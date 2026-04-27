@@ -237,27 +237,18 @@ export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) 
 
       {/* Footer */}
       <div className="px-2 py-2 border-t border-white/[0.07] flex-shrink-0">
-        <button className="ni text-white/35 text-xs">
-          <Download size={14} className="opacity-60 flex-shrink-0" />
-          {!collapsed && <span>CSV Dışa Aktar</span>}
-        </button>
-        <Link href="/login" className="ni text-white/35 text-xs">
+        <button
+          onClick={() => {
+            if (typeof window !== 'undefined') {
+              document.cookie = 'demo_auth=; path=/; max-age=0; sameSite=lax'
+              window.location.href = '/login'
+            }
+          }}
+          className="ni text-white/35 text-xs"
+        >
           <LogOut size={14} className="opacity-60 flex-shrink-0" />
           {!collapsed && <span>Çıkış Yap</span>}
-        </Link>
-        {/* User */}
-        <div className="flex items-center gap-2.5 px-2 py-1.5 mt-1">
-          <div className="w-7 h-7 rounded-full bg-eden-blue/60 flex items-center justify-center
-                          text-[10px] font-bold text-white flex-shrink-0">
-            İİ
-          </div>
-          {!collapsed && (
-            <div className="min-w-0">
-              <div className="text-xs font-medium text-white/70 truncate">İsmail ILGAR</div>
-              <div className="text-[10px] text-white/30">Yönetici</div>
-            </div>
-          )}
-        </div>
+        </button>
       </div>
     </aside>
   )

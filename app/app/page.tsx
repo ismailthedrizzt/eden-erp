@@ -1,164 +1,151 @@
 'use client'
 
-import { useState } from 'react'
-import { useNakitIslemler } from '@/hooks/useNakitIslemler'
+import { useState, useEffect } from 'react'
 import { usePersonel } from '@/hooks/usePersonel'
-import { formatTRY, formatDate } from '@/lib/utils'
-import KpiCard from '@/components/ui/KpiCard'
-import { ProjeBadge, DurumBadge } from '@/components/ui/Badge'
-import { Pin, MessageSquare, CheckSquare, ChevronRight } from 'lucide-react'
-import IslemModal from '@/components/modules/muhasebe/IslemModal'
-import Link from 'next/link'
+import { Plus, Settings } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
-const DUYURULAR = [
-  { id: 1, baslik: 'Q2 hedefleri güncellendi', tarih: '25 Nis 2026', kaynak: 'Yönetim', pinned: true },
-  { id: 2, baslik: 'SGK Nisan bildirge son tarihi', tarih: '22 Nis 2026', kaynak: 'İK', pinned: false },
-  { id: 3, baslik: 'PG Projesi milestone güncelleme', tarih: '18 Nis 2026', kaynak: 'Proje', pinned: false },
-]
+// Widget seçimi modalı
+function WidgetModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const [selectedWidgets, setSelectedWidgets] = useState<string[]>([])
 
-const GOREVLER = [
-  { id: 1, baslik: 'Personel onboarding formu', detay: 'Canberk Kaya — Bugün', done: false, late: false },
-  { id: 2, baslik: 'SGK bildirge gönderildi', detay: '', done: true, late: false },
-  { id: 3, baslik: 'İş ilanı yayınla — Yazılım Geliştirici', detay: 'Gecikmiş — 20 Nis 2026', done: false, late: true },
-  { id: 4, baslik: 'PG Proje haftalık raporu', detay: '27 Nis 2026', done: false, late: false },
-]
+  useEffect(() => {
+    if (open) {
+      const saved = localStorage.getItem('user_widgets')
+      if (saved) {
+        setSelectedWidgets(JSON.parse(saved))
+      }
+    }
+  }, [open])
 
-const TICKETLAR = [
-  { id: 1, baslik: 'Ekipman talebi — Laptop', meta: 'Canberk Kaya • 2 saat önce', renk: '#216688', badge: 'Yeni', badgeClass: 'badge-blue' },
-  { id: 2, baslik: 'Bordro düzeltme talebi', meta: 'Ergün Demir • Dün', renk: '#f4c323', badge: 'Bekliyor', badgeClass: 'badge-gold' },
-  { id: 3, baslik: 'İzin onayı — Nisan', meta: 'İsmail ILGAR • 3 gün önce', renk: '#0e8c61', badge: 'Kapalı', badgeClass: 'badge-green' },
-]
+  const widgets = [
+    { id: 'ik_ozeti', name: 'İK Özeti', module: 'İK', desc: 'Personel sayısı, izin durumu' },
+    { id: 'kadro_doluluk', name: 'Kadro Doluluk', module: 'İK', desc: 'Kadroların doluluk oranı' },
+    { id: 'nakit_akisi_kpi', name: 'Nakit Akışı KPI', module: 'Muhasebe', desc: 'Gelir, gider, bakiye' },
+    { id: 'son_islemler', name: 'Son İşlemler', module: 'Muhasebe', desc: 'Son yapılan işlemler' },
+    { id: 'borc_ozeti', name: 'Borç Özeti', module: 'Muhasebe', desc: 'Açık borçlar' },
+    { id: 'duyurular', name: 'Duyurular', module: 'Genel', desc: 'Şirket duyuruları' },
+    { id: 'gorevlerim', name: 'Görevlerim', module: 'Genel', desc: 'Kişisel görevler' },
+  ]
+
+  const saveWidgets = () => {
+    localStorage.setItem('user_widgets', JSON.stringify(selectedWidgets))
+    onClose()
+  }
+
+  if (!open) return null
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div className="bg-white dark:bg-eden-navy-2 rounded-xl p-6 w-full max-w-md mx-4">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Widget'ları Özelleştir</h3>
+        <div className="space-y-3 max-h-96 overflow-y-auto">
+          {widgets.map(widget => (
+            <label key={widget.id} className="flex items-start gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-eden-navy cursor-pointer">
+              <input
+                type="checkbox"
+                checked={selectedWidgets.includes(widget.id)}
+                onChange={(e) => {
+                  if (e.target.checked) {
+                    setSelectedWidgets(prev => [...prev, widget.id])
+                  } else {
+                    setSelectedWidgets(prev => prev.filter(id => id !== widget.id))
+                  }
+                }}
+                className="mt-0.5"
+              />
+              <div className="flex-1">
+                <div className="font-medium text-gray-900 dark:text-white">{widget.name}</div>
+                <div className="text-sm text-gray-500 dark:text-gray-400">{widget.module} • {widget.desc}</div>
+              </div>
+            </label>
+          ))}
+        </div>
+        <div className="flex gap-3 mt-6">
+          <button onClick={onClose} className="flex-1 py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-eden-navy">
+            İptal
+          </button>
+          <button onClick={saveWidgets} className="flex-1 py-2 px-4 bg-eden-blue text-white rounded-lg hover:bg-eden-blue-dk">
+            Kaydet
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 export default function AnaSayfa() {
-  const [modalOpen, setModalOpen] = useState(false)
-  const [doneIds, setDoneIds] = useState<number[]>([2])
-  const { toplamGelir, toplamGider, netBakiye, acikBorc, data: islemler, loading } = useNakitIslemler()
-  const { data: personel, gorevde, izinde } = usePersonel()
+  const [widgetModalOpen, setWidgetModalOpen] = useState(false)
+  const { data: personel } = usePersonel()
 
-  const sonIslemler = [...islemler].sort((a, b) => b.tarih.localeCompare(a.tarih)).slice(0, 5)
+  // Kullanıcı bilgilerini al (şimdilik sabit, gerçek auth'dan gelecek)
+  const currentUser = {
+    ad: 'İsmail',
+    soyad: 'ILGAR',
+    sgk_giris: '2024-01-15', // Demo tarih
+    dogum_tarihi: '1990-04-27' // Demo tarih
+  }
+
+  // Süre hesaplaması
+  const calculateDuration = (startDate: string) => {
+    const start = new Date(startDate)
+    const now = new Date()
+    const diffTime = Math.abs(now.getTime() - start.getTime())
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+
+    const years = Math.floor(diffDays / 365)
+    const months = Math.floor((diffDays % 365) / 30)
+    const days = diffDays % 30
+
+    return { years, months, days }
+  }
+
+  // Doğum günü kontrolü
+  const isBirthday = () => {
+    if (!currentUser.dogum_tarihi) return false
+    const today = new Date()
+    const birth = new Date(currentUser.dogum_tarihi)
+    return today.getMonth() === birth.getMonth() && today.getDate() === birth.getDate()
+  }
+
+  const duration = calculateDuration(currentUser.sgk_giris)
+  const birthday = isBirthday()
 
   return (
     <>
-      <IslemModal open={modalOpen} onClose={() => setModalOpen(false)} />
+      <WidgetModal open={widgetModalOpen} onClose={() => setWidgetModalOpen(false)} />
 
-      {/* Karşılama */}
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold font-display text-gray-900 dark:text-white">
-          Merhaba, İsmail 👋
-        </h1>
-        <p className="text-sm text-gray-500 mt-1">2 yıl 3 ay, 7 gündür bizimlesin. İyi ki varsın!</p>
-      </div>
-
-      {/* KPI Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
-        <KpiCard label="Net Bakiye" value={loading ? '—' : formatTRY(netBakiye)} color={netBakiye >= 0 ? 'green' : 'red'} />
-        <KpiCard label="Toplam Gider" value={loading ? '—' : formatTRY(toplamGider)} color="red" />
-        <KpiCard label="Toplam Personel" value={gorevde} sub={`${izinde} izinde`} color="blue" />
-        <KpiCard label="Açık Borç" value={loading ? '—' : formatTRY(acikBorc)} sub="Ortak & çalışan" color="gold" />
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* Sol: Duyurular + Son İşlemler */}
-        <div className="lg:col-span-2 space-y-4">
-
-          {/* Duyurular */}
-          <div className="card">
-            <div className="card-hdr">
-              <span className="card-title flex items-center gap-2"><Pin size={14} className="text-eden-gold" />Duyurular</span>
-              <Link href="#" className="text-xs text-eden-blue hover:underline flex items-center gap-1">
-                Tümünü gör <ChevronRight size={12} />
-              </Link>
-            </div>
-            <div className="divide-y divide-gray-100 dark:divide-gray-800">
-              {DUYURULAR.map(d => (
-                <div key={d.id} className={`px-4 py-3 flex items-start gap-3 border-l-2 ${d.pinned ? 'border-l-eden-gold bg-eden-gold-lt/30 dark:bg-yellow-900/10' : 'border-l-eden-blue bg-transparent'}`}>
-                  <div className="flex-1">
-                    <div className="text-sm font-medium text-gray-800 dark:text-gray-100">{d.baslik}</div>
-                    <div className="text-xs text-gray-400 mt-0.5">{d.tarih} — {d.kaynak}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
+      {/* Banner */}
+      <div className="bg-gradient-to-r from-eden-blue to-eden-blue-dk rounded-xl p-6 mb-6 text-white">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold font-display">
+              {birthday ? `🎉 Doğum Günün Kutlu Olsun, ${currentUser.ad}!` : `Merhaba, ${currentUser.ad} 👋`}
+            </h1>
+            <p className="text-eden-blue-lt mt-1">
+              {birthday
+                ? 'Bugün senin özel günün! 🎂'
+                : `${duration.years} yıl ${duration.months} ay, ${duration.days} gündür bizimlesin. İyi ki varsın!`
+              }
+            </p>
           </div>
-
-          {/* Son İşlemler */}
-          <div className="card">
-            <div className="card-hdr">
-              <span className="card-title">Son İşlemler</span>
-              <Link href="/muhasebe/islemler" className="text-xs text-eden-blue hover:underline flex items-center gap-1">
-                Tümünü gör <ChevronRight size={12} />
-              </Link>
-            </div>
-            <div className="overflow-x-auto">
-              <table className="data-table">
-                <thead><tr><th>Tarih</th><th>Açıklama</th><th>Proje</th><th className="text-right">Gelir</th><th className="text-right">Gider</th></tr></thead>
-                <tbody>
-                  {loading ? (
-                    Array.from({length:4}).map((_,i) => (
-                      <tr key={i}>{Array.from({length:5}).map((_,j) => <td key={j}><div className="h-3 bg-gray-100 dark:bg-gray-800 rounded animate-pulse"/></td>)}</tr>
-                    ))
-                  ) : sonIslemler.map(r => (
-                    <tr key={r.id}>
-                      <td className="text-xs text-gray-400 whitespace-nowrap">{formatDate(r.tarih)}</td>
-                      <td className="max-w-[200px] truncate">{r.aciklama}</td>
-                      <td><ProjeBadge proje={r.proje} /></td>
-                      <td className="text-right amt-pos whitespace-nowrap">{r.gelir ? formatTRY(r.gelir) : ''}</td>
-                      <td className="text-right amt-neg whitespace-nowrap">{r.gider ? formatTRY(r.gider) : ''}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+          <button
+            onClick={() => setWidgetModalOpen(true)}
+            className="flex items-center gap-2 bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg transition-colors"
+          >
+            <Plus size={16} />
+            Ekle
+          </button>
         </div>
+      </div>
 
-        {/* Sağ: Görevler + Ticketlar */}
-        <div className="space-y-4">
-          {/* Görevler */}
-          <div className="card">
-            <div className="card-hdr">
-              <span className="card-title flex items-center gap-2"><CheckSquare size={14} />Görevlerim</span>
-            </div>
-            <div className="px-4 py-2 divide-y divide-gray-100 dark:divide-gray-800">
-              {GOREVLER.map(g => (
-                <div key={g.id} className="flex items-start gap-2.5 py-2.5">
-                  <button
-                    onClick={() => setDoneIds(prev => prev.includes(g.id) ? prev.filter(x=>x!==g.id) : [...prev, g.id])}
-                    className={`mt-0.5 w-4 h-4 rounded flex-shrink-0 border transition-colors
-                      ${doneIds.includes(g.id) ? 'bg-eden-green border-eden-green' : 'border-gray-300 dark:border-gray-600'}`}
-                  />
-                  <div className="flex-1 min-w-0">
-                    <div className={`text-sm text-gray-800 dark:text-gray-100 ${doneIds.includes(g.id) ? 'line-through text-gray-400' : ''}`}>
-                      {g.baslik}
-                    </div>
-                    {g.detay && (
-                      <div className={`text-xs mt-0.5 ${g.late ? 'text-red-500' : 'text-gray-400'}`}>{g.detay}</div>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Ticketlar */}
-          <div className="card">
-            <div className="card-hdr">
-              <span className="card-title flex items-center gap-2"><MessageSquare size={14} />Ticketlar</span>
-              <button className="btn btn-sm text-xs">+ Yeni</button>
-            </div>
-            <div className="divide-y divide-gray-100 dark:divide-gray-800">
-              {TICKETLAR.map(t => (
-                <div key={t.id} className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-eden-navy/50 cursor-pointer transition-colors">
-                  <div className="w-2 h-2 rounded-full flex-shrink-0" style={{background: t.renk}} />
-                  <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium text-gray-800 dark:text-gray-100 truncate">{t.baslik}</div>
-                    <div className="text-xs text-gray-400 mt-0.5">{t.meta}</div>
-                  </div>
-                  <span className={`badge ${t.badgeClass} flex-shrink-0`}>{t.badge}</span>
-                </div>
-              ))}
-            </div>
-          </div>
+      {/* Widget Grid - Şimdilik boş */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+        {/* Widget'lar buraya gelecek */}
+        <div className="text-center py-12 text-gray-500 dark:text-gray-400">
+          <Settings size={48} className="mx-auto mb-4 opacity-50" />
+          <p>Henüz widget eklenmemiş</p>
+          <p className="text-sm mt-1">"+Ekle" butonuna tıklayarak widget'ları ekleyebilirsiniz</p>
         </div>
       </div>
     </>
