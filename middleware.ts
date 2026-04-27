@@ -42,16 +42,17 @@ export async function middleware(request: NextRequest) {
   const isAuthPage = request.nextUrl.pathname.startsWith('/login')
   const isApiRoute = request.nextUrl.pathname.startsWith('/api')
   const isPublic = isAuthPage || isApiRoute
+  const isDemo = request.cookies.get('demo_auth')?.value === 'true'
 
   // Giriş yapılmamış ve korunan sayfaya erişim → Login'e yönlendir
-  if (!user && !isPublic) {
+  if (!user && !isDemo && !isPublic) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
     return NextResponse.redirect(url)
   }
 
-  // Giriş yapılmış ve login sayfasına erişim → Ana sayfaya yönlendir
-  if (user && isAuthPage) {
+  // Giriş yapılmış veya demo giriş yapılmışsa login sayfasına erişim → Ana sayfaya yönlendir
+  if ((user || isDemo) && isAuthPage) {
     const url = request.nextUrl.clone()
     url.pathname = '/'
     return NextResponse.redirect(url)

@@ -29,18 +29,18 @@ const NAV: NavItem[] = [
     id: 'ana',
     label: 'Ana Sayfa',
     icon: <Home size={16} />,
-    href: '/',
+    href: '/app',
   },
   {
     id: 'ik',
     label: 'İnsan Kaynakları',
     icon: <Users size={16} />,
     children: [
-      { label: 'Teşkilat & Kadro', href: '/ik/teskilat' },
-      { label: 'Personel Listesi', href: '/ik/personel' },
-      { label: 'Personel Ekle', href: '/ik/personel-ekle' },
-      { label: 'İzin Yönetimi', href: '/ik/izin', disabled: true },
-      { label: 'Performans', href: '/ik/performans', disabled: true },
+      { label: 'Teşkilat & Kadro', href: '/app/ik/teskilat' },
+      { label: 'Personel Listesi', href: '/app/ik/personel' },
+      { label: 'Personel Ekle', href: '/app/ik/personel-ekle' },
+      { label: 'İzin Yönetimi', href: '/app/ik/izin', disabled: true },
+      { label: 'Performans', href: '/app/ik/performans', disabled: true },
     ],
   },
   {
@@ -48,11 +48,11 @@ const NAV: NavItem[] = [
     label: 'Muhasebe',
     icon: <CreditCard size={16} />,
     children: [
-      { label: 'Dashboard', href: '/muhasebe/dashboard' },
-      { label: 'Tüm İşlemler', href: '/muhasebe/islemler' },
-      { label: 'Borç Takip', href: '/muhasebe/borclar' },
-      { label: 'Proje Özeti', href: '/muhasebe/projeler' },
-      { label: 'Hesaplar', href: '/muhasebe/hesaplar' },
+      { label: 'Dashboard', href: '/app/muhasebe/dashboard' },
+      { label: 'Tüm İşlemler', href: '/app/muhasebe/islemler' },
+      { label: 'Borç Takip', href: '/app/muhasebe/borclar' },
+      { label: 'Proje Özeti', href: '/app/muhasebe/projeler' },
+      { label: 'Hesaplar', href: '/app/muhasebe/hesaplar' },
     ],
   },
   {
@@ -61,9 +61,9 @@ const NAV: NavItem[] = [
     icon: <Package size={16} />,
     badge: 'Yakında',
     children: [
-      { label: 'Ürün Listesi', href: '/stok/urunler', disabled: true },
-      { label: 'Depo Hareketleri', href: '/stok/hareketler', disabled: true },
-      { label: 'Sayım', href: '/stok/sayim', disabled: true },
+      { label: 'Ürün Listesi', href: '/app/stok/urunler', disabled: true },
+      { label: 'Depo Hareketleri', href: '/app/stok/hareketler', disabled: true },
+      { label: 'Sayım', href: '/app/stok/sayim', disabled: true },
     ],
   },
   {
@@ -72,9 +72,9 @@ const NAV: NavItem[] = [
     icon: <ShoppingCart size={16} />,
     badge: 'Yakında',
     children: [
-      { label: 'Teklifler', href: '/satis/teklifler', disabled: true },
-      { label: 'Siparişler', href: '/satis/siparisler', disabled: true },
-      { label: 'Müşteriler', href: '/satis/musteriler', disabled: true },
+      { label: 'Teklifler', href: '/app/satis/teklifler', disabled: true },
+      { label: 'Siparişler', href: '/app/satis/siparisler', disabled: true },
+      { label: 'Müşteriler', href: '/app/satis/musteriler', disabled: true },
     ],
   },
   {
@@ -83,8 +83,8 @@ const NAV: NavItem[] = [
     icon: <Factory size={16} />,
     badge: 'Yakında',
     children: [
-      { label: 'İş Emirleri', href: '/uretim/is-emirleri', disabled: true },
-      { label: 'Reçeteler', href: '/uretim/receteler', disabled: true },
+      { label: 'İş Emirleri', href: '/app/uretim/is-emirleri', disabled: true },
+      { label: 'Reçeteler', href: '/app/uretim/receteler', disabled: true },
     ],
   },
   {
@@ -93,7 +93,7 @@ const NAV: NavItem[] = [
     icon: <Wrench size={16} />,
     badge: 'Yakında',
     children: [
-      { label: 'Servis Kayıtları', href: '/servis/kayitlar', disabled: true },
+      { label: 'Servis Kayıtları', href: '/app/servis/kayitlar', disabled: true },
     ],
   },
   {
@@ -101,9 +101,9 @@ const NAV: NavItem[] = [
     label: 'Sistem Yönetimi',
     icon: <Settings size={16} />,
     children: [
-      { label: 'Kullanıcılar', href: '/sistem/kullanicilar', disabled: true },
-      { label: 'Roller & Yetkiler', href: '/sistem/roller', disabled: true },
-      { label: 'Sistem Logları', href: '/sistem/loglar', disabled: true },
+      { label: 'Kullanıcılar', href: '/app/sistem/kullanicilar', disabled: true },
+      { label: 'Roller & Yetkiler', href: '/app/sistem/roller', disabled: true },
+      { label: 'Sistem Logları', href: '/app/sistem/loglar', disabled: true },
     ],
   },
 ]
