@@ -1,0 +1,113 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600&family=Syne:wght@600;700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --eden-blue: #216688;
+    --eden-blue-dk: #174a61;
+    --eden-blue-lt: #e8f3f8;
+    --eden-green: #0e8c61;
+    --eden-green-lt: #e5f5ef;
+    --eden-gold: #f4c323;
+    --eden-gold-dk: #c49a10;
+    --eden-gold-lt: #fef8e3;
+    --eden-red: #d93025;
+    --eden-red-lt: #fde8e7;
+    --eden-navy: #0f2233;
+    --eden-navy-2: #162b46;
+    --sb-w: 256px;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    height: 100%;
+    font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #c8d4de; border-radius: 3px; }
+  .dark ::-webkit-scrollbar-thumb { background: #2a4a6a; }
+}
+
+@layer components {
+  /* Sidebar nav items */
+  .ni {
+    @apply flex items-center gap-2 px-3 py-2 rounded-lg cursor-pointer
+           text-white/60 text-sm font-medium border-0 bg-transparent w-full text-left
+           transition-all duration-150 whitespace-nowrap;
+  }
+  .ni:hover { @apply bg-white/[0.07] text-white/90; }
+  .ni.active { @apply bg-eden-blue/30 text-white; }
+  .ni.open { @apply bg-white/[0.05] text-white/80; }
+
+  .sni {
+    @apply flex items-center gap-2 pl-9 pr-3 py-[7px] rounded-lg cursor-pointer
+           text-white/45 text-xs font-normal border-0 bg-transparent w-full text-left
+           transition-all duration-150 whitespace-nowrap;
+  }
+  .sni:hover { @apply bg-white/[0.06] text-white/80; }
+  .sni.active { @apply bg-eden-blue/25 text-white font-medium; }
+
+  /* Cards */
+  .card {
+    @apply bg-white dark:bg-eden-navy-2 border border-gray-200 dark:border-eden-navy
+           rounded-xl overflow-hidden;
+  }
+
+  /* Buttons */
+  .btn {
+    @apply inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-sm font-medium
+           cursor-pointer border border-gray-200 dark:border-gray-700
+           bg-white dark:bg-eden-navy text-gray-700 dark:text-gray-200
+           transition-all duration-150;
+  }
+  .btn:hover { @apply bg-gray-50 dark:bg-eden-navy-2; }
+  .btn-primary {
+    @apply bg-eden-blue text-white border-eden-blue;
+  }
+  .btn-primary:hover { @apply bg-eden-blue-dk; }
+
+  /* Badges */
+  .badge {
+    @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold;
+  }
+  .badge-green { @apply bg-eden-green-lt text-green-800; }
+  .badge-red   { @apply bg-eden-red-lt text-red-800; }
+  .badge-blue  { @apply bg-eden-blue-lt text-eden-blue-dk; }
+  .badge-gold  { @apply bg-eden-gold-lt text-amber-800; }
+  .badge-gray  { @apply bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300; }
+
+  /* Amounts */
+  .amt-pos { @apply text-eden-green font-semibold; }
+  .amt-neg { @apply text-eden-red; }
+
+  /* Table */
+  .data-table { @apply w-full text-sm border-collapse; }
+  .data-table th {
+    @apply text-left text-[10.5px] font-semibold text-gray-500 dark:text-gray-400
+           px-3.5 py-2.5 border-b border-gray-200 dark:border-gray-700
+           uppercase tracking-wider whitespace-nowrap bg-white dark:bg-eden-navy-2;
+  }
+  .data-table td {
+    @apply px-3.5 py-2.5 border-b border-gray-100 dark:border-gray-800
+           text-gray-700 dark:text-gray-200 align-middle;
+  }
+  .data-table tbody tr:last-child td { @apply border-b-0; }
+  .data-table tbody tr:hover td { @apply bg-gray-50 dark:bg-eden-navy/50; }
+
+  /* KPI card */
+  .kpi-card {
+    @apply bg-white dark:bg-eden-navy-2 border border-gray-200 dark:border-eden-navy
+           rounded-xl p-4 border-t-[3px];
+  }
+  .kpi-label { @apply text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2; }
+  .kpi-value { @apply text-2xl font-bold font-display text-gray-900 dark:text-white; }
+  .kpi-sub { @apply text-xs text-gray-400 mt-1; }
+}

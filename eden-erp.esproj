@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.VisualStudio.JavaScript.Sdk/1.0.4671869">
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>0b225046-2f95-4be9-885f-11c76cbf7377</ProjectGuid>
+    <RootNamespace>eden_erp</RootNamespace>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <StartupCommand>npm run dev</StartupCommand>
+    <BuildCommand>npm run build</BuildCommand>
+    <TestCommand>npm run lint</TestCommand>
+    <ShouldRunNpmInstall>true</ShouldRunNpmInstall>
+    <ShouldRunBuildScript>true</ShouldRunBuildScript>
+  </PropertyGroup>
+</Project>
