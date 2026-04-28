@@ -8,6 +8,7 @@ import KpiCard from '@/components/ui/KpiCard'
 import { initials } from '@/lib/utils'
 import { Search, Plus, UserCheck, Clock, UserX, Users } from 'lucide-react'
 import { PageBanner } from '@/components/ui/PageBanner'
+import StaffAddEditModal from '@/components/modules/ik/StaffAddEditModal'
 
 const AVATAR_COLORS = ['#216688','#7c3aed','#0e8c61','#d97706','#db2777','#0891b2']
 const SL = 'border border-gray-200 dark:border-gray-700 rounded-lg px-2.5 py-1.5 text-sm bg-white dark:bg-eden-navy text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-eden-blue/20'

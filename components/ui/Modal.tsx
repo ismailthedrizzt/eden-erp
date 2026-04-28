@@ -10,10 +10,18 @@ interface ModalProps {
   title: string
   children: React.ReactNode
   footer?: React.ReactNode
-  size?: 'sm' | 'md' | 'lg'
+  size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl'
 }
 
-const SIZES = { sm: 'max-w-sm', md: 'max-w-lg', lg: 'max-w-2xl' }
+// 2xl ve 3xl boyutları eklendi
+const SIZES = { 
+  sm: 'max-w-sm', 
+  md: 'max-w-lg', 
+  lg: 'max-w-2xl', 
+  xl: 'max-w-4xl', 
+  '2xl': 'max-w-5xl',
+  '3xl': 'max-w-6xl'
+}
 
 export default function Modal({ open, onClose, title, children, footer, size = 'md' }: ModalProps) {
   useEffect(() => {
@@ -26,11 +34,11 @@ export default function Modal({ open, onClose, title, children, footer, size = '
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/45 backdrop-blur-sm p-4"
       onClick={e => { if (e.target === e.currentTarget) onClose() }}
     >
       <div className={cn(
-        'bg-white dark:bg-eden-navy-2 rounded-2xl shadow-2xl w-full mx-4 max-h-[92vh] flex flex-col',
+        'bg-white dark:bg-eden-navy-2 rounded-2xl shadow-2xl w-full max-h-[92vh] flex flex-col',
         SIZES[size]
       )}>
         {/* Header */}
