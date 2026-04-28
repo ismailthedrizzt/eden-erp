@@ -6,7 +6,8 @@ import { formatTRY, formatDate } from '@/lib/utils'
 import { ProjeBadge } from '@/components/ui/Badge'
 import KpiCard from '@/components/ui/KpiCard'
 import IslemModal from '@/components/modules/muhasebe/IslemModal'
-import { Plus } from 'lucide-react'
+import { Plus, CreditCard } from 'lucide-react'
+import { PageBanner } from '@/components/ui/PageBanner'
 
 const TARAFLAR = ['Eden','İsmail ILGAR','Canberk','Ergün']
 const SL = 'border border-gray-200 dark:border-gray-700 rounded-lg px-2.5 py-1.5 text-sm bg-white dark:bg-eden-navy text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-eden-blue/20'
@@ -24,10 +25,12 @@ export default function HesaplarPage() {
     <>
       <IslemModal open={modalOpen} onClose={()=>setModalOpen(false)} defaultTaraf={taraf||undefined} />
 
-      <div className="flex items-center justify-between mb-5">
-        <h1 className="text-xl font-bold font-display text-gray-900 dark:text-white">Hesaplar</h1>
-        <button onClick={()=>setModalOpen(true)} className="btn btn-primary"><Plus size={14}/> Yeni İşlem</button>
-      </div>
+      <PageBanner
+        title="Hesaplar"
+        icon={<CreditCard size={24} />}
+        onAddClick={()=>setModalOpen(true)}
+        addButtonText="Yeni İşlem"
+      />
 
       {/* Filtre */}
       <div className="flex gap-2 mb-4">

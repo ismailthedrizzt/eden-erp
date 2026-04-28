@@ -4,6 +4,8 @@ import { useNakitIslemler } from '@/hooks/useNakitIslemler'
 import { formatTRY } from '@/lib/utils'
 import { ProjeBadge } from '@/components/ui/Badge'
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer } from 'recharts'
+import { DollarSign } from 'lucide-react'
+import { PageBanner } from '@/components/ui/PageBanner'
 
 const IC_TARAFLAR = [
   { isim: 'İsmail ILGAR', rol: 'Ortak',   cls: 'border-l-eden-gold' },
@@ -34,12 +36,12 @@ export default function BorclarPage() {
 
   return (
     <>
-      <div className="flex items-center justify-between mb-5">
-        <h1 className="text-xl font-bold font-display text-gray-900 dark:text-white">Borç Takip</h1>
-        <div className="text-sm text-gray-500">
-          Toplam açık borç: <span className="font-bold text-red-600">{formatTRY(toplamBorc)}</span>
-        </div>
-      </div>
+      <PageBanner
+        title="Borç Takip"
+        subtitle={`Toplam açık borç: ${formatTRY(toplamBorc)}`}
+        icon={<DollarSign size={24} />}
+        onAddClick={undefined}
+      />
 
       {/* Borç Kartları */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">

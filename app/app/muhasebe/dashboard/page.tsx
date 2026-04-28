@@ -7,7 +7,8 @@ import { formatTRY, formatDate, PROJE_GRAFIK_RENKLERI, TARAF_RENKLERI } from '@/
 import KpiCard from '@/components/ui/KpiCard'
 import { ProjeBadge } from '@/components/ui/Badge'
 import IslemModal from '@/components/modules/muhasebe/IslemModal'
-import { Plus } from 'lucide-react'
+import { Plus, BarChart3 } from 'lucide-react'
+import { PageBanner } from '@/components/ui/PageBanner'
 
 const PROJELER = ['PG','EPIRB','İdari','Sermaye','Aktarım','Finansal','Destek','Yatırım','Otel']
 const AYLAR = ['','Oca','Şub','Mar','Nis','May','Haz','Tem','Ağu','Eyl','Eki','Kas','Ara']
@@ -41,12 +42,12 @@ export default function MuhasebeDashboard() {
     <>
       <IslemModal open={modalOpen} onClose={() => setModalOpen(false)} />
 
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-xl font-bold font-display text-gray-900 dark:text-white">Muhasebe Dashboard</h1>
-        <button onClick={() => setModalOpen(true)} className="btn btn-primary">
-          <Plus size={14} /> Yeni İşlem
-        </button>
-      </div>
+      <PageBanner
+        title="Muhasebe Dashboard"
+        icon={<BarChart3 size={24} />}
+        onAddClick={() => setModalOpen(true)}
+        addButtonText="Yeni İşlem"
+      />
 
       {/* KPI */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-6">

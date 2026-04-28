@@ -5,7 +5,8 @@ import { useNakitIslemler } from '@/hooks/useNakitIslemler'
 import { formatTRY, formatDate } from '@/lib/utils'
 import { ProjeBadge } from '@/components/ui/Badge'
 import IslemModal from '@/components/modules/muhasebe/IslemModal'
-import { Plus, Search } from 'lucide-react'
+import { Plus, Search, Receipt } from 'lucide-react'
+import { PageBanner } from '@/components/ui/PageBanner'
 
 const PROJELER  = ['PG','EPIRB','İdari','Sermaye','Aktarım','Finansal','Destek','Yatırım','Otel']
 const TARAFLAR  = ['Eden','İsmail ILGAR','Canberk','Ergün']
@@ -30,12 +31,12 @@ export default function IslemlerPage() {
     <>
       <IslemModal open={modalOpen} onClose={() => setModalOpen(false)} />
 
-      <div className="flex items-center justify-between mb-5">
-        <h1 className="text-xl font-bold font-display text-gray-900 dark:text-white">Tüm İşlemler</h1>
-        <button onClick={() => setModalOpen(true)} className="btn btn-primary">
-          <Plus size={14} /> Yeni İşlem
-        </button>
-      </div>
+      <PageBanner
+        title="Tüm İşlemler"
+        icon={<Receipt size={24} />}
+        onAddClick={() => setModalOpen(true)}
+        addButtonText="Yeni İşlem"
+      />
 
       {/* Filtreler */}
       <div className="flex flex-wrap gap-2 mb-4">

@@ -5,6 +5,8 @@ import { formatTRY } from '@/lib/utils'
 import { ProjeBadge } from '@/components/ui/Badge'
 import { PieChart, Pie, Cell, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts'
 import { PROJE_GRAFIK_RENKLERI, TARAF_RENKLERI } from '@/lib/utils'
+import { FolderOpen } from 'lucide-react'
+import { PageBanner } from '@/components/ui/PageBanner'
 
 const PROJELER  = ['PG','EPIRB','İdari','Sermaye','Aktarım','Finansal','Destek','Yatırım','Otel']
 const TARAFLAR  = ['Eden','İsmail ILGAR','Canberk','Ergün']
@@ -31,7 +33,11 @@ export default function ProjelerPage() {
 
   return (
     <>
-      <h1 className="text-xl font-bold font-display text-gray-900 dark:text-white mb-5">Proje Özeti</h1>
+      <PageBanner
+        title="Proje Özeti"
+        icon={<FolderOpen size={24} />}
+        onAddClick={undefined}
+      />
 
       {/* Top KPI */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">

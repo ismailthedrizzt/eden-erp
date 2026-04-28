@@ -6,16 +6,73 @@ import { useTeskilat } from '@/hooks/useTeskilat'
 import { DurumBadge } from '@/components/ui/Badge'
 import KpiCard from '@/components/ui/KpiCard'
 import { initials } from '@/lib/utils'
-import { Search, Plus, UserCheck, Clock, UserX } from 'lucide-react'
-import Link from 'next/link'
+import { Search, Plus, UserCheck, Clock, UserX, Users } from 'lucide-react'
+import { PageBanner } from '@/components/ui/PageBanner'
 
 const AVATAR_COLORS = ['#216688','#7c3aed','#0e8c61','#d97706','#db2777','#0891b2']
 const SL = 'border border-gray-200 dark:border-gray-700 rounded-lg px-2.5 py-1.5 text-sm bg-white dark:bg-eden-navy text-gray-700 dark:text-gray-200 focus:outline-none focus:ring-2 focus:ring-eden-blue/20'
+
+function PersonelEkleModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const [formData, setFormData] = useState({ ad: '', soyad: '', birim: '', pozisyon: '' })
+
+  if (!open) return null
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+      <div className="w-full max-w-md rounded-xl bg-white dark:bg-eden-navy-2 p-6 shadow-xl">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Personel Ekle</h3>
+        <div className="space-y-4">
+          <label className="block text-sm text-gray-700 dark:text-gray-300">
+            Ad
+            <input
+              value={formData.ad}
+              onChange={(e) => setFormData(prev => ({ ...prev, ad: e.target.value }))}
+              className="mt-2 w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-eden-navy text-gray-900 dark:text-white px-3 py-2"
+            />
+          </label>
+          <label className="block text-sm text-gray-700 dark:text-gray-300">
+            Soyad
+            <input
+              value={formData.soyad}
+              onChange={(e) => setFormData(prev => ({ ...prev, soyad: e.target.value }))}
+              className="mt-2 w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-eden-navy text-gray-900 dark:text-white px-3 py-2"
+            />
+          </label>
+          <label className="block text-sm text-gray-700 dark:text-gray-300">
+            Birim
+            <input
+              value={formData.birim}
+              onChange={(e) => setFormData(prev => ({ ...prev, birim: e.target.value }))}
+              className="mt-2 w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-eden-navy text-gray-900 dark:text-white px-3 py-2"
+            />
+          </label>
+          <label className="block text-sm text-gray-700 dark:text-gray-300">
+            Pozisyon
+            <input
+              value={formData.pozisyon}
+              onChange={(e) => setFormData(prev => ({ ...prev, pozisyon: e.target.value }))}
+              className="mt-2 w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-eden-navy text-gray-900 dark:text-white px-3 py-2"
+            />
+          </label>
+        </div>
+        <div className="mt-6 flex gap-3">
+          <button onClick={onClose} className="flex-1 rounded-lg border border-gray-200 dark:border-gray-700 px-4 py-2 text-sm text-gray-700 dark:text-gray-200">
+            İptal
+          </button>
+          <button onClick={onClose} className="flex-1 rounded-lg bg-eden-blue text-white px-4 py-2 text-sm hover:bg-eden-blue-dk">
+            Ekle
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 export default function PersonelPage() {
   const [birimId, setBirimId] = useState('')
   const [durum, setDurum] = useState('')
   const [ara, setAra] = useState('')
+  const [modalOpen, setModalOpen] = useState(false)
   const { data, loading, gorevde, izinde, ayrilmis } = usePersonel({ birimId: birimId||undefined, durum: durum||undefined, ara: ara||undefined })
   const { birimler } = useTeskilat()
 
@@ -25,12 +82,15 @@ export default function PersonelPage() {
 
   return (
     <>
-      <div className="flex items-center justify-between mb-5">
-        <h1 className="text-xl font-bold font-display text-gray-900 dark:text-white">Personel Listesi</h1>
-        <Link href="/ik/personel-ekle" className="btn btn-primary">
-          <Plus size={14}/> Personel Ekle
-        </Link>
-      </div>
+      <PersonelEkleModal open={modalOpen} onClose={() => setModalOpen(false)} />
+
+      <PageBanner
+        title="Çalışanlar"
+        subtitle="Çalışan bilgilerini görüntüleyin ve yönetin"
+        icon={<Users size={24} />}
+        onAddClick={() => setModalOpen(true)}
+        addButtonText="Ekle"
+      />
 
       {/* KPI */}
       <div className="grid grid-cols-3 gap-3 mb-5">

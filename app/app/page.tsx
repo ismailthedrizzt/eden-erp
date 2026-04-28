@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import { usePersonel } from '@/hooks/usePersonel'
-import { Plus, Settings } from 'lucide-react'
+import { Plus, Settings, Home } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { PageBanner } from '@/components/ui/PageBanner'
 
 // Widget seçimi modalı
 function WidgetModal({ open, onClose }: { open: boolean; onClose: () => void }) {
@@ -115,29 +116,16 @@ export default function AnaSayfa() {
     <>
       <WidgetModal open={widgetModalOpen} onClose={() => setWidgetModalOpen(false)} />
 
-      {/* Banner */}
-      <div className="bg-gradient-to-r from-eden-blue to-eden-blue-dk rounded-xl p-6 mb-6 text-white">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold font-display">
-              {birthday ? `🎉 Doğum Günün Kutlu Olsun, ${currentUser.ad}!` : `Merhaba, ${currentUser.ad} 👋`}
-            </h1>
-            <p className="text-eden-blue-lt mt-1">
-              {birthday
-                ? 'Bugün senin özel günün! 🎂'
-                : `${duration.years} yıl ${duration.months} ay, ${duration.days} gündür bizimlesin. İyi ki varsın!`
-              }
-            </p>
-          </div>
-          <button
-            onClick={() => setWidgetModalOpen(true)}
-            className="flex items-center gap-2 bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg transition-colors"
-          >
-            <Plus size={16} />
-            Ekle
-          </button>
-        </div>
-      </div>
+      <PageBanner
+        title={birthday ? `🎉 Doğum Günün Kutlu Olsun, ${currentUser.ad}!` : `Merhaba, ${currentUser.ad} 👋`}
+        subtitle={birthday
+          ? 'Bugün senin özel günün! 🎂'
+          : `${duration.years} yıl ${duration.months} ay, ${duration.days} gündür bizimlesin. İyi ki varsın!`
+        }
+        icon={<Home size={24} />}
+        onAddClick={() => setWidgetModalOpen(true)}
+        addButtonText="Ekle"
+      />
 
       {/* Widget Grid - Şimdilik boş */}
       <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">

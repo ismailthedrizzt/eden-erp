@@ -38,7 +38,6 @@ const NAV: NavItem[] = [
     children: [
       { label: 'Teşkilat & Kadro', href: '/app/ik/teskilat' },
       { label: 'Çalışanlar', href: '/app/ik/personel' },
-      { label: 'Personel Ekle', href: '/app/ik/personel-ekle' },
       { label: 'İzin Yönetimi', href: '/app/ik/izin', disabled: true },
       { label: 'Performans', href: '/app/ik/performans', disabled: true },
     ],

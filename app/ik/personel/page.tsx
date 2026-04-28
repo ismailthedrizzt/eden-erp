@@ -4,28 +4,177 @@ import { useState, useMemo } from 'react'
 import { usePersonel } from '@/hooks/usePersonel'
 import { Users, Plus, Search, Filter, ChevronUp, ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import Link from 'next/link'
+import { PageBanner } from '@/components/ui/PageBanner'
 
-// Banner component - tüm sayfalarda kullanılacak
-function PageBanner({ title, icon, addHref }: { title: string; icon: React.ReactNode; addHref?: string }) {
+// Personel Ekle Modal
+function PersonelEkleModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const [formData, setFormData] = useState({
+    ad: '',
+    soyad: '',
+    tc_kimlik: '',
+    cep_telefonu: '',
+    email: '',
+    birim_id: '',
+    kadro_id: ''
+  })
+  const [loading, setLoading] = useState(false)
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    try {
+      // Personel ekleme işlemi burada yapılacak
+      console.log('Personel eklenecek:', formData)
+      // Başarılı olursa modal kapanacak ve liste yenilenecek
+      onClose()
+      setFormData({
+        ad: '',
+        soyad: '',
+        tc_kimlik: '',
+        cep_telefonu: '',
+        email: '',
+        birim_id: '',
+        kadro_id: ''
+      })
+    } catch (error) {
+      console.error('Personel ekleme hatası:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (!open) return null
+
   return (
-    <div className="bg-gradient-to-r from-eden-blue to-eden-blue-dk rounded-xl p-6 mb-6 text-white">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-white/10 rounded-lg flex items-center justify-center">
-            {icon}
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+      <div className="bg-white dark:bg-eden-navy-2 rounded-xl p-6 w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Personel Ekle</h3>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Ad
+              </label>
+              <input
+                type="text"
+                required
+                value={formData.ad}
+                onChange={(e) => setFormData(prev => ({ ...prev, ad: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg
+                           bg-white dark:bg-eden-navy text-gray-900 dark:text-white
+                           focus:outline-none focus:ring-2 focus:ring-eden-blue/20 focus:border-eden-blue"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Soyad
+              </label>
+              <input
+                type="text"
+                required
+                value={formData.soyad}
+                onChange={(e) => setFormData(prev => ({ ...prev, soyad: e.target.value }))}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg
+                           bg-white dark:bg-eden-navy text-gray-900 dark:text-white
+                           focus:outline-none focus:ring-2 focus:ring-eden-blue/20 focus:border-eden-blue"
+              />
+            </div>
           </div>
-          <h1 className="text-2xl font-bold font-display">{title}</h1>
-        </div>
-        {addHref && (
-          <Link
-            href={addHref}
-            className="flex items-center gap-2 bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg transition-colors"
-          >
-            <Plus size={16} />
-            Ekle
-          </Link>
-        )}
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              TC Kimlik No
+            </label>
+            <input
+              type="text"
+              value={formData.tc_kimlik}
+              onChange={(e) => setFormData(prev => ({ ...prev, tc_kimlik: e.target.value }))}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg
+                         bg-white dark:bg-eden-navy text-gray-900 dark:text-white
+                         focus:outline-none focus:ring-2 focus:ring-eden-blue/20 focus:border-eden-blue"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Cep Telefonu
+            </label>
+            <input
+              type="tel"
+              required
+              value={formData.cep_telefonu}
+              onChange={(e) => setFormData(prev => ({ ...prev, cep_telefonu: e.target.value }))}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg
+                         bg-white dark:bg-eden-navy text-gray-900 dark:text-white
+                         focus:outline-none focus:ring-2 focus:ring-eden-blue/20 focus:border-eden-blue"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              E-posta
+            </label>
+            <input
+              type="email"
+              value={formData.email}
+              onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg
+                         bg-white dark:bg-eden-navy text-gray-900 dark:text-white
+                         focus:outline-none focus:ring-2 focus:ring-eden-blue/20 focus:border-eden-blue"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Birim
+            </label>
+            <select
+              value={formData.birim_id}
+              onChange={(e) => setFormData(prev => ({ ...prev, birim_id: e.target.value }))}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg
+                         bg-white dark:bg-eden-navy text-gray-900 dark:text-white
+                         focus:outline-none focus:ring-2 focus:ring-eden-blue/20 focus:border-eden-blue"
+            >
+              <option value="">Birim Seçin</option>
+              {/* Birimler burada listelenecek */}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+              Pozisyon
+            </label>
+            <select
+              value={formData.kadro_id}
+              onChange={(e) => setFormData(prev => ({ ...prev, kadro_id: e.target.value }))}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg
+                         bg-white dark:bg-eden-navy text-gray-900 dark:text-white
+                         focus:outline-none focus:ring-2 focus:ring-eden-blue/20 focus:border-eden-blue"
+            >
+              <option value="">Pozisyon Seçin</option>
+              {/* Kadrolar burada listelenecek */}
+            </select>
+          </div>
+
+          <div className="flex gap-3 pt-4">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-lg
+                         text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-eden-navy"
+            >
+              İptal
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="flex-1 py-2 px-4 bg-eden-blue text-white rounded-lg hover:bg-eden-blue-dk
+                         disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {loading ? 'Ekleniyor...' : 'Ekle'}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   )
@@ -204,6 +353,7 @@ function DataTable<T extends Record<string, any>>({
 }
 
 export default function CalisanlarPage() {
+  const [personelEkleModalOpen, setPersonelEkleModalOpen] = useState(false)
   const { data: personel, loading } = usePersonel()
 
   const columns: Column<any>[] = [
@@ -263,19 +413,24 @@ export default function CalisanlarPage() {
   ]
 
   return (
-    <div className="space-y-6">
+    <>
+      <PersonelEkleModal open={personelEkleModalOpen} onClose={() => setPersonelEkleModalOpen(false)} />
+
       <PageBanner
         title="Çalışanlar"
-        icon={<Users size={20} />}
-        addHref="/app/ik/personel-ekle"
+        icon={<Users size={24} />}
+        onAddClick={() => setPersonelEkleModalOpen(true)}
+        addButtonText="Ekle"
       />
 
-      <DataTable
-        data={personel}
-        columns={columns}
-        loading={loading}
-        searchPlaceholder="Çalışan ara..."
-      />
-    </div>
+      <div className="mt-6">
+        <DataTable
+          data={personel}
+          columns={columns}
+          loading={loading}
+          searchPlaceholder="Çalışan ara..."
+        />
+      </div>
+    </>
   )
 }
