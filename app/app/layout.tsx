@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils'
 const BREADCRUMBS: Record<string, string> = {
   '/app': 'Ana Sayfa',
   '/app/ik/teskilat': 'İK › Teşkilat & Kadro',
-  '/app/ik/personel': 'İK › Personel Listesi',
+  '/app/ik/personel': 'İK › Çalışanlar',
   '/app/ik/personel-ekle': 'İK › Personel Ekle',
   '/app/muhasebe/dashboard': 'Muhasebe › Dashboard',
   '/app/muhasebe/islemler': 'Muhasebe › İşlemler',

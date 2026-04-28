@@ -37,7 +37,7 @@ const NAV: NavItem[] = [
     icon: <Users size={16} />,
     children: [
       { label: 'Teşkilat & Kadro', href: '/app/ik/teskilat' },
-      { label: 'Personel Listesi', href: '/app/ik/personel' },
+      { label: 'Çalışanlar', href: '/app/ik/personel' },
       { label: 'Personel Ekle', href: '/app/ik/personel-ekle' },
       { label: 'İzin Yönetimi', href: '/app/ik/izin', disabled: true },
       { label: 'Performans', href: '/app/ik/performans', disabled: true },
@@ -120,12 +120,10 @@ const SECTION_LABELS: Record<string, string> = {
 
 export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) {
   const pathname = usePathname()
-  const [openMods, setOpenMods] = useState<string[]>(['muhasebe', 'ik'])
+  const [openMods, setOpenMods] = useState<string[]>([])
 
   function toggleMod(id: string) {
-    setOpenMods(prev =>
-      prev.includes(id) ? prev.filter(m => m !== id) : [...prev, id]
-    )
+    setOpenMods(prev => (prev.includes(id) ? [] : [id]))
   }
 
   function isModActive(item: NavItem): boolean {
