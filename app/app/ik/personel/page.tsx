@@ -43,13 +43,13 @@ export default function CalisanlarPage() {
       key: 'birim',
       header: 'Birim',
       sortable: true,
-      render: (row) => row.birim?.ad || row.unit || '-'
+      render: (row) => row.unit || '-'
     },
     {
       key: 'position',
       header: 'Görevi',
       sortable: true,
-      render: (row) => row.kadro?.unvan || row.position || '-'
+      render: (row) => row.position || '-'
     }
   ]
 

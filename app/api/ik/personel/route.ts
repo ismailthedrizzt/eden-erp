@@ -48,11 +48,7 @@ export async function GET(request: NextRequest) {
 
   let query = supabase
     .from('personel')
-    .select(`
-      *,
-      birim:birimler(id, ad, tip),
-      kadro:norm_kadrolar(id, unvan)
-    `)
+    .select('*')
     .order('soyad', { ascending: true })
 
   if (birimId) query = query.eq('birim_id', birimId)
