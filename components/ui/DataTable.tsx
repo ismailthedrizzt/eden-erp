@@ -86,12 +86,12 @@ export default function DataTable<T extends { id: string }>({
       if (existing) {
         // Toggle direction
         const newConfig = prev.map(s =>
-          s.key === key ? { ...s, direction: s.direction === 'asc' ? 'desc' : 'asc' } : s
+          s.key === key ? { ...s, direction: (s.direction === 'asc' ? 'desc' : 'asc') as 'asc' | 'desc' } : s
         )
         return newConfig
       } else {
         // Add new sort with priority
-        return [...prev, { key, direction: 'asc', priority: prev.length + 1 }]
+        return [...prev, { key, direction: 'asc' as const, priority: prev.length + 1 }]
       }
     })
   }
