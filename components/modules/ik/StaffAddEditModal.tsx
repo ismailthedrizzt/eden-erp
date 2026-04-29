@@ -405,14 +405,21 @@ export default function StaffAddEditModal({ open, onClose, onSuccess }: { open: 
             className="w-36 h-36 rounded-full border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center cursor-pointer overflow-hidden bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
           >
             {formData.photo ? (
-              <img src={formData.photo} alt="Fotoğraf" className="w-full h-full object-cover" />
+              <img
+                src={formData.photo}
+                alt="Fotoğraf"
+                className="w-full h-full object-cover rounded-full"
+                width={96}
+                height={96}
+              />
             ) : (
-              <Camera className="w-8 h-8 text-gray-400" />
+              <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm">
+                Fotoğraf
+              </div>
             )}
-          </div>
-          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
-            <Plus className="w-8 h-8 text-white bg-black/50 rounded-full p-1" />
-          </div>
+            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
+              <Plus className="w-8 h-8 text-white bg-black/50 rounded-full p-1" />
+            </div>
           <button
             onClick={() => cvInputRef.current?.click()}
             className="mt-3 w-full flex items-center justify-center gap-2 px-3 py-2 text-xs font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"

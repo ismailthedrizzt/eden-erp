@@ -39,7 +39,7 @@ function WidgetModal({ open, onClose }: { open: boolean; onClose: () => void }) 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
       <div className="bg-white dark:bg-eden-navy-2 rounded-xl p-6 w-full max-w-md mx-4">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Widget'ları Özelleştir</h3>
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Widget&apos;ları Özelleştir</h3>
         <div className="space-y-3 max-h-96 overflow-y-auto">
           {widgets.map(widget => (
             <label key={widget.id} className="flex items-start gap-3 p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-eden-navy cursor-pointer">
@@ -133,7 +133,7 @@ export default function AnaSayfa() {
         <div className="text-center py-12 text-gray-500 dark:text-gray-400">
           <Settings size={48} className="mx-auto mb-4 opacity-50" />
           <p>Henüz widget eklenmemiş</p>
-          <p className="text-sm mt-1">"+Ekle" butonuna tıklayarak widget'ları ekleyebilirsiniz</p>
+          <p className="text-sm mt-1">&quot;+Ekle&quot; butonuna tıklayarak widget&apos;ları ekleyebilirsiniz</p>
         </div>
       </div>
     </>

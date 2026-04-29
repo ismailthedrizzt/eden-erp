@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import mammoth from 'mammoth'
-import pdfParse from 'pdf-parse'
+import * as pdfParse from 'pdf-parse'
 
 const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024
 
