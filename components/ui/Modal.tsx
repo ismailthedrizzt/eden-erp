@@ -13,14 +13,14 @@ interface ModalProps {
   size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl'
 }
 
-// 2xl ve 3xl boyutları eklendi
-const SIZES = { 
-  sm: 'max-w-sm', 
-  md: 'max-w-lg', 
-  lg: 'max-w-2xl', 
-  xl: 'max-w-4xl', 
-  '2xl': 'max-w-5xl',
-  '3xl': 'max-w-6xl'
+// Modal genişlikleri %50 artırıldı
+const SIZES = {
+  sm: 'max-w-md',
+  md: 'max-w-2xl',
+  lg: 'max-w-3xl',
+  xl: 'max-w-6xl',
+  '2xl': 'max-w-7xl',
+  '3xl': 'max-w-[90rem]'
 }
 
 export default function Modal({ open, onClose, title, children, footer, size = 'md' }: ModalProps) {

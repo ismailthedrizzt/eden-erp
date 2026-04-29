@@ -5,180 +5,7 @@ import { usePersonel } from '@/hooks/usePersonel'
 import { Users, Plus, Search, Filter, ChevronUp, ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { PageBanner } from '@/components/ui/PageBanner'
-
-// Personel Ekle Modal
-function PersonelEkleModal({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const [formData, setFormData] = useState({
-    ad: '',
-    soyad: '',
-    tc_kimlik: '',
-    cep_telefonu: '',
-    email: '',
-    birim_id: '',
-    kadro_id: ''
-  })
-  const [loading, setLoading] = useState(false)
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-    try {
-      // Personel ekleme işlemi burada yapılacak
-      console.log('Personel eklenecek:', formData)
-      // Başarılı olursa modal kapanacak ve liste yenilenecek
-      onClose()
-      setFormData({
-        ad: '',
-        soyad: '',
-        tc_kimlik: '',
-        cep_telefonu: '',
-        email: '',
-        birim_id: '',
-        kadro_id: ''
-      })
-    } catch (error) {
-      console.error('Personel ekleme hatası:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  if (!open) return null
-
-  return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-      <div className="bg-white dark:bg-eden-navy-2 rounded-xl p-6 w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Personel Ekle</h3>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Ad
-              </label>
-              <input
-                type="text"
-                required
-                value={formData.ad}
-                onChange={(e) => setFormData(prev => ({ ...prev, ad: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg
-                           bg-white dark:bg-eden-navy text-gray-900 dark:text-white
-                           focus:outline-none focus:ring-2 focus:ring-eden-blue/20 focus:border-eden-blue"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                Soyad
-              </label>
-              <input
-                type="text"
-                required
-                value={formData.soyad}
-                onChange={(e) => setFormData(prev => ({ ...prev, soyad: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg
-                           bg-white dark:bg-eden-navy text-gray-900 dark:text-white
-                           focus:outline-none focus:ring-2 focus:ring-eden-blue/20 focus:border-eden-blue"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              TC Kimlik No
-            </label>
-            <input
-              type="text"
-              value={formData.tc_kimlik}
-              onChange={(e) => setFormData(prev => ({ ...prev, tc_kimlik: e.target.value }))}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg
-                         bg-white dark:bg-eden-navy text-gray-900 dark:text-white
-                         focus:outline-none focus:ring-2 focus:ring-eden-blue/20 focus:border-eden-blue"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Cep Telefonu
-            </label>
-            <input
-              type="tel"
-              required
-              value={formData.cep_telefonu}
-              onChange={(e) => setFormData(prev => ({ ...prev, cep_telefonu: e.target.value }))}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg
-                         bg-white dark:bg-eden-navy text-gray-900 dark:text-white
-                         focus:outline-none focus:ring-2 focus:ring-eden-blue/20 focus:border-eden-blue"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              E-posta
-            </label>
-            <input
-              type="email"
-              value={formData.email}
-              onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg
-                         bg-white dark:bg-eden-navy text-gray-900 dark:text-white
-                         focus:outline-none focus:ring-2 focus:ring-eden-blue/20 focus:border-eden-blue"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Birim
-            </label>
-            <select
-              value={formData.birim_id}
-              onChange={(e) => setFormData(prev => ({ ...prev, birim_id: e.target.value }))}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg
-                         bg-white dark:bg-eden-navy text-gray-900 dark:text-white
-                         focus:outline-none focus:ring-2 focus:ring-eden-blue/20 focus:border-eden-blue"
-            >
-              <option value="">Birim Seçin</option>
-              {/* Birimler burada listelenecek */}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-              Pozisyon
-            </label>
-            <select
-              value={formData.kadro_id}
-              onChange={(e) => setFormData(prev => ({ ...prev, kadro_id: e.target.value }))}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg
-                         bg-white dark:bg-eden-navy text-gray-900 dark:text-white
-                         focus:outline-none focus:ring-2 focus:ring-eden-blue/20 focus:border-eden-blue"
-            >
-              <option value="">Pozisyon Seçin</option>
-              {/* Kadrolar burada listelenecek */}
-            </select>
-          </div>
-
-          <div className="flex gap-3 pt-4">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 py-2 px-4 border border-gray-300 dark:border-gray-600 rounded-lg
-                         text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-eden-navy"
-            >
-              İptal
-            </button>
-            <button
-              type="submit"
-              disabled={loading}
-              className="flex-1 py-2 px-4 bg-eden-blue text-white rounded-lg hover:bg-eden-blue-dk
-                         disabled:opacity-60 disabled:cursor-not-allowed"
-            >
-              {loading ? 'Ekleniyor...' : 'Ekle'}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  )
-}
+import StaffAddEditModal from '@/components/modules/ik/StaffAddEditModal'
 
 // DataTable component - tüm sayfalarda kullanılacak
 interface Column<T> {
@@ -354,7 +181,7 @@ function DataTable<T extends Record<string, any>>({
 
 export default function CalisanlarPage() {
   const [personelEkleModalOpen, setPersonelEkleModalOpen] = useState(false)
-  const { data: personel, loading } = usePersonel()
+  const { data: personel, loading, yenile } = usePersonel()
 
   const columns: Column<any>[] = [
     {
@@ -414,7 +241,11 @@ export default function CalisanlarPage() {
 
   return (
     <>
-      <PersonelEkleModal open={personelEkleModalOpen} onClose={() => setPersonelEkleModalOpen(false)} />
+      <StaffAddEditModal 
+        open={personelEkleModalOpen} 
+        onClose={() => setPersonelEkleModalOpen(false)} 
+        onSuccess={() => yenile()}
+      />
 
       <PageBanner
         title="Çalışanlar"

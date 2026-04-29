@@ -11,9 +11,10 @@ interface EdenModalProps {
   heroSection: React.ReactNode
   tabs: { label: string; content: React.ReactNode; icon?: React.ReactNode }[]
   onSave: () => void
+  loading?: boolean
 }
 
-export default function EdenModal({ open, onClose, title, heroSection, tabs, onSave }: EdenModalProps) {
+export default function EdenModal({ open, onClose, title, heroSection, tabs, onSave, loading = false }: EdenModalProps) {
   const [activeTab, setActiveTab] = useState(0)
 
   const footer = (
@@ -26,9 +27,10 @@ export default function EdenModal({ open, onClose, title, heroSection, tabs, onS
       </button>
       <button
         onClick={onSave}
-        className="px-6 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 shadow-sm transition-all"
+        disabled={loading}
+        className="px-6 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 shadow-sm transition-all disabled:opacity-60 disabled:cursor-not-allowed"
       >
-        Kaydet ve İlerle
+        {loading ? 'Kaydediliyor...' : 'Kaydet'}
       </button>
     </>
   )
@@ -50,7 +52,7 @@ export default function EdenModal({ open, onClose, title, heroSection, tabs, onS
               key={idx}
               onClick={() => setActiveTab(idx)}
               className={cn(
-                'px-4 py-3 text-sm font-medium whitespace-nowrap transition-all border-b-2 flex items-center gap-2',
+                'w-40 px-4 py-3 text-sm font-medium whitespace-nowrap transition-all border-b-2 flex items-center gap-2',
                 activeTab === idx
                   ? 'border-blue-600 text-blue-600 dark:text-blue-400 dark:border-blue-400'
                   : 'border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200'
