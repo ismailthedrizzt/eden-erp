@@ -91,27 +91,61 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
       {/* Fixed Hero Section */}
       <div className="bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
         <div className="flex gap-6">
-          <div className="relative group">
-            <div className="w-36 h-36 rounded-full border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center bg-white dark:bg-gray-900 overflow-hidden">
-              {formData.photo ? (
-                <img src={URL.createObjectURL(formData.photo)} alt="Fotoğraf" className="w-full h-full object-cover" />
-              ) : (
-                <span className="text-gray-400">Fotoğraf</span>
-              )}
+          {/* Left Panel - Vertical Layout */}
+          <div className="w-48 flex flex-col gap-4">
+            {/* Photo Upload */}
+            <div className="relative group">
+              <div className="w-40 h-40 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center bg-white dark:bg-gray-900 overflow-hidden">
+                {formData.photo ? (
+                  <img src={URL.createObjectURL(formData.photo)} alt="Fotoğraf" className="w-full h-full object-cover" />
+                ) : (
+                  <span className="text-gray-400 text-sm">Fotoğraf</span>
+                )}
+              </div>
+              <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg">
+                <label className="cursor-pointer">
+                  <Camera className="text-white" size={24} />
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => setFormData({ ...formData, photo: e.target.files?.[0] || null })}
+                  />
+                </label>
+              </div>
             </div>
-            <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-full">
-              <label className="cursor-pointer">
-                <Camera className="text-white" size={24} />
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => setFormData({ ...formData, photo: e.target.files?.[0] || null })}
-                />
-              </label>
+
+            {/* CV Upload */}
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">CV Yükle</label>
+              <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-3">
+                {formData.cv ? (
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-gray-700 dark:text-gray-300 truncate">{formData.cv.name}</span>
+                    <button
+                      onClick={() => setFormData({ ...formData, cv: null })}
+                      className="text-red-600 hover:text-red-700 ml-2"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                ) : (
+                  <label className="cursor-pointer flex flex-col items-center py-2">
+                    <Upload className="text-gray-400 mb-1" size={20} />
+                    <span className="text-xs text-gray-500">Dosya seç</span>
+                    <input
+                      type="file"
+                      accept=".pdf,.doc,.docx"
+                      className="hidden"
+                      onChange={(e) => setFormData({ ...formData, cv: e.target.files?.[0] || null })}
+                    />
+                  </label>
+                )}
+              </div>
             </div>
           </div>
 
+          {/* Right Panel - Basic Info */}
           <div className="flex-1 space-y-4">
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Adı Soyadı *</label>
@@ -123,32 +157,68 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
               />
             </div>
 
-            <div className="flex flex-col gap-1.5">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">CV Yükle (PDF/Word)</label>
-              <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4">
-                {formData.cv ? (
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-700 dark:text-gray-300">{formData.cv.name}</span>
-                    <button
-                      onClick={() => setFormData({ ...formData, cv: null })}
-                      className="text-red-600 hover:text-red-700"
-                    >
-                      <X size={16} />
-                    </button>
-                  </div>
-                ) : (
-                  <label className="cursor-pointer flex flex-col items-center">
-                    <Upload className="text-gray-400 mb-2" size={24} />
-                    <span className="text-sm text-gray-500">Dosya seçmek için tıklayın</span>
-                    <input
-                      type="file"
-                      accept=".pdf,.doc,.docx"
-                      className="hidden"
-                      onChange={(e) => setFormData({ ...formData, cv: e.target.files?.[0] || null })}
-                    />
-                  </label>
-                )}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Uyruğu *</label>
+                <select
+                  className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                  value={formData.nationality}
+                  onChange={e => setFormData({ ...formData, nationality: e.target.value })}
+                >
+                  <option value="TR">Türkiye</option>
+                  <option value="US">Amerika Birleşik Devletleri</option>
+                  <option value="DE">Almanya</option>
+                  <option value="FR">Fransa</option>
+                  <option value="GB">Birleşik Krallık</option>
+                </select>
               </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  {isTurkey ? 'T.C. Kimlik No *' : 'Pasaport No *'}
+                </label>
+                <input
+                  className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                  placeholder={isTurkey ? '11 haneli T.C. Kimlik' : 'Pasaport No'}
+                  value={formData.idNumber}
+                  onChange={e => setFormData({ ...formData, idNumber: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Cinsiyet *</label>
+                <select
+                  className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                  value={formData.gender}
+                  onChange={e => setFormData({ ...formData, gender: e.target.value })}
+                >
+                  <option value="">Seçiniz</option>
+                  <option value="erkek">Erkek</option>
+                  <option value="kadin">Kadın</option>
+                </select>
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Doğum Yeri</label>
+                <input
+                  className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                  placeholder="Doğum yeri"
+                  value={formData.birthPlace}
+                  onChange={e => setFormData({ ...formData, birthPlace: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Doğum Tarihi</label>
+              <input
+                type="date"
+                className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                value={formData.birthDate}
+                onChange={e => setFormData({ ...formData, birthDate: e.target.value })}
+              />
             </div>
           </div>
         </div>
@@ -182,71 +252,9 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
       {/* Tab Content */}
       {activeTab === 'ozel' && (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Uyruğu *</label>
-              <select
-                className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-                value={formData.nationality}
-                onChange={e => setFormData({ ...formData, nationality: e.target.value })}
-              >
-                <option value="TR">Türkiye</option>
-                <option value="US">Amerika Birleşik Devletleri</option>
-                <option value="DE">Almanya</option>
-                <option value="FR">Fransa</option>
-                <option value="GB">Birleşik Krallık</option>
-              </select>
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                {isTurkey ? 'T.C. Kimlik No *' : 'Pasaport No *'}
-              </label>
-              <input
-                className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-                placeholder={isTurkey ? '11 haneli T.C. Kimlik' : 'Pasaport No'}
-                value={formData.idNumber}
-                onChange={e => setFormData({ ...formData, idNumber: e.target.value })}
-              />
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Cinsiyet *</label>
-              <select
-                className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-                value={formData.gender}
-                onChange={e => setFormData({ ...formData, gender: e.target.value })}
-              >
-                <option value="">Seçiniz</option>
-                <option value="erkek">Erkek</option>
-                <option value="kadin">Kadın</option>
-              </select>
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Doğum Yeri</label>
-              <input
-                className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-                placeholder="Doğum yeri"
-                value={formData.birthPlace}
-                onChange={e => setFormData({ ...formData, birthPlace: e.target.value })}
-              />
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Doğum Tarihi</label>
-              <input
-                type="date"
-                className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-                value={formData.birthDate}
-                onChange={e => setFormData({ ...formData, birthDate: e.target.value })}
-              />
-            </div>
-          </div>
-
           {/* Military Status (Conditional) */}
           {formData.gender === 'erkek' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Askerlik Durumu</label>
                 <select
@@ -278,7 +286,7 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
           )}
 
           {/* Health and Legal */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Engellilik Durumu</label>
               <select

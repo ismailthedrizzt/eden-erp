@@ -8,8 +8,10 @@ import { cn } from '@/lib/utils'
 
 const BREADCRUMBS: Record<string, string> = {
   '/app': 'Ana Sayfa',
-  '/app/ik/teskilat': 'İK › Teşkilat & Kadro',
-  '/app/ik/personel': 'İK › Çalışanlar',
+  '/app/ik': 'İnsan Kaynakları',
+  '/app/ik/teskilat': 'İnsan Kaynakları › Teşkilat & Kadro',
+  '/app/ik/personel': 'İnsan Kaynakları › Çalışanlar',
+  '/app/ik/personel/ekle': 'İnsan Kaynakları › Çalışanlar › Çalışan Ekle',
   '/app/muhasebe/dashboard': 'Muhasebe › Dashboard',
   '/app/muhasebe/islemler': 'Muhasebe › İşlemler',
   '/app/muhasebe/borclar': 'Muhasebe › Borç Takip',
