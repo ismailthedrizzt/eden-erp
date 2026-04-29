@@ -5,8 +5,6 @@ import { User, Phone, GraduationCap, Briefcase, Landmark, Plus, X, Upload, Camer
 import EdenModal from '@/components/ui/EdenModal'
 import { ModalHeroSection } from '@/components/ui/ModalHeroSection'
 import { cn } from '@/lib/utils'
-import countries from 'i18n-iso-countries'
-countries.registerLocale(require('i18n-iso-countries/langs/tr.json'))
 
 interface FormData {
   // Hero fields
@@ -48,6 +46,77 @@ const MILITARY_STATUSES = ['Muaf', 'Çağında Değil', 'Belirsiz', 'Tecilli', '
 const BLOOD_TYPES = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', '0+', '0-']
 const LANGUAGE_LEVELS = ['Başlangıç', 'Orta', 'İyi', 'Çok İyi', 'Ana Dil']
 
+const COUNTRIES = [
+  { code: 'TR', name: 'Türkiye' },
+  { code: 'US', name: 'Amerika Birleşik Devletleri' },
+  { code: 'DE', name: 'Almanya' },
+  { code: 'FR', name: 'Fransa' },
+  { code: 'GB', name: 'Birleşik Krallık' },
+  { code: 'IT', name: 'İtalya' },
+  { code: 'ES', name: 'İspanya' },
+  { code: 'NL', name: 'Hollanda' },
+  { code: 'BE', name: 'Belçika' },
+  { code: 'AT', name: 'Avusturya' },
+  { code: 'CH', name: 'İsviçre' },
+  { code: 'GR', name: 'Yunanistan' },
+  { code: 'RU', name: 'Rusya' },
+  { code: 'UA', name: 'Ukrayna' },
+  { code: 'PL', name: 'Polonya' },
+  { code: 'CZ', name: 'Çekya' },
+  { code: 'HU', name: 'Macaristan' },
+  { code: 'RO', name: 'Romanya' },
+  { code: 'BG', name: 'Bulgaristan' },
+  { code: 'SE', name: 'İsveç' },
+  { code: 'NO', name: 'Norveç' },
+  { code: 'DK', name: 'Danimarka' },
+  { code: 'FI', name: 'Finlandiya' },
+  { code: 'PT', name: 'Portekiz' },
+  { code: 'IE', name: 'İrlanda' },
+  { code: 'CA', name: 'Kanada' },
+  { code: 'AU', name: 'Avustralya' },
+  { code: 'JP', name: 'Japonya' },
+  { code: 'CN', name: 'Çin' },
+  { code: 'IN', name: 'Hindistan' },
+  { code: 'BR', name: 'Brezilya' },
+  { code: 'AR', name: 'Arjantin' },
+  { code: 'MX', name: 'Meksika' },
+  { code: 'ZA', name: 'Güney Afrika' },
+  { code: 'EG', name: 'Mısır' },
+  { code: 'SA', name: 'Suudi Arabistan' },
+  { code: 'AE', name: 'Birleşik Arap Emirlikleri' },
+  { code: 'TRNC', name: 'Kuzey Kıbrıs Türk Cumhuriyeti' },
+  { code: 'AZ', name: 'Azerbaycan' },
+  { code: 'KZ', name: 'Kazakistan' },
+  { code: 'UZ', name: 'Özbekistan' },
+  { code: 'IR', name: 'İran' },
+  { code: 'IQ', name: 'Irak' },
+  { code: 'SY', name: 'Suriye' },
+  { code: 'JO', name: 'Ürdün' },
+  { code: 'LB', name: 'Lübnan' },
+  { code: 'IL', name: 'İsrail' },
+  { code: 'CY', name: 'Kıbrıs' },
+  { code: 'GE', name: 'Gürcistan' },
+  { code: 'AM', name: 'Ermenistan' },
+  { code: 'MK', name: 'Kuzey Makedonya' },
+  { code: 'AL', name: 'Arnavutluk' },
+  { code: 'RS', name: 'Sırbistan' },
+  { code: 'BA', name: 'Bosna Hersek' },
+  { code: 'HR', name: 'Hırvatistan' },
+  { code: 'SI', name: 'Slovenya' },
+  { code: 'SK', name: 'Slovakya' },
+  { code: 'LV', name: 'Letonya' },
+  { code: 'LT', name: 'Litvanya' },
+  { code: 'EE', name: 'Estonya' },
+  { code: 'IS', name: 'İzlanda' },
+  { code: 'LU', name: 'Lüksemburg' },
+  { code: 'MC', name: 'Monako' },
+  { code: 'AD', name: 'Andorra' },
+  { code: 'SM', name: 'San Marino' },
+  { code: 'VA', name: 'Vatikan' },
+  { code: 'MT', name: 'Malta' },
+  { code: 'LI', name: 'Liechtenstein' }
+]
+
 export default function StaffAddEditModal({ open, onClose, onSuccess }: { open: boolean, onClose: () => void, onSuccess?: () => void }) {
   const [formData, setFormData] = useState<FormData>({
     fullname: '',
@@ -84,7 +153,7 @@ export default function StaffAddEditModal({ open, onClose, onSuccess }: { open: 
   const isTurkey = formData.nationality === TURKEY_CODE
   const isMale = formData.gender === 'erkek'
 
-  const countryList = Object.entries(countries.getNames('tr')).map(([code, name]) => ({ code, name }))
+  const countryList = COUNTRIES
 
   const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
