@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { User, Phone, GraduationCap, Briefcase, Landmark, Upload, Camera, X, Plus } from 'lucide-react'
+import { User, Phone, GraduationCap, Briefcase, Landmark, Upload, Camera, X, Plus, Building, Briefcase as Job } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () => void, onCancel: () => void }) {
@@ -35,7 +35,9 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
     schools: [] as Array<{ name: string, degree: string, department: string, startDate: string, endDate: string }>,
     languages: [] as Array<{ name: string, level: string, document: File | null }>,
     courses: [] as Array<{ name: string, institution: string, document: File | null }>,
-    iban: ''
+    iban: '',
+    unit: '',
+    position: ''
   })
 
   const isTurkey = formData.nationality === 'TR'
@@ -83,6 +85,7 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
     { id: 'iletisim', label: 'İletişim', icon: <Phone size={16} /> },
     { id: 'egitim', label: 'Eğitim', icon: <GraduationCap size={16} /> },
     { id: 'aile', label: 'Aile', icon: <Briefcase size={16} /> },
+    { id: 'is', label: 'İş', icon: <Job size={16} /> },
     { id: 'banka', label: 'Banka', icon: <Landmark size={16} /> }
   ]
 
@@ -780,6 +783,32 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
               <Plus size={16} />
               Yakın Ekle
             </button>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'is' && (
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Birim</label>
+              <input
+                className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                placeholder="Birim"
+                value={formData.unit}
+                onChange={e => setFormData({ ...formData, unit: e.target.value })}
+              />
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Pozisyon / Görev</label>
+              <input
+                className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                placeholder="Pozisyon"
+                value={formData.position}
+                onChange={e => setFormData({ ...formData, position: e.target.value })}
+              />
+            </div>
           </div>
         </div>
       )}
