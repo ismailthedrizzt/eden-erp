@@ -46,13 +46,17 @@ export async function PATCH(request: Request) {
 
   if (body.type === 'submodule') {
     const { moduleKey, submoduleKey, is_active } = body
+    console.log('Updating submodule:', { moduleKey, submoduleKey, is_active })
     const { error } = await supabase
       .from('submodule_licenses')
       .update({ is_active, updated_at: new Date().toISOString() })
       .eq('module_key', moduleKey)
       .eq('submodule_key', submoduleKey)
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    if (error) {
+      console.error('Supabase error:', error)
+      return NextResponse.json({ error: error.message, details: error }, { status: 500 })
+    }
     return NextResponse.json({ success: true })
   }
 
