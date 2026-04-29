@@ -1,6 +1,6 @@
 'use client'
 
-import { createContext, useContext, ReactNode, useEffect, useState } from 'react'
+import React, { createContext, useContext, ReactNode, useEffect, useState } from 'react'
 
 export interface ModuleLicense {
   module_key: string
@@ -104,10 +104,10 @@ export function ModuleLicenseProvider({ children, initialLicenses }: ModuleLicen
     loading
   }
 
-  return (
-    <ModuleLicenseContext.Provider value={contextValue}>
-      {children}
-    </ModuleLicenseContext.Provider>
+  return React.createElement(
+    ModuleLicenseContext.Provider,
+    { value: contextValue },
+    children
   )
 }
 
