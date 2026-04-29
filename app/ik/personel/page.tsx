@@ -216,26 +216,6 @@ export default function CalisanlarPage() {
       label: 'E-posta',
       sortable: false,
       filterable: true
-    },
-    {
-      key: 'calisma_durumu',
-      label: 'Durum',
-      sortable: true,
-      filterable: true,
-      render: (value) => {
-        const statusMap = {
-          gorevde: { label: 'Görevde', color: 'bg-green-100 text-green-800' },
-          izinde: { label: 'İzinde', color: 'bg-yellow-100 text-yellow-800' },
-          ayrilmis: { label: 'Ayrılmış', color: 'bg-red-100 text-red-800' },
-          askida: { label: 'Askıda', color: 'bg-gray-100 text-gray-800' }
-        }
-        const status = statusMap[value as keyof typeof statusMap] || { label: value, color: 'bg-gray-100 text-gray-800' }
-        return (
-          <span className={cn('px-2 py-1 text-xs font-medium rounded-full', status.color)}>
-            {status.label}
-          </span>
-        )
-      }
     }
   ]
 
