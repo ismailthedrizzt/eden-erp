@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
+import { useModuleLicense } from '@/hooks/useModuleLicense'
 import {
   Home, Users, Building2, CreditCard, Package, ShoppingCart,
   Settings, Factory, Wrench, ChevronRight, LogOut, Download,
@@ -17,10 +18,13 @@ interface NavItem {
   href?: string
   badge?: string
   disabled?: boolean
+  moduleKey?: string
   children?: {
     label: string
     href: string
     disabled?: boolean
+    moduleKey?: string
+    submoduleKey?: string
   }[]
 }
 
@@ -35,9 +39,10 @@ const NAV: NavItem[] = [
     id: 'ik',
     label: 'İnsan Kaynakları',
     icon: <Users size={16} />,
+    moduleKey: 'ik',
     children: [
-      { label: 'Teşkilat & Kadro', href: '/app/ik/teskilat' },
-      { label: 'Çalışanlar', href: '/app/ik/personel' },
+      { label: 'Teşkilat & Kadro', href: '/app/ik/teskilat', moduleKey: 'teskilat', submoduleKey: 'birimler' },
+      { label: 'Çalışanlar', href: '/app/ik/personel', moduleKey: 'ik', submoduleKey: 'personel' },
       { label: 'İzin Yönetimi', href: '/app/ik/izin', disabled: true },
       { label: 'Performans', href: '/app/ik/performans', disabled: true },
     ],
@@ -46,12 +51,21 @@ const NAV: NavItem[] = [
     id: 'muhasebe',
     label: 'Muhasebe',
     icon: <CreditCard size={16} />,
+    moduleKey: 'muhasebe',
     children: [
-      { label: 'Dashboard', href: '/app/muhasebe/dashboard' },
-      { label: 'Tüm İşlemler', href: '/app/muhasebe/islemler' },
-      { label: 'Borç Takip', href: '/app/muhasebe/borclar' },
-      { label: 'Proje Özeti', href: '/app/muhasebe/projeler' },
-      { label: 'Hesaplar', href: '/app/muhasebe/hesaplar' },
+      { label: 'Dashboard', href: '/app/muhasebe/dashboard', moduleKey: 'muhasebe', submoduleKey: 'dashboard' },
+      { label: 'Tüm İşlemler', href: '/app/muhasebe/islemler', moduleKey: 'muhasebe', submoduleKey: 'fatura' },
+      { label: 'Borç Takip', href: '/app/muhasebe/borclar', moduleKey: 'muhasebe', submoduleKey: 'cari' },
+      { label: 'Proje Özeti', href: '/app/muhasebe/projeler', disabled: true },
+      { label: 'Hesaplar', href: '/app/muhasebe/hesaplar', disabled: true },
+    ],
+  },
+  {
+    id: 'ayarlar',
+    label: 'Ayarlar',
+    icon: <Settings size={16} />,
+    children: [
+      { label: 'Modül Lisansları', href: '/app/ayarlar/module-licenses' },
     ],
   },
   {
@@ -119,6 +133,7 @@ const SECTION_LABELS: Record<string, string> = {
 
 export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) {
   const pathname = usePathname()
+  const { isModuleActive, isSubmoduleActive } = useModuleLicense()
   const [openMods, setOpenMods] = useState<string[]>([])
 
   function toggleMod(id: string) {
@@ -136,6 +151,13 @@ export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) 
     const isOpen = openMods.includes(item.id)
     const hasChildren = !!item.children?.length
     const showLabel = SECTION_LABELS[item.id]
+
+    // Check if module is active (in production, hide if inactive)
+    const isModuleAvailable = !item.moduleKey || isModuleActive(item.moduleKey)
+
+    // In production, completely hide inactive modules
+    const isProd = process.env.NODE_ENV === 'production'
+    if (isProd && !isModuleAvailable) return null
 
     return (
       <div key={item.id}>
@@ -185,21 +207,33 @@ export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) 
             'overflow-hidden transition-all duration-200',
             isOpen ? 'max-h-96' : 'max-h-0'
           )}>
-            {item.children!.map(child => (
-              <Link
-                key={child.href}
-                href={child.disabled ? '#' : child.href}
-                onClick={e => child.disabled && e.preventDefault()}
-                className={cn(
-                  'sni',
-                  pathname === child.href && 'active',
-                  child.disabled && 'opacity-40 cursor-not-allowed'
-                )}
-              >
-                <span className="w-1.5 h-1.5 rounded-full bg-current opacity-50 flex-shrink-0" />
-                {child.label}
-              </Link>
-            ))}
+            {item.children!.map(child => {
+              // Check if submodule is active
+              const isSubmoduleAvailable = !child.moduleKey || !child.submoduleKey ||
+                isSubmoduleActive(child.moduleKey, child.submoduleKey)
+
+              // In production, completely hide inactive submodules
+              if (isProd && !isSubmoduleAvailable) return null
+
+              // In dev, show but disable if inactive
+              const isDisabled = child.disabled || (!isSubmoduleAvailable && !isProd)
+
+              return (
+                <Link
+                  key={child.href}
+                  href={isDisabled ? '#' : child.href}
+                  onClick={e => isDisabled && e.preventDefault()}
+                  className={cn(
+                    'sni',
+                    pathname === child.href && 'active',
+                    isDisabled && 'opacity-40 cursor-not-allowed'
+                  )}
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-current opacity-50 flex-shrink-0" />
+                  {child.label}
+                </Link>
+              )
+            })}
           </div>
         )}
       </div>
