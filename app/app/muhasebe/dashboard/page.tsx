@@ -1,5 +1,9 @@
 'use client'
 
+// MODULE LICENSE: muhasebe/dashboard
+// Ana Modül: Muhasebe (muhasebe)
+// Alt Modül: Dashboard (dashboard)
+
 import { useState } from 'react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import { useNakitIslemler } from '@/hooks/useNakitIslemler'

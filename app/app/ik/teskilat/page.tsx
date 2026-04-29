@@ -1,5 +1,9 @@
 'use client'
 
+// MODULE LICENSE: ik/teskilat
+// Ana Modül: İnsan Kaynakları (ik)
+// Alt Modül: Teşkilat & Kadro (teskilat)
+
 import { useState } from 'react'
 import { useTeskilat } from '@/hooks/useTeskilat'
 import { DurumBadge } from '@/components/ui/Badge'

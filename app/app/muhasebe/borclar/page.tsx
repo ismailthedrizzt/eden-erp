@@ -1,5 +1,9 @@
 'use client'
 
+// MODULE LICENSE: muhasebe/cari
+// Ana Modül: Muhasebe (muhasebe)
+// Alt Modül: Borç Takip (cari)
+
 import { useNakitIslemler } from '@/hooks/useNakitIslemler'
 import { formatTRY } from '@/lib/utils'
 import { ProjeBadge } from '@/components/ui/Badge'

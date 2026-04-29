@@ -22,20 +22,21 @@ CREATE TABLE IF NOT EXISTS public.submodule_licenses (
 
 -- Insert default modules
 INSERT INTO public.module_licenses (module_key, module_name, is_active, environment) VALUES
+  ('ik', 'İnsan Kaynakları', true, 'all'),
   ('teskilat', 'Teşkilat', true, 'all'),
   ('kadro', 'Kadro', true, 'all'),
-  ('ik', 'İnsan Kaynakları', true, 'all'),
   ('muhasebe', 'Muhasebe', true, 'all')
 ON CONFLICT (module_key) DO NOTHING;
 
 -- Insert default submodules
 INSERT INTO public.submodule_licenses (module_key, submodule_key, submodule_name, is_active, environment) VALUES
+  ('ik', 'teskilat', 'Teşkilat & Kadro', true, 'all'),
+  ('ik', 'personel', 'Çalışanlar', true, 'all'),
   ('teskilat', 'birimler', 'Birimler', true, 'all'),
-  ('teskilat', 'kadrolar', 'Kadrolar', true, 'all'),
-  ('ik', 'personel', 'Personel', true, 'all'),
-  ('ik', 'teskilat', 'Teşkilat', true, 'all'),
-  ('muhasebe', 'fatura', 'Fatura', true, 'all'),
-  ('muhasebe', 'cari', 'Cari', true, 'all')
+  ('kadro', 'kadrolar', 'Kadrolar', true, 'all'),
+  ('muhasebe', 'dashboard', 'Dashboard', true, 'all'),
+  ('muhasebe', 'fatura', 'Tüm İşlemler', true, 'all'),
+  ('muhasebe', 'cari', 'Borç Takip', true, 'all')
 ON CONFLICT (module_key, submodule_key) DO NOTHING;
 
 -- Enable RLS

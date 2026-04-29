@@ -1,5 +1,9 @@
 'use client'
 
+// MODULE LICENSE: ik/personel
+// Ana Modül: İnsan Kaynakları (ik)
+// Alt Modül: Çalışanlar (personel)
+
 import { useRouter } from 'next/navigation'
 import { usePersonel } from '@/hooks/usePersonel'
 import { Users } from 'lucide-react'

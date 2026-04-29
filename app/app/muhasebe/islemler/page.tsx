@@ -1,5 +1,9 @@
 'use client'
 
+// MODULE LICENSE: muhasebe/fatura
+// Ana Modül: Muhasebe (muhasebe)
+// Alt Modül: Tüm İşlemler (fatura)
+
 import { useState } from 'react'
 import { useNakitIslemler } from '@/hooks/useNakitIslemler'
 import { formatTRY, formatDate } from '@/lib/utils'
