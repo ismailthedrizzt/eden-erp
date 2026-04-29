@@ -46,9 +46,23 @@ export async function GET(request: NextRequest) {
   const durum = searchParams.get('durum')
   const ara = searchParams.get('ara')
 
+  // Check if teskilat module is active
+  const { data: teskilatLicense } = await supabase
+    .from('module_licenses')
+    .select('is_active, environment')
+    .eq('module_key', 'teskilat')
+    .single()
+
+  const isTeskilatActive = teskilatLicense?.is_active &&
+    (teskilatLicense.environment === 'all' || teskilatLicense.environment === process.env.NODE_ENV)
+
   let query = supabase
     .from('personel')
-    .select('*')
+    .select(isTeskilatActive ? `
+      *,
+      birim:birimler(id, ad, tip),
+      kadro:norm_kadrolar(id, unvan)
+    ` : '*')
     .order('soyad', { ascending: true })
 
   if (birimId) query = query.eq('birim_id', birimId)
