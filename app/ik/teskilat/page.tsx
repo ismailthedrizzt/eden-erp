@@ -5,7 +5,7 @@ import { Building2 } from 'lucide-react'
 import { PageBanner } from '@/components/ui/PageBanner'
 
 export default function TeskilatPage() {
-  const { data: teskilat, loading } = useTeskilat()
+  const { birimler, kadrolar, loading, buildTree, dolu, acik, dolulukOrani } = useTeskilat()
 
   return (
     <div className="space-y-6">
