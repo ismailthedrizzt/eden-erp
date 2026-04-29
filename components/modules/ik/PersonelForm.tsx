@@ -3,11 +3,15 @@
 import { useState } from 'react'
 import { User, Phone, GraduationCap, Briefcase, Landmark, Upload, Camera, X, Plus, Building, Briefcase as Job } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useModuleLicense } from '@/hooks/useModuleLicense'
 
 export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () => void, onCancel: () => void }) {
   const [activeTab, setActiveTab] = useState('ozel')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const { isSubmoduleActive } = useModuleLicense()
+
+  const isTeskilatActive = isSubmoduleActive('teskilat', 'birimler')
 
   const [formData, setFormData] = useState({
     fullname: '',
@@ -793,21 +797,39 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Birim</label>
               <input
-                className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                disabled={!isTeskilatActive}
+                className={cn(
+                  "w-full border rounded-md px-3 py-2 text-sm",
+                  isTeskilatActive
+                    ? "bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                    : "bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-600 text-gray-400 dark:text-gray-500 cursor-not-allowed"
+                )}
                 placeholder="Birim"
                 value={formData.unit}
                 onChange={e => setFormData({ ...formData, unit: e.target.value })}
               />
+              {!isTeskilatActive && (
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Teşkilat modülü pasif</p>
+              )}
             </div>
 
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Pozisyon / Görev</label>
               <input
-                className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                disabled={!isTeskilatActive}
+                className={cn(
+                  "w-full border rounded-md px-3 py-2 text-sm",
+                  isTeskilatActive
+                    ? "bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                    : "bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-600 text-gray-400 dark:text-gray-500 cursor-not-allowed"
+                )}
                 placeholder="Pozisyon"
                 value={formData.position}
                 onChange={e => setFormData({ ...formData, position: e.target.value })}
               />
+              {!isTeskilatActive && (
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Teşkilat modülü pasif</p>
+              )}
             </div>
           </div>
         </div>
