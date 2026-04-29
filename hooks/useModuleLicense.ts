@@ -96,8 +96,16 @@ export function ModuleLicenseProvider({ children, initialLicenses }: ModuleLicen
     return submodule.environment === process.env.NODE_ENV
   }
 
+  const contextValue = {
+    modules,
+    submodules,
+    isModuleActive,
+    isSubmoduleActive,
+    loading
+  }
+
   return (
-    <ModuleLicenseContext.Provider value={{ modules, submodules, isModuleActive, isSubmoduleActive, loading }}>
+    <ModuleLicenseContext.Provider value={contextValue}>
       {children}
     </ModuleLicenseContext.Provider>
   )
