@@ -7,6 +7,8 @@ interface PageBannerProps {
   icon: ReactNode
   onAddClick?: () => void
   addButtonText?: string
+  showAddIcon?: boolean
+  buttonIcon?: ReactNode
 }
 
 export function PageBanner({
@@ -14,7 +16,9 @@ export function PageBanner({
   subtitle,
   icon,
   onAddClick,
-  addButtonText = "Ekle"
+  addButtonText = "Ekle",
+  showAddIcon = true,
+  buttonIcon
 }: PageBannerProps) {
   return (
     <div className="bg-gradient-to-r from-eden-blue to-eden-blue-dk rounded-xl p-6 mb-6 text-white">
@@ -35,7 +39,7 @@ export function PageBanner({
             onClick={onAddClick}
             className="flex items-center gap-2 bg-white/10 hover:bg-white/20 px-4 py-2 rounded-lg transition-colors"
           >
-            <Plus size={16} />
+            {buttonIcon || (showAddIcon && <Plus size={16} />)}
             {addButtonText}
           </button>
         )}

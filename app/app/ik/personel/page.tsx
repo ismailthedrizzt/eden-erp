@@ -235,6 +235,7 @@ export default function CalisanlarPage() {
         icon={<Users size={24} />}
         onAddClick={() => router.push('/app/ik/personel/ekle')}
         addButtonText="+Ekle"
+        showAddIcon={false}
       />
 
       <div className="mt-6">
