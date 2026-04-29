@@ -23,6 +23,7 @@ interface ModuleLicenseContextType {
   isModuleActive: (moduleKey: string) => boolean
   isSubmoduleActive: (moduleKey: string, submoduleKey: string) => boolean
   loading: boolean
+  error: string | null
 }
 
 const ModuleLicenseContext = createContext<ModuleLicenseContextType | null>(null)
@@ -39,6 +40,7 @@ export function ModuleLicenseProvider({ children, initialLicenses }: ModuleLicen
   const [modules, setModules] = useState<Record<string, ModuleLicense>>({})
   const [submodules, setSubmodules] = useState<Record<string, SubmoduleLicense>>({})
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     if (initialLicenses) {
@@ -58,7 +60,12 @@ export function ModuleLicenseProvider({ children, initialLicenses }: ModuleLicen
       setLoading(false)
     } else {
       fetch('/api/settings/module-licenses')
-        .then(res => res.json())
+        .then(res => {
+          if (!res.ok) {
+            throw new Error(`HTTP error! status: ${res.status}`)
+          }
+          return res.json()
+        })
         .then(data => {
           const modulesMap: Record<string, ModuleLicense> = {}
           const submodulesMap: Record<string, SubmoduleLicense> = {}
@@ -74,7 +81,10 @@ export function ModuleLicenseProvider({ children, initialLicenses }: ModuleLicen
           setModules(modulesMap)
           setSubmodules(submodulesMap)
         })
-        .catch(console.error)
+        .catch(err => {
+          console.error('Error fetching module licenses:', err)
+          setError(err.message || 'Failed to fetch module licenses')
+        })
         .finally(() => setLoading(false))
     }
   }, [initialLicenses])
@@ -101,7 +111,8 @@ export function ModuleLicenseProvider({ children, initialLicenses }: ModuleLicen
     submodules,
     isModuleActive,
     isSubmoduleActive,
-    loading
+    loading,
+    error
   }
 
   return React.createElement(

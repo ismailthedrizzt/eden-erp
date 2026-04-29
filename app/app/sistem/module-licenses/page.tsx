@@ -6,9 +6,8 @@ import { Settings, ChevronDown, ChevronRight } from 'lucide-react'
 import { useModuleLicense, ModuleLicense, SubmoduleLicense } from '@/hooks/useModuleLicense'
 
 export default function ModuleLicensesPage() {
-  const { modules, submodules, loading } = useModuleLicense()
+  const { modules, submodules, loading, error } = useModuleLicense()
   const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set())
-  const [error, setError] = useState<string | null>(null)
 
   const toggleModuleExpand = (moduleKey: string) => {
     setExpandedModules(prev => {
