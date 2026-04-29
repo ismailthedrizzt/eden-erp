@@ -3,7 +3,7 @@ import { createClient, createServiceClient } from '@/lib/supabase/server'
 
 // GET /api/settings/module-licenses
 export async function GET() {
-  const supabase = await createClient()
+  const supabase = createServiceClient()
 
   const [modulesRes, submodulesRes] = await Promise.all([
     supabase.from('module_licenses').select('*'),
