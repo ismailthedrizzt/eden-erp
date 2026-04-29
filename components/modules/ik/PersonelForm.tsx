@@ -9,9 +9,14 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
   const [activeTab, setActiveTab] = useState('ozel')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const { isSubmoduleActive } = useModuleLicense()
+  const { isModuleActive, isSubmoduleActive } = useModuleLicense()
 
-  const isTeskilatActive = isSubmoduleActive('teskilat', 'birimler')
+  // Check if IK module and Teskilat & Kadro submodule are active
+  const isIKActive = isModuleActive('ik')
+  const isTeskilatSubmoduleActive = isSubmoduleActive('ik', 'teskilat')
+  const isTeskilatActive = isIKActive && isTeskilatSubmoduleActive
+  
+  console.log('Module License Debug:', { isIKActive, isTeskilatSubmoduleActive, isTeskilatActive })
 
   const [formData, setFormData] = useState({
     fullname: '',
