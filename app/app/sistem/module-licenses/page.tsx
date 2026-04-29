@@ -8,6 +8,7 @@ import { useModuleLicense, ModuleLicense, SubmoduleLicense } from '@/hooks/useMo
 export default function ModuleLicensesPage() {
   const { modules, submodules, loading } = useModuleLicense()
   const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set())
+  const [error, setError] = useState<string | null>(null)
 
   const toggleModuleExpand = (moduleKey: string) => {
     setExpandedModules(prev => {
@@ -71,6 +72,14 @@ export default function ModuleLicensesPage() {
 
   if (loading) {
     return <div className="p-8">Yükleniyor...</div>
+  }
+
+  if (error) {
+    return <div className="p-8 text-red-500">Hata: {error}</div>
+  }
+
+  if (Object.keys(modules).length === 0) {
+    return <div className="p-8 text-gray-500">Modül lisansı bulunamadı. Veritabanı tablolarının oluşturulduğundan emin olun.</div>
   }
 
   return (
