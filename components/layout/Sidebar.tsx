@@ -61,14 +61,6 @@ const NAV: NavItem[] = [
     ],
   },
   {
-    id: 'ayarlar',
-    label: 'Ayarlar',
-    icon: <Settings size={16} />,
-    children: [
-      { label: 'Modül Lisansları', href: '/app/ayarlar/module-licenses' },
-    ],
-  },
-  {
     id: 'stok',
     label: 'Stok Yönetimi',
     icon: <Package size={16} />,
@@ -114,6 +106,7 @@ const NAV: NavItem[] = [
     label: 'Sistem Yönetimi',
     icon: <Settings size={16} />,
     children: [
+      { label: 'Modül Lisansları', href: '/app/sistem/module-licenses' },
       { label: 'Kullanıcılar', href: '/app/sistem/kullanicilar', disabled: true },
       { label: 'Roller & Yetkiler', href: '/app/sistem/roller', disabled: true },
       { label: 'Sistem Logları', href: '/app/sistem/loglar', disabled: true },

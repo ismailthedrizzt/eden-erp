@@ -32,6 +32,15 @@ export async function PATCH(request: Request) {
       .eq('module_key', key)
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+    // If module is being disabled, also disable all its submodules
+    if (!is_active) {
+      await supabase
+        .from('submodule_licenses')
+        .update({ is_active: false, updated_at: new Date().toISOString() })
+        .eq('module_key', key)
+    }
+
     return NextResponse.json({ success: true })
   }
 
