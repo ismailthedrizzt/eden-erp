@@ -88,6 +88,72 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
 
   return (
     <div className="space-y-6">
+      {/* Fixed Hero Section */}
+      <div className="bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
+        <div className="flex gap-6">
+          <div className="relative group">
+            <div className="w-36 h-36 rounded-full border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center bg-white dark:bg-gray-900 overflow-hidden">
+              {formData.photo ? (
+                <img src={URL.createObjectURL(formData.photo)} alt="Fotoğraf" className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-gray-400">Fotoğraf</span>
+              )}
+            </div>
+            <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-full">
+              <label className="cursor-pointer">
+                <Camera className="text-white" size={24} />
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => setFormData({ ...formData, photo: e.target.files?.[0] || null })}
+                />
+              </label>
+            </div>
+          </div>
+
+          <div className="flex-1 space-y-4">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Adı Soyadı *</label>
+              <input
+                className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                placeholder="Ad Soyad"
+                value={formData.fullname}
+                onChange={e => setFormData({ ...formData, fullname: e.target.value })}
+              />
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">CV Yükle (PDF/Word)</label>
+              <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4">
+                {formData.cv ? (
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-gray-700 dark:text-gray-300">{formData.cv.name}</span>
+                    <button
+                      onClick={() => setFormData({ ...formData, cv: null })}
+                      className="text-red-600 hover:text-red-700"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                ) : (
+                  <label className="cursor-pointer flex flex-col items-center">
+                    <Upload className="text-gray-400 mb-2" size={24} />
+                    <span className="text-sm text-gray-500">Dosya seçmek için tıklayın</span>
+                    <input
+                      type="file"
+                      accept=".pdf,.doc,.docx"
+                      className="hidden"
+                      onChange={(e) => setFormData({ ...formData, cv: e.target.files?.[0] || null })}
+                    />
+                  </label>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Tab Navigation */}
       <div className="flex border-b border-gray-200 dark:border-gray-700">
         {tabs.map(tab => (
@@ -116,70 +182,7 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
       {/* Tab Content */}
       {activeTab === 'ozel' && (
         <div className="space-y-6">
-          {/* Photo and CV Upload */}
-          <div className="flex gap-6">
-            <div className="relative group">
-              <div className="w-36 h-36 rounded-full border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center bg-gray-100 dark:bg-gray-800 overflow-hidden">
-                {formData.photo ? (
-                  <img src={URL.createObjectURL(formData.photo)} alt="Fotoğraf" className="w-full h-full object-cover" />
-                ) : (
-                  <span className="text-gray-400">Fotoğraf</span>
-                )}
-              </div>
-              <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-full">
-                <label className="cursor-pointer">
-                  <Camera className="text-white" size={24} />
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => setFormData({ ...formData, photo: e.target.files?.[0] || null })}
-                  />
-                </label>
-              </div>
-            </div>
-
-            <div className="flex-1">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">CV Yükle (PDF/Word)</label>
-              <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4">
-                {formData.cv ? (
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-700 dark:text-gray-300">{formData.cv.name}</span>
-                    <button
-                      onClick={() => setFormData({ ...formData, cv: null })}
-                      className="text-red-600 hover:text-red-700"
-                    >
-                      <X size={16} />
-                    </button>
-                  </div>
-                ) : (
-                  <label className="cursor-pointer flex flex-col items-center">
-                    <Upload className="text-gray-400 mb-2" size={24} />
-                    <span className="text-sm text-gray-500">Dosya seçmek için tıklayın</span>
-                    <input
-                      type="file"
-                      accept=".pdf,.doc,.docx"
-                      className="hidden"
-                      onChange={(e) => setFormData({ ...formData, cv: e.target.files?.[0] || null })}
-                    />
-                  </label>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Basic Info */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Adı Soyadı *</label>
-              <input
-                className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-                placeholder="Ad Soyad"
-                value={formData.fullname}
-                onChange={e => setFormData({ ...formData, fullname: e.target.value })}
-              />
-            </div>
-
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Uyruğu *</label>
               <select

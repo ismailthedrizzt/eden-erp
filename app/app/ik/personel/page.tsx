@@ -234,7 +234,7 @@ export default function CalisanlarPage() {
         title="Çalışanlar"
         icon={<Users size={24} />}
         onAddClick={() => router.push('/app/ik/personel/ekle')}
-        addButtonText="Yeni Personel Ekle"
+        addButtonText="+Ekle"
       />
 
       <div className="mt-6">
