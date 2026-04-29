@@ -288,7 +288,8 @@ function PersonelForm({ onSuccess, onCancel }: { onSuccess: () => void, onCancel
     isIlliterate: false,
     schools: [] as Array<{ name: string, degree: string, department: string, startDate: string, endDate: string }>,
     languages: [] as Array<{ name: string, level: string, document: File | null }>,
-    courses: [] as Array<{ name: string, institution: string, document: File | null }>
+    courses: [] as Array<{ name: string, institution: string, document: File | null }>,
+    iban: ''
   })
 
   const isTurkey = formData.nationality === 'TR'
