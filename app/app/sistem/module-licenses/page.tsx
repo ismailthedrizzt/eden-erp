@@ -42,7 +42,6 @@ export default function ModuleLicensesPage() {
 
   const toggleSubmodule = async (moduleKey: string, submoduleKey: string, currentStatus: boolean) => {
     try {
-      console.log('Toggling submodule:', { moduleKey, submoduleKey, currentStatus, newStatus: !currentStatus })
       const response = await fetch('/api/settings/module-licenses', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -53,13 +52,8 @@ export default function ModuleLicensesPage() {
           is_active: !currentStatus
         })
       })
-      console.log('Response status:', response.status)
-      const data = await response.json()
-      console.log('Response data:', data)
       if (response.ok) {
         window.location.reload()
-      } else {
-        console.error('Error response:', data)
       }
     } catch (error) {
       console.error('Error toggling submodule:', error)

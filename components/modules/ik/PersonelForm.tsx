@@ -15,8 +15,6 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
   const isIKActive = isModuleActive('ik')
   const isTeskilatSubmoduleActive = isSubmoduleActive('ik', 'teskilat')
   const isTeskilatActive = isIKActive && isTeskilatSubmoduleActive
-  
-  console.log('Module License Debug:', { isIKActive, isTeskilatSubmoduleActive, isTeskilatActive })
 
   const [formData, setFormData] = useState({
     fullname: '',
