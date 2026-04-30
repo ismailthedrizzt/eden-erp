@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { X, Download, Printer, FileText } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -11,6 +11,24 @@ interface DocumentViewerProps {
 
 export function DocumentViewer({ file, onClose }: DocumentViewerProps) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!file) return
+
+    let url: string | null = null
+    if (file.type.startsWith('image/') || file.type === 'application/pdf') {
+      url = URL.createObjectURL(file)
+      setPreviewUrl(url)
+    } else {
+      setPreviewUrl(null)
+    }
+
+    return () => {
+      if (url) {
+        URL.revokeObjectURL(url)
+      }
+    }
+  }, [file])
 
   if (!file) return null
 
@@ -32,23 +50,19 @@ export function DocumentViewer({ file, onClose }: DocumentViewerProps) {
     URL.revokeObjectURL(url)
   }
 
-  const renderPreview = () => {
-    if (file.type.startsWith('image/')) {
-      const url = URL.createObjectURL(file)
-      setPreviewUrl(url)
+  const renderPreview = useMemo(() => {
+    if (file.type.startsWith('image/') && previewUrl) {
       return (
         <img
-          src={url}
+          src={previewUrl}
           alt={file.name}
           className="max-w-full max-h-[70vh] object-contain mx-auto"
         />
       )
-    } else if (file.type === 'application/pdf') {
-      const url = URL.createObjectURL(file)
-      setPreviewUrl(url)
+    } else if (file.type === 'application/pdf' && previewUrl) {
       return (
         <iframe
-          src={url}
+          src={previewUrl}
           className="w-full h-[70vh] border-0"
           title={file.name}
         />
@@ -68,7 +82,7 @@ export function DocumentViewer({ file, onClose }: DocumentViewerProps) {
         </div>
       )
     }
-  }
+  }, [file, previewUrl])
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
@@ -91,7 +105,7 @@ export function DocumentViewer({ file, onClose }: DocumentViewerProps) {
 
         {/* Content */}
         <div className="flex-1 overflow-auto p-4">
-          {renderPreview()}
+          {renderPreview}
         </div>
 
         {/* Footer */}
