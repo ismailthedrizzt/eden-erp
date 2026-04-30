@@ -56,7 +56,7 @@ export function usePersonel(filters: Filters = {}) {
         throw err
       }
       console.log('usePersonel: Setting data:', rows)
-      setData((rows as Personel[]) ?? [])
+      setData(((rows as unknown) as Personel[]) ?? [])
     } catch (e: any) {
       console.error('usePersonel: Caught error:', e)
       setError(e.message)
