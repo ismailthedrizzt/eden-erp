@@ -13,6 +13,7 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
   const [loading, setLoading] = useState(false)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [showDocumentViewer, setShowDocumentViewer] = useState(false)
+  const [showHireModal, setShowHireModal] = useState(false)
   const [toast, setToast] = useState<{ type: ToastType; message: string } | null>(null)
   const { isModuleActive, isSubmoduleActive } = useModuleLicense()
 
@@ -89,7 +90,7 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
           pasaport_no: !isTurkey ? formData.idNumber : undefined,
           cinsiyet: formData.gender,
           dogum_yeri: formData.birthPlace,
-          dogum_tarihi: formData.birthDate,
+          dogum_tarihi: formData.birthDate || undefined,
           adres: formData.address,
           il: formData.city,
           ilce: formData.district,
@@ -894,143 +895,62 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
 
       {activeTab === 'is' && (
         <div className="space-y-6">
-          {/* Hire/Termination Toggle Buttons */}
-          <div className="flex gap-3 border-b border-gray-200 dark:border-gray-700 pb-4">
+          {/* Work Status Display */}
+          <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className={cn(
+                  "w-3 h-3 rounded-full",
+                  formData.isActive ? "bg-green-500" : "bg-red-500"
+                )} />
+                <span className="font-medium text-gray-900 dark:text-white">
+                  {formData.isActive ? 'Aktif Çalışan' : 'İşten Ayrıldı'}
+                </span>
+              </div>
+              {formData.hireDate && (
+                <span className="text-sm text-gray-500 dark:text-gray-400">
+                  İşe Giriş: {formData.hireDate}
+                </span>
+              )}
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex gap-3">
             <button
               type="button"
-              onClick={() => setFormData({ ...formData, isActive: true })}
+              onClick={() => setShowHireModal(true)}
+              disabled={!!formData.hireDate}
               className={cn(
                 "flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors",
-                formData.isActive
-                  ? "bg-green-500 text-white"
-                  : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700"
+                formData.hireDate
+                  ? "bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 cursor-not-allowed"
+                  : "bg-green-500 text-white hover:bg-green-600"
               )}
             >
               <Briefcase size={18} />
-              İşe Giriş
+              İşe Giriş Yap
             </button>
             <button
               type="button"
               onClick={() => formData.hireDate && setFormData({ ...formData, isActive: false })}
-              disabled={!formData.hireDate}
+              disabled={!formData.hireDate || !formData.isActive}
               className={cn(
                 "flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors",
-                !formData.hireDate
+                (!formData.hireDate || !formData.isActive)
                   ? "bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 cursor-not-allowed"
-                  : !formData.isActive
-                    ? "bg-red-500 text-white"
-                    : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700"
+                  : "bg-red-500 text-white hover:bg-red-600"
               )}
             >
               <X size={18} />
-              İşten Çıkış
+              İşten Çıkış Yap
             </button>
           </div>
 
-          {/* Hire Section */}
-          {formData.isActive && (
-            <div className="space-y-4">
-              <h4 className="text-sm font-semibold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2">
-                İşe Giriş Bilgileri
-              </h4>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Birim</label>
-                  <input
-                    disabled={!isTeskilatActive}
-                    className={cn(
-                      "w-full border rounded-md px-3 py-2 text-sm",
-                      isTeskilatActive
-                        ? "bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-                        : "bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-600 text-gray-400 dark:text-gray-500 cursor-not-allowed"
-                    )}
-                    placeholder="Birim"
-                    value={formData.unit}
-                    onChange={e => setFormData({ ...formData, unit: e.target.value })}
-                  />
-                  {!isTeskilatActive && (
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Teşkilat modülü pasif</p>
-                  )}
-                </div>
-
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Pozisyon / Görev</label>
-                  <input
-                    disabled={!isTeskilatActive}
-                    className={cn(
-                      "w-full border rounded-md px-3 py-2 text-sm",
-                      isTeskilatActive
-                        ? "bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-                        : "bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-600 text-gray-400 dark:text-gray-500 cursor-not-allowed"
-                    )}
-                    placeholder="Pozisyon"
-                    value={formData.position}
-                    onChange={e => setFormData({ ...formData, position: e.target.value })}
-                  />
-                  {!isTeskilatActive && (
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Teşkilat modülü pasif</p>
-                  )}
-                </div>
-
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">İşe Giriş Tarihi *</label>
-                  <input
-                    type="date"
-                    className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-                    value={formData.hireDate}
-                    onChange={e => setFormData({ ...formData, hireDate: e.target.value })}
-                  />
-                </div>
-              </div>
-
-              {/* Hire Documents Upload */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">İşe Giriş Belgeleri (Sözleşme vb.)</label>
-                <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4">
-                  <input
-                    type="file"
-                    multiple
-                    className="hidden"
-                    id="hire-documents"
-                    onChange={(e) => {
-                      const files = Array.from(e.target.files || [])
-                      setFormData({ ...formData, hireDocuments: [...formData.hireDocuments, ...files] })
-                    }}
-                  />
-                  <label htmlFor="hire-documents" className="cursor-pointer flex items-center justify-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
-                    <Upload size={20} />
-                    <span>Belge Ekle</span>
-                  </label>
-                </div>
-
-                {/* Hire Documents List with Icons */}
-                {formData.hireDocuments.length > 0 && (
-                  <div className="flex items-center gap-2 mt-2">
-                    <span className="text-xs text-gray-500 dark:text-gray-400">Yüklenen belgeler:</span>
-                    <div className="flex items-center gap-1">
-                      {formData.hireDocuments.map((doc, index) => (
-                        <button
-                          key={index}
-                          type="button"
-                          onClick={() => setShowDocumentViewer(true)}
-                          className="p-1.5 bg-blue-100 dark:bg-blue-900/30 rounded hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
-                          title={doc.name}
-                        >
-                          <FileText size={16} className="text-blue-600 dark:text-blue-400" />
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Termination Section */}
+          {/* Termination Form - Shows when termination is active */}
           {!formData.isActive && formData.hireDate && (
-            <div className="space-y-4">
-              <h4 className="text-sm font-semibold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2">
+            <div className="space-y-4 border-t border-gray-200 dark:border-gray-700 pt-4">
+              <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
                 İşten Çıkış Bilgileri
               </h4>
 
@@ -1066,7 +986,6 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
                   </label>
                 </div>
 
-                {/* Termination Documents List with Icons */}
                 {formData.terminationDocuments.length > 0 && (
                   <div className="flex items-center gap-2 mt-2">
                     <span className="text-xs text-gray-500 dark:text-gray-400">Yüklenen belgeler:</span>
@@ -1087,14 +1006,138 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
               </div>
             </div>
           )}
+        </div>
+      )}
 
-          {/* Info message when hire not done yet */}
-          {!formData.hireDate && !formData.isActive && (
-            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
-              <Briefcase size={48} className="mx-auto mb-4 opacity-50" />
-              <p>İşe giriş yapmadan işten çıkış yapılamaz.</p>
+      {/* Hire Modal */}
+      {showHireModal && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-lg w-full max-h-[90vh] flex flex-col">
+            <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">İşe Giriş</h3>
+              <button
+                onClick={() => setShowHireModal(false)}
+                className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                <X size={20} className="text-gray-600 dark:text-gray-400" />
+              </button>
             </div>
-          )}
+
+            <div className="flex-1 overflow-auto p-4 space-y-4">
+              <div className="grid grid-cols-1 gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Birim</label>
+                  <input
+                    disabled={!isTeskilatActive}
+                    className={cn(
+                      "w-full border rounded-md px-3 py-2 text-sm",
+                      isTeskilatActive
+                        ? "bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                        : "bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-600 text-gray-400 dark:text-gray-500 cursor-not-allowed"
+                    )}
+                    placeholder="Birim"
+                    value={formData.unit}
+                    onChange={e => setFormData({ ...formData, unit: e.target.value })}
+                  />
+                  {!isTeskilatActive && (
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Teşkilat modülü pasif</p>
+                  )}
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Pozisyon / Görev</label>
+                  <input
+                    disabled={!isTeskilatActive}
+                    className={cn(
+                      "w-full border rounded-md px-3 py-2 text-sm",
+                      isTeskilatActive
+                        ? "bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                        : "bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-600 text-gray-400 dark:text-gray-500 cursor-not-allowed"
+                    )}
+                    placeholder="Pozisyon"
+                    value={formData.position}
+                    onChange={e => setFormData({ ...formData, position: e.target.value })}
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">İşe Giriş Tarihi *</label>
+                  <input
+                    type="date"
+                    className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                    value={formData.hireDate}
+                    onChange={e => setFormData({ ...formData, hireDate: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              {/* Hire Documents Upload */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">İşe Giriş Belgeleri (Sözleşme vb.)</label>
+                <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4">
+                  <input
+                    type="file"
+                    multiple
+                    className="hidden"
+                    id="hire-documents-modal"
+                    onChange={(e) => {
+                      const files = Array.from(e.target.files || [])
+                      setFormData({ ...formData, hireDocuments: [...formData.hireDocuments, ...files] })
+                    }}
+                  />
+                  <label htmlFor="hire-documents-modal" className="cursor-pointer flex items-center justify-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
+                    <Upload size={20} />
+                    <span>Belge Ekle</span>
+                  </label>
+                </div>
+
+                {formData.hireDocuments.length > 0 && (
+                  <div className="flex items-center gap-2 mt-2">
+                    <span className="text-xs text-gray-500 dark:text-gray-400">Yüklenen belgeler:</span>
+                    <div className="flex items-center gap-1">
+                      {formData.hireDocuments.map((doc, index) => (
+                        <button
+                          key={index}
+                          type="button"
+                          onClick={() => setShowDocumentViewer(true)}
+                          className="p-1.5 bg-blue-100 dark:bg-blue-900/30 rounded hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
+                          title={doc.name}
+                        >
+                          <FileText size={16} className="text-blue-600 dark:text-blue-400" />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 p-4 border-t border-gray-200 dark:border-gray-700">
+              <button
+                onClick={() => setShowHireModal(false)}
+                className="px-4 py-2 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                İptal
+              </button>
+              <button
+                onClick={() => {
+                  if (formData.hireDate) {
+                    setFormData({ ...formData, isActive: true })
+                    setShowHireModal(false)
+                  }
+                }}
+                disabled={!formData.hireDate}
+                className={cn(
+                  "px-4 py-2 rounded-lg transition-colors",
+                  formData.hireDate
+                    ? "bg-green-500 text-white hover:bg-green-600"
+                    : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                )}
+              >
+                Kaydet
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
