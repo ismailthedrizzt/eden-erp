@@ -512,16 +512,23 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
                     </div>
                     <div className="flex flex-col gap-1.5">
                       <label className="text-xs text-gray-500">Derece *</label>
-                      <input
+                      <select
                         className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-                        placeholder="Lisans, Yüksek Lisans"
                         value={school.degree}
                         onChange={e => {
                           const newSchools = [...formData.schools]
                           newSchools[index].degree = e.target.value
                           setFormData({ ...formData, schools: newSchools })
                         }}
-                      />
+                      >
+                        <option value="">Seçiniz</option>
+                        <option value="İlkokul">İlkokul</option>
+                        <option value="Ortaokul ya da İ.Ö.O">Ortaokul ya da İ.Ö.O</option>
+                        <option value="Lise veya dengi okullar">Lise veya dengi okullar</option>
+                        <option value="Yüksekokul veya fakülte">Yüksekokul veya fakülte</option>
+                        <option value="Yüksek lisans">Yüksek lisans</option>
+                        <option value="Doktora">Doktora</option>
+                      </select>
                     </div>
                     <div className="flex flex-col gap-1.5">
                       <label className="text-xs text-gray-500">Bölüm *</label>
