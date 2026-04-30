@@ -6,12 +6,14 @@ import { cn } from '@/lib/utils'
 import { useModuleLicense } from '@/hooks/useModuleLicense'
 import { DocumentViewer } from '@/components/ui/DocumentViewer'
 import { IBANInput } from '@/components/ui/IBANInput'
+import { Toast, ToastType } from '@/components/ui/Toast'
 
 export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () => void, onCancel: () => void }) {
   const [activeTab, setActiveTab] = useState('ozel')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [showDocumentViewer, setShowDocumentViewer] = useState(false)
+  const [toast, setToast] = useState<{ type: ToastType; message: string } | null>(null)
   const { isModuleActive, isSubmoduleActive } = useModuleLicense()
 
   // Check if IK module and Teskilat & Kadro submodule are active
@@ -82,9 +84,14 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
         throw new Error(errorData.error || 'Kayıt başarısız')
       }
 
-      onSuccess()
+      setToast({ type: 'success', message: 'Personel başarıyla kaydedildi' })
+      setTimeout(() => {
+        onSuccess()
+      }, 1500)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Kayıt başarısız')
+      const errorMessage = err instanceof Error ? err.message : 'Kayıt başarısız'
+      setError(errorMessage)
+      setToast({ type: 'error', message: errorMessage })
     } finally {
       setLoading(false)
     }
@@ -907,6 +914,15 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
         <DocumentViewer
           file={formData.cv}
           onClose={() => setShowDocumentViewer(false)}
+        />
+      )}
+
+      {/* Toast Notification */}
+      {toast && (
+        <Toast
+          type={toast.type}
+          message={toast.message}
+          onClose={() => setToast(null)}
         />
       )}
     </div>
