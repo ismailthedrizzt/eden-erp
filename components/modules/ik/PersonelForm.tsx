@@ -11,7 +11,7 @@ import { Toast, ToastType } from '@/components/ui/Toast'
 export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () => void, onCancel: () => void }) {
   const [activeTab, setActiveTab] = useState('ozel')
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [showDocumentViewer, setShowDocumentViewer] = useState(false)
   const [toast, setToast] = useState<{ type: ToastType; message: string } | null>(null)
   const { isModuleActive, isSubmoduleActive } = useModuleLicense()
@@ -49,14 +49,33 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
     courses: [] as Array<{ name: string, institution: string, document: File | null }>,
     iban: '',
     unit: '',
-    position: ''
+    position: '',
+    isActive: true,
+    hireDate: '',
+    hireDocuments: [] as File[],
+    terminationDate: '',
+    terminationDocuments: [] as File[]
   })
 
   const isTurkey = formData.nationality === 'TR'
 
+  // Map API field names to display names for error messages
+  const fieldDisplayNames: Record<string, string> = {
+    ad: 'Ad',
+    soyad: 'Soyad',
+    uyruk: 'Uyruk',
+    tc_kimlik: 'T.C. Kimlik No',
+    pasaport_no: 'Pasaport No',
+    cinsiyet: 'Cinsiyet',
+    dogum_yeri: 'Doğum Yeri',
+    dogum_tarihi: 'Doğum Tarihi',
+    cep_telefonu: 'Cep Telefonu',
+    email: 'E-posta'
+  }
+
   const handleSave = async () => {
     setLoading(true)
-    setError(null)
+    setFieldErrors({})
 
     try {
       const response = await fetch('/api/ik/personel', {
@@ -81,6 +100,25 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
 
       if (!response.ok) {
         const errorData = await response.json()
+        // Parse Zod validation errors
+        if (errorData.details?.fieldErrors) {
+          const errors: Record<string, string> = {}
+          const errorFieldNames: string[] = []
+          Object.entries(errorData.details.fieldErrors).forEach(([key, value]) => {
+            errors[key] = Array.isArray(value) ? value[0] : String(value)
+            if (fieldDisplayNames[key]) {
+              errorFieldNames.push(fieldDisplayNames[key])
+            }
+          })
+          setFieldErrors(errors)
+
+          // Build detailed error message with field names
+          let errorMessage = 'Geçersiz veri'
+          if (errorFieldNames.length > 0) {
+            errorMessage = `Geçersiz veri: ${errorFieldNames.join(', ')}`
+          }
+          throw new Error(errorMessage)
+        }
         throw new Error(errorData.error || 'Kayıt başarısız')
       }
 
@@ -90,7 +128,6 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
       }, 1500)
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Kayıt başarısız'
-      setError(errorMessage)
       setToast({ type: 'error', message: errorMessage })
     } finally {
       setLoading(false)
@@ -176,11 +213,19 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Adı Soyadı *</label>
               <input
-                className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                className={cn(
+                  "w-full bg-white dark:bg-gray-900 border rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500",
+                  (fieldErrors.ad || fieldErrors.soyad)
+                    ? "border-red-500 dark:border-red-500"
+                    : "border-gray-300 dark:border-gray-700"
+                )}
                 placeholder="Ad Soyad"
                 value={formData.fullname}
                 onChange={e => setFormData({ ...formData, fullname: e.target.value })}
               />
+              {(fieldErrors.ad || fieldErrors.soyad) && (
+                <span className="text-xs text-red-500">{fieldErrors.ad || fieldErrors.soyad}</span>
+              )}
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -204,11 +249,19 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
                   {isTurkey ? 'T.C. Kimlik No *' : 'Pasaport No *'}
                 </label>
                 <input
-                  className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                  className={cn(
+                    "w-full bg-white dark:bg-gray-900 border rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500",
+                    (fieldErrors.tc_kimlik || fieldErrors.pasaport_no)
+                      ? "border-red-500 dark:border-red-500"
+                      : "border-gray-300 dark:border-gray-700"
+                  )}
                   placeholder={isTurkey ? '11 haneli T.C. Kimlik' : 'Pasaport No'}
                   value={formData.idNumber}
                   onChange={e => setFormData({ ...formData, idNumber: e.target.value })}
                 />
+                {(fieldErrors.tc_kimlik || fieldErrors.pasaport_no) && (
+                  <span className="text-xs text-red-500">{fieldErrors.tc_kimlik || fieldErrors.pasaport_no}</span>
+                )}
               </div>
             </div>
 
@@ -216,7 +269,12 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Cinsiyet *</label>
                 <select
-                  className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                  className={cn(
+                    "w-full bg-white dark:bg-gray-900 border rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500",
+                    fieldErrors.cinsiyet
+                      ? "border-red-500 dark:border-red-500"
+                      : "border-gray-300 dark:border-gray-700"
+                  )}
                   value={formData.gender}
                   onChange={e => setFormData({ ...formData, gender: e.target.value })}
                 >
@@ -224,6 +282,9 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
                   <option value="erkek">Erkek</option>
                   <option value="kadin">Kadın</option>
                 </select>
+                {fieldErrors.cinsiyet && (
+                  <span className="text-xs text-red-500">{fieldErrors.cinsiyet}</span>
+                )}
               </div>
 
               <div className="flex flex-col gap-1.5">
@@ -269,12 +330,6 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
           </button>
         ))}
       </div>
-
-      {error && (
-        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 px-4 py-3 rounded-lg">
-          {error}
-        </div>
-      )}
 
       {/* Tab Content */}
       {activeTab === 'ozel' && (
@@ -329,7 +384,7 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
 
             {formData.disabilityStatus === 'var' && (
               <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Engellilik Yüzdesi</label>
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Engellilik Yüzdesi *</label>
                 <input
                   type="number"
                   className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
@@ -838,46 +893,208 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
       )}
 
       {activeTab === 'is' && (
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Birim</label>
-              <input
-                disabled={!isTeskilatActive}
-                className={cn(
-                  "w-full border rounded-md px-3 py-2 text-sm",
-                  isTeskilatActive
-                    ? "bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-                    : "bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-600 text-gray-400 dark:text-gray-500 cursor-not-allowed"
-                )}
-                placeholder="Birim"
-                value={formData.unit}
-                onChange={e => setFormData({ ...formData, unit: e.target.value })}
-              />
-              {!isTeskilatActive && (
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Teşkilat modülü pasif</p>
+        <div className="space-y-6">
+          {/* Hire/Termination Toggle Buttons */}
+          <div className="flex gap-3 border-b border-gray-200 dark:border-gray-700 pb-4">
+            <button
+              type="button"
+              onClick={() => setFormData({ ...formData, isActive: true })}
+              className={cn(
+                "flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors",
+                formData.isActive
+                  ? "bg-green-500 text-white"
+                  : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700"
               )}
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Pozisyon / Görev</label>
-              <input
-                disabled={!isTeskilatActive}
-                className={cn(
-                  "w-full border rounded-md px-3 py-2 text-sm",
-                  isTeskilatActive
-                    ? "bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-                    : "bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-600 text-gray-400 dark:text-gray-500 cursor-not-allowed"
-                )}
-                placeholder="Pozisyon"
-                value={formData.position}
-                onChange={e => setFormData({ ...formData, position: e.target.value })}
-              />
-              {!isTeskilatActive && (
-                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Teşkilat modülü pasif</p>
+            >
+              <Briefcase size={18} />
+              İşe Giriş
+            </button>
+            <button
+              type="button"
+              onClick={() => formData.hireDate && setFormData({ ...formData, isActive: false })}
+              disabled={!formData.hireDate}
+              className={cn(
+                "flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors",
+                !formData.hireDate
+                  ? "bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 cursor-not-allowed"
+                  : !formData.isActive
+                    ? "bg-red-500 text-white"
+                    : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700"
               )}
-            </div>
+            >
+              <X size={18} />
+              İşten Çıkış
+            </button>
           </div>
+
+          {/* Hire Section */}
+          {formData.isActive && (
+            <div className="space-y-4">
+              <h4 className="text-sm font-semibold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2">
+                İşe Giriş Bilgileri
+              </h4>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Birim</label>
+                  <input
+                    disabled={!isTeskilatActive}
+                    className={cn(
+                      "w-full border rounded-md px-3 py-2 text-sm",
+                      isTeskilatActive
+                        ? "bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                        : "bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-600 text-gray-400 dark:text-gray-500 cursor-not-allowed"
+                    )}
+                    placeholder="Birim"
+                    value={formData.unit}
+                    onChange={e => setFormData({ ...formData, unit: e.target.value })}
+                  />
+                  {!isTeskilatActive && (
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Teşkilat modülü pasif</p>
+                  )}
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Pozisyon / Görev</label>
+                  <input
+                    disabled={!isTeskilatActive}
+                    className={cn(
+                      "w-full border rounded-md px-3 py-2 text-sm",
+                      isTeskilatActive
+                        ? "bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                        : "bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-600 text-gray-400 dark:text-gray-500 cursor-not-allowed"
+                    )}
+                    placeholder="Pozisyon"
+                    value={formData.position}
+                    onChange={e => setFormData({ ...formData, position: e.target.value })}
+                  />
+                  {!isTeskilatActive && (
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Teşkilat modülü pasif</p>
+                  )}
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">İşe Giriş Tarihi *</label>
+                  <input
+                    type="date"
+                    className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                    value={formData.hireDate}
+                    onChange={e => setFormData({ ...formData, hireDate: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              {/* Hire Documents Upload */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">İşe Giriş Belgeleri (Sözleşme vb.)</label>
+                <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4">
+                  <input
+                    type="file"
+                    multiple
+                    className="hidden"
+                    id="hire-documents"
+                    onChange={(e) => {
+                      const files = Array.from(e.target.files || [])
+                      setFormData({ ...formData, hireDocuments: [...formData.hireDocuments, ...files] })
+                    }}
+                  />
+                  <label htmlFor="hire-documents" className="cursor-pointer flex items-center justify-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
+                    <Upload size={20} />
+                    <span>Belge Ekle</span>
+                  </label>
+                </div>
+
+                {/* Hire Documents List with Icons */}
+                {formData.hireDocuments.length > 0 && (
+                  <div className="flex items-center gap-2 mt-2">
+                    <span className="text-xs text-gray-500 dark:text-gray-400">Yüklenen belgeler:</span>
+                    <div className="flex items-center gap-1">
+                      {formData.hireDocuments.map((doc, index) => (
+                        <button
+                          key={index}
+                          type="button"
+                          onClick={() => setShowDocumentViewer(true)}
+                          className="p-1.5 bg-blue-100 dark:bg-blue-900/30 rounded hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
+                          title={doc.name}
+                        >
+                          <FileText size={16} className="text-blue-600 dark:text-blue-400" />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Termination Section */}
+          {!formData.isActive && formData.hireDate && (
+            <div className="space-y-4">
+              <h4 className="text-sm font-semibold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2">
+                İşten Çıkış Bilgileri
+              </h4>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">İşten Çıkış Tarihi *</label>
+                  <input
+                    type="date"
+                    className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                    value={formData.terminationDate}
+                    onChange={e => setFormData({ ...formData, terminationDate: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              {/* Termination Documents Upload */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">İşten Çıkış Belgeleri</label>
+                <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4">
+                  <input
+                    type="file"
+                    multiple
+                    className="hidden"
+                    id="termination-documents"
+                    onChange={(e) => {
+                      const files = Array.from(e.target.files || [])
+                      setFormData({ ...formData, terminationDocuments: [...formData.terminationDocuments, ...files] })
+                    }}
+                  />
+                  <label htmlFor="termination-documents" className="cursor-pointer flex items-center justify-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
+                    <Upload size={20} />
+                    <span>Belge Ekle</span>
+                  </label>
+                </div>
+
+                {/* Termination Documents List with Icons */}
+                {formData.terminationDocuments.length > 0 && (
+                  <div className="flex items-center gap-2 mt-2">
+                    <span className="text-xs text-gray-500 dark:text-gray-400">Yüklenen belgeler:</span>
+                    <div className="flex items-center gap-1">
+                      {formData.terminationDocuments.map((doc, index) => (
+                        <button
+                          key={index}
+                          type="button"
+                          className="p-1.5 bg-red-100 dark:bg-red-900/30 rounded hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
+                          title={doc.name}
+                        >
+                          <FileText size={16} className="text-red-600 dark:text-red-400" />
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Info message when hire not done yet */}
+          {!formData.hireDate && !formData.isActive && (
+            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+              <Briefcase size={48} className="mx-auto mb-4 opacity-50" />
+              <p>İşe giriş yapmadan işten çıkış yapılamaz.</p>
+            </div>
+          )}
         </div>
       )}
 
