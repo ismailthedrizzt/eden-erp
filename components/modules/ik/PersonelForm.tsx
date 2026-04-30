@@ -1,10 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import { User, Phone, GraduationCap, Briefcase, Landmark, Upload, Camera, X, Plus, Building, Briefcase as Job, FileText } from 'lucide-react'
+import { User, Phone, GraduationCap, Briefcase, Landmark, Camera, X, Plus, Building, Briefcase as Job, FileText } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useModuleLicense } from '@/hooks/useModuleLicense'
 import { DocumentViewer } from '@/components/ui/DocumentViewer'
+import { DocumentUploader } from '@/components/ui/DocumentUploader'
 import { IBANInput } from '@/components/ui/IBANInput'
 import { Toast, ToastType } from '@/components/ui/Toast'
 
@@ -35,7 +36,7 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
     phones: [''],
     emails: [''],
     photo: null as File | null,
-    cv: null as File | null,
+    cv: [] as File[],
     militaryStatus: '',
     militaryExemptionDate: '',
     disabilityStatus: '',
@@ -176,36 +177,12 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
             {/* CV Upload */}
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300">CV Yükle</label>
-              <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-3">
-                {formData.cv ? (
-                  <div className="flex items-center justify-between">
-                    <button
-                      onClick={() => setShowDocumentViewer(true)}
-                      className="flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
-                    >
-                      <FileText size={16} />
-                      <span className="truncate">CV</span>
-                    </button>
-                    <button
-                      onClick={() => setFormData({ ...formData, cv: null })}
-                      className="text-red-600 hover:text-red-700 ml-2"
-                    >
-                      <X size={14} />
-                    </button>
-                  </div>
-                ) : (
-                  <label className="cursor-pointer flex flex-col items-center py-2">
-                    <Upload className="text-gray-400 mb-1" size={20} />
-                    <span className="text-xs text-gray-500">Dosya seç</span>
-                    <input
-                      type="file"
-                      accept=".pdf,.doc,.docx"
-                      className="hidden"
-                      onChange={(e) => setFormData({ ...formData, cv: e.target.files?.[0] || null })}
-                    />
-                  </label>
-                )}
-              </div>
+              <DocumentUploader
+                documents={formData.cv}
+                onDocumentsChange={(docs) => setFormData({ ...formData, cv: docs })}
+                accept=".pdf,.doc,.docx"
+                maxFiles={5}
+              />
             </div>
           </div>
 
@@ -969,40 +946,12 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
               {/* Termination Documents Upload */}
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">İşten Çıkış Belgeleri</label>
-                <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4">
-                  <input
-                    type="file"
-                    multiple
-                    className="hidden"
-                    id="termination-documents"
-                    onChange={(e) => {
-                      const files = Array.from(e.target.files || [])
-                      setFormData({ ...formData, terminationDocuments: [...formData.terminationDocuments, ...files] })
-                    }}
-                  />
-                  <label htmlFor="termination-documents" className="cursor-pointer flex items-center justify-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
-                    <Upload size={20} />
-                    <span>Belge Ekle</span>
-                  </label>
-                </div>
-
-                {formData.terminationDocuments.length > 0 && (
-                  <div className="flex items-center gap-2 mt-2">
-                    <span className="text-xs text-gray-500 dark:text-gray-400">Yüklenen belgeler:</span>
-                    <div className="flex items-center gap-1">
-                      {formData.terminationDocuments.map((doc, index) => (
-                        <button
-                          key={index}
-                          type="button"
-                          className="p-1.5 bg-red-100 dark:bg-red-900/30 rounded hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
-                          title={doc.name}
-                        >
-                          <FileText size={16} className="text-red-600 dark:text-red-400" />
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                <DocumentUploader
+                  documents={formData.terminationDocuments}
+                  onDocumentsChange={(docs) => setFormData({ ...formData, terminationDocuments: docs })}
+                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                  maxFiles={10}
+                />
               </div>
             </div>
           )}
@@ -1074,41 +1023,12 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
               {/* Hire Documents Upload */}
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">İşe Giriş Belgeleri (Sözleşme vb.)</label>
-                <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4">
-                  <input
-                    type="file"
-                    multiple
-                    className="hidden"
-                    id="hire-documents-modal"
-                    onChange={(e) => {
-                      const files = Array.from(e.target.files || [])
-                      setFormData({ ...formData, hireDocuments: [...formData.hireDocuments, ...files] })
-                    }}
-                  />
-                  <label htmlFor="hire-documents-modal" className="cursor-pointer flex items-center justify-center gap-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
-                    <Upload size={20} />
-                    <span>Belge Ekle</span>
-                  </label>
-                </div>
-
-                {formData.hireDocuments.length > 0 && (
-                  <div className="flex items-center gap-2 mt-2">
-                    <span className="text-xs text-gray-500 dark:text-gray-400">Yüklenen belgeler:</span>
-                    <div className="flex items-center gap-1">
-                      {formData.hireDocuments.map((doc, index) => (
-                        <button
-                          key={index}
-                          type="button"
-                          onClick={() => setShowDocumentViewer(true)}
-                          className="p-1.5 bg-blue-100 dark:bg-blue-900/30 rounded hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
-                          title={doc.name}
-                        >
-                          <FileText size={16} className="text-blue-600 dark:text-blue-400" />
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                <DocumentUploader
+                  documents={formData.hireDocuments}
+                  onDocumentsChange={(docs) => setFormData({ ...formData, hireDocuments: docs })}
+                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                  maxFiles={10}
+                />
               </div>
             </div>
 
