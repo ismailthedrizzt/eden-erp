@@ -1,9 +1,24 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { PageBanner } from '@/components/ui/PageBanner'
 import { Settings, ChevronDown, ChevronRight } from 'lucide-react'
 import { useModuleLicense, ModuleLicense, SubmoduleLicense } from '@/hooks/useModuleLicense'
+import { ToggleSwitch } from '@/components/ui/ToggleSwitch'
+import { TriStateToggle } from '@/components/ui/TriStateToggle'
+
+// Fixed module order matching sidebar navigation
+const MODULE_ORDER = ['ik', 'muhasebe', 'stok', 'satis', 'uretim', 'servis', 'teskilat', 'kadro']
+
+// Submodule order matching sidebar navigation
+const SUBMODULE_ORDER: Record<string, string[]> = {
+  ik: ['teskilat', 'personel'],
+  muhasebe: ['dashboard', 'fatura', 'cari'],
+  teskilat: ['birimler'],
+  kadro: ['kadrolar']
+}
+
+type TriState = 'on' | 'off' | 'partial'
 
 export default function ModuleLicensesPage() {
   const { modules, submodules, loading, error } = useModuleLicense()
@@ -60,6 +75,25 @@ export default function ModuleLicensesPage() {
     }
   }
 
+  // Calculate module state based on submodules
+  const getModuleState = (moduleKey: string): TriState => {
+    const moduleSubmodules = Object.values(submodules).filter(s => s.module_key === moduleKey)
+    if (moduleSubmodules.length === 0) {
+      return modules[moduleKey]?.is_active ? 'on' : 'off'
+    }
+    const allActive = moduleSubmodules.every(s => s.is_active)
+    const allInactive = moduleSubmodules.every(s => !s.is_active)
+    if (allActive) return 'on'
+    if (allInactive) return 'off'
+    return 'partial'
+  }
+
+  // Handle tri-state toggle for modules
+  const handleModuleTriState = async (moduleKey: string, state: TriState) => {
+    const newStatus = state === 'on'
+    await toggleModule(moduleKey, newStatus)
+  }
+
   // Group submodules by module
   const submodulesByModule: Record<string, SubmoduleLicense[]> = {}
   Object.values(submodules).forEach(sub => {
@@ -68,6 +102,11 @@ export default function ModuleLicensesPage() {
     }
     submodulesByModule[sub.module_key].push(sub)
   })
+
+  // Sort modules by fixed order
+  const sortedModules = MODULE_ORDER
+    .map(key => modules[key])
+    .filter((m): m is ModuleLicense => m !== undefined)
 
   if (loading) {
     return <div className="p-8">Yükleniyor...</div>
@@ -90,9 +129,17 @@ export default function ModuleLicensesPage() {
 
       <div className="mt-6 bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
         <div className="space-y-4">
-          {Object.values(modules).map(module => {
+          {sortedModules.map(module => {
             const moduleSubmodules = submodulesByModule[module.module_key] || []
             const isExpanded = expandedModules.has(module.module_key)
+            const moduleState = getModuleState(module.module_key)
+
+            // Sort submodules by fixed order
+            const sortedSubmodules = SUBMODULE_ORDER[module.module_key]
+              ? SUBMODULE_ORDER[module.module_key]
+                  .map(key => moduleSubmodules.find(s => s.submodule_key === key))
+                  .filter((s): s is SubmoduleLicense => s !== undefined)
+              : moduleSubmodules
 
             return (
               <div key={module.module_key} className="border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
@@ -112,34 +159,27 @@ export default function ModuleLicensesPage() {
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="radio"
-                        name={`module-${module.module_key}`}
+                  <div className="flex items-center gap-3">
+                    {moduleSubmodules.length > 0 ? (
+                      <TriStateToggle
+                        state={moduleState}
+                        onChange={(state) => handleModuleTriState(module.module_key, state)}
+                        size="md"
+                      />
+                    ) : (
+                      <ToggleSwitch
                         checked={module.is_active}
-                        onChange={() => toggleModule(module.module_key, module.is_active)}
-                        className="w-4 h-4 text-blue-600 focus:ring-blue-500"
+                        onChange={(checked) => toggleModule(module.module_key, module.is_active)}
+                        size="md"
                       />
-                      <span className="text-sm text-gray-700 dark:text-gray-300">Aktif</span>
-                    </label>
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="radio"
-                        name={`module-${module.module_key}`}
-                        checked={!module.is_active}
-                        onChange={() => toggleModule(module.module_key, module.is_active)}
-                        className="w-4 h-4 text-blue-600 focus:ring-blue-500"
-                      />
-                      <span className="text-sm text-gray-700 dark:text-gray-300">Pasif</span>
-                    </label>
+                    )}
                   </div>
                 </div>
 
                 {/* Submodules */}
                 {isExpanded && moduleSubmodules.length > 0 && (
                   <div className="p-4 border-t border-gray-200 dark:border-gray-700 space-y-3">
-                    {moduleSubmodules.map(submodule => (
+                    {sortedSubmodules.map(submodule => (
                       <div
                         key={`${submodule.module_key}:${submodule.submodule_key}`}
                         className="flex items-center justify-between pl-8"
@@ -152,28 +192,11 @@ export default function ModuleLicensesPage() {
                             Key: {submodule.submodule_key} | Environment: {submodule.environment}
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <label className="flex items-center gap-2 cursor-pointer">
-                            <input
-                              type="radio"
-                              name={`submodule-${submodule.module_key}-${submodule.submodule_key}`}
-                              checked={submodule.is_active}
-                              onChange={() => toggleSubmodule(submodule.module_key, submodule.submodule_key, submodule.is_active)}
-                              className="w-4 h-4 text-blue-600 focus:ring-blue-500"
-                            />
-                            <span className="text-sm text-gray-700 dark:text-gray-300">Aktif</span>
-                          </label>
-                          <label className="flex items-center gap-2 cursor-pointer">
-                            <input
-                              type="radio"
-                              name={`submodule-${submodule.module_key}-${submodule.submodule_key}`}
-                              checked={!submodule.is_active}
-                              onChange={() => toggleSubmodule(submodule.module_key, submodule.submodule_key, submodule.is_active)}
-                              className="w-4 h-4 text-blue-600 focus:ring-blue-500"
-                            />
-                            <span className="text-sm text-gray-700 dark:text-gray-300">Pasif</span>
-                          </label>
-                        </div>
+                        <ToggleSwitch
+                          checked={submodule.is_active}
+                          onChange={(checked) => toggleSubmodule(submodule.module_key, submodule.submodule_key, submodule.is_active)}
+                          size="sm"
+                        />
                       </div>
                     ))}
                   </div>
