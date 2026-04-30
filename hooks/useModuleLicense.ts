@@ -24,6 +24,7 @@ interface ModuleLicenseContextType {
   isSubmoduleActive: (moduleKey: string, submoduleKey: string) => boolean
   loading: boolean
   error: string | null
+  refetch: () => Promise<void>
 }
 
 const ModuleLicenseContext = createContext<ModuleLicenseContextType | null>(null)
@@ -42,6 +43,35 @@ export function ModuleLicenseProvider({ children, initialLicenses }: ModuleLicen
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  const fetchLicenses = async () => {
+    try {
+      const res = await fetch('/api/settings/module-licenses')
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`)
+      }
+      const data = await res.json()
+      const modulesMap: Record<string, ModuleLicense> = {}
+      const submodulesMap: Record<string, SubmoduleLicense> = {}
+
+      data.modules?.forEach((m: ModuleLicense) => {
+        modulesMap[m.module_key] = m
+      })
+
+      data.submodules?.forEach((s: SubmoduleLicense) => {
+        submodulesMap[`${s.module_key}:${s.submodule_key}`] = s
+      })
+
+      setModules(modulesMap)
+      setSubmodules(submodulesMap)
+      setError(null)
+    } catch (err) {
+      console.error('Error fetching module licenses:', err)
+      setError(err instanceof Error ? err.message : 'Failed to fetch module licenses')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   useEffect(() => {
     if (initialLicenses) {
       const modulesMap: Record<string, ModuleLicense> = {}
@@ -59,33 +89,7 @@ export function ModuleLicenseProvider({ children, initialLicenses }: ModuleLicen
       setSubmodules(submodulesMap)
       setLoading(false)
     } else {
-      fetch('/api/settings/module-licenses')
-        .then(res => {
-          if (!res.ok) {
-            throw new Error(`HTTP error! status: ${res.status}`)
-          }
-          return res.json()
-        })
-        .then(data => {
-          const modulesMap: Record<string, ModuleLicense> = {}
-          const submodulesMap: Record<string, SubmoduleLicense> = {}
-
-          data.modules?.forEach((m: ModuleLicense) => {
-            modulesMap[m.module_key] = m
-          })
-
-          data.submodules?.forEach((s: SubmoduleLicense) => {
-            submodulesMap[`${s.module_key}:${s.submodule_key}`] = s
-          })
-
-          setModules(modulesMap)
-          setSubmodules(submodulesMap)
-        })
-        .catch(err => {
-          console.error('Error fetching module licenses:', err)
-          setError(err.message || 'Failed to fetch module licenses')
-        })
-        .finally(() => setLoading(false))
+      fetchLicenses()
     }
   }, [initialLicenses])
 
@@ -112,7 +116,8 @@ export function ModuleLicenseProvider({ children, initialLicenses }: ModuleLicen
     isModuleActive,
     isSubmoduleActive,
     loading,
-    error
+    error,
+    refetch: fetchLicenses
   }
 
   return React.createElement(
