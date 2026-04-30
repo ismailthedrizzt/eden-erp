@@ -1,14 +1,17 @@
 'use client'
 
 import { useState } from 'react'
-import { User, Phone, GraduationCap, Briefcase, Landmark, Upload, Camera, X, Plus, Building, Briefcase as Job } from 'lucide-react'
+import { User, Phone, GraduationCap, Briefcase, Landmark, Upload, Camera, X, Plus, Building, Briefcase as Job, FileText } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useModuleLicense } from '@/hooks/useModuleLicense'
+import { DocumentViewer } from '@/components/ui/DocumentViewer'
+import { IBANInput } from '@/components/ui/IBANInput'
 
 export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () => void, onCancel: () => void }) {
   const [activeTab, setActiveTab] = useState('ozel')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [showDocumentViewer, setShowDocumentViewer] = useState(false)
   const { isModuleActive, isSubmoduleActive } = useModuleLicense()
 
   // Check if IK module and Teskilat & Kadro submodule are active
@@ -39,7 +42,7 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
     maritalStatus: '',
     familyMembers: [] as Array<{ name: string, surname: string, relation: string }>,
     isIlliterate: false,
-    schools: [] as Array<{ name: string, degree: string, department: string, startDate: string, endDate: string }>,
+    schools: [] as Array<{ name: string, degree: string, department: string, startDate: string, endDate: string, isOngoing: boolean }>,
     languages: [] as Array<{ name: string, level: string, document: File | null }>,
     courses: [] as Array<{ name: string, institution: string, document: File | null }>,
     iban: '',
@@ -131,7 +134,13 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
               <div className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-3">
                 {formData.cv ? (
                   <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-700 dark:text-gray-300 truncate">{formData.cv.name}</span>
+                    <button
+                      onClick={() => setShowDocumentViewer(true)}
+                      className="flex items-center gap-2 text-xs text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                    >
+                      <FileText size={16} />
+                      <span className="truncate">CV</span>
+                    </button>
                     <button
                       onClick={() => setFormData({ ...formData, cv: null })}
                       className="text-red-600 hover:text-red-700 ml-2"
@@ -541,19 +550,38 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
                           }}
                         />
                       </div>
-                      <div className="flex flex-col gap-1.5 flex-1">
-                        <label className="text-xs text-gray-500">Bitiş *</label>
-                        <input
-                          type="date"
-                          className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-                          value={school.endDate}
-                          onChange={e => {
-                            const newSchools = [...formData.schools]
-                            newSchools[index].endDate = e.target.value
-                            setFormData({ ...formData, schools: newSchools })
-                          }}
-                        />
-                      </div>
+                      {!school.isOngoing && (
+                        <div className="flex flex-col gap-1.5 flex-1">
+                          <label className="text-xs text-gray-500">Bitiş *</label>
+                          <input
+                            type="date"
+                            className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                            value={school.endDate}
+                            onChange={e => {
+                              const newSchools = [...formData.schools]
+                              newSchools[index].endDate = e.target.value
+                              setFormData({ ...formData, schools: newSchools })
+                            }}
+                          />
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="checkbox"
+                        id={`ongoing-${index}`}
+                        checked={school.isOngoing}
+                        onChange={e => {
+                          const newSchools = [...formData.schools]
+                          newSchools[index].isOngoing = e.target.checked
+                          if (e.target.checked) {
+                            newSchools[index].endDate = ''
+                          }
+                          setFormData({ ...formData, schools: newSchools })
+                        }}
+                        className="rounded border-gray-300"
+                      />
+                      <label htmlFor={`ongoing-${index}`} className="text-xs text-gray-700 dark:text-gray-300">Devam Ediyor</label>
                     </div>
                     <button
                       onClick={() => {
@@ -567,7 +595,7 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
                   </div>
                 ))}
                 <button
-                  onClick={() => setFormData({ ...formData, schools: [...formData.schools, { name: '', degree: '', department: '', startDate: '', endDate: '' }] })}
+                  onClick={() => setFormData({ ...formData, schools: [...formData.schools, { name: '', degree: '', department: '', startDate: '', endDate: '', isOngoing: false }] })}
                   className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700"
                 >
                   <Plus size={16} />
@@ -842,11 +870,9 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
         <div className="space-y-4">
           <div className="flex flex-col gap-1.5">
             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">IBAN</label>
-            <input
-              className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-              placeholder="TR00 0000 0000 0000 0000 0000 00"
+            <IBANInput
               value={formData.iban}
-              onChange={e => setFormData({ ...formData, iban: e.target.value })}
+              onChange={value => setFormData({ ...formData, iban: value })}
             />
           </div>
         </div>
@@ -868,6 +894,14 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
           {loading ? 'Kaydediliyor...' : 'Kaydet'}
         </button>
       </div>
+
+      {/* Document Viewer */}
+      {showDocumentViewer && (
+        <DocumentViewer
+          file={formData.cv}
+          onClose={() => setShowDocumentViewer(false)}
+        />
+      )}
     </div>
   )
 }
