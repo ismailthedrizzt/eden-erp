@@ -8,7 +8,7 @@ import { useModuleLicense } from '@/hooks/useModuleLicense'
 import {
   Home, Users, Building2, CreditCard, Package, ShoppingCart,
   Settings, Factory, Wrench, ChevronRight, LogOut, Download,
-  BarChart2, List, AlertCircle, FolderOpen, Wallet
+  BarChart2, List, AlertCircle, FolderOpen, Wallet, X
 } from 'lucide-react'
 
 interface NavItem {
@@ -124,7 +124,13 @@ const SECTION_LABELS: Record<string, string> = {
   sys: 'Yönetim',
 }
 
-export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) {
+interface SidebarProps {
+  collapsed?: boolean
+  mobileOpen?: boolean
+  onMobileClose?: () => void
+}
+
+export default function Sidebar({ collapsed = false, mobileOpen = false, onMobileClose }: SidebarProps) {
   const pathname = usePathname()
   const { isModuleActive, isSubmoduleActive } = useModuleLicense()
   const [openMods, setOpenMods] = useState<string[]>([])
@@ -235,22 +241,39 @@ export default function Sidebar({ collapsed = false }: { collapsed?: boolean }) 
 
   return (
     <aside className={cn(
-      'flex flex-col bg-eden-navy transition-all duration-200 overflow-hidden flex-shrink-0',
-      collapsed ? 'w-16' : 'w-64'
+      'flex flex-col bg-eden-navy transition-all duration-200 overflow-hidden flex-shrink-0 h-full',
+      mobileOpen ? 'w-64' : (collapsed ? 'w-16' : 'w-64')
     )}>
-      {/* Logo */}
-      <div className="px-4 py-4 border-b border-white/[0.07] flex items-center gap-3 flex-shrink-0">
-        <div className="w-8 h-8 bg-eden-blue rounded-lg flex items-center justify-center flex-shrink-0">
-          <svg width="18" height="18" fill="none" stroke="white" strokeWidth="2" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round"
-              d="M12 3l9 4.5-9 4.5-9-4.5L12 3zM3 12l9 4.5 9-4.5M3 17l9 4.5 9-4.5"/>
-          </svg>
-        </div>
-        {!collapsed && (
-          <div className="min-w-0">
-            <div className="text-[9px] font-semibold text-eden-gold uppercase tracking-widest">Eden Teknoloji</div>
-            <div className="text-sm font-bold font-display text-white mt-0.5">ERP</div>
+      {/* Logo & Mobile Close */}
+      <div className="px-4 py-4 border-b border-white/[0.07] flex items-center justify-between flex-shrink-0">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 bg-eden-blue rounded-lg flex items-center justify-center flex-shrink-0">
+            <svg width="18" height="18" fill="none" stroke="white" strokeWidth="2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round"
+                d="M12 3l9 4.5-9 4.5-9-4.5L12 3zM3 12l9 4.5 9-4.5M3 17l9 4.5 9-4.5"/>
+            </svg>
           </div>
+          {!collapsed && !mobileOpen && (
+            <div className="min-w-0">
+              <div className="text-[9px] font-semibold text-eden-gold uppercase tracking-widest">Eden Teknoloji</div>
+              <div className="text-sm font-bold font-display text-white mt-0.5">ERP</div>
+            </div>
+          )}
+          {mobileOpen && (
+            <div className="min-w-0">
+              <div className="text-[9px] font-semibold text-eden-gold uppercase tracking-widest">Eden Teknoloji</div>
+              <div className="text-sm font-bold font-display text-white mt-0.5">ERP</div>
+            </div>
+          )}
+        </div>
+        {/* Mobile Close Button */}
+        {mobileOpen && onMobileClose && (
+          <button
+            onClick={onMobileClose}
+            className="w-8 h-8 rounded-lg flex items-center justify-center text-white/60 hover:text-white hover:bg-white/10 transition-colors"
+          >
+            <X size={20} />
+          </button>
         )}
       </div>
 

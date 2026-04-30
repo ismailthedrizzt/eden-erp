@@ -23,6 +23,7 @@ const BREADCRUMBS: Record<string, string> = {
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(false)
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [dark, setDark] = useState(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('theme') === 'dark'
@@ -50,16 +51,43 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <ModuleLicenseProvider>
       <div className={cn('flex h-screen overflow-hidden', dark && 'dark')}>
-        <Sidebar collapsed={collapsed} />
+        {/* Desktop Sidebar */}
+        <div className="hidden lg:block">
+          <Sidebar collapsed={collapsed} mobileOpen={false} onMobileClose={() => {}} />
+        </div>
+
+        {/* Mobile Sidebar Overlay */}
+        {mobileMenuOpen && (
+          <>
+            {/* Backdrop */}
+            <div 
+              className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+              onClick={() => setMobileMenuOpen(false)}
+            />
+            {/* Mobile Sidebar */}
+            <div className="fixed left-0 top-0 h-full z-50 lg:hidden">
+              <Sidebar collapsed={false} mobileOpen={true} onMobileClose={() => setMobileMenuOpen(false)} />
+            </div>
+          </>
+        )}
 
         <div className="flex-1 flex flex-col overflow-hidden min-w-0">
           {/* Topbar */}
           <header className="h-14 bg-white dark:bg-eden-navy-2 border-b border-gray-200 dark:border-eden-navy
-                             px-5 flex items-center justify-between flex-shrink-0 z-10">
+                             px-3 sm:px-5 flex items-center justify-between flex-shrink-0 z-10">
             <div className="flex items-center gap-3">
+              {/* Mobile Menu Button */}
+              <button
+                onClick={() => setMobileMenuOpen(true)}
+                className="lg:hidden w-8 h-8 rounded-lg border border-gray-200 dark:border-gray-700 flex items-center justify-center
+                           text-gray-500 hover:bg-gray-50 dark:hover:bg-eden-navy transition-colors"
+              >
+                <Menu size={18} />
+              </button>
+              {/* Desktop Toggle */}
               <button
                 onClick={() => setCollapsed(!collapsed)}
-                className="w-8 h-8 rounded-lg border border-gray-200 dark:border-gray-700 flex items-center justify-center
+                className="hidden lg:flex w-8 h-8 rounded-lg border border-gray-200 dark:border-gray-700 items-center justify-center
                            text-gray-500 hover:bg-gray-50 dark:hover:bg-eden-navy transition-colors"
               >
                 <Menu size={15} />
