@@ -40,7 +40,7 @@ export function PageBanner({
             className="flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 px-3 sm:px-4 py-2 rounded-lg transition-colors text-sm sm:text-base"
           >
             {buttonIcon || (showAddIcon && <Plus size={16} />)}
-            <span className="hidden sm:inline">{addButtonText}</span>
+            {addButtonText}
           </button>
         )}
       </div>
