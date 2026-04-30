@@ -56,16 +56,20 @@ export async function GET(request: NextRequest) {
   const isTeskilatActive = teskilatLicense?.is_active &&
     (teskilatLicense.environment === 'all' || teskilatLicense.environment === process.env.NODE_ENV)
 
+  // Build select query based on teskilat module status
+  let selectQuery = '*'
+  if (isTeskilatActive) {
+    selectQuery = `*,
+      birim:birimler(id, ad, tip),
+      kadro:norm_kadrolar(id, unvan)`
+  }
+
   let query = supabase
     .from('personel')
-    .select(isTeskilatActive ? `
-      *,
-      birim:birimler(id, ad, tip),
-      kadro:norm_kadrolar(id, unvan)
-    ` : '*')
+    .select(selectQuery)
     .order('soyad', { ascending: true })
 
-  if (birimId) query = query.eq('birim_id', birimId)
+  if (birimId && isTeskilatActive) query = query.eq('birim_id', birimId)
   if (durum) query = query.eq('calisma_durumu', durum)
   if (ara) query = query.or(`ad.ilike.%${ara}%,soyad.ilike.%${ara}%,tc_kimlik.ilike.%${ara}%`)
 

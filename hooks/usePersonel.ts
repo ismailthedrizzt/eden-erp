@@ -21,12 +21,30 @@ export function usePersonel(filters: Filters = {}) {
     setError(null)
     console.log('usePersonel: Fetching data...')
     try {
+      // Check if teskilat module is active
+      const { data: teskilatLicense } = await supabase
+        .from('module_licenses')
+        .select('is_active, environment')
+        .eq('module_key', 'teskilat')
+        .single()
+
+      const isTeskilatActive = teskilatLicense?.is_active &&
+        (teskilatLicense.environment === 'all' || teskilatLicense.environment === 'development')
+
+      console.log('usePersonel: Teskilat module active:', isTeskilatActive)
+
+      // Build select query based on teskilat module status
+      let selectQuery = '*'
+      if (isTeskilatActive) {
+        selectQuery = '*, birim:birimler(id,ad,tip), kadro:norm_kadrolar(id,unvan)'
+      }
+
       let q = supabase
         .from('personel')
-        .select('*, birim:birimler(id,ad,tip), kadro:norm_kadrolar(id,unvan)')
+        .select(selectQuery)
         .order('soyad')
 
-      if (filters.birimId) q = q.eq('birim_id', filters.birimId)
+      if (filters.birimId && isTeskilatActive) q = q.eq('birim_id', filters.birimId)
       if (filters.durum)   q = q.eq('calisma_durumu', filters.durum)
       if (filters.ara)     q = q.or(`ad.ilike.%${filters.ara}%,soyad.ilike.%${filters.ara}%`)
 
