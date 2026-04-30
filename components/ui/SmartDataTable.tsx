@@ -74,7 +74,7 @@ interface SmartDataTableProps<T extends { id: string }> {
   pollingInterval?: number
 }
 
-interface WidgetDef {
+export interface WidgetDef<T = any> {
   key: string
   label: string
   render: (row: T) => React.ReactNode
@@ -502,7 +502,9 @@ export function SmartDataTable<T extends { id: string }>({
               {screenSize}
             </span>
             {columnEconomy.overflow > 0 && (
-              <AlertTriangle size={14} className="text-orange-500" title="Sütun genişliği aşıldı" />
+              <span title="Sütun genişliği aşıldı">
+                <AlertTriangle size={14} className="text-orange-500" />
+              </span>
             )}
           </div>
 
@@ -988,7 +990,7 @@ function ColumnFilterInput({
 }: { 
   column: ColumnDef
   value: any
-  onChange: (value: any, operator: string) => void 
+  onChange: (value: any, operator: FilterConfig['operator']) => void 
 }) {
   if (column.type === 'enum' && column.enumOptions) {
     return (
