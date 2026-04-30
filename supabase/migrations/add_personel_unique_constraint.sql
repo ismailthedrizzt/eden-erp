@@ -13,14 +13,12 @@ WHERE p1.uyruk = p2.uyruk
   AND (p1.tc_kimlik = p2.tc_kimlik OR p1.pasaport_no = p2.pasaport_no)
   AND p1.id != p2.min_id;
 
--- Add unique constraint for Turkish citizens (uyruk + tc_kimlik)
+-- Add unique constraint for Turkish citizens (tc_kimlik must be unique when not null)
 ALTER TABLE public.personel
-ADD CONSTRAINT personel_uyruk_tc_kimlik_unique
-UNIQUE (uyruk, tc_kimlik)
-WHERE (uyruk = 'tc' AND tc_kimlik IS NOT NULL);
+ADD CONSTRAINT personel_tc_kimlik_unique
+UNIQUE (tc_kimlik);
 
--- Add unique constraint for foreigners (uyruk + pasaport_no)
+-- Add unique constraint for foreigners (pasaport_no must be unique when not null)
 ALTER TABLE public.personel
-ADD CONSTRAINT personel_uyruk_pasaport_unique
-UNIQUE (uyruk, pasaport_no)
-WHERE (uyruk = 'yabanci' AND pasaport_no IS NOT NULL);
+ADD CONSTRAINT personel_pasaport_unique
+UNIQUE (pasaport_no);
