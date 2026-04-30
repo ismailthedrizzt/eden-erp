@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { X, Download, Printer, FileText } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -30,16 +30,15 @@ export function DocumentViewer({ file, onClose }: DocumentViewerProps) {
     }
   }, [file])
 
-  if (!file) return null
-
-  const handlePrint = () => {
+  const handlePrint = useCallback(() => {
     if (previewUrl) {
       const printWindow = window.open(previewUrl, '_blank')
       printWindow?.print()
     }
-  }
+  }, [previewUrl])
 
-  const handleDownload = () => {
+  const handleDownload = useCallback(() => {
+    if (!file) return
     const url = URL.createObjectURL(file)
     const a = document.createElement('a')
     a.href = url
@@ -48,9 +47,11 @@ export function DocumentViewer({ file, onClose }: DocumentViewerProps) {
     a.click()
     document.body.removeChild(a)
     URL.revokeObjectURL(url)
-  }
+  }, [file])
 
-  const renderPreview = useMemo(() => {
+  const renderPreviewContent = () => {
+    if (!file) return null
+
     if (file.type.startsWith('image/') && previewUrl) {
       return (
         <img
@@ -82,7 +83,9 @@ export function DocumentViewer({ file, onClose }: DocumentViewerProps) {
         </div>
       )
     }
-  }, [file, previewUrl])
+  }
+
+  if (!file) return null
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
@@ -105,7 +108,7 @@ export function DocumentViewer({ file, onClose }: DocumentViewerProps) {
 
         {/* Content */}
         <div className="flex-1 overflow-auto p-4">
-          {renderPreview}
+          {renderPreviewContent()}
         </div>
 
         {/* Footer */}
