@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { ChevronLeft } from 'lucide-react'
+import { Users } from 'lucide-react'
 import { PageBanner } from '@/components/ui/PageBanner'
 import PersonelForm from '@/components/modules/ik/PersonelForm'
 
