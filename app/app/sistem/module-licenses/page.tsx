@@ -8,20 +8,18 @@ import { ToggleSwitch } from '@/components/ui/ToggleSwitch'
 import { TriStateToggle } from '@/components/ui/TriStateToggle'
 
 // Fixed module order matching sidebar navigation
-const MODULE_ORDER = ['ik', 'muhasebe', 'stok', 'satis', 'uretim', 'servis', 'teskilat', 'kadro']
+const MODULE_ORDER = ['ik', 'muhasebe', 'stok', 'satis', 'uretim', 'servis']
 
 // Submodule order matching sidebar navigation
 const SUBMODULE_ORDER: Record<string, string[]> = {
-  ik: ['teskilat', 'personel'],
-  muhasebe: ['dashboard', 'fatura', 'cari'],
-  teskilat: ['birimler'],
-  kadro: ['kadrolar']
+  ik: ['birimler', 'personel'],
+  muhasebe: ['dashboard', 'fatura', 'cari']
 }
 
 type TriState = 'on' | 'off' | 'partial'
 
 export default function ModuleLicensesPage() {
-  const { modules, submodules, loading, error } = useModuleLicense()
+  const { modules, submodules, loading, error, refetch } = useModuleLicense()
   const [expandedModules, setExpandedModules] = useState<Set<string>>(new Set())
 
   const toggleModuleExpand = (moduleKey: string) => {
@@ -48,7 +46,7 @@ export default function ModuleLicensesPage() {
         })
       })
       if (response.ok) {
-        window.location.reload()
+        await refetch()
       }
     } catch (error) {
       console.error('Error toggling module:', error)
@@ -68,7 +66,7 @@ export default function ModuleLicensesPage() {
         })
       })
       if (response.ok) {
-        window.location.reload()
+        await refetch()
       }
     } catch (error) {
       console.error('Error toggling submodule:', error)
