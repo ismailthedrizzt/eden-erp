@@ -99,13 +99,13 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
   return (
     <div className="space-y-6">
       {/* Fixed Hero Section */}
-      <div className="bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6">
-        <div className="flex gap-6">
+      <div className="bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
+        <div className="flex flex-col md:flex-row gap-4 md:gap-6">
           {/* Left Panel - Vertical Layout */}
-          <div className="w-48 flex flex-col gap-4">
+          <div className="w-full md:w-48 flex flex-col gap-4 items-center md:items-start">
             {/* Photo Upload */}
             <div className="relative group">
-              <div className="w-40 h-40 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center bg-white dark:bg-gray-900 overflow-hidden">
+              <div className="w-32 h-32 sm:w-40 sm:h-40 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center bg-white dark:bg-gray-900 overflow-hidden">
                 {formData.photo ? (
                   <img src={URL.createObjectURL(formData.photo)} alt="Fotoğraf" className="w-full h-full object-cover" />
                 ) : (
@@ -167,7 +167,7 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Uyruğu *</label>
                 <select
@@ -196,7 +196,7 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Cinsiyet *</label>
                 <select
