@@ -18,6 +18,8 @@ export function usePersonel(filters: Filters = {}) {
 
   const fetch = useCallback(async () => {
     setLoading(true)
+    setError(null)
+    console.log('usePersonel: Fetching data...')
     try {
       let q = supabase
         .from('personel')
@@ -28,15 +30,22 @@ export function usePersonel(filters: Filters = {}) {
       if (filters.durum)   q = q.eq('calisma_durumu', filters.durum)
       if (filters.ara)     q = q.or(`ad.ilike.%${filters.ara}%,soyad.ilike.%${filters.ara}%`)
 
+      console.log('usePersonel: Executing query...')
       const { data: rows, error: err } = await q
-      if (err) throw err
+      console.log('usePersonel: Query result:', { rows, err })
+      if (err) {
+        console.error('usePersonel: Error fetching data:', err)
+        throw err
+      }
+      console.log('usePersonel: Setting data:', rows)
       setData(rows ?? [])
     } catch (e: any) {
+      console.error('usePersonel: Caught error:', e)
       setError(e.message)
     } finally {
       setLoading(false)
     }
-  }, [filters.birimId, filters.durum, filters.ara])
+  }, [filters.birimId, filters.durum, filters.ara, supabase])
 
   useEffect(() => { fetch() }, [fetch])
 

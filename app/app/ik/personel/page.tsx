@@ -12,7 +12,11 @@ import DataTable, { Column } from '@/components/ui/DataTable'
 
 export default function CalisanlarPage() {
   const router = useRouter()
-  const { data: personel, loading, yenile } = usePersonel()
+  const { data: personel, loading, error, yenile } = usePersonel()
+
+  console.log('Personel data:', personel)
+  console.log('Personel loading:', loading)
+  console.log('Personel error:', error)
 
   const columns: Column<any>[] = [
     {
@@ -65,6 +69,12 @@ export default function CalisanlarPage() {
         onAddClick={() => router.push('/app/ik/personel/ekle')}
         addButtonText="Ekle"
       />
+
+      {error && (
+        <div className="mt-4 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+          <p className="text-red-600 dark:text-red-400">Hata: {error}</p>
+        </div>
+      )}
 
       <div className="mt-6">
         <DataTable
