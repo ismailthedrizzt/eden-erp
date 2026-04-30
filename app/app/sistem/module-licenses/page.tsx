@@ -162,7 +162,6 @@ export default function ModuleLicensesPage() {
                       <TriStateToggle
                         state={moduleState}
                         onChange={(state) => handleModuleTriState(module.module_key, state)}
-                        size="md"
                       />
                     ) : (
                       <ToggleSwitch
