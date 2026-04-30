@@ -228,7 +228,7 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
               )}
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Uyruğu *</label>
                 <select
@@ -237,35 +237,13 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
                   onChange={e => setFormData({ ...formData, nationality: e.target.value })}
                 >
                   <option value="TR">Türkiye</option>
-                  <option value="US">Amerika Birleşik Devletleri</option>
+                  <option value="US">ABD</option>
                   <option value="DE">Almanya</option>
                   <option value="FR">Fransa</option>
-                  <option value="GB">Birleşik Krallık</option>
+                  <option value="GB">İngiltere</option>
                 </select>
               </div>
 
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  {isTurkey ? 'T.C. Kimlik No *' : 'Pasaport No *'}
-                </label>
-                <input
-                  className={cn(
-                    "w-full bg-white dark:bg-gray-900 border rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500",
-                    (fieldErrors.tc_kimlik || fieldErrors.pasaport_no)
-                      ? "border-red-500 dark:border-red-500"
-                      : "border-gray-300 dark:border-gray-700"
-                  )}
-                  placeholder={isTurkey ? '11 haneli T.C. Kimlik' : 'Pasaport No'}
-                  value={formData.idNumber}
-                  onChange={e => setFormData({ ...formData, idNumber: e.target.value })}
-                />
-                {(fieldErrors.tc_kimlik || fieldErrors.pasaport_no) && (
-                  <span className="text-xs text-red-500">{fieldErrors.tc_kimlik || fieldErrors.pasaport_no}</span>
-                )}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Cinsiyet *</label>
                 <select
@@ -278,15 +256,37 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
                   value={formData.gender}
                   onChange={e => setFormData({ ...formData, gender: e.target.value })}
                 >
-                  <option value="">Seçiniz</option>
-                  <option value="erkek">Erkek</option>
-                  <option value="kadin">Kadın</option>
+                  <option value="">Seç</option>
+                  <option value="erkek">E</option>
+                  <option value="kadin">K</option>
                 </select>
                 {fieldErrors.cinsiyet && (
                   <span className="text-xs text-red-500">{fieldErrors.cinsiyet}</span>
                 )}
               </div>
 
+              <div className="flex flex-col gap-1.5 col-span-2">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  {isTurkey ? 'T.C. Kimlik No *' : 'Pasaport No *'}
+                </label>
+                <input
+                  className={cn(
+                    "w-full bg-white dark:bg-gray-900 border rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500",
+                    (fieldErrors.tc_kimlik || fieldErrors.pasaport_no)
+                      ? "border-red-500 dark:border-red-500"
+                      : "border-gray-300 dark:border-gray-700"
+                  )}
+                  placeholder={isTurkey ? '11 haneli' : 'Pasaport No'}
+                  value={formData.idNumber}
+                  onChange={e => setFormData({ ...formData, idNumber: e.target.value })}
+                />
+                {(fieldErrors.tc_kimlik || fieldErrors.pasaport_no) && (
+                  <span className="text-xs text-red-500">{fieldErrors.tc_kimlik || fieldErrors.pasaport_no}</span>
+                )}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Doğum Yeri</label>
                 <input
@@ -296,16 +296,16 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
                   onChange={e => setFormData({ ...formData, birthPlace: e.target.value })}
                 />
               </div>
-            </div>
 
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Doğum Tarihi</label>
-              <input
-                type="date"
-                className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-                value={formData.birthDate}
-                onChange={e => setFormData({ ...formData, birthDate: e.target.value })}
-              />
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Doğum Tarihi</label>
+                <input
+                  type="date"
+                  className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                  value={formData.birthDate}
+                  onChange={e => setFormData({ ...formData, birthDate: e.target.value })}
+                />
+              </div>
             </div>
           </div>
         </div>

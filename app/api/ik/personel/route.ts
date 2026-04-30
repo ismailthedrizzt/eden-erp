@@ -17,7 +17,7 @@ const PersonelSchema = z.object({
   hukumluluk: z.boolean().default(false),
   cep_telefonu: z.string().optional(),
   is_telefonu: z.string().optional(),
-  email: z.string().email().optional(),
+  email: z.union([z.literal(''), z.string().email()]).optional(),
   adres: z.string().optional(),
   il: z.string().optional(),
   ilce: z.string().optional(),
