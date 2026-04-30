@@ -14,8 +14,8 @@ export default function PersonelEklePage() {
         title="Çalışan Ekle"
         icon={<ChevronLeft size={24} />}
         onAddClick={() => router.back()}
-        addButtonText="Geri Dön"
-        buttonIcon={<ChevronLeft size={16} />}
+        addButtonText="Listeye Dön"
+        buttonIcon={<ChevronLeft size={18} />}
       />
 
       <div className="mt-6 bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6">
