@@ -419,10 +419,15 @@ export default function PersonelYonetimPage() {
       }
     }
     
+    const getPersonelName = () => {
+      if (!selectedPersonel) return ''
+      return `${selectedPersonel.ad || ''} ${selectedPersonel.soyad || ''}`.trim()
+    }
+    
     const modeTitles: Record<typeof pageState, string> = {
       create: 'Yeni Personel',
-      view: selectedPersonel?.ad_soyad || 'Personel Detayı',
-      edit: selectedPersonel?.ad_soyad || 'Personel Düzenle',
+      view: getPersonelName() || 'Personel Detayı',
+      edit: getPersonelName() || 'Personel Düzenle',
       list: ''
     }
     
