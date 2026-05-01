@@ -6,7 +6,7 @@
  * This page follows the standard ERP data management pattern:
  * - PageBanner: Header with "Create New" action
  * - SmartDataTable: List view with row selection
- * - SirketForm: Create/View/Edit in drawer with full features
+ * - SirketForm: Create/View/Edit in-page (no drawer/modal)
  * 
  * @see docs/templates/ERPPageTemplate.md
  * @see components/modules/sirket/SirketForm.tsx
@@ -15,12 +15,11 @@
  */
 
 import { useState } from 'react'
-import { Building2, FileText, Globe, Phone, Mail } from 'lucide-react'
+import { Building2, ArrowLeft } from 'lucide-react'
 import { useSirketler } from '@/hooks/useSirketler'
 import { PageBanner } from '@/components/ui/PageBanner'
 import { SmartDataTable, ColumnDef } from '@/components/ui/SmartDataTable'
 import { SirketForm } from '@/components/modules/sirket/SirketForm'
-import { Drawer } from '@/components/ui/Drawer'
 import { Toast } from '@/components/ui/Toast'
 import type { Sirket } from '@/types/sirket'
 
@@ -116,9 +115,6 @@ export default function SirketlerPage() {
   const [deleting, setDeleting] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
   const [toast, setToast] = useState<{ type: 'success' | 'error', message: string } | null>(null)
-  
-  // Drawer open state
-  const [drawerOpen, setDrawerOpen] = useState(false)
 
   // Transform data for table
   const tableData: SirketTableRow[] = (sirketler || []).map(s => ({
@@ -131,25 +127,19 @@ export default function SirketlerPage() {
     setSelectedSirket(null)
     setFormError(null)
     setPageState('create')
-    setDrawerOpen(true)
   }
 
   const handleRowClick = (row: SirketTableRow) => {
     setSelectedSirket(row)
     setFormError(null)
     setPageState('view')
-    setDrawerOpen(true)
   }
 
-  const handleEditClick = () => {
-    setPageState('edit')
-  }
-
-  const handleClose = () => {
-    setDrawerOpen(false)
+  const handleBackToList = () => {
     setPageState('list')
     setSelectedSirket(null)
     setFormError(null)
+    yenile()
   }
 
   const handleSave = async (data: Record<string, any>, mode: PageState) => {
@@ -195,10 +185,10 @@ export default function SirketlerPage() {
         setToast({ type: 'success', message: 'Şirket bilgileri güncellendi' })
       }
       
-      yenile()
-      handleClose()
+      handleBackToList()
     } catch (err: any) {
       setFormError(err.message || 'Bir hata oluştu')
+      throw err
     } finally {
       setSaving(false)
     }
@@ -224,86 +214,110 @@ export default function SirketlerPage() {
       }
       
       setToast({ type: 'success', message: 'Şirket kaydı silindi' })
-      yenile()
-      handleClose()
+      handleBackToList()
     } catch (err: any) {
       setFormError(err.message || 'Silme işlemi sırasında hata oluştu')
+      throw err
     } finally {
       setDeleting(false)
     }
   }
 
-  const getDrawerTitle = () => {
+  const getBannerTitle = () => {
     switch (pageState) {
       case 'create': return 'Yeni Şirket'
       case 'view': return selectedSirket?.kisa_unvan || 'Şirket Detayı'
       case 'edit': return `${selectedSirket?.kisa_unvan || ''} - Düzenle`
-      default: return ''
+      default: return 'Şirketlerimiz'
     }
   }
 
-  const getDrawerSubtitle = () => {
+  const getBannerSubtitle = () => {
     switch (pageState) {
       case 'create': return 'Yeni şirket kaydı oluşturun'
       case 'view': return 'Şirket bilgilerini görüntüleyin'
       case 'edit': return 'Şirket bilgilerini güncelleyin'
-      default: return ''
+      default: return 'Yönetilen şirketler listesi'
     }
   }
 
+  // LIST VIEW
+  if (pageState === 'list') {
+    return (
+      <div className="space-y-6">
+        <PageBanner
+          mode="list"
+          title={getBannerTitle()}
+          subtitle={getBannerSubtitle()}
+          icon={<Building2 size={24} />}
+          onActionClick={handleAddClick}
+          actionLabel="Yeni Şirket"
+        />
+
+        {listError && (
+          <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+            <p className="text-sm text-red-600 dark:text-red-400">{listError}</p>
+          </div>
+        )}
+
+        <SmartDataTable
+          columns={columns}
+          data={tableData}
+          loading={loading}
+          onRowClick={handleRowClick}
+          entityName="Şirket"
+          groupByCategory
+          showExport
+          columnSelector
+          views={{
+            default: { name: 'Varsayılan', columns: ['kisa_unvan', 'ticari_unvan', 'vkn_tckn', 'vergi_dairesi', 'adres_ozet', 'is_active'] },
+            iletisim: { name: 'İletişim', columns: ['kisa_unvan', 'telefon', 'email', 'adres_ozet', 'is_active'] },
+            vergi: { name: 'Vergi', columns: ['kisa_unvan', 'vkn_tckn', 'vergi_dairesi', 'sirket_turu', 'is_active'] }
+          }}
+          defaultView="default"
+        />
+
+        {/* Toast */}
+        {toast && (
+          <Toast
+            type={toast.type}
+            message={toast.message}
+            onClose={() => setToast(null)}
+          />
+        )}
+      </div>
+    )
+  }
+
+  // FORM VIEW (Create/View/Edit)
   return (
     <div className="space-y-6">
       <PageBanner
-        mode="list"
-        title="Şirketlerimiz"
-        subtitle="Yönetilen şirketler listesi"
+        mode={pageState === 'view' ? 'view' : 'form'}
+        title={getBannerTitle()}
+        subtitle={getBannerSubtitle()}
         icon={<Building2 size={24} />}
-        onActionClick={handleAddClick}
-        actionLabel="Yeni Şirket"
+        onBackClick={handleBackToList}
+        onActionClick={pageState === 'view' ? () => setPageState('edit') : undefined}
+        actionLabel={pageState === 'view' ? 'Düzenle' : undefined}
       />
 
-      {listError && (
+      {formError && (
         <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-          <p className="text-sm text-red-600 dark:text-red-400">{listError}</p>
+          <p className="text-sm text-red-600 dark:text-red-400">{formError}</p>
         </div>
       )}
 
-      <SmartDataTable
-        columns={columns}
-        data={tableData}
-        loading={loading}
-        onRowClick={handleRowClick}
-        entityName="Şirket"
-        groupByCategory
-        showExport
-        columnSelector
-        views={{
-          default: { name: 'Varsayılan', columns: ['kisa_unvan', 'ticari_unvan', 'vkn_tckn', 'vergi_dairesi', 'adres_ozet', 'is_active'] },
-          iletisim: { name: 'İletişim', columns: ['kisa_unvan', 'telefon', 'email', 'adres_ozet', 'is_active'] },
-          vergi: { name: 'Vergi', columns: ['kisa_unvan', 'vkn_tckn', 'vergi_dairesi', 'sirket_turu', 'is_active'] }
-        }}
-        defaultView="default"
+      <SirketForm
+        mode={pageState}
+        sirket={selectedSirket}
+        onSave={handleSave}
+        onCancel={handleBackToList}
+        saving={saving}
+        deleting={deleting}
+        onDelete={pageState !== 'create' ? handleDelete : undefined}
+        error={formError}
       />
-
-      {/* Form Drawer */}
-      <Drawer
-        isOpen={drawerOpen}
-        onClose={handleClose}
-        title={getDrawerTitle()}
-        subtitle={getDrawerSubtitle()}
-        size="xl"
-      >
-        <SirketForm
-          mode={pageState}
-          sirket={selectedSirket}
-          onSave={handleSave}
-          onCancel={handleClose}
-          saving={saving}
-          deleting={deleting}
-          onDelete={pageState !== 'create' ? handleDelete : undefined}
-          error={formError}
-        />
-      </Drawer>
 
       {/* Toast */}
       {toast && (
