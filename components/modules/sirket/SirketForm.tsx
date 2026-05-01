@@ -20,7 +20,6 @@
 import { useState, useEffect } from 'react'
 import { Building2, Briefcase, Users, Settings, Shield, Globe, FileText } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { EntityForm, FormField, FormTab, FormMode } from '@/components/ui/EntityForm'
 import { LogoUploader, Logo } from './LogoUploader'
 import { DocumentLoader, YüklenenDokuman } from './DocumentLoader'
 import type { Sirket, SirketOrtak, SirketTemsilci } from '@/types/sirket'
@@ -32,6 +31,18 @@ import {
   DILLER,
   SIRKET_DOKUMAN_TIPLERI 
 } from '@/types/sirket'
+
+// Form mode type
+export type FormMode = 'create' | 'view' | 'edit'
+
+// Custom FormTab with render support
+interface FormTab {
+  id: string
+  label: string
+  icon?: React.ReactNode
+  fields?: any[]  // For field-based tabs
+  render?: () => React.ReactNode  // For custom render tabs
+}
 
 interface SirketFormProps {
   mode: FormMode
