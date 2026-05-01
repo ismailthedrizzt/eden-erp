@@ -36,12 +36,25 @@ const NAV: NavItem[] = [
     href: '/app',
   },
   {
+    id: 'sirket',
+    label: 'Şirket Yönetimi',
+    icon: <Building2 size={16} />,
+    moduleKey: 'sirket',
+    children: [
+      { label: 'Şirketlerimiz', href: '/app/sirket/sirketler', moduleKey: 'sirket', submoduleKey: 'sirketler' },
+      { label: 'Teşkilat ve Kadro', href: '/app/sirket/teskilat', moduleKey: 'sirket', submoduleKey: 'teskilat' },
+      { label: 'Süreçlerimiz', href: '/app/sirket/surecler', moduleKey: 'sirket', submoduleKey: 'surecler' },
+      { label: 'Tesislerimiz', href: '/app/sirket/tesisler', moduleKey: 'sirket', submoduleKey: 'tesisler' },
+      { label: 'Araçlarımız', href: '/app/sirket/araclar', moduleKey: 'sirket', submoduleKey: 'araclar' },
+      { label: 'Demirbaşlar', href: '/app/sirket/demirbas', moduleKey: 'sirket', submoduleKey: 'demirbas' },
+    ],
+  },
+  {
     id: 'ik',
     label: 'İnsan Kaynakları',
     icon: <Users size={16} />,
     moduleKey: 'ik',
     children: [
-      { label: 'Teşkilat & Kadro', href: '/app/ik/teskilat', moduleKey: 'teskilat', submoduleKey: 'birimler' },
       { label: 'Çalışanlar', href: '/app/ik/personel', moduleKey: 'ik', submoduleKey: 'personel' },
       { label: 'İzin Yönetimi', href: '/app/ik/izin', disabled: true },
       { label: 'Performans', href: '/app/ik/performans', disabled: true },
