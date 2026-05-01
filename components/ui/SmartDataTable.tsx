@@ -619,10 +619,13 @@ export function SmartDataTable<T extends { id: string }>({
     if (col.render) return col.render(value, row)
     
     if (col.type === 'image') {
-      const imageUrl = value || row?.profileImage || row?.image || row?.photo || row?.avatar
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const r = row as any
+      const imageUrl = value || r?.profileImage || r?.image || r?.photo || r?.avatar
       return (
         <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center flex-shrink-0">
           {imageUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
             <img 
               src={imageUrl} 
               alt="" 
@@ -633,7 +636,7 @@ export function SmartDataTable<T extends { id: string }>({
             />
           ) : (
             <div className="w-full h-full bg-gradient-to-br from-gray-300 to-gray-400 flex items-center justify-center text-gray-500 text-xs font-medium">
-              {row?.firstName?.[0] || row?.name?.[0] || '?'}
+              {r?.firstName?.[0] || r?.name?.[0] || '?'}
             </div>
           )}
         </div>
