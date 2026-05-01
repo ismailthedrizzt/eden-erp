@@ -21,41 +21,24 @@ export function usePersonel(filters: Filters = {}) {
     setError(null)
     console.log('usePersonel: Fetching data...')
     try {
-      // Check if teskilat module is active
-      const { data: teskilatLicense } = await supabase
-        .from('module_licenses')
-        .select('is_active, environment')
-        .eq('module_key', 'teskilat')
-        .single()
-
-      const isTeskilatActive = teskilatLicense?.is_active &&
-        (teskilatLicense.environment === 'all' || teskilatLicense.environment === 'development')
-
-      console.log('usePersonel: Teskilat module active:', isTeskilatActive)
-
-      // Build select query based on teskilat module status
-      let selectQuery = '*'
-      if (isTeskilatActive) {
-        selectQuery = '*, birim:birimler(id,ad,tip), kadro:norm_kadrolar(id,unvan)'
-      }
-
+      // Simple query without relations first
+      console.log('usePersonel: Executing simple query...')
       let q = supabase
         .from('personel')
-        .select(selectQuery)
+        .select('*')
         .order('soyad')
 
-      if (filters.birimId && isTeskilatActive) q = q.eq('birim_id', filters.birimId)
-      if (filters.durum)   q = q.eq('calisma_durumu', filters.durum)
-      if (filters.ara)     q = q.or(`ad.ilike.%${filters.ara}%,soyad.ilike.%${filters.ara}%`)
+      if (filters.durum) q = q.eq('calisma_durumu', filters.durum)
+      if (filters.ara)   q = q.or(`ad.ilike.%${filters.ara}%,soyad.ilike.%${filters.ara}%`)
 
-      console.log('usePersonel: Executing query...')
       const { data: rows, error: err } = await q
-      console.log('usePersonel: Query result:', { rows, err })
+      
       if (err) {
-        console.error('usePersonel: Error fetching data:', err)
+        console.error('usePersonel: Error:', err)
         throw err
       }
-      console.log('usePersonel: Setting data:', rows)
+      
+      console.log('usePersonel: Success -', rows?.length || 0, 'records')
       setData(((rows as unknown) as Personel[]) ?? [])
     } catch (e: any) {
       console.error('usePersonel: Caught error:', e)

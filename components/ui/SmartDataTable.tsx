@@ -630,14 +630,20 @@ export function SmartDataTable<T extends { id: string }>({
     return nationalityMap[cleanValue] || nationalityMap[upperValue] || nationalityMap[value] || value
   }
 
-  function renderCellValue(col: ColumnDef, value: any, row: T): React.ReactNode {
-    if (col.render) return col.render(value, row)
+  function renderCellValue(col: ColumnDef, value: any, row: T, forceImageType: boolean = false): React.ReactNode {
+    // @ts-ignore - dynamic property access on generic type
+    const r = row as Record<string, any>
     
-    if (col.type === 'image') {
-      // @ts-ignore - dynamic property access on generic type
-      const r = row as Record<string, any>
-      const imageUrl = value || r?.profileImage || r?.image || r?.photo || r?.avatar || r?.profile_image || r?.foto
-      const initials = (r?.firstName?.[0] || r?.name?.[0] || r?.ad?.[0] || '?').toUpperCase()
+    // For image type, handle specially (even if custom render exists, prefer type-based render)
+    if (col.type === 'image' || forceImageType) {
+      const imageUrl = value || r?.profileImage || r?.image || r?.photo || r?.avatar || r?.profile_image || r?.foto || r?.fotograf_url
+      const initials = (r?.firstName?.[0] || r?.name?.[0] || r?.ad?.[0] || r?.soyad?.[0] || '?').toUpperCase()
+      const fullName = r?.firstName || r?.name || r?.ad || r?.fullname || 'İsimsiz'
+      
+      // Debug log in development
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Image render:', { key: col.key, value, imageUrl, availableKeys: Object.keys(r).filter(k => k.includes('foto') || k.includes('image') || k.includes('photo')) })
+      }
       
       return (
         <div className="w-10 h-10 rounded-full overflow-hidden bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center flex-shrink-0 border-2 border-white shadow-sm">
@@ -645,26 +651,30 @@ export function SmartDataTable<T extends { id: string }>({
             // eslint-disable-next-line @next/next/no-img-element
             <img 
               src={imageUrl} 
-              alt={initials} 
+              alt={fullName}
               className="w-full h-full object-cover"
               onError={(e) => {
                 const target = e.target as HTMLImageElement
                 target.style.display = 'none'
-                target.parentElement?.querySelector('.fallback-avatar')?.classList.remove('hidden')
+                const fallback = target.parentElement?.querySelector('.fallback-avatar')
+                if (fallback) fallback.classList.remove('hidden')
               }}
             />
           ) : null}
-          <div className={cn("fallback-avatar w-full h-full flex items-center justify-center text-blue-600 text-sm font-bold", imageUrl && "hidden")}>
+          <div className={cn("fallback-avatar w-full h-full flex items-center justify-center text-blue-600 text-sm font-bold", imageUrl ? "hidden" : "flex")}>
             {initials}
           </div>
         </div>
       )
     }
     
+    // Use custom render if provided
+    if (col.render) return col.render(value, row)
+    
     // Handle nationality column
     if (col.key === 'nationality' || col.key === 'country' || col.key === 'uyruk' || col.key === 'vatandaslik') {
       const nationality = convertToNationality(value)
-      return <span className="capitalize">{nationality}</span>
+      return <span className="capitalize inline-block">{nationality}</span>
     }
     
     // Handle gender column
@@ -1186,8 +1196,12 @@ export function SmartDataTable<T extends { id: string }>({
             // @ts-ignore
             const r = row as Record<string, any>
             const imageCol = visibleColumns.find(c => c.type === 'image')
-            const imageUrl = imageCol ? (getNestedValue(row, imageCol.key) || r?.profileImage || r?.image || r?.photo || r?.avatar || r?.profile_image || r?.foto) : null
-            const initials = (r?.firstName?.[0] || r?.name?.[0] || r?.ad?.[0] || '?').toUpperCase()
+            const imageValue = imageCol ? getNestedValue(row, imageCol.key) : null
+            const imageUrl = imageValue || r?.profileImage || r?.image || r?.photo || r?.avatar || r?.profile_image || r?.foto || r?.fotograf_url
+            const firstInitial = (r?.firstName?.[0] || r?.name?.[0] || r?.ad?.[0] || '?').toUpperCase()
+            const lastInitial = (r?.soyad?.[0] || r?.lastName?.[0] || r?.surname?.[0] || '').toUpperCase()
+            const initials = firstInitial + lastInitial || '?'
+            const fullName = r?.fullname || `${r?.ad || r?.firstName || r?.name || ''} ${r?.soyad || r?.lastName || r?.surname || ''}`.trim() || 'İsimsiz'
             
             // Get required columns only, fallback to first 2 non-image columns
             const requiredCols = visibleColumns.filter(c => c.required && c.type !== 'image')
@@ -1206,23 +1220,24 @@ export function SmartDataTable<T extends { id: string }>({
               >
                 <div className="flex">
                   {/* Large Image Area - 4x bigger (160x160) */}
-                  <div className="w-40 h-40 flex-shrink-0 bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-900/30 dark:to-indigo-900/30 flex items-center justify-center relative">
+                  <div className="w-40 h-40 flex-shrink-0 bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-900/30 dark:to-indigo-900/30 flex items-center justify-center relative overflow-hidden">
                     {imageUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img 
                         src={imageUrl} 
-                        alt={initials}
+                        alt={fullName}
                         className="w-full h-full object-cover"
                         onError={(e) => {
                           const target = e.target as HTMLImageElement
                           target.style.display = 'none'
-                          target.parentElement?.querySelector('.card-fallback')?.classList.remove('hidden')
+                          const fallback = target.parentElement?.querySelector('.card-fallback')
+                          if (fallback) fallback.classList.remove('hidden')
                         }}
                       />
                     ) : null}
-                    <div className={cn("card-fallback w-full h-full flex flex-col items-center justify-center", imageUrl && "hidden")}>
-                      <span className="text-4xl font-bold text-blue-500 dark:text-blue-400">{initials}</span>
-                      <span className="text-xs text-gray-400 mt-1">{r?.firstName || r?.name || r?.ad || 'İsimsiz'}</span>
+                    <div className={cn("card-fallback w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-blue-100 to-indigo-200", imageUrl ? "hidden" : "flex")}>
+                      <span className="text-4xl font-bold text-blue-600 dark:text-blue-500">{initials}</span>
+                      <span className="text-xs text-gray-500 mt-1 px-2 text-center truncate max-w-full">{fullName}</span>
                     </div>
                   </div>
                   
