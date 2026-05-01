@@ -465,9 +465,22 @@ export function SmartDataTable<T extends { id: string }>({
 
   // Nationality converter: Country -> Demonym
   function convertToNationality(value: string): string {
+    if (!value) return '-'
+    const upperValue = value.toUpperCase().trim()
+    const cleanValue = value.trim()
+    
     const nationalityMap: Record<string, string> = {
+      // Turkish variations
       'Türkiye': 'Türk',
       'Turkey': 'Türk',
+      'TC': 'Türk',
+      'T.C.': 'Türk',
+      'T.C': 'Türk',
+      'TÜRKİYE CUMHURİYETİ': 'Türk',
+      'TURKIYE CUMHURIYETI': 'Türk',
+      'TURKEY CUMHURIYETI': 'Türk',
+      'TÜRKIYE': 'Türk',
+      'TURKIYE': 'Türk',
       'Yunanistan': 'Yunan',
       'Greece': 'Yunan',
       'Almanya': 'Alman',
@@ -612,7 +625,9 @@ export function SmartDataTable<T extends { id: string }>({
       'Seyşeller': 'Seyşelli',
       'Seychelles': 'Seyşelli',
     }
-    return nationalityMap[value] || value
+    
+    // Try exact match first, then uppercase match
+    return nationalityMap[cleanValue] || nationalityMap[upperValue] || nationalityMap[value] || value
   }
 
   function renderCellValue(col: ColumnDef, value: any, row: T): React.ReactNode {
@@ -621,24 +636,27 @@ export function SmartDataTable<T extends { id: string }>({
     if (col.type === 'image') {
       // @ts-ignore - dynamic property access on generic type
       const r = row as Record<string, any>
-      const imageUrl = value || r?.profileImage || r?.image || r?.photo || r?.avatar
+      const imageUrl = value || r?.profileImage || r?.image || r?.photo || r?.avatar || r?.profile_image || r?.foto
+      const initials = (r?.firstName?.[0] || r?.name?.[0] || r?.ad?.[0] || '?').toUpperCase()
+      
       return (
-        <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center flex-shrink-0">
+        <div className="w-10 h-10 rounded-full overflow-hidden bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center flex-shrink-0 border-2 border-white shadow-sm">
           {imageUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img 
               src={imageUrl} 
-              alt="" 
+              alt={initials} 
               className="w-full h-full object-cover"
               onError={(e) => {
-                (e.target as HTMLImageElement).style.display = 'none'
+                const target = e.target as HTMLImageElement
+                target.style.display = 'none'
+                target.parentElement?.querySelector('.fallback-avatar')?.classList.remove('hidden')
               }}
             />
-          ) : (
-            <div className="w-full h-full bg-gradient-to-br from-gray-300 to-gray-400 flex items-center justify-center text-gray-500 text-xs font-medium">
-              {r?.firstName?.[0] || r?.name?.[0] || '?'}
-            </div>
-          )}
+          ) : null}
+          <div className={cn("fallback-avatar w-full h-full flex items-center justify-center text-blue-600 text-sm font-bold", imageUrl && "hidden")}>
+            {initials}
+          </div>
         </div>
       )
     }
@@ -1092,7 +1110,7 @@ export function SmartDataTable<T extends { id: string }>({
                       onDrop={(e) => handleDrop(e, col.key)}
                       onDragEnd={handleDragEnd}
                       className={cn(
-                        "px-4 py-3 text-left font-medium text-gray-700 dark:text-gray-300 border-r border-gray-200 dark:border-gray-700 last:border-r-0",
+                        "px-4 py-3 text-center font-medium text-gray-700 dark:text-gray-300 border-r border-gray-200 dark:border-gray-700 last:border-r-0",
                         col.sortable !== false && "cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700/50 select-none",
                         dropTarget === col.key && "bg-blue-50 dark:bg-blue-900/30",
                         draggedColumn === col.key && "opacity-50"
@@ -1103,7 +1121,7 @@ export function SmartDataTable<T extends { id: string }>({
                       }}
                       onClick={() => col.sortable !== false && handleSort(col.key)}
                     >
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center justify-center gap-2 w-full">
                         <GripVertical size={14} className="text-gray-400 opacity-0 hover:opacity-100 transition-opacity flex-shrink-0" />
                         <span className="whitespace-nowrap text-sm font-medium">{col.label}</span>
                         {sort && (
@@ -1135,10 +1153,10 @@ export function SmartDataTable<T extends { id: string }>({
                     <td 
                       key={col.key} 
                       className={cn(
-                        "px-4 py-3 text-gray-900 dark:text-gray-100 border-r border-gray-100 dark:border-gray-800 last:border-r-0",
-                        col.fontSize === 'xs' && "text-xs",
-                        col.fontSize === 'sm' && "text-sm",
-                        col.fontSize === 'base' && "text-base"
+                        "px-4 py-3 text-gray-900 dark:text-gray-100 border-r border-gray-100 dark:border-gray-800 last:border-r-0 text-center",
+                        col.calculatedWidth && col.calculatedWidth < 100 && "text-xs",
+                        col.calculatedWidth && col.calculatedWidth >= 100 && col.calculatedWidth < 150 && "text-sm",
+                        (!col.calculatedWidth || col.calculatedWidth >= 150) && "text-base"
                       )}
                       style={{ 
                         width: col.calculatedWidth || col.width || 150,
@@ -1162,55 +1180,71 @@ export function SmartDataTable<T extends { id: string }>({
           </table>
         </div>
       ) : (
-        /* Card View */
+        /* Card View - New Design: Large image left, required fields right */
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {paginatedData.map(row => (
-            <div
-              key={row.id}
-              onClick={() => onRowClick?.(row)}
-              onMouseEnter={() => setHoveredRow(row.id)}
-              onMouseLeave={() => setHoveredRow(null)}
-              className={cn(
-                "bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 cursor-pointer",
-                "hover:shadow-lg hover:border-blue-300 dark:hover:border-blue-700 transition-all"
-              )}
-            >
-              {/* Card Header with Image */}
-              <div className="flex items-start gap-3 mb-3">
-                {visibleColumns.find(c => c.type === 'image') && (
-                  <div className="flex-shrink-0">
-                    {renderCellValue(
-                      visibleColumns.find(c => c.type === 'image')!,
-                      getNestedValue(row, visibleColumns.find(c => c.type === 'image')!.key),
-                      row
+          {paginatedData.map(row => {
+            // @ts-ignore
+            const r = row as Record<string, any>
+            const imageCol = visibleColumns.find(c => c.type === 'image')
+            const imageUrl = imageCol ? (getNestedValue(row, imageCol.key) || r?.profileImage || r?.image || r?.photo || r?.avatar || r?.profile_image || r?.foto) : null
+            const initials = (r?.firstName?.[0] || r?.name?.[0] || r?.ad?.[0] || '?').toUpperCase()
+            
+            // Get required columns only, fallback to first 2 non-image columns
+            const requiredCols = visibleColumns.filter(c => c.required && c.type !== 'image')
+            const displayCols = requiredCols.length > 0 ? requiredCols : visibleColumns.filter(c => c.type !== 'image').slice(0, 2)
+            
+            return (
+              <div
+                key={row.id}
+                onClick={() => onRowClick?.(row)}
+                onMouseEnter={() => setHoveredRow(row.id)}
+                onMouseLeave={() => setHoveredRow(null)}
+                className={cn(
+                  "bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden cursor-pointer",
+                  "hover:shadow-xl hover:border-blue-400 dark:hover:border-blue-600 transition-all duration-200"
+                )}
+              >
+                <div className="flex">
+                  {/* Large Image Area - 4x bigger (160x160) */}
+                  <div className="w-40 h-40 flex-shrink-0 bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-900/30 dark:to-indigo-900/30 flex items-center justify-center relative">
+                    {imageUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img 
+                        src={imageUrl} 
+                        alt={initials}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement
+                          target.style.display = 'none'
+                          target.parentElement?.querySelector('.card-fallback')?.classList.remove('hidden')
+                        }}
+                      />
+                    ) : null}
+                    <div className={cn("card-fallback w-full h-full flex flex-col items-center justify-center", imageUrl && "hidden")}>
+                      <span className="text-4xl font-bold text-blue-500 dark:text-blue-400">{initials}</span>
+                      <span className="text-xs text-gray-400 mt-1">{r?.firstName || r?.name || r?.ad || 'İsimsiz'}</span>
+                    </div>
+                  </div>
+                  
+                  {/* Required Fields Area */}
+                  <div className="flex-1 p-4 flex flex-col justify-center">
+                    {displayCols.length > 0 ? displayCols.map(col => (
+                      <div key={col.key} className="mb-3 last:mb-0">
+                        <span className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">{col.label}</span>
+                        <div className="text-base font-semibold text-gray-900 dark:text-white truncate">
+                          {renderCellValue(col, getNestedValue(row, col.key), row)}
+                        </div>
+                      </div>
+                    )) : (
+                      <div className="text-sm text-gray-500 dark:text-gray-400 italic">
+                        Zorunlu alan tanımlanmamış
+                      </div>
                     )}
                   </div>
-                )}
-                <div className="flex-1 min-w-0">
-                  {visibleColumns.slice(0, 3).map(col => col.type !== 'image' && (
-                    <div key={col.key} className="mb-1">
-                      <span className="text-xs text-gray-500 dark:text-gray-400 block">{col.label}</span>
-                      <span className="text-sm font-medium text-gray-900 dark:text-white truncate block">
-                        {renderCellValue(col, getNestedValue(row, col.key), row)}
-                      </span>
-                    </div>
-                  ))}
                 </div>
               </div>
-              
-              {/* Additional Fields */}
-              <div className="space-y-1 pt-3 border-t border-gray-100 dark:border-gray-700">
-                {visibleColumns.slice(3).map(col => col.type !== 'image' && (
-                  <div key={col.key} className="flex items-center justify-between text-sm">
-                    <span className="text-gray-500 dark:text-gray-400">{col.label}</span>
-                    <span className="text-gray-900 dark:text-white">
-                      {renderCellValue(col, getNestedValue(row, col.key), row)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
       )}
 
