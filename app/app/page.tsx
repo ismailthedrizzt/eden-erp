@@ -117,6 +117,7 @@ export default function AnaSayfa() {
       <WidgetModal open={widgetModalOpen} onClose={() => setWidgetModalOpen(false)} />
 
       <PageBanner
+        mode="list"
         title={birthday ? `🎉 Doğum Günün Kutlu Olsun, ${currentUser.ad}!` : `Merhaba, ${currentUser.ad} 👋`}
         subtitle={birthday
           ? 'Bugün senin özel günün! 🎂'

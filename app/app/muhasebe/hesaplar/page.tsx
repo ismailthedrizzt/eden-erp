@@ -26,6 +26,7 @@ export default function HesaplarPage() {
       <IslemModal open={modalOpen} onClose={()=>setModalOpen(false)} defaultTaraf={taraf||undefined} />
 
       <PageBanner
+        mode="list"
         title="Hesaplar"
         icon={<CreditCard size={24} />}
         onAddClick={()=>setModalOpen(true)}

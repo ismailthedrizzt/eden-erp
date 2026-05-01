@@ -121,6 +121,7 @@ export default function ModuleLicensesPage() {
   return (
     <>
       <PageBanner
+        mode="list"
         title="Modül Lisansları"
         icon={<Settings size={24} />}
       />

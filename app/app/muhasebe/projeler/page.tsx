@@ -34,9 +34,9 @@ export default function ProjelerPage() {
   return (
     <>
       <PageBanner
+        mode="list"
         title="Proje Özeti"
         icon={<FolderOpen size={24} />}
-        onAddClick={undefined}
       />
 
       {/* Top KPI */}

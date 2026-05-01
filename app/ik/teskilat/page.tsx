@@ -10,9 +10,9 @@ export default function TeskilatPage() {
   return (
     <div className="space-y-6">
       <PageBanner
+        mode="list"
         title="Teşkilat Şeması"
         icon={<Building2 size={24} />}
-        onAddClick={undefined}
       />
 
       {/* Teşkilat şeması burada gösterilecek */}

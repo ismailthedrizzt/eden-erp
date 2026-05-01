@@ -36,6 +36,7 @@ export default function IslemlerPage() {
       <IslemModal open={modalOpen} onClose={() => setModalOpen(false)} />
 
       <PageBanner
+        mode="list"
         title="Tüm İşlemler"
         icon={<Receipt size={24} />}
         onAddClick={() => setModalOpen(true)}
