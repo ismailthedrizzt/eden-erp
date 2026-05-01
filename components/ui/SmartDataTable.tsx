@@ -1161,21 +1161,14 @@ export function SmartDataTable<T extends { id: string }>({
                   {visibleColumns.map(col => (
                     <td 
                       key={col.key} 
-                      className={cn(
-                        "px-4 py-3 text-gray-900 dark:text-gray-100 border-r border-gray-100 dark:border-gray-800 last:border-r-0 text-center pointer-events-none",
-                        col.calculatedWidth && col.calculatedWidth < 100 && "text-xs",
-                        col.calculatedWidth && col.calculatedWidth >= 100 && col.calculatedWidth < 150 && "text-sm",
-                        (!col.calculatedWidth || col.calculatedWidth >= 150) && "text-base"
-                      )}
+                      className="px-2 py-2 text-sm text-gray-900 dark:text-gray-100 border-r border-gray-100 dark:border-gray-800 last:border-r-0 text-center whitespace-nowrap"
                       style={{ 
-                        width: col.calculatedWidth || col.width || 150,
-                        maxWidth: col.calculatedWidth || col.width || 150,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap'
+                        width: col.type === 'image' ? 60 : (col.width || 'auto'),
+                        minWidth: col.type === 'image' ? 60 : (col.key === 'kisa_unvan' || col.key === 'ad' ? 120 : 80),
+                        maxWidth: col.type === 'image' ? 60 : 250
                       }}
                     >
-                      <div className="pointer-events-auto" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex items-center justify-center h-full">
                         {renderCellValue(col, getNestedValue(row, col.key), row)}
                       </div>
                     </td>
