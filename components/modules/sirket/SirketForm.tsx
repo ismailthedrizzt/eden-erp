@@ -914,7 +914,7 @@ export function SirketForm({
                           className="w-full px-3 py-2 text-sm border rounded-md bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700"
                         >
                           <option value="">Seçin...</option>
-                          {field.options?.map(opt => (
+                          {field.options?.map((opt: { value: string; label: string }) => (
                             <option key={opt.value} value={opt.value}>{opt.label}</option>
                           ))}
                         </select>
