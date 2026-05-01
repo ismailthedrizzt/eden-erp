@@ -136,11 +136,12 @@ export default function PersonelDetayPage() {
   return (
     <>
       <PageBanner
+        mode="form"
         title={fullName || 'Personel Detayı'}
         subtitle={personel.kadro?.unvan || personel.birim?.ad || undefined}
         icon={<User size={24} />}
-        onAddClick={() => router.push('/app/ik/personel')}
-        addButtonText="Listeye Dön"
+        onBackClick={() => router.push('/app/ik/personel')}
+        backButtonText="Listeye Dön"
       />
 
       {toast && (
