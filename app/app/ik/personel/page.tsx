@@ -410,6 +410,7 @@ export default function PersonelYonetimPage() {
   return (
     <div className="relative">
       <PageBanner
+        mode="list"
         title="Çalışanlar"
         subtitle="Personel kayıtlarını yönetin"
         icon={<Users size={24} />}
