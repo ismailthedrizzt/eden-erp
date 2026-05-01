@@ -228,11 +228,11 @@ export function ImageSlotUploader({
     if (e.key === 'Escape') setPreviewImage(null)
   }, [handlePrevious, handleNext])
 
-  // Compact A4 aspect ratio style (half size)
+  // A4 aspect ratio style
   const containerStyle = {
     aspectRatio: '1/1.414',
-    maxWidth: '120px',
-    minHeight: '85px'
+    maxWidth: '144px',
+    minHeight: '102px'
   }
 
   return (
