@@ -264,15 +264,6 @@ export default function SirketlerPage() {
           data={tableData}
           loading={loading}
           onRowClick={handleRowClick}
-          entityName="Şirket"
-          groupByCategory
-          showExport
-          columnSelector
-          views={{
-            varsayilan: { name: 'Varsayılan', columns: ['kisa_unvan', 'ticari_unvan', 'vkn_tckn', 'vergi_dairesi', 'adres_ozet', 'is_active'] },
-            iletisim: { name: 'İletişim', columns: ['kisa_unvan', 'telefon', 'email', 'adres_ozet', 'is_active'] },
-            vergi: { name: 'Vergi', columns: ['kisa_unvan', 'vkn_tckn', 'vergi_dairesi', 'sirket_turu', 'is_active'] }
-          }}
           defaultView="list"
         />
 
