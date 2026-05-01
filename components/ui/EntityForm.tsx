@@ -85,6 +85,9 @@ export interface EntityFormProps {
   
   /** Saving state */
   saving?: boolean
+
+  /** Deleting state */
+  deleting?: boolean
   
   /** Whether the user has edit permission (future: auth integration) */
   canEdit?: boolean
@@ -100,6 +103,9 @@ export interface EntityFormProps {
   
   /** Cancel/close handler */
   onCancel: () => void
+
+  /** Delete handler - only for view/edit modes */
+  onDelete?: () => Promise<void> | void
   
   /** Mode change handler (view -> edit) */
   onModeChange?: (mode: FormMode) => void
