@@ -1163,7 +1163,7 @@ export function SmartDataTable<T extends { id: string }>({
                     <td 
                       key={col.key} 
                       className={cn(
-                        "px-4 py-3 text-gray-900 dark:text-gray-100 border-r border-gray-100 dark:border-gray-800 last:border-r-0 text-center",
+                        "px-4 py-3 text-gray-900 dark:text-gray-100 border-r border-gray-100 dark:border-gray-800 last:border-r-0 text-center pointer-events-none",
                         col.calculatedWidth && col.calculatedWidth < 100 && "text-xs",
                         col.calculatedWidth && col.calculatedWidth >= 100 && col.calculatedWidth < 150 && "text-sm",
                         (!col.calculatedWidth || col.calculatedWidth >= 150) && "text-base"
@@ -1176,11 +1176,19 @@ export function SmartDataTable<T extends { id: string }>({
                         whiteSpace: 'nowrap'
                       }}
                     >
-                      {renderCellValue(col, getNestedValue(row, col.key), row)}
+                      <div className="pointer-events-auto" onClick={(e) => e.stopPropagation()}>
+                        {renderCellValue(col, getNestedValue(row, col.key), row)}
+                      </div>
                     </td>
                   ))}
                   <td className="px-4 py-3">
-                    <button className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">
+                    <button 
+                      className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded pointer-events-auto"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        // Action menu logic here
+                      }}
+                    >
                       <MoreHorizontal size={16} className="text-gray-400" />
                     </button>
                   </td>
