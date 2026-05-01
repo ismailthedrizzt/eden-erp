@@ -26,7 +26,7 @@ import {
   FileText,
   File,
   FileSpreadsheet,
-  FilePresentation,
+  Presentation,
   FileArchive,
   FileType,
   X,
@@ -106,13 +106,13 @@ const fileTypeConfig: Record<string, { icon: React.ElementType; color: string; b
     label: 'XLSX'
   },
   'application/vnd.ms-powerpoint': { 
-    icon: FilePresentation, 
+    icon: Presentation, 
     color: 'text-orange-600', 
     bgColor: 'bg-orange-50 dark:bg-orange-900/20',
     label: 'PPT'
   },
   'application/vnd.openxmlformats-officedocument.presentationml.presentation': { 
-    icon: FilePresentation, 
+    icon: Presentation, 
     color: 'text-orange-600', 
     bgColor: 'bg-orange-50 dark:bg-orange-900/20',
     label: 'PPTX'

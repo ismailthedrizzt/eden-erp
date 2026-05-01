@@ -14,7 +14,7 @@
 
 import { useState } from 'react'
 import { DocumentSlotUploader, DocumentSlot, SlotDocument } from '@/components/ui/DocumentSlotUploader'
-import { ArrowLeft, FileText, FileSpreadsheet, FilePresentation, FileArchive } from 'lucide-react'
+import { ArrowLeft, FileText, FileSpreadsheet, Presentation, FileArchive } from 'lucide-react'
 import Link from 'next/link'
 
 // Demo slots
@@ -113,7 +113,7 @@ export default function DocumentSlotUploaderDemo() {
               bgColor="bg-green-50 dark:bg-green-900/20" 
             />
             <FileTypeBadge 
-              icon={FilePresentation} 
+              icon={Presentation} 
               label="PowerPoint" 
               color="text-orange-600" 
               bgColor="bg-orange-50 dark:bg-orange-900/20" 
