@@ -41,10 +41,10 @@ export default function BorclarPage() {
   return (
     <>
       <PageBanner
+        mode="list"
         title="Borç Takip"
         subtitle={`Toplam açık borç: ${formatTRY(toplamBorc)}`}
         icon={<DollarSign size={24} />}
-        onAddClick={undefined}
       />
 
       {/* Borç Kartları */}
