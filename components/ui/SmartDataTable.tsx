@@ -619,8 +619,8 @@ export function SmartDataTable<T extends { id: string }>({
     if (col.render) return col.render(value, row)
     
     if (col.type === 'image') {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const r = row as any
+      // @ts-ignore - dynamic property access on generic type
+      const r = row as Record<string, any>
       const imageUrl = value || r?.profileImage || r?.image || r?.photo || r?.avatar
       return (
         <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center flex-shrink-0">
