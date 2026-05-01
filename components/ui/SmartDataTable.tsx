@@ -1144,7 +1144,7 @@ export function SmartDataTable<T extends { id: string }>({
                     </th>
                   )
                 })}
-                <th className="px-4 py-3 w-10"></th>
+                <th className="px-4 py-3 w-10 text-center text-xs text-gray-500 dark:text-gray-400 font-medium">İşlem</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
