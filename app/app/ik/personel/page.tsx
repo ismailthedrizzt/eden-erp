@@ -424,25 +424,25 @@ export default function PersonelYonetimPage() {
       return `${selectedPersonel.ad || ''} ${selectedPersonel.soyad || ''}`.trim()
     }
     
-    const modeTitles: Record<typeof pageState, string> = {
-      create: 'Yeni Personel',
-      view: getPersonelName() || 'Personel Detayı',
-      edit: getPersonelName() || 'Personel Düzenle',
-      list: ''
-    }
+    const personelName = getPersonelName()
     
-    const modeSubtitles: Record<typeof pageState, string> = {
+    const modeTitles = {
+      create: 'Yeni Personel',
+      view: personelName || 'Personel Detayı',
+      edit: personelName || 'Personel Düzenle'
+    } as const
+    
+    const modeSubtitles = {
       create: 'Yeni personel kaydı oluştur',
       view: 'Personel bilgilerini görüntüle',
-      edit: 'Personel bilgilerini güncelle',
-      list: ''
-    }
+      edit: 'Personel bilgilerini güncelle'
+    } as const
     
     return {
       mode: 'form' as const,
       formMode: formMode,
-      title: modeTitles[pageState],
-      subtitle: modeSubtitles[pageState],
+      title: modeTitles[pageState as keyof typeof modeTitles],
+      subtitle: modeSubtitles[pageState as keyof typeof modeSubtitles],
       onBackClick: () => setPageState('list')
     }
   }
