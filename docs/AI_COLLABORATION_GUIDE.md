@@ -450,6 +450,115 @@ Example warning response:
 
 ---
 
+## ⚠️ CRITICAL: Component API Verification
+
+**NEVER assume prop names. ALWAYS check component source first.**
+
+### High-Risk Components (Frequent Mistakes)
+
+#### 1. PageBanner - Common Errors
+
+```typescript
+// ❌ WRONG - These props DO NOT EXIST:
+<PageBanner
+  onActionClick={...}     // WRONG - use onAddClick
+  actionLabel="..."        // WRONG - use addButtonText  
+  onNewClick={...}        // WRONG - use onAddClick
+  mode="view"             // WRONG - use 'form' + formMode
+/>
+
+// ✅ CORRECT:
+<PageBanner
+  mode="list"             // or "form"
+  onAddClick={...}        // list mode
+  addButtonText="..."
+/>
+
+// ✅ CORRECT for View/Edit:
+<PageBanner
+  mode="form"
+  formMode="view"         // "create" | "view" | "edit"
+  onBackClick={...}
+/>
+```
+
+**Check**: `components/ui/PageBanner.tsx`
+
+#### 2. SmartDataTable - Common Errors
+
+```typescript
+// ❌ WRONG - These props DO NOT EXIST:
+<SmartDataTable
+  entityName="..."        // WRONG - not used
+  groupByCategory         // WRONG - not a prop
+  showExport              // WRONG - built-in feature
+  columnSelector          // WRONG - built-in feature
+  views={{...}}           // WRONG - not supported
+  defaultView="default"   // WRONG - use "list" or "card"
+/>
+
+// ✅ CORRECT:
+<SmartDataTable
+  data={...}
+  columns={...}
+  defaultView="list"      // "list" | "card"
+  onRowClick={...}
+/>
+```
+
+**Check**: `components/ui/SmartDataTable.tsx`
+
+#### 3. EntityForm - Common Errors
+
+```typescript
+// ❌ WRONG:
+<EntityForm
+  entityName="..."        // Use entityNameSingular
+  heroTitle="..."         // Not needed
+  onAction={...}          // Use onSave
+/>
+
+// ✅ CORRECT:
+<EntityForm
+  mode="create"           // "create" | "view" | "edit"
+  entityName="Şirket"
+  entityNameSingular="Şirket"
+  heroFields={[...]}
+  tabs={[...]}
+  onSave={...}
+  onCancel={...}
+/>
+```
+
+**Check**: `components/ui/EntityForm.tsx`
+
+### Verification Checklist
+
+Before using ANY component:
+
+1. **Open the component file** (Ctrl+Click on import)
+2. **Read the interface definition** at the top
+3. **Copy exact prop names**
+4. **Check for type unions** (e.g., `'list' | 'card'`)
+5. **Note required vs optional props**
+
+### Template References
+
+- `docs/templates/PageBanner-API.md` - Complete API reference
+- `docs/templates/SmartDataTable-API.md` - Complete API reference
+- `docs/templates/ERPPageTemplate-UPDATED.md` - Full page pattern
+
+### Build-Blocking Mistakes Log
+
+| Date | Component | Mistake | Status |
+|------|-----------|---------|--------|
+| 2024-05-01 | PageBanner | `mode="view"` | Fixed |
+| 2024-05-01 | PageBanner | `onActionClick` | Fixed |
+| 2024-05-01 | SmartDataTable | `entityName`, `views` | Fixed |
+| 2024-05-01 | SmartDataTable | `defaultView="default"` | Fixed |
+
+---
+
 **Last Updated**: 2024-05-01
 **Maintained by**: AI Assistants + Human Review
 **Enforcement**: STRICT - All AI must follow and warn on conflicts
