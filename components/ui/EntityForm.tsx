@@ -146,7 +146,7 @@ function FieldHistoryIndicator({ history }: { history?: HistoryEntry[] }) {
               <div key={idx} className="text-xs">
                 <span className="text-gray-500">{new Date(entry.date).toLocaleDateString('tr-TR')}</span>
                 <span className="mx-1 text-gray-400">→</span>
-                <span className="text-gray-900 dark:text-gray-100 font-medium">"{entry.value}"</span>
+                <span className="text-gray-900 dark:text-gray-100 font-medium">&quot;{entry.value}&quot;</span>
                 {entry.user && (
                   <span className="block text-gray-400 mt-0.5">by {entry.user}</span>
                 )}
