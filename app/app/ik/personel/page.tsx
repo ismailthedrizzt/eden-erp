@@ -407,15 +407,55 @@ export default function PersonelYonetimPage() {
   const formMode: FormMode = pageState === 'create' ? 'create' : 
                             pageState === 'edit' ? 'edit' : 'view'
 
+  // Banner configuration based on page state
+  const getBannerConfig = () => {
+    if (pageState === 'list') {
+      return {
+        mode: 'list' as const,
+        title: 'Çalışanlar',
+        subtitle: 'Personel kayıtlarını yönetin',
+        onAddClick: handleAddClick,
+        addButtonText: 'Ekle'
+      }
+    }
+    
+    const modeTitles: Record<typeof pageState, string> = {
+      create: 'Yeni Personel',
+      view: selectedPersonel?.ad_soyad || 'Personel Detayı',
+      edit: selectedPersonel?.ad_soyad || 'Personel Düzenle',
+      list: ''
+    }
+    
+    const modeSubtitles: Record<typeof pageState, string> = {
+      create: 'Yeni personel kaydı oluştur',
+      view: 'Personel bilgilerini görüntüle',
+      edit: 'Personel bilgilerini güncelle',
+      list: ''
+    }
+    
+    return {
+      mode: 'form' as const,
+      formMode: formMode,
+      title: modeTitles[pageState],
+      subtitle: modeSubtitles[pageState],
+      onBackClick: () => setPageState('list')
+    }
+  }
+
+  const bannerConfig = getBannerConfig()
+
   return (
     <div className="relative">
       <PageBanner
-        mode="list"
-        title="Çalışanlar"
-        subtitle="Personel kayıtlarını yönetin"
+        mode={bannerConfig.mode}
+        {...(bannerConfig.mode === 'form' && { formMode: (bannerConfig as any).formMode })}
+        title={bannerConfig.title}
+        subtitle={bannerConfig.subtitle}
         icon={<Users size={24} />}
-        onAddClick={handleAddClick}
-        addButtonText="Ekle"
+        {...(bannerConfig.mode === 'list' 
+          ? { onAddClick: (bannerConfig as any).onAddClick, addButtonText: (bannerConfig as any).addButtonText }
+          : { onBackClick: (bannerConfig as any).onBackClick }
+        )}
       />
 
       {toast && (
