@@ -283,13 +283,12 @@ export default function SirketlerPage() {
   return (
     <div className="space-y-6">
       <PageBanner
-        mode={pageState === 'view' ? 'view' : 'form'}
+        mode="form"
+        formMode={pageState === 'view' ? 'view' : pageState === 'edit' ? 'edit' : 'create'}
         title={getBannerTitle()}
         subtitle={getBannerSubtitle()}
         icon={<Building2 size={24} />}
         onBackClick={handleBackToList}
-        onActionClick={pageState === 'view' ? () => setPageState('edit') : undefined}
-        actionLabel={pageState === 'view' ? 'Düzenle' : undefined}
       />
 
       {formError && (
