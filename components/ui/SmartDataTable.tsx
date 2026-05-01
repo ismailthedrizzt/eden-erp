@@ -1154,12 +1154,9 @@ export function SmartDataTable<T extends { id: string }>({
                 <tr
                   key={row.id}
                   className={cn(
-                    "hover:bg-gray-50 dark:hover:bg-gray-700/30 transition-colors",
                     onRowClick && "cursor-pointer"
                   )}
                   onClick={() => onRowClick?.(row)}
-                  onMouseEnter={() => setHoveredRow(row.id)}
-                  onMouseLeave={() => setHoveredRow(null)}
                 >
                   {visibleColumns.map(col => (
                     <td 
