@@ -56,6 +56,12 @@ export interface Sirket {
   created_at: string
   updated_at: string
   created_by: string
+  
+  // Related Entities (for form handling)
+  ortaklar?: SirketOrtak[]
+  temsilciler?: SirketTemsilci[]
+  logolar?: SirketLogo[]
+  dokumanlar?: SirketDokuman[]
 }
 
 export interface SirketOrtak {

@@ -111,10 +111,10 @@ export function SirketForm({
   // Extended form data with arrays
   const [formData, setFormData] = useState<Record<string, any>>({
     ...sirket,
-    ortaklar: sirket?.['ortaklar'] || [],
-    temsilciler: sirket?.['temsilciler'] || [],
-    logolar: sirket?.['logolar'] || [],
-    dokumanlar: sirket?.['dokumanlar'] || []
+    ortaklar: sirket?.ortaklar || [],
+    temsilciler: sirket?.temsilciler || [],
+    logolar: sirket?.logolar || [],
+    dokumanlar: sirket?.dokumanlar || []
   })
 
   const isReadOnly = mode === 'view'
