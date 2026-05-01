@@ -51,7 +51,7 @@ export default function MuhasebeDashboard() {
         title="Muhasebe Dashboard"
         icon={<BarChart3 size={24} />}
         onAddClick={() => setModalOpen(true)}
-        addButtonText="Yeni İşlem"
+        addButtonText="Ekle"
       />
 
       {/* KPI */}

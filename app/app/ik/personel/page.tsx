@@ -415,7 +415,7 @@ export default function PersonelYonetimPage() {
         subtitle="Personel kayıtlarını yönetin"
         icon={<Users size={24} />}
         onAddClick={handleAddClick}
-        addButtonText="Yeni Personel"
+        addButtonText="Ekle"
       />
 
       {toast && (
@@ -438,7 +438,6 @@ export default function PersonelYonetimPage() {
           <SmartDataTable<PersonelTableRow>
             data={tableData}
             columns={columns}
-            title="Personel Listesi"
             storageKey="personel-list"
             widgets={widgets}
             defaultView="list"

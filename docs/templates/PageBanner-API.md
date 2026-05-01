@@ -47,6 +47,19 @@ export interface PageBannerProps {
 ## Usage Examples
 
 ### List Mode
+
+**⚠️ UI Rule: addButtonText is always "Ekle" (standardized across all pages)**
+
+```tsx
+// ❌ WRONG - Custom button text
+addButtonText="Yeni Personel"
+addButtonText="Yeni Şirket"
+addButtonText="Yeni İşlem"
+
+// ✅ CORRECT - Standard text
+addButtonText="Ekle"
+```
+
 ```tsx
 <PageBanner
   mode="list"
@@ -54,7 +67,7 @@ export interface PageBannerProps {
   subtitle="Tüm çalışanlar"
   icon={<Users size={24} />}
   onAddClick={() => setPageState('create')}
-  addButtonText="Yeni Personel"
+  addButtonText="Ekle"
 />
 ```
 

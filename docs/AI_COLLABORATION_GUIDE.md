@@ -548,6 +548,56 @@ Before using ANY component:
 - `docs/templates/SmartDataTable-API.md` - Complete API reference
 - `docs/templates/ERPPageTemplate-UPDATED.md` - Full page pattern
 
+### UI Design Rules
+
+| Rule | Description | Enforcement |
+|------|-------------|-------------|
+| **No Duplicate Titles** | SmartDataTable should NOT have `title` prop when PageBanner is present | STRICT |
+| **Action Column Visibility** | SmartDataTable action column only shows when `onRowClick` is provided | REQUIRED |
+| **PageBanner Pattern** | Use `mode="list"` with `onAddClick` OR `mode="form"` with `onBackClick` | STRICT |
+| **Standardized Add Button** | `addButtonText` is always "Ekle" on all pages (no customization) | STRICT |
+
+**Why "Ekle" is Standardized?**
+- Consistency across all ERP pages
+- Users learn the pattern once, applies everywhere
+- PageBanner title already provides context (e.g., "Çalışanlar" → Add implies adding a personel)
+- Prevents visual clutter with varying button text lengths
+
+**Correct Pattern:**
+```tsx
+// All pages use the same text
+<PageBanner
+  title="Çalışanlar"           // Context here
+  addButtonText="Ekle"        // Always "Ekle"
+/>
+
+<PageBanner
+  title="Şirketler"            // Different context
+  addButtonText="Ekle"        // Same button text
+/>
+
+**Why No Duplicate Titles?**
+- PageBanner already defines the page content with its title
+- SmartDataTable having a separate title creates visual redundancy
+- Example: PageBanner says "Çalışanlar", SmartDataTable should NOT say "Personel Listesi"
+
+**Correct Pattern:**
+```tsx
+// PageBanner provides the page title
+<PageBanner
+  mode="list"
+  title="Çalışanlar"
+  onAddClick={handleAdd}
+/>
+
+// SmartDataTable has NO title prop
+<SmartDataTable
+  data={data}
+  columns={columns}
+  // ❌ NO title prop here
+/>
+```
+
 ### Build-Blocking Mistakes Log
 
 | Date | Component | Mistake | Status |

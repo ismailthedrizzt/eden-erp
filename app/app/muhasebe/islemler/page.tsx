@@ -40,7 +40,7 @@ export default function IslemlerPage() {
         title="Tüm İşlemler"
         icon={<Receipt size={24} />}
         onAddClick={() => setModalOpen(true)}
-        addButtonText="Yeni İşlem"
+        addButtonText="Ekle"
       />
 
       {/* Filtreler */}

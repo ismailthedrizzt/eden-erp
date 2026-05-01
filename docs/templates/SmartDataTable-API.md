@@ -77,6 +77,17 @@ export interface ColumnDef {
 
 ## Usage Examples
 
+### ⚠️ UI Rule: No title when PageBanner is present
+```tsx
+// ❌ WRONG - Duplicate title
+<PageBanner title="Çalışanlar" ... />
+<SmartDataTable title="Personel Listesi" ... />  // ❌ Don't do this!
+
+// ✅ CORRECT - PageBanner provides the title
+<PageBanner title="Çalışanlar" ... />
+<SmartDataTable ... />  // ✅ No title prop
+```
+
 ### Basic Usage
 ```tsx
 <SmartDataTable

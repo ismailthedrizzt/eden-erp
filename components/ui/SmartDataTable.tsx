@@ -1144,7 +1144,9 @@ export function SmartDataTable<T extends { id: string }>({
                     </th>
                   )
                 })}
-                <th className="px-4 py-3 w-10 text-center text-xs text-gray-500 dark:text-gray-400 font-medium">İşlem</th>
+                {onRowClick && (
+                  <th className="px-4 py-3 w-10 text-center text-xs text-gray-500 dark:text-gray-400 font-medium">İşlem</th>
+                )}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
@@ -1181,17 +1183,19 @@ export function SmartDataTable<T extends { id: string }>({
                       </div>
                     </td>
                   ))}
-                  <td className="px-4 py-3">
-                    <button 
-                      className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded pointer-events-auto"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        // Action menu logic here
-                      }}
-                    >
-                      <MoreHorizontal size={16} className="text-gray-400" />
-                    </button>
-                  </td>
+                  {onRowClick && (
+                    <td className="px-4 py-3">
+                      <button 
+                        className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded pointer-events-auto"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          // Action menu logic here
+                        }}
+                      >
+                        <MoreHorizontal size={16} className="text-gray-400" />
+                      </button>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>
@@ -1219,13 +1223,20 @@ export function SmartDataTable<T extends { id: string }>({
               <div
                 key={row.id}
                 onClick={() => onRowClick?.(row)}
-                onMouseEnter={() => setHoveredRow(row.id)}
-                onMouseLeave={() => setHoveredRow(null)}
-                className={cn(
-                  "bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden cursor-pointer",
-                  "hover:shadow-xl hover:border-blue-400 dark:hover:border-blue-600 transition-all duration-200"
-                )}
+                className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden cursor-pointer relative"
               >
+                {/* Action Button - Top Right */}
+                {onRowClick && (
+                  <button 
+                    className="absolute top-2 right-2 z-10 p-1.5 bg-white/80 dark:bg-gray-800/80 backdrop-blur rounded-full shadow-sm hover:bg-gray-100 dark:hover:bg-gray-700 pointer-events-auto"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      // Action menu logic here
+                    }}
+                  >
+                    <MoreHorizontal size={18} className="text-gray-500 dark:text-gray-400" />
+                  </button>
+                )}
                 <div className="flex">
                   {/* Large Image Area - 4x bigger (160x160) */}
                   <div className="w-40 h-40 flex-shrink-0 bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-900/30 dark:to-indigo-900/30 flex items-center justify-center relative overflow-hidden">

@@ -30,7 +30,7 @@ export default function HesaplarPage() {
         title="Hesaplar"
         icon={<CreditCard size={24} />}
         onAddClick={()=>setModalOpen(true)}
-        addButtonText="Yeni İşlem"
+        addButtonText="Ekle"
       />
 
       {/* Filtre */}
