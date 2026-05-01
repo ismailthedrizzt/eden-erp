@@ -23,9 +23,11 @@
  * />
  */
 
-import { useState, useEffect, ReactNode } from 'react'
+import { useState, useEffect, ReactNode, useCallback } from 'react'
 import { Save, Loader2, Edit3, Eye, History, Clock } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { ImageSlotUploader, ImageSlot, SlotImage } from './ImageSlotUploader'
+import { DocumentSlotUploader, DocumentSlot, SlotDocument } from './DocumentSlotUploader'
 
 /** Historical value entry */
 export interface HistoryEntry {
@@ -95,8 +97,20 @@ export interface EntityFormProps {
   /** Whether the user has create permission (future: auth integration) */
   canCreate?: boolean
   
-  /** Custom hero left panel content (Photo, Documents, etc.) */
+  /** Custom hero left panel content (Photo, Documents, etc.) - overrides default */
   heroLeftPanel?: ReactNode
+  
+  /** Image slot configuration for default hero left panel */
+  imageSlot?: {
+    title?: string
+    required?: boolean
+  }
+  
+  /** Document slot configuration for default hero left panel */
+  documentSlot?: {
+    title?: string
+    required?: boolean
+  }
   
   /** Save handler - receives form data */
   onSave: (data: Record<string, any>, mode: FormMode) => Promise<void> | void
@@ -174,11 +188,15 @@ export function EntityForm({
   data,
   loading = false,
   saving = false,
+  deleting = false,
   canEdit = true,
   canCreate = true,
   heroLeftPanel,
+  imageSlot = { title: 'Fotoğraf', required: false },
+  documentSlot = { title: 'CV', required: false },
   onSave,
   onCancel,
+  onDelete,
   onModeChange,
   additionalActions,
   error,
@@ -190,6 +208,17 @@ export function EntityForm({
   const [activeTab, setActiveTab] = useState(tabs[0]?.id || '')
   const [formData, setFormData] = useState<Record<string, any>>({})
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
+  
+  // STANDARD FORM LAYOUT: Image and Document slots
+  const imageSlots: ImageSlot[] = [
+    { id: 'photo', title: imageSlot.title || 'Fotoğraf', required: imageSlot.required ?? false },
+  ]
+  const [images, setImages] = useState<SlotImage[]>([])
+  
+  const documentSlots: DocumentSlot[] = [
+    { id: 'cv', title: documentSlot.title || 'CV', required: documentSlot.required ?? false },
+  ]
+  const [documents, setDocuments] = useState<SlotDocument[]>([])
 
   // Sync with external mode changes
   useEffect(() => {
@@ -420,27 +449,35 @@ export function EntityForm({
       <div className="border-b border-gray-200 dark:border-gray-700 bg-gradient-to-br from-gray-50/50 to-transparent dark:from-gray-800/30">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 p-6">
           
-          {/* Left Panel - Photo/Documents */}
+          {/* Left Panel - STANDARD FORM LAYOUT: Photo (expected) + CV (optional) */}
           <div className="lg:col-span-1">
             {heroLeftPanel || (
-              <div className="space-y-4">
-                {/* Default Photo Upload Placeholder */}
-                <div className="aspect-square bg-gray-100 dark:bg-gray-800 rounded-xl border-2 border-dashed border-gray-300 dark:border-gray-700 flex flex-col items-center justify-center p-4">
-                  <div className="w-20 h-20 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center mb-2">
-                    <span className="text-3xl">👤</span>
-                  </div>
-                  <p className="text-xs text-gray-500 text-center">
-                    {isReadOnly ? 'Fotoğraf Yok' : 'Fotoğraf Yüklemek için Tıklayın'}
-                  </p>
+              <div className="flex flex-col gap-4">
+                {/* Image Slot - Expected but not required */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                    {imageSlot.title}
+                  </label>
+                  <ImageSlotUploader
+                    slots={imageSlots}
+                    images={images}
+                    onChange={setImages}
+                    readOnly={isReadOnly}
+                  />
                 </div>
                 
-                {/* Document Upload Area */}
-                {!isReadOnly && (
-                  <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-                    <p className="text-xs font-medium text-blue-700 dark:text-blue-400 mb-1">Dokümanlar</p>
-                    <p className="text-xs text-blue-600 dark:text-blue-500">CV, Diploma, vb.</p>
-                  </div>
-                )}
+                {/* Document Slot - Optional */}
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                    {documentSlot.title}
+                  </label>
+                  <DocumentSlotUploader
+                    slots={documentSlots}
+                    documents={documents}
+                    onChange={setDocuments}
+                    readOnly={isReadOnly}
+                  />
+                </div>
               </div>
             )}
           </div>

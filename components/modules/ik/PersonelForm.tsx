@@ -22,20 +22,17 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
   const isTeskilatSubmoduleActive = isSubmoduleActive('ik', 'teskilat')
   const isTeskilatActive = isIKActive && isTeskilatSubmoduleActive
 
-  // Image slots for employee photos
+  // STANDARD FORM LAYOUT: Left panel - Top: Image (photo, expected), Bottom: Document (CV, optional)
+  
+  // Image slot for employee photo (expected but not required)
   const imageSlots: ImageSlot[] = [
-    { id: 'photo', title: 'Employee Photo', required: true },
-    { id: 'id_card', title: 'ID Card', required: false },
-    { id: 'signature', title: 'Signature', required: false },
+    { id: 'photo', title: 'Fotoğraf', required: false },
   ]
   const [images, setImages] = useState<SlotImage[]>([])
 
-  // Document slots for employee documents
+  // Document slot for CV (optional)
   const documentSlots: DocumentSlot[] = [
-    { id: 'cv', title: 'CV / Resume', required: false },
-    { id: 'contract', title: 'Employment Contract', required: true },
-    { id: 'health_report', title: 'Health Report', required: false },
-    { id: 'education_docs', title: 'Education Documents', required: false },
+    { id: 'cv', title: 'CV', required: false },
   ]
   const [documents, setDocuments] = useState<SlotDocument[]>([])
 

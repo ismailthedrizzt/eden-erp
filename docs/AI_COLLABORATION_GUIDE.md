@@ -559,6 +559,7 @@ Before using ANY component:
 | **Image Components** | ONLY `ImageSlotUploader` for ALL image operations | STRICT |
 | **Document Components** | ONLY `DocumentSlotUploader` for ALL document operations | STRICT |
 | **User Avatar** | ONLY `UserAvatar` component for user photos/initials - NO custom avatar solutions | STRICT |
+| **Form Hero Layout** | Left panel: Top=ImageSlotUploader (expected, not required), Bottom=DocumentSlotUploader (optional) | STRICT |
 
 **Why "Ekle" is Standardized?**
 - Consistency across all ERP pages
