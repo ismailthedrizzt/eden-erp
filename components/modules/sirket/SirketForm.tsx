@@ -22,14 +22,15 @@ import { Building2, Briefcase, Users, Settings, Shield, Globe, FileText } from '
 import { cn } from '@/lib/utils'
 import { EntityForm, FormField, FormTab, FormMode } from '@/components/ui/EntityForm'
 import { LogoUploader, Logo } from './LogoUploader'
-import { DocumentLoader, YüklenenDokuman, SIRKET_DOKUMAN_TIPLERI } from './DocumentLoader'
+import { DocumentLoader, YüklenenDokuman } from './DocumentLoader'
 import type { Sirket, SirketOrtak, SirketTemsilci } from '@/types/sirket'
 import { 
   SIRKET_TURLERI, 
   TEHLIKE_SINIFLARI, 
   TEMSILCI_ROLLERI,
   PARA_BIRIMLERI,
-  DILLER 
+  DILLER,
+  SIRKET_DOKUMAN_TIPLERI 
 } from '@/types/sirket'
 
 interface SirketFormProps {

@@ -250,8 +250,7 @@ export default function SirketlerPage() {
           title={getBannerTitle()}
           subtitle={getBannerSubtitle()}
           icon={<Building2 size={24} />}
-          onActionClick={handleAddClick}
-          actionLabel="Yeni Şirket"
+          onAddClick={handleAddClick}
         />
 
         {listError && (
