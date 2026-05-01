@@ -47,6 +47,7 @@ export default function MuhasebeDashboard() {
       <IslemModal open={modalOpen} onClose={() => setModalOpen(false)} />
 
       <PageBanner
+        mode="list"
         title="Muhasebe Dashboard"
         icon={<BarChart3 size={24} />}
         onAddClick={() => setModalOpen(true)}
