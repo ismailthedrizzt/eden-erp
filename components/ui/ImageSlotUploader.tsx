@@ -228,11 +228,11 @@ export function ImageSlotUploader({
     if (e.key === 'Escape') setPreviewImage(null)
   }, [handlePrevious, handleNext])
 
-  // A4 aspect ratio style (1:1.414)
+  // Compact A4 aspect ratio style (half size)
   const containerStyle = {
     aspectRatio: '1/1.414',
-    maxWidth: '240px',
-    minHeight: '170px'
+    maxWidth: '120px',
+    minHeight: '85px'
   }
 
   return (
@@ -247,32 +247,32 @@ export function ImageSlotUploader({
         style={containerStyle}
       >
         {/* Header - Navigation & Title */}
-        <div className="flex items-center justify-between px-3 py-2 border-b border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50">
+        <div className="flex items-center justify-between px-2 py-1 border-b border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50">
           <button
             onClick={handlePrevious}
             disabled={displaySlots.length <= 1}
-            className="p-1 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            className="p-0.5 rounded hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
             aria-label="Previous slot"
           >
-            <ChevronLeft size={18} className="text-gray-600 dark:text-gray-400" />
+            <ChevronLeft size={14} className="text-gray-600 dark:text-gray-400" />
           </button>
           
-          <div className="flex flex-col items-center">
-            <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+          <div className="flex flex-col items-center min-w-0 px-1">
+            <span className="text-xs font-medium text-gray-900 dark:text-gray-100 truncate max-w-[70px]">
               {currentSlot.title}
             </span>
             {currentSlot.required && (
-              <span className="text-xs text-red-500">*Required</span>
+              <span className="text-[10px] text-red-500">*</span>
             )}
           </div>
           
           <button
             onClick={handleNext}
             disabled={displaySlots.length <= 1}
-            className="p-1 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            className="p-0.5 rounded hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
             aria-label="Next slot"
           >
-            <ChevronRight size={18} className="text-gray-600 dark:text-gray-400" />
+            <ChevronRight size={14} className="text-gray-600 dark:text-gray-400" />
           </button>
         </div>
 
@@ -364,34 +364,34 @@ export function ImageSlotUploader({
             </div>
           ) : (
             // Empty State
-            <div className="flex flex-col items-center gap-3 p-6 text-center">
+            <div className="flex flex-col items-center gap-2 p-3 text-center">
               {currentSlot.id === '__extra__' ? (
                 <>
-                  <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                    <Plus size={24} className="text-blue-600 dark:text-blue-400" />
+                  <div className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                    <Plus size={14} className="text-blue-600 dark:text-blue-400" />
                   </div>
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Add Other Image
+                  <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
+                    Add Other
                   </span>
                   <button
                     onClick={() => setShowExtraSlotInput(true)}
-                    className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                    className="text-[10px] text-blue-600 hover:text-blue-700 font-medium"
                   >
-                    + Custom Name
+                    + Name
                   </button>
                 </>
               ) : (
                 <>
-                  <div className="w-14 h-14 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
-                    <ImageIcon size={28} className="text-gray-400" />
+                  <div className="w-7 h-7 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                    <ImageIcon size={16} className="text-gray-400" />
                   </div>
-                  <div className="flex flex-col items-center gap-1">
-                    <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                      Upload Image
+                  <div className="flex flex-col items-center gap-0.5">
+                    <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+                      Upload
                     </span>
                     {!readOnly && (
-                      <span className="text-xs text-gray-400">
-                        Drag & drop or click to browse
+                      <span className="text-[10px] text-gray-400">
+                        Drop or click
                       </span>
                     )}
                   </div>
@@ -419,13 +419,13 @@ export function ImageSlotUploader({
 
         {/* Bottom - Upload Button */}
         {!readOnly && !hasImage && currentSlot.id !== '__extra__' && (
-          <div className="px-3 py-3 border-t border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800">
+          <div className="px-2 py-2 border-t border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800">
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="w-full flex items-center justify-center gap-2 py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
+              className="w-full flex items-center justify-center gap-1 py-1.5 px-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded transition-colors"
             >
-              <Upload size={16} />
-              Choose File
+              <Upload size={12} />
+              Upload
             </button>
           </div>
         )}
