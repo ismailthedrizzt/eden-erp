@@ -88,3 +88,12 @@ export const PROJE_GRAFIK_RENKLERI: Record<string, string> = {
 export const TARAF_RENKLERI: Record<string, string> = {
   Eden: '#216688', 'İsmail ILGAR': '#c49a10', Canberk: '#7c3aed', Ergün: '#6b7280',
 }
+
+// Dosya boyutunu formatlama (KB, MB, GB)
+export function formatFileSize(bytes: number): string {
+  if (bytes === 0) return '0 B'
+  const k = 1024
+  const sizes = ['B', 'KB', 'MB', 'GB', 'TB']
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i]
+}

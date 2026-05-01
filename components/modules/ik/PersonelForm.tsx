@@ -1,11 +1,11 @@
 'use client'
 
 import { useState } from 'react'
-import { User, Phone, GraduationCap, Briefcase, Landmark, Camera, X, Plus, Building, Briefcase as Job, FileText } from 'lucide-react'
+import { User, Phone, GraduationCap, Briefcase, Landmark, X, Plus, Building, Briefcase as Job, FileText } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useModuleLicense } from '@/hooks/useModuleLicense'
-import { DocumentViewer } from '@/components/ui/DocumentViewer'
-import { DocumentUploader } from '@/components/ui/DocumentUploader'
+import { ImageSlotUploader, ImageSlot, SlotImage } from '@/components/ui/ImageSlotUploader'
+import { DocumentSlotUploader, DocumentSlot, SlotDocument } from '@/components/ui/DocumentSlotUploader'
 import { IBANInput } from '@/components/ui/IBANInput'
 import { Toast, ToastType } from '@/components/ui/Toast'
 
@@ -13,7 +13,6 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
   const [activeTab, setActiveTab] = useState('ozel')
   const [loading, setLoading] = useState(false)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
-  const [showDocumentViewer, setShowDocumentViewer] = useState(false)
   const [showHireModal, setShowHireModal] = useState(false)
   const [toast, setToast] = useState<{ type: ToastType; message: string } | null>(null)
   const { isModuleActive, isSubmoduleActive } = useModuleLicense()
@@ -22,6 +21,23 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
   const isIKActive = isModuleActive('ik')
   const isTeskilatSubmoduleActive = isSubmoduleActive('ik', 'teskilat')
   const isTeskilatActive = isIKActive && isTeskilatSubmoduleActive
+
+  // Image slots for employee photos
+  const imageSlots: ImageSlot[] = [
+    { id: 'photo', title: 'Employee Photo', required: true },
+    { id: 'id_card', title: 'ID Card', required: false },
+    { id: 'signature', title: 'Signature', required: false },
+  ]
+  const [images, setImages] = useState<SlotImage[]>([])
+
+  // Document slots for employee documents
+  const documentSlots: DocumentSlot[] = [
+    { id: 'cv', title: 'CV / Resume', required: false },
+    { id: 'contract', title: 'Employment Contract', required: true },
+    { id: 'health_report', title: 'Health Report', required: false },
+    { id: 'education_docs', title: 'Education Documents', required: false },
+  ]
+  const [documents, setDocuments] = useState<SlotDocument[]>([])
 
   const [formData, setFormData] = useState({
     fullname: '',
@@ -35,8 +51,6 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
     district: '',
     phones: [''],
     emails: [''],
-    photo: null as File | null,
-    cv: [] as File[],
     militaryStatus: '',
     militaryExemptionDate: '',
     disabilityStatus: '',
@@ -54,9 +68,7 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
     position: '',
     isActive: true,
     hireDate: '',
-    hireDocuments: [] as File[],
-    terminationDate: '',
-    terminationDocuments: [] as File[]
+    terminationDate: ''
   })
 
   const isTurkey = formData.nationality === 'TR'
@@ -150,38 +162,27 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
       {/* Fixed Hero Section */}
       <div className="bg-gray-50 dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
         <div className="flex flex-col md:flex-row gap-4 md:gap-6">
-          {/* Left Panel - Vertical Layout */}
-          <div className="w-full md:w-48 flex flex-col gap-4 items-center md:items-start">
-            {/* Photo Upload */}
-            <div className="relative group">
-              <div className="w-32 h-32 sm:w-40 sm:h-40 rounded-lg border-2 border-dashed border-gray-300 dark:border-gray-600 flex items-center justify-center bg-white dark:bg-gray-900 overflow-hidden">
-                {formData.photo ? (
-                  <img src={URL.createObjectURL(formData.photo)} alt="Fotoğraf" className="w-full h-full object-cover" />
-                ) : (
-                  <span className="text-gray-400 text-sm">Fotoğraf</span>
-                )}
-              </div>
-              <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg">
-                <label className="cursor-pointer">
-                  <Camera className="text-white" size={24} />
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => setFormData({ ...formData, photo: e.target.files?.[0] || null })}
-                  />
-                </label>
-              </div>
+          {/* Left Panel - Image & Document Slots */}
+          <div className="w-full md:w-64 flex flex-col gap-6 items-center md:items-start">
+            {/* Image Slot Uploader */}
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Fotoğraflar</label>
+              <ImageSlotUploader
+                slots={imageSlots}
+                images={images}
+                onChange={setImages}
+                allowExtraSlots={true}
+              />
             </div>
 
-            {/* CV Upload */}
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">CV Yükle</label>
-              <DocumentUploader
-                documents={formData.cv}
-                onDocumentsChange={(docs) => setFormData({ ...formData, cv: docs })}
-                accept=".pdf,.doc,.docx"
-                maxFiles={5}
+            {/* Document Slot Uploader */}
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Belgeler</label>
+              <DocumentSlotUploader
+                slots={documentSlots}
+                documents={documents}
+                onChange={setDocuments}
+                allowExtraSlots={true}
               />
             </div>
           </div>
@@ -943,16 +944,6 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
                 </div>
               </div>
 
-              {/* Termination Documents Upload */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">İşten Çıkış Belgeleri</label>
-                <DocumentUploader
-                  documents={formData.terminationDocuments}
-                  onDocumentsChange={(docs) => setFormData({ ...formData, terminationDocuments: docs })}
-                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                  maxFiles={10}
-                />
-              </div>
             </div>
           )}
         </div>
@@ -1020,16 +1011,6 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
                 </div>
               </div>
 
-              {/* Hire Documents Upload */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">İşe Giriş Belgeleri (Sözleşme vb.)</label>
-                <DocumentUploader
-                  documents={formData.hireDocuments}
-                  onDocumentsChange={(docs) => setFormData({ ...formData, hireDocuments: docs })}
-                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                  maxFiles={10}
-                />
-              </div>
             </div>
 
             <div className="flex items-center justify-end gap-3 p-4 border-t border-gray-200 dark:border-gray-700">
@@ -1090,13 +1071,6 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
         </button>
       </div>
 
-      {/* Document Viewer */}
-      {showDocumentViewer && (
-        <DocumentViewer
-          file={formData.cv}
-          onClose={() => setShowDocumentViewer(false)}
-        />
-      )}
 
       {/* Toast Notification */}
       {toast && (

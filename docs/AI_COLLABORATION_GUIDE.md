@@ -556,6 +556,8 @@ Before using ANY component:
 | **Action Column Visibility** | SmartDataTable action column only shows when `onRowClick` is provided | REQUIRED |
 | **PageBanner Pattern** | Use `mode="list"` with `onAddClick` OR `mode="form"` with `onBackClick` | STRICT |
 | **Standardized Add Button** | `addButtonText` is always "Ekle" on all pages (no customization) | STRICT |
+| **Image Components** | ONLY `ImageUploader` (single) or `MultiImageUploader` (multiple) - NO inline/custom solutions | STRICT |
+| **Document Components** | ONLY `DocumentUploader` for ALL document operations | STRICT |
 
 **Why "Ekle" is Standardized?**
 - Consistency across all ERP pages

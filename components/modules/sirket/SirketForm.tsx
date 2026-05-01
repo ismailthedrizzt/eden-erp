@@ -4,7 +4,7 @@
  * SirketForm - Şirket Form Bileşeni
  * 
  * Hero Alanı:
- * - Sol: LogoUploader + DocumentLoader
+ * - Sol: ImageSlotUploader (Logolar) + DocumentSlotUploader (Belgeler)
  * - Sağ: Kimlik, Tescil, Adres, İletişim grupları
  * 
  * Sekmeler:
@@ -20,8 +20,8 @@
 import { useState, useEffect } from 'react'
 import { Building2, Briefcase, Users, Settings, Shield, Globe, FileText } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { LogoUploader, Logo } from './LogoUploader'
-import { DocumentLoader, YüklenenDokuman } from './DocumentLoader'
+import { ImageSlotUploader, ImageSlot, SlotImage } from '@/components/ui/ImageSlotUploader'
+import { DocumentSlotUploader, DocumentSlot, SlotDocument } from '@/components/ui/DocumentSlotUploader'
 import type { Sirket, SirketOrtak, SirketTemsilci } from '@/types/sirket'
 import { 
   SIRKET_TURLERI, 
@@ -123,10 +123,24 @@ export function SirketForm({
   const [formData, setFormData] = useState<Record<string, any>>({
     ...sirket,
     ortaklar: sirket?.ortaklar || [],
-    temsilciler: sirket?.temsilciler || [],
-    logolar: sirket?.logolar || [],
-    dokumanlar: sirket?.dokumanlar || []
+    temsilciler: sirket?.temsilciler || []
   })
+
+  // Image slots for company logos
+  const imageSlots: ImageSlot[] = [
+    { id: 'logo_primary', title: 'Primary Logo', required: true },
+    { id: 'logo_dark', title: 'Dark Theme Logo', required: false },
+    { id: 'favicon', title: 'Favicon', required: false },
+  ]
+  const [images, setImages] = useState<SlotImage[]>([])
+
+  // Document slots for company documents
+  const documentSlots: DocumentSlot[] = SIRKET_DOKUMAN_TIPLERI.map(t => ({
+    id: t.value,
+    title: t.label,
+    required: t.required
+  }))
+  const [documents, setDocuments] = useState<SlotDocument[]>([])
 
   const isReadOnly = mode === 'view'
   const isCreate = mode === 'create'
@@ -139,23 +153,30 @@ export function SirketForm({
   const renderHero = () => (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
       {/* Left Panel - Logo & Documents */}
-      <div className="lg:col-span-3 space-y-4">
-        <LogoUploader
-          logolar={formData.logolar || []}
-          onChange={(logolar) => handleFieldChange('logolar', logolar)}
-          readOnly={isReadOnly}
-        />
+      <div className="lg:col-span-3 space-y-6">
+        {/* Image Slot Uploader */}
+        <div className="flex flex-col gap-2">
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Şirket Logoları</label>
+          <ImageSlotUploader
+            slots={imageSlots}
+            images={images}
+            onChange={setImages}
+            allowExtraSlots={true}
+            readOnly={isReadOnly}
+          />
+        </div>
         
-        <DocumentLoader
-          dokumanTipleri={SIRKET_DOKUMAN_TIPLERI.map(t => ({ 
-            value: t.value, 
-            label: t.label, 
-            required: t.required 
-          }))}
-          yuklenenDokumanlar={formData.dokumanlar || []}
-          onChange={(dokumanlar) => handleFieldChange('dokumanlar', dokumanlar)}
-          readOnly={isReadOnly}
-        />
+        {/* Document Slot Uploader */}
+        <div className="flex flex-col gap-2">
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Şirket Belgeleri</label>
+          <DocumentSlotUploader
+            slots={documentSlots}
+            documents={documents}
+            onChange={setDocuments}
+            allowExtraSlots={true}
+            readOnly={isReadOnly}
+          />
+        </div>
       </div>
 
       {/* Right Panel - Identity Groups */}

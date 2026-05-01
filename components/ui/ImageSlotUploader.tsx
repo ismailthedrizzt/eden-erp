@@ -1,0 +1,525 @@
+'use client'
+
+/**
+ * ImageSlotUploader - ERP Image Upload Component
+ * 
+ * A professional enterprise-grade image uploader for ERP systems.
+ * Supports multiple image slots with navigation, drag & drop, and preview.
+ * 
+ * @example
+ * <ImageSlotUploader
+ *   slots={[
+ *     { id: 'photo', title: 'Employee Photo', required: true },
+ *     { id: 'id_card', title: 'ID Card', required: true },
+ *     { id: 'signature', title: 'Signature', required: false },
+ *   ]}
+ *   images={images}
+ *   onChange={handleImagesChange}
+ * />
+ */
+
+import { useState, useRef, useCallback } from 'react'
+import { 
+  ChevronLeft, 
+  ChevronRight, 
+  Upload, 
+  Image as ImageIcon,
+  X,
+  ZoomIn,
+  Trash2,
+  RefreshCw,
+  Plus,
+  FileImage
+} from 'lucide-react'
+import { cn } from '@/lib/utils'
+
+export interface ImageSlot {
+  id: string
+  title: string
+  description?: string
+  required?: boolean
+  acceptedTypes?: string[]
+  maxSizeMB?: number
+}
+
+export interface SlotImage {
+  slotId: string
+  file?: File
+  previewUrl?: string
+  name?: string
+  size?: number
+  uploadedAt?: Date
+}
+
+interface ImageSlotUploaderProps {
+  /** Predefined image slots */
+  slots: ImageSlot[]
+  /** Current images in slots */
+  images: SlotImage[]
+  /** Callback when images change */
+  onChange: (images: SlotImage[]) => void
+  /** Allow adding extra slots beyond predefined */
+  allowExtraSlots?: boolean
+  /** Read-only mode (view only) */
+  readOnly?: boolean
+  /** Custom className */
+  className?: string
+}
+
+export function ImageSlotUploader({
+  slots,
+  images,
+  onChange,
+  allowExtraSlots = true,
+  readOnly = false,
+  className
+}: ImageSlotUploaderProps) {
+  const [currentIndex, setCurrentIndex] = useState(0)
+  const [isDragging, setIsDragging] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
+  const [isUploading, setIsUploading] = useState(false)
+  const [previewImage, setPreviewImage] = useState<SlotImage | null>(null)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [extraSlotName, setExtraSlotName] = useState('')
+  const [showExtraSlotInput, setShowExtraSlotInput] = useState(false)
+  
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const dropZoneRef = useRef<HTMLDivElement>(null)
+
+  // Combine predefined slots with extra slots from images
+  const allSlots: ImageSlot[] = [...slots]
+  const extraImages = images.filter(img => !slots.find(s => s.id === img.slotId))
+  extraImages.forEach(img => {
+    if (!allSlots.find(s => s.id === img.slotId)) {
+      allSlots.push({
+        id: img.slotId,
+        title: img.name || 'Other Image',
+        required: false
+      })
+    }
+  })
+
+  // Add "Other" slot if allowed
+  const displaySlots = allowExtraSlots 
+    ? [...allSlots, { id: '__extra__', title: 'Other Image', required: false }]
+    : allSlots
+
+  const currentSlot = displaySlots[currentIndex]
+  const currentImage = images.find(img => img.slotId === currentSlot.id)
+  const hasImage = !!currentImage?.previewUrl || !!currentImage?.file
+
+  const handlePrevious = useCallback(() => {
+    setCurrentIndex(prev => (prev > 0 ? prev - 1 : displaySlots.length - 1))
+  }, [displaySlots.length])
+
+  const handleNext = useCallback(() => {
+    setCurrentIndex(prev => (prev < displaySlots.length - 1 ? prev + 1 : 0))
+  }, [displaySlots.length])
+
+  const handleFileSelect = useCallback(async (file: File) => {
+    if (!currentSlot || currentSlot.id === '__extra__') return
+
+    // Validate file type
+    const acceptedTypes = currentSlot.acceptedTypes || ['image/jpeg', 'image/png', 'image/webp']
+    if (!acceptedTypes.includes(file.type)) {
+      alert(`Invalid file type. Accepted: ${acceptedTypes.join(', ')}`)
+      return
+    }
+
+    // Validate file size
+    const maxSizeMB = currentSlot.maxSizeMB || 5
+    if (file.size > maxSizeMB * 1024 * 1024) {
+      alert(`File too large. Maximum size: ${maxSizeMB}MB`)
+      return
+    }
+
+    setIsUploading(true)
+    setUploadProgress(0)
+
+    // Simulate upload progress
+    const progressInterval = setInterval(() => {
+      setUploadProgress(prev => {
+        if (prev >= 90) {
+          clearInterval(progressInterval)
+          return 90
+        }
+        return prev + 10
+      })
+    }, 100)
+
+    // Create preview URL
+    const previewUrl = URL.createObjectURL(file)
+
+    // Complete upload simulation
+    setTimeout(() => {
+      clearInterval(progressInterval)
+      setUploadProgress(100)
+      
+      const newImage: SlotImage = {
+        slotId: currentSlot.id,
+        file,
+        previewUrl,
+        name: file.name,
+        size: file.size,
+        uploadedAt: new Date()
+      }
+
+      const updatedImages = images.filter(img => img.slotId !== currentSlot.id)
+      onChange([...updatedImages, newImage])
+      
+      setIsUploading(false)
+      setUploadProgress(0)
+    }, 500)
+  }, [currentSlot, images, onChange])
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragging(false)
+    
+    const file = e.dataTransfer.files[0]
+    if (file && file.type.startsWith('image/')) {
+      handleFileSelect(file)
+    }
+  }, [handleFileSelect])
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragging(true)
+  }, [])
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault()
+    setIsDragging(false)
+  }, [])
+
+  const handleDelete = useCallback(() => {
+    if (!currentImage) return
+    
+    const updatedImages = images.filter(img => img.slotId !== currentSlot.id)
+    onChange(updatedImages)
+    setShowDeleteConfirm(false)
+  }, [currentImage, currentSlot, images, onChange])
+
+  const handleExtraSlotCreate = useCallback(() => {
+    if (!extraSlotName.trim()) return
+    
+    const newSlotId = `extra_${Date.now()}`
+    const newImage: SlotImage = {
+      slotId: newSlotId,
+      name: extraSlotName,
+      uploadedAt: new Date()
+    }
+    
+    onChange([...images, newImage])
+    setExtraSlotName('')
+    setShowExtraSlotInput(false)
+    
+    // Navigate to the new slot
+    const newIndex = displaySlots.findIndex(s => s.id === newSlotId)
+    if (newIndex >= 0) {
+      setCurrentIndex(newIndex)
+    }
+  }, [extraSlotName, images, onChange, displaySlots])
+
+  // Keyboard navigation
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'ArrowLeft') handlePrevious()
+    if (e.key === 'ArrowRight') handleNext()
+    if (e.key === 'Escape') setPreviewImage(null)
+  }, [handlePrevious, handleNext])
+
+  // A4 aspect ratio style (1:1.414)
+  const containerStyle = {
+    aspectRatio: '1/1.414',
+    maxWidth: '240px',
+    minHeight: '170px'
+  }
+
+  return (
+    <div 
+      className={cn("flex flex-col items-center gap-4", className)}
+      onKeyDown={handleKeyDown}
+      tabIndex={0}
+    >
+      {/* Main Card */}
+      <div 
+        className="relative w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden"
+        style={containerStyle}
+      >
+        {/* Header - Navigation & Title */}
+        <div className="flex items-center justify-between px-3 py-2 border-b border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50">
+          <button
+            onClick={handlePrevious}
+            disabled={displaySlots.length <= 1}
+            className="p-1 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            aria-label="Previous slot"
+          >
+            <ChevronLeft size={18} className="text-gray-600 dark:text-gray-400" />
+          </button>
+          
+          <div className="flex flex-col items-center">
+            <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+              {currentSlot.title}
+            </span>
+            {currentSlot.required && (
+              <span className="text-xs text-red-500">*Required</span>
+            )}
+          </div>
+          
+          <button
+            onClick={handleNext}
+            disabled={displaySlots.length <= 1}
+            className="p-1 rounded-md hover:bg-gray-200 dark:hover:bg-gray-700 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+            aria-label="Next slot"
+          >
+            <ChevronRight size={18} className="text-gray-600 dark:text-gray-400" />
+          </button>
+        </div>
+
+        {/* Center - Image Preview Area */}
+        <div
+          ref={dropZoneRef}
+          onDrop={!readOnly ? handleDrop : undefined}
+          onDragOver={!readOnly ? handleDragOver : undefined}
+          onDragLeave={!readOnly ? handleDragLeave : undefined}
+          className={cn(
+            "flex-1 flex flex-col items-center justify-center relative",
+            "bg-gray-50 dark:bg-gray-900/50",
+            isDragging && "bg-blue-50 dark:bg-blue-900/20 border-2 border-dashed border-blue-400"
+          )}
+          style={{ height: 'calc(100% - 100px)' }}
+        >
+          {hasImage ? (
+            // Uploaded State
+            <div className="relative w-full h-full group">
+              <img
+                src={currentImage?.previewUrl || currentImage?.file}
+                alt={currentSlot.title}
+                className="w-full h-full object-cover"
+              />
+              
+              {/* Hover Actions Overlay */}
+              {!readOnly && (
+                <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
+                  <button
+                    onClick={() => setPreviewImage(currentImage || null)}
+                    className="p-2 bg-white rounded-lg hover:bg-gray-100 transition-colors"
+                    title="View"
+                  >
+                    <ZoomIn size={20} className="text-gray-700" />
+                  </button>
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="p-2 bg-white rounded-lg hover:bg-gray-100 transition-colors"
+                    title="Replace"
+                  >
+                    <RefreshCw size={20} className="text-gray-700" />
+                  </button>
+                  <button
+                    onClick={() => setShowDeleteConfirm(true)}
+                    className="p-2 bg-white rounded-lg hover:bg-red-50 transition-colors"
+                    title="Delete"
+                  >
+                    <Trash2 size={20} className="text-red-600" />
+                  </button>
+                </div>
+              )}
+              
+              {/* Read-only View Button */}
+              {readOnly && (
+                <button
+                  onClick={() => setPreviewImage(currentImage || null)}
+                  className="absolute inset-0 flex items-center justify-center bg-black/0 hover:bg-black/40 transition-colors"
+                >
+                  <ZoomIn size={32} className="text-white opacity-0 hover:opacity-100 transition-opacity" />
+                </button>
+              )}
+            </div>
+          ) : currentSlot.id === '__extra__' && showExtraSlotInput ? (
+            // Extra Slot Name Input
+            <div className="flex flex-col items-center gap-3 p-4">
+              <input
+                type="text"
+                value={extraSlotName}
+                onChange={(e) => setExtraSlotName(e.target.value)}
+                placeholder="Enter image name..."
+                className="w-full px-3 py-2 text-sm border rounded-lg bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600"
+                autoFocus
+              />
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setShowExtraSlotInput(false)}
+                  className="px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-100 rounded-lg"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleExtraSlotCreate}
+                  disabled={!extraSlotName.trim()}
+                  className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                >
+                  Create
+                </button>
+              </div>
+            </div>
+          ) : (
+            // Empty State
+            <div className="flex flex-col items-center gap-3 p-6 text-center">
+              {currentSlot.id === '__extra__' ? (
+                <>
+                  <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                    <Plus size={24} className="text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Add Other Image
+                  </span>
+                  <button
+                    onClick={() => setShowExtraSlotInput(true)}
+                    className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+                  >
+                    + Custom Name
+                  </button>
+                </>
+              ) : (
+                <>
+                  <div className="w-14 h-14 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+                    <ImageIcon size={28} className="text-gray-400" />
+                  </div>
+                  <div className="flex flex-col items-center gap-1">
+                    <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                      Upload Image
+                    </span>
+                    {!readOnly && (
+                      <span className="text-xs text-gray-400">
+                        Drag & drop or click to browse
+                      </span>
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+
+          {/* Upload Progress */}
+          {isUploading && (
+            <div className="absolute inset-x-0 bottom-0 bg-white/90 dark:bg-gray-800/90 p-3">
+              <div className="flex items-center justify-between text-xs text-gray-600 mb-1">
+                <span>Uploading...</span>
+                <span>{uploadProgress}%</span>
+              </div>
+              <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-blue-600 rounded-full transition-all duration-300"
+                  style={{ width: `${uploadProgress}%` }}
+                />
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Bottom - Upload Button */}
+        {!readOnly && !hasImage && currentSlot.id !== '__extra__' && (
+          <div className="px-3 py-3 border-t border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800">
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="w-full flex items-center justify-center gap-2 py-2 px-4 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
+            >
+              <Upload size={16} />
+              Choose File
+            </button>
+          </div>
+        )}
+
+        {/* Slot Indicators */}
+        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1">
+          {displaySlots.map((slot, index) => (
+            <div
+              key={slot.id}
+              className={cn(
+                "w-1.5 h-1.5 rounded-full transition-colors",
+                index === currentIndex 
+                  ? "bg-blue-600" 
+                  : images.find(img => img.slotId === slot.id)
+                    ? "bg-green-400"
+                    : "bg-gray-300 dark:bg-gray-600"
+              )}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* Hidden File Input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept={currentSlot?.acceptedTypes?.join(',') || "image/*"}
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0]
+          if (file) handleFileSelect(file)
+          e.target.value = ''
+        }}
+      />
+
+      {/* Preview Modal */}
+      {previewImage && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
+          onClick={() => setPreviewImage(null)}
+        >
+          <div 
+            className="relative max-w-4xl max-h-[90vh] w-full"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setPreviewImage(null)}
+              className="absolute -top-10 right-0 p-2 text-white hover:text-gray-300 transition-colors"
+            >
+              <X size={24} />
+            </button>
+            <img
+              src={previewImage.previewUrl || previewImage.file}
+              alt="Preview"
+              className="w-full h-full object-contain rounded-lg"
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-sm w-full shadow-xl">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-full">
+                <Trash2 size={20} className="text-red-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                Delete Image?
+              </h3>
+            </div>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+              This action cannot be undone. The image will be permanently removed from this slot.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                className="flex-1 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDelete}
+                className="flex-1 py-2.5 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+export default ImageSlotUploader
