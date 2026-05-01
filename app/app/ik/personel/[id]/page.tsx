@@ -96,7 +96,12 @@ export default function PersonelDetayPage() {
   if (loading) {
     return (
       <>
-        <PageBanner title="Personel Detayı" icon={<User size={24} />} />
+        <PageBanner 
+          mode="form" 
+          title="Personel Detayı" 
+          icon={<User size={24} />}
+          onBackClick={() => router.push('/app/ik/personel')}
+        />
         <div className="mt-8 flex items-center justify-center">
           <Loader2 className="animate-spin text-blue-600" size={32} />
         </div>
@@ -107,7 +112,12 @@ export default function PersonelDetayPage() {
   if (!personel) {
     return (
       <>
-        <PageBanner title="Personel Detayı" icon={<User size={24} />} />
+        <PageBanner 
+          mode="form" 
+          title="Personel Detayı" 
+          icon={<User size={24} />}
+          onBackClick={() => router.push('/app/ik/personel')}
+        />
         <div className="mt-8 text-center">
           <p className="text-gray-500 dark:text-gray-400">Personel bulunamadı</p>
           <button
