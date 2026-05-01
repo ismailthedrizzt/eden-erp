@@ -17,7 +17,10 @@ import {
   EyeOff,
   GripVertical,
   Monitor,
-  AlertTriangle
+  AlertTriangle,
+  RefreshCw,
+  FileDown,
+  Sparkles
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -42,6 +45,7 @@ export interface ColumnDef {
   permission?: string // Permission required to view
   render?: (value: any, row: any) => React.ReactNode
   order?: number // For drag-drop ordering
+  category?: string // For grouping columns in selector (e.g., 'Kişisel', 'İş', 'Eğitim')
 }
 
 export interface SortConfig {
@@ -147,6 +151,7 @@ export function SmartDataTable<T extends { id: string }>({
   // Refs
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const pollingRef = useRef<NodeJS.Timeout | null>(null)
+  const columnSelectorRef = useRef<HTMLDivElement>(null)
 
   // Persist preferences
   useEffect(() => {
@@ -156,6 +161,20 @@ export function SmartDataTable<T extends { id: string }>({
       localStorage.setItem(`${storageKey}-columns`, JSON.stringify(columnConfig))
     }
   }, [viewMode, pageSize, columnConfig, storageKey])
+
+  // Click outside handler for column selector
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (columnSelectorRef.current && !columnSelectorRef.current.contains(event.target as Node)) {
+        setShowColumnSelector(false)
+      }
+    }
+    
+    if (showColumnSelector) {
+      document.addEventListener('mousedown', handleClickOutside)
+      return () => document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [showColumnSelector])
 
   // Realtime polling
   useEffect(() => {
@@ -444,19 +463,204 @@ export function SmartDataTable<T extends { id: string }>({
     return String(a).localeCompare(String(b))
   }
 
+  // Nationality converter: Country -> Demonym
+  function convertToNationality(value: string): string {
+    const nationalityMap: Record<string, string> = {
+      'Türkiye': 'Türk',
+      'Turkey': 'Türk',
+      'Yunanistan': 'Yunan',
+      'Greece': 'Yunan',
+      'Almanya': 'Alman',
+      'Germany': 'Alman',
+      'Fransa': 'Fransız',
+      'France': 'Fransız',
+      'İngiltere': 'İngiliz',
+      'United Kingdom': 'İngiliz',
+      'İtalya': 'İtalyan',
+      'Italy': 'İtalyan',
+      'İspanya': 'İspanyol',
+      'Spain': 'İspanyol',
+      'ABD': 'Amerikalı',
+      'USA': 'Amerikalı',
+      'Amerika': 'Amerikalı',
+      'Rusya': 'Rus',
+      'Russia': 'Rus',
+      'Çin': 'Çinli',
+      'China': 'Çinli',
+      'Japonya': 'Japon',
+      'Japan': 'Japon',
+      'Hollanda': 'Hollandalı',
+      'Netherlands': 'Hollandalı',
+      'Belçika': 'Belçikalı',
+      'Belgium': 'Belçikalı',
+      'Avusturya': 'Avusturyalı',
+      'Austria': 'Avusturyalı',
+      'İsviçre': 'İsviçreli',
+      'Switzerland': 'İsviçreli',
+      'İsveç': 'İsveçli',
+      'Sweden': 'İsveçli',
+      'Norveç': 'Norveçli',
+      'Norway': 'Norveçli',
+      'Danimarka': 'Danimarkalı',
+      'Denmark': 'Danimarkalı',
+      'Finlandiya': 'Fin',
+      'Finland': 'Fin',
+      'Polonya': 'Polonyalı',
+      'Poland': 'Polonyalı',
+      'Ukrayna': 'Ukraynalı',
+      'Ukraine': 'Ukraynalı',
+      'Bulgaristan': 'Bulgar',
+      'Bulgaria': 'Bulgar',
+      'Romanya': 'Rumen',
+      'Romania': 'Rumen',
+      'Sırbistan': 'Sırp',
+      'Serbia': 'Sırp',
+      'Hırvatistan': 'Hırvat',
+      'Croatia': 'Hırvat',
+      'Yugoslavya': 'Yugoslav',
+      'Yugoslavia': 'Yugoslav',
+      'Çekya': 'Çek',
+      'Czech Republic': 'Çek',
+      'Slovakya': 'Slovak',
+      'Slovakia': 'Slovak',
+      'Macaristan': 'Macar',
+      'Hungary': 'Macar',
+      'Portekiz': 'Portekizli',
+      'Portugal': 'Portekizli',
+      'İrlanda': 'İrlandalı',
+      'Ireland': 'İrlandalı',
+      'Kanada': 'Kanadalı',
+      'Canada': 'Kanadalı',
+      'Avustralya': 'Avustralyalı',
+      'Australia': 'Avustralyalı',
+      'Brezilya': 'Brezilyalı',
+      'Brazil': 'Brezilyalı',
+      'Arjantin': 'Arjantinli',
+      'Argentina': 'Arjantinli',
+      'Meksika': 'Meksikalı',
+      'Mexico': 'Meksikalı',
+      'Mısır': 'Mısırlı',
+      'Egypt': 'Mısırlı',
+      'Güney Afrika': 'Güney Afrikalı',
+      'South Africa': 'Güney Afrikalı',
+      'Hindistan': 'Hintli',
+      'India': 'Hintli',
+      'Pakistan': 'Pakistanlı',
+      'Bangladeş': 'Bangladeşli',
+      'Bangladesh': 'Bangladeşli',
+      'Endonezya': 'Endonezyalı',
+      'Indonesia': 'Endonezyalı',
+      'Malezya': 'Malezya',
+      'Malaysia': 'Malezya',
+      'Tayland': 'Taylandlı',
+      'Thailand': 'Taylandlı',
+      'Vietnam': 'Vietnamlı',
+      'Güney Kore': 'Güney Koreli',
+      'South Korea': 'Güney Koreli',
+      'Kuzey Kore': 'Kuzey Koreli',
+      'North Korea': 'Kuzey Koreli',
+      'İran': 'İranlı',
+      'Iran': 'İranlı',
+      'Irak': 'Iraklı',
+      'Iraq': 'Iraklı',
+      'Suriye': 'Suriyeli',
+      'Syria': 'Suriyeli',
+      'Suudi Arabistan': 'Suudi Arabistanlı',
+      'Saudi Arabia': 'Suudi Arabistanlı',
+      'BAE': 'BAE',
+      'UAE': 'BAE',
+      'İsrail': 'İsrailli',
+      'Israel': 'İsrailli',
+      'Ürdün': 'Ürdünlü',
+      'Jordan': 'Ürdünlü',
+      'Lübnan': 'Lübnanlı',
+      'Lebanon': 'Lübnanlı',
+      'Tunus': 'Tunuslu',
+      'Tunisia': 'Tunuslu',
+      'Fas': 'Faslı',
+      'Morocco': 'Faslı',
+      'Cezayir': 'Cezayirli',
+      'Algeria': 'Cezayirli',
+      'Libya': 'Libyalı',
+      'Sudan': 'Sudanlı',
+      'Etiyopya': 'Etiyopyalı',
+      'Ethiopia': 'Etiyopyalı',
+      'Nijerya': 'Nijeryalı',
+      'Nigeria': 'Nijeryalı',
+      'Kenya': 'Kenyalı',
+      'Tanzanya': 'Tanzanyalı',
+      'Tanzania': 'Tanzanyalı',
+      'Kamerun': 'Kamerunlu',
+      'Cameroon': 'Kamerunlu',
+      'Uganda': 'Ugandalı',
+      'Gana': 'Ganalı',
+      'Ghana': 'Ganalı',
+      'Mozambik': 'Mozambikli',
+      'Mozambique': 'Mozambikli',
+      'Zambiya': 'Zambiyalı',
+      'Zambia': 'Zambiyalı',
+      'Zimbabve': 'Zimbabveli',
+      'Zimbabwe': 'Zimbabveli',
+      'Botsvana': 'Botsvanalı',
+      'Botswana': 'Botsvanalı',
+      'Namibya': 'Namibyalı',
+      'Namibia': 'Namibyalı',
+      'Angola': 'Angolalı',
+      'Madagaskar': 'Madagaskarlı',
+      'Madagascar': 'Madagaskarlı',
+      'Mauritius': 'Mauritiuslu',
+      'Seyşeller': 'Seyşelli',
+      'Seychelles': 'Seyşelli',
+    }
+    return nationalityMap[value] || value
+  }
+
   function renderCellValue(col: ColumnDef, value: any, row: T): React.ReactNode {
     if (col.render) return col.render(value, row)
     
     if (col.type === 'image') {
+      const imageUrl = value || row?.profileImage || row?.image || row?.photo || row?.avatar
       return (
-        <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
-          {value ? (
-            <img src={value} alt="" className="w-full h-full object-cover" />
+        <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 flex items-center justify-center flex-shrink-0">
+          {imageUrl ? (
+            <img 
+              src={imageUrl} 
+              alt="" 
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                (e.target as HTMLImageElement).style.display = 'none'
+              }}
+            />
           ) : (
-            <div className="w-full h-full bg-gray-300" />
+            <div className="w-full h-full bg-gradient-to-br from-gray-300 to-gray-400 flex items-center justify-center text-gray-500 text-xs font-medium">
+              {row?.firstName?.[0] || row?.name?.[0] || '?'}
+            </div>
           )}
         </div>
       )
+    }
+    
+    // Handle nationality column
+    if (col.key === 'nationality' || col.key === 'country' || col.key === 'uyruk' || col.key === 'vatandaslik') {
+      const nationality = convertToNationality(value)
+      return <span className="capitalize">{nationality}</span>
+    }
+    
+    // Handle gender column
+    if (col.key === 'gender' || col.key === 'cinsiyet') {
+      const genderMap: Record<string, string> = {
+        'erkek': 'Erkek',
+        'kadın': 'Kadın',
+        'kadin': 'Kadın',
+        'male': 'Erkek',
+        'female': 'Kadın',
+        'E': 'Erkek',
+        'K': 'Kadın',
+        'M': 'Erkek',
+        'F': 'Kadın',
+      }
+      const gender = genderMap[String(value).toLowerCase()] || (value ? String(value).charAt(0).toUpperCase() + String(value).slice(1).toLowerCase() : '-')
+      return gender
     }
     
     if (col.type === 'boolean') {
@@ -508,9 +712,30 @@ export function SmartDataTable<T extends { id: string }>({
             )}
           </div>
 
-          {/* Widget Toggle */}
+          {/* Refresh */}
+          {onRefresh && (
+            <button
+              onClick={onRefresh}
+              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400 transition-colors"
+              title="Yenile"
+            >
+              <RefreshCw size={18} />
+            </button>
+          )}
+
+          {/* AI Assistant */}
+          <button
+            onClick={() => alert('AI Asistan yakında geliyor!')}
+            className="p-2 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/30 text-purple-600 dark:text-purple-400 transition-colors"
+            title="AI Asistan"
+          >
+            <Sparkles size={18} />
+          </button>
+
+          {/* Widget Toggle - Fixed to toggle overlay properly */}
           <button
             onClick={() => setShowWidgets(!showWidgets)}
+            onMouseEnter={() => !showWidgets && setHoveredRow('widget-preview')}
             className={cn(
               "p-2 rounded-lg transition-colors relative",
               showWidgets 
@@ -569,11 +794,25 @@ export function SmartDataTable<T extends { id: string }>({
             </button>
           </div>
 
+          {/* Export */}
+          <button
+            onClick={() => exportToCSV(filteredData, visibleColumns)}
+            className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400 transition-colors"
+            title="CSV olarak dışa aktar"
+          >
+            <FileDown size={18} />
+          </button>
+
           {/* Column Selector */}
-          <div className="relative">
+          <div className="relative" ref={columnSelectorRef}>
             <button
               onClick={() => setShowColumnSelector(!showColumnSelector)}
-              className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400 transition-colors"
+              className={cn(
+                "p-2 rounded-lg transition-colors",
+                showColumnSelector
+                  ? "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400"
+                  : "hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400"
+              )}
               title="Sütun ayarları"
             >
               <Settings size={18} />
@@ -620,71 +859,117 @@ export function SmartDataTable<T extends { id: string }>({
                     )}
                   </div>
                 </div>
-                <div className="max-h-64 overflow-y-auto p-2 space-y-1">
-                  {columnConfig
-                    .filter(c => c.visible !== false)
-                    .map((col, idx, visibleCols) => (
-                    <div
-                      key={col.key}
-                      draggable
-                      onDragStart={(e) => handleDragStart(e, col.key)}
-                      onDragOver={(e) => handleDragOver(e, col.key)}
-                      onDrop={(e) => handleDrop(e, col.key)}
-                      onDragEnd={handleDragEnd}
-                      className={cn(
-                        "flex items-center gap-3 p-2 rounded-lg cursor-move transition-all",
-                        dropTarget === col.key && "bg-blue-50 dark:bg-blue-900/30 ring-2 ring-blue-300",
-                        draggedColumn === col.key && "opacity-50"
-                      )}
-                    >
-                      <GripVertical size={16} className="text-gray-400" />
-                      <input
-                        type="checkbox"
-                        checked={true}
-                        onChange={() => toggleColumn(col.key)}
-                        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                      />
-                      <span className="text-sm text-gray-700 dark:text-gray-300 flex-1">
-                        {col.label}
-                      </span>
-                      <span className="text-xs text-gray-400">
-                        {col.width || 150}px
-                      </span>
-                      {col.required && (
-                        <span className="text-xs text-red-500">zorunlu</span>
-                      )}
-                    </div>
-                  ))}
-                  {/* Hidden columns section */}
+                <div className="max-h-64 overflow-y-auto p-2 space-y-3">
+                  {/* Group visible columns by category */}
+                  {(() => {
+                    const visibleCols = columnConfig.filter(c => c.visible !== false)
+                    const grouped = visibleCols.reduce((acc, col) => {
+                      const category = col.category || 'Genel'
+                      if (!acc[category]) acc[category] = []
+                      acc[category].push(col)
+                      return acc
+                    }, {} as Record<string, ColumnDef[]>)
+                    
+                    const categoryStyles: Record<string, string> = {
+                      'Kişisel': 'bg-blue-50 dark:bg-blue-900/20 border-l-2 border-blue-400',
+                      'İş': 'bg-green-50 dark:bg-green-900/20 border-l-2 border-green-400',
+                      'Eğitim': 'bg-purple-50 dark:bg-purple-900/20 border-l-2 border-purple-400',
+                      'İletişim': 'bg-orange-50 dark:bg-orange-900/20 border-l-2 border-orange-400',
+                      'Adres': 'bg-gray-50 dark:bg-gray-700/30 border-l-2 border-gray-400',
+                      'Genel': 'bg-gray-50 dark:bg-gray-700/30',
+                    }
+                    
+                    return Object.entries(grouped).map(([category, cols]) => (
+                      <div key={category} className="space-y-1">
+                        <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 px-1 uppercase tracking-wide">
+                          {category}
+                        </p>
+                        <div className="space-y-1">
+                          {cols.map(col => (
+                            <div
+                              key={col.key}
+                              draggable
+                              onDragStart={(e) => handleDragStart(e, col.key)}
+                              onDragOver={(e) => handleDragOver(e, col.key)}
+                              onDrop={(e) => handleDrop(e, col.key)}
+                              onDragEnd={handleDragEnd}
+                              className={cn(
+                                "flex items-center gap-3 p-2 rounded-lg cursor-move transition-all",
+                                categoryStyles[category] || categoryStyles['Genel'],
+                                dropTarget === col.key && "bg-blue-50 dark:bg-blue-900/30 ring-2 ring-blue-300",
+                                draggedColumn === col.key && "opacity-50"
+                              )}
+                            >
+                              <GripVertical size={16} className="text-gray-400" />
+                              <input
+                                type="checkbox"
+                                checked={true}
+                                onChange={() => toggleColumn(col.key)}
+                                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                              />
+                              <span className="text-sm text-gray-700 dark:text-gray-300 flex-1">
+                                {col.label}
+                              </span>
+                              <span className="text-xs text-gray-400">
+                                {col.width || 150}px
+                              </span>
+                              {col.required && (
+                                <span className="text-xs text-red-500">zorunlu</span>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))
+                  })()}
+                  
+                  {/* Hidden columns section - also grouped */}
                   {columnConfig.filter(c => c.visible === false).length > 0 && (
                     <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
-                      <p className="text-xs text-gray-500 dark:text-gray-400 px-2 mb-1">Gizli Sütunlar</p>
-                      {columnConfig
-                        .filter(c => c.visible === false)
-                        .map(col => (
-                        <div
-                          key={col.key}
-                          className={cn(
-                            "flex items-center gap-3 p-2 rounded-lg opacity-50 hover:opacity-80 transition-opacity",
-                            !columnEconomy.canAddMore && "cursor-not-allowed"
-                          )}
-                        >
-                          <div className="w-4" />
-                          <input
-                            type="checkbox"
-                            checked={false}
-                            disabled={!columnEconomy.canAddMore}
-                            onChange={() => toggleColumn(col.key)}
-                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:cursor-not-allowed"
-                          />
-                          <span className="text-sm text-gray-500 dark:text-gray-400 flex-1">
-                            {col.label}
-                          </span>
-                          <span className="text-xs text-gray-400">
-                            {col.width || 150}px
-                          </span>
-                        </div>
-                      ))}
+                      <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 px-2 mb-2 uppercase tracking-wide">
+                        Gizli Sütunlar
+                      </p>
+                      {(() => {
+                        const hiddenCols = columnConfig.filter(c => c.visible === false)
+                        const grouped = hiddenCols.reduce((acc, col) => {
+                          const category = col.category || 'Genel'
+                          if (!acc[category]) acc[category] = []
+                          acc[category].push(col)
+                          return acc
+                        }, {} as Record<string, ColumnDef[]>)
+                        
+                        return Object.entries(grouped).map(([category, cols]) => (
+                          <div key={`hidden-${category}`} className="mb-2">
+                            <p className="text-xs text-gray-400 dark:text-gray-500 px-2 mb-1">{category}</p>
+                            <div className="space-y-1">
+                              {cols.map(col => (
+                                <div
+                                  key={col.key}
+                                  className={cn(
+                                    "flex items-center gap-3 p-2 rounded-lg opacity-50 hover:opacity-80 transition-opacity",
+                                    !columnEconomy.canAddMore && "cursor-not-allowed"
+                                  )}
+                                >
+                                  <div className="w-4" />
+                                  <input
+                                    type="checkbox"
+                                    checked={false}
+                                    disabled={!columnEconomy.canAddMore}
+                                    onChange={() => toggleColumn(col.key)}
+                                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:cursor-not-allowed"
+                                  />
+                                  <span className="text-sm text-gray-500 dark:text-gray-400 flex-1">
+                                    {col.label}
+                                  </span>
+                                  <span className="text-xs text-gray-400">
+                                    {col.width || 150}px
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        ))
+                      })()}
                     </div>
                   )}
                 </div>
@@ -694,30 +979,42 @@ export function SmartDataTable<T extends { id: string }>({
         </div>
       </div>
 
-      {/* Widget Overlay */}
-      {showWidgets && hoveredRow && (
+      {/* Widget Overlay - Shows when toggled or when hovering row with widgets */}
+      {(showWidgets || (hoveredRow && hoveredRow !== 'widget-preview' && widgets.length > 0)) && (
         <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="font-medium text-blue-900 dark:text-blue-100">Hızlı Bilgi</h3>
+            <h3 className="font-medium text-blue-900 dark:text-blue-100 flex items-center gap-2">
+              <Eye size={16} />
+              Hızlı Bilgi
+            </h3>
             <button 
-              onClick={() => setShowWidgets(false)}
+              onClick={() => {
+                setShowWidgets(false)
+                setHoveredRow(null)
+              }}
               className="text-blue-600 dark:text-blue-400 hover:text-blue-800"
             >
               <X size={16} />
             </button>
           </div>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {widgets.map(widget => (
+            {widgets.length > 0 ? widgets.map(widget => (
               <div key={widget.key} className="bg-white dark:bg-gray-800 rounded-lg p-3 shadow-sm">
                 <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">{widget.label}</div>
                 <div className="font-medium text-gray-900 dark:text-white">
                   {(() => {
-                    const row = data.find(r => r.id === hoveredRow)
-                    return row ? widget.render(row) : '-'
+                    const targetRow = hoveredRow && hoveredRow !== 'widget-preview' 
+                      ? data.find(r => r.id === hoveredRow)
+                      : data[0]
+                    return targetRow ? widget.render(targetRow) : '-'
                   })()}
                 </div>
               </div>
-            ))}
+            )) : (
+              <div className="col-span-full text-center text-sm text-gray-500 dark:text-gray-400 py-4">
+                Henüz widget eklenmemiş. Widget tanımlamak için SmartDataTable bileşenine widgets prop&apos;u ekleyin.
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -804,13 +1101,8 @@ export function SmartDataTable<T extends { id: string }>({
                       onClick={() => col.sortable !== false && handleSort(col.key)}
                     >
                       <div className="flex items-center gap-2">
-                        <GripVertical size={14} className="text-gray-400 opacity-0 hover:opacity-100 transition-opacity" />
-                        <span className={cn(
-                          "whitespace-nowrap",
-                          col.fontSize === 'xs' && "text-xs",
-                          col.fontSize === 'sm' && "text-sm",
-                          col.fontSize === 'base' && "text-base"
-                        )}>{col.label}</span>
+                        <GripVertical size={14} className="text-gray-400 opacity-0 hover:opacity-100 transition-opacity flex-shrink-0" />
+                        <span className="whitespace-nowrap text-sm font-medium">{col.label}</span>
                         {sort && (
                           <span className="flex items-center gap-1 text-blue-600">
                             {sort.direction === 'asc' ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
@@ -1052,4 +1344,50 @@ function ColumnFilterInput({
       />
     </div>
   )
+}
+
+// CSV Export Helper
+function exportToCSV<T extends { id: string }>(
+  data: T[],
+  columns: ColumnDef[]
+) {
+  if (data.length === 0) {
+    alert('Dışa aktarılacak veri yok')
+    return
+  }
+
+  // Get nested value helper
+  const getValue = (obj: any, path: string): any => {
+    return path.split('.').reduce((acc, part) => acc?.[part], obj)
+  }
+
+  // CSV headers
+  const headers = columns.map(col => col.label).join(',')
+  
+  // CSV rows
+  const rows = data.map(row => {
+    return columns.map(col => {
+      const value = getValue(row, col.key)
+      // Escape quotes and wrap in quotes if contains comma
+      const stringValue = value === null || value === undefined ? '' : String(value)
+      const escaped = stringValue.replace(/"/g, '""')
+      return escaped.includes(',') || escaped.includes('\n') || escaped.includes('"') 
+        ? `"${escaped}"` 
+        : escaped
+    }).join(',')
+  })
+
+  // Combine
+  const csv = [headers, ...rows].join('\n')
+  
+  // Download
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+  const link = document.createElement('a')
+  const url = URL.createObjectURL(blob)
+  link.setAttribute('href', url)
+  link.setAttribute('download', `export_${new Date().toISOString().split('T')[0]}.csv`)
+  link.style.visibility = 'hidden'
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
 }
