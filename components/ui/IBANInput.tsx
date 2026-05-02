@@ -11,109 +11,6 @@ interface IBANInputProps {
   className?: string
 }
 
-// Turkish bank code mapping (first 5 digits after country code)
-const TURKISH_BANKS: Record<string, { name: string; branch: string }> = {
-  '00001': { name: 'Ziraat Bankası', branch: 'Merkez Şube' },
-  '00002': { name: 'Halkbank', branch: 'Merkez Şube' },
-  '00003': { name: 'Vakıfbank', branch: 'Merkez Şube' },
-  '00004': { name: 'Akbank', branch: 'Merkez Şube' },
-  '00005': { name: 'Garanti BBVA', branch: 'Merkez Şube' },
-  '00006': { name: 'Türkiye İş Bankası', branch: 'Merkez Şube' },
-  '00007': { name: 'Yapı Kredi Bankası', branch: 'Merkez Şube' },
-  '00008': { name: 'HSBC Bank', branch: 'Merkez Şube' },
-  '00009': { name: 'TEB', branch: 'Merkez Şube' },
-  '00010': { name: 'ING Bank', branch: 'Merkez Şube' },
-  '00011': { name: 'Denizbank', branch: 'Merkez Şube' },
-  '00012': { name: 'QNB Finansbank', branch: 'Merkez Şube' },
-  '00013': { name: 'Şekerbank', branch: 'Merkez Şube' },
-  '00014': { name: 'Odeabank', branch: 'Merkez Şube' },
-  '00046': { name: 'Kuveyt Türk', branch: 'Merkez Şube' },
-  '00059': { name: 'Türkiye İş Bankası', branch: 'Merkez Şube' },
-  '00064': { name: 'Türkiye İş Bankası', branch: 'Merkez Şube' },
-  '00067': { name: 'Yapı Kredi Bankası', branch: 'Merkez Şube' },
-  '00071': { name: 'TEB', branch: 'Merkez Şube' },
-  '00089': { name: 'Akbank', branch: 'Merkez Şube' },
-  '00111': { name: 'Ziraat Bankası', branch: 'Merkez Şube' },
-  '00123': { name: 'Halkbank', branch: 'Merkez Şube' },
-  '00124': { name: 'Vakıfbank', branch: 'Merkez Şube' },
-  '00154': { name: 'Türkiye İş Bankası', branch: 'Merkez Şube' },
-  '00159': { name: 'Türkiye İş Bankası', branch: 'Merkez Şube' },
-  '00167': { name: 'Yapı Kredi Bankası', branch: 'Merkez Şube' },
-  '00201': { name: 'Garanti BBVA', branch: 'Merkez Şube' },
-  '00206': { name: 'Akbank', branch: 'Merkez Şube' },
-  '00211': { name: 'Denizbank', branch: 'Merkez Şube' },
-  '00234': { name: 'QNB Finansbank', branch: 'Merkez Şube' },
-  '00235': { name: 'TEB', branch: 'Merkez Şube' },
-  '00241': { name: 'ING Bank', branch: 'Merkez Şube' },
-  '00245': { name: 'Şekerbank', branch: 'Merkez Şube' },
-  '00246': { name: 'Odeabank', branch: 'Merkez Şube' },
-  '00259': { name: 'Türkiye İş Bankası', branch: 'Merkez Şube' },
-  '00267': { name: 'Yapı Kredi Bankası', branch: 'Merkez Şube' },
-  '00301': { name: 'Ziraat Bankası', branch: 'Merkez Şube' },
-  '00302': { name: 'Halkbank', branch: 'Merkez Şube' },
-  '00303': { name: 'Vakıfbank', branch: 'Merkez Şube' },
-  '00304': { name: 'Akbank', branch: 'Merkez Şube' },
-  '00305': { name: 'Garanti BBVA', branch: 'Merkez Şube' },
-  '00306': { name: 'Türkiye İş Bankası', branch: 'Merkez Şube' },
-  '00307': { name: 'Yapı Kredi Bankası', branch: 'Merkez Şube' },
-  '00308': { name: 'HSBC Bank', branch: 'Merkez Şube' },
-  '00309': { name: 'TEB', branch: 'Merkez Şube' },
-  '00310': { name: 'ING Bank', branch: 'Merkez Şube' },
-  '00311': { name: 'Denizbank', branch: 'Merkez Şube' },
-  '00312': { name: 'QNB Finansbank', branch: 'Merkez Şube' },
-  '00313': { name: 'Şekerbank', branch: 'Merkez Şube' },
-  '00314': { name: 'Odeabank', branch: 'Merkez Şube' },
-  '00315': { name: 'QNB Finansbank', branch: 'Merkez Şube' },
-  '00346': { name: 'Kuveyt Türk', branch: 'Merkez Şube' },
-  '00359': { name: 'Türkiye İş Bankası', branch: 'Merkez Şube' },
-  '00364': { name: 'Türkiye İş Bankası', branch: 'Merkez Şube' },
-  '00367': { name: 'Yapı Kredi Bankası', branch: 'Merkez Şube' },
-  '00371': { name: 'TEB', branch: 'Merkez Şube' },
-  '00389': { name: 'Akbank', branch: 'Merkez Şube' },
-  '00401': { name: 'Ziraat Bankası', branch: 'Merkez Şube' },
-  '00402': { name: 'Halkbank', branch: 'Merkez Şube' },
-  '00403': { name: 'Vakıfbank', branch: 'Merkez Şube' },
-  '00404': { name: 'Akbank', branch: 'Merkez Şube' },
-  '00405': { name: 'Garanti BBVA', branch: 'Merkez Şube' },
-  '00406': { name: 'Türkiye İş Bankası', branch: 'Merkez Şube' },
-  '00407': { name: 'Yapı Kredi Bankası', branch: 'Merkez Şube' },
-  '00408': { name: 'HSBC Bank', branch: 'Merkez Şube' },
-  '00409': { name: 'TEB', branch: 'Merkez Şube' },
-  '00410': { name: 'ING Bank', branch: 'Merkez Şube' },
-  '00411': { name: 'Denizbank', branch: 'Merkez Şube' },
-  '00412': { name: 'QNB Finansbank', branch: 'Merkez Şube' },
-  '00413': { name: 'Şekerbank', branch: 'Merkez Şube' },
-  '00414': { name: 'Odeabank', branch: 'Merkez Şube' },
-  '00415': { name: 'QNB Finansbank', branch: 'Merkez Şube' },
-  '00446': { name: 'Kuveyt Türk', branch: 'Merkez Şube' },
-  '00459': { name: 'Türkiye İş Bankası', branch: 'Merkez Şube' },
-  '00464': { name: 'Türkiye İş Bankası', branch: 'Merkez Şube' },
-  '00467': { name: 'Yapı Kredi Bankası', branch: 'Merkez Şube' },
-  '00471': { name: 'TEB', branch: 'Merkez Şube' },
-  '00489': { name: 'Akbank', branch: 'Merkez Şube' },
-  '00501': { name: 'Ziraat Bankası', branch: 'Merkez Şube' },
-  '00502': { name: 'Halkbank', branch: 'Merkez Şube' },
-  '00503': { name: 'Vakıfbank', branch: 'Merkez Şube' },
-  '00504': { name: 'Akbank', branch: 'Merkez Şube' },
-  '00505': { name: 'Garanti BBVA', branch: 'Merkez Şube' },
-  '00506': { name: 'Türkiye İş Bankası', branch: 'Merkez Şube' },
-  '00507': { name: 'Yapı Kredi Bankası', branch: 'Merkez Şube' },
-  '00508': { name: 'HSBC Bank', branch: 'Merkez Şube' },
-  '00509': { name: 'TEB', branch: 'Merkez Şube' },
-  '00510': { name: 'ING Bank', branch: 'Merkez Şube' },
-  '00511': { name: 'Denizbank', branch: 'Merkez Şube' },
-  '00512': { name: 'QNB Finansbank', branch: 'Merkez Şube' },
-  '00513': { name: 'Şekerbank', branch: 'Merkez Şube' },
-  '00514': { name: 'Odeabank', branch: 'Merkez Şube' },
-  '00515': { name: 'QNB Finansbank', branch: 'Merkez Şube' },
-  '00546': { name: 'Kuveyt Türk', branch: 'Merkez Şube' },
-  '00559': { name: 'Türkiye İş Bankası', branch: 'Merkez Şube' },
-  '00564': { name: 'Türkiye İş Bankası', branch: 'Merkez Şube' },
-  '00567': { name: 'Yapı Kredi Bankası', branch: 'Merkez Şube' },
-  '00571': { name: 'TEB', branch: 'Merkez Şube' },
-  '00589': { name: 'Akbank', branch: 'Merkez Şube' },
-}
-
 export function IBANInput({ value, onChange, disabled = false, className }: IBANInputProps) {
   const [bankInfo, setBankInfo] = useState<ReturnType<typeof getIbanBankInfo>>(null)
 
@@ -172,10 +69,14 @@ export function IBANInput({ value, onChange, disabled = false, className }: IBAN
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-xs font-medium text-gray-700 dark:text-gray-300 truncate">
-              Banka
+              {bankInfo.bankName}
             </p>
             <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-              {bankInfo.branchConfidence === 'known' ? bankInfo.branchName : 'Şube bilgisi IBAN standardından güvenilir çıkarılamaz'}
+              {bankInfo.branchConfidence === 'known'
+                ? bankInfo.branchName
+                : bankInfo.swiftCode
+                  ? `SWIFT: ${bankInfo.swiftCode}`
+                  : 'Banka kodu açık kaynak listeden çözüldü'}
             </p>
           </div>
         </div>

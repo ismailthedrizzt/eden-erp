@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from 'clsx'
 import { twMerge } from 'tailwind-merge'
+import turkishBankCodes from '@/lib/data/turkish-bank-codes.json'
 
 // Tailwind class birleştirici
 export function cn(...inputs: ClassValue[]) {
@@ -48,6 +49,8 @@ export function slugify(text: string): string {
 export interface IbanBankInfo {
   bankName: string
   bankCode: string
+  swiftCode?: string
+  source?: string
   branchName?: string
   branchConfidence: 'known' | 'unknown'
   logoText: string
@@ -55,18 +58,12 @@ export interface IbanBankInfo {
 
 // Türkiye IBAN standardında banka kodu ayrı alandır; şube alanı standart bir
 // pozisyonda yayınlanmaz. Şube bilgisi yalnızca açıkça bilinen eşleşmelerde döner.
-const IBAN_BANKS: Record<string, { name: string; logoText: string }> = {
-  '00062': { name: 'Garanti BBVA', logoText: 'GB' },
-  '00067': { name: 'Yapı Kredi', logoText: 'YK' },
-  '00064': { name: 'İş Bankası', logoText: 'İŞ' },
-  '00046': { name: 'Akbank', logoText: 'AK' },
-  '00015': { name: 'Ziraat Bankası', logoText: 'ZB' },
-  '00012': { name: 'Halkbank', logoText: 'HB' },
-  '00032': { name: 'TEB', logoText: 'TEB' },
-  '00111': { name: 'QNB Finansbank', logoText: 'QNB' },
-  '00099': { name: 'ING Bank', logoText: 'ING' },
-  '10003': { name: 'Enpara (QNB)', logoText: 'QNB' },
-}
+const IBAN_BANKS = turkishBankCodes.banks as Record<string, {
+  name: string
+  swift?: string
+  logoText: string
+  source?: string
+}>
 
 const KNOWN_TR_IBAN_BRANCHES: Record<string, string> = {
   // İş Bankası hesap numarası içinde şube kodunu 4 hane olarak kullanan
@@ -96,6 +93,8 @@ export function getIbanBankInfo(iban: string): IbanBankInfo | null {
     bankCode,
     bankName: bank?.name ?? 'Bilinmeyen Banka',
     logoText: bank?.logoText ?? '?',
+    swiftCode: bank?.swift,
+    source: bank?.source,
     branchName,
     branchConfidence: branchName ? 'known' : 'unknown',
   }

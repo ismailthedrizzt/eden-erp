@@ -1,0 +1,372 @@
+{
+  "sources": [
+    {
+      "key": "tbb2024",
+      "name": "Türkiye Bankalar Birliği - Bankalarımız 2024",
+      "url": "https://www.tbb.org.tr/sites/default/files/kitaplar/bankalarimiz-2024_0.pdf",
+      "note": "EFT kodları kamuya açık TBB Bankalarımız 2024 PDF tablosundan parse edilir."
+    },
+    {
+      "key": "ibanGenTr",
+      "name": "IBAN.gen.tr - Bankalar",
+      "url": "https://iban.gen.tr/bankalar",
+      "note": "Katılım bankaları için açık web listesi tamamlayıcı kaynak olarak kullanılır."
+    }
+  ],
+  "generatedAt": "2026-05-02T11:16:27.476Z",
+  "banks": {
+    "00004": {
+      "name": "İller Bankası A.Ş.",
+      "logoText": "İB",
+      "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
+    },
+    "00010": {
+      "name": "Türkiye Cumhuriyeti Ziraat Bankası A.Ş.",
+      "swift": "TCZBTR2A",
+      "logoText": "ZB",
+      "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
+    },
+    "00012": {
+      "name": "Türkiye Halk Bankası A.Ş.",
+      "swift": "TRHBTR2A",
+      "logoText": "HB",
+      "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
+    },
+    "00014": {
+      "name": "Türkiye Sınai Kalkınma Bankası A.Ş.",
+      "swift": "TSKBTRIS",
+      "logoText": "SB",
+      "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
+    },
+    "00015": {
+      "name": "Türkiye Vakıflar Bankası T.A.O.",
+      "swift": "TVBATR2A",
+      "logoText": "VB",
+      "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
+    },
+    "00016": {
+      "name": "Türk Eximbank",
+      "swift": "TIKBTR2A",
+      "logoText": "E",
+      "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
+    },
+    "00017": {
+      "name": "Türkiye Kalkınma ve Yatırım Bankası A.Ş.",
+      "swift": "TKBNTR2A",
+      "logoText": "BA",
+      "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
+    },
+    "00029": {
+      "name": "Birleşik Fon Bankası A.Ş.",
+      "swift": "BAYDTRIS",
+      "logoText": "BF",
+      "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
+    },
+    "00032": {
+      "name": "Türk Ekonomi Bankası A.Ş.",
+      "swift": "TEBUTRIS",
+      "logoText": "TEB",
+      "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
+    },
+    "00046": {
+      "name": "Akbank T.A.Ş.",
+      "swift": "AKBKTRIS",
+      "logoText": "AK",
+      "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
+    },
+    "00059": {
+      "name": "Şekerbank T.A.Ş.",
+      "swift": "SEKETR2A",
+      "logoText": "ŞT",
+      "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
+    },
+    "00060": {
+      "name": "Türk Ticaret Bankası A.Ş.",
+      "swift": "TTANTRIS",
+      "logoText": "TB",
+      "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
+    },
+    "00062": {
+      "name": "Türkiye Garanti Bankası A.Ş.",
+      "swift": "TGBATRIS",
+      "logoText": "GB",
+      "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
+    },
+    "00064": {
+      "name": "Türkiye İş Bankası A.Ş.",
+      "swift": "ISBKTRIS",
+      "logoText": "IS",
+      "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
+    },
+    "00067": {
+      "name": "Yapı ve Kredi Bankası A.Ş.",
+      "swift": "YAPITRIS",
+      "logoText": "YK",
+      "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
+    },
+    "00091": {
+      "name": "Arap Türk Bankası A.Ş.",
+      "swift": "ATUBTRIS",
+      "logoText": "AB",
+      "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
+    },
+    "00092": {
+      "name": "Citibank A.Ş.",
+      "swift": "CITITRIX",
+      "logoText": "CA",
+      "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
+    },
+    "00094": {
+      "name": "Bank Mellat",
+      "swift": "BKMTTRIS",
+      "logoText": "M",
+      "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
+    },
+    "00096": {
+      "name": "Turkish Bank A.Ş.",
+      "swift": "TUBATRIS",
+      "logoText": "TA",
+      "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
+    },
+    "00097": {
+      "name": "Habib Bank Limited",
+      "swift": "HABBTRIS",
+      "logoText": "HL",
+      "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
+    },
+    "00098": {
+      "name": "JPMorgan Chase Bank N.A.",
+      "swift": "CHASTRIS",
+      "logoText": "JC",
+      "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
+    },
+    "00099": {
+      "name": "ING Bank A.Ş.",
+      "swift": "INGBTRIS",
+      "logoText": "ING",
+      "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
+    },
+    "00103": {
+      "name": "Fibabanka A.Ş.",
+      "swift": "FBHLTRIS",
+      "logoText": "FA",
+      "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
+    },
+    "00108": {
+      "name": "Turkland Bank A.Ş.",
+      "swift": "TBNKTRIS",
+      "logoText": "TA",
+      "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
+    },
+    "00109": {
+      "name": "ICBC Turkey Bank A.Ş.",
+      "swift": "ICBKTRIS",
+      "logoText": "IT",
+      "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
+    },
+    "00111": {
+      "name": "QNB Bank A.Ş.",
+      "swift": "FNNBTRIS",
+      "logoText": "QNB",
+      "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
+    },
+    "00115": {
+      "name": "Deutsche Bank A.Ş.",
+      "swift": "BKTRTRIS",
+      "logoText": "DA",
+      "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
+    },
+    "00116": {
+      "name": "Pasha Yatırım Bankası A.Ş.",
+      "swift": "PAHATRIS",
+      "logoText": "PB",
+      "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
+    },
+    "00121": {
+      "name": "Standard Chartered Yatırım Bankası Türk A.Ş.",
+      "swift": "SCBLTRIS",
+      "logoText": "SC",
+      "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
+    },
+    "00122": {
+      "name": "Société Générale (SA)",
+      "swift": "SOGETRIS",
+      "logoText": "SG",
+      "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
+    },
+    "00123": {
+      "name": "HSBC Bank A.Ş.",
+      "swift": "HSBCTRIX",
+      "logoText": "HA",
+      "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
+    },
+    "00124": {
+      "name": "Alternatifbank A.Ş.",
+      "swift": "ALFBTRIS",
+      "logoText": "AA",
+      "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
+    },
+    "00125": {
+      "name": "Burgan Bank A.Ş.",
+      "swift": "TEKFTRIS",
+      "logoText": "BA",
+      "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
+    },
+    "00129": {
+      "name": "Bank of America Yatırım Bank A.Ş.",
+      "swift": "MEYYTRIS",
+      "logoText": "OA",
+      "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
+    },
+    "00132": {
+      "name": "İstanbul Takas ve Saklama Bankası A.Ş.",
+      "swift": "TVSBTRIS",
+      "logoText": "İT",
+      "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
+    },
+    "00134": {
+      "name": "Denizbank A.Ş.",
+      "swift": "DENITRIS",
+      "logoText": "DA",
+      "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
+    },
+    "00135": {
+      "name": "Anadolubank A.Ş.",
+      "swift": "ANDLTRIS",
+      "logoText": "AA",
+      "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
+    },
+    "00137": {
+      "name": "Rabobank A.Ş.",
+      "swift": "RABOTRIS",
+      "logoText": "RA",
+      "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
+    },
+    "00138": {
+      "name": "Diler Yatırım Bankası A.Ş.",
+      "swift": "DYAKTRIS",
+      "logoText": "DB",
+      "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
+    },
+    "00139": {
+      "name": "GSD Yatırım Bankası A.Ş.",
+      "swift": "GSDBTRIS",
+      "logoText": "GB",
+      "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
+    },
+    "00141": {
+      "name": "Nurol Yatırım Bankası A.Ş.",
+      "swift": "NUROTRIS",
+      "logoText": "NB",
+      "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
+    },
+    "00142": {
+      "name": "BankPozitif Kredi ve Kalkınma Bankası A.Ş.",
+      "swift": "BPTRTRIS",
+      "logoText": "BK",
+      "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
+    },
+    "00143": {
+      "name": "Aktif Yatırım Bankası A.Ş.",
+      "swift": "CAYTTRIS",
+      "logoText": "AB",
+      "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
+    },
+    "00146": {
+      "name": "Odea Bank A.Ş.",
+      "swift": "ODEATRIS",
+      "logoText": "OA",
+      "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
+    },
+    "00147": {
+      "name": "MUFG Bank Turkey A.Ş.",
+      "swift": "BOTKTRIS",
+      "logoText": "MT",
+      "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
+    },
+    "00148": {
+      "name": "Intesa Sanpaolo S.p.A.",
+      "swift": "BCITTRIS",
+      "logoText": "IS",
+      "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
+    },
+    "00149": {
+      "name": "Bank of China Turkey A.Ş.",
+      "swift": "BKCHTRIS",
+      "logoText": "OC",
+      "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
+    },
+    "00150": {
+      "name": "Golden Global Yatırım Bankası A.Ş.",
+      "swift": "GOGYTRIS",
+      "logoText": "GG",
+      "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
+    },
+    "00151": {
+      "name": "D Yatırım Bankası A.Ş.",
+      "swift": "YATITRIS",
+      "logoText": "DB",
+      "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
+    },
+    "00152": {
+      "name": "Destek Yatırım Bankası A.Ş.",
+      "swift": "DEYATRIS",
+      "logoText": "DB",
+      "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
+    },
+    "00153": {
+      "name": "Misyon Yatırım Bankası A.Ş.",
+      "swift": "MYNSTRIS",
+      "logoText": "MB",
+      "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
+    },
+    "00154": {
+      "name": "Tera Yatırım Bankası A.Ş.",
+      "swift": "TYASTRIS",
+      "logoText": "TB",
+      "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
+    },
+    "00155": {
+      "name": "Q Yatırım Bankası A.Ş.",
+      "swift": "YAAITR22",
+      "logoText": "QB",
+      "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
+    },
+    "00156": {
+      "name": "Hedef Yatırım Bankası A.Ş.",
+      "swift": "HYASTRIS",
+      "logoText": "HB",
+      "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
+    },
+    "00203": {
+      "name": "Albaraka Türk Katılım Bankası A.Ş.",
+      "logoText": "AL",
+      "source": "IBAN.gen.tr - Bankalar"
+    },
+    "00205": {
+      "name": "Kuveyt Türk Katılım Bankası A.Ş.",
+      "logoText": "KT",
+      "source": "IBAN.gen.tr - Bankalar"
+    },
+    "00206": {
+      "name": "Türkiye Finans Katılım Bankası A.Ş.",
+      "logoText": "TF",
+      "source": "IBAN.gen.tr - Bankalar"
+    },
+    "00209": {
+      "name": "Ziraat Katılım Bankası A.Ş.",
+      "logoText": "ZK",
+      "source": "IBAN.gen.tr - Bankalar"
+    },
+    "00210": {
+      "name": "Vakıf Katılım Bankası A.Ş.",
+      "logoText": "VK",
+      "source": "IBAN.gen.tr - Bankalar"
+    },
+    "00211": {
+      "name": "Türkiye Emlak Katılım Bankası A.Ş.",
+      "logoText": "EK",
+      "source": "IBAN.gen.tr - Bankalar"
+    }
+  }
+}
