@@ -18,7 +18,7 @@
  * />
  */
 
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useMemo } from 'react'
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -87,22 +87,28 @@ export function ImageSlotUploader({
   const dropZoneRef = useRef<HTMLDivElement>(null)
 
   // Combine predefined slots with extra slots from images
-  const allSlots: ImageSlot[] = [...slots]
-  const extraImages = images.filter(img => !slots.find(s => s.id === img.slotId))
-  extraImages.forEach(img => {
-    if (!allSlots.find(s => s.id === img.slotId)) {
-      allSlots.push({
-        id: img.slotId,
-        title: img.name || 'Other Image',
-        required: false
-      })
-    }
-  })
+  const allSlots = useMemo(() => {
+    const nextSlots: ImageSlot[] = [...slots]
+    const extraImages = images.filter(img => !slots.find(s => s.id === img.slotId))
+    extraImages.forEach(img => {
+      if (!nextSlots.find(s => s.id === img.slotId)) {
+        nextSlots.push({
+          id: img.slotId,
+          title: img.name || 'Other Image',
+          required: false
+        })
+      }
+    })
+    return nextSlots
+  }, [images, slots])
 
   // Add "Other" slot if allowed
-  const displaySlots = allowExtraSlots 
-    ? [...allSlots, { id: '__extra__', title: 'Other Image', required: false }]
-    : allSlots
+  const displaySlots = useMemo(
+    () => allowExtraSlots
+      ? [...allSlots, { id: '__extra__', title: 'Other Image', required: false }]
+      : allSlots,
+    [allSlots, allowExtraSlots]
+  )
 
   const currentSlot = displaySlots[currentIndex]
   const currentImage = images.find(img => img.slotId === currentSlot.id)
@@ -231,8 +237,8 @@ export function ImageSlotUploader({
   // A4 aspect ratio style
   const containerStyle = {
     aspectRatio: '1/1.414',
-    maxWidth: '144px',
-    minHeight: '102px'
+    maxWidth: '173px',
+    minHeight: '122px'
   }
 
   return (

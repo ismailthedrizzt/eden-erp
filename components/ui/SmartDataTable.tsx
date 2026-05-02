@@ -76,6 +76,8 @@ interface SmartDataTableProps<T extends { id: string }> {
   pageSizeOptions?: number[]
   realtime?: boolean
   pollingInterval?: number
+  /** Whether to show action column. When undefined, shows when onRowClick is provided */
+  showActions?: boolean
 }
 
 export interface WidgetDef<T = any> {
@@ -91,6 +93,7 @@ export function SmartDataTable<T extends { id: string }>({
   title,
   onRowClick,
   onRefresh,
+  showActions,
   loading = false,
   emptyText = 'Kayıt bulunamadı',
   storageKey = 'smart-table-default',
@@ -147,6 +150,10 @@ export function SmartDataTable<T extends { id: string }>({
   const [screenSize, setScreenSize] = useState<'sm' | 'md' | 'lg' | 'xl'>('lg')
   const tableContainerRef = useRef<HTMLDivElement>(null)
   const [tableWidth, setTableWidth] = useState(0)
+
+  // Computed: Action column visibility
+  // If showActions is explicitly set, use that. Otherwise default to showing when onRowClick exists
+  const shouldShowActions = showActions !== undefined ? showActions : !!onRowClick
 
   // Refs
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
@@ -1144,7 +1151,7 @@ export function SmartDataTable<T extends { id: string }>({
                     </th>
                   )
                 })}
-                {onRowClick && (
+                {shouldShowActions && (
                   <th className="px-4 py-3 w-10 text-center text-xs text-gray-500 dark:text-gray-400 font-medium">İşlem</th>
                 )}
               </tr>
@@ -1173,7 +1180,7 @@ export function SmartDataTable<T extends { id: string }>({
                       </div>
                     </td>
                   ))}
-                  {onRowClick && (
+                  {shouldShowActions && (
                     <td className="px-4 py-3">
                       <button 
                         className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded pointer-events-auto"
@@ -1216,7 +1223,7 @@ export function SmartDataTable<T extends { id: string }>({
                 className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden cursor-pointer relative"
               >
                 {/* Action Button - Top Right */}
-                {onRowClick && (
+                {shouldShowActions && (
                   <button 
                     className="absolute top-2 right-2 z-10 p-1.5 bg-white/80 dark:bg-gray-800/80 backdrop-blur rounded-full shadow-sm hover:bg-gray-100 dark:hover:bg-gray-700 pointer-events-auto"
                     onClick={(e) => {

@@ -14,28 +14,24 @@
  */
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
-import { Users, Phone, Mail, Building2, Briefcase, FileText, UserCircle } from 'lucide-react'
+import { Users } from 'lucide-react'
 import { usePersonel } from '@/hooks/usePersonel'
 import { PageBanner } from '@/components/ui/PageBanner'
-import { SmartDataTable, ColumnDef, WidgetDef } from '@/components/ui/SmartDataTable'
-import { EntityForm, FormField, FormTab, FormMode } from '@/components/ui/EntityForm'
+import { SmartDataTable, WidgetDef } from '@/components/ui/SmartDataTable'
+import { EntityForm, FormMode } from '@/components/ui/EntityForm'
 import { Toast } from '@/components/ui/Toast'
+import { personelModuleConfig, PersonelTableRow } from '@/lib/modules/personel.config'
+import { toEntityFormFields, toEntityFormTabs } from '@/types/module-config'
 import type { Personel } from '@/types'
-
-// Extended type for table display
-type PersonelTableRow = Personel & { 
-  fullname: string
-  birim_adi: string 
-  kadro_unvani: string 
-}
 
 // Page state type following ERP pattern
 type PageState = 'list' | 'create' | 'view' | 'edit'
 
 export default function PersonelYonetimPage() {
-  const router = useRouter()
   const { data: personel, loading: listLoading, error: listError, yenile } = usePersonel()
+  const moduleConfig = personelModuleConfig
+  const apiBasePath = moduleConfig.entity.apiBasePath || '/api/ik/personel'
+  const lifecycleMessages = moduleConfig.form.lifecycle?.messages
   
   // Page state
   const [pageState, setPageState] = useState<PageState>('list')
@@ -75,7 +71,7 @@ export default function PersonelYonetimPage() {
     try {
       if (mode === 'create') {
         // Create new personel
-        const response = await fetch('/api/ik/personel', {
+        const response = await fetch(apiBasePath, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(data)
@@ -86,10 +82,10 @@ export default function PersonelYonetimPage() {
           throw new Error(err.error || 'Kayıt oluşturulamadı')
         }
         
-        setToast({ type: 'success', message: 'Personel kaydı oluşturuldu' })
+        setToast({ type: 'success', message: lifecycleMessages?.createSuccess || 'Personel kaydı oluşturuldu' })
       } else {
         // Update existing personel
-        const response = await fetch(`/api/ik/personel/${selectedPersonel?.id}`, {
+        const response = await fetch(`${apiBasePath}/${selectedPersonel?.id}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(data)
@@ -102,7 +98,7 @@ export default function PersonelYonetimPage() {
         
         const result = await response.json()
         setSelectedPersonel(result.data)
-        setToast({ type: 'success', message: 'Personel bilgileri güncellendi' })
+        setToast({ type: 'success', message: lifecycleMessages?.updateSuccess || 'Personel bilgileri güncellendi' })
       }
       
       // Refresh list and return to list view
@@ -121,7 +117,7 @@ export default function PersonelYonetimPage() {
     
     setDeleting(true)
     try {
-      const response = await fetch(`/api/ik/personel/${selectedPersonel.id}`, {
+      const response = await fetch(`${apiBasePath}/${selectedPersonel.id}`, {
         method: 'DELETE'
       })
       
@@ -130,7 +126,7 @@ export default function PersonelYonetimPage() {
         throw new Error(err.error || 'Silme işlemi başarısız')
       }
       
-      setToast({ type: 'success', message: 'Personel kaydı silindi' })
+      setToast({ type: 'success', message: lifecycleMessages?.deleteSuccess || 'Personel kaydı silindi' })
       await yenile()
       setPageState('list')
     } catch (err: any) {
@@ -140,244 +136,6 @@ export default function PersonelYonetimPage() {
       setDeleting(false)
     }
   }
-
-  // Form Configuration
-  const heroFields: FormField[] = [
-    { name: 'ad', label: 'Ad', type: 'text', required: true },
-    { name: 'soyad', label: 'Soyad', type: 'text', required: true },
-    { name: 'tc_kimlik', label: 'TC Kimlik', type: 'text' },
-    { 
-      name: 'uyruk', 
-      label: 'Uyruk', 
-      type: 'select',
-      options: [
-        { value: 'tc', label: 'T.C.' },
-        { value: 'yabanci', label: 'Yabancı' }
-      ]
-    },
-    { 
-      name: 'cinsiyet', 
-      label: 'Cinsiyet', 
-      type: 'select',
-      options: [
-        { value: '', label: 'Seçiniz' },
-        { value: 'erkek', label: 'Erkek' },
-        { value: 'kadin', label: 'Kadın' }
-      ]
-    },
-    { name: 'dogum_tarihi', label: 'Doğum Tarihi', type: 'date' },
-    { name: 'dogum_yeri', label: 'Doğum Yeri', type: 'text' },
-    { 
-      name: 'kan_grubu', 
-      label: 'Kan Grubu', 
-      type: 'select',
-      options: [
-        { value: '', label: 'Seçiniz' },
-        { value: 'A+', label: 'A+' },
-        { value: 'A-', label: 'A-' },
-        { value: 'B+', label: 'B+' },
-        { value: 'B-', label: 'B-' },
-        { value: 'AB+', label: 'AB+' },
-        { value: 'AB-', label: 'AB-' },
-        { value: '0+', label: '0+' },
-        { value: '0-', label: '0-' }
-      ]
-    },
-    { 
-      name: 'medeni_durum', 
-      label: 'Medeni Durum', 
-      type: 'select',
-      options: [
-        { value: '', label: 'Seçiniz' },
-        { value: 'bekar', label: 'Bekar' },
-        { value: 'evli', label: 'Evli' },
-        { value: 'dul', label: 'Dul' },
-        { value: 'bosanmis', label: 'Boşanmış' }
-      ]
-    }
-  ]
-
-  const tabs: FormTab[] = [
-    {
-      id: 'iletisim',
-      label: 'İletişim',
-      icon: <Phone size={16} />,
-      fields: [
-        { name: 'cep_telefonu', label: 'Cep Telefonu', type: 'tel' },
-        { name: 'is_telefonu', label: 'İş Telefonu', type: 'tel' },
-        { name: 'email', label: 'E-posta', type: 'email' },
-        { name: 'adres', label: 'Adres', type: 'textarea', colSpan: 2 },
-        { name: 'il', label: 'İl', type: 'text' },
-        { name: 'ilce', label: 'İlçe', type: 'text' }
-      ]
-    },
-    {
-      id: 'acil',
-      label: 'Acil Durum',
-      icon: <UserCircle size={16} />,
-      fields: [
-        { name: 'acil_kisi_ad', label: 'Acil Kişi Adı', type: 'text' },
-        { name: 'acil_kisi_soyad', label: 'Acil Kişi Soyadı', type: 'text' },
-        { name: 'acil_kisi_yakinlik', label: 'Yakınlık Derecesi', type: 'text' },
-        { name: 'acil_kisi_telefon', label: 'Acil Telefon', type: 'tel' }
-      ]
-    },
-    {
-      id: 'calisma',
-      label: 'Çalışma',
-      icon: <Briefcase size={16} />,
-      fields: [
-        { 
-          name: 'calisma_durumu', 
-          label: 'Çalışma Durumu', 
-          type: 'select',
-          options: [
-            { value: 'gorevde', label: 'Görevde' },
-            { value: 'izinde', label: 'İzinde' },
-            { value: 'ayrilmis', label: 'Ayrılmış' },
-            { value: 'askida', label: 'Askıda' }
-          ]
-        },
-        { name: 'sgk_giris', label: 'SGK Giriş Tarihi', type: 'date' },
-        { name: 'isten_ayrilis', label: 'İşten Ayrılış', type: 'date' },
-        { name: 'iban', label: 'IBAN', type: 'text', colSpan: 2 }
-      ]
-    },
-    {
-      id: 'notlar',
-      label: 'Notlar',
-      icon: <FileText size={16} />,
-      fields: [
-        { name: 'notlar', label: 'Notlar', type: 'textarea', colSpan: 3 }
-      ]
-    }
-  ]
-
-  // Table columns
-  const columns: ColumnDef[] = [
-    {
-      key: 'fotograf_url',
-      label: 'Fotoğraf',
-      type: 'image',
-      required: true,
-      visible: true,
-      width: 60,
-      fixedWidth: true,
-      sortable: false,
-      filterable: false,
-      category: 'Kişisel'
-    },
-    {
-      key: 'fullname',
-      label: 'Adı Soyadı',
-      type: 'text',
-      required: true,
-      visible: true,
-      width: 200,
-      minWidth: 120,
-      sortable: true,
-      filterable: true,
-      category: 'Kişisel'
-    },
-    {
-      key: 'tc_kimlik',
-      label: 'TC Kimlik',
-      type: 'text',
-      required: true,
-      visible: true,
-      width: 120,
-      sortable: true,
-      filterable: true,
-      category: 'Kişisel'
-    },
-    {
-      key: 'uyruk',
-      label: 'Uyruk',
-      type: 'enum',
-      required: true,
-      visible: true,
-      width: 100,
-      sortable: true,
-      filterable: true,
-      enumOptions: ['Türk', 'Yabancı', 'TC', 'YUNAN', 'ALMAN', 'AMERİKALI'],
-      category: 'Kişisel'
-    },
-    {
-      key: 'cinsiyet',
-      label: 'Cinsiyet',
-      type: 'enum',
-      required: true,
-      visible: true,
-      width: 100,
-      sortable: true,
-      filterable: true,
-      enumOptions: ['Erkek', 'Kadın'],
-      category: 'Kişisel'
-    },
-    {
-      key: 'dogum_tarihi',
-      label: 'Doğum Tarihi',
-      type: 'date',
-      width: 130,
-      sortable: true,
-      filterable: true,
-      category: 'Kişisel',
-      render: (value) => value ? new Date(value).toLocaleDateString('tr-TR') : '-'
-    },
-    {
-      key: 'cep_telefonu',
-      label: 'Telefon',
-      type: 'text',
-      width: 130,
-      sortable: false,
-      filterable: true,
-      category: 'İletişim'
-    },
-    {
-      key: 'email',
-      label: 'E-posta',
-      type: 'text',
-      width: 200,
-      sortable: true,
-      filterable: true,
-      category: 'İletişim'
-    },
-    {
-      key: 'calisma_durumu',
-      label: 'Durum',
-      type: 'enum',
-      width: 110,
-      sortable: true,
-      filterable: true,
-      enumOptions: ['gorevde', 'izinde', 'ayrilmis'],
-      render: (value) => {
-        const colors: Record<string, string> = {
-          gorevde: 'bg-green-100 text-green-800',
-          izinde: 'bg-yellow-100 text-yellow-800',
-          ayrilmis: 'bg-red-100 text-red-800'
-        }
-        const labels: Record<string, string> = {
-          gorevde: 'Görevde',
-          izinde: 'İzinde',
-          ayrilmis: 'Ayrılmış'
-        }
-        return (
-          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${colors[value] || 'bg-gray-100 text-gray-800'}`}>
-            {labels[value] || value}
-          </span>
-        )
-      }
-    },
-    {
-      key: 'sgk_giris',
-      label: 'SGK Giriş',
-      type: 'date',
-      width: 130,
-      sortable: true,
-      filterable: true,
-      render: (value) => value ? new Date(value).toLocaleDateString('tr-TR') : '-'
-    }
-  ]
 
   // Widgets
   const widgets: WidgetDef<PersonelTableRow>[] = [
@@ -482,16 +240,16 @@ export default function PersonelYonetimPage() {
           
           <SmartDataTable<PersonelTableRow>
             data={tableData}
-            columns={columns}
-            storageKey="personel-list"
+            columns={moduleConfig.list.columns}
+            storageKey={moduleConfig.list.storageKey}
             widgets={widgets}
-            defaultView="list"
-            defaultPageSize={25}
-            pageSizeOptions={[10, 25, 50, 100]}
+            defaultView={moduleConfig.list.defaultView}
+            defaultPageSize={moduleConfig.list.defaultPageSize}
+            pageSizeOptions={moduleConfig.list.pageSizeOptions}
             loading={listLoading}
-            emptyText="Henüz personel kaydı bulunmamaktadır."
-            realtime={true}
-            pollingInterval={30000}
+            emptyText={moduleConfig.list.emptyText}
+            realtime={moduleConfig.list.realtime}
+            pollingInterval={moduleConfig.list.pollingInterval}
             onRowClick={handleRowClick}
             onRefresh={yenile}
           />
@@ -503,10 +261,10 @@ export default function PersonelYonetimPage() {
         <div className="mt-6">
           <EntityForm
             mode={formMode}
-            entityName="Personel"
-            entityNameSingular="Personel"
-            heroFields={heroFields}
-            tabs={tabs}
+            entityName={moduleConfig.form.entityName}
+            entityNameSingular={moduleConfig.form.entityNameSingular}
+            heroFields={toEntityFormFields(moduleConfig.form.hero.fields)}
+            tabs={toEntityFormTabs(moduleConfig.form.tabs)}
             data={selectedPersonel || undefined}
             saving={saving}
             deleting={deleting}

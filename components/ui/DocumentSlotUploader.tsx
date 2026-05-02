@@ -18,7 +18,7 @@
  * />
  */
 
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useMemo } from 'react'
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -140,6 +140,18 @@ function getFileTypeConfig(type: string) {
   }
 }
 
+const DEFAULT_DOCUMENT_ACCEPTED_TYPES = [
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'application/vnd.ms-powerpoint',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  'application/zip',
+  'application/x-zip-compressed',
+]
+
 export function DocumentSlotUploader({
   slots,
   documents,
@@ -160,36 +172,29 @@ export function DocumentSlotUploader({
   const fileInputRef = useRef<HTMLInputElement>(null)
   const dropZoneRef = useRef<HTMLDivElement>(null)
 
-  // Default accepted types
-  const defaultAcceptedTypes = [
-    'application/pdf',
-    'application/msword',
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-    'application/vnd.ms-excel',
-    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    'application/vnd.ms-powerpoint',
-    'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-    'application/zip',
-    'application/x-zip-compressed',
-  ]
-
   // Combine predefined slots with extra slots from documents
-  const allSlots: DocumentSlot[] = [...slots]
-  const extraDocs = documents.filter(doc => !slots.find(s => s.id === doc.slotId))
-  extraDocs.forEach(doc => {
-    if (!allSlots.find(s => s.id === doc.slotId)) {
-      allSlots.push({
-        id: doc.slotId,
-        title: doc.name || 'Other Document',
-        required: false
-      })
-    }
-  })
+  const allSlots = useMemo(() => {
+    const nextSlots: DocumentSlot[] = [...slots]
+    const extraDocs = documents.filter(doc => !slots.find(s => s.id === doc.slotId))
+    extraDocs.forEach(doc => {
+      if (!nextSlots.find(s => s.id === doc.slotId)) {
+        nextSlots.push({
+          id: doc.slotId,
+          title: doc.name || 'Other Document',
+          required: false
+        })
+      }
+    })
+    return nextSlots
+  }, [documents, slots])
 
   // Add "Other" slot if allowed
-  const displaySlots = allowExtraSlots 
-    ? [...allSlots, { id: '__extra__', title: 'Other Document', required: false }]
-    : allSlots
+  const displaySlots = useMemo(
+    () => allowExtraSlots
+      ? [...allSlots, { id: '__extra__', title: 'Other Document', required: false }]
+      : allSlots,
+    [allSlots, allowExtraSlots]
+  )
 
   const currentSlot = displaySlots[currentIndex]
   const currentDoc = documents.find(doc => doc.slotId === currentSlot.id)
@@ -207,7 +212,7 @@ export function DocumentSlotUploader({
     if (!currentSlot || currentSlot.id === '__extra__') return
 
     // Validate file type
-    const acceptedTypes = currentSlot.acceptedTypes || defaultAcceptedTypes
+    const acceptedTypes = currentSlot.acceptedTypes || DEFAULT_DOCUMENT_ACCEPTED_TYPES
     if (!acceptedTypes.includes(file.type)) {
       alert(`Invalid file type. Accepted: PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, ZIP`)
       return
@@ -254,19 +259,19 @@ export function DocumentSlotUploader({
       setIsUploading(false)
       setUploadProgress(0)
     }, 500)
-  }, [currentSlot, documents, onChange, defaultAcceptedTypes])
+  }, [currentSlot, documents, onChange])
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault()
     setIsDragging(false)
     
     const file = e.dataTransfer.files[0]
-    if (file && defaultAcceptedTypes.includes(file.type)) {
+    if (file && DEFAULT_DOCUMENT_ACCEPTED_TYPES.includes(file.type)) {
       handleFileSelect(file)
     } else {
       alert('Invalid file type. Please upload PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, or ZIP files.')
     }
-  }, [handleFileSelect, defaultAcceptedTypes])
+  }, [handleFileSelect])
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault()
@@ -338,8 +343,8 @@ export function DocumentSlotUploader({
   // A4 aspect ratio style
   const containerStyle = {
     aspectRatio: '1/1.414',
-    maxWidth: '144px',
-    minHeight: '102px'
+    maxWidth: '173px',
+    minHeight: '122px'
   }
 
   // Get file type config for current document
@@ -596,7 +601,7 @@ export function DocumentSlotUploader({
       <input
         ref={fileInputRef}
         type="file"
-        accept={defaultAcceptedTypes.join(',')}
+        accept={DEFAULT_DOCUMENT_ACCEPTED_TYPES.join(',')}
         className="hidden"
         onChange={(e) => {
           const file = e.target.files?.[0]

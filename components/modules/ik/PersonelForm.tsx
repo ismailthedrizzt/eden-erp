@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { User, Phone, GraduationCap, Briefcase, Landmark, X, Plus, Building, Briefcase as Job, FileText } from 'lucide-react'
+import { User, Phone, GraduationCap, Briefcase, Landmark, X, Briefcase as Job } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useModuleLicense } from '@/hooks/useModuleLicense'
 import { ImageSlotUploader, ImageSlot, SlotImage } from '@/components/ui/ImageSlotUploader'
@@ -36,39 +36,43 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
   ]
   const [documents, setDocuments] = useState<SlotDocument[]>([])
 
+  // Database-compatible field names (Turkish snake_case)
   const [formData, setFormData] = useState({
-    fullname: '',
-    nationality: 'TR',
-    idNumber: '',
-    gender: '',
-    birthPlace: '',
-    birthDate: '',
-    address: '',
-    city: '',
-    district: '',
-    phones: [''],
-    emails: [''],
-    militaryStatus: '',
-    militaryExemptionDate: '',
-    disabilityStatus: '',
-    disabilityPercent: '',
-    bloodType: '',
-    criminalRecord: '',
-    maritalStatus: '',
-    familyMembers: [] as Array<{ name: string, surname: string, relation: string }>,
-    isIlliterate: false,
-    schools: [] as Array<{ name: string, degree: string, department: string, startDate: string, endDate: string, isOngoing: boolean }>,
-    languages: [] as Array<{ name: string, level: string, document: File | null }>,
-    courses: [] as Array<{ name: string, institution: string, document: File | null }>,
+    ad: '',
+    soyad: '',
+    uyruk: 'tc',
+    tc_kimlik: '',
+    pasaport_no: '',
+    cinsiyet: '',
+    dogum_yeri: '',
+    dogum_tarihi: '',
+    medeni_durum: '',
+    adres: '',
+    il: '',
+    ilce: '',
+    eposta: '',
+    cep_telefonu: '',
+    askerlik_durumu: '',
+    tecil_tarihi: '',
+    kan_grubu: '',
+    ehliyet: '',
+    ogrenim_durumu: '',
+    okul: '',
+    bolum: '',
+    mezuniyet_tarihi: '',
+    yabanci_dil: '',
+    yabanci_dil_seviye: '',
+    acil_kisi_ad: '',
+    acil_kisi_telefon: '',
     iban: '',
-    unit: '',
-    position: '',
-    isActive: true,
-    hireDate: '',
-    terminationDate: ''
+    birim_id: '',
+    pozisyon: '',
+    is_active: true,
+    ise_giris_tarihi: '',
+    isten_cikis_tarihi: ''
   })
 
-  const isTurkey = formData.nationality === 'TR'
+  const isTurkey = formData.uyruk === 'tc'
 
   // Map API field names to display names for error messages
   const fieldDisplayNames: Record<string, string> = {
@@ -89,23 +93,34 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
     setFieldErrors({})
 
     try {
+      // Send data directly matching database schema
       const response = await fetch('/api/ik/personel', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          ad: formData.fullname.split(' ')[0] || '',
-          soyad: formData.fullname.split(' ').slice(1).join(' ') || '',
-          uyruk: isTurkey ? 'tc' : 'yabanci',
-          tc_kimlik: isTurkey ? formData.idNumber : undefined,
-          pasaport_no: !isTurkey ? formData.idNumber : undefined,
-          cinsiyet: formData.gender,
-          dogum_yeri: formData.birthPlace,
-          dogum_tarihi: formData.birthDate || undefined,
-          adres: formData.address,
-          il: formData.city,
-          ilce: formData.district,
-          cep_telefonu: formData.phones[0] || '',
-          email: formData.emails[0] || ''
+          ad: formData.ad,
+          soyad: formData.soyad,
+          uyruk: formData.uyruk,
+          tc_kimlik: isTurkey ? formData.tc_kimlik : undefined,
+          pasaport_no: !isTurkey ? formData.pasaport_no : undefined,
+          cinsiyet: formData.cinsiyet,
+          dogum_yeri: formData.dogum_yeri,
+          dogum_tarihi: formData.dogum_tarihi || undefined,
+          medeni_durum: formData.medeni_durum || undefined,
+          adres: formData.adres,
+          il: formData.il,
+          ilce: formData.ilce,
+          email: formData.eposta || undefined,
+          cep_telefonu: formData.cep_telefonu,
+          askerlik_durumu: formData.askerlik_durumu || undefined,
+          kan_grubu: formData.kan_grubu || undefined,
+          acil_kisi_ad: formData.acil_kisi_ad || undefined,
+          acil_kisi_telefon: formData.acil_kisi_telefon || undefined,
+          iban: formData.iban || undefined,
+          birim_id: formData.birim_id || undefined,
+          sgk_giris: formData.ise_giris_tarihi || undefined,
+          isten_ayrilis: formData.isten_cikis_tarihi || undefined,
+          calisma_durumu: formData.is_active ? 'gorevde' : 'ayrilmis'
         })
       })
 
@@ -186,37 +201,45 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
 
           {/* Right Panel - Basic Info */}
           <div className="flex-1 space-y-4">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Adı Soyadı *</label>
-              <input
-                className={cn(
-                  "w-full bg-white dark:bg-gray-900 border rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500",
-                  (fieldErrors.ad || fieldErrors.soyad)
-                    ? "border-red-500 dark:border-red-500"
-                    : "border-gray-300 dark:border-gray-700"
-                )}
-                placeholder="Ad Soyad"
-                value={formData.fullname}
-                onChange={e => setFormData({ ...formData, fullname: e.target.value })}
-              />
-              {(fieldErrors.ad || fieldErrors.soyad) && (
-                <span className="text-xs text-red-500">{fieldErrors.ad || fieldErrors.soyad}</span>
-              )}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Ad *</label>
+                <input
+                  className={cn(
+                    "w-full bg-white dark:bg-gray-900 border rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500",
+                    fieldErrors.ad ? "border-red-500 dark:border-red-500" : "border-gray-300 dark:border-gray-700"
+                  )}
+                  placeholder="Ad"
+                  value={formData.ad}
+                  onChange={e => setFormData({ ...formData, ad: e.target.value })}
+                />
+                {fieldErrors.ad && <span className="text-xs text-red-500">{fieldErrors.ad}</span>}
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Soyad *</label>
+                <input
+                  className={cn(
+                    "w-full bg-white dark:bg-gray-900 border rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500",
+                    fieldErrors.soyad ? "border-red-500 dark:border-red-500" : "border-gray-300 dark:border-gray-700"
+                  )}
+                  placeholder="Soyad"
+                  value={formData.soyad}
+                  onChange={e => setFormData({ ...formData, soyad: e.target.value })}
+                />
+                {fieldErrors.soyad && <span className="text-xs text-red-500">{fieldErrors.soyad}</span>}
+              </div>
             </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Uyruğu *</label>
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Uyruk *</label>
                 <select
                   className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-                  value={formData.nationality}
-                  onChange={e => setFormData({ ...formData, nationality: e.target.value })}
+                  value={formData.uyruk}
+                  onChange={e => setFormData({ ...formData, uyruk: e.target.value })}
                 >
-                  <option value="TR">Türkiye</option>
-                  <option value="US">ABD</option>
-                  <option value="DE">Almanya</option>
-                  <option value="FR">Fransa</option>
-                  <option value="GB">İngiltere</option>
+                  <option value="tc">T.C.</option>
+                  <option value="yabanci">Yabancı</option>
                 </select>
               </div>
 
@@ -225,41 +248,47 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
                 <select
                   className={cn(
                     "w-full bg-white dark:bg-gray-900 border rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500",
-                    fieldErrors.cinsiyet
-                      ? "border-red-500 dark:border-red-500"
-                      : "border-gray-300 dark:border-gray-700"
+                    fieldErrors.cinsiyet ? "border-red-500 dark:border-red-500" : "border-gray-300 dark:border-gray-700"
                   )}
-                  value={formData.gender}
-                  onChange={e => setFormData({ ...formData, gender: e.target.value })}
+                  value={formData.cinsiyet}
+                  onChange={e => setFormData({ ...formData, cinsiyet: e.target.value })}
                 >
-                  <option value="">Seç</option>
-                  <option value="erkek">E</option>
-                  <option value="kadin">K</option>
+                  <option value="">Seçiniz</option>
+                  <option value="erkek">Erkek</option>
+                  <option value="kadin">Kadın</option>
                 </select>
-                {fieldErrors.cinsiyet && (
-                  <span className="text-xs text-red-500">{fieldErrors.cinsiyet}</span>
-                )}
+                {fieldErrors.cinsiyet && <span className="text-xs text-red-500">{fieldErrors.cinsiyet}</span>}
               </div>
 
-              <div className="flex flex-col gap-1.5 col-span-2">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  {isTurkey ? 'T.C. Kimlik No *' : 'Pasaport No *'}
-                </label>
-                <input
-                  className={cn(
-                    "w-full bg-white dark:bg-gray-900 border rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500",
-                    (fieldErrors.tc_kimlik || fieldErrors.pasaport_no)
-                      ? "border-red-500 dark:border-red-500"
-                      : "border-gray-300 dark:border-gray-700"
-                  )}
-                  placeholder={isTurkey ? '11 haneli' : 'Pasaport No'}
-                  value={formData.idNumber}
-                  onChange={e => setFormData({ ...formData, idNumber: e.target.value })}
-                />
-                {(fieldErrors.tc_kimlik || fieldErrors.pasaport_no) && (
-                  <span className="text-xs text-red-500">{fieldErrors.tc_kimlik || fieldErrors.pasaport_no}</span>
-                )}
-              </div>
+              {isTurkey ? (
+                <div className="flex flex-col gap-1.5 col-span-2">
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">T.C. Kimlik No *</label>
+                  <input
+                    className={cn(
+                      "w-full bg-white dark:bg-gray-900 border rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500",
+                      fieldErrors.tc_kimlik ? "border-red-500 dark:border-red-500" : "border-gray-300 dark:border-gray-700"
+                    )}
+                    placeholder="11 haneli"
+                    value={formData.tc_kimlik}
+                    onChange={e => setFormData({ ...formData, tc_kimlik: e.target.value })}
+                  />
+                  {fieldErrors.tc_kimlik && <span className="text-xs text-red-500">{fieldErrors.tc_kimlik}</span>}
+                </div>
+              ) : (
+                <div className="flex flex-col gap-1.5 col-span-2">
+                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Pasaport No *</label>
+                  <input
+                    className={cn(
+                      "w-full bg-white dark:bg-gray-900 border rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500",
+                      fieldErrors.pasaport_no ? "border-red-500 dark:border-red-500" : "border-gray-300 dark:border-gray-700"
+                    )}
+                    placeholder="Pasaport No"
+                    value={formData.pasaport_no}
+                    onChange={e => setFormData({ ...formData, pasaport_no: e.target.value })}
+                  />
+                  {fieldErrors.pasaport_no && <span className="text-xs text-red-500">{fieldErrors.pasaport_no}</span>}
+                </div>
+              )}
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -268,8 +297,8 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
                 <input
                   className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
                   placeholder="Doğum yeri"
-                  value={formData.birthPlace}
-                  onChange={e => setFormData({ ...formData, birthPlace: e.target.value })}
+                  value={formData.dogum_yeri}
+                  onChange={e => setFormData({ ...formData, dogum_yeri: e.target.value })}
                 />
               </div>
 
@@ -278,8 +307,8 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
                 <input
                   type="date"
                   className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-                  value={formData.birthDate}
-                  onChange={e => setFormData({ ...formData, birthDate: e.target.value })}
+                  value={formData.dogum_tarihi}
+                  onChange={e => setFormData({ ...formData, dogum_tarihi: e.target.value })}
                 />
               </div>
             </div>
@@ -311,14 +340,14 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
       {activeTab === 'ozel' && (
         <div className="space-y-6">
           {/* Military Status (Conditional) */}
-          {formData.gender === 'erkek' && (
+          {formData.cinsiyet === 'erkek' && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Askerlik Durumu</label>
                 <select
                   className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-                  value={formData.militaryStatus}
-                  onChange={e => setFormData({ ...formData, militaryStatus: e.target.value })}
+                  value={formData.askerlik_durumu}
+                  onChange={e => setFormData({ ...formData, askerlik_durumu: e.target.value })}
                 >
                   <option value="">Seçiniz</option>
                   <option value="muaf">Muaf</option>
@@ -329,54 +358,28 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
                 </select>
               </div>
 
-              {formData.militaryStatus === 'tecilli' && (
+              {formData.askerlik_durumu === 'tecilli' && (
                 <div className="flex flex-col gap-1.5">
                   <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Tecil Tarihi *</label>
                   <input
                     type="date"
                     className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-                    value={formData.militaryExemptionDate}
-                    onChange={e => setFormData({ ...formData, militaryExemptionDate: e.target.value })}
+                    value={formData.tecil_tarihi}
+                    onChange={e => setFormData({ ...formData, tecil_tarihi: e.target.value })}
                   />
                 </div>
               )}
             </div>
           )}
 
-          {/* Health and Legal */}
+          {/* Sağlık ve Ehliyet */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Engellilik Durumu</label>
-              <select
-                className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-                value={formData.disabilityStatus}
-                onChange={e => setFormData({ ...formData, disabilityStatus: e.target.value })}
-              >
-                <option value="">Seçiniz</option>
-                <option value="yok">Yok</option>
-                <option value="var">Var</option>
-              </select>
-            </div>
-
-            {formData.disabilityStatus === 'var' && (
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Engellilik Yüzdesi *</label>
-                <input
-                  type="number"
-                  className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-                  placeholder="40"
-                  value={formData.disabilityPercent}
-                  onChange={e => setFormData({ ...formData, disabilityPercent: e.target.value })}
-                />
-              </div>
-            )}
-
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Kan Grubu</label>
               <select
                 className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-                value={formData.bloodType}
-                onChange={e => setFormData({ ...formData, bloodType: e.target.value })}
+                value={formData.kan_grubu}
+                onChange={e => setFormData({ ...formData, kan_grubu: e.target.value })}
               >
                 <option value="">Seçiniz</option>
                 <option value="A+">A+</option>
@@ -391,16 +394,13 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Hükümlülük Durumu</label>
-              <select
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Ehliyet</label>
+              <input
                 className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-                value={formData.criminalRecord}
-                onChange={e => setFormData({ ...formData, criminalRecord: e.target.value })}
-              >
-                <option value="">Seçiniz</option>
-                <option value="yok">Yok</option>
-                <option value="var">Var</option>
-              </select>
+                placeholder="B, C, D vb."
+                value={formData.ehliyet}
+                onChange={e => setFormData({ ...formData, ehliyet: e.target.value })}
+              />
             </div>
           </div>
         </div>
@@ -408,15 +408,16 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
 
       {activeTab === 'iletisim' && (
         <div className="space-y-6">
-          <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Adres</label>
-            <textarea
-              className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 min-h-20"
-              placeholder="Açık adres"
-              value={formData.address}
-              onChange={e => setFormData({ ...formData, address: e.target.value })}
-            />
-          </div>
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Açık Adres</label>
+              <textarea
+                className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 min-h-20"
+                placeholder="Açık adres"
+                value={formData.adres}
+                onChange={e => setFormData({ ...formData, adres: e.target.value })}
+              />
+            </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">
@@ -424,8 +425,8 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
               <input
                 className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
                 placeholder="İl"
-                value={formData.city}
-                onChange={e => setFormData({ ...formData, city: e.target.value })}
+                value={formData.il}
+                onChange={e => setFormData({ ...formData, il: e.target.value })}
               />
             </div>
             <div className="flex flex-col gap-1.5">
@@ -433,356 +434,115 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
               <input
                 className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
                 placeholder="İlçe"
-                value={formData.district}
-                onChange={e => setFormData({ ...formData, district: e.target.value })}
+                value={formData.ilce}
+                onChange={e => setFormData({ ...formData, ilce: e.target.value })}
               />
             </div>
           </div>
 
-          {/* Dynamic Phone Fields */}
-          <div className="space-y-3">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Telefonlar</label>
-            {formData.phones.map((phone, index) => (
-              <div key={index} className="flex gap-2">
-                <input
-                  className="flex-1 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-                  placeholder="0555 555 55 55"
-                  value={phone}
-                  onChange={e => {
-                    const newPhones = [...formData.phones]
-                    newPhones[index] = e.target.value
-                    setFormData({ ...formData, phones: newPhones })
-                  }}
-                />
-                {formData.phones.length > 1 && (
-                  <button
-                    onClick={() => {
-                      const newPhones = formData.phones.filter((_, i) => i !== index)
-                      setFormData({ ...formData, phones: newPhones })
-                    }}
-                    className="px-3 py-2 text-red-600 hover:text-red-700"
-                  >
-                    <X size={16} />
-                  </button>
-                )}
-              </div>
-            ))}
-            <button
-              onClick={() => setFormData({ ...formData, phones: [...formData.phones, ''] })}
-              className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700"
-            >
-              <Plus size={16} />
-              Telefon Ekle
-            </button>
+          {/* Telefon */}
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Telefon</label>
+            <input
+              className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+              placeholder="0555 555 55 55"
+              value={formData.cep_telefonu}
+              onChange={e => setFormData({ ...formData, cep_telefonu: e.target.value })}
+            />
           </div>
 
-          {/* Dynamic Email Fields */}
-          <div className="space-y-3">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">E-postalar</label>
-            {formData.emails.map((email, index) => (
-              <div key={index} className="flex gap-2">
-                <input
-                  type="email"
-                  className="flex-1 bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-                  placeholder="email@example.com"
-                  value={email}
-                  onChange={e => {
-                    const newEmails = [...formData.emails]
-                    newEmails[index] = e.target.value
-                    setFormData({ ...formData, emails: newEmails })
-                  }}
-                />
-                {formData.emails.length > 1 && (
-                  <button
-                    onClick={() => {
-                      const newEmails = formData.emails.filter((_, i) => i !== index)
-                      setFormData({ ...formData, emails: newEmails })
-                    }}
-                    className="px-3 py-2 text-red-600 hover:text-red-700"
-                  >
-                    <X size={16} />
-                  </button>
-                )}
-              </div>
-            ))}
-            <button
-              onClick={() => setFormData({ ...formData, emails: [...formData.emails, ''] })}
-              className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700"
-            >
-              <Plus size={16} />
-              E-posta Ekle
-            </button>
+          {/* E-posta */}
+          <div className="flex flex-col gap-1.5">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">E-posta</label>
+            <input
+              type="email"
+              className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+              placeholder="email@example.com"
+              value={formData.eposta}
+              onChange={e => setFormData({ ...formData, eposta: e.target.value })}
+            />
           </div>
+        </div>
         </div>
       )}
 
       {activeTab === 'egitim' && (
         <div className="space-y-6">
-          <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              id="illiterate"
-              checked={formData.isIlliterate}
-              onChange={e => setFormData({ ...formData, isIlliterate: e.target.checked })}
-              className="rounded border-gray-300"
-            />
-            <label htmlFor="illiterate" className="text-sm font-medium text-gray-700 dark:text-gray-300">Okuryazar Değil</label>
+          {/* Eğitim Bilgileri */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Öğrenim Durumu</label>
+              <select
+                className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                value={formData.ogrenim_durumu}
+                onChange={e => setFormData({ ...formData, ogrenim_durumu: e.target.value })}
+              >
+                <option value="">Seçiniz</option>
+                <option value="ilkokul">İlkokul</option>
+                <option value="ortaokul">Ortaokul</option>
+                <option value="lise">Lise</option>
+                <option value="on_lisans">Ön Lisans</option>
+                <option value="lisans">Lisans</option>
+                <option value="yuksek_lisans">Yüksek Lisans</option>
+                <option value="doktora">Doktora</option>
+              </select>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Okul</label>
+              <input
+                className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                placeholder="Okul adı"
+                value={formData.okul}
+                onChange={e => setFormData({ ...formData, okul: e.target.value })}
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Bölüm</label>
+              <input
+                className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                placeholder="Bölüm"
+                value={formData.bolum}
+                onChange={e => setFormData({ ...formData, bolum: e.target.value })}
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Mezuniyet Tarihi</label>
+              <input
+                type="date"
+                className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                value={formData.mezuniyet_tarihi}
+                onChange={e => setFormData({ ...formData, mezuniyet_tarihi: e.target.value })}
+              />
+            </div>
+          </div>
+          
+          {/* Yabancı Dil */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Yabancı Dil</label>
+              <input
+                className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                placeholder="Yabancı dil"
+                value={formData.yabanci_dil}
+                onChange={e => setFormData({ ...formData, yabanci_dil: e.target.value })}
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Dil Seviyesi</label>
+              <select
+                className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                value={formData.yabanci_dil_seviye}
+                onChange={e => setFormData({ ...formData, yabanci_dil_seviye: e.target.value })}
+              >
+                <option value="">Seçiniz</option>
+                <option value="baslangic">Başlangıç</option>
+                <option value="orta">Orta</option>
+                <option value="iyi">İyi</option>
+                <option value="ileri">İleri</option>
+              </select>
+            </div>
           </div>
 
-          {!formData.isIlliterate && (
-            <>
-              {/* Schools */}
-              <div className="space-y-3">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Okullar</label>
-                {formData.schools.map((school, index) => (
-                  <div key={index} className="grid grid-cols-1 md:grid-cols-2 gap-3 p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
-                    <div className="flex flex-col gap-1.5">
-                      <label className="text-xs text-gray-500">Okul Adı *</label>
-                      <input
-                        className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-                        placeholder="Okul adı"
-                        value={school.name}
-                        onChange={e => {
-                          const newSchools = [...formData.schools]
-                          newSchools[index].name = e.target.value
-                          setFormData({ ...formData, schools: newSchools })
-                        }}
-                      />
-                    </div>
-                    <div className="flex flex-col gap-1.5">
-                      <label className="text-xs text-gray-500">Derece *</label>
-                      <select
-                        className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-                        value={school.degree}
-                        onChange={e => {
-                          const newSchools = [...formData.schools]
-                          newSchools[index].degree = e.target.value
-                          setFormData({ ...formData, schools: newSchools })
-                        }}
-                      >
-                        <option value="">Seçiniz</option>
-                        <option value="İlkokul">İlkokul</option>
-                        <option value="Ortaokul ya da İ.Ö.O">Ortaokul ya da İ.Ö.O</option>
-                        <option value="Lise veya dengi okullar">Lise veya dengi okullar</option>
-                        <option value="Yüksekokul veya fakülte">Yüksekokul veya fakülte</option>
-                        <option value="Yüksek lisans">Yüksek lisans</option>
-                        <option value="Doktora">Doktora</option>
-                      </select>
-                    </div>
-                    <div className="flex flex-col gap-1.5">
-                      <label className="text-xs text-gray-500">Bölüm *</label>
-                      <input
-                        className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-                        placeholder="Bölüm"
-                        value={school.department}
-                        onChange={e => {
-                          const newSchools = [...formData.schools]
-                          newSchools[index].department = e.target.value
-                          setFormData({ ...formData, schools: newSchools })
-                        }}
-                      />
-                    </div>
-                    <div className="flex gap-2">
-                      <div className="flex flex-col gap-1.5 flex-1">
-                        <label className="text-xs text-gray-500">Başlangıç *</label>
-                        <input
-                          type="date"
-                          className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-                          value={school.startDate}
-                          onChange={e => {
-                            const newSchools = [...formData.schools]
-                            newSchools[index].startDate = e.target.value
-                            setFormData({ ...formData, schools: newSchools })
-                          }}
-                        />
-                      </div>
-                      {!school.isOngoing && (
-                        <div className="flex flex-col gap-1.5 flex-1">
-                          <label className="text-xs text-gray-500">Bitiş *</label>
-                          <input
-                            type="date"
-                            className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-                            value={school.endDate}
-                            onChange={e => {
-                              const newSchools = [...formData.schools]
-                              newSchools[index].endDate = e.target.value
-                              setFormData({ ...formData, schools: newSchools })
-                            }}
-                          />
-                        </div>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="checkbox"
-                        id={`ongoing-${index}`}
-                        checked={school.isOngoing}
-                        onChange={e => {
-                          const newSchools = [...formData.schools]
-                          newSchools[index].isOngoing = e.target.checked
-                          if (e.target.checked) {
-                            newSchools[index].endDate = ''
-                          }
-                          setFormData({ ...formData, schools: newSchools })
-                        }}
-                        className="rounded border-gray-300"
-                      />
-                      <label htmlFor={`ongoing-${index}`} className="text-xs text-gray-700 dark:text-gray-300">Devam Ediyor</label>
-                    </div>
-                    <button
-                      onClick={() => {
-                        const newSchools = formData.schools.filter((_, i) => i !== index)
-                        setFormData({ ...formData, schools: newSchools })
-                      }}
-                      className="col-span-2 text-red-600 hover:text-red-700 text-sm"
-                    >
-                      Sil
-                    </button>
-                  </div>
-                ))}
-                <button
-                  onClick={() => setFormData({ ...formData, schools: [...formData.schools, { name: '', degree: '', department: '', startDate: '', endDate: '', isOngoing: false }] })}
-                  className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700"
-                >
-                  <Plus size={16} />
-                  Okul Ekle
-                </button>
-              </div>
-
-              {/* Languages */}
-              <div className="space-y-3">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Yabancı Diller</label>
-                {formData.languages.map((lang, index) => (
-                  <div key={index} className="grid grid-cols-1 md:grid-cols-3 gap-3 p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
-                    <div className="flex flex-col gap-1.5">
-                      <label className="text-xs text-gray-500">Dil *</label>
-                      <input
-                        className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-                        placeholder="İngilizce"
-                        value={lang.name}
-                        onChange={e => {
-                          const newLanguages = [...formData.languages]
-                          newLanguages[index].name = e.target.value
-                          setFormData({ ...formData, languages: newLanguages })
-                        }}
-                      />
-                    </div>
-                    <div className="flex flex-col gap-1.5">
-                      <label className="text-xs text-gray-500">Seviye *</label>
-                      <select
-                        className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-                        value={lang.level}
-                        onChange={e => {
-                          const newLanguages = [...formData.languages]
-                          newLanguages[index].level = e.target.value
-                          setFormData({ ...formData, languages: newLanguages })
-                        }}
-                      >
-                        <option value="">Seçiniz</option>
-                        <option value="A1">A1</option>
-                        <option value="A2">A2</option>
-                        <option value="B1">B1</option>
-                        <option value="B2">B2</option>
-                        <option value="C1">C1</option>
-                        <option value="C2">C2</option>
-                      </select>
-                    </div>
-                    <div className="flex flex-col gap-1.5">
-                      <label className="text-xs text-gray-500">Belge</label>
-                      <input
-                        type="file"
-                        className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-                        onChange={e => {
-                          const newLanguages = [...formData.languages]
-                          newLanguages[index].document = e.target.files?.[0] || null
-                          setFormData({ ...formData, languages: newLanguages })
-                        }}
-                      />
-                    </div>
-                    <button
-                      onClick={() => {
-                        const newLanguages = formData.languages.filter((_, i) => i !== index)
-                        setFormData({ ...formData, languages: newLanguages })
-                      }}
-                      className="col-span-3 text-red-600 hover:text-red-700 text-sm"
-                    >
-                      Sil
-                    </button>
-                  </div>
-                ))}
-                <button
-                  onClick={() => setFormData({ ...formData, languages: [...formData.languages, { name: '', level: '', document: null }] })}
-                  className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700"
-                >
-                  <Plus size={16} />
-                  Dil Ekle
-                </button>
-              </div>
-
-              {/* Courses */}
-              <div className="space-y-3">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Kurslar</label>
-                {formData.courses.map((course, index) => (
-                  <div key={index} className="grid grid-cols-1 md:grid-cols-2 gap-3 p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
-                    <div className="flex flex-col gap-1.5">
-                      <label className="text-xs text-gray-500">Kurs Adı *</label>
-                      <input
-                        className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-                        placeholder="Kurs adı"
-                        value={course.name}
-                        onChange={e => {
-                          const newCourses = [...formData.courses]
-                          newCourses[index].name = e.target.value
-                          setFormData({ ...formData, courses: newCourses })
-                        }}
-                      />
-                    </div>
-                    <div className="flex flex-col gap-1.5">
-                      <label className="text-xs text-gray-500">Kurum *</label>
-                      <input
-                        className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-                        placeholder="Kurum"
-                        value={course.institution}
-                        onChange={e => {
-                          const newCourses = [...formData.courses]
-                          newCourses[index].institution = e.target.value
-                          setFormData({ ...formData, courses: newCourses })
-                        }}
-                      />
-                    </div>
-                    <div className="flex flex-col gap-1.5 col-span-2">
-                      <label className="text-xs text-gray-500">Belge</label>
-                      <input
-                        type="file"
-                        className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-                        onChange={e => {
-                          const newCourses = [...formData.courses]
-                          newCourses[index].document = e.target.files?.[0] || null
-                          setFormData({ ...formData, courses: newCourses })
-                        }}
-                      />
-                    </div>
-                    <button
-                      onClick={() => {
-                        const newCourses = formData.courses.filter((_, i) => i !== index)
-                        setFormData({ ...formData, courses: newCourses })
-                      }}
-                      className="col-span-2 text-red-600 hover:text-red-700 text-sm"
-                    >
-                      Sil
-                    </button>
-                  </div>
-                ))}
-                <button
-                  onClick={() => setFormData({ ...formData, courses: [...formData.courses, { name: '', institution: '', document: null }] })}
-                  className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700"
-                >
-                  <Plus size={16} />
-                  Kurs Ekle
-                </button>
-              </div>
-            </>
-          )}
         </div>
       )}
 
@@ -792,78 +552,37 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Medeni Durum</label>
             <select
               className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-              value={formData.maritalStatus}
-              onChange={e => setFormData({ ...formData, maritalStatus: e.target.value })}
+              value={formData.medeni_durum}
+              onChange={e => setFormData({ ...formData, medeni_durum: e.target.value })}
             >
               <option value="">Seçiniz</option>
               <option value="bekar">Bekar</option>
               <option value="evli">Evli</option>
+              <option value="dul">Dul</option>
               <option value="bosanmis">Boşanmış</option>
             </select>
           </div>
 
-          {/* Family Members */}
-          <div className="space-y-3">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Yakın Bilgileri</label>
-            {formData.familyMembers.map((member, index) => (
-              <div key={index} className="grid grid-cols-1 md:grid-cols-3 gap-3 p-4 border border-gray-200 dark:border-gray-700 rounded-lg">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs text-gray-500">Ad *</label>
-                  <input
-                    className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-                    placeholder="Ad"
-                    value={member.name}
-                    onChange={e => {
-                      const newMembers = [...formData.familyMembers]
-                      newMembers[index].name = e.target.value
-                      setFormData({ ...formData, familyMembers: newMembers })
-                    }}
-                  />
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs text-gray-500">Soyad *</label>
-                  <input
-                    className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-                    placeholder="Soyad"
-                    value={member.surname}
-                    onChange={e => {
-                      const newMembers = [...formData.familyMembers]
-                      newMembers[index].surname = e.target.value
-                      setFormData({ ...formData, familyMembers: newMembers })
-                    }}
-                  />
-                </div>
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-xs text-gray-500">Yakınlık Derecesi *</label>
-                  <input
-                    className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-                    placeholder="Anne, Baba, Eş"
-                    value={member.relation}
-                    onChange={e => {
-                      const newMembers = [...formData.familyMembers]
-                      newMembers[index].relation = e.target.value
-                      setFormData({ ...formData, familyMembers: newMembers })
-                    }}
-                  />
-                </div>
-                <button
-                  onClick={() => {
-                    const newMembers = formData.familyMembers.filter((_, i) => i !== index)
-                    setFormData({ ...formData, familyMembers: newMembers })
-                  }}
-                  className="col-span-3 text-red-600 hover:text-red-700 text-sm"
-                >
-                  Sil
-                </button>
-              </div>
-            ))}
-            <button
-              onClick={() => setFormData({ ...formData, familyMembers: [...formData.familyMembers, { name: '', surname: '', relation: '' }] })}
-              className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700"
-            >
-              <Plus size={16} />
-              Yakın Ekle
-            </button>
+          {/* Acil Durum Kişisi */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Acil Durum Kişisi</label>
+              <input
+                className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                placeholder="Ad Soyad"
+                value={formData.acil_kisi_ad}
+                onChange={e => setFormData({ ...formData, acil_kisi_ad: e.target.value })}
+              />
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Acil Telefon</label>
+              <input
+                className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                placeholder="Telefon"
+                value={formData.acil_kisi_telefon}
+                onChange={e => setFormData({ ...formData, acil_kisi_telefon: e.target.value })}
+              />
+            </div>
           </div>
         </div>
       )}
@@ -876,15 +595,15 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
               <div className="flex items-center gap-3">
                 <div className={cn(
                   "w-3 h-3 rounded-full",
-                  formData.isActive ? "bg-green-500" : "bg-red-500"
+                  formData.is_active ? "bg-green-500" : "bg-red-500"
                 )} />
                 <span className="font-medium text-gray-900 dark:text-white">
-                  {formData.isActive ? 'Aktif Çalışan' : 'İşten Ayrıldı'}
+                  {formData.is_active ? 'Aktif Çalışan' : 'İşten Ayrıldı'}
                 </span>
               </div>
-              {formData.hireDate && (
+              {formData.ise_giris_tarihi && (
                 <span className="text-sm text-gray-500 dark:text-gray-400">
-                  İşe Giriş: {formData.hireDate}
+                  İşe Giriş: {formData.ise_giris_tarihi}
                 </span>
               )}
             </div>
@@ -895,10 +614,10 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
             <button
               type="button"
               onClick={() => setShowHireModal(true)}
-              disabled={!!formData.hireDate}
+              disabled={!!formData.ise_giris_tarihi}
               className={cn(
                 "flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors",
-                formData.hireDate
+                formData.ise_giris_tarihi
                   ? "bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 cursor-not-allowed"
                   : "bg-green-500 text-white hover:bg-green-600"
               )}
@@ -908,11 +627,11 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
             </button>
             <button
               type="button"
-              onClick={() => formData.hireDate && setFormData({ ...formData, isActive: false })}
-              disabled={!formData.hireDate || !formData.isActive}
+              onClick={() => formData.ise_giris_tarihi && setFormData({ ...formData, is_active: false })}
+              disabled={!formData.ise_giris_tarihi || !formData.is_active}
               className={cn(
                 "flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors",
-                (!formData.hireDate || !formData.isActive)
+                (!formData.ise_giris_tarihi || !formData.is_active)
                   ? "bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 cursor-not-allowed"
                   : "bg-red-500 text-white hover:bg-red-600"
               )}
@@ -923,7 +642,7 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
           </div>
 
           {/* Termination Form - Shows when termination is active */}
-          {!formData.isActive && formData.hireDate && (
+          {!formData.is_active && formData.ise_giris_tarihi && (
             <div className="space-y-4 border-t border-gray-200 dark:border-gray-700 pt-4">
               <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
                 İşten Çıkış Bilgileri
@@ -935,8 +654,8 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
                   <input
                     type="date"
                     className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-                    value={formData.terminationDate}
-                    onChange={e => setFormData({ ...formData, terminationDate: e.target.value })}
+                    value={formData.isten_cikis_tarihi}
+                    onChange={e => setFormData({ ...formData, isten_cikis_tarihi: e.target.value })}
                   />
                 </div>
               </div>
@@ -972,9 +691,9 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
                         ? "bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
                         : "bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-600 text-gray-400 dark:text-gray-500 cursor-not-allowed"
                     )}
-                    placeholder="Birim"
-                    value={formData.unit}
-                    onChange={e => setFormData({ ...formData, unit: e.target.value })}
+                    placeholder="Birim ID"
+                    value={formData.birim_id}
+                    onChange={e => setFormData({ ...formData, birim_id: e.target.value })}
                   />
                   {!isTeskilatActive && (
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Teşkilat modülü pasif</p>
@@ -992,8 +711,8 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
                         : "bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-600 text-gray-400 dark:text-gray-500 cursor-not-allowed"
                     )}
                     placeholder="Pozisyon"
-                    value={formData.position}
-                    onChange={e => setFormData({ ...formData, position: e.target.value })}
+                    value={formData.pozisyon}
+                    onChange={e => setFormData({ ...formData, pozisyon: e.target.value })}
                   />
                 </div>
 
@@ -1002,8 +721,8 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
                   <input
                     type="date"
                     className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-                    value={formData.hireDate}
-                    onChange={e => setFormData({ ...formData, hireDate: e.target.value })}
+                    value={formData.ise_giris_tarihi}
+                    onChange={e => setFormData({ ...formData, ise_giris_tarihi: e.target.value })}
                   />
                 </div>
               </div>
@@ -1019,15 +738,15 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
               </button>
               <button
                 onClick={() => {
-                  if (formData.hireDate) {
-                    setFormData({ ...formData, isActive: true })
+                  if (formData.ise_giris_tarihi) {
+                    setFormData({ ...formData, is_active: true })
                     setShowHireModal(false)
                   }
                 }}
-                disabled={!formData.hireDate}
+                disabled={!formData.ise_giris_tarihi}
                 className={cn(
                   "px-4 py-2 rounded-lg transition-colors",
-                  formData.hireDate
+                  formData.ise_giris_tarihi
                     ? "bg-green-500 text-white hover:bg-green-600"
                     : "bg-gray-300 text-gray-500 cursor-not-allowed"
                 )}

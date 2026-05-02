@@ -33,21 +33,21 @@ export function useSirketler(): UseSirketlerReturn {
       setLoading(true)
       setError(null)
       
-      const { data: sirketler, error: fetchError } = await supabase
-        .from('sirketler')
-        .select('*')
-        .order('kisa_unvan', { ascending: true })
+      const response = await fetch('/api/sirketler')
+      const result = await response.json()
       
-      if (fetchError) throw fetchError
+      if (!response.ok) {
+        throw new Error(result.error || 'Şirketler yüklenirken hata oluştu')
+      }
       
-      setData(sirketler || [])
+      setData(result.data || [])
     } catch (err: any) {
       console.error('Error fetching sirketler:', err)
       setError(err.message || 'Şirketler yüklenirken hata oluştu')
     } finally {
       setLoading(false)
     }
-  }, [supabase])
+  }, [])
 
   useEffect(() => {
     fetchSirketler()

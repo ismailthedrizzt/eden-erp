@@ -2,23 +2,67 @@
 -- This prevents duplicate entries for the same person
 
 -- First, remove any existing duplicates
-DELETE FROM public.personel p1
-USING (
-  SELECT uyruk, tc_kimlik, pasaport_no, MIN(id) as min_id
-  FROM public.personel
-  GROUP BY uyruk, tc_kimlik, pasaport_no
-  HAVING COUNT(*) > 1
-) p2
-WHERE p1.uyruk = p2.uyruk
-  AND (p1.tc_kimlik = p2.tc_kimlik OR p1.pasaport_no = p2.pasaport_no)
-  AND p1.id != p2.min_id;
+WITH duplicate_tc AS (
+  SELECT id
+  FROM (
+    SELECT
+      id,
+      ROW_NUMBER() OVER (
+        PARTITION BY tc_kimlik
+        ORDER BY created_at NULLS LAST, id::text
+      ) AS row_number
+    FROM public.personel
+    WHERE tc_kimlik IS NOT NULL
+  ) ranked
+  WHERE row_number > 1
+),
+duplicate_pasaport AS (
+  SELECT id
+  FROM (
+    SELECT
+      id,
+      ROW_NUMBER() OVER (
+        PARTITION BY pasaport_no
+        ORDER BY created_at NULLS LAST, id::text
+      ) AS row_number
+    FROM public.personel
+    WHERE pasaport_no IS NOT NULL
+  ) ranked
+  WHERE row_number > 1
+)
+DELETE FROM public.personel
+WHERE id IN (
+  SELECT id FROM duplicate_tc
+  UNION
+  SELECT id FROM duplicate_pasaport
+);
 
 -- Add unique constraint for Turkish citizens (tc_kimlik must be unique when not null)
-ALTER TABLE public.personel
-ADD CONSTRAINT personel_tc_kimlik_unique
-UNIQUE (tc_kimlik);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint
+    WHERE conname = 'personel_tc_kimlik_unique'
+      AND conrelid = 'public.personel'::regclass
+  ) THEN
+    ALTER TABLE public.personel
+    ADD CONSTRAINT personel_tc_kimlik_unique
+    UNIQUE (tc_kimlik);
+  END IF;
+END $$;
 
 -- Add unique constraint for foreigners (pasaport_no must be unique when not null)
-ALTER TABLE public.personel
-ADD CONSTRAINT personel_pasaport_unique
-UNIQUE (pasaport_no);
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM pg_constraint
+    WHERE conname = 'personel_pasaport_unique'
+      AND conrelid = 'public.personel'::regclass
+  ) THEN
+    ALTER TABLE public.personel
+    ADD CONSTRAINT personel_pasaport_unique
+    UNIQUE (pasaport_no);
+  END IF;
+END $$;

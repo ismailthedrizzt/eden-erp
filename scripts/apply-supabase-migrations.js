@@ -1,0 +1,103 @@
+const fs = require('fs');
+const path = require('path');
+const { Client } = require('pg');
+
+const root = path.resolve(__dirname, '..');
+const envPath = path.join(root, '.env.local');
+const migrationsDir = path.join(root, 'supabase', 'migrations');
+
+const migrationFiles = [
+  '20240501_create_sirketler_table.sql',
+  '20240502_complete_core_schema.sql',
+  'create_module_licenses.sql',
+  'add_personel_unique_constraint.sql',
+];
+
+function readEnv(filePath) {
+  return Object.fromEntries(
+    fs
+      .readFileSync(filePath, 'utf8')
+      .split(/\r?\n/)
+      .filter((line) => line && !line.trim().startsWith('#') && line.includes('='))
+      .map((line) => {
+        const index = line.indexOf('=');
+        return [line.slice(0, index), line.slice(index + 1)];
+      })
+  );
+}
+
+async function ensureMigrationTable(client) {
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS public.schema_migrations (
+      name TEXT PRIMARY KEY,
+      applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+  `);
+}
+
+async function applyMigration(client, name) {
+  const alreadyApplied = await client.query(
+    'SELECT 1 FROM public.schema_migrations WHERE name = $1',
+    [name]
+  );
+
+  if (alreadyApplied.rowCount > 0) {
+    console.log(`skip ${name}`);
+    return;
+  }
+
+  if (name === 'create_module_licenses.sql') {
+    const existing = await client.query(`
+      SELECT to_regclass('public.module_licenses') AS modules,
+             to_regclass('public.submodule_licenses') AS submodules;
+    `);
+
+    if (existing.rows[0].modules && existing.rows[0].submodules) {
+      await client.query('INSERT INTO public.schema_migrations (name) VALUES ($1)', [name]);
+      console.log(`mark ${name}`);
+      return;
+    }
+  }
+
+  const sql = fs.readFileSync(path.join(migrationsDir, name), 'utf8');
+
+  await client.query('BEGIN');
+  try {
+    await client.query(sql);
+    await client.query('INSERT INTO public.schema_migrations (name) VALUES ($1)', [name]);
+    await client.query('COMMIT');
+    console.log(`applied ${name}`);
+  } catch (error) {
+    await client.query('ROLLBACK');
+    throw new Error(`${name} failed: ${error.message}`);
+  }
+}
+
+async function main() {
+  const env = readEnv(envPath);
+
+  if (!env.DATABASE_URL) {
+    throw new Error('DATABASE_URL is missing in .env.local');
+  }
+
+  const client = new Client({
+    connectionString: env.DATABASE_URL,
+    ssl: { rejectUnauthorized: false },
+  });
+
+  await client.connect();
+  try {
+    await ensureMigrationTable(client);
+
+    for (const file of migrationFiles) {
+      await applyMigration(client, file);
+    }
+  } finally {
+    await client.end();
+  }
+}
+
+main().catch((error) => {
+  console.error(error.message);
+  process.exit(1);
+});
