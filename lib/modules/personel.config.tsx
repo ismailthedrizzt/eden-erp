@@ -299,10 +299,10 @@ export const personelModuleConfig: ModuleConfig<PersonelTableRow> = {
             { key: 'il', label: 'İl', type: 'text', compact: true },
             { key: 'ilce', label: 'İlçe', type: 'text', compact: true },
             { key: 'acil_baslik', label: 'Acil Durumda Ulaşılacak Kişi', type: 'section', colSpan: 3 },
-            { key: 'acil_kisi_ad', label: 'Adı', type: 'text', required: true },
-            { key: 'acil_kisi_soyad', label: 'Soyadı', type: 'text', required: true },
-            { key: 'acil_kisi_yakinlik', label: 'Yakınlık Derecesi', type: 'text', required: true },
-            { key: 'acil_kisi_telefon', label: 'Telefon Numarası', type: 'tel', required: true }
+            { key: 'acil_kisi_ad', label: 'Adı', type: 'text' },
+            { key: 'acil_kisi_soyad', label: 'Soyadı', type: 'text' },
+            { key: 'acil_kisi_yakinlik', label: 'Yakınlık Derecesi', type: 'text' },
+            { key: 'acil_kisi_telefon', label: 'Telefon Numarası', type: 'tel' }
           ]
         }
       },
