@@ -22,6 +22,7 @@ import { EntityForm, FormMode } from '@/components/ui/EntityForm'
 import { Toast } from '@/components/ui/Toast'
 import { personelModuleConfig, PersonelTableRow } from '@/lib/modules/personel.config'
 import { toEntityFormFields, toEntityFormTabs } from '@/types/module-config'
+import { formatPhoneInput, normalizeEmailInput } from '@/lib/utils'
 import type { Personel } from '@/types'
 
 // Page state type following ERP pattern
@@ -122,6 +123,20 @@ export default function PersonelYonetimPage() {
       payload[key] = value
     })
 
+    if (Array.isArray(payload.telefonlar)) {
+      payload.telefonlar = payload.telefonlar.map((phone: Record<string, any>) => ({
+        ...phone,
+        numara: formatPhoneInput(String(phone.numara || ''))
+      }))
+    }
+
+    if (Array.isArray(payload.epostalar)) {
+      payload.epostalar = payload.epostalar.map((email: Record<string, any>) => ({
+        ...email,
+        adres: normalizeEmailInput(String(email.adres || ''))
+      }))
+    }
+
     if (payload.telefonlar?.length && !payload.cep_telefonu) {
       payload.cep_telefonu = payload.telefonlar[0]?.numara
     }
@@ -129,6 +144,11 @@ export default function PersonelYonetimPage() {
     if (payload.epostalar?.length && !payload.email) {
       payload.email = payload.epostalar[0]?.adres
     }
+
+    if (payload.cep_telefonu) payload.cep_telefonu = formatPhoneInput(String(payload.cep_telefonu))
+    if (payload.is_telefonu) payload.is_telefonu = formatPhoneInput(String(payload.is_telefonu))
+    if (payload.acil_kisi_telefon) payload.acil_kisi_telefon = formatPhoneInput(String(payload.acil_kisi_telefon))
+    if (payload.email) payload.email = normalizeEmailInput(String(payload.email))
 
     if (payload.uyruk === 'tc') {
       delete payload.pasaport_no

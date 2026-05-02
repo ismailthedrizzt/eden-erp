@@ -25,7 +25,7 @@
 
 import { useState, useEffect, ReactNode, useCallback } from 'react'
 import { Save, Loader2, Edit3, History, Clock, Plus, Trash2, Upload, Briefcase, LogOut } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { cn, formatPhoneInput, normalizeEmailInput } from '@/lib/utils'
 import { ImageSlotUploader, ImageSlot, SlotImage } from './ImageSlotUploader'
 import { DocumentSlotUploader, DocumentSlot, SlotDocument } from './DocumentSlotUploader'
 import { IBANInput } from './IBANInput'
@@ -294,6 +294,12 @@ function ListField({
     if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }))
   }
 
+  const formatDraftValue = (item: FormField, value: string) => {
+    if (item.type === 'tel') return formatPhoneInput(value)
+    if (item.type === 'email') return normalizeEmailInput(value)
+    return value
+  }
+
   const addRow = () => {
     const nextErrors: Record<string, string> = {}
     fields.forEach(item => {
@@ -381,7 +387,7 @@ function ListField({
       <input
         type={item.type === 'email' ? 'email' : item.type === 'tel' ? 'tel' : 'text'}
         value={draft[item.name] || ''}
-        onChange={(event) => setDraftValue(item.name, event.target.value)}
+        onChange={(event) => setDraftValue(item.name, formatDraftValue(item, event.target.value))}
         placeholder={item.placeholder}
         disabled={disabled || readOnly}
         className={inputClass}
@@ -721,6 +727,20 @@ export function EntityForm({
     }
   }
 
+  const handleFormattedFieldChange = (field: FormField, value: string) => {
+    if (field.type === 'tel') {
+      handleChange(field.name, formatPhoneInput(value))
+      return
+    }
+
+    if (field.type === 'email') {
+      handleChange(field.name, normalizeEmailInput(value))
+      return
+    }
+
+    handleChange(field.name, value)
+  }
+
   const handleImagesChange = async (nextImages: SlotImage[]) => {
     setImages(nextImages)
 
@@ -913,7 +933,7 @@ export function EntityForm({
             <input
               type="email"
               value={value}
-              onChange={(e) => handleChange(field.name, e.target.value)}
+              onChange={(e) => handleFormattedFieldChange(field, e.target.value)}
               placeholder={field.placeholder}
               readOnly={fieldDisabled}
               className={baseInputClass}
@@ -924,7 +944,7 @@ export function EntityForm({
             <input
               type="tel"
               value={value}
-              onChange={(e) => handleChange(field.name, e.target.value)}
+              onChange={(e) => handleFormattedFieldChange(field, e.target.value)}
               placeholder={field.placeholder}
               readOnly={fieldDisabled}
               className={baseInputClass}

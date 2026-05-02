@@ -132,3 +132,25 @@ export function formatFileSize(bytes: number): string {
   const i = Math.floor(Math.log(bytes) / Math.log(k))
   return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i]
 }
+
+export function formatPhoneInput(value: string): string {
+  const digits = value.replace(/\D/g, '')
+  const localDigits = digits.startsWith('90') ? digits.slice(2) : digits
+  const normalized = localDigits.startsWith('0') ? localDigits.slice(1) : localDigits
+  const limited = normalized.slice(0, 10)
+
+  if (!limited) return ''
+
+  const parts = [
+    limited.slice(0, 3),
+    limited.slice(3, 6),
+    limited.slice(6, 8),
+    limited.slice(8, 10),
+  ].filter(Boolean)
+
+  return `0 ${parts.join(' ')}`
+}
+
+export function normalizeEmailInput(value: string): string {
+  return value.trim().toLowerCase()
+}
