@@ -26,6 +26,25 @@ const LOGO_OVERRIDES = {
   '00211': 'EK',
 }
 
+const DOMAIN_OVERRIDES = {
+  '00010': 'ziraatbank.com.tr',
+  '00012': 'halkbank.com.tr',
+  '00015': 'vakifbank.com.tr',
+  '00032': 'teb.com.tr',
+  '00046': 'akbank.com',
+  '00062': 'garantibbva.com.tr',
+  '00064': 'isbank.com.tr',
+  '00067': 'yapikredi.com.tr',
+  '00099': 'ing.com.tr',
+  '00111': 'qnb.com.tr',
+  '00203': 'albaraka.com.tr',
+  '00205': 'kuveytturk.com.tr',
+  '00206': 'turkiyefinans.com.tr',
+  '00209': 'ziraatkatilim.com.tr',
+  '00210': 'vakifkatilim.com.tr',
+  '00211': 'emlakkatilim.com.tr',
+}
+
 const SOURCE_NAME_BY_KEY = {
   tbb2024: 'Türkiye Bankalar Birliği - Bankalarımız 2024',
   ibanGenTr: 'IBAN.gen.tr - Bankalar',
@@ -64,11 +83,25 @@ function logoText(name, code) {
 }
 
 function upsertBank(banks, code, bank) {
+  const domain = bank.domain || banks[code]?.domain || DOMAIN_OVERRIDES[code]
   banks[code] = {
     name: bank.name,
     swift: bank.swift || banks[code]?.swift,
+    domain,
+    logoUrl: domain ? `https://www.google.com/s2/favicons?domain=${domain}&sz=64` : undefined,
     logoText: logoText(bank.name, code),
     source: SOURCE_NAME_BY_KEY[bank.sourceKey],
+  }
+}
+
+function extractDomain(value) {
+  if (!value) return undefined
+  const raw = value.startsWith('http') ? value : `https://${value}`
+
+  try {
+    return new URL(raw).hostname.replace(/^www\./, '')
+  } catch {
+    return undefined
   }
 }
 
@@ -107,14 +140,15 @@ async function parseTbbPdf() {
 
   for (let index = 0; index < lines.length; index += 1) {
     const joined = [lines[index], lines[index + 1], lines[index + 2]].filter(Boolean).join(' ')
-    const match = joined.match(/^(.+?)\s+([A-Z0-9-]{1,8})\s+(\d{4})\s+(?:https?:\/\/|www\.)/)
+    const match = joined.match(/^(.+?)\s+([A-Z0-9-]{1,8})\s+(\d{4})\s+((?:https?:\/\/|www\.)\S+)/)
     if (!match) continue
 
-    const [, name, swift, rawCode] = match
+    const [, name, swift, rawCode, website] = match
     const code = padEftCode(rawCode)
     upsertBank(banks, code, {
       name: name.replace(/\s+/g, ' ').trim(),
       swift: swift === '-' ? undefined : swift,
+      domain: extractDomain(website),
       sourceKey: 'tbb2024',
     })
   }

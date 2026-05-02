@@ -13,6 +13,7 @@ const migrationFiles = [
   '20240504_extend_employee_form_schema.sql',
   '20240505_employee_soft_delete_and_history.sql',
   '20240506_add_employee_cv_document.sql',
+  '20240507_reference_data_and_employee_optional_fields.sql',
   'create_module_licenses.sql',
   'add_employee_unique_constraint.sql',
 ];

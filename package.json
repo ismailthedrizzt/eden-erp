@@ -11,7 +11,8 @@
     "clean": "node -e \"require('fs').rmSync('.next', { recursive: true, force: true })\"",
     "send-email": "node scripts/send-email.js",
     "supabase:migrate": "node scripts/apply-supabase-migrations.js",
-    "iban:banks": "node --use-system-ca scripts/update-turkish-bank-codes.js"
+    "iban:banks": "node --use-system-ca scripts/update-turkish-bank-codes.js",
+    "reference:locations": "node scripts/update-turkey-locations.js"
   },
   "engines": {
     "node": ">=22 <25",

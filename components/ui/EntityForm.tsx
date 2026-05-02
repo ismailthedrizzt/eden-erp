@@ -70,6 +70,12 @@ interface FieldCondition {
   includes?: any[]
 }
 
+interface TurkeyProvince {
+  id: number
+  name: string
+  districts: Array<{ id: number; name: string }>
+}
+
 /** Tab configuration for grouping fields */
 export interface FormTab {
   id: string
@@ -290,7 +296,11 @@ function ListField({
   const inputClass = "w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:cursor-not-allowed"
 
   const setDraftValue = (name: string, nextValue: any) => {
-    setDraft(prev => ({ ...prev, [name]: nextValue }))
+    setDraft(prev => ({
+      ...prev,
+      [name]: nextValue,
+      ...(name === 'devam_ediyor' && nextValue ? { mezuniyet_tarihi: '' } : {})
+    }))
     if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }))
   }
 
@@ -318,6 +328,8 @@ function ListField({
   }
 
   const renderDraftInput = (item: FormField) => {
+    const itemDisabled = disabled || readOnly || (item.disabledWhen ? matchesCondition(item.disabledWhen, draft) : false)
+
     if (item.type === 'checkbox') {
       return (
         <label className="flex items-center gap-2 rounded-lg border border-gray-200 dark:border-gray-700 px-3 py-2 text-sm text-gray-700 dark:text-gray-300">
@@ -325,7 +337,7 @@ function ListField({
             type="checkbox"
             checked={!!draft[item.name]}
             onChange={(event) => setDraftValue(item.name, event.target.checked)}
-            disabled={disabled || readOnly}
+            disabled={itemDisabled}
             className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
           />
           {item.label}
@@ -338,7 +350,7 @@ function ListField({
         <select
           value={draft[item.name] || ''}
           onChange={(event) => setDraftValue(item.name, event.target.value)}
-          disabled={disabled || readOnly}
+          disabled={itemDisabled}
           className={inputClass}
         >
           <option value="">Seçiniz</option>
@@ -356,7 +368,7 @@ function ListField({
           <input
             type="file"
             className="hidden"
-            disabled={disabled || readOnly}
+            disabled={itemDisabled}
             onChange={(event) => {
               const file = event.target.files?.[0]
               if (!file) return
@@ -375,9 +387,9 @@ function ListField({
       return (
         <input
           type="date"
-          value={draft[item.name] || ''}
+          value={itemDisabled ? '' : draft[item.name] || ''}
           onChange={(event) => setDraftValue(item.name, event.target.value)}
-          disabled={disabled || readOnly}
+          disabled={itemDisabled}
           className={inputClass}
         />
       )
@@ -389,7 +401,7 @@ function ListField({
         value={draft[item.name] || ''}
         onChange={(event) => setDraftValue(item.name, formatDraftValue(item, event.target.value))}
         placeholder={item.placeholder}
-        disabled={disabled || readOnly}
+        disabled={itemDisabled}
         className={inputClass}
       />
     )
@@ -469,6 +481,7 @@ function WorkLifecycleField({
 }) {
   const [modal, setModal] = useState<'hire' | 'exit' | null>(null)
   const [draft, setDraft] = useState<Record<string, any>>({})
+  const [modalErrors, setModalErrors] = useState<Record<string, string>>({})
   const isHired = !!formData.sgk_giris
   const isExited = !!formData.isten_ayrilis
 
@@ -491,10 +504,16 @@ function WorkLifecycleField({
   const closeModal = () => {
     setModal(null)
     setDraft({})
+    setModalErrors({})
   }
 
   const saveModal = () => {
     if (modal === 'hire') {
+      if (!draft.sgk_giris) {
+        setModalErrors({ sgk_giris: 'SGK giriş tarihi zorunludur' })
+        return
+      }
+
       onChange('sgk_giris', draft.sgk_giris || '')
       onChange('sirket_id', draft.sirket_id || '')
       onChange('birim_id', draft.birim_id || '')
@@ -575,7 +594,14 @@ function WorkLifecycleField({
             <div className="space-y-4 p-4">
               {modal === 'hire' ? (
                 <>
-                  <input type="date" value={draft.sgk_giris || ''} onChange={(e) => setDraft(prev => ({ ...prev, sgk_giris: e.target.value }))} className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900" />
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">SGK Giriş Tarihi *</label>
+                    <input type="date" value={draft.sgk_giris || ''} onChange={(e) => {
+                      setDraft(prev => ({ ...prev, sgk_giris: e.target.value }))
+                      if (modalErrors.sgk_giris) setModalErrors({})
+                    }} className={cn("w-full rounded-lg border bg-white px-3 py-2 text-sm dark:bg-gray-900", modalErrors.sgk_giris ? "border-red-300 dark:border-red-700" : "border-gray-300 dark:border-gray-700")} />
+                    {modalErrors.sgk_giris && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{modalErrors.sgk_giris}</p>}
+                  </div>
                   <input placeholder="Şirket" value={draft.sirket_id || ''} onChange={(e) => setDraft(prev => ({ ...prev, sirket_id: e.target.value }))} className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900" />
                   <input placeholder="Birim" value={draft.birim_id || ''} onChange={(e) => setDraft(prev => ({ ...prev, birim_id: e.target.value }))} className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900" />
                   <input placeholder="Görev" value={draft.gorev || ''} onChange={(e) => setDraft(prev => ({ ...prev, gorev: e.target.value }))} className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900" />
@@ -638,6 +664,7 @@ export function EntityForm({
   const [formData, setFormData] = useState<Record<string, any>>({})
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [cvExtractStatus, setCvExtractStatus] = useState<{ type: 'idle' | 'loading' | 'success' | 'error'; message: string }>({ type: 'idle', message: '' })
+  const [turkeyProvinces, setTurkeyProvinces] = useState<TurkeyProvince[]>([])
   
   // STANDARD FORM LAYOUT: Image and Document slots
   const imageSlots: ImageSlot[] = [
@@ -702,7 +729,28 @@ export function EntityForm({
       })
       setFormData(defaults)
     }
-  }, [data, mode, heroFields, tabs])
+  // Keep form values stable across parent re-renders such as validation toasts.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data, mode])
+
+  useEffect(() => {
+    let cancelled = false
+
+    fetch('/api/reference/turkey-locations')
+      .then(response => response.ok ? response.json() : null)
+      .then(payload => {
+        if (!cancelled && Array.isArray(payload?.provinces)) {
+          setTurkeyProvinces(payload.provinces)
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setTurkeyProvinces([])
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   // Reset active tab when mode changes
   useEffect(() => {
@@ -914,6 +962,43 @@ export function EntityForm({
           onChange: (val) => handleChange(field.name, val),
           readOnly: isReadOnly
         })
+      }
+
+      if (field.name === 'il') {
+        return (
+          <select
+            value={value}
+            onChange={(e) => {
+              handleChange('il', e.target.value)
+              handleChange('ilce', '')
+            }}
+            disabled={fieldDisabled}
+            className={cn(baseInputClass, fieldDisabled && "appearance-none")}
+          >
+            <option value="">Seçiniz</option>
+            {turkeyProvinces.map(province => (
+              <option key={province.id} value={province.name}>{province.name}</option>
+            ))}
+          </select>
+        )
+      }
+
+      if (field.name === 'ilce') {
+        const selectedProvince = turkeyProvinces.find(province => province.name === formData.il)
+
+        return (
+          <select
+            value={value}
+            onChange={(e) => handleChange('ilce', e.target.value)}
+            disabled={fieldDisabled || !selectedProvince}
+            className={cn(baseInputClass, (fieldDisabled || !selectedProvince) && "appearance-none")}
+          >
+            <option value="">{selectedProvince ? 'Seçiniz' : 'Önce il seçiniz'}</option>
+            {selectedProvince?.districts.map(district => (
+              <option key={district.id} value={district.name}>{district.name}</option>
+            ))}
+          </select>
+        )
       }
 
       switch (field.type) {
@@ -1145,7 +1230,7 @@ export function EntityForm({
               {isReadOnly && canEdit && (
                 <button
                   onClick={() => handleModeChange('edit')}
-                  className="flex items-center gap-2 px-4 py-2 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors text-sm font-medium"
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
                 >
                   <Edit3 size={16} />
                   Düzenle
@@ -1167,7 +1252,7 @@ export function EntityForm({
                     className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium disabled:opacity-50"
                   >
                     {saving ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} />}
-                    {isCreate ? 'Oluştur' : 'Kaydet'}
+                    {isCreate ? 'Oluştur' : 'Güncelle'}
                   </button>
                 </>
               )}

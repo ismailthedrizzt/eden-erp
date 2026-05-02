@@ -341,7 +341,8 @@ export const personelModuleConfig: ModuleConfig<PersonelTableRow> = {
                     ]
                   },
                   { name: 'bolum', key: 'bolum', label: 'Bölüm', type: 'text' },
-                  { name: 'mezuniyet_tarihi', key: 'mezuniyet_tarihi', label: 'Mezuniyet Tarihi', type: 'date' }
+                  { name: 'mezuniyet_tarihi', key: 'mezuniyet_tarihi', label: 'Bitiş Tarihi', type: 'date', disabledWhen: { field: 'devam_ediyor', operator: 'equals', value: true } },
+                  { name: 'devam_ediyor', key: 'devam_ediyor', label: 'Devam', type: 'checkbox' }
                 ]
               }
             },
@@ -437,6 +438,20 @@ export const personelModuleConfig: ModuleConfig<PersonelTableRow> = {
           type: 'fields',
           fields: [
             { key: 'iban', label: 'IBAN', type: 'iban', colSpan: 2 }
+          ]
+        }
+      },
+      {
+        key: 'kiyafet',
+        label: 'Kıyafet',
+        icon: <UserCircle size={16} />,
+        source: {
+          type: 'fields',
+          fields: [
+            { key: 'ust_beden', label: 'Üst Beden', type: 'text', compact: true },
+            { key: 'alt_beden', label: 'Alt Beden', type: 'text', compact: true },
+            { key: 'ayakkabi', label: 'Ayakkabı', type: 'text', compact: true },
+            { key: 'kep', label: 'Kep', type: 'text', compact: true }
           ]
         }
       },

@@ -8,5 +8,10 @@
       "NEXT_PUBLIC_VERCEL_URL": "$VERCEL_URL"
     }
   },
-  "crons": []
+  "crons": [
+    {
+      "path": "/api/cron/update-reference-data",
+      "schedule": "0 0 * * 0"
+    }
+  ]
 }

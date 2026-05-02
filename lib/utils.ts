@@ -51,6 +51,7 @@ export interface IbanBankInfo {
   bankCode: string
   swiftCode?: string
   source?: string
+  logoUrl?: string
   branchName?: string
   branchConfidence: 'known' | 'unknown'
   logoText: string
@@ -61,6 +62,7 @@ export interface IbanBankInfo {
 const IBAN_BANKS = turkishBankCodes.banks as Record<string, {
   name: string
   swift?: string
+  logoUrl?: string
   logoText: string
   source?: string
 }>
@@ -95,6 +97,7 @@ export function getIbanBankInfo(iban: string): IbanBankInfo | null {
     logoText: bank?.logoText ?? '?',
     swiftCode: bank?.swift,
     source: bank?.source,
+    logoUrl: bank?.logoUrl,
     branchName,
     branchConfidence: branchName ? 'known' : 'unknown',
   }

@@ -13,358 +13,478 @@
       "note": "Katılım bankaları için açık web listesi tamamlayıcı kaynak olarak kullanılır."
     }
   ],
-  "generatedAt": "2026-05-02T11:16:27.476Z",
+  "generatedAt": "2026-05-02T15:17:14.308Z",
   "banks": {
     "00004": {
       "name": "İller Bankası A.Ş.",
+      "domain": "ilbank.gov.tr",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=ilbank.gov.tr&sz=64",
       "logoText": "İB",
       "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
     },
     "00010": {
       "name": "Türkiye Cumhuriyeti Ziraat Bankası A.Ş.",
       "swift": "TCZBTR2A",
+      "domain": "ziraatbank.com.tr",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=ziraatbank.com.tr&sz=64",
       "logoText": "ZB",
       "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
     },
     "00012": {
       "name": "Türkiye Halk Bankası A.Ş.",
       "swift": "TRHBTR2A",
+      "domain": "halkbank.com.tr",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=halkbank.com.tr&sz=64",
       "logoText": "HB",
       "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
     },
     "00014": {
       "name": "Türkiye Sınai Kalkınma Bankası A.Ş.",
       "swift": "TSKBTRIS",
+      "domain": "tskb.com.tr",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=tskb.com.tr&sz=64",
       "logoText": "SB",
       "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
     },
     "00015": {
       "name": "Türkiye Vakıflar Bankası T.A.O.",
       "swift": "TVBATR2A",
+      "domain": "vakifbank.com.tr",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=vakifbank.com.tr&sz=64",
       "logoText": "VB",
       "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
     },
     "00016": {
       "name": "Türk Eximbank",
       "swift": "TIKBTR2A",
+      "domain": "eximbank.gov.tr",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=eximbank.gov.tr&sz=64",
       "logoText": "E",
       "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
     },
     "00017": {
       "name": "Türkiye Kalkınma ve Yatırım Bankası A.Ş.",
       "swift": "TKBNTR2A",
+      "domain": "kalkinma.com.tr",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=kalkinma.com.tr&sz=64",
       "logoText": "BA",
       "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
     },
     "00029": {
       "name": "Birleşik Fon Bankası A.Ş.",
       "swift": "BAYDTRIS",
+      "domain": "fonbank.com.tr",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=fonbank.com.tr&sz=64",
       "logoText": "BF",
       "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
     },
     "00032": {
       "name": "Türk Ekonomi Bankası A.Ş.",
       "swift": "TEBUTRIS",
+      "domain": "teb.com.tr",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=teb.com.tr&sz=64",
       "logoText": "TEB",
       "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
     },
     "00046": {
       "name": "Akbank T.A.Ş.",
       "swift": "AKBKTRIS",
+      "domain": "akbank.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=akbank.com&sz=64",
       "logoText": "AK",
       "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
     },
     "00059": {
       "name": "Şekerbank T.A.Ş.",
       "swift": "SEKETR2A",
+      "domain": "sekerbank.com.tr",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=sekerbank.com.tr&sz=64",
       "logoText": "ŞT",
       "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
     },
     "00060": {
       "name": "Türk Ticaret Bankası A.Ş.",
       "swift": "TTANTRIS",
+      "domain": "turkticaretbankasi.com.tr",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=turkticaretbankasi.com.tr&sz=64",
       "logoText": "TB",
       "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
     },
     "00062": {
       "name": "Türkiye Garanti Bankası A.Ş.",
       "swift": "TGBATRIS",
+      "domain": "garantibbva.com.tr",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=garantibbva.com.tr&sz=64",
       "logoText": "GB",
       "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
     },
     "00064": {
       "name": "Türkiye İş Bankası A.Ş.",
       "swift": "ISBKTRIS",
+      "domain": "isbank.com.tr",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=isbank.com.tr&sz=64",
       "logoText": "IS",
       "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
     },
     "00067": {
       "name": "Yapı ve Kredi Bankası A.Ş.",
       "swift": "YAPITRIS",
+      "domain": "yapikredi.com.tr",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=yapikredi.com.tr&sz=64",
       "logoText": "YK",
       "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
     },
     "00091": {
       "name": "Arap Türk Bankası A.Ş.",
       "swift": "ATUBTRIS",
+      "domain": "atbank.com.tr",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=atbank.com.tr&sz=64",
       "logoText": "AB",
       "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
     },
     "00092": {
       "name": "Citibank A.Ş.",
       "swift": "CITITRIX",
+      "domain": "citibank.com.tr",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=citibank.com.tr&sz=64",
       "logoText": "CA",
       "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
     },
     "00094": {
       "name": "Bank Mellat",
       "swift": "BKMTTRIS",
+      "domain": "mellatbank.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=mellatbank.com&sz=64",
       "logoText": "M",
       "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
     },
     "00096": {
       "name": "Turkish Bank A.Ş.",
       "swift": "TUBATRIS",
+      "domain": "turkishbank.com.tr",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=turkishbank.com.tr&sz=64",
       "logoText": "TA",
       "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
     },
     "00097": {
       "name": "Habib Bank Limited",
       "swift": "HABBTRIS",
+      "domain": "hbl.com.tr",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=hbl.com.tr&sz=64",
       "logoText": "HL",
       "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
     },
     "00098": {
       "name": "JPMorgan Chase Bank N.A.",
       "swift": "CHASTRIS",
+      "domain": "jpmorgan.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=jpmorgan.com&sz=64",
       "logoText": "JC",
       "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
     },
     "00099": {
       "name": "ING Bank A.Ş.",
       "swift": "INGBTRIS",
+      "domain": "ing.com.tr",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=ing.com.tr&sz=64",
       "logoText": "ING",
       "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
     },
     "00103": {
       "name": "Fibabanka A.Ş.",
       "swift": "FBHLTRIS",
+      "domain": "fibabanka.com.tr",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=fibabanka.com.tr&sz=64",
       "logoText": "FA",
       "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
     },
     "00108": {
       "name": "Turkland Bank A.Ş.",
       "swift": "TBNKTRIS",
+      "domain": "tbank.com.tr",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=tbank.com.tr&sz=64",
       "logoText": "TA",
       "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
     },
     "00109": {
       "name": "ICBC Turkey Bank A.Ş.",
       "swift": "ICBKTRIS",
+      "domain": "icbc.com.tr",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=icbc.com.tr&sz=64",
       "logoText": "IT",
       "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
     },
     "00111": {
       "name": "QNB Bank A.Ş.",
       "swift": "FNNBTRIS",
+      "domain": "qnb.com.tr",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=qnb.com.tr&sz=64",
       "logoText": "QNB",
       "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
     },
     "00115": {
       "name": "Deutsche Bank A.Ş.",
       "swift": "BKTRTRIS",
+      "domain": "db.com.tr",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=db.com.tr&sz=64",
       "logoText": "DA",
       "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
     },
     "00116": {
       "name": "Pasha Yatırım Bankası A.Ş.",
       "swift": "PAHATRIS",
+      "domain": "pashabank.com.tr",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=pashabank.com.tr&sz=64",
       "logoText": "PB",
       "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
     },
     "00121": {
       "name": "Standard Chartered Yatırım Bankası Türk A.Ş.",
       "swift": "SCBLTRIS",
+      "domain": "standardchartered.com.tr",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=standardchartered.com.tr&sz=64",
       "logoText": "SC",
       "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
     },
     "00122": {
       "name": "Société Générale (SA)",
       "swift": "SOGETRIS",
+      "domain": "societegenerale.",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=societegenerale.&sz=64",
       "logoText": "SG",
       "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
     },
     "00123": {
       "name": "HSBC Bank A.Ş.",
       "swift": "HSBCTRIX",
+      "domain": "hsbc.com.tr",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=hsbc.com.tr&sz=64",
       "logoText": "HA",
       "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
     },
     "00124": {
       "name": "Alternatifbank A.Ş.",
       "swift": "ALFBTRIS",
+      "domain": "alternatifbank.com.tr",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=alternatifbank.com.tr&sz=64",
       "logoText": "AA",
       "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
     },
     "00125": {
       "name": "Burgan Bank A.Ş.",
       "swift": "TEKFTRIS",
+      "domain": "burgan.com.tr",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=burgan.com.tr&sz=64",
       "logoText": "BA",
       "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
     },
     "00129": {
       "name": "Bank of America Yatırım Bank A.Ş.",
       "swift": "MEYYTRIS",
+      "domain": "mlyb.com.tr",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=mlyb.com.tr&sz=64",
       "logoText": "OA",
       "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
     },
     "00132": {
       "name": "İstanbul Takas ve Saklama Bankası A.Ş.",
       "swift": "TVSBTRIS",
+      "domain": "takasbank.com.tr",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=takasbank.com.tr&sz=64",
       "logoText": "İT",
       "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
     },
     "00134": {
       "name": "Denizbank A.Ş.",
       "swift": "DENITRIS",
+      "domain": "denizbank.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=denizbank.com&sz=64",
       "logoText": "DA",
       "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
     },
     "00135": {
       "name": "Anadolubank A.Ş.",
       "swift": "ANDLTRIS",
+      "domain": "anadolubank.com.tr",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=anadolubank.com.tr&sz=64",
       "logoText": "AA",
       "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
     },
     "00137": {
       "name": "Rabobank A.Ş.",
       "swift": "RABOTRIS",
+      "domain": "rabobank.com.tr",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=rabobank.com.tr&sz=64",
       "logoText": "RA",
       "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
     },
     "00138": {
       "name": "Diler Yatırım Bankası A.Ş.",
       "swift": "DYAKTRIS",
+      "domain": "dilerbank.com.tr",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=dilerbank.com.tr&sz=64",
       "logoText": "DB",
       "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
     },
     "00139": {
       "name": "GSD Yatırım Bankası A.Ş.",
       "swift": "GSDBTRIS",
+      "domain": "gsdbank.com.tr",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=gsdbank.com.tr&sz=64",
       "logoText": "GB",
       "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
     },
     "00141": {
       "name": "Nurol Yatırım Bankası A.Ş.",
       "swift": "NUROTRIS",
+      "domain": "nurolbank.com.tr",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=nurolbank.com.tr&sz=64",
       "logoText": "NB",
       "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
     },
     "00142": {
       "name": "BankPozitif Kredi ve Kalkınma Bankası A.Ş.",
       "swift": "BPTRTRIS",
+      "domain": "bankpozitif.com.tr",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=bankpozitif.com.tr&sz=64",
       "logoText": "BK",
       "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
     },
     "00143": {
       "name": "Aktif Yatırım Bankası A.Ş.",
       "swift": "CAYTTRIS",
+      "domain": "aktifbank.com.tr",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=aktifbank.com.tr&sz=64",
       "logoText": "AB",
       "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
     },
     "00146": {
       "name": "Odea Bank A.Ş.",
       "swift": "ODEATRIS",
+      "domain": "odeabank.com.tr",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=odeabank.com.tr&sz=64",
       "logoText": "OA",
       "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
     },
     "00147": {
       "name": "MUFG Bank Turkey A.Ş.",
       "swift": "BOTKTRIS",
+      "domain": "tu.bk.mufg.jp",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=tu.bk.mufg.jp&sz=64",
       "logoText": "MT",
       "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
     },
     "00148": {
       "name": "Intesa Sanpaolo S.p.A.",
       "swift": "BCITTRIS",
+      "domain": "intesasanpaolo.com.tr",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=intesasanpaolo.com.tr&sz=64",
       "logoText": "IS",
       "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
     },
     "00149": {
       "name": "Bank of China Turkey A.Ş.",
       "swift": "BKCHTRIS",
+      "domain": "bankofchina.com.tr",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=bankofchina.com.tr&sz=64",
       "logoText": "OC",
       "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
     },
     "00150": {
       "name": "Golden Global Yatırım Bankası A.Ş.",
       "swift": "GOGYTRIS",
+      "domain": "goldenglobalbank.com.tr",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=goldenglobalbank.com.tr&sz=64",
       "logoText": "GG",
       "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
     },
     "00151": {
       "name": "D Yatırım Bankası A.Ş.",
       "swift": "YATITRIS",
+      "domain": "dybank.com.tr",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=dybank.com.tr&sz=64",
       "logoText": "DB",
       "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
     },
     "00152": {
       "name": "Destek Yatırım Bankası A.Ş.",
       "swift": "DEYATRIS",
+      "domain": "destekbank.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=destekbank.com&sz=64",
       "logoText": "DB",
       "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
     },
     "00153": {
       "name": "Misyon Yatırım Bankası A.Ş.",
       "swift": "MYNSTRIS",
+      "domain": "misyon.com",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=misyon.com&sz=64",
       "logoText": "MB",
       "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
     },
     "00154": {
       "name": "Tera Yatırım Bankası A.Ş.",
       "swift": "TYASTRIS",
+      "domain": "terayatirimbankasi.com.tr",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=terayatirimbankasi.com.tr&sz=64",
       "logoText": "TB",
       "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
     },
     "00155": {
       "name": "Q Yatırım Bankası A.Ş.",
       "swift": "YAAITR22",
+      "domain": "qyatirimbankasi.com.tr",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=qyatirimbankasi.com.tr&sz=64",
       "logoText": "QB",
       "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
     },
     "00156": {
       "name": "Hedef Yatırım Bankası A.Ş.",
       "swift": "HYASTRIS",
+      "domain": "hedefyatirimbankasi.com.tr",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=hedefyatirimbankasi.com.tr&sz=64",
       "logoText": "HB",
       "source": "Türkiye Bankalar Birliği - Bankalarımız 2024"
     },
     "00203": {
       "name": "Albaraka Türk Katılım Bankası A.Ş.",
+      "domain": "albaraka.com.tr",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=albaraka.com.tr&sz=64",
       "logoText": "AL",
       "source": "IBAN.gen.tr - Bankalar"
     },
     "00205": {
       "name": "Kuveyt Türk Katılım Bankası A.Ş.",
+      "domain": "kuveytturk.com.tr",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=kuveytturk.com.tr&sz=64",
       "logoText": "KT",
       "source": "IBAN.gen.tr - Bankalar"
     },
     "00206": {
       "name": "Türkiye Finans Katılım Bankası A.Ş.",
+      "domain": "turkiyefinans.com.tr",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=turkiyefinans.com.tr&sz=64",
       "logoText": "TF",
       "source": "IBAN.gen.tr - Bankalar"
     },
     "00209": {
       "name": "Ziraat Katılım Bankası A.Ş.",
+      "domain": "ziraatkatilim.com.tr",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=ziraatkatilim.com.tr&sz=64",
       "logoText": "ZK",
       "source": "IBAN.gen.tr - Bankalar"
     },
     "00210": {
       "name": "Vakıf Katılım Bankası A.Ş.",
+      "domain": "vakifkatilim.com.tr",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=vakifkatilim.com.tr&sz=64",
       "logoText": "VK",
       "source": "IBAN.gen.tr - Bankalar"
     },
     "00211": {
       "name": "Türkiye Emlak Katılım Bankası A.Ş.",
+      "domain": "emlakkatilim.com.tr",
+      "logoUrl": "https://www.google.com/s2/favicons?domain=emlakkatilim.com.tr&sz=64",
       "logoText": "EK",
       "source": "IBAN.gen.tr - Bankalar"
     }

@@ -372,9 +372,9 @@ export function DocumentSlotUploader({
         {aiBadge && (
           <div
             title={aiBadge.title || 'AI destekli belge okuma'}
-            className="pointer-events-none absolute left-1.5 top-7 z-10 inline-flex h-5 items-center gap-0.5 rounded-full border border-cyan-200 bg-cyan-50/95 px-1.5 text-[9px] font-semibold leading-none text-cyan-700 shadow-sm dark:border-cyan-800 dark:bg-cyan-950/90 dark:text-cyan-300"
+            className="pointer-events-none absolute left-1.5 top-7 z-10 inline-flex h-10 items-center gap-1 rounded-full border border-cyan-200 bg-cyan-50/95 px-3 text-lg font-semibold leading-none text-cyan-700 shadow-sm dark:border-cyan-800 dark:bg-cyan-950/90 dark:text-cyan-300"
           >
-            <Sparkles size={10} aria-hidden="true" />
+            <Sparkles size={20} aria-hidden="true" />
             <span>{aiBadge.label || 'AI'}</span>
           </div>
         )}

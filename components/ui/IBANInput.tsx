@@ -61,10 +61,18 @@ export function IBANInput({ value, onChange, disabled = false, className }: IBAN
           <div
             title={bankInfo.bankName}
             className={cn(
-              "flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md text-xs font-bold text-white",
+              "relative flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md text-xs font-bold text-white",
               bankInfo.bankName === 'Bilinmeyen Banka' ? "bg-amber-500" : "bg-[#003b79]"
             )}
           >
+            {bankInfo.logoUrl && (
+              <img
+                src={bankInfo.logoUrl}
+                alt=""
+                className="absolute h-6 w-6 rounded-sm bg-white object-contain"
+                onError={(event) => { event.currentTarget.style.display = 'none' }}
+              />
+            )}
             {bankInfo.logoText}
           </div>
           <div className="flex-1 min-w-0">
