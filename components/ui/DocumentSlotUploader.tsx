@@ -35,7 +35,8 @@ import {
   RefreshCw,
   Download,
   Plus,
-  AlertCircle
+  AlertCircle,
+  Sparkles
 } from 'lucide-react'
 import { cn, formatFileSize } from '@/lib/utils'
 
@@ -69,6 +70,11 @@ interface DocumentSlotUploaderProps {
   allowExtraSlots?: boolean
   /** Read-only mode (view only) */
   readOnly?: boolean
+  /** Show a compact AI capability badge without changing the uploader layout */
+  aiBadge?: {
+    label?: string
+    title?: string
+  }
   /** Custom className */
   className?: string
 }
@@ -158,6 +164,7 @@ export function DocumentSlotUploader({
   onChange,
   allowExtraSlots = true,
   readOnly = false,
+  aiBadge,
   className
 }: DocumentSlotUploaderProps) {
   const [currentIndex, setCurrentIndex] = useState(0)
@@ -362,6 +369,16 @@ export function DocumentSlotUploader({
         className="relative w-full bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden"
         style={containerStyle}
       >
+        {aiBadge && (
+          <div
+            title={aiBadge.title || 'AI destekli belge okuma'}
+            className="pointer-events-none absolute left-1.5 top-7 z-10 inline-flex h-5 items-center gap-0.5 rounded-full border border-cyan-200 bg-cyan-50/95 px-1.5 text-[9px] font-semibold leading-none text-cyan-700 shadow-sm dark:border-cyan-800 dark:bg-cyan-950/90 dark:text-cyan-300"
+          >
+            <Sparkles size={10} aria-hidden="true" />
+            <span>{aiBadge.label || 'AI'}</span>
+          </div>
+        )}
+
         {/* Header - Navigation & Title */}
         <div className="flex items-center justify-between px-2 py-1 border-b border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50">
           <button

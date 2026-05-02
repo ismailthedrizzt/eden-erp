@@ -637,6 +637,7 @@ export function EntityForm({
   const [activeTab, setActiveTab] = useState(tabs[0]?.id || '')
   const [formData, setFormData] = useState<Record<string, any>>({})
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
+  const [cvExtractStatus, setCvExtractStatus] = useState<{ type: 'idle' | 'loading' | 'success' | 'error'; message: string }>({ type: 'idle', message: '' })
   
   // STANDARD FORM LAYOUT: Image and Document slots
   const imageSlots: ImageSlot[] = [
@@ -762,10 +763,83 @@ export function EntityForm({
     handleChange('fotograf_url', photo.previewUrl || '')
   }
 
-  const handleDocumentsChange = (nextDocuments: SlotDocument[]) => {
+  const handleDocumentsChange = async (nextDocuments: SlotDocument[]) => {
     setDocuments(nextDocuments)
     const cvDocument = nextDocuments.find(document => document.slotId === 'cv')
     handleChange('cv_belgesi', cvDocument ? serializeDocumentForStorage(cvDocument) : null)
+
+    if (cvDocument?.file) {
+      await extractCvData(cvDocument.file)
+    } else if (!cvDocument) {
+      setCvExtractStatus({ type: 'idle', message: '' })
+    }
+  }
+
+  const extractCvData = async (file: File) => {
+    setCvExtractStatus({ type: 'loading', message: 'CV okunuyor...' })
+
+    try {
+      const body = new FormData()
+      body.append('file', file)
+
+      const response = await fetch('/api/ai/cv-extract', {
+        method: 'POST',
+        body,
+      })
+
+      const result = await response.json().catch(() => ({}))
+
+      if (!response.ok) {
+        throw new Error(result.error || 'CV çözümleme başarısız')
+      }
+
+      const appliedCount = applyCvExtractedData(result.data || {})
+      setCvExtractStatus({
+        type: appliedCount > 0 ? 'success' : 'error',
+        message: appliedCount > 0
+          ? `CV'den ${appliedCount} alan dolduruldu`
+          : 'CV okundu ama forma aktarılacak net bilgi bulunamadı',
+      })
+    } catch (error) {
+      setCvExtractStatus({
+        type: 'error',
+        message: error instanceof Error ? error.message : 'CV çözümleme başarısız',
+      })
+    }
+  }
+
+  const applyCvExtractedData = (extracted: Record<string, any>) => {
+    const normalized = normalizeCvExtractedData(extracted)
+    const entriesToApply = Object.entries(normalized).filter(([key, value]) =>
+      isEmptyFormValue(formData[key]) && !isEmptyFormValue(value)
+    )
+
+    if (entriesToApply.length > 0) {
+      setFormData(prev => ({ ...prev, ...Object.fromEntries(entriesToApply) }))
+    }
+
+    return entriesToApply.length
+  }
+
+  const normalizeCvExtractedData = (extracted: Record<string, any>) => {
+    const next: Record<string, any> = { ...extracted }
+
+    if (next.cep_telefonu) {
+      next.cep_telefonu = formatPhoneInput(String(next.cep_telefonu))
+      next.telefonlar = [{ etiket: 'Cep', numara: next.cep_telefonu }]
+    }
+
+    if (next.email) {
+      next.email = normalizeEmailInput(String(next.email))
+      next.epostalar = [{ etiket: 'Kişisel', adres: next.email }]
+    }
+
+    return next
+  }
+
+  const isEmptyFormValue = (value: any) => {
+    if (Array.isArray(value)) return value.length === 0
+    return value === undefined || value === null || value === ''
   }
 
   const validate = (): boolean => {
@@ -1025,7 +1099,21 @@ export function EntityForm({
                     documents={documents}
                     onChange={handleDocumentsChange}
                     readOnly={isReadOnly}
+                    aiBadge={{
+                      label: 'AI',
+                      title: 'CV yüklendiğinde çalışan alanları AI ile okunur'
+                    }}
                   />
+                  {cvExtractStatus.type !== 'idle' && (
+                    <p className={cn(
+                      "text-xs",
+                      cvExtractStatus.type === 'loading' && "text-gray-500 dark:text-gray-400",
+                      cvExtractStatus.type === 'success' && "text-emerald-600 dark:text-emerald-400",
+                      cvExtractStatus.type === 'error' && "text-amber-600 dark:text-amber-400"
+                    )}>
+                      {cvExtractStatus.message}
+                    </p>
+                  )}
                 </div>
               </div>
             )}
