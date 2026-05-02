@@ -6,7 +6,7 @@ const EmployeeSchema = z.object({
   ad: z.string().min(1).max(100),
   soyad: z.string().min(1).max(100),
   uyruk: z.enum(['tc', 'yabanci']).default('tc'),
-  tc_kimlik: z.string().optional(),
+  tc_kimlik: z.string().regex(/^\d{11}$/, 'TC Kimlik No 11 haneli sayı olmalıdır').optional(),
   pasaport_no: z.string().optional(),
   cinsiyet: z.enum(['erkek', 'kadin']),
   dogum_yeri: z.string().optional(),

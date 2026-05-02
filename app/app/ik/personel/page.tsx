@@ -257,11 +257,20 @@ export default function PersonelYonetimPage() {
 
     if (code === 'VALIDATION_FAILED' && missingFields.length > 0) {
       const message = formatFieldList(missingFields)
-      const error = new Error(`Eksik Zorunlu Alan [${message}]`) as SaveError
-      error.fieldErrors = Object.fromEntries(
-        missingFields.map(field => [field, `${getFieldLabel(field)} zorunludur`])
+      const hasFormatError = Object.values(fieldErrors).some(value =>
+        Array.isArray(value) && value.some(item => typeof item === 'string' && !item.toLowerCase().includes('required'))
       )
-      error.toast = { type: 'warning', title: 'Eksik Zorunlu Alan', message }
+      const error = new Error(`${hasFormatError ? 'Geçersiz Alan' : 'Eksik Zorunlu Alan'} [${message}]`) as SaveError
+      error.fieldErrors = Object.fromEntries(
+        missingFields.map(field => {
+          const firstMessage = Array.isArray(fieldErrors[field]) ? fieldErrors[field][0] : null
+          return [field, typeof firstMessage === 'string' && !firstMessage.toLowerCase().includes('required')
+            ? firstMessage
+            : `${getFieldLabel(field)} zorunludur`
+          ]
+        })
+      )
+      error.toast = { type: 'warning', title: hasFormatError ? 'Geçersiz Alan' : 'Eksik Zorunlu Alan', message }
       return error
     }
 
@@ -430,11 +439,15 @@ export default function PersonelYonetimPage() {
             onCancel={() => setPageState('list')}
             onDelete={handleDelete}
             onModeChange={(mode) => setPageState(mode)}
-            onValidationError={(fields) => setToast({
-              type: 'warning',
-              title: 'Eksik Zorunlu Alan',
-              message: fields.join(', ')
-            })}
+            enableHistory
+            onValidationError={(fields) => {
+              const hasFormatError = fields.some(field => field.includes('olmalıdır') || field.includes('geçersiz'))
+              setToast({
+                type: 'warning',
+                title: hasFormatError ? 'Geçersiz Alan' : 'Eksik Zorunlu Alan',
+                message: fields.join(', ')
+              })
+            }}
           />
         </div>
       )}

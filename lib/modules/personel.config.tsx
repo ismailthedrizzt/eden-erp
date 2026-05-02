@@ -196,7 +196,7 @@ export const personelModuleConfig: ModuleConfig<PersonelTableRow> = {
             { value: 'yabanci', label: 'Yabancı' }
           ]
         },
-        { key: 'tc_kimlik', label: 'TC Kimlik No', type: 'text', required: true, visibleWhen: { field: 'uyruk', operator: 'equals', value: 'tc' } },
+        { key: 'tc_kimlik', label: 'TC Kimlik No', type: 'text', required: true, maxLength: 11, inputMode: 'numeric', pattern: '[0-9]{11}', visibleWhen: { field: 'uyruk', operator: 'equals', value: 'tc' } },
         { key: 'pasaport_no', label: 'Pasaport No', type: 'text', required: true, visibleWhen: { field: 'uyruk', operator: 'equals', value: 'yabanci' } },
         {
           key: 'cinsiyet',

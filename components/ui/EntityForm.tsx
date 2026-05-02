@@ -47,6 +47,9 @@ export interface FormField {
   required?: boolean
   options?: { value: string; label: string }[]
   placeholder?: string
+  maxLength?: number
+  inputMode?: 'text' | 'numeric' | 'tel' | 'email' | 'url' | 'search' | 'decimal'
+  pattern?: string
   colSpan?: 1 | 2 | 3
   compact?: boolean
   visibleWhen?: any
@@ -818,6 +821,11 @@ export function EntityForm({
   }
 
   const handleFormattedFieldChange = (field: FormField, value: string) => {
+    if (field.name === 'tc_kimlik') {
+      handleChange(field.name, value.replace(/\D/g, '').slice(0, 11))
+      return
+    }
+
     if (field.type === 'tel') {
       handleChange(field.name, formatPhoneInput(value))
       return
@@ -939,6 +947,16 @@ export function EntityForm({
         if (field.type === 'section' || !matchesCondition(field.visibleWhen, formData)) return
         if (isFieldRequired(field) && !hasValue(formData[field.name])) {
           errors[field.name] = `${field.errorLabel || field.label} zorunludur`
+          return
+        }
+
+        if (field.pattern && hasValue(formData[field.name])) {
+          const regex = new RegExp(`^(?:${field.pattern})$`)
+          if (!regex.test(String(formData[field.name]))) {
+            errors[field.name] = field.name === 'tc_kimlik'
+              ? 'TC Kimlik No 11 haneli sayı olmalıdır'
+              : `${field.errorLabel || field.label} formatı geçersiz`
+          }
         }
       })
     }
@@ -1157,8 +1175,11 @@ export function EntityForm({
             <input
               type="text"
               value={value}
-              onChange={(e) => handleChange(field.name, e.target.value)}
+              onChange={(e) => handleFormattedFieldChange(field, e.target.value)}
               placeholder={field.placeholder}
+              maxLength={field.maxLength}
+              inputMode={field.inputMode}
+              pattern={field.pattern}
               readOnly={fieldDisabled}
               className={baseInputClass}
             />
