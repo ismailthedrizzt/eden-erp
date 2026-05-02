@@ -436,7 +436,7 @@ export const personelModuleConfig: ModuleConfig<PersonelTableRow> = {
         source: {
           type: 'fields',
           fields: [
-            { key: 'iban', label: 'IBAN', type: 'iban', required: true, colSpan: 2 }
+            { key: 'iban', label: 'IBAN', type: 'iban', colSpan: 2 }
           ]
         }
       },
