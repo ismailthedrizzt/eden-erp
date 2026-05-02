@@ -182,10 +182,11 @@ function FieldHistoryIndicator({ history }: { history?: HistoryEntry[] }) {
     <div className="relative">
       <button
         type="button"
+        title="Geçmiş değerleri göster"
         onMouseEnter={() => setShowTooltip(true)}
         onMouseLeave={() => setShowTooltip(false)}
         onClick={() => setShowTooltip(!showTooltip)}
-        className="p-1 text-gray-400 hover:text-blue-500 transition-colors"
+        className="rounded-md p-1 text-blue-600 transition-colors hover:bg-blue-50 hover:text-blue-700 dark:text-blue-400 dark:hover:bg-blue-900/20"
       >
         <History size={14} />
       </button>
@@ -1190,13 +1191,13 @@ export function EntityForm({
     return (
       <div key={field.name} className={cn("space-y-1", colSpanClass)}>
         <div className="flex items-center gap-2">
-          {(showHistoryIcon || enableHistory) && field.history && field.history.length > 0 && (
-            <FieldHistoryIndicator history={field.history} />
-          )}
           <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
             {field.label}
             {isRequired && <span className="text-red-500 ml-1">*</span>}
           </label>
+          {(showHistoryIcon || enableHistory) && field.history && field.history.length > 0 && (
+            <FieldHistoryIndicator history={field.history} />
+          )}
         </div>
         {renderInput()}
         {error && (

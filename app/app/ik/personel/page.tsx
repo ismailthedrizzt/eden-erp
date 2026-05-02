@@ -113,11 +113,20 @@ export default function PersonelYonetimPage() {
     setPageState('create')
   }
 
-  const handleRowClick = (row: PersonelTableRow) => {
+  const handleRowClick = async (row: PersonelTableRow) => {
     setSelectedPersonel(row as Personel)
     setFormError(null)
     setSaveFieldErrors({})
     setPageState('view')
+
+    try {
+      const response = await fetch(`${apiBasePath}/${row.id}`)
+      if (!response.ok) return
+      const result = await response.json()
+      if (result.data) setSelectedPersonel(result.data)
+    } catch {
+      // The list row is already usable; detail fetch only enriches history.
+    }
   }
 
   const handleSave = async (data: Record<string, any>, mode: FormMode) => {

@@ -205,7 +205,6 @@ export const personelModuleConfig: ModuleConfig<PersonelTableRow> = {
           required: true,
           compact: true,
           options: [
-            { value: '', label: 'Seçiniz' },
             { value: 'erkek', label: 'Erkek' },
             { value: 'kadin', label: 'Kadın' }
           ]
@@ -218,7 +217,6 @@ export const personelModuleConfig: ModuleConfig<PersonelTableRow> = {
           type: 'select',
           compact: true,
           options: [
-            { value: '', label: 'Seçiniz' },
             { value: 'A+', label: 'A+' },
             { value: 'A-', label: 'A-' },
             { value: 'B+', label: 'B+' },
