@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Landmark, Building2 } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { Landmark } from 'lucide-react'
+import { cn, getIbanBankInfo } from '@/lib/utils'
 
 interface IBANInputProps {
   value: string
@@ -115,7 +115,7 @@ const TURKISH_BANKS: Record<string, { name: string; branch: string }> = {
 }
 
 export function IBANInput({ value, onChange, disabled = false, className }: IBANInputProps) {
-  const [bankInfo, setBankInfo] = useState<{ bankName: string; branchName: string } | null>(null)
+  const [bankInfo, setBankInfo] = useState<ReturnType<typeof getIbanBankInfo>>(null)
 
   // Format IBAN for display
   const formatIBAN = (iban: string) => {
@@ -123,31 +123,9 @@ export function IBANInput({ value, onChange, disabled = false, className }: IBAN
     return cleaned.replace(/(.{4})/g, '$1 ').trim()
   }
 
-  // Get bank code from IBAN (first 5 characters after country code)
-  const getBankCode = (iban: string) => {
-    const cleaned = iban.replace(/\s/g, '').toUpperCase()
-    if (cleaned.length >= 9 && cleaned.startsWith('TR')) {
-      return cleaned.substring(4, 9)
-    }
-    return null
-  }
-
   // Get bank info from local mapping
   useEffect(() => {
-    const bankCode = getBankCode(value)
-    if (bankCode) {
-      const bank = TURKISH_BANKS[bankCode]
-      if (bank) {
-        setBankInfo({
-          bankName: bank.name,
-          branchName: bank.branch
-        })
-      } else {
-        setBankInfo(null)
-      }
-    } else {
-      setBankInfo(null)
-    }
+    setBankInfo(getIbanBankInfo(value))
   }, [value])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -177,14 +155,27 @@ export function IBANInput({ value, onChange, disabled = false, className }: IBAN
       </div>
       
       {bankInfo && (
-        <div className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700">
-          <Building2 size={16} className="text-gray-500" />
+        <div className={cn(
+          "flex items-center gap-2 p-2 rounded-md border",
+          bankInfo.bankName === 'Bilinmeyen Banka'
+            ? "bg-amber-50 border-amber-200 dark:bg-amber-900/20 dark:border-amber-800"
+            : "bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700"
+        )}>
+          <div
+            title={bankInfo.bankName}
+            className={cn(
+              "flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md text-xs font-bold text-white",
+              bankInfo.bankName === 'Bilinmeyen Banka' ? "bg-amber-500" : "bg-[#003b79]"
+            )}
+          >
+            {bankInfo.logoText}
+          </div>
           <div className="flex-1 min-w-0">
             <p className="text-xs font-medium text-gray-700 dark:text-gray-300 truncate">
-              {bankInfo.bankName}
+              Banka
             </p>
             <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-              {bankInfo.branchName}
+              {bankInfo.branchConfidence === 'known' ? bankInfo.branchName : 'Şube bilgisi IBAN standardından güvenilir çıkarılamaz'}
             </p>
           </div>
         </div>

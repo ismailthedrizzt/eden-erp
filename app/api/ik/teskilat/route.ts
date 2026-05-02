@@ -7,7 +7,7 @@ export async function GET() {
 
   const [{ data: birimler, error: e1 }, { data: kadrolar, error: e2 }] = await Promise.all([
     supabase.from('birimler').select('*').order('ad'),
-    supabase.from('norm_kadrolar').select('*, personel:personel(id,ad,soyad)').order('unvan'),
+    supabase.from('norm_kadrolar').select('*, personel:employees(id,ad,soyad)').order('unvan'),
   ])
 
   if (e1) return NextResponse.json({ error: e1.message }, { status: 500 })

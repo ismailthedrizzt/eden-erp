@@ -91,9 +91,13 @@ export interface Personel {
   dogum_tarihi?: string
   kan_grubu?: KanGrubu
   askerlik_durumu?: AskerlikDurum
+  tecil_tarihi?: string
   engellilik: boolean
+  engellilik_yuzdesi?: number
   hukumluluk: boolean
   // İletişim
+  telefonlar?: Array<Record<string, unknown>>
+  epostalar?: Array<Record<string, unknown>>
   cep_telefonu?: string
   is_telefonu?: string
   ev_telefonu?: string
@@ -111,8 +115,17 @@ export interface Personel {
   isten_ayrilis?: string
   calisma_durumu: PersonelDurum
   medeni_durum?: MedeniDurum
+  sirket_id?: string
   birim_id?: string
   kadro_id?: string
+  gorev?: string
+  okuryazar_degil?: boolean
+  egitim_okullari?: Array<Record<string, unknown>>
+  yabanci_diller?: Array<Record<string, unknown>>
+  sertifikalar?: Array<Record<string, unknown>>
+  yakinlar?: Array<Record<string, unknown>>
+  ise_giris_belgeleri?: Array<Record<string, unknown>>
+  isten_cikis_belgeleri?: Array<Record<string, unknown>>
   // Kıyafet
   ust_beden?: string
   alt_beden?: string
@@ -123,8 +136,11 @@ export interface Personel {
   // Meta
   notlar?: string
   fotograf_url?: string
+  cv_belgesi?: Record<string, unknown> | null
   created_at: string
   updated_at: string
+  is_active?: boolean
+  field_history?: Record<string, Array<{ value: unknown; date: string; user?: string }>>
   // İlişkiler
   birim?: Birim
   kadro?: NormKadro

@@ -45,25 +45,60 @@ export function slugify(text: string): string {
     .replace(/^-+|-+$/g, '')
 }
 
-// IBAN'dan banka adı çıkarma (Türkiye)
-const IBAN_BANKS: Record<string, string> = {
-  '00062': 'Garanti BBVA',
-  '00067': 'Yapı Kredi',
-  '00064': 'İş Bankası',
-  '00046': 'Akbank',
-  '00015': 'Ziraat Bankası',
-  '00012': 'Halkbank',
-  '00032': 'TEB',
-  '00111': 'QNB Finansbank',
-  '00099': 'ING Bank',
-  '10003': 'Enpara (QNB)',
+export interface IbanBankInfo {
+  bankName: string
+  bankCode: string
+  branchName?: string
+  branchConfidence: 'known' | 'unknown'
+  logoText: string
+}
+
+// Türkiye IBAN standardında banka kodu ayrı alandır; şube alanı standart bir
+// pozisyonda yayınlanmaz. Şube bilgisi yalnızca açıkça bilinen eşleşmelerde döner.
+const IBAN_BANKS: Record<string, { name: string; logoText: string }> = {
+  '00062': { name: 'Garanti BBVA', logoText: 'GB' },
+  '00067': { name: 'Yapı Kredi', logoText: 'YK' },
+  '00064': { name: 'İş Bankası', logoText: 'İŞ' },
+  '00046': { name: 'Akbank', logoText: 'AK' },
+  '00015': { name: 'Ziraat Bankası', logoText: 'ZB' },
+  '00012': { name: 'Halkbank', logoText: 'HB' },
+  '00032': { name: 'TEB', logoText: 'TEB' },
+  '00111': { name: 'QNB Finansbank', logoText: 'QNB' },
+  '00099': { name: 'ING Bank', logoText: 'ING' },
+  '10003': { name: 'Enpara (QNB)', logoText: 'QNB' },
+}
+
+const KNOWN_TR_IBAN_BRANCHES: Record<string, string> = {
+  // İş Bankası hesap numarası içinde şube kodunu 4 hane olarak kullanan
+  // bilinen örnekler için dar kapsamlı eşleşme.
+  '00064:2224': 'Yenişehir Şubesi / Bursa',
+  '00064:4218': 'Yenişehir Şubesi / Ankara',
+  '00064:3411': 'Yenişehir Şubesi / İzmir',
 }
 
 export function ibanToBanka(iban: string): string {
   const clean = iban.replace(/\s/g, '')
   if (!clean.startsWith('TR') || clean.length < 10) return ''
   const code = clean.substring(4, 9)
-  return IBAN_BANKS[code] ?? 'Bilinmeyen Banka'
+  return IBAN_BANKS[code]?.name ?? 'Bilinmeyen Banka'
+}
+
+export function getIbanBankInfo(iban: string): IbanBankInfo | null {
+  const clean = iban.replace(/\s/g, '').toUpperCase()
+  if (!clean.startsWith('TR') || clean.length < 10) return null
+  const bankCode = clean.substring(4, 9)
+  const bank = IBAN_BANKS[bankCode]
+  const accountField = clean.substring(10)
+  const possibleBranchCode = accountField.substring(0, 4)
+  const branchName = KNOWN_TR_IBAN_BRANCHES[`${bankCode}:${possibleBranchCode}`]
+
+  return {
+    bankCode,
+    bankName: bank?.name ?? 'Bilinmeyen Banka',
+    logoText: bank?.logoText ?? '?',
+    branchName,
+    branchConfidence: branchName ? 'known' : 'unknown',
+  }
 }
 
 // Renk paleti - proje etiketleri

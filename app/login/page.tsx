@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 
 const MODULES = [
-  { color: '#34d399', name: 'İnsan Kaynakları', desc: 'Teşkilat, kadro, personel yönetimi' },
+  { color: '#34d399', name: 'İnsan Kaynakları', desc: 'Teşkilat, kadro, çalışan yönetimi' },
   { color: '#60a5fa', name: 'Muhasebe', desc: 'Nakit akışı, borç takip, raporlar' },
   { color: '#fb923c', name: 'Üretim & Teknik Servis', desc: 'İş emirleri, servis takibi' },
   { color: '#a78bfa', name: 'Stok & Satış', desc: 'Ürünler, teklifler, siparişler' },

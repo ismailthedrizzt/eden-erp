@@ -55,7 +55,7 @@ const NAV: NavItem[] = [
     icon: <Users size={16} />,
     moduleKey: 'ik',
     children: [
-      { label: 'Çalışanlar', href: '/app/ik/personel', moduleKey: 'ik', submoduleKey: 'personel' },
+      { label: 'Çalışanlarımız', href: '/app/ik/personel', moduleKey: 'ik', submoduleKey: 'personel' },
       { label: 'İzin Yönetimi', href: '/app/ik/izin', disabled: true },
       { label: 'Performans', href: '/app/ik/performans', disabled: true },
     ],

@@ -58,6 +58,68 @@ INSERT INTO public.sirketler (
   true
 ) ON CONFLICT (id) DO NOTHING;
 
+DO $$
+BEGIN
+  IF to_regclass('public.employees') IS NULL AND to_regclass('public.personel') IS NOT NULL THEN
+    ALTER TABLE public.personel RENAME TO employees;
+  END IF;
+END $$;
+
+CREATE TABLE IF NOT EXISTS public.employees (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+  updated_at TIMESTAMPTZ DEFAULT NOW(),
+  ad VARCHAR(100) NOT NULL,
+  soyad VARCHAR(100) NOT NULL,
+  uyruk VARCHAR(20) DEFAULT 'tc',
+  tc_kimlik VARCHAR(11),
+  pasaport_no VARCHAR(50),
+  cinsiyet VARCHAR(10) NOT NULL,
+  dogum_yeri VARCHAR(100),
+  dogum_tarihi DATE,
+  cep_telefonu VARCHAR(20),
+  is_telefonu VARCHAR(20),
+  email VARCHAR(255),
+  adres TEXT,
+  il VARCHAR(100),
+  ilce VARCHAR(100),
+  acil_kisi_ad VARCHAR(100),
+  acil_kisi_soyad VARCHAR(100),
+  acil_kisi_yakinlik VARCHAR(50),
+  acil_kisi_telefon VARCHAR(20),
+  kan_grubu VARCHAR(5),
+  askerlik_durumu VARCHAR(50),
+  engellilik BOOLEAN DEFAULT false,
+  hukumluluk BOOLEAN DEFAULT false,
+  tecil_tarihi DATE,
+  engellilik_yuzdesi NUMERIC(5,2),
+  telefonlar JSONB NOT NULL DEFAULT '[]'::jsonb,
+  epostalar JSONB NOT NULL DEFAULT '[]'::jsonb,
+  sgk_giris DATE,
+  isten_ayrilis DATE,
+  calisma_durumu VARCHAR(20) DEFAULT 'gorevde',
+  medeni_durum VARCHAR(20),
+  sirket_id UUID REFERENCES public.sirketler(id) ON DELETE SET NULL,
+  ust_beden VARCHAR(10),
+  alt_beden VARCHAR(10),
+  ayakkabi VARCHAR(10),
+  kep VARCHAR(10),
+  iban VARCHAR(34),
+  notlar TEXT,
+  fotograf_url TEXT,
+  cv_belgesi JSONB,
+  gorev TEXT,
+  okuryazar_degil BOOLEAN NOT NULL DEFAULT false,
+  egitim_okullari JSONB NOT NULL DEFAULT '[]'::jsonb,
+  yabanci_diller JSONB NOT NULL DEFAULT '[]'::jsonb,
+  sertifikalar JSONB NOT NULL DEFAULT '[]'::jsonb,
+  yakinlar JSONB NOT NULL DEFAULT '[]'::jsonb,
+  ise_giris_belgeleri JSONB NOT NULL DEFAULT '[]'::jsonb,
+  isten_cikis_belgeleri JSONB NOT NULL DEFAULT '[]'::jsonb,
+  is_active BOOLEAN NOT NULL DEFAULT true,
+  field_history JSONB NOT NULL DEFAULT '{}'::jsonb
+);
+
 CREATE TABLE IF NOT EXISTS public.birimler (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   sirket_id UUID NOT NULL REFERENCES public.sirketler(id) ON DELETE CASCADE,
@@ -80,7 +142,7 @@ CREATE TABLE IF NOT EXISTS public.norm_kadrolar (
   amir BOOLEAN NOT NULL DEFAULT false,
   durum public.kadro_durum NOT NULL DEFAULT 'acik',
   butce NUMERIC(12,2),
-  personel_id UUID REFERENCES public.personel(id) ON DELETE SET NULL,
+  personel_id UUID REFERENCES public.employees(id) ON DELETE SET NULL,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -88,14 +150,32 @@ CREATE TABLE IF NOT EXISTS public.norm_kadrolar (
 CREATE INDEX IF NOT EXISTS idx_kadro_birim ON public.norm_kadrolar(birim_id);
 CREATE INDEX IF NOT EXISTS idx_kadro_personel ON public.norm_kadrolar(personel_id);
 
-ALTER TABLE public.personel
+ALTER TABLE public.employees
+  ADD COLUMN IF NOT EXISTS sirket_id UUID REFERENCES public.sirketler(id) ON DELETE SET NULL,
   ADD COLUMN IF NOT EXISTS birim_id UUID REFERENCES public.birimler(id) ON DELETE SET NULL,
   ADD COLUMN IF NOT EXISTS kadro_id UUID REFERENCES public.norm_kadrolar(id) ON DELETE SET NULL,
-  ADD COLUMN IF NOT EXISTS fotograf_url TEXT;
+  ADD COLUMN IF NOT EXISTS fotograf_url TEXT,
+  ADD COLUMN IF NOT EXISTS cv_belgesi JSONB,
+  ADD COLUMN IF NOT EXISTS tecil_tarihi DATE,
+  ADD COLUMN IF NOT EXISTS engellilik_yuzdesi NUMERIC(5,2),
+  ADD COLUMN IF NOT EXISTS telefonlar JSONB NOT NULL DEFAULT '[]'::jsonb,
+  ADD COLUMN IF NOT EXISTS epostalar JSONB NOT NULL DEFAULT '[]'::jsonb,
+  ADD COLUMN IF NOT EXISTS gorev TEXT,
+  ADD COLUMN IF NOT EXISTS okuryazar_degil BOOLEAN NOT NULL DEFAULT false,
+  ADD COLUMN IF NOT EXISTS egitim_okullari JSONB NOT NULL DEFAULT '[]'::jsonb,
+  ADD COLUMN IF NOT EXISTS yabanci_diller JSONB NOT NULL DEFAULT '[]'::jsonb,
+  ADD COLUMN IF NOT EXISTS sertifikalar JSONB NOT NULL DEFAULT '[]'::jsonb,
+  ADD COLUMN IF NOT EXISTS yakinlar JSONB NOT NULL DEFAULT '[]'::jsonb,
+  ADD COLUMN IF NOT EXISTS ise_giris_belgeleri JSONB NOT NULL DEFAULT '[]'::jsonb,
+  ADD COLUMN IF NOT EXISTS isten_cikis_belgeleri JSONB NOT NULL DEFAULT '[]'::jsonb,
+  ADD COLUMN IF NOT EXISTS is_active BOOLEAN NOT NULL DEFAULT true,
+  ADD COLUMN IF NOT EXISTS field_history JSONB NOT NULL DEFAULT '{}'::jsonb;
 
-CREATE INDEX IF NOT EXISTS idx_personel_birim ON public.personel(birim_id);
-CREATE INDEX IF NOT EXISTS idx_personel_durum ON public.personel(calisma_durumu);
-CREATE INDEX IF NOT EXISTS idx_personel_isim ON public.personel(soyad, ad);
+CREATE INDEX IF NOT EXISTS idx_employees_sirket ON public.employees(sirket_id);
+CREATE INDEX IF NOT EXISTS idx_employees_active ON public.employees(is_active);
+CREATE INDEX IF NOT EXISTS idx_employees_birim ON public.employees(birim_id);
+CREATE INDEX IF NOT EXISTS idx_employees_durum ON public.employees(calisma_durumu);
+CREATE INDEX IF NOT EXISTS idx_employees_isim ON public.employees(soyad, ad);
 
 CREATE TABLE IF NOT EXISTS public.nakit_islemler (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -136,7 +216,7 @@ INSERT INTO public.nakit_islemler (tarih, gelir, gider, aciklama, proje, islem_t
 ON CONFLICT DO NOTHING;
 
 ALTER TABLE public.birimler ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.personel ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.employees ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.norm_kadrolar ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.nakit_islemler ENABLE ROW LEVEL SECURITY;
 
@@ -170,8 +250,8 @@ $$ LANGUAGE plpgsql;
 DROP TRIGGER IF EXISTS trg_birimler_updated ON public.birimler;
 CREATE TRIGGER trg_birimler_updated BEFORE UPDATE ON public.birimler FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
 
-DROP TRIGGER IF EXISTS trg_personel_updated ON public.personel;
-CREATE TRIGGER trg_personel_updated BEFORE UPDATE ON public.personel FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
+DROP TRIGGER IF EXISTS trg_employees_updated ON public.employees;
+CREATE TRIGGER trg_employees_updated BEFORE UPDATE ON public.employees FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
 
 DROP TRIGGER IF EXISTS trg_nakit_updated ON public.nakit_islemler;
 CREATE TRIGGER trg_nakit_updated BEFORE UPDATE ON public.nakit_islemler FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();

@@ -21,9 +21,9 @@ const transporter = nodemailer.createTransporter({
 
 async function sendEmailWithData() {
   try {
-    // Supabase'den veri çek (örnek: personel tablosu)
-    const { data: personelData, error } = await supabase
-      .from('personel')
+    // Supabase'den veri çek (örnek: employees tablosu)
+    const { data: employeeData, error } = await supabase
+      .from('employees')
       .select('*')
       .limit(10); // İlk 10 kayıt
 
@@ -32,7 +32,7 @@ async function sendEmailWithData() {
     // Veri JSON olarak formatla
     const emailContent = `
       <h2>Supabase Personel Verisi</h2>
-      <pre>${JSON.stringify(personelData, null, 2)}</pre>
+      <pre>${JSON.stringify(employeeData, null, 2)}</pre>
     `;
 
     // E-posta gönder

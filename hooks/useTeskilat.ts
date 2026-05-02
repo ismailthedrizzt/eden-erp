@@ -15,7 +15,7 @@ export function useTeskilat() {
       setLoading(true)
       const [{ data: b }, { data: k }] = await Promise.all([
         supabase.from('birimler').select('*').order('ad'),
-        supabase.from('norm_kadrolar').select('*, personel:personel(id,ad,soyad)').order('unvan'),
+        supabase.from('norm_kadrolar').select('*, personel:employees(id,ad,soyad)').order('unvan'),
       ])
       setBirimler(b ?? [])
       setKadrolar(k ?? [])

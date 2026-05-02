@@ -24,14 +24,15 @@
  */
 
 import { useState, useEffect, ReactNode, useCallback } from 'react'
-import { Save, Loader2, Edit3, Eye, History, Clock } from 'lucide-react'
+import { Save, Loader2, Edit3, History, Clock, Plus, Trash2, Upload, Briefcase, LogOut } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ImageSlotUploader, ImageSlot, SlotImage } from './ImageSlotUploader'
 import { DocumentSlotUploader, DocumentSlot, SlotDocument } from './DocumentSlotUploader'
+import { IBANInput } from './IBANInput'
 
 /** Historical value entry */
 export interface HistoryEntry {
-  value: string
+  value: unknown
   date: string
   user?: string
 }
@@ -39,16 +40,34 @@ export interface HistoryEntry {
 /** Form field configuration */
 export interface FormField {
   name: string
+  key?: string
   label: string
-  type: 'text' | 'email' | 'tel' | 'date' | 'select' | 'textarea' | 'number' | 'custom'
+  type: 'text' | 'email' | 'tel' | 'date' | 'select' | 'textarea' | 'number' | 'checkbox' | 'section' | 'list' | 'iban' | 'document' | 'workLifecycle' | 'custom'
   required?: boolean
   options?: { value: string; label: string }[]
   placeholder?: string
   colSpan?: 1 | 2 | 3
+  compact?: boolean
+  visibleWhen?: any
+  disabledWhen?: any
+  listConfig?: {
+    addLabel?: string
+    emptyText?: string
+    fields: FormField[]
+  }
   /** History entries for this field */
   history?: HistoryEntry[]
   /** Custom render function */
   render?: (props: { value: any; onChange: (val: any) => void; readOnly: boolean }) => ReactNode
+}
+
+interface FieldCondition {
+  field: string
+  operator?: 'equals' | 'notEquals' | 'exists' | 'notExists' | 'includes'
+  value?: any
+  equals?: any
+  notEquals?: any
+  includes?: any[]
 }
 
 /** Tab configuration for grouping fields */
@@ -110,6 +129,8 @@ export interface EntityFormProps {
   documentSlot?: {
     title?: string
     required?: boolean
+    acceptedTypes?: string[]
+    maxSizeMB?: number
   }
   
   /** Save handler - receives form data */
@@ -129,6 +150,7 @@ export interface EntityFormProps {
   
   /** Form-level error message */
   error?: string | null
+  onValidationError?: (missingFields: string[]) => void
   
   /** CSS class for container */
   className?: string
@@ -164,14 +186,414 @@ function FieldHistoryIndicator({ history }: { history?: HistoryEntry[] }) {
           <div className="space-y-2">
             {history.map((entry, idx) => (
               <div key={idx} className="text-xs">
-                <span className="text-gray-500">{new Date(entry.date).toLocaleDateString('tr-TR')}</span>
+                <span className="text-gray-500">{new Date(entry.date).toLocaleString('tr-TR')}</span>
                 <span className="mx-1 text-gray-400">→</span>
-                <span className="text-gray-900 dark:text-gray-100 font-medium">&quot;{entry.value}&quot;</span>
+                <span className="text-gray-900 dark:text-gray-100 font-medium">&quot;{formatHistoryValue(entry.value)}&quot;</span>
                 {entry.user && (
-                  <span className="block text-gray-400 mt-0.5">by {entry.user}</span>
+                  <span className="block text-gray-400 mt-0.5">Değiştiren: {entry.user}</span>
                 )}
               </div>
             ))}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function formatHistoryValue(value: unknown): string {
+  if (value === null || value === undefined || value === '') return 'Boş'
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+    return String(value)
+  }
+
+  try {
+    return JSON.stringify(value)
+  } catch {
+    return String(value)
+  }
+}
+
+function readFileAsDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(String(reader.result || ''))
+    reader.onerror = () => reject(reader.error)
+    reader.readAsDataURL(file)
+  })
+}
+
+function normalizeStoredDocuments(value: unknown): SlotDocument[] {
+  const docs = Array.isArray(value) ? value : value ? [value] : []
+
+  return docs
+    .filter((doc): doc is Record<string, any> => !!doc && typeof doc === 'object')
+    .map(doc => ({
+      slotId: doc.slotId || doc.slot_id || 'cv',
+      name: doc.name || 'Belge',
+      size: Number(doc.size || 0),
+      type: doc.type || 'application/octet-stream',
+      uploadedAt: doc.uploadedAt ? new Date(doc.uploadedAt) : undefined,
+      url: doc.url
+    }))
+}
+
+function serializeDocumentForStorage(doc: SlotDocument) {
+  return {
+    slotId: doc.slotId,
+    name: doc.name,
+    size: doc.size,
+    type: doc.type,
+    uploadedAt: doc.uploadedAt?.toISOString?.() || new Date().toISOString(),
+    url: doc.url
+  }
+}
+
+const CV_DOCUMENT_ACCEPTED_TYPES = [
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+]
+
+function matchesCondition(condition: FieldCondition | undefined, data: Record<string, any>): boolean {
+  if (!condition) return true
+  const value = data[condition.field]
+  if (condition.operator === 'equals') return value === condition.value
+  if (condition.operator === 'notEquals') return value !== condition.value
+  if (condition.operator === 'exists') return value !== undefined && value !== null && value !== ''
+  if (condition.operator === 'notExists') return value === undefined || value === null || value === ''
+  if (condition.operator === 'includes') return Array.isArray(value) && value.includes(condition.value)
+  if ('equals' in condition) return value === condition.equals
+  if ('notEquals' in condition) return value !== condition.notEquals
+  if (condition.includes) return condition.includes.includes(value)
+  return true
+}
+
+function ListField({
+  field,
+  value,
+  onChange,
+  readOnly,
+  disabled,
+}: {
+  field: FormField
+  value: any[]
+  onChange: (value: any[]) => void
+  readOnly: boolean
+  disabled: boolean
+}) {
+  const [draft, setDraft] = useState<Record<string, any>>({})
+  const [errors, setErrors] = useState<Record<string, string>>({})
+  const fields = field.listConfig?.fields || []
+  const rows = Array.isArray(value) ? value : []
+
+  const inputClass = "w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:cursor-not-allowed"
+
+  const setDraftValue = (name: string, nextValue: any) => {
+    setDraft(prev => ({ ...prev, [name]: nextValue }))
+    if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }))
+  }
+
+  const addRow = () => {
+    const nextErrors: Record<string, string> = {}
+    fields.forEach(item => {
+      if (item.required && !draft[item.name]) {
+        nextErrors[item.name] = `${item.label} zorunludur`
+      }
+    })
+    setErrors(nextErrors)
+    if (Object.keys(nextErrors).length > 0) return
+    onChange([...rows, draft])
+    setDraft({})
+  }
+
+  const removeRow = (index: number) => {
+    onChange(rows.filter((_, rowIndex) => rowIndex !== index))
+  }
+
+  const renderDraftInput = (item: FormField) => {
+    if (item.type === 'checkbox') {
+      return (
+        <label className="flex items-center gap-2 rounded-lg border border-gray-200 dark:border-gray-700 px-3 py-2 text-sm text-gray-700 dark:text-gray-300">
+          <input
+            type="checkbox"
+            checked={!!draft[item.name]}
+            onChange={(event) => setDraftValue(item.name, event.target.checked)}
+            disabled={disabled || readOnly}
+            className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+          />
+          {item.label}
+        </label>
+      )
+    }
+
+    if (item.type === 'select') {
+      return (
+        <select
+          value={draft[item.name] || ''}
+          onChange={(event) => setDraftValue(item.name, event.target.value)}
+          disabled={disabled || readOnly}
+          className={inputClass}
+        >
+          <option value="">Seçiniz</option>
+          {item.options?.map(option => (
+            <option key={option.value} value={option.value}>{option.label}</option>
+          ))}
+        </select>
+      )
+    }
+
+    if (item.type === 'document') {
+      return (
+        <label className="inline-flex h-10 w-10 cursor-pointer items-center justify-center rounded-lg border border-gray-300 bg-white text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800">
+          <Upload size={16} />
+          <input
+            type="file"
+            className="hidden"
+            disabled={disabled || readOnly}
+            onChange={(event) => {
+              const file = event.target.files?.[0]
+              if (!file) return
+              setDraftValue(item.name, {
+                name: file.name,
+                size: file.size,
+                type: file.type,
+              })
+            }}
+          />
+        </label>
+      )
+    }
+
+    if (item.type === 'date') {
+      return (
+        <input
+          type="date"
+          value={draft[item.name] || ''}
+          onChange={(event) => setDraftValue(item.name, event.target.value)}
+          disabled={disabled || readOnly}
+          className={inputClass}
+        />
+      )
+    }
+
+    return (
+      <input
+        type={item.type === 'email' ? 'email' : item.type === 'tel' ? 'tel' : 'text'}
+        value={draft[item.name] || ''}
+        onChange={(event) => setDraftValue(item.name, event.target.value)}
+        placeholder={item.placeholder}
+        disabled={disabled || readOnly}
+        className={inputClass}
+      />
+    )
+  }
+
+  return (
+    <div className="space-y-2">
+      {rows.length === 0 ? (
+        <div className="rounded-lg border border-dashed border-gray-300 dark:border-gray-700 px-3 py-3 text-sm text-gray-500 dark:text-gray-400">
+          {field.listConfig?.emptyText || 'Henüz kayıt eklenmedi.'}
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {rows.map((row, index) => (
+            <div key={index} className="flex items-start justify-between gap-3 rounded-lg border border-gray-200 dark:border-gray-700 p-3">
+              <div className="grid flex-1 grid-cols-1 gap-1 text-sm text-gray-700 dark:text-gray-300 md:grid-cols-2">
+                {fields.filter(item => item.type !== 'checkbox').map(item => (
+                  <div key={item.name}>
+                    <span className="text-xs text-gray-500">{item.label}: </span>
+                    <span>{row[item.name] || '-'}</span>
+                  </div>
+                ))}
+              </div>
+              {!readOnly && (
+                <button
+                  type="button"
+                  onClick={() => removeRow(index)}
+                  className="rounded-lg p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20"
+                >
+                  <Trash2 size={16} />
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {!readOnly && (
+        <div className={cn("rounded-lg border border-gray-200 dark:border-gray-700 p-2", disabled && "opacity-50")}>
+          <div className="flex flex-wrap items-end gap-2">
+            {fields.map(item => (
+              <div key={item.name} className={cn(item.type === 'document' ? 'w-10' : 'min-w-36 flex-1')}>
+                {item.type !== 'checkbox' && (
+                  <label className={cn("mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400", item.type === 'document' && "sr-only")}>
+                    {item.label}
+                    {item.required && <span className="ml-1 text-red-500">*</span>}
+                  </label>
+                )}
+                {renderDraftInput(item)}
+                {errors[item.name] && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{errors[item.name]}</p>}
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={addRow}
+              disabled={disabled}
+              className="inline-flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+              title={field.listConfig?.addLabel || 'Listeye Ekle'}
+            >
+              <Plus size={18} />
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function WorkLifecycleField({
+  formData,
+  onChange,
+  readOnly,
+}: {
+  formData: Record<string, any>
+  onChange: (field: string, value: any) => void
+  readOnly: boolean
+}) {
+  const [modal, setModal] = useState<'hire' | 'exit' | null>(null)
+  const [draft, setDraft] = useState<Record<string, any>>({})
+  const isHired = !!formData.sgk_giris
+  const isExited = !!formData.isten_ayrilis
+
+  const openModal = (nextModal: 'hire' | 'exit') => {
+    setDraft(nextModal === 'hire'
+      ? {
+          sgk_giris: formData.sgk_giris || '',
+          sirket_id: formData.sirket_id || '',
+          birim_id: formData.birim_id || '',
+          gorev: formData.gorev || '',
+          ise_giris_belgeleri: formData.ise_giris_belgeleri || [],
+        }
+      : {
+          isten_ayrilis: formData.isten_ayrilis || '',
+          isten_cikis_belgeleri: formData.isten_cikis_belgeleri || [],
+        })
+    setModal(nextModal)
+  }
+
+  const closeModal = () => {
+    setModal(null)
+    setDraft({})
+  }
+
+  const saveModal = () => {
+    if (modal === 'hire') {
+      onChange('sgk_giris', draft.sgk_giris || '')
+      onChange('sirket_id', draft.sirket_id || '')
+      onChange('birim_id', draft.birim_id || '')
+      onChange('gorev', draft.gorev || '')
+      onChange('ise_giris_belgeleri', draft.ise_giris_belgeleri || [])
+      onChange('calisma_durumu', 'gorevde')
+    }
+
+    if (modal === 'exit') {
+      onChange('isten_ayrilis', draft.isten_ayrilis || '')
+      onChange('isten_cikis_belgeleri', draft.isten_cikis_belgeleri || [])
+      onChange('calisma_durumu', draft.isten_ayrilis ? 'ayrilmis' : 'gorevde')
+    }
+
+    closeModal()
+  }
+
+  const addDocument = (field: string, file?: File) => {
+    if (!file) return
+    setDraft(prev => ({
+      ...prev,
+      [field]: [
+        ...(prev[field] || []),
+        { name: file.name, size: file.size, type: file.type }
+      ]
+    }))
+  }
+
+  return (
+    <div className="space-y-4 rounded-lg border border-gray-200 p-4 dark:border-gray-700">
+      <div className="flex flex-wrap gap-2">
+        {!isHired && (
+          <button
+            type="button"
+            onClick={() => openModal('hire')}
+            disabled={readOnly}
+            className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-3 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <Briefcase size={16} />
+            İşe Giriş
+          </button>
+        )}
+
+        <button
+          type="button"
+          onClick={() => openModal('exit')}
+          disabled={readOnly || !isHired || isExited}
+          className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-40"
+        >
+          <LogOut size={16} />
+          İşten Çıkış
+        </button>
+      </div>
+
+      {isHired && (
+        <div className="grid grid-cols-1 gap-2 text-sm text-gray-700 dark:text-gray-300 md:grid-cols-2">
+          <div><span className="text-gray-500">İşe Giriş:</span> {formData.sgk_giris}</div>
+          <div><span className="text-gray-500">Şirket:</span> {formData.sirket_id || '-'}</div>
+          <div><span className="text-gray-500">Birim:</span> {formData.birim_id || '-'}</div>
+          <div><span className="text-gray-500">Görev:</span> {formData.gorev || '-'}</div>
+        </div>
+      )}
+
+      {isExited && (
+        <div className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-300">
+          İşten çıkış tarihi: {formData.isten_ayrilis}
+        </div>
+      )}
+
+      {modal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-lg rounded-xl bg-white shadow-2xl dark:bg-gray-900">
+            <div className="border-b border-gray-200 p-4 dark:border-gray-700">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                {modal === 'hire' ? 'İşe Giriş' : 'İşten Çıkış'}
+              </h3>
+            </div>
+            <div className="space-y-4 p-4">
+              {modal === 'hire' ? (
+                <>
+                  <input type="date" value={draft.sgk_giris || ''} onChange={(e) => setDraft(prev => ({ ...prev, sgk_giris: e.target.value }))} className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900" />
+                  <input placeholder="Şirket" value={draft.sirket_id || ''} onChange={(e) => setDraft(prev => ({ ...prev, sirket_id: e.target.value }))} className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900" />
+                  <input placeholder="Birim" value={draft.birim_id || ''} onChange={(e) => setDraft(prev => ({ ...prev, birim_id: e.target.value }))} className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900" />
+                  <input placeholder="Görev" value={draft.gorev || ''} onChange={(e) => setDraft(prev => ({ ...prev, gorev: e.target.value }))} className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900" />
+                  <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-700">
+                    <Upload size={16} />
+                    Belge Yükle
+                    <input type="file" className="hidden" onChange={(event) => addDocument('ise_giris_belgeleri', event.target.files?.[0])} />
+                  </label>
+                </>
+              ) : (
+                <>
+                  <input type="date" value={draft.isten_ayrilis || ''} onChange={(e) => setDraft(prev => ({ ...prev, isten_ayrilis: e.target.value }))} className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900" />
+                  <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-700">
+                    <Upload size={16} />
+                    Belge Yükle
+                    <input type="file" className="hidden" onChange={(event) => addDocument('isten_cikis_belgeleri', event.target.files?.[0])} />
+                  </label>
+                </>
+              )}
+            </div>
+            <div className="flex justify-end gap-2 border-t border-gray-200 p-4 dark:border-gray-700">
+              <button type="button" onClick={closeModal} className="rounded-lg px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800">İptal</button>
+              <button type="button" onClick={saveModal} className="rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700">Kaydet</button>
+            </div>
           </div>
         </div>
       )}
@@ -200,6 +622,7 @@ export function EntityForm({
   onModeChange,
   additionalActions,
   error,
+  onValidationError,
   className,
   enableHistory = false
 }: EntityFormProps) {
@@ -216,9 +639,27 @@ export function EntityForm({
   const [images, setImages] = useState<SlotImage[]>([])
   
   const documentSlots: DocumentSlot[] = [
-    { id: 'cv', title: documentSlot.title || 'CV', required: documentSlot.required ?? false },
+    {
+      id: 'cv',
+      title: documentSlot.title || 'CV',
+      required: documentSlot.required ?? false,
+      acceptedTypes: documentSlot.acceptedTypes || CV_DOCUMENT_ACCEPTED_TYPES,
+      maxSizeMB: documentSlot.maxSizeMB || 20
+    },
   ]
   const [documents, setDocuments] = useState<SlotDocument[]>([])
+
+  useEffect(() => {
+    if (data?.fotograf_url) {
+      setImages([{ slotId: 'photo', previewUrl: data.fotograf_url, name: 'Fotoğraf' }])
+    } else {
+      setImages([])
+    }
+  }, [data?.fotograf_url])
+
+  useEffect(() => {
+    setDocuments(normalizeStoredDocuments(data?.cv_belgesi))
+  }, [data?.cv_belgesi])
 
   // Sync with external mode changes
   useEffect(() => {
@@ -235,12 +676,20 @@ export function EntityForm({
       heroFields.forEach(f => {
         if (f.type === 'select' && f.options?.[0]?.value) {
           defaults[f.name] = f.options[0].value
+        } else if (f.type === 'checkbox') {
+          defaults[f.name] = false
+        } else if (f.type === 'list') {
+          defaults[f.name] = []
         }
       })
       tabs.forEach(tab => {
         tab.fields.forEach(f => {
           if (f.type === 'select' && f.options?.[0]?.value) {
             defaults[f.name] = f.options[0].value
+          } else if (f.type === 'checkbox') {
+            defaults[f.name] = false
+          } else if (f.type === 'list') {
+            defaults[f.name] = []
           }
         })
       })
@@ -272,11 +721,39 @@ export function EntityForm({
     }
   }
 
+  const handleImagesChange = async (nextImages: SlotImage[]) => {
+    setImages(nextImages)
+
+    const photo = nextImages.find(image => image.slotId === 'photo')
+    if (!photo) {
+      handleChange('fotograf_url', '')
+      return
+    }
+
+    if (photo.file) {
+      const dataUrl = await readFileAsDataUrl(photo.file)
+      handleChange('fotograf_url', dataUrl)
+      setImages(current => current.map(image =>
+        image.slotId === photo.slotId ? { ...image, previewUrl: dataUrl } : image
+      ))
+      return
+    }
+
+    handleChange('fotograf_url', photo.previewUrl || '')
+  }
+
+  const handleDocumentsChange = (nextDocuments: SlotDocument[]) => {
+    setDocuments(nextDocuments)
+    const cvDocument = nextDocuments.find(document => document.slotId === 'cv')
+    handleChange('cv_belgesi', cvDocument ? serializeDocumentForStorage(cvDocument) : null)
+  }
+
   const validate = (): boolean => {
     const errors: Record<string, string> = {}
     
     const validateFields = (fields: FormField[]) => {
       fields.forEach(field => {
+        if (field.type === 'section' || !matchesCondition(field.visibleWhen, formData)) return
         if (field.required && !formData[field.name]) {
           errors[field.name] = `${field.label} zorunludur`
         }
@@ -287,6 +764,9 @@ export function EntityForm({
     tabs.forEach(tab => validateFields(tab.fields))
 
     setFieldErrors(errors)
+    if (Object.keys(errors).length > 0) {
+      onValidationError?.(Object.values(errors).map(error => error.replace(' zorunludur', '')))
+    }
     return Object.keys(errors).length === 0
   }
 
@@ -304,9 +784,25 @@ export function EntityForm({
   }
 
   const renderField = (field: FormField, showHistoryIcon = false) => {
+    if (!matchesCondition(field.visibleWhen, formData)) return null
     const value = formData[field.name] || ''
     const error = fieldErrors[field.name]
-    const colSpanClass = field.colSpan === 2 ? 'md:col-span-2' : field.colSpan === 3 ? 'md:col-span-3' : ''
+    const colSpanClass = field.colSpan === 3
+      ? 'col-span-2 lg:col-span-3'
+      : field.colSpan === 2
+        ? 'col-span-2 md:col-span-2'
+        : field.compact
+          ? 'col-span-1'
+          : 'col-span-2 md:col-span-1'
+    const fieldDisabled = isReadOnly || (field.disabledWhen ? matchesCondition(field.disabledWhen, formData) : false)
+
+    if (field.type === 'section') {
+      return (
+        <div key={field.name} className={cn("border-t border-gray-200 pt-4 dark:border-gray-700", colSpanClass || 'md:col-span-2 lg:col-span-3')}>
+          <h4 className="text-sm font-semibold text-gray-900 dark:text-white">{field.label}</h4>
+        </div>
+      )
+    }
 
     const baseInputClass = cn(
       "w-full bg-white dark:bg-gray-900 border rounded-lg px-3 py-2 text-sm",
@@ -314,7 +810,7 @@ export function EntityForm({
       error 
         ? "border-red-300 dark:border-red-700 focus:border-red-500" 
         : "border-gray-300 dark:border-gray-700 focus:border-blue-500",
-      isReadOnly && "bg-gray-50 dark:bg-gray-800 cursor-not-allowed"
+      fieldDisabled && "bg-gray-50 dark:bg-gray-800 cursor-not-allowed"
     )
 
     const renderInput = () => {
@@ -327,6 +823,45 @@ export function EntityForm({
       }
 
       switch (field.type) {
+        case 'checkbox':
+          return (
+            <label className="flex min-h-10 items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300">
+              <input
+                type="checkbox"
+                checked={!!formData[field.name]}
+                onChange={(e) => handleChange(field.name, e.target.checked)}
+                disabled={fieldDisabled}
+                className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              {field.placeholder || field.label}
+            </label>
+          )
+        case 'iban':
+          return (
+            <IBANInput
+              value={value}
+              onChange={(nextValue) => handleChange(field.name, nextValue)}
+              disabled={fieldDisabled}
+            />
+          )
+        case 'list':
+          return (
+            <ListField
+              field={field}
+              value={formData[field.name] || []}
+              onChange={(nextValue) => handleChange(field.name, nextValue)}
+              readOnly={isReadOnly}
+              disabled={field.disabledWhen ? matchesCondition(field.disabledWhen, formData) : false}
+            />
+          )
+        case 'workLifecycle':
+          return (
+            <WorkLifecycleField
+              formData={formData}
+              onChange={handleChange}
+              readOnly={isReadOnly}
+            />
+          )
         case 'textarea':
           return (
             <textarea
@@ -334,7 +869,7 @@ export function EntityForm({
               onChange={(e) => handleChange(field.name, e.target.value)}
               placeholder={field.placeholder}
               rows={3}
-              readOnly={isReadOnly}
+              readOnly={fieldDisabled}
               className={baseInputClass}
             />
           )
@@ -343,8 +878,8 @@ export function EntityForm({
             <select
               value={value}
               onChange={(e) => handleChange(field.name, e.target.value)}
-              disabled={isReadOnly}
-              className={cn(baseInputClass, isReadOnly && "appearance-none")}
+              disabled={fieldDisabled}
+              className={cn(baseInputClass, fieldDisabled && "appearance-none")}
             >
               <option value="">Seçiniz</option>
               {field.options?.map(opt => (
@@ -358,7 +893,7 @@ export function EntityForm({
               type="date"
               value={value ? value.split('T')[0] : ''}
               onChange={(e) => handleChange(field.name, e.target.value)}
-              readOnly={isReadOnly}
+              readOnly={fieldDisabled}
               className={baseInputClass}
             />
           )
@@ -369,7 +904,7 @@ export function EntityForm({
               value={value}
               onChange={(e) => handleChange(field.name, e.target.value)}
               placeholder={field.placeholder}
-              readOnly={isReadOnly}
+              readOnly={fieldDisabled}
               className={baseInputClass}
             />
           )
@@ -380,7 +915,7 @@ export function EntityForm({
               value={value}
               onChange={(e) => handleChange(field.name, e.target.value)}
               placeholder={field.placeholder}
-              readOnly={isReadOnly}
+              readOnly={fieldDisabled}
               className={baseInputClass}
             />
           )
@@ -391,7 +926,7 @@ export function EntityForm({
               value={value}
               onChange={(e) => handleChange(field.name, e.target.value)}
               placeholder={field.placeholder}
-              readOnly={isReadOnly}
+              readOnly={fieldDisabled}
               className={baseInputClass}
             />
           )
@@ -402,7 +937,7 @@ export function EntityForm({
               value={value}
               onChange={(e) => handleChange(field.name, e.target.value)}
               placeholder={field.placeholder}
-              readOnly={isReadOnly}
+              readOnly={fieldDisabled}
               className={baseInputClass}
             />
           )
@@ -455,26 +990,20 @@ export function EntityForm({
               <div className="flex flex-col gap-4">
                 {/* Image Slot - Expected but not required */}
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-medium text-gray-600 dark:text-gray-400">
-                    {imageSlot.title}
-                  </label>
                   <ImageSlotUploader
                     slots={imageSlots}
                     images={images}
-                    onChange={setImages}
+                    onChange={handleImagesChange}
                     readOnly={isReadOnly}
                   />
                 </div>
                 
                 {/* Document Slot - Optional */}
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-xs font-medium text-gray-600 dark:text-gray-400">
-                    {documentSlot.title}
-                  </label>
                   <DocumentSlotUploader
                     slots={documentSlots}
                     documents={documents}
-                    onChange={setDocuments}
+                    onChange={handleDocumentsChange}
                     readOnly={isReadOnly}
                   />
                 </div>
@@ -495,7 +1024,7 @@ export function EntityForm({
             </div>
 
             {/* Required Fields Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 flex-1">
+            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 flex-1">
               {heroFields.map(field => renderField(field, enableHistory))}
             </div>
 
@@ -530,7 +1059,7 @@ export function EntityForm({
                     className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium disabled:opacity-50"
                   >
                     {saving ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} />}
-                    Kaydet
+                    {isCreate ? 'Oluştur' : 'Kaydet'}
                   </button>
                 </>
               )}
@@ -566,7 +1095,7 @@ export function EntityForm({
           <div
             key={tab.id}
             className={cn(
-              "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4",
+              "grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4",
               activeTab !== tab.id && "hidden"
             )}
           >

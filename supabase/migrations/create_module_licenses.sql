@@ -33,7 +33,7 @@ ON CONFLICT (module_key) DO NOTHING;
 -- Insert default submodules
 INSERT INTO public.submodule_licenses (module_key, submodule_key, submodule_name, is_active, environment) VALUES
   ('ik', 'teskilat', 'Teşkilat & Kadro', true, 'all'),
-  ('ik', 'personel', 'Çalışanlar', true, 'all'),
+  ('ik', 'personel', 'Çalışanlarımız', true, 'all'),
   ('teskilat', 'birimler', 'Birimler', true, 'all'),
   ('kadro', 'kadrolar', 'Kadrolar', true, 'all'),
   ('muhasebe', 'dashboard', 'Dashboard', true, 'all'),

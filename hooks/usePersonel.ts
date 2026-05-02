@@ -24,8 +24,9 @@ export function usePersonel(filters: Filters = {}) {
       // Simple query without relations first
       console.log('usePersonel: Executing simple query...')
       let q = supabase
-        .from('personel')
+        .from('employees')
         .select('*')
+        .eq('is_active', true)
         .order('soyad')
 
       if (filters.durum) q = q.eq('calisma_durumu', filters.durum)
@@ -52,7 +53,7 @@ export function usePersonel(filters: Filters = {}) {
 
   async function ekle(p: Omit<Personel, 'id' | 'created_at' | 'updated_at'>) {
     const { data: row, error: err } = await supabase
-      .from('personel').insert(p).select().single()
+      .from('employees').insert(p).select().single()
     if (err) throw err
     setData(prev => [...prev, row])
     return row
@@ -60,7 +61,7 @@ export function usePersonel(filters: Filters = {}) {
 
   async function guncelle(id: string, updates: Partial<Personel>) {
     const { data: row, error: err } = await supabase
-      .from('personel').update(updates).eq('id', id).select().single()
+      .from('employees').update(updates).eq('id', id).select().single()
     if (err) throw err
     setData(prev => prev.map(r => r.id === id ? row : r))
     return row

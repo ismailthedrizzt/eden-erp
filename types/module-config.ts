@@ -62,6 +62,11 @@ export type FieldType =
   | 'datetime'
   | 'multiSelect'
   | 'checkbox'
+  | 'section'
+  | 'list'
+  | 'iban'
+  | 'document'
+  | 'workLifecycle'
   | 'switch'
   | 'currency'
   | 'relation'
@@ -235,7 +240,7 @@ export function toEntityFormTabs(tabs: FormTabConfig[] = []) {
 function normalizeEntityFormFieldType(type: FieldType): FormField['type'] {
   if (type === 'datetime') return 'date'
   if (type === 'multiSelect' || type === 'relation') return 'select'
-  if (type === 'checkbox' || type === 'switch') return 'custom'
+  if (type === 'switch') return 'checkbox'
   if (type === 'currency') return 'number'
   return type
 }

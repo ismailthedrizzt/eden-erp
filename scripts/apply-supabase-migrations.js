@@ -9,8 +9,12 @@ const migrationsDir = path.join(root, 'supabase', 'migrations');
 const migrationFiles = [
   '20240501_create_sirketler_table.sql',
   '20240502_complete_core_schema.sql',
+  '20240503_rename_personel_to_employees.sql',
+  '20240504_extend_employee_form_schema.sql',
+  '20240505_employee_soft_delete_and_history.sql',
+  '20240506_add_employee_cv_document.sql',
   'create_module_licenses.sql',
-  'add_personel_unique_constraint.sql',
+  'add_employee_unique_constraint.sql',
 ];
 
 function readEnv(filePath) {

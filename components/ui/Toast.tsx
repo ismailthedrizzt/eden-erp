@@ -9,11 +9,12 @@ export type ToastType = 'success' | 'error' | 'warning'
 interface ToastProps {
   type: ToastType
   message: string
+  title?: string
   duration?: number
   onClose: () => void
 }
 
-export function Toast({ type, message, duration = 3000, onClose }: ToastProps) {
+export function Toast({ type, title, message, duration = 4500, onClose }: ToastProps) {
   const [isVisible, setIsVisible] = useState(true)
 
   useEffect(() => {
@@ -40,13 +41,16 @@ export function Toast({ type, message, duration = 3000, onClose }: ToastProps) {
   return (
     <div
       className={cn(
-        'fixed top-4 right-4 z-50 flex items-center gap-3 px-4 py-3 rounded-lg border shadow-lg transition-all duration-300',
+        'fixed top-4 right-4 z-50 flex max-w-md items-start gap-3 px-4 py-3 rounded-xl border shadow-xl backdrop-blur transition-all duration-300',
         bgColors[type],
         isVisible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-full'
       )}
     >
       {icons[type]}
-      <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{message}</p>
+      <div className="min-w-0">
+        {title && <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{title}</p>}
+        <p className="text-sm text-gray-700 dark:text-gray-200">{message}</p>
+      </div>
       <button
         onClick={() => {
           setIsVisible(false)

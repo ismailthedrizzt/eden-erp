@@ -20,7 +20,7 @@ function WidgetModal({ open, onClose }: { open: boolean; onClose: () => void }) 
   }, [open])
 
   const widgets = [
-    { id: 'ik_ozeti', name: 'İK Özeti', module: 'İK', desc: 'Personel sayısı, izin durumu' },
+    { id: 'ik_ozeti', name: 'İK Özeti', module: 'İK', desc: 'Çalışan sayısı, izin durumu' },
     { id: 'kadro_doluluk', name: 'Kadro Doluluk', module: 'İK', desc: 'Kadroların doluluk oranı' },
     { id: 'nakit_akisi_kpi', name: 'Nakit Akışı KPI', module: 'Muhasebe', desc: 'Gelir, gider, bakiye' },
     { id: 'son_islemler', name: 'Son İşlemler', module: 'Muhasebe', desc: 'Son yapılan işlemler' },

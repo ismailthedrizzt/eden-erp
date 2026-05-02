@@ -1,4 +1,4 @@
-import { Briefcase, FileText, Phone, UserCircle } from 'lucide-react'
+import { Briefcase, FileText, GraduationCap, Heart, Landmark, Phone, UserCircle } from 'lucide-react'
 import type { ModuleConfig } from '@/types/module-config'
 import type { Personel } from '@/types'
 
@@ -10,9 +10,9 @@ export type PersonelTableRow = Personel & {
 
 export const personelModuleConfig: ModuleConfig<PersonelTableRow> = {
   moduleKey: 'ik.personel',
-  title: 'Çalışanlar',
+  title: 'Çalışanlarımız',
   entity: {
-    primaryTable: 'personel',
+    primaryTable: 'employees',
     primaryKey: 'id',
     displayField: 'fullname',
     apiBasePath: '/api/ik/personel',
@@ -34,14 +34,14 @@ export const personelModuleConfig: ModuleConfig<PersonelTableRow> = {
     ]
   },
   list: {
-    title: 'Çalışanlar',
-    storageKey: 'personel-list',
+    title: 'Çalışanlarımız',
+    storageKey: 'employees-list',
     defaultView: 'list',
     defaultPageSize: 25,
     pageSizeOptions: [10, 25, 50, 100],
     realtime: true,
     pollingInterval: 30000,
-    emptyText: 'Henüz personel kaydı bulunmamaktadır.',
+    emptyText: 'Henüz çalışan kaydı bulunmamaktadır.',
     createEnabled: true,
     exportEnabled: true,
     search: {
@@ -175,42 +175,48 @@ export const personelModuleConfig: ModuleConfig<PersonelTableRow> = {
   },
   form: {
     mode: 'standard',
-    entityName: 'Personel',
-    entityNameSingular: 'Personel',
+    entityName: 'Çalışanlar',
+    entityNameSingular: 'Çalışan',
     hero: {
       mediaSlots: [
         { key: 'photo', label: 'Fotoğraf', type: 'image', required: false },
         { key: 'cv', label: 'CV', type: 'document', required: false }
       ],
       fields: [
-        { key: 'ad', label: 'Ad', type: 'text', required: true },
-        { key: 'soyad', label: 'Soyad', type: 'text', required: true },
-        { key: 'tc_kimlik', label: 'TC Kimlik', type: 'text' },
+        { key: 'ad', label: 'Adı', type: 'text', required: true },
+        { key: 'soyad', label: 'Soyadı', type: 'text', required: true },
         {
           key: 'uyruk',
-          label: 'Uyruk',
+          label: 'Uyruğu',
           type: 'select',
+          required: true,
+          compact: true,
           options: [
             { value: 'tc', label: 'T.C.' },
             { value: 'yabanci', label: 'Yabancı' }
           ]
         },
+        { key: 'tc_kimlik', label: 'TC Kimlik No', type: 'text', required: true, visibleWhen: { field: 'uyruk', operator: 'equals', value: 'tc' } },
+        { key: 'pasaport_no', label: 'Pasaport No', type: 'text', required: true, visibleWhen: { field: 'uyruk', operator: 'equals', value: 'yabanci' } },
         {
           key: 'cinsiyet',
-          label: 'Cinsiyet',
+          label: 'Cinsiyeti',
           type: 'select',
+          required: true,
+          compact: true,
           options: [
             { value: '', label: 'Seçiniz' },
             { value: 'erkek', label: 'Erkek' },
             { value: 'kadin', label: 'Kadın' }
           ]
         },
-        { key: 'dogum_tarihi', label: 'Doğum Tarihi', type: 'date' },
+        { key: 'dogum_tarihi', label: 'Doğum Tarihi', type: 'date', compact: true },
         { key: 'dogum_yeri', label: 'Doğum Yeri', type: 'text' },
         {
           key: 'kan_grubu',
           label: 'Kan Grubu',
           type: 'select',
+          compact: true,
           options: [
             { value: '', label: 'Seçiniz' },
             { value: 'A+', label: 'A+' },
@@ -223,21 +229,37 @@ export const personelModuleConfig: ModuleConfig<PersonelTableRow> = {
             { value: '0-', label: '0-' }
           ]
         },
-        {
-          key: 'medeni_durum',
-          label: 'Medeni Durum',
-          type: 'select',
-          options: [
-            { value: '', label: 'Seçiniz' },
-            { value: 'bekar', label: 'Bekar' },
-            { value: 'evli', label: 'Evli' },
-            { value: 'dul', label: 'Dul' },
-            { value: 'bosanmis', label: 'Boşanmış' }
-          ]
-        }
       ]
     },
     tabs: [
+      {
+        key: 'ozel',
+        label: 'Özel',
+        icon: <UserCircle size={16} />,
+        source: {
+          type: 'fields',
+          fields: [
+            { key: 'engellilik', label: 'Engellilik Durumu', type: 'checkbox', placeholder: 'Engellilik var', compact: true },
+            { key: 'engellilik_yuzdesi', label: 'Engellilik Yüzdesi', type: 'number', compact: true, visibleWhen: { field: 'engellilik', operator: 'equals', value: true } },
+            {
+              key: 'askerlik_durumu',
+              label: 'Askerlik Durumu',
+              type: 'select',
+              compact: true,
+              visibleWhen: { field: 'cinsiyet', includes: ['erkek', 'Erkek'] },
+              options: [
+                { value: 'muaf', label: 'Muaf' },
+                { value: 'caginda_degil', label: 'Askerlik Çağında Değil' },
+                { value: 'belirsiz', label: 'Belirsiz' },
+                { value: 'tecilli', label: 'Tecilli' },
+                { value: 'bakaya', label: 'Bakaya' }
+              ]
+            },
+            { key: 'tecil_tarihi', label: 'Tecil Tarihi', type: 'date', compact: true, visibleWhen: { field: 'askerlik_durumu', operator: 'equals', value: 'tecilli' } },
+            { key: 'hukumluluk', label: 'Hükümlülük Durumu', type: 'checkbox', placeholder: 'Hükümlülük var', compact: true }
+          ]
+        }
+      },
       {
         key: 'iletisim',
         label: 'İletişim',
@@ -245,50 +267,176 @@ export const personelModuleConfig: ModuleConfig<PersonelTableRow> = {
         source: {
           type: 'fields',
           fields: [
-            { key: 'cep_telefonu', label: 'Cep Telefonu', type: 'tel' },
-            { key: 'is_telefonu', label: 'İş Telefonu', type: 'tel' },
-            { key: 'email', label: 'E-posta', type: 'email' },
-            { key: 'adres', label: 'Adres', type: 'textarea', colSpan: 2 },
-            { key: 'il', label: 'İl', type: 'text' },
-            { key: 'ilce', label: 'İlçe', type: 'text' }
+            {
+              key: 'telefonlar',
+              label: 'Telefon',
+              type: 'list',
+              colSpan: 3,
+              listConfig: {
+                addLabel: 'Telefon Ekle',
+                emptyText: 'Telefon eklenmedi.',
+                fields: [
+                  { name: 'etiket', key: 'etiket', label: 'Etiket', type: 'text', placeholder: 'Cep, iş, ev' },
+                  { name: 'numara', key: 'numara', label: 'Telefon Numarası', type: 'tel', required: true }
+                ]
+              }
+            },
+            {
+              key: 'epostalar',
+              label: 'E-posta',
+              type: 'list',
+              colSpan: 3,
+              listConfig: {
+                addLabel: 'E-posta Ekle',
+                emptyText: 'E-posta eklenmedi.',
+                fields: [
+                  { name: 'etiket', key: 'etiket', label: 'Etiket', type: 'text', placeholder: 'Kişisel, iş' },
+                  { name: 'adres', key: 'adres', label: 'E-posta Adresi', type: 'email', required: true }
+                ]
+              }
+            },
+            { key: 'adres', label: 'Ev Adresi', type: 'textarea', colSpan: 2 },
+            { key: 'il', label: 'İl', type: 'text', compact: true },
+            { key: 'ilce', label: 'İlçe', type: 'text', compact: true },
+            { key: 'acil_baslik', label: 'Acil Durumda Ulaşılacak Kişi', type: 'section', colSpan: 3 },
+            { key: 'acil_kisi_ad', label: 'Adı', type: 'text', required: true },
+            { key: 'acil_kisi_soyad', label: 'Soyadı', type: 'text', required: true },
+            { key: 'acil_kisi_yakinlik', label: 'Yakınlık Derecesi', type: 'text', required: true },
+            { key: 'acil_kisi_telefon', label: 'Telefon Numarası', type: 'tel', required: true }
           ]
         }
       },
       {
-        key: 'acil',
-        label: 'Acil Durum',
-        icon: <UserCircle size={16} />,
+        key: 'egitim',
+        label: 'Eğitim',
+        icon: <GraduationCap size={16} />,
         source: {
           type: 'fields',
           fields: [
-            { key: 'acil_kisi_ad', label: 'Acil Kişi Adı', type: 'text' },
-            { key: 'acil_kisi_soyad', label: 'Acil Kişi Soyadı', type: 'text' },
-            { key: 'acil_kisi_yakinlik', label: 'Yakınlık Derecesi', type: 'text' },
-            { key: 'acil_kisi_telefon', label: 'Acil Telefon', type: 'tel' }
+            { key: 'okuryazar_degil', label: 'Okuryazar Değil', type: 'checkbox', placeholder: 'Okuryazar değil' },
+            {
+              key: 'egitim_okullari',
+              label: 'Okullar',
+              type: 'list',
+              colSpan: 3,
+              disabledWhen: { field: 'okuryazar_degil', operator: 'equals', value: true },
+              listConfig: {
+                addLabel: 'Okul Ekle',
+                emptyText: 'Okul bilgisi eklenmedi.',
+                fields: [
+                  { name: 'okul_adi', key: 'okul_adi', label: 'Okul Adı', type: 'text' },
+                  {
+                    name: 'derece',
+                    key: 'derece',
+                    label: 'Derecesi',
+                    type: 'select',
+                    required: true,
+                    options: [
+                      { value: 'ilkokul', label: 'İlkokul' },
+                      { value: 'ortaokul_ioo', label: 'Ortaokul ya da İ.Ö.O' },
+                      { value: 'lise_dengi', label: 'Lise veya dengi okullar' },
+                      { value: 'yuksekokul_fakulte', label: 'Yüksekokul veya fakülte' },
+                      { value: 'yuksek_lisans', label: 'Yüksek lisans' },
+                      { value: 'doktora', label: 'Doktora' }
+                    ]
+                  },
+                  { name: 'bolum', key: 'bolum', label: 'Bölüm', type: 'text' },
+                  { name: 'mezuniyet_tarihi', key: 'mezuniyet_tarihi', label: 'Mezuniyet Tarihi', type: 'date' }
+                ]
+              }
+            },
+            {
+              key: 'yabanci_diller',
+              label: 'Yabancı Diller',
+              type: 'list',
+              colSpan: 3,
+              listConfig: {
+                addLabel: 'Dil Ekle',
+                emptyText: 'Yabancı dil eklenmedi.',
+                fields: [
+                  { name: 'dil', key: 'dil', label: 'Dil', type: 'text', required: true },
+                  { name: 'seviye', key: 'seviye', label: 'Seviye', type: 'text', required: true },
+                  { name: 'belge', key: 'belge', label: 'Belge', type: 'document', colSpan: 2 }
+                ]
+              }
+            },
+            {
+              key: 'sertifikalar',
+              label: 'Kurslar/Sertifikalar',
+              type: 'list',
+              colSpan: 3,
+              listConfig: {
+                addLabel: 'Kurs/Sertifika Ekle',
+                emptyText: 'Kurs veya sertifika eklenmedi.',
+                fields: [
+                  { name: 'kurs_adi', key: 'kurs_adi', label: 'Kurs Adı', type: 'text', required: true },
+                  { name: 'konusu', key: 'konusu', label: 'Konusu', type: 'text', required: true },
+                  { name: 'veren_kurulus', key: 'veren_kurulus', label: 'Veren Kuruluş', type: 'text', required: true },
+                  { name: 'belge_tarihi', key: 'belge_tarihi', label: 'Belge Tarihi', type: 'date', required: true },
+                  { name: 'belge', key: 'belge', label: 'Belge', type: 'document', colSpan: 2 }
+                ]
+              }
+            }
           ]
         }
       },
       {
         key: 'calisma',
-        label: 'Çalışma',
+        label: 'İş',
         icon: <Briefcase size={16} />,
         source: {
           type: 'fields',
           fields: [
+            { key: 'is_lifecycle', label: 'İş Hareketleri', type: 'workLifecycle', colSpan: 3 }
+          ]
+        }
+      },
+      {
+        key: 'aile',
+        label: 'Aile',
+        icon: <Heart size={16} />,
+        source: {
+          type: 'fields',
+          fields: [
             {
-              key: 'calisma_durumu',
-              label: 'Çalışma Durumu',
+              key: 'medeni_durum',
+              label: 'Medeni Durumu',
               type: 'select',
+              compact: true,
               options: [
-                { value: 'gorevde', label: 'Görevde' },
-                { value: 'izinde', label: 'İzinde' },
-                { value: 'ayrilmis', label: 'Ayrılmış' },
-                { value: 'askida', label: 'Askıda' }
+                { value: '', label: 'Seçiniz' },
+                { value: 'bekar', label: 'Bekar' },
+                { value: 'evli', label: 'Evli' },
+                { value: 'dul', label: 'Dul' },
+                { value: 'bosanmis', label: 'Boşanmış' }
               ]
             },
-            { key: 'sgk_giris', label: 'SGK Giriş Tarihi', type: 'date' },
-            { key: 'isten_ayrilis', label: 'İşten Ayrılış', type: 'date' },
-            { key: 'iban', label: 'IBAN', type: 'text', colSpan: 2 }
+            {
+              key: 'yakinlar',
+              label: 'Yakın Bilgileri',
+              type: 'list',
+              colSpan: 3,
+              listConfig: {
+                addLabel: 'Yakın Ekle',
+                emptyText: 'Yakın bilgisi eklenmedi.',
+                fields: [
+                  { name: 'ad', key: 'ad', label: 'Adı', type: 'text', required: true },
+                  { name: 'soyad', key: 'soyad', label: 'Soyadı', type: 'text', required: true },
+                  { name: 'yakinlik', key: 'yakinlik', label: 'Yakınlık Derecesi', type: 'text', required: true }
+                ]
+              }
+            }
+          ]
+        }
+      },
+      {
+        key: 'banka',
+        label: 'Banka',
+        icon: <Landmark size={16} />,
+        source: {
+          type: 'fields',
+          fields: [
+            { key: 'iban', label: 'IBAN', type: 'iban', required: true, colSpan: 2 }
           ]
         }
       },
@@ -311,9 +459,9 @@ export const personelModuleConfig: ModuleConfig<PersonelTableRow> = {
     lifecycle: {
       saveMode: 'approvalAware',
       messages: {
-        createSuccess: 'Personel kaydı oluşturuldu',
-        updateSuccess: 'Personel bilgileri güncellendi',
-        deleteSuccess: 'Personel kaydı silindi'
+        createSuccess: 'Çalışan kaydı oluşturuldu',
+        updateSuccess: 'Çalışan bilgileri güncellendi',
+        deleteSuccess: 'Çalışan kaydı silindi'
       },
       approval: {
         enabled: false,

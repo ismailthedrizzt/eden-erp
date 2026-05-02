@@ -276,7 +276,7 @@ export default function StaffAddEditModal({ open, onClose, onSuccess }: { open: 
     <EdenModal
       open={open}
       onClose={onClose}
-      title="Personel Tanımlama"
+      title="Çalışan Tanımlama"
       heroSection={HeroContent}
       tabs={tabs}
       onSave={handleSave}

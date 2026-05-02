@@ -63,7 +63,7 @@ export default function DemirbasPage() {
                 Zimmet Yönetimi
               </h3>
               <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                Personel zimmet atamaları
+                Çalışan zimmet atamaları
               </p>
             </div>
             <ArrowRight className="w-5 h-5 text-gray-400" />

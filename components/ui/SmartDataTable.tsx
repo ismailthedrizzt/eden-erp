@@ -284,11 +284,40 @@ export function SmartDataTable<T extends { id: string }>({
     }
   }, [])
 
+  const estimateColumnWidth = useCallback((col: ColumnDef) => {
+    if (col.type === 'image') return 56
+
+    const sampleValues = data
+      .slice(0, 50)
+      .map(row => getNestedValue(row, col.key))
+      .filter(value => value !== null && value !== undefined && value !== '')
+      .map(value => String(value))
+
+    const averageValueLength = sampleValues.length > 0
+      ? sampleValues.reduce((sum, value) => sum + value.length, 0) / sampleValues.length
+      : 0
+
+    const typeWidth = col.type === 'date' ? 112 :
+                      col.type === 'boolean' ? 76 :
+                      col.type === 'number' ? 88 :
+                      col.type === 'enum' ? 108 : 96
+
+    const labelWidth = col.label.length * 7 + 30
+    const dataWidth = averageValueLength * 7 + 30
+    const configuredWidth = col.width || 0
+    const naturalWidth = Math.ceil(Math.max(typeWidth, labelWidth, dataWidth))
+    const cappedWidth = configuredWidth > 0 ? Math.min(configuredWidth, naturalWidth) : naturalWidth
+    const minWidth = col.minWidth || (col.type === 'text' ? 72 : 64)
+    const maxWidth = col.maxWidth || (col.key === 'fullname' ? 180 : col.type === 'text' ? 150 : 130)
+
+    return Math.max(minWidth, Math.min(maxWidth, cappedWidth))
+  }, [data])
+
   // Calculate column economy
   const columnEconomy = useMemo(() => {
     const visibleCols = columnConfig.filter(col => col.visible !== false)
     const totalWidth = visibleCols.reduce((sum, col) => {
-      return sum + (col.width || 150)
+      return sum + estimateColumnWidth(col)
     }, 0)
     
     const maxTableWidth = screenSize === 'sm' ? 360 : 
@@ -300,7 +329,7 @@ export function SmartDataTable<T extends { id: string }>({
     
     // Calculate widths with font size adjustments
     const columnWidths = visibleCols.map(col => {
-      const baseWidth = col.width || 150
+      const baseWidth = estimateColumnWidth(col)
       const isFixed = col.fixedWidth
       
       if (isFixed) {
@@ -310,7 +339,7 @@ export function SmartDataTable<T extends { id: string }>({
       // If overflowing, reduce font size and potentially width
       if (overflow > 0) {
         const ratio = availableWidth / totalWidth
-        const adjustedWidth = Math.max(col.minWidth || 80, Math.floor(baseWidth * ratio))
+        const adjustedWidth = Math.max(col.type === 'image' ? 52 : col.minWidth || 64, Math.floor(baseWidth * ratio))
         
         // Determine font size based on width
         let fontSize: 'xs' | 'sm' | 'base' = 'sm'
@@ -330,17 +359,38 @@ export function SmartDataTable<T extends { id: string }>({
       columns: columnWidths,
       canAddMore: totalWidth < availableWidth * 1.1 // 10% tolerance
     }
-  }, [columnConfig, tableWidth, screenSize])
+  }, [columnConfig, tableWidth, screenSize, estimateColumnWidth])
 
   // Visible columns with responsive limits
   const visibleColumns = useMemo(() => {
-    let cols = columnConfig.filter(col => col.visible !== false)
-    
-    // On small screens, limit to first 3-4 columns
-    if (screenSize === 'sm') {
-      cols = cols.slice(0, 3)
-    } else if (screenSize === 'md') {
-      cols = cols.slice(0, 4)
+    const cols = columnConfig.filter(col => col.visible !== false)
+    const availableWidth = Math.max(280, columnEconomy.availableWidth - (shouldShowActions ? 48 : 0))
+
+    if (screenSize === 'sm' || screenSize === 'md') {
+      const minColumns = screenSize === 'sm' ? 3 : 4
+      const maxColumns = screenSize === 'sm' ? 5 : 6
+      const selected: ColumnDef[] = []
+      let usedWidth = 0
+
+      for (const col of cols) {
+        const ecoCol = columnEconomy.columns.find(c => c.key === col.key)
+        const width = ecoCol?.calculatedWidth || estimateColumnWidth(col)
+        const canFit = usedWidth + width <= availableWidth
+
+        if (selected.length < minColumns || (canFit && selected.length < maxColumns)) {
+          selected.push(col)
+          usedWidth += width
+        }
+      }
+
+      return selected.map(col => {
+        const ecoCol = columnEconomy.columns.find(c => c.key === col.key)
+        return {
+          ...col,
+          calculatedWidth: ecoCol?.calculatedWidth,
+          fontSize: ecoCol?.fontSize
+        }
+      })
     }
     
     // Add calculated widths
@@ -352,7 +402,14 @@ export function SmartDataTable<T extends { id: string }>({
         fontSize: ecoCol?.fontSize
       }
     })
-  }, [columnConfig, columnEconomy, screenSize])
+  }, [columnConfig, columnEconomy, screenSize, shouldShowActions, estimateColumnWidth])
+
+  const visibleTableWidth = useMemo(() => {
+    const columnsWidth = visibleColumns.reduce((sum, col) => {
+      return sum + (col.calculatedWidth || estimateColumnWidth(col))
+    }, 0)
+    return columnsWidth + (shouldShowActions ? 48 : 0)
+  }, [visibleColumns, shouldShowActions, estimateColumnWidth])
 
   // Handlers
   const handleSearch = useCallback((value: string) => {
@@ -719,12 +776,12 @@ export function SmartDataTable<T extends { id: string }>({
   return (
     <div className="w-full space-y-4">
       {/* Header Toolbar */}
-      <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+      <div className="flex items-center gap-2 justify-between bg-white dark:bg-gray-800 p-3 sm:p-4 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
         {/* Left: Title and Search */}
-        <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center flex-1">
-          {title && <h2 className="text-lg font-semibold text-gray-900 dark:text-white">{title}</h2>}
+        <div className="flex items-center gap-3 flex-1 min-w-0">
+          {title && <h2 className="hidden sm:block text-lg font-semibold text-gray-900 dark:text-white whitespace-nowrap">{title}</h2>}
           
-          <div className="relative flex-1 max-w-md">
+          <div className="relative flex-1 min-w-0 max-w-none sm:max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
             <input
               type="text"
@@ -736,7 +793,7 @@ export function SmartDataTable<T extends { id: string }>({
         </div>
 
         {/* Right: View Toggle, Filter, Settings */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0 overflow-x-auto scrollbar-hide">
           {/* Screen Size Indicator */}
           <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-gray-700 rounded-lg">
             <Monitor size={14} className="text-gray-500 dark:text-gray-400" />
@@ -1113,7 +1170,7 @@ export function SmartDataTable<T extends { id: string }>({
           ref={tableContainerRef}
           className="overflow-x-auto bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700"
         >
-          <table className="w-full text-sm" style={{ minWidth: columnEconomy.totalWidth }}>
+          <table className="w-full table-fixed text-sm" style={{ minWidth: visibleTableWidth }}>
             <thead className="bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700">
               <tr>
                 {visibleColumns.map(col => {
@@ -1127,20 +1184,23 @@ export function SmartDataTable<T extends { id: string }>({
                       onDrop={(e) => handleDrop(e, col.key)}
                       onDragEnd={handleDragEnd}
                       className={cn(
-                        "px-4 py-3 text-center font-medium text-gray-700 dark:text-gray-300 border-r border-gray-200 dark:border-gray-700 last:border-r-0",
+                        "px-2 sm:px-3 py-3 text-center font-medium text-gray-700 dark:text-gray-300 border-r border-gray-200 dark:border-gray-700 last:border-r-0",
                         col.sortable !== false && "cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700/50 select-none",
                         dropTarget === col.key && "bg-blue-50 dark:bg-blue-900/30",
                         draggedColumn === col.key && "opacity-50"
                       )}
                       style={{ 
                         width: col.calculatedWidth || col.width || 150,
-                        minWidth: col.minWidth || 80
+                        minWidth: col.type === 'image' ? 52 : col.minWidth || 64
                       }}
                       onClick={() => col.sortable !== false && handleSort(col.key)}
                     >
-                      <div className="flex items-center justify-center gap-2 w-full">
-                        <GripVertical size={14} className="text-gray-400 opacity-0 hover:opacity-100 transition-opacity flex-shrink-0" />
-                        <span className="whitespace-nowrap text-sm font-medium">{col.label}</span>
+                      <div className="flex items-center justify-center gap-1 sm:gap-2 w-full min-w-0">
+                        <GripVertical size={14} className="hidden sm:block text-gray-400 opacity-0 hover:opacity-100 transition-opacity flex-shrink-0" />
+                        <span className={cn(
+                          "whitespace-nowrap font-medium truncate",
+                          col.fontSize === 'xs' ? 'text-xs' : 'text-sm'
+                        )}>{col.label}</span>
                         {sort && (
                           <span className="flex items-center gap-1 text-blue-600">
                             {sort.direction === 'asc' ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
@@ -1168,14 +1228,17 @@ export function SmartDataTable<T extends { id: string }>({
                   {visibleColumns.map(col => (
                     <td 
                       key={col.key} 
-                      className="px-2 py-2 text-sm text-gray-900 dark:text-gray-100 border-r border-gray-100 dark:border-gray-800 last:border-r-0 text-center whitespace-nowrap"
+                      className={cn(
+                        "px-2 py-2 text-gray-900 dark:text-gray-100 border-r border-gray-100 dark:border-gray-800 last:border-r-0 text-center whitespace-nowrap overflow-hidden",
+                        col.fontSize === 'xs' ? 'text-xs' : 'text-sm'
+                      )}
                       style={{ 
-                        width: col.type === 'image' ? 60 : (col.width || 'auto'),
-                        minWidth: col.type === 'image' ? 60 : (col.key === 'kisa_unvan' || col.key === 'ad' ? 120 : 80),
-                        maxWidth: col.type === 'image' ? 60 : 250
+                        width: col.calculatedWidth || estimateColumnWidth(col),
+                        minWidth: col.type === 'image' ? 52 : col.minWidth || 64,
+                        maxWidth: col.maxWidth || (col.type === 'image' ? 56 : 180)
                       }}
                     >
-                      <div className="flex items-center justify-center h-full">
+                      <div className="flex items-center justify-center h-full min-w-0 truncate">
                         {renderCellValue(col, getNestedValue(row, col.key), row)}
                       </div>
                     </td>

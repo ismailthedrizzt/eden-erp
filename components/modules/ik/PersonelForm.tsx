@@ -148,7 +148,7 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
         throw new Error(errorData.error || 'Kayıt başarısız')
       }
 
-      setToast({ type: 'success', message: 'Personel başarıyla kaydedildi' })
+      setToast({ type: 'success', message: 'Çalışan başarıyla kaydedildi' })
       setTimeout(() => {
         onSuccess()
       }, 1500)

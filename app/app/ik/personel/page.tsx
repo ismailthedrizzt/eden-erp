@@ -1,7 +1,7 @@
 'use client'
 
 /**
- * ERP PAGE TEMPLATE: Personel Yönetimi
+ * ERP PAGE TEMPLATE: Çalışan Yönetimi
  * 
  * This page follows the standard ERP data management pattern:
  * - PageBanner: Header with "Create New" action
@@ -26,6 +26,8 @@ import type { Personel } from '@/types'
 
 // Page state type following ERP pattern
 type PageState = 'list' | 'create' | 'view' | 'edit'
+type ToastState = { type: 'success' | 'error' | 'warning', title?: string, message: string }
+type SaveError = Error & { toast?: ToastState }
 
 export default function PersonelYonetimPage() {
   const { data: personel, loading: listLoading, error: listError, yenile } = usePersonel()
@@ -41,7 +43,7 @@ export default function PersonelYonetimPage() {
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
-  const [toast, setToast] = useState<{ type: 'success' | 'error', message: string } | null>(null)
+  const [toast, setToast] = useState<ToastState | null>(null)
 
   // Transform data for table
   const tableData: PersonelTableRow[] = (personel || []).map(p => ({
@@ -67,38 +69,37 @@ export default function PersonelYonetimPage() {
   const handleSave = async (data: Record<string, any>, mode: FormMode) => {
     setSaving(true)
     setFormError(null)
+    const payload = normalizeEmployeePayload(data)
     
     try {
       if (mode === 'create') {
-        // Create new personel
+        // Create new employee
         const response = await fetch(apiBasePath, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data)
+          body: JSON.stringify(payload)
         })
         
         if (!response.ok) {
-          const err = await response.json()
-          throw new Error(err.error || 'Kayıt oluşturulamadı')
+          throw await createSaveError(response, 'Kayıt oluşturulamadı')
         }
         
-        setToast({ type: 'success', message: lifecycleMessages?.createSuccess || 'Personel kaydı oluşturuldu' })
+        setToast({ type: 'success', title: 'Kayıt Başarılı', message: lifecycleMessages?.createSuccess || 'Çalışan kaydı oluşturuldu' })
       } else {
-        // Update existing personel
+        // Update existing employee
         const response = await fetch(`${apiBasePath}/${selectedPersonel?.id}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data)
+          body: JSON.stringify(payload)
         })
         
         if (!response.ok) {
-          const err = await response.json()
-          throw new Error(err.error || 'Güncelleme başarısız')
+          throw await createSaveError(response, 'Güncelleme başarısız')
         }
         
         const result = await response.json()
         setSelectedPersonel(result.data)
-        setToast({ type: 'success', message: lifecycleMessages?.updateSuccess || 'Personel bilgileri güncellendi' })
+        setToast({ type: 'success', title: 'Kayıt Başarılı', message: lifecycleMessages?.updateSuccess || 'Çalışan bilgileri güncellendi' })
       }
       
       // Refresh list and return to list view
@@ -106,10 +107,42 @@ export default function PersonelYonetimPage() {
       setPageState('list')
     } catch (err: any) {
       setFormError(err.message)
+      setToast(err.toast || { type: 'error', title: 'Kayıt Başarısız', message: err.message })
       throw err
     } finally {
       setSaving(false)
     }
+  }
+
+  const normalizeEmployeePayload = (raw: Record<string, any>) => {
+    const payload: Record<string, any> = {}
+
+    Object.entries(raw).forEach(([key, value]) => {
+      if (value === '') return
+      payload[key] = value
+    })
+
+    if (payload.telefonlar?.length && !payload.cep_telefonu) {
+      payload.cep_telefonu = payload.telefonlar[0]?.numara
+    }
+
+    if (payload.epostalar?.length && !payload.email) {
+      payload.email = payload.epostalar[0]?.adres
+    }
+
+    if (payload.uyruk === 'tc') {
+      delete payload.pasaport_no
+    } else if (payload.uyruk === 'yabanci') {
+      delete payload.tc_kimlik
+    }
+
+    if (!payload.sgk_giris) {
+      delete payload.isten_ayrilis
+      delete payload.isten_cikis_belgeleri
+    }
+
+    payload.calisma_durumu = payload.isten_ayrilis ? 'ayrilmis' : 'gorevde'
+    return payload
   }
 
   const handleDelete = async () => {
@@ -122,19 +155,43 @@ export default function PersonelYonetimPage() {
       })
       
       if (!response.ok) {
-        const err = await response.json()
-        throw new Error(err.error || 'Silme işlemi başarısız')
+        throw await createSaveError(response, 'Silme işlemi başarısız')
       }
       
-      setToast({ type: 'success', message: lifecycleMessages?.deleteSuccess || 'Personel kaydı silindi' })
+      setToast({ type: 'success', title: 'Kayıt Başarılı', message: lifecycleMessages?.deleteSuccess || 'Çalışan kaydı pasife çekildi' })
       await yenile()
       setPageState('list')
     } catch (err: any) {
       setFormError(err.message)
+      setToast(err.toast || { type: 'error', title: 'Kayıt Başarısız', message: err.message })
       throw err
     } finally {
       setDeleting(false)
     }
+  }
+
+  const createSaveError = async (response: Response, fallback: string): Promise<SaveError> => {
+    const body = await response.json().catch(() => ({}))
+    const code = body.code || `HTTP_${response.status}`
+    const fieldErrors = body.details?.fieldErrors || {}
+    const missingFields = Object.keys(fieldErrors)
+
+    if (code === 'VALIDATION_FAILED' && missingFields.length > 0) {
+      const message = missingFields.join(', ')
+      const error = new Error(`Eksik Zorunlu Alan [${message}]`) as SaveError
+      error.toast = { type: 'warning', title: 'Eksik Zorunlu Alan', message }
+      return error
+    }
+
+    const message = `${body.error || fallback} [${code}]`
+    const error = new Error(message) as SaveError
+    error.toast = { type: 'error', title: 'Kayıt Başarısız', message }
+    return error
+  }
+
+  const withFieldHistory = (field: any) => {
+    const history = (selectedPersonel as any)?.field_history?.[field.name || field.key]
+    return history ? { ...field, history } : field
   }
 
   // Widgets
@@ -170,8 +227,8 @@ export default function PersonelYonetimPage() {
     if (pageState === 'list') {
       return {
         mode: 'list' as const,
-        title: 'Çalışanlar',
-        subtitle: 'Personel kayıtlarını yönetin',
+        title: 'Çalışanlarımız',
+        subtitle: 'Çalışan kayıtlarını yönetin',
         onAddClick: handleAddClick,
         addButtonText: 'Ekle'
       }
@@ -185,15 +242,15 @@ export default function PersonelYonetimPage() {
     const personelName = getPersonelName()
     
     const modeTitles = {
-      create: 'Yeni Personel',
-      view: personelName || 'Personel Detayı',
-      edit: personelName || 'Personel Düzenle'
+      create: 'Yeni Çalışan',
+      view: personelName || 'Çalışan Detayı',
+      edit: personelName || 'Çalışan Düzenle'
     } as const
     
     const modeSubtitles = {
-      create: 'Yeni personel kaydı oluştur',
-      view: 'Personel bilgilerini görüntüle',
-      edit: 'Personel bilgilerini güncelle'
+      create: 'Yeni çalışan kaydı oluştur',
+      view: 'Çalışan bilgilerini görüntüle',
+      edit: 'Çalışan bilgilerini güncelle'
     } as const
     
     return {
@@ -225,6 +282,7 @@ export default function PersonelYonetimPage() {
         <Toast
           type={toast.type}
           message={toast.message}
+          title={toast.title}
           onClose={() => setToast(null)}
         />
       )}
@@ -263,8 +321,11 @@ export default function PersonelYonetimPage() {
             mode={formMode}
             entityName={moduleConfig.form.entityName}
             entityNameSingular={moduleConfig.form.entityNameSingular}
-            heroFields={toEntityFormFields(moduleConfig.form.hero.fields)}
-            tabs={toEntityFormTabs(moduleConfig.form.tabs)}
+            heroFields={toEntityFormFields(moduleConfig.form.hero.fields).map(withFieldHistory)}
+            tabs={toEntityFormTabs(moduleConfig.form.tabs).map(tab => ({
+              ...tab,
+              fields: tab.fields.map(withFieldHistory)
+            }))}
             data={selectedPersonel || undefined}
             saving={saving}
             deleting={deleting}
@@ -273,6 +334,11 @@ export default function PersonelYonetimPage() {
             onCancel={() => setPageState('list')}
             onDelete={handleDelete}
             onModeChange={(mode) => setPageState(mode)}
+            onValidationError={(fields) => setToast({
+              type: 'warning',
+              title: 'Eksik Zorunlu Alan',
+              message: fields.join(', ')
+            })}
           />
         </div>
       )}
