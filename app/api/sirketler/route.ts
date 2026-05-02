@@ -5,7 +5,7 @@ import { z } from 'zod'
 const SirketSchema = z.object({
   ticari_unvan: z.string().min(1).max(300),
   kisa_unvan: z.string().min(1).max(120),
-  vkn_tckn: z.string().min(10).max(11),
+  vkn_tckn: z.string().regex(/^\d{10,11}$/, 'VKN/TCKN 10 veya 11 haneli sayı olmalıdır'),
   vergi_dairesi: z.string().min(1).max(120),
   mersis_no: z.string().optional(),
   ticaret_sicil_no: z.string().optional(),
@@ -36,7 +36,12 @@ const SirketSchema = z.object({
   is_active: z.boolean().default(true),
 })
 
-// GET /api/sirketler
+function omitNullishValues(value: Record<string, any>) {
+  return Object.fromEntries(
+    Object.entries(value).filter(([, item]) => item !== null && item !== undefined)
+  )
+}
+
 export async function GET(request: NextRequest) {
   const supabase = createServiceClient()
   const { searchParams } = new URL(request.url)
@@ -65,21 +70,19 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: error.message, code: error.code || 'FETCH_FAILED' }, { status: 500 })
   }
 
   return NextResponse.json({ data })
 }
 
-// POST /api/sirketler
 export async function POST(request: NextRequest) {
   const supabase = createServiceClient()
-
-  const body = await request.json()
+  const body = omitNullishValues(await request.json())
   const parsed = SirketSchema.safeParse(body)
 
   if (!parsed.success) {
-    return NextResponse.json({ error: 'Geçersiz veri', details: parsed.error.flatten() }, { status: 400 })
+    return NextResponse.json({ error: 'Geçersiz veri', code: 'VALIDATION_FAILED', details: parsed.error.flatten() }, { status: 400 })
   }
 
   const { data, error } = await supabase
@@ -88,7 +91,7 @@ export async function POST(request: NextRequest) {
     .select()
     .single()
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return NextResponse.json({ error: error.message, code: error.code || 'CREATE_FAILED' }, { status: 500 })
 
   return NextResponse.json({ data }, { status: 201 })
 }

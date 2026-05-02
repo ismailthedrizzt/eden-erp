@@ -50,6 +50,7 @@ export interface FormField {
   maxLength?: number
   inputMode?: 'text' | 'numeric' | 'tel' | 'email' | 'url' | 'search' | 'decimal'
   pattern?: string
+  defaultValue?: any
   colSpan?: 1 | 2 | 3
   compact?: boolean
   visibleWhen?: any
@@ -729,7 +730,9 @@ export function EntityForm({
       // Initialize with defaults
       const defaults: Record<string, any> = {}
       heroFields.forEach(f => {
-        if (f.type === 'select' && f.options?.[0]?.value) {
+        if (f.defaultValue !== undefined) {
+          defaults[f.name] = f.defaultValue
+        } else if (f.type === 'select' && f.options?.[0]?.value) {
           defaults[f.name] = f.options[0].value
         } else if (f.type === 'checkbox') {
           defaults[f.name] = false
@@ -739,7 +742,9 @@ export function EntityForm({
       })
       tabs.forEach(tab => {
         tab.fields.forEach(f => {
-          if (f.type === 'select' && f.options?.[0]?.value) {
+          if (f.defaultValue !== undefined) {
+            defaults[f.name] = f.defaultValue
+          } else if (f.type === 'select' && f.options?.[0]?.value) {
             defaults[f.name] = f.options[0].value
           } else if (f.type === 'checkbox') {
             defaults[f.name] = false

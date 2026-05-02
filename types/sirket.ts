@@ -56,6 +56,7 @@ export interface Sirket {
   created_at: string
   updated_at: string
   created_by: string
+  field_history?: Record<string, Array<{ value: unknown; date: string; user?: string }>>
   
   // Related Entities (for form handling)
   ortaklar?: SirketOrtak[]

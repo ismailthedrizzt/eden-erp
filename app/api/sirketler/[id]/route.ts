@@ -5,7 +5,7 @@ import { z } from 'zod'
 const SirketUpdateSchema = z.object({
   ticari_unvan: z.string().min(1).max(300).optional(),
   kisa_unvan: z.string().min(1).max(120).optional(),
-  vkn_tckn: z.string().min(10).max(11).optional(),
+  vkn_tckn: z.string().regex(/^\d{10,11}$/, 'VKN/TCKN 10 veya 11 haneli sayı olmalıdır').optional(),
   vergi_dairesi: z.string().min(1).max(120).optional(),
   mersis_no: z.string().optional(),
   ticaret_sicil_no: z.string().optional(),
@@ -36,7 +36,12 @@ const SirketUpdateSchema = z.object({
   is_active: z.boolean().optional(),
 })
 
-// GET /api/sirketler/[id]
+function omitNullishValues(value: Record<string, any>) {
+  return Object.fromEntries(
+    Object.entries(value).filter(([, item]) => item !== null && item !== undefined)
+  )
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -58,15 +63,14 @@ export async function GET(
 
   if (error) {
     if (error.code === 'PGRST116') {
-      return NextResponse.json({ error: 'Şirket bulunamadı' }, { status: 404 })
+      return NextResponse.json({ error: 'Şirket bulunamadı', code: 'COMPANY_NOT_FOUND' }, { status: 404 })
     }
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: error.message, code: error.code || 'FETCH_FAILED' }, { status: 500 })
   }
 
   return NextResponse.json({ data })
 }
 
-// PATCH /api/sirketler/[id]
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -74,31 +78,47 @@ export async function PATCH(
   const { id } = await params
   const supabase = createServiceClient()
 
-  const body = await request.json()
+  const body = omitNullishValues(await request.json())
   const parsed = SirketUpdateSchema.safeParse(body)
 
   if (!parsed.success) {
-    return NextResponse.json({ error: 'Geçersiz veri', details: parsed.error.flatten() }, { status: 400 })
+    return NextResponse.json({ error: 'Geçersiz veri', code: 'VALIDATION_FAILED', details: parsed.error.flatten() }, { status: 400 })
   }
 
+  const { data: current, error: currentError } = await supabase
+    .from('sirketler')
+    .select('*')
+    .eq('id', id)
+    .single()
+
+  if (currentError) {
+    if (currentError.code === 'PGRST116') {
+      return NextResponse.json({ error: 'Şirket bulunamadı', code: 'COMPANY_NOT_FOUND' }, { status: 404 })
+    }
+    return NextResponse.json({ error: currentError.message, code: currentError.code || 'FETCH_FAILED' }, { status: 500 })
+  }
+
+  const nextHistory = buildFieldHistory(current, parsed.data)
   const { data, error } = await supabase
     .from('sirketler')
-    .update(parsed.data)
+    .update({
+      ...parsed.data,
+      field_history: nextHistory,
+    })
     .eq('id', id)
     .select()
     .single()
 
   if (error) {
     if (error.code === 'PGRST116') {
-      return NextResponse.json({ error: 'Şirket bulunamadı' }, { status: 404 })
+      return NextResponse.json({ error: 'Şirket bulunamadı', code: 'COMPANY_NOT_FOUND' }, { status: 404 })
     }
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ error: error.message, code: error.code || 'UPDATE_FAILED' }, { status: 500 })
   }
 
   return NextResponse.json({ data })
 }
 
-// DELETE /api/sirketler/[id]
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -108,10 +128,33 @@ export async function DELETE(
 
   const { error } = await supabase
     .from('sirketler')
-    .delete()
+    .update({ is_active: false })
     .eq('id', id)
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) return NextResponse.json({ error: error.message, code: error.code || 'SOFT_DELETE_FAILED' }, { status: 500 })
 
   return NextResponse.json({ success: true })
+}
+
+function buildFieldHistory(current: Record<string, any>, updates: Record<string, any>) {
+  const existingHistory = (current.field_history && typeof current.field_history === 'object') ? current.field_history : {}
+  const nextHistory: Record<string, any[]> = { ...existingHistory }
+  const ignored = new Set(['id', 'created_at', 'updated_at', 'created_by', 'field_history'])
+
+  Object.entries(updates).forEach(([field, nextValue]) => {
+    if (ignored.has(field)) return
+    const previousValue = current[field]
+    if (JSON.stringify(previousValue ?? null) === JSON.stringify(nextValue ?? null)) return
+
+    nextHistory[field] = [
+      ...(nextHistory[field] || []),
+      {
+        value: previousValue ?? '',
+        date: new Date().toISOString(),
+        user: 'Sistem Kullanıcısı',
+      },
+    ]
+  })
+
+  return nextHistory
 }
