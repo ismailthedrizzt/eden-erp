@@ -285,12 +285,14 @@ export function ImageSlotUploader({
         {/* Center - Image Preview Area */}
         <div
           ref={dropZoneRef}
+          onClick={!readOnly && !hasImage && currentSlot.id !== '__extra__' ? () => fileInputRef.current?.click() : undefined}
           onDrop={!readOnly ? handleDrop : undefined}
           onDragOver={!readOnly ? handleDragOver : undefined}
           onDragLeave={!readOnly ? handleDragLeave : undefined}
           className={cn(
             "flex-1 flex flex-col items-center justify-center relative",
             "bg-gray-50 dark:bg-gray-900/50",
+            !readOnly && !hasImage && currentSlot.id !== '__extra__' && "cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-900",
             isDragging && "bg-blue-50 dark:bg-blue-900/20 border-2 border-dashed border-blue-400"
           )}
           style={{ height: 'calc(100% - 100px)' }}
@@ -427,7 +429,10 @@ export function ImageSlotUploader({
         {!readOnly && !hasImage && currentSlot.id !== '__extra__' && (
           <div className="px-2 py-2 border-t border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800">
             <button
-              onClick={() => fileInputRef.current?.click()}
+              onClick={(event) => {
+                event.stopPropagation()
+                fileInputRef.current?.click()
+              }}
               className="w-full flex items-center justify-center gap-1 py-1.5 px-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded transition-colors"
             >
               <Upload size={12} />
