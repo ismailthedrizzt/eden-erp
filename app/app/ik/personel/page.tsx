@@ -28,7 +28,57 @@ import type { Personel } from '@/types'
 // Page state type following ERP pattern
 type PageState = 'list' | 'create' | 'view' | 'edit'
 type ToastState = { type: 'success' | 'error' | 'warning', title?: string, message: string }
-type SaveError = Error & { toast?: ToastState }
+type SaveError = Error & { toast?: ToastState; fieldErrors?: Record<string, string> }
+
+const PERSONEL_FIELD_LABELS: Record<string, string> = {
+  ad: 'Ad',
+  soyad: 'Soyad',
+  uyruk: 'Uyruk',
+  tc_kimlik: 'TC Kimlik No',
+  pasaport_no: 'Pasaport No',
+  dogum_tarihi: 'Doğum Tarihi',
+  cinsiyet: 'Cinsiyet',
+  kan_grubu: 'Kan Grubu',
+  askerlik_durumu: 'Askerlik Durumu',
+  tecil_tarihi: 'Tecil Tarihi',
+  is_telefonu: 'İş Telefonu',
+  acil_kisi_ad: 'Acil Kişi Adı',
+  acil_kisi_soyad: 'Acil Kişi Soyadı',
+  acil_kisi_yakinlik: 'Acil Kişi Yakınlık Derecesi',
+  acil_kisi_telefon: 'Acil Kişi Telefonu',
+  sgk_giris: 'SGK Giriş Tarihi',
+  gorev: 'Görev',
+  ust_beden: 'Üst Beden',
+  alt_beden: 'Alt Beden',
+  ayakkabi: 'Ayakkabı',
+  kep: 'Kep',
+  iban: 'IBAN',
+  notlar: 'Notlar',
+  fotograf_url: 'Fotoğraf',
+}
+
+const OPTIONAL_EMPLOYEE_FIELDS = new Set([
+  'askerlik_durumu',
+  'tecil_tarihi',
+  'is_telefonu',
+  'acil_kisi_ad',
+  'acil_kisi_soyad',
+  'acil_kisi_yakinlik',
+  'acil_kisi_telefon',
+  'sgk_giris',
+  'gorev',
+  'ust_beden',
+  'alt_beden',
+  'ayakkabi',
+  'kep',
+  'iban',
+  'notlar',
+  'fotograf_url',
+])
+
+const getFieldLabel = (field: string) => PERSONEL_FIELD_LABELS[field] || field
+
+const formatFieldList = (fields: string[]) => fields.map(getFieldLabel).join(', ')
 
 export default function PersonelYonetimPage() {
   const { data: personel, loading: listLoading, error: listError, yenile } = usePersonel()
@@ -44,6 +94,7 @@ export default function PersonelYonetimPage() {
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
+  const [saveFieldErrors, setSaveFieldErrors] = useState<Record<string, string>>({})
   const [toast, setToast] = useState<ToastState | null>(null)
 
   // Transform data for table
@@ -58,18 +109,21 @@ export default function PersonelYonetimPage() {
   const handleAddClick = () => {
     setSelectedPersonel(null)
     setFormError(null)
+    setSaveFieldErrors({})
     setPageState('create')
   }
 
   const handleRowClick = (row: PersonelTableRow) => {
     setSelectedPersonel(row as Personel)
     setFormError(null)
+    setSaveFieldErrors({})
     setPageState('view')
   }
 
   const handleSave = async (data: Record<string, any>, mode: FormMode) => {
     setSaving(true)
     setFormError(null)
+    setSaveFieldErrors({})
     const payload = normalizeEmployeePayload(data)
     
     try {
@@ -108,6 +162,7 @@ export default function PersonelYonetimPage() {
       setPageState('list')
     } catch (err: any) {
       setFormError(err.message)
+      setSaveFieldErrors(err.fieldErrors || {})
       setToast(err.toast || { type: 'error', title: 'Kayıt Başarısız', message: err.message })
       throw err
     } finally {
@@ -197,9 +252,25 @@ export default function PersonelYonetimPage() {
     const missingFields = Object.keys(fieldErrors)
 
     if (code === 'VALIDATION_FAILED' && missingFields.length > 0) {
-      const message = missingFields.join(', ')
+      const message = formatFieldList(missingFields)
       const error = new Error(`Eksik Zorunlu Alan [${message}]`) as SaveError
+      error.fieldErrors = Object.fromEntries(
+        missingFields.map(field => [field, `${getFieldLabel(field)} zorunludur`])
+      )
       error.toast = { type: 'warning', title: 'Eksik Zorunlu Alan', message }
+      return error
+    }
+
+    const notNullColumn = typeof body.error === 'string'
+      ? body.error.match(/column "([^"]+)"/)?.[1]
+      : null
+
+    if ((code === '23502' || code === 'DB_ERROR') && notNullColumn && OPTIONAL_EMPLOYEE_FIELDS.has(notNullColumn)) {
+      const label = getFieldLabel(notNullColumn)
+      const message = `${label} alanı veritabanında zorunlu görünüyor; migration uygulanınca opsiyonel olacak. [${code}]`
+      const error = new Error(message) as SaveError
+      error.fieldErrors = { [notNullColumn]: `${label} opsiyonel olmalıdır` }
+      error.toast = { type: 'error', title: 'Kayıt Başarısız', message }
       return error
     }
 
@@ -350,6 +421,7 @@ export default function PersonelYonetimPage() {
             saving={saving}
             deleting={deleting}
             error={formError}
+            externalFieldErrors={saveFieldErrors}
             onSave={handleSave}
             onCancel={() => setPageState('list')}
             onDelete={handleDelete}

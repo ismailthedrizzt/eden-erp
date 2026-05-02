@@ -255,7 +255,7 @@ export const personelModuleConfig: ModuleConfig<PersonelTableRow> = {
                 { value: 'bakaya', label: 'Bakaya' }
               ]
             },
-            { key: 'tecil_tarihi', label: 'Tecil Tarihi', type: 'date', compact: true, visibleWhen: { field: 'askerlik_durumu', operator: 'equals', value: 'tecilli' } },
+            { key: 'tecil_tarihi', label: 'Tecil Tarihi', type: 'date', compact: true, visibleWhen: { field: 'askerlik_durumu', operator: 'equals', value: 'tecilli' }, requiredWhen: { field: 'askerlik_durumu', operator: 'equals', value: 'tecilli' } },
             { key: 'hukumluluk', label: 'Hükümlülük Durumu', type: 'checkbox', placeholder: 'Hükümlülük var', compact: true }
           ]
         }

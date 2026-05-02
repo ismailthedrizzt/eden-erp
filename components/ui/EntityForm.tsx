@@ -50,6 +50,7 @@ export interface FormField {
   compact?: boolean
   visibleWhen?: any
   disabledWhen?: any
+  requiredWhen?: FieldCondition
   listConfig?: {
     addLabel?: string
     emptyText?: string
@@ -156,6 +157,7 @@ export interface EntityFormProps {
   
   /** Form-level error message */
   error?: string | null
+  externalFieldErrors?: Record<string, string>
   onValidationError?: (missingFields: string[]) => void
   
   /** CSS class for container */
@@ -654,6 +656,7 @@ export function EntityForm({
   onModeChange,
   additionalActions,
   error,
+  externalFieldErrors,
   onValidationError,
   className,
   enableHistory = false
@@ -759,6 +762,12 @@ export function EntityForm({
     }
   }, [tabs, activeTab])
 
+  useEffect(() => {
+    if (externalFieldErrors && Object.keys(externalFieldErrors).length > 0) {
+      setFieldErrors(externalFieldErrors)
+    }
+  }, [externalFieldErrors])
+
   const isReadOnly = mode === 'view'
   const isCreate = mode === 'create'
   const isEdit = mode === 'edit'
@@ -772,7 +781,11 @@ export function EntityForm({
   const handleChange = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }))
     if (fieldErrors[field]) {
-      setFieldErrors(prev => ({ ...prev, [field]: '' }))
+      setFieldErrors(prev => {
+        const next = { ...prev }
+        delete next[field]
+        return next
+      })
     }
   }
 
@@ -896,7 +909,8 @@ export function EntityForm({
     const validateFields = (fields: FormField[]) => {
       fields.forEach(field => {
         if (field.type === 'section' || !matchesCondition(field.visibleWhen, formData)) return
-        if (field.required && !formData[field.name]) {
+        const isRequired = field.required || (!!field.requiredWhen && matchesCondition(field.requiredWhen, formData))
+        if (isRequired && !formData[field.name]) {
           errors[field.name] = `${field.label} zorunludur`
         }
       })
@@ -929,6 +943,7 @@ export function EntityForm({
     if (!matchesCondition(field.visibleWhen, formData)) return null
     const value = formData[field.name] || ''
     const error = fieldErrors[field.name]
+    const isRequired = field.required || (!!field.requiredWhen && matchesCondition(field.requiredWhen, formData))
     const colSpanClass = field.colSpan === 3
       ? 'col-span-2 lg:col-span-3'
       : field.colSpan === 2
@@ -1021,6 +1036,7 @@ export function EntityForm({
               value={value}
               onChange={(nextValue) => handleChange(field.name, nextValue)}
               disabled={fieldDisabled}
+              className={error ? "border-red-300 dark:border-red-700 focus:border-red-500 focus:ring-red-500/20" : undefined}
             />
           )
         case 'list':
@@ -1131,7 +1147,7 @@ export function EntityForm({
           )}
           <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
             {field.label}
-            {field.required && <span className="text-red-500 ml-1">*</span>}
+            {isRequired && <span className="text-red-500 ml-1">*</span>}
           </label>
         </div>
         {renderInput()}
