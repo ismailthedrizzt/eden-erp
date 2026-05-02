@@ -42,6 +42,7 @@ export interface FormField {
   name: string
   key?: string
   label: string
+  errorLabel?: string
   type: 'text' | 'email' | 'tel' | 'date' | 'select' | 'textarea' | 'number' | 'checkbox' | 'section' | 'list' | 'iban' | 'document' | 'workLifecycle' | 'custom'
   required?: boolean
   options?: { value: string; label: string }[]
@@ -51,6 +52,7 @@ export interface FormField {
   visibleWhen?: any
   disabledWhen?: any
   requiredWhen?: FieldCondition
+  requiredGroup?: string
   listConfig?: {
     addLabel?: string
     emptyText?: string
@@ -275,6 +277,18 @@ function matchesCondition(condition: FieldCondition | undefined, data: Record<st
   if ('notEquals' in condition) return value !== condition.notEquals
   if (condition.includes) return condition.includes.includes(value)
   return true
+}
+
+function hasValue(value: unknown): boolean {
+  if (Array.isArray(value)) return value.length > 0
+  return value !== undefined && value !== null && value !== ''
+}
+
+function flattenFields(fields: FormField[]): FormField[] {
+  return fields.flatMap(field => [
+    field,
+    ...(field.listConfig?.fields ? flattenFields(field.listConfig.fields) : [])
+  ])
 }
 
 function ListField({
@@ -771,6 +785,20 @@ export function EntityForm({
   const isReadOnly = mode === 'view'
   const isCreate = mode === 'create'
   const isEdit = mode === 'edit'
+  const allFormFields = [
+    ...flattenFields(heroFields),
+    ...tabs.flatMap(tab => flattenFields(tab.fields))
+  ]
+
+  const isFieldRequired = (field: FormField, sourceData = formData) => {
+    if (field.required) return true
+    if (field.requiredWhen && matchesCondition(field.requiredWhen, sourceData)) return true
+    if (!field.requiredGroup) return false
+
+    return allFormFields
+      .filter(candidate => candidate.requiredGroup === field.requiredGroup)
+      .some(candidate => matchesCondition(candidate.visibleWhen, sourceData) && hasValue(sourceData[candidate.name]))
+  }
 
   const handleModeChange = (newMode: FormMode) => {
     setMode(newMode)
@@ -909,9 +937,8 @@ export function EntityForm({
     const validateFields = (fields: FormField[]) => {
       fields.forEach(field => {
         if (field.type === 'section' || !matchesCondition(field.visibleWhen, formData)) return
-        const isRequired = field.required || (!!field.requiredWhen && matchesCondition(field.requiredWhen, formData))
-        if (isRequired && !formData[field.name]) {
-          errors[field.name] = `${field.label} zorunludur`
+        if (isFieldRequired(field) && !hasValue(formData[field.name])) {
+          errors[field.name] = `${field.errorLabel || field.label} zorunludur`
         }
       })
     }
@@ -943,7 +970,7 @@ export function EntityForm({
     if (!matchesCondition(field.visibleWhen, formData)) return null
     const value = formData[field.name] || ''
     const error = fieldErrors[field.name]
-    const isRequired = field.required || (!!field.requiredWhen && matchesCondition(field.requiredWhen, formData))
+    const isRequired = isFieldRequired(field)
     const colSpanClass = field.colSpan === 3
       ? 'col-span-2 lg:col-span-3'
       : field.colSpan === 2
