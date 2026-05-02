@@ -16,6 +16,7 @@ const migrationFiles = [
   '20240507_reference_data_and_employee_optional_fields.sql',
   '20240508_relax_employee_optional_fields.sql',
   '20240509_company_soft_delete_and_history.sql',
+  '20240510_company_assets_and_types.sql',
   'create_module_licenses.sql',
   'add_employee_unique_constraint.sql',
 ];

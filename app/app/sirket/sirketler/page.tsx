@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Building2, FileText, Landmark, MapPin, Phone, Settings, Users } from 'lucide-react'
 import { useSirketler } from '@/hooks/useSirketler'
 import { EntityForm, FormField, FormMode, FormTab } from '@/components/ui/EntityForm'
@@ -14,11 +14,12 @@ type PageState = 'list' | 'create' | 'view' | 'edit'
 type ToastState = { type: 'success' | 'error' | 'warning'; title?: string; message: string }
 type SaveError = Error & { toast?: ToastState; fieldErrors?: Record<string, string> }
 type SirketTableRow = Sirket & { adres_ozet: string }
+type TaxOfficeOption = { value: string; label: string }
 
 const FIELD_LABELS: Record<string, string> = {
   ticari_unvan: 'Ticari Unvan',
   kisa_unvan: 'Şirket Adı',
-  vkn_tckn: 'VKN/TCKN',
+  vkn_tckn: 'VKN',
   vergi_dairesi: 'Vergi Dairesi',
   mersis_no: 'MERSİS No',
   ticaret_sicil_no: 'Ticaret Sicil No',
@@ -50,7 +51,7 @@ const FIELD_LABELS: Record<string, string> = {
 const columns: ColumnDef[] = [
   { key: 'kisa_unvan', label: 'Şirket Adı', type: 'text', width: 200, sortable: true, category: 'Kimlik' },
   { key: 'ticari_unvan', label: 'Ticari Unvan', type: 'text', width: 280, sortable: true, category: 'Kimlik' },
-  { key: 'vkn_tckn', label: 'VKN/TCKN', type: 'text', width: 120, sortable: true, category: 'Kimlik' },
+  { key: 'vkn_tckn', label: 'VKN', type: 'text', width: 120, sortable: true, category: 'Kimlik' },
   { key: 'vergi_dairesi', label: 'Vergi Dairesi', type: 'text', width: 140, sortable: true, category: 'Vergi' },
   { key: 'sirket_turu', label: 'Şirket Türü', type: 'enum', width: 150, sortable: true, category: 'Tescil' },
   { key: 'adres_ozet', label: 'Adres', type: 'text', width: 250, category: 'Adres' },
@@ -60,25 +61,60 @@ const columns: ColumnDef[] = [
 ]
 
 const heroFields: FormField[] = [
-  { name: 'kisa_unvan', label: 'Şirket Adı', type: 'text', required: true },
+  { name: 'kisa_unvan', label: 'Kısa Ünvan', type: 'text', required: true },
   { name: 'ticari_unvan', label: 'Ticari Unvan', type: 'text', required: true, colSpan: 2 },
-  { name: 'vkn_tckn', label: 'VKN/TCKN', type: 'text', required: true, maxLength: 11, inputMode: 'numeric', pattern: '[0-9]{10,11}' },
-  { name: 'vergi_dairesi', label: 'Vergi Dairesi', type: 'text', required: true },
+  { name: 'vkn_tckn', label: 'VKN', type: 'text', required: true, maxLength: 10, inputMode: 'numeric', pattern: '[0-9]{10}' },
+  { name: 'vergi_dairesi', label: 'Vergi Dairesi', type: 'select', required: true },
   {
     name: 'sirket_turu',
     label: 'Şirket Türü',
     type: 'select',
     options: [
-      { value: 'anonim', label: 'Anonim Şirket' },
-      { value: 'limited', label: 'Limited Şirket' },
-      { value: 'sahis', label: 'Şahıs Şirketi' },
-      { value: 'kooperatif', label: 'Kooperatif' },
-      { value: 'diger', label: 'Diğer' },
+      { value: 'anonim', label: 'Sermaye Şirketi - Anonim' },
+      { value: 'limited', label: 'Sermaye Şirketi - Limited' },
+      { value: 'komandit', label: 'Sermaye Şirketi - Komandit' },
+      { value: 'kolektif', label: 'Şahıs Şirketi - Kolektif' },
+      { value: 'adi_komandit', label: 'Şahıs Şirketi - Adi Komandit' },
+      { value: 'adi_sirket', label: 'Şahıs Şirketi - Adi Şirket' },
     ],
   },
 ]
 
 const tabs: FormTab[] = [
+  {
+    id: 'ortaklar',
+    label: 'Ortaklar',
+    icon: <Users size={16} />,
+    fields: [
+      {
+        name: 'ortaklar',
+        label: 'Ortaklar',
+        type: 'list',
+        colSpan: 3,
+        listConfig: {
+          addLabel: 'Ortak Ekle',
+          emptyText: 'Ortak bilgisi eklenmedi.',
+          fields: [
+            { name: 'ad', label: 'Adı', type: 'text', required: true },
+            { name: 'soyad', label: 'Soyadı', type: 'text' },
+            {
+              name: 'ortak_tipi',
+              label: 'Tipi',
+              type: 'select',
+              required: true,
+              options: [
+                { value: 'kisi', label: 'Kişi' },
+                { value: 'sirket', label: 'Şirket' },
+              ],
+            },
+            { name: 'tckn_vkn', label: 'TCKN / VKN', type: 'text', required: true, inputMode: 'numeric', pattern: '[0-9]{10,11}' },
+            { name: 'hisse_orani', label: 'Hisse Oranı', type: 'number', required: true },
+            { name: 'imza_yetkisi', label: 'Yetki Durumu', type: 'checkbox' },
+          ],
+        },
+      },
+    ],
+  },
   {
     id: 'adres',
     label: 'Adres',
@@ -182,6 +218,34 @@ export default function SirketlerPage() {
   const [formError, setFormError] = useState<string | null>(null)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [toast, setToast] = useState<ToastState | null>(null)
+  const [taxOfficeOptions, setTaxOfficeOptions] = useState<TaxOfficeOption[]>([])
+
+  useEffect(() => {
+    let cancelled = false
+
+    fetch('/api/reference/tax-offices')
+      .then(response => response.ok ? response.json() : null)
+      .then(payload => {
+        if (cancelled || !Array.isArray(payload?.offices)) return
+        setTaxOfficeOptions(payload.offices.map((office: any) => ({
+          value: office.code ? `${office.code} - ${office.name}` : office.name,
+          label: `${office.code ? `${office.code} - ` : ''}${office.name} (${office.province}/${office.district})`,
+        })))
+      })
+      .catch(() => {
+        if (!cancelled) setTaxOfficeOptions([])
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const configuredHeroFields = heroFields.map(field =>
+    field.name === 'vergi_dairesi' && taxOfficeOptions.length > 0
+      ? { ...field, options: taxOfficeOptions }
+      : field
+  )
 
   const tableData: SirketTableRow[] = (sirketler || []).map(sirket => ({
     ...sirket,
@@ -213,7 +277,7 @@ export default function SirketlerPage() {
       const response = await fetch(`/api/sirketler/${row.id}`)
       if (!response.ok) return
       const result = await response.json()
-      if (result.data) setSelectedSirket(result.data)
+      if (result.data) setSelectedSirket(normalizeCompanyForForm(result.data))
     } catch {
       // The list row is enough to open the page; detail fetch enriches related/history data.
     }
@@ -231,13 +295,14 @@ export default function SirketlerPage() {
     const payload: Record<string, any> = {}
 
     Object.entries(raw).forEach(([key, value]) => {
-      if (['ortaklar', 'temsilciler', 'dokumanlar', 'logolar'].includes(key)) return
+      if (['temsilciler', 'dokumanlar', 'logolar'].includes(key)) return
       if (value === '' || value === null || value === undefined) return
       payload[key] = value
     })
 
     if (payload.telefon) payload.telefon = formatPhoneInput(String(payload.telefon))
     if (payload.email) payload.email = normalizeEmailInput(String(payload.email))
+    if (payload.vkn_tckn) payload.vkn_tckn = String(payload.vkn_tckn).replace(/\D/g, '').slice(0, 10)
     if (payload.mali_yil_baslangici) payload.mali_yil_baslangici = Number(payload.mali_yil_baslangici)
 
     if (pageState === 'create') {
@@ -412,7 +477,7 @@ export default function SirketlerPage() {
             mode={formMode}
             entityName="Şirketler"
             entityNameSingular="Şirket"
-            heroFields={heroFields.map(withFieldHistory)}
+            heroFields={configuredHeroFields.map(withFieldHistory)}
             tabs={tabs.map(tab => ({ ...tab, fields: tab.fields.map(withFieldHistory) }))}
             data={selectedSirket || undefined}
             saving={saving}
@@ -424,7 +489,24 @@ export default function SirketlerPage() {
             onDelete={handleDelete}
             onModeChange={(mode) => setPageState(mode)}
             enableHistory
-            heroLeftPanel={<CompanySummaryPanel sirket={selectedSirket} />}
+            imageSlot={{
+              dataField: 'hero_images',
+              slots: [
+                { id: 'original_logo', title: 'Orijinal Logo', required: true },
+                { id: 'dark_logo', title: 'Dark Mode Logo', required: true },
+              ],
+            }}
+            documentSlot={{
+              dataField: 'hero_documents',
+              slots: [
+                { id: 'vergi_levhasi', title: 'Vergi Levhası', required: true },
+                { id: 'ticaret_sicil', title: 'Ticaret Sicil Gazetesi', required: true },
+                { id: 'imza_sirkuleri', title: 'İmza Sirküleri', required: true },
+                { id: 'faaliyet_belgesi', title: 'Faaliyet Belgesi', required: false },
+              ],
+              acceptedTypes: ['application/pdf', 'image/png', 'image/jpeg', 'image/webp'],
+              maxSizeMB: 20,
+            }}
             onValidationError={(fields) => setToast({
               type: 'warning',
               title: 'Eksik Zorunlu Alan',
@@ -437,20 +519,20 @@ export default function SirketlerPage() {
   )
 }
 
-function CompanySummaryPanel({ sirket }: { sirket: Sirket | null }) {
-  return (
-    <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-900">
-      <div className="flex h-20 w-20 items-center justify-center rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-300">
-        <Building2 size={32} />
-      </div>
-      <div className="mt-4 space-y-1">
-        <p className="text-sm font-semibold text-gray-900 dark:text-white">{sirket?.kisa_unvan || 'Yeni Şirket'}</p>
-        <p className="text-xs text-gray-500 dark:text-gray-400">{sirket?.vkn_tckn || 'VKN/TCKN bekleniyor'}</p>
-      </div>
-      <div className="mt-4 flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-        <Users size={14} />
-        <span>{sirket?.is_active === false ? 'Pasif kayıt' : 'Aktif kayıt'}</span>
-      </div>
-    </div>
-  )
+function normalizeCompanyForForm(company: Sirket) {
+  return {
+    ...company,
+    ortaklar: (company.ortaklar || []).map((partner: any) => {
+      const parts = String(partner.ortak_adi || '').trim().split(/\s+/)
+      return {
+        ...partner,
+        ad: partner.ad || parts.slice(0, -1).join(' ') || partner.ortak_adi || '',
+        soyad: partner.soyad || (parts.length > 1 ? parts.at(-1) : ''),
+        ortak_tipi: partner.ortak_tipi || 'kisi',
+        tckn_vkn: partner.tckn_vkn || '',
+        hisse_orani: partner.hisse_orani || '',
+        imza_yetkisi: !!partner.imza_yetkisi,
+      }
+    }),
+  }
 }

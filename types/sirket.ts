@@ -17,7 +17,7 @@ export interface Sirket {
   mersis_no?: string
   ticaret_sicil_no?: string
   kurulus_tarihi?: string
-  sirket_turu?: 'anonim' | 'limited' | 'sahis' | 'kooperatif' | 'diger'
+  sirket_turu?: 'anonim' | 'limited' | 'komandit' | 'kolektif' | 'adi_komandit' | 'adi_sirket'
   
   // Adres - Address
   ulke: string
@@ -51,6 +51,8 @@ export interface Sirket {
   zaman_dilimi: string
   mali_yil_baslangici: number
   is_active: boolean
+  hero_images?: Array<Record<string, unknown>>
+  hero_documents?: Array<Record<string, unknown>>
   
   // Metadata
   created_at: string
@@ -68,6 +70,8 @@ export interface Sirket {
 export interface SirketOrtak {
   id: string
   sirket_id: string
+  ad?: string
+  soyad?: string
   ortak_adi: string
   ortak_tipi: 'kisi' | 'sirket'
   tckn_vkn: string
@@ -114,11 +118,12 @@ export const SIRKET_DOKUMAN_TIPLERI = [
 ] as const
 
 export const SIRKET_TURLERI = [
-  { value: 'anonim', label: 'Anonim Şirket' },
-  { value: 'limited', label: 'Limited Şirket' },
-  { value: 'sahis', label: 'Şahıs Şirketi' },
-  { value: 'kooperatif', label: 'Kooperatif' },
-  { value: 'diger', label: 'Diğer' }
+  { value: 'anonim', label: 'Sermaye Şirketi - Anonim' },
+  { value: 'limited', label: 'Sermaye Şirketi - Limited' },
+  { value: 'komandit', label: 'Sermaye Şirketi - Komandit' },
+  { value: 'kolektif', label: 'Şahıs Şirketi - Kolektif' },
+  { value: 'adi_komandit', label: 'Şahıs Şirketi - Adi Komandit' },
+  { value: 'adi_sirket', label: 'Şahıs Şirketi - Adi Şirket' }
 ] as const
 
 export const TEHLIKE_SINIFLARI = [

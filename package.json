@@ -12,7 +12,8 @@
     "send-email": "node scripts/send-email.js",
     "supabase:migrate": "node scripts/apply-supabase-migrations.js",
     "iban:banks": "node --use-system-ca scripts/update-turkish-bank-codes.js",
-    "reference:locations": "node scripts/update-turkey-locations.js"
+    "reference:locations": "node scripts/update-turkey-locations.js",
+    "reference:tax-offices": "node scripts/update-tax-offices.js"
   },
   "engines": {
     "node": ">=22 <25",

@@ -136,6 +136,8 @@ export interface EntityFormProps {
   imageSlot?: {
     title?: string
     required?: boolean
+    dataField?: string
+    slots?: ImageSlot[]
   }
   
   /** Document slot configuration for default hero left panel */
@@ -144,6 +146,12 @@ export interface EntityFormProps {
     required?: boolean
     acceptedTypes?: string[]
     maxSizeMB?: number
+    dataField?: string
+    slots?: DocumentSlot[]
+    aiBadge?: {
+      label?: string
+      title?: string
+    }
   }
   
   /** Save handler - receives form data */
@@ -236,6 +244,30 @@ function readFileAsDataUrl(file: File): Promise<string> {
     reader.onerror = () => reject(reader.error)
     reader.readAsDataURL(file)
   })
+}
+
+function normalizeStoredImages(value: unknown): SlotImage[] {
+  const images = Array.isArray(value) ? value : value ? [value] : []
+
+  return images
+    .filter((image): image is Record<string, any> => !!image && typeof image === 'object')
+    .map(image => ({
+      slotId: image.slotId || image.slot_id || 'photo',
+      previewUrl: image.previewUrl || image.preview_url || image.url,
+      name: image.name || 'Görsel',
+      size: Number(image.size || 0),
+      uploadedAt: image.uploadedAt ? new Date(image.uploadedAt) : undefined,
+    }))
+}
+
+function serializeImageForStorage(image: SlotImage) {
+  return {
+    slotId: image.slotId,
+    name: image.name,
+    size: image.size || image.file?.size || 0,
+    uploadedAt: image.uploadedAt?.toISOString?.() || new Date().toISOString(),
+    url: image.previewUrl,
+  }
 }
 
 function normalizeStoredDocuments(value: unknown): SlotDocument[] {
@@ -336,6 +368,11 @@ function ListField({
     fields.forEach(item => {
       if (item.required && !draft[item.name]) {
         nextErrors[item.name] = `${item.label} zorunludur`
+      } else if (item.pattern && draft[item.name]) {
+        const regex = new RegExp(`^(?:${item.pattern})$`)
+        if (!regex.test(String(draft[item.name]))) {
+          nextErrors[item.name] = `${item.label} formatı geçersiz`
+        }
       }
     })
     setErrors(nextErrors)
@@ -689,12 +726,13 @@ export function EntityForm({
   const [turkeyProvinces, setTurkeyProvinces] = useState<TurkeyProvince[]>([])
   
   // STANDARD FORM LAYOUT: Image and Document slots
-  const imageSlots: ImageSlot[] = [
-    { id: 'photo', title: imageSlot.title || 'Fotoğraf', required: imageSlot.required ?? false },
+  const imageSlots: ImageSlot[] = imageSlot.slots || [
+    { id: 'photo', title: imageSlot.title || 'Foto?raf', required: imageSlot.required ?? false },
   ]
+  const imageDataField = imageSlot.dataField || 'fotograf_url'
   const [images, setImages] = useState<SlotImage[]>([])
   
-  const documentSlots: DocumentSlot[] = [
+  const documentSlots: DocumentSlot[] = documentSlot.slots || [
     {
       id: 'cv',
       title: documentSlot.title || 'CV',
@@ -703,19 +741,22 @@ export function EntityForm({
       maxSizeMB: documentSlot.maxSizeMB || 20
     },
   ]
+  const documentDataField = documentSlot.dataField || 'cv_belgesi'
   const [documents, setDocuments] = useState<SlotDocument[]>([])
 
   useEffect(() => {
-    if (data?.fotograf_url) {
-      setImages([{ slotId: 'photo', previewUrl: data.fotograf_url, name: 'Fotoğraf' }])
+    if (imageSlot.dataField) {
+      setImages(normalizeStoredImages(data?.[imageDataField]))
+    } else if (data?.fotograf_url) {
+      setImages([{ slotId: 'photo', previewUrl: data.fotograf_url, name: 'Foto?raf' }])
     } else {
       setImages([])
     }
-  }, [data?.fotograf_url])
+  }, [data, imageDataField, imageSlot.dataField])
 
   useEffect(() => {
-    setDocuments(normalizeStoredDocuments(data?.cv_belgesi))
-  }, [data?.cv_belgesi])
+    setDocuments(normalizeStoredDocuments(data?.[documentDataField]))
+  }, [data, documentDataField])
 
   // Sync with external mode changes
   useEffect(() => {
@@ -809,6 +850,47 @@ export function EntityForm({
       .some(candidate => matchesCondition(candidate.visibleWhen, sourceData) && hasValue(sourceData[candidate.name]))
   }
 
+  const getFieldValidationState = (field: FormField) => {
+    if (isReadOnly || field.type === 'section' || !matchesCondition(field.visibleWhen, formData)) {
+      return { status: 'neutral' as const, label: '' }
+    }
+
+    const value = formData[field.name]
+    const isRequired = isFieldRequired(field)
+    const error = fieldErrors[field.name]
+
+    if (error) {
+      return {
+        status: 'invalid' as const,
+        label: error.includes('format') || error.includes('olmalıdır') ? 'Geçersiz Format' : 'Zorunlu Alan',
+      }
+    }
+
+    if (isRequired && !hasValue(value)) {
+      return { status: 'invalid' as const, label: 'Zorunlu Alan' }
+    }
+
+    if (field.pattern && hasValue(value)) {
+      const regex = new RegExp(`^(?:${field.pattern})$`)
+      return regex.test(String(value))
+        ? { status: 'valid' as const, label: '' }
+        : { status: 'invalid' as const, label: 'Geçersiz Format' }
+    }
+
+    if (isRequired && hasValue(value)) {
+      return { status: 'valid' as const, label: '' }
+    }
+
+    return { status: 'neutral' as const, label: '' }
+  }
+
+  const getTabValidationStatus = (tab: FormTab) => {
+    const states = flattenFields(tab.fields).map(getFieldValidationState)
+    if (states.some(state => state.status === 'invalid')) return 'invalid'
+    if (states.some(state => state.status === 'valid')) return 'valid'
+    return 'neutral'
+  }
+
   const handleModeChange = (newMode: FormMode) => {
     setMode(newMode)
     onModeChange?.(newMode)
@@ -827,8 +909,8 @@ export function EntityForm({
   }
 
   const handleFormattedFieldChange = (field: FormField, value: string) => {
-    if (field.name === 'tc_kimlik') {
-      handleChange(field.name, value.replace(/\D/g, '').slice(0, 11))
+    if (field.name === 'tc_kimlik' || field.name === 'vkn_tckn') {
+      handleChange(field.name, value.replace(/\D/g, '').slice(0, field.maxLength || 11))
       return
     }
 
@@ -847,6 +929,21 @@ export function EntityForm({
 
   const handleImagesChange = async (nextImages: SlotImage[]) => {
     setImages(nextImages)
+
+    if (imageSlot.dataField) {
+      const hydratedImages = await Promise.all(nextImages.map(async image => {
+        if (!image.file) return image
+        return {
+          ...image,
+          previewUrl: await readFileAsDataUrl(image.file),
+          name: image.name || image.file.name,
+          size: image.size || image.file.size,
+        }
+      }))
+      setImages(hydratedImages)
+      handleChange(imageDataField, hydratedImages.map(serializeImageForStorage))
+      return
+    }
 
     const photo = nextImages.find(image => image.slotId === 'photo')
     if (!photo) {
@@ -868,6 +965,12 @@ export function EntityForm({
 
   const handleDocumentsChange = async (nextDocuments: SlotDocument[]) => {
     setDocuments(nextDocuments)
+
+    if (documentSlot.dataField) {
+      handleChange(documentDataField, nextDocuments.map(serializeDocumentForStorage))
+      return
+    }
+
     const cvDocument = nextDocuments.find(document => document.slotId === 'cv')
     handleChange('cv_belgesi', cvDocument ? serializeDocumentForStorage(cvDocument) : null)
 
@@ -995,6 +1098,7 @@ export function EntityForm({
     const value = formData[field.name] || ''
     const error = fieldErrors[field.name]
     const isRequired = isFieldRequired(field)
+    const validationState = getFieldValidationState(field)
     const colSpanClass = field.colSpan === 3
       ? 'col-span-2 lg:col-span-3'
       : field.colSpan === 2
@@ -1015,9 +1119,11 @@ export function EntityForm({
     const baseInputClass = cn(
       "w-full bg-white dark:bg-gray-900 border rounded-lg px-3 py-2 text-sm",
       "transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500/20",
-      error 
-        ? "border-red-300 dark:border-red-700 focus:border-red-500" 
-        : "border-gray-300 dark:border-gray-700 focus:border-blue-500",
+      validationState.status === 'invalid'
+        ? "border-red-400 dark:border-red-700 focus:border-red-500 focus:ring-red-500/20"
+        : validationState.status === 'valid'
+          ? "border-emerald-500 dark:border-emerald-600 focus:border-emerald-500 focus:ring-emerald-500/20"
+          : "border-gray-300 dark:border-gray-700 focus:border-blue-500",
       fieldDisabled && "bg-gray-50 dark:bg-gray-800 cursor-not-allowed"
     )
 
@@ -1194,16 +1300,20 @@ export function EntityForm({
     }
 
     return (
-      <div key={field.name} className={cn("space-y-1", colSpanClass)}>
+      <div key={field.name} className={cn("relative space-y-1", colSpanClass)}>
         <div className="flex items-center gap-2">
           <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
             {field.label}
-            {isRequired && <span className="text-red-500 ml-1">*</span>}
           </label>
           {(showHistoryIcon || enableHistory) && field.history && field.history.length > 0 && (
             <FieldHistoryIndicator history={field.history} />
           )}
         </div>
+        {validationState.label && (
+          <span className="pointer-events-none absolute right-2 top-7 z-10 rounded border border-red-300 bg-white px-1.5 py-0.5 text-[10px] font-medium leading-none text-red-600 dark:border-red-700 dark:bg-gray-900 dark:text-red-400">
+            {validationState.label}
+          </span>
+        )}
         {renderInput()}
         {error && (
           <p className="text-xs text-red-600 dark:text-red-400">{error}</p>
@@ -1254,12 +1364,9 @@ export function EntityForm({
                     documents={documents}
                     onChange={handleDocumentsChange}
                     readOnly={isReadOnly}
-                    aiBadge={{
-                      label: 'AI',
-                      title: 'CV yüklendiğinde çalışan alanları AI ile okunur'
-                    }}
+                    aiBadge={documentSlot.aiBadge}
                   />
-                  {cvExtractStatus.type !== 'idle' && (
+                  {!documentSlot.dataField && cvExtractStatus.type !== 'idle' && (
                     <p className={cn(
                       "text-xs",
                       cvExtractStatus.type === 'loading' && "text-gray-500 dark:text-gray-400",
@@ -1342,7 +1449,9 @@ export function EntityForm({
                 "flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap transition-colors border-b-2",
                 activeTab === tab.id
                   ? "border-blue-600 text-blue-600 dark:text-blue-400"
-                  : "border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
+                  : "border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200",
+                getTabValidationStatus(tab) === 'invalid' && "text-red-600 dark:text-red-400",
+                getTabValidationStatus(tab) === 'valid' && "text-emerald-600 dark:text-emerald-400"
               )}
             >
               {tab.icon}

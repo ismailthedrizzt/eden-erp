@@ -1,0 +1,7632 @@
+{
+  "source": {
+    "name": "Gelir İdaresi Başkanlığı - Defterdarlık ve Vergi Daireleri Listesi",
+    "url": "https://cdn.gib.gov.tr/api/gibportal-file/file/getFileResources?objectKey=arsiv%2Fyardim-kaynaklar%2Fyararli-bilgiler%2FDefterdarl%C4%B1kveVergiDaireleriListesi.pdf"
+  },
+  "generatedAt": "2026-05-02T23:04:43.438Z",
+  "offices": [
+    {
+      "id": "01250",
+      "code": "01250",
+      "name": "Adana İhtisas Vergi Dairesi Müdürlüğü",
+      "province": "ADANA",
+      "district": "Merkez"
+    },
+    {
+      "id": "01251",
+      "code": "01251",
+      "name": "5 Ocak Vergi Dairesi Müdürlüğü",
+      "province": "ADANA",
+      "district": "Merkez"
+    },
+    {
+      "id": "01252",
+      "code": "01252",
+      "name": "Yüreğir Vergi Dairesi Müdürlüğü",
+      "province": "ADANA",
+      "district": "Merkez"
+    },
+    {
+      "id": "01253",
+      "code": "01253",
+      "name": "Seyhan Vergi Dairesi Müdürlüğü",
+      "province": "ADANA",
+      "district": "Merkez"
+    },
+    {
+      "id": "01254",
+      "code": "01254",
+      "name": "Ziyapaşa Vergi Dairesi Müdürlüğü",
+      "province": "ADANA",
+      "district": "Merkez"
+    },
+    {
+      "id": "01255",
+      "code": "01255",
+      "name": "Çukurova Vergi Dairesi Müdürlüğü",
+      "province": "ADANA",
+      "district": "Merkez"
+    },
+    {
+      "id": "01201",
+      "code": "01201",
+      "name": "Ceyhan Vergi Dairesi Müdürlüğü",
+      "province": "ADANA",
+      "district": "Merkez Ceyhan"
+    },
+    {
+      "id": "01203",
+      "code": "01203",
+      "name": "Kozan Vergi Dairesi Müdürlüğü",
+      "province": "ADANA",
+      "district": "Merkez Kozan"
+    },
+    {
+      "id": "01205",
+      "code": "01205",
+      "name": "Karataş Vergi Dairesi Müdürlüğü",
+      "province": "ADANA",
+      "district": "Merkez Karataş"
+    },
+    {
+      "id": "01256",
+      "code": "01256",
+      "name": "Pozantı Vergi Dairesi Müdürlüğü",
+      "province": "ADANA",
+      "district": "Merkez Pozantı"
+    },
+    {
+      "id": "01257",
+      "code": "01257",
+      "name": "İmamoğlu Vergi Dairesi Müdürlüğü",
+      "province": "ADANA",
+      "district": "Merkez İmamoğlu"
+    },
+    {
+      "id": "01258",
+      "code": "01258",
+      "name": "Karaisalı Vergi Dairesi Müdürlüğü",
+      "province": "ADANA",
+      "district": "Merkez Karaisalı"
+    },
+    {
+      "id": "01259",
+      "code": "01259",
+      "name": "Yumurtalık Vergi Dairesi Müdürlüğü",
+      "province": "ADANA",
+      "district": "Merkez Yumurtalık"
+    },
+    {
+      "id": "01260",
+      "code": "01260",
+      "name": "Tufanbeyli Vergi Dairesi Müdürlüğü",
+      "province": "ADANA",
+      "district": "Merkez Tufanbeyli"
+    },
+    {
+      "id": "01261",
+      "code": "01261",
+      "name": "Feke Vergi Dairesi Müdürlüğü",
+      "province": "ADANA",
+      "district": "Merkez Feke"
+    },
+    {
+      "id": "01262",
+      "code": "01262",
+      "name": "Saimbeyli Vergi Dairesi Müdürlüğü",
+      "province": "ADANA",
+      "district": "Merkez Saimbeyli"
+    },
+    {
+      "id": "01263",
+      "code": "01263",
+      "name": "Aladağ Vergi Dairesi Müdürlüğü",
+      "province": "ADANA",
+      "district": "Merkez Aladağ"
+    },
+    {
+      "id": "02260",
+      "code": "02260",
+      "name": "Adıyaman Vergi Dairesi Müdürlüğü",
+      "province": "ADIYAMAN",
+      "district": "Merkez"
+    },
+    {
+      "id": "02266",
+      "code": "02266",
+      "name": "Karakuş Vergi Dairesi Müdürlüğü",
+      "province": "ADIYAMAN",
+      "district": "Merkez"
+    },
+    {
+      "id": "02-gerger-gerger-subesi",
+      "code": null,
+      "name": "Gerger Şubesi",
+      "province": "ADIYAMAN",
+      "district": "Gerger"
+    },
+    {
+      "id": "02-samsat-samsat-subesi",
+      "code": null,
+      "name": "Samsat Şubesi",
+      "province": "ADIYAMAN",
+      "district": "Samsat"
+    },
+    {
+      "id": "02-tut-tut-subesi",
+      "code": null,
+      "name": "Tut Şubesi",
+      "province": "ADIYAMAN",
+      "district": "Tut"
+    },
+    {
+      "id": "02261",
+      "code": "02261",
+      "name": "Kahta Vergi Dairesi Müdürlüğü",
+      "province": "ADIYAMAN",
+      "district": "Kahta"
+    },
+    {
+      "id": "02262",
+      "code": "02262",
+      "name": "Besni Vergi Dairesi Müdürlüğü",
+      "province": "ADIYAMAN",
+      "district": "Besni"
+    },
+    {
+      "id": "02263",
+      "code": "02263",
+      "name": "Gölbaşı Vergi Dairesi Müdürlüğü",
+      "province": "ADIYAMAN",
+      "district": "Gölbaşı"
+    },
+    {
+      "id": "02264",
+      "code": "02264",
+      "name": "Çelikhan Vergi Dairesi Müdürlüğü",
+      "province": "ADIYAMAN",
+      "district": "Çelikhan"
+    },
+    {
+      "id": "02265",
+      "code": "02265",
+      "name": "Sincik Vergi Dairesi Müdürlüğü",
+      "province": "ADIYAMAN",
+      "district": "Sincik"
+    },
+    {
+      "id": "03201",
+      "code": "03201",
+      "name": "Tınaztepe Vergi Dairesi Müdürlüğü",
+      "province": "AFYONKARAHİSAR",
+      "district": "Merkez"
+    },
+    {
+      "id": "03280",
+      "code": "03280",
+      "name": "Kocatepe Vergi Dairesi Müdürlüğü",
+      "province": "AFYONKARAHİSAR",
+      "district": "Merkez"
+    },
+    {
+      "id": "03273",
+      "code": "03273",
+      "name": "Çiğiltepe Vergi Dairesi Müdürlüğü",
+      "province": "AFYONKARAHİSAR",
+      "district": "Merkez"
+    },
+    {
+      "id": "03-bayat-bayat-subesi",
+      "code": null,
+      "name": "Bayat Şubesi",
+      "province": "AFYONKARAHİSAR",
+      "district": "Bayat"
+    },
+    {
+      "id": "03-hocalar-hocalar-subesi",
+      "code": null,
+      "name": "Hocalar Şubesi",
+      "province": "AFYONKARAHİSAR",
+      "district": "Hocalar"
+    },
+    {
+      "id": "03-k-z-loren-k-z-loren-subesi",
+      "code": null,
+      "name": "Kızılören Şubesi",
+      "province": "AFYONKARAHİSAR",
+      "district": "Kızılören"
+    },
+    {
+      "id": "03260",
+      "code": "03260",
+      "name": "Dinar Vergi Dairesi Müdürlüğü",
+      "province": "AFYONKARAHİSAR",
+      "district": "Dinar"
+    },
+    {
+      "id": "03261",
+      "code": "03261",
+      "name": "Bolvadin Vergi Dairesi Müdürlüğü",
+      "province": "AFYONKARAHİSAR",
+      "district": "Bolvadin"
+    },
+    {
+      "id": "03262",
+      "code": "03262",
+      "name": "Emirdağ Vergi Dairesi Müdürlüğü",
+      "province": "AFYONKARAHİSAR",
+      "district": "Emirdağ"
+    },
+    {
+      "id": "03263",
+      "code": "03263",
+      "name": "Sandıklı Vergi Dairesi Müdürlüğü",
+      "province": "AFYONKARAHİSAR",
+      "district": "Sandıklı"
+    },
+    {
+      "id": "03264",
+      "code": "03264",
+      "name": "İscehisar Vergi Dairesi Müdürlüğü",
+      "province": "AFYONKARAHİSAR",
+      "district": "İscehisar"
+    },
+    {
+      "id": "03202",
+      "code": "03202",
+      "name": "Çay Vergi Dairesi Müdürlüğü",
+      "province": "AFYONKARAHİSAR",
+      "district": "Çay"
+    },
+    {
+      "id": "03265",
+      "code": "03265",
+      "name": "Sinanpaşa Vergi Dairesi Müdürlüğü",
+      "province": "AFYONKARAHİSAR",
+      "district": "Sinanpaşa"
+    },
+    {
+      "id": "03266",
+      "code": "03266",
+      "name": "Şuhut Vergi Dairesi Müdürlüğü",
+      "province": "AFYONKARAHİSAR",
+      "district": "Şuhut"
+    },
+    {
+      "id": "03267",
+      "code": "03267",
+      "name": "İhsaniye Vergi Dairesi Müdürlüğü",
+      "province": "AFYONKARAHİSAR",
+      "district": "İhsaniye"
+    },
+    {
+      "id": "03268",
+      "code": "03268",
+      "name": "Sultandağı Vergi Dairesi Müdürlüğü",
+      "province": "AFYONKARAHİSAR",
+      "district": "Sultandağı"
+    },
+    {
+      "id": "03269",
+      "code": "03269",
+      "name": "Çobanlar Vergi Dairesi Müdürlüğü",
+      "province": "AFYONKARAHİSAR",
+      "district": "Çobanlar"
+    },
+    {
+      "id": "03270",
+      "code": "03270",
+      "name": "Dazkırı Vergi Dairesi Müdürlüğü",
+      "province": "AFYONKARAHİSAR",
+      "district": "Dazkırı"
+    },
+    {
+      "id": "03271",
+      "code": "03271",
+      "name": "Başmakçı Vergi Dairesi Müdürlüğü",
+      "province": "AFYONKARAHİSAR",
+      "district": "Başmakçı"
+    },
+    {
+      "id": "03272",
+      "code": "03272",
+      "name": "Evciler Vergi Dairesi Müdürlüğü",
+      "province": "AFYONKARAHİSAR",
+      "district": "Evciler"
+    },
+    {
+      "id": "04260",
+      "code": "04260",
+      "name": "Ağrı Vergi Dairesi Müdürlüğü",
+      "province": "AĞRI",
+      "district": "Merkez"
+    },
+    {
+      "id": "04266",
+      "code": "04266",
+      "name": "İshakpaşa Vergi Dairesi Müdürlüğü",
+      "province": "AĞRI",
+      "district": "Merkez"
+    },
+    {
+      "id": "04-hamur-hamur-subesi",
+      "code": null,
+      "name": "Hamur Şubesi",
+      "province": "AĞRI",
+      "district": "Hamur"
+    },
+    {
+      "id": "04-tasl-cay-tasl-cay-subesi",
+      "code": null,
+      "name": "Taşlıçay Şubesi",
+      "province": "AĞRI",
+      "district": "Taşlıçay"
+    },
+    {
+      "id": "04261",
+      "code": "04261",
+      "name": "Doğubeyazıt Vergi Dairesi Müdürlüğü",
+      "province": "AĞRI",
+      "district": "Doğubeyazıt"
+    },
+    {
+      "id": "04262",
+      "code": "04262",
+      "name": "Patnos Vergi Dairesi Müdürlüğü",
+      "province": "AĞRI",
+      "district": "Patnos"
+    },
+    {
+      "id": "04263",
+      "code": "04263",
+      "name": "Diyadin Vergi Dairesi Müdürlüğü",
+      "province": "AĞRI",
+      "district": "Diyadin"
+    },
+    {
+      "id": "04264",
+      "code": "04264",
+      "name": "Eleşkirt Vergi Dairesi Müdürlüğü",
+      "province": "AĞRI",
+      "district": "Eleşkirt"
+    },
+    {
+      "id": "04265",
+      "code": "04265",
+      "name": "Tutak Vergi Dairesi Müdürlüğü",
+      "province": "AĞRI",
+      "district": "Tutak"
+    },
+    {
+      "id": "05260",
+      "code": "05260",
+      "name": "Amasya Vergi Dairesi Müdürlüğü",
+      "province": "AMASYA",
+      "district": "Merkez"
+    },
+    {
+      "id": "05261",
+      "code": "05261",
+      "name": "Merzifon Vergi Dairesi Müdürlüğü",
+      "province": "AMASYA",
+      "district": "Merzifon"
+    },
+    {
+      "id": "05262",
+      "code": "05262",
+      "name": "Gümüşhacıköy Vergi Dairesi Müdürlüğü",
+      "province": "AMASYA",
+      "district": "Gümüşhacıköy"
+    },
+    {
+      "id": "05263",
+      "code": "05263",
+      "name": "Taşova Vergi Dairesi Müdürlüğü",
+      "province": "AMASYA",
+      "district": "Taşova"
+    },
+    {
+      "id": "05264",
+      "code": "05264",
+      "name": "Suluova Vergi Dairesi Müdürlüğü",
+      "province": "AMASYA",
+      "district": "Suluova"
+    },
+    {
+      "id": "05265",
+      "code": "05265",
+      "name": "Göynücek Vergi Dairesi Müdürlüğü",
+      "province": "AMASYA",
+      "district": "Göynücek"
+    },
+    {
+      "id": "05106",
+      "code": "05106",
+      "name": "Hamamözü Malmüdürlüğü",
+      "province": "AMASYA",
+      "district": "Hamamözü"
+    },
+    {
+      "id": "06280",
+      "code": "06280",
+      "name": "Anadolu İhtisas Vergi Dairesi Müdürlüğü",
+      "province": "ANKARA",
+      "district": "Merkez"
+    },
+    {
+      "id": "06281",
+      "code": "06281",
+      "name": "Ankara İhtisas Vergi Dairesi Müdürlüğü",
+      "province": "ANKARA",
+      "district": "Merkez"
+    },
+    {
+      "id": "06282",
+      "code": "06282",
+      "name": "Harçlar Vergi Dairesi Müdürlüğü",
+      "province": "ANKARA",
+      "district": "Merkez"
+    },
+    {
+      "id": "06283",
+      "code": "06283",
+      "name": "Ankara Kurumlar Vergi Dairesi Müdürlüğü",
+      "province": "ANKARA",
+      "district": "Merkez"
+    },
+    {
+      "id": "06284",
+      "code": "06284",
+      "name": "İvedik Vergi Dairesi Müdürlüğü",
+      "province": "ANKARA",
+      "district": "Merkez"
+    },
+    {
+      "id": "06285",
+      "code": "06285",
+      "name": "100. Yıl İhtisas Vergi Dairesi Müdürlüğü",
+      "province": "ANKARA",
+      "district": "Merkez"
+    },
+    {
+      "id": "06252",
+      "code": "06252",
+      "name": "Veraset ve İntikal Vergi Dairesi Müdürlüğü",
+      "province": "ANKARA",
+      "district": "Merkez"
+    },
+    {
+      "id": "06253",
+      "code": "06253",
+      "name": "Kavaklıdere Vergi Dairesi Müdürlüğü",
+      "province": "ANKARA",
+      "district": "Merkez"
+    },
+    {
+      "id": "06254",
+      "code": "06254",
+      "name": "Maltepe Vergi Dairesi Müdürlüğü",
+      "province": "ANKARA",
+      "district": "Merkez"
+    },
+    {
+      "id": "06255",
+      "code": "06255",
+      "name": "Yenimahalle Vergi Dairesi Müdürlüğü",
+      "province": "ANKARA",
+      "district": "Merkez"
+    },
+    {
+      "id": "06257",
+      "code": "06257",
+      "name": "Çankaya Vergi Dairesi Müdürlüğü",
+      "province": "ANKARA",
+      "district": "Merkez"
+    },
+    {
+      "id": "06258",
+      "code": "06258",
+      "name": "Kızılbey Vergi Dairesi Müdürlüğü",
+      "province": "ANKARA",
+      "district": "Merkez"
+    },
+    {
+      "id": "06259",
+      "code": "06259",
+      "name": "Mithatpaşa Vergi Dairesi Müdürlüğü",
+      "province": "ANKARA",
+      "district": "Merkez"
+    },
+    {
+      "id": "06260",
+      "code": "06260",
+      "name": "Ulus Vergi Dairesi Müdürlüğü",
+      "province": "ANKARA",
+      "district": "Merkez"
+    },
+    {
+      "id": "06261",
+      "code": "06261",
+      "name": "Yıldırım Beyazıt Vergi Dairesi Müdürlüğü",
+      "province": "ANKARA",
+      "district": "Merkez"
+    },
+    {
+      "id": "06262",
+      "code": "06262",
+      "name": "Seğmenler Vergi Dairesi Müdürlüğü",
+      "province": "ANKARA",
+      "district": "Merkez"
+    },
+    {
+      "id": "06264",
+      "code": "06264",
+      "name": "Dikimevi Vergi Dairesi Müdürlüğü",
+      "province": "ANKARA",
+      "district": "Merkez"
+    },
+    {
+      "id": "06265",
+      "code": "06265",
+      "name": "Doğanbey Vergi Dairesi Müdürlüğü",
+      "province": "ANKARA",
+      "district": "Merkez"
+    },
+    {
+      "id": "06266",
+      "code": "06266",
+      "name": "Yeğenbey Vergi Dairesi Müdürlüğü",
+      "province": "ANKARA",
+      "district": "Merkez"
+    },
+    {
+      "id": "06268",
+      "code": "06268",
+      "name": "Hitit Vergi Dairesi Müdürlüğü",
+      "province": "ANKARA",
+      "district": "Merkez"
+    },
+    {
+      "id": "06269",
+      "code": "06269",
+      "name": "Yahya Galip Vergi Dairesi Müdürlüğü",
+      "province": "ANKARA",
+      "district": "Merkez"
+    },
+    {
+      "id": "06270",
+      "code": "06270",
+      "name": "Muhammet Karagüzel Vergi Dairesi Müdürlüğü",
+      "province": "ANKARA",
+      "district": "Merkez"
+    },
+    {
+      "id": "06271",
+      "code": "06271",
+      "name": "Ostim Vergi Dairesi Müdürlüğü",
+      "province": "ANKARA",
+      "district": "Merkez"
+    },
+    {
+      "id": "06272",
+      "code": "06272",
+      "name": "Gölbaşı Vergi Dairesi Müdürlüğü",
+      "province": "ANKARA",
+      "district": "Merkez"
+    },
+    {
+      "id": "06273",
+      "code": "06273",
+      "name": "Sincan Vergi Dairesi Müdürlüğü",
+      "province": "ANKARA",
+      "district": "Merkez"
+    },
+    {
+      "id": "06274",
+      "code": "06274",
+      "name": "Dışkapı Vergi Dairesi Müdürlüğü",
+      "province": "ANKARA",
+      "district": "Merkez"
+    },
+    {
+      "id": "06275",
+      "code": "06275",
+      "name": "Etimesgut Vergi Dairesi Müdürlüğü",
+      "province": "ANKARA",
+      "district": "Merkez"
+    },
+    {
+      "id": "06276",
+      "code": "06276",
+      "name": "Başkent Vergi Dairesi Müdürlüğü",
+      "province": "ANKARA",
+      "district": "Merkez"
+    },
+    {
+      "id": "06277",
+      "code": "06277",
+      "name": "Cumhuriyet Vergi Dairesi Müdürlüğü",
+      "province": "ANKARA",
+      "district": "Merkez"
+    },
+    {
+      "id": "06278",
+      "code": "06278",
+      "name": "Keçiören Vergi Dairesi Müdürlüğü",
+      "province": "ANKARA",
+      "district": "Merkez"
+    },
+    {
+      "id": "06292",
+      "code": "06292",
+      "name": "Beytepe Vergi Dairesi Müdürlüğü",
+      "province": "ANKARA",
+      "district": "Merkez"
+    },
+    {
+      "id": "06-merkez-caml-dere-caml-dere-subesi",
+      "code": null,
+      "name": "(**) Çamlıdere Çamlıdere Şubesi",
+      "province": "ANKARA",
+      "district": "Merkez"
+    },
+    {
+      "id": "06-merkez-gudul-gudul-subesi",
+      "code": null,
+      "name": "(**) Güdül Güdül Şubesi",
+      "province": "ANKARA",
+      "district": "Merkez"
+    },
+    {
+      "id": "06-merkez-evren-evren-subesi",
+      "code": null,
+      "name": "(**) Evren Evren Şubesi",
+      "province": "ANKARA",
+      "district": "Merkez"
+    },
+    {
+      "id": "06279",
+      "code": "06279",
+      "name": "Kahramankazan Vergi Dairesi Müdürlüğü",
+      "province": "ANKARA",
+      "district": "Merkez Kahramankazan"
+    },
+    {
+      "id": "06205",
+      "code": "06205",
+      "name": "Polatlı Vergi Dairesi Müdürlüğü",
+      "province": "ANKARA",
+      "district": "Merkez Polatlı"
+    },
+    {
+      "id": "06207",
+      "code": "06207",
+      "name": "Şereflikoçhisar Vergi Dairesi Müdürlüğü",
+      "province": "ANKARA",
+      "district": "Merkez Şereflikoçhisar"
+    },
+    {
+      "id": "06209",
+      "code": "06209",
+      "name": "Beypazarı Vergi Dairesi Müdürlüğü",
+      "province": "ANKARA",
+      "district": "Merkez Beypazarı"
+    },
+    {
+      "id": "06211",
+      "code": "06211",
+      "name": "Çubuk Vergi Dairesi Müdürlüğü",
+      "province": "ANKARA",
+      "district": "Merkez Çubuk"
+    },
+    {
+      "id": "06213",
+      "code": "06213",
+      "name": "Haymana Vergi Dairesi Müdürlüğü",
+      "province": "ANKARA",
+      "district": "Merkez Haymana"
+    },
+    {
+      "id": "06215",
+      "code": "06215",
+      "name": "Elmadağ Vergi Dairesi Müdürlüğü",
+      "province": "ANKARA",
+      "district": "Merkez Elmadağ"
+    },
+    {
+      "id": "06286",
+      "code": "06286",
+      "name": "Akyurt Vergi Dairesi Müdürlüğü",
+      "province": "ANKARA",
+      "district": "Merkez Akyurt"
+    },
+    {
+      "id": "06287",
+      "code": "06287",
+      "name": "Kızılcahamam Vergi Dairesi Müdürlüğü",
+      "province": "ANKARA",
+      "district": "Merkez Kızılcahamam"
+    },
+    {
+      "id": "06288",
+      "code": "06288",
+      "name": "Nallıhan Vergi Dairesi Müdürlüğü",
+      "province": "ANKARA",
+      "district": "Merkez Nallıhan"
+    },
+    {
+      "id": "06289",
+      "code": "06289",
+      "name": "Ayaş Vergi Dairesi Müdürlüğü",
+      "province": "ANKARA",
+      "district": "Merkez Ayaş"
+    },
+    {
+      "id": "06290",
+      "code": "06290",
+      "name": "Bala Vergi Dairesi Müdürlüğü",
+      "province": "ANKARA",
+      "district": "Merkez Balâ"
+    },
+    {
+      "id": "06291",
+      "code": "06291",
+      "name": "Kalecik Vergi Dairesi Müdürlüğü",
+      "province": "ANKARA",
+      "district": "Merkez Kalecik"
+    },
+    {
+      "id": "07251",
+      "code": "07251",
+      "name": "Üçkapılar Vergi Dairesi Müdürlüğü",
+      "province": "ANTALYA",
+      "district": "Merkez"
+    },
+    {
+      "id": "07252",
+      "code": "07252",
+      "name": "Kalekapı Vergi Dairesi Müdürlüğü",
+      "province": "ANTALYA",
+      "district": "Merkez"
+    },
+    {
+      "id": "07253",
+      "code": "07253",
+      "name": "Muratpaşa Vergi Dairesi Müdürlüğü",
+      "province": "ANTALYA",
+      "district": "Merkez"
+    },
+    {
+      "id": "07254",
+      "code": "07254",
+      "name": "Düden Vergi Dairesi Müdürlüğü",
+      "province": "ANTALYA",
+      "district": "Merkez"
+    },
+    {
+      "id": "07255",
+      "code": "07255",
+      "name": "Antalya Kurumlar Vergi Dairesi Müdürlüğü",
+      "province": "ANTALYA",
+      "district": "Merkez"
+    },
+    {
+      "id": "07256",
+      "code": "07256",
+      "name": "Antalya İhtisas Vergi Dairesi Müdürlüğü",
+      "province": "ANTALYA",
+      "district": "Merkez"
+    },
+    {
+      "id": "07263",
+      "code": "07263",
+      "name": "Falez Vergi Dairesi Müdürlüğü",
+      "province": "ANTALYA",
+      "district": "Merkez"
+    },
+    {
+      "id": "07-merkez-gundogmus-gundogmus-subesi",
+      "code": null,
+      "name": "(**) Gündoğmuş Gündoğmuş Şubesi",
+      "province": "ANTALYA",
+      "district": "Merkez"
+    },
+    {
+      "id": "07-merkez-ibrad-ibrad-subesi",
+      "code": null,
+      "name": "(**) İbradı İbradı Şubesi",
+      "province": "ANTALYA",
+      "district": "Merkez"
+    },
+    {
+      "id": "07257",
+      "code": "07257",
+      "name": "Korkuteli Vergi Dairesi Müdürlüğü",
+      "province": "ANTALYA",
+      "district": "Merkez Korkuteli"
+    },
+    {
+      "id": "07201",
+      "code": "07201",
+      "name": "Alanya Vergi Dairesi Müdürlüğü",
+      "province": "ANTALYA",
+      "district": "Merkez Alanya"
+    },
+    {
+      "id": "07202",
+      "code": "07202",
+      "name": "Serik Vergi Dairesi Müdürlüğü",
+      "province": "ANTALYA",
+      "district": "Merkez Serik"
+    },
+    {
+      "id": "07203",
+      "code": "07203",
+      "name": "Manavgat Vergi Dairesi Müdürlüğü",
+      "province": "ANTALYA",
+      "district": "Merkez Manavgat"
+    },
+    {
+      "id": "07204",
+      "code": "07204",
+      "name": "Elmalı Vergi Dairesi Müdürlüğü",
+      "province": "ANTALYA",
+      "district": "Merkez Elmalı"
+    },
+    {
+      "id": "07205",
+      "code": "07205",
+      "name": "Kemer Vergi Dairesi Müdürlüğü",
+      "province": "ANTALYA",
+      "district": "Merkez Kemer"
+    },
+    {
+      "id": "07206",
+      "code": "07206",
+      "name": "Kumluca Vergi Dairesi Müdürlüğü",
+      "province": "ANTALYA",
+      "district": "Merkez Kumluca"
+    },
+    {
+      "id": "07259",
+      "code": "07259",
+      "name": "Finike Vergi Dairesi Müdürlüğü",
+      "province": "ANTALYA",
+      "district": "Merkez Finike"
+    },
+    {
+      "id": "07260",
+      "code": "07260",
+      "name": "Gazipaşa Vergi Dairesi Müdürlüğü",
+      "province": "ANTALYA",
+      "district": "Merkez Gazipaşa"
+    },
+    {
+      "id": "07258",
+      "code": "07258",
+      "name": "Kaş Vergi Dairesi Müdürlüğü",
+      "province": "ANTALYA",
+      "district": "Merkez Kaş"
+    },
+    {
+      "id": "07261",
+      "code": "07261",
+      "name": "Demre Vergi Dairesi Müdürlüğü",
+      "province": "ANTALYA",
+      "district": "Merkez Demre"
+    },
+    {
+      "id": "07262",
+      "code": "07262",
+      "name": "Akseki Vergi Dairesi Müdürlüğü",
+      "province": "ANTALYA",
+      "district": "Merkez Akseki"
+    },
+    {
+      "id": "08260",
+      "code": "08260",
+      "name": "Artvin Vergi Dairesi Müdürlüğü",
+      "province": "ARTVİN",
+      "district": "Merkez"
+    },
+    {
+      "id": "08261",
+      "code": "08261",
+      "name": "Hopa Vergi Dairesi Müdürlüğü",
+      "province": "ARTVİN",
+      "district": "Hopa"
+    },
+    {
+      "id": "08262",
+      "code": "08262",
+      "name": "Arhavi Vergi Dairesi Müdürlüğü",
+      "province": "ARTVİN",
+      "district": "Arhavi"
+    },
+    {
+      "id": "08263",
+      "code": "08263",
+      "name": "Borçka Vergi Dairesi Müdürlüğü",
+      "province": "ARTVİN",
+      "district": "Borçka"
+    },
+    {
+      "id": "08264",
+      "code": "08264",
+      "name": "Yusufeli Vergi Dairesi Müdürlüğü",
+      "province": "ARTVİN",
+      "district": "Yusufeli"
+    },
+    {
+      "id": "08265",
+      "code": "08265",
+      "name": "Şavşat Vergi Dairesi Müdürlüğü",
+      "province": "ARTVİN",
+      "district": "Şavşat"
+    },
+    {
+      "id": "08266",
+      "code": "08266",
+      "name": "Ardanuç Vergi Dairesi Müdürlüğü",
+      "province": "ARTVİN",
+      "district": "Ardanuç"
+    },
+    {
+      "id": "08107",
+      "code": "08107",
+      "name": "Murgul Malmüdürlüğü",
+      "province": "ARTVİN",
+      "district": "Murgul"
+    },
+    {
+      "id": "09201",
+      "code": "09201",
+      "name": "Efeler Vergi Dairesi Müdürlüğü",
+      "province": "AYDIN",
+      "district": "Merkez"
+    },
+    {
+      "id": "09280",
+      "code": "09280",
+      "name": "Güzelhisar Vergi Dairesi Müdürlüğü",
+      "province": "AYDIN",
+      "district": "Merkez"
+    },
+    {
+      "id": "09260",
+      "code": "09260",
+      "name": "Nazilli Vergi Dairesi Müdürlüğü",
+      "province": "AYDIN",
+      "district": "Merkez Nazilli"
+    },
+    {
+      "id": "09261",
+      "code": "09261",
+      "name": "Söke Vergi Dairesi Müdürlüğü",
+      "province": "AYDIN",
+      "district": "Merkez Söke"
+    },
+    {
+      "id": "09262",
+      "code": "09262",
+      "name": "Çine Vergi Dairesi Müdürlüğü",
+      "province": "AYDIN",
+      "district": "Merkez Çine"
+    },
+    {
+      "id": "09263",
+      "code": "09263",
+      "name": "Germencik Vergi Dairesi Müdürlüğü",
+      "province": "AYDIN",
+      "district": "Merkez Germencik"
+    },
+    {
+      "id": "09265",
+      "code": "09265",
+      "name": "Kuşadası Vergi Dairesi Müdürlüğü",
+      "province": "AYDIN",
+      "district": "Merkez Kuşadası"
+    },
+    {
+      "id": "09281",
+      "code": "09281",
+      "name": "Didim Vergi Dairesi Müdürlüğü",
+      "province": "AYDIN",
+      "district": "Merkez Didim"
+    },
+    {
+      "id": "09282",
+      "code": "09282",
+      "name": "İncirliova Vergi Dairesi Müdürlüğü",
+      "province": "AYDIN",
+      "district": "Merkez İncirliova"
+    },
+    {
+      "id": "09283",
+      "code": "09283",
+      "name": "Kuyucak Vergi Dairesi Müdürlüğü",
+      "province": "AYDIN",
+      "district": "Merkez Kuyucak"
+    },
+    {
+      "id": "09284",
+      "code": "09284",
+      "name": "Bozdoğan Vergi Dairesi Müdürlüğü",
+      "province": "AYDIN",
+      "district": "Merkez Bozdoğan"
+    },
+    {
+      "id": "09285",
+      "code": "09285",
+      "name": "Sultanhisar Vergi Dairesi Müdürlüğü",
+      "province": "AYDIN",
+      "district": "Merkez Sultanhisar"
+    },
+    {
+      "id": "09286",
+      "code": "09286",
+      "name": "Karacasu Vergi Dairesi Müdürlüğü",
+      "province": "AYDIN",
+      "district": "Merkez Karacasu"
+    },
+    {
+      "id": "09287",
+      "code": "09287",
+      "name": "Koçarlı Vergi Dairesi Müdürlüğü",
+      "province": "AYDIN",
+      "district": "Merkez Koçarlı"
+    },
+    {
+      "id": "09288",
+      "code": "09288",
+      "name": "Buharkent Vergi Dairesi Müdürlüğü",
+      "province": "AYDIN",
+      "district": "Merkez Buharkent"
+    },
+    {
+      "id": "09289",
+      "code": "09289",
+      "name": "Köşk Vergi Dairesi Müdürlüğü",
+      "province": "AYDIN",
+      "district": "Merkez Köşk"
+    },
+    {
+      "id": "09290",
+      "code": "09290",
+      "name": "Yenipazar Vergi Dairesi Müdürlüğü",
+      "province": "AYDIN",
+      "district": "Merkez Yenipazar"
+    },
+    {
+      "id": "09291",
+      "code": "09291",
+      "name": "Karpuzlu Vergi Dairesi Müdürlüğü",
+      "province": "AYDIN",
+      "district": "Merkez Karpuzlu"
+    },
+    {
+      "id": "10201",
+      "code": "10201",
+      "name": "Karesi Vergi Dairesi Müdürlüğü",
+      "province": "BALIKESİR",
+      "district": "Merkez"
+    },
+    {
+      "id": "10280",
+      "code": "10280",
+      "name": "Kurtdereli Vergi Dairesi Müdürlüğü",
+      "province": "BALIKESİR",
+      "district": "Merkez"
+    },
+    {
+      "id": "10277",
+      "code": "10277",
+      "name": "Koca Seyit Vergi Dairesi Müdürlüğü",
+      "province": "BALIKESİR",
+      "district": "Merkez"
+    },
+    {
+      "id": "10-merkez-balya-balya-subesi",
+      "code": null,
+      "name": "(**) Balya Balya Şubesi",
+      "province": "BALIKESİR",
+      "district": "Merkez"
+    },
+    {
+      "id": "10260",
+      "code": "10260",
+      "name": "Ayvalık Vergi Dairesi Müdürlüğü",
+      "province": "BALIKESİR",
+      "district": "Merkez Ayvalık"
+    },
+    {
+      "id": "10261",
+      "code": "10261",
+      "name": "Bandırma Vergi Dairesi Müdürlüğü",
+      "province": "BALIKESİR",
+      "district": "Merkez Bandırma"
+    },
+    {
+      "id": "10262",
+      "code": "10262",
+      "name": "Burhaniye Vergi Dairesi Müdürlüğü",
+      "province": "BALIKESİR",
+      "district": "Merkez Burhaniye"
+    },
+    {
+      "id": "10263",
+      "code": "10263",
+      "name": "Edremit Vergi Dairesi Müdürlüğü",
+      "province": "BALIKESİR",
+      "district": "Merkez Edremit"
+    },
+    {
+      "id": "10264",
+      "code": "10264",
+      "name": "Gönen Vergi Dairesi Müdürlüğü",
+      "province": "BALIKESİR",
+      "district": "Merkez Gönen"
+    },
+    {
+      "id": "10265",
+      "code": "10265",
+      "name": "Susurluk Vergi Dairesi Müdürlüğü",
+      "province": "BALIKESİR",
+      "district": "Merkez Susurluk"
+    },
+    {
+      "id": "10266",
+      "code": "10266",
+      "name": "Erdek Vergi Dairesi Müdürlüğü",
+      "province": "BALIKESİR",
+      "district": "Merkez Erdek"
+    },
+    {
+      "id": "10267",
+      "code": "10267",
+      "name": "Bigadiç Vergi Dairesi Müdürlüğü",
+      "province": "BALIKESİR",
+      "district": "Merkez Bigadiç"
+    },
+    {
+      "id": "10268",
+      "code": "10268",
+      "name": "Sındırgı Vergi Dairesi Müdürlüğü",
+      "province": "BALIKESİR",
+      "district": "Merkez Sındırgı"
+    },
+    {
+      "id": "10269",
+      "code": "10269",
+      "name": "Dursunbey Vergi Dairesi Müdürlüğü",
+      "province": "BALIKESİR",
+      "district": "Merkez Dursunbey"
+    },
+    {
+      "id": "10270",
+      "code": "10270",
+      "name": "Gömeç Vergi Dairesi Müdürlüğü",
+      "province": "BALIKESİR",
+      "district": "Merkez Gömeç"
+    },
+    {
+      "id": "10271",
+      "code": "10271",
+      "name": "Havran Vergi Dairesi Müdürlüğü",
+      "province": "BALIKESİR",
+      "district": "Merkez Havran"
+    },
+    {
+      "id": "10272",
+      "code": "10272",
+      "name": "İvrindi Vergi Dairesi Müdürlüğü",
+      "province": "BALIKESİR",
+      "district": "Merkez İvrindi"
+    },
+    {
+      "id": "10273",
+      "code": "10273",
+      "name": "Manyas Vergi Dairesi Müdürlüğü",
+      "province": "BALIKESİR",
+      "district": "Merkez Manyas"
+    },
+    {
+      "id": "10274",
+      "code": "10274",
+      "name": "Kepsut Vergi Dairesi Müdürlüğü",
+      "province": "BALIKESİR",
+      "district": "Merkez Kepsut"
+    },
+    {
+      "id": "10275",
+      "code": "10275",
+      "name": "Marmara Vergi Dairesi Müdürlüğü",
+      "province": "BALIKESİR",
+      "district": "Merkez Marmara"
+    },
+    {
+      "id": "10276",
+      "code": "10276",
+      "name": "Savaştepe Vergi Dairesi Müdürlüğü",
+      "province": "BALIKESİR",
+      "district": "Merkez Savaştepe"
+    },
+    {
+      "id": "11260",
+      "code": "11260",
+      "name": "Bilecik Vergi Dairesi Müdürlüğü",
+      "province": "BİLECİK",
+      "district": "Merkez"
+    },
+    {
+      "id": "11265",
+      "code": "11265",
+      "name": "Kayı Vergi Dairesi Müdürlüğü",
+      "province": "BİLECİK",
+      "district": "Merkez"
+    },
+    {
+      "id": "11-pazaryeri-pazaryeri-subesi",
+      "code": null,
+      "name": "Pazaryeri Şubesi",
+      "province": "BİLECİK",
+      "district": "Pazaryeri"
+    },
+    {
+      "id": "11-yenipazar-yenipazar-subesi",
+      "code": null,
+      "name": "Yenipazar Şubesi",
+      "province": "BİLECİK",
+      "district": "Yenipazar"
+    },
+    {
+      "id": "11-inhisar-inhisar-subesi",
+      "code": null,
+      "name": "İnhisar Şubesi",
+      "province": "BİLECİK",
+      "district": "İnhisar"
+    },
+    {
+      "id": "11261",
+      "code": "11261",
+      "name": "Bozüyük Vergi Dairesi Müdürlüğü",
+      "province": "BİLECİK",
+      "district": "Bozüyük"
+    },
+    {
+      "id": "11262",
+      "code": "11262",
+      "name": "Osmaneli Vergi Dairesi Müdürlüğü",
+      "province": "BİLECİK",
+      "district": "Osmaneli"
+    },
+    {
+      "id": "11263",
+      "code": "11263",
+      "name": "Söğüt Vergi Dairesi Müdürlüğü",
+      "province": "BİLECİK",
+      "district": "Söğüt"
+    },
+    {
+      "id": "11264",
+      "code": "11264",
+      "name": "Gölpazarı Vergi Dairesi Müdürlüğü",
+      "province": "BİLECİK",
+      "district": "Gölpazarı"
+    },
+    {
+      "id": "12260",
+      "code": "12260",
+      "name": "Bingöl Vergi Dairesi Müdürlüğü",
+      "province": "BİNGÖL",
+      "district": "Merkez"
+    },
+    {
+      "id": "12264",
+      "code": "12264",
+      "name": "Yüzen Ada Vergi Dairesi Müdürlüğü",
+      "province": "BİNGÖL",
+      "district": "Merkez"
+    },
+    {
+      "id": "12-kig-kig-subesi",
+      "code": null,
+      "name": "Kiğı Şubesi",
+      "province": "BİNGÖL",
+      "district": "Kiğı"
+    },
+    {
+      "id": "12-adakl-adakl-subesi",
+      "code": null,
+      "name": "Adaklı Şubesi",
+      "province": "BİNGÖL",
+      "district": "Adaklı"
+    },
+    {
+      "id": "12-yayladere-yayladere-subesi",
+      "code": null,
+      "name": "Yayladere Şubesi",
+      "province": "BİNGÖL",
+      "district": "Yayladere"
+    },
+    {
+      "id": "12-yedisu-yedisu-subesi",
+      "code": null,
+      "name": "Yedisu Şubesi",
+      "province": "BİNGÖL",
+      "district": "Yedisu"
+    },
+    {
+      "id": "12261",
+      "code": "12261",
+      "name": "Solhan Vergi Dairesi Müdürlüğü",
+      "province": "BİNGÖL",
+      "district": "Solhan"
+    },
+    {
+      "id": "12262",
+      "code": "12262",
+      "name": "Genç Vergi Dairesi Müdürlüğü",
+      "province": "BİNGÖL",
+      "district": "Genç"
+    },
+    {
+      "id": "12263",
+      "code": "12263",
+      "name": "Karlıova Vergi Dairesi Müdürlüğü",
+      "province": "BİNGÖL",
+      "district": "Karlıova"
+    },
+    {
+      "id": "13260",
+      "code": "13260",
+      "name": "Bitlis Vergi Dairesi Müdürlüğü",
+      "province": "BİTLİS",
+      "district": "Merkez"
+    },
+    {
+      "id": "13261",
+      "code": "13261",
+      "name": "Tatvan Vergi Dairesi Müdürlüğü",
+      "province": "BİTLİS",
+      "district": "Tatvan"
+    },
+    {
+      "id": "13262",
+      "code": "13262",
+      "name": "Ahlat Vergi Dairesi Müdürlüğü",
+      "province": "BİTLİS",
+      "district": "Ahlat"
+    },
+    {
+      "id": "13263",
+      "code": "13263",
+      "name": "Güroymak Vergi Dairesi Müdürlüğü",
+      "province": "BİTLİS",
+      "district": "Göroymak"
+    },
+    {
+      "id": "13264",
+      "code": "13264",
+      "name": "Hizan Vergi Dairesi Müdürlüğü",
+      "province": "BİTLİS",
+      "district": "Hizan"
+    },
+    {
+      "id": "13265",
+      "code": "13265",
+      "name": "Adilcevaz Vergi Dairesi Müdürlüğü",
+      "province": "BİTLİS",
+      "district": "Adilcevaz"
+    },
+    {
+      "id": "13104",
+      "code": "13104",
+      "name": "Mutki Malmüdürlüğü",
+      "province": "BİTLİS",
+      "district": "Mutki"
+    },
+    {
+      "id": "14260",
+      "code": "14260",
+      "name": "Bolu Vergi Dairesi Müdürlüğü",
+      "province": "BOLU",
+      "district": "Merkez"
+    },
+    {
+      "id": "14267",
+      "code": "14267",
+      "name": "Köroğlu Vergi Dairesi Müdürlüğü",
+      "province": "BOLU",
+      "district": "Merkez"
+    },
+    {
+      "id": "14-k-br-sc-k-k-br-sc-k-subesi",
+      "code": null,
+      "name": "Kıbrıscık Şubesi",
+      "province": "BOLU",
+      "district": "Kıbrıscık"
+    },
+    {
+      "id": "14-seben-seben-subesi",
+      "code": null,
+      "name": "Seben Şubesi",
+      "province": "BOLU",
+      "district": "Seben"
+    },
+    {
+      "id": "14-dortdivan-dortdivan-subesi",
+      "code": null,
+      "name": "Dörtdivan Şubesi",
+      "province": "BOLU",
+      "district": "Dörtdivan"
+    },
+    {
+      "id": "14262",
+      "code": "14262",
+      "name": "Gerede Vergi Dairesi Müdürlüğü",
+      "province": "BOLU",
+      "district": "Gerede"
+    },
+    {
+      "id": "14263",
+      "code": "14263",
+      "name": "Göynük Vergi Dairesi Müdürlüğü",
+      "province": "BOLU",
+      "district": "Göynük"
+    },
+    {
+      "id": "14264",
+      "code": "14264",
+      "name": "Mudurnu Vergi Dairesi Müdürlüğü",
+      "province": "BOLU",
+      "district": "Mudurnu"
+    },
+    {
+      "id": "14265",
+      "code": "14265",
+      "name": "Mengen Vergi Dairesi Müdürlüğü",
+      "province": "BOLU",
+      "district": "Mengen"
+    },
+    {
+      "id": "14266",
+      "code": "14266",
+      "name": "Yeniçağa Vergi Dairesi Müdürlüğü",
+      "province": "BOLU",
+      "district": "Yeniçağa"
+    },
+    {
+      "id": "15260",
+      "code": "15260",
+      "name": "Burdur Vergi Dairesi Müdürlüğü",
+      "province": "BURDUR",
+      "district": "Merkez"
+    },
+    {
+      "id": "15267",
+      "code": "15267",
+      "name": "Salda Vergi Dairesi Müdürlüğü",
+      "province": "BURDUR",
+      "district": "Merkez"
+    },
+    {
+      "id": "15-aglasun-aglasun-subesi",
+      "code": null,
+      "name": "Ağlasun Şubesi",
+      "province": "BURDUR",
+      "district": "Ağlasun"
+    },
+    {
+      "id": "15-kemer-kemer-subesi",
+      "code": null,
+      "name": "Kemer Şubesi",
+      "province": "BURDUR",
+      "district": "Kemer"
+    },
+    {
+      "id": "15-alt-nyayla-alt-nyayla-subesi",
+      "code": null,
+      "name": "Altınyayla Şubesi",
+      "province": "BURDUR",
+      "district": "Altınyayla"
+    },
+    {
+      "id": "15-celtikci-celtikci-subesi",
+      "code": null,
+      "name": "Çeltikçi Şubesi",
+      "province": "BURDUR",
+      "district": "Çeltikçi"
+    },
+    {
+      "id": "15261",
+      "code": "15261",
+      "name": "Bucak Vergi Dairesi Müdürlüğü",
+      "province": "BURDUR",
+      "district": "Bucak"
+    },
+    {
+      "id": "15262",
+      "code": "15262",
+      "name": "Gölhisar Vergi Dairesi Müdürlüğü",
+      "province": "BURDUR",
+      "district": "Gölhisar"
+    },
+    {
+      "id": "15263",
+      "code": "15263",
+      "name": "Çavdır Vergi Dairesi Müdürlüğü",
+      "province": "BURDUR",
+      "district": "Çavdır"
+    },
+    {
+      "id": "15264",
+      "code": "15264",
+      "name": "Yeşilova Vergi Dairesi Müdürlüğü",
+      "province": "BURDUR",
+      "district": "Yeşilova"
+    },
+    {
+      "id": "15265",
+      "code": "15265",
+      "name": "Tefenni Vergi Dairesi Müdürlüğü",
+      "province": "BURDUR",
+      "district": "Tefenni"
+    },
+    {
+      "id": "15266",
+      "code": "15266",
+      "name": "Karamanlı Vergi Dairesi Müdürlüğü",
+      "province": "BURDUR",
+      "district": "Karamanlı"
+    },
+    {
+      "id": "16250",
+      "code": "16250",
+      "name": "Bursa İhtisas Vergi Dairesi Müdürlüğü",
+      "province": "BURSA",
+      "district": "Merkez"
+    },
+    {
+      "id": "16251",
+      "code": "16251",
+      "name": "Osmangazi Vergi Dairesi Müdürlüğü",
+      "province": "BURSA",
+      "district": "Merkez"
+    },
+    {
+      "id": "16252",
+      "code": "16252",
+      "name": "Yıldırım Vergi Dairesi Müdürlüğü",
+      "province": "BURSA",
+      "district": "Merkez"
+    },
+    {
+      "id": "16253",
+      "code": "16253",
+      "name": "Çekirge Vergi Dairesi Müdürlüğü",
+      "province": "BURSA",
+      "district": "Merkez"
+    },
+    {
+      "id": "16254",
+      "code": "16254",
+      "name": "Setbaşı Vergi Dairesi Müdürlüğü",
+      "province": "BURSA",
+      "district": "Merkez"
+    },
+    {
+      "id": "16255",
+      "code": "16255",
+      "name": "Uludağ Vergi Dairesi Müdürlüğü",
+      "province": "BURSA",
+      "district": "Merkez"
+    },
+    {
+      "id": "16256",
+      "code": "16256",
+      "name": "Yeşil Vergi Dairesi Müdürlüğü",
+      "province": "BURSA",
+      "district": "Merkez"
+    },
+    {
+      "id": "16257",
+      "code": "16257",
+      "name": "Nilüfer Vergi Dairesi Müdürlüğü",
+      "province": "BURSA",
+      "district": "Merkez"
+    },
+    {
+      "id": "16258",
+      "code": "16258",
+      "name": "Ertuğrulgazi Vergi Dairesi Müdürlüğü",
+      "province": "BURSA",
+      "district": "Merkez"
+    },
+    {
+      "id": "16259",
+      "code": "16259",
+      "name": "Gökdere Vergi Dairesi Müdürlüğü",
+      "province": "BURSA",
+      "district": "Merkez"
+    },
+    {
+      "id": "16260",
+      "code": "16260",
+      "name": "Bursa Veraset ve Harçlar Vergi Dairesi Müdürlüğü",
+      "province": "BURSA",
+      "district": "Merkez"
+    },
+    {
+      "id": "16262",
+      "code": "16262",
+      "name": "Kozahan Vergi Dairesi Müdürlüğü",
+      "province": "BURSA",
+      "district": "Merkez"
+    },
+    {
+      "id": "16-merkez-keles-keles-subesi",
+      "code": null,
+      "name": "(**) Keles Keles Şubesi",
+      "province": "BURSA",
+      "district": "Merkez"
+    },
+    {
+      "id": "16-merkez-harmanc-k-harmanc-k-subesi",
+      "code": null,
+      "name": "(**) Harmancık Harmancık Şubesi",
+      "province": "BURSA",
+      "district": "Merkez"
+    },
+    {
+      "id": "16-merkez-buyukorhan-buyukorhan-subesi",
+      "code": null,
+      "name": "(**) Büyükorhan Büyükorhan Şubesi",
+      "province": "BURSA",
+      "district": "Merkez"
+    },
+    {
+      "id": "16201",
+      "code": "16201",
+      "name": "Gemlik Vergi Dairesi Müdürlüğü",
+      "province": "BURSA",
+      "district": "Merkez Gemlik"
+    },
+    {
+      "id": "16202",
+      "code": "16202",
+      "name": "İnegöl Vergi Dairesi Müdürlüğü",
+      "province": "BURSA",
+      "district": "Merkez İnegöl"
+    },
+    {
+      "id": "16203",
+      "code": "16203",
+      "name": "Karacabey Vergi Dairesi Müdürlüğü",
+      "province": "BURSA",
+      "district": "Merkez Karacabey"
+    },
+    {
+      "id": "16204",
+      "code": "16204",
+      "name": "Mustafakemalpaşa Vergi Dairesi Müdürlüğü",
+      "province": "BURSA",
+      "district": "Merkez Mustafakemalpaşa"
+    },
+    {
+      "id": "16205",
+      "code": "16205",
+      "name": "Mudanya Vergi Dairesi Müdürlüğü",
+      "province": "BURSA",
+      "district": "Merkez Mudanya"
+    },
+    {
+      "id": "16206",
+      "code": "16206",
+      "name": "Orhangazi Vergi Dairesi Müdürlüğü",
+      "province": "BURSA",
+      "district": "Merkez Orhangazi"
+    },
+    {
+      "id": "16207",
+      "code": "16207",
+      "name": "İznik Vergi Dairesi Müdürlüğü",
+      "province": "BURSA",
+      "district": "Merkez İznik"
+    },
+    {
+      "id": "16208",
+      "code": "16208",
+      "name": "Yenişehir Vergi Dairesi Müdürlüğü",
+      "province": "BURSA",
+      "district": "Merkez Yenişehir"
+    },
+    {
+      "id": "16261",
+      "code": "16261",
+      "name": "Orhaneli Vergi Dairesi Müdürlüğü",
+      "province": "BURSA",
+      "district": "Merkez Orhaneli"
+    },
+    {
+      "id": "17260",
+      "code": "17260",
+      "name": "Çanakkale Vergi Dairesi Müdürlüğü",
+      "province": "ÇANAKKALE",
+      "district": "Merkez"
+    },
+    {
+      "id": "17261",
+      "code": "17261",
+      "name": "Biga Vergi Dairesi Müdürlüğü",
+      "province": "ÇANAKKALE",
+      "district": "Biga"
+    },
+    {
+      "id": "17262",
+      "code": "17262",
+      "name": "Çan Vergi Dairesi Müdürlüğü",
+      "province": "ÇANAKKALE",
+      "district": "Çan"
+    },
+    {
+      "id": "17263",
+      "code": "17263",
+      "name": "Gelibolu Vergi Dairesi Müdürlüğü",
+      "province": "ÇANAKKALE",
+      "district": "Gelibolu"
+    },
+    {
+      "id": "17265",
+      "code": "17265",
+      "name": "Ezine Vergi Dairesi Müdürlüğü",
+      "province": "ÇANAKKALE",
+      "district": "Ezine"
+    },
+    {
+      "id": "17264",
+      "code": "17264",
+      "name": "Ayvacık Vergi Dairesi Müdürlüğü",
+      "province": "ÇANAKKALE",
+      "district": "Ayvacık"
+    },
+    {
+      "id": "17266",
+      "code": "17266",
+      "name": "Lapseki Vergi Dairesi Müdürlüğü",
+      "province": "ÇANAKKALE",
+      "district": "Lapseki"
+    },
+    {
+      "id": "17267",
+      "code": "17267",
+      "name": "Gökçeada Vergi Dairesi Müdürlüğü",
+      "province": "ÇANAKKALE",
+      "district": "Gökçeada"
+    },
+    {
+      "id": "17268",
+      "code": "17268",
+      "name": "Bayramiç Vergi Dairesi Müdürlüğü",
+      "province": "ÇANAKKALE",
+      "district": "Bayramiç"
+    },
+    {
+      "id": "17269",
+      "code": "17269",
+      "name": "Yenice Vergi Dairesi Müdürlüğü",
+      "province": "ÇANAKKALE",
+      "district": "Yenice"
+    },
+    {
+      "id": "17270",
+      "code": "17270",
+      "name": "Eceabat Vergi Dairesi Müdürlüğü",
+      "province": "ÇANAKKALE",
+      "district": "Eceabat"
+    },
+    {
+      "id": "17271",
+      "code": "17271",
+      "name": "Bozcaada Vergi Dairesi Müdürlüğü",
+      "province": "ÇANAKKALE",
+      "district": "Bozcaada"
+    },
+    {
+      "id": "18260",
+      "code": "18260",
+      "name": "Çankırı Vergi Dairesi Müdürlüğü",
+      "province": "ÇANKIRI",
+      "district": "Merkez"
+    },
+    {
+      "id": "18265",
+      "code": "18265",
+      "name": "Karatekin Vergi Dairesi Müdürlüğü",
+      "province": "ÇANKIRI",
+      "district": "Merkez"
+    },
+    {
+      "id": "18-eldivan-eldivan-subesi",
+      "code": null,
+      "name": "Eldivan Şubesi",
+      "province": "ÇANKIRI",
+      "district": "Eldivan"
+    },
+    {
+      "id": "18-kursunlu-kursunlu-subesi",
+      "code": null,
+      "name": "Kurşunlu Şubesi",
+      "province": "ÇANKIRI",
+      "district": "Kurşunlu"
+    },
+    {
+      "id": "18-yaprakl-yaprakl-subesi",
+      "code": null,
+      "name": "Yapraklı Şubesi",
+      "province": "ÇANKIRI",
+      "district": "Yapraklı"
+    },
+    {
+      "id": "18-atkaracalar-atkaracalar-subesi",
+      "code": null,
+      "name": "Atkaracalar Şubesi",
+      "province": "ÇANKIRI",
+      "district": "Atkaracalar"
+    },
+    {
+      "id": "18-k-z-l-rmak-k-z-l-rmak-subesi",
+      "code": null,
+      "name": "Kızılırmak Şubesi",
+      "province": "ÇANKIRI",
+      "district": "Kızılırmak"
+    },
+    {
+      "id": "18-bayramoren-bayramoren-subesi",
+      "code": null,
+      "name": "Bayramören Şubesi",
+      "province": "ÇANKIRI",
+      "district": "Bayramören"
+    },
+    {
+      "id": "18-korgun-korgun-subesi",
+      "code": null,
+      "name": "Korgun Şubesi",
+      "province": "ÇANKIRI",
+      "district": "Korgun"
+    },
+    {
+      "id": "18261",
+      "code": "18261",
+      "name": "Çerkeş Vergi Dairesi Müdürlüğü",
+      "province": "ÇANKIRI",
+      "district": "Çerkeş"
+    },
+    {
+      "id": "18262",
+      "code": "18262",
+      "name": "Ilgaz Vergi Dairesi Müdürlüğü",
+      "province": "ÇANKIRI",
+      "district": "Ilgaz"
+    },
+    {
+      "id": "18263",
+      "code": "18263",
+      "name": "Orta Vergi Dairesi Müdürlüğü",
+      "province": "ÇANKIRI",
+      "district": "Orta"
+    },
+    {
+      "id": "18264",
+      "code": "18264",
+      "name": "Şabanözü Vergi Dairesi Müdürlüğü",
+      "province": "ÇANKIRI",
+      "district": "Şabanözü"
+    },
+    {
+      "id": "19260",
+      "code": "19260",
+      "name": "Çorum Vergi Dairesi Müdürlüğü",
+      "province": "ÇORUM",
+      "district": "Merkez"
+    },
+    {
+      "id": "19262",
+      "code": "19262",
+      "name": "Hasanpaşa Vergi Dairesi Müdürlüğü",
+      "province": "ÇORUM",
+      "district": "Merkez"
+    },
+    {
+      "id": "19269",
+      "code": "19269",
+      "name": "Akşemseddin Vergi Dairesi Müdürlüğü",
+      "province": "ÇORUM",
+      "district": "Merkez"
+    },
+    {
+      "id": "19-ortakoy-ortakoy-subesi",
+      "code": null,
+      "name": "Ortaköy Şubesi",
+      "province": "ÇORUM",
+      "district": "Ortaköy"
+    },
+    {
+      "id": "19-bogazkale-bogazkale-subesi",
+      "code": null,
+      "name": "Boğazkale Şubesi",
+      "province": "ÇORUM",
+      "district": "Boğazkale"
+    },
+    {
+      "id": "19-ugurludag-ugurludag-subesi",
+      "code": null,
+      "name": "Uğurludağ Şubesi",
+      "province": "ÇORUM",
+      "district": "Uğurludağ"
+    },
+    {
+      "id": "19-dodurga-dodurga-subesi",
+      "code": null,
+      "name": "Dodurga Şubesi",
+      "province": "ÇORUM",
+      "district": "Dodurga"
+    },
+    {
+      "id": "19-oguzlar-oguzlar-subesi",
+      "code": null,
+      "name": "Oğuzlar Şubesi",
+      "province": "ÇORUM",
+      "district": "Oğuzlar"
+    },
+    {
+      "id": "19-lacin-lacin-subesi",
+      "code": null,
+      "name": "Laçin Şubesi",
+      "province": "ÇORUM",
+      "district": "Laçin"
+    },
+    {
+      "id": "19261",
+      "code": "19261",
+      "name": "Sungurlu Vergi Dairesi Müdürlüğü",
+      "province": "ÇORUM",
+      "district": "Sungurlu"
+    },
+    {
+      "id": "19263",
+      "code": "19263",
+      "name": "Osmancık Vergi Dairesi Müdürlüğü",
+      "province": "ÇORUM",
+      "district": "Osmancık"
+    },
+    {
+      "id": "19264",
+      "code": "19264",
+      "name": "İskilip Vergi Dairesi Müdürlüğü",
+      "province": "ÇORUM",
+      "district": "İskilip"
+    },
+    {
+      "id": "19265",
+      "code": "19265",
+      "name": "Alaca Vergi Dairesi Müdürlüğü",
+      "province": "ÇORUM",
+      "district": "Alaca"
+    },
+    {
+      "id": "19266",
+      "code": "19266",
+      "name": "Kargı Vergi Dairesi Müdürlüğü",
+      "province": "ÇORUM",
+      "district": "Kargı"
+    },
+    {
+      "id": "19267",
+      "code": "19267",
+      "name": "Mecitözü Vergi Dairesi Müdürlüğü",
+      "province": "ÇORUM",
+      "district": "Mecitözü"
+    },
+    {
+      "id": "19268",
+      "code": "19268",
+      "name": "Bayat Vergi Dairesi Müdürlüğü",
+      "province": "ÇORUM",
+      "district": "Bayat"
+    },
+    {
+      "id": "20201",
+      "code": "20201",
+      "name": "Saraylar Vergi Dairesi Müdürlüğü",
+      "province": "DENİZLİ",
+      "district": "Merkez"
+    },
+    {
+      "id": "20202",
+      "code": "20202",
+      "name": "Çınar Vergi Dairesi Müdürlüğü",
+      "province": "DENİZLİ",
+      "district": "Merkez"
+    },
+    {
+      "id": "20203",
+      "code": "20203",
+      "name": "Gökpınar Vergi Dairesi Müdürlüğü",
+      "province": "DENİZLİ",
+      "district": "Merkez"
+    },
+    {
+      "id": "20250",
+      "code": "20250",
+      "name": "Denizli İhtisas Vergi Dairesi Müdürlüğü",
+      "province": "DENİZLİ",
+      "district": "Merkez"
+    },
+    {
+      "id": "20280",
+      "code": "20280",
+      "name": "Pamukkale Vergi Dairesi Müdürlüğü",
+      "province": "DENİZLİ",
+      "district": "Merkez"
+    },
+    {
+      "id": "20275",
+      "code": "20275",
+      "name": "Bayramyeri Vergi Dairesi Müdürlüğü",
+      "province": "DENİZLİ",
+      "district": "Merkez"
+    },
+    {
+      "id": "20-merkez-baklan-baklan-subesi",
+      "code": null,
+      "name": "(**) Baklan Baklan Şubesi",
+      "province": "DENİZLİ",
+      "district": "Merkez"
+    },
+    {
+      "id": "20-merkez-beyagac-beyagac-subesi",
+      "code": null,
+      "name": "(**) Beyağaç Beyağaç Şubesi",
+      "province": "DENİZLİ",
+      "district": "Merkez"
+    },
+    {
+      "id": "20260",
+      "code": "20260",
+      "name": "Sarayköy Vergi Dairesi Müdürlüğü",
+      "province": "DENİZLİ",
+      "district": "Merkez Sarayköy"
+    },
+    {
+      "id": "20261",
+      "code": "20261",
+      "name": "Acıpayam Vergi Dairesi Müdürlüğü",
+      "province": "DENİZLİ",
+      "district": "Merkez Acıpayam"
+    },
+    {
+      "id": "20262",
+      "code": "20262",
+      "name": "Tavas Vergi Dairesi Müdürlüğü",
+      "province": "DENİZLİ",
+      "district": "Merkez Tavas"
+    },
+    {
+      "id": "20263",
+      "code": "20263",
+      "name": "Buldan Vergi Dairesi Müdürlüğü",
+      "province": "DENİZLİ",
+      "district": "Merkez Buldan"
+    },
+    {
+      "id": "20264",
+      "code": "20264",
+      "name": "Çal Vergi Dairesi Müdürlüğü",
+      "province": "DENİZLİ",
+      "district": "Merkez Çal"
+    },
+    {
+      "id": "20265",
+      "code": "20265",
+      "name": "Çivril Vergi Dairesi Müdürlüğü",
+      "province": "DENİZLİ",
+      "district": "Merkez Çivril"
+    },
+    {
+      "id": "20266",
+      "code": "20266",
+      "name": "Honaz Vergi Dairesi Müdürlüğü",
+      "province": "DENİZLİ",
+      "district": "Merkez Honaz"
+    },
+    {
+      "id": "20267",
+      "code": "20267",
+      "name": "Kale Vergi Dairesi Müdürlüğü",
+      "province": "DENİZLİ",
+      "district": "Merkez Kale"
+    },
+    {
+      "id": "20268",
+      "code": "20268",
+      "name": "Serinhisar Vergi Dairesi Müdürlüğü",
+      "province": "DENİZLİ",
+      "district": "Merkez Serinhisar"
+    },
+    {
+      "id": "20269",
+      "code": "20269",
+      "name": "Çameli Vergi Dairesi Müdürlüğü",
+      "province": "DENİZLİ",
+      "district": "Merkez Çameli"
+    },
+    {
+      "id": "20270",
+      "code": "20270",
+      "name": "Babadağ Vergi Dairesi Müdürlüğü",
+      "province": "DENİZLİ",
+      "district": "Merkez Babadağ"
+    },
+    {
+      "id": "20271",
+      "code": "20271",
+      "name": "Bozkurt Vergi Dairesi Müdürlüğü",
+      "province": "DENİZLİ",
+      "district": "Merkez Bozkurt"
+    },
+    {
+      "id": "20272",
+      "code": "20272",
+      "name": "Çardak Vergi Dairesi Müdürlüğü",
+      "province": "DENİZLİ",
+      "district": "Merkez Çardak"
+    },
+    {
+      "id": "20273",
+      "code": "20273",
+      "name": "Güney Vergi Dairesi Müdürlüğü",
+      "province": "DENİZLİ",
+      "district": "Merkez Güney"
+    },
+    {
+      "id": "20274",
+      "code": "20274",
+      "name": "Bekilli Vergi Dairesi Müdürlüğü",
+      "province": "DENİZLİ",
+      "district": "Merkez Bekilli"
+    },
+    {
+      "id": "21251",
+      "code": "21251",
+      "name": "Gökalp Vergi Dairesi Müdürlüğü",
+      "province": "DİYARBAKIR",
+      "district": "Merkez"
+    },
+    {
+      "id": "21281",
+      "code": "21281",
+      "name": "Süleyman Nazif Vergi Dairesi Müdürlüğü",
+      "province": "DİYARBAKIR",
+      "district": "Merkez"
+    },
+    {
+      "id": "21282",
+      "code": "21282",
+      "name": "Cahit Sıtkı Tarancı Vergi Dairesi Müdürlüğü",
+      "province": "DİYARBAKIR",
+      "district": "Merkez"
+    },
+    {
+      "id": "21290",
+      "code": "21290",
+      "name": "Kayapınar Vergi Dairesi Müdürlüğü",
+      "province": "DİYARBAKIR",
+      "district": "Merkez"
+    },
+    {
+      "id": "21-merkez-cungus-cungus-subesi",
+      "code": null,
+      "name": "(**) Çüngüş Çüngüş Şubesi",
+      "province": "DİYARBAKIR",
+      "district": "Merkez"
+    },
+    {
+      "id": "21-merkez-dicle-dicle-subesi",
+      "code": null,
+      "name": "(**) Dicle Dicle Şubesi",
+      "province": "DİYARBAKIR",
+      "district": "Merkez"
+    },
+    {
+      "id": "21-merkez-hazro-hazro-subesi",
+      "code": null,
+      "name": "(**) Hazro Hazro Şubesi",
+      "province": "DİYARBAKIR",
+      "district": "Merkez"
+    },
+    {
+      "id": "21-merkez-kulp-kulp-subesi",
+      "code": null,
+      "name": "(**) Kulp Kulp Şubesi",
+      "province": "DİYARBAKIR",
+      "district": "Merkez"
+    },
+    {
+      "id": "21-merkez-egil-egil-subesi",
+      "code": null,
+      "name": "(**) Eğil Eğil Şubesi",
+      "province": "DİYARBAKIR",
+      "district": "Merkez"
+    },
+    {
+      "id": "21-merkez-kocakoy-kocakoy-subesi",
+      "code": null,
+      "name": "(**) Kocaköy Kocaköy Şubesi",
+      "province": "DİYARBAKIR",
+      "district": "Merkez"
+    },
+    {
+      "id": "21283",
+      "code": "21283",
+      "name": "Ergani Vergi Dairesi Müdürlüğü",
+      "province": "DİYARBAKIR",
+      "district": "Merkez Ergani"
+    },
+    {
+      "id": "21284",
+      "code": "21284",
+      "name": "Bismil Vergi Dairesi Müdürlüğü",
+      "province": "DİYARBAKIR",
+      "district": "Merkez Bismil"
+    },
+    {
+      "id": "21285",
+      "code": "21285",
+      "name": "Silvan Vergi Dairesi Müdürlüğü",
+      "province": "DİYARBAKIR",
+      "district": "Merkez Silvan"
+    },
+    {
+      "id": "21286",
+      "code": "21286",
+      "name": "Çınar Vergi Dairesi Müdürlüğü",
+      "province": "DİYARBAKIR",
+      "district": "Merkez Çınar"
+    },
+    {
+      "id": "21287",
+      "code": "21287",
+      "name": "Çermik Vergi Dairesi Müdürlüğü",
+      "province": "DİYARBAKIR",
+      "district": "Merkez Çermik"
+    },
+    {
+      "id": "21288",
+      "code": "21288",
+      "name": "Hani Vergi Dairesi Müdürlüğü",
+      "province": "DİYARBAKIR",
+      "district": "Merkez Hani"
+    },
+    {
+      "id": "21289",
+      "code": "21289",
+      "name": "Lice Vergi Dairesi Müdürlüğü",
+      "province": "DİYARBAKIR",
+      "district": "Merkez Lice"
+    },
+    {
+      "id": "22201",
+      "code": "22201",
+      "name": "Arda Vergi Dairesi Müdürlüğü",
+      "province": "EDİRNE",
+      "district": "Merkez"
+    },
+    {
+      "id": "22260",
+      "code": "22260",
+      "name": "Kırkpınar Vergi Dairesi Müdürlüğü",
+      "province": "EDİRNE",
+      "district": "Merkez"
+    },
+    {
+      "id": "22267",
+      "code": "22267",
+      "name": "Tunca Vergi Dairesi Müdürlüğü",
+      "province": "EDİRNE",
+      "district": "Merkez"
+    },
+    {
+      "id": "22-lalapasa-lalapasa-subesi",
+      "code": null,
+      "name": "Lalapaşa Şubesi",
+      "province": "EDİRNE",
+      "district": "Lalapaşa"
+    },
+    {
+      "id": "22-suloglu-suloglu-subesi",
+      "code": null,
+      "name": "Süloğlu Şubesi",
+      "province": "EDİRNE",
+      "district": "Süloğlu"
+    },
+    {
+      "id": "22261",
+      "code": "22261",
+      "name": "Keşan Vergi Dairesi Müdürlüğü",
+      "province": "EDİRNE",
+      "district": "Keşan"
+    },
+    {
+      "id": "22262",
+      "code": "22262",
+      "name": "Uzunköprü Vergi Dairesi Müdürlüğü",
+      "province": "EDİRNE",
+      "district": "Uzunköprü"
+    },
+    {
+      "id": "22263",
+      "code": "22263",
+      "name": "Havsa Vergi Dairesi Müdürlüğü",
+      "province": "EDİRNE",
+      "district": "Havsa"
+    },
+    {
+      "id": "22264",
+      "code": "22264",
+      "name": "İpsala Vergi Dairesi Müdürlüğü",
+      "province": "EDİRNE",
+      "district": "İpsala"
+    },
+    {
+      "id": "22265",
+      "code": "22265",
+      "name": "Enez Vergi Dairesi Müdürlüğü",
+      "province": "EDİRNE",
+      "district": "Enez"
+    },
+    {
+      "id": "22266",
+      "code": "22266",
+      "name": "Meriç Vergi Dairesi Müdürlüğü",
+      "province": "EDİRNE",
+      "district": "Meriç"
+    },
+    {
+      "id": "23201",
+      "code": "23201",
+      "name": "Harput Vergi Dairesi Müdürlüğü",
+      "province": "ELAZIĞ",
+      "district": "Merkez"
+    },
+    {
+      "id": "23280",
+      "code": "23280",
+      "name": "Hazar Vergi Dairesi Müdürlüğü",
+      "province": "ELAZIĞ",
+      "district": "Merkez"
+    },
+    {
+      "id": "23284",
+      "code": "23284",
+      "name": "Elazığ Vergi Dairesi Müdürlüğü",
+      "province": "ELAZIĞ",
+      "district": "Merkez"
+    },
+    {
+      "id": "23-ag-n-ag-n-subesi",
+      "code": null,
+      "name": "Ağın Şubesi",
+      "province": "ELAZIĞ",
+      "district": "Ağın"
+    },
+    {
+      "id": "23-baskil-baskil-subesi",
+      "code": null,
+      "name": "Baskil Şubesi",
+      "province": "ELAZIĞ",
+      "district": "Baskil"
+    },
+    {
+      "id": "23-keban-keban-subesi",
+      "code": null,
+      "name": "Keban Şubesi",
+      "province": "ELAZIĞ",
+      "district": "Keban"
+    },
+    {
+      "id": "23-maden-maden-subesi",
+      "code": null,
+      "name": "Maden Şubesi",
+      "province": "ELAZIĞ",
+      "district": "Maden"
+    },
+    {
+      "id": "23-sivrice-sivrice-subesi",
+      "code": null,
+      "name": "Sivrice Şubesi",
+      "province": "ELAZIĞ",
+      "district": "Sivrice"
+    },
+    {
+      "id": "23-ar-cak-ar-cak-subesi",
+      "code": null,
+      "name": "Arıcak Şubesi",
+      "province": "ELAZIĞ",
+      "district": "Arıcak"
+    },
+    {
+      "id": "23-alacakaya-alacakaya-subesi",
+      "code": null,
+      "name": "Alacakaya Şubesi",
+      "province": "ELAZIĞ",
+      "district": "Alacakaya"
+    },
+    {
+      "id": "23281",
+      "code": "23281",
+      "name": "Karakoçan Vergi Dairesi Müdürlüğü",
+      "province": "ELAZIĞ",
+      "district": "Karakoçan"
+    },
+    {
+      "id": "23282",
+      "code": "23282",
+      "name": "Kovancılar Vergi Dairesi Müdürlüğü",
+      "province": "ELAZIĞ",
+      "district": "Kovancılar"
+    },
+    {
+      "id": "23283",
+      "code": "23283",
+      "name": "Palu Vergi Dairesi Müdürlüğü",
+      "province": "ELAZIĞ",
+      "district": "Palu"
+    },
+    {
+      "id": "24260",
+      "code": "24260",
+      "name": "Fevzipaşa Vergi Dairesi Müdürlüğü",
+      "province": "ERZİNCAN",
+      "district": "Merkez"
+    },
+    {
+      "id": "24262",
+      "code": "24262",
+      "name": "Ergan Vergi Dairesi Müdürlüğü",
+      "province": "ERZİNCAN",
+      "district": "Merkez"
+    },
+    {
+      "id": "24-cay-rl-cay-rl-subesi",
+      "code": null,
+      "name": "Çayırlı Şubesi",
+      "province": "ERZİNCAN",
+      "district": "Çayırlı"
+    },
+    {
+      "id": "24-ilic-ilic-subesi",
+      "code": null,
+      "name": "İliç Şubesi",
+      "province": "ERZİNCAN",
+      "district": "İliç"
+    },
+    {
+      "id": "24-kemah-kemah-subesi",
+      "code": null,
+      "name": "Kemah Şubesi",
+      "province": "ERZİNCAN",
+      "district": "Kemah"
+    },
+    {
+      "id": "24-kemaliye-kemaliye-subesi",
+      "code": null,
+      "name": "Kemaliye Şubesi",
+      "province": "ERZİNCAN",
+      "district": "Kemaliye"
+    },
+    {
+      "id": "24-refahiye-refahiye-subesi",
+      "code": null,
+      "name": "Refahiye Şubesi",
+      "province": "ERZİNCAN",
+      "district": "Refahiye"
+    },
+    {
+      "id": "24-uzumlu-uzumlu-subesi",
+      "code": null,
+      "name": "Üzümlü Şubesi",
+      "province": "ERZİNCAN",
+      "district": "Üzümlü"
+    },
+    {
+      "id": "24-otlukbeli-otlukbeli-subesi",
+      "code": null,
+      "name": "Otlukbeli Şubesi",
+      "province": "ERZİNCAN",
+      "district": "Otlukbeli"
+    },
+    {
+      "id": "24261",
+      "code": "24261",
+      "name": "Tercan Vergi Dairesi Müdürlüğü",
+      "province": "ERZİNCAN",
+      "district": "Tercan"
+    },
+    {
+      "id": "25251",
+      "code": "25251",
+      "name": "Aziziye Vergi Dairesi Müdürlüğü",
+      "province": "ERZURUM",
+      "district": "Merkez"
+    },
+    {
+      "id": "25280",
+      "code": "25280",
+      "name": "Kazımkarabekir Vergi Dairesi Müdürlüğü",
+      "province": "ERZURUM",
+      "district": "Merkez"
+    },
+    {
+      "id": "25287",
+      "code": "25287",
+      "name": "Palandöken Vergi Dairesi Müdürlüğü",
+      "province": "ERZURUM",
+      "district": "Merkez"
+    },
+    {
+      "id": "25-merkez-cat-cat-subesi",
+      "code": null,
+      "name": "(**) Çat Çat Şubesi",
+      "province": "ERZURUM",
+      "district": "Merkez"
+    },
+    {
+      "id": "25-merkez-narman-narman-subesi",
+      "code": null,
+      "name": "(**) Narman Narman Şubesi",
+      "province": "ERZURUM",
+      "district": "Merkez"
+    },
+    {
+      "id": "25-merkez-olur-olur-subesi",
+      "code": null,
+      "name": "(**) Olur Olur Şubesi",
+      "province": "ERZURUM",
+      "district": "Merkez"
+    },
+    {
+      "id": "25-merkez-senkaya-senkaya-subesi",
+      "code": null,
+      "name": "(**) Şenkaya Şenkaya Şubesi",
+      "province": "ERZURUM",
+      "district": "Merkez"
+    },
+    {
+      "id": "25-merkez-tekman-tekman-subesi",
+      "code": null,
+      "name": "(**) Tekman Tekman Şubesi",
+      "province": "ERZURUM",
+      "district": "Merkez"
+    },
+    {
+      "id": "25-merkez-tortum-tortum-subesi",
+      "code": null,
+      "name": "(**) Tortum Tortum Şubesi",
+      "province": "ERZURUM",
+      "district": "Merkez"
+    },
+    {
+      "id": "25-merkez-karacoban-karacoban-subesi",
+      "code": null,
+      "name": "(**) Karaçoban Karaçoban Şubesi",
+      "province": "ERZURUM",
+      "district": "Merkez"
+    },
+    {
+      "id": "25-merkez-uzundere-uzundere-subesi",
+      "code": null,
+      "name": "(**) Uzundere Uzundere Şubesi",
+      "province": "ERZURUM",
+      "district": "Merkez"
+    },
+    {
+      "id": "25-merkez-pazaryolu-pazaryolu-subesi",
+      "code": null,
+      "name": "(**) Pazaryolu Pazaryolu Şubesi",
+      "province": "ERZURUM",
+      "district": "Merkez"
+    },
+    {
+      "id": "25-merkez-koprukoy-koprukoy-subesi",
+      "code": null,
+      "name": "(**) Köprüköy Köprüköy Şubesi",
+      "province": "ERZURUM",
+      "district": "Merkez"
+    },
+    {
+      "id": "25281",
+      "code": "25281",
+      "name": "Horasan Vergi Dairesi Müdürlüğü",
+      "province": "ERZURUM",
+      "district": "Merkez Horasan"
+    },
+    {
+      "id": "25252",
+      "code": "25252",
+      "name": "Oltu Vergi Dairesi Müdürlüğü",
+      "province": "ERZURUM",
+      "district": "Merkez Oltu"
+    },
+    {
+      "id": "25282",
+      "code": "25282",
+      "name": "Pasinler Vergi Dairesi Müdürlüğü",
+      "province": "ERZURUM",
+      "district": "Merkez Pasinler"
+    },
+    {
+      "id": "25283",
+      "code": "25283",
+      "name": "Aşkale Vergi Dairesi Müdürlüğü",
+      "province": "ERZURUM",
+      "district": "Merkez Aşkale"
+    },
+    {
+      "id": "25284",
+      "code": "25284",
+      "name": "Hınıs Vergi Dairesi Müdürlüğü",
+      "province": "ERZURUM",
+      "district": "Merkez Hınıs"
+    },
+    {
+      "id": "25285",
+      "code": "25285",
+      "name": "İspir Vergi Dairesi Müdürlüğü",
+      "province": "ERZURUM",
+      "district": "Merkez İspir"
+    },
+    {
+      "id": "25286",
+      "code": "25286",
+      "name": "Karayazı Vergi Dairesi Müdürlüğü",
+      "province": "ERZURUM",
+      "district": "Merkez Karayazı"
+    },
+    {
+      "id": "25117",
+      "code": "25117",
+      "name": "Aziziye Malmüdürlüğü",
+      "province": "ERZURUM",
+      "district": "Merkez Aziziye (Ilıca)"
+    },
+    {
+      "id": "26250",
+      "code": "26250",
+      "name": "Eskişehir Defterdarlığı (*)",
+      "province": "ESKİŞEHİR",
+      "district": "Merkez"
+    },
+    {
+      "id": "26102",
+      "code": "26102",
+      "name": "Mahmudiye Malmüdürlüğü",
+      "province": "ESKİŞEHİR",
+      "district": "Merkez Mahmudiye"
+    },
+    {
+      "id": "26103",
+      "code": "26103",
+      "name": "Mihalıççık Malmüdürlüğü",
+      "province": "ESKİŞEHİR",
+      "district": "Merkez Mihalıççık"
+    },
+    {
+      "id": "26104",
+      "code": "26104",
+      "name": "Sarıcakaya Malmüdürlüğü",
+      "province": "ESKİŞEHİR",
+      "district": "Merkez Sarıcakaya"
+    },
+    {
+      "id": "26105",
+      "code": "26105",
+      "name": "Seyitgazi Malmüdürlüğü",
+      "province": "ESKİŞEHİR",
+      "district": "Merkez Seyitgazi"
+    },
+    {
+      "id": "26107",
+      "code": "26107",
+      "name": "Alpu Malmüdürlüğü",
+      "province": "ESKİŞEHİR",
+      "district": "Merkez Alpu"
+    },
+    {
+      "id": "26108",
+      "code": "26108",
+      "name": "Beylikova Malmüdürlüğü",
+      "province": "ESKİŞEHİR",
+      "district": "Merkez Beylikova"
+    },
+    {
+      "id": "26109",
+      "code": "26109",
+      "name": "İnönü Malmüdürlüğü",
+      "province": "ESKİŞEHİR",
+      "district": "Merkez İnönü"
+    },
+    {
+      "id": "26110",
+      "code": "26110",
+      "name": "Günyüzü Malmüdürlüğü",
+      "province": "ESKİŞEHİR",
+      "district": "Merkez Günyüzü"
+    },
+    {
+      "id": "26111",
+      "code": "26111",
+      "name": "Han Malmüdürlüğü",
+      "province": "ESKİŞEHİR",
+      "district": "Merkez Han"
+    },
+    {
+      "id": "26112",
+      "code": "26112",
+      "name": "Mihalgazi Malmüdürlüğü",
+      "province": "ESKİŞEHİR",
+      "district": "Merkez Mihalgazi"
+    },
+    {
+      "id": "27250",
+      "code": "27250",
+      "name": "Gaziantep İhtisas Vergi Dairesi Müdürlüğü",
+      "province": "GAZİANTEP",
+      "district": "Merkez"
+    },
+    {
+      "id": "27251",
+      "code": "27251",
+      "name": "Suburcu Vergi Dairesi Müdürlüğü",
+      "province": "GAZİANTEP",
+      "district": "Merkez"
+    },
+    {
+      "id": "27252",
+      "code": "27252",
+      "name": "Şehitkamil Vergi Dairesi Müdürlüğü",
+      "province": "GAZİANTEP",
+      "district": "Merkez"
+    },
+    {
+      "id": "27253",
+      "code": "27253",
+      "name": "Şahinbey Vergi Dairesi Müdürlüğü",
+      "province": "GAZİANTEP",
+      "district": "Merkez"
+    },
+    {
+      "id": "27254",
+      "code": "27254",
+      "name": "Gazikent Vergi Dairesi Müdürlüğü",
+      "province": "GAZİANTEP",
+      "district": "Merkez"
+    },
+    {
+      "id": "27255",
+      "code": "27255",
+      "name": "Kozanlı Vergi Dairesi Müdürlüğü",
+      "province": "GAZİANTEP",
+      "district": "Merkez"
+    },
+    {
+      "id": "27202",
+      "code": "27202",
+      "name": "Nizip Vergi Dairesi Müdürlüğü",
+      "province": "GAZİANTEP",
+      "district": "Merkez Nizip"
+    },
+    {
+      "id": "27203",
+      "code": "27203",
+      "name": "İslahiye Vergi Dairesi Müdürlüğü",
+      "province": "GAZİANTEP",
+      "district": "Merkez İslahiye"
+    },
+    {
+      "id": "27256",
+      "code": "27256",
+      "name": "Oğuzeli Vergi Dairesi Müdürlüğü",
+      "province": "GAZİANTEP",
+      "district": "Merkez Oğuzeli"
+    },
+    {
+      "id": "27257",
+      "code": "27257",
+      "name": "Nurdağı Vergi Dairesi Müdürlüğü",
+      "province": "GAZİANTEP",
+      "district": "Merkez Nurdağı"
+    },
+    {
+      "id": "27258",
+      "code": "27258",
+      "name": "Araban Vergi Dairesi Müdürlüğü",
+      "province": "GAZİANTEP",
+      "district": "Merkez Araban"
+    },
+    {
+      "id": "27259",
+      "code": "27259",
+      "name": "Yavuzeli Vergi Dairesi Müdürlüğü",
+      "province": "GAZİANTEP",
+      "district": "Merkez Yavuzeli"
+    },
+    {
+      "id": "27107",
+      "code": "27107",
+      "name": "Karkamış Malmüdürlüğü",
+      "province": "GAZİANTEP",
+      "district": "Merkez Karkamış"
+    },
+    {
+      "id": "28260",
+      "code": "28260",
+      "name": "Giresun Vergi Dairesi Müdürlüğü",
+      "province": "GİRESUN",
+      "district": "Merkez"
+    },
+    {
+      "id": "28271",
+      "code": "28271",
+      "name": "Ada Vergi Dairesi Müdürlüğü",
+      "province": "GİRESUN",
+      "district": "Merkez"
+    },
+    {
+      "id": "28-alucra-alucra-subesi",
+      "code": null,
+      "name": "Alucra Şubesi",
+      "province": "GİRESUN",
+      "district": "Alucra"
+    },
+    {
+      "id": "28-canakc-canakc-subesi",
+      "code": null,
+      "name": "Çanakçı Şubesi",
+      "province": "GİRESUN",
+      "district": "Çanakçı"
+    },
+    {
+      "id": "28-guce-guce-subesi",
+      "code": null,
+      "name": "Güce Şubesi",
+      "province": "GİRESUN",
+      "district": "Güce"
+    },
+    {
+      "id": "28-camoluk-camoluk-subesi",
+      "code": null,
+      "name": "Çamoluk Şubesi",
+      "province": "GİRESUN",
+      "district": "Çamoluk"
+    },
+    {
+      "id": "28-dogankent-dogankent-subesi",
+      "code": null,
+      "name": "Doğankent Şubesi",
+      "province": "GİRESUN",
+      "district": "Doğankent"
+    },
+    {
+      "id": "28261",
+      "code": "28261",
+      "name": "Bulancak Vergi Dairesi Müdürlüğü",
+      "province": "GİRESUN",
+      "district": "Bulancak"
+    },
+    {
+      "id": "28262",
+      "code": "28262",
+      "name": "Tirebolu Vergi Dairesi Müdürlüğü",
+      "province": "GİRESUN",
+      "district": "Tirebolu"
+    },
+    {
+      "id": "28264",
+      "code": "28264",
+      "name": "Espiye Vergi Dairesi Müdürlüğü",
+      "province": "GİRESUN",
+      "district": "Espiye"
+    },
+    {
+      "id": "28263",
+      "code": "28263",
+      "name": "Görele Vergi Dairesi Müdürlüğü",
+      "province": "GİRESUN",
+      "district": "Görele"
+    },
+    {
+      "id": "28265",
+      "code": "28265",
+      "name": "Dereli Vergi Dairesi Müdürlüğü",
+      "province": "GİRESUN",
+      "district": "Dereli"
+    },
+    {
+      "id": "28266",
+      "code": "28266",
+      "name": "Keşap Vergi Dairesi Müdürlüğü",
+      "province": "GİRESUN",
+      "district": "Keşap"
+    },
+    {
+      "id": "28267",
+      "code": "28267",
+      "name": "Şebinkarahisar Vergi Dairesi Müdürlüğü",
+      "province": "GİRESUN",
+      "district": "Şebinkarahisar"
+    },
+    {
+      "id": "28268",
+      "code": "28268",
+      "name": "Eynesil Vergi Dairesi Müdürlüğü",
+      "province": "GİRESUN",
+      "district": "Eynesil"
+    },
+    {
+      "id": "28269",
+      "code": "28269",
+      "name": "Piraziz Vergi Dairesi Müdürlüğü",
+      "province": "GİRESUN",
+      "district": "Piraziz"
+    },
+    {
+      "id": "28270",
+      "code": "28270",
+      "name": "Yağlıdere Vergi Dairesi Müdürlüğü",
+      "province": "GİRESUN",
+      "district": "Yağlıdere"
+    },
+    {
+      "id": "29260",
+      "code": "29260",
+      "name": "Gümüşhane Vergi Dairesi Müdürlüğü",
+      "province": "GÜMÜŞHANE",
+      "district": "Merkez"
+    },
+    {
+      "id": "29261",
+      "code": "29261",
+      "name": "Kelkit Vergi Dairesi Müdürlüğü",
+      "province": "GÜMÜŞHANE",
+      "district": "Kelkit"
+    },
+    {
+      "id": "29262",
+      "code": "29262",
+      "name": "Şiran Vergi Dairesi Müdürlüğü",
+      "province": "GÜMÜŞHANE",
+      "district": "Şiran"
+    },
+    {
+      "id": "29263",
+      "code": "29263",
+      "name": "Torul Vergi Dairesi Müdürlüğü",
+      "province": "GÜMÜŞHANE",
+      "district": "Torul"
+    },
+    {
+      "id": "29264",
+      "code": "29264",
+      "name": "Kürtün Vergi Dairesi Müdürlüğü",
+      "province": "GÜMÜŞHANE",
+      "district": "Kürtün"
+    },
+    {
+      "id": "29107",
+      "code": "29107",
+      "name": "Köse Malmüdürlüğü",
+      "province": "GÜMÜŞHANE",
+      "district": "Köse"
+    },
+    {
+      "id": "30260",
+      "code": "30260",
+      "name": "Hakkari Vergi Dairesi Müdürlüğü",
+      "province": "HAKKARİ",
+      "district": "Merkez"
+    },
+    {
+      "id": "30261",
+      "code": "30261",
+      "name": "Yüksekova Vergi Dairesi Müdürlüğü",
+      "province": "HAKKARİ",
+      "district": "Yüksekova"
+    },
+    {
+      "id": "30262",
+      "code": "30262",
+      "name": "Şemdinli Vergi Dairesi Müdürlüğü",
+      "province": "HAKKARİ",
+      "district": "Şemdinli"
+    },
+    {
+      "id": "30102",
+      "code": "30102",
+      "name": "Çukurca Malmüdürlüğü",
+      "province": "HAKKARİ",
+      "district": "Çukurca"
+    },
+    {
+      "id": "30104",
+      "code": "30104",
+      "name": "Derecik Malmüdürlüğü",
+      "province": "HAKKARİ",
+      "district": "Derecik"
+    },
+    {
+      "id": "31201",
+      "code": "31201",
+      "name": "23 Temmuz Vergi Dairesi Müdürlüğü",
+      "province": "HATAY",
+      "district": "Merkez"
+    },
+    {
+      "id": "31203",
+      "code": "31203",
+      "name": "Antakya Vergi Dairesi Müdürlüğü",
+      "province": "HATAY",
+      "district": "Merkez"
+    },
+    {
+      "id": "31280",
+      "code": "31280",
+      "name": "Şükrükanatlı Vergi Dairesi Müdürlüğü",
+      "province": "HATAY",
+      "district": "Merkez"
+    },
+    {
+      "id": "31202",
+      "code": "31202",
+      "name": "Sahil Vergi Dairesi Müdürlüğü",
+      "province": "HATAY",
+      "district": "Merkez İskenderun"
+    },
+    {
+      "id": "31281",
+      "code": "31281",
+      "name": "Akdeniz Vergi Dairesi Müdürlüğü",
+      "province": "HATAY",
+      "district": "Merkez İskenderun"
+    },
+    {
+      "id": "31290",
+      "code": "31290",
+      "name": "Asım Gündüz Vergi Dairesi Müdürlüğü",
+      "province": "HATAY",
+      "district": "Merkez İskenderun"
+    },
+    {
+      "id": "31260",
+      "code": "31260",
+      "name": "Dörtyol Vergi Dairesi Müdürlüğü",
+      "province": "HATAY",
+      "district": "Merkez Dörtyol"
+    },
+    {
+      "id": "31261",
+      "code": "31261",
+      "name": "Kırıkhan Vergi Dairesi Müdürlüğü",
+      "province": "HATAY",
+      "district": "Merkez Kırıkhan"
+    },
+    {
+      "id": "31262",
+      "code": "31262",
+      "name": "Reyhanlı Vergi Dairesi Müdürlüğü",
+      "province": "HATAY",
+      "district": "Merkez Reyhanlı"
+    },
+    {
+      "id": "31263",
+      "code": "31263",
+      "name": "Samandağ Vergi Dairesi Müdürlüğü",
+      "province": "HATAY",
+      "district": "Merkez Samandağ"
+    },
+    {
+      "id": "31264",
+      "code": "31264",
+      "name": "Hassa Vergi Dairesi Müdürlüğü",
+      "province": "HATAY",
+      "district": "Merkez Hassa"
+    },
+    {
+      "id": "31282",
+      "code": "31282",
+      "name": "Erzin Vergi Dairesi Müdürlüğü",
+      "province": "HATAY",
+      "district": "Merkez Erzin"
+    },
+    {
+      "id": "31265",
+      "code": "31265",
+      "name": "Yayladağı Vergi Dairesi Müdürlüğü",
+      "province": "HATAY",
+      "district": "Merkez Yayladağı"
+    },
+    {
+      "id": "31267",
+      "code": "31267",
+      "name": "Altınözü Vergi Dairesi Müdürlüğü",
+      "province": "HATAY",
+      "district": "Merkez Altınözü"
+    },
+    {
+      "id": "31268",
+      "code": "31268",
+      "name": "Belen Vergi Dairesi Müdürlüğü",
+      "province": "HATAY",
+      "district": "Merkez Belen"
+    },
+    {
+      "id": "31283",
+      "code": "31283",
+      "name": "Kumlu Vergi Dairesi Müdürlüğü",
+      "province": "HATAY",
+      "district": "Merkez Kumlu"
+    },
+    {
+      "id": "32201",
+      "code": "32201",
+      "name": "Davraz Vergi Dairesi Müdürlüğü",
+      "province": "ISPARTA",
+      "district": "Merkez"
+    },
+    {
+      "id": "32260",
+      "code": "32260",
+      "name": "Kaymakkapı Vergi Dairesi Müdürlüğü",
+      "province": "ISPARTA",
+      "district": "Merkez"
+    },
+    {
+      "id": "32267",
+      "code": "32267",
+      "name": "Gülkent Vergi Dairesi Müdürlüğü",
+      "province": "ISPARTA",
+      "district": "Merkez"
+    },
+    {
+      "id": "32-atabey-atabey-subesi",
+      "code": null,
+      "name": "Atabey Şubesi",
+      "province": "ISPARTA",
+      "district": "Atabey"
+    },
+    {
+      "id": "32-sutculer-sutculer-subesi",
+      "code": null,
+      "name": "Sütçüler Şubesi",
+      "province": "ISPARTA",
+      "district": "Sütçüler"
+    },
+    {
+      "id": "32-uluborlu-uluborlu-subesi",
+      "code": null,
+      "name": "Uluborlu Şubesi",
+      "province": "ISPARTA",
+      "district": "Uluborlu"
+    },
+    {
+      "id": "32-aksu-aksu-subesi",
+      "code": null,
+      "name": "Aksu Şubesi",
+      "province": "ISPARTA",
+      "district": "Aksu"
+    },
+    {
+      "id": "32-gonen-gonen-subesi",
+      "code": null,
+      "name": "Gönen Şubesi",
+      "province": "ISPARTA",
+      "district": "Gönen"
+    },
+    {
+      "id": "32-yenisarbademli-yenisarbademli-subesi",
+      "code": null,
+      "name": "Yenişarbademli Şubesi",
+      "province": "ISPARTA",
+      "district": "Yenişarbademli"
+    },
+    {
+      "id": "32261",
+      "code": "32261",
+      "name": "Eğirdir Vergi Dairesi Müdürlüğü",
+      "province": "ISPARTA",
+      "district": "Eğirdir"
+    },
+    {
+      "id": "32262",
+      "code": "32262",
+      "name": "Yalvaç Vergi Dairesi Müdürlüğü",
+      "province": "ISPARTA",
+      "district": "Yalvaç"
+    },
+    {
+      "id": "32263",
+      "code": "32263",
+      "name": "Şarkikaraağaç Vergi Dairesi Müdürlüğü",
+      "province": "ISPARTA",
+      "district": "Şarkikaraağaç"
+    },
+    {
+      "id": "32264",
+      "code": "32264",
+      "name": "Keçiborlu Vergi Dairesi Müdürlüğü",
+      "province": "ISPARTA",
+      "district": "Keçiborlu"
+    },
+    {
+      "id": "32265",
+      "code": "32265",
+      "name": "Senirkent Vergi Dairesi Müdürlüğü",
+      "province": "ISPARTA",
+      "district": "Senirkent"
+    },
+    {
+      "id": "32266",
+      "code": "32266",
+      "name": "Gelendost Vergi Dairesi Müdürlüğü",
+      "province": "ISPARTA",
+      "district": "Gelendost"
+    },
+    {
+      "id": "33250",
+      "code": "33250",
+      "name": "İstiklal Vergi Dairesi Müdürlüğü",
+      "province": "MERSİN",
+      "district": "Merkez"
+    },
+    {
+      "id": "33252",
+      "code": "33252",
+      "name": "Uray Vergi Dairesi Müdürlüğü",
+      "province": "MERSİN",
+      "district": "Merkez"
+    },
+    {
+      "id": "33254",
+      "code": "33254",
+      "name": "Liman Vergi Dairesi Müdürlüğü",
+      "province": "MERSİN",
+      "district": "Merkez"
+    },
+    {
+      "id": "33255",
+      "code": "33255",
+      "name": "Toros Vergi Dairesi Müdürlüğü",
+      "province": "MERSİN",
+      "district": "Merkez"
+    },
+    {
+      "id": "33256",
+      "code": "33256",
+      "name": "Mersin İhtisas Vergi Dairesi Müdürlüğü",
+      "province": "MERSİN",
+      "district": "Merkez"
+    },
+    {
+      "id": "33201",
+      "code": "33201",
+      "name": "Erdemli Vergi Dairesi Müdürlüğü",
+      "province": "MERSİN",
+      "district": "Merkez Erdemli"
+    },
+    {
+      "id": "33202",
+      "code": "33202",
+      "name": "Silifke Vergi Dairesi Müdürlüğü",
+      "province": "MERSİN",
+      "district": "Merkez Silifke"
+    },
+    {
+      "id": "33203",
+      "code": "33203",
+      "name": "Anamur Vergi Dairesi Müdürlüğü",
+      "province": "MERSİN",
+      "district": "Merkez Anamur"
+    },
+    {
+      "id": "33204",
+      "code": "33204",
+      "name": "Kızılmurat Vergi Dairesi Müdürlüğü",
+      "province": "MERSİN",
+      "district": "Merkez Tarsus"
+    },
+    {
+      "id": "33205",
+      "code": "33205",
+      "name": "Şehitkerim Vergi Dairesi Müdürlüğü",
+      "province": "MERSİN",
+      "district": "Merkez Tarsus"
+    },
+    {
+      "id": "33257",
+      "code": "33257",
+      "name": "Mut Vergi Dairesi Müdürlüğü",
+      "province": "MERSİN",
+      "district": "Merkez Mut"
+    },
+    {
+      "id": "33258",
+      "code": "33258",
+      "name": "Bozyazı Vergi Dairesi Müdürlüğü",
+      "province": "MERSİN",
+      "district": "Merkez Bozyazı"
+    },
+    {
+      "id": "33259",
+      "code": "33259",
+      "name": "Gülnar Vergi Dairesi Müdürlüğü",
+      "province": "MERSİN",
+      "district": "Merkez Gülnar"
+    },
+    {
+      "id": "33260",
+      "code": "33260",
+      "name": "Aydıncık Vergi Dairesi Müdürlüğü",
+      "province": "MERSİN",
+      "district": "Merkez Aydıncık"
+    },
+    {
+      "id": "33109",
+      "code": "33109",
+      "name": "Çamlıyayla Malmüdürlüğü",
+      "province": "MERSİN",
+      "district": "Merkez Çamlıyayla"
+    },
+    {
+      "id": "34220",
+      "code": "34220",
+      "name": "Haliç İhtisas Vergi Dairesi Müdürlüğü",
+      "province": "İSTANBUL",
+      "district": "Merkez"
+    },
+    {
+      "id": "34221",
+      "code": "34221",
+      "name": "Vatan İhtisas Vergi Dairesi Müdürlüğü",
+      "province": "İSTANBUL",
+      "district": "Merkez"
+    },
+    {
+      "id": "34222",
+      "code": "34222",
+      "name": "Çamlıca İhtisas Vergi Dairesi Müdürlüğü",
+      "province": "İSTANBUL",
+      "district": "Merkez"
+    },
+    {
+      "id": "34223",
+      "code": "34223",
+      "name": "Alemdağ Vergi Dairesi Müdürlüğü",
+      "province": "İSTANBUL",
+      "district": "Merkez"
+    },
+    {
+      "id": "34224",
+      "code": "34224",
+      "name": "Yenikapı Vergi Dairesi Müdürlüğü",
+      "province": "İSTANBUL",
+      "district": "Merkez"
+    },
+    {
+      "id": "34207",
+      "code": "34207",
+      "name": "Büyük Mükellefler Vergi Dairesi Müdürlüğü",
+      "province": "İSTANBUL",
+      "district": "Merkez"
+    },
+    {
+      "id": "34231",
+      "code": "34231",
+      "name": "Boğaziçi Kurumlar Vergi Dairesi Müdürlüğü",
+      "province": "İSTANBUL",
+      "district": "Merkez"
+    },
+    {
+      "id": "34232",
+      "code": "34232",
+      "name": "Marmara Kurumlar Vergi Dairesi Müdürlüğü",
+      "province": "İSTANBUL",
+      "district": "Merkez"
+    },
+    {
+      "id": "34234",
+      "code": "34234",
+      "name": "Davutpaşa Vergi Dairesi Müdürlüğü",
+      "province": "İSTANBUL",
+      "district": "Merkez"
+    },
+    {
+      "id": "34235",
+      "code": "34235",
+      "name": "Esenler Vergi Dairesi Müdürlüğü",
+      "province": "İSTANBUL",
+      "district": "Merkez"
+    },
+    {
+      "id": "34236",
+      "code": "34236",
+      "name": "Fatih Vergi Dairesi Müdürlüğü",
+      "province": "İSTANBUL",
+      "district": "Merkez"
+    },
+    {
+      "id": "34237",
+      "code": "34237",
+      "name": "Küçükköy Vergi Dairesi Müdürlüğü",
+      "province": "İSTANBUL",
+      "district": "Merkez"
+    },
+    {
+      "id": "34239",
+      "code": "34239",
+      "name": "Merter Vergi Dairesi Müdürlüğü",
+      "province": "İSTANBUL",
+      "district": "Merkez"
+    },
+    {
+      "id": "34242",
+      "code": "34242",
+      "name": "Sultanbeyli Vergi Dairesi Müdürlüğü",
+      "province": "İSTANBUL",
+      "district": "Merkez"
+    },
+    {
+      "id": "34244",
+      "code": "34244",
+      "name": "Anadolu Kurumlar Vergi Dairesi Müdürlüğü",
+      "province": "İSTANBUL",
+      "district": "Merkez"
+    },
+    {
+      "id": "34245",
+      "code": "34245",
+      "name": "Tuzla Vergi Dairesi Müdürlüğü",
+      "province": "İSTANBUL",
+      "district": "Merkez"
+    },
+    {
+      "id": "34246",
+      "code": "34246",
+      "name": "Kozyatağı Vergi Dairesi Müdürlüğü",
+      "province": "İSTANBUL",
+      "district": "Merkez"
+    },
+    {
+      "id": "34247",
+      "code": "34247",
+      "name": "Maslak Vergi Dairesi Müdürlüğü",
+      "province": "İSTANBUL",
+      "district": "Merkez"
+    },
+    {
+      "id": "34248",
+      "code": "34248",
+      "name": "Zincirlikuyu Vergi Dairesi Müdürlüğü",
+      "province": "İSTANBUL",
+      "district": "Merkez"
+    },
+    {
+      "id": "34249",
+      "code": "34249",
+      "name": "İkitelli Vergi Dairesi Müdürlüğü",
+      "province": "İSTANBUL",
+      "district": "Merkez"
+    },
+    {
+      "id": "34251",
+      "code": "34251",
+      "name": "Beşiktaş Vergi Dairesi Müdürlüğü",
+      "province": "İSTANBUL",
+      "district": "Merkez"
+    },
+    {
+      "id": "34252",
+      "code": "34252",
+      "name": "Ümraniye Vergi Dairesi Müdürlüğü",
+      "province": "İSTANBUL",
+      "district": "Merkez"
+    },
+    {
+      "id": "34253",
+      "code": "34253",
+      "name": "Yeditepe Veraset ve Harçlar Vergi Dairesi Müdürlüğü",
+      "province": "İSTANBUL",
+      "district": "Merkez"
+    },
+    {
+      "id": "34254",
+      "code": "34254",
+      "name": "Kasımpaşa Vergi Dairesi Müdürlüğü",
+      "province": "İSTANBUL",
+      "district": "Merkez"
+    },
+    {
+      "id": "34255",
+      "code": "34255",
+      "name": "Erenköy Vergi Dairesi Müdürlüğü",
+      "province": "İSTANBUL",
+      "district": "Merkez"
+    },
+    {
+      "id": "34256",
+      "code": "34256",
+      "name": "Hisar Veraset ve Harçlar Vergi Dairesi Müdürlüğü",
+      "province": "İSTANBUL",
+      "district": "Merkez"
+    },
+    {
+      "id": "34257",
+      "code": "34257",
+      "name": "Tuna Vergi Dairesi Müdürlüğü",
+      "province": "İSTANBUL",
+      "district": "Merkez"
+    },
+    {
+      "id": "34258",
+      "code": "34258",
+      "name": "Rıhtım Veraset ve Harçlar Vergi Dairesi Müdürlüğü",
+      "province": "İSTANBUL",
+      "district": "Merkez"
+    },
+    {
+      "id": "34259",
+      "code": "34259",
+      "name": "Güngören Vergi Dairesi Müdürlüğü",
+      "province": "İSTANBUL",
+      "district": "Merkez"
+    },
+    {
+      "id": "34260",
+      "code": "34260",
+      "name": "Kocasinan Vergi Dairesi Müdürlüğü",
+      "province": "İSTANBUL",
+      "district": "Merkez"
+    },
+    {
+      "id": "34261",
+      "code": "34261",
+      "name": "Güneşli Vergi Dairesi Müdürlüğü",
+      "province": "İSTANBUL",
+      "district": "Merkez"
+    },
+    {
+      "id": "34262",
+      "code": "34262",
+      "name": "Küçükyalı Vergi Dairesi Müdürlüğü",
+      "province": "İSTANBUL",
+      "district": "Merkez"
+    },
+    {
+      "id": "34263",
+      "code": "34263",
+      "name": "Pendik Vergi Dairesi Müdürlüğü",
+      "province": "İSTANBUL",
+      "district": "Merkez"
+    },
+    {
+      "id": "34264",
+      "code": "34264",
+      "name": "Bayrampaşa Vergi Dairesi Müdürlüğü",
+      "province": "İSTANBUL",
+      "district": "Merkez"
+    },
+    {
+      "id": "34265",
+      "code": "34265",
+      "name": "Beyazıt Vergi Dairesi Müdürlüğü",
+      "province": "İSTANBUL",
+      "district": "Merkez"
+    },
+    {
+      "id": "34266",
+      "code": "34266",
+      "name": "Beyoğlu Vergi Dairesi Müdürlüğü",
+      "province": "İSTANBUL",
+      "district": "Merkez"
+    },
+    {
+      "id": "34269",
+      "code": "34269",
+      "name": "Gaziosmanpaşa Vergi Dairesi Müdürlüğü",
+      "province": "İSTANBUL",
+      "district": "Merkez"
+    },
+    {
+      "id": "34270",
+      "code": "34270",
+      "name": "Göztepe Vergi Dairesi Müdürlüğü",
+      "province": "İSTANBUL",
+      "district": "Merkez"
+    },
+    {
+      "id": "34271",
+      "code": "34271",
+      "name": "Hocapaşa Vergi Dairesi Müdürlüğü",
+      "province": "İSTANBUL",
+      "district": "Merkez"
+    },
+    {
+      "id": "34272",
+      "code": "34272",
+      "name": "Kadıköy Vergi Dairesi Müdürlüğü",
+      "province": "İSTANBUL",
+      "district": "Merkez"
+    },
+    {
+      "id": "34273",
+      "code": "34273",
+      "name": "Kocamustafapaşa Vergi Dairesi Müdürlüğü",
+      "province": "İSTANBUL",
+      "district": "Merkez"
+    },
+    {
+      "id": "34274",
+      "code": "34274",
+      "name": "Mecidiyeköy Vergi Dairesi Müdürlüğü",
+      "province": "İSTANBUL",
+      "district": "Merkez"
+    },
+    {
+      "id": "34276",
+      "code": "34276",
+      "name": "Şişli Vergi Dairesi Müdürlüğü",
+      "province": "İSTANBUL",
+      "district": "Merkez"
+    },
+    {
+      "id": "34277",
+      "code": "34277",
+      "name": "Üsküdar Vergi Dairesi Müdürlüğü",
+      "province": "İSTANBUL",
+      "district": "Merkez"
+    },
+    {
+      "id": "34278",
+      "code": "34278",
+      "name": "Halkalı Vergi Dairesi Müdürlüğü",
+      "province": "İSTANBUL",
+      "district": "Merkez"
+    },
+    {
+      "id": "34279",
+      "code": "34279",
+      "name": "Kağıthane Vergi Dairesi Müdürlüğü",
+      "province": "İSTANBUL",
+      "district": "Merkez"
+    },
+    {
+      "id": "34280",
+      "code": "34280",
+      "name": "Zeytinburnu Vergi Dairesi Müdürlüğü",
+      "province": "İSTANBUL",
+      "district": "Merkez"
+    },
+    {
+      "id": "34281",
+      "code": "34281",
+      "name": "Beykoz Vergi Dairesi Müdürlüğü",
+      "province": "İSTANBUL",
+      "district": "Merkez"
+    },
+    {
+      "id": "34283",
+      "code": "34283",
+      "name": "Sarıyer Vergi Dairesi Müdürlüğü",
+      "province": "İSTANBUL",
+      "district": "Merkez"
+    },
+    {
+      "id": "34284",
+      "code": "34284",
+      "name": "Bakırköy Vergi Dairesi Müdürlüğü",
+      "province": "İSTANBUL",
+      "district": "Merkez"
+    },
+    {
+      "id": "34285",
+      "code": "34285",
+      "name": "Kartal Vergi Dairesi Müdürlüğü",
+      "province": "İSTANBUL",
+      "district": "Merkez"
+    },
+    {
+      "id": "34287",
+      "code": "34287",
+      "name": "Nakil Vasıtaları Vergi Dairesi Müdürlüğü",
+      "province": "İSTANBUL",
+      "district": "Merkez"
+    },
+    {
+      "id": "34288",
+      "code": "34288",
+      "name": "Sarıgazi Vergi Dairesi Müdürlüğü",
+      "province": "İSTANBUL",
+      "district": "Merkez"
+    },
+    {
+      "id": "34291",
+      "code": "34291",
+      "name": "Atışalanı Vergi Dairesi Müdürlüğü",
+      "province": "İSTANBUL",
+      "district": "Merkez"
+    },
+    {
+      "id": "34292",
+      "code": "34292",
+      "name": "Yakacık Vergi Dairesi Müdürlüğü",
+      "province": "İSTANBUL",
+      "district": "Merkez"
+    },
+    {
+      "id": "34293",
+      "code": "34293",
+      "name": "Yenibosna Vergi Dairesi Müdürlüğü",
+      "province": "İSTANBUL",
+      "district": "Merkez"
+    },
+    {
+      "id": "34294",
+      "code": "34294",
+      "name": "Avcılar Vergi Dairesi Müdürlüğü",
+      "province": "İSTANBUL",
+      "district": "Merkez"
+    },
+    {
+      "id": "34295",
+      "code": "34295",
+      "name": "Adalar Vergi Dairesi Müdürlüğü",
+      "province": "İSTANBUL",
+      "district": "Merkez Adalar"
+    },
+    {
+      "id": "34296",
+      "code": "34296",
+      "name": "Küçükçekmece Vergi Dairesi Müdürlüğü",
+      "province": "İSTANBUL",
+      "district": "Merkez"
+    },
+    {
+      "id": "34297",
+      "code": "34297",
+      "name": "Beylikdüzü Vergi Dairesi Müdürlüğü",
+      "province": "İSTANBUL",
+      "district": "Merkez"
+    },
+    {
+      "id": "34298",
+      "code": "34298",
+      "name": "Esenyurt Vergi Dairesi Müdürlüğü",
+      "province": "İSTANBUL",
+      "district": "Merkez"
+    },
+    {
+      "id": "34299",
+      "code": "34299",
+      "name": "Başakşehir Vergi Dairesi Müdürlüğü",
+      "province": "İSTANBUL",
+      "district": "Merkez"
+    },
+    {
+      "id": "34203",
+      "code": "34203",
+      "name": "Silivri Vergi Dairesi Müdürlüğü",
+      "province": "İSTANBUL",
+      "district": "Merkez Silivri"
+    },
+    {
+      "id": "34204",
+      "code": "34204",
+      "name": "Büyükçekmece Vergi Dairesi Müdürlüğü",
+      "province": "İSTANBUL",
+      "district": "Merkez Büyükçekmece"
+    },
+    {
+      "id": "34205",
+      "code": "34205",
+      "name": "Şile Vergi Dairesi Müdürlüğü",
+      "province": "İSTANBUL",
+      "district": "Merkez Şile"
+    },
+    {
+      "id": "35250",
+      "code": "35250",
+      "name": "İzmir İhtisas Vergi Dairesi Müdürlüğü",
+      "province": "İZMİR",
+      "district": "Merkez"
+    },
+    {
+      "id": "35251",
+      "code": "35251",
+      "name": "9 Eylül Vergi Dairesi Müdürlüğü",
+      "province": "İZMİR",
+      "district": "Merkez"
+    },
+    {
+      "id": "35252",
+      "code": "35252",
+      "name": "Yamanlar Vergi Dairesi Müdürlüğü",
+      "province": "İZMİR",
+      "district": "Merkez"
+    },
+    {
+      "id": "35254",
+      "code": "35254",
+      "name": "Belkahve Vergi Dairesi Müdürlüğü",
+      "province": "İZMİR",
+      "district": "Merkez"
+    },
+    {
+      "id": "35256",
+      "code": "35256",
+      "name": "Karşıyaka Vergi Dairesi Müdürlüğü",
+      "province": "İZMİR",
+      "district": "Merkez"
+    },
+    {
+      "id": "35257",
+      "code": "35257",
+      "name": "Kemeraltı Vergi Dairesi Müdürlüğü",
+      "province": "İZMİR",
+      "district": "Merkez"
+    },
+    {
+      "id": "35258",
+      "code": "35258",
+      "name": "Konak Vergi Dairesi Müdürlüğü",
+      "province": "İZMİR",
+      "district": "Merkez"
+    },
+    {
+      "id": "35259",
+      "code": "35259",
+      "name": "Kordon Vergi Dairesi Müdürlüğü",
+      "province": "İZMİR",
+      "district": "Merkez"
+    },
+    {
+      "id": "35260",
+      "code": "35260",
+      "name": "Şirinyer Vergi Dairesi Müdürlüğü",
+      "province": "İZMİR",
+      "district": "Merkez"
+    },
+    {
+      "id": "35261",
+      "code": "35261",
+      "name": "Kadifekale Vergi Dairesi Müdürlüğü",
+      "province": "İZMİR",
+      "district": "Merkez"
+    },
+    {
+      "id": "35262",
+      "code": "35262",
+      "name": "Taşıtlar Vergi Dairesi Müdürlüğü",
+      "province": "İZMİR",
+      "district": "Merkez"
+    },
+    {
+      "id": "35263",
+      "code": "35263",
+      "name": "Hasan Tahsin Vergi Dairesi Müdürlüğü",
+      "province": "İZMİR",
+      "district": "Merkez"
+    },
+    {
+      "id": "35264",
+      "code": "35264",
+      "name": "Bornova Vergi Dairesi Müdürlüğü",
+      "province": "İZMİR",
+      "district": "Merkez"
+    },
+    {
+      "id": "35266",
+      "code": "35266",
+      "name": "Balçova Vergi Dairesi Müdürlüğü",
+      "province": "İZMİR",
+      "district": "Merkez"
+    },
+    {
+      "id": "35267",
+      "code": "35267",
+      "name": "Gaziemir Vergi Dairesi Müdürlüğü",
+      "province": "İZMİR",
+      "district": "Merkez"
+    },
+    {
+      "id": "35268",
+      "code": "35268",
+      "name": "Ege Vergi Dairesi Müdürlüğü",
+      "province": "İZMİR",
+      "district": "Merkez"
+    },
+    {
+      "id": "35269",
+      "code": "35269",
+      "name": "Çiğli Vergi Dairesi Müdürlüğü",
+      "province": "İZMİR",
+      "district": "Merkez"
+    },
+    {
+      "id": "35270",
+      "code": "35270",
+      "name": "Çakabey İhtisas Vergi Dairesi Müdürlüğü",
+      "province": "İZMİR",
+      "district": "Merkez"
+    },
+    {
+      "id": "35201",
+      "code": "35201",
+      "name": "Bayındır Vergi Dairesi Müdürlüğü",
+      "province": "İZMİR",
+      "district": "Merkez Bayındır"
+    },
+    {
+      "id": "35202",
+      "code": "35202",
+      "name": "Bergama Vergi Dairesi Müdürlüğü",
+      "province": "İZMİR",
+      "district": "Merkez Bergama"
+    },
+    {
+      "id": "35203",
+      "code": "35203",
+      "name": "Menemen Vergi Dairesi Müdürlüğü",
+      "province": "İZMİR",
+      "district": "Merkez Menemen"
+    },
+    {
+      "id": "35204",
+      "code": "35204",
+      "name": "Ödemiş Vergi Dairesi Müdürlüğü",
+      "province": "İZMİR",
+      "district": "Merkez Ödemiş"
+    },
+    {
+      "id": "35205",
+      "code": "35205",
+      "name": "Tire Vergi Dairesi Müdürlüğü",
+      "province": "İZMİR",
+      "district": "Merkez Tire"
+    },
+    {
+      "id": "35206",
+      "code": "35206",
+      "name": "Torbalı Vergi Dairesi Müdürlüğü",
+      "province": "İZMİR",
+      "district": "Merkez Torbalı"
+    },
+    {
+      "id": "35207",
+      "code": "35207",
+      "name": "Kemalpaşa Vergi Dairesi Müdürlüğü",
+      "province": "İZMİR",
+      "district": "Merkez Kemalpaşa"
+    },
+    {
+      "id": "35208",
+      "code": "35208",
+      "name": "Urla Vergi Dairesi Müdürlüğü",
+      "province": "İZMİR",
+      "district": "Merkez Urla"
+    },
+    {
+      "id": "35209",
+      "code": "35209",
+      "name": "Selçuk Vergi Dairesi Müdürlüğü",
+      "province": "İZMİR",
+      "district": "Merkez Selçuk"
+    },
+    {
+      "id": "35210",
+      "code": "35210",
+      "name": "Kınık Vergi Dairesi Müdürlüğü",
+      "province": "İZMİR",
+      "district": "Merkez Kınık"
+    },
+    {
+      "id": "35211",
+      "code": "35211",
+      "name": "Kiraz Vergi Dairesi Müdürlüğü",
+      "province": "İZMİR",
+      "district": "Merkez Kiraz"
+    },
+    {
+      "id": "35212",
+      "code": "35212",
+      "name": "Çeşme Vergi Dairesi Müdürlüğü",
+      "province": "İZMİR",
+      "district": "Merkez Çeşme"
+    },
+    {
+      "id": "35213",
+      "code": "35213",
+      "name": "Aliağa Vergi Dairesi Müdürlüğü",
+      "province": "İZMİR",
+      "district": "Merkez Aliağa"
+    },
+    {
+      "id": "35215",
+      "code": "35215",
+      "name": "Menderes Vergi Dairesi Müdürlüğü",
+      "province": "İZMİR",
+      "district": "Merkez Menderes"
+    },
+    {
+      "id": "35271",
+      "code": "35271",
+      "name": "Dikili Vergi Dairesi Müdürlüğü",
+      "province": "İZMİR",
+      "district": "Merkez Dikili"
+    },
+    {
+      "id": "35272",
+      "code": "35272",
+      "name": "Seferihisar Vergi Dairesi Müdürlüğü",
+      "province": "İZMİR",
+      "district": "Merkez Seferihisar"
+    },
+    {
+      "id": "35273",
+      "code": "35273",
+      "name": "Foça Vergi Dairesi Müdürlüğü",
+      "province": "İZMİR",
+      "district": "Merkez Foça"
+    },
+    {
+      "id": "35274",
+      "code": "35274",
+      "name": "Karaburun Vergi Dairesi Müdürlüğü",
+      "province": "İZMİR",
+      "district": "Merkez Karaburun"
+    },
+    {
+      "id": "35275",
+      "code": "35275",
+      "name": "Beydağ Vergi Dairesi Müdürlüğü",
+      "province": "İZMİR",
+      "district": "Merkez Beydağ"
+    },
+    {
+      "id": "36260",
+      "code": "36260",
+      "name": "Kars Vergi Dairesi Müdürlüğü",
+      "province": "KARS",
+      "district": "Merkez"
+    },
+    {
+      "id": "36264",
+      "code": "36264",
+      "name": "Kafkas Vergi Dairesi Müdürlüğü",
+      "province": "KARS",
+      "district": "Merkez"
+    },
+    {
+      "id": "36-arpacay-arpacay-subesi",
+      "code": null,
+      "name": "Arpaçay Şubesi",
+      "province": "KARS",
+      "district": "Arpaçay"
+    },
+    {
+      "id": "36-digor-digor-subesi",
+      "code": null,
+      "name": "Digor Şubesi",
+      "province": "KARS",
+      "district": "Digor"
+    },
+    {
+      "id": "36-susuz-susuz-subesi",
+      "code": null,
+      "name": "Susuz Şubesi",
+      "province": "KARS",
+      "district": "Susuz"
+    },
+    {
+      "id": "36-akyaka-akyaka-subesi",
+      "code": null,
+      "name": "Akyaka Şubesi",
+      "province": "KARS",
+      "district": "Akyaka"
+    },
+    {
+      "id": "36261",
+      "code": "36261",
+      "name": "Sarıkamış Vergi Dairesi Müdürlüğü",
+      "province": "KARS",
+      "district": "Sarıkamış"
+    },
+    {
+      "id": "36262",
+      "code": "36262",
+      "name": "Kağızman Vergi Dairesi Müdürlüğü",
+      "province": "KARS",
+      "district": "Kağızman"
+    },
+    {
+      "id": "36263",
+      "code": "36263",
+      "name": "Selim Vergi Dairesi Müdürlüğü",
+      "province": "KARS",
+      "district": "Selim"
+    },
+    {
+      "id": "37260",
+      "code": "37260",
+      "name": "Kastamonu Vergi Dairesi Müdürlüğü",
+      "province": "KASTAMONU",
+      "district": "Merkez"
+    },
+    {
+      "id": "37270",
+      "code": "37270",
+      "name": "Atabey Vergi Dairesi Müdürlüğü",
+      "province": "KASTAMONU",
+      "district": "Merkez"
+    },
+    {
+      "id": "37-catalzeytin-catalzeytin-subesi",
+      "code": null,
+      "name": "Çatalzeytin Şubesi",
+      "province": "KASTAMONU",
+      "district": "Çatalzeytin"
+    },
+    {
+      "id": "37-kure-kure-subesi",
+      "code": null,
+      "name": "Küre Şubesi",
+      "province": "KASTAMONU",
+      "district": "Küre"
+    },
+    {
+      "id": "37-abana-abana-subesi",
+      "code": null,
+      "name": "Abana Şubesi",
+      "province": "KASTAMONU",
+      "district": "Abana"
+    },
+    {
+      "id": "37-ihsangazi-ihsangazi-subesi",
+      "code": null,
+      "name": "İhsangazi Şubesi",
+      "province": "KASTAMONU",
+      "district": "İhsangazi"
+    },
+    {
+      "id": "37-p-narbas-p-narbas-subesi",
+      "code": null,
+      "name": "Pınarbaşı Şubesi",
+      "province": "KASTAMONU",
+      "district": "Pınarbaşı"
+    },
+    {
+      "id": "37-senpazar-senpazar-subesi",
+      "code": null,
+      "name": "Şenpazar Şubesi",
+      "province": "KASTAMONU",
+      "district": "Şenpazar"
+    },
+    {
+      "id": "37-agl-agl-subesi",
+      "code": null,
+      "name": "Ağlı Şubesi",
+      "province": "KASTAMONU",
+      "district": "Ağlı"
+    },
+    {
+      "id": "37-doganyurt-doganyurt-subesi",
+      "code": null,
+      "name": "Doğanyurt Şubesi",
+      "province": "KASTAMONU",
+      "district": "Doğanyurt"
+    },
+    {
+      "id": "37-hanonu-hanonu-subesi",
+      "code": null,
+      "name": "Hanönü Şubesi",
+      "province": "KASTAMONU",
+      "district": "Hanönü"
+    },
+    {
+      "id": "37-seydiler-seydiler-subesi",
+      "code": null,
+      "name": "Seydiler Şubesi",
+      "province": "KASTAMONU",
+      "district": "Seydiler"
+    },
+    {
+      "id": "37261",
+      "code": "37261",
+      "name": "Tosya Vergi Dairesi Müdürlüğü",
+      "province": "KASTAMONU",
+      "district": "Tosya"
+    },
+    {
+      "id": "37262",
+      "code": "37262",
+      "name": "Taşköprü Vergi Dairesi Müdürlüğü",
+      "province": "KASTAMONU",
+      "district": "Taşköprü"
+    },
+    {
+      "id": "37263",
+      "code": "37263",
+      "name": "Cide Vergi Dairesi Müdürlüğü",
+      "province": "KASTAMONU",
+      "district": "Cide"
+    },
+    {
+      "id": "37264",
+      "code": "37264",
+      "name": "İnebolu Vergi Dairesi Müdürlüğü",
+      "province": "KASTAMONU",
+      "district": "İnebolu"
+    },
+    {
+      "id": "37265",
+      "code": "37265",
+      "name": "Araç Vergi Dairesi Müdürlüğü",
+      "province": "KASTAMONU",
+      "district": "Araç"
+    },
+    {
+      "id": "37266",
+      "code": "37266",
+      "name": "Devrekani Vergi Dairesi Müdürlüğü",
+      "province": "KASTAMONU",
+      "district": "Devrekani"
+    },
+    {
+      "id": "37267",
+      "code": "37267",
+      "name": "Azdavay Vergi Dairesi Müdürlüğü",
+      "province": "KASTAMONU",
+      "district": "Azdavay"
+    },
+    {
+      "id": "37268",
+      "code": "37268",
+      "name": "Bozkurt Vergi Dairesi Müdürlüğü",
+      "province": "KASTAMONU",
+      "district": "Bozkurt"
+    },
+    {
+      "id": "37269",
+      "code": "37269",
+      "name": "Daday Vergi Dairesi Müdürlüğü",
+      "province": "KASTAMONU",
+      "district": "Daday"
+    },
+    {
+      "id": "38250",
+      "code": "38250",
+      "name": "Kayseri İhtisas Vergi Dairesi Müdürlüğü",
+      "province": "KAYSERİ",
+      "district": "Merkez"
+    },
+    {
+      "id": "38251",
+      "code": "38251",
+      "name": "Mimar Sinan Vergi Dairesi Müdürlüğü",
+      "province": "KAYSERİ",
+      "district": "Merkez"
+    },
+    {
+      "id": "38252",
+      "code": "38252",
+      "name": "Erciyes Vergi Dairesi Müdürlüğü",
+      "province": "KAYSERİ",
+      "district": "Merkez"
+    },
+    {
+      "id": "38253",
+      "code": "38253",
+      "name": "Kaleönü Vergi Dairesi Müdürlüğü",
+      "province": "KAYSERİ",
+      "district": "Merkez"
+    },
+    {
+      "id": "38254",
+      "code": "38254",
+      "name": "Gevher Nesibe Vergi Dairesi Müdürlüğü",
+      "province": "KAYSERİ",
+      "district": "Merkez"
+    },
+    {
+      "id": "38260",
+      "code": "38260",
+      "name": "Kültepe Vergi Dairesi Müdürlüğü",
+      "province": "KAYSERİ",
+      "district": "Merkez"
+    },
+    {
+      "id": "38-merkez-felahiye-felahiye-subesi",
+      "code": null,
+      "name": "(**) Felahiye Felahiye Şubesi",
+      "province": "KAYSERİ",
+      "district": "Merkez"
+    },
+    {
+      "id": "38-merkez-sar-oglan-sar-oglan-subesi",
+      "code": null,
+      "name": "(**) Sarıoğlan Sarıoğlan Şubesi",
+      "province": "KAYSERİ",
+      "district": "Merkez"
+    },
+    {
+      "id": "38-merkez-akk-sla-akk-sla-subesi",
+      "code": null,
+      "name": "(**) Akkışla Akkışla Şubesi",
+      "province": "KAYSERİ",
+      "district": "Merkez"
+    },
+    {
+      "id": "38-merkez-hac-lar-hac-lar-subesi",
+      "code": null,
+      "name": "(**) Hacılar Hacılar Şubesi",
+      "province": "KAYSERİ",
+      "district": "Merkez"
+    },
+    {
+      "id": "38-merkez-ozvatan-ozvatan-subesi",
+      "code": null,
+      "name": "(**) Özvatan Özvatan Şubesi",
+      "province": "KAYSERİ",
+      "district": "Merkez"
+    },
+    {
+      "id": "38201",
+      "code": "38201",
+      "name": "Develi Vergi Dairesi Müdürlüğü",
+      "province": "KAYSERİ",
+      "district": "Merkez Develi"
+    },
+    {
+      "id": "38202",
+      "code": "38202",
+      "name": "Pınarbaşı Vergi Dairesi Müdürlüğü",
+      "province": "KAYSERİ",
+      "district": "Merkez Pınarbaşı"
+    },
+    {
+      "id": "38203",
+      "code": "38203",
+      "name": "Bünyan Vergi Dairesi Müdürlüğü",
+      "province": "KAYSERİ",
+      "district": "Merkez Bünyan"
+    },
+    {
+      "id": "38255",
+      "code": "38255",
+      "name": "Yahyalı Vergi Dairesi Müdürlüğü",
+      "province": "KAYSERİ",
+      "district": "Merkez Yahyalı"
+    },
+    {
+      "id": "38256",
+      "code": "38256",
+      "name": "İncesu Vergi Dairesi Müdürlüğü",
+      "province": "KAYSERİ",
+      "district": "Merkez İncesu"
+    },
+    {
+      "id": "38257",
+      "code": "38257",
+      "name": "Tomarza Vergi Dairesi Müdürlüğü",
+      "province": "KAYSERİ",
+      "district": "Merkez Tomarza"
+    },
+    {
+      "id": "38258",
+      "code": "38258",
+      "name": "Yeşilhisar Vergi Dairesi Müdürlüğü",
+      "province": "KAYSERİ",
+      "district": "Merkez Yeşilhisar"
+    },
+    {
+      "id": "38259",
+      "code": "38259",
+      "name": "Sarız Vergi Dairesi Müdürlüğü",
+      "province": "KAYSERİ",
+      "district": "Merkez Sarız"
+    },
+    {
+      "id": "39260",
+      "code": "39260",
+      "name": "Kırklareli Vergi Dairesi Müdürlüğü",
+      "province": "KIRKLARELİ",
+      "district": "Merkez"
+    },
+    {
+      "id": "39266",
+      "code": "39266",
+      "name": "Kırk Şehitler Vergi Dairesi Müdürlüğü",
+      "province": "KIRKLARELİ",
+      "district": "Merkez"
+    },
+    {
+      "id": "39-kofcaz-kofcaz-subesi",
+      "code": null,
+      "name": "Kofçaz Şubesi",
+      "province": "KIRKLARELİ",
+      "district": "Kofçaz"
+    },
+    {
+      "id": "39-pehlivankoy-pehlivankoy-subesi",
+      "code": null,
+      "name": "Pehlivanköy Şubesi",
+      "province": "KIRKLARELİ",
+      "district": "Pehlivanköy"
+    },
+    {
+      "id": "39261",
+      "code": "39261",
+      "name": "Lüleburgaz Vergi Dairesi Müdürlüğü",
+      "province": "KIRKLARELİ",
+      "district": "Lüleburgaz"
+    },
+    {
+      "id": "39262",
+      "code": "39262",
+      "name": "Babaeski Vergi Dairesi Müdürlüğü",
+      "province": "KIRKLARELİ",
+      "district": "Babaeski"
+    },
+    {
+      "id": "39263",
+      "code": "39263",
+      "name": "Pınarhisar Vergi Dairesi Müdürlüğü",
+      "province": "KIRKLARELİ",
+      "district": "Pınarhisar"
+    },
+    {
+      "id": "39264",
+      "code": "39264",
+      "name": "Vize Vergi Dairesi Müdürlüğü",
+      "province": "KIRKLARELİ",
+      "district": "Vize"
+    },
+    {
+      "id": "39265",
+      "code": "39265",
+      "name": "Demirköy Vergi Dairesi Müdürlüğü",
+      "province": "KIRKLARELİ",
+      "district": "Demirköy"
+    },
+    {
+      "id": "40260",
+      "code": "40260",
+      "name": "Kırşehir Vergi Dairesi Müdürlüğü",
+      "province": "KIRŞEHİR",
+      "district": "Merkez"
+    },
+    {
+      "id": "40264",
+      "code": "40264",
+      "name": "Cacabey Vergi Dairesi Müdürlüğü",
+      "province": "KIRŞEHİR",
+      "district": "Merkez"
+    },
+    {
+      "id": "40-akp-nar-akp-nar-subesi",
+      "code": null,
+      "name": "Akpınar Şubesi",
+      "province": "KIRŞEHİR",
+      "district": "Akpınar"
+    },
+    {
+      "id": "40-akcakent-akcakent-subesi",
+      "code": null,
+      "name": "Akçakent Şubesi",
+      "province": "KIRŞEHİR",
+      "district": "Akçakent"
+    },
+    {
+      "id": "40-boztepe-boztepe-subesi",
+      "code": null,
+      "name": "Boztepe Şubesi",
+      "province": "KIRŞEHİR",
+      "district": "Boztepe"
+    },
+    {
+      "id": "40261",
+      "code": "40261",
+      "name": "Kaman Vergi Dairesi Müdürlüğü",
+      "province": "KIRŞEHİR",
+      "district": "Kaman"
+    },
+    {
+      "id": "40262",
+      "code": "40262",
+      "name": "Mucur Vergi Dairesi Müdürlüğü",
+      "province": "KIRŞEHİR",
+      "district": "Mucur"
+    },
+    {
+      "id": "40263",
+      "code": "40263",
+      "name": "Çiçekdağı Vergi Dairesi Müdürlüğü",
+      "province": "KIRŞEHİR",
+      "district": "Çiçekdağı"
+    },
+    {
+      "id": "41250",
+      "code": "41250",
+      "name": "Kocaeli İhtisas Vergi Dairesi Müdürlüğü",
+      "province": "KOCAELİ",
+      "district": "Merkez"
+    },
+    {
+      "id": "41252",
+      "code": "41252",
+      "name": "Tepecik Vergi Dairesi Müdürlüğü",
+      "province": "KOCAELİ",
+      "district": "Merkez"
+    },
+    {
+      "id": "41253",
+      "code": "41253",
+      "name": "Alemdar Vergi Dairesi Müdürlüğü",
+      "province": "KOCAELİ",
+      "district": "Merkez"
+    },
+    {
+      "id": "41290",
+      "code": "41290",
+      "name": "Acısu Vergi Dairesi Müdürlüğü",
+      "province": "KOCAELİ",
+      "district": "Merkez"
+    },
+    {
+      "id": "41254",
+      "code": "41254",
+      "name": "Gebze İhtisas Vergi Dairesi Müdürlüğü",
+      "province": "KOCAELİ",
+      "district": "Merkez Gebze"
+    },
+    {
+      "id": "41202",
+      "code": "41202",
+      "name": "Uluçınar Vergi Dairesi Müdürlüğü",
+      "province": "KOCAELİ",
+      "district": "Merkez Gebze"
+    },
+    {
+      "id": "41203",
+      "code": "41203",
+      "name": "İlyasbey Vergi Dairesi Müdürlüğü",
+      "province": "KOCAELİ",
+      "district": "Merkez Gebze"
+    },
+    {
+      "id": "41204",
+      "code": "41204",
+      "name": "Gölcük Vergi Dairesi Müdürlüğü",
+      "province": "KOCAELİ",
+      "district": "Merkez Gölcük"
+    },
+    {
+      "id": "41205",
+      "code": "41205",
+      "name": "Karamürsel Vergi Dairesi Müdürlüğü",
+      "province": "KOCAELİ",
+      "district": "Merkez Karamürsel"
+    },
+    {
+      "id": "41206",
+      "code": "41206",
+      "name": "Körfez Vergi Dairesi Müdürlüğü",
+      "province": "KOCAELİ",
+      "district": "Merkez Körfez"
+    },
+    {
+      "id": "41207",
+      "code": "41207",
+      "name": "Derince Vergi Dairesi Müdürlüğü",
+      "province": "KOCAELİ",
+      "district": "Merkez Derince"
+    },
+    {
+      "id": "41255",
+      "code": "41255",
+      "name": "Kandıra Vergi Dairesi Müdürlüğü",
+      "province": "KOCAELİ",
+      "district": "Merkez Kandıra"
+    },
+    {
+      "id": "42250",
+      "code": "42250",
+      "name": "Konya İhtisas Vergi Dairesi Müdürlüğü",
+      "province": "KONYA",
+      "district": "Merkez"
+    },
+    {
+      "id": "42251",
+      "code": "42251",
+      "name": "Selçuk Vergi Dairesi Müdürlüğü",
+      "province": "KONYA",
+      "district": "Merkez"
+    },
+    {
+      "id": "42252",
+      "code": "42252",
+      "name": "Mevlana Vergi Dairesi Müdürlüğü",
+      "province": "KONYA",
+      "district": "Merkez"
+    },
+    {
+      "id": "42253",
+      "code": "42253",
+      "name": "Meram Vergi Dairesi Müdürlüğü",
+      "province": "KONYA",
+      "district": "Merkez"
+    },
+    {
+      "id": "42254",
+      "code": "42254",
+      "name": "Alaaddin Vergi Dairesi Müdürlüğü",
+      "province": "KONYA",
+      "district": "Merkez"
+    },
+    {
+      "id": "42262",
+      "code": "42262",
+      "name": "Karatay Vergi Dairesi Müdürlüğü",
+      "province": "KONYA",
+      "district": "Merkez"
+    },
+    {
+      "id": "42-merkez-hadim-hadim-subesi",
+      "code": null,
+      "name": "(**) Hadim Hadim Şubesi",
+      "province": "KONYA",
+      "district": "Merkez"
+    },
+    {
+      "id": "42-merkez-akoren-akoren-subesi",
+      "code": null,
+      "name": "(**) Akören Akören Şubesi",
+      "province": "KONYA",
+      "district": "Merkez"
+    },
+    {
+      "id": "42-merkez-derebucak-derebucak-subesi",
+      "code": null,
+      "name": "(**) Derebucak Derebucak Şubesi",
+      "province": "KONYA",
+      "district": "Merkez"
+    },
+    {
+      "id": "42-merkez-taskent-taskent-subesi",
+      "code": null,
+      "name": "(**) Taşkent Taşkent Şubesi",
+      "province": "KONYA",
+      "district": "Merkez"
+    },
+    {
+      "id": "42-merkez-ah-rl-ah-rl-subesi",
+      "code": null,
+      "name": "(**) Ahırlı Ahırlı Şubesi",
+      "province": "KONYA",
+      "district": "Merkez"
+    },
+    {
+      "id": "42-merkez-celtik-celtik-subesi",
+      "code": null,
+      "name": "(**) Çeltik Çeltik Şubesi",
+      "province": "KONYA",
+      "district": "Merkez"
+    },
+    {
+      "id": "42-merkez-derbent-derbent-subesi",
+      "code": null,
+      "name": "(**) Derbent Derbent Şubesi",
+      "province": "KONYA",
+      "district": "Merkez"
+    },
+    {
+      "id": "42-merkez-guneys-n-r-guneys-n-r-subesi",
+      "code": null,
+      "name": "(**) Güneysınır Güneysınır Şubesi",
+      "province": "KONYA",
+      "district": "Merkez"
+    },
+    {
+      "id": "42-merkez-halkap-nar-halkap-nar-subesi",
+      "code": null,
+      "name": "(**) Halkapınar Halkapınar Şubesi",
+      "province": "KONYA",
+      "district": "Merkez"
+    },
+    {
+      "id": "42-merkez-tuzlukcu-tuzlukcu-subesi",
+      "code": null,
+      "name": "(**) Tuzlukçu Tuzlukçu Şubesi",
+      "province": "KONYA",
+      "district": "Merkez"
+    },
+    {
+      "id": "42-merkez-yal-huyuk-yal-huyuk-subesi",
+      "code": null,
+      "name": "(**) Yalıhüyük Yalıhüyük Şubesi",
+      "province": "KONYA",
+      "district": "Merkez"
+    },
+    {
+      "id": "42201",
+      "code": "42201",
+      "name": "Akşehir Vergi Dairesi Müdürlüğü",
+      "province": "KONYA",
+      "district": "Merkez Akşehir"
+    },
+    {
+      "id": "42202",
+      "code": "42202",
+      "name": "Ereğli Vergi Dairesi Müdürlüğü",
+      "province": "KONYA",
+      "district": "Merkez Ereğli"
+    },
+    {
+      "id": "42204",
+      "code": "42204",
+      "name": "Beyşehir Vergi Dairesi Müdürlüğü",
+      "province": "KONYA",
+      "district": "Merkez Beyşehir"
+    },
+    {
+      "id": "42205",
+      "code": "42205",
+      "name": "Cihanbeyli Vergi Dairesi Müdürlüğü",
+      "province": "KONYA",
+      "district": "Merkez Cihanbeyli"
+    },
+    {
+      "id": "42206",
+      "code": "42206",
+      "name": "Çumra Vergi Dairesi Müdürlüğü",
+      "province": "KONYA",
+      "district": "Merkez Çumra"
+    },
+    {
+      "id": "42207",
+      "code": "42207",
+      "name": "Seydişehir Vergi Dairesi Müdürlüğü",
+      "province": "KONYA",
+      "district": "Merkez Seydişehir"
+    },
+    {
+      "id": "42208",
+      "code": "42208",
+      "name": "Ilgın Vergi Dairesi Müdürlüğü",
+      "province": "KONYA",
+      "district": "Merkez Ilgın"
+    },
+    {
+      "id": "42209",
+      "code": "42209",
+      "name": "Kulu Vergi Dairesi Müdürlüğü",
+      "province": "KONYA",
+      "district": "Merkez Kulu"
+    },
+    {
+      "id": "42210",
+      "code": "42210",
+      "name": "Karapınar Vergi Dairesi Müdürlüğü",
+      "province": "KONYA",
+      "district": "Merkez Karapınar"
+    },
+    {
+      "id": "42211",
+      "code": "42211",
+      "name": "Kadınhanı Vergi Dairesi Müdürlüğü",
+      "province": "KONYA",
+      "district": "Merkez Kadınhanı"
+    },
+    {
+      "id": "42255",
+      "code": "42255",
+      "name": "Sarayönü Vergi Dairesi Müdürlüğü",
+      "province": "KONYA",
+      "district": "Merkez Sarayönü"
+    },
+    {
+      "id": "42256",
+      "code": "42256",
+      "name": "Bozkır Vergi Dairesi Müdürlüğü",
+      "province": "KONYA",
+      "district": "Merkez Bozkır"
+    },
+    {
+      "id": "42257",
+      "code": "42257",
+      "name": "Yunak Vergi Dairesi Müdürlüğü",
+      "province": "KONYA",
+      "district": "Merkez Yunak"
+    },
+    {
+      "id": "42258",
+      "code": "42258",
+      "name": "Hüyük Vergi Dairesi Müdürlüğü",
+      "province": "KONYA",
+      "district": "Merkez Hüyük"
+    },
+    {
+      "id": "42259",
+      "code": "42259",
+      "name": "Altınekin Vergi Dairesi Müdürlüğü",
+      "province": "KONYA",
+      "district": "Merkez Altınekin"
+    },
+    {
+      "id": "42260",
+      "code": "42260",
+      "name": "Emirgazi Vergi Dairesi Müdürlüğü",
+      "province": "KONYA",
+      "district": "Merkez Emirgazi"
+    },
+    {
+      "id": "42261",
+      "code": "42261",
+      "name": "Doğanhisar Vergi Dairesi Müdürlüğü",
+      "province": "KONYA",
+      "district": "Merkez Doğanhisar"
+    },
+    {
+      "id": "43201",
+      "code": "43201",
+      "name": "30 Ağustos Vergi Dairesi Müdürlüğü",
+      "province": "KÜTAHYA",
+      "district": "Merkez"
+    },
+    {
+      "id": "43280",
+      "code": "43280",
+      "name": "Çinili Vergi Dairesi Müdürlüğü",
+      "province": "KÜTAHYA",
+      "district": "Merkez"
+    },
+    {
+      "id": "43267",
+      "code": "43267",
+      "name": "Çaltepe Vergi Dairesi Müdürlüğü",
+      "province": "KÜTAHYA",
+      "district": "Merkez"
+    },
+    {
+      "id": "43-aslanapa-aslanapa-subesi",
+      "code": null,
+      "name": "Aslanapa Şubesi",
+      "province": "KÜTAHYA",
+      "district": "Aslanapa"
+    },
+    {
+      "id": "43-dumlup-nar-dumlup-nar-subesi",
+      "code": null,
+      "name": "Dumlupınar Şubesi",
+      "province": "KÜTAHYA",
+      "district": "Dumlupınar"
+    },
+    {
+      "id": "43-saphane-saphane-subesi",
+      "code": null,
+      "name": "Şaphane Şubesi",
+      "province": "KÜTAHYA",
+      "district": "Şaphane"
+    },
+    {
+      "id": "43-cavdarhisar-cavdarhisar-subesi",
+      "code": null,
+      "name": "Çavdarhisar Şubesi",
+      "province": "KÜTAHYA",
+      "district": "Çavdarhisar"
+    },
+    {
+      "id": "43-pazarlar-pazarlar-subesi",
+      "code": null,
+      "name": "Pazarlar Şubesi",
+      "province": "KÜTAHYA",
+      "district": "Pazarlar"
+    },
+    {
+      "id": "43260",
+      "code": "43260",
+      "name": "Gediz Vergi Dairesi Müdürlüğü",
+      "province": "KÜTAHYA",
+      "district": "Gediz"
+    },
+    {
+      "id": "43261",
+      "code": "43261",
+      "name": "Simav Vergi Dairesi Müdürlüğü",
+      "province": "KÜTAHYA",
+      "district": "Simav"
+    },
+    {
+      "id": "43262",
+      "code": "43262",
+      "name": "Tavşanlı Vergi Dairesi Müdürlüğü",
+      "province": "KÜTAHYA",
+      "district": "Tavşanlı"
+    },
+    {
+      "id": "43263",
+      "code": "43263",
+      "name": "Emet Vergi Dairesi Müdürlüğü",
+      "province": "KÜTAHYA",
+      "district": "Emet"
+    },
+    {
+      "id": "43264",
+      "code": "43264",
+      "name": "Altıntaş Vergi Dairesi Müdürlüğü",
+      "province": "KÜTAHYA",
+      "district": "Altıntaş"
+    },
+    {
+      "id": "43265",
+      "code": "43265",
+      "name": "Domaniç Vergi Dairesi Müdürlüğü",
+      "province": "KÜTAHYA",
+      "district": "Domaniç"
+    },
+    {
+      "id": "43266",
+      "code": "43266",
+      "name": "Hisarcık Vergi Dairesi Müdürlüğü",
+      "province": "KÜTAHYA",
+      "district": "Hisarcık"
+    },
+    {
+      "id": "44251",
+      "code": "44251",
+      "name": "Fırat Vergi Dairesi Müdürlüğü",
+      "province": "MALATYA",
+      "district": "Merkez"
+    },
+    {
+      "id": "44252",
+      "code": "44252",
+      "name": "Beydağı Vergi Dairesi Müdürlüğü",
+      "province": "MALATYA",
+      "district": "Merkez"
+    },
+    {
+      "id": "44258",
+      "code": "44258",
+      "name": "Battalgazi Vergi Dairesi Müdürlüğü",
+      "province": "MALATYA",
+      "district": "Merkez"
+    },
+    {
+      "id": "44-merkez-arguvan-arguvan-subesi",
+      "code": null,
+      "name": "(**) Arguvan Arguvan Şubesi",
+      "province": "MALATYA",
+      "district": "Merkez"
+    },
+    {
+      "id": "44-merkez-puturge-puturge-subesi",
+      "code": null,
+      "name": "(**) Pütürge Pütürge Şubesi",
+      "province": "MALATYA",
+      "district": "Merkez"
+    },
+    {
+      "id": "44-merkez-doganyol-doganyol-subesi",
+      "code": null,
+      "name": "(**) Doğanyol Doğanyol Şubesi",
+      "province": "MALATYA",
+      "district": "Merkez"
+    },
+    {
+      "id": "44-merkez-kale-kale-subesi",
+      "code": null,
+      "name": "(**) Kale Kale Şubesi",
+      "province": "MALATYA",
+      "district": "Merkez"
+    },
+    {
+      "id": "44-merkez-kuluncak-kuluncak-subesi",
+      "code": null,
+      "name": "(**) Kuluncak Kuluncak Şubesi",
+      "province": "MALATYA",
+      "district": "Merkez"
+    },
+    {
+      "id": "44-merkez-yaz-han-yaz-han-subesi",
+      "code": null,
+      "name": "(**) Yazıhan Yazıhan Şubesi",
+      "province": "MALATYA",
+      "district": "Merkez"
+    },
+    {
+      "id": "44253",
+      "code": "44253",
+      "name": "Doğanşehir Vergi Dairesi Müdürlüğü",
+      "province": "MALATYA",
+      "district": "Merkez Doğanşehir"
+    },
+    {
+      "id": "44254",
+      "code": "44254",
+      "name": "Darende Vergi Dairesi Müdürlüğü",
+      "province": "MALATYA",
+      "district": "Merkez Darende"
+    },
+    {
+      "id": "44255",
+      "code": "44255",
+      "name": "Akçadağ Vergi Dairesi Müdürlüğü",
+      "province": "MALATYA",
+      "district": "Merkez Akçadağ"
+    },
+    {
+      "id": "44256",
+      "code": "44256",
+      "name": "Arapgir Vergi Dairesi Müdürlüğü",
+      "province": "MALATYA",
+      "district": "Merkez Arapgir"
+    },
+    {
+      "id": "44257",
+      "code": "44257",
+      "name": "Hekimhan Vergi Dairesi Müdürlüğü",
+      "province": "MALATYA",
+      "district": "Merkez Hekimhan"
+    },
+    {
+      "id": "45250",
+      "code": "45250",
+      "name": "Manisa İhtisas Vergi Dairesi Müdürlüğü",
+      "province": "MANİSA",
+      "district": "Merkez"
+    },
+    {
+      "id": "45251",
+      "code": "45251",
+      "name": "Şehit Cihan Güneş Vergi Dairesi Müdürlüğü",
+      "province": "MANİSA",
+      "district": "Merkez"
+    },
+    {
+      "id": "45252",
+      "code": "45252",
+      "name": "Mesir Vergi Dairesi Müdürlüğü",
+      "province": "MANİSA",
+      "district": "Merkez"
+    },
+    {
+      "id": "45201",
+      "code": "45201",
+      "name": "Akhisar Vergi Dairesi Müdürlüğü",
+      "province": "MANİSA",
+      "district": "Merkez Akhisar"
+    },
+    {
+      "id": "45202",
+      "code": "45202",
+      "name": "Alaşehir Vergi Dairesi Müdürlüğü",
+      "province": "MANİSA",
+      "district": "Merkez Alaşehir"
+    },
+    {
+      "id": "45203",
+      "code": "45203",
+      "name": "Demirci Vergi Dairesi Müdürlüğü",
+      "province": "MANİSA",
+      "district": "Merkez Demirci"
+    },
+    {
+      "id": "45204",
+      "code": "45204",
+      "name": "Kırkağaç Vergi Dairesi Müdürlüğü",
+      "province": "MANİSA",
+      "district": "Merkez Kırkağaç"
+    },
+    {
+      "id": "45205",
+      "code": "45205",
+      "name": "Salihli Adil Oral Vergi Dairesi Müdürlüğü",
+      "province": "MANİSA",
+      "district": "Merkez Salihli"
+    },
+    {
+      "id": "45206",
+      "code": "45206",
+      "name": "Sarıgöl Vergi Dairesi Müdürlüğü",
+      "province": "MANİSA",
+      "district": "Merkez Sarıgöl"
+    },
+    {
+      "id": "45207",
+      "code": "45207",
+      "name": "Saruhanlı Vergi Dairesi Müdürlüğü",
+      "province": "MANİSA",
+      "district": "Merkez Saruhanlı"
+    },
+    {
+      "id": "45208",
+      "code": "45208",
+      "name": "Soma Vergi Dairesi Müdürlüğü",
+      "province": "MANİSA",
+      "district": "Merkez Soma"
+    },
+    {
+      "id": "45209",
+      "code": "45209",
+      "name": "Turgutlu Vergi Dairesi Müdürlüğü",
+      "province": "MANİSA",
+      "district": "Merkez Turgutlu"
+    },
+    {
+      "id": "45210",
+      "code": "45210",
+      "name": "Gördes Vergi Dairesi Müdürlüğü",
+      "province": "MANİSA",
+      "district": "Merkez Gördes"
+    },
+    {
+      "id": "45211",
+      "code": "45211",
+      "name": "Kula Vergi Dairesi Müdürlüğü",
+      "province": "MANİSA",
+      "district": "Merkez Kula"
+    },
+    {
+      "id": "45253",
+      "code": "45253",
+      "name": "Ahmetli Vergi Dairesi Müdürlüğü",
+      "province": "MANİSA",
+      "district": "Merkez Ahmetli"
+    },
+    {
+      "id": "45254",
+      "code": "45254",
+      "name": "Gölmarmara Vergi Dairesi Müdürlüğü",
+      "province": "MANİSA",
+      "district": "Merkez Gölmarmara"
+    },
+    {
+      "id": "45255",
+      "code": "45255",
+      "name": "Selendi Vergi Dairesi Müdürlüğü",
+      "province": "MANİSA",
+      "district": "Merkez Selendi"
+    },
+    {
+      "id": "45256",
+      "code": "45256",
+      "name": "Köprübaşı Vergi Dairesi Müdürlüğü",
+      "province": "MANİSA",
+      "district": "Merkez Köprübaşı"
+    },
+    {
+      "id": "46201",
+      "code": "46201",
+      "name": "Aslanbey Vergi Dairesi Müdürlüğü",
+      "province": "KAHRAMANMARAŞ",
+      "district": "Merkez"
+    },
+    {
+      "id": "46280",
+      "code": "46280",
+      "name": "Aksu Vergi Dairesi Müdürlüğü",
+      "province": "KAHRAMANMARAŞ",
+      "district": "Merkez"
+    },
+    {
+      "id": "46260",
+      "code": "46260",
+      "name": "Elbistan Vergi Dairesi Müdürlüğü",
+      "province": "KAHRAMANMARAŞ",
+      "district": "Merkez Elbistan"
+    },
+    {
+      "id": "46261",
+      "code": "46261",
+      "name": "Afşin Vergi Dairesi Müdürlüğü",
+      "province": "KAHRAMANMARAŞ",
+      "district": "Merkez Afşin"
+    },
+    {
+      "id": "46262",
+      "code": "46262",
+      "name": "Pazarcık Vergi Dairesi Müdürlüğü",
+      "province": "KAHRAMANMARAŞ",
+      "district": "Merkez Pazarcık"
+    },
+    {
+      "id": "46264",
+      "code": "46264",
+      "name": "Göksun Vergi Dairesi Müdürlüğü",
+      "province": "KAHRAMANMARAŞ",
+      "district": "Merkez Göksun"
+    },
+    {
+      "id": "46263",
+      "code": "46263",
+      "name": "Andırın Vergi Dairesi Müdürlüğü",
+      "province": "KAHRAMANMARAŞ",
+      "district": "Merkez Andırın"
+    },
+    {
+      "id": "46265",
+      "code": "46265",
+      "name": "Türkoğlu Vergi Dairesi Müdürlüğü",
+      "province": "KAHRAMANMARAŞ",
+      "district": "Merkez Türkoğlu"
+    },
+    {
+      "id": "46266",
+      "code": "46266",
+      "name": "Çağlayancerit Vergi Dairesi Müdürlüğü",
+      "province": "KAHRAMANMARAŞ",
+      "district": "Merkez Çağlayancerit"
+    },
+    {
+      "id": "46267",
+      "code": "46267",
+      "name": "Nurhak Vergi Dairesi Müdürlüğü",
+      "province": "KAHRAMANMARAŞ",
+      "district": "Merkez Nurhak"
+    },
+    {
+      "id": "46108",
+      "code": "46108",
+      "name": "Ekinözü Malmüdürlüğü",
+      "province": "KAHRAMANMARAŞ",
+      "district": "Merkez Ekinözü"
+    },
+    {
+      "id": "47260",
+      "code": "47260",
+      "name": "Mardin Vergi Dairesi Müdürlüğü",
+      "province": "MARDİN",
+      "district": "Merkez"
+    },
+    {
+      "id": "47261",
+      "code": "47261",
+      "name": "Kızıltepe Vergi Dairesi Müdürlüğü",
+      "province": "MARDİN",
+      "district": "Merkez Kızıltepe"
+    },
+    {
+      "id": "47262",
+      "code": "47262",
+      "name": "Nusaybin Vergi Dairesi Müdürlüğü",
+      "province": "MARDİN",
+      "district": "Merkez Nusaybin"
+    },
+    {
+      "id": "47263",
+      "code": "47263",
+      "name": "Midyat Vergi Dairesi Müdürlüğü",
+      "province": "MARDİN",
+      "district": "Merkez Midyat"
+    },
+    {
+      "id": "47264",
+      "code": "47264",
+      "name": "Derik Vergi Dairesi Müdürlüğü",
+      "province": "MARDİN",
+      "district": "Merkez Derik"
+    },
+    {
+      "id": "47265",
+      "code": "47265",
+      "name": "Mazıdağı Vergi Dairesi Müdürlüğü",
+      "province": "MARDİN",
+      "district": "Merkez Mazıdağı"
+    },
+    {
+      "id": "47266",
+      "code": "47266",
+      "name": "Ömerli Vergi Dairesi Müdürlüğü",
+      "province": "MARDİN",
+      "district": "Merkez Ömerli"
+    },
+    {
+      "id": "47268",
+      "code": "47268",
+      "name": "Savur Vergi Dairesi Müdürlüğü",
+      "province": "MARDİN",
+      "district": "Merkez Savur"
+    },
+    {
+      "id": "47269",
+      "code": "47269",
+      "name": "Dargeçit Vergi Dairesi Müdürlüğü",
+      "province": "MARDİN",
+      "district": "Merkez Dargeçit"
+    },
+    {
+      "id": "47113",
+      "code": "47113",
+      "name": "Yeşilli Malmüdürlüğü",
+      "province": "MARDİN",
+      "district": "Merkez Yeşilli"
+    },
+    {
+      "id": "48260",
+      "code": "48260",
+      "name": "Muğla Vergi Dairesi Müdürlüğü",
+      "province": "MUĞLA",
+      "district": "Merkez"
+    },
+    {
+      "id": "48261",
+      "code": "48261",
+      "name": "Bodrum Vergi Dairesi Müdürlüğü",
+      "province": "MUĞLA",
+      "district": "Merkez Bodrum"
+    },
+    {
+      "id": "48262",
+      "code": "48262",
+      "name": "Fethiye Vergi Dairesi Müdürlüğü",
+      "province": "MUĞLA",
+      "district": "Merkez Fethiye"
+    },
+    {
+      "id": "48263",
+      "code": "48263",
+      "name": "Köyceğiz Vergi Dairesi Müdürlüğü",
+      "province": "MUĞLA",
+      "district": "Merkez Köyceğiz"
+    },
+    {
+      "id": "48264",
+      "code": "48264",
+      "name": "Milas Vergi Dairesi Müdürlüğü",
+      "province": "MUĞLA",
+      "district": "Merkez Milas"
+    },
+    {
+      "id": "48265",
+      "code": "48265",
+      "name": "Marmaris Vergi Dairesi Müdürlüğü",
+      "province": "MUĞLA",
+      "district": "Merkez Marmaris"
+    },
+    {
+      "id": "48266",
+      "code": "48266",
+      "name": "Yatağan Vergi Dairesi Müdürlüğü",
+      "province": "MUĞLA",
+      "district": "Merkez Yatağan"
+    },
+    {
+      "id": "48267",
+      "code": "48267",
+      "name": "Ortaca Vergi Dairesi Müdürlüğü",
+      "province": "MUĞLA",
+      "district": "Merkez Ortaca"
+    },
+    {
+      "id": "48268",
+      "code": "48268",
+      "name": "Datça Vergi Dairesi Müdürlüğü",
+      "province": "MUĞLA",
+      "district": "Merkez Datça"
+    },
+    {
+      "id": "48269",
+      "code": "48269",
+      "name": "Dalaman Vergi Dairesi Müdürlüğü",
+      "province": "MUĞLA",
+      "district": "Merkez Dalaman"
+    },
+    {
+      "id": "48270",
+      "code": "48270",
+      "name": "Seydikemer Vergi Dairesi Müdürlüğü",
+      "province": "MUĞLA",
+      "district": "Merkez Seydikemer"
+    },
+    {
+      "id": "48271",
+      "code": "48271",
+      "name": "Ula Vergi Dairesi Müdürlüğü",
+      "province": "MUĞLA",
+      "district": "Merkez Ula"
+    },
+    {
+      "id": "48272",
+      "code": "48272",
+      "name": "Kavaklıdere Vergi Dairesi Müdürlüğü",
+      "province": "MUĞLA",
+      "district": "Merkez Kavaklıdere"
+    },
+    {
+      "id": "49260",
+      "code": "49260",
+      "name": "Muş Vergi Dairesi Müdürlüğü",
+      "province": "MUŞ",
+      "district": "Merkez"
+    },
+    {
+      "id": "49261",
+      "code": "49261",
+      "name": "Bulanık Vergi Dairesi Müdürlüğü",
+      "province": "MUŞ",
+      "district": "Bulanık"
+    },
+    {
+      "id": "49262",
+      "code": "49262",
+      "name": "Malazgirt Vergi Dairesi Müdürlüğü",
+      "province": "MUŞ",
+      "district": "Malazgirt"
+    },
+    {
+      "id": "49263",
+      "code": "49263",
+      "name": "Varto Vergi Dairesi Müdürlüğü",
+      "province": "MUŞ",
+      "district": "Varto"
+    },
+    {
+      "id": "49264",
+      "code": "49264",
+      "name": "Hasköy Vergi Dairesi Müdürlüğü",
+      "province": "MUŞ",
+      "district": "Hasköy"
+    },
+    {
+      "id": "49105",
+      "code": "49105",
+      "name": "Korkut Malmüdürlüğü",
+      "province": "MUŞ",
+      "district": "Korkut"
+    },
+    {
+      "id": "50260",
+      "code": "50260",
+      "name": "Nevşehir Vergi Dairesi Müdürlüğü",
+      "province": "NEVŞEHİR",
+      "district": "Merkez"
+    },
+    {
+      "id": "50261",
+      "code": "50261",
+      "name": "Ürgüp Vergi Dairesi Müdürlüğü",
+      "province": "NEVŞEHİR",
+      "district": "Ürgüp"
+    },
+    {
+      "id": "50262",
+      "code": "50262",
+      "name": "Derinkuyu Vergi Dairesi Müdürlüğü",
+      "province": "NEVŞEHİR",
+      "district": "Derinkuyu"
+    },
+    {
+      "id": "50263",
+      "code": "50263",
+      "name": "Avanos Vergi Dairesi Müdürlüğü",
+      "province": "NEVŞEHİR",
+      "district": "Avanos"
+    },
+    {
+      "id": "50264",
+      "code": "50264",
+      "name": "Gülşehir Vergi Dairesi Müdürlüğü",
+      "province": "NEVŞEHİR",
+      "district": "Gülşehir"
+    },
+    {
+      "id": "50265",
+      "code": "50265",
+      "name": "Hacıbektaş Vergi Dairesi Müdürlüğü",
+      "province": "NEVŞEHİR",
+      "district": "Hacıbektaş"
+    },
+    {
+      "id": "50266",
+      "code": "50266",
+      "name": "Acıgöl Vergi Dairesi Müdürlüğü",
+      "province": "NEVŞEHİR",
+      "district": "Acıgöl"
+    },
+    {
+      "id": "50267",
+      "code": "50267",
+      "name": "Kozaklı Vergi Dairesi Müdürlüğü",
+      "province": "NEVŞEHİR",
+      "district": "Kozaklı"
+    },
+    {
+      "id": "51260",
+      "code": "51260",
+      "name": "Niğde Vergi Dairesi Müdürlüğü",
+      "province": "NİĞDE",
+      "district": "Merkez"
+    },
+    {
+      "id": "51262",
+      "code": "51262",
+      "name": "Bor Vergi Dairesi Müdürlüğü",
+      "province": "NİĞDE",
+      "district": "Bor"
+    },
+    {
+      "id": "51263",
+      "code": "51263",
+      "name": "Ulukışla Vergi Dairesi Müdürlüğü",
+      "province": "NİĞDE",
+      "district": "Ulukışla"
+    },
+    {
+      "id": "51264",
+      "code": "51264",
+      "name": "Çiftlik Vergi Dairesi Müdürlüğü",
+      "province": "NİĞDE",
+      "district": "Çiftlik"
+    },
+    {
+      "id": "51265",
+      "code": "51265",
+      "name": "Altunhisar Vergi Dairesi Müdürlüğü",
+      "province": "NİĞDE",
+      "district": "Altunhisar"
+    },
+    {
+      "id": "51266",
+      "code": "51266",
+      "name": "Çamardı Vergi Dairesi Müdürlüğü",
+      "province": "NİĞDE",
+      "district": "Çamardı"
+    },
+    {
+      "id": "52201",
+      "code": "52201",
+      "name": "Boztepe Vergi Dairesi Müdürlüğü",
+      "province": "ORDU",
+      "district": "Merkez"
+    },
+    {
+      "id": "52260",
+      "code": "52260",
+      "name": "Köprübaşı Vergi Dairesi Müdürlüğü",
+      "province": "ORDU",
+      "district": "Merkez"
+    },
+    {
+      "id": "52274",
+      "code": "52274",
+      "name": "Altınordu Vergi Dairesi Müdürlüğü",
+      "province": "ORDU",
+      "district": "Merkez"
+    },
+    {
+      "id": "52-merkez-mesudiye-mesudiye-subesi",
+      "code": null,
+      "name": "(**) Mesudiye Mesudiye Şubesi",
+      "province": "ORDU",
+      "district": "Merkez"
+    },
+    {
+      "id": "52-merkez-gulyal-gulyal-subesi",
+      "code": null,
+      "name": "(**) Gülyalı Gülyalı Şubesi",
+      "province": "ORDU",
+      "district": "Merkez"
+    },
+    {
+      "id": "52-merkez-camas-camas-subesi",
+      "code": null,
+      "name": "(**) Çamaş Çamaş Şubesi",
+      "province": "ORDU",
+      "district": "Merkez"
+    },
+    {
+      "id": "52-merkez-ikizce-ikizce-subesi",
+      "code": null,
+      "name": "(**) İkizce İkizce Şubesi",
+      "province": "ORDU",
+      "district": "Merkez"
+    },
+    {
+      "id": "52-merkez-kabaduz-kabaduz-subesi",
+      "code": null,
+      "name": "(**) Kabadüz Kabadüz Şubesi",
+      "province": "ORDU",
+      "district": "Merkez"
+    },
+    {
+      "id": "52261",
+      "code": "52261",
+      "name": "Fatsa Vergi Dairesi Müdürlüğü",
+      "province": "ORDU",
+      "district": "Merkez Fatsa"
+    },
+    {
+      "id": "52262",
+      "code": "52262",
+      "name": "Ünye Vergi Dairesi Müdürlüğü",
+      "province": "ORDU",
+      "district": "Merkez Ünye"
+    },
+    {
+      "id": "52264",
+      "code": "52264",
+      "name": "Aybastı Vergi Dairesi Müdürlüğü",
+      "province": "ORDU",
+      "district": "Merkez Aybastı"
+    },
+    {
+      "id": "52263",
+      "code": "52263",
+      "name": "Gölköy Vergi Dairesi Müdürlüğü",
+      "province": "ORDU",
+      "district": "Merkez Gölköy"
+    },
+    {
+      "id": "52265",
+      "code": "52265",
+      "name": "Korgan Vergi Dairesi Müdürlüğü",
+      "province": "ORDU",
+      "district": "Merkez Korgan"
+    },
+    {
+      "id": "52266",
+      "code": "52266",
+      "name": "Kumru Vergi Dairesi Müdürlüğü",
+      "province": "ORDU",
+      "district": "Merkez Kumru"
+    },
+    {
+      "id": "52267",
+      "code": "52267",
+      "name": "Perşembe Vergi Dairesi Müdürlüğü",
+      "province": "ORDU",
+      "district": "Merkez Perşembe"
+    },
+    {
+      "id": "52268",
+      "code": "52268",
+      "name": "Akkuş Vergi Dairesi Müdürlüğü",
+      "province": "ORDU",
+      "district": "Merkez Akkuş"
+    },
+    {
+      "id": "52269",
+      "code": "52269",
+      "name": "Çatalpınar Vergi Dairesi Müdürlüğü",
+      "province": "ORDU",
+      "district": "Merkez Çatalpınar"
+    },
+    {
+      "id": "52270",
+      "code": "52270",
+      "name": "Ulubey Vergi Dairesi Müdürlüğü",
+      "province": "ORDU",
+      "district": "Merkez Ulubey"
+    },
+    {
+      "id": "52271",
+      "code": "52271",
+      "name": "Gürgentepe Vergi Dairesi Müdürlüğü",
+      "province": "ORDU",
+      "district": "Merkez Gürgentepe"
+    },
+    {
+      "id": "52272",
+      "code": "52272",
+      "name": "Çaybaşı Vergi Dairesi Müdürlüğü",
+      "province": "ORDU",
+      "district": "Merkez Çaybaşı"
+    },
+    {
+      "id": "52273",
+      "code": "52273",
+      "name": "Kabataş Vergi Dairesi Müdürlüğü",
+      "province": "ORDU",
+      "district": "Merkez Kabataş"
+    },
+    {
+      "id": "53201",
+      "code": "53201",
+      "name": "Kaçkar Vergi Dairesi Müdürlüğü",
+      "province": "RİZE",
+      "district": "Merkez"
+    },
+    {
+      "id": "53260",
+      "code": "53260",
+      "name": "Yeşilçay Vergi Dairesi Müdürlüğü",
+      "province": "RİZE",
+      "district": "Merkez"
+    },
+    {
+      "id": "53266",
+      "code": "53266",
+      "name": "Rize Vergi Dairesi Müdürlüğü",
+      "province": "RİZE",
+      "district": "Merkez"
+    },
+    {
+      "id": "53-ikizdere-ikizdere-subesi",
+      "code": null,
+      "name": "İkizdere Şubesi",
+      "province": "RİZE",
+      "district": "İkizdere"
+    },
+    {
+      "id": "53-kalkandere-kalkandere-subesi",
+      "code": null,
+      "name": "Kalkandere Şubesi",
+      "province": "RİZE",
+      "district": "Kalkandere"
+    },
+    {
+      "id": "53-guneysu-guneysu-subesi",
+      "code": null,
+      "name": "Güneysu Şubesi",
+      "province": "RİZE",
+      "district": "Güneysu"
+    },
+    {
+      "id": "53-derepazar-derepazar-subesi",
+      "code": null,
+      "name": "Derepazarı Şubesi",
+      "province": "RİZE",
+      "district": "Derepazarı"
+    },
+    {
+      "id": "53-hemsin-hemsin-subesi",
+      "code": null,
+      "name": "Hemşin Şubesi",
+      "province": "RİZE",
+      "district": "Hemşin"
+    },
+    {
+      "id": "53-iyidere-iyidere-subesi",
+      "code": null,
+      "name": "İyidere Şubesi",
+      "province": "RİZE",
+      "district": "İyidere"
+    },
+    {
+      "id": "53261",
+      "code": "53261",
+      "name": "Çayeli Vergi Dairesi Müdürlüğü",
+      "province": "RİZE",
+      "district": "Çayeli"
+    },
+    {
+      "id": "53262",
+      "code": "53262",
+      "name": "Pazar Vergi Dairesi Müdürlüğü",
+      "province": "RİZE",
+      "district": "Pazar"
+    },
+    {
+      "id": "53263",
+      "code": "53263",
+      "name": "Ardeşen Vergi Dairesi Müdürlüğü",
+      "province": "RİZE",
+      "district": "Ardeşen"
+    },
+    {
+      "id": "53264",
+      "code": "53264",
+      "name": "Fındıklı Vergi Dairesi Müdürlüğü",
+      "province": "RİZE",
+      "district": "Fındıklı"
+    },
+    {
+      "id": "53265",
+      "code": "53265",
+      "name": "Çamlıhemşin Vergi Dairesi Müdürlüğü",
+      "province": "RİZE",
+      "district": "Çamlıhemşin"
+    },
+    {
+      "id": "54250",
+      "code": "54250",
+      "name": "Sakarya İhtisas Vergi Dairesi Müdürlüğü",
+      "province": "SAKARYA",
+      "district": "Merkez"
+    },
+    {
+      "id": "54251",
+      "code": "54251",
+      "name": "Gümrükönü Vergi Dairesi Müdürlüğü",
+      "province": "SAKARYA",
+      "district": "Merkez"
+    },
+    {
+      "id": "54252",
+      "code": "54252",
+      "name": "Ali Fuat Cebesoy Vergi Dairesi Müdürlüğü",
+      "province": "SAKARYA",
+      "district": "Merkez"
+    },
+    {
+      "id": "54253",
+      "code": "54253",
+      "name": "Sapanca Vergi Dairesi Müdürlüğü",
+      "province": "SAKARYA",
+      "district": "Merkez Sapanca"
+    },
+    {
+      "id": "54201",
+      "code": "54201",
+      "name": "Akyazı Vergi Dairesi Müdürlüğü",
+      "province": "SAKARYA",
+      "district": "Merkez Akyazı"
+    },
+    {
+      "id": "54202",
+      "code": "54202",
+      "name": "Geyve Vergi Dairesi Müdürlüğü",
+      "province": "SAKARYA",
+      "district": "Merkez Geyve"
+    },
+    {
+      "id": "54203",
+      "code": "54203",
+      "name": "Hendek Vergi Dairesi Müdürlüğü",
+      "province": "SAKARYA",
+      "district": "Merkez Hendek"
+    },
+    {
+      "id": "54204",
+      "code": "54204",
+      "name": "Karasu Vergi Dairesi Müdürlüğü",
+      "province": "SAKARYA",
+      "district": "Merkez Karasu"
+    },
+    {
+      "id": "54254",
+      "code": "54254",
+      "name": "Pamukova Vergi Dairesi Müdürlüğü",
+      "province": "SAKARYA",
+      "district": "Merkez Pamukova"
+    },
+    {
+      "id": "54255",
+      "code": "54255",
+      "name": "Kaynarca Vergi Dairesi Müdürlüğü",
+      "province": "SAKARYA",
+      "district": "Merkez Kaynarca"
+    },
+    {
+      "id": "54256",
+      "code": "54256",
+      "name": "Kocaali Vergi Dairesi Müdürlüğü",
+      "province": "SAKARYA",
+      "district": "Merkez Kocaali"
+    },
+    {
+      "id": "54257",
+      "code": "54257",
+      "name": "Karapürçek Vergi Dairesi Müdürlüğü",
+      "province": "SAKARYA",
+      "district": "Merkez Karapürçek"
+    },
+    {
+      "id": "54109",
+      "code": "54109",
+      "name": "Taraklı Malmüdürlüğü",
+      "province": "SAKARYA",
+      "district": "Merkez Taraklı"
+    },
+    {
+      "id": "55251",
+      "code": "55251",
+      "name": "19 Mayıs Vergi Dairesi Müdürlüğü",
+      "province": "SAMSUN",
+      "district": "Merkez"
+    },
+    {
+      "id": "55252",
+      "code": "55252",
+      "name": "Gaziler Vergi Dairesi Müdürlüğü",
+      "province": "SAMSUN",
+      "district": "Merkez"
+    },
+    {
+      "id": "55290",
+      "code": "55290",
+      "name": "Zafer Vergi Dairesi Müdürlüğü",
+      "province": "SAMSUN",
+      "district": "Merkez"
+    },
+    {
+      "id": "55202",
+      "code": "55202",
+      "name": "Bafra Vergi Dairesi Müdürlüğü",
+      "province": "SAMSUN",
+      "district": "Merkez Bafra"
+    },
+    {
+      "id": "55203",
+      "code": "55203",
+      "name": "Çarşamba Vergi Dairesi Müdürlüğü",
+      "province": "SAMSUN",
+      "district": "Merkez Çarşamba"
+    },
+    {
+      "id": "55204",
+      "code": "55204",
+      "name": "Terme Vergi Dairesi Müdürlüğü",
+      "province": "SAMSUN",
+      "district": "Merkez Terme"
+    },
+    {
+      "id": "55205",
+      "code": "55205",
+      "name": "Havza Vergi Dairesi Müdürlüğü",
+      "province": "SAMSUN",
+      "district": "Merkez Havza"
+    },
+    {
+      "id": "55291",
+      "code": "55291",
+      "name": "Vezirköprü Vergi Dairesi Müdürlüğü",
+      "province": "SAMSUN",
+      "district": "Merkez Vezirköprü"
+    },
+    {
+      "id": "55254",
+      "code": "55254",
+      "name": "19 Mayıs Ballıca Vergi Dairesi Müdürlüğü",
+      "province": "SAMSUN",
+      "district": "Merkez 19 Mayıs"
+    },
+    {
+      "id": "55253",
+      "code": "55253",
+      "name": "Kavak Vergi Dairesi Müdürlüğü",
+      "province": "SAMSUN",
+      "district": "Merkez Kavak"
+    },
+    {
+      "id": "55255",
+      "code": "55255",
+      "name": "Salıpazarı Vergi Dairesi Müdürlüğü",
+      "province": "SAMSUN",
+      "district": "Merkez Salıpazarı"
+    },
+    {
+      "id": "55256",
+      "code": "55256",
+      "name": "Alaçam Vergi Dairesi Müdürlüğü",
+      "province": "SAMSUN",
+      "district": "Merkez Alaçam"
+    },
+    {
+      "id": "55257",
+      "code": "55257",
+      "name": "Ladik Vergi Dairesi Müdürlüğü",
+      "province": "SAMSUN",
+      "district": "Merkez Ladik"
+    },
+    {
+      "id": "55258",
+      "code": "55258",
+      "name": "Asarcık Vergi Dairesi Müdürlüğü",
+      "province": "SAMSUN",
+      "district": "Merkez Asarcık"
+    },
+    {
+      "id": "55259",
+      "code": "55259",
+      "name": "Yakakent Vergi Dairesi Müdürlüğü",
+      "province": "SAMSUN",
+      "district": "Merkez Yakakent"
+    },
+    {
+      "id": "55113",
+      "code": "55113",
+      "name": "Ayvacık Malmüdürlüğü",
+      "province": "SAMSUN",
+      "district": "Merkez Ayvacık"
+    },
+    {
+      "id": "56260",
+      "code": "56260",
+      "name": "Siirt Vergi Dairesi Müdürlüğü",
+      "province": "SİİRT",
+      "district": "Merkez"
+    },
+    {
+      "id": "56263",
+      "code": "56263",
+      "name": "Deliklitaş Vergi Dairesi Müdürlüğü",
+      "province": "SİİRT",
+      "district": "Merkez"
+    },
+    {
+      "id": "56-eruh-eruh-subesi",
+      "code": null,
+      "name": "Eruh Şubesi",
+      "province": "SİİRT",
+      "district": "Eruh"
+    },
+    {
+      "id": "56-pervari-pervari-subesi",
+      "code": null,
+      "name": "Pervari Şubesi",
+      "province": "SİİRT",
+      "district": "Pervari"
+    },
+    {
+      "id": "56-sirvan-sirvan-subesi",
+      "code": null,
+      "name": "Şirvan Şubesi",
+      "province": "SİİRT",
+      "district": "Şirvan"
+    },
+    {
+      "id": "56261",
+      "code": "56261",
+      "name": "Kurtalan Vergi Dairesi Müdürlüğü",
+      "province": "SİİRT",
+      "district": "Kurtalan"
+    },
+    {
+      "id": "56262",
+      "code": "56262",
+      "name": "Baykan Vergi Dairesi Müdürlüğü",
+      "province": "SİİRT",
+      "district": "Baykan"
+    },
+    {
+      "id": "57260",
+      "code": "57260",
+      "name": "Sinop Vergi Dairesi Müdürlüğü",
+      "province": "SİNOP",
+      "district": "Merkez"
+    },
+    {
+      "id": "57261",
+      "code": "57261",
+      "name": "Boyabat Vergi Dairesi Müdürlüğü",
+      "province": "SİNOP",
+      "district": "Boyabat"
+    },
+    {
+      "id": "57263",
+      "code": "57263",
+      "name": "Ayancık Vergi Dairesi Müdürlüğü",
+      "province": "SİNOP",
+      "district": "Ayancık"
+    },
+    {
+      "id": "57262",
+      "code": "57262",
+      "name": "Gerze Vergi Dairesi Müdürlüğü",
+      "province": "SİNOP",
+      "district": "Gerze"
+    },
+    {
+      "id": "57264",
+      "code": "57264",
+      "name": "Türkeli Vergi Dairesi Müdürlüğü",
+      "province": "SİNOP",
+      "district": "Türkeli"
+    },
+    {
+      "id": "57265",
+      "code": "57265",
+      "name": "Durağan Vergi Dairesi Müdürlüğü",
+      "province": "SİNOP",
+      "district": "Durağan"
+    },
+    {
+      "id": "57266",
+      "code": "57266",
+      "name": "Erfelek Vergi Dairesi Müdürlüğü",
+      "province": "SİNOP",
+      "district": "Erfelek"
+    },
+    {
+      "id": "57107",
+      "code": "57107",
+      "name": "Dikmen Malmüdürlüğü",
+      "province": "SİNOP",
+      "district": "Dikmen"
+    },
+    {
+      "id": "57108",
+      "code": "57108",
+      "name": "Saraydüzü Malmüdürlüğü",
+      "province": "SİNOP",
+      "district": "Saraydüzü"
+    },
+    {
+      "id": "58201",
+      "code": "58201",
+      "name": "Kale Vergi Dairesi Müdürlüğü",
+      "province": "SİVAS",
+      "district": "Merkez"
+    },
+    {
+      "id": "58280",
+      "code": "58280",
+      "name": "Site Vergi Dairesi Müdürlüğü",
+      "province": "SİVAS",
+      "district": "Merkez"
+    },
+    {
+      "id": "58268",
+      "code": "58268",
+      "name": "4 Eylül Vergi Dairesi Müdürlüğü",
+      "province": "SİVAS",
+      "district": "Merkez"
+    },
+    {
+      "id": "58-hafik-hafik-subesi",
+      "code": null,
+      "name": "Hafik Şubesi",
+      "province": "SİVAS",
+      "district": "Hafik"
+    },
+    {
+      "id": "58-imranl-imranl-subesi",
+      "code": null,
+      "name": "İmranlı Şubesi",
+      "province": "SİVAS",
+      "district": "İmranlı"
+    },
+    {
+      "id": "58-koyulhisar-koyulhisar-subesi",
+      "code": null,
+      "name": "Koyulhisar Şubesi",
+      "province": "SİVAS",
+      "district": "Koyulhisar"
+    },
+    {
+      "id": "58-ak-nc-lar-ak-nc-lar-subesi",
+      "code": null,
+      "name": "Akıncılar Şubesi",
+      "province": "SİVAS",
+      "district": "Akıncılar"
+    },
+    {
+      "id": "58-alt-nyayla-alt-nyayla-subesi",
+      "code": null,
+      "name": "Altınyayla Şubesi",
+      "province": "SİVAS",
+      "district": "Altınyayla"
+    },
+    {
+      "id": "58-dogansar-dogansar-subesi",
+      "code": null,
+      "name": "Doğanşar Şubesi",
+      "province": "SİVAS",
+      "district": "Doğanşar"
+    },
+    {
+      "id": "58-golova-golova-subesi",
+      "code": null,
+      "name": "Gölova Şubesi",
+      "province": "SİVAS",
+      "district": "Gölova"
+    },
+    {
+      "id": "58-ulas-ulas-subesi",
+      "code": null,
+      "name": "Ulaş Şubesi",
+      "province": "SİVAS",
+      "district": "Ulaş"
+    },
+    {
+      "id": "58260",
+      "code": "58260",
+      "name": "Şarkışla Vergi Dairesi Müdürlüğü",
+      "province": "SİVAS",
+      "district": "Şarkışla"
+    },
+    {
+      "id": "58261",
+      "code": "58261",
+      "name": "Suşehri Vergi Dairesi Müdürlüğü",
+      "province": "SİVAS",
+      "district": "Suşehri"
+    },
+    {
+      "id": "58262",
+      "code": "58262",
+      "name": "Yıldızeli Vergi Dairesi Müdürlüğü",
+      "province": "SİVAS",
+      "district": "Yıldızeli"
+    },
+    {
+      "id": "58263",
+      "code": "58263",
+      "name": "Kangal Vergi Dairesi Müdürlüğü",
+      "province": "SİVAS",
+      "district": "Kangal"
+    },
+    {
+      "id": "58264",
+      "code": "58264",
+      "name": "Zara Vergi Dairesi Müdürlüğü",
+      "province": "SİVAS",
+      "district": "Zara"
+    },
+    {
+      "id": "58265",
+      "code": "58265",
+      "name": "Gemerek Vergi Dairesi Müdürlüğü",
+      "province": "SİVAS",
+      "district": "Gemerek"
+    },
+    {
+      "id": "58266",
+      "code": "58266",
+      "name": "Gürün Vergi Dairesi Müdürlüğü",
+      "province": "SİVAS",
+      "district": "Gürün"
+    },
+    {
+      "id": "58267",
+      "code": "58267",
+      "name": "Divriği Vergi Dairesi Müdürlüğü",
+      "province": "SİVAS",
+      "district": "Divriği"
+    },
+    {
+      "id": "59201",
+      "code": "59201",
+      "name": "Süleymanpaşa Vergi Dairesi Müdürlüğü",
+      "province": "TEKİRDAĞ",
+      "district": "Merkez"
+    },
+    {
+      "id": "59260",
+      "code": "59260",
+      "name": "Namık Kemal Vergi Dairesi Müdürlüğü",
+      "province": "TEKİRDAĞ",
+      "district": "Merkez"
+    },
+    {
+      "id": "59250",
+      "code": "59250",
+      "name": "Çorlu İhtisas Vergi Dairesi Müdürlüğü",
+      "province": "TEKİRDAĞ",
+      "district": "Merkez Çorlu"
+    },
+    {
+      "id": "59261",
+      "code": "59261",
+      "name": "Çerkezköy Vergi Dairesi Müdürlüğü",
+      "province": "TEKİRDAĞ",
+      "district": "Merkez Çerkezköy"
+    },
+    {
+      "id": "59262",
+      "code": "59262",
+      "name": "Çorlu Vergi Dairesi Müdürlüğü",
+      "province": "TEKİRDAĞ",
+      "district": "Merkez Çorlu"
+    },
+    {
+      "id": "59263",
+      "code": "59263",
+      "name": "Hayrabolu Vergi Dairesi Müdürlüğü",
+      "province": "TEKİRDAĞ",
+      "district": "Merkez Hayrabolu"
+    },
+    {
+      "id": "59264",
+      "code": "59264",
+      "name": "Malkara Vergi Dairesi Müdürlüğü",
+      "province": "TEKİRDAĞ",
+      "district": "Merkez Malkara"
+    },
+    {
+      "id": "59265",
+      "code": "59265",
+      "name": "Muratlı Vergi Dairesi Müdürlüğü",
+      "province": "TEKİRDAĞ",
+      "district": "Merkez Muratlı"
+    },
+    {
+      "id": "59266",
+      "code": "59266",
+      "name": "Şarköy Vergi Dairesi Müdürlüğü",
+      "province": "TEKİRDAĞ",
+      "district": "Merkez Şarköy"
+    },
+    {
+      "id": "59267",
+      "code": "59267",
+      "name": "Kapaklı Vergi Dairesi Müdürlüğü",
+      "province": "TEKİRDAĞ",
+      "district": "Merkez Kapaklı"
+    },
+    {
+      "id": "59268",
+      "code": "59268",
+      "name": "Saray Vergi Dairesi Müdürlüğü",
+      "province": "TEKİRDAĞ",
+      "district": "Merkez Saray"
+    },
+    {
+      "id": "59269",
+      "code": "59269",
+      "name": "Marmaraereğlisi Vergi Dairesi Müdürlüğü",
+      "province": "TEKİRDAĞ",
+      "district": "Merkez Marmaraereğlisi"
+    },
+    {
+      "id": "60260",
+      "code": "60260",
+      "name": "Tokat Vergi Dairesi Müdürlüğü",
+      "province": "TOKAT",
+      "district": "Merkez"
+    },
+    {
+      "id": "60268",
+      "code": "60268",
+      "name": "Topçam Vergi Dairesi Müdürlüğü",
+      "province": "TOKAT",
+      "district": "Merkez"
+    },
+    {
+      "id": "60-artova-artova-subesi",
+      "code": null,
+      "name": "Artova Şubesi",
+      "province": "TOKAT",
+      "district": "Artova"
+    },
+    {
+      "id": "60-yesilyurt-yesilyurt-subesi",
+      "code": null,
+      "name": "Yeşilyurt Şubesi",
+      "province": "TOKAT",
+      "district": "Yeşilyurt"
+    },
+    {
+      "id": "60-basciftlik-basciftlik-subesi",
+      "code": null,
+      "name": "Başçiftlik Şubesi",
+      "province": "TOKAT",
+      "district": "Başçiftlik"
+    },
+    {
+      "id": "60-sulusaray-sulusaray-subesi",
+      "code": null,
+      "name": "Sulusaray Şubesi",
+      "province": "TOKAT",
+      "district": "Sulusaray"
+    },
+    {
+      "id": "60261",
+      "code": "60261",
+      "name": "Erbaa Vergi Dairesi Müdürlüğü",
+      "province": "TOKAT",
+      "district": "Erbaa"
+    },
+    {
+      "id": "60262",
+      "code": "60262",
+      "name": "Niksar Vergi Dairesi Müdürlüğü",
+      "province": "TOKAT",
+      "district": "Niksar"
+    },
+    {
+      "id": "60263",
+      "code": "60263",
+      "name": "Turhal Vergi Dairesi Müdürlüğü",
+      "province": "TOKAT",
+      "district": "Turhal"
+    },
+    {
+      "id": "60264",
+      "code": "60264",
+      "name": "Zile Vergi Dairesi Müdürlüğü",
+      "province": "TOKAT",
+      "district": "Zile"
+    },
+    {
+      "id": "60265",
+      "code": "60265",
+      "name": "Reşadiye Vergi Dairesi Müdürlüğü",
+      "province": "TOKAT",
+      "district": "Reşadiye"
+    },
+    {
+      "id": "60266",
+      "code": "60266",
+      "name": "Almus Vergi Dairesi Müdürlüğü",
+      "province": "TOKAT",
+      "district": "Almus"
+    },
+    {
+      "id": "60267",
+      "code": "60267",
+      "name": "Pazar Vergi Dairesi Müdürlüğü",
+      "province": "TOKAT",
+      "district": "Pazar"
+    },
+    {
+      "id": "61201",
+      "code": "61201",
+      "name": "Hızırbey Vergi Dairesi Müdürlüğü",
+      "province": "TRABZON",
+      "district": "Merkez"
+    },
+    {
+      "id": "61280",
+      "code": "61280",
+      "name": "Karadeniz Vergi Dairesi Müdürlüğü",
+      "province": "TRABZON",
+      "district": "Merkez"
+    },
+    {
+      "id": "61292",
+      "code": "61292",
+      "name": "Ortahisar Vergi Dairesi Müdürlüğü",
+      "province": "TRABZON",
+      "district": "Merkez"
+    },
+    {
+      "id": "61-merkez-dernekpazar-dernekpazar-subesi",
+      "code": null,
+      "name": "(**) Dernekpazarı Dernekpazarı Şubesi",
+      "province": "TRABZON",
+      "district": "Merkez"
+    },
+    {
+      "id": "61-merkez-hayrat-hayrat-subesi",
+      "code": null,
+      "name": "(**) Hayrat Hayrat Şubesi",
+      "province": "TRABZON",
+      "district": "Merkez"
+    },
+    {
+      "id": "61-merkez-koprubas-koprubas-subesi",
+      "code": null,
+      "name": "(**) Köprübaşı Köprübaşı Şubesi",
+      "province": "TRABZON",
+      "district": "Merkez"
+    },
+    {
+      "id": "61260",
+      "code": "61260",
+      "name": "Akçaabat Vergi Dairesi Müdürlüğü",
+      "province": "TRABZON",
+      "district": "Merkez Akçaabat"
+    },
+    {
+      "id": "61261",
+      "code": "61261",
+      "name": "Of Vergi Dairesi Müdürlüğü",
+      "province": "TRABZON",
+      "district": "Merkez Of"
+    },
+    {
+      "id": "61262",
+      "code": "61262",
+      "name": "Vakfıkebir Vergi Dairesi Müdürlüğü",
+      "province": "TRABZON",
+      "district": "Merkez Vakfıkebir"
+    },
+    {
+      "id": "61281",
+      "code": "61281",
+      "name": "Araklı Vergi Dairesi Müdürlüğü",
+      "province": "TRABZON",
+      "district": "Merkez Araklı"
+    },
+    {
+      "id": "61282",
+      "code": "61282",
+      "name": "Yomra Vergi Dairesi Müdürlüğü",
+      "province": "TRABZON",
+      "district": "Merkez Yomra"
+    },
+    {
+      "id": "61283",
+      "code": "61283",
+      "name": "Sürmene Vergi Dairesi Müdürlüğü",
+      "province": "TRABZON",
+      "district": "Merkez Sürmene"
+    },
+    {
+      "id": "61284",
+      "code": "61284",
+      "name": "Arsin Vergi Dairesi Müdürlüğü",
+      "province": "TRABZON",
+      "district": "Merkez Arsin"
+    },
+    {
+      "id": "61285",
+      "code": "61285",
+      "name": "Çaykara Vergi Dairesi Müdürlüğü",
+      "province": "TRABZON",
+      "district": "Merkez Çaykara"
+    },
+    {
+      "id": "61286",
+      "code": "61286",
+      "name": "Maçka Vergi Dairesi Müdürlüğü",
+      "province": "TRABZON",
+      "district": "Merkez Maçka"
+    },
+    {
+      "id": "61287",
+      "code": "61287",
+      "name": "Beşikdüzü Vergi Dairesi Müdürlüğü",
+      "province": "TRABZON",
+      "district": "Merkez Beşikdüzü"
+    },
+    {
+      "id": "61288",
+      "code": "61288",
+      "name": "Çarşıbaşı Vergi Dairesi Müdürlüğü",
+      "province": "TRABZON",
+      "district": "Merkez Çarşıbaşı"
+    },
+    {
+      "id": "61289",
+      "code": "61289",
+      "name": "Tonya Vergi Dairesi Müdürlüğü",
+      "province": "TRABZON",
+      "district": "Merkez Tonya"
+    },
+    {
+      "id": "61290",
+      "code": "61290",
+      "name": "Şalpazarı Vergi Dairesi Müdürlüğü",
+      "province": "TRABZON",
+      "district": "Merkez Şalpazarı"
+    },
+    {
+      "id": "61291",
+      "code": "61291",
+      "name": "Düzköy Vergi Dairesi Müdürlüğü",
+      "province": "TRABZON",
+      "district": "Merkez Düzköy"
+    },
+    {
+      "id": "62260",
+      "code": "62260",
+      "name": "Tunceli Vergi Dairesi Müdürlüğü",
+      "province": "TUNCELİ",
+      "district": "Merkez"
+    },
+    {
+      "id": "62261",
+      "code": "62261",
+      "name": "Munzur Vergi Dairesi Müdürlüğü",
+      "province": "TUNCELİ",
+      "district": "Merkez"
+    },
+    {
+      "id": "62-cemisgezek-cemisgezek-subesi",
+      "code": null,
+      "name": "Çemişgezek Şubesi",
+      "province": "TUNCELİ",
+      "district": "Çemişgezek"
+    },
+    {
+      "id": "62-hozat-hozat-subesi",
+      "code": null,
+      "name": "Hozat Şubesi",
+      "province": "TUNCELİ",
+      "district": "Hozat"
+    },
+    {
+      "id": "62-mazgirt-mazgirt-subesi",
+      "code": null,
+      "name": "Mazgirt Şubesi",
+      "province": "TUNCELİ",
+      "district": "Mazgirt"
+    },
+    {
+      "id": "62-naz-miye-naz-miye-subesi",
+      "code": null,
+      "name": "Nazımiye Şubesi",
+      "province": "TUNCELİ",
+      "district": "Nazımiye"
+    },
+    {
+      "id": "62-ovac-k-ovac-k-subesi",
+      "code": null,
+      "name": "Ovacık Şubesi",
+      "province": "TUNCELİ",
+      "district": "Ovacık"
+    },
+    {
+      "id": "62-pertek-pertek-subesi",
+      "code": null,
+      "name": "Pertek Şubesi",
+      "province": "TUNCELİ",
+      "district": "Pertek"
+    },
+    {
+      "id": "62-pulumur-pulumur-subesi",
+      "code": null,
+      "name": "Pülümür Şubesi",
+      "province": "TUNCELİ",
+      "district": "Pülümür"
+    },
+    {
+      "id": "63201",
+      "code": "63201",
+      "name": "Şehitlik Vergi Dairesi Müdürlüğü",
+      "province": "ŞANLIURFA",
+      "district": "Merkez"
+    },
+    {
+      "id": "63280",
+      "code": "63280",
+      "name": "Topçu Meydanı Vergi Dairesi Müdürlüğü",
+      "province": "ŞANLIURFA",
+      "district": "Merkez"
+    },
+    {
+      "id": "63281",
+      "code": "63281",
+      "name": "Göbeklitepe Vergi Dairesi Müdürlüğü",
+      "province": "ŞANLIURFA",
+      "district": "Merkez"
+    },
+    {
+      "id": "63260",
+      "code": "63260",
+      "name": "Siverek Vergi Dairesi Müdürlüğü",
+      "province": "ŞANLIURFA",
+      "district": "Merkez Siverek"
+    },
+    {
+      "id": "63261",
+      "code": "63261",
+      "name": "Viranşehir Vergi Dairesi Müdürlüğü",
+      "province": "ŞANLIURFA",
+      "district": "Merkez Viranşehir"
+    },
+    {
+      "id": "63262",
+      "code": "63262",
+      "name": "Birecik Vergi Dairesi Müdürlüğü",
+      "province": "ŞANLIURFA",
+      "district": "Merkez Birecik"
+    },
+    {
+      "id": "63263",
+      "code": "63263",
+      "name": "Suruç Vergi Dairesi Müdürlüğü",
+      "province": "ŞANLIURFA",
+      "district": "Merkez Suruç"
+    },
+    {
+      "id": "63282",
+      "code": "63282",
+      "name": "Ceylanpınar Vergi Dairesi Müdürlüğü",
+      "province": "ŞANLIURFA",
+      "district": "Merkez Ceylanpınar"
+    },
+    {
+      "id": "63283",
+      "code": "63283",
+      "name": "Akçakale Vergi Dairesi Müdürlüğü",
+      "province": "ŞANLIURFA",
+      "district": "Merkez Akçakale"
+    },
+    {
+      "id": "63284",
+      "code": "63284",
+      "name": "Hilvan Vergi Dairesi Müdürlüğü",
+      "province": "ŞANLIURFA",
+      "district": "Merkez Hilvan"
+    },
+    {
+      "id": "63285",
+      "code": "63285",
+      "name": "Bozova Vergi Dairesi Müdürlüğü",
+      "province": "ŞANLIURFA",
+      "district": "Merkez Bozova"
+    },
+    {
+      "id": "63286",
+      "code": "63286",
+      "name": "Halfeti Vergi Dairesi Müdürlüğü",
+      "province": "ŞANLIURFA",
+      "district": "Merkez Halfeti"
+    },
+    {
+      "id": "63287",
+      "code": "63287",
+      "name": "Harran Vergi Dairesi Müdürlüğü",
+      "province": "ŞANLIURFA",
+      "district": "Merkez Harran"
+    },
+    {
+      "id": "64260",
+      "code": "64260",
+      "name": "Uşak Vergi Dairesi Müdürlüğü",
+      "province": "UŞAK",
+      "district": "Merkez"
+    },
+    {
+      "id": "64261",
+      "code": "64261",
+      "name": "Banaz Vergi Dairesi Müdürlüğü",
+      "province": "UŞAK",
+      "district": "Banaz"
+    },
+    {
+      "id": "64262",
+      "code": "64262",
+      "name": "Eşme Vergi Dairesi Müdürlüğü",
+      "province": "UŞAK",
+      "district": "Eşme"
+    },
+    {
+      "id": "64263",
+      "code": "64263",
+      "name": "Sivaslı Vergi Dairesi Müdürlüğü",
+      "province": "UŞAK",
+      "district": "Sivaslı"
+    },
+    {
+      "id": "64264",
+      "code": "64264",
+      "name": "Ulubey Vergi Dairesi Müdürlüğü",
+      "province": "UŞAK",
+      "district": "Ulubey"
+    },
+    {
+      "id": "64265",
+      "code": "64265",
+      "name": "Karahallı Vergi Dairesi Müdürlüğü",
+      "province": "UŞAK",
+      "district": "Karahallı"
+    },
+    {
+      "id": "65260",
+      "code": "65260",
+      "name": "Van Vergi Dairesi Müdürlüğü",
+      "province": "VAN",
+      "district": "Merkez"
+    },
+    {
+      "id": "65267",
+      "code": "65267",
+      "name": "Akdamar Vergi Dairesi Müdürlüğü",
+      "province": "VAN",
+      "district": "Merkez"
+    },
+    {
+      "id": "65-merkez-catak-catak-subesi",
+      "code": null,
+      "name": "(**) Çatak Çatak Şubesi",
+      "province": "VAN",
+      "district": "Merkez"
+    },
+    {
+      "id": "65-merkez-bahcesaray-bahcesaray-subesi",
+      "code": null,
+      "name": "(**) Bahçesaray Bahçesaray Şubesi",
+      "province": "VAN",
+      "district": "Merkez"
+    },
+    {
+      "id": "65-merkez-saray-saray-subesi",
+      "code": null,
+      "name": "(**) Saray Saray Şubesi",
+      "province": "VAN",
+      "district": "Merkez"
+    },
+    {
+      "id": "65201",
+      "code": "65201",
+      "name": "Erciş Vergi Dairesi Müdürlüğü",
+      "province": "VAN",
+      "district": "Merkez Erciş"
+    },
+    {
+      "id": "65261",
+      "code": "65261",
+      "name": "Özalp Vergi Dairesi Müdürlüğü",
+      "province": "VAN",
+      "district": "Merkez Özalp"
+    },
+    {
+      "id": "65262",
+      "code": "65262",
+      "name": "Çaldıran Vergi Dairesi Müdürlüğü",
+      "province": "VAN",
+      "district": "Merkez Çaldıran"
+    },
+    {
+      "id": "65202",
+      "code": "65202",
+      "name": "Edremit Vergi Dairesi Müdürlüğü",
+      "province": "VAN",
+      "district": "Merkez Edremit"
+    },
+    {
+      "id": "65263",
+      "code": "65263",
+      "name": "Muradiye Vergi Dairesi Müdürlüğü",
+      "province": "VAN",
+      "district": "Merkez Muradiye"
+    },
+    {
+      "id": "65264",
+      "code": "65264",
+      "name": "Gevaş Vergi Dairesi Müdürlüğü",
+      "province": "VAN",
+      "district": "Merkez Gevaş"
+    },
+    {
+      "id": "65265",
+      "code": "65265",
+      "name": "Gürpınar Vergi Dairesi Müdürlüğü",
+      "province": "VAN",
+      "district": "Merkez Gürpınar"
+    },
+    {
+      "id": "65266",
+      "code": "65266",
+      "name": "Başkale Vergi Dairesi Müdürlüğü",
+      "province": "VAN",
+      "district": "Merkez Başkale"
+    },
+    {
+      "id": "66260",
+      "code": "66260",
+      "name": "Yozgat Vergi Dairesi Müdürlüğü",
+      "province": "YOZGAT",
+      "district": "Merkez"
+    },
+    {
+      "id": "66271",
+      "code": "66271",
+      "name": "Çamlık Vergi Dairesi Müdürlüğü",
+      "province": "YOZGAT",
+      "district": "Merkez"
+    },
+    {
+      "id": "66-cand-r-cand-r-subesi",
+      "code": null,
+      "name": "Çandır Şubesi",
+      "province": "YOZGAT",
+      "district": "Çandır"
+    },
+    {
+      "id": "66-kad-sehri-kad-sehri-subesi",
+      "code": null,
+      "name": "Kadışehri Şubesi",
+      "province": "YOZGAT",
+      "district": "Kadışehri"
+    },
+    {
+      "id": "66-yenifak-l-yenifak-l-subesi",
+      "code": null,
+      "name": "Yenifakılı Şubesi",
+      "province": "YOZGAT",
+      "district": "Yenifakılı"
+    },
+    {
+      "id": "66261",
+      "code": "66261",
+      "name": "Boğazlıyan Vergi Dairesi Müdürlüğü",
+      "province": "YOZGAT",
+      "district": "Boğazlıyan"
+    },
+    {
+      "id": "66262",
+      "code": "66262",
+      "name": "Sorgun Vergi Dairesi Müdürlüğü",
+      "province": "YOZGAT",
+      "district": "Sorgun"
+    },
+    {
+      "id": "66263",
+      "code": "66263",
+      "name": "Yerköy Vergi Dairesi Müdürlüğü",
+      "province": "YOZGAT",
+      "district": "Yerköy"
+    },
+    {
+      "id": "66264",
+      "code": "66264",
+      "name": "Akdağmadeni Vergi Dairesi Müdürlüğü",
+      "province": "YOZGAT",
+      "district": "Akdağmadeni"
+    },
+    {
+      "id": "66265",
+      "code": "66265",
+      "name": "Şefaatli Vergi Dairesi Müdürlüğü",
+      "province": "YOZGAT",
+      "district": "Şefaatli"
+    },
+    {
+      "id": "66266",
+      "code": "66266",
+      "name": "Sarıkaya Vergi Dairesi Müdürlüğü",
+      "province": "YOZGAT",
+      "district": "Sarıkaya"
+    },
+    {
+      "id": "66267",
+      "code": "66267",
+      "name": "Çekerek Vergi Dairesi Müdürlüğü",
+      "province": "YOZGAT",
+      "district": "Çekerek"
+    },
+    {
+      "id": "66268",
+      "code": "66268",
+      "name": "Çayıralan Vergi Dairesi Müdürlüğü",
+      "province": "YOZGAT",
+      "district": "Çayıralan"
+    },
+    {
+      "id": "66269",
+      "code": "66269",
+      "name": "Aydıncık Vergi Dairesi Müdürlüğü",
+      "province": "YOZGAT",
+      "district": "Aydıncık"
+    },
+    {
+      "id": "66270",
+      "code": "66270",
+      "name": "Saraykent Vergi Dairesi Müdürlüğü",
+      "province": "YOZGAT",
+      "district": "Saraykent"
+    },
+    {
+      "id": "67201",
+      "code": "67201",
+      "name": "Uzunmehmet Vergi Dairesi Müdürlüğü",
+      "province": "ZONGULDAK",
+      "district": "Merkez"
+    },
+    {
+      "id": "67280",
+      "code": "67280",
+      "name": "Kara Elmas Vergi Dairesi Müdürlüğü",
+      "province": "ZONGULDAK",
+      "district": "Merkez"
+    },
+    {
+      "id": "67261",
+      "code": "67261",
+      "name": "Ereğli Vergi Dairesi Müdürlüğü",
+      "province": "ZONGULDAK",
+      "district": "Ereğli"
+    },
+    {
+      "id": "67263",
+      "code": "67263",
+      "name": "Çaycuma Vergi Dairesi Müdürlüğü",
+      "province": "ZONGULDAK",
+      "district": "Çaycuma"
+    },
+    {
+      "id": "67264",
+      "code": "67264",
+      "name": "Devrek Vergi Dairesi Müdürlüğü",
+      "province": "ZONGULDAK",
+      "district": "Devrek"
+    },
+    {
+      "id": "67265",
+      "code": "67265",
+      "name": "Alaplı Vergi Dairesi Müdürlüğü",
+      "province": "ZONGULDAK",
+      "district": "Alaplı"
+    },
+    {
+      "id": "67266",
+      "code": "67266",
+      "name": "Gökçebey Vergi Dairesi Müdürlüğü",
+      "province": "ZONGULDAK",
+      "district": "Gökçebey"
+    },
+    {
+      "id": "68201",
+      "code": "68201",
+      "name": "Aksaray Vergi Dairesi Müdürlüğü",
+      "province": "AKSARAY",
+      "district": "Merkez"
+    },
+    {
+      "id": "68202",
+      "code": "68202",
+      "name": "Ortaköy Vergi Dairesi Müdürlüğü",
+      "province": "AKSARAY",
+      "district": "Ortaköy"
+    },
+    {
+      "id": "68203",
+      "code": "68203",
+      "name": "Eskil Vergi Dairesi Müdürlüğü",
+      "province": "AKSARAY",
+      "district": "Eskil"
+    },
+    {
+      "id": "68204",
+      "code": "68204",
+      "name": "Gülağaç Vergi Dairesi Müdürlüğü",
+      "province": "AKSARAY",
+      "district": "Gülağaç"
+    },
+    {
+      "id": "68205",
+      "code": "68205",
+      "name": "Ağaçören Vergi Dairesi Müdürlüğü",
+      "province": "AKSARAY",
+      "district": "Ağaçören"
+    },
+    {
+      "id": "68206",
+      "code": "68206",
+      "name": "Güzelyurt Vergi Dairesi Müdürlüğü",
+      "province": "AKSARAY",
+      "district": "Güzelyurt"
+    },
+    {
+      "id": "68207",
+      "code": "68207",
+      "name": "Sultanhanı Vergi Dairesi Müdürlüğü",
+      "province": "AKSARAY",
+      "district": "Sultanhanı"
+    },
+    {
+      "id": "68104",
+      "code": "68104",
+      "name": "Sarıyahşi Malmüdürlüğü",
+      "province": "AKSARAY",
+      "district": "Sarıyahşi"
+    },
+    {
+      "id": "69201",
+      "code": "69201",
+      "name": "Bayburt Vergi Dairesi Müdürlüğü",
+      "province": "BAYBURT",
+      "district": "Merkez"
+    },
+    {
+      "id": "69101",
+      "code": "69101",
+      "name": "Aydıntepe Malmüdürlüğü",
+      "province": "BAYBURT",
+      "district": "Aydıntepe"
+    },
+    {
+      "id": "69102",
+      "code": "69102",
+      "name": "Demirözü Malmüdürlüğü",
+      "province": "BAYBURT",
+      "district": "Demirözü"
+    },
+    {
+      "id": "70201",
+      "code": "70201",
+      "name": "Karaman Vergi Dairesi Müdürlüğü",
+      "province": "KARAMAN",
+      "district": "Merkez"
+    },
+    {
+      "id": "70204",
+      "code": "70204",
+      "name": "Larende Vergi Dairesi Müdürlüğü",
+      "province": "KARAMAN",
+      "district": "Merkez"
+    },
+    {
+      "id": "70-ayranc-ayranc-subesi",
+      "code": null,
+      "name": "Ayrancı Şubesi",
+      "province": "KARAMAN",
+      "district": "Ayrancı"
+    },
+    {
+      "id": "70-kaz-m-karabekir-kaz-mkarabekir-subesi",
+      "code": null,
+      "name": "Karabekir Kazımkarabekir Şubesi",
+      "province": "KARAMAN",
+      "district": "Kazım"
+    },
+    {
+      "id": "70-basyayla-basyayla-subesi",
+      "code": null,
+      "name": "Başyayla Şubesi",
+      "province": "KARAMAN",
+      "district": "Başyayla"
+    },
+    {
+      "id": "70202",
+      "code": "70202",
+      "name": "Ermenek Vergi Dairesi Müdürlüğü",
+      "province": "KARAMAN",
+      "district": "Ermenek"
+    },
+    {
+      "id": "70203",
+      "code": "70203",
+      "name": "Sarıveliler Vergi Dairesi Müdürlüğü",
+      "province": "KARAMAN",
+      "district": "Sarıveliler"
+    },
+    {
+      "id": "71201",
+      "code": "71201",
+      "name": "Irmak Vergi Dairesi Müdürlüğü",
+      "province": "KIRIKKALE",
+      "district": "Merkez"
+    },
+    {
+      "id": "71202",
+      "code": "71202",
+      "name": "Kaletepe Vergi Dairesi Müdürlüğü",
+      "province": "KIRIKKALE",
+      "district": "Merkez"
+    },
+    {
+      "id": "71205",
+      "code": "71205",
+      "name": "Kırıkkale Vergi Dairesi Müdürlüğü",
+      "province": "KIRIKKALE",
+      "district": "Merkez"
+    },
+    {
+      "id": "71-sulakyurt-sulakyurt-subesi",
+      "code": null,
+      "name": "Sulakyurt Şubesi",
+      "province": "KIRIKKALE",
+      "district": "Sulakyurt"
+    },
+    {
+      "id": "71-bal-seyh-bal-seyh-subesi",
+      "code": null,
+      "name": "Balışeyh Şubesi",
+      "province": "KIRIKKALE",
+      "district": "Balışeyh"
+    },
+    {
+      "id": "71-celebi-celebi-subesi",
+      "code": null,
+      "name": "Çelebi Şubesi",
+      "province": "KIRIKKALE",
+      "district": "Çelebi"
+    },
+    {
+      "id": "71-karakecili-karakecili-subesi",
+      "code": null,
+      "name": "Karakeçili Şubesi",
+      "province": "KIRIKKALE",
+      "district": "Karakeçili"
+    },
+    {
+      "id": "71203",
+      "code": "71203",
+      "name": "Keskin Vergi Dairesi Müdürlüğü",
+      "province": "KIRIKKALE",
+      "district": "Keskin"
+    },
+    {
+      "id": "71204",
+      "code": "71204",
+      "name": "Delice Vergi Dairesi Müdürlüğü",
+      "province": "KIRIKKALE",
+      "district": "Delice"
+    },
+    {
+      "id": "72260",
+      "code": "72260",
+      "name": "Batman Vergi Dairesi Müdürlüğü",
+      "province": "BATMAN",
+      "district": "Merkez"
+    },
+    {
+      "id": "72262",
+      "code": "72262",
+      "name": "Raman Vergi Dairesi Müdürlüğü",
+      "province": "BATMAN",
+      "district": "Merkez"
+    },
+    {
+      "id": "72-besiri-besiri-subesi",
+      "code": null,
+      "name": "Beşiri Şubesi",
+      "province": "BATMAN",
+      "district": "Beşiri"
+    },
+    {
+      "id": "72-gercus-gercus-subesi",
+      "code": null,
+      "name": "Gercüş Şubesi",
+      "province": "BATMAN",
+      "district": "Gercüş"
+    },
+    {
+      "id": "72-hasankeyf-hasankeyf-subesi",
+      "code": null,
+      "name": "Hasankeyf Şubesi",
+      "province": "BATMAN",
+      "district": "Hasankeyf"
+    },
+    {
+      "id": "72-sason-sason-subesi",
+      "code": null,
+      "name": "Sason Şubesi",
+      "province": "BATMAN",
+      "district": "Sason"
+    },
+    {
+      "id": "72261",
+      "code": "72261",
+      "name": "Kozluk Vergi Dairesi Müdürlüğü",
+      "province": "BATMAN",
+      "district": "Kozluk"
+    },
+    {
+      "id": "73260",
+      "code": "73260",
+      "name": "Şırnak Vergi Dairesi Müdürlüğü",
+      "province": "ŞIRNAK",
+      "district": "Merkez"
+    },
+    {
+      "id": "73261",
+      "code": "73261",
+      "name": "Cizre Vergi Dairesi Müdürlüğü",
+      "province": "ŞIRNAK",
+      "district": "Cizre"
+    },
+    {
+      "id": "73262",
+      "code": "73262",
+      "name": "Silopi Vergi Dairesi Müdürlüğü",
+      "province": "ŞIRNAK",
+      "district": "Silopi"
+    },
+    {
+      "id": "73263",
+      "code": "73263",
+      "name": "Uludere Vergi Dairesi Müdürlüğü",
+      "province": "ŞIRNAK",
+      "district": "Uludere"
+    },
+    {
+      "id": "73264",
+      "code": "73264",
+      "name": "İdil Vergi Dairesi Müdürlüğü",
+      "province": "ŞIRNAK",
+      "district": "İdil"
+    },
+    {
+      "id": "73101",
+      "code": "73101",
+      "name": "Beytüşşebap Malmüdürlüğü",
+      "province": "ŞIRNAK",
+      "district": "Beytüşşebap"
+    },
+    {
+      "id": "73103",
+      "code": "73103",
+      "name": "Güçlükonak Malmüdürlüğü",
+      "province": "ŞIRNAK",
+      "district": "Güçlükonak"
+    },
+    {
+      "id": "74260",
+      "code": "74260",
+      "name": "Bartın Vergi Dairesi Müdürlüğü",
+      "province": "BARTIN",
+      "district": "Merkez"
+    },
+    {
+      "id": "74261",
+      "code": "74261",
+      "name": "Ulus Vergi Dairesi Müdürlüğü",
+      "province": "BARTIN",
+      "district": "Ulus"
+    },
+    {
+      "id": "74262",
+      "code": "74262",
+      "name": "Amasra Vergi Dairesi Müdürlüğü",
+      "province": "BARTIN",
+      "district": "Amasra"
+    },
+    {
+      "id": "74102",
+      "code": "74102",
+      "name": "Kurucaşile Malmüdürlüğü",
+      "province": "BARTIN",
+      "district": "Kurucaşile"
+    },
+    {
+      "id": "75201",
+      "code": "75201",
+      "name": "Ardahan Vergi Dairesi Müdürlüğü",
+      "province": "ARDAHAN",
+      "district": "Merkez"
+    },
+    {
+      "id": "75202",
+      "code": "75202",
+      "name": "Göle Vergi Dairesi Müdürlüğü",
+      "province": "ARDAHAN",
+      "district": "Göle"
+    },
+    {
+      "id": "75101",
+      "code": "75101",
+      "name": "Çıldır Malmüdürlüğü",
+      "province": "ARDAHAN",
+      "district": "Çıldır"
+    },
+    {
+      "id": "75102",
+      "code": "75102",
+      "name": "Damal Malmüdürlüğü",
+      "province": "ARDAHAN",
+      "district": "Damal"
+    },
+    {
+      "id": "75104",
+      "code": "75104",
+      "name": "Hanak Malmüdürlüğü",
+      "province": "ARDAHAN",
+      "district": "Hanak"
+    },
+    {
+      "id": "75105",
+      "code": "75105",
+      "name": "Posof Malmüdürlüğü",
+      "province": "ARDAHAN",
+      "district": "Posof"
+    },
+    {
+      "id": "76201",
+      "code": "76201",
+      "name": "Iğdır Vergi Dairesi Müdürlüğü",
+      "province": "IĞDIR",
+      "district": "Merkez"
+    },
+    {
+      "id": "76203",
+      "code": "76203",
+      "name": "Aras Vergi Dairesi Müdürlüğü",
+      "province": "IĞDIR",
+      "district": "Merkez"
+    },
+    {
+      "id": "76-aral-k-aral-k-subesi",
+      "code": null,
+      "name": "Aralık Şubesi",
+      "province": "IĞDIR",
+      "district": "Aralık"
+    },
+    {
+      "id": "76-karakoyunlu-karakoyunlu-subesi",
+      "code": null,
+      "name": "Karakoyunlu Şubesi",
+      "province": "IĞDIR",
+      "district": "Karakoyunlu"
+    },
+    {
+      "id": "76202",
+      "code": "76202",
+      "name": "Tuzluca Vergi Dairesi Müdürlüğü",
+      "province": "IĞDIR",
+      "district": "Tuzluca"
+    },
+    {
+      "id": "77201",
+      "code": "77201",
+      "name": "Yalova Vergi Dairesi Müdürlüğü",
+      "province": "YALOVA",
+      "district": "Merkez"
+    },
+    {
+      "id": "77202",
+      "code": "77202",
+      "name": "Çınarcık Vergi Dairesi Müdürlüğü",
+      "province": "YALOVA",
+      "district": "Çınarcık"
+    },
+    {
+      "id": "77203",
+      "code": "77203",
+      "name": "Altınova Vergi Dairesi Müdürlüğü",
+      "province": "YALOVA",
+      "district": "Altınova"
+    },
+    {
+      "id": "77204",
+      "code": "77204",
+      "name": "Armutlu Vergi Dairesi Müdürlüğü",
+      "province": "YALOVA",
+      "district": "Armutlu"
+    },
+    {
+      "id": "78201",
+      "code": "78201",
+      "name": "Karabük Vergi Dairesi Müdürlüğü",
+      "province": "KARABÜK",
+      "district": "Merkez"
+    },
+    {
+      "id": "78261",
+      "code": "78261",
+      "name": "Demirkent Vergi Dairesi Müdürlüğü",
+      "province": "KARABÜK",
+      "district": "Merkez"
+    },
+    {
+      "id": "78-eflani-eflani-subesi",
+      "code": null,
+      "name": "Eflani Şubesi",
+      "province": "KARABÜK",
+      "district": "Eflani"
+    },
+    {
+      "id": "78-ovac-k-ovac-k-subesi",
+      "code": null,
+      "name": "Ovacık Şubesi",
+      "province": "KARABÜK",
+      "district": "Ovacık"
+    },
+    {
+      "id": "78260",
+      "code": "78260",
+      "name": "Safranbolu Vergi Dairesi Müdürlüğü",
+      "province": "KARABÜK",
+      "district": "Safranbolu"
+    },
+    {
+      "id": "78202",
+      "code": "78202",
+      "name": "Yenice Vergi Dairesi Müdürlüğü",
+      "province": "KARABÜK",
+      "district": "Yenice"
+    },
+    {
+      "id": "78203",
+      "code": "78203",
+      "name": "Eskipazar Vergi Dairesi Müdürlüğü",
+      "province": "KARABÜK",
+      "district": "Eskipazar"
+    },
+    {
+      "id": "79201",
+      "code": "79201",
+      "name": "Kilis Vergi Dairesi Müdürlüğü",
+      "province": "KİLİS",
+      "district": "Merkez"
+    },
+    {
+      "id": "80201",
+      "code": "80201",
+      "name": "Osmaniye Vergi Dairesi Müdürlüğü",
+      "province": "OSMANİYE",
+      "district": "Merkez"
+    },
+    {
+      "id": "80205",
+      "code": "80205",
+      "name": "Amanos Vergi Dairesi Müdürlüğü",
+      "province": "OSMANİYE",
+      "district": "Merkez"
+    },
+    {
+      "id": "80-hasanbeyli-hasanbeyli-subesi",
+      "code": null,
+      "name": "Hasanbeyli Şubesi",
+      "province": "OSMANİYE",
+      "district": "Hasanbeyli"
+    },
+    {
+      "id": "80-sumbas-sumbas-subesi",
+      "code": null,
+      "name": "Sumbas Şubesi",
+      "province": "OSMANİYE",
+      "district": "Sumbas"
+    },
+    {
+      "id": "80260",
+      "code": "80260",
+      "name": "Kadirli Vergi Dairesi Müdürlüğü",
+      "province": "OSMANİYE",
+      "district": "Kadirli"
+    },
+    {
+      "id": "80202",
+      "code": "80202",
+      "name": "Düziçi Vergi Dairesi Müdürlüğü",
+      "province": "OSMANİYE",
+      "district": "Düziçi"
+    },
+    {
+      "id": "80203",
+      "code": "80203",
+      "name": "Bahçe Vergi Dairesi Müdürlüğü",
+      "province": "OSMANİYE",
+      "district": "Bahçe"
+    },
+    {
+      "id": "80204",
+      "code": "80204",
+      "name": "Toprakkale Vergi Dairesi Müdürlüğü",
+      "province": "OSMANİYE",
+      "district": "Toprakkale"
+    },
+    {
+      "id": "81260",
+      "code": "81260",
+      "name": "Düzce Vergi Dairesi Müdürlüğü",
+      "province": "DÜZCE",
+      "district": "Merkez"
+    },
+    {
+      "id": "81261",
+      "code": "81261",
+      "name": "Akçakoca Vergi Dairesi Müdürlüğü",
+      "province": "DÜZCE",
+      "district": "Akçakoca"
+    },
+    {
+      "id": "81262",
+      "code": "81262",
+      "name": "Gölyaka Vergi Dairesi Müdürlüğü",
+      "province": "DÜZCE",
+      "district": "Gölyaka"
+    },
+    {
+      "id": "81263",
+      "code": "81263",
+      "name": "Kaynaşlı Vergi Dairesi Müdürlüğü",
+      "province": "DÜZCE",
+      "district": "Kaynaşlı"
+    },
+    {
+      "id": "81264",
+      "code": "81264",
+      "name": "Gümüşova Vergi Dairesi Müdürlüğü",
+      "province": "DÜZCE",
+      "district": "Gümüşova"
+    },
+    {
+      "id": "81265",
+      "code": "81265",
+      "name": "Cumayeri Vergi Dairesi Müdürlüğü",
+      "province": "DÜZCE",
+      "district": "Cumayeri"
+    },
+    {
+      "id": "81266",
+      "code": "81266",
+      "name": "Çilimli Vergi Dairesi Müdürlüğü",
+      "province": "DÜZCE",
+      "district": "Çilimli"
+    },
+    {
+      "id": "81267",
+      "code": "81267",
+      "name": "Yığılca Vergi Dairesi Müdürlüğü",
+      "province": "DÜZCE",
+      "district": "Yığılca"
+    }
+  ]
+}
