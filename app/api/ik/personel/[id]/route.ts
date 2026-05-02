@@ -54,6 +54,14 @@ const EmployeeUpdateSchema = z.object({
   cv_belgesi: z.record(z.any()).optional().nullable(),
 })
 
+function omitNullishValues(value: Record<string, any>) {
+  const nullableFields = new Set(['cv_belgesi'])
+
+  return Object.fromEntries(
+    Object.entries(value).filter(([key, item]) => nullableFields.has(key) || (item !== null && item !== undefined))
+  )
+}
+
 // GET /api/ik/personel/[id]
 export async function GET(
   request: NextRequest,
@@ -104,7 +112,7 @@ export async function PATCH(
   const { id } = await params
   const supabase = createServiceClient()
 
-  const body = await request.json()
+  const body = omitNullishValues(await request.json())
   const parsed = EmployeeUpdateSchema.safeParse(body)
   
   if (!parsed.success) {

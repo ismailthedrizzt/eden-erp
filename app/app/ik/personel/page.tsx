@@ -174,7 +174,11 @@ export default function PersonelYonetimPage() {
     const payload: Record<string, any> = {}
 
     Object.entries(raw).forEach(([key, value]) => {
-      if (value === '') return
+      if (key === 'cv_belgesi' && value === null) {
+        payload[key] = value
+        return
+      }
+      if (value === '' || value === null || value === undefined) return
       payload[key] = value
     })
 

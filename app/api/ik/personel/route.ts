@@ -53,6 +53,14 @@ const EmployeeSchema = z.object({
   cv_belgesi: z.record(z.any()).optional().nullable(),
 })
 
+function omitNullishStrings(value: Record<string, any>) {
+  const nullableFields = new Set(['cv_belgesi'])
+
+  return Object.fromEntries(
+    Object.entries(value).filter(([key, item]) => nullableFields.has(key) || (item !== null && item !== undefined))
+  )
+}
+
 // GET /api/ik/personel
 export async function GET(request: NextRequest) {
   const supabase = await createClient()
@@ -99,7 +107,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const supabase = createServiceClient()
 
-  const body = await request.json()
+  const body = omitNullishStrings(await request.json())
   const parsed = EmployeeSchema.safeParse(body)
   if (!parsed.success) {
     return NextResponse.json({ error: 'Geçersiz veri', code: 'VALIDATION_FAILED', details: parsed.error.flatten() }, { status: 400 })
