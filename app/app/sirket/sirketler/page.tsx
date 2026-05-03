@@ -69,7 +69,7 @@ const heroFields: FormField[] = [
   { name: 'kisa_unvan', label: 'Kısa Ünvan', type: 'text', required: true },
   { name: 'ticari_unvan', label: 'Ticari Unvan', type: 'text', required: true, colSpan: 2 },
   { name: 'vkn_tckn', label: 'VKN', type: 'text', required: true, maxLength: 10, inputMode: 'numeric', pattern: '[0-9]{10}' },
-  { name: 'vergi_dairesi', label: 'Vergi Dairesi', type: 'select', required: true, searchable: true },
+  { name: 'vergi_dairesi', label: 'Vergi Dairesi', type: 'select', required: true },
   {
     name: 'sirket_turu',
     label: 'Şirket Türü',
