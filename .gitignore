@@ -1,5 +1,7 @@
 # Dependencies
 node_modules/
+.venv/
+apps/api/.venv/
 .pnp
 .pnp.js
 
@@ -23,6 +25,10 @@ yarn-debug.log*
 yarn-error.log*
 .next-dev.log
 .next-dev.err.log
+.next-dev*.log
+.next-dev*.err.log
+.api-dev*.log
+.api-dev*.err.log
 
 # Vercel
 .vercel

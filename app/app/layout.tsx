@@ -6,6 +6,8 @@ import Sidebar from '@/components/layout/Sidebar'
 import { Menu, Sun, Moon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ModuleLicenseProvider } from '@/hooks/useModuleLicense'
+import { PermissionProvider } from '@/lib/security/permissionStore'
+import { ModuleProvider } from '@/lib/security/moduleStore'
 
 const BREADCRUMBS: Record<string, string> = {
   '/app': 'Ana Sayfa',
@@ -50,28 +52,30 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <ModuleLicenseProvider>
-      <div className={cn('flex h-screen overflow-hidden', dark && 'dark')}>
-        {/* Desktop Sidebar */}
-        <div className="hidden lg:block">
-          <Sidebar collapsed={collapsed} mobileOpen={false} onMobileClose={() => {}} />
-        </div>
-
-        {/* Mobile Sidebar Overlay */}
-        {mobileMenuOpen && (
-          <>
-            {/* Backdrop */}
-            <div 
-              className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-              onClick={() => setMobileMenuOpen(false)}
-            />
-            {/* Mobile Sidebar */}
-            <div className="fixed left-0 top-0 h-full z-50 lg:hidden">
-              <Sidebar collapsed={false} mobileOpen={true} onMobileClose={() => setMobileMenuOpen(false)} />
+      <ModuleProvider>
+        <PermissionProvider>
+          <div className={cn('flex h-screen overflow-hidden', dark && 'dark')}>
+            {/* Desktop Sidebar */}
+            <div className="hidden lg:block">
+              <Sidebar collapsed={collapsed} mobileOpen={false} onMobileClose={() => {}} />
             </div>
-          </>
-        )}
 
-        <div className="flex-1 flex flex-col overflow-hidden min-w-0">
+            {/* Mobile Sidebar Overlay */}
+            {mobileMenuOpen && (
+              <>
+                {/* Backdrop */}
+                <div
+                  className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+                  onClick={() => setMobileMenuOpen(false)}
+                />
+                {/* Mobile Sidebar */}
+                <div className="fixed left-0 top-0 h-full z-50 lg:hidden">
+                  <Sidebar collapsed={false} mobileOpen={true} onMobileClose={() => setMobileMenuOpen(false)} />
+                </div>
+              </>
+            )}
+
+            <div className="flex-1 flex flex-col overflow-hidden min-w-0">
           {/* Topbar */}
           <header className="h-14 bg-white dark:bg-eden-navy-2 border-b border-gray-200 dark:border-eden-navy
                              px-3 sm:px-5 flex items-center justify-between flex-shrink-0 z-10">
@@ -125,8 +129,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <main className="flex-1 overflow-y-auto bg-gray-50 dark:bg-[#09141e] p-5">
             {children}
           </main>
-        </div>
-      </div>
+            </div>
+          </div>
+        </PermissionProvider>
+      </ModuleProvider>
     </ModuleLicenseProvider>
   )
 }

@@ -1,24 +1,28 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { BriefcaseBusiness, Building2, FileText, Landmark, MapPin, Phone, Settings, Users } from 'lucide-react'
+import { BriefcaseBusiness, Building2, FileText, Landmark, Phone, Settings, Users } from 'lucide-react'
 import { useSirketler } from '@/hooks/useSirketler'
 import { EntityForm, FormField, FormMode, FormTab } from '@/components/ui/EntityForm'
 import { PageBanner } from '@/components/ui/PageBanner'
 import { SmartDataTable, ColumnDef, WidgetDef } from '@/components/ui/SmartDataTable'
 import { Toast } from '@/components/ui/Toast'
 import { formatPhoneInput, normalizeEmailInput } from '@/lib/utils'
+import { createFormModeState, mapPageStateToFormMode } from '@/lib/forms/formModeEngine'
+import { useModules } from '@/lib/security/moduleStore'
+import { usePermissions } from '@/lib/security/permissionStore'
+import { PERMISSIONS } from '@/packages/shared/src'
 import type { Sirket } from '@/types/sirket'
 
 type PageState = 'list' | 'create' | 'view' | 'edit'
 type ToastState = { type: 'success' | 'error' | 'warning'; title?: string; message: string }
 type SaveError = Error & { toast?: ToastState; fieldErrors?: Record<string, string> }
-type SirketTableRow = Sirket & { adres_ozet: string }
+type SirketTableRow = Sirket & { adres_ozet: string; logo_url: string }
 type TaxOfficeOption = { value: string; label: string }
 
 const FIELD_LABELS: Record<string, string> = {
   ticari_unvan: 'Ticari Unvan',
-  kisa_unvan: 'Şirket Adı',
+  kisa_unvan: 'Kısa Ünvan',
   vkn_tckn: 'VKN',
   vergi_dairesi: 'Vergi Dairesi',
   mersis_no: 'MERSİS No',
@@ -49,21 +53,23 @@ const FIELD_LABELS: Record<string, string> = {
 }
 
 const columns: ColumnDef[] = [
-  { key: 'kisa_unvan', label: 'Şirket Adı', type: 'text', width: 200, sortable: true, category: 'Kimlik' },
+  { key: 'logo_url', label: 'Logo', type: 'image', width: 64, fixedWidth: true, category: 'Kimlik' },
+  { key: 'kisa_unvan', label: 'Kısa Ünvan', type: 'text', width: 200, sortable: true, category: 'Kimlik' },
   { key: 'ticari_unvan', label: 'Ticari Unvan', type: 'text', width: 280, sortable: true, category: 'Kimlik' },
   { key: 'vkn_tckn', label: 'VKN', type: 'text', width: 120, sortable: true, category: 'Kimlik' },
   { key: 'vergi_dairesi', label: 'Vergi Dairesi', type: 'text', width: 140, sortable: true, category: 'Vergi' },
   { key: 'sirket_turu', label: 'Şirket Türü', type: 'enum', width: 150, sortable: true, category: 'Tescil' },
-  { key: 'adres_ozet', label: 'Adres', type: 'text', width: 250, category: 'Adres' },
+  { key: 'adres_ozet', label: 'Adres', type: 'text', width: 250, category: 'İletişim' },
   { key: 'telefon', label: 'Telefon', type: 'text', width: 150, category: 'İletişim' },
   { key: 'email', label: 'E-posta', type: 'text', width: 200, category: 'İletişim' },
   { key: 'is_active', label: 'Durum', type: 'boolean', width: 100, sortable: true, category: 'Durum' },
 ]
 
 const heroFields: FormField[] = [
+  { name: 'kisa_unvan', label: 'Kısa Ünvan', type: 'text', required: true },
   { name: 'ticari_unvan', label: 'Ticari Unvan', type: 'text', required: true, colSpan: 2 },
   { name: 'vkn_tckn', label: 'VKN', type: 'text', required: true, maxLength: 10, inputMode: 'numeric', pattern: '[0-9]{10}' },
-  { name: 'vergi_dairesi', label: 'Vergi Dairesi', type: 'select', required: true },
+  { name: 'vergi_dairesi', label: 'Vergi Dairesi', type: 'select', required: true, searchable: true },
   {
     name: 'sirket_turu',
     label: 'Şirket Türü',
@@ -121,21 +127,14 @@ const tabs: FormTab[] = [
     ],
   },
   {
-    id: 'adres',
-    label: 'Adres',
-    icon: <MapPin size={16} />,
+    id: 'iletisim',
+    label: 'İletişim',
+    icon: <Phone size={16} />,
     fields: [
       { name: 'ulke', label: 'Ülke', type: 'text', required: true, defaultValue: 'Türkiye' },
       { name: 'il', label: 'İl', type: 'text', required: true },
       { name: 'ilce', label: 'İlçe', type: 'text', required: true },
       { name: 'adres', label: 'Adres', type: 'textarea', required: true, colSpan: 3 },
-    ],
-  },
-  {
-    id: 'iletisim',
-    label: 'İletişim',
-    icon: <Phone size={16} />,
-    fields: [
       { name: 'telefon', label: 'Telefon', type: 'tel' },
       { name: 'email', label: 'E-posta', type: 'email' },
       { name: 'web_sitesi', label: 'Web Sitesi', type: 'text', colSpan: 2 },
@@ -216,6 +215,8 @@ const formatFieldList = (fields: string[]) => fields.map(getFieldLabel).join(', 
 
 export default function SirketlerPage() {
   const { data: sirketler, loading, error: listError, yenile } = useSirketler()
+  const { can } = usePermissions()
+  const { isEnabled, isWritable } = useModules()
   const [pageState, setPageState] = useState<PageState>('list')
   const [selectedSirket, setSelectedSirket] = useState<Sirket | null>(null)
   const [saving, setSaving] = useState(false)
@@ -232,14 +233,10 @@ export default function SirketlerPage() {
       .then(response => response.ok ? response.json() : null)
       .then(payload => {
         if (cancelled || !Array.isArray(payload?.offices)) return
-        setTaxOfficeOptions(payload.offices.map((office: any) => ({
-          value: [
-            office.code || office.name,
-            office.province,
-            office.district,
-          ].filter(Boolean).join(' - '),
-          label: `${office.code ? `${office.code} - ` : ''}${office.name} (${office.province}/${office.district})`,
-        })))
+        setTaxOfficeOptions(payload.offices.map((office: any) => {
+          const label = `${office.code ? `${office.code} - ` : ''}${office.name} (${office.province}/${office.district})`
+          return { value: label, label }
+        }))
       })
       .catch(() => {
         if (!cancelled) setTaxOfficeOptions([])
@@ -259,6 +256,7 @@ export default function SirketlerPage() {
   const tableData: SirketTableRow[] = (sirketler || []).map(sirket => ({
     ...sirket,
     adres_ozet: [sirket.ilce, sirket.il].filter(Boolean).join(', '),
+    logo_url: extractLogoUrl((sirket as any).hero_images),
   }))
 
   const widgets: WidgetDef<SirketTableRow>[] = [
@@ -267,9 +265,26 @@ export default function SirketlerPage() {
     { key: 'inactive', label: 'Pasif', render: () => tableData.filter(row => !row.is_active).length },
   ]
 
-  const formMode: FormMode = pageState === 'create' ? 'create' : pageState === 'edit' ? 'edit' : 'view'
+  const moduleEnabled = isEnabled('companies')
+  const moduleWritable = isWritable('companies')
+  const formAccess = createFormModeState(mapPageStateToFormMode(pageState), {
+    canView: moduleEnabled && can(PERMISSIONS.companies.view),
+    canInsert: moduleWritable && can(PERMISSIONS.companies.insert),
+    canEdit: moduleWritable && can(PERMISSIONS.companies.edit),
+    canApprove: moduleWritable && can(PERMISSIONS.companies.approve),
+  })
+  const formMode: FormMode = pageState === 'create' ? 'create' : pageState === 'edit' && formAccess.canSave ? 'edit' : 'view'
+
+  if (!formAccess.canView) {
+    return (
+      <div className="rounded-lg border border-gray-200 bg-white p-6 text-sm text-gray-600 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300">
+        Bu modulu goruntuleme yetkiniz bulunmuyor.
+      </div>
+    )
+  }
 
   const handleAddClick = () => {
+    if (!formAccess.showAdd) return
     setSelectedSirket(null)
     setFormError(null)
     setFieldErrors({})
@@ -313,8 +328,6 @@ export default function SirketlerPage() {
     if (payload.email) payload.email = normalizeEmailInput(String(payload.email))
     if (payload.vkn_tckn) payload.vkn_tckn = String(payload.vkn_tckn).replace(/\D/g, '').slice(0, 10)
     if (payload.mali_yil_baslangici) payload.mali_yil_baslangici = Number(payload.mali_yil_baslangici)
-    if (payload.ticari_unvan) payload.kisa_unvan = payload.ticari_unvan
-
     if (pageState === 'create') {
       payload.ulke = payload.ulke || 'Türkiye'
       payload.varsayilan_para_birimi = payload.varsayilan_para_birimi || 'TRY'
@@ -421,7 +434,7 @@ export default function SirketlerPage() {
         mode: 'list' as const,
         title: 'Şirketlerimiz',
         subtitle: 'Yönetilen şirket kayıtlarını görüntüleyin',
-        onAddClick: handleAddClick,
+        onAddClick: formAccess.showAdd ? handleAddClick : undefined,
         addButtonText: 'Ekle',
       }
     : {
@@ -522,7 +535,9 @@ export default function SirketlerPage() {
             onSave={handleSave}
             onCancel={handleBackToList}
             onDelete={handleDelete}
-            onModeChange={(mode) => setPageState(mode)}
+            onModeChange={(mode) => setPageState(mode === 'edit' && !formAccess.showEdit ? 'view' : mode)}
+            canCreate={formAccess.showAdd}
+            canEdit={formAccess.showEdit}
             enableHistory
             imageSlot={{
               dataField: 'hero_images',
@@ -552,6 +567,12 @@ export default function SirketlerPage() {
       )}
     </div>
   )
+}
+
+function extractLogoUrl(images: unknown) {
+  const rows = Array.isArray(images) ? images : []
+  const preferred = rows.find((image: any) => image?.slotId === 'original_logo' || image?.slot_id === 'original_logo' || image?.slotId === 'logo_primary' || image?.slot_id === 'logo_primary') || rows[0]
+  return preferred?.url || preferred?.previewUrl || preferred?.preview_url || ''
 }
 
 function RelatedSummaryTable({ type, rows }: { type: 'ortaklar' | 'temsilciler' | 'paydaslar'; rows: any[] }) {
