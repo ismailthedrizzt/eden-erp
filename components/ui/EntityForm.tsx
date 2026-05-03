@@ -885,7 +885,10 @@ export function EntityForm({
   }
 
   const getTabValidationStatus = (tab: FormTab) => {
-    const states = flattenFields(tab.fields).map(getFieldValidationState)
+    // Tab color reflects only the actual fields rendered on that tab.
+    // Nested list draft fields have their own add-row validation and should not
+    // make a tab red before the user starts adding a row.
+    const states = tab.fields.map(getFieldValidationState)
     if (states.some(state => state.status === 'invalid')) return 'invalid'
     if (states.some(state => state.status === 'valid')) return 'valid'
     return 'neutral'
