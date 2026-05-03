@@ -76,7 +76,7 @@ interface SmartDataTableProps<T extends { id: string }> {
   pageSizeOptions?: number[]
   realtime?: boolean
   pollingInterval?: number
-  /** Whether to show action column. When undefined, shows when onRowClick is provided */
+  /** Whether to show action column. Only shown when explicitly enabled. */
   showActions?: boolean
 }
 
@@ -152,8 +152,8 @@ export function SmartDataTable<T extends { id: string }>({
   const [tableWidth, setTableWidth] = useState(0)
 
   // Computed: Action column visibility
-  // If showActions is explicitly set, use that. Otherwise default to showing when onRowClick exists
-  const shouldShowActions = showActions !== undefined ? showActions : !!onRowClick
+  // General rule: hide the action column unless an action surface is explicitly defined.
+  const shouldShowActions = showActions === true
 
   // Refs
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
@@ -773,10 +773,52 @@ export function SmartDataTable<T extends { id: string }>({
     return value ?? '-'
   }
 
+  const quickLookPanel = (showWidgets || (hoveredRow && hoveredRow !== 'widget-preview' && widgets.length > 0)) ? (
+    <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="font-medium text-blue-900 dark:text-blue-100 flex items-center gap-2">
+          <Eye size={16} />
+          Hızlı Bakış
+        </h3>
+        <button
+          onClick={() => {
+            setShowWidgets(false)
+            setHoveredRow(null)
+          }}
+          className="text-blue-600 dark:text-blue-400 hover:text-blue-800"
+          title="Kapat"
+        >
+          <X size={16} />
+        </button>
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {widgets.length > 0 ? widgets.map(widget => (
+          <div key={widget.key} className="bg-white dark:bg-gray-800 rounded-lg p-3 shadow-sm">
+            <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">{widget.label}</div>
+            <div className="font-medium text-gray-900 dark:text-white">
+              {(() => {
+                const targetRow = hoveredRow && hoveredRow !== 'widget-preview'
+                  ? data.find(r => r.id === hoveredRow)
+                  : data[0]
+                return targetRow ? widget.render(targetRow) : '-'
+              })()}
+            </div>
+          </div>
+        )) : (
+          <div className="col-span-full text-center text-sm text-gray-500 dark:text-gray-400 py-4">
+            Bu liste için hızlı bakış bilgisi tanımlanmamış.
+          </div>
+        )}
+      </div>
+    </div>
+  ) : null
+
   return (
     <div className="w-full space-y-4">
+      {quickLookPanel}
+
       {/* Header Toolbar */}
-      <div className="flex items-center gap-2 justify-between bg-white dark:bg-gray-800 p-3 sm:p-4 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+      <div className="flex items-center gap-2 justify-between bg-white dark:bg-gray-800 p-3 sm:p-4 rounded-lg border border-gray-200 dark:border-gray-700 overflow-visible">
         {/* Left: Title and Search */}
         <div className="flex items-center gap-3 flex-1 min-w-0">
           {title && <h2 className="hidden sm:block text-lg font-semibold text-gray-900 dark:text-white whitespace-nowrap">{title}</h2>}
@@ -827,7 +869,7 @@ export function SmartDataTable<T extends { id: string }>({
             <Sparkles size={18} />
           </button>
 
-          {/* Widget Toggle - Fixed to toggle overlay properly */}
+          {/* Quick Look Toggle */}
           <button
             onClick={() => setShowWidgets(!showWidgets)}
             onMouseEnter={() => !showWidgets && setHoveredRow('widget-preview')}
@@ -837,7 +879,7 @@ export function SmartDataTable<T extends { id: string }>({
                 ? "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400" 
                 : "hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400"
             )}
-            title="Widget görünümü"
+            title="Hızlı Bakış"
           >
             <Eye size={18} />
             {widgets.length > 0 && (
@@ -1074,46 +1116,6 @@ export function SmartDataTable<T extends { id: string }>({
         </div>
       </div>
 
-      {/* Widget Overlay - Shows when toggled or when hovering row with widgets */}
-      {(showWidgets || (hoveredRow && hoveredRow !== 'widget-preview' && widgets.length > 0)) && (
-        <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="font-medium text-blue-900 dark:text-blue-100 flex items-center gap-2">
-              <Eye size={16} />
-              Hızlı Bilgi
-            </h3>
-            <button 
-              onClick={() => {
-                setShowWidgets(false)
-                setHoveredRow(null)
-              }}
-              className="text-blue-600 dark:text-blue-400 hover:text-blue-800"
-            >
-              <X size={16} />
-            </button>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {widgets.length > 0 ? widgets.map(widget => (
-              <div key={widget.key} className="bg-white dark:bg-gray-800 rounded-lg p-3 shadow-sm">
-                <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">{widget.label}</div>
-                <div className="font-medium text-gray-900 dark:text-white">
-                  {(() => {
-                    const targetRow = hoveredRow && hoveredRow !== 'widget-preview' 
-                      ? data.find(r => r.id === hoveredRow)
-                      : data[0]
-                    return targetRow ? widget.render(targetRow) : '-'
-                  })()}
-                </div>
-              </div>
-            )) : (
-              <div className="col-span-full text-center text-sm text-gray-500 dark:text-gray-400 py-4">
-                Henüz widget eklenmemiş. Widget tanımlamak için SmartDataTable bileşenine widgets prop&apos;u ekleyin.
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
       {/* Column Filter Panel */}
       {showFilterPanel && (
         <div className="bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-lg p-4 space-y-3">
@@ -1212,7 +1214,9 @@ export function SmartDataTable<T extends { id: string }>({
                   )
                 })}
                 {shouldShowActions && (
-                  <th className="px-4 py-3 w-10 text-center text-xs text-gray-500 dark:text-gray-400 font-medium">İşlem</th>
+                  <th className="sticky right-0 z-20 w-12 border-l border-gray-200 bg-gray-50 px-3 py-3 text-center text-xs font-medium text-gray-500 shadow-[-6px_0_10px_-10px_rgba(0,0,0,0.45)] dark:border-gray-700 dark:bg-gray-700">
+                    İşlem
+                  </th>
                 )}
               </tr>
             </thead>
@@ -1244,7 +1248,7 @@ export function SmartDataTable<T extends { id: string }>({
                     </td>
                   ))}
                   {shouldShowActions && (
-                    <td className="px-4 py-3">
+                    <td className="sticky right-0 z-10 border-l border-gray-100 bg-white px-3 py-3 text-center shadow-[-6px_0_10px_-10px_rgba(0,0,0,0.45)] dark:border-gray-800 dark:bg-gray-800">
                       <button 
                         className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded pointer-events-auto"
                         onClick={(e) => {
