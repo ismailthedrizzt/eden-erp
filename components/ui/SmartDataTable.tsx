@@ -760,17 +760,28 @@ export function SmartDataTable<T extends { id: string }>({
     
     if (col.type === 'boolean') {
       return value ? (
-        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-200">
           Evet
         </span>
       ) : (
-        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-100">
           Hayır
         </span>
       )
     }
     
     return value ?? '-'
+  }
+
+  function getCellTitle(value: any): string | undefined {
+    if (value === null || value === undefined) return undefined
+    if (typeof value === 'object') return undefined
+    const text = String(value)
+    return text.length > 0 ? text : undefined
+  }
+
+  function isLeftAlignedColumn(col: ColumnDef): boolean {
+    return col.type === 'text' || col.type === 'enum'
   }
 
   const quickLookPanel = (showWidgets || (hoveredRow && hoveredRow !== 'widget-preview' && widgets.length > 0)) ? (
@@ -835,7 +846,7 @@ export function SmartDataTable<T extends { id: string }>({
         </div>
 
         {/* Right: View Toggle, Filter, Settings */}
-        <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0 overflow-x-auto scrollbar-hide">
+        <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0 overflow-visible scrollbar-hide">
           {/* Screen Size Indicator */}
           <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-gray-700 rounded-lg">
             <Monitor size={14} className="text-gray-500 dark:text-gray-400" />
@@ -1230,10 +1241,12 @@ export function SmartDataTable<T extends { id: string }>({
                   onClick={() => onRowClick?.(row)}
                 >
                   {visibleColumns.map(col => (
-                    <td 
+                    <td
                       key={col.key} 
+                      title={getCellTitle(getNestedValue(row, col.key))}
                       className={cn(
-                        "px-2 py-2 text-gray-900 dark:text-gray-100 border-r border-gray-100 dark:border-gray-800 last:border-r-0 text-center whitespace-nowrap overflow-hidden",
+                        "px-2 py-2 text-gray-900 dark:text-gray-100 border-r border-gray-100 dark:border-gray-800 last:border-r-0 whitespace-nowrap overflow-hidden",
+                        isLeftAlignedColumn(col) ? "text-left" : "text-center",
                         col.fontSize === 'xs' ? 'text-xs' : 'text-sm'
                       )}
                       style={{ 
@@ -1242,7 +1255,10 @@ export function SmartDataTable<T extends { id: string }>({
                         maxWidth: col.maxWidth || (col.type === 'image' ? 56 : 180)
                       }}
                     >
-                      <div className="flex items-center justify-center h-full min-w-0 truncate">
+                      <div className={cn(
+                        "flex h-full min-w-0 truncate text-gray-900 dark:text-gray-100",
+                        isLeftAlignedColumn(col) ? "items-center justify-start" : "items-center justify-center"
+                      )}>
                         {renderCellValue(col, getNestedValue(row, col.key), row)}
                       </div>
                     </td>

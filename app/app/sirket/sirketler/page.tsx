@@ -542,8 +542,9 @@ export default function SirketlerPage() {
             imageSlot={{
               dataField: 'hero_images',
               slots: [
-                { id: 'original_logo', title: 'Orijinal Logo', required: true },
-                { id: 'dark_logo', title: 'Dark Mode Logo', required: true },
+                { id: 'light_mode_avatar', title: 'Light Mode Avatar', required: true },
+                { id: 'dark_mode_avatar', title: 'Dark Mode Avatar', required: true },
+                { id: 'document_logo', title: 'Belge Logosu', required: false },
               ],
             }}
             documentSlot={{
@@ -571,7 +572,12 @@ export default function SirketlerPage() {
 
 function extractLogoUrl(images: unknown) {
   const rows = Array.isArray(images) ? images : []
-  const preferred = rows.find((image: any) => image?.slotId === 'original_logo' || image?.slot_id === 'original_logo' || image?.slotId === 'logo_primary' || image?.slot_id === 'logo_primary') || rows[0]
+  const isDark = typeof document !== 'undefined' && document.documentElement.classList.contains('dark')
+  const preferredSlot = isDark ? 'dark_mode_avatar' : 'light_mode_avatar'
+  const preferred = rows.find((image: any) => image?.slotId === preferredSlot || image?.slot_id === preferredSlot)
+    || rows.find((image: any) => image?.slotId === 'light_mode_avatar' || image?.slot_id === 'light_mode_avatar')
+    || rows.find((image: any) => image?.slotId === 'original_logo' || image?.slot_id === 'original_logo' || image?.slotId === 'logo_primary' || image?.slot_id === 'logo_primary')
+    || rows[0]
   return preferred?.url || preferred?.previewUrl || preferred?.preview_url || ''
 }
 
