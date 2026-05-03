@@ -190,9 +190,9 @@ const tabs: FormTab[] = [
       { name: 'e_fatura_mukellefi', label: 'E-Fatura Mükellefi', type: 'checkbox' },
       { name: 'e_arsiv_mukellefi', label: 'E-Arşiv Mükellefi', type: 'checkbox' },
       { name: 'e_irsaliye_mukellefi', label: 'E-İrsaliye Mükellefi', type: 'checkbox' },
-      { name: 'sgk_is_yeri_sicil_no', label: 'SGK İşyeri Sicil No', type: 'text' },
-      { name: 'sgk_il', label: 'SGK İl', type: 'text' },
-      { name: 'sgk_sube', label: 'SGK Şube', type: 'text' },
+      { name: 'sgk_is_yeri_sicil_no', label: 'SGK İşyeri Sicil No', type: 'text', maxLength: 26, inputMode: 'numeric', placeholder: '26 hane: M + 4 işkolu + 2 eski şube + 2 yeni şube + 7 sıra + 3 il + 2 ilçe + 2 kontrol + 3 aracı' },
+      { name: 'sgk_il', label: 'SGK İl', type: 'text', placeholder: 'SGK sicil no girilince otomatik dolar' },
+      { name: 'sgk_sube', label: 'SGK Şube', type: 'text', placeholder: 'SGK sicil no girilince otomatik dolar' },
       {
         name: 'tehlike_sinifi',
         label: 'Tehlike Sınıfı',

@@ -297,6 +297,106 @@ function serializeDocumentForStorage(doc: SlotDocument) {
   }
 }
 
+const SGK_PROVINCE_CODES: Record<string, string> = {
+  '001': 'Adana',
+  '002': 'Adıyaman',
+  '003': 'Afyonkarahisar',
+  '004': 'Ağrı',
+  '005': 'Amasya',
+  '006': 'Ankara',
+  '007': 'Antalya',
+  '008': 'Artvin',
+  '009': 'Aydın',
+  '010': 'Balıkesir',
+  '011': 'Bilecik',
+  '012': 'Bingöl',
+  '013': 'Bitlis',
+  '014': 'Bolu',
+  '015': 'Burdur',
+  '016': 'Bursa',
+  '017': 'Çanakkale',
+  '018': 'Çankırı',
+  '019': 'Çorum',
+  '020': 'Denizli',
+  '021': 'Diyarbakır',
+  '022': 'Edirne',
+  '023': 'Elazığ',
+  '024': 'Erzincan',
+  '025': 'Erzurum',
+  '026': 'Eskişehir',
+  '027': 'Gaziantep',
+  '028': 'Giresun',
+  '029': 'Gümüşhane',
+  '030': 'Hakkari',
+  '031': 'Hatay',
+  '032': 'Isparta',
+  '033': 'Mersin',
+  '034': 'İstanbul',
+  '035': 'İzmir',
+  '036': 'Kars',
+  '037': 'Kastamonu',
+  '038': 'Kayseri',
+  '039': 'Kırklareli',
+  '040': 'Kırşehir',
+  '041': 'Kocaeli',
+  '042': 'Konya',
+  '043': 'Kütahya',
+  '044': 'Malatya',
+  '045': 'Manisa',
+  '046': 'Kahramanmaraş',
+  '047': 'Mardin',
+  '048': 'Muğla',
+  '049': 'Muş',
+  '050': 'Nevşehir',
+  '051': 'Niğde',
+  '052': 'Ordu',
+  '053': 'Rize',
+  '054': 'Sakarya',
+  '055': 'Samsun',
+  '056': 'Siirt',
+  '057': 'Sinop',
+  '058': 'Sivas',
+  '059': 'Tekirdağ',
+  '060': 'Tokat',
+  '061': 'Trabzon',
+  '062': 'Tunceli',
+  '063': 'Şanlıurfa',
+  '064': 'Uşak',
+  '065': 'Van',
+  '066': 'Yozgat',
+  '067': 'Zonguldak',
+  '068': 'Aksaray',
+  '069': 'Bayburt',
+  '070': 'Karaman',
+  '071': 'Kırıkkale',
+  '072': 'Batman',
+  '073': 'Şırnak',
+  '074': 'Bartın',
+  '075': 'Ardahan',
+  '076': 'Iğdır',
+  '077': 'Yalova',
+  '078': 'Karabük',
+  '079': 'Kilis',
+  '080': 'Osmaniye',
+  '081': 'Düzce',
+}
+
+function parseSgkWorkplaceNumber(value: string) {
+  const digits = value.replace(/\D/g, '').slice(0, 26)
+  if (digits.length < 19) return { digits, provinceLabel: '', branchLabel: '' }
+
+  const oldBranch = digits.slice(5, 7)
+  const newBranch = digits.slice(7, 9)
+  const provinceCode = digits.slice(16, 19)
+  const provinceName = SGK_PROVINCE_CODES[provinceCode]
+
+  return {
+    digits,
+    provinceLabel: provinceName ? `${provinceCode} - ${provinceName}` : provinceCode,
+    branchLabel: `Eski ${oldBranch} / Yeni ${newBranch}`,
+  }
+}
+
 function SearchableSelectField({
   field,
   value,
@@ -310,27 +410,63 @@ function SearchableSelectField({
   className: string
   onChange: (value: string) => void
 }) {
-  const listId = `datalist-${field.name}`
+  const [query, setQuery] = useState(value || '')
+  const [open, setOpen] = useState(false)
+  const options = field.options || []
+  const filteredOptions = options
+    .filter(option => {
+      const q = query.toLocaleLowerCase('tr-TR')
+      return option.label.toLocaleLowerCase('tr-TR').includes(q) || option.value.toLocaleLowerCase('tr-TR').includes(q)
+    })
+    .slice(0, 80)
+
+  useEffect(() => {
+    setQuery(value || '')
+  }, [value])
 
   return (
-    <>
+    <div className="relative">
       <input
         type="text"
-        list={listId}
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
+        value={query}
+        onChange={(event) => {
+          setQuery(event.target.value)
+          onChange(event.target.value)
+          setOpen(true)
+        }}
+        onFocus={(event) => {
+          event.currentTarget.select()
+          setOpen(true)
+        }}
+        onBlur={() => {
+          window.setTimeout(() => setOpen(false), 120)
+        }}
         placeholder={field.placeholder || 'Yazarak arayın'}
         readOnly={disabled}
         className={className}
       />
-      <datalist id={listId}>
-        {field.options?.map((opt, index) => (
-          <option key={`${opt.value}-${index}`} value={opt.value}>
-            {opt.label}
-          </option>
-        ))}
-      </datalist>
-    </>
+      {open && !disabled && (
+        <div className="absolute z-50 mt-1 max-h-64 w-full overflow-auto rounded-lg border border-gray-200 bg-white py-1 shadow-lg dark:border-gray-700 dark:bg-gray-900">
+          {filteredOptions.length > 0 ? filteredOptions.map((opt, index) => (
+            <button
+              key={`${opt.value}-${index}`}
+              type="button"
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={() => {
+                setQuery(opt.value)
+                onChange(opt.value)
+                setOpen(false)
+              }}
+              className="block w-full px-3 py-2 text-left text-sm text-gray-800 hover:bg-blue-50 dark:text-gray-100 dark:hover:bg-blue-950/40"
+            >
+              {opt.label}
+            </button>
+          )) : (
+            <div className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">Sonuç bulunamadı</div>
+          )}
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -939,7 +1075,19 @@ export function EntityForm({
   }
 
   const handleChange = (field: string, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }))
+    setFormData(prev => {
+      if (field === 'sgk_is_yeri_sicil_no') {
+        const parsed = parseSgkWorkplaceNumber(String(value || ''))
+        return {
+          ...prev,
+          [field]: parsed.digits,
+          sgk_il: parsed.provinceLabel,
+          sgk_sube: parsed.branchLabel,
+        }
+      }
+
+      return { ...prev, [field]: value }
+    })
     if (fieldErrors[field]) {
       setFieldErrors(prev => {
         const next = { ...prev }
@@ -950,7 +1098,7 @@ export function EntityForm({
   }
 
   const handleFormattedFieldChange = (field: FormField, value: string) => {
-    if (field.name === 'tc_kimlik' || field.name === 'vkn_tckn') {
+    if (field.name === 'tc_kimlik' || field.name === 'vkn_tckn' || field.name === 'sgk_is_yeri_sicil_no') {
       handleChange(field.name, value.replace(/\D/g, '').slice(0, field.maxLength || 11))
       return
     }
@@ -1158,7 +1306,7 @@ export function EntityForm({
     }
 
     const baseInputClass = cn(
-      "w-full bg-white dark:bg-gray-900 border rounded-lg px-3 py-2 text-sm",
+      "w-full bg-white dark:bg-gray-900 border rounded-lg px-3 py-2 text-sm text-gray-900 dark:!text-white placeholder:text-gray-400 dark:placeholder:text-gray-500",
       "transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500/20",
       validationState.status === 'invalid'
         ? "border-red-400 dark:border-red-700 focus:border-red-500 focus:ring-red-500/20"

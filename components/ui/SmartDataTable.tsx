@@ -1248,7 +1248,7 @@ export function SmartDataTable<T extends { id: string }>({
                       key={col.key} 
                       title={getCellTitle(getNestedValue(row, col.key))}
                       className={cn(
-                        "px-2 py-2 text-gray-900 dark:text-gray-100 border-r border-gray-100 dark:border-gray-800 last:border-r-0 whitespace-nowrap overflow-hidden",
+                        "px-2 py-2 text-gray-900 dark:text-gray-100 dark:[&_*]:!text-gray-100 border-r border-gray-100 dark:border-gray-800 last:border-r-0 whitespace-nowrap overflow-hidden",
                         isLeftAlignedColumn(col) ? "text-left" : "text-center",
                         col.fontSize === 'xs' ? 'text-xs' : 'text-sm'
                       )}
