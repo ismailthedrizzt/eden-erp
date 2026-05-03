@@ -4,17 +4,20 @@ import { createServiceClient } from '@/lib/supabase/server'
 export async function GET() {
   const supabase = createServiceClient()
 
-  const [{ data: birimler, error: unitError }, { data: kadrolar, error: positionError }, { data: unitTypes, error: typeError }] = await Promise.all([
-    supabase.from('birimler').select('*, unit_type:organization_unit_types(*)').order('sort_order', { ascending: true }).order('ad'),
-    supabase.from('norm_kadrolar').select('*, personel:employees(id,ad,soyad,cinsiyet,dogum_tarihi)').order('unvan'),
+  const [{ data: birimler, error: unitError }, { data: kadrolar, error: positionError }, { data: unitTypes, error: typeError }, { data: employees, error: employeeError }] = await Promise.all([
+    supabase.from('birimler').select('*').order('ad'),
+    supabase.from('norm_kadrolar').select('*').order('unvan'),
     supabase.from('organization_unit_types').select('*').order('sort_order', { ascending: true }).order('name'),
+    supabase.from('employees').select('id,ad,soyad,cinsiyet,dogum_tarihi'),
   ])
 
   if (unitError) return NextResponse.json({ error: unitError.message, code: unitError.code || 'UNITS_FETCH_FAILED' }, { status: 500 })
   if (positionError) return NextResponse.json({ error: positionError.message, code: positionError.code || 'POSITIONS_FETCH_FAILED' }, { status: 500 })
-  if (typeError) return NextResponse.json({ error: typeError.message, code: typeError.code || 'UNIT_TYPES_FETCH_FAILED' }, { status: 500 })
+  if (typeError && !['42P01', 'PGRST205'].includes(typeError.code || '')) return NextResponse.json({ error: typeError.message, code: typeError.code || 'UNIT_TYPES_FETCH_FAILED' }, { status: 500 })
+  if (employeeError) return NextResponse.json({ error: employeeError.message, code: employeeError.code || 'EMPLOYEES_FETCH_FAILED' }, { status: 500 })
 
-  return NextResponse.json({ birimler, kadrolar, unitTypes })
+  const resolvedUnitTypes = unitTypes || fallbackUnitTypes()
+  return NextResponse.json({ birimler: attachUnitTypes(birimler || [], resolvedUnitTypes), kadrolar: attachEmployees(kadrolar || [], employees || []), unitTypes: resolvedUnitTypes })
 }
 
 export async function POST(request: NextRequest) {
@@ -65,11 +68,11 @@ async function createUnit(supabase: ReturnType<typeof createServiceClient>, body
   const { data, error } = await supabase
     .from('birimler')
     .insert(mapUnit(body))
-    .select('*, unit_type:organization_unit_types(*)')
+    .select('*')
     .single()
 
   if (error) return NextResponse.json({ error: error.message, code: error.code || 'UNIT_CREATE_FAILED' }, { status: 500 })
-  return NextResponse.json({ data }, { status: 201 })
+  return NextResponse.json({ data: await attachUnitType(supabase, data) }, { status: 201 })
 }
 
 async function updateUnit(supabase: ReturnType<typeof createServiceClient>, body: Record<string, any>) {
@@ -81,11 +84,11 @@ async function updateUnit(supabase: ReturnType<typeof createServiceClient>, body
     .from('birimler')
     .update({ ...mapped, history: buildHistory(current, mapped, ['ust_birim_id', 'unit_type_id', 'code', 'location_name', 'status']) })
     .eq('id', body.id)
-    .select('*, unit_type:organization_unit_types(*)')
+    .select('*')
     .single()
 
   if (error) return NextResponse.json({ error: error.message, code: error.code || 'UNIT_UPDATE_FAILED' }, { status: 500 })
-  return NextResponse.json({ data })
+  return NextResponse.json({ data: await attachUnitType(supabase, data) })
 }
 
 async function createPosition(supabase: ReturnType<typeof createServiceClient>, body: Record<string, any>) {
@@ -93,7 +96,7 @@ async function createPosition(supabase: ReturnType<typeof createServiceClient>, 
   const { data, error } = await supabase
     .from('norm_kadrolar')
     .insert(mapPosition(body))
-    .select('*, personel:employees(id,ad,soyad,cinsiyet,dogum_tarihi)')
+    .select('*')
     .single()
 
   if (error) return NextResponse.json({ error: error.message, code: error.code || 'POSITION_CREATE_FAILED' }, { status: 500 })
@@ -109,7 +112,7 @@ async function updatePosition(supabase: ReturnType<typeof createServiceClient>, 
     .from('norm_kadrolar')
     .update({ ...mapped, history: buildHistory(current, mapped, ['norm_count', 'amir', 'is_manager', 'status', 'reports_to_position_id']) })
     .eq('id', body.id)
-    .select('*, personel:employees(id,ad,soyad,cinsiyet,dogum_tarihi)')
+    .select('*')
     .single()
 
   if (error) return NextResponse.json({ error: error.message, code: error.code || 'POSITION_UPDATE_FAILED' }, { status: 500 })
@@ -161,6 +164,63 @@ function mapUnit(body: Record<string, any>) {
     aktif: body.status ? body.status === 'Aktif' : true,
     is_deleted: !!body.is_deleted,
   }
+}
+
+function attachUnitTypes(units: Record<string, any>[], unitTypes: Record<string, any>[]) {
+  const typeById = new Map(unitTypes.map((type) => [type.id, type]))
+  const typeByLegacy = new Map(unitTypes.map((type) => [type.legacy_tip || type.slug, type]))
+  return units.map((unit) => ({
+    ...unit,
+    unit_type: unit.unit_type_id ? typeById.get(unit.unit_type_id) || null : typeByLegacy.get(unit.tip) || null,
+  }))
+}
+
+function attachEmployees(positions: Record<string, any>[], employees: Record<string, any>[]) {
+  const employeeById = new Map(employees.map((employee) => [employee.id, employee]))
+  return positions.map((position) => ({
+    ...position,
+    personel: position.personel_id ? employeeById.get(position.personel_id) || null : null,
+  }))
+}
+
+async function attachUnitType(supabase: ReturnType<typeof createServiceClient>, unit: Record<string, any>) {
+  if (!unit?.unit_type_id) return { ...unit, unit_type: null }
+  const { data } = await supabase
+    .from('organization_unit_types')
+    .select('*')
+    .eq('id', unit.unit_type_id)
+    .single()
+
+  return { ...unit, unit_type: data || null }
+}
+
+function fallbackUnitTypes() {
+  const rows = [
+    ['Genel Müdürlük', 'genel_mudurluk', '#1d4ed8'],
+    ['Direktörlük', 'direktorluk', '#7c3aed'],
+    ['Müdürlük', 'mudurluk', '#0891b2'],
+    ['Departman', 'departman', '#2563eb'],
+    ['Bölüm', 'bolum', '#16a34a'],
+    ['Takım', 'takim', '#65a30d'],
+    ['Şube', 'sube', '#ea580c'],
+    ['Ofis', 'ofis', '#f59e0b'],
+    ['Operasyon', 'operasyon', '#dc2626'],
+    ['Proje Ofisi', 'proje_ofisi', '#9333ea'],
+    ['Komite', 'komite', '#475569'],
+    ['Kurul', 'kurul', '#334155'],
+    ['Diğer', 'diger', '#6b7280'],
+  ]
+
+  return rows.map(([name, legacy_tip, color], index) => ({
+    id: legacy_tip,
+    name,
+    slug: String(legacy_tip).replace(/_/g, '-'),
+    legacy_tip,
+    color,
+    icon: 'Layers',
+    sort_order: (index + 1) * 10,
+    is_active: true,
+  }))
 }
 
 function mapPosition(body: Record<string, any>) {

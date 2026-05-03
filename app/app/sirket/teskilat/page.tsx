@@ -636,7 +636,7 @@ function normalizeUnitForForm(unit: OrganizationUnit) {
     name: unitName(unit),
     parent_unit_id: unit.ust_birim_id || '',
     company_id: unit.sirket_id || '',
-    unit_type_id: unit.unit_type_id || '',
+    unit_type_id: unit.unit_type_id || unit.tip || '',
     status: unit.status || 'Aktif',
   }
 }
