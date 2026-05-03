@@ -20,6 +20,15 @@ type SaveError = Error & { toast?: ToastState; fieldErrors?: Record<string, stri
 type SirketTableRow = Sirket & { adres_ozet: string; logo_url: string }
 type TaxOfficeOption = { value: string; label: string }
 
+const COMPANY_TYPE_SHORT_LABELS: Record<string, string> = {
+  anonim: 'A.Ş.',
+  limited: 'Ltd. Şti.',
+  komandit: 'Kom. Şti.',
+  kolektif: 'Kol. Şti.',
+  adi_komandit: 'Adi Kom.',
+  adi_sirket: 'Adi Şti.',
+}
+
 const FIELD_LABELS: Record<string, string> = {
   ticari_unvan: 'Ticari Unvan',
   kisa_unvan: 'Kısa Ünvan',
@@ -58,18 +67,39 @@ const columns: ColumnDef[] = [
   { key: 'ticari_unvan', label: 'Ticari Unvan', type: 'text', width: 280, sortable: true, category: 'Kimlik' },
   { key: 'vkn_tckn', label: 'VKN', type: 'text', width: 120, sortable: true, category: 'Kimlik' },
   { key: 'vergi_dairesi', label: 'Vergi Dairesi', type: 'text', width: 140, sortable: true, category: 'Vergi' },
-  { key: 'sirket_turu', label: 'Şirket Türü', type: 'enum', width: 150, sortable: true, category: 'Tescil' },
+  { key: 'sirket_turu', label: 'Şirket Türü', type: 'enum', width: 110, sortable: true, category: 'Tescil', render: (value) => COMPANY_TYPE_SHORT_LABELS[String(value)] || value || '-' },
   { key: 'adres_ozet', label: 'Adres', type: 'text', width: 250, category: 'İletişim' },
   { key: 'telefon', label: 'Telefon', type: 'text', width: 150, category: 'İletişim' },
   { key: 'email', label: 'E-posta', type: 'text', width: 200, category: 'İletişim' },
   { key: 'is_active', label: 'Durum', type: 'boolean', width: 100, sortable: true, category: 'Durum' },
+  { key: 'mersis_no', label: FIELD_LABELS.mersis_no, type: 'text', width: 150, sortable: true, category: 'Tescil', required: false, visible: false },
+  { key: 'ticaret_sicil_no', label: FIELD_LABELS.ticaret_sicil_no, type: 'text', width: 150, sortable: true, category: 'Tescil', required: false, visible: false },
+  { key: 'kurulus_tarihi', label: FIELD_LABELS.kurulus_tarihi, type: 'date', width: 130, sortable: true, category: 'Tescil', required: false, visible: false },
+  { key: 'legal_entity', label: FIELD_LABELS.legal_entity, type: 'text', width: 160, sortable: true, category: 'Tescil', required: false, visible: false },
+  { key: 'sirket_kodu', label: FIELD_LABELS.sirket_kodu, type: 'text', width: 130, sortable: true, category: 'Tescil', required: false, visible: false },
+  { key: 'ulke', label: FIELD_LABELS.ulke, type: 'text', width: 120, sortable: true, category: 'İletişim', required: false, visible: false },
+  { key: 'il', label: FIELD_LABELS.il, type: 'text', width: 120, sortable: true, category: 'İletişim', required: false, visible: false },
+  { key: 'ilce', label: FIELD_LABELS.ilce, type: 'text', width: 120, sortable: true, category: 'İletişim', required: false, visible: false },
+  { key: 'adres', label: FIELD_LABELS.adres, type: 'text', width: 260, category: 'İletişim', required: false, visible: false },
+  { key: 'web_sitesi', label: FIELD_LABELS.web_sitesi, type: 'text', width: 180, category: 'İletişim', required: false, visible: false },
+  { key: 'e_fatura_mukellefi', label: FIELD_LABELS.e_fatura_mukellefi, type: 'boolean', width: 140, sortable: true, category: 'Vergi', required: false, visible: false },
+  { key: 'e_arsiv_mukellefi', label: FIELD_LABELS.e_arsiv_mukellefi, type: 'boolean', width: 140, sortable: true, category: 'Vergi', required: false, visible: false },
+  { key: 'e_irsaliye_mukellefi', label: FIELD_LABELS.e_irsaliye_mukellefi, type: 'boolean', width: 140, sortable: true, category: 'Vergi', required: false, visible: false },
+  { key: 'sgk_is_yeri_sicil_no', label: FIELD_LABELS.sgk_is_yeri_sicil_no, type: 'text', width: 170, sortable: true, category: 'Vergi', required: false, visible: false },
+  { key: 'sgk_il', label: FIELD_LABELS.sgk_il, type: 'text', width: 120, sortable: true, category: 'Vergi', required: false, visible: false },
+  { key: 'sgk_sube', label: FIELD_LABELS.sgk_sube, type: 'text', width: 130, sortable: true, category: 'Vergi', required: false, visible: false },
+  { key: 'tehlike_sinifi', label: FIELD_LABELS.tehlike_sinifi, type: 'enum', width: 140, sortable: true, category: 'Vergi', required: false, visible: false },
+  { key: 'varsayilan_para_birimi', label: FIELD_LABELS.varsayilan_para_birimi, type: 'text', width: 150, sortable: true, category: 'Ayarlar', required: false, visible: false },
+  { key: 'varsayilan_dil', label: FIELD_LABELS.varsayilan_dil, type: 'text', width: 130, sortable: true, category: 'Ayarlar', required: false, visible: false },
+  { key: 'zaman_dilimi', label: FIELD_LABELS.zaman_dilimi, type: 'text', width: 170, sortable: true, category: 'Ayarlar', required: false, visible: false },
+  { key: 'mali_yil_baslangici', label: FIELD_LABELS.mali_yil_baslangici, type: 'number', width: 150, sortable: true, category: 'Ayarlar', required: false, visible: false },
 ]
 
 const heroFields: FormField[] = [
   { name: 'kisa_unvan', label: 'Kısa Ünvan', type: 'text', required: true },
   { name: 'ticari_unvan', label: 'Ticari Unvan', type: 'text', required: true, colSpan: 2 },
   { name: 'vkn_tckn', label: 'VKN', type: 'text', required: true, maxLength: 10, inputMode: 'numeric', pattern: '[0-9]{10}' },
-  { name: 'vergi_dairesi', label: 'Vergi Dairesi', type: 'select', required: true },
+  { name: 'vergi_dairesi', label: 'Vergi Dairesi', type: 'select', required: true, searchable: true },
   {
     name: 'sirket_turu',
     label: 'Şirket Türü',

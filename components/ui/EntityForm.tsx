@@ -46,6 +46,7 @@ export interface FormField {
   type: 'text' | 'email' | 'tel' | 'date' | 'select' | 'textarea' | 'number' | 'checkbox' | 'section' | 'list' | 'iban' | 'document' | 'workLifecycle' | 'custom'
   required?: boolean
   options?: { value: string; label: string }[]
+  searchable?: boolean
   placeholder?: string
   maxLength?: number
   inputMode?: 'text' | 'numeric' | 'tel' | 'email' | 'url' | 'search' | 'decimal'
@@ -294,6 +295,43 @@ function serializeDocumentForStorage(doc: SlotDocument) {
     uploadedAt: doc.uploadedAt?.toISOString?.() || new Date().toISOString(),
     url: doc.url
   }
+}
+
+function SearchableSelectField({
+  field,
+  value,
+  disabled,
+  className,
+  onChange,
+}: {
+  field: FormField
+  value: string
+  disabled: boolean
+  className: string
+  onChange: (value: string) => void
+}) {
+  const listId = `datalist-${field.name}`
+
+  return (
+    <>
+      <input
+        type="text"
+        list={listId}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        placeholder={field.placeholder || 'Yazarak arayın'}
+        readOnly={disabled}
+        className={className}
+      />
+      <datalist id={listId}>
+        {field.options?.map((opt, index) => (
+          <option key={`${opt.value}-${index}`} value={opt.value}>
+            {opt.label}
+          </option>
+        ))}
+      </datalist>
+    </>
+  )
 }
 
 const CV_DOCUMENT_ACCEPTED_TYPES = [
@@ -1229,6 +1267,18 @@ export function EntityForm({
             />
           )
         case 'select':
+          if (field.searchable) {
+            return (
+              <SearchableSelectField
+                field={field}
+                value={value}
+                disabled={fieldDisabled}
+                className={baseInputClass}
+                onChange={(nextValue) => handleChange(field.name, nextValue)}
+              />
+            )
+          }
+
           return (
             <select
               value={value}

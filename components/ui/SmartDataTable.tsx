@@ -122,7 +122,14 @@ export function SmartDataTable<T extends { id: string }>({
     const saved = localStorage.getItem(`${storageKey}-columns`)
     if (saved) {
       try {
-        return JSON.parse(saved)
+        const savedColumns = JSON.parse(saved) as ColumnDef[]
+        const savedByKey = new Map(savedColumns.map(col => [col.key, col]))
+        const mergedColumns = initialColumns.map(col => ({
+          ...col,
+          ...savedByKey.get(col.key),
+        }))
+        const customSavedColumns = savedColumns.filter(col => !initialColumns.some(initialCol => initialCol.key === col.key))
+        return [...mergedColumns, ...customSavedColumns]
       } catch {
         return initialColumns
       }
@@ -1093,18 +1100,14 @@ export function SmartDataTable<T extends { id: string }>({
                               {cols.map(col => (
                                 <div
                                   key={col.key}
-                                  className={cn(
-                                    "flex items-center gap-3 p-2 rounded-lg opacity-50 hover:opacity-80 transition-opacity",
-                                    !columnEconomy.canAddMore && "cursor-not-allowed"
-                                  )}
+                                  className="flex items-center gap-3 p-2 rounded-lg opacity-50 hover:opacity-80 transition-opacity"
                                 >
                                   <div className="w-4" />
                                   <input
                                     type="checkbox"
                                     checked={false}
-                                    disabled={!columnEconomy.canAddMore}
                                     onChange={() => toggleColumn(col.key)}
-                                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 disabled:cursor-not-allowed"
+                                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                                   />
                                   <span className="text-sm text-gray-500 dark:text-gray-400 flex-1">
                                     {col.label}
@@ -1257,7 +1260,8 @@ export function SmartDataTable<T extends { id: string }>({
                     >
                       <div className={cn(
                         "flex h-full min-w-0 truncate text-gray-900 dark:text-gray-100",
-                        isLeftAlignedColumn(col) ? "items-center justify-start" : "items-center justify-center"
+                        isLeftAlignedColumn(col) ? "items-center justify-start" : "items-center justify-center",
+                        col.type !== 'image' && col.type !== 'boolean' && "dark:[&_*]:!text-gray-100"
                       )}>
                         {renderCellValue(col, getNestedValue(row, col.key), row)}
                       </div>
