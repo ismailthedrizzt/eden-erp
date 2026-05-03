@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Building2, FileText, Landmark, MapPin, Phone, Settings, Users } from 'lucide-react'
+import { BriefcaseBusiness, Building2, FileText, Landmark, MapPin, Phone, Settings, Users } from 'lucide-react'
 import { useSirketler } from '@/hooks/useSirketler'
 import { EntityForm, FormField, FormMode, FormTab } from '@/components/ui/EntityForm'
 import { PageBanner } from '@/components/ui/PageBanner'
@@ -61,7 +61,6 @@ const columns: ColumnDef[] = [
 ]
 
 const heroFields: FormField[] = [
-  { name: 'kisa_unvan', label: 'Kısa Ünvan', type: 'text', required: true },
   { name: 'ticari_unvan', label: 'Ticari Unvan', type: 'text', required: true, colSpan: 2 },
   { name: 'vkn_tckn', label: 'VKN', type: 'text', required: true, maxLength: 10, inputMode: 'numeric', pattern: '[0-9]{10}' },
   { name: 'vergi_dairesi', label: 'Vergi Dairesi', type: 'select', required: true },
@@ -69,6 +68,7 @@ const heroFields: FormField[] = [
     name: 'sirket_turu',
     label: 'Şirket Türü',
     type: 'select',
+    required: true,
     options: [
       { value: 'anonim', label: 'Sermaye Şirketi - Anonim' },
       { value: 'limited', label: 'Sermaye Şirketi - Limited' },
@@ -89,29 +89,34 @@ const tabs: FormTab[] = [
       {
         name: 'ortaklar',
         label: 'Ortaklar',
-        type: 'list',
+        type: 'custom',
         colSpan: 3,
-        listConfig: {
-          addLabel: 'Ortak Ekle',
-          emptyText: 'Ortak bilgisi eklenmedi.',
-          fields: [
-            { name: 'ad', label: 'Adı', type: 'text', required: true },
-            { name: 'soyad', label: 'Soyadı', type: 'text' },
-            {
-              name: 'ortak_tipi',
-              label: 'Tipi',
-              type: 'select',
-              required: true,
-              options: [
-                { value: 'kisi', label: 'Kişi' },
-                { value: 'sirket', label: 'Şirket' },
-              ],
-            },
-            { name: 'tckn_vkn', label: 'TCKN / VKN', type: 'text', required: true, inputMode: 'numeric', pattern: '[0-9]{10,11}' },
-            { name: 'hisse_orani', label: 'Hisse Oranı', type: 'number', required: true },
-            { name: 'imza_yetkisi', label: 'Yetki Durumu', type: 'checkbox' },
-          ],
-        },
+      },
+    ],
+  },
+  {
+    id: 'temsilciler',
+    label: 'Temsilciler',
+    icon: <BriefcaseBusiness size={16} />,
+    fields: [
+      {
+        name: 'temsilciler',
+        label: 'Temsilciler',
+        type: 'custom',
+        colSpan: 3,
+      },
+    ],
+  },
+  {
+    id: 'paydaslar',
+    label: 'Paydaşlar',
+    icon: <Users size={16} />,
+    fields: [
+      {
+        name: 'paydaslar',
+        label: 'Paydaşlar',
+        type: 'custom',
+        colSpan: 3,
       },
     ],
   },
@@ -228,7 +233,11 @@ export default function SirketlerPage() {
       .then(payload => {
         if (cancelled || !Array.isArray(payload?.offices)) return
         setTaxOfficeOptions(payload.offices.map((office: any) => ({
-          value: office.code ? `${office.code} - ${office.name}` : office.name,
+          value: [
+            office.code || office.name,
+            office.province,
+            office.district,
+          ].filter(Boolean).join(' - '),
           label: `${office.code ? `${office.code} - ` : ''}${office.name} (${office.province}/${office.district})`,
         })))
       })
@@ -295,7 +304,7 @@ export default function SirketlerPage() {
     const payload: Record<string, any> = {}
 
     Object.entries(raw).forEach(([key, value]) => {
-      if (['temsilciler', 'dokumanlar', 'logolar'].includes(key)) return
+      if (['ortaklar', 'temsilciler', 'dokumanlar', 'logolar'].includes(key)) return
       if (value === '' || value === null || value === undefined) return
       payload[key] = value
     })
@@ -304,6 +313,7 @@ export default function SirketlerPage() {
     if (payload.email) payload.email = normalizeEmailInput(String(payload.email))
     if (payload.vkn_tckn) payload.vkn_tckn = String(payload.vkn_tckn).replace(/\D/g, '').slice(0, 10)
     if (payload.mali_yil_baslangici) payload.mali_yil_baslangici = Number(payload.mali_yil_baslangici)
+    if (payload.ticari_unvan) payload.kisa_unvan = payload.ticari_unvan
 
     if (pageState === 'create') {
       payload.ulke = payload.ulke || 'Türkiye'
@@ -478,7 +488,32 @@ export default function SirketlerPage() {
             entityName="Şirketler"
             entityNameSingular="Şirket"
             heroFields={configuredHeroFields.map(withFieldHistory)}
-            tabs={tabs.map(tab => ({ ...tab, fields: tab.fields.map(withFieldHistory) }))}
+            tabs={tabs.map(tab => ({
+              ...tab,
+              fields: tab.fields.map(field => {
+                const nextField = withFieldHistory(field)
+                if (nextField.name === 'ortaklar') {
+                  return {
+                    ...nextField,
+                    render: ({ value }) => <RelatedSummaryTable type="ortaklar" rows={Array.isArray(value) ? value : []} />,
+                  }
+                }
+
+                if (nextField.name === 'paydaslar') {
+                  return {
+                    ...nextField,
+                    render: ({ value }) => <RelatedSummaryTable type="paydaslar" rows={Array.isArray(value) ? value : []} />,
+                  }
+                }
+
+                if (nextField.name !== 'temsilciler') return nextField
+
+                return {
+                  ...nextField,
+                  render: ({ value }) => <RelatedSummaryTable type="temsilciler" rows={Array.isArray(value) ? value : []} />,
+                }
+              }),
+            }))}
             data={selectedSirket || undefined}
             saving={saving}
             deleting={deleting}
@@ -519,6 +554,127 @@ export default function SirketlerPage() {
   )
 }
 
+function RelatedSummaryTable({ type, rows }: { type: 'ortaklar' | 'temsilciler' | 'paydaslar'; rows: any[] }) {
+  const isPartners = type === 'ortaklar'
+  const isStakeholders = type === 'paydaslar'
+  const sourcePage = isPartners ? 'Ortaklar' : isStakeholders ? 'Paydaşlar' : 'Temsilciler'
+  const href = isPartners ? '/app/sirket/sirketler/ortaklar' : isStakeholders ? '/app/sirket/sirketler/paydaslar' : '/app/sirket/sirketler/temsilciler'
+  const title = isPartners ? 'Ortak bilgileri' : isStakeholders ? 'Paydaş bilgileri' : 'Temsilci bilgileri'
+  const emptyText = isPartners
+    ? 'Bu şirket için ortak kaydı bulunamadı.'
+    : isStakeholders
+      ? 'Bu şirket için paydaş kaydı bulunamadı.'
+      : 'Bu şirket için temsilci kaydı bulunamadı.'
+
+  return (
+    <div className="col-span-2 space-y-3 lg:col-span-3">
+      <div className="rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-800 dark:border-blue-900/50 dark:bg-blue-950/30 dark:text-blue-200">
+        <span className="font-medium">{title}</span> {sourcePage} sayfasından otomatik çekilmektedir. Eksik ya da yanlış varsa lütfen{' '}
+        <a href={href} className="font-semibold underline underline-offset-2">
+          ilgili sayfadan
+        </a>{' '}
+        düzeltiniz.
+      </div>
+
+      <div className="overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900">
+        <table className="min-w-full divide-y divide-gray-200 text-sm dark:divide-gray-700">
+          <thead className="bg-gray-50 text-left text-xs font-semibold uppercase text-gray-500 dark:bg-gray-800/60 dark:text-gray-400">
+            <tr>
+              {isPartners ? (
+                <>
+                  <th className="px-3 py-2">Ad / Ünvan</th>
+                  <th className="px-3 py-2">Tür</th>
+                  <th className="px-3 py-2">Hisse %</th>
+                  <th className="px-3 py-2">Oy %</th>
+                  <th className="px-3 py-2">Durum</th>
+                </>
+              ) : isStakeholders ? (
+                <>
+                  <th className="px-3 py-2">Ad / Ünvan</th>
+                  <th className="px-3 py-2">Paydaş Türü</th>
+                  <th className="px-3 py-2">İlişki</th>
+                  <th className="px-3 py-2">Öncelik</th>
+                  <th className="px-3 py-2">Durum</th>
+                </>
+              ) : (
+                <>
+                  <th className="px-3 py-2">Ad / Ünvan</th>
+                  <th className="px-3 py-2">Kişi / Kurum</th>
+                  <th className="px-3 py-2">Kaynak</th>
+                  <th className="px-3 py-2">Ana Yetki</th>
+                  <th className="px-3 py-2">Durum</th>
+                </>
+              )}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+            {rows.length === 0 && (
+              <tr>
+                <td colSpan={5} className="px-3 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
+                  {emptyText}
+                </td>
+              </tr>
+            )}
+            {rows.map((row, index) => (
+              <tr key={row.id || row.temp_id || index}>
+                {isPartners ? (
+                  <>
+                    <td className="px-3 py-2 font-medium text-gray-900 dark:text-white">{row.display_name || row.ortak_adi || '-'}</td>
+                    <td className="px-3 py-2 text-gray-600 dark:text-gray-300">{row.owner_kind === 'tuzel_kisi' || row.ortak_tipi === 'sirket' ? 'Tüzel Kişi' : 'Gerçek Kişi'}</td>
+                    <td className="px-3 py-2 text-gray-600 dark:text-gray-300">{row.share_ratio ?? row.hisse_orani ?? '-'}</td>
+                    <td className="px-3 py-2 text-gray-600 dark:text-gray-300">{row.voting_ratio ?? '-'}</td>
+                    <td className="px-3 py-2"><StatusPill status={row.is_deleted ? 'Pasif' : row.status || 'Aktif'} /></td>
+                  </>
+                ) : isStakeholders ? (
+                  <>
+                    <td className="px-3 py-2 font-medium text-gray-900 dark:text-white">{row.display_name || row.ad_unvan || '-'}</td>
+                    <td className="px-3 py-2 text-gray-600 dark:text-gray-300">{row.stakeholder_type || row.paydas_turu || '-'}</td>
+                    <td className="px-3 py-2 text-gray-600 dark:text-gray-300">{row.relationship_type || row.iliski_turu || '-'}</td>
+                    <td className="px-3 py-2 text-gray-600 dark:text-gray-300">{row.priority || row.oncelik || '-'}</td>
+                    <td className="px-3 py-2"><StatusPill status={row.is_deleted ? 'Pasif' : row.status || 'Aktif'} /></td>
+                  </>
+                ) : (
+                  <>
+                    <td className="px-3 py-2 font-medium text-gray-900 dark:text-white">{row.display_name || row.ad_soyad || '-'}</td>
+                    <td className="px-3 py-2 text-gray-600 dark:text-gray-300">{row.person_kind === 'tuzel_kisi' ? 'Tüzel Kişi' : 'Gerçek Kişi'}</td>
+                    <td className="px-3 py-2 text-gray-600 dark:text-gray-300">{formatSourceType(row.source_type)}</td>
+                    <td className="px-3 py-2 text-gray-600 dark:text-gray-300">{row.authority_types?.[0] || row.primary_authority_type || '-'}</td>
+                    <td className="px-3 py-2"><StatusPill status={row.is_deleted ? 'Pasif' : row.status || 'Aktif'} /></td>
+                  </>
+                )}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
+}
+
+function StatusPill({ status }: { status: string }) {
+  const isActive = status === 'Aktif'
+
+  return (
+    <span className={`rounded-full px-2 py-1 text-xs font-medium ${isActive ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300'}`}>
+      {status}
+    </span>
+  )
+}
+
+function formatSourceType(value?: string) {
+  const labels: Record<string, string> = {
+    calisan: 'Çalışan',
+    ortak: 'Ortak',
+    yonetim_kurulu_uyesi: 'Yönetim Kurulu Üyesi',
+    dis_kisi: 'Dış Kişi',
+    cari: 'Cari',
+    paydas: 'Paydaş',
+    ortak_sirket: 'Ortak Şirket',
+  }
+
+  return value ? labels[value] || value : '-'
+}
+
 function normalizeCompanyForForm(company: Sirket) {
   return {
     ...company,
@@ -526,6 +682,15 @@ function normalizeCompanyForForm(company: Sirket) {
       const parts = String(partner.ortak_adi || '').trim().split(/\s+/)
       return {
         ...partner,
+        owner_kind: partner.owner_kind || (partner.ortak_tipi === 'sirket' ? 'tuzel_kisi' : 'gercek_kisi'),
+        source_type: partner.source_type || (partner.ortak_tipi === 'sirket' ? 'harici_sirket' : 'harici_kisi'),
+        source_id: partner.source_id || partner.id,
+        display_name: partner.display_name || partner.ortak_adi || '',
+        identity_number: partner.identity_number || partner.tckn_vkn || '',
+        share_ratio: partner.share_ratio ?? partner.hisse_orani ?? '',
+        has_representation_right: partner.has_representation_right ?? !!partner.imza_yetkisi,
+        status: partner.status || 'Aktif',
+        history: partner.history || [],
         ad: partner.ad || parts.slice(0, -1).join(' ') || partner.ortak_adi || '',
         soyad: partner.soyad || (parts.length > 1 ? parts.at(-1) : ''),
         ortak_tipi: partner.ortak_tipi || 'kisi',
@@ -534,5 +699,15 @@ function normalizeCompanyForForm(company: Sirket) {
         imza_yetkisi: !!partner.imza_yetkisi,
       }
     }),
+    temsilciler: (company.temsilciler || []).map((representative: any) => ({
+      ...representative,
+      authority_types: representative.authority_types || (representative.yetki_turu ? [representative.yetki_turu] : []),
+      person_kind: representative.person_kind || 'gercek_kisi',
+      source_type: representative.source_type || 'dis_kisi',
+      source_id: representative.source_id || representative.id,
+      display_name: representative.display_name || representative.ad_soyad || '',
+      status: representative.status || 'Aktif',
+      history: representative.history || [],
+    })),
   }
 }

@@ -1,0 +1,99 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { createServiceClient } from '@/lib/supabase/server'
+
+const TRACKED_FIELDS = new Set(['category', 'status', 'phone', 'email', 'internal_owner_employee_id', 'relationship_start_date'])
+
+function buildHistory(current: Record<string, any>, updates: Record<string, any>) {
+  const existingHistory = Array.isArray(current.history) ? current.history : []
+  const nextHistory = [...existingHistory]
+
+  Object.entries(updates).forEach(([field, nextValue]) => {
+    if (!TRACKED_FIELDS.has(field)) return
+    const previousValue = current[field]
+    if (JSON.stringify(previousValue ?? null) === JSON.stringify(nextValue ?? null)) return
+    nextHistory.push({
+      field,
+      old_value: previousValue ?? '',
+      new_value: nextValue ?? '',
+      changed_at: new Date().toISOString(),
+      changed_by: 'Sistem Kullanıcısı',
+    })
+  })
+
+  return nextHistory
+}
+
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params
+  const supabase = createServiceClient()
+  const { data, error } = await supabase.from('stakeholders').select('*').eq('id', id).single()
+  if (error) return NextResponse.json({ error: error.message, code: error.code || 'FETCH_FAILED' }, { status: 500 })
+  return NextResponse.json({ data })
+}
+
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params
+  const supabase = createServiceClient()
+  const body = await request.json()
+  const { data: current, error: currentError } = await supabase.from('stakeholders').select('*').eq('id', id).single()
+  if (currentError) return NextResponse.json({ error: currentError.message, code: currentError.code || 'FETCH_FAILED' }, { status: 500 })
+
+  const mapped = mapStakeholderForDb(body, current)
+  const { data, error } = await supabase
+    .from('stakeholders')
+    .update({ ...mapped, history: buildHistory(current, mapped) })
+    .eq('id', id)
+    .select()
+    .single()
+
+  if (error) return NextResponse.json({ error: error.message, code: error.code || 'UPDATE_FAILED' }, { status: 500 })
+  return NextResponse.json({ data })
+}
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params
+  const supabase = createServiceClient()
+  const { error } = await supabase
+    .from('stakeholders')
+    .update({ status: 'Pasif', is_deleted: true, deleted_at: new Date().toISOString(), deleted_by: 'Sistem Kullanıcısı' })
+    .eq('id', id)
+
+  if (error) return NextResponse.json({ error: error.message, code: error.code || 'SOFT_DELETE_FAILED' }, { status: 500 })
+  return NextResponse.json({ success: true })
+}
+
+function mapStakeholderForDb(stakeholder: Record<string, any>, current?: Record<string, any>) {
+  return {
+    company_id: stakeholder.company_id || current?.company_id || null,
+    stakeholder_type: stakeholder.stakeholder_type || current?.stakeholder_type || 'gercek_kisi',
+    category: stakeholder.category || current?.category,
+    display_name: stakeholder.display_name || current?.display_name,
+    tax_id: stakeholder.tax_id || null,
+    phone: stakeholder.phone || stakeholder.phone_1 || null,
+    email: stakeholder.email || stakeholder.email_1 || null,
+    country: stakeholder.country || null,
+    city: stakeholder.city || null,
+    status: stakeholder.status || current?.status || 'Aktif',
+    priority_level: stakeholder.priority_level || null,
+    internal_owner_employee_id: stakeholder.internal_owner_employee_id || null,
+    relationship_start_date: stakeholder.relationship_start_date || current?.relationship_start_date,
+    relationship_end_date: stakeholder.relationship_end_date || null,
+    iban: stakeholder.iban || null,
+    bank_name: stakeholder.bank_name || null,
+    currency: stakeholder.currency || current?.currency || 'TRY',
+    contract_status: stakeholder.contract_status || null,
+    notes: stakeholder.notes || null,
+    photo_logo: stakeholder.photo_logo || current?.photo_logo || [],
+    stakeholder_documents: stakeholder.stakeholder_documents || current?.stakeholder_documents || [],
+    stakeholder_profile: stakeholder,
+  }
+}

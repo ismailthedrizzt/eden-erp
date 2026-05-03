@@ -42,6 +42,9 @@ const NAV: NavItem[] = [
     moduleKey: 'sirket',
     children: [
       { label: 'Şirketlerimiz', href: '/app/sirket/sirketler', moduleKey: 'sirket', submoduleKey: 'sirketler' },
+      { label: 'Ortaklar', href: '/app/sirket/sirketler/ortaklar', moduleKey: 'sirket' },
+      { label: 'Temsilciler', href: '/app/sirket/sirketler/temsilciler', moduleKey: 'sirket' },
+      { label: 'Paydaşlar', href: '/app/sirket/sirketler/paydaslar', moduleKey: 'sirket' },
       { label: 'Teşkilat ve Kadro', href: '/app/sirket/teskilat', moduleKey: 'sirket', submoduleKey: 'teskilat' },
       { label: 'Süreçlerimiz', href: '/app/sirket/surecler', moduleKey: 'sirket', submoduleKey: 'surecler' },
       { label: 'Tesislerimiz', href: '/app/sirket/tesisler', moduleKey: 'sirket', submoduleKey: 'tesisler' },
@@ -64,14 +67,8 @@ const NAV: NavItem[] = [
     id: 'muhasebe',
     label: 'Muhasebe',
     icon: <CreditCard size={16} />,
+    badge: 'Yakında',
     moduleKey: 'muhasebe',
-    children: [
-      { label: 'Dashboard', href: '/app/muhasebe/dashboard', moduleKey: 'muhasebe', submoduleKey: 'dashboard' },
-      { label: 'Tüm İşlemler', href: '/app/muhasebe/islemler', moduleKey: 'muhasebe', submoduleKey: 'fatura' },
-      { label: 'Borç Takip', href: '/app/muhasebe/borclar', moduleKey: 'muhasebe', submoduleKey: 'cari' },
-      { label: 'Proje Özeti', href: '/app/muhasebe/projeler', disabled: true },
-      { label: 'Hesaplar', href: '/app/muhasebe/hesaplar', disabled: true },
-    ],
   },
   {
     id: 'stok',

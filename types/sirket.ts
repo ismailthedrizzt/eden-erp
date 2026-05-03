@@ -77,16 +77,72 @@ export interface SirketOrtak {
   tckn_vkn: string
   hisse_orani: number
   imza_yetkisi: boolean
+  owner_kind?: 'gercek_kisi' | 'tuzel_kisi'
+  source_type?: string
+  source_id?: string
+  display_name?: string
+  identity_number?: string
+  share_class?: string
+  share_units?: number
+  nominal_value?: number
+  capital_amount?: number
+  share_ratio?: number
+  voting_ratio?: number
+  profit_ratio?: number
+  beneficial_owner?: boolean
+  beneficial_ratio?: number
+  beneficial_note?: string
+  has_representation_right?: boolean
+  has_board_nomination_right?: boolean
+  start_date?: string
+  end_date?: string
+  status?: 'Aktif' | 'Pasif' | 'Devredildi' | 'Askıda' | 'Tasfiye Sürecinde'
+  document_reference_id?: string
+  notes?: string
+  history?: Array<{ field: string; old_value: unknown; new_value: unknown; changed_at: string; changed_by?: string }>
+  is_deleted?: boolean
+  deleted_at?: string
+  deleted_by?: string
 }
 
 export interface SirketTemsilci {
   id: string
   sirket_id: string
-  ad_soyad: string
-  gorev: string
+  ad_soyad?: string
+  gorev?: string
   telefon?: string
   email?: string
-  yetki_turu: 'ceo' | 'mali_musavir' | 'finans_muduru' | 'ik_muduru' | 'imza_sahibi' | 'diger'
+  yetki_turu?: 'ceo' | 'mali_musavir' | 'finans_muduru' | 'ik_muduru' | 'imza_sahibi' | 'diger'
+  authority_types?: string[]
+  person_kind?: 'gercek_kisi' | 'tuzel_kisi'
+  source_type?: string
+  source_id?: string
+  display_name?: string
+  start_date?: string
+  end_date?: string
+  status?: 'Aktif' | 'Pasif' | 'Askıda' | 'Süresi Dolmuş'
+  document_reference_id?: string
+  notes?: string
+  bank_authority_level?: string
+  transaction_limit?: number
+  payment_approval_limit?: number
+  purchase_approval_limit?: number
+  currency?: 'TRY' | 'USD' | 'EUR' | 'GBP'
+  signature_type?: string
+  signature_degree?: string
+  requires_joint_signature?: boolean
+  can_approve_alone?: boolean
+  department_scope?: string
+  gib_permissions?: string
+  can_submit_declaration?: boolean
+  can_process_e_invoice?: boolean
+  sgk_permissions?: string
+  can_submit_hiring_notice?: boolean
+  can_submit_termination_notice?: boolean
+  history?: Array<{ field: string; old_value: unknown; new_value: unknown; changed_at: string; changed_by?: string }>
+  is_deleted?: boolean
+  deleted_at?: string
+  deleted_by?: string
 }
 
 export interface SirketDokuman {

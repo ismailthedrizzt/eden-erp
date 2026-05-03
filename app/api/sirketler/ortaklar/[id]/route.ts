@@ -1,0 +1,127 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { createServiceClient } from '@/lib/supabase/server'
+
+function buildFieldHistory(current: Record<string, any>, updates: Record<string, any>) {
+  const existingHistory = Array.isArray(current.history) ? current.history : []
+  const tracked = new Set(['share_ratio', 'voting_ratio', 'profit_ratio', 'status', 'start_date'])
+  const nextHistory = [...existingHistory]
+
+  Object.entries(updates).forEach(([field, nextValue]) => {
+    if (!tracked.has(field)) return
+    const previousValue = current[field]
+    if (JSON.stringify(previousValue ?? null) === JSON.stringify(nextValue ?? null)) return
+    nextHistory.push({
+      field,
+      old_value: previousValue ?? '',
+      new_value: nextValue ?? '',
+      changed_at: new Date().toISOString(),
+      changed_by: 'Sistem Kullanıcısı',
+    })
+  })
+
+  return nextHistory
+}
+
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params
+  const supabase = createServiceClient()
+
+  const { data, error } = await supabase
+    .from('sirket_ortaklar')
+    .select('*')
+    .eq('id', id)
+    .single()
+
+  if (error) return NextResponse.json({ error: error.message, code: error.code || 'FETCH_FAILED' }, { status: 500 })
+  return NextResponse.json({ data })
+}
+
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params
+  const supabase = createServiceClient()
+  const body = await request.json()
+
+  const { data: current, error: currentError } = await supabase
+    .from('sirket_ortaklar')
+    .select('*')
+    .eq('id', id)
+    .single()
+
+  if (currentError) return NextResponse.json({ error: currentError.message, code: currentError.code || 'FETCH_FAILED' }, { status: 500 })
+
+  const mapped = mapPartnerForDb(body, current)
+  const { data, error } = await supabase
+    .from('sirket_ortaklar')
+    .update({
+      ...mapped,
+      history: buildFieldHistory(current, mapped),
+    })
+    .eq('id', id)
+    .select()
+    .single()
+
+  if (error) return NextResponse.json({ error: error.message, code: error.code || 'UPDATE_FAILED' }, { status: 500 })
+  return NextResponse.json({ data })
+}
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params
+  const supabase = createServiceClient()
+
+  const { error } = await supabase
+    .from('sirket_ortaklar')
+    .update({
+      status: 'Pasif',
+      is_deleted: true,
+      deleted_at: new Date().toISOString(),
+      deleted_by: 'Sistem Kullanıcısı',
+    })
+    .eq('id', id)
+
+  if (error) return NextResponse.json({ error: error.message, code: error.code || 'SOFT_DELETE_FAILED' }, { status: 500 })
+  return NextResponse.json({ success: true })
+}
+
+function mapPartnerForDb(partner: Record<string, any>, current?: Record<string, any>) {
+  const ownerKind = partner.partner_type || partner.owner_kind || current?.owner_kind || 'gercek_kisi'
+  const displayName = ownerKind === 'tuzel_kisi'
+    ? partner.trade_name || partner.short_name || current?.display_name
+    : [partner.first_name, partner.last_name].filter(Boolean).join(' ').trim() || current?.display_name
+
+  return {
+    sirket_id: partner.company_id || partner.sirket_id || current?.sirket_id,
+    ortak_adi: displayName || 'Ortak',
+    ortak_tipi: ownerKind === 'tuzel_kisi' ? 'sirket' : 'kisi',
+    tckn_vkn: partner.identity_number || current?.tckn_vkn,
+    hisse_orani: partner.share_ratio ?? current?.hisse_orani,
+    imza_yetkisi: !!(partner.has_representation_right ?? current?.imza_yetkisi),
+    owner_kind: ownerKind,
+    display_name: displayName || 'Ortak',
+    identity_number: partner.identity_number || current?.identity_number,
+    share_class: partner.share_class || current?.share_class || 'Adi Pay',
+    share_units: partner.share_units || null,
+    nominal_value: partner.nominal_value || null,
+    capital_amount: partner.capital_amount || null,
+    share_ratio: partner.share_ratio ?? current?.share_ratio,
+    voting_ratio: partner.voting_ratio || null,
+    profit_ratio: partner.profit_ratio || null,
+    has_representation_right: !!(partner.has_representation_right ?? current?.has_representation_right),
+    has_board_nomination_right: !!(partner.has_board_nomination_right ?? current?.has_board_nomination_right),
+    start_date: partner.start_date || current?.start_date,
+    end_date: partner.end_date || null,
+    status: partner.status || current?.status || 'Aktif',
+    notes: partner.notes || null,
+    photo_logo: partner.photo_logo || current?.photo_logo || [],
+    partner_documents: partner.partner_documents || current?.partner_documents || [],
+    partner_profile: partner,
+  }
+}

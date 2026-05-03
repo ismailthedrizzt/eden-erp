@@ -158,6 +158,11 @@ const DEFAULT_DOCUMENT_ACCEPTED_TYPES = [
   'application/x-zip-compressed',
 ]
 
+function getDocumentUrl(doc?: SlotDocument | null) {
+  if (!doc) return ''
+  return doc.url || (doc.file ? URL.createObjectURL(doc.file) : '')
+}
+
 export function DocumentSlotUploader({
   slots,
   documents,
@@ -206,6 +211,7 @@ export function DocumentSlotUploader({
   const currentSlot = displaySlots[currentIndex]
   const currentDoc = documents.find(doc => doc.slotId === currentSlot.id)
   const hasDocument = !!currentDoc
+  const currentAcceptedTypes = currentSlot?.acceptedTypes || DEFAULT_DOCUMENT_ACCEPTED_TYPES
 
   const handlePrevious = useCallback(() => {
     setCurrentIndex(prev => (prev > 0 ? prev - 1 : displaySlots.length - 1))
@@ -273,12 +279,12 @@ export function DocumentSlotUploader({
     setIsDragging(false)
     
     const file = e.dataTransfer.files[0]
-    if (file && DEFAULT_DOCUMENT_ACCEPTED_TYPES.includes(file.type)) {
+    if (file && currentAcceptedTypes.includes(file.type)) {
       handleFileSelect(file)
     } else {
-      alert('Invalid file type. Please upload PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, or ZIP files.')
+      alert('Invalid file type. Please upload an accepted document type.')
     }
-  }, [handleFileSelect])
+  }, [currentAcceptedTypes, handleFileSelect])
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault()
@@ -427,22 +433,38 @@ export function DocumentSlotUploader({
           {hasDocument ? (
             // Uploaded State
             <div className="flex-1 flex flex-col p-4 group">
-              {/* File Type Icon */}
+              {/* File Preview / Thumbnail */}
               <div className="flex-1 flex items-center justify-center">
-                <div className={cn(
-                  "w-10 h-10 rounded-lg flex flex-col items-center justify-center gap-0.5",
-                  fileConfig?.bgColor || 'bg-gray-100'
-                )}>
-                  <FileIcon size={18} className={cn(
-                    fileConfig?.color || 'text-gray-600'
-                  )} />
-                  <span className={cn(
-                    "text-[8px] font-semibold",
-                    fileConfig?.color || 'text-gray-600'
+                {currentDoc?.type === 'application/pdf' && getDocumentUrl(currentDoc) ? (
+                  <div className="h-20 w-14 overflow-hidden rounded border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-900">
+                    <iframe
+                      src={`${getDocumentUrl(currentDoc)}#page=1&toolbar=0&navpanes=0&scrollbar=0`}
+                      title={`${currentDoc.name} preview`}
+                      className="h-32 w-24 origin-top-left scale-[0.58] border-0"
+                    />
+                  </div>
+                ) : currentDoc?.type.includes('image') && getDocumentUrl(currentDoc) ? (
+                  <img
+                    src={getDocumentUrl(currentDoc)}
+                    alt={currentDoc.name}
+                    className="h-20 w-14 rounded border border-gray-200 object-cover shadow-sm dark:border-gray-700"
+                  />
+                ) : (
+                  <div className={cn(
+                    "w-10 h-10 rounded-lg flex flex-col items-center justify-center gap-0.5",
+                    fileConfig?.bgColor || 'bg-gray-100'
                   )}>
-                    {fileConfig?.label || 'FILE'}
-                  </span>
-                </div>
+                    <FileIcon size={18} className={cn(
+                      fileConfig?.color || 'text-gray-600'
+                    )} />
+                    <span className={cn(
+                      "text-[8px] font-semibold",
+                      fileConfig?.color || 'text-gray-600'
+                    )}>
+                      {fileConfig?.label || 'FILE'}
+                    </span>
+                  </div>
+                )}
               </div>
 
               {/* File Info */}
@@ -623,7 +645,7 @@ export function DocumentSlotUploader({
       <input
         ref={fileInputRef}
         type="file"
-        accept={DEFAULT_DOCUMENT_ACCEPTED_TYPES.join(',')}
+        accept={currentAcceptedTypes.join(',')}
         className="hidden"
         onChange={(e) => {
           const file = e.target.files?.[0]
@@ -639,7 +661,7 @@ export function DocumentSlotUploader({
           onClick={() => setPreviewDoc(null)}
         >
           <div 
-            className="relative bg-white dark:bg-gray-800 rounded-xl max-w-2xl w-full max-h-[90vh] overflow-hidden shadow-2xl"
+            className="relative bg-white dark:bg-gray-800 rounded-xl max-w-5xl w-full max-h-[90vh] overflow-hidden shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
@@ -680,21 +702,29 @@ export function DocumentSlotUploader({
             {/* Modal Content */}
             <div className="p-6 max-h-[60vh] overflow-auto">
               {previewDoc.type === 'application/pdf' ? (
-                <div className="bg-gray-100 dark:bg-gray-900 rounded-lg p-8 text-center">
-                  <FileText size={64} className="mx-auto text-red-500 mb-4" />
-                  <p className="text-gray-600 dark:text-gray-400 mb-4">
-                    PDF preview not available in browser.
-                  </p>
-                  <button
-                    onClick={handleDownload}
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                  >
-                    Download PDF
-                  </button>
-                </div>
+                getDocumentUrl(previewDoc) ? (
+                  <iframe
+                    src={`${getDocumentUrl(previewDoc)}#toolbar=1&navpanes=0`}
+                    title={`${previewDoc.name} preview`}
+                    className="h-[60vh] w-full rounded-lg border border-gray-200 bg-white dark:border-gray-700"
+                  />
+                ) : (
+                  <div className="bg-gray-100 dark:bg-gray-900 rounded-lg p-8 text-center">
+                    <FileText size={64} className="mx-auto text-red-500 mb-4" />
+                    <p className="text-gray-600 dark:text-gray-400 mb-4">
+                      PDF önizlemesi için dosya bağlantısı bulunamadı.
+                    </p>
+                    <button
+                      onClick={handleDownload}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                    >
+                      PDF İndir
+                    </button>
+                  </div>
+                )
               ) : previewDoc.type.includes('image') ? (
                 <img
-                  src={previewDoc.url || (previewDoc.file ? URL.createObjectURL(previewDoc.file) : '')}
+                  src={getDocumentUrl(previewDoc)}
                   alt={previewDoc.name}
                   className="max-w-full mx-auto rounded-lg"
                 />

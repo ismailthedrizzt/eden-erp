@@ -1237,8 +1237,8 @@ export function EntityForm({
               className={cn(baseInputClass, fieldDisabled && "appearance-none")}
             >
               <option value="">Seçiniz</option>
-              {field.options?.map(opt => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              {field.options?.map((opt, index) => (
+                <option key={`${opt.value}-${index}`} value={opt.value}>{opt.label}</option>
               ))}
             </select>
           )
