@@ -25,16 +25,21 @@ export async function PATCH(request: Request) {
   const body = await request.json()
 
   if (body.type === 'module') {
-    const { key, is_active } = body
+    const { key, is_active, environment } = body
+    const updates = {
+      ...(typeof is_active === 'boolean' ? { is_active } : {}),
+      ...(environment ? { environment } : {}),
+      updated_at: new Date().toISOString(),
+    }
     const { error } = await supabase
       .from('module_licenses')
-      .update({ is_active, updated_at: new Date().toISOString() })
+      .update(updates)
       .eq('module_key', key)
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
     // If module is being disabled, also disable all its submodules
-    if (!is_active) {
+    if (typeof is_active === 'boolean' && !is_active) {
       await supabase
         .from('submodule_licenses')
         .update({ is_active: false, updated_at: new Date().toISOString() })
@@ -45,10 +50,15 @@ export async function PATCH(request: Request) {
   }
 
   if (body.type === 'submodule') {
-    const { moduleKey, submoduleKey, is_active } = body
+    const { moduleKey, submoduleKey, is_active, environment } = body
+    const updates = {
+      ...(typeof is_active === 'boolean' ? { is_active } : {}),
+      ...(environment ? { environment } : {}),
+      updated_at: new Date().toISOString(),
+    }
     const { error } = await supabase
       .from('submodule_licenses')
-      .update({ is_active, updated_at: new Date().toISOString() })
+      .update(updates)
       .eq('module_key', moduleKey)
       .eq('submodule_key', submoduleKey)
 

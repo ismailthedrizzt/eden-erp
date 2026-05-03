@@ -20,6 +20,7 @@ const migrationFiles = [
   '20240516_company_public_institution_data.sql',
   '20240517_partner_corporate_control_fields.sql',
   '20240518_organization_and_positions_model.sql',
+  '20240519_company_vehicles.sql',
   'create_module_licenses.sql',
   'add_employee_unique_constraint.sql',
 ];
