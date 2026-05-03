@@ -101,7 +101,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Geçersiz veri', code: 'VALIDATION_FAILED', details: parsed.error.flatten() }, { status: 400 })
   }
 
-  const row = mapPartnerForDb(parsed.data)
+  const row = await attachPartnerIdentity(supabase, parsed.data, mapPartnerForDb(parsed.data))
   if (!row.sirket_id) {
     return NextResponse.json({ error: 'Bağlı şirket bulunamadı', code: 'COMPANY_REQUIRED' }, { status: 400 })
   }
@@ -160,5 +160,56 @@ function mapPartnerForDb(partner: Record<string, any>) {
     partner_documents: partner.partner_documents || [],
     partner_profile: partner,
     is_deleted: false,
+  }
+}
+
+async function attachPartnerIdentity(supabase: ReturnType<typeof createServiceClient>, partner: Record<string, any>, row: Record<string, any>) {
+  try {
+    const kind = row.owner_kind === 'tuzel_kisi' ? 'organization' : 'person'
+    if (kind === 'person') {
+      const fullName = row.display_name || [partner.first_name, partner.last_name].filter(Boolean).join(' ').trim()
+      const nationality = partner.nationality_country || partner.nationality || 'TR'
+      const nationalId = partner.identity_number && String(partner.identity_number).length === 11 ? String(partner.identity_number) : null
+      const passportNo = nationalId ? null : partner.passport_no || null
+      let query = supabase.from('persons').select('id').eq('nationality', nationality).eq(nationalId ? 'national_id' : 'passport_no', nationalId || passportNo).maybeSingle()
+      if (!nationalId && !passportNo) query = supabase.from('persons').select('id').eq('full_name', fullName).maybeSingle()
+      const { data: existing, error: findError } = await query
+      if (findError) return row
+      const personId = existing?.id || (await supabase.from('persons').insert({
+        first_name: partner.first_name || null,
+        last_name: partner.last_name || null,
+        full_name: fullName,
+        nationality,
+        national_id: nationalId,
+        passport_no: passportNo,
+        birth_date: partner.birth_date || null,
+        metadata_json: { source: 'partners_create' },
+      }).select('id').single()).data?.id
+      return { ...row, person_id: personId || null, source_type: row.source_type || 'master_person', source_id: row.source_id || personId || null }
+    }
+
+    const legalName = partner.trade_name || row.display_name
+    const country = partner.country || partner.nationality_country || 'TR'
+    const taxNumber = partner.tax_number || partner.identity_number || null
+    const { data: existing, error: findError } = await supabase
+      .from('organizations')
+      .select('id')
+      .eq('country', country)
+      .eq(taxNumber ? 'tax_number' : 'legal_name', taxNumber || legalName)
+      .maybeSingle()
+    if (findError) return row
+    const organizationId = existing?.id || (await supabase.from('organizations').insert({
+      legal_name: legalName,
+      short_name: partner.short_name || null,
+      country,
+      tax_number: taxNumber,
+      registration_number: partner.trade_registry_no || partner.mersis_no || null,
+      tax_office: partner.tax_office || null,
+      organization_type: partner.company_type || null,
+      metadata_json: { source: 'partners_create' },
+    }).select('id').single()).data?.id
+    return { ...row, organization_id: organizationId || null, source_type: row.source_type || 'master_organization', source_id: row.source_id || organizationId || null }
+  } catch {
+    return row
   }
 }

@@ -124,3 +124,25 @@ Takip edilen alanlar:
 - `source_id`
 
 Değişiklikler eski değer, yeni değer, tarih ve kullanıcı bilgisiyle auditable şekilde saklanır.
+## Master Identity Refactor
+
+Ortak oluşturma akışında `Kaynak Türü` ilk soru olmaktan çıkar. Yeni akış:
+
+1. Kişi/Kurum Tipi
+2. Kimlik Bilgileri
+3. Mevcut Kayıt Eşleştirme
+4. Rol Detayları
+
+Gerçek kişi ortaklar `sirket_ortaklar.person_id`, tüzel kişi ortaklar `sirket_ortaklar.organization_id` üzerinden master kimliğe bağlanır. Eski `source_type`, `source_id`, `display_name` ve `identity_number` alanları geçiş süresince okunabilir uyumluluk alanlarıdır.
+
+Hedef rol alanları:
+
+- `id`
+- `company_id`
+- `owner_kind: person | organization`
+- `person_id`
+- `organization_id`
+- `share_ratio`
+- `voting_ratio`
+- `profit_ratio`
+- `status`

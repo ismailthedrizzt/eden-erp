@@ -6,8 +6,8 @@ const RepresentativeSchema = z.object({
   company_id: z.string().uuid().optional(),
   sirket_id: z.string().uuid().optional(),
   person_or_entity_type: z.enum(['gercek_kisi', 'tuzel_kisi']).default('gercek_kisi'),
-  source_type: z.string().min(1),
-  source_id: z.string().min(1),
+  source_type: z.string().optional(),
+  source_id: z.string().optional(),
   display_name: z.string().min(1),
   identity_number: z.string().optional(),
   status: z.enum(['Aktif', 'Pasif', 'Askıda', 'Süresi Dolmuş']).default('Aktif'),
@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Geçersiz veri', code: 'VALIDATION_FAILED', details: parsed.error.flatten() }, { status: 400 })
   }
 
-  const row = mapRepresentativeForDb(parsed.data)
+  const row = await attachRepresentativeIdentity(supabase, parsed.data, mapRepresentativeForDb(parsed.data))
   if (!row.sirket_id) {
     return NextResponse.json({ error: 'Bağlı şirket bulunamadı', code: 'COMPANY_REQUIRED' }, { status: 400 })
   }
@@ -89,8 +89,8 @@ function mapRepresentativeForDb(representative: Record<string, any>) {
     yetki_turu: 'diger',
     authority_types: authorityTypes,
     person_kind: representative.person_or_entity_type,
-    source_type: representative.source_type,
-    source_id: representative.source_id,
+    source_type: representative.source_type || (representative.person_or_entity_type === 'tuzel_kisi' ? 'master_organization' : 'master_person'),
+    source_id: representative.source_id || null,
     display_name: representative.display_name,
     start_date: representative.start_date,
     end_date: representative.end_date || null,
@@ -106,5 +106,42 @@ function mapRepresentativeForDb(representative: Record<string, any>) {
     representative_profile: representative,
     history: representative.timeline || [],
     is_deleted: false,
+  }
+}
+
+async function attachRepresentativeIdentity(supabase: ReturnType<typeof createServiceClient>, representative: Record<string, any>, row: Record<string, any>) {
+  try {
+    const kind = representative.person_or_entity_type === 'tuzel_kisi' ? 'organization' : 'person'
+    if (kind === 'person') {
+      const fullName = representative.display_name
+      const nationalId = representative.identity_number && String(representative.identity_number).length === 11 ? String(representative.identity_number) : null
+      const { data: existing, error: findError } = nationalId
+        ? await supabase.from('persons').select('id').eq('nationality', 'TR').eq('national_id', nationalId).maybeSingle()
+        : await supabase.from('persons').select('id').eq('full_name', fullName).maybeSingle()
+      if (findError) return row
+      const personId = existing?.id || (await supabase.from('persons').insert({
+        full_name: fullName,
+        nationality: 'TR',
+        national_id: nationalId,
+        metadata_json: { source: 'representatives_create' },
+      }).select('id').single()).data?.id
+      return { ...row, person_id: personId || null, source_id: row.source_id || personId || null }
+    }
+
+    const legalName = representative.display_name
+    const taxNumber = representative.identity_number || null
+    const { data: existing, error: findError } = taxNumber
+      ? await supabase.from('organizations').select('id').eq('country', 'TR').eq('tax_number', taxNumber).maybeSingle()
+      : await supabase.from('organizations').select('id').eq('country', 'TR').eq('legal_name', legalName).maybeSingle()
+    if (findError) return row
+    const organizationId = existing?.id || (await supabase.from('organizations').insert({
+      legal_name: legalName,
+      country: 'TR',
+      tax_number: taxNumber,
+      metadata_json: { source: 'representatives_create' },
+    }).select('id').single()).data?.id
+    return { ...row, organization_id: organizationId || null, source_id: row.source_id || organizationId || null }
+  } catch {
+    return row
   }
 }

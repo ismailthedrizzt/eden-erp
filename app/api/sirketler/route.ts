@@ -96,9 +96,10 @@ export async function POST(request: NextRequest) {
   }
 
   const { ortaklar, temsilciler, public_tax, public_sgk, public_incentives, public_registry, public_licenses, public_channels, ...companyData } = parsed.data
+  const companyRow = await attachCompanyOrganization(supabase, companyData)
   const { data, error } = await supabase
     .from('sirketler')
-    .insert(companyData)
+    .insert(companyRow)
     .select()
     .single()
 
@@ -121,6 +122,37 @@ export async function POST(request: NextRequest) {
   if (publicError) return NextResponse.json({ error: publicError.message, code: publicError.code || 'PUBLIC_SAVE_FAILED' }, { status: 500 })
 
   return NextResponse.json({ data }, { status: 201 })
+}
+
+async function attachCompanyOrganization(supabase: ReturnType<typeof createServiceClient>, companyData: Record<string, any>) {
+  try {
+    const country = companyData.ulke || 'TR'
+    const taxNumber = companyData.vkn_tckn || null
+    const { data: existing, error: findError } = taxNumber
+      ? await supabase.from('organizations').select('id').eq('country', country).eq('tax_number', taxNumber).maybeSingle()
+      : await supabase.from('organizations').select('id').eq('country', country).eq('legal_name', companyData.ticari_unvan).maybeSingle()
+    if (findError) return companyData
+
+    const organizationId = existing?.id || (await supabase.from('organizations').insert({
+      legal_name: companyData.ticari_unvan,
+      short_name: companyData.kisa_unvan || null,
+      country,
+      tax_number: taxNumber,
+      registration_number: companyData.ticaret_sicil_no || companyData.mersis_no || null,
+      tax_office: companyData.vergi_dairesi || null,
+      organization_type: companyData.sirket_turu || null,
+      phone: companyData.telefon || null,
+      email: companyData.email || null,
+      address: companyData.adres || null,
+      city: companyData.il || null,
+      district: companyData.ilce || null,
+      metadata_json: { source: 'companies_create' },
+    }).select('id').single()).data?.id
+
+    return { ...companyData, organization_id: organizationId || null }
+  } catch {
+    return companyData
+  }
 }
 
 async function replaceCompanyPublicData(

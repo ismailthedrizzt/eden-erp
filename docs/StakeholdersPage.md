@@ -75,3 +75,18 @@ Paydaş kayıtları fiziksel olarak silinmez. Silme eylemi:
 - deleted_by
 
 alanlarını günceller.
+## Master Identity Refactor
+
+Paydaş oluşturma akışında kişi/kurum kimliği `persons` veya `organizations` master kaydından gelir. Paydaş tablosu yalnızca ilişki kategorisi, durum, sorumlu kişi, finans/sözleşme bilgileri gibi rol detaylarını tutar.
+
+Hedef rol alanları:
+
+- `id`
+- `company_id`
+- `stakeholder_kind: person | organization`
+- `person_id`
+- `organization_id`
+- `category`
+- `status`
+
+Kayıt sırasında kesin eşleşme bulunursa mevcut kişi/kurumla ilişkilendirme önerilir. Zayıf eşleşme duplicate uyarısıdır; kullanıcı kararı auditlenir.

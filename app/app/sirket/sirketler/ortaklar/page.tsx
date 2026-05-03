@@ -86,7 +86,7 @@ const heroFields: FormField[] = [
   { name: 'company_id', label: 'Şirket', type: 'select', required: true },
   {
     name: 'partner_type',
-    label: 'Ortak Türü',
+    label: 'Kişi/Kurum Tipi',
     type: 'select',
     required: true,
     options: [
@@ -96,9 +96,9 @@ const heroFields: FormField[] = [
   },
   {
     name: 'source_type',
-    label: 'Kaynak Türü',
+    label: 'Mevcut Kayıt Eşleştirme',
     type: 'select',
-    required: true,
+    required: false,
     options: [
       { value: 'calisan', label: 'Çalışan' },
       { value: 'mevcut_temsilci', label: 'Mevcut Temsilci' },
@@ -111,7 +111,7 @@ const heroFields: FormField[] = [
       { value: 'yeni_sirket', label: 'Yeni Şirket' },
     ],
   },
-  { name: 'source_id', label: 'Kayıt Seçimi / Kaynak ID', type: 'select' },
+  { name: 'source_id', label: 'Mevcut Kayıt Eşleştirme', type: 'select' },
   { name: 'first_name', label: 'Adı / Ticari Ünvan', type: 'text', required: true },
   { name: 'last_name', label: 'Kısa Ad / Soyad', type: 'text' },
   { name: 'identity_number', label: 'TCKN / VKN', type: 'text', required: true, inputMode: 'numeric', pattern: '[0-9]{10,11}', maxLength: 11 },

@@ -83,9 +83,9 @@ const heroFields: FormField[] = [
   { name: 'display_name', label: 'Ad Soyad / Ticari Ünvan', type: 'text', required: true },
   {
     name: 'source_type',
-    label: 'Kaynak Türü',
+    label: 'Mevcut Kayıt Eşleştirme',
     type: 'select',
-    required: true,
+    required: false,
     visibleWhen: { field: 'person_or_entity_type', operator: 'equals', value: 'gercek_kisi' },
     options: [
       { value: 'calisan', label: 'Çalışan' },
@@ -96,9 +96,9 @@ const heroFields: FormField[] = [
   },
   {
     name: 'source_type',
-    label: 'Kaynak Türü',
+    label: 'Mevcut Kayıt Eşleştirme',
     type: 'select',
-    required: true,
+    required: false,
     visibleWhen: { field: 'person_or_entity_type', operator: 'equals', value: 'tuzel_kisi' },
     options: [
       { value: 'cari', label: 'Cari' },
@@ -106,7 +106,7 @@ const heroFields: FormField[] = [
       { value: 'ortak_sirket', label: 'Ortak Şirket' },
     ],
   },
-  { name: 'source_id', label: 'Kayıt Seçimi', type: 'text', required: true },
+  { name: 'source_id', label: 'Mevcut Kayıt Eşleştirme', type: 'text' },
   { name: 'identity_number', label: 'TCKN / VKN', type: 'text', inputMode: 'numeric', maxLength: 11 },
   {
     name: 'status',

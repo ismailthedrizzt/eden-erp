@@ -1,3 +1,4 @@
 export * from './permissions'
 export * from './modules'
 export * from './workflow'
+export * from './identity'

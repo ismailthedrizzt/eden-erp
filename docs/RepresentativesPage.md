@@ -101,3 +101,18 @@ Temsilci kayıtları fiziksel olarak silinmez. Silme eylemi:
 - deleted_by
 
 alanlarını günceller.
+## Master Identity Refactor
+
+Temsilci oluşturma akışında `Kaynak Türü` ilk soru değildir. Kullanıcı önce `Kişi/Kurum Tipi` seçer, kimlik bilgilerini girer, backend master kayıtlarda kesin veya zayıf eşleşme arar, ardından temsil rol detayları alınır.
+
+Gerçek kişi temsilciler `sirket_temsilciler.person_id`, tüzel kişi temsilciler `sirket_temsilciler.organization_id` üzerinden master kimliğe bağlanır.
+
+Hedef rol alanları:
+
+- `id`
+- `company_id`
+- `representative_kind: person | organization`
+- `person_id`
+- `organization_id`
+- `authority_types`
+- `status`

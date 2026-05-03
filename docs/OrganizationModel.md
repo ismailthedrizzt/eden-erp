@@ -1,5 +1,11 @@
 # Organization Model
 
+## Master Identity Notu
+
+Bu dokümandaki Organization Model iç teşkilat yapısını anlatır. Tüzel kişi / kurum kimliği artık `organizations` master tablosunda tutulur; ERP şirket rolü `sirketler.organization_id` ile bu kayda bağlanır.
+
+Kurum kimliği için ana referans: `docs/OrganizationIdentityModel.md`.
+
 ## Kapsam
 
 Organization Model şirketin iç teşkilat yapısını yönetir. Bu model iç organizasyon içindir; dış partner, bayi ve distribütör ilişkileri Paydaşlar modülüne aittir.

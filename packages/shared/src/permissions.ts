@@ -12,6 +12,7 @@ export const MODULE_CODES = [
   'workflow',
   'inventory',
   'documents',
+  'identity',
 ] as const
 
 export type ModuleCode = typeof MODULE_CODES[number]
@@ -48,6 +49,13 @@ export const PERMISSIONS = {
   },
   documents: {
     export: 'documents.export',
+  },
+  identity: {
+    view: 'identity.view',
+    insert: 'identity.insert',
+    edit: 'identity.edit',
+    approve: 'identity.approve',
+    passivate: 'identity.passivate',
   },
 } as const
 

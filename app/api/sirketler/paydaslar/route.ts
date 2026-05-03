@@ -67,7 +67,7 @@ export async function POST(request: NextRequest) {
 
   const { data, error } = await supabase
     .from('stakeholders')
-    .insert(mapStakeholderForDb(parsed.data))
+    .insert(await attachStakeholderIdentity(supabase, parsed.data, mapStakeholderForDb(parsed.data)))
     .select()
     .single()
 
@@ -101,5 +101,48 @@ function mapStakeholderForDb(stakeholder: Record<string, any>) {
     stakeholder_profile: stakeholder,
     history: stakeholder.timeline || [],
     is_deleted: false,
+  }
+}
+
+async function attachStakeholderIdentity(supabase: ReturnType<typeof createServiceClient>, stakeholder: Record<string, any>, row: Record<string, any>) {
+  try {
+    const kind = stakeholder.stakeholder_type === 'tuzel_kisi' ? 'organization' : 'person'
+    if (kind === 'person') {
+      const fullName = stakeholder.display_name
+      const nationalId = stakeholder.tax_id && String(stakeholder.tax_id).length === 11 ? String(stakeholder.tax_id) : null
+      const { data: existing, error: findError } = nationalId
+        ? await supabase.from('persons').select('id').eq('nationality', stakeholder.country || 'TR').eq('national_id', nationalId).maybeSingle()
+        : await supabase.from('persons').select('id').eq('full_name', fullName).maybeSingle()
+      if (findError) return row
+      const personId = existing?.id || (await supabase.from('persons').insert({
+        full_name: fullName,
+        nationality: stakeholder.country || 'TR',
+        national_id: nationalId,
+        birth_date: stakeholder.birth_date || null,
+        phone: stakeholder.phone || stakeholder.phone_1 || null,
+        email: stakeholder.email || stakeholder.email_1 || null,
+        metadata_json: { source: 'stakeholders_create' },
+      }).select('id').single()).data?.id
+      return { ...row, stakeholder_kind: 'person', person_id: personId || null }
+    }
+
+    const legalName = stakeholder.display_name
+    const country = stakeholder.country || 'TR'
+    const taxNumber = stakeholder.tax_id || stakeholder.tax_number || null
+    const { data: existing, error: findError } = taxNumber
+      ? await supabase.from('organizations').select('id').eq('country', country).eq('tax_number', taxNumber).maybeSingle()
+      : await supabase.from('organizations').select('id').eq('country', country).eq('legal_name', legalName).maybeSingle()
+    if (findError) return row
+    const organizationId = existing?.id || (await supabase.from('organizations').insert({
+      legal_name: legalName,
+      country,
+      tax_number: taxNumber,
+      tax_office: stakeholder.tax_office || null,
+      registration_number: stakeholder.trade_registry_no || stakeholder.mersis_no || null,
+      metadata_json: { source: 'stakeholders_create' },
+    }).select('id').single()).data?.id
+    return { ...row, stakeholder_kind: 'organization', organization_id: organizationId || null }
+  } catch {
+    return row
   }
 }

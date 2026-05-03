@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import modules, permissions, companies, workflows
+from app.api.routes import modules, permissions, companies, identity, workflows
 from app.core.config import settings
 
 app = FastAPI(title="Eden ERP API", version="0.1.0")
@@ -23,4 +23,5 @@ def health() -> dict[str, str]:
 app.include_router(modules.router, prefix="/modules", tags=["modules"])
 app.include_router(permissions.router, prefix="/permissions", tags=["permissions"])
 app.include_router(companies.router, prefix="/companies", tags=["companies"])
+app.include_router(identity.router, prefix="/identity", tags=["identity"])
 app.include_router(workflows.router, prefix="/workflows", tags=["workflows"])
