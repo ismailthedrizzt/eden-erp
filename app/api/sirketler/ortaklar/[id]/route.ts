@@ -3,7 +3,7 @@ import { createServiceClient } from '@/lib/supabase/server'
 
 function buildFieldHistory(current: Record<string, any>, updates: Record<string, any>) {
   const existingHistory = Array.isArray(current.history) ? current.history : []
-  const tracked = new Set(['share_ratio', 'voting_ratio', 'profit_ratio', 'status', 'start_date'])
+  const tracked = new Set(['share_ratio', 'voting_ratio', 'profit_ratio', 'control_type', 'status', 'start_date', 'end_date', 'source_id'])
   const nextHistory = [...existingHistory]
 
   Object.entries(updates).forEach(([field, nextValue]) => {
@@ -105,6 +105,8 @@ function mapPartnerForDb(partner: Record<string, any>, current?: Record<string, 
     hisse_orani: partner.share_ratio ?? current?.hisse_orani,
     imza_yetkisi: !!(partner.has_representation_right ?? current?.imza_yetkisi),
     owner_kind: ownerKind,
+    source_type: partner.source_type || current?.source_type || 'ortaklar_sayfasi',
+    source_id: partner.source_id || current?.source_id || null,
     display_name: displayName || 'Ortak',
     identity_number: partner.identity_number || current?.identity_number,
     share_class: partner.share_class || current?.share_class || 'Adi Pay',
@@ -114,8 +116,16 @@ function mapPartnerForDb(partner: Record<string, any>, current?: Record<string, 
     share_ratio: partner.share_ratio ?? current?.share_ratio,
     voting_ratio: partner.voting_ratio || null,
     profit_ratio: partner.profit_ratio || null,
+    beneficial_owner: !!(partner.beneficial_owner ?? partner.is_beneficial_owner ?? current?.beneficial_owner),
+    is_beneficial_owner: !!(partner.beneficial_owner ?? partner.is_beneficial_owner ?? current?.is_beneficial_owner),
+    beneficial_ratio: partner.beneficial_ratio || null,
+    is_ultimate_controller: !!(partner.is_ultimate_controller ?? current?.is_ultimate_controller),
     has_representation_right: !!(partner.has_representation_right ?? current?.has_representation_right),
+    has_control_right: !!(partner.has_control_right ?? current?.has_control_right),
+    control_type: partner.control_type || null,
     has_board_nomination_right: !!(partner.has_board_nomination_right ?? current?.has_board_nomination_right),
+    has_veto_right: !!(partner.has_veto_right ?? current?.has_veto_right),
+    has_privileged_share: !!(partner.has_privileged_share ?? partner.has_privilege ?? current?.has_privileged_share),
     start_date: partner.start_date || current?.start_date,
     end_date: partner.end_date || null,
     status: partner.status || current?.status || 'Aktif',

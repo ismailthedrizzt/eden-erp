@@ -1,16 +1,19 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { Users } from 'lucide-react'
+import type { ReactNode } from 'react'
+import { AlertTriangle, Building2, GitBranch, Users } from 'lucide-react'
 import { EntityForm, FormField, FormMode, FormTab } from '@/components/ui/EntityForm'
 import { PageBanner } from '@/components/ui/PageBanner'
 import { SmartDataTable, ColumnDef, WidgetDef } from '@/components/ui/SmartDataTable'
 import { Toast } from '@/components/ui/Toast'
+import { calculateCorporateStructure } from '@/lib/corporate-structure'
 
 type PageState = 'list' | 'create' | 'view' | 'edit'
 type ToastState = { type: 'success' | 'error' | 'warning'; title?: string; message: string }
 type SaveError = Error & { toast?: ToastState; fieldErrors?: Record<string, string> }
 type Option = { value: string; label: string }
+type CompanyOption = Option & { ticari_unvan?: string; kisa_unvan?: string }
 
 interface PartnerRow {
   id: string
@@ -25,7 +28,22 @@ interface PartnerRow {
   share_ratio?: number
   voting_ratio?: number
   profit_ratio?: number
+  source_type?: string
+  source_id?: string
+  share_units?: number
+  nominal_value?: number
+  capital_amount?: number
+  has_control_right?: boolean
+  control_type?: string
+  has_board_nomination_right?: boolean
+  has_veto_right?: boolean
+  has_privileged_share?: boolean
+  beneficial_owner?: boolean
+  is_beneficial_owner?: boolean
+  beneficial_ratio?: number
+  is_ultimate_controller?: boolean
   start_date?: string
+  end_date?: string
   status?: string
   is_deleted?: boolean
   history?: Array<{ value: unknown; date: string; user?: string }>
@@ -40,22 +58,32 @@ const FIELD_LABELS: Record<string, string> = {
   last_name: 'Kısa Ad / Soyad',
   identity_number: 'TCKN / VKN',
   share_ratio: 'Pay Oranı',
+  voting_ratio: 'Oy Hakkı',
+  profit_ratio: 'Kar Payı',
+  source_type: 'Kaynak Türü',
+  source_id: 'Kayıt Seçimi',
+  control_type: 'Kontrol Türü',
   start_date: 'Başlangıç Tarihi',
   status: 'Durum',
 }
 
 const columns: ColumnDef[] = [
-  { key: 'display_name', label: 'Ad / Ünvan', type: 'text', width: 260, sortable: true, category: 'Kimlik' },
-  { key: 'partner_type_label', label: 'Tür', type: 'enum', width: 120, category: 'Kimlik' },
+  { key: 'display_name', label: 'Ortak Adı / Ünvanı', type: 'text', width: 280, sortable: true, category: 'Kimlik', render: (value, row) => <PartnerNameCell value={value} row={row} /> },
+  { key: 'partner_type_label', label: 'Ortak Türü', type: 'enum', width: 130, category: 'Kimlik' },
+  { key: 'source_type_label', label: 'Kaynak Türü', type: 'enum', width: 140, category: 'Kimlik' },
   { key: 'company_name', label: 'Şirket', type: 'text', width: 220, category: 'Şirket' },
-  { key: 'identity_number', label: 'TCKN / VKN', type: 'text', width: 140, category: 'Kimlik' },
-  { key: 'share_ratio', label: 'Pay %', type: 'number', width: 100, sortable: true, category: 'Sermaye' },
+  { key: 'share_ratio', label: 'Hisse %', type: 'number', width: 100, sortable: true, category: 'Sermaye' },
   { key: 'voting_ratio', label: 'Oy %', type: 'number', width: 100, category: 'Sermaye' },
   { key: 'profit_ratio', label: 'Kar Payı %', type: 'number', width: 120, category: 'Sermaye' },
+  { key: 'control_label', label: 'Kontrol', type: 'text', width: 160, category: 'Yönetim' },
+  { key: 'beneficial_label', label: 'Nihai Faydalanıcı', type: 'text', width: 150, category: 'Yönetim' },
+  { key: 'start_date', label: 'Başlangıç', type: 'date', width: 120, category: 'Dönem' },
+  { key: 'end_date', label: 'Bitiş', type: 'date', width: 120, category: 'Dönem' },
   { key: 'status', label: 'Durum', type: 'enum', width: 120, sortable: true, category: 'Durum' },
 ]
 
 const heroFields: FormField[] = [
+  { name: 'company_id', label: 'Şirket', type: 'select', required: true },
   {
     name: 'partner_type',
     label: 'Ortak Türü',
@@ -66,6 +94,24 @@ const heroFields: FormField[] = [
       { value: 'tuzel_kisi', label: 'Tüzel Kişi' },
     ],
   },
+  {
+    name: 'source_type',
+    label: 'Kaynak Türü',
+    type: 'select',
+    required: true,
+    options: [
+      { value: 'calisan', label: 'Çalışan' },
+      { value: 'mevcut_temsilci', label: 'Mevcut Temsilci' },
+      { value: 'harici_kisi', label: 'Harici Kişi' },
+      { value: 'yeni_kisi', label: 'Yeni Kişi' },
+      { value: 'cari', label: 'Cari' },
+      { value: 'paydas', label: 'Paydaş' },
+      { value: 'grup_sirketi', label: 'Grup Şirketi' },
+      { value: 'harici_sirket', label: 'Harici Şirket' },
+      { value: 'yeni_sirket', label: 'Yeni Şirket' },
+    ],
+  },
+  { name: 'source_id', label: 'Kayıt Seçimi / Kaynak ID', type: 'select' },
   { name: 'first_name', label: 'Adı / Ticari Ünvan', type: 'text', required: true },
   { name: 'last_name', label: 'Kısa Ad / Soyad', type: 'text' },
   { name: 'identity_number', label: 'TCKN / VKN', type: 'text', required: true, inputMode: 'numeric', pattern: '[0-9]{10,11}', maxLength: 11 },
@@ -84,10 +130,27 @@ const heroFields: FormField[] = [
       { value: 'Pasif', label: 'Pasif' },
       { value: 'Devredildi', label: 'Devredildi' },
       { value: 'Askıda', label: 'Askıda' },
+      { value: 'Tarihsel', label: 'Tarihsel' },
     ],
   },
-  { name: 'has_representation_right', label: 'Temsil Yetkisi Var mı', type: 'checkbox' },
+  { name: 'has_control_right', label: 'Kontrol Hakkı Var mı?', type: 'checkbox' },
+  {
+    name: 'control_type',
+    label: 'Kontrol Türü',
+    type: 'select',
+    visibleWhen: { field: 'has_control_right', operator: 'equals', value: true },
+    options: [
+      { value: 'Hisse Çoğunluğu', label: 'Hisse Çoğunluğu' },
+      { value: 'Oy Çoğunluğu', label: 'Oy Çoğunluğu' },
+      { value: 'Sözleşmesel Kontrol', label: 'Sözleşmesel Kontrol' },
+      { value: 'Yönetim Kontrolü', label: 'Yönetim Kontrolü' },
+      { value: 'Altın Hisse', label: 'Altın Hisse' },
+      { value: 'Diğer', label: 'Diğer' },
+    ],
+  },
   { name: 'has_board_nomination_right', label: 'Yönetim Kurulu Aday Hakkı', type: 'checkbox' },
+  { name: 'has_veto_right', label: 'Veto Hakkı Var mı?', type: 'checkbox' },
+  { name: 'has_privileged_share', label: 'İmtiyazlı Pay Var mı?', type: 'checkbox' },
 ]
 
 const tabs: FormTab[] = [
@@ -148,7 +211,7 @@ const tabs: FormTab[] = [
           { value: 'Diğer', label: 'Diğer' },
         ],
       },
-      { name: 'has_privilege', label: 'İmtiyaz Var mı', type: 'checkbox' },
+      { name: 'has_privileged_share', label: 'İmtiyazlı Pay Var mı', type: 'checkbox' },
       { name: 'capital_increase_history', label: 'Sermaye Artış Geçmişi', type: 'textarea', colSpan: 3 },
     ],
   },
@@ -161,6 +224,9 @@ const tabs: FormTab[] = [
       { name: 'is_board_member', label: 'Yönetim Kurulu Üyesi mi?', type: 'checkbox' },
       { name: 'has_purchase_authority', label: 'Satınalma Yetkisi', type: 'checkbox' },
       { name: 'has_payment_approval_authority', label: 'Ödeme Onay Yetkisi', type: 'checkbox' },
+      { name: 'beneficial_owner', label: 'Nihai Faydalanıcı mı?', type: 'checkbox' },
+      { name: 'beneficial_ratio', label: 'Nihai Faydalanma Oranı (%)', type: 'number', visibleWhen: { field: 'beneficial_owner', operator: 'equals', value: true } },
+      { name: 'is_ultimate_controller', label: 'Nihai Hakim Ortak mı?', type: 'checkbox', visibleWhen: { field: 'beneficial_owner', operator: 'equals', value: true } },
     ],
   },
   {
@@ -210,7 +276,8 @@ const tabs: FormTab[] = [
 export default function OrtaklarPage() {
   const [pageState, setPageState] = useState<PageState>('list')
   const [partners, setPartners] = useState<PartnerRow[]>([])
-  const [companies, setCompanies] = useState<Option[]>([])
+  const [companies, setCompanies] = useState<CompanyOption[]>([])
+  const [selectedStructureCompanyId, setSelectedStructureCompanyId] = useState<string>('')
   const [selectedPartner, setSelectedPartner] = useState<Record<string, any> | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -235,10 +302,14 @@ export default function OrtaklarPage() {
       if (!partnerResponse.ok) throw new Error(partnerPayload.error || 'Ortaklar yüklenemedi')
 
       setPartners(Array.isArray(partnerPayload.data) ? partnerPayload.data : [])
-      setCompanies(Array.isArray(companyPayload.data) ? companyPayload.data.map((company: any) => ({
+      const companyOptions = Array.isArray(companyPayload.data) ? companyPayload.data.map((company: any) => ({
         value: company.id,
         label: company.ticari_unvan || company.kisa_unvan,
-      })) : [])
+        ticari_unvan: company.ticari_unvan,
+        kisa_unvan: company.kisa_unvan,
+      })) : []
+      setCompanies(companyOptions)
+      setSelectedStructureCompanyId((current) => current || companyOptions[0]?.value || '')
     } catch (err: any) {
       setError(err.message)
     } finally {
@@ -251,13 +322,19 @@ export default function OrtaklarPage() {
   }, [])
 
   const companyNameById = useMemo(() => Object.fromEntries(companies.map(company => [company.value, company.label])), [companies])
+  const companyRecords = useMemo(() => companies.map(company => ({ id: company.value, ticari_unvan: company.ticari_unvan || company.label, kisa_unvan: company.kisa_unvan })), [companies])
+  const structure = useMemo(() => calculateCorporateStructure(selectedStructureCompanyId, partners, companyRecords), [selectedStructureCompanyId, partners, companyRecords])
   const tableData = partners.map(partner => ({
     ...partner,
     display_name: partner.display_name || partner.ortak_adi || '',
     identity_number: partner.identity_number || partner.tckn_vkn || '',
     partner_type_label: (partner.owner_kind || partner.ortak_tipi) === 'tuzel_kisi' || partner.ortak_tipi === 'sirket' ? 'Tüzel Kişi' : 'Gerçek Kişi',
+    source_type_label: getSourceTypeLabel(partner.source_type),
     company_name: companyNameById[partner.sirket_id] || '-',
     share_ratio: partner.share_ratio ?? partner.hisse_orani,
+    control_label: partner.has_control_right ? partner.control_type || 'Kontrol Hakkı' : ratioValue(partner.voting_ratio ?? partner.share_ratio ?? partner.hisse_orani) > 50 ? 'Çoğunluk' : '-',
+    beneficial_label: partner.beneficial_owner || partner.is_beneficial_owner ? `${partner.beneficial_ratio ?? partner.share_ratio ?? '-'}%` : '-',
+    is_main_owner: structure.main_owner_id ? partner.source_id === structure.main_owner_id && partner.sirket_id === selectedStructureCompanyId : partner.display_name === structure.main_owner && partner.sirket_id === selectedStructureCompanyId,
   }))
 
   const activePartners = tableData.filter(partner => !partner.is_deleted && partner.status === 'Aktif')
@@ -268,7 +345,12 @@ export default function OrtaklarPage() {
     { key: 'legal', label: 'Tüzel Kişi', render: () => activePartners.filter(partner => partner.partner_type_label === 'Tüzel Kişi').length },
   ]
 
-  const configuredHeroFields = heroFields
+  const groupCompanyOptions = companies.filter(company => company.value !== selectedPartner?.company_id && company.value !== selectedPartner?.sirket_id)
+  const configuredHeroFields = heroFields.map(field => {
+    if (field.name === 'company_id') return { ...field, options: companies }
+    if (field.name === 'source_id') return { ...field, options: groupCompanyOptions, visibleWhen: { field: 'source_type', operator: 'equals', value: 'grup_sirketi' } }
+    return field
+  })
   const withFieldHistory = (field: FormField) => {
     const history = selectedPartner?.field_history?.[field.name]
     return history ? { ...field, history } : field
@@ -370,12 +452,18 @@ export default function OrtaklarPage() {
       {toast && <Toast type={toast.type} title={toast.title} message={toast.message} onClose={() => setToast(null)} />}
 
       {pageState === 'list' && (
-        <div className="mt-6">
+        <div className="mt-6 space-y-5">
           {error && (
             <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
               <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
             </div>
           )}
+          <CorporateStructurePanel
+            companies={companies}
+            selectedCompanyId={selectedStructureCompanyId}
+            onCompanyChange={setSelectedStructureCompanyId}
+            structure={structure}
+          />
           <SmartDataTable
             columns={columns}
             data={tableData}
@@ -442,6 +530,100 @@ export default function OrtaklarPage() {
   )
 }
 
+function CorporateStructurePanel({
+  companies,
+  selectedCompanyId,
+  onCompanyChange,
+  structure,
+}: {
+  companies: CompanyOption[]
+  selectedCompanyId: string
+  onCompanyChange: (value: string) => void
+  structure: ReturnType<typeof calculateCorporateStructure>
+}) {
+  return (
+    <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h3 className="flex items-center gap-2 text-base font-semibold text-gray-900 dark:text-white">
+            <GitBranch size={18} />
+            Kurumsal Yapı
+          </h3>
+          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Şirketler arası kontrol ilişkisi ortaklık kayıtlarından hesaplanır.</p>
+        </div>
+        <select value={selectedCompanyId} onChange={(event) => onCompanyChange(event.target.value)} className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 md:w-80">
+          {companies.map((company) => <option key={company.value} value={company.value}>{company.label}</option>)}
+        </select>
+      </div>
+
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-7">
+        <StructureCard label="Ana Ortak" value={structure.main_owner} />
+        <StructureCard label="Nihai Hakim Ortak" value={`${structure.ultimate_controller}${structure.ultimate_ownership_ratio ? ` (${structure.ultimate_ownership_ratio}%)` : ''}`} />
+        <StructureCard label="Grup Şirketi mi?" value={structure.is_group_company ? 'Evet' : 'Hayır'} />
+        <StructureCard label="Bağlı Şirket Sayısı" value={structure.subsidiary_count} />
+        <StructureCard label="İştirak Sayısı" value={structure.affiliate_count} />
+        <StructureCard label="Toplam Aktif Hisse" value={`${structure.total_active_share}%`} tone={structure.total_active_share === 100 ? 'green' : 'amber'} />
+        <StructureCard label="Toplam Oy Hakkı" value={`${structure.total_voting_right}%`} tone={structure.total_voting_right === 100 ? 'green' : 'amber'} />
+      </div>
+
+      {structure.warnings.length > 0 && (
+        <div className="mt-4 grid grid-cols-1 gap-2 md:grid-cols-2">
+          {structure.warnings.map((warning) => (
+            <div key={warning} className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
+              <AlertTriangle size={16} />
+              {warning}
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="mt-4 rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-900/50">
+        <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-gray-800 dark:text-gray-100">
+          <Building2 size={16} />
+          Ortaklık Grafiği
+        </div>
+        <div className="flex flex-col gap-2 md:flex-row md:flex-wrap md:items-center">
+          {structure.ownership_graph.map((node, index) => (
+            <div key={`${node.kind}-${node.label}-${index}`} className="flex items-center gap-2">
+              <span className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100">
+                {node.label}{node.ratio !== undefined ? ` ${node.ratio}%` : ''}
+              </span>
+              {index < structure.ownership_graph.length - 1 && <span className="text-gray-400">→</span>}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function StructureCard({ label, value, tone = 'default' }: { label: string; value: string | number; tone?: 'default' | 'green' | 'amber' }) {
+  return (
+    <div className={`rounded-lg border p-3 ${tone === 'green' ? 'border-emerald-200 bg-emerald-50 dark:border-emerald-900 dark:bg-emerald-950/30' : tone === 'amber' ? 'border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/30' : 'border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900/50'}`}>
+      <div className="text-xs font-medium text-gray-500 dark:text-gray-400">{label}</div>
+      <div className="mt-1 truncate text-sm font-semibold text-gray-900 dark:text-white">{value}</div>
+    </div>
+  )
+}
+
+function PartnerNameCell({ value, row }: { value: any; row: any }) {
+  return (
+    <div className="flex flex-wrap items-center gap-1.5">
+      <span className="font-medium">{value || '-'}</span>
+      {row.is_main_owner && <InlineBadge tone="blue">Ana Ortak</InlineBadge>}
+      {(row.has_control_right || ratioValue(row.voting_ratio ?? row.share_ratio) > 50) && <InlineBadge tone="blue">Kontrol Sahibi</InlineBadge>}
+      {row.source_type === 'grup_sirketi' && <InlineBadge>Grup İçi</InlineBadge>}
+      {(row.beneficial_owner || row.is_beneficial_owner) && <InlineBadge>Nihai Faydalanıcı</InlineBadge>}
+      {row.has_privileged_share && <InlineBadge>İmtiyazlı</InlineBadge>}
+      {row.status === 'Tarihsel' && <InlineBadge>Tarihsel</InlineBadge>}
+    </div>
+  )
+}
+
+function InlineBadge({ children, tone = 'green' }: { children: ReactNode; tone?: 'green' | 'blue' }) {
+  return <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${tone === 'blue' ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300' : 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300'}`}>{children}</span>
+}
+
 function SummaryList({ items, emptyText }: { items: any[]; emptyText: string }) {
   if (!items.length) return <div className="rounded-lg border border-dashed border-gray-200 p-4 text-sm text-gray-500 dark:border-gray-700">{emptyText}</div>
   return (
@@ -486,9 +668,23 @@ function normalizePartnerForForm(partner: PartnerRow) {
     first_name: profile.first_name || (partnerType === 'tuzel_kisi' ? partner.display_name || partner.ortak_adi || '' : nameParts.slice(0, -1).join(' ') || partner.display_name || partner.ortak_adi || ''),
     last_name: profile.last_name || (partnerType === 'tuzel_kisi' ? profile.short_name || '' : nameParts.length > 1 ? nameParts.at(-1) : ''),
     identity_number: profile.identity_number || partner.identity_number || partner.tckn_vkn || '',
+    source_type: profile.source_type || partner.source_type || (partnerType === 'tuzel_kisi' ? 'harici_sirket' : 'harici_kisi'),
+    source_id: profile.source_id || partner.source_id || '',
     share_ratio: profile.share_ratio ?? partner.share_ratio ?? partner.hisse_orani ?? '',
     voting_ratio: profile.voting_ratio ?? partner.voting_ratio ?? '',
     profit_ratio: profile.profit_ratio ?? partner.profit_ratio ?? '',
+    share_units: profile.share_units ?? partner.share_units ?? '',
+    nominal_value: profile.nominal_value ?? partner.nominal_value ?? '',
+    capital_amount: profile.capital_amount ?? partner.capital_amount ?? '',
+    has_control_right: profile.has_control_right ?? partner.has_control_right ?? false,
+    control_type: profile.control_type ?? partner.control_type ?? '',
+    has_board_nomination_right: profile.has_board_nomination_right ?? partner.has_board_nomination_right ?? false,
+    has_veto_right: profile.has_veto_right ?? partner.has_veto_right ?? false,
+    has_privileged_share: profile.has_privileged_share ?? partner.has_privileged_share ?? false,
+    beneficial_owner: profile.beneficial_owner ?? partner.beneficial_owner ?? partner.is_beneficial_owner ?? false,
+    beneficial_ratio: profile.beneficial_ratio ?? partner.beneficial_ratio ?? '',
+    is_ultimate_controller: profile.is_ultimate_controller ?? partner.is_ultimate_controller ?? false,
+    end_date: profile.end_date ?? partner.end_date ?? '',
     status: profile.status || partner.status || 'Aktif',
     photo_logo: partner.photo_logo || [],
     partner_documents: partner.partner_documents || [],
@@ -507,6 +703,9 @@ function normalizePayload(raw: Record<string, any>, companies: Option[]) {
   payload.owner_kind = payload.partner_type
   payload.trade_name = payload.partner_type === 'tuzel_kisi' ? payload.first_name : undefined
   payload.short_name = payload.partner_type === 'tuzel_kisi' ? payload.last_name : undefined
+  payload.source_type = payload.source_type || (payload.partner_type === 'tuzel_kisi' ? 'harici_sirket' : 'harici_kisi')
+  payload.source_id = payload.source_id || undefined
+  payload.is_beneficial_owner = !!payload.beneficial_owner
   payload.document_summary = undefined
   payload.field_history = undefined
   return payload
@@ -517,8 +716,11 @@ function buildEntityFieldHistory(history: any[]) {
     share_ratio: 'share_ratio',
     voting_ratio: 'voting_ratio',
     profit_ratio: 'profit_ratio',
+    control_type: 'control_type',
     status: 'status',
     start_date: 'start_date',
+    end_date: 'end_date',
+    source_id: 'source_id',
   }
   return history.reduce((acc: Record<string, any[]>, entry: any) => {
     const field = trackedMap[entry.field]
@@ -533,6 +735,27 @@ function buildEntityFieldHistory(history: any[]) {
     ]
     return acc
   }, {})
+}
+
+function getSourceTypeLabel(value?: string) {
+  const labels: Record<string, string> = {
+    calisan: 'Çalışan',
+    mevcut_temsilci: 'Mevcut Temsilci',
+    harici_kisi: 'Harici Kişi',
+    yeni_kisi: 'Yeni Kişi',
+    cari: 'Cari',
+    paydas: 'Paydaş',
+    grup_sirketi: 'Grup Şirketi',
+    harici_sirket: 'Harici Şirket',
+    yeni_sirket: 'Yeni Şirket',
+    ortaklar_sayfasi: 'Ortaklar Sayfası',
+  }
+  return value ? labels[value] || value : '-'
+}
+
+function ratioValue(value: unknown) {
+  const numeric = Number(value || 0)
+  return Number.isFinite(numeric) ? numeric : 0
 }
 
 async function createSaveError(response: Response, fallback: string): Promise<SaveError> {

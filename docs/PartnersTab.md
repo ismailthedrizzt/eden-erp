@@ -2,11 +2,11 @@
 
 ## Amaç
 
-Ortaklar sekmesi şirketin gerçek kişi ve tüzel kişi ortaklarını, pay detaylarını, ekonomik haklarını ve tarihsel ortaklık kayıtlarını yönetir.
+Ortaklar sekmesi şirket formu içinde ownership kayıtlarını yönetir. Bağımsız Ortaklar sayfası ise aynı kayıtları kurumsal yapı hesaplama ekranı olarak kullanır.
 
 ## Seçim Akışı
 
-Kayıt ekleme akışı soldan sağa ilerler:
+Kayıt ekleme akışı:
 
 1. Ortak Türü
 2. Kaynak Türü
@@ -14,18 +14,16 @@ Kayıt ekleme akışı soldan sağa ilerler:
 4. Ortaklık Detayları
 5. Ortağı Kaydet
 
-Önceki adım tamamlanmadan sonraki adım aktif olmaz.
-
 ## Ortak Türü ve Kaynaklar
 
-Gerçek Kişi kaynakları:
+Gerçek kişi kaynakları:
 
 - Çalışan
 - Mevcut Temsilci
 - Harici Kişi
 - Yeni Kişi
 
-Tüzel Kişi kaynakları:
+Tüzel kişi kaynakları:
 
 - Cari
 - Paydaş
@@ -33,7 +31,7 @@ Tüzel Kişi kaynakları:
 - Harici Şirket
 - Yeni Şirket
 
-UI içinde `Personel`, `Delete`, `Remove` veya `Shareholder` etiketi kullanılmaz.
+`Tüzel Kişi + Grup Şirketi` seçimi ERP içindeki başka bir şirket kaydına işaret eder ve kurumsal yapı hesabında kullanılır.
 
 ## Ortaklık Detayları
 
@@ -49,32 +47,16 @@ Alanlar:
 - Hisse Oranı (%)
 - Oy Hakkı (%)
 - Kar Payı Oranı (%)
-- Temsil Yetkisi Var mı?
+- Kontrol Hakkı Var mı?
+- Kontrol Türü
 - Yönetim Kurulu Aday Hakkı Var mı?
+- Veto Hakkı Var mı?
+- İmtiyazlı Pay Var mı?
 - Nihai Faydalanıcı mı?
+- Nihai Faydalanma Oranı (%)
+- Nihai Hakim Ortak mı?
 - Notlar
 - Belge Referansı
-
-Zorunlu alanlar:
-
-- Ortak Türü
-- Kaynak Türü
-- Kayıt Seçimi
-- Başlangıç Tarihi
-- Durum
-- Hisse Oranı, Sermaye Tutarı veya Pay Adedi alanlarından en az biri
-
-## Hisse Türü
-
-Desteklenen türler:
-
-- Adi Pay
-- İmtiyazlı Pay
-- Nama Yazılı
-- Hamiline
-- Kurucu Payı
-- Yatırımcı Payı
-- Diğer
 
 ## Durum
 
@@ -84,14 +66,14 @@ Desteklenen durumlar:
 - Pasif
 - Devredildi
 - Askıda
-- Tasfiye Sürecinde
+- Tarihsel
 
 ## Koşullu Gösterimler
 
 - Kaynak Çalışan ise `Çalışan Ortak` etiketi gösterilir.
 - Kaynak Grup Şirketi ise `Grup İçi Ortaklık` etiketi gösterilir.
-- Hisse oranı %50 üzerindeyse `Kontrol Hissesi` badge'i gösterilir.
-- Nihai Faydalanıcı seçilirse `Nihai Faydalanma Oranı` ve `Açıklama` alanları açılır.
+- Hisse veya oy oranı %50 üzerindeyse kontrol rozeti gösterilir.
+- Nihai Faydalanıcı seçilirse nihai faydalanma oranı ve nihai hakim ortak alanları açılır.
 
 ## Toplamlar
 
@@ -105,32 +87,18 @@ Sekmede toplam paneli bulunur:
 
 Aktif ortaklık toplamı 100% değilse uyarı gösterilir.
 
-## Pay Devri
-
-`Pay Devri` işlemi modal üzerinden yapılır:
-
-- Devreden Ortak
-- Devralan Ortak
-- Devir Tarihi
-- Devir Oranı
-- Belge Referansı
-- Not
-
-Sistem devreden satırı kısmen veya tamamen kapatır, devralan için yeni tarihsel satır oluşturur.
-
 ## Geçmiş
 
 Takip edilen değişiklikler:
 
-- share_ratio
-- capital_amount
-- voting_right
-- profit_share
-- status
-- owner
-- dates
-
-Her satırda `Geçmiş` ikonu bulunur. Panelde eski değer, yeni değer, değiştirme tarihi ve değiştiren gösterilir.
+- `share_ratio`
+- `voting_ratio`
+- `profit_ratio`
+- `control_type`
+- `status`
+- `start_date`
+- `end_date`
+- `source_id`
 
 ## Silme Kuralı
 

@@ -65,6 +65,117 @@ export interface Sirket {
   temsilciler?: SirketTemsilci[]
   logolar?: SirketLogo[]
   dokumanlar?: SirketDokuman[]
+  public_tax?: CompanyPublicTax | CompanyPublicTax[]
+  public_sgk?: CompanyPublicSgk | CompanyPublicSgk[]
+  public_incentives?: CompanyPublicIncentives | CompanyPublicIncentives[]
+  public_registry?: CompanyPublicRegistry | CompanyPublicRegistry[]
+  public_licenses?: CompanyPublicLicense[]
+  public_channels?: CompanyPublicChannels | CompanyPublicChannels[]
+}
+
+export interface CompanyPublicHistoryItem {
+  field?: string
+  old_value?: unknown
+  new_value?: unknown
+  changed_at?: string
+  changed_by?: string
+}
+
+export interface CompanyPublicTax {
+  id?: string
+  company_id?: string
+  tax_number?: string
+  tax_office?: string
+  tax_type?: string
+  liability_start_date?: string
+  e_invoice_taxpayer?: boolean
+  e_archive_taxpayer?: boolean
+  e_waybill_enabled?: boolean
+  gib_user_code?: string
+  has_financial_seal?: boolean
+  financial_seal_expiry_date?: string
+  tax_debt_tracking_active?: boolean
+  last_check_date?: string
+  history?: CompanyPublicHistoryItem[]
+}
+
+export interface CompanyPublicSgk {
+  id?: string
+  company_id?: string
+  workplace_registry_no?: string
+  province?: string
+  branch?: string
+  registration_date?: string
+  nace_code?: string
+  risk_class?: string
+  uses_incentive?: boolean
+  active_incentive_type?: string
+  incentive_end_date?: string
+  employee_count?: number
+  debt_tracking_active?: boolean
+  last_check_date?: string
+  history?: CompanyPublicHistoryItem[]
+}
+
+export interface CompanyPublicIncentives {
+  id?: string
+  company_id?: string
+  has_kosgeb_registration?: boolean
+  kosgeb_no?: string
+  active_support_program?: string
+  application_date?: string
+  result_status?: string
+  incentive_type?: string
+  incentive_end_date?: string
+  responsible_person?: string
+  notes?: string
+  history?: CompanyPublicHistoryItem[]
+}
+
+export interface CompanyPublicRegistry {
+  id?: string
+  company_id?: string
+  mersis_no?: string
+  trade_registry_no?: string
+  registry_office?: string
+  chamber_registry_no?: string
+  chamber_name?: string
+  establishment_registration_date?: string
+  last_change_date?: string
+  liquidation_status?: string
+  history?: CompanyPublicHistoryItem[]
+}
+
+export interface CompanyPublicLicense {
+  id?: string
+  company_id?: string
+  license_type?: string
+  document_no?: string
+  issuing_authority?: string
+  start_date?: string
+  end_date?: string
+  status?: string
+  document_file?: string
+  reminder_days?: number
+  history?: CompanyPublicHistoryItem[]
+  is_deleted?: boolean
+  deleted_at?: string
+  deleted_by?: string
+}
+
+export interface CompanyPublicChannels {
+  id?: string
+  company_id?: string
+  kep_address?: string
+  kep_provider?: string
+  e_notification_address?: string
+  e_notification_active?: boolean
+  e_government_authority_status?: string
+  official_notification_email?: string
+  official_notification_phone?: string
+  has_web_service_integration?: boolean
+  api_notes?: string
+  history?: CompanyPublicHistoryItem[]
 }
 
 export interface SirketOrtak {
@@ -90,10 +201,16 @@ export interface SirketOrtak {
   voting_ratio?: number
   profit_ratio?: number
   beneficial_owner?: boolean
+  is_beneficial_owner?: boolean
   beneficial_ratio?: number
   beneficial_note?: string
+  is_ultimate_controller?: boolean
   has_representation_right?: boolean
+  has_control_right?: boolean
+  control_type?: 'Hisse Çoğunluğu' | 'Oy Çoğunluğu' | 'Sözleşmesel Kontrol' | 'Yönetim Kontrolü' | 'Altın Hisse' | 'Diğer'
   has_board_nomination_right?: boolean
+  has_veto_right?: boolean
+  has_privileged_share?: boolean
   start_date?: string
   end_date?: string
   status?: 'Aktif' | 'Pasif' | 'Devredildi' | 'Askıda' | 'Tasfiye Sürecinde'

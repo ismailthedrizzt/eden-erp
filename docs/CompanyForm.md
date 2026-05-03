@@ -2,7 +2,7 @@
 
 ## Genel Yapı
 
-Şirket formu standart `EntityForm` şablonunu kullanır. Hero alanı şirket kimlik bilgileri, logo slotları ve belge slotlarından oluşur. Detay bilgileri sekmeler altında yönetilir.
+Şirket formu standart ERP form mimarisini kullanır. Hero alanı şirket kimlik bilgileri, logo slotları ve belge slotlarından oluşur. Detay bilgileri sekmeler altında yönetilir.
 
 ## Hero Alanı
 
@@ -13,7 +13,7 @@ Zorunlu alanlar:
 - VKN
 - Vergi Dairesi
 
-VKN sadece 10 haneli sayı kabul eder. Kısa Ünvan Hero alanında gösterilmez; veri kaydında Ticari Ünvan üzerinden türetilir.
+VKN sadece 10 haneli sayı kabul eder. Kısa Ünvan veri kaydında ve liste görünümünde şirketin kısa adı olarak kullanılır.
 
 Beklenen resimler:
 
@@ -33,15 +33,31 @@ Belge yükleyici PDF ve resim dosyalarında thumbnail/preview gösterir.
 
 Mevcut sekme yapısı:
 
+- Kurumsal Kimlik
+- Vergi ve SGK Bilgileri
+- Kamu
 - Ortaklar
 - Temsilciler
-- Adres
-- İletişim
-- Tescil
-- Vergi ve SGK
-- Ayarlar
+- ERP Ayarları
 
 Sekme başlığı renkleri yalnızca o sekmedeki ana form alanlarının doğrulama durumuna göre değişir. Liste içi geçici draft alanları, ilgili kayıt listeye eklenmeden sekme rengini boyamaz.
+
+## Kamu
+
+Kamu sekmesi resmi kurum ilişkileri merkezidir. Vergi, SGK, Teşvikler, Sicil, Ruhsatlar, Dijital Kanallar ve Geçmiş alt sekmelerinden oluşur.
+
+Kamu verileri şirket ana tablosundan ayrı kurum bazlı tablolarda saklanır:
+
+- `company_public_tax`
+- `company_public_sgk`
+- `company_public_incentives`
+- `company_public_registry`
+- `company_public_licenses`
+- `company_public_channels`
+
+Ruhsatlar çoklu kayıt yapısındadır. Silme yerine pasifleştirme kullanılır. Bitiş tarihi 30 gün içinde olan ruhsatlarda uyarı rozeti gösterilir.
+
+Detay davranışı `docs/CompanyPublicTab.md` içinde açıklanmıştır.
 
 ## Ortaklar
 
@@ -53,8 +69,8 @@ Temsilci kayıtları bağımsız Temsilciler sayfasında yönetilir. Şirket for
 
 ## Veri Kaydetme
 
-Form kaydı şirket ana alanlarını, Hero asset JSON alanlarını, ortakları ve temsilcileri birlikte gönderir. Temsilci pasifleştirme fiziksel silme yapmaz; satır üzerinde `is_deleted`, `deleted_at` ve geçmiş bilgisi tutulur.
+Form kaydı şirket ana alanlarını, Hero asset JSON alanlarını, ortakları, temsilcileri ve Kamu sekmesi verilerini birlikte gönderir. Temsilci ve resmi ruhsat pasifleştirme fiziksel silme yapmaz; satır üzerinde `is_deleted`, `deleted_at` ve geçmiş bilgisi tutulur.
 
 ## Gelecek İş Akışı Entegrasyonu
 
-Temsilci yetkileri ileride onay akışlarında kullanılacaktır. Ödeme, satınalma, sözleşme, SGK ve GİB süreçleri ilgili temsilci yetkilerini okuyarak uygun onay ve işlem adımlarını belirleyebilir.
+Temsilci yetkileri ve Kamu kayıtları ileride onay akışlarında, belge hatırlatmalarında ve kamu entegrasyonlarında kullanılacaktır. Ödeme, satınalma, sözleşme, SGK ve GİB süreçleri ilgili temsilci yetkilerini ve Kamu sekmesi durumlarını okuyarak uygun onay ve işlem adımlarını belirleyebilir.

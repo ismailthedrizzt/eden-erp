@@ -38,6 +38,12 @@ const SirketSchema = z.object({
   hero_documents: z.array(z.record(z.any())).optional(),
   ortaklar: z.array(z.record(z.any())).optional(),
   temsilciler: z.array(z.record(z.any())).optional(),
+  public_tax: z.record(z.any()).optional(),
+  public_sgk: z.record(z.any()).optional(),
+  public_incentives: z.record(z.any()).optional(),
+  public_registry: z.record(z.any()).optional(),
+  public_licenses: z.array(z.record(z.any())).optional(),
+  public_channels: z.record(z.any()).optional(),
 })
 
 function omitNullishValues(value: Record<string, any>) {
@@ -89,7 +95,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Geçersiz veri', code: 'VALIDATION_FAILED', details: parsed.error.flatten() }, { status: 400 })
   }
 
-  const { ortaklar, temsilciler, ...companyData } = parsed.data
+  const { ortaklar, temsilciler, public_tax, public_sgk, public_incentives, public_registry, public_licenses, public_channels, ...companyData } = parsed.data
   const { data, error } = await supabase
     .from('sirketler')
     .insert(companyData)
@@ -104,7 +110,75 @@ export async function POST(request: NextRequest) {
   const representativeError = await replaceCompanyRepresentatives(supabase, data.id, temsilciler || [])
   if (representativeError) return NextResponse.json({ error: representativeError.message, code: representativeError.code || 'REPRESENTATIVE_SAVE_FAILED' }, { status: 500 })
 
+  const publicError = await replaceCompanyPublicData(supabase, data.id, {
+    public_tax,
+    public_sgk,
+    public_incentives,
+    public_registry,
+    public_licenses,
+    public_channels,
+  })
+  if (publicError) return NextResponse.json({ error: publicError.message, code: publicError.code || 'PUBLIC_SAVE_FAILED' }, { status: 500 })
+
   return NextResponse.json({ data }, { status: 201 })
+}
+
+async function replaceCompanyPublicData(
+  supabase: ReturnType<typeof createServiceClient>,
+  sirketId: string,
+  payload: {
+    public_tax?: Record<string, any>
+    public_sgk?: Record<string, any>
+    public_incentives?: Record<string, any>
+    public_registry?: Record<string, any>
+    public_licenses?: Record<string, any>[]
+    public_channels?: Record<string, any>
+  }
+) {
+  const singleRows = [
+    ['company_public_tax', payload.public_tax],
+    ['company_public_sgk', payload.public_sgk],
+    ['company_public_incentives', payload.public_incentives],
+    ['company_public_registry', payload.public_registry],
+    ['company_public_channels', payload.public_channels],
+  ] as const
+
+  for (const [table, row] of singleRows) {
+    if (!row || Object.keys(row).length === 0) continue
+    const { error } = await supabase
+      .from(table)
+      .upsert({ ...cleanPublicRow(row), company_id: sirketId }, { onConflict: 'company_id' })
+    if (error) return error
+  }
+
+  if (payload.public_licenses?.length) {
+    const { error } = await supabase
+      .from('company_public_licenses')
+      .insert(payload.public_licenses.map((license) => ({
+        ...cleanPublicRow(license),
+        company_id: sirketId,
+        reminder_days: license.reminder_days ? Number(license.reminder_days) : null,
+        is_deleted: !!license.is_deleted,
+        deleted_at: license.deleted_at || null,
+        deleted_by: license.deleted_by || null,
+      })))
+    if (error) return error
+  }
+
+  return null
+}
+
+function cleanPublicRow(row: Record<string, any>) {
+  const { id, company_id, created_at, updated_at, ...rest } = row
+  return Object.fromEntries(
+    Object.entries(rest)
+      .filter(([, value]) => value !== undefined)
+      .map(([key, value]) => {
+        if (value === '') return [key, null]
+        if (key === 'employee_count') return [key, value ? Number(value) : null]
+        return [key, value]
+      })
+  )
 }
 
 async function replaceCompanyPartners(supabase: ReturnType<typeof createServiceClient>, sirketId: string, partners: Record<string, any>[]) {
@@ -140,10 +214,16 @@ function mapPartnerForDb(sirketId: string, partner: Record<string, any>) {
     voting_ratio: partner.voting_ratio ? Number(partner.voting_ratio) : null,
     profit_ratio: partner.profit_ratio ? Number(partner.profit_ratio) : null,
     beneficial_owner: !!partner.beneficial_owner,
+    is_beneficial_owner: !!(partner.beneficial_owner || partner.is_beneficial_owner),
     beneficial_ratio: partner.beneficial_ratio ? Number(partner.beneficial_ratio) : null,
     beneficial_note: partner.beneficial_note || null,
+    is_ultimate_controller: !!partner.is_ultimate_controller,
     has_representation_right: !!(partner.has_representation_right ?? partner.imza_yetkisi),
+    has_control_right: !!partner.has_control_right,
+    control_type: partner.control_type || null,
     has_board_nomination_right: !!partner.has_board_nomination_right,
+    has_veto_right: !!partner.has_veto_right,
+    has_privileged_share: !!partner.has_privileged_share,
     start_date: partner.start_date || null,
     end_date: partner.end_date || null,
     status: partner.status || 'Aktif',

@@ -1,5 +1,32 @@
 # Veri Mimarisi
 
+## Şirketler ve Kurumsal Yapı
+
+ERP içinde her `sirketler` kaydı bir tüzel kişiliği temsil eder.
+
+```text
+companies = legal entities
+```
+
+Kurumsal yapı `parent_company_id`, `holding_id` veya ayrı bir legal entity parent modeliyle tutulmaz. Ana ortak, nihai hakim ortak, bağlı şirket ve iştirak ilişkileri `sirket_ortaklar` ownership kayıtlarından hesaplanır.
+
+`sirket_ortaklar` tablosu şirketin corporate ownership kaynağıdır. Önemli alanlar:
+
+- `sirket_id`: ortak olunan şirket
+- `owner_kind`: gerçek kişi / tüzel kişi
+- `source_type`: kaynak türü
+- `source_id`: kaynak kayıt id'si
+- `share_ratio`, `voting_ratio`, `profit_ratio`
+- `has_control_right`, `control_type`
+- `has_board_nomination_right`, `has_veto_right`, `has_privileged_share`
+- `beneficial_owner`, `is_beneficial_owner`, `beneficial_ratio`, `is_ultimate_controller`
+- `start_date`, `end_date`, `status`
+- `history`, `is_deleted`, `deleted_at`, `deleted_by`
+
+ERP içindeki başka bir şirket ortak olduğunda `owner_kind = tuzel_kisi`, `source_type = grup_sirketi`, `source_id = diğer şirket id` kullanılır.
+
+Kurumsal yapı hesabı `calculateCorporateStructure(company_id)` yardımcı fonksiyonuyla yapılır. Detaylar `docs/CorporateStructure.md` ve `docs/OwnershipModel.md` içinde açıklanır.
+
 ## Şirket Temsilcileri
 
 Şirket temsilcileri `sirket_temsilciler` tablosunda tutulur. Tablo eski alanları korur ve ERP temsilci modeli için genişletilmiş alanlar içerir.

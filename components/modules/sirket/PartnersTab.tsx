@@ -27,7 +27,8 @@ type PartnerSourceType =
   | 'grup_sirketi'
   | 'harici_sirket'
   | 'yeni_sirket'
-type PartnerStatus = 'Aktif' | 'Pasif' | 'Devredildi' | 'Askıda' | 'Tasfiye Sürecinde'
+type PartnerStatus = 'Aktif' | 'Pasif' | 'Devredildi' | 'Askıda' | 'Tarihsel'
+type ControlType = 'Hisse Çoğunluğu' | 'Oy Çoğunluğu' | 'Sözleşmesel Kontrol' | 'Yönetim Kontrolü' | 'Altın Hisse' | 'Diğer'
 
 export interface CompanyPartner {
   id?: string
@@ -45,10 +46,16 @@ export interface CompanyPartner {
   voting_ratio?: string | number
   profit_ratio?: string | number
   beneficial_owner?: boolean
+  is_beneficial_owner?: boolean
   beneficial_ratio?: string | number
   beneficial_note?: string
+  is_ultimate_controller?: boolean
   has_representation_right?: boolean
+  has_control_right?: boolean
+  control_type?: ControlType | string
   has_board_nomination_right?: boolean
+  has_veto_right?: boolean
+  has_privileged_share?: boolean
   start_date: string
   end_date?: string
   status: PartnerStatus
@@ -106,8 +113,13 @@ interface DraftState {
   beneficial_owner: boolean
   beneficial_ratio: string
   beneficial_note: string
+  is_ultimate_controller: boolean
   has_representation_right: boolean
+  has_control_right: boolean
+  control_type: ControlType | ''
   has_board_nomination_right: boolean
+  has_veto_right: boolean
+  has_privileged_share: boolean
   document_reference_id: string
   notes: string
 }
@@ -139,7 +151,8 @@ const SOURCE_OPTIONS: Record<OwnerKind, Array<{ value: PartnerSourceType; label:
 }
 
 const SHARE_CLASS_OPTIONS = ['Adi Pay', 'İmtiyazlı Pay', 'Nama Yazılı', 'Hamiline', 'Kurucu Payı', 'Yatırımcı Payı', 'Diğer']
-const STATUS_OPTIONS: PartnerStatus[] = ['Aktif', 'Pasif', 'Devredildi', 'Askıda', 'Tasfiye Sürecinde']
+const STATUS_OPTIONS: PartnerStatus[] = ['Aktif', 'Pasif', 'Devredildi', 'Askıda', 'Tarihsel']
+const CONTROL_TYPE_OPTIONS: ControlType[] = ['Hisse Çoğunluğu', 'Oy Çoğunluğu', 'Sözleşmesel Kontrol', 'Yönetim Kontrolü', 'Altın Hisse', 'Diğer']
 
 const emptyDraft: DraftState = {
   editIndex: null,
@@ -161,8 +174,13 @@ const emptyDraft: DraftState = {
   beneficial_owner: false,
   beneficial_ratio: '',
   beneficial_note: '',
+  is_ultimate_controller: false,
   has_representation_right: false,
+  has_control_right: false,
+  control_type: '',
   has_board_nomination_right: false,
+  has_veto_right: false,
+  has_privileged_share: false,
   document_reference_id: '',
   notes: '',
 }
@@ -307,10 +325,16 @@ export function PartnersTab({ value, onChange, readOnly = false, representatives
       voting_ratio: draft.voting_ratio || undefined,
       profit_ratio: draft.profit_ratio || undefined,
       beneficial_owner: draft.beneficial_owner,
+      is_beneficial_owner: draft.beneficial_owner,
       beneficial_ratio: draft.beneficial_ratio || undefined,
       beneficial_note: draft.beneficial_note || undefined,
+      is_ultimate_controller: draft.is_ultimate_controller,
       has_representation_right: draft.has_representation_right,
+      has_control_right: draft.has_control_right,
+      control_type: draft.control_type || undefined,
       has_board_nomination_right: draft.has_board_nomination_right,
+      has_veto_right: draft.has_veto_right,
+      has_privileged_share: draft.has_privileged_share,
       start_date: draft.start_date,
       end_date: draft.end_date || undefined,
       status: draft.status as PartnerStatus,
@@ -350,8 +374,13 @@ export function PartnersTab({ value, onChange, readOnly = false, representatives
       beneficial_owner: !!row.beneficial_owner,
       beneficial_ratio: String(row.beneficial_ratio || ''),
       beneficial_note: row.beneficial_note || '',
+      is_ultimate_controller: !!row.is_ultimate_controller,
       has_representation_right: !!row.has_representation_right,
+      has_control_right: !!row.has_control_right,
+      control_type: (row.control_type as ControlType) || '',
       has_board_nomination_right: !!row.has_board_nomination_right,
+      has_veto_right: !!row.has_veto_right,
+      has_privileged_share: !!row.has_privileged_share,
       document_reference_id: row.document_reference_id || '',
       notes: row.notes || '',
     })
@@ -525,11 +554,16 @@ export function PartnersTab({ value, onChange, readOnly = false, representatives
               <Field label="Hisse Oranı (%)" error={errors.ownership_metric}><input type="number" min={0} max={100} value={draft.share_ratio} onChange={event => setDraft(prev => ({ ...prev, share_ratio: event.target.value }))} disabled={readOnly} className={inputClass(errors.ownership_metric)} /></Field>
               <Field label="Oy Hakkı (%)"><input type="number" min={0} max={100} value={draft.voting_ratio} onChange={event => setDraft(prev => ({ ...prev, voting_ratio: event.target.value }))} disabled={readOnly} className={inputClass()} /></Field>
               <Field label="Kar Payı Oranı (%)"><input type="number" min={0} max={100} value={draft.profit_ratio} onChange={event => setDraft(prev => ({ ...prev, profit_ratio: event.target.value }))} disabled={readOnly} className={inputClass()} /></Field>
+              <CheckField label="Kontrol Hakkı Var mı?" checked={draft.has_control_right} onChange={value => setDraft(prev => ({ ...prev, has_control_right: value }))} readOnly={readOnly} />
+              {draft.has_control_right && <Field label="Kontrol Türü"><select value={draft.control_type} onChange={event => setDraft(prev => ({ ...prev, control_type: event.target.value as ControlType }))} disabled={readOnly} className={inputClass()}><option value="">Seçiniz</option>{CONTROL_TYPE_OPTIONS.map(option => <option key={option} value={option}>{option}</option>)}</select></Field>}
               <Field label="Belge Referansı"><select value={draft.document_reference_id} onChange={event => setDraft(prev => ({ ...prev, document_reference_id: event.target.value }))} disabled={readOnly} className={inputClass()}><option value="">Seçiniz</option>{documents.map((document: any) => <option key={document.id || document.slotId || document.name} value={document.id || document.slotId || document.name}>{document.slotTitle || document.title || document.name || document.slotId}</option>)}</select></Field>
               <CheckField label="Temsil Yetkisi Var mı?" checked={draft.has_representation_right} onChange={value => setDraft(prev => ({ ...prev, has_representation_right: value }))} readOnly={readOnly} />
               <CheckField label="Yönetim Kurulu Aday Hakkı Var mı?" checked={draft.has_board_nomination_right} onChange={value => setDraft(prev => ({ ...prev, has_board_nomination_right: value }))} readOnly={readOnly} />
+              <CheckField label="Veto Hakkı Var mı?" checked={draft.has_veto_right} onChange={value => setDraft(prev => ({ ...prev, has_veto_right: value }))} readOnly={readOnly} />
+              <CheckField label="İmtiyazlı Pay Var mı?" checked={draft.has_privileged_share} onChange={value => setDraft(prev => ({ ...prev, has_privileged_share: value }))} readOnly={readOnly} />
               <CheckField label="Nihai Faydalanıcı mı?" checked={draft.beneficial_owner} onChange={value => setDraft(prev => ({ ...prev, beneficial_owner: value }))} readOnly={readOnly} />
               {draft.beneficial_owner && <Field label="Nihai Faydalanma Oranı"><input type="number" min={0} max={100} value={draft.beneficial_ratio} onChange={event => setDraft(prev => ({ ...prev, beneficial_ratio: event.target.value }))} disabled={readOnly} className={inputClass()} /></Field>}
+              {draft.beneficial_owner && <CheckField label="Nihai Hakim Ortak mı?" checked={draft.is_ultimate_controller} onChange={value => setDraft(prev => ({ ...prev, is_ultimate_controller: value }))} readOnly={readOnly} />}
               {draft.beneficial_owner && <Field label="Açıklama"><input value={draft.beneficial_note} onChange={event => setDraft(prev => ({ ...prev, beneficial_note: event.target.value }))} disabled={readOnly} className={inputClass()} /></Field>}
               <Field label="Notlar" wide><textarea value={draft.notes} onChange={event => setDraft(prev => ({ ...prev, notes: event.target.value }))} disabled={readOnly} rows={3} className={inputClass()} /></Field>
             </div>
@@ -595,6 +629,8 @@ function PartnersSmartList({ partners, readOnly, historyRow, setHistoryRow, edit
               <th className="px-3 py-2">Hisse %</th>
               <th className="px-3 py-2">Oy %</th>
               <th className="px-3 py-2">Kar Payı %</th>
+              <th className="px-3 py-2">Kontrol</th>
+              <th className="px-3 py-2">Nihai Faydalanıcı</th>
               <th className="px-3 py-2">Başlangıç</th>
               <th className="px-3 py-2">Bitiş</th>
               <th className="px-3 py-2">Durum</th>
@@ -602,14 +638,18 @@ function PartnersSmartList({ partners, readOnly, historyRow, setHistoryRow, edit
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-            {partners.length === 0 && <tr><td colSpan={10} className="px-3 py-8 text-center text-sm text-gray-500">Ortak kaydı eklenmedi.</td></tr>}
+            {partners.length === 0 && <tr><td colSpan={12} className="px-3 py-8 text-center text-sm text-gray-500">Ortak kaydı eklenmedi.</td></tr>}
             {partners.map((row, index) => (
               <tr key={row.id || row.temp_id || index} className={cn(row.is_deleted && "bg-gray-50 text-gray-500 dark:bg-gray-800/40")}>
                 <td className="min-w-56 px-3 py-3">
                   <div className="flex flex-wrap items-center gap-1.5">
                     <span className="font-medium text-gray-900 dark:text-white">{row.display_name}</span>
-                    {toNumber(row.share_ratio) > 50 && <Tag tone="blue">Kontrol Hissesi</Tag>}
+                    {toNumber(row.share_ratio) > 50 && <Tag tone="blue">Ana Ortak</Tag>}
+                    {(row.has_control_right || toNumber(row.voting_ratio || row.share_ratio) > 50) && <Tag tone="blue">Kontrol Sahibi</Tag>}
+                    {row.source_type === 'grup_sirketi' && <Tag>Grup İçi</Tag>}
                     {row.beneficial_owner && <Tag>Nihai Faydalanıcı</Tag>}
+                    {row.has_privileged_share && <Tag>İmtiyazlı</Tag>}
+                    {row.status === 'Tarihsel' && <Tag>Tarihsel</Tag>}
                   </div>
                 </td>
                 <td className="px-3 py-3">{getOwnerKindLabel(row.owner_kind)}</td>
@@ -617,6 +657,8 @@ function PartnersSmartList({ partners, readOnly, historyRow, setHistoryRow, edit
                 <td className="px-3 py-3">{formatPercent(row.share_ratio)}</td>
                 <td className="px-3 py-3">{formatPercent(row.voting_ratio)}</td>
                 <td className="px-3 py-3">{formatPercent(row.profit_ratio)}</td>
+                <td className="px-3 py-3">{row.has_control_right ? row.control_type || 'Var' : '-'}</td>
+                <td className="px-3 py-3">{row.beneficial_owner || row.is_beneficial_owner ? formatPercent(row.beneficial_ratio || row.share_ratio) : '-'}</td>
                 <td className="px-3 py-3">{formatDate(row.start_date)}</td>
                 <td className="px-3 py-3">{formatDate(row.end_date) || '-'}</td>
                 <td className="px-3 py-3"><StatusBadge status={row.is_deleted ? 'Pasif' : row.status} /></td>
@@ -802,12 +844,13 @@ function buildHistory(previous: CompanyPartner | undefined, draft: DraftState) {
   const entries: PartnerHistoryEntry[] = [...(previous.history || [])]
   const fields: Array<[string, unknown, unknown]> = [
     ['share_ratio', previous.share_ratio, draft.share_ratio],
-    ['capital_amount', previous.capital_amount, draft.capital_amount],
-    ['voting_right', previous.voting_ratio, draft.voting_ratio],
-    ['profit_share', previous.profit_ratio, draft.profit_ratio],
+    ['voting_ratio', previous.voting_ratio, draft.voting_ratio],
+    ['profit_ratio', previous.profit_ratio, draft.profit_ratio],
+    ['control_type', previous.control_type, draft.control_type],
     ['status', previous.status, draft.status],
-    ['owner', previous.display_name, draft.display_name],
-    ['dates', { start_date: previous.start_date, end_date: previous.end_date }, { start_date: draft.start_date, end_date: draft.end_date }],
+    ['start_date', previous.start_date, draft.start_date],
+    ['end_date', previous.end_date, draft.end_date],
+    ['source_id', previous.source_id, draft.source_id],
   ]
   fields.forEach(([field, oldValue, newValue]) => {
     if (JSON.stringify(oldValue ?? '') === JSON.stringify(newValue ?? '')) return

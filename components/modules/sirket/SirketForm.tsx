@@ -22,6 +22,7 @@ import { Building2, Briefcase, Users, Settings, Shield, Globe, FileText } from '
 import { cn } from '@/lib/utils'
 import { ImageSlotUploader, ImageSlot, SlotImage } from '@/components/ui/ImageSlotUploader'
 import { DocumentSlotUploader, DocumentSlot, SlotDocument } from '@/components/ui/DocumentSlotUploader'
+import { CompanyPublicTab } from '@/components/modules/sirket/CompanyPublicTab'
 import type { Sirket, SirketOrtak, SirketTemsilci } from '@/types/sirket'
 import { 
   SIRKET_TURLERI, 
@@ -123,7 +124,13 @@ export function SirketForm({
   const [formData, setFormData] = useState<Record<string, any>>({
     ...sirket,
     ortaklar: sirket?.ortaklar || [],
-    temsilciler: sirket?.temsilciler || []
+    temsilciler: sirket?.temsilciler || [],
+    public_tax: (sirket as any)?.public_tax || {},
+    public_sgk: (sirket as any)?.public_sgk || {},
+    public_incentives: (sirket as any)?.public_incentives || {},
+    public_registry: (sirket as any)?.public_registry || {},
+    public_licenses: (sirket as any)?.public_licenses || [],
+    public_channels: (sirket as any)?.public_channels || {}
   })
 
   // Image slots for company logos
@@ -421,18 +428,6 @@ export function SirketForm({
       icon: <Building2 size={18} />,
       fields: [
         {
-          name: 'legal_entity',
-          label: 'Legal Entity',
-          type: 'text',
-          placeholder: 'Holding/legal bağlılık'
-        },
-        {
-          name: 'parent_company_id',
-          label: 'Parent Company',
-          type: 'select',
-          placeholder: 'Üst şirket (varsa)'
-        },
-        {
           name: 'sirket_kodu',
           label: 'Şirket Kodu',
           type: 'text',
@@ -572,6 +567,18 @@ export function SirketForm({
             </div>
           </div>
         </div>
+      )
+    },
+    {
+      id: 'kamu',
+      label: 'Kamu',
+      icon: <Shield size={18} />,
+      render: () => (
+        <CompanyPublicTab
+          data={formData}
+          onChange={handleFieldChange}
+          readOnly={isReadOnly}
+        />
       )
     },
     {
