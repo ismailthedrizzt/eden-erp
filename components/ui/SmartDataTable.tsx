@@ -1263,12 +1263,12 @@ export function SmartDataTable<T extends { id: string }>({
           </table>
         </div>
       ) : (
-        /* Card View - New Design: Large image left, required fields right */
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        /* Card View */
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           {paginatedData.map(row => {
             // @ts-ignore
             const r = row as Record<string, any>
-            const imageCol = visibleColumns.find(c => c.type === 'image')
+            const imageCol = columnConfig.find(c => c.type === 'image')
             const imageValue = imageCol ? getNestedValue(row, imageCol.key) : null
             const imageUrl = imageValue || r?.profileImage || r?.image || r?.photo || r?.avatar || r?.profile_image || r?.foto || r?.fotograf_url
             const firstInitial = (r?.firstName?.[0] || r?.name?.[0] || r?.ad?.[0] || '?').toUpperCase()
@@ -1276,15 +1276,16 @@ export function SmartDataTable<T extends { id: string }>({
             const initials = firstInitial + lastInitial || '?'
             const fullName = r?.fullname || `${r?.ad || r?.firstName || r?.name || ''} ${r?.soyad || r?.lastName || r?.surname || ''}`.trim() || 'İsimsiz'
             
-            // Get required columns only, fallback to first 2 non-image columns
-            const requiredCols = visibleColumns.filter(c => c.required && c.type !== 'image')
-            const displayCols = requiredCols.length > 0 ? requiredCols : visibleColumns.filter(c => c.type !== 'image').slice(0, 2)
+            const cardFieldPool = columnConfig.filter(c => c.type !== 'image' && c.type !== 'actions')
+            const requiredCols = cardFieldPool.filter(c => c.required)
+            const visibleCardCols = cardFieldPool.filter(c => c.visible)
+            const displayCols = (requiredCols.length > 0 ? requiredCols : visibleCardCols.length > 0 ? visibleCardCols : cardFieldPool).slice(0, 3)
             
             return (
               <div
                 key={row.id}
                 onClick={() => onRowClick?.(row)}
-                className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 overflow-hidden cursor-pointer relative"
+                className="relative min-h-44 cursor-pointer overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800"
               >
                 {/* Action Button - Top Right */}
                 {shouldShowActions && (
@@ -1298,15 +1299,14 @@ export function SmartDataTable<T extends { id: string }>({
                     <MoreHorizontal size={18} className="text-gray-500 dark:text-gray-400" />
                   </button>
                 )}
-                <div className="flex">
-                  {/* Large Image Area - 4x bigger (160x160) */}
-                  <div className="w-40 h-40 flex-shrink-0 bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-900/30 dark:to-indigo-900/30 flex items-center justify-center relative overflow-hidden">
+                <div className="flex min-h-44">
+                  <div className="relative flex w-32 shrink-0 self-stretch overflow-hidden bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-900/30 dark:to-indigo-900/30 sm:w-36 xl:w-40">
                     {imageUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img 
                         src={imageUrl} 
                         alt={fullName}
-                        className="w-full h-full object-cover"
+                        className="h-full w-full object-contain p-2"
                         onError={(e) => {
                           const target = e.target as HTMLImageElement
                           target.style.display = 'none'
@@ -1315,18 +1315,17 @@ export function SmartDataTable<T extends { id: string }>({
                         }}
                       />
                     ) : null}
-                    <div className={cn("card-fallback w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-blue-100 to-indigo-200", imageUrl ? "hidden" : "flex")}>
-                      <span className="text-4xl font-bold text-blue-600 dark:text-blue-500">{initials}</span>
+                    <div className={cn("card-fallback h-full w-full flex-col items-center justify-center bg-gradient-to-br from-blue-100 to-indigo-200", imageUrl ? "hidden" : "flex")}>
+                      <span className="text-3xl font-bold text-blue-600 dark:text-blue-500">{initials}</span>
                       <span className="text-xs text-gray-500 mt-1 px-2 text-center truncate max-w-full">{fullName}</span>
                     </div>
                   </div>
                   
-                  {/* Required Fields Area */}
-                  <div className="flex-1 p-4 flex flex-col justify-center">
+                  <div className="flex min-w-0 flex-1 flex-col justify-center gap-3 p-4">
                     {displayCols.length > 0 ? displayCols.map(col => (
-                      <div key={col.key} className="mb-3 last:mb-0">
-                        <span className="text-xs text-gray-500 dark:text-gray-400 uppercase tracking-wider">{col.label}</span>
-                        <div className="text-base font-semibold text-gray-900 dark:text-white truncate">
+                      <div key={col.key} className="min-w-0">
+                        <span className="block truncate text-[11px] font-medium uppercase text-gray-500 dark:text-gray-400">{col.label}</span>
+                        <div className="mt-0.5 truncate text-sm font-semibold text-gray-900 dark:text-white" title={getCellTitle(getNestedValue(row, col.key))}>
                           {renderCellValue(col, getNestedValue(row, col.key), row)}
                         </div>
                       </div>

@@ -2,12 +2,11 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
-import { AlertTriangle, Building2, GitBranch, Users } from 'lucide-react'
+import { Users } from 'lucide-react'
 import { EntityForm, FormField, FormMode, FormTab } from '@/components/ui/EntityForm'
 import { PageBanner } from '@/components/ui/PageBanner'
 import { SmartDataTable, ColumnDef, WidgetDef } from '@/components/ui/SmartDataTable'
 import { Toast } from '@/components/ui/Toast'
-import { calculateCorporateStructure } from '@/lib/corporate-structure'
 
 type PageState = 'list' | 'create' | 'view' | 'edit'
 type ToastState = { type: 'success' | 'error' | 'warning'; title?: string; message: string }
@@ -277,7 +276,6 @@ export default function OrtaklarPage() {
   const [pageState, setPageState] = useState<PageState>('list')
   const [partners, setPartners] = useState<PartnerRow[]>([])
   const [companies, setCompanies] = useState<CompanyOption[]>([])
-  const [selectedStructureCompanyId, setSelectedStructureCompanyId] = useState<string>('')
   const [selectedPartner, setSelectedPartner] = useState<Record<string, any> | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -309,7 +307,6 @@ export default function OrtaklarPage() {
         kisa_unvan: company.kisa_unvan,
       })) : []
       setCompanies(companyOptions)
-      setSelectedStructureCompanyId((current) => current || companyOptions[0]?.value || '')
     } catch (err: any) {
       setError(err.message)
     } finally {
@@ -322,8 +319,6 @@ export default function OrtaklarPage() {
   }, [])
 
   const companyNameById = useMemo(() => Object.fromEntries(companies.map(company => [company.value, company.label])), [companies])
-  const companyRecords = useMemo(() => companies.map(company => ({ id: company.value, ticari_unvan: company.ticari_unvan || company.label, kisa_unvan: company.kisa_unvan })), [companies])
-  const structure = useMemo(() => calculateCorporateStructure(selectedStructureCompanyId, partners, companyRecords), [selectedStructureCompanyId, partners, companyRecords])
   const tableData = partners.map(partner => ({
     ...partner,
     display_name: partner.display_name || partner.ortak_adi || '',
@@ -334,7 +329,6 @@ export default function OrtaklarPage() {
     share_ratio: partner.share_ratio ?? partner.hisse_orani,
     control_label: partner.has_control_right ? partner.control_type || 'Kontrol Hakkı' : ratioValue(partner.voting_ratio ?? partner.share_ratio ?? partner.hisse_orani) > 50 ? 'Çoğunluk' : '-',
     beneficial_label: partner.beneficial_owner || partner.is_beneficial_owner ? `${partner.beneficial_ratio ?? partner.share_ratio ?? '-'}%` : '-',
-    is_main_owner: structure.main_owner_id ? partner.source_id === structure.main_owner_id && partner.sirket_id === selectedStructureCompanyId : partner.display_name === structure.main_owner && partner.sirket_id === selectedStructureCompanyId,
   }))
 
   const activePartners = tableData.filter(partner => !partner.is_deleted && partner.status === 'Aktif')
@@ -458,12 +452,6 @@ export default function OrtaklarPage() {
               <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
             </div>
           )}
-          <CorporateStructurePanel
-            companies={companies}
-            selectedCompanyId={selectedStructureCompanyId}
-            onCompanyChange={setSelectedStructureCompanyId}
-            structure={structure}
-          />
           <SmartDataTable
             columns={columns}
             data={tableData}
@@ -530,87 +518,10 @@ export default function OrtaklarPage() {
   )
 }
 
-function CorporateStructurePanel({
-  companies,
-  selectedCompanyId,
-  onCompanyChange,
-  structure,
-}: {
-  companies: CompanyOption[]
-  selectedCompanyId: string
-  onCompanyChange: (value: string) => void
-  structure: ReturnType<typeof calculateCorporateStructure>
-}) {
-  return (
-    <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h3 className="flex items-center gap-2 text-base font-semibold text-gray-900 dark:text-white">
-            <GitBranch size={18} />
-            Kurumsal Yapı
-          </h3>
-          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Şirketler arası kontrol ilişkisi ortaklık kayıtlarından hesaplanır.</p>
-        </div>
-        <select value={selectedCompanyId} onChange={(event) => onCompanyChange(event.target.value)} className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 md:w-80">
-          {companies.map((company) => <option key={company.value} value={company.value}>{company.label}</option>)}
-        </select>
-      </div>
-
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-7">
-        <StructureCard label="Ana Ortak" value={structure.main_owner} />
-        <StructureCard label="Nihai Hakim Ortak" value={`${structure.ultimate_controller}${structure.ultimate_ownership_ratio ? ` (${structure.ultimate_ownership_ratio}%)` : ''}`} />
-        <StructureCard label="Grup Şirketi mi?" value={structure.is_group_company ? 'Evet' : 'Hayır'} />
-        <StructureCard label="Bağlı Şirket Sayısı" value={structure.subsidiary_count} />
-        <StructureCard label="İştirak Sayısı" value={structure.affiliate_count} />
-        <StructureCard label="Toplam Aktif Hisse" value={`${structure.total_active_share}%`} tone={structure.total_active_share === 100 ? 'green' : 'amber'} />
-        <StructureCard label="Toplam Oy Hakkı" value={`${structure.total_voting_right}%`} tone={structure.total_voting_right === 100 ? 'green' : 'amber'} />
-      </div>
-
-      {structure.warnings.length > 0 && (
-        <div className="mt-4 grid grid-cols-1 gap-2 md:grid-cols-2">
-          {structure.warnings.map((warning) => (
-            <div key={warning} className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
-              <AlertTriangle size={16} />
-              {warning}
-            </div>
-          ))}
-        </div>
-      )}
-
-      <div className="mt-4 rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-900/50">
-        <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-gray-800 dark:text-gray-100">
-          <Building2 size={16} />
-          Ortaklık Grafiği
-        </div>
-        <div className="flex flex-col gap-2 md:flex-row md:flex-wrap md:items-center">
-          {structure.ownership_graph.map((node, index) => (
-            <div key={`${node.kind}-${node.label}-${index}`} className="flex items-center gap-2">
-              <span className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-100">
-                {node.label}{node.ratio !== undefined ? ` ${node.ratio}%` : ''}
-              </span>
-              {index < structure.ownership_graph.length - 1 && <span className="text-gray-400">→</span>}
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function StructureCard({ label, value, tone = 'default' }: { label: string; value: string | number; tone?: 'default' | 'green' | 'amber' }) {
-  return (
-    <div className={`rounded-lg border p-3 ${tone === 'green' ? 'border-emerald-200 bg-emerald-50 dark:border-emerald-900 dark:bg-emerald-950/30' : tone === 'amber' ? 'border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/30' : 'border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-900/50'}`}>
-      <div className="text-xs font-medium text-gray-500 dark:text-gray-400">{label}</div>
-      <div className="mt-1 truncate text-sm font-semibold text-gray-900 dark:text-white">{value}</div>
-    </div>
-  )
-}
-
 function PartnerNameCell({ value, row }: { value: any; row: any }) {
   return (
     <div className="flex flex-wrap items-center gap-1.5">
       <span className="font-medium">{value || '-'}</span>
-      {row.is_main_owner && <InlineBadge tone="blue">Ana Ortak</InlineBadge>}
       {(row.has_control_right || ratioValue(row.voting_ratio ?? row.share_ratio) > 50) && <InlineBadge tone="blue">Kontrol Sahibi</InlineBadge>}
       {row.source_type === 'grup_sirketi' && <InlineBadge>Grup İçi</InlineBadge>}
       {(row.beneficial_owner || row.is_beneficial_owner) && <InlineBadge>Nihai Faydalanıcı</InlineBadge>}

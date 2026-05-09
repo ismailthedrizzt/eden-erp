@@ -41,7 +41,15 @@ export async function middleware(request: NextRequest) {
 
   const isAuthPage = request.nextUrl.pathname.startsWith('/login')
   const isApiRoute = request.nextUrl.pathname.startsWith('/api')
-  const isPublic = isAuthPage || isApiRoute
+  const isPwaAsset = [
+    '/manifest.json',
+    '/sw.js',
+    '/workbox-',
+    '/offline',
+    '/icons/',
+    '/eden-icon-original.png',
+  ].some(path => request.nextUrl.pathname.startsWith(path))
+  const isPublic = isAuthPage || isApiRoute || isPwaAsset
   const isDemo = request.cookies.get('demo_auth')?.value === 'true'
 
   // Giriş yapılmamış ve korunan sayfaya erişim → Login'e yönlendir
@@ -63,6 +71,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|public).*)',
+    '/((?!_next/static|_next/image|favicon.ico|manifest.json|sw.js|workbox-.*\\.js|icons|eden-icon-original.png).*)',
   ],
 }

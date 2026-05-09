@@ -61,6 +61,42 @@ function omitNullishStrings(value: Record<string, any>) {
   )
 }
 
+const baseEmployeeListColumns = [
+  'id',
+  'ad',
+  'soyad',
+  'uyruk',
+  'tc_kimlik',
+  'pasaport_no',
+  'cinsiyet',
+  'dogum_tarihi',
+  'cep_telefonu',
+  'email',
+  'calisma_durumu',
+  'sgk_giris',
+  'fotograf_url',
+  'sirket_id',
+  'birim_id',
+  'kadro_id',
+  'gorev',
+  'egitim_okullari',
+  'created_at',
+  'updated_at',
+]
+
+const optionalEmployeeListColumns = [
+  'employee_no',
+  'employment_status',
+  'start_date',
+  'calisma_tipi',
+  'version',
+]
+
+function missingEmployeeColumn(error: { message?: string } | null, optionalColumns: string[]) {
+  const message = error?.message || ''
+  return optionalColumns.find((column) => message.includes(`employees.${column}`) && message.includes('does not exist'))
+}
+
 // GET /api/ik/personel
 export async function GET(request: NextRequest) {
   const supabase = await createClient()
@@ -80,28 +116,47 @@ export async function GET(request: NextRequest) {
   const isTeskilatActive = teskilatLicense?.is_active &&
     (teskilatLicense.environment === 'all' || teskilatLicense.environment === process.env.NODE_ENV)
 
-  // Build select query based on teskilat module status
-  let selectQuery = 'id,employee_no,ad,soyad,uyruk,tc_kimlik,pasaport_no,cinsiyet,dogum_tarihi,cep_telefonu,email,calisma_durumu,employment_status,start_date,sgk_giris,fotograf_url,sirket_id,birim_id,kadro_id,gorev,egitim_okullari,created_at,updated_at,version,sirket:sirketler(id,kisa_unvan,ticari_unvan)'
-  if (isTeskilatActive) {
-    selectQuery = `${selectQuery},
-      birim:birimler(id, ad, tip),
-      kadro:norm_kadrolar(id, unvan)`
+  let enabledOptionalColumns = [...optionalEmployeeListColumns]
+  let data: any[] | null = null
+  let error: any = null
+
+  while (true) {
+    let selectQuery = [
+      ...baseEmployeeListColumns,
+      ...enabledOptionalColumns,
+      'sirket:sirketler(id,kisa_unvan,ticari_unvan)',
+    ].join(',')
+
+    if (isTeskilatActive) {
+      selectQuery = `${selectQuery},
+        birim:birimler(id, ad, tip),
+        kadro:norm_kadrolar(id, unvan)`
+    }
+
+    let query = supabase
+      .from('employees')
+      .select(selectQuery)
+      .eq('is_active', true)
+      .order('soyad', { ascending: true })
+
+    if (birimId && isTeskilatActive) query = query.eq('birim_id', birimId)
+    if (durum) query = query.eq('calisma_durumu', durum)
+    if (ara) query = query.or(`ad.ilike.%${ara}%,soyad.ilike.%${ara}%,tc_kimlik.ilike.%${ara}%`)
+
+    const result = await query
+    data = result.data
+    error = result.error
+
+    const missingColumn = missingEmployeeColumn(error, enabledOptionalColumns)
+    if (!missingColumn) break
+
+    enabledOptionalColumns = enabledOptionalColumns.filter((column) => column !== missingColumn)
   }
 
-  let query = supabase
-    .from('employees')
-    .select(selectQuery)
-    .eq('is_active', true)
-    .order('soyad', { ascending: true })
-
-  if (birimId && isTeskilatActive) query = query.eq('birim_id', birimId)
-  if (durum) query = query.eq('calisma_durumu', durum)
-  if (ara) query = query.or(`ad.ilike.%${ara}%,soyad.ilike.%${ara}%,tc_kimlik.ilike.%${ara}%`)
-
-  const { data, error } = await query
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   const rows = (data || []).map((row: any) => ({
     ...row,
+    employee_no: row.employee_no || null,
     photo_url: row.fotograf_url || null,
     full_name: [row.ad, row.soyad].filter(Boolean).join(' '),
     national_id: row.tc_kimlik || null,
