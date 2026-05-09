@@ -25,6 +25,7 @@ import { personelModuleConfig, PersonelTableRow } from '@/lib/modules/personel.c
 import { buildEmployeesDashboard } from '@/lib/modules/employees/dashboard/employeesDashboard.mock'
 import { toEntityFormFields, toEntityFormTabs } from '@/types/module-config'
 import { formatPhoneInput, normalizeEmailInput } from '@/lib/utils'
+import { isTurkishNationality, normalizeCountryId } from '@/lib/reference/country-nationalities'
 import type { Personel } from '@/types'
 
 // Page state type following ERP pattern
@@ -246,9 +247,11 @@ export default function PersonelYonetimPage() {
     if (payload.acil_kisi_telefon) payload.acil_kisi_telefon = formatPhoneInput(String(payload.acil_kisi_telefon))
     if (payload.email) payload.email = normalizeEmailInput(String(payload.email))
 
-    if (payload.uyruk === 'tc') {
+    if (payload.uyruk) payload.uyruk = normalizeCountryId(payload.uyruk)
+
+    if (isTurkishNationality(payload.uyruk)) {
       delete payload.pasaport_no
-    } else if (payload.uyruk === 'yabanci') {
+    } else if (payload.uyruk) {
       delete payload.tc_kimlik
     }
 

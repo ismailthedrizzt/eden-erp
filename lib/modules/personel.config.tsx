@@ -1,6 +1,7 @@
 import { Briefcase, FileText, GraduationCap, Heart, Landmark, Phone, UserCircle } from 'lucide-react'
 import type { ModuleConfig } from '@/types/module-config'
 import type { Personel } from '@/types'
+import { COUNTRY_NATIONALITY_OPTIONS, getCountryNationalityLabel } from '@/lib/reference/country-nationalities'
 
 export type PersonelTableRow = Personel & {
   fullname: string
@@ -61,7 +62,7 @@ export const personelModuleConfig: ModuleConfig<PersonelTableRow> = {
       { key: 'employee_no', label: 'Çalışan No', type: 'text', visible: true, width: 120, sortable: true, filterable: true, category: 'Kimlik' },
       { key: 'fullname', label: 'Ad Soyad', type: 'text', visible: true, width: 200, minWidth: 120, sortable: true, filterable: true, category: 'Kimlik' },
       { key: 'identity_display', label: 'TCKN / Pasaport', type: 'text', visible: false, width: 150, sortable: true, filterable: true, category: 'Kimlik' },
-      { key: 'uyruk', label: 'Uyruk', type: 'enum', visible: false, width: 110, sortable: true, filterable: true, enumOptions: ['tc', 'yabanci'], category: 'Kimlik' },
+      { key: 'uyruk', label: 'Uyruk', type: 'enum', visible: false, width: 110, sortable: true, filterable: true, enumOptions: COUNTRY_NATIONALITY_OPTIONS.map(option => option.value), category: 'Kimlik', render: (value) => getCountryNationalityLabel(value) },
       { key: 'sirket_adi', label: 'Şirket', type: 'text', visible: true, width: 180, sortable: true, filterable: true, category: 'İş' },
       { key: 'birim_adi', label: 'Departman / Birim', type: 'text', visible: true, width: 170, sortable: true, filterable: true, category: 'İş' },
       { key: 'kadro_unvani', label: 'Pozisyon / Ünvan', type: 'text', visible: true, width: 170, sortable: true, filterable: true, category: 'İş' },

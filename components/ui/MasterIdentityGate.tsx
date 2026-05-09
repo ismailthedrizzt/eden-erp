@@ -5,6 +5,7 @@ import type { ReactNode } from 'react'
 import { AlertTriangle, CheckCircle2, Loader2, Search, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { IdentityEntityKind, IdentityGateConfig, IdentityGateResolveResult, IdentityGateState } from '@/lib/identity-gate'
+import { COUNTRY_NATIONALITY_OPTIONS, isTurkishNationality, normalizeCountryId } from '@/lib/reference/country-nationalities'
 
 interface MasterIdentityGateProps {
   config: IdentityGateConfig
@@ -38,7 +39,7 @@ export function MasterIdentityGate({
 
   const readOnly = mode !== 'create'
   const isFixedKind = config.allowedEntityKinds.length === 1
-  const isTurkeyPerson = entityKind === 'person' && normalizeNationalityInput(identity.nationality) === 'tc'
+  const isTurkeyPerson = entityKind === 'person' && isTurkishNationality(identity.nationality)
   const kindOptions = useMemo(() => config.allowedEntityKinds.map(kind => ({
     value: kind,
     label: kind === 'person' ? 'Gerçek Kişi' : 'Tüzel Kişi',
@@ -57,7 +58,7 @@ export function MasterIdentityGate({
       next[key] = cleaned
 
       if (key === 'nationality') {
-        const nextIsTurkey = normalizeNationalityInput(cleaned) === 'tc'
+        const nextIsTurkey = isTurkishNationality(cleaned)
         next.national_id = nextIsTurkey ? next.national_id || '' : ''
         next.passport_no = nextIsTurkey ? '' : next.passport_no || ''
       }
@@ -166,8 +167,9 @@ export function MasterIdentityGate({
                 onChange={(event) => updateIdentity('nationality', event.target.value)}
                 className={fieldClass(hasPersonNationality(identity), touched.nationality, readOnly)}
               >
-                <option value="tc">T.C.</option>
-                <option value="yabanci">Yabancı</option>
+                {COUNTRY_NATIONALITY_OPTIONS.map(option => (
+                  <option key={option.value} value={option.value}>{option.label}</option>
+                ))}
               </select>
             </Field>
             <Field label={isTurkeyPerson ? 'TC Kimlik No' : 'Pasaport No'}>
@@ -266,14 +268,14 @@ const inputClass = 'w-full rounded-lg border border-gray-300 bg-white px-3 py-2 
 
 function initialIdentity(kind: IdentityEntityKind): Record<string, string> {
   return kind === 'person'
-    ? { nationality: 'tc', national_id: '', passport_no: '' }
+    ? { nationality: 'TR', national_id: '', passport_no: '' }
     : { country: 'TR', tax_number: '', registration_number: '' }
 }
 
 function validateIdentity(kind: IdentityEntityKind, identity: Record<string, string>) {
   if (kind === 'person') {
     if (!identity.nationality) return 'Uyruğu zorunludur.'
-    const isTurkish = normalizeNationalityInput(identity.nationality) === 'tc'
+    const isTurkish = isTurkishNationality(identity.nationality)
     if (isTurkish && !identity.national_id) return 'TC Kimlik No zorunludur.'
     if (!isTurkish && !identity.passport_no) return 'Pasaport No zorunludur.'
     if (isTurkish && identity.national_id.length !== 11) return 'TC Kimlik No 11 haneli olmalıdır.'
@@ -289,7 +291,7 @@ function validateIdentity(kind: IdentityEntityKind, identity: Record<string, str
 function normalizeIdentityForSubmit(kind: IdentityEntityKind, identity: Record<string, string>) {
   if (kind === 'person') {
     const nationality = normalizeNationalityInput(identity.nationality)
-    const isTurkish = nationality === 'tc'
+    const isTurkish = nationality === 'TR'
     return {
       nationality,
       national_id: isTurkish ? identity.national_id || '' : '',
@@ -305,8 +307,7 @@ function normalizeIdentityForSubmit(kind: IdentityEntityKind, identity: Record<s
 }
 
 function normalizeNationalityInput(value?: string) {
-  const normalized = String(value || 'tc').trim().toLocaleLowerCase('tr-TR')
-  return ['tr', 'tc', 't.c.', 't.c', 'türkiye', 'turkiye'].includes(normalized) ? 'tc' : 'yabanci'
+  return normalizeCountryId(value)
 }
 
 function hasPersonNationality(identity: Record<string, string>) {
@@ -314,7 +315,7 @@ function hasPersonNationality(identity: Record<string, string>) {
 }
 
 function hasPersonIdentity(identity: Record<string, string>) {
-  return normalizeNationalityInput(identity.nationality) === 'tc'
+  return isTurkishNationality(identity.nationality)
     ? /^\d{11}$/.test(identity.national_id || '')
     : !!String(identity.passport_no || '').trim()
 }

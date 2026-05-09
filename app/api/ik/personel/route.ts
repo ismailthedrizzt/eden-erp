@@ -1,13 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { z } from 'zod'
+import { isTurkishNationality, normalizeCountryId } from '@/lib/reference/country-nationalities'
 
 const EmployeeSchema = z.object({
   person_id: z.string().uuid().optional().nullable(),
   employee_no: z.string().optional(),
   ad: z.string().min(1).max(100),
   soyad: z.string().min(1).max(100),
-  uyruk: z.enum(['tc', 'yabanci']).default('tc'),
+  uyruk: z.string().default('TR').transform(normalizeCountryId),
   tc_kimlik: z.string().regex(/^\d{11}$/, 'TC Kimlik No 11 haneli sayı olmalıdır').optional(),
   pasaport_no: z.string().optional(),
   cinsiyet: z.enum(['erkek', 'kadin']),
@@ -190,15 +191,67 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Geçersiz veri', code: 'VALIDATION_FAILED', details: parsed.error.flatten() }, { status: 400 })
   }
 
+  const employeePayload = await ensureEmployeePersonLink(supabase, parsed.data)
+
   const { data, error } = await supabase
     .from('employees')
     .insert({
-      ...parsed.data,
-      calisma_durumu: parsed.data.isten_ayrilis ? 'ayrilmis' : parsed.data.calisma_durumu
+      ...employeePayload,
+      calisma_durumu: employeePayload.isten_ayrilis ? 'ayrilmis' : employeePayload.calisma_durumu
     })
     .select()
     .single()
 
   if (error) return NextResponse.json({ error: error.message, code: error.code || 'CREATE_FAILED' }, { status: 500 })
   return NextResponse.json({ data }, { status: 201 })
+}
+
+async function ensureEmployeePersonLink(supabase: ReturnType<typeof createServiceClient>, employee: z.infer<typeof EmployeeSchema>) {
+  if (employee.person_id) return employee
+
+  const fullName = [employee.ad, employee.soyad].filter(Boolean).join(' ').trim()
+  if (!fullName) return employee
+
+  const nationality = normalizeCountryId(employee.uyruk)
+  const nationalId = isTurkishNationality(nationality) ? employee.tc_kimlik || null : null
+  const passportNo = isTurkishNationality(nationality) ? null : employee.pasaport_no || null
+
+  const lookup = nationalId
+    ? supabase.from('persons').select('id').eq('nationality', nationality).eq('national_id', nationalId).eq('is_deleted', false).maybeSingle()
+    : passportNo
+      ? supabase.from('persons').select('id').eq('nationality', nationality).eq('passport_no', passportNo).eq('is_deleted', false).maybeSingle()
+      : null
+
+  const existing = lookup ? await lookup : { data: null, error: null }
+  if (isMissingTableError(existing.error, 'persons')) return employee
+  if (existing.error) return employee
+  if (existing.data?.id) return { ...employee, person_id: existing.data.id }
+
+  const { data: created, error } = await supabase
+    .from('persons')
+    .insert({
+      first_name: employee.ad,
+      last_name: employee.soyad,
+      full_name: fullName,
+      nationality,
+      national_id: nationalId,
+      passport_no: passportNo,
+      birth_date: employee.dogum_tarihi || null,
+      birth_place: employee.dogum_yeri || null,
+      gender: employee.cinsiyet || null,
+      phone: employee.cep_telefonu || employee.is_telefonu || null,
+      email: employee.email || null,
+      address: employee.adres || null,
+      metadata_json: { source_table: 'employees', source: 'identity_gate' },
+    })
+    .select('id')
+    .single()
+
+  if (isMissingTableError(error, 'persons') || error) return employee
+  return created?.id ? { ...employee, person_id: created.id } : employee
+}
+
+function isMissingTableError(error: { message?: string; code?: string } | null, tableName: string) {
+  const message = error?.message || ''
+  return error?.code === 'PGRST205' || message.includes(`'public.${tableName}'`) || message.includes(`table '${tableName}'`) || message.includes('schema cache')
 }

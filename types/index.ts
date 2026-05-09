@@ -83,7 +83,7 @@ export interface Personel {
   // Kişisel
   ad: string
   soyad: string
-  uyruk: 'tc' | 'yabanci'
+  uyruk: string
   tc_kimlik?: string
   pasaport_no?: string
   cinsiyet: 'erkek' | 'kadin'

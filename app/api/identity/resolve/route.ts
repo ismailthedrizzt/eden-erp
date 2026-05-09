@@ -117,9 +117,9 @@ export async function POST(request: NextRequest) {
     message: payload.entityKind === 'person'
       ? 'Bu gerçek kişi master kayıtlarda bulunamadı. Yeni kişi kaydı oluşturulacak.'
       : 'Bu tüzel kişi master kayıtlarda bulunamadı. Yeni kurum kaydı oluşturulacak.',
-    warning: payload.entityKind === 'organization' && !identity.tax_number && identity.registration_number
+    warning: masterResult.warning || (payload.entityKind === 'organization' && !identity.tax_number && identity.registration_number
       ? 'VKN olmadan ticaret sicil no ile ilerleniyor; kayıt duplicate uyarısı gerektirebilir.'
-      : undefined,
+      : undefined),
   })
 }
 
@@ -135,6 +135,9 @@ async function findPerson(supabase: ReturnType<typeof createServiceClient>, iden
   let query = supabase.from('persons').select('*').eq('nationality', nationality).eq('is_deleted', false)
   query = nationalId ? query.eq('national_id', nationalId) : query.eq('passport_no', passportNo)
   const { data, error } = await query.maybeSingle()
+  if (isMissingTableError(error, 'persons')) {
+    return { record: null, warning: 'Master kişiler tablosu veritabanında bulunamadı; kayıt şimdilik master bağlantısı olmadan hazırlanacak.' }
+  }
   if (error) return { error: error.message }
   return { record: data || null }
 }
@@ -151,6 +154,9 @@ async function findOrganization(supabase: ReturnType<typeof createServiceClient>
   let query = supabase.from('organizations').select('*').eq('country', country).eq('is_deleted', false)
   query = taxNumber ? query.eq('tax_number', taxNumber) : query.eq('registration_number', registrationNumber)
   const { data, error } = await query.maybeSingle()
+  if (isMissingTableError(error, 'organizations')) {
+    return { record: null, warning: 'Master kurumlar tablosu veritabanında bulunamadı; kayıt şimdilik master bağlantısı olmadan hazırlanacak.' }
+  }
   if (error) return { error: error.message }
   return { record: data || null }
 }
@@ -282,5 +288,10 @@ function onlyDigits(value: unknown) {
 }
 
 function normalizePersonUyruk(value: unknown) {
-  return normalizeIdentityCountry(String(value || 'TR')) === 'TR' ? 'tc' : 'yabanci'
+  return normalizeIdentityCountry(String(value || 'TR'))
+}
+
+function isMissingTableError(error: { message?: string; code?: string } | null, tableName: string) {
+  const message = error?.message || ''
+  return error?.code === 'PGRST205' || message.includes(`'public.${tableName}'`) || message.includes(`table '${tableName}'`) || message.includes('schema cache')
 }

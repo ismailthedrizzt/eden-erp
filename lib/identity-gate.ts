@@ -1,3 +1,5 @@
+import { normalizeCountryId } from '@/lib/reference/country-nationalities'
+
 export type IdentityEntityKind = 'person' | 'organization'
 
 export type IdentityGateState =
@@ -56,8 +58,5 @@ export interface IdentityGateResolveResult {
 }
 
 export function normalizeIdentityCountry(value?: string) {
-  const normalized = String(value || '').trim()
-  if (!normalized) return 'TR'
-  if (['tc', 't.c.', 't.c', 'turkiye', 'türkiye', 'tr'].includes(normalized.toLocaleLowerCase('tr-TR'))) return 'TR'
-  return normalized.toUpperCase()
+  return normalizeCountryId(value)
 }

@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { z } from 'zod'
+import { normalizeCountryId } from '@/lib/reference/country-nationalities'
 
 const EmployeeUpdateSchema = z.object({
   ad: z.string().min(1).max(100).optional(),
   soyad: z.string().min(1).max(100).optional(),
-  uyruk: z.enum(['tc', 'yabanci']).optional(),
+  uyruk: z.string().optional().transform(value => value ? normalizeCountryId(value) : value),
   tc_kimlik: z.string().regex(/^\d{11}$/, 'TC Kimlik No 11 haneli sayı olmalıdır').optional(),
   pasaport_no: z.string().optional(),
   cinsiyet: z.enum(['erkek', 'kadin']).optional(),

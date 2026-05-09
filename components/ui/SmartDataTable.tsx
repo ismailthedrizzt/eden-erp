@@ -25,6 +25,7 @@ import {
 import { cn } from '@/lib/utils'
 import { DashboardGrid } from '@/components/dashboard/DashboardGrid'
 import type { AnyDashboardWidgetConfig, DashboardFilterEvent } from '@/components/dashboard/dashboard.types'
+import { getCountryNationalityLabel } from '@/lib/reference/country-nationalities'
 
 // Column Definition Types
 type ColumnType = 'text' | 'number' | 'date' | 'enum' | 'boolean' | 'image' | 'badge' | 'avatar' | 'actions'
@@ -561,6 +562,8 @@ export function SmartDataTable<T extends { id: string }>({
 
   // Nationality converter: Country -> Demonym
   function convertToNationality(value: string): string {
+    const referenceLabel = getCountryNationalityLabel(value)
+    if (referenceLabel !== value && referenceLabel !== '-') return referenceLabel
     if (!value) return '-'
     const upperValue = value.toUpperCase().trim()
     const cleanValue = value.trim()
@@ -769,7 +772,7 @@ export function SmartDataTable<T extends { id: string }>({
     // Handle nationality column
     if (col.key === 'nationality' || col.key === 'country' || col.key === 'uyruk' || col.key === 'vatandaslik') {
       const nationality = convertToNationality(value)
-      return <span className="capitalize inline-block">{nationality}</span>
+      return <span className="inline-block text-gray-900 dark:text-gray-100">{nationality}</span>
     }
     
     // Handle gender column
@@ -801,6 +804,10 @@ export function SmartDataTable<T extends { id: string }>({
       )
     }
     
+    if (col.type === 'enum') {
+      return <span className="inline-block text-gray-900 dark:text-gray-100">{value ?? '-'}</span>
+    }
+
     return value ?? '-'
   }
 
