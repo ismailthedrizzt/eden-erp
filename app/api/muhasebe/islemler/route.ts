@@ -27,10 +27,11 @@ export async function GET(request: NextRequest) {
   const ara = searchParams.get('ara')
   const page = parseInt(searchParams.get('page') ?? '1')
   const pageSize = parseInt(searchParams.get('pageSize') ?? '50')
+  const includeCount = searchParams.get('includeCount') === 'true'
 
   let query = supabase
     .from('nakit_islemler')
-    .select('*', { count: 'exact' })
+    .select('id,tarih,gelir,gider,aciklama,proje,belge_no,islem_tarafi,karsi_taraf,banka,hesap_tipi,hesap_no,created_at,updated_at', includeCount ? { count: 'exact' } : undefined)
     .order('tarih', { ascending: false })
     .range((page - 1) * pageSize, page * pageSize - 1)
 
@@ -45,7 +46,7 @@ export async function GET(request: NextRequest) {
 
   return NextResponse.json({
     data,
-    total: count ?? 0,
+    total: count ?? data?.length ?? 0,
     page,
     pageSize,
     totalPages: Math.ceil((count ?? 0) / pageSize),

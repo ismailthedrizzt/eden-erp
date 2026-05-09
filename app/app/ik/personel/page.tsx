@@ -80,6 +80,12 @@ const getFieldLabel = (field: string) => PERSONEL_FIELD_LABELS[field] || field
 
 const formatFieldList = (fields: string[]) => fields.map(getFieldLabel).join(', ')
 
+function getEducationSummary(personel: Personel) {
+  const schools = Array.isArray(personel.egitim_okullari) ? personel.egitim_okullari : []
+  const latest = schools.find((school: Record<string, any>) => school?.derece || school?.okul_adi)
+  return String(latest?.derece || latest?.okul_adi || '-')
+}
+
 export default function PersonelYonetimPage() {
   const { data: personel, loading: listLoading, error: listError, yenile } = usePersonel()
   const moduleConfig = personelModuleConfig
@@ -100,9 +106,17 @@ export default function PersonelYonetimPage() {
   // Transform data for table
   const tableData: PersonelTableRow[] = (personel || []).map(p => ({
     ...p,
+    employee_no: (p as any).employee_no || '-',
     fullname: `${p.ad || ''} ${p.soyad || ''}`.trim(),
-    birim_adi: '-',  // Simplified without teskilat module check
-    kadro_unvani: '-'
+    identity_display: p.tc_kimlik || p.pasaport_no || '-',
+    sirket_adi: (p as any).sirket?.kisa_unvan || (p as any).sirket?.ticari_unvan || '-',
+    birim_adi: p.birim?.ad || '-',
+    kadro_unvani: p.kadro?.unvan || p.gorev || '-',
+    calisma_tipi: (p as any).calisma_tipi || '-',
+    employment_status: (p as any).employment_status || p.calisma_durumu || '-',
+    egitim_durumu: getEducationSummary(p),
+    sgk_status: p.sgk_giris ? 'SGK girişi var' : 'SGK bekliyor',
+    __actions: ''
   }))
 
   // Event Handlers

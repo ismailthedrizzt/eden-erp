@@ -81,9 +81,9 @@ export async function GET(request: NextRequest) {
     (teskilatLicense.environment === 'all' || teskilatLicense.environment === process.env.NODE_ENV)
 
   // Build select query based on teskilat module status
-  let selectQuery = '*'
+  let selectQuery = 'id,employee_no,ad,soyad,uyruk,tc_kimlik,pasaport_no,cinsiyet,dogum_tarihi,cep_telefonu,email,calisma_durumu,employment_status,start_date,sgk_giris,fotograf_url,sirket_id,birim_id,kadro_id,gorev,egitim_okullari,created_at,updated_at,version,sirket:sirketler(id,kisa_unvan,ticari_unvan)'
   if (isTeskilatActive) {
-    selectQuery = `*,
+    selectQuery = `${selectQuery},
       birim:birimler(id, ad, tip),
       kadro:norm_kadrolar(id, unvan)`
   }
@@ -100,7 +100,27 @@ export async function GET(request: NextRequest) {
 
   const { data, error } = await query
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json({ data })
+  const rows = (data || []).map((row: any) => ({
+    ...row,
+    photo_url: row.fotograf_url || null,
+    full_name: [row.ad, row.soyad].filter(Boolean).join(' '),
+    national_id: row.tc_kimlik || null,
+    passport_no: row.pasaport_no || null,
+    nationality: row.uyruk || null,
+    company_name: row.sirket?.kisa_unvan || row.sirket?.ticari_unvan || null,
+    department_name: row.birim?.ad || null,
+    position_title: row.kadro?.unvan || row.gorev || null,
+    hire_date: row.sgk_giris || row.start_date || null,
+    employment_type: row.calisma_tipi || null,
+    employment_status: row.employment_status || row.calisma_durumu || null,
+    phone: row.cep_telefonu || null,
+    gender: row.cinsiyet || null,
+    birth_date: row.dogum_tarihi || null,
+    education_level: Array.isArray(row.egitim_okullari) ? row.egitim_okullari.find((school: any) => school?.derece || school?.okul_adi)?.derece || null : null,
+    sgk_status: row.sgk_giris ? 'active' : 'pending',
+    status: row.calisma_durumu || null,
+  }))
+  return NextResponse.json({ data: rows })
 }
 
 // POST /api/ik/personel

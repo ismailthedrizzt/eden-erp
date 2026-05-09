@@ -22,7 +22,7 @@ export default function IslemlerPage() {
   const [tip,   setTip]     = useState('')
   const [ara,   setAra]     = useState('')
 
-  const { data, loading } = useNakitIslemler({ islemTarafi: taraf||undefined, proje: proje||undefined, tip: tip as any, ara: ara||undefined })
+  const { data, loading, yenile } = useNakitIslemler({ islemTarafi: taraf||undefined, proje: proje||undefined, tip: tip as any, ara: ara||undefined })
 
   const filteredTotal = {
     gelir: data.reduce((s,r)=>s+(r.gelir||0),0),
@@ -33,7 +33,7 @@ export default function IslemlerPage() {
 
   return (
     <>
-      <IslemModal open={modalOpen} onClose={() => setModalOpen(false)} />
+      <IslemModal open={modalOpen} onClose={() => setModalOpen(false)} onSaved={yenile} />
 
       <PageBanner
         mode="list"

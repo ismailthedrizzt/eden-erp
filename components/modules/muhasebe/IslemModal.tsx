@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Modal from '@/components/ui/Modal'
-import { useNakitIslemler } from '@/hooks/useNakitIslemler'
+import { accountingService } from '@/lib/services/accountingService'
 
 const PROJELER = ['PG', 'EPIRB', 'İdari', 'Sermaye', 'Aktarım', 'Finansal', 'Destek', 'Yatırım', 'Otel']
 const TARAFLAR = ['Eden', 'İsmail ILGAR', 'Canberk', 'Ergün']
@@ -12,10 +12,10 @@ interface Props {
   open: boolean
   onClose: () => void
   defaultTaraf?: string
+  onSaved?: () => void
 }
 
-export default function IslemModal({ open, onClose, defaultTaraf }: Props) {
-  const { ekle } = useNakitIslemler()
+export default function IslemModal({ open, onClose, defaultTaraf, onSaved }: Props) {
   const [saving, setSaving] = useState(false)
   const [err, setErr] = useState('')
   const today = new Date().toISOString().split('T')[0]
@@ -35,7 +35,7 @@ export default function IslemModal({ open, onClose, defaultTaraf }: Props) {
     if (g === 0 && d === 0) { setErr('Gelir veya gider girilmelidir.'); return }
     setSaving(true)
     try {
-      await ekle({
+      await accountingService.create({
         tarih: form.tarih, gelir: g, gider: d,
         aciklama: form.aciklama, proje: form.proje as any,
         islem_tarafi: form.islem_tarafi as any,
@@ -45,6 +45,8 @@ export default function IslemModal({ open, onClose, defaultTaraf }: Props) {
         hesap_no: form.hesap_no || undefined,
         belge_no: form.belge_no || undefined,
       })
+      accountingService.invalidateList()
+      onSaved?.()
       onClose()
       setForm(f => ({ ...f, gelir: '', gider: '', aciklama: '', karsi_taraf: '', banka: '', hesap_no: '', belge_no: '' }))
     } catch (e: any) { setErr(e.message) }

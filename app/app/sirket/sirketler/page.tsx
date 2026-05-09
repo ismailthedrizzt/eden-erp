@@ -342,7 +342,6 @@ export default function SirketlerPage() {
     setSelectedSirket(null)
     setFormError(null)
     setFieldErrors({})
-    yenile()
   }
 
   const normalizePayload = (raw: Record<string, any>) => {

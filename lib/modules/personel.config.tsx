@@ -4,8 +4,16 @@ import type { Personel } from '@/types'
 
 export type PersonelTableRow = Personel & {
   fullname: string
+  employee_no?: string
+  identity_display?: string
+  sirket_adi?: string
   birim_adi: string
   kadro_unvani: string
+  calisma_tipi?: string
+  employment_status?: string
+  egitim_durumu?: string
+  sgk_status?: string
+  __actions?: string
 }
 
 export const personelModuleConfig: ModuleConfig<PersonelTableRow> = {
@@ -49,128 +57,55 @@ export const personelModuleConfig: ModuleConfig<PersonelTableRow> = {
       fields: ['fullname', 'tc_kimlik', 'cep_telefonu', 'email']
     },
     columns: [
-      {
-        key: 'fotograf_url',
-        label: 'Fotoğraf',
-        type: 'image',
-        required: true,
-        visible: true,
-        width: 60,
-        fixedWidth: true,
-        sortable: false,
-        filterable: false,
-        category: 'Kişisel'
-      },
-      {
-        key: 'fullname',
-        label: 'Adı Soyadı',
-        type: 'text',
-        required: true,
-        visible: true,
-        width: 200,
-        minWidth: 120,
-        sortable: true,
-        filterable: true,
-        category: 'Kişisel'
-      },
-      {
-        key: 'tc_kimlik',
-        label: 'TC Kimlik',
-        type: 'text',
-        required: true,
-        visible: true,
-        width: 120,
-        sortable: true,
-        filterable: true,
-        category: 'Kişisel'
-      },
-      {
-        key: 'uyruk',
-        label: 'Uyruk',
-        type: 'enum',
-        required: true,
-        visible: true,
-        width: 100,
-        sortable: true,
-        filterable: true,
-        enumOptions: ['Türk', 'Yabancı', 'TC', 'YUNAN', 'ALMAN', 'AMERİKALI'],
-        category: 'Kişisel'
-      },
-      {
-        key: 'cinsiyet',
-        label: 'Cinsiyet',
-        type: 'enum',
-        required: true,
-        visible: true,
-        width: 100,
-        sortable: true,
-        filterable: true,
-        enumOptions: ['Erkek', 'Kadın'],
-        category: 'Kişisel'
-      },
-      {
-        key: 'dogum_tarihi',
-        label: 'Doğum Tarihi',
-        type: 'date',
-        width: 130,
-        sortable: true,
-        filterable: true,
-        category: 'Kişisel',
-        render: (value) => value ? new Date(value).toLocaleDateString('tr-TR') : '-'
-      },
-      {
-        key: 'cep_telefonu',
-        label: 'Telefon',
-        type: 'text',
-        width: 130,
-        sortable: false,
-        filterable: true,
-        category: 'İletişim'
-      },
-      {
-        key: 'email',
-        label: 'E-posta',
-        type: 'text',
-        width: 200,
-        sortable: true,
-        filterable: true,
-        category: 'İletişim'
-      },
+      { key: 'fotograf_url', label: 'Fotoğraf', type: 'image', visible: true, width: 60, fixedWidth: true, sortable: false, filterable: false, category: 'Kimlik' },
+      { key: 'employee_no', label: 'Çalışan No', type: 'text', visible: true, width: 120, sortable: true, filterable: true, category: 'Kimlik' },
+      { key: 'fullname', label: 'Ad Soyad', type: 'text', visible: true, width: 200, minWidth: 120, sortable: true, filterable: true, category: 'Kimlik' },
+      { key: 'identity_display', label: 'TCKN / Pasaport', type: 'text', visible: false, width: 150, sortable: true, filterable: true, category: 'Kimlik' },
+      { key: 'uyruk', label: 'Uyruk', type: 'enum', visible: false, width: 110, sortable: true, filterable: true, enumOptions: ['tc', 'yabanci'], category: 'Kimlik' },
+      { key: 'sirket_adi', label: 'Şirket', type: 'text', visible: true, width: 180, sortable: true, filterable: true, category: 'İş' },
+      { key: 'birim_adi', label: 'Departman / Birim', type: 'text', visible: true, width: 170, sortable: true, filterable: true, category: 'İş' },
+      { key: 'kadro_unvani', label: 'Pozisyon / Ünvan', type: 'text', visible: true, width: 170, sortable: true, filterable: true, category: 'İş' },
+      { key: 'sgk_giris', label: 'İşe Giriş Tarihi', type: 'date', visible: true, width: 140, sortable: true, filterable: true, category: 'İş', render: (value) => value ? new Date(value).toLocaleDateString('tr-TR') : '-' },
+      { key: 'calisma_tipi', label: 'Çalışma Tipi', type: 'text', visible: false, width: 130, sortable: true, filterable: true, category: 'İş' },
+      { key: 'employment_status', label: 'İstihdam Durumu', type: 'enum', visible: true, width: 150, sortable: true, filterable: true, enumOptions: ['gorevde', 'izinde', 'ayrilmis', 'askida'], category: 'İş' },
+      { key: 'cep_telefonu', label: 'Telefon', type: 'text', visible: false, width: 130, sortable: false, filterable: true, category: 'İletişim' },
+      { key: 'email', label: 'E-posta', type: 'text', visible: false, width: 200, sortable: true, filterable: true, category: 'İletişim' },
+      { key: 'cinsiyet', label: 'Cinsiyet', type: 'enum', visible: false, width: 100, sortable: true, filterable: true, enumOptions: ['erkek', 'kadin'], category: 'Kişisel' },
+      { key: 'dogum_tarihi', label: 'Doğum Tarihi', type: 'date', visible: false, width: 130, sortable: true, filterable: true, category: 'Kişisel', render: (value) => value ? new Date(value).toLocaleDateString('tr-TR') : '-' },
+      { key: 'egitim_durumu', label: 'Eğitim Durumu', type: 'text', visible: false, width: 150, sortable: true, filterable: true, category: 'Eğitim Durumu' },
+      { key: 'sgk_status', label: 'SGK Durumu', type: 'text', visible: false, width: 130, sortable: true, filterable: true, category: 'İş' },
       {
         key: 'calisma_durumu',
         label: 'Durum',
         type: 'enum',
+        visible: true,
         width: 110,
         sortable: true,
         filterable: true,
-        enumOptions: ['gorevde', 'izinde', 'ayrilmis'],
+        enumOptions: ['gorevde', 'izinde', 'ayrilmis', 'askida'],
+        category: 'Durum',
         render: (value) => {
           const colors: Record<string, string> = {
             gorevde: 'bg-green-100 text-green-800',
             izinde: 'bg-yellow-100 text-yellow-800',
-            ayrilmis: 'bg-red-100 text-red-800'
+            ayrilmis: 'bg-red-100 text-red-800',
+            askida: 'bg-gray-100 text-gray-800'
           }
           const labels: Record<string, string> = {
             gorevde: 'Görevde',
             izinde: 'İzinde',
-            ayrilmis: 'Ayrılmış'
+            ayrilmis: 'Ayrılmış',
+            askida: 'Askıda'
           }
           return (
             <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${colors[value] || 'bg-gray-100 text-gray-800'}`}>
-              {labels[value] || value}
+              {labels[value] || value || '-'}
             </span>
           )
         }
       },
-      {
-        key: 'sgk_giris',
-        label: 'SGK Giriş',
-        type: 'date',
-        width: 130,
-        sortable: true,
-        filterable: true,
-        render: (value) => value ? new Date(value).toLocaleDateString('tr-TR') : '-'
-      }
+      { key: 'updated_at', label: 'Son Güncelleme', type: 'date', visible: false, width: 150, sortable: true, filterable: true, category: 'Durum', render: (value) => value ? new Date(value).toLocaleDateString('tr-TR') : '-' },
+      { key: '__actions', label: 'İşlemler', type: 'actions', visible: true, width: 80, fixed: true, hideable: false, sortable: false, filterable: false, category: 'Genel' }
     ]
   },
   form: {

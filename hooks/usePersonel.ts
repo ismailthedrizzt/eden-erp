@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { createClient } from '@/lib/supabase/client'
+import { useDebouncedValue } from '@/hooks/useDebouncedValue'
+import { employeeService } from '@/lib/services/employeeService'
 import type { Personel } from '@/types'
 
 interface Filters {
@@ -11,65 +12,52 @@ interface Filters {
 }
 
 export function usePersonel(filters: Filters = {}) {
+  const filterKey = `${filters.birimId ?? ''}|${filters.durum ?? ''}|${filters.ara ?? ''}`
+  const debouncedFilterKey = useDebouncedValue(filterKey)
+  const [birimId, durum, ara] = debouncedFilterKey.split('|')
+  const debouncedFilters = {
+    birimId: birimId || undefined,
+    durum: durum || undefined,
+    ara: ara || undefined,
+  }
   const [data, setData] = useState<Personel[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const supabase = createClient()
 
-  const fetch = useCallback(async () => {
+  const fetch = useCallback(async (force = false) => {
     setLoading(true)
     setError(null)
-    console.log('usePersonel: Fetching data...')
     try {
-      // Simple query without relations first
-      console.log('usePersonel: Executing simple query...')
-      let q = supabase
-        .from('employees')
-        .select('*')
-        .eq('is_active', true)
-        .order('soyad')
-
-      if (filters.durum) q = q.eq('calisma_durumu', filters.durum)
-      if (filters.ara)   q = q.or(`ad.ilike.%${filters.ara}%,soyad.ilike.%${filters.ara}%`)
-
-      const { data: rows, error: err } = await q
-      
-      if (err) {
-        console.error('usePersonel: Error:', err)
-        throw err
-      }
-      
-      console.log('usePersonel: Success -', rows?.length || 0, 'records')
-      setData(((rows as unknown) as Personel[]) ?? [])
+      if (force) employeeService.invalidateList()
+      const result = await employeeService.list(debouncedFilters, { useCache: !force })
+      setData(result.data ?? [])
     } catch (e: any) {
       console.error('usePersonel: Caught error:', e)
       setError(e.message)
     } finally {
       setLoading(false)
     }
-  }, [filters.birimId, filters.durum, filters.ara, supabase])
+  }, [debouncedFilterKey])
 
   useEffect(() => { fetch() }, [fetch])
 
   async function ekle(p: Omit<Personel, 'id' | 'created_at' | 'updated_at'>) {
-    const { data: row, error: err } = await supabase
-      .from('employees').insert(p).select().single()
-    if (err) throw err
-    setData(prev => [...prev, row])
-    return row
+    const result = await employeeService.create(p)
+    employeeService.invalidateList()
+    setData(prev => [...prev, result.data])
+    return result.data
   }
 
   async function guncelle(id: string, updates: Partial<Personel>) {
-    const { data: row, error: err } = await supabase
-      .from('employees').update(updates).eq('id', id).select().single()
-    if (err) throw err
-    setData(prev => prev.map(r => r.id === id ? row : r))
-    return row
+    const result = await employeeService.update(id, updates)
+    employeeService.invalidateList()
+    setData(prev => prev.map(r => r.id === id ? result.data : r))
+    return result.data
   }
 
-  const gorevde  = data.filter(r => r.calisma_durumu === 'gorevde').length
-  const izinde   = data.filter(r => r.calisma_durumu === 'izinde').length
+  const gorevde = data.filter(r => r.calisma_durumu === 'gorevde').length
+  const izinde = data.filter(r => r.calisma_durumu === 'izinde').length
   const ayrilmis = data.filter(r => r.calisma_durumu === 'ayrilmis').length
 
-  return { data, loading, error, ekle, guncelle, yenile: fetch, gorevde, izinde, ayrilmis }
+  return { data, loading, error, ekle, guncelle, yenile: () => fetch(true), gorevde, izinde, ayrilmis }
 }

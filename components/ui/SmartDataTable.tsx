@@ -25,7 +25,7 @@ import {
 import { cn } from '@/lib/utils'
 
 // Column Definition Types
-type ColumnType = 'text' | 'number' | 'date' | 'enum' | 'boolean' | 'image'
+type ColumnType = 'text' | 'number' | 'date' | 'enum' | 'boolean' | 'image' | 'badge' | 'avatar' | 'actions'
 
 export interface ColumnDef {
   key: string
@@ -35,6 +35,8 @@ export interface ColumnDef {
   sortable?: boolean
   filterable?: boolean
   visible?: boolean
+  hideable?: boolean
+  fixed?: boolean
   width?: number // Width in pixels
   minWidth?: number
   maxWidth?: number
@@ -87,6 +89,29 @@ export interface WidgetDef<T = any> {
   moduleDependency?: string
 }
 
+function getDefaultColumnVisibility(col: ColumnDef) {
+  if (col.fixed || col.hideable === false) return true
+  if (typeof col.visible === 'boolean') return col.visible
+  return col.required !== false
+}
+
+function mergeColumnConfig(allColumns: ColumnDef[], savedColumns?: ColumnDef[]) {
+  const savedByKey = new Map((savedColumns || []).map(col => [col.key, col]))
+
+  return allColumns
+    .map((col, index) => {
+      const saved = savedByKey.get(col.key)
+      const canHide = col.hideable !== false && !col.fixed
+
+      return {
+        ...col,
+        visible: canHide ? saved?.visible ?? getDefaultColumnVisibility(col) : true,
+        order: saved?.order ?? col.order ?? index,
+      }
+    })
+    .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+}
+
 export function SmartDataTable<T extends { id: string }>({
   data,
   columns: initialColumns,
@@ -104,6 +129,8 @@ export function SmartDataTable<T extends { id: string }>({
   realtime = false,
   pollingInterval = 30000
 }: SmartDataTableProps<T>) {
+  const columnSignature = initialColumns.map(col => `${col.key}:${col.label}:${col.visible ?? ''}:${col.required ?? ''}:${col.fixed ?? ''}:${col.hideable ?? ''}`).join('|')
+
   // User Preferences State
   const [viewMode, setViewMode] = useState<'list' | 'card'>(() => {
     if (typeof window === 'undefined') return defaultView
@@ -118,27 +145,17 @@ export function SmartDataTable<T extends { id: string }>({
   })
 
   const [columnConfig, setColumnConfig] = useState<ColumnDef[]>(() => {
-    if (typeof window === 'undefined') return initialColumns
+    if (typeof window === 'undefined') return mergeColumnConfig(initialColumns)
     const saved = localStorage.getItem(`${storageKey}-columns`)
     if (saved) {
       try {
         const savedColumns = JSON.parse(saved) as ColumnDef[]
-        const savedByKey = new Map(savedColumns.map(col => [col.key, col]))
-        const mergedColumns = initialColumns.map(col => ({
-          ...col,
-          ...savedByKey.get(col.key),
-        }))
-        const customSavedColumns = savedColumns.filter(col => !initialColumns.some(initialCol => initialCol.key === col.key))
-        return [...mergedColumns, ...customSavedColumns]
+        return mergeColumnConfig(initialColumns, savedColumns)
       } catch {
-        return initialColumns
+        return mergeColumnConfig(initialColumns)
       }
     }
-    // Default: show only required columns
-    return initialColumns.map(col => ({
-      ...col,
-      visible: col.required !== false
-    }))
+    return mergeColumnConfig(initialColumns)
   })
 
   // Active Data State
@@ -166,6 +183,10 @@ export function SmartDataTable<T extends { id: string }>({
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const pollingRef = useRef<NodeJS.Timeout | null>(null)
   const columnSelectorRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    setColumnConfig(prev => mergeColumnConfig(initialColumns, prev))
+  }, [columnSignature])
 
   // Persist preferences
   useEffect(() => {
@@ -454,24 +475,17 @@ export function SmartDataTable<T extends { id: string }>({
     setColumnConfig(prev => {
       const col = prev.find(c => c.key === key)
       if (!col) return prev
-      
-      // Check if trying to show a column when at capacity
-      if (col.visible === false) {
-        const visibleCols = prev.filter(c => c.visible !== false)
-        const newTotalWidth = visibleCols.reduce((sum, c) => sum + (c.width || 150), 0) + (col.width || 150)
-        const maxWidth = screenSize === 'sm' ? 360 : screenSize === 'md' ? 540 : screenSize === 'lg' ? 768 : 1200
-        
-        if (newTotalWidth > maxWidth * 1.2) {
-          // Show warning - quota exceeded
-          return prev
-        }
-      }
-      
+      if (col.fixed || col.hideable === false) return prev
+
       return prev.map(c => 
         c.key === key ? { ...c, visible: c.visible === false ? true : false } : c
       )
     })
-  }, [screenSize])
+  }, [])
+
+  const resetColumnsToDefault = useCallback(() => {
+    setColumnConfig(mergeColumnConfig(initialColumns))
+  }, [initialColumns])
 
   const reorderColumns = useCallback((dragKey: string, dropKey: string) => {
     setColumnConfig(prev => {
@@ -704,17 +718,16 @@ export function SmartDataTable<T extends { id: string }>({
   function renderCellValue(col: ColumnDef, value: any, row: T, forceImageType: boolean = false): React.ReactNode {
     // @ts-ignore - dynamic property access on generic type
     const r = row as Record<string, any>
+
+    if (col.type === 'actions') {
+      return <MoreHorizontal size={16} className="text-gray-400" />
+    }
     
     // For image type, handle specially (even if custom render exists, prefer type-based render)
     if (col.type === 'image' || forceImageType) {
       const imageUrl = value || r?.profileImage || r?.image || r?.photo || r?.avatar || r?.profile_image || r?.foto || r?.fotograf_url
       const initials = (r?.firstName?.[0] || r?.name?.[0] || r?.ad?.[0] || r?.soyad?.[0] || '?').toUpperCase()
       const fullName = r?.firstName || r?.name || r?.ad || r?.fullname || 'İsimsiz'
-      
-      // Debug log in development
-      if (process.env.NODE_ENV === 'development') {
-        console.log('Image render:', { key: col.key, value, imageUrl, availableKeys: Object.keys(r).filter(k => k.includes('foto') || k.includes('image') || k.includes('photo')) })
-      }
       
       return (
         <div className="w-10 h-10 rounded-full overflow-hidden bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center flex-shrink-0 border-2 border-white shadow-sm">
@@ -788,7 +801,7 @@ export function SmartDataTable<T extends { id: string }>({
   }
 
   function isLeftAlignedColumn(col: ColumnDef): boolean {
-    return col.type === 'text' || col.type === 'enum'
+    return col.type === 'text' || col.type === 'enum' || col.type === 'badge'
   }
 
   const quickLookPanel = (showWidgets || (hoveredRow && hoveredRow !== 'widget-preview' && widgets.length > 0)) ? (
@@ -982,6 +995,13 @@ export function SmartDataTable<T extends { id: string }>({
                       {columnConfig.filter(c => c.visible !== false).length} / {columnConfig.length}
                     </span>
                   </div>
+                  <button
+                    type="button"
+                    onClick={resetColumnsToDefault}
+                    className="w-full rounded-md border border-gray-200 px-2 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-700"
+                  >
+                    SÃ¼tunlarÄ± VarsayÄ±lana DÃ¶ndÃ¼r
+                  </button>
                   {/* Width Quota Bar */}
                   <div className="space-y-1">
                     <div className="flex items-center justify-between text-xs">
@@ -1015,10 +1035,9 @@ export function SmartDataTable<T extends { id: string }>({
                   </div>
                 </div>
                 <div className="max-h-64 overflow-y-auto p-2 space-y-3">
-                  {/* Group visible columns by category */}
+                  {/* Column selector is backed by all columns; visibility only controls rendering. */}
                   {(() => {
-                    const visibleCols = columnConfig.filter(c => c.visible !== false)
-                    const grouped = visibleCols.reduce((acc, col) => {
+                    const grouped = columnConfig.reduce((acc, col) => {
                       const category = col.category || 'Genel'
                       if (!acc[category]) acc[category] = []
                       acc[category].push(col)
@@ -1058,7 +1077,8 @@ export function SmartDataTable<T extends { id: string }>({
                               <GripVertical size={16} className="text-gray-400" />
                               <input
                                 type="checkbox"
-                                checked={true}
+                                checked={col.visible !== false}
+                                disabled={col.fixed || col.hideable === false}
                                 onChange={() => toggleColumn(col.key)}
                                 className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                               />
@@ -1071,58 +1091,15 @@ export function SmartDataTable<T extends { id: string }>({
                               {col.required && (
                                 <span className="text-xs text-red-500">zorunlu</span>
                               )}
+                              {(col.fixed || col.hideable === false) && (
+                                <span className="text-xs text-blue-500">sabit</span>
+                              )}
                             </div>
                           ))}
                         </div>
                       </div>
                     ))
                   })()}
-                  
-                  {/* Hidden columns section - also grouped */}
-                  {columnConfig.filter(c => c.visible === false).length > 0 && (
-                    <div className="pt-2 border-t border-gray-200 dark:border-gray-700">
-                      <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 px-2 mb-2 uppercase tracking-wide">
-                        Gizli Sütunlar
-                      </p>
-                      {(() => {
-                        const hiddenCols = columnConfig.filter(c => c.visible === false)
-                        const grouped = hiddenCols.reduce((acc, col) => {
-                          const category = col.category || 'Genel'
-                          if (!acc[category]) acc[category] = []
-                          acc[category].push(col)
-                          return acc
-                        }, {} as Record<string, ColumnDef[]>)
-                        
-                        return Object.entries(grouped).map(([category, cols]) => (
-                          <div key={`hidden-${category}`} className="mb-2">
-                            <p className="text-xs text-gray-400 dark:text-gray-500 px-2 mb-1">{category}</p>
-                            <div className="space-y-1">
-                              {cols.map(col => (
-                                <div
-                                  key={col.key}
-                                  className="flex items-center gap-3 p-2 rounded-lg opacity-50 hover:opacity-80 transition-opacity"
-                                >
-                                  <div className="w-4" />
-                                  <input
-                                    type="checkbox"
-                                    checked={false}
-                                    onChange={() => toggleColumn(col.key)}
-                                    className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                                  />
-                                  <span className="text-sm text-gray-500 dark:text-gray-400 flex-1">
-                                    {col.label}
-                                  </span>
-                                  <span className="text-xs text-gray-400">
-                                    {col.width || 150}px
-                                  </span>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                        ))
-                      })()}
-                    </div>
-                  )}
                 </div>
               </div>
             )}
