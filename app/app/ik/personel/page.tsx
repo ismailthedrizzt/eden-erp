@@ -454,6 +454,7 @@ export default function PersonelYonetimPage() {
               fields: tab.fields.map(withFieldHistory)
             }))}
             data={selectedPersonel || undefined}
+            identityGate={moduleConfig.form.identityGate}
             saving={saving}
             deleting={deleting}
             error={formError}
@@ -462,6 +463,11 @@ export default function PersonelYonetimPage() {
             onCancel={() => setPageState('list')}
             onDelete={handleDelete}
             onModeChange={(mode) => setPageState(mode)}
+            onIdentityGateOpenExistingRole={async (roleRecord) => {
+              await handleRowClick(roleRecord as PersonelTableRow)
+              setPageState('edit')
+            }}
+            onIdentityGateCancelDuplicate={() => setPageState('list')}
             enableHistory
             onValidationError={(fields) => {
               const hasFormatError = fields.some(field => field.includes('olmalıdır') || field.includes('geçersiz'))

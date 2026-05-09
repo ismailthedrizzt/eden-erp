@@ -29,6 +29,8 @@ import { cn, formatPhoneInput, normalizeEmailInput } from '@/lib/utils'
 import { ImageSlotUploader, ImageSlot, SlotImage } from './ImageSlotUploader'
 import { DocumentSlotUploader, DocumentSlot, SlotDocument } from './DocumentSlotUploader'
 import { IBANInput } from './IBANInput'
+import { MasterIdentityGate } from './MasterIdentityGate'
+import type { IdentityGateConfig, IdentityGateResolveResult } from '@/lib/identity-gate'
 
 /** Historical value entry */
 export interface HistoryEntry {
@@ -180,6 +182,12 @@ export interface EntityFormProps {
   
   /** Enable history tracking for all fields */
   enableHistory?: boolean
+
+  identityGate?: IdentityGateConfig
+  identityRoleScope?: Record<string, unknown>
+  onIdentityResolved?: (result: IdentityGateResolveResult) => void
+  onIdentityGateOpenExistingRole?: (roleRecord: Record<string, any>, result: IdentityGateResolveResult) => void
+  onIdentityGateCancelDuplicate?: () => void
 }
 
 /** FieldHistoryIndicator Component */
@@ -889,13 +897,19 @@ export function EntityForm({
   externalFieldErrors,
   onValidationError,
   className,
-  enableHistory = false
+  enableHistory = false,
+  identityGate,
+  identityRoleScope,
+  onIdentityResolved,
+  onIdentityGateOpenExistingRole,
+  onIdentityGateCancelDuplicate
 }: EntityFormProps) {
   // Internal mode state
   const [mode, setMode] = useState<FormMode>(initialMode)
   const [activeTab, setActiveTab] = useState(tabs[0]?.id || '')
   const [formData, setFormData] = useState<Record<string, any>>({})
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
+  const [identityGateResult, setIdentityGateResult] = useState<IdentityGateResolveResult | null>(null)
   const [cvExtractStatus, setCvExtractStatus] = useState<{ type: 'idle' | 'loading' | 'success' | 'error'; message: string }>({ type: 'idle', message: '' })
   const [turkeyProvinces, setTurkeyProvinces] = useState<TurkeyProvince[]>([])
   
@@ -935,6 +949,9 @@ export function EntityForm({
   // Sync with external mode changes
   useEffect(() => {
     setMode(initialMode)
+    if (initialMode !== 'create') {
+      setIdentityGateResult(null)
+    }
   }, [initialMode])
 
   // Initialize form data
@@ -969,6 +986,7 @@ export function EntityForm({
         })
       })
       setFormData(defaults)
+      setIdentityGateResult(null)
     }
   // Keep form values stable across parent re-renders such as validation toasts.
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1009,6 +1027,10 @@ export function EntityForm({
   const isReadOnly = mode === 'view'
   const isCreate = mode === 'create'
   const isEdit = mode === 'edit'
+  const isIdentityGateEnabled = !!identityGate?.enabled
+  const isIdentityGateReady = !isIdentityGateEnabled || !isCreate || identityGateResult?.state === 'ready_for_insert' || identityGateResult?.state === 'ready_for_edit'
+  const isIdentityGateLocked = isIdentityGateEnabled && isCreate && !isIdentityGateReady
+  const masterControlledFields = new Set(Object.keys(identityGateResult?.prefill || {}).filter(key => key !== 'person_id' && key !== 'organization_id'))
   const allFormFields = [
     ...flattenFields(heroFields),
     ...tabs.flatMap(tab => flattenFields(tab.fields))
@@ -1095,6 +1117,22 @@ export function EntityForm({
         return next
       })
     }
+  }
+
+  const handleIdentityResolved = (result: IdentityGateResolveResult) => {
+    setIdentityGateResult(result)
+    setFormData(prev => ({
+      ...prev,
+      ...result.prefill,
+      master_entity_kind: result.entityKind,
+      master_record_id: result.masterRecord?.id || null,
+      identity_gate_state: result.state,
+    }))
+    onIdentityResolved?.(result)
+  }
+
+  const resetIdentityGate = () => {
+    setIdentityGateResult(null)
   }
 
   const handleFormattedFieldChange = (field: FormField, value: string) => {
@@ -1239,6 +1277,13 @@ export function EntityForm({
 
   const validate = (): boolean => {
     const errors: Record<string, string> = {}
+
+    if (isIdentityGateLocked) {
+      errors.identity_gate = 'Devam etmek için önce kimlik / kurum bilgilerini girerek master kayıt eşleştirmesi yapın.'
+      setFieldErrors(errors)
+      onValidationError?.([errors.identity_gate])
+      return false
+    }
     
     const validateFields = (fields: FormField[]) => {
       fields.forEach(field => {
@@ -1270,6 +1315,14 @@ export function EntityForm({
   }
 
   const handleSave = async () => {
+    if (isIdentityGateLocked) {
+      setFieldErrors(prev => ({
+        ...prev,
+        identity_gate: 'Devam etmek için önce kimlik / kurum bilgilerini girerek master kayıt eşleştirmesi yapın.',
+      }))
+      onValidationError?.(['Devam etmek için önce kimlik / kurum bilgilerini girerek master kayıt eşleştirmesi yapın.'])
+      return
+    }
     if (!validate()) return
     
     try {
@@ -1295,7 +1348,7 @@ export function EntityForm({
         : field.compact
           ? 'col-span-1'
           : 'col-span-2 md:col-span-1'
-    const fieldDisabled = isReadOnly || (field.disabledWhen ? matchesCondition(field.disabledWhen, formData) : false)
+    const fieldDisabled = isReadOnly || isIdentityGateLocked || (field.disabledWhen ? matchesCondition(field.disabledWhen, formData) : false)
 
     if (field.type === 'section') {
       return (
@@ -1321,7 +1374,7 @@ export function EntityForm({
         return field.render({
           value,
           onChange: (val) => handleChange(field.name, val),
-          readOnly: isReadOnly
+          readOnly: fieldDisabled
         })
       }
 
@@ -1391,8 +1444,8 @@ export function EntityForm({
               field={field}
               value={formData[field.name] || []}
               onChange={(nextValue) => handleChange(field.name, nextValue)}
-              readOnly={isReadOnly}
-              disabled={field.disabledWhen ? matchesCondition(field.disabledWhen, formData) : false}
+              readOnly={fieldDisabled}
+              disabled={fieldDisabled || (field.disabledWhen ? matchesCondition(field.disabledWhen, formData) : false)}
             />
           )
         case 'workLifecycle':
@@ -1400,7 +1453,7 @@ export function EntityForm({
             <WorkLifecycleField
               formData={formData}
               onChange={handleChange}
-              readOnly={isReadOnly}
+              readOnly={fieldDisabled}
             />
           )
         case 'textarea':
@@ -1509,6 +1562,11 @@ export function EntityForm({
           {(showHistoryIcon || enableHistory) && field.history && field.history.length > 0 && (
             <FieldHistoryIndicator history={field.history} />
           )}
+          {masterControlledFields.has(field.name) && (
+            <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-medium text-blue-700 dark:bg-blue-950/50 dark:text-blue-300">
+              Master kayıttan geldi
+            </span>
+          )}
         </div>
         {validationState.label && (
           <span className="pointer-events-none absolute right-2 top-7 z-10 rounded border border-red-300 bg-white px-1.5 py-0.5 text-[10px] font-medium leading-none text-red-600 dark:border-red-700 dark:bg-gray-900 dark:text-red-400">
@@ -1554,7 +1612,7 @@ export function EntityForm({
                     slots={imageSlots}
                     images={images}
                     onChange={handleImagesChange}
-                    readOnly={isReadOnly}
+                    readOnly={isReadOnly || isIdentityGateLocked}
                   />
                 </div>
                 
@@ -1564,7 +1622,7 @@ export function EntityForm({
                     slots={documentSlots}
                     documents={documents}
                     onChange={handleDocumentsChange}
-                    readOnly={isReadOnly}
+                    readOnly={isReadOnly || isIdentityGateLocked}
                     aiBadge={documentSlot.aiBadge}
                   />
                   {!documentSlot.dataField && cvExtractStatus.type !== 'idle' && (
@@ -1596,6 +1654,23 @@ export function EntityForm({
 
             {/* Required Fields Grid */}
             <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 flex-1">
+              {identityGate?.enabled && (
+                <MasterIdentityGate
+                  config={identityGate}
+                  mode={mode}
+                  formData={formData}
+                  roleScope={identityRoleScope}
+                  onResolved={handleIdentityResolved}
+                  onReset={resetIdentityGate}
+                  onOpenExistingRole={onIdentityGateOpenExistingRole}
+                  onCancelDuplicate={onIdentityGateCancelDuplicate || onCancel}
+                />
+              )}
+              {isIdentityGateLocked && fieldErrors.identity_gate && (
+                <div className="col-span-2 lg:col-span-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+                  {fieldErrors.identity_gate}
+                </div>
+              )}
               {heroFields.map(field => renderField(field, enableHistory))}
             </div>
 
@@ -1626,7 +1701,7 @@ export function EntityForm({
                   </button>
                   <button
                     onClick={handleSave}
-                    disabled={saving || (isCreate && !canCreate)}
+                    disabled={saving || isIdentityGateLocked || (isCreate && !canCreate)}
                     className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium disabled:opacity-50"
                   >
                     {saving ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} />}
@@ -1645,6 +1720,7 @@ export function EntityForm({
           {tabs.map(tab => (
             <button
               key={tab.id}
+              disabled={isIdentityGateLocked}
               onClick={() => setActiveTab(tab.id)}
               className={cn(
                 "flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap transition-colors border-b-2",
@@ -1652,7 +1728,8 @@ export function EntityForm({
                   ? "border-blue-600 text-blue-600 dark:text-blue-400"
                   : "border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200",
                 getTabValidationStatus(tab) === 'invalid' && "text-red-600 dark:text-red-400",
-                getTabValidationStatus(tab) === 'valid' && "text-emerald-600 dark:text-emerald-400"
+                getTabValidationStatus(tab) === 'valid' && "text-emerald-600 dark:text-emerald-400",
+                isIdentityGateLocked && "cursor-not-allowed opacity-50"
               )}
             >
               {tab.icon}
@@ -1664,6 +1741,11 @@ export function EntityForm({
 
       {/* Tab Content */}
       <div className="p-6">
+        {isIdentityGateLocked && (
+          <div className="mb-4 rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-3 text-sm text-gray-600 dark:border-gray-700 dark:bg-gray-800/50 dark:text-gray-300">
+            Devam etmek için önce kimlik / kurum bilgilerini girerek master kayıt eşleştirmesi yapın.
+          </div>
+        )}
         {tabs.map(tab => (
           <div
             key={tab.id}

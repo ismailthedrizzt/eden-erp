@@ -472,6 +472,18 @@ export default function OrtaklarPage() {
             mode={formMode}
             entityName="Ortaklar"
             entityNameSingular="Ortak"
+            identityGate={{
+              enabled: true,
+              allowedEntityKinds: ['person', 'organization'],
+              masterTable: 'both',
+              uniqueFields: {
+                person: ['nationality', 'national_id', 'passport_no'],
+                organization: ['country', 'tax_number', 'registration_number'],
+              },
+              roleTable: 'sirket_ortaklar',
+              roleDuplicateCheck: 'company_id + entity_kind + person_id/organization_id + active',
+              roleScopeFields: ['company_id', 'sirket_id'],
+            }}
             heroFields={configuredHeroFields.map(withFieldHistory)}
             tabs={tabs.map(tab => ({ ...tab, fields: tab.fields.map(withFieldHistory) }))}
             data={selectedPartner || undefined}
@@ -483,6 +495,12 @@ export default function OrtaklarPage() {
             onCancel={() => setPageState('list')}
             onDelete={handleDelete}
             onModeChange={(mode) => setPageState(mode)}
+            onIdentityGateOpenExistingRole={async (roleRecord) => {
+              await handleRowClick(roleRecord as any)
+              setPageState('edit')
+            }}
+            onIdentityGateCancelDuplicate={() => setPageState('list')}
+
             enableHistory
             imageSlot={{
               title: selectedPartner?.partner_type === 'tuzel_kisi' ? 'Logo' : 'Fotoğraf',

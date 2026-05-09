@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react'
 import type { ColumnDef, WidgetDef } from '@/components/ui/SmartDataTable'
 import type { FormField, FormMode } from '@/components/ui/EntityForm'
+import type { IdentityGateConfig } from '@/lib/identity-gate'
 
 export type EntityRelationType = 'oneToOne' | 'oneToMany' | 'manyToMany'
 
@@ -177,6 +178,7 @@ export interface FormConfig {
   mode: 'standard'
   entityName: string
   entityNameSingular: string
+  identityGate?: IdentityGateConfig
   hero: HeroConfig
   tabs?: FormTabConfig[]
   actions?: FormActionConfig[]

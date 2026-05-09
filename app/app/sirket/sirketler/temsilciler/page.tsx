@@ -459,6 +459,18 @@ export default function TemsilcilerPage() {
             mode={formMode}
             entityName="Temsilciler"
             entityNameSingular="Temsilci"
+            identityGate={{
+              enabled: true,
+              allowedEntityKinds: ['person', 'organization'],
+              masterTable: 'both',
+              uniqueFields: {
+                person: ['nationality', 'national_id', 'passport_no'],
+                organization: ['country', 'tax_number', 'registration_number'],
+              },
+              roleTable: 'sirket_temsilciler',
+              roleDuplicateCheck: 'company_id + person_id/organization_id + authority_type + active',
+              roleScopeFields: ['company_id', 'sirket_id'],
+            }}
             heroFields={heroFields.map(withFieldHistory)}
             tabs={tabs.map(tab => ({ ...tab, fields: tab.fields.map(withFieldHistory) }))}
             data={selectedRepresentative || undefined}
@@ -470,6 +482,12 @@ export default function TemsilcilerPage() {
             onCancel={() => setPageState('list')}
             onDelete={handleDelete}
             onModeChange={(mode) => setPageState(mode)}
+            onIdentityGateOpenExistingRole={async (roleRecord) => {
+              await handleRowClick(roleRecord as any)
+              setPageState('edit')
+            }}
+            onIdentityGateCancelDuplicate={() => setPageState('list')}
+
             enableHistory
             imageSlot={{
               title: selectedRepresentative?.person_or_entity_type === 'tuzel_kisi' ? 'Logo' : 'Fotoğraf',

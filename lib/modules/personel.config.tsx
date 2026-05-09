@@ -112,6 +112,17 @@ export const personelModuleConfig: ModuleConfig<PersonelTableRow> = {
     mode: 'standard',
     entityName: 'Çalışanlar',
     entityNameSingular: 'Çalışan',
+    identityGate: {
+      enabled: true,
+      allowedEntityKinds: ['person'],
+      masterTable: 'persons',
+      uniqueFields: {
+        person: ['nationality', 'national_id', 'passport_no'],
+      },
+      roleTable: 'employees',
+      roleDuplicateCheck: 'company_id + person_id + active',
+      roleScopeFields: ['company_id', 'sirket_id'],
+    },
     hero: {
       mediaSlots: [
         { key: 'photo', label: 'Fotoğraf', type: 'image', required: false },

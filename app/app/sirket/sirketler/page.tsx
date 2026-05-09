@@ -529,6 +529,16 @@ export default function SirketlerPage() {
             mode={formMode}
             entityName="Şirketler"
             entityNameSingular="Şirket"
+            identityGate={{
+              enabled: true,
+              allowedEntityKinds: ['organization'],
+              masterTable: 'organizations',
+              uniqueFields: {
+                organization: ['country', 'tax_number', 'registration_number'],
+              },
+              roleTable: 'sirketler',
+              roleDuplicateCheck: 'organization_id + active',
+            }}
             heroFields={configuredHeroFields.map(withFieldHistory)}
             tabs={tabs.map(tab => ({
               ...tab,
@@ -565,6 +575,11 @@ export default function SirketlerPage() {
             onCancel={handleBackToList}
             onDelete={handleDelete}
             onModeChange={(mode) => setPageState(mode === 'edit' && !formAccess.showEdit ? 'view' : mode)}
+            onIdentityGateOpenExistingRole={async (roleRecord) => {
+              await handleRowClick(roleRecord as SirketTableRow)
+              setPageState('edit')
+            }}
+            onIdentityGateCancelDuplicate={handleBackToList}
             canCreate={formAccess.showAdd}
             canEdit={formAccess.showEdit}
             enableHistory

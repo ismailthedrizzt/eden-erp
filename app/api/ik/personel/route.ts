@@ -3,6 +3,8 @@ import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { z } from 'zod'
 
 const EmployeeSchema = z.object({
+  person_id: z.string().uuid().optional().nullable(),
+  employee_no: z.string().optional(),
   ad: z.string().min(1).max(100),
   soyad: z.string().min(1).max(100),
   uyruk: z.enum(['tc', 'yabanci']).default('tc'),

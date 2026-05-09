@@ -3,6 +3,7 @@ import { createServiceClient } from '@/lib/supabase/server'
 import { z } from 'zod'
 
 const SirketSchema = z.object({
+  organization_id: z.string().uuid().optional().nullable(),
   ticari_unvan: z.string().min(1).max(300),
   kisa_unvan: z.string().min(1).max(120),
   vkn_tckn: z.string().regex(/^\d{10}$/, 'VKN 10 haneli sayı olmalıdır'),
@@ -126,6 +127,8 @@ export async function POST(request: NextRequest) {
 
 async function attachCompanyOrganization(supabase: ReturnType<typeof createServiceClient>, companyData: Record<string, any>) {
   try {
+    if (companyData.organization_id) return companyData
+
     const country = companyData.ulke || 'TR'
     const taxNumber = companyData.vkn_tckn || null
     const { data: existing, error: findError } = taxNumber

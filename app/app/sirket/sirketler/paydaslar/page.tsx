@@ -388,6 +388,18 @@ export default function PaydaslarPage() {
             mode={formMode}
             entityName="Paydaşlar"
             entityNameSingular="Paydaş"
+            identityGate={{
+              enabled: true,
+              allowedEntityKinds: ['person', 'organization'],
+              masterTable: 'both',
+              uniqueFields: {
+                person: ['nationality', 'national_id', 'passport_no'],
+                organization: ['country', 'tax_number', 'registration_number'],
+              },
+              roleTable: 'stakeholders',
+              roleDuplicateCheck: 'company_id + person_id/organization_id + category + active',
+              roleScopeFields: ['company_id', 'sirket_id'],
+            }}
             heroFields={heroFields.map(withFieldHistory)}
             tabs={tabs.map(tab => ({ ...tab, fields: tab.fields.map(withFieldHistory) }))}
             data={selectedStakeholder || undefined}
@@ -399,6 +411,12 @@ export default function PaydaslarPage() {
             onCancel={() => setPageState('list')}
             onDelete={handleDelete}
             onModeChange={(mode) => setPageState(mode)}
+            onIdentityGateOpenExistingRole={async (roleRecord) => {
+              await handleRowClick(roleRecord as any)
+              setPageState('edit')
+            }}
+            onIdentityGateCancelDuplicate={() => setPageState('list')}
+
             enableHistory
             imageSlot={{ title: selectedStakeholder?.stakeholder_type === 'tuzel_kisi' ? 'Logo' : 'Fotoğraf', dataField: 'photo_logo', slots: [{ id: 'photo_logo', title: selectedStakeholder?.stakeholder_type === 'tuzel_kisi' ? 'Logo' : 'Fotoğraf', required: false }] }}
             documentSlot={{ title: 'Belgeler', dataField: 'stakeholder_documents', slots: [

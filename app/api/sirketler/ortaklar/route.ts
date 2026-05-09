@@ -5,6 +5,8 @@ import { z } from 'zod'
 const PartnerSchema = z.object({
   company_id: z.string().uuid().optional(),
   sirket_id: z.string().uuid().optional(),
+  person_id: z.string().uuid().optional().nullable(),
+  organization_id: z.string().uuid().optional().nullable(),
   partner_type: z.enum(['gercek_kisi', 'tuzel_kisi']).default('gercek_kisi'),
   owner_kind: z.enum(['gercek_kisi', 'tuzel_kisi']).optional(),
   first_name: z.string().optional(),
@@ -167,6 +169,8 @@ async function attachPartnerIdentity(supabase: ReturnType<typeof createServiceCl
   try {
     const kind = row.owner_kind === 'tuzel_kisi' ? 'organization' : 'person'
     if (kind === 'person') {
+      if (partner.person_id) return { ...row, person_id: partner.person_id, source_type: row.source_type || 'master_person', source_id: row.source_id || partner.person_id }
+
       const fullName = row.display_name || [partner.first_name, partner.last_name].filter(Boolean).join(' ').trim()
       const nationality = partner.nationality_country || partner.nationality || 'TR'
       const nationalId = partner.identity_number && String(partner.identity_number).length === 11 ? String(partner.identity_number) : null
@@ -189,6 +193,8 @@ async function attachPartnerIdentity(supabase: ReturnType<typeof createServiceCl
     }
 
     const legalName = partner.trade_name || row.display_name
+    if (partner.organization_id) return { ...row, organization_id: partner.organization_id, source_type: row.source_type || 'master_organization', source_id: row.source_id || partner.organization_id }
+
     const country = partner.country || partner.nationality_country || 'TR'
     const taxNumber = partner.tax_number || partner.identity_number || null
     const { data: existing, error: findError } = await supabase
