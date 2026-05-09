@@ -166,17 +166,15 @@ export function MasterIdentityGate({
         {entityKind === 'person' ? (
           <>
             <Field label="Uyruğu">
-              <select
+              <SearchableGateSelect
                 value={normalizeNationalityInput(identity.nationality)}
                 disabled={readOnly}
+                options={COUNTRY_NATIONALITY_OPTIONS}
+                placeholder="Yazarak arayın"
                 onBlur={() => setTouched(prev => ({ ...prev, nationality: true }))}
-                onChange={(event) => updateIdentity('nationality', event.target.value)}
+                onChange={(value) => updateIdentity('nationality', value)}
                 className={fieldClass(hasPersonNationality(identity), touched.nationality, readOnly)}
-              >
-                {COUNTRY_NATIONALITY_OPTIONS.map(option => (
-                  <option key={option.value} value={option.value}>{option.label}</option>
-                ))}
-              </select>
+              />
             </Field>
             <Field label={isTurkeyPerson ? 'TC Kimlik No' : 'Pasaport No'}>
               <input
@@ -252,6 +250,98 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
       <span className="text-xs font-medium text-gray-600 dark:text-gray-400">{label}</span>
       {children}
     </label>
+  )
+}
+
+function SearchableGateSelect({
+  value,
+  options,
+  disabled,
+  className,
+  placeholder,
+  onBlur,
+  onChange,
+}: {
+  value: string
+  options: Array<{ value: string; label: string }>
+  disabled: boolean
+  className: string
+  placeholder?: string
+  onBlur?: () => void
+  onChange: (value: string) => void
+}) {
+  const selectedLabel = options.find(option => option.value === value)?.label || value || ''
+  const [query, setQuery] = useState(selectedLabel)
+  const [open, setOpen] = useState(false)
+  const filteredOptions = options
+    .filter(option => {
+      const q = query.toLocaleLowerCase('tr-TR')
+      return option.label.toLocaleLowerCase('tr-TR').includes(q) || option.value.toLocaleLowerCase('tr-TR').includes(q)
+    })
+    .slice(0, 80)
+
+  useEffect(() => {
+    setQuery(selectedLabel)
+  }, [selectedLabel])
+
+  const commitIfExactMatch = (text: string) => {
+    const normalized = text.trim().toLocaleLowerCase('tr-TR')
+    const exact = options.find(option =>
+      option.label.toLocaleLowerCase('tr-TR') === normalized ||
+      option.value.toLocaleLowerCase('tr-TR') === normalized
+    )
+    if (exact) {
+      setQuery(exact.label)
+      onChange(exact.value)
+      return
+    }
+    setQuery(selectedLabel)
+  }
+
+  return (
+    <div className="relative">
+      <input
+        type="text"
+        value={query}
+        disabled={disabled}
+        placeholder={placeholder}
+        onChange={(event) => {
+          setQuery(event.target.value)
+          setOpen(true)
+        }}
+        onFocus={(event) => {
+          event.currentTarget.select()
+          setOpen(true)
+        }}
+        onBlur={() => {
+          commitIfExactMatch(query)
+          onBlur?.()
+          window.setTimeout(() => setOpen(false), 120)
+        }}
+        className={className}
+      />
+      {open && !disabled && (
+        <div className="absolute z-50 mt-1 max-h-64 w-full overflow-auto rounded-lg border border-gray-200 bg-white py-1 shadow-lg dark:border-gray-700 dark:bg-gray-900">
+          {filteredOptions.length > 0 ? filteredOptions.map((option, index) => (
+            <button
+              key={`${option.value}-${index}`}
+              type="button"
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={() => {
+                setQuery(option.label)
+                onChange(option.value)
+                setOpen(false)
+              }}
+              className="block w-full px-3 py-2 text-left text-sm text-gray-800 hover:bg-blue-50 dark:text-gray-100 dark:hover:bg-blue-950/40"
+            >
+              {option.label}
+            </button>
+          )) : (
+            <div className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">Sonuç bulunamadı</div>
+          )}
+        </div>
+      )}
+    </div>
   )
 }
 

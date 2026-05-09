@@ -418,7 +418,8 @@ function SearchableSelectField({
   className: string
   onChange: (value: string) => void
 }) {
-  const [query, setQuery] = useState(value || '')
+  const selectedLabel = field.options?.find(option => option.value === value)?.label || value || ''
+  const [query, setQuery] = useState(selectedLabel)
   const [open, setOpen] = useState(false)
   const options = field.options || []
   const filteredOptions = options
@@ -429,8 +430,22 @@ function SearchableSelectField({
     .slice(0, 80)
 
   useEffect(() => {
-    setQuery(value || '')
-  }, [value])
+    setQuery(selectedLabel)
+  }, [selectedLabel])
+
+  const commitIfExactMatch = (text: string) => {
+    const normalized = text.trim().toLocaleLowerCase('tr-TR')
+    const exact = options.find(option =>
+      option.label.toLocaleLowerCase('tr-TR') === normalized ||
+      option.value.toLocaleLowerCase('tr-TR') === normalized
+    )
+    if (exact) {
+      setQuery(exact.label)
+      onChange(exact.value)
+      return
+    }
+    setQuery(selectedLabel)
+  }
 
   return (
     <div className="relative">
@@ -439,7 +454,6 @@ function SearchableSelectField({
         value={query}
         onChange={(event) => {
           setQuery(event.target.value)
-          onChange(event.target.value)
           setOpen(true)
         }}
         onFocus={(event) => {
@@ -447,6 +461,7 @@ function SearchableSelectField({
           setOpen(true)
         }}
         onBlur={() => {
+          commitIfExactMatch(query)
           window.setTimeout(() => setOpen(false), 120)
         }}
         placeholder={field.placeholder || 'Yazarak arayın'}
@@ -461,7 +476,7 @@ function SearchableSelectField({
               type="button"
               onMouseDown={(event) => event.preventDefault()}
               onClick={() => {
-                setQuery(opt.value)
+                setQuery(opt.label)
                 onChange(opt.value)
                 setOpen(false)
               }}
@@ -508,6 +523,10 @@ function flattenFields(fields: FormField[]): FormField[] {
     field,
     ...(field.listConfig?.fields ? flattenFields(field.listConfig.fields) : [])
   ])
+}
+
+function isLongSelectField(field: FormField) {
+  return field.type === 'select' && (field.options?.length || 0) >= 12
 }
 
 function ListField({
@@ -1088,6 +1107,27 @@ export function EntityForm({
   }, [data, mode])
 
   useEffect(() => {
+    if (mode !== 'create') return
+
+    const defaults: Record<string, any> = {}
+    const applyDefault = (field: FormField) => {
+      if (formData[field.name] !== undefined && formData[field.name] !== '') return
+      if (field.defaultValue !== undefined) {
+        defaults[field.name] = field.defaultValue
+      } else if (field.type === 'select' && field.options?.length === 1 && field.options[0]?.value) {
+        defaults[field.name] = field.options[0].value
+      }
+    }
+
+    heroFields.forEach(applyDefault)
+    tabs.forEach(tab => tab.fields.forEach(applyDefault))
+
+    if (Object.keys(defaults).length > 0) {
+      setFormData(prev => ({ ...defaults, ...prev }))
+    }
+  }, [formData, heroFields, mode, tabs])
+
+  useEffect(() => {
     let cancelled = false
 
     fetch('/api/reference/turkey-locations')
@@ -1574,7 +1614,7 @@ export function EntityForm({
             />
           )
         case 'select':
-          if (field.searchable) {
+          if (field.searchable || isLongSelectField(field)) {
             return (
               <SearchableSelectField
                 field={field}

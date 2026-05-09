@@ -67,9 +67,19 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Geçersiz veri', code: 'VALIDATION_FAILED', details: parsed.error.flatten() }, { status: 400 })
   }
 
+  let row: Record<string, any>
+  try {
+    row = await attachStakeholderIdentity(supabase, parsed.data, mapStakeholderForDb(parsed.data))
+  } catch (error) {
+    return NextResponse.json({
+      error: error instanceof Error ? error.message : 'Paydaş ana kayda bağlanamadı',
+      code: 'MASTER_IDENTITY_LINK_FAILED',
+    }, { status: 500 })
+  }
+
   const { data, error } = await supabase
     .from('stakeholders')
-    .insert(await attachStakeholderIdentity(supabase, parsed.data, mapStakeholderForDb(parsed.data)))
+    .insert(row)
     .select()
     .single()
 
@@ -120,7 +130,7 @@ async function attachStakeholderIdentity(supabase: ReturnType<typeof createServi
         : passportNo
           ? await supabase.from('persons').select('id').eq('nationality', stakeholder.country || 'TR').eq('passport_no', passportNo).maybeSingle()
           : await supabase.from('persons').select('id').eq('full_name', fullName).maybeSingle()
-      if (findError) return row
+      if (findError) throw new Error(findError.message)
       const personId = existing?.id || (await supabase.from('persons').insert({
         full_name: fullName,
         nationality: stakeholder.country || 'TR',
@@ -131,6 +141,7 @@ async function attachStakeholderIdentity(supabase: ReturnType<typeof createServi
         email: stakeholder.email || stakeholder.email_1 || null,
         metadata_json: { source: 'stakeholders_create' },
       }).select('id').single()).data?.id
+      if (!personId) throw new Error('Ana kişi kaydı oluşturulamadı.')
       return { ...row, stakeholder_kind: 'person', person_id: personId || null }
     }
 
@@ -142,7 +153,7 @@ async function attachStakeholderIdentity(supabase: ReturnType<typeof createServi
     const { data: existing, error: findError } = taxNumber
       ? await supabase.from('organizations').select('id').eq('country', country).eq('tax_number', taxNumber).maybeSingle()
       : await supabase.from('organizations').select('id').eq('country', country).eq('legal_name', legalName).maybeSingle()
-    if (findError) return row
+    if (findError) throw new Error(findError.message)
     const organizationId = existing?.id || (await supabase.from('organizations').insert({
       legal_name: legalName,
       country,
@@ -151,8 +162,9 @@ async function attachStakeholderIdentity(supabase: ReturnType<typeof createServi
       registration_number: stakeholder.trade_registry_no || stakeholder.mersis_no || null,
       metadata_json: { source: 'stakeholders_create' },
     }).select('id').single()).data?.id
+    if (!organizationId) throw new Error('Ana kurum kaydı oluşturulamadı.')
     return { ...row, stakeholder_kind: 'organization', organization_id: organizationId || null }
-  } catch {
-    return row
+  } catch (error) {
+    throw error instanceof Error ? error : new Error('Paydaş ana kayda bağlanamadı.')
   }
 }

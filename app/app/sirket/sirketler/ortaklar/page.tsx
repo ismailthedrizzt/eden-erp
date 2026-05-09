@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import type { ReactNode } from 'react'
 import { Users } from 'lucide-react'
 import { EntityForm, FormField, FormMode, FormTab } from '@/components/ui/EntityForm'
 import { PageBanner } from '@/components/ui/PageBanner'
@@ -69,13 +68,7 @@ const FIELD_LABELS: Record<string, string> = {
 const columns: ColumnDef[] = [
   { key: 'display_name', label: 'Ortak Adı / Ünvanı', type: 'text', width: 280, sortable: true, category: 'Kimlik', render: (value, row) => <PartnerNameCell value={value} row={row} /> },
   { key: 'partner_type_label', label: 'Ortak Türü', type: 'enum', width: 130, category: 'Kimlik' },
-  { key: 'source_type_label', label: 'Kaynak Türü', type: 'enum', width: 140, category: 'Kimlik' },
   { key: 'company_name', label: 'Şirket', type: 'text', width: 220, category: 'Şirket' },
-  { key: 'share_ratio', label: 'Hisse %', type: 'number', width: 100, sortable: true, category: 'Sermaye' },
-  { key: 'voting_ratio', label: 'Oy %', type: 'number', width: 100, category: 'Sermaye' },
-  { key: 'profit_ratio', label: 'Kar Payı %', type: 'number', width: 120, category: 'Sermaye' },
-  { key: 'control_label', label: 'Kontrol', type: 'text', width: 160, category: 'Yönetim' },
-  { key: 'beneficial_label', label: 'Nihai Faydalanıcı', type: 'text', width: 150, category: 'Yönetim' },
   { key: 'start_date', label: 'Başlangıç', type: 'date', width: 120, category: 'Dönem' },
   { key: 'end_date', label: 'Bitiş', type: 'date', width: 120, category: 'Dönem' },
   { key: 'status', label: 'Durum', type: 'enum', width: 120, sortable: true, category: 'Durum' },
@@ -83,29 +76,10 @@ const columns: ColumnDef[] = [
 
 const heroFields: FormField[] = [
   { name: 'company_id', label: 'Şirket', type: 'select', required: true },
-  {
-    name: 'source_type',
-    label: 'Mevcut Kayıt Eşleştirme',
-    type: 'select',
-    required: false,
-    options: [
-      { value: 'calisan', label: 'Çalışan' },
-      { value: 'mevcut_temsilci', label: 'Mevcut Temsilci' },
-      { value: 'harici_kisi', label: 'Harici Kişi' },
-      { value: 'yeni_kisi', label: 'Yeni Kişi' },
-      { value: 'cari', label: 'Cari' },
-      { value: 'paydas', label: 'Paydaş' },
-      { value: 'grup_sirketi', label: 'Grup Şirketi' },
-      { value: 'harici_sirket', label: 'Harici Şirket' },
-      { value: 'yeni_sirket', label: 'Yeni Şirket' },
-    ],
-  },
-  { name: 'source_id', label: 'Mevcut Kayıt Eşleştirme', type: 'select' },
-  { name: 'first_name', label: 'Adı / Ticari Ünvan', type: 'text', required: true },
-  { name: 'last_name', label: 'Kısa Ad / Soyad', type: 'text' },
-  { name: 'share_ratio', label: 'Pay Oranı (%)', type: 'number', required: true },
-  { name: 'voting_ratio', label: 'Oy Hakkı (%)', type: 'number' },
-  { name: 'profit_ratio', label: 'Kar Payı (%)', type: 'number' },
+  { name: 'first_name', label: 'Adı', type: 'text', required: true, visibleWhen: { field: 'partner_type', operator: 'equals', value: 'gercek_kisi' } },
+  { name: 'last_name', label: 'Soyadı', type: 'text', visibleWhen: { field: 'partner_type', operator: 'equals', value: 'gercek_kisi' } },
+  { name: 'first_name', label: 'Ticari Unvan', type: 'text', required: true, visibleWhen: { field: 'partner_type', operator: 'equals', value: 'tuzel_kisi' } },
+  { name: 'last_name', label: 'Kısa Unvan', type: 'text', visibleWhen: { field: 'partner_type', operator: 'equals', value: 'tuzel_kisi' } },
   { name: 'start_date', label: 'Başlangıç Tarihi', type: 'date', required: true },
   {
     name: 'status',
@@ -120,24 +94,6 @@ const heroFields: FormField[] = [
       { value: 'Tarihsel', label: 'Tarihsel' },
     ],
   },
-  { name: 'has_control_right', label: 'Kontrol Hakkı Var mı?', type: 'checkbox' },
-  {
-    name: 'control_type',
-    label: 'Kontrol Türü',
-    type: 'select',
-    visibleWhen: { field: 'has_control_right', operator: 'equals', value: true },
-    options: [
-      { value: 'Hisse Çoğunluğu', label: 'Hisse Çoğunluğu' },
-      { value: 'Oy Çoğunluğu', label: 'Oy Çoğunluğu' },
-      { value: 'Sözleşmesel Kontrol', label: 'Sözleşmesel Kontrol' },
-      { value: 'Yönetim Kontrolü', label: 'Yönetim Kontrolü' },
-      { value: 'Altın Hisse', label: 'Altın Hisse' },
-      { value: 'Diğer', label: 'Diğer' },
-    ],
-  },
-  { name: 'has_board_nomination_right', label: 'Yönetim Kurulu Aday Hakkı', type: 'checkbox' },
-  { name: 'has_veto_right', label: 'Veto Hakkı Var mı?', type: 'checkbox' },
-  { name: 'has_privileged_share', label: 'İmtiyazlı Pay Var mı?', type: 'checkbox' },
 ]
 
 const tabs: FormTab[] = [
@@ -177,31 +133,6 @@ const tabs: FormTab[] = [
     ],
   },
   {
-    id: 'sermaye',
-    label: 'Sermaye',
-    fields: [
-      { name: 'share_units', label: 'Pay Adedi', type: 'number' },
-      { name: 'nominal_value', label: 'Nominal Değer', type: 'number' },
-      { name: 'capital_amount', label: 'Toplam Sermaye Tutarı', type: 'number' },
-      {
-        name: 'share_class',
-        label: 'Hisse Sınıfı',
-        type: 'select',
-        options: [
-          { value: 'Adi Pay', label: 'Adi Pay' },
-          { value: 'İmtiyazlı Pay', label: 'İmtiyazlı Pay' },
-          { value: 'Nama Yazılı', label: 'Nama Yazılı' },
-          { value: 'Hamiline', label: 'Hamiline' },
-          { value: 'Kurucu Payı', label: 'Kurucu Payı' },
-          { value: 'Yatırımcı Payı', label: 'Yatırımcı Payı' },
-          { value: 'Diğer', label: 'Diğer' },
-        ],
-      },
-      { name: 'has_privileged_share', label: 'İmtiyazlı Pay Var mı', type: 'checkbox' },
-      { name: 'capital_increase_history', label: 'Sermaye Artış Geçmişi', type: 'textarea', colSpan: 3 },
-    ],
-  },
-  {
     id: 'yetkiler',
     label: 'Yetkiler',
     fields: [
@@ -210,9 +141,6 @@ const tabs: FormTab[] = [
       { name: 'is_board_member', label: 'Yönetim Kurulu Üyesi mi?', type: 'checkbox' },
       { name: 'has_purchase_authority', label: 'Satınalma Yetkisi', type: 'checkbox' },
       { name: 'has_payment_approval_authority', label: 'Ödeme Onay Yetkisi', type: 'checkbox' },
-      { name: 'beneficial_owner', label: 'Nihai Faydalanıcı mı?', type: 'checkbox' },
-      { name: 'beneficial_ratio', label: 'Nihai Faydalanma Oranı (%)', type: 'number', visibleWhen: { field: 'beneficial_owner', operator: 'equals', value: true } },
-      { name: 'is_ultimate_controller', label: 'Nihai Hakim Ortak mı?', type: 'checkbox', visibleWhen: { field: 'beneficial_owner', operator: 'equals', value: true } },
     ],
   },
   {
@@ -310,11 +238,7 @@ export default function OrtaklarPage() {
     display_name: partner.display_name || partner.ortak_adi || '',
     identity_number: partner.identity_number || partner.tckn_vkn || '',
     partner_type_label: (partner.owner_kind || partner.ortak_tipi) === 'tuzel_kisi' || partner.ortak_tipi === 'sirket' ? 'Tüzel Kişi' : 'Gerçek Kişi',
-    source_type_label: getSourceTypeLabel(partner.source_type),
     company_name: companyNameById[partner.sirket_id] || '-',
-    share_ratio: partner.share_ratio ?? partner.hisse_orani,
-    control_label: partner.has_control_right ? partner.control_type || 'Kontrol Hakkı' : ratioValue(partner.voting_ratio ?? partner.share_ratio ?? partner.hisse_orani) > 50 ? 'Çoğunluk' : '-',
-    beneficial_label: partner.beneficial_owner || partner.is_beneficial_owner ? `${partner.beneficial_ratio ?? partner.share_ratio ?? '-'}%` : '-',
   }))
 
   const activePartners = tableData.filter(partner => !partner.is_deleted && partner.status === 'Aktif')
@@ -325,10 +249,8 @@ export default function OrtaklarPage() {
     { key: 'legal', label: 'Tüzel Kişi', render: () => activePartners.filter(partner => partner.partner_type_label === 'Tüzel Kişi').length },
   ]
 
-  const groupCompanyOptions = companies.filter(company => company.value !== selectedPartner?.company_id && company.value !== selectedPartner?.sirket_id)
   const configuredHeroFields = heroFields.map(field => {
-    if (field.name === 'company_id') return { ...field, options: companies }
-    if (field.name === 'source_id') return { ...field, options: groupCompanyOptions, visibleWhen: { field: 'source_type', operator: 'equals', value: 'grup_sirketi' } }
+    if (field.name === 'company_id') return { ...field, options: companies, defaultValue: companies.length === 1 ? companies[0].value : field.defaultValue }
     return field
   })
   const withFieldHistory = (field: FormField) => {
@@ -501,8 +423,6 @@ export default function OrtaklarPage() {
               slots: [
                 { id: 'kimlik_pasaport', title: 'Kimlik / Pasaport', required: false },
                 { id: 'imza_beyani', title: 'İmza Beyanı', required: false },
-                { id: 'pay_defteri', title: 'Pay Defteri Kaydı', required: false },
-                { id: 'hisse_devir', title: 'Hisse Devir Belgesi', required: false },
                 { id: 'vergi_levhasi', title: 'Vergi Levhası', required: false },
                 { id: 'ticaret_sicil', title: 'Ticaret Sicil Gazetesi', required: false },
                 { id: 'diger', title: 'Diğer Belgeler', required: false },
@@ -526,17 +446,9 @@ function PartnerNameCell({ value, row }: { value: any; row: any }) {
   return (
     <div className="flex flex-wrap items-center gap-1.5">
       <span className="font-medium">{value || '-'}</span>
-      {(row.has_control_right || ratioValue(row.voting_ratio ?? row.share_ratio) > 50) && <InlineBadge tone="blue">Kontrol Sahibi</InlineBadge>}
-      {row.source_type === 'grup_sirketi' && <InlineBadge>Grup İçi</InlineBadge>}
-      {(row.beneficial_owner || row.is_beneficial_owner) && <InlineBadge>Nihai Faydalanıcı</InlineBadge>}
-      {row.has_privileged_share && <InlineBadge>İmtiyazlı</InlineBadge>}
-      {row.status === 'Tarihsel' && <InlineBadge>Tarihsel</InlineBadge>}
+      {row.status === 'Tarihsel' && <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">Tarihsel</span>}
     </div>
   )
-}
-
-function InlineBadge({ children, tone = 'green' }: { children: ReactNode; tone?: 'green' | 'blue' }) {
-  return <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${tone === 'blue' ? 'bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300' : 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300'}`}>{children}</span>
 }
 
 function SummaryList({ items, emptyText }: { items: any[]; emptyText: string }) {
@@ -583,22 +495,6 @@ function normalizePartnerForForm(partner: PartnerRow) {
     first_name: profile.first_name || (partnerType === 'tuzel_kisi' ? partner.display_name || partner.ortak_adi || '' : nameParts.slice(0, -1).join(' ') || partner.display_name || partner.ortak_adi || ''),
     last_name: profile.last_name || (partnerType === 'tuzel_kisi' ? profile.short_name || '' : nameParts.length > 1 ? nameParts.at(-1) : ''),
     identity_number: profile.identity_number || partner.identity_number || partner.tckn_vkn || '',
-    source_type: profile.source_type || partner.source_type || (partnerType === 'tuzel_kisi' ? 'harici_sirket' : 'harici_kisi'),
-    source_id: profile.source_id || partner.source_id || '',
-    share_ratio: profile.share_ratio ?? partner.share_ratio ?? partner.hisse_orani ?? '',
-    voting_ratio: profile.voting_ratio ?? partner.voting_ratio ?? '',
-    profit_ratio: profile.profit_ratio ?? partner.profit_ratio ?? '',
-    share_units: profile.share_units ?? partner.share_units ?? '',
-    nominal_value: profile.nominal_value ?? partner.nominal_value ?? '',
-    capital_amount: profile.capital_amount ?? partner.capital_amount ?? '',
-    has_control_right: profile.has_control_right ?? partner.has_control_right ?? false,
-    control_type: profile.control_type ?? partner.control_type ?? '',
-    has_board_nomination_right: profile.has_board_nomination_right ?? partner.has_board_nomination_right ?? false,
-    has_veto_right: profile.has_veto_right ?? partner.has_veto_right ?? false,
-    has_privileged_share: profile.has_privileged_share ?? partner.has_privileged_share ?? false,
-    beneficial_owner: profile.beneficial_owner ?? partner.beneficial_owner ?? partner.is_beneficial_owner ?? false,
-    beneficial_ratio: profile.beneficial_ratio ?? partner.beneficial_ratio ?? '',
-    is_ultimate_controller: profile.is_ultimate_controller ?? partner.is_ultimate_controller ?? false,
     end_date: profile.end_date ?? partner.end_date ?? '',
     status: profile.status || partner.status || 'Aktif',
     photo_logo: partner.photo_logo || [],
@@ -622,9 +518,25 @@ function normalizePayload(raw: Record<string, any>, companies: Option[]) {
   payload.owner_kind = payload.partner_type
   payload.trade_name = payload.partner_type === 'tuzel_kisi' ? payload.first_name : undefined
   payload.short_name = payload.partner_type === 'tuzel_kisi' ? payload.last_name : undefined
-  payload.source_type = payload.source_type || (payload.partner_type === 'tuzel_kisi' ? 'harici_sirket' : 'harici_kisi')
-  payload.source_id = payload.source_id || undefined
-  payload.is_beneficial_owner = !!payload.beneficial_owner
+  delete payload.share_ratio
+  delete payload.voting_ratio
+  delete payload.profit_ratio
+  delete payload.share_units
+  delete payload.nominal_value
+  delete payload.capital_amount
+  delete payload.share_class
+  delete payload.has_privileged_share
+  delete payload.has_privilege
+  delete payload.has_control_right
+  delete payload.control_type
+  delete payload.has_board_nomination_right
+  delete payload.has_veto_right
+  delete payload.beneficial_owner
+  delete payload.beneficial_ratio
+  delete payload.is_beneficial_owner
+  delete payload.is_ultimate_controller
+  delete payload.source_type
+  delete payload.source_id
   payload.document_summary = undefined
   payload.field_history = undefined
   return payload
@@ -654,27 +566,6 @@ function buildEntityFieldHistory(history: any[]) {
     ]
     return acc
   }, {})
-}
-
-function getSourceTypeLabel(value?: string) {
-  const labels: Record<string, string> = {
-    calisan: 'Çalışan',
-    mevcut_temsilci: 'Mevcut Temsilci',
-    harici_kisi: 'Harici Kişi',
-    yeni_kisi: 'Yeni Kişi',
-    cari: 'Cari',
-    paydas: 'Paydaş',
-    grup_sirketi: 'Grup Şirketi',
-    harici_sirket: 'Harici Şirket',
-    yeni_sirket: 'Yeni Şirket',
-    ortaklar_sayfasi: 'Ortaklar Sayfası',
-  }
-  return value ? labels[value] || value : '-'
-}
-
-function ratioValue(value: unknown) {
-  const numeric = Number(value || 0)
-  return Number.isFinite(numeric) ? numeric : 0
 }
 
 async function createSaveError(response: Response, fallback: string): Promise<SaveError> {

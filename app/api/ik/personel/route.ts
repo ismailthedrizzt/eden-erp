@@ -242,8 +242,8 @@ async function ensureEmployeePersonLink(supabase: ReturnType<typeof createServic
       : null
 
   const existing = lookup ? await lookup : { data: null, error: null }
-  if (isMissingTableError(existing.error, 'persons')) return employee
-  if (existing.error) return employee
+  if (isMissingTableError(existing.error, 'persons')) throw new Error('Ana kişiler tablosu bulunamadı; çalışan kaydı master bağlantısı olmadan oluşturulamaz.')
+  if (existing.error) throw new Error(existing.error.message)
   if (existing.data?.id) return { ...employee, person_id: existing.data.id }
 
   const { data: created, error } = await supabase
@@ -266,7 +266,8 @@ async function ensureEmployeePersonLink(supabase: ReturnType<typeof createServic
     .select('id')
     .single()
 
-  if (isMissingTableError(error, 'persons') || error) return employee
+  if (isMissingTableError(error, 'persons')) throw new Error('Ana kişiler tablosu bulunamadı; çalışan kaydı master bağlantısı olmadan oluşturulamaz.')
+  if (error) throw new Error(error.message)
   return created?.id ? { ...employee, person_id: created.id } : employee
 }
 

@@ -17,7 +17,7 @@ const PartnerSchema = z.object({
   source_type: z.string().optional(),
   source_id: z.string().optional(),
   nationality_country: z.string().optional(),
-  share_ratio: z.coerce.number().min(0).max(100),
+  share_ratio: z.coerce.number().min(0).max(100).optional().nullable(),
   voting_ratio: z.coerce.number().min(0).max(100).optional(),
   profit_ratio: z.coerce.number().min(0).max(100).optional(),
   start_date: z.string().min(1),

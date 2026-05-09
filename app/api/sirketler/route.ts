@@ -97,7 +97,15 @@ export async function POST(request: NextRequest) {
   }
 
   const { ortaklar, temsilciler, public_tax, public_sgk, public_incentives, public_registry, public_licenses, public_channels, ...companyData } = parsed.data
-  const companyRow = await attachCompanyOrganization(supabase, companyData)
+  let companyRow: Record<string, any>
+  try {
+    companyRow = await attachCompanyOrganization(supabase, companyData)
+  } catch (error) {
+    return NextResponse.json({
+      error: error instanceof Error ? error.message : 'Şirket ana kurum kaydına bağlanamadı',
+      code: 'MASTER_ORGANIZATION_LINK_FAILED',
+    }, { status: 500 })
+  }
   const { data, error } = await supabase
     .from('sirketler')
     .insert(companyRow)
@@ -134,7 +142,7 @@ async function attachCompanyOrganization(supabase: ReturnType<typeof createServi
     const { data: existing, error: findError } = taxNumber
       ? await supabase.from('organizations').select('id').eq('country', country).eq('tax_number', taxNumber).maybeSingle()
       : await supabase.from('organizations').select('id').eq('country', country).eq('legal_name', companyData.ticari_unvan).maybeSingle()
-    if (findError) return companyData
+    if (findError) throw new Error(findError.message)
 
     const organizationId = existing?.id || (await supabase.from('organizations').insert({
       legal_name: companyData.ticari_unvan,
@@ -152,9 +160,10 @@ async function attachCompanyOrganization(supabase: ReturnType<typeof createServi
       metadata_json: { source: 'companies_create' },
     }).select('id').single()).data?.id
 
-    return { ...companyData, organization_id: organizationId || null }
-  } catch {
-    return companyData
+    if (!organizationId) throw new Error('Ana kurum kaydı oluşturulamadı.')
+    return { ...companyData, organization_id: organizationId }
+  } catch (error) {
+    throw error instanceof Error ? error : new Error('Şirket ana kurum kaydına bağlanamadı.')
   }
 }
 
