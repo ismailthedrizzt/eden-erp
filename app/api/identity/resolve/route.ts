@@ -51,12 +51,18 @@ export async function POST(request: NextRequest) {
   const roleTable = roleTableAliases[payload.roleTable] || payload.roleTable
   const identity = payload.identity
 
-  const masterResult = payload.entityKind === 'person'
+  let masterResult = payload.entityKind === 'person'
     ? await findPerson(supabase, identity)
     : await findOrganization(supabase, identity)
 
   if ('error' in masterResult) {
     return NextResponse.json({ error: masterResult.error }, { status: 400 })
+  }
+
+  if (!masterResult.record && !masterResult.warning) {
+    masterResult = payload.entityKind === 'person'
+      ? await findOrCreatePersonFromEmployee(supabase, identity)
+      : await findOrCreateOrganizationFromCompany(supabase, identity)
   }
 
   const masterRecord = masterResult.record
@@ -101,8 +107,8 @@ export async function POST(request: NextRequest) {
       roleRecord: null,
       prefill: buildPrefill(payload.entityKind, masterRecord),
       message: payload.entityKind === 'person'
-        ? 'Gerçek kişi bulundu. Mevcut veriler forma aktarılacaktır.'
-        : 'Tüzel kişi bulundu. Mevcut veriler forma aktarılacaktır.',
+        ? 'Kişi bulundu. Ana Kişi Kaydına bağlandı ve kayıtlı veriler çekildi.'
+        : 'Tüzel kişi bulundu. Ana Kurum Kaydına bağlandı ve kayıtlı veriler çekildi.',
     })
   }
 
@@ -161,6 +167,99 @@ async function findOrganization(supabase: ReturnType<typeof createServiceClient>
   return { record: data || null }
 }
 
+async function findOrCreatePersonFromEmployee(supabase: ReturnType<typeof createServiceClient>, identity: z.infer<typeof ResolveSchema>['identity']) {
+  const nationality = normalizeIdentityCountry(identity.nationality)
+  const nationalId = onlyDigits(identity.national_id)
+  const passportNo = clean(identity.passport_no)
+
+  if (!nationalId && !passportNo) return { record: null }
+
+  let query = supabase.from('employees').select('*').eq('is_active', true).limit(1)
+  query = nationalId ? query.eq('tc_kimlik', nationalId) : query.eq('pasaport_no', passportNo)
+  const { data, error } = await query
+  if (error) return { record: null }
+
+  const employee = Array.isArray(data) ? data[0] : null
+  if (!employee) return { record: null }
+
+  if (employee.person_id) {
+    const { data: existingPerson } = await supabase.from('persons').select('*').eq('id', employee.person_id).maybeSingle()
+    if (existingPerson) return { record: mergeEmployeeIntoPerson(existingPerson, employee) }
+  }
+
+  const fullName = [employee.ad, employee.soyad].filter(Boolean).join(' ').trim()
+  const { data: created, error: createError } = await supabase
+    .from('persons')
+    .insert({
+      first_name: employee.ad || null,
+      last_name: employee.soyad || null,
+      full_name: fullName,
+      nationality: employee.uyruk || nationality,
+      national_id: nationalId || null,
+      passport_no: passportNo || null,
+      birth_date: employee.dogum_tarihi || null,
+      birth_place: employee.dogum_yeri || null,
+      gender: employee.cinsiyet || null,
+      phone: employee.cep_telefonu || employee.is_telefonu || null,
+      email: employee.email || null,
+      address: employee.adres || null,
+      metadata_json: { source_table: 'employees', source_id: employee.id, source: 'identity_resolve' },
+    })
+    .select('*')
+    .single()
+
+  if (createError || !created) return { record: null }
+
+  await supabase.from('employees').update({ person_id: created.id }).eq('id', employee.id)
+  return { record: mergeEmployeeIntoPerson(created, employee) }
+}
+
+async function findOrCreateOrganizationFromCompany(supabase: ReturnType<typeof createServiceClient>, identity: z.infer<typeof ResolveSchema>['identity']) {
+  const country = normalizeIdentityCountry(identity.country)
+  const taxNumber = onlyDigits(identity.tax_number)
+  const registrationNumber = clean(identity.registration_number)
+
+  if (!taxNumber && !registrationNumber) return { record: null }
+
+  let query = supabase.from('sirketler').select('*').eq('is_active', true).limit(1)
+  query = taxNumber ? query.eq('vkn_tckn', taxNumber) : query.eq('ticaret_sicil_no', registrationNumber)
+  const { data, error } = await query
+  if (error) return { record: null }
+
+  const company = Array.isArray(data) ? data[0] : null
+  if (!company) return { record: null }
+
+  if (company.organization_id) {
+    const { data: existingOrganization } = await supabase.from('organizations').select('*').eq('id', company.organization_id).maybeSingle()
+    if (existingOrganization) return { record: mergeCompanyIntoOrganization(existingOrganization, company) }
+  }
+
+  const { data: created, error: createError } = await supabase
+    .from('organizations')
+    .insert({
+      legal_name: company.ticari_unvan,
+      short_name: company.kisa_unvan || null,
+      country: company.ulke || country,
+      tax_number: taxNumber || null,
+      registration_number: company.ticaret_sicil_no || company.mersis_no || registrationNumber || null,
+      tax_office: company.vergi_dairesi || null,
+      organization_type: company.sirket_turu || null,
+      phone: company.telefon || null,
+      email: company.email || null,
+      address: company.adres || null,
+      city: company.il || null,
+      district: company.ilce || null,
+      metadata_json: { source_table: 'sirketler', source_id: company.id, source: 'identity_resolve' },
+    })
+    .select('*')
+    .single()
+
+  if (createError || !created) return { record: null }
+
+  await supabase.from('sirketler').update({ organization_id: created.id }).eq('id', company.id)
+  return { record: mergeCompanyIntoOrganization(created, company) }
+}
+
 async function findRoleRecord(
   supabase: ReturnType<typeof createServiceClient>,
   input: { roleTable: string; entityKind: 'person' | 'organization'; masterId: string; roleScope: Record<string, unknown> }
@@ -170,8 +269,7 @@ async function findRoleRecord(
 
   const companyId = clean(input.roleScope.company_id || input.roleScope.sirket_id)
   if (companyId && ['sirket_ortaklar', 'sirket_temsilciler', 'stakeholders'].includes(input.roleTable)) {
-    const companyColumn = input.roleTable === 'stakeholders' ? 'company_id' : 'company_id'
-    query = query.eq(companyColumn, companyId)
+    query = query.eq('company_id', companyId)
   }
 
   if (input.roleTable === 'employees' || input.roleTable === 'sirketler') {
@@ -187,11 +285,19 @@ async function findRoleRecord(
 
 function buildPrefill(entityKind: 'person' | 'organization', record: Record<string, any>) {
   if (entityKind === 'person') {
+    const firstName = record.first_name || record.ad || ''
+    const lastName = record.last_name || record.soyad || ''
+    const fullName = record.full_name || [firstName, lastName].filter(Boolean).join(' ')
+    const documents = normalizePersonDocuments(record)
+
     return {
       person_id: record.id,
-      ad: record.first_name || '',
-      soyad: record.last_name || '',
-      full_name: record.full_name || '',
+      ad: firstName,
+      soyad: lastName,
+      first_name: firstName,
+      last_name: lastName,
+      display_name: fullName,
+      full_name: fullName,
       uyruk: normalizePersonUyruk(record.nationality),
       nationality: record.nationality || 'TR',
       nationality_country: record.nationality || 'TR',
@@ -206,21 +312,35 @@ function buildPrefill(entityKind: 'person' | 'organization', record: Record<stri
       person_or_entity_type: 'gercek_kisi',
       dogum_tarihi: record.birth_date || '',
       dogum_yeri: record.birth_place || '',
+      birth_date: record.birth_date || '',
+      birth_place: record.birth_place || '',
       cinsiyet: record.gender || '',
+      gender: record.gender || '',
       cep_telefonu: record.phone || '',
       phone: record.phone || '',
       email: record.email || '',
       adres: record.address || '',
       address: record.address || '',
+      photo_logo: normalizePersonImages(record),
+      partner_documents: documents,
+      authority_documents: documents,
+      stakeholder_documents: documents,
+      document_summary: documents,
     }
   }
 
+  const legalName = record.legal_name || record.ticari_unvan || ''
+  const shortName = record.short_name || record.kisa_unvan || ''
+  const documents = normalizeOrganizationDocuments(record)
+
   return {
     organization_id: record.id,
-    ticari_unvan: record.legal_name || '',
-    legal_name: record.legal_name || '',
-    kisa_unvan: record.short_name || '',
-    short_name: record.short_name || '',
+    ticari_unvan: legalName,
+    legal_name: legalName,
+    trade_name: legalName,
+    display_name: legalName || shortName,
+    kisa_unvan: shortName,
+    short_name: shortName,
     ulke: record.country || 'TR',
     country: record.country || 'TR',
     nationality_country: record.country || 'TR',
@@ -241,7 +361,16 @@ function buildPrefill(entityKind: 'person' | 'organization', record: Record<stri
     adres: record.address || '',
     address: record.address || '',
     il: record.city || '',
+    city: record.city || '',
     ilce: record.district || '',
+    district: record.district || '',
+    foundation_date: record.foundation_date || record.kurulus_tarihi || '',
+    company_type: record.organization_type || record.sirket_turu || '',
+    photo_logo: normalizeOrganizationImages(record),
+    partner_documents: documents,
+    authority_documents: documents,
+    stakeholder_documents: documents,
+    document_summary: documents,
   }
 }
 
@@ -277,6 +406,105 @@ function buildNewMasterPrefill(entityKind: 'person' | 'organization', identity: 
     partner_type: 'tuzel_kisi',
     person_or_entity_type: 'tuzel_kisi',
   }
+}
+
+function mergeEmployeeIntoPerson(person: Record<string, any>, employee: Record<string, any>) {
+  return {
+    ...person,
+    first_name: person.first_name || employee.ad || '',
+    last_name: person.last_name || employee.soyad || '',
+    full_name: person.full_name || [employee.ad, employee.soyad].filter(Boolean).join(' '),
+    nationality: person.nationality || employee.uyruk || 'TR',
+    national_id: person.national_id || employee.tc_kimlik || '',
+    passport_no: person.passport_no || employee.pasaport_no || '',
+    birth_date: person.birth_date || employee.dogum_tarihi || '',
+    birth_place: person.birth_place || employee.dogum_yeri || '',
+    gender: person.gender || employee.cinsiyet || '',
+    phone: person.phone || employee.cep_telefonu || employee.is_telefonu || '',
+    email: person.email || employee.email || '',
+    address: person.address || employee.adres || '',
+    photo_logo: normalizePersonImages(employee),
+    partner_documents: normalizePersonDocuments(employee),
+  }
+}
+
+function mergeCompanyIntoOrganization(organization: Record<string, any>, company: Record<string, any>) {
+  return {
+    ...organization,
+    legal_name: organization.legal_name || company.ticari_unvan || '',
+    short_name: organization.short_name || company.kisa_unvan || '',
+    country: organization.country || company.ulke || 'TR',
+    tax_number: organization.tax_number || company.vkn_tckn || '',
+    registration_number: organization.registration_number || company.ticaret_sicil_no || company.mersis_no || '',
+    tax_office: organization.tax_office || company.vergi_dairesi || '',
+    organization_type: organization.organization_type || company.sirket_turu || '',
+    phone: organization.phone || company.telefon || '',
+    email: organization.email || company.email || '',
+    address: organization.address || company.adres || '',
+    city: organization.city || company.il || '',
+    district: organization.district || company.ilce || '',
+    foundation_date: organization.foundation_date || company.kurulus_tarihi || '',
+    photo_logo: normalizeOrganizationImages(company),
+    partner_documents: normalizeOrganizationDocuments(company),
+  }
+}
+
+function normalizePersonImages(record: Record<string, any>) {
+  const existing = Array.isArray(record.photo_logo) ? record.photo_logo : []
+  if (existing.length) return existing
+  const url = record.fotograf_url || record.photo_url || record.image_url
+  return url ? [{ slotId: 'photo_logo', name: 'Fotoğraf', previewUrl: url, url }] : []
+}
+
+function normalizeOrganizationImages(record: Record<string, any>) {
+  const existing = Array.isArray(record.photo_logo) ? record.photo_logo : []
+  if (existing.length) return existing
+
+  const heroImages = Array.isArray(record.hero_images) ? record.hero_images : []
+  if (heroImages.length) {
+    return heroImages.map((image: Record<string, any>) => ({
+      ...image,
+      slotId: image.slotId || image.slot_id || 'photo_logo',
+      previewUrl: image.previewUrl || image.preview_url || image.url,
+    }))
+  }
+
+  const logoUrl = record.logo_url || record.logoUrl
+  return logoUrl ? [{ slotId: 'photo_logo', name: 'Logo', previewUrl: logoUrl, url: logoUrl }] : []
+}
+
+function normalizePersonDocuments(record: Record<string, any>) {
+  const existing = Array.isArray(record.partner_documents) ? record.partner_documents : []
+  if (existing.length) return existing
+
+  const docs: Record<string, any>[] = []
+  if (record.cv_belgesi && typeof record.cv_belgesi === 'object') {
+    docs.push({ slotId: 'cv', title: 'CV', ...record.cv_belgesi })
+  }
+  if (Array.isArray(record.ise_giris_belgeleri)) docs.push(...record.ise_giris_belgeleri)
+  if (Array.isArray(record.isten_cikis_belgeleri)) docs.push(...record.isten_cikis_belgeleri)
+
+  return docs.map((doc, index) => ({
+    ...doc,
+    slotId: doc.slotId || doc.slot_id || `employee_document_${index + 1}`,
+    name: doc.name || doc.fileName || doc.title || 'Belge',
+    type: doc.type || 'application/octet-stream',
+    url: doc.url || doc.previewUrl || doc.preview_url,
+  }))
+}
+
+function normalizeOrganizationDocuments(record: Record<string, any>) {
+  const existing = Array.isArray(record.partner_documents) ? record.partner_documents : []
+  if (existing.length) return existing
+
+  const docs = Array.isArray(record.hero_documents) ? record.hero_documents : []
+  return docs.map((doc: Record<string, any>, index: number) => ({
+    ...doc,
+    slotId: doc.slotId || doc.slot_id || `company_document_${index + 1}`,
+    name: doc.name || doc.fileName || doc.title || 'Belge',
+    type: doc.type || 'application/octet-stream',
+    url: doc.url || doc.previewUrl || doc.preview_url,
+  }))
 }
 
 function clean(value: unknown) {

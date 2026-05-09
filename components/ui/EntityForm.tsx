@@ -290,7 +290,7 @@ function normalizeStoredDocuments(value: unknown): SlotDocument[] {
       size: Number(doc.size || 0),
       type: doc.type || 'application/octet-stream',
       uploadedAt: doc.uploadedAt ? new Date(doc.uploadedAt) : undefined,
-      url: doc.url
+      url: doc.url || doc.previewUrl || doc.preview_url
     }))
 }
 
@@ -301,7 +301,7 @@ function serializeDocumentForStorage(doc: SlotDocument) {
     size: doc.size,
     type: doc.type,
     uploadedAt: doc.uploadedAt?.toISOString?.() || new Date().toISOString(),
-    url: doc.url
+    url: doc.url || doc.previewUrl
   }
 }
 
@@ -845,13 +845,14 @@ function WorkLifecycleField({
     closeModal()
   }
 
-  const addDocument = (field: string, file?: File) => {
+  const addDocument = async (field: string, file?: File) => {
     if (!file) return
+    const url = await readFileAsDataUrl(file)
     setDraft(prev => ({
       ...prev,
       [field]: [
         ...(prev[field] || []),
-        { name: file.name, size: file.size, type: file.type }
+        { name: file.name, size: file.size, type: file.type, url, uploadedAt: new Date().toISOString() }
       ]
     }))
   }
@@ -1285,14 +1286,25 @@ export function EntityForm({
   }
 
   const handleDocumentsChange = async (nextDocuments: SlotDocument[]) => {
-    setDocuments(nextDocuments)
+    const hydratedDocuments = await Promise.all(nextDocuments.map(async document => {
+      if (!document.file || document.url || document.previewUrl) return document
+      return {
+        ...document,
+        url: await readFileAsDataUrl(document.file),
+        name: document.name || document.file.name,
+        size: document.size || document.file.size,
+        type: document.type || document.file.type,
+      }
+    }))
+
+    setDocuments(hydratedDocuments)
 
     if (documentSlot.dataField) {
-      handleChange(documentDataField, nextDocuments.map(serializeDocumentForStorage))
+      handleChange(documentDataField, hydratedDocuments.map(serializeDocumentForStorage))
       return
     }
 
-    const cvDocument = nextDocuments.find(document => document.slotId === 'cv')
+    const cvDocument = hydratedDocuments.find(document => document.slotId === 'cv')
     handleChange('cv_belgesi', cvDocument ? serializeDocumentForStorage(cvDocument) : null)
 
     if (cvDocument?.file) {

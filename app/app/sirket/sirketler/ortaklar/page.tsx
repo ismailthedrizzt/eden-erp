@@ -399,7 +399,7 @@ export default function OrtaklarPage() {
   const bannerConfig = pageState === 'list'
     ? {
         mode: 'list' as const,
-        title: 'Ortaklar',
+        title: 'Ortaklarımız',
         subtitle: 'Şirket ortaklık ve pay kayıtlarını yönetin',
         onAddClick: () => {
           setSelectedPartner(null)
@@ -456,7 +456,7 @@ export default function OrtaklarPage() {
         <div className="mt-6">
           <EntityForm
             mode={formMode}
-            entityName="Ortaklar"
+            entityName="Ortaklarımız"
             entityNameSingular="Ortak"
             identityGate={{
               enabled: true,

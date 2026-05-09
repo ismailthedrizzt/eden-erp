@@ -345,7 +345,7 @@ export default function PaydaslarPage() {
   }
 
   const bannerConfig = pageState === 'list'
-    ? { mode: 'list' as const, title: 'Paydaşlar', subtitle: 'Şirket dışı ilişki ve paydaş kayıtlarını yönetin', onAddClick: () => { setSelectedStakeholder(null); setPageState('create') }, addButtonText: 'Ekle' }
+    ? { mode: 'list' as const, title: 'Paydaşlarımız', subtitle: 'Şirket dışı ilişki ve paydaş kayıtlarını yönetin', onAddClick: () => { setSelectedStakeholder(null); setPageState('create') }, addButtonText: 'Ekle' }
     : { mode: 'form' as const, formMode, title: pageState === 'create' ? 'Yeni Paydaş' : selectedStakeholder?.display_name || 'Paydaş Detayı', subtitle: pageState === 'create' ? 'Yeni paydaş kaydı oluştur' : pageState === 'edit' ? 'Paydaş bilgilerini güncelle' : 'Paydaş kayıt detayları', onBackClick: () => setPageState('list') }
 
   return (
@@ -372,7 +372,7 @@ export default function PaydaslarPage() {
         <div className="mt-6">
           <EntityForm
             mode={formMode}
-            entityName="Paydaşlar"
+            entityName="Paydaşlarımız"
             entityNameSingular="Paydaş"
             identityGate={{
               enabled: true,

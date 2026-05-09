@@ -57,6 +57,7 @@ export interface SlotDocument {
   type: string
   uploadedAt?: Date
   url?: string
+  previewUrl?: string
 }
 
 interface DocumentSlotUploaderProps {
@@ -160,7 +161,7 @@ const DEFAULT_DOCUMENT_ACCEPTED_TYPES = [
 
 function getDocumentUrl(doc?: SlotDocument | null) {
   if (!doc) return ''
-  return doc.url || (doc.file ? URL.createObjectURL(doc.file) : '')
+  return doc.url || doc.previewUrl || (doc.file ? URL.createObjectURL(doc.file) : '')
 }
 
 export function DocumentSlotUploader({

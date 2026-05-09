@@ -386,7 +386,7 @@ export default function TemsilcilerPage() {
   const bannerConfig = pageState === 'list'
     ? {
         mode: 'list' as const,
-        title: 'Temsilciler',
+        title: 'Temsilcilerimiz',
         subtitle: 'Şirket temsilci ve yetki kayıtlarını yönetin',
         onAddClick: () => {
           setSelectedRepresentative(null)
@@ -443,7 +443,7 @@ export default function TemsilcilerPage() {
         <div className="mt-6">
           <EntityForm
             mode={formMode}
-            entityName="Temsilciler"
+            entityName="Temsilcilerimiz"
             entityNameSingular="Temsilci"
             identityGate={{
               enabled: true,
