@@ -356,8 +356,9 @@ export function DocumentSlotUploader({
   // A4 aspect ratio style
   const containerStyle = {
     aspectRatio: '1/1.414',
-    maxWidth: '173px',
-    minHeight: '122px'
+    width: '100%',
+    maxWidth: '280px',
+    minHeight: '220px'
   }
 
   // Get file type config for current document
@@ -428,33 +429,33 @@ export function DocumentSlotUploader({
             !readOnly && !hasDocument && currentSlot.id !== '__extra__' && "cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-900",
             isDragging && "bg-blue-50 dark:bg-blue-900/20 border-2 border-dashed border-blue-400"
           )}
-          style={{ height: 'calc(100% - 108px)' }}
+          style={{ height: hasDocument ? 'calc(100% - 34px)' : 'calc(100% - 78px)' }}
         >
           {hasDocument ? (
             // Uploaded State
-            <div className="flex-1 flex flex-col p-4 group">
+            <div className="flex-1 flex flex-col p-3 group">
               {/* File Preview / Thumbnail */}
               <div className="flex-1 flex items-center justify-center">
                 {currentDoc?.type === 'application/pdf' && getDocumentUrl(currentDoc) ? (
-                  <div className="h-20 w-14 overflow-hidden rounded border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-900">
+                  <div className="h-full min-h-36 w-full overflow-hidden rounded border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-900">
                     <iframe
                       src={`${getDocumentUrl(currentDoc)}#page=1&toolbar=0&navpanes=0&scrollbar=0`}
                       title={`${currentDoc.name} preview`}
-                      className="h-32 w-24 origin-top-left scale-[0.58] border-0"
+                      className="h-full w-full border-0"
                     />
                   </div>
                 ) : currentDoc?.type.includes('image') && getDocumentUrl(currentDoc) ? (
                   <img
                     src={getDocumentUrl(currentDoc)}
                     alt={currentDoc.name}
-                    className="h-20 w-14 rounded border border-gray-200 object-cover shadow-sm dark:border-gray-700"
+                    className="h-full min-h-36 w-full rounded border border-gray-200 object-cover shadow-sm dark:border-gray-700"
                   />
                 ) : (
                   <div className={cn(
-                    "w-10 h-10 rounded-lg flex flex-col items-center justify-center gap-0.5",
+                    "h-28 w-full rounded-lg flex flex-col items-center justify-center gap-1",
                     fileConfig?.bgColor || 'bg-gray-100'
                   )}>
-                    <FileIcon size={18} className={cn(
+                    <FileIcon size={34} className={cn(
                       fileConfig?.color || 'text-gray-600'
                     )} />
                     <span className={cn(

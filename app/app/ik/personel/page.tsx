@@ -79,6 +79,8 @@ const OPTIONAL_EMPLOYEE_FIELDS = new Set([
   'fotograf_url',
 ])
 
+const LANGUAGE_LEVELS = new Set(['A1', 'A2', 'B1', 'B2', 'C1', 'C2'])
+
 const getFieldLabel = (field: string) => PERSONEL_FIELD_LABELS[field] || field
 
 const formatFieldList = (fields: string[]) => fields.map(getFieldLabel).join(', ')
@@ -231,6 +233,15 @@ export default function PersonelYonetimPage() {
       payload.epostalar = payload.epostalar.map((email: Record<string, any>) => ({
         ...email,
         adres: normalizeEmailInput(String(email.adres || ''))
+      }))
+    }
+
+    if (Array.isArray(payload.yabanci_diller)) {
+      payload.yabanci_diller = payload.yabanci_diller.map((language: Record<string, any>) => ({
+        ...language,
+        seviye: LANGUAGE_LEVELS.has(String(language.seviye || '').toUpperCase())
+          ? String(language.seviye).toUpperCase()
+          : ''
       }))
     }
 

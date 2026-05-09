@@ -710,6 +710,27 @@ function ListField({
   )
 }
 
+const WORK_TYPE_OPTIONS = [
+  { value: 'tam_zamanli', label: 'Tam Zamanlı' },
+  { value: 'yari_zamanli', label: 'Yarı Zamanlı' },
+  { value: 'vardiyali', label: 'Vardiyalı' },
+  { value: 'proje_bazli', label: 'Proje Bazlı' },
+  { value: 'uzaktan', label: 'Uzaktan' },
+]
+
+const CONTRACT_TYPE_OPTIONS = [
+  { value: 'disaridan', label: 'Dışarıdan' },
+  { value: 'sozlesmeli', label: 'Sözleşmeli' },
+  { value: 'stajyer', label: 'Stajyer' },
+  { value: 'deneme_sureli', label: 'Deneme Süreli' },
+  { value: 'belirsiz_sureli', label: 'Belirsiz Süreli' },
+  { value: 'belirli_sureli', label: 'Belirli Süreli' },
+]
+
+function optionLabel(options: Array<{ value: string; label: string }>, value: unknown) {
+  return options.find(option => option.value === value)?.label || String(value || '-')
+}
+
 function WorkLifecycleField({
   formData,
   onChange,
@@ -722,16 +743,66 @@ function WorkLifecycleField({
   const [modal, setModal] = useState<'hire' | 'exit' | null>(null)
   const [draft, setDraft] = useState<Record<string, any>>({})
   const [modalErrors, setModalErrors] = useState<Record<string, string>>({})
+  const [companies, setCompanies] = useState<Array<{ id: string; label: string }>>([])
+  const [units, setUnits] = useState<Array<{ id: string; label: string }>>([])
+  const [positions, setPositions] = useState<Array<{ id: string; label: string; birim_id?: string | null }>>([])
   const isHired = !!formData.sgk_giris
   const isExited = !!formData.isten_ayrilis
+  const companyLabel = companies.find(company => company.id === formData.sirket_id)?.label || formData.sirket_id || '-'
+  const unitLabel = units.find(unit => unit.id === formData.birim_id)?.label || formData.birim_id || '-'
+  const positionLabel = positions.find(position => position.id === formData.kadro_id)?.label || formData.gorev || '-'
+  const filteredPositions = draft.birim_id ? positions.filter(position => !position.birim_id || position.birim_id === draft.birim_id) : positions
+
+  useEffect(() => {
+    let cancelled = false
+
+    async function fetchReferences() {
+      try {
+        const [companyResponse, organizationResponse] = await Promise.all([
+          fetch('/api/sirketler?is_active=true'),
+          fetch('/api/ik/teskilat'),
+        ])
+        const companyPayload = companyResponse.ok ? await companyResponse.json() : { data: [] }
+        const organizationPayload = organizationResponse.ok ? await organizationResponse.json() : { birimler: [], kadrolar: [] }
+        if (cancelled) return
+
+        setCompanies((companyPayload.data || []).map((company: Record<string, any>) => ({
+          id: company.id,
+          label: company.kisa_unvan || company.ticari_unvan || company.sirket_kodu || company.id,
+        })))
+        setUnits((organizationPayload.birimler || []).map((unit: Record<string, any>) => ({
+          id: unit.id,
+          label: unit.ad || unit.name || unit.id,
+        })))
+        setPositions((organizationPayload.kadrolar || []).map((position: Record<string, any>) => ({
+          id: position.id,
+          label: position.unvan || position.title || position.name || position.id,
+          birim_id: position.birim_id || null,
+        })))
+      } catch {
+        if (cancelled) return
+        setCompanies([])
+        setUnits([])
+        setPositions([])
+      }
+    }
+
+    fetchReferences()
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   const openModal = (nextModal: 'hire' | 'exit') => {
     setDraft(nextModal === 'hire'
       ? {
           sgk_giris: formData.sgk_giris || '',
-          sirket_id: formData.sirket_id || '',
+          sirket_id: formData.sirket_id || (companies.length === 1 ? companies[0].id : ''),
           birim_id: formData.birim_id || '',
+          kadro_id: formData.kadro_id || '',
           gorev: formData.gorev || '',
+          calisma_tipi: formData.calisma_tipi || 'tam_zamanli',
+          is_akdi_bicimi: formData.is_akdi_bicimi || 'sozlesmeli',
           ise_giris_belgeleri: formData.ise_giris_belgeleri || [],
         }
       : {
@@ -750,14 +821,17 @@ function WorkLifecycleField({
   const saveModal = () => {
     if (modal === 'hire') {
       if (!draft.sgk_giris) {
-        setModalErrors({ sgk_giris: 'SGK giriş tarihi zorunludur' })
+        setModalErrors({ sgk_giris: 'İşe başlangıç tarihi zorunludur' })
         return
       }
 
       onChange('sgk_giris', draft.sgk_giris || '')
       onChange('sirket_id', draft.sirket_id || '')
       onChange('birim_id', draft.birim_id || '')
+      onChange('kadro_id', draft.kadro_id || '')
       onChange('gorev', draft.gorev || '')
+      onChange('calisma_tipi', draft.calisma_tipi || '')
+      onChange('is_akdi_bicimi', draft.is_akdi_bicimi || '')
       onChange('ise_giris_belgeleri', draft.ise_giris_belgeleri || [])
       onChange('calisma_durumu', 'gorevde')
     }
@@ -810,10 +884,12 @@ function WorkLifecycleField({
 
       {isHired && (
         <div className="grid grid-cols-1 gap-2 text-sm text-gray-700 dark:text-gray-300 md:grid-cols-2">
-          <div><span className="text-gray-500">İşe Giriş:</span> {formData.sgk_giris}</div>
-          <div><span className="text-gray-500">Şirket:</span> {formData.sirket_id || '-'}</div>
-          <div><span className="text-gray-500">Birim:</span> {formData.birim_id || '-'}</div>
-          <div><span className="text-gray-500">Görev:</span> {formData.gorev || '-'}</div>
+          <div><span className="text-gray-500">İşe Başlangıç:</span> {formData.sgk_giris}</div>
+          <div><span className="text-gray-500">Şirket:</span> {companyLabel}</div>
+          <div><span className="text-gray-500">Birim:</span> {unitLabel}</div>
+          <div><span className="text-gray-500">Görev:</span> {positionLabel}</div>
+          <div><span className="text-gray-500">Çalışma Türü:</span> {optionLabel(WORK_TYPE_OPTIONS, formData.calisma_tipi)}</div>
+          <div><span className="text-gray-500">İş Akdi Biçimi:</span> {optionLabel(CONTRACT_TYPE_OPTIONS, formData.is_akdi_bicimi)}</div>
         </div>
       )}
 
@@ -835,16 +911,34 @@ function WorkLifecycleField({
               {modal === 'hire' ? (
                 <>
                   <div>
-                    <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">SGK Giriş Tarihi *</label>
+                    <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">İşe Başlangıç Tarihi *</label>
                     <input type="date" value={draft.sgk_giris || ''} onChange={(e) => {
                       setDraft(prev => ({ ...prev, sgk_giris: e.target.value }))
                       if (modalErrors.sgk_giris) setModalErrors({})
-                    }} className={cn("w-full rounded-lg border bg-white px-3 py-2 text-sm dark:bg-gray-900", modalErrors.sgk_giris ? "border-red-300 dark:border-red-700" : "border-gray-300 dark:border-gray-700")} />
+                    }} className={cn("w-full rounded-lg border bg-white px-3 py-2 text-sm text-gray-900 dark:bg-gray-900 dark:text-white", modalErrors.sgk_giris ? "border-red-300 dark:border-red-700" : "border-gray-300 dark:border-gray-700")} />
                     {modalErrors.sgk_giris && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{modalErrors.sgk_giris}</p>}
                   </div>
-                  <input placeholder="Şirket" value={draft.sirket_id || ''} onChange={(e) => setDraft(prev => ({ ...prev, sirket_id: e.target.value }))} className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900" />
-                  <input placeholder="Birim" value={draft.birim_id || ''} onChange={(e) => setDraft(prev => ({ ...prev, birim_id: e.target.value }))} className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900" />
-                  <input placeholder="Görev" value={draft.gorev || ''} onChange={(e) => setDraft(prev => ({ ...prev, gorev: e.target.value }))} className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900" />
+                  <select value={draft.sirket_id || ''} onChange={(e) => setDraft(prev => ({ ...prev, sirket_id: e.target.value }))} disabled={companies.length === 0} className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 disabled:bg-gray-100 disabled:text-gray-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:disabled:bg-gray-800">
+                    <option value="">{companies.length ? 'Şirket seçiniz' : 'Şirket bulunamadı'}</option>
+                    {companies.map(company => <option key={company.id} value={company.id}>{company.label}</option>)}
+                  </select>
+                  <select value={draft.birim_id || ''} onChange={(e) => setDraft(prev => ({ ...prev, birim_id: e.target.value, kadro_id: '', gorev: '' }))} disabled={units.length === 0} className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 disabled:bg-gray-100 disabled:text-gray-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:disabled:bg-gray-800">
+                    <option value="">{units.length ? 'Birim seçiniz' : 'Teşkilat birimi yok'}</option>
+                    {units.map(unit => <option key={unit.id} value={unit.id}>{unit.label}</option>)}
+                  </select>
+                  <select value={draft.kadro_id || ''} onChange={(e) => {
+                    const position = positions.find(item => item.id === e.target.value)
+                    setDraft(prev => ({ ...prev, kadro_id: e.target.value, gorev: position?.label || '' }))
+                  }} disabled={filteredPositions.length === 0} className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 disabled:bg-gray-100 disabled:text-gray-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:disabled:bg-gray-800">
+                    <option value="">{filteredPositions.length ? 'Görev / kadro seçiniz' : 'Kadro kaydı yok'}</option>
+                    {filteredPositions.map(position => <option key={position.id} value={position.id}>{position.label}</option>)}
+                  </select>
+                  <select value={draft.calisma_tipi || ''} onChange={(e) => setDraft(prev => ({ ...prev, calisma_tipi: e.target.value }))} className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-white">
+                    {WORK_TYPE_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+                  </select>
+                  <select value={draft.is_akdi_bicimi || ''} onChange={(e) => setDraft(prev => ({ ...prev, is_akdi_bicimi: e.target.value }))} className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-white">
+                    {CONTRACT_TYPE_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
+                  </select>
                   <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-700">
                     <Upload size={16} />
                     Belge Yükle

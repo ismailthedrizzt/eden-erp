@@ -29,6 +29,28 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
+  select,
+  select option {
+    color: #111827;
+    background-color: #ffffff;
+  }
+
+  .dark select,
+  .dark select option {
+    color: #f9fafb;
+    background-color: #111827;
+  }
+
+  [data-enum-cell],
+  [data-enum-cell] * {
+    color: #111827 !important;
+  }
+
+  .dark [data-enum-cell],
+  .dark [data-enum-cell] * {
+    color: #f3f4f6 !important;
+  }
+
   /* Custom scrollbar */
   ::-webkit-scrollbar { width: 5px; height: 5px; }
   ::-webkit-scrollbar-track { background: transparent; }

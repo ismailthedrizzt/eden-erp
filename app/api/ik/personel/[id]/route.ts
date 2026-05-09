@@ -33,6 +33,8 @@ const EmployeeUpdateSchema = z.object({
   sgk_giris: z.string().optional(),
   isten_ayrilis: z.string().optional(),
   calisma_durumu: z.enum(['gorevde', 'izinde', 'ayrilmis', 'askida']).optional(),
+  calisma_tipi: z.string().optional(),
+  is_akdi_bicimi: z.string().optional(),
   medeni_durum: z.enum(['bekar', 'evli', 'dul', 'bosanmis']).optional(),
   sirket_id: z.string().uuid().optional().nullable(),
   birim_id: z.string().uuid().optional().nullable(),
@@ -136,17 +138,36 @@ export async function PATCH(
     return NextResponse.json({ error: currentError.message, code: currentError.code || 'FETCH_FAILED' }, { status: 500 })
   }
 
-  const nextHistory = buildFieldHistory(current, parsed.data)
-  const { data, error } = await supabase
+  let updatePayload = parsed.data
+  const nextHistory = buildFieldHistory(current, updatePayload)
+  let { data, error } = await supabase
     .from('employees')
     .update({
-      ...parsed.data,
+      ...updatePayload,
       field_history: nextHistory,
-      ...(parsed.data.isten_ayrilis ? { calisma_durumu: 'ayrilmis' as const } : {})
+      ...(updatePayload.isten_ayrilis ? { calisma_durumu: 'ayrilmis' as const } : {})
     })
     .eq('id', id)
     .select()
     .single()
+
+  const missingColumn = missingEmployeeColumn(error, ['is_akdi_bicimi', 'calisma_tipi'])
+  if (missingColumn) {
+    updatePayload = { ...updatePayload }
+    delete (updatePayload as Record<string, any>)[missingColumn]
+    const retry = await supabase
+      .from('employees')
+      .update({
+        ...updatePayload,
+        field_history: buildFieldHistory(current, updatePayload),
+        ...(updatePayload.isten_ayrilis ? { calisma_durumu: 'ayrilmis' as const } : {})
+      })
+      .eq('id', id)
+      .select()
+      .single()
+    data = retry.data
+    error = retry.error
+  }
 
   if (error) {
     if (error.code === 'PGRST116') {
@@ -214,4 +235,9 @@ function summarizeHistoryValue(value: unknown) {
   }
 
   return value ?? ''
+}
+
+function missingEmployeeColumn(error: { message?: string } | null, optionalColumns: string[]) {
+  const message = error?.message || ''
+  return optionalColumns.find((column) => message.includes(`employees.${column}`) && message.includes('does not exist'))
 }

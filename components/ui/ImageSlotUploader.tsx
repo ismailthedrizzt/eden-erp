@@ -237,8 +237,9 @@ export function ImageSlotUploader({
   // A4 aspect ratio style
   const containerStyle = {
     aspectRatio: '1/1.414',
-    maxWidth: '173px',
-    minHeight: '122px'
+    width: '100%',
+    maxWidth: '280px',
+    minHeight: '220px'
   }
 
   return (
@@ -295,7 +296,7 @@ export function ImageSlotUploader({
             !readOnly && !hasImage && currentSlot.id !== '__extra__' && "cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-900",
             isDragging && "bg-blue-50 dark:bg-blue-900/20 border-2 border-dashed border-blue-400"
           )}
-          style={{ height: 'calc(100% - 100px)' }}
+          style={{ height: hasImage ? 'calc(100% - 34px)' : 'calc(100% - 78px)' }}
         >
           {hasImage ? (
             // Uploaded State
@@ -303,7 +304,7 @@ export function ImageSlotUploader({
               <img
                 src={currentImage?.previewUrl || currentImage?.file}
                 alt={currentSlot.title}
-                className="w-full h-full object-cover"
+                className="h-full w-full object-cover"
               />
               
               {/* Hover Actions Overlay */}

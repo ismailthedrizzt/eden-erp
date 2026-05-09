@@ -1273,7 +1273,11 @@ export function SmartDataTable<T extends { id: string }>({
                         isLeftAlignedColumn(col) ? "items-center justify-start" : "items-center justify-center",
                         col.type !== 'image' && col.type !== 'boolean' && "dark:[&_*]:!text-gray-100"
                       )}>
-                        {renderCellValue(col, getNestedValue(row, col.key), row)}
+                        {col.type === 'enum' ? (
+                          <span data-enum-cell className="inline-flex min-w-0 max-w-full items-center truncate text-gray-900 dark:text-gray-100">
+                            {renderCellValue(col, getNestedValue(row, col.key), row)}
+                          </span>
+                        ) : renderCellValue(col, getNestedValue(row, col.key), row)}
                       </div>
                     </td>
                   ))}
@@ -1359,7 +1363,11 @@ export function SmartDataTable<T extends { id: string }>({
                       <div key={col.key} className="min-w-0">
                         <span className="block truncate text-[11px] font-medium uppercase text-gray-500 dark:text-gray-400">{col.label}</span>
                         <div className="mt-0.5 truncate text-sm font-semibold text-gray-900 dark:text-white" title={getCellTitle(getNestedValue(row, col.key))}>
-                          {renderCellValue(col, getNestedValue(row, col.key), row)}
+                          {col.type === 'enum' ? (
+                            <span data-enum-cell className="inline-flex min-w-0 max-w-full items-center truncate text-gray-900 dark:text-gray-100">
+                              {renderCellValue(col, getNestedValue(row, col.key), row)}
+                            </span>
+                          ) : renderCellValue(col, getNestedValue(row, col.key), row)}
                         </div>
                       </div>
                     )) : (

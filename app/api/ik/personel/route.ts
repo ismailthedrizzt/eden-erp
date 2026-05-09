@@ -35,6 +35,8 @@ const EmployeeSchema = z.object({
   sgk_giris: z.string().optional(),
   isten_ayrilis: z.string().optional(),
   calisma_durumu: z.enum(['gorevde', 'izinde', 'ayrilmis', 'askida']).default('gorevde'),
+  calisma_tipi: z.string().optional(),
+  is_akdi_bicimi: z.string().optional(),
   sirket_id: z.string().uuid().optional(),
   birim_id: z.string().uuid().optional(),
   kadro_id: z.string().uuid().optional(),
@@ -92,6 +94,7 @@ const optionalEmployeeListColumns = [
   'employment_status',
   'start_date',
   'calisma_tipi',
+  'is_akdi_bicimi',
   'version',
 ]
 
@@ -191,9 +194,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Geçersiz veri', code: 'VALIDATION_FAILED', details: parsed.error.flatten() }, { status: 400 })
   }
 
-  const employeePayload = await ensureEmployeePersonLink(supabase, parsed.data)
+  let employeePayload = await ensureEmployeePersonLink(supabase, parsed.data)
 
-  const { data, error } = await supabase
+  let { data, error } = await supabase
     .from('employees')
     .insert({
       ...employeePayload,
@@ -201,6 +204,22 @@ export async function POST(request: NextRequest) {
     })
     .select()
     .single()
+
+  const missingMutationColumn = missingEmployeeColumn(error, ['is_akdi_bicimi', 'calisma_tipi'])
+  if (missingMutationColumn) {
+    employeePayload = { ...employeePayload }
+    delete (employeePayload as Record<string, any>)[missingMutationColumn]
+    const retry = await supabase
+      .from('employees')
+      .insert({
+        ...employeePayload,
+        calisma_durumu: employeePayload.isten_ayrilis ? 'ayrilmis' : employeePayload.calisma_durumu
+      })
+      .select()
+      .single()
+    data = retry.data
+    error = retry.error
+  }
 
   if (error) return NextResponse.json({ error: error.message, code: error.code || 'CREATE_FAILED' }, { status: 500 })
   return NextResponse.json({ data }, { status: 201 })

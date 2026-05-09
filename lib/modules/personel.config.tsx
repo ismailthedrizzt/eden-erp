@@ -209,7 +209,7 @@ export const personelModuleConfig: ModuleConfig<PersonelTableRow> = {
                 emptyText: 'Telefon eklenmedi.',
                 fields: [
                   { name: 'etiket', key: 'etiket', label: 'Etiket', type: 'text', placeholder: 'Cep, iş, ev' },
-                  { name: 'numara', key: 'numara', label: 'Telefon Numarası', type: 'tel', required: true }
+                  { name: 'numara', key: 'numara', label: 'Telefon Numarası', type: 'tel', required: true, placeholder: '+90 5XX XXX XX XX' }
                 ]
               }
             },
@@ -288,7 +288,21 @@ export const personelModuleConfig: ModuleConfig<PersonelTableRow> = {
                 emptyText: 'Yabancı dil eklenmedi.',
                 fields: [
                   { name: 'dil', key: 'dil', label: 'Dil', type: 'text', required: true },
-                  { name: 'seviye', key: 'seviye', label: 'Seviye', type: 'text', required: true },
+                  {
+                    name: 'seviye',
+                    key: 'seviye',
+                    label: 'Seviye',
+                    type: 'select',
+                    required: true,
+                    options: [
+                      { value: 'A1', label: 'A1' },
+                      { value: 'A2', label: 'A2' },
+                      { value: 'B1', label: 'B1' },
+                      { value: 'B2', label: 'B2' },
+                      { value: 'C1', label: 'C1' },
+                      { value: 'C2', label: 'C2' }
+                    ]
+                  },
                   { name: 'belge', key: 'belge', label: 'Belge', type: 'document', colSpan: 2 }
                 ]
               }

@@ -47,9 +47,15 @@ export function MasterIdentityGate({
 
   useEffect(() => {
     if (mode === 'create') return
+    setIdentity(prev => ({
+      ...prev,
+      nationality: normalizeCountryId(formData.uyruk || formData.nationality || prev.nationality),
+      national_id: String(formData.tc_kimlik || formData.national_id || prev.national_id || ''),
+      passport_no: String(formData.pasaport_no || formData.passport_no || prev.passport_no || ''),
+    }))
     setState('ready_for_edit')
     setMessage('Kayıt düzenleme modunda. Temel kimlik ilişkisi mevcut kayıt üzerinden yönetilir.')
-  }, [mode])
+  }, [mode, formData.uyruk, formData.nationality, formData.tc_kimlik, formData.national_id, formData.pasaport_no, formData.passport_no])
 
   const updateIdentity = (key: string, value: string) => {
     setIdentity(prev => {

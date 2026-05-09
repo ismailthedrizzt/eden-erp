@@ -136,7 +136,7 @@ async function findPerson(supabase: ReturnType<typeof createServiceClient>, iden
   query = nationalId ? query.eq('national_id', nationalId) : query.eq('passport_no', passportNo)
   const { data, error } = await query.maybeSingle()
   if (isMissingTableError(error, 'persons')) {
-    return { record: null, warning: 'Master kişiler tablosu veritabanında bulunamadı; kayıt şimdilik master bağlantısı olmadan hazırlanacak.' }
+    return { record: null, warning: 'Girilen kişi kayıtlı kişiler listesinde bulunamadı. Yeni kayıt oluşturulacak.' }
   }
   if (error) return { error: error.message }
   return { record: data || null }
@@ -155,7 +155,7 @@ async function findOrganization(supabase: ReturnType<typeof createServiceClient>
   query = taxNumber ? query.eq('tax_number', taxNumber) : query.eq('registration_number', registrationNumber)
   const { data, error } = await query.maybeSingle()
   if (isMissingTableError(error, 'organizations')) {
-    return { record: null, warning: 'Master kurumlar tablosu veritabanında bulunamadı; kayıt şimdilik master bağlantısı olmadan hazırlanacak.' }
+    return { record: null, warning: 'Girilen kurum kayıtlı kurumlar listesinde bulunamadı. Yeni kayıt oluşturulacak.' }
   }
   if (error) return { error: error.message }
   return { record: data || null }

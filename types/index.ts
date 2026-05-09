@@ -114,6 +114,8 @@ export interface Personel {
   sgk_giris?: string
   isten_ayrilis?: string
   calisma_durumu: PersonelDurum
+  calisma_tipi?: string
+  is_akdi_bicimi?: string
   medeni_durum?: MedeniDurum
   sirket_id?: string
   birim_id?: string
