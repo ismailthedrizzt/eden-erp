@@ -221,7 +221,7 @@ set
   person_id = p.id,
   employment_status = coalesce(e.employment_status, e.calisma_durumu),
   start_date = coalesce(e.start_date, e.sgk_giris),
-  end_date = coalesce(e.end_date, e.isten_ayrilis),
+  end_date = coalesce(e.end_date, null),
   department_id = coalesce(e.department_id, e.birim_id)
 from persons p
 where e.person_id is null

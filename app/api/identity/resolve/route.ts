@@ -140,11 +140,21 @@ async function findPerson(supabase: ReturnType<typeof createServiceClient>, iden
 
   let query = supabase.from('persons').select('*').eq('nationality', nationality).eq('is_deleted', false)
   query = nationalId ? query.eq('national_id', nationalId) : query.eq('passport_no', passportNo)
-  const { data, error } = await query.maybeSingle()
+  let { data, error } = await query.maybeSingle()
   if (isMissingTableError(error, 'persons')) {
     return { record: null, warning: 'Girilen kişi kayıtlı kişiler listesinde bulunamadı. Yeni kayıt oluşturulacak.' }
   }
   if (error) return { error: error.message }
+  if (!data && nationalId) {
+    const fallback = await supabase
+      .from('persons')
+      .select('*')
+      .eq('national_id', nationalId)
+      .eq('is_deleted', false)
+      .limit(1)
+    if (fallback.error) return { error: fallback.error.message }
+    data = Array.isArray(fallback.data) ? fallback.data[0] || null : null
+  }
   return { record: data || null }
 }
 
@@ -159,11 +169,21 @@ async function findOrganization(supabase: ReturnType<typeof createServiceClient>
 
   let query = supabase.from('organizations').select('*').eq('country', country).eq('is_deleted', false)
   query = taxNumber ? query.eq('tax_number', taxNumber) : query.eq('registration_number', registrationNumber)
-  const { data, error } = await query.maybeSingle()
+  let { data, error } = await query.maybeSingle()
   if (isMissingTableError(error, 'organizations')) {
     return { record: null, warning: 'Girilen kurum kayıtlı kurumlar listesinde bulunamadı. Yeni kayıt oluşturulacak.' }
   }
   if (error) return { error: error.message }
+  if (!data && taxNumber) {
+    const fallback = await supabase
+      .from('organizations')
+      .select('*')
+      .eq('tax_number', taxNumber)
+      .eq('is_deleted', false)
+      .limit(1)
+    if (fallback.error) return { error: fallback.error.message }
+    data = Array.isArray(fallback.data) ? fallback.data[0] || null : null
+  }
   return { record: data || null }
 }
 
@@ -174,7 +194,7 @@ async function findOrCreatePersonFromEmployee(supabase: ReturnType<typeof create
 
   if (!nationalId && !passportNo) return { record: null }
 
-  let query = supabase.from('employees').select('*').eq('is_active', true).limit(1)
+  let query = supabase.from('employees').select('*').limit(1)
   query = nationalId ? query.eq('tc_kimlik', nationalId) : query.eq('pasaport_no', passportNo)
   const { data, error } = await query
   if (error) return { record: null }
