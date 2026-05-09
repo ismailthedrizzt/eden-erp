@@ -13,14 +13,17 @@
  * @see components/ui/PageBanner.md
  */
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Users } from 'lucide-react'
 import { usePersonel } from '@/hooks/usePersonel'
 import { PageBanner } from '@/components/ui/PageBanner'
 import { SmartDataTable, WidgetDef } from '@/components/ui/SmartDataTable'
+import { DashboardGrid } from '@/components/dashboard/DashboardGrid'
+import type { DashboardFilterEvent } from '@/components/dashboard/dashboard.types'
 import { EntityForm, FormMode } from '@/components/ui/EntityForm'
 import { Toast } from '@/components/ui/Toast'
 import { personelModuleConfig, PersonelTableRow } from '@/lib/modules/personel.config'
+import { buildEmployeesDashboard } from '@/lib/modules/employees/dashboard/employeesDashboard.mock'
 import { toEntityFormFields, toEntityFormTabs } from '@/types/module-config'
 import { formatPhoneInput, normalizeEmailInput } from '@/lib/utils'
 import type { Personel } from '@/types'
@@ -102,6 +105,7 @@ export default function PersonelYonetimPage() {
   const [formError, setFormError] = useState<string | null>(null)
   const [saveFieldErrors, setSaveFieldErrors] = useState<Record<string, string>>({})
   const [toast, setToast] = useState<ToastState | null>(null)
+  const [dashboardFilter, setDashboardFilter] = useState<DashboardFilterEvent | null>(null)
 
   // Transform data for table
   const tableData: PersonelTableRow[] = (personel || []).map(p => ({
@@ -118,6 +122,17 @@ export default function PersonelYonetimPage() {
     sgk_status: p.sgk_giris ? 'SGK girişi var' : 'SGK bekliyor',
     __actions: ''
   }))
+
+  const dashboardWidgets = useMemo(() => buildEmployeesDashboard(tableData), [tableData])
+  const visibleTableData = useMemo(() => applyDashboardFilter(tableData, dashboardFilter), [tableData, dashboardFilter])
+
+  const handleDashboardFilter = (event: DashboardFilterEvent) => {
+    setDashboardFilter(event.filters ? event : null)
+    if (event.filters) {
+      const label = event.itemId || Object.values(event.filters)[0]
+      setToast({ type: 'success', title: 'Liste Filtrelendi', message: `${label} filtresi uygulandı.` })
+    }
+  }
 
   // Event Handlers
   const handleAddClick = () => {
@@ -422,9 +437,16 @@ export default function PersonelYonetimPage() {
               <p className="text-red-600 dark:text-red-400">Hata: {listError}</p>
             </div>
           )}
+
+          <DashboardGrid
+            widgets={dashboardWidgets}
+            onFilter={handleDashboardFilter}
+            unauthorizedMode="hide"
+            className="mb-4"
+          />
           
           <SmartDataTable<PersonelTableRow>
-            data={tableData}
+            data={visibleTableData}
             columns={moduleConfig.list.columns}
             storageKey={moduleConfig.list.storageKey}
             widgets={widgets}
@@ -438,6 +460,15 @@ export default function PersonelYonetimPage() {
             onRowClick={handleRowClick}
             onRefresh={yenile}
           />
+          {dashboardFilter && (
+            <button
+              type="button"
+              onClick={() => setDashboardFilter(null)}
+              className="mt-3 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300"
+            >
+              Dashboard filtresini temizle
+            </button>
+          )}
         </div>
       )}
 
@@ -482,4 +513,27 @@ export default function PersonelYonetimPage() {
       )}
     </div>
   )
+}
+
+function applyDashboardFilter(rows: PersonelTableRow[], event: DashboardFilterEvent | null) {
+  if (!event?.filters) return rows
+  const entries = Object.entries(event.filters)
+  if (entries.length === 0) return rows
+
+  return rows.filter(row => entries.every(([field, value]) => {
+    if (field === 'ageGroup') return getAgeGroup((row as any).dogum_tarihi) === value
+    if (value === null) return !((row as any)[field])
+    return String((row as any)[field] || '').toLocaleLowerCase('tr-TR') === String(value || '').toLocaleLowerCase('tr-TR')
+  }))
+}
+
+function getAgeGroup(value?: string | null) {
+  if (!value) return 'Belirsiz'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return 'Belirsiz'
+  const now = new Date()
+  let age = now.getFullYear() - date.getFullYear()
+  const monthDiff = now.getMonth() - date.getMonth()
+  if (monthDiff < 0 || (monthDiff === 0 && now.getDate() < date.getDate())) age -= 1
+  return age <= 25 ? '18-25' : age <= 35 ? '26-35' : age <= 45 ? '36-45' : '46+'
 }

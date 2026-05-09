@@ -1,0 +1,107 @@
+﻿import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
+import { createServiceClient } from '@/lib/supabase/server'
+import { normalizeIdentityCountry } from '@/lib/identity-gate'
+
+const ResolveSchema = z.object({
+  entityKind: z.enum(['person', 'organization']),
+  identity: z.object({
+    nationality: z.string().optional(),
+    national_id: z.string().optional(),
+    passport_no: z.string().optional(),
+    country: z.string().optional(),
+    tax_number: z.string().optional(),
+    registration_number: z.string().optional(),
+  }),
+})
+
+export async function POST(request: NextRequest) {
+  const parsed = ResolveSchema.safeParse(await request.json().catch(() => null))
+  if (!parsed.success) return NextResponse.json({ error: 'GeÃ§ersiz kimlik arama isteÄŸi' }, { status: 400 })
+
+  const supabase = createServiceClient()
+  const { entityKind, identity } = parsed.data
+  const master = entityKind === 'person'
+    ? await findPerson(supabase, identity)
+    : await findOrganization(supabase, identity)
+
+  if ('error' in master) return NextResponse.json({ error: master.error }, { status: 400 })
+  if (!master.record) {
+    return NextResponse.json({
+      found: false,
+      entityKind,
+      message: 'Bu kiÅŸi/kurum master kayÄ±tlarda bulunamadÄ±. Cari hareketlerde kullanabilmek iÃ§in Ã¶nce ilgili formdan oluÅŸturulmalÄ±dÄ±r.',
+      roles: [],
+      card: null,
+    })
+  }
+
+  const roles = await loadRoles(supabase, entityKind, master.record.id)
+  const card = await loadCard(supabase, entityKind, master.record.id)
+
+  return NextResponse.json({
+    found: true,
+    entityKind,
+    record: master.record,
+    displayName: entityKind === 'person' ? master.record.full_name : master.record.legal_name,
+    identityNo: entityKind === 'person' ? master.record.national_id || master.record.passport_no : master.record.tax_number || master.record.registration_number,
+    roles,
+    card,
+    message: 'Bu kayÄ±t sistemde mevcut.',
+  })
+}
+
+async function findPerson(supabase: ReturnType<typeof createServiceClient>, identity: any) {
+  const nationality = normalizeIdentityCountry(identity.nationality)
+  const nationalId = String(identity.national_id || '').replace(/\D/g, '')
+  const passportNo = String(identity.passport_no || '').trim()
+  if (!nationalId && !passportNo) return { error: 'TC Kimlik No veya Pasaport No girin.' }
+  let query = supabase.from('persons').select('*').eq('nationality', nationality).eq('is_deleted', false)
+  query = nationalId ? query.eq('national_id', nationalId) : query.eq('passport_no', passportNo)
+  const { data, error } = await query.maybeSingle()
+  if (error) return { error: error.message }
+  return { record: data || null }
+}
+
+async function findOrganization(supabase: ReturnType<typeof createServiceClient>, identity: any) {
+  const country = normalizeIdentityCountry(identity.country)
+  const taxNumber = String(identity.tax_number || '').replace(/\D/g, '')
+  const registrationNumber = String(identity.registration_number || '').trim()
+  if (!taxNumber && !registrationNumber) return { error: 'VKN veya Ticaret Sicil No girin.' }
+  let query = supabase.from('organizations').select('*').eq('country', country).eq('is_deleted', false)
+  query = taxNumber ? query.eq('tax_number', taxNumber) : query.eq('registration_number', registrationNumber)
+  const { data, error } = await query.maybeSingle()
+  if (error) return { error: error.message }
+  return { record: data || null }
+}
+
+async function loadRoles(supabase: ReturnType<typeof createServiceClient>, kind: 'person' | 'organization', id: string) {
+  const roleQueries = kind === 'person'
+    ? [
+        { label: 'Çalışan', query: supabase.from('employees').select('id').eq('person_id', id).limit(1) },
+        { label: 'Ortak', query: supabase.from('sirket_ortaklar').select('id').eq('person_id', id).limit(1) },
+        { label: 'Temsilci', query: supabase.from('sirket_temsilciler').select('id').eq('person_id', id).limit(1) },
+        { label: 'Paydaş', query: supabase.from('stakeholders').select('id').eq('person_id', id).limit(1) },
+      ]
+    : [
+        { label: 'Şirket', query: supabase.from('sirketler').select('id').eq('organization_id', id).limit(1) },
+        { label: 'Ortak', query: supabase.from('sirket_ortaklar').select('id').eq('organization_id', id).limit(1) },
+        { label: 'Temsilci', query: supabase.from('sirket_temsilciler').select('id').eq('organization_id', id).limit(1) },
+        { label: 'Paydaş', query: supabase.from('stakeholders').select('id').eq('organization_id', id).limit(1) },
+      ]
+
+  const results = await Promise.all(
+    roleQueries.map(async ({ query }) => {
+      const response = await query
+      return response.data?.length ? true : false
+    })
+  )
+
+  return roleQueries.map(role => role.label).filter((_, index) => results[index])
+}
+async function loadCard(supabase: ReturnType<typeof createServiceClient>, kind: 'person' | 'organization', id: string) {
+  const column = kind === 'person' ? 'person_id' : 'organization_id'
+  const { data } = await supabase.from('v_account_cards').select('*').eq(column, id).limit(1).maybeSingle()
+  return data || null
+}
+
