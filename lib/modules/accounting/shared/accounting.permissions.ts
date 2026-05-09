@@ -10,4 +10,8 @@ export const ACCOUNTING_PERMISSIONS = {
   preAccountingApprove: 'preaccounting.approve',
   preAccountingMatch: 'preaccounting.match',
   preAccountingCancel: 'preaccounting.cancel',
+  bankConnectionsView: 'bank_connections.view',
+  bankConnectionsEdit: 'bank_connections.edit',
+  bankTransactionsView: 'bank_transactions.view',
+  bankTransactionsEdit: 'bank_transactions.edit',
 }

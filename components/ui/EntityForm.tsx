@@ -1279,7 +1279,7 @@ export function EntityForm({
     const errors: Record<string, string> = {}
 
     if (isIdentityGateLocked) {
-      errors.identity_gate = 'Devam etmek için önce kimlik / kurum bilgilerini girerek master kayıt eşleştirmesi yapın.'
+      errors.identity_gate = 'Devam etmek için önce Temel Kimlik Bilgileri alanını eşleştirin.'
       setFieldErrors(errors)
       onValidationError?.([errors.identity_gate])
       return false
@@ -1318,9 +1318,9 @@ export function EntityForm({
     if (isIdentityGateLocked) {
       setFieldErrors(prev => ({
         ...prev,
-        identity_gate: 'Devam etmek için önce kimlik / kurum bilgilerini girerek master kayıt eşleştirmesi yapın.',
+        identity_gate: 'Devam etmek için önce Temel Kimlik Bilgileri alanını eşleştirin.',
       }))
-      onValidationError?.(['Devam etmek için önce kimlik / kurum bilgilerini girerek master kayıt eşleştirmesi yapın.'])
+      onValidationError?.(['Devam etmek için önce Temel Kimlik Bilgileri alanını eşleştirin.'])
       return
     }
     if (!validate()) return
@@ -1743,7 +1743,7 @@ export function EntityForm({
       <div className="p-6">
         {isIdentityGateLocked && (
           <div className="mb-4 rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-3 text-sm text-gray-600 dark:border-gray-700 dark:bg-gray-800/50 dark:text-gray-300">
-            Devam etmek için önce kimlik / kurum bilgilerini girerek master kayıt eşleştirmesi yapın.
+            Devam etmek için önce Temel Kimlik Bilgileri alanını eşleştirin.
           </div>
         )}
         {tabs.map(tab => (

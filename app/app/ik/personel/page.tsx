@@ -18,7 +18,6 @@ import { Users } from 'lucide-react'
 import { usePersonel } from '@/hooks/usePersonel'
 import { PageBanner } from '@/components/ui/PageBanner'
 import { SmartDataTable, WidgetDef } from '@/components/ui/SmartDataTable'
-import { DashboardGrid } from '@/components/dashboard/DashboardGrid'
 import type { DashboardFilterEvent } from '@/components/dashboard/dashboard.types'
 import { EntityForm, FormMode } from '@/components/ui/EntityForm'
 import { Toast } from '@/components/ui/Toast'
@@ -438,18 +437,13 @@ export default function PersonelYonetimPage() {
             </div>
           )}
 
-          <DashboardGrid
-            widgets={dashboardWidgets}
-            onFilter={handleDashboardFilter}
-            unauthorizedMode="hide"
-            className="mb-4"
-          />
-          
           <SmartDataTable<PersonelTableRow>
             data={visibleTableData}
             columns={moduleConfig.list.columns}
             storageKey={moduleConfig.list.storageKey}
             widgets={widgets}
+            dashboardWidgets={dashboardWidgets}
+            onDashboardFilter={handleDashboardFilter}
             defaultView={moduleConfig.list.defaultView}
             defaultPageSize={moduleConfig.list.defaultPageSize}
             pageSizeOptions={moduleConfig.list.pageSizeOptions}

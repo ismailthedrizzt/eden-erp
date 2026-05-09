@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import type { ReactNode } from 'react'
-import { CreditCard, FileText, WalletCards } from 'lucide-react'
+import { CreditCard, FileText, Landmark, WalletCards } from 'lucide-react'
 import { PageBanner } from '@/components/ui/PageBanner'
 
 export default function MuhasebePage() {
@@ -25,6 +25,12 @@ export default function MuhasebePage() {
           icon={<FileText size={22} />}
           title="Ön Muhasebe Hareketleri"
           description="Harcama, ödeme, tahsilat ve cari hareketleri sade bir ekrandan yönetin."
+        />
+        <ModuleLink
+          href="/app/muhasebe/banka-kart-hareketleri"
+          icon={<Landmark size={22} />}
+          title="Banka ve Kart Hareketleri"
+          description="Banka ve kredi kartı hareketlerini sağlayıcı bağlantılarından içe aktarın ve eşleştirin."
         />
       </div>
     </div>

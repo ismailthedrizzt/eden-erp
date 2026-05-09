@@ -4,6 +4,8 @@ import { z } from 'zod'
 
 const StakeholderSchema = z.object({
   company_id: z.string().uuid().optional(),
+  person_id: z.string().uuid().optional().nullable(),
+  organization_id: z.string().uuid().optional().nullable(),
   stakeholder_type: z.enum(['gercek_kisi', 'tuzel_kisi']).default('gercek_kisi'),
   category: z.string().min(1),
   display_name: z.string().min(1),
@@ -108,16 +110,22 @@ async function attachStakeholderIdentity(supabase: ReturnType<typeof createServi
   try {
     const kind = stakeholder.stakeholder_type === 'tuzel_kisi' ? 'organization' : 'person'
     if (kind === 'person') {
+      if (stakeholder.person_id) return { ...row, stakeholder_kind: 'person', person_id: stakeholder.person_id }
+
       const fullName = stakeholder.display_name
       const nationalId = stakeholder.tax_id && String(stakeholder.tax_id).length === 11 ? String(stakeholder.tax_id) : null
+      const passportNo = nationalId ? null : stakeholder.passport_no || stakeholder.tax_id || null
       const { data: existing, error: findError } = nationalId
         ? await supabase.from('persons').select('id').eq('nationality', stakeholder.country || 'TR').eq('national_id', nationalId).maybeSingle()
-        : await supabase.from('persons').select('id').eq('full_name', fullName).maybeSingle()
+        : passportNo
+          ? await supabase.from('persons').select('id').eq('nationality', stakeholder.country || 'TR').eq('passport_no', passportNo).maybeSingle()
+          : await supabase.from('persons').select('id').eq('full_name', fullName).maybeSingle()
       if (findError) return row
       const personId = existing?.id || (await supabase.from('persons').insert({
         full_name: fullName,
         nationality: stakeholder.country || 'TR',
         national_id: nationalId,
+        passport_no: passportNo,
         birth_date: stakeholder.birth_date || null,
         phone: stakeholder.phone || stakeholder.phone_1 || null,
         email: stakeholder.email || stakeholder.email_1 || null,
@@ -127,6 +135,8 @@ async function attachStakeholderIdentity(supabase: ReturnType<typeof createServi
     }
 
     const legalName = stakeholder.display_name
+    if (stakeholder.organization_id) return { ...row, stakeholder_kind: 'organization', organization_id: stakeholder.organization_id }
+
     const country = stakeholder.country || 'TR'
     const taxNumber = stakeholder.tax_id || stakeholder.tax_number || null
     const { data: existing, error: findError } = taxNumber

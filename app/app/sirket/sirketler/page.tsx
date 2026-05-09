@@ -98,7 +98,6 @@ const columns: ColumnDef[] = [
 const heroFields: FormField[] = [
   { name: 'kisa_unvan', label: 'Kısa Ünvan', type: 'text', required: true },
   { name: 'ticari_unvan', label: 'Ticari Unvan', type: 'text', required: true, colSpan: 2 },
-  { name: 'vkn_tckn', label: 'VKN', type: 'text', required: true, maxLength: 10, inputMode: 'numeric', pattern: '[0-9]{10}' },
   { name: 'vergi_dairesi', label: 'Vergi Dairesi', type: 'select', required: true, searchable: true },
   {
     name: 'sirket_turu',
@@ -161,7 +160,6 @@ const tabs: FormTab[] = [
     label: 'İletişim',
     icon: <Phone size={16} />,
     fields: [
-      { name: 'ulke', label: 'Ülke', type: 'text', required: true, defaultValue: 'Türkiye' },
       { name: 'il', label: 'İl', type: 'text', required: true },
       { name: 'ilce', label: 'İlçe', type: 'text', required: true },
       { name: 'adres', label: 'Adres', type: 'textarea', required: true, colSpan: 3 },

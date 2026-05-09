@@ -84,16 +84,6 @@ const columns: ColumnDef[] = [
 const heroFields: FormField[] = [
   { name: 'company_id', label: 'Şirket', type: 'select', required: true },
   {
-    name: 'partner_type',
-    label: 'Kişi/Kurum Tipi',
-    type: 'select',
-    required: true,
-    options: [
-      { value: 'gercek_kisi', label: 'Gerçek Kişi' },
-      { value: 'tuzel_kisi', label: 'Tüzel Kişi' },
-    ],
-  },
-  {
     name: 'source_type',
     label: 'Mevcut Kayıt Eşleştirme',
     type: 'select',
@@ -113,8 +103,6 @@ const heroFields: FormField[] = [
   { name: 'source_id', label: 'Mevcut Kayıt Eşleştirme', type: 'select' },
   { name: 'first_name', label: 'Adı / Ticari Ünvan', type: 'text', required: true },
   { name: 'last_name', label: 'Kısa Ad / Soyad', type: 'text' },
-  { name: 'identity_number', label: 'TCKN / VKN', type: 'text', required: true, inputMode: 'numeric', pattern: '[0-9]{10,11}', maxLength: 11 },
-  { name: 'nationality_country', label: 'Uyruğu / Ülke', type: 'text', defaultValue: 'Türkiye' },
   { name: 'share_ratio', label: 'Pay Oranı (%)', type: 'number', required: true },
   { name: 'voting_ratio', label: 'Oy Hakkı (%)', type: 'number' },
   { name: 'profit_ratio', label: 'Kar Payı (%)', type: 'number' },
@@ -183,7 +171,6 @@ const tabs: FormTab[] = [
     fields: [
       { name: 'phone', label: 'Telefon', type: 'tel' },
       { name: 'email', label: 'Email', type: 'email' },
-      { name: 'country', label: 'Ülke', type: 'text', defaultValue: 'Türkiye' },
       { name: 'city', label: 'Şehir', type: 'text' },
       { name: 'district', label: 'İlçe', type: 'text' },
       { name: 'address', label: 'Adres', type: 'textarea', colSpan: 3 },
@@ -245,7 +232,6 @@ const tabs: FormTab[] = [
     id: 'vergi',
     label: 'Vergi',
     fields: [
-      { name: 'tax_number', label: 'Vergi No', type: 'text', visibleWhen: { field: 'partner_type', operator: 'equals', value: 'tuzel_kisi' } },
       { name: 'tax_office', label: 'Vergi Dairesi', type: 'text', visibleWhen: { field: 'partner_type', operator: 'equals', value: 'tuzel_kisi' } },
       { name: 'e_invoice_status', label: 'E-Fatura Durumu', type: 'checkbox', visibleWhen: { field: 'partner_type', operator: 'equals', value: 'tuzel_kisi' } },
     ],
@@ -629,6 +615,10 @@ function normalizePayload(raw: Record<string, any>, companies: Option[]) {
   )
 
   payload.company_id = payload.company_id || payload.sirket_id || companies[0]?.value
+  if (payload.master_entity_kind === 'person') payload.partner_type = 'gercek_kisi'
+  if (payload.master_entity_kind === 'organization') payload.partner_type = 'tuzel_kisi'
+  payload.nationality_country = payload.nationality_country || payload.country || payload.nationality || 'TR'
+  payload.identity_number = payload.identity_number || payload.national_id || payload.tc_kimlik || payload.tax_number || payload.vkn_tckn || payload.passport_no || payload.pasaport_no
   payload.owner_kind = payload.partner_type
   payload.trade_name = payload.partner_type === 'tuzel_kisi' ? payload.first_name : undefined
   payload.short_name = payload.partner_type === 'tuzel_kisi' ? payload.last_name : undefined

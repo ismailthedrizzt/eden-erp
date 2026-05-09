@@ -30,12 +30,15 @@ export function MasterIdentityGate({
   const [entityKind, setEntityKind] = useState<IdentityEntityKind>(config.allowedEntityKinds[0] || 'person')
   const [identity, setIdentity] = useState<Record<string, string>>(() => initialIdentity(config.allowedEntityKinds[0] || 'person'))
   const [state, setState] = useState<IdentityGateState>('identity_input')
-  const [message, setMessage] = useState('Devam etmek için önce kimlik / kurum bilgilerini girerek master kayıt eşleştirmesi yapın.')
+  const [message, setMessage] = useState('Devam etmek için önce temel kimlik bilgilerini girerek master kayıt eşleştirmesi yapın.')
   const [warning, setWarning] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [lastResult, setLastResult] = useState<IdentityGateResolveResult | null>(null)
+  const [touched, setTouched] = useState<Record<string, boolean>>({})
 
   const readOnly = mode !== 'create'
+  const isFixedKind = config.allowedEntityKinds.length === 1
+  const isTurkeyPerson = entityKind === 'person' && normalizeNationalityInput(identity.nationality) === 'tc'
   const kindOptions = useMemo(() => config.allowedEntityKinds.map(kind => ({
     value: kind,
     label: kind === 'person' ? 'Gerçek Kişi' : 'Tüzel Kişi',
@@ -44,11 +47,24 @@ export function MasterIdentityGate({
   useEffect(() => {
     if (mode === 'create') return
     setState('ready_for_edit')
-    setMessage('Kayıt düzenleme modunda. Master kimlik ilişkisi mevcut kayıt üzerinden yönetilir.')
+    setMessage('Kayıt düzenleme modunda. Temel kimlik ilişkisi mevcut kayıt üzerinden yönetilir.')
   }, [mode])
 
   const updateIdentity = (key: string, value: string) => {
-    setIdentity(prev => ({ ...prev, [key]: key.includes('number') || key.includes('id') ? value.replace(/\D/g, '') : value }))
+    setIdentity(prev => {
+      const next = { ...prev }
+      const cleaned = key.includes('number') || key.includes('id') ? value.replace(/\D/g, '') : value
+      next[key] = cleaned
+
+      if (key === 'nationality') {
+        const nextIsTurkey = normalizeNationalityInput(cleaned) === 'tc'
+        next.national_id = nextIsTurkey ? next.national_id || '' : ''
+        next.passport_no = nextIsTurkey ? '' : next.passport_no || ''
+      }
+
+      return next
+    })
+    setTouched(prev => ({ ...prev, [key]: true }))
     if (state !== 'identity_input') {
       setState('identity_input')
       setLastResult(null)
@@ -65,12 +81,14 @@ export function MasterIdentityGate({
     setLastResult(null)
     setWarning(null)
     setError(null)
+    setTouched({})
     onReset()
   }
 
   const resolveIdentity = async () => {
     setError(null)
     setWarning(null)
+    setTouched({ nationality: true, identity_no: true, country: true, tax_number: true })
 
     const validationError = validateIdentity(entityKind, identity)
     if (validationError) {
@@ -87,7 +105,7 @@ export function MasterIdentityGate({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           entityKind,
-          identity,
+          identity: normalizeIdentityForSubmit(entityKind, identity),
           roleTable: config.roleTable,
           roleDuplicateCheck: config.roleDuplicateCheck,
           allowMultipleActiveRoles: config.allowMultipleActiveRoles,
@@ -105,7 +123,7 @@ export function MasterIdentityGate({
       onResolved(result)
     } catch (err) {
       setState('identity_input')
-      setMessage('Devam etmek için önce kimlik / kurum bilgilerini girerek master kayıt eşleştirmesi yapın.')
+      setMessage('Devam etmek için önce temel kimlik bilgilerini girerek master kayıt eşleştirmesi yapın.')
       setError(err instanceof Error ? err.message : 'Kimlik çözümleme başarısız')
     }
   }
@@ -120,7 +138,7 @@ export function MasterIdentityGate({
     <div className="col-span-2 lg:col-span-3 rounded-xl border border-blue-100 bg-blue-50/70 p-4 dark:border-blue-900/60 dark:bg-blue-950/20">
       <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h4 className="text-sm font-semibold text-gray-900 dark:text-white">Master Kimlik Eşleştirme</h4>
+          <h4 className="text-sm font-semibold text-gray-900 dark:text-white">Temel Kimlik Bilgileri</h4>
           <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">{message}</p>
         </div>
         <GateStatus state={state} tone={statusTone} />
@@ -130,9 +148,9 @@ export function MasterIdentityGate({
         <Field label="Kişi / Kurum Tipi">
           <select
             value={entityKind}
-            disabled={readOnly || kindOptions.length === 1}
+            disabled={readOnly || isFixedKind}
             onChange={(event) => handleKindChange(event.target.value as IdentityEntityKind)}
-            className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900"
+            className={fieldClass(true, false, readOnly || isFixedKind)}
           >
             {kindOptions.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
           </select>
@@ -141,25 +159,53 @@ export function MasterIdentityGate({
         {entityKind === 'person' ? (
           <>
             <Field label="Uyruğu">
-              <input value={identity.nationality || ''} disabled={readOnly} onChange={(event) => updateIdentity('nationality', event.target.value)} placeholder="TR" className={inputClass} />
+              <select
+                value={normalizeNationalityInput(identity.nationality)}
+                disabled={readOnly}
+                onBlur={() => setTouched(prev => ({ ...prev, nationality: true }))}
+                onChange={(event) => updateIdentity('nationality', event.target.value)}
+                className={fieldClass(hasPersonNationality(identity), touched.nationality, readOnly)}
+              >
+                <option value="tc">T.C.</option>
+                <option value="yabanci">Yabancı</option>
+              </select>
             </Field>
-            <Field label="TC Kimlik No / Pasaport No">
-              <div className="grid grid-cols-2 gap-2">
-                <input value={identity.national_id || ''} disabled={readOnly} onChange={(event) => updateIdentity('national_id', event.target.value)} placeholder="TCKN" maxLength={11} inputMode="numeric" className={inputClass} />
-                <input value={identity.passport_no || ''} disabled={readOnly} onChange={(event) => updateIdentity('passport_no', event.target.value)} placeholder="Pasaport" className={inputClass} />
-              </div>
+            <Field label={isTurkeyPerson ? 'TC Kimlik No' : 'Pasaport No'}>
+              <input
+                value={isTurkeyPerson ? identity.national_id || '' : identity.passport_no || ''}
+                disabled={readOnly}
+                onBlur={() => setTouched(prev => ({ ...prev, identity_no: true }))}
+                onChange={(event) => updateIdentity(isTurkeyPerson ? 'national_id' : 'passport_no', event.target.value)}
+                placeholder={isTurkeyPerson ? '11 haneli TCKN' : 'Pasaport No'}
+                maxLength={isTurkeyPerson ? 11 : undefined}
+                inputMode={isTurkeyPerson ? 'numeric' : 'text'}
+                className={fieldClass(hasPersonIdentity(identity), touched.identity_no, readOnly)}
+              />
             </Field>
           </>
         ) : (
           <>
             <Field label="Ülke">
-              <input value={identity.country || ''} disabled={readOnly} onChange={(event) => updateIdentity('country', event.target.value)} placeholder="TR" className={inputClass} />
+              <input
+                value={identity.country || ''}
+                disabled={readOnly}
+                onBlur={() => setTouched(prev => ({ ...prev, country: true }))}
+                onChange={(event) => updateIdentity('country', event.target.value)}
+                placeholder="TR"
+                className={fieldClass(hasOrganizationCountry(identity), touched.country, readOnly)}
+              />
             </Field>
-            <Field label="VKN / Ticaret Sicil No">
-              <div className="grid grid-cols-2 gap-2">
-                <input value={identity.tax_number || ''} disabled={readOnly} onChange={(event) => updateIdentity('tax_number', event.target.value)} placeholder="VKN" inputMode="numeric" className={inputClass} />
-                <input value={identity.registration_number || ''} disabled={readOnly} onChange={(event) => updateIdentity('registration_number', event.target.value)} placeholder="Sicil No" className={inputClass} />
-              </div>
+            <Field label="VKN">
+              <input
+                value={identity.tax_number || ''}
+                disabled={readOnly}
+                onBlur={() => setTouched(prev => ({ ...prev, tax_number: true }))}
+                onChange={(event) => updateIdentity('tax_number', event.target.value)}
+                placeholder="10 haneli VKN"
+                maxLength={10}
+                inputMode="numeric"
+                className={fieldClass(hasOrganizationTaxNumber(identity), touched.tax_number, readOnly)}
+              />
             </Field>
           </>
         )}
@@ -220,21 +266,73 @@ const inputClass = 'w-full rounded-lg border border-gray-300 bg-white px-3 py-2 
 
 function initialIdentity(kind: IdentityEntityKind): Record<string, string> {
   return kind === 'person'
-    ? { nationality: 'TR', national_id: '', passport_no: '' }
+    ? { nationality: 'tc', national_id: '', passport_no: '' }
     : { country: 'TR', tax_number: '', registration_number: '' }
 }
 
 function validateIdentity(kind: IdentityEntityKind, identity: Record<string, string>) {
   if (kind === 'person') {
     if (!identity.nationality) return 'Uyruğu zorunludur.'
-    if (!identity.national_id && !identity.passport_no) return 'TC Kimlik No veya Pasaport No zorunludur.'
-    if (identity.national_id && identity.national_id.length !== 11) return 'TC Kimlik No 11 haneli olmalıdır.'
+    const isTurkish = normalizeNationalityInput(identity.nationality) === 'tc'
+    if (isTurkish && !identity.national_id) return 'TC Kimlik No zorunludur.'
+    if (!isTurkish && !identity.passport_no) return 'Pasaport No zorunludur.'
+    if (isTurkish && identity.national_id.length !== 11) return 'TC Kimlik No 11 haneli olmalıdır.'
     return null
   }
 
   if (!identity.country) return 'Ülke zorunludur.'
-  if (!identity.tax_number && !identity.registration_number) return 'VKN veya Ticaret Sicil No zorunludur.'
+  if (!identity.tax_number) return 'VKN zorunludur.'
+  if (identity.tax_number.length !== 10) return 'VKN 10 haneli olmalıdır.'
   return null
+}
+
+function normalizeIdentityForSubmit(kind: IdentityEntityKind, identity: Record<string, string>) {
+  if (kind === 'person') {
+    const nationality = normalizeNationalityInput(identity.nationality)
+    const isTurkish = nationality === 'tc'
+    return {
+      nationality,
+      national_id: isTurkish ? identity.national_id || '' : '',
+      passport_no: isTurkish ? '' : identity.passport_no || '',
+    }
+  }
+
+  return {
+    country: identity.country || 'TR',
+    tax_number: identity.tax_number || '',
+    registration_number: '',
+  }
+}
+
+function normalizeNationalityInput(value?: string) {
+  const normalized = String(value || 'tc').trim().toLocaleLowerCase('tr-TR')
+  return ['tr', 'tc', 't.c.', 't.c', 'türkiye', 'turkiye'].includes(normalized) ? 'tc' : 'yabanci'
+}
+
+function hasPersonNationality(identity: Record<string, string>) {
+  return !!identity.nationality
+}
+
+function hasPersonIdentity(identity: Record<string, string>) {
+  return normalizeNationalityInput(identity.nationality) === 'tc'
+    ? /^\d{11}$/.test(identity.national_id || '')
+    : !!String(identity.passport_no || '').trim()
+}
+
+function hasOrganizationCountry(identity: Record<string, string>) {
+  return !!String(identity.country || '').trim()
+}
+
+function hasOrganizationTaxNumber(identity: Record<string, string>) {
+  return /^\d{10}$/.test(identity.tax_number || '')
+}
+
+function fieldClass(valid: boolean, touched?: boolean, disabled?: boolean) {
+  return cn(
+    inputClass,
+    !disabled && valid && 'border-emerald-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20',
+    !disabled && !valid && 'border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20'
+  )
 }
 
 function buildRoleScope(config: IdentityGateConfig, formData: Record<string, any>, explicitScope?: Record<string, unknown>) {

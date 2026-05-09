@@ -71,16 +71,6 @@ const columns: ColumnDef[] = [
 ]
 
 const heroFields: FormField[] = [
-  {
-    name: 'stakeholder_type',
-    label: 'Paydaş Türü',
-    type: 'select',
-    required: true,
-    options: [
-      { value: 'gercek_kisi', label: 'Gerçek Kişi' },
-      { value: 'tuzel_kisi', label: 'Tüzel Kişi' },
-    ],
-  },
   { name: 'display_name', label: 'Ad Soyad / Ticari Ünvan', type: 'text', required: true },
   {
     name: 'category',
@@ -89,10 +79,8 @@ const heroFields: FormField[] = [
     required: true,
     options: CATEGORY_OPTIONS.map(item => ({ value: item, label: item })),
   },
-  { name: 'tax_id', label: 'TCKN / VKN', type: 'text', inputMode: 'numeric', maxLength: 11 },
   { name: 'phone', label: 'Telefon', type: 'tel', requiredGroup: 'stakeholder_contact' },
   { name: 'email', label: 'Email', type: 'email', requiredGroup: 'stakeholder_contact' },
-  { name: 'country', label: 'Ülke', type: 'text', defaultValue: 'Türkiye' },
   { name: 'city', label: 'Şehir', type: 'text' },
   {
     name: 'status',
@@ -149,7 +137,6 @@ const tabs: FormTab[] = [
       { name: 'phone_2', label: 'Telefon 2', type: 'tel' },
       { name: 'email_1', label: 'Email 1', type: 'email' },
       { name: 'email_2', label: 'Email 2', type: 'email' },
-      { name: 'country', label: 'Ülke', type: 'text' },
       { name: 'city', label: 'Şehir', type: 'text' },
       { name: 'district', label: 'İlçe', type: 'text' },
       { name: 'postal_code', label: 'Posta Kodu', type: 'text' },
@@ -167,7 +154,6 @@ const tabs: FormTab[] = [
       { name: 'payment_method', label: 'Ödeme Şekli', type: 'text' },
       { name: 'due_day', label: 'Vade Günü', type: 'number' },
       { name: 'currency', label: 'Para Birimi', type: 'text', defaultValue: 'TRY' },
-      { name: 'tax_id', label: 'Vergi No', type: 'text' },
       { name: 'withholding_applies', label: 'Stopaj Uygulanır mı', type: 'checkbox' },
       { name: 'pricing_note', label: 'Fiyatlandırma Notu', type: 'textarea', colSpan: 3 },
     ],
@@ -473,6 +459,10 @@ function normalizeStakeholderForForm(stakeholder: StakeholderRow) {
 function normalizePayload(raw: Record<string, any>, companies: Option[]) {
   const payload = Object.fromEntries(Object.entries(raw).filter(([, value]) => value !== '' && value !== null && value !== undefined))
   payload.company_id = payload.company_id || companies[0]?.value
+  if (payload.master_entity_kind === 'person') payload.stakeholder_type = 'gercek_kisi'
+  if (payload.master_entity_kind === 'organization') payload.stakeholder_type = 'tuzel_kisi'
+  payload.country = payload.country || payload.nationality_country || payload.nationality || 'TR'
+  payload.tax_id = payload.tax_id || payload.national_id || payload.tc_kimlik || payload.tax_number || payload.vkn_tckn || payload.passport_no || payload.pasaport_no
   payload.phone = payload.phone || payload.phone_1
   payload.email = payload.email || payload.email_1
   payload.document_summary = undefined

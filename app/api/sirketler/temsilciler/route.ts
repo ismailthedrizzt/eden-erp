@@ -5,6 +5,8 @@ import { z } from 'zod'
 const RepresentativeSchema = z.object({
   company_id: z.string().uuid().optional(),
   sirket_id: z.string().uuid().optional(),
+  person_id: z.string().uuid().optional().nullable(),
+  organization_id: z.string().uuid().optional().nullable(),
   person_or_entity_type: z.enum(['gercek_kisi', 'tuzel_kisi']).default('gercek_kisi'),
   source_type: z.string().optional(),
   source_id: z.string().optional(),
@@ -113,30 +115,40 @@ async function attachRepresentativeIdentity(supabase: ReturnType<typeof createSe
   try {
     const kind = representative.person_or_entity_type === 'tuzel_kisi' ? 'organization' : 'person'
     if (kind === 'person') {
+      if (representative.person_id) return { ...row, person_id: representative.person_id, source_id: row.source_id || representative.person_id }
+
       const fullName = representative.display_name
       const nationalId = representative.identity_number && String(representative.identity_number).length === 11 ? String(representative.identity_number) : null
+      const passportNo = nationalId ? null : representative.passport_no || representative.identity_number || null
+      const nationality = representative.nationality || representative.nationality_country || 'TR'
       const { data: existing, error: findError } = nationalId
-        ? await supabase.from('persons').select('id').eq('nationality', 'TR').eq('national_id', nationalId).maybeSingle()
-        : await supabase.from('persons').select('id').eq('full_name', fullName).maybeSingle()
+        ? await supabase.from('persons').select('id').eq('nationality', nationality).eq('national_id', nationalId).maybeSingle()
+        : passportNo
+          ? await supabase.from('persons').select('id').eq('nationality', nationality).eq('passport_no', passportNo).maybeSingle()
+          : await supabase.from('persons').select('id').eq('full_name', fullName).maybeSingle()
       if (findError) return row
       const personId = existing?.id || (await supabase.from('persons').insert({
         full_name: fullName,
-        nationality: 'TR',
+        nationality,
         national_id: nationalId,
+        passport_no: passportNo,
         metadata_json: { source: 'representatives_create' },
       }).select('id').single()).data?.id
       return { ...row, person_id: personId || null, source_id: row.source_id || personId || null }
     }
 
     const legalName = representative.display_name
+    if (representative.organization_id) return { ...row, organization_id: representative.organization_id, source_id: row.source_id || representative.organization_id }
+
+    const country = representative.country || representative.nationality_country || 'TR'
     const taxNumber = representative.identity_number || null
     const { data: existing, error: findError } = taxNumber
-      ? await supabase.from('organizations').select('id').eq('country', 'TR').eq('tax_number', taxNumber).maybeSingle()
-      : await supabase.from('organizations').select('id').eq('country', 'TR').eq('legal_name', legalName).maybeSingle()
+      ? await supabase.from('organizations').select('id').eq('country', country).eq('tax_number', taxNumber).maybeSingle()
+      : await supabase.from('organizations').select('id').eq('country', country).eq('legal_name', legalName).maybeSingle()
     if (findError) return row
     const organizationId = existing?.id || (await supabase.from('organizations').insert({
       legal_name: legalName,
-      country: 'TR',
+      country,
       tax_number: taxNumber,
       metadata_json: { source: 'representatives_create' },
     }).select('id').single()).data?.id

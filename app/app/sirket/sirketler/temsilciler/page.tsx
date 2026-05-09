@@ -70,16 +70,6 @@ const columns: ColumnDef[] = [
 ]
 
 const heroFields: FormField[] = [
-  {
-    name: 'person_or_entity_type',
-    label: 'Kişi / Kurum Tipi',
-    type: 'select',
-    required: true,
-    options: [
-      { value: 'gercek_kisi', label: 'Gerçek Kişi' },
-      { value: 'tuzel_kisi', label: 'Tüzel Kişi' },
-    ],
-  },
   { name: 'display_name', label: 'Ad Soyad / Ticari Ünvan', type: 'text', required: true },
   {
     name: 'source_type',
@@ -107,7 +97,6 @@ const heroFields: FormField[] = [
     ],
   },
   { name: 'source_id', label: 'Mevcut Kayıt Eşleştirme', type: 'text' },
-  { name: 'identity_number', label: 'TCKN / VKN', type: 'text', inputMode: 'numeric', maxLength: 11 },
   {
     name: 'status',
     label: 'Yetki Durumu',
@@ -170,14 +159,11 @@ const tabs: FormTab[] = [
     fields: [
       { name: 'first_name', label: 'Ad', type: 'text', visibleWhen: { field: 'person_or_entity_type', operator: 'equals', value: 'gercek_kisi' } },
       { name: 'last_name', label: 'Soyad', type: 'text', visibleWhen: { field: 'person_or_entity_type', operator: 'equals', value: 'gercek_kisi' } },
-      { name: 'nationality', label: 'Uyruk', type: 'text', visibleWhen: { field: 'person_or_entity_type', operator: 'equals', value: 'gercek_kisi' } },
       { name: 'birth_date', label: 'Doğum Tarihi', type: 'date', visibleWhen: { field: 'person_or_entity_type', operator: 'equals', value: 'gercek_kisi' } },
       { name: 'phone', label: 'Telefon', type: 'tel', visibleWhen: { field: 'person_or_entity_type', operator: 'equals', value: 'gercek_kisi' } },
       { name: 'email', label: 'Email', type: 'email', visibleWhen: { field: 'person_or_entity_type', operator: 'equals', value: 'gercek_kisi' } },
       { name: 'trade_name', label: 'Ticari Ünvan', type: 'text', visibleWhen: { field: 'person_or_entity_type', operator: 'equals', value: 'tuzel_kisi' } },
       { name: 'short_name', label: 'Kısa Ünvan', type: 'text', visibleWhen: { field: 'person_or_entity_type', operator: 'equals', value: 'tuzel_kisi' } },
-      { name: 'country', label: 'Ülke', type: 'text', visibleWhen: { field: 'person_or_entity_type', operator: 'equals', value: 'tuzel_kisi' } },
-      { name: 'tax_number', label: 'Vergi No', type: 'text', visibleWhen: { field: 'person_or_entity_type', operator: 'equals', value: 'tuzel_kisi' } },
       { name: 'tax_office', label: 'Vergi Dairesi', type: 'text', visibleWhen: { field: 'person_or_entity_type', operator: 'equals', value: 'tuzel_kisi' } },
       { name: 'mersis_no', label: 'MERSİS', type: 'text', visibleWhen: { field: 'person_or_entity_type', operator: 'equals', value: 'tuzel_kisi' } },
       { name: 'source_link', label: 'Kaynak Kayıt Bağlantısı', type: 'text', colSpan: 2 },
@@ -615,6 +601,11 @@ function normalizePayload(raw: Record<string, any>, companies: Option[]) {
   )
 
   payload.company_id = payload.company_id || payload.sirket_id || companies[0]?.value
+  if (payload.master_entity_kind === 'person') payload.person_or_entity_type = 'gercek_kisi'
+  if (payload.master_entity_kind === 'organization') payload.person_or_entity_type = 'tuzel_kisi'
+  payload.nationality = payload.nationality || payload.nationality_country || payload.country || 'TR'
+  payload.country = payload.country || payload.nationality_country || payload.nationality || 'TR'
+  payload.identity_number = payload.identity_number || payload.national_id || payload.tc_kimlik || payload.tax_number || payload.vkn_tckn || payload.passport_no || payload.pasaport_no
   payload.person_kind = payload.person_or_entity_type
   payload.document_summary = undefined
   payload.field_history = undefined

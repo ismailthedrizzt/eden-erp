@@ -23,25 +23,26 @@ interface DashboardGridProps {
   onFilter?: (event: DashboardFilterEvent) => void
   unauthorizedMode?: 'hide' | 'placeholder'
   className?: string
+  compact?: boolean
 }
 
-export function DashboardGrid({ widgets, onFilter, unauthorizedMode = 'hide', className }: DashboardGridProps) {
+export function DashboardGrid({ widgets, onFilter, unauthorizedMode = 'hide', className, compact = false }: DashboardGridProps) {
   const { canAll } = usePermissions()
   const visibleWidgets = widgets.filter(widget => unauthorizedMode === 'placeholder' || canAll(widget.permissions || []))
 
   if (visibleWidgets.length === 0) return null
 
   return (
-    <div className={cn('grid grid-cols-1 gap-3 md:grid-cols-6 xl:grid-cols-12', className)}>
+    <div className={cn('grid grid-cols-1 md:grid-cols-6 xl:grid-cols-12', compact ? 'gap-2' : 'gap-3', className)}>
       {visibleWidgets.map(widget => {
         const allowed = canAll(widget.permissions || [])
-        const w = Math.max(1, Math.min(12, widget.size.w))
+        const w = Math.max(1, Math.min(12, compact ? Math.ceil(widget.size.w / 2) : widget.size.w))
         const h = Math.max(1, widget.size.h)
         return (
           <div
             key={widget.id}
             className={cn('col-span-1 min-w-0', mdSpan[Math.min(w, 6)], xlSpan[w])}
-            style={{ minHeight: widget.size.minHeight ?? h * 82 }}
+            style={{ minHeight: widget.size.minHeight ?? h * (compact ? 41 : 82) }}
           >
             {!allowed ? (
               <div className="flex h-full items-center justify-center rounded-lg border border-dashed border-gray-200 bg-white p-4 text-sm text-gray-500 dark:border-gray-800 dark:bg-gray-900">

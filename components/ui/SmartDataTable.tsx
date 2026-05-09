@@ -23,6 +23,8 @@ import {
   Sparkles
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { DashboardGrid } from '@/components/dashboard/DashboardGrid'
+import type { AnyDashboardWidgetConfig, DashboardFilterEvent } from '@/components/dashboard/dashboard.types'
 
 // Column Definition Types
 type ColumnType = 'text' | 'number' | 'date' | 'enum' | 'boolean' | 'image' | 'badge' | 'avatar' | 'actions'
@@ -73,6 +75,8 @@ interface SmartDataTableProps<T extends { id: string }> {
   emptyText?: string
   storageKey?: string // For persisting user preferences
   widgets?: WidgetDef[]
+  dashboardWidgets?: AnyDashboardWidgetConfig[]
+  onDashboardFilter?: (event: DashboardFilterEvent) => void
   defaultView?: 'list' | 'card'
   defaultPageSize?: number
   pageSizeOptions?: number[]
@@ -123,6 +127,8 @@ export function SmartDataTable<T extends { id: string }>({
   emptyText = 'Kayıt bulunamadı',
   storageKey = 'smart-table-default',
   widgets = [],
+  dashboardWidgets = [],
+  onDashboardFilter,
   defaultView = 'list',
   defaultPageSize = 10,
   pageSizeOptions = [10, 25, 50, 100],
@@ -166,7 +172,11 @@ export function SmartDataTable<T extends { id: string }>({
   const [showColumnSelector, setShowColumnSelector] = useState(false)
   const [showFilterPanel, setShowFilterPanel] = useState(false)
   const [hoveredRow, setHoveredRow] = useState<string | null>(null)
-  const [showWidgets, setShowWidgets] = useState(false)
+  const [showWidgets, setShowWidgets] = useState(() => {
+    if (typeof window === 'undefined') return true
+    const saved = localStorage.getItem(`${storageKey}-quickLook`)
+    return saved === null ? true : saved === 'true'
+  })
   const [draggedColumn, setDraggedColumn] = useState<string | null>(null)
   const [dropTarget, setDropTarget] = useState<string | null>(null)
 
@@ -194,8 +204,9 @@ export function SmartDataTable<T extends { id: string }>({
       localStorage.setItem(`${storageKey}-view`, viewMode)
       localStorage.setItem(`${storageKey}-pageSize`, pageSize.toString())
       localStorage.setItem(`${storageKey}-columns`, JSON.stringify(columnConfig))
+      localStorage.setItem(`${storageKey}-quickLook`, String(showWidgets))
     }
-  }, [viewMode, pageSize, columnConfig, storageKey])
+  }, [viewMode, pageSize, columnConfig, showWidgets, storageKey])
 
   // Click outside handler for column selector
   useEffect(() => {
@@ -804,7 +815,8 @@ export function SmartDataTable<T extends { id: string }>({
     return col.type === 'text' || col.type === 'enum' || col.type === 'badge'
   }
 
-  const quickLookPanel = (showWidgets || (hoveredRow && hoveredRow !== 'widget-preview' && widgets.length > 0)) ? (
+  const hasQuickLookContent = widgets.length > 0 || dashboardWidgets.length > 0
+  const quickLookPanel = (showWidgets && hasQuickLookContent) ? (
     <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
       <div className="flex items-center justify-between mb-3">
         <h3 className="font-medium text-blue-900 dark:text-blue-100 flex items-center gap-2">
@@ -822,23 +834,38 @@ export function SmartDataTable<T extends { id: string }>({
           <X size={16} />
         </button>
       </div>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {widgets.length > 0 ? widgets.map(widget => (
-          <div key={widget.key} className="bg-white dark:bg-gray-800 rounded-lg p-3 shadow-sm">
-            <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">{widget.label}</div>
-            <div className="font-medium text-gray-900 dark:text-white">
-              {(() => {
-                const targetRow = hoveredRow && hoveredRow !== 'widget-preview'
-                  ? data.find(r => r.id === hoveredRow)
-                  : data[0]
-                return targetRow ? widget.render(targetRow) : '-'
-              })()}
-            </div>
+      <div className="space-y-3">
+        {dashboardWidgets.length > 0 && (
+          <DashboardGrid
+            widgets={dashboardWidgets}
+            onFilter={onDashboardFilter}
+            unauthorizedMode="hide"
+            compact
+          />
+        )}
+
+        {widgets.length > 0 && (
+          <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
+            {widgets.map(widget => (
+              <div key={widget.key} className="bg-white dark:bg-gray-800 rounded-lg p-2 shadow-sm">
+                <div className="text-[11px] text-gray-500 dark:text-gray-400 mb-0.5">{widget.label}</div>
+                <div className="text-sm font-medium text-gray-900 dark:text-white">
+                  {(() => {
+                    const targetRow = hoveredRow && hoveredRow !== 'widget-preview'
+                      ? data.find(r => r.id === hoveredRow)
+                      : data[0]
+                    return targetRow ? widget.render(targetRow) : '-'
+                  })()}
+                </div>
+              </div>
+            ))}
           </div>
-        )) : (
-          <div className="col-span-full text-center text-sm text-gray-500 dark:text-gray-400 py-4">
+        )}
+
+        {!hasQuickLookContent && (
+          <div className="text-center text-sm text-gray-500 dark:text-gray-400 py-4">
             Bu liste için hızlı bakış bilgisi tanımlanmamış.
-          </div>
+            </div>
         )}
       </div>
     </div>
@@ -903,7 +930,6 @@ export function SmartDataTable<T extends { id: string }>({
           {/* Quick Look Toggle */}
           <button
             onClick={() => setShowWidgets(!showWidgets)}
-            onMouseEnter={() => !showWidgets && setHoveredRow('widget-preview')}
             className={cn(
               "p-2 rounded-lg transition-colors relative",
               showWidgets 
@@ -913,9 +939,9 @@ export function SmartDataTable<T extends { id: string }>({
             title="Hızlı Bakış"
           >
             <Eye size={18} />
-            {widgets.length > 0 && (
+            {hasQuickLookContent && (
               <span className="absolute -top-1 -right-1 w-4 h-4 bg-blue-500 text-white text-[10px] rounded-full flex items-center justify-center">
-                {widgets.length}
+                {dashboardWidgets.length || widgets.length}
               </span>
             )}
           </button>
