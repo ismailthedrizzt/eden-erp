@@ -17,7 +17,7 @@ const ResolveSchema = z.object({
 
 export async function POST(request: NextRequest) {
   const parsed = ResolveSchema.safeParse(await request.json().catch(() => null))
-  if (!parsed.success) return NextResponse.json({ error: 'GeÃ§ersiz kimlik arama isteÄŸi' }, { status: 400 })
+  if (!parsed.success) return NextResponse.json({ error: 'Geçersiz kimlik arama isteği' }, { status: 400 })
 
   const supabase = createServiceClient()
   const { entityKind, identity } = parsed.data
@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       found: false,
       entityKind,
-      message: 'Bu kiÅŸi/kurum master kayÄ±tlarda bulunamadÄ±. Cari hareketlerde kullanabilmek iÃ§in Ã¶nce ilgili formdan oluÅŸturulmalÄ±dÄ±r.',
+      message: 'Bu kişi/kurum master kayıtlarda bulunamadı. Cari hareketlerde kullanabilmek için önce ilgili formdan oluşturulmalıdır.',
       roles: [],
       card: null,
     })
@@ -47,7 +47,7 @@ export async function POST(request: NextRequest) {
     identityNo: entityKind === 'person' ? master.record.national_id || master.record.passport_no : master.record.tax_number || master.record.registration_number,
     roles,
     card,
-    message: 'Bu kayÄ±t sistemde mevcut.',
+    message: 'Bu kayıt sistemde mevcut.',
   })
 }
 

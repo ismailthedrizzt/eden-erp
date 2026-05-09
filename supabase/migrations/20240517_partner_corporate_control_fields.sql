@@ -21,7 +21,7 @@ ALTER TABLE public.sirket_ortaklar
 
 ALTER TABLE public.sirket_ortaklar
   ADD CONSTRAINT sirket_ortaklar_status_check
-  CHECK (status IN ('Aktif', 'Pasif', 'Devredildi', 'Askıda', 'AskÄ±da', 'Tarihsel', 'Tasfiye Sürecinde', 'Tasfiye SÃ¼recinde')),
+  CHECK (status IN ('Aktif', 'Pasif', 'Devredildi', 'Askıda', 'Askıda', 'Tarihsel', 'Tasfiye Sürecinde', 'Tasfiye Sürecinde')),
   ADD CONSTRAINT sirket_ortaklar_control_type_check
   CHECK (
     control_type IS NULL OR

@@ -11,18 +11,18 @@ import { ModuleProvider } from '@/lib/security/moduleStore'
 
 const BREADCRUMBS: Record<string, string> = {
   '/app': 'Ana Sayfa',
-  '/app/ik': 'Ä°nsan KaynaklarÄ±',
-  '/app/ik/teskilat': 'Ä°nsan KaynaklarÄ± â€º TeÅŸkilat & Kadro',
-  '/app/ik/personel': 'Ä°nsan KaynaklarÄ± â€º Ã‡alÄ±ÅŸanlarÄ±mÄ±z',
-  '/app/ik/personel/ekle': 'Ä°nsan KaynaklarÄ± â€º Ã‡alÄ±ÅŸanlarÄ±mÄ±z â€º Ã‡alÄ±ÅŸan Ekle',
+  '/app/ik': 'İnsan Kaynakları',
+  '/app/ik/teskilat': 'İnsan Kaynakları › Teşkilat & Kadro',
+  '/app/ik/personel': 'İnsan Kaynakları › Çalışanlarımız',
+  '/app/ik/personel/ekle': 'İnsan Kaynakları › Çalışanlarımız › Çalışan Ekle',
   '/app/muhasebe': 'Muhasebe',
   '/app/muhasebe/cari-kartlar': 'Muhasebe › Cari Kartlar',
   '/app/muhasebe/on-muhasebe-hareketleri': 'Muhasebe › Ön Muhasebe Hareketleri',
-  '/app/muhasebe/dashboard': 'Muhasebe â€º Dashboard',
-  '/app/muhasebe/islemler': 'Muhasebe â€º Ä°ÅŸlemler',
-  '/app/muhasebe/borclar': 'Muhasebe â€º BorÃ§ Takip',
-  '/app/muhasebe/projeler': 'Muhasebe â€º Proje Ã–zeti',
-  '/app/muhasebe/hesaplar': 'Muhasebe â€º Hesaplar',
+  '/app/muhasebe/dashboard': 'Muhasebe › Dashboard',
+  '/app/muhasebe/islemler': 'Muhasebe › İşlemler',
+  '/app/muhasebe/borclar': 'Muhasebe › Borç Takip',
+  '/app/muhasebe/projeler': 'Muhasebe › Proje Özeti',
+  '/app/muhasebe/hesaplar': 'Muhasebe › Hesaplar',
 }
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
@@ -52,7 +52,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   }
 
   const breadcrumb = BREADCRUMBS[pathname] ?? 'Eden ERP'
-  const breadcrumbParts = breadcrumb.includes('›') ? breadcrumb.split('›') : breadcrumb.split('â€º')
+  const breadcrumbParts = breadcrumb.includes('›') ? breadcrumb.split('›') : breadcrumb.split('›')
 
   return (
     <ModuleLicenseProvider>
@@ -101,7 +101,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 <Menu size={15} />
               </button>
               <div className="text-xs text-gray-400 dark:text-gray-500">
-                Eden ERP â€º{' '}
+                Eden ERP ›{' '}
                 <span className="text-gray-700 dark:text-gray-200 font-medium">
                   {breadcrumbParts.length > 1 ? breadcrumbParts.pop()?.trim() : breadcrumb}
                 </span>
@@ -119,11 +119,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               <div className="flex items-center gap-2.5">
                 <div className="w-7 h-7 rounded-full bg-eden-blue flex items-center justify-center
                                 text-[10px] font-bold text-white">
-                  Ä°Ä°
+                  İİ
                 </div>
                 <div className="min-w-0">
-                  <div className="text-xs font-medium text-gray-700 dark:text-gray-200 truncate">Ä°smail ILGAR</div>
-                  <div className="text-[10px] text-gray-500 dark:text-gray-400">YÃ¶netici</div>
+                  <div className="text-xs font-medium text-gray-700 dark:text-gray-200 truncate">İsmail ILGAR</div>
+                  <div className="text-[10px] text-gray-500 dark:text-gray-400">Yönetici</div>
                 </div>
               </div>
             </div>

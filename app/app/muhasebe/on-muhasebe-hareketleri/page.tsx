@@ -14,16 +14,16 @@ import type { AccountMovementRow } from '@/lib/modules/accounting/shared/account
 
 const columns: ColumnDef[] = [
   { key: 'movement_date', label: 'Tarih', type: 'date', width: 120, sortable: true },
-  { key: 'movement_type', label: 'Ä°ÅŸlem Tipi', type: 'text', width: 150 },
-  { key: 'performed_by_name', label: 'Ä°ÅŸlemi Yapan', type: 'text', width: 190 },
-  { key: 'counterparty_name', label: 'KarÅŸÄ± Taraf', type: 'text', width: 220 },
+  { key: 'movement_type', label: 'İşlem Tipi', type: 'text', width: 150 },
+  { key: 'performed_by_name', label: 'İşlemi Yapan', type: 'text', width: 190 },
+  { key: 'counterparty_name', label: 'Karşı Taraf', type: 'text', width: 220 },
   { key: 'amount', label: 'Tutar', type: 'number', width: 120 },
   { key: 'currency', label: 'Para Birimi', type: 'text', width: 100 },
-  { key: 'payment_method', label: 'Ã–deme YÃ¶ntemi', type: 'text', width: 170 },
+  { key: 'payment_method', label: 'Ödeme Yöntemi', type: 'text', width: 170 },
   { key: 'document_label', label: 'Belge', type: 'text', width: 130 },
   { key: 'bank_label', label: 'Banka/Kart', type: 'text', width: 130 },
   { key: 'status', label: 'Durum', type: 'text', width: 130 },
-  { key: 'health_label', label: 'SaÄŸlÄ±k', type: 'text', width: 170 },
+  { key: 'health_label', label: 'Sağlık', type: 'text', width: 170 },
 ]
 
 export default function PreAccountingMovementsPage() {
@@ -67,40 +67,40 @@ export default function PreAccountingMovementsPage() {
   const companyOptions = refs.companies.map(company => ({ value: company.id, label: company.kisa_unvan || company.ticari_unvan }))
 
   const heroFields: FormField[] = [
-    { name: 'company_id', label: 'Åirket', type: 'select', options: companyOptions },
-    { name: 'movement_type', label: 'Ä°ÅŸlem Tipi', type: 'select', required: true, options: MOVEMENT_TYPES.map(value => ({ value, label: value })) },
-    { name: 'performed_by_person_id', label: 'Ä°ÅŸlemi Yapan', type: 'select', required: true, searchable: true, options: personOptions },
-    { name: 'counterparty_kind', label: 'KarÅŸÄ± Taraf Tipi', type: 'select', required: true, options: [{ value: 'person', label: 'GerÃ§ek KiÅŸi' }, { value: 'organization', label: 'TÃ¼zel KiÅŸi' }] },
-    { name: 'counterparty_person_id', label: 'KarÅŸÄ± Taraf KiÅŸi', type: 'select', searchable: true, options: personOptions, visibleWhen: { field: 'counterparty_kind', operator: 'equals', value: 'person' }, requiredWhen: { field: 'counterparty_kind', operator: 'equals', value: 'person' } },
-    { name: 'counterparty_organization_id', label: 'KarÅŸÄ± Taraf Kurum', type: 'select', searchable: true, options: organizationOptions, visibleWhen: { field: 'counterparty_kind', operator: 'equals', value: 'organization' }, requiredWhen: { field: 'counterparty_kind', operator: 'equals', value: 'organization' } },
+    { name: 'company_id', label: 'Şirket', type: 'select', options: companyOptions },
+    { name: 'movement_type', label: 'İşlem Tipi', type: 'select', required: true, options: MOVEMENT_TYPES.map(value => ({ value, label: value })) },
+    { name: 'performed_by_person_id', label: 'İşlemi Yapan', type: 'select', required: true, searchable: true, options: personOptions },
+    { name: 'counterparty_kind', label: 'Karşı Taraf Tipi', type: 'select', required: true, options: [{ value: 'person', label: 'Gerçek Kişi' }, { value: 'organization', label: 'Tüzel Kişi' }] },
+    { name: 'counterparty_person_id', label: 'Karşı Taraf Kişi', type: 'select', searchable: true, options: personOptions, visibleWhen: { field: 'counterparty_kind', operator: 'equals', value: 'person' }, requiredWhen: { field: 'counterparty_kind', operator: 'equals', value: 'person' } },
+    { name: 'counterparty_organization_id', label: 'Karşı Taraf Kurum', type: 'select', searchable: true, options: organizationOptions, visibleWhen: { field: 'counterparty_kind', operator: 'equals', value: 'organization' }, requiredWhen: { field: 'counterparty_kind', operator: 'equals', value: 'organization' } },
     { name: 'movement_date', label: 'Tarih', type: 'date', required: true },
-    { name: 'direction', label: 'YÃ¶n', type: 'select', required: true, options: [{ value: 'debit', label: 'BorÃ§' }, { value: 'credit', label: 'Alacak' }] },
+    { name: 'direction', label: 'Yön', type: 'select', required: true, options: [{ value: 'debit', label: 'Borç' }, { value: 'credit', label: 'Alacak' }] },
     { name: 'amount', label: 'Tutar', type: 'number', required: true },
     { name: 'currency', label: 'Para Birimi', type: 'select', required: true, options: [{ value: 'TRY', label: 'TRY' }, { value: 'USD', label: 'USD' }, { value: 'EUR', label: 'EUR' }] },
-    { name: 'payment_method', label: 'Ã–deme YÃ¶ntemi', type: 'select', required: true, options: PAYMENT_METHODS.map(value => ({ value, label: value })) },
-    { name: 'document_status', label: 'Belge Durumu', type: 'select', options: [{ value: 'none', label: 'Yok' }, { value: 'waiting', label: 'Bekleniyor' }, { value: 'matched', label: 'EÅŸleÅŸti' }, { value: 'missing', label: 'Eksik' }] },
-    { name: 'description', label: 'AÃ§Ä±klama', type: 'textarea', colSpan: 3 },
+    { name: 'payment_method', label: 'Ödeme Yöntemi', type: 'select', required: true, options: PAYMENT_METHODS.map(value => ({ value, label: value })) },
+    { name: 'document_status', label: 'Belge Durumu', type: 'select', options: [{ value: 'none', label: 'Yok' }, { value: 'waiting', label: 'Bekleniyor' }, { value: 'matched', label: 'Eşleşti' }, { value: 'missing', label: 'Eksik' }] },
+    { name: 'description', label: 'Açıklama', type: 'textarea', colSpan: 3 },
   ]
 
   const tabs: FormTab[] = [
-    { id: 'matching', label: 'EÅŸleÅŸtirme', fields: [
+    { id: 'matching', label: 'Eşleştirme', fields: [
       { name: 'invoice_match_status', label: 'Fatura', type: 'select', options: invoiceOptions() },
       { name: 'bank_match_status', label: 'Banka/Kart', type: 'select', options: bankOptions() },
-      { name: 'reconciliation_status', label: 'Mutabakat', type: 'select', options: [{ value: 'none', label: 'Yok' }, { value: 'waiting', label: 'Bekleniyor' }, { value: 'matched', label: 'EÅŸleÅŸti' }] },
-      { name: 'row_health_status', label: 'SatÄ±r SaÄŸlÄ±ÄŸÄ±', type: 'select', options: Object.entries(ROW_HEALTH_LABELS).map(([value, label]) => ({ value, label })) },
+      { name: 'reconciliation_status', label: 'Mutabakat', type: 'select', options: [{ value: 'none', label: 'Yok' }, { value: 'waiting', label: 'Bekleniyor' }, { value: 'matched', label: 'Eşleşti' }] },
+      { name: 'row_health_status', label: 'Satır Sağlığı', type: 'select', options: Object.entries(ROW_HEALTH_LABELS).map(([value, label]) => ({ value, label })) },
     ] },
     { id: 'workflow', label: 'Durum', fields: [
       { name: 'status', label: 'Durum', type: 'select', options: MOVEMENT_STATUSES.map(value => ({ value, label: value })) },
-      { name: 'workflow_status', label: 'Workflow', type: 'select', options: [{ value: 'none', label: 'Yok' }, { value: 'pending', label: 'Onay Bekliyor' }, { value: 'approved', label: 'OnaylandÄ±' }, { value: 'rejected', label: 'Reddedildi' }] },
+      { name: 'workflow_status', label: 'Workflow', type: 'select', options: [{ value: 'none', label: 'Yok' }, { value: 'pending', label: 'Onay Bekliyor' }, { value: 'approved', label: 'Onaylandı' }, { value: 'rejected', label: 'Reddedildi' }] },
     ] },
-    { id: 'history', label: 'GeÃ§miÅŸ', fields: [{ name: 'history', label: 'GeÃ§miÅŸ', type: 'custom', colSpan: 3, render: () => <div className="rounded-lg border border-dashed border-gray-200 p-4 text-sm text-gray-500 dark:border-gray-700">Audit ve geÃ§miÅŸ kayÄ±tlarÄ± iÃ§in hazÄ±r alan.</div> }] },
+    { id: 'history', label: 'Geçmiş', fields: [{ name: 'history', label: 'Geçmiş', type: 'custom', colSpan: 3, render: () => <div className="rounded-lg border border-dashed border-gray-200 p-4 text-sm text-gray-500 dark:border-gray-700">Audit ve geçmiş kayıtları için hazır alan.</div> }] },
   ]
 
   const widgets: WidgetDef<any>[] = useMemo(() => [
     { key: 'total', label: 'Hareket', render: () => tableData.length },
     { key: 'draft', label: 'Taslak', render: () => tableData.filter(row => row.status === 'Taslak').length },
-    { key: 'approved', label: 'OnaylÄ±', render: () => tableData.filter(row => ['OnaylandÄ±', 'KesinleÅŸti'].includes(row.status)).length },
-    { key: 'review', label: 'Ä°nceleme', render: () => tableData.filter(row => row.row_health_status === 'manual_review_required').length },
+    { key: 'approved', label: 'Onaylı', render: () => tableData.filter(row => ['Onaylandı', 'Kesinleşti'].includes(row.status)).length },
+    { key: 'review', label: 'İnceleme', render: () => tableData.filter(row => row.row_health_status === 'manual_review_required').length },
   ], [tableData])
 
   const save = async (data: Record<string, any>) => {
@@ -108,7 +108,7 @@ export default function PreAccountingMovementsPage() {
     try {
       await preAccountingService.create(data)
       preAccountingService.invalidate()
-      setToast({ type: 'success', title: 'Kaydedildi', message: 'Ã–n muhasebe hareketi oluÅŸturuldu.' })
+      setToast({ type: 'success', title: 'Kaydedildi', message: 'Ön muhasebe hareketi oluşturuldu.' })
       setPageState('list')
       setSelected(null)
       await loadData()
@@ -125,8 +125,8 @@ export default function PreAccountingMovementsPage() {
       <PageBanner
         mode={pageState === 'list' ? 'list' : 'form'}
         formMode={pageState === 'list' ? undefined : formMode}
-        title={pageState === 'list' ? 'Ã–n Muhasebe Hareketleri' : pageState === 'create' ? 'Yeni Hareket' : selected?.description || 'Hareket DetayÄ±'}
-        subtitle={pageState === 'list' ? 'Harcama, Ã¶deme, tahsilat ve cari hareketleri sade bir ekrandan yÃ¶netin.' : 'Ã–n muhasebe hareketi'}
+        title={pageState === 'list' ? 'Ön Muhasebe Hareketleri' : pageState === 'create' ? 'Yeni Hareket' : selected?.description || 'Hareket Detayı'}
+        subtitle={pageState === 'list' ? 'Harcama, ödeme, tahsilat ve cari hareketleri sade bir ekrandan yönetin.' : 'Ön muhasebe hareketi'}
         icon={<FileText size={24} />}
         onAddClick={pageState === 'list' && can(ACCOUNTING_PERMISSIONS.preAccountingInsert) ? () => { setSelected(null); setPageState('create') } : undefined}
         addButtonText="Yeni Hareket Ekle"
@@ -138,14 +138,14 @@ export default function PreAccountingMovementsPage() {
         <div className="mt-6">
           <div className="mb-3 flex justify-end gap-2">
             <button className="btn"><Filter size={16} />Filtreler</button>
-            <button className="btn"><RefreshCw size={16} />EÅŸleÅŸtirme Ã‡alÄ±ÅŸtÄ±r</button>
-            <button className="btn"><Download size={16} />DÄ±ÅŸa Aktar</button>
+            <button className="btn"><RefreshCw size={16} />Eşleştirme Çalıştır</button>
+            <button className="btn"><Download size={16} />Dışa Aktar</button>
           </div>
-          <SmartDataTable columns={columns} data={tableData} loading={loading} widgets={widgets} defaultView="list" storageKey="pre-accounting-movements" emptyText="Ã–n muhasebe hareketi bulunamadÄ±" onRefresh={loadData} onRowClick={(row) => { setSelected(row); setPageState('view') }} />
+          <SmartDataTable columns={columns} data={tableData} loading={loading} widgets={widgets} defaultView="list" storageKey="pre-accounting-movements" emptyText="Ön muhasebe hareketi bulunamadı" onRefresh={loadData} onRowClick={(row) => { setSelected(row); setPageState('view') }} />
         </div>
       ) : (
         <div className="mt-6">
-          <EntityForm mode={formMode} entityName="Ã–n Muhasebe Hareketleri" entityNameSingular="Hareket" heroFields={heroFields} tabs={tabs} data={selected || { movement_date: new Date().toISOString().slice(0, 10), currency: 'TRY', exchange_rate: 1, status: 'Taslak', document_status: 'none', invoice_match_status: 'none', bank_match_status: 'none', reconciliation_status: 'none', row_health_status: 'missing_document' }} saving={saving} onSave={save} onCancel={() => setPageState('list')} onModeChange={(nextMode) => setPageState(nextMode)} canCreate={can(ACCOUNTING_PERMISSIONS.preAccountingInsert)} canEdit={can(ACCOUNTING_PERMISSIONS.preAccountingEdit)} enableHistory />
+          <EntityForm mode={formMode} entityName="Ön Muhasebe Hareketleri" entityNameSingular="Hareket" heroFields={heroFields} tabs={tabs} data={selected || { movement_date: new Date().toISOString().slice(0, 10), currency: 'TRY', exchange_rate: 1, status: 'Taslak', document_status: 'none', invoice_match_status: 'none', bank_match_status: 'none', reconciliation_status: 'none', row_health_status: 'missing_document' }} saving={saving} onSave={save} onCancel={() => setPageState('list')} onModeChange={(nextMode) => setPageState(nextMode)} canCreate={can(ACCOUNTING_PERMISSIONS.preAccountingInsert)} canEdit={can(ACCOUNTING_PERMISSIONS.preAccountingEdit)} enableHistory />
         </div>
       )}
     </div>
@@ -153,11 +153,11 @@ export default function PreAccountingMovementsPage() {
 }
 
 function documentLabel(value: string) {
-  return ({ none: 'Yok', waiting: 'Bekleniyor', matched: 'EÅŸleÅŸti', missing: 'Eksik' } as Record<string, string>)[value] || value
+  return ({ none: 'Yok', waiting: 'Bekleniyor', matched: 'Eşleşti', missing: 'Eksik' } as Record<string, string>)[value] || value
 }
 
 function bankLabel(value: string) {
-  return ({ none: 'Yok', waiting: 'Bekleniyor', matched: 'EÅŸleÅŸti', manual_match: 'Manuel EÅŸleÅŸti', not_found: 'BulunamadÄ±' } as Record<string, string>)[value] || value
+  return ({ none: 'Yok', waiting: 'Bekleniyor', matched: 'Eşleşti', manual_match: 'Manuel Eşleşti', not_found: 'Bulunamadı' } as Record<string, string>)[value] || value
 }
 
 function invoiceOptions() {

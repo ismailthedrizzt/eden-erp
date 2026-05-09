@@ -15,9 +15,9 @@ import type { AccountCardRow, AccountingEntityKind } from '@/lib/modules/account
 
 const columns: ColumnDef[] = [
   { key: 'account_code', label: 'Cari Kodu', type: 'text', width: 120, category: 'Kimlik' },
-  { key: 'display_name', label: 'Ad / Ãœnvan', type: 'text', width: 260, sortable: true, category: 'Kimlik' },
-  { key: 'entity_label', label: 'KiÅŸi / Kurum', type: 'text', width: 130, category: 'Kimlik' },
-  { key: 'roles_label', label: 'Roller', type: 'text', width: 180, category: 'Ä°liÅŸki' },
+  { key: 'display_name', label: 'Ad / Ünvan', type: 'text', width: 260, sortable: true, category: 'Kimlik' },
+  { key: 'entity_label', label: 'Kişi / Kurum', type: 'text', width: 130, category: 'Kimlik' },
+  { key: 'roles_label', label: 'Roller', type: 'text', width: 180, category: 'İlişki' },
   { key: 'identity_display', label: 'TCKN / VKN', type: 'text', width: 140, category: 'Kimlik' },
   { key: 'official_balance', label: 'Resmi Bakiye', type: 'number', width: 130, category: 'Bakiye' },
   { key: 'pending_balance', label: 'Bekleyen Bakiye', type: 'number', width: 140, category: 'Bakiye' },
@@ -29,21 +29,21 @@ const columns: ColumnDef[] = [
 
 const financeFields: FormField[] = [
   { name: 'account_code', label: 'Cari Kodu', type: 'text' },
-  { name: 'default_currency', label: 'VarsayÄ±lan Para Birimi', type: 'select', options: [{ value: 'TRY', label: 'TRY' }, { value: 'USD', label: 'USD' }, { value: 'EUR', label: 'EUR' }] },
+  { name: 'default_currency', label: 'Varsayılan Para Birimi', type: 'select', options: [{ value: 'TRY', label: 'TRY' }, { value: 'USD', label: 'USD' }, { value: 'EUR', label: 'EUR' }] },
   { name: 'risk_limit', label: 'Risk Limiti', type: 'number' },
   { name: 'credit_limit', label: 'Kredi Limiti', type: 'number' },
-  { name: 'payment_term_days', label: 'Ã–deme Vadesi (GÃ¼n)', type: 'number' },
-  { name: 'collection_term_days', label: 'Tahsilat Vadesi (GÃ¼n)', type: 'number' },
+  { name: 'payment_term_days', label: 'Ödeme Vadesi (Gün)', type: 'number' },
+  { name: 'collection_term_days', label: 'Tahsilat Vadesi (Gün)', type: 'number' },
   { name: 'notes', label: 'Notlar', type: 'textarea', colSpan: 3 },
 ]
 
 const detailTabs: FormTab[] = [
-  { id: 'hareketler', label: 'Hareketler', fields: [{ name: 'movement_summary', label: 'Hareket Ã–zeti', type: 'custom', colSpan: 3, render: ({ value }) => <ReadOnlyBox text={value || 'Hareketler Ã–n Muhasebe Hareketleri ekranÄ±nda yÃ¶netilir.'} /> }] },
-  { id: 'finans', label: 'Finans AyarlarÄ±', fields: financeFields },
-  { id: 'mutabakat', label: 'Mutabakat', fields: [{ name: 'reconciliation_summary', label: 'Mutabakat', type: 'custom', colSpan: 3, render: () => <ReadOnlyBox text="Mutabakat akÄ±ÅŸÄ± iÃ§in hazÄ±r alan." /> }] },
-  { id: 'baglantilar', label: 'BaÄŸlantÄ±lar', fields: [{ name: 'links', label: 'BaÄŸlÄ± KayÄ±t', type: 'custom', colSpan: 3, render: () => <ReadOnlyBox text="Kimlik deÄŸiÅŸiklikleri baÄŸlÄ± kaynak modÃ¼lden yapÄ±lmalÄ±dÄ±r." /> }] },
-  { id: 'belgeler', label: 'Belgeler', fields: [{ name: 'documents', label: 'Belgeler', type: 'custom', colSpan: 3, render: () => <ReadOnlyBox text="Belge baÄŸlantÄ±larÄ± hareketler Ã¼zerinden eklenecek." /> }] },
-  { id: 'gecmis', label: 'GeÃ§miÅŸ', fields: [{ name: 'history', label: 'GeÃ§miÅŸ', type: 'custom', colSpan: 3, render: () => <ReadOnlyBox text="Finans ayarÄ± ve hareket geÃ§miÅŸi audit log Ã¼zerinden izlenecek." /> }] },
+  { id: 'hareketler', label: 'Hareketler', fields: [{ name: 'movement_summary', label: 'Hareket Özeti', type: 'custom', colSpan: 3, render: ({ value }) => <ReadOnlyBox text={value || 'Hareketler Ön Muhasebe Hareketleri ekranında yönetilir.'} /> }] },
+  { id: 'finans', label: 'Finans Ayarları', fields: financeFields },
+  { id: 'mutabakat', label: 'Mutabakat', fields: [{ name: 'reconciliation_summary', label: 'Mutabakat', type: 'custom', colSpan: 3, render: () => <ReadOnlyBox text="Mutabakat akışı için hazır alan." /> }] },
+  { id: 'baglantilar', label: 'Bağlantılar', fields: [{ name: 'links', label: 'Bağlı Kayıt', type: 'custom', colSpan: 3, render: () => <ReadOnlyBox text="Kimlik değişiklikleri bağlı kaynak modülden yapılmalıdır." /> }] },
+  { id: 'belgeler', label: 'Belgeler', fields: [{ name: 'documents', label: 'Belgeler', type: 'custom', colSpan: 3, render: () => <ReadOnlyBox text="Belge bağlantıları hareketler üzerinden eklenecek." /> }] },
+  { id: 'gecmis', label: 'Geçmiş', fields: [{ name: 'history', label: 'Geçmiş', type: 'custom', colSpan: 3, render: () => <ReadOnlyBox text="Finans ayarı ve hareket geçmişi audit log üzerinden izlenecek." /> }] },
 ]
 
 export default function AccountCardsPage() {
@@ -73,17 +73,17 @@ export default function AccountCardsPage() {
   const tableData = cards.map(card => ({
     ...card,
     id: `${card.entity_kind}-${card.person_id || card.organization_id}-${card.company_id || 'global'}`,
-    entity_label: card.entity_kind === 'person' ? 'GerÃ§ek KiÅŸi' : 'TÃ¼zel KiÅŸi',
+    entity_label: card.entity_kind === 'person' ? 'Gerçek Kişi' : 'Tüzel Kişi',
     roles_label: card.roles?.length ? card.roles.join(', ') : '-',
     identity_display: card.identity_no || card.tax_no || '-',
-    risk_label: card.risk_status === 'limit_exceeded' ? 'Limit AÅŸÄ±ldÄ±' : 'Normal',
+    risk_label: card.risk_status === 'limit_exceeded' ? 'Limit Aşıldı' : 'Normal',
     status_label: card.status === 'active' ? 'Aktif' : 'Pasif',
   }))
 
   const widgets: WidgetDef<any>[] = useMemo(() => [
     { key: 'total', label: 'Cari Kart', render: () => tableData.length },
-    { key: 'person', label: 'GerÃ§ek KiÅŸi', render: () => tableData.filter(row => row.entity_kind === 'person').length },
-    { key: 'organization', label: 'TÃ¼zel KiÅŸi', render: () => tableData.filter(row => row.entity_kind === 'organization').length },
+    { key: 'person', label: 'Gerçek Kişi', render: () => tableData.filter(row => row.entity_kind === 'person').length },
+    { key: 'organization', label: 'Tüzel Kişi', render: () => tableData.filter(row => row.entity_kind === 'organization').length },
     { key: 'risk', label: 'Riskli', render: () => tableData.filter(row => row.risk_status === 'limit_exceeded').length },
   ], [tableData])
 
@@ -109,7 +109,7 @@ export default function AccountCardsPage() {
         organization_id: selectedCard.organization_id,
       })
       accountCardsService.invalidate()
-      setToast({ type: 'success', title: 'Kaydedildi', message: 'Cari finans ayarlarÄ± gÃ¼ncellendi.' })
+      setToast({ type: 'success', title: 'Kaydedildi', message: 'Cari finans ayarları güncellendi.' })
       setMode('view')
       await loadCards()
     } catch (error) {
@@ -126,10 +126,10 @@ export default function AccountCardsPage() {
         mode={selectedCard ? 'form' : 'list'}
         formMode={selectedCard ? mode : undefined}
         title={selectedCard ? selectedCard.display_name : 'Cari Kartlar'}
-        subtitle={selectedCard ? 'Cari kart gÃ¶rÃ¼nÃ¼mÃ¼ ve finans ayarlarÄ±' : 'KiÅŸi ve kurumlarÄ±n finansal iliÅŸkilerini, bakiyelerini ve hareketlerini gÃ¶rÃ¼ntÃ¼leyin.'}
+        subtitle={selectedCard ? 'Cari kart görünümü ve finans ayarları' : 'Kişi ve kurumların finansal ilişkilerini, bakiyelerini ve hareketlerini görüntüleyin.'}
         icon={<WalletCards size={24} />}
         onAddClick={!selectedCard && can(ACCOUNTING_PERMISSIONS.accountCardsEditFinancialSettings) ? () => setLauncherOpen(true) : undefined}
-        addButtonText="Yeni Cari Ä°liÅŸkisi Ekle"
+        addButtonText="Yeni Cari İlişkisi Ekle"
         onBackClick={selectedCard ? () => { setSelectedCard(null); setMode('view') } : undefined}
       />
       {toast && <Toast type={toast.type} title={toast.title} message={toast.message} onClose={() => setToast(null)} />}
@@ -138,13 +138,13 @@ export default function AccountCardsPage() {
         <div className="mt-6">
           <div className="mb-3 flex justify-end gap-2">
             <button className="btn"><Filter size={16} />Filtreler</button>
-            <button className="btn"><Download size={16} />DÄ±ÅŸa Aktar</button>
+            <button className="btn"><Download size={16} />Dışa Aktar</button>
           </div>
-          <SmartDataTable columns={columns} data={tableData} loading={loading} widgets={widgets} defaultView="list" storageKey="account-cards" emptyText="Cari kart bulunamadÄ±" onRowClick={(row) => { setSelectedCard(row); setMode('view') }} onRefresh={loadCards} />
+          <SmartDataTable columns={columns} data={tableData} loading={loading} widgets={widgets} defaultView="list" storageKey="account-cards" emptyText="Cari kart bulunamadı" onRowClick={(row) => { setSelectedCard(row); setMode('view') }} onRefresh={loadCards} />
         </div>
       ) : (
         <div className="mt-6">
-          <EntityForm mode={mode} entityName="Cari Kartlar" entityNameSingular="Cari Kart" heroFields={heroFields} tabs={detailTabs} data={selectedCard as any} saving={saving} onSave={saveSettings} onCancel={() => mode === 'edit' ? setMode('view') : setSelectedCard(null)} onModeChange={setMode} canEdit={can(ACCOUNTING_PERMISSIONS.accountCardsEditFinancialSettings)} enableHistory additionalActions={<Link className="btn" href={`/app/muhasebe/on-muhasebe-hareketleri?counterparty=${selectedCard.person_id || selectedCard.organization_id}`}><Settings size={16} />Hareketleri GÃ¶r</Link>} />
+          <EntityForm mode={mode} entityName="Cari Kartlar" entityNameSingular="Cari Kart" heroFields={heroFields} tabs={detailTabs} data={selectedCard as any} saving={saving} onSave={saveSettings} onCancel={() => mode === 'edit' ? setMode('view') : setSelectedCard(null)} onModeChange={setMode} canEdit={can(ACCOUNTING_PERMISSIONS.accountCardsEditFinancialSettings)} enableHistory additionalActions={<Link className="btn" href={`/app/muhasebe/on-muhasebe-hareketleri?counterparty=${selectedCard.person_id || selectedCard.organization_id}`}><Settings size={16} />Hareketleri Gör</Link>} />
         </div>
       )}
 
@@ -175,52 +175,52 @@ function AccountCardLauncher({ onClose }: { onClose: () => void }) {
       <div className="w-full max-w-2xl rounded-xl bg-white p-5 shadow-xl dark:bg-gray-900">
         <div className="mb-4 flex items-start justify-between">
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Yeni Cari Ä°liÅŸkisi Ekle</h3>
-            <p className="mt-1 text-sm text-gray-500">Cari kart kimlik oluÅŸturmaz; doÄŸru kaynak formu aÃ§ar.</p>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Yeni Cari İlişkisi Ekle</h3>
+            <p className="mt-1 text-sm text-gray-500">Cari kart kimlik oluşturmaz; doğru kaynak formu açar.</p>
           </div>
           <button onClick={onClose} className="btn">Kapat</button>
         </div>
         <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
           <label className="space-y-1 text-sm">
-            <span>KiÅŸi / Kurum Tipi</span>
+            <span>Kişi / Kurum Tipi</span>
             <select value={entityKind} onChange={(e) => { setEntityKind(e.target.value as AccountingEntityKind); setResult(null) }} className="w-full rounded-lg border px-3 py-2 dark:bg-gray-800">
-              <option value="person">GerÃ§ek KiÅŸi</option>
-              <option value="organization">TÃ¼zel KiÅŸi</option>
+              <option value="person">Gerçek Kişi</option>
+              <option value="organization">Tüzel Kişi</option>
             </select>
           </label>
           {entityKind === 'person' ? (
             <>
-              <Input label="UyruÄŸu" value={identity.nationality || ''} onChange={v => setIdentity(p => ({ ...p, nationality: v }))} />
+              <Input label="Uyruğu" value={identity.nationality || ''} onChange={v => setIdentity(p => ({ ...p, nationality: v }))} />
               <div className="grid grid-cols-2 gap-2"><Input label="TCKN" value={identity.national_id || ''} onChange={v => setIdentity(p => ({ ...p, national_id: v }))} /><Input label="Pasaport" value={identity.passport_no || ''} onChange={v => setIdentity(p => ({ ...p, passport_no: v }))} /></div>
             </>
           ) : (
             <>
-              <Input label="Ãœlke" value={identity.country || ''} onChange={v => setIdentity(p => ({ ...p, country: v }))} />
+              <Input label="Ülke" value={identity.country || ''} onChange={v => setIdentity(p => ({ ...p, country: v }))} />
               <div className="grid grid-cols-2 gap-2"><Input label="VKN" value={identity.tax_number || ''} onChange={v => setIdentity(p => ({ ...p, tax_number: v }))} /><Input label="Sicil No" value={identity.registration_number || ''} onChange={v => setIdentity(p => ({ ...p, registration_number: v }))} /></div>
             </>
           )}
         </div>
-        <button onClick={search} disabled={loading} className="btn btn-primary mt-4">{loading ? 'AranÄ±yor...' : 'Master KaydÄ± Ara'}</button>
+        <button onClick={search} disabled={loading} className="btn btn-primary mt-4">{loading ? 'Aranıyor...' : 'Master Kaydı Ara'}</button>
 
         {result && (
           <div className="mt-4 rounded-lg border border-gray-200 p-4 dark:border-gray-700">
             <p className="font-medium text-gray-900 dark:text-white">{result.message}</p>
             {result.found ? (
               <div className="mt-3 space-y-2 text-sm">
-                <p><b>Ad Soyad / Ãœnvan:</b> {result.displayName}</p>
+                <p><b>Ad Soyad / Ünvan:</b> {result.displayName}</p>
                 <p><b>Kimlik No / VKN:</b> {result.identityNo || '-'}</p>
                 <p><b>Mevcut Roller:</b> {result.roles?.length ? result.roles.join(', ') : '-'}</p>
-                <p><b>Mevcut Cari Durumu:</b> {result.card?.status || 'Pasif gÃ¶rÃ¼nÃ¼m'}</p>
+                <p><b>Mevcut Cari Durumu:</b> {result.card?.status || 'Pasif görünüm'}</p>
                 <div className="flex flex-wrap gap-2 pt-2">
-                  <Link className="btn btn-primary" href="/app/muhasebe/cari-kartlar">Cari GÃ¶rÃ¼nÃ¼mÃ¼nÃ¼ AÃ§</Link>
-                  <Link className="btn" href="/app/muhasebe/on-muhasebe-hareketleri">Hareketlerini GÃ¶r</Link>
-                  <button className="btn">Finans AyarlarÄ±nÄ± DÃ¼zenle</button>
-                  <button className="btn">Yeni Rol / Ä°liÅŸki Ekle</button>
+                  <Link className="btn btn-primary" href="/app/muhasebe/cari-kartlar">Cari Görünümünü Aç</Link>
+                  <Link className="btn" href="/app/muhasebe/on-muhasebe-hareketleri">Hareketlerini Gör</Link>
+                  <button className="btn">Finans Ayarlarını Düzenle</button>
+                  <button className="btn">Yeni Rol / İlişki Ekle</button>
                 </div>
               </div>
             ) : (
               <div className="mt-3">
-                <p className="text-sm text-amber-700 dark:text-amber-300">Ã–nce ilgili iÅŸ formundan master kayÄ±t oluÅŸturulmalÄ±dÄ±r.</p>
+                <p className="text-sm text-amber-700 dark:text-amber-300">Önce ilgili iş formundan master kayıt oluşturulmalıdır.</p>
                 <div className="mt-3 flex flex-wrap gap-2">
                   {targets.map(target => <Link key={target.key} className="btn" href={target.href}>{target.label}</Link>)}
                 </div>

@@ -1000,7 +1000,7 @@ export function SmartDataTable<T extends { id: string }>({
                     onClick={resetColumnsToDefault}
                     className="w-full rounded-md border border-gray-200 px-2 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-700"
                   >
-                    SÃ¼tunlarÄ± VarsayÄ±lana DÃ¶ndÃ¼r
+                    Sütunları Varsayılana Döndür
                   </button>
                   {/* Width Quota Bar */}
                   <div className="space-y-1">
