@@ -2,13 +2,10 @@ export type OwnershipTransactionStatus = 'draft' | 'active' | 'cancelled' | 'rev
 export type OwnershipApprovalStatus = 'draft' | 'pending_approval' | 'approved' | 'rejected' | 'cancelled'
 
 export type OwnershipTransactionType =
-  | 'Yeni Ortak Girişi'
+  | 'Yeni Ortaklık Girişi'
   | 'Pay Devri'
   | 'Kısmi Pay Devri'
   | 'Ortaklıktan Çıkış'
-  | 'Sermaye Taahhüdü'
-  | 'Sermaye Artırımı'
-  | 'Sermaye Azaltımı'
   | 'Oy Hakkı Değişikliği'
   | 'Kar Payı Oranı Değişikliği'
   | 'İmtiyazlı Pay Tanımı'

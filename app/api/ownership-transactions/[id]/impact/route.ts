@@ -40,19 +40,15 @@ function simulateImpact(rows: any[], transaction: any) {
       current_share_ratio: 0,
       current_voting_ratio: 0,
       current_profit_ratio: 0,
-      current_capital_amount: 0,
-      current_share_units: 0,
     }
     row.current_share_ratio = Math.max(0, Number(row.current_share_ratio || 0) + Number(transaction.share_ratio || 0) * direction)
     row.current_voting_ratio = Math.max(0, Number(row.current_voting_ratio || 0) + Number(transaction.voting_ratio || 0) * direction)
     row.current_profit_ratio = Math.max(0, Number(row.current_profit_ratio || 0) + Number(transaction.profit_ratio || 0) * direction)
-    row.current_capital_amount = Math.max(0, Number(row.current_capital_amount || 0) + Number(transaction.capital_amount || 0) * direction)
-    row.current_share_units = Math.max(0, Number(row.current_share_units || 0) + Number(transaction.share_units || 0) * direction)
     map.set(partnerId, row)
   }
 
   apply(transaction.to_partner_id, 1)
-  if (['Pay Devri', 'Kısmi Pay Devri', 'Ortaklıktan Çıkış', 'Sermaye Azaltımı'].includes(transaction.transaction_type)) {
+  if (['Pay Devri', 'Kısmi Pay Devri', 'Ortaklıktan Çıkış'].includes(transaction.transaction_type)) {
     apply(transaction.from_partner_id, -1)
   }
   apply(transaction.affected_partner_id, 1)

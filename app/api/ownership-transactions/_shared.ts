@@ -1,13 +1,10 @@
 import { createServiceClient } from '@/lib/supabase/server'
 
 const ALLOWED_TRANSACTION_TYPES = new Set([
-  'Yeni Ortak Girişi',
+  'Yeni Ortaklık Girişi',
   'Pay Devri',
   'Kısmi Pay Devri',
   'Ortaklıktan Çıkış',
-  'Sermaye Taahhüdü',
-  'Sermaye Artırımı',
-  'Sermaye Azaltımı',
   'Oy Hakkı Değişikliği',
   'Kar Payı Oranı Değişikliği',
   'İmtiyazlı Pay Tanımı',
@@ -61,16 +58,12 @@ export async function validateDraft(supabase: ReturnType<typeof createServiceCli
   if (['Pay Devri', 'Kısmi Pay Devri'].includes(data.transaction_type) && (!data.from_partner_id || !data.to_partner_id)) {
     return { ok: false, code: 'PARTIES_REQUIRED', error: 'Pay devri için devreden ve devralan ortak zorunludur', warnings }
   }
-  if (data.transaction_type === 'Yeni Ortak Girişi' && !data.to_partner_id) {
+  if (data.transaction_type === 'Yeni Ortaklık Girişi' && !data.to_partner_id) {
     return { ok: false, code: 'NEW_PARTNER_REQUIRED', error: 'Yeni ortak girişi için devralan/yeni ortak seçilmelidir', warnings }
   }
   if (data.transaction_type === 'Ortaklıktan Çıkış' && !data.from_partner_id) {
     return { ok: false, code: 'EXIT_PARTNER_REQUIRED', error: 'Ortaklıktan çıkış için çıkan ortak seçilmelidir', warnings }
   }
-  if (data.transaction_type === 'Sermaye Taahhüdü' && (!data.affected_partner_id || Number(data.committed_capital_amount || 0) <= 0)) {
-    return { ok: false, code: 'CAPITAL_COMMITMENT_REQUIRED', error: 'Sermaye taahhüdü için ortak ve taahhüt edilen sermaye zorunludur', warnings }
-  }
-
   if (['Pay Devri', 'Kısmi Pay Devri', 'Ortaklıktan Çıkış'].includes(data.transaction_type) && data.from_partner_id && Number(data.share_ratio || 0) > 0) {
     const { data: ownership } = await supabase
       .from('v_current_ownership')

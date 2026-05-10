@@ -41,12 +41,12 @@ export class OwnershipCalculationService {
     }
 
     transactions
-      .filter(item => APPROVED_ACTIVE.has(item.approval_status) && item.status === 'active' && !item.is_deleted && item.effective_date <= today)
+      .filter(item => APPROVED_ACTIVE.has(item.approval_status) && item.status === 'active' && !item.is_deleted && (item.effective_date || item.transaction_date) <= today)
       .forEach(item => {
         if (item.to_partner_id) {
           this.applyDelta(getRow(item.company_id, item.to_partner_id), item, 1)
         }
-        if (item.from_partner_id && ['Pay Devri', 'Kısmi Pay Devri', 'Ortaklıktan Çıkış', 'Sermaye Azaltımı'].includes(item.transaction_type)) {
+        if (item.from_partner_id && ['Pay Devri', 'Kısmi Pay Devri', 'Ortaklıktan Çıkış'].includes(item.transaction_type)) {
           this.applyDelta(getRow(item.company_id, item.from_partner_id), item, -1)
         }
         if (item.affected_partner_id) {
@@ -84,8 +84,6 @@ export class OwnershipCalculationService {
     row.current_share_ratio += Number(item.share_ratio || 0) * direction
     row.current_voting_ratio += Number(item.voting_ratio || 0) * direction
     row.current_profit_ratio += Number(item.profit_ratio || 0) * direction
-    row.current_capital_amount += Number(item.capital_amount || 0) * direction
-    row.current_share_units += Number(item.share_units || 0) * direction
     row.has_veto_right = row.has_veto_right || !!item.has_veto_right
     row.has_board_nomination_right = row.has_board_nomination_right || !!item.has_board_nomination_right
     row.has_privileged_share = row.has_privileged_share || !!item.has_privileged_share

@@ -2,11 +2,8 @@ import type { AnyDashboardWidgetConfig } from '@/components/dashboard/dashboard.
 import type { OwnershipTransaction } from './ownershipTransactions.types'
 
 const distributionTypes = [
-  'Yeni Ortak Girişi',
+  'Yeni Ortaklık Girişi',
   'Pay Devri',
-  'Sermaye Taahhüdü',
-  'Sermaye Artırımı',
-  'Sermaye Azaltımı',
   'Oy Hakkı Değişikliği',
   'Kar Payı Oranı Değişikliği',
   'İmtiyazlı Pay Tanımı',

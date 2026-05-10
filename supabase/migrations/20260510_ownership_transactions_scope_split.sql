@@ -23,13 +23,10 @@ alter table public.ownership_transactions
 
 alter table public.ownership_transactions
   add constraint ownership_transactions_type_check check (transaction_type in (
-    'Yeni Ortak Girişi',
+    'Yeni Ortaklık Girişi',
     'Pay Devri',
     'Kısmi Pay Devri',
     'Ortaklıktan Çıkış',
-    'Sermaye Taahhüdü',
-    'Sermaye Artırımı',
-    'Sermaye Azaltımı',
     'Oy Hakkı Değişikliği',
     'Kar Payı Oranı Değişikliği',
     'İmtiyazlı Pay Tanımı',
@@ -79,7 +76,7 @@ partner_effects as (
     transaction_date
   from approved
   where to_partner_id is not null
-    and transaction_type in ('Yeni Ortak Girişi', 'Pay Devri', 'Kısmi Pay Devri', 'Düzeltme Kaydı', 'Ters Kayıt')
+    and transaction_type in ('Yeni Ortaklık Girişi', 'Pay Devri', 'Kısmi Pay Devri', 'Düzeltme Kaydı', 'Ters Kayıt')
 
   union all
 
@@ -98,14 +95,14 @@ partner_effects as (
     transaction_date
   from approved
   where from_partner_id is not null
-    and transaction_type in ('Pay Devri', 'Kısmi Pay Devri', 'Ortaklıktan Çıkış', 'Sermaye Azaltımı')
+    and transaction_type in ('Pay Devri', 'Kısmi Pay Devri', 'Ortaklıktan Çıkış')
 
   union all
 
   select
     company_id,
     affected_partner_id as partner_id,
-    case when transaction_type in ('Sermaye Artırımı', 'Sermaye Azaltımı', 'Düzeltme Kaydı', 'Ters Kayıt') then share_ratio else null end,
+    case when transaction_type in ('Düzeltme Kaydı', 'Ters Kayıt') then share_ratio else null end,
     case when transaction_type = 'Oy Hakkı Değişikliği' then coalesce(new_voting_ratio, voting_ratio) else null end,
     case when transaction_type = 'Kar Payı Oranı Değişikliği' then coalesce(new_profit_ratio, profit_ratio) else null end,
     capital_amount,

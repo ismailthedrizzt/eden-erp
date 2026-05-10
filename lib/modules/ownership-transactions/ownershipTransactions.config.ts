@@ -1,13 +1,10 @@
 import type { ColumnDef } from '@/components/ui/SmartDataTable'
 
 export const transactionTypes = [
-  'Yeni Ortak Girişi',
+  'Yeni Ortaklık Girişi',
   'Pay Devri',
   'Kısmi Pay Devri',
   'Ortaklıktan Çıkış',
-  'Sermaye Taahhüdü',
-  'Sermaye Artırımı',
-  'Sermaye Azaltımı',
   'Oy Hakkı Değişikliği',
   'Kar Payı Oranı Değişikliği',
   'İmtiyazlı Pay Tanımı',
@@ -19,7 +16,6 @@ export const transactionTypes = [
 export const transactionReasonOptions = [
   'Kuruluş',
   'Pay Devri',
-  'Sermaye Değişikliği',
   'Yönetim Kararı',
   'Ortaklar Kurulu Kararı',
   'Düzeltme',
@@ -33,24 +29,6 @@ export const privilegeTypeOptions = [
   'Veto Hakkı',
   'Altın Hisse',
   'Diğer',
-]
-
-export const capitalMovementTypes = [
-  'Sermaye Ödemesi',
-  'Sermaye Avansı',
-  'Ortak Borç Verdi',
-  'Ortağa Geri Ödeme',
-  'Sermaye Borcu Mahsubu',
-]
-
-export const capitalPaymentStatusOptions = [
-  'Taahhüt Yok',
-  'Ödeme Bekleniyor',
-  'Kısmi Ödendi',
-  'Tam Ödendi',
-  'Fazla Ödeme Var',
-  'Sermaye Avansı Var',
-  'Uyuşmazlık / İnceleme Gerekli',
 ]
 
 export const documentStatusOptions = ['Belge Yok', 'Bekleniyor', 'Yüklendi', 'Onaylandı', 'Eksik', 'Hatalı']
@@ -74,17 +52,14 @@ export const statusLabels: Record<string, string> = {
 export const ownershipTransactionColumns: ColumnDef[] = [
   { key: 'transaction_no', label: 'İşlem No', type: 'text', width: 140, sortable: true, category: 'Genel' },
   { key: 'company_name', label: 'Şirket', type: 'text', width: 220, sortable: true, category: 'Genel' },
+  { key: 'partner_name', label: 'Ortak', type: 'text', width: 190, sortable: true, category: 'Genel' },
   { key: 'transaction_type', label: 'İşlem Tipi', type: 'enum', width: 190, sortable: true, category: 'Genel' },
-  { key: 'from_partner_name', label: 'Devreden Ortak', type: 'text', width: 180, category: 'Taraflar' },
-  { key: 'to_partner_name', label: 'Devralan Ortak', type: 'text', width: 180, category: 'Taraflar' },
-  { key: 'affected_partner_name', label: 'Etkilenen Ortak', type: 'text', width: 180, category: 'Taraflar' },
-  { key: 'share_ratio', label: 'Pay %', type: 'number', width: 100, category: 'Pay' },
-  { key: 'voting_ratio', label: 'Oy %', type: 'number', width: 100, category: 'Pay' },
-  { key: 'profit_ratio', label: 'Kar Payı %', type: 'number', width: 120, category: 'Pay' },
-  { key: 'capital_amount', label: 'Sermaye Tutarı', type: 'number', width: 150, category: 'Sermaye' },
-  { key: 'committed_capital_amount', label: 'Taahhüt', type: 'number', width: 130, category: 'Sermaye' },
   { key: 'transaction_date', label: 'İşlem Tarihi', type: 'date', width: 130, sortable: true, category: 'Tarih' },
-  { key: 'effective_date', label: 'Geçerlilik Tarihi', type: 'date', width: 145, sortable: true, category: 'Tarih' },
+  { key: 'effective_date', label: 'Yürürlük Başlangıç Tarihi', type: 'date', width: 190, sortable: true, category: 'Tarih' },
+  { key: 'share_effect', label: 'Hisse Etkisi', type: 'text', width: 120, category: 'Etkiler' },
+  { key: 'voting_effect', label: 'Oy Hakkı Etkisi', type: 'text', width: 140, category: 'Etkiler' },
+  { key: 'profit_effect', label: 'Kar Payı Etkisi', type: 'text', width: 130, category: 'Etkiler' },
+  { key: 'privilege_effect', label: 'İmtiyaz Etkisi', type: 'text', width: 150, category: 'Etkiler' },
   { key: 'status_label', label: 'Durum', type: 'enum', width: 130, category: 'Durum' },
   { key: 'approval_status_label', label: 'Onay Durumu', type: 'enum', width: 150, category: 'Durum' },
   { key: 'document_status', label: 'Belge', type: 'enum', width: 120, category: 'Belge' },
@@ -95,24 +70,14 @@ export function getPartyFieldVisibility(transactionType?: string) {
   return {
     showFrom: ['Pay Devri', 'Kısmi Pay Devri'].includes(transactionType || ''),
     showExit: transactionType === 'Ortaklıktan Çıkış',
-    showTo: ['Yeni Ortak Girişi', 'Pay Devri', 'Kısmi Pay Devri', 'Ortaklıktan Çıkış'].includes(transactionType || ''),
+    showTo: ['Yeni Ortaklık Girişi', 'Pay Devri', 'Kısmi Pay Devri', 'Ortaklıktan Çıkış'].includes(transactionType || ''),
     showAffected: [
-      'Sermaye Taahhüdü',
       'Oy Hakkı Değişikliği',
       'Kar Payı Oranı Değişikliği',
       'İmtiyazlı Pay Tanımı',
       'İmtiyazlı Pay Kaldırma',
       'Düzeltme Kaydı',
       'Ters Kayıt',
-      'Sermaye Artırımı',
-      'Sermaye Azaltımı',
     ].includes(transactionType || ''),
   }
 }
-
-export const capitalTransactionTypes = [
-  'Yeni Ortak Girişi',
-  'Sermaye Taahhüdü',
-  'Sermaye Artırımı',
-  'Sermaye Azaltımı',
-]

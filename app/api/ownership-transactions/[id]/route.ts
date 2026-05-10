@@ -13,13 +13,6 @@ const LOCKED_WHEN_APPROVED = new Set([
   'share_ratio',
   'voting_ratio',
   'profit_ratio',
-  'share_units',
-  'nominal_value',
-  'capital_amount',
-  'new_capital_amount',
-  'committed_capital_amount',
-  'transfer_price',
-  'currency',
   'has_veto_right',
   'has_board_nomination_right',
   'has_privileged_share',
@@ -33,8 +26,6 @@ const LOCKED_WHEN_APPROVED = new Set([
   'new_voting_ratio',
   'old_profit_ratio',
   'new_profit_ratio',
-  'commitment_date',
-  'capital_distribution',
 ])
 
 export async function GET(

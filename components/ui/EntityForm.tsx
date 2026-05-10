@@ -1925,50 +1925,52 @@ export function EntityForm({
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="border-b border-gray-200 dark:border-gray-700">
-        <div className="flex overflow-x-auto">
+      {tabs.length > 0 && (
+        <div className="border-b border-gray-200 dark:border-gray-700">
+          <div className="flex overflow-x-auto">
+            {tabs.map(tab => (
+              <button
+                key={tab.id}
+                disabled={isIdentityGateLocked}
+                onClick={() => setActiveTab(tab.id)}
+                className={cn(
+                  "flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap transition-colors border-b-2",
+                  activeTab === tab.id
+                    ? "border-blue-600 text-blue-600 dark:text-blue-400"
+                    : "border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200",
+                  getTabValidationStatus(tab) === 'invalid' && "text-red-600 dark:text-red-400",
+                  getTabValidationStatus(tab) === 'valid' && "text-emerald-600 dark:text-emerald-400",
+                  isIdentityGateLocked && "cursor-not-allowed opacity-50"
+                )}
+              >
+                {tab.icon}
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {(tabs.length > 0 || isIdentityGateLocked) && (
+        <div className="p-6">
+          {isIdentityGateLocked && (
+            <div className="mb-4 rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-3 text-sm text-gray-600 dark:border-gray-700 dark:bg-gray-800/50 dark:text-gray-300">
+              Devam etmek için önce Temel Kimlik Bilgileri alanını eşleştirin.
+            </div>
+          )}
           {tabs.map(tab => (
-            <button
+            <div
               key={tab.id}
-              disabled={isIdentityGateLocked}
-              onClick={() => setActiveTab(tab.id)}
               className={cn(
-                "flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap transition-colors border-b-2",
-                activeTab === tab.id
-                  ? "border-blue-600 text-blue-600 dark:text-blue-400"
-                  : "border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200",
-                getTabValidationStatus(tab) === 'invalid' && "text-red-600 dark:text-red-400",
-                getTabValidationStatus(tab) === 'valid' && "text-emerald-600 dark:text-emerald-400",
-                isIdentityGateLocked && "cursor-not-allowed opacity-50"
+                "grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4",
+                activeTab !== tab.id && "hidden"
               )}
             >
-              {tab.icon}
-              {tab.label}
-            </button>
+              {tab.fields.map(field => renderField(field, enableHistory))}
+            </div>
           ))}
         </div>
-      </div>
-
-      {/* Tab Content */}
-      <div className="p-6">
-        {isIdentityGateLocked && (
-          <div className="mb-4 rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-3 text-sm text-gray-600 dark:border-gray-700 dark:bg-gray-800/50 dark:text-gray-300">
-            Devam etmek için önce Temel Kimlik Bilgileri alanını eşleştirin.
-          </div>
-        )}
-        {tabs.map(tab => (
-          <div
-            key={tab.id}
-            className={cn(
-              "grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4",
-              activeTab !== tab.id && "hidden"
-            )}
-          >
-            {tab.fields.map(field => renderField(field, enableHistory))}
-          </div>
-        ))}
-      </div>
+      )}
     </div>
   )
 }
