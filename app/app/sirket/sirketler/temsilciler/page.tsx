@@ -20,6 +20,13 @@ interface RepresentativeRow {
   source_id?: string
   display_name?: string
   ad_soyad?: string
+  phone?: string
+  email?: string
+  telefonlar?: Array<Record<string, any>>
+  epostalar?: Array<Record<string, any>>
+  address?: string
+  city?: string
+  district?: string
   authority_types?: string[]
   status?: string
   start_date?: string
@@ -160,13 +167,48 @@ const tabs: FormTab[] = [
       { name: 'first_name', label: 'Ad', type: 'text', visibleWhen: { field: 'person_or_entity_type', operator: 'equals', value: 'gercek_kisi' } },
       { name: 'last_name', label: 'Soyad', type: 'text', visibleWhen: { field: 'person_or_entity_type', operator: 'equals', value: 'gercek_kisi' } },
       { name: 'birth_date', label: 'Doğum Tarihi', type: 'date', visibleWhen: { field: 'person_or_entity_type', operator: 'equals', value: 'gercek_kisi' } },
-      { name: 'phone', label: 'Telefon', type: 'tel', visibleWhen: { field: 'person_or_entity_type', operator: 'equals', value: 'gercek_kisi' } },
-      { name: 'email', label: 'Email', type: 'email', visibleWhen: { field: 'person_or_entity_type', operator: 'equals', value: 'gercek_kisi' } },
       { name: 'trade_name', label: 'Ticari Ünvan', type: 'text', visibleWhen: { field: 'person_or_entity_type', operator: 'equals', value: 'tuzel_kisi' } },
       { name: 'short_name', label: 'Kısa Ünvan', type: 'text', visibleWhen: { field: 'person_or_entity_type', operator: 'equals', value: 'tuzel_kisi' } },
       { name: 'tax_office', label: 'Vergi Dairesi', type: 'text', visibleWhen: { field: 'person_or_entity_type', operator: 'equals', value: 'tuzel_kisi' } },
       { name: 'mersis_no', label: 'MERSİS', type: 'text', visibleWhen: { field: 'person_or_entity_type', operator: 'equals', value: 'tuzel_kisi' } },
       { name: 'source_link', label: 'Kaynak Kayıt Bağlantısı', type: 'text', colSpan: 2 },
+    ],
+  },
+  {
+    id: 'iletisim',
+    label: 'İletişim',
+    fields: [
+      {
+        name: 'telefonlar',
+        label: 'Telefon',
+        type: 'list',
+        colSpan: 3,
+        listConfig: {
+          addLabel: 'Telefon Ekle',
+          emptyText: 'Telefon eklenmedi.',
+          fields: [
+            { name: 'etiket', key: 'etiket', label: 'Etiket', type: 'text', placeholder: 'Cep, iş, ev' },
+            { name: 'numara', key: 'numara', label: 'Telefon Numarası', type: 'tel', required: true, placeholder: '+90 5XX XXX XX XX' },
+          ],
+        },
+      },
+      {
+        name: 'epostalar',
+        label: 'E-posta',
+        type: 'list',
+        colSpan: 3,
+        listConfig: {
+          addLabel: 'E-posta Ekle',
+          emptyText: 'E-posta eklenmedi.',
+          fields: [
+            { name: 'etiket', key: 'etiket', label: 'Etiket', type: 'text', placeholder: 'Kişisel, iş' },
+            { name: 'adres', key: 'adres', label: 'E-posta Adresi', type: 'email', required: true },
+          ],
+        },
+      },
+      { name: 'address', label: 'Adres', type: 'textarea', colSpan: 2 },
+      { name: 'city', label: 'İl', type: 'text', compact: true },
+      { name: 'district', label: 'İlçe', type: 'text', compact: true },
     ],
   },
   {
@@ -607,6 +649,8 @@ function normalizeRepresentativeForForm(representative: RepresentativeRow) {
     currency: profile.currency || representative.currency || 'TRY',
     photo_logo: representative.photo_logo || [],
     authority_documents: representative.authority_documents || [],
+    telefonlar: profile.telefonlar || representative.telefonlar || (representative.phone ? [{ etiket: 'Birincil', numara: representative.phone }] : []),
+    epostalar: profile.epostalar || representative.epostalar || (representative.email ? [{ etiket: 'Birincil', adres: representative.email }] : []),
     document_summary: representative.authority_documents || [],
     timeline: representative.history || [],
     field_history: buildEntityFieldHistory(representative.history || []),
@@ -624,6 +668,8 @@ function normalizePayload(raw: Record<string, any>, companies: Option[]) {
   payload.nationality = payload.nationality || payload.nationality_country || payload.country || 'TR'
   payload.country = payload.country || payload.nationality_country || payload.nationality || 'TR'
   payload.identity_number = payload.identity_number || payload.national_id || payload.tc_kimlik || payload.tax_number || payload.vkn_tckn || payload.passport_no || payload.pasaport_no
+  if (Array.isArray(payload.telefonlar) && payload.telefonlar.length && !payload.phone) payload.phone = payload.telefonlar[0]?.numara
+  if (Array.isArray(payload.epostalar) && payload.epostalar.length && !payload.email) payload.email = payload.epostalar[0]?.adres
   payload.person_kind = payload.person_or_entity_type
   payload.document_summary = undefined
   payload.field_history = undefined

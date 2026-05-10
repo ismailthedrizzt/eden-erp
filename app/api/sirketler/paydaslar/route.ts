@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { z } from 'zod'
+import { hydrateMasterContact, syncMasterContact } from '@/lib/identity/masterContact'
 
 const StakeholderSchema = z.object({
   company_id: z.string().uuid().optional(),
@@ -55,7 +56,14 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: error.message, code: error.code || 'FETCH_FAILED' }, { status: 500 })
   }
 
-  return NextResponse.json({ data })
+  const hydrated = await Promise.all((data || []).map((row: Record<string, any>) =>
+    row.person_id
+      ? hydrateMasterContact(supabase, 'person', row)
+      : row.organization_id
+        ? hydrateMasterContact(supabase, 'organization', row)
+        : row
+  ))
+  return NextResponse.json({ data: hydrated })
 }
 
 export async function POST(request: NextRequest) {
@@ -84,7 +92,14 @@ export async function POST(request: NextRequest) {
     .single()
 
   if (error) return NextResponse.json({ error: error.message, code: error.code || 'CREATE_FAILED' }, { status: 500 })
-  return NextResponse.json({ data }, { status: 201 })
+  if (data?.person_id) await syncMasterContact(supabase, 'person', data.person_id, parsed.data)
+  if (data?.organization_id) await syncMasterContact(supabase, 'organization', data.organization_id, parsed.data)
+  const hydrated = data?.person_id
+    ? await hydrateMasterContact(supabase, 'person', data)
+    : data?.organization_id
+      ? await hydrateMasterContact(supabase, 'organization', data)
+      : data
+  return NextResponse.json({ data: hydrated }, { status: 201 })
 }
 
 function mapStakeholderForDb(stakeholder: Record<string, any>) {
@@ -139,6 +154,9 @@ async function attachStakeholderIdentity(supabase: ReturnType<typeof createServi
         birth_date: stakeholder.birth_date || null,
         phone: stakeholder.phone || stakeholder.phone_1 || null,
         email: stakeholder.email || stakeholder.email_1 || null,
+        address: stakeholder.address || null,
+        city: stakeholder.city || null,
+        district: stakeholder.district || null,
         metadata_json: { source: 'stakeholders_create' },
       }).select('id').single()).data?.id
       if (!personId) throw new Error('Ana kişi kaydı oluşturulamadı.')
@@ -160,6 +178,11 @@ async function attachStakeholderIdentity(supabase: ReturnType<typeof createServi
       tax_number: taxNumber,
       tax_office: stakeholder.tax_office || null,
       registration_number: stakeholder.trade_registry_no || stakeholder.mersis_no || null,
+      phone: stakeholder.phone || stakeholder.phone_1 || null,
+      email: stakeholder.email || stakeholder.email_1 || null,
+      address: stakeholder.address || null,
+      city: stakeholder.city || null,
+      district: stakeholder.district || null,
       metadata_json: { source: 'stakeholders_create' },
     }).select('id').single()).data?.id
     if (!organizationId) throw new Error('Ana kurum kaydı oluşturulamadı.')

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { z } from 'zod'
+import { hydrateMasterContact, syncMasterContact } from '@/lib/identity/masterContact'
 
 const PartnerSchema = z.object({
   company_id: z.string().uuid().optional(),
@@ -105,7 +106,14 @@ export async function GET(request: NextRequest) {
   const { data, error } = await query
   if (error) return NextResponse.json({ error: error.message, code: error.code || 'FETCH_FAILED' }, { status: 500 })
 
-  return NextResponse.json({ data })
+  const hydrated = await Promise.all((data || []).map((row: Record<string, any>) =>
+    row.person_id
+      ? hydrateMasterContact(supabase, 'person', row)
+      : row.organization_id
+        ? hydrateMasterContact(supabase, 'organization', row)
+        : row
+  ))
+  return NextResponse.json({ data: hydrated })
 }
 
 export async function POST(request: NextRequest) {
@@ -129,8 +137,15 @@ export async function POST(request: NextRequest) {
     .single()
 
   if (error) return NextResponse.json({ error: error.message, code: error.code || 'CREATE_FAILED' }, { status: 500 })
+  if (data?.person_id) await syncMasterContact(supabase, 'person', data.person_id, parsed.data)
+  if (data?.organization_id) await syncMasterContact(supabase, 'organization', data.organization_id, parsed.data)
   await linkPartnerRegistryAssets(supabase, data)
-  return NextResponse.json({ data }, { status: 201 })
+  const hydrated = data?.person_id
+    ? await hydrateMasterContact(supabase, 'person', data)
+    : data?.organization_id
+      ? await hydrateMasterContact(supabase, 'organization', data)
+      : data
+  return NextResponse.json({ data: hydrated }, { status: 201 })
 }
 
 function mapPartnerForDb(partner: Record<string, any>) {
@@ -203,6 +218,11 @@ async function attachPartnerIdentity(supabase: ReturnType<typeof createServiceCl
         national_id: nationalId,
         passport_no: passportNo,
         birth_date: partner.birth_date || null,
+        phone: partner.phone || partner.cep_telefonu || null,
+        email: partner.email || null,
+        address: partner.address || partner.adres || null,
+        city: partner.city || partner.il || null,
+        district: partner.district || partner.ilce || null,
         metadata_json: { source: 'partners_create' },
       }).select('id').single()).data?.id
       return { ...row, person_id: personId || null, source_type: 'master_person', source_id: personId || null }
@@ -228,6 +248,11 @@ async function attachPartnerIdentity(supabase: ReturnType<typeof createServiceCl
       registration_number: partner.trade_registry_no || partner.mersis_no || null,
       tax_office: partner.tax_office || null,
       organization_type: partner.company_type || null,
+      phone: partner.phone || partner.telefon || null,
+      email: partner.email || null,
+      address: partner.address || partner.adres || null,
+      city: partner.city || partner.il || null,
+      district: partner.district || partner.ilce || null,
       metadata_json: { source: 'partners_create' },
     }).select('id').single()).data?.id
     return { ...row, organization_id: organizationId || null, source_type: 'master_organization', source_id: organizationId || null }

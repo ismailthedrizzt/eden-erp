@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { z } from 'zod'
+import { hydrateMasterContact, syncMasterContact } from '@/lib/identity/masterContact'
 import { normalizeCountryId } from '@/lib/reference/country-nationalities'
 
 const EmployeeUpdateSchema = z.object({
@@ -104,7 +105,7 @@ export async function GET(
     return NextResponse.json({ error: error.message, code: error.code || 'FETCH_FAILED' }, { status: 500 })
   }
 
-  return NextResponse.json({ data })
+  return NextResponse.json({ data: await hydrateMasterContact(supabase, 'person', data) })
 }
 
 // PATCH /api/ik/personel/[id]
@@ -177,7 +178,9 @@ export async function PATCH(
     return NextResponse.json({ error: error.message, code: error.code || 'UPDATE_FAILED' }, { status: 500 })
   }
 
-  return NextResponse.json({ data })
+  await syncMasterContact(supabase, 'person', data?.person_id || current.person_id, updatePayload)
+  const hydrated = await hydrateMasterContact(supabase, 'person', data)
+  return NextResponse.json({ data: hydrated })
 }
 
 // DELETE /api/ik/personel/[id]

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
+import { hydrateMasterContact, syncMasterContact } from '@/lib/identity/masterContact'
 
 const TRACKED_FIELDS = new Set([
   'status',
@@ -46,7 +47,12 @@ export async function GET(
     .single()
 
   if (error) return NextResponse.json({ error: error.message, code: error.code || 'FETCH_FAILED' }, { status: 500 })
-  return NextResponse.json({ data })
+  const hydrated = data?.person_id
+    ? await hydrateMasterContact(supabase, 'person', data)
+    : data?.organization_id
+      ? await hydrateMasterContact(supabase, 'organization', data)
+      : data
+  return NextResponse.json({ data: hydrated })
 }
 
 export async function PATCH(
@@ -77,7 +83,14 @@ export async function PATCH(
     .single()
 
   if (error) return NextResponse.json({ error: error.message, code: error.code || 'UPDATE_FAILED' }, { status: 500 })
-  return NextResponse.json({ data })
+  if (data?.person_id) await syncMasterContact(supabase, 'person', data.person_id, body)
+  if (data?.organization_id) await syncMasterContact(supabase, 'organization', data.organization_id, body)
+  const hydrated = data?.person_id
+    ? await hydrateMasterContact(supabase, 'person', data)
+    : data?.organization_id
+      ? await hydrateMasterContact(supabase, 'organization', data)
+      : data
+  return NextResponse.json({ data: hydrated })
 }
 
 export async function DELETE(

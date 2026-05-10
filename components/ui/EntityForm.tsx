@@ -296,7 +296,8 @@ function normalizeStoredDocuments(value: unknown): SlotDocument[] {
       size: Number(doc.size || doc.file_size || 0),
       type: doc.type || doc.mime_type || doc.mimeType || doc.file_type || 'application/octet-stream',
       uploadedAt: doc.uploadedAt || doc.uploaded_at ? new Date(doc.uploadedAt || doc.uploaded_at) : undefined,
-      url: doc.url || doc.previewUrl || doc.preview_url || doc.signedUrl || doc.signed_url || doc.file_url || doc.download_url
+      url: doc.url || doc.previewUrl || doc.preview_url || doc.signedUrl || doc.signed_url || doc.file_url || doc.download_url,
+      thumbnailUrl: doc.thumbnailUrl || doc.thumbnail_url || doc.preview_thumb_url || doc.preview_image_url,
     }))
 }
 
@@ -309,7 +310,8 @@ function serializeDocumentForStorage(doc: SlotDocument) {
     size: doc.size,
     type: doc.type,
     uploadedAt: doc.uploadedAt?.toISOString?.() || new Date().toISOString(),
-    url: doc.url || doc.previewUrl
+    url: doc.url || doc.previewUrl,
+    thumbnailUrl: doc.thumbnailUrl
   }
 }
 

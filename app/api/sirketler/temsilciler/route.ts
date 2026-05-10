@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { z } from 'zod'
+import { hydrateMasterContact, syncMasterContact } from '@/lib/identity/masterContact'
 
 const RepresentativeSchema = z.object({
   company_id: z.string().uuid().optional(),
@@ -52,7 +53,14 @@ export async function GET(request: NextRequest) {
   const { data, error } = await query
   if (error) return NextResponse.json({ error: error.message, code: error.code || 'FETCH_FAILED' }, { status: 500 })
 
-  return NextResponse.json({ data })
+  const hydrated = await Promise.all((data || []).map((row: Record<string, any>) =>
+    row.person_id
+      ? hydrateMasterContact(supabase, 'person', row)
+      : row.organization_id
+        ? hydrateMasterContact(supabase, 'organization', row)
+        : row
+  ))
+  return NextResponse.json({ data: hydrated })
 }
 
 export async function POST(request: NextRequest) {
@@ -76,7 +84,14 @@ export async function POST(request: NextRequest) {
     .single()
 
   if (error) return NextResponse.json({ error: error.message, code: error.code || 'CREATE_FAILED' }, { status: 500 })
-  return NextResponse.json({ data }, { status: 201 })
+  if (data?.person_id) await syncMasterContact(supabase, 'person', data.person_id, parsed.data)
+  if (data?.organization_id) await syncMasterContact(supabase, 'organization', data.organization_id, parsed.data)
+  const hydrated = data?.person_id
+    ? await hydrateMasterContact(supabase, 'person', data)
+    : data?.organization_id
+      ? await hydrateMasterContact(supabase, 'organization', data)
+      : data
+  return NextResponse.json({ data: hydrated }, { status: 201 })
 }
 
 function mapRepresentativeForDb(representative: Record<string, any>) {
@@ -132,6 +147,11 @@ async function attachRepresentativeIdentity(supabase: ReturnType<typeof createSe
         nationality,
         national_id: nationalId,
         passport_no: passportNo,
+        phone: representative.phone || null,
+        email: representative.email || null,
+        address: representative.address || representative.adres || null,
+        city: representative.city || representative.il || null,
+        district: representative.district || representative.ilce || null,
         metadata_json: { source: 'representatives_create' },
       }).select('id').single()).data?.id
       return { ...row, person_id: personId || null, source_id: row.source_id || personId || null }
@@ -150,6 +170,11 @@ async function attachRepresentativeIdentity(supabase: ReturnType<typeof createSe
       legal_name: legalName,
       country,
       tax_number: taxNumber,
+      phone: representative.phone || null,
+      email: representative.email || null,
+      address: representative.address || representative.adres || null,
+      city: representative.city || representative.il || null,
+      district: representative.district || representative.ilce || null,
       metadata_json: { source: 'representatives_create' },
     }).select('id').single()).data?.id
     return { ...row, organization_id: organizationId || null, source_id: row.source_id || organizationId || null }

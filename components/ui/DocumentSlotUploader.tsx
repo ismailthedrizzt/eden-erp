@@ -64,6 +64,7 @@ export interface SlotDocument {
   uploadedAt?: Date
   url?: string
   previewUrl?: string
+  thumbnailUrl?: string
 }
 
 interface DocumentSlotUploaderProps {
@@ -217,7 +218,12 @@ const DEFAULT_DOCUMENT_ACCEPTED_TYPES = [
 
 function getDocumentUrl(doc?: SlotDocument | null) {
   if (!doc) return ''
-  return doc.url || doc.previewUrl || (doc.file ? URL.createObjectURL(doc.file) : '')
+  return doc.url || doc.previewUrl || doc.thumbnailUrl || (doc.file ? URL.createObjectURL(doc.file) : '')
+}
+
+function getDocumentThumbnailUrl(doc?: SlotDocument | null, signedUrl?: string) {
+  if (!doc) return ''
+  return doc.thumbnailUrl || doc.previewUrl || signedUrl || doc.url || (doc.file ? URL.createObjectURL(doc.file) : '')
 }
 
 export function DocumentSlotUploader({
@@ -277,6 +283,7 @@ export function DocumentSlotUploader({
   const currentDocUrl = currentDoc?.documentId
     ? signedPreviewUrls[currentDoc.documentId] || getDocumentUrl(currentDoc)
     : getDocumentUrl(currentDoc)
+  const currentDocThumbnailUrl = getDocumentThumbnailUrl(currentDoc, currentDoc?.documentId ? signedPreviewUrls[currentDoc.documentId] : undefined)
   const hasDocument = !!currentDoc
   const currentAcceptedTypes = currentSlot?.acceptedTypes || DEFAULT_DOCUMENT_ACCEPTED_TYPES
   const registryEnabled = !!registry?.enabled && !readOnly
@@ -616,19 +623,26 @@ export function DocumentSlotUploader({
             <div className="flex-1 flex flex-col p-3 group">
               {/* File Preview / Thumbnail */}
               <div className="flex-1 flex items-center justify-center">
-                {isImageDocument(currentDoc) && currentDocUrl ? (
+                {isImageDocument(currentDoc) && currentDocThumbnailUrl ? (
                   <img
-                    src={currentDocUrl}
+                    src={currentDocThumbnailUrl}
                     alt={currentDoc.name}
                     className="h-full min-h-36 w-full rounded border border-gray-200 object-cover shadow-sm dark:border-gray-700"
                   />
                 ) : canPreviewCurrentDoc ? (
                   <div className="h-full min-h-36 w-full overflow-hidden rounded border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-900">
-                    <iframe
-                      src={`${currentDocUrl}#page=1&toolbar=0&navpanes=0&scrollbar=0`}
+                    <object
+                      data={`${currentDocUrl}#page=1&toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
+                      type="application/pdf"
                       title={`${currentDoc.name} preview`}
-                      className="h-full w-full border-0"
-                    />
+                      className="h-full w-full"
+                    >
+                      <iframe
+                        src={`${currentDocUrl}#page=1&toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
+                        title={`${currentDoc.name} preview`}
+                        className="h-full w-full border-0"
+                      />
+                    </object>
                   </div>
                 ) : (
                   <div className={cn(

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { z } from 'zod'
 import { isTurkishNationality, normalizeCountryId } from '@/lib/reference/country-nationalities'
+import { syncMasterContact } from '@/lib/identity/masterContact'
 
 const EmployeeSchema = z.object({
   person_id: z.string().uuid().optional().nullable(),
@@ -228,6 +229,7 @@ export async function POST(request: NextRequest) {
   }
 
   if (error) return NextResponse.json({ error: error.message, code: error.code || 'CREATE_FAILED' }, { status: 500 })
+  await syncMasterContact(supabase, 'person', data?.person_id || employeePayload.person_id, employeePayload)
   return NextResponse.json({ data }, { status: 201 })
 }
 
@@ -267,6 +269,8 @@ async function ensureEmployeePersonLink(supabase: ReturnType<typeof createServic
       phone: employee.cep_telefonu || employee.is_telefonu || null,
       email: employee.email || null,
       address: employee.adres || null,
+      city: employee.il || null,
+      district: employee.ilce || null,
       metadata_json: { source_table: 'employees', source: 'identity_gate' },
     })
     .select('id')

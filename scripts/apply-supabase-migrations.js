@@ -32,6 +32,7 @@ const migrationFiles = [
   '20260510_ownership_transactions_scope_split.sql',
   '20260510_document_media_registry.sql',
   '20260510_employee_marital_status.sql',
+  '20260510_master_contact_standardization.sql',
   'create_module_licenses.sql',
   'add_employee_unique_constraint.sql',
 ];

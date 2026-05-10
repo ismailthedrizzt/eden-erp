@@ -7,3 +7,5 @@ ALTER TABLE public.employees
 ALTER TABLE public.employees
   ADD CONSTRAINT employees_medeni_durum_check
   CHECK (medeni_durum IS NULL OR medeni_durum IN ('bekar', 'evli'));
+
+NOTIFY pgrst, 'reload schema';

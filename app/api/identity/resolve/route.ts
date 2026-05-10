@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { createServiceClient } from '@/lib/supabase/server'
 import { normalizeIdentityCountry } from '@/lib/identity-gate'
+import { mergeMasterContactIntoRole } from '@/lib/identity/masterContact'
 
 const ResolveSchema = z.object({
   entityKind: z.enum(['person', 'organization']),
@@ -312,7 +313,7 @@ function buildPrefill(entityKind: 'person' | 'organization', record: Record<stri
     const images = normalizePersonImages(record)
     const cvDocument = documents.find(document => document.slotId === 'cv') || documents[0] || null
 
-    return {
+    return mergeMasterContactIntoRole({
       person_id: record.id,
       ad: firstName,
       soyad: lastName,
@@ -350,14 +351,14 @@ function buildPrefill(entityKind: 'person' | 'organization', record: Record<stri
       authority_documents: documents,
       stakeholder_documents: documents,
       document_summary: documents,
-    }
+    }, record, 'person')
   }
 
   const legalName = record.legal_name || record.ticari_unvan || ''
   const shortName = record.short_name || record.kisa_unvan || ''
   const documents = normalizeOrganizationDocuments(record)
 
-  return {
+  return mergeMasterContactIntoRole({
     organization_id: record.id,
     ticari_unvan: legalName,
     legal_name: legalName,
@@ -395,7 +396,7 @@ function buildPrefill(entityKind: 'person' | 'organization', record: Record<stri
     authority_documents: documents,
     stakeholder_documents: documents,
     document_summary: documents,
-  }
+  }, record, 'organization')
 }
 
 function buildNewMasterPrefill(entityKind: 'person' | 'organization', identity: z.infer<typeof ResolveSchema>['identity']) {

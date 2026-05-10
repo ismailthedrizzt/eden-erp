@@ -52,6 +52,8 @@ begin
   end if;
 end $$;
 
+drop view if exists public.v_current_ownership;
+
 create or replace view public.v_current_ownership as
 with approved as (
   select *

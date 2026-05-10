@@ -21,8 +21,11 @@ interface StakeholderRow {
   tax_id?: string
   phone?: string
   email?: string
+  telefonlar?: Array<Record<string, any>>
+  epostalar?: Array<Record<string, any>>
   country?: string
   city?: string
+  district?: string
   status?: string
   priority_level?: string
   internal_owner_employee_id?: string
@@ -133,15 +136,37 @@ const tabs: FormTab[] = [
     id: 'iletisim',
     label: 'İletişim',
     fields: [
-      { name: 'phone_1', label: 'Telefon 1', type: 'tel' },
-      { name: 'phone_2', label: 'Telefon 2', type: 'tel' },
-      { name: 'email_1', label: 'Email 1', type: 'email' },
-      { name: 'email_2', label: 'Email 2', type: 'email' },
-      { name: 'city', label: 'Şehir', type: 'text' },
-      { name: 'district', label: 'İlçe', type: 'text' },
-      { name: 'postal_code', label: 'Posta Kodu', type: 'text' },
-      { name: 'whatsapp', label: 'WhatsApp', type: 'tel' },
-      { name: 'address', label: 'Adres', type: 'textarea', colSpan: 3 },
+      {
+        name: 'telefonlar',
+        label: 'Telefon',
+        type: 'list',
+        colSpan: 3,
+        listConfig: {
+          addLabel: 'Telefon Ekle',
+          emptyText: 'Telefon eklenmedi.',
+          fields: [
+            { name: 'etiket', key: 'etiket', label: 'Etiket', type: 'text', placeholder: 'Cep, iş, ev' },
+            { name: 'numara', key: 'numara', label: 'Telefon Numarası', type: 'tel', required: true, placeholder: '+90 5XX XXX XX XX' },
+          ],
+        },
+      },
+      {
+        name: 'epostalar',
+        label: 'E-posta',
+        type: 'list',
+        colSpan: 3,
+        listConfig: {
+          addLabel: 'E-posta Ekle',
+          emptyText: 'E-posta eklenmedi.',
+          fields: [
+            { name: 'etiket', key: 'etiket', label: 'Etiket', type: 'text', placeholder: 'Kişisel, iş' },
+            { name: 'adres', key: 'adres', label: 'E-posta Adresi', type: 'email', required: true },
+          ],
+        },
+      },
+      { name: 'address', label: 'Adres', type: 'textarea', colSpan: 2 },
+      { name: 'city', label: 'İl', type: 'text', compact: true },
+      { name: 'district', label: 'İlçe', type: 'text', compact: true },
     ],
   },
   {
@@ -468,8 +493,8 @@ function normalizeStakeholderForForm(stakeholder: StakeholderRow) {
     display_name: profile.display_name || stakeholder.display_name || '',
     phone: profile.phone || stakeholder.phone || '',
     email: profile.email || stakeholder.email || '',
-    phone_1: profile.phone_1 || stakeholder.phone || '',
-    email_1: profile.email_1 || stakeholder.email || '',
+    telefonlar: profile.telefonlar || stakeholder.telefonlar || (stakeholder.phone ? [{ etiket: 'Birincil', numara: stakeholder.phone }] : []),
+    epostalar: profile.epostalar || stakeholder.epostalar || (stakeholder.email ? [{ etiket: 'Birincil', adres: stakeholder.email }] : []),
     document_summary: stakeholder.stakeholder_documents || [],
     timeline: stakeholder.history || [],
     field_history: buildEntityFieldHistory(stakeholder.history || []),
@@ -483,8 +508,8 @@ function normalizePayload(raw: Record<string, any>, companies: Option[]) {
   if (payload.master_entity_kind === 'organization') payload.stakeholder_type = 'tuzel_kisi'
   payload.country = payload.country || payload.nationality_country || payload.nationality || 'TR'
   payload.tax_id = payload.tax_id || payload.national_id || payload.tc_kimlik || payload.tax_number || payload.vkn_tckn || payload.passport_no || payload.pasaport_no
-  payload.phone = payload.phone || payload.phone_1
-  payload.email = payload.email || payload.email_1
+  if (Array.isArray(payload.telefonlar) && payload.telefonlar.length && !payload.phone) payload.phone = payload.telefonlar[0]?.numara
+  if (Array.isArray(payload.epostalar) && payload.epostalar.length && !payload.email) payload.email = payload.epostalar[0]?.adres
   payload.document_summary = undefined
   payload.field_history = undefined
   return payload
