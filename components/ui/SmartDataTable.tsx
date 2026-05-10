@@ -117,6 +117,22 @@ function mergeColumnConfig(allColumns: ColumnDef[], savedColumns?: ColumnDef[]) 
     .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
 }
 
+function quickLookWidgetId(kind: 'summary' | 'dashboard', key: string) {
+  return `${kind}:${key}`
+}
+
+function parseSavedWidgetIds(value: string | null, fallbackIds: string[]) {
+  if (!value) return fallbackIds
+  try {
+    const parsed = JSON.parse(value)
+    if (!Array.isArray(parsed)) return fallbackIds
+    const allowedIds = new Set(fallbackIds)
+    return parsed.filter((id): id is string => typeof id === 'string' && allowedIds.has(id))
+  } catch {
+    return fallbackIds
+  }
+}
+
 export function SmartDataTable<T extends { id: string }>({
   data,
   columns: initialColumns,
@@ -137,6 +153,11 @@ export function SmartDataTable<T extends { id: string }>({
   pollingInterval = 30000
 }: SmartDataTableProps<T>) {
   const columnSignature = initialColumns.map(col => `${col.key}:${col.label}:${col.visible ?? ''}:${col.required ?? ''}:${col.fixed ?? ''}:${col.hideable ?? ''}`).join('|')
+  const quickLookWidgetIds = [
+    ...dashboardWidgets.map(widget => quickLookWidgetId('dashboard', widget.id)),
+    ...widgets.map(widget => quickLookWidgetId('summary', widget.key)),
+  ]
+  const quickLookWidgetSignature = quickLookWidgetIds.join('|')
 
   // User Preferences State
   const [viewMode, setViewMode] = useState<'list' | 'card'>(() => {
@@ -178,6 +199,10 @@ export function SmartDataTable<T extends { id: string }>({
     const saved = localStorage.getItem(`${storageKey}-quickLook`)
     return saved === null ? true : saved === 'true'
   })
+  const [selectedQuickLookWidgetIds, setSelectedQuickLookWidgetIds] = useState<string[]>(() => {
+    if (typeof window === 'undefined') return quickLookWidgetIds
+    return parseSavedWidgetIds(localStorage.getItem(`${storageKey}-widgets`), quickLookWidgetIds)
+  })
   const [draggedColumn, setDraggedColumn] = useState<string | null>(null)
   const [dropTarget, setDropTarget] = useState<string | null>(null)
 
@@ -199,6 +224,16 @@ export function SmartDataTable<T extends { id: string }>({
     setColumnConfig(prev => mergeColumnConfig(initialColumns, prev))
   }, [columnSignature])
 
+  useEffect(() => {
+    setSelectedQuickLookWidgetIds(prev => {
+      const allowedIds = new Set(quickLookWidgetIds)
+      if (prev.length === 0 && quickLookWidgetIds.length > 0 && typeof window !== 'undefined' && !localStorage.getItem(`${storageKey}-widgets`)) {
+        return quickLookWidgetIds
+      }
+      return prev.filter(id => allowedIds.has(id))
+    })
+  }, [quickLookWidgetSignature, storageKey])
+
   // Persist preferences
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -206,8 +241,9 @@ export function SmartDataTable<T extends { id: string }>({
       localStorage.setItem(`${storageKey}-pageSize`, pageSize.toString())
       localStorage.setItem(`${storageKey}-columns`, JSON.stringify(columnConfig))
       localStorage.setItem(`${storageKey}-quickLook`, String(showWidgets))
+      localStorage.setItem(`${storageKey}-widgets`, JSON.stringify(selectedQuickLookWidgetIds))
     }
-  }, [viewMode, pageSize, columnConfig, showWidgets, storageKey])
+  }, [viewMode, pageSize, columnConfig, showWidgets, selectedQuickLookWidgetIds, storageKey])
 
   // Click outside handler for column selector
   useEffect(() => {
@@ -498,6 +534,16 @@ export function SmartDataTable<T extends { id: string }>({
   const resetColumnsToDefault = useCallback(() => {
     setColumnConfig(mergeColumnConfig(initialColumns))
   }, [initialColumns])
+
+  const toggleQuickLookWidget = useCallback((id: string) => {
+    setSelectedQuickLookWidgetIds(prev =>
+      prev.includes(id) ? prev.filter(item => item !== id) : [...prev, id]
+    )
+  }, [])
+
+  const resetQuickLookWidgetsToDefault = useCallback(() => {
+    setSelectedQuickLookWidgetIds(quickLookWidgetIds)
+  }, [quickLookWidgetSignature])
 
   const reorderColumns = useCallback((dragKey: string, dropKey: string) => {
     setColumnConfig(prev => {
@@ -822,7 +868,14 @@ export function SmartDataTable<T extends { id: string }>({
     return col.type === 'text' || col.type === 'enum' || col.type === 'badge'
   }
 
+  const selectedDashboardWidgets = dashboardWidgets.filter(widget =>
+    selectedQuickLookWidgetIds.includes(quickLookWidgetId('dashboard', widget.id))
+  )
+  const selectedSummaryWidgets = widgets.filter(widget =>
+    selectedQuickLookWidgetIds.includes(quickLookWidgetId('summary', widget.key))
+  )
   const hasQuickLookContent = widgets.length > 0 || dashboardWidgets.length > 0
+  const hasSelectedQuickLookContent = selectedSummaryWidgets.length > 0 || selectedDashboardWidgets.length > 0
   const quickLookPanel = (showWidgets && hasQuickLookContent) ? (
     <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
       <div className="flex items-center justify-between mb-3">
@@ -842,18 +895,18 @@ export function SmartDataTable<T extends { id: string }>({
         </button>
       </div>
       <div className="space-y-3">
-        {dashboardWidgets.length > 0 && (
+        {selectedDashboardWidgets.length > 0 && (
           <DashboardGrid
-            widgets={dashboardWidgets}
+            widgets={selectedDashboardWidgets}
             onFilter={onDashboardFilter}
             unauthorizedMode="hide"
             compact
           />
         )}
 
-        {widgets.length > 0 && (
+        {selectedSummaryWidgets.length > 0 && (
           <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
-            {widgets.map(widget => (
+            {selectedSummaryWidgets.map(widget => (
               <div key={widget.key} className="bg-white dark:bg-gray-800 rounded-lg p-2 shadow-sm">
                 <div className="text-[11px] text-gray-500 dark:text-gray-400 mb-0.5">{widget.label}</div>
                 <div className="text-sm font-medium text-gray-900 dark:text-white">
@@ -869,10 +922,10 @@ export function SmartDataTable<T extends { id: string }>({
           </div>
         )}
 
-        {!hasQuickLookContent && (
+        {!hasSelectedQuickLookContent && (
           <div className="text-center text-sm text-gray-500 dark:text-gray-400 py-4">
-            Bu liste için hızlı bakış bilgisi tanımlanmamış.
-            </div>
+            Tercihlerde seçili hızlı bakış widget&apos;ı yok.
+          </div>
         )}
       </div>
     </div>
@@ -948,7 +1001,7 @@ export function SmartDataTable<T extends { id: string }>({
             <Eye size={18} />
             {hasQuickLookContent && (
               <span className="absolute -top-1 -right-1 w-4 h-4 bg-blue-500 text-white text-[10px] rounded-full flex items-center justify-center">
-                {dashboardWidgets.length || widgets.length}
+                {selectedDashboardWidgets.length + selectedSummaryWidgets.length}
               </span>
             )}
           </button>
@@ -1035,6 +1088,55 @@ export function SmartDataTable<T extends { id: string }>({
                   >
                     Sütunları Varsayılana Döndür
                   </button>
+                  {hasQuickLookContent && (
+                    <div className="rounded-lg border border-gray-200 p-2 dark:border-gray-700">
+                      <div className="mb-2 flex items-center justify-between gap-2">
+                        <div>
+                          <h4 className="text-xs font-semibold text-gray-700 dark:text-gray-200">Widget Tercihleri</h4>
+                          <p className="text-[11px] text-gray-500 dark:text-gray-400">
+                            {selectedQuickLookWidgetIds.length} / {quickLookWidgetIds.length} seçili
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={resetQuickLookWidgetsToDefault}
+                          className="rounded-md border border-gray-200 px-2 py-1 text-[11px] font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-700"
+                        >
+                          Varsayılan
+                        </button>
+                      </div>
+                      <div className="max-h-36 space-y-1 overflow-y-auto pr-1">
+                        {dashboardWidgets.map(widget => {
+                          const id = quickLookWidgetId('dashboard', widget.id)
+                          return (
+                            <label key={id} className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 text-xs hover:bg-gray-50 dark:hover:bg-gray-700">
+                              <input
+                                type="checkbox"
+                                checked={selectedQuickLookWidgetIds.includes(id)}
+                                onChange={() => toggleQuickLookWidget(id)}
+                                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                              />
+                              <span className="min-w-0 flex-1 truncate text-gray-700 dark:text-gray-300">{widget.title}</span>
+                            </label>
+                          )
+                        })}
+                        {widgets.map(widget => {
+                          const id = quickLookWidgetId('summary', widget.key)
+                          return (
+                            <label key={id} className="flex cursor-pointer items-center gap-2 rounded px-1.5 py-1 text-xs hover:bg-gray-50 dark:hover:bg-gray-700">
+                              <input
+                                type="checkbox"
+                                checked={selectedQuickLookWidgetIds.includes(id)}
+                                onChange={() => toggleQuickLookWidget(id)}
+                                className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                              />
+                              <span className="min-w-0 flex-1 truncate text-gray-700 dark:text-gray-300">{widget.label}</span>
+                            </label>
+                          )
+                        })}
+                      </div>
+                    </div>
+                  )}
                   {/* Width Quota Bar */}
                   <div className="space-y-1">
                     <div className="flex items-center justify-between text-xs">
