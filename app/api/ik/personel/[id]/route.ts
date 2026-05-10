@@ -35,7 +35,7 @@ const EmployeeUpdateSchema = z.object({
   calisma_durumu: z.enum(['gorevde', 'izinde', 'ayrilmis', 'askida']).optional(),
   calisma_tipi: z.string().optional(),
   is_akdi_bicimi: z.string().optional(),
-  medeni_durum: z.enum(['bekar', 'evli', 'dul', 'bosanmis']).optional(),
+  medeni_durum: z.enum(['bekar', 'evli']).optional(),
   sirket_id: z.string().uuid().optional().nullable(),
   birim_id: z.string().uuid().optional().nullable(),
   kadro_id: z.string().uuid().optional().nullable(),
@@ -151,8 +151,8 @@ export async function PATCH(
     .select()
     .single()
 
-  const missingColumn = missingEmployeeColumn(error, ['is_akdi_bicimi', 'calisma_tipi'])
-  if (missingColumn) {
+  let missingColumn = missingEmployeeColumn(error, ['is_akdi_bicimi', 'calisma_tipi', 'medeni_durum'])
+  while (missingColumn) {
     updatePayload = { ...updatePayload }
     delete (updatePayload as Record<string, any>)[missingColumn]
     const retry = await supabase
@@ -167,6 +167,7 @@ export async function PATCH(
       .single()
     data = retry.data
     error = retry.error
+    missingColumn = missingEmployeeColumn(error, ['is_akdi_bicimi', 'calisma_tipi', 'medeni_durum'])
   }
 
   if (error) {
@@ -239,5 +240,9 @@ function summarizeHistoryValue(value: unknown) {
 
 function missingEmployeeColumn(error: { message?: string } | null, optionalColumns: string[]) {
   const message = error?.message || ''
-  return optionalColumns.find((column) => message.includes(`employees.${column}`) && message.includes('does not exist'))
+  return optionalColumns.find((column) =>
+    (message.includes(`employees.${column}`) && message.includes('does not exist')) ||
+    (message.includes(`'${column}'`) && message.includes("'employees'") && message.includes('schema cache')) ||
+    (message.includes(column) && message.includes('schema cache'))
+  )
 }

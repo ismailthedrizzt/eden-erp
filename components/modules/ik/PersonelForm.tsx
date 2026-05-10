@@ -570,8 +570,6 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
               <option value="">Seçiniz</option>
               <option value="bekar">Bekar</option>
               <option value="evli">Evli</option>
-              <option value="dul">Dul</option>
-              <option value="bosanmis">Boşanmış</option>
             </select>
           </div>
 

@@ -37,6 +37,7 @@ const EmployeeSchema = z.object({
   calisma_durumu: z.enum(['gorevde', 'izinde', 'ayrilmis', 'askida']).default('gorevde'),
   calisma_tipi: z.string().optional(),
   is_akdi_bicimi: z.string().optional(),
+  medeni_durum: z.enum(['bekar', 'evli']).optional(),
   sirket_id: z.string().uuid().optional(),
   birim_id: z.string().uuid().optional(),
   kadro_id: z.string().uuid().optional(),
@@ -100,7 +101,11 @@ const optionalEmployeeListColumns = [
 
 function missingEmployeeColumn(error: { message?: string } | null, optionalColumns: string[]) {
   const message = error?.message || ''
-  return optionalColumns.find((column) => message.includes(`employees.${column}`) && message.includes('does not exist'))
+  return optionalColumns.find((column) =>
+    (message.includes(`employees.${column}`) && message.includes('does not exist')) ||
+    (message.includes(`'${column}'`) && message.includes("'employees'") && message.includes('schema cache')) ||
+    (message.includes(column) && message.includes('schema cache'))
+  )
 }
 
 // GET /api/ik/personel
@@ -205,8 +210,8 @@ export async function POST(request: NextRequest) {
     .select()
     .single()
 
-  const missingMutationColumn = missingEmployeeColumn(error, ['is_akdi_bicimi', 'calisma_tipi'])
-  if (missingMutationColumn) {
+  let missingMutationColumn = missingEmployeeColumn(error, ['is_akdi_bicimi', 'calisma_tipi', 'medeni_durum'])
+  while (missingMutationColumn) {
     employeePayload = { ...employeePayload }
     delete (employeePayload as Record<string, any>)[missingMutationColumn]
     const retry = await supabase
@@ -219,6 +224,7 @@ export async function POST(request: NextRequest) {
       .single()
     data = retry.data
     error = retry.error
+    missingMutationColumn = missingEmployeeColumn(error, ['is_akdi_bicimi', 'calisma_tipi', 'medeni_durum'])
   }
 
   if (error) return NextResponse.json({ error: error.message, code: error.code || 'CREATE_FAILED' }, { status: 500 })

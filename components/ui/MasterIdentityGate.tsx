@@ -387,7 +387,7 @@ function GateStatus({ state, tone }: { state: IdentityGateState; tone: 'neutral'
   )
 }
 
-const inputClass = 'w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900 disabled:cursor-not-allowed disabled:bg-gray-50 dark:disabled:bg-gray-800'
+const inputClass = 'w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-white disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-900 dark:disabled:bg-gray-800 dark:disabled:text-gray-100'
 
 function initialIdentity(kind: IdentityEntityKind): Record<string, string> {
   return kind === 'person'

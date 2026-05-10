@@ -351,11 +351,8 @@ export const personelModuleConfig: ModuleConfig<PersonelTableRow> = {
               type: 'select',
               compact: true,
               options: [
-                { value: '', label: 'Seçiniz' },
                 { value: 'bekar', label: 'Bekar' },
-                { value: 'evli', label: 'Evli' },
-                { value: 'dul', label: 'Dul' },
-                { value: 'bosanmis', label: 'Boşanmış' }
+                { value: 'evli', label: 'Evli' }
               ]
             },
             {

@@ -150,7 +150,7 @@ export interface Personel {
 
 export type PersonelDurum = 'gorevde' | 'izinde' | 'ayrilmis' | 'askida'
 export type KanGrubu = 'A+' | 'A-' | 'B+' | 'B-' | 'AB+' | 'AB-' | '0+' | '0-'
-export type MedeniDurum = 'bekar' | 'evli' | 'dul' | 'bosanmis'
+export type MedeniDurum = 'bekar' | 'evli'
 export type AskerlikDurum = 'muaf' | 'caginda_degil' | 'tecilli' | 'belirsiz' | 'bakaya' | 'yapti'
 
 // ── Muhasebe ──────────────────────────────────────────────────

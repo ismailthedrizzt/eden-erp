@@ -24,7 +24,7 @@ const EMPLOYEE_SCHEMA = {
     il: { type: 'string' },
     ilce: { type: 'string' },
     pozisyon: { type: 'string' },
-    medeni_durum: { type: 'string', enum: ['bekar', 'evli', 'dul', 'bosanmis', ''] },
+    medeni_durum: { type: 'string', enum: ['bekar', 'evli', ''] },
     egitim_okullari: {
       type: 'array',
       items: {
