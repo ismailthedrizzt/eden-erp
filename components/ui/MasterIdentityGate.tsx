@@ -36,6 +36,7 @@ export function MasterIdentityGate({
   const [error, setError] = useState<string | null>(null)
   const [lastResult, setLastResult] = useState<IdentityGateResolveResult | null>(null)
   const [touched, setTouched] = useState<Record<string, boolean>>({})
+  const allowedEntityKindsKey = config.allowedEntityKinds.join('|')
 
   const readOnly = mode !== 'create'
   const isFixedKind = config.allowedEntityKinds.length === 1
@@ -47,15 +48,41 @@ export function MasterIdentityGate({
 
   useEffect(() => {
     if (mode === 'create') return
+    const nextKind = deriveEntityKind(config, formData)
+    const nextIdentity = deriveIdentity(nextKind, formData, identity)
+    setEntityKind(nextKind)
     setIdentity(prev => ({
       ...prev,
-      nationality: normalizeCountryId(formData.uyruk || formData.nationality || prev.nationality),
-      national_id: String(formData.tc_kimlik || formData.national_id || prev.national_id || ''),
-      passport_no: String(formData.pasaport_no || formData.passport_no || prev.passport_no || ''),
+      ...nextIdentity,
     }))
     setState('ready_for_edit')
     setMessage('Kayıt düzenleme modunda. Temel kimlik ilişkisi mevcut kayıt üzerinden yönetilir.')
-  }, [mode, formData.uyruk, formData.nationality, formData.tc_kimlik, formData.national_id, formData.pasaport_no, formData.passport_no])
+  }, [
+    mode,
+    allowedEntityKindsKey,
+    formData.master_entity_kind,
+    formData.partner_type,
+    formData.stakeholder_type,
+    formData.person_or_entity_type,
+    formData.owner_kind,
+    formData.person_id,
+    formData.organization_id,
+    formData.uyruk,
+    formData.nationality,
+    formData.nationality_country,
+    formData.tc_kimlik,
+    formData.national_id,
+    formData.identity_number,
+    formData.tckn_vkn,
+    formData.pasaport_no,
+    formData.passport_no,
+    formData.country,
+    formData.ulke,
+    formData.tax_number,
+    formData.vkn_tckn,
+    formData.registration_number,
+    formData.ticaret_sicil_no,
+  ])
 
   const updateIdentity = (key: string, value: string) => {
     setIdentity(prev => {
@@ -366,6 +393,53 @@ function initialIdentity(kind: IdentityEntityKind): Record<string, string> {
   return kind === 'person'
     ? { nationality: 'TR', national_id: '', passport_no: '' }
     : { country: 'TR', tax_number: '', registration_number: '' }
+}
+
+function deriveEntityKind(config: IdentityGateConfig, formData: Record<string, any>): IdentityEntityKind {
+  const rawKind = String(
+    formData.master_entity_kind ||
+    formData.person_or_entity_type ||
+    formData.partner_type ||
+    formData.stakeholder_type ||
+    formData.owner_kind ||
+    ''
+  )
+
+  if (formData.organization_id || rawKind === 'organization' || rawKind === 'tuzel_kisi' || rawKind === 'sirket') {
+    return config.allowedEntityKinds.includes('organization') ? 'organization' : config.allowedEntityKinds[0] || 'person'
+  }
+
+  if (formData.person_id || rawKind === 'person' || rawKind === 'gercek_kisi' || rawKind === 'kisi') {
+    return config.allowedEntityKinds.includes('person') ? 'person' : config.allowedEntityKinds[0] || 'person'
+  }
+
+  return config.allowedEntityKinds[0] || 'person'
+}
+
+function deriveIdentity(kind: IdentityEntityKind, formData: Record<string, any>, previous: Record<string, string>): Record<string, string> {
+  if (kind === 'person') {
+    const rawIdentity = String(formData.identity_number || formData.tckn_vkn || '')
+    const nationalId = String(formData.tc_kimlik || formData.national_id || (/^\d{11}$/.test(rawIdentity) ? rawIdentity : '') || '')
+    const passportNo = String(formData.pasaport_no || formData.passport_no || (rawIdentity && !/^\d{11}$/.test(rawIdentity) ? rawIdentity : '') || '')
+
+    return {
+      nationality: normalizeCountryId(formData.uyruk || formData.nationality || formData.nationality_country || previous.nationality || 'TR'),
+      national_id: nationalId,
+      passport_no: passportNo,
+      country: previous.country || 'TR',
+      tax_number: previous.tax_number || '',
+      registration_number: previous.registration_number || '',
+    }
+  }
+
+  return {
+    nationality: previous.nationality || 'TR',
+    national_id: previous.national_id || '',
+    passport_no: previous.passport_no || '',
+    country: normalizeCountryId(formData.country || formData.ulke || formData.nationality_country || previous.country || 'TR'),
+    tax_number: String(formData.tax_number || formData.vkn_tckn || formData.identity_number || formData.tckn_vkn || previous.tax_number || ''),
+    registration_number: String(formData.registration_number || formData.ticaret_sicil_no || previous.registration_number || ''),
+  }
 }
 
 function validateIdentity(kind: IdentityEntityKind, identity: Record<string, string>) {

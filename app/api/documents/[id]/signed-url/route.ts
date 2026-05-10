@@ -11,12 +11,12 @@ const SignedUrlSchema = z.object({
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const supabase = createServiceClient()
-  const permission = await requireRegistryPermission(request, supabase, 'documents.download')
-  if (permission instanceof NextResponse) return permission
-
   const { id } = await params
   const parsed = SignedUrlSchema.safeParse(await request.json().catch(() => ({})))
   const fileId = parsed.success ? parsed.data.file_id : undefined
+  const isDownload = parsed.success && parsed.data.download
+  const permission = await requireRegistryPermission(request, supabase, isDownload ? 'documents.download' : 'documents.view')
+  if (permission instanceof NextResponse) return permission
 
   const { data: document, error: documentError } = await supabase
     .from('documents')

@@ -164,6 +164,41 @@ function getFileTypeConfig(type: string) {
   }
 }
 
+function getDocumentExtension(doc?: SlotDocument | null) {
+  const source = `${doc?.name || ''} ${doc?.url || ''} ${doc?.previewUrl || ''}`.split('?')[0].toLowerCase()
+  const match = source.match(/\.([a-z0-9]+)(?:$|[#\s])/)
+  return match?.[1] || ''
+}
+
+function getEffectiveDocumentType(doc?: SlotDocument | null) {
+  const type = doc?.type || ''
+  if (type && type !== 'application/octet-stream') return type
+
+  const extension = getDocumentExtension(doc)
+  if (extension === 'pdf') return 'application/pdf'
+  if (['jpg', 'jpeg'].includes(extension)) return 'image/jpeg'
+  if (extension === 'png') return 'image/png'
+  if (extension === 'webp') return 'image/webp'
+  if (extension === 'gif') return 'image/gif'
+  if (extension === 'doc') return 'application/msword'
+  if (extension === 'docx') return 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+  if (extension === 'xls') return 'application/vnd.ms-excel'
+  if (extension === 'xlsx') return 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+  if (extension === 'ppt') return 'application/vnd.ms-powerpoint'
+  if (extension === 'pptx') return 'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+  if (extension === 'zip') return 'application/zip'
+
+  return type || 'application/octet-stream'
+}
+
+function isPdfDocument(doc?: SlotDocument | null) {
+  return getEffectiveDocumentType(doc) === 'application/pdf'
+}
+
+function isImageDocument(doc?: SlotDocument | null) {
+  return getEffectiveDocumentType(doc).startsWith('image/')
+}
+
 const DEFAULT_DOCUMENT_ACCEPTED_TYPES = [
   'application/pdf',
   'application/msword',
@@ -241,6 +276,7 @@ export function DocumentSlotUploader({
   const hasDocument = !!currentDoc
   const currentAcceptedTypes = currentSlot?.acceptedTypes || DEFAULT_DOCUMENT_ACCEPTED_TYPES
   const registryEnabled = !!registry?.enabled && !readOnly
+  const currentDocType = getEffectiveDocumentType(currentDoc)
 
   useEffect(() => {
     if (!registryEnabled || mode !== 'select') return
@@ -268,19 +304,34 @@ export function DocumentSlotUploader({
   }, [existingQuery, mode, registry?.companyId, registry?.documentType, registry?.searchFilters, registryEnabled])
 
   useEffect(() => {
-    if (!currentDoc?.documentId || currentDoc.url || currentDoc.previewUrl || signedPreviewUrls[currentDoc.documentId]) return
+    const documentsNeedingSignedUrl = documents.filter(doc =>
+      doc.documentId &&
+      !doc.url &&
+      !doc.previewUrl &&
+      !signedPreviewUrls[doc.documentId]
+    )
+    if (documentsNeedingSignedUrl.length === 0) return
 
     let cancelled = false
-    documentRegistryService.getDocumentSignedUrl(currentDoc.documentId)
-      .then((signedUrl) => {
-        if (!cancelled) setSignedPreviewUrls(prev => ({ ...prev, [currentDoc.documentId!]: signedUrl }))
+    Promise.all(
+      documentsNeedingSignedUrl.map(doc =>
+        documentRegistryService.getDocumentSignedUrl(doc.documentId!)
+          .then(signedUrl => [doc.documentId!, signedUrl] as const)
+          .catch(() => null)
+      )
+    )
+      .then((items) => {
+        if (cancelled) return
+        const nextUrls = Object.fromEntries(items.filter((item): item is readonly [string, string] => !!item))
+        if (Object.keys(nextUrls).length > 0) {
+          setSignedPreviewUrls(prev => ({ ...prev, ...nextUrls }))
+        }
       })
-      .catch(() => undefined)
 
     return () => {
       cancelled = true
     }
-  }, [currentDoc?.documentId, currentDoc?.previewUrl, currentDoc?.url, signedPreviewUrls])
+  }, [documents, signedPreviewUrls])
 
   const handlePrevious = useCallback(() => {
     setCurrentIndex(prev => (prev > 0 ? prev - 1 : displaySlots.length - 1))
@@ -462,7 +513,7 @@ export function DocumentSlotUploader({
   }
 
   // Get file type config for current document
-  const fileConfig = currentDoc ? getFileTypeConfig(currentDoc.type) : null
+  const fileConfig = currentDoc ? getFileTypeConfig(currentDocType) : null
   const FileIcon = fileConfig?.icon || FileText
 
   return (
@@ -560,7 +611,7 @@ export function DocumentSlotUploader({
             <div className="flex-1 flex flex-col p-3 group">
               {/* File Preview / Thumbnail */}
               <div className="flex-1 flex items-center justify-center">
-                {currentDoc?.type === 'application/pdf' && currentDocUrl ? (
+                {isPdfDocument(currentDoc) && currentDocUrl ? (
                   <div className="h-full min-h-36 w-full overflow-hidden rounded border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-900">
                     <iframe
                       src={`${currentDocUrl}#page=1&toolbar=0&navpanes=0&scrollbar=0`}
@@ -568,7 +619,7 @@ export function DocumentSlotUploader({
                       className="h-full w-full border-0"
                     />
                   </div>
-                ) : currentDoc?.type.includes('image') && currentDocUrl ? (
+                ) : isImageDocument(currentDoc) && currentDocUrl ? (
                   <img
                     src={currentDocUrl}
                     alt={currentDoc.name}
@@ -864,7 +915,7 @@ export function DocumentSlotUploader({
 
             {/* Modal Content */}
             <div className="p-6 max-h-[60vh] overflow-auto">
-              {previewDoc.type === 'application/pdf' ? (
+              {isPdfDocument(previewDoc) ? (
                 (previewDoc.documentId ? signedPreviewUrls[previewDoc.documentId] || getDocumentUrl(previewDoc) : getDocumentUrl(previewDoc)) ? (
                   <iframe
                     src={`${previewDoc.documentId ? signedPreviewUrls[previewDoc.documentId] || getDocumentUrl(previewDoc) : getDocumentUrl(previewDoc)}#toolbar=1&navpanes=0`}
@@ -885,7 +936,7 @@ export function DocumentSlotUploader({
                     </button>
                   </div>
                 )
-              ) : previewDoc.type.includes('image') ? (
+              ) : isImageDocument(previewDoc) ? (
                 <img
                   src={previewDoc.documentId ? signedPreviewUrls[previewDoc.documentId] || getDocumentUrl(previewDoc) : getDocumentUrl(previewDoc)}
                   alt={previewDoc.name}

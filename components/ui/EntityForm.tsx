@@ -294,9 +294,9 @@ function normalizeStoredDocuments(value: unknown): SlotDocument[] {
       documentLinkId: doc.documentLinkId || doc.document_link_id || doc.link_id,
       name: doc.name || doc.file_name || doc.fileName || doc.document_title || doc.title || 'Belge',
       size: Number(doc.size || doc.file_size || 0),
-      type: doc.type || doc.mime_type || 'application/octet-stream',
-      uploadedAt: doc.uploadedAt ? new Date(doc.uploadedAt) : undefined,
-      url: doc.url || doc.previewUrl || doc.preview_url || doc.signedUrl || doc.signed_url
+      type: doc.type || doc.mime_type || doc.mimeType || doc.file_type || 'application/octet-stream',
+      uploadedAt: doc.uploadedAt || doc.uploaded_at ? new Date(doc.uploadedAt || doc.uploaded_at) : undefined,
+      url: doc.url || doc.previewUrl || doc.preview_url || doc.signedUrl || doc.signed_url || doc.file_url || doc.download_url
     }))
 }
 

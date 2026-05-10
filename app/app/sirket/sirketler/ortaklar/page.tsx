@@ -49,6 +49,7 @@ interface PartnerRow {
   photo_logo?: Array<Record<string, any>>
   partner_documents?: Array<Record<string, any>>
   current_ownership?: CurrentOwnershipRow | null
+  ownership_transaction_history?: OwnershipTransactionHistoryRow[]
 }
 
 interface CurrentOwnershipRow {
@@ -69,6 +70,29 @@ interface CurrentOwnershipRow {
   warnings?: string[]
 }
 
+interface OwnershipTransactionHistoryRow {
+  id: string
+  transaction_no?: string
+  transaction_type?: string
+  transaction_date?: string
+  effective_date?: string
+  approval_status?: string
+  from_partner_id?: string | null
+  to_partner_id?: string | null
+  affected_partner_id?: string | null
+  share_ratio?: number | null
+  voting_ratio?: number | null
+  profit_ratio?: number | null
+  capital_amount?: number | null
+  share_units?: number | null
+  has_control_right?: boolean
+  control_type?: string | null
+  has_veto_right?: boolean
+  has_board_nomination_right?: boolean
+  has_privileged_share?: boolean
+  created_at?: string
+}
+
 interface RepresentativeAuthorityRow {
   id: string
   sirket_id?: string
@@ -87,6 +111,11 @@ interface RepresentativeAuthorityRow {
   can_approve_alone?: boolean
   start_date?: string
   end_date?: string | null
+}
+
+type PartnerHistorySectionsValue = {
+  ownershipTransactions?: OwnershipTransactionHistoryRow[]
+  technicalChanges?: any[]
 }
 
 const FIELD_LABELS: Record<string, string> = {
@@ -230,7 +259,7 @@ const tabs: FormTab[] = [
     fields: [
       {
         name: 'current_ownership',
-        label: 'Hesaplanan Ortaklık',
+        label: 'Onaylı İşlemlerden Hesaplanan Sermaye',
         type: 'custom',
         colSpan: 3,
         render: ({ value }) => <CurrentOwnershipPanel value={value} section="capital" />,
@@ -242,36 +271,18 @@ const tabs: FormTab[] = [
     label: 'Yetkiler',
     fields: [
       {
-        name: 'representative_authorities',
-        label: 'Temsilci Yetkileri',
-        type: 'custom',
-        colSpan: 3,
-        render: ({ value }) => <RepresentativeAuthoritiesPanel value={Array.isArray(value) ? value : []} />,
-      },
-      {
         name: 'current_ownership',
-        label: 'Ortaklık Hakları',
+        label: 'Onaylı İşlemlerden Hesaplanan Yönetim Hakları',
         type: 'custom',
         colSpan: 3,
         render: ({ value }) => <CurrentOwnershipPanel value={value} section="rights" />,
       },
-      { name: 'is_representative', label: 'Temsilci mi?', type: 'checkbox' },
-      { name: 'is_signature_authorized', label: 'İmza Yetkilisi mi?', type: 'checkbox' },
-      { name: 'is_board_member', label: 'Yönetim Kurulu Üyesi mi?', type: 'checkbox' },
-      { name: 'has_purchase_authority', label: 'Satınalma Yetkisi', type: 'checkbox' },
-      { name: 'has_payment_approval_authority', label: 'Ödeme Onay Yetkisi', type: 'checkbox' },
-    ],
-  },
-  {
-    id: 'belgeler',
-    label: 'Belgeler',
-    fields: [
       {
-        name: 'document_summary',
-        label: 'Belgeler',
+        name: 'representative_authorities',
+        label: 'Temsilci / Kurul Kaynaklı Yetkiler',
         type: 'custom',
         colSpan: 3,
-        render: ({ value }) => <SummaryList items={Array.isArray(value) ? value : []} emptyText="Yüklü belge bulunamadı." />,
+        render: ({ value }) => <RepresentativeAuthoritiesPanel value={Array.isArray(value) ? value : []} />,
       },
     ],
   },
@@ -295,11 +306,11 @@ const tabs: FormTab[] = [
     label: 'Geçmiş',
     fields: [
       {
-        name: 'timeline',
+        name: 'history_sections',
         label: 'Geçmiş',
         type: 'custom',
         colSpan: 3,
-        render: ({ value }) => <Timeline value={Array.isArray(value) ? value : []} />,
+        render: ({ value }) => <PartnerHistorySections value={value as PartnerHistorySectionsValue} />,
       },
     ],
   },
@@ -424,13 +435,20 @@ export default function OrtaklarPage() {
     setFieldErrors({})
 
     try {
-      const response = await fetch(`/api/sirketler/ortaklar/${row.id}`)
-      if (!response.ok) return
+      const [response, transactionHistory] = await Promise.all([
+        fetch(`/api/sirketler/ortaklar/${row.id}`),
+        fetchApprovedOwnershipTransactionsForPartner(row),
+      ])
+      if (!response.ok) {
+        setSelectedPartner(normalizePartnerForForm({ ...row, ownership_transaction_history: transactionHistory }))
+        return
+      }
       const result = await response.json()
       if (result.data) setSelectedPartner(normalizePartnerForForm({
         ...result.data,
         current_ownership: row.current_ownership,
         representative_authorities: row.representative_authorities,
+        ownership_transaction_history: transactionHistory,
       }))
     } catch {
       // List row is enough for initial view.
@@ -648,25 +666,44 @@ function PartnerNameCell({ value, row }: { value: any; row: any }) {
   )
 }
 
-function SummaryList({ items, emptyText }: { items: any[]; emptyText: string }) {
-  if (!items.length) return <div className="rounded-lg border border-dashed border-gray-200 p-4 text-sm text-gray-500 dark:border-gray-700">{emptyText}</div>
-  return (
-    <div className="rounded-lg border border-gray-200 dark:border-gray-700">
-      {items.map((item, index) => (
-        <div key={`${item.slotId || item.name || index}`} className="flex items-center justify-between border-b border-gray-100 px-3 py-2 text-sm last:border-b-0 dark:border-gray-800">
-          <span className="font-medium text-gray-800 dark:text-gray-100">{item.slotTitle || item.title || item.name || 'Belge'}</span>
-          <span className="text-xs text-gray-500">{item.name || item.fileName || '-'}</span>
-        </div>
-      ))}
-    </div>
-  )
+async function fetchApprovedOwnershipTransactionsForPartner(partner: Record<string, any>): Promise<OwnershipTransactionHistoryRow[]> {
+  const companyId = partner.company_id || partner.sirket_id
+  const partnerId = partner.id
+  if (!companyId || !partnerId) return []
+
+  const response = await fetch(`/api/ownership-transactions?company_id=${companyId}&approval_status=approved`)
+  if (!response.ok) return []
+  const payload = await response.json().catch(() => ({ data: [] }))
+  const rows = Array.isArray(payload.data) ? payload.data : []
+
+  return rows
+    .filter((transaction: OwnershipTransactionHistoryRow) =>
+      transaction.from_partner_id === partnerId ||
+      transaction.to_partner_id === partnerId ||
+      transaction.affected_partner_id === partnerId
+    )
+    .sort((a: OwnershipTransactionHistoryRow, b: OwnershipTransactionHistoryRow) =>
+      String(b.effective_date || b.transaction_date || b.created_at || '').localeCompare(String(a.effective_date || a.transaction_date || a.created_at || ''))
+    )
 }
 
 function CurrentOwnershipPanel({ value, section }: { value?: CurrentOwnershipRow | null; section: 'capital' | 'rights' }) {
+  const createOwnershipTransaction = () => {
+    if (typeof window === 'undefined') return
+    const params = new URLSearchParams()
+    if (value?.company_id) params.set('company_id', value.company_id)
+    if (value?.partner_id) params.set('partner_id', value.partner_id)
+    params.set('mode', 'create')
+    window.location.href = `/app/sirket/ortaklik-islemleri?${params.toString()}`
+  }
+
   if (!value) {
     return (
-      <div className="rounded-lg border border-dashed border-gray-200 p-4 text-sm text-gray-500 dark:border-gray-700">
-        Onaylı ortaklık işlemi kaynaklı hesaplanan değer yok. Hak değişikliği için Ortaklık İşlemleri sayfasından işlem oluşturun.
+      <div className="space-y-3 rounded-lg border border-dashed border-gray-200 p-4 text-sm text-gray-500 dark:border-gray-700">
+        <p>Onaylı ortaklık işlemi kaynaklı hesaplanan değer yok.</p>
+        <button type="button" onClick={createOwnershipTransaction} className="rounded-lg border border-blue-200 px-3 py-2 text-sm font-medium text-blue-700 hover:bg-blue-50 dark:border-blue-800 dark:text-blue-300 dark:hover:bg-blue-950/30">
+          Ortaklık İşlemi Oluştur
+        </button>
       </div>
     )
   }
@@ -691,6 +728,9 @@ function CurrentOwnershipPanel({ value, section }: { value?: CurrentOwnershipRow
 
   return (
     <div className="space-y-4">
+      <div className="rounded-lg border border-blue-100 bg-blue-50 px-3 py-2 text-sm text-blue-800 dark:border-blue-900/60 dark:bg-blue-950/30 dark:text-blue-200">
+        Bu değerler yalnızca onaylı Ortaklık İşlemleri üzerinden hesaplanır. Pay, oy, kar payı, sermaye, imtiyaz, veto, yönetim kurulu aday gösterme veya kontrol hakkı değişikliği için yeni işlem oluşturun.
+      </div>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {items.map(([label, itemValue]) => (
           <div key={label} className="rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-900">
@@ -704,6 +744,9 @@ function CurrentOwnershipPanel({ value, section }: { value?: CurrentOwnershipRow
           {value.warnings.map(warning => <div key={warning}>{warning}</div>)}
         </div>
       )}
+      <button type="button" onClick={createOwnershipTransaction} className="rounded-lg border border-blue-200 px-3 py-2 text-sm font-medium text-blue-700 hover:bg-blue-50 dark:border-blue-800 dark:text-blue-300 dark:hover:bg-blue-950/30">
+        Ortaklık İşlemi Oluştur
+      </button>
     </div>
   )
 }
@@ -745,20 +788,63 @@ function RepresentativeAuthoritiesPanel({ value }: { value: RepresentativeAuthor
   )
 }
 
-function Timeline({ value }: { value: any[] }) {
-  const items = value.length ? value : [
-    { text: '01.01.2025 → %20 Pay ile eklendi' },
-    { text: '01.06.2025 → %35 oldu' },
-    { text: '10.02.2026 → Yönetim Kurulu Üyesi oldu' },
-  ]
+function PartnerHistorySections({ value }: { value?: PartnerHistorySectionsValue }) {
+  const ownershipTransactions = Array.isArray(value?.ownershipTransactions) ? value.ownershipTransactions : []
+  const technicalChanges = Array.isArray(value?.technicalChanges) ? value.technicalChanges : []
 
   return (
-    <div className="space-y-2">
-      {items.map((item, index) => (
-        <div key={index} className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200">
-          {item.text || `${item.changed_at || ''} → ${item.field || 'Değişiklik'}: ${item.old_value ?? '-'} → ${item.new_value ?? '-'}`}
-        </div>
-      ))}
+    <div className="space-y-5">
+      <section className="space-y-2">
+        <h4 className="text-sm font-semibold text-gray-900 dark:text-white">Ortaklık İşlem Geçmişi</h4>
+        {ownershipTransactions.length ? (
+          <div className="rounded-lg border border-gray-200 dark:border-gray-700">
+            {ownershipTransactions.map(transaction => (
+              <div key={transaction.id} className="border-b border-gray-100 px-3 py-2 text-sm last:border-b-0 dark:border-gray-800">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="font-medium text-gray-900 dark:text-white">
+                    {transaction.transaction_no || transaction.transaction_type || 'Ortaklık işlemi'}
+                  </span>
+                  <span className="text-xs text-emerald-700 dark:text-emerald-300">Onaylı</span>
+                </div>
+                <div className="mt-1 text-xs text-gray-500">
+                  {transaction.effective_date || transaction.transaction_date || '-'} · {transaction.transaction_type || 'İşlem'}
+                </div>
+                <div className="mt-2 flex flex-wrap gap-2 text-xs text-gray-600 dark:text-gray-300">
+                  {transaction.share_ratio != null && <span>Pay %{Number(transaction.share_ratio).toFixed(2)}</span>}
+                  {transaction.voting_ratio != null && <span>Oy %{Number(transaction.voting_ratio).toFixed(2)}</span>}
+                  {transaction.profit_ratio != null && <span>Kar %{Number(transaction.profit_ratio).toFixed(2)}</span>}
+                  {transaction.capital_amount != null && <span>Sermaye {Number(transaction.capital_amount).toLocaleString('tr-TR')}</span>}
+                  {transaction.has_control_right && <span>Kontrol hakkı</span>}
+                  {transaction.has_veto_right && <span>Veto hakkı</span>}
+                  {transaction.has_board_nomination_right && <span>YK aday hakkı</span>}
+                  {transaction.has_privileged_share && <span>İmtiyazlı pay</span>}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-lg border border-dashed border-gray-200 p-4 text-sm text-gray-500 dark:border-gray-700">
+            Onaylı ortaklık işlemi bulunamadı.
+          </div>
+        )}
+      </section>
+
+      <section className="space-y-2">
+        <h4 className="text-sm font-semibold text-gray-900 dark:text-white">Teknik Değişiklik Geçmişi</h4>
+        {technicalChanges.length ? (
+          <div className="space-y-2">
+            {technicalChanges.map((item, index) => (
+              <div key={index} className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200">
+                {item.text || `${item.changed_at || item.date || ''} → ${item.field || item.action || 'Değişiklik'}: ${item.old_value ?? item.oldValue ?? '-'} → ${item.new_value ?? item.newValue ?? item.value ?? '-'}`}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-lg border border-dashed border-gray-200 p-4 text-sm text-gray-500 dark:border-gray-700">
+            Teknik değişiklik geçmişi bulunamadı.
+          </div>
+        )}
+      </section>
     </div>
   )
 }
@@ -795,10 +881,12 @@ function normalizePartnerForForm(partner: PartnerRow) {
     status: profile.status || partner.status || 'Aktif',
     photo_logo: partner.photo_logo || [],
     partner_documents: partner.partner_documents || [],
-    document_summary: partner.partner_documents || [],
-    current_ownership: partner.current_ownership || null,
+    current_ownership: partner.current_ownership || { company_id: partner.sirket_id, partner_id: partner.id },
     representative_authorities: (partner as any).representative_authorities || [],
-    timeline: partner.history || [],
+    history_sections: {
+      ownershipTransactions: partner.ownership_transaction_history || [],
+      technicalChanges: partner.history || [],
+    },
     field_history: buildEntityFieldHistory(partner.history || []),
   }
 }
@@ -838,7 +926,11 @@ function normalizePayload(raw: Record<string, any>, companies: Option[]) {
   delete payload.is_ultimate_controller
   delete payload.source_type
   delete payload.source_id
-  payload.document_summary = undefined
+  delete payload.current_ownership
+  delete payload.representative_authorities
+  delete payload.history_sections
+  delete payload.ownership_transaction_history
+  delete payload.timeline
   payload.field_history = undefined
   return payload
 }
