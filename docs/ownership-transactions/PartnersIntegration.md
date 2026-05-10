@@ -1,19 +1,15 @@
 # Partners Integration
 
-Ortaklar sayfası bir ortağın şirkete bağlı olduğunu gösterir. Ortaklık hakkı üreten alanların doğrudan düzenlenmesi kapalıdır:
+Ortaklar sayfası bir kişi veya kurumun şirkete ortak olarak bağlı olduğunu gösterir. Güncel hisse, oy hakkı, kar payı, sermaye ve imtiyaz değerleri manuel düzenlenmez; Ortaklık İşlemleri kayıtlarından hesaplanır.
 
 ```text
-Hisse Oranı
-Oy Hakkı
-Kar Payı
-Sermaye
-Kontrol Hakkı
-İmtiyaz
-Nihai Faydalanıcı
+Ortaklık İşlemleri ortaklık ve sermaye haklarını yönetir.
+Temsilciler temsil ve imza yetkilerini yönetir.
+Cari Hareketler para hareketlerini yönetir.
 ```
 
-Bu değerleri değiştirmek için `Ortaklık İşlemleri` sayfasında yeni işlem oluşturulur ve işlem onaylanır.
+Ortak detayındaki `Ortaklık İşlemi Oluştur` aksiyonu formu `company_id` ve ilgili ortak bilgisiyle açabilir. Yine de işlem tipi seçilene kadar sadece temel alanlar gösterilir.
 
-Ortak detayında `Yeni Ortaklık İşlemi Oluştur` aksiyonu bulunur. Bu aksiyon işlem formunu `company_id` ve `partner_id` ön dolu şekilde açar.
+Ortaklık İşlemleri ham kişi/kurum kimliği oluşturmaz. İşlem tarafları `sirket_ortaklar` içinden seçilir; eksik ortak önce Ortaklar modülünde oluşturulur.
 
-`Ortaklık İşlemleri` sayfası ham kişi veya kurum kimliği oluşturmaz. İşlem tarafları `sirket_ortaklar` içinden seçilir. İstenen ortak yoksa önce Ortaklar sayfasından oluşturulur.
+Temsil yetkisi, banka yetkisi, GİB/SGK yetkisi, sözleşme yetkisi, mesul müdür ve kanuni temsilci bilgileri ortaklık kaydı değildir. Bu bilgiler Temsilciler modülüne aittir.

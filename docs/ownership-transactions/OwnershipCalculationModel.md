@@ -1,8 +1,6 @@
 # Ownership Calculation Model
 
-Güncel ortaklık değerleri yalnızca onaylı işlemlerden hesaplanır.
-
-Hesaba giren kayıt koşulları:
+Güncel ortaklık durumu yalnızca onaylı Ortaklık İşlemleri kayıtlarından hesaplanır.
 
 ```text
 approval_status = approved
@@ -11,15 +9,16 @@ effective_date <= today
 is_deleted = false
 ```
 
-`Yeni Ortak Girişi`, devralan/yeni ortak için pay, oy, kar payı, sermaye ve pay adedi yaratır. `Pay Devri` ve `Kısmi Pay Devri`, devreden ortaktan düşer ve devralan ortağa eklenir. `Ortaklıktan Çıkış` devreden/çıkan ortak üzerinde azaltıcı etki oluşturur. Hak tanımı ve düzeltme işlemleri etkilenen ortak üzerinden değerlendirilir.
+`OwnershipCalculationService` pay, oy hakkı, kar payı, sermaye tutarı, pay adedi ve ortaklık kaynaklı imtiyazları üretir. Cari Hareketler hiçbir koşulda hisse, oy, kar payı, sermaye hakkı, imtiyazlı pay veya kontrol hakkı doğurmaz; sadece ödeme takibini etkiler.
 
-Onaylanmış geçmiş sessizce değiştirilmez. Hatalı onaylı kayıtlar için `Ters Kayıt` veya `Düzeltme Kaydı` oluşturulur.
+İşlem etkisi:
 
-Hesaplama uyarıları:
+- `Yeni Ortak Girişi`: yeni ortağa hisse, oy, kar payı ve varsa sermaye taahhüdü ekler.
+- `Pay Devri` / `Kısmi Pay Devri`: devreden ortaktan düşer, devralan ortağa eklenir.
+- `Ortaklıktan Çıkış`: çıkan ortağın devredilecek payını düşer.
+- `Sermaye Taahhüdü`: hak/taahhüt üretir, ödeme girişi yapmaz.
+- `Sermaye Artırımı` / `Sermaye Azaltımı`: onaylı işlem olarak sermaye ve pay etkisini üretir.
+- `Oy Hakkı Değişikliği`, `Kar Payı Oranı Değişikliği`, `İmtiyazlı Pay Tanımı/Kaldırma`: yalnızca ortaklık kaynaklı hakları günceller.
+- `Düzeltme Kaydı` ve `Ters Kayıt`: onaylı geçmişi sessizce değiştirmeden yeni tarihsel kayıt oluşturur.
 
-- Toplam hisse 100% değil
-- Toplam oy hakkı 100% değil
-- Birden fazla kontrol sahibi var
-- Devreden ortağın yeterli payı yok
-- Tarihsel çakışma riski
-- Döngüsel ortaklık riski
+Uyarılar en az şu durumları kapsar: toplam hisse 100% değil, toplam oy hakkı 100% değil, devreden ortağın yeterli payı yok ve temsil yetkisi alanı Ortaklık İşlemleri içinde kullanılmaya çalışılıyor.

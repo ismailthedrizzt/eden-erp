@@ -29,6 +29,7 @@ const migrationFiles = [
   '20260503_backend_architecture_foundation.sql',
   '20260503_identity_master_model.sql',
   '20260509_ownership_transactions.sql',
+  '20260510_ownership_transactions_scope_split.sql',
   '20260510_document_media_registry.sql',
   'create_module_licenses.sql',
   'add_employee_unique_constraint.sql',

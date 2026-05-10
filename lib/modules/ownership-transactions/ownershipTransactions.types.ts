@@ -6,16 +6,13 @@ export type OwnershipTransactionType =
   | 'Pay Devri'
   | 'Kısmi Pay Devri'
   | 'Ortaklıktan Çıkış'
+  | 'Sermaye Taahhüdü'
   | 'Sermaye Artırımı'
   | 'Sermaye Azaltımı'
   | 'Oy Hakkı Değişikliği'
   | 'Kar Payı Oranı Değişikliği'
   | 'İmtiyazlı Pay Tanımı'
   | 'İmtiyazlı Pay Kaldırma'
-  | 'Kontrol Hakkı Tanımı'
-  | 'Veto Hakkı Tanımı'
-  | 'Yönetim Kurulu Aday Hakkı Tanımı'
-  | 'Nihai Faydalanıcı Değişikliği'
   | 'Düzeltme Kaydı'
   | 'Ters Kayıt'
 
@@ -35,16 +32,30 @@ export interface OwnershipTransaction {
   share_units?: number | null
   nominal_value?: number | null
   capital_amount?: number | null
+  new_capital_amount?: number | null
+  committed_capital_amount?: number | null
   transfer_price?: number | null
   currency?: string | null
-  has_control_right?: boolean
-  control_type?: string | null
   has_veto_right?: boolean
   has_board_nomination_right?: boolean
   has_privileged_share?: boolean
   privilege_type?: string | null
-  is_beneficial_owner?: boolean
-  beneficial_ratio?: number | null
+  privilege_description?: string | null
+  privilege_start_date?: string | null
+  privilege_end_date?: string | null
+  removed_privilege_type?: string | null
+  removal_date?: string | null
+  old_voting_ratio?: number | null
+  new_voting_ratio?: number | null
+  old_profit_ratio?: number | null
+  new_profit_ratio?: number | null
+  commitment_date?: string | null
+  capital_distribution?: Record<string, unknown>[] | null
+  correction_transaction_id?: string | null
+  correction_reason?: string | null
+  new_values?: Record<string, unknown> | null
+  reversal_transaction_id?: string | null
+  reversal_reason?: string | null
   document_status?: string
   document_reference_id?: string | null
   decision_reference_id?: string | null
@@ -73,14 +84,41 @@ export interface CurrentOwnershipRow {
   current_voting_ratio: number
   current_profit_ratio: number
   current_capital_amount: number
+  committed_capital_amount?: number
   current_share_units: number
-  has_control_right: boolean
-  control_type?: string | null
   has_veto_right: boolean
   has_board_nomination_right: boolean
   has_privileged_share: boolean
-  is_beneficial_owner: boolean
-  beneficial_ratio?: number | null
   last_transaction_date?: string | null
   warnings?: string[]
+}
+
+export interface CapitalPaymentMovement {
+  id: string
+  movement_date: string
+  movement_type: string
+  partner_name?: string | null
+  amount: number
+  currency: string
+  capital_relation_type?: string | null
+  offset_amount?: number | null
+  status: string
+  document_reference_id?: string | null
+}
+
+export type CapitalPaymentStatus =
+  | 'Taahhüt Yok'
+  | 'Ödeme Bekleniyor'
+  | 'Kısmi Ödendi'
+  | 'Tam Ödendi'
+  | 'Fazla Ödeme Var'
+  | 'Sermaye Avansı Var'
+  | 'Uyuşmazlık / İnceleme Gerekli'
+
+export interface CapitalPaymentSummary {
+  committedCapital: number
+  paidCapital: number
+  remainingCapitalDebt: number
+  overpayment: number
+  paymentStatus: CapitalPaymentStatus
 }

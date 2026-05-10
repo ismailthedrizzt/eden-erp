@@ -4,12 +4,16 @@ import type { OwnershipTransaction } from './ownershipTransactions.types'
 const distributionTypes = [
   'Yeni Ortak Girişi',
   'Pay Devri',
+  'Sermaye Taahhüdü',
   'Sermaye Artırımı',
   'Sermaye Azaltımı',
   'Oy Hakkı Değişikliği',
-  'Kar Payı Değişikliği',
+  'Kar Payı Oranı Değişikliği',
+  'İmtiyazlı Pay Tanımı',
+  'İmtiyazlı Pay Kaldırma',
   'Ortaklıktan Çıkış',
   'Düzeltme Kaydı',
+  'Ters Kayıt',
 ]
 
 export function buildOwnershipTransactionsDashboard(rows: OwnershipTransaction[]): AnyDashboardWidgetConfig[] {
@@ -45,7 +49,7 @@ export function buildOwnershipTransactionsDashboard(rows: OwnershipTransaction[]
       items: distributionTypes.map((type, index) => ({
         label: type,
         value: rows.filter(row => normalizeType(row.transaction_type) === type).length,
-        color: ['#2563eb', '#16a34a', '#f59e0b', '#ef4444', '#7c3aed', '#0891b2', '#be123c', '#64748b'][index],
+        color: ['#2563eb', '#16a34a', '#f59e0b', '#ef4444', '#7c3aed', '#0891b2', '#be123c', '#64748b'][index % 8],
         filter: { transaction_type: type },
       })),
       total: rows.length,
@@ -104,7 +108,6 @@ export function buildOwnershipTransactionsDashboard(rows: OwnershipTransaction[]
 }
 
 function normalizeType(type: string) {
-  if (type === 'Kar Payı Oranı Değişikliği') return 'Kar Payı Değişikliği'
   if (type === 'Kısmi Pay Devri') return 'Pay Devri'
   return type
 }

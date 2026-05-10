@@ -1,5 +1,31 @@
 import { createServiceClient } from '@/lib/supabase/server'
 
+const ALLOWED_TRANSACTION_TYPES = new Set([
+  'Yeni Ortak Girişi',
+  'Pay Devri',
+  'Kısmi Pay Devri',
+  'Ortaklıktan Çıkış',
+  'Sermaye Taahhüdü',
+  'Sermaye Artırımı',
+  'Sermaye Azaltımı',
+  'Oy Hakkı Değişikliği',
+  'Kar Payı Oranı Değişikliği',
+  'İmtiyazlı Pay Tanımı',
+  'İmtiyazlı Pay Kaldırma',
+  'Düzeltme Kaydı',
+  'Ters Kayıt',
+])
+
+const REPRESENTATIVE_ONLY_FIELDS = [
+  'signature_authority',
+  'bank_authority',
+  'gib_authority',
+  'sgk_authority',
+  'contract_authority',
+  'responsible_manager',
+  'legal_representative',
+]
+
 export async function nextTransactionNo(supabase: ReturnType<typeof createServiceClient>) {
   const prefix = `OI-${new Date().getFullYear()}`
   const { count } = await supabase
@@ -10,6 +36,13 @@ export async function nextTransactionNo(supabase: ReturnType<typeof createServic
 
 export async function validateDraft(supabase: ReturnType<typeof createServiceClient>, data: Record<string, any>) {
   const warnings: string[] = []
+  if (!ALLOWED_TRANSACTION_TYPES.has(data.transaction_type)) {
+    return { ok: false, code: 'TRANSACTION_TYPE_OUT_OF_SCOPE', error: 'Bu işlem tipi Ortaklık İşlemleri kapsamında değildir', warnings }
+  }
+  if (REPRESENTATIVE_ONLY_FIELDS.some(field => field in data)) {
+    return { ok: false, code: 'REPRESENTATIVE_FIELD_NOT_ALLOWED', error: 'Temsil yetkisi alanları Ortaklık İşlemleri içinde kullanılamaz. Temsilciler modülünü kullanın.', warnings }
+  }
+
   const { data: company } = await supabase.from('sirketler').select('id').eq('id', data.company_id).maybeSingle()
   if (!company) return { ok: false, code: 'COMPANY_NOT_FOUND', error: 'Şirket bulunamadı', warnings }
 
@@ -34,6 +67,9 @@ export async function validateDraft(supabase: ReturnType<typeof createServiceCli
   if (data.transaction_type === 'Ortaklıktan Çıkış' && !data.from_partner_id) {
     return { ok: false, code: 'EXIT_PARTNER_REQUIRED', error: 'Ortaklıktan çıkış için çıkan ortak seçilmelidir', warnings }
   }
+  if (data.transaction_type === 'Sermaye Taahhüdü' && (!data.affected_partner_id || Number(data.committed_capital_amount || 0) <= 0)) {
+    return { ok: false, code: 'CAPITAL_COMMITMENT_REQUIRED', error: 'Sermaye taahhüdü için ortak ve taahhüt edilen sermaye zorunludur', warnings }
+  }
 
   if (['Pay Devri', 'Kısmi Pay Devri', 'Ortaklıktan Çıkış'].includes(data.transaction_type) && data.from_partner_id && Number(data.share_ratio || 0) > 0) {
     const { data: ownership } = await supabase
@@ -51,13 +87,12 @@ export async function validateDraft(supabase: ReturnType<typeof createServiceCli
 
   const { data: currentRows } = await supabase
     .from('v_current_ownership')
-    .select('current_share_ratio,current_voting_ratio,has_control_right')
+    .select('current_share_ratio,current_voting_ratio')
     .eq('company_id', data.company_id)
   const totalShare = (currentRows || []).reduce((sum, row) => sum + Number(row.current_share_ratio || 0), 0)
   const totalVoting = (currentRows || []).reduce((sum, row) => sum + Number(row.current_voting_ratio || 0), 0)
   if (totalShare > 0 && Math.abs(totalShare - 100) > 0.01) warnings.push('Toplam hisse 100% değil')
   if (totalVoting > 0 && Math.abs(totalVoting - 100) > 0.01) warnings.push('Toplam oy hakkı 100% değil')
-  if ((currentRows || []).filter(row => row.has_control_right).length > 1) warnings.push('Birden fazla kontrol sahibi var')
 
   return { ok: true, warnings }
 }

@@ -18,6 +18,9 @@ const MovementSchema = z.object({
   payment_method: z.string().min(1),
   payment_source_type: z.string().optional(),
   payment_source_id: z.string().uuid().optional().nullable(),
+  linked_ownership_transaction_id: z.string().uuid().optional().nullable(),
+  capital_relation_type: z.string().optional().nullable(),
+  offset_amount: z.coerce.number().min(0).optional().nullable(),
   document_status: z.string().default('none'),
   document_reference_id: z.string().uuid().optional().nullable(),
   invoice_match_status: z.string().default('none'),
@@ -32,6 +35,8 @@ export async function GET(request: NextRequest) {
   const supabase = createServiceClient()
   const { searchParams } = new URL(request.url)
   const search = searchParams.get('search')
+  const linkedOwnershipTransactionId = searchParams.get('linked_ownership_transaction_id')
+  const companyId = searchParams.get('company_id')
 
   let query = supabase
     .from('account_movements')
@@ -45,6 +50,8 @@ export async function GET(request: NextRequest) {
     .order('movement_date', { ascending: false })
 
   if (search) query = query.ilike('description', `%${search}%`)
+  if (companyId) query = query.eq('company_id', companyId)
+  if (linkedOwnershipTransactionId) query = query.eq('linked_ownership_transaction_id', linkedOwnershipTransactionId)
 
   const { data, error } = await query
   if (error) {
@@ -57,6 +64,7 @@ export async function GET(request: NextRequest) {
       ...row,
       performed_by_name: row.performed_by?.full_name || null,
       counterparty_name: row.counterparty_person?.full_name || row.counterparty_organization?.legal_name || null,
+      partner_name: row.counterparty_person?.full_name || row.counterparty_organization?.legal_name || null,
     })),
   })
 }

@@ -31,11 +31,9 @@ export class OwnershipCalculationService {
         current_profit_ratio: 0,
         current_capital_amount: 0,
         current_share_units: 0,
-        has_control_right: false,
         has_veto_right: false,
         has_board_nomination_right: false,
         has_privileged_share: false,
-        is_beneficial_owner: false,
         warnings: [],
       }
       rows.set(partnerId, next)
@@ -67,7 +65,7 @@ export class OwnershipCalculationService {
 
     const warnings = this.buildWarnings(calculatedRows)
     const main_owner = calculatedRows.find(row => row.current_share_ratio > 50 || row.current_voting_ratio > 50)
-    const ultimate_controller = calculatedRows.find(row => row.has_control_right) || main_owner
+    const ultimate_controller = main_owner
 
     return {
       current_share_ratio: calculatedRows.reduce((sum, row) => sum + row.current_share_ratio, 0),
@@ -88,13 +86,9 @@ export class OwnershipCalculationService {
     row.current_profit_ratio += Number(item.profit_ratio || 0) * direction
     row.current_capital_amount += Number(item.capital_amount || 0) * direction
     row.current_share_units += Number(item.share_units || 0) * direction
-    row.has_control_right = row.has_control_right || !!item.has_control_right
     row.has_veto_right = row.has_veto_right || !!item.has_veto_right
     row.has_board_nomination_right = row.has_board_nomination_right || !!item.has_board_nomination_right
     row.has_privileged_share = row.has_privileged_share || !!item.has_privileged_share
-    row.is_beneficial_owner = row.is_beneficial_owner || !!item.is_beneficial_owner
-    row.control_type = item.control_type || row.control_type
-    row.beneficial_ratio = item.beneficial_ratio ?? row.beneficial_ratio
     row.last_transaction_date = item.transaction_date
   }
 
@@ -104,7 +98,6 @@ export class OwnershipCalculationService {
     const totalVoting = rows.reduce((sum, row) => sum + row.current_voting_ratio, 0)
     if (Math.abs(totalShare - 100) > 0.01) warnings.push('Toplam hisse 100% değil')
     if (Math.abs(totalVoting - 100) > 0.01) warnings.push('Toplam oy hakkı 100% değil')
-    if (rows.filter(row => row.has_control_right).length > 1) warnings.push('Birden fazla kontrol sahibi var')
     return warnings
   }
 }

@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { ArrowDownUp, Check, Clock, FileText, History, RotateCcw, Send, ShieldAlert, X } from 'lucide-react'
+import { ArrowDownUp, Check, Clock, ExternalLink, FileText, History, Plus, RotateCcw, Send, ShieldAlert, X } from 'lucide-react'
 import { EntityForm, FormField, FormMode, FormTab } from '@/components/ui/EntityForm'
 import { PageBanner } from '@/components/ui/PageBanner'
 import { SmartDataTable } from '@/components/ui/SmartDataTable'
@@ -10,7 +10,7 @@ import { Toast } from '@/components/ui/Toast'
 import { buildOwnershipTransactionsDashboard } from '@/lib/modules/ownership-transactions/ownershipTransactionsDashboard.config'
 import {
   approvalStatusLabels,
-  controlTypeOptions,
+  capitalTransactionTypes,
   documentStatusOptions,
   getPartyFieldVisibility,
   ownershipTransactionColumns,
@@ -19,8 +19,9 @@ import {
   transactionReasonOptions,
   transactionTypes,
 } from '@/lib/modules/ownership-transactions/ownershipTransactions.config'
+import { CapitalPaymentReconciliationService } from '@/lib/modules/ownership-transactions/CapitalPaymentReconciliationService'
 import { getOwnershipTransactionCapabilities } from '@/lib/modules/ownership-transactions/ownershipTransactions.permissions'
-import type { CurrentOwnershipRow, OwnershipTransaction } from '@/lib/modules/ownership-transactions/ownershipTransactions.types'
+import type { CapitalPaymentMovement, CurrentOwnershipRow, OwnershipTransaction } from '@/lib/modules/ownership-transactions/ownershipTransactions.types'
 
 type PageState = 'list' | 'create' | 'view' | 'edit'
 type ToastState = { type: 'success' | 'error' | 'warning'; title?: string; message: string }
@@ -62,6 +63,7 @@ function OwnershipTransactionsContent() {
   const [companies, setCompanies] = useState<Option[]>([])
   const [partners, setPartners] = useState<PartnerOption[]>([])
   const [currentOwnership, setCurrentOwnership] = useState<CurrentOwnershipRow[]>([])
+  const [linkedCapitalMovements, setLinkedCapitalMovements] = useState<CapitalPaymentMovement[]>([])
   const [selected, setSelected] = useState<Record<string, any> | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -124,7 +126,7 @@ function OwnershipTransactionsContent() {
         company_id: companyId || companies[0]?.value || '',
         to_partner_id: partnerId || '',
         affected_partner_id: partnerId || '',
-        transaction_type: 'Yeni Ortak Girişi',
+        transaction_type: '',
         transaction_date: new Date().toISOString().slice(0, 10),
         effective_date: new Date().toISOString().slice(0, 10),
         status: 'draft',
@@ -144,6 +146,18 @@ function OwnershipTransactionsContent() {
       .then(payload => setCurrentOwnership(Array.isArray(payload.data) ? payload.data : []))
       .catch(() => setCurrentOwnership([]))
   }, [selectedCompanyId])
+
+  useEffect(() => {
+    if (!selected?.id) {
+      setLinkedCapitalMovements([])
+      return
+    }
+
+    fetch(`/api/muhasebe/on-muhasebe-hareketleri?linked_ownership_transaction_id=${selected.id}`)
+      .then(response => response.json())
+      .then(payload => setLinkedCapitalMovements(Array.isArray(payload.data) ? payload.data : []))
+      .catch(() => setLinkedCapitalMovements([]))
+  }, [selected?.id])
 
   const tableData = transactions.map(transaction => ({
     ...transaction,
@@ -214,17 +228,17 @@ function OwnershipTransactionsContent() {
   }
 
   const formFields = buildFormFields(companies, partnerOptions)
-  const formTabs = buildFormTabs(currentOwnership, selected, partnerNameById)
+  const formTabs = buildFormTabs(currentOwnership, selected, partnerNameById, linkedCapitalMovements)
   const banner = pageState === 'list'
     ? {
         mode: 'list' as const,
         title: 'Ortaklık İşlemleri',
         subtitle: 'Hisse, oy hakkı, kar payı, sermaye ve ortaklık haklarındaki değişiklikleri işlem bazlı yönetin.',
-        addButtonText: 'Yeni İşlem Ekle',
+        addButtonText: 'Ekle',
         onAddClick: () => {
           setSelected({
             company_id: companies[0]?.value || '',
-            transaction_type: 'Yeni Ortak Girişi',
+            transaction_type: '',
             transaction_date: new Date().toISOString().slice(0, 10),
             effective_date: new Date().toISOString().slice(0, 10),
             status: 'draft',
@@ -333,24 +347,19 @@ function buildFormFields(companies: Option[], partners: Option[]): FormField[] {
     { name: 'transaction_type', label: 'İşlem Tipi', type: 'select', required: true, searchable: true, options: transactionTypes.map(value => ({ value, label: value })) },
     { name: 'transaction_date', label: 'İşlem Tarihi', type: 'date', required: true },
     { name: 'effective_date', label: 'Geçerlilik Tarihi', type: 'date', required: true },
-    { name: 'from_partner_id', label: 'Devreden / Çıkan Ortak', type: 'select', searchable: true, options: partnerSelect, visibleWhen: { field: 'transaction_type', includes: ['Pay Devri', 'Kısmi Pay Devri', 'Ortaklıktan Çıkış'] } },
-    { name: 'to_partner_id', label: 'Devralan / Yeni Ortak', type: 'select', searchable: true, options: partnerSelect, visibleWhen: { field: 'transaction_type', includes: ['Yeni Ortak Girişi', 'Pay Devri', 'Kısmi Pay Devri'] } },
-    { name: 'affected_partner_id', label: 'Etkilenen Ortak', type: 'select', searchable: true, options: partnerSelect, visibleWhen: { field: 'transaction_type', includes: ['Oy Hakkı Değişikliği', 'Kar Payı Oranı Değişikliği', 'İmtiyazlı Pay Tanımı', 'İmtiyazlı Pay Kaldırma', 'Kontrol Hakkı Tanımı', 'Veto Hakkı Tanımı', 'Yönetim Kurulu Aday Hakkı Tanımı', 'Nihai Faydalanıcı Değişikliği', 'Düzeltme Kaydı', 'Ters Kayıt', 'Sermaye Artırımı', 'Sermaye Azaltımı'] } },
-    { name: 'share_ratio', label: 'Pay Oranı (%)', type: 'number', inputMode: 'decimal', visibleWhen: { field: 'transaction_type', includes: ['Yeni Ortak Girişi', 'Pay Devri', 'Kısmi Pay Devri', 'Ortaklıktan Çıkış', 'Sermaye Artırımı', 'Sermaye Azaltımı', 'Düzeltme Kaydı', 'Ters Kayıt'] } },
-    { name: 'voting_ratio', label: 'Oy Hakkı (%)', type: 'number', inputMode: 'decimal', visibleWhen: { field: 'transaction_type', includes: ['Yeni Ortak Girişi', 'Pay Devri', 'Kısmi Pay Devri', 'Oy Hakkı Değişikliği', 'Düzeltme Kaydı'] } },
-    { name: 'profit_ratio', label: 'Kar Payı Oranı (%)', type: 'number', inputMode: 'decimal', visibleWhen: { field: 'transaction_type', includes: ['Yeni Ortak Girişi', 'Pay Devri', 'Kısmi Pay Devri', 'Kar Payı Oranı Değişikliği', 'Düzeltme Kaydı'] } },
-    { name: 'status', label: 'İşlem Durumu', type: 'select', options: Object.entries(statusLabels).map(([value, label]) => ({ value, label })) },
-    { name: 'approval_status', label: 'Onay Durumu', type: 'select', options: Object.entries(approvalStatusLabels).map(([value, label]) => ({ value, label })) },
   ]
 }
 
-function buildFormTabs(currentOwnership: CurrentOwnershipRow[], selected: Record<string, any> | null, partnerNameById: Record<string, string>): FormTab[] {
+function buildFormTabs(currentOwnership: CurrentOwnershipRow[], selected: Record<string, any> | null, partnerNameById: Record<string, string>, linkedCapitalMovements: CapitalPaymentMovement[]): FormTab[] {
   const partyVisibility = getPartyFieldVisibility(selected?.transaction_type)
+  const partnerSelect = Object.entries(partnerNameById).map(([value, label]) => ({ value, label }))
+  const isCapitalTransaction = capitalTransactionTypes.includes(selected?.transaction_type || '')
   const partnerFields: FormField[] = [
-    ...(partyVisibility.showFrom || partyVisibility.showExit ? [{ name: 'from_partner_id', label: partyVisibility.showExit ? 'Çıkan Ortak' : 'Devreden Ortak', type: 'custom' as const, render: ({ value }: { value: any }) => <ReadOnlyValue value={partnerNameById[value] || value || '-'} /> }] : []),
-    ...(partyVisibility.showTo ? [{ name: 'to_partner_id', label: selected?.transaction_type === 'Yeni Ortak Girişi' ? 'Yeni Ortak' : 'Devralan Ortak', type: 'custom' as const, render: ({ value }: { value: any }) => <ReadOnlyValue value={partnerNameById[value] || value || '-'} /> }] : []),
-    ...(partyVisibility.showAffected ? [{ name: 'affected_partner_id', label: 'Etkilenen Ortak', type: 'custom' as const, render: ({ value }: { value: any }) => <ReadOnlyValue value={partnerNameById[value] || value || '-'} /> }] : []),
+    ...(partyVisibility.showFrom || partyVisibility.showExit ? [{ name: 'from_partner_id', label: partyVisibility.showExit ? 'Çıkan Ortak' : 'Devreden Ortak', type: 'select' as const, searchable: true, options: partnerSelect }] : []),
+    ...(partyVisibility.showTo ? [{ name: 'to_partner_id', label: selected?.transaction_type === 'Yeni Ortak Girişi' ? 'Yeni Ortak' : selected?.transaction_type === 'Ortaklıktan Çıkış' ? 'Payların Devredileceği Ortak' : 'Devralan Ortak', type: 'select' as const, searchable: true, options: partnerSelect }] : []),
+    ...(partyVisibility.showAffected ? [{ name: 'affected_partner_id', label: selected?.transaction_type === 'Sermaye Taahhüdü' ? 'Ortak' : 'Etkilenen Ortak', type: 'select' as const, searchable: true, options: partnerSelect }] : []),
     { name: 'exit_reason', label: 'Çıkış Nedeni', type: 'textarea', visibleWhen: { field: 'transaction_type', operator: 'equals', value: 'Ortaklıktan Çıkış' } },
+    { name: 'document_reference_id', label: 'Belge Referansı', type: 'text' },
   ]
 
   return [
@@ -363,38 +372,43 @@ function buildFormTabs(currentOwnership: CurrentOwnershipRow[], selected: Record
         { name: 'company_id', label: 'Şirket', type: 'text' },
         { name: 'transaction_date', label: 'İşlem Tarihi', type: 'date' },
         { name: 'effective_date', label: 'Geçerlilik Tarihi', type: 'date' },
-        { name: 'description', label: 'Açıklama', type: 'textarea', colSpan: 3 },
         { name: 'transaction_reason', label: 'İşlem Nedeni', type: 'select', searchable: true, options: transactionReasonOptions.map(value => ({ value, label: value })) },
         { name: 'status', label: 'Durum', type: 'select', options: Object.entries(statusLabels).map(([value, label]) => ({ value, label })) },
       ],
     },
-    { id: 'taraflar', label: 'Taraflar', fields: partnerFields },
+    { id: 'taraflar', label: 'Taraflar ve Paylar', fields: [
+      ...partnerFields,
+      { name: 'share_ratio', label: selected?.transaction_type === 'Pay Devri' || selected?.transaction_type === 'Kısmi Pay Devri' ? 'Devredilen Pay Oranı' : selected?.transaction_type === 'Ortaklıktan Çıkış' ? 'Devredilecek Pay Oranı' : 'Hisse Oranı', type: 'number', visibleWhen: { field: 'transaction_type', includes: ['Yeni Ortak Girişi', 'Pay Devri', 'Kısmi Pay Devri', 'Ortaklıktan Çıkış', 'Sermaye Artırımı', 'Sermaye Azaltımı'] } },
+      { name: 'share_units', label: 'Pay Adedi', type: 'number', visibleWhen: { field: 'transaction_type', includes: ['Sermaye Artırımı', 'Sermaye Azaltımı', 'Düzeltme Kaydı'] } },
+      { name: 'nominal_value', label: 'Nominal Değer', type: 'number', visibleWhen: { field: 'transaction_type', includes: ['Sermaye Artırımı', 'Sermaye Azaltımı', 'Düzeltme Kaydı'] } },
+      { name: 'transfer_price', label: 'Devir Bedeli', type: 'number', visibleWhen: { field: 'transaction_type', includes: ['Pay Devri', 'Kısmi Pay Devri'] } },
+      { name: 'currency', label: 'Para Birimi', type: 'select', options: ['TRY', 'USD', 'EUR', 'GBP'].map(value => ({ value, label: value })), visibleWhen: { field: 'transaction_type', includes: ['Yeni Ortak Girişi', 'Pay Devri', 'Kısmi Pay Devri', 'Sermaye Taahhüdü', 'Sermaye Artırımı', 'Sermaye Azaltımı'] } },
+      { name: 'committed_capital_amount', label: 'Sermaye Taahhüdü', type: 'number', visibleWhen: { field: 'transaction_type', includes: ['Yeni Ortak Girişi', 'Sermaye Taahhüdü'] } },
+      { name: 'capital_amount', label: selected?.transaction_type === 'Sermaye Artırımı' ? 'Artırım Tutarı' : selected?.transaction_type === 'Sermaye Azaltımı' ? 'Azaltım Tutarı' : 'Sermaye Tutarı', type: 'number', visibleWhen: { field: 'transaction_type', includes: ['Sermaye Artırımı', 'Sermaye Azaltımı'] } },
+      { name: 'new_capital_amount', label: 'Yeni Sermaye Tutarı', type: 'number', visibleWhen: { field: 'transaction_type', includes: ['Sermaye Artırımı', 'Sermaye Azaltımı'] } },
+      { name: 'capital_distribution', label: 'Pay Dağılımı', type: 'textarea', colSpan: 3, visibleWhen: { field: 'transaction_type', includes: ['Sermaye Artırımı', 'Sermaye Azaltımı'] } },
+      { name: 'commitment_date', label: 'Taahhüt Tarihi', type: 'date', visibleWhen: { field: 'transaction_type', operator: 'equals', value: 'Sermaye Taahhüdü' } },
+    ] },
     {
-      id: 'pay_sermaye',
-      label: 'Pay / Sermaye',
+      id: 'oy_imtiyaz',
+      label: 'Oy ve İmtiyazlar',
       fields: [
-        { name: 'share_ratio', label: 'Pay Oranı', type: 'number' },
-        { name: 'voting_ratio', label: 'Oy Hakkı Oranı', type: 'number' },
-        { name: 'profit_ratio', label: 'Kar Payı Oranı', type: 'number' },
-        { name: 'share_units', label: 'Pay Adedi', type: 'number' },
-        { name: 'nominal_value', label: 'Nominal Değer', type: 'number' },
-        { name: 'capital_amount', label: 'Sermaye Tutarı', type: 'number' },
-        { name: 'transfer_price', label: 'Devir Bedeli', type: 'number', visibleWhen: { field: 'transaction_type', includes: ['Pay Devri', 'Kısmi Pay Devri'] } },
-        { name: 'currency', label: 'Para Birimi', type: 'select', options: ['TRY', 'USD', 'EUR', 'GBP'].map(value => ({ value, label: value })) },
-      ],
-    },
-    {
-      id: 'haklar',
-      label: 'Yetkiler ve Haklar',
-      fields: [
-        { name: 'has_control_right', label: 'Kontrol Hakkı Var mı?', type: 'checkbox' },
-        { name: 'control_type', label: 'Kontrol Türü', type: 'select', searchable: true, options: controlTypeOptions.map(value => ({ value, label: value })) },
+        { name: 'voting_ratio', label: selected?.transaction_type === 'Pay Devri' || selected?.transaction_type === 'Kısmi Pay Devri' ? 'Oy Hakkı Etkisi' : 'Oy Hakkı Oranı', type: 'number', visibleWhen: { field: 'transaction_type', includes: ['Yeni Ortak Girişi', 'Pay Devri', 'Kısmi Pay Devri'] } },
+        { name: 'old_voting_ratio', label: 'Eski Oy Hakkı', type: 'number', visibleWhen: { field: 'transaction_type', operator: 'equals', value: 'Oy Hakkı Değişikliği' } },
+        { name: 'new_voting_ratio', label: 'Yeni Oy Hakkı', type: 'number', visibleWhen: { field: 'transaction_type', operator: 'equals', value: 'Oy Hakkı Değişikliği' } },
+        { name: 'profit_ratio', label: selected?.transaction_type === 'Pay Devri' || selected?.transaction_type === 'Kısmi Pay Devri' ? 'Kar Payı Etkisi' : 'Kar Payı Oranı', type: 'number', visibleWhen: { field: 'transaction_type', includes: ['Yeni Ortak Girişi', 'Pay Devri', 'Kısmi Pay Devri'] } },
+        { name: 'old_profit_ratio', label: 'Eski Kar Payı Oranı', type: 'number', visibleWhen: { field: 'transaction_type', operator: 'equals', value: 'Kar Payı Oranı Değişikliği' } },
+        { name: 'new_profit_ratio', label: 'Yeni Kar Payı Oranı', type: 'number', visibleWhen: { field: 'transaction_type', operator: 'equals', value: 'Kar Payı Oranı Değişikliği' } },
+        { name: 'justification', label: 'Gerekçe', type: 'textarea', colSpan: 3, visibleWhen: { field: 'transaction_type', includes: ['Oy Hakkı Değişikliği', 'Kar Payı Oranı Değişikliği', 'İmtiyazlı Pay Kaldırma'] } },
         { name: 'has_veto_right', label: 'Veto Hakkı Var mı?', type: 'checkbox' },
         { name: 'has_board_nomination_right', label: 'Yönetim Kurulu Aday Gösterme Hakkı Var mı?', type: 'checkbox' },
         { name: 'has_privileged_share', label: 'İmtiyazlı Pay Var mı?', type: 'checkbox' },
         { name: 'privilege_type', label: 'İmtiyaz Türü', type: 'select', searchable: true, options: privilegeTypeOptions.map(value => ({ value, label: value })) },
-        { name: 'is_beneficial_owner', label: 'Nihai Faydalanıcı mı?', type: 'checkbox' },
-        { name: 'beneficial_ratio', label: 'Nihai Faydalanma Oranı', type: 'number' },
+        { name: 'privilege_description', label: 'İmtiyaz Açıklaması', type: 'textarea', colSpan: 3, visibleWhen: { field: 'transaction_type', operator: 'equals', value: 'İmtiyazlı Pay Tanımı' } },
+        { name: 'privilege_start_date', label: 'Başlangıç Tarihi', type: 'date', visibleWhen: { field: 'transaction_type', operator: 'equals', value: 'İmtiyazlı Pay Tanımı' } },
+        { name: 'privilege_end_date', label: 'Bitiş Tarihi', type: 'date', visibleWhen: { field: 'transaction_type', operator: 'equals', value: 'İmtiyazlı Pay Tanımı' } },
+        { name: 'removed_privilege_type', label: 'Kaldırılan İmtiyaz Türü', type: 'select', searchable: true, options: privilegeTypeOptions.map(value => ({ value, label: value })), visibleWhen: { field: 'transaction_type', operator: 'equals', value: 'İmtiyazlı Pay Kaldırma' } },
+        { name: 'removal_date', label: 'Kaldırma Tarihi', type: 'date', visibleWhen: { field: 'transaction_type', operator: 'equals', value: 'İmtiyazlı Pay Kaldırma' } },
       ],
     },
     {
@@ -404,6 +418,15 @@ function buildFormTabs(currentOwnership: CurrentOwnershipRow[], selected: Record
         { name: 'document_status', label: 'Belge Durumu', type: 'select', options: documentStatusOptions.map(value => ({ value, label: value })) },
         { name: 'document_reference_id', label: 'Belge Referansı', type: 'text' },
         { name: 'decision_reference_id', label: 'Karar Referansı', type: 'text' },
+        { name: 'representative_action', label: 'Temsilci Aksiyonu', type: 'custom', colSpan: 3, render: () => <RepresentativeActionPanel selected={selected} partnerNameById={partnerNameById} /> },
+      ],
+    },
+    {
+      id: 'cari',
+      label: 'Cari Hareketler',
+      fields: [
+        { name: 'capital_summary', label: 'Sermaye Ödeme Özeti', type: 'custom', colSpan: 3, render: () => isCapitalTransaction ? <CapitalPaymentSummaryCard selected={selected} movements={linkedCapitalMovements} /> : <ReadOnlyValue value="Bu işlem tipi sermaye ödeme özeti gerektirmez." /> },
+        { name: 'linked_capital_movements', label: 'Bağlı Cari Hareketler', type: 'custom', colSpan: 3, render: () => <CapitalMovementsPanel selected={selected} movements={linkedCapitalMovements} /> },
       ],
     },
     {
@@ -414,20 +437,19 @@ function buildFormTabs(currentOwnership: CurrentOwnershipRow[], selected: Record
       ],
     },
     {
-      id: 'onay',
-      label: 'Onay Süreci',
+      id: 'gecmis',
+      label: 'Geçmiş',
       fields: [
         { name: 'approval_status', label: 'Onay Durumu', type: 'select', options: Object.entries(approvalStatusLabels).map(([value, label]) => ({ value, label })) },
         { name: 'approved_at', label: 'Onay Tarihi', type: 'date' },
-        { name: 'rejection_reason', label: 'Red Nedeni', type: 'textarea', colSpan: 3 },
-        { name: 'approval_notes', label: 'Onay Notları', type: 'textarea', colSpan: 3 },
+        { name: 'description', label: 'Açıklama', type: 'textarea', colSpan: 3, visibleWhen: { field: 'transaction_type', includes: ['Düzeltme Kaydı', 'Ters Kayıt'] } },
+        { name: 'correction_transaction_id', label: 'Düzeltilecek İşlem', type: 'text', visibleWhen: { field: 'transaction_type', operator: 'equals', value: 'Düzeltme Kaydı' } },
+        { name: 'correction_reason', label: 'Düzeltme Nedeni', type: 'textarea', colSpan: 3, visibleWhen: { field: 'transaction_type', operator: 'equals', value: 'Düzeltme Kaydı' } },
+        { name: 'new_values', label: 'Yeni Değerler', type: 'textarea', colSpan: 3, visibleWhen: { field: 'transaction_type', operator: 'equals', value: 'Düzeltme Kaydı' } },
+        { name: 'reversal_transaction_id', label: 'Tersine Çevrilecek İşlem', type: 'text', visibleWhen: { field: 'transaction_type', operator: 'equals', value: 'Ters Kayıt' } },
+        { name: 'reversal_reason', label: 'Ters Kayıt Nedeni', type: 'textarea', colSpan: 3, visibleWhen: { field: 'transaction_type', operator: 'equals', value: 'Ters Kayıt' } },
+        { name: 'history', label: 'Geçmiş', type: 'custom', colSpan: 3, render: ({ value }) => <HistoryPanel value={Array.isArray(value) ? value : []} /> },
       ],
-    },
-    { id: 'notlar', label: 'Notlar', fields: [{ name: 'notes', label: 'Notlar', type: 'textarea', colSpan: 3 }] },
-    {
-      id: 'gecmis',
-      label: 'Geçmiş',
-      fields: [{ name: 'history', label: 'Geçmiş', type: 'custom', colSpan: 3, render: ({ value }) => <HistoryPanel value={Array.isArray(value) ? value : []} /> }],
     },
   ]
 }
@@ -522,6 +544,89 @@ function ReadOnlyValue({ value }: { value: string }) {
   return <div className="rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200">{value}</div>
 }
 
+function RepresentativeActionPanel({ selected, partnerNameById }: { selected: Record<string, any> | null; partnerNameById: Record<string, string> }) {
+  const partnerId = selected?.to_partner_id || selected?.affected_partner_id || selected?.from_partner_id || ''
+  const href = `/app/sirket/sirketler/temsilciler?mode=create&company_id=${selected?.company_id || ''}&partner_id=${partnerId}&document_reference_id=${selected?.document_reference_id || ''}&source_ownership_transaction_id=${selected?.id || ''}`
+
+  return (
+    <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900 dark:border-blue-900 dark:bg-blue-950/30 dark:text-blue-200">
+      <div className="font-semibold">Temsil yetkisi bu sayfada tutulmaz.</div>
+      <p className="mt-1">İmza, banka, GİB, SGK, sözleşme, mesul müdür ve kanuni temsilci yetkileri Temsilciler modülünde yönetilir.</p>
+      <a href={href} className="mt-3 inline-flex items-center gap-2 rounded-lg border border-blue-300 bg-white px-3 py-2 font-medium text-blue-700 hover:bg-blue-50 dark:border-blue-800 dark:bg-gray-900 dark:text-blue-300">
+        <ExternalLink size={16} />
+        Bu işleme dayanarak temsilci kaydı oluştur
+      </a>
+      {partnerId && <div className="mt-2 text-xs opacity-80">Aktarılacak ortak: {partnerNameById[partnerId] || partnerId}</div>}
+    </div>
+  )
+}
+
+function CapitalPaymentSummaryCard({ selected, movements }: { selected: Record<string, any> | null; movements: CapitalPaymentMovement[] }) {
+  const summary = CapitalPaymentReconciliationService.summarize(selected as Partial<OwnershipTransaction>, movements)
+  const items = [
+    ['Taahhüt Edilen Sermaye', summary.committedCapital],
+    ['Ödenen Sermaye', summary.paidCapital],
+    ['Kalan Sermaye Borcu', summary.remainingCapitalDebt],
+    ['Fazla Ödeme', summary.overpayment],
+  ]
+
+  return (
+    <div className="grid gap-3 md:grid-cols-5">
+      {items.map(([label, value]) => (
+        <div key={label} className="rounded-lg border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-900">
+          <div className="text-xs text-gray-500 dark:text-gray-400">{label}</div>
+          <div className="mt-1 text-base font-semibold text-gray-900 dark:text-white">{Number(value || 0).toLocaleString('tr-TR')}</div>
+        </div>
+      ))}
+      <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 dark:border-emerald-900 dark:bg-emerald-950/30">
+        <div className="text-xs text-emerald-700 dark:text-emerald-300">Ödeme Durumu</div>
+        <div className="mt-1 text-sm font-semibold text-emerald-900 dark:text-emerald-100">{summary.paymentStatus}</div>
+      </div>
+    </div>
+  )
+}
+
+function CapitalMovementsPanel({ selected, movements }: { selected: Record<string, any> | null; movements: CapitalPaymentMovement[] }) {
+  const listHref = selected?.id ? `/app/muhasebe/on-muhasebe-hareketleri?linked_ownership_transaction_id=${selected.id}` : '/app/muhasebe/on-muhasebe-hareketleri'
+  const createHref = `/app/muhasebe/on-muhasebe-hareketleri?mode=create&movement_type=Sermaye%20Ödemesi&company_id=${selected?.company_id || ''}&linked_ownership_transaction_id=${selected?.id || ''}`
+
+  return (
+    <div className="space-y-3">
+      <div className="flex flex-wrap gap-2">
+        <a href={listHref} className="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-800">
+          <ExternalLink size={16} />
+          Bağlı Cari Hareketleri Gör
+        </a>
+        <a href={createHref} className="inline-flex items-center gap-2 rounded-lg border border-blue-200 px-3 py-2 text-sm font-medium text-blue-700 hover:bg-blue-50 dark:border-blue-800 dark:text-blue-300 dark:hover:bg-blue-950/30">
+          <Plus size={16} />
+          Yeni Sermaye Ödemesi Hareketi Oluştur
+        </a>
+      </div>
+      <div className="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-700">
+        <div className="grid grid-cols-10 gap-2 bg-gray-50 px-3 py-2 text-xs font-semibold text-gray-600 dark:bg-gray-800 dark:text-gray-300">
+          {['Tarih', 'Hareket Tipi', 'Ortak', 'Tutar', 'Para Birimi', 'Sermaye İlişki Tipi', 'Mahsup Tutarı', 'Durum', 'Belge', 'İşlemler'].map(label => <div key={label}>{label}</div>)}
+        </div>
+        {movements.length ? movements.map(movement => (
+          <div key={movement.id} className="grid grid-cols-10 gap-2 border-t border-gray-100 px-3 py-2 text-xs text-gray-700 dark:border-gray-800 dark:text-gray-200">
+            <div>{movement.movement_date}</div>
+            <div>{movement.movement_type}</div>
+            <div>{movement.partner_name || '-'}</div>
+            <div>{Number(movement.amount || 0).toLocaleString('tr-TR')}</div>
+            <div>{movement.currency}</div>
+            <div>{movement.capital_relation_type || '-'}</div>
+            <div>{Number(movement.offset_amount || 0).toLocaleString('tr-TR')}</div>
+            <div>{movement.status}</div>
+            <div>{movement.document_reference_id || '-'}</div>
+            <div><a className="text-blue-600 dark:text-blue-300" href={`${listHref}&movement_id=${movement.id}`}>Aç</a></div>
+          </div>
+        )) : (
+          <div className="px-3 py-4 text-sm text-gray-500 dark:text-gray-400">Bağlı cari hareket bulunamadı. Sermaye ödemesi Cari Hareketler / Ön Muhasebe Hareketleri formunda oluşturulur.</div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 function normalizeForForm(row: OwnershipTransaction) {
   return {
     ...row,
@@ -533,6 +638,12 @@ function normalizeForForm(row: OwnershipTransaction) {
 
 function normalizePayload(raw: Record<string, any>, companies: Option[]) {
   const payload = Object.fromEntries(Object.entries(raw).filter(([, value]) => value !== '' && value !== undefined))
+  if (typeof payload.capital_distribution === 'string') {
+    payload.capital_distribution = parseJsonValue(payload.capital_distribution, [])
+  }
+  if (typeof payload.new_values === 'string') {
+    payload.new_values = parseJsonValue(payload.new_values, {})
+  }
   payload.company_id = payload.company_id || companies[0]?.value
   payload.currency = payload.currency || 'TRY'
   payload.document_status = payload.document_status || 'Belge Yok'
@@ -541,6 +652,14 @@ function normalizePayload(raw: Record<string, any>, companies: Option[]) {
   payload.workflow_status = payload.workflow_status || payload.approval_status
   delete payload.impact_preview
   return payload
+}
+
+function parseJsonValue(value: string, fallback: any) {
+  try {
+    return JSON.parse(value)
+  } catch {
+    return fallback
+  }
 }
 
 function simulateImpact(rows: CurrentOwnershipRow[], selected: Record<string, any> | null, partnerNameById: Record<string, string>) {
@@ -557,11 +676,9 @@ function simulateImpact(rows: CurrentOwnershipRow[], selected: Record<string, an
       current_profit_ratio: 0,
       current_capital_amount: 0,
       current_share_units: 0,
-      has_control_right: false,
       has_veto_right: false,
       has_board_nomination_right: false,
       has_privileged_share: false,
-      is_beneficial_owner: false,
     }
     row.current_share_ratio = Math.max(0, Number(row.current_share_ratio || 0) + Number(selected.share_ratio || 0) * direction)
     row.current_voting_ratio = Math.max(0, Number(row.current_voting_ratio || 0) + Number(selected.voting_ratio || 0) * direction)
@@ -582,7 +699,6 @@ function buildImpactWarnings(rows: CurrentOwnershipRow[]) {
   const totalVoting = rows.reduce((sum, row) => sum + Number(row.current_voting_ratio || 0), 0)
   if (rows.length && Math.abs(totalShare - 100) > 0.01) warnings.push('Toplam hisse 100% değil')
   if (rows.length && Math.abs(totalVoting - 100) > 0.01) warnings.push('Toplam oy hakkı 100% değil')
-  if (rows.filter(row => row.has_control_right).length > 1) warnings.push('Birden fazla kontrol sahibi var')
   return warnings
 }
 
