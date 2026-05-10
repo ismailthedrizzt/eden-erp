@@ -201,7 +201,7 @@ function OwnershipTransactionsContent() {
     setSaving(true)
     setFormError(null)
     try {
-      const payload = normalizePayload(data, companies)
+      const payload = normalizePayload(data, companies, partnerOptions)
       const response = await fetch(mode === 'create' ? '/api/ownership-transactions' : `/api/ownership-transactions/${selected?.id}`, {
         method: mode === 'create' ? 'POST' : 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -235,7 +235,7 @@ function OwnershipTransactionsContent() {
           : selected?.transaction_type || 'Mevcut ortak için ortaklık hakkı işlemi kaydedin.'}
         icon={<ArrowDownUp size={24} />}
         {...(pageState === 'list'
-          ? { onAddClick: () => startCreate(), addButtonText: 'Yeni İşlem Ekle' }
+          ? { onAddClick: () => startCreate(), addButtonText: 'Ekle' }
           : { onBackClick: () => setPageState('list'), formMode })}
       />
 
@@ -316,13 +316,13 @@ function buildFormFields(companies: Option[], partners: Option[], selected: Reco
 
   return [
     { name: 'company_id', label: 'Şirket', type: 'select', required: true, searchable: true, options: companies, defaultValue: companies.length === 1 ? companies[0].value : undefined },
-    { name: 'affected_partner_id', label: 'Ortak', type: 'select', searchable: true, options: partnerSelect, disabledWhen: { field: 'company_id', operator: 'empty' }, visibleWhen: { field: 'transaction_type', includes: ['', 'Yeni Ortaklık Girişi', 'Oy Hakkı Değişikliği', 'Kar Payı Oranı Değişikliği', 'İmtiyazlı Pay Tanımı', 'İmtiyazlı Pay Kaldırma'] } },
+    { name: 'affected_partner_id', label: 'Ortak', type: 'select', searchable: true, options: partnerSelect, defaultValue: partners.length === 1 ? partners[0].value : undefined, disabledWhen: { field: 'company_id', operator: 'empty' }, visibleWhen: { field: 'transaction_type', includes: ['', 'Oy Hakkı Değişikliği', 'Kar Payı Oranı Değişikliği', 'İmtiyazlı Pay Tanımı', 'İmtiyazlı Pay Kaldırma'] } },
     { name: 'transaction_type', label: 'İşlem Tipi', type: 'select', required: true, searchable: true, options: transactionTypes.map(value => ({ value, label: value })) },
     { name: 'transaction_date', label: 'İşlem Tarihi', type: 'date', required: true },
     { name: 'effective_date', label: 'Yürürlük Başlangıç Tarihi', type: 'date', placeholder: 'Boş bırakılırsa işlem tarihi yürürlük başlangıcı kabul edilir.' },
 
-    ...(partyVisibility.showFrom || partyVisibility.showExit ? [{ name: 'from_partner_id', label: partyVisibility.showExit ? 'Çıkan Ortak' : 'Devreden Ortak', type: 'select' as const, searchable: true, required: true, options: partnerSelect }] : []),
-    ...(partyVisibility.showTo ? [{ name: 'to_partner_id', label: transactionType === 'Yeni Ortaklık Girişi' ? 'Ortak' : transactionType === 'Ortaklıktan Çıkış' ? 'Payların Devredileceği Ortak' : 'Devralan Ortak', type: 'select' as const, searchable: true, required: true, options: partnerSelect }] : []),
+    ...(partyVisibility.showFrom || partyVisibility.showExit ? [{ name: 'from_partner_id', label: partyVisibility.showExit ? 'Çıkan Ortak' : 'Devreden Ortak', type: 'select' as const, searchable: true, required: true, options: partnerSelect, defaultValue: partners.length === 1 ? partners[0].value : undefined }] : []),
+    ...(partyVisibility.showTo ? [{ name: 'to_partner_id', label: transactionType === 'Yeni Ortaklık Girişi' ? 'Ortak' : transactionType === 'Ortaklıktan Çıkış' ? 'Payların Devredileceği Ortak' : 'Devralan Ortak', type: 'select' as const, searchable: true, required: true, options: partnerSelect, defaultValue: partners.length === 1 ? partners[0].value : undefined }] : []),
 
     { name: 'share_ratio', label: transactionType === 'Pay Devri' || transactionType === 'Kısmi Pay Devri' ? 'Devredilen Hisse Oranı' : transactionType === 'Ortaklıktan Çıkış' ? 'Devredilecek Hisse Oranı' : 'Hisse Oranı', type: 'number', visibleWhen: { field: 'transaction_type', includes: ['Yeni Ortaklık Girişi', 'Pay Devri', 'Kısmi Pay Devri', 'Ortaklıktan Çıkış'] } },
     { name: 'voting_ratio', label: transactionType === 'Pay Devri' || transactionType === 'Kısmi Pay Devri' ? 'Oy Hakkı Etkisi' : 'Oy Hakkı Oranı', type: 'number', visibleWhen: { field: 'transaction_type', includes: ['Yeni Ortaklık Girişi', 'Pay Devri', 'Kısmi Pay Devri'] } },
@@ -366,10 +366,18 @@ function normalizeForForm(row: OwnershipTransaction) {
   }
 }
 
-function normalizePayload(raw: Record<string, any>, companies: Option[]) {
+function normalizePayload(raw: Record<string, any>, companies: Option[], partners: Option[]) {
   const payload = Object.fromEntries(Object.entries(raw).filter(([, value]) => value !== '' && value !== undefined))
   if (typeof payload.new_values === 'string') payload.new_values = parseJsonValue(payload.new_values, {})
   payload.company_id = payload.company_id || companies[0]?.value
+  const singlePartnerId = partners.length === 1 ? partners[0].value : ''
+  if (payload.transaction_type === 'Yeni Ortaklık Girişi') {
+    payload.to_partner_id = payload.to_partner_id || payload.affected_partner_id || singlePartnerId
+    payload.affected_partner_id = payload.affected_partner_id || payload.to_partner_id
+  }
+  if (['Oy Hakkı Değişikliği', 'Kar Payı Oranı Değişikliği', 'İmtiyazlı Pay Tanımı', 'İmtiyazlı Pay Kaldırma'].includes(String(payload.transaction_type || ''))) {
+    payload.affected_partner_id = payload.affected_partner_id || singlePartnerId
+  }
   payload.effective_date = payload.effective_date || payload.transaction_date
   payload.status = payload.status || 'draft'
   payload.approval_status = payload.approval_status || 'draft'
