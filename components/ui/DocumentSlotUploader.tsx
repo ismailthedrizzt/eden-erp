@@ -199,6 +199,10 @@ function isImageDocument(doc?: SlotDocument | null) {
   return getEffectiveDocumentType(doc).startsWith('image/')
 }
 
+function canInlinePreview(doc?: SlotDocument | null, url?: string) {
+  return !!url && (isPdfDocument(doc) || getEffectiveDocumentType(doc) === 'application/octet-stream')
+}
+
 const DEFAULT_DOCUMENT_ACCEPTED_TYPES = [
   'application/pdf',
   'application/msword',
@@ -277,6 +281,7 @@ export function DocumentSlotUploader({
   const currentAcceptedTypes = currentSlot?.acceptedTypes || DEFAULT_DOCUMENT_ACCEPTED_TYPES
   const registryEnabled = !!registry?.enabled && !readOnly
   const currentDocType = getEffectiveDocumentType(currentDoc)
+  const canPreviewCurrentDoc = canInlinePreview(currentDoc, currentDocUrl)
 
   useEffect(() => {
     if (!registryEnabled || mode !== 'select') return
@@ -611,7 +616,13 @@ export function DocumentSlotUploader({
             <div className="flex-1 flex flex-col p-3 group">
               {/* File Preview / Thumbnail */}
               <div className="flex-1 flex items-center justify-center">
-                {isPdfDocument(currentDoc) && currentDocUrl ? (
+                {isImageDocument(currentDoc) && currentDocUrl ? (
+                  <img
+                    src={currentDocUrl}
+                    alt={currentDoc.name}
+                    className="h-full min-h-36 w-full rounded border border-gray-200 object-cover shadow-sm dark:border-gray-700"
+                  />
+                ) : canPreviewCurrentDoc ? (
                   <div className="h-full min-h-36 w-full overflow-hidden rounded border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-900">
                     <iframe
                       src={`${currentDocUrl}#page=1&toolbar=0&navpanes=0&scrollbar=0`}
@@ -619,12 +630,6 @@ export function DocumentSlotUploader({
                       className="h-full w-full border-0"
                     />
                   </div>
-                ) : isImageDocument(currentDoc) && currentDocUrl ? (
-                  <img
-                    src={currentDocUrl}
-                    alt={currentDoc.name}
-                    className="h-full min-h-36 w-full rounded border border-gray-200 object-cover shadow-sm dark:border-gray-700"
-                  />
                 ) : (
                   <div className={cn(
                     "h-28 w-full rounded-lg flex flex-col items-center justify-center gap-1",
@@ -870,110 +875,104 @@ export function DocumentSlotUploader({
 
       {/* Preview Modal */}
       {previewDoc && (
-        <div 
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
-          onClick={() => setPreviewDoc(null)}
-        >
-          <div 
-            className="relative bg-white dark:bg-gray-800 rounded-xl max-w-5xl w-full max-h-[90vh] overflow-hidden shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Modal Header */}
-            <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
-              <div className="flex items-center gap-3">
-                <div className={cn(
-                  "w-10 h-10 rounded-lg flex items-center justify-center",
-                  fileConfig?.bgColor || 'bg-gray-100'
-                )}>
-                  <FileIcon size={20} className={fileConfig?.color || 'text-gray-600'} />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-gray-900 dark:text-white">
-                    {previewDoc.name}
-                  </h3>
-                  <p className="text-sm text-gray-500">
-                    {formatFileSize(previewDoc.size)} • {fileConfig?.label || 'Document'}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={handleDownload}
-                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                  title="Download"
-                >
-                  <Download size={20} className="text-gray-600 dark:text-gray-400" />
-                </button>
-                <button
-                  onClick={() => setPreviewDoc(null)}
-                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
-                >
-                  <X size={20} className="text-gray-600 dark:text-gray-400" />
-                </button>
-              </div>
-            </div>
+        (() => {
+          const previewDocUrl = previewDoc.documentId ? signedPreviewUrls[previewDoc.documentId] || getDocumentUrl(previewDoc) : getDocumentUrl(previewDoc)
+          const previewConfig = getFileTypeConfig(getEffectiveDocumentType(previewDoc))
+          const PreviewIcon = previewConfig.icon
+          const canPreviewInline = canInlinePreview(previewDoc, previewDocUrl)
 
-            {/* Modal Content */}
-            <div className="p-6 max-h-[60vh] overflow-auto">
-              {isPdfDocument(previewDoc) ? (
-                (previewDoc.documentId ? signedPreviewUrls[previewDoc.documentId] || getDocumentUrl(previewDoc) : getDocumentUrl(previewDoc)) ? (
+          return (
+            <div
+              className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
+              onClick={() => setPreviewDoc(null)}
+            >
+              <div
+                className="relative bg-white dark:bg-gray-800 rounded-xl max-w-5xl w-full max-h-[90vh] overflow-hidden shadow-2xl"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Modal Header */}
+                <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+                  <div className="flex items-center gap-3">
+                    <div className={cn(
+                      "w-10 h-10 rounded-lg flex items-center justify-center",
+                      previewConfig.bgColor || 'bg-gray-100'
+                    )}>
+                      <PreviewIcon size={20} className={previewConfig.color || 'text-gray-600'} />
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-gray-900 dark:text-white">
+                        {previewDoc.name}
+                      </h3>
+                      <p className="text-sm text-gray-500">
+                        {formatFileSize(previewDoc.size)} • {previewConfig.label || 'Document'}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={handleDownload}
+                      className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                      title="Download"
+                    >
+                      <Download size={20} className="text-gray-600 dark:text-gray-400" />
+                    </button>
+                    <button
+                      onClick={() => setPreviewDoc(null)}
+                      className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                    >
+                      <X size={20} className="text-gray-600 dark:text-gray-400" />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Modal Content */}
+                <div className="p-6 max-h-[60vh] overflow-auto">
+                  {isImageDocument(previewDoc) && previewDocUrl ? (
+                    <img
+                      src={previewDocUrl}
+                      alt={previewDoc.name}
+                      className="max-w-full mx-auto rounded-lg"
+                    />
+                  ) : canPreviewInline ? (
                   <iframe
-                    src={`${previewDoc.documentId ? signedPreviewUrls[previewDoc.documentId] || getDocumentUrl(previewDoc) : getDocumentUrl(previewDoc)}#toolbar=1&navpanes=0`}
+                    src={`${previewDocUrl}#toolbar=1&navpanes=0`}
                     title={`${previewDoc.name} preview`}
                     className="h-[60vh] w-full rounded-lg border border-gray-200 bg-white dark:border-gray-700"
                   />
-                ) : (
-                  <div className="bg-gray-100 dark:bg-gray-900 rounded-lg p-8 text-center">
-                    <FileText size={64} className="mx-auto text-red-500 mb-4" />
-                    <p className="text-gray-600 dark:text-gray-400 mb-4">
-                      PDF önizlemesi için dosya bağlantısı bulunamadı.
-                    </p>
-                    <button
-                      onClick={handleDownload}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                    >
-                      PDF İndir
-                    </button>
-                  </div>
-                )
-              ) : isImageDocument(previewDoc) ? (
-                <img
-                  src={previewDoc.documentId ? signedPreviewUrls[previewDoc.documentId] || getDocumentUrl(previewDoc) : getDocumentUrl(previewDoc)}
-                  alt={previewDoc.name}
-                  className="max-w-full mx-auto rounded-lg"
-                />
-              ) : (
-                <div className="bg-gray-100 dark:bg-gray-900 rounded-lg p-8 text-center">
-                  <FileIcon size={64} className={cn(
-                    "mx-auto mb-4",
-                    fileConfig?.color || 'text-gray-600'
-                  )} />
-                  <p className="text-gray-600 dark:text-gray-400">
-                    Preview not available for this file type.
-                  </p>
+                  ) : (
+                    <div className="bg-gray-100 dark:bg-gray-900 rounded-lg p-8 text-center">
+                      <PreviewIcon size={64} className={cn(
+                        "mx-auto mb-4",
+                        previewConfig.color || 'text-gray-600'
+                      )} />
+                      <p className="text-gray-600 dark:text-gray-400">
+                        Preview not available for this file type.
+                      </p>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
 
-            {/* Modal Footer */}
-            <div className="flex items-center justify-between p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
-              <span className="text-xs text-gray-500">
-                Uploaded on {previewDoc.uploadedAt?.toLocaleDateString()}
-              </span>
-              {!readOnly && (
-                <button
-                  onClick={() => {
-                    setPreviewDoc(null)
-                    setShowDeleteConfirm(true)
-                  }}
-                  className="text-sm text-red-600 hover:text-red-700 font-medium"
-                >
-                  Delete Document
-                </button>
-              )}
+                {/* Modal Footer */}
+                <div className="flex items-center justify-between p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+                  <span className="text-xs text-gray-500">
+                    Uploaded on {previewDoc.uploadedAt?.toLocaleDateString()}
+                  </span>
+                  {!readOnly && (
+                    <button
+                      onClick={() => {
+                        setPreviewDoc(null)
+                        setShowDeleteConfirm(true)
+                      }}
+                      className="text-sm text-red-600 hover:text-red-700 font-medium"
+                    >
+                      Delete Document
+                    </button>
+                  )}
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
+          )
+        })()
       )}
 
       {/* Delete Confirmation */}

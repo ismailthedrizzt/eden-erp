@@ -526,6 +526,27 @@ function hasValue(value: unknown): boolean {
   return value !== undefined && value !== null && value !== ''
 }
 
+function fieldName(field: FormField) {
+  return field.name || field.key || ''
+}
+
+function hasDraftValue(row: Record<string, any>, fields: FormField[]) {
+  return fields.some(field => hasValue(row[fieldName(field)]))
+}
+
+function stripDraftMarker(row: Record<string, any>) {
+  const { __draft, ...clean } = row
+  return clean
+}
+
+function finalizeListValue(value: unknown, fields: FormField[]) {
+  if (!Array.isArray(value)) return []
+  return value
+    .filter((row): row is Record<string, any> => !!row && typeof row === 'object')
+    .filter(row => !row.__draft || hasDraftValue(row, fields))
+    .map(stripDraftMarker)
+}
+
 function flattenFields(fields: FormField[]): FormField[] {
   return fields.flatMap(field => [
     field,
@@ -550,19 +571,21 @@ function ListField({
   readOnly: boolean
   disabled: boolean
 }) {
-  const [draft, setDraft] = useState<Record<string, any>>({})
   const [errors, setErrors] = useState<Record<string, string>>({})
   const fields = field.listConfig?.fields || []
-  const rows = Array.isArray(value) ? value : []
+  const allRows = Array.isArray(value) ? value.filter((row): row is Record<string, any> => !!row && typeof row === 'object') : []
+  const rows = allRows.filter(row => !row.__draft)
+  const draft = allRows.find(row => row.__draft) || {}
 
-  const inputClass = "w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:cursor-not-allowed"
+  const inputClass = "w-full bg-white text-gray-900 dark:bg-gray-900 dark:text-white border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 disabled:bg-gray-100 disabled:text-gray-900 dark:disabled:bg-gray-800 dark:disabled:text-gray-100 disabled:cursor-not-allowed"
 
   const setDraftValue = (name: string, nextValue: any) => {
-    setDraft(prev => ({
-      ...prev,
+    const nextDraft = {
+      ...draft,
       [name]: nextValue,
       ...(name === 'devam_ediyor' && nextValue ? { mezuniyet_tarihi: '' } : {})
-    }))
+    }
+    onChange(hasDraftValue(nextDraft, fields) ? [...rows, { ...nextDraft, __draft: true }] : rows)
     if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }))
   }
 
@@ -575,19 +598,19 @@ function ListField({
   const addRow = () => {
     const nextErrors: Record<string, string> = {}
     fields.forEach(item => {
-      if (item.required && !draft[item.name]) {
+      const name = fieldName(item)
+      if (item.required && !draft[name]) {
         nextErrors[item.name] = `${item.label} zorunludur`
-      } else if (item.pattern && draft[item.name]) {
+      } else if (item.pattern && draft[name]) {
         const regex = new RegExp(`^(?:${item.pattern})$`)
-        if (!regex.test(String(draft[item.name]))) {
+        if (!regex.test(String(draft[name]))) {
           nextErrors[item.name] = `${item.label} formatı geçersiz`
         }
       }
     })
     setErrors(nextErrors)
     if (Object.keys(nextErrors).length > 0) return
-    onChange([...rows, draft])
-    setDraft({})
+    onChange([...rows, stripDraftMarker(draft)])
   }
 
   const removeRow = (index: number) => {
@@ -595,6 +618,7 @@ function ListField({
   }
 
   const renderDraftInput = (item: FormField) => {
+    const name = fieldName(item)
     const itemDisabled = disabled || readOnly || (item.disabledWhen ? matchesCondition(item.disabledWhen, draft) : false)
 
     if (item.type === 'checkbox') {
@@ -602,8 +626,8 @@ function ListField({
         <label className="flex items-center gap-2 rounded-lg border border-gray-200 dark:border-gray-700 px-3 py-2 text-sm text-gray-700 dark:text-gray-300">
           <input
             type="checkbox"
-            checked={!!draft[item.name]}
-            onChange={(event) => setDraftValue(item.name, event.target.checked)}
+            checked={!!draft[name]}
+            onChange={(event) => setDraftValue(name, event.target.checked)}
             disabled={itemDisabled}
             className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
           />
@@ -615,8 +639,8 @@ function ListField({
     if (item.type === 'select') {
       return (
         <select
-          value={draft[item.name] || ''}
-          onChange={(event) => setDraftValue(item.name, event.target.value)}
+          value={draft[name] || ''}
+          onChange={(event) => setDraftValue(name, event.target.value)}
           disabled={itemDisabled}
           className={inputClass}
         >
@@ -639,7 +663,7 @@ function ListField({
             onChange={(event) => {
               const file = event.target.files?.[0]
               if (!file) return
-              setDraftValue(item.name, {
+              setDraftValue(name, {
                 name: file.name,
                 size: file.size,
                 type: file.type,
@@ -654,8 +678,8 @@ function ListField({
       return (
         <input
           type="date"
-          value={itemDisabled ? '' : draft[item.name] || ''}
-          onChange={(event) => setDraftValue(item.name, event.target.value)}
+          value={draft[name] || ''}
+          onChange={(event) => setDraftValue(name, event.target.value)}
           disabled={itemDisabled}
           className={inputClass}
         />
@@ -665,8 +689,8 @@ function ListField({
     return (
       <input
         type={item.type === 'email' ? 'email' : item.type === 'tel' ? 'tel' : 'text'}
-        value={draft[item.name] || ''}
-        onChange={(event) => setDraftValue(item.name, formatDraftValue(item, event.target.value))}
+        value={draft[name] || ''}
+        onChange={(event) => setDraftValue(name, formatDraftValue(item, event.target.value))}
         placeholder={item.placeholder}
         disabled={itemDisabled}
         className={inputClass}
@@ -686,9 +710,9 @@ function ListField({
             <div key={index} className="flex items-start justify-between gap-3 rounded-lg border border-gray-200 dark:border-gray-700 p-3">
               <div className="grid flex-1 grid-cols-1 gap-1 text-sm text-gray-700 dark:text-gray-300 md:grid-cols-2">
                 {fields.filter(item => item.type !== 'checkbox').map(item => (
-                  <div key={item.name}>
+                  <div key={fieldName(item)}>
                     <span className="text-xs text-gray-500">{item.label}: </span>
-                    <span>{row[item.name] || '-'}</span>
+                    <span>{row[fieldName(item)] || '-'}</span>
                   </div>
                 ))}
               </div>
@@ -710,7 +734,7 @@ function ListField({
         <div className={cn("rounded-lg border border-gray-200 dark:border-gray-700 p-2", disabled && "opacity-50")}>
           <div className="flex flex-wrap items-end gap-2">
             {fields.map(item => (
-              <div key={item.name} className={cn(item.type === 'document' ? 'w-10' : 'min-w-36 flex-1')}>
+              <div key={fieldName(item)} className={cn(item.type === 'document' ? 'w-10' : 'min-w-36 flex-1')}>
                 {item.type !== 'checkbox' && (
                   <label className={cn("mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400", item.type === 'document' && "sr-only")}>
                     {item.label}
@@ -718,7 +742,7 @@ function ListField({
                   </label>
                 )}
                 {renderDraftInput(item)}
-                {errors[item.name] && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{errors[item.name]}</p>}
+                {errors[fieldName(item)] && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{errors[fieldName(item)]}</p>}
               </div>
             ))}
             <button
@@ -1086,7 +1110,7 @@ export function EntityForm({
       heroFields.forEach(f => {
         if (f.defaultValue !== undefined) {
           defaults[f.name] = f.defaultValue
-        } else if (f.type === 'select' && f.options?.[0]?.value) {
+        } else if (f.type === 'select' && f.options?.length === 1 && f.options[0]?.value) {
           defaults[f.name] = f.options[0].value
         } else if (f.type === 'checkbox') {
           defaults[f.name] = false
@@ -1098,7 +1122,7 @@ export function EntityForm({
         tab.fields.forEach(f => {
           if (f.defaultValue !== undefined) {
             defaults[f.name] = f.defaultValue
-          } else if (f.type === 'select' && f.options?.[0]?.value) {
+          } else if (f.type === 'select' && f.options?.length === 1 && f.options[0]?.value) {
             defaults[f.name] = f.options[0].value
           } else if (f.type === 'checkbox') {
             defaults[f.name] = false
@@ -1291,6 +1315,16 @@ export function EntityForm({
     onIdentityResolved?.(result)
   }
 
+  const finalizeFormDataForSave = (sourceData: Record<string, any>) => {
+    const next = { ...sourceData }
+    allFormFields.forEach(field => {
+      if (field.type === 'list') {
+        next[field.name] = finalizeListValue(next[field.name], field.listConfig?.fields || [])
+      }
+    })
+    return next
+  }
+
   const resetIdentityGate = () => {
     setIdentityGateResult(null)
   }
@@ -1446,7 +1480,7 @@ export function EntityForm({
     return value === undefined || value === null || value === ''
   }
 
-  const validate = (): boolean => {
+  const validate = (sourceData = formData): boolean => {
     const errors: Record<string, string> = {}
 
     if (isIdentityGateLocked) {
@@ -1458,15 +1492,15 @@ export function EntityForm({
     
     const validateFields = (fields: FormField[]) => {
       fields.forEach(field => {
-        if (field.type === 'section' || !matchesCondition(field.visibleWhen, formData)) return
-        if (isFieldRequired(field) && !hasValue(formData[field.name])) {
+        if (field.type === 'section' || !matchesCondition(field.visibleWhen, sourceData)) return
+        if (isFieldRequired(field, sourceData) && !hasValue(sourceData[field.name])) {
           errors[field.name] = `${field.errorLabel || field.label} zorunludur`
           return
         }
 
-        if (field.pattern && hasValue(formData[field.name])) {
+        if (field.pattern && hasValue(sourceData[field.name])) {
           const regex = new RegExp(`^(?:${field.pattern})$`)
-          if (!regex.test(String(formData[field.name]))) {
+          if (!regex.test(String(sourceData[field.name]))) {
             errors[field.name] = field.name === 'tc_kimlik'
               ? 'TC Kimlik No 11 haneli sayı olmalıdır'
               : `${field.errorLabel || field.label} formatı geçersiz`
@@ -1494,10 +1528,12 @@ export function EntityForm({
       onValidationError?.(['Devam etmek için önce Temel Kimlik Bilgileri alanını eşleştirin.'])
       return
     }
-    if (!validate()) return
+    const finalizedData = finalizeFormDataForSave(formData)
+    setFormData(finalizedData)
+    if (!validate(finalizedData)) return
     
     try {
-      await onSave(formData, mode)
+      await onSave(finalizedData, mode)
       if (isCreate) {
         setFormData({})
       }
@@ -1508,7 +1544,7 @@ export function EntityForm({
 
   const renderField = (field: FormField, showHistoryIcon = false) => {
     if (!matchesCondition(field.visibleWhen, formData)) return null
-    const value = formData[field.name] || ''
+    const value = formData[field.name] ?? ''
     const error = fieldErrors[field.name]
     const isRequired = isFieldRequired(field)
     const validationState = getFieldValidationState(field)
@@ -1530,14 +1566,14 @@ export function EntityForm({
     }
 
     const baseInputClass = cn(
-      "w-full bg-white dark:bg-gray-900 border rounded-lg px-3 py-2 text-sm text-gray-900 dark:!text-white placeholder:text-gray-400 dark:placeholder:text-gray-500",
+      "w-full bg-white text-gray-900 dark:bg-gray-900 dark:text-white border rounded-lg px-3 py-2 text-sm placeholder:text-gray-400 dark:placeholder:text-gray-500",
       "transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500/20",
       validationState.status === 'invalid'
         ? "border-red-400 dark:border-red-700 focus:border-red-500 focus:ring-red-500/20"
         : validationState.status === 'valid'
           ? "border-emerald-500 dark:border-emerald-600 focus:border-emerald-500 focus:ring-emerald-500/20"
           : "border-gray-300 dark:border-gray-700 focus:border-blue-500",
-      fieldDisabled && "bg-gray-50 dark:bg-gray-800 cursor-not-allowed"
+      fieldDisabled && "bg-gray-50 text-gray-900 dark:bg-gray-800 dark:text-gray-100 cursor-not-allowed"
     )
 
     const renderInput = () => {
