@@ -139,6 +139,7 @@ export interface EntityFormProps {
   imageSlot?: {
     title?: string
     required?: boolean
+    readOnly?: boolean
     dataField?: string
     slots?: ImageSlot[]
     registry?: any
@@ -170,6 +171,9 @@ export interface EntityFormProps {
   
   /** Mode change handler (view -> edit) */
   onModeChange?: (mode: FormMode) => void
+
+  /** Optional field change observer for parent-driven dynamic forms */
+  onFieldChange?: (field: string, value: any, data: Record<string, any>) => void
   
   /** Additional actions in form action area (future: workflow) */
   additionalActions?: ReactNode
@@ -1040,6 +1044,7 @@ export function EntityForm({
   onCancel,
   onDelete,
   onModeChange,
+  onFieldChange,
   additionalActions,
   error,
   externalFieldErrors,
@@ -1269,15 +1274,19 @@ export function EntityForm({
     setFormData(prev => {
       if (field === 'sgk_is_yeri_sicil_no') {
         const parsed = parseSgkWorkplaceNumber(String(value || ''))
-        return {
+        const next = {
           ...prev,
           [field]: parsed.digits,
           sgk_il: parsed.provinceLabel,
           sgk_sube: parsed.branchLabel,
         }
+        onFieldChange?.(field, parsed.digits, next)
+        return next
       }
 
-      return { ...prev, [field]: value }
+      const next = { ...prev, [field]: value }
+      onFieldChange?.(field, value, next)
+      return next
     })
     if (fieldErrors[field]) {
       setFieldErrors(prev => {
@@ -1821,7 +1830,7 @@ export function EntityForm({
                     slots={imageSlots}
                     images={images}
                     onChange={handleImagesChange}
-                    readOnly={isReadOnly || isIdentityGateLocked}
+                    readOnly={isReadOnly || isIdentityGateLocked || !!imageSlot.readOnly}
                     registry={imageSlot.registry}
                   />
                 </div>
