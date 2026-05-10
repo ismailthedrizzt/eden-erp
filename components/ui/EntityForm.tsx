@@ -73,7 +73,7 @@ export interface FormField {
 
 interface FieldCondition {
   field: string
-  operator?: 'equals' | 'notEquals' | 'exists' | 'notExists' | 'includes'
+  operator?: 'equals' | 'notEquals' | 'exists' | 'notExists' | 'empty' | 'notEmpty' | 'includes'
   value?: any
   equals?: any
   notEquals?: any
@@ -520,6 +520,8 @@ function matchesCondition(condition: FieldCondition | undefined, data: Record<st
   if (condition.operator === 'notEquals') return value !== condition.value
   if (condition.operator === 'exists') return value !== undefined && value !== null && value !== ''
   if (condition.operator === 'notExists') return value === undefined || value === null || value === ''
+  if (condition.operator === 'empty') return value === undefined || value === null || value === ''
+  if (condition.operator === 'notEmpty') return value !== undefined && value !== null && value !== ''
   if (condition.operator === 'includes') return Array.isArray(value) && value.includes(condition.value)
   if ('equals' in condition) return value === condition.equals
   if ('notEquals' in condition) return value !== condition.notEquals
