@@ -81,13 +81,13 @@ function OwnershipTransactionsContent() {
     () => selected ? { ...selected, photo_logo: selectedPartner?.photo_logo || selected.photo_logo || [] } : undefined,
     [selected, selectedPartner],
   )
-  const selectedPartnerHasEntry = selectedCompanyId && selectedPartnerId
-    ? hasOwnershipEntry(transactions, selectedCompanyId, selectedPartnerId, newEntryTransactionType)
-    : false
+  const selectedOwnershipSummary = getCurrentOwnershipSummary(transactions, selectedCompanyId, selectedPartnerId)
   const availableTransactionTypes = selectedPartnerId
-    ? selectedPartnerHasEntry
-      ? transactionTypes.filter(type => type !== newEntryTransactionType)
-      : [newEntryTransactionType]
+    ? selectedOwnershipSummary.canCreateInitialOwnership
+      ? [newEntryTransactionType]
+      : selectedOwnershipSummary.partnerShare > 0
+        ? transactionTypes.filter(type => type !== newEntryTransactionType)
+        : transactionTypes.filter(type => type !== newEntryTransactionType && !['Pay Devri', 'Kısmi Pay Devri', 'Ortaklıktan Çıkış'].includes(type))
     : transactionTypes
 
   const loadData = async () => {
@@ -177,7 +177,6 @@ function OwnershipTransactionsContent() {
       nextCompanyId,
       nextPartnerId,
       '',
-      newEntryTransactionType,
     )
     const partner = partners.find(item => item.value === nextPartnerId)
     setSelected({
@@ -213,13 +212,21 @@ function OwnershipTransactionsContent() {
     }
 
     const currentType = field === 'transaction_type' ? value : nextData.transaction_type
-    const nextTransactionType = resolveTransactionTypeForPartner(
+    const resolvedTransactionType = resolveTransactionTypeForPartner(
       transactions,
       nextCompanyId,
       nextPartnerId,
       currentType,
-      newEntryTransactionType,
     )
+    const summary = getCurrentOwnershipSummary(transactions, nextCompanyId, nextPartnerId)
+    const allowedTypes = nextPartnerId
+      ? summary.canCreateInitialOwnership
+        ? [newEntryTransactionType]
+        : summary.partnerShare > 0
+          ? transactionTypes.filter(type => type !== newEntryTransactionType)
+          : transactionTypes.filter(type => type !== newEntryTransactionType && !['Pay Devri', 'Kısmi Pay Devri', 'Ortaklıktan Çıkış'].includes(type))
+      : transactionTypes
+    const nextTransactionType = allowedTypes.includes(resolvedTransactionType as any) ? resolvedTransactionType : ''
     const partner = partners.find(item => item.value === nextPartnerId)
 
     setSelected(prev => ({
@@ -274,7 +281,7 @@ function OwnershipTransactionsContent() {
     setSaving(true)
     setFormError(null)
     try {
-      const payload = normalizePayload(data, companies, partnerOptions)
+      const payload = normalizePayload(data, companies, partners)
       const response = await fetch(mode === 'create' ? '/api/ownership-transactions' : `/api/ownership-transactions/${selected?.id}`, {
         method: mode === 'create' ? 'POST' : 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -391,21 +398,39 @@ function OwnershipTransactionsContent() {
   )
 }
 
-function hasOwnershipEntry(transactions: OwnershipTransaction[], companyId: string, partnerId: string, newEntryTransactionType: string) {
-  if (!companyId || !partnerId) return false
+function getCurrentOwnershipSummary(transactions: OwnershipTransaction[], companyId: string, partnerId?: string) {
+  const today = new Date().toISOString().slice(0, 10)
+  const shares = new Map<string, number>()
 
-  return transactions.some(transaction => (
-    !transaction.is_deleted &&
-    transaction.company_id === companyId &&
-    transaction.status !== 'cancelled' &&
-    transaction.status !== 'reversed' &&
-    (String(transaction.transaction_type) === newEntryTransactionType || String(transaction.transaction_type) === 'Yeni Ortak Girişi') &&
-    (
-      transaction.affected_partner_id === partnerId ||
-      transaction.to_partner_id === partnerId ||
-      transaction.from_partner_id === partnerId
-    )
-  ))
+  transactions
+    .filter(transaction => (
+      transaction.company_id === companyId &&
+      transaction.approval_status === 'approved' &&
+      transaction.status === 'active' &&
+      !transaction.is_deleted &&
+      (transaction.effective_date || transaction.transaction_date) <= today
+    ))
+    .forEach(transaction => {
+      const shareRatio = Number(transaction.share_ratio || 0)
+      if (transaction.to_partner_id) {
+        shares.set(transaction.to_partner_id, Number(shares.get(transaction.to_partner_id) || 0) + shareRatio)
+      }
+      if (transaction.from_partner_id && ['Pay Devri', 'Kısmi Pay Devri', 'Ortaklıktan Çıkış'].includes(transaction.transaction_type)) {
+        shares.set(transaction.from_partner_id, Number(shares.get(transaction.from_partner_id) || 0) - shareRatio)
+      }
+      if (transaction.affected_partner_id && transaction.affected_partner_id !== transaction.to_partner_id) {
+        shares.set(transaction.affected_partner_id, Number(shares.get(transaction.affected_partner_id) || 0) + shareRatio)
+      }
+    })
+
+  const totalShare = Array.from(shares.values()).reduce((sum, value) => sum + Math.max(0, value), 0)
+  const partnerShare = partnerId ? Math.max(0, Number(shares.get(partnerId) || 0)) : 0
+
+  return {
+    totalShare,
+    partnerShare,
+    canCreateInitialOwnership: !!partnerId && partnerShare <= 0.0001 && totalShare < 99.99,
+  }
 }
 
 function resolveTransactionTypeForPartner(
@@ -413,12 +438,12 @@ function resolveTransactionTypeForPartner(
   companyId: string,
   partnerId: string,
   currentType: string,
-  newEntryTransactionType: string,
 ) {
+  const newEntryTransactionType = transactionTypes[0]
   if (!companyId || !partnerId) return currentType || ''
-  const hasEntry = hasOwnershipEntry(transactions, companyId, partnerId, newEntryTransactionType)
+  const summary = getCurrentOwnershipSummary(transactions, companyId, partnerId)
 
-  if (!hasEntry) return newEntryTransactionType
+  if (summary.canCreateInitialOwnership) return newEntryTransactionType
   return currentType === newEntryTransactionType ? '' : currentType || ''
 }
 
@@ -491,7 +516,7 @@ function normalizePayload(raw: Record<string, any>, companies: Option[], partner
   const singlePartnerId = partners.length === 1 ? partners[0].value : ''
   if (payload.transaction_type === 'Yeni Ortaklık Girişi') {
     payload.to_partner_id = payload.to_partner_id || payload.affected_partner_id || singlePartnerId
-    payload.affected_partner_id = payload.affected_partner_id || payload.to_partner_id
+    delete payload.affected_partner_id
   }
   if (['Oy Hakkı Değişikliği', 'Kar Payı Oranı Değişikliği', 'İmtiyazlı Pay Tanımı', 'İmtiyazlı Pay Kaldırma'].includes(String(payload.transaction_type || ''))) {
     payload.affected_partner_id = payload.affected_partner_id || singlePartnerId

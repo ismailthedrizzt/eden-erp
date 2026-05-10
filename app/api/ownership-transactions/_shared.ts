@@ -43,7 +43,7 @@ export async function validateDraft(supabase: ReturnType<typeof createServiceCli
   const { data: company } = await supabase.from('sirketler').select('id').eq('id', data.company_id).maybeSingle()
   if (!company) return { ok: false, code: 'COMPANY_NOT_FOUND', error: 'Şirket bulunamadı', warnings }
 
-  const requiredPartnerIds = [data.from_partner_id, data.to_partner_id, data.affected_partner_id].filter(Boolean)
+  const requiredPartnerIds = Array.from(new Set([data.from_partner_id, data.to_partner_id, data.affected_partner_id].filter(Boolean)))
   if (requiredPartnerIds.length) {
     const { data: partners } = await supabase
       .from('sirket_ortaklar')
@@ -80,10 +80,27 @@ export async function validateDraft(supabase: ReturnType<typeof createServiceCli
 
   const { data: currentRows } = await supabase
     .from('v_current_ownership')
-    .select('current_share_ratio,current_voting_ratio')
+    .select('partner_id,current_share_ratio,current_voting_ratio')
     .eq('company_id', data.company_id)
   const totalShare = (currentRows || []).reduce((sum, row) => sum + Number(row.current_share_ratio || 0), 0)
   const totalVoting = (currentRows || []).reduce((sum, row) => sum + Number(row.current_voting_ratio || 0), 0)
+
+  if (data.transaction_type === 'Yeni Ortaklık Girişi') {
+    const newPartnerId = data.to_partner_id || data.affected_partner_id
+    const currentPartnerShare = Number((currentRows || []).find(row => row.partner_id === newPartnerId)?.current_share_ratio || 0)
+    const requestedShare = Number(data.share_ratio || 0)
+
+    if (currentPartnerShare > 0) {
+      return { ok: false, code: 'PARTNER_ALREADY_HAS_ACTIVE_SHARE', error: 'Seçilen ortağın aktif hisse hakkı bulunduğu için Yeni Ortaklık Girişi yapılamaz', warnings }
+    }
+    if (totalShare >= 99.99) {
+      return { ok: false, code: 'OWNERSHIP_FULLY_DISTRIBUTED', error: 'Şirketin yürürlükteki onaylı hisse dağılımı %100 olduğu için Yeni Ortaklık Girişi yapılamaz', warnings }
+    }
+    if (requestedShare > 0 && totalShare + requestedShare > 100.01) {
+      return { ok: false, code: 'SHARE_RATIO_EXCEEDS_REMAINING', error: `Girilen hisse oranı kalan dağıtılabilir payı aşıyor. Kalan pay: %${Math.max(0, 100 - totalShare).toLocaleString('tr-TR', { maximumFractionDigits: 4 })}`, warnings }
+    }
+  }
+
   if (totalShare > 0 && Math.abs(totalShare - 100) > 0.01) warnings.push('Toplam hisse 100% değil')
   if (totalVoting > 0 && Math.abs(totalVoting - 100) > 0.01) warnings.push('Toplam oy hakkı 100% değil')
 
