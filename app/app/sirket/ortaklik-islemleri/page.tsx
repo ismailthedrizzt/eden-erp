@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { Suspense, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { ArrowDownUp, Check, Clock, FileText, History, RotateCcw, Send, ShieldAlert, X } from 'lucide-react'
 import { EntityForm, FormField, FormMode, FormTab } from '@/components/ui/EntityForm'
@@ -32,6 +32,30 @@ interface PartnerOption extends Option {
 }
 
 export default function OwnershipTransactionsPage() {
+  return (
+    <Suspense fallback={<OwnershipTransactionsFallback />}>
+      <OwnershipTransactionsContent />
+    </Suspense>
+  )
+}
+
+function OwnershipTransactionsFallback() {
+  return (
+    <div className="space-y-4">
+      <PageBanner
+        mode="list"
+        title="Ortaklık İşlemleri"
+        subtitle="Ortaklık işlemleri yükleniyor"
+        icon={<ArrowDownUp size={24} />}
+      />
+      <div className="rounded-lg border border-gray-200 bg-white p-6 text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-800">
+        Yükleniyor...
+      </div>
+    </div>
+  )
+}
+
+function OwnershipTransactionsContent() {
   const searchParams = useSearchParams()
   const [pageState, setPageState] = useState<PageState>('list')
   const [transactions, setTransactions] = useState<OwnershipTransaction[]>([])
