@@ -109,6 +109,7 @@ export function ImageSlotUploader({
   const [existingAssets, setExistingAssets] = useState<MediaAsset[]>([])
   const [existingLoading, setExistingLoading] = useState(false)
   const [existingError, setExistingError] = useState<string | null>(null)
+  const [signedPreviewUrls, setSignedPreviewUrls] = useState<Record<string, string>>({})
   
   const fileInputRef = useRef<HTMLInputElement>(null)
   const dropZoneRef = useRef<HTMLDivElement>(null)
@@ -139,7 +140,10 @@ export function ImageSlotUploader({
 
   const currentSlot = displaySlots[currentIndex]
   const currentImage = images.find(img => img.slotId === currentSlot.id)
-  const hasImage = !!currentImage?.previewUrl || !!currentImage?.file
+  const currentImageUrl = currentImage?.mediaAssetId
+    ? signedPreviewUrls[currentImage.mediaAssetId] || currentImage.previewUrl
+    : currentImage?.previewUrl
+  const hasImage = !!currentImageUrl || !!currentImage?.file
   const registryEnabled = !!registry?.enabled && !readOnly
 
   useEffect(() => {
@@ -168,6 +172,21 @@ export function ImageSlotUploader({
       cancelled = true
     }
   }, [mode, registry?.companyId, registry?.entityKind, registry?.mediaType, registry?.organizationId, registry?.personId, registry?.searchFilters, registryEnabled])
+
+  useEffect(() => {
+    if (!currentImage?.mediaAssetId || currentImage.previewUrl || signedPreviewUrls[currentImage.mediaAssetId]) return
+
+    let cancelled = false
+    mediaRegistryService.getMediaSignedUrl(currentImage.mediaAssetId)
+      .then((signedUrl) => {
+        if (!cancelled) setSignedPreviewUrls(prev => ({ ...prev, [currentImage.mediaAssetId!]: signedUrl }))
+      })
+      .catch(() => undefined)
+
+    return () => {
+      cancelled = true
+    }
+  }, [currentImage?.mediaAssetId, currentImage?.previewUrl, signedPreviewUrls])
 
   const handlePrevious = useCallback(() => {
     setCurrentIndex(prev => (prev > 0 ? prev - 1 : displaySlots.length - 1))
@@ -409,7 +428,7 @@ export function ImageSlotUploader({
             // Uploaded State
             <div className="relative w-full h-full group">
               <img
-                src={currentImage?.previewUrl || currentImage?.file}
+                src={currentImageUrl || (currentImage?.file ? URL.createObjectURL(currentImage.file) : '')}
                 alt={currentSlot.title}
                 className="h-full w-full object-cover"
               />
@@ -646,7 +665,7 @@ export function ImageSlotUploader({
               <X size={24} />
             </button>
             <img
-              src={previewImage.previewUrl || previewImage.file}
+              src={previewImage.mediaAssetId ? signedPreviewUrls[previewImage.mediaAssetId] || previewImage.previewUrl || '' : previewImage.previewUrl || (previewImage.file ? URL.createObjectURL(previewImage.file) : '')}
               alt="Preview"
               className="w-full h-full object-contain rounded-lg"
             />

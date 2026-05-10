@@ -48,6 +48,45 @@ interface PartnerRow {
   partner_profile?: Record<string, any>
   photo_logo?: Array<Record<string, any>>
   partner_documents?: Array<Record<string, any>>
+  current_ownership?: CurrentOwnershipRow | null
+}
+
+interface CurrentOwnershipRow {
+  company_id: string
+  partner_id: string
+  current_share_ratio?: number
+  current_voting_ratio?: number
+  current_profit_ratio?: number
+  current_capital_amount?: number
+  current_share_units?: number
+  has_control_right?: boolean
+  control_type?: string
+  has_veto_right?: boolean
+  has_board_nomination_right?: boolean
+  has_privileged_share?: boolean
+  is_beneficial_owner?: boolean
+  beneficial_ratio?: number
+  warnings?: string[]
+}
+
+interface RepresentativeAuthorityRow {
+  id: string
+  sirket_id?: string
+  person_id?: string | null
+  organization_id?: string | null
+  source_id?: string | null
+  display_name?: string
+  ad_soyad?: string
+  status?: string
+  authority_types?: string[]
+  gorev?: string
+  signature_type?: string | null
+  transaction_limit?: number | null
+  currency?: string | null
+  requires_joint_signature?: boolean
+  can_approve_alone?: boolean
+  start_date?: string
+  end_date?: string | null
 }
 
 const FIELD_LABELS: Record<string, string> = {
@@ -69,6 +108,10 @@ const columns: ColumnDef[] = [
   { key: 'display_name', label: 'Ortak Adı / Ünvanı', type: 'text', width: 280, sortable: true, category: 'Kimlik', render: (value, row) => <PartnerNameCell value={value} row={row} /> },
   { key: 'partner_type_label', label: 'Ortak Türü', type: 'enum', width: 130, category: 'Kimlik' },
   { key: 'company_name', label: 'Şirket', type: 'text', width: 220, category: 'Şirket' },
+  { key: 'current_share_ratio', label: 'Hisse %', type: 'number', width: 110, category: 'Hesaplanan' },
+  { key: 'current_voting_ratio', label: 'Oy %', type: 'number', width: 100, category: 'Hesaplanan' },
+  { key: 'current_profit_ratio', label: 'Kar Payı %', type: 'number', width: 120, category: 'Hesaplanan' },
+  { key: 'current_capital_amount', label: 'Sermaye', type: 'number', width: 130, category: 'Hesaplanan' },
   { key: 'start_date', label: 'Başlangıç', type: 'date', width: 120, category: 'Dönem' },
   { key: 'end_date', label: 'Bitiş', type: 'date', width: 120, category: 'Dönem' },
   { key: 'status', label: 'Durum', type: 'enum', width: 120, sortable: true, category: 'Durum' },
@@ -78,8 +121,26 @@ const heroFields: FormField[] = [
   { name: 'company_id', label: 'Şirket', type: 'select', required: true },
   { name: 'first_name', label: 'Adı', type: 'text', required: true, visibleWhen: { field: 'partner_type', operator: 'equals', value: 'gercek_kisi' } },
   { name: 'last_name', label: 'Soyadı', type: 'text', visibleWhen: { field: 'partner_type', operator: 'equals', value: 'gercek_kisi' } },
+  {
+    name: 'uyruk',
+    label: 'Uyruğu',
+    type: 'select',
+    required: true,
+    visibleWhen: { field: 'partner_type', operator: 'equals', value: 'gercek_kisi' },
+    options: [
+      { value: 'TR', label: 'Türkiye Cumhuriyeti' },
+      { value: 'US', label: 'Amerika Birleşik Devletleri' },
+      { value: 'DE', label: 'Almanya' },
+      { value: 'GB', label: 'Birleşik Krallık' },
+      { value: 'FR', label: 'Fransa' },
+      { value: 'OTHER', label: 'Diğer' },
+    ],
+  },
+  { name: 'tc_kimlik', label: 'TC Kimlik No', type: 'text', maxLength: 11, visibleWhen: { field: 'partner_type', operator: 'equals', value: 'gercek_kisi' } },
+  { name: 'pasaport_no', label: 'Pasaport No', type: 'text', visibleWhen: { field: 'partner_type', operator: 'equals', value: 'gercek_kisi' } },
   { name: 'first_name', label: 'Ticari Unvan', type: 'text', required: true, visibleWhen: { field: 'partner_type', operator: 'equals', value: 'tuzel_kisi' } },
   { name: 'last_name', label: 'Kısa Unvan', type: 'text', visibleWhen: { field: 'partner_type', operator: 'equals', value: 'tuzel_kisi' } },
+  { name: 'identity_number', label: 'VKN', type: 'text', visibleWhen: { field: 'partner_type', operator: 'equals', value: 'tuzel_kisi' } },
   { name: 'start_date', label: 'Başlangıç Tarihi', type: 'date', required: true },
   {
     name: 'status',
@@ -125,17 +186,75 @@ const tabs: FormTab[] = [
     id: 'iletisim',
     label: 'İletişim',
     fields: [
-      { name: 'phone', label: 'Telefon', type: 'tel' },
-      { name: 'email', label: 'Email', type: 'email' },
-      { name: 'city', label: 'Şehir', type: 'text' },
-      { name: 'district', label: 'İlçe', type: 'text' },
-      { name: 'address', label: 'Adres', type: 'textarea', colSpan: 3 },
+      {
+        name: 'telefonlar',
+        label: 'Telefon',
+        type: 'list',
+        colSpan: 3,
+        listConfig: {
+          addLabel: 'Telefon Ekle',
+          emptyText: 'Telefon eklenmedi.',
+          fields: [
+            { name: 'etiket', key: 'etiket', label: 'Etiket', type: 'text', placeholder: 'Cep, iş, ev' },
+            { name: 'numara', key: 'numara', label: 'Telefon Numarası', type: 'tel', required: true, placeholder: '+90 5XX XXX XX XX' },
+          ],
+        },
+      },
+      {
+        name: 'epostalar',
+        label: 'E-posta',
+        type: 'list',
+        colSpan: 3,
+        listConfig: {
+          addLabel: 'E-posta Ekle',
+          emptyText: 'E-posta eklenmedi.',
+          fields: [
+            { name: 'etiket', key: 'etiket', label: 'Etiket', type: 'text', placeholder: 'Kişisel, iş' },
+            { name: 'adres', key: 'adres', label: 'E-posta Adresi', type: 'email', required: true },
+          ],
+        },
+      },
+      { name: 'address', label: 'Ev Adresi', type: 'textarea', colSpan: 2 },
+      { name: 'city', label: 'İl', type: 'text', compact: true },
+      { name: 'district', label: 'İlçe', type: 'text', compact: true },
+      { name: 'acil_baslik', label: 'Acil Durumda Ulaşılacak Kişi', type: 'section', colSpan: 3 },
+      { name: 'acil_kisi_ad', label: 'Adı', type: 'text', requiredGroup: 'acil_kisi' },
+      { name: 'acil_kisi_soyad', label: 'Soyadı', type: 'text', requiredGroup: 'acil_kisi' },
+      { name: 'acil_kisi_yakinlik', label: 'Yakınlık Derecesi', type: 'text', requiredGroup: 'acil_kisi' },
+      { name: 'acil_kisi_telefon', label: 'Telefon Numarası', type: 'tel', requiredGroup: 'acil_kisi' },
+    ],
+  },
+  {
+    id: 'sermaye',
+    label: 'Sermaye',
+    fields: [
+      {
+        name: 'current_ownership',
+        label: 'Hesaplanan Ortaklık',
+        type: 'custom',
+        colSpan: 3,
+        render: ({ value }) => <CurrentOwnershipPanel value={value} section="capital" />,
+      },
     ],
   },
   {
     id: 'yetkiler',
     label: 'Yetkiler',
     fields: [
+      {
+        name: 'representative_authorities',
+        label: 'Temsilci Yetkileri',
+        type: 'custom',
+        colSpan: 3,
+        render: ({ value }) => <RepresentativeAuthoritiesPanel value={Array.isArray(value) ? value : []} />,
+      },
+      {
+        name: 'current_ownership',
+        label: 'Ortaklık Hakları',
+        type: 'custom',
+        colSpan: 3,
+        render: ({ value }) => <CurrentOwnershipPanel value={value} section="rights" />,
+      },
       { name: 'is_representative', label: 'Temsilci mi?', type: 'checkbox' },
       { name: 'is_signature_authorized', label: 'İmza Yetkilisi mi?', type: 'checkbox' },
       { name: 'is_board_member', label: 'Yönetim Kurulu Üyesi mi?', type: 'checkbox' },
@@ -190,6 +309,8 @@ export default function OrtaklarPage() {
   const [pageState, setPageState] = useState<PageState>('list')
   const [partners, setPartners] = useState<PartnerRow[]>([])
   const [companies, setCompanies] = useState<CompanyOption[]>([])
+  const [currentOwnershipRows, setCurrentOwnershipRows] = useState<CurrentOwnershipRow[]>([])
+  const [representatives, setRepresentatives] = useState<RepresentativeAuthorityRow[]>([])
   const [selectedPartner, setSelectedPartner] = useState<Record<string, any> | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -205,22 +326,29 @@ export default function OrtaklarPage() {
     setLoading(true)
     setError(null)
     try {
-      const [partnerResponse, companyResponse] = await Promise.all([
+      const [partnerResponse, companyResponse, representativeResponse] = await Promise.all([
         fetch('/api/sirketler/ortaklar'),
         fetch('/api/sirketler?is_active=true'),
+        fetch('/api/sirketler/temsilciler'),
       ])
       const partnerPayload = await partnerResponse.json()
       const companyPayload = await companyResponse.json()
+      const representativePayload = await representativeResponse.json().catch(() => ({ data: [] }))
       if (!partnerResponse.ok) throw new Error(partnerPayload.error || 'Ortaklar yüklenemedi')
 
       setPartners(Array.isArray(partnerPayload.data) ? partnerPayload.data : [])
-      const companyOptions = Array.isArray(companyPayload.data) ? companyPayload.data.map((company: any) => ({
+      setRepresentatives(Array.isArray(representativePayload.data) ? representativePayload.data : [])
+      const companyOptions: CompanyOption[] = Array.isArray(companyPayload.data) ? companyPayload.data.map((company: any) => ({
         value: company.id,
         label: company.ticari_unvan || company.kisa_unvan,
         ticari_unvan: company.ticari_unvan,
         kisa_unvan: company.kisa_unvan,
       })) : []
       setCompanies(companyOptions)
+      const ownershipPayloads = await Promise.all(companyOptions.map((company: CompanyOption) =>
+        fetch(`/api/companies/${company.value}/current-ownership`).then(response => response.json()).catch(() => ({ data: [] }))
+      ))
+      setCurrentOwnershipRows(ownershipPayloads.flatMap(payload => Array.isArray(payload.data) ? payload.data : []))
     } catch (err: any) {
       setError(err.message)
     } finally {
@@ -233,13 +361,44 @@ export default function OrtaklarPage() {
   }, [])
 
   const companyNameById = useMemo(() => Object.fromEntries(companies.map(company => [company.value, company.label])), [companies])
-  const tableData = partners.map(partner => ({
+  const currentOwnershipByPartnerId = useMemo(() => Object.fromEntries(currentOwnershipRows.map(row => [row.partner_id, row])), [currentOwnershipRows])
+  const representativeAuthoritiesForPartner = (partner: Record<string, any> | null | undefined) => {
+    if (!partner) return []
+    const companyId = partner.company_id || partner.sirket_id
+    const personId = partner.person_id
+    const organizationId = partner.organization_id
+    const sourceId = partner.source_id || personId || organizationId
+    const displayName = partner.display_name || partner.ortak_adi
+
+    return representatives.filter(representative =>
+      (!companyId || representative.sirket_id === companyId) &&
+      representative.status !== 'Pasif' &&
+      (
+        (personId && representative.person_id === personId) ||
+        (organizationId && representative.organization_id === organizationId) ||
+        (sourceId && representative.source_id === sourceId) ||
+        (!!displayName && (representative.display_name === displayName || representative.ad_soyad === displayName))
+      )
+    )
+  }
+
+  const tableData = partners.map(partner => {
+    const currentOwnership = currentOwnershipByPartnerId[partner.id]
+    const representativeAuthorities = representativeAuthoritiesForPartner(partner)
+    return ({
     ...partner,
     display_name: partner.display_name || partner.ortak_adi || '',
     identity_number: partner.identity_number || partner.tckn_vkn || '',
     partner_type_label: (partner.owner_kind || partner.ortak_tipi) === 'tuzel_kisi' || partner.ortak_tipi === 'sirket' ? 'Tüzel Kişi' : 'Gerçek Kişi',
     company_name: companyNameById[partner.sirket_id] || '-',
-  }))
+    current_ownership: currentOwnership || null,
+    current_share_ratio: currentOwnership?.current_share_ratio ?? 0,
+    current_voting_ratio: currentOwnership?.current_voting_ratio ?? 0,
+    current_profit_ratio: currentOwnership?.current_profit_ratio ?? 0,
+    current_capital_amount: currentOwnership?.current_capital_amount ?? 0,
+    representative_authorities: representativeAuthorities,
+  })
+  })
 
   const activePartners = tableData.filter(partner => !partner.is_deleted && partner.status === 'Aktif')
   const widgets: WidgetDef<any>[] = [
@@ -268,7 +427,11 @@ export default function OrtaklarPage() {
       const response = await fetch(`/api/sirketler/ortaklar/${row.id}`)
       if (!response.ok) return
       const result = await response.json()
-      if (result.data) setSelectedPartner(normalizePartnerForForm(result.data))
+      if (result.data) setSelectedPartner(normalizePartnerForForm({
+        ...result.data,
+        current_ownership: row.current_ownership,
+        representative_authorities: row.representative_authorities,
+      }))
     } catch {
       // List row is enough for initial view.
     }
@@ -403,6 +566,22 @@ export default function OrtaklarPage() {
             onCancel={() => setPageState('list')}
             onDelete={handleDelete}
             onModeChange={(mode) => setPageState(mode)}
+            additionalActions={selectedPartner?.id ? (
+              <button
+                type="button"
+                onClick={() => {
+                  const params = new URLSearchParams({
+                    mode: 'create',
+                    company_id: selectedPartner.company_id || selectedPartner.sirket_id || '',
+                    partner_id: selectedPartner.id,
+                  })
+                  window.location.href = `/app/sirket/ortaklik-islemleri?${params.toString()}`
+                }}
+                className="rounded-lg border border-blue-200 px-3 py-2 text-sm font-medium text-blue-700 hover:bg-blue-50 dark:border-blue-800 dark:text-blue-300 dark:hover:bg-blue-950/30"
+              >
+                Yeni Ortaklık İşlemi Oluştur
+              </button>
+            ) : null}
             onIdentityGateOpenExistingRole={async (roleRecord) => {
               await handleRowClick(roleRecord as any)
               setPageState('edit')
@@ -416,12 +595,23 @@ export default function OrtaklarPage() {
               slots: [
                 { id: 'photo_logo', title: selectedPartner?.partner_type === 'tuzel_kisi' ? 'Logo' : 'Fotoğraf', required: false },
               ],
+              registry: {
+                enabled: true,
+                entityKind: selectedPartner?.partner_type === 'tuzel_kisi' ? 'organization' : 'person',
+                personId: selectedPartner?.person_id,
+                organizationId: selectedPartner?.organization_id,
+                companyId: selectedPartner?.company_id || selectedPartner?.sirket_id,
+                mediaType: selectedPartner?.partner_type === 'tuzel_kisi' ? 'logo' : 'profile_photo',
+                linkedModule: 'partners',
+                linkedRecordId: selectedPartner?.id,
+              },
             }}
             documentSlot={{
               title: 'Belgeler',
               dataField: 'partner_documents',
               slots: [
                 { id: 'kimlik_pasaport', title: 'Kimlik / Pasaport', required: false },
+                { id: 'cv', title: 'CV', required: false },
                 { id: 'imza_beyani', title: 'İmza Beyanı', required: false },
                 { id: 'vergi_levhasi', title: 'Vergi Levhası', required: false },
                 { id: 'ticaret_sicil', title: 'Ticaret Sicil Gazetesi', required: false },
@@ -429,6 +619,13 @@ export default function OrtaklarPage() {
               ],
               acceptedTypes: ['application/pdf', 'image/png', 'image/jpeg', 'image/webp'],
               maxSizeMB: 20,
+              registry: {
+                enabled: true,
+                companyId: selectedPartner?.company_id || selectedPartner?.sirket_id,
+                linkedModule: 'partners',
+                linkedRecordId: selectedPartner?.id,
+                linkType: 'partner_document',
+              },
             }}
             onValidationError={(fields) => setToast({
               type: 'warning',
@@ -465,6 +662,89 @@ function SummaryList({ items, emptyText }: { items: any[]; emptyText: string }) 
   )
 }
 
+function CurrentOwnershipPanel({ value, section }: { value?: CurrentOwnershipRow | null; section: 'capital' | 'rights' }) {
+  if (!value) {
+    return (
+      <div className="rounded-lg border border-dashed border-gray-200 p-4 text-sm text-gray-500 dark:border-gray-700">
+        Onaylı ortaklık işlemi kaynaklı hesaplanan değer yok. Hak değişikliği için Ortaklık İşlemleri sayfasından işlem oluşturun.
+      </div>
+    )
+  }
+
+  const items = section === 'capital'
+    ? [
+        ['Hisse Oranı', `%${Number(value.current_share_ratio || 0).toFixed(2)}`],
+        ['Oy Hakkı', `%${Number(value.current_voting_ratio || 0).toFixed(2)}`],
+        ['Kar Payı', `%${Number(value.current_profit_ratio || 0).toFixed(2)}`],
+        ['Sermaye', Number(value.current_capital_amount || 0).toLocaleString('tr-TR')],
+        ['Pay Adedi', Number(value.current_share_units || 0).toLocaleString('tr-TR')],
+      ]
+    : [
+        ['Kontrol Hakkı', value.has_control_right ? 'Var' : 'Yok'],
+        ['Kontrol Türü', value.control_type || '-'],
+        ['Veto Hakkı', value.has_veto_right ? 'Var' : 'Yok'],
+        ['YK Aday Hakkı', value.has_board_nomination_right ? 'Var' : 'Yok'],
+        ['İmtiyazlı Pay', value.has_privileged_share ? 'Var' : 'Yok'],
+        ['Nihai Faydalanıcı', value.is_beneficial_owner ? 'Evet' : 'Hayır'],
+        ['Faydalanma Oranı', value.beneficial_ratio ? `%${Number(value.beneficial_ratio).toFixed(2)}` : '-'],
+      ]
+
+  return (
+    <div className="space-y-4">
+      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {items.map(([label, itemValue]) => (
+          <div key={label} className="rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-900">
+            <div className="text-xs text-gray-500 dark:text-gray-400">{label}</div>
+            <div className="mt-1 text-sm font-semibold text-gray-900 dark:text-white">{itemValue}</div>
+          </div>
+        ))}
+      </div>
+      {Array.isArray(value.warnings) && value.warnings.length > 0 && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+          {value.warnings.map(warning => <div key={warning}>{warning}</div>)}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function RepresentativeAuthoritiesPanel({ value }: { value: RepresentativeAuthorityRow[] }) {
+  if (!value.length) {
+    return (
+      <div className="rounded-lg border border-dashed border-gray-200 p-4 text-sm text-gray-500 dark:border-gray-700">
+        Bu ortak için Temsilciler sayfasından gelen aktif yetki kaydı bulunamadı.
+      </div>
+    )
+  }
+
+  return (
+    <div className="rounded-lg border border-gray-200 dark:border-gray-700">
+      {value.map(authority => (
+        <div key={authority.id} className="border-b border-gray-100 p-3 last:border-b-0 dark:border-gray-800">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <div className="text-sm font-semibold text-gray-900 dark:text-white">
+                {(authority.authority_types || []).join(', ') || authority.gorev || 'Yetki Kaydı'}
+              </div>
+              <div className="mt-1 text-xs text-gray-500">
+                {authority.start_date || '-'} - {authority.end_date || 'Süresiz'} · {authority.status || 'Aktif'}
+              </div>
+            </div>
+            <div className="text-right text-xs text-gray-600 dark:text-gray-300">
+              {authority.signature_type || 'İmza tipi yok'}
+              {authority.transaction_limit ? ` · ${Number(authority.transaction_limit).toLocaleString('tr-TR')} ${authority.currency || 'TRY'}` : ''}
+            </div>
+          </div>
+          <div className="mt-2 flex flex-wrap gap-2 text-xs">
+            {authority.requires_joint_signature && <span className="rounded-full bg-amber-100 px-2 py-1 text-amber-700 dark:bg-amber-950/40 dark:text-amber-200">Müşterek imza</span>}
+            {authority.can_approve_alone && <span className="rounded-full bg-emerald-100 px-2 py-1 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-200">Tek başına onay</span>}
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 function Timeline({ value }: { value: any[] }) {
   const items = value.length ? value : [
     { text: '01.01.2025 → %20 Pay ile eklendi' },
@@ -487,6 +767,9 @@ function normalizePartnerForForm(partner: PartnerRow) {
   const profile = partner.partner_profile || {}
   const partnerType = profile.partner_type || partner.owner_kind || (partner.ortak_tipi === 'sirket' ? 'tuzel_kisi' : 'gercek_kisi')
   const nameParts = String(partner.display_name || partner.ortak_adi || '').trim().split(/\s+/)
+  const identityNumber = profile.identity_number || partner.identity_number || partner.tckn_vkn || ''
+  const phone = profile.phone || profile.cep_telefonu || ''
+  const email = profile.email || ''
   return {
     ...profile,
     ...partner,
@@ -494,12 +777,27 @@ function normalizePartnerForForm(partner: PartnerRow) {
     partner_type: partnerType,
     first_name: profile.first_name || (partnerType === 'tuzel_kisi' ? partner.display_name || partner.ortak_adi || '' : nameParts.slice(0, -1).join(' ') || partner.display_name || partner.ortak_adi || ''),
     last_name: profile.last_name || (partnerType === 'tuzel_kisi' ? profile.short_name || '' : nameParts.length > 1 ? nameParts.at(-1) : ''),
-    identity_number: profile.identity_number || partner.identity_number || partner.tckn_vkn || '',
+    identity_number: identityNumber,
+    uyruk: profile.uyruk || profile.nationality || profile.nationality_country || 'TR',
+    tc_kimlik: profile.tc_kimlik || profile.national_id || (partnerType === 'gercek_kisi' && String(identityNumber).length === 11 ? identityNumber : ''),
+    pasaport_no: profile.pasaport_no || profile.passport_no || (partnerType === 'gercek_kisi' && String(identityNumber).length !== 11 ? identityNumber : ''),
+    telefonlar: Array.isArray(profile.telefonlar) && profile.telefonlar.length
+      ? profile.telefonlar
+      : phone
+        ? [{ etiket: 'Cep', numara: phone }]
+        : [],
+    epostalar: Array.isArray(profile.epostalar) && profile.epostalar.length
+      ? profile.epostalar
+      : email
+        ? [{ etiket: 'Kişisel', adres: email }]
+        : [],
     end_date: profile.end_date ?? partner.end_date ?? '',
     status: profile.status || partner.status || 'Aktif',
     photo_logo: partner.photo_logo || [],
     partner_documents: partner.partner_documents || [],
     document_summary: partner.partner_documents || [],
+    current_ownership: partner.current_ownership || null,
+    representative_authorities: (partner as any).representative_authorities || [],
     timeline: partner.history || [],
     field_history: buildEntityFieldHistory(partner.history || []),
   }
@@ -513,8 +811,11 @@ function normalizePayload(raw: Record<string, any>, companies: Option[]) {
   payload.company_id = payload.company_id || payload.sirket_id || companies[0]?.value
   if (payload.master_entity_kind === 'person') payload.partner_type = 'gercek_kisi'
   if (payload.master_entity_kind === 'organization') payload.partner_type = 'tuzel_kisi'
-  payload.nationality_country = payload.nationality_country || payload.country || payload.nationality || 'TR'
+  payload.nationality_country = payload.nationality_country || payload.country || payload.nationality || payload.uyruk || 'TR'
+  payload.nationality = payload.nationality || payload.uyruk || payload.nationality_country
   payload.identity_number = payload.identity_number || payload.national_id || payload.tc_kimlik || payload.tax_number || payload.vkn_tckn || payload.passport_no || payload.pasaport_no
+  if (Array.isArray(payload.telefonlar) && payload.telefonlar.length && !payload.phone) payload.phone = payload.telefonlar[0]?.numara
+  if (Array.isArray(payload.epostalar) && payload.epostalar.length && !payload.email) payload.email = payload.epostalar[0]?.adres
   payload.owner_kind = payload.partner_type
   payload.trade_name = payload.partner_type === 'tuzel_kisi' ? payload.first_name : undefined
   payload.short_name = payload.partner_type === 'tuzel_kisi' ? payload.last_name : undefined

@@ -55,9 +55,73 @@ const employeeWidgets: DashboardWidgetRegistryRecord[] = employeesDashboardLayou
   pagePath: '/app/ik/personel',
 }))
 
+const ownershipTransactionWidgets: DashboardWidgetRegistryRecord[] = [
+  {
+    id: 'ownership-this-month',
+    title: 'Bu Ayki İşlem Sayısı',
+    description: 'Ortaklık işlemleri sayfasında bu ay açılan işlemleri gösterir.',
+    moduleKey: 'sirket',
+    moduleLabel: 'Şirket Yönetimi',
+    pageKey: 'ownership-transactions',
+    pageLabel: 'Ortaklık İşlemleri',
+    pagePath: '/app/sirket/ortaklik-islemleri',
+  },
+  {
+    id: 'ownership-type-distribution',
+    title: 'İşlem Türü Dağılımı',
+    description: 'Ortaklık işlemlerini işlem tipine göre dağıtır.',
+    moduleKey: 'sirket',
+    moduleLabel: 'Şirket Yönetimi',
+    pageKey: 'ownership-transactions',
+    pageLabel: 'Ortaklık İşlemleri',
+    pagePath: '/app/sirket/ortaklik-islemleri',
+  },
+  {
+    id: 'ownership-approval-status',
+    title: 'Onay Durumu',
+    description: 'Ortaklık işlemlerinin onay durumlarını gösterir.',
+    moduleKey: 'sirket',
+    moduleLabel: 'Şirket Yönetimi',
+    pageKey: 'ownership-transactions',
+    pageLabel: 'Ortaklık İşlemleri',
+    pagePath: '/app/sirket/ortaklik-islemleri',
+  },
+  {
+    id: 'ownership-pending',
+    title: 'Bekleyen İşlemler',
+    description: 'Onay bekleyen ortaklık işlemi sayısını gösterir.',
+    moduleKey: 'sirket',
+    moduleLabel: 'Şirket Yönetimi',
+    pageKey: 'ownership-transactions',
+    pageLabel: 'Ortaklık İşlemleri',
+    pagePath: '/app/sirket/ortaklik-islemleri',
+  },
+  {
+    id: 'ownership-share-delta',
+    title: 'Toplam Pay Değişimi',
+    description: 'Ortaklık işlemlerindeki toplam pay hareketini gösterir.',
+    moduleKey: 'sirket',
+    moduleLabel: 'Şirket Yönetimi',
+    pageKey: 'ownership-transactions',
+    pageLabel: 'Ortaklık İşlemleri',
+    pagePath: '/app/sirket/ortaklik-islemleri',
+  },
+  {
+    id: 'ownership-actions',
+    title: 'Dikkat Gerektiren İşlemler',
+    description: 'Belge, onay ve hesaplama uyarılarını listeler.',
+    moduleKey: 'sirket',
+    moduleLabel: 'Şirket Yönetimi',
+    pageKey: 'ownership-transactions',
+    pageLabel: 'Ortaklık İşlemleri',
+    pagePath: '/app/sirket/ortaklik-islemleri',
+  },
+]
+
 export const dashboardWidgetRegistry: DashboardWidgetRegistryRecord[] = [
   ...homeWidgets,
   ...employeeWidgets,
+  ...ownershipTransactionWidgets,
 ]
 
 export const legacyHomeWidgetIdMap: Record<string, string> = {

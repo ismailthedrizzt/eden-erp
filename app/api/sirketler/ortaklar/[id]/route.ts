@@ -36,7 +36,7 @@ export async function GET(
     .single()
 
   if (error) return NextResponse.json({ error: error.message, code: error.code || 'FETCH_FAILED' }, { status: 500 })
-  return NextResponse.json({ data })
+  return NextResponse.json({ data: await hydratePartnerMasterAssets(supabase, data) })
 }
 
 export async function PATCH(
@@ -67,6 +67,7 @@ export async function PATCH(
     .single()
 
   if (error) return NextResponse.json({ error: error.message, code: error.code || 'UPDATE_FAILED' }, { status: 500 })
+  await linkPartnerRegistryAssets(supabase, data)
   return NextResponse.json({ data })
 }
 
@@ -102,30 +103,32 @@ function mapPartnerForDb(partner: Record<string, any>, current?: Record<string, 
     ortak_adi: displayName || 'Ortak',
     ortak_tipi: ownerKind === 'tuzel_kisi' ? 'sirket' : 'kisi',
     tckn_vkn: partner.identity_number || current?.tckn_vkn,
-    hisse_orani: partner.share_ratio ?? current?.hisse_orani,
+    hisse_orani: current?.hisse_orani ?? null,
     imza_yetkisi: !!(partner.has_representation_right ?? current?.imza_yetkisi),
     owner_kind: ownerKind,
-    source_type: partner.source_type || current?.source_type || 'ortaklar_sayfasi',
-    source_id: partner.source_id || current?.source_id || null,
+    source_type: partner.person_id ? 'master_person' : partner.organization_id ? 'master_organization' : partner.source_type || current?.source_type || 'ortaklar_sayfasi',
+    source_id: partner.person_id || partner.organization_id || partner.source_id || current?.source_id || null,
+    person_id: partner.person_id || current?.person_id || null,
+    organization_id: partner.organization_id || current?.organization_id || null,
     display_name: displayName || 'Ortak',
     identity_number: partner.identity_number || current?.identity_number,
     share_class: partner.share_class || current?.share_class || 'Adi Pay',
-    share_units: partner.share_units || null,
-    nominal_value: partner.nominal_value || null,
-    capital_amount: partner.capital_amount || null,
-    share_ratio: partner.share_ratio ?? current?.share_ratio,
-    voting_ratio: partner.voting_ratio || null,
-    profit_ratio: partner.profit_ratio || null,
-    beneficial_owner: !!(partner.beneficial_owner ?? partner.is_beneficial_owner ?? current?.beneficial_owner),
-    is_beneficial_owner: !!(partner.beneficial_owner ?? partner.is_beneficial_owner ?? current?.is_beneficial_owner),
-    beneficial_ratio: partner.beneficial_ratio || null,
-    is_ultimate_controller: !!(partner.is_ultimate_controller ?? current?.is_ultimate_controller),
+    share_units: current?.share_units ?? null,
+    nominal_value: current?.nominal_value ?? null,
+    capital_amount: current?.capital_amount ?? null,
+    share_ratio: current?.share_ratio ?? null,
+    voting_ratio: current?.voting_ratio ?? null,
+    profit_ratio: current?.profit_ratio ?? null,
+    beneficial_owner: !!current?.beneficial_owner,
+    is_beneficial_owner: !!current?.is_beneficial_owner,
+    beneficial_ratio: current?.beneficial_ratio ?? null,
+    is_ultimate_controller: !!current?.is_ultimate_controller,
     has_representation_right: !!(partner.has_representation_right ?? current?.has_representation_right),
-    has_control_right: !!(partner.has_control_right ?? current?.has_control_right),
-    control_type: partner.control_type || null,
-    has_board_nomination_right: !!(partner.has_board_nomination_right ?? current?.has_board_nomination_right),
-    has_veto_right: !!(partner.has_veto_right ?? current?.has_veto_right),
-    has_privileged_share: !!(partner.has_privileged_share ?? partner.has_privilege ?? current?.has_privileged_share),
+    has_control_right: !!current?.has_control_right,
+    control_type: current?.control_type || null,
+    has_board_nomination_right: !!current?.has_board_nomination_right,
+    has_veto_right: !!current?.has_veto_right,
+    has_privileged_share: !!current?.has_privileged_share,
     start_date: partner.start_date || current?.start_date,
     end_date: partner.end_date || null,
     status: partner.status || current?.status || 'Aktif',
@@ -134,4 +137,78 @@ function mapPartnerForDb(partner: Record<string, any>, current?: Record<string, 
     partner_documents: partner.partner_documents || current?.partner_documents || [],
     partner_profile: partner,
   }
+}
+
+async function hydratePartnerMasterAssets(supabase: ReturnType<typeof createServiceClient>, partner: Record<string, any>) {
+  if (!partner) return partner
+  const hasPhoto = Array.isArray(partner.photo_logo) && partner.photo_logo.length > 0
+  const hasDocuments = Array.isArray(partner.partner_documents) && partner.partner_documents.length > 0
+  if (hasPhoto && hasDocuments) return partner
+
+  if (partner.person_id) {
+    const { data: employee } = await supabase
+      .from('employees')
+      .select('fotograf_url, cv_belgesi, ise_giris_belgeleri, isten_cikis_belgeleri')
+      .eq('person_id', partner.person_id)
+      .eq('is_active', true)
+      .maybeSingle()
+
+    const photoLogo = hasPhoto
+      ? partner.photo_logo
+      : employee?.fotograf_url
+        ? [{ slotId: 'photo_logo', name: 'Fotoğraf', previewUrl: employee.fotograf_url, url: employee.fotograf_url }]
+        : []
+
+    const documents = hasDocuments ? partner.partner_documents : normalizeEmployeeDocuments(employee || {})
+    return {
+      ...partner,
+      photo_logo: photoLogo,
+      partner_documents: documents,
+      partner_profile: {
+        ...(partner.partner_profile || {}),
+        photo_logo: photoLogo,
+        partner_documents: documents,
+      },
+    }
+  }
+
+  return partner
+}
+
+function normalizeEmployeeDocuments(employee: Record<string, any>) {
+  const docs: Record<string, any>[] = []
+  if (employee.cv_belgesi && typeof employee.cv_belgesi === 'object') docs.push({ slotId: 'cv', title: 'CV', ...employee.cv_belgesi })
+  if (Array.isArray(employee.ise_giris_belgeleri)) docs.push(...employee.ise_giris_belgeleri)
+  if (Array.isArray(employee.isten_cikis_belgeleri)) docs.push(...employee.isten_cikis_belgeleri)
+
+  return docs.map((doc, index) => ({
+    ...doc,
+    slotId: doc.slotId || doc.slot_id || `employee_document_${index + 1}`,
+    name: doc.name || doc.fileName || doc.file_name || doc.title || 'Belge',
+    type: doc.type || doc.mime_type || 'application/octet-stream',
+    url: doc.url || doc.previewUrl || doc.preview_url,
+  }))
+}
+
+async function linkPartnerRegistryAssets(supabase: ReturnType<typeof createServiceClient>, partner: Record<string, any>) {
+  const docs = Array.isArray(partner.partner_documents) ? partner.partner_documents : []
+  const images = Array.isArray(partner.photo_logo) ? partner.photo_logo : []
+
+  await Promise.all([
+    ...docs
+      .filter((doc: Record<string, any>) => doc.documentId || doc.document_id)
+      .map((doc: Record<string, any>) => supabase.from('document_links').insert({
+        document_id: doc.documentId || doc.document_id,
+        linked_module: 'partners',
+        linked_record_id: partner.id,
+        link_type: doc.linkType || doc.link_type || 'partner_document',
+        notes: 'Master kimlikten ortak kaydına bağlandı',
+      })),
+    ...images
+      .filter((image: Record<string, any>) => image.mediaAssetId || image.media_asset_id)
+      .map((image: Record<string, any>) => supabase.from('media_assets').update({
+        linked_module: 'partners',
+        linked_record_id: partner.id,
+      }).eq('id', image.mediaAssetId || image.media_asset_id)),
+  ])
 }

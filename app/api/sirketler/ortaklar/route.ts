@@ -17,6 +17,12 @@ const PartnerSchema = z.object({
   source_type: z.string().optional(),
   source_id: z.string().optional(),
   nationality_country: z.string().optional(),
+  nationality: z.string().optional(),
+  uyruk: z.string().optional(),
+  national_id: z.string().optional(),
+  tc_kimlik: z.string().optional(),
+  passport_no: z.string().optional(),
+  pasaport_no: z.string().optional(),
   share_ratio: z.coerce.number().min(0).max(100).optional().nullable(),
   voting_ratio: z.coerce.number().min(0).max(100).optional(),
   profit_ratio: z.coerce.number().min(0).max(100).optional(),
@@ -46,10 +52,18 @@ const PartnerSchema = z.object({
   trade_registry_no: z.string().optional(),
   phone: z.string().optional(),
   email: z.union([z.literal(''), z.string().email()]).optional(),
+  telefonlar: z.array(z.record(z.any())).optional(),
+  epostalar: z.array(z.record(z.any())).optional(),
   address: z.string().optional(),
+  il: z.string().optional(),
+  ilce: z.string().optional(),
   country: z.string().optional(),
   city: z.string().optional(),
   district: z.string().optional(),
+  acil_kisi_ad: z.string().optional(),
+  acil_kisi_soyad: z.string().optional(),
+  acil_kisi_yakinlik: z.string().optional(),
+  acil_kisi_telefon: z.string().optional(),
   share_units: z.coerce.number().optional(),
   nominal_value: z.coerce.number().optional(),
   capital_amount: z.coerce.number().optional(),
@@ -115,6 +129,7 @@ export async function POST(request: NextRequest) {
     .single()
 
   if (error) return NextResponse.json({ error: error.message, code: error.code || 'CREATE_FAILED' }, { status: 500 })
+  await linkPartnerRegistryAssets(supabase, data)
   return NextResponse.json({ data }, { status: 201 })
 }
 
@@ -129,38 +144,38 @@ function mapPartnerForDb(partner: Record<string, any>) {
     ortak_adi: displayName || 'Ortak',
     ortak_tipi: ownerKind === 'tuzel_kisi' ? 'sirket' : 'kisi',
     tckn_vkn: partner.identity_number,
-    hisse_orani: partner.share_ratio,
+    hisse_orani: null,
     imza_yetkisi: !!partner.has_representation_right,
     owner_kind: ownerKind,
     source_type: partner.source_type || 'ortaklar_sayfasi',
     source_id: partner.source_id || partner.person_id || partner.organization_id || null,
     display_name: displayName || 'Ortak',
-    identity_number: partner.identity_number,
+    identity_number: partner.identity_number || partner.national_id || partner.tc_kimlik || partner.tax_number || partner.vkn_tckn || partner.passport_no || partner.pasaport_no,
     share_class: partner.share_class || 'Adi Pay',
-    share_units: partner.share_units || null,
-    nominal_value: partner.nominal_value || null,
-    capital_amount: partner.capital_amount || null,
-    share_ratio: partner.share_ratio,
-    voting_ratio: partner.voting_ratio || null,
-    profit_ratio: partner.profit_ratio || null,
-    beneficial_owner: !!(partner.beneficial_owner || partner.is_beneficial_owner),
-    is_beneficial_owner: !!(partner.beneficial_owner || partner.is_beneficial_owner),
-    beneficial_ratio: partner.beneficial_ratio || null,
-    is_ultimate_controller: !!partner.is_ultimate_controller,
+    share_units: null,
+    nominal_value: null,
+    capital_amount: null,
+    share_ratio: null,
+    voting_ratio: null,
+    profit_ratio: null,
+    beneficial_owner: false,
+    is_beneficial_owner: false,
+    beneficial_ratio: null,
+    is_ultimate_controller: false,
     has_representation_right: !!partner.has_representation_right,
-    has_control_right: !!partner.has_control_right,
-    control_type: partner.control_type || null,
-    has_board_nomination_right: !!partner.has_board_nomination_right,
-    has_veto_right: !!partner.has_veto_right,
-    has_privileged_share: !!(partner.has_privileged_share || partner.has_privilege),
+    has_control_right: false,
+    control_type: null,
+    has_board_nomination_right: false,
+    has_veto_right: false,
+    has_privileged_share: false,
     start_date: partner.start_date,
     end_date: partner.end_date || null,
     status: partner.status || 'Aktif',
     notes: partner.notes || null,
     history: partner.timeline || [],
-    photo_logo: partner.photo_logo || [],
-    partner_documents: partner.partner_documents || [],
-    partner_profile: partner,
+  photo_logo: partner.photo_logo || [],
+  partner_documents: partner.partner_documents || [],
+  partner_profile: partner,
     is_deleted: false,
   }
 }
@@ -169,12 +184,13 @@ async function attachPartnerIdentity(supabase: ReturnType<typeof createServiceCl
   try {
     const kind = row.owner_kind === 'tuzel_kisi' ? 'organization' : 'person'
     if (kind === 'person') {
-      if (partner.person_id) return { ...row, person_id: partner.person_id, source_type: row.source_type || 'master_person', source_id: row.source_id || partner.person_id }
+      if (partner.person_id) return { ...row, person_id: partner.person_id, source_type: 'master_person', source_id: partner.person_id }
 
       const fullName = row.display_name || [partner.first_name, partner.last_name].filter(Boolean).join(' ').trim()
-      const nationality = partner.nationality_country || partner.nationality || 'TR'
-      const nationalId = partner.identity_number && String(partner.identity_number).length === 11 ? String(partner.identity_number) : null
-      const passportNo = nationalId ? null : partner.passport_no || null
+      const nationality = partner.nationality_country || partner.nationality || partner.uyruk || 'TR'
+      const identityNumber = partner.identity_number || partner.national_id || partner.tc_kimlik || partner.passport_no || partner.pasaport_no
+      const nationalId = identityNumber && String(identityNumber).length === 11 ? String(identityNumber) : null
+      const passportNo = nationalId ? null : partner.passport_no || partner.pasaport_no || null
       let query = supabase.from('persons').select('id').eq('nationality', nationality).eq(nationalId ? 'national_id' : 'passport_no', nationalId || passportNo).maybeSingle()
       if (!nationalId && !passportNo) query = supabase.from('persons').select('id').eq('full_name', fullName).maybeSingle()
       const { data: existing, error: findError } = await query
@@ -189,11 +205,11 @@ async function attachPartnerIdentity(supabase: ReturnType<typeof createServiceCl
         birth_date: partner.birth_date || null,
         metadata_json: { source: 'partners_create' },
       }).select('id').single()).data?.id
-      return { ...row, person_id: personId || null, source_type: row.source_type || 'master_person', source_id: row.source_id || personId || null }
+      return { ...row, person_id: personId || null, source_type: 'master_person', source_id: personId || null }
     }
 
     const legalName = partner.trade_name || row.display_name
-    if (partner.organization_id) return { ...row, organization_id: partner.organization_id, source_type: row.source_type || 'master_organization', source_id: row.source_id || partner.organization_id }
+    if (partner.organization_id) return { ...row, organization_id: partner.organization_id, source_type: 'master_organization', source_id: partner.organization_id }
 
     const country = partner.country || partner.nationality_country || 'TR'
     const taxNumber = partner.tax_number || partner.identity_number || null
@@ -214,8 +230,31 @@ async function attachPartnerIdentity(supabase: ReturnType<typeof createServiceCl
       organization_type: partner.company_type || null,
       metadata_json: { source: 'partners_create' },
     }).select('id').single()).data?.id
-    return { ...row, organization_id: organizationId || null, source_type: row.source_type || 'master_organization', source_id: row.source_id || organizationId || null }
+    return { ...row, organization_id: organizationId || null, source_type: 'master_organization', source_id: organizationId || null }
   } catch {
     return row
   }
+}
+
+async function linkPartnerRegistryAssets(supabase: ReturnType<typeof createServiceClient>, partner: Record<string, any>) {
+  const docs = Array.isArray(partner.partner_documents) ? partner.partner_documents : []
+  const images = Array.isArray(partner.photo_logo) ? partner.photo_logo : []
+
+  await Promise.all([
+    ...docs
+      .filter((doc: Record<string, any>) => doc.documentId || doc.document_id)
+      .map((doc: Record<string, any>) => supabase.from('document_links').insert({
+        document_id: doc.documentId || doc.document_id,
+        linked_module: 'partners',
+        linked_record_id: partner.id,
+        link_type: doc.linkType || doc.link_type || 'partner_document',
+        notes: 'Master kimlikten ortak kaydına bağlandı',
+      })),
+    ...images
+      .filter((image: Record<string, any>) => image.mediaAssetId || image.media_asset_id)
+      .map((image: Record<string, any>) => supabase.from('media_assets').update({
+        linked_module: 'partners',
+        linked_record_id: partner.id,
+      }).eq('id', image.mediaAssetId || image.media_asset_id)),
+  ])
 }

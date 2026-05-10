@@ -204,6 +204,7 @@ export function DocumentSlotUploader({
   const [existingDocuments, setExistingDocuments] = useState<RegistryDocument[]>([])
   const [existingLoading, setExistingLoading] = useState(false)
   const [existingError, setExistingError] = useState<string | null>(null)
+  const [signedPreviewUrls, setSignedPreviewUrls] = useState<Record<string, string>>({})
   
   const fileInputRef = useRef<HTMLInputElement>(null)
   const dropZoneRef = useRef<HTMLDivElement>(null)
@@ -234,6 +235,9 @@ export function DocumentSlotUploader({
 
   const currentSlot = displaySlots[currentIndex]
   const currentDoc = documents.find(doc => doc.slotId === currentSlot.id)
+  const currentDocUrl = currentDoc?.documentId
+    ? signedPreviewUrls[currentDoc.documentId] || getDocumentUrl(currentDoc)
+    : getDocumentUrl(currentDoc)
   const hasDocument = !!currentDoc
   const currentAcceptedTypes = currentSlot?.acceptedTypes || DEFAULT_DOCUMENT_ACCEPTED_TYPES
   const registryEnabled = !!registry?.enabled && !readOnly
@@ -262,6 +266,21 @@ export function DocumentSlotUploader({
       cancelled = true
     }
   }, [existingQuery, mode, registry?.companyId, registry?.documentType, registry?.searchFilters, registryEnabled])
+
+  useEffect(() => {
+    if (!currentDoc?.documentId || currentDoc.url || currentDoc.previewUrl || signedPreviewUrls[currentDoc.documentId]) return
+
+    let cancelled = false
+    documentRegistryService.getDocumentSignedUrl(currentDoc.documentId)
+      .then((signedUrl) => {
+        if (!cancelled) setSignedPreviewUrls(prev => ({ ...prev, [currentDoc.documentId!]: signedUrl }))
+      })
+      .catch(() => undefined)
+
+    return () => {
+      cancelled = true
+    }
+  }, [currentDoc?.documentId, currentDoc?.previewUrl, currentDoc?.url, signedPreviewUrls])
 
   const handlePrevious = useCallback(() => {
     setCurrentIndex(prev => (prev > 0 ? prev - 1 : displaySlots.length - 1))
@@ -407,10 +426,12 @@ export function DocumentSlotUploader({
   }, [extraSlotName, documents, onChange, displaySlots])
 
   const handleDownload = useCallback(() => {
-    if (!currentDoc?.file && !currentDoc?.url) return
+    if (!currentDoc?.file && !currentDoc?.url && !currentDoc?.documentId) return
     
     // Create download link
-    const url = currentDoc.url || (currentDoc.file ? URL.createObjectURL(currentDoc.file) : '')
+    const url = currentDoc.documentId
+      ? signedPreviewUrls[currentDoc.documentId] || currentDoc.url || ''
+      : currentDoc.url || (currentDoc.file ? URL.createObjectURL(currentDoc.file) : '')
     if (url) {
       const link = document.createElement('a')
       link.href = url
@@ -423,7 +444,7 @@ export function DocumentSlotUploader({
         URL.revokeObjectURL(url)
       }
     }
-  }, [currentDoc])
+  }, [currentDoc, signedPreviewUrls])
 
   // Keyboard navigation
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
@@ -539,17 +560,17 @@ export function DocumentSlotUploader({
             <div className="flex-1 flex flex-col p-3 group">
               {/* File Preview / Thumbnail */}
               <div className="flex-1 flex items-center justify-center">
-                {currentDoc?.type === 'application/pdf' && getDocumentUrl(currentDoc) ? (
+                {currentDoc?.type === 'application/pdf' && currentDocUrl ? (
                   <div className="h-full min-h-36 w-full overflow-hidden rounded border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-900">
                     <iframe
-                      src={`${getDocumentUrl(currentDoc)}#page=1&toolbar=0&navpanes=0&scrollbar=0`}
+                      src={`${currentDocUrl}#page=1&toolbar=0&navpanes=0&scrollbar=0`}
                       title={`${currentDoc.name} preview`}
                       className="h-full w-full border-0"
                     />
                   </div>
-                ) : currentDoc?.type.includes('image') && getDocumentUrl(currentDoc) ? (
+                ) : currentDoc?.type.includes('image') && currentDocUrl ? (
                   <img
-                    src={getDocumentUrl(currentDoc)}
+                    src={currentDocUrl}
                     alt={currentDoc.name}
                     className="h-full min-h-36 w-full rounded border border-gray-200 object-cover shadow-sm dark:border-gray-700"
                   />
@@ -844,9 +865,9 @@ export function DocumentSlotUploader({
             {/* Modal Content */}
             <div className="p-6 max-h-[60vh] overflow-auto">
               {previewDoc.type === 'application/pdf' ? (
-                getDocumentUrl(previewDoc) ? (
+                (previewDoc.documentId ? signedPreviewUrls[previewDoc.documentId] || getDocumentUrl(previewDoc) : getDocumentUrl(previewDoc)) ? (
                   <iframe
-                    src={`${getDocumentUrl(previewDoc)}#toolbar=1&navpanes=0`}
+                    src={`${previewDoc.documentId ? signedPreviewUrls[previewDoc.documentId] || getDocumentUrl(previewDoc) : getDocumentUrl(previewDoc)}#toolbar=1&navpanes=0`}
                     title={`${previewDoc.name} preview`}
                     className="h-[60vh] w-full rounded-lg border border-gray-200 bg-white dark:border-gray-700"
                   />
@@ -866,7 +887,7 @@ export function DocumentSlotUploader({
                 )
               ) : previewDoc.type.includes('image') ? (
                 <img
-                  src={getDocumentUrl(previewDoc)}
+                  src={previewDoc.documentId ? signedPreviewUrls[previewDoc.documentId] || getDocumentUrl(previewDoc) : getDocumentUrl(previewDoc)}
                   alt={previewDoc.name}
                   className="max-w-full mx-auto rounded-lg"
                 />

@@ -289,7 +289,7 @@ async function findRoleRecord(
 
   const companyId = clean(input.roleScope.company_id || input.roleScope.sirket_id)
   if (companyId && ['sirket_ortaklar', 'sirket_temsilciler', 'stakeholders'].includes(input.roleTable)) {
-    query = query.eq('company_id', companyId)
+    query = query.eq(input.roleTable === 'stakeholders' ? 'company_id' : 'sirket_id', companyId)
   }
 
   if (input.roleTable === 'employees' || input.roleTable === 'sirketler') {
@@ -309,6 +309,8 @@ function buildPrefill(entityKind: 'person' | 'organization', record: Record<stri
     const lastName = record.last_name || record.soyad || ''
     const fullName = record.full_name || [firstName, lastName].filter(Boolean).join(' ')
     const documents = normalizePersonDocuments(record)
+    const images = normalizePersonImages(record)
+    const cvDocument = documents.find(document => document.slotId === 'cv') || documents[0] || null
 
     return {
       person_id: record.id,
@@ -341,7 +343,9 @@ function buildPrefill(entityKind: 'person' | 'organization', record: Record<stri
       email: record.email || '',
       adres: record.address || '',
       address: record.address || '',
-      photo_logo: normalizePersonImages(record),
+      fotograf_url: images[0]?.previewUrl || images[0]?.url || '',
+      photo_logo: images,
+      cv_belgesi: cvDocument,
       partner_documents: documents,
       authority_documents: documents,
       stakeholder_documents: documents,

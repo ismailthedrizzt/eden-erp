@@ -264,8 +264,9 @@ function normalizeStoredImages(value: unknown): SlotImage[] {
     .filter((image): image is Record<string, any> => !!image && typeof image === 'object')
     .map(image => ({
       slotId: image.slotId || image.slot_id || 'photo',
-      previewUrl: image.previewUrl || image.preview_url || image.url,
-      name: image.name || 'Görsel',
+      mediaAssetId: image.mediaAssetId || image.media_asset_id || image.asset_id,
+      previewUrl: image.previewUrl || image.preview_url || image.url || image.signedUrl || image.signed_url,
+      name: image.name || image.file_name || image.fileName || 'Görsel',
       size: Number(image.size || 0),
       uploadedAt: image.uploadedAt ? new Date(image.uploadedAt) : undefined,
     }))
@@ -274,6 +275,7 @@ function normalizeStoredImages(value: unknown): SlotImage[] {
 function serializeImageForStorage(image: SlotImage) {
   return {
     slotId: image.slotId,
+    mediaAssetId: image.mediaAssetId,
     name: image.name,
     size: image.size || image.file?.size || 0,
     uploadedAt: image.uploadedAt?.toISOString?.() || new Date().toISOString(),
@@ -288,17 +290,21 @@ function normalizeStoredDocuments(value: unknown): SlotDocument[] {
     .filter((doc): doc is Record<string, any> => !!doc && typeof doc === 'object')
     .map(doc => ({
       slotId: doc.slotId || doc.slot_id || 'cv',
-      name: doc.name || 'Belge',
-      size: Number(doc.size || 0),
-      type: doc.type || 'application/octet-stream',
+      documentId: doc.documentId || doc.document_id,
+      documentLinkId: doc.documentLinkId || doc.document_link_id || doc.link_id,
+      name: doc.name || doc.file_name || doc.fileName || doc.document_title || doc.title || 'Belge',
+      size: Number(doc.size || doc.file_size || 0),
+      type: doc.type || doc.mime_type || 'application/octet-stream',
       uploadedAt: doc.uploadedAt ? new Date(doc.uploadedAt) : undefined,
-      url: doc.url || doc.previewUrl || doc.preview_url
+      url: doc.url || doc.previewUrl || doc.preview_url || doc.signedUrl || doc.signed_url
     }))
 }
 
 function serializeDocumentForStorage(doc: SlotDocument) {
   return {
     slotId: doc.slotId,
+    documentId: doc.documentId,
+    documentLinkId: doc.documentLinkId,
     name: doc.name,
     size: doc.size,
     type: doc.type,
@@ -1257,6 +1263,21 @@ export function EntityForm({
   }
 
   const handleIdentityResolved = (result: IdentityGateResolveResult) => {
+    const nextImages = normalizeStoredImages(
+      result.prefill[imageDataField] ||
+      result.prefill.photo_logo ||
+      result.prefill.fotograf_url ||
+      []
+    )
+    const nextDocuments = normalizeStoredDocuments(
+      result.prefill[documentDataField] ||
+      result.prefill.partner_documents ||
+      result.prefill.authority_documents ||
+      result.prefill.stakeholder_documents ||
+      result.prefill.cv_belgesi ||
+      []
+    )
+
     setIdentityGateResult(result)
     setFormData(prev => ({
       ...prev,
@@ -1265,6 +1286,8 @@ export function EntityForm({
       master_record_id: result.masterRecord?.id || null,
       identity_gate_state: result.state,
     }))
+    if (nextImages.length) setImages(nextImages)
+    if (nextDocuments.length) setDocuments(nextDocuments)
     onIdentityResolved?.(result)
   }
 
