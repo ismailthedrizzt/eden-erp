@@ -18,7 +18,7 @@
  * />
  */
 
-import { useState, useRef, useCallback, useMemo } from 'react'
+import { useState, useRef, useCallback, useMemo, useEffect } from 'react'
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -29,9 +29,15 @@ import {
   Trash2,
   RefreshCw,
   Plus,
-  FileImage
+  FileImage,
+  Search,
+  Star,
+  History,
+  Link2
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { mediaRegistryService } from '@/lib/modules/document-registry/documentRegistry.service'
+import type { MediaAsset, MediaSearchFilters } from '@/lib/modules/document-registry/documentRegistry.types'
 
 export interface ImageSlot {
   id: string
@@ -44,6 +50,7 @@ export interface ImageSlot {
 
 export interface SlotImage {
   slotId: string
+  mediaAssetId?: string
   file?: File
   previewUrl?: string
   name?: string
@@ -62,6 +69,21 @@ interface ImageSlotUploaderProps {
   allowExtraSlots?: boolean
   /** Read-only mode (view only) */
   readOnly?: boolean
+  /** Central media registry integration */
+  registry?: {
+    enabled?: boolean
+    entityKind?: 'person' | 'organization' | 'company' | 'vehicle'
+    personId?: string
+    organizationId?: string
+    companyId?: string
+    linkedModule?: string
+    linkedRecordId?: string
+    mediaType?: 'profile_photo' | 'logo' | 'vehicle_photo' | 'gallery'
+    onExistingMediaSelected?: (asset: MediaAsset, slot: ImageSlot) => void | Promise<void>
+    onSetPrimary?: (image: SlotImage, slot: ImageSlot) => void | Promise<void>
+    onViewHistory?: (image: SlotImage, slot: ImageSlot) => void | Promise<void>
+    searchFilters?: MediaSearchFilters
+  }
   /** Custom className */
   className?: string
 }
@@ -72,9 +94,11 @@ export function ImageSlotUploader({
   onChange,
   allowExtraSlots = true,
   readOnly = false,
+  registry,
   className
 }: ImageSlotUploaderProps) {
   const [currentIndex, setCurrentIndex] = useState(0)
+  const [mode, setMode] = useState<'upload' | 'select'>('upload')
   const [isDragging, setIsDragging] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
   const [isUploading, setIsUploading] = useState(false)
@@ -82,6 +106,9 @@ export function ImageSlotUploader({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [extraSlotName, setExtraSlotName] = useState('')
   const [showExtraSlotInput, setShowExtraSlotInput] = useState(false)
+  const [existingAssets, setExistingAssets] = useState<MediaAsset[]>([])
+  const [existingLoading, setExistingLoading] = useState(false)
+  const [existingError, setExistingError] = useState<string | null>(null)
   
   const fileInputRef = useRef<HTMLInputElement>(null)
   const dropZoneRef = useRef<HTMLDivElement>(null)
@@ -113,6 +140,34 @@ export function ImageSlotUploader({
   const currentSlot = displaySlots[currentIndex]
   const currentImage = images.find(img => img.slotId === currentSlot.id)
   const hasImage = !!currentImage?.previewUrl || !!currentImage?.file
+  const registryEnabled = !!registry?.enabled && !readOnly
+
+  useEffect(() => {
+    if (!registryEnabled || mode !== 'select') return
+
+    let cancelled = false
+    setExistingLoading(true)
+    setExistingError(null)
+
+    mediaRegistryService.listMedia({
+      entity_kind: registry?.entityKind,
+      person_id: registry?.personId,
+      organization_id: registry?.organizationId,
+      company_id: registry?.companyId,
+      media_type: registry?.mediaType,
+      ...registry?.searchFilters,
+    }).then((items) => {
+      if (!cancelled) setExistingAssets(items)
+    }).catch((error) => {
+      if (!cancelled) setExistingError(error instanceof Error ? error.message : 'Medya alınamadı')
+    }).finally(() => {
+      if (!cancelled) setExistingLoading(false)
+    })
+
+    return () => {
+      cancelled = true
+    }
+  }, [mode, registry?.companyId, registry?.entityKind, registry?.mediaType, registry?.organizationId, registry?.personId, registry?.searchFilters, registryEnabled])
 
   const handlePrevious = useCallback(() => {
     setCurrentIndex(prev => (prev > 0 ? prev - 1 : displaySlots.length - 1))
@@ -177,6 +232,34 @@ export function ImageSlotUploader({
       setUploadProgress(0)
     }, 500)
   }, [currentSlot, images, onChange])
+
+  const handleSelectExistingAsset = useCallback(async (asset: MediaAsset) => {
+    if (!currentSlot || currentSlot.id === '__extra__') return
+
+    let previewUrl: string | undefined
+    try {
+      previewUrl = await mediaRegistryService.getMediaSignedUrl(asset.id)
+    } catch {
+      previewUrl = undefined
+    }
+
+    const newImage: SlotImage = {
+      slotId: currentSlot.id,
+      mediaAssetId: asset.id,
+      previewUrl,
+      name: asset.file_name,
+      uploadedAt: asset.created_at ? new Date(asset.created_at) : new Date(),
+    }
+
+    if (registry?.linkedModule && registry?.linkedRecordId) {
+      await mediaRegistryService.linkMedia(asset.id, registry.linkedModule, registry.linkedRecordId)
+    }
+
+    const updatedImages = images.filter(img => img.slotId !== currentSlot.id)
+    onChange([...updatedImages, newImage])
+    await registry?.onExistingMediaSelected?.(asset, currentSlot)
+    setMode('upload')
+  }, [currentSlot, images, onChange, registry])
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault()
@@ -284,6 +367,30 @@ export function ImageSlotUploader({
         </div>
 
         {/* Center - Image Preview Area */}
+        {registryEnabled && !hasImage && currentSlot.id !== '__extra__' && (
+          <div className="grid grid-cols-2 gap-1 border-b border-gray-100 bg-white p-1 text-[10px] font-medium dark:border-gray-700 dark:bg-gray-800">
+            <button
+              type="button"
+              onClick={() => setMode('upload')}
+              className={cn(
+                'rounded px-2 py-1 transition-colors',
+                mode === 'upload' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
+              )}
+            >
+              Yeni Fotoğraf Yükle
+            </button>
+            <button
+              type="button"
+              onClick={() => setMode('select')}
+              className={cn(
+                'rounded px-2 py-1 transition-colors',
+                mode === 'select' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
+              )}
+            >
+              Mevcut Fotoğraftan Seç
+            </button>
+          </div>
+        )}
         <div
           ref={dropZoneRef}
           onClick={!readOnly && !hasImage && currentSlot.id !== '__extra__' ? () => fileInputRef.current?.click() : undefined}
@@ -293,7 +400,7 @@ export function ImageSlotUploader({
           className={cn(
             "flex-1 flex flex-col items-center justify-center relative",
             "bg-gray-50 dark:bg-gray-900/50",
-            !readOnly && !hasImage && currentSlot.id !== '__extra__' && "cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-900",
+            !readOnly && !hasImage && currentSlot.id !== '__extra__' && mode === 'upload' && "cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-900",
             isDragging && "bg-blue-50 dark:bg-blue-900/20 border-2 border-dashed border-blue-400"
           )}
           style={{ height: hasImage ? 'calc(100% - 34px)' : 'calc(100% - 78px)' }}
@@ -325,6 +432,20 @@ export function ImageSlotUploader({
                     <RefreshCw size={20} className="text-gray-700" />
                   </button>
                   <button
+                    onClick={() => currentImage && registry?.onSetPrimary?.(currentImage, currentSlot)}
+                    className="p-2 bg-white rounded-lg hover:bg-gray-100 transition-colors"
+                    title="Set as Primary"
+                  >
+                    <Star size={20} className="text-gray-700" />
+                  </button>
+                  <button
+                    onClick={() => currentImage && registry?.onViewHistory?.(currentImage, currentSlot)}
+                    className="p-2 bg-white rounded-lg hover:bg-gray-100 transition-colors"
+                    title="View History"
+                  >
+                    <History size={20} className="text-gray-700" />
+                  </button>
+                  <button
                     onClick={() => setShowDeleteConfirm(true)}
                     className="p-2 bg-white rounded-lg hover:bg-red-50 transition-colors"
                     title="Delete"
@@ -343,6 +464,41 @@ export function ImageSlotUploader({
                   <ZoomIn size={32} className="text-white opacity-0 hover:opacity-100 transition-opacity" />
                 </button>
               )}
+            </div>
+          ) : registryEnabled && mode === 'select' && currentSlot.id !== '__extra__' ? (
+            <div className="flex h-full flex-col gap-2 p-2">
+              <div className="flex items-center gap-1 rounded border border-gray-200 bg-white px-2 py-1 dark:border-gray-700 dark:bg-gray-800">
+                <Search size={12} className="text-gray-400" />
+                <span className="truncate text-xs text-gray-500">Ana kayıttaki medya varlıkları</span>
+              </div>
+              <div className="min-h-0 flex-1 overflow-auto rounded border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900">
+                {existingLoading ? (
+                  <div className="p-3 text-center text-xs text-gray-500">Fotoğraflar yükleniyor...</div>
+                ) : existingError ? (
+                  <div className="p-3 text-center text-xs text-red-600">{existingError}</div>
+                ) : existingAssets.length === 0 ? (
+                  <div className="p-3 text-center text-xs text-gray-500">Uygun fotoğraf bulunamadı</div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-2 p-2">
+                    {existingAssets.map(asset => (
+                      <button
+                        key={asset.id}
+                        type="button"
+                        onClick={() => handleSelectExistingAsset(asset)}
+                        className="group overflow-hidden rounded border border-gray-200 bg-gray-50 text-left hover:border-blue-400 dark:border-gray-700 dark:bg-gray-800"
+                      >
+                        <div className="flex aspect-square items-center justify-center bg-gray-100 dark:bg-gray-900">
+                          <Link2 size={20} className="text-blue-600" />
+                        </div>
+                        <div className="p-1">
+                          <span className="block truncate text-[10px] font-semibold text-gray-800 dark:text-gray-100">{asset.file_name}</span>
+                          <span className="block truncate text-[9px] text-gray-500">{asset.media_type}{asset.is_primary ? ' · Birincil' : ''}</span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           ) : currentSlot.id === '__extra__' && showExtraSlotInput ? (
             // Extra Slot Name Input
@@ -427,7 +583,7 @@ export function ImageSlotUploader({
         </div>
 
         {/* Bottom - Upload Button */}
-        {!readOnly && !hasImage && currentSlot.id !== '__extra__' && (
+        {!readOnly && !hasImage && currentSlot.id !== '__extra__' && mode === 'upload' && (
           <div className="px-2 py-2 border-t border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800">
             <button
               onClick={(event) => {

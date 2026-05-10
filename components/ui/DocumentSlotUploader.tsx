@@ -18,7 +18,7 @@
  * />
  */
 
-import { useState, useRef, useCallback, useMemo } from 'react'
+import { useState, useRef, useCallback, useMemo, useEffect } from 'react'
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -36,9 +36,13 @@ import {
   Download,
   Plus,
   AlertCircle,
-  Sparkles
+  Sparkles,
+  Search,
+  Link2
 } from 'lucide-react'
 import { cn, formatFileSize } from '@/lib/utils'
+import { documentRegistryService } from '@/lib/modules/document-registry/documentRegistry.service'
+import type { DocumentSearchFilters, RegistryDocument } from '@/lib/modules/document-registry/documentRegistry.types'
 
 export interface DocumentSlot {
   id: string
@@ -51,6 +55,8 @@ export interface DocumentSlot {
 
 export interface SlotDocument {
   slotId: string
+  documentId?: string
+  documentLinkId?: string
   file?: File
   name: string
   size: number
@@ -75,6 +81,17 @@ interface DocumentSlotUploaderProps {
   aiBadge?: {
     label?: string
     title?: string
+  }
+  /** Central document registry integration */
+  registry?: {
+    enabled?: boolean
+    companyId?: string
+    documentType?: string
+    linkedModule?: string
+    linkedRecordId?: string
+    linkType?: string
+    onExistingDocumentSelected?: (document: RegistryDocument, slot: DocumentSlot) => void | Promise<void>
+    searchFilters?: DocumentSearchFilters
   }
   /** Custom className */
   className?: string
@@ -171,9 +188,11 @@ export function DocumentSlotUploader({
   allowExtraSlots = true,
   readOnly = false,
   aiBadge,
+  registry,
   className
 }: DocumentSlotUploaderProps) {
   const [currentIndex, setCurrentIndex] = useState(0)
+  const [mode, setMode] = useState<'upload' | 'select'>('upload')
   const [isDragging, setIsDragging] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
   const [isUploading, setIsUploading] = useState(false)
@@ -181,6 +200,10 @@ export function DocumentSlotUploader({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [extraSlotName, setExtraSlotName] = useState('')
   const [showExtraSlotInput, setShowExtraSlotInput] = useState(false)
+  const [existingQuery, setExistingQuery] = useState('')
+  const [existingDocuments, setExistingDocuments] = useState<RegistryDocument[]>([])
+  const [existingLoading, setExistingLoading] = useState(false)
+  const [existingError, setExistingError] = useState<string | null>(null)
   
   const fileInputRef = useRef<HTMLInputElement>(null)
   const dropZoneRef = useRef<HTMLDivElement>(null)
@@ -213,6 +236,32 @@ export function DocumentSlotUploader({
   const currentDoc = documents.find(doc => doc.slotId === currentSlot.id)
   const hasDocument = !!currentDoc
   const currentAcceptedTypes = currentSlot?.acceptedTypes || DEFAULT_DOCUMENT_ACCEPTED_TYPES
+  const registryEnabled = !!registry?.enabled && !readOnly
+
+  useEffect(() => {
+    if (!registryEnabled || mode !== 'select') return
+
+    let cancelled = false
+    setExistingLoading(true)
+    setExistingError(null)
+
+    documentRegistryService.listDocuments({
+      company_id: registry?.companyId,
+      document_type: registry?.documentType,
+      q: existingQuery,
+      ...registry?.searchFilters,
+    }).then((items) => {
+      if (!cancelled) setExistingDocuments(items)
+    }).catch((error) => {
+      if (!cancelled) setExistingError(error instanceof Error ? error.message : 'Belgeler alınamadı')
+    }).finally(() => {
+      if (!cancelled) setExistingLoading(false)
+    })
+
+    return () => {
+      cancelled = true
+    }
+  }, [existingQuery, mode, registry?.companyId, registry?.documentType, registry?.searchFilters, registryEnabled])
 
   const handlePrevious = useCallback(() => {
     setCurrentIndex(prev => (prev > 0 ? prev - 1 : displaySlots.length - 1))
@@ -274,6 +323,35 @@ export function DocumentSlotUploader({
       setUploadProgress(0)
     }, 500)
   }, [currentSlot, documents, onChange])
+
+  const handleSelectExistingDocument = useCallback(async (document: RegistryDocument) => {
+    if (!currentSlot || currentSlot.id === '__extra__') return
+
+    const currentFile = document.document_files?.find(file => file.is_current_version) || document.document_files?.[0]
+    const newDoc: SlotDocument = {
+      slotId: currentSlot.id,
+      documentId: document.id,
+      name: document.document_title,
+      size: currentFile?.file_size || 0,
+      type: currentFile?.mime_type || 'application/octet-stream',
+      uploadedAt: document.updated_at ? new Date(document.updated_at) : new Date(),
+    }
+
+    if (registry?.linkedModule && registry?.linkedRecordId && registry?.linkType) {
+      const link = await documentRegistryService.linkDocument({
+        document_id: document.id,
+        linked_module: registry.linkedModule,
+        linked_record_id: registry.linkedRecordId,
+        link_type: registry.linkType,
+      })
+      newDoc.documentLinkId = link.id
+    }
+
+    const updatedDocs = documents.filter(doc => doc.slotId !== currentSlot.id)
+    onChange([...updatedDocs, newDoc])
+    await registry?.onExistingDocumentSelected?.(document, currentSlot)
+    setMode('upload')
+  }, [currentSlot, documents, onChange, registry])
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault()
@@ -418,6 +496,30 @@ export function DocumentSlotUploader({
         </div>
 
         {/* Center - Document Display Area */}
+        {registryEnabled && !hasDocument && currentSlot.id !== '__extra__' && (
+          <div className="grid grid-cols-2 gap-1 border-b border-gray-100 bg-white p-1 text-[10px] font-medium dark:border-gray-700 dark:bg-gray-800">
+            <button
+              type="button"
+              onClick={() => setMode('upload')}
+              className={cn(
+                'rounded px-2 py-1 transition-colors',
+                mode === 'upload' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
+              )}
+            >
+              Yeni Belge Yükle
+            </button>
+            <button
+              type="button"
+              onClick={() => setMode('select')}
+              className={cn(
+                'rounded px-2 py-1 transition-colors',
+                mode === 'select' ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700'
+              )}
+            >
+              Mevcut Belgeden Seç
+            </button>
+          </div>
+        )}
         <div
           ref={dropZoneRef}
           onClick={!readOnly && !hasDocument && currentSlot.id !== '__extra__' ? () => fileInputRef.current?.click() : undefined}
@@ -427,7 +529,7 @@ export function DocumentSlotUploader({
           className={cn(
             "flex-1 flex flex-col relative",
             "bg-gray-50 dark:bg-gray-900/50",
-            !readOnly && !hasDocument && currentSlot.id !== '__extra__' && "cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-900",
+            !readOnly && !hasDocument && currentSlot.id !== '__extra__' && mode === 'upload' && "cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-900",
             isDragging && "bg-blue-50 dark:bg-blue-900/20 border-2 border-dashed border-blue-400"
           )}
           style={{ height: hasDocument ? 'calc(100% - 34px)' : 'calc(100% - 78px)' }}
@@ -525,6 +627,44 @@ export function DocumentSlotUploader({
                 </button>
               )}
             </div>
+          ) : registryEnabled && mode === 'select' && currentSlot.id !== '__extra__' ? (
+            <div className="flex h-full flex-col gap-2 p-2">
+              <label className="flex items-center gap-1 rounded border border-gray-200 bg-white px-2 py-1 dark:border-gray-700 dark:bg-gray-800">
+                <Search size={12} className="text-gray-400" />
+                <input
+                  value={existingQuery}
+                  onChange={(event) => setExistingQuery(event.target.value)}
+                  placeholder="Belge ara..."
+                  className="min-w-0 flex-1 bg-transparent text-xs outline-none placeholder:text-gray-400"
+                />
+              </label>
+              <div className="min-h-0 flex-1 overflow-auto rounded border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900">
+                {existingLoading ? (
+                  <div className="p-3 text-center text-xs text-gray-500">Belgeler yükleniyor...</div>
+                ) : existingError ? (
+                  <div className="p-3 text-center text-xs text-red-600">{existingError}</div>
+                ) : existingDocuments.length === 0 ? (
+                  <div className="p-3 text-center text-xs text-gray-500">Uygun belge bulunamadı</div>
+                ) : (
+                  existingDocuments.map(document => (
+                    <button
+                      key={document.id}
+                      type="button"
+                      onClick={() => handleSelectExistingDocument(document)}
+                      className="flex w-full items-start gap-2 border-b border-gray-100 p-2 text-left hover:bg-blue-50 dark:border-gray-800 dark:hover:bg-blue-950/30"
+                    >
+                      <Link2 size={14} className="mt-0.5 shrink-0 text-blue-600" />
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-xs font-semibold text-gray-900 dark:text-white">{document.document_title}</span>
+                        <span className="block truncate text-[10px] text-gray-500">
+                          {document.document_type} · {document.issue_date || 'Tarih yok'} · {document.expiry_date || 'Süre yok'} · {document.status}
+                        </span>
+                      </span>
+                    </button>
+                  ))
+                )}
+              </div>
+            </div>
           ) : currentSlot.id === '__extra__' && showExtraSlotInput ? (
             // Extra Slot Name Input
             <div className="flex flex-col items-center justify-center gap-3 p-4 h-full">
@@ -610,7 +750,7 @@ export function DocumentSlotUploader({
         </div>
 
         {/* Bottom - Upload Button */}
-        {!readOnly && !hasDocument && currentSlot.id !== '__extra__' && (
+        {!readOnly && !hasDocument && currentSlot.id !== '__extra__' && mode === 'upload' && (
           <div className="px-2 py-2 border-t border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800">
             <button
               onClick={(event) => {

@@ -404,7 +404,21 @@ export default function PaydaslarPage() {
             onIdentityGateCancelDuplicate={() => setPageState('list')}
 
             enableHistory
-            imageSlot={{ title: selectedStakeholder?.stakeholder_type === 'tuzel_kisi' ? 'Logo' : 'Fotoğraf', dataField: 'photo_logo', slots: [{ id: 'photo_logo', title: selectedStakeholder?.stakeholder_type === 'tuzel_kisi' ? 'Logo' : 'Fotoğraf', required: false }] }}
+            imageSlot={{
+              title: selectedStakeholder?.stakeholder_type === 'tuzel_kisi' ? 'Logo' : 'Fotoğraf',
+              dataField: 'photo_logo',
+              slots: [{ id: 'photo_logo', title: selectedStakeholder?.stakeholder_type === 'tuzel_kisi' ? 'Logo' : 'Fotoğraf', required: false }],
+              registry: {
+                enabled: true,
+                entityKind: selectedStakeholder?.stakeholder_type === 'tuzel_kisi' ? 'organization' : 'person',
+                personId: selectedStakeholder?.person_id,
+                organizationId: selectedStakeholder?.organization_id,
+                companyId: selectedStakeholder?.company_id || selectedStakeholder?.sirket_id,
+                mediaType: selectedStakeholder?.stakeholder_type === 'tuzel_kisi' ? 'logo' : 'profile_photo',
+                linkedModule: 'stakeholders',
+                linkedRecordId: selectedStakeholder?.id,
+              },
+            }}
             documentSlot={{ title: 'Belgeler', dataField: 'stakeholder_documents', slots: [
               { id: 'sozlesme', title: 'Sözleşme', required: false },
               { id: 'teklif', title: 'Teklif Dosyası', required: false },
@@ -415,7 +429,13 @@ export default function PaydaslarPage() {
               { id: 'nda', title: 'NDA', required: false },
               { id: 'mutabakat', title: 'Mutabakat', required: false },
               { id: 'diger', title: 'Diğer Belgeler', required: false },
-            ], acceptedTypes: ['application/pdf', 'image/png', 'image/jpeg', 'image/webp'], maxSizeMB: 20 }}
+            ], acceptedTypes: ['application/pdf', 'image/png', 'image/jpeg', 'image/webp'], maxSizeMB: 20, registry: {
+              enabled: true,
+              companyId: selectedStakeholder?.company_id || selectedStakeholder?.sirket_id,
+              linkedModule: 'stakeholders',
+              linkedRecordId: selectedStakeholder?.id,
+              linkType: 'stakeholder_document',
+            } }}
             onValidationError={(fields) => setToast({ type: 'warning', title: 'Eksik Zorunlu Alan', message: fields.join(', ') })}
           />
         </div>

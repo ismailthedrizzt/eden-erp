@@ -141,6 +141,7 @@ export interface EntityFormProps {
     required?: boolean
     dataField?: string
     slots?: ImageSlot[]
+    registry?: any
   }
   
   /** Document slot configuration for default hero left panel */
@@ -155,6 +156,7 @@ export interface EntityFormProps {
       label?: string
       title?: string
     }
+    registry?: any
   }
   
   /** Save handler - receives form data */
@@ -1759,6 +1761,7 @@ export function EntityForm({
                     images={images}
                     onChange={handleImagesChange}
                     readOnly={isReadOnly || isIdentityGateLocked}
+                    registry={imageSlot.registry}
                   />
                 </div>
                 
@@ -1770,6 +1773,7 @@ export function EntityForm({
                     onChange={handleDocumentsChange}
                     readOnly={isReadOnly || isIdentityGateLocked}
                     aiBadge={documentSlot.aiBadge}
+                    registry={documentSlot.registry}
                   />
                   {!documentSlot.dataField && cvExtractStatus.type !== 'idle' && (
                     <p className={cn(

@@ -481,6 +481,16 @@ export default function TemsilcilerPage() {
               slots: [
                 { id: 'photo_logo', title: selectedRepresentative?.person_or_entity_type === 'tuzel_kisi' ? 'Logo' : 'Fotoğraf', required: false },
               ],
+              registry: {
+                enabled: true,
+                entityKind: selectedRepresentative?.person_or_entity_type === 'tuzel_kisi' ? 'organization' : 'person',
+                personId: selectedRepresentative?.person_id,
+                organizationId: selectedRepresentative?.organization_id,
+                companyId: selectedRepresentative?.company_id || selectedRepresentative?.sirket_id,
+                mediaType: selectedRepresentative?.person_or_entity_type === 'tuzel_kisi' ? 'logo' : 'profile_photo',
+                linkedModule: 'representatives',
+                linkedRecordId: selectedRepresentative?.id,
+              },
             }}
             documentSlot={{
               title: 'Yetki Belgeleri',
@@ -497,6 +507,14 @@ export default function TemsilcilerPage() {
               ],
               acceptedTypes: ['application/pdf', 'image/png', 'image/jpeg', 'image/webp'],
               maxSizeMB: 20,
+              registry: {
+                enabled: true,
+                companyId: selectedRepresentative?.company_id || selectedRepresentative?.sirket_id,
+                documentType: 'İmza Sirküleri',
+                linkedModule: 'representatives',
+                linkedRecordId: selectedRepresentative?.id,
+                linkType: 'authority_basis',
+              },
             }}
             onValidationError={(fields) => setToast({
               type: 'warning',
