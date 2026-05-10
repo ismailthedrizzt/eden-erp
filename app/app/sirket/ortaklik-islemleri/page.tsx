@@ -146,28 +146,6 @@ function OwnershipTransactionsContent() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, companies])
 
-  const tableData = transactions.map(transaction => {
-    const partnerId = transaction.affected_partner_id || transaction.to_partner_id || transaction.from_partner_id || ''
-    return {
-      ...transaction,
-      company_name: companyNameById[transaction.company_id] || '-',
-      partner_name: partnerId ? partnerNameById[partnerId] || '-' : '-',
-      share_effect: formatPercent(transaction.share_ratio),
-      voting_effect: formatPercent(transaction.new_voting_ratio ?? transaction.voting_ratio),
-      profit_effect: formatPercent(transaction.new_profit_ratio ?? transaction.profit_ratio),
-      privilege_effect: transaction.has_privileged_share
-        ? transaction.privilege_type || 'Var'
-        : transaction.has_veto_right
-          ? 'Veto Hakkı'
-          : transaction.has_board_nomination_right
-            ? 'YK Aday Gösterme'
-            : '-',
-      status_label: statusLabels[transaction.status] || transaction.status,
-      approval_status_label: approvalStatusLabels[transaction.approval_status] || transaction.approval_status,
-      row_actions: <RowActions row={transaction} capabilities={capabilities} onAction={handleWorkflowAction} onOpen={handleOpen} onEdit={handleEdit} />,
-    }
-  })
-
   function startCreate(companyId?: string, partnerId?: string) {
     const nextCompanyId = companyId || (companies.length === 1 ? companies[0]?.value : '')
     const companyPartners = partners.filter(partner => !nextCompanyId || partner.company_id === nextCompanyId)
@@ -301,6 +279,28 @@ function OwnershipTransactionsContent() {
       setSaving(false)
     }
   }
+
+  const tableData = transactions.map(transaction => {
+    const partnerId = transaction.affected_partner_id || transaction.to_partner_id || transaction.from_partner_id || ''
+    return {
+      ...transaction,
+      company_name: companyNameById[transaction.company_id] || '-',
+      partner_name: partnerId ? partnerNameById[partnerId] || '-' : '-',
+      share_effect: formatPercent(transaction.share_ratio),
+      voting_effect: formatPercent(transaction.new_voting_ratio ?? transaction.voting_ratio),
+      profit_effect: formatPercent(transaction.new_profit_ratio ?? transaction.profit_ratio),
+      privilege_effect: transaction.has_privileged_share
+        ? transaction.privilege_type || 'Var'
+        : transaction.has_veto_right
+          ? 'Veto Hakkı'
+          : transaction.has_board_nomination_right
+            ? 'YK Aday Gösterme'
+            : '-',
+      status_label: statusLabels[transaction.status] || transaction.status,
+      approval_status_label: approvalStatusLabels[transaction.approval_status] || transaction.approval_status,
+      row_actions: <RowActions row={transaction} capabilities={capabilities} onAction={handleWorkflowAction} onOpen={handleOpen} onEdit={handleEdit} />,
+    }
+  })
 
   const formFields = buildFormFields(companies, partnerOptions, selected, transactions, availableTransactionTypes)
   const hasSelectedCompanyWithoutPartners = !!selectedCompanyId && partnerOptions.length === 0
