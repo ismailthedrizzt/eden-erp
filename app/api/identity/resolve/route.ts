@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
       : await findOrCreateOrganizationFromCompany(supabase, identity)
   }
 
-  const masterRecord = masterResult.record
+  const masterRecord = masterResult.record as Record<string, any> | null
   let roleRecord: Record<string, any> | null = null
 
   if (masterRecord && !payload.allowMultipleActiveRoles) {
@@ -156,7 +156,7 @@ async function findPerson(supabase: ReturnType<typeof createServiceClient>, iden
     if (fallback.error) return { error: fallback.error.message }
     data = Array.isArray(fallback.data) ? fallback.data[0] || null : null
   }
-  return { record: data || null }
+  return { record: data ? await enrichPersonFromEmployee(supabase, data) : null }
 }
 
 async function findOrganization(supabase: ReturnType<typeof createServiceClient>, identity: z.infer<typeof ResolveSchema>['identity']) {
@@ -185,7 +185,55 @@ async function findOrganization(supabase: ReturnType<typeof createServiceClient>
     if (fallback.error) return { error: fallback.error.message }
     data = Array.isArray(fallback.data) ? fallback.data[0] || null : null
   }
-  return { record: data || null }
+  return { record: data ? await enrichOrganizationFromCompany(supabase, data) : null }
+}
+
+async function enrichPersonFromEmployee(supabase: ReturnType<typeof createServiceClient>, person: Record<string, any>) {
+  const existingImages = normalizePersonImages(person)
+  if (existingImages.length) return { ...person, photo_logo: existingImages }
+
+  let employee: Record<string, any> | null = null
+
+  if (person.id) {
+    const { data } = await supabase.from('employees').select('*').eq('person_id', person.id).limit(1)
+    employee = Array.isArray(data) ? data[0] || null : null
+  }
+
+  if (!employee && person.national_id) {
+    const { data } = await supabase.from('employees').select('*').eq('tc_kimlik', person.national_id).limit(1)
+    employee = Array.isArray(data) ? data[0] || null : null
+  }
+
+  if (!employee && person.passport_no) {
+    const { data } = await supabase.from('employees').select('*').eq('pasaport_no', person.passport_no).limit(1)
+    employee = Array.isArray(data) ? data[0] || null : null
+  }
+
+  return employee ? mergeEmployeeIntoPerson(person, employee) : person
+}
+
+async function enrichOrganizationFromCompany(supabase: ReturnType<typeof createServiceClient>, organization: Record<string, any>) {
+  const existingImages = normalizeOrganizationImages(organization)
+  if (existingImages.length) return { ...organization, photo_logo: existingImages }
+
+  let company: Record<string, any> | null = null
+
+  if (organization.id) {
+    const { data } = await supabase.from('sirketler').select('*').eq('is_active', true).eq('organization_id', organization.id).limit(1)
+    company = Array.isArray(data) ? data[0] || null : null
+  }
+
+  if (!company && organization.tax_number) {
+    const { data } = await supabase.from('sirketler').select('*').eq('is_active', true).eq('vkn_tckn', organization.tax_number).limit(1)
+    company = Array.isArray(data) ? data[0] || null : null
+  }
+
+  if (!company && organization.registration_number) {
+    const { data } = await supabase.from('sirketler').select('*').eq('is_active', true).eq('ticaret_sicil_no', organization.registration_number).limit(1)
+    company = Array.isArray(data) ? data[0] || null : null
+  }
+
+  return company ? mergeCompanyIntoOrganization(organization, company) : organization
 }
 
 async function findOrCreatePersonFromEmployee(supabase: ReturnType<typeof createServiceClient>, identity: z.infer<typeof ResolveSchema>['identity']) {

@@ -41,6 +41,7 @@ export function mergeMasterContactIntoRole(role: Record<string, any>, master: Re
   const telefonlar = normalizePhones({ telefonlar: contact.telefonlar || role.telefonlar, phone: master.phone || role.phone || role.cep_telefonu || role.telefon })
   const epostalar = normalizeEmails({ epostalar: contact.epostalar || role.epostalar, email: master.email || role.email })
   const emergency = kind === 'person' && contact.acil_kisi && typeof contact.acil_kisi === 'object' ? contact.acil_kisi : {}
+  const photoLogo: Array<Record<string, any>> = normalizeMasterImages(master, kind, role.photo_logo)
 
   return {
     ...role,
@@ -60,6 +61,8 @@ export function mergeMasterContactIntoRole(role: Record<string, any>, master: Re
     email_2: epostalar[1]?.adres || role.email_2 || '',
     telefonlar,
     epostalar,
+    photo_logo: photoLogo,
+    fotograf_url: photoLogo[0]?.previewUrl || photoLogo[0]?.url || role.fotograf_url || '',
     ...(kind === 'person'
       ? {
           acil_kisi_ad: emergency.ad || role.acil_kisi_ad || '',
@@ -69,6 +72,33 @@ export function mergeMasterContactIntoRole(role: Record<string, any>, master: Re
         }
       : {}),
   }
+}
+
+function normalizeMasterImages(master: Record<string, any>, kind: EntityKind, fallback: unknown) {
+  const roleImages = Array.isArray(fallback) ? fallback : []
+  const masterImages = Array.isArray(master.photo_logo) ? master.photo_logo : []
+  const existing = masterImages.length ? masterImages : roleImages
+  if (existing.length) {
+    return existing.map((image: Record<string, any>) => ({
+      ...image,
+      slotId: image.slotId || image.slot_id || 'photo_logo',
+      previewUrl: image.previewUrl || image.preview_url || image.url,
+    }))
+  }
+
+  const heroImages = Array.isArray(master.hero_images) ? master.hero_images : []
+  if (kind === 'organization' && heroImages.length) {
+    return heroImages.map((image: Record<string, any>) => ({
+      ...image,
+      slotId: image.slotId || image.slot_id || 'photo_logo',
+      previewUrl: image.previewUrl || image.preview_url || image.url,
+    }))
+  }
+
+  const url = kind === 'person'
+    ? master.fotograf_url || master.photo_url || master.image_url
+    : master.logo_url || master.logoUrl
+  return url ? [{ slotId: 'photo_logo', name: kind === 'person' ? 'Fotoğraf' : 'Logo', previewUrl: url, url }] : []
 }
 
 export async function syncMasterContact(supabase: SupabaseClient, kind: EntityKind, masterId: string | null | undefined, source: Record<string, any>) {

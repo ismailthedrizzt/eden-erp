@@ -94,15 +94,32 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({ data: hydrated }, { status: 201 })
 }
 
+const AUTHORITY_VALUE_BY_LABEL: Record<string, string> = {
+  'İmza Yetkilisi': 'imza_yetkilisi',
+  'Banka Yetkilisi': 'banka_yetkilisi',
+  'GİB Yetkilisi': 'gib_yetkilisi',
+  'SGK Yetkilisi': 'sgk_yetkilisi',
+  'Sözleşme Yetkilisi': 'sozlesme_yetkilisi',
+  'Satınalma Onay Yetkilisi': 'satinalma_onay_yetkilisi',
+  'Ödeme Onay Yetkilisi': 'odeme_onay_yetkilisi',
+  'Mesul Müdür': 'mesul_mudur',
+  'Kanuni Temsilci': 'kanuni_temsilci',
+}
+
+function normalizeAuthorityType(value: unknown) {
+  const text = String(value || '').trim()
+  return AUTHORITY_VALUE_BY_LABEL[text] || text
+}
+
 function mapRepresentativeForDb(representative: Record<string, any>) {
   const authorityTypes = representative.authority_types?.length
-    ? representative.authority_types
-    : [representative.primary_authority_type].filter(Boolean)
+    ? representative.authority_types.map(normalizeAuthorityType)
+    : [normalizeAuthorityType(representative.primary_authority_type)].filter(Boolean)
 
   return {
     sirket_id: representative.company_id || representative.sirket_id,
     ad_soyad: representative.display_name || 'Temsilci',
-    gorev: representative.primary_authority_type || null,
+    gorev: normalizeAuthorityType(representative.primary_authority_type) || null,
     yetki_turu: 'diger',
     authority_types: authorityTypes,
     person_kind: representative.person_or_entity_type,

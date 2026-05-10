@@ -43,8 +43,6 @@ interface RepresentativeRow {
 
 const FIELD_LABELS: Record<string, string> = {
   person_or_entity_type: 'Kişi / Kurum Tipi',
-  source_type: 'Kaynak Türü',
-  source_id: 'Kayıt Seçimi',
   primary_authority_type: 'Ana Yetki Tipi',
   start_date: 'Başlangıç Tarihi',
   status: 'Yetki Durumu',
@@ -65,11 +63,34 @@ const AUTHORITY_OPTIONS = [
   'Kanuni Temsilci',
 ]
 
+const AUTHORITY_VALUE_BY_LABEL: Record<string, string> = {
+  'İmza Yetkilisi': 'imza_yetkilisi',
+  'Banka Yetkilisi': 'banka_yetkilisi',
+  'GİB Yetkilisi': 'gib_yetkilisi',
+  'SGK Yetkilisi': 'sgk_yetkilisi',
+  'Sözleşme Yetkilisi': 'sozlesme_yetkilisi',
+  'Satınalma Onay Yetkilisi': 'satinalma_onay_yetkilisi',
+  'Ödeme Onay Yetkilisi': 'odeme_onay_yetkilisi',
+  'Mesul Müdür': 'mesul_mudur',
+  'Kanuni Temsilci': 'kanuni_temsilci',
+}
+
+const AUTHORITY_LABEL_BY_VALUE = Object.fromEntries(
+  Object.entries(AUTHORITY_VALUE_BY_LABEL).map(([label, value]) => [value, label])
+)
+
+function toAuthorityValue(value: string) {
+  return AUTHORITY_VALUE_BY_LABEL[value] || value
+}
+
+function toAuthorityLabel(value: string) {
+  return AUTHORITY_LABEL_BY_VALUE[value] || value
+}
+
 const columns: ColumnDef[] = [
   { key: 'display_name', label: 'Ad Soyad / Ünvan', type: 'text', width: 260, sortable: true, category: 'Kimlik' },
   { key: 'company_name', label: 'Şirket', type: 'text', width: 220, category: 'Şirket' },
   { key: 'person_kind_label', label: 'Kişi / Kurum Tipi', type: 'enum', width: 150, category: 'Kimlik' },
-  { key: 'source_type', label: 'Kaynak Türü', type: 'text', width: 150, category: 'Kaynak' },
   { key: 'primary_authority_type', label: 'Ana Yetki Tipi', type: 'enum', width: 180, category: 'Yetki' },
   { key: 'status', label: 'Yetki Durumu', type: 'enum', width: 130, sortable: true, category: 'Durum' },
   { key: 'start_date', label: 'Başlangıç', type: 'date', width: 120, category: 'Tarih' },
@@ -78,32 +99,6 @@ const columns: ColumnDef[] = [
 
 const heroFields: FormField[] = [
   { name: 'display_name', label: 'Ad Soyad / Ticari Ünvan', type: 'text', required: true },
-  {
-    name: 'source_type',
-    label: 'Mevcut Kayıt Eşleştirme',
-    type: 'select',
-    required: false,
-    visibleWhen: { field: 'person_or_entity_type', operator: 'equals', value: 'gercek_kisi' },
-    options: [
-      { value: 'calisan', label: 'Çalışan' },
-      { value: 'ortak', label: 'Ortak' },
-      { value: 'yonetim_kurulu_uyesi', label: 'Yönetim Kurulu Üyesi' },
-      { value: 'dis_kisi', label: 'Dış Kişi' },
-    ],
-  },
-  {
-    name: 'source_type',
-    label: 'Mevcut Kayıt Eşleştirme',
-    type: 'select',
-    required: false,
-    visibleWhen: { field: 'person_or_entity_type', operator: 'equals', value: 'tuzel_kisi' },
-    options: [
-      { value: 'cari', label: 'Cari' },
-      { value: 'paydas', label: 'Paydaş' },
-      { value: 'ortak_sirket', label: 'Ortak Şirket' },
-    ],
-  },
-  { name: 'source_id', label: 'Mevcut Kayıt Eşleştirme', type: 'text' },
   {
     name: 'status',
     label: 'Yetki Durumu',
@@ -123,13 +118,13 @@ const heroFields: FormField[] = [
     label: 'Ana Yetki Tipi',
     type: 'select',
     required: true,
-    options: AUTHORITY_OPTIONS.map(item => ({ value: item, label: item })),
+    options: AUTHORITY_OPTIONS.map(item => ({ value: toAuthorityValue(item), label: item })),
   },
   {
     name: 'signature_type',
     label: 'İmza Türü',
     type: 'select',
-    requiredWhen: { field: 'primary_authority_type', operator: 'equals', value: 'İmza Yetkilisi' },
+    requiredWhen: { field: 'primary_authority_type', operator: 'equals', value: 'imza_yetkilisi' },
     options: [
       { value: 'Münferit', label: 'Münferit' },
       { value: 'Müşterek', label: 'Müşterek' },
@@ -142,14 +137,14 @@ const heroFields: FormField[] = [
     name: 'authority_limit',
     label: 'Yetki Limiti',
     type: 'number',
-    requiredWhen: { field: 'primary_authority_type', includes: ['Banka Yetkilisi', 'Ödeme Onay Yetkilisi', 'Satınalma Onay Yetkilisi'] },
+    requiredWhen: { field: 'primary_authority_type', includes: ['banka_yetkilisi', 'odeme_onay_yetkilisi', 'satinalma_onay_yetkilisi'] },
   },
   {
     name: 'currency',
     label: 'Para Birimi',
     type: 'select',
     defaultValue: 'TRY',
-    requiredWhen: { field: 'primary_authority_type', includes: ['Banka Yetkilisi', 'Ödeme Onay Yetkilisi', 'Satınalma Onay Yetkilisi'] },
+    requiredWhen: { field: 'primary_authority_type', includes: ['banka_yetkilisi', 'odeme_onay_yetkilisi', 'satinalma_onay_yetkilisi'] },
     options: [
       { value: 'TRY', label: 'TRY' },
       { value: 'USD', label: 'USD' },
@@ -171,7 +166,6 @@ const tabs: FormTab[] = [
       { name: 'short_name', label: 'Kısa Ünvan', type: 'text', visibleWhen: { field: 'person_or_entity_type', operator: 'equals', value: 'tuzel_kisi' } },
       { name: 'tax_office', label: 'Vergi Dairesi', type: 'text', visibleWhen: { field: 'person_or_entity_type', operator: 'equals', value: 'tuzel_kisi' } },
       { name: 'mersis_no', label: 'MERSİS', type: 'text', visibleWhen: { field: 'person_or_entity_type', operator: 'equals', value: 'tuzel_kisi' } },
-      { name: 'source_link', label: 'Kaynak Kayıt Bağlantısı', type: 'text', colSpan: 2 },
     ],
   },
   {
@@ -349,15 +343,15 @@ export default function TemsilcilerPage() {
     display_name: representative.display_name || representative.ad_soyad || '',
     person_kind_label: representative.person_kind === 'tuzel_kisi' ? 'Tüzel Kişi' : 'Gerçek Kişi',
     company_name: companyNameById[representative.sirket_id] || '-',
-    primary_authority_type: representative.authority_types?.[0] || '-',
+    primary_authority_type: toAuthorityLabel(representative.authority_types?.[0] || '-'),
     authority_limit: representative.transaction_limit,
   }))
 
   const widgets: WidgetDef<any>[] = [
     { key: 'total', label: 'Toplam Temsilci', render: () => tableData.length },
     { key: 'active', label: 'Aktif', render: () => tableData.filter(row => row.status === 'Aktif' && !row.is_deleted).length },
-    { key: 'signature', label: 'İmza Yetkilisi', render: () => tableData.filter(row => row.authority_types?.includes('İmza Yetkilisi')).length },
-    { key: 'bank', label: 'Banka Yetkilisi', render: () => tableData.filter(row => row.authority_types?.includes('Banka Yetkilisi')).length },
+    { key: 'signature', label: 'İmza Yetkilisi', render: () => tableData.filter(row => row.authority_types?.some(type => toAuthorityValue(type) === 'imza_yetkilisi')).length },
+    { key: 'bank', label: 'Banka Yetkilisi', render: () => tableData.filter(row => row.authority_types?.some(type => toAuthorityValue(type) === 'banka_yetkilisi')).length },
   ]
 
   const withFieldHistory = (field: FormField) => {
@@ -573,8 +567,13 @@ export default function TemsilcilerPage() {
 function AuthoritySelector({ value, onChange, readOnly }: { value: string[]; onChange: (value: string[]) => void; readOnly: boolean }) {
   const toggle = (authority: string) => {
     if (readOnly) return
-    onChange(value.includes(authority) ? value.filter(item => item !== authority) : [...value, authority])
+    const normalizedValue = value.map(toAuthorityValue)
+    const authorityValue = toAuthorityValue(authority)
+    onChange(normalizedValue.includes(authorityValue)
+      ? normalizedValue.filter(item => item !== authorityValue)
+      : [...normalizedValue, authorityValue])
   }
+  const normalizedValue = value.map(toAuthorityValue)
 
   return (
     <div className="flex flex-wrap gap-2">
@@ -586,7 +585,7 @@ function AuthoritySelector({ value, onChange, readOnly }: { value: string[]; onC
           disabled={readOnly}
           className={[
             'rounded-full border px-3 py-1.5 text-xs font-medium transition-colors',
-            value.includes(authority)
+            normalizedValue.includes(toAuthorityValue(authority))
               ? 'border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300'
               : 'border-gray-200 bg-white text-gray-600 hover:border-blue-300 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300',
             readOnly ? 'cursor-not-allowed opacity-70' : '',
@@ -633,16 +632,14 @@ function Timeline({ value }: { value: any[] }) {
 
 function normalizeRepresentativeForForm(representative: RepresentativeRow) {
   const profile = representative.representative_profile || {}
-  const authorityTypes = profile.authority_types || representative.authority_types || []
+  const authorityTypes = (profile.authority_types || representative.authority_types || []).map(toAuthorityValue)
   return {
     ...profile,
     ...representative,
     company_id: representative.sirket_id,
     person_or_entity_type: profile.person_or_entity_type || representative.person_kind || 'gercek_kisi',
     display_name: profile.display_name || representative.display_name || representative.ad_soyad || '',
-    source_type: profile.source_type || representative.source_type || '',
-    source_id: profile.source_id || representative.source_id || '',
-    primary_authority_type: profile.primary_authority_type || authorityTypes[0] || '',
+    primary_authority_type: toAuthorityValue(profile.primary_authority_type || authorityTypes[0] || ''),
     authority_types: authorityTypes,
     status: profile.status || representative.status || 'Aktif',
     authority_limit: profile.authority_limit ?? representative.transaction_limit ?? '',
@@ -670,7 +667,12 @@ function normalizePayload(raw: Record<string, any>, companies: Option[]) {
   payload.identity_number = payload.identity_number || payload.national_id || payload.tc_kimlik || payload.tax_number || payload.vkn_tckn || payload.passport_no || payload.pasaport_no
   if (Array.isArray(payload.telefonlar) && payload.telefonlar.length && !payload.phone) payload.phone = payload.telefonlar[0]?.numara
   if (Array.isArray(payload.epostalar) && payload.epostalar.length && !payload.email) payload.email = payload.epostalar[0]?.adres
+  payload.primary_authority_type = toAuthorityValue(payload.primary_authority_type || '')
+  payload.authority_types = Array.isArray(payload.authority_types) && payload.authority_types.length
+    ? payload.authority_types.map(toAuthorityValue)
+    : [payload.primary_authority_type].filter(Boolean)
   payload.person_kind = payload.person_or_entity_type
+  delete payload.source_link
   payload.document_summary = undefined
   payload.field_history = undefined
   return payload
@@ -684,8 +686,6 @@ function buildEntityFieldHistory(history: any[]) {
     transaction_limit: 'authority_limit',
     start_date: 'start_date',
     end_date: 'end_date',
-    source_type: 'source_type',
-    source_id: 'source_id',
   }
   return history.reduce((acc: Record<string, any[]>, entry: any) => {
     const field = trackedMap[entry.field]
