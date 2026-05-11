@@ -64,7 +64,8 @@ export default function LoginPage() {
     const data = await response.json().catch(() => ({}))
 
     if (!response.ok) {
-      throw new Error(data.error || 'Doğrulama kodu gönderilemedi.')
+      const detail = [data.code, data.detail].filter(Boolean).join(' - ')
+      throw new Error(detail ? `${data.error || 'Doğrulama kodu gönderilemedi.'} (${detail})` : data.error || 'Doğrulama kodu gönderilemedi.')
     }
   }
 
