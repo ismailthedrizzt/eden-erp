@@ -268,11 +268,33 @@ function readFileAsText(file: File): Promise<string> {
   })
 }
 
+function dataUrlToBytes(dataUrl: string) {
+  const [header, payload = ''] = dataUrl.split(',')
+  if (!header.includes(';base64')) {
+    return new TextEncoder().encode(decodeURIComponent(payload))
+  }
+  const binary = atob(payload)
+  const bytes = new Uint8Array(binary.length)
+  for (let index = 0; index < binary.length; index += 1) {
+    bytes[index] = binary.charCodeAt(index)
+  }
+  return bytes
+}
+
+async function pdfSourceToBytes(source: File | string) {
+  if (typeof source !== 'string') return new Uint8Array(await readFileAsArrayBuffer(source))
+  if (source.startsWith('data:')) return dataUrlToBytes(source)
+
+  const response = await fetch(source)
+  if (!response.ok) throw new Error(`PDF okunamadi: ${response.status}`)
+  return new Uint8Array(await response.arrayBuffer())
+}
+
 async function generatePdfThumbnail(source: File | string) {
   const pdfjs = await import('pdfjs-dist')
   pdfjs.GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/build/pdf.worker.min.mjs', import.meta.url).toString()
-  const data = typeof source === 'string' ? source : new Uint8Array(await readFileAsArrayBuffer(source))
-  const pdf = await pdfjs.getDocument(typeof data === 'string' ? { url: data } : { data }).promise
+  const data = await pdfSourceToBytes(source)
+  const pdf = await pdfjs.getDocument({ data }).promise
   const page = await pdf.getPage(1)
   const viewport = page.getViewport({ scale: 0.42 })
   const canvas = document.createElement('canvas')
@@ -285,6 +307,34 @@ async function generatePdfThumbnail(source: File | string) {
   await pdf.destroy()
 
   return canvas.toDataURL('image/jpeg', 0.78)
+}
+
+function generateFallbackDocumentThumbnail(label: string, title = 'Belge') {
+  const canvas = document.createElement('canvas')
+  canvas.width = 360
+  canvas.height = 510
+  const context = canvas.getContext('2d')
+  if (!context) return ''
+
+  context.fillStyle = '#ffffff'
+  context.fillRect(0, 0, canvas.width, canvas.height)
+  context.strokeStyle = '#e5e7eb'
+  context.lineWidth = 2
+  context.strokeRect(18, 18, canvas.width - 36, canvas.height - 36)
+  context.fillStyle = label === 'PDF' ? '#dc2626' : '#2563eb'
+  context.fillRect(52, 72, 256, 118)
+  context.fillStyle = '#ffffff'
+  context.font = 'bold 54px Arial, sans-serif'
+  context.textAlign = 'center'
+  context.fillText(label, 180, 148)
+  context.fillStyle = '#111827'
+  context.font = 'bold 20px Arial, sans-serif'
+  context.fillText(title.slice(0, 24), 180, 238)
+  context.fillStyle = '#9ca3af'
+  for (let index = 0; index < 9; index += 1) {
+    context.fillRect(58, 285 + index * 18, 244 - (index % 3) * 26, 7)
+  }
+  return canvas.toDataURL('image/jpeg', 0.82)
 }
 
 function generateTextThumbnail(text: string, title = 'Belge') {
@@ -335,7 +385,7 @@ async function createDocumentPreviewMetadata(file: File) {
   if (type === 'application/pdf') {
     const [url, thumbnailUrl] = await Promise.all([
       readFileAsDataUrl(file),
-      generatePdfThumbnail(file).catch(() => ''),
+      generatePdfThumbnail(file).catch(() => generateFallbackDocumentThumbnail('PDF', file.name)),
     ])
     return { url, thumbnailUrl: thumbnailUrl || undefined }
   }
@@ -348,7 +398,7 @@ async function createDocumentPreviewMetadata(file: File) {
     }
   }
 
-  return { url: await readFileAsDataUrl(file), thumbnailUrl: undefined }
+  return { url: await readFileAsDataUrl(file), thumbnailUrl: generateFallbackDocumentThumbnail('DOC', file.name) }
 }
 
 export function DocumentSlotUploader({
@@ -511,13 +561,19 @@ export function DocumentSlotUploader({
     })).then(items => {
       if (cancelled) return
       const next = Object.fromEntries(items.filter((item): item is readonly [string, string] => !!item?.[1]))
-      if (Object.keys(next).length > 0) setGeneratedThumbnails(prev => ({ ...prev, ...next }))
+      if (Object.keys(next).length > 0) {
+        setGeneratedThumbnails(prev => ({ ...prev, ...next }))
+        onChange(documents.map(doc => {
+          const key = doc.documentId || `${doc.slotId}:${doc.name}:${doc.size}`
+          return next[key] && !doc.thumbnailUrl ? { ...doc, thumbnailUrl: next[key] } : doc
+        }))
+      }
     })
 
     return () => {
       cancelled = true
     }
-  }, [documents, generatedThumbnails, signedPreviewUrls])
+  }, [documents, generatedThumbnails, onChange, signedPreviewUrls])
 
   useEffect(() => {
     if (!previewDoc) {
