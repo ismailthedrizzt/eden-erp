@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, type ClipboardEvent } from 'react'
 
 const MODULES = [
   { color: '#34d399', name: 'İnsan Kaynakları', desc: 'Teşkilat, kadro, çalışan yönetimi' },
@@ -155,6 +155,57 @@ export default function LoginPage() {
     }
   }
 
+  async function submitOtpCode(code: string) {
+    setLoading(true)
+    setOtpError('')
+    try {
+      if (fallbackCode && code === fallbackCode) {
+        if (typeof window !== 'undefined') {
+          document.cookie = 'demo_auth=true; path=/; max-age=3600; sameSite=lax'
+          window.location.href = '/app'
+        }
+        setSuccess(true)
+        return
+      }
+
+      if (isEmailLogin) {
+        await verifyEmailCode(code)
+        setSuccess(true)
+        if (typeof window !== 'undefined') window.location.href = '/app'
+        return
+      }
+
+      setOtpError('Kod hatalı. Lütfen tekrar deneyin.')
+      setOtp(['', '', '', '', '', ''])
+      otpRefs.current[0]?.focus()
+    } catch (cause: any) {
+      setOtpError(cause?.message || 'Kod hatalı. Lütfen tekrar deneyin.')
+      setOtp(['', '', '', '', '', ''])
+      otpRefs.current[0]?.focus()
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  async function handleOtpPaste(event: ClipboardEvent<HTMLInputElement>) {
+    event.preventDefault()
+    const pastedCode = event.clipboardData.getData('text').replace(/\D/g, '').slice(0, 6)
+    if (!pastedCode) return
+
+    const nextOtp = ['', '', '', '', '', '']
+    pastedCode.split('').forEach((digit, index) => {
+      nextOtp[index] = digit
+    })
+    setOtp(nextOtp)
+
+    if (pastedCode.length === 6) {
+      await submitOtpCode(pastedCode)
+      return
+    }
+
+    otpRefs.current[Math.min(pastedCode.length, 5)]?.focus()
+  }
+
   async function handleResend() {
     setOtp(['', '', '', '', '', ''])
     setOtpError('')
@@ -289,6 +340,7 @@ export default function LoginPage() {
                     maxLength={1}
                     value={digit}
                     onChange={e => handleOtpInput(idx, e.target.value)}
+                    onPaste={handleOtpPaste}
                     onKeyDown={e => {
                       if (e.key === 'Backspace' && !digit && idx > 0) otpRefs.current[idx - 1]?.focus()
                     }}
