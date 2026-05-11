@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createEmailOtp } from '@/lib/auth/emailOtp'
-import { sendEdenMail } from '@/lib/mail/edenMail'
+import { EdenMailError, sendEdenMail } from '@/lib/mail/edenMail'
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
@@ -40,6 +40,20 @@ export async function POST(request: NextRequest) {
     return response
   } catch (e: any) {
     console.error('OTP mail gonderim hatasi:', e?.message ?? e)
-    return NextResponse.json({ error: 'Dogrulama kodu e-posta ile gonderilemedi.' }, { status: 502 })
+    const isMissingMailKey = e instanceof EdenMailError && e.message.includes('EDEN_MAIL_API_KEY')
+    const isMissingOtpSecret = e instanceof Error && e.message.includes('OTP_SECRET')
+    const detail = e instanceof EdenMailError && e.status
+      ? `Mail API HTTP ${e.status}`
+      : isMissingMailKey
+        ? 'EDEN_MAIL_API_KEY ortam degiskeni Vercel runtime ortaminda tanimli degil.'
+        : isMissingOtpSecret
+          ? 'OTP_SECRET ortam degiskeni Vercel runtime ortaminda tanimli degil.'
+          : undefined
+
+    return NextResponse.json({
+      error: 'Dogrulama kodu e-posta ile gonderilemedi.',
+      code: isMissingMailKey ? 'MAIL_API_KEY_MISSING' : isMissingOtpSecret ? 'OTP_SECRET_MISSING' : 'MAIL_SEND_FAILED',
+      detail,
+    }, { status: isMissingMailKey || isMissingOtpSecret ? 500 : 502 })
   }
 }

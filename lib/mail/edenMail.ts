@@ -10,11 +10,23 @@ type SendMailParams = {
   bcc?: string[]
 }
 
+export class EdenMailError extends Error {
+  status?: number
+  detail?: string
+
+  constructor(message: string, status?: number, detail?: string) {
+    super(message)
+    this.name = 'EdenMailError'
+    this.status = status
+    this.detail = detail
+  }
+}
+
 export async function sendEdenMail(params: SendMailParams) {
   const apiKey = process.env.EDEN_MAIL_API_KEY
 
   if (!apiKey) {
-    throw new Error('EDEN_MAIL_API_KEY tanimli degil.')
+    throw new EdenMailError('EDEN_MAIL_API_KEY tanimli degil.')
   }
 
   const response = await fetch(MAIL_API_URL, {
@@ -28,6 +40,6 @@ export async function sendEdenMail(params: SendMailParams) {
 
   if (!response.ok) {
     const detail = await response.text().catch(() => '')
-    throw new Error(`Mail API hatasi: ${response.status}${detail ? ` - ${detail}` : ''}`)
+    throw new EdenMailError('Mail API istegi basarisiz.', response.status, detail)
   }
 }
