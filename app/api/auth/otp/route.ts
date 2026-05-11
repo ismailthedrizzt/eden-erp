@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { OTP_COOKIE_NAME, verifyEmailOtp } from '@/lib/auth/emailOtp'
 
 // POST /api/auth/otp  →  Verify OTP token
 export async function POST(request: NextRequest) {
@@ -14,6 +15,26 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    if (type === 'email') {
+      const isValidEmailOtp = verifyEmailOtp(request.cookies.get(OTP_COOKIE_NAME)?.value, identifier, token)
+
+      if (isValidEmailOtp) {
+        const response = NextResponse.json({ user: { email: identifier } })
+        response.cookies.set('demo_auth', 'true', {
+          path: '/',
+          maxAge: 3600,
+          sameSite: 'lax',
+          secure: process.env.NODE_ENV === 'production',
+        })
+        response.cookies.set(OTP_COOKIE_NAME, '', {
+          path: '/',
+          maxAge: 0,
+        })
+
+        return response
+      }
+    }
+
     let result
     if (type === 'email') {
       result = await auth.verifyOtp({ email: identifier, token, type: 'email' })

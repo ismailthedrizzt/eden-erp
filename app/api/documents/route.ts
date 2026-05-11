@@ -11,6 +11,7 @@ const FileSchema = z.object({
   mime_type: z.string().min(1),
   file_size: z.coerce.number().int().nonnegative(),
   file_hash: z.string().optional().nullable(),
+  thumbnail_url: z.string().optional().nullable(),
 })
 
 const CreateDocumentSchema = z.object({
@@ -93,7 +94,7 @@ export async function POST(request: NextRequest) {
 
   if (documentError) return NextResponse.json({ error: documentError.message, code: documentError.code || 'CREATE_FAILED' }, { status: 500 })
 
-  const { error: fileError } = await supabase
+  let { error: fileError } = await supabase
     .from('document_files')
     .insert({
       ...file,
@@ -102,6 +103,20 @@ export async function POST(request: NextRequest) {
       version_no: 1,
       is_current_version: true,
     })
+
+  if (fileError && fileError.message?.includes('thumbnail_url')) {
+    const { thumbnail_url, ...fileWithoutThumbnail } = file
+    const retry = await supabase
+      .from('document_files')
+      .insert({
+        ...fileWithoutThumbnail,
+        document_id: document.id,
+        uploaded_by: permission.userId,
+        version_no: 1,
+        is_current_version: true,
+      })
+    fileError = retry.error
+  }
 
   if (fileError) return NextResponse.json({ error: fileError.message, code: fileError.code || 'FILE_CREATE_FAILED' }, { status: 500 })
 

@@ -200,8 +200,21 @@ function isImageDocument(doc?: SlotDocument | null) {
   return getEffectiveDocumentType(doc).startsWith('image/')
 }
 
+function isTextDocument(doc?: SlotDocument | null) {
+  const type = getEffectiveDocumentType(doc)
+  const extension = getDocumentExtension(doc)
+  return type.startsWith('text/') ||
+    ['application/json', 'application/xml', 'application/csv'].includes(type) ||
+    ['txt', 'md', 'csv', 'json', 'xml', 'html', 'htm', 'log'].includes(extension)
+}
+
+function isDocxDocument(doc?: SlotDocument | null) {
+  return getEffectiveDocumentType(doc) === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+    getDocumentExtension(doc) === 'docx'
+}
+
 function canInlinePreview(doc?: SlotDocument | null, url?: string) {
-  return !!url && (isPdfDocument(doc) || getEffectiveDocumentType(doc) === 'application/octet-stream')
+  return !!url && (isPdfDocument(doc) || isTextDocument(doc) || isDocxDocument(doc) || getEffectiveDocumentType(doc) === 'application/octet-stream')
 }
 
 const DEFAULT_DOCUMENT_ACCEPTED_TYPES = [
@@ -224,6 +237,116 @@ function getDocumentUrl(doc?: SlotDocument | null) {
 function getDocumentThumbnailUrl(doc?: SlotDocument | null, signedUrl?: string) {
   if (!doc) return ''
   return doc.thumbnailUrl || doc.previewUrl || signedUrl || doc.url || (doc.file ? URL.createObjectURL(doc.file) : '')
+}
+
+function readFileAsDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(String(reader.result || ''))
+    reader.onerror = () => reject(reader.error)
+    reader.readAsDataURL(file)
+  })
+}
+
+function readFileAsArrayBuffer(file: File): Promise<ArrayBuffer> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(reader.result as ArrayBuffer)
+    reader.onerror = () => reject(reader.error)
+    reader.readAsArrayBuffer(file)
+  })
+}
+
+function readFileAsText(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(String(reader.result || ''))
+    reader.onerror = () => reject(reader.error)
+    reader.readAsText(file)
+  })
+}
+
+async function generatePdfThumbnail(source: File | string) {
+  const pdfjs = await import('pdfjs-dist')
+  pdfjs.GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/build/pdf.worker.min.mjs', import.meta.url).toString()
+  const data = typeof source === 'string' ? source : new Uint8Array(await readFileAsArrayBuffer(source))
+  const pdf = await pdfjs.getDocument(typeof data === 'string' ? { url: data } : { data }).promise
+  const page = await pdf.getPage(1)
+  const viewport = page.getViewport({ scale: 0.42 })
+  const canvas = document.createElement('canvas')
+  const context = canvas.getContext('2d')
+  if (!context) return ''
+
+  canvas.width = Math.floor(viewport.width)
+  canvas.height = Math.floor(viewport.height)
+  await page.render({ canvasContext: context as any, viewport, canvas: canvas as any }).promise
+  await pdf.destroy()
+
+  return canvas.toDataURL('image/jpeg', 0.78)
+}
+
+function generateTextThumbnail(text: string, title = 'Belge') {
+  const canvas = document.createElement('canvas')
+  canvas.width = 360
+  canvas.height = 510
+  const context = canvas.getContext('2d')
+  if (!context) return ''
+
+  context.fillStyle = '#ffffff'
+  context.fillRect(0, 0, canvas.width, canvas.height)
+  context.fillStyle = '#f3f4f6'
+  context.fillRect(0, 0, canvas.width, 52)
+  context.fillStyle = '#111827'
+  context.font = 'bold 18px Arial, sans-serif'
+  context.fillText(title.slice(0, 28), 22, 33)
+  context.font = '14px Arial, sans-serif'
+  context.fillStyle = '#374151'
+
+  const words = text.replace(/\s+/g, ' ').trim().split(' ')
+  const lines: string[] = []
+  let line = ''
+  words.forEach(word => {
+    const candidate = line ? `${line} ${word}` : word
+    if (context.measureText(candidate).width > 310) {
+      if (line) lines.push(line)
+      line = word
+    } else {
+      line = candidate
+    }
+  })
+  if (line) lines.push(line)
+
+  lines.slice(0, 23).forEach((item, index) => {
+    context.fillText(item, 22, 82 + index * 18)
+  })
+  return canvas.toDataURL('image/jpeg', 0.82)
+}
+
+async function createDocumentPreviewMetadata(file: File) {
+  const type = file.type || getEffectiveDocumentType({ slotId: 'preview', file, name: file.name, size: file.size, type: file.type })
+
+  if (type.startsWith('image/')) {
+    const dataUrl = await readFileAsDataUrl(file)
+    return { url: dataUrl, thumbnailUrl: dataUrl }
+  }
+
+  if (type === 'application/pdf') {
+    const [url, thumbnailUrl] = await Promise.all([
+      readFileAsDataUrl(file),
+      generatePdfThumbnail(file).catch(() => ''),
+    ])
+    return { url, thumbnailUrl: thumbnailUrl || undefined }
+  }
+
+  if (isTextDocument({ slotId: 'preview', file, name: file.name, size: file.size, type })) {
+    const text = await readFileAsText(file)
+    return {
+      url: `data:${type || 'text/plain'};charset=utf-8,${encodeURIComponent(text)}`,
+      thumbnailUrl: generateTextThumbnail(text, file.name),
+    }
+  }
+
+  return { url: await readFileAsDataUrl(file), thumbnailUrl: undefined }
 }
 
 export function DocumentSlotUploader({
@@ -250,6 +373,8 @@ export function DocumentSlotUploader({
   const [existingLoading, setExistingLoading] = useState(false)
   const [existingError, setExistingError] = useState<string | null>(null)
   const [signedPreviewUrls, setSignedPreviewUrls] = useState<Record<string, string>>({})
+  const [generatedThumbnails, setGeneratedThumbnails] = useState<Record<string, string>>({})
+  const [previewText, setPreviewText] = useState<{ loading: boolean; content: string; error: string }>({ loading: false, content: '', error: '' })
   
   const fileInputRef = useRef<HTMLInputElement>(null)
   const dropZoneRef = useRef<HTMLDivElement>(null)
@@ -280,10 +405,11 @@ export function DocumentSlotUploader({
 
   const currentSlot = displaySlots[currentIndex]
   const currentDoc = documents.find(doc => doc.slotId === currentSlot.id)
+  const currentDocKey = currentDoc ? currentDoc.documentId || `${currentDoc.slotId}:${currentDoc.name}:${currentDoc.size}` : ''
   const currentDocUrl = currentDoc?.documentId
     ? signedPreviewUrls[currentDoc.documentId] || getDocumentUrl(currentDoc)
     : getDocumentUrl(currentDoc)
-  const currentDocThumbnailUrl = getDocumentThumbnailUrl(currentDoc, currentDoc?.documentId ? signedPreviewUrls[currentDoc.documentId] : undefined)
+  const currentDocThumbnailUrl = currentDoc?.thumbnailUrl || (currentDocKey ? generatedThumbnails[currentDocKey] : '') || getDocumentThumbnailUrl(currentDoc, currentDoc?.documentId ? signedPreviewUrls[currentDoc.documentId] : undefined)
   const hasDocument = !!currentDoc
   const currentAcceptedTypes = currentSlot?.acceptedTypes || DEFAULT_DOCUMENT_ACCEPTED_TYPES
   const registryEnabled = !!registry?.enabled && !readOnly
@@ -345,6 +471,83 @@ export function DocumentSlotUploader({
     }
   }, [documents, signedPreviewUrls])
 
+  useEffect(() => {
+    const docsNeedingThumbnail = documents.filter(doc => {
+      const key = doc.documentId || `${doc.slotId}:${doc.name}:${doc.size}`
+      const url = doc.documentId ? signedPreviewUrls[doc.documentId] : doc.url || doc.previewUrl
+      return !doc.thumbnailUrl && !generatedThumbnails[key] && url && (isPdfDocument(doc) || isTextDocument(doc))
+    })
+    if (docsNeedingThumbnail.length === 0) return
+
+    let cancelled = false
+    Promise.all(docsNeedingThumbnail.map(async doc => {
+      const key = doc.documentId || `${doc.slotId}:${doc.name}:${doc.size}`
+      const url = doc.documentId ? signedPreviewUrls[doc.documentId] : doc.url || doc.previewUrl || ''
+      try {
+        if (isPdfDocument(doc)) return [key, await generatePdfThumbnail(url)] as const
+        const response = await fetch(url)
+        const text = await response.text()
+        return [key, generateTextThumbnail(text, doc.name)] as const
+      } catch {
+        return null
+      }
+    })).then(items => {
+      if (cancelled) return
+      const next = Object.fromEntries(items.filter((item): item is readonly [string, string] => !!item?.[1]))
+      if (Object.keys(next).length > 0) setGeneratedThumbnails(prev => ({ ...prev, ...next }))
+    })
+
+    return () => {
+      cancelled = true
+    }
+  }, [documents, generatedThumbnails, signedPreviewUrls])
+
+  useEffect(() => {
+    if (!previewDoc) {
+      setPreviewText({ loading: false, content: '', error: '' })
+      return
+    }
+
+    const previewDocUrl = previewDoc.documentId ? signedPreviewUrls[previewDoc.documentId] || getDocumentUrl(previewDoc) : getDocumentUrl(previewDoc)
+    if (!isTextDocument(previewDoc) && !isDocxDocument(previewDoc)) {
+      setPreviewText({ loading: false, content: '', error: '' })
+      return
+    }
+
+    let cancelled = false
+    setPreviewText({ loading: true, content: '', error: '' })
+    ;(async () => {
+      try {
+        if (isDocxDocument(previewDoc)) {
+          const mammoth = await import('mammoth/mammoth.browser')
+          const arrayBuffer = previewDoc.file
+            ? await readFileAsArrayBuffer(previewDoc.file)
+            : await fetch(previewDocUrl).then(response => response.arrayBuffer())
+          const result = await mammoth.extractRawText({ arrayBuffer })
+          if (!cancelled) setPreviewText({ loading: false, content: result.value || 'Önizlenecek metin bulunamadı.', error: '' })
+          return
+        }
+
+        const text = previewDoc.file
+          ? await readFileAsText(previewDoc.file)
+          : await fetch(previewDocUrl).then(response => response.text())
+        if (!cancelled) setPreviewText({ loading: false, content: text || 'Önizlenecek metin bulunamadı.', error: '' })
+      } catch (error) {
+        if (!cancelled) {
+          setPreviewText({
+            loading: false,
+            content: '',
+            error: error instanceof Error ? error.message : 'Belge önizlemesi alınamadı.',
+          })
+        }
+      }
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [previewDoc, signedPreviewUrls])
+
   const handlePrevious = useCallback(() => {
     setCurrentIndex(prev => (prev > 0 ? prev - 1 : displaySlots.length - 1))
   }, [displaySlots.length])
@@ -385,9 +588,10 @@ export function DocumentSlotUploader({
     }, 100)
 
     // Complete upload simulation
-    setTimeout(() => {
+    setTimeout(async () => {
       clearInterval(progressInterval)
       setUploadProgress(100)
+      const preview = await createDocumentPreviewMetadata(file).catch(() => ({ url: '', thumbnailUrl: undefined }))
       
       const newDoc: SlotDocument = {
         slotId: currentSlot.id,
@@ -395,7 +599,10 @@ export function DocumentSlotUploader({
         name: file.name,
         size: file.size,
         type: file.type,
-        uploadedAt: new Date()
+        uploadedAt: new Date(),
+        url: preview.url,
+        previewUrl: preview.url,
+        thumbnailUrl: preview.thumbnailUrl,
       }
 
       const updatedDocs = documents.filter(doc => doc.slotId !== currentSlot.id)
@@ -417,6 +624,7 @@ export function DocumentSlotUploader({
       size: currentFile?.file_size || 0,
       type: currentFile?.mime_type || 'application/octet-stream',
       uploadedAt: document.updated_at ? new Date(document.updated_at) : new Date(),
+      thumbnailUrl: (currentFile as any)?.thumbnail_url || (currentFile as any)?.preview_thumb_url || undefined,
     }
 
     if (registry?.linkedModule && registry?.linkedRecordId && registry?.linkType) {
@@ -623,11 +831,11 @@ export function DocumentSlotUploader({
             <div className="flex-1 flex flex-col p-3 group">
               {/* File Preview / Thumbnail */}
               <div className="flex-1 flex items-center justify-center">
-                {isImageDocument(currentDoc) && currentDocThumbnailUrl ? (
+                {currentDocThumbnailUrl ? (
                   <img
                     src={currentDocThumbnailUrl}
                     alt={currentDoc.name}
-                    className="h-full min-h-36 w-full rounded border border-gray-200 object-cover shadow-sm dark:border-gray-700"
+                    className="h-full min-h-36 w-full rounded border border-gray-200 object-cover object-top shadow-sm dark:border-gray-700"
                   />
                 ) : canPreviewCurrentDoc ? (
                   <div className="h-full min-h-36 w-full overflow-hidden rounded border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-900">
@@ -947,6 +1155,18 @@ export function DocumentSlotUploader({
                       alt={previewDoc.name}
                       className="max-w-full mx-auto rounded-lg"
                     />
+                  ) : (isTextDocument(previewDoc) || isDocxDocument(previewDoc)) ? (
+                    <div className="h-[60vh] w-full overflow-auto rounded-lg border border-gray-200 bg-white p-5 text-left dark:border-gray-700 dark:bg-gray-950">
+                      {previewText.loading ? (
+                        <div className="flex h-full items-center justify-center text-sm text-gray-500">Önizleme hazırlanıyor...</div>
+                      ) : previewText.error ? (
+                        <div className="flex h-full items-center justify-center text-sm text-red-600">{previewText.error}</div>
+                      ) : (
+                        <pre className="whitespace-pre-wrap break-words font-mono text-sm leading-6 text-gray-800 dark:text-gray-100">
+                          {previewText.content}
+                        </pre>
+                      )}
+                    </div>
                   ) : canPreviewInline ? (
                   <iframe
                     src={`${previewDocUrl}#toolbar=1&navpanes=0`}

@@ -22,6 +22,7 @@ export default function LoginPage() {
   const [resendActive, setResendActive] = useState(false)
   const otpRefs = useRef<(HTMLInputElement | null)[]>([])
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const isEmailLogin = value.includes('@')
 
   useEffect(() => {
     if (step === 'otp') startTimer()
@@ -35,7 +36,10 @@ export default function LoginPage() {
     timerRef.current = setInterval(() => {
       setTimer(t => {
         if (t <= 241) setResendActive(true)
-        if (t <= 1) { clearInterval(timerRef.current!); return 0 }
+        if (t <= 1) {
+          clearInterval(timerRef.current!)
+          return 0
+        }
         return t - 1
       })
     }, 1000)
@@ -51,6 +55,19 @@ export default function LoginPage() {
     return code
   }
 
+  async function sendEmailOtp(email: string) {
+    const response = await fetch('/api/auth/otp/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    })
+    const data = await response.json().catch(() => ({}))
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Doğrulama kodu gönderilemedi.')
+    }
+  }
+
   async function handleStep1() {
     const v = value.trim()
     const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v)
@@ -62,16 +79,37 @@ export default function LoginPage() {
     setLoading(true)
     setError('')
     setFallbackCode(null)
+    setSuccess(false)
+    setOtp(['', '', '', '', '', ''])
     try {
+      if (isEmail) {
+        await sendEmailOtp(v.toLowerCase())
+        setStep('otp')
+        return
+      }
+
       const code = createFallbackCode()
       setStep('otp')
-      setError(`6 haneli kod ekrana düştü. Lütfen aşağıya girin.`)
+      setError('6 haneli kod ekrana düştü. Lütfen aşağıya girin.')
       console.log('Geçici OTP kodu:', code)
     } catch (cause: any) {
-      console.error('Kod oluşturma hatası:', cause?.message ?? cause)
-      setError('Kod oluşturulamadı. Lütfen tekrar deneyin.')
+      console.error('Kod gönderim hatası:', cause?.message ?? cause)
+      setError(cause?.message || 'Kod gönderilemedi. Lütfen tekrar deneyin.')
     } finally {
       setLoading(false)
+    }
+  }
+
+  async function verifyEmailCode(code: string) {
+    const response = await fetch('/api/auth/otp', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'email', identifier: value.trim().toLowerCase(), token: code }),
+    })
+    const data = await response.json().catch(() => ({}))
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Kod hatalı. Lütfen tekrar deneyin.')
     }
   }
 
@@ -95,7 +133,19 @@ export default function LoginPage() {
           setSuccess(true)
           return
         }
+
+        if (isEmailLogin) {
+          await verifyEmailCode(code)
+          setSuccess(true)
+          if (typeof window !== 'undefined') window.location.href = '/app'
+          return
+        }
+
         setOtpError('Kod hatalı. Lütfen tekrar deneyin.')
+        setOtp(['', '', '', '', '', ''])
+        otpRefs.current[0]?.focus()
+      } catch (cause: any) {
+        setOtpError(cause?.message || 'Kod hatalı. Lütfen tekrar deneyin.')
         setOtp(['', '', '', '', '', ''])
         otpRefs.current[0]?.focus()
       } finally {
@@ -104,12 +154,27 @@ export default function LoginPage() {
     }
   }
 
+  async function handleResend() {
+    setOtp(['', '', '', '', '', ''])
+    setOtpError('')
+    setLoading(true)
+    try {
+      if (isEmailLogin) {
+        await sendEmailOtp(value.trim().toLowerCase())
+      } else {
+        createFallbackCode()
+      }
+      startTimer()
+    } catch (cause: any) {
+      setOtpError(cause?.message || 'Kod tekrar gönderilemedi.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <div className="flex h-screen">
-      {/* Sol görsel panel */}
-      <div className="hidden lg:flex flex-1 flex-col items-center justify-center p-16
-                      bg-gradient-to-br from-[#0f2233] via-[#162b46] to-[#216688]
-                      relative overflow-hidden">
+      <div className="hidden lg:flex flex-1 flex-col items-center justify-center p-16 bg-gradient-to-br from-[#0f2233] via-[#162b46] to-[#216688] relative overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_70%,rgba(14,140,97,0.12),transparent_60%)]" />
         <div className="relative text-center max-w-sm">
           <div className="w-20 h-20 bg-eden-blue rounded-2xl flex items-center justify-center mx-auto mb-8 shadow-lg">
@@ -119,13 +184,11 @@ export default function LoginPage() {
           </div>
           <h1 className="text-3xl font-bold font-display text-white mb-3">Eden Teknoloji</h1>
           <p className="text-white/55 text-sm leading-relaxed mb-10">
-            Kurumsal ERP platformuna erişmek için kurumsal e-posta adresinizi
-            veya kayıtlı telefon numaranızı kullanın.
+            Kurumsal ERP platformuna erişmek için kurumsal e-posta adresinizi veya kayıtlı telefon numaranızı kullanın.
           </p>
           <div className="flex flex-col gap-3">
             {MODULES.map(m => (
-              <div key={m.name}
-                   className="flex items-center gap-3 px-4 py-3 bg-white/[0.06] rounded-xl border border-white/10 text-left">
+              <div key={m.name} className="flex items-center gap-3 px-4 py-3 bg-white/[0.06] rounded-xl border border-white/10 text-left">
                 <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: m.color }} />
                 <div>
                   <div className="text-sm font-medium text-white/80">{m.name}</div>
@@ -137,10 +200,8 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* Sağ form paneli */}
       <div className="w-full lg:w-[440px] flex items-center justify-center p-10 bg-white dark:bg-[#112038]">
         <div className="w-full max-w-sm">
-          {/* Logo */}
           <div className="flex items-center gap-3 mb-10">
             <div className="w-9 h-9 bg-eden-blue rounded-lg flex items-center justify-center">
               <svg width="20" height="20" fill="none" stroke="white" strokeWidth="2" viewBox="0 0 24 24">
@@ -167,10 +228,7 @@ export default function LoginPage() {
                   onChange={e => { setValue(e.target.value); setError('') }}
                   onKeyDown={e => e.key === 'Enter' && handleStep1()}
                   placeholder="5554443322 veya ornek@eden.com"
-                  className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3
-                             text-sm text-gray-900 dark:text-white bg-white dark:bg-[#0f2233]
-                             focus:outline-none focus:ring-2 focus:ring-eden-blue/20 focus:border-eden-blue
-                             transition-all"
+                  className="w-full border border-gray-200 dark:border-gray-700 rounded-xl px-4 py-3 text-sm text-gray-900 dark:text-white bg-white dark:bg-[#0f2233] focus:outline-none focus:ring-2 focus:ring-eden-blue/20 focus:border-eden-blue transition-all"
                   autoFocus
                 />
                 {error && <p className="text-xs text-red-500 mt-1.5">{error}</p>}
@@ -178,8 +236,7 @@ export default function LoginPage() {
               <button
                 onClick={handleStep1}
                 disabled={loading}
-                className="w-full py-3 rounded-xl bg-eden-blue text-white text-sm font-semibold
-                           hover:bg-eden-blue-dk transition-colors disabled:opacity-60 mb-3"
+                className="w-full py-3 rounded-xl bg-eden-blue text-white text-sm font-semibold hover:bg-eden-blue-dk transition-colors disabled:opacity-60 mb-3"
               >
                 {loading ? 'Gönderiliyor...' : 'Devam Et →'}
               </button>
@@ -189,13 +246,15 @@ export default function LoginPage() {
             </>
           ) : (
             <>
-              <button onClick={() => { setStep('kimlik'); setOtp(['','','','','','']); setFallbackCode(null) }}
-                      className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 mb-6 transition-colors">
+              <button
+                onClick={() => { setStep('kimlik'); setOtp(['','','','','','']); setFallbackCode(null); setOtpError('') }}
+                className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 mb-6 transition-colors"
+              >
                 ← Geri
               </button>
               <h2 className="text-2xl font-bold font-display text-gray-900 dark:text-white mb-1">Doğrulama Kodu</h2>
               <p className="text-sm text-gray-500 mb-7">
-                {value.includes('@') ? `${value} adresine` : `${value} numarasına`} 6 haneli kod gönderildi.
+                {isEmailLogin ? `${value} adresine` : `${value} numarasına`} 6 haneli kod gönderildi.
               </p>
 
               {fallbackCode && (
@@ -203,7 +262,7 @@ export default function LoginPage() {
                   <div className="font-semibold mb-1">Geçici giriş kodu</div>
                   <div className="font-mono text-lg">{fallbackCode}</div>
                   <div className="mt-2 text-xs text-blue-700/80">
-                    Bu kod, SMS/e-posta gelmediğinde demo amaçlı kullanılabilir.
+                    Bu kod, SMS gelmediğinde demo amaçlı kullanılabilir.
                   </div>
                   {error && (
                     <div className="mt-3 rounded-xl border border-blue-100 bg-blue-100/80 px-3 py-2 text-xs text-blue-900">
@@ -219,7 +278,6 @@ export default function LoginPage() {
                 </div>
               )}
 
-              {/* OTP inputs */}
               <div className="flex gap-2.5 mb-4">
                 {otp.map((digit, idx) => (
                   <input
@@ -233,9 +291,7 @@ export default function LoginPage() {
                     onKeyDown={e => {
                       if (e.key === 'Backspace' && !digit && idx > 0) otpRefs.current[idx - 1]?.focus()
                     }}
-                    className="w-12 h-14 text-center text-xl font-bold border border-gray-200 dark:border-gray-700
-                               rounded-xl bg-white dark:bg-[#0f2233] text-gray-900 dark:text-white
-                               focus:outline-none focus:ring-2 focus:ring-eden-blue/20 focus:border-eden-blue transition-all"
+                    className="w-12 h-14 text-center text-xl font-bold border border-gray-200 dark:border-gray-700 rounded-xl bg-white dark:bg-[#0f2233] text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-eden-blue/20 focus:border-eden-blue transition-all"
                     autoFocus={idx === 0}
                   />
                 ))}
@@ -251,16 +307,18 @@ export default function LoginPage() {
               <div className="flex justify-between items-center text-xs text-gray-400">
                 <span>Kalan süre: <b>{formatTimer(timer)}</b></span>
                 <button
-                  onClick={() => { setOtp(['','','','','','']); startTimer() }}
-                  disabled={!resendActive}
-                  className={`transition-colors ${resendActive ? 'text-eden-blue cursor-pointer' : 'cursor-not-allowed opacity-50'}`}
+                  onClick={handleResend}
+                  disabled={!resendActive || loading}
+                  className={`transition-colors ${resendActive && !loading ? 'text-eden-blue cursor-pointer' : 'cursor-not-allowed opacity-50'}`}
                 >
                   Kodu tekrar gönder
                 </button>
               </div>
-              <p className="text-xs text-gray-400 text-center mt-4 p-3 bg-gray-50 dark:bg-[#0f2233] rounded-lg">
-                Demo: <b className="font-mono">123456</b> — Gerçek SMS Supabase&apos;de aktif
-              </p>
+              {fallbackCode && (
+                <p className="text-xs text-gray-400 text-center mt-4 p-3 bg-gray-50 dark:bg-[#0f2233] rounded-lg">
+                  Demo: <b className="font-mono">123456</b> — Gerçek SMS Supabase&apos;de aktif
+                </p>
+              )}
             </>
           )}
         </div>

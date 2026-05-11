@@ -55,6 +55,7 @@ export interface RegistryDocumentFile {
   mime_type: string
   file_size: number
   file_hash: string | null
+  thumbnail_url?: string | null
   uploaded_at: string
   uploaded_by: string | null
   version_no: number
@@ -100,6 +101,7 @@ export interface CreateDocumentInput {
     mime_type: string
     file_size: number
     file_hash?: string | null
+    thumbnail_url?: string | null
   }
 }
 

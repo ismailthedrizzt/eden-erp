@@ -504,7 +504,7 @@ export default function PersonelYonetimPage() {
             onModeChange={(mode) => setPageState(mode)}
             onIdentityGateOpenExistingRole={async (roleRecord) => {
               await handleRowClick(roleRecord as PersonelTableRow)
-              setPageState('edit')
+              setPageState('view')
             }}
             onIdentityGateCancelDuplicate={() => setPageState('list')}
             enableHistory

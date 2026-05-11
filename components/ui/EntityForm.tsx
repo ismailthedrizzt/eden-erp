@@ -1073,6 +1073,7 @@ export function EntityForm({
     { id: 'photo', title: imageSlot.title || 'Foto?raf', required: imageSlot.required ?? false },
   ]
   const imageDataField = imageSlot.dataField || 'fotograf_url'
+  const primaryImageSlotId = imageSlots[0]?.id || 'photo'
   const [images, setImages] = useState<SlotImage[]>([])
   
   const documentSlots: DocumentSlot[] = documentSlot.slots || [
@@ -1092,10 +1093,15 @@ export function EntityForm({
       setImages(normalizeStoredImages(data?.[imageDataField]))
     } else if (data?.fotograf_url) {
       setImages([{ slotId: 'photo', previewUrl: data.fotograf_url, name: 'Foto?raf' }])
+    } else if (Array.isArray(data?.photo_logo) && data.photo_logo.length > 0) {
+      setImages(normalizeStoredImages(data.photo_logo).map((image, index) => ({
+        ...image,
+        slotId: index === 0 ? primaryImageSlotId : image.slotId,
+      })))
     } else {
       setImages([])
     }
-  }, [data, imageDataField, imageSlot.dataField])
+  }, [data, imageDataField, imageSlot.dataField, primaryImageSlotId])
 
   useEffect(() => {
     setDocuments(normalizeStoredDocuments(data?.[documentDataField]))
@@ -1300,12 +1306,18 @@ export function EntityForm({
   }
 
   const handleIdentityResolved = (result: IdentityGateResolveResult) => {
-    const nextImages = normalizeStoredImages(
+    const resolvedImages = normalizeStoredImages(
       result.prefill[imageDataField] ||
       result.prefill.photo_logo ||
       result.prefill.fotograf_url ||
       []
     )
+    const nextImages = imageSlot.dataField
+      ? resolvedImages
+      : resolvedImages.map((image, index) => ({
+          ...image,
+          slotId: index === 0 ? primaryImageSlotId : image.slotId,
+        }))
     const nextDocuments = normalizeStoredDocuments(
       result.prefill[documentDataField] ||
       result.prefill.partner_documents ||
