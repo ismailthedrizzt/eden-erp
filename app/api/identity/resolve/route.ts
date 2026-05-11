@@ -561,8 +561,11 @@ function normalizePersonDocuments(record: Record<string, any>) {
     ...doc,
     slotId: doc.slotId || doc.slot_id || `employee_document_${index + 1}`,
     name: doc.name || doc.fileName || doc.title || 'Belge',
-    type: doc.type || 'application/octet-stream',
+    type: doc.type || doc.mime_type || doc.mimeType || 'application/octet-stream',
+    size: doc.size || doc.file_size || 0,
     url: doc.url || doc.previewUrl || doc.preview_url,
+    previewUrl: doc.previewUrl || doc.preview_url || doc.url,
+    thumbnailUrl: doc.thumbnailUrl || doc.thumbnail_url || doc.preview_thumb_url || doc.preview_image_url,
   }))
 }
 
@@ -575,8 +578,11 @@ function normalizeOrganizationDocuments(record: Record<string, any>) {
     ...doc,
     slotId: doc.slotId || doc.slot_id || `company_document_${index + 1}`,
     name: doc.name || doc.fileName || doc.title || 'Belge',
-    type: doc.type || 'application/octet-stream',
+    type: doc.type || doc.mime_type || doc.mimeType || 'application/octet-stream',
+    size: doc.size || doc.file_size || 0,
     url: doc.url || doc.previewUrl || doc.preview_url,
+    previewUrl: doc.previewUrl || doc.preview_url || doc.url,
+    thumbnailUrl: doc.thumbnailUrl || doc.thumbnail_url || doc.preview_thumb_url || doc.preview_image_url,
   }))
 }
 

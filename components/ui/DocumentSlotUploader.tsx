@@ -236,7 +236,9 @@ function getDocumentUrl(doc?: SlotDocument | null) {
 
 function getDocumentThumbnailUrl(doc?: SlotDocument | null, signedUrl?: string) {
   if (!doc) return ''
-  return doc.thumbnailUrl || doc.previewUrl || signedUrl || doc.url || (doc.file ? URL.createObjectURL(doc.file) : '')
+  if (doc.thumbnailUrl) return doc.thumbnailUrl
+  if (isImageDocument(doc)) return doc.previewUrl || signedUrl || doc.url || (doc.file ? URL.createObjectURL(doc.file) : '')
+  return ''
 }
 
 function readFileAsDataUrl(file: File): Promise<string> {
@@ -470,6 +472,21 @@ export function DocumentSlotUploader({
       cancelled = true
     }
   }, [documents, signedPreviewUrls])
+
+  useEffect(() => {
+    if (!previewDoc?.documentId || signedPreviewUrls[previewDoc.documentId] || previewDoc.url || previewDoc.previewUrl) return
+
+    let cancelled = false
+    documentRegistryService.getDocumentSignedUrl(previewDoc.documentId)
+      .then(signedUrl => {
+        if (!cancelled) setSignedPreviewUrls(prev => ({ ...prev, [previewDoc.documentId!]: signedUrl }))
+      })
+      .catch(() => {})
+
+    return () => {
+      cancelled = true
+    }
+  }, [previewDoc, signedPreviewUrls])
 
   useEffect(() => {
     const docsNeedingThumbnail = documents.filter(doc => {
