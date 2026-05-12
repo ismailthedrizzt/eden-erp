@@ -480,9 +480,14 @@ export default function PaydaslarPage() {
 
             enableHistory
             imageSlot={{
-              title: selectedStakeholder?.stakeholder_type === 'tuzel_kisi' ? 'Logo' : 'Fotoğraf',
               dataField: 'photo_logo',
-              slots: [{ id: 'photo_logo', title: selectedStakeholder?.stakeholder_type === 'tuzel_kisi' ? 'Logo' : 'Fotoğraf', required: false }],
+              slots: (formData) => normalizeStakeholderEntityType(formData.stakeholder_type || formData.master_entity_kind) === 'tuzel_kisi'
+                ? [
+                    { id: 'light_mode_avatar', title: 'Light Mode Avatar', required: true },
+                    { id: 'dark_mode_avatar', title: 'Dark Mode Avatar', required: true },
+                    { id: 'document_logo', title: 'Belge Logosu', required: false },
+                  ]
+                : [{ id: 'photo_logo', title: 'Fotoğraf', required: false }],
             }}
             documentSlot={{ title: 'Belgeler', dataField: 'stakeholder_documents', slots: [
               { id: 'sozlesme', title: 'Sözleşme', required: false },

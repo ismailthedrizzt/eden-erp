@@ -316,14 +316,53 @@ async function replaceCompanyRepresentatives(supabase: ReturnType<typeof createS
   return error
 }
 
+const COMPANY_REPRESENTATIVE_AUTHORITY_VALUE_BY_LABEL: Record<string, string> = {
+  'Imza Yetkilisi': 'imza_yetkilisi',
+  'İmza Yetkilisi': 'imza_yetkilisi',
+  'Banka Yetkilisi': 'banka_yetkilisi',
+  'GIB Yetkilisi': 'gib_yetkilisi',
+  'GİB Yetkilisi': 'gib_yetkilisi',
+  'SGK Yetkilisi': 'sgk_yetkilisi',
+  'Sozlesme Yetkilisi': 'sozlesme_yetkilisi',
+  'Sözleşme Yetkilisi': 'sozlesme_yetkilisi',
+  'Satinalma Onay Yetkilisi': 'satinalma_onay_yetkilisi',
+  'Satınalma Onay Yetkilisi': 'satinalma_onay_yetkilisi',
+  'Odeme Onay Yetkilisi': 'odeme_onay_yetkilisi',
+  'Ödeme Onay Yetkilisi': 'odeme_onay_yetkilisi',
+  'Mesul Mudur': 'mesul_mudur',
+  'Mesul Müdür': 'mesul_mudur',
+  'Kanuni Temsilci': 'kanuni_temsilci',
+}
+
+function normalizeCompanyRepresentativeAuthority(value: unknown) {
+  const text = String(value || '').trim()
+  if (!text) return ''
+  return COMPANY_REPRESENTATIVE_AUTHORITY_VALUE_BY_LABEL[text] || text
+}
+
+function getCompanyRepresentativePrimaryAuthority(representative: Record<string, any>) {
+  const candidates = [
+    representative.gorev,
+    representative.primary_authority_type,
+    Array.isArray(representative.authority_types) ? representative.authority_types[0] : null,
+    representative.yetki_turu,
+  ]
+  return candidates.map(normalizeCompanyRepresentativeAuthority).find(Boolean) || ''
+}
+
 function mapRepresentativeForDb(sirketId: string, representative: Record<string, any>) {
+  const primaryAuthority = getCompanyRepresentativePrimaryAuthority(representative)
+  const authorityTypes = Array.isArray(representative.authority_types) && representative.authority_types.length
+    ? representative.authority_types.map(normalizeCompanyRepresentativeAuthority).filter(Boolean)
+    : [primaryAuthority].filter(Boolean)
+
   return {
     sirket_id: sirketId,
     company_id: sirketId,
     ad_soyad: representative.display_name || representative.ad_soyad || 'Temsilci',
-    gorev: representative.notes || null,
-    yetki_turu: 'diger',
-    authority_types: representative.authority_types || [],
+    gorev: primaryAuthority || null,
+    yetki_turu: primaryAuthority || 'diger',
+    authority_types: authorityTypes,
     person_kind: representative.person_kind || 'gercek_kisi',
     source_type: representative.source_type || null,
     source_id: representative.source_id || null,

@@ -151,7 +151,7 @@ export interface EntityFormProps {
     required?: boolean
     readOnly?: boolean
     dataField?: string
-    slots?: ImageSlot[]
+    slots?: ImageSlot[] | ((formData: Record<string, any>) => ImageSlot[])
   }
   
   /** Document slot configuration for default hero left panel */
@@ -1559,7 +1559,8 @@ export function EntityForm({
   const [turkeyProvinces, setTurkeyProvinces] = useState<TurkeyProvince[]>([])
   
   // STANDARD FORM LAYOUT: Image and Document slots
-  const imageSlots: ImageSlot[] = imageSlot.slots || [
+  const resolvedImageSlots = typeof imageSlot.slots === 'function' ? imageSlot.slots(formData) : imageSlot.slots
+  const imageSlots: ImageSlot[] = resolvedImageSlots || [
     { id: 'photo', title: imageSlot.title || 'Foto?raf', required: imageSlot.required ?? false },
   ]
   const imageDataField = imageSlot.dataField || 'fotograf_url'

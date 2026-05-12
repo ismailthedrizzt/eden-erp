@@ -235,9 +235,9 @@ export function MasterIdentityGate({
                 disabled={readOnly}
                 onBlur={() => setTouched(prev => ({ ...prev, tax_number: true }))}
                 onChange={(event) => updateIdentity('tax_number', event.target.value)}
-                placeholder="10 haneli VKN"
-                maxLength={10}
-                inputMode="numeric"
+                placeholder={isTurkishOrganization(identity.country) ? '10 haneli VKN' : 'Vergi / kayıt no'}
+                maxLength={isTurkishOrganization(identity.country) ? 10 : 32}
+                inputMode={isTurkishOrganization(identity.country) ? 'numeric' : 'text'}
                 className={fieldClass(hasOrganizationTaxNumber(identity), touched.tax_number, readOnly)}
               />
             </Field>
@@ -453,7 +453,8 @@ function validateIdentity(kind: IdentityEntityKind, identity: Record<string, str
 
   if (!identity.country) return 'Ülke zorunludur.'
   if (!identity.tax_number) return 'VKN zorunludur.'
-  if (identity.tax_number.length !== 10) return 'VKN 10 haneli olmalıdır.'
+  if (isTurkishOrganization(identity.country) && !/^\d{10}$/.test(identity.tax_number)) return 'VKN 10 haneli sayı olmalıdır.'
+  if (!isTurkishOrganization(identity.country) && !/^[A-Za-z0-9][A-Za-z0-9 ._/-]{0,31}$/.test(identity.tax_number.trim())) return 'Vergi / kayıt no alfanumerik olmalıdır.'
   return null
 }
 
@@ -498,7 +499,14 @@ function hasOrganizationCountry(identity: Record<string, string>) {
 }
 
 function hasOrganizationTaxNumber(identity: Record<string, string>) {
-  return /^\d{10}$/.test(identity.tax_number || '')
+  const taxNumber = String(identity.tax_number || '').trim()
+  return isTurkishOrganization(identity.country)
+    ? /^\d{10}$/.test(taxNumber)
+    : /^[A-Za-z0-9][A-Za-z0-9 ._/-]{0,31}$/.test(taxNumber)
+}
+
+function isTurkishOrganization(country?: string) {
+  return normalizeCountryInput(country || 'TR') === 'TR'
 }
 
 function fieldClass(valid: boolean, touched?: boolean, disabled?: boolean) {

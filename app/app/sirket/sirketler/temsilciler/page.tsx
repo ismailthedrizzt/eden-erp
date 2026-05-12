@@ -94,6 +94,17 @@ function toAuthorityLabel(value: string) {
   return AUTHORITY_LABEL_BY_VALUE[value] || value
 }
 
+function getRepresentativePrimaryAuthority(representative: RepresentativeRow & Record<string, any>) {
+  const candidates = [
+    representative.gorev,
+    representative.primary_authority_type,
+    representative.representative_profile?.primary_authority_type,
+    Array.isArray(representative.authority_types) ? representative.authority_types[0] : null,
+    representative.yetki_turu,
+  ]
+  return candidates.map(value => String(value || '').trim()).find(Boolean)
+}
+
 const columns: ColumnDef[] = [
   { key: 'display_name', label: 'Ad Soyad / Ünvan', type: 'text', width: 260, sortable: true, category: 'Kimlik' },
   { key: 'company_name', label: 'Şirket', type: 'text', width: 220, category: 'Şirket' },
@@ -375,7 +386,7 @@ export default function TemsilcilerPage() {
     display_name: representative.display_name || representative.ad_soyad || '',
     person_kind_label: representative.person_kind === 'tuzel_kisi' ? 'Tüzel Kişi' : 'Gerçek Kişi',
     company_name: companyNameById[representative.sirket_id] || '-',
-    primary_authority_type: toAuthorityLabel(representative.authority_types?.[0] || '-'),
+    primary_authority_type: toAuthorityLabel(getRepresentativePrimaryAuthority(representative) || '-'),
     authority_limit: representative.transaction_limit,
   }))
 
@@ -664,6 +675,7 @@ function Timeline({ value }: { value: any[] }) {
 function normalizeRepresentativeForForm(representative: RepresentativeRow) {
   const profile = representative.representative_profile || {}
   const authorityTypes = (profile.authority_types || representative.authority_types || []).map(toAuthorityValue)
+  const primaryAuthority = getRepresentativePrimaryAuthority(representative)
   const masterFields = representative as RepresentativeRow & {
     first_name?: string
     last_name?: string
@@ -684,7 +696,7 @@ function normalizeRepresentativeForForm(representative: RepresentativeRow) {
     trade_name: masterFields.trade_name || masterFields.legal_name || '',
     short_name: masterFields.short_name || '',
     display_name: displayName,
-    primary_authority_type: toAuthorityValue(profile.primary_authority_type || authorityTypes[0] || ''),
+    primary_authority_type: toAuthorityValue(primaryAuthority || authorityTypes[0] || ''),
     authority_types: authorityTypes,
     status: profile.status || representative.status || 'Aktif',
     authority_limit: profile.authority_limit ?? representative.transaction_limit ?? '',

@@ -16,6 +16,9 @@ const EmployeeSchema = z.object({
   cinsiyet: z.enum(['erkek', 'kadin']),
   dogum_yeri: z.string().optional(),
   dogum_tarihi: z.string().optional(),
+  occupation: z.string().optional(),
+  profession: z.string().optional(),
+  meslek: z.string().optional(),
   kan_grubu: z.string().optional(),
   askerlik_durumu: z.string().optional(),
   tecil_tarihi: z.string().optional(),
@@ -111,6 +114,16 @@ function missingEmployeeColumn(error: { message?: string } | null, optionalColum
   )
 }
 
+const employeeMasterOnlyFields = ['occupation', 'profession', 'meslek']
+
+function stripEmployeeMasterOnlyFields<T extends Record<string, any>>(payload: T) {
+  const next = { ...payload }
+  employeeMasterOnlyFields.forEach(field => {
+    delete next[field]
+  })
+  return next
+}
+
 // GET /api/ik/personel
 export async function GET(request: NextRequest) {
   const supabase = await createClient()
@@ -202,7 +215,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Geçersiz veri', code: 'VALIDATION_FAILED', details: parsed.error.flatten() }, { status: 400 })
   }
 
-  let employeePayload = await ensureEmployeePersonLink(supabase, parsed.data)
+  const masterPayload = parsed.data
+  let employeePayload = await ensureEmployeePersonLink(supabase, stripEmployeeMasterOnlyFields(masterPayload))
 
   let { data, error } = await supabase
     .from('employees')
@@ -231,7 +245,10 @@ export async function POST(request: NextRequest) {
   }
 
   if (error) return NextResponse.json({ error: error.message, code: error.code || 'CREATE_FAILED' }, { status: 500 })
-  await syncMasterContact(supabase, 'person', data?.person_id || employeePayload.person_id, employeePayload)
+  await syncMasterContact(supabase, 'person', data?.person_id || employeePayload.person_id, {
+    ...masterPayload,
+    person_id: data?.person_id || employeePayload.person_id,
+  })
   const hydrated = data?.person_id ? await hydrateMasterContact(supabase, 'person', data) : data
   return NextResponse.json({ data: hydrated }, { status: 201 })
 }

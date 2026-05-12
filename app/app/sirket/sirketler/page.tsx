@@ -791,7 +791,7 @@ function RelatedSummaryTable({ type, rows }: { type: 'ortaklar' | 'temsilciler' 
                   <>
                     <td className="px-3 py-2 font-medium text-gray-900 dark:text-white">{row.display_name || row.ad_soyad || '-'}</td>
                     <td className="px-3 py-2 text-gray-600 dark:text-gray-300">{row.person_kind === 'tuzel_kisi' ? 'Tüzel Kişi' : 'Gerçek Kişi'}</td>
-                    <td className="px-3 py-2 text-gray-600 dark:text-gray-300">{formatAuthorityType(row.authority_types?.[0] || row.primary_authority_type)}</td>
+                    <td className="px-3 py-2 text-gray-600 dark:text-gray-300">{formatAuthorityType(getRepresentativePrimaryAuthority(row))}</td>
                     <td className="px-3 py-2"><StatusPill status={row.is_deleted ? 'Pasif' : row.status || 'Aktif'} /></td>
                   </>
                 )}
@@ -835,6 +835,16 @@ function formatAuthorityType(value?: string) {
   }
 
   return value ? labels[value] || value : '-'
+}
+
+function getRepresentativePrimaryAuthority(row: Record<string, any>) {
+  const candidates = [
+    row.gorev,
+    row.primary_authority_type,
+    Array.isArray(row.authority_types) ? row.authority_types[0] : null,
+    row.yetki_turu,
+  ]
+  return candidates.map(value => String(value || '').trim()).find(Boolean)
 }
 
 function formatSourceType(value?: string) {
@@ -881,6 +891,7 @@ function normalizeCompanyForForm(company: Sirket) {
     temsilciler: (company.temsilciler || []).map((representative: any) => ({
       ...representative,
       authority_types: representative.authority_types || (representative.yetki_turu ? [representative.yetki_turu] : []),
+      primary_authority_type: getRepresentativePrimaryAuthority(representative),
       person_kind: representative.person_kind || 'gercek_kisi',
       source_type: representative.source_type || 'dis_kisi',
       source_id: representative.source_id || representative.id,

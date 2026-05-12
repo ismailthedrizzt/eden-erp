@@ -13,6 +13,9 @@ const EmployeeUpdateSchema = z.object({
   cinsiyet: z.enum(['erkek', 'kadin']).optional(),
   dogum_yeri: z.string().optional(),
   dogum_tarihi: z.string().optional(),
+  occupation: z.string().optional(),
+  profession: z.string().optional(),
+  meslek: z.string().optional(),
   kan_grubu: z.string().optional(),
   askerlik_durumu: z.string().optional(),
   tecil_tarihi: z.string().optional(),
@@ -129,6 +132,16 @@ export async function GET(
   )
 }
 
+const employeeMasterOnlyFields = ['occupation', 'profession', 'meslek']
+
+function stripEmployeeMasterOnlyFields<T extends Record<string, any>>(payload: T) {
+  const next = { ...payload }
+  employeeMasterOnlyFields.forEach(field => {
+    delete next[field]
+  })
+  return next
+}
+
 // PATCH /api/ik/personel/[id]
 export async function PATCH(
   request: NextRequest,
@@ -160,7 +173,8 @@ export async function PATCH(
     return NextResponse.json({ error: currentError.message, code: currentError.code || 'FETCH_FAILED' }, { status: 500 })
   }
 
-  let updatePayload = parsed.data
+  const masterPayload = parsed.data
+  let updatePayload = stripEmployeeMasterOnlyFields(masterPayload)
   const nextHistory = buildFieldHistory(current, updatePayload)
   let { data, error } = await supabase
     .from('employees')
@@ -199,7 +213,7 @@ export async function PATCH(
     return NextResponse.json({ error: error.message, code: error.code || 'UPDATE_FAILED' }, { status: 500 })
   }
 
-  await syncMasterContact(supabase, 'person', data?.person_id || current.person_id, updatePayload)
+  await syncMasterContact(supabase, 'person', data?.person_id || current.person_id, masterPayload)
   const hydrated = await hydrateMasterContact(supabase, 'person', data)
   return NextResponse.json({ data: hydrated })
 }
