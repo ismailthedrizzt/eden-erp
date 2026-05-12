@@ -324,7 +324,7 @@ export default function SirketlerPage() {
     setFieldErrors({})
 
     try {
-      const response = await fetch(`/api/sirketler/${row.id}`)
+      const response = await fetch(`/api/sirketler/${row.id}?t=${Date.now()}`, { cache: 'no-store' })
       if (!response.ok) {
         setSelectedSirket(row)
         setPageState('view')

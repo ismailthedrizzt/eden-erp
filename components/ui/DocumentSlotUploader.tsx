@@ -782,6 +782,56 @@ export function DocumentSlotUploader({
       </span>
     </div>
   ) : null
+  const renderDocumentActions = (surface: 'inline' | 'overlay' = 'inline') => {
+    if (!currentDoc) return null
+
+    const buttonClass = surface === 'inline'
+      ? 'rounded-md p-2 transition-colors disabled:cursor-not-allowed disabled:opacity-45'
+      : 'rounded-lg p-2.5 transition-colors disabled:cursor-not-allowed disabled:opacity-45'
+
+    return (
+      <div className="flex items-center justify-center gap-2">
+        <button
+          type="button"
+          onClick={() => currentDocUrl && setPreviewDoc(currentDoc)}
+          disabled={!canPreviewCurrentDoc}
+          className={cn(buttonClass, 'bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600')}
+          title={canPreviewCurrentDoc ? 'View' : 'Önizleme hazırlanıyor'}
+        >
+          <Eye size={surface === 'inline' ? 16 : 18} className="text-gray-700 dark:text-gray-300" />
+        </button>
+        {!readOnly && (
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className={cn(buttonClass, 'bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/30 dark:hover:bg-blue-900/50')}
+            title="Replace"
+          >
+            <RefreshCw size={surface === 'inline' ? 16 : 18} className="text-blue-600" />
+          </button>
+        )}
+        <button
+          type="button"
+          onClick={handleDownload}
+          disabled={!currentDocUrl}
+          className={cn(buttonClass, 'bg-green-100 hover:bg-green-200 dark:bg-green-900/30 dark:hover:bg-green-900/50')}
+          title="Download"
+        >
+          <Download size={surface === 'inline' ? 16 : 18} className="text-green-600" />
+        </button>
+        {!readOnly && (
+          <button
+            type="button"
+            onClick={() => setShowDeleteConfirm(true)}
+            className={cn(buttonClass, 'bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50')}
+            title="Delete"
+          >
+            <Trash2 size={surface === 'inline' ? 16 : 18} className="text-red-600" />
+          </button>
+        )}
+      </div>
+    )
+  }
 
   return (
     <div 
@@ -874,54 +924,21 @@ export function DocumentSlotUploader({
                   {formatFileSize(currentDoc?.size || 0)}
                 </p>
               </div>
+
+              <div className="relative z-30 mt-2">
+                {renderDocumentActions('inline')}
+              </div>
               
               {/* Hover Actions Overlay */}
               {(
-                <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-2 bg-white/90 opacity-100 transition-colors group-hover:bg-white/95 group-focus-within:bg-white/95 dark:bg-gray-800/90 dark:group-hover:bg-gray-800/95 dark:group-focus-within:bg-gray-800/95">
+                <div className="pointer-events-none absolute inset-0 z-20 flex flex-col items-center justify-center gap-2 bg-white/90 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 dark:bg-gray-800/90">
                   {!currentDocUrl && currentDoc?.storagePath && (
                     <div className="rounded-md bg-gray-100 px-2 py-1 text-[10px] font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-300">
                       Bağlantı hazırlanıyor
                     </div>
                   )}
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => currentDocUrl && setPreviewDoc(currentDoc || null)}
-                      disabled={!canPreviewCurrentDoc}
-                      className="p-2.5 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors disabled:cursor-not-allowed disabled:opacity-45"
-                      title={canPreviewCurrentDoc ? 'View' : 'Önizleme hazırlanıyor'}
-                    >
-                      <Eye size={18} className="text-gray-700 dark:text-gray-300" />
-                    </button>
-                    {!readOnly && (
-                      <button
-                        type="button"
-                        onClick={() => fileInputRef.current?.click()}
-                        className="p-2.5 bg-blue-100 dark:bg-blue-900/30 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
-                        title="Replace"
-                      >
-                        <RefreshCw size={18} className="text-blue-600" />
-                      </button>
-                    )}
-                    <button
-                      type="button"
-                      onClick={handleDownload}
-                      disabled={!currentDocUrl}
-                      className="p-2.5 bg-green-100 dark:bg-green-900/30 rounded-lg hover:bg-green-200 dark:hover:bg-green-900/50 transition-colors disabled:cursor-not-allowed disabled:opacity-45"
-                      title="Download"
-                    >
-                      <Download size={18} className="text-green-600" />
-                    </button>
-                    {!readOnly && (
-                      <button
-                        type="button"
-                        onClick={() => setShowDeleteConfirm(true)}
-                        className="p-2.5 bg-red-100 dark:bg-red-900/30 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
-                        title="Delete"
-                      >
-                        <Trash2 size={18} className="text-red-600" />
-                      </button>
-                    )}
+                  <div className="pointer-events-auto">
+                    {renderDocumentActions('overlay')}
                   </div>
                 </div>
               )}
