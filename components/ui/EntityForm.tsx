@@ -63,6 +63,7 @@ export interface FormField {
   listConfig?: {
     addLabel?: string
     emptyText?: string
+    maxItems?: number
     fields: FormField[]
   }
   /** History entries for this field */
@@ -1038,6 +1039,22 @@ function isLongSelectField(field: FormField) {
   return field.type === 'select' && (field.options?.length || 0) >= 12
 }
 
+function getListCellValue(row: Record<string, any>, item: FormField) {
+  const name = fieldName(item)
+  const value = row[name]
+  if (value) return value
+
+  if (name === 'ad_soyad') {
+    return [row.ad, row.soyad].filter(Boolean).join(' ')
+  }
+
+  if (name === 'akrabalik_bicimi') {
+    return row.yakinlik
+  }
+
+  return value
+}
+
 function ListField({
   field,
   value,
@@ -1056,6 +1073,8 @@ function ListField({
   const allRows = Array.isArray(value) ? value.filter((row): row is Record<string, any> => !!row && typeof row === 'object') : []
   const rows = allRows.filter(row => !row.__draft)
   const draft = allRows.find(row => row.__draft) || {}
+  const maxItems = field.listConfig?.maxItems
+  const maxItemsReached = typeof maxItems === 'number' && rows.length >= maxItems
 
   const inputClass = cn(
     "w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900",
@@ -1083,6 +1102,8 @@ function ListField({
   }
 
   const addRow = () => {
+    if (maxItemsReached) return
+
     const nextErrors: Record<string, string> = {}
     fields.forEach(item => {
       const name = fieldName(item)
@@ -1202,7 +1223,7 @@ function ListField({
                 {fields.filter(item => item.type !== 'checkbox').map(item => (
                   <div key={fieldName(item)}>
                     <span className="text-xs text-gray-500">{item.label}: </span>
-                    <span>{row[fieldName(item)] || '-'}</span>
+                    <span>{getListCellValue(row, item) || '-'}</span>
                   </div>
                 ))}
               </div>
@@ -1222,6 +1243,11 @@ function ListField({
 
       {!readOnly && (
         <div className={cn("rounded-lg border border-gray-200 dark:border-gray-700 p-2", disabled && "opacity-50")}>
+          {maxItemsReached && (
+            <div className="mb-2 rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-700 dark:bg-amber-900/20 dark:text-amber-300">
+              En fazla {maxItems} kayıt eklenebilir.
+            </div>
+          )}
           <div className="flex flex-wrap items-end gap-2">
             {fields.map(item => (
               <div key={fieldName(item)} className={cn(item.type === 'document' ? 'w-10' : 'min-w-36 flex-1')}>
@@ -1238,7 +1264,7 @@ function ListField({
             <button
               type="button"
               onClick={addRow}
-              disabled={disabled}
+              disabled={disabled || maxItemsReached}
               className="inline-flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
               title={field.listConfig?.addLabel || 'Listeye Ekle'}
             >

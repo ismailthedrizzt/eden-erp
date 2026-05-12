@@ -353,10 +353,11 @@ export const personelModuleConfig: ModuleConfig<PersonelTableRow> = {
               listConfig: {
                 addLabel: 'Yakın Ekle',
                 emptyText: 'Yakın bilgisi eklenmedi.',
+                maxItems: 10,
                 fields: [
-                  { name: 'ad', key: 'ad', label: 'Adı', type: 'text', required: true },
-                  { name: 'soyad', key: 'soyad', label: 'Soyadı', type: 'text', required: true },
-                  { name: 'yakinlik', key: 'yakinlik', label: 'Yakınlık Derecesi', type: 'text', required: true }
+                  { name: 'ad_soyad', key: 'ad_soyad', label: 'Adı Soyadı', type: 'text', required: true },
+                  { name: 'dogum_tarihi', key: 'dogum_tarihi', label: 'Doğum Tarihi', type: 'date' },
+                  { name: 'akrabalik_bicimi', key: 'akrabalik_bicimi', label: 'Akrabalık Biçimi', type: 'text', required: true }
                 ]
               }
             }

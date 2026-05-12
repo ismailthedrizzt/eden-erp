@@ -297,7 +297,7 @@ export async function hydrateMasterContact(supabase: SupabaseClient, kind: Entit
     .eq('id', masterId)
     .maybeSingle()
 
-  const master = data || null
+  const master = kind === 'person' ? await enrichPersonMasterFromEmployee(supabase, data || null) : data || null
   return {
     ...mergeMasterContactIntoRole(role, master, kind),
     master,
@@ -305,6 +305,52 @@ export async function hydrateMasterContact(supabase: SupabaseClient, kind: Entit
     derived: extractDerivedSnapshot(role),
     master_entity_kind: kind,
     master_record_id: masterId,
+  }
+}
+
+async function enrichPersonMasterFromEmployee(supabase: SupabaseClient, master: Record<string, any> | null) {
+  if (!master?.id) return master
+
+  let employee: Record<string, any> | null = null
+  const byPerson = await supabase.from('employees').select('*').eq('person_id', master.id).limit(1)
+  employee = Array.isArray(byPerson.data) ? byPerson.data[0] || null : null
+
+  if (!employee && master.national_id) {
+    const byNationalId = await supabase.from('employees').select('*').eq('tc_kimlik', master.national_id).limit(1)
+    employee = Array.isArray(byNationalId.data) ? byNationalId.data[0] || null : null
+  }
+
+  if (!employee && master.passport_no) {
+    const byPassport = await supabase.from('employees').select('*').eq('pasaport_no', master.passport_no).limit(1)
+    employee = Array.isArray(byPassport.data) ? byPassport.data[0] || null : null
+  }
+
+  if (!employee) return master
+
+  const employeeProfile: Record<string, any> = {
+    engellilik: employee.engellilik,
+    engellilik_yuzdesi: employee.engellilik_yuzdesi,
+    askerlik_durumu: employee.askerlik_durumu,
+    tecil_tarihi: employee.tecil_tarihi,
+    hukumluluk: employee.hukumluluk,
+    okuryazar_degil: employee.okuryazar_degil,
+    egitim_okullari: employee.egitim_okullari,
+    yabanci_diller: employee.yabanci_diller,
+    sertifikalar: employee.sertifikalar,
+    medeni_durum: employee.medeni_durum,
+    marital_status: employee.medeni_durum,
+    yakinlar: employee.yakinlar,
+    iban: employee.iban,
+    occupation: employee.occupation || employee.profession || employee.meslek,
+    profession: employee.profession || employee.meslek,
+    meslek: employee.meslek || employee.profession,
+    blood_type: employee.kan_grubu,
+    kan_grubu: employee.kan_grubu,
+  }
+
+  return {
+    ...Object.fromEntries(Object.entries(employeeProfile).filter(([, value]) => value !== undefined && value !== null)),
+    ...master,
   }
 }
 
@@ -338,7 +384,16 @@ function readContactMetadata(master: Record<string, any>) {
 function readPersonMasterMetadata(master: Record<string, any>) {
   const metadata = master.metadata_json && typeof master.metadata_json === 'object' ? master.metadata_json : {}
   const personMaster = metadata[PERSON_MASTER_METADATA_KEY]
-  return personMaster && typeof personMaster === 'object' ? personMaster : {}
+  const directProfile = Object.fromEntries(
+    PERSON_MASTER_PROFILE_KEYS
+      .filter(key => Object.prototype.hasOwnProperty.call(master, key))
+      .map(key => [key, master[key]])
+  )
+
+  return {
+    ...directProfile,
+    ...(personMaster && typeof personMaster === 'object' ? personMaster : {}),
+  }
 }
 
 function readOrganizationMasterMetadata(master: Record<string, any>) {

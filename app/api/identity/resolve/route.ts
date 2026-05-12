@@ -190,7 +190,6 @@ async function findOrganization(supabase: ReturnType<typeof createServiceClient>
 
 async function enrichPersonFromEmployee(supabase: ReturnType<typeof createServiceClient>, person: Record<string, any>) {
   const existingImages = normalizePersonImages(person)
-  if (existingImages.length) return { ...person, photo_logo: existingImages }
 
   let employee: Record<string, any> | null = null
 
@@ -209,7 +208,9 @@ async function enrichPersonFromEmployee(supabase: ReturnType<typeof createServic
     employee = Array.isArray(data) ? data[0] || null : null
   }
 
-  return employee ? mergeEmployeeIntoPerson(person, employee) : person
+  return employee
+    ? mergeEmployeeIntoPerson({ ...person, photo_logo: existingImages }, employee)
+    : { ...person, photo_logo: existingImages }
 }
 
 async function enrichOrganizationFromCompany(supabase: ReturnType<typeof createServiceClient>, organization: Record<string, any>) {
@@ -496,7 +497,25 @@ function mergeEmployeeIntoPerson(person: Record<string, any>, employee: Record<s
     phone: person.phone || employee.cep_telefonu || employee.is_telefonu || '',
     email: person.email || employee.email || '',
     address: person.address || employee.adres || '',
-    photo_logo: normalizePersonImages(employee),
+    engellilik: person.engellilik ?? employee.engellilik ?? false,
+    engellilik_yuzdesi: person.engellilik_yuzdesi ?? employee.engellilik_yuzdesi ?? null,
+    askerlik_durumu: person.askerlik_durumu || employee.askerlik_durumu || '',
+    tecil_tarihi: person.tecil_tarihi || employee.tecil_tarihi || '',
+    hukumluluk: person.hukumluluk ?? employee.hukumluluk ?? false,
+    okuryazar_degil: person.okuryazar_degil ?? employee.okuryazar_degil ?? false,
+    egitim_okullari: Array.isArray(person.egitim_okullari) ? person.egitim_okullari : Array.isArray(employee.egitim_okullari) ? employee.egitim_okullari : [],
+    yabanci_diller: Array.isArray(person.yabanci_diller) ? person.yabanci_diller : Array.isArray(employee.yabanci_diller) ? employee.yabanci_diller : [],
+    sertifikalar: Array.isArray(person.sertifikalar) ? person.sertifikalar : Array.isArray(employee.sertifikalar) ? employee.sertifikalar : [],
+    medeni_durum: person.medeni_durum || employee.medeni_durum || '',
+    marital_status: person.marital_status || employee.medeni_durum || '',
+    yakinlar: Array.isArray(person.yakinlar) ? person.yakinlar : Array.isArray(employee.yakinlar) ? employee.yakinlar : [],
+    iban: person.iban || employee.iban || '',
+    occupation: person.occupation || employee.occupation || employee.profession || employee.meslek || '',
+    profession: person.profession || employee.profession || employee.meslek || '',
+    meslek: person.meslek || employee.meslek || employee.profession || '',
+    blood_type: person.blood_type || employee.kan_grubu || '',
+    kan_grubu: person.kan_grubu || employee.kan_grubu || '',
+    photo_logo: normalizePersonImages(person).length ? normalizePersonImages(person) : normalizePersonImages(employee),
     partner_documents: normalizePersonDocuments(employee),
   }
 }
