@@ -140,10 +140,8 @@ export default function PersonelYonetimPage() {
   }
 
   const handleRowClick = async (row: PersonelTableRow) => {
-    setSelectedPersonel(row as Personel)
     setFormError(null)
     setSaveFieldErrors({})
-    setPageState('view')
 
     try {
       const response = await fetch(`${apiBasePath}/${row.id}?t=${Date.now()}`, { cache: 'no-store' })
@@ -151,6 +149,7 @@ export default function PersonelYonetimPage() {
       const result = await response.json()
       if (!result.data) throw new Error('Çalışan detayı yüklenemedi')
       setSelectedPersonel(result.data)
+      setPageState('view')
     } catch (err: any) {
       setFormError(err.message || 'Çalışan detayı yüklenemedi')
       setToast(err.toast || { type: 'error', title: 'Detay Yüklenemedi', message: err.message || 'Çalışan detayı yüklenemedi' })
