@@ -202,12 +202,6 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
                 documents={documents}
                 onChange={setDocuments}
                 allowExtraSlots={true}
-                registry={{
-                  enabled: true,
-                  documentType: 'Diğer',
-                  linkedModule: 'employees',
-                  linkType: 'employee_document',
-                }}
               />
             </div>
           </div>

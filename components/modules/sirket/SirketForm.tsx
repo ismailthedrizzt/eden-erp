@@ -190,13 +190,6 @@ export function SirketForm({
             onChange={setDocuments}
             allowExtraSlots={true}
             readOnly={isReadOnly}
-            registry={{
-              enabled: true,
-              companyId: formData.id,
-              linkedModule: 'companies',
-              linkedRecordId: formData.id,
-              linkType: 'company_legal_document',
-            }}
           />
         </div>
       </div>

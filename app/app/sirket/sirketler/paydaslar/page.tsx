@@ -454,13 +454,7 @@ export default function PaydaslarPage() {
               { id: 'nda', title: 'NDA', required: false },
               { id: 'mutabakat', title: 'Mutabakat', required: false },
               { id: 'diger', title: 'Diğer Belgeler', required: false },
-            ], acceptedTypes: ['application/pdf', 'image/png', 'image/jpeg', 'image/webp'], maxSizeMB: 20, registry: {
-              enabled: true,
-              companyId: selectedStakeholder?.company_id || selectedStakeholder?.sirket_id,
-              linkedModule: 'stakeholders',
-              linkedRecordId: selectedStakeholder?.id,
-              linkType: 'stakeholder_document',
-            } }}
+            ], acceptedTypes: ['application/pdf', 'image/png', 'image/jpeg', 'image/webp'], maxSizeMB: 20 }}
             onValidationError={(fields) => setToast({ type: 'warning', title: 'Eksik Zorunlu Alan', message: fields.join(', ') })}
           />
         </div>

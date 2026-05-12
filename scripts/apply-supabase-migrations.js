@@ -38,6 +38,7 @@ const migrationFiles = [
   '20260511_document_file_thumbnails.sql',
   '20260512_employee_diploma_document.sql',
   '20260512_backfill_company_document_thumbnails.sql',
+  '20260512_remove_document_registry_tables.sql',
   'create_module_licenses.sql',
   'add_employee_unique_constraint.sql',
 ];

@@ -637,13 +637,6 @@ export default function OrtaklarPage() {
               ],
               acceptedTypes: ['application/pdf', 'image/png', 'image/jpeg', 'image/webp'],
               maxSizeMB: 20,
-              registry: {
-                enabled: true,
-                companyId: selectedPartner?.company_id || selectedPartner?.sirket_id,
-                linkedModule: 'partners',
-                linkedRecordId: selectedPartner?.id,
-                linkType: 'partner_document',
-              },
             }}
             onValidationError={(fields) => setToast({
               type: 'warning',

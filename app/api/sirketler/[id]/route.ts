@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { z } from 'zod'
-import { syncCompanyDocuments } from '@/lib/modules/companies/companyDocuments'
 
 const SirketUpdateSchema = z.object({
   ticari_unvan: z.string().min(1).max(300).optional(),
@@ -66,7 +65,6 @@ export async function GET(
       *,
       ortaklar:sirket_ortaklar(*),
       temsilciler:sirket_temsilciler(*),
-      dokumanlar:sirket_dokumanlar(*),
       logolar:sirket_logolar(*),
       public_tax:company_public_tax(*),
       public_sgk:company_public_sgk(*),
@@ -83,14 +81,6 @@ export async function GET(
       return NextResponse.json({ error: 'Şirket bulunamadı', code: 'COMPANY_NOT_FOUND' }, { status: 404 })
     }
     return NextResponse.json({ error: error.message, code: error.code || 'FETCH_FAILED' }, { status: 500 })
-  }
-
-  const heroDocuments = Array.isArray(data.hero_documents) && data.hero_documents.length > 0
-    ? data.hero_documents
-    : normalizeLegacyDocuments(data.dokumanlar)
-
-  if (heroDocuments.length > 0) {
-    data.hero_documents = heroDocuments
   }
 
   return NextResponse.json({ data })
@@ -140,14 +130,6 @@ export async function PATCH(
       return NextResponse.json({ error: 'Şirket bulunamadı', code: 'COMPANY_NOT_FOUND' }, { status: 404 })
     }
     return NextResponse.json({ error: error.message, code: error.code || 'UPDATE_FAILED' }, { status: 500 })
-  }
-
-  if (companyUpdates.hero_documents) {
-    const documentSync = await syncCompanyDocuments(supabase, id, companyUpdates.hero_documents)
-    if (documentSync.error) return NextResponse.json({ error: documentSync.error.message, code: documentSync.error.code || 'DOCUMENT_SAVE_FAILED' }, { status: 500 })
-    if (documentSync.documents.length > 0) {
-      await supabase.from('sirketler').update({ hero_documents: documentSync.documents }).eq('id', id)
-    }
   }
 
   if (ortaklar) {
@@ -211,33 +193,6 @@ function buildFieldHistory(current: Record<string, any>, updates: Record<string,
   })
 
   return nextHistory
-}
-
-function normalizeLegacyDocuments(documents: unknown) {
-  if (!Array.isArray(documents)) return []
-  return documents.map((document: any) => ({
-    slotId: normalizeCompanyDocumentType(document.dokuman_turu),
-    name: document.dosya_adi || 'Belge',
-    size: 0,
-    type: inferDocumentType(document.dosya_adi, document.dosya_url),
-    url: document.dosya_url || '',
-    previewUrl: document.dosya_url || '',
-    thumbnailUrl: document.thumbnail_url || document.preview_thumb_url || '',
-    uploadedAt: document.yuklenme_tarihi || document.created_at,
-  })).filter(document => document.url)
-}
-
-function normalizeCompanyDocumentType(value: unknown) {
-  const allowed = new Set(['vergi_levhasi', 'ticaret_sicil', 'imza_sirkuleri', 'faaliyet_belgesi', 'diger'])
-  const text = String(value || '')
-  return allowed.has(text) ? text : 'diger'
-}
-
-function inferDocumentType(fileName?: string, url?: string) {
-  const text = `${fileName || ''} ${url || ''}`.toLocaleLowerCase('tr-TR')
-  if (text.includes('data:image/') || /\.(png|jpe?g|webp)$/i.test(text)) return 'image/jpeg'
-  if (text.includes('pdf') || text.includes('application/pdf')) return 'application/pdf'
-  return 'application/octet-stream'
 }
 
 async function replaceCompanyPartners(supabase: ReturnType<typeof createServiceClient>, sirketId: string, partners: Record<string, any>[]) {

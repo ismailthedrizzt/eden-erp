@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { z } from 'zod'
-import { syncCompanyDocuments } from '@/lib/modules/companies/companyDocuments'
 
 const SirketSchema = z.object({
   organization_id: z.string().uuid().optional().nullable(),
@@ -114,12 +113,6 @@ export async function POST(request: NextRequest) {
     .single()
 
   if (error) return NextResponse.json({ error: error.message, code: error.code || 'CREATE_FAILED' }, { status: 500 })
-
-  const documentSync = await syncCompanyDocuments(supabase, data.id, companyData.hero_documents || [])
-  if (documentSync.error) return NextResponse.json({ error: documentSync.error.message, code: documentSync.error.code || 'DOCUMENT_SAVE_FAILED' }, { status: 500 })
-  if (documentSync.documents.length > 0) {
-    await supabase.from('sirketler').update({ hero_documents: documentSync.documents }).eq('id', data.id)
-  }
 
   const partnerError = await replaceCompanyPartners(supabase, data.id, ortaklar || [])
   if (partnerError) return NextResponse.json({ error: partnerError.message, code: partnerError.code || 'PARTNER_SAVE_FAILED' }, { status: 500 })

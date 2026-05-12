@@ -262,19 +262,9 @@ async function attachPartnerIdentity(supabase: ReturnType<typeof createServiceCl
 }
 
 async function linkPartnerRegistryAssets(supabase: ReturnType<typeof createServiceClient>, partner: Record<string, any>) {
-  const docs = Array.isArray(partner.partner_documents) ? partner.partner_documents : []
   const images = Array.isArray(partner.photo_logo) ? partner.photo_logo : []
 
   await Promise.all([
-    ...docs
-      .filter((doc: Record<string, any>) => doc.documentId || doc.document_id)
-      .map((doc: Record<string, any>) => supabase.from('document_links').insert({
-        document_id: doc.documentId || doc.document_id,
-        linked_module: 'partners',
-        linked_record_id: partner.id,
-        link_type: doc.linkType || doc.link_type || 'partner_document',
-        notes: 'Master kimlikten ortak kaydına bağlandı',
-      })),
     ...images
       .filter((image: Record<string, any>) => image.mediaAssetId || image.media_asset_id)
       .map((image: Record<string, any>) => supabase.from('media_assets').update({

@@ -367,13 +367,6 @@ function VehicleForm({
               readOnly={readOnly}
               allowExtraSlots
               aiBadge={{ label: 'Belge Takibi', title: 'Sigorta, muayene ve bakım belgeleri ileride otomasyonlara bağlanabilir.' }}
-              registry={{
-                enabled: true,
-                companyId: formData.company_id || undefined,
-                linkedModule: 'vehicles',
-                linkedRecordId: formData.id?.startsWith('new-') ? undefined : formData.id,
-                linkType: 'vehicle_document',
-              }}
             />
           </Card>
         </div>

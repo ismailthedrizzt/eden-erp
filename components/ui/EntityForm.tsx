@@ -308,8 +308,6 @@ function normalizeStoredDocuments(value: unknown, fallbackSlotId = 'cv'): SlotDo
 function serializeDocumentForStorage(doc: SlotDocument) {
   return {
     slotId: doc.slotId,
-    documentId: doc.documentId,
-    documentLinkId: doc.documentLinkId,
     name: doc.name,
     size: doc.size,
     type: doc.type,
@@ -1889,7 +1887,6 @@ export function EntityForm({
                     onChange={handleDocumentsChange}
                     readOnly={isReadOnly || isIdentityGateLocked}
                     aiBadge={documentSlot.aiBadge}
-                    registry={documentSlot.registry}
                   />
                   {!documentSlot.dataField && cvExtractStatus.type !== 'idle' && (
                     <p className={cn(

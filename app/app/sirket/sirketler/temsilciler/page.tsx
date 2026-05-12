@@ -543,14 +543,6 @@ export default function TemsilcilerPage() {
               ],
               acceptedTypes: ['application/pdf', 'image/png', 'image/jpeg', 'image/webp'],
               maxSizeMB: 20,
-              registry: {
-                enabled: true,
-                companyId: selectedRepresentative?.company_id || selectedRepresentative?.sirket_id,
-                documentType: 'İmza Sirküleri',
-                linkedModule: 'representatives',
-                linkedRecordId: selectedRepresentative?.id,
-                linkType: 'authority_basis',
-              },
             }}
             onValidationError={(fields) => setToast({
               type: 'warning',

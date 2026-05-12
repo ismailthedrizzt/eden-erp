@@ -599,13 +599,6 @@ export default function SirketlerPage() {
               ],
               acceptedTypes: ['application/pdf', 'image/png', 'image/jpeg', 'image/webp'],
               maxSizeMB: 20,
-              registry: {
-                enabled: !!selectedSirket?.id,
-                companyId: selectedSirket?.id,
-                linkedModule: 'companies',
-                linkedRecordId: selectedSirket?.id,
-                linkType: 'company_document',
-              },
             }}
             onValidationError={(fields) => setToast({
               type: 'warning',
