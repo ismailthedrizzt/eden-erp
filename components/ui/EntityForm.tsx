@@ -250,6 +250,38 @@ function formatHistoryValue(value: unknown): string {
   }
 }
 
+function buildChangedPayload(nextData: Record<string, any>, previousData: Record<string, any>) {
+  return Object.fromEntries(
+    Object.entries(nextData).filter(([key, value]) => !areFormValuesEqual(value, previousData[key]))
+  )
+}
+
+function areFormValuesEqual(nextValue: unknown, previousValue: unknown) {
+  return stableStringifyForDiff(nextValue) === stableStringifyForDiff(previousValue)
+}
+
+function stableStringifyForDiff(value: unknown): string {
+  return JSON.stringify(normalizeForDiff(value))
+}
+
+function normalizeForDiff(value: unknown): unknown {
+  if (value instanceof Date) return value.toISOString()
+  if (Array.isArray(value)) return value.map(normalizeForDiff)
+  if (!value || typeof value !== 'object') return value === undefined ? null : value
+
+  const entries = Object.entries(value as Record<string, unknown>)
+    .filter(([key, item]) =>
+      item !== undefined &&
+      typeof item !== 'function' &&
+      key !== 'file' &&
+      key !== 'uploadedAt' &&
+      key !== 'uploaded_at'
+    )
+    .sort(([a], [b]) => a.localeCompare(b))
+
+  return Object.fromEntries(entries.map(([key, item]) => [key, normalizeForDiff(item)]))
+}
+
 function readFileAsDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
@@ -1629,9 +1661,14 @@ export function EntityForm({
     const finalizedData = finalizeFormDataForSave(formData)
     setFormData(finalizedData)
     if (!validate(finalizedData)) return
+    const payload = isEdit && data ? buildChangedPayload(finalizedData, data) : finalizedData
+    if (isEdit && Object.keys(payload).length === 0) {
+      handleModeChange('view')
+      return
+    }
     
     try {
-      await onSave(finalizedData, mode)
+      await onSave(payload, mode)
       if (isCreate) {
         setFormData({})
       }
