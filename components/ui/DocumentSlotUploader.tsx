@@ -470,8 +470,6 @@ export function DocumentSlotUploader({
   const currentAcceptedTypes = currentSlot?.acceptedTypes || DEFAULT_DOCUMENT_ACCEPTED_TYPES
   const currentDocType = getEffectiveDocumentType(currentDoc)
   const canPreviewCurrentDoc = canInlinePreview(currentDoc, currentDocUrl)
-  const fallbackThumbnailUrl = currentDoc ? generateFallbackDocumentThumbnail(getFileTypeConfig(currentDocType).label, currentDoc.name) : ''
-  const visibleThumbnailUrl = currentDocThumbnailUrl || fallbackThumbnailUrl
 
   useEffect(() => {
     const docsNeedingSignedUrl = documents.filter(doc =>
@@ -765,6 +763,25 @@ export function DocumentSlotUploader({
   // Get file type config for current document
   const fileConfig = currentDoc ? getFileTypeConfig(currentDocType) : null
   const FileIcon = fileConfig?.icon || FileText
+  const documentFallback = currentDoc ? (
+    <div className="flex h-full min-h-36 w-full flex-col items-center justify-center gap-2 rounded border border-gray-200 bg-white p-3 text-center shadow-sm dark:border-gray-700 dark:bg-gray-900">
+      <div className={cn(
+        "flex h-16 w-16 items-center justify-center rounded-lg",
+        fileConfig?.bgColor || 'bg-gray-100'
+      )}>
+        <FileIcon size={34} className={cn(fileConfig?.color || 'text-gray-600')} />
+      </div>
+      <span className={cn(
+        "text-xs font-semibold",
+        fileConfig?.color || 'text-gray-600'
+      )}>
+        {fileConfig?.label || 'FILE'}
+      </span>
+      <span className="max-w-[140px] truncate text-[10px] text-gray-500 dark:text-gray-400">
+        {currentDoc.name}
+      </span>
+    </div>
+  ) : null
 
   return (
     <div 
@@ -834,45 +851,17 @@ export function DocumentSlotUploader({
         >
           {hasDocument ? (
             // Uploaded State
-            <div className="flex-1 flex flex-col p-3 group">
+            <div className="relative flex-1 flex flex-col p-3 group">
               {/* File Preview / Thumbnail */}
               <div className="flex-1 flex items-center justify-center">
-                {visibleThumbnailUrl ? (
+                {currentDocThumbnailUrl ? (
                   <img
-                    src={visibleThumbnailUrl}
+                    src={currentDocThumbnailUrl}
                     alt={currentDoc.name}
                     className="h-full min-h-36 w-full rounded border border-gray-200 object-cover object-top shadow-sm dark:border-gray-700"
                   />
-                ) : canPreviewCurrentDoc ? (
-                  <div className="h-full min-h-36 w-full overflow-hidden rounded border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-900">
-                    <object
-                      data={`${currentDocUrl}#page=1&toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
-                      type="application/pdf"
-                      title={`${currentDoc.name} preview`}
-                      className="h-full w-full"
-                    >
-                      <iframe
-                        src={`${currentDocUrl}#page=1&toolbar=0&navpanes=0&scrollbar=0&view=FitH`}
-                        title={`${currentDoc.name} preview`}
-                        className="h-full w-full border-0"
-                      />
-                    </object>
-                  </div>
                 ) : (
-                  <div className={cn(
-                    "h-28 w-full rounded-lg flex flex-col items-center justify-center gap-1",
-                    fileConfig?.bgColor || 'bg-gray-100'
-                  )}>
-                    <FileIcon size={34} className={cn(
-                      fileConfig?.color || 'text-gray-600'
-                    )} />
-                    <span className={cn(
-                      "text-[8px] font-semibold",
-                      fileConfig?.color || 'text-gray-600'
-                    )}>
-                      {fileConfig?.label || 'FILE'}
-                    </span>
-                  </div>
+                  documentFallback
                 )}
               </div>
 
@@ -888,7 +877,7 @@ export function DocumentSlotUploader({
               
               {/* Hover Actions Overlay */}
               {(
-                <div className="absolute inset-0 bg-white/95 dark:bg-gray-800/95 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
+                <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-2 bg-white/95 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 dark:bg-gray-800/95">
                   {!currentDocUrl && currentDoc?.storagePath && (
                     <div className="rounded-md bg-gray-100 px-2 py-1 text-[10px] font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-300">
                       Bağlantı hazırlanıyor
@@ -918,7 +907,7 @@ export function DocumentSlotUploader({
                       type="button"
                       onClick={handleDownload}
                       disabled={!currentDocUrl}
-                      className="p-2.5 bg-green-100 dark:bg-green-900/30 rounded-lg hover:bg-green-200 dark:hover:bg-green-900/50 transition-colors"
+                      className="p-2.5 bg-green-100 dark:bg-green-900/30 rounded-lg hover:bg-green-200 dark:hover:bg-green-900/50 transition-colors disabled:cursor-not-allowed disabled:opacity-45"
                       title="Download"
                     >
                       <Download size={18} className="text-green-600" />
@@ -935,16 +924,6 @@ export function DocumentSlotUploader({
                     )}
                   </div>
                 </div>
-              )}
-              
-              {/* Read-only View Button */}
-              {readOnly && canPreviewCurrentDoc && (
-                <button
-                  onClick={() => setPreviewDoc(currentDoc || null)}
-                  className="absolute inset-0 flex items-center justify-center bg-black/0 hover:bg-black/40 transition-colors group/view"
-                >
-                  <Eye size={28} className="text-white opacity-0 transition-opacity group-hover/view:opacity-100" />
-                </button>
               )}
             </div>
           ) : currentSlot.id === '__extra__' && showExtraSlotInput ? (
