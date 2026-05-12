@@ -59,6 +59,25 @@ export async function syncCompanyDocuments(
       if (updateResult.error && !isMissingRegistryTableError(updateResult.error)) {
         return { documents, error: updateResult.error }
       }
+
+      if (normalized.fileUrl || normalized.thumbnailUrl) {
+        const fileUpdate: Record<string, any> = {}
+        if (normalized.fileUrl) fileUpdate.storage_path = normalized.fileUrl
+        if (normalized.fileName) fileUpdate.file_name = normalized.fileName
+        if (normalized.mimeType) fileUpdate.mime_type = normalized.mimeType
+        if (normalized.fileSize) fileUpdate.file_size = normalized.fileSize
+        if (normalized.thumbnailUrl) fileUpdate.thumbnail_url = normalized.thumbnailUrl
+
+        const fileUpdateResult = await supabase
+          .from('document_files')
+          .update(fileUpdate)
+          .eq('document_id', documentId)
+          .eq('is_current_version', true)
+
+        if (fileUpdateResult.error && !isMissingRegistryTableError(fileUpdateResult.error) && !fileUpdateResult.error.message?.includes('thumbnail_url')) {
+          return { documents, error: fileUpdateResult.error }
+        }
+      }
     }
 
     let documentLinkId = normalized.documentLinkId

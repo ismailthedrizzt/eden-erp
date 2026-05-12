@@ -459,9 +459,7 @@ export function DocumentSlotUploader({
   const currentSlot = displaySlots[currentIndex]
   const currentDoc = documents.find(doc => doc.slotId === currentSlot.id)
   const currentDocKey = currentDoc ? currentDoc.documentId || `${currentDoc.slotId}:${currentDoc.name}:${currentDoc.size}` : ''
-  const currentDocUrl = currentDoc?.documentId
-    ? signedPreviewUrls[currentDoc.documentId] || getDocumentUrl(currentDoc)
-    : getDocumentUrl(currentDoc)
+  const currentDocUrl = getDocumentUrl(currentDoc) || (currentDoc?.documentId ? signedPreviewUrls[currentDoc.documentId] : '')
   const currentDocThumbnailUrl = currentDoc?.thumbnailUrl || (currentDocKey ? generatedThumbnails[currentDocKey] : '') || getDocumentThumbnailUrl(currentDoc, currentDoc?.documentId ? signedPreviewUrls[currentDoc.documentId] : undefined)
   const hasDocument = !!currentDoc
   const currentAcceptedTypes = currentSlot?.acceptedTypes || DEFAULT_DOCUMENT_ACCEPTED_TYPES
@@ -542,7 +540,7 @@ export function DocumentSlotUploader({
   useEffect(() => {
     const docsNeedingThumbnail = documents.filter(doc => {
       const key = doc.documentId || `${doc.slotId}:${doc.name}:${doc.size}`
-      const url = doc.documentId ? signedPreviewUrls[doc.documentId] : doc.url || doc.previewUrl
+      const url = doc.url || doc.previewUrl || (doc.documentId ? signedPreviewUrls[doc.documentId] : '')
       return !doc.thumbnailUrl && !generatedThumbnails[key] && url && (isPdfDocument(doc) || isTextDocument(doc))
     })
     if (docsNeedingThumbnail.length === 0) return
@@ -550,7 +548,7 @@ export function DocumentSlotUploader({
     let cancelled = false
     Promise.all(docsNeedingThumbnail.map(async doc => {
       const key = doc.documentId || `${doc.slotId}:${doc.name}:${doc.size}`
-      const url = doc.documentId ? signedPreviewUrls[doc.documentId] : doc.url || doc.previewUrl || ''
+      const url = doc.url || doc.previewUrl || (doc.documentId ? signedPreviewUrls[doc.documentId] : '') || ''
       try {
         if (isPdfDocument(doc)) return [key, await generatePdfThumbnail(url)] as const
         const response = await fetch(url)
@@ -582,7 +580,7 @@ export function DocumentSlotUploader({
       return
     }
 
-    const previewDocUrl = previewDoc.documentId ? signedPreviewUrls[previewDoc.documentId] || getDocumentUrl(previewDoc) : getDocumentUrl(previewDoc)
+    const previewDocUrl = getDocumentUrl(previewDoc) || (previewDoc.documentId ? signedPreviewUrls[previewDoc.documentId] : '')
     if (!isTextDocument(previewDoc) && !isDocxDocument(previewDoc)) {
       setPreviewText({ loading: false, content: '', error: '' })
       return
@@ -774,9 +772,7 @@ export function DocumentSlotUploader({
     if (!currentDoc?.file && !currentDoc?.url && !currentDoc?.documentId) return
     
     // Create download link
-    const url = currentDoc.documentId
-      ? signedPreviewUrls[currentDoc.documentId] || currentDoc.url || ''
-      : currentDoc.url || (currentDoc.file ? URL.createObjectURL(currentDoc.file) : '')
+    const url = getDocumentUrl(currentDoc) || (currentDoc.documentId ? signedPreviewUrls[currentDoc.documentId] : '')
     if (url) {
       const link = document.createElement('a')
       link.href = url
@@ -1172,7 +1168,7 @@ export function DocumentSlotUploader({
       {/* Preview Modal */}
       {previewDoc && (
         (() => {
-          const previewDocUrl = previewDoc.documentId ? signedPreviewUrls[previewDoc.documentId] || getDocumentUrl(previewDoc) : getDocumentUrl(previewDoc)
+          const previewDocUrl = getDocumentUrl(previewDoc) || (previewDoc.documentId ? signedPreviewUrls[previewDoc.documentId] : '')
           const previewConfig = getFileTypeConfig(getEffectiveDocumentType(previewDoc))
           const PreviewIcon = previewConfig.icon
           const canPreviewInline = canInlinePreview(previewDoc, previewDocUrl)
