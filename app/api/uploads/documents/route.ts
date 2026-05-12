@@ -47,9 +47,34 @@ export async function POST(request: NextRequest) {
 }
 
 function safePathPart(value: string) {
-  return value.replace(/[^a-zA-Z0-9_-]+/g, '_').replace(/^_+|_+$/g, '') || 'document'
+  return toAsciiSafe(value).replace(/[^a-zA-Z0-9_-]+/g, '_').replace(/^_+|_+$/g, '') || 'document'
 }
 
 function safeFileName(value: string) {
-  return value.replace(/[\\/:*?"<>|]+/g, '_').replace(/\s+/g, '_') || 'document'
+  const normalized = toAsciiSafe(value)
+  const cleaned = normalized
+    .replace(/[\\/:*?"<>|]+/g, '_')
+    .replace(/[^a-zA-Z0-9._-]+/g, '_')
+    .replace(/_+/g, '_')
+    .replace(/^_+|_+$/g, '')
+
+  return cleaned || 'document'
+}
+
+function toAsciiSafe(value: string) {
+  return value
+    .replace(/İ/g, 'I')
+    .replace(/ı/g, 'i')
+    .replace(/Ş/g, 'S')
+    .replace(/ş/g, 's')
+    .replace(/Ğ/g, 'G')
+    .replace(/ğ/g, 'g')
+    .replace(/Ü/g, 'U')
+    .replace(/ü/g, 'u')
+    .replace(/Ö/g, 'O')
+    .replace(/ö/g, 'o')
+    .replace(/Ç/g, 'C')
+    .replace(/ç/g, 'c')
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '')
 }
