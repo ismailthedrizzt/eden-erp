@@ -494,7 +494,8 @@ export default function PersonelYonetimPage() {
             showMasterSummaryBadge={false}
             masterSummaryTitleAsField
             masterSummaryMode="personIdentity"
-            showResolvedMasterHeroFields
+            hideRoleHeroFields
+            showEmptyRoleHeroState={false}
             saving={saving}
             deleting={deleting}
             error={formError}

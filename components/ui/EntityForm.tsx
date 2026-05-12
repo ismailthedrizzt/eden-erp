@@ -141,6 +141,8 @@ export interface EntityFormProps {
   masterSummaryTitleAsField?: boolean
   masterSummaryMode?: 'default' | 'personIdentity'
   showResolvedMasterHeroFields?: boolean
+  hideRoleHeroFields?: boolean
+  showEmptyRoleHeroState?: boolean
   
   /** Image slot configuration for default hero left panel */
   imageSlot?: {
@@ -260,19 +262,21 @@ function formatHistoryValue(value: unknown): string {
 function MasterSummaryHero({
   result,
   locked,
+  sourceData = {},
   showBadge = true,
   titleAsField = false,
   mode = 'default',
 }: {
   result: IdentityGateResolveResult | null
   locked: boolean
+  sourceData?: Record<string, any>
   showBadge?: boolean
   titleAsField?: boolean
   mode?: 'default' | 'personIdentity'
 }) {
   const kind = result?.entityKind
   const master = result?.masterRecord || null
-  const prefill = result?.prefill || {}
+  const prefill = { ...(result?.prefill || {}), ...sourceData }
   const Icon = kind === 'organization' ? Building2 : UserRound
   const title = kind === 'organization'
     ? readFirst(master, prefill, ['legal_name', 'ticari_unvan', 'trade_name', 'display_name', 'short_name', 'kisa_unvan'])
@@ -293,6 +297,8 @@ function MasterSummaryHero({
           { label: 'Doğum Tarihi', value: readFirst(master, prefill, ['birth_date', 'dogum_tarihi']) },
           { label: 'Doğum Yeri', value: readFirst(master, prefill, ['birth_place', 'dogum_yeri']) },
           { label: 'Cinsiyet', value: formatGender(readFirst(master, prefill, ['gender', 'cinsiyet'])) },
+          { label: 'Mesleği', value: readFirst(master, prefill, ['occupation', 'profession', 'meslek', 'gorev']) },
+          { label: 'Kan Grubu', value: readFirst(master, prefill, ['blood_type', 'kan_grubu']) },
         ])
     : compactSummaryItems([
         ...(titleAsField ? [{ label: 'Ad Soyad', value: title }] : []),
@@ -1379,6 +1385,8 @@ export function EntityForm({
   masterSummaryTitleAsField = false,
   masterSummaryMode = 'default',
   showResolvedMasterHeroFields = false,
+  hideRoleHeroFields = false,
+  showEmptyRoleHeroState = true,
   imageSlot = { title: 'Fotoğraf', required: false },
   documentSlot = { title: 'CV', required: false },
   onSave,
@@ -1562,9 +1570,11 @@ export function EntityForm({
   const isIdentityGateLocked = isIdentityGateEnabled && isCreate && !isIdentityGateReady
   const masterControlledFields = new Set(Object.keys(effectiveIdentityGateResult?.prefill || {}).filter(key => key !== 'person_id' && key !== 'organization_id'))
   const shouldHideResolvedMasterHeroFields = isIdentityGateEnabled && !!effectiveIdentityGateResult?.masterFound && !showResolvedMasterHeroFields
-  const roleHeroFields = shouldHideResolvedMasterHeroFields
-    ? heroFields.filter(field => !isMasterIdentityHeroField(field))
-    : heroFields
+  const roleHeroFields = hideRoleHeroFields
+    ? []
+    : shouldHideResolvedMasterHeroFields
+      ? heroFields.filter(field => !isMasterIdentityHeroField(field))
+      : heroFields
   const allFormFields = [
     ...flattenFields(roleHeroFields),
     ...tabs.flatMap(tab => flattenFields(tab.fields))
@@ -2276,6 +2286,7 @@ export function EntityForm({
                 <MasterSummaryHero
                   result={effectiveIdentityGateResult}
                   locked={isIdentityGateLocked}
+                  sourceData={formData}
                   showBadge={showMasterSummaryBadge}
                   titleAsField={masterSummaryTitleAsField}
                   mode={masterSummaryMode}
@@ -2286,11 +2297,11 @@ export function EntityForm({
                   {fieldErrors.identity_gate}
                 </div>
               )}
-              {roleHeroFields.length > 0 ? roleHeroFields.map(field => renderField(field, enableHistory)) : (
+              {roleHeroFields.length > 0 ? roleHeroFields.map(field => renderField(field, enableHistory)) : showEmptyRoleHeroState ? (
                 <div className="col-span-2 lg:col-span-3 rounded-lg border border-dashed border-gray-200 bg-white/70 px-3 py-2 text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-900/50 dark:text-gray-400">
                   Bu formda hero alaninda manuel girilecek rol alani yok. Rol detaylari sekmelerde yonetilir.
                 </div>
-              )}
+              ) : null}
             </div>
 
             {/* Form Action Area - Bottom Right */}
