@@ -533,7 +533,7 @@ function normalizeStakeholderForForm(stakeholder: StakeholderRow) {
   return {
     ...profile,
     ...stakeholder,
-    stakeholder_type: profile.stakeholder_type || stakeholder.stakeholder_type || 'gercek_kisi',
+    stakeholder_type: normalizeStakeholderEntityType(profile.stakeholder_type || stakeholder.stakeholder_type),
     first_name: masterFields.first_name || '',
     last_name: masterFields.last_name || '',
     trade_name: masterFields.trade_name || masterFields.legal_name || '',
@@ -545,6 +545,12 @@ function normalizeStakeholderForForm(stakeholder: StakeholderRow) {
     timeline: stakeholder.history || [],
     field_history: buildEntityFieldHistory(stakeholder.history || []),
   }
+}
+
+function normalizeStakeholderEntityType(value: unknown): 'gercek_kisi' | 'tuzel_kisi' {
+  const text = String(value || '').toLocaleLowerCase('tr-TR')
+  if (['tuzel_kisi', 'tüzel_kisi', 'sirket', 'şirket', 'organization'].includes(text)) return 'tuzel_kisi'
+  return 'gercek_kisi'
 }
 
 function normalizePayload(raw: Record<string, any>, companies: Option[], current?: Record<string, any>) {

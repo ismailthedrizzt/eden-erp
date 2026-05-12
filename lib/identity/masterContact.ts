@@ -9,6 +9,8 @@ const PERSON_MASTER_METADATA_KEY = 'person_master'
 const ORGANIZATION_MASTER_METADATA_KEY = 'organization_master'
 
 const PERSON_MASTER_PROFILE_KEYS = [
+  'photo_logo',
+  'fotograf_url',
   'engellilik',
   'engellilik_yuzdesi',
   'askerlik_durumu',
@@ -23,6 +25,11 @@ const PERSON_MASTER_PROFILE_KEYS = [
   'yakinlar',
   'iban',
   'bank_name',
+  'occupation',
+  'profession',
+  'meslek',
+  'blood_type',
+  'kan_grubu',
 ]
 
 const ORGANIZATION_MASTER_PROFILE_KEYS = [
@@ -128,10 +135,11 @@ export function mergeMasterContactIntoRole(role: Record<string, any>, master: Re
   const contact = readContactMetadata(master)
   const telefonlar = normalizePhones({ telefonlar: contact.telefonlar, phone: master.phone })
   const epostalar = normalizeEmails({ epostalar: contact.epostalar, email: master.email })
-  const emergency = kind === 'person' && contact.acil_kisi && typeof contact.acil_kisi === 'object' ? contact.acil_kisi : {}
-  const photoLogo: Array<Record<string, any>> = normalizeMasterImages(master, kind, undefined)
   const personMaster = kind === 'person' ? readPersonMasterMetadata(master) : {}
   const organizationMaster = kind === 'organization' ? readOrganizationMasterMetadata(master) : {}
+  const emergency = kind === 'person' && contact.acil_kisi && typeof contact.acil_kisi === 'object' ? contact.acil_kisi : {}
+  const masterWithMetadata = kind === 'person' ? { ...master, ...personMaster } : { ...master, ...organizationMaster }
+  const photoLogo: Array<Record<string, any>> = normalizeMasterImages(masterWithMetadata, kind, undefined)
 
   return {
     ...role,
@@ -340,11 +348,15 @@ function readOrganizationMasterMetadata(master: Record<string, any>) {
 }
 
 function normalizePersonMasterPayload(source: Record<string, any>) {
-  return Object.fromEntries(
+  const payload = Object.fromEntries(
     PERSON_MASTER_PROFILE_KEYS
       .filter(key => Object.prototype.hasOwnProperty.call(source, key))
       .map(key => [key, source[key] ?? null])
   )
+  if (Object.prototype.hasOwnProperty.call(source, 'photo_logo') || Object.prototype.hasOwnProperty.call(source, 'fotograf_url')) {
+    payload.photo_logo = normalizeMasterImages(source, 'person', undefined)
+  }
+  return payload
 }
 
 function normalizeOrganizationMasterPayload(source: Record<string, any>) {

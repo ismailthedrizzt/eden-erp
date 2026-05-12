@@ -678,7 +678,7 @@ function normalizeRepresentativeForForm(representative: RepresentativeRow) {
     ...profile,
     ...representative,
     company_id: (representative as any).company_id || representative.sirket_id,
-    person_or_entity_type: profile.person_or_entity_type || representative.person_kind || 'gercek_kisi',
+    person_or_entity_type: normalizeRepresentativeEntityType(profile.person_or_entity_type || representative.person_kind),
     first_name: masterFields.first_name || '',
     last_name: masterFields.last_name || '',
     trade_name: masterFields.trade_name || masterFields.legal_name || '',
@@ -697,6 +697,12 @@ function normalizeRepresentativeForForm(representative: RepresentativeRow) {
     timeline: representative.history || [],
     field_history: buildEntityFieldHistory(representative.history || []),
   }
+}
+
+function normalizeRepresentativeEntityType(value: unknown): 'gercek_kisi' | 'tuzel_kisi' {
+  const text = String(value || '').toLocaleLowerCase('tr-TR')
+  if (['tuzel_kisi', 'tüzel_kisi', 'sirket', 'şirket', 'organization'].includes(text)) return 'tuzel_kisi'
+  return 'gercek_kisi'
 }
 
 function normalizePayload(raw: Record<string, any>, companies: Option[], current?: Record<string, any>) {

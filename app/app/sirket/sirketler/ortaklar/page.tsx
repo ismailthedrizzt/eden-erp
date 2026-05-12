@@ -894,7 +894,7 @@ function normalizePartnerForForm(partner: PartnerRow) {
     telefonlar?: Array<Record<string, any>>
     epostalar?: Array<Record<string, any>>
   }
-  const partnerType = profile.partner_type || partner.owner_kind || (partner.ortak_tipi === 'sirket' ? 'tuzel_kisi' : 'gercek_kisi')
+  const partnerType = normalizePartnerType(profile.partner_type || partner.owner_kind || partner.ortak_tipi)
   const identityNumber = partner.identity_number || partner.tckn_vkn || ''
   const telefonlar = Array.isArray(masterFields.telefonlar) ? masterFields.telefonlar : []
   const epostalar = Array.isArray(masterFields.epostalar) ? masterFields.epostalar : []
@@ -923,6 +923,12 @@ function normalizePartnerForForm(partner: PartnerRow) {
     },
     field_history: buildEntityFieldHistory(partner.history || []),
   }
+}
+
+function normalizePartnerType(value: unknown): 'gercek_kisi' | 'tuzel_kisi' {
+  const text = String(value || '').toLocaleLowerCase('tr-TR')
+  if (['tuzel_kisi', 'tüzel_kisi', 'sirket', 'şirket', 'organization'].includes(text)) return 'tuzel_kisi'
+  return 'gercek_kisi'
 }
 
 function normalizePayload(raw: Record<string, any>, companies: Option[]) {

@@ -183,6 +183,9 @@ async function hydratePartnerMasterAssets(supabase: ReturnType<typeof createServ
         : []
 
     const documents = hasDocuments ? partner.partner_documents : normalizeEmployeeDocuments(employee || {})
+    if (photoLogo.length) {
+      await promotePersonPhotoToMaster(supabase, partner.person_id, photoLogo)
+    }
     return {
       ...partner,
       photo_logo: photoLogo,
@@ -196,6 +199,35 @@ async function hydratePartnerMasterAssets(supabase: ReturnType<typeof createServ
   }
 
   return partner
+}
+
+async function promotePersonPhotoToMaster(
+  supabase: ReturnType<typeof createServiceClient>,
+  personId: string,
+  photoLogo: Record<string, any>[]
+) {
+  const { data: person } = await supabase
+    .from('persons')
+    .select('metadata_json')
+    .eq('id', personId)
+    .maybeSingle()
+
+  const metadata = person?.metadata_json && typeof person.metadata_json === 'object' ? person.metadata_json : {}
+  const personMaster = metadata.person_master && typeof metadata.person_master === 'object' ? metadata.person_master : {}
+  if (Array.isArray(personMaster.photo_logo) && personMaster.photo_logo.length) return
+
+  await supabase
+    .from('persons')
+    .update({
+      metadata_json: {
+        ...metadata,
+        person_master: {
+          ...personMaster,
+          photo_logo: photoLogo,
+        },
+      },
+    })
+    .eq('id', personId)
 }
 
 function normalizeEmployeeDocuments(employee: Record<string, any>) {

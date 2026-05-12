@@ -324,7 +324,7 @@ function MasterSummaryHero({
           { label: 'Doğum Tarihi', value: readFirst(master, prefill, ['birth_date', 'dogum_tarihi']), fieldKeys: ['birth_date', 'dogum_tarihi'], inputType: 'date' as const },
           { label: 'Doğum Yeri', value: readFirst(master, prefill, ['birth_place', 'dogum_yeri']), fieldKeys: ['birth_place', 'dogum_yeri'] },
           { label: 'Cinsiyet', value: readFirst(master, prefill, ['gender', 'cinsiyet']), fieldKeys: ['gender', 'cinsiyet'], inputType: 'select' as const, options: [{ value: 'erkek', label: 'Erkek' }, { value: 'kadin', label: 'Kadın' }] },
-          { label: 'Mesleği', value: readFirst(master, prefill, ['occupation', 'profession', 'meslek', 'gorev']), fieldKeys: ['occupation', 'profession', 'meslek', 'gorev'] },
+          { label: 'Mesleği', value: readFirst(master, prefill, ['occupation', 'profession', 'meslek']), fieldKeys: ['occupation', 'profession', 'meslek'] },
           { label: 'Kan Grubu', value: readFirst(master, prefill, ['blood_type', 'kan_grubu']), fieldKeys: ['blood_type', 'kan_grubu'], inputType: 'select' as const, options: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', '0+', '0-'].map(value => ({ value, label: value })) },
         ]
     : compactSummaryItems([
@@ -401,7 +401,11 @@ function formatAddress(master: Record<string, any> | null, prefill: Record<strin
   return [address, district, city].filter(Boolean).join(', ')
 }
 
-function formatSummaryValue(value: unknown) {
+function formatSummaryValue(value: unknown, item?: MasterSummaryItem) {
+  if (item?.inputType === 'select' && item.options?.length) {
+    const normalized = normalizeSummarySelectValue(value, item.options)
+    return item.options.find(option => option.value === normalized)?.label || String(value || '')
+  }
   if (isDateLikeValue(value)) return formatDateForDisplay(value)
   if (Array.isArray(value)) return value.length ? `${value.length} kayit` : ''
   if (value && typeof value === 'object') return 'Kayitli'
@@ -424,7 +428,7 @@ function MasterSummaryItemValue({
   const inputClass = "mt-1 w-full rounded-md border border-emerald-100 bg-white px-2 py-1.5 text-sm text-gray-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 dark:border-emerald-900/50 dark:bg-gray-950 dark:text-white"
 
   if (!canEdit) {
-    return <div className="mt-0.5 truncate text-sm text-gray-900 dark:text-white">{formatSummaryValue(item.value)}</div>
+    return <div className="mt-0.5 truncate text-sm text-gray-900 dark:text-white">{formatSummaryValue(item.value, item)}</div>
   }
 
   if (item.inputType === 'select') {
@@ -584,6 +588,10 @@ const MASTER_IDENTITY_FIELD_NAMES = new Set([
   'last_name',
   'full_name',
   'display_name',
+  'person_or_entity_type',
+  'person_kind',
+  'partner_type',
+  'stakeholder_type',
   'trade_name',
   'legal_name',
   'ticari_unvan',
@@ -609,6 +617,11 @@ const MASTER_IDENTITY_FIELD_NAMES = new Set([
   'birth_place',
   'cinsiyet',
   'gender',
+  'occupation',
+  'profession',
+  'meslek',
+  'blood_type',
+  'kan_grubu',
   'vergi_dairesi',
   'tax_office',
   'sirket_turu',
@@ -1100,11 +1113,11 @@ function ListField({
         <label className="flex items-center gap-2 rounded-lg border border-gray-200 dark:border-gray-700 px-3 py-2 text-sm text-gray-700 dark:text-gray-300">
           <input
             type="checkbox"
-            checked={!!draft[name]}
-            onChange={(event) => setDraftValue(name, event.target.checked)}
-            disabled={itemDisabled}
-            className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-          />
+                checked={!!draft[name]}
+                onChange={(event) => setDraftValue(name, event.target.checked)}
+                disabled={itemDisabled}
+                className="h-4 w-4 rounded border-gray-400 bg-white text-blue-600 accent-blue-600 focus:ring-2 focus:ring-blue-500/30 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-600 dark:bg-gray-900 dark:accent-blue-500"
+              />
           {item.label}
         </label>
       )
@@ -1701,7 +1714,6 @@ export function EntityForm({
   const effectiveIdentityGateResult = identityGateResult || buildIdentityResultFromExistingData(identityGate, formData)
   const isIdentityGateReady = !isIdentityGateEnabled || !isCreate || effectiveIdentityGateResult?.state === 'ready_for_insert' || effectiveIdentityGateResult?.state === 'ready_for_edit'
   const isIdentityGateLocked = isIdentityGateEnabled && isCreate && !isIdentityGateReady
-  const masterControlledFields = new Set(Object.keys(effectiveIdentityGateResult?.prefill || {}).filter(key => key !== 'person_id' && key !== 'organization_id'))
   const shouldHideResolvedMasterHeroFields = isIdentityGateEnabled && !!effectiveIdentityGateResult?.masterFound && !showResolvedMasterHeroFields
   const roleHeroFields = hideRoleHeroFields
     ? []
@@ -2174,14 +2186,11 @@ export function EntityForm({
                 checked={!!formData[field.name]}
                 onChange={(e) => handleChange(field.name, e.target.checked)}
                 disabled={fieldDisabled}
-                className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                className="h-4 w-4 rounded border-gray-400 bg-white text-blue-600 accent-blue-600 focus:ring-2 focus:ring-blue-500/30 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-600 dark:bg-gray-900 dark:accent-blue-500"
               />
               {checkboxHasStatusLabel ? (
-                <span className="flex flex-1 items-center justify-between gap-2">
-                  <span>{field.label}</span>
-                  <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700 dark:bg-gray-800 dark:text-gray-200">
-                    {formData[field.name] ? 'Var' : 'Yok'}
-                  </span>
+                <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700 dark:bg-gray-800 dark:text-gray-200">
+                  {formData[field.name] ? 'Var' : 'Yok'}
                 </span>
               ) : (
                 field.placeholder || field.label
@@ -2320,11 +2329,6 @@ export function EntityForm({
           </label>
           {(showHistoryIcon || enableHistory) && field.history && field.history.length > 0 && (
             <FieldHistoryIndicator history={field.history} />
-          )}
-          {masterControlledFields.has(field.name) && (
-            <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-medium text-blue-700 dark:bg-blue-950/50 dark:text-blue-300">
-              Master kayıttan geldi
-            </span>
           )}
         </div>
         {validationState.label && (
