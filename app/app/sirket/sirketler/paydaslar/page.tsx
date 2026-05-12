@@ -82,28 +82,12 @@ const columns: ColumnDef[] = [
 
 const heroFields: FormField[] = [
   {
-    name: 'stakeholder_type',
-    label: 'Paydaş Türü',
-    type: 'select',
-    defaultValue: 'gercek_kisi',
-    options: [
-      { value: 'gercek_kisi', label: 'Gerçek Kişi' },
-      { value: 'tuzel_kisi', label: 'Tüzel Kişi' },
-    ],
-  },
-  { name: 'first_name', label: 'Ad', type: 'text', required: true, visibleWhen: { field: 'stakeholder_type', operator: 'equals', value: 'gercek_kisi' } },
-  { name: 'last_name', label: 'Soyad', type: 'text', required: true, visibleWhen: { field: 'stakeholder_type', operator: 'equals', value: 'gercek_kisi' } },
-  { name: 'trade_name', label: 'Ticari Unvan', type: 'text', required: true, visibleWhen: { field: 'stakeholder_type', operator: 'equals', value: 'tuzel_kisi' } },
-  { name: 'short_name', label: 'Kısa Unvan', type: 'text', visibleWhen: { field: 'stakeholder_type', operator: 'equals', value: 'tuzel_kisi' } },
-  {
     name: 'category',
     label: 'Paydaş Kategorisi',
     type: 'select',
     required: true,
     options: CATEGORY_OPTIONS.map(item => ({ value: item, label: item })),
   },
-  { name: 'phone', label: 'Telefon', type: 'tel', requiredGroup: 'stakeholder_contact' },
-  { name: 'email', label: 'Email', type: 'email', requiredGroup: 'stakeholder_contact' },
   { name: 'city', label: 'Şehir', type: 'text' },
   {
     name: 'status',
@@ -119,18 +103,6 @@ const heroFields: FormField[] = [
     ],
   },
   { name: 'relationship_start_date', label: 'Şirketle İlişki Başlangıcı', type: 'date', required: true },
-  {
-    name: 'priority_level',
-    label: 'Öncelik Seviyesi',
-    type: 'select',
-    options: [
-      { value: 'Düşük', label: 'Düşük' },
-      { value: 'Orta', label: 'Orta' },
-      { value: 'Yüksek', label: 'Yüksek' },
-      { value: 'Kritik', label: 'Kritik' },
-    ],
-  },
-  { name: 'internal_owner_name', label: 'Sorumlu İç Kişi', type: 'text' },
 ]
 
 const tabs: FormTab[] = [
@@ -353,7 +325,7 @@ export default function PaydaslarPage() {
       visibleWhen: { field: 'stakeholder_type', operator: 'equals', value: 'tuzel_kisi' },
       websiteField: 'web_sitesi',
     }),
-    ...tabs.filter(tab => !['genel', 'iletisim'].includes(tab.id)),
+    ...tabs.filter(tab => !['genel', 'iletisim', 'finans', 'yetkiler'].includes(tab.id)),
   ]
 
   const withFieldHistory = (field: FormField) => {

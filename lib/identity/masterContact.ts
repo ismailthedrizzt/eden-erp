@@ -339,7 +339,7 @@ async function enrichPersonMasterFromEmployee(supabase: SupabaseClient, master: 
     sertifikalar: employee.sertifikalar,
     medeni_durum: employee.medeni_durum,
     marital_status: employee.medeni_durum,
-    yakinlar: employee.yakinlar,
+    yakinlar: normalizeRelatives(employee.yakinlar),
     iban: employee.iban,
     occupation: employee.occupation || employee.profession || employee.meslek,
     profession: employee.profession || employee.meslek,
@@ -393,6 +393,9 @@ function readPersonMasterMetadata(master: Record<string, any>) {
   return {
     ...directProfile,
     ...(personMaster && typeof personMaster === 'object' ? personMaster : {}),
+    ...('yakinlar' in directProfile || (personMaster && typeof personMaster === 'object' && 'yakinlar' in personMaster)
+      ? { yakinlar: normalizeRelatives((personMaster && typeof personMaster === 'object' ? personMaster.yakinlar : undefined) || directProfile.yakinlar) }
+      : {}),
   }
 }
 
@@ -408,10 +411,39 @@ function normalizePersonMasterPayload(source: Record<string, any>) {
       .filter(key => Object.prototype.hasOwnProperty.call(source, key))
       .map(key => [key, source[key] ?? null])
   )
+  if (Object.prototype.hasOwnProperty.call(source, 'yakinlar')) {
+    payload.yakinlar = normalizeRelatives(source.yakinlar)
+  }
   if (Object.prototype.hasOwnProperty.call(source, 'photo_logo') || Object.prototype.hasOwnProperty.call(source, 'fotograf_url')) {
     payload.photo_logo = normalizeMasterImages(source, 'person', undefined)
   }
   return payload
+}
+
+function normalizeRelatives(value: unknown) {
+  if (!Array.isArray(value)) return []
+
+  return value
+    .filter((item): item is Record<string, any> => !!item && typeof item === 'object')
+    .map(item => {
+      const adSoyad = clean(
+        item.ad_soyad ||
+        item.full_name ||
+        item.display_name ||
+        item.name ||
+        [item.ad, item.soyad].filter(Boolean).join(' ')
+      )
+      const akrabalikBicimi = clean(item.akrabalik_bicimi || item.yakinlik || item.relationship)
+
+      return {
+        ...item,
+        ad_soyad: adSoyad || null,
+        dogum_tarihi: clean(item.dogum_tarihi || item.birth_date) || null,
+        akrabalik_bicimi: akrabalikBicimi || null,
+        ...(item.ad === undefined && adSoyad ? { ad: adSoyad } : {}),
+        ...(item.yakinlik === undefined && akrabalikBicimi ? { yakinlik: akrabalikBicimi } : {}),
+      }
+    })
 }
 
 function normalizeOrganizationMasterPayload(source: Record<string, any>) {
