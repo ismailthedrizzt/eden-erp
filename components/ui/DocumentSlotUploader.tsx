@@ -321,31 +321,35 @@ async function generatePdfThumbnail(source: File | string) {
 }
 
 function generateFallbackDocumentThumbnail(label: string, title = 'Belge') {
-  const canvas = document.createElement('canvas')
-  canvas.width = 360
-  canvas.height = 510
-  const context = canvas.getContext('2d')
-  if (!context) return ''
+  const safeLabel = escapeSvgText(label || 'FILE')
+  const safeTitle = escapeSvgText((title || 'Belge').slice(0, 28))
+  const accent = label === 'PDF' ? '#dc2626' : label === 'TXT' ? '#2563eb' : '#4b5563'
+  const lines = Array.from({ length: 9 }, (_, index) => {
+    const width = 244 - (index % 3) * 26
+    const y = 285 + index * 18
+    return `<rect x="58" y="${y}" width="${width}" height="7" rx="3.5" fill="#d1d5db"/>`
+  }).join('')
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="360" height="510" viewBox="0 0 360 510">
+      <rect width="360" height="510" fill="#ffffff"/>
+      <rect x="18" y="18" width="324" height="474" rx="8" fill="none" stroke="#e5e7eb" stroke-width="2"/>
+      <rect x="52" y="72" width="256" height="118" rx="10" fill="${accent}"/>
+      <text x="180" y="148" text-anchor="middle" font-family="Arial, sans-serif" font-size="54" font-weight="700" fill="#ffffff">${safeLabel}</text>
+      <text x="180" y="238" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" font-weight="700" fill="#111827">${safeTitle}</text>
+      ${lines}
+    </svg>
+  `.trim()
 
-  context.fillStyle = '#ffffff'
-  context.fillRect(0, 0, canvas.width, canvas.height)
-  context.strokeStyle = '#e5e7eb'
-  context.lineWidth = 2
-  context.strokeRect(18, 18, canvas.width - 36, canvas.height - 36)
-  context.fillStyle = label === 'PDF' ? '#dc2626' : '#2563eb'
-  context.fillRect(52, 72, 256, 118)
-  context.fillStyle = '#ffffff'
-  context.font = 'bold 54px Arial, sans-serif'
-  context.textAlign = 'center'
-  context.fillText(label, 180, 148)
-  context.fillStyle = '#111827'
-  context.font = 'bold 20px Arial, sans-serif'
-  context.fillText(title.slice(0, 24), 180, 238)
-  context.fillStyle = '#9ca3af'
-  for (let index = 0; index < 9; index += 1) {
-    context.fillRect(58, 285 + index * 18, 244 - (index % 3) * 26, 7)
-  }
-  return canvas.toDataURL('image/jpeg', 0.82)
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`
+}
+
+function escapeSvgText(value: string) {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;')
 }
 
 function generateTextThumbnail(text: string, title = 'Belge') {
@@ -471,6 +475,21 @@ export function DocumentSlotUploader({
   const currentDocType = getEffectiveDocumentType(currentDoc)
   const canPreviewCurrentDoc = canInlinePreview(currentDoc, currentDocUrl)
   const hasVisualThumbnail = Boolean(currentDocThumbnailUrl)
+
+  useEffect(() => {
+    const nextDocuments = documents.map(doc => {
+      if (doc.thumbnailUrl || isImageDocument(doc)) return doc
+      const label = isPdfDocument(doc) ? 'PDF' : isTextDocument(doc) ? 'TXT' : getFileTypeConfig(getEffectiveDocumentType(doc)).label
+      return {
+        ...doc,
+        thumbnailUrl: generateFallbackDocumentThumbnail(label, doc.name),
+      }
+    })
+
+    if (nextDocuments.some((doc, index) => doc !== documents[index])) {
+      onChange(nextDocuments)
+    }
+  }, [documents, onChange])
 
   useEffect(() => {
     const docsNeedingSignedUrl = documents.filter(doc =>
@@ -640,13 +659,11 @@ export function DocumentSlotUploader({
     // Complete upload simulation
     setTimeout(async () => {
       try {
-        const [preview, uploaded] = await Promise.all([
-          createDocumentPreviewMetadata(file).catch(() => ({ url: '', thumbnailUrl: undefined })),
-          uploadDocumentFile(file, currentSlot.id),
-        ])
+        const uploaded = await uploadDocumentFile(file, currentSlot.id)
         clearInterval(progressInterval)
         setUploadProgress(100)
-        const thumbnailUrl = file.type.startsWith('image/') ? uploaded.url : preview.thumbnailUrl
+        const fallbackThumbnail = generateFallbackDocumentThumbnail(getFileTypeConfig(file.type).label, file.name)
+        const thumbnailUrl = file.type.startsWith('image/') ? uploaded.url : fallbackThumbnail
       
         const newDoc: SlotDocument = {
           slotId: currentSlot.id,
