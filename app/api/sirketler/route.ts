@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { z } from 'zod'
+import { syncCompanyDocuments } from '@/lib/modules/companies/companyDocuments'
 
 const SirketSchema = z.object({
   organization_id: z.string().uuid().optional().nullable(),
@@ -114,8 +115,11 @@ export async function POST(request: NextRequest) {
 
   if (error) return NextResponse.json({ error: error.message, code: error.code || 'CREATE_FAILED' }, { status: 500 })
 
-  const documentError = await replaceCompanyDocuments(supabase, data.id, companyData.hero_documents || [])
-  if (documentError) return NextResponse.json({ error: documentError.message, code: documentError.code || 'DOCUMENT_SAVE_FAILED' }, { status: 500 })
+  const documentSync = await syncCompanyDocuments(supabase, data.id, companyData.hero_documents || [])
+  if (documentSync.error) return NextResponse.json({ error: documentSync.error.message, code: documentSync.error.code || 'DOCUMENT_SAVE_FAILED' }, { status: 500 })
+  if (documentSync.documents.length > 0) {
+    await supabase.from('sirketler').update({ hero_documents: documentSync.documents }).eq('id', data.id)
+  }
 
   const partnerError = await replaceCompanyPartners(supabase, data.id, ortaklar || [])
   if (partnerError) return NextResponse.json({ error: partnerError.message, code: partnerError.code || 'PARTNER_SAVE_FAILED' }, { status: 500 })
@@ -226,46 +230,6 @@ function cleanPublicRow(row: Record<string, any>) {
         return [key, value]
       })
   )
-}
-
-async function replaceCompanyDocuments(supabase: ReturnType<typeof createServiceClient>, sirketId: string, documents: Record<string, any>[]) {
-  const { error: deleteError } = await supabase
-    .from('sirket_dokumanlar')
-    .delete()
-    .eq('sirket_id', sirketId)
-
-  if (deleteError) return deleteError
-
-  const rows = documents
-    .map(document => mapCompanyDocumentForDb(sirketId, document))
-    .filter((document): document is NonNullable<ReturnType<typeof mapCompanyDocumentForDb>> => Boolean(document))
-
-  if (rows.length === 0) return null
-
-  const { error } = await supabase
-    .from('sirket_dokumanlar')
-    .insert(rows)
-
-  return error
-}
-
-function mapCompanyDocumentForDb(sirketId: string, document: Record<string, any>) {
-  const fileName = document.name || document.fileName || document.file_name || document.title || document.slotTitle
-  const fileUrl = document.url || document.previewUrl || document.preview_url || document.signedUrl || document.signed_url || document.file_url || document.download_url
-  if (!fileName || !fileUrl) return null
-
-  return {
-    sirket_id: sirketId,
-    dokuman_turu: normalizeCompanyDocumentType(document.slotId || document.slot_id || document.dokuman_turu),
-    dosya_adi: String(fileName),
-    dosya_url: String(fileUrl),
-  }
-}
-
-function normalizeCompanyDocumentType(value: unknown) {
-  const allowed = new Set(['vergi_levhasi', 'ticaret_sicil', 'imza_sirkuleri', 'faaliyet_belgesi', 'diger'])
-  const text = String(value || '')
-  return allowed.has(text) ? text : 'diger'
 }
 
 async function replaceCompanyPartners(supabase: ReturnType<typeof createServiceClient>, sirketId: string, partners: Record<string, any>[]) {

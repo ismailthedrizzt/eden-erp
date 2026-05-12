@@ -35,6 +35,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   const { data: file, error: fileError } = await fileQuery.single()
   if (fileError) return NextResponse.json({ error: fileError.message, code: fileError.code || 'FILE_NOT_FOUND' }, { status: 404 })
 
+  if (typeof file.storage_path === 'string' && file.storage_path.startsWith('data:')) {
+    return NextResponse.json({ signedUrl: file.storage_path })
+  }
+
   const { data, error } = await supabase.storage
     .from(DOCUMENT_STORAGE_BUCKET)
     .createSignedUrl(file.storage_path, 300, { download: parsed.success ? parsed.data.download : false })
