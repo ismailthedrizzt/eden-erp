@@ -3,6 +3,10 @@
 import { useEffect, useState } from 'react'
 import { Download, RefreshCw, WifiOff, X } from 'lucide-react'
 
+const APP_CACHE_VERSION = '2026-05-12-document-uploader-v3'
+const APP_CACHE_VERSION_KEY = 'eden-app-cache-version'
+const APP_RELOAD_ONCE_KEY = 'eden-sw-controller-reload'
+
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>
@@ -23,7 +27,33 @@ export function PWAStatus() {
       event.preventDefault()
       setInstallPrompt(event as BeforeInstallPromptEvent)
     }
-    const handleControllerChange = () => setUpdateReady(true)
+    const handleControllerChange = () => {
+      setUpdateReady(true)
+      if (sessionStorage.getItem(APP_RELOAD_ONCE_KEY) === APP_CACHE_VERSION) return
+      sessionStorage.setItem(APP_RELOAD_ONCE_KEY, APP_CACHE_VERSION)
+      window.location.reload()
+    }
+
+    async function refreshServiceWorker() {
+      if (!('serviceWorker' in navigator)) return
+
+      const registrations = await navigator.serviceWorker.getRegistrations()
+      await Promise.all(registrations.map(registration => registration.update().catch(() => undefined)))
+
+      const currentVersion = localStorage.getItem(APP_CACHE_VERSION_KEY)
+      if (currentVersion === APP_CACHE_VERSION) return
+
+      localStorage.setItem(APP_CACHE_VERSION_KEY, APP_CACHE_VERSION)
+      if ('caches' in window) {
+        const keys = await caches.keys()
+        await Promise.all(keys.map(key => caches.delete(key)))
+      }
+
+      if (navigator.serviceWorker.controller && sessionStorage.getItem(APP_RELOAD_ONCE_KEY) !== APP_CACHE_VERSION) {
+        sessionStorage.setItem(APP_RELOAD_ONCE_KEY, APP_CACHE_VERSION)
+        window.location.reload()
+      }
+    }
 
     window.addEventListener('online', handleOnline)
     window.addEventListener('offline', handleOffline)
@@ -31,6 +61,7 @@ export function PWAStatus() {
 
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.addEventListener('controllerchange', handleControllerChange)
+      refreshServiceWorker().catch(() => undefined)
     }
 
     return () => {
