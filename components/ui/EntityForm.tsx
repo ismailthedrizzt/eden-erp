@@ -304,6 +304,7 @@ function normalizeStoredDocuments(value: unknown, fallbackSlotId = 'cv'): SlotDo
 
 function serializeDocumentForStorage(doc: SlotDocument) {
   const url = doc.url || doc.previewUrl
+  const thumbnailUrl = doc.thumbnailUrl && isPersistableThumbnailUrl(doc.thumbnailUrl) ? doc.thumbnailUrl : undefined
   return {
     slotId: doc.slotId,
     storagePath: doc.storagePath,
@@ -312,8 +313,13 @@ function serializeDocumentForStorage(doc: SlotDocument) {
     type: doc.type,
     uploadedAt: doc.uploadedAt?.toISOString?.() || new Date().toISOString(),
     url: doc.storagePath || !url || url.startsWith('blob:') || url.startsWith('data:') ? undefined : url,
-    thumbnailUrl: doc.thumbnailUrl
+    thumbnailUrl
   }
+}
+
+function isPersistableThumbnailUrl(value: string) {
+  if (!value.startsWith('data:')) return true
+  return value.startsWith('data:image/svg+xml')
 }
 
 async function uploadDocumentFile(document: SlotDocument) {

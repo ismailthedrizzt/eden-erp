@@ -646,6 +646,7 @@ export function DocumentSlotUploader({
         clearInterval(progressInterval)
         setUploadProgress(100)
         const fallbackThumbnail = generateFallbackDocumentThumbnail(getFileTypeConfig(file.type).label, file.name)
+        const thumbnailUrl = file.type.startsWith('image/') ? uploaded.url : fallbackThumbnail
       
         const newDoc: SlotDocument = {
           slotId: currentSlot.id,
@@ -656,7 +657,7 @@ export function DocumentSlotUploader({
           uploadedAt: new Date(),
           url: uploaded.url,
           previewUrl: uploaded.url,
-          thumbnailUrl: preview.thumbnailUrl || (file.type.startsWith('image/') ? uploaded.url : fallbackThumbnail),
+          thumbnailUrl,
         }
 
         const updatedDocs = documents.filter(doc => doc.slotId !== currentSlot.id)
