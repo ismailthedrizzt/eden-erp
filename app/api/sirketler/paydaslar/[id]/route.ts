@@ -92,7 +92,7 @@ function mapStakeholderForDb(stakeholder: Record<string, any>, current?: Record<
     company_id: stakeholder.company_id || current?.company_id || null,
     stakeholder_type: stakeholder.stakeholder_type || current?.stakeholder_type || 'gercek_kisi',
     category: stakeholder.category || current?.category,
-    display_name: stakeholder.display_name || current?.display_name,
+    display_name: stakeholder.display_name || buildDisplayName(stakeholder, current) || current?.display_name,
     tax_id: stakeholder.tax_id || null,
     phone: stakeholder.phone || stakeholder.phone_1 || null,
     email: stakeholder.email || stakeholder.email_1 || null,
@@ -112,4 +112,11 @@ function mapStakeholderForDb(stakeholder: Record<string, any>, current?: Record<
     stakeholder_documents: stakeholder.stakeholder_documents || current?.stakeholder_documents || [],
     stakeholder_profile: stakeholder,
   }
+}
+
+function buildDisplayName(source: Record<string, any>, current?: Record<string, any>) {
+  const kind = source.stakeholder_type || current?.stakeholder_type
+  return kind === 'tuzel_kisi'
+    ? source.trade_name || source.short_name || ''
+    : [source.first_name ?? current?.first_name, source.last_name ?? current?.last_name].filter(Boolean).join(' ').trim()
 }

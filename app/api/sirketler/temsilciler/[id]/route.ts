@@ -142,14 +142,14 @@ function mapRepresentativeForDb(representative: Record<string, any>, current?: R
   return {
     company_id: representative.company_id || representative.sirket_id || current?.company_id || current?.sirket_id,
     sirket_id: representative.company_id || representative.sirket_id || current?.company_id || current?.sirket_id,
-    ad_soyad: representative.display_name || current?.display_name || 'Temsilci',
+    ad_soyad: representative.display_name || buildDisplayName(representative, current) || current?.display_name || 'Temsilci',
     gorev: normalizeAuthorityType(representative.primary_authority_type || current?.gorev) || null,
     yetki_turu: 'diger',
     authority_types: authorityTypes,
     person_kind: representative.person_or_entity_type || current?.person_kind || 'gercek_kisi',
     source_type: representative.source_type || current?.source_type,
     source_id: representative.source_id || current?.source_id,
-    display_name: representative.display_name || current?.display_name,
+    display_name: representative.display_name || buildDisplayName(representative, current) || current?.display_name,
     start_date: representative.start_date || current?.start_date,
     end_date: representative.end_date || null,
     status: representative.status || current?.status || 'Aktif',
@@ -163,4 +163,11 @@ function mapRepresentativeForDb(representative: Record<string, any>, current?: R
     authority_documents: representative.authority_documents || current?.authority_documents || [],
     representative_profile: representative,
   }
+}
+
+function buildDisplayName(source: Record<string, any>, current?: Record<string, any>) {
+  const kind = source.person_or_entity_type || current?.person_kind
+  return kind === 'tuzel_kisi'
+    ? source.trade_name || source.short_name || ''
+    : [source.first_name ?? current?.first_name, source.last_name ?? current?.last_name].filter(Boolean).join(' ').trim()
 }

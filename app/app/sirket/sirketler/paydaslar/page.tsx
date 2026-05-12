@@ -39,7 +39,10 @@ interface StakeholderRow {
 
 const FIELD_LABELS: Record<string, string> = {
   stakeholder_type: 'Paydaş Türü',
-  display_name: 'Ad Soyad / Ünvan',
+  first_name: 'Ad',
+  last_name: 'Soyad',
+  trade_name: 'Ticari Unvan',
+  short_name: 'Kısa Unvan',
   category: 'Paydaş Kategorisi',
   phone: 'Telefon',
   email: 'Email',
@@ -55,6 +58,8 @@ const CATEGORY_OPTIONS = [
   'Ajans',
   'Freelancer',
   'Taşeron',
+  'Distribütör',
+  'Anlaşmalı Üretici',
   'Tedarikçi Temsilcisi',
   'Broker',
   'Resmi Temsilci',
@@ -74,7 +79,20 @@ const columns: ColumnDef[] = [
 ]
 
 const heroFields: FormField[] = [
-  { name: 'display_name', label: 'Ad Soyad / Ticari Ünvan', type: 'text', required: true },
+  {
+    name: 'stakeholder_type',
+    label: 'Paydaş Türü',
+    type: 'select',
+    defaultValue: 'gercek_kisi',
+    options: [
+      { value: 'gercek_kisi', label: 'Gerçek Kişi' },
+      { value: 'tuzel_kisi', label: 'Tüzel Kişi' },
+    ],
+  },
+  { name: 'first_name', label: 'Ad', type: 'text', required: true, visibleWhen: { field: 'stakeholder_type', operator: 'equals', value: 'gercek_kisi' } },
+  { name: 'last_name', label: 'Soyad', type: 'text', required: true, visibleWhen: { field: 'stakeholder_type', operator: 'equals', value: 'gercek_kisi' } },
+  { name: 'trade_name', label: 'Ticari Unvan', type: 'text', required: true, visibleWhen: { field: 'stakeholder_type', operator: 'equals', value: 'tuzel_kisi' } },
+  { name: 'short_name', label: 'Kısa Unvan', type: 'text', visibleWhen: { field: 'stakeholder_type', operator: 'equals', value: 'tuzel_kisi' } },
   {
     name: 'category',
     label: 'Paydaş Kategorisi',
@@ -118,8 +136,20 @@ const tabs: FormTab[] = [
     id: 'genel',
     label: 'Genel',
     fields: [
+      { name: 'birth_place', label: 'Doğum Yeri', type: 'text', visibleWhen: { field: 'stakeholder_type', operator: 'equals', value: 'gercek_kisi' } },
+      {
+        name: 'gender',
+        label: 'Cinsiyet',
+        type: 'select',
+        visibleWhen: { field: 'stakeholder_type', operator: 'equals', value: 'gercek_kisi' },
+        options: [
+          { value: 'erkek', label: 'Erkek' },
+          { value: 'kadin', label: 'Kadın' },
+        ],
+      },
       { name: 'birth_date', label: 'Doğum Tarihi', type: 'date', visibleWhen: { field: 'stakeholder_type', operator: 'equals', value: 'gercek_kisi' } },
       { name: 'occupation', label: 'Meslek', type: 'text', visibleWhen: { field: 'stakeholder_type', operator: 'equals', value: 'gercek_kisi' } },
+      { name: 'marital_status', label: 'Medeni Durum', type: 'text', visibleWhen: { field: 'stakeholder_type', operator: 'equals', value: 'gercek_kisi' } },
       { name: 'expertise_area', label: 'Uzmanlık Alanı', type: 'text', visibleWhen: { field: 'stakeholder_type', operator: 'equals', value: 'gercek_kisi' } },
       { name: 'employer_company', label: 'Çalıştığı Firma', type: 'text', visibleWhen: { field: 'stakeholder_type', operator: 'equals', value: 'gercek_kisi' } },
       { name: 'linkedin', label: 'LinkedIn', type: 'text', visibleWhen: { field: 'stakeholder_type', operator: 'equals', value: 'gercek_kisi' } },
@@ -127,6 +157,7 @@ const tabs: FormTab[] = [
       { name: 'company_type', label: 'Şirket Türü', type: 'text', visibleWhen: { field: 'stakeholder_type', operator: 'equals', value: 'tuzel_kisi' } },
       { name: 'tax_office', label: 'Vergi Dairesi', type: 'text', visibleWhen: { field: 'stakeholder_type', operator: 'equals', value: 'tuzel_kisi' } },
       { name: 'mersis_no', label: 'MERSİS', type: 'text', visibleWhen: { field: 'stakeholder_type', operator: 'equals', value: 'tuzel_kisi' } },
+      { name: 'trade_registry_no', label: 'Ticaret Sicil No', type: 'text', visibleWhen: { field: 'stakeholder_type', operator: 'equals', value: 'tuzel_kisi' } },
       { name: 'website', label: 'Web Sitesi', type: 'text', visibleWhen: { field: 'stakeholder_type', operator: 'equals', value: 'tuzel_kisi' } },
       { name: 'reference_source', label: 'Referans Kaynağı', type: 'text' },
       { name: 'work_model', label: 'Çalışma Şekli', type: 'text' },
@@ -339,7 +370,7 @@ export default function PaydaslarPage() {
     setFormError(null)
     setFieldErrors({})
     try {
-      const payload = normalizePayload(data, companies)
+      const payload = normalizePayload(data, companies, selectedStakeholder || undefined)
       const response = await fetch(mode === 'create' ? '/api/sirketler/paydaslar' : `/api/sirketler/paydaslar/${selectedStakeholder?.id}`, {
         method: mode === 'create' ? 'POST' : 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -474,11 +505,17 @@ function Timeline({ value }: { value: any[] }) {
 
 function normalizeStakeholderForForm(stakeholder: StakeholderRow) {
   const profile = stakeholder.stakeholder_profile || {}
+  const displayName = profile.display_name || stakeholder.display_name || ''
+  const nameParts = String(displayName).trim().split(/\s+/)
   return {
     ...profile,
     ...stakeholder,
     stakeholder_type: profile.stakeholder_type || stakeholder.stakeholder_type || 'gercek_kisi',
-    display_name: profile.display_name || stakeholder.display_name || '',
+    first_name: profile.first_name || (stakeholder as any).first_name || (stakeholder.stakeholder_type === 'tuzel_kisi' ? '' : nameParts.slice(0, -1).join(' ') || displayName),
+    last_name: profile.last_name || (stakeholder as any).last_name || (stakeholder.stakeholder_type === 'tuzel_kisi' ? '' : nameParts.length > 1 ? nameParts.at(-1) : ''),
+    trade_name: profile.trade_name || (stakeholder as any).trade_name || (stakeholder.stakeholder_type === 'tuzel_kisi' ? displayName : ''),
+    short_name: profile.short_name || (stakeholder as any).short_name || '',
+    display_name: displayName,
     phone: profile.phone || stakeholder.phone || '',
     email: profile.email || stakeholder.email || '',
     telefonlar: profile.telefonlar || stakeholder.telefonlar || (stakeholder.phone ? [{ etiket: 'Birincil', numara: stakeholder.phone }] : []),
@@ -489,11 +526,16 @@ function normalizeStakeholderForForm(stakeholder: StakeholderRow) {
   }
 }
 
-function normalizePayload(raw: Record<string, any>, companies: Option[]) {
+function normalizePayload(raw: Record<string, any>, companies: Option[], current?: Record<string, any>) {
   const payload = Object.fromEntries(Object.entries(raw).filter(([, value]) => value !== '' && value !== null && value !== undefined))
-  payload.company_id = payload.company_id || companies[0]?.value
+  const effective = { ...(current || {}), ...payload }
+  payload.company_id = payload.company_id || current?.company_id || companies[0]?.value
   if (payload.master_entity_kind === 'person') payload.stakeholder_type = 'gercek_kisi'
   if (payload.master_entity_kind === 'organization') payload.stakeholder_type = 'tuzel_kisi'
+  payload.stakeholder_type = payload.stakeholder_type || effective.stakeholder_type || 'gercek_kisi'
+  payload.display_name = payload.stakeholder_type === 'tuzel_kisi'
+    ? effective.trade_name || effective.short_name || effective.display_name
+    : [effective.first_name, effective.last_name].filter(Boolean).join(' ').trim() || effective.display_name
   payload.country = payload.country || payload.nationality_country || payload.nationality || 'TR'
   payload.tax_id = payload.tax_id || payload.national_id || payload.tc_kimlik || payload.tax_number || payload.vkn_tckn || payload.passport_no || payload.pasaport_no
   if (Array.isArray(payload.telefonlar) && payload.telefonlar.length && !payload.phone) payload.phone = payload.telefonlar[0]?.numara

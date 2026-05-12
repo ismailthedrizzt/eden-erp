@@ -45,6 +45,19 @@ export function mergeMasterContactIntoRole(role: Record<string, any>, master: Re
 
   return {
     ...role,
+    ...(kind === 'person'
+      ? {
+          first_name: master.first_name || role.first_name || '',
+          last_name: master.last_name || role.last_name || '',
+          full_name: master.full_name || role.full_name || role.display_name || '',
+          display_name: master.full_name || role.display_name || role.ad_soyad || '',
+        }
+      : {
+          trade_name: master.legal_name || role.trade_name || role.display_name || '',
+          legal_name: master.legal_name || role.legal_name || '',
+          short_name: master.short_name || role.short_name || '',
+          display_name: master.legal_name || role.display_name || role.ad_soyad || '',
+        }),
     phone: master.phone || role.phone || role.cep_telefonu || role.telefon || '',
     cep_telefonu: master.phone || role.cep_telefonu || role.phone || '',
     telefon: master.phone || role.telefon || role.phone || '',
@@ -108,28 +121,49 @@ export async function syncMasterContact(supabase: SupabaseClient, kind: EntityKi
   const contact = normalizeContactPayload(source, kind)
   const { data: current } = await supabase
     .from(table)
-    .select('metadata_json')
+    .select('*')
     .eq('id', masterId)
     .maybeSingle()
 
   const metadata = current?.metadata_json && typeof current.metadata_json === 'object' ? current.metadata_json : {}
-  const update: Record<string, any> = {
-    phone: contact.phone,
-    email: contact.email,
-    address: contact.address,
-    city: contact.city,
-    district: contact.district,
-    metadata_json: {
+  const update: Record<string, any> = {}
+  const hasAny = (...keys: string[]) => keys.some(key => Object.prototype.hasOwnProperty.call(source, key))
+
+  if (kind === 'person') {
+    if (hasAny('first_name')) update.first_name = clean(source.first_name) || null
+    if (hasAny('last_name')) update.last_name = clean(source.last_name) || null
+    if (hasAny('display_name', 'full_name', 'first_name', 'last_name')) {
+      update.full_name = clean(source.display_name || source.full_name || [source.first_name ?? current?.first_name, source.last_name ?? current?.last_name].filter(Boolean).join(' ')) || null
+    }
+    if (hasAny('birth_date')) update.birth_date = clean(source.birth_date) || null
+  } else {
+    if (hasAny('trade_name', 'legal_name', 'display_name')) update.legal_name = clean(source.trade_name || source.legal_name || source.display_name) || null
+    if (hasAny('short_name')) update.short_name = clean(source.short_name) || null
+    if (hasAny('tax_number', 'tax_id', 'identity_number')) update.tax_number = clean(source.tax_number || source.tax_id || source.identity_number) || null
+    if (hasAny('tax_office')) update.tax_office = clean(source.tax_office) || null
+    if (hasAny('company_type')) update.organization_type = clean(source.company_type) || null
+    if (hasAny('trade_registry_no', 'mersis_no')) update.registration_number = clean(source.trade_registry_no || source.mersis_no) || null
+  }
+
+  if (hasAny('phone', 'cep_telefonu', 'telefon', 'phone_1', 'telefonlar')) update.phone = contact.phone
+  if (hasAny('email', 'email_1', 'epostalar')) update.email = contact.email
+  if (hasAny('address', 'adres')) update.address = contact.address
+  if (hasAny('city', 'il')) update.city = contact.city
+  if (hasAny('district', 'ilce')) update.district = contact.district
+
+  if (hasAny('telefonlar', 'epostalar', 'acil_kisi_ad', 'acil_kisi_soyad', 'acil_kisi_yakinlik', 'acil_kisi_telefon')) {
+    update.metadata_json = {
       ...metadata,
       [CONTACT_METADATA_KEY]: {
         ...(metadata[CONTACT_METADATA_KEY] || {}),
-        telefonlar: contact.telefonlar,
-        epostalar: contact.epostalar,
-        ...(kind === 'person' ? { acil_kisi: contact.acil_kisi } : {}),
+        ...(hasAny('telefonlar') ? { telefonlar: contact.telefonlar } : {}),
+        ...(hasAny('epostalar') ? { epostalar: contact.epostalar } : {}),
+        ...(kind === 'person' && hasAny('acil_kisi_ad', 'acil_kisi_soyad', 'acil_kisi_yakinlik', 'acil_kisi_telefon') ? { acil_kisi: contact.acil_kisi } : {}),
       },
-    },
+    }
   }
 
+  if (Object.keys(update).length === 0) return
   await supabase.from(table).update(update).eq('id', masterId)
 }
 

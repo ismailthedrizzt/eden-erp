@@ -119,14 +119,14 @@ function mapRepresentativeForDb(representative: Record<string, any>) {
   return {
     company_id: representative.company_id || representative.sirket_id,
     sirket_id: representative.company_id || representative.sirket_id,
-    ad_soyad: representative.display_name || 'Temsilci',
+    ad_soyad: representative.display_name || buildDisplayName(representative) || 'Temsilci',
     gorev: normalizeAuthorityType(representative.primary_authority_type) || null,
     yetki_turu: 'diger',
     authority_types: authorityTypes,
     person_kind: representative.person_or_entity_type,
     source_type: representative.source_type || (representative.person_or_entity_type === 'tuzel_kisi' ? 'master_organization' : 'master_person'),
     source_id: representative.source_id || null,
-    display_name: representative.display_name,
+    display_name: representative.display_name || buildDisplayName(representative),
     start_date: representative.start_date,
     end_date: representative.end_date || null,
     status: representative.status || 'Aktif',
@@ -144,13 +144,19 @@ function mapRepresentativeForDb(representative: Record<string, any>) {
   }
 }
 
+function buildDisplayName(source: Record<string, any>) {
+  return source.person_or_entity_type === 'tuzel_kisi'
+    ? source.trade_name || source.short_name || ''
+    : [source.first_name, source.last_name].filter(Boolean).join(' ').trim()
+}
+
 async function attachRepresentativeIdentity(supabase: ReturnType<typeof createServiceClient>, representative: Record<string, any>, row: Record<string, any>) {
   try {
     const kind = representative.person_or_entity_type === 'tuzel_kisi' ? 'organization' : 'person'
     if (kind === 'person') {
       if (representative.person_id) return { ...row, person_id: representative.person_id, source_id: row.source_id || representative.person_id }
 
-      const fullName = representative.display_name
+      const fullName = representative.display_name || buildDisplayName(representative)
       const nationalId = representative.identity_number && String(representative.identity_number).length === 11 ? String(representative.identity_number) : null
       const passportNo = nationalId ? null : representative.passport_no || representative.identity_number || null
       const nationality = representative.nationality || representative.nationality_country || 'TR'
@@ -161,6 +167,8 @@ async function attachRepresentativeIdentity(supabase: ReturnType<typeof createSe
           : await supabase.from('persons').select('id').eq('full_name', fullName).maybeSingle()
       if (findError) return row
       const personId = existing?.id || (await supabase.from('persons').insert({
+        first_name: representative.first_name || null,
+        last_name: representative.last_name || null,
         full_name: fullName,
         nationality,
         national_id: nationalId,
@@ -175,7 +183,7 @@ async function attachRepresentativeIdentity(supabase: ReturnType<typeof createSe
       return { ...row, person_id: personId || null, source_id: row.source_id || personId || null }
     }
 
-    const legalName = representative.display_name
+    const legalName = representative.trade_name || representative.display_name
     if (representative.organization_id) return { ...row, organization_id: representative.organization_id, source_id: row.source_id || representative.organization_id }
 
     const country = representative.country || representative.nationality_country || 'TR'
@@ -186,8 +194,12 @@ async function attachRepresentativeIdentity(supabase: ReturnType<typeof createSe
     if (findError) return row
     const organizationId = existing?.id || (await supabase.from('organizations').insert({
       legal_name: legalName,
+      short_name: representative.short_name || null,
       country,
       tax_number: taxNumber,
+      tax_office: representative.tax_office || null,
+      organization_type: representative.company_type || null,
+      registration_number: representative.trade_registry_no || representative.mersis_no || null,
       phone: representative.phone || null,
       email: representative.email || null,
       address: representative.address || representative.adres || null,

@@ -188,7 +188,7 @@ const tabs: FormTab[] = [
       { name: 'mersis_no', label: 'MERSİS No', type: 'text' },
       { name: 'ticaret_sicil_no', label: 'Ticaret Sicil No', type: 'text' },
       { name: 'kurulus_tarihi', label: 'Kuruluş Tarihi', type: 'date' },
-      { name: 'electronic_notification_address', label: 'Elektronik Tebligat Adresi', type: 'text', maxLength: 17, inputMode: 'numeric', pattern: '\\d{5}-\\d{5}-\\d{5}', placeholder: '25888-57689-53086' },
+      { name: 'electronic_notification_address', label: 'Elektronik Tebligat Adresi', type: 'text', maxLength: 17, inputMode: 'numeric', pattern: '\\d{5}-\\d{5}-\\d{5}', placeholder: '11111-22222-33333' },
       { name: 'trade_registry_office', label: 'Ticaret Sicili Müdürlüğü', type: 'select', searchable: true },
       { name: 'sirket_kodu', label: 'Şirket Kodu', type: 'text' },
     ],

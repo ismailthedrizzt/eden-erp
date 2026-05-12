@@ -43,6 +43,10 @@ interface RepresentativeRow {
 
 const FIELD_LABELS: Record<string, string> = {
   person_or_entity_type: 'Kişi / Kurum Tipi',
+  first_name: 'Ad',
+  last_name: 'Soyad',
+  trade_name: 'Ticari Unvan',
+  short_name: 'Kısa Unvan',
   primary_authority_type: 'Ana Yetki Tipi',
   start_date: 'Başlangıç Tarihi',
   status: 'Yetki Durumu',
@@ -98,7 +102,20 @@ const columns: ColumnDef[] = [
 ]
 
 const heroFields: FormField[] = [
-  { name: 'display_name', label: 'Ad Soyad / Ticari Ünvan', type: 'text', required: true },
+  {
+    name: 'person_or_entity_type',
+    label: 'Kişi / Kurum Tipi',
+    type: 'select',
+    defaultValue: 'gercek_kisi',
+    options: [
+      { value: 'gercek_kisi', label: 'Gerçek Kişi' },
+      { value: 'tuzel_kisi', label: 'Tüzel Kişi' },
+    ],
+  },
+  { name: 'first_name', label: 'Ad', type: 'text', required: true, visibleWhen: { field: 'person_or_entity_type', operator: 'equals', value: 'gercek_kisi' } },
+  { name: 'last_name', label: 'Soyad', type: 'text', required: true, visibleWhen: { field: 'person_or_entity_type', operator: 'equals', value: 'gercek_kisi' } },
+  { name: 'trade_name', label: 'Ticari Unvan', type: 'text', required: true, visibleWhen: { field: 'person_or_entity_type', operator: 'equals', value: 'tuzel_kisi' } },
+  { name: 'short_name', label: 'Kısa Unvan', type: 'text', visibleWhen: { field: 'person_or_entity_type', operator: 'equals', value: 'tuzel_kisi' } },
   {
     name: 'status',
     label: 'Yetki Durumu',
@@ -159,13 +176,25 @@ const tabs: FormTab[] = [
     id: 'genel',
     label: 'Genel',
     fields: [
-      { name: 'first_name', label: 'Ad', type: 'text', visibleWhen: { field: 'person_or_entity_type', operator: 'equals', value: 'gercek_kisi' } },
-      { name: 'last_name', label: 'Soyad', type: 'text', visibleWhen: { field: 'person_or_entity_type', operator: 'equals', value: 'gercek_kisi' } },
       { name: 'birth_date', label: 'Doğum Tarihi', type: 'date', visibleWhen: { field: 'person_or_entity_type', operator: 'equals', value: 'gercek_kisi' } },
-      { name: 'trade_name', label: 'Ticari Ünvan', type: 'text', visibleWhen: { field: 'person_or_entity_type', operator: 'equals', value: 'tuzel_kisi' } },
-      { name: 'short_name', label: 'Kısa Ünvan', type: 'text', visibleWhen: { field: 'person_or_entity_type', operator: 'equals', value: 'tuzel_kisi' } },
+      { name: 'birth_place', label: 'Doğum Yeri', type: 'text', visibleWhen: { field: 'person_or_entity_type', operator: 'equals', value: 'gercek_kisi' } },
+      {
+        name: 'gender',
+        label: 'Cinsiyet',
+        type: 'select',
+        visibleWhen: { field: 'person_or_entity_type', operator: 'equals', value: 'gercek_kisi' },
+        options: [
+          { value: 'erkek', label: 'Erkek' },
+          { value: 'kadin', label: 'Kadın' },
+        ],
+      },
+      { name: 'occupation', label: 'Meslek', type: 'text', visibleWhen: { field: 'person_or_entity_type', operator: 'equals', value: 'gercek_kisi' } },
+      { name: 'marital_status', label: 'Medeni Durum', type: 'text', visibleWhen: { field: 'person_or_entity_type', operator: 'equals', value: 'gercek_kisi' } },
+      { name: 'foundation_date', label: 'Kuruluş Tarihi', type: 'date', visibleWhen: { field: 'person_or_entity_type', operator: 'equals', value: 'tuzel_kisi' } },
+      { name: 'company_type', label: 'Şirket Türü', type: 'text', visibleWhen: { field: 'person_or_entity_type', operator: 'equals', value: 'tuzel_kisi' } },
       { name: 'tax_office', label: 'Vergi Dairesi', type: 'text', visibleWhen: { field: 'person_or_entity_type', operator: 'equals', value: 'tuzel_kisi' } },
       { name: 'mersis_no', label: 'MERSİS', type: 'text', visibleWhen: { field: 'person_or_entity_type', operator: 'equals', value: 'tuzel_kisi' } },
+      { name: 'trade_registry_no', label: 'Ticaret Sicil No', type: 'text', visibleWhen: { field: 'person_or_entity_type', operator: 'equals', value: 'tuzel_kisi' } },
     ],
   },
   {
@@ -382,7 +411,7 @@ export default function TemsilcilerPage() {
     setFormError(null)
     setFieldErrors({})
     try {
-      const payload = normalizePayload(data, companies)
+      const payload = normalizePayload(data, companies, selectedRepresentative || undefined)
       const response = await fetch(mode === 'create' ? '/api/sirketler/temsilciler' : `/api/sirketler/temsilciler/${selectedRepresentative?.id}`, {
         method: mode === 'create' ? 'POST' : 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -617,12 +646,18 @@ function Timeline({ value }: { value: any[] }) {
 function normalizeRepresentativeForForm(representative: RepresentativeRow) {
   const profile = representative.representative_profile || {}
   const authorityTypes = (profile.authority_types || representative.authority_types || []).map(toAuthorityValue)
+  const displayName = profile.display_name || representative.display_name || representative.ad_soyad || ''
+  const nameParts = String(displayName).trim().split(/\s+/)
   return {
     ...profile,
     ...representative,
-    company_id: representative.sirket_id,
+    company_id: (representative as any).company_id || representative.sirket_id,
     person_or_entity_type: profile.person_or_entity_type || representative.person_kind || 'gercek_kisi',
-    display_name: profile.display_name || representative.display_name || representative.ad_soyad || '',
+    first_name: profile.first_name || (representative as any).first_name || (representative.person_kind === 'tuzel_kisi' ? '' : nameParts.slice(0, -1).join(' ') || displayName),
+    last_name: profile.last_name || (representative as any).last_name || (representative.person_kind === 'tuzel_kisi' ? '' : nameParts.length > 1 ? nameParts.at(-1) : ''),
+    trade_name: profile.trade_name || (representative as any).trade_name || (representative.person_kind === 'tuzel_kisi' ? displayName : ''),
+    short_name: profile.short_name || (representative as any).short_name || '',
+    display_name: displayName,
     primary_authority_type: toAuthorityValue(profile.primary_authority_type || authorityTypes[0] || ''),
     authority_types: authorityTypes,
     status: profile.status || representative.status || 'Aktif',
@@ -638,14 +673,19 @@ function normalizeRepresentativeForForm(representative: RepresentativeRow) {
   }
 }
 
-function normalizePayload(raw: Record<string, any>, companies: Option[]) {
+function normalizePayload(raw: Record<string, any>, companies: Option[], current?: Record<string, any>) {
   const payload = Object.fromEntries(
     Object.entries(raw).filter(([, value]) => value !== '' && value !== null && value !== undefined)
   )
+  const effective = { ...(current || {}), ...payload }
 
-  payload.company_id = payload.company_id || payload.sirket_id || companies[0]?.value
+  payload.company_id = payload.company_id || current?.company_id || current?.sirket_id || payload.sirket_id || companies[0]?.value
   if (payload.master_entity_kind === 'person') payload.person_or_entity_type = 'gercek_kisi'
   if (payload.master_entity_kind === 'organization') payload.person_or_entity_type = 'tuzel_kisi'
+  payload.person_or_entity_type = payload.person_or_entity_type || effective.person_or_entity_type || 'gercek_kisi'
+  payload.display_name = payload.person_or_entity_type === 'tuzel_kisi'
+    ? effective.trade_name || effective.short_name || effective.display_name
+    : [effective.first_name, effective.last_name].filter(Boolean).join(' ').trim() || effective.display_name
   payload.nationality = payload.nationality || payload.nationality_country || payload.country || 'TR'
   payload.country = payload.country || payload.nationality_country || payload.nationality || 'TR'
   payload.identity_number = payload.identity_number || payload.national_id || payload.tc_kimlik || payload.tax_number || payload.vkn_tckn || payload.passport_no || payload.pasaport_no

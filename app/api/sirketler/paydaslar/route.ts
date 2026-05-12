@@ -107,7 +107,7 @@ function mapStakeholderForDb(stakeholder: Record<string, any>) {
     company_id: stakeholder.company_id || null,
     stakeholder_type: stakeholder.stakeholder_type,
     category: stakeholder.category,
-    display_name: stakeholder.display_name,
+    display_name: stakeholder.display_name || buildDisplayName(stakeholder),
     tax_id: stakeholder.tax_id || null,
     phone: stakeholder.phone || stakeholder.phone_1 || null,
     email: stakeholder.email || stakeholder.email_1 || null,
@@ -131,13 +131,19 @@ function mapStakeholderForDb(stakeholder: Record<string, any>) {
   }
 }
 
+function buildDisplayName(source: Record<string, any>) {
+  return source.stakeholder_type === 'tuzel_kisi'
+    ? source.trade_name || source.short_name || ''
+    : [source.first_name, source.last_name].filter(Boolean).join(' ').trim()
+}
+
 async function attachStakeholderIdentity(supabase: ReturnType<typeof createServiceClient>, stakeholder: Record<string, any>, row: Record<string, any>) {
   try {
     const kind = stakeholder.stakeholder_type === 'tuzel_kisi' ? 'organization' : 'person'
     if (kind === 'person') {
       if (stakeholder.person_id) return { ...row, stakeholder_kind: 'person', person_id: stakeholder.person_id }
 
-      const fullName = stakeholder.display_name
+      const fullName = stakeholder.display_name || buildDisplayName(stakeholder)
       const nationalId = stakeholder.tax_id && String(stakeholder.tax_id).length === 11 ? String(stakeholder.tax_id) : null
       const passportNo = nationalId ? null : stakeholder.passport_no || stakeholder.tax_id || null
       const { data: existing, error: findError } = nationalId
@@ -147,6 +153,8 @@ async function attachStakeholderIdentity(supabase: ReturnType<typeof createServi
           : await supabase.from('persons').select('id').eq('full_name', fullName).maybeSingle()
       if (findError) throw new Error(findError.message)
       const personId = existing?.id || (await supabase.from('persons').insert({
+        first_name: stakeholder.first_name || null,
+        last_name: stakeholder.last_name || null,
         full_name: fullName,
         nationality: stakeholder.country || 'TR',
         national_id: nationalId,
@@ -163,7 +171,7 @@ async function attachStakeholderIdentity(supabase: ReturnType<typeof createServi
       return { ...row, stakeholder_kind: 'person', person_id: personId || null }
     }
 
-    const legalName = stakeholder.display_name
+    const legalName = stakeholder.trade_name || stakeholder.display_name
     if (stakeholder.organization_id) return { ...row, stakeholder_kind: 'organization', organization_id: stakeholder.organization_id }
 
     const country = stakeholder.country || 'TR'
@@ -174,6 +182,7 @@ async function attachStakeholderIdentity(supabase: ReturnType<typeof createServi
     if (findError) throw new Error(findError.message)
     const organizationId = existing?.id || (await supabase.from('organizations').insert({
       legal_name: legalName,
+      short_name: stakeholder.short_name || null,
       country,
       tax_number: taxNumber,
       tax_office: stakeholder.tax_office || null,
