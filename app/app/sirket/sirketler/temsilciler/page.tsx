@@ -664,17 +664,25 @@ function Timeline({ value }: { value: any[] }) {
 function normalizeRepresentativeForForm(representative: RepresentativeRow) {
   const profile = representative.representative_profile || {}
   const authorityTypes = (profile.authority_types || representative.authority_types || []).map(toAuthorityValue)
-  const displayName = profile.display_name || representative.display_name || representative.ad_soyad || ''
-  const nameParts = String(displayName).trim().split(/\s+/)
+  const masterFields = representative as RepresentativeRow & {
+    first_name?: string
+    last_name?: string
+    trade_name?: string
+    legal_name?: string
+    short_name?: string
+    telefonlar?: Array<Record<string, any>>
+    epostalar?: Array<Record<string, any>>
+  }
+  const displayName = representative.display_name || representative.ad_soyad || ''
   return {
     ...profile,
     ...representative,
     company_id: (representative as any).company_id || representative.sirket_id,
     person_or_entity_type: profile.person_or_entity_type || representative.person_kind || 'gercek_kisi',
-    first_name: profile.first_name || (representative as any).first_name || (representative.person_kind === 'tuzel_kisi' ? '' : nameParts.slice(0, -1).join(' ') || displayName),
-    last_name: profile.last_name || (representative as any).last_name || (representative.person_kind === 'tuzel_kisi' ? '' : nameParts.length > 1 ? nameParts.at(-1) : ''),
-    trade_name: profile.trade_name || (representative as any).trade_name || (representative.person_kind === 'tuzel_kisi' ? displayName : ''),
-    short_name: profile.short_name || (representative as any).short_name || '',
+    first_name: masterFields.first_name || '',
+    last_name: masterFields.last_name || '',
+    trade_name: masterFields.trade_name || masterFields.legal_name || '',
+    short_name: masterFields.short_name || '',
     display_name: displayName,
     primary_authority_type: toAuthorityValue(profile.primary_authority_type || authorityTypes[0] || ''),
     authority_types: authorityTypes,
@@ -683,8 +691,8 @@ function normalizeRepresentativeForForm(representative: RepresentativeRow) {
     currency: profile.currency || representative.currency || 'TRY',
     photo_logo: representative.photo_logo || [],
     authority_documents: representative.authority_documents || [],
-    telefonlar: profile.telefonlar || representative.telefonlar || (representative.phone ? [{ etiket: 'Birincil', numara: representative.phone }] : []),
-    epostalar: profile.epostalar || representative.epostalar || (representative.email ? [{ etiket: 'Birincil', adres: representative.email }] : []),
+    telefonlar: Array.isArray(masterFields.telefonlar) ? masterFields.telefonlar : [],
+    epostalar: Array.isArray(masterFields.epostalar) ? masterFields.epostalar : [],
     document_summary: representative.authority_documents || [],
     timeline: representative.history || [],
     field_history: buildEntityFieldHistory(representative.history || []),
@@ -708,8 +716,6 @@ function normalizePayload(raw: Record<string, any>, companies: Option[], current
   payload.country = normalizeCountryId(payload.country || payload.nationality_country || payload.nationality || 'TR')
   payload.nationality_country = normalizeCountryId(payload.nationality_country || payload.country || payload.nationality || 'TR')
   payload.identity_number = payload.identity_number || payload.national_id || payload.tc_kimlik || payload.tax_number || payload.vkn_tckn || payload.passport_no || payload.pasaport_no
-  if (Array.isArray(payload.telefonlar) && payload.telefonlar.length && !payload.phone) payload.phone = payload.telefonlar[0]?.numara
-  if (Array.isArray(payload.epostalar) && payload.epostalar.length && !payload.email) payload.email = payload.epostalar[0]?.adres
   payload.primary_authority_type = toAuthorityValue(payload.primary_authority_type || '')
   payload.authority_types = Array.isArray(payload.authority_types) && payload.authority_types.length
     ? payload.authority_types.map(toAuthorityValue)

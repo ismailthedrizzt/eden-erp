@@ -126,10 +126,10 @@ export function mergeMasterContactIntoRole(role: Record<string, any>, master: Re
   if (!master) return role
 
   const contact = readContactMetadata(master)
-  const telefonlar = normalizePhones({ telefonlar: contact.telefonlar || role.telefonlar, phone: master.phone || role.phone || role.cep_telefonu || role.telefon })
-  const epostalar = normalizeEmails({ epostalar: contact.epostalar || role.epostalar, email: master.email || role.email })
+  const telefonlar = normalizePhones({ telefonlar: contact.telefonlar, phone: master.phone })
+  const epostalar = normalizeEmails({ epostalar: contact.epostalar, email: master.email })
   const emergency = kind === 'person' && contact.acil_kisi && typeof contact.acil_kisi === 'object' ? contact.acil_kisi : {}
-  const photoLogo: Array<Record<string, any>> = normalizeMasterImages(master, kind, role.photo_logo)
+  const photoLogo: Array<Record<string, any>> = normalizeMasterImages(master, kind, undefined)
   const personMaster = kind === 'person' ? readPersonMasterMetadata(master) : {}
   const organizationMaster = kind === 'organization' ? readOrganizationMasterMetadata(master) : {}
 
@@ -139,41 +139,41 @@ export function mergeMasterContactIntoRole(role: Record<string, any>, master: Re
     ...organizationMaster,
     ...(kind === 'person'
       ? {
-          first_name: master.first_name || role.first_name || '',
-          last_name: master.last_name || role.last_name || '',
-          full_name: master.full_name || role.full_name || role.display_name || '',
-          display_name: master.full_name || role.display_name || role.ad_soyad || '',
+          first_name: master.first_name || '',
+          last_name: master.last_name || '',
+          full_name: master.full_name || [master.first_name, master.last_name].filter(Boolean).join(' '),
+          display_name: master.full_name || [master.first_name, master.last_name].filter(Boolean).join(' '),
         }
       : {
-          trade_name: master.legal_name || role.trade_name || role.display_name || '',
-          legal_name: master.legal_name || role.legal_name || '',
-          short_name: master.short_name || role.short_name || '',
-          display_name: master.legal_name || role.display_name || role.ad_soyad || '',
+          trade_name: master.legal_name || '',
+          legal_name: master.legal_name || '',
+          short_name: master.short_name || '',
+          display_name: master.legal_name || master.short_name || '',
         }),
-    phone: master.phone || role.phone || role.cep_telefonu || role.telefon || '',
-    cep_telefonu: master.phone || role.cep_telefonu || role.phone || '',
-    telefon: master.phone || role.telefon || role.phone || '',
-    email: master.email || role.email || '',
-    address: master.address || role.address || role.adres || '',
-    adres: master.address || role.adres || role.address || '',
-    city: master.city || role.city || role.il || '',
-    il: master.city || role.il || role.city || '',
-    district: master.district || role.district || role.ilce || '',
-    ilce: master.district || role.ilce || role.district || '',
-    phone_1: telefonlar[0]?.numara || master.phone || role.phone_1 || '',
-    phone_2: telefonlar[1]?.numara || role.phone_2 || '',
-    email_1: epostalar[0]?.adres || master.email || role.email_1 || '',
-    email_2: epostalar[1]?.adres || role.email_2 || '',
+    phone: master.phone || '',
+    cep_telefonu: master.phone || '',
+    telefon: master.phone || '',
+    email: master.email || '',
+    address: master.address || '',
+    adres: master.address || '',
+    city: master.city || '',
+    il: master.city || '',
+    district: master.district || '',
+    ilce: master.district || '',
+    phone_1: telefonlar[0]?.numara || master.phone || '',
+    phone_2: telefonlar[1]?.numara || '',
+    email_1: epostalar[0]?.adres || master.email || '',
+    email_2: epostalar[1]?.adres || '',
     telefonlar,
     epostalar,
     photo_logo: photoLogo,
-    fotograf_url: photoLogo[0]?.previewUrl || photoLogo[0]?.url || role.fotograf_url || '',
+    fotograf_url: photoLogo[0]?.previewUrl || photoLogo[0]?.url || '',
     ...(kind === 'person'
       ? {
-          acil_kisi_ad: emergency.ad || role.acil_kisi_ad || '',
-          acil_kisi_soyad: emergency.soyad || role.acil_kisi_soyad || '',
-          acil_kisi_yakinlik: emergency.yakinlik || role.acil_kisi_yakinlik || '',
-          acil_kisi_telefon: emergency.telefon || role.acil_kisi_telefon || '',
+          acil_kisi_ad: emergency.ad || '',
+          acil_kisi_soyad: emergency.soyad || '',
+          acil_kisi_yakinlik: emergency.yakinlik || '',
+          acil_kisi_telefon: emergency.telefon || '',
         }
       : {}),
   }

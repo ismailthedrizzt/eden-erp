@@ -520,21 +520,27 @@ function Timeline({ value }: { value: any[] }) {
 
 function normalizeStakeholderForForm(stakeholder: StakeholderRow) {
   const profile = stakeholder.stakeholder_profile || {}
-  const displayName = profile.display_name || stakeholder.display_name || ''
-  const nameParts = String(displayName).trim().split(/\s+/)
+  const masterFields = stakeholder as StakeholderRow & {
+    first_name?: string
+    last_name?: string
+    trade_name?: string
+    legal_name?: string
+    short_name?: string
+    telefonlar?: Array<Record<string, any>>
+    epostalar?: Array<Record<string, any>>
+  }
+  const displayName = stakeholder.display_name || ''
   return {
     ...profile,
     ...stakeholder,
     stakeholder_type: profile.stakeholder_type || stakeholder.stakeholder_type || 'gercek_kisi',
-    first_name: profile.first_name || (stakeholder as any).first_name || (stakeholder.stakeholder_type === 'tuzel_kisi' ? '' : nameParts.slice(0, -1).join(' ') || displayName),
-    last_name: profile.last_name || (stakeholder as any).last_name || (stakeholder.stakeholder_type === 'tuzel_kisi' ? '' : nameParts.length > 1 ? nameParts.at(-1) : ''),
-    trade_name: profile.trade_name || (stakeholder as any).trade_name || (stakeholder.stakeholder_type === 'tuzel_kisi' ? displayName : ''),
-    short_name: profile.short_name || (stakeholder as any).short_name || '',
+    first_name: masterFields.first_name || '',
+    last_name: masterFields.last_name || '',
+    trade_name: masterFields.trade_name || masterFields.legal_name || '',
+    short_name: masterFields.short_name || '',
     display_name: displayName,
-    phone: profile.phone || stakeholder.phone || '',
-    email: profile.email || stakeholder.email || '',
-    telefonlar: profile.telefonlar || stakeholder.telefonlar || (stakeholder.phone ? [{ etiket: 'Birincil', numara: stakeholder.phone }] : []),
-    epostalar: profile.epostalar || stakeholder.epostalar || (stakeholder.email ? [{ etiket: 'Birincil', adres: stakeholder.email }] : []),
+    telefonlar: Array.isArray(masterFields.telefonlar) ? masterFields.telefonlar : [],
+    epostalar: Array.isArray(masterFields.epostalar) ? masterFields.epostalar : [],
     document_summary: stakeholder.stakeholder_documents || [],
     timeline: stakeholder.history || [],
     field_history: buildEntityFieldHistory(stakeholder.history || []),
@@ -553,8 +559,6 @@ function normalizePayload(raw: Record<string, any>, companies: Option[], current
     : [effective.first_name, effective.last_name].filter(Boolean).join(' ').trim() || effective.display_name
   payload.country = payload.country || payload.nationality_country || payload.nationality || 'TR'
   payload.tax_id = payload.tax_id || payload.national_id || payload.tc_kimlik || payload.tax_number || payload.vkn_tckn || payload.passport_no || payload.pasaport_no
-  if (Array.isArray(payload.telefonlar) && payload.telefonlar.length && !payload.phone) payload.phone = payload.telefonlar[0]?.numara
-  if (Array.isArray(payload.epostalar) && payload.epostalar.length && !payload.email) payload.email = payload.epostalar[0]?.adres
   payload.document_summary = undefined
   payload.field_history = undefined
   return payload

@@ -428,9 +428,10 @@ function MasterSummaryItemValue({
   }
 
   if (item.inputType === 'select') {
+    const selectValue = normalizeSummarySelectValue(item.value, item.options)
     return (
       <select
-        value={String(item.value || '')}
+        value={selectValue}
         onChange={(event) => onFieldChange(fieldName, event.target.value)}
         className={inputClass}
       >
@@ -451,6 +452,18 @@ function MasterSummaryItemValue({
       className={inputClass}
     />
   )
+}
+
+function normalizeSummarySelectValue(value: unknown, options: MasterSummaryItem['options']) {
+  const text = String(value || '')
+  if (!text || !options?.length) return text
+  const exact = options.find(option => option.value === text)
+  if (exact) return exact.value
+  const lowerText = text.toLocaleLowerCase('tr-TR')
+  const byValue = options.find(option => option.value.toLocaleLowerCase('tr-TR') === lowerText)
+  if (byValue) return byValue.value
+  const byLabel = options.find(option => option.label.toLocaleLowerCase('tr-TR') === lowerText)
+  return byLabel?.value || text
 }
 
 function pickEditableFieldName(sourceData: Record<string, any>, fieldKeys: string[]) {
@@ -1031,7 +1044,14 @@ function ListField({
   const rows = allRows.filter(row => !row.__draft)
   const draft = allRows.find(row => row.__draft) || {}
 
-  const inputClass = "w-full bg-white text-gray-900 dark:bg-gray-900 dark:text-white border border-gray-300 dark:border-gray-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 disabled:bg-gray-100 disabled:text-gray-900 dark:disabled:bg-gray-800 dark:disabled:text-gray-100 disabled:cursor-not-allowed"
+  const inputClass = cn(
+    "w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900",
+    "[-webkit-text-fill-color:#111827] [color-scheme:light]",
+    "focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20",
+    "disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-900 disabled:[-webkit-text-fill-color:#111827]",
+    "dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:[-webkit-text-fill-color:#ffffff] dark:[color-scheme:dark]",
+    "dark:disabled:bg-gray-800 dark:disabled:text-gray-100 dark:disabled:[-webkit-text-fill-color:#f3f4f6]"
+  )
 
   const setDraftValue = (name: string, nextValue: any) => {
     const nextDraft = {
@@ -1146,6 +1166,9 @@ function ListField({
         value={draft[name] || ''}
         onChange={(event) => setDraftValue(name, formatDraftValue(item, event.target.value))}
         placeholder={item.placeholder}
+        inputMode={item.inputMode}
+        maxLength={item.maxLength}
+        pattern={item.pattern}
         disabled={itemDisabled}
         className={inputClass}
       />
@@ -2143,6 +2166,7 @@ export function EntityForm({
 
       switch (field.type) {
         case 'checkbox':
+          const checkboxHasStatusLabel = ['engellilik', 'hukumluluk'].includes(field.name)
           return (
             <label className="flex min-h-10 items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300">
               <input
@@ -2152,7 +2176,16 @@ export function EntityForm({
                 disabled={fieldDisabled}
                 className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
               />
-              {field.placeholder || field.label}
+              {checkboxHasStatusLabel ? (
+                <span className="flex flex-1 items-center justify-between gap-2">
+                  <span>{field.label}</span>
+                  <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700 dark:bg-gray-800 dark:text-gray-200">
+                    {formData[field.name] ? 'Var' : 'Yok'}
+                  </span>
+                </span>
+              ) : (
+                field.placeholder || field.label
+              )}
             </label>
           )
         case 'iban':

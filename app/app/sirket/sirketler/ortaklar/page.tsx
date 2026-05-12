@@ -878,32 +878,39 @@ function PartnerHistorySections({ value }: { value?: PartnerHistorySectionsValue
 
 function normalizePartnerForForm(partner: PartnerRow) {
   const profile = partner.partner_profile || {}
+  const masterFields = partner as PartnerRow & {
+    first_name?: string
+    last_name?: string
+    trade_name?: string
+    legal_name?: string
+    short_name?: string
+    nationality?: string
+    nationality_country?: string
+    uyruk?: string
+    national_id?: string
+    tc_kimlik?: string
+    passport_no?: string
+    pasaport_no?: string
+    telefonlar?: Array<Record<string, any>>
+    epostalar?: Array<Record<string, any>>
+  }
   const partnerType = profile.partner_type || partner.owner_kind || (partner.ortak_tipi === 'sirket' ? 'tuzel_kisi' : 'gercek_kisi')
-  const nameParts = String(partner.display_name || partner.ortak_adi || '').trim().split(/\s+/)
-  const identityNumber = profile.identity_number || partner.identity_number || partner.tckn_vkn || ''
-  const phone = profile.phone || profile.cep_telefonu || ''
-  const email = profile.email || ''
+  const identityNumber = partner.identity_number || partner.tckn_vkn || ''
+  const telefonlar = Array.isArray(masterFields.telefonlar) ? masterFields.telefonlar : []
+  const epostalar = Array.isArray(masterFields.epostalar) ? masterFields.epostalar : []
   return {
     ...profile,
     ...partner,
     company_id: partner.sirket_id,
     partner_type: partnerType,
-    first_name: profile.first_name || (partnerType === 'tuzel_kisi' ? partner.display_name || partner.ortak_adi || '' : nameParts.slice(0, -1).join(' ') || partner.display_name || partner.ortak_adi || ''),
-    last_name: profile.last_name || (partnerType === 'tuzel_kisi' ? profile.short_name || '' : nameParts.length > 1 ? nameParts.at(-1) : ''),
+    first_name: masterFields.first_name || masterFields.trade_name || masterFields.legal_name || '',
+    last_name: masterFields.last_name || masterFields.short_name || '',
     identity_number: identityNumber,
-    uyruk: profile.uyruk || profile.nationality || profile.nationality_country || 'TR',
-    tc_kimlik: profile.tc_kimlik || profile.national_id || (partnerType === 'gercek_kisi' && String(identityNumber).length === 11 ? identityNumber : ''),
-    pasaport_no: profile.pasaport_no || profile.passport_no || (partnerType === 'gercek_kisi' && String(identityNumber).length !== 11 ? identityNumber : ''),
-    telefonlar: Array.isArray(profile.telefonlar) && profile.telefonlar.length
-      ? profile.telefonlar
-      : phone
-        ? [{ etiket: 'Cep', numara: phone }]
-        : [],
-    epostalar: Array.isArray(profile.epostalar) && profile.epostalar.length
-      ? profile.epostalar
-      : email
-        ? [{ etiket: 'Kişisel', adres: email }]
-        : [],
+    uyruk: masterFields.uyruk || masterFields.nationality || masterFields.nationality_country || 'TR',
+    tc_kimlik: masterFields.tc_kimlik || masterFields.national_id || (partnerType === 'gercek_kisi' && String(identityNumber).length === 11 ? identityNumber : ''),
+    pasaport_no: masterFields.pasaport_no || masterFields.passport_no || (partnerType === 'gercek_kisi' && String(identityNumber).length !== 11 ? identityNumber : ''),
+    telefonlar,
+    epostalar,
     end_date: profile.end_date ?? partner.end_date ?? '',
     status: profile.status || partner.status || 'Aktif',
     photo_logo: partner.photo_logo || [],
@@ -931,8 +938,6 @@ function normalizePayload(raw: Record<string, any>, companies: Option[]) {
   payload.uyruk = normalizeCountryId(payload.uyruk || payload.nationality || payload.nationality_country)
   payload.country = normalizeCountryId(payload.country || payload.nationality_country || payload.nationality || 'TR')
   payload.identity_number = payload.identity_number || payload.national_id || payload.tc_kimlik || payload.tax_number || payload.vkn_tckn || payload.passport_no || payload.pasaport_no
-  if (Array.isArray(payload.telefonlar) && payload.telefonlar.length && !payload.phone) payload.phone = payload.telefonlar[0]?.numara
-  if (Array.isArray(payload.epostalar) && payload.epostalar.length && !payload.email) payload.email = payload.epostalar[0]?.adres
   payload.owner_kind = payload.partner_type
   payload.trade_name = payload.partner_type === 'tuzel_kisi' ? payload.first_name : undefined
   payload.short_name = payload.partner_type === 'tuzel_kisi' ? payload.last_name : undefined
