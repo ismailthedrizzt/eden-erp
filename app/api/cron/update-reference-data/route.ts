@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
+import { buildTradeRegistryOfficesPayload } from '@/lib/reference/trade-registry-offices'
 import { PDFParse } from 'pdf-parse'
 
 export const runtime = 'nodejs'
@@ -15,6 +16,7 @@ export async function GET(request: Request) {
 
   const payload = await buildTurkeyLocationsPayload()
   const taxOfficesPayload = await buildTaxOfficesPayload(payload.provinces.map(province => province.name))
+  const tradeRegistryOfficesPayload = await buildTradeRegistryOfficesPayload()
   const supabase = createServiceClient()
   const { error } = await supabase
     .from('reference_data')
@@ -31,6 +33,12 @@ export async function GET(request: Request) {
         source_url: taxOfficesPayload.source.url,
         updated_at: new Date().toISOString(),
       },
+      {
+        key: 'trade_registry_offices',
+        payload: tradeRegistryOfficesPayload,
+        source_url: tradeRegistryOfficesPayload.source.url,
+        updated_at: new Date().toISOString(),
+      },
     ], { onConflict: 'key' })
 
   if (error) {
@@ -42,6 +50,7 @@ export async function GET(request: Request) {
     provinces: payload.provinces.length,
     districts: payload.provinces.reduce((total, province) => total + province.districts.length, 0),
     taxOffices: taxOfficesPayload.offices.length,
+    tradeRegistryOffices: tradeRegistryOfficesPayload.offices.length,
   })
 }
 

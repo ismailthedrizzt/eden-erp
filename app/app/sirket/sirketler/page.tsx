@@ -20,6 +20,14 @@ type SaveError = Error & { toast?: ToastState; fieldErrors?: Record<string, stri
 type SirketTableRow = Sirket & { adres_ozet: string; logo_url: string }
 type TaxOfficeOption = { value: string; label: string }
 
+const COMPANY_STATUS_OPTIONS = [
+  { value: 'aktif', label: 'Aktif' },
+  { value: 'tasfiye_halinde', label: 'Tasfiye Halinde' },
+  { value: 'terkin_edilmis', label: 'Terkin Edilmiş' },
+]
+
+const COMPANY_STATUS_LABELS = Object.fromEntries(COMPANY_STATUS_OPTIONS.map(option => [option.value, option.label]))
+
 const COMPANY_TYPE_SHORT_LABELS: Record<string, string> = {
   anonim: 'A.Ş.',
   limited: 'Ltd. Şti.',
@@ -46,6 +54,8 @@ const FIELD_LABELS: Record<string, string> = {
   email: 'E-posta',
   web_sitesi: 'Web Sitesi',
   legal_entity: 'Tüzel Kişilik',
+  electronic_notification_address: 'Elektronik Tebligat Adresi',
+  trade_registry_office: 'Ticaret Sicili Müdürlüğü',
   sirket_kodu: 'Şirket Kodu',
   e_fatura_mukellefi: 'E-Fatura Mükellefi',
   e_arsiv_mukellefi: 'E-Arşiv Mükellefi',
@@ -59,6 +69,7 @@ const FIELD_LABELS: Record<string, string> = {
   zaman_dilimi: 'Zaman Dilimi',
   mali_yil_baslangici: 'Mali Yıl Başlangıcı',
   is_active: 'Durum',
+  company_status: 'Firma Durumu',
 }
 
 const columns: ColumnDef[] = [
@@ -71,11 +82,12 @@ const columns: ColumnDef[] = [
   { key: 'adres_ozet', label: 'Adres', type: 'text', width: 250, category: 'İletişim' },
   { key: 'telefon', label: 'Telefon', type: 'text', width: 150, category: 'İletişim' },
   { key: 'email', label: 'E-posta', type: 'text', width: 200, category: 'İletişim' },
-  { key: 'is_active', label: 'Durum', type: 'boolean', width: 100, sortable: true, category: 'Durum' },
+  { key: 'company_status', label: FIELD_LABELS.company_status, type: 'enum', width: 140, sortable: true, category: 'Durum', render: (value) => COMPANY_STATUS_LABELS[String(value)] || value || '-' },
   { key: 'mersis_no', label: FIELD_LABELS.mersis_no, type: 'text', width: 150, sortable: true, category: 'Tescil', required: false, visible: false },
   { key: 'ticaret_sicil_no', label: FIELD_LABELS.ticaret_sicil_no, type: 'text', width: 150, sortable: true, category: 'Tescil', required: false, visible: false },
   { key: 'kurulus_tarihi', label: FIELD_LABELS.kurulus_tarihi, type: 'date', width: 130, sortable: true, category: 'Tescil', required: false, visible: false },
-  { key: 'legal_entity', label: FIELD_LABELS.legal_entity, type: 'text', width: 160, sortable: true, category: 'Tescil', required: false, visible: false },
+  { key: 'electronic_notification_address', label: FIELD_LABELS.electronic_notification_address, type: 'text', width: 190, sortable: true, category: 'Tescil', required: false, visible: false },
+  { key: 'trade_registry_office', label: FIELD_LABELS.trade_registry_office, type: 'text', width: 190, sortable: true, category: 'Tescil', required: false, visible: false },
   { key: 'sirket_kodu', label: FIELD_LABELS.sirket_kodu, type: 'text', width: 130, sortable: true, category: 'Tescil', required: false, visible: false },
   { key: 'ulke', label: FIELD_LABELS.ulke, type: 'text', width: 120, sortable: true, category: 'İletişim', required: false, visible: false },
   { key: 'il', label: FIELD_LABELS.il, type: 'text', width: 120, sortable: true, category: 'İletişim', required: false, visible: false },
@@ -176,7 +188,8 @@ const tabs: FormTab[] = [
       { name: 'mersis_no', label: 'MERSİS No', type: 'text' },
       { name: 'ticaret_sicil_no', label: 'Ticaret Sicil No', type: 'text' },
       { name: 'kurulus_tarihi', label: 'Kuruluş Tarihi', type: 'date' },
-      { name: 'legal_entity', label: 'Tüzel Kişilik', type: 'text' },
+      { name: 'electronic_notification_address', label: 'Elektronik Tebligat Adresi', type: 'text', maxLength: 17, inputMode: 'numeric', pattern: '\\d{5}-\\d{5}-\\d{5}', placeholder: '25888-57689-53086' },
+      { name: 'trade_registry_office', label: 'Ticaret Sicili Müdürlüğü', type: 'select', searchable: true },
       { name: 'sirket_kodu', label: 'Şirket Kodu', type: 'text' },
     ],
   },
@@ -233,7 +246,13 @@ const tabs: FormTab[] = [
       },
       { name: 'zaman_dilimi', label: 'Zaman Dilimi', type: 'text', defaultValue: 'Europe/Istanbul' },
       { name: 'mali_yil_baslangici', label: 'Mali Yıl Başlangıcı', type: 'number', defaultValue: 1 },
-      { name: 'is_active', label: 'Şirket Aktif', type: 'checkbox', defaultValue: true },
+      {
+        name: 'company_status',
+        label: 'Firma Durumu',
+        type: 'select',
+        defaultValue: 'aktif',
+        options: COMPANY_STATUS_OPTIONS,
+      },
     ],
   },
 ]
@@ -253,6 +272,7 @@ export default function SirketlerPage() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [toast, setToast] = useState<ToastState | null>(null)
   const [taxOfficeOptions, setTaxOfficeOptions] = useState<TaxOfficeOption[]>([])
+  const [tradeRegistryOfficeOptions, setTradeRegistryOfficeOptions] = useState<TaxOfficeOption[]>([])
 
   useEffect(() => {
     let cancelled = false
@@ -270,6 +290,19 @@ export default function SirketlerPage() {
         if (!cancelled) setTaxOfficeOptions([])
       })
 
+    fetch('/api/reference/trade-registry-offices')
+      .then(response => response.ok ? response.json() : null)
+      .then(payload => {
+        if (cancelled || !Array.isArray(payload?.offices)) return
+        setTradeRegistryOfficeOptions(payload.offices.map((office: any) => {
+          const label = `${office.name} Ticaret Sicili Müdürlüğü`
+          return { value: label, label }
+        }))
+      })
+      .catch(() => {
+        if (!cancelled) setTradeRegistryOfficeOptions([])
+      })
+
     return () => {
       cancelled = true
     }
@@ -281,16 +314,27 @@ export default function SirketlerPage() {
       : field
   )
 
+  const configuredTabs = tabs.map(tab => ({
+    ...tab,
+    fields: tab.fields.map(field =>
+      field.name === 'trade_registry_office' && tradeRegistryOfficeOptions.length > 0
+        ? { ...field, options: tradeRegistryOfficeOptions }
+        : field
+    ),
+  }))
+
   const tableData: SirketTableRow[] = (sirketler || []).map(sirket => ({
     ...sirket,
+    company_status: sirket.company_status || (sirket.is_active ? 'aktif' : 'terkin_edilmis'),
     adres_ozet: [sirket.ilce, sirket.il].filter(Boolean).join(', '),
     logo_url: extractLogoUrl((sirket as any).hero_images),
   }))
 
   const widgets: WidgetDef<SirketTableRow>[] = [
     { key: 'total', label: 'Toplam Şirket', render: () => tableData.length },
-    { key: 'active', label: 'Aktif', render: () => tableData.filter(row => row.is_active).length },
-    { key: 'inactive', label: 'Pasif', render: () => tableData.filter(row => !row.is_active).length },
+    { key: 'active', label: 'Aktif', render: () => tableData.filter(row => row.company_status === 'aktif').length },
+    { key: 'liquidation', label: 'Tasfiye', render: () => tableData.filter(row => row.company_status === 'tasfiye_halinde').length },
+    { key: 'closed', label: 'Terkin', render: () => tableData.filter(row => row.company_status === 'terkin_edilmis').length },
   ]
 
   const moduleEnabled = isEnabled('companies')
@@ -362,7 +406,7 @@ export default function SirketlerPage() {
     const payload: Record<string, any> = {}
 
     Object.entries(raw).forEach(([key, value]) => {
-      if (['ortaklar', 'temsilciler', 'dokumanlar', 'logolar'].includes(key)) return
+      if (['ortaklar', 'temsilciler', 'paydaslar', 'dokumanlar', 'logolar'].includes(key)) return
       if (value === '' || value === null || value === undefined) return
       payload[key] = value
     })
@@ -370,14 +414,19 @@ export default function SirketlerPage() {
     if (payload.telefon) payload.telefon = formatPhoneInput(String(payload.telefon))
     if (payload.email) payload.email = normalizeEmailInput(String(payload.email))
     if (payload.vkn_tckn) payload.vkn_tckn = String(payload.vkn_tckn).replace(/\D/g, '').slice(0, 10)
+    if (payload.electronic_notification_address) {
+      const digits = String(payload.electronic_notification_address).replace(/\D/g, '').slice(0, 15)
+      payload.electronic_notification_address = digits.replace(/(\d{5})(?=\d)/g, '$1-')
+    }
     if (payload.mali_yil_baslangici) payload.mali_yil_baslangici = Number(payload.mali_yil_baslangici)
+    payload.company_status = payload.company_status || (payload.is_active === false ? 'terkin_edilmis' : 'aktif')
+    payload.is_active = payload.company_status !== 'terkin_edilmis'
     if (pageState === 'create') {
       payload.ulke = payload.ulke || 'Türkiye'
       payload.varsayilan_para_birimi = payload.varsayilan_para_birimi || 'TRY'
       payload.varsayilan_dil = payload.varsayilan_dil || 'tr'
       payload.zaman_dilimi = payload.zaman_dilimi || 'Europe/Istanbul'
       payload.mali_yil_baslangici = payload.mali_yil_baslangici || 1
-      payload.is_active = payload.is_active ?? true
     }
 
     return payload
@@ -554,7 +603,7 @@ export default function SirketlerPage() {
               roleDuplicateCheck: 'organization_id + active',
             }}
             heroFields={configuredHeroFields.map(withFieldHistory)}
-            tabs={tabs.map(tab => ({
+            tabs={configuredTabs.map(tab => ({
               ...tab,
               fields: tab.fields.map(field => {
                 const nextField = withFieldHistory(field)
@@ -764,6 +813,7 @@ function formatSourceType(value?: string) {
 function normalizeCompanyForForm(company: Sirket) {
   return {
     ...company,
+    company_status: company.company_status || (company.is_active ? 'aktif' : 'terkin_edilmis'),
     ortaklar: (company.ortaklar || []).map((partner: any) => {
       const parts = String(partner.ortak_adi || '').trim().split(/\s+/)
       return {

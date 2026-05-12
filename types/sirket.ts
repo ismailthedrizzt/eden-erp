@@ -17,6 +17,8 @@ export interface Sirket {
   mersis_no?: string
   ticaret_sicil_no?: string
   kurulus_tarihi?: string
+  electronic_notification_address?: string
+  trade_registry_office?: string
   sirket_turu?: 'anonim' | 'limited' | 'komandit' | 'kolektif' | 'adi_komandit' | 'adi_sirket'
   
   // Adres - Address
@@ -51,6 +53,7 @@ export interface Sirket {
   zaman_dilimi: string
   mali_yil_baslangici: number
   is_active: boolean
+  company_status?: 'aktif' | 'tasfiye_halinde' | 'terkin_edilmis'
   hero_images?: Array<Record<string, unknown>>
   hero_documents?: Array<Record<string, unknown>>
   

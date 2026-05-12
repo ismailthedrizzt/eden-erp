@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { z } from 'zod'
 
+const CompanyStatusSchema = z.enum(['aktif', 'tasfiye_halinde', 'terkin_edilmis'])
+
 const SirketSchema = z.object({
   organization_id: z.string().uuid().optional().nullable(),
   ticari_unvan: z.string().min(1).max(300),
@@ -20,6 +22,8 @@ const SirketSchema = z.object({
   email: z.union([z.literal(''), z.string().email()]).optional(),
   web_sitesi: z.string().optional(),
   legal_entity: z.string().optional(),
+  electronic_notification_address: z.string().regex(/^\d{5}-\d{5}-\d{5}$/, 'Elektronik tebligat adresi 25888-57689-53086 formatinda olmalidir').optional(),
+  trade_registry_office: z.string().optional(),
   parent_company_id: z.string().uuid().optional().nullable(),
   sirket_kodu: z.string().optional(),
   e_fatura_mukellefi: z.boolean().default(false),
@@ -35,6 +39,7 @@ const SirketSchema = z.object({
   zaman_dilimi: z.string().default('Europe/Istanbul'),
   mali_yil_baslangici: z.number().int().min(1).max(12).default(1),
   is_active: z.boolean().default(true),
+  company_status: CompanyStatusSchema.default('aktif'),
   hero_images: z.array(z.record(z.any())).optional(),
   hero_documents: z.array(z.record(z.any())).optional(),
   ortaklar: z.array(z.record(z.any())).optional(),
@@ -53,6 +58,15 @@ function omitNullishValues(value: Record<string, any>) {
   )
 }
 
+function applyCompanyStatus(payload: Record<string, any>) {
+  const companyStatus = payload.company_status || (payload.is_active === false ? 'terkin_edilmis' : 'aktif')
+  return {
+    ...payload,
+    company_status: companyStatus,
+    is_active: companyStatus !== 'terkin_edilmis',
+  }
+}
+
 export async function GET(request: NextRequest) {
   const supabase = createServiceClient()
   const { searchParams } = new URL(request.url)
@@ -62,7 +76,7 @@ export async function GET(request: NextRequest) {
 
   let query = supabase
     .from('sirketler')
-    .select('id,kisa_unvan,ticari_unvan,vkn_tckn,vergi_dairesi,sirket_turu,il,ilce,adres,telefon,email,is_active,mersis_no,ticaret_sicil_no,kurulus_tarihi,legal_entity,sirket_kodu,ulke,web_sitesi,e_fatura_mukellefi,e_arsiv_mukellefi,e_irsaliye_mukellefi,sgk_is_yeri_sicil_no,sgk_il,sgk_sube,tehlike_sinifi,varsayilan_para_birimi,varsayilan_dil,zaman_dilimi,mali_yil_baslangici,hero_images,updated_at,created_at')
+    .select('id,kisa_unvan,ticari_unvan,vkn_tckn,vergi_dairesi,sirket_turu,il,ilce,adres,telefon,email,is_active,company_status,mersis_no,ticaret_sicil_no,kurulus_tarihi,legal_entity,electronic_notification_address,trade_registry_office,sirket_kodu,ulke,web_sitesi,e_fatura_mukellefi,e_arsiv_mukellefi,e_irsaliye_mukellefi,sgk_is_yeri_sicil_no,sgk_il,sgk_sube,tehlike_sinifi,varsayilan_para_birimi,varsayilan_dil,zaman_dilimi,mali_yil_baslangici,hero_images,updated_at,created_at')
     .order('kisa_unvan', { ascending: true })
 
   if (ara) {
@@ -99,7 +113,7 @@ export async function POST(request: NextRequest) {
   const { ortaklar, temsilciler, public_tax, public_sgk, public_incentives, public_registry, public_licenses, public_channels, ...companyData } = parsed.data
   let companyRow: Record<string, any>
   try {
-    companyRow = await attachCompanyOrganization(supabase, companyData)
+    companyRow = await attachCompanyOrganization(supabase, applyCompanyStatus(companyData))
   } catch (error) {
     return NextResponse.json({
       error: error instanceof Error ? error.message : 'Şirket ana kurum kaydına bağlanamadı',
@@ -109,7 +123,7 @@ export async function POST(request: NextRequest) {
   const { data, error } = await supabase
     .from('sirketler')
     .insert(companyRow)
-    .select('id,kisa_unvan,ticari_unvan,vkn_tckn,is_active,updated_at')
+    .select('id,kisa_unvan,ticari_unvan,vkn_tckn,is_active,company_status,updated_at')
     .single()
 
   if (error) return NextResponse.json({ error: error.message, code: error.code || 'CREATE_FAILED' }, { status: 500 })
@@ -240,6 +254,7 @@ function mapPartnerForDb(sirketId: string, partner: Record<string, any>) {
 
   return {
     sirket_id: sirketId,
+    company_id: sirketId,
     ortak_adi: displayName,
     ortak_tipi: partner.owner_kind === 'tuzel_kisi' || partner.ortak_tipi === 'sirket' ? 'sirket' : 'kisi',
     tckn_vkn: partner.identity_number || partner.tckn_vkn || null,
@@ -292,6 +307,7 @@ async function replaceCompanyRepresentatives(supabase: ReturnType<typeof createS
 function mapRepresentativeForDb(sirketId: string, representative: Record<string, any>) {
   return {
     sirket_id: sirketId,
+    company_id: sirketId,
     ad_soyad: representative.display_name || representative.ad_soyad || 'Temsilci',
     gorev: representative.notes || null,
     yetki_turu: 'diger',

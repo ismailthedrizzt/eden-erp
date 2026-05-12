@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { z } from 'zod'
 
+const CompanyStatusSchema = z.enum(['aktif', 'tasfiye_halinde', 'terkin_edilmis'])
+
 const SirketUpdateSchema = z.object({
   ticari_unvan: z.string().min(1).max(300).optional(),
   kisa_unvan: z.string().min(1).max(120).optional(),
@@ -19,6 +21,8 @@ const SirketUpdateSchema = z.object({
   email: z.union([z.literal(''), z.string().email()]).optional(),
   web_sitesi: z.string().optional(),
   legal_entity: z.string().optional(),
+  electronic_notification_address: z.string().regex(/^\d{5}-\d{5}-\d{5}$/, 'Elektronik tebligat adresi 25888-57689-53086 formatinda olmalidir').optional(),
+  trade_registry_office: z.string().optional(),
   parent_company_id: z.string().uuid().optional().nullable(),
   sirket_kodu: z.string().optional(),
   e_fatura_mukellefi: z.boolean().optional(),
@@ -34,6 +38,7 @@ const SirketUpdateSchema = z.object({
   zaman_dilimi: z.string().optional(),
   mali_yil_baslangici: z.number().int().min(1).max(12).optional(),
   is_active: z.boolean().optional(),
+  company_status: CompanyStatusSchema.optional(),
   hero_images: z.array(z.record(z.any())).optional(),
   hero_documents: z.array(z.record(z.any())).optional(),
   ortaklar: z.array(z.record(z.any())).optional(),
@@ -50,6 +55,16 @@ function omitNullishValues(value: Record<string, any>) {
   return Object.fromEntries(
     Object.entries(value).filter(([, item]) => item !== null && item !== undefined)
   )
+}
+
+function applyCompanyStatus(payload: Record<string, any>) {
+  if (!('company_status' in payload) && !('is_active' in payload)) return payload
+  const companyStatus = payload.company_status || (payload.is_active === false ? 'terkin_edilmis' : 'aktif')
+  return {
+    ...payload,
+    company_status: companyStatus,
+    is_active: companyStatus !== 'terkin_edilmis',
+  }
 }
 
 export async function GET(
@@ -83,8 +98,8 @@ export async function GET(
     publicLicenses,
     publicChannels,
   ] = await Promise.all([
-    supabase.from('sirket_ortaklar').select('*').eq('sirket_id', id),
-    supabase.from('sirket_temsilciler').select('*').eq('sirket_id', id),
+    supabase.from('sirket_ortaklar').select('*').or(`sirket_id.eq.${id},company_id.eq.${id}`),
+    supabase.from('sirket_temsilciler').select('*').or(`sirket_id.eq.${id},company_id.eq.${id}`),
     supabase.from('sirket_logolar').select('*').eq('sirket_id', id),
     supabase.from('company_public_tax').select('*').eq('company_id', id).maybeSingle(),
     supabase.from('company_public_sgk').select('*').eq('company_id', id).maybeSingle(),
@@ -148,7 +163,7 @@ export async function PATCH(
 
   const { data: current, error: currentError } = await supabase
     .from('sirketler')
-    .select('id,field_history,kisa_unvan,ticari_unvan,vkn_tckn,vergi_dairesi,sirket_turu,il,ilce,adres,telefon,email,is_active,mersis_no,ticaret_sicil_no,kurulus_tarihi,legal_entity,sirket_kodu,ulke,web_sitesi,e_fatura_mukellefi,e_arsiv_mukellefi,e_irsaliye_mukellefi,sgk_is_yeri_sicil_no,sgk_il,sgk_sube,tehlike_sinifi,varsayilan_para_birimi,varsayilan_dil,zaman_dilimi,mali_yil_baslangici')
+    .select('id,field_history,kisa_unvan,ticari_unvan,vkn_tckn,vergi_dairesi,sirket_turu,il,ilce,adres,telefon,email,is_active,company_status,mersis_no,ticaret_sicil_no,kurulus_tarihi,legal_entity,electronic_notification_address,trade_registry_office,sirket_kodu,ulke,web_sitesi,e_fatura_mukellefi,e_arsiv_mukellefi,e_irsaliye_mukellefi,sgk_is_yeri_sicil_no,sgk_il,sgk_sube,tehlike_sinifi,varsayilan_para_birimi,varsayilan_dil,zaman_dilimi,mali_yil_baslangici')
     .eq('id', id)
     .single()
 
@@ -159,7 +174,8 @@ export async function PATCH(
     return NextResponse.json({ error: currentError.message, code: currentError.code || 'FETCH_FAILED' }, { status: 500 })
   }
 
-  const { ortaklar, temsilciler, public_tax, public_sgk, public_incentives, public_registry, public_licenses, public_channels, ...companyUpdates } = parsed.data
+  const { ortaklar, temsilciler, public_tax, public_sgk, public_incentives, public_registry, public_licenses, public_channels, ...rawCompanyUpdates } = parsed.data
+  const companyUpdates = applyCompanyStatus(rawCompanyUpdates)
   const nextHistory = buildFieldHistory(current, companyUpdates)
   const { data, error } = await supabase
     .from('sirketler')
@@ -168,7 +184,7 @@ export async function PATCH(
       field_history: nextHistory,
     })
     .eq('id', id)
-    .select('id,kisa_unvan,ticari_unvan,vkn_tckn,is_active,updated_at')
+    .select('id,kisa_unvan,ticari_unvan,vkn_tckn,is_active,company_status,updated_at')
     .single()
 
   if (error) {
@@ -210,7 +226,7 @@ export async function DELETE(
 
   const { error } = await supabase
     .from('sirketler')
-    .update({ is_active: false })
+    .update({ is_active: false, company_status: 'terkin_edilmis' })
     .eq('id', id)
 
   if (error) return NextResponse.json({ error: error.message, code: error.code || 'SOFT_DELETE_FAILED' }, { status: 500 })
@@ -245,7 +261,7 @@ async function replaceCompanyPartners(supabase: ReturnType<typeof createServiceC
   const { data: existing, error: fetchError } = await supabase
     .from('sirket_ortaklar')
     .select('id')
-    .eq('sirket_id', sirketId)
+    .or(`sirket_id.eq.${sirketId},company_id.eq.${sirketId}`)
 
   if (fetchError) return fetchError
 
@@ -283,6 +299,7 @@ function mapPartnerForDb(sirketId: string, partner: Record<string, any>) {
   return {
     ...(partner.id ? { id: partner.id } : {}),
     sirket_id: sirketId,
+    company_id: sirketId,
     ortak_adi: displayName,
     ortak_tipi: partner.owner_kind === 'tuzel_kisi' || partner.ortak_tipi === 'sirket' ? 'sirket' : 'kisi',
     tckn_vkn: partner.identity_number || partner.tckn_vkn || null,
@@ -327,7 +344,7 @@ async function replaceCompanyRepresentatives(supabase: ReturnType<typeof createS
   const { data: existing, error: fetchError } = await supabase
     .from('sirket_temsilciler')
     .select('id')
-    .eq('sirket_id', sirketId)
+    .or(`sirket_id.eq.${sirketId},company_id.eq.${sirketId}`)
 
   if (fetchError) return fetchError
 
@@ -364,6 +381,7 @@ function mapRepresentativeForDb(sirketId: string, representative: Record<string,
   return {
     ...(representative.id ? { id: representative.id } : {}),
     sirket_id: sirketId,
+    company_id: sirketId,
     ad_soyad: representative.display_name || representative.ad_soyad || 'Temsilci',
     gorev: representative.notes || null,
     yetki_turu: 'diger',

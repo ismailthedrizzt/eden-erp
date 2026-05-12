@@ -1428,6 +1428,12 @@ export function EntityForm({
       return
     }
 
+    if (field.name === 'electronic_notification_address') {
+      const digits = value.replace(/\D/g, '').slice(0, 15)
+      handleChange(field.name, digits.replace(/(\d{5})(?=\d)/g, '$1-'))
+      return
+    }
+
     if (field.type === 'tel') {
       handleChange(field.name, formatPhoneInput(value))
       return
