@@ -470,6 +470,7 @@ export function DocumentSlotUploader({
   const currentAcceptedTypes = currentSlot?.acceptedTypes || DEFAULT_DOCUMENT_ACCEPTED_TYPES
   const currentDocType = getEffectiveDocumentType(currentDoc)
   const canPreviewCurrentDoc = canInlinePreview(currentDoc, currentDocUrl)
+  const hasVisualThumbnail = Boolean(currentDocThumbnailUrl)
 
   useEffect(() => {
     const docsNeedingSignedUrl = documents.filter(doc =>
@@ -854,7 +855,7 @@ export function DocumentSlotUploader({
             <div className="relative flex-1 flex flex-col p-3 group">
               {/* File Preview / Thumbnail */}
               <div className="flex-1 flex items-center justify-center">
-                {currentDocThumbnailUrl ? (
+                {hasVisualThumbnail ? (
                   <img
                     src={currentDocThumbnailUrl}
                     alt={currentDoc.name}
@@ -877,7 +878,12 @@ export function DocumentSlotUploader({
               
               {/* Hover Actions Overlay */}
               {(
-                <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-2 bg-white/95 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 dark:bg-gray-800/95">
+                <div className={cn(
+                  "absolute inset-0 z-20 flex flex-col items-center justify-center gap-2 bg-white/95 transition-opacity dark:bg-gray-800/95",
+                  hasVisualThumbnail
+                    ? "opacity-0 group-hover:opacity-100 group-focus-within:opacity-100"
+                    : "opacity-100"
+                )}>
                   {!currentDocUrl && currentDoc?.storagePath && (
                     <div className="rounded-md bg-gray-100 px-2 py-1 text-[10px] font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-300">
                       Bağlantı hazırlanıyor
