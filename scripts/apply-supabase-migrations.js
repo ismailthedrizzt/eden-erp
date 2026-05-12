@@ -42,6 +42,8 @@ const migrationFiles = [
   '20260512_remove_media_registry_tables.sql',
   '20260512_compact_company_document_thumbnails.sql',
   '20260512_strip_company_document_bitmap_thumbnails.sql',
+  '20260512_company_registration_status_fields.sql',
+  '20260512_company_relation_english_alias_backfill.sql',
   'create_module_licenses.sql',
   'add_employee_unique_constraint.sql',
 ];
