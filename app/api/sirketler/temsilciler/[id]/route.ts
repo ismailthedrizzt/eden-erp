@@ -140,7 +140,8 @@ function mapRepresentativeForDb(representative: Record<string, any>, current?: R
     : [normalizeAuthorityType(representative.primary_authority_type || current?.authority_types?.[0])].filter(Boolean)
 
   return {
-    sirket_id: representative.company_id || representative.sirket_id || current?.sirket_id,
+    company_id: representative.company_id || representative.sirket_id || current?.company_id || current?.sirket_id,
+    sirket_id: representative.company_id || representative.sirket_id || current?.company_id || current?.sirket_id,
     ad_soyad: representative.display_name || current?.display_name || 'Temsilci',
     gorev: normalizeAuthorityType(representative.primary_authority_type || current?.gorev) || null,
     yetki_turu: 'diger',

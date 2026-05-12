@@ -115,7 +115,8 @@ function mapPartnerForDb(partner: Record<string, any>, current?: Record<string, 
     : [partner.first_name, partner.last_name].filter(Boolean).join(' ').trim() || current?.display_name
 
   return {
-    sirket_id: partner.company_id || partner.sirket_id || current?.sirket_id,
+    company_id: partner.company_id || partner.sirket_id || current?.company_id || current?.sirket_id,
+    sirket_id: partner.company_id || partner.sirket_id || current?.company_id || current?.sirket_id,
     ortak_adi: displayName || 'Ortak',
     ortak_tipi: ownerKind === 'tuzel_kisi' ? 'sirket' : 'kisi',
     tckn_vkn: partner.identity_number || current?.tckn_vkn,

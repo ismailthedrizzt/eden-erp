@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
     .select('*')
     .order('created_at', { ascending: false })
 
-  if (companyId) query = query.eq('sirket_id', companyId)
+  if (companyId) query = query.or(`company_id.eq.${companyId},sirket_id.eq.${companyId}`)
   if (status) query = query.eq('status', status)
 
   const { data, error } = await query
@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
   }
 
   const row = await attachRepresentativeIdentity(supabase, parsed.data, mapRepresentativeForDb(parsed.data))
-  if (!row.sirket_id) {
+  if (!row.company_id) {
     return NextResponse.json({ error: 'Bağlı şirket bulunamadı', code: 'COMPANY_REQUIRED' }, { status: 400 })
   }
 
@@ -117,6 +117,7 @@ function mapRepresentativeForDb(representative: Record<string, any>) {
     : [normalizeAuthorityType(representative.primary_authority_type)].filter(Boolean)
 
   return {
+    company_id: representative.company_id || representative.sirket_id,
     sirket_id: representative.company_id || representative.sirket_id,
     ad_soyad: representative.display_name || 'Temsilci',
     gorev: normalizeAuthorityType(representative.primary_authority_type) || null,

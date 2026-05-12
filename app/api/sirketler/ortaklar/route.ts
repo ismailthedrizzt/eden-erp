@@ -100,7 +100,7 @@ export async function GET(request: NextRequest) {
     .select('*')
     .order('created_at', { ascending: false })
 
-  if (companyId) query = query.eq('sirket_id', companyId)
+  if (companyId) query = query.or(`company_id.eq.${companyId},sirket_id.eq.${companyId}`)
   if (status) query = query.eq('status', status)
 
   const { data, error } = await query
@@ -126,7 +126,7 @@ export async function POST(request: NextRequest) {
   }
 
   const row = await attachPartnerIdentity(supabase, parsed.data, mapPartnerForDb(parsed.data))
-  if (!row.sirket_id) {
+  if (!row.company_id) {
     return NextResponse.json({ error: 'Bağlı şirket bulunamadı', code: 'COMPANY_REQUIRED' }, { status: 400 })
   }
 
@@ -154,6 +154,7 @@ function mapPartnerForDb(partner: Record<string, any>) {
     : [partner.first_name, partner.last_name].filter(Boolean).join(' ').trim()
 
   return {
+    company_id: partner.company_id || partner.sirket_id,
     sirket_id: partner.company_id || partner.sirket_id,
     ortak_adi: displayName || 'Ortak',
     ortak_tipi: ownerKind === 'tuzel_kisi' ? 'sirket' : 'kisi',

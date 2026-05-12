@@ -225,7 +225,7 @@ setToast({ type: 'success' | 'error' | 'info', message: '...' })
 - **Files**: camelCase or PascalCase matching default export
 - **Variables**: camelCase
 - **Constants**: UPPER_SNAKE_CASE
-- **Database tables**: snake_case, Turkish names preferred
+- **Backend and database identifiers**: English `snake_case` only for tables, columns, API payload keys, route params, service types, enum values, and storage/reference keys. Turkish is allowed only in user-facing labels, helper text, document titles, and externally mandated legal names. Existing Turkish legacy fields must be treated as compatibility aliases and normalized to English at module boundaries; do not introduce new Turkish backend identifiers.
 - **CSS classes**: kebab-case
 
 ### File Organization
