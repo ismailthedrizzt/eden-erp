@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { z } from 'zod'
+import { hydrateMasterContact, syncMasterContact } from '@/lib/identity/masterContact'
 
 const CompanyStatusSchema = z.enum(['aktif', 'tasfiye_halinde', 'terkin_edilmis'])
 
@@ -160,8 +161,12 @@ export async function GET(
     public_channels: publicChannels.data || {},
   }
 
+  const hydrated = data.organization_id
+    ? await hydrateMasterContact(supabase, 'organization', data)
+    : data
+
   return NextResponse.json(
-    { data },
+    { data: hydrated },
     { headers: { 'Cache-Control': 'no-store, max-age=0' } }
   )
 }
@@ -182,7 +187,7 @@ export async function PATCH(
 
   const { data: current, error: currentError } = await supabase
     .from('sirketler')
-    .select('id,field_history,kisa_unvan,ticari_unvan,vkn_tckn,vergi_dairesi,sirket_turu,il,ilce,adres,telefon,email,is_active,company_status,mersis_no,ticaret_sicil_no,kurulus_tarihi,legal_entity,electronic_notification_address,trade_registry_office,sirket_kodu,ulke,web_sitesi,e_fatura_mukellefi,e_arsiv_mukellefi,e_irsaliye_mukellefi,sgk_is_yeri_sicil_no,sgk_il,sgk_sube,tehlike_sinifi,varsayilan_para_birimi,varsayilan_dil,zaman_dilimi,mali_yil_baslangici')
+    .select('id,organization_id,field_history,kisa_unvan,ticari_unvan,vkn_tckn,vergi_dairesi,sirket_turu,il,ilce,adres,telefon,email,is_active,company_status,mersis_no,ticaret_sicil_no,kurulus_tarihi,legal_entity,electronic_notification_address,trade_registry_office,sirket_kodu,ulke,web_sitesi,e_fatura_mukellefi,e_arsiv_mukellefi,e_irsaliye_mukellefi,sgk_is_yeri_sicil_no,sgk_il,sgk_sube,tehlike_sinifi,varsayilan_para_birimi,varsayilan_dil,zaman_dilimi,mali_yil_baslangici')
     .eq('id', id)
     .single()
 
@@ -212,6 +217,7 @@ export async function PATCH(
     }
     return NextResponse.json({ error: error.message, code: error.code || 'UPDATE_FAILED' }, { status: 500 })
   }
+  await syncMasterContact(supabase, 'organization', current.organization_id, companyUpdates)
 
   if (ortaklar) {
     const partnerError = await replaceCompanyPartners(supabase, id, ortaklar)

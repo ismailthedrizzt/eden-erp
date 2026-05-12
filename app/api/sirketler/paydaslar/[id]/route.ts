@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
-import { hydrateMasterContact, syncMasterContact } from '@/lib/identity/masterContact'
+import { hydrateMasterContact, stripMasterDataForRoleProfile, syncMasterContact } from '@/lib/identity/masterContact'
 
 const TRACKED_FIELDS = new Set(['category', 'status', 'phone', 'email', 'internal_owner_employee_id', 'relationship_start_date'])
 
@@ -110,7 +110,7 @@ function mapStakeholderForDb(stakeholder: Record<string, any>, current?: Record<
     notes: stakeholder.notes || null,
     photo_logo: stakeholder.photo_logo || current?.photo_logo || [],
     stakeholder_documents: stakeholder.stakeholder_documents || current?.stakeholder_documents || [],
-    stakeholder_profile: stakeholder,
+    stakeholder_profile: stripMasterDataForRoleProfile(stakeholder),
   }
 }
 

@@ -25,7 +25,7 @@ import {
 import { cn } from '@/lib/utils'
 import { DashboardGrid } from '@/components/dashboard/DashboardGrid'
 import type { AnyDashboardWidgetConfig, DashboardFilterEvent } from '@/components/dashboard/dashboard.types'
-import { getCountryNationalityLabel } from '@/lib/reference/country-nationalities'
+import { getCountryLabel, getCountryNationalityLabel } from '@/lib/reference/country-nationalities'
 
 // Column Definition Types
 type ColumnType = 'text' | 'number' | 'date' | 'enum' | 'boolean' | 'image' | 'badge' | 'avatar' | 'actions'
@@ -160,31 +160,12 @@ export function SmartDataTable<T extends { id: string }>({
   const quickLookWidgetSignature = quickLookWidgetIds.join('|')
 
   // User Preferences State
-  const [viewMode, setViewMode] = useState<'list' | 'card'>(() => {
-    if (typeof window === 'undefined') return defaultView
-    const saved = localStorage.getItem(`${storageKey}-view`)
-    return (saved as 'list' | 'card') || defaultView
-  })
+  const [preferencesLoaded, setPreferencesLoaded] = useState(false)
+  const [viewMode, setViewMode] = useState<'list' | 'card'>(defaultView)
   
-  const [pageSize, setPageSize] = useState(() => {
-    if (typeof window === 'undefined') return defaultPageSize
-    const saved = localStorage.getItem(`${storageKey}-pageSize`)
-    return saved ? parseInt(saved, 10) : defaultPageSize
-  })
+  const [pageSize, setPageSize] = useState(defaultPageSize)
 
-  const [columnConfig, setColumnConfig] = useState<ColumnDef[]>(() => {
-    if (typeof window === 'undefined') return mergeColumnConfig(initialColumns)
-    const saved = localStorage.getItem(`${storageKey}-columns`)
-    if (saved) {
-      try {
-        const savedColumns = JSON.parse(saved) as ColumnDef[]
-        return mergeColumnConfig(initialColumns, savedColumns)
-      } catch {
-        return mergeColumnConfig(initialColumns)
-      }
-    }
-    return mergeColumnConfig(initialColumns)
-  })
+  const [columnConfig, setColumnConfig] = useState<ColumnDef[]>(() => mergeColumnConfig(initialColumns))
 
   // Active Data State
   const [currentPage, setCurrentPage] = useState(1)
@@ -194,15 +175,8 @@ export function SmartDataTable<T extends { id: string }>({
   const [showColumnSelector, setShowColumnSelector] = useState(false)
   const [showFilterPanel, setShowFilterPanel] = useState(false)
   const [hoveredRow, setHoveredRow] = useState<string | null>(null)
-  const [showWidgets, setShowWidgets] = useState(() => {
-    if (typeof window === 'undefined') return true
-    const saved = localStorage.getItem(`${storageKey}-quickLook`)
-    return saved === null ? true : saved === 'true'
-  })
-  const [selectedQuickLookWidgetIds, setSelectedQuickLookWidgetIds] = useState<string[]>(() => {
-    if (typeof window === 'undefined') return quickLookWidgetIds
-    return parseSavedWidgetIds(localStorage.getItem(`${storageKey}-widgets`), quickLookWidgetIds)
-  })
+  const [showWidgets, setShowWidgets] = useState(true)
+  const [selectedQuickLookWidgetIds, setSelectedQuickLookWidgetIds] = useState<string[]>(quickLookWidgetIds)
   const [draggedColumn, setDraggedColumn] = useState<string | null>(null)
   const [dropTarget, setDropTarget] = useState<string | null>(null)
 
@@ -221,6 +195,35 @@ export function SmartDataTable<T extends { id: string }>({
   const columnSelectorRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
+    const savedView = localStorage.getItem(`${storageKey}-view`)
+    if (savedView === 'list' || savedView === 'card') {
+      setViewMode(savedView)
+    } else {
+      setViewMode(defaultView)
+    }
+
+    const savedPageSize = localStorage.getItem(`${storageKey}-pageSize`)
+    const parsedPageSize = savedPageSize ? parseInt(savedPageSize, 10) : defaultPageSize
+    setPageSize(Number.isFinite(parsedPageSize) ? parsedPageSize : defaultPageSize)
+
+    const savedColumns = localStorage.getItem(`${storageKey}-columns`)
+    if (savedColumns) {
+      try {
+        setColumnConfig(mergeColumnConfig(initialColumns, JSON.parse(savedColumns) as ColumnDef[]))
+      } catch {
+        setColumnConfig(mergeColumnConfig(initialColumns))
+      }
+    } else {
+      setColumnConfig(mergeColumnConfig(initialColumns))
+    }
+
+    const savedQuickLook = localStorage.getItem(`${storageKey}-quickLook`)
+    setShowWidgets(savedQuickLook === null ? true : savedQuickLook === 'true')
+    setSelectedQuickLookWidgetIds(parseSavedWidgetIds(localStorage.getItem(`${storageKey}-widgets`), quickLookWidgetIds))
+    setPreferencesLoaded(true)
+  }, [storageKey, defaultView, defaultPageSize, columnSignature, quickLookWidgetSignature])
+
+  useEffect(() => {
     setColumnConfig(prev => mergeColumnConfig(initialColumns, prev))
   }, [columnSignature])
 
@@ -236,14 +239,13 @@ export function SmartDataTable<T extends { id: string }>({
 
   // Persist preferences
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem(`${storageKey}-view`, viewMode)
-      localStorage.setItem(`${storageKey}-pageSize`, pageSize.toString())
-      localStorage.setItem(`${storageKey}-columns`, JSON.stringify(columnConfig))
-      localStorage.setItem(`${storageKey}-quickLook`, String(showWidgets))
-      localStorage.setItem(`${storageKey}-widgets`, JSON.stringify(selectedQuickLookWidgetIds))
-    }
-  }, [viewMode, pageSize, columnConfig, showWidgets, selectedQuickLookWidgetIds, storageKey])
+    if (!preferencesLoaded) return
+    localStorage.setItem(`${storageKey}-view`, viewMode)
+    localStorage.setItem(`${storageKey}-pageSize`, pageSize.toString())
+    localStorage.setItem(`${storageKey}-columns`, JSON.stringify(columnConfig))
+    localStorage.setItem(`${storageKey}-quickLook`, String(showWidgets))
+    localStorage.setItem(`${storageKey}-widgets`, JSON.stringify(selectedQuickLookWidgetIds))
+  }, [preferencesLoaded, viewMode, pageSize, columnConfig, showWidgets, selectedQuickLookWidgetIds, storageKey])
 
   // Click outside handler for column selector
   useEffect(() => {
@@ -816,9 +818,12 @@ export function SmartDataTable<T extends { id: string }>({
     if (col.render) return col.render(value, row)
     
     // Handle nationality column
-    if (col.key === 'nationality' || col.key === 'country' || col.key === 'uyruk' || col.key === 'vatandaslik') {
-      const nationality = convertToNationality(value)
-      return <span className="inline-block text-gray-900 dark:text-gray-100">{nationality}</span>
+    if (col.key === 'country') {
+      return <span className="inline-block text-gray-900 dark:text-gray-100">{getCountryLabel(value)}</span>
+    }
+
+    if (col.key === 'nationality' || col.key === 'uyruk' || col.key === 'vatandaslik') {
+      return <span className="inline-block text-gray-900 dark:text-gray-100">{convertToNationality(value)}</span>
     }
     
     // Handle gender column

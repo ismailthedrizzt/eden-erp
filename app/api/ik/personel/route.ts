@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { z } from 'zod'
 import { isTurkishNationality, normalizeCountryId } from '@/lib/reference/country-nationalities'
-import { syncMasterContact } from '@/lib/identity/masterContact'
+import { hydrateMasterContact, syncMasterContact } from '@/lib/identity/masterContact'
 import { getEducationLevelValue } from '@/lib/modules/employees/education'
 
 const EmployeeSchema = z.object({
@@ -232,7 +232,8 @@ export async function POST(request: NextRequest) {
 
   if (error) return NextResponse.json({ error: error.message, code: error.code || 'CREATE_FAILED' }, { status: 500 })
   await syncMasterContact(supabase, 'person', data?.person_id || employeePayload.person_id, employeePayload)
-  return NextResponse.json({ data }, { status: 201 })
+  const hydrated = data?.person_id ? await hydrateMasterContact(supabase, 'person', data) : data
+  return NextResponse.json({ data: hydrated }, { status: 201 })
 }
 
 async function ensureEmployeePersonLink(supabase: ReturnType<typeof createServiceClient>, employee: z.infer<typeof EmployeeSchema>) {

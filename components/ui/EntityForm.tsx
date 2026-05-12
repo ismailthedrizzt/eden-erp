@@ -24,7 +24,7 @@
  */
 
 import { useState, useEffect, ReactNode, useCallback } from 'react'
-import { Save, Loader2, Edit3, History, Clock, Plus, Trash2, Upload, Briefcase, LogOut } from 'lucide-react'
+import { Save, Loader2, Edit3, History, Clock, Plus, Trash2, Upload, Briefcase, LogOut, Building2, UserRound } from 'lucide-react'
 import { cn, formatPhoneInput, normalizeEmailInput } from '@/lib/utils'
 import { ImageSlotUploader, ImageSlot, SlotImage } from './ImageSlotUploader'
 import { DocumentSlotUploader, DocumentSlot, SlotDocument } from './DocumentSlotUploader'
@@ -249,6 +249,230 @@ function formatHistoryValue(value: unknown): string {
     return String(value)
   }
 }
+
+function MasterSummaryHero({
+  result,
+  locked,
+}: {
+  result: IdentityGateResolveResult | null
+  locked: boolean
+}) {
+  const kind = result?.entityKind
+  const master = result?.masterRecord || null
+  const prefill = result?.prefill || {}
+  const Icon = kind === 'organization' ? Building2 : UserRound
+  const title = kind === 'organization'
+    ? readFirst(master, prefill, ['legal_name', 'ticari_unvan', 'trade_name', 'display_name', 'short_name', 'kisa_unvan'])
+    : readFirst(master, prefill, ['full_name', 'display_name', 'ad_soyad'])
+      || [readFirst(master, prefill, ['first_name', 'ad']), readFirst(master, prefill, ['last_name', 'soyad'])].filter(Boolean).join(' ')
+
+  const items = kind === 'organization'
+    ? compactSummaryItems([
+        { label: 'Kisa unvan', value: readFirst(master, prefill, ['short_name', 'kisa_unvan']) },
+        { label: 'Vergi dairesi', value: readFirst(master, prefill, ['tax_office', 'vergi_dairesi']) },
+        { label: 'Telefon', value: readFirst(master, prefill, ['phone', 'telefon', 'phone_1']) },
+        { label: 'E-posta', value: readFirst(master, prefill, ['email', 'email_1']) },
+        { label: 'Adres', value: formatAddress(master, prefill) },
+      ])
+    : compactSummaryItems([
+        { label: 'Uyruk', value: readFirst(master, prefill, ['nationality', 'uyruk', 'nationality_country']) },
+        { label: 'Dogum', value: readFirst(master, prefill, ['birth_date', 'dogum_tarihi']) },
+        { label: 'Telefon', value: readFirst(master, prefill, ['phone', 'cep_telefonu', 'telefon', 'phone_1']) },
+        { label: 'E-posta', value: readFirst(master, prefill, ['email', 'email_1']) },
+        { label: 'Adres', value: formatAddress(master, prefill) },
+      ])
+
+  if (locked) {
+    return (
+      <div className="col-span-2 lg:col-span-3 rounded-xl border border-dashed border-gray-300 bg-white/60 p-4 text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-900/50 dark:text-gray-400">
+        Master ozeti, kimlik eslestirmesi tamamlandiktan sonra burada gosterilecek.
+      </div>
+    )
+  }
+
+  if (!result) return null
+
+  return (
+    <div className="col-span-2 lg:col-span-3 rounded-xl border border-emerald-100 bg-emerald-50/70 p-4 dark:border-emerald-900/60 dark:bg-emerald-950/20">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="flex items-start gap-3">
+          <div className="rounded-lg bg-white p-2 text-emerald-700 shadow-sm dark:bg-gray-900 dark:text-emerald-300">
+            <Icon size={18} />
+          </div>
+          <div>
+            <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
+              {title || (kind === 'organization' ? 'Tuzel kisi master kaydi' : 'Gercek kisi master kaydi')}
+            </h4>
+          </div>
+        </div>
+        <span className="rounded-full bg-white px-2.5 py-1 text-xs font-medium text-emerald-700 dark:bg-gray-900 dark:text-emerald-300">
+          Temel Bilgiler
+        </span>
+      </div>
+      {items.length > 0 && (
+        <div className="mt-3 grid gap-2 md:grid-cols-2 lg:grid-cols-3">
+          {items.map(item => (
+            <div key={item.label} className="rounded-lg border border-emerald-100 bg-white px-3 py-2 dark:border-emerald-900/50 dark:bg-gray-900">
+              <div className="text-[11px] font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">{item.label}</div>
+              <div className="mt-0.5 truncate text-sm text-gray-900 dark:text-white">{formatSummaryValue(item.value)}</div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function compactSummaryItems(items: MasterSummaryItem[]) {
+  return items.filter(item => hasValue(item.value))
+}
+
+function readFirst(master: Record<string, any> | null, prefill: Record<string, any>, keys: string[]) {
+  for (const key of keys) {
+    const value = master?.[key] ?? prefill[key]
+    if (hasValue(value)) return value
+  }
+  return ''
+}
+
+function formatAddress(master: Record<string, any> | null, prefill: Record<string, any>) {
+  const address = readFirst(master, prefill, ['address', 'adres'])
+  const city = readFirst(master, prefill, ['city', 'il'])
+  const district = readFirst(master, prefill, ['district', 'ilce'])
+  return [address, district, city].filter(Boolean).join(', ')
+}
+
+function formatSummaryValue(value: unknown) {
+  if (Array.isArray(value)) return value.length ? `${value.length} kayit` : ''
+  if (value && typeof value === 'object') return 'Kayitli'
+  return String(value || '')
+}
+
+function isMasterIdentityHeroField(field: FormField) {
+  if (field.type === 'section') return false
+  return MASTER_IDENTITY_FIELD_NAMES.has(field.name)
+}
+
+function buildIdentityResultFromExistingData(
+  config: IdentityGateConfig | undefined,
+  source: Record<string, any>
+): IdentityGateResolveResult | null {
+  if (!config?.enabled) return null
+  const master = source.master && typeof source.master === 'object'
+    ? source.master
+    : source.masterRecord && typeof source.masterRecord === 'object'
+      ? source.masterRecord
+      : null
+  const entityKind = source.master_entity_kind === 'organization' || source.organization_id
+    ? 'organization'
+    : 'person'
+  const masterRecord = master || extractMasterLikeRecord(entityKind, source)
+
+  if (!source.person_id && !source.organization_id && !master) return null
+
+  return {
+    state: 'ready_for_edit',
+    entityKind,
+    masterFound: !!master || !!source.person_id || !!source.organization_id,
+    masterRecord,
+    roleFound: true,
+    roleRecord: source.role && typeof source.role === 'object' ? source.role : source,
+    prefill: masterRecord,
+    message: 'Kayit master kimlik ile bagli.',
+  }
+}
+
+function extractMasterLikeRecord(kind: 'person' | 'organization', source: Record<string, any>) {
+  if (kind === 'organization') {
+    return {
+      id: source.organization_id || source.master_record_id || null,
+      legal_name: source.legal_name || source.trade_name || source.ticari_unvan || source.display_name || '',
+      short_name: source.short_name || source.kisa_unvan || '',
+      country: source.country || source.ulke || 'TR',
+      tax_number: source.tax_number || source.vkn_tckn || source.identity_number || source.tckn_vkn || '',
+      registration_number: source.registration_number || source.ticaret_sicil_no || source.mersis_no || '',
+      tax_office: source.tax_office || source.vergi_dairesi || '',
+      phone: source.phone || source.telefon || '',
+      email: source.email || '',
+      address: source.address || source.adres || '',
+      city: source.city || source.il || '',
+      district: source.district || source.ilce || '',
+    }
+  }
+
+  return {
+    id: source.person_id || source.master_record_id || null,
+    first_name: source.first_name || source.ad || '',
+    last_name: source.last_name || source.soyad || '',
+    full_name: source.full_name || source.display_name || [source.ad, source.soyad].filter(Boolean).join(' '),
+    nationality: source.nationality || source.uyruk || source.nationality_country || 'TR',
+    national_id: source.national_id || source.tc_kimlik || '',
+    passport_no: source.passport_no || source.pasaport_no || '',
+    birth_date: source.birth_date || source.dogum_tarihi || '',
+    phone: source.phone || source.cep_telefonu || source.telefon || '',
+    email: source.email || '',
+    address: source.address || source.adres || '',
+    city: source.city || source.il || '',
+    district: source.district || source.ilce || '',
+  }
+}
+
+type MasterSummaryItem = {
+  label: string
+  value: unknown
+}
+
+const MASTER_IDENTITY_FIELD_NAMES = new Set([
+  'ad',
+  'soyad',
+  'first_name',
+  'last_name',
+  'full_name',
+  'display_name',
+  'trade_name',
+  'legal_name',
+  'ticari_unvan',
+  'kisa_unvan',
+  'short_name',
+  'uyruk',
+  'nationality',
+  'nationality_country',
+  'tc_kimlik',
+  'national_id',
+  'pasaport_no',
+  'passport_no',
+  'identity_number',
+  'tax_id',
+  'vkn_tckn',
+  'tax_number',
+  'ticaret_sicil_no',
+  'registration_number',
+  'mersis_no',
+  'dogum_tarihi',
+  'birth_date',
+  'dogum_yeri',
+  'birth_place',
+  'cinsiyet',
+  'gender',
+  'vergi_dairesi',
+  'tax_office',
+  'sirket_turu',
+  'company_type',
+  'foundation_date',
+  'kurulus_tarihi',
+  'telefon',
+  'phone',
+  'cep_telefonu',
+  'email',
+  'adres',
+  'address',
+  'il',
+  'city',
+  'ilce',
+  'district',
+  'telefonlar',
+  'epostalar',
+])
 
 function buildChangedPayload(nextData: Record<string, any>, previousData: Record<string, any>) {
   return Object.fromEntries(
@@ -1298,11 +1522,16 @@ export function EntityForm({
   const isCreate = mode === 'create'
   const isEdit = mode === 'edit'
   const isIdentityGateEnabled = !!identityGate?.enabled
-  const isIdentityGateReady = !isIdentityGateEnabled || !isCreate || identityGateResult?.state === 'ready_for_insert' || identityGateResult?.state === 'ready_for_edit'
+  const effectiveIdentityGateResult = identityGateResult || buildIdentityResultFromExistingData(identityGate, formData)
+  const isIdentityGateReady = !isIdentityGateEnabled || !isCreate || effectiveIdentityGateResult?.state === 'ready_for_insert' || effectiveIdentityGateResult?.state === 'ready_for_edit'
   const isIdentityGateLocked = isIdentityGateEnabled && isCreate && !isIdentityGateReady
-  const masterControlledFields = new Set(Object.keys(identityGateResult?.prefill || {}).filter(key => key !== 'person_id' && key !== 'organization_id'))
+  const masterControlledFields = new Set(Object.keys(effectiveIdentityGateResult?.prefill || {}).filter(key => key !== 'person_id' && key !== 'organization_id'))
+  const shouldHideResolvedMasterHeroFields = isIdentityGateEnabled && !!effectiveIdentityGateResult?.masterFound
+  const roleHeroFields = shouldHideResolvedMasterHeroFields
+    ? heroFields.filter(field => !isMasterIdentityHeroField(field))
+    : heroFields
   const allFormFields = [
-    ...flattenFields(heroFields),
+    ...flattenFields(roleHeroFields),
     ...tabs.flatMap(tab => flattenFields(tab.fields))
   ]
 
@@ -1614,7 +1843,7 @@ export function EntityForm({
     const errors: Record<string, string> = {}
 
     if (isIdentityGateLocked) {
-      errors.identity_gate = 'Devam etmek için önce Temel Kimlik Bilgileri alanını eşleştirin.'
+      errors.identity_gate = 'Devam etmek için önce Temel Kimlik Sorgulama/Oluşturma alanını eşleştirin.'
       setFieldErrors(errors)
       onValidationError?.([errors.identity_gate])
       return false
@@ -1653,9 +1882,9 @@ export function EntityForm({
     if (isIdentityGateLocked) {
       setFieldErrors(prev => ({
         ...prev,
-        identity_gate: 'Devam etmek için önce Temel Kimlik Bilgileri alanını eşleştirin.',
+        identity_gate: 'Devam etmek için önce Temel Kimlik Sorgulama/Oluşturma alanını eşleştirin.',
       }))
-      onValidationError?.(['Devam etmek için önce Temel Kimlik Bilgileri alanını eşleştirin.'])
+      onValidationError?.(['Devam etmek için önce Temel Kimlik Sorgulama/Oluşturma alanını eşleştirin.'])
       return
     }
     const finalizedData = finalizeFormDataForSave(formData)
@@ -2008,12 +2237,19 @@ export function EntityForm({
                   onCancelDuplicate={onIdentityGateCancelDuplicate || onCancel}
                 />
               )}
+              {identityGate?.enabled && (
+                <MasterSummaryHero result={effectiveIdentityGateResult} locked={isIdentityGateLocked} />
+              )}
               {isIdentityGateLocked && fieldErrors.identity_gate && (
                 <div className="col-span-2 lg:col-span-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
                   {fieldErrors.identity_gate}
                 </div>
               )}
-              {heroFields.map(field => renderField(field, enableHistory))}
+              {roleHeroFields.length > 0 ? roleHeroFields.map(field => renderField(field, enableHistory)) : (
+                <div className="col-span-2 lg:col-span-3 rounded-lg border border-dashed border-gray-200 bg-white/70 px-3 py-2 text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-900/50 dark:text-gray-400">
+                  Bu formda hero alaninda manuel girilecek rol alani yok. Rol detaylari sekmelerde yonetilir.
+                </div>
+              )}
             </div>
 
             {/* Form Action Area - Bottom Right */}
@@ -2086,7 +2322,7 @@ export function EntityForm({
         <div className="p-6">
           {isIdentityGateLocked && (
             <div className="mb-4 rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-3 text-sm text-gray-600 dark:border-gray-700 dark:bg-gray-800/50 dark:text-gray-300">
-              Devam etmek için önce Temel Kimlik Bilgileri alanını eşleştirin.
+              Devam etmek için önce Temel Kimlik Sorgulama/Oluşturma alanını eşleştirin.
             </div>
           )}
           {tabs.map(tab => (

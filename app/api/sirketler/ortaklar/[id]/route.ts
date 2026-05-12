@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
-import { hydrateMasterContact, syncMasterContact } from '@/lib/identity/masterContact'
+import { hydrateMasterContact, stripMasterDataForRoleProfile, syncMasterContact } from '@/lib/identity/masterContact'
 
 function buildFieldHistory(current: Record<string, any>, updates: Record<string, any>) {
   const existingHistory = Array.isArray(current.history) ? current.history : []
@@ -152,7 +152,7 @@ function mapPartnerForDb(partner: Record<string, any>, current?: Record<string, 
     notes: partner.notes || null,
     photo_logo: partner.photo_logo || current?.photo_logo || [],
     partner_documents: partner.partner_documents || current?.partner_documents || [],
-    partner_profile: partner,
+    partner_profile: stripMasterDataForRoleProfile(partner),
   }
 }
 

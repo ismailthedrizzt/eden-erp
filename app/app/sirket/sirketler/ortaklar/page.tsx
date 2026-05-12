@@ -6,6 +6,7 @@ import { EntityForm, FormField, FormMode, FormTab } from '@/components/ui/Entity
 import { PageBanner } from '@/components/ui/PageBanner'
 import { SmartDataTable, ColumnDef, WidgetDef } from '@/components/ui/SmartDataTable'
 import { Toast } from '@/components/ui/Toast'
+import { normalizeCountryId } from '@/lib/reference/country-nationalities'
 
 type PageState = 'list' | 'create' | 'view' | 'edit'
 type ToastState = { type: 'success' | 'error' | 'warning'; title?: string; message: string }
@@ -116,6 +117,23 @@ interface RepresentativeAuthorityRow {
 type PartnerHistorySectionsValue = {
   ownershipTransactions?: OwnershipTransactionHistoryRow[]
   technicalChanges?: any[]
+}
+
+const AUTHORITY_LABEL_BY_VALUE: Record<string, string> = {
+  imza_yetkilisi: 'İmza Yetkilisi',
+  banka_yetkilisi: 'Banka Yetkilisi',
+  gib_yetkilisi: 'GİB Yetkilisi',
+  sgk_yetkilisi: 'SGK Yetkilisi',
+  sozlesme_yetkilisi: 'Sözleşme Yetkilisi',
+  satinalma_onay_yetkilisi: 'Satınalma Onay Yetkilisi',
+  odeme_onay_yetkilisi: 'Ödeme Onay Yetkilisi',
+  mesul_mudur: 'Mesul Müdür',
+  kanuni_temsilci: 'Kanuni Temsilci',
+}
+
+function toAuthorityLabel(value?: string | null) {
+  if (!value) return ''
+  return AUTHORITY_LABEL_BY_VALUE[value] || value
 }
 
 const FIELD_LABELS: Record<string, string> = {
@@ -751,7 +769,17 @@ function RepresentativeAuthoritiesPanel({ value }: { value: RepresentativeAuthor
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
               <div className="text-sm font-semibold text-gray-900 dark:text-white">
-                {(authority.authority_types || []).join(', ') || authority.gorev || 'Yetki Kaydı'}
+                {authority.authority_types?.length ? (
+                  <span className="flex flex-wrap gap-1.5">
+                    {authority.authority_types.map(type => (
+                      <span key={type} className="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700 dark:bg-blue-950/40 dark:text-blue-300">
+                        {toAuthorityLabel(type)}
+                      </span>
+                    ))}
+                  </span>
+                ) : (
+                  toAuthorityLabel(authority.gorev) || 'Yetki Kaydı'
+                )}
               </div>
               <div className="mt-1 text-xs text-gray-500">
                 {authority.start_date || '-'} - {authority.end_date || 'Süresiz'} · {authority.status || 'Aktif'}
@@ -883,8 +911,10 @@ function normalizePayload(raw: Record<string, any>, companies: Option[]) {
   payload.company_id = payload.company_id || payload.sirket_id || companies[0]?.value
   if (payload.master_entity_kind === 'person') payload.partner_type = 'gercek_kisi'
   if (payload.master_entity_kind === 'organization') payload.partner_type = 'tuzel_kisi'
-  payload.nationality_country = payload.nationality_country || payload.country || payload.nationality || payload.uyruk || 'TR'
-  payload.nationality = payload.nationality || payload.uyruk || payload.nationality_country
+  payload.nationality_country = normalizeCountryId(payload.nationality_country || payload.country || payload.nationality || payload.uyruk || 'TR')
+  payload.nationality = normalizeCountryId(payload.nationality || payload.uyruk || payload.nationality_country)
+  payload.uyruk = normalizeCountryId(payload.uyruk || payload.nationality || payload.nationality_country)
+  payload.country = normalizeCountryId(payload.country || payload.nationality_country || payload.nationality || 'TR')
   payload.identity_number = payload.identity_number || payload.national_id || payload.tc_kimlik || payload.tax_number || payload.vkn_tckn || payload.passport_no || payload.pasaport_no
   if (Array.isArray(payload.telefonlar) && payload.telefonlar.length && !payload.phone) payload.phone = payload.telefonlar[0]?.numara
   if (Array.isArray(payload.epostalar) && payload.epostalar.length && !payload.email) payload.email = payload.epostalar[0]?.adres

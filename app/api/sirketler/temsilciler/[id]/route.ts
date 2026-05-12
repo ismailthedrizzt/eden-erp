@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
-import { hydrateMasterContact, syncMasterContact } from '@/lib/identity/masterContact'
+import { hydrateMasterContact, stripMasterDataForRoleProfile, syncMasterContact } from '@/lib/identity/masterContact'
 
 const TRACKED_FIELDS = new Set([
   'status',
@@ -161,7 +161,7 @@ function mapRepresentativeForDb(representative: Record<string, any>, current?: R
     can_approve_alone: !!(representative.can_approve_alone ?? current?.can_approve_alone),
     photo_logo: representative.photo_logo || current?.photo_logo || [],
     authority_documents: representative.authority_documents || current?.authority_documents || [],
-    representative_profile: representative,
+    representative_profile: stripMasterDataForRoleProfile(representative),
   }
 }
 

@@ -359,7 +359,17 @@ export const COUNTRY_NATIONALITIES: CountryNationality[] = [
 
 export const COUNTRY_NATIONALITY_OPTIONS = COUNTRY_NATIONALITIES.map(item => ({
   value: item.id,
-  label: [item.phoneCode, item.country, item.nationality].filter(Boolean).join(', '),
+  label: item.nationality,
+}))
+
+export const COUNTRY_OPTIONS = COUNTRY_NATIONALITIES.map(item => ({
+  value: item.id,
+  label: item.country,
+}))
+
+export const COUNTRY_PHONE_OPTIONS = COUNTRY_NATIONALITIES.map(item => ({
+  value: item.id,
+  label: item.phoneCode ? `${item.phoneCode} ${item.country}` : item.country,
 }))
 
 export function normalizeCountryId(value?: unknown) {
@@ -390,4 +400,12 @@ export function getCountryNationalityLabel(value?: unknown) {
   const id = normalizeCountryId(raw)
   const item = COUNTRY_NATIONALITIES.find(country => country.id === id)
   return item?.nationality || raw
+}
+
+export function getCountryLabel(value?: unknown) {
+  const raw = String(value || '').trim()
+  if (!raw) return '-'
+  const id = normalizeCountryId(raw)
+  const item = COUNTRY_NATIONALITIES.find(country => country.id === id)
+  return item?.country || raw
 }

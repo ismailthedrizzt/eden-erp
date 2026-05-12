@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { z } from 'zod'
-import { hydrateMasterContact, syncMasterContact } from '@/lib/identity/masterContact'
+import { hydrateMasterContact, stripMasterDataForRoleProfile, syncMasterContact } from '@/lib/identity/masterContact'
+import { normalizeCountryId } from '@/lib/reference/country-nationalities'
 
 const PartnerSchema = z.object({
   company_id: z.string().uuid().optional(),
@@ -190,7 +191,7 @@ function mapPartnerForDb(partner: Record<string, any>) {
     history: partner.timeline || [],
   photo_logo: partner.photo_logo || [],
   partner_documents: partner.partner_documents || [],
-  partner_profile: partner,
+    partner_profile: stripMasterDataForRoleProfile(partner),
     is_deleted: false,
   }
 }
@@ -202,7 +203,7 @@ async function attachPartnerIdentity(supabase: ReturnType<typeof createServiceCl
       if (partner.person_id) return { ...row, person_id: partner.person_id, source_type: 'master_person', source_id: partner.person_id }
 
       const fullName = row.display_name || [partner.first_name, partner.last_name].filter(Boolean).join(' ').trim()
-      const nationality = partner.nationality_country || partner.nationality || partner.uyruk || 'TR'
+      const nationality = normalizeCountryId(partner.nationality_country || partner.nationality || partner.uyruk || 'TR')
       const identityNumber = partner.identity_number || partner.national_id || partner.tc_kimlik || partner.passport_no || partner.pasaport_no
       const nationalId = identityNumber && String(identityNumber).length === 11 ? String(identityNumber) : null
       const passportNo = nationalId ? null : partner.passport_no || partner.pasaport_no || null
@@ -231,7 +232,7 @@ async function attachPartnerIdentity(supabase: ReturnType<typeof createServiceCl
     const legalName = partner.trade_name || row.display_name
     if (partner.organization_id) return { ...row, organization_id: partner.organization_id, source_type: 'master_organization', source_id: partner.organization_id }
 
-    const country = partner.country || partner.nationality_country || 'TR'
+    const country = normalizeCountryId(partner.country || partner.nationality_country || 'TR')
     const taxNumber = partner.tax_number || partner.identity_number || null
     const { data: existing, error: findError } = await supabase
       .from('organizations')

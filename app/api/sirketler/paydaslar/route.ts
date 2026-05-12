@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { z } from 'zod'
-import { hydrateMasterContact, syncMasterContact } from '@/lib/identity/masterContact'
+import { hydrateMasterContact, stripMasterDataForRoleProfile, syncMasterContact } from '@/lib/identity/masterContact'
+import { normalizeCountryId } from '@/lib/reference/country-nationalities'
 
 const StakeholderSchema = z.object({
   company_id: z.string().uuid().optional(),
@@ -125,7 +126,7 @@ function mapStakeholderForDb(stakeholder: Record<string, any>) {
     notes: stakeholder.notes || null,
     photo_logo: stakeholder.photo_logo || [],
     stakeholder_documents: stakeholder.stakeholder_documents || [],
-    stakeholder_profile: stakeholder,
+    stakeholder_profile: stripMasterDataForRoleProfile(stakeholder),
     history: stakeholder.timeline || [],
     is_deleted: false,
   }
@@ -147,16 +148,16 @@ async function attachStakeholderIdentity(supabase: ReturnType<typeof createServi
       const nationalId = stakeholder.tax_id && String(stakeholder.tax_id).length === 11 ? String(stakeholder.tax_id) : null
       const passportNo = nationalId ? null : stakeholder.passport_no || stakeholder.tax_id || null
       const { data: existing, error: findError } = nationalId
-        ? await supabase.from('persons').select('id').eq('nationality', stakeholder.country || 'TR').eq('national_id', nationalId).maybeSingle()
+        ? await supabase.from('persons').select('id').eq('nationality', normalizeCountryId(stakeholder.country || 'TR')).eq('national_id', nationalId).maybeSingle()
         : passportNo
-          ? await supabase.from('persons').select('id').eq('nationality', stakeholder.country || 'TR').eq('passport_no', passportNo).maybeSingle()
+          ? await supabase.from('persons').select('id').eq('nationality', normalizeCountryId(stakeholder.country || 'TR')).eq('passport_no', passportNo).maybeSingle()
           : await supabase.from('persons').select('id').eq('full_name', fullName).maybeSingle()
       if (findError) throw new Error(findError.message)
       const personId = existing?.id || (await supabase.from('persons').insert({
         first_name: stakeholder.first_name || null,
         last_name: stakeholder.last_name || null,
         full_name: fullName,
-        nationality: stakeholder.country || 'TR',
+        nationality: normalizeCountryId(stakeholder.country || 'TR'),
         national_id: nationalId,
         passport_no: passportNo,
         birth_date: stakeholder.birth_date || null,
@@ -174,7 +175,7 @@ async function attachStakeholderIdentity(supabase: ReturnType<typeof createServi
     const legalName = stakeholder.trade_name || stakeholder.display_name
     if (stakeholder.organization_id) return { ...row, stakeholder_kind: 'organization', organization_id: stakeholder.organization_id }
 
-    const country = stakeholder.country || 'TR'
+    const country = normalizeCountryId(stakeholder.country || 'TR')
     const taxNumber = stakeholder.tax_id || stakeholder.tax_number || null
     const { data: existing, error: findError } = taxNumber
       ? await supabase.from('organizations').select('id').eq('country', country).eq('tax_number', taxNumber).maybeSingle()

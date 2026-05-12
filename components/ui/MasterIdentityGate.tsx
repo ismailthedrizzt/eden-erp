@@ -5,7 +5,7 @@ import type { ReactNode } from 'react'
 import { AlertTriangle, CheckCircle2, Loader2, Search, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { IdentityEntityKind, IdentityGateConfig, IdentityGateResolveResult, IdentityGateState } from '@/lib/identity-gate'
-import { COUNTRY_NATIONALITY_OPTIONS, isTurkishNationality, normalizeCountryId } from '@/lib/reference/country-nationalities'
+import { COUNTRY_NATIONALITY_OPTIONS, COUNTRY_OPTIONS, isTurkishNationality, normalizeCountryId } from '@/lib/reference/country-nationalities'
 
 interface MasterIdentityGateProps {
   config: IdentityGateConfig
@@ -31,7 +31,7 @@ export function MasterIdentityGate({
   const [entityKind, setEntityKind] = useState<IdentityEntityKind>(config.allowedEntityKinds[0] || 'person')
   const [identity, setIdentity] = useState<Record<string, string>>(() => initialIdentity(config.allowedEntityKinds[0] || 'person'))
   const [state, setState] = useState<IdentityGateState>('identity_input')
-  const [message, setMessage] = useState('Devam etmek için önce temel kimlik bilgilerini girerek master kayıt eşleştirmesi yapın.')
+  const [message, setMessage] = useState('')
   const [warning, setWarning] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [lastResult, setLastResult] = useState<IdentityGateResolveResult | null>(null)
@@ -56,7 +56,7 @@ export function MasterIdentityGate({
       ...nextIdentity,
     }))
     setState('ready_for_edit')
-    setMessage('Kayıt düzenleme modunda. Temel kimlik ilişkisi mevcut kayıt üzerinden yönetilir.')
+    setMessage('')
   }, [
     mode,
     allowedEntityKindsKey,
@@ -157,7 +157,7 @@ export function MasterIdentityGate({
       onResolved(result)
     } catch (err) {
       setState('identity_input')
-      setMessage('Devam etmek için önce temel kimlik bilgilerini girerek master kayıt eşleştirmesi yapın.')
+      setMessage('')
       setError(err instanceof Error ? err.message : 'Kimlik çözümleme başarısız')
     }
   }
@@ -172,10 +172,10 @@ export function MasterIdentityGate({
     <div className="col-span-2 lg:col-span-3 rounded-xl border border-blue-100 bg-blue-50/70 p-4 dark:border-blue-900/60 dark:bg-blue-950/20">
       <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h4 className="text-sm font-semibold text-gray-900 dark:text-white">Temel Kimlik Bilgileri</h4>
-          <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">{message}</p>
+          <h4 className="text-sm font-semibold text-gray-900 dark:text-white">Temel Kimlik Sorgulama/Oluşturma</h4>
+          {message && <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">{message}</p>}
         </div>
-        <GateStatus state={state} tone={statusTone} />
+        {mode === 'create' && <GateStatus state={state} tone={statusTone} />}
       </div>
 
       <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
@@ -219,12 +219,13 @@ export function MasterIdentityGate({
         ) : (
           <>
             <Field label="Ülke">
-              <input
-                value={identity.country || ''}
+              <SearchableGateSelect
+                value={normalizeCountryInput(identity.country)}
                 disabled={readOnly}
+                options={COUNTRY_OPTIONS}
+                placeholder="Yazarak arayın"
                 onBlur={() => setTouched(prev => ({ ...prev, country: true }))}
-                onChange={(event) => updateIdentity('country', event.target.value)}
-                placeholder="TR"
+                onChange={(value) => updateIdentity('country', value)}
                 className={fieldClass(hasOrganizationCountry(identity), touched.country, readOnly)}
               />
             </Field>
@@ -248,9 +249,7 @@ export function MasterIdentityGate({
       {warning && <p className="mt-3 text-xs font-medium text-amber-700 dark:text-amber-300">{warning}</p>}
 
       <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
-        <div className="text-xs text-gray-500 dark:text-gray-400">
-          {lastResult?.masterRecord ? 'Master kayıttan gelen alanlar formda işaretlenecek.' : 'Master kayıt bulunmazsa yeni master kayıt bağlamı hazırlanır.'}
-        </div>
+        <div />
         {state === 'role_found' && lastResult?.roleRecord ? (
           <div className="flex gap-2">
             <button type="button" onClick={() => onOpenExistingRole?.(lastResult.roleRecord!, lastResult)} className="rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700">
@@ -480,6 +479,10 @@ function normalizeNationalityInput(value?: string) {
   return normalizeCountryId(value)
 }
 
+function normalizeCountryInput(value?: string) {
+  return normalizeCountryId(value)
+}
+
 function hasPersonNationality(identity: Record<string, string>) {
   return !!identity.nationality
 }
@@ -527,7 +530,7 @@ function stateLabel(state: IdentityGateState) {
     role_not_found: 'Rol yok',
     role_found: 'Mevcut kayıt',
     ready_for_insert: 'Form aktif',
-    ready_for_edit: 'Düzenleme',
+    ready_for_edit: 'Hazır',
     blocked_duplicate: 'Duplicate engelli',
   }
   return labels[state]

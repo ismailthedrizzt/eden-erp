@@ -6,6 +6,7 @@ import { EntityForm, FormField, FormMode, FormTab } from '@/components/ui/Entity
 import { PageBanner } from '@/components/ui/PageBanner'
 import { SmartDataTable, ColumnDef, WidgetDef } from '@/components/ui/SmartDataTable'
 import { Toast } from '@/components/ui/Toast'
+import { normalizeCountryId } from '@/lib/reference/country-nationalities'
 
 type PageState = 'list' | 'create' | 'view' | 'edit'
 type ToastState = { type: 'success' | 'error' | 'warning'; title?: string; message: string }
@@ -686,8 +687,9 @@ function normalizePayload(raw: Record<string, any>, companies: Option[], current
   payload.display_name = payload.person_or_entity_type === 'tuzel_kisi'
     ? effective.trade_name || effective.short_name || effective.display_name
     : [effective.first_name, effective.last_name].filter(Boolean).join(' ').trim() || effective.display_name
-  payload.nationality = payload.nationality || payload.nationality_country || payload.country || 'TR'
-  payload.country = payload.country || payload.nationality_country || payload.nationality || 'TR'
+  payload.nationality = normalizeCountryId(payload.nationality || payload.nationality_country || payload.country || 'TR')
+  payload.country = normalizeCountryId(payload.country || payload.nationality_country || payload.nationality || 'TR')
+  payload.nationality_country = normalizeCountryId(payload.nationality_country || payload.country || payload.nationality || 'TR')
   payload.identity_number = payload.identity_number || payload.national_id || payload.tc_kimlik || payload.tax_number || payload.vkn_tckn || payload.passport_no || payload.pasaport_no
   if (Array.isArray(payload.telefonlar) && payload.telefonlar.length && !payload.phone) payload.phone = payload.telefonlar[0]?.numara
   if (Array.isArray(payload.epostalar) && payload.epostalar.length && !payload.email) payload.email = payload.epostalar[0]?.adres

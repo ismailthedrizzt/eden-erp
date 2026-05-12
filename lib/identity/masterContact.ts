@@ -6,6 +6,69 @@ type EntityKind = 'person' | 'organization'
 
 const CONTACT_METADATA_KEY = 'contact'
 
+const MASTER_PROFILE_KEYS = new Set([
+  'ad',
+  'soyad',
+  'first_name',
+  'last_name',
+  'full_name',
+  'display_name',
+  'trade_name',
+  'legal_name',
+  'ticari_unvan',
+  'kisa_unvan',
+  'short_name',
+  'uyruk',
+  'nationality',
+  'nationality_country',
+  'tc_kimlik',
+  'national_id',
+  'pasaport_no',
+  'passport_no',
+  'identity_number',
+  'tax_id',
+  'vkn_tckn',
+  'tax_number',
+  'ticaret_sicil_no',
+  'registration_number',
+  'mersis_no',
+  'dogum_tarihi',
+  'birth_date',
+  'dogum_yeri',
+  'birth_place',
+  'cinsiyet',
+  'gender',
+  'vergi_dairesi',
+  'tax_office',
+  'sirket_turu',
+  'company_type',
+  'foundation_date',
+  'kurulus_tarihi',
+  'telefon',
+  'phone',
+  'cep_telefonu',
+  'email',
+  'adres',
+  'address',
+  'il',
+  'city',
+  'ilce',
+  'district',
+  'telefonlar',
+  'epostalar',
+  'photo_logo',
+  'fotograf_url',
+])
+
+export function stripMasterDataForRoleProfile(source: Record<string, any>) {
+  return Object.fromEntries(
+    Object.entries(source).filter(([key, value]) =>
+      !MASTER_PROFILE_KEYS.has(key) &&
+      value !== undefined
+    )
+  )
+}
+
 export function normalizeContactPayload(source: Record<string, any>, kind: EntityKind) {
   const phones = normalizePhones(source)
   const emails = normalizeEmails(source)
@@ -130,19 +193,21 @@ export async function syncMasterContact(supabase: SupabaseClient, kind: EntityKi
   const hasAny = (...keys: string[]) => keys.some(key => Object.prototype.hasOwnProperty.call(source, key))
 
   if (kind === 'person') {
-    if (hasAny('first_name')) update.first_name = clean(source.first_name) || null
-    if (hasAny('last_name')) update.last_name = clean(source.last_name) || null
-    if (hasAny('display_name', 'full_name', 'first_name', 'last_name')) {
-      update.full_name = clean(source.display_name || source.full_name || [source.first_name ?? current?.first_name, source.last_name ?? current?.last_name].filter(Boolean).join(' ')) || null
+    if (hasAny('first_name', 'ad')) update.first_name = clean(source.first_name || source.ad) || null
+    if (hasAny('last_name', 'soyad')) update.last_name = clean(source.last_name || source.soyad) || null
+    if (hasAny('display_name', 'full_name', 'first_name', 'last_name', 'ad', 'soyad')) {
+      update.full_name = clean(source.display_name || source.full_name || [source.first_name ?? source.ad ?? current?.first_name, source.last_name ?? source.soyad ?? current?.last_name].filter(Boolean).join(' ')) || null
     }
-    if (hasAny('birth_date')) update.birth_date = clean(source.birth_date) || null
+    if (hasAny('birth_date', 'dogum_tarihi')) update.birth_date = clean(source.birth_date || source.dogum_tarihi) || null
+    if (hasAny('birth_place', 'dogum_yeri')) update.birth_place = clean(source.birth_place || source.dogum_yeri) || null
+    if (hasAny('gender', 'cinsiyet')) update.gender = clean(source.gender || source.cinsiyet) || null
   } else {
-    if (hasAny('trade_name', 'legal_name', 'display_name')) update.legal_name = clean(source.trade_name || source.legal_name || source.display_name) || null
-    if (hasAny('short_name')) update.short_name = clean(source.short_name) || null
-    if (hasAny('tax_number', 'tax_id', 'identity_number')) update.tax_number = clean(source.tax_number || source.tax_id || source.identity_number) || null
-    if (hasAny('tax_office')) update.tax_office = clean(source.tax_office) || null
-    if (hasAny('company_type')) update.organization_type = clean(source.company_type) || null
-    if (hasAny('trade_registry_no', 'mersis_no')) update.registration_number = clean(source.trade_registry_no || source.mersis_no) || null
+    if (hasAny('trade_name', 'legal_name', 'display_name', 'ticari_unvan')) update.legal_name = clean(source.trade_name || source.legal_name || source.ticari_unvan || source.display_name) || null
+    if (hasAny('short_name', 'kisa_unvan')) update.short_name = clean(source.short_name || source.kisa_unvan) || null
+    if (hasAny('tax_number', 'tax_id', 'identity_number', 'vkn_tckn')) update.tax_number = clean(source.tax_number || source.tax_id || source.identity_number || source.vkn_tckn) || null
+    if (hasAny('tax_office', 'vergi_dairesi')) update.tax_office = clean(source.tax_office || source.vergi_dairesi) || null
+    if (hasAny('company_type', 'sirket_turu')) update.organization_type = clean(source.company_type || source.sirket_turu) || null
+    if (hasAny('trade_registry_no', 'ticaret_sicil_no', 'mersis_no')) update.registration_number = clean(source.trade_registry_no || source.ticaret_sicil_no || source.mersis_no) || null
   }
 
   if (hasAny('phone', 'cep_telefonu', 'telefon', 'phone_1', 'telefonlar')) update.phone = contact.phone
@@ -177,7 +242,36 @@ export async function hydrateMasterContact(supabase: SupabaseClient, kind: Entit
     .eq('id', masterId)
     .maybeSingle()
 
-  return mergeMasterContactIntoRole(role, data || null, kind)
+  const master = data || null
+  return {
+    ...mergeMasterContactIntoRole(role, master, kind),
+    master,
+    role: stripLayerFields(role),
+    derived: extractDerivedSnapshot(role),
+    master_entity_kind: kind,
+    master_record_id: masterId,
+  }
+}
+
+function stripLayerFields(role: Record<string, any>) {
+  const { master, role: nestedRole, derived, ...rest } = role
+  return rest
+}
+
+function extractDerivedSnapshot(role: Record<string, any>) {
+  const keys = [
+    'current_ownership',
+    'current_share_ratio',
+    'current_voting_ratio',
+    'current_profit_ratio',
+    'current_capital_amount',
+    'current_share_units',
+    'representative_authorities',
+    'ownership_transaction_history',
+    'history_sections',
+  ]
+
+  return Object.fromEntries(keys.filter(key => role[key] !== undefined).map(key => [key, role[key]]))
 }
 
 function readContactMetadata(master: Record<string, any>) {

@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { z } from 'zod'
-import { hydrateMasterContact, syncMasterContact } from '@/lib/identity/masterContact'
+import { hydrateMasterContact, stripMasterDataForRoleProfile, syncMasterContact } from '@/lib/identity/masterContact'
+import { normalizeCountryId } from '@/lib/reference/country-nationalities'
 
 const RepresentativeSchema = z.object({
   company_id: z.string().uuid().optional(),
@@ -138,7 +139,7 @@ function mapRepresentativeForDb(representative: Record<string, any>) {
     can_approve_alone: !!representative.can_approve_alone,
     photo_logo: representative.photo_logo || [],
     authority_documents: representative.authority_documents || [],
-    representative_profile: representative,
+    representative_profile: stripMasterDataForRoleProfile(representative),
     history: representative.timeline || [],
     is_deleted: false,
   }
@@ -159,7 +160,7 @@ async function attachRepresentativeIdentity(supabase: ReturnType<typeof createSe
       const fullName = representative.display_name || buildDisplayName(representative)
       const nationalId = representative.identity_number && String(representative.identity_number).length === 11 ? String(representative.identity_number) : null
       const passportNo = nationalId ? null : representative.passport_no || representative.identity_number || null
-      const nationality = representative.nationality || representative.nationality_country || 'TR'
+      const nationality = normalizeCountryId(representative.nationality || representative.nationality_country || 'TR')
       const { data: existing, error: findError } = nationalId
         ? await supabase.from('persons').select('id').eq('nationality', nationality).eq('national_id', nationalId).maybeSingle()
         : passportNo
@@ -186,7 +187,7 @@ async function attachRepresentativeIdentity(supabase: ReturnType<typeof createSe
     const legalName = representative.trade_name || representative.display_name
     if (representative.organization_id) return { ...row, organization_id: representative.organization_id, source_id: row.source_id || representative.organization_id }
 
-    const country = representative.country || representative.nationality_country || 'TR'
+    const country = normalizeCountryId(representative.country || representative.nationality_country || 'TR')
     const taxNumber = representative.identity_number || null
     const { data: existing, error: findError } = taxNumber
       ? await supabase.from('organizations').select('id').eq('country', country).eq('tax_number', taxNumber).maybeSingle()
