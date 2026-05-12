@@ -7,6 +7,7 @@ import { PageBanner } from '@/components/ui/PageBanner'
 import { SmartDataTable, ColumnDef, WidgetDef } from '@/components/ui/SmartDataTable'
 import { Toast } from '@/components/ui/Toast'
 import { normalizeCountryId } from '@/lib/reference/country-nationalities'
+import { createRealPersonMasterTabs } from '@/lib/identity/realPersonFormSections'
 
 type PageState = 'list' | 'create' | 'view' | 'edit'
 type ToastState = { type: 'success' | 'error' | 'warning'; title?: string; message: string }
@@ -383,6 +384,21 @@ export default function TemsilcilerPage() {
     { key: 'signature', label: 'İmza Yetkilisi', render: () => tableData.filter(row => row.authority_types?.some(type => toAuthorityValue(type) === 'imza_yetkilisi')).length },
     { key: 'bank', label: 'Banka Yetkilisi', render: () => tableData.filter(row => row.authority_types?.some(type => toAuthorityValue(type) === 'banka_yetkilisi')).length },
   ]
+  const legalEntityGeneralTab = (() => {
+    const generalTab = tabs.find(tab => tab.id === 'genel')
+    const fields = generalTab?.fields.filter(field => field.visibleWhen?.value === 'tuzel_kisi') || []
+    return generalTab && fields.length ? [{ ...generalTab, id: 'tuzel_genel', label: 'Tüzel Bilgiler', fields }] : []
+  })()
+  const configuredTabs = [
+    ...createRealPersonMasterTabs({
+      visibleWhen: { field: 'person_or_entity_type', operator: 'equals', value: 'gercek_kisi' },
+      includeEmergencyContact: true,
+    }),
+    ...legalEntityGeneralTab,
+    ...tabs
+      .filter(tab => !['genel', 'iletisim'].includes(tab.id))
+      .map(tab => tab.id === 'banka' ? { ...tab, id: 'banka_yetkileri', label: 'Banka Yetkileri' } : tab),
+  ]
 
   const withFieldHistory = (field: FormField) => {
     const history = selectedRepresentative?.field_history?.[field.name]
@@ -526,7 +542,8 @@ export default function TemsilcilerPage() {
               roleScopeFields: ['company_id', 'sirket_id'],
             }}
             heroFields={heroFields.map(withFieldHistory)}
-            tabs={tabs.map(tab => ({ ...tab, fields: tab.fields.map(withFieldHistory) }))}
+            tabs={configuredTabs.map(tab => ({ ...tab, fields: tab.fields.map(withFieldHistory) }))}
+            roleHeroCardTitle="Forma Özel"
             data={selectedRepresentative || undefined}
             saving={saving}
             deleting={deleting}

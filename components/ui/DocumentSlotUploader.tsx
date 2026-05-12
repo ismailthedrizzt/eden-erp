@@ -787,7 +787,7 @@ export function DocumentSlotUploader({
   const containerStyle = {
     aspectRatio: '1/1.414',
     width: '100%',
-    maxWidth: '280px',
+    maxWidth: '196px',
     minHeight: '220px'
   }
 

@@ -143,6 +143,7 @@ export interface EntityFormProps {
   showResolvedMasterHeroFields?: boolean
   hideRoleHeroFields?: boolean
   showEmptyRoleHeroState?: boolean
+  roleHeroCardTitle?: string
   
   /** Image slot configuration for default hero left panel */
   imageSlot?: {
@@ -1387,6 +1388,7 @@ export function EntityForm({
   showResolvedMasterHeroFields = false,
   hideRoleHeroFields = false,
   showEmptyRoleHeroState = true,
+  roleHeroCardTitle,
   imageSlot = { title: 'Fotoğraf', required: false },
   documentSlot = { title: 'CV', required: false },
   onSave,
@@ -1434,6 +1436,9 @@ export function EntityForm({
   ]
   const documentDataField = documentSlot.dataField || 'cv_belgesi'
   const [documents, setDocuments] = useState<SlotDocument[]>([])
+  const visibleTabs = tabs.filter(tab =>
+    tab.fields.length === 0 || tab.fields.some(field => matchesCondition(field.visibleWhen, formData))
+  )
 
   useEffect(() => {
     if (imageSlot.dataField) {
@@ -1550,10 +1555,10 @@ export function EntityForm({
 
   // Reset active tab when mode changes
   useEffect(() => {
-    if (tabs.length > 0 && !tabs.find(t => t.id === activeTab)) {
-      setActiveTab(tabs[0].id)
+    if (visibleTabs.length > 0 && !visibleTabs.find(t => t.id === activeTab)) {
+      setActiveTab(visibleTabs[0].id)
     }
-  }, [tabs, activeTab])
+  }, [visibleTabs, activeTab])
 
   useEffect(() => {
     if (externalFieldErrors && Object.keys(externalFieldErrors).length > 0) {
@@ -1577,7 +1582,7 @@ export function EntityForm({
       : heroFields
   const allFormFields = [
     ...flattenFields(roleHeroFields),
-    ...tabs.flatMap(tab => flattenFields(tab.fields))
+    ...visibleTabs.flatMap(tab => flattenFields(tab.fields))
   ]
 
   const isFieldRequired = (field: FormField, sourceData = formData) => {
@@ -1914,7 +1919,7 @@ export function EntityForm({
     }
 
     validateFields(heroFields)
-    tabs.forEach(tab => validateFields(tab.fields))
+    visibleTabs.forEach(tab => validateFields(tab.fields))
 
     setFieldErrors(errors)
     if (Object.keys(errors).length > 0) {
@@ -2297,7 +2302,16 @@ export function EntityForm({
                   {fieldErrors.identity_gate}
                 </div>
               )}
-              {roleHeroFields.length > 0 ? roleHeroFields.map(field => renderField(field, enableHistory)) : showEmptyRoleHeroState ? (
+              {roleHeroFields.length > 0 ? (
+                roleHeroCardTitle ? (
+                  <div className="col-span-2 lg:col-span-3 rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                    <div className="mb-3 text-sm font-semibold text-gray-900 dark:text-white">{roleHeroCardTitle}</div>
+                    <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {roleHeroFields.map(field => renderField(field, enableHistory))}
+                    </div>
+                  </div>
+                ) : roleHeroFields.map(field => renderField(field, enableHistory))
+              ) : showEmptyRoleHeroState ? (
                 <div className="col-span-2 lg:col-span-3 rounded-lg border border-dashed border-gray-200 bg-white/70 px-3 py-2 text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-900/50 dark:text-gray-400">
                   Bu formda hero alaninda manuel girilecek rol alani yok. Rol detaylari sekmelerde yonetilir.
                 </div>
@@ -2344,10 +2358,10 @@ export function EntityForm({
         </div>
       </div>
 
-      {tabs.length > 0 && (
+      {visibleTabs.length > 0 && (
         <div className="border-b border-gray-200 dark:border-gray-700">
           <div className="flex overflow-x-auto">
-            {tabs.map(tab => (
+            {visibleTabs.map(tab => (
               <button
                 key={tab.id}
                 disabled={isIdentityGateLocked}
@@ -2370,14 +2384,14 @@ export function EntityForm({
         </div>
       )}
 
-      {(tabs.length > 0 || isIdentityGateLocked) && (
+      {(visibleTabs.length > 0 || isIdentityGateLocked) && (
         <div className="p-6">
           {isIdentityGateLocked && (
             <div className="mb-4 rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-3 text-sm text-gray-600 dark:border-gray-700 dark:bg-gray-800/50 dark:text-gray-300">
               Devam etmek için önce Temel Kimlik Sorgulama/Oluşturma alanını eşleştirin.
             </div>
           )}
-          {tabs.map(tab => (
+          {visibleTabs.map(tab => (
             <div
               key={tab.id}
               className={cn(

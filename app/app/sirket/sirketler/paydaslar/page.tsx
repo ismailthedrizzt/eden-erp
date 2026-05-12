@@ -6,6 +6,7 @@ import { EntityForm, FormField, FormMode, FormTab } from '@/components/ui/Entity
 import { PageBanner } from '@/components/ui/PageBanner'
 import { SmartDataTable, ColumnDef, WidgetDef } from '@/components/ui/SmartDataTable'
 import { Toast } from '@/components/ui/Toast'
+import { createRealPersonMasterTabs } from '@/lib/identity/realPersonFormSections'
 
 type PageState = 'list' | 'create' | 'view' | 'edit'
 type ToastState = { type: 'success' | 'error' | 'warning'; title?: string; message: string }
@@ -342,6 +343,19 @@ export default function PaydaslarPage() {
     { key: 'legal', label: 'Tüzel Kişi', render: () => tableData.filter(row => row.stakeholder_type === 'tuzel_kisi').length },
     { key: 'critical', label: 'Kritik', render: () => tableData.filter(row => row.priority_level === 'Kritik').length },
   ]
+  const legalEntityGeneralTab = (() => {
+    const generalTab = tabs.find(tab => tab.id === 'genel')
+    const fields = generalTab?.fields.filter(field => field.visibleWhen?.value === 'tuzel_kisi') || []
+    return generalTab && fields.length ? [{ ...generalTab, id: 'tuzel_genel', label: 'Tüzel Bilgiler', fields }] : []
+  })()
+  const configuredTabs = [
+    ...createRealPersonMasterTabs({
+      visibleWhen: { field: 'stakeholder_type', operator: 'equals', value: 'gercek_kisi' },
+      includeEmergencyContact: true,
+    }),
+    ...legalEntityGeneralTab,
+    ...tabs.filter(tab => !['genel', 'iletisim'].includes(tab.id)),
+  ]
 
   const withFieldHistory = (field: FormField) => {
     const history = selectedStakeholder?.field_history?.[field.name]
@@ -447,7 +461,8 @@ export default function PaydaslarPage() {
               roleScopeFields: ['company_id', 'sirket_id'],
             }}
             heroFields={heroFields.map(withFieldHistory)}
-            tabs={tabs.map(tab => ({ ...tab, fields: tab.fields.map(withFieldHistory) }))}
+            tabs={configuredTabs.map(tab => ({ ...tab, fields: tab.fields.map(withFieldHistory) }))}
+            roleHeroCardTitle="Forma Özel"
             data={selectedStakeholder || undefined}
             saving={saving}
             deleting={deleting}

@@ -5,6 +5,24 @@ type SupabaseClient = {
 type EntityKind = 'person' | 'organization'
 
 const CONTACT_METADATA_KEY = 'contact'
+const PERSON_MASTER_METADATA_KEY = 'person_master'
+
+const PERSON_MASTER_PROFILE_KEYS = [
+  'engellilik',
+  'engellilik_yuzdesi',
+  'askerlik_durumu',
+  'tecil_tarihi',
+  'hukumluluk',
+  'okuryazar_degil',
+  'egitim_okullari',
+  'yabanci_diller',
+  'sertifikalar',
+  'medeni_durum',
+  'marital_status',
+  'yakinlar',
+  'iban',
+  'bank_name',
+]
 
 const MASTER_PROFILE_KEYS = new Set([
   'ad',
@@ -58,6 +76,7 @@ const MASTER_PROFILE_KEYS = new Set([
   'epostalar',
   'photo_logo',
   'fotograf_url',
+  ...PERSON_MASTER_PROFILE_KEYS,
 ])
 
 export function stripMasterDataForRoleProfile(source: Record<string, any>) {
@@ -105,9 +124,11 @@ export function mergeMasterContactIntoRole(role: Record<string, any>, master: Re
   const epostalar = normalizeEmails({ epostalar: contact.epostalar || role.epostalar, email: master.email || role.email })
   const emergency = kind === 'person' && contact.acil_kisi && typeof contact.acil_kisi === 'object' ? contact.acil_kisi : {}
   const photoLogo: Array<Record<string, any>> = normalizeMasterImages(master, kind, role.photo_logo)
+  const personMaster = kind === 'person' ? readPersonMasterMetadata(master) : {}
 
   return {
     ...role,
+    ...personMaster,
     ...(kind === 'person'
       ? {
           first_name: master.first_name || role.first_name || '',
@@ -201,6 +222,15 @@ export async function syncMasterContact(supabase: SupabaseClient, kind: EntityKi
     if (hasAny('birth_date', 'dogum_tarihi')) update.birth_date = clean(source.birth_date || source.dogum_tarihi) || null
     if (hasAny('birth_place', 'dogum_yeri')) update.birth_place = clean(source.birth_place || source.dogum_yeri) || null
     if (hasAny('gender', 'cinsiyet')) update.gender = clean(source.gender || source.cinsiyet) || null
+    if (hasAny(...PERSON_MASTER_PROFILE_KEYS)) {
+      update.metadata_json = {
+        ...metadata,
+        [PERSON_MASTER_METADATA_KEY]: {
+          ...(metadata[PERSON_MASTER_METADATA_KEY] || {}),
+          ...normalizePersonMasterPayload(source),
+        },
+      }
+    }
   } else {
     if (hasAny('trade_name', 'legal_name', 'display_name', 'ticari_unvan')) update.legal_name = clean(source.trade_name || source.legal_name || source.ticari_unvan || source.display_name) || null
     if (hasAny('short_name', 'kisa_unvan')) update.short_name = clean(source.short_name || source.kisa_unvan) || null
@@ -218,7 +248,7 @@ export async function syncMasterContact(supabase: SupabaseClient, kind: EntityKi
 
   if (hasAny('telefonlar', 'epostalar', 'acil_kisi_ad', 'acil_kisi_soyad', 'acil_kisi_yakinlik', 'acil_kisi_telefon')) {
     update.metadata_json = {
-      ...metadata,
+      ...(update.metadata_json || metadata),
       [CONTACT_METADATA_KEY]: {
         ...(metadata[CONTACT_METADATA_KEY] || {}),
         ...(hasAny('telefonlar') ? { telefonlar: contact.telefonlar } : {}),
@@ -278,6 +308,20 @@ function readContactMetadata(master: Record<string, any>) {
   const metadata = master.metadata_json && typeof master.metadata_json === 'object' ? master.metadata_json : {}
   const contact = metadata[CONTACT_METADATA_KEY]
   return contact && typeof contact === 'object' ? contact : {}
+}
+
+function readPersonMasterMetadata(master: Record<string, any>) {
+  const metadata = master.metadata_json && typeof master.metadata_json === 'object' ? master.metadata_json : {}
+  const personMaster = metadata[PERSON_MASTER_METADATA_KEY]
+  return personMaster && typeof personMaster === 'object' ? personMaster : {}
+}
+
+function normalizePersonMasterPayload(source: Record<string, any>) {
+  return Object.fromEntries(
+    PERSON_MASTER_PROFILE_KEYS
+      .filter(key => Object.prototype.hasOwnProperty.call(source, key))
+      .map(key => [key, source[key] ?? null])
+  )
 }
 
 function normalizePhones(source: Record<string, any>) {

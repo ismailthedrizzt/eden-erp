@@ -329,17 +329,6 @@ export const personelModuleConfig: ModuleConfig<PersonelTableRow> = {
         }
       },
       {
-        key: 'calisma',
-        label: 'İş',
-        icon: <Briefcase size={16} />,
-        source: {
-          type: 'fields',
-          fields: [
-            { key: 'is_lifecycle', label: 'İş Hareketleri', type: 'workLifecycle', colSpan: 3 }
-          ]
-        }
-      },
-      {
         key: 'aile',
         label: 'Aile',
         icon: <Heart size={16} />,
@@ -382,6 +371,17 @@ export const personelModuleConfig: ModuleConfig<PersonelTableRow> = {
           type: 'fields',
           fields: [
             { key: 'iban', label: 'IBAN', type: 'iban', colSpan: 2 }
+          ]
+        }
+      },
+      {
+        key: 'calisma',
+        label: 'İş',
+        icon: <Briefcase size={16} />,
+        source: {
+          type: 'fields',
+          fields: [
+            { key: 'is_lifecycle', label: 'İş Hareketleri', type: 'workLifecycle', colSpan: 3 }
           ]
         }
       },
