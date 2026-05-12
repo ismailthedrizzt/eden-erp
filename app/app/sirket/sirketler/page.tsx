@@ -326,18 +326,29 @@ export default function SirketlerPage() {
     try {
       const response = await fetch(`/api/sirketler/${row.id}?t=${Date.now()}`, { cache: 'no-store' })
       if (!response.ok) {
-        setSelectedSirket(row)
+        throw await createSaveError(response, 'Şirket detayı yüklenemedi')
+      }
+
+      const result = await response.json()
+      if (!result.data) {
+        throw new Error('Şirket detayı yüklenemedi')
+      }
+
+      setSelectedSirket(normalizeCompanyForForm(result.data))
+      setPageState('view')
+    } catch (error: any) {
+      setFormError(error.message || 'Şirket detayı yüklenemedi')
+      setToast(error.toast || {
+        type: 'error',
+        title: 'Detay Yüklenemedi',
+        message: error.message || 'Şirket detayı yüklenemedi',
+      })
+      if (row.hero_documents || row.hero_images) {
+        setSelectedSirket(normalizeCompanyForForm(row as Sirket))
         setPageState('view')
         return
       }
-      const result = await response.json()
-      if (result.data) setSelectedSirket(normalizeCompanyForForm(result.data))
-      else setSelectedSirket(row)
-    } catch {
-      // The list row is enough to open the page; detail fetch enriches related/history data.
-      setSelectedSirket(row)
     }
-    setPageState('view')
   }
 
   const handleBackToList = () => {

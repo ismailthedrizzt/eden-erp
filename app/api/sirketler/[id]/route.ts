@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient, createServiceClient } from '@/lib/supabase/server'
+import { createServiceClient } from '@/lib/supabase/server'
 import { z } from 'zod'
 
 const SirketUpdateSchema = z.object({
@@ -57,22 +57,11 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params
-  const supabase = await createClient()
+  const supabase = createServiceClient()
 
-  const { data, error } = await supabase
+  const { data: company, error } = await supabase
     .from('sirketler')
-    .select(`
-      *,
-      ortaklar:sirket_ortaklar(*),
-      temsilciler:sirket_temsilciler(*),
-      logolar:sirket_logolar(*),
-      public_tax:company_public_tax(*),
-      public_sgk:company_public_sgk(*),
-      public_incentives:company_public_incentives(*),
-      public_registry:company_public_registry(*),
-      public_licenses:company_public_licenses(*),
-      public_channels:company_public_channels(*)
-    `)
+    .select('*')
     .eq('id', id)
     .single()
 
@@ -81,6 +70,60 @@ export async function GET(
       return NextResponse.json({ error: 'Şirket bulunamadı', code: 'COMPANY_NOT_FOUND' }, { status: 404 })
     }
     return NextResponse.json({ error: error.message, code: error.code || 'FETCH_FAILED' }, { status: 500 })
+  }
+
+  const [
+    partners,
+    representatives,
+    logos,
+    publicTax,
+    publicSgk,
+    publicIncentives,
+    publicRegistry,
+    publicLicenses,
+    publicChannels,
+  ] = await Promise.all([
+    supabase.from('sirket_ortaklar').select('*').eq('sirket_id', id),
+    supabase.from('sirket_temsilciler').select('*').eq('sirket_id', id),
+    supabase.from('sirket_logolar').select('*').eq('sirket_id', id),
+    supabase.from('company_public_tax').select('*').eq('company_id', id).maybeSingle(),
+    supabase.from('company_public_sgk').select('*').eq('company_id', id).maybeSingle(),
+    supabase.from('company_public_incentives').select('*').eq('company_id', id).maybeSingle(),
+    supabase.from('company_public_registry').select('*').eq('company_id', id).maybeSingle(),
+    supabase.from('company_public_licenses').select('*').eq('company_id', id),
+    supabase.from('company_public_channels').select('*').eq('company_id', id).maybeSingle(),
+  ])
+
+  const relatedError = [
+    partners.error,
+    representatives.error,
+    logos.error,
+    publicTax.error,
+    publicSgk.error,
+    publicIncentives.error,
+    publicRegistry.error,
+    publicLicenses.error,
+    publicChannels.error,
+  ].find(Boolean)
+
+  if (relatedError) {
+    return NextResponse.json({
+      error: relatedError.message,
+      code: relatedError.code || 'RELATED_FETCH_FAILED',
+    }, { status: 500 })
+  }
+
+  const data = {
+    ...company,
+    ortaklar: partners.data || [],
+    temsilciler: representatives.data || [],
+    logolar: logos.data || [],
+    public_tax: publicTax.data || {},
+    public_sgk: publicSgk.data || {},
+    public_incentives: publicIncentives.data || {},
+    public_registry: publicRegistry.data || {},
+    public_licenses: publicLicenses.data || [],
+    public_channels: publicChannels.data || {},
   }
 
   return NextResponse.json(
