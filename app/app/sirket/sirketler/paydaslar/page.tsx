@@ -7,6 +7,7 @@ import { PageBanner } from '@/components/ui/PageBanner'
 import { SmartDataTable, ColumnDef, WidgetDef } from '@/components/ui/SmartDataTable'
 import { Toast } from '@/components/ui/Toast'
 import { createRealPersonMasterTabs } from '@/lib/identity/realPersonFormSections'
+import { createLegalEntityMasterTabs } from '@/lib/identity/legalEntityFormSections'
 
 type PageState = 'list' | 'create' | 'view' | 'edit'
 type ToastState = { type: 'success' | 'error' | 'warning'; title?: string; message: string }
@@ -343,17 +344,15 @@ export default function PaydaslarPage() {
     { key: 'legal', label: 'Tüzel Kişi', render: () => tableData.filter(row => row.stakeholder_type === 'tuzel_kisi').length },
     { key: 'critical', label: 'Kritik', render: () => tableData.filter(row => row.priority_level === 'Kritik').length },
   ]
-  const legalEntityGeneralTab = (() => {
-    const generalTab = tabs.find(tab => tab.id === 'genel')
-    const fields = generalTab?.fields.filter(field => field.visibleWhen?.value === 'tuzel_kisi') || []
-    return generalTab && fields.length ? [{ ...generalTab, id: 'tuzel_genel', label: 'Tüzel Bilgiler', fields }] : []
-  })()
   const configuredTabs = [
     ...createRealPersonMasterTabs({
       visibleWhen: { field: 'stakeholder_type', operator: 'equals', value: 'gercek_kisi' },
       includeEmergencyContact: true,
     }),
-    ...legalEntityGeneralTab,
+    ...createLegalEntityMasterTabs({
+      visibleWhen: { field: 'stakeholder_type', operator: 'equals', value: 'tuzel_kisi' },
+      websiteField: 'web_sitesi',
+    }),
     ...tabs.filter(tab => !['genel', 'iletisim'].includes(tab.id)),
   ]
 
@@ -463,6 +462,7 @@ export default function PaydaslarPage() {
             heroFields={heroFields.map(withFieldHistory)}
             tabs={configuredTabs.map(tab => ({ ...tab, fields: tab.fields.map(withFieldHistory) }))}
             roleHeroCardTitle="Forma Özel"
+            masterSummaryMode="entityIdentity"
             data={selectedStakeholder || undefined}
             saving={saving}
             deleting={deleting}

@@ -56,6 +56,7 @@ const PartnerSchema = z.object({
   email: z.union([z.literal(''), z.string().email()]).optional(),
   telefonlar: z.array(z.record(z.any())).optional(),
   epostalar: z.array(z.record(z.any())).optional(),
+  contact_points: z.array(z.record(z.any())).optional(),
   address: z.string().optional(),
   il: z.string().optional(),
   ilce: z.string().optional(),

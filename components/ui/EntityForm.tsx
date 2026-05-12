@@ -139,7 +139,7 @@ export interface EntityFormProps {
   showHeroHeader?: boolean
   showMasterSummaryBadge?: boolean
   masterSummaryTitleAsField?: boolean
-  masterSummaryMode?: 'default' | 'personIdentity'
+  masterSummaryMode?: MasterSummaryMode
   showResolvedMasterHeroFields?: boolean
   hideRoleHeroFields?: boolean
   showEmptyRoleHeroState?: boolean
@@ -264,20 +264,27 @@ function MasterSummaryHero({
   result,
   locked,
   sourceData = {},
+  readOnly = false,
   showBadge = true,
   titleAsField = false,
   mode = 'default',
+  onFieldChange,
 }: {
   result: IdentityGateResolveResult | null
   locked: boolean
   sourceData?: Record<string, any>
+  readOnly?: boolean
   showBadge?: boolean
   titleAsField?: boolean
-  mode?: 'default' | 'personIdentity'
+  mode?: MasterSummaryMode
+  onFieldChange?: (field: string, value: any) => void
 }) {
   const kind = result?.entityKind
   const master = result?.masterRecord || null
   const prefill = { ...(result?.prefill || {}), ...sourceData }
+  const effectiveMode = mode === 'entityIdentity'
+    ? kind === 'organization' ? 'organizationIdentity' : 'personIdentity'
+    : mode
   const Icon = kind === 'organization' ? Building2 : UserRound
   const title = kind === 'organization'
     ? readFirst(master, prefill, ['legal_name', 'ticari_unvan', 'trade_name', 'display_name', 'short_name', 'kisa_unvan'])
@@ -285,22 +292,41 @@ function MasterSummaryHero({
       || [readFirst(master, prefill, ['first_name', 'ad']), readFirst(master, prefill, ['last_name', 'soyad'])].filter(Boolean).join(' ')
 
   const items = kind === 'organization'
-    ? compactSummaryItems([
-        { label: 'Kisa unvan', value: readFirst(master, prefill, ['short_name', 'kisa_unvan']) },
-        { label: 'Vergi dairesi', value: readFirst(master, prefill, ['tax_office', 'vergi_dairesi']) },
-        { label: 'Telefon', value: readFirst(master, prefill, ['phone', 'telefon', 'phone_1']) },
-        { label: 'E-posta', value: readFirst(master, prefill, ['email', 'email_1']) },
-        { label: 'Adres', value: formatAddress(master, prefill) },
-      ])
-    : mode === 'personIdentity'
-      ? compactSummaryItems([
-          ...(titleAsField ? [{ label: 'Ad Soyad', value: title }] : []),
-          { label: 'Doğum Tarihi', value: readFirst(master, prefill, ['birth_date', 'dogum_tarihi']) },
-          { label: 'Doğum Yeri', value: readFirst(master, prefill, ['birth_place', 'dogum_yeri']) },
-          { label: 'Cinsiyet', value: formatGender(readFirst(master, prefill, ['gender', 'cinsiyet'])) },
-          { label: 'Mesleği', value: readFirst(master, prefill, ['occupation', 'profession', 'meslek', 'gorev']) },
-          { label: 'Kan Grubu', value: readFirst(master, prefill, ['blood_type', 'kan_grubu']) },
+    ? effectiveMode === 'organizationIdentity'
+      ? [
+          { label: 'Ticari Unvan', value: readFirst(master, prefill, ['legal_name', 'trade_name', 'ticari_unvan', 'display_name']), fieldKeys: ['ticari_unvan', 'legal_name', 'trade_name'] },
+          { label: 'Kısa Ünvan', value: readFirst(master, prefill, ['short_name', 'kisa_unvan']), fieldKeys: ['kisa_unvan', 'short_name'] },
+          { label: 'VKN', value: readFirst(master, prefill, ['tax_number', 'vkn_tckn', 'tax_id', 'identity_number']), fieldKeys: ['vkn_tckn', 'tax_number', 'tax_id', 'identity_number'] },
+          { label: 'Vergi Dairesi', value: readFirst(master, prefill, ['tax_office', 'vergi_dairesi']), fieldKeys: ['vergi_dairesi', 'tax_office'] },
+          { label: 'Şirket Türü', value: readFirst(master, prefill, ['organization_type', 'company_type', 'sirket_turu']), fieldKeys: ['sirket_turu', 'company_type', 'organization_type'], inputType: 'select' as const, options: [
+            { value: 'anonim', label: 'Sermaye Şirketi - Anonim' },
+            { value: 'limited', label: 'Sermaye Şirketi - Limited' },
+            { value: 'komandit', label: 'Sermaye Şirketi - Komandit' },
+            { value: 'kolektif', label: 'Şahıs Şirketi - Kolektif' },
+            { value: 'adi_komandit', label: 'Şahıs Şirketi - Adi Komandit' },
+            { value: 'adi_sirket', label: 'Şahıs Şirketi - Adi Şirket' },
+          ] },
+          { label: 'Kuruluş Tarihi', value: readFirst(master, prefill, ['foundation_date', 'kurulus_tarihi']), fieldKeys: ['kurulus_tarihi', 'foundation_date'], inputType: 'date' as const },
+          { label: 'MERSİS No', value: readFirst(master, prefill, ['mersis_no']), fieldKeys: ['mersis_no'] },
+          { label: 'Ticaret Sicil No', value: readFirst(master, prefill, ['registration_number', 'ticaret_sicil_no', 'trade_registry_no']), fieldKeys: ['ticaret_sicil_no', 'trade_registry_no', 'registration_number'] },
+        ]
+      : compactSummaryItems([
+          { label: 'Kısa Ünvan', value: readFirst(master, prefill, ['short_name', 'kisa_unvan']) },
+          { label: 'Vergi Dairesi', value: readFirst(master, prefill, ['tax_office', 'vergi_dairesi']) },
+          { label: 'Telefon', value: readFirst(master, prefill, ['phone', 'telefon', 'phone_1']) },
+          { label: 'E-posta', value: readFirst(master, prefill, ['email', 'email_1']) },
+          { label: 'Adres', value: formatAddress(master, prefill) },
         ])
+    : effectiveMode === 'personIdentity'
+      ? [
+          { label: 'Ad', value: readFirst(master, prefill, ['first_name', 'ad']), fieldKeys: ['first_name', 'ad'] },
+          { label: 'Soyad', value: readFirst(master, prefill, ['last_name', 'soyad']), fieldKeys: ['last_name', 'soyad'] },
+          { label: 'Doğum Tarihi', value: readFirst(master, prefill, ['birth_date', 'dogum_tarihi']), fieldKeys: ['birth_date', 'dogum_tarihi'], inputType: 'date' as const },
+          { label: 'Doğum Yeri', value: readFirst(master, prefill, ['birth_place', 'dogum_yeri']), fieldKeys: ['birth_place', 'dogum_yeri'] },
+          { label: 'Cinsiyet', value: readFirst(master, prefill, ['gender', 'cinsiyet']), fieldKeys: ['gender', 'cinsiyet'], inputType: 'select' as const, options: [{ value: 'erkek', label: 'Erkek' }, { value: 'kadin', label: 'Kadın' }] },
+          { label: 'Mesleği', value: readFirst(master, prefill, ['occupation', 'profession', 'meslek', 'gorev']), fieldKeys: ['occupation', 'profession', 'meslek', 'gorev'] },
+          { label: 'Kan Grubu', value: readFirst(master, prefill, ['blood_type', 'kan_grubu']), fieldKeys: ['blood_type', 'kan_grubu'], inputType: 'select' as const, options: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', '0+', '0-'].map(value => ({ value, label: value })) },
+        ]
     : compactSummaryItems([
         ...(titleAsField ? [{ label: 'Ad Soyad', value: title }] : []),
         { label: 'Uyruk', value: readFirst(master, prefill, ['nationality', 'uyruk', 'nationality_country']) },
@@ -327,7 +353,7 @@ function MasterSummaryHero({
           <div className="rounded-lg bg-white p-2 text-emerald-700 shadow-sm dark:bg-gray-900 dark:text-emerald-300">
             <Icon size={18} />
           </div>
-          {!titleAsField && <div>
+          {!titleAsField && effectiveMode !== 'organizationIdentity' && <div>
             <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
               {title || (kind === 'organization' ? 'Tuzel kisi master kaydi' : 'Gercek kisi master kaydi')}
             </h4>
@@ -342,7 +368,12 @@ function MasterSummaryHero({
           {items.map(item => (
             <div key={item.label} className="rounded-lg border border-emerald-100 bg-white px-3 py-2 dark:border-emerald-900/50 dark:bg-gray-900">
               <div className="text-[11px] font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">{item.label}</div>
-              <div className="mt-0.5 truncate text-sm text-gray-900 dark:text-white">{formatSummaryValue(item.value)}</div>
+              <MasterSummaryItemValue
+                item={item}
+                sourceData={sourceData}
+                readOnly={readOnly}
+                onFieldChange={onFieldChange}
+              />
             </div>
           ))}
         </div>
@@ -357,8 +388,8 @@ function compactSummaryItems(items: MasterSummaryItem[]) {
 
 function readFirst(master: Record<string, any> | null, prefill: Record<string, any>, keys: string[]) {
   for (const key of keys) {
-    const value = master?.[key] ?? prefill[key]
-    if (hasValue(value)) return value
+    if (hasValue(prefill[key])) return prefill[key]
+    if (hasValue(master?.[key])) return master?.[key]
   }
   return ''
 }
@@ -371,9 +402,78 @@ function formatAddress(master: Record<string, any> | null, prefill: Record<strin
 }
 
 function formatSummaryValue(value: unknown) {
+  if (isDateLikeValue(value)) return formatDateForDisplay(value)
   if (Array.isArray(value)) return value.length ? `${value.length} kayit` : ''
   if (value && typeof value === 'object') return 'Kayitli'
   return String(value || '')
+}
+
+function MasterSummaryItemValue({
+  item,
+  sourceData,
+  readOnly,
+  onFieldChange,
+}: {
+  item: MasterSummaryItem
+  sourceData: Record<string, any>
+  readOnly: boolean
+  onFieldChange?: (field: string, value: any) => void
+}) {
+  const fieldName = item.fieldKeys ? pickEditableFieldName(sourceData, item.fieldKeys) : null
+  const canEdit = !!fieldName && !!onFieldChange && !readOnly
+  const inputClass = "mt-1 w-full rounded-md border border-emerald-100 bg-white px-2 py-1.5 text-sm text-gray-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 dark:border-emerald-900/50 dark:bg-gray-950 dark:text-white"
+
+  if (!canEdit) {
+    return <div className="mt-0.5 truncate text-sm text-gray-900 dark:text-white">{formatSummaryValue(item.value)}</div>
+  }
+
+  if (item.inputType === 'select') {
+    return (
+      <select
+        value={String(item.value || '')}
+        onChange={(event) => onFieldChange(fieldName, event.target.value)}
+        className={inputClass}
+      >
+        <option value="">Seçiniz</option>
+        {item.options?.map(option => (
+          <option key={option.value} value={option.value}>{option.label}</option>
+        ))}
+      </select>
+    )
+  }
+
+  return (
+    <input
+      type="text"
+      value={item.inputType === 'date' ? formatDateForDisplay(item.value) : String(item.value || '')}
+      placeholder={item.inputType === 'date' ? 'gg.aa.yyyy' : undefined}
+      onChange={(event) => onFieldChange(fieldName, item.inputType === 'date' ? normalizeDateDisplayInput(event.target.value) : event.target.value)}
+      className={inputClass}
+    />
+  )
+}
+
+function pickEditableFieldName(sourceData: Record<string, any>, fieldKeys: string[]) {
+  return fieldKeys.find(key => Object.prototype.hasOwnProperty.call(sourceData, key)) || fieldKeys[0]
+}
+
+function isDateLikeValue(value: unknown) {
+  return typeof value === 'string' && /^\d{4}-\d{2}-\d{2}(?:T.*)?$/.test(value)
+}
+
+function formatDateForDisplay(value: unknown) {
+  const text = String(value || '').trim()
+  if (!text) return ''
+  const isoMatch = text.match(/^(\d{4})-(\d{2})-(\d{2})/)
+  if (isoMatch) return `${isoMatch[3]}.${isoMatch[2]}.${isoMatch[1]}`
+  return text
+}
+
+function normalizeDateDisplayInput(value: string) {
+  const text = value.trim()
+  const displayMatch = text.match(/^(\d{2})\.(\d{2})\.(\d{4})$/)
+  if (displayMatch) return `${displayMatch[3]}-${displayMatch[2]}-${displayMatch[1]}`
+  return text
 }
 
 function formatGender(value: unknown) {
@@ -457,7 +557,12 @@ function extractMasterLikeRecord(kind: 'person' | 'organization', source: Record
 type MasterSummaryItem = {
   label: string
   value: unknown
+  fieldKeys?: string[]
+  inputType?: 'text' | 'date' | 'select'
+  options?: { value: string; label: string }[]
 }
+
+type MasterSummaryMode = 'default' | 'personIdentity' | 'organizationIdentity' | 'entityIdentity'
 
 const MASTER_IDENTITY_FIELD_NAMES = new Set([
   'ad',
@@ -2292,9 +2397,11 @@ export function EntityForm({
                   result={effectiveIdentityGateResult}
                   locked={isIdentityGateLocked}
                   sourceData={formData}
+                  readOnly={isReadOnly}
                   showBadge={showMasterSummaryBadge}
                   titleAsField={masterSummaryTitleAsField}
                   mode={masterSummaryMode}
+                  onFieldChange={handleChange}
                 />
               )}
               {isIdentityGateLocked && fieldErrors.identity_gate && (

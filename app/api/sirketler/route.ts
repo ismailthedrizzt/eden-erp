@@ -43,6 +43,7 @@ const SirketSchema = z.object({
   company_status: CompanyStatusSchema.default('aktif'),
   hero_images: z.array(z.record(z.any())).optional(),
   hero_documents: z.array(z.record(z.any())).optional(),
+  contact_points: z.array(z.record(z.any())).optional(),
   ortaklar: z.array(z.record(z.any())).optional(),
   temsilciler: z.array(z.record(z.any())).optional(),
   public_tax: z.record(z.any()).optional(),
@@ -115,7 +116,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Geçersiz veri', code: 'VALIDATION_FAILED', details: parsed.error.flatten() }, { status: 400 })
   }
 
-  const { ortaklar, temsilciler, public_tax, public_sgk, public_incentives, public_registry, public_licenses, public_channels, ...companyData } = parsed.data
+  const { ortaklar, temsilciler, contact_points, public_tax, public_sgk, public_incentives, public_registry, public_licenses, public_channels, ...companyData } = parsed.data
   let companyRow: Record<string, any>
   try {
     companyRow = await attachCompanyOrganization(supabase, applyCompanyStatus(companyData))
@@ -132,7 +133,12 @@ export async function POST(request: NextRequest) {
     .single()
 
   if (error) return NextResponse.json({ error: error.message, code: error.code || 'CREATE_FAILED' }, { status: 500 })
-  await syncMasterContact(supabase, 'organization', companyRow.organization_id, companyRow)
+  await syncMasterContact(
+    supabase,
+    'organization',
+    companyRow.organization_id,
+    contact_points !== undefined ? { ...companyRow, contact_points } : companyRow
+  )
 
   const partnerError = await replaceCompanyPartners(supabase, data.id, ortaklar || [])
   if (partnerError) return NextResponse.json({ error: partnerError.message, code: partnerError.code || 'PARTNER_SAVE_FAILED' }, { status: 500 })

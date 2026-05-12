@@ -8,6 +8,7 @@ import { SmartDataTable, ColumnDef, WidgetDef } from '@/components/ui/SmartDataT
 import { Toast } from '@/components/ui/Toast'
 import { normalizeCountryId } from '@/lib/reference/country-nationalities'
 import { createRealPersonMasterTabs } from '@/lib/identity/realPersonFormSections'
+import { createLegalEntityMasterTabs } from '@/lib/identity/legalEntityFormSections'
 
 type PageState = 'list' | 'create' | 'view' | 'edit'
 type ToastState = { type: 'success' | 'error' | 'warning'; title?: string; message: string }
@@ -442,17 +443,15 @@ export default function OrtaklarPage() {
     if (field.name === 'company_id') return { ...field, options: companies, defaultValue: companies.length === 1 ? companies[0].value : field.defaultValue }
     return field
   })
-  const legalEntityGeneralTab = (() => {
-    const generalTab = tabs.find(tab => tab.id === 'genel')
-    const fields = generalTab?.fields.filter(field => field.visibleWhen?.value === 'tuzel_kisi') || []
-    return generalTab && fields.length ? [{ ...generalTab, id: 'tuzel_genel', label: 'Tüzel Bilgiler', fields }] : []
-  })()
   const configuredTabs = [
     ...createRealPersonMasterTabs({
       visibleWhen: { field: 'partner_type', operator: 'equals', value: 'gercek_kisi' },
       includeEmergencyContact: true,
     }),
-    ...legalEntityGeneralTab,
+    ...createLegalEntityMasterTabs({
+      visibleWhen: { field: 'partner_type', operator: 'equals', value: 'tuzel_kisi' },
+      websiteField: 'web_sitesi',
+    }),
     ...tabs.filter(tab => !['genel', 'iletisim'].includes(tab.id)),
   ]
   const withFieldHistory = (field: FormField) => {
@@ -609,6 +608,7 @@ export default function OrtaklarPage() {
             heroFields={configuredHeroFields.map(withFieldHistory)}
             tabs={configuredTabs.map(tab => ({ ...tab, fields: tab.fields.map(withFieldHistory) }))}
             roleHeroCardTitle="Forma Özel"
+            masterSummaryMode="entityIdentity"
             data={selectedPartner || undefined}
             saving={saving}
             deleting={deleting}

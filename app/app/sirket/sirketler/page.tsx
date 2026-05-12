@@ -9,6 +9,7 @@ import { SmartDataTable, ColumnDef, WidgetDef } from '@/components/ui/SmartDataT
 import { Toast } from '@/components/ui/Toast'
 import { formatPhoneInput, normalizeEmailInput } from '@/lib/utils'
 import { createFormModeState, mapPageStateToFormMode } from '@/lib/forms/formModeEngine'
+import { createLegalEntityMasterTabs } from '@/lib/identity/legalEntityFormSections'
 import { useModules } from '@/lib/security/moduleStore'
 import { usePermissions } from '@/lib/security/permissionStore'
 import { PERMISSIONS } from '@/packages/shared/src'
@@ -314,7 +315,17 @@ export default function SirketlerPage() {
       : field
   )
 
-  const configuredTabs = tabs.map(tab => ({
+  const configuredTabs = [
+    ...createLegalEntityMasterTabs({
+      addressField: 'adres',
+      cityField: 'il',
+      districtField: 'ilce',
+      phoneField: 'telefon',
+      emailField: 'email',
+      websiteField: 'web_sitesi',
+    }),
+    ...tabs.filter(tab => tab.id !== 'iletisim'),
+  ].map(tab => ({
     ...tab,
     fields: tab.fields.map(field =>
       field.name === 'trade_registry_office' && tradeRegistryOfficeOptions.length > 0
@@ -649,6 +660,11 @@ export default function SirketlerPage() {
             canCreate={formAccess.showAdd}
             canEdit={formAccess.showEdit}
             enableHistory
+            showHeroHeader={false}
+            showMasterSummaryBadge={false}
+            masterSummaryMode="organizationIdentity"
+            hideRoleHeroFields
+            showEmptyRoleHeroState={false}
             imageSlot={{
               dataField: 'hero_images',
               slots: [

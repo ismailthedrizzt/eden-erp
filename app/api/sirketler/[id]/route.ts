@@ -42,6 +42,7 @@ const SirketUpdateSchema = z.object({
   company_status: CompanyStatusSchema.optional(),
   hero_images: z.array(z.record(z.any())).optional(),
   hero_documents: z.array(z.record(z.any())).optional(),
+  contact_points: z.array(z.record(z.any())).optional(),
   ortaklar: z.array(z.record(z.any())).optional(),
   temsilciler: z.array(z.record(z.any())).optional(),
   public_tax: z.record(z.any()).optional(),
@@ -198,7 +199,7 @@ export async function PATCH(
     return NextResponse.json({ error: currentError.message, code: currentError.code || 'FETCH_FAILED' }, { status: 500 })
   }
 
-  const { ortaklar, temsilciler, public_tax, public_sgk, public_incentives, public_registry, public_licenses, public_channels, ...rawCompanyUpdates } = parsed.data
+  const { ortaklar, temsilciler, contact_points, public_tax, public_sgk, public_incentives, public_registry, public_licenses, public_channels, ...rawCompanyUpdates } = parsed.data
   const companyUpdates = applyCompanyStatus(rawCompanyUpdates)
   const nextHistory = buildFieldHistory(current, companyUpdates)
   const { data, error } = await supabase
@@ -217,7 +218,12 @@ export async function PATCH(
     }
     return NextResponse.json({ error: error.message, code: error.code || 'UPDATE_FAILED' }, { status: 500 })
   }
-  await syncMasterContact(supabase, 'organization', current.organization_id, companyUpdates)
+  await syncMasterContact(
+    supabase,
+    'organization',
+    current.organization_id,
+    contact_points !== undefined ? { ...companyUpdates, contact_points } : companyUpdates
+  )
 
   if (ortaklar) {
     const partnerError = await replaceCompanyPartners(supabase, id, ortaklar)
