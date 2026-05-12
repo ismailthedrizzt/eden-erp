@@ -951,37 +951,47 @@ export function DocumentSlotUploader({
               </div>
               
               {/* Hover Actions Overlay */}
-              {!readOnly && (
+              {(readOnly ? canPreviewCurrentDoc || currentDocUrl : true) && (
                 <div className="absolute inset-0 bg-white/95 dark:bg-gray-800/95 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
                   <div className="flex items-center gap-2">
+                    {canPreviewCurrentDoc && (
+                      <button
+                        type="button"
+                        onClick={() => setPreviewDoc(currentDoc || null)}
+                        className="p-2.5 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                        title="View"
+                      >
+                        <Eye size={18} className="text-gray-700 dark:text-gray-300" />
+                      </button>
+                    )}
+                    {!readOnly && (
+                      <button
+                        type="button"
+                        onClick={() => fileInputRef.current?.click()}
+                        className="p-2.5 bg-blue-100 dark:bg-blue-900/30 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
+                        title="Replace"
+                      >
+                        <RefreshCw size={18} className="text-blue-600" />
+                      </button>
+                    )}
                     <button
-                      onClick={() => setPreviewDoc(currentDoc || null)}
-                      className="p-2.5 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-                      title="View"
-                    >
-                      <Eye size={18} className="text-gray-700 dark:text-gray-300" />
-                    </button>
-                    <button
-                      onClick={() => fileInputRef.current?.click()}
-                      className="p-2.5 bg-blue-100 dark:bg-blue-900/30 rounded-lg hover:bg-blue-200 dark:hover:bg-blue-900/50 transition-colors"
-                      title="Replace"
-                    >
-                      <RefreshCw size={18} className="text-blue-600" />
-                    </button>
-                    <button
+                      type="button"
                       onClick={handleDownload}
                       className="p-2.5 bg-green-100 dark:bg-green-900/30 rounded-lg hover:bg-green-200 dark:hover:bg-green-900/50 transition-colors"
                       title="Download"
                     >
                       <Download size={18} className="text-green-600" />
                     </button>
-                    <button
-                      onClick={() => setShowDeleteConfirm(true)}
-                      className="p-2.5 bg-red-100 dark:bg-red-900/30 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
-                      title="Delete"
-                    >
-                      <Trash2 size={18} className="text-red-600" />
-                    </button>
+                    {!readOnly && (
+                      <button
+                        type="button"
+                        onClick={() => setShowDeleteConfirm(true)}
+                        className="p-2.5 bg-red-100 dark:bg-red-900/30 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
+                        title="Delete"
+                      >
+                        <Trash2 size={18} className="text-red-600" />
+                      </button>
+                    )}
                   </div>
                 </div>
               )}

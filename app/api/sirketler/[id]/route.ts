@@ -85,6 +85,14 @@ export async function GET(
     return NextResponse.json({ error: error.message, code: error.code || 'FETCH_FAILED' }, { status: 500 })
   }
 
+  const heroDocuments = Array.isArray(data.hero_documents) && data.hero_documents.length > 0
+    ? data.hero_documents
+    : normalizeLegacyDocuments(data.dokumanlar)
+
+  if (heroDocuments.length > 0) {
+    data.hero_documents = heroDocuments
+  }
+
   return NextResponse.json({ data })
 }
 
@@ -203,6 +211,33 @@ function buildFieldHistory(current: Record<string, any>, updates: Record<string,
   })
 
   return nextHistory
+}
+
+function normalizeLegacyDocuments(documents: unknown) {
+  if (!Array.isArray(documents)) return []
+  return documents.map((document: any) => ({
+    slotId: normalizeCompanyDocumentType(document.dokuman_turu),
+    name: document.dosya_adi || 'Belge',
+    size: 0,
+    type: inferDocumentType(document.dosya_adi, document.dosya_url),
+    url: document.dosya_url || '',
+    previewUrl: document.dosya_url || '',
+    thumbnailUrl: document.thumbnail_url || document.preview_thumb_url || '',
+    uploadedAt: document.yuklenme_tarihi || document.created_at,
+  })).filter(document => document.url)
+}
+
+function normalizeCompanyDocumentType(value: unknown) {
+  const allowed = new Set(['vergi_levhasi', 'ticaret_sicil', 'imza_sirkuleri', 'faaliyet_belgesi', 'diger'])
+  const text = String(value || '')
+  return allowed.has(text) ? text : 'diger'
+}
+
+function inferDocumentType(fileName?: string, url?: string) {
+  const text = `${fileName || ''} ${url || ''}`.toLocaleLowerCase('tr-TR')
+  if (text.includes('data:image/') || /\.(png|jpe?g|webp)$/i.test(text)) return 'image/jpeg'
+  if (text.includes('pdf') || text.includes('application/pdf')) return 'application/pdf'
+  return 'application/octet-stream'
 }
 
 async function replaceCompanyPartners(supabase: ReturnType<typeof createServiceClient>, sirketId: string, partners: Record<string, any>[]) {
