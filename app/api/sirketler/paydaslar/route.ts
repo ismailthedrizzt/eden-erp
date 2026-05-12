@@ -10,7 +10,7 @@ const StakeholderSchema = z.object({
   organization_id: z.string().uuid().optional().nullable(),
   stakeholder_type: z.enum(['gercek_kisi', 'tuzel_kisi']).default('gercek_kisi'),
   category: z.string().min(1),
-  display_name: z.string().min(1),
+  display_name: z.string().optional(),
   tax_id: z.string().optional(),
   phone: z.string().optional(),
   email: z.union([z.literal(''), z.string().email()]).optional(),
@@ -76,9 +76,23 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Geçersiz veri', code: 'VALIDATION_FAILED', details: parsed.error.flatten() }, { status: 400 })
   }
 
+  const stakeholder = {
+    ...parsed.data,
+    display_name: parsed.data.display_name || buildDisplayName(parsed.data),
+  }
+
+  if (!stakeholder.display_name) {
+    const field = stakeholder.stakeholder_type === 'tuzel_kisi' ? 'trade_name' : 'first_name'
+    return NextResponse.json({
+      error: 'Geçersiz veri',
+      code: 'VALIDATION_FAILED',
+      details: { fieldErrors: { [field]: ['Zorunlu alan'] } },
+    }, { status: 400 })
+  }
+
   let row: Record<string, any>
   try {
-    row = await attachStakeholderIdentity(supabase, parsed.data, mapStakeholderForDb(parsed.data))
+    row = await attachStakeholderIdentity(supabase, stakeholder, mapStakeholderForDb(stakeholder))
   } catch (error) {
     return NextResponse.json({
       error: error instanceof Error ? error.message : 'Paydaş ana kayda bağlanamadı',
@@ -93,8 +107,8 @@ export async function POST(request: NextRequest) {
     .single()
 
   if (error) return NextResponse.json({ error: error.message, code: error.code || 'CREATE_FAILED' }, { status: 500 })
-  if (data?.person_id) await syncMasterContact(supabase, 'person', data.person_id, parsed.data)
-  if (data?.organization_id) await syncMasterContact(supabase, 'organization', data.organization_id, parsed.data)
+  if (data?.person_id) await syncMasterContact(supabase, 'person', data.person_id, stakeholder)
+  if (data?.organization_id) await syncMasterContact(supabase, 'organization', data.organization_id, stakeholder)
   const hydrated = data?.person_id
     ? await hydrateMasterContact(supabase, 'person', data)
     : data?.organization_id
@@ -134,8 +148,8 @@ function mapStakeholderForDb(stakeholder: Record<string, any>) {
 
 function buildDisplayName(source: Record<string, any>) {
   return source.stakeholder_type === 'tuzel_kisi'
-    ? source.trade_name || source.short_name || ''
-    : [source.first_name, source.last_name].filter(Boolean).join(' ').trim()
+    ? source.trade_name || source.legal_name || source.ticari_unvan || source.short_name || source.kisa_unvan || ''
+    : [source.first_name, source.last_name].filter(Boolean).join(' ').trim() || source.full_name || ''
 }
 
 async function attachStakeholderIdentity(supabase: ReturnType<typeof createServiceClient>, stakeholder: Record<string, any>, row: Record<string, any>) {

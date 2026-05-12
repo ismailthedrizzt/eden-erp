@@ -538,8 +538,8 @@ function normalizePayload(raw: Record<string, any>, companies: Option[], current
   if (payload.master_entity_kind === 'organization') payload.stakeholder_type = 'tuzel_kisi'
   payload.stakeholder_type = payload.stakeholder_type || effective.stakeholder_type || 'gercek_kisi'
   payload.display_name = payload.stakeholder_type === 'tuzel_kisi'
-    ? effective.trade_name || effective.short_name || effective.display_name
-    : [effective.first_name, effective.last_name].filter(Boolean).join(' ').trim() || effective.display_name
+    ? effective.trade_name || effective.legal_name || effective.ticari_unvan || effective.short_name || effective.kisa_unvan || effective.display_name
+    : [effective.first_name, effective.last_name].filter(Boolean).join(' ').trim() || effective.full_name || effective.display_name
   payload.country = payload.country || payload.nationality_country || payload.nationality || 'TR'
   payload.tax_id = payload.tax_id || payload.national_id || payload.tc_kimlik || payload.tax_number || payload.vkn_tckn || payload.passport_no || payload.pasaport_no
   payload.document_summary = undefined

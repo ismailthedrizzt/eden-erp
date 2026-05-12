@@ -136,7 +136,20 @@ export function formatFileSize(bytes: number): string {
 }
 
 export function formatPhoneInput(value: string): string {
-  const digits = value.replace(/\D/g, '')
+  const text = value.trim()
+  if (!text) return ''
+
+  if (text.startsWith('+')) {
+    const digits = text.replace(/\D/g, '').slice(0, 15)
+    if (!digits) return ''
+
+    return `+${digits}`
+  }
+
+  const digits = text.replace(/\D/g, '')
+  const looksLikeTurkey = digits.startsWith('90') || digits.startsWith('0') || (digits.length === 10 && digits.startsWith('5'))
+  if (!looksLikeTurkey) return `+${digits.slice(0, 15)}`
+
   const localDigits = digits.startsWith('90') ? digits.slice(2) : digits
   const normalized = localDigits.startsWith('0') ? localDigits.slice(1) : localDigits
   const limited = normalized.slice(0, 10)

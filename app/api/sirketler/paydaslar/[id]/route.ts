@@ -117,6 +117,6 @@ function mapStakeholderForDb(stakeholder: Record<string, any>, current?: Record<
 function buildDisplayName(source: Record<string, any>, current?: Record<string, any>) {
   const kind = source.stakeholder_type || current?.stakeholder_type
   return kind === 'tuzel_kisi'
-    ? source.trade_name || source.short_name || ''
-    : [source.first_name ?? current?.first_name, source.last_name ?? current?.last_name].filter(Boolean).join(' ').trim()
+    ? source.trade_name || source.legal_name || source.ticari_unvan || source.short_name || source.kisa_unvan || current?.display_name || ''
+    : [source.first_name ?? current?.first_name, source.last_name ?? current?.last_name].filter(Boolean).join(' ').trim() || source.full_name || current?.display_name || ''
 }
