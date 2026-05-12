@@ -433,16 +433,6 @@ export default function PaydaslarPage() {
               title: selectedStakeholder?.stakeholder_type === 'tuzel_kisi' ? 'Logo' : 'Fotoğraf',
               dataField: 'photo_logo',
               slots: [{ id: 'photo_logo', title: selectedStakeholder?.stakeholder_type === 'tuzel_kisi' ? 'Logo' : 'Fotoğraf', required: false }],
-              registry: {
-                enabled: true,
-                entityKind: selectedStakeholder?.stakeholder_type === 'tuzel_kisi' ? 'organization' : 'person',
-                personId: selectedStakeholder?.person_id,
-                organizationId: selectedStakeholder?.organization_id,
-                companyId: selectedStakeholder?.company_id || selectedStakeholder?.sirket_id,
-                mediaType: selectedStakeholder?.stakeholder_type === 'tuzel_kisi' ? 'logo' : 'profile_photo',
-                linkedModule: 'stakeholders',
-                linkedRecordId: selectedStakeholder?.id,
-              },
             }}
             documentSlot={{ title: 'Belgeler', dataField: 'stakeholder_documents', slots: [
               { id: 'sozlesme', title: 'Sözleşme', required: false },

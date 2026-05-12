@@ -76,7 +76,6 @@ export async function PATCH(
   if (error) return NextResponse.json({ error: error.message, code: error.code || 'UPDATE_FAILED' }, { status: 500 })
   if (data?.person_id) await syncMasterContact(supabase, 'person', data.person_id, body)
   if (data?.organization_id) await syncMasterContact(supabase, 'organization', data.organization_id, body)
-  await linkPartnerRegistryAssets(supabase, data)
   const hydrated = data?.person_id
     ? await hydrateMasterContact(supabase, 'person', data)
     : data?.organization_id
@@ -206,17 +205,4 @@ function normalizeEmployeeDocuments(employee: Record<string, any>) {
     previewUrl: doc.previewUrl || doc.preview_url || doc.url,
     thumbnailUrl: doc.thumbnailUrl || doc.thumbnail_url || doc.preview_thumb_url || doc.preview_image_url,
   }))
-}
-
-async function linkPartnerRegistryAssets(supabase: ReturnType<typeof createServiceClient>, partner: Record<string, any>) {
-  const images = Array.isArray(partner.photo_logo) ? partner.photo_logo : []
-
-  await Promise.all([
-    ...images
-      .filter((image: Record<string, any>) => image.mediaAssetId || image.media_asset_id)
-      .map((image: Record<string, any>) => supabase.from('media_assets').update({
-        linked_module: 'partners',
-        linked_record_id: partner.id,
-      }).eq('id', image.mediaAssetId || image.media_asset_id)),
-  ])
 }

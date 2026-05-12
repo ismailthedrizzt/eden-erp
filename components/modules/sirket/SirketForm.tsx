@@ -170,14 +170,6 @@ export function SirketForm({
             onChange={setImages}
             allowExtraSlots={true}
             readOnly={isReadOnly}
-            registry={{
-              enabled: true,
-              entityKind: 'company',
-              companyId: formData.id,
-              mediaType: 'logo',
-              linkedModule: 'companies',
-              linkedRecordId: formData.id,
-            }}
           />
         </div>
         

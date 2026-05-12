@@ -142,7 +142,6 @@ export interface EntityFormProps {
     readOnly?: boolean
     dataField?: string
     slots?: ImageSlot[]
-    registry?: any
   }
   
   /** Document slot configuration for default hero left panel */
@@ -157,7 +156,6 @@ export interface EntityFormProps {
       label?: string
       title?: string
     }
-    registry?: any
   }
   
   /** Save handler - receives form data */
@@ -268,7 +266,6 @@ function normalizeStoredImages(value: unknown): SlotImage[] {
     .filter((image): image is Record<string, any> => !!image && typeof image === 'object')
     .map(image => ({
       slotId: image.slotId || image.slot_id || 'photo',
-      mediaAssetId: image.mediaAssetId || image.media_asset_id || image.asset_id,
       previewUrl: image.previewUrl || image.preview_url || image.url || image.signedUrl || image.signed_url,
       name: image.name || image.file_name || image.fileName || 'Görsel',
       size: Number(image.size || 0),
@@ -279,7 +276,6 @@ function normalizeStoredImages(value: unknown): SlotImage[] {
 function serializeImageForStorage(image: SlotImage) {
   return {
     slotId: image.slotId,
-    mediaAssetId: image.mediaAssetId,
     name: image.name,
     size: image.size || image.file?.size || 0,
     uploadedAt: image.uploadedAt?.toISOString?.() || new Date().toISOString(),
@@ -1875,7 +1871,6 @@ export function EntityForm({
                     images={images}
                     onChange={handleImagesChange}
                     readOnly={isReadOnly || isIdentityGateLocked || !!imageSlot.readOnly}
-                    registry={imageSlot.registry}
                   />
                 </div>
                 

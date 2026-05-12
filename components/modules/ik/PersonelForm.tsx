@@ -185,12 +185,6 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
                 images={images}
                 onChange={setImages}
                 allowExtraSlots={true}
-                registry={{
-                  enabled: true,
-                  entityKind: 'person',
-                  mediaType: 'profile_photo',
-                  linkedModule: 'employees',
-                }}
               />
             </div>
 

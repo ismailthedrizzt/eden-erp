@@ -349,14 +349,6 @@ function VehicleForm({
               onChange={(images) => updateField('media', images)}
               readOnly={readOnly}
               allowExtraSlots
-              registry={{
-                enabled: true,
-                entityKind: 'vehicle',
-                companyId: formData.company_id || undefined,
-                mediaType: 'vehicle_photo',
-                linkedModule: 'vehicles',
-                linkedRecordId: formData.id?.startsWith('new-') ? undefined : formData.id,
-              }}
             />
           </Card>
           <Card title="Belgeler" icon={<FileText size={18} />}>

@@ -613,16 +613,6 @@ export default function OrtaklarPage() {
               slots: [
                 { id: 'photo_logo', title: selectedPartner?.partner_type === 'tuzel_kisi' ? 'Logo' : 'Fotoğraf', required: false },
               ],
-              registry: {
-                enabled: true,
-                entityKind: selectedPartner?.partner_type === 'tuzel_kisi' ? 'organization' : 'person',
-                personId: selectedPartner?.person_id,
-                organizationId: selectedPartner?.organization_id,
-                companyId: selectedPartner?.company_id || selectedPartner?.sirket_id,
-                mediaType: selectedPartner?.partner_type === 'tuzel_kisi' ? 'logo' : 'profile_photo',
-                linkedModule: 'partners',
-                linkedRecordId: selectedPartner?.id,
-              },
             }}
             documentSlot={{
               title: 'Belgeler',

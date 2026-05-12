@@ -139,7 +139,6 @@ export async function POST(request: NextRequest) {
   if (error) return NextResponse.json({ error: error.message, code: error.code || 'CREATE_FAILED' }, { status: 500 })
   if (data?.person_id) await syncMasterContact(supabase, 'person', data.person_id, parsed.data)
   if (data?.organization_id) await syncMasterContact(supabase, 'organization', data.organization_id, parsed.data)
-  await linkPartnerRegistryAssets(supabase, data)
   const hydrated = data?.person_id
     ? await hydrateMasterContact(supabase, 'person', data)
     : data?.organization_id
@@ -259,17 +258,4 @@ async function attachPartnerIdentity(supabase: ReturnType<typeof createServiceCl
   } catch {
     return row
   }
-}
-
-async function linkPartnerRegistryAssets(supabase: ReturnType<typeof createServiceClient>, partner: Record<string, any>) {
-  const images = Array.isArray(partner.photo_logo) ? partner.photo_logo : []
-
-  await Promise.all([
-    ...images
-      .filter((image: Record<string, any>) => image.mediaAssetId || image.media_asset_id)
-      .map((image: Record<string, any>) => supabase.from('media_assets').update({
-        linked_module: 'partners',
-        linked_record_id: partner.id,
-      }).eq('id', image.mediaAssetId || image.media_asset_id)),
-  ])
 }
