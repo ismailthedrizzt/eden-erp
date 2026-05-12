@@ -134,6 +134,13 @@ export interface EntityFormProps {
   
   /** Custom hero left panel content (Photo, Documents, etc.) - overrides default */
   heroLeftPanel?: ReactNode
+
+  /** Optional hero presentation controls for module-specific layouts */
+  showHeroHeader?: boolean
+  showMasterSummaryBadge?: boolean
+  masterSummaryTitleAsField?: boolean
+  masterSummaryMode?: 'default' | 'personIdentity'
+  showResolvedMasterHeroFields?: boolean
   
   /** Image slot configuration for default hero left panel */
   imageSlot?: {
@@ -253,9 +260,15 @@ function formatHistoryValue(value: unknown): string {
 function MasterSummaryHero({
   result,
   locked,
+  showBadge = true,
+  titleAsField = false,
+  mode = 'default',
 }: {
   result: IdentityGateResolveResult | null
   locked: boolean
+  showBadge?: boolean
+  titleAsField?: boolean
+  mode?: 'default' | 'personIdentity'
 }) {
   const kind = result?.entityKind
   const master = result?.masterRecord || null
@@ -274,7 +287,15 @@ function MasterSummaryHero({
         { label: 'E-posta', value: readFirst(master, prefill, ['email', 'email_1']) },
         { label: 'Adres', value: formatAddress(master, prefill) },
       ])
+    : mode === 'personIdentity'
+      ? compactSummaryItems([
+          ...(titleAsField ? [{ label: 'Ad Soyad', value: title }] : []),
+          { label: 'Doğum Tarihi', value: readFirst(master, prefill, ['birth_date', 'dogum_tarihi']) },
+          { label: 'Doğum Yeri', value: readFirst(master, prefill, ['birth_place', 'dogum_yeri']) },
+          { label: 'Cinsiyet', value: formatGender(readFirst(master, prefill, ['gender', 'cinsiyet'])) },
+        ])
     : compactSummaryItems([
+        ...(titleAsField ? [{ label: 'Ad Soyad', value: title }] : []),
         { label: 'Uyruk', value: readFirst(master, prefill, ['nationality', 'uyruk', 'nationality_country']) },
         { label: 'Dogum', value: readFirst(master, prefill, ['birth_date', 'dogum_tarihi']) },
         { label: 'Telefon', value: readFirst(master, prefill, ['phone', 'cep_telefonu', 'telefon', 'phone_1']) },
@@ -299,15 +320,15 @@ function MasterSummaryHero({
           <div className="rounded-lg bg-white p-2 text-emerald-700 shadow-sm dark:bg-gray-900 dark:text-emerald-300">
             <Icon size={18} />
           </div>
-          <div>
+          {!titleAsField && <div>
             <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
               {title || (kind === 'organization' ? 'Tuzel kisi master kaydi' : 'Gercek kisi master kaydi')}
             </h4>
-          </div>
+          </div>}
         </div>
-        <span className="rounded-full bg-white px-2.5 py-1 text-xs font-medium text-emerald-700 dark:bg-gray-900 dark:text-emerald-300">
+        {showBadge && <span className="rounded-full bg-white px-2.5 py-1 text-xs font-medium text-emerald-700 dark:bg-gray-900 dark:text-emerald-300">
           Temel Bilgiler
-        </span>
+        </span>}
       </div>
       {items.length > 0 && (
         <div className="mt-3 grid gap-2 md:grid-cols-2 lg:grid-cols-3">
@@ -345,6 +366,13 @@ function formatAddress(master: Record<string, any> | null, prefill: Record<strin
 function formatSummaryValue(value: unknown) {
   if (Array.isArray(value)) return value.length ? `${value.length} kayit` : ''
   if (value && typeof value === 'object') return 'Kayitli'
+  return String(value || '')
+}
+
+function formatGender(value: unknown) {
+  const normalized = String(value || '').toLocaleLowerCase('tr-TR')
+  if (normalized === 'erkek') return 'Erkek'
+  if (normalized === 'kadin' || normalized === 'kadın') return 'Kadın'
   return String(value || '')
 }
 
@@ -409,6 +437,8 @@ function extractMasterLikeRecord(kind: 'person' | 'organization', source: Record
     national_id: source.national_id || source.tc_kimlik || '',
     passport_no: source.passport_no || source.pasaport_no || '',
     birth_date: source.birth_date || source.dogum_tarihi || '',
+    birth_place: source.birth_place || source.dogum_yeri || '',
+    gender: source.gender || source.cinsiyet || '',
     phone: source.phone || source.cep_telefonu || source.telefon || '',
     email: source.email || '',
     address: source.address || source.adres || '',
@@ -1344,6 +1374,11 @@ export function EntityForm({
   canEdit = true,
   canCreate = true,
   heroLeftPanel,
+  showHeroHeader = true,
+  showMasterSummaryBadge = true,
+  masterSummaryTitleAsField = false,
+  masterSummaryMode = 'default',
+  showResolvedMasterHeroFields = false,
   imageSlot = { title: 'Fotoğraf', required: false },
   documentSlot = { title: 'CV', required: false },
   onSave,
@@ -1526,7 +1561,7 @@ export function EntityForm({
   const isIdentityGateReady = !isIdentityGateEnabled || !isCreate || effectiveIdentityGateResult?.state === 'ready_for_insert' || effectiveIdentityGateResult?.state === 'ready_for_edit'
   const isIdentityGateLocked = isIdentityGateEnabled && isCreate && !isIdentityGateReady
   const masterControlledFields = new Set(Object.keys(effectiveIdentityGateResult?.prefill || {}).filter(key => key !== 'person_id' && key !== 'organization_id'))
-  const shouldHideResolvedMasterHeroFields = isIdentityGateEnabled && !!effectiveIdentityGateResult?.masterFound
+  const shouldHideResolvedMasterHeroFields = isIdentityGateEnabled && !!effectiveIdentityGateResult?.masterFound && !showResolvedMasterHeroFields
   const roleHeroFields = shouldHideResolvedMasterHeroFields
     ? heroFields.filter(field => !isMasterIdentityHeroField(field))
     : heroFields
@@ -2214,14 +2249,14 @@ export function EntityForm({
           {/* Right Panel - Fields + Actions */}
           <div className="lg:col-span-3 flex flex-col">
             {/* Section Title */}
-            <div className="mb-4">
+            {showHeroHeader && <div className="mb-4">
               <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
                 Temel Bilgiler
               </h3>
               <p className="text-xs text-gray-400 mt-1">
                 {isCreate ? 'Yeni kayıt oluşturun' : isEdit ? 'Bilgileri güncelleyin' : 'Kayıt detayları'}
               </p>
-            </div>
+            </div>}
 
             {/* Required Fields Grid */}
             <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 flex-1">
@@ -2238,7 +2273,13 @@ export function EntityForm({
                 />
               )}
               {identityGate?.enabled && (
-                <MasterSummaryHero result={effectiveIdentityGateResult} locked={isIdentityGateLocked} />
+                <MasterSummaryHero
+                  result={effectiveIdentityGateResult}
+                  locked={isIdentityGateLocked}
+                  showBadge={showMasterSummaryBadge}
+                  titleAsField={masterSummaryTitleAsField}
+                  mode={masterSummaryMode}
+                />
               )}
               {isIdentityGateLocked && fieldErrors.identity_gate && (
                 <div className="col-span-2 lg:col-span-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">

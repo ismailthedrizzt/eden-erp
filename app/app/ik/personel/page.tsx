@@ -490,6 +490,11 @@ export default function PersonelYonetimPage() {
             }))}
             data={selectedPersonel || undefined}
             identityGate={moduleConfig.form.identityGate}
+            showHeroHeader={false}
+            showMasterSummaryBadge={false}
+            masterSummaryTitleAsField
+            masterSummaryMode="personIdentity"
+            showResolvedMasterHeroFields
             saving={saving}
             deleting={deleting}
             error={formError}

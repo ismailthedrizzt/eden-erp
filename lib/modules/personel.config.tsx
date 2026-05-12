@@ -145,6 +145,7 @@ export const personelModuleConfig: ModuleConfig<PersonelTableRow> = {
         },
         { key: 'dogum_tarihi', label: 'Doğum Tarihi', type: 'date', compact: true },
         { key: 'dogum_yeri', label: 'Doğum Yeri', type: 'text' },
+        { key: 'gorev', label: 'Mesleği', type: 'text' },
         {
           key: 'kan_grubu',
           label: 'Kan Grubu',
