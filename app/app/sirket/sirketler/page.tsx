@@ -320,19 +320,24 @@ export default function SirketlerPage() {
   }
 
   const handleRowClick = async (row: SirketTableRow) => {
-    setSelectedSirket(row)
     setFormError(null)
     setFieldErrors({})
-    setPageState('view')
 
     try {
       const response = await fetch(`/api/sirketler/${row.id}`)
-      if (!response.ok) return
+      if (!response.ok) {
+        setSelectedSirket(row)
+        setPageState('view')
+        return
+      }
       const result = await response.json()
       if (result.data) setSelectedSirket(normalizeCompanyForForm(result.data))
+      else setSelectedSirket(row)
     } catch {
       // The list row is enough to open the page; detail fetch enriches related/history data.
+      setSelectedSirket(row)
     }
+    setPageState('view')
   }
 
   const handleBackToList = () => {

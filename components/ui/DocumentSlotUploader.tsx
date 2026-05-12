@@ -228,6 +228,30 @@ function getDocumentThumbnailUrl(doc?: SlotDocument | null, signedUrl?: string) 
   return ''
 }
 
+async function uploadDocumentFile(file: File, slotId: string) {
+  const body = new FormData()
+  body.append('file', file)
+  body.append('slotId', slotId)
+
+  const response = await fetch('/api/uploads/documents', {
+    method: 'POST',
+    body,
+  })
+
+  const result = await response.json().catch(() => ({}))
+  if (!response.ok) {
+    throw new Error(result.error || 'Belge yüklenemedi')
+  }
+
+  return {
+    storagePath: String(result.storagePath || ''),
+    url: String(result.url || ''),
+    name: String(result.name || file.name),
+    size: Number(result.size || file.size),
+    type: String(result.type || file.type || 'application/octet-stream'),
+  }
+}
+
 function readFileAsDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
@@ -614,27 +638,36 @@ export function DocumentSlotUploader({
 
     // Complete upload simulation
     setTimeout(async () => {
-      clearInterval(progressInterval)
-      setUploadProgress(100)
-      const preview = await createDocumentPreviewMetadata(file).catch(() => ({ url: '', thumbnailUrl: undefined }))
+      try {
+        const [preview, uploaded] = await Promise.all([
+          createDocumentPreviewMetadata(file).catch(() => ({ url: '', thumbnailUrl: undefined })),
+          uploadDocumentFile(file, currentSlot.id),
+        ])
+        clearInterval(progressInterval)
+        setUploadProgress(100)
+        const fallbackThumbnail = generateFallbackDocumentThumbnail(getFileTypeConfig(file.type).label, file.name)
       
-      const newDoc: SlotDocument = {
-        slotId: currentSlot.id,
-        file,
-        name: file.name,
-        size: file.size,
-        type: file.type,
-        uploadedAt: new Date(),
-        url: preview.url,
-        previewUrl: preview.url,
-        thumbnailUrl: preview.thumbnailUrl,
-      }
+        const newDoc: SlotDocument = {
+          slotId: currentSlot.id,
+          storagePath: uploaded.storagePath,
+          name: uploaded.name,
+          size: uploaded.size,
+          type: uploaded.type,
+          uploadedAt: new Date(),
+          url: uploaded.url,
+          previewUrl: uploaded.url,
+          thumbnailUrl: preview.thumbnailUrl || (file.type.startsWith('image/') ? uploaded.url : fallbackThumbnail),
+        }
 
-      const updatedDocs = documents.filter(doc => doc.slotId !== currentSlot.id)
-      onChange([...updatedDocs, newDoc])
-      
-      setIsUploading(false)
-      setUploadProgress(0)
+        const updatedDocs = documents.filter(doc => doc.slotId !== currentSlot.id)
+        onChange([...updatedDocs, newDoc])
+      } catch (error) {
+        alert(error instanceof Error ? error.message : 'Belge yüklenemedi')
+      } finally {
+        clearInterval(progressInterval)
+        setIsUploading(false)
+        setUploadProgress(0)
+      }
     }, 500)
   }, [currentSlot, documents, onChange])
 
