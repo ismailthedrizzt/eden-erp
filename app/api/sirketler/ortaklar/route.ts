@@ -159,7 +159,7 @@ function mapPartnerForDb(partner: Record<string, any>) {
     ortak_adi: displayName || 'Ortak',
     ortak_tipi: ownerKind === 'tuzel_kisi' ? 'sirket' : 'kisi',
     tckn_vkn: partner.identity_number,
-    hisse_orani: null,
+    hisse_orani: toNullableNumber(partner.share_ratio ?? partner.hisse_orani),
     imza_yetkisi: !!partner.has_representation_right,
     owner_kind: ownerKind,
     source_type: partner.source_type || 'ortaklar_sayfasi',
@@ -167,15 +167,15 @@ function mapPartnerForDb(partner: Record<string, any>) {
     display_name: displayName || 'Ortak',
     identity_number: partner.identity_number || partner.national_id || partner.tc_kimlik || partner.tax_number || partner.vkn_tckn || partner.passport_no || partner.pasaport_no,
     share_class: partner.share_class || 'Adi Pay',
-    share_units: null,
-    nominal_value: null,
-    capital_amount: null,
-    share_ratio: null,
-    voting_ratio: null,
-    profit_ratio: null,
+    share_units: toNullableNumber(partner.share_units),
+    nominal_value: toNullableNumber(partner.nominal_value),
+    capital_amount: toNullableNumber(partner.capital_amount),
+    share_ratio: toNullableNumber(partner.share_ratio ?? partner.hisse_orani),
+    voting_ratio: toNullableNumber(partner.voting_ratio),
+    profit_ratio: toNullableNumber(partner.profit_ratio),
     beneficial_owner: false,
     is_beneficial_owner: false,
-    beneficial_ratio: null,
+    beneficial_ratio: toNullableNumber(partner.beneficial_ratio),
     is_ultimate_controller: false,
     has_representation_right: !!partner.has_representation_right,
     has_control_right: false,
@@ -259,4 +259,10 @@ async function attachPartnerIdentity(supabase: ReturnType<typeof createServiceCl
   } catch {
     return row
   }
+}
+
+function toNullableNumber(value: unknown) {
+  if (value === '' || value === null || value === undefined) return null
+  const number = Number(value)
+  return Number.isFinite(number) ? number : null
 }

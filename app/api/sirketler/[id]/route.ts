@@ -97,6 +97,7 @@ export async function GET(
     publicRegistry,
     publicLicenses,
     publicChannels,
+    currentOwnership,
   ] = await Promise.all([
     supabase.from('sirket_ortaklar').select('*').or(`sirket_id.eq.${id},company_id.eq.${id}`),
     supabase.from('sirket_temsilciler').select('*').or(`sirket_id.eq.${id},company_id.eq.${id}`),
@@ -107,6 +108,7 @@ export async function GET(
     supabase.from('company_public_registry').select('*').eq('company_id', id).maybeSingle(),
     supabase.from('company_public_licenses').select('*').eq('company_id', id),
     supabase.from('company_public_channels').select('*').eq('company_id', id).maybeSingle(),
+    supabase.from('v_current_ownership').select('*').eq('company_id', id),
   ])
 
   const relatedError = [
@@ -119,6 +121,7 @@ export async function GET(
     publicRegistry.error,
     publicLicenses.error,
     publicChannels.error,
+    currentOwnership.error,
   ].find(Boolean)
 
   if (relatedError) {
@@ -128,9 +131,25 @@ export async function GET(
     }, { status: 500 })
   }
 
+  const ownershipByPartnerId = new Map((currentOwnership.data || []).map((row: Record<string, any>) => [row.partner_id, row]))
+  const partnersWithOwnership = (partners.data || []).map((partner: Record<string, any>) => {
+    const ownership = ownershipByPartnerId.get(partner.id)
+    if (!ownership) return partner
+    return {
+      ...partner,
+      current_ownership: ownership,
+      current_share_ratio: ownership.current_share_ratio,
+      current_voting_ratio: ownership.current_voting_ratio,
+      current_profit_ratio: ownership.current_profit_ratio,
+      share_ratio: partner.share_ratio ?? ownership.current_share_ratio,
+      voting_ratio: partner.voting_ratio ?? ownership.current_voting_ratio,
+      profit_ratio: partner.profit_ratio ?? ownership.current_profit_ratio,
+    }
+  })
+
   const data = {
     ...company,
-    ortaklar: partners.data || [],
+    ortaklar: partnersWithOwnership,
     temsilciler: representatives.data || [],
     logolar: logos.data || [],
     public_tax: publicTax.data || {},

@@ -408,6 +408,9 @@ export default function SirketlerPage() {
     Object.entries(raw).forEach(([key, value]) => {
       if (['ortaklar', 'temsilciler', 'paydaslar', 'dokumanlar', 'logolar'].includes(key)) return
       if (value === '' || value === null || value === undefined) return
+      if (pageState !== 'create' && ['hero_documents', 'hero_images'].includes(key) && selectedSirket) {
+        if (JSON.stringify(value) === JSON.stringify((selectedSirket as any)[key] || [])) return
+      }
       payload[key] = value
     })
 
@@ -692,6 +695,7 @@ function extractLogoUrl(images: unknown) {
 function RelatedSummaryTable({ type, rows }: { type: 'ortaklar' | 'temsilciler' | 'paydaslar'; rows: any[] }) {
   const isPartners = type === 'ortaklar'
   const isStakeholders = type === 'paydaslar'
+  const columnCount = isPartners || isStakeholders ? 5 : 4
   const sourcePage = isPartners ? 'Ortaklar' : isStakeholders ? 'Paydaşlar' : 'Temsilciler'
   const href = isPartners ? '/app/sirket/sirketler/ortaklar' : isStakeholders ? '/app/sirket/sirketler/paydaslar' : '/app/sirket/sirketler/temsilciler'
   const title = isPartners ? 'Ortak bilgileri' : isStakeholders ? 'Paydaş bilgileri' : 'Temsilci bilgileri'
@@ -735,7 +739,6 @@ function RelatedSummaryTable({ type, rows }: { type: 'ortaklar' | 'temsilciler' 
                 <>
                   <th className="px-3 py-2">Ad / Ünvan</th>
                   <th className="px-3 py-2">Kişi / Kurum</th>
-                  <th className="px-3 py-2">Kaynak</th>
                   <th className="px-3 py-2">Ana Yetki</th>
                   <th className="px-3 py-2">Durum</th>
                 </>
@@ -745,7 +748,7 @@ function RelatedSummaryTable({ type, rows }: { type: 'ortaklar' | 'temsilciler' 
           <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
             {rows.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-3 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
+                <td colSpan={columnCount} className="px-3 py-6 text-center text-sm text-gray-500 dark:text-gray-400">
                   {emptyText}
                 </td>
               </tr>
@@ -756,8 +759,8 @@ function RelatedSummaryTable({ type, rows }: { type: 'ortaklar' | 'temsilciler' 
                   <>
                     <td className="px-3 py-2 font-medium text-gray-900 dark:text-white">{row.display_name || row.ortak_adi || '-'}</td>
                     <td className="px-3 py-2 text-gray-600 dark:text-gray-300">{row.owner_kind === 'tuzel_kisi' || row.ortak_tipi === 'sirket' ? 'Tüzel Kişi' : 'Gerçek Kişi'}</td>
-                    <td className="px-3 py-2 text-gray-600 dark:text-gray-300">{row.share_ratio ?? row.hisse_orani ?? '-'}</td>
-                    <td className="px-3 py-2 text-gray-600 dark:text-gray-300">{row.voting_ratio ?? '-'}</td>
+                    <td className="px-3 py-2 text-gray-600 dark:text-gray-300">{formatPercent(row.share_ratio ?? row.hisse_orani ?? row.current_share_ratio)}</td>
+                    <td className="px-3 py-2 text-gray-600 dark:text-gray-300">{formatPercent(row.voting_ratio ?? row.current_voting_ratio)}</td>
                     <td className="px-3 py-2"><StatusPill status={row.is_deleted ? 'Pasif' : row.status || 'Aktif'} /></td>
                   </>
                 ) : isStakeholders ? (
@@ -772,8 +775,7 @@ function RelatedSummaryTable({ type, rows }: { type: 'ortaklar' | 'temsilciler' 
                   <>
                     <td className="px-3 py-2 font-medium text-gray-900 dark:text-white">{row.display_name || row.ad_soyad || '-'}</td>
                     <td className="px-3 py-2 text-gray-600 dark:text-gray-300">{row.person_kind === 'tuzel_kisi' ? 'Tüzel Kişi' : 'Gerçek Kişi'}</td>
-                    <td className="px-3 py-2 text-gray-600 dark:text-gray-300">{formatSourceType(row.source_type)}</td>
-                    <td className="px-3 py-2 text-gray-600 dark:text-gray-300">{row.authority_types?.[0] || row.primary_authority_type || '-'}</td>
+                    <td className="px-3 py-2 text-gray-600 dark:text-gray-300">{formatAuthorityType(row.authority_types?.[0] || row.primary_authority_type)}</td>
                     <td className="px-3 py-2"><StatusPill status={row.is_deleted ? 'Pasif' : row.status || 'Aktif'} /></td>
                   </>
                 )}
@@ -794,6 +796,29 @@ function StatusPill({ status }: { status: string }) {
       {status}
     </span>
   )
+}
+
+function formatPercent(value: unknown) {
+  if (value === '' || value === null || value === undefined) return '-'
+  const number = Number(value)
+  if (!Number.isFinite(number)) return '-'
+  return `%${number.toLocaleString('tr-TR', { maximumFractionDigits: 2 })}`
+}
+
+function formatAuthorityType(value?: string) {
+  const labels: Record<string, string> = {
+    imza_yetkilisi: 'İmza Yetkilisi',
+    banka_yetkilisi: 'Banka Yetkilisi',
+    gib_yetkilisi: 'GİB Yetkilisi',
+    sgk_yetkilisi: 'SGK Yetkilisi',
+    sozlesme_yetkilisi: 'Sözleşme Yetkilisi',
+    satinalma_onay_yetkilisi: 'Satınalma Onay Yetkilisi',
+    odeme_onay_yetkilisi: 'Ödeme Onay Yetkilisi',
+    mesul_mudur: 'Mesul Müdür',
+    kanuni_temsilci: 'Kanuni Temsilci',
+  }
+
+  return value ? labels[value] || value : '-'
 }
 
 function formatSourceType(value?: string) {
@@ -823,7 +848,9 @@ function normalizeCompanyForForm(company: Sirket) {
         source_id: partner.source_id || partner.id,
         display_name: partner.display_name || partner.ortak_adi || '',
         identity_number: partner.identity_number || partner.tckn_vkn || '',
-        share_ratio: partner.share_ratio ?? partner.hisse_orani ?? '',
+        share_ratio: partner.share_ratio ?? partner.hisse_orani ?? partner.current_share_ratio ?? '',
+        voting_ratio: partner.voting_ratio ?? partner.current_voting_ratio ?? '',
+        profit_ratio: partner.profit_ratio ?? partner.current_profit_ratio ?? '',
         has_representation_right: partner.has_representation_right ?? !!partner.imza_yetkisi,
         status: partner.status || 'Aktif',
         history: partner.history || [],

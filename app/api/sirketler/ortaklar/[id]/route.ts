@@ -120,7 +120,7 @@ function mapPartnerForDb(partner: Record<string, any>, current?: Record<string, 
     ortak_adi: displayName || 'Ortak',
     ortak_tipi: ownerKind === 'tuzel_kisi' ? 'sirket' : 'kisi',
     tckn_vkn: partner.identity_number || current?.tckn_vkn,
-    hisse_orani: current?.hisse_orani ?? null,
+    hisse_orani: toNullableNumber(partner.share_ratio ?? partner.hisse_orani ?? current?.hisse_orani),
     imza_yetkisi: !!(partner.has_representation_right ?? current?.imza_yetkisi),
     owner_kind: ownerKind,
     source_type: partner.person_id ? 'master_person' : partner.organization_id ? 'master_organization' : partner.source_type || current?.source_type || 'ortaklar_sayfasi',
@@ -130,15 +130,15 @@ function mapPartnerForDb(partner: Record<string, any>, current?: Record<string, 
     display_name: displayName || 'Ortak',
     identity_number: partner.identity_number || current?.identity_number,
     share_class: partner.share_class || current?.share_class || 'Adi Pay',
-    share_units: current?.share_units ?? null,
-    nominal_value: current?.nominal_value ?? null,
-    capital_amount: current?.capital_amount ?? null,
-    share_ratio: current?.share_ratio ?? null,
-    voting_ratio: current?.voting_ratio ?? null,
-    profit_ratio: current?.profit_ratio ?? null,
+    share_units: toNullableNumber(partner.share_units ?? current?.share_units),
+    nominal_value: toNullableNumber(partner.nominal_value ?? current?.nominal_value),
+    capital_amount: toNullableNumber(partner.capital_amount ?? current?.capital_amount),
+    share_ratio: toNullableNumber(partner.share_ratio ?? partner.hisse_orani ?? current?.share_ratio),
+    voting_ratio: toNullableNumber(partner.voting_ratio ?? current?.voting_ratio),
+    profit_ratio: toNullableNumber(partner.profit_ratio ?? current?.profit_ratio),
     beneficial_owner: !!current?.beneficial_owner,
     is_beneficial_owner: !!current?.is_beneficial_owner,
-    beneficial_ratio: current?.beneficial_ratio ?? null,
+    beneficial_ratio: toNullableNumber(partner.beneficial_ratio ?? current?.beneficial_ratio),
     is_ultimate_controller: !!current?.is_ultimate_controller,
     has_representation_right: !!(partner.has_representation_right ?? current?.has_representation_right),
     has_control_right: !!current?.has_control_right,
@@ -154,6 +154,12 @@ function mapPartnerForDb(partner: Record<string, any>, current?: Record<string, 
     partner_documents: partner.partner_documents || current?.partner_documents || [],
     partner_profile: partner,
   }
+}
+
+function toNullableNumber(value: unknown) {
+  if (value === '' || value === null || value === undefined) return null
+  const number = Number(value)
+  return Number.isFinite(number) ? number : null
 }
 
 async function hydratePartnerMasterAssets(supabase: ReturnType<typeof createServiceClient>, partner: Record<string, any>) {
