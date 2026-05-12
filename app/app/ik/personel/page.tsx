@@ -146,12 +146,14 @@ export default function PersonelYonetimPage() {
     setPageState('view')
 
     try {
-      const response = await fetch(`${apiBasePath}/${row.id}`)
-      if (!response.ok) return
+      const response = await fetch(`${apiBasePath}/${row.id}?t=${Date.now()}`, { cache: 'no-store' })
+      if (!response.ok) throw await createSaveError(response, 'Çalışan detayı yüklenemedi')
       const result = await response.json()
-      if (result.data) setSelectedPersonel(result.data)
-    } catch {
-      // The list row is already usable; detail fetch only enriches history.
+      if (!result.data) throw new Error('Çalışan detayı yüklenemedi')
+      setSelectedPersonel(result.data)
+    } catch (err: any) {
+      setFormError(err.message || 'Çalışan detayı yüklenemedi')
+      setToast(err.toast || { type: 'error', title: 'Detay Yüklenemedi', message: err.message || 'Çalışan detayı yüklenemedi' })
     }
   }
 

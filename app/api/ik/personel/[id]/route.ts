@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient, createServiceClient } from '@/lib/supabase/server'
+import { createServiceClient } from '@/lib/supabase/server'
 import { z } from 'zod'
 import { hydrateMasterContact, syncMasterContact } from '@/lib/identity/masterContact'
 import { normalizeCountryId } from '@/lib/reference/country-nationalities'
@@ -73,7 +73,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params
-  const supabase = await createClient()
+  const supabase = createServiceClient()
 
   // Check if teskilat module is active
   const { data: teskilatLicense } = await supabase
@@ -85,17 +85,9 @@ export async function GET(
   const isTeskilatActive = teskilatLicense?.is_active &&
     (teskilatLicense.environment === 'all' || teskilatLicense.environment === process.env.NODE_ENV)
 
-  // Build select query based on teskilat module status
-  let selectQuery = '*'
-  if (isTeskilatActive) {
-    selectQuery = `*,
-      birim:birimler(id, ad, tip),
-      kadro:norm_kadrolar(id, unvan)`
-  }
-
   const { data, error } = await supabase
     .from('employees')
-    .select(selectQuery)
+    .select('*')
     .eq('id', id)
     .single()
 
@@ -106,7 +98,35 @@ export async function GET(
     return NextResponse.json({ error: error.message, code: error.code || 'FETCH_FAILED' }, { status: 500 })
   }
 
-  return NextResponse.json({ data: await hydrateMasterContact(supabase, 'person', data) })
+  const [birim, kadro] = isTeskilatActive
+    ? await Promise.all([
+        data.birim_id
+          ? supabase.from('birimler').select('id, ad, tip').eq('id', data.birim_id).maybeSingle()
+          : Promise.resolve({ data: null, error: null }),
+        data.kadro_id
+          ? supabase.from('norm_kadrolar').select('id, unvan').eq('id', data.kadro_id).maybeSingle()
+          : Promise.resolve({ data: null, error: null }),
+      ])
+    : [{ data: null, error: null }, { data: null, error: null }]
+
+  const relatedError = birim.error || kadro.error
+  if (relatedError) {
+    return NextResponse.json({
+      error: relatedError.message,
+      code: relatedError.code || 'RELATED_FETCH_FAILED',
+    }, { status: 500 })
+  }
+
+  const hydrated = await hydrateMasterContact(supabase, 'person', {
+    ...data,
+    ...(birim.data ? { birim: birim.data } : {}),
+    ...(kadro.data ? { kadro: kadro.data } : {}),
+  })
+
+  return NextResponse.json(
+    { data: hydrated },
+    { headers: { 'Cache-Control': 'no-store, max-age=0' } }
+  )
 }
 
 // PATCH /api/ik/personel/[id]

@@ -323,11 +323,15 @@ export default function PaydaslarPage() {
     setFormError(null)
     setFieldErrors({})
     try {
-      const response = await fetch(`/api/sirketler/paydaslar/${row.id}`)
-      if (!response.ok) return
+      const response = await fetch(`/api/sirketler/paydaslar/${row.id}?t=${Date.now()}`, { cache: 'no-store' })
+      if (!response.ok) throw await createSaveError(response, 'Paydaş detayı yüklenemedi')
       const result = await response.json()
-      if (result.data) setSelectedStakeholder(normalizeStakeholderForForm(result.data))
-    } catch {}
+      if (!result.data) throw new Error('Paydaş detayı yüklenemedi')
+      setSelectedStakeholder(normalizeStakeholderForForm(result.data))
+    } catch (err: any) {
+      setFormError(err.message || 'Paydaş detayı yüklenemedi')
+      setToast(err.toast || { type: 'error', title: 'Detay Yüklenemedi', message: err.message || 'Paydaş detayı yüklenemedi' })
+    }
   }
 
   const handleSave = async (data: Record<string, any>, mode: FormMode) => {

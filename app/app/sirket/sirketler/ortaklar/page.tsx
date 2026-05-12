@@ -436,22 +436,23 @@ export default function OrtaklarPage() {
 
     try {
       const [response, transactionHistory] = await Promise.all([
-        fetch(`/api/sirketler/ortaklar/${row.id}`),
+        fetch(`/api/sirketler/ortaklar/${row.id}?t=${Date.now()}`, { cache: 'no-store' }),
         fetchApprovedOwnershipTransactionsForPartner(row),
       ])
       if (!response.ok) {
-        setSelectedPartner(normalizePartnerForForm({ ...row, ownership_transaction_history: transactionHistory }))
-        return
+        throw await createSaveError(response, 'Ortak detayı yüklenemedi')
       }
       const result = await response.json()
-      if (result.data) setSelectedPartner(normalizePartnerForForm({
+      if (!result.data) throw new Error('Ortak detayı yüklenemedi')
+      setSelectedPartner(normalizePartnerForForm({
         ...result.data,
         current_ownership: row.current_ownership,
         representative_authorities: row.representative_authorities,
         ownership_transaction_history: transactionHistory,
       }))
-    } catch {
-      // List row is enough for initial view.
+    } catch (err: any) {
+      setFormError(err.message || 'Ortak detayı yüklenemedi')
+      setToast(err.toast || { type: 'error', title: 'Detay Yüklenemedi', message: err.message || 'Ortak detayı yüklenemedi' })
     }
   }
 

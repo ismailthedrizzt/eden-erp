@@ -366,12 +366,14 @@ export default function TemsilcilerPage() {
     setFieldErrors({})
 
     try {
-      const response = await fetch(`/api/sirketler/temsilciler/${row.id}`)
-      if (!response.ok) return
+      const response = await fetch(`/api/sirketler/temsilciler/${row.id}?t=${Date.now()}`, { cache: 'no-store' })
+      if (!response.ok) throw await createSaveError(response, 'Temsilci detayı yüklenemedi')
       const result = await response.json()
-      if (result.data) setSelectedRepresentative(normalizeRepresentativeForForm(result.data))
-    } catch {
-      // List row is enough for initial view.
+      if (!result.data) throw new Error('Temsilci detayı yüklenemedi')
+      setSelectedRepresentative(normalizeRepresentativeForForm(result.data))
+    } catch (err: any) {
+      setFormError(err.message || 'Temsilci detayı yüklenemedi')
+      setToast(err.toast || { type: 'error', title: 'Detay Yüklenemedi', message: err.message || 'Temsilci detayı yüklenemedi' })
     }
   }
 

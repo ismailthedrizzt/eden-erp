@@ -43,7 +43,10 @@ export async function GET(
     : assetHydrated?.organization_id
       ? await hydrateMasterContact(supabase, 'organization', assetHydrated)
       : assetHydrated
-  return NextResponse.json({ data: contactHydrated })
+  return NextResponse.json(
+    { data: contactHydrated },
+    { headers: { 'Cache-Control': 'no-store, max-age=0' } }
+  )
 }
 
 export async function PATCH(

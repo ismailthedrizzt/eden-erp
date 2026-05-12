@@ -52,7 +52,10 @@ export async function GET(
     : data?.organization_id
       ? await hydrateMasterContact(supabase, 'organization', data)
       : data
-  return NextResponse.json({ data: hydrated })
+  return NextResponse.json(
+    { data: hydrated },
+    { headers: { 'Cache-Control': 'no-store, max-age=0' } }
+  )
 }
 
 export async function PATCH(
