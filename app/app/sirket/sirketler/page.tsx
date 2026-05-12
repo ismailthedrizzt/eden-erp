@@ -594,6 +594,7 @@ export default function SirketlerPage() {
               slots: [
                 { id: 'vergi_levhasi', title: 'Vergi Levhası', required: true },
                 { id: 'ticaret_sicil', title: 'Ticaret Sicil Gazetesi', required: true },
+                { id: 'sicil_tasdiknamesi', title: 'Sicil Tasdiknamesi', required: false },
                 { id: 'imza_sirkuleri', title: 'İmza Sirküleri', required: true },
                 { id: 'faaliyet_belgesi', title: 'Faaliyet Belgesi', required: false },
               ],
