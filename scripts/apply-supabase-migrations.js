@@ -31,6 +31,7 @@ const migrationFiles = [
   '20260509_ownership_transactions.sql',
   '20260510_ownership_transactions_scope_split.sql',
   '20260510_document_media_registry.sql',
+  '20260512_fix_document_registry_audit_is_deleted.sql',
   '20260510_employee_marital_status.sql',
   '20260510_master_contact_standardization.sql',
   '20260510_ownership_transactions_lean_scope.sql',

@@ -167,7 +167,11 @@ begin
     when tg_table_name = 'documents' and tg_op = 'INSERT' then 'document_uploaded'
     when tg_table_name = 'document_files' and tg_op = 'INSERT' then 'document_version_changed'
     when tg_table_name = 'document_links' and tg_op = 'INSERT' then 'document_linked'
-    when tg_table_name = 'document_links' and tg_op = 'UPDATE' and new.is_deleted and not old.is_deleted then 'document_unlinked'
+    when tg_table_name = 'document_links'
+      and tg_op = 'UPDATE'
+      and coalesce((to_jsonb(new)->>'is_deleted')::boolean, false)
+      and not coalesce((to_jsonb(old)->>'is_deleted')::boolean, false)
+      then 'document_unlinked'
     when tg_table_name = 'media_assets' and tg_op = 'INSERT' then 'media_uploaded'
     when tg_table_name = 'media_assets' and tg_op = 'UPDATE' then 'media_changed'
     else lower(tg_table_name || '_' || tg_op)
