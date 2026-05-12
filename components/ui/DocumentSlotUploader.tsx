@@ -218,7 +218,7 @@ const DEFAULT_DOCUMENT_ACCEPTED_TYPES = [
 
 function getDocumentUrl(doc?: SlotDocument | null) {
   if (!doc) return ''
-  return doc.url || doc.previewUrl || doc.thumbnailUrl || (doc.file ? URL.createObjectURL(doc.file) : '')
+  return doc.url || doc.previewUrl || (doc.file ? URL.createObjectURL(doc.file) : '')
 }
 
 function getDocumentThumbnailUrl(doc?: SlotDocument | null, signedUrl?: string) {
@@ -646,8 +646,7 @@ export function DocumentSlotUploader({
         ])
         clearInterval(progressInterval)
         setUploadProgress(100)
-        const fallbackThumbnail = generateFallbackDocumentThumbnail(getFileTypeConfig(file.type).label, file.name)
-        const thumbnailUrl = file.type.startsWith('image/') ? uploaded.url : fallbackThumbnail
+        const thumbnailUrl = file.type.startsWith('image/') ? uploaded.url : preview.thumbnailUrl
       
         const newDoc: SlotDocument = {
           slotId: currentSlot.id,
@@ -878,12 +877,7 @@ export function DocumentSlotUploader({
               
               {/* Hover Actions Overlay */}
               {(
-                <div className={cn(
-                  "absolute inset-0 z-20 flex flex-col items-center justify-center gap-2 bg-white/95 transition-opacity dark:bg-gray-800/95",
-                  hasVisualThumbnail
-                    ? "opacity-0 group-hover:opacity-100 group-focus-within:opacity-100"
-                    : "opacity-100"
-                )}>
+                <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-2 bg-white/90 opacity-100 transition-colors group-hover:bg-white/95 group-focus-within:bg-white/95 dark:bg-gray-800/90 dark:group-hover:bg-gray-800/95 dark:group-focus-within:bg-gray-800/95">
                   {!currentDocUrl && currentDoc?.storagePath && (
                     <div className="rounded-md bg-gray-100 px-2 py-1 text-[10px] font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-300">
                       Bağlantı hazırlanıyor
