@@ -292,6 +292,7 @@ function normalizeStoredDocuments(value: unknown, fallbackSlotId = 'cv'): SlotDo
       slotId: doc.slotId || doc.slot_id || fallbackSlotId,
       documentId: doc.documentId || doc.document_id,
       documentLinkId: doc.documentLinkId || doc.document_link_id || doc.link_id,
+      storagePath: doc.storagePath || doc.storage_path,
       name: doc.name || doc.file_name || doc.fileName || doc.document_title || doc.title || 'Belge',
       size: Number(doc.size || doc.file_size || 0),
       type: doc.type || doc.mime_type || doc.mimeType || doc.file_type || 'application/octet-stream',
@@ -302,14 +303,45 @@ function normalizeStoredDocuments(value: unknown, fallbackSlotId = 'cv'): SlotDo
 }
 
 function serializeDocumentForStorage(doc: SlotDocument) {
+  const url = doc.url || doc.previewUrl
   return {
     slotId: doc.slotId,
+    storagePath: doc.storagePath,
     name: doc.name,
     size: doc.size,
     type: doc.type,
     uploadedAt: doc.uploadedAt?.toISOString?.() || new Date().toISOString(),
-    url: doc.url || doc.previewUrl,
+    url: doc.storagePath || !url || url.startsWith('blob:') || url.startsWith('data:') ? undefined : url,
     thumbnailUrl: doc.thumbnailUrl
+  }
+}
+
+async function uploadDocumentFile(document: SlotDocument) {
+  if (!document.file) return document
+
+  const body = new FormData()
+  body.append('file', document.file)
+  body.append('slotId', document.slotId)
+
+  const response = await fetch('/api/uploads/documents', {
+    method: 'POST',
+    body,
+  })
+
+  const result = await response.json().catch(() => ({}))
+  if (!response.ok) {
+    throw new Error(result.error || 'Belge yüklenemedi')
+  }
+
+  return {
+    ...document,
+    storagePath: result.storagePath,
+    url: result.url,
+    previewUrl: result.url,
+    thumbnailUrl: document.type?.startsWith('image/') ? result.url : document.thumbnailUrl,
+    name: document.name || result.name || document.file.name,
+    size: document.size || result.size || document.file.size,
+    type: document.type || result.type || document.file.type,
   }
 }
 
@@ -1432,14 +1464,8 @@ export function EntityForm({
 
   const handleDocumentsChange = async (nextDocuments: SlotDocument[]) => {
     const hydratedDocuments = await Promise.all(nextDocuments.map(async document => {
-      if (!document.file || document.url || document.previewUrl) return document
-      return {
-        ...document,
-        url: await readFileAsDataUrl(document.file),
-        name: document.name || document.file.name,
-        size: document.size || document.file.size,
-        type: document.type || document.file.type,
-      }
+      if (!document.file || document.storagePath) return document
+      return uploadDocumentFile(document)
     }))
 
     setDocuments(hydratedDocuments)
