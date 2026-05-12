@@ -102,7 +102,7 @@ export async function PATCH(
 
   const { data: current, error: currentError } = await supabase
     .from('sirketler')
-    .select('*')
+    .select('id,field_history,kisa_unvan,ticari_unvan,vkn_tckn,vergi_dairesi,sirket_turu,il,ilce,adres,telefon,email,is_active,mersis_no,ticaret_sicil_no,kurulus_tarihi,legal_entity,sirket_kodu,ulke,web_sitesi,e_fatura_mukellefi,e_arsiv_mukellefi,e_irsaliye_mukellefi,sgk_is_yeri_sicil_no,sgk_il,sgk_sube,tehlike_sinifi,varsayilan_para_birimi,varsayilan_dil,zaman_dilimi,mali_yil_baslangici')
     .eq('id', id)
     .single()
 
@@ -122,7 +122,7 @@ export async function PATCH(
       field_history: nextHistory,
     })
     .eq('id', id)
-    .select()
+    .select('id,kisa_unvan,ticari_unvan,vkn_tckn,is_active,updated_at')
     .single()
 
   if (error) {
@@ -175,7 +175,7 @@ export async function DELETE(
 function buildFieldHistory(current: Record<string, any>, updates: Record<string, any>) {
   const existingHistory = (current.field_history && typeof current.field_history === 'object') ? current.field_history : {}
   const nextHistory: Record<string, any[]> = { ...existingHistory }
-  const ignored = new Set(['id', 'created_at', 'updated_at', 'created_by', 'field_history'])
+  const ignored = new Set(['id', 'created_at', 'updated_at', 'created_by', 'field_history', 'hero_images', 'hero_documents'])
 
   Object.entries(updates).forEach(([field, nextValue]) => {
     if (ignored.has(field)) return

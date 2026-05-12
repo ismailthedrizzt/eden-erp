@@ -109,7 +109,7 @@ export async function POST(request: NextRequest) {
   const { data, error } = await supabase
     .from('sirketler')
     .insert(companyRow)
-    .select()
+    .select('id,kisa_unvan,ticari_unvan,vkn_tckn,is_active,updated_at')
     .single()
 
   if (error) return NextResponse.json({ error: error.message, code: error.code || 'CREATE_FAILED' }, { status: 500 })

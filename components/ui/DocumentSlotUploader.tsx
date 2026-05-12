@@ -507,7 +507,7 @@ export function DocumentSlotUploader({
         const text = await response.text()
         return [key, generateTextThumbnail(text, doc.name)] as const
       } catch {
-        return null
+        return [key, generateFallbackDocumentThumbnail(isPdfDocument(doc) ? 'PDF' : 'TXT', doc.name)] as const
       }
     })).then(items => {
       if (cancelled) return
@@ -515,7 +515,7 @@ export function DocumentSlotUploader({
       if (Object.keys(next).length > 0) {
         setGeneratedThumbnails(prev => ({ ...prev, ...next }))
         onChange(documents.map(doc => {
-          const key = doc.documentId || `${doc.slotId}:${doc.name}:${doc.size}`
+          const key = doc.storagePath || doc.documentId || `${doc.slotId}:${doc.name}:${doc.size}`
           return next[key] && !doc.thumbnailUrl ? { ...doc, thumbnailUrl: next[key] } : doc
         }))
       }
