@@ -1321,6 +1321,7 @@ export function SmartDataTable<T extends { id: string }>({
                         width: col.calculatedWidth || col.width || 150,
                         minWidth: col.type === 'image' ? 52 : col.minWidth || 64
                       }}
+                      title={col.label}
                       onClick={() => col.sortable !== false && handleSort(col.key)}
                     >
                       <div className="flex items-center justify-center gap-1 sm:gap-2 w-full min-w-0">

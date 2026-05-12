@@ -23,6 +23,7 @@ import { EntityForm, FormMode } from '@/components/ui/EntityForm'
 import { Toast } from '@/components/ui/Toast'
 import { personelModuleConfig, PersonelTableRow } from '@/lib/modules/personel.config'
 import { buildEmployeesDashboard } from '@/lib/modules/employees/dashboard/employeesDashboard.mock'
+import { getEducationSummary } from '@/lib/modules/employees/education'
 import { toEntityFormFields, toEntityFormTabs } from '@/types/module-config'
 import { formatPhoneInput, normalizeEmailInput } from '@/lib/utils'
 import { isTurkishNationality, normalizeCountryId } from '@/lib/reference/country-nationalities'
@@ -84,12 +85,6 @@ const LANGUAGE_LEVELS = new Set(['A1', 'A2', 'B1', 'B2', 'C1', 'C2'])
 const getFieldLabel = (field: string) => PERSONEL_FIELD_LABELS[field] || field
 
 const formatFieldList = (fields: string[]) => fields.map(getFieldLabel).join(', ')
-
-function getEducationSummary(personel: Personel) {
-  const schools = Array.isArray(personel.egitim_okullari) ? personel.egitim_okullari : []
-  const latest = schools.find((school: Record<string, any>) => school?.derece || school?.okul_adi)
-  return String(latest?.derece || latest?.okul_adi || '-')
-}
 
 export default function PersonelYonetimPage() {
   const { data: personel, loading: listLoading, error: listError, yenile } = usePersonel()
@@ -508,6 +503,13 @@ export default function PersonelYonetimPage() {
             }}
             onIdentityGateCancelDuplicate={() => setPageState('list')}
             enableHistory
+            documentSlot={{
+              title: 'Belgeler',
+              slots: [
+                { id: 'cv', title: 'CV', required: false, storageField: 'cv_belgesi' },
+                { id: 'diploma', title: 'Diploma', required: false, storageField: 'diploma_belgesi' },
+              ],
+            }}
             onValidationError={(fields) => {
               const hasFormatError = fields.some(field => field.includes('olmalıdır') || field.includes('geçersiz'))
               setToast({

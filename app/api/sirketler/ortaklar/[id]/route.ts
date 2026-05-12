@@ -162,7 +162,7 @@ async function hydratePartnerMasterAssets(supabase: ReturnType<typeof createServ
   if (partner.person_id) {
     const { data: employee } = await supabase
       .from('employees')
-      .select('fotograf_url, cv_belgesi, ise_giris_belgeleri, isten_cikis_belgeleri')
+      .select('fotograf_url, cv_belgesi, diploma_belgesi, ise_giris_belgeleri, isten_cikis_belgeleri')
       .eq('person_id', partner.person_id)
       .eq('is_active', true)
       .maybeSingle()
@@ -192,6 +192,7 @@ async function hydratePartnerMasterAssets(supabase: ReturnType<typeof createServ
 function normalizeEmployeeDocuments(employee: Record<string, any>) {
   const docs: Record<string, any>[] = []
   if (employee.cv_belgesi && typeof employee.cv_belgesi === 'object') docs.push({ slotId: 'cv', title: 'CV', ...employee.cv_belgesi })
+  if (employee.diploma_belgesi && typeof employee.diploma_belgesi === 'object') docs.push({ slotId: 'diploma', title: 'Diploma', ...employee.diploma_belgesi })
   if (Array.isArray(employee.ise_giris_belgeleri)) docs.push(...employee.ise_giris_belgeleri)
   if (Array.isArray(employee.isten_cikis_belgeleri)) docs.push(...employee.isten_cikis_belgeleri)
 

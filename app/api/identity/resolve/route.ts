@@ -554,6 +554,9 @@ function normalizePersonDocuments(record: Record<string, any>) {
   if (record.cv_belgesi && typeof record.cv_belgesi === 'object') {
     docs.push({ slotId: 'cv', title: 'CV', ...record.cv_belgesi })
   }
+  if (record.diploma_belgesi && typeof record.diploma_belgesi === 'object') {
+    docs.push({ slotId: 'diploma', title: 'Diploma', ...record.diploma_belgesi })
+  }
   if (Array.isArray(record.ise_giris_belgeleri)) docs.push(...record.ise_giris_belgeleri)
   if (Array.isArray(record.isten_cikis_belgeleri)) docs.push(...record.isten_cikis_belgeleri)
 

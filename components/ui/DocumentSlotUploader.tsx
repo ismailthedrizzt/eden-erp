@@ -51,6 +51,7 @@ export interface DocumentSlot {
   required?: boolean
   acceptedTypes?: string[]
   maxSizeMB?: number
+  storageField?: string
 }
 
 export interface SlotDocument {

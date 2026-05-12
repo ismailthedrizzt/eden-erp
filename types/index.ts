@@ -139,6 +139,7 @@ export interface Personel {
   notlar?: string
   fotograf_url?: string
   cv_belgesi?: Record<string, unknown> | null
+  diploma_belgesi?: Record<string, unknown> | null
   created_at: string
   updated_at: string
   is_active?: boolean

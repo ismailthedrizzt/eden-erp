@@ -56,10 +56,11 @@ const EmployeeUpdateSchema = z.object({
   notlar: z.string().optional(),
   fotograf_url: z.string().optional(),
   cv_belgesi: z.record(z.any()).optional().nullable(),
+  diploma_belgesi: z.record(z.any()).optional().nullable(),
 })
 
 function omitNullishValues(value: Record<string, any>) {
-  const nullableFields = new Set(['cv_belgesi'])
+  const nullableFields = new Set(['cv_belgesi', 'diploma_belgesi'])
 
   return Object.fromEntries(
     Object.entries(value).filter(([key, item]) => nullableFields.has(key) || (item !== null && item !== undefined))

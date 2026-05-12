@@ -10,6 +10,7 @@ export const DOCUMENT_TYPES = [
   'Ruhsat',
   'Kimlik',
   'Pasaport',
+  'Diploma',
   'Diğer',
 ] as const
 

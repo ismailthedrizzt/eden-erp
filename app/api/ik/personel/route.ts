@@ -3,6 +3,7 @@ import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { z } from 'zod'
 import { isTurkishNationality, normalizeCountryId } from '@/lib/reference/country-nationalities'
 import { syncMasterContact } from '@/lib/identity/masterContact'
+import { getEducationLevelValue } from '@/lib/modules/employees/education'
 
 const EmployeeSchema = z.object({
   person_id: z.string().uuid().optional().nullable(),
@@ -58,10 +59,11 @@ const EmployeeSchema = z.object({
   notlar: z.string().optional(),
   fotograf_url: z.string().optional(),
   cv_belgesi: z.record(z.any()).optional().nullable(),
+  diploma_belgesi: z.record(z.any()).optional().nullable(),
 })
 
 function omitNullishStrings(value: Record<string, any>) {
-  const nullableFields = new Set(['cv_belgesi'])
+  const nullableFields = new Set(['cv_belgesi', 'diploma_belgesi'])
 
   return Object.fromEntries(
     Object.entries(value).filter(([key, item]) => nullableFields.has(key) || (item !== null && item !== undefined))
@@ -183,7 +185,7 @@ export async function GET(request: NextRequest) {
     phone: row.cep_telefonu || null,
     gender: row.cinsiyet || null,
     birth_date: row.dogum_tarihi || null,
-    education_level: Array.isArray(row.egitim_okullari) ? row.egitim_okullari.find((school: any) => school?.derece || school?.okul_adi)?.derece || null : null,
+    education_level: getEducationLevelValue(row) || null,
     sgk_status: row.sgk_giris ? 'active' : 'pending',
     status: row.calisma_durumu || null,
   }))

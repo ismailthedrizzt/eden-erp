@@ -14,6 +14,7 @@ import {
   type DashboardWidgetRegistryRecord,
 } from '@/lib/dashboard/widgetRegistry'
 import { buildEmployeesDashboard } from '@/lib/modules/employees/dashboard/employeesDashboard.mock'
+import { getEducationSummary } from '@/lib/modules/employees/education'
 import type { Personel } from '@/types'
 
 const WIDGET_STORAGE_KEY = 'user_widgets'
@@ -307,12 +308,6 @@ function toEmployeeDashboardRow(personel: Personel) {
     dogum_tarihi: personel.dogum_tarihi,
     sgk_giris: personel.sgk_giris,
   }
-}
-
-function getEducationSummary(personel: Personel) {
-  const schools = Array.isArray(personel.egitim_okullari) ? personel.egitim_okullari : []
-  const latest = schools.find((school: Record<string, any>) => school?.derece || school?.okul_adi)
-  return String(latest?.derece || latest?.okul_adi || '-')
 }
 
 function normalizeSavedWidgetIds(ids: unknown[]) {

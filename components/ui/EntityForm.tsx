@@ -287,13 +287,13 @@ function serializeImageForStorage(image: SlotImage) {
   }
 }
 
-function normalizeStoredDocuments(value: unknown): SlotDocument[] {
+function normalizeStoredDocuments(value: unknown, fallbackSlotId = 'cv'): SlotDocument[] {
   const docs = Array.isArray(value) ? value : value ? [value] : []
 
   return docs
     .filter((doc): doc is Record<string, any> => !!doc && typeof doc === 'object')
     .map(doc => ({
-      slotId: doc.slotId || doc.slot_id || 'cv',
+      slotId: doc.slotId || doc.slot_id || fallbackSlotId,
       documentId: doc.documentId || doc.document_id,
       documentLinkId: doc.documentLinkId || doc.document_link_id || doc.link_id,
       name: doc.name || doc.file_name || doc.fileName || doc.document_title || doc.title || 'Belge',
@@ -317,6 +317,13 @@ function serializeDocumentForStorage(doc: SlotDocument) {
     url: doc.url || doc.previewUrl,
     thumbnailUrl: doc.thumbnailUrl
   }
+}
+
+function getDocumentSlotStorageField(slot: DocumentSlot) {
+  if (slot.storageField) return slot.storageField
+  if (slot.id === 'cv') return 'cv_belgesi'
+  if (slot.id === 'diploma') return 'diploma_belgesi'
+  return undefined
 }
 
 const SGK_PROVINCE_CODES: Record<string, string> = {
@@ -1104,8 +1111,16 @@ export function EntityForm({
   }, [data, imageDataField, imageSlot.dataField, primaryImageSlotId])
 
   useEffect(() => {
-    setDocuments(normalizeStoredDocuments(data?.[documentDataField]))
-  }, [data, documentDataField])
+    if (documentSlot.dataField) {
+      setDocuments(normalizeStoredDocuments(data?.[documentDataField]))
+      return
+    }
+
+    setDocuments(documentSlots.flatMap(slot => {
+      const storageField = getDocumentSlotStorageField(slot)
+      return storageField ? normalizeStoredDocuments(data?.[storageField], slot.id) : []
+    }))
+  }, [data, documentDataField, documentSlot.dataField])
 
   // Sync with external mode changes
   useEffect(() => {
@@ -1347,6 +1362,18 @@ export function EntityForm({
         next[field.name] = finalizeListValue(next[field.name], field.listConfig?.fields || [])
       }
     })
+
+    if (documentSlot.dataField) {
+      next[documentDataField] = documents.map(serializeDocumentForStorage)
+    } else {
+      documentSlots.forEach(slot => {
+        const storageField = getDocumentSlotStorageField(slot)
+        if (!storageField) return
+        const slotDocument = documents.find(document => document.slotId === slot.id)
+        next[storageField] = slotDocument ? serializeDocumentForStorage(slotDocument) : null
+      })
+    }
+
     return next
   }
 
@@ -1428,9 +1455,14 @@ export function EntityForm({
       return
     }
 
-    const cvDocument = hydratedDocuments.find(document => document.slotId === 'cv')
-    handleChange('cv_belgesi', cvDocument ? serializeDocumentForStorage(cvDocument) : null)
+    documentSlots.forEach(slot => {
+      const storageField = getDocumentSlotStorageField(slot)
+      if (!storageField) return
+      const slotDocument = hydratedDocuments.find(document => document.slotId === slot.id)
+      handleChange(storageField, slotDocument ? serializeDocumentForStorage(slotDocument) : null)
+    })
 
+    const cvDocument = hydratedDocuments.find(document => document.slotId === 'cv')
     if (cvDocument?.file) {
       await extractCvData(cvDocument.file)
     } else if (!cvDocument) {

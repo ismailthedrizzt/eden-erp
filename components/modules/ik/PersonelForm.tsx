@@ -33,6 +33,7 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
   // Document slot for CV (optional)
   const documentSlots: DocumentSlot[] = [
     { id: 'cv', title: 'CV', required: false },
+    { id: 'diploma', title: 'Diploma', required: false },
   ]
   const [documents, setDocuments] = useState<SlotDocument[]>([])
 
