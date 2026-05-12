@@ -470,6 +470,8 @@ export function DocumentSlotUploader({
   const currentAcceptedTypes = currentSlot?.acceptedTypes || DEFAULT_DOCUMENT_ACCEPTED_TYPES
   const currentDocType = getEffectiveDocumentType(currentDoc)
   const canPreviewCurrentDoc = canInlinePreview(currentDoc, currentDocUrl)
+  const fallbackThumbnailUrl = currentDoc ? generateFallbackDocumentThumbnail(getFileTypeConfig(currentDocType).label, currentDoc.name) : ''
+  const visibleThumbnailUrl = currentDocThumbnailUrl || fallbackThumbnailUrl
 
   useEffect(() => {
     const docsNeedingSignedUrl = documents.filter(doc =>
@@ -835,9 +837,9 @@ export function DocumentSlotUploader({
             <div className="flex-1 flex flex-col p-3 group">
               {/* File Preview / Thumbnail */}
               <div className="flex-1 flex items-center justify-center">
-                {currentDocThumbnailUrl ? (
+                {visibleThumbnailUrl ? (
                   <img
-                    src={currentDocThumbnailUrl}
+                    src={visibleThumbnailUrl}
                     alt={currentDoc.name}
                     className="h-full min-h-36 w-full rounded border border-gray-200 object-cover object-top shadow-sm dark:border-gray-700"
                   />
@@ -885,19 +887,23 @@ export function DocumentSlotUploader({
               </div>
               
               {/* Hover Actions Overlay */}
-              {(readOnly ? canPreviewCurrentDoc || currentDocUrl : true) && (
+              {(
                 <div className="absolute inset-0 bg-white/95 dark:bg-gray-800/95 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
+                  {!currentDocUrl && currentDoc?.storagePath && (
+                    <div className="rounded-md bg-gray-100 px-2 py-1 text-[10px] font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-300">
+                      Bağlantı hazırlanıyor
+                    </div>
+                  )}
                   <div className="flex items-center gap-2">
-                    {canPreviewCurrentDoc && (
-                      <button
-                        type="button"
-                        onClick={() => setPreviewDoc(currentDoc || null)}
-                        className="p-2.5 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-                        title="View"
-                      >
-                        <Eye size={18} className="text-gray-700 dark:text-gray-300" />
-                      </button>
-                    )}
+                    <button
+                      type="button"
+                      onClick={() => currentDocUrl && setPreviewDoc(currentDoc || null)}
+                      disabled={!canPreviewCurrentDoc}
+                      className="p-2.5 bg-gray-100 dark:bg-gray-700 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors disabled:cursor-not-allowed disabled:opacity-45"
+                      title={canPreviewCurrentDoc ? 'View' : 'Önizleme hazırlanıyor'}
+                    >
+                      <Eye size={18} className="text-gray-700 dark:text-gray-300" />
+                    </button>
                     {!readOnly && (
                       <button
                         type="button"
@@ -911,6 +917,7 @@ export function DocumentSlotUploader({
                     <button
                       type="button"
                       onClick={handleDownload}
+                      disabled={!currentDocUrl}
                       className="p-2.5 bg-green-100 dark:bg-green-900/30 rounded-lg hover:bg-green-200 dark:hover:bg-green-900/50 transition-colors"
                       title="Download"
                     >
@@ -931,12 +938,12 @@ export function DocumentSlotUploader({
               )}
               
               {/* Read-only View Button */}
-              {readOnly && (
+              {readOnly && canPreviewCurrentDoc && (
                 <button
                   onClick={() => setPreviewDoc(currentDoc || null)}
-                  className="absolute inset-0 flex items-center justify-center bg-black/0 hover:bg-black/40 transition-colors"
+                  className="absolute inset-0 flex items-center justify-center bg-black/0 hover:bg-black/40 transition-colors group/view"
                 >
-                  <Eye size={28} className="text-white opacity-0 hover:opacity-100 transition-opacity" />
+                  <Eye size={28} className="text-white opacity-0 transition-opacity group-hover/view:opacity-100" />
                 </button>
               )}
             </div>
