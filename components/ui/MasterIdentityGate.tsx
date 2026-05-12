@@ -87,7 +87,7 @@ export function MasterIdentityGate({
   const updateIdentity = (key: string, value: string) => {
     setIdentity(prev => {
       const next = { ...prev }
-      const cleaned = key.includes('number') || key.includes('id') ? value.replace(/\D/g, '') : value
+      const cleaned = cleanIdentityValue(key, value, entityKind, prev)
       next[key] = cleaned
 
       if (key === 'nationality') {
@@ -392,6 +392,22 @@ function initialIdentity(kind: IdentityEntityKind): Record<string, string> {
   return kind === 'person'
     ? { nationality: 'TR', national_id: '', passport_no: '' }
     : { country: 'TR', tax_number: '', registration_number: '' }
+}
+
+function cleanIdentityValue(
+  key: string,
+  value: string,
+  entityKind: IdentityEntityKind,
+  currentIdentity: Record<string, string>
+) {
+  if (key === 'national_id') return value.replace(/\D/g, '').slice(0, 11)
+  if (key === 'tax_number' && entityKind === 'organization') {
+    return isTurkishOrganization(currentIdentity.country)
+      ? value.replace(/\D/g, '').slice(0, 10)
+      : value.replace(/[^A-Za-z0-9 ._/-]/g, '').slice(0, 32).toUpperCase()
+  }
+
+  return value
 }
 
 function deriveEntityKind(config: IdentityGateConfig, formData: Record<string, any>): IdentityEntityKind {

@@ -899,5 +899,14 @@ function normalizeCompanyForForm(company: Sirket) {
       status: representative.status || 'Aktif',
       history: representative.history || [],
     })),
+    paydaslar: ((company as any).paydaslar || []).map((stakeholder: any) => ({
+      ...stakeholder,
+      display_name: stakeholder.display_name || stakeholder.ad_unvan || '',
+      stakeholder_type: stakeholder.stakeholder_type === 'tuzel_kisi' ? 'Tüzel Kişi' : stakeholder.stakeholder_type === 'gercek_kisi' ? 'Gerçek Kişi' : stakeholder.stakeholder_type || stakeholder.paydas_turu || '-',
+      relationship_type: stakeholder.relationship_type || stakeholder.category || stakeholder.iliski_turu || '-',
+      priority: stakeholder.priority || stakeholder.priority_level || stakeholder.oncelik || '-',
+      status: stakeholder.status || 'Aktif',
+      history: stakeholder.history || [],
+    })),
   }
 }

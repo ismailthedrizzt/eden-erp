@@ -161,7 +161,7 @@ async function findPerson(supabase: ReturnType<typeof createServiceClient>, iden
 
 async function findOrganization(supabase: ReturnType<typeof createServiceClient>, identity: z.infer<typeof ResolveSchema>['identity']) {
   const country = normalizeIdentityCountry(identity.country)
-  const taxNumber = onlyDigits(identity.tax_number)
+  const taxNumber = normalizeOrganizationTaxNumber(identity.tax_number, country)
   const registrationNumber = clean(identity.registration_number)
 
   if (!taxNumber && !registrationNumber) {
@@ -286,7 +286,7 @@ async function findOrCreatePersonFromEmployee(supabase: ReturnType<typeof create
 
 async function findOrCreateOrganizationFromCompany(supabase: ReturnType<typeof createServiceClient>, identity: z.infer<typeof ResolveSchema>['identity']) {
   const country = normalizeIdentityCountry(identity.country)
-  const taxNumber = onlyDigits(identity.tax_number)
+  const taxNumber = normalizeOrganizationTaxNumber(identity.tax_number, country)
   const registrationNumber = clean(identity.registration_number)
 
   if (!taxNumber && !registrationNumber) return { record: null }
@@ -470,10 +470,10 @@ function buildNewMasterPrefill(entityKind: 'person' | 'organization', identity: 
     ulke: normalizeIdentityCountry(identity.country),
     country: normalizeIdentityCountry(identity.country),
     nationality_country: normalizeIdentityCountry(identity.country),
-    vkn_tckn: onlyDigits(identity.tax_number),
-    tax_number: onlyDigits(identity.tax_number),
-    tax_id: onlyDigits(identity.tax_number),
-    identity_number: onlyDigits(identity.tax_number),
+    vkn_tckn: normalizeOrganizationTaxNumber(identity.tax_number, identity.country),
+    tax_number: normalizeOrganizationTaxNumber(identity.tax_number, identity.country),
+    tax_id: normalizeOrganizationTaxNumber(identity.tax_number, identity.country),
+    identity_number: normalizeOrganizationTaxNumber(identity.tax_number, identity.country),
     ticaret_sicil_no: clean(identity.registration_number),
     registration_number: clean(identity.registration_number),
     stakeholder_type: 'tuzel_kisi',
@@ -614,6 +614,14 @@ function clean(value: unknown) {
 
 function onlyDigits(value: unknown) {
   return clean(value).replace(/\D/g, '')
+}
+
+function normalizeOrganizationTaxNumber(value: unknown, country?: unknown) {
+  const normalizedCountry = normalizeIdentityCountry(String(country || 'TR'))
+  const text = clean(value)
+  return normalizedCountry === 'TR'
+    ? text.replace(/\D/g, '')
+    : text.replace(/[^A-Za-z0-9 ._/-]/g, '').toUpperCase()
 }
 
 function normalizePersonUyruk(value: unknown) {

@@ -92,6 +92,7 @@ export async function GET(
   const [
     partners,
     representatives,
+    stakeholders,
     logos,
     publicTax,
     publicSgk,
@@ -103,6 +104,7 @@ export async function GET(
   ] = await Promise.all([
     supabase.from('sirket_ortaklar').select('*').or(`sirket_id.eq.${id},company_id.eq.${id}`),
     supabase.from('sirket_temsilciler').select('*').or(`sirket_id.eq.${id},company_id.eq.${id}`),
+    supabase.from('stakeholders').select('*').eq('company_id', id),
     supabase.from('sirket_logolar').select('*').eq('sirket_id', id),
     supabase.from('company_public_tax').select('*').eq('company_id', id).maybeSingle(),
     supabase.from('company_public_sgk').select('*').eq('company_id', id).maybeSingle(),
@@ -116,6 +118,7 @@ export async function GET(
   const relatedError = [
     partners.error,
     representatives.error,
+    stakeholders.error,
     logos.error,
     publicTax.error,
     publicSgk.error,
@@ -153,6 +156,7 @@ export async function GET(
     ...company,
     ortaklar: partnersWithOwnership,
     temsilciler: representatives.data || [],
+    paydaslar: stakeholders.data || [],
     logolar: logos.data || [],
     public_tax: publicTax.data || {},
     public_sgk: publicSgk.data || {},
