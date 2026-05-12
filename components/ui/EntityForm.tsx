@@ -288,18 +288,27 @@ function normalizeStoredDocuments(value: unknown, fallbackSlotId = 'cv'): SlotDo
 
   return docs
     .filter((doc): doc is Record<string, any> => !!doc && typeof doc === 'object')
-    .map(doc => ({
-      slotId: doc.slotId || doc.slot_id || fallbackSlotId,
-      documentId: doc.documentId || doc.document_id,
-      documentLinkId: doc.documentLinkId || doc.document_link_id || doc.link_id,
-      storagePath: doc.storagePath || doc.storage_path,
-      name: doc.name || doc.file_name || doc.fileName || doc.document_title || doc.title || 'Belge',
-      size: Number(doc.size || doc.file_size || 0),
-      type: doc.type || doc.mime_type || doc.mimeType || doc.file_type || 'application/octet-stream',
-      uploadedAt: doc.uploadedAt || doc.uploaded_at ? new Date(doc.uploadedAt || doc.uploaded_at) : undefined,
-      url: doc.url || doc.previewUrl || doc.preview_url || doc.signedUrl || doc.signed_url || doc.file_url || doc.download_url,
-      thumbnailUrl: doc.thumbnailUrl || doc.thumbnail_url || doc.preview_thumb_url || doc.preview_image_url,
-    }))
+    .map(doc => {
+      const url = doc.url || doc.previewUrl || doc.preview_url || doc.signedUrl || doc.signed_url || doc.file_url || doc.download_url
+      const inferredType = doc.type || doc.mime_type || doc.mimeType || doc.file_type || inferDocumentMimeFromUrl(url) || 'application/octet-stream'
+      return {
+        slotId: doc.slotId || doc.slot_id || fallbackSlotId,
+        documentId: doc.documentId || doc.document_id,
+        documentLinkId: doc.documentLinkId || doc.document_link_id || doc.link_id,
+        storagePath: doc.storagePath || doc.storage_path,
+        name: doc.name || doc.file_name || doc.fileName || doc.document_title || doc.title || (inferredType === 'application/pdf' ? 'Belge.pdf' : 'Belge'),
+        size: Number(doc.size || doc.file_size || 0),
+        type: inferredType,
+        uploadedAt: doc.uploadedAt || doc.uploaded_at ? new Date(doc.uploadedAt || doc.uploaded_at) : undefined,
+        url,
+        thumbnailUrl: doc.thumbnailUrl || doc.thumbnail_url || doc.preview_thumb_url || doc.preview_image_url,
+      }
+    })
+}
+
+function inferDocumentMimeFromUrl(value?: string) {
+  const match = value?.match(/^data:([^;,]+)[;,]/i)
+  return match?.[1]?.toLowerCase() || ''
 }
 
 function serializeDocumentForStorage(doc: SlotDocument) {

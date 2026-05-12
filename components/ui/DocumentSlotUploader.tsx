@@ -158,9 +158,18 @@ function getDocumentExtension(doc?: SlotDocument | null) {
   return match?.[1] || ''
 }
 
+function getDocumentDataUrlMime(doc?: SlotDocument | null) {
+  const source = doc?.url || doc?.previewUrl || doc?.thumbnailUrl || ''
+  const match = source.match(/^data:([^;,]+)[;,]/i)
+  return match?.[1]?.toLowerCase() || ''
+}
+
 function getEffectiveDocumentType(doc?: SlotDocument | null) {
   const type = doc?.type || ''
   if (type && type !== 'application/octet-stream') return type
+
+  const dataUrlMime = getDocumentDataUrlMime(doc)
+  if (dataUrlMime) return dataUrlMime
 
   const extension = getDocumentExtension(doc)
   if (extension === 'pdf') return 'application/pdf'
