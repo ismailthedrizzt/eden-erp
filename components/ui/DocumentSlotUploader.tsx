@@ -228,6 +228,10 @@ function getDocumentThumbnailUrl(doc?: SlotDocument | null, signedUrl?: string) 
   return ''
 }
 
+function isFallbackDocumentThumbnail(value?: string) {
+  return !!value && value.startsWith('data:image/svg+xml')
+}
+
 async function uploadDocumentFile(file: File, slotId: string) {
   const body = new FormData()
   body.append('file', file)
@@ -469,7 +473,7 @@ export function DocumentSlotUploader({
   const currentDocSignedKey = currentDoc?.storagePath || currentDoc?.documentId || ''
   const currentDocKey = currentDoc ? currentDocSignedKey || `${currentDoc.slotId}:${currentDoc.name}:${currentDoc.size}` : ''
   const currentDocUrl = getDocumentUrl(currentDoc) || (currentDocSignedKey ? signedPreviewUrls[currentDocSignedKey] : '')
-  const currentDocThumbnailUrl = currentDoc?.thumbnailUrl || (currentDocKey ? generatedThumbnails[currentDocKey] : '') || getDocumentThumbnailUrl(currentDoc, currentDocSignedKey ? signedPreviewUrls[currentDocSignedKey] : undefined)
+  const currentDocThumbnailUrl = (currentDocKey ? generatedThumbnails[currentDocKey] : '') || getDocumentThumbnailUrl(currentDoc, currentDocSignedKey ? signedPreviewUrls[currentDocSignedKey] : undefined)
   const hasDocument = !!currentDoc
   const currentAcceptedTypes = currentSlot?.acceptedTypes || DEFAULT_DOCUMENT_ACCEPTED_TYPES
   const currentDocType = getEffectiveDocumentType(currentDoc)
@@ -536,7 +540,8 @@ export function DocumentSlotUploader({
       const signedKey = doc.storagePath || doc.documentId || ''
       const key = signedKey || `${doc.slotId}:${doc.name}:${doc.size}`
       const url = doc.url || doc.previewUrl || (signedKey ? signedPreviewUrls[signedKey] : '')
-      return !doc.thumbnailUrl && !generatedThumbnails[key] && url && (isPdfDocument(doc) || isTextDocument(doc))
+      const hasFinalThumbnail = doc.thumbnailUrl && !isFallbackDocumentThumbnail(doc.thumbnailUrl)
+      return !hasFinalThumbnail && !generatedThumbnails[key] && url && (isPdfDocument(doc) || isTextDocument(doc))
     })
     if (docsNeedingThumbnail.length === 0) return
 
@@ -560,7 +565,7 @@ export function DocumentSlotUploader({
         setGeneratedThumbnails(prev => ({ ...prev, ...next }))
         onChange(documents.map(doc => {
           const key = doc.storagePath || doc.documentId || `${doc.slotId}:${doc.name}:${doc.size}`
-          return next[key] && !doc.thumbnailUrl ? { ...doc, thumbnailUrl: next[key] } : doc
+          return next[key] && (!doc.thumbnailUrl || isFallbackDocumentThumbnail(doc.thumbnailUrl)) ? { ...doc, thumbnailUrl: next[key] } : doc
         }))
       }
     })
