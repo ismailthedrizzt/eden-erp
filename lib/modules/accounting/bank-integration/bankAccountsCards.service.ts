@@ -54,6 +54,54 @@ export interface BankCardRow {
   status: string
 }
 
+export interface BankAccountCardRow {
+  id: string
+  raw_id: string
+  record_type: 'account' | 'card'
+  record_type_label: string
+  company_id?: string | null
+  company_name?: string | null
+  bank_name: string
+  branch_name?: string | null
+  branch_code?: string | null
+  branch_display?: string | null
+  identity_display: string
+  name: string
+  currency: string
+  type: string
+  type_label: string
+  linked_bank_account_id?: string | null
+  is_default: boolean
+  is_default_label: string
+  balance_limit_display: string | number
+  status: string
+  raw: Record<string, any>
+}
+
+export interface BankAccountCardPayload {
+  record_type: 'account' | 'card'
+  company_id?: string | null
+  bank_name?: string | null
+  branch_name?: string | null
+  branch_code?: string | null
+  status?: string
+  iban?: string | null
+  account_no?: string | null
+  account_name?: string | null
+  currency?: string
+  account_type?: string
+  opening_date?: string | null
+  is_default?: boolean
+  linked_bank_account_id?: string | null
+  card_name?: string | null
+  card_type?: string
+  last_four_digits?: string | null
+  limit_amount?: number | string | null
+  available_limit?: number | string | null
+  statement_day?: number | string | null
+  payment_due_day?: number | string | null
+}
+
 export interface BankAutomationPreviewPayload {
   id?: string
   company_id?: string | null
@@ -75,6 +123,21 @@ export interface BankAutomationPreviewPayload {
 }
 
 export const bankAccountsCardsService = {
+  getUnifiedRecords() {
+    return apiClient.get<{ data: BankAccountCardRow[]; accountOptions: Array<{ value: string; label: string; bank_connection_id?: string | null }> }>('/api/accounting/bank-accounts-cards', { useCache: false })
+  },
+  createUnifiedRecord(payload: BankAccountCardPayload) {
+    return apiClient.post<{ data: any }>('/api/accounting/bank-accounts-cards', payload as unknown as Record<string, unknown>, { useCache: false })
+  },
+  updateUnifiedRecord(id: string, payload: BankAccountCardPayload) {
+    return apiClient.patch<{ data: any }>(`/api/accounting/bank-accounts-cards/${id}`, payload as unknown as Record<string, unknown>, { useCache: false })
+  },
+  passivateUnifiedRecord(id: string) {
+    return apiClient.post<{ data: any }>(`/api/accounting/bank-accounts-cards/${id}/passivate`, undefined, { useCache: false })
+  },
+  setDefaultUnifiedRecord(id: string) {
+    return apiClient.post<{ data: any }>(`/api/accounting/bank-accounts-cards/${id}/set-default`, undefined, { useCache: false })
+  },
   getConnections() {
     return apiClient.get<{ data: BankConnectionRow[] }>('/api/accounting/bank-connections', { useCache: false })
   },
