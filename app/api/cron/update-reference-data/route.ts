@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { buildTradeRegistryOfficesPayload } from '@/lib/reference/trade-registry-offices'
+import { NaceReferenceUpdateService } from '@/lib/modules/companies/nace/naceReference.service'
 import { PDFParse } from 'pdf-parse'
 
 export const runtime = 'nodejs'
@@ -18,6 +19,7 @@ export async function GET(request: Request) {
   const taxOfficesPayload = await buildTaxOfficesPayload(payload.provinces.map(province => province.name))
   const tradeRegistryOfficesPayload = await buildTradeRegistryOfficesPayload()
   const supabase = createServiceClient()
+  const naceUpdate = await new NaceReferenceUpdateService(supabase).updateFromTrustedSources()
   const { error } = await supabase
     .from('reference_data')
     .upsert([
@@ -51,6 +53,7 @@ export async function GET(request: Request) {
     districts: payload.provinces.reduce((total, province) => total + province.districts.length, 0),
     taxOffices: taxOfficesPayload.offices.length,
     tradeRegistryOffices: tradeRegistryOfficesPayload.offices.length,
+    naceReference: naceUpdate,
   })
 }
 

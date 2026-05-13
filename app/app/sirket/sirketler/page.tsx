@@ -8,6 +8,7 @@ import { PageBanner } from '@/components/ui/PageBanner'
 import { SmartDataTable, ColumnDef, WidgetDef } from '@/components/ui/SmartDataTable'
 import { Toast } from '@/components/ui/Toast'
 import { GeographicTradeReachWidget, type GeographicTradeReachWidgetAction } from '@/components/dashboard/widgets/GeographicTradeReachWidget'
+import { CompanyNaceCodesSection } from '@/components/modules/sirket/CompanyPublicTab'
 import { formatPhoneInput, normalizeEmailInput } from '@/lib/utils'
 import { createFormModeState, mapPageStateToFormMode } from '@/lib/forms/formModeEngine'
 import { createLegalEntityMasterTabs } from '@/lib/identity/legalEntityFormSections'
@@ -197,7 +198,7 @@ const tabs: FormTab[] = [
   },
   {
     id: 'vergi',
-    label: 'Vergi ve SGK',
+    label: 'Kamu',
     icon: <Landmark size={16} />,
     fields: [
       { name: 'e_fatura_mukellefi', label: 'E-Fatura Mükellefi', type: 'checkbox' },
@@ -206,16 +207,8 @@ const tabs: FormTab[] = [
       { name: 'sgk_is_yeri_sicil_no', label: 'SGK İşyeri Sicil No', type: 'text', maxLength: 26, inputMode: 'numeric', placeholder: '26 hane: M + 4 işkolu + 2 eski şube + 2 yeni şube + 7 sıra + 3 il + 2 ilçe + 2 kontrol + 3 aracı' },
       { name: 'sgk_il', label: 'SGK İl', type: 'text', placeholder: 'SGK sicil no girilince otomatik dolar' },
       { name: 'sgk_sube', label: 'SGK Şube', type: 'text', placeholder: 'SGK sicil no girilince otomatik dolar' },
-      {
-        name: 'tehlike_sinifi',
-        label: 'Tehlike Sınıfı',
-        type: 'select',
-        options: [
-          { value: 'az_tehlikeli', label: 'Az Tehlikeli' },
-          { value: 'tehlikeli', label: 'Tehlikeli' },
-          { value: 'cok_tehlikeli', label: 'Çok Tehlikeli' },
-        ],
-      },
+      { name: 'tehlike_sinifi', label: 'Tehlike Sınıfı', type: 'custom', colSpan: 3 },
+      { name: 'company_nace_codes', label: 'NACE / Faaliyet Kodları', type: 'custom', colSpan: 3 },
     ],
   },
   {
@@ -638,6 +631,40 @@ export default function SirketlerPage() {
               ...tab,
               fields: tab.fields.map(field => {
                 const nextField = withFieldHistory(field)
+                if (nextField.name === 'tehlike_sinifi') {
+                  return {
+                    ...nextField,
+                    render: () => {
+                      const rows = Array.isArray((selectedSirket as any)?.company_nace_codes) ? (selectedSirket as any).company_nace_codes : []
+                      const primary = rows.find((row: any) => row?.is_primary && row?.status !== 'passive')
+                      const hazardClass = primary?.nace_code?.hazard_class || (selectedSirket as any)?.public_sgk?.risk_class || (selectedSirket as any)?.tehlike_sinifi || 'Birincil NACE seçilmemiş'
+
+                      return (
+                        <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm dark:border-gray-700 dark:bg-gray-900/50">
+                          <div className="flex flex-wrap items-center gap-3">
+                            <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Tehlike sınıfı</span>
+                            <span className="rounded-full bg-blue-50 px-3 py-1 text-sm font-semibold text-blue-700 dark:bg-blue-900/30 dark:text-blue-200">{hazardClass}</span>
+                          </div>
+                          <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">Tehlike sınıfı, birincil NACE koduna göre otomatik belirlenir.</p>
+                        </div>
+                      )
+                    },
+                  }
+                }
+
+                if (nextField.name === 'company_nace_codes') {
+                  return {
+                    ...nextField,
+                    render: ({ value }) => (
+                      <CompanyNaceCodesSection
+                        companyId={selectedSirket?.id}
+                        initialRows={Array.isArray(value) ? value : (selectedSirket as any)?.company_nace_codes}
+                        readOnly={pageState !== 'edit'}
+                      />
+                    ),
+                  }
+                }
+
                 if (nextField.name === 'ortaklar') {
                   return {
                     ...nextField,

@@ -59,6 +59,10 @@ function omitNullishValues(value: Record<string, any>) {
   )
 }
 
+function isMissingTableError(error: any) {
+  return error?.code === '42P01' || String(error?.message || '').includes('Could not find the table')
+}
+
 function applyCompanyStatus(payload: Record<string, any>) {
   if (!('company_status' in payload) && !('is_active' in payload)) return payload
   const companyStatus = payload.company_status || (payload.is_active === false ? 'terkin_edilmis' : 'aktif')
@@ -136,6 +140,21 @@ export async function GET(
     }, { status: 500 })
   }
 
+  const companyNaceCodes = await supabase
+    .from('company_nace_codes')
+    .select('*,nace_code:nace_codes(*)')
+    .eq('company_id', id)
+    .eq('is_deleted', false)
+    .order('is_primary', { ascending: false })
+    .order('created_at', { ascending: false })
+
+  if (companyNaceCodes.error && !isMissingTableError(companyNaceCodes.error)) {
+    return NextResponse.json({
+      error: companyNaceCodes.error.message,
+      code: companyNaceCodes.error.code || 'COMPANY_NACE_FETCH_FAILED',
+    }, { status: 500 })
+  }
+
   const ownershipByPartnerId = new Map((currentOwnership.data || []).map((row: Record<string, any>) => [row.partner_id, row]))
   const partnersWithOwnership = (partners.data || []).map((partner: Record<string, any>) => {
     const ownership = ownershipByPartnerId.get(partner.id)
@@ -164,6 +183,7 @@ export async function GET(
     public_registry: publicRegistry.data || {},
     public_licenses: publicLicenses.data || [],
     public_channels: publicChannels.data || {},
+    company_nace_codes: companyNaceCodes.data || [],
   }
 
   const hydrated = data.organization_id

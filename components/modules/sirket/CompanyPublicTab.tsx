@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import {
   AlertTriangle,
@@ -49,6 +49,27 @@ export interface PublicHistoryItem {
   user?: string
 }
 
+interface NaceReferenceRow {
+  id: string
+  nace_code: string
+  description: string
+  hazard_class: string
+  source_name?: string
+  source_url?: string
+  source_reference?: string
+  updated_at?: string
+}
+
+interface CompanyNaceRow {
+  id: string
+  company_id: string
+  nace_code_id: string
+  is_primary: boolean
+  status: string
+  updated_at?: string
+  nace_code?: NaceReferenceRow
+}
+
 interface CompanyPublicTabProps {
   data: Record<string, any>
   onChange: (name: string, value: any) => void
@@ -69,7 +90,6 @@ const subTabs = [
 ] as const
 
 const taxTypes = ['Kurumlar Vergisi', 'Gelir Vergisi', 'Şahıs', 'Muaf', 'Diğer']
-const riskClasses = ['Az Tehlikeli', 'Tehlikeli', 'Çok Tehlikeli']
 const incentiveResults = ['Beklemede', 'Onaylandı', 'Reddedildi', 'Tamamlandı', 'İptal']
 const licenseTypes = ['İşyeri Açma Ruhsatı', 'Faaliyet Belgesi', 'Sanayi Sicil Belgesi', 'ISO Belgesi', 'Çevre İzni', 'Yangın Raporu', 'Hijyen Belgesi', 'Diğer']
 const licenseStatuses = ['Aktif', 'Süresi Yaklaşıyor', 'Süresi Doldu', 'Pasif', 'İptal']
@@ -83,6 +103,7 @@ export function CompanyPublicTab({ data, onChange, readOnly = false }: CompanyPu
   const publicChannels = normalizeObject(data.public_channels)
   const licenses = normalizeArray<CompanyPublicLicense>(data.public_licenses)
   const isForeignCompany = data.ulke && data.ulke !== 'Türkiye'
+  const primaryNace = getPrimaryNace(data.company_nace_codes)
 
   const mergedHistory = useMemo(
     () => buildTimeline(data.field_history, publicTax, publicSgk, publicIncentives, publicRegistry, publicChannels, licenses),
@@ -206,11 +227,12 @@ export function CompanyPublicTab({ data, onChange, readOnly = false }: CompanyPu
             <Field label="İşyeri Tescil Tarihi">
               <input type="date" className={inputClass} value={publicSgk.registration_date || ''} onChange={(e) => updateSection('public_sgk', 'registration_date', e.target.value)} disabled={readOnly} />
             </Field>
-            <Field label="NACE Kodu" history={historyText(data.field_history?.nace_kodlari)}>
-              <input className={inputClass} value={publicSgk.nace_code ?? (data.nace_kodlari || []).join(', ')} onChange={(e) => updateSection('public_sgk', 'nace_code', e.target.value)} disabled={readOnly} />
+            <Field label="Birincil NACE Kodu" history={historyText(data.field_history?.nace_kodlari)}>
+              <ReadOnlyValue value={primaryNace?.nace_code?.nace_code || publicSgk.nace_code || 'Birincil NACE kodu seçilmemiş'} />
             </Field>
             <Field label="Tehlike Sınıfı" history={historyText(data.field_history?.tehlike_sinifi)}>
-              <Select value={publicSgk.risk_class || ''} onChange={(value) => updateSection('public_sgk', 'risk_class', value)} options={riskClasses} disabled={readOnly} />
+              <ReadOnlyBadge value={primaryNace?.nace_code?.hazard_class || publicSgk.risk_class || 'Hesaplanamaz'} />
+              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Tehlike sınıfı, birincil NACE koduna göre otomatik belirlenir.</p>
             </Field>
             <ToggleField label="Teşvik Kullanıyor mu" checked={!!publicSgk.uses_incentive} onChange={(value) => updateSection('public_sgk', 'uses_incentive', value)} disabled={readOnly} />
             {publicSgk.uses_incentive && (
@@ -231,6 +253,7 @@ export function CompanyPublicTab({ data, onChange, readOnly = false }: CompanyPu
               <input type="date" className={inputClass} value={publicSgk.last_check_date || ''} onChange={(e) => updateSection('public_sgk', 'last_check_date', e.target.value)} disabled={readOnly} />
             </Field>
           </div>
+          <CompanyNaceCodesSection companyId={data.id} initialRows={data.company_nace_codes} readOnly={readOnly} />
         </PublicCard>
       )}
 
@@ -413,6 +436,226 @@ export function CompanyPublicTab({ data, onChange, readOnly = false }: CompanyPu
   )
 }
 
+export function CompanyNaceCodesSection({
+  companyId,
+  initialRows,
+  readOnly = false,
+}: {
+  companyId?: string
+  initialRows?: any
+  readOnly?: boolean
+}) {
+  const [rows, setRows] = useState<CompanyNaceRow[]>(normalizeCompanyNaceRows(initialRows))
+  const [options, setOptions] = useState<NaceReferenceRow[]>([])
+  const [search, setSearch] = useState('')
+  const [selectedNaceId, setSelectedNaceId] = useState('')
+  const [warning, setWarning] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [saving, setSaving] = useState(false)
+
+  const activeRows = rows.filter((row) => row.status !== 'passive')
+  const primaryRow = activeRows.find((row) => row.is_primary)
+
+  const loadRows = async () => {
+    if (!companyId) return
+    setLoading(true)
+    try {
+      const response = await fetch(`/api/companies/${companyId}/nace-codes`, { cache: 'no-store' })
+      const payload = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(payload.error || 'NACE kodları alınamadı.')
+      setRows(normalizeCompanyNaceRows(payload.data))
+      setWarning(payload.warning || null)
+    } catch (error) {
+      setWarning(error instanceof Error ? error.message : 'NACE kodları alınamadı.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    setRows(normalizeCompanyNaceRows(initialRows))
+  }, [initialRows])
+
+  useEffect(() => {
+    loadRows()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [companyId])
+
+  useEffect(() => {
+    let cancelled = false
+    const timeout = window.setTimeout(async () => {
+      try {
+        const params = new URLSearchParams()
+        if (search.trim()) params.set('q', search.trim())
+        const response = await fetch(`/api/reference/nace-codes${params.toString() ? `?${params}` : ''}`, { cache: 'no-store' })
+        const payload = await response.json().catch(() => ({}))
+        if (cancelled) return
+        setOptions(Array.isArray(payload.data) ? payload.data : [])
+        setWarning(payload.warning || null)
+      } catch {
+        if (!cancelled) setWarning('NACE referans listesi oluşturulamadı. Lütfen admin tarafından resmi liste yükleyin.')
+      }
+    }, 250)
+
+    return () => {
+      cancelled = true
+      window.clearTimeout(timeout)
+    }
+  }, [search])
+
+  const runAction = async (url: string, init?: RequestInit) => {
+    if (!companyId) return
+    setSaving(true)
+    try {
+      const response = await fetch(url, {
+        ...init,
+        headers: {
+          'Content-Type': 'application/json',
+          ...(init?.headers || {}),
+        },
+      })
+      const payload = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(payload.error || 'İşlem tamamlanamadı.')
+      setWarning(null)
+      await loadRows()
+    } catch (error) {
+      setWarning(error instanceof Error ? error.message : 'İşlem tamamlanamadı.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const addNace = async () => {
+    if (!selectedNaceId) return
+    if (activeRows.length >= 5) {
+      setWarning('Bir şirket için en fazla 5 aktif NACE kodu tanımlanabilir.')
+      return
+    }
+    await runAction(`/api/companies/${companyId}/nace-codes`, {
+      method: 'POST',
+      body: JSON.stringify({ nace_code_id: selectedNaceId }),
+    })
+    setSelectedNaceId('')
+    setSearch('')
+  }
+
+  const emptyReferenceWarning = options.length === 0 && !search.trim()
+    ? 'NACE referans listesi oluşturulamadı. Lütfen admin tarafından resmi liste yükleyin.'
+    : null
+  const noPrimaryWarning = activeRows.length > 0 && !primaryRow
+    ? 'Birincil NACE kodu seçilmemiş. Tehlike sınıfı hesaplanamaz.'
+    : null
+
+  return (
+    <div className="mt-6 rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900/40">
+      <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h5 className="text-sm font-semibold text-gray-900 dark:text-white">NACE / Faaliyet Kodları</h5>
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Faaliyet kodu ve tehlike sınıfı resmi referans listesinden seçilir.</p>
+        </div>
+        {!readOnly && companyId && (
+          <div className="flex flex-wrap items-center gap-2">
+            <input
+              className="w-56 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Kod veya faaliyet ara"
+            />
+            <select
+              className="w-64 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+              value={selectedNaceId}
+              onChange={(event) => setSelectedNaceId(event.target.value)}
+              disabled={options.length === 0}
+            >
+              <option value="">NACE kodu seç</option>
+              {options.map((option) => (
+                <option key={option.id} value={option.id}>
+                  {option.nace_code} - {option.description}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              onClick={addNace}
+              disabled={!selectedNaceId || saving || activeRows.length >= 5}
+              className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-300"
+            >
+              <Plus size={16} />
+              NACE Kodu Ekle
+            </button>
+          </div>
+        )}
+      </div>
+
+      {(warning || emptyReferenceWarning || noPrimaryWarning) && (
+        <div className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-900/50 dark:bg-amber-900/20 dark:text-amber-200">
+          {warning || noPrimaryWarning || emptyReferenceWarning}
+        </div>
+      )}
+
+      <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
+        <table className="min-w-full divide-y divide-gray-200 text-sm dark:divide-gray-700">
+          <thead className="bg-gray-100 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:bg-gray-900 dark:text-gray-400">
+            <tr>
+              <th className="px-3 py-2">NACE Kodu</th>
+              <th className="px-3 py-2">Faaliyet Tanımı</th>
+              <th className="px-3 py-2">Tehlike Sınıfı</th>
+              <th className="px-3 py-2">Birincil mi?</th>
+              <th className="px-3 py-2">Durum</th>
+              <th className="px-3 py-2">Son Güncelleme</th>
+              <th className="px-3 py-2">Kaynak</th>
+              <th className="px-3 py-2">İşlemler</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+            {loading && (
+              <tr>
+                <td colSpan={8} className="px-3 py-6 text-center text-gray-500">NACE kodları yükleniyor...</td>
+              </tr>
+            )}
+            {!loading && rows.length === 0 && (
+              <tr>
+                <td colSpan={8} className="px-3 py-6 text-center text-gray-500">NACE kodu bulunamadı.</td>
+              </tr>
+            )}
+            {!loading && rows.map((row) => (
+              <tr key={row.id} className="align-top">
+                <td className="px-3 py-2 font-medium text-gray-900 dark:text-white">{row.nace_code?.nace_code || '-'}</td>
+                <td className="max-w-md px-3 py-2 text-gray-700 dark:text-gray-200">{row.nace_code?.description || '-'}</td>
+                <td className="px-3 py-2"><ReadOnlyBadge value={row.nace_code?.hazard_class || '-'} /></td>
+                <td className="px-3 py-2">{row.is_primary ? 'Evet' : 'Hayır'}</td>
+                <td className="px-3 py-2">{row.status === 'active' ? 'Aktif' : 'Pasif'}</td>
+                <td className="px-3 py-2">{formatDate(row.updated_at)}</td>
+                <td className="px-3 py-2">{row.nace_code?.source_name || row.nace_code?.source_reference || '-'}</td>
+                <td className="px-3 py-2">
+                  <div className="flex flex-wrap gap-1">
+                    {!readOnly && row.status === 'active' && !row.is_primary && (
+                      <button type="button" className="rounded-md px-2 py-1 text-xs font-medium text-blue-700 hover:bg-blue-50 dark:text-blue-300 dark:hover:bg-blue-900/30" onClick={() => runAction(`/api/companies/${companyId}/nace-codes/${row.id}/set-primary`, { method: 'POST' })}>
+                        Birincil Yap
+                      </button>
+                    )}
+                    <button type="button" title={row.nace_code?.source_url || row.nace_code?.source_reference || 'Referans detayı'} className="rounded-md px-2 py-1 text-xs font-medium text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">
+                      Görüntüle
+                    </button>
+                    {!readOnly && row.status === 'active' && (
+                      <button type="button" className="rounded-md px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20" onClick={() => runAction(`/api/companies/${companyId}/nace-codes/${row.id}/passivate`, { method: 'POST' })}>
+                        Pasifleştir
+                      </button>
+                    )}
+                    <button type="button" title="Audit geçmişi backend history kayıtlarından izlenir." className="rounded-md px-2 py-1 text-xs font-medium text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700">
+                      Geçmiş
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
+}
+
 function PublicCard({ title, description, action, children }: { title: string; description: string; action?: ReactNode; children: ReactNode }) {
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-5 dark:border-gray-700 dark:bg-gray-800">
@@ -425,6 +668,22 @@ function PublicCard({ title, description, action, children }: { title: string; d
       </div>
       {children}
     </div>
+  )
+}
+
+function ReadOnlyValue({ value }: { value: string }) {
+  return (
+    <div className="min-h-[38px] rounded-md border border-gray-200 bg-gray-100 px-3 py-2 text-sm text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200">
+      {value}
+    </div>
+  )
+}
+
+function ReadOnlyBadge({ value }: { value: string }) {
+  return (
+    <span className="inline-flex min-h-[32px] items-center rounded-full bg-blue-50 px-3 py-1 text-sm font-medium text-blue-700 dark:bg-blue-900/30 dark:text-blue-200">
+      {value}
+    </span>
   )
 }
 
@@ -476,6 +735,17 @@ function normalizeObject(value: any): Record<string, any> {
 
 function normalizeArray<T>(value: any): T[] {
   return Array.isArray(value) ? value : []
+}
+
+function normalizeCompanyNaceRows(value: any): CompanyNaceRow[] {
+  return normalizeArray<CompanyNaceRow>(value).map((row) => ({
+    ...row,
+    status: row.status || 'active',
+  }))
+}
+
+function getPrimaryNace(value: any) {
+  return normalizeCompanyNaceRows(value).find((row) => row.status !== 'passive' && row.is_primary)
 }
 
 function isExpiringSoon(date?: string) {
