@@ -232,7 +232,7 @@ export default function AnaSayfa() {
         }
         icon={<Home size={24} />}
         onAddClick={() => setWidgetModalOpen(true)}
-        addButtonText="Widget Ekle"
+        addButtonText="Ekle"
       />
 
       <div className="mt-6">
@@ -242,7 +242,7 @@ export default function AnaSayfa() {
           <div className="rounded-lg border border-dashed border-gray-200 bg-white py-12 text-center text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
             <Settings size={48} className="mx-auto mb-4 opacity-50" />
             <p>Henüz widget eklenmemiş</p>
-            <p className="mt-1 text-sm">&quot;Widget Ekle&quot; butonuyla mevcut widget kayıtlarını ana sayfaya ekleyebilirsiniz.</p>
+            <p className="mt-1 text-sm">&quot;Ekle&quot; butonuyla mevcut widget kayıtlarını ana sayfaya ekleyebilirsiniz.</p>
           </div>
         )}
       </div>
