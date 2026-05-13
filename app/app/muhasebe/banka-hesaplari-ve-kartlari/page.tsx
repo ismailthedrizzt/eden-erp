@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { Eye, History, Landmark, Pencil, Power, Star } from 'lucide-react'
 import { PageBanner } from '@/components/ui/PageBanner'
+import Modal from '@/components/ui/Modal'
 import { SmartDataTable, type ColumnDef, type WidgetDef } from '@/components/ui/SmartDataTable'
 import { Toast } from '@/components/ui/Toast'
 import { usePermissions } from '@/lib/security/permissionStore'
@@ -65,6 +66,7 @@ export default function BankAccountsCardsPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [includePassive, setIncludePassive] = useState(false)
+  const [showPassivateConfirm, setShowPassivateConfirm] = useState(false)
   const [toast, setToast] = useState<ToastState | null>(null)
   const canView = can(ACCOUNTING_PERMISSIONS.bankAccountsCardsView) || can(ACCOUNTING_PERMISSIONS.bankAccountsView) || can(ACCOUNTING_PERMISSIONS.bankCardsView)
   const canInsert = can(ACCOUNTING_PERMISSIONS.bankAccountsCardsInsert) || can(ACCOUNTING_PERMISSIONS.bankAccountsInsert) || can(ACCOUNTING_PERMISSIONS.bankCardsInsert)
@@ -167,8 +169,6 @@ export default function BankAccountsCardsPage() {
 
   const passivateSelected = async () => {
     if (!selected) return
-    const confirmed = window.confirm('Kayit silinmeyecek, sadece pasife alinacaktir. Bu kayitla iliskili baska veriler olabilir. Devam etmek istiyor musunuz?')
-    if (!confirmed) return
 
     try {
       await bankAccountsCardsService.passivateUnifiedRecord(selected.id)
@@ -176,6 +176,7 @@ export default function BankAccountsCardsPage() {
       await loadRows()
       setPageState('list')
       setSelected(null)
+      setShowPassivateConfirm(false)
     } catch (error) {
       setToast({ type: 'error', title: 'Islem tamamlanamadi', message: error instanceof Error ? error.message : 'Kayit pasife alinamadi.' })
     }
@@ -196,6 +197,35 @@ export default function BankAccountsCardsPage() {
         onBackClick={pageState === 'list' ? undefined : () => { setPageState('list'); setSelected(null) }}
       />
       {toast && <Toast type={toast.type} title={toast.title} message={toast.message} onClose={() => setToast(null)} />}
+      <Modal
+        open={showPassivateConfirm}
+        onClose={() => setShowPassivateConfirm(false)}
+        title="Kaydi Pasife Al"
+        size="sm"
+        footer={
+          <>
+            <button
+              type="button"
+              onClick={() => setShowPassivateConfirm(false)}
+              className="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg transition-colors dark:text-gray-300 dark:hover:bg-gray-800"
+            >
+              Vazgec
+            </button>
+            <button
+              type="button"
+              onClick={passivateSelected}
+              className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-700"
+            >
+              Pasife Al
+            </button>
+          </>
+        }
+      >
+        <div className="space-y-3 text-sm text-gray-600 dark:text-gray-300">
+          <p>Bu kayit silinmeyecek, sadece pasife alinacaktir.</p>
+          <p>Kayitla iliskili hesap hareketleri veya master kart verileri olabilecegi icin gecmis veri korunur.</p>
+        </div>
+      </Modal>
 
       {pageState === 'list' ? (
         <SmartDataTable
@@ -224,7 +254,7 @@ export default function BankAccountsCardsPage() {
           onChange={patch => setForm(prev => ({ ...prev, ...patch }))}
           onSave={save}
           onEdit={() => setPageState('edit')}
-          onDelete={passivateSelected}
+          onDelete={() => setShowPassivateConfirm(true)}
           canEdit={canEditRecord}
         />
       )}

@@ -87,9 +87,11 @@ export function OpenStreetMapReachMap({ points, dataMode, scope, onPointClick }:
 
   return (
     <div
-      className="relative h-80 touch-none overflow-hidden rounded-lg border border-gray-200 bg-slate-100 dark:border-gray-800 dark:bg-slate-950"
+      className="relative h-80 touch-none overscroll-contain overflow-hidden rounded-lg border border-gray-200 bg-slate-100 select-none dark:border-gray-800 dark:bg-slate-950"
       onPointerDown={(event) => {
         if ((event.target as HTMLElement).closest('button, a')) return
+        event.preventDefault()
+        event.stopPropagation()
         event.currentTarget.setPointerCapture(event.pointerId)
         dragRef.current = {
           pointerId: event.pointerId,
@@ -102,19 +104,24 @@ export function OpenStreetMapReachMap({ points, dataMode, scope, onPointClick }:
       onPointerMove={(event) => {
         const drag = dragRef.current
         if (!drag || drag.pointerId !== event.pointerId) return
+        event.preventDefault()
+        event.stopPropagation()
         const deltaX = event.clientX - drag.x
         const deltaY = event.clientY - drag.y
         if (Math.abs(deltaX) + Math.abs(deltaY) > 3) drag.moved = true
         setCenter(worldToLatLng(drag.centerWorld.x - deltaX, drag.centerWorld.y - deltaY, zoom))
       }}
       onPointerUp={(event) => {
+        event.stopPropagation()
         if (dragRef.current?.pointerId === event.pointerId) dragRef.current = null
       }}
       onPointerCancel={(event) => {
+        event.stopPropagation()
         if (dragRef.current?.pointerId === event.pointerId) dragRef.current = null
       }}
       onWheel={(event) => {
         event.preventDefault()
+        event.stopPropagation()
         updateZoom(zoom + (event.deltaY < 0 ? 1 : -1), {
           clientX: event.clientX,
           clientY: event.clientY,
@@ -154,7 +161,11 @@ export function OpenStreetMapReachMap({ points, dataMode, scope, onPointClick }:
             key={point.id}
             type="button"
             aria-label={`${point.city || point.country} coğrafi erişim filtresi`}
-            onClick={() => onPointClick?.(point)}
+            onPointerDown={(event) => event.stopPropagation()}
+            onClick={(event) => {
+              event.stopPropagation()
+              onPointClick?.(point)
+            }}
             className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full outline-none ring-offset-2 transition hover:scale-110 focus-visible:ring-2 focus-visible:ring-blue-500"
             style={{
               left: `calc(50% + ${left}px)`,
@@ -170,7 +181,7 @@ export function OpenStreetMapReachMap({ points, dataMode, scope, onPointClick }:
         )
       })}
 
-      <div className="absolute left-3 top-3 overflow-hidden rounded-md border border-gray-200 bg-white/90 shadow-sm backdrop-blur dark:border-gray-800 dark:bg-gray-900/90">
+      <div className="absolute left-3 top-3 overflow-hidden rounded-md border border-gray-200 bg-white/90 shadow-sm backdrop-blur dark:border-gray-800 dark:bg-gray-900/90" onPointerDown={(event) => event.stopPropagation()}>
         <button
           type="button"
           onClick={() => updateZoom(zoom + 1)}
@@ -189,7 +200,7 @@ export function OpenStreetMapReachMap({ points, dataMode, scope, onPointClick }:
         </button>
       </div>
 
-      <div className="absolute right-3 top-3 inline-flex overflow-hidden rounded-md border border-gray-200 bg-white/90 text-xs font-medium shadow-sm backdrop-blur dark:border-gray-800 dark:bg-gray-900/90">
+      <div className="absolute right-3 top-3 inline-flex overflow-hidden rounded-md border border-gray-200 bg-white/90 text-xs font-medium shadow-sm backdrop-blur dark:border-gray-800 dark:bg-gray-900/90" onPointerDown={(event) => event.stopPropagation()}>
         {(Object.keys(TILE_LAYERS) as MapLayer[]).map(item => (
           <button
             key={item}

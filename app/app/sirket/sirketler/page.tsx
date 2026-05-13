@@ -7,7 +7,6 @@ import { EntityForm, FormField, FormMode, FormTab } from '@/components/ui/Entity
 import { PageBanner } from '@/components/ui/PageBanner'
 import { SmartDataTable, ColumnDef, WidgetDef } from '@/components/ui/SmartDataTable'
 import { Toast } from '@/components/ui/Toast'
-import { GeographicTradeReachWidget, type GeographicTradeReachWidgetAction } from '@/components/dashboard/widgets/GeographicTradeReachWidget'
 import type { AnyDashboardWidgetConfig } from '@/components/dashboard/dashboard.types'
 import { CompanyNaceCodesSection } from '@/components/modules/sirket/CompanyPublicTab'
 import { formatPhoneInput, normalizeEmailInput } from '@/lib/utils'
@@ -552,14 +551,6 @@ export default function SirketlerPage() {
         onBackClick: handleBackToList,
       }
 
-  const handleGeographicWidgetAction = (action: GeographicTradeReachWidgetAction) => {
-    const { country, city, dataMode } = action.value
-    setToast({
-      type: 'success',
-      title: 'Coğrafi Filtre',
-      message: `${city ? `${city}, ` : ''}${country} için ${dataMode === 'trade' ? 'ticari ağ' : 'bağlantı ağı'} filtresi üretildi.`,
-    })
-  }
 
   const dashboardWidgets: AnyDashboardWidgetConfig[] = [
     {
@@ -634,11 +625,6 @@ export default function SirketlerPage() {
 
       {pageState !== 'list' && (
         <div className="mt-6 space-y-4">
-          <GeographicTradeReachWidget
-            selectedCompanyId={selectedSirket?.id}
-            onWidgetAction={handleGeographicWidgetAction}
-          />
-
           <EntityForm
             mode={formMode}
             entityName="Şirketler"

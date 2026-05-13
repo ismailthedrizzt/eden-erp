@@ -30,6 +30,7 @@ import { ImageSlotUploader, ImageSlot, SlotImage } from './ImageSlotUploader'
 import { DocumentSlotUploader, DocumentSlot, SlotDocument } from './DocumentSlotUploader'
 import { IBANInput } from './IBANInput'
 import { MasterIdentityGate } from './MasterIdentityGate'
+import Modal from './Modal'
 import type { IdentityGateConfig, IdentityGateResolveResult } from '@/lib/identity-gate'
 import { COUNTRY_OPTIONS, normalizeCountryId } from '@/lib/reference/country-nationalities'
 
@@ -1582,6 +1583,7 @@ export function EntityForm({
   const [identityGateResult, setIdentityGateResult] = useState<IdentityGateResolveResult | null>(null)
   const [cvExtractStatus, setCvExtractStatus] = useState<{ type: 'idle' | 'loading' | 'success' | 'error'; message: string }>({ type: 'idle', message: '' })
   const [turkeyProvinces, setTurkeyProvinces] = useState<TurkeyProvince[]>([])
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   
   // STANDARD FORM LAYOUT: Image and Document slots
   const resolvedImageSlots = typeof imageSlot.slots === 'function' ? imageSlot.slots(formData) : imageSlot.slots
@@ -2136,13 +2138,13 @@ export function EntityForm({
 
   const handleDelete = async () => {
     if (!onDelete || isCreate) return
+    setShowDeleteConfirm(true)
+  }
 
-    const confirmed = window.confirm(
-      `${entityNameSingular} kaydi silinmeyecek, sadece pasife alinacaktir. Bu kayitla iliskili baska veriler olabilir. Devam etmek istiyor musunuz?`
-    )
-    if (!confirmed) return
-
+  const confirmDelete = async () => {
+    if (!onDelete || isCreate) return
     await onDelete()
+    setShowDeleteConfirm(false)
   }
 
   const renderField = (field: FormField, showHistoryIcon = false) => {
@@ -2447,6 +2449,43 @@ export function EntityForm({
 
   return (
     <div className={cn("bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden", className)}>
+      <Modal
+        open={showDeleteConfirm}
+        onClose={() => !deleting && setShowDeleteConfirm(false)}
+        title={`${entityNameSingular} Pasife Al`}
+        size="sm"
+        footer={
+          <>
+            <button
+              type="button"
+              onClick={() => setShowDeleteConfirm(false)}
+              disabled={deleting}
+              className="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50 dark:text-gray-300 dark:hover:bg-gray-800"
+            >
+              Vazgec
+            </button>
+            <button
+              type="button"
+              onClick={confirmDelete}
+              disabled={deleting}
+              className="flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {deleting ? <Loader2 className="animate-spin" size={16} /> : <Trash2 size={16} />}
+              Pasife Al
+            </button>
+          </>
+        }
+      >
+        <div className="space-y-3 text-sm text-gray-600 dark:text-gray-300">
+          <p>
+            Bu kayit sistemden silinmeyecek, sadece pasife alinacaktir.
+          </p>
+          <p>
+            Kayitla iliskili baska master kart verileri veya hareketler olabilir; bu nedenle gecmis veri korunur.
+          </p>
+        </div>
+      </Modal>
+
       {/* Global Error */}
       {error && (
         <div className="m-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
