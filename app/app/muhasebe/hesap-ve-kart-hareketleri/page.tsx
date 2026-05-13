@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { Suspense, useCallback, useEffect, useMemo, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { FileDown, Filter, Link2, Plus, RefreshCw, SearchCheck, WalletCards, X } from 'lucide-react'
 import { PageBanner } from '@/components/ui/PageBanner'
@@ -30,6 +30,30 @@ const MATCH_LABELS: Record<string, string> = {
 }
 
 export default function FinancialInstitutionMovementsPage() {
+  return (
+    <Suspense fallback={<FinancialInstitutionMovementsFallback />}>
+      <FinancialInstitutionMovementsContent />
+    </Suspense>
+  )
+}
+
+function FinancialInstitutionMovementsFallback() {
+  return (
+    <div className="space-y-4">
+      <PageBanner
+        mode="list"
+        title="Hesap ve Kart Hareketleri"
+        subtitle="Hareketler yukleniyor"
+        icon={<WalletCards size={24} />}
+      />
+      <div className="rounded-lg border border-gray-200 bg-white p-6 text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-800">
+        Yukleniyor...
+      </div>
+    </div>
+  )
+}
+
+function FinancialInstitutionMovementsContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const { can } = usePermissions()
@@ -50,7 +74,7 @@ export default function FinancialInstitutionMovementsPage() {
     dateTo: searchParams.get('dateTo'),
   }), [searchParams])
 
-  const loadRows = async () => {
+  const loadRows = useCallback(async () => {
     setLoading(true)
     try {
       const payload = await financialInstitutionMovementsService.getMovements(filters)
@@ -61,11 +85,11 @@ export default function FinancialInstitutionMovementsPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [filters])
 
   useEffect(() => {
     loadRows()
-  }, [filters.bankConnectionId, filters.accountId, filters.cardId, filters.companyId, filters.matchStatus, filters.movementType, filters.dateFrom, filters.dateTo])
+  }, [loadRows])
 
   if (!can(ACCOUNTING_PERMISSIONS.bankMovementsView)) {
     return <div className="rounded-lg border border-gray-200 bg-white p-6 text-sm text-gray-600 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300">Bu sayfayı görüntüleme yetkiniz yok.</div>

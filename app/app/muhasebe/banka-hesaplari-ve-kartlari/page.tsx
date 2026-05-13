@@ -417,7 +417,7 @@ function IntegrationTab({ connection }: { connection: BankConnectionRow }) {
         <button className="btn"><CreditCard size={16} />Kartları Çek</button>
         <button className="btn"><RefreshCw size={16} />Hareketleri Senkronize Et</button>
       </div>
-      <p className="mt-3 text-xs text-gray-500">Client secret, API key, refresh token ve sertifika şifresi frontend'de gösterilmez.</p>
+      <p className="mt-3 text-xs text-gray-500">Client secret, API key, refresh token ve sertifika şifresi frontend&apos;de gösterilmez.</p>
     </section>
   )
 }
