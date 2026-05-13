@@ -8,6 +8,8 @@ import { StackedBarWidget } from './widgets/StackedBarWidget'
 import { DistributionWidget } from './widgets/DistributionWidget'
 import { TrendWidget } from './widgets/TrendWidget'
 import { ActionListWidget } from './widgets/ActionListWidget'
+import { moveWidgetId } from '@/lib/dashboard/widgetPreferences'
+import { GeographicTradeReachWidget } from './widgets/GeographicTradeReachWidget'
 
 const mdSpan: Record<number, string> = {
   1: 'md:col-span-1', 2: 'md:col-span-2', 3: 'md:col-span-3', 4: 'md:col-span-4', 5: 'md:col-span-5', 6: 'md:col-span-6',
@@ -24,9 +26,11 @@ interface DashboardGridProps {
   unauthorizedMode?: 'hide' | 'placeholder'
   className?: string
   compact?: boolean
+  draggable?: boolean
+  onOrderChange?: (ids: string[]) => void
 }
 
-export function DashboardGrid({ widgets, onFilter, unauthorizedMode = 'hide', className, compact = false }: DashboardGridProps) {
+export function DashboardGrid({ widgets, onFilter, unauthorizedMode = 'hide', className, compact = false, draggable = false, onOrderChange }: DashboardGridProps) {
   const { canAll } = usePermissions()
   const visibleWidgets = widgets.filter(widget => unauthorizedMode === 'placeholder' || canAll(widget.permissions || []))
 
@@ -41,7 +45,25 @@ export function DashboardGrid({ widgets, onFilter, unauthorizedMode = 'hide', cl
         return (
           <div
             key={widget.id}
-            className={cn('col-span-1 min-w-0', mdSpan[Math.min(w, 6)], xlSpan[w])}
+            draggable={draggable}
+            onDragStart={(event) => {
+              if (!draggable) return
+              event.dataTransfer.setData('text/plain', widget.id)
+              event.dataTransfer.effectAllowed = 'move'
+            }}
+            onDragOver={(event) => {
+              if (!draggable) return
+              event.preventDefault()
+              event.dataTransfer.dropEffect = 'move'
+            }}
+            onDrop={(event) => {
+              if (!draggable) return
+              event.preventDefault()
+              const draggedId = event.dataTransfer.getData('text/plain')
+              const nextIds = moveWidgetId(widgets.map(item => item.id), draggedId, widget.id)
+              onOrderChange?.(nextIds)
+            }}
+            className={cn('col-span-1 min-w-0', draggable && 'cursor-move', mdSpan[Math.min(w, 6)], xlSpan[w])}
             style={{ minHeight: widget.size.minHeight ?? h * (compact ? 41 : 82) }}
           >
             {!allowed ? (
@@ -70,6 +92,8 @@ function DashboardWidgetRenderer({ widget, onFilter }: { widget: AnyDashboardWid
       return <TrendWidget config={widget} />
     case 'actionList':
       return <ActionListWidget config={widget} onItemClick={onFilter} />
+    case 'geographicTradeReach':
+      return <GeographicTradeReachWidget selectedCompanyId={widget.selectedCompanyId} />
     default:
       return null
   }

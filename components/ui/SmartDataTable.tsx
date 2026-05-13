@@ -20,11 +20,14 @@ import {
   AlertTriangle,
   RefreshCw,
   FileDown,
+  Plus,
   Sparkles
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { DashboardGrid } from '@/components/dashboard/DashboardGrid'
+import { WidgetPickerModal, type WidgetPickerItem } from '@/components/dashboard/WidgetPickerModal'
 import type { AnyDashboardWidgetConfig, DashboardFilterEvent } from '@/components/dashboard/dashboard.types'
+import { moveWidgetId, parseWidgetPreferenceIds, widgetPreferenceStorageKey } from '@/lib/dashboard/widgetPreferences'
 import { getCountryLabel, getCountryNationalityLabel } from '@/lib/reference/country-nationalities'
 
 // Column Definition Types
@@ -121,18 +124,6 @@ function quickLookWidgetId(kind: 'summary' | 'dashboard', key: string) {
   return `${kind}:${key}`
 }
 
-function parseSavedWidgetIds(value: string | null, fallbackIds: string[]) {
-  if (!value) return fallbackIds
-  try {
-    const parsed = JSON.parse(value)
-    if (!Array.isArray(parsed)) return fallbackIds
-    const allowedIds = new Set(fallbackIds)
-    return parsed.filter((id): id is string => typeof id === 'string' && allowedIds.has(id))
-  } catch {
-    return fallbackIds
-  }
-}
-
 export function SmartDataTable<T extends { id: string }>({
   data,
   columns: initialColumns,
@@ -158,6 +149,7 @@ export function SmartDataTable<T extends { id: string }>({
     ...widgets.map(widget => quickLookWidgetId('summary', widget.key)),
   ]
   const quickLookWidgetSignature = quickLookWidgetIds.join('|')
+  const quickLookPreferenceScope = `${storageKey}:quick-look`
 
   // User Preferences State
   const [preferencesLoaded, setPreferencesLoaded] = useState(false)
@@ -176,6 +168,7 @@ export function SmartDataTable<T extends { id: string }>({
   const [showFilterPanel, setShowFilterPanel] = useState(false)
   const [hoveredRow, setHoveredRow] = useState<string | null>(null)
   const [showWidgets, setShowWidgets] = useState(true)
+  const [showWidgetPicker, setShowWidgetPicker] = useState(false)
   const [selectedQuickLookWidgetIds, setSelectedQuickLookWidgetIds] = useState<string[]>(quickLookWidgetIds)
   const [draggedColumn, setDraggedColumn] = useState<string | null>(null)
   const [dropTarget, setDropTarget] = useState<string | null>(null)
@@ -217,9 +210,13 @@ export function SmartDataTable<T extends { id: string }>({
       setColumnConfig(mergeColumnConfig(initialColumns))
     }
 
-    const savedQuickLook = localStorage.getItem(`${storageKey}-quickLook`)
+    const widgetPreferenceKey = widgetPreferenceStorageKey(quickLookPreferenceScope)
+    const savedQuickLook = localStorage.getItem(`${widgetPreferenceKey}:open`) ?? localStorage.getItem(`${storageKey}-quickLook`)
     setShowWidgets(savedQuickLook === null ? true : savedQuickLook === 'true')
-    setSelectedQuickLookWidgetIds(parseSavedWidgetIds(localStorage.getItem(`${storageKey}-widgets`), quickLookWidgetIds))
+    setSelectedQuickLookWidgetIds(parseWidgetPreferenceIds(
+      localStorage.getItem(`${widgetPreferenceKey}:ids`) ?? localStorage.getItem(`${storageKey}-widgets`),
+      quickLookWidgetIds,
+    ))
     setPreferencesLoaded(true)
   }, [storageKey, defaultView, defaultPageSize, columnSignature, quickLookWidgetSignature])
 
@@ -230,7 +227,7 @@ export function SmartDataTable<T extends { id: string }>({
   useEffect(() => {
     setSelectedQuickLookWidgetIds(prev => {
       const allowedIds = new Set(quickLookWidgetIds)
-      if (prev.length === 0 && quickLookWidgetIds.length > 0 && typeof window !== 'undefined' && !localStorage.getItem(`${storageKey}-widgets`)) {
+      if (prev.length === 0 && quickLookWidgetIds.length > 0 && typeof window !== 'undefined' && !localStorage.getItem(`${widgetPreferenceStorageKey(quickLookPreferenceScope)}:ids`) && !localStorage.getItem(`${storageKey}-widgets`)) {
         return quickLookWidgetIds
       }
       return prev.filter(id => allowedIds.has(id))
@@ -243,9 +240,10 @@ export function SmartDataTable<T extends { id: string }>({
     localStorage.setItem(`${storageKey}-view`, viewMode)
     localStorage.setItem(`${storageKey}-pageSize`, pageSize.toString())
     localStorage.setItem(`${storageKey}-columns`, JSON.stringify(columnConfig))
-    localStorage.setItem(`${storageKey}-quickLook`, String(showWidgets))
-    localStorage.setItem(`${storageKey}-widgets`, JSON.stringify(selectedQuickLookWidgetIds))
-  }, [preferencesLoaded, viewMode, pageSize, columnConfig, showWidgets, selectedQuickLookWidgetIds, storageKey])
+    const widgetPreferenceKey = widgetPreferenceStorageKey(quickLookPreferenceScope)
+    localStorage.setItem(`${widgetPreferenceKey}:open`, String(showWidgets))
+    localStorage.setItem(`${widgetPreferenceKey}:ids`, JSON.stringify(selectedQuickLookWidgetIds))
+  }, [preferencesLoaded, viewMode, pageSize, columnConfig, showWidgets, selectedQuickLookWidgetIds, storageKey, quickLookPreferenceScope])
 
   // Click outside handler for column selector
   useEffect(() => {
@@ -873,12 +871,33 @@ export function SmartDataTable<T extends { id: string }>({
     return col.type === 'text' || col.type === 'enum' || col.type === 'badge'
   }
 
-  const selectedDashboardWidgets = dashboardWidgets.filter(widget =>
-    selectedQuickLookWidgetIds.includes(quickLookWidgetId('dashboard', widget.id))
-  )
-  const selectedSummaryWidgets = widgets.filter(widget =>
-    selectedQuickLookWidgetIds.includes(quickLookWidgetId('summary', widget.key))
-  )
+  const dashboardWidgetByQuickLookId = new Map(dashboardWidgets.map(widget => [quickLookWidgetId('dashboard', widget.id), widget]))
+  const summaryWidgetByQuickLookId = new Map(widgets.map(widget => [quickLookWidgetId('summary', widget.key), widget]))
+  const selectedDashboardWidgets = selectedQuickLookWidgetIds
+    .map(id => dashboardWidgetByQuickLookId.get(id))
+    .filter((widget): widget is AnyDashboardWidgetConfig => Boolean(widget))
+  const selectedSummaryWidgets = selectedQuickLookWidgetIds
+    .map(id => summaryWidgetByQuickLookId.get(id))
+    .filter((widget): widget is WidgetDef => Boolean(widget))
+  const quickLookPickerItems: WidgetPickerItem[] = [
+    ...dashboardWidgets.map(widget => ({
+      id: quickLookWidgetId('dashboard', widget.id),
+      title: widget.title,
+      description: widget.description || widget.dataSource,
+      moduleKey: widget.module,
+      moduleLabel: widget.module,
+      pageKey: storageKey,
+      pageLabel: title || storageKey,
+    })),
+    ...widgets.map(widget => ({
+      id: quickLookWidgetId('summary', widget.key),
+      title: widget.label,
+      moduleKey: 'summary',
+      moduleLabel: 'Sayfa Ozeti',
+      pageKey: storageKey,
+      pageLabel: title || storageKey,
+    })),
+  ]
   const hasQuickLookContent = widgets.length > 0 || dashboardWidgets.length > 0
   const hasSelectedQuickLookContent = selectedSummaryWidgets.length > 0 || selectedDashboardWidgets.length > 0
   const quickLookPanel = (showWidgets && hasQuickLookContent) ? (
@@ -888,16 +907,27 @@ export function SmartDataTable<T extends { id: string }>({
           <Eye size={16} />
           Hızlı Bakış
         </h3>
-        <button
-          onClick={() => {
-            setShowWidgets(false)
-            setHoveredRow(null)
-          }}
-          className="text-blue-600 dark:text-blue-400 hover:text-blue-800"
-          title="Kapat"
-        >
-          <X size={16} />
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setShowWidgetPicker(true)}
+            className="inline-flex items-center gap-1 rounded-md border border-blue-200 bg-white px-2 py-1 text-xs font-medium text-blue-700 hover:bg-blue-50 dark:border-blue-800 dark:bg-gray-900 dark:text-blue-300 dark:hover:bg-blue-950/40"
+            title="Widget ekle veya cikar"
+          >
+            <Plus size={14} />
+            Ekle
+          </button>
+          <button
+            onClick={() => {
+              setShowWidgets(false)
+              setHoveredRow(null)
+            }}
+            className="text-blue-600 dark:text-blue-400 hover:text-blue-800"
+            title="Kapat"
+          >
+            <X size={16} />
+          </button>
+        </div>
       </div>
       <div className="space-y-3">
         {selectedDashboardWidgets.length > 0 && (
@@ -906,13 +936,38 @@ export function SmartDataTable<T extends { id: string }>({
             onFilter={onDashboardFilter}
             unauthorizedMode="hide"
             compact
+            draggable
+            onOrderChange={(ids) => {
+              const nextDashboardIds = ids.map(id => quickLookWidgetId('dashboard', id))
+              setSelectedQuickLookWidgetIds(prev => [
+                ...nextDashboardIds,
+                ...prev.filter(id => !nextDashboardIds.includes(id)),
+              ])
+            }}
           />
         )}
 
         {selectedSummaryWidgets.length > 0 && (
           <div className="grid grid-cols-2 gap-2 md:grid-cols-4">
             {selectedSummaryWidgets.map(widget => (
-              <div key={widget.key} className="bg-white dark:bg-gray-800 rounded-lg p-2 shadow-sm">
+              <div
+                key={widget.key}
+                draggable
+                onDragStart={(event) => {
+                  event.dataTransfer.setData('text/plain', quickLookWidgetId('summary', widget.key))
+                  event.dataTransfer.effectAllowed = 'move'
+                }}
+                onDragOver={(event) => {
+                  event.preventDefault()
+                  event.dataTransfer.dropEffect = 'move'
+                }}
+                onDrop={(event) => {
+                  event.preventDefault()
+                  const draggedId = event.dataTransfer.getData('text/plain')
+                  setSelectedQuickLookWidgetIds(prev => moveWidgetId(prev, draggedId, quickLookWidgetId('summary', widget.key)))
+                }}
+                className="cursor-move rounded-lg bg-white p-2 shadow-sm dark:bg-gray-800"
+              >
                 <div className="text-[11px] text-gray-500 dark:text-gray-400 mb-0.5">{widget.label}</div>
                 <div className="text-sm font-medium text-gray-900 dark:text-white">
                   {(() => {
@@ -938,6 +993,16 @@ export function SmartDataTable<T extends { id: string }>({
 
   return (
     <div className="w-full space-y-4">
+      <WidgetPickerModal
+        open={showWidgetPicker}
+        title="Widget Ekle"
+        description="Bu sayfanin widget repository'sinden hizli bakis overlay'inde gorunecek widget'lari secin."
+        items={quickLookPickerItems}
+        selectedWidgetIds={selectedQuickLookWidgetIds}
+        enableFilters={false}
+        onClose={() => setShowWidgetPicker(false)}
+        onSave={(ids) => setSelectedQuickLookWidgetIds(parseWidgetPreferenceIds(JSON.stringify(ids), [], quickLookWidgetIds))}
+      />
       {quickLookPanel}
 
       {/* Header Toolbar */}

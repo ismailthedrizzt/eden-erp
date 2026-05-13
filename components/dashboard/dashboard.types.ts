@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react'
 
-export type WidgetType = 'kpi' | 'stackedBar' | 'distribution' | 'trend' | 'actionList'
+export type WidgetType = 'kpi' | 'stackedBar' | 'distribution' | 'trend' | 'actionList' | 'geographicTradeReach'
 
 export interface WidgetAction {
   id: string
@@ -99,9 +99,15 @@ export interface ActionListWidgetConfig extends DashboardWidgetConfig {
   items: ActionListItem[]
 }
 
+export interface GeographicTradeReachWidgetConfig extends DashboardWidgetConfig {
+  type: 'geographicTradeReach'
+  selectedCompanyId?: string | null
+}
+
 export type AnyDashboardWidgetConfig =
   | KPIWidgetConfig
   | StackedBarWidgetConfig
   | DistributionWidgetConfig
   | TrendWidgetConfig
   | ActionListWidgetConfig
+  | GeographicTradeReachWidgetConfig

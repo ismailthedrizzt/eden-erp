@@ -6,6 +6,7 @@ import { DashboardGrid } from '@/components/dashboard/DashboardGrid'
 import type { AnyDashboardWidgetConfig } from '@/components/dashboard/dashboard.types'
 import { PageBanner } from '@/components/ui/PageBanner'
 import { usePersonel } from '@/hooks/usePersonel'
+import { normalizeWidgetPreferenceIds, widgetPreferenceStorageKey } from '@/lib/dashboard/widgetPreferences'
 import {
   dashboardWidgetRegistry,
   legacyHomeWidgetIdMap,
@@ -13,11 +14,13 @@ import {
   uniqueWidgetPages,
   type DashboardWidgetRegistryRecord,
 } from '@/lib/dashboard/widgetRegistry'
+import { companyGeographicReachWidgetConfig } from '@/lib/modules/companies/dashboard/companyGeographicReach.config'
 import { buildEmployeesDashboard } from '@/lib/modules/employees/dashboard/employeesDashboard.mock'
 import { getEducationSummary } from '@/lib/modules/employees/education'
 import type { Personel } from '@/types'
 
 const WIDGET_STORAGE_KEY = 'user_widgets'
+const WIDGET_STORAGE_SCOPE = 'home'
 const CURRENT_USER = {
   ad: 'İsmail',
   soyad: 'ILGAR',
@@ -179,14 +182,12 @@ export default function AnaSayfa() {
   const { data: personel } = usePersonel()
 
   useEffect(() => {
-    const saved = localStorage.getItem(WIDGET_STORAGE_KEY)
+    const preferenceKey = widgetPreferenceStorageKey(WIDGET_STORAGE_SCOPE)
+    const saved = localStorage.getItem(`${preferenceKey}:ids`) ?? localStorage.getItem(WIDGET_STORAGE_KEY)
     if (!saved) return
-
     try {
       const parsed = JSON.parse(saved)
-      if (Array.isArray(parsed)) {
-        setSelectedWidgetIds(normalizeSavedWidgetIds(parsed))
-      }
+      setSelectedWidgetIds(Array.isArray(parsed) ? normalizeSavedWidgetIds(parsed) : [])
     } catch {
       setSelectedWidgetIds([])
     }
@@ -197,21 +198,22 @@ export default function AnaSayfa() {
   const employeeRows = useMemo(() => (personel || []).map(toEmployeeDashboardRow), [personel])
   const availableWidgets = useMemo(() => {
     const homeWidgets = buildHomeDashboardWidgets(CURRENT_USER, duration, birthday)
+    const companyWidgets = buildCompanyDashboardWidgets()
     const employeeWidgets = buildEmployeesDashboard(employeeRows).map(widget => ({
       ...widget,
       permissions: [],
     }))
-    return new Map([...homeWidgets, ...employeeWidgets].map(widget => [widget.id, widget]))
+    return new Map([...homeWidgets, ...companyWidgets, ...employeeWidgets].map(widget => [widget.id, widget]))
   }, [birthday, duration, employeeRows])
 
   const selectedWidgets = selectedWidgetIds
-    .map(id => availableWidgets.get(id))
+    .map(id => availableWidgets.get(id) || buildRegisteredWidgetPlaceholder(id))
     .filter((widget): widget is AnyDashboardWidgetConfig => Boolean(widget))
 
   const handleSaveWidgets = (ids: string[]) => {
     const normalizedIds = normalizeSavedWidgetIds(ids)
     setSelectedWidgetIds(normalizedIds)
-    localStorage.setItem(WIDGET_STORAGE_KEY, JSON.stringify(normalizedIds))
+    localStorage.setItem(`${widgetPreferenceStorageKey(WIDGET_STORAGE_SCOPE)}:ids`, JSON.stringify(normalizedIds))
   }
 
   return (
@@ -237,7 +239,12 @@ export default function AnaSayfa() {
 
       <div className="mt-6">
         {selectedWidgets.length > 0 ? (
-          <DashboardGrid widgets={selectedWidgets} className="pb-6" />
+          <DashboardGrid
+            widgets={selectedWidgets}
+            className="pb-6"
+            draggable
+            onOrderChange={(ids) => handleSaveWidgets(ids)}
+          />
         ) : (
           <div className="rounded-lg border border-dashed border-gray-200 bg-white py-12 text-center text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
             <Settings size={48} className="mx-auto mb-4 opacity-50" />
@@ -296,6 +303,43 @@ function buildHomeDashboardWidgets(
   ]
 }
 
+function buildCompanyDashboardWidgets(): AnyDashboardWidgetConfig[] {
+  return [
+    {
+      id: companyGeographicReachWidgetConfig.id,
+      type: 'geographicTradeReach',
+      title: companyGeographicReachWidgetConfig.title,
+      description: 'Şirket bağlantılarının Türkiye ve dünya üzerindeki dağılımı',
+      module: companyGeographicReachWidgetConfig.module,
+      size: { w: 12, h: 6, minHeight: 560 },
+      dataSource: 'dashboard.companies.geographicTradeReach',
+      permissions: [],
+    },
+  ]
+}
+
+function buildRegisteredWidgetPlaceholder(id: string): AnyDashboardWidgetConfig | null {
+  const record = dashboardWidgetRegistry.find(widget => widget.id === id)
+  if (!record) return null
+  return {
+    id: record.id,
+    type: 'actionList',
+    title: record.title,
+    module: record.moduleKey,
+    size: { w: 4, h: 2 },
+    dataSource: `registry.${record.id}`,
+    permissions: [],
+    items: [
+      {
+        id: `${record.id}-source`,
+        label: `${record.moduleLabel} / ${record.pageLabel}`,
+        description: record.description || record.pagePath,
+        severity: 'info',
+      },
+    ],
+  }
+}
+
 function toEmployeeDashboardRow(personel: Personel) {
   return {
     id: personel.id,
@@ -311,12 +355,10 @@ function toEmployeeDashboardRow(personel: Personel) {
 }
 
 function normalizeSavedWidgetIds(ids: unknown[]) {
-  const validIds = new Set(dashboardWidgetRegistry.map(widget => widget.id))
-  const normalized = ids
+  const normalized = normalizeWidgetPreferenceIds(ids
     .map(id => String(id))
-    .map(id => legacyHomeWidgetIdMap[id] || id)
-    .filter(id => validIds.has(id))
-  return Array.from(new Set(normalized))
+    .map(id => legacyHomeWidgetIdMap[id] || id), dashboardWidgetRegistry.map(widget => widget.id))
+  return normalized
 }
 
 function calculateDuration(startDate: string) {

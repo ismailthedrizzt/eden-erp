@@ -1,4 +1,5 @@
 import { employeesDashboardLayout } from '@/lib/modules/employees/dashboard/employeesDashboard.config'
+import { companyGeographicReachWidgetConfig } from '@/lib/modules/companies/dashboard/companyGeographicReach.config'
 
 export interface DashboardWidgetRegistryRecord {
   id: string
@@ -9,6 +10,13 @@ export interface DashboardWidgetRegistryRecord {
   pageKey: string
   pageLabel: string
   pagePath: string
+}
+
+interface WidgetRegistryGroupRecord {
+  moduleKey: string
+  moduleLabel: string
+  pageKey: string
+  pageLabel: string
 }
 
 const homeWidgets: DashboardWidgetRegistryRecord[] = [
@@ -54,6 +62,19 @@ const employeeWidgets: DashboardWidgetRegistryRecord[] = employeesDashboardLayou
   pageLabel: 'Çalışanlarımız',
   pagePath: '/app/ik/personel',
 }))
+
+const companyWidgets: DashboardWidgetRegistryRecord[] = [
+  {
+    id: companyGeographicReachWidgetConfig.id,
+    title: companyGeographicReachWidgetConfig.title,
+    description: 'Şirket bağlantılarını ve ticari ağı Türkiye/Dünya haritası üzerinde gösterir.',
+    moduleKey: 'sirket',
+    moduleLabel: 'Şirket Yönetimi',
+    pageKey: 'sirketler',
+    pageLabel: 'Şirketler',
+    pagePath: '/app/sirket/sirketler',
+  },
+]
 
 const ownershipTransactionWidgets: DashboardWidgetRegistryRecord[] = [
   {
@@ -120,6 +141,7 @@ const ownershipTransactionWidgets: DashboardWidgetRegistryRecord[] = [
 
 export const dashboardWidgetRegistry: DashboardWidgetRegistryRecord[] = [
   ...homeWidgets,
+  ...companyWidgets,
   ...employeeWidgets,
   ...ownershipTransactionWidgets,
 ]
@@ -131,14 +153,14 @@ export const legacyHomeWidgetIdMap: Record<string, string> = {
   gorevlerim: 'home-actions',
 }
 
-export function uniqueWidgetModules(records = dashboardWidgetRegistry) {
+export function uniqueWidgetModules(records: WidgetRegistryGroupRecord[] = dashboardWidgetRegistry) {
   return uniqueBy(records.map(record => ({
     key: record.moduleKey,
     label: record.moduleLabel,
   })), item => item.key)
 }
 
-export function uniqueWidgetPages(records = dashboardWidgetRegistry, moduleKey?: string) {
+export function uniqueWidgetPages(records: WidgetRegistryGroupRecord[] = dashboardWidgetRegistry, moduleKey?: string) {
   return uniqueBy(records
     .filter(record => !moduleKey || record.moduleKey === moduleKey)
     .map(record => ({

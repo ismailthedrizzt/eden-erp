@@ -43,6 +43,45 @@ export const WORLD_COUNTRY_POSITIONS: Record<string, { x: number; y: number }> =
   'guney afrika': { x: 52, y: 78 },
 }
 
+export const TURKEY_CITY_COORDINATES: Record<string, { lat: number; lng: number }> = {
+  adana: { lat: 37.0, lng: 35.3213 },
+  ankara: { lat: 39.9334, lng: 32.8597 },
+  antalya: { lat: 36.8969, lng: 30.7133 },
+  bursa: { lat: 40.1826, lng: 29.0665 },
+  diyarbakir: { lat: 37.9144, lng: 40.2306 },
+  erzurum: { lat: 39.9000, lng: 41.2700 },
+  gaziantep: { lat: 37.0662, lng: 37.3833 },
+  istanbul: { lat: 41.0082, lng: 28.9784 },
+  izmir: { lat: 38.4237, lng: 27.1428 },
+  kayseri: { lat: 38.7205, lng: 35.4826 },
+  konya: { lat: 37.8746, lng: 32.4932 },
+  samsun: { lat: 41.2867, lng: 36.33 },
+  trabzon: { lat: 41.0027, lng: 39.7168 },
+}
+
+export const WORLD_COUNTRY_COORDINATES: Record<string, { lat: number; lng: number }> = {
+  almanya: { lat: 51.1657, lng: 10.4515 },
+  amerika: { lat: 39.8283, lng: -98.5795 },
+  'amerika birlesik devletleri': { lat: 39.8283, lng: -98.5795 },
+  'amerika birleşik devletleri': { lat: 39.8283, lng: -98.5795 },
+  azerbaycan: { lat: 40.1431, lng: 47.5769 },
+  'birlesik krallik': { lat: 55.3781, lng: -3.4360 },
+  'birleşik krallık': { lat: 55.3781, lng: -3.4360 },
+  cin: { lat: 35.8617, lng: 104.1954 },
+  fransa: { lat: 46.2276, lng: 2.2137 },
+  gabon: { lat: -0.8037, lng: 11.6094 },
+  'guney afrika': { lat: -30.5595, lng: 22.9375 },
+  irak: { lat: 33.2232, lng: 43.6793 },
+  iran: { lat: 32.4279, lng: 53.6880 },
+  ispanya: { lat: 40.4637, lng: -3.7492 },
+  italya: { lat: 41.8719, lng: 12.5674 },
+  japonya: { lat: 36.2048, lng: 138.2529 },
+  misir: { lat: 26.8206, lng: 30.8025 },
+  rusya: { lat: 61.5240, lng: 105.3188 },
+  turkiye: { lat: 38.9637, lng: 35.2433 },
+  türkiye: { lat: 38.9637, lng: 35.2433 },
+}
+
 export function markerRadius(point: GeoPoint, dataMode: GeographicReachDataMode) {
   if (dataMode === 'trade') {
     const amount = point.trade?.totalAmount || 0
@@ -94,6 +133,26 @@ export function fallbackPosition(seed: string, minX: number, maxX: number, minY:
   return {
     x: minX + (hash % 1000) / 1000 * (maxX - minX),
     y: minY + (Math.floor(hash / 10) % 1000) / 1000 * (maxY - minY),
+  }
+}
+
+export function pointCoordinate(point: GeoPoint, scope: 'turkey' | 'world') {
+  if (Number.isFinite(point.lat) && Number.isFinite(point.lng)) {
+    return { lat: Number(point.lat), lng: Number(point.lng) }
+  }
+
+  if (scope === 'turkey') {
+    return TURKEY_CITY_COORDINATES[normalizeMapKey(point.city)] || TURKEY_CITY_COORDINATES[normalizeMapKey(point.country)]
+  }
+
+  return WORLD_COUNTRY_COORDINATES[normalizeMapKey(point.country)]
+}
+
+export function fallbackCoordinate(seed: string, bounds: { north: number; south: number; west: number; east: number }) {
+  const position = fallbackPosition(seed, 0, 1, 0, 1)
+  return {
+    lat: bounds.north - position.y * (bounds.north - bounds.south),
+    lng: bounds.west + position.x * (bounds.east - bounds.west),
   }
 }
 
