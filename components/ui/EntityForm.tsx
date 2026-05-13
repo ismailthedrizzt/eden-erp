@@ -308,8 +308,6 @@ function MasterSummaryHero({
             { value: 'adi_sirket', label: 'Şahıs Şirketi - Adi Şirket' },
           ] },
           { label: 'Kuruluş Tarihi', value: readFirst(master, prefill, ['foundation_date', 'kurulus_tarihi']), fieldKeys: ['kurulus_tarihi', 'foundation_date'], inputType: 'date' as const },
-          { label: 'MERSİS No', value: readFirst(master, prefill, ['mersis_no']), fieldKeys: ['mersis_no'] },
-          { label: 'Ticaret Sicil No', value: readFirst(master, prefill, ['registration_number', 'ticaret_sicil_no', 'trade_registry_no']), fieldKeys: ['ticaret_sicil_no', 'trade_registry_no', 'registration_number'] },
         ]
       : compactSummaryItems([
           { label: 'Kısa Ünvan', value: readFirst(master, prefill, ['short_name', 'kisa_unvan']) },

@@ -222,6 +222,10 @@ export async function PATCH(
     }
     return NextResponse.json({ error: error.message, code: error.code || 'UPDATE_FAILED' }, { status: 500 })
   }
+
+  const organizationUnitError = await ensureCompanyRootUnit(supabase, id, { ...current, ...companyUpdates })
+  if (organizationUnitError) return NextResponse.json({ error: organizationUnitError.message, code: organizationUnitError.code || 'COMPANY_ORG_UNIT_SAVE_FAILED' }, { status: 500 })
+
   await syncMasterContact(
     supabase,
     'organization',
@@ -250,6 +254,54 @@ export async function PATCH(
   if (publicError) return NextResponse.json({ error: publicError.message, code: publicError.code || 'PUBLIC_SAVE_FAILED' }, { status: 500 })
 
   return NextResponse.json({ data })
+}
+
+async function ensureCompanyRootUnit(
+  supabase: ReturnType<typeof createServiceClient>,
+  companyId: string,
+  companyData: Record<string, any>
+) {
+  const { data: unitType, error: typeError } = await supabase
+    .from('organization_unit_types')
+    .upsert({ name: 'Şirket', slug: 'sirket', color: '#0f766e', icon: 'Building2', sort_order: 0, is_active: true }, { onConflict: 'slug' })
+    .select('id')
+    .single()
+
+  if (typeError) return typeError
+
+  const companyName = companyData.ticari_unvan || companyData.kisa_unvan || 'Şirket'
+  const { data: existing, error: findError } = await supabase
+    .from('birimler')
+    .select('id')
+    .eq('sirket_id', companyId)
+    .is('ust_birim_id', null)
+    .eq('tip', 'sirket')
+    .eq('is_deleted', false)
+    .limit(1)
+    .maybeSingle()
+
+  if (findError) return findError
+
+  const payload = {
+    sirket_id: companyId,
+    ust_birim_id: null,
+    ad: companyName,
+    name: companyName,
+    short_name: companyData.kisa_unvan || null,
+    tip: 'sirket',
+    unit_type_id: unitType?.id || null,
+    status: 'Aktif',
+    aktif: true,
+    is_deleted: false,
+  }
+
+  if (existing?.id) {
+    const { error } = await supabase.from('birimler').update(payload).eq('id', existing.id)
+    return error
+  }
+
+  const { error } = await supabase.from('birimler').insert(payload)
+  return error
 }
 
 export async function DELETE(

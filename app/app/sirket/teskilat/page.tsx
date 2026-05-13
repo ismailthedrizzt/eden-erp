@@ -5,19 +5,15 @@ import type { ReactNode } from 'react'
 import {
   AlertTriangle,
   BarChart3,
-  Briefcase,
   ChevronDown,
   ChevronRight,
   Clock,
   Edit3,
   Eye,
-  FileDown,
-  FolderTree,
   History,
   Layers,
   Network,
   Plus,
-  Search,
   Users,
   X,
 } from 'lucide-react'
@@ -97,9 +93,10 @@ interface HistoryEntry {
   user?: string
 }
 
-const defaultUnitTypes = ['Genel Müdürlük', 'Direktörlük', 'Müdürlük', 'Departman', 'Bölüm', 'Takım', 'Şube', 'Ofis', 'Operasyon', 'Proje Ofisi', 'Komite', 'Kurul', 'Diğer']
+const defaultUnitTypes = ['Şirket', 'Genel Müdürlük', 'Direktörlük', 'Müdürlük', 'Departman', 'Bölüm', 'Takım', 'Şube', 'Ofis', 'Operasyon', 'Proje Ofisi', 'Komite', 'Kurul', 'Diğer']
 const unitStatuses: UnitStatus[] = ['Aktif', 'Pasif', 'Kapatıldı', 'Birleştirildi', 'Taşındı']
 const positionStatuses: PositionStatus[] = ['Aktif', 'Pasif', 'Kapatıldı', 'Donduruldu']
+const locationOptions = ['Merkez', 'Fabrika', 'Şube', 'Ofis', 'Depo', 'Saha', 'Mağaza', 'Diğer'].map((value) => ({ value, label: value }))
 
 export default function TeskilatPage() {
   const [units, setUnits] = useState<OrganizationUnit[]>([])
@@ -110,7 +107,6 @@ export default function TeskilatPage() {
   const [selectedUnit, setSelectedUnit] = useState<OrganizationUnit | null>(null)
   const [positionOverlayUnit, setPositionOverlayUnit] = useState<OrganizationUnit | null>(null)
   const [pageState, setPageState] = useState<PageState>('list')
-  const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
@@ -151,7 +147,10 @@ export default function TeskilatPage() {
 
   const unitOptions = useMemo(() => units.filter((unit) => !unit.is_deleted).map((unit) => ({ value: unit.id, label: unitName(unit) })), [units])
   const positionOptions = useMemo(() => positions.filter((position) => !position.is_deleted).map((position) => ({ value: position.id, label: positionTitle(position) })), [positions])
-  const treeRows = useMemo(() => flattenTree(units, positions, openIds, search), [units, positions, openIds, search])
+  const companyRootUnits = useMemo(() => units.filter((unit) => !unit.is_deleted && !unit.ust_birim_id && isCompanyUnit(unit)), [units])
+  const defaultCompanyId = companies[0]?.value || companyRootUnits[0]?.sirket_id || ''
+  const defaultParentUnitId = companyRootUnits.find((unit) => unit.sirket_id === defaultCompanyId)?.id || ''
+  const treeRows = useMemo(() => flattenTree(units, positions, openIds, ''), [units, positions, openIds])
   const selectedPositions = useMemo(() => selectedUnit ? positions.filter((position) => position.birim_id === selectedUnit.id && !position.is_deleted) : [], [positions, selectedUnit])
   const overlayPositions = useMemo(() => positionOverlayUnit ? positions.filter((position) => position.birim_id === positionOverlayUnit.id && !position.is_deleted) : [], [positions, positionOverlayUnit])
 
@@ -183,38 +182,16 @@ export default function TeskilatPage() {
     { name: 'status', label: 'Durum', type: 'select', required: true, options: unitStatuses.map((status) => ({ value: status, label: status })) },
     { name: 'start_date', label: 'Kuruluş Tarihi', type: 'date' },
     { name: 'code', label: 'Kod', type: 'text' },
-    { name: 'location_name', label: 'Yerleşke', type: 'text' },
+    { name: 'location_name', label: 'Yerleşke', type: 'select', options: locationOptions },
   ]
 
   const tabs: FormTab[] = [
-    { id: 'genel', label: 'Genel', fields: [
-      { name: 'sort_order', label: 'Sıra', type: 'number' },
-      { name: 'end_date', label: 'Bitiş Tarihi', type: 'date' },
-      { name: 'type_management', label: 'Tip Yönetimi', type: 'custom', colSpan: 3, render: () => <UnitTypeManager unitTypes={unitTypes} saveType={saveUnitType} /> },
-    ] },
     { id: 'kadro', label: 'Kadro', fields: [
       { name: 'positions', label: 'Kadrolar', type: 'custom', colSpan: 3, render: ({ readOnly }) => <PositionsTab unit={selectedUnit} positions={selectedPositions} readOnly={readOnly} openOverlay={() => selectedUnit && setPositionOverlayUnit(selectedUnit)} openCreate={() => openPositionCreate(selectedUnit)} /> },
-    ] },
-    { id: 'yetkiler', label: 'Yetkiler', fields: [
-      { name: 'approval_scope', label: 'Onay Kapsamı', type: 'textarea', colSpan: 3 },
-      { name: 'manager_rule_note', label: 'Amir Kural Notu', type: 'textarea', colSpan: 3 },
-    ] },
-    { id: 'lokasyon', label: 'Lokasyon', fields: [
-      { name: 'location_id', label: 'Lokasyon ID', type: 'text' },
-      { name: 'location_name', label: 'Yerleşke', type: 'text' },
     ] },
     { id: 'butce', label: 'Bütçe', fields: [
       { name: 'budget_code', label: 'Bütçe Kodu', type: 'text' },
       { name: 'budget_note', label: 'Bütçe Notu', type: 'textarea', colSpan: 3 },
-    ] },
-    { id: 'belgeler', label: 'Belgeler', fields: [
-      { name: 'documents_note', label: 'Belge Notları', type: 'textarea', colSpan: 3 },
-    ] },
-    { id: 'notlar', label: 'Notlar', fields: [
-      { name: 'notes', label: 'Notlar', type: 'textarea', colSpan: 3 },
-    ] },
-    { id: 'gecmis', label: 'Geçmiş', fields: [
-      { name: 'history', label: 'Geçmiş', type: 'custom', colSpan: 3, render: () => <Timeline history={selectedUnit?.history || []} /> },
     ] },
   ]
 
@@ -318,7 +295,7 @@ export default function TeskilatPage() {
     setPageState('create-position')
   }
 
-  const formData = selectedUnit ? normalizeUnitForForm(selectedUnit) : { status: 'Aktif', company_id: companies[0]?.value || '', parent_unit_id: '' }
+  const formData = selectedUnit ? normalizeUnitForForm(selectedUnit) : { status: 'Aktif', company_id: defaultCompanyId, parent_unit_id: defaultParentUnitId }
   const pageIsPositionForm = pageState === 'create-position'
 
   return (
@@ -330,7 +307,7 @@ export default function TeskilatPage() {
         subtitle={pageState === 'list' ? 'İç organizasyon, birim hiyerarşisi ve norm kadro yönetimi' : pageIsPositionForm ? 'Seçili birime pozisyon tanımlayın' : 'Birim detaylarını yönetin'}
         icon={<Network size={24} />}
         onAddClick={openCreate}
-        addButtonText="Yeni Birim Ekle"
+        addButtonText="Ekle"
         onBackClick={() => setPageState('list')}
       />
 
@@ -343,17 +320,6 @@ export default function TeskilatPage() {
 
       {pageState === 'list' && (
         <div className="space-y-5">
-          <div className="flex flex-wrap items-center gap-2 rounded-xl border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-800">
-            <button onClick={openCreate} className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700"><Plus size={16} />Yeni Birim Ekle</button>
-            <button onClick={() => openPositionCreate(selectedUnit)} className="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-900"><Briefcase size={16} />Yeni Kadro Ekle</button>
-            <button className="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-900"><FolderTree size={16} />Şema Görünümü</button>
-            <button className="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-900"><FileDown size={16} />Excel Aktar</button>
-            <div className="relative ml-auto w-full sm:w-80">
-              <Search className="pointer-events-none absolute left-3 top-2.5 text-gray-400" size={16} />
-              <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Birim, kod, tip veya yerleşke ara" className="w-full rounded-lg border border-gray-300 bg-white py-2 pl-9 pr-3 text-sm dark:border-gray-700 dark:bg-gray-900" />
-            </div>
-          </div>
-
           <SmartDataTable
             columns={columns}
             data={treeRows}
@@ -648,6 +614,10 @@ function withHistory(field: FormField, history?: HistoryEntry[]) {
 
 function unitName(unit?: OrganizationUnit | null) {
   return unit?.name || unit?.ad || ''
+}
+
+function isCompanyUnit(unit: OrganizationUnit) {
+  return unit.unit_type?.slug === 'sirket' || unit.unit_type?.name === 'Şirket' || unit.tip === 'sirket'
 }
 
 function positionTitle(position: Position) {

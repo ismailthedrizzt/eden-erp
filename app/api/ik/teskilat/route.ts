@@ -65,14 +65,56 @@ export async function DELETE(request: NextRequest) {
 }
 
 async function createUnit(supabase: ReturnType<typeof createServiceClient>, body: Record<string, any>) {
+  const mappedUnit = await mapUnitForCreate(supabase, body)
   const { data, error } = await supabase
     .from('birimler')
-    .insert(mapUnit(body))
+    .insert(mappedUnit)
     .select('*')
     .single()
 
   if (error) return NextResponse.json({ error: error.message, code: error.code || 'UNIT_CREATE_FAILED' }, { status: 500 })
   return NextResponse.json({ data: await attachUnitType(supabase, data) }, { status: 201 })
+}
+
+async function mapUnitForCreate(supabase: ReturnType<typeof createServiceClient>, body: Record<string, any>) {
+  const mapped = mapUnit(body)
+  if (mapped.ust_birim_id) {
+    const { data: parent } = await supabase
+      .from('birimler')
+      .select('sirket_id')
+      .eq('id', mapped.ust_birim_id)
+      .maybeSingle()
+
+    return parent?.sirket_id ? { ...mapped, sirket_id: parent.sirket_id } : mapped
+  }
+
+  if (!mapped.sirket_id) return mapped
+
+  const companyTypeId = await getCompanyUnitTypeId(supabase)
+  const isCompanyUnit = mapped.tip === 'sirket' || (!!companyTypeId && mapped.unit_type_id === companyTypeId)
+  if (isCompanyUnit) return mapped
+
+  const { data: companyRoot } = await supabase
+    .from('birimler')
+    .select('id')
+    .eq('sirket_id', mapped.sirket_id)
+    .is('ust_birim_id', null)
+    .or(companyTypeId ? `tip.eq.sirket,unit_type_id.eq.${companyTypeId}` : 'tip.eq.sirket')
+    .eq('is_deleted', false)
+    .limit(1)
+    .maybeSingle()
+
+  return companyRoot?.id ? { ...mapped, ust_birim_id: companyRoot.id } : mapped
+}
+
+async function getCompanyUnitTypeId(supabase: ReturnType<typeof createServiceClient>) {
+  const { data } = await supabase
+    .from('organization_unit_types')
+    .select('id')
+    .eq('slug', 'sirket')
+    .maybeSingle()
+
+  return data?.id || null
 }
 
 async function updateUnit(supabase: ReturnType<typeof createServiceClient>, body: Record<string, any>) {
@@ -196,6 +238,7 @@ async function attachUnitType(supabase: ReturnType<typeof createServiceClient>, 
 
 function fallbackUnitTypes() {
   const rows = [
+    ['Şirket', 'sirket', '#0f766e'],
     ['Genel Müdürlük', 'genel_mudurluk', '#1d4ed8'],
     ['Direktörlük', 'direktorluk', '#7c3aed'],
     ['Müdürlük', 'mudurluk', '#0891b2'],
