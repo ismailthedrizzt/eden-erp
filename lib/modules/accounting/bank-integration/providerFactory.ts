@@ -1,6 +1,7 @@
 import type { BankProvider } from './BankProvider'
 import { GenericBankProvider } from './GenericBankProvider'
-import { AkbankProvider, GarantiProvider, IsBankasiProvider, QNBProvider, YapiKrediProvider, ZiraatProvider } from './providers/FutureBankProviders'
+import { AkbankProvider, IsBankasiProvider, QNBProvider, YapiKrediProvider, ZiraatProvider } from './providers/FutureBankProviders'
+import { GarantiProvider } from './providers/GarantiProvider'
 
 export function createBankProvider(providerCode: string): BankProvider {
   const normalized = providerCode.toLowerCase()

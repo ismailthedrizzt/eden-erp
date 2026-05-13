@@ -12,48 +12,37 @@ export async function GET(request: NextRequest) {
   const matchStatus = searchParams.get('match_status')
   const companyId = searchParams.get('company_id')
 
-  const [bankResult, cardResult] = await Promise.all([
-    fetchBankTransactions(supabase, { matchStatus, companyId }),
-    fetchCardTransactions(supabase, { matchStatus, companyId }),
-  ])
-
-  if (bankResult.error) return NextResponse.json({ error: bankResult.error.message }, { status: 500 })
-  if (cardResult.error) return NextResponse.json({ error: cardResult.error.message }, { status: 500 })
-
-  const bankRows = (bankResult.data || []).map((row: any) => ({
-    ...row,
-    source_type: 'bank',
-    merchant_name: null,
-  }))
-  const cardRows = (cardResult.data || []).map((row: any) => ({
-    ...row,
-    source_type: 'card',
-    counterparty_name: row.merchant_name,
-  }))
+  const result = await fetchFinancialInstitutionMovements(supabase, { matchStatus, companyId })
+  if (result.error) return NextResponse.json({ error: result.error.message }, { status: 500 })
 
   return NextResponse.json({
-    data: [...bankRows, ...cardRows].sort((a, b) => String(b.transaction_date).localeCompare(String(a.transaction_date))),
+    data: (result.data || []).map((row: any) => ({
+      id: row.id,
+      source_type: row.source_type === 'card' ? 'card' : 'bank',
+      connection_id: row.bank_connection_id,
+      provider_code: row.source,
+      external_transaction_id: row.external_transaction_id,
+      transaction_date: row.movement_date,
+      description: row.description,
+      counterparty_name: row.counterparty_name,
+      merchant_name: row.source_type === 'card' ? row.counterparty_name : null,
+      direction: row.direction,
+      amount: row.amount,
+      currency: row.currency,
+      match_status: row.match_status,
+      linked_movement_id: row.matched_pre_accounting_movement_id,
+    })),
   })
 }
 
-function fetchBankTransactions(supabase: ReturnType<typeof createServiceClient>, filters: { matchStatus: string | null; companyId: string | null }) {
+function fetchFinancialInstitutionMovements(supabase: ReturnType<typeof createServiceClient>, filters: { matchStatus: string | null; companyId: string | null }) {
   let query = supabase
-    .from('accounting_bank_transactions')
-    .select('id,connection_id,company_id,provider_code,external_transaction_id,transaction_date,description,counterparty_name,direction,amount,currency,match_status,linked_movement_id')
+    .from('financial_institution_movements')
+    .select('id,bank_connection_id,company_id,source_type,source,external_transaction_id,movement_date,description,counterparty_name,direction,amount,currency,match_status,matched_pre_accounting_movement_id')
     .eq('is_deleted', false)
+    .in('source_type', ['bank_account', 'card'])
 
   if (filters.matchStatus) query = query.eq('match_status', filters.matchStatus)
   if (filters.companyId) query = query.eq('company_id', filters.companyId)
-  return query.order('transaction_date', { ascending: false })
-}
-
-function fetchCardTransactions(supabase: ReturnType<typeof createServiceClient>, filters: { matchStatus: string | null; companyId: string | null }) {
-  let query = supabase
-    .from('accounting_card_transactions')
-    .select('id,connection_id,company_id,provider_code,external_transaction_id,transaction_date,description,merchant_name,direction,amount,currency,match_status,linked_movement_id')
-    .eq('is_deleted', false)
-
-  if (filters.matchStatus) query = query.eq('match_status', filters.matchStatus)
-  if (filters.companyId) query = query.eq('company_id', filters.companyId)
-  return query.order('transaction_date', { ascending: false })
+  return query.order('movement_date', { ascending: false })
 }

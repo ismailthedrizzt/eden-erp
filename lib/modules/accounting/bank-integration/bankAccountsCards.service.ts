@@ -54,6 +54,26 @@ export interface BankCardRow {
   status: string
 }
 
+export interface BankAutomationPreviewPayload {
+  id?: string
+  company_id?: string | null
+  bank_name?: string | null
+  provider_code?: string | null
+  credential_id?: string | null
+  environment?: string | null
+  base_url?: string | null
+  credentials?: {
+    clientId?: string
+    clientSecret?: string
+    tokenEndpoint?: string
+    consentId?: string
+    unitNum?: string
+    accountNum?: string
+    IBAN?: string
+    tokenAuthMethod?: string
+  }
+}
+
 export const bankAccountsCardsService = {
   getConnections() {
     return apiClient.get<{ data: BankConnectionRow[] }>('/api/accounting/bank-connections', { useCache: false })
@@ -75,6 +95,9 @@ export const bankAccountsCardsService = {
   },
   syncConnection(id: string) {
     return apiClient.post<{ data: any }>(`/api/accounting/bank-connections/${id}/sync`, undefined, { useCache: false })
+  },
+  previewAutomation(payload: BankAutomationPreviewPayload) {
+    return apiClient.post<{ data: { providerCode: string; bankName?: string | null; connectionStatus: string; accounts: Array<Record<string, any>>; providerStatus?: string } }>('/api/accounting/bank-connections/automation-preview', payload as unknown as Record<string, unknown>, { useCache: false })
   },
   getAccounts(connectionId: string) {
     return apiClient.get<{ data: BankAccountRow[] }>(`/api/accounting/bank-connections/${connectionId}/accounts`, { useCache: false })

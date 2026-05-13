@@ -1,10 +1,5 @@
 import { GenericBankProvider } from '../GenericBankProvider'
 
-export class GarantiProvider extends GenericBankProvider {
-  readonly code = 'garanti'
-  readonly displayName = 'Garanti BBVA'
-}
-
 export class IsBankasiProvider extends GenericBankProvider {
   readonly code = 'isbankasi'
   readonly displayName = 'İş Bankası'

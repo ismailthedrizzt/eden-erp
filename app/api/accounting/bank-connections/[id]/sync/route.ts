@@ -12,12 +12,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
   if (permission instanceof NextResponse) return permission
 
   try {
-    const { data: connection } = await supabase.from('bank_connections').select('id,provider_code,credential_id').eq('id', id).maybeSingle()
-    if (connection) {
-      await supabase.from('bank_connections').update({ last_sync_at: new Date().toISOString(), connection_status: 'connected' }).eq('id', id)
-      return NextResponse.json({ data: { connectionId: id, providerCode: connection.provider_code, bankTransactionsUpserted: 0, cardTransactionsUpserted: 0, nextCursor: null } })
-    }
-
     const service = new BankSyncService(supabase as any)
     const summary = await service.syncConnection(id)
     return NextResponse.json({ data: summary })

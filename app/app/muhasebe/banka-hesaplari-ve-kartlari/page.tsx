@@ -10,6 +10,7 @@ import { usePermissions } from '@/lib/security/permissionStore'
 import { ACCOUNTING_PERMISSIONS } from '@/lib/modules/accounting/shared/accounting.permissions'
 import {
   bankAccountsCardsService,
+  type BankAutomationPreviewPayload,
   type BankAccountRow,
   type BankCardRow,
   type BankConnectionRow,
@@ -18,6 +19,25 @@ import {
 type PageState = 'list' | 'view' | 'create' | 'edit'
 type ToastState = { type: 'success' | 'error' | 'warning'; title?: string; message: string }
 type TabKey = 'genel' | 'hesaplar' | 'kartlar' | 'entegrasyon' | 'belgeler' | 'gecmis'
+type CompanyOption = { value: string; label: string }
+type AutomationDraft = {
+  clientId: string
+  clientSecret: string
+  tokenEndpoint: string
+  consentId: string
+  unitNum: string
+  accountNum: string
+  IBAN: string
+  tokenAuthMethod: string
+}
+
+const BANK_AUTOMATIONS: Record<string, { label: string; baseUrl: string; tokenEndpoint: string }> = {
+  garanti: {
+    label: 'Garanti BBVA Account Information',
+    baseUrl: 'https://apis.garantibbva.com.tr:443',
+    tokenEndpoint: 'https://apis.garantibbva.com.tr:443/oauth2/token',
+  },
+}
 
 const PROVIDERS = [
   ['garanti', 'Garanti BBVA'],
@@ -66,6 +86,7 @@ export default function BankAccountsCardsPage() {
   const [rows, setRows] = useState<BankConnectionRow[]>([])
   const [selected, setSelected] = useState<(BankConnectionRow & { accounts?: BankAccountRow[]; cards?: BankCardRow[] }) | null>(null)
   const [activeTab, setActiveTab] = useState<TabKey>('genel')
+  const [companies, setCompanies] = useState<CompanyOption[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [toast, setToast] = useState<ToastState | null>(null)
@@ -84,6 +105,7 @@ export default function BankAccountsCardsPage() {
 
   useEffect(() => {
     loadRows()
+    loadCompanies().then(setCompanies).catch(() => setCompanies([]))
   }, [])
 
   const tableData = rows.map(row => ({
@@ -129,17 +151,24 @@ export default function BankAccountsCardsPage() {
     setActiveTab('genel')
   }
 
-  const saveConnection = async (payload: Partial<BankConnectionRow>) => {
+  const saveConnection = async (payload: Partial<BankConnectionRow>, automatedAccounts?: Partial<BankAccountRow>[]) => {
     setSaving(true)
     try {
       const result = pageState === 'create'
         ? await bankAccountsCardsService.createConnection(payload)
         : await bankAccountsCardsService.updateConnection(selected!.id, payload)
+      if (automatedAccounts?.length) {
+        for (const account of automatedAccounts) {
+          await bankAccountsCardsService.createAccount(result.data.id, account)
+        }
+      }
       setToast({ type: 'success', title: 'Kaydedildi', message: 'Banka bağlantısı kaydedildi.' })
       await loadRows()
       await openConnection(result.data, 'view')
+      return result.data
     } catch (error) {
       setToast({ type: 'error', title: 'Kaydedilemedi', message: error instanceof Error ? error.message : 'İşlem tamamlanamadı.' })
+      return undefined
     } finally {
       setSaving(false)
     }
@@ -181,6 +210,7 @@ export default function BankAccountsCardsPage() {
         <ConnectionForm
           mode={pageState}
           selected={selected}
+          companies={companies}
           activeTab={activeTab}
           setActiveTab={setActiveTab}
           saving={saving}
@@ -208,6 +238,7 @@ function ConnectionActions({ row }: { row: any }) {
 function ConnectionForm({
   mode,
   selected,
+  companies,
   activeTab,
   setActiveTab,
   saving,
@@ -219,19 +250,82 @@ function ConnectionForm({
 }: {
   mode: PageState
   selected: BankConnectionRow & { accounts?: BankAccountRow[]; cards?: BankCardRow[] }
+  companies: CompanyOption[]
   activeTab: TabKey
   setActiveTab: (tab: TabKey) => void
   saving: boolean
   canEdit: boolean
-  onSave: (payload: Partial<BankConnectionRow>) => void
+  onSave: (payload: Partial<BankConnectionRow>, automatedAccounts?: Partial<BankAccountRow>[]) => Promise<BankConnectionRow | void>
   onModeChange: (mode: PageState) => void
   onReload: () => void
   onToast: (toast: ToastState) => void
 }) {
   const [form, setForm] = useState<Partial<BankConnectionRow>>(selected)
+  const [automation, setAutomation] = useState<AutomationDraft>(() => createAutomationDraft(selected.provider_code, selected.base_url))
+  const [automationAccounts, setAutomationAccounts] = useState<Partial<BankAccountRow>[]>([])
+  const [automationLoading, setAutomationLoading] = useState(false)
   const readOnly = mode === 'view'
 
-  useEffect(() => setForm(selected), [selected])
+  useEffect(() => {
+    setForm(selected)
+    setAutomation(createAutomationDraft(selected.provider_code, selected.base_url))
+    setAutomationAccounts([])
+  }, [selected])
+
+  const updateForm = (patch: Partial<BankConnectionRow>) => setForm(prev => ({ ...prev, ...patch }))
+  const automationConfig = BANK_AUTOMATIONS[String(form.provider_code || '')]
+  const canRunAutomation = !!automationConfig && !readOnly
+
+  const handleProviderChange = (providerCode: string) => {
+    const config = BANK_AUTOMATIONS[providerCode]
+    updateForm({
+      provider_code: providerCode,
+      bank_name: providerLabel(providerCode),
+      integration_type: config ? 'api' : providerCode === 'manual' ? 'manual' : form.integration_type,
+      base_url: config?.baseUrl || form.base_url,
+      connection_status: config ? 'pending_test' : form.connection_status,
+    })
+    setAutomation(createAutomationDraft(providerCode, config?.baseUrl || form.base_url))
+    setAutomationAccounts([])
+  }
+
+  const handleAutomation = async () => {
+    if (!automationConfig) {
+      onToast({ type: 'warning', title: 'Otomasyon yok', message: 'Seçili banka için otomasyon henüz tanımlı değil.' })
+      return
+    }
+
+    setAutomationLoading(true)
+    try {
+      const payload: BankAutomationPreviewPayload = {
+        id: selected.id || undefined,
+        company_id: form.company_id || null,
+        bank_name: form.bank_name || providerLabel(form.provider_code),
+        provider_code: form.provider_code,
+        credential_id: form.credential_id || null,
+        environment: form.environment || 'sandbox',
+        base_url: form.base_url || automationConfig.baseUrl,
+        credentials: automation,
+      }
+      const result = await bankAccountsCardsService.previewAutomation(payload)
+      const accounts = (result.data.accounts || []).map(mapProviderAccountToForm)
+      setAutomationAccounts(accounts)
+      updateForm({
+        bank_name: result.data.bankName || form.bank_name || providerLabel(form.provider_code),
+        connection_status: result.data.connectionStatus,
+        integration_type: 'api',
+        base_url: form.base_url || automationConfig.baseUrl,
+      })
+      onToast({ type: 'success', title: 'Otomasyon tamamlandı', message: `${accounts.length} hesap bilgisi forma alındı.` })
+      setActiveTab('genel')
+    } catch (error) {
+      onToast({ type: 'error', title: 'Otomasyon başarısız', message: error instanceof Error ? error.message : 'Hesap bilgileri alınamadı.' })
+    } finally {
+      setAutomationLoading(false)
+    }
+  }
+
+  const handleSave = () => onSave(form, automationAccounts.length ? automationAccounts : undefined)
 
   const tabs: Array<{ key: TabKey; label: string; icon: React.ReactNode }> = [
     { key: 'genel', label: 'Genel', icon: <Building2 size={15} /> },
@@ -253,7 +347,7 @@ function ConnectionForm({
           </div>
           <div className="flex flex-wrap gap-2">
             {mode === 'view' && canEdit && <button className="btn" onClick={() => onModeChange('edit')}>Düzenle</button>}
-            {mode !== 'view' && <button disabled={saving} className="btn btn-primary" onClick={() => onSave(form)}>{saving ? 'Kaydediliyor...' : 'Kaydet'}</button>}
+            {mode !== 'view' && <button disabled={saving} className="btn btn-primary" onClick={handleSave}>{saving ? 'Kaydediliyor...' : 'Kaydet'}</button>}
             {selected.id && <button className="btn" onClick={() => testConnection(selected.id, onToast, onReload)}><TestTube2 size={16} />Test Et</button>}
             {selected.id && <button className="btn" onClick={() => syncConnection(selected.id, onToast, onReload)}><RefreshCw size={16} />Senkronize Et</button>}
           </div>
@@ -271,14 +365,28 @@ function ConnectionForm({
       {activeTab === 'genel' && (
         <section className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-            <TextField label="Banka Adı" value={form.bank_name} readOnly={readOnly} onChange={value => setForm({ ...form, bank_name: value })} />
-            <TextField label="Banka Kodu" value={form.provider_code} readOnly={readOnly} onChange={value => setForm({ ...form, provider_code: value })} />
-            <SelectField label="Provider" value={form.provider_code} options={PROVIDERS} disabled={readOnly} onChange={value => setForm({ ...form, provider_code: value })} />
-            <SelectField label="Entegrasyon Tipi" value={form.integration_type} options={INTEGRATION_TYPES} disabled={readOnly} onChange={value => setForm({ ...form, integration_type: value })} />
-            <SelectField label="Bağlantı Durumu" value={form.connection_status} options={CONNECTION_STATUSES} disabled={readOnly} onChange={value => setForm({ ...form, connection_status: value })} />
-            <SelectField label="Durum" value={form.status} options={[['active', 'Aktif'], ['passive', 'Pasif']]} disabled={readOnly} onChange={value => setForm({ ...form, status: value })} />
-            <TextField label="Açıklama" value={form.notes} readOnly={readOnly} onChange={value => setForm({ ...form, notes: value })} className="md:col-span-2 xl:col-span-3" />
+            <SelectField label="Şirket" value={form.company_id || ''} options={[['', 'Şirket seçiniz'], ...companies.map(company => [company.value, company.label])]} disabled={readOnly} onChange={value => updateForm({ company_id: value || null })} />
+            <SelectField label="Provider" value={form.provider_code} options={PROVIDERS} disabled={readOnly} onChange={handleProviderChange} />
+            <TextField label="Banka Adı" value={form.bank_name} readOnly={readOnly} onChange={value => updateForm({ bank_name: value })} />
+            <TextField label="Credential Reference" value={form.credential_id} readOnly={readOnly} onChange={value => updateForm({ credential_id: value })} />
+            <TextField label="Base URL" value={form.base_url || automationConfig?.baseUrl} readOnly={readOnly} onChange={value => updateForm({ base_url: value })} />
+            <SelectField label="Entegrasyon Tipi" value={form.integration_type} options={INTEGRATION_TYPES} disabled={readOnly} onChange={value => updateForm({ integration_type: value })} />
+            <SelectField label="Bağlantı Durumu" value={form.connection_status} options={CONNECTION_STATUSES} disabled={readOnly} onChange={value => updateForm({ connection_status: value })} />
+            <SelectField label="Durum" value={form.status} options={[['active', 'Aktif'], ['passive', 'Pasif']]} disabled={readOnly} onChange={value => updateForm({ status: value })} />
+            <TextField label="Açıklama" value={form.notes} readOnly={readOnly} onChange={value => updateForm({ notes: value })} className="md:col-span-2 xl:col-span-3" />
           </div>
+          {!readOnly && (
+            <AutomationPanel
+              providerCode={form.provider_code}
+              automation={automation}
+              accounts={automationAccounts}
+              loading={automationLoading}
+              disabled={!canRunAutomation}
+              disabledReason={automationConfig ? undefined : 'Seçili banka için hesap bilgisi otomasyonu henüz tanımlı değil.'}
+              onChange={patch => setAutomation(prev => ({ ...prev, ...patch }))}
+              onRun={handleAutomation}
+            />
+          )}
           <p className="mt-3 text-xs text-gray-500">Şube bilgisi bağlantıda değil, hesap seviyesinde tutulur.</p>
         </section>
       )}
@@ -422,6 +530,76 @@ function IntegrationTab({ connection }: { connection: BankConnectionRow }) {
   )
 }
 
+function AutomationPanel({
+  providerCode,
+  automation,
+  accounts,
+  loading,
+  disabled,
+  disabledReason,
+  onChange,
+  onRun,
+}: {
+  providerCode?: string | null
+  automation: AutomationDraft
+  accounts: Partial<BankAccountRow>[]
+  loading: boolean
+  disabled: boolean
+  disabledReason?: string
+  onChange: (patch: Partial<AutomationDraft>) => void
+  onRun: () => void
+}) {
+  const config = providerCode ? BANK_AUTOMATIONS[providerCode] : undefined
+
+  return (
+    <div className="mt-4 rounded-lg border border-blue-100 bg-blue-50/60 p-4 dark:border-blue-900/60 dark:bg-blue-950/20">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Banka otomasyonu</h3>
+          <p className="mt-1 text-xs text-gray-600 dark:text-gray-300">
+            {config ? `${config.label} ile hesap bilgileri çekilir.` : 'Seçili banka için otomasyon henüz tanımlı değil.'}
+          </p>
+        </div>
+        <button
+          type="button"
+          className="btn btn-primary"
+          disabled={disabled || loading}
+          title={disabledReason}
+          onClick={onRun}
+        >
+          <DatabaseZap size={16} />
+          {loading ? 'Çekiliyor...' : 'Otomatik Doldur'}
+        </button>
+      </div>
+
+      <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+        <TextField label="Client ID" value={automation.clientId} onChange={value => onChange({ clientId: value })} />
+        <TextField label="Client Secret" value={automation.clientSecret} type="password" onChange={value => onChange({ clientSecret: value })} />
+        <TextField label="Consent ID" value={automation.consentId} onChange={value => onChange({ consentId: value })} />
+        <TextField label="Token Endpoint" value={automation.tokenEndpoint} onChange={value => onChange({ tokenEndpoint: value })} />
+        <TextField label="Şube No" value={automation.unitNum} onChange={value => onChange({ unitNum: value.replace(/\D/g, '') })} />
+        <TextField label="Hesap No" value={automation.accountNum} onChange={value => onChange({ accountNum: value.replace(/\D/g, '') })} />
+        <TextField label="IBAN" value={automation.IBAN} onChange={value => onChange({ IBAN: value.toUpperCase().replace(/\s/g, '') })} />
+        <SelectField label="Token Kimlik Doğrulama" value={automation.tokenAuthMethod} options={[['body', 'Body'], ['basic', 'Basic Auth']]} onChange={value => onChange({ tokenAuthMethod: value })} />
+      </div>
+
+      {accounts.length > 0 && (
+        <div className="mt-4 rounded-md border border-blue-100 bg-white p-3 dark:border-blue-900 dark:bg-gray-950">
+          <div className="text-xs font-medium text-gray-500">Otomasyonla alınan hesaplar</div>
+          <div className="mt-2 grid gap-2 md:grid-cols-2">
+            {accounts.map((account, index) => (
+              <div key={`${account.iban || account.account_no || index}`} className="rounded-md border border-gray-100 p-2 text-xs dark:border-gray-800">
+                <div className="font-semibold text-gray-900 dark:text-white">{account.account_name || account.iban || account.account_no}</div>
+                <div className="mt-1 text-gray-500">{account.iban || account.account_no || '-'} · {account.currency || 'TRY'} · {account.last_balance ?? '-'}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
 function ActionBar({ onRefresh }: { onRefresh: () => void }) {
   return (
     <div className="flex flex-wrap justify-end gap-2">
@@ -504,6 +682,44 @@ function integrationLabel(value?: string | null) {
 
 function connectionStatusLabel(value?: string | null) {
   return CONNECTION_STATUSES.find(([key]) => key === value)?.[1] || value || '-'
+}
+
+function createAutomationDraft(providerCode?: string | null, baseUrl?: string | null): AutomationDraft {
+  const config = providerCode ? BANK_AUTOMATIONS[providerCode] : undefined
+  return {
+    clientId: '',
+    clientSecret: '',
+    tokenEndpoint: config?.tokenEndpoint || (baseUrl ? `${String(baseUrl).replace(/\/+$/, '')}/oauth2/token` : ''),
+    consentId: '',
+    unitNum: '',
+    accountNum: '',
+    IBAN: '',
+    tokenAuthMethod: 'body',
+  }
+}
+
+function mapProviderAccountToForm(account: Record<string, any>): Partial<BankAccountRow> {
+  return {
+    iban: account.iban || null,
+    account_no: account.accountNo || null,
+    account_name: account.accountName || account.iban || account.accountNo || 'Banka Hesabı',
+    branch_name: account.branchName || null,
+    branch_code: account.branchCode || null,
+    currency: account.currency || 'TRY',
+    account_type: account.accountType || 'vadesiz',
+    last_balance: account.lastBalance ?? account.availableBalance ?? null,
+    status: account.status === 'passive' ? 'passive' : 'active',
+  }
+}
+
+async function loadCompanies(): Promise<CompanyOption[]> {
+  const response = await fetch('/api/sirketler?is_active=true', { cache: 'no-store' })
+  if (!response.ok) return []
+  const payload = await response.json()
+  return (payload.data || []).map((company: any) => ({
+    value: company.id,
+    label: company.kisa_unvan || company.ticari_unvan || 'Şirket',
+  }))
 }
 
 function latestSyncText(rows: BankConnectionRow[]) {

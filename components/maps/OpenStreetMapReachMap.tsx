@@ -26,7 +26,7 @@ const MAPS = {
   world: {
     label: 'Dünya erişimi',
     center: { lat: 24.0, lng: 18.0 },
-    zoom: 2,
+    zoom: 1,
     bounds: { north: 72, south: -45, west: -130, east: 145 },
   },
 }

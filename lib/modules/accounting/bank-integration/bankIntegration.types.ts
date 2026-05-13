@@ -13,14 +13,17 @@ export type BankMatchStatus = 'waiting' | 'matched' | 'mismatch_amount' | 'misma
 export interface BankConnection {
   id: string
   company_id?: string | null
+  bank_name?: string | null
   provider_code: BankProviderCode | string
   provider_display_name: string
   connection_name?: string | null
   connection_type: 'bank' | 'card' | 'bank_and_card'
-  credential_id: string
+  credential_id?: string | null
   status: 'active' | 'paused' | 'revoked' | 'error'
   sync_cursor?: string | null
   metadata_json?: Record<string, unknown>
+  base_url?: string | null
+  environment?: string | null
 }
 
 export interface BankProviderCredentials {
@@ -31,7 +34,23 @@ export interface BankProviderCredentials {
   tokenEndpoint?: string
   apiBaseUrl?: string
   scopes?: string[]
+  consentId?: string
   extra?: Record<string, unknown>
+}
+
+export interface ProviderBankAccount {
+  externalAccountId?: string | null
+  iban?: string | null
+  accountNo?: string | null
+  accountName?: string | null
+  branchCode?: string | null
+  branchName?: string | null
+  currency: string
+  accountType?: string | null
+  lastBalance?: number | null
+  availableBalance?: number | null
+  status?: string | null
+  raw?: Record<string, unknown>
 }
 
 export interface BankProviderSyncInput {
@@ -75,6 +94,7 @@ export interface ProviderCardTransaction {
 }
 
 export interface BankProviderSyncResult {
+  bankAccounts?: ProviderBankAccount[]
   bankTransactions: ProviderBankTransaction[]
   cardTransactions: ProviderCardTransaction[]
   nextCursor?: string | null
@@ -84,6 +104,7 @@ export interface BankProviderSyncResult {
 export interface BankSyncSummary {
   connectionId: string
   providerCode: string
+  bankAccountsUpserted?: number
   bankTransactionsUpserted: number
   cardTransactionsUpserted: number
   nextCursor?: string | null
