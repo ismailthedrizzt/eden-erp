@@ -25,6 +25,11 @@ interface ImportOptions {
 
 const TRUSTED_SOURCES = [
   {
+    name: 'Ticaret Bakanlığı Esnaf ve Sanatkar NACE Kodları ve Meslek Listesi',
+    url: 'https://ticaret.gov.tr/data/5d418c7e13b87639ac9dffe0/Esnaf%20ve%20Sanatk%C3%A2r%20NACE%20Kodlar%C4%B1%20ve%20Meslek%20Listesi%2029.01.2026.xlsx',
+    referenceUrl: 'https://ticaret.gov.tr/esnaf-sanatkarlar/esnaf-ve-sanatkar-meslek-kollari/sektor-meslek-nace-listeleri/guncel-liste',
+  },
+  {
     name: 'Ticaret Bakanlığı Güncel NACE Rev.2.1 Listesi',
     url: 'https://ticaret.gov.tr/esnaf-sanatkarlar/esnaf-ve-sanatkar-meslek-kollari/sektor-meslek-nace-listeleri/guncel-liste',
   },
@@ -32,6 +37,43 @@ const TRUSTED_SOURCES = [
     name: 'Ticaret Bakanlığı NACE Güncelleme Duyurusu',
     url: 'https://esnafkoop.ticaret.gov.tr/duyurular/esnaf-ve-sanatkar-meslek-kollari-ve-nace-listesi-guncellendi',
   },
+]
+
+const CODE_COLUMN_CANDIDATES = [
+  'nace rev. 2.1 kodu',
+  'nace rev.2.1 kodu',
+  'nace kodu',
+  'nace rev.2 altili kod',
+  'nace rev.2 altılı kod',
+  'altili kod',
+  'altılı kod',
+  'kod',
+]
+
+const DESCRIPTION_COLUMN_CANDIDATES = [
+  'nace rev.2.1 tanim',
+  'nace rev.2.1 tanım',
+  'nace tanimi',
+  'nace tanımı',
+  'faaliyet tanimi',
+  'faaliyet tanımı',
+  'nace rev.2 altili tanim',
+  'nace rev.2 altılı tanım',
+  'meslek tanim',
+  'meslek tanım',
+  'tanim',
+  'tanım',
+  'aciklama',
+  'açıklama',
+]
+
+const HAZARD_COLUMN_CANDIDATES = [
+  'tehlike sinifi',
+  'tehlike sınıfı',
+  'sinifi',
+  'sınıfı',
+  'ek-1 tehlike sinifi',
+  'ek-1 tehlike sınıfı',
 ]
 
 export class NaceReferenceImportService {
@@ -50,8 +92,8 @@ export class NaceReferenceImportService {
         : []
 
     if (!rows.length) {
-      await this.log('failed', importOptions, 'NACE referans listesi oluşturulamadı. Lütfen admin tarafından resmi liste yükleyin.')
-      return { imported: 0, updated: 0, rows: [] as NaceReferenceRow[], warning: 'NACE referans listesi oluşturulamadı. Lütfen admin tarafından resmi liste yükleyin.' }
+      await this.log('failed', importOptions, 'NACE referans listesi oluşturulamadı. Resmi Ticaret Bakanlığı listesi okunamadı.')
+      return { imported: 0, updated: 0, rows: [] as NaceReferenceRow[], warning: 'NACE referans listesi oluşturulamadı. Resmi Ticaret Bakanlığı listesi okunamadı.' }
     }
 
     const result = await this.upsertRows(rows)
@@ -134,7 +176,7 @@ export class NaceReferenceUpdateService {
         return importService.importBuffer(buffer, discovered.filename, {
           sourceName: source.name,
           sourceUrl: discovered.url,
-          sourceReference: source.url,
+          sourceReference: 'referenceUrl' in source ? source.referenceUrl : source.url,
         })
       } catch (error) {
         await this.log('failed', source, error instanceof Error ? error.message : 'Kaynak okunamadı')
@@ -144,7 +186,7 @@ export class NaceReferenceUpdateService {
     return {
       imported: 0,
       updated: 0,
-      warning: 'NACE referans listesi oluşturulamadı. Lütfen admin tarafından resmi liste yükleyin.',
+      warning: 'NACE referans listesi oluşturulamadı. Resmi Ticaret Bakanlığı listesi okunamadı.',
     }
   }
 
@@ -190,9 +232,9 @@ function parseCsv(text: string, options: ImportOptions) {
   const lines = text.split(/\r?\n/).filter(line => line.trim())
   if (lines.length < 2) return []
   const headers = splitCsvLine(lines[0]).map(normalizeHeader)
-  const codeIndex = findColumn(headers, options.columnMap?.code, ['nace kodu', 'nace rev.2 altili kod', 'nace rev.2_altılı kod', 'altili kod', 'kod'])
-  const descIndex = findColumn(headers, options.columnMap?.description, ['faaliyet tanimi', 'faaliyet tanımı', 'nace rev.2 altili tanim', 'nace rev.2_altılı tanım', 'tanim', 'tanım', 'aciklama', 'açıklama'])
-  const hazardIndex = findColumn(headers, options.columnMap?.hazardClass, ['tehlike sinifi', 'tehlike sınıfı', 'sinifi', 'sınıfı', 'ek-1 tehlike sinifi'])
+  const codeIndex = findColumn(headers, options.columnMap?.code, CODE_COLUMN_CANDIDATES)
+  const descIndex = findColumn(headers, options.columnMap?.description, DESCRIPTION_COLUMN_CANDIDATES)
+  const hazardIndex = findColumn(headers, options.columnMap?.hazardClass, HAZARD_COLUMN_CANDIDATES)
   if (codeIndex < 0 || descIndex < 0) return []
 
   return lines.slice(1)
@@ -207,8 +249,12 @@ async function parseXlsx(buffer: Buffer, options: ImportOptions) {
     const workbook = xlsx.read(buffer, { type: 'buffer' })
     const parsedRows = workbook.SheetNames.flatMap((sheetName: string) => {
       const sheet = workbook.Sheets[sheetName]
-      const rows = xlsx.utils.sheet_to_json(sheet, { defval: '' }) as Array<Record<string, unknown>>
-      return rows.map(row => normalizeNaceJsonRow(row, options)).filter((row): row is NaceReferenceRow => !!row)
+      const objectRows = xlsx.utils.sheet_to_json(sheet, { defval: '' }) as Array<Record<string, unknown>>
+      const fromObjects = objectRows.map(row => normalizeNaceJsonRow(row, options)).filter((row): row is NaceReferenceRow => !!row)
+      if (fromObjects.length > 0) return fromObjects
+
+      const matrixRows = xlsx.utils.sheet_to_json(sheet, { header: 1, defval: '' }) as unknown[][]
+      return normalizeNaceMatrixRows(matrixRows, options)
     })
     return dedupeRows(parsedRows)
   } catch {
@@ -218,10 +264,29 @@ async function parseXlsx(buffer: Buffer, options: ImportOptions) {
 
 function normalizeNaceJsonRow(row: Record<string, unknown>, options: ImportOptions) {
   const normalized = Object.fromEntries(Object.entries(row).map(([key, value]) => [normalizeHeader(key), value]))
-  const code = readMappedValue(normalized, options.columnMap?.code, ['nace kodu', 'nace rev.2 altili kod', 'nace rev.2_altılı kod', 'altili kod', 'kod'])
-  const desc = readMappedValue(normalized, options.columnMap?.description, ['faaliyet tanimi', 'faaliyet tanımı', 'nace rev.2 altili tanim', 'nace rev.2_altılı tanım', 'tanim', 'tanım', 'aciklama', 'açıklama'])
-  const hazard = readMappedValue(normalized, options.columnMap?.hazardClass, ['tehlike sinifi', 'tehlike sınıfı', 'sinifi', 'sınıfı', 'ek-1 tehlike sinifi'])
+  const code = readMappedValue(normalized, options.columnMap?.code, CODE_COLUMN_CANDIDATES)
+  const desc = readMappedValue(normalized, options.columnMap?.description, DESCRIPTION_COLUMN_CANDIDATES)
+  const hazard = readMappedValue(normalized, options.columnMap?.hazardClass, HAZARD_COLUMN_CANDIDATES)
   return normalizeNaceRow(code, desc, hazard, options)
+}
+
+function normalizeNaceMatrixRows(rows: unknown[][], options: ImportOptions) {
+  const headerRowIndex = rows.findIndex(row => {
+    const headers = row.map(cell => normalizeHeader(String(cell || '')))
+    return findColumn(headers, options.columnMap?.code, CODE_COLUMN_CANDIDATES) >= 0 &&
+      findColumn(headers, options.columnMap?.description, DESCRIPTION_COLUMN_CANDIDATES) >= 0
+  })
+  if (headerRowIndex < 0) return []
+
+  const headers = rows[headerRowIndex].map(cell => normalizeHeader(String(cell || '')))
+  const codeIndex = findColumn(headers, options.columnMap?.code, CODE_COLUMN_CANDIDATES)
+  const descIndex = findColumn(headers, options.columnMap?.description, DESCRIPTION_COLUMN_CANDIDATES)
+  const hazardIndex = findColumn(headers, options.columnMap?.hazardClass, HAZARD_COLUMN_CANDIDATES)
+  if (codeIndex < 0 || descIndex < 0) return []
+
+  return rows.slice(headerRowIndex + 1)
+    .map(row => normalizeNaceRow(row[codeIndex], row[descIndex], hazardIndex >= 0 ? row[hazardIndex] : '', options))
+    .filter((row): row is NaceReferenceRow => !!row)
 }
 
 function normalizeNaceRow(codeValue: unknown, descriptionValue: unknown, hazardValue: unknown, options: ImportOptions): NaceReferenceRow | null {
@@ -241,8 +306,14 @@ function normalizeNaceRow(codeValue: unknown, descriptionValue: unknown, hazardV
 
 function normalizeNaceCode(value: unknown) {
   const text = String(value || '').trim().replace(',', '.')
-  const numeric = text.match(/\d{2}(?:\.\d{1,2}){0,2}/)?.[0] || ''
-  return numeric
+  const dotted = text.match(/\d{2}(?:\.\d{1,2}){0,2}/)?.[0]
+  if (dotted) return dotted
+
+  const digits = text.replace(/\D/g, '')
+  if (/^\d{6}$/.test(digits)) return `${digits.slice(0, 2)}.${digits.slice(2, 4)}.${digits.slice(4, 6)}`
+  if (/^\d{4}$/.test(digits)) return `${digits.slice(0, 2)}.${digits.slice(2, 4)}`
+  if (/^\d{2}$/.test(digits)) return digits
+  return ''
 }
 
 function normalizeHazardClass(value: unknown): NaceReferenceRow['hazard_class'] | null {

@@ -1,43 +1,109 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { DatabaseZap, FileUp, Save, Settings2 } from 'lucide-react'
+import { ListChecks, Settings2, SlidersHorizontal } from 'lucide-react'
+import { EntityForm, type FormField, type FormMode, type FormTab } from '@/components/ui/EntityForm'
 import { PageBanner } from '@/components/ui/PageBanner'
+import { SmartDataTable, type ColumnDef } from '@/components/ui/SmartDataTable'
+import { Toast } from '@/components/ui/Toast'
 import {
   systemParameterDefinitions,
-  uniqueSystemParameterModules,
-  uniqueSystemParameterPages,
   type SystemParameterDefinition,
 } from '@/lib/system/systemParameters.config'
 
 type ParameterRow = SystemParameterDefinition & {
+  id: string
   value: string
   updatedAt?: string | null
   descriptionOverride?: string | null
 }
 
-type Notice = { type: 'success' | 'error' | 'warning'; message: string } | null
+type ToastState = { type: 'success' | 'error' | 'warning'; title?: string; message: string }
+type PageMode = 'list' | 'view' | 'edit'
 
 export default function SystemParametersPage() {
   const [rows, setRows] = useState<ParameterRow[]>([])
-  const [moduleKey, setModuleKey] = useState('')
-  const [pageKey, setPageKey] = useState('')
-  const [notice, setNotice] = useState<Notice>(null)
+  const [selected, setSelected] = useState<ParameterRow | null>(null)
+  const [mode, setMode] = useState<PageMode>('list')
   const [loading, setLoading] = useState(true)
-  const [savingKey, setSavingKey] = useState<string | null>(null)
-  const [importing, setImporting] = useState(false)
-  const [file, setFile] = useState<File | null>(null)
+  const [saving, setSaving] = useState(false)
+  const [toast, setToast] = useState<ToastState | null>(null)
 
   useEffect(() => {
     loadParameters()
   }, [])
 
-  const modules = uniqueSystemParameterModules()
-  const pages = uniqueSystemParameterPages(moduleKey || undefined)
-  const filteredRows = useMemo(() => rows.filter(row =>
-    (!moduleKey || row.moduleKey === moduleKey) &&
-    (!pageKey || row.pageKey === pageKey)
-  ), [moduleKey, pageKey, rows])
+  const columns: ColumnDef[] = [
+    { key: 'moduleLabel', label: 'Modül', type: 'text', width: 150 },
+    { key: 'pageLabel', label: 'Sayfa', type: 'text', width: 160 },
+    { key: 'label', label: 'Parametre Adı', type: 'text', width: 260 },
+  ]
+
+  const tableRows = useMemo(() => rows.map(row => ({
+    ...row,
+    valueDisplay: formatParameterValue(row),
+  })), [rows])
+
+  const heroFields = useMemo<FormField[]>(() => [
+    {
+      name: 'moduleLabel',
+      label: 'Modül',
+      type: 'custom',
+      render: ({ value }) => <ReadOnlyField value={value} />,
+    },
+    {
+      name: 'pageLabel',
+      label: 'Sayfa',
+      type: 'custom',
+      render: ({ value }) => <ReadOnlyField value={value} />,
+    },
+    {
+      name: 'label',
+      label: 'Parametre Adı',
+      type: 'custom',
+      render: ({ value }) => <ReadOnlyField value={value} />,
+    },
+    {
+      name: 'value',
+      label: 'Değer',
+      type: 'custom',
+      required: true,
+      render: ({ value, onChange, readOnly }) => selected
+        ? <ParameterValueInput row={selected} value={value} onChange={onChange} readOnly={readOnly} />
+        : <ReadOnlyField value={value} />,
+    },
+    {
+      name: 'key',
+      label: 'Parametre Kodu',
+      type: 'custom',
+      colSpan: 2,
+      render: ({ value }) => <ReadOnlyField value={value} monospace />,
+    },
+  ], [selected])
+
+  const detailTabs = useMemo<FormTab[]>(() => [
+    {
+      id: 'enum-list',
+      label: 'Enum Listesi',
+      icon: <ListChecks size={16} />,
+      fields: [
+        {
+          name: 'enumOptions',
+          label: 'Enum Değerleri',
+          type: 'custom',
+          colSpan: 3,
+          render: () => selected ? <EnumOptionsList row={selected} /> : null,
+        },
+        {
+          name: 'descriptionOverride',
+          label: 'Açıklama',
+          type: 'textarea',
+          colSpan: 3,
+          placeholder: 'Parametre açıklaması',
+        },
+      ],
+    },
+  ], [selected])
 
   async function loadParameters() {
     setLoading(true)
@@ -45,219 +111,188 @@ export default function SystemParametersPage() {
       const response = await fetch('/api/settings/system-parameters', { cache: 'no-store' })
       const payload = await response.json().catch(() => ({}))
       if (!response.ok) throw new Error(payload.error || 'Parametreler alınamadı.')
-      setRows(payload.data || systemParameterDefinitions.map(item => ({ ...item, value: item.defaultValue })))
-      if (payload.warning) setNotice({ type: 'warning', message: payload.warning })
+      const nextRows = normalizeRows(payload.data)
+      setRows(nextRows)
+      setSelected(current => current ? nextRows.find(row => row.key === current.key) || current : current)
+      if (payload.warning) setToast({ type: 'warning', title: 'Uyarı', message: payload.warning })
     } catch (error) {
-      setRows(systemParameterDefinitions.map(item => ({ ...item, value: item.defaultValue })))
-      setNotice({ type: 'warning', message: error instanceof Error ? error.message : 'Varsayılan parametreler gösteriliyor.' })
+      setRows(normalizeRows())
+      setToast({ type: 'warning', title: 'Varsayılanlar', message: error instanceof Error ? error.message : 'Varsayılan parametreler gösteriliyor.' })
     } finally {
       setLoading(false)
     }
   }
 
-  async function saveParameter(row: ParameterRow) {
-    setSavingKey(row.key)
-    setNotice(null)
+  function openParameter(row: ParameterRow) {
+    setSelected(row)
+    setMode('view')
+  }
+
+  async function saveParameter(data: Record<string, any>) {
+    if (!selected) return
+    setSaving(true)
     try {
       const response = await fetch('/api/settings/system-parameters', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ key: row.key, value: row.value, description: row.descriptionOverride || row.description }),
+        body: JSON.stringify({
+          key: selected.key,
+          value: data.value,
+          description: data.descriptionOverride || selected.description || '',
+        }),
       })
       const payload = await response.json().catch(() => ({}))
       if (!response.ok) throw new Error(payload.error || 'Parametre kaydedilemedi.')
-      setNotice({ type: 'success', message: 'Parametre kaydedildi.' })
+      setToast({ type: 'success', title: 'Kaydedildi', message: 'Sistem parametresi güncellendi.' })
+      setMode('view')
       await loadParameters()
     } catch (error) {
-      setNotice({ type: 'error', message: error instanceof Error ? error.message : 'Parametre kaydedilemedi.' })
+      setToast({ type: 'error', title: 'Kaydedilemedi', message: error instanceof Error ? error.message : 'İşlem tamamlanamadı.' })
     } finally {
-      setSavingKey(null)
+      setSaving(false)
     }
-  }
-
-  async function generateNaceFromOfficialSource() {
-    setImporting(true)
-    setNotice(null)
-    try {
-      const response = await fetch('/api/reference/nace-codes/update-from-source', { method: 'POST' })
-      const payload = await response.json().catch(() => ({}))
-      if (!response.ok) throw new Error(payload.error || 'NACE listesi üretilemedi.')
-      const result = payload.data || {}
-      setNotice({
-        type: result.warning ? 'warning' : 'success',
-        message: result.warning || `NACE referansı güncellendi. Yeni: ${result.imported || 0}, Güncellenen: ${result.updated || 0}`,
-      })
-    } catch (error) {
-      setNotice({ type: 'error', message: error instanceof Error ? error.message : 'NACE listesi üretilemedi.' })
-    } finally {
-      setImporting(false)
-    }
-  }
-
-  async function uploadNaceFile() {
-    if (!file) {
-      setNotice({ type: 'warning', message: 'Lütfen XLSX veya CSV dosyası seçin.' })
-      return
-    }
-    setImporting(true)
-    setNotice(null)
-    try {
-      const formData = new FormData()
-      formData.set('file', file)
-      formData.set('sourceName', 'Sistem Parametreleri üzerinden yüklenen resmi NACE dosyası')
-      const response = await fetch('/api/reference/nace-codes/import', { method: 'POST', body: formData })
-      const payload = await response.json().catch(() => ({}))
-      if (!response.ok) throw new Error(payload.error || 'NACE dosyası yüklenemedi.')
-      const result = payload.data || {}
-      setNotice({ type: 'success', message: `NACE dosyası işlendi. Yeni: ${result.imported || 0}, Güncellenen: ${result.updated || 0}` })
-      setFile(null)
-    } catch (error) {
-      setNotice({ type: 'error', message: error instanceof Error ? error.message : 'NACE dosyası yüklenemedi.' })
-    } finally {
-      setImporting(false)
-    }
-  }
-
-  function updateRowValue(key: string, value: string) {
-    setRows(prev => prev.map(row => row.key === key ? { ...row, value } : row))
   }
 
   return (
-    <div className="space-y-5">
+    <div className="relative">
       <PageBanner
-        mode="list"
-        title="Sistem Parametreleri"
-        subtitle="Modül ve sayfa bazında firma enumları, referans listeleri ve uygulama parametrelerini yönetin."
+        mode={mode === 'list' ? 'list' : 'form'}
+        formMode={mode === 'edit' ? 'edit' : 'view'}
+        title={mode === 'list' ? 'Sistem Parametreleri' : selected?.label || 'Sistem Parametresi'}
+        subtitle="Kodlama aşamasında üretilen parametreleri modül ve sayfa bazında yönetin."
         icon={<Settings2 size={24} />}
+        onAddClick={mode === 'list' ? () => undefined : undefined}
+        addButtonDisabled
+        onBackClick={mode === 'list' ? undefined : () => { setMode('list'); setSelected(null) }}
       />
+      {toast && <Toast type={toast.type} title={toast.title} message={toast.message} onClose={() => setToast(null)} />}
 
-      {notice && (
-        <div className={`rounded-lg border px-4 py-3 text-sm ${
-          notice.type === 'success'
-            ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300'
-            : notice.type === 'error'
-              ? 'border-red-200 bg-red-50 text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300'
-              : 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-300'
-        }`}>
-          {notice.message}
-        </div>
-      )}
-
-      <section className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-        <div className="mb-3 flex flex-col justify-between gap-3 md:flex-row md:items-center">
-          <div>
-            <h2 className="text-sm font-semibold text-gray-900 dark:text-white">NACE Referans Listesi</h2>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              Resmi Ticaret Bakanlığı / TÜİK NACE listesi kaynak alınır. Tehlike sınıfı yoksa aşağıdaki varsayılan parametre uygulanır.
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <button type="button" className="btn" disabled={importing} onClick={generateNaceFromOfficialSource}>
-              <DatabaseZap size={16} />
-              Resmi Kaynaktan Üret
-            </button>
-            <label className="btn cursor-pointer">
-              <FileUp size={16} />
-              Dosya Seç
-              <input
-                type="file"
-                accept=".xlsx,.xls,.csv"
-                className="hidden"
-                onChange={(event) => setFile(event.target.files?.[0] || null)}
-              />
-            </label>
-            <button type="button" className="btn" disabled={importing || !file} onClick={uploadNaceFile}>
-              Yükle
-            </button>
-          </div>
-        </div>
-        {file && <p className="text-xs text-gray-500 dark:text-gray-400">Seçili dosya: {file.name}</p>}
-      </section>
-
-      <section className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-        <div className="mb-4 grid gap-3 md:grid-cols-2">
-          <label className="space-y-1 text-sm font-medium text-gray-700 dark:text-gray-200">
-            <span>Modül</span>
-            <select
-              value={moduleKey}
-              onChange={(event) => {
-                setModuleKey(event.target.value)
-                setPageKey('')
-              }}
-              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-950"
-            >
-              <option value="">Tüm Modüller</option>
-              {modules.map(module => <option key={module.key} value={module.key}>{module.label}</option>)}
-            </select>
-          </label>
-          <label className="space-y-1 text-sm font-medium text-gray-700 dark:text-gray-200">
-            <span>Sayfa</span>
-            <select
-              value={pageKey}
-              onChange={(event) => setPageKey(event.target.value)}
-              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-950"
-            >
-              <option value="">Tüm Sayfalar</option>
-              {pages.map(page => <option key={`${page.moduleKey}:${page.key}`} value={page.key}>{page.label}</option>)}
-            </select>
-          </label>
-        </div>
-
-        <div className="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-800">
-          <table className="w-full text-left text-sm">
-            <thead className="bg-gray-50 text-xs uppercase text-gray-500 dark:bg-gray-950 dark:text-gray-400">
-              <tr>
-                <th className="px-3 py-2">Parametre</th>
-                <th className="px-3 py-2">Modül / Sayfa</th>
-                <th className="px-3 py-2">Değer</th>
-                <th className="px-3 py-2">İşlem</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-              {loading && <tr><td colSpan={4} className="px-3 py-8 text-center text-gray-500">Yükleniyor...</td></tr>}
-              {!loading && filteredRows.map(row => (
-                <tr key={row.key} className="align-top">
-                  <td className="px-3 py-3">
-                    <div className="font-medium text-gray-900 dark:text-white">{row.label}</div>
-                    <div className="mt-1 max-w-xl text-xs text-gray-500 dark:text-gray-400">{row.descriptionOverride || row.description || row.key}</div>
-                  </td>
-                  <td className="px-3 py-3 text-gray-600 dark:text-gray-300">{row.moduleLabel} / {row.pageLabel}</td>
-                  <td className="px-3 py-3">
-                    <ParameterInput row={row} onChange={(value) => updateRowValue(row.key, value)} />
-                  </td>
-                  <td className="px-3 py-3">
-                    <button type="button" className="btn" disabled={savingKey === row.key} onClick={() => saveParameter(row)}>
-                      <Save size={15} />
-                      Kaydet
-                    </button>
-                  </td>
-                </tr>
-              ))}
-              {!loading && filteredRows.length === 0 && <tr><td colSpan={4} className="px-3 py-8 text-center text-gray-500">Bu filtrede parametre yok.</td></tr>}
-            </tbody>
-          </table>
-        </div>
-      </section>
+      {mode === 'list' ? (
+        <SmartDataTable
+          columns={columns}
+          data={tableRows}
+          loading={loading}
+          defaultView="list"
+          storageKey="system-parameters-catalog"
+          emptyText="Sistem parametresi bulunamadı"
+          onRefresh={loadParameters}
+          onRowClick={(row: any) => openParameter(row)}
+        />
+      ) : selected ? (
+        <EntityForm
+          mode={mode as FormMode}
+          entityName="Sistem Parametreleri"
+          entityNameSingular="Sistem Parametresi"
+          heroFields={heroFields}
+          tabs={detailTabs}
+          data={{
+            ...selected,
+            descriptionOverride: selected.descriptionOverride || selected.description || '',
+          }}
+          saving={saving}
+          canEdit
+          heroLeftPanel={<ParameterHeroPanel row={selected} />}
+          showHeroHeader
+          onSave={saveParameter}
+          onCancel={() => mode === 'edit' ? setMode('view') : setMode('list')}
+          onModeChange={(nextMode) => setMode(nextMode === 'create' ? 'edit' : nextMode)}
+        />
+      ) : null}
     </div>
   )
 }
 
-function ParameterInput({ row, onChange }: { row: ParameterRow; onChange: (value: string) => void }) {
-  const className = 'w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-950 dark:text-white'
+function normalizeRows(data?: ParameterRow[]) {
+  const byKey = new Map((data || []).map(item => [item.key, item]))
+  return systemParameterDefinitions.map(definition => {
+    const stored = byKey.get(definition.key)
+    return {
+      ...definition,
+      ...stored,
+      id: definition.key,
+      value: stored?.value ?? definition.defaultValue,
+    }
+  })
+}
+
+function formatParameterValue(row: ParameterRow) {
+  if (row.type === 'boolean') return String(row.value) === 'true' ? 'Açık' : 'Kapalı'
+  return row.value || row.defaultValue || '-'
+}
+
+function ParameterHeroPanel({ row }: { row: ParameterRow }) {
+  return (
+    <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+      <div className="flex items-center gap-3">
+        <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300">
+          <SlidersHorizontal size={20} />
+        </div>
+        <div className="min-w-0">
+          <p className="truncate text-sm font-semibold text-gray-900 dark:text-white">{row.label}</p>
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{row.moduleLabel} / {row.pageLabel}</p>
+        </div>
+      </div>
+      <div className="mt-4 rounded-lg bg-gray-50 p-3 text-xs text-gray-600 dark:bg-gray-950 dark:text-gray-300">
+        {row.descriptionOverride || row.description || 'Bu parametre kodlama aşamasında üretilir; ekleme kapalıdır, yalnızca değer güncellenir.'}
+      </div>
+    </div>
+  )
+}
+
+function ReadOnlyField({ value, monospace = false }: { value: unknown; monospace?: boolean }) {
+  return (
+    <div className={`min-h-10 rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-800 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-100 ${monospace ? 'font-mono' : ''}`}>
+      {String(value || '-')}
+    </div>
+  )
+}
+
+function ParameterValueInput({ row, value, onChange, readOnly }: { row: ParameterRow; value: any; onChange: (value: any) => void; readOnly: boolean }) {
+  const className = 'min-h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-400 disabled:cursor-not-allowed disabled:bg-gray-50 dark:border-gray-700 dark:bg-gray-950 dark:text-white dark:disabled:bg-gray-900'
   if (row.type === 'enum') {
     return (
-      <select value={row.value} onChange={(event) => onChange(event.target.value)} className={className}>
+      <select value={value ?? ''} disabled={readOnly} onChange={event => onChange(event.target.value)} className={className}>
         {(row.options || []).map(option => <option key={option} value={option}>{option}</option>)}
       </select>
     )
   }
+
   if (row.type === 'boolean') {
     return (
-      <select value={String(row.value)} onChange={(event) => onChange(event.target.value)} className={className}>
+      <select value={String(value ?? row.defaultValue)} disabled={readOnly} onChange={event => onChange(event.target.value)} className={className}>
         <option value="true">Açık</option>
         <option value="false">Kapalı</option>
       </select>
     )
   }
-  return <input type={row.type === 'number' ? 'number' : 'text'} value={row.value} onChange={(event) => onChange(event.target.value)} className={className} />
+
+  return (
+    <input
+      type={row.type === 'number' ? 'number' : 'text'}
+      value={value ?? ''}
+      readOnly={readOnly}
+      onChange={event => onChange(event.target.value)}
+      className={className}
+    />
+  )
+}
+
+function EnumOptionsList({ row }: { row: ParameterRow }) {
+  if (row.type !== 'enum' || !row.options?.length) {
+    return (
+      <div className="rounded-lg border border-dashed border-gray-200 bg-gray-50 px-4 py-5 text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-400">
+        Bu parametre için enum listesi tanımlı değil.
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex flex-wrap gap-2 rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-950">
+      {row.options.map(option => (
+        <span key={option} className="rounded-md border border-gray-200 bg-white px-2.5 py-1 text-sm font-medium text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100">
+          {option}
+        </span>
+      ))}
+    </div>
+  )
 }

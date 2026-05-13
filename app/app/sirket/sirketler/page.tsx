@@ -650,14 +650,11 @@ export default function SirketlerPage() {
                     render: () => {
                       const rows = Array.isArray((selectedSirket as any)?.company_nace_codes) ? (selectedSirket as any).company_nace_codes : []
                       const primary = rows.find((row: any) => row?.is_primary && row?.status !== 'passive')
-                      const hazardClass = primary?.nace_code?.hazard_class || (selectedSirket as any)?.public_sgk?.risk_class || (selectedSirket as any)?.tehlike_sinifi || 'Birincil NACE seçilmemiş'
+                      const hazardClass = formatHazardClass(primary?.nace_code?.hazard_class || (selectedSirket as any)?.public_sgk?.risk_class || (selectedSirket as any)?.tehlike_sinifi) || 'Birincil NACE seçilmemiş'
 
                       return (
                         <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm dark:border-gray-700 dark:bg-gray-900/50">
-                          <div className="flex flex-wrap items-center gap-3">
-                            <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Tehlike sınıfı</span>
-                            <span className="rounded-full bg-blue-50 px-3 py-1 text-sm font-semibold text-blue-700 dark:bg-blue-900/30 dark:text-blue-200">{hazardClass}</span>
-                          </div>
+                          <span className="inline-flex rounded-full bg-blue-50 px-3 py-1 text-sm font-semibold text-blue-700 dark:bg-blue-900/30 dark:text-blue-200">{hazardClass}</span>
                           <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">Tehlike sınıfı, birincil NACE koduna göre otomatik belirlenir.</p>
                         </div>
                       )
@@ -752,6 +749,15 @@ export default function SirketlerPage() {
       )}
     </div>
   )
+}
+
+function formatHazardClass(value: unknown) {
+  const normalized = String(value || '').trim().toLocaleLowerCase('tr-TR').replace(/_/g, ' ')
+  if (!normalized) return ''
+  if (normalized === 'az tehlikeli') return 'Az Tehlikeli'
+  if (normalized === 'tehlikeli') return 'Tehlikeli'
+  if (normalized === 'cok tehlikeli' || normalized === 'çok tehlikeli') return 'Çok Tehlikeli'
+  return String(value || '')
 }
 
 function extractLogoUrl(images: unknown) {

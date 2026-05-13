@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { requirePermission } from '@/lib/security/serverPermissions'
+import { NaceReferenceUpdateService } from '@/lib/modules/companies/nace/naceReference.service'
+
+const EMPTY_NACE_WARNING = 'NACE referans listesi oluşturulamadı. Resmi Ticaret Bakanlığı listesi okunamadı.'
 
 export async function GET(request: NextRequest) {
   const supabase = createServiceClient()
@@ -10,6 +13,30 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const queryText = searchParams.get('q')
 
+  const firstResult = await queryNaceCodes(supabase, queryText)
+  if (firstResult.error) {
+    if (isMissingTableError(firstResult.error)) {
+      return NextResponse.json({ data: [], warning: EMPTY_NACE_WARNING })
+    }
+    return NextResponse.json({ error: firstResult.error.message }, { status: 500 })
+  }
+
+  let data = firstResult.data || []
+  if (data.length === 0) {
+    const updateResult = await new NaceReferenceUpdateService(supabase).updateFromTrustedSources()
+    if (!updateResult.warning) {
+      const refreshed = await queryNaceCodes(supabase, queryText)
+      data = refreshed.data || []
+    }
+  }
+
+  return NextResponse.json({
+    data,
+    warning: data.length === 0 ? EMPTY_NACE_WARNING : undefined,
+  })
+}
+
+function queryNaceCodes(supabase: ReturnType<typeof createServiceClient>, queryText: string | null) {
   let query = supabase
     .from('nace_codes')
     .select('*')
@@ -18,22 +45,7 @@ export async function GET(request: NextRequest) {
     .limit(50)
 
   if (queryText) query = query.or(`nace_code.ilike.%${queryText}%,description.ilike.%${queryText}%`)
-
-  const { data, error } = await query
-  if (error) {
-    if (isMissingTableError(error)) {
-      return NextResponse.json({
-        data: [],
-        warning: 'NACE referans listesi oluşturulamadı. Lütfen admin tarafından resmi liste yükleyin.',
-      })
-    }
-    return NextResponse.json({ error: error.message }, { status: 500 })
-  }
-
-  return NextResponse.json({
-    data: data || [],
-    warning: (data || []).length === 0 ? 'NACE referans listesi oluşturulamadı. Lütfen admin tarafından resmi liste yükleyin.' : undefined,
-  })
+  return query
 }
 
 function isMissingTableError(error: any) {
