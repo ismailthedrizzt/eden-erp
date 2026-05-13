@@ -15,6 +15,7 @@ export function normalizeIntegrationParameter(body: Record<string, any>) {
     api_status: body.api_status || null,
     requires_certificate: !!body.requires_certificate,
     ip_whitelist_note: body.ip_whitelist_note || null,
+    settings_json: body.settings_json && typeof body.settings_json === 'object' ? body.settings_json : {},
     error_message: body.error_message || null,
     status: body.status || 'active',
     updated_at: new Date().toISOString(),

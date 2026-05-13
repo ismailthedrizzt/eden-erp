@@ -24,6 +24,7 @@ create table if not exists public.integration_parameters (
   api_status text,
   requires_certificate boolean not null default false,
   ip_whitelist_note text,
+  settings_json jsonb not null default '{}'::jsonb,
   error_message text,
   status text not null default 'active',
   created_at timestamptz not null default now(),
@@ -39,6 +40,18 @@ create table if not exists public.integration_parameters (
 create index if not exists idx_integration_parameters_status
 on public.integration_parameters (status, integration_type)
 where is_deleted = false;
+
+alter table if exists public.integration_parameters
+  add column if not exists settings_json jsonb not null default '{}'::jsonb;
+
+alter table if exists public.integration_parameters enable row level security;
+
+insert into public.module_licenses (module_key, module_name, is_active, environment) values
+  ('sistem', 'Sistem', true, 'all')
+on conflict (module_key) do update
+set module_name = excluded.module_name,
+    is_active = excluded.is_active,
+    updated_at = now();
 
 insert into public.submodule_licenses (module_key, submodule_key, submodule_name, is_active, environment) values
   ('sistem', 'entegrasyon-ayarlari', 'Entegrasyon Ayarları', true, 'all')

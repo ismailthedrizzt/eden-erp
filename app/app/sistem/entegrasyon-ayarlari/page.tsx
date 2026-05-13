@@ -1,19 +1,60 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { DatabaseZap, KeyRound, RefreshCw, TestTube2 } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { DatabaseZap } from 'lucide-react'
 import { PageBanner } from '@/components/ui/PageBanner'
 import { SmartDataTable, type ColumnDef } from '@/components/ui/SmartDataTable'
 import { Toast } from '@/components/ui/Toast'
 
 type ToastState = { type: 'success' | 'error' | 'warning'; title?: string; message: string }
+type PageMode = 'list' | 'edit'
+type IntegrationRow = Record<string, any> & {
+  catalog_key: string
+  module_name: string
+  page_name: string
+  integration_name: string
+  is_catalog: boolean
+}
 
-const BANK_OPTIONS = [['', 'Seçiniz'], ['Garanti BBVA', 'Garanti BBVA'], ['İş Bankası', 'İş Bankası'], ['Akbank', 'Akbank'], ['Yapı Kredi', 'Yapı Kredi'], ['QNB', 'QNB'], ['Ziraat', 'Ziraat'], ['Diğer', 'Diğer']]
 const ENVIRONMENTS = [['sandbox', 'Sandbox'], ['production', 'Production']]
 const CONNECTION_STATUSES = [['not_connected', 'Bağlı Değil'], ['connected', 'Bağlı'], ['pending_test', 'Test Bekliyor'], ['error', 'Hata'], ['expired', 'Yetki Süresi Doldu']]
 const CREDENTIAL_STATUSES = [['not_configured', 'Tanımlı Değil'], ['configured', 'Tanımlı'], ['expired', 'Süresi Doldu'], ['rotation_required', 'Rotasyon Gerekli']]
+const STATUSES = [['active', 'Aktif'], ['passive', 'Pasif']]
+
+const INTEGRATION_CATALOG: IntegrationRow[] = [
+  {
+    catalog_key: 'garanti-bbva-account-information',
+    module_name: 'Muhasebe',
+    page_name: 'Banka Hesapları ve Kartları',
+    integration_name: 'Garanti BBVA Hesap Bilgisi API',
+    bank_name: 'Garanti BBVA',
+    provider_code: 'garanti',
+    provider_name: 'GarantiProvider',
+    integration_type: 'bank_account_information',
+    environment: 'production',
+    base_url: 'https://apis.garantibbva.com.tr:443',
+    token_url: 'https://apis.garantibbva.com.tr:443/oauth2/token',
+    connection_status: 'not_connected',
+    credential_status: 'not_configured',
+    api_status: '',
+    requires_certificate: false,
+    ip_whitelist_note: '',
+    error_message: '',
+    status: 'active',
+    credential_id: '',
+    consent_id: '',
+    token_auth_method: 'body',
+    scopes: '',
+    account_filters: '',
+    account_information_path: '/balancesandmovements/accountinformation/account/v1/getaccountinformation',
+    documentation_url: '',
+    is_catalog: true,
+  },
+]
 
 const emptyForm = {
+  module_name: '',
+  page_name: '',
   integration_name: '',
   bank_name: '',
   provider_code: '',
@@ -29,16 +70,25 @@ const emptyForm = {
   ip_whitelist_note: '',
   error_message: '',
   status: 'active',
+  credential_id: '',
+  consent_id: '',
+  token_auth_method: '',
+  scopes: '',
+  account_filters: '',
+  account_information_path: '',
+  documentation_url: '',
 }
 
 export default function IntegrationParametersPage() {
-  const [rows, setRows] = useState<any[]>([])
-  const [mode, setMode] = useState<'list' | 'create' | 'edit'>('list')
-  const [selected, setSelected] = useState<any | null>(null)
+  const [storedRows, setStoredRows] = useState<any[]>([])
+  const [mode, setMode] = useState<PageMode>('list')
+  const [selected, setSelected] = useState<IntegrationRow | null>(null)
   const [form, setForm] = useState<Record<string, any>>(emptyForm)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [toast, setToast] = useState<ToastState | null>(null)
+
+  const rows = useMemo(() => mergeCatalogRows(storedRows), [storedRows])
 
   const loadRows = async () => {
     setLoading(true)
@@ -46,7 +96,7 @@ export default function IntegrationParametersPage() {
       const response = await fetch('/api/settings/integration-parameters', { cache: 'no-store' })
       const payload = await response.json()
       if (!response.ok) throw new Error(payload.error || 'Entegrasyon ayarları yüklenemedi.')
-      setRows(payload.data || [])
+      setStoredRows(payload.data || [])
     } catch (error) {
       setToast({ type: 'error', title: 'Hata', message: error instanceof Error ? error.message : 'Entegrasyon ayarları yüklenemedi.' })
     } finally {
@@ -59,43 +109,37 @@ export default function IntegrationParametersPage() {
   }, [])
 
   const columns: ColumnDef[] = [
-    { key: 'integration_name', label: 'Entegrasyon Adı', type: 'text', width: 180 },
-    { key: 'bank_name', label: 'Banka', type: 'text', width: 130 },
-    { key: 'provider_code', label: 'Provider Code', type: 'text', width: 120 },
-    { key: 'environment', label: 'Ortam', type: 'text', width: 100 },
-    { key: 'connection_status', label: 'Bağlantı Durumu', type: 'text', width: 140 },
-    { key: 'credential_status', label: 'Credential Durumu', type: 'text', width: 140 },
-    { key: 'last_test_at', label: 'Son Test', type: 'date', width: 140 },
-    { key: 'last_sync_at', label: 'Son Senkronizasyon', type: 'date', width: 150 },
-    { key: 'api_status', label: 'API Durumu', type: 'text', width: 160 },
-    { key: 'status', label: 'Durum', type: 'text', width: 90 },
-    { key: 'actions', label: 'İşlemler', type: 'text', width: 260, fixedWidth: true, render: (_value, row) => <RowActions row={row} onEdit={openEdit} onCredential={markCredential} onTest={testIntegration} /> },
+    { key: 'module_name', label: 'Modül', type: 'text', width: 130 },
+    { key: 'page_name', label: 'Sayfa', type: 'text', width: 190 },
+    { key: 'integration_name', label: 'Entegrasyon Adı', type: 'text', width: 260 },
   ]
 
-  const openCreate = () => {
-    setSelected(null)
-    setForm(emptyForm)
-    setMode('create')
-  }
-
-  function openEdit(row: any) {
+  function openEdit(row: IntegrationRow) {
     setSelected(row)
-    setForm({ ...emptyForm, ...row })
+    setForm({ ...emptyForm, ...row, ...(row.settings_json || {}) })
     setMode('edit')
   }
 
   const save = async () => {
+    if (!selected) return
+
     setSaving(true)
     try {
-      const response = await fetch(mode === 'create' ? '/api/settings/integration-parameters' : `/api/settings/integration-parameters/${selected.id}`, {
-        method: mode === 'create' ? 'POST' : 'PATCH',
+      const isPersisted = !!selected.id
+      const response = await fetch(isPersisted ? `/api/settings/integration-parameters/${selected.id}` : '/api/settings/integration-parameters', {
+        method: isPersisted ? 'PATCH' : 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify({
+          ...form,
+          settings_json: integrationSettingsFromForm(form),
+        }),
       })
       const payload = await response.json()
       if (!response.ok) throw new Error(payload.error || 'Kayıt kaydedilemedi.')
+
       setToast({ type: 'success', title: 'Kaydedildi', message: 'Entegrasyon ayarı kaydedildi.' })
       setMode('list')
+      setSelected(null)
       await loadRows()
     } catch (error) {
       setToast({ type: 'error', title: 'Kaydedilemedi', message: error instanceof Error ? error.message : 'İşlem tamamlanamadı.' })
@@ -104,78 +148,115 @@ export default function IntegrationParametersPage() {
     }
   }
 
-  async function markCredential(row: any) {
-    const response = await fetch(`/api/settings/integration-parameters/${row.id}/credential`, { method: 'POST', body: '{}' })
-    const payload = await response.json().catch(() => ({}))
-    setToast(response.ok ? { type: 'success', title: 'Credential', message: payload.message || 'Credential durumu güncellendi.' } : { type: 'error', title: 'Credential', message: payload.error || 'Credential güncellenemedi.' })
-    await loadRows()
-  }
-
-  async function testIntegration(row: any) {
-    const response = await fetch(`/api/settings/integration-parameters/${row.id}/test`, { method: 'POST' })
-    const payload = await response.json().catch(() => ({}))
-    setToast(response.ok ? { type: 'success', title: 'Test', message: payload.message || 'Test isteği alındı.' } : { type: 'error', title: 'Test', message: payload.error || 'Test başlatılamadı.' })
-    await loadRows()
-  }
-
   return (
     <div className="relative">
       <PageBanner
         mode={mode === 'list' ? 'list' : 'form'}
         title="Entegrasyon Ayarları"
-        subtitle="Banka API bağlantılarını, ortamları ve credential durumlarını yönetin."
+        subtitle="Modül ve sayfa bazlı entegrasyon parametrelerini yönetin."
         icon={<DatabaseZap size={24} />}
-        onAddClick={mode === 'list' ? openCreate : undefined}
-        addButtonText="Yeni Entegrasyon Ekle"
-        onBackClick={mode === 'list' ? undefined : () => setMode('list')}
+        onAddClick={mode === 'list' ? () => undefined : undefined}
+        addButtonDisabled
+        onBackClick={mode === 'list' ? undefined : () => { setMode('list'); setSelected(null) }}
       />
       {toast && <Toast type={toast.type} title={toast.title} message={toast.message} onClose={() => setToast(null)} />}
 
       {mode === 'list' ? (
-        <SmartDataTable columns={columns} data={rows} loading={loading} defaultView="list" storageKey="integration-parameters" emptyText="Entegrasyon ayarı bulunamadı" onRefresh={loadRows} />
+        <SmartDataTable
+          columns={columns}
+          data={rows}
+          loading={loading}
+          defaultView="list"
+          storageKey="integration-parameters-catalog"
+          emptyText="Entegrasyon ayarı bulunamadı"
+          onRefresh={loadRows}
+          onRowClick={(row: any) => openEdit(row)}
+        />
       ) : (
-        <section className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-            <TextField label="Entegrasyon Adı" value={form.integration_name} onChange={value => setForm({ ...form, integration_name: value })} />
-            <SelectField label="Banka" value={form.bank_name} options={BANK_OPTIONS} onChange={value => setForm({ ...form, bank_name: value })} />
-            <TextField label="Provider Code" value={form.provider_code} onChange={value => setForm({ ...form, provider_code: value })} />
-            <TextField label="Provider Name" value={form.provider_name} onChange={value => setForm({ ...form, provider_name: value })} />
-            <SelectField label="Ortam" value={form.environment} options={ENVIRONMENTS} onChange={value => setForm({ ...form, environment: value })} />
-            <TextField label="Base URL" value={form.base_url} onChange={value => setForm({ ...form, base_url: value })} />
-            <TextField label="Token URL" value={form.token_url} onChange={value => setForm({ ...form, token_url: value })} />
-            <SelectField label="Bağlantı Durumu" value={form.connection_status} options={CONNECTION_STATUSES} onChange={value => setForm({ ...form, connection_status: value })} />
-            <SelectField label="Credential Durumu" value={form.credential_status} options={CREDENTIAL_STATUSES} onChange={value => setForm({ ...form, credential_status: value })} />
-            <TextField label="API Durumu" value={form.api_status} onChange={value => setForm({ ...form, api_status: value })} />
-            <TextField label="IP Whitelist Notu" value={form.ip_whitelist_note} onChange={value => setForm({ ...form, ip_whitelist_note: value })} />
-            <TextField label="Hata Mesajı" value={form.error_message} onChange={value => setForm({ ...form, error_message: value })} />
-            <CheckboxField label="Sertifika gerekiyor mu?" checked={!!form.requires_certificate} onChange={value => setForm({ ...form, requires_certificate: value })} />
-          </div>
-          <div className="mt-4 flex justify-end">
+        <div className="space-y-4">
+          <section className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+              <TextField label="Modül" value={form.module_name} readOnly onChange={value => setForm({ ...form, module_name: value })} />
+              <TextField label="Sayfa" value={form.page_name} readOnly onChange={value => setForm({ ...form, page_name: value })} />
+              <TextField label="Entegrasyon Adı" value={form.integration_name} onChange={value => setForm({ ...form, integration_name: value })} />
+              <TextField label="Banka" value={form.bank_name} onChange={value => setForm({ ...form, bank_name: value })} />
+              <TextField label="Provider Code" value={form.provider_code} onChange={value => setForm({ ...form, provider_code: value })} />
+              <TextField label="Provider Name" value={form.provider_name} onChange={value => setForm({ ...form, provider_name: value })} />
+              <SelectField label="Ortam" value={form.environment} options={ENVIRONMENTS} onChange={value => setForm({ ...form, environment: value })} />
+              <SelectField label="Durum" value={form.status} options={STATUSES} onChange={value => setForm({ ...form, status: value })} />
+            </div>
+          </section>
+
+          <section className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Entegrasyona Özel Veriler</h3>
+            <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+              <TextField label="Base URL" value={form.base_url} onChange={value => setForm({ ...form, base_url: value })} />
+              <TextField label="Token URL" value={form.token_url} onChange={value => setForm({ ...form, token_url: value })} />
+              <TextField label="Account Information Path" value={form.account_information_path} onChange={value => setForm({ ...form, account_information_path: value })} />
+              <SelectField label="Bağlantı Durumu" value={form.connection_status} options={CONNECTION_STATUSES} onChange={value => setForm({ ...form, connection_status: value })} />
+              <SelectField label="Credential Durumu" value={form.credential_status} options={CREDENTIAL_STATUSES} onChange={value => setForm({ ...form, credential_status: value })} />
+              <TextField label="Secure Credential ID" value={form.credential_id} onChange={value => setForm({ ...form, credential_id: value })} />
+              <TextField label="Consent ID" value={form.consent_id} onChange={value => setForm({ ...form, consent_id: value })} />
+              <TextField label="Token Auth Method" value={form.token_auth_method} onChange={value => setForm({ ...form, token_auth_method: value })} />
+              <TextField label="Scopes" value={form.scopes} onChange={value => setForm({ ...form, scopes: value })} />
+              <TextField label="Account Filters" value={form.account_filters} onChange={value => setForm({ ...form, account_filters: value })} />
+              <TextField label="API Durumu" value={form.api_status} onChange={value => setForm({ ...form, api_status: value })} />
+              <TextField label="IP Whitelist Notu" value={form.ip_whitelist_note} onChange={value => setForm({ ...form, ip_whitelist_note: value })} />
+              <TextField label="Dokümantasyon URL" value={form.documentation_url} onChange={value => setForm({ ...form, documentation_url: value })} />
+              <TextField label="Hata Mesajı" value={form.error_message} onChange={value => setForm({ ...form, error_message: value })} />
+              <CheckboxField label="Sertifika gerekiyor mu?" checked={!!form.requires_certificate} onChange={value => setForm({ ...form, requires_certificate: value })} />
+            </div>
+          </section>
+
+          <div className="flex justify-end">
             <button className="btn btn-primary" disabled={saving} onClick={save}>{saving ? 'Kaydediliyor...' : 'Kaydet'}</button>
           </div>
-          <p className="mt-3 text-xs text-gray-500">Client ID, Client Secret, Consent ID, API Key, token, private key ve sertifika şifresi bu tabloda tutulmaz. Bu değerler Secure Credential akışıyla girilir ve kayıt sonrası gösterilmez.</p>
-        </section>
+        </div>
       )}
     </div>
   )
 }
 
-function RowActions({ row, onEdit, onCredential, onTest }: { row: any; onEdit: (row: any) => void; onCredential: (row: any) => void; onTest: (row: any) => void }) {
-  return (
-    <div className="flex flex-wrap justify-center gap-1">
-      <button className="rounded bg-gray-100 px-2 py-1 text-[11px] text-gray-700 dark:bg-gray-800 dark:text-gray-200" onClick={() => onEdit(row)}>Düzenle</button>
-      <button className="inline-flex items-center gap-1 rounded bg-blue-50 px-2 py-1 text-[11px] text-blue-700 dark:bg-blue-950/40 dark:text-blue-300" onClick={() => onCredential(row)}><KeyRound size={11} />Credential</button>
-      <button className="inline-flex items-center gap-1 rounded bg-emerald-50 px-2 py-1 text-[11px] text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300" onClick={() => onTest(row)}><TestTube2 size={11} />Test</button>
-      <button className="inline-flex items-center gap-1 rounded bg-gray-100 px-2 py-1 text-[11px] text-gray-700 dark:bg-gray-800 dark:text-gray-200"><RefreshCw size={11} />Senkron</button>
-    </div>
-  )
+function integrationSettingsFromForm(form: Record<string, any>) {
+  return {
+    credential_id: form.credential_id || '',
+    consent_id: form.consent_id || '',
+    token_auth_method: form.token_auth_method || '',
+    scopes: form.scopes || '',
+    account_filters: form.account_filters || '',
+    account_information_path: form.account_information_path || '',
+    documentation_url: form.documentation_url || '',
+  }
 }
 
-function TextField({ label, value, onChange }: { label: string; value: any; onChange: (value: string) => void }) {
+function mergeCatalogRows(storedRows: any[]): IntegrationRow[] {
+  return INTEGRATION_CATALOG.map((catalogRow) => {
+    const stored = storedRows.find(row =>
+      row.provider_code === catalogRow.provider_code ||
+      row.integration_name === catalogRow.integration_name
+    )
+
+    return {
+      ...catalogRow,
+      ...stored,
+      catalog_key: catalogRow.catalog_key,
+      module_name: catalogRow.module_name,
+      page_name: catalogRow.page_name,
+      integration_name: stored?.integration_name || catalogRow.integration_name,
+      settings_json: {
+        ...integrationSettingsFromForm(catalogRow),
+        ...(stored?.settings_json || {}),
+      },
+      is_catalog: !stored,
+    }
+  })
+}
+
+function TextField({ label, value, onChange, readOnly, type = 'text' }: { label: string; value: any; onChange: (value: string) => void; readOnly?: boolean; type?: string }) {
   return (
     <label className="block">
       <span className="text-xs font-medium text-gray-500">{label}</span>
-      <input value={value ?? ''} onChange={event => onChange(event.target.value)} className="mt-1 h-10 w-full rounded-md border border-gray-200 bg-white px-3 text-sm text-gray-900 outline-none focus:border-blue-400 dark:border-gray-700 dark:bg-gray-950 dark:text-white" />
+      <input type={type} value={value ?? ''} readOnly={readOnly} onChange={event => onChange(event.target.value)} className="mt-1 h-10 w-full rounded-md border border-gray-200 bg-white px-3 text-sm text-gray-900 outline-none focus:border-blue-400 read-only:bg-gray-50 dark:border-gray-700 dark:bg-gray-950 dark:text-white dark:read-only:bg-gray-900" />
     </label>
   )
 }

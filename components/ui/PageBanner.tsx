@@ -64,6 +64,9 @@ export interface PageBannerProps {
   
   /** Add button text (list mode) */
   addButtonText?: string
+
+  /** Add button disabled state (list mode) */
+  addButtonDisabled?: boolean
   
   /** Back button text (form mode) */
   backButtonText?: string
@@ -84,6 +87,7 @@ export function PageBanner({
   onAddClick,
   onBackClick,
   addButtonText = 'Ekle',
+  addButtonDisabled = false,
   backButtonText = 'Geri',
   customButtonIcon,
   className
@@ -123,7 +127,8 @@ export function PageBanner({
         {mode === 'list' && onAddClick && (
           <button
             onClick={onAddClick}
-            className="flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 px-3 sm:px-4 py-2 rounded-lg transition-colors text-sm sm:text-base"
+            disabled={addButtonDisabled}
+            className="flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 px-3 sm:px-4 py-2 rounded-lg transition-colors text-sm sm:text-base disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-white/10"
           >
             {customButtonIcon || <Plus size={16} />}
             {addButtonText}
