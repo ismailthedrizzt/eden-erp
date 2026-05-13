@@ -6,6 +6,7 @@ type FieldCondition = NonNullable<FormField['visibleWhen']>
 type LegalEntityMasterTabOptions = {
   visibleWhen?: FieldCondition
   addressField?: string
+  countryField?: string
   cityField?: string
   districtField?: string
   phoneField?: string
@@ -24,6 +25,7 @@ function applyVisibleWhen(fields: FormField[], visibleWhen?: FieldCondition): Fo
 export function createLegalEntityMasterTabs({
   visibleWhen,
   addressField = 'address',
+  countryField = 'country',
   cityField = 'city',
   districtField = 'district',
   phoneField = 'phone',
@@ -39,6 +41,7 @@ export function createLegalEntityMasterTabs({
         { name: phoneField, label: 'Telefon', type: 'tel' },
         { name: emailField, label: 'E-posta', type: 'email' },
         { name: websiteField, label: 'Web Sitesi', type: 'text' },
+        { name: countryField, label: 'Ülke', type: 'select', compact: true },
         { name: cityField, label: 'İl', type: 'text', compact: true },
         { name: districtField, label: 'İlçe', type: 'text', compact: true },
         { name: addressField, label: 'Adres', type: 'textarea', colSpan: 3 },

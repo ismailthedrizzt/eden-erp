@@ -31,6 +31,7 @@ import { DocumentSlotUploader, DocumentSlot, SlotDocument } from './DocumentSlot
 import { IBANInput } from './IBANInput'
 import { MasterIdentityGate } from './MasterIdentityGate'
 import type { IdentityGateConfig, IdentityGateResolveResult } from '@/lib/identity-gate'
+import { COUNTRY_OPTIONS, normalizeCountryId } from '@/lib/reference/country-nationalities'
 
 /** Historical value entry */
 export interface HistoryEntry {
@@ -1812,6 +1813,18 @@ export function EntityForm({
 
   const handleChange = (field: string, value: any) => {
     setFormData(prev => {
+      if (isCountryField(field)) {
+        const previousCountry = normalizeCountryId(prev[field] || prev.country || prev.ulke)
+        const nextCountry = normalizeCountryId(value)
+        const next = {
+          ...prev,
+          [field]: value,
+          ...(previousCountry !== nextCountry ? { il: '', ilce: '', city: '', district: '' } : {}),
+        }
+        onFieldChange?.(field, value, next)
+        return next
+      }
+
       if (field === 'sgk_is_yeri_sicil_no') {
         const parsed = parseSgkWorkplaceNumber(String(value || ''))
         const next = {
@@ -2164,13 +2177,42 @@ export function EntityForm({
         })
       }
 
-      if (field.name === 'il') {
+      if (isCountryField(field.name) && field.type === 'select' && (!field.options || field.options.length === 0)) {
+        return (
+          <select
+            value={value || 'TR'}
+            onChange={(e) => handleChange(field.name, e.target.value)}
+            disabled={fieldDisabled}
+            className={cn(baseInputClass, fieldDisabled && "appearance-none")}
+          >
+            {COUNTRY_OPTIONS.map(country => (
+              <option key={country.value} value={country.value}>{country.label}</option>
+            ))}
+          </select>
+        )
+      }
+
+      if (isCityField(field.name)) {
+        const selectedCountry = normalizeCountryId(formData.ulke || formData.country || 'TR')
+        if (selectedCountry !== 'TR') {
+          return (
+            <input
+              type="text"
+              value={value}
+              onChange={(e) => handleChange(field.name, e.target.value)}
+              disabled={fieldDisabled}
+              className={baseInputClass}
+              placeholder="Şehir / bölge"
+            />
+          )
+        }
+
         return (
           <select
             value={value}
             onChange={(e) => {
-              handleChange('il', e.target.value)
-              handleChange('ilce', '')
+              handleChange(field.name, e.target.value)
+              handleChange(field.name === 'city' ? 'district' : 'ilce', '')
             }}
             disabled={fieldDisabled}
             className={cn(baseInputClass, fieldDisabled && "appearance-none")}
@@ -2183,13 +2225,28 @@ export function EntityForm({
         )
       }
 
-      if (field.name === 'ilce') {
-        const selectedProvince = turkeyProvinces.find(province => province.name === formData.il)
+      if (isDistrictField(field.name)) {
+        const selectedCountry = normalizeCountryId(formData.ulke || formData.country || 'TR')
+        if (selectedCountry !== 'TR') {
+          return (
+            <input
+              type="text"
+              value={value}
+              onChange={(e) => handleChange(field.name, e.target.value)}
+              disabled={fieldDisabled}
+              className={baseInputClass}
+              placeholder="İlçe / semt"
+            />
+          )
+        }
+
+        const cityField = field.name === 'district' ? 'city' : 'il'
+        const selectedProvince = turkeyProvinces.find(province => province.name === formData[cityField])
 
         return (
           <select
             value={value}
-            onChange={(e) => handleChange('ilce', e.target.value)}
+            onChange={(e) => handleChange(field.name, e.target.value)}
             disabled={fieldDisabled || !selectedProvince}
             className={cn(baseInputClass, (fieldDisabled || !selectedProvince) && "appearance-none")}
           >
@@ -2575,6 +2632,18 @@ export function EntityForm({
       )}
     </div>
   )
+}
+
+function isCountryField(field: string) {
+  return ['ulke', 'country', 'nationality_country', 'uyruk', 'nationality'].includes(field)
+}
+
+function isCityField(field: string) {
+  return field === 'il' || field === 'city'
+}
+
+function isDistrictField(field: string) {
+  return field === 'ilce' || field === 'district'
 }
 
 export default EntityForm

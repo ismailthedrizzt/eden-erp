@@ -8,6 +8,7 @@ import { PageBanner } from '@/components/ui/PageBanner'
 import { SmartDataTable, ColumnDef, WidgetDef } from '@/components/ui/SmartDataTable'
 import { Toast } from '@/components/ui/Toast'
 import { GeographicTradeReachWidget, type GeographicTradeReachWidgetAction } from '@/components/dashboard/widgets/GeographicTradeReachWidget'
+import type { AnyDashboardWidgetConfig } from '@/components/dashboard/dashboard.types'
 import { CompanyNaceCodesSection } from '@/components/modules/sirket/CompanyPublicTab'
 import { formatPhoneInput, normalizeEmailInput } from '@/lib/utils'
 import { createFormModeState, mapPageStateToFormMode } from '@/lib/forms/formModeEngine'
@@ -312,6 +313,7 @@ export default function SirketlerPage() {
   const configuredTabs = [
     ...createLegalEntityMasterTabs({
       addressField: 'adres',
+      countryField: 'ulke',
       cityField: 'il',
       districtField: 'ilce',
       phoneField: 'telefon',
@@ -558,6 +560,19 @@ export default function SirketlerPage() {
     })
   }
 
+  const dashboardWidgets: AnyDashboardWidgetConfig[] = [
+    {
+      id: 'companies-geographic-trade-reach',
+      type: 'geographicTradeReach',
+      title: 'Coğrafi Erişim ve Ticari Ağ',
+      description: 'Şirket bağlantılarının Türkiye ve dünya üzerindeki dağılımı',
+      module: 'companies',
+      size: { w: 12, h: 6, minHeight: 560 },
+      dataSource: 'dashboard.companies.geographicTradeReach',
+      permissions: [],
+    },
+  ]
+
   return (
     <div className="relative">
       <PageBanner
@@ -589,8 +604,6 @@ export default function SirketlerPage() {
             </div>
           )}
 
-          <GeographicTradeReachWidget onWidgetAction={handleGeographicWidgetAction} />
-
           <SmartDataTable<SirketTableRow>
             columns={columns}
             data={tableData}
@@ -598,6 +611,16 @@ export default function SirketlerPage() {
             onRowClick={handleRowClick}
             onRefresh={yenile}
             widgets={widgets}
+            dashboardWidgets={dashboardWidgets}
+            onDashboardFilter={(event) => {
+              if (event.widgetId === 'companies-geographic-trade-reach') {
+                setToast({
+                  type: 'success',
+                  title: 'Coğrafi Filtre',
+                  message: 'Coğrafi erişim widget filtresi üretildi.',
+                })
+              }
+            }}
             defaultView="list"
             storageKey="sirketler-table"
             emptyText="Şirket kaydı bulunamadı"
