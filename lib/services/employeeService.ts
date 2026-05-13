@@ -5,6 +5,7 @@ export type EmployeeListFilters = {
   birimId?: string
   durum?: string
   ara?: string
+  includePassive?: boolean
 }
 
 export const employeeService = {
@@ -15,6 +16,7 @@ export const employeeService = {
         birim_id: filters.birimId,
         durum: filters.durum,
         ara: filters.ara,
+        include_passive: filters.includePassive ? 'true' : undefined,
         ...options.query,
       },
     })

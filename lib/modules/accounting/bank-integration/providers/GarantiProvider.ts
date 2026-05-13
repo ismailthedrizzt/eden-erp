@@ -70,7 +70,7 @@ export class GarantiProvider extends GenericBankProvider {
       throw new Error('Garanti BBVA OAuth clientId ve clientSecret zorunludur.')
     }
 
-    const tokenEndpoint = credentials.tokenEndpoint || `${apiBaseUrl}/oauth2/token`
+    const tokenEndpoint = credentials.tokenEndpoint || `${apiBaseUrl}/auth/oauth/v2/token`
     const body = new URLSearchParams()
     body.set('grant_type', 'client_credentials')
     if (credentials.scopes?.length) body.set('scope', credentials.scopes.join(' '))

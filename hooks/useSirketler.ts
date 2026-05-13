@@ -16,7 +16,7 @@ interface UseSirketlerReturn {
   getLogolar: (sirketId: string) => Promise<SirketLogo[]>
 }
 
-export function useSirketler(): UseSirketlerReturn {
+export function useSirketler(options: { includePassive?: boolean } = {}): UseSirketlerReturn {
   const [data, setData] = useState<Sirket[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -26,7 +26,7 @@ export function useSirketler(): UseSirketlerReturn {
       setLoading(true)
       setError(null)
       if (force) companyService.invalidateList()
-      const result = await companyService.list({ useCache: !force })
+      const result = await companyService.list({ useCache: !force, includePassive: options.includePassive })
       setData(result.data || [])
     } catch (err: any) {
       console.error('Error fetching sirketler:', err)
@@ -34,7 +34,7 @@ export function useSirketler(): UseSirketlerReturn {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [options.includePassive])
 
   useEffect(() => {
     fetchSirketler()

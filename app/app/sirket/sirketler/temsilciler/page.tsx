@@ -348,6 +348,7 @@ export default function TemsilcilerPage() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [includePassive, setIncludePassive] = useState(false)
   const [toast, setToast] = useState<ToastState | null>(null)
 
   const formMode: FormMode = pageState === 'create' ? 'create' : pageState === 'edit' ? 'edit' : 'view'
@@ -357,7 +358,7 @@ export default function TemsilcilerPage() {
     setError(null)
     try {
       const [representativeResponse, companyResponse] = await Promise.all([
-        fetch('/api/sirketler/temsilciler'),
+        fetch(`/api/sirketler/temsilciler${includePassive ? '?include_passive=true' : ''}`),
         fetch('/api/sirketler?is_active=true'),
       ])
       const representativePayload = await representativeResponse.json()
@@ -378,7 +379,7 @@ export default function TemsilcilerPage() {
 
   useEffect(() => {
     loadData()
-  }, [])
+  }, [includePassive])
 
   const companyNameById = useMemo(() => Object.fromEntries(companies.map(company => [company.value, company.label])), [companies])
   const tableData = representatives.map(representative => ({
@@ -529,6 +530,9 @@ export default function TemsilcilerPage() {
             emptyText="Temsilci kaydı bulunamadı"
             onRowClick={handleRowClick}
             onRefresh={loadData}
+            showPassiveToggle
+            includePassive={includePassive}
+            onIncludePassiveChange={setIncludePassive}
           />
         </div>
       )}

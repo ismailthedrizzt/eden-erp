@@ -228,7 +228,7 @@ export async function DELETE(
 
   const { error } = await supabase
     .from('employees')
-    .update({ is_active: false })
+    .update({ is_active: false, calisma_durumu: 'ayrilmis' })
     .eq('id', id)
 
   if (error) {

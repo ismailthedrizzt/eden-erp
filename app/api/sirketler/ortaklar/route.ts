@@ -111,6 +111,7 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const companyId = searchParams.get('company_id')
   const status = searchParams.get('status')
+  const includePassive = searchParams.get('include_passive') === 'true'
 
   let query = supabase
     .from('sirket_ortaklar')
@@ -119,6 +120,7 @@ export async function GET(request: NextRequest) {
 
   if (companyId) query = query.or(`company_id.eq.${companyId},sirket_id.eq.${companyId}`)
   if (status) query = query.eq('status', status)
+  if (!includePassive) query = query.eq('is_deleted', false)
 
   const { data, error } = await query
   if (error) return NextResponse.json({ error: error.message, code: error.code || 'FETCH_FAILED' }, { status: 500 })

@@ -2,8 +2,15 @@ import { apiClient, ApiClientOptions } from '@/lib/api/apiClient'
 import type { Sirket, SirketDokuman, SirketLogo, SirketOrtak, SirketTemsilci } from '@/types/sirket'
 
 export const companyService = {
-  list(options: ApiClientOptions = {}) {
-    return apiClient.get<{ data: Sirket[] }>('/api/sirketler', options)
+  list(options: ApiClientOptions & { includePassive?: boolean } = {}) {
+    const { includePassive, ...clientOptions } = options
+    return apiClient.get<{ data: Sirket[] }>('/api/sirketler', {
+      ...clientOptions,
+      query: {
+        ...(includePassive ? {} : { is_active: 'true' }),
+        ...clientOptions.query,
+      },
+    })
   },
   detail(id: string) {
     return apiClient.get<{ data: Sirket }>(`/api/sirketler/${id}`)

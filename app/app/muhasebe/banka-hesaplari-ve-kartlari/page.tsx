@@ -64,6 +64,7 @@ export default function BankAccountsCardsPage() {
   const [form, setForm] = useState<BankAccountCardPayload>(emptyForm)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [includePassive, setIncludePassive] = useState(false)
   const [toast, setToast] = useState<ToastState | null>(null)
   const canView = can(ACCOUNTING_PERMISSIONS.bankAccountsCardsView) || can(ACCOUNTING_PERMISSIONS.bankAccountsView) || can(ACCOUNTING_PERMISSIONS.bankCardsView)
   const canInsert = can(ACCOUNTING_PERMISSIONS.bankAccountsCardsInsert) || can(ACCOUNTING_PERMISSIONS.bankAccountsInsert) || can(ACCOUNTING_PERMISSIONS.bankCardsInsert)
@@ -72,7 +73,7 @@ export default function BankAccountsCardsPage() {
   const loadRows = async () => {
     setLoading(true)
     try {
-      const payload = await bankAccountsCardsService.getUnifiedRecords()
+      const payload = await bankAccountsCardsService.getUnifiedRecords({ includePassive })
       setRows(payload.data || [])
       setAccountOptions((payload.accountOptions || []).map(option => ({ value: option.value, label: option.label })))
     } catch (error) {
@@ -84,6 +85,9 @@ export default function BankAccountsCardsPage() {
 
   useEffect(() => {
     loadRows()
+  }, [includePassive])
+
+  useEffect(() => {
     loadCompanies().then(options => {
       setCompanies(options)
       if (options.length === 1) setForm(prev => ({ ...prev, company_id: options[0].value }))
@@ -161,6 +165,22 @@ export default function BankAccountsCardsPage() {
     }
   }
 
+  const passivateSelected = async () => {
+    if (!selected) return
+    const confirmed = window.confirm('Kayit silinmeyecek, sadece pasife alinacaktir. Bu kayitla iliskili baska veriler olabilir. Devam etmek istiyor musunuz?')
+    if (!confirmed) return
+
+    try {
+      await bankAccountsCardsService.passivateUnifiedRecord(selected.id)
+      setToast({ type: 'success', title: 'Kayit pasife alindi', message: 'Banka hesap/kart kaydi pasife cekildi.' })
+      await loadRows()
+      setPageState('list')
+      setSelected(null)
+    } catch (error) {
+      setToast({ type: 'error', title: 'Islem tamamlanamadi', message: error instanceof Error ? error.message : 'Kayit pasife alinamadi.' })
+    }
+  }
+
   if (!canView) {
     return <div className="rounded-lg border border-gray-200 bg-white p-6 text-sm text-gray-600 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300">Bu sayfayı görüntüleme yetkiniz yok.</div>
   }
@@ -188,6 +208,9 @@ export default function BankAccountsCardsPage() {
           emptyText="Tanımlı banka hesabı veya kart bulunamadı"
           onRefresh={loadRows}
           onRowClick={(row: any) => openRow(row, 'view')}
+          showPassiveToggle
+          includePassive={includePassive}
+          onIncludePassiveChange={setIncludePassive}
         />
       ) : (
         <RecordForm
@@ -201,6 +224,7 @@ export default function BankAccountsCardsPage() {
           onChange={patch => setForm(prev => ({ ...prev, ...patch }))}
           onSave={save}
           onEdit={() => setPageState('edit')}
+          onDelete={passivateSelected}
           canEdit={canEditRecord}
         />
       )}
@@ -219,6 +243,7 @@ function RecordForm({
   onChange,
   onSave,
   onEdit,
+  onDelete,
   canEdit,
 }: {
   form: BankAccountCardPayload
@@ -231,6 +256,7 @@ function RecordForm({
   onChange: (patch: Partial<BankAccountCardPayload>) => void
   onSave: () => void
   onEdit: () => void
+  onDelete: () => void
   canEdit: boolean
 }) {
   const isAccount = form.record_type === 'account'
@@ -263,6 +289,7 @@ function RecordForm({
             <h2 className="mt-1 text-xl font-semibold text-gray-900 dark:text-white">{isAccount ? form.account_name || 'Yeni Hesap' : form.card_name || 'Yeni Kart'}</h2>
           </div>
           <div className="flex gap-2">
+            {readOnly && canEdit && !isCreate && <button className="btn border-red-200 text-red-700 hover:bg-red-50 dark:border-red-900/60 dark:text-red-300 dark:hover:bg-red-950/30" onClick={onDelete}>Pasife Al</button>}
             {readOnly && canEdit && <button className="btn" onClick={onEdit}>Düzenle</button>}
           </div>
         </div>

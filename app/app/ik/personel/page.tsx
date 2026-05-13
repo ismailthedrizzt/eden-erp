@@ -87,7 +87,8 @@ const getFieldLabel = (field: string) => PERSONEL_FIELD_LABELS[field] || field
 const formatFieldList = (fields: string[]) => fields.map(getFieldLabel).join(', ')
 
 export default function PersonelYonetimPage() {
-  const { data: personel, loading: listLoading, error: listError, yenile } = usePersonel()
+  const [includePassive, setIncludePassive] = useState(false)
+  const { data: personel, loading: listLoading, error: listError, yenile } = usePersonel({ includePassive })
   const moduleConfig = personelModuleConfig
   const apiBasePath = moduleConfig.entity.apiBasePath || '/api/ik/personel'
   const lifecycleMessages = moduleConfig.form.lifecycle?.messages
@@ -114,7 +115,7 @@ export default function PersonelYonetimPage() {
     birim_adi: p.birim?.ad || '-',
     kadro_unvani: p.kadro?.unvan || p.gorev || '-',
     calisma_tipi: (p as any).calisma_tipi || '-',
-    employment_status: (p as any).employment_status || p.calisma_durumu || '-',
+    employment_status: p.is_active === false ? 'pasif' : (p as any).employment_status || p.calisma_durumu || '-',
     egitim_durumu: getEducationSummary(p),
     sgk_status: p.sgk_giris ? 'SGK girişi var' : 'SGK bekliyor',
     __actions: ''
@@ -463,6 +464,9 @@ export default function PersonelYonetimPage() {
             pollingInterval={moduleConfig.list.pollingInterval}
             onRowClick={handleRowClick}
             onRefresh={yenile}
+            showPassiveToggle
+            includePassive={includePassive}
+            onIncludePassiveChange={setIncludePassive}
           />
           {dashboardFilter && (
             <button

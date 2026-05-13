@@ -346,6 +346,7 @@ export default function OrtaklarPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [includePassive, setIncludePassive] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
@@ -358,7 +359,7 @@ export default function OrtaklarPage() {
     setError(null)
     try {
       const [partnerResponse, companyResponse, representativeResponse] = await Promise.all([
-        fetch('/api/sirketler/ortaklar'),
+        fetch(`/api/sirketler/ortaklar${includePassive ? '?include_passive=true' : ''}`),
         fetch('/api/sirketler?is_active=true'),
         fetch('/api/sirketler/temsilciler'),
       ])
@@ -389,7 +390,7 @@ export default function OrtaklarPage() {
 
   useEffect(() => {
     loadData()
-  }, [])
+  }, [includePassive])
 
   const companyNameById = useMemo(() => Object.fromEntries(companies.map(company => [company.value, company.label])), [companies])
   const currentOwnershipByPartnerId = useMemo(() => Object.fromEntries(currentOwnershipRows.map(row => [row.partner_id, row])), [currentOwnershipRows])
@@ -583,6 +584,9 @@ export default function OrtaklarPage() {
             emptyText="Ortak kaydı bulunamadı"
             onRowClick={handleRowClick}
             onRefresh={loadData}
+            showPassiveToggle
+            includePassive={includePassive}
+            onIncludePassiveChange={setIncludePassive}
           />
         </div>
       )}

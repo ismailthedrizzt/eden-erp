@@ -123,8 +123,11 @@ export interface BankAutomationPreviewPayload {
 }
 
 export const bankAccountsCardsService = {
-  getUnifiedRecords() {
-    return apiClient.get<{ data: BankAccountCardRow[]; accountOptions: Array<{ value: string; label: string; bank_connection_id?: string | null }> }>('/api/accounting/bank-accounts-cards', { useCache: false })
+  getUnifiedRecords(options: { includePassive?: boolean } = {}) {
+    return apiClient.get<{ data: BankAccountCardRow[]; accountOptions: Array<{ value: string; label: string; bank_connection_id?: string | null }> }>('/api/accounting/bank-accounts-cards', {
+      useCache: false,
+      query: options.includePassive ? { include_passive: 'true' } : undefined,
+    })
   },
   createUnifiedRecord(payload: BankAccountCardPayload) {
     return apiClient.post<{ data: any }>('/api/accounting/bank-accounts-cards', payload as unknown as Record<string, unknown>, { useCache: false })

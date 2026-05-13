@@ -2134,6 +2134,17 @@ export function EntityForm({
     }
   }
 
+  const handleDelete = async () => {
+    if (!onDelete || isCreate) return
+
+    const confirmed = window.confirm(
+      `${entityNameSingular} kaydi silinmeyecek, sadece pasife alinacaktir. Bu kayitla iliskili baska veriler olabilir. Devam etmek istiyor musunuz?`
+    )
+    if (!confirmed) return
+
+    await onDelete()
+  }
+
   const renderField = (field: FormField, showHistoryIcon = false) => {
     if (!matchesCondition(field.visibleWhen, formData)) return null
     const value = formData[field.name] ?? ''
@@ -2550,6 +2561,16 @@ export function EntityForm({
               {additionalActions}
               
               {/* View Mode: Edit Button */}
+              {isReadOnly && canEdit && onDelete && (
+                <button
+                  onClick={handleDelete}
+                  disabled={deleting}
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg border border-red-200 text-red-700 hover:bg-red-50 transition-colors text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-900/60 dark:text-red-300 dark:hover:bg-red-950/30"
+                >
+                  {deleting ? <Loader2 className="animate-spin" size={16} /> : <Trash2 size={16} />}
+                  Pasife Al
+                </button>
+              )}
               {isReadOnly && canEdit && (
                 <button
                   onClick={() => handleModeChange('edit')}

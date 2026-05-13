@@ -10,10 +10,18 @@ export function parseCompositeId(id: string): { kind: BankAccountCardKind; rawId
   throw new Error('Geçersiz hesap/kart kimliği.')
 }
 
-export async function listBankAccountsCards(supabase: SupabaseClient) {
+export async function listBankAccountsCards(supabase: SupabaseClient, options: { includePassive?: boolean } = {}) {
+  let accountsQuery = supabase.from('bank_accounts').select('*').order('created_at', { ascending: false })
+  let cardsQuery = supabase.from('bank_cards').select('*').order('created_at', { ascending: false })
+
+  if (!options.includePassive) {
+    accountsQuery = accountsQuery.eq('is_deleted', false)
+    cardsQuery = cardsQuery.eq('is_deleted', false)
+  }
+
   const [accountsResult, cardsResult] = await Promise.all([
-    supabase.from('bank_accounts').select('*').eq('is_deleted', false).order('created_at', { ascending: false }),
-    supabase.from('bank_cards').select('*').eq('is_deleted', false).order('created_at', { ascending: false }),
+    accountsQuery,
+    cardsQuery,
   ])
 
   if (accountsResult.error) throw new Error(accountsResult.error.message)

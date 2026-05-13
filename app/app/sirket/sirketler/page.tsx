@@ -257,7 +257,8 @@ const getFieldLabel = (field: string) => FIELD_LABELS[field] || field
 const formatFieldList = (fields: string[]) => fields.map(getFieldLabel).join(', ')
 
 export default function SirketlerPage() {
-  const { data: sirketler, loading, error: listError, yenile } = useSirketler()
+  const [includePassive, setIncludePassive] = useState(false)
+  const { data: sirketler, loading, error: listError, yenile } = useSirketler({ includePassive })
   const { can } = usePermissions()
   const { isEnabled, isWritable } = useModules()
   const [pageState, setPageState] = useState<PageState>('list')
@@ -610,6 +611,9 @@ export default function SirketlerPage() {
             loading={loading}
             onRowClick={handleRowClick}
             onRefresh={yenile}
+            showPassiveToggle
+            includePassive={includePassive}
+            onIncludePassiveChange={setIncludePassive}
             widgets={widgets}
             dashboardWidgets={dashboardWidgets}
             onDashboardFilter={(event) => {

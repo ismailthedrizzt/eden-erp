@@ -88,6 +88,11 @@ interface SmartDataTableProps<T extends { id: string }> {
   pollingInterval?: number
   /** Whether to show action column. Only shown when explicitly enabled. */
   showActions?: boolean
+  /** Shows a toolbar toggle that asks the parent page to include passive records. */
+  showPassiveToggle?: boolean
+  includePassive?: boolean
+  onIncludePassiveChange?: (includePassive: boolean) => void
+  includePassiveLabel?: string
 }
 
 export interface WidgetDef<T = any> {
@@ -141,7 +146,11 @@ export function SmartDataTable<T extends { id: string }>({
   defaultPageSize = 10,
   pageSizeOptions = [10, 25, 50, 100],
   realtime = false,
-  pollingInterval = 30000
+  pollingInterval = 30000,
+  showPassiveToggle = false,
+  includePassive = false,
+  onIncludePassiveChange,
+  includePassiveLabel = 'Pasif kayitlari da goster',
 }: SmartDataTableProps<T>) {
   const columnSignature = initialColumns.map(col => `${col.key}:${col.label}:${col.visible ?? ''}:${col.required ?? ''}:${col.fixed ?? ''}:${col.hideable ?? ''}`).join('|')
   const quickLookWidgetIds = [
@@ -1020,6 +1029,18 @@ export function SmartDataTable<T extends { id: string }>({
               className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white text-sm focus:ring-2 focus:ring-blue-500"
             />
           </div>
+
+          {showPassiveToggle && (
+            <label className="flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-xs font-medium text-gray-600 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300">
+              <input
+                type="checkbox"
+                checked={includePassive}
+                onChange={(event) => onIncludePassiveChange?.(event.target.checked)}
+                className="h-4 w-4 rounded border-gray-300 text-blue-600 accent-blue-600"
+              />
+              {includePassiveLabel}
+            </label>
+          )}
         </div>
 
         {/* Right: View Toggle, Filter, Settings */}

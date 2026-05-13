@@ -9,16 +9,18 @@ interface Filters {
   birimId?: string
   durum?: string
   ara?: string
+  includePassive?: boolean
 }
 
 export function usePersonel(filters: Filters = {}) {
-  const filterKey = `${filters.birimId ?? ''}|${filters.durum ?? ''}|${filters.ara ?? ''}`
+  const filterKey = `${filters.birimId ?? ''}|${filters.durum ?? ''}|${filters.ara ?? ''}|${filters.includePassive ? '1' : '0'}`
   const debouncedFilterKey = useDebouncedValue(filterKey)
-  const [birimId, durum, ara] = debouncedFilterKey.split('|')
+  const [birimId, durum, ara, includePassive] = debouncedFilterKey.split('|')
   const debouncedFilters = {
     birimId: birimId || undefined,
     durum: durum || undefined,
     ara: ara || undefined,
+    includePassive: includePassive === '1',
   }
   const [data, setData] = useState<Personel[]>([])
   const [loading, setLoading] = useState(true)

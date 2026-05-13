@@ -271,6 +271,7 @@ export default function PaydaslarPage() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [includePassive, setIncludePassive] = useState(false)
   const [toast, setToast] = useState<ToastState | null>(null)
 
   const formMode: FormMode = pageState === 'create' ? 'create' : pageState === 'edit' ? 'edit' : 'view'
@@ -280,7 +281,7 @@ export default function PaydaslarPage() {
     setError(null)
     try {
       const [stakeholderResponse, companyResponse] = await Promise.all([
-        fetch('/api/sirketler/paydaslar'),
+        fetch(`/api/sirketler/paydaslar${includePassive ? '?include_passive=true' : ''}`),
         fetch('/api/sirketler?is_active=true'),
       ])
       const stakeholderPayload = await stakeholderResponse.json()
@@ -301,7 +302,7 @@ export default function PaydaslarPage() {
 
   useEffect(() => {
     loadData()
-  }, [])
+  }, [includePassive])
 
   const companyNameById = useMemo(() => Object.fromEntries(companies.map(company => [company.value, company.label])), [companies])
   const tableData = stakeholders.map(stakeholder => ({
@@ -409,7 +410,7 @@ export default function PaydaslarPage() {
       {pageState === 'list' && (
         <div className="mt-6">
           {error && <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-600 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">{error}</div>}
-          <SmartDataTable columns={columns} data={tableData} loading={loading} widgets={widgets} defaultView="list" storageKey="sirket-paydaslar-table" emptyText="Paydaş kaydı bulunamadı" onRowClick={handleRowClick} onRefresh={loadData} />
+          <SmartDataTable columns={columns} data={tableData} loading={loading} widgets={widgets} defaultView="list" storageKey="sirket-paydaslar-table" emptyText="Paydaş kaydı bulunamadı" onRowClick={handleRowClick} onRefresh={loadData} showPassiveToggle includePassive={includePassive} onIncludePassiveChange={setIncludePassive} />
         </div>
       )}
 

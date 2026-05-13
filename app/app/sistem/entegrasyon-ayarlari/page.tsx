@@ -33,7 +33,7 @@ const INTEGRATION_CATALOG: IntegrationRow[] = [
     integration_type: 'bank_account_information',
     environment: 'production',
     base_url: 'https://apis.garantibbva.com.tr:443',
-    token_url: 'https://apis.garantibbva.com.tr:443/oauth2/token',
+    token_url: 'https://apis.garantibbva.com.tr:443/auth/oauth/v2/token',
     connection_status: 'not_connected',
     credential_status: 'not_configured',
     api_status: '',

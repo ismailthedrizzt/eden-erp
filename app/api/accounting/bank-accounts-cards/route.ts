@@ -11,7 +11,8 @@ export async function GET(request: NextRequest) {
   if (permission instanceof NextResponse) return permission
 
   try {
-    const data = await listBankAccountsCards(supabase as any)
+    const { searchParams } = new URL(request.url)
+    const data = await listBankAccountsCards(supabase as any, { includePassive: searchParams.get('include_passive') === 'true' })
     return NextResponse.json({ data: data.rows, accountOptions: data.accountOptions })
   } catch (error) {
     if (isMissingTableError(error)) {

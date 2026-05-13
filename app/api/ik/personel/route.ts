@@ -91,6 +91,7 @@ const baseEmployeeListColumns = [
   'birim_id',
   'kadro_id',
   'gorev',
+  'is_active',
   'egitim_okullari',
   'created_at',
   'updated_at',
@@ -132,6 +133,7 @@ export async function GET(request: NextRequest) {
   const birimId = searchParams.get('birim_id')
   const durum = searchParams.get('durum')
   const ara = searchParams.get('ara')
+  const includePassive = searchParams.get('include_passive') === 'true'
 
   // Check if teskilat module is active
   const { data: teskilatLicense } = await supabase
@@ -163,9 +165,9 @@ export async function GET(request: NextRequest) {
     let query = supabase
       .from('employees')
       .select(selectQuery)
-      .eq('is_active', true)
       .order('soyad', { ascending: true })
 
+    if (!includePassive) query = query.eq('is_active', true)
     if (birimId && isTeskilatActive) query = query.eq('birim_id', birimId)
     if (durum) query = query.eq('calisma_durumu', durum)
     if (ara) query = query.or(`ad.ilike.%${ara}%,soyad.ilike.%${ara}%,tc_kimlik.ilike.%${ara}%`)
