@@ -7,6 +7,7 @@ import { EntityForm, FormField, FormMode, FormTab } from '@/components/ui/Entity
 import { PageBanner } from '@/components/ui/PageBanner'
 import { SmartDataTable, ColumnDef, WidgetDef } from '@/components/ui/SmartDataTable'
 import { Toast } from '@/components/ui/Toast'
+import { GeographicTradeReachWidget, type GeographicTradeReachWidgetAction } from '@/components/dashboard/widgets/GeographicTradeReachWidget'
 import { formatPhoneInput, normalizeEmailInput } from '@/lib/utils'
 import { createFormModeState, mapPageStateToFormMode } from '@/lib/forms/formModeEngine'
 import { createLegalEntityMasterTabs } from '@/lib/identity/legalEntityFormSections'
@@ -555,6 +556,15 @@ export default function SirketlerPage() {
         onBackClick: handleBackToList,
       }
 
+  const handleGeographicWidgetAction = (action: GeographicTradeReachWidgetAction) => {
+    const { country, city, dataMode } = action.value
+    setToast({
+      type: 'success',
+      title: 'Coğrafi Filtre',
+      message: `${city ? `${city}, ` : ''}${country} için ${dataMode === 'trade' ? 'ticari ağ' : 'bağlantı ağı'} filtresi üretildi.`,
+    })
+  }
+
   return (
     <div className="relative">
       <PageBanner
@@ -579,12 +589,14 @@ export default function SirketlerPage() {
       )}
 
       {pageState === 'list' && (
-        <div className="mt-6">
+        <div className="mt-6 space-y-4">
           {listError && (
             <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
               <p className="text-sm text-red-600 dark:text-red-400">{listError}</p>
             </div>
           )}
+
+          <GeographicTradeReachWidget onWidgetAction={handleGeographicWidgetAction} />
 
           <SmartDataTable<SirketTableRow>
             columns={columns}
@@ -601,7 +613,12 @@ export default function SirketlerPage() {
       )}
 
       {pageState !== 'list' && (
-        <div className="mt-6">
+        <div className="mt-6 space-y-4">
+          <GeographicTradeReachWidget
+            selectedCompanyId={selectedSirket?.id}
+            onWidgetAction={handleGeographicWidgetAction}
+          />
+
           <EntityForm
             mode={formMode}
             entityName="Şirketler"

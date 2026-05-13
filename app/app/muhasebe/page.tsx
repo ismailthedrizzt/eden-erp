@@ -27,10 +27,16 @@ export default function MuhasebePage() {
           description="Harcama, ödeme, tahsilat ve cari hareketleri sade bir ekrandan yönetin."
         />
         <ModuleLink
-          href="/app/muhasebe/banka-kart-hareketleri"
+          href="/app/muhasebe/banka-hesaplari-ve-kartlari"
           icon={<Landmark size={22} />}
-          title="Banka ve Kart Hareketleri"
-          description="Banka ve kredi kartı hareketlerini sağlayıcı bağlantılarından içe aktarın ve eşleştirin."
+          title="Banka Hesapları ve Kartları"
+          description="Banka bağlantılarını, hesapları, kartları ve entegrasyon ayarlarını yönetin."
+        />
+        <ModuleLink
+          href="/app/muhasebe/hesap-ve-kart-hareketleri"
+          icon={<CreditCard size={22} />}
+          title="Hesap ve Kart Hareketleri"
+          description="Hesap ve kart hareketlerini görüntüleyin, filtreleyin ve ön muhasebe kayıtlarıyla eşleştirin."
         />
       </div>
     </div>

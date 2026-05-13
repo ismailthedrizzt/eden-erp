@@ -72,6 +72,8 @@ const NAV: NavItem[] = [
     children: [
       { label: 'Cari Kartlar', href: '/app/muhasebe/cari-kartlar', moduleKey: 'muhasebe' },
       { label: 'Ön Muhasebe Hareketleri', href: '/app/muhasebe/on-muhasebe-hareketleri', moduleKey: 'muhasebe' },
+      { label: 'Banka Hesapları ve Kartları', href: '/app/muhasebe/banka-hesaplari-ve-kartlari', moduleKey: 'muhasebe', submoduleKey: 'banka-hesaplari-ve-kartlari' },
+      { label: 'Hesap ve Kart Hareketleri', href: '/app/muhasebe/hesap-ve-kart-hareketleri', moduleKey: 'muhasebe', submoduleKey: 'hesap-ve-kart-hareketleri' },
     ],
   },  {
     id: 'stok',
