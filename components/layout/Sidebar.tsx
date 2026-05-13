@@ -122,6 +122,7 @@ const NAV: NavItem[] = [
     icon: <Settings size={16} />,
     children: [
       { label: 'Modül Lisansları', href: '/app/sistem/module-licenses' },
+      { label: 'Sistem Parametreleri', href: '/app/sistem/system-parameters' },
       { label: 'Kullanıcılar', href: '/app/sistem/kullanicilar', disabled: true },
       { label: 'Roller & Yetkiler', href: '/app/sistem/roller', disabled: true },
       { label: 'Sistem Logları', href: '/app/sistem/loglar', disabled: true },

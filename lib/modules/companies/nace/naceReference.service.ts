@@ -1,5 +1,6 @@
 import 'server-only'
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { systemParameterDefaultValue } from '@/lib/system/systemParameters.config'
 
 export interface NaceReferenceRow {
   nace_code: string
@@ -14,6 +15,7 @@ interface ImportOptions {
   sourceName: string
   sourceUrl?: string | null
   sourceReference?: string | null
+  defaultHazardClass?: NaceReferenceRow['hazard_class']
   columnMap?: {
     code?: string
     description?: string
@@ -23,14 +25,12 @@ interface ImportOptions {
 
 const TRUSTED_SOURCES = [
   {
-    name: 'TÜRMOB İşyeri Tehlike Sınıfları Listesi 2025 PDF',
-    url: 'https://www.turmob.org.tr/arsiv/mbs/pratikBilgiler/IS_TEHLIKE-26.01.2025.pdf',
-    format: 'pdf',
+    name: 'Ticaret Bakanlığı Güncel NACE Rev.2.1 Listesi',
+    url: 'https://ticaret.gov.tr/esnaf-sanatkarlar/esnaf-ve-sanatkar-meslek-kollari/sektor-meslek-nace-listeleri/guncel-liste',
   },
   {
-    name: 'TOBB 2025 İşyeri Tehlike Sınıfları Duyurusu',
-    url: 'https://www.tobb.org.tr/MaliveSosyalPolitikalar/Documents/duyurular/2025/T%C3%BCm%20Oda%20Borsalara%20Duyuru%20Yaz%C4%B1s%C4%B1.pdf',
-    format: 'pdf',
+    name: 'Ticaret Bakanlığı NACE Güncelleme Duyurusu',
+    url: 'https://esnafkoop.ticaret.gov.tr/duyurular/esnaf-ve-sanatkar-meslek-kollari-ve-nace-listesi-guncellendi',
   },
 ]
 
@@ -38,20 +38,24 @@ export class NaceReferenceImportService {
   constructor(private supabase: SupabaseClient) {}
 
   async importBuffer(buffer: Buffer, filename: string, options: ImportOptions) {
+    const importOptions = {
+      ...options,
+      defaultHazardClass: options.defaultHazardClass || await getDefaultHazardClass(this.supabase),
+    }
     const lower = filename.toLocaleLowerCase('tr-TR')
     const rows = lower.endsWith('.csv')
-      ? parseCsv(buffer.toString('utf8'), options)
-      : lower.endsWith('.xlsx')
-        ? await parseXlsx(buffer, options)
+      ? parseCsv(buffer.toString('utf8'), importOptions)
+      : lower.endsWith('.xlsx') || lower.endsWith('.xls')
+        ? await parseXlsx(buffer, importOptions)
         : []
 
     if (!rows.length) {
-      await this.log('failed', options, 'NACE referans listesi oluşturulamadı. Lütfen admin tarafından resmi liste yükleyin.')
+      await this.log('failed', importOptions, 'NACE referans listesi oluşturulamadı. Lütfen admin tarafından resmi liste yükleyin.')
       return { imported: 0, updated: 0, rows: [] as NaceReferenceRow[], warning: 'NACE referans listesi oluşturulamadı. Lütfen admin tarafından resmi liste yükleyin.' }
     }
 
     const result = await this.upsertRows(rows)
-    await this.log('success', options, 'NACE referans listesi içe aktarıldı.', result.imported, result.updated)
+    await this.log('success', importOptions, 'NACE referans listesi içe aktarıldı.', result.imported, result.updated)
     return { ...result, rows }
   }
 
@@ -107,7 +111,10 @@ export class NaceReferenceImportService {
       message,
       imported_count: imported,
       updated_count: updated,
-      raw_metadata: { sourceReference: options.sourceReference || null },
+      raw_metadata: {
+        sourceReference: options.sourceReference || null,
+        defaultHazardClass: options.defaultHazardClass || null,
+      },
     })
   }
 }
@@ -119,16 +126,16 @@ export class NaceReferenceUpdateService {
     const importService = new NaceReferenceImportService(this.supabase)
 
     for (const source of TRUSTED_SOURCES) {
-      if (source.format === 'pdf') {
-        await this.log('skipped', source, 'PDF kaynak güvenilir tablo olarak otomatik parse edilmedi; admin resmi XLSX/CSV yüklemelidir.')
-        continue
-      }
-
       try {
-        const response = await fetch(source.url)
+        const discovered = await discoverDownloadSource(source.url)
+        const response = await fetch(discovered.url, { cache: 'no-store' })
         if (!response.ok) throw new Error(`HTTP ${response.status}`)
         const buffer = Buffer.from(await response.arrayBuffer())
-        return importService.importBuffer(buffer, source.url, { sourceName: source.name, sourceUrl: source.url })
+        return importService.importBuffer(buffer, discovered.filename, {
+          sourceName: source.name,
+          sourceUrl: discovered.url,
+          sourceReference: source.url,
+        })
       } catch (error) {
         await this.log('failed', source, error instanceof Error ? error.message : 'Kaynak okunamadı')
       }
@@ -153,45 +160,74 @@ export class NaceReferenceUpdateService {
   }
 }
 
+async function discoverDownloadSource(sourceUrl: string) {
+  const response = await fetch(sourceUrl, { cache: 'no-store' })
+  if (!response.ok) throw new Error(`Kaynak sayfa okunamadı: HTTP ${response.status}`)
+  const contentType = response.headers.get('content-type') || ''
+
+  if (contentType.includes('spreadsheet') || /\.(xlsx|xls|csv)(\?|$)/i.test(sourceUrl)) {
+    return { url: sourceUrl, filename: filenameFromUrl(sourceUrl) || 'nace.xlsx' }
+  }
+
+  const html = await response.text()
+  const matches = Array.from(html.matchAll(/href=["']([^"']+\.(?:xlsx|xls|csv)(?:\?[^"']*)?)["']/gi))
+  const href = matches.find(match => /nace|rev|liste|meslek/i.test(match[1]))?.[1] || matches[0]?.[1]
+  if (!href) throw new Error('Resmi sayfada indirilebilir XLSX/CSV NACE dosyası bulunamadı.')
+
+  const url = new URL(href, sourceUrl).toString()
+  return { url, filename: filenameFromUrl(url) || 'nace.xlsx' }
+}
+
+function filenameFromUrl(url: string) {
+  try {
+    return decodeURIComponent(new URL(url).pathname.split('/').pop() || '')
+  } catch {
+    return ''
+  }
+}
+
 function parseCsv(text: string, options: ImportOptions) {
   const lines = text.split(/\r?\n/).filter(line => line.trim())
   if (lines.length < 2) return []
   const headers = splitCsvLine(lines[0]).map(normalizeHeader)
-  const codeIndex = findColumn(headers, options.columnMap?.code, ['nace kodu', 'nace rev.2_altili kod', 'altili kod', 'kod'])
-  const descIndex = findColumn(headers, options.columnMap?.description, ['faaliyet tanimi', 'nace rev.2_altili tanim', 'tanim', 'aciklama'])
-  const hazardIndex = findColumn(headers, options.columnMap?.hazardClass, ['tehlike sinifi', 'sinifi', 'ek-1 tehlike sinifi'])
-  if (codeIndex < 0 || descIndex < 0 || hazardIndex < 0) return []
+  const codeIndex = findColumn(headers, options.columnMap?.code, ['nace kodu', 'nace rev.2 altili kod', 'nace rev.2_altılı kod', 'altili kod', 'kod'])
+  const descIndex = findColumn(headers, options.columnMap?.description, ['faaliyet tanimi', 'faaliyet tanımı', 'nace rev.2 altili tanim', 'nace rev.2_altılı tanım', 'tanim', 'tanım', 'aciklama', 'açıklama'])
+  const hazardIndex = findColumn(headers, options.columnMap?.hazardClass, ['tehlike sinifi', 'tehlike sınıfı', 'sinifi', 'sınıfı', 'ek-1 tehlike sinifi'])
+  if (codeIndex < 0 || descIndex < 0) return []
 
   return lines.slice(1)
     .map(line => splitCsvLine(line))
-    .map(cols => normalizeNaceRow(cols[codeIndex], cols[descIndex], cols[hazardIndex], options))
+    .map(cols => normalizeNaceRow(cols[codeIndex], cols[descIndex], hazardIndex >= 0 ? cols[hazardIndex] : '', options))
     .filter((row): row is NaceReferenceRow => !!row)
 }
 
 async function parseXlsx(buffer: Buffer, options: ImportOptions) {
   try {
-    const xlsx: any = await (new Function('specifier', 'return import(specifier)')('xlsx') as Promise<any>)
+    const xlsx: any = await import('xlsx')
     const workbook = xlsx.read(buffer, { type: 'buffer' })
-    const sheet = workbook.Sheets[workbook.SheetNames[0]]
-    const rows = xlsx.utils.sheet_to_json(sheet, { defval: '' }) as Array<Record<string, unknown>>
-    return rows
-      .map(row => {
-        const normalized = Object.fromEntries(Object.entries(row).map(([key, value]) => [normalizeHeader(key), value]))
-        const code = readMappedValue(normalized, options.columnMap?.code, ['nace kodu', 'nace rev.2_altili kod', 'altili kod', 'kod'])
-        const desc = readMappedValue(normalized, options.columnMap?.description, ['faaliyet tanimi', 'nace rev.2_altili tanim', 'tanim', 'aciklama'])
-        const hazard = readMappedValue(normalized, options.columnMap?.hazardClass, ['tehlike sinifi', 'sinifi', 'ek-1 tehlike sinifi'])
-        return normalizeNaceRow(code, desc, hazard, options)
-      })
-      .filter((row): row is NaceReferenceRow => !!row)
+    const parsedRows = workbook.SheetNames.flatMap((sheetName: string) => {
+      const sheet = workbook.Sheets[sheetName]
+      const rows = xlsx.utils.sheet_to_json(sheet, { defval: '' }) as Array<Record<string, unknown>>
+      return rows.map(row => normalizeNaceJsonRow(row, options)).filter((row): row is NaceReferenceRow => !!row)
+    })
+    return dedupeRows(parsedRows)
   } catch {
     return []
   }
 }
 
+function normalizeNaceJsonRow(row: Record<string, unknown>, options: ImportOptions) {
+  const normalized = Object.fromEntries(Object.entries(row).map(([key, value]) => [normalizeHeader(key), value]))
+  const code = readMappedValue(normalized, options.columnMap?.code, ['nace kodu', 'nace rev.2 altili kod', 'nace rev.2_altılı kod', 'altili kod', 'kod'])
+  const desc = readMappedValue(normalized, options.columnMap?.description, ['faaliyet tanimi', 'faaliyet tanımı', 'nace rev.2 altili tanim', 'nace rev.2_altılı tanım', 'tanim', 'tanım', 'aciklama', 'açıklama'])
+  const hazard = readMappedValue(normalized, options.columnMap?.hazardClass, ['tehlike sinifi', 'tehlike sınıfı', 'sinifi', 'sınıfı', 'ek-1 tehlike sinifi'])
+  return normalizeNaceRow(code, desc, hazard, options)
+}
+
 function normalizeNaceRow(codeValue: unknown, descriptionValue: unknown, hazardValue: unknown, options: ImportOptions): NaceReferenceRow | null {
-  const nace_code = String(codeValue || '').trim()
+  const nace_code = normalizeNaceCode(codeValue)
   const description = String(descriptionValue || '').trim()
-  const hazard_class = normalizeHazardClass(hazardValue)
+  const hazard_class = normalizeHazardClass(hazardValue) || options.defaultHazardClass || 'Az Tehlikeli'
   if (!/^\d{2}(\.\d{1,2}){0,2}$/.test(nace_code) || !description || !hazard_class) return null
   return {
     nace_code,
@@ -203,12 +239,28 @@ function normalizeNaceRow(codeValue: unknown, descriptionValue: unknown, hazardV
   }
 }
 
+function normalizeNaceCode(value: unknown) {
+  const text = String(value || '').trim().replace(',', '.')
+  const numeric = text.match(/\d{2}(?:\.\d{1,2}){0,2}/)?.[0] || ''
+  return numeric
+}
+
 function normalizeHazardClass(value: unknown): NaceReferenceRow['hazard_class'] | null {
   const text = normalizeHeader(String(value || ''))
   if (text === 'az tehlikeli') return 'Az Tehlikeli'
   if (text === 'tehlikeli') return 'Tehlikeli'
-  if (text === 'cok tehlikeli') return 'Çok Tehlikeli'
+  if (text === 'cok tehlikeli' || text === 'çok tehlikeli') return 'Çok Tehlikeli'
   return null
+}
+
+async function getDefaultHazardClass(supabase: SupabaseClient): Promise<NaceReferenceRow['hazard_class']> {
+  const fallback = normalizeHazardClass(systemParameterDefaultValue('nace.default_hazard_class')) || 'Az Tehlikeli'
+  const { data } = await supabase
+    .from('system_parameters')
+    .select('value')
+    .eq('parameter_key', 'nace.default_hazard_class')
+    .maybeSingle()
+  return normalizeHazardClass((data as any)?.value?.value) || fallback
 }
 
 function findColumn(headers: string[], explicit: string | undefined, candidates: string[]) {
@@ -216,12 +268,13 @@ function findColumn(headers: string[], explicit: string | undefined, candidates:
     const index = headers.indexOf(normalizeHeader(explicit))
     if (index >= 0) return index
   }
-  return headers.findIndex(header => candidates.includes(header))
+  return headers.findIndex(header => candidates.map(normalizeHeader).includes(header))
 }
 
 function readMappedValue(row: Record<string, unknown>, explicit: string | undefined, candidates: string[]) {
   if (explicit && normalizeHeader(explicit) in row) return row[normalizeHeader(explicit)]
-  const key = candidates.find(candidate => candidate in row)
+  const normalizedCandidates = candidates.map(normalizeHeader)
+  const key = normalizedCandidates.find(candidate => candidate in row)
   return key ? row[key] : ''
 }
 
@@ -259,4 +312,8 @@ function normalizeHeader(value: string) {
     .replace(/ö/g, 'o')
     .replace(/ç/g, 'c')
     .replace(/\s+/g, ' ')
+}
+
+function dedupeRows(rows: NaceReferenceRow[]) {
+  return Array.from(new Map(rows.map(row => [row.nace_code, row])).values())
 }

@@ -1,8 +1,7 @@
 'use client'
 
-import { MapPin } from 'lucide-react'
-import { cn } from '@/lib/utils'
-import type { GeoPoint } from '@/lib/modules/companies/services/geographicTradeReach.service'
+import { useMemo, useRef, useState } from 'react'
+import { Minus, Plus } from 'lucide-react'
 import {
   fallbackCoordinate,
   formatPointTooltip,
@@ -14,6 +13,8 @@ import {
 interface OpenStreetMapReachMapProps extends ReachMapProps {
   scope: 'turkey' | 'world'
 }
+
+type MapLayer = 'standard' | 'satellite'
 
 const MAPS = {
   turkey: {
@@ -30,21 +31,105 @@ const MAPS = {
   },
 }
 
+const TILE_LAYERS: Record<MapLayer, { label: string; attribution: string; url: (zoom: number, x: number, y: number) => string }> = {
+  standard: {
+    label: 'Harita',
+    attribution: '© OSM',
+    url: (zoom, x, y) => `https://tile.openstreetmap.org/${zoom}/${x}/${y}.png`,
+  },
+  satellite: {
+    label: 'Uydu',
+    attribution: 'Tiles © Esri',
+    url: (zoom, x, y) => `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/${zoom}/${y}/${x}`,
+  },
+}
+
 export function OpenStreetMapReachMap({ points, dataMode, scope, onPointClick }: OpenStreetMapReachMapProps) {
   const config = MAPS[scope]
+  const [center, setCenter] = useState(config.center)
+  const [zoom, setZoom] = useState(config.zoom)
+  const [layer, setLayer] = useState<MapLayer>('standard')
+  const dragRef = useRef<{
+    pointerId: number
+    x: number
+    y: number
+    centerWorld: { x: number; y: number }
+    moved: boolean
+  } | null>(null)
   const maxCount = Math.max(...points.map(point => point.totalCount), 1)
-  const center = latLngToWorld(config.center.lat, config.center.lng, config.zoom)
-  const tiles = buildTiles(config.center.lat, config.center.lng, config.zoom)
+  const centerWorld = latLngToWorld(center.lat, center.lng, zoom)
+  const tiles = useMemo(() => buildTiles(center.lat, center.lng, zoom), [center.lat, center.lng, zoom])
+  const tileLayer = TILE_LAYERS[layer]
+
+  const updateZoom = (nextZoom: number, anchor?: { clientX: number; clientY: number; rect: DOMRect }) => {
+    const clampedZoom = Math.max(1, Math.min(18, nextZoom))
+    if (clampedZoom === zoom) return
+
+    if (!anchor) {
+      setZoom(clampedZoom)
+      return
+    }
+
+    const currentAnchorWorld = {
+      x: centerWorld.x + anchor.clientX - anchor.rect.left - anchor.rect.width / 2,
+      y: centerWorld.y + anchor.clientY - anchor.rect.top - anchor.rect.height / 2,
+    }
+    const anchorLatLng = worldToLatLng(currentAnchorWorld.x, currentAnchorWorld.y, zoom)
+    const nextAnchorWorld = latLngToWorld(anchorLatLng.lat, anchorLatLng.lng, clampedZoom)
+    const nextCenterWorld = {
+      x: nextAnchorWorld.x - (anchor.clientX - anchor.rect.left - anchor.rect.width / 2),
+      y: nextAnchorWorld.y - (anchor.clientY - anchor.rect.top - anchor.rect.height / 2),
+    }
+
+    setCenter(worldToLatLng(nextCenterWorld.x, nextCenterWorld.y, clampedZoom))
+    setZoom(clampedZoom)
+  }
 
   return (
-    <div className="relative h-80 overflow-hidden rounded-lg border border-gray-200 bg-slate-100 dark:border-gray-800 dark:bg-slate-950">
+    <div
+      className="relative h-80 touch-none overflow-hidden rounded-lg border border-gray-200 bg-slate-100 dark:border-gray-800 dark:bg-slate-950"
+      onPointerDown={(event) => {
+        if ((event.target as HTMLElement).closest('button, a')) return
+        event.currentTarget.setPointerCapture(event.pointerId)
+        dragRef.current = {
+          pointerId: event.pointerId,
+          x: event.clientX,
+          y: event.clientY,
+          centerWorld,
+          moved: false,
+        }
+      }}
+      onPointerMove={(event) => {
+        const drag = dragRef.current
+        if (!drag || drag.pointerId !== event.pointerId) return
+        const deltaX = event.clientX - drag.x
+        const deltaY = event.clientY - drag.y
+        if (Math.abs(deltaX) + Math.abs(deltaY) > 3) drag.moved = true
+        setCenter(worldToLatLng(drag.centerWorld.x - deltaX, drag.centerWorld.y - deltaY, zoom))
+      }}
+      onPointerUp={(event) => {
+        if (dragRef.current?.pointerId === event.pointerId) dragRef.current = null
+      }}
+      onPointerCancel={(event) => {
+        if (dragRef.current?.pointerId === event.pointerId) dragRef.current = null
+      }}
+      onWheel={(event) => {
+        event.preventDefault()
+        updateZoom(zoom + (event.deltaY < 0 ? 1 : -1), {
+          clientX: event.clientX,
+          clientY: event.clientY,
+          rect: event.currentTarget.getBoundingClientRect(),
+        })
+      }}
+    >
       <div className="absolute inset-0" role="img" aria-label={config.label}>
         {tiles.map(tile => (
+          // eslint-disable-next-line @next/next/no-img-element
           <img
             key={`${tile.x}:${tile.y}`}
             alt=""
             draggable={false}
-            src={`https://tile.openstreetmap.org/${config.zoom}/${tile.x}/${tile.y}.png`}
+            src={tileLayer.url(zoom, tile.x, tile.y)}
             className="absolute h-64 w-64 select-none"
             style={{
               left: `calc(50% + ${tile.left}px)`,
@@ -58,9 +143,9 @@ export function OpenStreetMapReachMap({ points, dataMode, scope, onPointClick }:
 
       {points.map(point => {
         const coordinate = pointCoordinate(point, scope) || fallbackCoordinate(point.city || point.country || point.id, config.bounds)
-        const pixel = latLngToWorld(coordinate.lat, coordinate.lng, config.zoom)
-        const left = pixel.x - center.x
-        const top = pixel.y - center.y
+        const pixel = latLngToWorld(coordinate.lat, coordinate.lng, zoom)
+        const left = pixel.x - centerWorld.x
+        const top = pixel.y - centerWorld.y
         const radius = markerRadius(point, dataMode)
         const opacity = 0.35 + Math.min(0.45, point.totalCount / maxCount * 0.45)
 
@@ -85,19 +170,48 @@ export function OpenStreetMapReachMap({ points, dataMode, scope, onPointClick }:
         )
       })}
 
-      <div className={cn('absolute left-3 top-3 rounded-md border border-gray-200 bg-white/90 px-2 py-1 text-[11px] text-gray-600 shadow-sm backdrop-blur dark:border-gray-800 dark:bg-gray-900/90 dark:text-gray-300')}>
-        <span className="inline-flex items-center gap-1">
-          <MapPin size={12} className="text-blue-600" />
-          OpenStreetMap altlığı
-        </span>
+      <div className="absolute left-3 top-3 overflow-hidden rounded-md border border-gray-200 bg-white/90 shadow-sm backdrop-blur dark:border-gray-800 dark:bg-gray-900/90">
+        <button
+          type="button"
+          onClick={() => updateZoom(zoom + 1)}
+          className="flex h-8 w-8 items-center justify-center text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800"
+          title="Yakınlaştır"
+        >
+          <Plus size={15} />
+        </button>
+        <button
+          type="button"
+          onClick={() => updateZoom(zoom - 1)}
+          className="flex h-8 w-8 items-center justify-center border-t border-gray-200 text-gray-700 hover:bg-gray-100 dark:border-gray-800 dark:text-gray-200 dark:hover:bg-gray-800"
+          title="Uzaklaştır"
+        >
+          <Minus size={15} />
+        </button>
+      </div>
+
+      <div className="absolute right-3 top-3 inline-flex overflow-hidden rounded-md border border-gray-200 bg-white/90 text-xs font-medium shadow-sm backdrop-blur dark:border-gray-800 dark:bg-gray-900/90">
+        {(Object.keys(TILE_LAYERS) as MapLayer[]).map(item => (
+          <button
+            key={item}
+            type="button"
+            onClick={() => setLayer(item)}
+            className={`h-8 px-3 transition ${
+              layer === item
+                ? 'bg-blue-600 text-white'
+                : 'text-gray-700 hover:bg-gray-100 dark:text-gray-200 dark:hover:bg-gray-800'
+            }`}
+          >
+            {TILE_LAYERS[item].label}
+          </button>
+        ))}
       </div>
       <a
-        href="https://www.openstreetmap.org/copyright"
+        href={layer === 'standard' ? 'https://www.openstreetmap.org/copyright' : 'https://www.esri.com/en-us/legal/terms/full-master-agreement'}
         target="_blank"
         rel="noreferrer"
         className="absolute bottom-2 right-2 rounded bg-white/90 px-1.5 py-0.5 text-[10px] text-gray-500 shadow-sm hover:text-gray-900 dark:bg-gray-900/90 dark:text-gray-400 dark:hover:text-white"
       >
-        © OpenStreetMap
+        {tileLayer.attribution}
       </a>
     </div>
   )
@@ -140,6 +254,14 @@ function latLngToWorld(lat: number, lng: number, zoom: number) {
     x: ((lng + 180) / 360) * scale,
     y: (0.5 - Math.log((1 + sinLat) / (1 - sinLat)) / (4 * Math.PI)) * scale,
   }
+}
+
+function worldToLatLng(x: number, y: number, zoom: number) {
+  const scale = 256 * 2 ** zoom
+  const lng = x / scale * 360 - 180
+  const n = Math.PI - 2 * Math.PI * y / scale
+  const lat = 180 / Math.PI * Math.atan(0.5 * (Math.exp(n) - Math.exp(-n)))
+  return { lat, lng }
 }
 
 function wrapTile(value: number, tileCount: number) {

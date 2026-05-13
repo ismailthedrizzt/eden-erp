@@ -23,6 +23,8 @@ const BREADCRUMBS: Record<string, string> = {
   '/app/muhasebe/borclar': 'Muhasebe › Borç Takip',
   '/app/muhasebe/projeler': 'Muhasebe › Proje Özeti',
   '/app/muhasebe/hesaplar': 'Muhasebe › Hesaplar',
+  '/app/sistem/module-licenses': 'Sistem Yönetimi › Modül Lisansları',
+  '/app/sistem/system-parameters': 'Sistem Yönetimi › Sistem Parametreleri',
 }
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
