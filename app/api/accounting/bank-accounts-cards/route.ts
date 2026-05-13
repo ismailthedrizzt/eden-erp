@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { ACCOUNTING_PERMISSIONS } from '@/lib/modules/accounting/shared/accounting.permissions'
 import { requirePermission } from '@/lib/security/serverPermissions'
+import { isMissingTableError } from '../_banking'
 import { ensureManualBankConnection, listBankAccountsCards, normalizeAccountBody, normalizeCardBody } from './_shared'
 
 export async function GET(request: NextRequest) {
@@ -13,6 +14,14 @@ export async function GET(request: NextRequest) {
     const data = await listBankAccountsCards(supabase as any)
     return NextResponse.json({ data: data.rows, accountOptions: data.accountOptions })
   } catch (error) {
+    if (isMissingTableError(error)) {
+      return NextResponse.json({
+        data: [],
+        accountOptions: [],
+        warning: 'Banka hesap/kart tabloları bulunamadı. İlgili migration uygulanmalı.',
+      })
+    }
+
     const message = error instanceof Error ? error.message : 'Hesap ve kartlar yüklenemedi.'
     return NextResponse.json({ error: message }, { status: 500 })
   }

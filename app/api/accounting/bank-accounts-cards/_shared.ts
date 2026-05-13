@@ -1,4 +1,5 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { resolveTurkishIban } from '@/lib/utils'
 import { cleanPayload, fetchCompanyNames } from '../_banking'
 
 export type BankAccountCardKind = 'account' | 'card'
@@ -124,14 +125,15 @@ export async function ensureManualBankConnection(supabase: SupabaseClient, body:
 }
 
 export function normalizeAccountBody(body: Record<string, any>, connection: Record<string, any>, userId: string | null) {
+  const ibanDetails = body.iban ? resolveTurkishIban(body.iban) : null
   return cleanPayload({
     company_id: body.company_id || connection.company_id || null,
     bank_connection_id: connection.id,
-    iban: body.iban || null,
-    account_no: body.account_no || null,
+    iban: ibanDetails?.iban || body.iban || null,
+    account_no: body.account_no || ibanDetails?.accountNo || null,
     account_name: body.account_name,
-    branch_name: body.branch_name || null,
-    branch_code: body.branch_code || null,
+    branch_name: body.branch_name || ibanDetails?.branchName || null,
+    branch_code: body.branch_code || ibanDetails?.branchCode || null,
     currency: body.currency || 'TRY',
     account_type: body.account_type || 'vadesiz',
     opening_date: body.opening_date || null,

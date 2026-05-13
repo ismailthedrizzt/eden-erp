@@ -1,6 +1,7 @@
 import { clsx, type ClassValue } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 import turkishBankCodes from '@/lib/data/turkish-bank-codes.json'
+import garantiBbvaBranches from '@/lib/data/garanti-bbva-branches.json'
 
 // Tailwind class birleştirici
 export function cn(...inputs: ClassValue[]) {
@@ -52,13 +53,174 @@ export interface IbanBankInfo {
   swiftCode?: string
   source?: string
   logoUrl?: string
+  accountNo?: string
+  branchCode?: string
   branchName?: string
   branchConfidence: 'known' | 'unknown'
   logoText: string
 }
 
-// Türkiye IBAN standardında banka kodu ayrı alandır; şube alanı standart bir
-// pozisyonda yayınlanmaz. Şube bilgisi yalnızca açıkça bilinen eşleşmelerde döner.
+export interface TurkishIbanBank {
+  bankName: string
+  bankCode: string
+  swiftCode?: string
+  source?: string
+  logoUrl?: string
+  logoText: string
+}
+
+// Turkiye IBAN standardinda banka/odeme hizmeti saglayicisi kodu ayri alandir.
+// Sube bilgisi standart alanda yer almaz; bankaya ozel resolver ile hesaplanir.
+export interface TurkishIbanResolution extends TurkishIbanBank {
+  iban: string
+  countryCode: 'TR'
+  checkDigits: string
+  bankCode: string
+  reservedField: string
+  accountNo: string
+  branchCode: string | null
+  branchName: string | null
+  branchConfidence: 'known' | 'unknown'
+}
+
+export type TurkishIbanAccountDetails = TurkishIbanResolution
+
+export type TurkishIbanBranchResolver = (details: {
+  iban: string
+  bankCode: string
+  accountNo: string
+}) => { branchCode?: string | null; branchName?: string | null } | null | undefined
+
+export function getTurkishIbanBanks(): TurkishIbanBank[] {
+  return Object.entries(IBAN_BANKS)
+    .map(([bankCode, bank]) => ({
+      bankCode,
+      bankName: bank.name,
+      swiftCode: bank.swift,
+      source: bank.source,
+      logoUrl: bank.logoUrl,
+      logoText: bank.logoText,
+    }))
+    .sort((a, b) => a.bankName.localeCompare(b.bankName, 'tr'))
+}
+
+// TCMB 2008/6 sayili Teblig ve guncel TCMB IBAN bilgisindeki TR format:
+// 2 ulke kodu + 2 kontrol + 5 banka/odeme hizmeti saglayicisi kodu
+// + 1 rezerv alan + 16 hesap numarasi alanidir.
+export function resolveTurkishIban(
+  iban: string,
+  resolveBranch?: TurkishIbanBranchResolver
+): TurkishIbanResolution | null {
+  const clean = iban.replace(/[^a-zA-Z0-9]/g, '').toUpperCase()
+  if (!/^TR\d{2}\d{5}\d[A-Z0-9]{16}$/.test(clean)) return null
+  if (!isValidIbanMod97(clean)) return null
+
+  const bankCode = clean.substring(4, 9)
+  const bank = IBAN_BANKS[bankCode]
+  const baseDetails = {
+    iban: clean,
+    countryCode: 'TR' as const,
+    checkDigits: clean.substring(2, 4),
+    bankCode,
+    bankName: bank?.name ?? 'Bilinmeyen Banka',
+    swiftCode: bank?.swift,
+    source: bank?.source,
+    logoUrl: bank?.logoUrl,
+    logoText: bank?.logoText ?? '?',
+    reservedField: clean.substring(9, 10),
+    accountNo: clean.substring(10, 26),
+  }
+  const branch = resolveTurkishIbanBranch(baseDetails, resolveBranch)
+
+  return {
+    ...baseDetails,
+    branchCode: branch?.branchCode || null,
+    branchName: branch?.branchName || null,
+    branchConfidence: branch?.branchName ? 'known' : 'unknown',
+  }
+}
+
+export function extractTurkishIbanAccountDetails(
+  iban: string,
+  resolveBranch?: TurkishIbanBranchResolver
+): TurkishIbanAccountDetails | null {
+  return resolveTurkishIban(iban, resolveBranch)
+}
+
+export function resolveTurkishIbanBranch(
+  ibanOrDetails: string | { iban?: string; bankCode: string; accountNo: string },
+  resolveBranch?: TurkishIbanBranchResolver
+) {
+  const details = typeof ibanOrDetails === 'string'
+    ? resolveTurkishIbanWithoutBranch(ibanOrDetails)
+    : ibanOrDetails
+  if (!details) return null
+
+  const branchInput = {
+    iban: details.iban || '',
+    bankCode: details.bankCode,
+    accountNo: details.accountNo,
+  }
+
+  return resolveBranch?.(branchInput) || resolveKnownTurkishIbanBranch(branchInput)
+}
+
+function resolveTurkishIbanWithoutBranch(iban: string) {
+  const clean = iban.replace(/[^a-zA-Z0-9]/g, '').toUpperCase()
+  if (!/^TR\d{2}\d{5}\d[A-Z0-9]{16}$/.test(clean)) return null
+  if (!isValidIbanMod97(clean)) return null
+
+  return {
+    iban: clean,
+    bankCode: clean.substring(4, 9),
+    accountNo: clean.substring(10, 26),
+  }
+}
+
+const GARANTI_BBVA_BANK_CODE = '00062'
+const GARANTI_BBVA_BRANCHES = garantiBbvaBranches.branches as Record<string, string>
+const TURKISH_IBAN_BRANCH_RESOLVERS: Record<string, TurkishIbanBranchResolver> = {
+  [GARANTI_BBVA_BANK_CODE]: resolveGarantiBbvaIbanBranch,
+}
+
+function resolveKnownTurkishIbanBranch(details: {
+  iban: string
+  bankCode: string
+  accountNo: string
+}) {
+  return TURKISH_IBAN_BRANCH_RESOLVERS[details.bankCode]?.(details) || null
+}
+
+function resolveGarantiBbvaIbanBranch(details: {
+  bankCode: string
+  accountNo: string
+}) {
+  if (!/^\d{16}$/.test(details.accountNo) || details.accountNo[0] !== '0') return null
+
+  // Garanti BBVA IBAN hesap numarası alanında şube kodu 2-5. hanelerdedir.
+  // Şube adı Garanti BBVA'nın resmi IBAN sorgulama şube listesinden eşleştirilir.
+  const branchCode = String(Number(details.accountNo.slice(1, 5)))
+  const branchName = GARANTI_BBVA_BRANCHES[branchCode]
+
+  if (!branchName) return { branchCode }
+
+  return { branchCode, branchName }
+}
+
+function isValidIbanMod97(iban: string): boolean {
+  const rearranged = `${iban.slice(4)}${iban.slice(0, 4)}`
+  let remainder = 0
+
+  for (const char of rearranged) {
+    const value = /[A-Z]/.test(char) ? String(char.charCodeAt(0) - 55) : char
+    for (const digit of value) {
+      remainder = (remainder * 10 + Number(digit)) % 97
+    }
+  }
+
+  return remainder === 1
+}
+
 const IBAN_BANKS = turkishBankCodes.banks as Record<string, {
   name: string
   swift?: string
@@ -66,14 +228,6 @@ const IBAN_BANKS = turkishBankCodes.banks as Record<string, {
   logoText: string
   source?: string
 }>
-
-const KNOWN_TR_IBAN_BRANCHES: Record<string, string> = {
-  // İş Bankası hesap numarası içinde şube kodunu 4 hane olarak kullanan
-  // bilinen örnekler için dar kapsamlı eşleşme.
-  '00064:2224': 'Yenişehir Şubesi / Bursa',
-  '00064:4218': 'Yenişehir Şubesi / Ankara',
-  '00064:3411': 'Yenişehir Şubesi / İzmir',
-}
 
 export function ibanToBanka(iban: string): string {
   const clean = iban.replace(/\s/g, '')
@@ -85,11 +239,9 @@ export function ibanToBanka(iban: string): string {
 export function getIbanBankInfo(iban: string): IbanBankInfo | null {
   const clean = iban.replace(/\s/g, '').toUpperCase()
   if (!clean.startsWith('TR') || clean.length < 10) return null
-  const bankCode = clean.substring(4, 9)
+  const details = extractTurkishIbanAccountDetails(iban)
+  const bankCode = details?.bankCode || clean.substring(4, 9)
   const bank = IBAN_BANKS[bankCode]
-  const accountField = clean.substring(10)
-  const possibleBranchCode = accountField.substring(0, 4)
-  const branchName = KNOWN_TR_IBAN_BRANCHES[`${bankCode}:${possibleBranchCode}`]
 
   return {
     bankCode,
@@ -98,8 +250,10 @@ export function getIbanBankInfo(iban: string): IbanBankInfo | null {
     swiftCode: bank?.swift,
     source: bank?.source,
     logoUrl: bank?.logoUrl,
-    branchName,
-    branchConfidence: branchName ? 'known' : 'unknown',
+    accountNo: details?.accountNo,
+    branchCode: details?.branchCode || undefined,
+    branchName: details?.branchName || undefined,
+    branchConfidence: details?.branchConfidence || 'unknown',
   }
 }
 

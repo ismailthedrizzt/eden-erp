@@ -7,6 +7,7 @@ import { PageBanner } from '@/components/ui/PageBanner'
 import { SmartDataTable, type ColumnDef, type WidgetDef } from '@/components/ui/SmartDataTable'
 import { Toast } from '@/components/ui/Toast'
 import { usePermissions } from '@/lib/security/permissionStore'
+import { getTurkishIbanBanks, resolveTurkishIban } from '@/lib/utils'
 import { ACCOUNTING_PERMISSIONS } from '@/lib/modules/accounting/shared/accounting.permissions'
 import {
   bankAccountsCardsService,
@@ -18,16 +19,6 @@ type PageState = 'list' | 'create' | 'edit' | 'view'
 type RecordType = 'account' | 'card'
 type ToastState = { type: 'success' | 'error' | 'warning'; title?: string; message: string }
 type Option = { value: string; label: string }
-
-const BANK_OPTIONS = [
-  ['Garanti BBVA', 'Garanti BBVA'],
-  ['İş Bankası', 'İş Bankası'],
-  ['Akbank', 'Akbank'],
-  ['Yapı Kredi', 'Yapı Kredi'],
-  ['QNB', 'QNB'],
-  ['Ziraat', 'Ziraat'],
-  ['Diğer', 'Diğer'],
-]
 
 const ACCOUNT_TYPES = [
   ['vadesiz', 'Vadesiz'],
@@ -53,7 +44,7 @@ const STATUSES = [['active', 'Aktif'], ['passive', 'Pasif']]
 const emptyForm: BankAccountCardPayload = {
   record_type: 'account',
   company_id: '',
-  bank_name: 'Garanti BBVA',
+  bank_name: '',
   branch_name: '',
   branch_code: '',
   status: 'active',
@@ -120,6 +111,7 @@ export default function BankAccountsCardsPage() {
     { key: 'cards', label: 'Kart', render: () => rows.filter(row => row.record_type === 'card').length },
     { key: 'defaults', label: 'Varsayılan', render: () => rows.filter(row => row.is_default).length },
   ], [rows])
+  const bankOptions = useMemo(() => getTurkishIbanBanks().map(bank => [bank.bankName, bank.bankName]), [])
 
   const openCreate = () => {
     setSelected(null)
@@ -181,7 +173,6 @@ export default function BankAccountsCardsPage() {
         subtitle="Şirketlerin banka hesaplarını ve kartlarını tanımlayın."
         icon={<Landmark size={24} />}
         onAddClick={pageState === 'list' && canInsert ? openCreate : undefined}
-        addButtonText="Yeni Hesap / Kart Ekle"
         onBackClick={pageState === 'list' ? undefined : () => { setPageState('list'); setSelected(null) }}
       />
       {toast && <Toast type={toast.type} title={toast.title} message={toast.message} onClose={() => setToast(null)} />}
@@ -203,8 +194,10 @@ export default function BankAccountsCardsPage() {
           form={form}
           readOnly={pageState === 'view'}
           saving={saving}
+          isCreate={pageState === 'create'}
           companies={companies}
           accountOptions={accountOptions}
+          bankOptions={bankOptions}
           onChange={patch => setForm(prev => ({ ...prev, ...patch }))}
           onSave={save}
           onEdit={() => setPageState('edit')}
@@ -219,8 +212,10 @@ function RecordForm({
   form,
   readOnly,
   saving,
+  isCreate,
   companies,
   accountOptions,
+  bankOptions,
   onChange,
   onSave,
   onEdit,
@@ -229,14 +224,35 @@ function RecordForm({
   form: BankAccountCardPayload
   readOnly: boolean
   saving: boolean
+  isCreate: boolean
   companies: Option[]
   accountOptions: Option[]
+  bankOptions: string[][]
   onChange: (patch: Partial<BankAccountCardPayload>) => void
   onSave: () => void
   onEdit: () => void
   canEdit: boolean
 }) {
   const isAccount = form.record_type === 'account'
+  const hasCompany = !!form.company_id
+  const canEditRecordType = !readOnly && hasCompany
+  const canEditAccountFields = !readOnly && hasCompany && form.record_type === 'account'
+  const canEditCardFields = !readOnly && hasCompany && form.record_type === 'card' && !isCreate
+  const resolvedIban = isAccount ? resolveTurkishIban(form.iban || '') : null
+  const canSaveRecord = !saving && hasCompany && (!isCreate || (isAccount && !!resolvedIban))
+  const handleIbanChange = (value: string) => {
+    const normalizedIban = value.toUpperCase().replace(/[^A-Z0-9]/g, '')
+    const details = resolveTurkishIban(normalizedIban)
+    onChange({
+      iban: normalizedIban,
+      ...(details ? {
+        bank_name: details.bankName,
+        account_no: details.accountNo,
+        branch_code: details.branchCode,
+        branch_name: details.branchName,
+      } : {}),
+    })
+  }
 
   return (
     <div className="space-y-4">
@@ -248,50 +264,54 @@ function RecordForm({
           </div>
           <div className="flex gap-2">
             {readOnly && canEdit && <button className="btn" onClick={onEdit}>Düzenle</button>}
-            {!readOnly && <button disabled={saving} className="btn btn-primary" onClick={onSave}>{saving ? 'Kaydediliyor...' : 'Kaydet'}</button>}
           </div>
         </div>
 
         <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           <SelectField label="Şirket" value={form.company_id || ''} options={[['', 'Şirket seçiniz'], ...companies.map(company => [company.value, company.label])]} disabled={readOnly} onChange={value => onChange({ company_id: value || null })} />
-          <SelectField label="Banka" value={form.bank_name || ''} options={BANK_OPTIONS} disabled={readOnly} onChange={value => onChange({ bank_name: value })} />
-          <TextField label="Şube Adı" value={form.branch_name} readOnly={readOnly} onChange={value => onChange({ branch_name: value })} />
-          <TextField label="Şube Kodu" value={form.branch_code} readOnly={readOnly} onChange={value => onChange({ branch_code: value.replace(/\D/g, '') })} />
-          <SelectField label="Kayıt Tipi" value={form.record_type} options={[['account', 'Hesap'], ['card', 'Kart']]} disabled={readOnly} onChange={value => onChange({ record_type: value as RecordType })} />
+          <SelectField label="Kayıt Tipi" value={form.record_type} options={[['account', 'Hesap'], ['card', 'Kart']]} disabled={!canEditRecordType} onChange={value => onChange({ record_type: value as RecordType })} />
+          {isAccount && <TextField label="IBAN" value={formatIbanInput(form.iban)} disabled={!canEditAccountFields} onChange={handleIbanChange} />}
           <SelectField label="Durum" value={form.status || 'active'} options={STATUSES} disabled={readOnly} onChange={value => onChange({ status: value })} />
         </div>
       </section>
 
       <section className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
-        <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{isAccount ? 'Hesap Bilgileri' : 'Kart Bilgileri'}</h3>
+        <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{isAccount ? 'Çözümlenen Hesap Bilgileri' : 'Kart Bilgileri'}</h3>
         <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {isAccount ? (
             <>
-              <TextField label="IBAN" value={form.iban} readOnly={readOnly} onChange={value => onChange({ iban: value.toUpperCase().replace(/\s/g, '') })} />
-              <TextField label="Hesap No" value={form.account_no} readOnly={readOnly} onChange={value => onChange({ account_no: value })} />
-              <TextField label="Hesap Adı" value={form.account_name} readOnly={readOnly} onChange={value => onChange({ account_name: value })} />
-              <SelectField label="Para Birimi" value={form.currency || 'TRY'} options={CURRENCIES} disabled={readOnly} onChange={value => onChange({ currency: value })} />
-              <SelectField label="Hesap Tipi" value={form.account_type || 'vadesiz'} options={ACCOUNT_TYPES} disabled={readOnly} onChange={value => onChange({ account_type: value })} />
-              <TextField label="Açılış Tarihi" type="date" value={form.opening_date} readOnly={readOnly} onChange={value => onChange({ opening_date: value })} />
-              <CheckboxField label="Varsayılan Hesap mı?" checked={!!form.is_default} disabled={readOnly} onChange={value => onChange({ is_default: value })} />
+              <SelectField label="Banka" value={form.bank_name || ''} options={[['', 'IBAN ile doldurulur'], ...bankOptions]} disabled onChange={value => onChange({ bank_name: value })} />
+              <TextField label="Hesap No" value={form.account_no} readOnly onChange={value => onChange({ account_no: value })} />
+              <TextField label="Şube Adı" value={form.branch_name} readOnly onChange={value => onChange({ branch_name: value })} />
+              <TextField label="Şube Kodu" value={form.branch_code} readOnly onChange={value => onChange({ branch_code: value.replace(/\D/g, '') })} />
+              <TextField label="Hesap Adı" value={form.account_name} disabled={!canEditAccountFields} onChange={value => onChange({ account_name: value })} />
+              <SelectField label="Para Birimi" value={form.currency || 'TRY'} options={CURRENCIES} disabled={!canEditAccountFields} onChange={value => onChange({ currency: value })} />
+              <SelectField label="Hesap Tipi" value={form.account_type || 'vadesiz'} options={ACCOUNT_TYPES} disabled={!canEditAccountFields} onChange={value => onChange({ account_type: value })} />
+              <TextField label="Açılış Tarihi" type="date" value={form.opening_date} disabled={!canEditAccountFields} onChange={value => onChange({ opening_date: value })} />
+              <CheckboxField label="Varsayılan Hesap mı?" checked={!!form.is_default} disabled={!canEditAccountFields} onChange={value => onChange({ is_default: value })} />
             </>
           ) : (
             <>
-              <TextField label="Kart Adı" value={form.card_name} readOnly={readOnly} onChange={value => onChange({ card_name: value })} />
-              <SelectField label="Kart Tipi" value={form.card_type || 'credit_card'} options={CARD_TYPES} disabled={readOnly} onChange={value => onChange({ card_type: value })} />
-              <TextField label="Son 4 Hane" value={form.last_four_digits} readOnly={readOnly} onChange={value => onChange({ last_four_digits: value.replace(/\D/g, '').slice(0, 4) })} />
-              <SelectField label="Bağlı Hesap" value={form.linked_bank_account_id || ''} options={[['', 'Opsiyonel'], ...accountOptions.map(option => [option.value, option.label])]} disabled={readOnly} onChange={value => onChange({ linked_bank_account_id: value || null })} />
-              <SelectField label="Para Birimi" value={form.currency || 'TRY'} options={CURRENCIES} disabled={readOnly} onChange={value => onChange({ currency: value })} />
-              <TextField label="Limit" type="number" value={form.limit_amount} readOnly={readOnly} onChange={value => onChange({ limit_amount: value })} />
-              <TextField label="Kullanılabilir Limit" type="number" value={form.available_limit} readOnly={readOnly} onChange={value => onChange({ available_limit: value })} />
-              <TextField label="Ekstre Kesim Günü" type="number" value={form.statement_day} readOnly={readOnly} onChange={value => onChange({ statement_day: value })} />
-              <TextField label="Son Ödeme Günü" type="number" value={form.payment_due_day} readOnly={readOnly} onChange={value => onChange({ payment_due_day: value })} />
-              <CheckboxField label="Varsayılan Kart mı?" checked={!!form.is_default} disabled={readOnly} onChange={value => onChange({ is_default: value })} />
+              <TextField label="Kart Adı" value={form.card_name} disabled={!canEditCardFields} onChange={value => onChange({ card_name: value })} />
+              <SelectField label="Kart Tipi" value={form.card_type || 'credit_card'} options={CARD_TYPES} disabled={!canEditCardFields} onChange={value => onChange({ card_type: value })} />
+              <TextField label="Son 4 Hane" value={form.last_four_digits} disabled={!canEditCardFields} onChange={value => onChange({ last_four_digits: value.replace(/\D/g, '').slice(0, 4) })} />
+              <SelectField label="Bağlı Hesap" value={form.linked_bank_account_id || ''} options={[['', 'Opsiyonel'], ...accountOptions.map(option => [option.value, option.label])]} disabled={!canEditCardFields} onChange={value => onChange({ linked_bank_account_id: value || null })} />
+              <SelectField label="Para Birimi" value={form.currency || 'TRY'} options={CURRENCIES} disabled={!canEditCardFields} onChange={value => onChange({ currency: value })} />
+              <TextField label="Limit" type="number" value={form.limit_amount} disabled={!canEditCardFields} onChange={value => onChange({ limit_amount: value })} />
+              <TextField label="Kullanılabilir Limit" type="number" value={form.available_limit} disabled={!canEditCardFields} onChange={value => onChange({ available_limit: value })} />
+              <TextField label="Ekstre Kesim Günü" type="number" value={form.statement_day} disabled={!canEditCardFields} onChange={value => onChange({ statement_day: value })} />
+              <TextField label="Son Ödeme Günü" type="number" value={form.payment_due_day} disabled={!canEditCardFields} onChange={value => onChange({ payment_due_day: value })} />
+              <CheckboxField label="Varsayılan Kart mı?" checked={!!form.is_default} disabled={!canEditCardFields} onChange={value => onChange({ is_default: value })} />
             </>
           )}
         </div>
         {!isAccount && <p className="mt-3 text-xs text-gray-500">Kart numarasının tamamı saklanmaz; yalnızca son 4 hane tutulur.</p>}
       </section>
+      {!readOnly && (
+        <div className="flex justify-end">
+          <button disabled={!canSaveRecord} className="btn btn-primary disabled:opacity-50" onClick={onSave}>{saving ? 'Kaydediliyor...' : 'Kaydet'}</button>
+        </div>
+      )}
     </div>
   )
 }
@@ -313,11 +333,11 @@ function ActionButton({ children, icon, onClick }: { children: React.ReactNode; 
   return <button className="inline-flex items-center gap-1 rounded bg-gray-100 px-2 py-1 text-[11px] text-gray-700 dark:bg-gray-800 dark:text-gray-200" onClick={(event) => { event.stopPropagation(); onClick() }}>{icon}{children}</button>
 }
 
-function TextField({ label, value, onChange, readOnly, type = 'text' }: { label: string; value: any; onChange: (value: string) => void; readOnly?: boolean; type?: string }) {
+function TextField({ label, value, onChange, readOnly, disabled, type = 'text' }: { label: string; value: any; onChange: (value: string) => void; readOnly?: boolean; disabled?: boolean; type?: string }) {
   return (
     <label className="block">
       <span className="text-xs font-medium text-gray-500">{label}</span>
-      <input type={type} value={value ?? ''} readOnly={readOnly} onChange={event => onChange(event.target.value)} className="mt-1 h-10 w-full rounded-md border border-gray-200 bg-white px-3 text-sm text-gray-900 outline-none focus:border-blue-400 read-only:bg-gray-50 dark:border-gray-700 dark:bg-gray-950 dark:text-white dark:read-only:bg-gray-900" />
+      <input type={type} value={value ?? ''} readOnly={readOnly} disabled={disabled} onChange={event => onChange(event.target.value)} className="mt-1 h-10 w-full rounded-md border border-gray-200 bg-white px-3 text-sm text-gray-900 outline-none focus:border-blue-400 read-only:bg-gray-50 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400 dark:border-gray-700 dark:bg-gray-950 dark:text-white dark:read-only:bg-gray-900 dark:disabled:bg-gray-900 dark:disabled:text-gray-500" />
     </label>
   )
 }
@@ -340,6 +360,14 @@ function CheckboxField({ label, checked, disabled, onChange }: { label: string; 
       {label}
     </label>
   )
+}
+
+function formatIbanInput(value?: string | null) {
+  return String(value || '')
+    .replace(/[^a-zA-Z0-9]/g, '')
+    .toUpperCase()
+    .replace(/(.{4})/g, '$1 ')
+    .trim()
 }
 
 function rowToForm(row: BankAccountCardRow): BankAccountCardPayload {
