@@ -4,7 +4,7 @@ import { cleanPayload, fetchCompanyNames } from '../_banking'
 
 export type BankAccountCardKind = 'account' | 'card'
 
-const BANK_ACCOUNT_LIST_COLUMNS = [
+export const BANK_ACCOUNT_SELECT = [
   'id',
   'company_id',
   'bank_connection_id',
@@ -20,9 +20,11 @@ const BANK_ACCOUNT_LIST_COLUMNS = [
   'status',
   'is_deleted',
   'created_at',
+  'updated_at',
+  'version',
 ].join(',')
 
-const BANK_CARD_LIST_COLUMNS = [
+export const BANK_CARD_SELECT = [
   'id',
   'company_id',
   'bank_connection_id',
@@ -39,7 +41,11 @@ const BANK_CARD_LIST_COLUMNS = [
   'status',
   'is_deleted',
   'created_at',
+  'updated_at',
+  'version',
 ].join(',')
+
+export const BANK_CONNECTION_SELECT = 'id,company_id,bank_name,provider_code,integration_type,connection_status,environment,status,is_deleted,created_at,updated_at,version'
 
 export function parseCompositeId(id: string): { kind: BankAccountCardKind; rawId: string } {
   const [kind, rawId] = id.split(':')
@@ -48,8 +54,8 @@ export function parseCompositeId(id: string): { kind: BankAccountCardKind; rawId
 }
 
 export async function listBankAccountsCards(supabase: SupabaseClient, options: { includePassive?: boolean } = {}) {
-  let accountsQuery = supabase.from('bank_accounts').select(BANK_ACCOUNT_LIST_COLUMNS).order('created_at', { ascending: false })
-  let cardsQuery = supabase.from('bank_cards').select(BANK_CARD_LIST_COLUMNS).order('created_at', { ascending: false })
+  let accountsQuery = supabase.from('bank_accounts').select(BANK_ACCOUNT_SELECT).order('created_at', { ascending: false })
+  let cardsQuery = supabase.from('bank_cards').select(BANK_CARD_SELECT).order('created_at', { ascending: false })
 
   if (!options.includePassive) {
     accountsQuery = accountsQuery.eq('is_deleted', false)
@@ -140,7 +146,7 @@ export async function ensureManualBankConnection(supabase: SupabaseClient, body:
 
   const { data: existing, error } = await supabase
     .from('bank_connections')
-    .select('*')
+    .select(BANK_CONNECTION_SELECT)
     .eq('is_deleted', false)
     .eq('bank_name', bankName)
     .eq('provider_code', 'manual')
@@ -162,7 +168,7 @@ export async function ensureManualBankConnection(supabase: SupabaseClient, body:
       created_by: userId,
       updated_by: userId,
     })
-    .select('*')
+    .select(BANK_CONNECTION_SELECT)
     .single()
 
   if (insertError) throw new Error(insertError.message)

@@ -3,7 +3,7 @@ import { createServiceClient } from '@/lib/supabase/server'
 import { ACCOUNTING_PERMISSIONS } from '@/lib/modules/accounting/shared/accounting.permissions'
 import { requirePermission } from '@/lib/security/serverPermissions'
 import { isMissingTableError } from '../_banking'
-import { ensureManualBankConnection, listBankAccountsCards, normalizeAccountBody, normalizeCardBody } from './_shared'
+import { BANK_ACCOUNT_SELECT, BANK_CARD_SELECT, ensureManualBankConnection, listBankAccountsCards, normalizeAccountBody, normalizeCardBody } from './_shared'
 
 export async function GET(request: NextRequest) {
   const supabase = createServiceClient()
@@ -41,16 +41,18 @@ export async function POST(request: NextRequest) {
     if (recordType === 'account') {
       const payload = normalizeAccountBody(body, connection, permission.userId)
       if (!payload.account_name) return NextResponse.json({ error: 'Hesap adı zorunludur.' }, { status: 400 })
-      const { data, error } = await supabase.from('bank_accounts').insert({ ...payload, created_by: permission.userId }).select('*').single()
+      const { data, error } = await supabase.from('bank_accounts').insert({ ...payload, created_by: permission.userId }).select(BANK_ACCOUNT_SELECT).single()
       if (error) throw new Error(error.message)
-      return NextResponse.json({ data: { id: `account:${data.id}`, ...data } }, { status: 201 })
+      const account = data as Record<string, any>
+      return NextResponse.json({ data: { id: `account:${account.id}`, ...account } }, { status: 201 })
     }
 
     const payload = normalizeCardBody(body, connection, permission.userId)
     if (!payload.card_name) return NextResponse.json({ error: 'Kart adı zorunludur.' }, { status: 400 })
-    const { data, error } = await supabase.from('bank_cards').insert({ ...payload, created_by: permission.userId }).select('*').single()
+    const { data, error } = await supabase.from('bank_cards').insert({ ...payload, created_by: permission.userId }).select(BANK_CARD_SELECT).single()
     if (error) throw new Error(error.message)
-    return NextResponse.json({ data: { id: `card:${data.id}`, ...data } }, { status: 201 })
+    const card = data as Record<string, any>
+    return NextResponse.json({ data: { id: `card:${card.id}`, ...card } }, { status: 201 })
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Kayıt oluşturulamadı.'
     return NextResponse.json({ error: message }, { status: 500 })
