@@ -91,12 +91,12 @@ const baseEmployeeListColumns = [
   'birim_id',
   'kadro_id',
   'gorev',
-  'is_deleted',
   'created_at',
   'updated_at',
 ]
 
 const optionalEmployeeListColumns = [
+  'is_deleted',
   'employee_no',
   'employment_status',
   'start_date',
@@ -148,6 +148,7 @@ export async function GET(request: NextRequest) {
 
   let enabledOptionalColumns = [...optionalEmployeeListColumns]
   let includeOrganizationRelations = true
+  let hasIsDeletedColumn = true
   let data: any[] | null = null
   let error: any = null
 
@@ -167,7 +168,7 @@ export async function GET(request: NextRequest) {
       .select(selectQuery)
       .order('soyad', { ascending: true })
 
-    if (!includePassive) query = query.or('is_deleted.eq.false,is_deleted.is.null')
+    if (!includePassive && hasIsDeletedColumn) query = query.or('is_deleted.eq.false,is_deleted.is.null')
     if (birimId) query = query.eq('birim_id', birimId)
     if (durum) query = query.eq('calisma_durumu', durum)
     if (ara) query = query.or(`ad.ilike.%${ara}%,soyad.ilike.%${ara}%,tc_kimlik.ilike.%${ara}%`)
@@ -179,6 +180,7 @@ export async function GET(request: NextRequest) {
     const missingColumn = missingEmployeeColumn(error, enabledOptionalColumns)
     if (missingColumn) {
       enabledOptionalColumns = enabledOptionalColumns.filter((column) => column !== missingColumn)
+      if (missingColumn === 'is_deleted') hasIsDeletedColumn = false
       continue
     }
 
@@ -193,6 +195,7 @@ export async function GET(request: NextRequest) {
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   const rows = (data || []).map((row: any) => ({
     ...row,
+    is_deleted: row.is_deleted ?? false,
     employee_no: row.employee_no || null,
     photo_url: row.fotograf_url || null,
     full_name: [row.ad, row.soyad].filter(Boolean).join(' '),

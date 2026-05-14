@@ -70,6 +70,7 @@ for (const forbidden of ['module_licenses', 'egitim_okullari', 'getEducationLeve
 }
 assertIncludes('app/api/ik/personel/route.ts', 'missingEmployeeRelation(error)', 'employee list GET must fall back when organization relations are unavailable')
 assertIncludes('app/api/ik/personel/route.ts', 'includeOrganizationRelations = false', 'employee list GET must not fail the whole list when organization joins are unavailable')
+assertIncludes('app/api/ik/personel/route.ts', "missingColumn === 'is_deleted'", 'employee list GET must fall back when legacy databases do not have is_deleted yet')
 
 const instantOpenPages = [
   {
