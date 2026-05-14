@@ -62,6 +62,8 @@ interface ImageSlotUploaderProps {
   allowExtraSlots?: boolean
   /** Read-only mode (view only) */
   readOnly?: boolean
+  /** Form interaction mode */
+  mode?: 'insert' | 'view' | 'update'
   /** Custom className */
   className?: string
 }
@@ -72,6 +74,7 @@ export function ImageSlotUploader({
   onChange,
   allowExtraSlots = true,
   readOnly = false,
+  mode,
   className
 }: ImageSlotUploaderProps) {
   const [currentIndex, setCurrentIndex] = useState(0)
@@ -85,6 +88,7 @@ export function ImageSlotUploader({
   
   const fileInputRef = useRef<HTMLInputElement>(null)
   const dropZoneRef = useRef<HTMLDivElement>(null)
+  const canMutate = !readOnly && mode !== 'view'
 
   // Combine predefined slots with extra slots from images
   const allSlots = useMemo(() => {
@@ -104,10 +108,10 @@ export function ImageSlotUploader({
 
   // Add "Other" slot if allowed
   const displaySlots = useMemo(
-    () => allowExtraSlots
+    () => allowExtraSlots && canMutate
       ? [...allSlots, { id: '__extra__', title: 'Other Image', required: false }]
       : allSlots,
-    [allSlots, allowExtraSlots]
+    [allSlots, allowExtraSlots, canMutate]
   )
 
   const currentSlot = displaySlots[currentIndex]
@@ -126,6 +130,7 @@ export function ImageSlotUploader({
   }, [displaySlots.length])
 
   const handleFileSelect = useCallback(async (file: File) => {
+    if (!canMutate) return
     if (!currentSlot || currentSlot.id === '__extra__') return
 
     // Validate file type
@@ -179,22 +184,24 @@ export function ImageSlotUploader({
       setIsUploading(false)
       setUploadProgress(0)
     }, 500)
-  }, [currentSlot, images, onChange])
+  }, [canMutate, currentSlot, images, onChange])
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault()
     setIsDragging(false)
+    if (!canMutate) return
     
     const file = e.dataTransfer.files[0]
     if (file && file.type.startsWith('image/')) {
       handleFileSelect(file)
     }
-  }, [handleFileSelect])
+  }, [canMutate, handleFileSelect])
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault()
+    if (!canMutate) return
     setIsDragging(true)
-  }, [])
+  }, [canMutate])
 
   const handleDragLeave = useCallback((e: React.DragEvent) => {
     e.preventDefault()
@@ -202,14 +209,16 @@ export function ImageSlotUploader({
   }, [])
 
   const handleDelete = useCallback(() => {
+    if (!canMutate) return
     if (!currentImage) return
     
     const updatedImages = images.filter(img => img.slotId !== currentSlot.id)
     onChange(updatedImages)
     setShowDeleteConfirm(false)
-  }, [currentImage, currentSlot, images, onChange])
+  }, [canMutate, currentImage, currentSlot, images, onChange])
 
   const handleExtraSlotCreate = useCallback(() => {
+    if (!canMutate) return
     if (!extraSlotName.trim()) return
     
     const newSlotId = `extra_${Date.now()}`
@@ -228,7 +237,7 @@ export function ImageSlotUploader({
     if (newIndex >= 0) {
       setCurrentIndex(newIndex)
     }
-  }, [extraSlotName, images, onChange, displaySlots])
+  }, [canMutate, extraSlotName, images, onChange, displaySlots])
 
   // Keyboard navigation
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
@@ -289,14 +298,14 @@ export function ImageSlotUploader({
         {/* Center - Image Preview Area */}
         <div
           ref={dropZoneRef}
-          onClick={!readOnly && !hasImage && currentSlot.id !== '__extra__' ? () => fileInputRef.current?.click() : undefined}
-          onDrop={!readOnly ? handleDrop : undefined}
-          onDragOver={!readOnly ? handleDragOver : undefined}
-          onDragLeave={!readOnly ? handleDragLeave : undefined}
+          onClick={canMutate && !hasImage && currentSlot.id !== '__extra__' ? () => fileInputRef.current?.click() : undefined}
+          onDrop={canMutate ? handleDrop : undefined}
+          onDragOver={canMutate ? handleDragOver : undefined}
+          onDragLeave={canMutate ? handleDragLeave : undefined}
           className={cn(
             "flex-1 flex flex-col items-center justify-center relative",
             "bg-gray-50 dark:bg-gray-900/50",
-            !readOnly && !hasImage && currentSlot.id !== '__extra__' && "cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-900",
+            canMutate && !hasImage && currentSlot.id !== '__extra__' && "cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-900",
             isDragging && "bg-blue-50 dark:bg-blue-900/20 border-2 border-dashed border-blue-400"
           )}
           style={{ height: hasImage ? 'calc(100% - 34px)' : 'calc(100% - 78px)' }}
@@ -311,7 +320,7 @@ export function ImageSlotUploader({
               />
               
               {/* Hover Actions Overlay */}
-              {!readOnly && (
+              {canMutate && (
                 <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-3">
                   <button
                     onClick={() => setPreviewImage(currentImage || null)}
@@ -338,7 +347,7 @@ export function ImageSlotUploader({
               )}
               
               {/* Read-only View Button */}
-              {readOnly && (
+              {!canMutate && (
                 <button
                   onClick={() => setPreviewImage(currentImage || null)}
                   className="absolute inset-0 flex items-center justify-center bg-black/0 hover:bg-black/40 transition-colors"
@@ -399,9 +408,9 @@ export function ImageSlotUploader({
                   </div>
                   <div className="flex flex-col items-center gap-0.5">
                     <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
-                      Upload
+                      {canMutate ? 'Upload' : 'No image'}
                     </span>
-                    {!readOnly && (
+                    {canMutate && (
                       <span className="text-[10px] text-gray-400">
                         Drop or click
                       </span>
@@ -430,7 +439,7 @@ export function ImageSlotUploader({
         </div>
 
         {/* Bottom - Upload Button */}
-        {!readOnly && !hasImage && currentSlot.id !== '__extra__' && (
+        {canMutate && !hasImage && currentSlot.id !== '__extra__' && (
           <div className="px-2 py-2 border-t border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800">
             <button
               onClick={(event) => {
@@ -468,8 +477,13 @@ export function ImageSlotUploader({
         ref={fileInputRef}
         type="file"
         accept={currentSlot?.acceptedTypes?.join(',') || "image/*"}
+        disabled={!canMutate}
         className="hidden"
         onChange={(e) => {
+          if (!canMutate) {
+            e.target.value = ''
+            return
+          }
           const file = e.target.files?.[0]
           if (file) handleFileSelect(file)
           e.target.value = ''

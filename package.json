@@ -13,6 +13,7 @@
     "supabase:migrate": "node scripts/apply-supabase-migrations.js",
     "master:sync": "node scripts/sync-master-identities.js",
     "iban:banks": "node --use-system-ca scripts/update-turkish-bank-codes.js",
+    "iban:ziraat-branches": "node --use-system-ca scripts/update-ziraat-branches.js",
     "iban:garanti-branches": "node --use-system-ca scripts/update-garanti-bbva-branches.js",
     "iban:isbank-branches": "node --use-system-ca scripts/update-isbank-branches.js",
     "reference:locations": "node scripts/update-turkey-locations.js",

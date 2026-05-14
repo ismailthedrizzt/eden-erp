@@ -23,7 +23,7 @@
  * />
  */
 
-import { useState, useEffect, ReactNode, useCallback } from 'react'
+import { useState, useEffect, ReactNode, useCallback, useMemo } from 'react'
 import { Save, Loader2, Edit3, History, Clock, Plus, Trash2, Upload, Briefcase, LogOut, Building2, UserRound, FileText } from 'lucide-react'
 import { cn, formatPhoneInput, normalizeEmailInput } from '@/lib/utils'
 import { ImageSlotUploader, ImageSlot, SlotImage } from './ImageSlotUploader'
@@ -1599,7 +1599,7 @@ export function EntityForm({
   showEmptyRoleHeroState = true,
   roleHeroCardTitle,
   imageSlot = { title: 'Fotoğraf', required: false },
-  documentSlot = { title: 'CV', required: false },
+  documentSlot,
   onSave,
   onCancel,
   onDelete,
@@ -1636,29 +1636,35 @@ export function EntityForm({
   const primaryImageSlotId = imageSlots[0]?.id || 'photo'
   const [images, setImages] = useState<SlotImage[]>([])
   
-  const documentSlots: DocumentSlot[] = documentSlot.slots || [
-    {
-      id: 'cv',
-      title: documentSlot.title || 'CV',
-      required: documentSlot.required ?? false,
-      acceptedTypes: documentSlot.acceptedTypes || CV_DOCUMENT_ACCEPTED_TYPES,
-      maxSizeMB: documentSlot.maxSizeMB || 20
-    },
-  ]
-  const documentDataField = documentSlot.dataField || 'cv_belgesi'
+  const hasDocumentSlot = !!documentSlot
+  const effectiveDocumentSlot = useMemo(() => documentSlot || { title: 'CV', required: false }, [documentSlot])
+  const documentSlots: DocumentSlot[] = useMemo(() => effectiveDocumentSlot.slots || [
+      {
+        id: 'cv',
+        title: effectiveDocumentSlot.title || 'CV',
+        required: effectiveDocumentSlot.required ?? false,
+        acceptedTypes: effectiveDocumentSlot.acceptedTypes || CV_DOCUMENT_ACCEPTED_TYPES,
+        maxSizeMB: effectiveDocumentSlot.maxSizeMB || 20
+      },
+    ], [effectiveDocumentSlot])
+  const documentDataField = effectiveDocumentSlot.dataField || 'cv_belgesi'
   const [documents, setDocuments] = useState<SlotDocument[]>([])
-  const visibleTabs = tabs.filter(tab =>
+  const visibleTabs = useMemo(() => tabs.filter(tab =>
     tab.fields.length === 0 || tab.fields.some(field => matchesCondition(field.visibleWhen, formData))
+  ), [tabs, formData])
+  const formTabs = useMemo(() => hasDocumentSlot
+      ? [
+          ...visibleTabs,
+          {
+            id: DOCUMENTS_FORM_TAB_ID,
+            label: 'Belgeler',
+            icon: <FileText size={16} />,
+            fields: [],
+          },
+        ]
+      : visibleTabs,
+    [hasDocumentSlot, visibleTabs]
   )
-  const formTabs = [
-    ...visibleTabs,
-    {
-      id: DOCUMENTS_FORM_TAB_ID,
-      label: 'Belgeler',
-      icon: <FileText size={16} />,
-      fields: [],
-    },
-  ]
 
   useEffect(() => {
     if (imageSlot.dataField) {
@@ -1676,7 +1682,12 @@ export function EntityForm({
   }, [data, imageDataField, imageSlot.dataField, primaryImageSlotId])
 
   useEffect(() => {
-    if (documentSlot.dataField) {
+    if (!hasDocumentSlot) {
+      setDocuments([])
+      return
+    }
+
+    if (effectiveDocumentSlot.dataField) {
       setDocuments(normalizeStoredDocuments(data?.[documentDataField]))
       return
     }
@@ -1685,7 +1696,7 @@ export function EntityForm({
       const storageField = getDocumentSlotStorageField(slot)
       return storageField ? normalizeStoredDocuments(data?.[storageField], slot.id) : []
     }))
-  }, [data, documentDataField, documentSlot.dataField])
+  }, [data, documentDataField, documentSlots, effectiveDocumentSlot.dataField, hasDocumentSlot])
 
   // Sync with external mode changes
   useEffect(() => {
@@ -1789,6 +1800,7 @@ export function EntityForm({
   const isReadOnly = mode === 'view'
   const isCreate = mode === 'create'
   const isEdit = mode === 'edit'
+  const slotLoaderMode = isReadOnly ? 'view' : isCreate ? 'insert' : 'update'
   const isIdentityGateEnabled = !!identityGate?.enabled
   const effectiveIdentityGateResult = identityGateResult || buildIdentityResultFromExistingData(identityGate, formData)
   const isIdentityGateReady = !isIdentityGateEnabled || !isCreate || effectiveIdentityGateResult?.state === 'ready_for_insert' || effectiveIdentityGateResult?.state === 'ready_for_edit'
@@ -1916,14 +1928,16 @@ export function EntityForm({
           ...image,
           slotId: index === 0 ? primaryImageSlotId : image.slotId,
         }))
-    const nextDocuments = normalizeStoredDocuments(
-      result.prefill[documentDataField] ||
-      result.prefill.partner_documents ||
-      result.prefill.authority_documents ||
-      result.prefill.stakeholder_documents ||
-      result.prefill.cv_belgesi ||
-      []
-    )
+    const nextDocuments = hasDocumentSlot
+      ? normalizeStoredDocuments(
+          result.prefill[documentDataField] ||
+          result.prefill.partner_documents ||
+          result.prefill.authority_documents ||
+          result.prefill.stakeholder_documents ||
+          result.prefill.cv_belgesi ||
+          []
+        )
+      : []
 
     setIdentityGateResult(result)
     setFormData(prev => ({
@@ -1946,15 +1960,17 @@ export function EntityForm({
       }
     })
 
-    if (documentSlot.dataField) {
-      next[documentDataField] = documents.map(serializeDocumentForStorage)
-    } else {
-      documentSlots.forEach(slot => {
-        const storageField = getDocumentSlotStorageField(slot)
-        if (!storageField) return
-        const slotDocument = getLatestActiveStoredDocument(documents, slot.id)
-        next[storageField] = slotDocument ? serializeDocumentForStorage(slotDocument) : null
-      })
+    if (hasDocumentSlot) {
+      if (effectiveDocumentSlot.dataField) {
+        next[documentDataField] = documents.map(serializeDocumentForStorage)
+      } else {
+        documentSlots.forEach(slot => {
+          const storageField = getDocumentSlotStorageField(slot)
+          if (!storageField) return
+          const slotDocument = getLatestActiveStoredDocument(documents, slot.id)
+          next[storageField] = slotDocument ? serializeDocumentForStorage(slotDocument) : null
+        })
+      }
     }
 
     return next
@@ -2026,6 +2042,8 @@ export function EntityForm({
   }
 
   const handleDocumentsChange = async (nextDocuments: SlotDocument[]) => {
+    if (!hasDocumentSlot) return
+
     const hydratedDocuments = await Promise.all(nextDocuments.map(async document => {
       if (!document.file || document.storagePath) return document
       return uploadDocumentFile(document)
@@ -2033,7 +2051,7 @@ export function EntityForm({
 
     setDocuments(hydratedDocuments)
 
-    if (documentSlot.dataField) {
+    if (effectiveDocumentSlot.dataField) {
       handleChange(documentDataField, hydratedDocuments.map(serializeDocumentForStorage))
       return
     }
@@ -2559,29 +2577,32 @@ export function EntityForm({
                     images={images}
                     onChange={handleImagesChange}
                     readOnly={isReadOnly || isIdentityGateLocked || !!imageSlot.readOnly}
+                    mode={slotLoaderMode}
                   />
                 </div>
                 
-                {/* Document Slot - Optional */}
-                <div className="flex flex-col gap-1.5">
-                  <DocumentSlotUploader
-                    slots={documentSlots}
-                    documents={documents}
-                    onChange={handleDocumentsChange}
-                    readOnly={isReadOnly || isIdentityGateLocked}
-                    aiBadge={documentSlot.aiBadge}
-                  />
-                  {!documentSlot.dataField && cvExtractStatus.type !== 'idle' && (
-                    <p className={cn(
-                      "text-xs",
-                      cvExtractStatus.type === 'loading' && "text-gray-500 dark:text-gray-400",
-                      cvExtractStatus.type === 'success' && "text-emerald-600 dark:text-emerald-400",
-                      cvExtractStatus.type === 'error' && "text-amber-600 dark:text-amber-400"
-                    )}>
-                      {cvExtractStatus.message}
-                    </p>
-                  )}
-                </div>
+                {hasDocumentSlot && (
+                  <div className="flex flex-col gap-1.5">
+                    <DocumentSlotUploader
+                      slots={documentSlots}
+                      documents={documents}
+                      onChange={handleDocumentsChange}
+                      readOnly={isReadOnly || isIdentityGateLocked}
+                      mode={slotLoaderMode}
+                      aiBadge={effectiveDocumentSlot.aiBadge}
+                    />
+                    {!effectiveDocumentSlot.dataField && cvExtractStatus.type !== 'idle' && (
+                      <p className={cn(
+                        "text-xs",
+                        cvExtractStatus.type === 'loading' && "text-gray-500 dark:text-gray-400",
+                        cvExtractStatus.type === 'success' && "text-emerald-600 dark:text-emerald-400",
+                        cvExtractStatus.type === 'error' && "text-amber-600 dark:text-amber-400"
+                      )}>
+                        {cvExtractStatus.message}
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -2742,7 +2763,8 @@ export function EntityForm({
                   documents={documents}
                   onChange={handleDocumentsChange}
                   readOnly={isReadOnly || isIdentityGateLocked}
-                  aiBadge={documentSlot.aiBadge}
+                  mode={slotLoaderMode}
+                  aiBadge={effectiveDocumentSlot.aiBadge}
                   defaultTab="documents"
                   className="items-stretch"
                 />

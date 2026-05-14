@@ -3,6 +3,7 @@ import { twMerge } from 'tailwind-merge'
 import turkishBankCodes from '@/lib/data/turkish-bank-codes.json'
 import garantiBbvaBranches from '@/lib/data/garanti-bbva-branches.json'
 import isbankBranches from '@/lib/data/isbank-branches.json'
+import ziraatBranches from '@/lib/data/ziraat-branches.json'
 
 // Tailwind class birleştirici
 export function cn(...inputs: ClassValue[]) {
@@ -180,11 +181,14 @@ function resolveTurkishIbanWithoutBranch(iban: string) {
 
 const GARANTI_BBVA_BANK_CODE = '00062'
 const ISBANK_BANK_CODE = '00064'
+const ZIRAAT_BANK_CODE = '00010'
 const GARANTI_BBVA_BRANCHES = garantiBbvaBranches.branches as Record<string, string>
 const ISBANK_BRANCHES = isbankBranches.branches as Record<string, string>
+const ZIRAAT_BRANCHES = ziraatBranches.branches as Record<string, string>
 const TURKISH_IBAN_BRANCH_RESOLVERS: Record<string, TurkishIbanBranchResolver> = {
   [GARANTI_BBVA_BANK_CODE]: resolveGarantiBbvaIbanBranch,
   [ISBANK_BANK_CODE]: resolveIsbankIbanBranch,
+  [ZIRAAT_BANK_CODE]: resolveZiraatIbanBranch,
 }
 
 function resolveKnownTurkishIbanBranch(details: {
@@ -220,6 +224,25 @@ function resolveIsbankIbanBranch(details: {
   // İş Bankası IBAN hesap numarası alanı: 0000 + hesap tipi + 4 hane şube + 7 hane hesap no.
   const branchCode = String(Number(details.accountNo.slice(5, 9)))
   const branchName = ISBANK_BRANCHES[branchCode]
+
+  if (!branchName) return { branchCode }
+
+  return { branchCode, branchName }
+}
+
+function resolveZiraatIbanBranch(details: {
+  bankCode: string
+  accountNo: string
+}) {
+  if (!/^\d{16}$/.test(details.accountNo)) return null
+
+  // Ziraat Bankasi IBAN hesap numarasi alaninin ilk 4 hanesi sube kodudur.
+  // IBAN merkezi gibi ozel kayitlar 5 haneli kodla yayinlanabildigi icin once onu deneriz.
+  const specialBranchCode = String(Number(details.accountNo.slice(0, 5)))
+  const branchCode = ZIRAAT_BRANCHES[specialBranchCode]
+    ? specialBranchCode
+    : String(Number(details.accountNo.slice(0, 4)))
+  const branchName = ZIRAAT_BRANCHES[branchCode]
 
   if (!branchName) return { branchCode }
 

@@ -84,6 +84,8 @@ interface DocumentSlotUploaderProps {
   allowExtraSlots?: boolean
   /** Read-only mode (view only) */
   readOnly?: boolean
+  /** Form interaction mode */
+  mode?: 'insert' | 'view' | 'update'
   /** Initial tab to show when the uploader mounts */
   defaultTab?: 'upload' | 'documents'
   /** Show a compact AI capability badge without changing the uploader layout */
@@ -480,6 +482,7 @@ export function DocumentSlotUploader({
   onChange,
   allowExtraSlots = true,
   readOnly = false,
+  mode,
   defaultTab = 'upload',
   aiBadge,
   className
@@ -503,6 +506,7 @@ export function DocumentSlotUploader({
   const fileInputRef = useRef<HTMLInputElement>(null)
   const replaceFileInputRef = useRef<HTMLInputElement>(null)
   const dropZoneRef = useRef<HTMLDivElement>(null)
+  const canMutate = !readOnly && mode !== 'view'
 
   // Combine predefined slots with extra slots from documents
   const allSlots = useMemo(() => {
@@ -522,10 +526,10 @@ export function DocumentSlotUploader({
 
   // Add "Other" slot if allowed
   const displaySlots = useMemo(
-    () => allowExtraSlots
+    () => allowExtraSlots && canMutate
       ? [...allSlots, { id: '__extra__', title: 'Other Document', required: false }]
       : allSlots,
-    [allSlots, allowExtraSlots]
+    [allSlots, allowExtraSlots, canMutate]
   )
 
   const currentSlot = displaySlots[currentIndex]
@@ -554,10 +558,10 @@ export function DocumentSlotUploader({
       }
     })
 
-    if (nextDocuments.some((doc, index) => doc !== documents[index])) {
+    if (canMutate && nextDocuments.some((doc, index) => doc !== documents[index])) {
       onChange(nextDocuments)
     }
-  }, [documents, onChange])
+  }, [canMutate, documents, onChange])
 
   useEffect(() => {
     const docsNeedingSignedUrl = documents.filter(doc =>
@@ -627,17 +631,19 @@ export function DocumentSlotUploader({
       const next = Object.fromEntries(items.filter((item): item is readonly [string, string] => !!item?.[1]))
       if (Object.keys(next).length > 0) {
         setGeneratedThumbnails(prev => ({ ...prev, ...next }))
-        onChange(documents.map(doc => {
-          const key = doc.storagePath || doc.documentId || `${doc.slotId}:${doc.name}:${doc.size}`
-          return next[key] && (!doc.thumbnailUrl || isFallbackDocumentThumbnail(doc.thumbnailUrl)) ? { ...doc, thumbnailUrl: next[key] } : doc
-        }))
+        if (canMutate) {
+          onChange(documents.map(doc => {
+            const key = doc.storagePath || doc.documentId || `${doc.slotId}:${doc.name}:${doc.size}`
+            return next[key] && (!doc.thumbnailUrl || isFallbackDocumentThumbnail(doc.thumbnailUrl)) ? { ...doc, thumbnailUrl: next[key] } : doc
+          }))
+        }
       }
     })
 
     return () => {
       cancelled = true
     }
-  }, [documents, generatedThumbnails, onChange, signedPreviewUrls])
+  }, [canMutate, documents, generatedThumbnails, onChange, signedPreviewUrls])
 
   useEffect(() => {
     if (!previewDoc) {
@@ -695,6 +701,7 @@ export function DocumentSlotUploader({
   }, [displaySlots.length])
 
   const handleFileSelect = useCallback(async (file: File, targetSlotId = currentSlot?.id) => {
+    if (!canMutate) return
     const targetSlot = displaySlots.find(slot => slot.id === targetSlotId)
     if (!targetSlot || targetSlot.id === '__extra__') return
 
@@ -769,11 +776,12 @@ export function DocumentSlotUploader({
         setUploadProgress(0)
       }
     }, 500)
-  }, [currentSlot?.id, displaySlots, documents, onChange])
+  }, [canMutate, currentSlot?.id, displaySlots, documents, onChange])
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault()
     setIsDragging(false)
+    if (!canMutate) return
     
     const file = e.dataTransfer.files[0]
     if (file && currentAcceptedTypes.includes(file.type)) {
@@ -781,12 +789,13 @@ export function DocumentSlotUploader({
     } else {
       alert('Invalid file type. Please upload an accepted document type.')
     }
-  }, [currentAcceptedTypes, handleFileSelect])
+  }, [canMutate, currentAcceptedTypes, handleFileSelect])
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault()
+    if (!canMutate) return
     setIsDragging(true)
-  }, [])
+  }, [canMutate])
 
   const handleDragLeave = useCallback((e: React.DragEvent) => {
     e.preventDefault()
@@ -794,6 +803,7 @@ export function DocumentSlotUploader({
   }, [])
 
   const handleDelete = useCallback(() => {
+    if (!canMutate) return
     const targetDoc = deleteTargetDoc || currentDoc
     if (!targetDoc) return
 
@@ -807,9 +817,10 @@ export function DocumentSlotUploader({
     onChange(updatedDocs)
     setDeleteTargetDoc(null)
     setShowDeleteConfirm(false)
-  }, [currentDoc, deleteTargetDoc, documents, onChange])
+  }, [canMutate, currentDoc, deleteTargetDoc, documents, onChange])
 
   const handleExtraSlotCreate = useCallback(() => {
+    if (!canMutate) return
     if (!extraSlotName.trim()) return
     
     const newSlotId = `extra_${Date.now()}`
@@ -834,7 +845,7 @@ export function DocumentSlotUploader({
     if (newIndex >= 0) {
       setCurrentIndex(newIndex)
     }
-  }, [extraSlotName, documents, onChange, displaySlots])
+  }, [canMutate, extraSlotName, documents, onChange, displaySlots])
 
   const handleDownload = useCallback((doc = currentDoc) => {
     if (!doc?.file && !doc?.url && !doc?.storagePath && !doc?.documentId) return
@@ -895,6 +906,7 @@ export function DocumentSlotUploader({
   ) : null
 
   const handleReplaceDocument = (doc: SlotDocument) => {
+    if (!canMutate) return
     setReplaceSlotId(doc.slotId)
     replaceFileInputRef.current?.click()
   }
@@ -974,7 +986,7 @@ export function DocumentSlotUploader({
                   >
                     <Download size={16} className="text-gray-600 dark:text-gray-300" />
                   </button>
-                  {!readOnly && active && (
+                  {canMutate && active && (
                     <>
                       <button
                         type="button"
@@ -1007,6 +1019,7 @@ export function DocumentSlotUploader({
   )
 
   const handleUploadForSlot = (slotId: string) => {
+    if (!canMutate) return
     setReplaceSlotId(slotId)
     replaceFileInputRef.current?.click()
   }
@@ -1107,7 +1120,7 @@ export function DocumentSlotUploader({
                     >
                       <Download size={16} className="text-gray-600 dark:text-gray-300" />
                     </button>
-                    {!readOnly && (
+                    {canMutate && (
                       <button
                         type="button"
                         onClick={() => handleUploadForSlot(slot.id)}
@@ -1117,7 +1130,7 @@ export function DocumentSlotUploader({
                         <Upload size={16} className="text-blue-600" />
                       </button>
                     )}
-                    {!readOnly && doc && (
+                    {canMutate && doc && (
                       <button
                         type="button"
                         onClick={() => {
@@ -1196,7 +1209,7 @@ export function DocumentSlotUploader({
         >
           <Eye size={surface === 'inline' ? 16 : 18} className="text-gray-700 dark:text-gray-300" />
         </button>
-        {!readOnly && (
+        {canMutate && (
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
@@ -1215,7 +1228,7 @@ export function DocumentSlotUploader({
         >
           <Download size={surface === 'inline' ? 16 : 18} className="text-green-600" />
         </button>
-        {!readOnly && (
+        {canMutate && (
           <button
             type="button"
             onClick={() => {
@@ -1315,14 +1328,14 @@ export function DocumentSlotUploader({
         {/* Center - Document Display Area */}
         <div
           ref={dropZoneRef}
-          onClick={!readOnly && !hasDocument && currentSlot.id !== '__extra__' ? () => fileInputRef.current?.click() : undefined}
-          onDrop={!readOnly ? handleDrop : undefined}
-          onDragOver={!readOnly ? handleDragOver : undefined}
-          onDragLeave={!readOnly ? handleDragLeave : undefined}
+          onClick={canMutate && !hasDocument && currentSlot.id !== '__extra__' ? () => fileInputRef.current?.click() : undefined}
+          onDrop={canMutate ? handleDrop : undefined}
+          onDragOver={canMutate ? handleDragOver : undefined}
+          onDragLeave={canMutate ? handleDragLeave : undefined}
           className={cn(
             "flex-1 flex flex-col relative",
             "bg-gray-50 dark:bg-gray-900/50",
-            !readOnly && !hasDocument && currentSlot.id !== '__extra__' && "cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-900",
+            canMutate && !hasDocument && currentSlot.id !== '__extra__' && "cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-900",
             isDragging && "bg-blue-50 dark:bg-blue-900/20 border-2 border-dashed border-blue-400"
           )}
           style={{ height: hasDocument ? 'calc(100% - 34px)' : 'calc(100% - 78px)' }}
@@ -1425,9 +1438,9 @@ export function DocumentSlotUploader({
                   </div>
                   <div className="flex flex-col items-center gap-0.5">
                     <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
-                      Upload
+                      {canMutate ? 'Upload' : 'Belge yok'}
                     </span>
-                    {!readOnly && (
+                    {canMutate && (
                       <span className="text-[10px] text-gray-400">
                         PDF, DOC, XLS...
                       </span>
@@ -1456,7 +1469,7 @@ export function DocumentSlotUploader({
         </div>
 
         {/* Bottom - Upload Button */}
-        {!readOnly && !hasDocument && currentSlot.id !== '__extra__' && (
+        {canMutate && !hasDocument && currentSlot.id !== '__extra__' && (
           <div className="px-2 py-2 border-t border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800">
             <button
               onClick={(event) => {
@@ -1496,8 +1509,13 @@ export function DocumentSlotUploader({
         ref={fileInputRef}
         type="file"
         accept={currentAcceptedTypes.join(',')}
+        disabled={!canMutate}
         className="hidden"
         onChange={(e) => {
+          if (!canMutate) {
+            e.target.value = ''
+            return
+          }
           const file = e.target.files?.[0]
           if (file) handleFileSelect(file)
           e.target.value = ''
@@ -1508,8 +1526,14 @@ export function DocumentSlotUploader({
         ref={replaceFileInputRef}
         type="file"
         accept={(displaySlots.find(slot => slot.id === replaceSlotId)?.acceptedTypes || DEFAULT_DOCUMENT_ACCEPTED_TYPES).join(',')}
+        disabled={!canMutate}
         className="hidden"
         onChange={(e) => {
+          if (!canMutate) {
+            setReplaceSlotId(null)
+            e.target.value = ''
+            return
+          }
           const file = e.target.files?.[0]
           if (file && replaceSlotId) handleFileSelect(file, replaceSlotId)
           setReplaceSlotId(null)
@@ -1614,7 +1638,7 @@ export function DocumentSlotUploader({
                   <span className="text-xs text-gray-500">
                     Yüklenme tarihi {formatDocumentDate(previewDoc.uploadedAt)}
                   </span>
-                  {!readOnly && isActiveDocument(previewDoc) && (
+                  {canMutate && isActiveDocument(previewDoc) && (
                     <button
                       onClick={() => {
                         setPreviewDoc(null)
