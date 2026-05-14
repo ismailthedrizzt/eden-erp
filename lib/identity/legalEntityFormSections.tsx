@@ -55,7 +55,7 @@ export function createLegalEntityMasterTabs({
 }: LegalEntityMasterTabOptions = {}): FormTab[] {
   return [
     {
-      id: 'iletisim',
+      id: 'tuzel_kisi_iletisim',
       label: 'İletişim',
       icon: <Phone size={16} />,
       fields: applyVisibleWhen([
@@ -69,8 +69,8 @@ export function createLegalEntityMasterTabs({
       ], visibleWhen),
     },
     {
-      id: 'banka',
-      label: 'Banka Bilgileri',
+      id: 'tuzel_kisi_banka',
+      label: 'Banka',
       icon: <Landmark size={16} />,
       fields: applyVisibleWhen([
         {
@@ -91,7 +91,7 @@ export function createLegalEntityMasterTabs({
       ], visibleWhen),
     },
     {
-      id: 'irtibat_noktalari',
+      id: 'tuzel_kisi_irtibat_noktalari',
       label: 'İrtibat Noktaları',
       icon: <ContactRound size={16} />,
       fields: applyVisibleWhen([

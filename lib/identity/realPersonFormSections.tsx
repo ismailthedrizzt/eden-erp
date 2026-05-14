@@ -95,7 +95,7 @@ export function createRealPersonMasterTabs({
 
   return [
     {
-      id: 'ozel',
+      id: 'gercek_kisi_ozel',
       label: 'Özel',
       icon: <UserCircle size={16} />,
       fields: applyVisibleWhen([
@@ -107,13 +107,13 @@ export function createRealPersonMasterTabs({
       ], visibleWhen),
     },
     {
-      id: 'iletisim',
+      id: 'gercek_kisi_iletisim',
       label: 'İletişim',
       icon: <Phone size={16} />,
       fields: applyVisibleWhen(contactFields, visibleWhen),
     },
     {
-      id: 'egitim',
+      id: 'gercek_kisi_egitim',
       label: 'Eğitim',
       icon: <GraduationCap size={16} />,
       fields: applyVisibleWhen([
@@ -166,7 +166,7 @@ export function createRealPersonMasterTabs({
       ], visibleWhen),
     },
     {
-      id: 'aile',
+      id: 'gercek_kisi_aile',
       label: 'Aile',
       icon: <Heart size={16} />,
       fields: applyVisibleWhen([
@@ -184,8 +184,8 @@ export function createRealPersonMasterTabs({
       ], visibleWhen),
     },
     {
-      id: 'banka',
-      label: 'Banka Bilgileri',
+      id: 'gercek_kisi_banka',
+      label: 'Banka',
       icon: <Landmark size={16} />,
       fields: applyVisibleWhen([
         {

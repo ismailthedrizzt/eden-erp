@@ -25,6 +25,7 @@ import { personelModuleConfig, PersonelTableRow } from '@/lib/modules/personel.c
 import { buildEmployeesDashboard } from '@/lib/modules/employees/dashboard/employeesDashboard.mock'
 import { getEducationSummary } from '@/lib/modules/employees/education'
 import { toEntityFormFields, toEntityFormTabs } from '@/types/module-config'
+import { createRealPersonMasterTabs } from '@/lib/identity/realPersonFormSections'
 import { formatPhoneInput, normalizeEmailInput } from '@/lib/utils'
 import { isTurkishNationality, normalizeCountryId } from '@/lib/reference/country-nationalities'
 import type { Personel } from '@/types'
@@ -373,6 +374,18 @@ export default function PersonelYonetimPage() {
   // Determine form mode for display
   const formMode: FormMode = pageState === 'create' ? 'create' : 
                             pageState === 'edit' ? 'edit' : 'view'
+  const formTabs = [
+    ...createRealPersonMasterTabs({
+      addressField: 'adres',
+      cityField: 'il',
+      districtField: 'ilce',
+      maritalStatusField: 'medeni_durum',
+      includeEmergencyContact: true,
+    }),
+    ...toEntityFormTabs(moduleConfig.form.tabs).filter(tab =>
+      !['ozel', 'iletisim', 'egitim', 'aile', 'banka'].includes(tab.id)
+    ),
+  ]
 
   // Banner configuration based on page state
   const getBannerConfig = () => {
@@ -488,7 +501,7 @@ export default function PersonelYonetimPage() {
             entityName={moduleConfig.form.entityName}
             entityNameSingular={moduleConfig.form.entityNameSingular}
             heroFields={toEntityFormFields(moduleConfig.form.hero.fields).map(withFieldHistory)}
-            tabs={toEntityFormTabs(moduleConfig.form.tabs).map(tab => ({
+            tabs={formTabs.map(tab => ({
               ...tab,
               fields: tab.fields.map(withFieldHistory)
             }))}

@@ -2,6 +2,7 @@ import { Briefcase, FileText, GraduationCap, Heart, Landmark, Phone, UserCircle 
 import type { ModuleConfig } from '@/types/module-config'
 import type { Personel } from '@/types'
 import { COUNTRY_NATIONALITY_OPTIONS, getCountryNationalityLabel } from '@/lib/reference/country-nationalities'
+import { EntityBankAccountsPanel } from '@/components/ui/EntityBankAccountsPanel'
 
 export type PersonelTableRow = Personel & {
   fullname: string
@@ -366,12 +367,26 @@ export const personelModuleConfig: ModuleConfig<PersonelTableRow> = {
       },
       {
         key: 'banka',
-        label: 'Banka',
+        label: 'Banka Bilgileri',
         icon: <Landmark size={16} />,
         source: {
           type: 'fields',
           fields: [
-            { key: 'iban', label: 'IBAN', type: 'iban', colSpan: 2 }
+            {
+              key: 'entity_bank_accounts',
+              label: 'Banka Bilgileri',
+              type: 'custom',
+              colSpan: 3,
+              render: ({ data, readOnly }) => (
+                <EntityBankAccountsPanel
+                  entityKind="person"
+                  entityId={data.master_record_id || data.person_id}
+                  masterName={data.full_name || [data.ad, data.soyad].filter(Boolean).join(' ')}
+                  masterCountry={data.nationality_country || data.uyruk}
+                  readOnly={readOnly}
+                />
+              ),
+            }
           ]
         }
       },

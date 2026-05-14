@@ -150,7 +150,7 @@ export function SmartDataTable<T extends { id: string }>({
   showPassiveToggle = false,
   includePassive = false,
   onIncludePassiveChange,
-  includePassiveLabel = 'Pasif kayitlari da goster',
+  includePassiveLabel = 'Pasif kayıtları da göster',
 }: SmartDataTableProps<T>) {
   const columnSignature = initialColumns.map(col => `${col.key}:${col.label}:${col.visible ?? ''}:${col.required ?? ''}:${col.fixed ?? ''}:${col.hideable ?? ''}`).join('|')
   const quickLookWidgetIds = [
@@ -1015,9 +1015,9 @@ export function SmartDataTable<T extends { id: string }>({
       {quickLookPanel}
 
       {/* Header Toolbar */}
-      <div className="flex items-center gap-2 justify-between bg-white dark:bg-gray-800 p-3 sm:p-4 rounded-lg border border-gray-200 dark:border-gray-700 overflow-visible">
+      <div className="flex flex-col gap-3 bg-white p-3 dark:bg-gray-800 sm:flex-row sm:items-center sm:justify-between sm:gap-2 sm:p-4 rounded-lg border border-gray-200 dark:border-gray-700 overflow-visible">
         {/* Left: Title and Search */}
-        <div className="flex items-center gap-3 flex-1 min-w-0">
+        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2 sm:gap-3">
           {title && <h2 className="hidden sm:block text-lg font-semibold text-gray-900 dark:text-white whitespace-nowrap">{title}</h2>}
           
           <div className="relative flex-1 min-w-0 max-w-none sm:max-w-md">
@@ -1031,20 +1031,20 @@ export function SmartDataTable<T extends { id: string }>({
           </div>
 
           {showPassiveToggle && (
-            <label className="flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-xs font-medium text-gray-600 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300">
+            <label className="flex w-full min-w-0 items-center justify-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-xs font-medium text-gray-600 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 sm:w-auto sm:justify-start">
               <input
                 type="checkbox"
                 checked={includePassive}
                 onChange={(event) => onIncludePassiveChange?.(event.target.checked)}
-                className="h-4 w-4 rounded border-gray-300 text-blue-600 accent-blue-600"
+                className="h-4 w-4 shrink-0 rounded border-gray-300 text-blue-600 accent-blue-600"
               />
-              {includePassiveLabel}
+              <span className="min-w-0 truncate">{includePassiveLabel}</span>
             </label>
           )}
         </div>
 
         {/* Right: View Toggle, Filter, Settings */}
-        <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0 overflow-visible scrollbar-hide">
+        <div className="flex w-full flex-wrap items-center justify-end gap-1 overflow-visible scrollbar-hide sm:w-auto sm:flex-shrink-0 sm:gap-2">
           {/* Screen Size Indicator */}
           <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-gray-700 rounded-lg">
             <Monitor size={14} className="text-gray-500 dark:text-gray-400" />

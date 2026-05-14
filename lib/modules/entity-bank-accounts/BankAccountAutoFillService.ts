@@ -1,5 +1,5 @@
 import { getCountryLabel, normalizeCountryId } from '@/lib/reference/country-nationalities'
-import { resolveTurkishIban } from '@/lib/utils'
+import { getIbanBankInfo, resolveTurkishIban } from '@/lib/utils'
 import type { BankAccountFormPriorityMode, EntityBankAccountKind } from './entityBankAccounts.types'
 
 type MasterRecord = Record<string, any> | null
@@ -41,6 +41,15 @@ export class BankAccountAutoFillService {
     if (/^[A-Z]{2}$/.test(ibanCountry)) {
       setIfFresh(values, sources, previous, 'account_country', ibanCountry, 'iban.country')
       setIfFresh(values, sources, previous, 'bank_country', ibanCountry, 'iban.country')
+    }
+
+    const bankInfo = getIbanBankInfo(iban)
+    if (bankInfo) {
+      setIfFresh(values, sources, previous, 'bank_code', bankInfo.bankCode, 'iban.bankCode')
+      if (bankInfo.bankName !== 'Bilinmeyen Banka') setIfFresh(values, sources, previous, 'bank_name', bankInfo.bankName, 'iban.bankCode')
+      if (bankInfo.swiftCode) setIfFresh(values, sources, previous, 'swift_bic', bankInfo.swiftCode, 'bankReference.swift')
+      if (bankInfo.branchCode) setIfFresh(values, sources, previous, 'branch_code', bankInfo.branchCode, 'iban.branchCode')
+      if (bankInfo.branchName) setIfFresh(values, sources, previous, 'branch_name', bankInfo.branchName, 'iban.branchCode')
     }
 
     const tr = resolveTurkishIban(iban)

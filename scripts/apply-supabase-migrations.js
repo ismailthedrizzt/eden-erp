@@ -52,6 +52,7 @@ const migrationFiles = [
   '20260513_system_parameters.sql',
   '20260513_security_linter_hardening.sql',
   '20260513_integration_parameters_and_bank_card_refs.sql',
+  '20260514_entity_bank_accounts.sql',
   'create_module_licenses.sql',
   'add_employee_unique_constraint.sql',
 ];

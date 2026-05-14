@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { CheckCircle2, Eye, History, Landmark, Pencil, Plus, Star, Trash2, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { usePermissions } from '@/lib/security/permissionStore'
+import { COUNTRY_OPTIONS } from '@/lib/reference/country-nationalities'
 import {
   ENTITY_BANK_ACCOUNT_PERMISSIONS,
   VERIFICATION_STATUS_LABELS,
@@ -54,6 +55,7 @@ const emptyDraft: Partial<EntityBankAccount> = {
 const localCodeTypeOptions = ['Bank Code', 'Branch Code', 'Routing Number / ABA', 'Sort Code', 'IFSC', 'BSB', 'Other']
 const currencyOptions = ['TRY', 'USD', 'EUR', 'GBP']
 const swiftChargeOptions = ['SHA', 'OUR', 'BEN']
+const countryOptionLabels = Object.fromEntries(COUNTRY_OPTIONS.map(option => [option.value, option.label]))
 
 export function EntityBankAccountsPanel({ entityKind, entityId, masterName = '', masterCountry = '', readOnly = false }: Props) {
   const { can } = usePermissions()
@@ -147,40 +149,34 @@ export function EntityBankAccountsPanel({ entityKind, entityId, masterName = '',
       body: JSON.stringify({ iban: value, current: draft }),
     }).catch(() => null)
     if (payload?.data?.values) {
-      setDraft(prev => ({ ...prev, ...onlyFresh(prev, payload.data.values) }))
+      setDraft(prev => ({ ...prev, ...payload.data.values }))
     }
   }
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Banka Bilgileri</h3>
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            Tek master veri seti. Görünüm modu: {priorityModeLabel(priorityMode)}
-          </p>
-        </div>
-        {!readOnly && canInsert && (
+      {!readOnly && canInsert && (
+        <div className="flex justify-end">
           <button type="button" onClick={startCreate} className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700">
             <Plus size={16} />
             Hesap Ekle
           </button>
-        )}
-      </div>
+        </div>
+      )}
 
       {error && <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300">{error}</div>}
 
       {mode === 'list' ? (
         <div className="overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900">
           <div className="grid grid-cols-[80px_1.4fr_1.2fr_90px_1.4fr_100px_130px_90px_150px] gap-2 border-b border-gray-100 bg-gray-50 px-3 py-2 text-xs font-semibold text-gray-600 dark:border-gray-800 dark:bg-gray-800 dark:text-gray-300">
-            {['Varsayılan', 'Beneficiary Name', 'Banka', 'Ülke', 'IBAN / Account No', 'SWIFT / BIC', 'Para Birimi', 'Durum', 'İşlemler'].map(label => <span key={label}>{label}</span>)}
+            {['Varsayılan', 'Hesap Sahibi', 'Banka', 'Ülke', 'IBAN / Hesap No', 'SWIFT / BIC', 'Para Birimi', 'Durum', 'İşlemler'].map(label => <span key={label}>{label}</span>)}
           </div>
           {loading ? <EmptyPanel text="Yükleniyor..." /> : rows.length === 0 ? <EmptyPanel text="Banka bilgisi eklenmedi." /> : rows.map(row => (
             <div key={row.id} className="grid grid-cols-[80px_1.4fr_1.2fr_90px_1.4fr_100px_130px_90px_150px] items-center gap-2 border-b border-gray-100 px-3 py-3 text-xs dark:border-gray-800">
               <span>{row.is_default ? <Star size={16} className="fill-amber-400 text-amber-500" /> : '-'}</span>
               <span className="truncate font-medium text-gray-900 dark:text-white">{row.beneficiary_name}</span>
               <span className="truncate">{row.bank_name || '-'}</span>
-              <span>{row.bank_country || row.account_country || '-'}</span>
+              <span>{countryOptionLabels[row.bank_country || row.account_country || ''] || row.bank_country || row.account_country || '-'}</span>
               <span className="truncate">{row.iban || row.account_number || '-'}</span>
               <span>{row.swift_bic || '-'}</span>
               <span>{row.preferred_currency || row.account_currency || '-'}</span>
@@ -255,11 +251,11 @@ export function EntityBankAccountsPanel({ entityKind, entityId, masterName = '',
 
 function renderField(field: string, draft: Partial<EntityBankAccount>, disabled: boolean, onChange: (field: string, value: any) => void, onIban: (value: string) => void) {
   const labels: Record<string, string> = {
-    beneficiary_name: 'Beneficiary Name / Hesap Sahibi Adı',
+    beneficiary_name: 'Hesap Sahibi Adı',
     is_same_as_master_name: 'Hesap sahibi master kayıt ile aynı mı?',
     beneficiary_name_note: 'Farklılık açıklaması',
     iban: 'IBAN',
-    account_number: 'Account Number',
+    account_number: 'Hesap Numarası',
     account_country: 'Hesap Ülkesi',
     account_currency: 'Hesap Para Birimi',
     bank_name: 'Banka Adı',
@@ -289,6 +285,7 @@ function renderField(field: string, draft: Partial<EntityBankAccount>, disabled:
   if (field === 'beneficiary_name_note' && draft.is_same_as_master_name !== false) return null
 
   if (field === 'local_clearing_code_type') return <Select key={field} label={labels[field]} value={value} disabled={disabled} options={['', ...localCodeTypeOptions]} onChange={next => onChange(field, next)} />
+  if (field === 'account_country' || field === 'bank_country') return <Select key={field} label={labels[field]} value={value} disabled={disabled} options={['', ...COUNTRY_OPTIONS.map(option => option.value)]} optionLabels={countryOptionLabels} onChange={next => onChange(field, next)} />
   if (field === 'preferred_currency' || field === 'account_currency') return <Select key={field} label={labels[field]} value={value} disabled={disabled} options={['', ...currencyOptions]} onChange={next => onChange(field, next)} />
   if (field === 'swift_charge_type') return <Select key={field} label={labels[field]} value={value} disabled={disabled} options={['', ...swiftChargeOptions]} onChange={next => onChange(field, next)} />
   if (field === 'verification_status') return <Select key={field} label={labels[field]} value={value} disabled={disabled} options={Object.keys(VERIFICATION_STATUS_LABELS)} optionLabels={VERIFICATION_STATUS_LABELS} onChange={next => onChange(field, next)} />
@@ -311,7 +308,7 @@ function Select({ label, value, options, optionLabels, disabled, onChange }: { l
     <label className="space-y-1">
       <span className="text-xs font-medium text-gray-600 dark:text-gray-400">{label}</span>
       <select value={value || ''} disabled={disabled} onChange={event => onChange(event.target.value)} className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900">
-        {options.map(option => <option key={option} value={option}>{option ? optionLabels?.[option] || option : 'Seçiniz'}</option>)}
+        {options.map((option, index) => <option key={`${option || 'empty'}-${index}`} value={option}>{option ? optionLabels?.[option] || option : 'Seçiniz'}</option>)}
       </select>
     </label>
   )
@@ -331,10 +328,6 @@ function normalizeDraft(draft: Partial<EntityBankAccount>, masterName: string) {
   if (!payload.beneficiary_name) payload.beneficiary_name = masterName
   if (!payload.iban && !payload.account_number) throw new Error('IBAN veya Account Number alanlarından biri zorunludur.')
   return payload
-}
-
-function onlyFresh(current: Partial<EntityBankAccount>, values: Record<string, any>) {
-  return Object.fromEntries(Object.entries(values).filter(([key, value]) => !String((current as any)[key] || '').trim() || (current as any)[key] === value))
 }
 
 async function fetchJson(url: string, init: RequestInit = {}) {
