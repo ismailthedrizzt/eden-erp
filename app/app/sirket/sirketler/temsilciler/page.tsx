@@ -478,6 +478,35 @@ export default function TemsilcilerPage() {
     }
   }
 
+  const handleActivate = async () => {
+    if (!selectedRepresentative?.id) return
+    setDeleting(true)
+    try {
+      const response = await fetch(`/api/sirketler/temsilciler/${selectedRepresentative.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...selectedRepresentative,
+          status: 'Aktif',
+          is_deleted: false,
+          deleted_at: null,
+          deleted_by: null,
+        }),
+      })
+      if (!response.ok) throw await createSaveError(response, 'Aktiflestirme basarisiz')
+      const result = await response.json()
+      if (result.data) setSelectedRepresentative(normalizeRepresentativeForForm(result.data))
+      setToast({ type: 'success', title: 'Kayit Basarili', message: 'Temsilci kaydi aktive edildi' })
+      await loadData()
+      setPageState('view')
+    } catch (err: any) {
+      setToast(err.toast || { type: 'error', title: 'Kayit Basarisiz', message: err.message })
+      throw err
+    } finally {
+      setDeleting(false)
+    }
+  }
+
   const bannerConfig = pageState === 'list'
     ? {
         mode: 'list' as const,
@@ -567,6 +596,7 @@ export default function TemsilcilerPage() {
             onSave={handleSave}
             onCancel={() => setPageState('list')}
             onDelete={handleDelete}
+            onActivate={handleActivate}
             onModeChange={(mode) => setPageState(mode)}
             onIdentityGateOpenExistingRole={async (roleRecord) => {
               await handleRowClick(roleRecord as any)

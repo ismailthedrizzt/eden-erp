@@ -111,6 +111,9 @@ function mapStakeholderForDb(stakeholder: Record<string, any>, current?: Record<
     photo_logo: stakeholder.photo_logo || current?.photo_logo || [],
     stakeholder_documents: stakeholder.stakeholder_documents || current?.stakeholder_documents || [],
     stakeholder_profile: stripMasterDataForRoleProfile(stakeholder),
+    is_deleted: !!(stakeholder.is_deleted ?? current?.is_deleted),
+    deleted_at: 'deleted_at' in stakeholder ? stakeholder.deleted_at : current?.deleted_at ?? null,
+    deleted_by: 'deleted_by' in stakeholder ? stakeholder.deleted_by : current?.deleted_by ?? null,
   }
 }
 

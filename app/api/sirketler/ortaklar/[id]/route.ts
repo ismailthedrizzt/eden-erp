@@ -153,6 +153,9 @@ function mapPartnerForDb(partner: Record<string, any>, current?: Record<string, 
     photo_logo: partner.photo_logo || current?.photo_logo || [],
     partner_documents: partner.partner_documents || current?.partner_documents || [],
     partner_profile: stripMasterDataForRoleProfile(partner),
+    is_deleted: !!(partner.is_deleted ?? current?.is_deleted),
+    deleted_at: 'deleted_at' in partner ? partner.deleted_at : current?.deleted_at ?? null,
+    deleted_by: 'deleted_by' in partner ? partner.deleted_by : current?.deleted_by ?? null,
   }
 }
 

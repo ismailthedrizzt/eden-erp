@@ -24,7 +24,7 @@
  */
 
 import { useState, useEffect, ReactNode, useCallback, useMemo } from 'react'
-import { Save, Loader2, Edit3, History, Clock, Plus, Trash2, Upload, Briefcase, LogOut, Building2, UserRound, FileText } from 'lucide-react'
+import { Save, Loader2, Edit3, History, Clock, Plus, Trash2, Upload, Briefcase, LogOut, Building2, UserRound, FileText, RotateCcw } from 'lucide-react'
 import { cn, formatPhoneInput, normalizeEmailInput, resolveTurkishIban } from '@/lib/utils'
 import { ImageSlotUploader, ImageSlot, SlotImage } from './ImageSlotUploader'
 import { DocumentSlotUploader, DocumentSlot, SlotDocument } from './DocumentSlotUploader'
@@ -179,6 +179,9 @@ export interface EntityFormProps {
 
   /** Delete handler - only for view/edit modes */
   onDelete?: () => Promise<void> | void
+
+  /** Activation handler for passive records */
+  onActivate?: () => Promise<void> | void
   
   /** Mode change handler (view -> edit) */
   onModeChange?: (mode: FormMode) => void
@@ -208,6 +211,16 @@ export interface EntityFormProps {
 }
 
 const DOCUMENTS_FORM_TAB_ID = '__documents__'
+
+function isPassiveRecord(data: Record<string, any>) {
+  const status = String(data.status || data.durum || '').toLocaleLowerCase('tr-TR')
+  const companyStatus = String(data.company_status || '').toLocaleLowerCase('tr-TR')
+  return data.is_deleted === true
+    || data.is_active === false
+    || data.aktif === false
+    || ['pasif', 'passive', 'inactive', 'deleted', 'archived'].includes(status)
+    || companyStatus === 'terkin_edilmis'
+}
 
 /** FieldHistoryIndicator Component */
 function FieldHistoryIndicator({ history }: { history?: HistoryEntry[] }) {
@@ -1603,6 +1616,7 @@ export function EntityForm({
   onSave,
   onCancel,
   onDelete,
+  onActivate,
   onModeChange,
   onFieldChange,
   additionalActions,
@@ -1797,9 +1811,13 @@ export function EntityForm({
     }
   }, [externalFieldErrors])
 
-  const isReadOnly = mode === 'view'
+  const isPassive = isPassiveRecord(formData)
+  const isPassiveEditLocked = isPassive && mode === 'edit'
+  const isReadOnly = mode === 'view' || isPassiveEditLocked
   const isCreate = mode === 'create'
-  const isEdit = mode === 'edit'
+  const isEdit = mode === 'edit' && !isPassiveEditLocked
+  const canActivateRecord = isPassive && !!onActivate
+  const hasStatusAction = !!onDelete || canActivateRecord
   const slotLoaderMode = isReadOnly ? 'view' : isCreate ? 'insert' : 'update'
   const isIdentityGateEnabled = !!identityGate?.enabled
   const effectiveIdentityGateResult = identityGateResult || buildIdentityResultFromExistingData(identityGate, formData)
@@ -1871,6 +1889,7 @@ export function EntityForm({
   }
 
   const handleModeChange = (newMode: FormMode) => {
+    if (newMode === 'edit' && isPassive) return
     setMode(newMode)
     onModeChange?.(newMode)
     setFieldErrors({})
@@ -2178,6 +2197,7 @@ export function EntityForm({
   }
 
   const handleSave = async () => {
+    if (isPassive && !isCreate) return
     if (isIdentityGateLocked) {
       setFieldErrors(prev => ({
         ...prev,
@@ -2206,13 +2226,17 @@ export function EntityForm({
   }
 
   const handleDelete = async () => {
-    if (!onDelete || isCreate) return
+    if ((!onDelete && !onActivate) || isCreate) return
     setShowDeleteConfirm(true)
   }
 
   const confirmDelete = async () => {
-    if (!onDelete || isCreate) return
-    await onDelete()
+    if (isCreate) return
+    if (canActivateRecord) {
+      await onActivate()
+    } else if (onDelete) {
+      await onDelete()
+    }
     setShowDeleteConfirm(false)
   }
 
@@ -2523,7 +2547,7 @@ export function EntityForm({
       <Modal
         open={showDeleteConfirm}
         onClose={() => !deleting && setShowDeleteConfirm(false)}
-        title={`${entityNameSingular} Pasife Al`}
+        title={`${entityNameSingular} ${canActivateRecord ? 'Aktive Et' : 'Pasife Al'}`}
         size="sm"
         footer={
           <>
@@ -2539,21 +2563,30 @@ export function EntityForm({
               type="button"
               onClick={confirmDelete}
               disabled={deleting}
-              className="flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+              className={cn(
+                "flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50",
+                canActivateRecord ? "bg-emerald-600 hover:bg-emerald-700" : "bg-red-600 hover:bg-red-700"
+              )}
             >
-              {deleting ? <Loader2 className="animate-spin" size={16} /> : <Trash2 size={16} />}
-              Pasife Al
+              {deleting ? <Loader2 className="animate-spin" size={16} /> : canActivateRecord ? <RotateCcw size={16} /> : <Trash2 size={16} />}
+              {canActivateRecord ? 'Aktive Et' : 'Pasife Al'}
             </button>
           </>
         }
       >
         <div className="space-y-3 text-sm text-gray-600 dark:text-gray-300">
-          <p>
-            Bu kayit sistemden silinmeyecek, sadece pasife alinacaktir.
-          </p>
-          <p>
-            Kayitla iliskili baska master kart verileri veya hareketler olabilir; bu nedenle gecmis veri korunur.
-          </p>
+          {canActivateRecord ? (
+            <p>Bu kayit tekrar aktif hale getirilecek ve aktif kayit listelerinde gorunecektir.</p>
+          ) : (
+            <>
+              <p>
+                Bu kayit sistemden silinmeyecek, sadece pasife alinacaktir.
+              </p>
+              <p>
+                Kayitla iliskili baska master kart verileri veya hareketler olabilir; bu nedenle gecmis veri korunur.
+              </p>
+            </>
+          )}
         </div>
       </Modal>
 
@@ -2674,17 +2707,22 @@ export function EntityForm({
               {additionalActions}
               
               {/* View Mode: Edit Button */}
-              {isReadOnly && canEdit && onDelete && (
+              {isReadOnly && canEdit && hasStatusAction && (
                 <button
                   onClick={handleDelete}
                   disabled={deleting}
-                  className="flex items-center gap-2 px-4 py-2 rounded-lg border border-red-200 text-red-700 hover:bg-red-50 transition-colors text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-900/60 dark:text-red-300 dark:hover:bg-red-950/30"
+                  className={cn(
+                    "flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50",
+                    canActivateRecord
+                      ? "border-emerald-200 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-900/60 dark:text-emerald-300 dark:hover:bg-emerald-950/30"
+                      : "border-red-200 text-red-700 hover:bg-red-50 dark:border-red-900/60 dark:text-red-300 dark:hover:bg-red-950/30"
+                  )}
                 >
-                  {deleting ? <Loader2 className="animate-spin" size={16} /> : <Trash2 size={16} />}
-                  Pasife Al
+                  {deleting ? <Loader2 className="animate-spin" size={16} /> : canActivateRecord ? <RotateCcw size={16} /> : <Trash2 size={16} />}
+                  {canActivateRecord ? 'Aktive Et' : 'Pasife Al'}
                 </button>
               )}
-              {isReadOnly && canEdit && (
+              {isReadOnly && canEdit && !isPassive && (
                 <button
                   onClick={() => handleModeChange('edit')}
                   className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"

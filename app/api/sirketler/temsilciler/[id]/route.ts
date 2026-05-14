@@ -162,6 +162,9 @@ function mapRepresentativeForDb(representative: Record<string, any>, current?: R
     photo_logo: representative.photo_logo || current?.photo_logo || [],
     authority_documents: representative.authority_documents || current?.authority_documents || [],
     representative_profile: stripMasterDataForRoleProfile(representative),
+    is_deleted: !!(representative.is_deleted ?? current?.is_deleted),
+    deleted_at: 'deleted_at' in representative ? representative.deleted_at : current?.deleted_at ?? null,
+    deleted_by: 'deleted_by' in representative ? representative.deleted_by : current?.deleted_by ?? null,
   }
 }
 

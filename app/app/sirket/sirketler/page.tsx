@@ -501,6 +501,35 @@ export default function SirketlerPage() {
     }
   }
 
+  const handleActivate = async () => {
+    if (!selectedSirket) return
+
+    setDeleting(true)
+    try {
+      const response = await fetch(`/api/sirketler/${selectedSirket.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ company_status: 'aktif', is_active: true }),
+      })
+
+      if (!response.ok) {
+        throw await createSaveError(response, 'Aktiflestirme basarisiz')
+      }
+
+      const result = await response.json()
+      if (result.data) setSelectedSirket({ ...selectedSirket, ...result.data, company_status: 'aktif', is_active: true })
+      setToast({ type: 'success', title: 'Kayit Basarili', message: 'Sirket kaydi aktive edildi' })
+      await yenile()
+      setPageState('view')
+    } catch (error: any) {
+      setFormError(error.message)
+      setToast(error.toast || { type: 'error', title: 'Kayit Basarisiz', message: error.message })
+      throw error
+    } finally {
+      setDeleting(false)
+    }
+  }
+
   const createSaveError = async (response: Response, fallback: string): Promise<SaveError> => {
     const body = await response.json().catch(() => ({}))
     const code = body.code || `HTTP_${response.status}`
@@ -705,6 +734,7 @@ export default function SirketlerPage() {
             onSave={handleSave}
             onCancel={handleBackToList}
             onDelete={handleDelete}
+            onActivate={handleActivate}
             onModeChange={(mode) => setPageState(mode === 'edit' && !formAccess.showEdit ? 'view' : mode)}
             onIdentityGateOpenExistingRole={async (roleRecord) => {
               await handleRowClick(roleRecord as SirketTableRow)
