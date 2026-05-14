@@ -474,6 +474,7 @@ export default function PaydaslarPage() {
             onCancel={() => setPageState('list')}
             onDelete={handleDelete}
             onActivate={handleActivate}
+            isPassiveRecord={!!selectedStakeholder && (selectedStakeholder.is_deleted === true || selectedStakeholder.status !== 'Aktif')}
             onModeChange={(mode) => setPageState(mode)}
             onIdentityGateOpenExistingRole={async (roleRecord) => {
               await handleRowClick(roleRecord as any)

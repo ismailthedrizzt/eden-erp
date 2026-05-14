@@ -19,6 +19,8 @@ type Props = {
   masterName?: string
   masterCountry?: string
   readOnly?: boolean
+  value?: Array<Partial<EntityBankAccount>>
+  onChange?: (rows: Array<Partial<EntityBankAccount>>) => void
 }
 
 const emptyDraft: Partial<EntityBankAccount> = {
@@ -58,7 +60,7 @@ const swiftChargeOptions = ['SHA', 'OUR', 'BEN']
 const countryOptionLabels = Object.fromEntries(COUNTRY_OPTIONS.map(option => [option.value, option.label]))
 type IbanAutomationStatus = 'idle' | 'working' | 'done' | 'no_data'
 
-export function EntityBankAccountsPanel({ entityKind, entityId, masterName = '', masterCountry = '', readOnly = false }: Props) {
+export function EntityBankAccountsPanel({ entityKind, entityId, masterName = '', masterCountry = '', readOnly = false, value, onChange }: Props) {
   const { can } = usePermissions()
   const [rows, setRows] = useState<EntityBankAccount[]>([])
   const [loading, setLoading] = useState(false)
@@ -75,6 +77,7 @@ export function EntityBankAccountsPanel({ entityKind, entityId, masterName = '',
   const canPassivate = can(ENTITY_BANK_ACCOUNT_PERMISSIONS.passivate)
   const canSetDefault = can(ENTITY_BANK_ACCOUNT_PERMISSIONS.setDefault)
   const locked = readOnly || !canEdit
+  const embedded = !!onChange
 
   const load = useCallback(async () => {
     if (!entityKind || !entityId) return
@@ -82,13 +85,22 @@ export function EntityBankAccountsPanel({ entityKind, entityId, masterName = '',
     setError('')
     try {
       const payload = await fetchJson(`/api/entities/${entityKind}/${entityId}/bank-accounts`)
-      setRows(payload.data || [])
+      const nextRows = payload.data || []
+      setRows(nextRows)
+      onChange?.(nextRows)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Banka bilgileri alınamadı')
     } finally {
       setLoading(false)
     }
+  // Keep this tied to the entity only; EntityForm passes a fresh onChange function on rerenders.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [entityKind, entityId])
+
+  useEffect(() => {
+    if (!embedded || !Array.isArray(value)) return
+    setRows(value as EntityBankAccount[])
+  }, [embedded, value])
 
   useEffect(() => {
     if (!entityKind || !entityId || !canView) return
@@ -110,15 +122,18 @@ export function EntityBankAccountsPanel({ entityKind, entityId, masterName = '',
   }
 
   function startCreate() {
-    setDraft({
+    const nextDraft = {
       ...emptyDraft,
+      id: `tmp-${Date.now()}`,
       beneficiary_name: masterName,
       is_same_as_master_name: true,
       account_country: masterCountry,
       bank_country: masterCountry,
       preferred_currency: masterCountry === 'TR' ? 'TRY' : 'USD',
       is_default: rows.length === 0,
-    })
+    } as Partial<EntityBankAccount>
+    setDraft(nextDraft)
+    if (embedded) updateRows([...rows, nextDraft as EntityBankAccount])
     setIbanAutomationStatus('idle')
     setMode('create')
   }
@@ -159,7 +174,13 @@ export function EntityBankAccountsPanel({ entityKind, entityId, masterName = '',
       body: JSON.stringify({ iban: value, current: draft }),
     }).catch(() => null)
     if (payload?.data?.values) {
-      setDraft(prev => ({ ...prev, ...payload.data.values }))
+      setDraft(prev => {
+        const next = { ...prev, ...payload.data.values }
+        if (embedded && next.id) {
+          updateRows(rows.map(row => row.id === next.id ? { ...row, ...next } : row))
+        }
+        return next
+      })
       setIbanAutomationStatus(Object.keys(payload.data.values).length > 0 ? 'done' : 'no_data')
     } else {
       setIbanAutomationStatus('no_data')
@@ -227,7 +248,7 @@ export function EntityBankAccountsPanel({ entityKind, entityId, masterName = '',
           {mode !== 'view' && !readOnly && (
             <div className="mt-4 flex justify-end gap-2">
               <button type="button" onClick={() => setMode('list')} className="rounded-lg px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800">İptal</button>
-              <button type="button" onClick={save} className="rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700">Kaydet</button>
+              {!embedded && <button type="button" onClick={save} className="rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700">Kaydet</button>}
             </div>
           )}
         </div>
@@ -257,8 +278,16 @@ export function EntityBankAccountsPanel({ entityKind, entityId, masterName = '',
     setDraft(prev => {
       const next = { ...prev, [field]: value }
       if (field === 'beneficiary_name' && masterName && value !== masterName) next.is_same_as_master_name = false
+      if (embedded && next.id) {
+        updateRows(rows.map(row => row.id === next.id ? { ...row, ...next } : row))
+      }
       return next
     })
+  }
+
+  function updateRows(nextRows: EntityBankAccount[]) {
+    setRows(nextRows)
+    onChange?.(nextRows)
   }
 }
 

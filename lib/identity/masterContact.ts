@@ -96,6 +96,7 @@ const MASTER_PROFILE_KEYS = new Set([
   'district',
   'telefonlar',
   'epostalar',
+  'entity_bank_accounts',
   ...ORGANIZATION_MASTER_PROFILE_KEYS,
   'photo_logo',
   'fotograf_url',

@@ -89,6 +89,33 @@ export class EntityBankAccountsService {
     return data
   }
 
+  async syncMany(kind: EntityBankAccountKind, entityId: string, rows: Array<Record<string, any>>, userId: string | null) {
+    if (!Array.isArray(rows)) return []
+    const master = await this.getMaster(kind, entityId)
+    const defaults = BankAccountAutoFillService.buildDefaults(kind, master)
+    const saved: Record<string, any>[] = []
+
+    for (const row of rows) {
+      if (!row || typeof row !== 'object') continue
+      if (!row.iban && !row.account_number && !row.id) continue
+      const parsed = EntityBankAccountSchema.safeParse({
+        ...row,
+        beneficiary_name: row.beneficiary_name || defaults.beneficiary_name || 'Hesap Sahibi',
+        is_default: row.is_default ?? rows.length === 1,
+      })
+      if (!parsed.success) continue
+
+      const rawId = String(row.id || '')
+      if (rawId && !rawId.startsWith('tmp-')) {
+        saved.push(await this.update(rawId, parsed.data, userId))
+      } else {
+        saved.push(await this.create(kind, entityId, parsed.data, userId))
+      }
+    }
+
+    return saved
+  }
+
   async update(id: string, input: Partial<EntityBankAccountInput>, userId: string | null) {
     const current = await this.get(id)
     if (!current) throw new Error('Banka hesabı bulunamadı.')

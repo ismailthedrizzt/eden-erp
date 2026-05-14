@@ -3,6 +3,7 @@ import { createServiceClient } from '@/lib/supabase/server'
 import { z } from 'zod'
 import { hydrateMasterContact, stripMasterDataForRoleProfile, syncMasterContact } from '@/lib/identity/masterContact'
 import { normalizeCountryId } from '@/lib/reference/country-nationalities'
+import { EntityBankAccountsService } from '@/lib/modules/entity-bank-accounts/entityBankAccounts.service'
 
 const PartnerSchema = z.object({
   company_id: z.string().uuid().optional(),
@@ -108,6 +109,7 @@ const PartnerSchema = z.object({
   e_invoice_status: z.boolean().default(false),
   notes: z.string().optional(),
   timeline: z.array(z.record(z.any())).optional(),
+  entity_bank_accounts: z.array(z.record(z.any())).optional(),
 })
 
 function omitNullishValues(value: Record<string, any>) {
@@ -125,7 +127,7 @@ export async function GET(request: NextRequest) {
 
   let query = supabase
     .from('sirket_ortaklar')
-    .select('*')
+    .select('id,sirket_id,company_id,person_id,organization_id,owner_kind,ortak_tipi,display_name,ortak_adi,identity_number,tckn_vkn,share_ratio,hisse_orani,voting_ratio,profit_ratio,start_date,end_date,status,is_deleted,source_type,source_id,created_at')
     .order('created_at', { ascending: false })
 
   if (companyId) query = query.or(`company_id.eq.${companyId},sirket_id.eq.${companyId}`)
@@ -135,14 +137,7 @@ export async function GET(request: NextRequest) {
   const { data, error } = await query
   if (error) return NextResponse.json({ error: error.message, code: error.code || 'FETCH_FAILED' }, { status: 500 })
 
-  const hydrated = await Promise.all((data || []).map((row: Record<string, any>) =>
-    row.person_id
-      ? hydrateMasterContact(supabase, 'person', row)
-      : row.organization_id
-        ? hydrateMasterContact(supabase, 'organization', row)
-        : row
-  ))
-  return NextResponse.json({ data: hydrated })
+  return NextResponse.json({ data: data || [] })
 }
 
 export async function POST(request: NextRequest) {
@@ -168,6 +163,11 @@ export async function POST(request: NextRequest) {
   if (error) return NextResponse.json({ error: error.message, code: error.code || 'CREATE_FAILED' }, { status: 500 })
   if (data?.person_id) await syncMasterContact(supabase, 'person', data.person_id, parsed.data)
   if (data?.organization_id) await syncMasterContact(supabase, 'organization', data.organization_id, parsed.data)
+  if (parsed.data.entity_bank_accounts) {
+    const kind = data?.person_id ? 'person' : data?.organization_id ? 'organization' : null
+    const masterId = data?.person_id || data?.organization_id
+    if (kind && masterId) await new EntityBankAccountsService(supabase as any).syncMany(kind, masterId, parsed.data.entity_bank_accounts, null)
+  }
   const hydrated = data?.person_id
     ? await hydrateMasterContact(supabase, 'person', data)
     : data?.organization_id

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { z } from 'zod'
 import { hydrateMasterContact, syncMasterContact } from '@/lib/identity/masterContact'
+import { EntityBankAccountsService } from '@/lib/modules/entity-bank-accounts/entityBankAccounts.service'
 
 const CompanyStatusSchema = z.enum(['aktif', 'tasfiye_halinde', 'terkin_edilmis'])
 
@@ -61,6 +62,7 @@ const SirketUpdateSchema = z.object({
   public_registry: z.record(z.any()).optional(),
   public_licenses: z.array(z.record(z.any())).optional(),
   public_channels: z.record(z.any()).optional(),
+  entity_bank_accounts: z.array(z.record(z.any())).optional(),
 })
 
 function omitNullishValues(value: Record<string, any>) {
@@ -253,6 +255,7 @@ export async function PATCH(
     public_registry,
     public_licenses,
     public_channels,
+    entity_bank_accounts,
     ...rawCompanyUpdates
   } = parsed.data
   const organizationMasterUpdates = {
@@ -296,6 +299,10 @@ export async function PATCH(
     current.organization_id,
     { ...companyUpdates, ...organizationMasterUpdates }
   )
+
+  if (entity_bank_accounts && current.organization_id) {
+    await new EntityBankAccountsService(supabase as any).syncMany('organization', current.organization_id, entity_bank_accounts, null)
+  }
 
   if (ortaklar) {
     const partnerError = await replaceCompanyPartners(supabase, id, ortaklar)

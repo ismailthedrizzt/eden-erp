@@ -735,6 +735,7 @@ export default function SirketlerPage() {
             onCancel={handleBackToList}
             onDelete={handleDelete}
             onActivate={handleActivate}
+            isPassiveRecord={!!selectedSirket && (selectedSirket.is_active === false || selectedSirket.company_status === 'terkin_edilmis')}
             onModeChange={(mode) => setPageState(mode === 'edit' && !formAccess.showEdit ? 'view' : mode)}
             onIdentityGateOpenExistingRole={async (roleRecord) => {
               await handleRowClick(roleRecord as SirketTableRow)

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { hydrateMasterContact, stripMasterDataForRoleProfile, syncMasterContact } from '@/lib/identity/masterContact'
+import { EntityBankAccountsService } from '@/lib/modules/entity-bank-accounts/entityBankAccounts.service'
 
 const TRACKED_FIELDS = new Set([
   'status',
@@ -88,6 +89,11 @@ export async function PATCH(
   if (error) return NextResponse.json({ error: error.message, code: error.code || 'UPDATE_FAILED' }, { status: 500 })
   if (data?.person_id) await syncMasterContact(supabase, 'person', data.person_id, body)
   if (data?.organization_id) await syncMasterContact(supabase, 'organization', data.organization_id, body)
+  if (Array.isArray(body.entity_bank_accounts)) {
+    const kind = data?.person_id ? 'person' : data?.organization_id ? 'organization' : null
+    const masterId = data?.person_id || data?.organization_id
+    if (kind && masterId) await new EntityBankAccountsService(supabase as any).syncMany(kind, masterId, body.entity_bank_accounts, null)
+  }
   const hydrated = data?.person_id
     ? await hydrateMasterContact(supabase, 'person', data)
     : data?.organization_id

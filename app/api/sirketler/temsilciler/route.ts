@@ -3,6 +3,7 @@ import { createServiceClient } from '@/lib/supabase/server'
 import { z } from 'zod'
 import { hydrateMasterContact, stripMasterDataForRoleProfile, syncMasterContact } from '@/lib/identity/masterContact'
 import { normalizeCountryId } from '@/lib/reference/country-nationalities'
+import { EntityBankAccountsService } from '@/lib/modules/entity-bank-accounts/entityBankAccounts.service'
 
 const RepresentativeSchema = z.object({
   company_id: z.string().uuid().optional(),
@@ -46,7 +47,7 @@ export async function GET(request: NextRequest) {
 
   let query = supabase
     .from('sirket_temsilciler')
-    .select('*')
+    .select('id,sirket_id,company_id,person_id,organization_id,person_kind,source_type,source_id,display_name,ad_soyad,authority_types,gorev,yetki_turu,status,start_date,end_date,signature_type,transaction_limit,currency,requires_joint_signature,can_approve_alone,is_deleted,created_at')
     .order('created_at', { ascending: false })
 
   if (companyId) query = query.or(`company_id.eq.${companyId},sirket_id.eq.${companyId}`)
@@ -56,14 +57,7 @@ export async function GET(request: NextRequest) {
   const { data, error } = await query
   if (error) return NextResponse.json({ error: error.message, code: error.code || 'FETCH_FAILED' }, { status: 500 })
 
-  const hydrated = await Promise.all((data || []).map((row: Record<string, any>) =>
-    row.person_id
-      ? hydrateMasterContact(supabase, 'person', row)
-      : row.organization_id
-        ? hydrateMasterContact(supabase, 'organization', row)
-        : row
-  ))
-  return NextResponse.json({ data: hydrated })
+  return NextResponse.json({ data: data || [] })
 }
 
 export async function POST(request: NextRequest) {
@@ -89,6 +83,11 @@ export async function POST(request: NextRequest) {
   if (error) return NextResponse.json({ error: error.message, code: error.code || 'CREATE_FAILED' }, { status: 500 })
   if (data?.person_id) await syncMasterContact(supabase, 'person', data.person_id, parsed.data)
   if (data?.organization_id) await syncMasterContact(supabase, 'organization', data.organization_id, parsed.data)
+  if (Array.isArray(parsed.data.entity_bank_accounts)) {
+    const kind = data?.person_id ? 'person' : data?.organization_id ? 'organization' : null
+    const masterId = data?.person_id || data?.organization_id
+    if (kind && masterId) await new EntityBankAccountsService(supabase as any).syncMany(kind, masterId, parsed.data.entity_bank_accounts, null)
+  }
   const hydrated = data?.person_id
     ? await hydrateMasterContact(supabase, 'person', data)
     : data?.organization_id

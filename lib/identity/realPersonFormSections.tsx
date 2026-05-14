@@ -193,13 +193,15 @@ export function createRealPersonMasterTabs({
           label: 'Banka Bilgileri',
           type: 'custom',
           colSpan: 3,
-          render: ({ data, readOnly }) => (
+          render: ({ value, onChange, data, readOnly }) => (
             <EntityBankAccountsPanel
               entityKind="person"
               entityId={data.master_record_id || data.person_id}
               masterName={data.full_name || data.display_name || [data.first_name || data.ad, data.last_name || data.soyad].filter(Boolean).join(' ')}
               masterCountry={data.nationality_country || data.country || data.uyruk}
               readOnly={readOnly}
+              value={Array.isArray(value) ? value : data.entity_bank_accounts}
+              onChange={onChange}
             />
           ),
         },

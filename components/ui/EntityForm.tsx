@@ -182,6 +182,9 @@ export interface EntityFormProps {
 
   /** Activation handler for passive records */
   onActivate?: () => Promise<void> | void
+
+  /** Explicit passive state from parent pages when row/status normalization is module-specific */
+  isPassiveRecord?: boolean
   
   /** Mode change handler (view -> edit) */
   onModeChange?: (mode: FormMode) => void
@@ -1618,6 +1621,7 @@ export function EntityForm({
   onCancel,
   onDelete,
   onActivate,
+  isPassiveRecord: explicitPassiveRecord,
   onModeChange,
   onFieldChange,
   additionalActions,
@@ -1813,7 +1817,7 @@ export function EntityForm({
   }, [externalFieldErrors])
 
   const effectiveStatusData = data ? { ...data, ...formData } : formData
-  const isPassive = isPassiveRecord(effectiveStatusData)
+  const isPassive = typeof explicitPassiveRecord === 'boolean' ? explicitPassiveRecord : isPassiveRecord(effectiveStatusData)
   const isPassiveEditLocked = isPassive && mode === 'edit'
   const isReadOnly = mode === 'view' || isPassiveEditLocked
   const isCreate = mode === 'create'

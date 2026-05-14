@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { z } from 'zod'
-import { hydrateMasterContact, syncMasterContact } from '@/lib/identity/masterContact'
+import { syncMasterContact } from '@/lib/identity/masterContact'
+import { EntityBankAccountsService } from '@/lib/modules/entity-bank-accounts/entityBankAccounts.service'
 
 const CompanyStatusSchema = z.enum(['aktif', 'tasfiye_halinde', 'terkin_edilmis'])
 
@@ -62,6 +63,7 @@ const SirketSchema = z.object({
   public_registry: z.record(z.any()).optional(),
   public_licenses: z.array(z.record(z.any())).optional(),
   public_channels: z.record(z.any()).optional(),
+  entity_bank_accounts: z.array(z.record(z.any())).optional(),
 })
 
 function omitNullishValues(value: Record<string, any>) {
@@ -110,11 +112,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: error.message, code: error.code || 'FETCH_FAILED' }, { status: 500 })
   }
 
-  const hydrated = await Promise.all((data || []).map((row: Record<string, any>) =>
-    row.organization_id ? hydrateMasterContact(supabase, 'organization', row) : row
-  ))
-
-  return NextResponse.json({ data: hydrated })
+  return NextResponse.json({ data: data || [] })
 }
 
 export async function POST(request: NextRequest) {
@@ -146,6 +144,7 @@ export async function POST(request: NextRequest) {
     public_registry,
     public_licenses,
     public_channels,
+    entity_bank_accounts,
     ...companyData
   } = parsed.data
   const organizationMasterData = {
@@ -187,6 +186,10 @@ export async function POST(request: NextRequest) {
     companyRow.organization_id,
     { ...companyRow, ...organizationMasterData }
   )
+
+  if (entity_bank_accounts && companyRow.organization_id) {
+    await new EntityBankAccountsService(supabase as any).syncMany('organization', companyRow.organization_id, entity_bank_accounts, null)
+  }
 
   const partnerError = await replaceCompanyPartners(supabase, data.id, ortaklar || [])
   if (partnerError) return NextResponse.json({ error: partnerError.message, code: partnerError.code || 'PARTNER_SAVE_FAILED' }, { status: 500 })

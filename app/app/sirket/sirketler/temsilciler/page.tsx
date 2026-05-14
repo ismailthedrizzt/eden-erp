@@ -597,6 +597,7 @@ export default function TemsilcilerPage() {
             onCancel={() => setPageState('list')}
             onDelete={handleDelete}
             onActivate={handleActivate}
+            isPassiveRecord={!!selectedRepresentative && (selectedRepresentative.is_deleted === true || selectedRepresentative.status !== 'Aktif')}
             onModeChange={(mode) => setPageState(mode)}
             onIdentityGateOpenExistingRole={async (roleRecord) => {
               await handleRowClick(roleRecord as any)

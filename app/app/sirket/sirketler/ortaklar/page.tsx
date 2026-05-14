@@ -651,6 +651,7 @@ export default function OrtaklarPage() {
             onCancel={() => setPageState('list')}
             onDelete={handleDelete}
             onActivate={handleActivate}
+            isPassiveRecord={!!selectedPartner && (selectedPartner.is_deleted === true || selectedPartner.status !== 'Aktif')}
             onModeChange={(mode) => setPageState(mode)}
             additionalActions={selectedPartner?.id ? (
               <button
