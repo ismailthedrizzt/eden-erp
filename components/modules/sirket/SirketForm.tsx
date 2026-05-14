@@ -826,8 +826,8 @@ export function SirketForm({
             <div className="flex items-center gap-2 pt-4">
               <input
                 type="checkbox"
-                checked={formData.is_active ?? true}
-                onChange={(e) => handleFieldChange('is_active', e.target.checked)}
+                checked={!formData.is_deleted}
+                onChange={(e) => handleFieldChange('is_deleted', !e.target.checked)}
                 disabled={isReadOnly}
                 id="sirket-aktif"
               />

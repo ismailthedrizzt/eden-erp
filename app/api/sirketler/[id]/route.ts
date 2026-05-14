@@ -4,8 +4,6 @@ import { z } from 'zod'
 import { hydrateMasterContact, syncMasterContact } from '@/lib/identity/masterContact'
 import { EntityBankAccountsService } from '@/lib/modules/entity-bank-accounts/entityBankAccounts.service'
 
-const CompanyStatusSchema = z.enum(['aktif', 'tasfiye_halinde', 'terkin_edilmis'])
-
 const SirketUpdateSchema = z.object({
   ticari_unvan: z.string().min(1).max(300).optional(),
   kisa_unvan: z.string().min(1).max(120).optional(),
@@ -39,9 +37,7 @@ const SirketUpdateSchema = z.object({
   varsayilan_dil: z.string().optional(),
   zaman_dilimi: z.string().optional(),
   mali_yil_baslangici: z.number().int().min(1).max(12).optional(),
-  is_active: z.boolean().optional(),
   is_deleted: z.boolean().optional(),
-  company_status: CompanyStatusSchema.optional(),
   hero_images: z.array(z.record(z.any())).optional(),
   hero_documents: z.array(z.record(z.any())).optional(),
   contact_points: z.array(z.record(z.any())).optional(),
@@ -74,18 +70,6 @@ function omitNullishValues(value: Record<string, any>) {
 
 function isMissingTableError(error: any) {
   return error?.code === '42P01' || String(error?.message || '').includes('Could not find the table')
-}
-
-function applyCompanyStatus(payload: Record<string, any>) {
-  if (!('company_status' in payload) && !('is_active' in payload) && !('is_deleted' in payload)) return payload
-  const isDeleted = payload.is_deleted ?? false
-  const companyStatus = payload.company_status || (isDeleted ? 'terkin_edilmis' : 'aktif')
-  return {
-    ...payload,
-    company_status: companyStatus,
-    is_active: !isDeleted,
-    is_deleted: isDeleted,
-  }
 }
 
 export async function GET(
@@ -227,7 +211,7 @@ export async function PATCH(
 
   const { data: current, error: currentError } = await supabase
     .from('sirketler')
-    .select('id,organization_id,field_history,kisa_unvan,ticari_unvan,vkn_tckn,vergi_dairesi,sirket_turu,il,ilce,adres,telefon,email,is_active,is_deleted,company_status,mersis_no,ticaret_sicil_no,kurulus_tarihi,legal_entity,electronic_notification_address,trade_registry_office,sirket_kodu,ulke,web_sitesi,e_fatura_mukellefi,e_arsiv_mukellefi,e_irsaliye_mukellefi,sgk_is_yeri_sicil_no,sgk_il,sgk_sube,tehlike_sinifi,varsayilan_para_birimi,varsayilan_dil,zaman_dilimi,mali_yil_baslangici')
+    .select('id,organization_id,field_history,kisa_unvan,ticari_unvan,vkn_tckn,vergi_dairesi,sirket_turu,il,ilce,adres,telefon,email,is_deleted,mersis_no,ticaret_sicil_no,kurulus_tarihi,legal_entity,electronic_notification_address,trade_registry_office,sirket_kodu,ulke,web_sitesi,e_fatura_mukellefi,e_arsiv_mukellefi,e_irsaliye_mukellefi,sgk_is_yeri_sicil_no,sgk_il,sgk_sube,tehlike_sinifi,varsayilan_para_birimi,varsayilan_dil,zaman_dilimi,mali_yil_baslangici')
     .eq('id', id)
     .single()
 
@@ -274,7 +258,7 @@ export async function PATCH(
     ...(beneficiary_bank_address !== undefined ? { beneficiary_bank_address } : {}),
     ...(beneficiary_currency !== undefined ? { beneficiary_currency } : {}),
   }
-  const companyUpdates = applyCompanyStatus(rawCompanyUpdates)
+  const companyUpdates = rawCompanyUpdates
   const nextHistory = buildFieldHistory(current, companyUpdates)
   const { data, error } = await supabase
     .from('sirketler')
@@ -283,7 +267,7 @@ export async function PATCH(
       field_history: nextHistory,
     })
     .eq('id', id)
-    .select('id,kisa_unvan,ticari_unvan,vkn_tckn,is_active,is_deleted,company_status,updated_at')
+    .select('id,kisa_unvan,ticari_unvan,vkn_tckn,is_deleted,updated_at')
     .single()
 
   if (error) {
@@ -387,7 +371,7 @@ export async function DELETE(
 
   const { error } = await supabase
     .from('sirketler')
-    .update({ is_active: false, is_deleted: true, company_status: 'terkin_edilmis' })
+    .update({ is_deleted: true })
     .eq('id', id)
 
   if (error) return NextResponse.json({ error: error.message, code: error.code || 'SOFT_DELETE_FAILED' }, { status: 500 })

@@ -142,7 +142,7 @@ export interface Personel {
   diploma_belgesi?: Record<string, unknown> | null
   created_at: string
   updated_at: string
-  is_active?: boolean
+  is_deleted?: boolean
   field_history?: Record<string, Array<{ value: unknown; date: string; user?: string }>>
   // İlişkiler
   birim?: Birim

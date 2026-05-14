@@ -52,9 +52,7 @@ export interface Sirket {
   varsayilan_dil: string
   zaman_dilimi: string
   mali_yil_baslangici: number
-  is_active: boolean
   is_deleted?: boolean
-  company_status?: 'aktif' | 'tasfiye_halinde' | 'terkin_edilmis'
   hero_images?: Array<Record<string, unknown>>
   hero_documents?: Array<Record<string, unknown>>
   beneficiary_full_name?: string

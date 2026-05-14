@@ -28,6 +28,7 @@ import { toEntityFormFields, toEntityFormTabs } from '@/types/module-config'
 import { createRealPersonMasterTabs } from '@/lib/identity/realPersonFormSections'
 import { formatPhoneInput, normalizeEmailInput } from '@/lib/utils'
 import { isTurkishNationality, normalizeCountryId } from '@/lib/reference/country-nationalities'
+import { isSoftDeletedRecord } from '@/lib/forms/entityState'
 import type { Personel } from '@/types'
 
 // Page state type following ERP pattern
@@ -116,7 +117,7 @@ export default function PersonelYonetimPage() {
     birim_adi: p.birim?.ad || '-',
     kadro_unvani: p.kadro?.unvan || p.gorev || '-',
     calisma_tipi: (p as any).calisma_tipi || '-',
-    employment_status: p.is_active === false ? 'pasif' : (p as any).employment_status || p.calisma_durumu || '-',
+    employment_status: isSoftDeletedRecord(p as Record<string, any>) ? 'pasif' : (p as any).employment_status || p.calisma_durumu || '-',
     egitim_durumu: getEducationSummary(p),
     sgk_status: p.sgk_giris ? 'SGK girişi var' : 'SGK bekliyor',
     __actions: ''
@@ -298,6 +299,38 @@ export default function PersonelYonetimPage() {
     }
   }
 
+  const handleActivate = async () => {
+    if (!selectedPersonel) return
+
+    setDeleting(true)
+    try {
+      const response = await fetch(`${apiBasePath}/${selectedPersonel.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          is_deleted: false,
+          calisma_durumu: 'gorevde',
+        }),
+      })
+
+      if (!response.ok) {
+        throw await createSaveError(response, 'Aktivasyon islemi basarisiz')
+      }
+
+      const result = await response.json()
+      setSelectedPersonel(result.data)
+      setToast({ type: 'success', title: 'Kayit Basarili', message: 'Calisan kaydi aktive edildi' })
+      await yenile()
+      setPageState('view')
+    } catch (err: any) {
+      setFormError(err.message)
+      setToast(err.toast || { type: 'error', title: 'Aktivasyon Basarisiz', message: err.message })
+      throw err
+    } finally {
+      setDeleting(false)
+    }
+  }
+
   const createSaveError = async (response: Response, fallback: string): Promise<SaveError> => {
     const body = await response.json().catch(() => ({}))
     const code = body.code || `HTTP_${response.status}`
@@ -372,8 +405,10 @@ export default function PersonelYonetimPage() {
   ]
 
   // Determine form mode for display
-  const formMode: FormMode = pageState === 'create' ? 'create' : 
-                            pageState === 'edit' ? 'edit' : 'view'
+  const selectedIsPassive = isSoftDeletedRecord(selectedPersonel as Record<string, any> | null)
+  const formMode: FormMode = pageState === 'create' ? 'create' :
+                            pageState === 'edit' ? 'edit' :
+                            selectedIsPassive ? 'passive' : 'view'
   const formTabs = [
     ...createRealPersonMasterTabs({
       addressField: 'adres',
@@ -421,8 +456,8 @@ export default function PersonelYonetimPage() {
     return {
       mode: 'form' as const,
       formMode: formMode,
-      title: modeTitles[pageState as keyof typeof modeTitles],
-      subtitle: modeSubtitles[pageState as keyof typeof modeSubtitles],
+      title: formMode === 'passive' ? personelName || 'Pasif Calisan' : modeTitles[pageState as keyof typeof modeTitles],
+      subtitle: formMode === 'passive' ? 'Pasif kaydi goruntule' : modeSubtitles[pageState as keyof typeof modeSubtitles],
       onBackClick: () => setPageState('list')
     }
   }
@@ -520,6 +555,7 @@ export default function PersonelYonetimPage() {
             onSave={handleSave}
             onCancel={() => setPageState('list')}
             onDelete={handleDelete}
+            onActivate={handleActivate}
             onModeChange={(mode) => setPageState(mode)}
             onIdentityGateOpenExistingRole={async (roleRecord) => {
               await handleRowClick(roleRecord as PersonelTableRow)

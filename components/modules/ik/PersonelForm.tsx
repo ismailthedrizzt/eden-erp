@@ -68,7 +68,7 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
     iban: '',
     birim_id: '',
     pozisyon: '',
-    is_active: true,
+    is_deleted: false,
     ise_giris_tarihi: '',
     isten_cikis_tarihi: ''
   })
@@ -121,7 +121,8 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
           birim_id: formData.birim_id || undefined,
           sgk_giris: formData.ise_giris_tarihi || undefined,
           isten_ayrilis: formData.isten_cikis_tarihi || undefined,
-          calisma_durumu: formData.is_active ? 'gorevde' : 'ayrilmis'
+          is_deleted: formData.is_deleted,
+          calisma_durumu: formData.is_deleted ? 'ayrilmis' : 'gorevde'
         })
       })
 
@@ -594,10 +595,10 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
               <div className="flex items-center gap-3">
                 <div className={cn(
                   "w-3 h-3 rounded-full",
-                  formData.is_active ? "bg-green-500" : "bg-red-500"
+                  !formData.is_deleted ? "bg-green-500" : "bg-red-500"
                 )} />
                 <span className="font-medium text-gray-900 dark:text-white">
-                  {formData.is_active ? 'Aktif Çalışan' : 'İşten Ayrıldı'}
+                  {!formData.is_deleted ? 'Aktif Çalışan' : 'İşten Ayrıldı'}
                 </span>
               </div>
               {formData.ise_giris_tarihi && (
@@ -626,11 +627,11 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
             </button>
             <button
               type="button"
-              onClick={() => formData.ise_giris_tarihi && setFormData({ ...formData, is_active: false })}
-              disabled={!formData.ise_giris_tarihi || !formData.is_active}
+              onClick={() => formData.ise_giris_tarihi && setFormData({ ...formData, is_deleted: true })}
+              disabled={!formData.ise_giris_tarihi || formData.is_deleted}
               className={cn(
                 "flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors",
-                (!formData.ise_giris_tarihi || !formData.is_active)
+                (!formData.ise_giris_tarihi || formData.is_deleted)
                   ? "bg-gray-100 dark:bg-gray-800 text-gray-400 dark:text-gray-600 cursor-not-allowed"
                   : "bg-red-500 text-white hover:bg-red-600"
               )}
@@ -641,7 +642,7 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
           </div>
 
           {/* Termination Form - Shows when termination is active */}
-          {!formData.is_active && formData.ise_giris_tarihi && (
+          {formData.is_deleted && formData.ise_giris_tarihi && (
             <div className="space-y-4 border-t border-gray-200 dark:border-gray-700 pt-4">
               <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
                 İşten Çıkış Bilgileri
@@ -738,7 +739,7 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
               <button
                 onClick={() => {
                   if (formData.ise_giris_tarihi) {
-                    setFormData({ ...formData, is_active: true })
+                    setFormData({ ...formData, is_deleted: false })
                     setShowHireModal(false)
                   }
                 }}

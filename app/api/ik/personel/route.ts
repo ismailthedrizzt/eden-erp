@@ -63,6 +63,7 @@ const EmployeeSchema = z.object({
   fotograf_url: z.string().optional(),
   cv_belgesi: z.record(z.any()).optional().nullable(),
   diploma_belgesi: z.record(z.any()).optional().nullable(),
+  is_deleted: z.boolean().default(false),
 })
 
 function omitNullishStrings(value: Record<string, any>) {
@@ -91,7 +92,7 @@ const baseEmployeeListColumns = [
   'birim_id',
   'kadro_id',
   'gorev',
-  'is_active',
+  'is_deleted',
   'egitim_okullari',
   'created_at',
   'updated_at',
@@ -167,7 +168,7 @@ export async function GET(request: NextRequest) {
       .select(selectQuery)
       .order('soyad', { ascending: true })
 
-    if (!includePassive) query = query.eq('is_active', true)
+    if (!includePassive) query = query.or('is_deleted.eq.false,is_deleted.is.null')
     if (birimId && isTeskilatActive) query = query.eq('birim_id', birimId)
     if (durum) query = query.eq('calisma_durumu', durum)
     if (ara) query = query.or(`ad.ilike.%${ara}%,soyad.ilike.%${ara}%,tc_kimlik.ilike.%${ara}%`)
@@ -224,6 +225,7 @@ export async function POST(request: NextRequest) {
     .from('employees')
     .insert({
       ...employeePayload,
+      is_deleted: employeePayload.is_deleted ?? false,
       calisma_durumu: employeePayload.isten_ayrilis ? 'ayrilmis' : employeePayload.calisma_durumu
     })
     .select()
@@ -237,6 +239,7 @@ export async function POST(request: NextRequest) {
       .from('employees')
       .insert({
         ...employeePayload,
+        is_deleted: employeePayload.is_deleted ?? false,
         calisma_durumu: employeePayload.isten_ayrilis ? 'ayrilmis' : employeePayload.calisma_durumu
       })
       .select()

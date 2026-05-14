@@ -4,8 +4,6 @@ import { z } from 'zod'
 import { syncMasterContact } from '@/lib/identity/masterContact'
 import { EntityBankAccountsService } from '@/lib/modules/entity-bank-accounts/entityBankAccounts.service'
 
-const CompanyStatusSchema = z.enum(['aktif', 'tasfiye_halinde', 'terkin_edilmis'])
-
 const SirketSchema = z.object({
   organization_id: z.string().uuid().optional().nullable(),
   ticari_unvan: z.string().min(1).max(300),
@@ -40,9 +38,7 @@ const SirketSchema = z.object({
   varsayilan_dil: z.string().default('tr'),
   zaman_dilimi: z.string().default('Europe/Istanbul'),
   mali_yil_baslangici: z.number().int().min(1).max(12).default(1),
-  is_active: z.boolean().default(true),
   is_deleted: z.boolean().default(false),
-  company_status: CompanyStatusSchema.default('aktif'),
   hero_images: z.array(z.record(z.any())).optional(),
   hero_documents: z.array(z.record(z.any())).optional(),
   contact_points: z.array(z.record(z.any())).optional(),
@@ -73,28 +69,16 @@ function omitNullishValues(value: Record<string, any>) {
   )
 }
 
-function applyCompanyStatus(payload: Record<string, any>) {
-  const isDeleted = payload.is_deleted ?? false
-  const companyStatus = payload.company_status || (isDeleted ? 'terkin_edilmis' : 'aktif')
-  return {
-    ...payload,
-    company_status: companyStatus,
-    is_active: !isDeleted,
-    is_deleted: isDeleted,
-  }
-}
-
 export async function GET(request: NextRequest) {
   const supabase = createServiceClient()
   const { searchParams } = new URL(request.url)
 
   const ara = searchParams.get('ara')
-  const isActive = searchParams.get('is_active')
   const includePassive = searchParams.get('include_passive') === 'true'
 
   let query = supabase
     .from('sirketler')
-    .select('id,organization_id,kisa_unvan,ticari_unvan,vkn_tckn,vergi_dairesi,sirket_turu,il,ilce,adres,telefon,email,is_active,is_deleted,company_status,mersis_no,ticaret_sicil_no,kurulus_tarihi,legal_entity,electronic_notification_address,trade_registry_office,sirket_kodu,ulke,web_sitesi,e_fatura_mukellefi,e_arsiv_mukellefi,e_irsaliye_mukellefi,sgk_is_yeri_sicil_no,sgk_il,sgk_sube,tehlike_sinifi,varsayilan_para_birimi,varsayilan_dil,zaman_dilimi,mali_yil_baslangici,hero_images,updated_at,created_at')
+    .select('id,organization_id,kisa_unvan,ticari_unvan,vkn_tckn,vergi_dairesi,sirket_turu,il,ilce,adres,telefon,email,is_deleted,mersis_no,ticaret_sicil_no,kurulus_tarihi,legal_entity,electronic_notification_address,trade_registry_office,sirket_kodu,ulke,web_sitesi,e_fatura_mukellefi,e_arsiv_mukellefi,e_irsaliye_mukellefi,sgk_is_yeri_sicil_no,sgk_il,sgk_sube,tehlike_sinifi,varsayilan_para_birimi,varsayilan_dil,zaman_dilimi,mali_yil_baslangici,hero_images,updated_at,created_at')
     .order('kisa_unvan', { ascending: true })
 
   if (ara) {
@@ -102,8 +86,6 @@ export async function GET(request: NextRequest) {
   }
 
   if (!includePassive) query = query.eq('is_deleted', false)
-  if (isActive === 'true') query = query.eq('is_deleted', false)
-  if (isActive === 'false') query = query.eq('is_deleted', true)
 
   const { data, error } = await query
   if (error) {
@@ -167,7 +149,10 @@ export async function POST(request: NextRequest) {
   }
   let companyRow: Record<string, any>
   try {
-    companyRow = await attachCompanyOrganization(supabase, applyCompanyStatus(companyData))
+    companyRow = await attachCompanyOrganization(supabase, {
+      ...companyData,
+      is_deleted: companyData.is_deleted ?? false,
+    })
   } catch (error) {
     return NextResponse.json({
       error: error instanceof Error ? error.message : 'Şirket ana kurum kaydına bağlanamadı',
@@ -177,7 +162,7 @@ export async function POST(request: NextRequest) {
   const { data, error } = await supabase
     .from('sirketler')
     .insert(companyRow)
-    .select('id,kisa_unvan,ticari_unvan,vkn_tckn,is_active,is_deleted,company_status,updated_at')
+    .select('id,kisa_unvan,ticari_unvan,vkn_tckn,is_deleted,updated_at')
     .single()
 
   if (error) return NextResponse.json({ error: error.message, code: error.code || 'CREATE_FAILED' }, { status: 500 })

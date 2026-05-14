@@ -136,7 +136,7 @@ async function collectRelationshipRows(supabase: SupabaseClient, params: Geograp
   const companyId = params.mode === 'selected' ? params.companyId : null
 
   const companyRows = await fetchRows(supabase, 'sirketler', query => {
-    let next = query.select('id,kisa_unvan,ticari_unvan,ulke,il,ilce,adres,is_active,company_status')
+    let next = query.select('id,kisa_unvan,ticari_unvan,ulke,il,ilce,adres,is_deleted')
     if (companyId) next = next.eq('id', companyId)
     return next
   })

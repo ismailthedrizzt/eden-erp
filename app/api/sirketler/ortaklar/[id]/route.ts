@@ -182,7 +182,7 @@ async function hydratePartnerMasterAssets(supabase: ReturnType<typeof createServ
       .from('employees')
       .select('fotograf_url, cv_belgesi, diploma_belgesi, ise_giris_belgeleri, isten_cikis_belgeleri')
       .eq('person_id', partner.person_id)
-      .eq('is_active', true)
+      .eq('is_deleted', false)
       .maybeSingle()
 
     const photoLogo = hasPhoto

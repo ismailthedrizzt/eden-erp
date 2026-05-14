@@ -221,7 +221,7 @@ export function PartnersTab({ value, onChange, readOnly = false, representatives
           displayName: company.ticari_unvan || company.kisa_unvan,
           identity: company.vkn_tckn,
           country: company.ulke || 'Türkiye',
-          status: company.is_active ? 'Aktif' : 'Pasif',
+          status: company.is_deleted ? 'Pasif' : 'Aktif',
           kind: 'tuzel_kisi' as OwnerKind,
         })) : [])
     }).catch(() => {

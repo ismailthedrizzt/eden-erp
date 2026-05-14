@@ -60,6 +60,7 @@ const EmployeeUpdateSchema = z.object({
   fotograf_url: z.string().optional(),
   cv_belgesi: z.record(z.any()).optional().nullable(),
   diploma_belgesi: z.record(z.any()).optional().nullable(),
+  is_deleted: z.boolean().optional(),
 })
 
 function omitNullishValues(value: Record<string, any>) {
@@ -228,7 +229,10 @@ export async function DELETE(
 
   const { error } = await supabase
     .from('employees')
-    .update({ is_active: false, calisma_durumu: 'ayrilmis' })
+    .update({
+      is_deleted: true,
+      calisma_durumu: 'ayrilmis',
+    })
     .eq('id', id)
 
   if (error) {

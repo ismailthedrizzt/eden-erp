@@ -342,13 +342,7 @@ async function findRoleRecord(
     query = query.eq(input.roleTable === 'stakeholders' ? 'company_id' : 'sirket_id', companyId)
   }
 
-  if (input.roleTable === 'employees') {
-    query = query.eq('is_active', true)
-  } else if (input.roleTable === 'sirketler') {
-    query = query.eq('is_deleted', false)
-  } else {
-    query = query.eq('is_deleted', false)
-  }
+  query = query.eq('is_deleted', false)
 
   const { data, error } = await query
   if (error) return { error: error.message, record: null }
