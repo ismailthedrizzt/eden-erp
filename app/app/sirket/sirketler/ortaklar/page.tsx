@@ -9,6 +9,7 @@ import { Toast } from '@/components/ui/Toast'
 import { normalizeCountryId } from '@/lib/reference/country-nationalities'
 import { createRealPersonMasterTabs } from '@/lib/identity/realPersonFormSections'
 import { createLegalEntityMasterTabs } from '@/lib/identity/legalEntityFormSections'
+import { isSoftDeletedRecord } from '@/lib/forms/entityState'
 
 type PageState = 'list' | 'create' | 'view' | 'edit'
 type ToastState = { type: 'success' | 'error' | 'warning'; title?: string; message: string }
@@ -352,7 +353,7 @@ export default function OrtaklarPage() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [toast, setToast] = useState<ToastState | null>(null)
 
-  const isSelectedPassive = !!selectedPartner && (selectedPartner.is_deleted === true || selectedPartner.status !== 'Aktif')
+  const isSelectedPassive = isSoftDeletedRecord(selectedPartner)
   const formMode: FormMode = pageState === 'create' ? 'create' : isSelectedPassive ? 'passive' : pageState === 'edit' ? 'edit' : 'view'
 
   const loadData = async () => {
@@ -433,7 +434,7 @@ export default function OrtaklarPage() {
   })
   })
 
-  const activePartners = tableData.filter(partner => !partner.is_deleted && partner.status === 'Aktif')
+  const activePartners = tableData.filter(partner => !isSoftDeletedRecord(partner))
   const widgets: WidgetDef<any>[] = [
     { key: 'total', label: 'Toplam Ortak', render: () => tableData.length },
     { key: 'active', label: 'Aktif Ortak', render: () => activePartners.length },
@@ -652,7 +653,6 @@ export default function OrtaklarPage() {
             onCancel={() => setPageState('list')}
             onDelete={handleDelete}
             onActivate={handleActivate}
-            isPassiveRecord={isSelectedPassive}
             onModeChange={(mode) => setPageState(mode)}
             additionalActions={selectedPartner?.id ? (
               <button
@@ -934,7 +934,7 @@ function normalizePartnerForForm(partner: PartnerRow) {
   const identityNumber = partner.identity_number || partner.tckn_vkn || ''
   const telefonlar = Array.isArray(masterFields.telefonlar) ? masterFields.telefonlar : []
   const epostalar = Array.isArray(masterFields.epostalar) ? masterFields.epostalar : []
-  const status = partner.is_deleted ? 'Pasif' : partner.status || profile.status || 'Aktif'
+  const status = isSoftDeletedRecord(partner) ? 'Pasif' : partner.status || profile.status || 'Aktif'
   return {
     ...profile,
     ...partner,

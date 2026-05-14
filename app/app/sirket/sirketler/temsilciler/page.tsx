@@ -9,6 +9,7 @@ import { Toast } from '@/components/ui/Toast'
 import { normalizeCountryId } from '@/lib/reference/country-nationalities'
 import { createRealPersonMasterTabs } from '@/lib/identity/realPersonFormSections'
 import { createLegalEntityMasterTabs } from '@/lib/identity/legalEntityFormSections'
+import { isSoftDeletedRecord } from '@/lib/forms/entityState'
 
 type PageState = 'list' | 'create' | 'view' | 'edit'
 type ToastState = { type: 'success' | 'error' | 'warning'; title?: string; message: string }
@@ -351,7 +352,7 @@ export default function TemsilcilerPage() {
   const [includePassive, setIncludePassive] = useState(false)
   const [toast, setToast] = useState<ToastState | null>(null)
 
-  const isSelectedPassive = !!selectedRepresentative && (selectedRepresentative.is_deleted === true || selectedRepresentative.status !== 'Aktif')
+  const isSelectedPassive = isSoftDeletedRecord(selectedRepresentative)
   const formMode: FormMode = pageState === 'create' ? 'create' : isSelectedPassive ? 'passive' : pageState === 'edit' ? 'edit' : 'view'
 
   const loadData = async () => {
@@ -394,7 +395,7 @@ export default function TemsilcilerPage() {
 
   const widgets: WidgetDef<any>[] = [
     { key: 'total', label: 'Toplam Temsilci', render: () => tableData.length },
-    { key: 'active', label: 'Aktif', render: () => tableData.filter(row => row.status === 'Aktif' && !row.is_deleted).length },
+    { key: 'active', label: 'Aktif', render: () => tableData.filter(row => !isSoftDeletedRecord(row)).length },
     { key: 'signature', label: 'İmza Yetkilisi', render: () => tableData.filter(row => row.authority_types?.some(type => toAuthorityValue(type) === 'imza_yetkilisi')).length },
     { key: 'bank', label: 'Banka Yetkilisi', render: () => tableData.filter(row => row.authority_types?.some(type => toAuthorityValue(type) === 'banka_yetkilisi')).length },
   ]
@@ -598,7 +599,6 @@ export default function TemsilcilerPage() {
             onCancel={() => setPageState('list')}
             onDelete={handleDelete}
             onActivate={handleActivate}
-            isPassiveRecord={isSelectedPassive}
             onModeChange={(mode) => setPageState(mode)}
             onIdentityGateOpenExistingRole={async (roleRecord) => {
               await handleRowClick(roleRecord as any)
@@ -722,7 +722,7 @@ function normalizeRepresentativeForForm(representative: RepresentativeRow) {
     epostalar?: Array<Record<string, any>>
   }
   const displayName = representative.display_name || representative.ad_soyad || ''
-  const status = representative.is_deleted ? 'Pasif' : representative.status || profile.status || 'Aktif'
+  const status = isSoftDeletedRecord(representative) ? 'Pasif' : representative.status || profile.status || 'Aktif'
   return {
     ...profile,
     ...representative,

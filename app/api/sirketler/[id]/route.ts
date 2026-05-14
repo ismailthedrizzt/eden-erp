@@ -40,6 +40,7 @@ const SirketUpdateSchema = z.object({
   zaman_dilimi: z.string().optional(),
   mali_yil_baslangici: z.number().int().min(1).max(12).optional(),
   is_active: z.boolean().optional(),
+  is_deleted: z.boolean().optional(),
   company_status: CompanyStatusSchema.optional(),
   hero_images: z.array(z.record(z.any())).optional(),
   hero_documents: z.array(z.record(z.any())).optional(),
@@ -76,12 +77,14 @@ function isMissingTableError(error: any) {
 }
 
 function applyCompanyStatus(payload: Record<string, any>) {
-  if (!('company_status' in payload) && !('is_active' in payload)) return payload
-  const companyStatus = payload.company_status || (payload.is_active === false ? 'terkin_edilmis' : 'aktif')
+  if (!('company_status' in payload) && !('is_active' in payload) && !('is_deleted' in payload)) return payload
+  const isDeleted = payload.is_deleted ?? false
+  const companyStatus = payload.company_status || (isDeleted ? 'terkin_edilmis' : 'aktif')
   return {
     ...payload,
     company_status: companyStatus,
-    is_active: companyStatus !== 'terkin_edilmis',
+    is_active: !isDeleted,
+    is_deleted: isDeleted,
   }
 }
 
@@ -224,7 +227,7 @@ export async function PATCH(
 
   const { data: current, error: currentError } = await supabase
     .from('sirketler')
-    .select('id,organization_id,field_history,kisa_unvan,ticari_unvan,vkn_tckn,vergi_dairesi,sirket_turu,il,ilce,adres,telefon,email,is_active,company_status,mersis_no,ticaret_sicil_no,kurulus_tarihi,legal_entity,electronic_notification_address,trade_registry_office,sirket_kodu,ulke,web_sitesi,e_fatura_mukellefi,e_arsiv_mukellefi,e_irsaliye_mukellefi,sgk_is_yeri_sicil_no,sgk_il,sgk_sube,tehlike_sinifi,varsayilan_para_birimi,varsayilan_dil,zaman_dilimi,mali_yil_baslangici')
+    .select('id,organization_id,field_history,kisa_unvan,ticari_unvan,vkn_tckn,vergi_dairesi,sirket_turu,il,ilce,adres,telefon,email,is_active,is_deleted,company_status,mersis_no,ticaret_sicil_no,kurulus_tarihi,legal_entity,electronic_notification_address,trade_registry_office,sirket_kodu,ulke,web_sitesi,e_fatura_mukellefi,e_arsiv_mukellefi,e_irsaliye_mukellefi,sgk_is_yeri_sicil_no,sgk_il,sgk_sube,tehlike_sinifi,varsayilan_para_birimi,varsayilan_dil,zaman_dilimi,mali_yil_baslangici')
     .eq('id', id)
     .single()
 
@@ -280,7 +283,7 @@ export async function PATCH(
       field_history: nextHistory,
     })
     .eq('id', id)
-    .select('id,kisa_unvan,ticari_unvan,vkn_tckn,is_active,company_status,updated_at')
+    .select('id,kisa_unvan,ticari_unvan,vkn_tckn,is_active,is_deleted,company_status,updated_at')
     .single()
 
   if (error) {
@@ -384,7 +387,7 @@ export async function DELETE(
 
   const { error } = await supabase
     .from('sirketler')
-    .update({ is_active: false, company_status: 'terkin_edilmis' })
+    .update({ is_active: false, is_deleted: true, company_status: 'terkin_edilmis' })
     .eq('id', id)
 
   if (error) return NextResponse.json({ error: error.message, code: error.code || 'SOFT_DELETE_FAILED' }, { status: 500 })

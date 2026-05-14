@@ -11,6 +11,7 @@ import type { AnyDashboardWidgetConfig } from '@/components/dashboard/dashboard.
 import { CompanyNaceCodesSection } from '@/components/modules/sirket/CompanyPublicTab'
 import { formatPhoneInput, normalizeEmailInput } from '@/lib/utils'
 import { createFormModeState, mapPageStateToFormMode } from '@/lib/forms/formModeEngine'
+import { isSoftDeletedRecord } from '@/lib/forms/entityState'
 import { createLegalEntityMasterTabs } from '@/lib/identity/legalEntityFormSections'
 import { useModules } from '@/lib/security/moduleStore'
 import { usePermissions } from '@/lib/security/permissionStore'
@@ -332,6 +333,7 @@ export default function SirketlerPage() {
 
   const tableData: SirketTableRow[] = (sirketler || []).map(sirket => ({
     ...sirket,
+    is_deleted: !!sirket.is_deleted,
     company_status: sirket.company_status || (sirket.is_active ? 'aktif' : 'terkin_edilmis'),
     adres_ozet: [sirket.ilce, sirket.il].filter(Boolean).join(', '),
     logo_url: extractLogoUrl((sirket as any).hero_images),
@@ -339,9 +341,9 @@ export default function SirketlerPage() {
 
   const widgets: WidgetDef<SirketTableRow>[] = [
     { key: 'total', label: 'Toplam Şirket', render: () => tableData.length },
-    { key: 'active', label: 'Aktif', render: () => tableData.filter(row => row.company_status === 'aktif').length },
-    { key: 'liquidation', label: 'Tasfiye', render: () => tableData.filter(row => row.company_status === 'tasfiye_halinde').length },
-    { key: 'closed', label: 'Terkin', render: () => tableData.filter(row => row.company_status === 'terkin_edilmis').length },
+    { key: 'active', label: 'Aktif', render: () => tableData.filter(row => !isSoftDeletedRecord(row)).length },
+    { key: 'liquidation', label: 'Tasfiye', render: () => tableData.filter(row => !isSoftDeletedRecord(row) && row.company_status === 'tasfiye_halinde').length },
+    { key: 'closed', label: 'Terkin', render: () => tableData.filter(row => isSoftDeletedRecord(row)).length },
   ]
 
   const moduleEnabled = isEnabled('companies')
@@ -352,7 +354,7 @@ export default function SirketlerPage() {
     canEdit: moduleWritable && can(PERMISSIONS.companies.edit),
     canApprove: moduleWritable && can(PERMISSIONS.companies.approve),
   })
-  const isSelectedPassive = !!selectedSirket && (selectedSirket.is_active === false || selectedSirket.company_status === 'terkin_edilmis')
+  const isSelectedPassive = isSoftDeletedRecord(selectedSirket)
   const formMode: FormMode = pageState === 'create'
     ? 'create'
     : isSelectedPassive
@@ -436,8 +438,9 @@ export default function SirketlerPage() {
       payload.electronic_notification_address = digits.replace(/(\d{5})(?=\d)/g, '$1-')
     }
     if (payload.mali_yil_baslangici) payload.mali_yil_baslangici = Number(payload.mali_yil_baslangici)
-    payload.company_status = payload.company_status || (payload.is_active === false ? 'terkin_edilmis' : 'aktif')
-    payload.is_active = payload.company_status !== 'terkin_edilmis'
+    payload.is_deleted = payload.is_deleted ?? false
+    payload.company_status = payload.company_status || (payload.is_deleted ? 'terkin_edilmis' : 'aktif')
+    payload.is_active = !payload.is_deleted
     if (pageState === 'create') {
       payload.ulke = payload.ulke || 'Türkiye'
       payload.varsayilan_para_birimi = payload.varsayilan_para_birimi || 'TRY'
@@ -516,7 +519,7 @@ export default function SirketlerPage() {
       const response = await fetch(`/api/sirketler/${selectedSirket.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ company_status: 'aktif', is_active: true }),
+        body: JSON.stringify({ company_status: 'aktif', is_active: true, is_deleted: false }),
       })
 
       if (!response.ok) {
@@ -524,7 +527,7 @@ export default function SirketlerPage() {
       }
 
       const result = await response.json()
-      if (result.data) setSelectedSirket({ ...selectedSirket, ...result.data, company_status: 'aktif', is_active: true })
+      if (result.data) setSelectedSirket({ ...selectedSirket, ...result.data, company_status: 'aktif', is_active: true, is_deleted: false })
       setToast({ type: 'success', title: 'Kayit Basarili', message: 'Sirket kaydi aktive edildi' })
       await yenile()
       setPageState('view')
@@ -742,7 +745,6 @@ export default function SirketlerPage() {
             onCancel={handleBackToList}
             onDelete={handleDelete}
             onActivate={handleActivate}
-            isPassiveRecord={isSelectedPassive}
             onModeChange={(mode) => setPageState(mode === 'edit' && !formAccess.showEdit ? 'view' : mode)}
             onIdentityGateOpenExistingRole={async (roleRecord) => {
               await handleRowClick(roleRecord as SirketTableRow)
@@ -965,6 +967,7 @@ function formatSourceType(value?: string) {
 function normalizeCompanyForForm(company: Sirket) {
   return {
     ...company,
+    is_deleted: !!company.is_deleted,
     company_status: company.company_status || (company.is_active ? 'aktif' : 'terkin_edilmis'),
     ortaklar: (company.ortaklar || []).map((partner: any) => {
       const parts = String(partner.ortak_adi || '').trim().split(/\s+/)

@@ -8,6 +8,7 @@ import { SmartDataTable, ColumnDef, WidgetDef } from '@/components/ui/SmartDataT
 import { Toast } from '@/components/ui/Toast'
 import { createRealPersonMasterTabs } from '@/lib/identity/realPersonFormSections'
 import { createLegalEntityMasterTabs } from '@/lib/identity/legalEntityFormSections'
+import { isSoftDeletedRecord } from '@/lib/forms/entityState'
 
 type PageState = 'list' | 'create' | 'view' | 'edit'
 type ToastState = { type: 'success' | 'error' | 'warning'; title?: string; message: string }
@@ -274,7 +275,7 @@ export default function PaydaslarPage() {
   const [includePassive, setIncludePassive] = useState(false)
   const [toast, setToast] = useState<ToastState | null>(null)
 
-  const isSelectedPassive = !!selectedStakeholder && (selectedStakeholder.is_deleted === true || selectedStakeholder.status !== 'Aktif')
+  const isSelectedPassive = isSoftDeletedRecord(selectedStakeholder)
   const formMode: FormMode = pageState === 'create' ? 'create' : isSelectedPassive ? 'passive' : pageState === 'edit' ? 'edit' : 'view'
 
   const loadData = async () => {
@@ -314,7 +315,7 @@ export default function PaydaslarPage() {
 
   const widgets: WidgetDef<any>[] = [
     { key: 'total', label: 'Toplam Paydaş', render: () => tableData.length },
-    { key: 'active', label: 'Aktif', render: () => tableData.filter(row => row.status === 'Aktif' && !row.is_deleted).length },
+    { key: 'active', label: 'Aktif', render: () => tableData.filter(row => !isSoftDeletedRecord(row)).length },
     { key: 'legal', label: 'Tüzel Kişi', render: () => tableData.filter(row => row.stakeholder_type === 'tuzel_kisi').length },
     { key: 'critical', label: 'Kritik', render: () => tableData.filter(row => row.priority_level === 'Kritik').length },
   ]
@@ -475,7 +476,6 @@ export default function PaydaslarPage() {
             onCancel={() => setPageState('list')}
             onDelete={handleDelete}
             onActivate={handleActivate}
-            isPassiveRecord={isSelectedPassive}
             onModeChange={(mode) => setPageState(mode)}
             onIdentityGateOpenExistingRole={async (roleRecord) => {
               await handleRowClick(roleRecord as any)
@@ -540,7 +540,7 @@ function normalizeStakeholderForForm(stakeholder: StakeholderRow) {
     epostalar?: Array<Record<string, any>>
   }
   const displayName = stakeholder.display_name || ''
-  const status = stakeholder.is_deleted ? 'Pasif' : stakeholder.status || profile.status || 'Aktif'
+  const status = isSoftDeletedRecord(stakeholder) ? 'Pasif' : stakeholder.status || profile.status || 'Aktif'
   return {
     ...profile,
     ...stakeholder,

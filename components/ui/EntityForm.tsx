@@ -33,6 +33,7 @@ import { MasterIdentityGate } from './MasterIdentityGate'
 import Modal from './Modal'
 import type { IdentityGateConfig, IdentityGateResolveResult } from '@/lib/identity-gate'
 import { COUNTRY_OPTIONS, normalizeCountryId } from '@/lib/reference/country-nationalities'
+import { isSoftDeletedRecord } from '@/lib/forms/entityState'
 
 /** Historical value entry */
 export interface HistoryEntry {
@@ -183,9 +184,6 @@ export interface EntityFormProps {
   /** Activation handler for passive records */
   onActivate?: () => Promise<void> | void
 
-  /** Explicit passive state from parent pages when row/status normalization is module-specific */
-  isPassiveRecord?: boolean
-  
   /** Mode change handler (view -> edit) */
   onModeChange?: (mode: 'create' | 'view' | 'edit') => void
 
@@ -214,17 +212,6 @@ export interface EntityFormProps {
 }
 
 const DOCUMENTS_FORM_TAB_ID = '__documents__'
-
-function isPassiveRecord(data: Record<string, any>) {
-  const status = String(data.status || data.durum || '').trim().toLocaleLowerCase('tr-TR')
-  const companyStatus = String(data.company_status || '').trim().toLocaleLowerCase('tr-TR')
-  return data.is_deleted === true
-    || data.is_active === false
-    || data.aktif === false
-    || ['pasif', 'passive', 'inactive', 'deleted', 'archived'].includes(status)
-    || status.includes('pasif')
-    || companyStatus === 'terkin_edilmis'
-}
 
 /** FieldHistoryIndicator Component */
 function FieldHistoryIndicator({ history }: { history?: HistoryEntry[] }) {
@@ -1621,7 +1608,6 @@ export function EntityForm({
   onCancel,
   onDelete,
   onActivate,
-  isPassiveRecord: explicitPassiveRecord,
   onModeChange,
   onFieldChange,
   additionalActions,
@@ -1817,13 +1803,12 @@ export function EntityForm({
   }, [externalFieldErrors])
 
   const effectiveStatusData = data ? { ...data, ...formData } : formData
-  const isPassive = mode === 'passive' || (typeof explicitPassiveRecord === 'boolean' ? explicitPassiveRecord : isPassiveRecord(effectiveStatusData))
+  const isPassive = mode === 'passive' || isSoftDeletedRecord(effectiveStatusData)
   const isReadOnly = mode === 'view' || mode === 'passive'
   const isCreate = mode === 'create'
   const isEdit = mode === 'edit'
   const canActivateRecord = isPassive && !!onActivate
-  const hasStatusAction = isPassive ? canActivateRecord : !!onDelete
-  const canShowStatusAction = canActivateRecord || (!isPassive && canEdit && !!onDelete)
+  const canPassivateRecord = !isPassive && canEdit && !!onDelete
   const slotLoaderMode = isReadOnly ? 'view' : isCreate ? 'insert' : 'update'
   const isIdentityGateEnabled = !!identityGate?.enabled
   const effectiveIdentityGateResult = identityGateResult || buildIdentityResultFromExistingData(identityGate, formData)
@@ -2713,7 +2698,7 @@ export function EntityForm({
               {additionalActions}
               
               {/* View Mode: Edit Button */}
-              {isReadOnly && hasStatusAction && canShowStatusAction && (
+              {!isCreate && (canActivateRecord || canPassivateRecord) && (
                 <button
                   onClick={handleDelete}
                   disabled={deleting}
