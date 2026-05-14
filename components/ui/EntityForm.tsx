@@ -24,7 +24,7 @@
  */
 
 import { useState, useEffect, ReactNode, useCallback } from 'react'
-import { Save, Loader2, Edit3, History, Clock, Plus, Trash2, Upload, Briefcase, LogOut, Building2, UserRound } from 'lucide-react'
+import { Save, Loader2, Edit3, History, Clock, Plus, Trash2, Upload, Briefcase, LogOut, Building2, UserRound, FileText } from 'lucide-react'
 import { cn, formatPhoneInput, normalizeEmailInput } from '@/lib/utils'
 import { ImageSlotUploader, ImageSlot, SlotImage } from './ImageSlotUploader'
 import { DocumentSlotUploader, DocumentSlot, SlotDocument } from './DocumentSlotUploader'
@@ -206,6 +206,8 @@ export interface EntityFormProps {
   onIdentityGateOpenExistingRole?: (roleRecord: Record<string, any>, result: IdentityGateResolveResult) => void
   onIdentityGateCancelDuplicate?: () => void
 }
+
+const DOCUMENTS_FORM_TAB_ID = '__documents__'
 
 /** FieldHistoryIndicator Component */
 function FieldHistoryIndicator({ history }: { history?: HistoryEntry[] }) {
@@ -1648,6 +1650,15 @@ export function EntityForm({
   const visibleTabs = tabs.filter(tab =>
     tab.fields.length === 0 || tab.fields.some(field => matchesCondition(field.visibleWhen, formData))
   )
+  const formTabs = [
+    ...visibleTabs,
+    {
+      id: DOCUMENTS_FORM_TAB_ID,
+      label: 'Belgeler',
+      icon: <FileText size={16} />,
+      fields: [],
+    },
+  ]
 
   useEffect(() => {
     if (imageSlot.dataField) {
@@ -1764,10 +1775,10 @@ export function EntityForm({
 
   // Reset active tab when mode changes
   useEffect(() => {
-    if (visibleTabs.length > 0 && !visibleTabs.find(t => t.id === activeTab)) {
-      setActiveTab(visibleTabs[0].id)
+    if (formTabs.length > 0 && !formTabs.find(t => t.id === activeTab)) {
+      setActiveTab(formTabs[0].id)
     }
-  }, [visibleTabs, activeTab])
+  }, [formTabs, activeTab])
 
   useEffect(() => {
     if (externalFieldErrors && Object.keys(externalFieldErrors).length > 0) {
@@ -2684,10 +2695,10 @@ export function EntityForm({
         </div>
       </div>
 
-      {visibleTabs.length > 0 && (
+      {formTabs.length > 0 && (
         <div className="border-b border-gray-200 dark:border-gray-700">
           <div className="flex overflow-x-auto">
-            {visibleTabs.map(tab => (
+            {formTabs.map(tab => (
               <button
                 key={tab.id}
                 disabled={isIdentityGateLocked}
@@ -2697,8 +2708,8 @@ export function EntityForm({
                   activeTab === tab.id
                     ? "border-blue-600 text-blue-600 dark:text-blue-400"
                     : "border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200",
-                  getTabValidationStatus(tab) === 'invalid' && "text-red-600 dark:text-red-400",
-                  getTabValidationStatus(tab) === 'valid' && "text-emerald-600 dark:text-emerald-400",
+                  tab.id !== DOCUMENTS_FORM_TAB_ID && getTabValidationStatus(tab) === 'invalid' && "text-red-600 dark:text-red-400",
+                  tab.id !== DOCUMENTS_FORM_TAB_ID && getTabValidationStatus(tab) === 'valid' && "text-emerald-600 dark:text-emerald-400",
                   isIdentityGateLocked && "cursor-not-allowed opacity-50"
                 )}
               >
@@ -2710,22 +2721,34 @@ export function EntityForm({
         </div>
       )}
 
-      {(visibleTabs.length > 0 || isIdentityGateLocked) && (
+      {(formTabs.length > 0 || isIdentityGateLocked) && (
         <div className="p-6">
           {isIdentityGateLocked && (
             <div className="mb-4 rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-3 text-sm text-gray-600 dark:border-gray-700 dark:bg-gray-800/50 dark:text-gray-300">
               Devam etmek için önce Temel Kimlik Sorgulama/Oluşturma alanını eşleştirin.
             </div>
           )}
-          {visibleTabs.map(tab => (
+          {formTabs.map(tab => (
             <div
               key={tab.id}
               className={cn(
-                "grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4",
+                tab.id === DOCUMENTS_FORM_TAB_ID ? "block" : "grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4",
                 activeTab !== tab.id && "hidden"
               )}
             >
-              {tab.fields.map(field => renderField(field, enableHistory))}
+              {tab.id === DOCUMENTS_FORM_TAB_ID ? (
+                <DocumentSlotUploader
+                  slots={documentSlots}
+                  documents={documents}
+                  onChange={handleDocumentsChange}
+                  readOnly={isReadOnly || isIdentityGateLocked}
+                  aiBadge={documentSlot.aiBadge}
+                  defaultTab="documents"
+                  className="items-stretch"
+                />
+              ) : (
+                tab.fields.map(field => renderField(field, enableHistory))
+              )}
             </div>
           ))}
         </div>

@@ -83,6 +83,8 @@ interface DocumentSlotUploaderProps {
   allowExtraSlots?: boolean
   /** Read-only mode (view only) */
   readOnly?: boolean
+  /** Initial tab to show when the uploader mounts */
+  defaultTab?: 'upload' | 'documents'
   /** Show a compact AI capability badge without changing the uploader layout */
   aiBadge?: {
     label?: string
@@ -477,6 +479,7 @@ export function DocumentSlotUploader({
   onChange,
   allowExtraSlots = true,
   readOnly = false,
+  defaultTab = 'upload',
   aiBadge,
   className
 }: DocumentSlotUploaderProps) {
@@ -487,7 +490,7 @@ export function DocumentSlotUploader({
   const [previewDoc, setPreviewDoc] = useState<SlotDocument | null>(null)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [deleteTargetDoc, setDeleteTargetDoc] = useState<SlotDocument | null>(null)
-  const [activeTab, setActiveTab] = useState<'upload' | 'documents'>('upload')
+  const [activeTab, setActiveTab] = useState<'upload' | 'documents'>(defaultTab)
   const [replaceSlotId, setReplaceSlotId] = useState<string | null>(null)
   const [extraSlotName, setExtraSlotName] = useState('')
   const [showExtraSlotInput, setShowExtraSlotInput] = useState(false)
