@@ -25,7 +25,7 @@
 
 import { useState, useEffect, ReactNode, useCallback, useMemo } from 'react'
 import { Save, Loader2, Edit3, History, Clock, Plus, Trash2, Upload, Briefcase, LogOut, Building2, UserRound, FileText } from 'lucide-react'
-import { cn, formatPhoneInput, normalizeEmailInput } from '@/lib/utils'
+import { cn, formatPhoneInput, normalizeEmailInput, resolveTurkishIban } from '@/lib/utils'
 import { ImageSlotUploader, ImageSlot, SlotImage } from './ImageSlotUploader'
 import { DocumentSlotUploader, DocumentSlot, SlotDocument } from './DocumentSlotUploader'
 import { IBANInput } from './IBANInput'
@@ -71,7 +71,7 @@ export interface FormField {
   /** History entries for this field */
   history?: HistoryEntry[]
   /** Custom render function */
-  render?: (props: { value: any; onChange: (val: any) => void; readOnly: boolean }) => ReactNode
+  render?: (props: { value: any; onChange: (val: any) => void; readOnly: boolean; data: Record<string, any>; mode: FormMode }) => ReactNode
 }
 
 interface FieldCondition {
@@ -1902,7 +1902,7 @@ export function EntityForm({
         return next
       }
 
-      const next = { ...prev, [field]: value }
+      const next = applyLegalEntityBankDerivations(prev, field, value)
       onFieldChange?.(field, value, next)
       return next
     })
@@ -1973,7 +1973,7 @@ export function EntityForm({
       }
     }
 
-    return next
+    return normalizeLegalEntityBankData(next)
   }
 
   const resetIdentityGate = () => {
@@ -2251,13 +2251,15 @@ export function EntityForm({
     )
 
     const renderInput = () => {
-      if (field.render) {
-        return field.render({
-          value,
-          onChange: (val) => handleChange(field.name, val),
-          readOnly: fieldDisabled
-        })
-      }
+          if (field.render) {
+            return field.render({
+              value,
+              onChange: (val) => handleChange(field.name, val),
+              readOnly: fieldDisabled,
+              data: formData,
+              mode,
+            })
+          }
 
       if (isCountryField(field.name) && field.type === 'select' && (!field.options || field.options.length === 0)) {
         return (
@@ -2781,6 +2783,109 @@ export function EntityForm({
 
 function isCountryField(field: string) {
   return ['ulke', 'country', 'nationality_country', 'uyruk', 'nationality'].includes(field)
+}
+
+function applyLegalEntityBankDerivations(prev: Record<string, any>, field: string, value: any) {
+  const next = { ...prev, [field]: value }
+
+  if (field === 'ticari_unvan' || field === 'legal_name' || field === 'trade_name') {
+    const previousName = pickText(prev.ticari_unvan, prev.legal_name, prev.trade_name)
+    if (shouldRefreshDerivedValue(prev.beneficiary_full_name, previousName)) {
+      next.beneficiary_full_name = String(value || '')
+    }
+  }
+
+  if (field === 'adres' || field === 'address') {
+    const previousAddress = pickText(prev.adres, prev.address)
+    if (shouldRefreshDerivedValue(prev.beneficiary_address, previousAddress)) {
+      next.beneficiary_address = String(value || '')
+    }
+  }
+
+  if (field === 'beneficiary_iban' || field === 'beneficiary_iban_or_account_no') {
+    const oldDetails = resolveTurkishIban(String(prev.beneficiary_iban || prev.beneficiary_iban_or_account_no || ''))
+    const updated = applyIbanDerivedBankFields(next, value, oldDetails)
+
+    if (field === 'beneficiary_iban_or_account_no') {
+      const cleanValue = String(value || '').replace(/\s/g, '').toUpperCase()
+      if (cleanValue.startsWith('TR')) {
+        updated.beneficiary_iban = value
+      } else if (shouldRefreshDerivedValue(updated.beneficiary_account_no, prev.beneficiary_iban_or_account_no)) {
+        updated.beneficiary_account_no = value
+      }
+    } else {
+      updated.beneficiary_iban_or_account_no = value || next.beneficiary_account_no || ''
+    }
+
+    return updated
+  }
+
+  if (field === 'beneficiary_account_no' && !next.beneficiary_iban) {
+    next.beneficiary_iban_or_account_no = value
+  }
+
+  return next
+}
+
+function normalizeLegalEntityBankData(source: Record<string, any>) {
+  const next = applyIbanDerivedBankFields({ ...source }, source.beneficiary_iban || source.beneficiary_iban_or_account_no)
+
+  if (!String(next.beneficiary_full_name || '').trim()) {
+    next.beneficiary_full_name = pickText(next.ticari_unvan, next.legal_name, next.trade_name)
+  }
+
+  if (!String(next.beneficiary_address || '').trim()) {
+    next.beneficiary_address = pickText(next.adres, next.address)
+  }
+
+  if (!String(next.beneficiary_iban_or_account_no || '').trim()) {
+    next.beneficiary_iban_or_account_no = next.beneficiary_iban || next.beneficiary_account_no || ''
+  }
+
+  return next
+}
+
+function applyIbanDerivedBankFields(
+  source: Record<string, any>,
+  ibanValue: any,
+  previousDetails = resolveTurkishIban(String(source.beneficiary_iban || source.beneficiary_iban_or_account_no || ''))
+) {
+  const next = { ...source }
+  const rawIban = String(ibanValue || '')
+  const cleanIban = rawIban.replace(/\s/g, '').toUpperCase()
+  const details = resolveTurkishIban(rawIban)
+
+  if (!details) {
+    if (/^TR\d{2}\d{5}/.test(cleanIban) && shouldRefreshDerivedValue(next.beneficiary_bank_code, previousDetails?.bankCode)) {
+      next.beneficiary_bank_code = cleanIban.substring(4, 9)
+    }
+    return next
+  }
+
+  if (shouldRefreshDerivedValue(next.beneficiary_account_no, previousDetails?.accountNo)) {
+    next.beneficiary_account_no = details.accountNo
+  }
+  if (shouldRefreshDerivedValue(next.beneficiary_bank_code, previousDetails?.bankCode)) {
+    next.beneficiary_bank_code = details.bankCode
+  }
+  if (details.bankName !== 'Bilinmeyen Banka' && shouldRefreshDerivedValue(next.beneficiary_bank_name, previousDetails?.bankName)) {
+    next.beneficiary_bank_name = details.bankName
+  }
+  if (details.swiftCode && shouldRefreshDerivedValue(next.beneficiary_swift_bic, previousDetails?.swiftCode)) {
+    next.beneficiary_swift_bic = details.swiftCode
+  }
+
+  return next
+}
+
+function shouldRefreshDerivedValue(currentValue: any, previousDerivedValue: any) {
+  const current = String(currentValue || '').trim()
+  const previous = String(previousDerivedValue || '').trim()
+  return !current || (!!previous && current === previous)
+}
+
+function pickText(...values: any[]) {
+  return String(values.find(value => String(value || '').trim()) || '').trim()
 }
 
 function isCityField(field: string) {

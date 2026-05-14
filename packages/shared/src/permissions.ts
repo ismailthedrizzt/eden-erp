@@ -1,4 +1,4 @@
-export const PERMISSION_ACTIONS = ['view', 'insert', 'edit', 'approve', 'passivate', 'export'] as const
+export const PERMISSION_ACTIONS = ['view', 'insert', 'edit', 'approve', 'passivate', 'export', 'set_default', 'view_sensitive', 'verify'] as const
 
 export type PermissionAction = typeof PERMISSION_ACTIONS[number]
 
@@ -56,6 +56,15 @@ export const PERMISSIONS = {
     edit: 'identity.edit',
     approve: 'identity.approve',
     passivate: 'identity.passivate',
+  },
+  entityBankAccounts: {
+    view: 'entity_bank_accounts.view',
+    insert: 'entity_bank_accounts.insert',
+    edit: 'entity_bank_accounts.edit',
+    passivate: 'entity_bank_accounts.passivate',
+    setDefault: 'entity_bank_accounts.set_default',
+    viewSensitive: 'entity_bank_accounts.view_sensitive',
+    verify: 'entity_bank_accounts.verify',
   },
 } as const
 

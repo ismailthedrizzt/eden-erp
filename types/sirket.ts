@@ -56,6 +56,16 @@ export interface Sirket {
   company_status?: 'aktif' | 'tasfiye_halinde' | 'terkin_edilmis'
   hero_images?: Array<Record<string, unknown>>
   hero_documents?: Array<Record<string, unknown>>
+  beneficiary_full_name?: string
+  beneficiary_address?: string
+  beneficiary_iban?: string
+  beneficiary_account_no?: string
+  beneficiary_iban_or_account_no?: string
+  beneficiary_bank_code?: string
+  beneficiary_swift_bic?: string
+  beneficiary_bank_name?: string
+  beneficiary_bank_address?: string
+  beneficiary_currency?: string
   
   // Metadata
   created_at: string

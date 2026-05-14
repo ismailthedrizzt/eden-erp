@@ -1,5 +1,6 @@
 import { GraduationCap, Heart, Landmark, Phone, UserCircle } from 'lucide-react'
 import type { FormField, FormTab } from '@/components/ui/EntityForm'
+import { EntityBankAccountsPanel } from '@/components/ui/EntityBankAccountsPanel'
 
 type FieldCondition = NonNullable<FormField['visibleWhen']>
 
@@ -184,10 +185,24 @@ export function createRealPersonMasterTabs({
     },
     {
       id: 'banka',
-      label: 'Banka',
+      label: 'Banka Bilgileri',
       icon: <Landmark size={16} />,
       fields: applyVisibleWhen([
-        { name: ibanField, label: 'IBAN', type: 'iban', colSpan: 2 },
+        {
+          name: 'entity_bank_accounts',
+          label: 'Banka Bilgileri',
+          type: 'custom',
+          colSpan: 3,
+          render: ({ data, readOnly }) => (
+            <EntityBankAccountsPanel
+              entityKind="person"
+              entityId={data.master_record_id || data.person_id}
+              masterName={data.full_name || data.display_name || [data.first_name || data.ad, data.last_name || data.soyad].filter(Boolean).join(' ')}
+              masterCountry={data.nationality_country || data.country || data.uyruk}
+              readOnly={readOnly}
+            />
+          ),
+        },
       ], visibleWhen),
     },
   ]

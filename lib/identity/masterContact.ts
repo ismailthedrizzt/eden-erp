@@ -36,7 +36,10 @@ const ORGANIZATION_MASTER_PROFILE_KEYS = [
   'contact_points',
   'beneficiary_full_name',
   'beneficiary_address',
+  'beneficiary_iban',
+  'beneficiary_account_no',
   'beneficiary_iban_or_account_no',
+  'beneficiary_bank_code',
   'beneficiary_swift_bic',
   'beneficiary_bank_name',
   'beneficiary_bank_address',
@@ -409,7 +412,19 @@ function readPersonMasterMetadata(master: Record<string, any>) {
 function readOrganizationMasterMetadata(master: Record<string, any>) {
   const metadata = master.metadata_json && typeof master.metadata_json === 'object' ? master.metadata_json : {}
   const organizationMaster = metadata[ORGANIZATION_MASTER_METADATA_KEY]
-  return organizationMaster && typeof organizationMaster === 'object' ? organizationMaster : {}
+  if (!organizationMaster || typeof organizationMaster !== 'object') return {}
+
+  const legacyAccount = clean(organizationMaster.beneficiary_iban_or_account_no)
+  const migrated = { ...organizationMaster }
+  if (legacyAccount && !clean(migrated.beneficiary_iban) && !clean(migrated.beneficiary_account_no)) {
+    if (legacyAccount.replace(/\s/g, '').toUpperCase().startsWith('TR')) {
+      migrated.beneficiary_iban = legacyAccount
+    } else {
+      migrated.beneficiary_account_no = legacyAccount
+    }
+  }
+
+  return migrated
 }
 
 function normalizePersonMasterPayload(source: Record<string, any>) {
@@ -462,6 +477,14 @@ function normalizeOrganizationMasterPayload(source: Record<string, any>) {
 
   if (Object.prototype.hasOwnProperty.call(source, 'beneficiary_currency')) {
     payload.beneficiary_currency = clean(source.beneficiary_currency).toUpperCase() || null
+  }
+
+  if (!payload.beneficiary_iban_or_account_no && (payload.beneficiary_iban || payload.beneficiary_account_no)) {
+    payload.beneficiary_iban_or_account_no = payload.beneficiary_iban || payload.beneficiary_account_no
+  }
+
+  if (Object.prototype.hasOwnProperty.call(source, 'beneficiary_bank_code')) {
+    payload.beneficiary_bank_code = clean(source.beneficiary_bank_code).replace(/\D/g, '') || null
   }
 
   if (Object.prototype.hasOwnProperty.call(source, 'beneficiary_swift_bic')) {

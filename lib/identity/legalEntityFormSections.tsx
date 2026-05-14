@@ -1,5 +1,6 @@
 import { ContactRound, Landmark, Phone } from 'lucide-react'
 import type { FormField, FormTab } from '@/components/ui/EntityForm'
+import { EntityBankAccountsPanel } from '@/components/ui/EntityBankAccountsPanel'
 
 type FieldCondition = NonNullable<FormField['visibleWhen']>
 
@@ -14,7 +15,9 @@ type LegalEntityMasterTabOptions = {
   websiteField?: string
   beneficiaryFullNameField?: string
   beneficiaryAddressField?: string
+  beneficiaryIbanField?: string
   beneficiaryAccountField?: string
+  beneficiaryBankCodeField?: string
   beneficiarySwiftBicField?: string
   beneficiaryBankNameField?: string
   beneficiaryBankAddressField?: string
@@ -42,7 +45,9 @@ export function createLegalEntityMasterTabs({
   websiteField = 'website',
   beneficiaryFullNameField = 'beneficiary_full_name',
   beneficiaryAddressField = 'beneficiary_address',
-  beneficiaryAccountField = 'beneficiary_iban_or_account_no',
+  beneficiaryIbanField = 'beneficiary_iban',
+  beneficiaryAccountField = 'beneficiary_account_no',
+  beneficiaryBankCodeField = 'beneficiary_bank_code',
   beneficiarySwiftBicField = 'beneficiary_swift_bic',
   beneficiaryBankNameField = 'beneficiary_bank_name',
   beneficiaryBankAddressField = 'beneficiary_bank_address',
@@ -65,16 +70,24 @@ export function createLegalEntityMasterTabs({
     },
     {
       id: 'banka',
-      label: 'Banka',
+      label: 'Banka Bilgileri',
       icon: <Landmark size={16} />,
       fields: applyVisibleWhen([
-        { name: beneficiaryFullNameField, label: 'Lehtar Tam Adı', type: 'text', colSpan: 2 },
-        { name: beneficiaryAddressField, label: 'Lehtar Adresi', type: 'textarea', colSpan: 3 },
-        { name: beneficiaryAccountField, label: 'IBAN veya Hesap Numarası', type: 'text', colSpan: 2 },
-        { name: beneficiarySwiftBicField, label: 'SWIFT/BIC Kodu', type: 'text' },
-        { name: beneficiaryBankNameField, label: 'Alıcı Banka Adı', type: 'text', colSpan: 2 },
-        { name: beneficiaryBankAddressField, label: 'Alıcı Banka Adresi', type: 'textarea', colSpan: 3 },
-        { name: beneficiaryCurrencyField, label: 'Para Birimi', type: 'select', compact: true, options: currencyOptions, defaultValue: 'TRY' },
+        {
+          name: 'entity_bank_accounts',
+          label: 'Banka Bilgileri',
+          type: 'custom',
+          colSpan: 3,
+          render: ({ data, readOnly }) => (
+            <EntityBankAccountsPanel
+              entityKind="organization"
+              entityId={data.master_record_id || data.organization_id}
+              masterName={data.legal_name || data.trade_name || data.ticari_unvan || data.display_name || data.kisa_unvan}
+              masterCountry={data.country || data.ulke}
+              readOnly={readOnly}
+            />
+          ),
+        },
       ], visibleWhen),
     },
     {
