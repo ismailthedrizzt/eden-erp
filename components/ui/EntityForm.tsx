@@ -725,6 +725,13 @@ function normalizeStoredDocuments(value: unknown, fallbackSlotId = 'cv'): SlotDo
         size: Number(doc.size || doc.file_size || 0),
         type: inferredType,
         uploadedAt: doc.uploadedAt || doc.uploaded_at ? new Date(doc.uploadedAt || doc.uploaded_at) : undefined,
+        updatedAt: doc.updatedAt || doc.updated_at ? new Date(doc.updatedAt || doc.updated_at) : undefined,
+        deletedAt: doc.deletedAt || doc.deleted_at ? new Date(doc.deletedAt || doc.deleted_at) : undefined,
+        replacedAt: doc.replacedAt || doc.replaced_at ? new Date(doc.replacedAt || doc.replaced_at) : undefined,
+        status: doc.status,
+        version: Number(doc.version || 0) || undefined,
+        slotTitle: doc.slotTitle || doc.slot_title,
+        isDeleted: Boolean(doc.isDeleted || doc.is_deleted),
         url,
         thumbnailUrl: doc.thumbnailUrl || doc.thumbnail_url || doc.preview_thumb_url || doc.preview_image_url,
       }
@@ -742,13 +749,46 @@ function serializeDocumentForStorage(doc: SlotDocument) {
   return {
     slotId: doc.slotId,
     storagePath: doc.storagePath,
+    documentId: doc.documentId,
+    documentLinkId: doc.documentLinkId,
     name: doc.name,
     size: doc.size,
     type: doc.type,
-    uploadedAt: doc.uploadedAt?.toISOString?.() || new Date().toISOString(),
+    uploadedAt: serializeDocumentDate(doc.uploadedAt) || new Date().toISOString(),
+    updatedAt: serializeDocumentDate(doc.updatedAt),
+    deletedAt: serializeDocumentDate(doc.deletedAt),
+    replacedAt: serializeDocumentDate(doc.replacedAt),
+    status: doc.status,
+    version: doc.version,
+    slotTitle: doc.slotTitle,
+    isDeleted: doc.isDeleted,
     url: doc.storagePath || !url || url.startsWith('blob:') || url.startsWith('data:') ? undefined : url,
     thumbnailUrl
   }
+}
+
+function serializeDocumentDate(value?: Date | string) {
+  if (!value) return undefined
+  if (value instanceof Date) return value.toISOString()
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? undefined : date.toISOString()
+}
+
+function getDocumentSaveTimestamp(doc: SlotDocument) {
+  const value = doc.updatedAt || doc.uploadedAt || doc.replacedAt || doc.deletedAt
+  if (!value) return 0
+  const timestamp = value instanceof Date ? value.getTime() : new Date(value).getTime()
+  return Number.isFinite(timestamp) ? timestamp : 0
+}
+
+function isActiveStoredDocument(doc: SlotDocument) {
+  return !doc.isDeleted && doc.status !== 'deleted' && doc.status !== 'archived'
+}
+
+function getLatestActiveStoredDocument(documents: SlotDocument[], slotId: string) {
+  return documents
+    .filter(document => document.slotId === slotId && isActiveStoredDocument(document))
+    .sort((a, b) => (b.version || 0) - (a.version || 0) || getDocumentSaveTimestamp(b) - getDocumentSaveTimestamp(a))[0]
 }
 
 function isPersistableThumbnailUrl(value: string) {
@@ -1901,7 +1941,7 @@ export function EntityForm({
       documentSlots.forEach(slot => {
         const storageField = getDocumentSlotStorageField(slot)
         if (!storageField) return
-        const slotDocument = documents.find(document => document.slotId === slot.id)
+        const slotDocument = getLatestActiveStoredDocument(documents, slot.id)
         next[storageField] = slotDocument ? serializeDocumentForStorage(slotDocument) : null
       })
     }
@@ -1990,11 +2030,11 @@ export function EntityForm({
     documentSlots.forEach(slot => {
       const storageField = getDocumentSlotStorageField(slot)
       if (!storageField) return
-      const slotDocument = hydratedDocuments.find(document => document.slotId === slot.id)
+      const slotDocument = getLatestActiveStoredDocument(hydratedDocuments, slot.id)
       handleChange(storageField, slotDocument ? serializeDocumentForStorage(slotDocument) : null)
     })
 
-    const cvDocument = hydratedDocuments.find(document => document.slotId === 'cv')
+    const cvDocument = getLatestActiveStoredDocument(hydratedDocuments, 'cv')
     if (cvDocument?.file) {
       await extractCvData(cvDocument.file)
     } else if (!cvDocument) {
