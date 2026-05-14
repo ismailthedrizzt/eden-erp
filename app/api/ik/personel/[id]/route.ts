@@ -71,6 +71,94 @@ function omitNullishValues(value: Record<string, any>) {
   )
 }
 
+const baseEmployeeDetailColumns = [
+  'id',
+  'person_id',
+  'ad',
+  'soyad',
+  'uyruk',
+  'tc_kimlik',
+  'pasaport_no',
+  'cinsiyet',
+  'dogum_yeri',
+  'dogum_tarihi',
+  'kan_grubu',
+  'askerlik_durumu',
+  'tecil_tarihi',
+  'engellilik',
+  'engellilik_yuzdesi',
+  'hukumluluk',
+  'telefonlar',
+  'epostalar',
+  'cep_telefonu',
+  'is_telefonu',
+  'email',
+  'adres',
+  'il',
+  'ilce',
+  'acil_kisi_ad',
+  'acil_kisi_soyad',
+  'acil_kisi_yakinlik',
+  'acil_kisi_telefon',
+  'sgk_giris',
+  'isten_ayrilis',
+  'calisma_durumu',
+  'sirket_id',
+  'birim_id',
+  'kadro_id',
+  'gorev',
+  'okuryazar_degil',
+  'egitim_okullari',
+  'yabanci_diller',
+  'sertifikalar',
+  'yakinlar',
+  'ise_giris_belgeleri',
+  'isten_cikis_belgeleri',
+  'ust_beden',
+  'alt_beden',
+  'ayakkabi',
+  'kep',
+  'iban',
+  'notlar',
+  'fotograf_url',
+  'cv_belgesi',
+  'diploma_belgesi',
+  'field_history',
+  'created_at',
+  'updated_at',
+]
+
+const optionalEmployeeDetailColumns = [
+  'is_deleted',
+  'employee_no',
+  'employment_status',
+  'start_date',
+  'calisma_tipi',
+  'is_akdi_bicimi',
+  'medeni_durum',
+  'version',
+]
+
+async function fetchEmployeeDetail(supabase: ReturnType<typeof createServiceClient>, id: string): Promise<{ data: Record<string, any> | null; error: any }> {
+  let enabledOptionalColumns = [...optionalEmployeeDetailColumns]
+
+  while (true) {
+    const result = await supabase
+      .from('employees')
+      .select([...baseEmployeeDetailColumns, ...enabledOptionalColumns].join(','))
+      .eq('id', id)
+      .single()
+
+    const missingColumn = missingEmployeeColumn(result.error, enabledOptionalColumns)
+    if (missingColumn) {
+      enabledOptionalColumns = enabledOptionalColumns.filter((column) => column !== missingColumn)
+      continue
+    }
+
+    return { data: result.data as Record<string, any> | null, error: result.error }
+  }
+}
+
 // GET /api/ik/personel/[id]
 export async function GET(
   request: NextRequest,
@@ -79,11 +167,7 @@ export async function GET(
   const { id } = await params
   const supabase = createServiceClient()
 
-  const { data, error } = await supabase
-    .from('employees')
-    .select('*')
-    .eq('id', id)
-    .single()
+  const { data, error } = await fetchEmployeeDetail(supabase, id)
 
   if (error) {
     if (error.code === 'PGRST116') {
@@ -91,6 +175,8 @@ export async function GET(
     }
     return NextResponse.json({ error: error.message, code: error.code || 'FETCH_FAILED' }, { status: 500 })
   }
+
+  if (!data) return NextResponse.json({ error: 'Çalışan bulunamadı', code: 'EMPLOYEE_NOT_FOUND' }, { status: 404 })
 
   const [birim, kadro] = await Promise.all([
     data.birim_id
@@ -149,11 +235,7 @@ export async function PATCH(
     )
   }
 
-  const { data: current, error: currentError } = await supabase
-    .from('employees')
-    .select('*')
-    .eq('id', id)
-    .single()
+  const { data: current, error: currentError } = await fetchEmployeeDetail(supabase, id)
 
   if (currentError) {
     if (currentError.code === 'PGRST116') {
@@ -161,6 +243,8 @@ export async function PATCH(
     }
     return NextResponse.json({ error: currentError.message, code: currentError.code || 'FETCH_FAILED' }, { status: 500 })
   }
+
+  if (!current) return NextResponse.json({ error: 'Çalışan bulunamadı', code: 'EMPLOYEE_NOT_FOUND' }, { status: 404 })
 
   const masterPayload = parsed.data
   let updatePayload = stripEmployeeMasterOnlyFields(masterPayload)
@@ -202,8 +286,10 @@ export async function PATCH(
     return NextResponse.json({ error: error.message, code: error.code || 'UPDATE_FAILED' }, { status: 500 })
   }
 
-  await syncMasterContact(supabase, 'person', data?.person_id || current.person_id, masterPayload)
-  const hydrated = await hydrateMasterContact(supabase, 'person', data)
+  const updatedEmployee = data as Record<string, any> | null
+  if (!updatedEmployee) return NextResponse.json({ error: 'Çalışan bulunamadı', code: 'EMPLOYEE_NOT_FOUND' }, { status: 404 })
+  await syncMasterContact(supabase, 'person', updatedEmployee?.person_id || current.person_id, masterPayload)
+  const hydrated = await hydrateMasterContact(supabase, 'person', updatedEmployee)
   return NextResponse.json({ data: hydrated })
 }
 

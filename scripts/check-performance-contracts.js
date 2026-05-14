@@ -177,6 +177,7 @@ for (const file of [
   'app/api/ownership-transactions/[id]/reverse/route.ts',
   'app/api/ownership-transactions/[id]/impact/route.ts',
   'app/api/identity/resolve/route.ts',
+  'app/api/ik/personel/[id]/route.ts',
   'app/api/accounting/financial-institution-movements/[id]/route.ts',
   'app/api/accounting/financial-institution-movements/[id]/match/route.ts',
   'app/api/accounting/financial-institution-movements/[id]/unmatch/route.ts',
