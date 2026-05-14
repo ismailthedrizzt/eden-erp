@@ -54,12 +54,12 @@ export default function PreAccountingMovementsPage() {
     loadData()
   }, [])
 
-  const tableData = rows.map(row => ({
+  const tableData = useMemo(() => rows.map(row => ({
     ...row,
     document_label: documentLabel(row.document_status),
     bank_label: bankLabel(row.bank_match_status),
     health_label: ROW_HEALTH_LABELS[row.row_health_status] || row.row_health_status,
-  }))
+  })), [rows])
 
   const formMode: FormMode = pageState === 'create' ? 'create' : pageState === 'edit' ? 'edit' : 'view'
   const personOptions = refs.persons.map(person => ({ value: person.id, label: `${person.full_name}${person.national_id ? ` (${person.national_id})` : ''}` }))

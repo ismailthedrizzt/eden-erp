@@ -32,6 +32,7 @@ import { PageBanner } from '@/components/ui/PageBanner'
 import { SmartDataTable, ColumnDef, WidgetDef } from '@/components/ui/SmartDataTable'
 import { DocumentSlotUploader, DocumentSlot, SlotDocument } from '@/components/ui/DocumentSlotUploader'
 import { ImageSlotUploader, ImageSlot, SlotImage } from '@/components/ui/ImageSlotUploader'
+import { companyVehicleService } from '@/lib/services/companyVehicleService'
 import { cn } from '@/lib/utils'
 
 type PageState = 'list' | 'create' | 'view' | 'edit'
@@ -140,12 +141,11 @@ export default function AraclarPage() {
   const [saving, setSaving] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
 
-  const loadData = async () => {
+  const loadData = async (force = false) => {
     setLoading(true)
     try {
-      const response = await fetch('/api/sirket/araclar')
-      const payload = await response.json()
-      if (!response.ok) throw new Error(payload.error || 'Araç verisi yüklenemedi')
+      if (force) companyVehicleService.invalidateList()
+      const payload = await companyVehicleService.list({ useCache: !force })
       setVehicles(Array.isArray(payload.vehicles) ? payload.vehicles : [])
       setEmployees(Array.isArray(payload.employees) ? payload.employees : [])
       setCompanies(Array.isArray(payload.companies) ? payload.companies : [])
@@ -163,6 +163,7 @@ export default function AraclarPage() {
 
   const activeVehicles = useMemo(() => vehicles.filter((vehicle) => !vehicle.is_deleted), [vehicles])
   const expiringVehicles = useMemo(() => activeVehicles.filter((vehicle) => hasUpcomingWarning(vehicle)).length, [activeVehicles])
+  const tableData = useMemo(() => activeVehicles.map(enrichVehicleForTable), [activeVehicles])
 
   const columns: ColumnDef[] = [
     { key: 'vehicle_name', label: 'Araç', type: 'text', width: 240, render: (_value: unknown, row: Vehicle) => <VehicleNameCell vehicle={row} /> },
@@ -175,13 +176,13 @@ export default function AraclarPage() {
     { key: 'actions', label: 'İşlemler', type: 'text', width: 260, render: (_value: unknown, row: Vehicle) => <VehicleActions vehicle={row} onView={openView} onEdit={openEdit} onOverlay={setOverlayVehicle} onPassive={softDeleteVehicle} /> },
   ]
 
-  const widgets: WidgetDef<Vehicle>[] = [
+  const widgets: WidgetDef<Vehicle>[] = useMemo(() => [
     { key: 'total', label: 'Aktif Araç', render: () => activeVehicles.length },
     { key: 'road', label: 'Kara', render: () => activeVehicles.filter((vehicle) => vehicle.category === 'Kara').length },
     { key: 'marine', label: 'Deniz', render: () => activeVehicles.filter((vehicle) => vehicle.category === 'Deniz').length },
     { key: 'air', label: 'Hava', render: () => activeVehicles.filter((vehicle) => vehicle.category === 'Hava').length },
     { key: 'warnings', label: 'Yaklaşan Takip', render: () => expiringVehicles },
-  ]
+  ], [activeVehicles, expiringVehicles])
 
   function openCreate() {
     setSelectedVehicle(createEmptyVehicle())
@@ -201,31 +202,25 @@ export default function AraclarPage() {
   async function saveVehicle(vehicle: Vehicle) {
     setSaving(true)
     try {
-      const response = await fetch('/api/sirket/araclar', {
-        method: pageState === 'create' ? 'POST' : 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(vehicle),
-      })
-      const payload = await response.json()
-      if (!response.ok) throw new Error(payload.error || 'Araç kaydedilemedi')
-      await loadData()
+      if (pageState === 'create') await companyVehicleService.create(vehicle as unknown as Record<string, unknown>)
+      else await companyVehicleService.update(vehicle as unknown as Record<string, unknown>)
+      await loadData(true)
       setSelectedVehicle(null)
       setPageState('list')
     } catch (error: unknown) {
-      setToast(error instanceof Error ? error.message : 'Araç kaydedilemedi')
+      setToast(error instanceof Error ? error.message : 'Arac kaydedilemedi')
     } finally {
       setSaving(false)
     }
   }
 
   async function softDeleteVehicle(vehicle: Vehicle) {
-    const response = await fetch(`/api/sirket/araclar?id=${vehicle.id}`, { method: 'DELETE' })
-    const payload = await response.json()
-    if (!response.ok) {
-      setToast(payload.error || 'Araç pasifleştirilemedi')
-      return
+    try {
+      await companyVehicleService.delete(vehicle.id)
+      await loadData(true)
+    } catch (error: unknown) {
+      setToast(error instanceof Error ? error.message : 'Arac pasiflestirilemedi')
     }
-    await loadData()
   }
 
   return (
@@ -254,7 +249,7 @@ export default function AraclarPage() {
             <button type="button" onClick={openCreate} className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700">
               <Plus size={16} />Yeni Araç Ekle
             </button>
-            <button type="button" onClick={loadData} className="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-900">
+            <button type="button" onClick={() => loadData(true)} className="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-900">
               <RefreshCw size={16} />Yenile
             </button>
             <div className="ml-auto flex flex-wrap gap-2 text-xs">
@@ -266,14 +261,14 @@ export default function AraclarPage() {
 
           <SmartDataTable
             columns={columns}
-            data={activeVehicles.map(enrichVehicleForTable)}
+            data={tableData}
             widgets={widgets}
             loading={loading}
             defaultView="list"
             storageKey="sirket-araclar"
             emptyText="Araç kaydı bulunamadı"
             onRowClick={openView}
-            onRefresh={loadData}
+            onRefresh={() => loadData(true)}
             showActions={false}
           />
         </div>

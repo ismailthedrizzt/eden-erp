@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { z } from 'zod'
-import { nextTransactionNo, validateDraft } from './_shared'
+import { OWNERSHIP_TRANSACTION_SELECT, nextTransactionNo, validateDraft } from './_shared'
 
 const TransactionSchema = z.object({
   company_id: z.string().uuid(),
@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
 
   let query = supabase
     .from('ownership_transactions')
-    .select('*')
+    .select(OWNERSHIP_TRANSACTION_SELECT)
     .eq('is_deleted', false)
     .order('created_at', { ascending: false })
 
@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
   const { data, error } = await supabase
     .from('ownership_transactions')
     .insert(row)
-    .select()
+    .select(OWNERSHIP_TRANSACTION_SELECT)
     .single()
 
   if (error) return NextResponse.json({ error: error.message, code: error.code || 'CREATE_FAILED' }, { status: 500 })

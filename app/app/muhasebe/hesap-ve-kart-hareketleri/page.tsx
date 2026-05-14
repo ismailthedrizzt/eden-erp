@@ -95,14 +95,14 @@ function FinancialInstitutionMovementsContent() {
     return <div className="rounded-lg border border-gray-200 bg-white p-6 text-sm text-gray-600 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300">Bu sayfayı görüntüleme yetkiniz yok.</div>
   }
 
-  const tableData = rows.map(row => ({
+  const tableData = useMemo(() => rows.map(row => ({
     ...row,
     source_type_label: sourceTypeLabel(row.source_type),
     direction_label: row.direction === 'credit' ? 'Alacak' : 'Borç',
     match_status_label: MATCH_LABELS[row.match_status] || row.match_status,
     linked_pre_accounting_label: row.matched_pre_accounting_movement_id || '-',
     actions: row.id,
-  }))
+  })), [rows])
 
   const columns: ColumnDef[] = [
     { key: 'movement_date', label: 'Tarih', type: 'date', width: 105, sortable: true },
@@ -122,14 +122,14 @@ function FinancialInstitutionMovementsContent() {
     { key: 'actions', label: 'İşlemler', type: 'text', width: 360, fixedWidth: true, render: (_v, row) => <MovementActions row={row} onSelect={() => setSelected(row)} onToast={setToast} onReload={loadRows} /> },
   ]
 
-  const widgets: WidgetDef<any>[] = [
+  const widgets: WidgetDef<any>[] = useMemo(() => [
     { key: 'total', label: 'Toplam Hareket', render: () => summary.total || 0 },
     { key: 'unmatched', label: 'Eşleşmeyen Hareket', render: () => summary.unmatched || 0 },
     { key: 'matched', label: 'Eşleşen Hareket', render: () => summary.matched || 0 },
     { key: 'review', label: 'Manuel İnceleme Gereken', render: () => summary.reviewRequired || 0 },
     { key: 'credit', label: 'Toplam Giriş', render: () => formatAmount(summary.totalCredit || 0) },
     { key: 'debit', label: 'Toplam Çıkış', render: () => formatAmount(summary.totalDebit || 0) },
-  ]
+  ], [summary])
 
   return (
     <div className="relative">

@@ -68,6 +68,8 @@ const employeeListGet = employeeRoute.slice(
 for (const forbidden of ['module_licenses', 'egitim_okullari', 'getEducationLevelValue']) {
   if (employeeListGet.includes(forbidden)) fail(`app/api/ik/personel/route.ts: employee list GET must not include ${forbidden}`)
 }
+assertIncludes('app/api/ik/personel/route.ts', 'missingEmployeeRelation(error)', 'employee list GET must fall back when organization relations are unavailable')
+assertIncludes('app/api/ik/personel/route.ts', 'includeOrganizationRelations = false', 'employee list GET must not fail the whole list when organization joins are unavailable')
 
 const instantOpenPages = [
   {
@@ -130,6 +132,30 @@ assertIncludes('app/app/sirket/ortaklik-islemleri/page.tsx', 'ownershipTransacti
 assertNotIncludes('app/app/muhasebe/banka-hesaplari-ve-kartlari/page.tsx', "fetch('/api/sirketler'", 'bank accounts page must use companyService for company options')
 assertIncludes('app/app/muhasebe/banka-hesaplari-ve-kartlari/page.tsx', 'companyService.list()', 'bank accounts page must use cacheable company options')
 
+assertNotIncludes('app/app/sirket/araclar/page.tsx', "fetch('/api/sirket/araclar'", 'vehicles page must use companyVehicleService for cacheable list and mutations')
+assertIncludes('app/app/sirket/araclar/page.tsx', 'companyVehicleService.list({ useCache: !force })', 'vehicles page must use cacheable vehicle service list')
+assertIncludes('app/app/sirket/araclar/page.tsx', 'data={tableData}', 'vehicles page must memoize table rows before rendering')
+assertIncludes('app/app/sirket/araclar/page.tsx', 'onRefresh={() => loadData(true)}', 'vehicles page refresh must force invalidate cache')
+
+for (const file of [
+  'components/ui/EntityForm.tsx',
+  'components/modules/sirket/PartnersTab.tsx',
+  'components/modules/sirket/RepresentativesTab.tsx',
+]) {
+  assertNotIncludes(file, "fetch('/api/sirketler'", 'shared form components must use cached company service references')
+  assertNotIncludes(file, "fetch('/api/ik/personel", 'shared form components must use cached employee service references')
+  assertNotIncludes(file, "fetch('/api/ik/teskilat", 'shared form components must use cached organization service references')
+}
+
+for (const file of [
+  'app/app/muhasebe/on-muhasebe-hareketleri/page.tsx',
+  'app/app/muhasebe/banka-kart-hareketleri/page.tsx',
+  'app/app/muhasebe/hesap-ve-kart-hareketleri/page.tsx',
+  'app/app/muhasebe/cari-kartlar/page.tsx',
+]) {
+  assertIncludes(file, 'const tableData = useMemo(() =>', 'accounting list table derivations must be memoized')
+}
+
 const companyDetailRoute = 'app/api/sirketler/[id]/route.ts'
 for (const table of ['sirket_ortaklar', 'sirket_temsilciler', 'stakeholders', 'sirket_logolar']) {
   assertNotIncludes(companyDetailRoute, `from('${table}').select('*')`, `${table} detail select must be explicit`)
@@ -140,6 +166,10 @@ for (const file of [
   'app/api/sirketler/ortaklar/[id]/route.ts',
   'app/api/sirketler/temsilciler/[id]/route.ts',
   'app/api/sirketler/paydaslar/[id]/route.ts',
+  'app/api/sirket/araclar/route.ts',
+  'app/api/ownership-transactions/route.ts',
+  'app/api/ownership-transactions/[id]/route.ts',
+  'lib/modules/entity-bank-accounts/entityBankAccounts.service.ts',
 ]) {
   assertNotIncludes(file, ".select('*')", 'hot list/detail API routes must use explicit selects')
 }
@@ -151,6 +181,7 @@ for (const indexName of [
   'idx_sirket_ortaklar_company_active_fast',
   'idx_sirket_temsilciler_company_active_fast',
   'idx_stakeholders_company_active_fast',
+  'idx_company_vehicles_active_fast',
 ]) {
   assertIncludes(indexMigration, indexName, `missing required performance index ${indexName}`)
 }

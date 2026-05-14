@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 
 const missingTableCodes = ['42P01', 'PGRST205']
+const VEHICLE_SELECT = 'id,company_id,category,vehicle_type,brand,manufacturer,model,model_year,color,registration_no,vin_serial_no,status,ownership_type,assigned_to_employee_id,operator_employee_id,location_name,current_usage_value,usage_unit,fuel_type,insurance_policy_no,insurance_expiry_date,inspection_expiry_date,maintenance_due_date,purchase_date,lease_start_date,lease_end_date,budget_code,cost_center,notes,api_notes,media,documents,history,is_deleted,created_at,updated_at'
+const EMPLOYEE_OPTION_SELECT = 'id,ad,soyad,unvan,email'
+const COMPANY_OPTION_SELECT = 'id,ticari_unvan,kisa_unvan'
 const trackedFields = [
   'category',
   'vehicle_type',
@@ -19,9 +22,9 @@ export async function GET() {
   const supabase = createServiceClient()
 
   const [{ data: vehicles, error }, { data: employees }, { data: companies }] = await Promise.all([
-    supabase.from('company_vehicles').select('*').eq('is_deleted', false).order('created_at', { ascending: false }),
-    supabase.from('employees').select('id,ad,soyad,unvan,email').order('ad'),
-    supabase.from('sirketler').select('id,ticari_unvan,kisa_unvan').eq('is_deleted', false).order('kisa_unvan'),
+    supabase.from('company_vehicles').select(VEHICLE_SELECT).eq('is_deleted', false).order('created_at', { ascending: false }),
+    supabase.from('employees').select(EMPLOYEE_OPTION_SELECT).order('ad'),
+    supabase.from('sirketler').select(COMPANY_OPTION_SELECT).eq('is_deleted', false).order('kisa_unvan'),
   ])
 
   if (error) {
@@ -56,7 +59,7 @@ export async function POST(request: NextRequest) {
   const { data, error } = await supabase
     .from('company_vehicles')
     .insert(mapped)
-    .select('*')
+    .select(VEHICLE_SELECT)
     .single()
 
   if (error) return NextResponse.json({ error: error.message, code: error.code || 'VEHICLE_CREATE_FAILED' }, { status: 500 })
@@ -69,7 +72,7 @@ export async function PATCH(request: NextRequest) {
 
   if (!body.id) return NextResponse.json({ error: 'id zorunlu', code: 'ID_REQUIRED' }, { status: 400 })
 
-  const { data: current } = await supabase.from('company_vehicles').select('*').eq('id', body.id).single()
+  const { data: current } = await supabase.from('company_vehicles').select(VEHICLE_SELECT).eq('id', body.id).single()
   const mapped = mapVehicle(body)
   const { data, error } = await supabase
     .from('company_vehicles')
@@ -80,7 +83,7 @@ export async function PATCH(request: NextRequest) {
       updated_by: 'Sistem Kullanıcısı',
     })
     .eq('id', body.id)
-    .select('*')
+    .select(VEHICLE_SELECT)
     .single()
 
   if (error) return NextResponse.json({ error: error.message, code: error.code || 'VEHICLE_UPDATE_FAILED' }, { status: 500 })

@@ -27,3 +27,6 @@ on public.norm_kadrolar (is_deleted, birim_id, unvan, id);
 
 create index if not exists idx_ownership_transactions_company_fast
 on public.ownership_transactions (company_id, created_at desc, id);
+
+create index if not exists idx_company_vehicles_active_fast
+on public.company_vehicles (is_deleted, company_id, created_at desc, id);

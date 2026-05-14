@@ -72,7 +72,7 @@ export default function AccountCardsPage() {
     loadCards()
   }, [])
 
-  const tableData = cards.map(card => ({
+  const tableData = useMemo(() => cards.map(card => ({
     ...card,
     id: `${card.entity_kind}-${card.person_id || card.organization_id}-${card.company_id || 'global'}`,
     entity_label: card.entity_kind === 'person' ? 'Gerçek Kişi' : 'Tüzel Kişi',
@@ -80,7 +80,7 @@ export default function AccountCardsPage() {
     identity_display: card.identity_no || card.tax_no || '-',
     risk_label: card.risk_status === 'limit_exceeded' ? 'Limit Aşıldı' : 'Normal',
     status_label: card.status === 'active' ? 'Aktif' : 'Pasif',
-  }))
+  })), [cards])
 
   const widgets: WidgetDef<any>[] = useMemo(() => [
     { key: 'total', label: 'Cari Kart', render: () => tableData.length },

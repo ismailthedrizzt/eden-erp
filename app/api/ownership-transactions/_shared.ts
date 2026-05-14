@@ -1,5 +1,7 @@
 import { createServiceClient } from '@/lib/supabase/server'
 
+export const OWNERSHIP_TRANSACTION_SELECT = 'id,company_id,transaction_no,transaction_type,transaction_date,effective_date,from_partner_id,to_partner_id,affected_partner_id,share_ratio,voting_ratio,profit_ratio,share_units,nominal_value,capital_amount,transfer_price,currency,has_control_right,control_type,has_veto_right,has_board_nomination_right,has_privileged_share,privilege_type,is_beneficial_owner,beneficial_ratio,committed_capital_amount,new_capital_amount,commitment_date,old_voting_ratio,new_voting_ratio,old_profit_ratio,new_profit_ratio,privilege_description,privilege_start_date,privilege_end_date,removed_privilege_type,removal_date,capital_distribution,correction_transaction_id,correction_reason,new_values,reversal_transaction_id,reversal_reason,document_status,document_reference_id,decision_reference_id,document_files,status,approval_status,workflow_status,description,transaction_reason,exit_reason,justification,notes,warnings,history,approval_notes,rejection_reason,approved_by,approved_at,created_at,created_by,updated_at,updated_by,is_deleted,deleted_at,deleted_by,version'
+
 const ALLOWED_TRANSACTION_TYPES = new Set([
   'Yeni Ortaklık Girişi',
   'Pay Devri',

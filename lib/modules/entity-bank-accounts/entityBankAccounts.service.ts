@@ -3,6 +3,10 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { BankAccountAutoFillService } from './BankAccountAutoFillService'
 import type { EntityBankAccountKind } from './entityBankAccounts.types'
 
+const PERSON_MASTER_SELECT = 'id,full_name,first_name,last_name,display_name,country,ulke,nationality_country'
+const ORGANIZATION_MASTER_SELECT = 'id,legal_name,trade_name,ticari_unvan,display_name,short_name,country,ulke,nationality_country'
+const BANK_ACCOUNT_SELECT = 'id,entity_kind,person_id,organization_id,beneficiary_name,is_same_as_master_name,beneficiary_name_note,iban,account_number,account_country,account_currency,bank_name,bank_country,bank_code,branch_name,branch_code,swift_bic,bank_address,local_clearing_code_type,local_clearing_code,has_intermediary_bank,intermediary_bank_name,intermediary_swift_bic,intermediary_bank_address,intermediary_account_number,preferred_currency,payment_purpose,swift_charge_type,payment_note,verification_status,document_reference_id,is_default,status,history,autofill_sources,created_at,created_by,updated_at,updated_by,is_deleted,deleted_at,deleted_by,version'
+
 export const EntityBankAccountSchema = z.object({
   beneficiary_name: z.string().min(1),
   is_same_as_master_name: z.boolean().default(true),
@@ -42,7 +46,8 @@ export class EntityBankAccountsService {
 
   async getMaster(kind: EntityBankAccountKind, id: string) {
     const table = kind === 'person' ? 'persons' : 'organizations'
-    const { data, error } = await this.supabase.from(table).select('*').eq('id', id).maybeSingle()
+    const select = kind === 'person' ? PERSON_MASTER_SELECT : ORGANIZATION_MASTER_SELECT
+    const { data, error } = await this.supabase.from(table).select(select).eq('id', id).maybeSingle()
     if (error) throw error
     return data || null
   }
@@ -51,7 +56,7 @@ export class EntityBankAccountsService {
     const column = kind === 'person' ? 'person_id' : 'organization_id'
     const { data, error } = await this.supabase
       .from('entity_bank_accounts')
-      .select('*')
+      .select(BANK_ACCOUNT_SELECT)
       .eq('entity_kind', kind)
       .eq(column, id)
       .eq('is_deleted', false)
@@ -63,7 +68,7 @@ export class EntityBankAccountsService {
   }
 
   async get(id: string) {
-    const { data, error } = await this.supabase.from('entity_bank_accounts').select('*').eq('id', id).maybeSingle()
+    const { data, error } = await this.supabase.from('entity_bank_accounts').select(BANK_ACCOUNT_SELECT).eq('id', id).maybeSingle()
     if (error) throw error
     return data
   }
@@ -83,7 +88,7 @@ export class EntityBankAccountsService {
     })
 
     if (row.is_default) await this.clearDefault(kind, entityId)
-    const { data, error } = await this.supabase.from('entity_bank_accounts').insert(row).select('*').single()
+    const { data, error } = await this.supabase.from('entity_bank_accounts').insert(row).select(BANK_ACCOUNT_SELECT).single()
     if (error) throw error
     if (!row.is_default) await this.ensureOneDefault(kind, entityId)
     return data
@@ -132,7 +137,7 @@ export class EntityBankAccountsService {
       await this.clearDefault(current.entity_kind, current.person_id || current.organization_id)
     }
 
-    const { data, error } = await this.supabase.from('entity_bank_accounts').update(next).eq('id', id).select('*').single()
+    const { data, error } = await this.supabase.from('entity_bank_accounts').update(next).eq('id', id).select(BANK_ACCOUNT_SELECT).single()
     if (error) throw error
     return data
   }
@@ -147,7 +152,7 @@ export class EntityBankAccountsService {
       .from('entity_bank_accounts')
       .update({ is_default: true, updated_at: new Date().toISOString(), updated_by: userId, history })
       .eq('id', id)
-      .select('*')
+      .select(BANK_ACCOUNT_SELECT)
       .single()
     if (error) throw error
     return data
@@ -161,7 +166,7 @@ export class EntityBankAccountsService {
       .from('entity_bank_accounts')
       .update({ status: 'passive', is_default: false, is_deleted: true, deleted_at: new Date().toISOString(), deleted_by: userId, updated_by: userId, history })
       .eq('id', id)
-      .select('*')
+      .select(BANK_ACCOUNT_SELECT)
       .single()
     if (error) throw error
     await this.ensureOneDefault(current.entity_kind, current.person_id || current.organization_id)

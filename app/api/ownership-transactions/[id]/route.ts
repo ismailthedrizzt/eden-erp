@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
-import { validateDraft } from '../_shared'
+import { OWNERSHIP_TRANSACTION_SELECT, validateDraft } from '../_shared'
 
 const LOCKED_WHEN_APPROVED = new Set([
   'company_id',
@@ -36,7 +36,7 @@ export async function GET(
   const supabase = createServiceClient()
   const { data, error } = await supabase
     .from('ownership_transactions')
-    .select('*')
+    .select(OWNERSHIP_TRANSACTION_SELECT)
     .eq('id', id)
     .eq('is_deleted', false)
     .single()
@@ -55,25 +55,26 @@ export async function PATCH(
 
   const { data: current, error: currentError } = await supabase
     .from('ownership_transactions')
-    .select('*')
+    .select(OWNERSHIP_TRANSACTION_SELECT)
     .eq('id', id)
     .eq('is_deleted', false)
     .single()
 
   if (currentError) return NextResponse.json({ error: currentError.message, code: currentError.code || 'FETCH_FAILED' }, { status: 500 })
+  const currentRecord = current as Record<string, any>
   if (current.approval_status === 'approved' && Object.keys(body).some(key => LOCKED_WHEN_APPROVED.has(key))) {
     return NextResponse.json({ error: 'Onaylı işlem sessizce değiştirilemez. Ters kayıt veya düzeltme kaydı oluşturun.', code: 'APPROVED_RECORD_LOCKED' }, { status: 409 })
   }
 
-  const merged = { ...current, ...body }
+  const merged = { ...currentRecord, ...body }
   const validation = await validateDraft(supabase, merged)
   if (!validation.ok) return NextResponse.json({ error: validation.error, code: validation.code }, { status: 400 })
 
   const history = [
-    ...(Array.isArray(current.history) ? current.history : []),
+    ...(Array.isArray(currentRecord.history) ? currentRecord.history : []),
     ...Object.entries(body).map(([field, nextValue]) => ({
       field,
-      old_value: current[field],
+      old_value: currentRecord[field],
       new_value: nextValue,
       changed_at: new Date().toISOString(),
       changed_by: 'Sistem Kullanıcısı',
@@ -90,7 +91,7 @@ export async function PATCH(
       updated_at: new Date().toISOString(),
     })
     .eq('id', id)
-    .select()
+    .select(OWNERSHIP_TRANSACTION_SELECT)
     .single()
 
   if (error) return NextResponse.json({ error: error.message, code: error.code || 'UPDATE_FAILED' }, { status: 500 })

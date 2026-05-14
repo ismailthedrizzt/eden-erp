@@ -114,6 +114,18 @@ function missingEmployeeColumn(error: { message?: string } | null, optionalColum
   )
 }
 
+function missingEmployeeRelation(error: { code?: string; message?: string } | null) {
+  const message = error?.message || ''
+  return (
+    error?.code === 'PGRST200' ||
+    error?.code === 'PGRST201' ||
+    message.includes('relationship') ||
+    message.includes('schema cache') ||
+    message.includes('birimler') ||
+    message.includes('norm_kadrolar')
+  )
+}
+
 const employeeMasterOnlyFields = ['occupation', 'profession', 'meslek']
 
 function stripEmployeeMasterOnlyFields<T extends Record<string, any>>(payload: T) {
@@ -135,6 +147,7 @@ export async function GET(request: NextRequest) {
   const includePassive = searchParams.get('include_passive') === 'true'
 
   let enabledOptionalColumns = [...optionalEmployeeListColumns]
+  let includeOrganizationRelations = true
   let data: any[] | null = null
   let error: any = null
 
@@ -145,7 +158,9 @@ export async function GET(request: NextRequest) {
       'sirket:sirketler(id,kisa_unvan,ticari_unvan)',
     ].join(',')
 
-    selectQuery = `${selectQuery},birim:birimler(id, ad, tip),kadro:norm_kadrolar(id, unvan)`
+    if (includeOrganizationRelations) {
+      selectQuery = `${selectQuery},birim:birimler(id, ad, tip),kadro:norm_kadrolar(id, unvan)`
+    }
 
     let query = supabase
       .from('employees')
@@ -162,9 +177,17 @@ export async function GET(request: NextRequest) {
     error = result.error
 
     const missingColumn = missingEmployeeColumn(error, enabledOptionalColumns)
-    if (!missingColumn) break
+    if (missingColumn) {
+      enabledOptionalColumns = enabledOptionalColumns.filter((column) => column !== missingColumn)
+      continue
+    }
 
-    enabledOptionalColumns = enabledOptionalColumns.filter((column) => column !== missingColumn)
+    if (includeOrganizationRelations && missingEmployeeRelation(error)) {
+      includeOrganizationRelations = false
+      continue
+    }
+
+    break
   }
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

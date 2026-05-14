@@ -21,6 +21,7 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { isSoftDeletedRecord } from '@/lib/forms/entityState'
+import { employeeService } from '@/lib/services/employeeService'
 
 type AuthorityType =
   | 'imza_yetkilisi'
@@ -196,8 +197,7 @@ export function RepresentativesTab({ value, onChange, readOnly = false, partners
   useEffect(() => {
     let cancelled = false
 
-    fetch('/api/ik/personel?durum=gorevde')
-      .then(response => response.ok ? response.json() : null)
+    employeeService.list({ durum: 'gorevde' })
       .then(payload => {
         if (cancelled || !Array.isArray(payload?.data)) return
         setEmployees(payload.data.map((employee: any) => ({

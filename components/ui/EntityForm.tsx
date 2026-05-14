@@ -34,6 +34,8 @@ import Modal from './Modal'
 import type { IdentityGateConfig, IdentityGateResolveResult } from '@/lib/identity-gate'
 import { COUNTRY_OPTIONS, normalizeCountryId } from '@/lib/reference/country-nationalities'
 import { isSoftDeletedRecord } from '@/lib/forms/entityState'
+import { companyService } from '@/lib/services/companyService'
+import { organizationService } from '@/lib/services/organizationService'
 
 /** Historical value entry */
 export interface HistoryEntry {
@@ -1371,12 +1373,10 @@ function WorkLifecycleField({
 
     async function fetchReferences() {
       try {
-        const [companyResponse, organizationResponse] = await Promise.all([
-          fetch('/api/sirketler'),
-          fetch('/api/ik/teskilat'),
+        const [companyPayload, organizationPayload] = await Promise.all([
+          companyService.list(),
+          organizationService.list(),
         ])
-        const companyPayload = companyResponse.ok ? await companyResponse.json() : { data: [] }
-        const organizationPayload = organizationResponse.ok ? await organizationResponse.json() : { birimler: [], kadrolar: [] }
         if (cancelled) return
 
         setCompanies((companyPayload.data || []).map((company: Record<string, any>) => ({

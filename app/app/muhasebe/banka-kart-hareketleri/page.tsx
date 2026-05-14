@@ -50,13 +50,13 @@ export default function BankCardMovementsPage() {
     loadData()
   }, [])
 
-  const tableData = rows.map(row => ({
+  const tableData = useMemo(() => rows.map(row => ({
     ...row,
     source_label: row.source_type === 'card' ? 'Kart' : 'Banka',
     counterparty_display: row.counterparty_name || row.merchant_name || '-',
     direction_label: row.direction === 'credit' ? 'Giriş' : 'Çıkış',
     match_label: matchLabel(row.match_status),
-  }))
+  })), [rows])
 
   const widgets: WidgetDef<any>[] = useMemo(() => [
     { key: 'waiting', label: 'Bekleyen', render: () => tableData.filter(row => row.match_status === 'waiting').length },

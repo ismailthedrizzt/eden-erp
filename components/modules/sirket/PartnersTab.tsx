@@ -16,6 +16,8 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { isSoftDeletedRecord } from '@/lib/forms/entityState'
+import { companyService } from '@/lib/services/companyService'
+import { employeeService } from '@/lib/services/employeeService'
 
 type OwnerKind = 'gercek_kisi' | 'tuzel_kisi'
 type PartnerSourceType =
@@ -200,8 +202,8 @@ export function PartnersTab({ value, onChange, readOnly = false, representatives
     let cancelled = false
 
     Promise.all([
-      fetch('/api/ik/personel?durum=gorevde').then(response => response.ok ? response.json() : null),
-      fetch('/api/sirketler').then(response => response.ok ? response.json() : null),
+      employeeService.list({ durum: 'gorevde' }),
+      companyService.list(),
     ]).then(([employeePayload, companyPayload]) => {
       if (cancelled) return
 
