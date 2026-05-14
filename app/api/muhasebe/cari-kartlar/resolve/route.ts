@@ -15,6 +15,10 @@ const ResolveSchema = z.object({
   }),
 })
 
+const PERSON_RESOLVE_SELECT = 'id,first_name,last_name,full_name,nationality,national_id,passport_no,birth_date,birth_place,gender,phone,email,status,is_deleted'
+const ORGANIZATION_RESOLVE_SELECT = 'id,legal_name,trade_name,country,tax_number,registration_number,phone,email,status,is_deleted'
+const ACCOUNT_CARD_VIEW_SELECT = 'company_id,entity_kind,person_id,organization_id,display_name,identity_no,tax_no,roles,account_code,official_balance,pending_balance,projected_balance,currency,last_movement_date,risk_status,status'
+
 export async function POST(request: NextRequest) {
   const parsed = ResolveSchema.safeParse(await request.json().catch(() => null))
   if (!parsed.success) return NextResponse.json({ error: 'Geçersiz kimlik arama isteği' }, { status: 400 })
@@ -36,15 +40,16 @@ export async function POST(request: NextRequest) {
     })
   }
 
-  const roles = await loadRoles(supabase, entityKind, master.record.id)
-  const card = await loadCard(supabase, entityKind, master.record.id)
+  const record = master.record as Record<string, any>
+  const roles = await loadRoles(supabase, entityKind, record.id)
+  const card = await loadCard(supabase, entityKind, record.id)
 
   return NextResponse.json({
     found: true,
     entityKind,
-    record: master.record,
-    displayName: entityKind === 'person' ? master.record.full_name : master.record.legal_name,
-    identityNo: entityKind === 'person' ? master.record.national_id || master.record.passport_no : master.record.tax_number || master.record.registration_number,
+    record,
+    displayName: entityKind === 'person' ? record.full_name : record.legal_name,
+    identityNo: entityKind === 'person' ? record.national_id || record.passport_no : record.tax_number || record.registration_number,
     roles,
     card,
     message: 'Bu kayıt sistemde mevcut.',
@@ -56,7 +61,7 @@ async function findPerson(supabase: ReturnType<typeof createServiceClient>, iden
   const nationalId = String(identity.national_id || '').replace(/\D/g, '')
   const passportNo = String(identity.passport_no || '').trim()
   if (!nationalId && !passportNo) return { error: 'TC Kimlik No veya Pasaport No girin.' }
-  let query = supabase.from('persons').select('*').eq('nationality', nationality).eq('is_deleted', false)
+  let query = supabase.from('persons').select(PERSON_RESOLVE_SELECT).eq('nationality', nationality).eq('is_deleted', false)
   query = nationalId ? query.eq('national_id', nationalId) : query.eq('passport_no', passportNo)
   const { data, error } = await query.maybeSingle()
   if (error) return { error: error.message }
@@ -68,7 +73,7 @@ async function findOrganization(supabase: ReturnType<typeof createServiceClient>
   const taxNumber = String(identity.tax_number || '').replace(/\D/g, '')
   const registrationNumber = String(identity.registration_number || '').trim()
   if (!taxNumber && !registrationNumber) return { error: 'VKN veya Ticaret Sicil No girin.' }
-  let query = supabase.from('organizations').select('*').eq('country', country).eq('is_deleted', false)
+  let query = supabase.from('organizations').select(ORGANIZATION_RESOLVE_SELECT).eq('country', country).eq('is_deleted', false)
   query = taxNumber ? query.eq('tax_number', taxNumber) : query.eq('registration_number', registrationNumber)
   const { data, error } = await query.maybeSingle()
   if (error) return { error: error.message }
@@ -101,7 +106,7 @@ async function loadRoles(supabase: ReturnType<typeof createServiceClient>, kind:
 }
 async function loadCard(supabase: ReturnType<typeof createServiceClient>, kind: 'person' | 'organization', id: string) {
   const column = kind === 'person' ? 'person_id' : 'organization_id'
-  const { data } = await supabase.from('v_account_cards').select('*').eq(column, id).limit(1).maybeSingle()
+  const { data } = await supabase.from('v_account_cards').select(ACCOUNT_CARD_VIEW_SELECT).eq(column, id).limit(1).maybeSingle()
   return data || null
 }
 

@@ -17,6 +17,44 @@ const SettingsSchema = z.object({
   notes: z.string().optional(),
 })
 
+const ACCOUNT_CARD_VIEW_SELECT = [
+  'company_id',
+  'entity_kind',
+  'person_id',
+  'organization_id',
+  'display_name',
+  'identity_no',
+  'tax_no',
+  'roles',
+  'account_code',
+  'official_balance',
+  'pending_balance',
+  'projected_balance',
+  'currency',
+  'last_movement_date',
+  'risk_status',
+  'status',
+].join(',')
+
+const ACCOUNT_CARD_SETTINGS_SELECT = [
+  'id',
+  'company_id',
+  'entity_kind',
+  'person_id',
+  'organization_id',
+  'account_code',
+  'default_currency',
+  'payment_term_days',
+  'collection_term_days',
+  'risk_limit',
+  'credit_limit',
+  'status',
+  'notes',
+  'created_at',
+  'updated_at',
+  'version',
+].join(',')
+
 export async function GET(request: NextRequest) {
   const supabase = createServiceClient()
   const { searchParams } = new URL(request.url)
@@ -25,7 +63,7 @@ export async function GET(request: NextRequest) {
 
   let query = supabase
     .from('v_account_cards')
-    .select('*')
+    .select(ACCOUNT_CARD_VIEW_SELECT)
     .order('display_name', { ascending: true })
 
   if (companyId) query = query.eq('company_id', companyId)
@@ -79,13 +117,13 @@ async function saveAccountCardSettings(
       .from('account_card_settings')
       .update({ ...row, updated_at: new Date().toISOString() })
       .eq('id', existing.id)
-      .select()
+      .select(ACCOUNT_CARD_SETTINGS_SELECT)
       .single()
   }
 
   return supabase
     .from('account_card_settings')
     .insert(row)
-    .select()
+    .select(ACCOUNT_CARD_SETTINGS_SELECT)
     .single()
 }

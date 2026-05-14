@@ -201,6 +201,8 @@ for (const file of [
   'app/api/accounting/bank-connections/[id]/cards/route.ts',
   'app/api/accounting/bank-connections/[id]/passivate/route.ts',
   'app/api/accounting/bank-connections/[id]/test/route.ts',
+  'app/api/muhasebe/cari-kartlar/route.ts',
+  'app/api/muhasebe/cari-kartlar/resolve/route.ts',
   'lib/identity/masterContact.ts',
   'lib/modules/entity-bank-accounts/entityBankAccounts.service.ts',
 ]) {
