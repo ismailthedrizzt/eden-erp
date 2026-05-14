@@ -1820,6 +1820,7 @@ export function EntityForm({
   const isEdit = mode === 'edit' && !isPassiveEditLocked
   const canActivateRecord = isPassive && !!onActivate
   const hasStatusAction = isPassive ? canActivateRecord : !!onDelete
+  const canShowStatusAction = canActivateRecord || (!isPassive && canEdit && !!onDelete)
   const slotLoaderMode = isReadOnly ? 'view' : isCreate ? 'insert' : 'update'
   const isIdentityGateEnabled = !!identityGate?.enabled
   const effectiveIdentityGateResult = identityGateResult || buildIdentityResultFromExistingData(identityGate, formData)
@@ -2709,7 +2710,7 @@ export function EntityForm({
               {additionalActions}
               
               {/* View Mode: Edit Button */}
-              {isReadOnly && canEdit && hasStatusAction && (
+              {isReadOnly && hasStatusAction && canShowStatusAction && (
                 <button
                   onClick={handleDelete}
                   disabled={deleting}

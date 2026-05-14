@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { CheckCircle2, Eye, History, Landmark, Pencil, Plus, Star, Trash2, X } from 'lucide-react'
+import { Bot, CheckCircle2, Eye, History, Loader2, Pencil, Plus, Star, Trash2, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { usePermissions } from '@/lib/security/permissionStore'
 import { COUNTRY_OPTIONS } from '@/lib/reference/country-nationalities'
@@ -56,6 +56,7 @@ const localCodeTypeOptions = ['Bank Code', 'Branch Code', 'Routing Number / ABA'
 const currencyOptions = ['TRY', 'USD', 'EUR', 'GBP']
 const swiftChargeOptions = ['SHA', 'OUR', 'BEN']
 const countryOptionLabels = Object.fromEntries(COUNTRY_OPTIONS.map(option => [option.value, option.label]))
+type IbanAutomationStatus = 'idle' | 'working' | 'done' | 'no_data'
 
 export function EntityBankAccountsPanel({ entityKind, entityId, masterName = '', masterCountry = '', readOnly = false }: Props) {
   const { can } = usePermissions()
@@ -66,6 +67,7 @@ export function EntityBankAccountsPanel({ entityKind, entityId, masterName = '',
   const [draft, setDraft] = useState<Partial<EntityBankAccount>>(emptyDraft)
   const [historyRow, setHistoryRow] = useState<EntityBankAccount | null>(null)
   const [priorityMode, setPriorityMode] = useState<BankAccountFormPriorityMode>(getLocalPriorityMode(masterCountry))
+  const [ibanAutomationStatus, setIbanAutomationStatus] = useState<IbanAutomationStatus>('idle')
 
   const canView = can(ENTITY_BANK_ACCOUNT_PERMISSIONS.view)
   const canInsert = can(ENTITY_BANK_ACCOUNT_PERMISSIONS.insert)
@@ -117,11 +119,13 @@ export function EntityBankAccountsPanel({ entityKind, entityId, masterName = '',
       preferred_currency: masterCountry === 'TR' ? 'TRY' : 'USD',
       is_default: rows.length === 0,
     })
+    setIbanAutomationStatus('idle')
     setMode('create')
   }
 
   function startEdit(row: EntityBankAccount, nextMode: 'view' | 'edit') {
     setDraft(row)
+    setIbanAutomationStatus(getInitialIbanAutomationStatus(row))
     setMode(nextMode)
   }
 
@@ -144,12 +148,21 @@ export function EntityBankAccountsPanel({ entityKind, entityId, masterName = '',
 
   async function parseIban(value: string) {
     updateDraft('iban', value)
+    const clean = value.replace(/\s/g, '').toUpperCase()
+    if (!clean) {
+      setIbanAutomationStatus('idle')
+      return
+    }
+    setIbanAutomationStatus('working')
     const payload = await fetchJson('/api/entity-bank-accounts/parse-iban', {
       method: 'POST',
       body: JSON.stringify({ iban: value, current: draft }),
     }).catch(() => null)
     if (payload?.data?.values) {
       setDraft(prev => ({ ...prev, ...payload.data.values }))
+      setIbanAutomationStatus(Object.keys(payload.data.values).length > 0 ? 'done' : 'no_data')
+    } else {
+      setIbanAutomationStatus('no_data')
     }
   }
 
@@ -199,15 +212,15 @@ export function EntityBankAccountsPanel({ entityKind, entityId, masterName = '',
           </div>
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-            {orderedFields.map(field => renderField(field, draft, mode === 'view' || locked, updateDraft, parseIban))}
+            {orderedFields.map(field => renderField(field, draft, mode === 'view' || locked, updateDraft, parseIban, ibanAutomationStatus))}
           </div>
 
           {draft.has_intermediary_bank && (
             <div className="mt-4 grid grid-cols-1 gap-4 rounded-lg border border-gray-200 p-3 md:grid-cols-2 dark:border-gray-700">
-              {renderField('intermediary_bank_name', draft, mode === 'view' || locked, updateDraft, parseIban)}
-              {renderField('intermediary_swift_bic', draft, mode === 'view' || locked, updateDraft, parseIban)}
-              {renderField('intermediary_bank_address', draft, mode === 'view' || locked, updateDraft, parseIban)}
-              {renderField('intermediary_account_number', draft, mode === 'view' || locked, updateDraft, parseIban)}
+              {renderField('intermediary_bank_name', draft, mode === 'view' || locked, updateDraft, parseIban, ibanAutomationStatus)}
+              {renderField('intermediary_swift_bic', draft, mode === 'view' || locked, updateDraft, parseIban, ibanAutomationStatus)}
+              {renderField('intermediary_bank_address', draft, mode === 'view' || locked, updateDraft, parseIban, ibanAutomationStatus)}
+              {renderField('intermediary_account_number', draft, mode === 'view' || locked, updateDraft, parseIban, ibanAutomationStatus)}
             </div>
           )}
 
@@ -249,7 +262,7 @@ export function EntityBankAccountsPanel({ entityKind, entityId, masterName = '',
   }
 }
 
-function renderField(field: string, draft: Partial<EntityBankAccount>, disabled: boolean, onChange: (field: string, value: any) => void, onIban: (value: string) => void) {
+function renderField(field: string, draft: Partial<EntityBankAccount>, disabled: boolean, onChange: (field: string, value: any) => void, onIban: (value: string) => void, ibanAutomationStatus: IbanAutomationStatus) {
   const labels: Record<string, string> = {
     beneficiary_name: 'Hesap Sahibi Adı',
     is_same_as_master_name: 'Hesap sahibi master kayıt ile aynı mı?',
@@ -293,13 +306,55 @@ function renderField(field: string, draft: Partial<EntityBankAccount>, disabled:
   const wide = ['bank_address', 'payment_note', 'beneficiary_name_note', 'document_reference_id'].includes(field)
   return (
     <label key={field} className={cn("space-y-1", wide && "md:col-span-2")}>
-      <span className="text-xs font-medium text-gray-600 dark:text-gray-400">{labels[field] || field}</span>
+      <span className="flex items-center gap-2 text-xs font-medium text-gray-600 dark:text-gray-400">
+        {labels[field] || field}
+        {field === 'iban' && <IbanAutomationBadge status={ibanAutomationStatus} />}
+      </span>
       {wide ? (
         <textarea value={value} disabled={disabled} rows={2} onChange={event => onChange(field, event.target.value)} className={common} />
       ) : (
         <input value={value} disabled={disabled} onChange={event => field === 'iban' ? onIban(event.target.value) : onChange(field, event.target.value)} className={common} />
       )}
     </label>
+  )
+}
+
+function IbanAutomationBadge({ status }: { status: IbanAutomationStatus }) {
+  const config = {
+    idle: {
+      label: 'Otomasyon: veri bekliyor',
+      className: 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-300',
+      icon: <Bot size={12} />,
+    },
+    working: {
+      label: 'Otomasyon: cozuluyor',
+      className: 'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900/60 dark:bg-blue-950/30 dark:text-blue-300',
+      icon: <Loader2 size={12} className="animate-spin" />,
+    },
+    done: {
+      label: 'Otomasyon: OK',
+      className: 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-300',
+      icon: <CheckCircle2 size={12} />,
+    },
+    no_data: {
+      label: 'Otomasyon: veri bulunamadi',
+      className: 'border-gray-200 bg-gray-50 text-gray-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300',
+      icon: <Bot size={12} />,
+    },
+  }[status]
+
+  return (
+    <span
+      title={config.label}
+      className={cn(
+        "inline-flex h-5 min-w-[118px] items-center justify-center gap-1 rounded-full border px-2 text-[10px] font-semibold leading-none transition-colors",
+        status === 'working' && "animate-pulse",
+        config.className
+      )}
+    >
+      {config.icon}
+      {config.label.replace('Otomasyon: ', '')}
+    </span>
   )
 }
 
@@ -348,6 +403,11 @@ function EmptyPanel({ text }: { text: string }) {
 function getLocalPriorityMode(country?: string): BankAccountFormPriorityMode {
   if (!country) return 'unknown_country'
   return country === 'TR' || country.toLocaleLowerCase('tr-TR') === 'türkiye' ? 'tr_priority' : 'international_priority'
+}
+
+function getInitialIbanAutomationStatus(row: Partial<EntityBankAccount>): IbanAutomationStatus {
+  if (!row.iban) return 'idle'
+  return row.bank_name || row.bank_code || row.account_number ? 'done' : 'no_data'
 }
 
 function priorityModeLabel(mode: BankAccountFormPriorityMode) {
