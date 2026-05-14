@@ -1,13 +1,16 @@
 import { NextResponse } from 'next/server'
-import { createClient, createServiceClient } from '@/lib/supabase/server'
+import { createServiceClient } from '@/lib/supabase/server'
+
+const MODULE_LICENSE_SELECT = 'id,module_key,module_name,is_active,environment,created_at,updated_at'
+const SUBMODULE_LICENSE_SELECT = 'id,module_key,submodule_key,submodule_name,is_active,environment,created_at,updated_at'
 
 // GET /api/settings/module-licenses
 export async function GET() {
   const supabase = createServiceClient()
 
   const [modulesRes, submodulesRes] = await Promise.all([
-    supabase.from('module_licenses').select('*'),
-    supabase.from('submodule_licenses').select('*')
+    supabase.from('module_licenses').select(MODULE_LICENSE_SELECT),
+    supabase.from('submodule_licenses').select(SUBMODULE_LICENSE_SELECT)
   ])
 
   if (modulesRes.error) return NextResponse.json({ error: modulesRes.error.message }, { status: 500 })

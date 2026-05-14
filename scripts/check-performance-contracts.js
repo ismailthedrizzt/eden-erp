@@ -203,6 +203,13 @@ for (const file of [
   'app/api/accounting/bank-connections/[id]/test/route.ts',
   'app/api/muhasebe/cari-kartlar/route.ts',
   'app/api/muhasebe/cari-kartlar/resolve/route.ts',
+  'app/api/settings/system-parameters/route.ts',
+  'app/api/settings/module-licenses/route.ts',
+  'app/api/settings/integration-parameters/_shared.ts',
+  'app/api/settings/integration-parameters/route.ts',
+  'app/api/settings/integration-parameters/[id]/route.ts',
+  'app/api/settings/integration-parameters/[id]/credential/route.ts',
+  'app/api/settings/integration-parameters/[id]/test/route.ts',
   'lib/identity/masterContact.ts',
   'lib/modules/entity-bank-accounts/entityBankAccounts.service.ts',
 ]) {

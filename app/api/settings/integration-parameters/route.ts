@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { requirePermission } from '@/lib/security/serverPermissions'
 import { isMissingTableError, missingTableResponse } from '../../accounting/_banking'
-import { normalizeIntegrationParameter } from './_shared'
+import { INTEGRATION_PARAMETER_SELECT, normalizeIntegrationParameter } from './_shared'
 
 export async function GET(request: NextRequest) {
   const supabase = createServiceClient()
@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
 
   const { data, error } = await supabase
     .from('integration_parameters')
-    .select('*')
+    .select(INTEGRATION_PARAMETER_SELECT)
     .eq('is_deleted', false)
     .order('created_at', { ascending: false })
 
@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
   const { data, error } = await supabase
     .from('integration_parameters')
     .insert({ ...payload, created_by: permission.userId, updated_by: permission.userId })
-    .select('*')
+    .select(INTEGRATION_PARAMETER_SELECT)
     .single()
 
   if (error) {

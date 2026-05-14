@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { requirePermission } from '@/lib/security/serverPermissions'
+import { INTEGRATION_PARAMETER_SELECT } from '../../_shared'
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -17,7 +18,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       updated_by: permission.userId,
     })
     .eq('id', id)
-    .select('*')
+    .select(INTEGRATION_PARAMETER_SELECT)
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

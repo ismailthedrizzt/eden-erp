@@ -1,5 +1,31 @@
 import { cleanPayload } from '../../accounting/_banking'
 
+export const INTEGRATION_PARAMETER_SELECT = [
+  'id',
+  'integration_name',
+  'bank_name',
+  'provider_code',
+  'provider_name',
+  'integration_type',
+  'environment',
+  'base_url',
+  'token_url',
+  'connection_status',
+  'credential_status',
+  'last_test_at',
+  'last_sync_at',
+  'api_status',
+  'requires_certificate',
+  'ip_whitelist_note',
+  'settings_json',
+  'error_message',
+  'status',
+  'is_deleted',
+  'created_at',
+  'updated_at',
+  'version',
+].join(',')
+
 export function normalizeIntegrationParameter(body: Record<string, any>) {
   return cleanPayload({
     integration_name: body.integration_name,

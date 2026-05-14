@@ -3,6 +3,8 @@ import { createServiceClient } from '@/lib/supabase/server'
 import { requirePermission } from '@/lib/security/serverPermissions'
 import { systemParameterDefinitions } from '@/lib/system/systemParameters.config'
 
+const SYSTEM_PARAMETER_SELECT = 'id,parameter_key,module_key,page_key,value,description,created_at,updated_at'
+
 export async function GET(request: NextRequest) {
   const supabase = createServiceClient()
   const permission = await requirePermission(request, supabase, 'system_parameters.view')
@@ -10,7 +12,7 @@ export async function GET(request: NextRequest) {
 
   const { data, error } = await supabase
     .from('system_parameters')
-    .select('*')
+    .select(SYSTEM_PARAMETER_SELECT)
 
   if (error && !isMissingTableError(error)) return NextResponse.json({ error: error.message }, { status: 500 })
 
@@ -49,7 +51,7 @@ export async function PATCH(request: NextRequest) {
   const { data, error } = await supabase
     .from('system_parameters')
     .upsert(payload, { onConflict: 'parameter_key' })
-    .select('*')
+    .select(SYSTEM_PARAMETER_SELECT)
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
