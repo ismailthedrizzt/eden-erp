@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
-import { AlertTriangle, CheckCircle2, Loader2, Search, X } from 'lucide-react'
+import { Bot, CheckCircle2, Loader2, Search } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import type { IdentityEntityKind, IdentityGateConfig, IdentityGateResolveResult, IdentityGateState } from '@/lib/identity-gate'
 import { COUNTRY_NATIONALITY_OPTIONS, COUNTRY_OPTIONS, isTurkishNationality, normalizeCountryId } from '@/lib/reference/country-nationalities'
@@ -17,6 +17,8 @@ interface MasterIdentityGateProps {
   onCancelDuplicate?: () => void
   roleScope?: Record<string, unknown>
 }
+
+type MasterMatchAutomationStatus = 'idle' | 'working' | 'done' | 'no_data'
 
 export function MasterIdentityGate({
   config,
@@ -36,6 +38,7 @@ export function MasterIdentityGate({
   const [error, setError] = useState<string | null>(null)
   const [lastResult, setLastResult] = useState<IdentityGateResolveResult | null>(null)
   const [touched, setTouched] = useState<Record<string, boolean>>({})
+  const [automationStarted, setAutomationStarted] = useState(false)
   const allowedEntityKindsKey = config.allowedEntityKinds.join('|')
 
   const readOnly = mode !== 'create'
@@ -103,6 +106,7 @@ export function MasterIdentityGate({
       setState('identity_input')
       setLastResult(null)
       setWarning(null)
+      setAutomationStarted(false)
       onReset()
     }
     if (error) setError(null)
@@ -115,11 +119,13 @@ export function MasterIdentityGate({
     setLastResult(null)
     setWarning(null)
     setError(null)
+    setAutomationStarted(false)
     setTouched({})
     onReset()
   }
 
   const resolveIdentity = async () => {
+    setAutomationStarted(true)
     setError(null)
     setWarning(null)
     setTouched({ nationality: true, identity_no: true, country: true, tax_number: true })
@@ -162,20 +168,23 @@ export function MasterIdentityGate({
     }
   }
 
-  const statusTone = state === 'role_found' || state === 'blocked_duplicate'
-    ? 'warning'
-    : state === 'ready_for_insert' || state === 'ready_for_edit'
-      ? 'success'
-      : 'neutral'
+  const automationStatus = getMasterMatchAutomationStatus({
+    state,
+    error,
+    lastResult,
+    automationStarted,
+  })
 
   return (
     <div className="col-span-2 lg:col-span-3 rounded-xl border border-blue-100 bg-blue-50/70 p-4 dark:border-blue-900/60 dark:bg-blue-950/20">
       <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h4 className="text-sm font-semibold text-gray-900 dark:text-white">Temel Kimlik Sorgulama/Oluşturma</h4>
+          <div className="flex flex-wrap items-center gap-2">
+            <h4 className="text-sm font-semibold text-gray-900 dark:text-white">Temel Kimlik Sorgulama/Oluşturma</h4>
+            {mode === 'create' && <MasterMatchAutomationBadge status={automationStatus} />}
+          </div>
           {message && <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">{message}</p>}
         </div>
-        {mode === 'create' && <GateStatus state={state} tone={statusTone} />}
       </div>
 
       <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
@@ -371,19 +380,54 @@ function SearchableGateSelect({
   )
 }
 
-function GateStatus({ state, tone }: { state: IdentityGateState; tone: 'neutral' | 'success' | 'warning' }) {
-  const Icon = tone === 'success' ? CheckCircle2 : tone === 'warning' ? AlertTriangle : X
+function MasterMatchAutomationBadge({ status }: { status: MasterMatchAutomationStatus }) {
+  const config = {
+    idle: {
+      label: 'Eşleşme bekliyor',
+      className: 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-300',
+      icon: <Bot size={12} />,
+    },
+    working: {
+      label: 'Eşleşiyor',
+      className: 'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900/60 dark:bg-blue-950/30 dark:text-blue-300',
+      icon: <Loader2 size={12} className="animate-spin" />,
+    },
+    done: {
+      label: 'OK',
+      className: 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-300',
+      icon: <CheckCircle2 size={12} />,
+    },
+    no_data: {
+      label: 'Veri bulunamadı',
+      className: 'border-gray-200 bg-gray-50 text-gray-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300',
+      icon: <Bot size={12} />,
+    },
+  }[status]
+
   return (
     <span className={cn(
-      'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium',
-      tone === 'success' && 'bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300',
-      tone === 'warning' && 'bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300',
-      tone === 'neutral' && 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300'
+      'inline-flex h-5 min-w-[118px] items-center justify-center gap-1 rounded-full border px-2 text-[10px] font-semibold leading-none transition-colors',
+      status === 'working' && 'animate-pulse',
+      config.className
     )}>
-      <Icon size={13} />
-      {stateLabel(state)}
+      {config.icon}
+      {config.label}
     </span>
   )
+}
+
+function getMasterMatchAutomationStatus(input: {
+  state: IdentityGateState
+  error: string | null
+  lastResult: IdentityGateResolveResult | null
+  automationStarted: boolean
+}): MasterMatchAutomationStatus {
+  if (input.state === 'searching_master') return 'working'
+  if (!input.automationStarted) return 'idle'
+  if (input.error) return 'no_data'
+  if (!input.lastResult) return 'no_data'
+  if (input.lastResult.masterFound || input.lastResult.roleFound) return 'done'
+  return 'no_data'
 }
 
 const inputClass = 'w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-white disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-900 dark:disabled:bg-gray-800 dark:disabled:text-gray-100'
