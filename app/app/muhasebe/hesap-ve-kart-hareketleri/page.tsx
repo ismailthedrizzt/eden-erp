@@ -91,9 +91,6 @@ function FinancialInstitutionMovementsContent() {
     loadRows()
   }, [loadRows])
 
-  if (!can(ACCOUNTING_PERMISSIONS.bankMovementsView)) {
-    return <div className="rounded-lg border border-gray-200 bg-white p-6 text-sm text-gray-600 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300">Bu sayfayı görüntüleme yetkiniz yok.</div>
-  }
 
   const tableData = useMemo(() => rows.map(row => ({
     ...row,
@@ -130,6 +127,10 @@ function FinancialInstitutionMovementsContent() {
     { key: 'credit', label: 'Toplam Giriş', render: () => formatAmount(summary.totalCredit || 0) },
     { key: 'debit', label: 'Toplam Çıkış', render: () => formatAmount(summary.totalDebit || 0) },
   ], [summary])
+
+  if (!can(ACCOUNTING_PERMISSIONS.bankMovementsView)) {
+    return <div className="rounded-lg border border-gray-200 bg-white p-6 text-sm text-gray-600 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300">Bu sayfayı görüntüleme yetkiniz yok.</div>
+  }
 
   return (
     <div className="relative">
