@@ -3,6 +3,8 @@ import { createServiceClient } from '@/lib/supabase/server'
 import { hydrateMasterContact, stripMasterDataForRoleProfile, syncMasterContact } from '@/lib/identity/masterContact'
 import { EntityBankAccountsService } from '@/lib/modules/entity-bank-accounts/entityBankAccounts.service'
 
+const REPRESENTATIVE_DETAIL_SELECT = 'id,sirket_id,company_id,person_id,organization_id,person_kind,source_type,source_id,display_name,ad_soyad,telefon,email,authority_types,gorev,yetki_turu,status,start_date,end_date,signature_type,transaction_limit,currency,requires_joint_signature,can_approve_alone,is_deleted,history,photo_logo,authority_documents,representative_profile,notes,created_at'
+
 const TRACKED_FIELDS = new Set([
   'status',
   'authority_types',
@@ -43,7 +45,7 @@ export async function GET(
 
   const { data, error } = await supabase
     .from('sirket_temsilciler')
-    .select('*')
+    .select(REPRESENTATIVE_DETAIL_SELECT)
     .eq('id', id)
     .single()
 
@@ -69,7 +71,7 @@ export async function PATCH(
 
   const { data: current, error: currentError } = await supabase
     .from('sirket_temsilciler')
-    .select('*')
+    .select(REPRESENTATIVE_DETAIL_SELECT)
     .eq('id', id)
     .single()
 
@@ -83,7 +85,7 @@ export async function PATCH(
       history: buildHistory(current, mapped),
     })
     .eq('id', id)
-    .select()
+    .select(REPRESENTATIVE_DETAIL_SELECT)
     .single()
 
   if (error) return NextResponse.json({ error: error.message, code: error.code || 'UPDATE_FAILED' }, { status: 500 })

@@ -15,6 +15,7 @@ import {
   type BankAccountCardPayload,
   type BankAccountCardRow,
 } from '@/lib/modules/accounting/bank-integration/bankAccountsCards.service'
+import { companyService } from '@/lib/services/companyService'
 
 type PageState = 'list' | 'create' | 'edit' | 'view'
 type RecordType = 'account' | 'card'
@@ -489,9 +490,7 @@ function normalizeForm(form: BankAccountCardPayload): BankAccountCardPayload {
 }
 
 async function loadCompanies(): Promise<Option[]> {
-  const response = await fetch('/api/sirketler', { cache: 'no-store' })
-  if (!response.ok) return []
-  const payload = await response.json()
+  const payload = await companyService.list()
   return (payload.data || []).map((company: any) => ({
     value: company.id,
     label: company.kisa_unvan || company.ticari_unvan || 'Şirket',

@@ -29,6 +29,7 @@ import { createRealPersonMasterTabs } from '@/lib/identity/realPersonFormSection
 import { formatPhoneInput, normalizeEmailInput } from '@/lib/utils'
 import { isTurkishNationality, normalizeCountryId } from '@/lib/reference/country-nationalities'
 import { isSoftDeletedRecord } from '@/lib/forms/entityState'
+import { employeeService } from '@/lib/services/employeeService'
 import type { Personel } from '@/types'
 
 // Page state type following ERP pattern
@@ -108,7 +109,7 @@ export default function PersonelYonetimPage() {
   const [dashboardFilter, setDashboardFilter] = useState<DashboardFilterEvent | null>(null)
 
   // Transform data for table
-  const tableData: PersonelTableRow[] = (personel || []).map(p => ({
+  const tableData: PersonelTableRow[] = useMemo(() => (personel || []).map(p => ({
     ...p,
     employee_no: (p as any).employee_no || '-',
     fullname: `${p.ad || ''} ${p.soyad || ''}`.trim(),
@@ -121,7 +122,7 @@ export default function PersonelYonetimPage() {
     egitim_durumu: getEducationSummary(p),
     sgk_status: p.sgk_giris ? 'SGK girişi var' : 'SGK bekliyor',
     __actions: ''
-  }))
+  })), [personel])
 
   const dashboardWidgets = useMemo(() => buildEmployeesDashboard(tableData), [tableData])
   const visibleTableData = useMemo(() => applyDashboardFilter(tableData, dashboardFilter), [tableData, dashboardFilter])
@@ -145,14 +146,13 @@ export default function PersonelYonetimPage() {
   const handleRowClick = async (row: PersonelTableRow) => {
     setFormError(null)
     setSaveFieldErrors({})
+    setSelectedPersonel(row as Personel)
+    setPageState('view')
 
     try {
-      const response = await fetch(`${apiBasePath}/${row.id}?t=${Date.now()}`, { cache: 'no-store' })
-      if (!response.ok) throw await createSaveError(response, 'Çalışan detayı yüklenemedi')
-      const result = await response.json()
+      const result = await employeeService.detail(row.id)
       if (!result.data) throw new Error('Çalışan detayı yüklenemedi')
       setSelectedPersonel(result.data)
-      setPageState('view')
     } catch (err: any) {
       setFormError(err.message || 'Çalışan detayı yüklenemedi')
       setToast(err.toast || { type: 'error', title: 'Detay Yüklenemedi', message: err.message || 'Çalışan detayı yüklenemedi' })

@@ -1,13 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 
+const UNIT_SELECT = 'id,sirket_id,ust_birim_id,unit_type_id,ad,name,tip,short_name,code,location_name,status,start_date,end_date,sort_order,notes,history,is_deleted'
+const POSITION_SELECT = 'id,birim_id,unvan,title,grade,reports_to_position_id,amir,is_manager,norm_count,active_count,budget_code,work_type,status,durum,personel_id,history,is_deleted'
+const UNIT_TYPE_SELECT = 'id,name,slug,color,icon,parent_type_id,legacy_tip,sort_order,is_active'
+
 export async function GET() {
   const supabase = createServiceClient()
 
   const [{ data: birimler, error: unitError }, { data: kadrolar, error: positionError }, { data: unitTypes, error: typeError }, { data: employees, error: employeeError }] = await Promise.all([
-    supabase.from('birimler').select('*').order('ad'),
-    supabase.from('norm_kadrolar').select('*').order('unvan'),
-    supabase.from('organization_unit_types').select('*').order('sort_order', { ascending: true }).order('name'),
+    supabase.from('birimler').select(UNIT_SELECT).order('ad'),
+    supabase.from('norm_kadrolar').select(POSITION_SELECT).order('unvan'),
+    supabase.from('organization_unit_types').select(UNIT_TYPE_SELECT).order('sort_order', { ascending: true }).order('name'),
     supabase.from('employees').select('id,ad,soyad,cinsiyet,dogum_tarihi'),
   ])
 
@@ -164,7 +168,7 @@ async function createUnit(supabase: ReturnType<typeof createServiceClient>, body
   const { data, error } = await supabase
     .from('birimler')
     .insert(mappedUnit)
-    .select('*')
+    .select(UNIT_SELECT)
     .single()
 
   if (error) return NextResponse.json({ error: error.message, code: error.code || 'UNIT_CREATE_FAILED' }, { status: 500 })
@@ -215,13 +219,13 @@ async function getCompanyUnitTypeId(supabase: ReturnType<typeof createServiceCli
 async function updateUnit(supabase: ReturnType<typeof createServiceClient>, body: Record<string, any>) {
   if (!body.id) return NextResponse.json({ error: 'id zorunlu', code: 'ID_REQUIRED' }, { status: 400 })
 
-  const { data: current } = await supabase.from('birimler').select('*').eq('id', body.id).single()
+  const { data: current } = await supabase.from('birimler').select(UNIT_SELECT).eq('id', body.id).single()
   const mapped = mapUnit(body)
   const { data, error } = await supabase
     .from('birimler')
     .update({ ...mapped, history: buildHistory(current, mapped, ['ust_birim_id', 'unit_type_id', 'code', 'location_name', 'status']) })
     .eq('id', body.id)
-    .select('*')
+    .select(UNIT_SELECT)
     .single()
 
   if (error) return NextResponse.json({ error: error.message, code: error.code || 'UNIT_UPDATE_FAILED' }, { status: 500 })
@@ -233,7 +237,7 @@ async function createPosition(supabase: ReturnType<typeof createServiceClient>, 
   const { data, error } = await supabase
     .from('norm_kadrolar')
     .insert(mapPosition(body))
-    .select('*')
+    .select(POSITION_SELECT)
     .single()
 
   if (error) return NextResponse.json({ error: error.message, code: error.code || 'POSITION_CREATE_FAILED' }, { status: 500 })
@@ -242,14 +246,14 @@ async function createPosition(supabase: ReturnType<typeof createServiceClient>, 
 
 async function updatePosition(supabase: ReturnType<typeof createServiceClient>, body: Record<string, any>) {
   if (!body.id) return NextResponse.json({ error: 'id zorunlu', code: 'ID_REQUIRED' }, { status: 400 })
-  const { data: current } = await supabase.from('norm_kadrolar').select('*').eq('id', body.id).single()
+  const { data: current } = await supabase.from('norm_kadrolar').select(POSITION_SELECT).eq('id', body.id).single()
   const managerWarning = await checkManagerWarning(supabase, body)
   const mapped = mapPosition(body)
   const { data, error } = await supabase
     .from('norm_kadrolar')
     .update({ ...mapped, history: buildHistory(current, mapped, ['norm_count', 'amir', 'is_manager', 'status', 'reports_to_position_id']) })
     .eq('id', body.id)
-    .select('*')
+    .select(POSITION_SELECT)
     .single()
 
   if (error) return NextResponse.json({ error: error.message, code: error.code || 'POSITION_UPDATE_FAILED' }, { status: 500 })
@@ -324,7 +328,7 @@ async function attachUnitType(supabase: ReturnType<typeof createServiceClient>, 
   if (!unit?.unit_type_id) return { ...unit, unit_type: null }
   const { data } = await supabase
     .from('organization_unit_types')
-    .select('*')
+    .select(UNIT_TYPE_SELECT)
     .eq('id', unit.unit_type_id)
     .single()
 

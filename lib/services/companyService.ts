@@ -1,11 +1,29 @@
 import { apiClient, ApiClientOptions } from '@/lib/api/apiClient'
 import type { Sirket, SirketDokuman, SirketLogo, SirketOrtak, SirketTemsilci } from '@/types/sirket'
 
+type RelationListOptions = ApiClientOptions & { includePassive?: boolean; companyId?: string }
+
+function relationListOptions(options: RelationListOptions = {}) {
+  const { includePassive, companyId, ...clientOptions } = options
+  return {
+    ...clientOptions,
+    skipAuth: clientOptions.skipAuth ?? true,
+    staleTime: clientOptions.staleTime ?? 120_000,
+    query: {
+      ...(companyId ? { company_id: companyId } : {}),
+      ...(includePassive ? { include_passive: 'true' } : {}),
+      ...clientOptions.query,
+    },
+  }
+}
+
 export const companyService = {
   list(options: ApiClientOptions & { includePassive?: boolean } = {}) {
     const { includePassive, ...clientOptions } = options
     return apiClient.get<{ data: Sirket[] }>('/api/sirketler', {
       ...clientOptions,
+      skipAuth: clientOptions.skipAuth ?? true,
+      staleTime: clientOptions.staleTime ?? 120_000,
       query: {
         ...(includePassive ? { include_passive: 'true' } : {}),
         ...clientOptions.query,
@@ -13,17 +31,37 @@ export const companyService = {
     })
   },
   detail(id: string) {
-    return apiClient.get<{ data: Sirket }>(`/api/sirketler/${id}`)
+    return apiClient.get<{ data: Sirket }>(`/api/sirketler/${id}`, { skipAuth: true, staleTime: 120_000 })
   },
-  partners(companyId: string) {
-    return apiClient.get<{ data: SirketOrtak[] }>('/api/sirketler/ortaklar', {
-      query: { company_id: companyId },
+  partners(companyId: string, options: ApiClientOptions = {}) {
+    return apiClient.get<{ data: SirketOrtak[] }>('/api/sirketler/ortaklar', relationListOptions({ ...options, companyId }))
+  },
+  partnersList(options: RelationListOptions = {}) {
+    return apiClient.get<{ data: Array<any> }>('/api/sirketler/ortaklar', {
+      ...relationListOptions(options),
     })
   },
-  representatives(companyId: string) {
+  partnerDetail(id: string) {
+    return apiClient.get<{ data: any }>(`/api/sirketler/ortaklar/${id}`, { skipAuth: true, staleTime: 120_000 })
+  },
+  representatives(companyId: string, options: ApiClientOptions = {}) {
+    return apiClient.get<{ data: SirketTemsilci[] }>('/api/sirketler/temsilciler', relationListOptions({ ...options, companyId }))
+  },
+  representativesList(options: RelationListOptions = {}) {
     return apiClient.get<{ data: SirketTemsilci[] }>('/api/sirketler/temsilciler', {
-      query: { company_id: companyId },
+      ...relationListOptions(options),
     })
+  },
+  representativeDetail(id: string) {
+    return apiClient.get<{ data: SirketTemsilci }>(`/api/sirketler/temsilciler/${id}`, { skipAuth: true, staleTime: 120_000 })
+  },
+  stakeholdersList(options: RelationListOptions = {}) {
+    return apiClient.get<{ data: Array<any> }>('/api/sirketler/paydaslar', {
+      ...relationListOptions(options),
+    })
+  },
+  stakeholderDetail(id: string) {
+    return apiClient.get<{ data: any }>(`/api/sirketler/paydaslar/${id}`, { skipAuth: true, staleTime: 120_000 })
   },
   async documents(companyId: string): Promise<{ data: SirketDokuman[] }> {
     const result = await this.detail(companyId)
@@ -35,5 +73,10 @@ export const companyService = {
   },
   invalidateList() {
     apiClient.invalidate('/api/sirketler')
+  },
+  invalidateRelations() {
+    apiClient.invalidate('/api/sirketler/ortaklar')
+    apiClient.invalidate('/api/sirketler/temsilciler')
+    apiClient.invalidate('/api/sirketler/paydaslar')
   },
 }

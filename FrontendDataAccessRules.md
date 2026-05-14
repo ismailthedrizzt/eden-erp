@@ -28,3 +28,18 @@ await apiClient.get('/api/employees', { query: { page, pageSize, search } })
 await apiClient.post('/api/companies', payload)
 await apiClient.patch(`/api/partners/${id}`, { version, data })
 ```
+
+## Liste ve detay performans kontrati
+
+Ana ERP liste ekranlari icin hedef, ilk liste gorunumunun kullaniciya 0.2 saniye civarinda, satir tiklama sonrasi formun 0.5 saniye icinde gorunmesidir. Bu hedefi korumak icin yeni liste/detay ekranlari asagidaki kurallara uyar.
+
+- Liste ve detay GET cagrisini sayfadan ham `fetch` ile yapmak yerine `lib/services/*Service.ts` icinden `apiClient.get()` ile yap.
+- Yetki karari API tarafinda service client veya endpoint guard ile veriliyorsa liste/detay servisinde `skipAuth: true` kullan; her liste acilisinda Supabase `getSession()` bekletme.
+- Liste GET servislerinde varsayilan `staleTime` en az `120_000` olmalidir. Mutasyonlardan sonra ilgili prefix `apiClient.invalidate(...)` ile temizlenir.
+- Satira tiklaninca once secili kaydi liste satiri verisiyle state'e koy ve form modunu `view` yap; detay verisini arka planda cek.
+- Satir detay fetch'lerinde `?t=${Date.now()}` ve `cache: 'no-store'` kullanma. Gercek zamanli tazelik gerekiyorsa servis cagrisina bilincli `useCache: false` ver ve bunu yorumla acikla.
+- Liste API'lerinde `select('*')` kullanma. Tablo icin gereken kolonlari acik listele; buyuk JSON/media/history kolonlarini detay endpointine birak.
+- Liste sort/filter alanlari icin migration ile indeks ekle. Soft delete kullanan ana listelerde indeksin ilk bolumu `is_deleted` filtresini desteklemelidir.
+- Tabloya verilen turetilmis data ve dashboard ozetleri `useMemo` ile hesaplanir.
+
+Bu kontratin ana sirket/personel ekranlarinda bozulmamasi icin `npm run perf:guard` calistirilir. Yeni ana liste ekranlari eklenirken ayni kontrat script'e eklenmelidir.

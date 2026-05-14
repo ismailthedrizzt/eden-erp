@@ -17,6 +17,8 @@ import {
   transactionTypes,
 } from '@/lib/modules/ownership-transactions/ownershipTransactions.config'
 import { getOwnershipTransactionCapabilities } from '@/lib/modules/ownership-transactions/ownershipTransactions.permissions'
+import { ownershipTransactionsService } from '@/lib/modules/ownership-transactions/ownershipTransactions.service'
+import { companyService } from '@/lib/services/companyService'
 import type { OwnershipTransaction } from '@/lib/modules/ownership-transactions/ownershipTransactions.types'
 
 type PageState = 'list' | 'create' | 'view' | 'edit'
@@ -90,31 +92,27 @@ function OwnershipTransactionsContent() {
         : transactionTypes.filter(type => type !== newEntryTransactionType && !['Pay Devri', 'Kısmi Pay Devri', 'Ortaklıktan Çıkış'].includes(type))
     : transactionTypes
 
-  const loadData = async () => {
+  const loadData = async (force = false) => {
     setLoading(true)
     setError(null)
     try {
-      const [transactionResponse, companyResponse, partnerResponse] = await Promise.all([
-        fetch('/api/ownership-transactions'),
-        fetch('/api/sirketler'),
-        fetch('/api/sirketler/ortaklar'),
+      if (force) {
+        ownershipTransactionsService.invalidateList()
+        companyService.invalidateRelations()
+      }
+      const [transactionRows, companyPayload, partnerPayload] = await Promise.all([
+        ownershipTransactionsService.list(),
+        companyService.list({ useCache: !force }),
+        companyService.partnersList({ useCache: !force }),
       ])
-      const [transactionPayload, companyPayload, partnerPayload] = await Promise.all([
-        transactionResponse.json(),
-        companyResponse.json(),
-        partnerResponse.json(),
-      ])
-      if (!transactionResponse.ok) throw new Error(transactionPayload.error || 'Ortaklık işlemleri yüklenemedi')
-      if (!companyResponse.ok) throw new Error(companyPayload.error || 'Şirketler yüklenemedi')
-      if (!partnerResponse.ok) throw new Error(partnerPayload.error || 'Ortaklar yüklenemedi')
 
       const companyRows = Array.isArray(companyPayload.data) ? companyPayload.data : []
       const partnerRows = Array.isArray(partnerPayload.data) ? partnerPayload.data : []
 
-      setTransactions(Array.isArray(transactionPayload.data) ? transactionPayload.data : [])
+      setTransactions(Array.isArray(transactionRows) ? transactionRows : [])
       setCompanies(companyRows.map((company: any) => ({
         value: company.id,
-        label: company.ticari_unvan || company.kisa_unvan || 'Şirket',
+        label: company.ticari_unvan || company.kisa_unvan || 'Sirket',
       })))
       setPartners(partnerRows.filter((partner: any) => !partner.is_deleted).map((partner: any) => ({
         value: partner.id,
@@ -131,7 +129,6 @@ function OwnershipTransactionsContent() {
       setLoading(false)
     }
   }
-
   useEffect(() => {
     loadData()
   }, [])
@@ -225,9 +222,8 @@ function OwnershipTransactionsContent() {
     setPageState('view')
     setFormError(null)
     try {
-      const response = await fetch(`/api/ownership-transactions/${row.id}`)
-      const payload = await response.json()
-      if (response.ok && payload.data) setSelected(normalizeForForm(payload.data))
+      const detail = await ownershipTransactionsService.get(row.id)
+      if (detail) setSelected(normalizeForForm(detail))
     } catch {
       // List row is enough for initial display.
     }
@@ -248,7 +244,7 @@ function OwnershipTransactionsContent() {
       const payload = await response.json().catch(() => ({}))
       if (!response.ok) throw new Error(payload.error || 'İşlem tamamlanamadı')
       setToast({ type: 'success', title: 'İşlem Tamamlandı', message: workflowActionLabel(action) })
-      await loadData()
+      await loadData(true)
       if (payload.data) setSelected(normalizeForForm(payload.data))
     } catch (err: any) {
       setToast({ type: 'error', title: 'İşlem Başarısız', message: err.message })
@@ -268,7 +264,7 @@ function OwnershipTransactionsContent() {
       const result = await response.json().catch(() => ({}))
       if (!response.ok) throw new Error(result.error || 'Ortaklık işlemi kaydedilemedi')
       setToast({ type: 'success', title: 'Kayıt Başarılı', message: mode === 'create' ? 'Ortaklık işlemi oluşturuldu' : 'Ortaklık işlemi güncellendi' })
-      await loadData()
+      await loadData(true)
       setSelected(result.data ? normalizeForForm(result.data) : null)
       setPageState('list')
     } catch (err: any) {
@@ -280,7 +276,7 @@ function OwnershipTransactionsContent() {
     }
   }
 
-  const tableData = transactions.map(transaction => {
+  const tableData = useMemo(() => transactions.map(transaction => {
     const partnerId = transaction.affected_partner_id || transaction.to_partner_id || transaction.from_partner_id || ''
     return {
       ...transaction,
@@ -300,7 +296,7 @@ function OwnershipTransactionsContent() {
       approval_status_label: approvalStatusLabels[transaction.approval_status] || transaction.approval_status,
       row_actions: <RowActions row={transaction} capabilities={capabilities} onAction={handleWorkflowAction} onOpen={handleOpen} onEdit={handleEdit} />,
     }
-  })
+  }), [capabilities, companyNameById, partnerNameById, transactions])
 
   const formFields = buildFormFields(companies, partnerOptions, selected, transactions, availableTransactionTypes)
   const hasSelectedCompanyWithoutPartners = !!selectedCompanyId && partnerOptions.length === 0

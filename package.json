@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit -p tsconfig.typecheck.json",
+    "perf:guard": "node scripts/check-performance-contracts.js",
     "clean": "node -e \"require('fs').rmSync('.next', { recursive: true, force: true })\"",
     "send-email": "node scripts/send-email.js",
     "supabase:migrate": "node scripts/apply-supabase-migrations.js",

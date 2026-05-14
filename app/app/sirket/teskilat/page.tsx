@@ -21,6 +21,8 @@ import { PageBanner } from '@/components/ui/PageBanner'
 import { EntityForm, FormField, FormMode, FormTab } from '@/components/ui/EntityForm'
 import { SmartDataTable, ColumnDef, WidgetDef } from '@/components/ui/SmartDataTable'
 import { cn } from '@/lib/utils'
+import { companyService } from '@/lib/services/companyService'
+import { organizationService } from '@/lib/services/organizationService'
 
 type PageState = 'list' | 'create-unit' | 'view-unit' | 'edit-unit' | 'create-position'
 type UnitStatus = 'Aktif' | 'Pasif' | 'Kapatıldı' | 'Birleştirildi' | 'Taşındı'
@@ -113,28 +115,25 @@ export default function TeskilatPage() {
 
   const formMode: FormMode = pageState === 'create-unit' || pageState === 'create-position' ? 'create' : pageState === 'edit-unit' ? 'edit' : 'view'
 
-  const loadData = async () => {
+  const loadData = async (force = false) => {
     setLoading(true)
     try {
-      const [teskilatResponse, companyResponse] = await Promise.all([
-        fetch('/api/ik/teskilat'),
-        fetch('/api/sirketler'),
+      if (force) organizationService.invalidateList()
+      const [teskilatPayload, companyPayload] = await Promise.all([
+        organizationService.list({ useCache: !force }),
+        companyService.list({ useCache: !force }),
       ])
-      const teskilatPayload = await teskilatResponse.json()
-      const companyPayload = await companyResponse.json()
-      if (!teskilatResponse.ok) throw new Error(teskilatPayload.error || 'Teşkilat verisi yüklenemedi')
 
       setUnits(Array.isArray(teskilatPayload.birimler) ? teskilatPayload.birimler : [])
       setPositions(Array.isArray(teskilatPayload.kadrolar) ? teskilatPayload.kadrolar : [])
-      setUnitTypes(Array.isArray(teskilatPayload.unitTypes) ? teskilatPayload.unitTypes : [])
+      setUnitTypes(Array.isArray(teskilatPayload.unitTypes) ? teskilatPayload.unitTypes as UnitType[] : [])
       setCompanies(Array.isArray(companyPayload.data) ? companyPayload.data.map((company: any) => ({ value: company.id, label: company.ticari_unvan || company.kisa_unvan })) : [])
     } catch (error: any) {
-      setToast(error.message || 'Teşkilat verisi yüklenemedi')
+      setToast(error.message || 'Teskilat verisi yuklenemedi')
     } finally {
       setLoading(false)
     }
   }
-
   useEffect(() => {
     loadData()
   }, [])
@@ -166,12 +165,12 @@ export default function TeskilatPage() {
     { key: 'actions', label: 'İşlemler', type: 'text', width: 230, render: (_, row) => <UnitActions unit={row} onView={openView} onEdit={openEdit} onPositions={setPositionOverlayUnit} onAddChild={openChildCreate} onRollback={rollbackUnit} /> },
   ]
 
-  const widgets: WidgetDef<any>[] = [
+  const widgets: WidgetDef<any>[] = useMemo(() => [
     { key: 'unit-count', label: 'Aktif Birim', render: () => units.filter((unit) => !unit.is_deleted).length },
     { key: 'positions', label: 'Toplam Kadro', render: () => positions.filter((position) => !position.is_deleted).reduce((sum, position) => sum + numberValue(position.norm_count, 1), 0) },
     { key: 'filled', label: 'Dolu', render: () => positions.filter((position) => !position.is_deleted).reduce((sum, position) => sum + numberValue(position.active_count), 0) },
     { key: 'open', label: 'Boş', render: () => positions.filter((position) => !position.is_deleted).reduce((sum, position) => sum + Math.max(numberValue(position.norm_count, 1) - numberValue(position.active_count), 0), 0) },
-  ]
+  ], [positions, units])
 
   const heroFields: FormField[] = [
     { name: 'name', label: 'Birim Adı', type: 'text', required: true },
@@ -223,7 +222,7 @@ export default function TeskilatPage() {
       })
       const payload = await response.json()
       if (!response.ok) throw new Error(payload.error || 'Birim kaydedilemedi')
-      await loadData()
+      await loadData(true)
       setPageState('list')
       setSelectedUnit(null)
     } finally {
@@ -242,7 +241,7 @@ export default function TeskilatPage() {
       const payload = await response.json()
       if (!response.ok) throw new Error(payload.error || 'Kadro kaydedilemedi')
       if (payload.warning) setToast(payload.warning)
-      await loadData()
+      await loadData(true)
       setPageState('list')
     } finally {
       setSaving(false)
@@ -257,7 +256,7 @@ export default function TeskilatPage() {
     })
     const payload = await response.json()
     if (!response.ok) throw new Error(payload.error || 'Tip kaydedilemedi')
-    await loadData()
+    await loadData(true)
   }
 
   async function rollbackUnit(unit: OrganizationUnit) {
@@ -268,12 +267,12 @@ export default function TeskilatPage() {
       return
     }
     setToast(`${unitName(unit)} geri alındı. ${payload.clearedEmployeeCount || 0} çalışanın birim ve görev alanı boşaltıldı.`)
-    await loadData()
+    await loadData(true)
   }
 
   async function softDeletePosition(position: Position) {
     await fetch(`/api/ik/teskilat?entity=position&id=${position.id}`, { method: 'DELETE' })
-    await loadData()
+    await loadData(true)
   }
 
   function openCreate() {
@@ -335,7 +334,7 @@ export default function TeskilatPage() {
             storageKey="teskilat-kadro-tree"
             emptyText="Birim kaydı bulunamadı"
             onRowClick={openView}
-            onRefresh={loadData}
+            onRefresh={() => loadData(true)}
             showActions={false}
           />
         </div>

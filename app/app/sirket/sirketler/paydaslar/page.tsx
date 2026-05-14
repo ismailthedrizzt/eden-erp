@@ -9,6 +9,7 @@ import { Toast } from '@/components/ui/Toast'
 import { createRealPersonMasterTabs } from '@/lib/identity/realPersonFormSections'
 import { createLegalEntityMasterTabs } from '@/lib/identity/legalEntityFormSections'
 import { isSoftDeletedRecord } from '@/lib/forms/entityState'
+import { companyService } from '@/lib/services/companyService'
 
 type PageState = 'list' | 'create' | 'view' | 'edit'
 type ToastState = { type: 'success' | 'error' | 'warning'; title?: string; message: string }
@@ -278,17 +279,15 @@ export default function PaydaslarPage() {
   const isSelectedPassive = isSoftDeletedRecord(selectedStakeholder)
   const formMode: FormMode = pageState === 'create' ? 'create' : isSelectedPassive ? 'passive' : pageState === 'edit' ? 'edit' : 'view'
 
-  const loadData = async () => {
+  const loadData = async (force = false) => {
     setLoading(true)
     setError(null)
     try {
-      const [stakeholderResponse, companyResponse] = await Promise.all([
-        fetch(`/api/sirketler/paydaslar${includePassive ? '?include_passive=true' : ''}`),
-        fetch('/api/sirketler'),
+      if (force) companyService.invalidateRelations()
+      const [stakeholderPayload, companyPayload] = await Promise.all([
+        companyService.stakeholdersList({ includePassive, useCache: !force }),
+        companyService.list({ useCache: !force }),
       ])
-      const stakeholderPayload = await stakeholderResponse.json()
-      const companyPayload = await companyResponse.json()
-      if (!stakeholderResponse.ok) throw new Error(stakeholderPayload.error || 'Paydaşlar yüklenemedi')
 
       setStakeholders(Array.isArray(stakeholderPayload.data) ? stakeholderPayload.data : [])
       setCompanies(Array.isArray(companyPayload.data) ? companyPayload.data.map((company: any) => ({
@@ -301,24 +300,23 @@ export default function PaydaslarPage() {
       setLoading(false)
     }
   }
-
   useEffect(() => {
     loadData()
   }, [includePassive])
 
   const companyNameById = useMemo(() => Object.fromEntries(companies.map(company => [company.value, company.label])), [companies])
-  const tableData = stakeholders.map(stakeholder => ({
+  const tableData = useMemo(() => stakeholders.map(stakeholder => ({
     ...stakeholder,
     stakeholder_type_label: stakeholder.stakeholder_type === 'tuzel_kisi' ? 'Tüzel Kişi' : 'Gerçek Kişi',
     company_name: stakeholder.company_id ? companyNameById[stakeholder.company_id] || '-' : '-',
-  }))
+  })), [companyNameById, stakeholders])
 
-  const widgets: WidgetDef<any>[] = [
+  const widgets: WidgetDef<any>[] = useMemo(() => [
     { key: 'total', label: 'Toplam Paydaş', render: () => tableData.length },
     { key: 'active', label: 'Aktif', render: () => tableData.filter(row => !isSoftDeletedRecord(row)).length },
     { key: 'legal', label: 'Tüzel Kişi', render: () => tableData.filter(row => row.stakeholder_type === 'tuzel_kisi').length },
     { key: 'critical', label: 'Kritik', render: () => tableData.filter(row => row.priority_level === 'Kritik').length },
-  ]
+  ], [tableData])
   const configuredTabs = [
     ...createRealPersonMasterTabs({
       visibleWhen: { field: 'stakeholder_type', operator: 'equals', value: 'gercek_kisi' },
@@ -342,9 +340,7 @@ export default function PaydaslarPage() {
     setFormError(null)
     setFieldErrors({})
     try {
-      const response = await fetch(`/api/sirketler/paydaslar/${row.id}?t=${Date.now()}`, { cache: 'no-store' })
-      if (!response.ok) throw await createSaveError(response, 'Paydaş detayı yüklenemedi')
-      const result = await response.json()
+      const result = await companyService.stakeholderDetail(row.id)
       if (!result.data) throw new Error('Paydaş detayı yüklenemedi')
       setSelectedStakeholder(normalizeStakeholderForForm(result.data))
     } catch (err: any) {
@@ -366,7 +362,7 @@ export default function PaydaslarPage() {
       })
       if (!response.ok) throw await createSaveError(response, mode === 'create' ? 'Paydaş oluşturulamadı' : 'Güncelleme başarısız')
       setToast({ type: 'success', title: 'Kayıt Başarılı', message: mode === 'create' ? 'Paydaş kaydı oluşturuldu' : 'Paydaş bilgileri güncellendi' })
-      await loadData()
+      await loadData(true)
       setPageState('list')
     } catch (err: any) {
       setFormError(err.message)
@@ -385,7 +381,7 @@ export default function PaydaslarPage() {
       const response = await fetch(`/api/sirketler/paydaslar/${selectedStakeholder.id}`, { method: 'DELETE' })
       if (!response.ok) throw await createSaveError(response, 'Pasifleştirme başarısız')
       setToast({ type: 'success', title: 'Kayıt Başarılı', message: 'Paydaş kaydı pasife çekildi' })
-      await loadData()
+      await loadData(true)
       setPageState('list')
     } finally {
       setDeleting(false)
@@ -411,7 +407,7 @@ export default function PaydaslarPage() {
       const result = await response.json()
       if (result.data) setSelectedStakeholder(normalizeStakeholderForForm(result.data))
       setToast({ type: 'success', title: 'Kayit Basarili', message: 'Paydas kaydi aktive edildi' })
-      await loadData()
+      await loadData(true)
       setPageState('view')
     } catch (err: any) {
       setToast(err.toast || { type: 'error', title: 'Kayit Basarisiz', message: err.message })
@@ -441,7 +437,7 @@ export default function PaydaslarPage() {
       {pageState === 'list' && (
         <div className="mt-6">
           {error && <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-600 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">{error}</div>}
-          <SmartDataTable columns={columns} data={tableData} loading={loading} widgets={widgets} defaultView="list" storageKey="sirket-paydaslar-table" emptyText="Paydaş kaydı bulunamadı" onRowClick={handleRowClick} onRefresh={loadData} showPassiveToggle includePassive={includePassive} onIncludePassiveChange={setIncludePassive} />
+          <SmartDataTable columns={columns} data={tableData} loading={loading} widgets={widgets} defaultView="list" storageKey="sirket-paydaslar-table" emptyText="Paydaş kaydı bulunamadı" onRowClick={handleRowClick} onRefresh={() => loadData(true)} showPassiveToggle includePassive={includePassive} onIncludePassiveChange={setIncludePassive} />
         </div>
       )}
 

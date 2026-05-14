@@ -72,6 +72,15 @@ function isMissingTableError(error: any) {
   return error?.code === '42P01' || String(error?.message || '').includes('Could not find the table')
 }
 
+const COMPANY_DETAIL_SELECT = 'id,organization_id,field_history,kisa_unvan,ticari_unvan,vkn_tckn,vergi_dairesi,sirket_turu,il,ilce,adres,telefon,email,is_deleted,mersis_no,ticaret_sicil_no,kurulus_tarihi,legal_entity,electronic_notification_address,trade_registry_office,parent_company_id,sirket_kodu,ulke,web_sitesi,e_fatura_mukellefi,e_arsiv_mukellefi,e_irsaliye_mukellefi,sgk_is_yeri_sicil_no,sgk_il,sgk_sube,nace_kodlari,tehlike_sinifi,varsayilan_para_birimi,varsayilan_dil,zaman_dilimi,mali_yil_baslangici,hero_images,hero_documents,created_at,updated_at'
+const PUBLIC_TAX_SELECT = 'id,company_id,tax_number,tax_office,tax_type,liability_start_date,e_invoice_taxpayer,e_archive_taxpayer,e_waybill_enabled,gib_user_code,has_financial_seal,financial_seal_expiry_date,tax_debt_tracking_active,last_check_date,history,created_at,updated_at'
+const PUBLIC_SGK_SELECT = 'id,company_id,workplace_registry_no,province,branch,registration_date,nace_code,risk_class,uses_incentive,active_incentive_type,incentive_end_date,employee_count,debt_tracking_active,last_check_date,history,created_at,updated_at'
+const PUBLIC_INCENTIVES_SELECT = 'id,company_id,has_kosgeb_registration,kosgeb_no,active_support_program,application_date,result_status,incentive_type,incentive_end_date,responsible_person,notes,history,created_at,updated_at'
+const PUBLIC_REGISTRY_SELECT = 'id,company_id,mersis_no,trade_registry_no,registry_office,chamber_registry_no,chamber_name,establishment_registration_date,last_change_date,liquidation_status,history,created_at,updated_at'
+const PUBLIC_LICENSES_SELECT = 'id,company_id,license_type,document_no,issuing_authority,start_date,end_date,status,document_file,reminder_days,history,is_deleted,created_at,updated_at'
+const PUBLIC_CHANNELS_SELECT = 'id,company_id,kep_address,kep_provider,e_notification_address,e_notification_active,e_government_authority_status,official_notification_email,official_notification_phone,has_web_service_integration,api_notes,history,created_at,updated_at'
+const CURRENT_OWNERSHIP_SELECT = 'company_id,partner_id,owner_kind,person_id,organization_id,display_name,current_share_ratio,current_voting_ratio,current_profit_ratio,current_capital_amount,committed_capital_amount,current_share_units,has_veto_right,has_board_nomination_right,has_privileged_share,last_transaction_date,warnings'
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -81,7 +90,7 @@ export async function GET(
 
   const { data: company, error } = await supabase
     .from('sirketler')
-    .select('*')
+    .select(COMPANY_DETAIL_SELECT)
     .eq('id', id)
     .single()
 
@@ -105,17 +114,17 @@ export async function GET(
     publicChannels,
     currentOwnership,
   ] = await Promise.all([
-    supabase.from('sirket_ortaklar').select('*').or(`sirket_id.eq.${id},company_id.eq.${id}`),
-    supabase.from('sirket_temsilciler').select('*').or(`sirket_id.eq.${id},company_id.eq.${id}`),
-    supabase.from('stakeholders').select('*').eq('company_id', id),
-    supabase.from('sirket_logolar').select('*').eq('sirket_id', id),
-    supabase.from('company_public_tax').select('*').eq('company_id', id).maybeSingle(),
-    supabase.from('company_public_sgk').select('*').eq('company_id', id).maybeSingle(),
-    supabase.from('company_public_incentives').select('*').eq('company_id', id).maybeSingle(),
-    supabase.from('company_public_registry').select('*').eq('company_id', id).maybeSingle(),
-    supabase.from('company_public_licenses').select('*').eq('company_id', id),
-    supabase.from('company_public_channels').select('*').eq('company_id', id).maybeSingle(),
-    supabase.from('v_current_ownership').select('*').eq('company_id', id),
+    supabase.from('sirket_ortaklar').select('id,sirket_id,company_id,person_id,organization_id,owner_kind,ortak_tipi,display_name,ortak_adi,identity_number,tckn_vkn,share_ratio,hisse_orani,voting_ratio,profit_ratio,has_representation_right,imza_yetkisi,start_date,end_date,status,is_deleted,source_type,source_id,history,created_at').or(`sirket_id.eq.${id},company_id.eq.${id}`),
+    supabase.from('sirket_temsilciler').select('id,sirket_id,company_id,person_id,organization_id,person_kind,source_type,source_id,display_name,ad_soyad,authority_types,gorev,yetki_turu,status,start_date,end_date,signature_type,transaction_limit,currency,requires_joint_signature,can_approve_alone,is_deleted,history,created_at').or(`sirket_id.eq.${id},company_id.eq.${id}`),
+    supabase.from('stakeholders').select('id,company_id,person_id,organization_id,stakeholder_type,category,display_name,tax_id,phone,email,country,city,status,priority_level,relationship_start_date,is_deleted,history,created_at').eq('company_id', id),
+    supabase.from('sirket_logolar').select('id,sirket_id,dosya_adi,dosya_url,is_primary,created_at').eq('sirket_id', id),
+    supabase.from('company_public_tax').select(PUBLIC_TAX_SELECT).eq('company_id', id).maybeSingle(),
+    supabase.from('company_public_sgk').select(PUBLIC_SGK_SELECT).eq('company_id', id).maybeSingle(),
+    supabase.from('company_public_incentives').select(PUBLIC_INCENTIVES_SELECT).eq('company_id', id).maybeSingle(),
+    supabase.from('company_public_registry').select(PUBLIC_REGISTRY_SELECT).eq('company_id', id).maybeSingle(),
+    supabase.from('company_public_licenses').select(PUBLIC_LICENSES_SELECT).eq('company_id', id),
+    supabase.from('company_public_channels').select(PUBLIC_CHANNELS_SELECT).eq('company_id', id).maybeSingle(),
+    supabase.from('v_current_ownership').select(CURRENT_OWNERSHIP_SELECT).eq('company_id', id),
   ])
 
   const relatedError = [

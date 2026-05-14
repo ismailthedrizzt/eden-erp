@@ -3,6 +3,8 @@ import { createServiceClient } from '@/lib/supabase/server'
 import { hydrateMasterContact, stripMasterDataForRoleProfile, syncMasterContact } from '@/lib/identity/masterContact'
 import { EntityBankAccountsService } from '@/lib/modules/entity-bank-accounts/entityBankAccounts.service'
 
+const STAKEHOLDER_DETAIL_SELECT = 'id,company_id,person_id,organization_id,stakeholder_type,category,display_name,tax_id,phone,email,country,city,status,priority_level,internal_owner_employee_id,relationship_start_date,relationship_end_date,iban,bank_name,currency,contract_status,notes,photo_logo,stakeholder_documents,stakeholder_profile,history,is_deleted,created_at'
+
 const TRACKED_FIELDS = new Set(['category', 'status', 'phone', 'email', 'internal_owner_employee_id', 'relationship_start_date'])
 
 function buildHistory(current: Record<string, any>, updates: Record<string, any>) {
@@ -31,7 +33,7 @@ export async function GET(
 ) {
   const { id } = await params
   const supabase = createServiceClient()
-  const { data, error } = await supabase.from('stakeholders').select('*').eq('id', id).single()
+  const { data, error } = await supabase.from('stakeholders').select(STAKEHOLDER_DETAIL_SELECT).eq('id', id).single()
   if (error) return NextResponse.json({ error: error.message, code: error.code || 'FETCH_FAILED' }, { status: 500 })
   const hydrated = data?.person_id
     ? await hydrateMasterContact(supabase, 'person', data)
@@ -51,7 +53,7 @@ export async function PATCH(
   const { id } = await params
   const supabase = createServiceClient()
   const body = await request.json()
-  const { data: current, error: currentError } = await supabase.from('stakeholders').select('*').eq('id', id).single()
+  const { data: current, error: currentError } = await supabase.from('stakeholders').select(STAKEHOLDER_DETAIL_SELECT).eq('id', id).single()
   if (currentError) return NextResponse.json({ error: currentError.message, code: currentError.code || 'FETCH_FAILED' }, { status: 500 })
 
   const mapped = mapStakeholderForDb(body, current)
@@ -59,7 +61,7 @@ export async function PATCH(
     .from('stakeholders')
     .update({ ...mapped, history: buildHistory(current, mapped) })
     .eq('id', id)
-    .select()
+    .select(STAKEHOLDER_DETAIL_SELECT)
     .single()
 
   if (error) return NextResponse.json({ error: error.message, code: error.code || 'UPDATE_FAILED' }, { status: 500 })

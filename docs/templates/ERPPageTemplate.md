@@ -184,6 +184,8 @@ export default function EntityManagementPage() {
   const [toast, setToast] = useState<{ type: 'success' | 'error', message: string } | null>(null)
 
   // Fetch data
+  // Performance rule: for primary ERP list pages prefer the service/hook pattern in
+  // docs/templates/FastEntityListTemplate.md. Do not use cache-busting detail fetches.
   useEffect(() => {
     fetchRecords()
   }, [])
@@ -191,9 +193,7 @@ export default function EntityManagementPage() {
   const fetchRecords = async () => {
     try {
       setLoading(true)
-      const response = await fetch('/api/[module]/[entity]')
-      const result = await response.json()
-      if (!response.ok) throw new Error(result.error)
+      const result = await entityService.list({}, { useCache: true })
       setRecords(result.data)
     } catch (err: any) {
       setError(err.message)
@@ -208,9 +208,16 @@ export default function EntityManagementPage() {
     setPageState('create')
   }
 
-  const handleRowClick = (record: Entity) => {
+  const handleRowClick = async (record: Entity) => {
     setSelectedRecord(record)
     setPageState('view')
+
+    try {
+      const result = await entityService.detail(record.id)
+      if (result.data) setSelectedRecord(result.data)
+    } catch (err: any) {
+      setError(err.message)
+    }
   }
 
   const handleSave = async (data: any, mode: FormMode) => {

@@ -10,6 +10,7 @@ import { normalizeCountryId } from '@/lib/reference/country-nationalities'
 import { createRealPersonMasterTabs } from '@/lib/identity/realPersonFormSections'
 import { createLegalEntityMasterTabs } from '@/lib/identity/legalEntityFormSections'
 import { isSoftDeletedRecord } from '@/lib/forms/entityState'
+import { companyService } from '@/lib/services/companyService'
 
 type PageState = 'list' | 'create' | 'view' | 'edit'
 type ToastState = { type: 'success' | 'error' | 'warning'; title?: string; message: string }
@@ -355,17 +356,15 @@ export default function TemsilcilerPage() {
   const isSelectedPassive = isSoftDeletedRecord(selectedRepresentative)
   const formMode: FormMode = pageState === 'create' ? 'create' : isSelectedPassive ? 'passive' : pageState === 'edit' ? 'edit' : 'view'
 
-  const loadData = async () => {
+  const loadData = async (force = false) => {
     setLoading(true)
     setError(null)
     try {
-      const [representativeResponse, companyResponse] = await Promise.all([
-        fetch(`/api/sirketler/temsilciler${includePassive ? '?include_passive=true' : ''}`),
-        fetch('/api/sirketler'),
+      if (force) companyService.invalidateRelations()
+      const [representativePayload, companyPayload] = await Promise.all([
+        companyService.representativesList({ includePassive, useCache: !force }),
+        companyService.list({ useCache: !force }),
       ])
-      const representativePayload = await representativeResponse.json()
-      const companyPayload = await companyResponse.json()
-      if (!representativeResponse.ok) throw new Error(representativePayload.error || 'Temsilciler yüklenemedi')
 
       setRepresentatives(Array.isArray(representativePayload.data) ? representativePayload.data : [])
       setCompanies(Array.isArray(companyPayload.data) ? companyPayload.data.map((company: any) => ({
@@ -378,27 +377,26 @@ export default function TemsilcilerPage() {
       setLoading(false)
     }
   }
-
   useEffect(() => {
     loadData()
   }, [includePassive])
 
   const companyNameById = useMemo(() => Object.fromEntries(companies.map(company => [company.value, company.label])), [companies])
-  const tableData = representatives.map(representative => ({
+  const tableData = useMemo(() => representatives.map(representative => ({
     ...representative,
     display_name: representative.display_name || representative.ad_soyad || '',
     person_kind_label: representative.person_kind === 'tuzel_kisi' ? 'Tüzel Kişi' : 'Gerçek Kişi',
     company_name: companyNameById[representative.sirket_id] || '-',
     primary_authority_type: toAuthorityLabel(getRepresentativePrimaryAuthority(representative) || '-'),
     authority_limit: representative.transaction_limit,
-  }))
+  })), [companyNameById, representatives])
 
-  const widgets: WidgetDef<any>[] = [
+  const widgets: WidgetDef<any>[] = useMemo(() => [
     { key: 'total', label: 'Toplam Temsilci', render: () => tableData.length },
     { key: 'active', label: 'Aktif', render: () => tableData.filter(row => !isSoftDeletedRecord(row)).length },
     { key: 'signature', label: 'İmza Yetkilisi', render: () => tableData.filter(row => row.authority_types?.some(type => toAuthorityValue(type) === 'imza_yetkilisi')).length },
     { key: 'bank', label: 'Banka Yetkilisi', render: () => tableData.filter(row => row.authority_types?.some(type => toAuthorityValue(type) === 'banka_yetkilisi')).length },
-  ]
+  ], [tableData])
   const configuredTabs = [
     ...createRealPersonMasterTabs({
       visibleWhen: { field: 'person_or_entity_type', operator: 'equals', value: 'gercek_kisi' },
@@ -425,9 +423,7 @@ export default function TemsilcilerPage() {
     setFieldErrors({})
 
     try {
-      const response = await fetch(`/api/sirketler/temsilciler/${row.id}?t=${Date.now()}`, { cache: 'no-store' })
-      if (!response.ok) throw await createSaveError(response, 'Temsilci detayı yüklenemedi')
-      const result = await response.json()
+      const result = await companyService.representativeDetail(row.id)
       if (!result.data) throw new Error('Temsilci detayı yüklenemedi')
       setSelectedRepresentative(normalizeRepresentativeForForm(result.data))
     } catch (err: any) {
@@ -451,7 +447,7 @@ export default function TemsilcilerPage() {
       const result = await response.json()
       if (result.data) setSelectedRepresentative(normalizeRepresentativeForForm(result.data))
       setToast({ type: 'success', title: 'Kayıt Başarılı', message: mode === 'create' ? 'Temsilci kaydı oluşturuldu' : 'Temsilci bilgileri güncellendi' })
-      await loadData()
+      await loadData(true)
       setPageState('list')
     } catch (err: any) {
       setFormError(err.message)
@@ -470,7 +466,7 @@ export default function TemsilcilerPage() {
       const response = await fetch(`/api/sirketler/temsilciler/${selectedRepresentative.id}`, { method: 'DELETE' })
       if (!response.ok) throw await createSaveError(response, 'Pasifleştirme başarısız')
       setToast({ type: 'success', title: 'Kayıt Başarılı', message: 'Temsilci kaydı pasife çekildi' })
-      await loadData()
+      await loadData(true)
       setPageState('list')
     } catch (err: any) {
       setToast(err.toast || { type: 'error', title: 'Kayıt Başarısız', message: err.message })
@@ -499,7 +495,7 @@ export default function TemsilcilerPage() {
       const result = await response.json()
       if (result.data) setSelectedRepresentative(normalizeRepresentativeForForm(result.data))
       setToast({ type: 'success', title: 'Kayit Basarili', message: 'Temsilci kaydi aktive edildi' })
-      await loadData()
+      await loadData(true)
       setPageState('view')
     } catch (err: any) {
       setToast(err.toast || { type: 'error', title: 'Kayit Basarisiz', message: err.message })
@@ -560,7 +556,7 @@ export default function TemsilcilerPage() {
             storageKey="sirket-temsilciler-table"
             emptyText="Temsilci kaydı bulunamadı"
             onRowClick={handleRowClick}
-            onRefresh={loadData}
+            onRefresh={() => loadData(true)}
             showPassiveToggle
             includePassive={includePassive}
             onIncludePassiveChange={setIncludePassive}

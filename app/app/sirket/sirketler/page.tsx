@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { BriefcaseBusiness, Building2, FileText, Landmark, Phone, Settings, Users } from 'lucide-react'
 import { useSirketler } from '@/hooks/useSirketler'
 import { EntityForm, FormField, FormMode, FormTab } from '@/components/ui/EntityForm'
@@ -16,6 +16,7 @@ import { createLegalEntityMasterTabs } from '@/lib/identity/legalEntityFormSecti
 import { useModules } from '@/lib/security/moduleStore'
 import { usePermissions } from '@/lib/security/permissionStore'
 import { PERMISSIONS } from '@/packages/shared/src'
+import { companyService } from '@/lib/services/companyService'
 import type { Sirket } from '@/types/sirket'
 
 type PageState = 'list' | 'create' | 'view' | 'edit'
@@ -314,18 +315,18 @@ export default function SirketlerPage() {
     ),
   }))
 
-  const tableData: SirketTableRow[] = (sirketler || []).map(sirket => ({
+  const tableData: SirketTableRow[] = useMemo(() => (sirketler || []).map(sirket => ({
     ...sirket,
     is_deleted: !!sirket.is_deleted,
     adres_ozet: [sirket.ilce, sirket.il].filter(Boolean).join(', '),
     logo_url: extractLogoUrl((sirket as any).hero_images),
-  }))
+  })), [sirketler])
 
-  const widgets: WidgetDef<SirketTableRow>[] = [
+  const widgets: WidgetDef<SirketTableRow>[] = useMemo(() => [
     { key: 'total', label: 'Toplam Şirket', render: () => tableData.length },
     { key: 'active', label: 'Aktif', render: () => tableData.filter(row => !isSoftDeletedRecord(row)).length },
     { key: 'passive', label: 'Pasif', render: () => tableData.filter(row => isSoftDeletedRecord(row)).length },
-  ]
+  ], [tableData])
 
   const moduleEnabled = isEnabled('companies')
   const moduleWritable = isWritable('companies')
@@ -363,20 +364,16 @@ export default function SirketlerPage() {
   const handleRowClick = async (row: SirketTableRow) => {
     setFormError(null)
     setFieldErrors({})
+    setSelectedSirket(normalizeCompanyForForm(row as Sirket))
+    setPageState('view')
 
     try {
-      const response = await fetch(`/api/sirketler/${row.id}?t=${Date.now()}`, { cache: 'no-store' })
-      if (!response.ok) {
-        throw await createSaveError(response, 'Şirket detayı yüklenemedi')
-      }
-
-      const result = await response.json()
+      const result = await companyService.detail(row.id)
       if (!result.data) {
         throw new Error('Şirket detayı yüklenemedi')
       }
 
       setSelectedSirket(normalizeCompanyForForm(result.data))
-      setPageState('view')
     } catch (error: any) {
       setFormError(error.message || 'Şirket detayı yüklenemedi')
       setToast(error.toast || {
@@ -384,11 +381,6 @@ export default function SirketlerPage() {
         title: 'Detay Yüklenemedi',
         message: error.message || 'Şirket detayı yüklenemedi',
       })
-      if (row.hero_documents || row.hero_images) {
-        setSelectedSirket(normalizeCompanyForForm(row as Sirket))
-        setPageState('view')
-        return
-      }
     }
   }
 

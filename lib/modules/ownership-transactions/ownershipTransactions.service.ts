@@ -1,4 +1,5 @@
 import type { CurrentOwnershipRow, OwnershipTransaction } from './ownershipTransactions.types'
+import { apiClient } from '@/lib/api/apiClient'
 
 async function requestJson<T>(url: string, init?: RequestInit): Promise<T> {
   const response = await fetch(url, init)
@@ -9,13 +10,17 @@ async function requestJson<T>(url: string, init?: RequestInit): Promise<T> {
 
 export const ownershipTransactionsService = {
   async list(): Promise<OwnershipTransaction[]> {
-    const payload = await requestJson<{ data: OwnershipTransaction[] }>('/api/ownership-transactions')
+    const payload = await apiClient.get<{ data: OwnershipTransaction[] }>('/api/ownership-transactions', { skipAuth: true, staleTime: 120_000 })
     return payload.data || []
   },
 
   async get(id: string): Promise<OwnershipTransaction> {
-    const payload = await requestJson<{ data: OwnershipTransaction }>(`/api/ownership-transactions/${id}`)
+    const payload = await apiClient.get<{ data: OwnershipTransaction }>(`/api/ownership-transactions/${id}`, { skipAuth: true, staleTime: 120_000 })
     return payload.data
+  },
+
+  invalidateList() {
+    apiClient.invalidate('/api/ownership-transactions')
   },
 
   async create(data: Record<string, unknown>): Promise<OwnershipTransaction> {

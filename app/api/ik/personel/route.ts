@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient, createServiceClient } from '@/lib/supabase/server'
+import { createServiceClient } from '@/lib/supabase/server'
 import { z } from 'zod'
 import { isTurkishNationality, normalizeCountryId } from '@/lib/reference/country-nationalities'
 import { hydrateMasterContact, syncMasterContact } from '@/lib/identity/masterContact'
-import { getEducationLevelValue } from '@/lib/modules/employees/education'
 
 const EmployeeSchema = z.object({
   person_id: z.string().uuid().optional().nullable(),
@@ -93,7 +92,6 @@ const baseEmployeeListColumns = [
   'kadro_id',
   'gorev',
   'is_deleted',
-  'egitim_okullari',
   'created_at',
   'updated_at',
 ]
@@ -128,23 +126,13 @@ function stripEmployeeMasterOnlyFields<T extends Record<string, any>>(payload: T
 
 // GET /api/ik/personel
 export async function GET(request: NextRequest) {
-  const supabase = await createClient()
+  const supabase = createServiceClient()
   const { searchParams } = new URL(request.url)
 
   const birimId = searchParams.get('birim_id')
   const durum = searchParams.get('durum')
   const ara = searchParams.get('ara')
   const includePassive = searchParams.get('include_passive') === 'true'
-
-  // Check if teskilat module is active
-  const { data: teskilatLicense } = await supabase
-    .from('module_licenses')
-    .select('is_active, environment')
-    .eq('module_key', 'teskilat')
-    .single()
-
-  const isTeskilatActive = teskilatLicense?.is_active &&
-    (teskilatLicense.environment === 'all' || teskilatLicense.environment === process.env.NODE_ENV)
 
   let enabledOptionalColumns = [...optionalEmployeeListColumns]
   let data: any[] | null = null
@@ -157,11 +145,7 @@ export async function GET(request: NextRequest) {
       'sirket:sirketler(id,kisa_unvan,ticari_unvan)',
     ].join(',')
 
-    if (isTeskilatActive) {
-      selectQuery = `${selectQuery},
-        birim:birimler(id, ad, tip),
-        kadro:norm_kadrolar(id, unvan)`
-    }
+    selectQuery = `${selectQuery},birim:birimler(id, ad, tip),kadro:norm_kadrolar(id, unvan)`
 
     let query = supabase
       .from('employees')
@@ -169,7 +153,7 @@ export async function GET(request: NextRequest) {
       .order('soyad', { ascending: true })
 
     if (!includePassive) query = query.or('is_deleted.eq.false,is_deleted.is.null')
-    if (birimId && isTeskilatActive) query = query.eq('birim_id', birimId)
+    if (birimId) query = query.eq('birim_id', birimId)
     if (durum) query = query.eq('calisma_durumu', durum)
     if (ara) query = query.or(`ad.ilike.%${ara}%,soyad.ilike.%${ara}%,tc_kimlik.ilike.%${ara}%`)
 
@@ -201,7 +185,7 @@ export async function GET(request: NextRequest) {
     phone: row.cep_telefonu || null,
     gender: row.cinsiyet || null,
     birth_date: row.dogum_tarihi || null,
-    education_level: getEducationLevelValue(row) || null,
+    education_level: null,
     sgk_status: row.sgk_giris ? 'active' : 'pending',
     status: row.calisma_durumu || null,
   }))

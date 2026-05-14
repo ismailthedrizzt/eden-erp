@@ -79,16 +79,6 @@ export async function GET(
   const { id } = await params
   const supabase = createServiceClient()
 
-  // Check if teskilat module is active
-  const { data: teskilatLicense } = await supabase
-    .from('module_licenses')
-    .select('is_active, environment')
-    .eq('module_key', 'teskilat')
-    .single()
-
-  const isTeskilatActive = teskilatLicense?.is_active &&
-    (teskilatLicense.environment === 'all' || teskilatLicense.environment === process.env.NODE_ENV)
-
   const { data, error } = await supabase
     .from('employees')
     .select('*')
@@ -102,16 +92,14 @@ export async function GET(
     return NextResponse.json({ error: error.message, code: error.code || 'FETCH_FAILED' }, { status: 500 })
   }
 
-  const [birim, kadro] = isTeskilatActive
-    ? await Promise.all([
-        data.birim_id
-          ? supabase.from('birimler').select('id, ad, tip').eq('id', data.birim_id).maybeSingle()
-          : Promise.resolve({ data: null, error: null }),
-        data.kadro_id
-          ? supabase.from('norm_kadrolar').select('id, unvan').eq('id', data.kadro_id).maybeSingle()
-          : Promise.resolve({ data: null, error: null }),
-      ])
-    : [{ data: null, error: null }, { data: null, error: null }]
+  const [birim, kadro] = await Promise.all([
+    data.birim_id
+      ? supabase.from('birimler').select('id, ad, tip').eq('id', data.birim_id).maybeSingle()
+      : Promise.resolve({ data: null, error: null }),
+    data.kadro_id
+      ? supabase.from('norm_kadrolar').select('id, unvan').eq('id', data.kadro_id).maybeSingle()
+      : Promise.resolve({ data: null, error: null }),
+  ])
 
   const relatedError = birim.error || kadro.error
   if (relatedError) {

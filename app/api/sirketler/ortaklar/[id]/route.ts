@@ -3,6 +3,8 @@ import { createServiceClient } from '@/lib/supabase/server'
 import { hydrateMasterContact, stripMasterDataForRoleProfile, syncMasterContact } from '@/lib/identity/masterContact'
 import { EntityBankAccountsService } from '@/lib/modules/entity-bank-accounts/entityBankAccounts.service'
 
+const PARTNER_DETAIL_SELECT = 'id,sirket_id,company_id,person_id,organization_id,owner_kind,ortak_tipi,display_name,ortak_adi,identity_number,tckn_vkn,hisse_orani,share_ratio,voting_ratio,profit_ratio,source_type,source_id,share_units,nominal_value,capital_amount,share_class,has_representation_right,imza_yetkisi,has_control_right,control_type,has_board_nomination_right,has_veto_right,has_privileged_share,beneficial_owner,is_beneficial_owner,beneficial_ratio,is_ultimate_controller,start_date,end_date,status,is_deleted,history,photo_logo,partner_documents,partner_profile,notes,created_at'
+
 function buildFieldHistory(current: Record<string, any>, updates: Record<string, any>) {
   const existingHistory = Array.isArray(current.history) ? current.history : []
   const tracked = new Set(['share_ratio', 'voting_ratio', 'profit_ratio', 'control_type', 'status', 'start_date', 'end_date', 'source_id'])
@@ -33,7 +35,7 @@ export async function GET(
 
   const { data, error } = await supabase
     .from('sirket_ortaklar')
-    .select('*')
+    .select(PARTNER_DETAIL_SELECT)
     .eq('id', id)
     .single()
 
@@ -60,7 +62,7 @@ export async function PATCH(
 
   const { data: current, error: currentError } = await supabase
     .from('sirket_ortaklar')
-    .select('*')
+    .select(PARTNER_DETAIL_SELECT)
     .eq('id', id)
     .single()
 
@@ -74,7 +76,7 @@ export async function PATCH(
       history: buildFieldHistory(current, mapped),
     })
     .eq('id', id)
-    .select()
+    .select(PARTNER_DETAIL_SELECT)
     .single()
 
   if (error) return NextResponse.json({ error: error.message, code: error.code || 'UPDATE_FAILED' }, { status: 500 })

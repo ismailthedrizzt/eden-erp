@@ -10,6 +10,7 @@ import { normalizeCountryId } from '@/lib/reference/country-nationalities'
 import { createRealPersonMasterTabs } from '@/lib/identity/realPersonFormSections'
 import { createLegalEntityMasterTabs } from '@/lib/identity/legalEntityFormSections'
 import { isSoftDeletedRecord } from '@/lib/forms/entityState'
+import { companyService } from '@/lib/services/companyService'
 
 type PageState = 'list' | 'create' | 'view' | 'edit'
 type ToastState = { type: 'success' | 'error' | 'warning'; title?: string; message: string }
@@ -357,19 +358,16 @@ export default function OrtaklarPage() {
   const isSelectedPassive = isSoftDeletedRecord(selectedPartner)
   const formMode: FormMode = pageState === 'create' ? 'create' : isSelectedPassive ? 'passive' : pageState === 'edit' ? 'edit' : 'view'
 
-  const loadData = async () => {
+  const loadData = async (force = false) => {
     setLoading(true)
     setError(null)
     try {
-      const [partnerResponse, companyResponse, representativeResponse] = await Promise.all([
-        fetch(`/api/sirketler/ortaklar${includePassive ? '?include_passive=true' : ''}`),
-        fetch('/api/sirketler'),
-        fetch('/api/sirketler/temsilciler'),
+      if (force) companyService.invalidateRelations()
+      const [partnerPayload, companyPayload, representativePayload] = await Promise.all([
+        companyService.partnersList({ includePassive, useCache: !force }),
+        companyService.list({ useCache: !force }),
+        companyService.representativesList({ useCache: !force }),
       ])
-      const partnerPayload = await partnerResponse.json()
-      const companyPayload = await companyResponse.json()
-      const representativePayload = await representativeResponse.json().catch(() => ({ data: [] }))
-      if (!partnerResponse.ok) throw new Error(partnerPayload.error || 'Ortaklar yüklenemedi')
 
       setPartners(Array.isArray(partnerPayload.data) ? partnerPayload.data : [])
       setRepresentatives(Array.isArray(representativePayload.data) ? representativePayload.data : [])
@@ -393,7 +391,6 @@ export default function OrtaklarPage() {
       setLoading(false)
     }
   }
-
   useEffect(() => {
     loadData()
   }, [includePassive])
@@ -420,7 +417,7 @@ export default function OrtaklarPage() {
     )
   }
 
-  const tableData = partners.map(partner => {
+  const tableData = useMemo(() => partners.map(partner => {
     const currentOwnership = currentOwnershipByPartnerId[partner.id]
     const representativeAuthorities = representativeAuthoritiesForPartner(partner)
     return ({
@@ -436,15 +433,15 @@ export default function OrtaklarPage() {
     current_capital_amount: currentOwnership?.current_capital_amount ?? 0,
     representative_authorities: representativeAuthorities,
   })
-  })
+  }), [companyNameById, currentOwnershipByPartnerId, partners, representatives])
 
-  const activePartners = tableData.filter(partner => !isSoftDeletedRecord(partner))
-  const widgets: WidgetDef<any>[] = [
+  const activePartners = useMemo(() => tableData.filter(partner => !isSoftDeletedRecord(partner)), [tableData])
+  const widgets: WidgetDef<any>[] = useMemo(() => [
     { key: 'total', label: 'Toplam Ortak', render: () => tableData.length },
     { key: 'active', label: 'Aktif Ortak', render: () => activePartners.length },
     { key: 'real', label: 'Gerçek Kişi', render: () => activePartners.filter(partner => partner.partner_type_label === 'Gerçek Kişi').length },
     { key: 'legal', label: 'Tüzel Kişi', render: () => activePartners.filter(partner => partner.partner_type_label === 'Tüzel Kişi').length },
-  ]
+  ], [activePartners, tableData])
 
   const configuredHeroFields = heroFields.map(field => {
     if (field.name === 'company_id') return { ...field, options: companies, defaultValue: companies.length === 1 ? companies[0].value : field.defaultValue }
@@ -474,13 +471,10 @@ export default function OrtaklarPage() {
 
     try {
       const [response, transactionHistory] = await Promise.all([
-        fetch(`/api/sirketler/ortaklar/${row.id}?t=${Date.now()}`, { cache: 'no-store' }),
+        companyService.partnerDetail(row.id),
         fetchApprovedOwnershipTransactionsForPartner(row),
       ])
-      if (!response.ok) {
-        throw await createSaveError(response, 'Ortak detayı yüklenemedi')
-      }
-      const result = await response.json()
+      const result = response
       if (!result.data) throw new Error('Ortak detayı yüklenemedi')
       setSelectedPartner(normalizePartnerForForm({
         ...result.data,
@@ -509,7 +503,7 @@ export default function OrtaklarPage() {
       const result = await response.json()
       if (result.data) setSelectedPartner(normalizePartnerForForm(result.data))
       setToast({ type: 'success', title: 'Kayıt Başarılı', message: mode === 'create' ? 'Ortak kaydı oluşturuldu' : 'Ortak bilgileri güncellendi' })
-      await loadData()
+      await loadData(true)
       setPageState('list')
     } catch (err: any) {
       setFormError(err.message)
@@ -528,7 +522,7 @@ export default function OrtaklarPage() {
       const response = await fetch(`/api/sirketler/ortaklar/${selectedPartner.id}`, { method: 'DELETE' })
       if (!response.ok) throw await createSaveError(response, 'Pasifleştirme başarısız')
       setToast({ type: 'success', title: 'Kayıt Başarılı', message: 'Ortak kaydı pasife çekildi' })
-      await loadData()
+      await loadData(true)
       setPageState('list')
     } catch (err: any) {
       setToast(err.toast || { type: 'error', title: 'Kayıt Başarısız', message: err.message })
@@ -557,7 +551,7 @@ export default function OrtaklarPage() {
       const result = await response.json()
       if (result.data) setSelectedPartner(normalizePartnerForForm(result.data))
       setToast({ type: 'success', title: 'Kayit Basarili', message: 'Ortak kaydi aktive edildi' })
-      await loadData()
+      await loadData(true)
       setPageState('view')
     } catch (err: any) {
       setToast(err.toast || { type: 'error', title: 'Kayit Basarisiz', message: err.message })
@@ -618,7 +612,7 @@ export default function OrtaklarPage() {
             storageKey="sirket-ortaklar-table"
             emptyText="Ortak kaydı bulunamadı"
             onRowClick={handleRowClick}
-            onRefresh={loadData}
+            onRefresh={() => loadData(true)}
             showPassiveToggle
             includePassive={includePassive}
             onIncludePassiveChange={setIncludePassive}

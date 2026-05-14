@@ -78,7 +78,7 @@ export async function GET(request: NextRequest) {
 
   let query = supabase
     .from('sirketler')
-    .select('id,organization_id,kisa_unvan,ticari_unvan,vkn_tckn,vergi_dairesi,sirket_turu,il,ilce,adres,telefon,email,is_deleted,mersis_no,ticaret_sicil_no,kurulus_tarihi,legal_entity,electronic_notification_address,trade_registry_office,sirket_kodu,ulke,web_sitesi,e_fatura_mukellefi,e_arsiv_mukellefi,e_irsaliye_mukellefi,sgk_is_yeri_sicil_no,sgk_il,sgk_sube,tehlike_sinifi,varsayilan_para_birimi,varsayilan_dil,zaman_dilimi,mali_yil_baslangici,hero_images,updated_at,created_at')
+    .select('id,organization_id,kisa_unvan,ticari_unvan,vkn_tckn,vergi_dairesi,sirket_turu,il,ilce,adres,telefon,email,is_deleted,mersis_no,ticaret_sicil_no,kurulus_tarihi,ulke,web_sitesi,updated_at,created_at')
     .order('kisa_unvan', { ascending: true })
 
   if (ara) {

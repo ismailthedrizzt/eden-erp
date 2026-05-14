@@ -111,6 +111,11 @@ docs/                       # Documentation
 - Built-in save/cancel/delete actions
 
 ### 3. Data Fetching Pattern
+
+Frontend business data access must follow `FrontendDataAccessRules.md`. Primary ERP list pages must also follow `docs/templates/FastEntityListTemplate.md`: use a service built on `apiClient`, keep list/detail GETs cacheable, set the selected row and open the form before awaiting detail data, and keep list API selects narrow.
+
+Do not introduce direct Supabase table access in frontend hooks or pages. Do not add row detail cache busters such as `?t=${Date.now()}` or `cache: 'no-store'` unless the endpoint is explicitly real-time and the reason is documented.
+
 ```typescript
 // Custom hook structure
 export function useEntityName(options?: FilterOptions) {
@@ -125,12 +130,8 @@ export function useEntityName(options?: FilterOptions) {
   const fetchData = async () => {
     setLoading(true)
     try {
-      const { data, error } = await supabase
-        .from('table_name')
-        .select('*')
-        // ... filters
-      if (error) throw error
-      setData(data || [])
+      const result = await entityService.list(options, { useCache: true })
+      setData(result.data || [])
     } catch (err) {
       setError(err.message)
     } finally {
