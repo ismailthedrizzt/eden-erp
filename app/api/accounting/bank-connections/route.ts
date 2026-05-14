@@ -3,6 +3,7 @@ import { createServiceClient } from '@/lib/supabase/server'
 import { ACCOUNTING_PERMISSIONS } from '@/lib/modules/accounting/shared/accounting.permissions'
 import { requirePermission } from '@/lib/security/serverPermissions'
 import { cleanPayload, enrichConnections, isMissingTableError, missingTableResponse, normalizeConnectionPayload } from '../_banking'
+import { BANK_CONNECTION_SELECT } from '../bank-accounts-cards/_shared'
 
 export async function GET(request: NextRequest) {
   const supabase = createServiceClient()
@@ -14,7 +15,7 @@ export async function GET(request: NextRequest) {
 
   let query = supabase
     .from('bank_connections')
-    .select('*')
+    .select(BANK_CONNECTION_SELECT)
     .eq('is_deleted', false)
     .order('created_at', { ascending: false })
 
@@ -40,7 +41,7 @@ export async function POST(request: NextRequest) {
   const { data, error } = await supabase
     .from('bank_connections')
     .insert(cleanPayload({ ...payload, created_by: permission.userId, updated_by: permission.userId }))
-    .select('*')
+    .select(BANK_CONNECTION_SELECT)
     .single()
 
   if (error) {

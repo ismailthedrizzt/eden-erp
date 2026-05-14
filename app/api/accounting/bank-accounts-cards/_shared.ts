@@ -15,8 +15,10 @@ export const BANK_ACCOUNT_SELECT = [
   'account_name',
   'currency',
   'account_type',
+  'opening_date',
   'is_default',
   'last_balance',
+  'last_sync_at',
   'status',
   'is_deleted',
   'created_at',
@@ -38,6 +40,8 @@ export const BANK_CARD_SELECT = [
   'is_default',
   'limit_amount',
   'available_limit',
+  'statement_day',
+  'payment_due_day',
   'status',
   'is_deleted',
   'created_at',
@@ -45,7 +49,25 @@ export const BANK_CARD_SELECT = [
   'version',
 ].join(',')
 
-export const BANK_CONNECTION_SELECT = 'id,company_id,bank_name,provider_code,integration_type,connection_status,environment,status,is_deleted,created_at,updated_at,version'
+export const BANK_CONNECTION_SELECT = [
+  'id',
+  'company_id',
+  'bank_name',
+  'provider_code',
+  'integration_type',
+  'connection_status',
+  'credential_id',
+  'environment',
+  'base_url',
+  'last_test_at',
+  'last_sync_at',
+  'status',
+  'notes',
+  'is_deleted',
+  'created_at',
+  'updated_at',
+  'version',
+].join(',')
 
 export function parseCompositeId(id: string): { kind: BankAccountCardKind; rawId: string } {
   const [kind, rawId] = id.split(':')
