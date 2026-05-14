@@ -1,3 +1,5 @@
+import { isSoftDeletedRecord } from '@/lib/forms/entityState'
+
 export interface CorporatePartnerRecord {
   id?: string
   sirket_id?: string
@@ -182,7 +184,7 @@ function buildOwnershipGraph(
 }
 
 function isActivePartner(partner: CorporatePartnerRecord) {
-  return !partner.is_deleted && partner.status === 'Aktif'
+  return !isSoftDeletedRecord(partner)
 }
 
 function getCompanyId(partner: CorporatePartnerRecord) {

@@ -7,7 +7,7 @@ export const companyService = {
     return apiClient.get<{ data: Sirket[] }>('/api/sirketler', {
       ...clientOptions,
       query: {
-        ...(includePassive ? {} : { is_active: 'true' }),
+        ...(includePassive ? { include_passive: 'true' } : {}),
         ...clientOptions.query,
       },
     })

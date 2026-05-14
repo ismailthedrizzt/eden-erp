@@ -15,6 +15,7 @@ import {
   Users,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { isSoftDeletedRecord } from '@/lib/forms/entityState'
 
 type OwnerKind = 'gercek_kisi' | 'tuzel_kisi'
 type PartnerSourceType =
@@ -200,7 +201,7 @@ export function PartnersTab({ value, onChange, readOnly = false, representatives
 
     Promise.all([
       fetch('/api/ik/personel?durum=gorevde').then(response => response.ok ? response.json() : null),
-      fetch('/api/sirketler?is_active=true').then(response => response.ok ? response.json() : null),
+      fetch('/api/sirketler').then(response => response.ok ? response.json() : null),
     ]).then(([employeePayload, companyPayload]) => {
       if (cancelled) return
 
@@ -263,7 +264,7 @@ export function PartnersTab({ value, onChange, readOnly = false, representatives
 
   const activeStep = getActiveStep(draft)
   const selectedRecord = sourceRecords.find(record => record.id === draft.source_id)
-  const activePartners = partners.filter(row => !row.is_deleted && row.status === 'Aktif')
+  const activePartners = partners.filter(row => !isSoftDeletedRecord(row))
   const totalShare = round(activePartners.reduce((sum, row) => sum + toNumber(row.share_ratio), 0))
   const controlPartner = activePartners.find(row => toNumber(row.share_ratio) > 50)
   const canSaveDraft = draft.owner_kind && draft.source_type && draft.source_id && draft.start_date && draft.status && hasOwnershipMetric(draft)

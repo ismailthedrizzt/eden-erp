@@ -361,7 +361,7 @@ export default function TemsilcilerPage() {
     try {
       const [representativeResponse, companyResponse] = await Promise.all([
         fetch(`/api/sirketler/temsilciler${includePassive ? '?include_passive=true' : ''}`),
-        fetch('/api/sirketler?is_active=true'),
+        fetch('/api/sirketler'),
       ])
       const representativePayload = await representativeResponse.json()
       const companyPayload = await companyResponse.json()

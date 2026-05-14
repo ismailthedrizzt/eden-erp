@@ -220,17 +220,17 @@ async function enrichOrganizationFromCompany(supabase: ReturnType<typeof createS
   let company: Record<string, any> | null = null
 
   if (organization.id) {
-    const { data } = await supabase.from('sirketler').select('*').eq('is_active', true).eq('organization_id', organization.id).limit(1)
+    const { data } = await supabase.from('sirketler').select('*').eq('is_deleted', false).eq('organization_id', organization.id).limit(1)
     company = Array.isArray(data) ? data[0] || null : null
   }
 
   if (!company && organization.tax_number) {
-    const { data } = await supabase.from('sirketler').select('*').eq('is_active', true).eq('vkn_tckn', organization.tax_number).limit(1)
+    const { data } = await supabase.from('sirketler').select('*').eq('is_deleted', false).eq('vkn_tckn', organization.tax_number).limit(1)
     company = Array.isArray(data) ? data[0] || null : null
   }
 
   if (!company && organization.registration_number) {
-    const { data } = await supabase.from('sirketler').select('*').eq('is_active', true).eq('ticaret_sicil_no', organization.registration_number).limit(1)
+    const { data } = await supabase.from('sirketler').select('*').eq('is_deleted', false).eq('ticaret_sicil_no', organization.registration_number).limit(1)
     company = Array.isArray(data) ? data[0] || null : null
   }
 
@@ -291,7 +291,7 @@ async function findOrCreateOrganizationFromCompany(supabase: ReturnType<typeof c
 
   if (!taxNumber && !registrationNumber) return { record: null }
 
-  let query = supabase.from('sirketler').select('*').eq('is_active', true).limit(1)
+  let query = supabase.from('sirketler').select('*').eq('is_deleted', false).limit(1)
   query = taxNumber ? query.eq('vkn_tckn', taxNumber) : query.eq('ticaret_sicil_no', registrationNumber)
   const { data, error } = await query
   if (error) return { record: null }
@@ -342,10 +342,12 @@ async function findRoleRecord(
     query = query.eq(input.roleTable === 'stakeholders' ? 'company_id' : 'sirket_id', companyId)
   }
 
-  if (input.roleTable === 'employees' || input.roleTable === 'sirketler') {
+  if (input.roleTable === 'employees') {
     query = query.eq('is_active', true)
+  } else if (input.roleTable === 'sirketler') {
+    query = query.eq('is_deleted', false)
   } else {
-    query = query.eq('status', 'Aktif')
+    query = query.eq('is_deleted', false)
   }
 
   const { data, error } = await query

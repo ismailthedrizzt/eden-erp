@@ -44,7 +44,8 @@ const INTEGRATION_CATALOG: IntegrationRow[] = [
     credential_id: '',
     consent_id: '',
     token_auth_method: 'body',
-    scopes: '',
+    oauth_type: 'confidential',
+    scopes: 'oob',
     account_filters: '',
     account_information_path: '/balancesandmovements/accountinformation/account/v1/getaccountinformation',
     documentation_url: '',
@@ -73,6 +74,7 @@ const emptyForm = {
   credential_id: '',
   consent_id: '',
   token_auth_method: '',
+  oauth_type: '',
   scopes: '',
   account_filters: '',
   account_information_path: '',
@@ -198,6 +200,7 @@ export default function IntegrationParametersPage() {
               <TextField label="Secure Credential ID" value={form.credential_id} onChange={value => setForm({ ...form, credential_id: value })} />
               <TextField label="Consent ID" value={form.consent_id} onChange={value => setForm({ ...form, consent_id: value })} />
               <TextField label="Token Auth Method" value={form.token_auth_method} onChange={value => setForm({ ...form, token_auth_method: value })} />
+              <TextField label="OAuth Type" value={form.oauth_type} onChange={value => setForm({ ...form, oauth_type: value })} />
               <TextField label="Scopes" value={form.scopes} onChange={value => setForm({ ...form, scopes: value })} />
               <TextField label="Account Filters" value={form.account_filters} onChange={value => setForm({ ...form, account_filters: value })} />
               <TextField label="API Durumu" value={form.api_status} onChange={value => setForm({ ...form, api_status: value })} />
@@ -222,6 +225,7 @@ function integrationSettingsFromForm(form: Record<string, any>) {
     credential_id: form.credential_id || '',
     consent_id: form.consent_id || '',
     token_auth_method: form.token_auth_method || '',
+    oauth_type: form.oauth_type || '',
     scopes: form.scopes || '',
     account_filters: form.account_filters || '',
     account_information_path: form.account_information_path || '',

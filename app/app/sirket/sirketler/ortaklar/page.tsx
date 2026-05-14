@@ -100,6 +100,7 @@ interface OwnershipTransactionHistoryRow {
 interface RepresentativeAuthorityRow {
   id: string
   sirket_id?: string
+  is_deleted?: boolean
   person_id?: string | null
   organization_id?: string | null
   source_id?: string | null
@@ -362,7 +363,7 @@ export default function OrtaklarPage() {
     try {
       const [partnerResponse, companyResponse, representativeResponse] = await Promise.all([
         fetch(`/api/sirketler/ortaklar${includePassive ? '?include_passive=true' : ''}`),
-        fetch('/api/sirketler?is_active=true'),
+        fetch('/api/sirketler'),
         fetch('/api/sirketler/temsilciler'),
       ])
       const partnerPayload = await partnerResponse.json()
@@ -379,10 +380,13 @@ export default function OrtaklarPage() {
         kisa_unvan: company.kisa_unvan,
       })) : []
       setCompanies(companyOptions)
-      const ownershipPayloads = await Promise.all(companyOptions.map((company: CompanyOption) =>
-        fetch(`/api/companies/${company.value}/current-ownership`).then(response => response.json()).catch(() => ({ data: [] }))
-      ))
-      setCurrentOwnershipRows(ownershipPayloads.flatMap(payload => Array.isArray(payload.data) ? payload.data : []))
+      if (companyOptions.length > 0) {
+        const ownershipResponse = await fetch(`/api/companies/current-ownership?company_ids=${companyOptions.map(company => company.value).join(',')}`)
+        const ownershipPayload = await ownershipResponse.json().catch(() => ({ data: [] }))
+        setCurrentOwnershipRows(Array.isArray(ownershipPayload.data) ? ownershipPayload.data : [])
+      } else {
+        setCurrentOwnershipRows([])
+      }
     } catch (err: any) {
       setError(err.message)
     } finally {
@@ -406,7 +410,7 @@ export default function OrtaklarPage() {
 
     return representatives.filter(representative =>
       (!companyId || representative.sirket_id === companyId) &&
-      representative.status !== 'Pasif' &&
+      !isSoftDeletedRecord(representative) &&
       (
         (personId && representative.person_id === personId) ||
         (organizationId && representative.organization_id === organizationId) ||

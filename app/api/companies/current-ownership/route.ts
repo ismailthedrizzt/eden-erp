@@ -19,15 +19,20 @@ const CURRENT_OWNERSHIP_COLUMNS = [
   'warnings',
 ].join(',')
 
-export async function GET(_request: Request, { params }: { params: Promise<{ company_id: string }> }) {
-  const { company_id } = await params
+export async function GET(request: Request) {
   const supabase = createServiceClient()
-  const { data, error } = await supabase
+  const { searchParams } = new URL(request.url)
+  const companyIds = searchParams.get('company_ids')?.split(',').map(value => value.trim()).filter(Boolean) || []
+
+  let query = supabase
     .from('v_current_ownership')
     .select(CURRENT_OWNERSHIP_COLUMNS)
-    .eq('company_id', company_id)
+    .order('company_id', { ascending: true })
     .order('current_share_ratio', { ascending: false })
 
+  if (companyIds.length > 0) query = query.in('company_id', companyIds)
+
+  const { data, error } = await query
   if (error) return NextResponse.json({ error: error.message, code: error.code || 'FETCH_FAILED' }, { status: 500 })
-  return NextResponse.json({ data })
+  return NextResponse.json({ data: data || [] })
 }

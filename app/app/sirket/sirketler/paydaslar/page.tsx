@@ -284,7 +284,7 @@ export default function PaydaslarPage() {
     try {
       const [stakeholderResponse, companyResponse] = await Promise.all([
         fetch(`/api/sirketler/paydaslar${includePassive ? '?include_passive=true' : ''}`),
-        fetch('/api/sirketler?is_active=true'),
+        fetch('/api/sirketler'),
       ])
       const stakeholderPayload = await stakeholderResponse.json()
       const companyPayload = await companyResponse.json()

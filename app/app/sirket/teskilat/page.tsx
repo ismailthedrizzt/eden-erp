@@ -118,7 +118,7 @@ export default function TeskilatPage() {
     try {
       const [teskilatResponse, companyResponse] = await Promise.all([
         fetch('/api/ik/teskilat'),
-        fetch('/api/sirketler?is_active=true'),
+        fetch('/api/sirketler'),
       ])
       const teskilatPayload = await teskilatResponse.json()
       const companyPayload = await companyResponse.json()
@@ -167,7 +167,7 @@ export default function TeskilatPage() {
   ]
 
   const widgets: WidgetDef<any>[] = [
-    { key: 'unit-count', label: 'Aktif Birim', render: () => units.filter((unit) => !unit.is_deleted && unit.status !== 'Pasif').length },
+    { key: 'unit-count', label: 'Aktif Birim', render: () => units.filter((unit) => !unit.is_deleted).length },
     { key: 'positions', label: 'Toplam Kadro', render: () => positions.filter((position) => !position.is_deleted).reduce((sum, position) => sum + numberValue(position.norm_count, 1), 0) },
     { key: 'filled', label: 'Dolu', render: () => positions.filter((position) => !position.is_deleted).reduce((sum, position) => sum + numberValue(position.active_count), 0) },
     { key: 'open', label: 'Boş', render: () => positions.filter((position) => !position.is_deleted).reduce((sum, position) => sum + Math.max(numberValue(position.norm_count, 1) - numberValue(position.active_count), 0), 0) },

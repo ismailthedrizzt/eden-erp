@@ -174,15 +174,16 @@ async function collectRelationshipRows(supabase: SupabaseClient, params: Geograp
     }
   }))
 
-  for (const source of SOURCE_TABLES) {
+  const sourceResults = await Promise.all(SOURCE_TABLES.map(async source => {
+    const columns = sourceColumns(source)
     const sourceRows = await fetchRows(supabase, source.table, query => {
-      let next = query.select('*')
+      let next = query.select(columns)
       if (companyId && source.companyKey) next = next.eq(source.companyKey, companyId)
       return next
     })
 
-    rows.push(...sourceRows.map((row: Record<string, any>) => ({
-      id: `${source.type}:${row.id || rows.length}`,
+    return sourceRows.map((row: Record<string, any>, index: number) => ({
+      id: `${source.type}:${row.id || index}`,
       sourceType: source.type,
       sourceLabel: firstString(row, source.labelKeys) || RELATION_LABELS[source.type],
       companyId: source.companyKey ? row[source.companyKey] : null,
@@ -191,10 +192,30 @@ async function collectRelationshipRows(supabase: SupabaseClient, params: Geograp
       address: firstString(row, source.addressKeys),
       lat: readNumber(row, {}, ['lat', 'latitude', 'enlem']),
       lng: readNumber(row, {}, ['lng', 'lon', 'longitude', 'boylam']),
-    })))
-  }
+    }))
+  }))
+
+  rows.push(...sourceResults.flat())
 
   return rows.filter(hasMappableLocation)
+}
+
+function sourceColumns(source: (typeof SOURCE_TABLES)[number]) {
+  return Array.from(new Set([
+    'id',
+    source.companyKey,
+    ...source.labelKeys,
+    ...source.countryKeys,
+    ...source.cityKeys,
+    ...source.addressKeys,
+    'lat',
+    'latitude',
+    'enlem',
+    'lng',
+    'lon',
+    'longitude',
+    'boylam',
+  ].filter(Boolean))).join(',')
 }
 
 async function fetchRows(

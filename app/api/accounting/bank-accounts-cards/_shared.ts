@@ -4,6 +4,43 @@ import { cleanPayload, fetchCompanyNames } from '../_banking'
 
 export type BankAccountCardKind = 'account' | 'card'
 
+const BANK_ACCOUNT_LIST_COLUMNS = [
+  'id',
+  'company_id',
+  'bank_connection_id',
+  'branch_name',
+  'branch_code',
+  'iban',
+  'account_no',
+  'account_name',
+  'currency',
+  'account_type',
+  'is_default',
+  'last_balance',
+  'status',
+  'is_deleted',
+  'created_at',
+].join(',')
+
+const BANK_CARD_LIST_COLUMNS = [
+  'id',
+  'company_id',
+  'bank_connection_id',
+  'linked_bank_account_id',
+  'branch_name',
+  'branch_code',
+  'last_four_digits',
+  'card_name',
+  'currency',
+  'card_type',
+  'is_default',
+  'limit_amount',
+  'available_limit',
+  'status',
+  'is_deleted',
+  'created_at',
+].join(',')
+
 export function parseCompositeId(id: string): { kind: BankAccountCardKind; rawId: string } {
   const [kind, rawId] = id.split(':')
   if ((kind === 'account' || kind === 'card') && rawId) return { kind, rawId }
@@ -11,8 +48,8 @@ export function parseCompositeId(id: string): { kind: BankAccountCardKind; rawId
 }
 
 export async function listBankAccountsCards(supabase: SupabaseClient, options: { includePassive?: boolean } = {}) {
-  let accountsQuery = supabase.from('bank_accounts').select('*').order('created_at', { ascending: false })
-  let cardsQuery = supabase.from('bank_cards').select('*').order('created_at', { ascending: false })
+  let accountsQuery = supabase.from('bank_accounts').select(BANK_ACCOUNT_LIST_COLUMNS).order('created_at', { ascending: false })
+  let cardsQuery = supabase.from('bank_cards').select(BANK_CARD_LIST_COLUMNS).order('created_at', { ascending: false })
 
   if (!options.includePassive) {
     accountsQuery = accountsQuery.eq('is_deleted', false)

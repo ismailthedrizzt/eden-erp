@@ -20,6 +20,7 @@ import {
   UserCheck,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { isSoftDeletedRecord } from '@/lib/forms/entityState'
 
 type AuthorityType =
   | 'imza_yetkilisi'
@@ -282,7 +283,7 @@ export function RepresentativesTab({ value, onChange, readOnly = false, partners
 
     const duplicateAuthorities = representatives
       .filter((row, index) => index !== draft.editIndex)
-      .filter(row => !row.is_deleted && row.status !== 'Pasif')
+      .filter(row => !isSoftDeletedRecord(row))
       .filter(row => row.source_type === draft.source_type && row.source_id === draft.source_id)
       .flatMap(row => row.authority_types || [])
       .filter(authority => draft.authority_types.includes(authority))
@@ -650,7 +651,7 @@ export function RepresentativesTab({ value, onChange, readOnly = false, partners
                   <td className="px-3 py-3">
                     <span className={cn(
                       "rounded-full px-2 py-1 text-xs font-medium",
-                      row.status === 'Aktif' && !row.is_deleted
+                      !isSoftDeletedRecord(row)
                         ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300"
                         : "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300"
                     )}>

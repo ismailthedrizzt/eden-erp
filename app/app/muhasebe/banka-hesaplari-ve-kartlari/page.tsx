@@ -489,7 +489,7 @@ function normalizeForm(form: BankAccountCardPayload): BankAccountCardPayload {
 }
 
 async function loadCompanies(): Promise<Option[]> {
-  const response = await fetch('/api/sirketler?is_active=true', { cache: 'no-store' })
+  const response = await fetch('/api/sirketler', { cache: 'no-store' })
   if (!response.ok) return []
   const payload = await response.json()
   return (payload.data || []).map((company: any) => ({

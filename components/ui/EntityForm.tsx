@@ -1372,7 +1372,7 @@ function WorkLifecycleField({
     async function fetchReferences() {
       try {
         const [companyResponse, organizationResponse] = await Promise.all([
-          fetch('/api/sirketler?is_active=true'),
+          fetch('/api/sirketler'),
           fetch('/api/ik/teskilat'),
         ])
         const companyPayload = companyResponse.ok ? await companyResponse.json() : { data: [] }

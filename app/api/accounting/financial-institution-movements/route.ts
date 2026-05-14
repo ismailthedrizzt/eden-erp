@@ -4,6 +4,32 @@ import { ACCOUNTING_PERMISSIONS } from '@/lib/modules/accounting/shared/accounti
 import { requirePermission } from '@/lib/security/serverPermissions'
 import { fetchCompanyNames, isMissingTableError, missingTableResponse } from '../_banking'
 
+const MOVEMENT_LIST_COLUMNS = [
+  'id',
+  'company_id',
+  'bank_connection_id',
+  'bank_account_id',
+  'bank_card_id',
+  'source_type',
+  'movement_type',
+  'movement_date',
+  'value_date',
+  'description',
+  'counterparty_name',
+  'counterparty_iban',
+  'reference_no',
+  'amount',
+  'currency',
+  'direction',
+  'source',
+  'raw_data',
+  'match_status',
+  'matched_pre_accounting_movement_id',
+  'matched_at',
+  'matched_by',
+  'status',
+].join(',')
+
 export async function GET(request: NextRequest) {
   const supabase = createServiceClient()
   const permission = await requirePermission(request, supabase, ACCOUNTING_PERMISSIONS.bankMovementsView)
@@ -12,7 +38,7 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   let query = supabase
     .from('financial_institution_movements')
-    .select('*')
+    .select(MOVEMENT_LIST_COLUMNS)
     .eq('is_deleted', false)
     .order('movement_date', { ascending: false })
 

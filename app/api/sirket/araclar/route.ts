@@ -21,7 +21,7 @@ export async function GET() {
   const [{ data: vehicles, error }, { data: employees }, { data: companies }] = await Promise.all([
     supabase.from('company_vehicles').select('*').eq('is_deleted', false).order('created_at', { ascending: false }),
     supabase.from('employees').select('id,ad,soyad,unvan,email').order('ad'),
-    supabase.from('sirketler').select('id,ticari_unvan,kisa_unvan').eq('is_active', true).order('kisa_unvan'),
+    supabase.from('sirketler').select('id,ticari_unvan,kisa_unvan').eq('is_deleted', false).order('kisa_unvan'),
   ])
 
   if (error) {

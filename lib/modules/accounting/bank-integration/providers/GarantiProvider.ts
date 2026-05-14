@@ -73,7 +73,8 @@ export class GarantiProvider extends GenericBankProvider {
     const tokenEndpoint = credentials.tokenEndpoint || `${apiBaseUrl}/auth/oauth/v2/token`
     const body = new URLSearchParams()
     body.set('grant_type', 'client_credentials')
-    if (credentials.scopes?.length) body.set('scope', credentials.scopes.join(' '))
+    const scopes = credentials.scopes?.length ? credentials.scopes : ['oob']
+    body.set('scope', scopes.join(' '))
 
     const tokenAuthMethod = readText(credentials.extra?.tokenAuthMethod) || 'body'
     const headers: Record<string, string> = {

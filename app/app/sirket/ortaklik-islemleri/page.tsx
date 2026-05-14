@@ -96,7 +96,7 @@ function OwnershipTransactionsContent() {
     try {
       const [transactionResponse, companyResponse, partnerResponse] = await Promise.all([
         fetch('/api/ownership-transactions'),
-        fetch('/api/sirketler?is_active=true'),
+        fetch('/api/sirketler'),
         fetch('/api/sirketler/ortaklar'),
       ])
       const [transactionPayload, companyPayload, partnerPayload] = await Promise.all([

@@ -90,6 +90,7 @@ export async function GET(request: NextRequest) {
 
   const ara = searchParams.get('ara')
   const isActive = searchParams.get('is_active')
+  const includePassive = searchParams.get('include_passive') === 'true'
 
   let query = supabase
     .from('sirketler')
@@ -100,8 +101,9 @@ export async function GET(request: NextRequest) {
     query = query.or(`kisa_unvan.ilike.%${ara}%,ticari_unvan.ilike.%${ara}%,vkn_tckn.ilike.%${ara}%`)
   }
 
-  if (isActive === 'true') query = query.eq('is_active', true)
-  if (isActive === 'false') query = query.eq('is_active', false)
+  if (!includePassive) query = query.eq('is_deleted', false)
+  if (isActive === 'true') query = query.eq('is_deleted', false)
+  if (isActive === 'false') query = query.eq('is_deleted', true)
 
   const { data, error } = await query
   if (error) {
