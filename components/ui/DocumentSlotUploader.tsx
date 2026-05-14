@@ -36,7 +36,8 @@ import {
   Download,
   Plus,
   AlertCircle,
-  Sparkles
+  Sparkles,
+  History
 } from 'lucide-react'
 import { cn, formatFileSize } from '@/lib/utils'
 
@@ -492,6 +493,7 @@ export function DocumentSlotUploader({
   const [deleteTargetDoc, setDeleteTargetDoc] = useState<SlotDocument | null>(null)
   const [activeTab, setActiveTab] = useState<'upload' | 'documents'>(defaultTab)
   const [replaceSlotId, setReplaceSlotId] = useState<string | null>(null)
+  const [expandedHistorySlotIds, setExpandedHistorySlotIds] = useState<string[]>([])
   const [extraSlotName, setExtraSlotName] = useState('')
   const [showExtraSlotInput, setShowExtraSlotInput] = useState(false)
   const [signedPreviewUrls, setSignedPreviewUrls] = useState<Record<string, string>>({})
@@ -1004,6 +1006,178 @@ export function DocumentSlotUploader({
     </div>
   )
 
+  const handleUploadForSlot = (slotId: string) => {
+    setReplaceSlotId(slotId)
+    replaceFileInputRef.current?.click()
+  }
+
+  const toggleHistoryForSlot = (slotId: string) => {
+    setExpandedHistorySlotIds(prev =>
+      prev.includes(slotId) ? prev.filter(id => id !== slotId) : [...prev, slotId]
+    )
+  }
+
+  const renderDocumentListView = () => (
+    <div className="w-full rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
+      <div className="flex items-center justify-between border-b border-gray-100 px-4 py-3 dark:border-gray-700">
+        <div>
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Belgeler</h3>
+          <p className="text-xs text-gray-500 dark:text-gray-400">Aktif belgeler ve geçmiş sürümler</p>
+        </div>
+        <span className="rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-300">
+          {documents.length}
+        </span>
+      </div>
+
+      {allSlots.length === 0 ? (
+        <div className="flex min-h-32 flex-col items-center justify-center gap-2 px-4 py-8 text-center">
+          <FileText size={28} className="text-gray-400" />
+          <p className="text-sm font-medium text-gray-600 dark:text-gray-300">Tanımlı belge alanı yok</p>
+        </div>
+      ) : (
+        <div className="max-h-[360px] divide-y divide-gray-100 overflow-auto dark:divide-gray-700">
+          {allSlots.map(slot => {
+            const doc = getLatestActiveDocument(documents, slot.id)
+            const historyDocs = sortedDocuments.filter(item => item.slotId === slot.id && !isActiveDocument(item))
+            const expanded = expandedHistorySlotIds.includes(slot.id)
+            const signedKey = doc?.storagePath || doc?.documentId || ''
+            const docUrl = getDocumentUrl(doc) || (signedKey ? signedPreviewUrls[signedKey] : '')
+            const config = getFileTypeConfig(getEffectiveDocumentType(doc))
+            const Icon = config.icon
+
+            return (
+              <div key={slot.id}>
+                <div className="flex items-center gap-3 px-4 py-3">
+                  <div className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-lg", config.bgColor)}>
+                    <Icon size={18} className={config.color} />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex min-w-0 items-center gap-2">
+                      <span className="shrink-0 text-sm font-semibold text-gray-900 dark:text-white">{slot.title}</span>
+                      {doc ? (
+                        <button
+                          type="button"
+                          onClick={() => setPreviewDoc(doc)}
+                          className="min-w-0 truncate text-left text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-200 dark:hover:text-blue-300"
+                          title={doc.name}
+                        >
+                          {doc.name}
+                        </button>
+                      ) : (
+                        <span className="text-sm text-gray-400">Belge yok</span>
+                      )}
+                    </div>
+                    <div className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-gray-500 dark:text-gray-400">
+                      {doc ? (
+                        <>
+                          <span>{formatFileSize(doc.size || 0)}</span>
+                          <span>{formatDocumentDate(doc.uploadedAt)}</span>
+                          <span className="rounded-full bg-green-50 px-1.5 py-0.5 font-medium text-green-700 dark:bg-green-900/30 dark:text-green-300">Aktif</span>
+                        </>
+                      ) : (
+                        <span>Bu belge alanına henüz dosya yüklenmedi</span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => toggleHistoryForSlot(slot.id)}
+                      disabled={historyDocs.length === 0}
+                      className="rounded-md p-2 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-35 dark:hover:bg-gray-700"
+                      title="Geçmiş belgeler"
+                    >
+                      <History size={16} className="text-gray-600 dark:text-gray-300" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => doc && setPreviewDoc(doc)}
+                      disabled={!doc}
+                      className="rounded-md p-2 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-35 dark:hover:bg-gray-700"
+                      title="Önizle"
+                    >
+                      <Eye size={16} className="text-gray-600 dark:text-gray-300" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => doc && handleDownload(doc)}
+                      disabled={!docUrl}
+                      className="rounded-md p-2 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-35 dark:hover:bg-gray-700"
+                      title="İndir"
+                    >
+                      <Download size={16} className="text-gray-600 dark:text-gray-300" />
+                    </button>
+                    {!readOnly && (
+                      <button
+                        type="button"
+                        onClick={() => handleUploadForSlot(slot.id)}
+                        className="rounded-md p-2 hover:bg-blue-50 dark:hover:bg-blue-900/30"
+                        title={doc ? "Güncelle" : "Yükle"}
+                      >
+                        <Upload size={16} className="text-blue-600" />
+                      </button>
+                    )}
+                    {!readOnly && doc && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setDeleteTargetDoc(doc)
+                          setShowDeleteConfirm(true)
+                        }}
+                        className="rounded-md p-2 hover:bg-red-50 dark:hover:bg-red-900/30"
+                        title="Sil"
+                      >
+                        <Trash2 size={16} className="text-red-600" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+                {expanded && historyDocs.length > 0 && (
+                  <div className="space-y-2 border-t border-gray-100 bg-gray-50 px-4 py-3 pl-16 dark:border-gray-700 dark:bg-gray-900/40">
+                    {historyDocs.map((historyDoc, index) => {
+                      const historyConfig = getFileTypeConfig(getEffectiveDocumentType(historyDoc))
+                      const HistoryIcon = historyConfig.icon
+                      return (
+                        <div key={`${getDocumentIdentity(historyDoc)}:${index}`} className="flex items-center gap-3 rounded-lg border border-gray-200 bg-white px-3 py-2 dark:border-gray-700 dark:bg-gray-800">
+                          <div className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-md", historyConfig.bgColor)}>
+                            <HistoryIcon size={16} className={historyConfig.color} />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <button
+                              type="button"
+                              onClick={() => setPreviewDoc(historyDoc)}
+                              className="block max-w-full truncate text-left text-sm font-medium text-gray-700 hover:text-blue-600 dark:text-gray-200 dark:hover:text-blue-300"
+                              title={historyDoc.name}
+                            >
+                              {historyDoc.name}
+                            </button>
+                            <div className="mt-0.5 flex flex-wrap items-center gap-2 text-[11px] text-gray-500 dark:text-gray-400">
+                              <span>{formatFileSize(historyDoc.size || 0)}</span>
+                              <span>{formatDocumentDate(historyDoc.uploadedAt)}</span>
+                              <span>{getDocumentStatusLabel(historyDoc)}</span>
+                            </div>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setPreviewDoc(historyDoc)}
+                            className="rounded-md p-2 hover:bg-gray-100 dark:hover:bg-gray-700"
+                            title="Önizle"
+                          >
+                            <Eye size={16} className="text-gray-600 dark:text-gray-300" />
+                          </button>
+                        </div>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+
   const renderDocumentActions = (surface: 'inline' | 'overlay' = 'inline') => {
     if (!currentDoc) return null
 
@@ -1064,7 +1238,7 @@ export function DocumentSlotUploader({
       onKeyDown={handleKeyDown}
       tabIndex={0}
     >
-      <div className="flex w-full min-w-[196px] max-w-[196px] rounded-lg border border-gray-200 bg-gray-50 p-1 dark:border-gray-700 dark:bg-gray-900">
+      <div className="hidden">
         <button
           type="button"
           onClick={() => setActiveTab('upload')}
@@ -1091,7 +1265,7 @@ export function DocumentSlotUploader({
         </button>
       </div>
 
-      {activeTab === 'documents' ? renderDocumentList() : (
+      {activeTab === 'documents' ? renderDocumentListView() : (
       <>
       {/* Main Card */}
       <div 
