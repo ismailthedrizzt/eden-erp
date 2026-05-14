@@ -213,12 +213,13 @@ export interface EntityFormProps {
 const DOCUMENTS_FORM_TAB_ID = '__documents__'
 
 function isPassiveRecord(data: Record<string, any>) {
-  const status = String(data.status || data.durum || '').toLocaleLowerCase('tr-TR')
-  const companyStatus = String(data.company_status || '').toLocaleLowerCase('tr-TR')
+  const status = String(data.status || data.durum || '').trim().toLocaleLowerCase('tr-TR')
+  const companyStatus = String(data.company_status || '').trim().toLocaleLowerCase('tr-TR')
   return data.is_deleted === true
     || data.is_active === false
     || data.aktif === false
     || ['pasif', 'passive', 'inactive', 'deleted', 'archived'].includes(status)
+    || status.includes('pasif')
     || companyStatus === 'terkin_edilmis'
 }
 
@@ -1811,13 +1812,14 @@ export function EntityForm({
     }
   }, [externalFieldErrors])
 
-  const isPassive = isPassiveRecord(formData)
+  const effectiveStatusData = data ? { ...data, ...formData } : formData
+  const isPassive = isPassiveRecord(effectiveStatusData)
   const isPassiveEditLocked = isPassive && mode === 'edit'
   const isReadOnly = mode === 'view' || isPassiveEditLocked
   const isCreate = mode === 'create'
   const isEdit = mode === 'edit' && !isPassiveEditLocked
   const canActivateRecord = isPassive && !!onActivate
-  const hasStatusAction = !!onDelete || canActivateRecord
+  const hasStatusAction = isPassive ? canActivateRecord : !!onDelete
   const slotLoaderMode = isReadOnly ? 'view' : isCreate ? 'insert' : 'update'
   const isIdentityGateEnabled = !!identityGate?.enabled
   const effectiveIdentityGateResult = identityGateResult || buildIdentityResultFromExistingData(identityGate, formData)
