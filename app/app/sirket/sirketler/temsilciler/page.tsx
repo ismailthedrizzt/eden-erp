@@ -721,6 +721,7 @@ function normalizeRepresentativeForForm(representative: RepresentativeRow) {
     epostalar?: Array<Record<string, any>>
   }
   const displayName = representative.display_name || representative.ad_soyad || ''
+  const status = representative.is_deleted ? 'Pasif' : representative.status || profile.status || 'Aktif'
   return {
     ...profile,
     ...representative,
@@ -733,7 +734,7 @@ function normalizeRepresentativeForForm(representative: RepresentativeRow) {
     display_name: displayName,
     primary_authority_type: toAuthorityValue(primaryAuthority || authorityTypes[0] || ''),
     authority_types: authorityTypes,
-    status: profile.status || representative.status || 'Aktif',
+    status,
     authority_limit: profile.authority_limit ?? representative.transaction_limit ?? '',
     currency: profile.currency || representative.currency || 'TRY',
     photo_logo: representative.photo_logo || [],

@@ -539,6 +539,7 @@ function normalizeStakeholderForForm(stakeholder: StakeholderRow) {
     epostalar?: Array<Record<string, any>>
   }
   const displayName = stakeholder.display_name || ''
+  const status = stakeholder.is_deleted ? 'Pasif' : stakeholder.status || profile.status || 'Aktif'
   return {
     ...profile,
     ...stakeholder,
@@ -548,6 +549,7 @@ function normalizeStakeholderForForm(stakeholder: StakeholderRow) {
     trade_name: masterFields.trade_name || masterFields.legal_name || '',
     short_name: masterFields.short_name || '',
     display_name: displayName,
+    status,
     telefonlar: Array.isArray(masterFields.telefonlar) ? masterFields.telefonlar : [],
     epostalar: Array.isArray(masterFields.epostalar) ? masterFields.epostalar : [],
     document_summary: stakeholder.stakeholder_documents || [],

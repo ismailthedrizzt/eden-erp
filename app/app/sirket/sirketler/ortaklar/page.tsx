@@ -933,6 +933,7 @@ function normalizePartnerForForm(partner: PartnerRow) {
   const identityNumber = partner.identity_number || partner.tckn_vkn || ''
   const telefonlar = Array.isArray(masterFields.telefonlar) ? masterFields.telefonlar : []
   const epostalar = Array.isArray(masterFields.epostalar) ? masterFields.epostalar : []
+  const status = partner.is_deleted ? 'Pasif' : partner.status || profile.status || 'Aktif'
   return {
     ...profile,
     ...partner,
@@ -947,7 +948,7 @@ function normalizePartnerForForm(partner: PartnerRow) {
     telefonlar,
     epostalar,
     end_date: profile.end_date ?? partner.end_date ?? '',
-    status: profile.status || partner.status || 'Aktif',
+    status,
     photo_logo: partner.photo_logo || [],
     partner_documents: partner.partner_documents || [],
     current_ownership: partner.current_ownership || { company_id: partner.sirket_id, partner_id: partner.id },
