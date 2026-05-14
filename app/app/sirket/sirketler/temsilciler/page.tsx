@@ -351,7 +351,8 @@ export default function TemsilcilerPage() {
   const [includePassive, setIncludePassive] = useState(false)
   const [toast, setToast] = useState<ToastState | null>(null)
 
-  const formMode: FormMode = pageState === 'create' ? 'create' : pageState === 'edit' ? 'edit' : 'view'
+  const isSelectedPassive = !!selectedRepresentative && (selectedRepresentative.is_deleted === true || selectedRepresentative.status !== 'Aktif')
+  const formMode: FormMode = pageState === 'create' ? 'create' : isSelectedPassive ? 'passive' : pageState === 'edit' ? 'edit' : 'view'
 
   const loadData = async () => {
     setLoading(true)
@@ -597,7 +598,7 @@ export default function TemsilcilerPage() {
             onCancel={() => setPageState('list')}
             onDelete={handleDelete}
             onActivate={handleActivate}
-            isPassiveRecord={!!selectedRepresentative && (selectedRepresentative.is_deleted === true || selectedRepresentative.status !== 'Aktif')}
+            isPassiveRecord={isSelectedPassive}
             onModeChange={(mode) => setPageState(mode)}
             onIdentityGateOpenExistingRole={async (roleRecord) => {
               await handleRowClick(roleRecord as any)

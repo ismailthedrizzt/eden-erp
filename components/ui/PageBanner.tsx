@@ -30,7 +30,7 @@
  * />
  */
 
-import { Plus, ArrowLeft, UserPlus, User, Edit3, Eye } from 'lucide-react'
+import { Plus, ArrowLeft, UserPlus, User, Edit3, EyeOff } from 'lucide-react'
 import { ReactNode } from 'react'
 import { cn } from '@/lib/utils'
 
@@ -38,7 +38,7 @@ import { cn } from '@/lib/utils'
 export type PageBannerMode = 'list' | 'form'
 
 /** Form sub-mode for displaying appropriate icon/title */
-export type FormSubMode = 'create' | 'view' | 'edit'
+export type FormSubMode = 'create' | 'view' | 'edit' | 'passive'
 
 export interface PageBannerProps {
   /** Page mode - determines which button to show */
@@ -98,6 +98,7 @@ export function PageBanner({
       switch (formMode) {
         case 'create': return <UserPlus size={24} />
         case 'edit': return <Edit3 size={24} />
+        case 'passive': return <EyeOff size={24} />
         case 'view': return <User size={24} />
         default: return <User size={24} />
       }

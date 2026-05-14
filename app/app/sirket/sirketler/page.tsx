@@ -352,7 +352,14 @@ export default function SirketlerPage() {
     canEdit: moduleWritable && can(PERMISSIONS.companies.edit),
     canApprove: moduleWritable && can(PERMISSIONS.companies.approve),
   })
-  const formMode: FormMode = pageState === 'create' ? 'create' : pageState === 'edit' && formAccess.canSave ? 'edit' : 'view'
+  const isSelectedPassive = !!selectedSirket && (selectedSirket.is_active === false || selectedSirket.company_status === 'terkin_edilmis')
+  const formMode: FormMode = pageState === 'create'
+    ? 'create'
+    : isSelectedPassive
+      ? 'passive'
+      : pageState === 'edit' && formAccess.canSave
+        ? 'edit'
+        : 'view'
 
   if (!formAccess.canView) {
     return (
@@ -735,7 +742,7 @@ export default function SirketlerPage() {
             onCancel={handleBackToList}
             onDelete={handleDelete}
             onActivate={handleActivate}
-            isPassiveRecord={!!selectedSirket && (selectedSirket.is_active === false || selectedSirket.company_status === 'terkin_edilmis')}
+            isPassiveRecord={isSelectedPassive}
             onModeChange={(mode) => setPageState(mode === 'edit' && !formAccess.showEdit ? 'view' : mode)}
             onIdentityGateOpenExistingRole={async (roleRecord) => {
               await handleRowClick(roleRecord as SirketTableRow)

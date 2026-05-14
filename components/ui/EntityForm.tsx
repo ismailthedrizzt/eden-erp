@@ -98,7 +98,7 @@ export interface FormTab {
 }
 
 /** Form modes */
-export type FormMode = 'create' | 'view' | 'edit'
+export type FormMode = 'create' | 'view' | 'edit' | 'passive'
 
 /** EntityForm props */
 export interface EntityFormProps {
@@ -187,7 +187,7 @@ export interface EntityFormProps {
   isPassiveRecord?: boolean
   
   /** Mode change handler (view -> edit) */
-  onModeChange?: (mode: FormMode) => void
+  onModeChange?: (mode: 'create' | 'view' | 'edit') => void
 
   /** Optional field change observer for parent-driven dynamic forms */
   onFieldChange?: (field: string, value: any, data: Record<string, any>) => void
@@ -1727,7 +1727,7 @@ export function EntityForm({
 
   // Initialize form data
   useEffect(() => {
-    if (data && (mode === 'view' || mode === 'edit')) {
+    if (data && (mode === 'view' || mode === 'edit' || mode === 'passive')) {
       setFormData(data)
     } else if (mode === 'create') {
       // Initialize with defaults
@@ -1817,11 +1817,10 @@ export function EntityForm({
   }, [externalFieldErrors])
 
   const effectiveStatusData = data ? { ...data, ...formData } : formData
-  const isPassive = typeof explicitPassiveRecord === 'boolean' ? explicitPassiveRecord : isPassiveRecord(effectiveStatusData)
-  const isPassiveEditLocked = isPassive && mode === 'edit'
-  const isReadOnly = mode === 'view' || isPassiveEditLocked
+  const isPassive = mode === 'passive' || (typeof explicitPassiveRecord === 'boolean' ? explicitPassiveRecord : isPassiveRecord(effectiveStatusData))
+  const isReadOnly = mode === 'view' || mode === 'passive'
   const isCreate = mode === 'create'
-  const isEdit = mode === 'edit' && !isPassiveEditLocked
+  const isEdit = mode === 'edit'
   const canActivateRecord = isPassive && !!onActivate
   const hasStatusAction = isPassive ? canActivateRecord : !!onDelete
   const canShowStatusAction = canActivateRecord || (!isPassive && canEdit && !!onDelete)
@@ -1895,7 +1894,7 @@ export function EntityForm({
     return 'neutral'
   }
 
-  const handleModeChange = (newMode: FormMode) => {
+  const handleModeChange = (newMode: 'view' | 'edit') => {
     if (newMode === 'edit' && isPassive) return
     setMode(newMode)
     onModeChange?.(newMode)
@@ -2666,7 +2665,7 @@ export function EntityForm({
               {identityGate?.enabled && (
                 <MasterIdentityGate
                   config={identityGate}
-                  mode={mode}
+                  mode={mode === 'passive' ? 'view' : mode}
                   formData={formData}
                   roleScope={identityRoleScope}
                   onResolved={handleIdentityResolved}

@@ -352,7 +352,8 @@ export default function OrtaklarPage() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [toast, setToast] = useState<ToastState | null>(null)
 
-  const formMode: FormMode = pageState === 'create' ? 'create' : pageState === 'edit' ? 'edit' : 'view'
+  const isSelectedPassive = !!selectedPartner && (selectedPartner.is_deleted === true || selectedPartner.status !== 'Aktif')
+  const formMode: FormMode = pageState === 'create' ? 'create' : isSelectedPassive ? 'passive' : pageState === 'edit' ? 'edit' : 'view'
 
   const loadData = async () => {
     setLoading(true)
@@ -651,7 +652,7 @@ export default function OrtaklarPage() {
             onCancel={() => setPageState('list')}
             onDelete={handleDelete}
             onActivate={handleActivate}
-            isPassiveRecord={!!selectedPartner && (selectedPartner.is_deleted === true || selectedPartner.status !== 'Aktif')}
+            isPassiveRecord={isSelectedPassive}
             onModeChange={(mode) => setPageState(mode)}
             additionalActions={selectedPartner?.id ? (
               <button
