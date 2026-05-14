@@ -1057,11 +1057,11 @@ export function DocumentSlotUploader({
 
   return (
     <div 
-      className={cn("flex flex-col items-center gap-4", className)}
+      className={cn("flex w-full flex-col items-center gap-4", className)}
       onKeyDown={handleKeyDown}
       tabIndex={0}
     >
-      <div className="flex w-full max-w-xs rounded-lg border border-gray-200 bg-gray-50 p-1 dark:border-gray-700 dark:bg-gray-900">
+      <div className="flex w-full min-w-[196px] max-w-[196px] rounded-lg border border-gray-200 bg-gray-50 p-1 dark:border-gray-700 dark:bg-gray-900">
         <button
           type="button"
           onClick={() => setActiveTab('upload')}
