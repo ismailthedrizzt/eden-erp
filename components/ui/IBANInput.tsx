@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { Landmark } from 'lucide-react'
 import { cn, getIbanBankInfo } from '@/lib/utils'
 
@@ -13,14 +13,17 @@ interface IBANInputProps {
 
 export function IBANInput({ value, onChange, disabled = false, className }: IBANInputProps) {
   const [bankInfo, setBankInfo] = useState<ReturnType<typeof getIbanBankInfo>>(null)
+  const branchLabel = bankInfo?.branchName
+    ? bankInfo.branchName
+    : bankInfo?.branchCode
+      ? `Şube kodu: ${bankInfo.branchCode}`
+      : 'Şube adı çözümlenemedi'
 
-  // Format IBAN for display
   const formatIBAN = (iban: string) => {
     const cleaned = iban.replace(/\s/g, '').toUpperCase()
     return cleaned.replace(/(.{4})/g, '$1 ').trim()
   }
 
-  // Get bank info from local mapping
   useEffect(() => {
     setBankInfo(getIbanBankInfo(value))
   }, [value])
@@ -50,7 +53,7 @@ export function IBANInput({ value, onChange, disabled = false, className }: IBAN
         />
         <Landmark className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
       </div>
-      
+
       {bankInfo && (
         <div className={cn(
           "flex items-center gap-2 p-2 rounded-md border",
@@ -77,14 +80,10 @@ export function IBANInput({ value, onChange, disabled = false, className }: IBAN
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-xs font-medium text-gray-700 dark:text-gray-300 truncate">
-              {bankInfo.bankName}
+              <span className="text-gray-500 dark:text-gray-400">Banka Adı: </span>{bankInfo.bankName}
             </p>
             <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-              {bankInfo.branchConfidence === 'known'
-                ? bankInfo.branchName
-                : bankInfo.swiftCode
-                  ? `SWIFT: ${bankInfo.swiftCode}`
-                  : 'Banka kodu açık kaynak listeden çözüldü'}
+              <span>Şube Adı: </span>{branchLabel}
             </p>
           </div>
         </div>

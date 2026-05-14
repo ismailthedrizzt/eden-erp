@@ -34,6 +34,13 @@ const PERSON_MASTER_PROFILE_KEYS = [
 
 const ORGANIZATION_MASTER_PROFILE_KEYS = [
   'contact_points',
+  'beneficiary_full_name',
+  'beneficiary_address',
+  'beneficiary_iban_or_account_no',
+  'beneficiary_swift_bic',
+  'beneficiary_bank_name',
+  'beneficiary_bank_address',
+  'beneficiary_currency',
 ]
 
 const MASTER_PROFILE_KEYS = new Set([
@@ -447,9 +454,25 @@ function normalizeRelatives(value: unknown) {
 }
 
 function normalizeOrganizationMasterPayload(source: Record<string, any>) {
-  return {
-    ...(Object.prototype.hasOwnProperty.call(source, 'contact_points') ? { contact_points: normalizeContactPoints(source.contact_points) } : {}),
+  const payload: Record<string, any> = Object.fromEntries(
+    ORGANIZATION_MASTER_PROFILE_KEYS
+      .filter(key => key !== 'contact_points' && Object.prototype.hasOwnProperty.call(source, key))
+      .map(key => [key, clean(source[key]) || null])
+  )
+
+  if (Object.prototype.hasOwnProperty.call(source, 'beneficiary_currency')) {
+    payload.beneficiary_currency = clean(source.beneficiary_currency).toUpperCase() || null
   }
+
+  if (Object.prototype.hasOwnProperty.call(source, 'beneficiary_swift_bic')) {
+    payload.beneficiary_swift_bic = clean(source.beneficiary_swift_bic).toUpperCase() || null
+  }
+
+  if (Object.prototype.hasOwnProperty.call(source, 'contact_points')) {
+    payload.contact_points = normalizeContactPoints(source.contact_points)
+  }
+
+  return payload
 }
 
 function normalizeContactPoints(value: unknown) {

@@ -2,6 +2,7 @@ import { clsx, type ClassValue } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 import turkishBankCodes from '@/lib/data/turkish-bank-codes.json'
 import garantiBbvaBranches from '@/lib/data/garanti-bbva-branches.json'
+import isbankBranches from '@/lib/data/isbank-branches.json'
 
 // Tailwind class birleştirici
 export function cn(...inputs: ClassValue[]) {
@@ -178,9 +179,12 @@ function resolveTurkishIbanWithoutBranch(iban: string) {
 }
 
 const GARANTI_BBVA_BANK_CODE = '00062'
+const ISBANK_BANK_CODE = '00064'
 const GARANTI_BBVA_BRANCHES = garantiBbvaBranches.branches as Record<string, string>
+const ISBANK_BRANCHES = isbankBranches.branches as Record<string, string>
 const TURKISH_IBAN_BRANCH_RESOLVERS: Record<string, TurkishIbanBranchResolver> = {
   [GARANTI_BBVA_BANK_CODE]: resolveGarantiBbvaIbanBranch,
+  [ISBANK_BANK_CODE]: resolveIsbankIbanBranch,
 }
 
 function resolveKnownTurkishIbanBranch(details: {
@@ -201,6 +205,21 @@ function resolveGarantiBbvaIbanBranch(details: {
   // Şube adı Garanti BBVA'nın resmi IBAN sorgulama şube listesinden eşleştirilir.
   const branchCode = String(Number(details.accountNo.slice(1, 5)))
   const branchName = GARANTI_BBVA_BRANCHES[branchCode]
+
+  if (!branchName) return { branchCode }
+
+  return { branchCode, branchName }
+}
+
+function resolveIsbankIbanBranch(details: {
+  bankCode: string
+  accountNo: string
+}) {
+  if (!/^\d{16}$/.test(details.accountNo)) return null
+
+  // İş Bankası IBAN hesap numarası alanı: 0000 + hesap tipi + 4 hane şube + 7 hane hesap no.
+  const branchCode = String(Number(details.accountNo.slice(5, 9)))
+  const branchName = ISBANK_BRANCHES[branchCode]
 
   if (!branchName) return { branchCode }
 

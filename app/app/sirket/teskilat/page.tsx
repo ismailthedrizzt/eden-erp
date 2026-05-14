@@ -163,7 +163,7 @@ export default function TeskilatPage() {
     { key: 'open_count', label: 'Boş', type: 'number', width: 80 },
     { key: 'location_name', label: 'Yerleşke', type: 'text', width: 130 },
     { key: 'status', label: 'Durum', type: 'enum', width: 120 },
-    { key: 'actions', label: 'İşlemler', type: 'text', width: 230, render: (_, row) => <UnitActions unit={row} onView={openView} onEdit={openEdit} onPositions={setPositionOverlayUnit} onAddChild={openChildCreate} onPassive={softDeleteUnit} /> },
+    { key: 'actions', label: 'İşlemler', type: 'text', width: 230, render: (_, row) => <UnitActions unit={row} onView={openView} onEdit={openEdit} onPositions={setPositionOverlayUnit} onAddChild={openChildCreate} onRollback={rollbackUnit} /> },
   ]
 
   const widgets: WidgetDef<any>[] = [
@@ -260,8 +260,14 @@ export default function TeskilatPage() {
     await loadData()
   }
 
-  async function softDeleteUnit(unit: OrganizationUnit) {
-    await fetch(`/api/ik/teskilat?entity=unit&id=${unit.id}`, { method: 'DELETE' })
+  async function rollbackUnit(unit: OrganizationUnit) {
+    const response = await fetch(`/api/ik/teskilat?entity=unit&id=${unit.id}`, { method: 'DELETE' })
+    const payload = await response.json().catch(() => ({}))
+    if (!response.ok) {
+      setToast(payload.error || 'Birim geri alınamadı')
+      return
+    }
+    setToast(`${unitName(unit)} geri alındı. ${payload.clearedEmployeeCount || 0} çalışanın birim ve görev alanı boşaltıldı.`)
     await loadData()
   }
 
@@ -397,14 +403,15 @@ function TreeNameCell({ row, openIds, setOpenIds }: { row: OrganizationUnit; ope
   )
 }
 
-function UnitActions({ unit, onView, onEdit, onPositions, onAddChild, onPassive }: {
+function UnitActions({ unit, onView, onEdit, onPositions, onAddChild, onRollback }: {
   unit: OrganizationUnit
   onView: (unit: OrganizationUnit) => void
   onEdit: (unit: OrganizationUnit) => void
   onPositions: (unit: OrganizationUnit) => void
   onAddChild: (unit: OrganizationUnit) => void
-  onPassive: (unit: OrganizationUnit) => void
+  onRollback: (unit: OrganizationUnit) => void
 }) {
+  const canRollback = !!unit.ust_birim_id || !isCompanyUnit(unit)
   const action = (event: React.MouseEvent, callback: () => void) => {
     event.stopPropagation()
     callback()
@@ -415,7 +422,7 @@ function UnitActions({ unit, onView, onEdit, onPositions, onAddChild, onPassive 
       <button title="Düzenle" onClick={(event) => action(event, () => onEdit(unit))} className="rounded-md p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/40"><Edit3 size={15} /></button>
       <button title="Kadro" onClick={(event) => action(event, () => onPositions(unit))} className="rounded-md px-2 py-1.5 text-xs font-medium text-purple-700 hover:bg-purple-50 dark:text-purple-300 dark:hover:bg-purple-950/40">Kadro</button>
       <button title="Alt Birim Ekle" onClick={(event) => action(event, () => onAddChild(unit))} className="rounded-md p-1.5 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40"><Plus size={15} /></button>
-      <button title="Pasifleştir" onClick={(event) => action(event, () => onPassive(unit))} className="rounded-md p-1.5 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/40"><Clock size={15} /></button>
+      {canRollback && <button title="Geri Al" onClick={(event) => action(event, () => onRollback(unit))} className="rounded-md p-1.5 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/40"><Clock size={15} /></button>}
       <button title="Geçmiş" onClick={(event) => event.stopPropagation()} className="rounded-md p-1.5 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800"><History size={15} /></button>
     </div>
   )

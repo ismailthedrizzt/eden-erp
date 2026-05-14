@@ -44,6 +44,13 @@ const SirketSchema = z.object({
   hero_images: z.array(z.record(z.any())).optional(),
   hero_documents: z.array(z.record(z.any())).optional(),
   contact_points: z.array(z.record(z.any())).optional(),
+  beneficiary_full_name: z.string().optional(),
+  beneficiary_address: z.string().optional(),
+  beneficiary_iban_or_account_no: z.string().optional(),
+  beneficiary_swift_bic: z.string().optional(),
+  beneficiary_bank_name: z.string().optional(),
+  beneficiary_bank_address: z.string().optional(),
+  beneficiary_currency: z.string().optional(),
   ortaklar: z.array(z.record(z.any())).optional(),
   temsilciler: z.array(z.record(z.any())).optional(),
   public_tax: z.record(z.any()).optional(),
@@ -116,7 +123,35 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Geçersiz veri', code: 'VALIDATION_FAILED', details: parsed.error.flatten() }, { status: 400 })
   }
 
-  const { ortaklar, temsilciler, contact_points, public_tax, public_sgk, public_incentives, public_registry, public_licenses, public_channels, ...companyData } = parsed.data
+  const {
+    ortaklar,
+    temsilciler,
+    contact_points,
+    beneficiary_full_name,
+    beneficiary_address,
+    beneficiary_iban_or_account_no,
+    beneficiary_swift_bic,
+    beneficiary_bank_name,
+    beneficiary_bank_address,
+    beneficiary_currency,
+    public_tax,
+    public_sgk,
+    public_incentives,
+    public_registry,
+    public_licenses,
+    public_channels,
+    ...companyData
+  } = parsed.data
+  const organizationMasterData = {
+    ...(contact_points !== undefined ? { contact_points } : {}),
+    ...(beneficiary_full_name !== undefined ? { beneficiary_full_name } : {}),
+    ...(beneficiary_address !== undefined ? { beneficiary_address } : {}),
+    ...(beneficiary_iban_or_account_no !== undefined ? { beneficiary_iban_or_account_no } : {}),
+    ...(beneficiary_swift_bic !== undefined ? { beneficiary_swift_bic } : {}),
+    ...(beneficiary_bank_name !== undefined ? { beneficiary_bank_name } : {}),
+    ...(beneficiary_bank_address !== undefined ? { beneficiary_bank_address } : {}),
+    ...(beneficiary_currency !== undefined ? { beneficiary_currency } : {}),
+  }
   let companyRow: Record<string, any>
   try {
     companyRow = await attachCompanyOrganization(supabase, applyCompanyStatus(companyData))
@@ -141,7 +176,7 @@ export async function POST(request: NextRequest) {
     supabase,
     'organization',
     companyRow.organization_id,
-    contact_points !== undefined ? { ...companyRow, contact_points } : companyRow
+    { ...companyRow, ...organizationMasterData }
   )
 
   const partnerError = await replaceCompanyPartners(supabase, data.id, ortaklar || [])

@@ -1,4 +1,4 @@
-import { ContactRound, Phone } from 'lucide-react'
+import { ContactRound, Landmark, Phone } from 'lucide-react'
 import type { FormField, FormTab } from '@/components/ui/EntityForm'
 
 type FieldCondition = NonNullable<FormField['visibleWhen']>
@@ -12,7 +12,16 @@ type LegalEntityMasterTabOptions = {
   phoneField?: string
   emailField?: string
   websiteField?: string
+  beneficiaryFullNameField?: string
+  beneficiaryAddressField?: string
+  beneficiaryAccountField?: string
+  beneficiarySwiftBicField?: string
+  beneficiaryBankNameField?: string
+  beneficiaryBankAddressField?: string
+  beneficiaryCurrencyField?: string
 }
+
+const currencyOptions = ['TRY', 'USD', 'EUR', 'GBP'].map(value => ({ value, label: value }))
 
 function applyVisibleWhen(fields: FormField[], visibleWhen?: FieldCondition): FormField[] {
   if (!visibleWhen) return fields
@@ -31,6 +40,13 @@ export function createLegalEntityMasterTabs({
   phoneField = 'phone',
   emailField = 'email',
   websiteField = 'website',
+  beneficiaryFullNameField = 'beneficiary_full_name',
+  beneficiaryAddressField = 'beneficiary_address',
+  beneficiaryAccountField = 'beneficiary_iban_or_account_no',
+  beneficiarySwiftBicField = 'beneficiary_swift_bic',
+  beneficiaryBankNameField = 'beneficiary_bank_name',
+  beneficiaryBankAddressField = 'beneficiary_bank_address',
+  beneficiaryCurrencyField = 'beneficiary_currency',
 }: LegalEntityMasterTabOptions = {}): FormTab[] {
   return [
     {
@@ -45,6 +61,20 @@ export function createLegalEntityMasterTabs({
         { name: cityField, label: 'İl', type: 'text', compact: true },
         { name: districtField, label: 'İlçe', type: 'text', compact: true },
         { name: addressField, label: 'Adres', type: 'textarea', colSpan: 3 },
+      ], visibleWhen),
+    },
+    {
+      id: 'banka',
+      label: 'Banka',
+      icon: <Landmark size={16} />,
+      fields: applyVisibleWhen([
+        { name: beneficiaryFullNameField, label: 'Lehtar Tam Adı', type: 'text', colSpan: 2 },
+        { name: beneficiaryAddressField, label: 'Lehtar Adresi', type: 'textarea', colSpan: 3 },
+        { name: beneficiaryAccountField, label: 'IBAN veya Hesap Numarası', type: 'text', colSpan: 2 },
+        { name: beneficiarySwiftBicField, label: 'SWIFT/BIC Kodu', type: 'text' },
+        { name: beneficiaryBankNameField, label: 'Alıcı Banka Adı', type: 'text', colSpan: 2 },
+        { name: beneficiaryBankAddressField, label: 'Alıcı Banka Adresi', type: 'textarea', colSpan: 3 },
+        { name: beneficiaryCurrencyField, label: 'Para Birimi', type: 'select', compact: true, options: currencyOptions, defaultValue: 'TRY' },
       ], visibleWhen),
     },
     {

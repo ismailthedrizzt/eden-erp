@@ -55,13 +55,108 @@ export async function DELETE(request: NextRequest) {
     return NextResponse.json({ success: true })
   }
 
-  const { error } = await supabase
-    .from('birimler')
-    .update({ status: 'Pasif', aktif: false, is_deleted: true, deleted_at: new Date().toISOString(), deleted_by: 'Sistem Kullanıcısı' })
-    .eq('id', id)
+  return rollbackUnit(supabase, id)
+}
 
-  if (error) return NextResponse.json({ error: error.message, code: error.code || 'UNIT_SOFT_DELETE_FAILED' }, { status: 500 })
-  return NextResponse.json({ success: true })
+async function rollbackUnit(supabase: ReturnType<typeof createServiceClient>, unitId: string) {
+  const now = new Date().toISOString()
+  const { data: units, error: unitFetchError } = await supabase
+    .from('birimler')
+    .select('id,ust_birim_id,tip,is_deleted')
+
+  if (unitFetchError) return NextResponse.json({ error: unitFetchError.message, code: unitFetchError.code || 'UNITS_FETCH_FAILED' }, { status: 500 })
+
+  const targetUnit = (units || []).find((unit: Record<string, any>) => unit.id === unitId)
+  if (!targetUnit || targetUnit.is_deleted) {
+    return NextResponse.json({ error: 'Birim bulunamadı', code: 'UNIT_NOT_FOUND' }, { status: 404 })
+  }
+
+  if (!targetUnit.ust_birim_id && targetUnit.tip === 'sirket') {
+    return NextResponse.json({ error: 'Şirket kök birimi geri alınamaz.', code: 'COMPANY_ROOT_UNIT_PROTECTED' }, { status: 400 })
+  }
+
+  const unitIds = collectUnitSubtreeIds(units || [], unitId)
+  const { data: positions, error: positionFetchError } = await supabase
+    .from('norm_kadrolar')
+    .select('id')
+    .in('birim_id', unitIds)
+    .eq('is_deleted', false)
+
+  if (positionFetchError) return NextResponse.json({ error: positionFetchError.message, code: positionFetchError.code || 'POSITIONS_FETCH_FAILED' }, { status: 500 })
+
+  const positionIds = (positions || []).map((position: Record<string, any>) => position.id)
+  const assignedEmployeeIds = new Set<string>()
+  const [employeesByUnit, employeesByPosition] = await Promise.all([
+    supabase.from('employees').select('id').in('birim_id', unitIds),
+    positionIds.length
+      ? supabase.from('employees').select('id').in('kadro_id', positionIds)
+      : Promise.resolve({ data: [], error: null }),
+  ])
+
+  if (employeesByUnit.error) return NextResponse.json({ error: employeesByUnit.error.message, code: employeesByUnit.error.code || 'EMPLOYEES_BY_UNIT_FETCH_FAILED' }, { status: 500 })
+  if (employeesByPosition.error) return NextResponse.json({ error: employeesByPosition.error.message, code: employeesByPosition.error.code || 'EMPLOYEES_BY_POSITION_FETCH_FAILED' }, { status: 500 })
+
+  ;[...(employeesByUnit.data || []), ...(employeesByPosition.data || [])].forEach((employee: Record<string, any>) => {
+    if (employee.id) assignedEmployeeIds.add(employee.id)
+  })
+
+  if (assignedEmployeeIds.size > 0) {
+    const { error: employeeUpdateError } = await supabase
+      .from('employees')
+      .update({ birim_id: null, kadro_id: null, gorev: null })
+      .in('id', Array.from(assignedEmployeeIds))
+
+    if (employeeUpdateError) return NextResponse.json({ error: employeeUpdateError.message, code: employeeUpdateError.code || 'EMPLOYEE_ASSIGNMENT_CLEAR_FAILED' }, { status: 500 })
+  }
+
+  if (positionIds.length > 0) {
+    const { error: positionUpdateError } = await supabase
+      .from('norm_kadrolar')
+      .update({
+        durum: 'kapali',
+        status: 'Kapatıldı',
+        active_count: 0,
+        personel_id: null,
+        is_deleted: true,
+        deleted_at: now,
+        deleted_by: 'Sistem Kullanıcısı',
+      })
+      .in('id', positionIds)
+
+    if (positionUpdateError) return NextResponse.json({ error: positionUpdateError.message, code: positionUpdateError.code || 'POSITIONS_ROLLBACK_FAILED' }, { status: 500 })
+  }
+
+  const { error: unitUpdateError } = await supabase
+    .from('birimler')
+    .update({ status: 'Pasif', aktif: false, is_deleted: true, deleted_at: now, deleted_by: 'Sistem Kullanıcısı' })
+    .in('id', unitIds)
+
+  if (unitUpdateError) return NextResponse.json({ error: unitUpdateError.message, code: unitUpdateError.code || 'UNIT_ROLLBACK_FAILED' }, { status: 500 })
+
+  return NextResponse.json({
+    success: true,
+    rolledBackUnitCount: unitIds.length,
+    closedPositionCount: positionIds.length,
+    clearedEmployeeCount: assignedEmployeeIds.size,
+  })
+}
+
+function collectUnitSubtreeIds(units: Record<string, any>[], rootId: string) {
+  const childrenByParent = new Map<string, string[]>()
+  units
+    .filter(unit => !unit.is_deleted)
+    .forEach(unit => {
+      if (!unit.ust_birim_id) return
+      childrenByParent.set(unit.ust_birim_id, [...(childrenByParent.get(unit.ust_birim_id) || []), unit.id])
+    })
+
+  const ids: string[] = []
+  const walk = (id: string) => {
+    ids.push(id)
+    ;(childrenByParent.get(id) || []).forEach(walk)
+  }
+  walk(rootId)
+  return ids
 }
 
 async function createUnit(supabase: ReturnType<typeof createServiceClient>, body: Record<string, any>) {
