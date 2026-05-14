@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
+import { OWNERSHIP_TRANSACTION_SELECT } from '../../_shared'
 
 export async function POST(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const supabase = createServiceClient()
   const now = new Date().toISOString()
-  const { data: current, error: currentError } = await supabase.from('ownership_transactions').select('*').eq('id', id).single()
+  const { data: current, error: currentError } = await supabase.from('ownership_transactions').select(OWNERSHIP_TRANSACTION_SELECT).eq('id', id).single()
   if (currentError) return NextResponse.json({ error: currentError.message, code: currentError.code || 'FETCH_FAILED' }, { status: 500 })
   if (current.approval_status !== 'approved') return NextResponse.json({ error: 'Sadece onaylı işlem için ters kayıt oluşturulabilir', code: 'NOT_APPROVED' }, { status: 409 })
 
@@ -35,7 +36,7 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
     version: 1,
   }
 
-  const { data, error } = await supabase.from('ownership_transactions').insert(reversal).select().single()
+  const { data, error } = await supabase.from('ownership_transactions').insert(reversal).select(OWNERSHIP_TRANSACTION_SELECT).single()
   if (error) return NextResponse.json({ error: error.message, code: error.code || 'REVERSE_FAILED' }, { status: 500 })
   return NextResponse.json({ data }, { status: 201 })
 }

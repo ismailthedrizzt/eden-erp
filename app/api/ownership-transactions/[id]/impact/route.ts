@@ -1,15 +1,18 @@
 import { NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
+import { OWNERSHIP_TRANSACTION_SELECT } from '../../_shared'
+
+const CURRENT_OWNERSHIP_IMPACT_SELECT = 'company_id,partner_id,display_name,current_share_ratio,current_voting_ratio,current_profit_ratio'
 
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const supabase = createServiceClient()
-  const { data: transaction, error } = await supabase.from('ownership_transactions').select('*').eq('id', id).single()
+  const { data: transaction, error } = await supabase.from('ownership_transactions').select(OWNERSHIP_TRANSACTION_SELECT).eq('id', id).single()
   if (error) return NextResponse.json({ error: error.message, code: error.code || 'FETCH_FAILED' }, { status: 500 })
 
   const { data: beforeRows } = await supabase
     .from('v_current_ownership')
-    .select('*')
+    .select(CURRENT_OWNERSHIP_IMPACT_SELECT)
     .eq('company_id', transaction.company_id)
 
   const afterRows = simulateImpact(beforeRows || [], transaction)

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { ACCOUNTING_PERMISSIONS } from '@/lib/modules/accounting/shared/accounting.permissions'
 import { requirePermission } from '@/lib/security/serverPermissions'
+import { FINANCIAL_MOVEMENT_SELECT } from '../../_selects'
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -19,7 +20,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       matched_by: permission.userId,
     })
     .eq('id', id)
-    .select('*')
+    .select(FINANCIAL_MOVEMENT_SELECT)
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

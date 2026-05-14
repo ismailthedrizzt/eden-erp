@@ -37,6 +37,18 @@ const roleTableAliases: Record<string, string> = {
   company_representatives: 'sirket_temsilciler',
 }
 
+const PERSON_SELECT = 'id,first_name,last_name,full_name,nationality,national_id,passport_no,birth_date,birth_place,gender,phone,email,address,city,district,metadata_json,is_deleted,updated_at'
+const ORGANIZATION_SELECT = 'id,legal_name,short_name,country,tax_number,registration_number,tax_office,organization_type,phone,email,address,city,district,metadata_json,is_deleted,updated_at'
+const EMPLOYEE_IDENTITY_SELECT = 'id,person_id,ad,soyad,uyruk,tc_kimlik,pasaport_no,dogum_tarihi,dogum_yeri,cinsiyet,cep_telefonu,is_telefonu,email,adres,engellilik,engellilik_yuzdesi,askerlik_durumu,tecil_tarihi,hukumluluk,okuryazar_degil,egitim_okullari,yabanci_diller,sertifikalar,medeni_durum,yakinlar,iban,kan_grubu,fotograf_url,cv_belgesi,diploma_belgesi,ise_giris_belgeleri,isten_cikis_belgeleri'
+const COMPANY_IDENTITY_SELECT = 'id,organization_id,ticari_unvan,kisa_unvan,ulke,vkn_tckn,ticaret_sicil_no,mersis_no,vergi_dairesi,sirket_turu,telefon,email,adres,il,ilce,kurulus_tarihi,logo_url,hero_images,hero_documents,is_deleted'
+const ROLE_SELECT_BY_TABLE: Record<string, string> = {
+  employees: 'id,person_id,ad,soyad,tc_kimlik,pasaport_no,calisma_durumu,is_deleted',
+  sirketler: 'id,organization_id,ticari_unvan,kisa_unvan,vkn_tckn,ticaret_sicil_no,is_deleted',
+  sirket_ortaklar: 'id,sirket_id,company_id,person_id,organization_id,display_name,ortak_adi,ad,soyad,tckn_vkn,share_ratio,hisse_orani,status,is_deleted',
+  sirket_temsilciler: 'id,sirket_id,company_id,person_id,organization_id,display_name,ad_soyad,authority_types,status,is_deleted',
+  stakeholders: 'id,company_id,person_id,organization_id,display_name,tax_id,stakeholder_type,status,is_deleted',
+}
+
 export async function POST(request: NextRequest) {
   const parsed = ResolveSchema.safeParse(await request.json().catch(() => null))
   if (!parsed.success) {
@@ -139,7 +151,7 @@ async function findPerson(supabase: ReturnType<typeof createServiceClient>, iden
     return { error: 'Devam etmek için TC Kimlik No veya Pasaport No girin.' }
   }
 
-  let query = supabase.from('persons').select('*').eq('nationality', nationality).eq('is_deleted', false)
+  let query = supabase.from('persons').select(PERSON_SELECT).eq('nationality', nationality).eq('is_deleted', false)
   query = nationalId ? query.eq('national_id', nationalId) : query.eq('passport_no', passportNo)
   let { data, error } = await query.maybeSingle()
   if (isMissingTableError(error, 'persons')) {
@@ -149,7 +161,7 @@ async function findPerson(supabase: ReturnType<typeof createServiceClient>, iden
   if (!data && nationalId) {
     const fallback = await supabase
       .from('persons')
-      .select('*')
+      .select(PERSON_SELECT)
       .eq('national_id', nationalId)
       .eq('is_deleted', false)
       .limit(1)
@@ -168,7 +180,7 @@ async function findOrganization(supabase: ReturnType<typeof createServiceClient>
     return { error: 'Devam etmek için VKN veya Ticaret Sicil No girin.' }
   }
 
-  let query = supabase.from('organizations').select('*').eq('country', country).eq('is_deleted', false)
+  let query = supabase.from('organizations').select(ORGANIZATION_SELECT).eq('country', country).eq('is_deleted', false)
   query = taxNumber ? query.eq('tax_number', taxNumber) : query.eq('registration_number', registrationNumber)
   let { data, error } = await query.maybeSingle()
   if (isMissingTableError(error, 'organizations')) {
@@ -178,7 +190,7 @@ async function findOrganization(supabase: ReturnType<typeof createServiceClient>
   if (!data && taxNumber) {
     const fallback = await supabase
       .from('organizations')
-      .select('*')
+      .select(ORGANIZATION_SELECT)
       .eq('tax_number', taxNumber)
       .eq('is_deleted', false)
       .limit(1)
@@ -194,17 +206,17 @@ async function enrichPersonFromEmployee(supabase: ReturnType<typeof createServic
   let employee: Record<string, any> | null = null
 
   if (person.id) {
-    const { data } = await supabase.from('employees').select('*').eq('person_id', person.id).limit(1)
+    const { data } = await supabase.from('employees').select(EMPLOYEE_IDENTITY_SELECT).eq('person_id', person.id).limit(1)
     employee = Array.isArray(data) ? data[0] || null : null
   }
 
   if (!employee && person.national_id) {
-    const { data } = await supabase.from('employees').select('*').eq('tc_kimlik', person.national_id).limit(1)
+    const { data } = await supabase.from('employees').select(EMPLOYEE_IDENTITY_SELECT).eq('tc_kimlik', person.national_id).limit(1)
     employee = Array.isArray(data) ? data[0] || null : null
   }
 
   if (!employee && person.passport_no) {
-    const { data } = await supabase.from('employees').select('*').eq('pasaport_no', person.passport_no).limit(1)
+    const { data } = await supabase.from('employees').select(EMPLOYEE_IDENTITY_SELECT).eq('pasaport_no', person.passport_no).limit(1)
     employee = Array.isArray(data) ? data[0] || null : null
   }
 
@@ -220,17 +232,17 @@ async function enrichOrganizationFromCompany(supabase: ReturnType<typeof createS
   let company: Record<string, any> | null = null
 
   if (organization.id) {
-    const { data } = await supabase.from('sirketler').select('*').eq('is_deleted', false).eq('organization_id', organization.id).limit(1)
+    const { data } = await supabase.from('sirketler').select(COMPANY_IDENTITY_SELECT).eq('is_deleted', false).eq('organization_id', organization.id).limit(1)
     company = Array.isArray(data) ? data[0] || null : null
   }
 
   if (!company && organization.tax_number) {
-    const { data } = await supabase.from('sirketler').select('*').eq('is_deleted', false).eq('vkn_tckn', organization.tax_number).limit(1)
+    const { data } = await supabase.from('sirketler').select(COMPANY_IDENTITY_SELECT).eq('is_deleted', false).eq('vkn_tckn', organization.tax_number).limit(1)
     company = Array.isArray(data) ? data[0] || null : null
   }
 
   if (!company && organization.registration_number) {
-    const { data } = await supabase.from('sirketler').select('*').eq('is_deleted', false).eq('ticaret_sicil_no', organization.registration_number).limit(1)
+    const { data } = await supabase.from('sirketler').select(COMPANY_IDENTITY_SELECT).eq('is_deleted', false).eq('ticaret_sicil_no', organization.registration_number).limit(1)
     company = Array.isArray(data) ? data[0] || null : null
   }
 
@@ -244,7 +256,7 @@ async function findOrCreatePersonFromEmployee(supabase: ReturnType<typeof create
 
   if (!nationalId && !passportNo) return { record: null }
 
-  let query = supabase.from('employees').select('*').limit(1)
+  let query = supabase.from('employees').select(EMPLOYEE_IDENTITY_SELECT).limit(1)
   query = nationalId ? query.eq('tc_kimlik', nationalId) : query.eq('pasaport_no', passportNo)
   const { data, error } = await query
   if (error) return { record: null }
@@ -253,7 +265,7 @@ async function findOrCreatePersonFromEmployee(supabase: ReturnType<typeof create
   if (!employee) return { record: null }
 
   if (employee.person_id) {
-    const { data: existingPerson } = await supabase.from('persons').select('*').eq('id', employee.person_id).maybeSingle()
+    const { data: existingPerson } = await supabase.from('persons').select(PERSON_SELECT).eq('id', employee.person_id).maybeSingle()
     if (existingPerson) return { record: mergeEmployeeIntoPerson(existingPerson, employee) }
   }
 
@@ -275,7 +287,7 @@ async function findOrCreatePersonFromEmployee(supabase: ReturnType<typeof create
       address: employee.adres || null,
       metadata_json: { source_table: 'employees', source_id: employee.id, source: 'identity_resolve' },
     })
-    .select('*')
+    .select(PERSON_SELECT)
     .single()
 
   if (createError || !created) return { record: null }
@@ -291,7 +303,7 @@ async function findOrCreateOrganizationFromCompany(supabase: ReturnType<typeof c
 
   if (!taxNumber && !registrationNumber) return { record: null }
 
-  let query = supabase.from('sirketler').select('*').eq('is_deleted', false).limit(1)
+  let query = supabase.from('sirketler').select(COMPANY_IDENTITY_SELECT).eq('is_deleted', false).limit(1)
   query = taxNumber ? query.eq('vkn_tckn', taxNumber) : query.eq('ticaret_sicil_no', registrationNumber)
   const { data, error } = await query
   if (error) return { record: null }
@@ -300,7 +312,7 @@ async function findOrCreateOrganizationFromCompany(supabase: ReturnType<typeof c
   if (!company) return { record: null }
 
   if (company.organization_id) {
-    const { data: existingOrganization } = await supabase.from('organizations').select('*').eq('id', company.organization_id).maybeSingle()
+    const { data: existingOrganization } = await supabase.from('organizations').select(ORGANIZATION_SELECT).eq('id', company.organization_id).maybeSingle()
     if (existingOrganization) return { record: mergeCompanyIntoOrganization(existingOrganization, company) }
   }
 
@@ -321,7 +333,7 @@ async function findOrCreateOrganizationFromCompany(supabase: ReturnType<typeof c
       district: company.ilce || null,
       metadata_json: { source_table: 'sirketler', source_id: company.id, source: 'identity_resolve' },
     })
-    .select('*')
+    .select(ORGANIZATION_SELECT)
     .single()
 
   if (createError || !created) return { record: null }
@@ -334,7 +346,7 @@ async function findRoleRecord(
   supabase: ReturnType<typeof createServiceClient>,
   input: { roleTable: string; entityKind: 'person' | 'organization'; masterId: string; roleScope: Record<string, unknown> }
 ) {
-  let query = supabase.from(input.roleTable).select('*').limit(1)
+  let query = supabase.from(input.roleTable).select(ROLE_SELECT_BY_TABLE[input.roleTable] || 'id').limit(1)
   query = query.eq(input.entityKind === 'person' ? 'person_id' : 'organization_id', input.masterId)
 
   const companyId = clean(input.roleScope.company_id || input.roleScope.sirket_id)

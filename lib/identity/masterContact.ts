@@ -7,6 +7,9 @@ type EntityKind = 'person' | 'organization'
 const CONTACT_METADATA_KEY = 'contact'
 const PERSON_MASTER_METADATA_KEY = 'person_master'
 const ORGANIZATION_MASTER_METADATA_KEY = 'organization_master'
+const PERSON_CONTACT_SELECT = 'id,first_name,last_name,full_name,nationality,national_id,passport_no,birth_date,birth_place,gender,phone,email,address,city,district,metadata_json'
+const ORGANIZATION_CONTACT_SELECT = 'id,legal_name,short_name,country,tax_number,registration_number,tax_office,organization_type,phone,email,address,city,district,metadata_json'
+const EMPLOYEE_MASTER_ENRICH_SELECT = 'id,person_id,ad,soyad,tc_kimlik,pasaport_no,engellilik,engellilik_yuzdesi,askerlik_durumu,tecil_tarihi,hukumluluk,okuryazar_degil,egitim_okullari,yabanci_diller,sertifikalar,medeni_durum,yakinlar,iban,kan_grubu'
 
 const PERSON_MASTER_PROFILE_KEYS = [
   'photo_logo',
@@ -232,7 +235,7 @@ export async function syncMasterContact(supabase: SupabaseClient, kind: EntityKi
   const contact = normalizeContactPayload(source, kind)
   const { data: current } = await supabase
     .from(table)
-    .select('*')
+    .select(kind === 'person' ? PERSON_CONTACT_SELECT : ORGANIZATION_CONTACT_SELECT)
     .eq('id', masterId)
     .maybeSingle()
 
@@ -304,7 +307,7 @@ export async function hydrateMasterContact(supabase: SupabaseClient, kind: Entit
 
   const { data } = await supabase
     .from(kind === 'person' ? 'persons' : 'organizations')
-    .select('*')
+    .select(kind === 'person' ? PERSON_CONTACT_SELECT : ORGANIZATION_CONTACT_SELECT)
     .eq('id', masterId)
     .maybeSingle()
 
@@ -323,16 +326,16 @@ async function enrichPersonMasterFromEmployee(supabase: SupabaseClient, master: 
   if (!master?.id) return master
 
   let employee: Record<string, any> | null = null
-  const byPerson = await supabase.from('employees').select('*').eq('person_id', master.id).limit(1)
+  const byPerson = await supabase.from('employees').select(EMPLOYEE_MASTER_ENRICH_SELECT).eq('person_id', master.id).limit(1)
   employee = Array.isArray(byPerson.data) ? byPerson.data[0] || null : null
 
   if (!employee && master.national_id) {
-    const byNationalId = await supabase.from('employees').select('*').eq('tc_kimlik', master.national_id).limit(1)
+    const byNationalId = await supabase.from('employees').select(EMPLOYEE_MASTER_ENRICH_SELECT).eq('tc_kimlik', master.national_id).limit(1)
     employee = Array.isArray(byNationalId.data) ? byNationalId.data[0] || null : null
   }
 
   if (!employee && master.passport_no) {
-    const byPassport = await supabase.from('employees').select('*').eq('pasaport_no', master.passport_no).limit(1)
+    const byPassport = await supabase.from('employees').select(EMPLOYEE_MASTER_ENRICH_SELECT).eq('pasaport_no', master.passport_no).limit(1)
     employee = Array.isArray(byPassport.data) ? byPassport.data[0] || null : null
   }
 

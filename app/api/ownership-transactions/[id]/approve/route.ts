@@ -1,13 +1,13 @@
 import { NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
-import { validateDraft } from '../../_shared'
+import { OWNERSHIP_TRANSACTION_SELECT, validateDraft } from '../../_shared'
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const supabase = createServiceClient()
   const body = await request.json().catch(() => ({}))
   const now = new Date().toISOString()
-  const { data: current, error: currentError } = await supabase.from('ownership_transactions').select('*').eq('id', id).single()
+  const { data: current, error: currentError } = await supabase.from('ownership_transactions').select(OWNERSHIP_TRANSACTION_SELECT).eq('id', id).single()
   if (currentError) return NextResponse.json({ error: currentError.message, code: currentError.code || 'FETCH_FAILED' }, { status: 500 })
 
   const validation = await validateDraft(supabase, current)
@@ -33,7 +33,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       updated_at: now,
     })
     .eq('id', id)
-    .select()
+    .select(OWNERSHIP_TRANSACTION_SELECT)
     .single()
 
   if (error) return NextResponse.json({ error: error.message, code: error.code || 'APPROVE_FAILED' }, { status: 500 })
