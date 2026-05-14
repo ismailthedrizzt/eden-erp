@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
 function queryNaceCodes(supabase: ReturnType<typeof createServiceClient>, queryText: string | null) {
   let query = supabase
     .from('nace_codes')
-    .select('*')
+    .select('id,nace_code,description,hazard_class,source_name,source_url,source_reference,valid_from,valid_to,is_active,last_checked_at,created_at,updated_at,version')
     .eq('is_active', true)
     .order('nace_code', { ascending: true })
     .limit(50)

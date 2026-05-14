@@ -210,7 +210,11 @@ for (const file of [
   'app/api/settings/integration-parameters/[id]/route.ts',
   'app/api/settings/integration-parameters/[id]/credential/route.ts',
   'app/api/settings/integration-parameters/[id]/test/route.ts',
+  'app/api/reference/nace-codes/route.ts',
+  'app/api/reference/nace-codes/update-logs/route.ts',
+  'app/api/ownership-transactions/[id]/history/route.ts',
   'lib/identity/masterContact.ts',
+  'lib/modules/accounting/bank-integration/BankSyncService.ts',
   'lib/modules/entity-bank-accounts/entityBankAccounts.service.ts',
 ]) {
   assertNotIncludes(file, ".select('*')", 'hot list/detail API routes must use explicit selects')

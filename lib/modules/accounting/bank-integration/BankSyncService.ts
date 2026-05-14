@@ -3,6 +3,8 @@ import { SecureCredentialService } from './SecureCredentialService'
 import { createBankProvider } from './providerFactory'
 import type { BankConnection, BankSyncSummary, ProviderBankAccount, ProviderBankTransaction, ProviderCardTransaction } from './bankIntegration.types'
 
+const BANK_SYNC_CONNECTION_SELECT = 'id,company_id,bank_name,provider_code,integration_type,credential_id,status,base_url,environment'
+
 export class BankSyncService {
   constructor(
     private readonly supabase: SupabaseClient,
@@ -12,7 +14,7 @@ export class BankSyncService {
   async syncConnection(connectionId: string): Promise<BankSyncSummary> {
     const { data: connection, error } = await this.supabase
       .from('bank_connections')
-      .select('*')
+      .select(BANK_SYNC_CONNECTION_SELECT)
       .eq('id', connectionId)
       .eq('is_deleted', false)
       .maybeSingle()

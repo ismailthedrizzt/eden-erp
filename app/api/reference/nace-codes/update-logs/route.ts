@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
 
   const { data, error } = await supabase
     .from('nace_reference_update_logs')
-    .select('*')
+    .select('id,job_name,source_name,source_url,status,message,imported_count,updated_count,deactivated_count,raw_metadata,created_at,created_by')
     .order('created_at', { ascending: false })
     .limit(100)
 
