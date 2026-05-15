@@ -4,6 +4,8 @@ import { z } from 'zod'
 import { hydrateMasterContact, syncMasterContact } from '@/lib/identity/masterContact'
 import { EntityBankAccountsService } from '@/lib/modules/entity-bank-accounts/entityBankAccounts.service'
 
+const COMPANY_NACE_SELECT = 'id,company_id,nace_code_id,is_primary,status,start_date,end_date,notes,is_deleted,created_at,updated_at,version,nace_code:nace_codes(id,nace_code,description,hazard_class,source_name,source_url,source_reference,valid_from,valid_to,is_active,last_checked_at)'
+
 const SirketUpdateSchema = z.object({
   ticari_unvan: z.string().min(1).max(300).optional(),
   kisa_unvan: z.string().min(1).max(120).optional(),
@@ -150,7 +152,7 @@ export async function GET(
 
   const companyNaceCodes = await supabase
     .from('company_nace_codes')
-    .select('*,nace_code:nace_codes(*)')
+    .select(COMPANY_NACE_SELECT)
     .eq('company_id', id)
     .eq('is_deleted', false)
     .order('is_primary', { ascending: false })

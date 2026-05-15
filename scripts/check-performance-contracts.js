@@ -132,6 +132,16 @@ assertIncludes('app/app/sirket/ortaklik-islemleri/page.tsx', 'ownershipTransacti
 
 assertNotIncludes('app/app/muhasebe/banka-hesaplari-ve-kartlari/page.tsx', "fetch('/api/sirketler'", 'bank accounts page must use companyService for company options')
 assertIncludes('app/app/muhasebe/banka-hesaplari-ve-kartlari/page.tsx', 'companyService.list()', 'bank accounts page must use cacheable company options')
+assertIncludes('lib/modules/accounting/bank-integration/bankAccountsCards.service.ts', 'skipAuth: true', 'bank account/card list services must skip session lookup by default')
+assertIncludes('lib/modules/accounting/bank-integration/bankAccountsCards.service.ts', 'staleTime: 120_000', 'bank account/card list services must keep short client cache')
+assertNotIncludes('lib/modules/accounting/bank-integration/bankAccountsCards.service.ts', "getUnifiedRecords(options: { includePassive?: boolean } = {}) {\n    return apiClient.get<{ data: BankAccountCardRow[]; accountOptions: Array<{ value: string; label: string; bank_connection_id?: string | null }> }>('/api/accounting/bank-accounts-cards', {\n      useCache: false", 'bank account/card unified list must not disable client cache')
+assertNotIncludes('lib/modules/accounting/bank-integration/bankAccountsCards.service.ts', "getConnections() {\n    return apiClient.get<{ data: BankConnectionRow[] }>('/api/accounting/bank-connections', { useCache: false })", 'bank connections list must not disable client cache')
+assertIncludes('lib/modules/accounting/bank-integration/bankAccountsCards.service.ts', 'function invalidateBankAccountCardCaches', 'bank account/card mutations must invalidate cached lists')
+
+assertIncludes('lib/modules/accounting/bank-integration/financialInstitutionMovements.service.ts', 'skipAuth: true', 'financial movement list/detail services must skip session lookup by default')
+assertIncludes('lib/modules/accounting/bank-integration/financialInstitutionMovements.service.ts', 'function invalidateFinancialMovementCaches', 'financial movement mutations must invalidate cached lists')
+assertIncludes('lib/modules/accounting/account-cards/accountCards.service.ts', 'skipAuth: options?.skipAuth ?? true', 'account card list service must skip session lookup by default')
+assertIncludes('lib/modules/accounting/pre-accounting/preAccounting.service.ts', 'skipAuth: options?.skipAuth ?? true', 'pre-accounting services must skip session lookup by default')
 
 assertNotIncludes('app/app/sirket/araclar/page.tsx', "fetch('/api/sirket/araclar'", 'vehicles page must use companyVehicleService for cacheable list and mutations')
 assertIncludes('app/app/sirket/araclar/page.tsx', 'companyVehicleService.list({ useCache: !force })', 'vehicles page must use cacheable vehicle service list')
@@ -212,12 +222,17 @@ for (const file of [
   'app/api/settings/integration-parameters/[id]/test/route.ts',
   'app/api/reference/nace-codes/route.ts',
   'app/api/reference/nace-codes/update-logs/route.ts',
+  'app/api/companies/[company_id]/nace-codes/route.ts',
+  'app/api/companies/[company_id]/nace-codes/[id]/route.ts',
+  'app/api/companies/[company_id]/nace-codes/[id]/passivate/route.ts',
+  'app/api/companies/[company_id]/nace-codes/[id]/set-primary/route.ts',
   'app/api/ownership-transactions/[id]/history/route.ts',
   'lib/identity/masterContact.ts',
   'lib/modules/accounting/bank-integration/BankSyncService.ts',
   'lib/modules/entity-bank-accounts/entityBankAccounts.service.ts',
 ]) {
   assertNotIncludes(file, ".select('*')", 'hot list/detail API routes must use explicit selects')
+  assertNotIncludes(file, "nace_codes(*)", 'nested relation selects must list required NACE columns explicitly')
 }
 
 const indexMigration = 'supabase/migrations/20260514_fast_primary_lists.sql'

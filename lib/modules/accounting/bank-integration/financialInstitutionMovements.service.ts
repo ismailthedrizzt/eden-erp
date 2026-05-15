@@ -47,31 +47,49 @@ export const financialInstitutionMovementsService = {
   getMovements(filters: MovementFilters = {}) {
     return apiClient.get<{ data: FinancialInstitutionMovementRow[]; summary: Record<string, number> }>('/api/accounting/financial-institution-movements', {
       query: filters as Record<string, string | number | boolean | null | undefined>,
-      useCache: false,
+      skipAuth: true,
+      staleTime: 60_000,
     })
   },
   getMovement(id: string) {
-    return apiClient.get<{ data: FinancialInstitutionMovementRow }>(`/api/accounting/financial-institution-movements/${id}`, { useCache: false })
+    return apiClient.get<{ data: FinancialInstitutionMovementRow }>(`/api/accounting/financial-institution-movements/${id}`, { skipAuth: true, staleTime: 60_000 })
   },
-  createManual(payload: Partial<FinancialInstitutionMovementRow>) {
-    return apiClient.post<{ data: FinancialInstitutionMovementRow }>('/api/accounting/financial-institution-movements/manual', payload, { useCache: false })
+  async createManual(payload: Partial<FinancialInstitutionMovementRow>) {
+    const result = await apiClient.post<{ data: FinancialInstitutionMovementRow }>('/api/accounting/financial-institution-movements/manual', payload, { useCache: false })
+    invalidateFinancialMovementCaches()
+    return result
   },
-  updateMovement(id: string, payload: Partial<FinancialInstitutionMovementRow>) {
-    return apiClient.patch<{ data: FinancialInstitutionMovementRow }>(`/api/accounting/financial-institution-movements/${id}`, payload, { useCache: false })
+  async updateMovement(id: string, payload: Partial<FinancialInstitutionMovementRow>) {
+    const result = await apiClient.patch<{ data: FinancialInstitutionMovementRow }>(`/api/accounting/financial-institution-movements/${id}`, payload, { useCache: false })
+    invalidateFinancialMovementCaches(id)
+    return result
   },
-  match(id: string, preAccountingMovementId?: string) {
-    return apiClient.post<{ data: FinancialInstitutionMovementRow }>(`/api/accounting/financial-institution-movements/${id}/match`, { preAccountingMovementId }, { useCache: false })
+  async match(id: string, preAccountingMovementId?: string) {
+    const result = await apiClient.post<{ data: FinancialInstitutionMovementRow }>(`/api/accounting/financial-institution-movements/${id}/match`, { preAccountingMovementId }, { useCache: false })
+    invalidateFinancialMovementCaches(id)
+    return result
   },
-  unmatch(id: string) {
-    return apiClient.post<{ data: FinancialInstitutionMovementRow }>(`/api/accounting/financial-institution-movements/${id}/unmatch`, undefined, { useCache: false })
+  async unmatch(id: string) {
+    const result = await apiClient.post<{ data: FinancialInstitutionMovementRow }>(`/api/accounting/financial-institution-movements/${id}/unmatch`, undefined, { useCache: false })
+    invalidateFinancialMovementCaches(id)
+    return result
   },
   createPreAccounting(id: string) {
     return apiClient.post<{ data: { redirectUrl: string } }>(`/api/accounting/financial-institution-movements/${id}/create-pre-accounting`, undefined, { useCache: false })
   },
-  review(id: string) {
-    return apiClient.post<{ data: FinancialInstitutionMovementRow }>(`/api/accounting/financial-institution-movements/${id}/review`, undefined, { useCache: false })
+  async review(id: string) {
+    const result = await apiClient.post<{ data: FinancialInstitutionMovementRow }>(`/api/accounting/financial-institution-movements/${id}/review`, undefined, { useCache: false })
+    invalidateFinancialMovementCaches(id)
+    return result
   },
-  passivate(id: string) {
-    return apiClient.post<{ data: FinancialInstitutionMovementRow }>(`/api/accounting/financial-institution-movements/${id}/passivate`, undefined, { useCache: false })
+  async passivate(id: string) {
+    const result = await apiClient.post<{ data: FinancialInstitutionMovementRow }>(`/api/accounting/financial-institution-movements/${id}/passivate`, undefined, { useCache: false })
+    invalidateFinancialMovementCaches(id)
+    return result
   },
+}
+
+function invalidateFinancialMovementCaches(id?: string) {
+  apiClient.invalidate('/api/accounting/financial-institution-movements')
+  if (id) apiClient.invalidate(`/api/accounting/financial-institution-movements/${id}`)
 }

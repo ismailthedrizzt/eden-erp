@@ -9,15 +9,25 @@ export interface AccountingReferences {
 
 export const preAccountingService = {
   getList(options?: ApiClientOptions) {
-    return apiClient.get<{ data: AccountMovementRow[]; warning?: string }>('/api/muhasebe/on-muhasebe-hareketleri', options)
+    return apiClient.get<{ data: AccountMovementRow[]; warning?: string }>('/api/muhasebe/on-muhasebe-hareketleri', {
+      skipAuth: options?.skipAuth ?? true,
+      staleTime: options?.staleTime ?? 120_000,
+      ...options,
+    })
   },
 
   getReferences(options?: ApiClientOptions) {
-    return apiClient.get<AccountingReferences>('/api/muhasebe/reference-search', options)
+    return apiClient.get<AccountingReferences>('/api/muhasebe/reference-search', {
+      skipAuth: options?.skipAuth ?? true,
+      staleTime: options?.staleTime ?? 120_000,
+      ...options,
+    })
   },
 
-  create(payload: Record<string, unknown>) {
-    return apiClient.post<{ data: AccountMovementRow }>('/api/muhasebe/on-muhasebe-hareketleri', payload)
+  async create(payload: Record<string, unknown>) {
+    const result = await apiClient.post<{ data: AccountMovementRow }>('/api/muhasebe/on-muhasebe-hareketleri', payload)
+    preAccountingService.invalidate()
+    return result
   },
 
   invalidate() {

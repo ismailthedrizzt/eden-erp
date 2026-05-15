@@ -125,74 +125,121 @@ export interface BankAutomationPreviewPayload {
 export const bankAccountsCardsService = {
   getUnifiedRecords(options: { includePassive?: boolean } = {}) {
     return apiClient.get<{ data: BankAccountCardRow[]; accountOptions: Array<{ value: string; label: string; bank_connection_id?: string | null }> }>('/api/accounting/bank-accounts-cards', {
-      useCache: false,
+      skipAuth: true,
+      staleTime: 120_000,
       query: options.includePassive ? { include_passive: 'true' } : undefined,
     })
   },
-  createUnifiedRecord(payload: BankAccountCardPayload) {
-    return apiClient.post<{ data: any }>('/api/accounting/bank-accounts-cards', payload as unknown as Record<string, unknown>, { useCache: false })
+  async createUnifiedRecord(payload: BankAccountCardPayload) {
+    const result = await apiClient.post<{ data: any }>('/api/accounting/bank-accounts-cards', payload as unknown as Record<string, unknown>, { useCache: false })
+    invalidateBankAccountCardCaches()
+    return result
   },
-  updateUnifiedRecord(id: string, payload: BankAccountCardPayload) {
-    return apiClient.patch<{ data: any }>(`/api/accounting/bank-accounts-cards/${id}`, payload as unknown as Record<string, unknown>, { useCache: false })
+  async updateUnifiedRecord(id: string, payload: BankAccountCardPayload) {
+    const result = await apiClient.patch<{ data: any }>(`/api/accounting/bank-accounts-cards/${id}`, payload as unknown as Record<string, unknown>, { useCache: false })
+    invalidateBankAccountCardCaches(id)
+    return result
   },
-  passivateUnifiedRecord(id: string) {
-    return apiClient.post<{ data: any }>(`/api/accounting/bank-accounts-cards/${id}/passivate`, undefined, { useCache: false })
+  async passivateUnifiedRecord(id: string) {
+    const result = await apiClient.post<{ data: any }>(`/api/accounting/bank-accounts-cards/${id}/passivate`, undefined, { useCache: false })
+    invalidateBankAccountCardCaches(id)
+    return result
   },
-  setDefaultUnifiedRecord(id: string) {
-    return apiClient.post<{ data: any }>(`/api/accounting/bank-accounts-cards/${id}/set-default`, undefined, { useCache: false })
+  async setDefaultUnifiedRecord(id: string) {
+    const result = await apiClient.post<{ data: any }>(`/api/accounting/bank-accounts-cards/${id}/set-default`, undefined, { useCache: false })
+    invalidateBankAccountCardCaches(id)
+    return result
   },
   getConnections() {
-    return apiClient.get<{ data: BankConnectionRow[] }>('/api/accounting/bank-connections', { useCache: false })
+    return apiClient.get<{ data: BankConnectionRow[] }>('/api/accounting/bank-connections', { skipAuth: true, staleTime: 120_000 })
   },
   getConnection(id: string) {
-    return apiClient.get<{ data: BankConnectionRow & { accounts: BankAccountRow[]; cards: BankCardRow[] } }>(`/api/accounting/bank-connections/${id}`, { useCache: false })
+    return apiClient.get<{ data: BankConnectionRow & { accounts: BankAccountRow[]; cards: BankCardRow[] } }>(`/api/accounting/bank-connections/${id}`, { skipAuth: true, staleTime: 120_000 })
   },
-  createConnection(payload: Partial<BankConnectionRow>) {
-    return apiClient.post<{ data: BankConnectionRow }>('/api/accounting/bank-connections', payload, { useCache: false })
+  async createConnection(payload: Partial<BankConnectionRow>) {
+    const result = await apiClient.post<{ data: BankConnectionRow }>('/api/accounting/bank-connections', payload, { useCache: false })
+    invalidateBankAccountCardCaches()
+    return result
   },
-  updateConnection(id: string, payload: Partial<BankConnectionRow>) {
-    return apiClient.patch<{ data: BankConnectionRow }>(`/api/accounting/bank-connections/${id}`, payload, { useCache: false })
+  async updateConnection(id: string, payload: Partial<BankConnectionRow>) {
+    const result = await apiClient.patch<{ data: BankConnectionRow }>(`/api/accounting/bank-connections/${id}`, payload, { useCache: false })
+    invalidateBankAccountCardCaches(undefined, id)
+    return result
   },
-  passivateConnection(id: string) {
-    return apiClient.post<{ data: BankConnectionRow }>(`/api/accounting/bank-connections/${id}/passivate`, undefined, { useCache: false })
+  async passivateConnection(id: string) {
+    const result = await apiClient.post<{ data: BankConnectionRow }>(`/api/accounting/bank-connections/${id}/passivate`, undefined, { useCache: false })
+    invalidateBankAccountCardCaches(undefined, id)
+    return result
   },
-  testConnection(id: string) {
-    return apiClient.post<{ data: BankConnectionRow; message: string }>(`/api/accounting/bank-connections/${id}/test`, undefined, { useCache: false })
+  async testConnection(id: string) {
+    const result = await apiClient.post<{ data: BankConnectionRow; message: string }>(`/api/accounting/bank-connections/${id}/test`, undefined, { useCache: false })
+    invalidateBankAccountCardCaches(undefined, id)
+    return result
   },
-  syncConnection(id: string) {
-    return apiClient.post<{ data: any }>(`/api/accounting/bank-connections/${id}/sync`, undefined, { useCache: false })
+  async syncConnection(id: string) {
+    const result = await apiClient.post<{ data: any }>(`/api/accounting/bank-connections/${id}/sync`, undefined, { useCache: false })
+    invalidateBankAccountCardCaches(undefined, id)
+    apiClient.invalidate('/api/accounting/financial-institution-movements')
+    return result
   },
   previewAutomation(payload: BankAutomationPreviewPayload) {
     return apiClient.post<{ data: { providerCode: string; bankName?: string | null; connectionStatus: string; accounts: Array<Record<string, any>>; providerStatus?: string } }>('/api/accounting/bank-connections/automation-preview', payload as unknown as Record<string, unknown>, { useCache: false })
   },
   getAccounts(connectionId: string) {
-    return apiClient.get<{ data: BankAccountRow[] }>(`/api/accounting/bank-connections/${connectionId}/accounts`, { useCache: false })
+    return apiClient.get<{ data: BankAccountRow[] }>(`/api/accounting/bank-connections/${connectionId}/accounts`, { skipAuth: true, staleTime: 120_000 })
   },
-  createAccount(connectionId: string, payload: Partial<BankAccountRow>) {
-    return apiClient.post<{ data: BankAccountRow }>(`/api/accounting/bank-connections/${connectionId}/accounts`, payload, { useCache: false })
+  async createAccount(connectionId: string, payload: Partial<BankAccountRow>) {
+    const result = await apiClient.post<{ data: BankAccountRow }>(`/api/accounting/bank-connections/${connectionId}/accounts`, payload, { useCache: false })
+    invalidateBankAccountCardCaches(undefined, connectionId)
+    return result
   },
-  updateAccount(id: string, payload: Partial<BankAccountRow>) {
-    return apiClient.patch<{ data: BankAccountRow }>(`/api/accounting/bank-accounts/${id}`, payload, { useCache: false })
+  async updateAccount(id: string, payload: Partial<BankAccountRow>) {
+    const result = await apiClient.patch<{ data: BankAccountRow }>(`/api/accounting/bank-accounts/${id}`, payload, { useCache: false })
+    invalidateBankAccountCardCaches(`account:${id}`)
+    return result
   },
-  passivateAccount(id: string) {
-    return apiClient.post<{ data: BankAccountRow }>(`/api/accounting/bank-accounts/${id}/passivate`, undefined, { useCache: false })
+  async passivateAccount(id: string) {
+    const result = await apiClient.post<{ data: BankAccountRow }>(`/api/accounting/bank-accounts/${id}/passivate`, undefined, { useCache: false })
+    invalidateBankAccountCardCaches(`account:${id}`)
+    return result
   },
-  syncAccount(id: string) {
-    return apiClient.post<{ data: BankAccountRow }>(`/api/accounting/bank-accounts/${id}/sync`, undefined, { useCache: false })
+  async syncAccount(id: string) {
+    const result = await apiClient.post<{ data: BankAccountRow }>(`/api/accounting/bank-accounts/${id}/sync`, undefined, { useCache: false })
+    invalidateBankAccountCardCaches(`account:${id}`)
+    return result
   },
   getCards(connectionId: string) {
-    return apiClient.get<{ data: BankCardRow[] }>(`/api/accounting/bank-connections/${connectionId}/cards`, { useCache: false })
+    return apiClient.get<{ data: BankCardRow[] }>(`/api/accounting/bank-connections/${connectionId}/cards`, { skipAuth: true, staleTime: 120_000 })
   },
-  createCard(connectionId: string, payload: Partial<BankCardRow>) {
-    return apiClient.post<{ data: BankCardRow }>(`/api/accounting/bank-connections/${connectionId}/cards`, payload, { useCache: false })
+  async createCard(connectionId: string, payload: Partial<BankCardRow>) {
+    const result = await apiClient.post<{ data: BankCardRow }>(`/api/accounting/bank-connections/${connectionId}/cards`, payload, { useCache: false })
+    invalidateBankAccountCardCaches(undefined, connectionId)
+    return result
   },
-  updateCard(id: string, payload: Partial<BankCardRow>) {
-    return apiClient.patch<{ data: BankCardRow }>(`/api/accounting/bank-cards/${id}`, payload, { useCache: false })
+  async updateCard(id: string, payload: Partial<BankCardRow>) {
+    const result = await apiClient.patch<{ data: BankCardRow }>(`/api/accounting/bank-cards/${id}`, payload, { useCache: false })
+    invalidateBankAccountCardCaches(`card:${id}`)
+    return result
   },
-  passivateCard(id: string) {
-    return apiClient.post<{ data: BankCardRow }>(`/api/accounting/bank-cards/${id}/passivate`, undefined, { useCache: false })
+  async passivateCard(id: string) {
+    const result = await apiClient.post<{ data: BankCardRow }>(`/api/accounting/bank-cards/${id}/passivate`, undefined, { useCache: false })
+    invalidateBankAccountCardCaches(`card:${id}`)
+    return result
   },
-  syncCard(id: string) {
-    return apiClient.post<{ data: BankCardRow }>(`/api/accounting/bank-cards/${id}/sync`, undefined, { useCache: false })
+  async syncCard(id: string) {
+    const result = await apiClient.post<{ data: BankCardRow }>(`/api/accounting/bank-cards/${id}/sync`, undefined, { useCache: false })
+    invalidateBankAccountCardCaches(`card:${id}`)
+    return result
   },
+}
+
+function invalidateBankAccountCardCaches(recordId?: string, connectionId?: string) {
+  apiClient.invalidate('/api/accounting/bank-accounts-cards')
+  apiClient.invalidate('/api/accounting/bank-connections')
+  if (recordId) apiClient.invalidate(`/api/accounting/bank-accounts-cards/${recordId}`)
+  if (connectionId) {
+    apiClient.invalidate(`/api/accounting/bank-connections/${connectionId}`)
+    apiClient.invalidate(`/api/accounting/bank-connections/${connectionId}/accounts`)
+    apiClient.invalidate(`/api/accounting/bank-connections/${connectionId}/cards`)
+  }
 }

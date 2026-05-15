@@ -15,11 +15,17 @@ export interface AccountCardResolvePayload {
 
 export const accountCardsService = {
   getList(options?: ApiClientOptions) {
-    return apiClient.get<{ data: AccountCardRow[]; warning?: string }>('/api/muhasebe/cari-kartlar', options)
+    return apiClient.get<{ data: AccountCardRow[]; warning?: string }>('/api/muhasebe/cari-kartlar', {
+      skipAuth: options?.skipAuth ?? true,
+      staleTime: options?.staleTime ?? 120_000,
+      ...options,
+    })
   },
 
-  saveFinancialSettings(payload: Record<string, unknown>) {
-    return apiClient.post<{ data: unknown }>('/api/muhasebe/cari-kartlar', payload)
+  async saveFinancialSettings(payload: Record<string, unknown>) {
+    const result = await apiClient.post<{ data: unknown }>('/api/muhasebe/cari-kartlar', payload)
+    accountCardsService.invalidate()
+    return result
   },
 
   resolveIdentity(payload: AccountCardResolvePayload) {
