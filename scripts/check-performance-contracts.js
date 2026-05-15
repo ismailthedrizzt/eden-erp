@@ -189,6 +189,8 @@ for (const file of [
 }
 assertNotIncludes('app/app/muhasebe/on-muhasebe-hareketleri/page.tsx', 'Promise.all([\n        preAccountingService.getList(),\n        preAccountingService.getReferences(),', 'pre-accounting list must not block initial table on form reference data')
 assertIncludes('app/app/muhasebe/on-muhasebe-hareketleri/page.tsx', 'const loadReferences = async () =>', 'pre-accounting form references must be lazy-loaded')
+assertNotIncludes('app/app/muhasebe/banka-kart-hareketleri/page.tsx', 'const [transactionPayload, connectionPayload] = await Promise.all([', 'bank/card movements list must not block initial table on connection cards')
+assertIncludes('app/app/muhasebe/banka-kart-hareketleri/page.tsx', 'const loadConnections = useCallback(async () =>', 'bank/card movements connections must load separately from initial rows')
 assertNotIncludes('app/app/muhasebe/banka-hesaplari-ve-kartlari/page.tsx', 'loadCompanies().then(options =>', 'bank account/card list must not block initial table on company options')
 assertIncludes('app/app/muhasebe/banka-hesaplari-ve-kartlari/page.tsx', 'const loadCompanyOptions = async () =>', 'bank account/card company options must be lazy-loaded for the form')
 

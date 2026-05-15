@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { RefreshCw, WalletCards } from 'lucide-react'
 import { PageBanner } from '@/components/ui/PageBanner'
 import { SmartDataTable, ColumnDef, WidgetDef } from '@/components/ui/SmartDataTable'
@@ -30,25 +30,27 @@ export default function BankCardMovementsPage() {
   const [syncingId, setSyncingId] = useState<string | null>(null)
   const [toast, setToast] = useState<{ type: 'success' | 'error' | 'warning'; title?: string; message: string } | null>(null)
 
-  const loadData = async () => {
+  const loadConnections = useCallback(async () => {
+    const connectionPayload = await bankCardMovementsService.getConnections()
+    setConnections(Array.isArray(connectionPayload.data) ? connectionPayload.data : [])
+  }, [])
+
+  const loadData = useCallback(async () => {
     setLoading(true)
     try {
-      const [transactionPayload, connectionPayload] = await Promise.all([
-        bankCardMovementsService.getTransactions('waiting'),
-        bankCardMovementsService.getConnections(),
-      ])
+      const transactionPayload = await bankCardMovementsService.getTransactions('waiting')
       setRows(Array.isArray(transactionPayload.data) ? transactionPayload.data : [])
-      setConnections(Array.isArray(connectionPayload.data) ? connectionPayload.data : [])
+      loadConnections().catch(() => setConnections([]))
     } catch (error) {
       setToast({ type: 'error', title: 'Hata', message: error instanceof Error ? error.message : 'Banka hareketleri yüklenemedi.' })
     } finally {
       setLoading(false)
     }
-  }
+  }, [loadConnections])
 
   useEffect(() => {
     loadData()
-  }, [])
+  }, [loadData])
 
   const tableData = useMemo(() => rows.map(row => ({
     ...row,
