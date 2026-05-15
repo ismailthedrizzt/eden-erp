@@ -89,7 +89,6 @@ const baseEmployeeListColumns = [
   'email',
   'calisma_durumu',
   'sgk_giris',
-  'fotograf_url',
   'sirket_id',
   'birim_id',
   'kadro_id',
@@ -190,7 +189,7 @@ export async function GET(request: NextRequest) {
       .order(sortColumn, { ascending: listQuery.direction !== 'desc' })
       .range(from, to)
 
-    if (!includePassive && hasIsDeletedColumn) query = query.or('is_deleted.eq.false,is_deleted.is.null')
+    if (!includePassive && hasIsDeletedColumn) query = query.eq('is_deleted', false)
     if (birimId) query = query.eq('birim_id', birimId)
     if (durum) query = query.eq('calisma_durumu', durum)
     if (ara) query = query.or(`ad.ilike.%${ara}%,soyad.ilike.%${ara}%,tc_kimlik.ilike.%${ara}%`)
@@ -221,7 +220,7 @@ export async function GET(request: NextRequest) {
     ...row,
     is_deleted: row.is_deleted ?? false,
     employee_no: row.employee_no || null,
-    photo_url: row.fotograf_url || null,
+    photo_url: null,
     full_name: [row.ad, row.soyad].filter(Boolean).join(' '),
     national_id: row.tc_kimlik || null,
     passport_no: row.pasaport_no || null,

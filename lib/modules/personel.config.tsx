@@ -49,7 +49,7 @@ export const personelModuleConfig: ModuleConfig<PersonelTableRow> = {
     defaultView: 'list',
     defaultPageSize: 25,
     pageSizeOptions: [10, 25, 50, 100],
-    realtime: true,
+    realtime: false,
     pollingInterval: 30000,
     emptyText: 'Henüz çalışan kaydı bulunmamaktadır.',
     createEnabled: true,
