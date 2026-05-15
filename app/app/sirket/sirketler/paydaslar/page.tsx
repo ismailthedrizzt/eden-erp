@@ -266,6 +266,7 @@ export default function PaydaslarPage() {
   const [pageState, setPageState] = useState<PageState>('list')
   const [stakeholders, setStakeholders] = useState<StakeholderRow[]>([])
   const [companies, setCompanies] = useState<Option[]>([])
+  const [companiesLoaded, setCompaniesLoaded] = useState(false)
   const [selectedStakeholder, setSelectedStakeholder] = useState<Record<string, any> | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -284,16 +285,10 @@ export default function PaydaslarPage() {
     setError(null)
     try {
       if (force) companyService.invalidateRelations()
-      const [stakeholderPayload, companyPayload] = await Promise.all([
-        companyService.stakeholdersList({ includePassive, useCache: !force }),
-        companyService.list({ useCache: !force }),
-      ])
+      const stakeholderPayload = await companyService.stakeholdersList({ includePassive, useCache: !force })
 
       setStakeholders(Array.isArray(stakeholderPayload.data) ? stakeholderPayload.data : [])
-      setCompanies(Array.isArray(companyPayload.data) ? companyPayload.data.map((company: any) => ({
-        value: company.id,
-        label: company.ticari_unvan || company.kisa_unvan,
-      })) : [])
+      loadCompanyOptions(force).catch(() => setCompanies([]))
     } catch (err: any) {
       setError(err.message)
     } finally {
@@ -303,6 +298,23 @@ export default function PaydaslarPage() {
   useEffect(() => {
     loadData()
   }, [includePassive])
+
+  const loadCompanyOptions = async (force = false) => {
+    if (companiesLoaded && !force) return
+    const companyPayload = await companyService.list({ useCache: !force })
+    setCompanies(Array.isArray(companyPayload.data) ? companyPayload.data.map((company: any) => ({
+      value: company.id,
+      label: company.ticari_unvan || company.kisa_unvan,
+    })) : [])
+    setCompaniesLoaded(true)
+  }
+
+  useEffect(() => {
+    if (pageState !== 'list') {
+      loadCompanyOptions().catch(() => setCompanies([]))
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pageState])
 
   const companyNameById = useMemo(() => Object.fromEntries(companies.map(company => [company.value, company.label])), [companies])
   const tableData = useMemo(() => stakeholders.map(stakeholder => ({

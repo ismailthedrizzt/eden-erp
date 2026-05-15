@@ -122,6 +122,10 @@ for (const file of [
   assertIncludes(file, 'useMemo(() =>', 'company relation pages must memoize table and widget derivations')
   assertIncludes(file, 'loadData(true)', 'company relation pages must force-refresh after mutations')
 }
+assertNotIncludes('app/app/sirket/sirketler/temsilciler/page.tsx', 'Promise.all([\n        companyService.representativesList({ includePassive, useCache: !force }),\n        companyService.list({ useCache: !force }),', 'representatives list must not block initial table on company options')
+assertIncludes('app/app/sirket/sirketler/temsilciler/page.tsx', 'const loadCompanyOptions = async (force = false) =>', 'representatives company options must load separately from initial list')
+assertNotIncludes('app/app/sirket/sirketler/paydaslar/page.tsx', 'Promise.all([\n        companyService.stakeholdersList({ includePassive, useCache: !force }),\n        companyService.list({ useCache: !force }),', 'stakeholders list must not block initial table on company options')
+assertIncludes('app/app/sirket/sirketler/paydaslar/page.tsx', 'const loadCompanyOptions = async (force = false) =>', 'stakeholders company options must load separately from initial list')
 
 assertIncludes('app/app/sirket/teskilat/page.tsx', 'organizationService.list({ useCache: !force })', 'teskilat page must use cacheable organization service list')
 assertNotIncludes('app/app/sirket/teskilat/page.tsx', 'Promise.all([\n        organizationService.list({ useCache: !force }),\n        companyService.list({ useCache: !force }),', 'teskilat list must not block initial tree on company options')
