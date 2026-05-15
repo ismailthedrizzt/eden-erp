@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { syncMasterContact } from '@/lib/identity/masterContact'
 import { EntityBankAccountsService } from '@/lib/modules/entity-bank-accounts/entityBankAccounts.service'
 import { listMeta, listRange, parseListQuery } from '@/lib/api/listEndpoint'
+import { getServerResponseCache, serverListCacheKey, setServerResponseCache } from '@/lib/api/serverResponseCache'
 
 const SirketSchema = z.object({
   organization_id: z.string().uuid().optional().nullable(),
@@ -71,6 +72,10 @@ function omitNullishValues(value: Record<string, any>) {
 }
 
 export async function GET(request: NextRequest) {
+  const cacheKey = serverListCacheKey(request, 'companies:list')
+  const cached = getServerResponseCache<Record<string, unknown>>(cacheKey)
+  if (cached) return NextResponse.json(cached)
+
   const supabase = createServiceClient()
   const { searchParams } = new URL(request.url)
   const listQuery = parseListQuery(searchParams, { pageSize: 50, sort: 'kisa_unvan', direction: 'asc' })
@@ -95,7 +100,7 @@ export async function GET(request: NextRequest) {
 
   let query = supabase
     .from('sirketler')
-    .select('id,organization_id,kisa_unvan,ticari_unvan,vkn_tckn,vergi_dairesi,sirket_turu,il,ilce,adres,telefon,email,is_deleted,mersis_no,ticaret_sicil_no,kurulus_tarihi,ulke,web_sitesi,updated_at,created_at', { count: 'exact' })
+    .select('id,organization_id,kisa_unvan,ticari_unvan,vkn_tckn,vergi_dairesi,sirket_turu,il,ilce,is_deleted,updated_at,created_at', { count: 'exact' })
     .order(sortColumn, { ascending: listQuery.direction !== 'desc' })
     .range(from, to)
 
@@ -118,7 +123,9 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: error.message, code: error.code || 'FETCH_FAILED' }, { status: 500 })
   }
 
-  return NextResponse.json({ data: data || [], meta: listMeta(listQuery, count ?? 0) })
+  const payload = { data: data || [], meta: listMeta(listQuery, count ?? 0) }
+  setServerResponseCache(cacheKey, payload)
+  return NextResponse.json(payload)
 }
 
 export async function POST(request: NextRequest) {

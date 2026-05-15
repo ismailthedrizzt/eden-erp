@@ -4,6 +4,8 @@ import { z } from 'zod'
 import { isTurkishNationality, normalizeCountryId } from '@/lib/reference/country-nationalities'
 import { hydrateMasterContact, syncMasterContact } from '@/lib/identity/masterContact'
 import { listMeta, listRange, parseListQuery } from '@/lib/api/listEndpoint'
+import { getServerResponseCache, serverListCacheKey, setServerResponseCache } from '@/lib/api/serverResponseCache'
+import { fetchCompanyNames } from '../../accounting/_banking'
 
 const EmployeeSchema = z.object({
   person_id: z.string().uuid().optional().nullable(),
@@ -139,6 +141,10 @@ function stripEmployeeMasterOnlyFields<T extends Record<string, any>>(payload: T
 
 // GET /api/ik/personel
 export async function GET(request: NextRequest) {
+  const cacheKey = serverListCacheKey(request, 'employees:list')
+  const cached = getServerResponseCache<Record<string, unknown>>(cacheKey)
+  if (cached) return NextResponse.json(cached)
+
   const supabase = createServiceClient()
   const { searchParams } = new URL(request.url)
   const listQuery = parseListQuery(searchParams, { pageSize: 50, sort: 'soyad', direction: 'asc' })
@@ -162,8 +168,8 @@ export async function GET(request: NextRequest) {
   const ara = searchParams.get('ara') || listQuery.search
   const includePassive = listQuery.includePassive
 
-  let enabledOptionalColumns = [...optionalEmployeeListColumns]
-  let includeOrganizationRelations = true
+  let enabledOptionalColumns = ['is_deleted']
+  let includeOrganizationRelations = false
   let hasIsDeletedColumn = true
   let data: any[] | null = null
   let error: any = null
@@ -172,7 +178,6 @@ export async function GET(request: NextRequest) {
     let selectQuery = [
       ...baseEmployeeListColumns,
       ...enabledOptionalColumns,
-      'sirket:sirketler(id,kisa_unvan,ticari_unvan)',
     ].join(',')
 
     if (includeOrganizationRelations) {
@@ -181,7 +186,7 @@ export async function GET(request: NextRequest) {
 
     let query = supabase
       .from('employees')
-      .select(selectQuery, { count: 'exact' })
+      .select(selectQuery, { count: 'planned' })
       .order(sortColumn, { ascending: listQuery.direction !== 'desc' })
       .range(from, to)
 
@@ -211,6 +216,7 @@ export async function GET(request: NextRequest) {
   }
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  const companyNames = await fetchCompanyNames(supabase as any, (data || []).map((row: any) => row.sirket_id))
   const rows = (data || []).map((row: any) => ({
     ...row,
     is_deleted: row.is_deleted ?? false,
@@ -220,7 +226,7 @@ export async function GET(request: NextRequest) {
     national_id: row.tc_kimlik || null,
     passport_no: row.pasaport_no || null,
     nationality: row.uyruk || null,
-    company_name: row.sirket?.kisa_unvan || row.sirket?.ticari_unvan || null,
+    company_name: row.sirket_id ? companyNames.get(row.sirket_id) || null : null,
     department_name: row.birim?.ad || null,
     position_title: row.kadro?.unvan || row.gorev || null,
     hire_date: row.sgk_giris || row.start_date || null,
@@ -233,7 +239,9 @@ export async function GET(request: NextRequest) {
     sgk_status: row.sgk_giris ? 'active' : 'pending',
     status: row.calisma_durumu || null,
   }))
-  return NextResponse.json({ data: rows, meta: listMeta(listQuery, (listQuery as any).__count ?? 0) })
+  const payload = { data: rows, meta: listMeta(listQuery, (listQuery as any).__count ?? 0) }
+  setServerResponseCache(cacheKey, payload)
+  return NextResponse.json(payload)
 }
 
 // POST /api/ik/personel

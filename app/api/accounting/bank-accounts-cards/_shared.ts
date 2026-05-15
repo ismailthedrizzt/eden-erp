@@ -1,6 +1,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { resolveTurkishIban } from '@/lib/utils'
 import { cleanPayload, fetchCompanyNames } from '../_banking'
+import type { ListQuery } from '@/lib/api/listEndpoint'
 
 export type BankAccountCardKind = 'account' | 'card'
 
@@ -75,13 +76,40 @@ export function parseCompositeId(id: string): { kind: BankAccountCardKind; rawId
   throw new Error('Geçersiz hesap/kart kimliği.')
 }
 
-export async function listBankAccountsCards(supabase: SupabaseClient, options: { includePassive?: boolean } = {}) {
-  let accountsQuery = supabase.from('bank_accounts').select(BANK_ACCOUNT_SELECT).order('created_at', { ascending: false })
-  let cardsQuery = supabase.from('bank_cards').select(BANK_CARD_SELECT).order('created_at', { ascending: false })
+type BankAccountCardListOptions = {
+  includePassive?: boolean
+  from?: number
+  to?: number
+  search?: string
+  sort?: string
+  direction?: ListQuery['direction']
+}
+
+export async function listBankAccountsCards(supabase: SupabaseClient, options: BankAccountCardListOptions = {}) {
+  const from = options.from ?? 0
+  const to = options.to ?? 49
+  const direction = options.direction === 'desc' ? 'desc' : 'asc'
+  const sortColumn = getBankAccountCardSortColumn(options.sort)
+  let accountsQuery = supabase
+    .from('bank_accounts')
+    .select(BANK_ACCOUNT_SELECT, { count: 'planned' })
+    .order(sortColumn.accounts, { ascending: direction !== 'desc' })
+    .range(0, to)
+  let cardsQuery = supabase
+    .from('bank_cards')
+    .select(BANK_CARD_SELECT, { count: 'planned' })
+    .order(sortColumn.cards, { ascending: direction !== 'desc' })
+    .range(0, to)
 
   if (!options.includePassive) {
     accountsQuery = accountsQuery.eq('is_deleted', false)
     cardsQuery = cardsQuery.eq('is_deleted', false)
+  }
+
+  const search = options.search?.trim()
+  if (search) {
+    accountsQuery = accountsQuery.or(`account_name.ilike.%${search}%,iban.ilike.%${search}%,account_no.ilike.%${search}%`)
+    cardsQuery = cardsQuery.or(`card_name.ilike.%${search}%,last_four_digits.ilike.%${search}%`)
   }
 
   const [accountsResult, cardsResult] = await Promise.all([
@@ -156,9 +184,39 @@ export async function listBankAccountsCards(supabase: SupabaseClient, options: {
   }))
 
   return {
-    rows: [...accounts, ...cards].sort((a, b) => String(b.raw?.created_at || '').localeCompare(String(a.raw?.created_at || ''))),
+    rows: sortBankAccountCardRows([...accounts, ...cards], options.sort, direction).slice(from, to + 1),
     accountOptions,
+    total: (accountsResult.count ?? accounts.length) + (cardsResult.count ?? cards.length),
   }
+}
+
+function getBankAccountCardSortColumn(sort?: string) {
+  const map: Record<string, { accounts: string; cards: string }> = {
+    bank_name: { accounts: 'created_at', cards: 'created_at' },
+    company_name: { accounts: 'company_id', cards: 'company_id' },
+    identity_display: { accounts: 'iban', cards: 'last_four_digits' },
+    name: { accounts: 'account_name', cards: 'card_name' },
+    currency: { accounts: 'currency', cards: 'currency' },
+    type: { accounts: 'account_type', cards: 'card_type' },
+    status: { accounts: 'status', cards: 'status' },
+    created_at: { accounts: 'created_at', cards: 'created_at' },
+    updated_at: { accounts: 'updated_at', cards: 'updated_at' },
+  }
+  return map[sort || ''] || { accounts: 'created_at', cards: 'created_at' }
+}
+
+function sortBankAccountCardRows(rows: any[], sort = 'created_at', direction: ListQuery['direction'] = 'desc') {
+  const sorted = [...rows].sort((a, b) => {
+    if (sort === 'bank_name') {
+      const bankCompare = String(a.bank_name || '').localeCompare(String(b.bank_name || ''), 'tr')
+      if (bankCompare !== 0) return bankCompare
+    }
+    const left = sort === 'created_at' ? a.raw?.created_at : a[sort]
+    const right = sort === 'created_at' ? b.raw?.created_at : b[sort]
+    return String(left || '').localeCompare(String(right || ''), 'tr')
+  })
+  if (direction === 'desc') sorted.reverse()
+  return sorted
 }
 
 export async function ensureManualBankConnection(supabase: SupabaseClient, body: Record<string, any>, userId: string | null) {

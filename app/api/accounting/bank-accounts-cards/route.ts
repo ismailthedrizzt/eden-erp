@@ -5,6 +5,7 @@ import { requirePermission } from '@/lib/security/serverPermissions'
 import { isMissingTableError } from '../_banking'
 import { BANK_ACCOUNT_SELECT, BANK_CARD_SELECT, ensureManualBankConnection, listBankAccountsCards, normalizeAccountBody, normalizeCardBody } from './_shared'
 import { listMeta, listRange, parseListQuery } from '@/lib/api/listEndpoint'
+import { getServerResponseCache, serverListCacheKey, setServerResponseCache } from '@/lib/api/serverResponseCache'
 
 export async function GET(request: NextRequest) {
   const supabase = createServiceClient()
@@ -12,18 +13,24 @@ export async function GET(request: NextRequest) {
   if (permission instanceof NextResponse) return permission
 
   try {
+    const cacheKey = serverListCacheKey(request, 'bank-accounts-cards:list')
+    const cached = getServerResponseCache<Record<string, unknown>>(cacheKey)
+    if (cached) return NextResponse.json(cached)
+
     const { searchParams } = new URL(request.url)
     const listQuery = parseListQuery(searchParams, { pageSize: 50, sort: 'bank_name', direction: 'asc' })
     const { from, to } = listRange(listQuery)
-    const data = await listBankAccountsCards(supabase as any, { includePassive: searchParams.get('include_passive') === 'true' })
-    let rows = data.rows
-    if (listQuery.search) {
-      const search = listQuery.search.toLowerCase()
-      rows = rows.filter((row: any) => [row.bank_name, row.company_name, row.iban, row.card_number_masked, row.account_name, row.card_name].some(value => String(value || '').toLowerCase().includes(search)))
-    }
-    const sortedRows = [...rows].sort((a: any, b: any) => String(a[listQuery.sort || 'bank_name'] || '').localeCompare(String(b[listQuery.sort || 'bank_name'] || ''), 'tr'))
-    if (listQuery.direction === 'desc') sortedRows.reverse()
-    return NextResponse.json({ data: sortedRows.slice(from, to + 1), meta: listMeta(listQuery, sortedRows.length), accountOptions: data.accountOptions })
+    const data = await listBankAccountsCards(supabase as any, {
+      includePassive: searchParams.get('include_passive') === 'true',
+      from,
+      to,
+      search: listQuery.search,
+      sort: listQuery.sort,
+      direction: listQuery.direction,
+    })
+    const payload = { data: data.rows, meta: listMeta(listQuery, data.total), accountOptions: data.accountOptions }
+    setServerResponseCache(cacheKey, payload)
+    return NextResponse.json(payload)
   } catch (error) {
     if (isMissingTableError(error)) {
       return NextResponse.json({
