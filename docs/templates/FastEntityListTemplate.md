@@ -26,7 +26,7 @@ export const entityService = {
     return apiClient.get<ListResponse<EntityListRow>>('/api/module/entities', {
       ...options,
       skipAuth: options.skipAuth ?? true,
-      staleTime: options.staleTime ?? 120_000,
+      staleTime: options.staleTime ?? 300_000,
       query: {
         page: String(query.page),
         pageSize: String(query.pageSize),
@@ -61,14 +61,16 @@ export function useEntities() {
   const [meta, setMeta] = useState({ page: 1, pageSize: 50, total: 0, totalPages: 1 })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const hasDataRef = useRef(false)
 
   const fetchEntities = useCallback(async (force = false) => {
-    setLoading(true)
+    setLoading(previous => force || !hasDataRef.current ? true : previous)
     setError(null)
     try {
       if (force) entityService.invalidateList()
       const result = await entityService.list(query, { useCache: !force })
       setData(result.data ?? [])
+      hasDataRef.current = true
       setMeta(result.meta)
     } catch (err: any) {
       setError(err.message)
@@ -234,7 +236,7 @@ Bagimli modul kapaliysa alan crash etmez; standart olarak `Bu alandan yararlanab
 ## API List Route
 
 ```ts
-import { listMeta, listRange, parseListQuery } from '@/lib/api/listEndpoint'
+import { listMetaFromRows, listRange, parseListQuery } from '@/lib/api/listEndpoint'
 
 const ENTITY_LIST_SELECT = 'id,name,code,status,is_deleted,updated_at'
 const allowedSorts = new Set(['name', 'code', 'updated_at'])
@@ -248,16 +250,17 @@ export async function GET(request: NextRequest) {
 
   let query = supabase
     .from('entities')
-    .select(ENTITY_LIST_SELECT, { count: 'exact' })
+    .select(ENTITY_LIST_SELECT)
     .order(sort, { ascending: listQuery.direction !== 'desc' })
     .range(from, to)
 
   if (!listQuery.includePassive) query = query.eq('is_deleted', false)
   if (listQuery.search) query = query.or(`name.ilike.%${listQuery.search}%,code.ilike.%${listQuery.search}%`)
 
-  const { data, error, count } = await query
+  const { data, error } = await query
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json({ data: data || [], meta: listMeta(listQuery, count ?? 0) })
+  const rows = data || []
+  return NextResponse.json({ data: rows, meta: listMetaFromRows(listQuery, rows.length) })
 }
 ```
 
@@ -274,9 +277,10 @@ Ana liste ekrani kritikse `scripts/check-performance-contracts.js` icindeki kont
 
 - Liste ve detay servislerinde `skipAuth` ve `staleTime`.
 - Liste servisleri `ListResponse<T>` donmeli; `page`, `pageSize`, `search`, `sort`, `direction`, `include_passive` query parametrelerini backend'e tasimali.
-- Liste endpointleri `parseListQuery`, `listRange`, `listMeta`, `select(..., { count: 'exact' })` ve `range(from, to)` kullanmali.
+- Liste endpointleri `parseListQuery`, `listRange`, `listMetaFromRows`, count'suz narrow `select(ENTITY_LIST_SELECT)` ve `range(from, to)` kullanmali.
 - `SmartDataTable` ana ERP listelerinde `pagination={{ mode: 'server', ... }}` ile kullanilmali; client tarafina tum veri basilmamali.
+- Hook'lar elde veri varken otomatik yenilemede tabloyu tekrar komple `loading=true` durumuna dusurmemeli; force refresh haricinde stale veri ekranda kalmali.
 - Sayfa row click icinde once state/mode set edilmesi, sonra detay await edilmesi.
 - `?t=${Date.now()}` ve `cache: 'no-store'` kullanilmamasi.
-- Liste endpointinde agir kolon ve `select('*')` kullanilmamasi.
+- Liste endpointinde agir kolon, base64 medya, belge/history JSON ve `select('*')` kullanilmamasi.
 - Migration indeksinin bulunmasi.

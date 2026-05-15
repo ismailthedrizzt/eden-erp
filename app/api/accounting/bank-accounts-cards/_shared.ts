@@ -92,12 +92,12 @@ export async function listBankAccountsCards(supabase: SupabaseClient, options: B
   const sortColumn = getBankAccountCardSortColumn(options.sort)
   let accountsQuery = supabase
     .from('bank_accounts')
-    .select(BANK_ACCOUNT_SELECT, { count: 'planned' })
+    .select(BANK_ACCOUNT_SELECT)
     .order(sortColumn.accounts, { ascending: direction !== 'desc' })
     .range(0, to)
   let cardsQuery = supabase
     .from('bank_cards')
-    .select(BANK_CARD_SELECT, { count: 'planned' })
+    .select(BANK_CARD_SELECT)
     .order(sortColumn.cards, { ascending: direction !== 'desc' })
     .range(0, to)
 
@@ -186,7 +186,7 @@ export async function listBankAccountsCards(supabase: SupabaseClient, options: B
   return {
     rows: sortBankAccountCardRows([...accounts, ...cards], options.sort, direction).slice(from, to + 1),
     accountOptions,
-    total: (accountsResult.count ?? accounts.length) + (cardsResult.count ?? cards.length),
+    total: rows.length,
   }
 }
 

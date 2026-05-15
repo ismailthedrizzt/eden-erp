@@ -52,6 +52,7 @@ assertIncludes('lib/api/listEndpoint.ts', 'export interface ListResponse<T>', 'l
 assertIncludes('lib/api/listEndpoint.ts', 'export function parseListQuery', 'list endpoint standard must expose query parser')
 assertIncludes('lib/api/listEndpoint.ts', 'export function listRange', 'list endpoint standard must expose backend range helper')
 assertIncludes('lib/api/listEndpoint.ts', 'export function listMeta', 'list endpoint standard must expose meta helper')
+assertIncludes('lib/api/listEndpoint.ts', 'export function listMetaFromRows', 'list endpoint standard must expose count-free approximate meta helper')
 assertIncludes('components/ui/SmartDataTable.tsx', 'export interface ServerPaginationConfig', 'SmartDataTable must support server-side pagination contract')
 assertIncludes('components/ui/SmartDataTable.tsx', "pagination?: ServerPaginationConfig", 'SmartDataTable props must expose server pagination')
 assertIncludes('components/ui/SmartDataTable.tsx', "if (isServerPaginated) return data", 'SmartDataTable server mode must not client-filter/sort the current backend page')
@@ -73,7 +74,10 @@ assertIncludes('components/ui/EntityForm.tsx', 'access?: Partial<EntityAccessSta
 assertIncludes('components/ui/EntityForm.tsx', 'moduleDependencies?: ModuleDependency[]', 'EntityForm must render missing module dependencies')
 assertIncludes('docs/ArchitectureAccessWorkflow.md', 'useEntityAccess', 'architecture doc must explain access helper usage')
 assertIncludes('docs/templates/FastEntityListTemplate.md', "pagination={{", 'fast list template must use SmartDataTable server pagination')
-assertIncludes('docs/templates/FastEntityListTemplate.md', "select(ENTITY_LIST_SELECT, { count: 'exact' })", 'fast list template must require counted narrow selects')
+assertIncludes('docs/templates/FastEntityListTemplate.md', 'select(ENTITY_LIST_SELECT)', 'fast list template must require narrow selects')
+assertIncludes('docs/templates/FastEntityListTemplate.md', 'listMetaFromRows', 'fast list template must avoid exact count for hot lists')
+assertNotIncludes('docs/templates/FastEntityListTemplate.md', "select(ENTITY_LIST_SELECT, { count: 'exact' })", 'fast list template must not recommend exact count for hot lists')
+assertIncludes('docs/templates/FastEntityListTemplate.md', 'hasDataRef', 'fast list template must keep stale rows visible during background refresh')
 assertIncludes('docs/templates/FastEntityListTemplate.md', 'range(from, to)', 'fast list template must require backend pagination range')
 assertIncludes('docs/templates/FastEntityListTemplate.md', 'ListResponse<EntityListRow>', 'fast list template must use paginated list response typing')
 assertIncludes('docs/templates/FastEntityListTemplate.md', 'Satir acma davranisini ayrica her sayfada stillendirme', 'fast list template must keep row click affordance centralized')
@@ -143,7 +147,9 @@ for (const file of [
   'app/api/muhasebe/cari-kartlar/route.ts',
 ]) {
   assertIncludes(file, 'parseListQuery', 'main ERP list endpoint must parse the standard list query')
-  assertIncludes(file, 'listMeta', 'main ERP list endpoint must return standard pagination metadata')
+  assertIncludes(file, 'listMetaFromRows', 'main ERP list endpoint must return count-free pagination metadata')
+  assertNotIncludes(file, "count: 'exact'", 'main ERP list endpoint must not use exact count on hot lists')
+  assertNotIncludes(file, 'count: "exact"', 'main ERP list endpoint must not use exact count on hot lists')
 }
 
 for (const service of fastListServices) {
@@ -151,8 +157,8 @@ for (const service of fastListServices) {
   if (!/(skipAuth:\s*(options|clientOptions)\.skipAuth \?\? true)/.test(content)) {
     fail(`${service.file}: primary list service must skip Supabase session lookup by default`)
   }
-  if (!/(staleTime:\s*(options|clientOptions)\.staleTime \?\? 120_000)/.test(content)) {
-    fail(`${service.file}: primary list service must keep a short client cache`)
+  if (!/(staleTime:\s*(options|clientOptions)\.staleTime \?\? 300_000)/.test(content)) {
+    fail(`${service.file}: primary list service must keep a 5 minute client cache`)
   }
   assertIncludes(service.file, service.detailNeedle, 'primary detail service must use skipAuth and short client cache')
 }
@@ -171,6 +177,7 @@ const employeeListGet = employeeRoute.slice(
 for (const forbidden of ['module_licenses', 'egitim_okullari', 'getEducationLevelValue']) {
   if (employeeListGet.includes(forbidden)) fail(`app/api/ik/personel/route.ts: employee list GET must not include ${forbidden}`)
 }
+assertIncludes('app/api/ik/personel/route.ts', 'photoUrl.startsWith(\'data:\') && photoUrl.length > 20_000', 'employee list GET must strip large base64 avatar payloads')
 assertIncludes('app/api/ik/personel/route.ts', 'missingEmployeeRelation(error)', 'employee list GET must fall back when organization relations are unavailable')
 assertIncludes('app/api/ik/personel/route.ts', 'includeOrganizationRelations = false', 'employee list GET must not fail the whole list when organization joins are unavailable')
 assertIncludes('app/api/ik/personel/route.ts', "missingColumn === 'is_deleted'", 'employee list GET must fall back when legacy databases do not have is_deleted yet')
@@ -178,31 +185,31 @@ assertIncludes('app/api/ik/personel/route.ts', "missingColumn === 'is_deleted'",
 const instantOpenPages = [
   {
     file: 'app/app/sirket/sirketler/page.tsx',
-    selected: 'setSelectedSirket(normalizeCompanyForForm(row as Sirket))',
+    selected: 'setSelectedSirket(snapshot)',
     mode: "setPageState('view')",
-    detail: 'await companyService.detail(row.id)',
+    detail: "await companyService.detailSection(row.id, 'hero')",
   },
   {
     file: 'app/app/ik/personel/page.tsx',
-    selected: 'setSelectedPersonel(row as Personel)',
+    selected: 'setSelectedPersonel(cached?.data || row as Personel)',
     mode: "setPageState('view')",
     detail: 'await employeeService.detail(row.id)',
   },
   {
     file: 'app/app/sirket/sirketler/ortaklar/page.tsx',
-    selected: 'setSelectedPartner(normalizePartnerForForm(row))',
+    selected: 'setSelectedPartner(cached?.data || normalizePartnerForForm(row))',
     mode: "setPageState('view')",
     detail: 'companyService.partnerDetail(row.id)',
   },
   {
     file: 'app/app/sirket/sirketler/temsilciler/page.tsx',
-    selected: 'setSelectedRepresentative(normalizeRepresentativeForForm(row))',
+    selected: 'setSelectedRepresentative(cached?.data || normalizeRepresentativeForForm(row))',
     mode: "setPageState('view')",
     detail: 'await companyService.representativeDetail(row.id)',
   },
   {
     file: 'app/app/sirket/sirketler/paydaslar/page.tsx',
-    selected: 'setSelectedStakeholder(normalizeStakeholderForForm(row))',
+    selected: 'setSelectedStakeholder(cached?.data || normalizeStakeholderForForm(row))',
     mode: "setPageState('view')",
     detail: 'await companyService.stakeholderDetail(row.id)',
   },
@@ -273,6 +280,13 @@ assertIncludes('app/app/sirket/araclar/page.tsx', 'data={tableData}', 'vehicles 
 assertIncludes('app/app/sirket/araclar/page.tsx', 'onRefresh={() => loadData(true)}', 'vehicles page refresh must force invalidate cache')
 assertIncludes('app/api/sirket/araclar/route.ts', "searchParams.get('refs_only') === 'true'", 'vehicles API must expose references-only mode for form data')
 assertIncludes('app/api/sirket/araclar/route.ts', "includeReferences ? employees || [] : []", 'vehicles API must not return all employee/company references for the initial list')
+assertNotIncludes('app/api/accounting/bank-accounts-cards/_shared.ts', "count: 'planned'", 'bank account/card hot list must not request planned counts')
+assertNotIncludes('app/api/accounting/bank-accounts-cards/_shared.ts', "count: 'exact'", 'bank account/card hot list must not request exact counts')
+for (const heavyColumn of ['media', 'documents', 'history', 'api_notes']) {
+  if (getSelectAfterFrom('app/api/sirket/araclar/route.ts', 'company_vehicles').includes(heavyColumn)) {
+    fail(`app/api/sirket/araclar/route.ts: vehicle list select must not include heavy column ${heavyColumn}`)
+  }
+}
 
 for (const file of [
   'components/ui/EntityForm.tsx',

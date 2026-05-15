@@ -4,7 +4,7 @@ import { ACCOUNTING_PERMISSIONS } from '@/lib/modules/accounting/shared/accounti
 import { requirePermission } from '@/lib/security/serverPermissions'
 import { isMissingTableError } from '../_banking'
 import { BANK_ACCOUNT_SELECT, BANK_CARD_SELECT, ensureManualBankConnection, listBankAccountsCards, normalizeAccountBody, normalizeCardBody } from './_shared'
-import { listMeta, listRange, parseListQuery } from '@/lib/api/listEndpoint'
+import { listMetaFromRows, listRange, parseListQuery } from '@/lib/api/listEndpoint'
 import { getServerResponseCache, serverListCacheKey, setServerResponseCache } from '@/lib/api/serverResponseCache'
 
 export async function GET(request: NextRequest) {
@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
       sort: listQuery.sort,
       direction: listQuery.direction,
     })
-    const payload = { data: data.rows, meta: listMeta(listQuery, data.total), accountOptions: data.accountOptions }
+    const payload = { data: data.rows, meta: listMetaFromRows(listQuery, data.rows.length), accountOptions: data.accountOptions }
     setServerResponseCache(cacheKey, payload)
     return NextResponse.json(payload)
   } catch (error) {
