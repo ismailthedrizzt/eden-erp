@@ -113,6 +113,30 @@ export interface Personel {
   // İş
   sgk_giris?: string
   isten_ayrilis?: string
+  sgk_giris_yontemi?: 'servis' | 'web'
+  sgk_giris_referans_no?: string
+  sgk_giris_bildiren?: string
+  sgk_giris_sigorta_kolu?: string
+  sgk_giris_gorev_kodu?: string
+  sgk_giris_meslek_kodu?: string
+  sgk_giris_csgb_is_kolu?: string
+  sgk_giris_engelli?: 'E' | 'H'
+  sgk_giris_eski_hukumlu?: 'E' | 'H'
+  sgk_giris_ogrenim_kodu?: string
+  sgk_giris_mezuniyet_yili?: string
+  sgk_giris_mezuniyet_bolumu?: string
+  sgk_giris_kismi_gun_sayisi?: string
+  sgk_cikis_yontemi?: 'servis' | 'web'
+  sgk_cikis_referans_no?: string
+  sgk_cikis_bildiren?: string
+  sgk_cikis_nedeni?: string
+  sgk_cikis_meslek_kodu?: string
+  sgk_cikis_csgb_is_kolu?: string
+  sgk_cikis_ucret_yuzde_usulu?: 'E' | 'H'
+  sgk_cikis_onceki_belge_turu?: string
+  sgk_cikis_onceki_hakedilen_ucret?: string
+  sgk_cikis_bu_donem_belge_turu?: string
+  sgk_cikis_bu_donem_hakedilen_ucret?: string
   calisma_durumu: PersonelDurum
   calisma_tipi?: string
   is_akdi_bicimi?: string

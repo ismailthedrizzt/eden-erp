@@ -35,8 +35,6 @@ import Modal from './Modal'
 import type { IdentityGateConfig, IdentityGateResolveResult } from '@/lib/identity-gate'
 import { COUNTRY_OPTIONS, normalizeCountryId } from '@/lib/reference/country-nationalities'
 import { isSoftDeletedRecord } from '@/lib/forms/entityState'
-import { companyService } from '@/lib/services/companyService'
-import { organizationService } from '@/lib/services/organizationService'
 import { ModuleDependencyNotice, type EntityAccessState, type ModuleDependency } from '@/lib/access/entityAccess'
 
 /** Historical value entry */
@@ -1477,27 +1475,6 @@ function ListField({
   )
 }
 
-const WORK_TYPE_OPTIONS = [
-  { value: 'tam_zamanli', label: 'Tam Zamanlı' },
-  { value: 'yari_zamanli', label: 'Yarı Zamanlı' },
-  { value: 'vardiyali', label: 'Vardiyalı' },
-  { value: 'proje_bazli', label: 'Proje Bazlı' },
-  { value: 'uzaktan', label: 'Uzaktan' },
-]
-
-const CONTRACT_TYPE_OPTIONS = [
-  { value: 'disaridan', label: 'Dışarıdan' },
-  { value: 'sozlesmeli', label: 'Sözleşmeli' },
-  { value: 'stajyer', label: 'Stajyer' },
-  { value: 'deneme_sureli', label: 'Deneme Süreli' },
-  { value: 'belirsiz_sureli', label: 'Belirsiz Süreli' },
-  { value: 'belirli_sureli', label: 'Belirli Süreli' },
-]
-
-function optionLabel(options: Array<{ value: string; label: string }>, value: unknown) {
-  return options.find(option => option.value === value)?.label || String(value || '-')
-}
-
 function WorkLifecycleField({
   formData,
   onChange,
@@ -1507,229 +1484,280 @@ function WorkLifecycleField({
   onChange: (field: string, value: any) => void
   readOnly: boolean
 }) {
-  const [modal, setModal] = useState<'hire' | 'exit' | null>(null)
-  const [draft, setDraft] = useState<Record<string, any>>({})
-  const [modalErrors, setModalErrors] = useState<Record<string, string>>({})
-  const [companies, setCompanies] = useState<Array<{ id: string; label: string }>>([])
-  const [units, setUnits] = useState<Array<{ id: string; label: string }>>([])
-  const [positions, setPositions] = useState<Array<{ id: string; label: string; birim_id?: string | null }>>([])
   const isHired = !!formData.sgk_giris
   const isExited = !!formData.isten_ayrilis
-  const companyLabel = companies.find(company => company.id === formData.sirket_id)?.label || formData.sirket_id || '-'
-  const unitLabel = units.find(unit => unit.id === formData.birim_id)?.label || formData.birim_id || '-'
-  const positionLabel = positions.find(position => position.id === formData.kadro_id)?.label || formData.gorev || '-'
-  const filteredPositions = draft.birim_id ? positions.filter(position => !position.birim_id || position.birim_id === draft.birim_id) : positions
+  const [inlineHireDate, setInlineHireDate] = useState(formData.sgk_giris || '')
+  const [inlineExitDate, setInlineExitDate] = useState(formData.isten_ayrilis || '')
+  const [hireMode, setHireMode] = useState(formData.sgk_giris_yontemi || 'servis')
+  const [exitMode, setExitMode] = useState(formData.sgk_cikis_yontemi || 'servis')
+  const [inlineError, setInlineError] = useState('')
 
   useEffect(() => {
-    let cancelled = false
+    setInlineHireDate(formData.sgk_giris || '')
+    setInlineExitDate(formData.isten_ayrilis || '')
+    setHireMode(formData.sgk_giris_yontemi || 'servis')
+    setExitMode(formData.sgk_cikis_yontemi || 'servis')
+  }, [formData.sgk_giris, formData.isten_ayrilis, formData.sgk_giris_yontemi, formData.sgk_cikis_yontemi])
 
-    async function fetchReferences() {
-      try {
-        const [companyPayload, organizationPayload] = await Promise.all([
-          companyService.list(),
-          organizationService.list(),
-        ])
-        if (cancelled) return
-
-        setCompanies((companyPayload.data || []).map((company: Record<string, any>) => ({
-          id: company.id,
-          label: company.kisa_unvan || company.ticari_unvan || company.sirket_kodu || company.id,
-        })))
-        setUnits((organizationPayload.birimler || []).map((unit: Record<string, any>) => ({
-          id: unit.id,
-          label: unit.ad || unit.name || unit.id,
-        })))
-        setPositions((organizationPayload.kadrolar || []).map((position: Record<string, any>) => ({
-          id: position.id,
-          label: position.unvan || position.title || position.name || position.id,
-          birim_id: position.birim_id || null,
-        })))
-      } catch {
-        if (cancelled) return
-        setCompanies([])
-        setUnits([])
-        setPositions([])
-      }
-    }
-
-    fetchReferences()
-    return () => {
-      cancelled = true
-    }
-  }, [])
-
-  const openModal = (nextModal: 'hire' | 'exit') => {
-    setDraft(nextModal === 'hire'
-      ? {
-          sgk_giris: formData.sgk_giris || '',
-          sirket_id: formData.sirket_id || (companies.length === 1 ? companies[0].id : ''),
-          birim_id: formData.birim_id || '',
-          kadro_id: formData.kadro_id || '',
-          gorev: formData.gorev || '',
-          calisma_tipi: formData.calisma_tipi || 'tam_zamanli',
-          is_akdi_bicimi: formData.is_akdi_bicimi || 'sozlesmeli',
-          ise_giris_belgeleri: formData.ise_giris_belgeleri || [],
-        }
-      : {
-          isten_ayrilis: formData.isten_ayrilis || '',
-          isten_cikis_belgeleri: formData.isten_cikis_belgeleri || [],
-        })
-    setModal(nextModal)
+  const updateHireMode = (mode: string) => {
+    setHireMode(mode)
+    onChange('sgk_giris_yontemi', mode)
   }
 
-  const closeModal = () => {
-    setModal(null)
-    setDraft({})
-    setModalErrors({})
+  const updateExitMode = (mode: string) => {
+    setExitMode(mode)
+    onChange('sgk_cikis_yontemi', mode)
   }
 
-  const saveModal = () => {
-    if (modal === 'hire') {
-      if (!draft.sgk_giris) {
-        setModalErrors({ sgk_giris: 'İşe başlangıç tarihi zorunludur' })
-        return
-      }
-
-      onChange('sgk_giris', draft.sgk_giris || '')
-      onChange('sirket_id', draft.sirket_id || '')
-      onChange('birim_id', draft.birim_id || '')
-      onChange('kadro_id', draft.kadro_id || '')
-      onChange('gorev', draft.gorev || '')
-      onChange('calisma_tipi', draft.calisma_tipi || '')
-      onChange('is_akdi_bicimi', draft.is_akdi_bicimi || '')
-      onChange('ise_giris_belgeleri', draft.ise_giris_belgeleri || [])
-      onChange('calisma_durumu', 'gorevde')
+  const activateInlineHire = () => {
+    if (!inlineHireDate) {
+      setInlineError('İşe giriş tarihi zorunludur')
+      return
     }
 
-    if (modal === 'exit') {
-      onChange('isten_ayrilis', draft.isten_ayrilis || '')
-      onChange('isten_cikis_belgeleri', draft.isten_cikis_belgeleri || [])
-      onChange('calisma_durumu', draft.isten_ayrilis ? 'ayrilmis' : 'gorevde')
+    setInlineError('')
+    onChange('sgk_giris_yontemi', hireMode)
+    onChange('sgk_giris', inlineHireDate)
+    onChange('calisma_durumu', 'gorevde')
+  }
+
+  const activateInlineExit = () => {
+    if (!inlineExitDate) {
+      setInlineError('İşten çıkış tarihi zorunludur')
+      return
     }
 
-    closeModal()
+    setInlineError('')
+    onChange('sgk_cikis_yontemi', exitMode)
+    onChange('isten_ayrilis', inlineExitDate)
+    onChange('calisma_durumu', 'ayrilmis')
   }
 
-  const addDocument = async (field: string, file?: File) => {
-    if (!file) return
-    const url = await readFileAsDataUrl(file)
-    setDraft(prev => ({
-      ...prev,
-      [field]: [
-        ...(prev[field] || []),
-        { name: file.name, size: file.size, type: file.type, url, uploadedAt: new Date().toISOString() }
-      ]
-    }))
-  }
+  const inputClass = "min-h-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 read-only:cursor-not-allowed read-only:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:read-only:bg-gray-800"
+  const compactInputClass = "min-h-9 w-full rounded-md border border-gray-300 bg-white px-2 py-1.5 text-xs text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 read-only:cursor-not-allowed read-only:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:read-only:bg-gray-800"
+  const actionReadOnly = readOnly
+  const hireReadOnly = actionReadOnly || isHired
+  const exitReadOnly = actionReadOnly || !isHired || isExited
 
   return (
-    <div className="space-y-4 rounded-lg border border-gray-200 p-4 dark:border-gray-700">
-      <div className="flex flex-wrap gap-2">
-        {!isHired && (
-          <button
-            type="button"
-            onClick={() => openModal('hire')}
-            disabled={readOnly}
-            className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-3 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            <Briefcase size={16} />
-            İşe Giriş
-          </button>
-        )}
-
-        <button
-          type="button"
-          onClick={() => openModal('exit')}
-          disabled={readOnly || !isHired || isExited}
-          className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          <LogOut size={16} />
-          İşten Çıkış
-        </button>
-      </div>
-
-      {isHired && (
-        <div className="grid grid-cols-1 gap-2 text-sm text-gray-700 dark:text-gray-300 md:grid-cols-2">
-          <div><span className="text-gray-500">İşe Başlangıç:</span> {formData.sgk_giris}</div>
-          <div><span className="text-gray-500">Şirket:</span> {companyLabel}</div>
-          <div><span className="text-gray-500">Birim:</span> {unitLabel}</div>
-          <div><span className="text-gray-500">Görev:</span> {positionLabel}</div>
-          <div><span className="text-gray-500">Çalışma Türü:</span> {optionLabel(WORK_TYPE_OPTIONS, formData.calisma_tipi)}</div>
-          <div><span className="text-gray-500">İş Akdi Biçimi:</span> {optionLabel(CONTRACT_TYPE_OPTIONS, formData.is_akdi_bicimi)}</div>
-        </div>
-      )}
-
-      {isExited && (
-        <div className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 dark:bg-red-900/20 dark:text-red-300">
-          İşten çıkış tarihi: {formData.isten_ayrilis}
-        </div>
-      )}
-
-      {modal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-lg rounded-xl bg-white shadow-2xl dark:bg-gray-900">
-            <div className="border-b border-gray-200 p-4 dark:border-gray-700">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                {modal === 'hire' ? 'İşe Giriş' : 'İşten Çıkış'}
-              </h3>
-            </div>
-            <div className="space-y-4 p-4">
-              {modal === 'hire' ? (
-                <>
-                  <div>
-                    <label className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">İşe Başlangıç Tarihi *</label>
-                    <input type="date" value={draft.sgk_giris || ''} onChange={(e) => {
-                      setDraft(prev => ({ ...prev, sgk_giris: e.target.value }))
-                      if (modalErrors.sgk_giris) setModalErrors({})
-                    }} className={cn("w-full rounded-lg border bg-white px-3 py-2 text-sm text-gray-900 dark:bg-gray-900 dark:text-white", modalErrors.sgk_giris ? "border-red-300 dark:border-red-700" : "border-gray-300 dark:border-gray-700")} />
-                    {modalErrors.sgk_giris && <p className="mt-1 text-xs text-red-600 dark:text-red-400">{modalErrors.sgk_giris}</p>}
-                  </div>
-                  <select value={draft.sirket_id || ''} onChange={(e) => setDraft(prev => ({ ...prev, sirket_id: e.target.value }))} disabled={companies.length === 0} className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 disabled:bg-gray-100 disabled:text-gray-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:disabled:bg-gray-800">
-                    <option value="">{companies.length ? 'Şirket seçiniz' : 'Şirket bulunamadı'}</option>
-                    {companies.map(company => <option key={company.id} value={company.id}>{company.label}</option>)}
-                  </select>
-                  <select value={draft.birim_id || ''} onChange={(e) => setDraft(prev => ({ ...prev, birim_id: e.target.value, kadro_id: '', gorev: '' }))} disabled={units.length === 0} className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 disabled:bg-gray-100 disabled:text-gray-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:disabled:bg-gray-800">
-                    <option value="">{units.length ? 'Birim seçiniz' : 'Teşkilat birimi yok'}</option>
-                    {units.map(unit => <option key={unit.id} value={unit.id}>{unit.label}</option>)}
-                  </select>
-                  <select value={draft.kadro_id || ''} onChange={(e) => {
-                    const position = positions.find(item => item.id === e.target.value)
-                    setDraft(prev => ({ ...prev, kadro_id: e.target.value, gorev: position?.label || '' }))
-                  }} disabled={filteredPositions.length === 0} className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 disabled:bg-gray-100 disabled:text-gray-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:disabled:bg-gray-800">
-                    <option value="">{filteredPositions.length ? 'Görev / kadro seçiniz' : 'Kadro kaydı yok'}</option>
-                    {filteredPositions.map(position => <option key={position.id} value={position.id}>{position.label}</option>)}
-                  </select>
-                  <select value={draft.calisma_tipi || ''} onChange={(e) => setDraft(prev => ({ ...prev, calisma_tipi: e.target.value }))} className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-white">
-                    {WORK_TYPE_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
-                  </select>
-                  <select value={draft.is_akdi_bicimi || ''} onChange={(e) => setDraft(prev => ({ ...prev, is_akdi_bicimi: e.target.value }))} className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-white">
-                    {CONTRACT_TYPE_OPTIONS.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
-                  </select>
-                  <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-700">
-                    <Upload size={16} />
-                    Belge Yükle
-                    <input type="file" className="hidden" onChange={(event) => addDocument('ise_giris_belgeleri', event.target.files?.[0])} />
-                  </label>
-                </>
-              ) : (
-                <>
-                  <input type="date" value={draft.isten_ayrilis || ''} onChange={(e) => setDraft(prev => ({ ...prev, isten_ayrilis: e.target.value }))} className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900" />
-                  <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-700">
-                    <Upload size={16} />
-                    Belge Yükle
-                    <input type="file" className="hidden" onChange={(event) => addDocument('isten_cikis_belgeleri', event.target.files?.[0])} />
-                  </label>
-                </>
-              )}
-            </div>
-            <div className="flex justify-end gap-2 border-t border-gray-200 p-4 dark:border-gray-700">
-              <button type="button" onClick={closeModal} className="rounded-lg px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800">İptal</button>
-              <button type="button" onClick={saveModal} className="rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700">Kaydet</button>
+    <div className="space-y-3">
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+        <div className="rounded-lg border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-900">
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              İşe Giriş
+            </label>
+            <div className="inline-flex rounded-lg border border-gray-200 bg-gray-50 p-0.5 dark:border-gray-700 dark:bg-gray-800">
+              {[
+                ['servis', 'SGK Servisi'],
+                ['web', 'Webden Yapıldı'],
+              ].map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => updateHireMode(value)}
+                  disabled={hireReadOnly}
+                  className={cn(
+                    "rounded-md px-2.5 py-1 text-xs font-medium transition-colors disabled:cursor-not-allowed",
+                    hireMode === value ? "bg-white text-gray-900 shadow-sm dark:bg-gray-900 dark:text-white" : "text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-100"
+                  )}
+                >
+                  {label}
+                </button>
+              ))}
             </div>
           </div>
+
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <input
+              type="date"
+              value={inlineHireDate ? String(inlineHireDate).split('T')[0] : ''}
+              onChange={(event) => {
+                setInlineHireDate(event.target.value)
+                if (inlineError) setInlineError('')
+              }}
+              readOnly={hireReadOnly}
+              className={cn(inputClass, "flex-1")}
+            />
+            <button
+              type="button"
+              onClick={activateInlineHire}
+              disabled={hireReadOnly}
+              className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              {isHired ? <CheckCircle2 size={16} /> : <Briefcase size={16} />}
+              {isHired ? 'Giriş Yapıldı' : hireMode === 'servis' ? 'SGK Girişi Yap' : 'Giriş Yap'}
+            </button>
+          </div>
+
+          {hireMode === 'servis' ? (
+            <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <SgkTextField label="Sigorta kolu" field="sgk_giris_sigorta_kolu" value={formData.sgk_giris_sigorta_kolu || '0'} onChange={onChange} readOnly={hireReadOnly} className={compactInputClass} />
+              <SgkTextField label="Görev kodu" field="sgk_giris_gorev_kodu" value={formData.sgk_giris_gorev_kodu || '02'} onChange={onChange} readOnly={hireReadOnly} className={compactInputClass} />
+              <SgkTextField label="Meslek kodu" field="sgk_giris_meslek_kodu" value={formData.sgk_giris_meslek_kodu || ''} onChange={onChange} readOnly={hireReadOnly} className={compactInputClass} />
+              <SgkTextField label="ÇSGB iş kolu" field="sgk_giris_csgb_is_kolu" value={formData.sgk_giris_csgb_is_kolu || ''} onChange={onChange} readOnly={hireReadOnly} className={compactInputClass} />
+              <SgkSelectField label="Engelli" field="sgk_giris_engelli" value={formData.sgk_giris_engelli || (formData.engellilik ? 'E' : 'H')} onChange={onChange} readOnly={hireReadOnly} className={compactInputClass} options={SGK_YES_NO_OPTIONS} />
+              <SgkSelectField label="Eski hükümlü" field="sgk_giris_eski_hukumlu" value={formData.sgk_giris_eski_hukumlu || (formData.hukumluluk ? 'E' : 'H')} onChange={onChange} readOnly={hireReadOnly} className={compactInputClass} options={SGK_YES_NO_OPTIONS} />
+              <SgkTextField label="Öğrenim kodu" field="sgk_giris_ogrenim_kodu" value={formData.sgk_giris_ogrenim_kodu || ''} onChange={onChange} readOnly={hireReadOnly} className={compactInputClass} />
+              <SgkTextField label="Mezuniyet yılı" field="sgk_giris_mezuniyet_yili" value={formData.sgk_giris_mezuniyet_yili || ''} onChange={onChange} readOnly={hireReadOnly} className={compactInputClass} />
+              <SgkTextField label="Kısmi gün" field="sgk_giris_kismi_gun_sayisi" value={formData.sgk_giris_kismi_gun_sayisi || ''} onChange={onChange} readOnly={hireReadOnly} className={compactInputClass} />
+              <SgkTextField label="Referans kodu" field="sgk_giris_referans_no" value={formData.sgk_giris_referans_no || ''} onChange={onChange} readOnly={actionReadOnly} className={compactInputClass} />
+              <div className="sm:col-span-2">
+                <SgkTextField label="Mezuniyet bölümü" field="sgk_giris_mezuniyet_bolumu" value={formData.sgk_giris_mezuniyet_bolumu || ''} onChange={onChange} readOnly={hireReadOnly} className={compactInputClass} />
+              </div>
+            </div>
+          ) : (
+            <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <SgkTextField label="Web referans / takip no" field="sgk_giris_referans_no" value={formData.sgk_giris_referans_no || ''} onChange={onChange} readOnly={hireReadOnly} className={compactInputClass} />
+              <SgkTextField label="Bildirim yapan" field="sgk_giris_bildiren" value={formData.sgk_giris_bildiren || ''} onChange={onChange} readOnly={hireReadOnly} className={compactInputClass} />
+            </div>
+          )}
         </div>
+
+        <div className={cn(
+          "rounded-lg border p-3",
+          isHired ? "border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900" : "border-gray-200 bg-gray-50 opacity-70 dark:border-gray-800 dark:bg-gray-950"
+        )}>
+          <div className="mb-3 flex items-center justify-between gap-3">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              İşten Çıkış
+            </label>
+            <div className="inline-flex rounded-lg border border-gray-200 bg-gray-50 p-0.5 dark:border-gray-700 dark:bg-gray-800">
+              {[
+                ['servis', 'SGK Servisi'],
+                ['web', 'Webden Yapıldı'],
+              ].map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => updateExitMode(value)}
+                  disabled={exitReadOnly}
+                  className={cn(
+                    "rounded-md px-2.5 py-1 text-xs font-medium transition-colors disabled:cursor-not-allowed",
+                    exitMode === value ? "bg-white text-gray-900 shadow-sm dark:bg-gray-900 dark:text-white" : "text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-100"
+                  )}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <input
+              type="date"
+              value={inlineExitDate ? String(inlineExitDate).split('T')[0] : ''}
+              onChange={(event) => {
+                setInlineExitDate(event.target.value)
+                if (inlineError) setInlineError('')
+              }}
+              readOnly={exitReadOnly}
+              className={cn(inputClass, "flex-1")}
+            />
+            <button
+              type="button"
+              onClick={activateInlineExit}
+              disabled={exitReadOnly}
+              className="inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-red-600 px-3 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              {isExited ? <CheckCircle2 size={16} /> : <LogOut size={16} />}
+              {isExited ? 'Çıkış Yapıldı' : exitMode === 'servis' ? 'SGK Çıkışı Yap' : 'Çıkış Yap'}
+            </button>
+          </div>
+
+          {exitMode === 'servis' ? (
+            <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <SgkTextField label="Çıkış nedeni" field="sgk_cikis_nedeni" value={formData.sgk_cikis_nedeni || ''} onChange={onChange} readOnly={exitReadOnly} className={compactInputClass} />
+              <SgkTextField label="Meslek kodu" field="sgk_cikis_meslek_kodu" value={formData.sgk_cikis_meslek_kodu || formData.sgk_giris_meslek_kodu || ''} onChange={onChange} readOnly={exitReadOnly} className={compactInputClass} />
+              <SgkTextField label="ÇSGB iş kolu" field="sgk_cikis_csgb_is_kolu" value={formData.sgk_cikis_csgb_is_kolu || formData.sgk_giris_csgb_is_kolu || ''} onChange={onChange} readOnly={exitReadOnly} className={compactInputClass} />
+              <SgkSelectField label="Ücret yüzde usulü" field="sgk_cikis_ucret_yuzde_usulu" value={formData.sgk_cikis_ucret_yuzde_usulu || 'H'} onChange={onChange} readOnly={exitReadOnly} className={compactInputClass} options={SGK_YES_NO_OPTIONS} />
+              <SgkTextField label="Önceki belge türü" field="sgk_cikis_onceki_belge_turu" value={formData.sgk_cikis_onceki_belge_turu || '1'} onChange={onChange} readOnly={exitReadOnly} className={compactInputClass} />
+              <SgkTextField label="Önceki hak edilen ücret" field="sgk_cikis_onceki_hakedilen_ucret" value={formData.sgk_cikis_onceki_hakedilen_ucret || ''} onChange={onChange} readOnly={exitReadOnly} className={compactInputClass} />
+              <SgkTextField label="Bu dönem belge türü" field="sgk_cikis_bu_donem_belge_turu" value={formData.sgk_cikis_bu_donem_belge_turu || '1'} onChange={onChange} readOnly={exitReadOnly} className={compactInputClass} />
+              <SgkTextField label="Bu dönem hak edilen ücret" field="sgk_cikis_bu_donem_hakedilen_ucret" value={formData.sgk_cikis_bu_donem_hakedilen_ucret || ''} onChange={onChange} readOnly={exitReadOnly} className={compactInputClass} />
+              <SgkTextField label="Referans kodu" field="sgk_cikis_referans_no" value={formData.sgk_cikis_referans_no || ''} onChange={onChange} readOnly={actionReadOnly} className={compactInputClass} />
+            </div>
+          ) : (
+            <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <SgkTextField label="Web referans / takip no" field="sgk_cikis_referans_no" value={formData.sgk_cikis_referans_no || ''} onChange={onChange} readOnly={exitReadOnly} className={compactInputClass} />
+              <SgkTextField label="Bildirim yapan" field="sgk_cikis_bildiren" value={formData.sgk_cikis_bildiren || ''} onChange={onChange} readOnly={exitReadOnly} className={compactInputClass} />
+            </div>
+          )}
+        </div>
+      </div>
+
+      {inlineError && (
+        <p className="text-xs font-medium text-red-600 dark:text-red-400">{inlineError}</p>
       )}
     </div>
+  )
+}
+
+const SGK_YES_NO_OPTIONS = [
+  { value: 'H', label: 'Hayır' },
+  { value: 'E', label: 'Evet' },
+]
+
+function SgkTextField({
+  label,
+  field,
+  value,
+  onChange,
+  readOnly,
+  className,
+}: {
+  label: string
+  field: string
+  value: string
+  onChange: (field: string, value: any) => void
+  readOnly: boolean
+  className: string
+}) {
+  return (
+    <label className="block">
+      <span className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">{label}</span>
+      <input
+        type="text"
+        value={value}
+        onChange={(event) => onChange(field, event.target.value)}
+        readOnly={readOnly}
+        className={className}
+      />
+    </label>
+  )
+}
+
+function SgkSelectField({
+  label,
+  field,
+  value,
+  onChange,
+  readOnly,
+  className,
+  options,
+}: {
+  label: string
+  field: string
+  value: string
+  onChange: (field: string, value: any) => void
+  readOnly: boolean
+  className: string
+  options: Array<{ value: string; label: string }>
+}) {
+  return (
+    <label className="block">
+      <span className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">{label}</span>
+      <select
+        value={value}
+        onChange={(event) => onChange(field, event.target.value)}
+        disabled={readOnly}
+        className={className}
+      >
+        {options.map(option => (
+          <option key={option.value} value={option.value}>{option.label}</option>
+        ))}
+      </select>
+    </label>
   )
 }
 
