@@ -123,7 +123,8 @@ for (const file of [
 }
 
 assertIncludes('app/app/sirket/teskilat/page.tsx', 'organizationService.list({ useCache: !force })', 'teskilat page must use cacheable organization service list')
-assertIncludes('app/app/sirket/teskilat/page.tsx', 'companyService.list({ useCache: !force })', 'teskilat page must use cacheable company service list')
+assertNotIncludes('app/app/sirket/teskilat/page.tsx', 'Promise.all([\n        organizationService.list({ useCache: !force }),\n        companyService.list({ useCache: !force }),', 'teskilat list must not block initial tree on company options')
+assertIncludes('app/app/sirket/teskilat/page.tsx', 'const loadCompanyOptions = async (force = false) =>', 'teskilat company options must be lazy-loaded for the form')
 assertIncludes('app/app/sirket/teskilat/page.tsx', 'onRefresh={() => loadData(true)}', 'teskilat page refresh must force invalidate cache')
 
 assertIncludes('app/app/sirket/ortaklik-islemleri/page.tsx', 'ownershipTransactionsService.list()', 'ownership transactions page must use ownership service list')

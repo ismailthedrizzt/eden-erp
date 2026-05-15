@@ -111,6 +111,7 @@ export default function TeskilatPage() {
   const [pageState, setPageState] = useState<PageState>('list')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [companiesLoaded, setCompaniesLoaded] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
 
   const formMode: FormMode = pageState === 'create-unit' || pageState === 'create-position' ? 'create' : pageState === 'edit-unit' ? 'edit' : 'view'
@@ -119,15 +120,11 @@ export default function TeskilatPage() {
     setLoading(true)
     try {
       if (force) organizationService.invalidateList()
-      const [teskilatPayload, companyPayload] = await Promise.all([
-        organizationService.list({ useCache: !force }),
-        companyService.list({ useCache: !force }),
-      ])
+      const teskilatPayload = await organizationService.list({ useCache: !force })
 
       setUnits(Array.isArray(teskilatPayload.birimler) ? teskilatPayload.birimler : [])
       setPositions(Array.isArray(teskilatPayload.kadrolar) ? teskilatPayload.kadrolar : [])
       setUnitTypes(Array.isArray(teskilatPayload.unitTypes) ? teskilatPayload.unitTypes as UnitType[] : [])
-      setCompanies(Array.isArray(companyPayload.data) ? companyPayload.data.map((company: any) => ({ value: company.id, label: company.ticari_unvan || company.kisa_unvan })) : [])
     } catch (error: any) {
       setToast(error.message || 'Teskilat verisi yuklenemedi')
     } finally {
@@ -137,6 +134,20 @@ export default function TeskilatPage() {
   useEffect(() => {
     loadData()
   }, [])
+
+  const loadCompanyOptions = async (force = false) => {
+    if (companiesLoaded && !force) return
+    const companyPayload = await companyService.list({ useCache: !force })
+    setCompanies(Array.isArray(companyPayload.data) ? companyPayload.data.map((company: any) => ({ value: company.id, label: company.ticari_unvan || company.kisa_unvan })) : [])
+    setCompaniesLoaded(true)
+  }
+
+  useEffect(() => {
+    if (pageState !== 'list') {
+      loadCompanyOptions().catch(error => setToast(error instanceof Error ? error.message : 'Şirket seçenekleri yüklenemedi'))
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pageState])
 
   const unitTypeOptions = useMemo(() => {
     const existing = unitTypes.map((type) => ({ value: type.id, label: type.name }))
