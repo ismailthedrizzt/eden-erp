@@ -69,6 +69,18 @@ export interface FilterConfig {
   operator: 'contains' | 'equals' | 'gt' | 'lt' | 'between'
 }
 
+export interface ServerPaginationConfig {
+  mode: 'server'
+  page: number
+  pageSize: number
+  total: number
+  onPageChange: (page: number) => void
+  onPageSizeChange?: (pageSize: number) => void
+  onSearchChange?: (search: string) => void
+  onSortChange?: (sorts: SortConfig[]) => void
+  onFilterChange?: (filters: FilterConfig[]) => void
+}
+
 interface SmartDataTableProps<T extends { id: string }> {
   data: T[]
   columns: ColumnDef[]
@@ -84,6 +96,11 @@ interface SmartDataTableProps<T extends { id: string }> {
   defaultView?: 'list' | 'card'
   defaultPageSize?: number
   pageSizeOptions?: number[]
+  /**
+   * Use for ERP lists backed by list endpoints.
+   * Server mode means data already contains only the current backend page.
+   */
+  pagination?: ServerPaginationConfig
   realtime?: boolean
   pollingInterval?: number
   /** Whether to show action column. Only shown when explicitly enabled. */
@@ -145,6 +162,7 @@ export function SmartDataTable<T extends { id: string }>({
   defaultView = 'list',
   defaultPageSize = 10,
   pageSizeOptions = [10, 25, 50, 100],
+  pagination,
   realtime = false,
   pollingInterval = 30000,
   showPassiveToggle = false,
@@ -152,6 +170,7 @@ export function SmartDataTable<T extends { id: string }>({
   onIncludePassiveChange,
   includePassiveLabel = 'Pasif kayıtları da göster',
 }: SmartDataTableProps<T>) {
+  const isServerPaginated = pagination?.mode === 'server'
   const columnSignature = initialColumns.map(col => `${col.key}:${col.label}:${col.visible ?? ''}:${col.required ?? ''}:${col.fixed ?? ''}:${col.hideable ?? ''}`).join('|')
   const quickLookWidgetIds = [
     ...dashboardWidgets.map(widget => quickLookWidgetId('dashboard', widget.id)),
@@ -195,6 +214,12 @@ export function SmartDataTable<T extends { id: string }>({
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const pollingRef = useRef<NodeJS.Timeout | null>(null)
   const columnSelectorRef = useRef<HTMLDivElement>(null)
+  const serverPaginationRef = useRef(pagination)
+  const serverFilterSignatureRef = useRef(JSON.stringify(filters))
+
+  useEffect(() => {
+    serverPaginationRef.current = pagination
+  }, [pagination])
 
   useEffect(() => {
     const savedView = localStorage.getItem(`${storageKey}-view`)
@@ -282,6 +307,8 @@ export function SmartDataTable<T extends { id: string }>({
   const filteredData = useMemo(() => {
     let result = [...data]
 
+    if (isServerPaginated) return data
+
     // Global search
     if (searchQuery) {
       const query = searchQuery.toLowerCase()
@@ -332,14 +359,18 @@ export function SmartDataTable<T extends { id: string }>({
     }
 
     return result
-  }, [data, searchQuery, filters, sortConfigs, columnConfig])
+  }, [data, searchQuery, filters, sortConfigs, columnConfig, isServerPaginated])
 
   // Pagination
-  const totalPages = Math.ceil(filteredData.length / pageSize)
+  const activePage = isServerPaginated ? pagination.page : currentPage
+  const activePageSize = isServerPaginated ? pagination.pageSize : pageSize
+  const totalRows = isServerPaginated ? pagination.total : filteredData.length
+  const totalPages = Math.max(1, Math.ceil(totalRows / activePageSize))
   const paginatedData = useMemo(() => {
+    if (isServerPaginated) return filteredData
     const start = (currentPage - 1) * pageSize
     return filteredData.slice(start, start + pageSize)
-  }, [filteredData, currentPage, pageSize])
+  }, [filteredData, currentPage, pageSize, isServerPaginated])
 
   // Screen size detection
   useEffect(() => {
@@ -503,30 +534,64 @@ export function SmartDataTable<T extends { id: string }>({
     }
     searchTimeoutRef.current = setTimeout(() => {
       setSearchQuery(value)
-      setCurrentPage(1)
+      if (isServerPaginated) {
+        pagination.onSearchChange?.(value)
+        pagination.onPageChange(1)
+      } else {
+        setCurrentPage(1)
+      }
     }, 300)
-  }, [])
+  }, [isServerPaginated, pagination])
 
   const handleSort = useCallback((key: string) => {
     setSortConfigs(prev => {
       const existing = prev.find(s => s.key === key)
+      let next: SortConfig[]
       if (existing) {
         if (existing.direction === 'asc') {
-          // Switch to desc
-          return prev.map(s => 
+          next = prev.map(s =>
             s.key === key ? { ...s, direction: 'desc' } : s
           )
         } else {
-          // Remove sort
           const filtered = prev.filter(s => s.key !== key)
-          // Update priorities
-          return filtered.map((s, idx) => ({ ...s, priority: idx + 1 }))
+          next = filtered.map((s, idx) => ({ ...s, priority: idx + 1 }))
         }
+      } else {
+        next = [...prev, { key, direction: 'asc', priority: prev.length + 1 }]
       }
-      // Add new sort
-      return [...prev, { key, direction: 'asc', priority: prev.length + 1 }]
+      if (isServerPaginated) {
+        pagination.onSortChange?.(next)
+        pagination.onPageChange(1)
+      }
+      return next
     })
-  }, [])
+  }, [isServerPaginated, pagination])
+
+  useEffect(() => {
+    if (!isServerPaginated) return
+    const filterSignature = JSON.stringify(filters)
+    if (filterSignature === serverFilterSignatureRef.current) return
+    serverFilterSignatureRef.current = filterSignature
+    const serverPagination = serverPaginationRef.current
+    serverPagination?.onFilterChange?.(filters)
+    serverPagination?.onPageChange(1)
+  }, [filters, isServerPaginated])
+
+  const handlePageChange = useCallback((page: number) => {
+    const nextPage = Math.min(totalPages, Math.max(1, page))
+    if (isServerPaginated) pagination.onPageChange(nextPage)
+    else setCurrentPage(nextPage)
+  }, [isServerPaginated, pagination, totalPages])
+
+  const handlePageSizeChange = useCallback((nextPageSize: number) => {
+    if (isServerPaginated) {
+      pagination.onPageSizeChange?.(nextPageSize)
+      pagination.onPageChange(1)
+    } else {
+      setPageSize(nextPageSize)
+      setCurrentPage(1)
+    }
+  }, [isServerPaginated, pagination])
 
   const toggleColumn = useCallback((key: string) => {
     setColumnConfig(prev => {
@@ -1581,15 +1646,14 @@ export function SmartDataTable<T extends { id: string }>({
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
         <div className="flex items-center gap-4">
           <span className="text-sm text-gray-600 dark:text-gray-400">
-            Toplam {filteredData.length} kayıt
+            Toplam {totalRows} kayıt
           </span>
           <div className="flex items-center gap-2">
             <span className="text-sm text-gray-600 dark:text-gray-400">Sayfa başı:</span>
             <select
-              value={pageSize}
+              value={activePageSize}
               onChange={(e) => {
-                setPageSize(Number(e.target.value))
-                setCurrentPage(1)
+                handlePageSizeChange(Number(e.target.value))
               }}
               className="border border-gray-300 dark:border-gray-600 rounded-lg px-2 py-1 text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
             >
@@ -1602,34 +1666,34 @@ export function SmartDataTable<T extends { id: string }>({
 
         <div className="flex items-center gap-2">
           <button
-            onClick={() => setCurrentPage(1)}
-            disabled={currentPage === 1}
+            onClick={() => handlePageChange(1)}
+            disabled={activePage === 1}
             className="px-3 py-1.5 rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
           >
             İlk
           </button>
           <button
-            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-            disabled={currentPage === 1}
+            onClick={() => handlePageChange(activePage - 1)}
+            disabled={activePage === 1}
             className="p-1.5 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 dark:hover:bg-gray-700"
           >
             <ChevronLeft size={18} className="text-gray-700 dark:text-gray-300" />
           </button>
           
           <span className="text-sm font-medium text-gray-900 dark:text-white px-4">
-            {currentPage} / {totalPages}
+            {activePage} / {totalPages}
           </span>
           
           <button
-            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-            disabled={currentPage === totalPages}
+            onClick={() => handlePageChange(activePage + 1)}
+            disabled={activePage === totalPages}
             className="p-1.5 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 dark:hover:bg-gray-700"
           >
             <ChevronRight size={18} className="text-gray-700 dark:text-gray-300" />
           </button>
           <button
-            onClick={() => setCurrentPage(totalPages)}
-            disabled={currentPage === totalPages}
+            onClick={() => handlePageChange(totalPages)}
+            disabled={activePage === totalPages}
             className="px-3 py-1.5 rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
           >
             Son

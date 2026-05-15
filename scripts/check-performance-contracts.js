@@ -27,6 +27,10 @@ function assertBefore(file, first, second, message) {
   if (firstIndex < 0 || secondIndex < 0 || firstIndex > secondIndex) fail(`${file}: ${message}`)
 }
 
+function assertRegex(file, pattern, message) {
+  if (!pattern.test(read(file))) fail(`${file}: ${message}`)
+}
+
 function getSelectAfterFrom(file, table) {
   const content = read(file)
   const pattern = new RegExp(`from\\('${table}'\\)[\\s\\S]{0,500}?\\.select\\('([^']+)'\\)`)
@@ -43,6 +47,20 @@ const fastListServices = [
     detailNeedle: "return apiClient.get<{ data: Personel }>(`/api/ik/personel/${id}`, { skipAuth: true, staleTime: 120_000 })",
   },
 ]
+
+assertIncludes('lib/api/listEndpoint.ts', 'export interface ListResponse<T>', 'list endpoint standard must expose typed paginated responses')
+assertIncludes('lib/api/listEndpoint.ts', 'export function parseListQuery', 'list endpoint standard must expose query parser')
+assertIncludes('lib/api/listEndpoint.ts', 'export function listRange', 'list endpoint standard must expose backend range helper')
+assertIncludes('lib/api/listEndpoint.ts', 'export function listMeta', 'list endpoint standard must expose meta helper')
+assertIncludes('components/ui/SmartDataTable.tsx', 'export interface ServerPaginationConfig', 'SmartDataTable must support server-side pagination contract')
+assertIncludes('components/ui/SmartDataTable.tsx', "pagination?: ServerPaginationConfig", 'SmartDataTable props must expose server pagination')
+assertIncludes('components/ui/SmartDataTable.tsx', "if (isServerPaginated) return data", 'SmartDataTable server mode must not client-filter/sort the current backend page')
+assertIncludes('docs/templates/FastEntityListTemplate.md', "pagination={{", 'fast list template must use SmartDataTable server pagination')
+assertIncludes('docs/templates/FastEntityListTemplate.md', "select(ENTITY_LIST_SELECT, { count: 'exact' })", 'fast list template must require counted narrow selects')
+assertIncludes('docs/templates/FastEntityListTemplate.md', 'range(from, to)', 'fast list template must require backend pagination range')
+assertIncludes('docs/templates/FastEntityListTemplate.md', 'ListResponse<EntityListRow>', 'fast list template must use paginated list response typing')
+assertRegex('FrontendDataAccessRules.md', /SmartDataTable.*pagination=\{\{ mode: 'server'/s, 'frontend rules must require server pagination for main ERP lists')
+assertIncludes('BackendApiMigration.md', 'parseListQuery', 'backend migration rules must reference list query parser')
 
 for (const service of fastListServices) {
   const content = read(service.file)

@@ -41,6 +41,22 @@ interface SmartDataTableProps<T extends { id: string }> {
   
   /** Available page size options */
   pageSizeOptions?: number[]
+
+  /**
+   * Server-side pagination for ERP list endpoints.
+   * In server mode, data must contain only the current backend page.
+   */
+  pagination?: {
+    mode: 'server'
+    page: number
+    pageSize: number
+    total: number
+    onPageChange: (page: number) => void
+    onPageSizeChange?: (pageSize: number) => void
+    onSearchChange?: (search: string) => void
+    onSortChange?: (sorts: SortConfig[]) => void
+    onFilterChange?: (filters: FilterConfig[]) => void
+  }
   
   /** Enable realtime updates */
   realtime?: boolean
@@ -115,6 +131,34 @@ export interface ColumnDef {
   defaultView="list"
   defaultPageSize={25}
   pageSizeOptions={[10, 25, 50, 100]}
+/>
+```
+
+### Server-Paginated ERP List
+
+Ana ERP listelerinde tercih edilen yapi budur. `data` tum tabloyu degil, backend'in dondurdugu mevcut sayfayi tasir.
+
+```tsx
+<SmartDataTable
+  data={rows}
+  columns={columns}
+  loading={loading}
+  defaultPageSize={query.pageSize}
+  pagination={{
+    mode: 'server',
+    page: meta.page,
+    pageSize: meta.pageSize,
+    total: meta.total,
+    onPageChange: page => setQuery(prev => ({ ...prev, page })),
+    onPageSizeChange: pageSize => setQuery(prev => ({ ...prev, page: 1, pageSize })),
+    onSearchChange: search => setQuery(prev => ({ ...prev, page: 1, search })),
+    onSortChange: sorts => setQuery(prev => ({
+      ...prev,
+      page: 1,
+      sort: sorts[0]?.key,
+      direction: sorts[0]?.direction,
+    })),
+  }}
 />
 ```
 

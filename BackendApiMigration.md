@@ -23,6 +23,22 @@ GET    /api/{module}/{id}/history
 
 Liste endpointleri pagination, search, filters, sort, permission filtering ve `is_deleted = false` davranisini backend tarafinda uygulamalidir.
 
+Standart liste response'u:
+
+```ts
+{
+  data: Row[],
+  meta: {
+    page: number,
+    pageSize: number,
+    total: number,
+    totalPages: number,
+  }
+}
+```
+
+Yeni ana liste endpointleri `@/lib/api/listEndpoint` icindeki `parseListQuery`, `listRange` ve `listMeta` yardimcilarini kullanir. Supabase sorgusunda liste kolonlari sabit bir `*_LIST_SELECT` sabitiyle acik listelenir, `select('*')` kullanilmaz, `select(..., { count: 'exact' })` ve `range(from, to)` uygulanir. Agir form alanlari, JSON history/media ve referans kataloglari detay veya referans endpointlerine birakilir.
+
 ## Write endpointleri
 
 Create/update/delete islemleri backend tarafinda validation, permission, audit, history ve optimistic locking kontrollerinden gecmelidir. Version uyusmazliginda `409 Conflict` donulur.

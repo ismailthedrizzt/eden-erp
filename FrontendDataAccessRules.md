@@ -39,6 +39,7 @@ Ana ERP liste ekranlari icin hedef, ilk liste gorunumunun kullaniciya 0.2 saniye
 - Satira tiklaninca once secili kaydi liste satiri verisiyle state'e koy ve form modunu `view` yap; detay verisini arka planda cek.
 - Satir detay fetch'lerinde `?t=${Date.now()}` ve `cache: 'no-store'` kullanma. Gercek zamanli tazelik gerekiyorsa servis cagrisina bilincli `useCache: false` ver ve bunu yorumla acikla.
 - Liste API'lerinde `select('*')` kullanma. Tablo icin gereken kolonlari acik listele; buyuk JSON/media/history kolonlarini detay endpointine birak.
+- Ana ERP listelerinde liste servisi `ListResponse<T>` donmeli ve `page`, `pageSize`, `search`, `sort`, `direction`, `include_passive` parametrelerini backend'e tasimalidir. `SmartDataTable` bu durumda `pagination={{ mode: 'server', ... }}` ile kullanilir; frontend'e tum tablo basilip client-side sayfalanmaz.
 - Liste sort/filter alanlari icin migration ile indeks ekle. Soft delete kullanan ana listelerde indeksin ilk bolumu `is_deleted` filtresini desteklemelidir.
 - Tabloya verilen turetilmis data ve dashboard ozetleri `useMemo` ile hesaplanir.
 
