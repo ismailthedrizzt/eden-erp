@@ -788,6 +788,59 @@ function readFileAsDataUrl(file: File): Promise<string> {
   })
 }
 
+function resizeImageFileAsDataUrl(file: File, maxDimension = 512, quality = 0.78): Promise<string> {
+  if (!file.type.startsWith('image/') || file.type === 'image/svg+xml') return readFileAsDataUrl(file)
+
+  return new Promise(resolve => {
+    const objectUrl = URL.createObjectURL(file)
+    const image = new Image()
+
+    const fallback = async () => {
+      URL.revokeObjectURL(objectUrl)
+      resolve(await readFileAsDataUrl(file))
+    }
+
+    image.onload = () => {
+      try {
+        const sourceWidth = image.naturalWidth || image.width
+        const sourceHeight = image.naturalHeight || image.height
+        if (!sourceWidth || !sourceHeight) {
+          fallback()
+          return
+        }
+
+        const scale = Math.min(1, maxDimension / Math.max(sourceWidth, sourceHeight))
+        const width = Math.max(1, Math.round(sourceWidth * scale))
+        const height = Math.max(1, Math.round(sourceHeight * scale))
+        const canvas = document.createElement('canvas')
+        canvas.width = width
+        canvas.height = height
+        const context = canvas.getContext('2d')
+        if (!context) {
+          fallback()
+          return
+        }
+
+        context.drawImage(image, 0, 0, width, height)
+        const webp = canvas.toDataURL('image/webp', quality)
+        URL.revokeObjectURL(objectUrl)
+        resolve(webp.startsWith('data:image/webp') ? webp : canvas.toDataURL('image/jpeg', quality))
+      } catch {
+        fallback()
+      }
+    }
+
+    image.onerror = fallback
+    image.src = objectUrl
+  })
+}
+
+function avatarImageMaxDimension(slotId?: string) {
+  if (!slotId) return 512
+  if (['photo', 'photo_logo', 'light_mode_avatar', 'dark_mode_avatar'].includes(slotId)) return 384
+  return 512
+}
+
 function normalizeStoredImages(value: unknown): SlotImage[] {
   const images = Array.isArray(value) ? value : value ? [value] : []
 
@@ -2128,11 +2181,12 @@ export function EntityForm({
     if (imageSlot.dataField) {
       const hydratedImages = await Promise.all(nextImages.map(async image => {
         if (!image.file) return image
+        const previewUrl = await resizeImageFileAsDataUrl(image.file, avatarImageMaxDimension(image.slotId))
         return {
           ...image,
-          previewUrl: await readFileAsDataUrl(image.file),
+          previewUrl,
           name: image.name || image.file.name,
-          size: image.size || image.file.size,
+          size: Math.round((previewUrl.length * 3) / 4),
         }
       }))
       setImages(hydratedImages)
@@ -2147,10 +2201,10 @@ export function EntityForm({
     }
 
     if (photo.file) {
-      const dataUrl = await readFileAsDataUrl(photo.file)
+      const dataUrl = await resizeImageFileAsDataUrl(photo.file, avatarImageMaxDimension(photo.slotId))
       handleChange('fotograf_url', dataUrl)
       setImages(current => current.map(image =>
-        image.slotId === photo.slotId ? { ...image, previewUrl: dataUrl } : image
+        image.slotId === photo.slotId ? { ...image, previewUrl: dataUrl, size: Math.round((dataUrl.length * 3) / 4) } : image
       ))
       return
     }

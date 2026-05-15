@@ -283,4 +283,5 @@ Ana liste ekrani kritikse `scripts/check-performance-contracts.js` icindeki kont
 - Sayfa row click icinde once state/mode set edilmesi, sonra detay await edilmesi.
 - `?t=${Date.now()}` ve `cache: 'no-store'` kullanilmamasi.
 - Liste endpointinde agir kolon, base64 medya, belge/history JSON ve `select('*')` kullanilmamasi.
+- Avatar/foto/logo yuklemeleri kayda yazilmadan once client tarafinda kucultulmeli; form image upload akisi `resizeImageFileAsDataUrl` benzeri helper kullanmali, ham `readFileAsDataUrl(file)` sonucunu avatar alanina yazmamali.
 - Migration indeksinin bulunmasi.
