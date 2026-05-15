@@ -933,6 +933,8 @@ export function DocumentSlotUploader({
           {sortedDocuments.map((doc, index) => {
             const signedKey = doc.storagePath || doc.documentId || ''
             const docUrl = getDocumentUrl(doc) || (signedKey ? signedPreviewUrls[signedKey] : '')
+            const docKey = signedKey || `${doc.slotId}:${doc.name}:${doc.size}`
+            const thumbUrl = generatedThumbnails[docKey] || getDocumentThumbnailUrl(doc, signedKey ? signedPreviewUrls[signedKey] : undefined)
             const config = getFileTypeConfig(getEffectiveDocumentType(doc))
             const Icon = config.icon
             const slotTitle = allSlots.find(slot => slot.id === doc.slotId)?.title || doc.slotTitle || doc.slotId
@@ -940,9 +942,17 @@ export function DocumentSlotUploader({
 
             return (
               <div key={`${getDocumentIdentity(doc)}:${index}`} className="flex items-center gap-3 px-4 py-3">
-                <div className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-lg", config.bgColor)}>
-                  <Icon size={18} className={config.color} />
-                </div>
+                {thumbUrl ? (
+                  <img
+                    src={thumbUrl}
+                    alt={doc.name}
+                    className="h-11 w-8 shrink-0 rounded border border-gray-200 object-cover object-top bg-white shadow-sm dark:border-gray-700"
+                  />
+                ) : (
+                  <div className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-lg", config.bgColor)}>
+                    <Icon size={18} className={config.color} />
+                  </div>
+                )}
                 <div className="min-w-0 flex-1">
                   <button
                     type="button"
@@ -1055,15 +1065,25 @@ export function DocumentSlotUploader({
             const expanded = expandedHistorySlotIds.includes(slot.id)
             const signedKey = doc?.storagePath || doc?.documentId || ''
             const docUrl = getDocumentUrl(doc) || (signedKey ? signedPreviewUrls[signedKey] : '')
+            const docKey = doc ? signedKey || `${doc.slotId}:${doc.name}:${doc.size}` : ''
+            const thumbUrl = doc ? generatedThumbnails[docKey] || getDocumentThumbnailUrl(doc, signedKey ? signedPreviewUrls[signedKey] : undefined) : ''
             const config = getFileTypeConfig(getEffectiveDocumentType(doc))
             const Icon = config.icon
 
             return (
               <div key={slot.id}>
                 <div className="flex items-center gap-3 px-4 py-3">
-                  <div className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-lg", config.bgColor)}>
-                    <Icon size={18} className={config.color} />
-                  </div>
+                  {thumbUrl ? (
+                    <img
+                      src={thumbUrl}
+                      alt={doc?.name || slot.title}
+                      className="h-11 w-8 shrink-0 rounded border border-gray-200 object-cover object-top bg-white shadow-sm dark:border-gray-700"
+                    />
+                  ) : (
+                    <div className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-lg", config.bgColor)}>
+                      <Icon size={18} className={config.color} />
+                    </div>
+                  )}
                   <div className="min-w-0 flex-1">
                     <div className="flex min-w-0 items-center gap-2">
                       <span className="shrink-0 text-sm font-semibold text-gray-900 dark:text-white">{slot.title}</span>

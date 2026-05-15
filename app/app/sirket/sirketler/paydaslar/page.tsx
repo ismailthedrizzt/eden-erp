@@ -10,6 +10,7 @@ import { createRealPersonMasterTabs } from '@/lib/identity/realPersonFormSection
 import { createLegalEntityMasterTabs } from '@/lib/identity/legalEntityFormSections'
 import { isSoftDeletedRecord } from '@/lib/forms/entityState'
 import { createProgressiveFormLoadStages } from '@/lib/forms/progressiveFormLoading'
+import { invalidateEntityDetailCache, readEntityDetailCache, writeEntityDetailCache } from '@/lib/forms/entityDetailCache'
 import { companyService } from '@/lib/services/companyService'
 import type { ListMeta } from '@/lib/api/listEndpoint'
 
@@ -381,15 +382,22 @@ export default function PaydaslarPage() {
   }
 
   const handleRowClick = async (row: any) => {
-    setSelectedStakeholder(normalizeStakeholderForForm(row))
+    const cached = readEntityDetailCache<Record<string, any>>('company-stakeholders', row.id)
+    setSelectedStakeholder(cached?.data || normalizeStakeholderForForm(row))
     setPageState('view')
     setFormError(null)
     setFieldErrors({})
+    if (cached) {
+      setDetailLoading(false)
+      return
+    }
     setDetailLoading(true)
     try {
       const result = await companyService.stakeholderDetail(row.id)
       if (!result.data) throw new Error('Paydaş detayı yüklenemedi')
-      setSelectedStakeholder(normalizeStakeholderForForm(result.data))
+      const normalized = normalizeStakeholderForForm(result.data)
+      setSelectedStakeholder(normalized)
+      writeEntityDetailCache('company-stakeholders', row.id, normalized)
     } catch (err: any) {
       setFormError(err.message || 'Paydaş detayı yüklenemedi')
       setToast(err.toast || { type: 'error', title: 'Detay Yüklenemedi', message: err.message || 'Paydaş detayı yüklenemedi' })
@@ -412,6 +420,8 @@ export default function PaydaslarPage() {
       if (!response.ok) throw await createSaveError(response, mode === 'create' ? 'Paydaş oluşturulamadı' : 'Güncelleme başarısız')
       setToast({ type: 'success', title: 'Kayıt Başarılı', message: mode === 'create' ? 'Paydaş kaydı oluşturuldu' : 'Paydaş bilgileri güncellendi' })
       await loadData(true)
+      if (mode === 'create') invalidateEntityDetailCache('company-stakeholders')
+      else invalidateEntityDetailCache('company-stakeholders', selectedStakeholder?.id)
       setPageState('list')
     } catch (err: any) {
       setFormError(err.message)
@@ -456,6 +466,7 @@ export default function PaydaslarPage() {
       const result = await response.json()
       if (result.data) setSelectedStakeholder(normalizeStakeholderForForm(result.data))
       setToast({ type: 'success', title: 'Kayit Basarili', message: 'Paydas kaydi aktive edildi' })
+      invalidateEntityDetailCache('company-stakeholders', selectedStakeholder.id)
       await loadData(true)
       setPageState('view')
     } catch (err: any) {

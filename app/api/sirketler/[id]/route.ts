@@ -75,13 +75,16 @@ function isMissingTableError(error: any) {
 }
 
 const COMPANY_DETAIL_SELECT = 'id,organization_id,field_history,kisa_unvan,ticari_unvan,vkn_tckn,vergi_dairesi,sirket_turu,il,ilce,adres,telefon,email,is_deleted,mersis_no,ticaret_sicil_no,kurulus_tarihi,legal_entity,electronic_notification_address,trade_registry_office,parent_company_id,sirket_kodu,ulke,web_sitesi,e_fatura_mukellefi,e_arsiv_mukellefi,e_irsaliye_mukellefi,sgk_is_yeri_sicil_no,sgk_il,sgk_sube,nace_kodlari,tehlike_sinifi,varsayilan_para_birimi,varsayilan_dil,zaman_dilimi,mali_yil_baslangici,hero_images,hero_documents,created_at,updated_at'
+const COMPANY_HERO_SELECT = 'id,organization_id,field_history,kisa_unvan,ticari_unvan,vkn_tckn,vergi_dairesi,sirket_turu,is_deleted,created_at,updated_at'
+const COMPANY_MEDIA_SELECT = 'id,hero_images,hero_documents,updated_at'
+const COMPANY_DETAILS_SELECT = 'id,organization_id,field_history,il,ilce,adres,telefon,email,mersis_no,ticaret_sicil_no,kurulus_tarihi,legal_entity,electronic_notification_address,trade_registry_office,parent_company_id,sirket_kodu,ulke,web_sitesi,e_fatura_mukellefi,e_arsiv_mukellefi,e_irsaliye_mukellefi,sgk_is_yeri_sicil_no,sgk_il,sgk_sube,nace_kodlari,tehlike_sinifi,varsayilan_para_birimi,varsayilan_dil,zaman_dilimi,mali_yil_baslangici,created_at,updated_at'
 const PUBLIC_TAX_SELECT = 'id,company_id,tax_number,tax_office,tax_type,liability_start_date,e_invoice_taxpayer,e_archive_taxpayer,e_waybill_enabled,gib_user_code,has_financial_seal,financial_seal_expiry_date,tax_debt_tracking_active,last_check_date,history,created_at,updated_at'
 const PUBLIC_SGK_SELECT = 'id,company_id,workplace_registry_no,province,branch,registration_date,nace_code,risk_class,uses_incentive,active_incentive_type,incentive_end_date,employee_count,debt_tracking_active,last_check_date,history,created_at,updated_at'
 const PUBLIC_INCENTIVES_SELECT = 'id,company_id,has_kosgeb_registration,kosgeb_no,active_support_program,application_date,result_status,incentive_type,incentive_end_date,responsible_person,notes,history,created_at,updated_at'
 const PUBLIC_REGISTRY_SELECT = 'id,company_id,mersis_no,trade_registry_no,registry_office,chamber_registry_no,chamber_name,establishment_registration_date,last_change_date,liquidation_status,history,created_at,updated_at'
 const PUBLIC_LICENSES_SELECT = 'id,company_id,license_type,document_no,issuing_authority,start_date,end_date,status,document_file,reminder_days,history,is_deleted,created_at,updated_at'
 const PUBLIC_CHANNELS_SELECT = 'id,company_id,kep_address,kep_provider,e_notification_address,e_notification_active,e_government_authority_status,official_notification_email,official_notification_phone,has_web_service_integration,api_notes,history,created_at,updated_at'
-const CURRENT_OWNERSHIP_SELECT = 'company_id,partner_id,owner_kind,person_id,organization_id,display_name,current_share_ratio,current_voting_ratio,current_profit_ratio,current_capital_amount,committed_capital_amount,current_share_units,has_veto_right,has_board_nomination_right,has_privileged_share,last_transaction_date,warnings'
+const CURRENT_OWNERSHIP_SELECT = 'company_id,partner_id,display_name,current_share_ratio,current_voting_ratio,current_profit_ratio'
 
 export async function GET(
   request: NextRequest,
@@ -89,10 +92,50 @@ export async function GET(
 ) {
   const { id } = await params
   const supabase = createServiceClient()
+  const section = request.nextUrl.searchParams.get('section')
+
+  if (section === 'hero') {
+    const { data: company, error } = await supabase
+      .from('sirketler')
+      .select(COMPANY_HERO_SELECT)
+      .eq('id', id)
+      .single()
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return NextResponse.json({ error: 'Åirket bulunamadÄ±', code: 'COMPANY_NOT_FOUND' }, { status: 404 })
+      }
+      return NextResponse.json({ error: error.message, code: error.code || 'FETCH_FAILED' }, { status: 500 })
+    }
+
+    const companyRow = company as Record<string, any>
+    const hydrated = companyRow.organization_id
+      ? await hydrateMasterContact(supabase, 'organization', companyRow)
+      : companyRow
+
+    return NextResponse.json({ data: hydrated }, { headers: { 'Cache-Control': 'no-store, max-age=0' } })
+  }
+
+  if (section === 'media') {
+    const { data, error } = await supabase
+      .from('sirketler')
+      .select(COMPANY_MEDIA_SELECT)
+      .eq('id', id)
+      .single()
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return NextResponse.json({ error: 'Åirket bulunamadÄ±', code: 'COMPANY_NOT_FOUND' }, { status: 404 })
+      }
+      return NextResponse.json({ error: error.message, code: error.code || 'FETCH_FAILED' }, { status: 500 })
+    }
+
+    return NextResponse.json({ data }, { headers: { 'Cache-Control': 'no-store, max-age=0' } })
+  }
 
   const { data: company, error } = await supabase
     .from('sirketler')
-    .select(COMPANY_DETAIL_SELECT)
+    .select((section === 'details' ? COMPANY_DETAILS_SELECT : COMPANY_DETAIL_SELECT) as string)
     .eq('id', id)
     .single()
 
@@ -182,7 +225,7 @@ export async function GET(
   })
 
   const data = {
-    ...company,
+    ...(company as Record<string, any>),
     ortaklar: partnersWithOwnership,
     temsilciler: representatives.data || [],
     paydaslar: stakeholders.data || [],
@@ -196,9 +239,10 @@ export async function GET(
     company_nace_codes: companyNaceCodes.data || [],
   }
 
-  const hydrated = data.organization_id
-    ? await hydrateMasterContact(supabase, 'organization', data)
-    : data
+  const dataRow = data as Record<string, any>
+  const hydrated = dataRow.organization_id
+    ? await hydrateMasterContact(supabase, 'organization', dataRow)
+    : dataRow
 
   return NextResponse.json(
     { data: hydrated },

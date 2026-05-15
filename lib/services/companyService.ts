@@ -45,6 +45,13 @@ export const companyService = {
   detail(id: string) {
     return apiClient.get<{ data: Sirket }>(`/api/sirketler/${id}`, { skipAuth: true, staleTime: 120_000 })
   },
+  detailSection(id: string, section: 'hero' | 'media' | 'details') {
+    return apiClient.get<{ data: Partial<Sirket> }>(`/api/sirketler/${id}`, {
+      skipAuth: true,
+      staleTime: 120_000,
+      query: { section },
+    })
+  },
   partners(companyId: string, options: ApiClientOptions = {}) {
     return apiClient.get<{ data: SirketOrtak[] }>('/api/sirketler/ortaklar', relationListOptions({ ...options, companyId }))
   },

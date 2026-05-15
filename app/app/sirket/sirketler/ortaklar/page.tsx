@@ -11,6 +11,7 @@ import { createRealPersonMasterTabs } from '@/lib/identity/realPersonFormSection
 import { createLegalEntityMasterTabs } from '@/lib/identity/legalEntityFormSections'
 import { isSoftDeletedRecord } from '@/lib/forms/entityState'
 import { createProgressiveFormLoadStages } from '@/lib/forms/progressiveFormLoading'
+import { invalidateEntityDetailCache, readEntityDetailCache, writeEntityDetailCache } from '@/lib/forms/entityDetailCache'
 import { companyService } from '@/lib/services/companyService'
 import { ownershipTransactionsService } from '@/lib/modules/ownership-transactions/ownershipTransactions.service'
 import type { ListMeta } from '@/lib/api/listEndpoint'
@@ -505,10 +506,15 @@ export default function OrtaklarPage() {
   }
 
   const handleRowClick = async (row: any) => {
-    setSelectedPartner(normalizePartnerForForm(row))
+    const cached = readEntityDetailCache<Record<string, any>>('company-partners', row.id)
+    setSelectedPartner(cached?.data || normalizePartnerForForm(row))
     setPageState('view')
     setFormError(null)
     setFieldErrors({})
+    if (cached) {
+      setDetailLoading(false)
+      return
+    }
     setDetailLoading(true)
 
     try {
@@ -518,12 +524,14 @@ export default function OrtaklarPage() {
       ])
       const result = response
       if (!result.data) throw new Error('Ortak detayı yüklenemedi')
-      setSelectedPartner(normalizePartnerForForm({
+      const normalized = normalizePartnerForForm({
         ...result.data,
         current_ownership: row.current_ownership,
         representative_authorities: row.representative_authorities,
         ownership_transaction_history: transactionHistory,
-      }))
+      })
+      setSelectedPartner(normalized)
+      writeEntityDetailCache('company-partners', row.id, normalized)
     } catch (err: any) {
       setFormError(err.message || 'Ortak detayı yüklenemedi')
       setToast(err.toast || { type: 'error', title: 'Detay Yüklenemedi', message: err.message || 'Ortak detayı yüklenemedi' })
@@ -548,6 +556,8 @@ export default function OrtaklarPage() {
       if (result.data) setSelectedPartner(normalizePartnerForForm(result.data))
       setToast({ type: 'success', title: 'Kayıt Başarılı', message: mode === 'create' ? 'Ortak kaydı oluşturuldu' : 'Ortak bilgileri güncellendi' })
       await loadData(true)
+      if (mode === 'create') invalidateEntityDetailCache('company-partners')
+      else invalidateEntityDetailCache('company-partners', selectedPartner?.id)
       setPageState('list')
     } catch (err: any) {
       setFormError(err.message)
@@ -564,6 +574,7 @@ export default function OrtaklarPage() {
     setDeleting(true)
     try {
       const response = await fetch(`/api/sirketler/ortaklar/${selectedPartner.id}`, { method: 'DELETE' })
+      invalidateEntityDetailCache('company-partners', selectedPartner.id)
       if (!response.ok) throw await createSaveError(response, 'Pasifleştirme başarısız')
       setToast({ type: 'success', title: 'Kayıt Başarılı', message: 'Ortak kaydı pasife çekildi' })
       await loadData(true)
@@ -591,6 +602,7 @@ export default function OrtaklarPage() {
           deleted_by: null,
         }),
       })
+      invalidateEntityDetailCache('company-partners', selectedPartner.id)
       if (!response.ok) throw await createSaveError(response, 'Aktiflestirme basarisiz')
       const result = await response.json()
       if (result.data) setSelectedPartner(normalizePartnerForForm(result.data))

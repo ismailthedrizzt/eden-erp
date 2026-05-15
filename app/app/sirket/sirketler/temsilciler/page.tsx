@@ -11,6 +11,7 @@ import { createRealPersonMasterTabs } from '@/lib/identity/realPersonFormSection
 import { createLegalEntityMasterTabs } from '@/lib/identity/legalEntityFormSections'
 import { isSoftDeletedRecord } from '@/lib/forms/entityState'
 import { createProgressiveFormLoadStages } from '@/lib/forms/progressiveFormLoading'
+import { invalidateEntityDetailCache, readEntityDetailCache, writeEntityDetailCache } from '@/lib/forms/entityDetailCache'
 import { companyService } from '@/lib/services/companyService'
 import type { ListMeta } from '@/lib/api/listEndpoint'
 
@@ -462,16 +463,23 @@ export default function TemsilcilerPage() {
   }
 
   const handleRowClick = async (row: any) => {
-    setSelectedRepresentative(normalizeRepresentativeForForm(row))
+    const cached = readEntityDetailCache<Record<string, any>>('company-representatives', row.id)
+    setSelectedRepresentative(cached?.data || normalizeRepresentativeForForm(row))
     setPageState('view')
     setFormError(null)
     setFieldErrors({})
+    if (cached) {
+      setDetailLoading(false)
+      return
+    }
     setDetailLoading(true)
 
     try {
       const result = await companyService.representativeDetail(row.id)
       if (!result.data) throw new Error('Temsilci detayı yüklenemedi')
-      setSelectedRepresentative(normalizeRepresentativeForForm(result.data))
+      const normalized = normalizeRepresentativeForForm(result.data)
+      setSelectedRepresentative(normalized)
+      writeEntityDetailCache('company-representatives', row.id, normalized)
     } catch (err: any) {
       setFormError(err.message || 'Temsilci detayı yüklenemedi')
       setToast(err.toast || { type: 'error', title: 'Detay Yüklenemedi', message: err.message || 'Temsilci detayı yüklenemedi' })
@@ -496,6 +504,8 @@ export default function TemsilcilerPage() {
       if (result.data) setSelectedRepresentative(normalizeRepresentativeForForm(result.data))
       setToast({ type: 'success', title: 'Kayıt Başarılı', message: mode === 'create' ? 'Temsilci kaydı oluşturuldu' : 'Temsilci bilgileri güncellendi' })
       await loadData(true)
+      if (mode === 'create') invalidateEntityDetailCache('company-representatives')
+      else invalidateEntityDetailCache('company-representatives', selectedRepresentative?.id)
       setPageState('list')
     } catch (err: any) {
       setFormError(err.message)
@@ -543,6 +553,7 @@ export default function TemsilcilerPage() {
       const result = await response.json()
       if (result.data) setSelectedRepresentative(normalizeRepresentativeForForm(result.data))
       setToast({ type: 'success', title: 'Kayit Basarili', message: 'Temsilci kaydi aktive edildi' })
+      invalidateEntityDetailCache('company-representatives', selectedRepresentative.id)
       await loadData(true)
       setPageState('view')
     } catch (err: any) {

@@ -3,6 +3,15 @@ import type { FormLoadStage, FormLoadStageStatus, FormMode } from '@/components/
 type ProgressiveFormLoadingInput = {
   mode: FormMode | 'list'
   hasSnapshot?: boolean
+  heroLoading?: boolean
+  heroReady?: boolean
+  heroError?: boolean
+  mediaLoading?: boolean
+  mediaReady?: boolean
+  mediaError?: boolean
+  detailsLoading?: boolean
+  detailsReady?: boolean
+  detailsError?: boolean
   detailLoading?: boolean
   detailError?: boolean
   detailReady?: boolean
@@ -15,6 +24,36 @@ type ProgressiveFormLoadingInput = {
 
 export function createProgressiveFormLoadStages(input: ProgressiveFormLoadingInput): FormLoadStage[] {
   if (input.mode === 'list' || input.mode === 'create') return []
+
+  if (
+    input.heroLoading !== undefined ||
+    input.heroReady !== undefined ||
+    input.mediaLoading !== undefined ||
+    input.mediaReady !== undefined ||
+    input.detailsLoading !== undefined ||
+    input.detailsReady !== undefined
+  ) {
+    return [
+      {
+        key: 'hero',
+        label: 'Hero alanı',
+        status: sectionStatus(input.heroLoading, input.heroReady || input.hasSnapshot, input.heroError),
+        description: 'Hero alanındaki temel bilgiler yükleniyor.',
+      },
+      {
+        key: 'media',
+        label: 'Fotoğraf ve belgeler',
+        status: sectionStatus(input.mediaLoading, input.mediaReady, input.mediaError),
+        description: 'Fotoğraf, avatar ve belge görselleri yükleniyor.',
+      },
+      {
+        key: 'details',
+        label: 'Detay alanları',
+        status: sectionStatus(input.detailsLoading, input.detailsReady, input.detailsError),
+        description: 'Sekmelerdeki detay alanları yükleniyor.',
+      },
+    ]
+  }
 
   const detailStatus: FormLoadStageStatus = input.detailError
     ? 'error'
@@ -64,4 +103,11 @@ export function createProgressiveFormLoadStages(input: ProgressiveFormLoadingInp
       description: 'Dropdown, bağlı kayıt ve başka modüllerden gelen alan seçenekleri ayrıca yüklenir.',
     },
   ]
+}
+
+function sectionStatus(loading?: boolean, ready?: boolean, error?: boolean): FormLoadStageStatus {
+  if (error) return 'error'
+  if (loading) return 'loading'
+  if (ready) return 'ready'
+  return 'idle'
 }

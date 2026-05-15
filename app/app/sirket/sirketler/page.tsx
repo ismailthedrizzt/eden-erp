@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { BriefcaseBusiness, Building2, FileText, Landmark, Phone, Settings, Users } from 'lucide-react'
 import { useSirketler } from '@/hooks/useSirketler'
 import { EntityForm, FormField, FormMode, FormTab } from '@/components/ui/EntityForm'
@@ -13,6 +13,7 @@ import { formatPhoneInput, normalizeEmailInput } from '@/lib/utils'
 import { createFormModeState, mapPageStateToFormMode } from '@/lib/forms/formModeEngine'
 import { isSoftDeletedRecord } from '@/lib/forms/entityState'
 import { createProgressiveFormLoadStages } from '@/lib/forms/progressiveFormLoading'
+import { invalidateEntityDetailCache, readEntityDetailCache, writeEntityDetailCache } from '@/lib/forms/entityDetailCache'
 import { createLegalEntityMasterTabs } from '@/lib/identity/legalEntityFormSections'
 import { useModules } from '@/lib/security/moduleStore'
 import { usePermissions } from '@/lib/security/permissionStore'
@@ -25,6 +26,28 @@ type ToastState = { type: 'success' | 'error' | 'warning'; title?: string; messa
 type SaveError = Error & { toast?: ToastState; fieldErrors?: Record<string, string> }
 type SirketTableRow = Sirket & { adres_ozet: string; logo_url: string }
 type TaxOfficeOption = { value: string; label: string }
+type DetailSectionState = {
+  heroLoading: boolean
+  heroReady: boolean
+  heroError: boolean
+  mediaLoading: boolean
+  mediaReady: boolean
+  mediaError: boolean
+  detailsLoading: boolean
+  detailsReady: boolean
+  detailsError: boolean
+}
+const emptyDetailSectionState: DetailSectionState = {
+  heroLoading: false,
+  heroReady: false,
+  heroError: false,
+  mediaLoading: false,
+  mediaReady: false,
+  mediaError: false,
+  detailsLoading: false,
+  detailsReady: false,
+  detailsError: false,
+}
 
 const COMPANY_TYPE_SHORT_LABELS: Record<string, string> = {
   anonim: 'A.Ş.',
@@ -252,12 +275,14 @@ export default function SirketlerPage() {
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [detailLoading, setDetailLoading] = useState(false)
+  const [detailSections, setDetailSections] = useState<DetailSectionState>(emptyDetailSectionState)
   const [formError, setFormError] = useState<string | null>(null)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [toast, setToast] = useState<ToastState | null>(null)
   const [taxOfficeOptions, setTaxOfficeOptions] = useState<TaxOfficeOption[]>([])
   const [tradeRegistryOfficeOptions, setTradeRegistryOfficeOptions] = useState<TaxOfficeOption[]>([])
   const [publicReferenceOptionsLoaded, setPublicReferenceOptionsLoaded] = useState(false)
+  const detailRequestRef = useRef(0)
 
   useEffect(() => {
     if (pageState === 'list' || publicReferenceOptionsLoaded) return
@@ -354,9 +379,7 @@ export default function SirketlerPage() {
   const formLoadStages = createProgressiveFormLoadStages({
     mode: formMode,
     hasSnapshot: pageState !== 'create' && !!selectedSirket,
-    detailLoading,
-    detailError: !!formError,
-    detailReady: pageState !== 'create' && !!selectedSirket && !detailLoading,
+    ...detailSections,
     hasMaster: !!((selectedSirket as any)?.organization_id || (selectedSirket as any)?.master_record_id || (selectedSirket as any)?.master),
     referencesLoading: pageState !== 'list' && !publicReferenceOptionsLoaded,
     referencesReady: pageState !== 'list' && publicReferenceOptionsLoaded,
@@ -375,24 +398,85 @@ export default function SirketlerPage() {
     setSelectedSirket(null)
     setFormError(null)
     setFieldErrors({})
+    setDetailSections(emptyDetailSectionState)
     setPageState('create')
   }
 
   const handleRowClick = async (row: SirketTableRow) => {
+    const requestId = detailRequestRef.current + 1
+    detailRequestRef.current = requestId
+    const snapshot = normalizeCompanyForForm(row as Sirket)
+    const cached = readEntityDetailCache<Sirket, DetailSectionState>('companies', row.id)
+
+    if (cached) {
+      setFormError(null)
+      setFieldErrors({})
+      setSelectedSirket(cached.data)
+      setPageState('view')
+      setDetailLoading(false)
+      setDetailSections(cached.meta || emptyDetailSectionState)
+      return
+    }
+
+    let mergedData = snapshot
+    const applySection = (sectionData: Partial<Sirket>) => {
+      if (detailRequestRef.current !== requestId) return
+      mergedData = normalizeCompanyForForm({ ...mergedData, ...sectionData } as Sirket)
+      setSelectedSirket(mergedData)
+    }
+
     setFormError(null)
     setFieldErrors({})
-    setSelectedSirket(normalizeCompanyForForm(row as Sirket))
+    setSelectedSirket(snapshot)
     setPageState('view')
     setDetailLoading(true)
+    setDetailSections({ ...emptyDetailSectionState, heroLoading: true })
 
     try {
-      const result = await companyService.detail(row.id)
-      if (!result.data) {
-        throw new Error('Şirket detayı yüklenemedi')
+      const heroResult = await companyService.detailSection(row.id, 'hero')
+      if (!heroResult.data) throw new Error('Sirket hero bilgileri yuklenemedi')
+
+      applySection(heroResult.data)
+      if (detailRequestRef.current !== requestId) return
+      const heroSections = { ...emptyDetailSectionState, heroLoading: false, heroReady: true, mediaLoading: true, detailsLoading: true }
+      setDetailSections(heroSections)
+      writeEntityDetailCache('companies', row.id, mergedData, { meta: { ...heroSections, mediaLoading: false, detailsLoading: false } })
+
+      const [mediaResult, detailsResult] = await Promise.allSettled([
+        companyService.detailSection(row.id, 'media'),
+        companyService.detailSection(row.id, 'details'),
+      ])
+
+      if (detailRequestRef.current !== requestId) return
+
+      if (mediaResult.status === 'fulfilled' && mediaResult.value.data) {
+        applySection(mediaResult.value.data)
+        setDetailSections(previous => {
+          const next = { ...previous, mediaLoading: false, mediaReady: true }
+          writeEntityDetailCache('companies', row.id, mergedData, { meta: { ...next, detailsLoading: false } })
+          return next
+        })
+      } else {
+        setDetailSections(previous => ({ ...previous, mediaLoading: false, mediaError: true }))
       }
 
-      setSelectedSirket(normalizeCompanyForForm(result.data))
+      if (detailsResult.status === 'fulfilled' && detailsResult.value.data) {
+        applySection(detailsResult.value.data)
+        setDetailSections(previous => {
+          const next = { ...previous, detailsLoading: false, detailsReady: true }
+          writeEntityDetailCache('companies', row.id, mergedData, { meta: next })
+          return next
+        })
+      } else {
+        const message = detailsResult.status === 'rejected'
+          ? detailsResult.reason?.message
+          : 'Sirket detay alanlari yuklenemedi'
+        setDetailSections(previous => ({ ...previous, detailsLoading: false, detailsError: true }))
+        setFormError(message || 'Sirket detay alanlari yuklenemedi')
+      }
     } catch (error: any) {
+      if (detailRequestRef.current !== requestId) return
+      setDetailSections(previous => ({ ...previous, heroLoading: false, mediaLoading: false, detailsLoading: false, heroError: previous.heroReady ? previous.heroError : true }))
       setFormError(error.message || 'Şirket detayı yüklenemedi')
       setToast(error.toast || {
         type: 'error',
@@ -400,7 +484,7 @@ export default function SirketlerPage() {
         message: error.message || 'Şirket detayı yüklenemedi',
       })
     } finally {
-      setDetailLoading(false)
+      if (detailRequestRef.current === requestId) setDetailLoading(false)
     }
   }
 
@@ -409,6 +493,7 @@ export default function SirketlerPage() {
     setSelectedSirket(null)
     setFormError(null)
     setFieldErrors({})
+    setDetailSections(emptyDetailSectionState)
   }
 
   const normalizePayload = (raw: Record<string, any>) => {
@@ -461,6 +546,11 @@ export default function SirketlerPage() {
       }
 
       const result = await response.json()
+      if (mode === 'create') {
+        invalidateEntityDetailCache('companies')
+      } else {
+        invalidateEntityDetailCache('companies', selectedSirket?.id)
+      }
       if (result.data) setSelectedSirket(result.data)
       setToast({
         type: 'success',
@@ -485,6 +575,7 @@ export default function SirketlerPage() {
     setDeleting(true)
     try {
       const response = await fetch(`/api/sirketler/${selectedSirket.id}`, { method: 'DELETE' })
+      invalidateEntityDetailCache('companies', selectedSirket.id)
 
       if (!response.ok) {
         throw await createSaveError(response, 'Silme işlemi başarısız')
@@ -512,6 +603,7 @@ export default function SirketlerPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ is_deleted: false }),
       })
+      invalidateEntityDetailCache('companies', selectedSirket.id)
 
       if (!response.ok) {
         throw await createSaveError(response, 'Aktiflestirme basarisiz')

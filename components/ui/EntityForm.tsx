@@ -118,7 +118,7 @@ export interface FormTab {
 /** Form modes */
 export type FormMode = 'create' | 'view' | 'edit' | 'passive'
 
-export type FormLoadStageKey = 'snapshot' | 'detail' | 'master' | 'references'
+export type FormLoadStageKey = 'snapshot' | 'detail' | 'master' | 'references' | 'hero' | 'media' | 'details'
 export type FormLoadStageStatus = 'idle' | 'loading' | 'ready' | 'error' | 'skipped'
 
 export interface FormLoadStage {
@@ -579,6 +579,33 @@ function FormLoadStages({ stages }: { stages?: FormLoadStage[] }) {
           </div>
         ))}
       </div>
+    </div>
+  )
+}
+
+function SectionLoadIcon({ stage }: { stage?: FormLoadStage }) {
+  if (!stage || stage.status === 'idle' || stage.status === 'skipped') return null
+
+  return (
+    <div
+      className={cn(
+        "pointer-events-none absolute right-2 top-2 z-20 inline-flex h-7 w-7 items-center justify-center rounded-full border bg-white/95 shadow-sm dark:bg-gray-900/95",
+        stage.status === 'ready' && "border-emerald-200 text-emerald-600 dark:border-emerald-900/70 dark:text-emerald-300",
+        stage.status === 'loading' && "border-sky-200 text-sky-600 dark:border-sky-900/70 dark:text-sky-300",
+        stage.status === 'error' && "border-red-200 text-red-600 dark:border-red-900/70 dark:text-red-300",
+      )}
+      title={stage.description || stage.label}
+      aria-label={stage.label}
+    >
+      {stage.status === 'ready' ? (
+        <CheckCircle2 size={15} />
+      ) : stage.status === 'loading' ? (
+        <Loader2 size={15} className="animate-spin" />
+      ) : stage.status === 'error' ? (
+        <AlertCircle size={15} />
+      ) : (
+        <Circle size={15} />
+      )}
     </div>
   )
 }
@@ -1886,6 +1913,10 @@ export function EntityForm({
   const canActivateRecord = isPassive && effectiveCanPassivate && !!onActivate
   const canPassivateRecord = !isPassive && effectiveCanPassivate && !!onDelete
   const slotLoaderMode = isReadOnly ? 'view' : isCreate ? 'insert' : 'update'
+  const getLoadStage = (key: FormLoadStageKey) => loadStages?.find(stage => stage.key === key)
+  const mediaLoadStage = getLoadStage('media') || getLoadStage('detail')
+  const heroLoadStage = getLoadStage('hero') || getLoadStage('detail')
+  const detailsLoadStage = getLoadStage('details') || getLoadStage('detail')
   const isIdentityGateEnabled = !!identityGate?.enabled
   const effectiveIdentityGateResult = identityGateResult || buildIdentityResultFromExistingData(identityGate, formData)
   const isIdentityGateReady = !isIdentityGateEnabled || !isCreate || effectiveIdentityGateResult?.state === 'ready_for_insert' || effectiveIdentityGateResult?.state === 'ready_for_edit'
@@ -2675,8 +2706,6 @@ export function EntityForm({
         </div>
       )}
 
-      <FormLoadStages stages={loadStages} />
-
       {moduleDependencies.length > 0 && (
         <div className="m-4 space-y-2">
           {moduleDependencies.map(dependency => (
@@ -2690,7 +2719,8 @@ export function EntityForm({
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 p-6">
           
           {/* Left Panel - STANDARD FORM LAYOUT: Photo (expected) + CV (optional) */}
-          <div className="lg:col-span-1">
+          <div className="relative lg:col-span-1">
+            <SectionLoadIcon stage={mediaLoadStage} />
             {heroLeftPanel || (
               <div className="flex flex-col gap-4">
                 {/* Image Slot - Expected but not required */}
@@ -2731,7 +2761,8 @@ export function EntityForm({
           </div>
 
           {/* Right Panel - Fields + Actions */}
-          <div className="lg:col-span-3 flex flex-col">
+          <div className="relative lg:col-span-3 flex flex-col">
+            <SectionLoadIcon stage={heroLoadStage} />
             {/* Section Title */}
             {showHeroHeader && <div className="mb-4">
               <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
@@ -2876,7 +2907,8 @@ export function EntityForm({
       )}
 
       {(formTabs.length > 0 || isIdentityGateLocked) && (
-        <div className="p-6">
+        <div className="relative p-6">
+          <SectionLoadIcon stage={detailsLoadStage} />
           {isIdentityGateLocked && (
             <div className="mb-4 rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-3 text-sm text-gray-600 dark:border-gray-700 dark:bg-gray-800/50 dark:text-gray-300">
               Devam etmek için önce Temel Kimlik Sorgulama/Oluşturma alanını eşleştirin.

@@ -30,6 +30,7 @@ import { formatPhoneInput, normalizeEmailInput } from '@/lib/utils'
 import { isTurkishNationality, normalizeCountryId } from '@/lib/reference/country-nationalities'
 import { isSoftDeletedRecord } from '@/lib/forms/entityState'
 import { createProgressiveFormLoadStages } from '@/lib/forms/progressiveFormLoading'
+import { invalidateEntityDetailCache, readEntityDetailCache, writeEntityDetailCache } from '@/lib/forms/entityDetailCache'
 import { employeeService } from '@/lib/services/employeeService'
 import type { Personel } from '@/types'
 
@@ -165,16 +166,22 @@ export default function PersonelYonetimPage() {
   }
 
   const handleRowClick = async (row: PersonelTableRow) => {
+    const cached = readEntityDetailCache<Personel>('employees', row.id)
     setFormError(null)
     setSaveFieldErrors({})
-    setSelectedPersonel(row as Personel)
+    setSelectedPersonel(cached?.data || row as Personel)
     setPageState('view')
+    if (cached) {
+      setDetailLoading(false)
+      return
+    }
     setDetailLoading(true)
 
     try {
       const result = await employeeService.detail(row.id)
       if (!result.data) throw new Error('Çalışan detayı yüklenemedi')
       setSelectedPersonel(result.data)
+      writeEntityDetailCache('employees', row.id, result.data)
     } catch (err: any) {
       setFormError(err.message || 'Çalışan detayı yüklenemedi')
       setToast(err.toast || { type: 'error', title: 'Detay Yüklenemedi', message: err.message || 'Çalışan detayı yüklenemedi' })
@@ -220,8 +227,14 @@ export default function PersonelYonetimPage() {
         setToast({ type: 'success', title: 'Kayıt Başarılı', message: lifecycleMessages?.updateSuccess || 'Çalışan bilgileri güncellendi' })
       }
       
+      if (mode === 'create') {
+        invalidateEntityDetailCache('employees')
+      } else {
+        invalidateEntityDetailCache('employees', selectedPersonel?.id)
+      }
       // Refresh list and return to list view
       await yenile()
+      invalidateEntityDetailCache('employees', selectedPersonel?.id)
       setPageState('list')
     } catch (err: any) {
       setFormError(err.message)
@@ -313,6 +326,7 @@ export default function PersonelYonetimPage() {
       
       setToast({ type: 'success', title: 'Kayıt Başarılı', message: lifecycleMessages?.deleteSuccess || 'Çalışan kaydı pasife çekildi' })
       await yenile()
+      invalidateEntityDetailCache('employees', selectedPersonel?.id)
       setPageState('list')
     } catch (err: any) {
       setFormError(err.message)
@@ -342,6 +356,7 @@ export default function PersonelYonetimPage() {
       }
 
       const result = await response.json()
+      invalidateEntityDetailCache('employees', selectedPersonel.id)
       setSelectedPersonel(result.data)
       setToast({ type: 'success', title: 'Kayit Basarili', message: 'Calisan kaydi aktive edildi' })
       await yenile()
