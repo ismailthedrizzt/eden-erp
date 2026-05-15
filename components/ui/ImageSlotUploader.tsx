@@ -51,6 +51,18 @@ export interface SlotImage {
   uploadedAt?: Date
 }
 
+const avatarSlotIds = new Set(['light_mode_avatar', 'dark_mode_avatar'])
+const avatarFallbackSlots = ['light_mode_avatar', 'dark_mode_avatar', 'document_logo', 'original_logo', 'logo_primary', 'photo_logo']
+
+function findImageForSlot(images: SlotImage[], slotId: string) {
+  const exact = images.find(img => img.slotId === slotId)
+  if (exact || !avatarSlotIds.has(slotId)) return exact
+  return avatarFallbackSlots
+    .filter(fallbackSlotId => fallbackSlotId !== slotId)
+    .map(fallbackSlotId => images.find(img => img.slotId === fallbackSlotId && (img.previewUrl || img.file)))
+    .find(Boolean) || images.find(img => img.previewUrl || img.file)
+}
+
 interface ImageSlotUploaderProps {
   /** Predefined image slots */
   slots: ImageSlot[]
@@ -115,7 +127,8 @@ export function ImageSlotUploader({
   )
 
   const currentSlot = displaySlots[currentIndex]
-  const currentImage = images.find(img => img.slotId === currentSlot.id)
+  const currentImage = findImageForSlot(images, currentSlot.id)
+  const isFallbackImage = !!currentImage && currentImage.slotId !== currentSlot.id
   const currentImageUrl = currentImage?.previewUrl
   const hasImage = !!currentImageUrl || !!currentImage?.file
 
@@ -210,12 +223,12 @@ export function ImageSlotUploader({
 
   const handleDelete = useCallback(() => {
     if (!canMutate) return
-    if (!currentImage) return
+    if (!currentImage || isFallbackImage) return
     
     const updatedImages = images.filter(img => img.slotId !== currentSlot.id)
     onChange(updatedImages)
     setShowDeleteConfirm(false)
-  }, [canMutate, currentImage, currentSlot, images, onChange])
+  }, [canMutate, currentImage, currentSlot, images, isFallbackImage, onChange])
 
   const handleExtraSlotCreate = useCallback(() => {
     if (!canMutate) return
@@ -336,13 +349,15 @@ export function ImageSlotUploader({
                   >
                     <RefreshCw size={20} className="text-gray-700" />
                   </button>
-                  <button
-                    onClick={() => setShowDeleteConfirm(true)}
-                    className="p-2 bg-white rounded-lg hover:bg-red-50 transition-colors"
-                    title="Delete"
-                  >
-                    <Trash2 size={20} className="text-red-600" />
-                  </button>
+                  {!isFallbackImage && (
+                    <button
+                      onClick={() => setShowDeleteConfirm(true)}
+                      className="p-2 bg-white rounded-lg hover:bg-red-50 transition-colors"
+                      title="Delete"
+                    >
+                      <Trash2 size={20} className="text-red-600" />
+                    </button>
+                  )}
                 </div>
               )}
               
@@ -463,7 +478,7 @@ export function ImageSlotUploader({
                 "w-1.5 h-1.5 rounded-full transition-colors",
                 index === currentIndex 
                   ? "bg-blue-600" 
-                  : images.find(img => img.slotId === slot.id)
+                  : findImageForSlot(images, slot.id)
                     ? "bg-green-400"
                     : "bg-gray-300 dark:bg-gray-600"
               )}

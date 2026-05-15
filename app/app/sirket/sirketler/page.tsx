@@ -438,45 +438,44 @@ export default function SirketlerPage() {
 
       applySection(heroResult.data)
       if (detailRequestRef.current !== requestId) return
-      const heroSections = { ...emptyDetailSectionState, heroLoading: false, heroReady: true, mediaLoading: true, detailsLoading: true }
+      const heroSections = { ...emptyDetailSectionState, heroLoading: false, heroReady: true, mediaLoading: true }
       setDetailSections(heroSections)
-      writeEntityDetailCache('companies', row.id, mergedData, { meta: { ...heroSections, mediaLoading: false, detailsLoading: false } })
+      writeEntityDetailCache('companies', row.id, mergedData, { meta: { ...heroSections, mediaLoading: false } })
 
-      const [mediaResult, detailsResult] = await Promise.allSettled([
-        companyService.detailSection(row.id, 'media'),
-        companyService.detailSection(row.id, 'details'),
-      ])
-
-      if (detailRequestRef.current !== requestId) return
-
-      if (mediaResult.status === 'fulfilled' && mediaResult.value.data) {
-        applySection(mediaResult.value.data)
+      try {
+        const mediaResult = await companyService.detailSection(row.id, 'media')
+        if (!mediaResult.data) throw new Error('Sirket fotograf ve belge bilgileri yuklenemedi')
+        applySection(mediaResult.data)
+        if (detailRequestRef.current !== requestId) return
         setDetailSections(previous => {
-          const next = { ...previous, mediaLoading: false, mediaReady: true }
+          const next = { ...previous, mediaLoading: false, mediaReady: true, detailsLoading: true }
           writeEntityDetailCache('companies', row.id, mergedData, { meta: { ...next, detailsLoading: false } })
           return next
         })
-      } else {
-        setDetailSections(previous => ({ ...previous, mediaLoading: false, mediaError: true }))
+      } catch {
+        if (detailRequestRef.current !== requestId) return
+        setDetailSections(previous => ({ ...previous, mediaLoading: false, mediaError: true, detailsLoading: true }))
       }
 
-      if (detailsResult.status === 'fulfilled' && detailsResult.value.data) {
-        applySection(detailsResult.value.data)
-        setDetailSections(previous => {
-          const next = { ...previous, detailsLoading: false, detailsReady: true }
-          writeEntityDetailCache('companies', row.id, mergedData, { meta: next })
-          return next
-        })
-      } else {
-        const message = detailsResult.status === 'rejected'
-          ? detailsResult.reason?.message
-          : 'Sirket detay alanlari yuklenemedi'
-        setDetailSections(previous => ({ ...previous, detailsLoading: false, detailsError: true }))
-        setFormError(message || 'Sirket detay alanlari yuklenemedi')
-      }
+      const detailsResult = await companyService.detailSection(row.id, 'details')
+      if (!detailsResult.data) throw new Error('Sirket detay alanlari yuklenemedi')
+      applySection(detailsResult.data)
+      if (detailRequestRef.current !== requestId) return
+      setDetailSections(previous => {
+        const next = { ...previous, detailsLoading: false, detailsReady: true }
+        writeEntityDetailCache('companies', row.id, mergedData, { meta: next })
+        return next
+      })
     } catch (error: any) {
       if (detailRequestRef.current !== requestId) return
-      setDetailSections(previous => ({ ...previous, heroLoading: false, mediaLoading: false, detailsLoading: false, heroError: previous.heroReady ? previous.heroError : true }))
+      setDetailSections(previous => ({
+        ...previous,
+        heroLoading: false,
+        mediaLoading: false,
+        detailsLoading: false,
+        heroError: previous.heroReady ? previous.heroError : true,
+        detailsError: previous.heroReady ? true : previous.detailsError,
+      }))
       setFormError(error.message || 'Şirket detayı yüklenemedi')
       setToast(error.toast || {
         type: 'error',
@@ -914,6 +913,7 @@ function extractLogoUrl(images: unknown) {
   const preferredSlot = isDark ? 'dark_mode_avatar' : 'light_mode_avatar'
   const preferred = rows.find((image: any) => image?.slotId === preferredSlot || image?.slot_id === preferredSlot)
     || rows.find((image: any) => image?.slotId === 'light_mode_avatar' || image?.slot_id === 'light_mode_avatar')
+    || rows.find((image: any) => image?.slotId === 'document_logo' || image?.slot_id === 'document_logo')
     || rows.find((image: any) => image?.slotId === 'original_logo' || image?.slot_id === 'original_logo' || image?.slotId === 'logo_primary' || image?.slot_id === 'logo_primary')
     || rows[0]
   return preferred?.url || preferred?.previewUrl || preferred?.preview_url || ''
