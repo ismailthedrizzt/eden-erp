@@ -379,8 +379,7 @@ export default function OrtaklarPage() {
       })) : []
       setCompanies(companyOptions)
       if (companyOptions.length > 0) {
-        const ownershipResponse = await fetch(`/api/companies/current-ownership?company_ids=${companyOptions.map(company => company.value).join(',')}`)
-        const ownershipPayload = await ownershipResponse.json().catch(() => ({ data: [] }))
+        const ownershipPayload = await companyService.currentOwnership(companyOptions.map(company => company.value), { useCache: !force })
         setCurrentOwnershipRows(Array.isArray(ownershipPayload.data) ? ownershipPayload.data : [])
       } else {
         setCurrentOwnershipRows([])

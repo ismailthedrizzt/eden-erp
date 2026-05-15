@@ -54,6 +54,7 @@ for (const service of fastListServices) {
   }
   assertIncludes(service.file, service.detailNeedle, 'primary detail service must use skipAuth and short client cache')
 }
+assertIncludes('lib/services/companyService.ts', 'currentOwnership(companyIds: string[]', 'company service must expose cacheable current ownership lookup')
 
 const companyListSelect = getSelectAfterFrom('app/api/sirketler/route.ts', 'sirketler')
 for (const column of ['hero_images', 'hero_documents', 'field_history']) {

@@ -63,6 +63,17 @@ export const companyService = {
   stakeholderDetail(id: string) {
     return apiClient.get<{ data: any }>(`/api/sirketler/paydaslar/${id}`, { skipAuth: true, staleTime: 120_000 })
   },
+  currentOwnership(companyIds: string[], options: ApiClientOptions = {}) {
+    return apiClient.get<{ data: Array<any> }>('/api/companies/current-ownership', {
+      ...options,
+      skipAuth: options.skipAuth ?? true,
+      staleTime: options.staleTime ?? 120_000,
+      query: {
+        ...(companyIds.length ? { company_ids: companyIds.join(',') } : {}),
+        ...options.query,
+      },
+    })
+  },
   async documents(companyId: string): Promise<{ data: SirketDokuman[] }> {
     const result = await this.detail(companyId)
     return { data: result.data.dokumanlar || [] }
