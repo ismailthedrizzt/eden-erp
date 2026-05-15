@@ -184,6 +184,8 @@ assertIncludes('components/ui/EntityForm.tsx', 'avatarImageMaxDimension(image.sl
 assertIncludes('components/ui/EntityForm.tsx', 'avatarImageMaxDimension(photo.slotId)', 'EntityForm single photo uploads must use avatar-aware dimensions')
 assertNotIncludes('components/ui/EntityForm.tsx', 'previewUrl: await readFileAsDataUrl(image.file)', 'EntityForm must not persist raw full-size image data URLs for slot images')
 assertNotIncludes('components/ui/EntityForm.tsx', 'const dataUrl = await readFileAsDataUrl(photo.file)', 'EntityForm must not persist raw full-size image data URLs for single photo fields')
+assertIncludes('components/ui/ImageSlotUploader.tsx', 'function getImageThumbnailUrl', 'ImageSlotUploader must prefer thumbnails for inline slot previews')
+assertIncludes('components/ui/ImageSlotUploader.tsx', 'src={currentThumbnailUrl || currentImageUrl', 'ImageSlotUploader slot preview must render thumbnail URLs before full image URLs')
 assertIncludes('app/api/ik/personel/route.ts', 'missingEmployeeRelation(error)', 'employee list GET must fall back when organization relations are unavailable')
 assertIncludes('app/api/ik/personel/route.ts', 'includeOrganizationRelations = false', 'employee list GET must not fail the whole list when organization joins are unavailable')
 assertIncludes('app/api/ik/personel/route.ts', "missingColumn === 'is_deleted'", 'employee list GET must fall back when legacy databases do not have is_deleted yet')

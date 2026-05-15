@@ -849,6 +849,7 @@ function normalizeStoredImages(value: unknown): SlotImage[] {
     .map(image => ({
       slotId: image.slotId || image.slot_id || 'photo',
       previewUrl: image.previewUrl || image.preview_url || image.url || image.signedUrl || image.signed_url,
+      thumbnailUrl: image.thumbnailUrl || image.thumbnail_url || image.preview_thumb_url || image.preview_image_url,
       name: image.name || image.file_name || image.fileName || 'Görsel',
       size: Number(image.size || 0),
       uploadedAt: image.uploadedAt ? new Date(image.uploadedAt) : undefined,
@@ -862,6 +863,8 @@ function serializeImageForStorage(image: SlotImage) {
     size: image.size || image.file?.size || 0,
     uploadedAt: image.uploadedAt?.toISOString?.() || new Date().toISOString(),
     url: image.previewUrl,
+    previewUrl: image.previewUrl,
+    thumbnailUrl: image.thumbnailUrl,
   }
 }
 
@@ -2182,9 +2185,11 @@ export function EntityForm({
       const hydratedImages = await Promise.all(nextImages.map(async image => {
         if (!image.file) return image
         const previewUrl = await resizeImageFileAsDataUrl(image.file, avatarImageMaxDimension(image.slotId))
+        const thumbnailUrl = await resizeImageFileAsDataUrl(image.file, 96, 0.72)
         return {
           ...image,
           previewUrl,
+          thumbnailUrl,
           name: image.name || image.file.name,
           size: Math.round((previewUrl.length * 3) / 4),
         }

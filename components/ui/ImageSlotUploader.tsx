@@ -46,6 +46,8 @@ export interface SlotImage {
   slotId: string
   file?: File
   previewUrl?: string
+  thumbnailUrl?: string
+  thumbnail_url?: string
   url?: string
   preview_url?: string
   signedUrl?: string
@@ -60,6 +62,10 @@ const avatarFallbackSlots = ['light_mode_avatar', 'dark_mode_avatar', 'document_
 
 function getImageUrl(image?: SlotImage | null) {
   return image?.previewUrl || image?.url || image?.preview_url || image?.signedUrl || image?.signed_url || ''
+}
+
+function getImageThumbnailUrl(image?: SlotImage | null) {
+  return image?.thumbnailUrl || image?.thumbnail_url || getImageUrl(image)
 }
 
 function hasRenderableImage(image?: SlotImage | null) {
@@ -143,6 +149,7 @@ export function ImageSlotUploader({
   const currentImage = findImageForSlot(images, currentSlot.id)
   const isFallbackImage = !!currentImage && currentImage.slotId !== currentSlot.id
   const currentImageUrl = getImageUrl(currentImage)
+  const currentThumbnailUrl = getImageThumbnailUrl(currentImage)
   const hasImage = hasRenderableImage(currentImage)
 
 
@@ -340,7 +347,7 @@ export function ImageSlotUploader({
             // Uploaded State
             <div className="relative w-full h-full group">
               <img
-                src={currentImageUrl || (currentImage?.file ? URL.createObjectURL(currentImage.file) : '')}
+                src={currentThumbnailUrl || currentImageUrl || (currentImage?.file ? URL.createObjectURL(currentImage.file) : '')}
                 alt={currentSlot.title}
                 className="h-full w-full object-cover"
               />

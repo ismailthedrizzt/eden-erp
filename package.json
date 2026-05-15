@@ -15,6 +15,8 @@
     "send-email": "node scripts/send-email.js",
     "supabase:migrate": "node scripts/apply-supabase-migrations.js",
     "master:sync": "node scripts/sync-master-identities.js",
+    "avatar:migrate": "node scripts/migrate-avatar-images.js",
+    "avatar:migrate:dry": "node scripts/migrate-avatar-images.js --dry-run",
     "iban:banks": "node --use-system-ca scripts/update-turkish-bank-codes.js",
     "iban:ziraat-branches": "node --use-system-ca scripts/update-ziraat-branches.js",
     "iban:garanti-branches": "node --use-system-ca scripts/update-garanti-bbva-branches.js",
@@ -45,6 +47,7 @@
     "react-dom": "19.2.5",
     "react-hook-form": "^7.51.5",
     "recharts": "^2.12.7",
+    "sharp": "^0.34.5",
     "tailwind-merge": "^2.3.0",
     "xlsx": "^0.18.5",
     "zod": "^3.23.8"
