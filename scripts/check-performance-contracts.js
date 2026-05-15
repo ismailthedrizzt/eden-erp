@@ -136,6 +136,8 @@ assertIncludes('app/app/sirket/sirketler/page.tsx', "if (pageState === 'list' ||
 assertIncludes('app/app/sirket/ortaklik-islemleri/page.tsx', 'ownershipTransactionsService.list()', 'ownership transactions page must use ownership service list')
 assertIncludes('app/app/sirket/ortaklik-islemleri/page.tsx', 'companyService.partnersList({ useCache: !force })', 'ownership transactions page must use cacheable partner list')
 assertIncludes('app/app/sirket/ortaklik-islemleri/page.tsx', 'ownershipTransactionsService.get(row.id)', 'ownership transactions row detail must use service detail')
+assertNotIncludes('app/app/sirket/ortaklik-islemleri/page.tsx', 'const [transactionRows, companyPayload, partnerPayload] = await Promise.all([', 'ownership transactions list must not block initial table on company/partner references')
+assertIncludes('app/app/sirket/ortaklik-islemleri/page.tsx', 'const loadReferenceData = useCallback(async (force = false) =>', 'ownership transactions page must lazy-load form references after initial rows')
 assertIncludes('lib/modules/ownership-transactions/ownershipTransactions.service.ts', 'approvedForCompany(companyId: string)', 'ownership service must expose cacheable approved transactions lookup')
 assertNotIncludes('app/app/sirket/sirketler/ortaklar/page.tsx', 'fetch(`/api/ownership-transactions?company_id=${companyId}&approval_status=approved`)', 'partner detail history must not call approved ownership transactions with raw fetch')
 assertIncludes('app/app/sirket/sirketler/ortaklar/page.tsx', 'ownershipTransactionsService.approvedForCompany(companyId)', 'partner detail history must use ownership service cache')

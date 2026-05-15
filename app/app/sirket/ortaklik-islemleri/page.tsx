@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { Suspense, useEffect, useMemo, useState } from 'react'
+import { Suspense, useCallback, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { ArrowDownUp, Check, Clock, Download, Eye, Filter, FileText, History, Pencil, Plus, RotateCcw, Send, X } from 'lucide-react'
 import { EntityForm, FormField, FormMode } from '@/components/ui/EntityForm'
@@ -92,7 +92,31 @@ function OwnershipTransactionsContent() {
         : transactionTypes.filter(type => type !== newEntryTransactionType && !['Pay Devri', 'Kısmi Pay Devri', 'Ortaklıktan Çıkış'].includes(type))
     : transactionTypes
 
-  const loadData = async (force = false) => {
+  const loadReferenceData = useCallback(async (force = false) => {
+    const [companyPayload, partnerPayload] = await Promise.all([
+      companyService.list({ useCache: !force }),
+      companyService.partnersList({ useCache: !force }),
+    ])
+
+    const companyRows = Array.isArray(companyPayload.data) ? companyPayload.data : []
+    const partnerRows = Array.isArray(partnerPayload.data) ? partnerPayload.data : []
+
+    setCompanies(companyRows.map((company: any) => ({
+      value: company.id,
+      label: company.ticari_unvan || company.kisa_unvan || 'Sirket',
+    })))
+    setPartners(partnerRows.filter((partner: any) => !partner.is_deleted).map((partner: any) => ({
+      value: partner.id,
+      label: partner.display_name || partner.ortak_adi || 'Ortak',
+      company_id: partner.sirket_id || partner.company_id,
+      owner_kind: partner.owner_kind,
+      photo_logo: Array.isArray(partner.photo_logo) ? partner.photo_logo : [],
+      person_id: partner.person_id || null,
+      organization_id: partner.organization_id || null,
+    })))
+  }, [])
+
+  const loadData = useCallback(async (force = false) => {
     setLoading(true)
     setError(null)
     try {
@@ -100,38 +124,21 @@ function OwnershipTransactionsContent() {
         ownershipTransactionsService.invalidateList()
         companyService.invalidateRelations()
       }
-      const [transactionRows, companyPayload, partnerPayload] = await Promise.all([
-        ownershipTransactionsService.list(),
-        companyService.list({ useCache: !force }),
-        companyService.partnersList({ useCache: !force }),
-      ])
-
-      const companyRows = Array.isArray(companyPayload.data) ? companyPayload.data : []
-      const partnerRows = Array.isArray(partnerPayload.data) ? partnerPayload.data : []
-
+      const transactionRows = await ownershipTransactionsService.list()
       setTransactions(Array.isArray(transactionRows) ? transactionRows : [])
-      setCompanies(companyRows.map((company: any) => ({
-        value: company.id,
-        label: company.ticari_unvan || company.kisa_unvan || 'Sirket',
-      })))
-      setPartners(partnerRows.filter((partner: any) => !partner.is_deleted).map((partner: any) => ({
-        value: partner.id,
-        label: partner.display_name || partner.ortak_adi || 'Ortak',
-        company_id: partner.sirket_id || partner.company_id,
-        owner_kind: partner.owner_kind,
-        photo_logo: Array.isArray(partner.photo_logo) ? partner.photo_logo : [],
-        person_id: partner.person_id || null,
-        organization_id: partner.organization_id || null,
-      })))
+      loadReferenceData(force).catch(() => {
+        setCompanies([])
+        setPartners([])
+      })
     } catch (err: any) {
       setError(err.message)
     } finally {
       setLoading(false)
     }
-  }
+  }, [loadReferenceData])
   useEffect(() => {
     loadData()
-  }, [])
+  }, [loadData])
 
   useEffect(() => {
     const mode = searchParams.get('mode')
