@@ -100,7 +100,7 @@ export async function GET(request: NextRequest) {
 
   let query = supabase
     .from('sirketler')
-    .select('id,organization_id,kisa_unvan,ticari_unvan,vkn_tckn,vergi_dairesi,sirket_turu,il,ilce,is_deleted,updated_at,created_at', { count: 'exact' })
+    .select('id,organization_id,kisa_unvan,ticari_unvan,vkn_tckn,vergi_dairesi,sirket_turu,il,ilce,is_deleted,updated_at,created_at')
     .order(sortColumn, { ascending: listQuery.direction !== 'desc' })
     .range(from, to)
 
@@ -110,7 +110,7 @@ export async function GET(request: NextRequest) {
 
   if (!includePassive) query = query.eq('is_deleted', false)
 
-  const { data, error, count } = await query
+  const { data, error } = await query
   if (error) {
     if (error.message.includes("Could not find the table 'public.sirketler'")) {
       return NextResponse.json({
@@ -123,8 +123,12 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: error.message, code: error.code || 'FETCH_FAILED' }, { status: 500 })
   }
 
-  const payload = { data: data || [], meta: listMeta(listQuery, count ?? 0) }
-  setServerResponseCache(cacheKey, payload)
+  const rows = data || []
+  const visibleTotal = rows.length < listQuery.pageSize
+    ? (listQuery.page - 1) * listQuery.pageSize + rows.length
+    : listQuery.page * listQuery.pageSize + 1
+  const payload = { data: rows, meta: listMeta(listQuery, visibleTotal) }
+  setServerResponseCache(cacheKey, payload, 60_000)
   return NextResponse.json(payload)
 }
 

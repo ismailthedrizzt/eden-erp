@@ -30,7 +30,7 @@ export const companyService = {
     return apiClient.get<ListResponse<Sirket>>('/api/sirketler', {
       ...clientOptions,
       skipAuth: clientOptions.skipAuth ?? true,
-      staleTime: clientOptions.staleTime ?? 120_000,
+      staleTime: clientOptions.staleTime ?? 300_000,
       query: {
         page,
         pageSize,

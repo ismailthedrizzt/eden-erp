@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { companyService } from '@/lib/services/companyService'
 import type { ListMeta, ListQuery } from '@/lib/api/listEndpoint'
 import type { Sirket, SirketOrtak, SirketTemsilci, SirketDokuman, SirketLogo } from '@/types/sirket'
@@ -23,14 +23,16 @@ export function useSirketler(options: { includePassive?: boolean } & Partial<Pic
   const [meta, setMeta] = useState<ListMeta>({ page: 1, pageSize: 50, total: 0, totalPages: 1 })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const hasDataRef = useRef(false)
 
   const fetchSirketler = useCallback(async (force = false) => {
     try {
-      setLoading(true)
+      setLoading(previous => force || !hasDataRef.current ? true : previous)
       setError(null)
       if (force) companyService.invalidateList()
       const result = await companyService.list({ useCache: !force, ...options })
       setData(result.data || [])
+      hasDataRef.current = true
       setMeta(result.meta ?? { page: options.page ?? 1, pageSize: options.pageSize ?? 50, total: result.data?.length ?? 0, totalPages: 1 })
     } catch (err: any) {
       console.error('Error fetching sirketler:', err)

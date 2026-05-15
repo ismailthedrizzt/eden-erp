@@ -50,6 +50,16 @@ const emptyDetailSectionState: DetailSectionState = {
 }
 const COMPANY_DETAIL_CACHE_NAMESPACE = 'companies:phased-v2'
 
+function waitForStagePaint() {
+  return new Promise<void>(resolve => {
+    if (typeof requestAnimationFrame === 'function') {
+      requestAnimationFrame(() => resolve())
+      return
+    }
+    setTimeout(resolve, 0)
+  })
+}
+
 const COMPANY_TYPE_SHORT_LABELS: Record<string, string> = {
   anonim: 'A.Ş.',
   limited: 'Ltd. Şti.',
@@ -267,7 +277,7 @@ const formatFieldList = (fields: string[]) => fields.map(getFieldLabel).join(', 
 
 export default function SirketlerPage() {
   const [includePassive, setIncludePassive] = useState(false)
-  const [listQuery, setListQuery] = useState({ page: 1, pageSize: 50, search: '', sort: 'kisa_unvan', direction: 'asc' as 'asc' | 'desc' })
+  const [listQuery, setListQuery] = useState({ page: 1, pageSize: 10, search: '', sort: 'kisa_unvan', direction: 'asc' as 'asc' | 'desc' })
   const { data: sirketler, meta: listMeta, loading, error: listError, yenile } = useSirketler({ includePassive, ...listQuery })
   const { can } = usePermissions()
   const { isEnabled, isWritable } = useModules()
@@ -442,6 +452,7 @@ export default function SirketlerPage() {
       const heroSections = { ...emptyDetailSectionState, heroLoading: false, heroReady: true, mediaLoading: true }
       setDetailSections(heroSections)
       writeEntityDetailCache(COMPANY_DETAIL_CACHE_NAMESPACE, row.id, mergedData, { meta: { ...heroSections, mediaLoading: false } })
+      await waitForStagePaint()
 
       try {
         const mediaResult = await companyService.detailSection(row.id, 'media')
@@ -453,9 +464,11 @@ export default function SirketlerPage() {
           writeEntityDetailCache(COMPANY_DETAIL_CACHE_NAMESPACE, row.id, mergedData, { meta: { ...next, detailsLoading: false } })
           return next
         })
+        await waitForStagePaint()
       } catch {
         if (detailRequestRef.current !== requestId) return
         setDetailSections(previous => ({ ...previous, mediaLoading: false, mediaError: true, detailsLoading: true }))
+        await waitForStagePaint()
       }
 
       const detailsResult = await companyService.detailSection(row.id, 'details')
