@@ -173,6 +173,10 @@ for (const file of [
 ]) {
   assertIncludes(file, 'const tableData = useMemo(() =>', 'accounting list table derivations must be memoized')
 }
+assertNotIncludes('app/app/muhasebe/on-muhasebe-hareketleri/page.tsx', 'Promise.all([\n        preAccountingService.getList(),\n        preAccountingService.getReferences(),', 'pre-accounting list must not block initial table on form reference data')
+assertIncludes('app/app/muhasebe/on-muhasebe-hareketleri/page.tsx', 'const loadReferences = async () =>', 'pre-accounting form references must be lazy-loaded')
+assertNotIncludes('app/app/muhasebe/banka-hesaplari-ve-kartlari/page.tsx', 'loadCompanies().then(options =>', 'bank account/card list must not block initial table on company options')
+assertIncludes('app/app/muhasebe/banka-hesaplari-ve-kartlari/page.tsx', 'const loadCompanyOptions = async () =>', 'bank account/card company options must be lazy-loaded for the form')
 
 const companyDetailRoute = 'app/api/sirketler/[id]/route.ts'
 for (const table of ['sirket_ortaklar', 'sirket_temsilciler', 'stakeholders', 'sirket_logolar']) {

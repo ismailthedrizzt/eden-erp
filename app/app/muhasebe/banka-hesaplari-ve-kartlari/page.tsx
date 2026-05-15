@@ -62,6 +62,7 @@ export default function BankAccountsCardsPage() {
   const [rows, setRows] = useState<BankAccountCardRow[]>([])
   const [accountOptions, setAccountOptions] = useState<Option[]>([])
   const [companies, setCompanies] = useState<Option[]>([])
+  const [companiesLoaded, setCompaniesLoaded] = useState(false)
   const [selected, setSelected] = useState<BankAccountCardRow | null>(null)
   const [form, setForm] = useState<BankAccountCardPayload>(emptyForm)
   const [loading, setLoading] = useState(true)
@@ -90,12 +91,22 @@ export default function BankAccountsCardsPage() {
     loadRows()
   }, [includePassive])
 
+  const loadCompanyOptions = async () => {
+    if (companiesLoaded) return
+    const options = await loadCompanies()
+    setCompanies(options)
+    setCompaniesLoaded(true)
+    if (options.length === 1) setForm(prev => ({ ...prev, company_id: prev.company_id || options[0].value }))
+  }
+
   useEffect(() => {
-    loadCompanies().then(options => {
-      setCompanies(options)
-      if (options.length === 1) setForm(prev => ({ ...prev, company_id: options[0].value }))
-    }).catch(() => setCompanies([]))
-  }, [])
+    if (pageState !== 'list') {
+      loadCompanyOptions().catch(() => {
+        setCompanies([])
+      })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pageState])
 
   const columns: ColumnDef[] = [
     { key: 'record_type_label', label: 'Kayıt Tipi', type: 'text', width: 90 },

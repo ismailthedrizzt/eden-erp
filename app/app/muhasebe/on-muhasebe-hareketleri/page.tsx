@@ -34,25 +34,38 @@ export default function PreAccountingMovementsPage() {
   const [selected, setSelected] = useState<AccountMovementRow | null>(null)
   const [saving, setSaving] = useState(false)
   const [refs, setRefs] = useState<{ persons: any[]; organizations: any[]; companies: any[] }>({ persons: [], organizations: [], companies: [] })
+  const [refsLoaded, setRefsLoaded] = useState(false)
   const [toast, setToast] = useState<{ type: 'success' | 'error' | 'warning'; title?: string; message: string } | null>(null)
 
   const loadData = async () => {
     setLoading(true)
     try {
-      const [movementPayload, refPayload] = await Promise.all([
-        preAccountingService.getList(),
-        preAccountingService.getReferences(),
-      ])
+      const movementPayload = await preAccountingService.getList()
       setRows(Array.isArray(movementPayload.data) ? movementPayload.data : [])
-      setRefs({ persons: refPayload.persons || [], organizations: refPayload.organizations || [], companies: refPayload.companies || [] })
     } finally {
       setLoading(false)
     }
   }
 
+  const loadReferences = async () => {
+    if (refsLoaded) return
+    const refPayload = await preAccountingService.getReferences()
+    setRefs({ persons: refPayload.persons || [], organizations: refPayload.organizations || [], companies: refPayload.companies || [] })
+    setRefsLoaded(true)
+  }
+
   useEffect(() => {
     loadData()
   }, [])
+
+  useEffect(() => {
+    if (pageState !== 'list') {
+      loadReferences().catch(error => {
+        setToast({ type: 'error', title: 'Referanslar yüklenemedi', message: error instanceof Error ? error.message : 'Form referansları alınamadı.' })
+      })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pageState])
 
   const tableData = useMemo(() => rows.map(row => ({
     ...row,
