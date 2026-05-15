@@ -19,6 +19,15 @@ export const ownershipTransactionsService = {
     return payload.data
   },
 
+  async approvedForCompany(companyId: string): Promise<OwnershipTransaction[]> {
+    const payload = await apiClient.get<{ data: OwnershipTransaction[] }>('/api/ownership-transactions', {
+      skipAuth: true,
+      staleTime: 120_000,
+      query: { company_id: companyId, approval_status: 'approved' },
+    })
+    return payload.data || []
+  },
+
   invalidateList() {
     apiClient.invalidate('/api/ownership-transactions')
   },

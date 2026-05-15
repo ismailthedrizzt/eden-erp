@@ -11,6 +11,7 @@ import { createRealPersonMasterTabs } from '@/lib/identity/realPersonFormSection
 import { createLegalEntityMasterTabs } from '@/lib/identity/legalEntityFormSections'
 import { isSoftDeletedRecord } from '@/lib/forms/entityState'
 import { companyService } from '@/lib/services/companyService'
+import { ownershipTransactionsService } from '@/lib/modules/ownership-transactions/ownershipTransactions.service'
 
 type PageState = 'list' | 'create' | 'view' | 'edit'
 type ToastState = { type: 'success' | 'error' | 'warning'; title?: string; message: string }
@@ -721,10 +722,7 @@ async function fetchApprovedOwnershipTransactionsForPartner(partner: Record<stri
   const partnerId = partner.id
   if (!companyId || !partnerId) return []
 
-  const response = await fetch(`/api/ownership-transactions?company_id=${companyId}&approval_status=approved`)
-  if (!response.ok) return []
-  const payload = await response.json().catch(() => ({ data: [] }))
-  const rows = Array.isArray(payload.data) ? payload.data : []
+  const rows = await ownershipTransactionsService.approvedForCompany(companyId)
 
   return rows
     .filter((transaction: OwnershipTransactionHistoryRow) =>

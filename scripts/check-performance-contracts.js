@@ -136,6 +136,9 @@ assertIncludes('app/app/sirket/sirketler/page.tsx', "if (pageState === 'list' ||
 assertIncludes('app/app/sirket/ortaklik-islemleri/page.tsx', 'ownershipTransactionsService.list()', 'ownership transactions page must use ownership service list')
 assertIncludes('app/app/sirket/ortaklik-islemleri/page.tsx', 'companyService.partnersList({ useCache: !force })', 'ownership transactions page must use cacheable partner list')
 assertIncludes('app/app/sirket/ortaklik-islemleri/page.tsx', 'ownershipTransactionsService.get(row.id)', 'ownership transactions row detail must use service detail')
+assertIncludes('lib/modules/ownership-transactions/ownershipTransactions.service.ts', 'approvedForCompany(companyId: string)', 'ownership service must expose cacheable approved transactions lookup')
+assertNotIncludes('app/app/sirket/sirketler/ortaklar/page.tsx', 'fetch(`/api/ownership-transactions?company_id=${companyId}&approval_status=approved`)', 'partner detail history must not call approved ownership transactions with raw fetch')
+assertIncludes('app/app/sirket/sirketler/ortaklar/page.tsx', 'ownershipTransactionsService.approvedForCompany(companyId)', 'partner detail history must use ownership service cache')
 
 assertNotIncludes('app/app/muhasebe/banka-hesaplari-ve-kartlari/page.tsx', "fetch('/api/sirketler'", 'bank accounts page must use companyService for company options')
 assertIncludes('app/app/muhasebe/banka-hesaplari-ve-kartlari/page.tsx', 'companyService.list()', 'bank accounts page must use cacheable company options')
