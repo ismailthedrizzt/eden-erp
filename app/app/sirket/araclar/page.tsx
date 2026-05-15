@@ -4,7 +4,7 @@
 // Ana Modül: Şirket Yönetimi (sirket)
 // Alt Modül: Şirket Araçlarımız
 
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import {
   AlertTriangle,
@@ -141,25 +141,33 @@ export default function AraclarPage() {
   const [saving, setSaving] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
 
-  const loadData = async (force = false) => {
+  const loadReferences = useCallback(async (force = false) => {
+    const payload = await companyVehicleService.references({ useCache: !force })
+    setEmployees(Array.isArray(payload.employees) ? payload.employees : [])
+    setCompanies(Array.isArray(payload.companies) ? payload.companies : [])
+  }, [])
+
+  const loadData = useCallback(async (force = false) => {
     setLoading(true)
     try {
       if (force) companyVehicleService.invalidateList()
       const payload = await companyVehicleService.list({ useCache: !force })
       setVehicles(Array.isArray(payload.vehicles) ? payload.vehicles : [])
-      setEmployees(Array.isArray(payload.employees) ? payload.employees : [])
-      setCompanies(Array.isArray(payload.companies) ? payload.companies : [])
+      loadReferences(force).catch(() => {
+        setEmployees([])
+        setCompanies([])
+      })
       if (payload.warning) setToast(payload.warning)
     } catch (error: unknown) {
       setToast(error instanceof Error ? error.message : 'Araç verisi yüklenemedi')
     } finally {
       setLoading(false)
     }
-  }
+  }, [loadReferences])
 
   useEffect(() => {
     loadData()
-  }, [])
+  }, [loadData])
 
   const activeVehicles = useMemo(() => vehicles.filter((vehicle) => !vehicle.is_deleted), [vehicles])
   const expiringVehicles = useMemo(() => activeVehicles.filter((vehicle) => hasUpcomingWarning(vehicle)).length, [activeVehicles])
@@ -185,6 +193,9 @@ export default function AraclarPage() {
   ], [activeVehicles, expiringVehicles])
 
   function openCreate() {
+    if (employees.length === 0 || companies.length === 0) {
+      loadReferences().catch(() => undefined)
+    }
     setSelectedVehicle(createEmptyVehicle())
     setPageState('create')
   }

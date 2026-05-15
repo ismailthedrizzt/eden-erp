@@ -166,8 +166,11 @@ assertIncludes('components/modules/sirket/CompanyPublicTab.tsx', "apiClient.get<
 
 assertNotIncludes('app/app/sirket/araclar/page.tsx', "fetch('/api/sirket/araclar'", 'vehicles page must use companyVehicleService for cacheable list and mutations')
 assertIncludes('app/app/sirket/araclar/page.tsx', 'companyVehicleService.list({ useCache: !force })', 'vehicles page must use cacheable vehicle service list')
+assertIncludes('app/app/sirket/araclar/page.tsx', 'const loadReferences = useCallback(async (force = false) =>', 'vehicles page must lazy-load employee/company references')
 assertIncludes('app/app/sirket/araclar/page.tsx', 'data={tableData}', 'vehicles page must memoize table rows before rendering')
 assertIncludes('app/app/sirket/araclar/page.tsx', 'onRefresh={() => loadData(true)}', 'vehicles page refresh must force invalidate cache')
+assertIncludes('app/api/sirket/araclar/route.ts', "searchParams.get('refs_only') === 'true'", 'vehicles API must expose references-only mode for form data')
+assertIncludes('app/api/sirket/araclar/route.ts', "includeReferences ? employees || [] : []", 'vehicles API must not return all employee/company references for the initial list')
 
 for (const file of [
   'components/ui/EntityForm.tsx',

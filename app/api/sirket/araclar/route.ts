@@ -18,13 +18,45 @@ const trackedFields = [
   'maintenance_due_date',
 ]
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   const supabase = createServiceClient()
+  const { searchParams } = new URL(request.url)
+  const includeReferences = searchParams.get('include_refs') === 'true'
+  const refsOnly = searchParams.get('refs_only') === 'true'
 
-  const [{ data: vehicles, error }, { data: employees }, { data: companies }] = await Promise.all([
-    supabase.from('company_vehicles').select(VEHICLE_SELECT).eq('is_deleted', false).order('created_at', { ascending: false }),
-    supabase.from('employees').select(EMPLOYEE_OPTION_SELECT).order('ad'),
-    supabase.from('sirketler').select(COMPANY_OPTION_SELECT).eq('is_deleted', false).order('kisa_unvan'),
+  if (refsOnly) {
+    const [{ data: employees }, { data: companies }] = await Promise.all([
+      supabase.from('employees').select(EMPLOYEE_OPTION_SELECT).order('ad'),
+      supabase.from('sirketler').select(COMPANY_OPTION_SELECT).eq('is_deleted', false).order('kisa_unvan'),
+    ])
+
+    return NextResponse.json({
+      vehicles: [],
+      employees: employees || [],
+      companies: companies || [],
+    })
+  }
+
+  const { data: vehicles, error } = await supabase
+    .from('company_vehicles')
+    .select(VEHICLE_SELECT)
+    .eq('is_deleted', false)
+    .order('created_at', { ascending: false })
+
+  const vehicleRows = vehicles || []
+  const employeeIds = uniqueIds(vehicleRows.flatMap(vehicle => [vehicle.assigned_to_employee_id, vehicle.operator_employee_id]))
+  const companyIds = uniqueIds(vehicleRows.map(vehicle => vehicle.company_id))
+  const [{ data: employees }, { data: companies }] = await Promise.all([
+    includeReferences
+      ? supabase.from('employees').select(EMPLOYEE_OPTION_SELECT).order('ad')
+      : employeeIds.length
+        ? supabase.from('employees').select(EMPLOYEE_OPTION_SELECT).in('id', employeeIds)
+        : Promise.resolve({ data: [] }),
+    includeReferences
+      ? supabase.from('sirketler').select(COMPANY_OPTION_SELECT).eq('is_deleted', false).order('kisa_unvan')
+      : companyIds.length
+        ? supabase.from('sirketler').select(COMPANY_OPTION_SELECT).in('id', companyIds)
+        : Promise.resolve({ data: [] }),
   ])
 
   if (error) {
@@ -41,9 +73,9 @@ export async function GET() {
   }
 
   return NextResponse.json({
-    vehicles: attachPeople(vehicles || [], employees || [], companies || []),
-    employees: employees || [],
-    companies: companies || [],
+    vehicles: attachPeople(vehicleRows, employees || [], companies || []),
+    employees: includeReferences ? employees || [] : [],
+    companies: includeReferences ? companies || [] : [],
   })
 }
 
@@ -178,4 +210,8 @@ function attachPeople(vehicles: Record<string, any>[], employees: Record<string,
 
 function emptyToNull(value: unknown) {
   return value === '' || value === undefined ? null : value
+}
+
+function uniqueIds(values: unknown[]) {
+  return Array.from(new Set(values.filter((value): value is string => typeof value === 'string' && value.length > 0)))
 }
