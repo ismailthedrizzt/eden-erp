@@ -1,5 +1,6 @@
 import type { CurrentOwnershipRow, OwnershipTransaction } from './ownershipTransactions.types'
 import { apiClient } from '@/lib/api/apiClient'
+import type { ListQuery, ListResponse } from '@/lib/api/listEndpoint'
 
 async function requestJson<T>(url: string, init?: RequestInit): Promise<T> {
   const response = await fetch(url, init)
@@ -9,9 +10,12 @@ async function requestJson<T>(url: string, init?: RequestInit): Promise<T> {
 }
 
 export const ownershipTransactionsService = {
-  async list(): Promise<OwnershipTransaction[]> {
-    const payload = await apiClient.get<{ data: OwnershipTransaction[] }>('/api/ownership-transactions', { skipAuth: true, staleTime: 120_000 })
-    return payload.data || []
+  list(query: Partial<Pick<ListQuery, 'page' | 'pageSize' | 'search' | 'sort' | 'direction'>> = {}) {
+    return apiClient.get<ListResponse<OwnershipTransaction>>('/api/ownership-transactions', {
+      skipAuth: true,
+      staleTime: 120_000,
+      query,
+    })
   },
 
   async get(id: string): Promise<OwnershipTransaction> {
@@ -23,7 +27,7 @@ export const ownershipTransactionsService = {
     const payload = await apiClient.get<{ data: OwnershipTransaction[] }>('/api/ownership-transactions', {
       skipAuth: true,
       staleTime: 120_000,
-      query: { company_id: companyId, approval_status: 'approved' },
+      query: { company_id: companyId, approval_status: 'approved', pageSize: 100 },
     })
     return payload.data || []
   },

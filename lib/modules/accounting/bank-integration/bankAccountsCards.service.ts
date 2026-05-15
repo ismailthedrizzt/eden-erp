@@ -1,4 +1,5 @@
 import { apiClient } from '@/lib/api/apiClient'
+import type { ListMeta, ListQuery } from '@/lib/api/listEndpoint'
 
 export interface BankConnectionRow {
   id: string
@@ -123,11 +124,18 @@ export interface BankAutomationPreviewPayload {
 }
 
 export const bankAccountsCardsService = {
-  getUnifiedRecords(options: { includePassive?: boolean } = {}) {
-    return apiClient.get<{ data: BankAccountCardRow[]; accountOptions: Array<{ value: string; label: string; bank_connection_id?: string | null }> }>('/api/accounting/bank-accounts-cards', {
+  getUnifiedRecords(options: { includePassive?: boolean } & Partial<Pick<ListQuery, 'page' | 'pageSize' | 'search' | 'sort' | 'direction'>> = {}) {
+    return apiClient.get<{ data: BankAccountCardRow[]; meta?: ListMeta; accountOptions: Array<{ value: string; label: string; bank_connection_id?: string | null }> }>('/api/accounting/bank-accounts-cards', {
       skipAuth: true,
       staleTime: 120_000,
-      query: options.includePassive ? { include_passive: 'true' } : undefined,
+      query: {
+        ...(options.includePassive ? { include_passive: 'true' } : {}),
+        page: options.page,
+        pageSize: options.pageSize,
+        search: options.search,
+        sort: options.sort,
+        direction: options.direction,
+      },
     })
   },
   async createUnifiedRecord(payload: BankAccountCardPayload) {

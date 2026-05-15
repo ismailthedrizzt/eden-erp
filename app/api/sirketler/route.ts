@@ -3,6 +3,7 @@ import { createServiceClient } from '@/lib/supabase/server'
 import { z } from 'zod'
 import { syncMasterContact } from '@/lib/identity/masterContact'
 import { EntityBankAccountsService } from '@/lib/modules/entity-bank-accounts/entityBankAccounts.service'
+import { listMeta, listRange, parseListQuery } from '@/lib/api/listEndpoint'
 
 const SirketSchema = z.object({
   organization_id: z.string().uuid().optional().nullable(),
@@ -72,14 +73,31 @@ function omitNullishValues(value: Record<string, any>) {
 export async function GET(request: NextRequest) {
   const supabase = createServiceClient()
   const { searchParams } = new URL(request.url)
+  const listQuery = parseListQuery(searchParams, { pageSize: 50, sort: 'kisa_unvan', direction: 'asc' })
+  const { from, to } = listRange(listQuery)
+  const sortMap: Record<string, string> = {
+    kisa_unvan: 'kisa_unvan',
+    ticari_unvan: 'ticari_unvan',
+    vkn_tckn: 'vkn_tckn',
+    vergi_dairesi: 'vergi_dairesi',
+    sirket_turu: 'sirket_turu',
+    is_deleted: 'is_deleted',
+    mersis_no: 'mersis_no',
+    ticaret_sicil_no: 'ticaret_sicil_no',
+    kurulus_tarihi: 'kurulus_tarihi',
+    updated_at: 'updated_at',
+    created_at: 'created_at',
+  }
+  const sortColumn = sortMap[listQuery.sort || ''] || 'kisa_unvan'
 
-  const ara = searchParams.get('ara')
-  const includePassive = searchParams.get('include_passive') === 'true'
+  const ara = searchParams.get('ara') || listQuery.search
+  const includePassive = listQuery.includePassive
 
   let query = supabase
     .from('sirketler')
-    .select('id,organization_id,kisa_unvan,ticari_unvan,vkn_tckn,vergi_dairesi,sirket_turu,il,ilce,adres,telefon,email,is_deleted,mersis_no,ticaret_sicil_no,kurulus_tarihi,ulke,web_sitesi,updated_at,created_at')
-    .order('kisa_unvan', { ascending: true })
+    .select('id,organization_id,kisa_unvan,ticari_unvan,vkn_tckn,vergi_dairesi,sirket_turu,il,ilce,adres,telefon,email,is_deleted,mersis_no,ticaret_sicil_no,kurulus_tarihi,ulke,web_sitesi,updated_at,created_at', { count: 'exact' })
+    .order(sortColumn, { ascending: listQuery.direction !== 'desc' })
+    .range(from, to)
 
   if (ara) {
     query = query.or(`kisa_unvan.ilike.%${ara}%,ticari_unvan.ilike.%${ara}%,vkn_tckn.ilike.%${ara}%`)
@@ -87,11 +105,12 @@ export async function GET(request: NextRequest) {
 
   if (!includePassive) query = query.eq('is_deleted', false)
 
-  const { data, error } = await query
+  const { data, error, count } = await query
   if (error) {
     if (error.message.includes("Could not find the table 'public.sirketler'")) {
       return NextResponse.json({
         data: [],
+        meta: listMeta(listQuery, 0),
         warning: 'sirketler tablosu bulunamadı. supabase/migrations/20240501_create_sirketler_table.sql uygulanmalı.'
       })
     }
@@ -99,7 +118,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: error.message, code: error.code || 'FETCH_FAILED' }, { status: 500 })
   }
 
-  return NextResponse.json({ data: data || [] })
+  return NextResponse.json({ data: data || [], meta: listMeta(listQuery, count ?? 0) })
 }
 
 export async function POST(request: NextRequest) {

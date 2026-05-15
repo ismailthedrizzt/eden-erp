@@ -62,6 +62,48 @@ assertIncludes('docs/templates/FastEntityListTemplate.md', 'ListResponse<EntityL
 assertRegex('FrontendDataAccessRules.md', /SmartDataTable.*pagination=\{\{ mode: 'server'/s, 'frontend rules must require server pagination for main ERP lists')
 assertIncludes('BackendApiMigration.md', 'parseListQuery', 'backend migration rules must reference list query parser')
 
+const serverPaginatedSmartListPages = [
+  'app/app/ik/personel/page.tsx',
+  'app/app/sirket/sirketler/page.tsx',
+  'app/app/sirket/sirketler/ortaklar/page.tsx',
+  'app/app/sirket/sirketler/temsilciler/page.tsx',
+  'app/app/sirket/sirketler/paydaslar/page.tsx',
+  'app/app/sirket/ortaklik-islemleri/page.tsx',
+  'app/app/sirket/araclar/page.tsx',
+  'app/app/muhasebe/on-muhasebe-hareketleri/page.tsx',
+  'app/app/muhasebe/hesap-ve-kart-hareketleri/page.tsx',
+  'app/app/muhasebe/banka-kart-hareketleri/page.tsx',
+  'app/app/muhasebe/banka-hesaplari-ve-kartlari/page.tsx',
+  'app/app/muhasebe/cari-kartlar/page.tsx',
+]
+
+for (const file of serverPaginatedSmartListPages) {
+  assertIncludes(file, 'pagination={{', 'main ERP list SmartDataTable must use the server pagination contract')
+  assertIncludes(file, "mode: 'server'", 'main ERP list SmartDataTable must run in server pagination mode')
+  assertIncludes(file, 'onPageChange', 'main ERP list SmartDataTable must request pages from the backend')
+  assertIncludes(file, 'onPageSizeChange', 'main ERP list SmartDataTable must request page-size changes from the backend')
+  assertIncludes(file, 'onSearchChange', 'main ERP list SmartDataTable must send search to the backend')
+  assertIncludes(file, 'onSortChange', 'main ERP list SmartDataTable must send sort to the backend')
+}
+
+for (const file of [
+  'app/api/ik/personel/route.ts',
+  'app/api/sirketler/route.ts',
+  'app/api/sirketler/ortaklar/route.ts',
+  'app/api/sirketler/temsilciler/route.ts',
+  'app/api/sirketler/paydaslar/route.ts',
+  'app/api/ownership-transactions/route.ts',
+  'app/api/sirket/araclar/route.ts',
+  'app/api/muhasebe/on-muhasebe-hareketleri/route.ts',
+  'app/api/accounting/financial-institution-movements/route.ts',
+  'app/api/accounting/bank-card-transactions/route.ts',
+  'app/api/accounting/bank-accounts-cards/route.ts',
+  'app/api/muhasebe/cari-kartlar/route.ts',
+]) {
+  assertIncludes(file, 'parseListQuery', 'main ERP list endpoint must parse the standard list query')
+  assertIncludes(file, 'listMeta', 'main ERP list endpoint must return standard pagination metadata')
+}
+
 for (const service of fastListServices) {
   const content = read(service.file)
   if (!/(skipAuth:\s*(options|clientOptions)\.skipAuth \?\? true)/.test(content)) {
@@ -151,7 +193,7 @@ assertIncludes('app/app/sirket/teskilat/page.tsx', 'const loadCompanyOptions = a
 assertIncludes('app/app/sirket/teskilat/page.tsx', 'onRefresh={() => loadData(true)}', 'teskilat page refresh must force invalidate cache')
 assertIncludes('app/app/sirket/sirketler/page.tsx', "if (pageState === 'list' || publicReferenceOptionsLoaded) return", 'company page public reference options must not load while the list is open')
 
-assertIncludes('app/app/sirket/ortaklik-islemleri/page.tsx', 'ownershipTransactionsService.list()', 'ownership transactions page must use ownership service list')
+assertIncludes('app/app/sirket/ortaklik-islemleri/page.tsx', 'ownershipTransactionsService.list(listQuery)', 'ownership transactions page must use ownership service list')
 assertIncludes('app/app/sirket/ortaklik-islemleri/page.tsx', 'companyService.partnersList({ useCache: !force })', 'ownership transactions page must use cacheable partner list')
 assertIncludes('app/app/sirket/ortaklik-islemleri/page.tsx', 'ownershipTransactionsService.get(row.id)', 'ownership transactions row detail must use service detail')
 assertNotIncludes('app/app/sirket/ortaklik-islemleri/page.tsx', 'const [transactionRows, companyPayload, partnerPayload] = await Promise.all([', 'ownership transactions list must not block initial table on company/partner references')
@@ -183,7 +225,7 @@ assertIncludes('components/modules/sirket/CompanyPublicTab.tsx', "apiClient.get<
 assertIncludes('components/modules/sirket/CompanyPublicTab.tsx', "apiClient.get<{ data?: NaceReferenceRow[]; warning?: string }>", 'company public NACE references must use apiClient')
 
 assertNotIncludes('app/app/sirket/araclar/page.tsx', "fetch('/api/sirket/araclar'", 'vehicles page must use companyVehicleService for cacheable list and mutations')
-assertIncludes('app/app/sirket/araclar/page.tsx', 'companyVehicleService.list({ useCache: !force })', 'vehicles page must use cacheable vehicle service list')
+assertIncludes('app/app/sirket/araclar/page.tsx', 'companyVehicleService.list({ useCache: !force, ...listQuery })', 'vehicles page must use cacheable vehicle service list')
 assertIncludes('app/app/sirket/araclar/page.tsx', 'const loadReferences = useCallback(async (force = false) =>', 'vehicles page must lazy-load employee/company references')
 assertIncludes('app/app/sirket/araclar/page.tsx', 'data={tableData}', 'vehicles page must memoize table rows before rendering')
 assertIncludes('app/app/sirket/araclar/page.tsx', 'onRefresh={() => loadData(true)}', 'vehicles page refresh must force invalidate cache')

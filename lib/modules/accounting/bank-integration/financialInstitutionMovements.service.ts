@@ -1,4 +1,5 @@
 import { apiClient } from '@/lib/api/apiClient'
+import type { ListQuery, ListResponse } from '@/lib/api/listEndpoint'
 
 export interface FinancialInstitutionMovementRow {
   id: string
@@ -30,7 +31,7 @@ export interface FinancialInstitutionMovementRow {
   status: string
 }
 
-export interface MovementFilters {
+export interface MovementFilters extends Partial<Pick<ListQuery, 'page' | 'pageSize' | 'search' | 'sort'>> {
   bankConnectionId?: string | null
   accountId?: string | null
   cardId?: string | null
@@ -40,12 +41,12 @@ export interface MovementFilters {
   dateFrom?: string | null
   dateTo?: string | null
   sourceType?: string | null
-  direction?: string | null
+  direction?: 'asc' | 'desc' | string | null
 }
 
 export const financialInstitutionMovementsService = {
   getMovements(filters: MovementFilters = {}) {
-    return apiClient.get<{ data: FinancialInstitutionMovementRow[]; summary: Record<string, number> }>('/api/accounting/financial-institution-movements', {
+    return apiClient.get<ListResponse<FinancialInstitutionMovementRow> & { summary: Record<string, number> }>('/api/accounting/financial-institution-movements', {
       query: filters as Record<string, string | number | boolean | null | undefined>,
       skipAuth: true,
       staleTime: 60_000,

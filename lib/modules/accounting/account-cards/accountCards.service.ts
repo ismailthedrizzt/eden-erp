@@ -1,4 +1,5 @@
 import { apiClient, ApiClientOptions } from '@/lib/api/apiClient'
+import type { ListQuery, ListResponse } from '@/lib/api/listEndpoint'
 import type { AccountCardRow, AccountingEntityKind } from '@/lib/modules/accounting/shared/accounting.types'
 
 export interface AccountCardResolvePayload {
@@ -14,10 +15,11 @@ export interface AccountCardResolvePayload {
 }
 
 export const accountCardsService = {
-  getList(options?: ApiClientOptions) {
-    return apiClient.get<{ data: AccountCardRow[]; warning?: string }>('/api/muhasebe/cari-kartlar', {
+  getList(query: Partial<Pick<ListQuery, 'page' | 'pageSize' | 'search' | 'sort' | 'direction'>> = {}, options?: ApiClientOptions) {
+    return apiClient.get<ListResponse<AccountCardRow>>('/api/muhasebe/cari-kartlar', {
       skipAuth: options?.skipAuth ?? true,
       staleTime: options?.staleTime ?? 120_000,
+      query,
       ...options,
     })
   },

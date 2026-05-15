@@ -1,4 +1,5 @@
 import { apiClient, ApiClientOptions } from '@/lib/api/apiClient'
+import type { ListQuery, ListResponse } from '@/lib/api/listEndpoint'
 import type { Personel } from '@/types'
 
 export type EmployeeListFilters = {
@@ -8,16 +9,23 @@ export type EmployeeListFilters = {
   includePassive?: boolean
 }
 
+export type EmployeeListQuery = EmployeeListFilters & Pick<ListQuery, 'page' | 'pageSize' | 'search' | 'sort' | 'direction'>
+
 export const employeeService = {
-  list(filters: EmployeeListFilters = {}, options: ApiClientOptions = {}) {
-    return apiClient.get<{ data: Personel[] }>('/api/ik/personel', {
+  list(filters: Partial<EmployeeListQuery> = {}, options: ApiClientOptions = {}) {
+    return apiClient.get<ListResponse<Personel>>('/api/ik/personel', {
       ...options,
       skipAuth: options.skipAuth ?? true,
       staleTime: options.staleTime ?? 120_000,
       query: {
+        page: filters.page,
+        pageSize: filters.pageSize,
+        search: filters.search,
+        sort: filters.sort,
+        direction: filters.direction,
         birim_id: filters.birimId,
         durum: filters.durum,
-        ara: filters.ara,
+        ara: filters.ara || filters.search,
         include_passive: filters.includePassive ? 'true' : undefined,
         ...options.query,
       },

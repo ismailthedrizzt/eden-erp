@@ -3,6 +3,7 @@ import { createServiceClient } from '@/lib/supabase/server'
 import { z } from 'zod'
 import { isTurkishNationality, normalizeCountryId } from '@/lib/reference/country-nationalities'
 import { hydrateMasterContact, syncMasterContact } from '@/lib/identity/masterContact'
+import { listMeta, listRange, parseListQuery } from '@/lib/api/listEndpoint'
 
 const EmployeeSchema = z.object({
   person_id: z.string().uuid().optional().nullable(),
@@ -140,11 +141,26 @@ function stripEmployeeMasterOnlyFields<T extends Record<string, any>>(payload: T
 export async function GET(request: NextRequest) {
   const supabase = createServiceClient()
   const { searchParams } = new URL(request.url)
+  const listQuery = parseListQuery(searchParams, { pageSize: 50, sort: 'soyad', direction: 'asc' })
+  const { from, to } = listRange(listQuery)
+  const sortMap: Record<string, string> = {
+    ad: 'ad',
+    soyad: 'soyad',
+    employee_no: 'employee_no',
+    tc_kimlik: 'tc_kimlik',
+    calisma_durumu: 'calisma_durumu',
+    created_at: 'created_at',
+    updated_at: 'updated_at',
+    sirket_id: 'sirket_id',
+    birim_id: 'birim_id',
+    kadro_id: 'kadro_id',
+  }
+  const sortColumn = sortMap[listQuery.sort || ''] || 'soyad'
 
   const birimId = searchParams.get('birim_id')
   const durum = searchParams.get('durum')
-  const ara = searchParams.get('ara')
-  const includePassive = searchParams.get('include_passive') === 'true'
+  const ara = searchParams.get('ara') || listQuery.search
+  const includePassive = listQuery.includePassive
 
   let enabledOptionalColumns = [...optionalEmployeeListColumns]
   let includeOrganizationRelations = true
@@ -165,8 +181,9 @@ export async function GET(request: NextRequest) {
 
     let query = supabase
       .from('employees')
-      .select(selectQuery)
-      .order('soyad', { ascending: true })
+      .select(selectQuery, { count: 'exact' })
+      .order(sortColumn, { ascending: listQuery.direction !== 'desc' })
+      .range(from, to)
 
     if (!includePassive && hasIsDeletedColumn) query = query.or('is_deleted.eq.false,is_deleted.is.null')
     if (birimId) query = query.eq('birim_id', birimId)
@@ -176,6 +193,7 @@ export async function GET(request: NextRequest) {
     const result = await query
     data = result.data
     error = result.error
+    ;(listQuery as any).__count = result.count ?? 0
 
     const missingColumn = missingEmployeeColumn(error, enabledOptionalColumns)
     if (missingColumn) {
@@ -215,7 +233,7 @@ export async function GET(request: NextRequest) {
     sgk_status: row.sgk_giris ? 'active' : 'pending',
     status: row.calisma_durumu || null,
   }))
-  return NextResponse.json({ data: rows })
+  return NextResponse.json({ data: rows, meta: listMeta(listQuery, (listQuery as any).__count ?? 0) })
 }
 
 // POST /api/ik/personel

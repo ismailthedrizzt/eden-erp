@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { createServiceClient } from '@/lib/supabase/server'
+import { listMeta, listRange, parseListQuery } from '@/lib/api/listEndpoint'
 
 const MovementSchema = z.object({
   company_id: z.string().uuid().optional().nullable(),
@@ -34,7 +35,10 @@ const MovementSchema = z.object({
 export async function GET(request: NextRequest) {
   const supabase = createServiceClient()
   const { searchParams } = new URL(request.url)
-  const search = searchParams.get('search')
+  const listQuery = parseListQuery(searchParams, { pageSize: 50, sort: 'movement_date', direction: 'desc' })
+  const { from, to } = listRange(listQuery)
+  const sortMap: Record<string, string> = { movement_date: 'movement_date', amount: 'amount', status: 'status', movement_type: 'movement_type', created_at: 'created_at' }
+  const search = searchParams.get('search') || listQuery.search
   const linkedOwnershipTransactionId = searchParams.get('linked_ownership_transaction_id')
   const companyId = searchParams.get('company_id')
 
@@ -45,15 +49,16 @@ export async function GET(request: NextRequest) {
       performed_by:persons!account_movements_performed_by_person_id_fkey(id,full_name),
       counterparty_person:persons!account_movements_counterparty_person_id_fkey(id,full_name),
       counterparty_organization:organizations!account_movements_counterparty_organization_id_fkey(id,legal_name)
-    `)
+    `, { count: 'exact' })
     .eq('is_deleted', false)
-    .order('movement_date', { ascending: false })
+    .order(sortMap[listQuery.sort || ''] || 'movement_date', { ascending: listQuery.direction !== 'desc' })
+    .range(from, to)
 
   if (search) query = query.ilike('description', `%${search}%`)
   if (companyId) query = query.eq('company_id', companyId)
   if (linkedOwnershipTransactionId) query = query.eq('linked_ownership_transaction_id', linkedOwnershipTransactionId)
 
-  const { data, error } = await query
+  const { data, error, count } = await query
   if (error) {
     if (error.message.includes('account_movements')) return NextResponse.json({ data: [], warning: 'Muhasebe migration uygulanmalı.' })
     return NextResponse.json({ error: error.message }, { status: 500 })
@@ -66,6 +71,7 @@ export async function GET(request: NextRequest) {
       counterparty_name: row.counterparty_person?.full_name || row.counterparty_organization?.legal_name || null,
       partner_name: row.counterparty_person?.full_name || row.counterparty_organization?.legal_name || null,
     })),
+    meta: listMeta(listQuery, count ?? 0),
   })
 }
 

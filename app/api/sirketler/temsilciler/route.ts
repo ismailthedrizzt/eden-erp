@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { hydrateMasterContact, stripMasterDataForRoleProfile, syncMasterContact } from '@/lib/identity/masterContact'
 import { normalizeCountryId } from '@/lib/reference/country-nationalities'
 import { EntityBankAccountsService } from '@/lib/modules/entity-bank-accounts/entityBankAccounts.service'
+import { listMeta, listRange, parseListQuery } from '@/lib/api/listEndpoint'
 
 const RepresentativeSchema = z.object({
   company_id: z.string().uuid().optional(),
@@ -41,23 +42,36 @@ function omitNullishValues(value: Record<string, any>) {
 export async function GET(request: NextRequest) {
   const supabase = createServiceClient()
   const { searchParams } = new URL(request.url)
+  const listQuery = parseListQuery(searchParams, { pageSize: 50, sort: 'created_at', direction: 'desc' })
+  const { from, to } = listRange(listQuery)
+  const sortMap: Record<string, string> = {
+    display_name: 'display_name',
+    ad_soyad: 'ad_soyad',
+    gorev: 'gorev',
+    yetki_turu: 'yetki_turu',
+    status: 'status',
+    created_at: 'created_at',
+  }
+  const sortColumn = sortMap[listQuery.sort || ''] || 'created_at'
   const companyId = searchParams.get('company_id')
   const status = searchParams.get('status')
-  const includePassive = searchParams.get('include_passive') === 'true'
+  const includePassive = listQuery.includePassive
 
   let query = supabase
     .from('sirket_temsilciler')
-    .select('id,sirket_id,company_id,person_id,organization_id,person_kind,source_type,source_id,display_name,ad_soyad,authority_types,gorev,yetki_turu,status,start_date,end_date,signature_type,transaction_limit,currency,requires_joint_signature,can_approve_alone,is_deleted,created_at')
-    .order('created_at', { ascending: false })
+    .select('id,sirket_id,company_id,person_id,organization_id,person_kind,source_type,source_id,display_name,ad_soyad,authority_types,gorev,yetki_turu,status,start_date,end_date,signature_type,transaction_limit,currency,requires_joint_signature,can_approve_alone,is_deleted,created_at', { count: 'exact' })
+    .order(sortColumn, { ascending: listQuery.direction !== 'desc' })
+    .range(from, to)
 
   if (companyId) query = query.or(`company_id.eq.${companyId},sirket_id.eq.${companyId}`)
   if (status) query = query.eq('status', status)
   if (!includePassive) query = query.eq('is_deleted', false)
+  if (listQuery.search) query = query.or(`display_name.ilike.%${listQuery.search}%,ad_soyad.ilike.%${listQuery.search}%,gorev.ilike.%${listQuery.search}%`)
 
-  const { data, error } = await query
+  const { data, error, count } = await query
   if (error) return NextResponse.json({ error: error.message, code: error.code || 'FETCH_FAILED' }, { status: 500 })
 
-  return NextResponse.json({ data: data || [] })
+  return NextResponse.json({ data: data || [], meta: listMeta(listQuery, count ?? 0) })
 }
 
 export async function POST(request: NextRequest) {

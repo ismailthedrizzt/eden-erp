@@ -2,10 +2,12 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { companyService } from '@/lib/services/companyService'
+import type { ListMeta, ListQuery } from '@/lib/api/listEndpoint'
 import type { Sirket, SirketOrtak, SirketTemsilci, SirketDokuman, SirketLogo } from '@/types/sirket'
 
 interface UseSirketlerReturn {
   data: Sirket[]
+  meta: ListMeta
   loading: boolean
   error: string | null
   yenile: () => void
@@ -16,8 +18,9 @@ interface UseSirketlerReturn {
   getLogolar: (sirketId: string) => Promise<SirketLogo[]>
 }
 
-export function useSirketler(options: { includePassive?: boolean } = {}): UseSirketlerReturn {
+export function useSirketler(options: { includePassive?: boolean } & Partial<Pick<ListQuery, 'page' | 'pageSize' | 'search' | 'sort' | 'direction'>> = {}): UseSirketlerReturn {
   const [data, setData] = useState<Sirket[]>([])
+  const [meta, setMeta] = useState<ListMeta>({ page: 1, pageSize: 50, total: 0, totalPages: 1 })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -26,15 +29,16 @@ export function useSirketler(options: { includePassive?: boolean } = {}): UseSir
       setLoading(true)
       setError(null)
       if (force) companyService.invalidateList()
-      const result = await companyService.list({ useCache: !force, includePassive: options.includePassive })
+      const result = await companyService.list({ useCache: !force, ...options })
       setData(result.data || [])
+      setMeta(result.meta ?? { page: options.page ?? 1, pageSize: options.pageSize ?? 50, total: result.data?.length ?? 0, totalPages: 1 })
     } catch (err: any) {
       console.error('Error fetching sirketler:', err)
       setError(err.message || 'Sirketler yuklenirken hata olustu')
     } finally {
       setLoading(false)
     }
-  }, [options.includePassive])
+  }, [options.includePassive, options.page, options.pageSize, options.search, options.sort, options.direction])
 
   useEffect(() => {
     fetchSirketler()
@@ -92,6 +96,7 @@ export function useSirketler(options: { includePassive?: boolean } = {}): UseSir
 
   return {
     data,
+    meta,
     loading,
     error,
     yenile: () => fetchSirketler(true),

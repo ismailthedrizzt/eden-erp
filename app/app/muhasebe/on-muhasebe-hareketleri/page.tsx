@@ -3,13 +3,14 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Download, FileText, Filter, RefreshCw } from 'lucide-react'
 import { PageBanner } from '@/components/ui/PageBanner'
-import { SmartDataTable, ColumnDef, WidgetDef } from '@/components/ui/SmartDataTable'
+import { SmartDataTable, ColumnDef, SortConfig, WidgetDef } from '@/components/ui/SmartDataTable'
 import { EntityForm, FormField, FormMode, FormTab } from '@/components/ui/EntityForm'
 import { Toast } from '@/components/ui/Toast'
 import { usePermissions } from '@/lib/security/permissionStore'
 import { preAccountingService } from '@/lib/modules/accounting/pre-accounting/preAccounting.service'
 import { ACCOUNTING_PERMISSIONS } from '@/lib/modules/accounting/shared/accounting.permissions'
 import { MOVEMENT_STATUSES, MOVEMENT_TYPES, PAYMENT_METHODS, ROW_HEALTH_LABELS } from '@/lib/modules/accounting/shared/accounting.constants'
+import type { ListMeta } from '@/lib/api/listEndpoint'
 import type { AccountMovementRow } from '@/lib/modules/accounting/shared/accounting.types'
 
 const columns: ColumnDef[] = [
@@ -36,12 +37,15 @@ export default function PreAccountingMovementsPage() {
   const [refs, setRefs] = useState<{ persons: any[]; organizations: any[]; companies: any[] }>({ persons: [], organizations: [], companies: [] })
   const [refsLoaded, setRefsLoaded] = useState(false)
   const [toast, setToast] = useState<{ type: 'success' | 'error' | 'warning'; title?: string; message: string } | null>(null)
+  const [listQuery, setListQuery] = useState({ page: 1, pageSize: 50, search: '', sort: 'movement_date', direction: 'desc' as 'asc' | 'desc' })
+  const [listMeta, setListMeta] = useState<ListMeta>({ page: 1, pageSize: 50, total: 0, totalPages: 1 })
 
   const loadData = async () => {
     setLoading(true)
     try {
-      const movementPayload = await preAccountingService.getList()
+      const movementPayload = await preAccountingService.getList(listQuery)
       setRows(Array.isArray(movementPayload.data) ? movementPayload.data : [])
+      setListMeta(movementPayload.meta ?? { page: listQuery.page, pageSize: listQuery.pageSize, total: movementPayload.data?.length ?? 0, totalPages: 1 })
     } finally {
       setLoading(false)
     }
@@ -56,7 +60,7 @@ export default function PreAccountingMovementsPage() {
 
   useEffect(() => {
     loadData()
-  }, [])
+  }, [listQuery])
 
   useEffect(() => {
     if (pageState !== 'list') {
@@ -116,6 +120,11 @@ export default function PreAccountingMovementsPage() {
     { key: 'review', label: 'İnceleme', render: () => tableData.filter(row => row.row_health_status === 'manual_review_required').length },
   ], [tableData])
 
+  const handleListSortChange = (sorts: SortConfig[]) => {
+    const sort = sorts[0]
+    setListQuery(prev => ({ ...prev, page: 1, sort: sort?.key || 'movement_date', direction: sort?.direction || 'desc' }))
+  }
+
   const save = async (data: Record<string, any>) => {
     setSaving(true)
     try {
@@ -154,7 +163,7 @@ export default function PreAccountingMovementsPage() {
             <button className="btn"><RefreshCw size={16} />Eşleştirme Çalıştır</button>
             <button className="btn"><Download size={16} />Dışa Aktar</button>
           </div>
-          <SmartDataTable columns={columns} data={tableData} loading={loading} widgets={widgets} defaultView="list" storageKey="pre-accounting-movements" emptyText="Ön muhasebe hareketi bulunamadı" onRefresh={loadData} onRowClick={(row) => { setSelected(row); setPageState('view') }} />
+          <SmartDataTable columns={columns} data={tableData} loading={loading} widgets={widgets} defaultView="list" storageKey="pre-accounting-movements" emptyText="Ön muhasebe hareketi bulunamadı" onRefresh={loadData} onRowClick={(row) => { setSelected(row); setPageState('view') }} defaultPageSize={listQuery.pageSize} pagination={{ mode: 'server', page: listMeta.page, pageSize: listMeta.pageSize, total: listMeta.total, onPageChange: page => setListQuery(prev => ({ ...prev, page })), onPageSizeChange: pageSize => setListQuery(prev => ({ ...prev, page: 1, pageSize })), onSearchChange: search => setListQuery(prev => ({ ...prev, page: 1, search })), onSortChange: handleListSortChange }} />
         </div>
       ) : (
         <div className="mt-6">

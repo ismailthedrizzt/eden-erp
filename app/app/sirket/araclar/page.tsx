@@ -29,10 +29,11 @@ import {
   X,
 } from 'lucide-react'
 import { PageBanner } from '@/components/ui/PageBanner'
-import { SmartDataTable, ColumnDef, WidgetDef } from '@/components/ui/SmartDataTable'
+import { SmartDataTable, ColumnDef, SortConfig, WidgetDef } from '@/components/ui/SmartDataTable'
 import { DocumentSlotUploader, DocumentSlot, SlotDocument } from '@/components/ui/DocumentSlotUploader'
 import { ImageSlotUploader, ImageSlot, SlotImage } from '@/components/ui/ImageSlotUploader'
 import { companyVehicleService } from '@/lib/services/companyVehicleService'
+import type { ListMeta } from '@/lib/api/listEndpoint'
 import { cn } from '@/lib/utils'
 
 type PageState = 'list' | 'create' | 'view' | 'edit'
@@ -140,6 +141,8 @@ export default function AraclarPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
+  const [listQuery, setListQuery] = useState({ page: 1, pageSize: 50, search: '', sort: 'created_at', direction: 'desc' as 'asc' | 'desc' })
+  const [listMeta, setListMeta] = useState<ListMeta>({ page: 1, pageSize: 50, total: 0, totalPages: 1 })
 
   const loadReferences = useCallback(async (force = false) => {
     const payload = await companyVehicleService.references({ useCache: !force })
@@ -151,8 +154,9 @@ export default function AraclarPage() {
     setLoading(true)
     try {
       if (force) companyVehicleService.invalidateList()
-      const payload = await companyVehicleService.list({ useCache: !force })
+      const payload = await companyVehicleService.list({ useCache: !force, ...listQuery })
       setVehicles(Array.isArray(payload.vehicles) ? payload.vehicles : [])
+      setListMeta(payload.meta ?? { page: listQuery.page, pageSize: listQuery.pageSize, total: payload.vehicles?.length ?? 0, totalPages: 1 })
       loadReferences(force).catch(() => {
         setEmployees([])
         setCompanies([])
@@ -163,7 +167,7 @@ export default function AraclarPage() {
     } finally {
       setLoading(false)
     }
-  }, [loadReferences])
+  }, [listQuery, loadReferences])
 
   useEffect(() => {
     loadData()
@@ -191,6 +195,11 @@ export default function AraclarPage() {
     { key: 'air', label: 'Hava', render: () => activeVehicles.filter((vehicle) => vehicle.category === 'Hava').length },
     { key: 'warnings', label: 'Yaklaşan Takip', render: () => expiringVehicles },
   ], [activeVehicles, expiringVehicles])
+
+  const handleListSortChange = (sorts: SortConfig[]) => {
+    const sort = sorts[0]
+    setListQuery(prev => ({ ...prev, page: 1, sort: sort?.key || 'created_at', direction: sort?.direction || 'desc' }))
+  }
 
   function openCreate() {
     if (employees.length === 0 || companies.length === 0) {
@@ -280,6 +289,17 @@ export default function AraclarPage() {
             emptyText="Araç kaydı bulunamadı"
             onRowClick={openView}
             onRefresh={() => loadData(true)}
+            defaultPageSize={listQuery.pageSize}
+            pagination={{
+              mode: 'server',
+              page: listMeta.page,
+              pageSize: listMeta.pageSize,
+              total: listMeta.total,
+              onPageChange: page => setListQuery(prev => ({ ...prev, page })),
+              onPageSizeChange: pageSize => setListQuery(prev => ({ ...prev, page: 1, pageSize })),
+              onSearchChange: search => setListQuery(prev => ({ ...prev, page: 1, search })),
+              onSortChange: handleListSortChange,
+            }}
             showActions={false}
           />
         </div>

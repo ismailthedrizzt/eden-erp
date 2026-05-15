@@ -3,11 +3,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { RefreshCw, WalletCards } from 'lucide-react'
 import { PageBanner } from '@/components/ui/PageBanner'
-import { SmartDataTable, ColumnDef, WidgetDef } from '@/components/ui/SmartDataTable'
+import { SmartDataTable, ColumnDef, SortConfig, WidgetDef } from '@/components/ui/SmartDataTable'
 import { Toast } from '@/components/ui/Toast'
 import { usePermissions } from '@/lib/security/permissionStore'
 import { ACCOUNTING_PERMISSIONS } from '@/lib/modules/accounting/shared/accounting.permissions'
 import { bankCardMovementsService } from '@/lib/modules/accounting/bank-integration/bankCardMovements.service'
+import type { ListMeta } from '@/lib/api/listEndpoint'
 import type { BankAndCardMovementRow } from '@/lib/modules/accounting/bank-integration/bankIntegration.types'
 
 const columns: ColumnDef[] = [
@@ -29,6 +30,8 @@ export default function BankCardMovementsPage() {
   const [loading, setLoading] = useState(true)
   const [syncingId, setSyncingId] = useState<string | null>(null)
   const [toast, setToast] = useState<{ type: 'success' | 'error' | 'warning'; title?: string; message: string } | null>(null)
+  const [listQuery, setListQuery] = useState({ page: 1, pageSize: 50, search: '', sort: 'movement_date', direction: 'desc' as 'asc' | 'desc' })
+  const [listMeta, setListMeta] = useState<ListMeta>({ page: 1, pageSize: 50, total: 0, totalPages: 1 })
 
   const loadConnections = useCallback(async () => {
     const connectionPayload = await bankCardMovementsService.getConnections()
@@ -38,15 +41,16 @@ export default function BankCardMovementsPage() {
   const loadData = useCallback(async () => {
     setLoading(true)
     try {
-      const transactionPayload = await bankCardMovementsService.getTransactions('waiting')
+      const transactionPayload = await bankCardMovementsService.getTransactions('waiting', listQuery)
       setRows(Array.isArray(transactionPayload.data) ? transactionPayload.data : [])
+      setListMeta(transactionPayload.meta ?? { page: listQuery.page, pageSize: listQuery.pageSize, total: transactionPayload.data?.length ?? 0, totalPages: 1 })
       loadConnections().catch(() => setConnections([]))
     } catch (error) {
       setToast({ type: 'error', title: 'Hata', message: error instanceof Error ? error.message : 'Banka hareketleri yüklenemedi.' })
     } finally {
       setLoading(false)
     }
-  }, [loadConnections])
+  }, [listQuery, loadConnections])
 
   useEffect(() => {
     loadData()
@@ -66,6 +70,11 @@ export default function BankCardMovementsPage() {
     { key: 'card', label: 'Kart', render: () => tableData.filter(row => row.source_type === 'card').length },
     { key: 'connections', label: 'Bağlantı', render: () => connections.length },
   ], [tableData, connections.length])
+
+  const handleListSortChange = (sorts: SortConfig[]) => {
+    const sort = sorts[0]
+    setListQuery(prev => ({ ...prev, page: 1, sort: sort?.key || 'movement_date', direction: sort?.direction || 'desc' }))
+  }
 
   const syncConnection = async (connectionId: string) => {
     setSyncingId(connectionId)
@@ -132,6 +141,17 @@ export default function BankCardMovementsPage() {
           storageKey="accounting-bank-card-movements"
           emptyText="Bekleyen banka veya kart hareketi bulunamadı"
           onRefresh={loadData}
+          defaultPageSize={listQuery.pageSize}
+          pagination={{
+            mode: 'server',
+            page: listMeta.page,
+            pageSize: listMeta.pageSize,
+            total: listMeta.total,
+            onPageChange: page => setListQuery(prev => ({ ...prev, page })),
+            onPageSizeChange: pageSize => setListQuery(prev => ({ ...prev, page: 1, pageSize })),
+            onSearchChange: search => setListQuery(prev => ({ ...prev, page: 1, search })),
+            onSortChange: handleListSortChange,
+          }}
         />
       </div>
     </div>

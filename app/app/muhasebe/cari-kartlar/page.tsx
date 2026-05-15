@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
 import { Download, Filter, Settings, WalletCards } from 'lucide-react'
 import { PageBanner } from '@/components/ui/PageBanner'
-import { SmartDataTable, ColumnDef, WidgetDef } from '@/components/ui/SmartDataTable'
+import { SmartDataTable, ColumnDef, SortConfig, WidgetDef } from '@/components/ui/SmartDataTable'
 import { EntityForm, FormField, FormMode, FormTab } from '@/components/ui/EntityForm'
 import { Toast } from '@/components/ui/Toast'
 import { EntityBankAccountsPanel } from '@/components/ui/EntityBankAccountsPanel'
@@ -12,6 +12,7 @@ import { usePermissions } from '@/lib/security/permissionStore'
 import { accountCardsService } from '@/lib/modules/accounting/account-cards/accountCards.service'
 import { ACCOUNTING_PERMISSIONS } from '@/lib/modules/accounting/shared/accounting.permissions'
 import { getAccountingLauncherTargets } from '@/lib/modules/accounting/shared/formRegistry'
+import type { ListMeta } from '@/lib/api/listEndpoint'
 import type { AccountCardRow, AccountingEntityKind } from '@/lib/modules/accounting/shared/accounting.types'
 
 const columns: ColumnDef[] = [
@@ -57,12 +58,15 @@ export default function AccountCardsPage() {
   const [mode, setMode] = useState<FormMode>('view')
   const [saving, setSaving] = useState(false)
   const [toast, setToast] = useState<{ type: 'success' | 'error' | 'warning'; message: string; title?: string } | null>(null)
+  const [listQuery, setListQuery] = useState({ page: 1, pageSize: 50, search: '', sort: 'display_name', direction: 'asc' as 'asc' | 'desc' })
+  const [listMeta, setListMeta] = useState<ListMeta>({ page: 1, pageSize: 50, total: 0, totalPages: 1 })
 
   const loadCards = async () => {
     setLoading(true)
     try {
-      const payload = await accountCardsService.getList()
+      const payload = await accountCardsService.getList(listQuery)
       setCards(Array.isArray(payload.data) ? payload.data : [])
+      setListMeta(payload.meta ?? { page: listQuery.page, pageSize: listQuery.pageSize, total: payload.data?.length ?? 0, totalPages: 1 })
     } finally {
       setLoading(false)
     }
@@ -70,7 +74,7 @@ export default function AccountCardsPage() {
 
   useEffect(() => {
     loadCards()
-  }, [])
+  }, [listQuery])
 
   const tableData = useMemo(() => cards.map(card => ({
     ...card,
@@ -88,6 +92,11 @@ export default function AccountCardsPage() {
     { key: 'organization', label: 'Tüzel Kişi', render: () => tableData.filter(row => row.entity_kind === 'organization').length },
     { key: 'risk', label: 'Riskli', render: () => tableData.filter(row => row.risk_status === 'limit_exceeded').length },
   ], [tableData])
+
+  const handleListSortChange = (sorts: SortConfig[]) => {
+    const sort = sorts[0]
+    setListQuery(prev => ({ ...prev, page: 1, sort: sort?.key || 'display_name', direction: sort?.direction || 'asc' }))
+  }
 
   const heroFields: FormField[] = [
     { name: 'display_name', label: 'Ad / Ünvan', type: 'custom', render: ({ value }) => <ReadOnlyField value={value} /> },
@@ -142,7 +151,7 @@ export default function AccountCardsPage() {
             <button className="btn"><Filter size={16} />Filtreler</button>
             <button className="btn"><Download size={16} />Dışa Aktar</button>
           </div>
-          <SmartDataTable columns={columns} data={tableData} loading={loading} widgets={widgets} defaultView="list" storageKey="account-cards" emptyText="Cari kart bulunamadı" onRowClick={(row) => { setSelectedCard(row); setMode('view') }} onRefresh={loadCards} />
+          <SmartDataTable columns={columns} data={tableData} loading={loading} widgets={widgets} defaultView="list" storageKey="account-cards" emptyText="Cari kart bulunamadı" onRowClick={(row) => { setSelectedCard(row); setMode('view') }} onRefresh={loadCards} defaultPageSize={listQuery.pageSize} pagination={{ mode: 'server', page: listMeta.page, pageSize: listMeta.pageSize, total: listMeta.total, onPageChange: page => setListQuery(prev => ({ ...prev, page })), onPageSizeChange: pageSize => setListQuery(prev => ({ ...prev, page: 1, pageSize })), onSearchChange: search => setListQuery(prev => ({ ...prev, page: 1, search })), onSortChange: handleListSortChange }} />
         </div>
       ) : (
         <div className="mt-6">

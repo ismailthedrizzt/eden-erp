@@ -5,7 +5,7 @@ import { BriefcaseBusiness, Building2, FileText, Landmark, Phone, Settings, User
 import { useSirketler } from '@/hooks/useSirketler'
 import { EntityForm, FormField, FormMode, FormTab } from '@/components/ui/EntityForm'
 import { PageBanner } from '@/components/ui/PageBanner'
-import { SmartDataTable, ColumnDef, WidgetDef } from '@/components/ui/SmartDataTable'
+import { SmartDataTable, ColumnDef, SortConfig, WidgetDef } from '@/components/ui/SmartDataTable'
 import { Toast } from '@/components/ui/Toast'
 import type { AnyDashboardWidgetConfig } from '@/components/dashboard/dashboard.types'
 import { CompanyNaceCodesSection } from '@/components/modules/sirket/CompanyPublicTab'
@@ -242,7 +242,8 @@ const formatFieldList = (fields: string[]) => fields.map(getFieldLabel).join(', 
 
 export default function SirketlerPage() {
   const [includePassive, setIncludePassive] = useState(false)
-  const { data: sirketler, loading, error: listError, yenile } = useSirketler({ includePassive })
+  const [listQuery, setListQuery] = useState({ page: 1, pageSize: 50, search: '', sort: 'kisa_unvan', direction: 'asc' as 'asc' | 'desc' })
+  const { data: sirketler, meta: listMeta, loading, error: listError, yenile } = useSirketler({ includePassive, ...listQuery })
   const { can } = usePermissions()
   const { isEnabled, isWritable } = useModules()
   const [pageState, setPageState] = useState<PageState>('list')
@@ -579,6 +580,16 @@ export default function SirketlerPage() {
     },
   ]
 
+  const handleListSortChange = (sorts: SortConfig[]) => {
+    const sort = sorts[0]
+    setListQuery(prev => ({
+      ...prev,
+      page: 1,
+      sort: sort?.key || 'kisa_unvan',
+      direction: sort?.direction || 'asc',
+    }))
+  }
+
   return (
     <div className="relative">
       <PageBanner
@@ -616,9 +627,23 @@ export default function SirketlerPage() {
             loading={loading}
             onRowClick={handleRowClick}
             onRefresh={yenile}
+            defaultPageSize={listQuery.pageSize}
+            pagination={{
+              mode: 'server',
+              page: listMeta.page,
+              pageSize: listMeta.pageSize,
+              total: listMeta.total,
+              onPageChange: page => setListQuery(prev => ({ ...prev, page })),
+              onPageSizeChange: pageSize => setListQuery(prev => ({ ...prev, page: 1, pageSize })),
+              onSearchChange: search => setListQuery(prev => ({ ...prev, page: 1, search })),
+              onSortChange: handleListSortChange,
+            }}
             showPassiveToggle
             includePassive={includePassive}
-            onIncludePassiveChange={setIncludePassive}
+            onIncludePassiveChange={(next) => {
+              setIncludePassive(next)
+              setListQuery(prev => ({ ...prev, page: 1 }))
+            }}
             widgets={widgets}
             dashboardWidgets={dashboardWidgets}
             onDashboardFilter={(event) => {

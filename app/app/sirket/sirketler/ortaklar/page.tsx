@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Users } from 'lucide-react'
 import { EntityForm, FormField, FormMode, FormTab } from '@/components/ui/EntityForm'
 import { PageBanner } from '@/components/ui/PageBanner'
-import { SmartDataTable, ColumnDef, WidgetDef } from '@/components/ui/SmartDataTable'
+import { SmartDataTable, ColumnDef, SortConfig, WidgetDef } from '@/components/ui/SmartDataTable'
 import { Toast } from '@/components/ui/Toast'
 import { normalizeCountryId } from '@/lib/reference/country-nationalities'
 import { createRealPersonMasterTabs } from '@/lib/identity/realPersonFormSections'
@@ -12,6 +12,7 @@ import { createLegalEntityMasterTabs } from '@/lib/identity/legalEntityFormSecti
 import { isSoftDeletedRecord } from '@/lib/forms/entityState'
 import { companyService } from '@/lib/services/companyService'
 import { ownershipTransactionsService } from '@/lib/modules/ownership-transactions/ownershipTransactions.service'
+import type { ListMeta } from '@/lib/api/listEndpoint'
 
 type PageState = 'list' | 'create' | 'view' | 'edit'
 type ToastState = { type: 'success' | 'error' | 'warning'; title?: string; message: string }
@@ -351,6 +352,8 @@ export default function OrtaklarPage() {
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [includePassive, setIncludePassive] = useState(false)
+  const [listQuery, setListQuery] = useState({ page: 1, pageSize: 50, search: '', sort: 'created_at', direction: 'desc' as 'asc' | 'desc' })
+  const [listMeta, setListMeta] = useState<ListMeta>({ page: 1, pageSize: 50, total: 0, totalPages: 1 })
   const [error, setError] = useState<string | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
@@ -386,9 +389,10 @@ export default function OrtaklarPage() {
     setError(null)
     try {
       if (force) companyService.invalidateRelations()
-      const partnerPayload = await companyService.partnersList({ includePassive, useCache: !force })
+      const partnerPayload = await companyService.partnersList({ includePassive, useCache: !force, ...listQuery })
 
       setPartners(Array.isArray(partnerPayload.data) ? partnerPayload.data : [])
+      setListMeta(partnerPayload.meta ?? { page: listQuery.page, pageSize: listQuery.pageSize, total: partnerPayload.data?.length ?? 0, totalPages: 1 })
       loadRelationContext(force).catch(() => {
         setRepresentatives([])
         setCurrentOwnershipRows([])
@@ -398,7 +402,7 @@ export default function OrtaklarPage() {
     } finally {
       setLoading(false)
     }
-  }, [includePassive, loadRelationContext])
+  }, [includePassive, listQuery, loadRelationContext])
   useEffect(() => {
     loadData()
   }, [loadData])
@@ -450,6 +454,11 @@ export default function OrtaklarPage() {
     { key: 'real', label: 'Gerçek Kişi', render: () => activePartners.filter(partner => partner.partner_type_label === 'Gerçek Kişi').length },
     { key: 'legal', label: 'Tüzel Kişi', render: () => activePartners.filter(partner => partner.partner_type_label === 'Tüzel Kişi').length },
   ], [activePartners, tableData])
+
+  const handleListSortChange = (sorts: SortConfig[]) => {
+    const sort = sorts[0]
+    setListQuery(prev => ({ ...prev, page: 1, sort: sort?.key || 'created_at', direction: sort?.direction || 'desc' }))
+  }
 
   const configuredHeroFields = heroFields.map(field => {
     if (field.name === 'company_id') return { ...field, options: companies, defaultValue: companies.length === 1 ? companies[0].value : field.defaultValue }
@@ -621,9 +630,23 @@ export default function OrtaklarPage() {
             emptyText="Ortak kaydı bulunamadı"
             onRowClick={handleRowClick}
             onRefresh={() => loadData(true)}
+            defaultPageSize={listQuery.pageSize}
+            pagination={{
+              mode: 'server',
+              page: listMeta.page,
+              pageSize: listMeta.pageSize,
+              total: listMeta.total,
+              onPageChange: page => setListQuery(prev => ({ ...prev, page })),
+              onPageSizeChange: pageSize => setListQuery(prev => ({ ...prev, page: 1, pageSize })),
+              onSearchChange: search => setListQuery(prev => ({ ...prev, page: 1, search })),
+              onSortChange: handleListSortChange,
+            }}
             showPassiveToggle
             includePassive={includePassive}
-            onIncludePassiveChange={setIncludePassive}
+            onIncludePassiveChange={(next) => {
+              setIncludePassive(next)
+              setListQuery(prev => ({ ...prev, page: 1 }))
+            }}
           />
         </div>
       )}

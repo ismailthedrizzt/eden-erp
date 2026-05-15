@@ -1,25 +1,32 @@
 'use client'
 
 import { apiClient, type ApiClientOptions } from '@/lib/api/apiClient'
+import type { ListMeta, ListQuery } from '@/lib/api/listEndpoint'
 
 export interface CompanyVehiclePayload {
   vehicles: any[]
   employees: any[]
   companies: any[]
+  meta?: ListMeta
   warning?: string
 }
 
-type CompanyVehicleListOptions = ApiClientOptions & { includeReferences?: boolean }
+type CompanyVehicleListOptions = ApiClientOptions & Partial<Pick<ListQuery, 'page' | 'pageSize' | 'search' | 'sort' | 'direction'>> & { includeReferences?: boolean }
 
 export const companyVehicleService = {
   list(options: CompanyVehicleListOptions = {}) {
-    const { includeReferences, ...clientOptions } = options
+    const { includeReferences, page, pageSize, search, sort, direction, ...clientOptions } = options
     return apiClient.get<CompanyVehiclePayload>('/api/sirket/araclar', {
       ...clientOptions,
       skipAuth: clientOptions.skipAuth ?? true,
       staleTime: clientOptions.staleTime ?? 120_000,
       query: {
         ...(includeReferences ? { include_refs: 'true' } : {}),
+        page,
+        pageSize,
+        search,
+        sort,
+        direction,
         ...clientOptions.query,
       },
     })

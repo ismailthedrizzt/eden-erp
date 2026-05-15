@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
+import { listMeta, listRange, parseListQuery } from '@/lib/api/listEndpoint'
 
 const missingTableCodes = ['42P01', 'PGRST205']
 const VEHICLE_SELECT = 'id,company_id,category,vehicle_type,brand,manufacturer,model,model_year,color,registration_no,vin_serial_no,status,ownership_type,assigned_to_employee_id,operator_employee_id,location_name,current_usage_value,usage_unit,fuel_type,insurance_policy_no,insurance_expiry_date,inspection_expiry_date,maintenance_due_date,purchase_date,lease_start_date,lease_end_date,budget_code,cost_center,notes,api_notes,media,documents,history,is_deleted,created_at,updated_at'
@@ -23,6 +24,17 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const includeReferences = searchParams.get('include_refs') === 'true'
   const refsOnly = searchParams.get('refs_only') === 'true'
+  const listQuery = parseListQuery(searchParams, { pageSize: 50, sort: 'created_at', direction: 'desc' })
+  const { from, to } = listRange(listQuery)
+  const sortMap: Record<string, string> = {
+    vehicle_name: 'brand',
+    brand: 'brand',
+    vehicle_type: 'vehicle_type',
+    registration_no: 'registration_no',
+    status: 'status',
+    created_at: 'created_at',
+  }
+  const sortColumn = sortMap[listQuery.sort || ''] || 'created_at'
 
   if (refsOnly) {
     const [{ data: employees }, { data: companies }] = await Promise.all([
@@ -37,11 +49,12 @@ export async function GET(request: NextRequest) {
     })
   }
 
-  const { data: vehicles, error } = await supabase
+  const { data: vehicles, error, count } = await supabase
     .from('company_vehicles')
-    .select(VEHICLE_SELECT)
+    .select(VEHICLE_SELECT, { count: 'exact' })
     .eq('is_deleted', false)
-    .order('created_at', { ascending: false })
+    .order(sortColumn, { ascending: listQuery.direction !== 'desc' })
+    .range(from, to)
 
   const vehicleRows = vehicles || []
   const employeeIds = uniqueIds(vehicleRows.flatMap(vehicle => [vehicle.assigned_to_employee_id, vehicle.operator_employee_id]))
@@ -72,8 +85,12 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: error.message, code: error.code || 'VEHICLES_FETCH_FAILED' }, { status: 500 })
   }
 
+  const enrichedVehicles = attachPeople(vehicleRows, employees || [], companies || [])
+
   return NextResponse.json({
-    vehicles: attachPeople(vehicleRows, employees || [], companies || []),
+    vehicles: enrichedVehicles,
+    data: enrichedVehicles,
+    meta: listMeta(listQuery, count ?? 0),
     employees: includeReferences ? employees || [] : [],
     companies: includeReferences ? companies || [] : [],
   })

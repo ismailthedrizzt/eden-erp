@@ -6,7 +6,7 @@ import { useSearchParams } from 'next/navigation'
 import { ArrowDownUp, Check, Clock, Download, Eye, Filter, FileText, History, Pencil, Plus, RotateCcw, Send, X } from 'lucide-react'
 import { EntityForm, FormField, FormMode } from '@/components/ui/EntityForm'
 import { PageBanner } from '@/components/ui/PageBanner'
-import { SmartDataTable } from '@/components/ui/SmartDataTable'
+import { SmartDataTable, type SortConfig } from '@/components/ui/SmartDataTable'
 import { Toast } from '@/components/ui/Toast'
 import {
   approvalStatusLabels,
@@ -20,6 +20,7 @@ import { getOwnershipTransactionCapabilities } from '@/lib/modules/ownership-tra
 import { ownershipTransactionsService } from '@/lib/modules/ownership-transactions/ownershipTransactions.service'
 import { companyService } from '@/lib/services/companyService'
 import type { OwnershipTransaction } from '@/lib/modules/ownership-transactions/ownershipTransactions.types'
+import type { ListMeta } from '@/lib/api/listEndpoint'
 
 type PageState = 'list' | 'create' | 'view' | 'edit'
 type ToastState = { type: 'success' | 'error' | 'warning'; title?: string; message: string }
@@ -69,6 +70,8 @@ function OwnershipTransactionsContent() {
   const [error, setError] = useState<string | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
   const [toast, setToast] = useState<ToastState | null>(null)
+  const [listQuery, setListQuery] = useState({ page: 1, pageSize: 50, search: '', sort: 'created_at', direction: 'desc' as 'asc' | 'desc' })
+  const [listMeta, setListMeta] = useState<ListMeta>({ page: 1, pageSize: 50, total: 0, totalPages: 1 })
 
   const capabilities = getOwnershipTransactionCapabilities()
   const formMode: FormMode = pageState === 'create' ? 'create' : pageState === 'edit' ? 'edit' : 'view'
@@ -124,8 +127,9 @@ function OwnershipTransactionsContent() {
         ownershipTransactionsService.invalidateList()
         companyService.invalidateRelations()
       }
-      const transactionRows = await ownershipTransactionsService.list()
-      setTransactions(Array.isArray(transactionRows) ? transactionRows : [])
+      const transactionPayload = await ownershipTransactionsService.list(listQuery)
+      setTransactions(Array.isArray(transactionPayload.data) ? transactionPayload.data : [])
+      setListMeta(transactionPayload.meta ?? { page: listQuery.page, pageSize: listQuery.pageSize, total: transactionPayload.data?.length ?? 0, totalPages: 1 })
       loadReferenceData(force).catch(() => {
         setCompanies([])
         setPartners([])
@@ -135,7 +139,7 @@ function OwnershipTransactionsContent() {
     } finally {
       setLoading(false)
     }
-  }, [loadReferenceData])
+  }, [listQuery, loadReferenceData])
   useEffect(() => {
     loadData()
   }, [loadData])
@@ -305,6 +309,11 @@ function OwnershipTransactionsContent() {
     }
   }), [capabilities, companyNameById, partnerNameById, transactions])
 
+  const handleListSortChange = (sorts: SortConfig[]) => {
+    const sort = sorts[0]
+    setListQuery(prev => ({ ...prev, page: 1, sort: sort?.key || 'created_at', direction: sort?.direction || 'desc' }))
+  }
+
   const formFields = buildFormFields(companies, partnerOptions, selected, transactions, availableTransactionTypes)
   const hasSelectedCompanyWithoutPartners = !!selectedCompanyId && partnerOptions.length === 0
 
@@ -340,6 +349,17 @@ function OwnershipTransactionsContent() {
             emptyText="Ortaklık işlemi bulunamadı"
             onRowClick={handleOpen}
             onRefresh={loadData}
+            defaultPageSize={listQuery.pageSize}
+            pagination={{
+              mode: 'server',
+              page: listMeta.page,
+              pageSize: listMeta.pageSize,
+              total: listMeta.total,
+              onPageChange: page => setListQuery(prev => ({ ...prev, page })),
+              onPageSizeChange: pageSize => setListQuery(prev => ({ ...prev, page: 1, pageSize })),
+              onSearchChange: search => setListQuery(prev => ({ ...prev, page: 1, search })),
+              onSortChange: handleListSortChange,
+            }}
           />
         </div>
       )}

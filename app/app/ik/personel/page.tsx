@@ -17,7 +17,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { Users } from 'lucide-react'
 import { usePersonel } from '@/hooks/usePersonel'
 import { PageBanner } from '@/components/ui/PageBanner'
-import { SmartDataTable, WidgetDef } from '@/components/ui/SmartDataTable'
+import { SmartDataTable, SortConfig, WidgetDef } from '@/components/ui/SmartDataTable'
 import type { DashboardFilterEvent } from '@/components/dashboard/dashboard.types'
 import { EntityForm, FormMode } from '@/components/ui/EntityForm'
 import { Toast } from '@/components/ui/Toast'
@@ -91,7 +91,8 @@ const formatFieldList = (fields: string[]) => fields.map(getFieldLabel).join(', 
 
 export default function PersonelYonetimPage() {
   const [includePassive, setIncludePassive] = useState(false)
-  const { data: personel, loading: listLoading, error: listError, yenile } = usePersonel({ includePassive })
+  const [listQuery, setListQuery] = useState({ page: 1, pageSize: 50, search: '', sort: 'soyad', direction: 'asc' as 'asc' | 'desc' })
+  const { data: personel, meta: listMeta, loading: listLoading, error: listError, yenile } = usePersonel({ includePassive, ...listQuery })
   const moduleConfig = personelModuleConfig
   const apiBasePath = moduleConfig.entity.apiBasePath || '/api/ik/personel'
   const lifecycleMessages = moduleConfig.form.lifecycle?.messages
@@ -141,6 +142,24 @@ export default function PersonelYonetimPage() {
     setFormError(null)
     setSaveFieldErrors({})
     setPageState('create')
+  }
+
+  const handleListSortChange = (sorts: SortConfig[]) => {
+    const sort = sorts[0]
+    const sortMap: Record<string, string> = {
+      fullname: 'soyad',
+      full_name: 'soyad',
+      sirket_adi: 'sirket_id',
+      birim_adi: 'birim_id',
+      kadro_unvani: 'kadro_id',
+      employment_status: 'calisma_durumu',
+    }
+    setListQuery(prev => ({
+      ...prev,
+      page: 1,
+      sort: sort ? sortMap[sort.key] || sort.key : 'soyad',
+      direction: sort?.direction || 'asc',
+    }))
   }
 
   const handleRowClick = async (row: PersonelTableRow) => {
@@ -506,6 +525,16 @@ export default function PersonelYonetimPage() {
             defaultView={moduleConfig.list.defaultView}
             defaultPageSize={moduleConfig.list.defaultPageSize}
             pageSizeOptions={moduleConfig.list.pageSizeOptions}
+            pagination={{
+              mode: 'server',
+              page: listMeta.page,
+              pageSize: listMeta.pageSize,
+              total: listMeta.total,
+              onPageChange: page => setListQuery(prev => ({ ...prev, page })),
+              onPageSizeChange: pageSize => setListQuery(prev => ({ ...prev, page: 1, pageSize })),
+              onSearchChange: search => setListQuery(prev => ({ ...prev, page: 1, search })),
+              onSortChange: handleListSortChange,
+            }}
             loading={listLoading}
             emptyText={moduleConfig.list.emptyText}
             realtime={moduleConfig.list.realtime}
@@ -514,7 +543,10 @@ export default function PersonelYonetimPage() {
             onRefresh={yenile}
             showPassiveToggle
             includePassive={includePassive}
-            onIncludePassiveChange={setIncludePassive}
+            onIncludePassiveChange={(next) => {
+              setIncludePassive(next)
+              setListQuery(prev => ({ ...prev, page: 1 }))
+            }}
           />
           {dashboardFilter && (
             <button

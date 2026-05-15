@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { Eye, History, Landmark, Pencil, Power, Star } from 'lucide-react'
 import { PageBanner } from '@/components/ui/PageBanner'
 import Modal from '@/components/ui/Modal'
-import { SmartDataTable, type ColumnDef, type WidgetDef } from '@/components/ui/SmartDataTable'
+import { SmartDataTable, type ColumnDef, type SortConfig, type WidgetDef } from '@/components/ui/SmartDataTable'
 import { Toast } from '@/components/ui/Toast'
 import { usePermissions } from '@/lib/security/permissionStore'
 import { getTurkishIbanBanks, resolveTurkishIban } from '@/lib/utils'
@@ -16,6 +16,7 @@ import {
   type BankAccountCardRow,
 } from '@/lib/modules/accounting/bank-integration/bankAccountsCards.service'
 import { companyService } from '@/lib/services/companyService'
+import type { ListMeta } from '@/lib/api/listEndpoint'
 
 type PageState = 'list' | 'create' | 'edit' | 'view'
 type RecordType = 'account' | 'card'
@@ -68,6 +69,8 @@ export default function BankAccountsCardsPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [includePassive, setIncludePassive] = useState(false)
+  const [listQuery, setListQuery] = useState({ page: 1, pageSize: 50, search: '', sort: 'bank_name', direction: 'asc' as 'asc' | 'desc' })
+  const [listMeta, setListMeta] = useState<ListMeta>({ page: 1, pageSize: 50, total: 0, totalPages: 1 })
   const [showPassivateConfirm, setShowPassivateConfirm] = useState(false)
   const [toast, setToast] = useState<ToastState | null>(null)
   const canView = can(ACCOUNTING_PERMISSIONS.bankAccountsCardsView) || can(ACCOUNTING_PERMISSIONS.bankAccountsView) || can(ACCOUNTING_PERMISSIONS.bankCardsView)
@@ -77,8 +80,9 @@ export default function BankAccountsCardsPage() {
   const loadRows = async () => {
     setLoading(true)
     try {
-      const payload = await bankAccountsCardsService.getUnifiedRecords({ includePassive })
+      const payload = await bankAccountsCardsService.getUnifiedRecords({ includePassive, ...listQuery })
       setRows(payload.data || [])
+      setListMeta(payload.meta ?? { page: listQuery.page, pageSize: listQuery.pageSize, total: payload.data?.length ?? 0, totalPages: 1 })
       setAccountOptions((payload.accountOptions || []).map(option => ({ value: option.value, label: option.label })))
     } catch (error) {
       setToast({ type: 'error', title: 'Hata', message: error instanceof Error ? error.message : 'Hesap ve kartlar yüklenemedi.' })
@@ -89,7 +93,7 @@ export default function BankAccountsCardsPage() {
 
   useEffect(() => {
     loadRows()
-  }, [includePassive])
+  }, [includePassive, listQuery])
 
   const loadCompanyOptions = async () => {
     if (companiesLoaded) return
@@ -130,6 +134,11 @@ export default function BankAccountsCardsPage() {
     { key: 'defaults', label: 'Varsayılan', render: () => rows.filter(row => row.is_default).length },
   ], [rows])
   const bankOptions = useMemo(() => getTurkishIbanBanks().map(bank => [bank.bankName, bank.bankName]), [])
+
+  const handleListSortChange = (sorts: SortConfig[]) => {
+    const sort = sorts[0]
+    setListQuery(prev => ({ ...prev, page: 1, sort: sort?.key || 'bank_name', direction: sort?.direction || 'asc' }))
+  }
 
   const openCreate = () => {
     setSelected(null)
@@ -250,9 +259,23 @@ export default function BankAccountsCardsPage() {
           emptyText="Tanımlı banka hesabı veya kart bulunamadı"
           onRefresh={loadRows}
           onRowClick={(row: any) => openRow(row, 'view')}
+          defaultPageSize={listQuery.pageSize}
+          pagination={{
+            mode: 'server',
+            page: listMeta.page,
+            pageSize: listMeta.pageSize,
+            total: listMeta.total,
+            onPageChange: page => setListQuery(prev => ({ ...prev, page })),
+            onPageSizeChange: pageSize => setListQuery(prev => ({ ...prev, page: 1, pageSize })),
+            onSearchChange: search => setListQuery(prev => ({ ...prev, page: 1, search })),
+            onSortChange: handleListSortChange,
+          }}
           showPassiveToggle
           includePassive={includePassive}
-          onIncludePassiveChange={setIncludePassive}
+          onIncludePassiveChange={(next) => {
+            setIncludePassive(next)
+            setListQuery(prev => ({ ...prev, page: 1 }))
+          }}
         />
       ) : (
         <RecordForm

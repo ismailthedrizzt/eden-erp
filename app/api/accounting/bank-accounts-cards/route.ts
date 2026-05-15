@@ -4,6 +4,7 @@ import { ACCOUNTING_PERMISSIONS } from '@/lib/modules/accounting/shared/accounti
 import { requirePermission } from '@/lib/security/serverPermissions'
 import { isMissingTableError } from '../_banking'
 import { BANK_ACCOUNT_SELECT, BANK_CARD_SELECT, ensureManualBankConnection, listBankAccountsCards, normalizeAccountBody, normalizeCardBody } from './_shared'
+import { listMeta, listRange, parseListQuery } from '@/lib/api/listEndpoint'
 
 export async function GET(request: NextRequest) {
   const supabase = createServiceClient()
@@ -12,8 +13,17 @@ export async function GET(request: NextRequest) {
 
   try {
     const { searchParams } = new URL(request.url)
+    const listQuery = parseListQuery(searchParams, { pageSize: 50, sort: 'bank_name', direction: 'asc' })
+    const { from, to } = listRange(listQuery)
     const data = await listBankAccountsCards(supabase as any, { includePassive: searchParams.get('include_passive') === 'true' })
-    return NextResponse.json({ data: data.rows, accountOptions: data.accountOptions })
+    let rows = data.rows
+    if (listQuery.search) {
+      const search = listQuery.search.toLowerCase()
+      rows = rows.filter((row: any) => [row.bank_name, row.company_name, row.iban, row.card_number_masked, row.account_name, row.card_name].some(value => String(value || '').toLowerCase().includes(search)))
+    }
+    const sortedRows = [...rows].sort((a: any, b: any) => String(a[listQuery.sort || 'bank_name'] || '').localeCompare(String(b[listQuery.sort || 'bank_name'] || ''), 'tr'))
+    if (listQuery.direction === 'desc') sortedRows.reverse()
+    return NextResponse.json({ data: sortedRows.slice(from, to + 1), meta: listMeta(listQuery, sortedRows.length), accountOptions: data.accountOptions })
   } catch (error) {
     if (isMissingTableError(error)) {
       return NextResponse.json({

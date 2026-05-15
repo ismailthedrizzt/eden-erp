@@ -4,13 +4,14 @@ import { useEffect, useMemo, useState } from 'react'
 import { BadgeCheck } from 'lucide-react'
 import { EntityForm, FormField, FormMode, FormTab } from '@/components/ui/EntityForm'
 import { PageBanner } from '@/components/ui/PageBanner'
-import { SmartDataTable, ColumnDef, WidgetDef } from '@/components/ui/SmartDataTable'
+import { SmartDataTable, ColumnDef, SortConfig, WidgetDef } from '@/components/ui/SmartDataTable'
 import { Toast } from '@/components/ui/Toast'
 import { normalizeCountryId } from '@/lib/reference/country-nationalities'
 import { createRealPersonMasterTabs } from '@/lib/identity/realPersonFormSections'
 import { createLegalEntityMasterTabs } from '@/lib/identity/legalEntityFormSections'
 import { isSoftDeletedRecord } from '@/lib/forms/entityState'
 import { companyService } from '@/lib/services/companyService'
+import type { ListMeta } from '@/lib/api/listEndpoint'
 
 type PageState = 'list' | 'create' | 'view' | 'edit'
 type ToastState = { type: 'success' | 'error' | 'warning'; title?: string; message: string }
@@ -352,6 +353,8 @@ export default function TemsilcilerPage() {
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [includePassive, setIncludePassive] = useState(false)
+  const [listQuery, setListQuery] = useState({ page: 1, pageSize: 50, search: '', sort: 'created_at', direction: 'desc' as 'asc' | 'desc' })
+  const [listMeta, setListMeta] = useState<ListMeta>({ page: 1, pageSize: 50, total: 0, totalPages: 1 })
   const [toast, setToast] = useState<ToastState | null>(null)
 
   const isSelectedPassive = isSoftDeletedRecord(selectedRepresentative)
@@ -362,9 +365,10 @@ export default function TemsilcilerPage() {
     setError(null)
     try {
       if (force) companyService.invalidateRelations()
-      const representativePayload = await companyService.representativesList({ includePassive, useCache: !force })
+      const representativePayload = await companyService.representativesList({ includePassive, useCache: !force, ...listQuery })
 
       setRepresentatives(Array.isArray(representativePayload.data) ? representativePayload.data : [])
+      setListMeta(representativePayload.meta ?? { page: listQuery.page, pageSize: listQuery.pageSize, total: representativePayload.data?.length ?? 0, totalPages: 1 })
       loadCompanyOptions(force).catch(() => setCompanies([]))
     } catch (err: any) {
       setError(err.message)
@@ -374,7 +378,7 @@ export default function TemsilcilerPage() {
   }
   useEffect(() => {
     loadData()
-  }, [includePassive])
+  }, [includePassive, listQuery])
 
   const loadCompanyOptions = async (force = false) => {
     if (companiesLoaded && !force) return
@@ -409,6 +413,11 @@ export default function TemsilcilerPage() {
     { key: 'signature', label: 'İmza Yetkilisi', render: () => tableData.filter(row => row.authority_types?.some(type => toAuthorityValue(type) === 'imza_yetkilisi')).length },
     { key: 'bank', label: 'Banka Yetkilisi', render: () => tableData.filter(row => row.authority_types?.some(type => toAuthorityValue(type) === 'banka_yetkilisi')).length },
   ], [tableData])
+
+  const handleListSortChange = (sorts: SortConfig[]) => {
+    const sort = sorts[0]
+    setListQuery(prev => ({ ...prev, page: 1, sort: sort?.key || 'created_at', direction: sort?.direction || 'desc' }))
+  }
   const configuredTabs = [
     ...createRealPersonMasterTabs({
       visibleWhen: { field: 'person_or_entity_type', operator: 'equals', value: 'gercek_kisi' },
@@ -569,9 +578,23 @@ export default function TemsilcilerPage() {
             emptyText="Temsilci kaydı bulunamadı"
             onRowClick={handleRowClick}
             onRefresh={() => loadData(true)}
+            defaultPageSize={listQuery.pageSize}
+            pagination={{
+              mode: 'server',
+              page: listMeta.page,
+              pageSize: listMeta.pageSize,
+              total: listMeta.total,
+              onPageChange: page => setListQuery(prev => ({ ...prev, page })),
+              onPageSizeChange: pageSize => setListQuery(prev => ({ ...prev, page: 1, pageSize })),
+              onSearchChange: search => setListQuery(prev => ({ ...prev, page: 1, search })),
+              onSortChange: handleListSortChange,
+            }}
             showPassiveToggle
             includePassive={includePassive}
-            onIncludePassiveChange={setIncludePassive}
+            onIncludePassiveChange={(next) => {
+              setIncludePassive(next)
+              setListQuery(prev => ({ ...prev, page: 1 }))
+            }}
           />
         </div>
       )}

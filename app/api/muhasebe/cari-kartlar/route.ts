@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { createServiceClient } from '@/lib/supabase/server'
+import { listMeta, listRange, parseListQuery } from '@/lib/api/listEndpoint'
 
 const SettingsSchema = z.object({
   company_id: z.string().uuid().optional().nullable(),
@@ -58,24 +59,28 @@ const ACCOUNT_CARD_SETTINGS_SELECT = [
 export async function GET(request: NextRequest) {
   const supabase = createServiceClient()
   const { searchParams } = new URL(request.url)
-  const search = searchParams.get('search')
+  const listQuery = parseListQuery(searchParams, { pageSize: 50, sort: 'display_name', direction: 'asc' })
+  const { from, to } = listRange(listQuery)
+  const sortMap: Record<string, string> = { display_name: 'display_name', account_code: 'account_code', official_balance: 'official_balance', last_movement_date: 'last_movement_date', status: 'status' }
+  const search = searchParams.get('search') || listQuery.search
   const companyId = searchParams.get('company_id')
 
   let query = supabase
     .from('v_account_cards')
-    .select(ACCOUNT_CARD_VIEW_SELECT)
-    .order('display_name', { ascending: true })
+    .select(ACCOUNT_CARD_VIEW_SELECT, { count: 'exact' })
+    .order(sortMap[listQuery.sort || ''] || 'display_name', { ascending: listQuery.direction !== 'desc' })
+    .range(from, to)
 
   if (companyId) query = query.eq('company_id', companyId)
   if (search) query = query.or(`display_name.ilike.%${search}%,identity_no.ilike.%${search}%,tax_no.ilike.%${search}%,account_code.ilike.%${search}%`)
 
-  const { data, error } = await query
+  const { data, error, count } = await query
   if (error) {
     if (error.message.includes('v_account_cards')) return NextResponse.json({ data: [], warning: 'Muhasebe migration uygulanmalı.' })
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  return NextResponse.json({ data: data || [] })
+  return NextResponse.json({ data: data || [], meta: listMeta(listQuery, count ?? 0) })
 }
 
 export async function POST(request: NextRequest) {

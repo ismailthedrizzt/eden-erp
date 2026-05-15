@@ -1,4 +1,5 @@
 import { apiClient, ApiClientOptions } from '@/lib/api/apiClient'
+import type { ListQuery, ListResponse } from '@/lib/api/listEndpoint'
 import type { AccountMovementRow } from '@/lib/modules/accounting/shared/accounting.types'
 
 export interface AccountingReferences {
@@ -8,10 +9,11 @@ export interface AccountingReferences {
 }
 
 export const preAccountingService = {
-  getList(options?: ApiClientOptions) {
-    return apiClient.get<{ data: AccountMovementRow[]; warning?: string }>('/api/muhasebe/on-muhasebe-hareketleri', {
+  getList(query: Partial<Pick<ListQuery, 'page' | 'pageSize' | 'search' | 'sort' | 'direction'>> = {}, options?: ApiClientOptions) {
+    return apiClient.get<ListResponse<AccountMovementRow>>('/api/muhasebe/on-muhasebe-hareketleri', {
       skipAuth: options?.skipAuth ?? true,
       staleTime: options?.staleTime ?? 120_000,
+      query,
       ...options,
     })
   },

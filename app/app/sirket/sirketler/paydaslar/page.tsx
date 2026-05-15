@@ -4,12 +4,13 @@ import { useEffect, useMemo, useState } from 'react'
 import { Handshake } from 'lucide-react'
 import { EntityForm, FormField, FormMode, FormTab } from '@/components/ui/EntityForm'
 import { PageBanner } from '@/components/ui/PageBanner'
-import { SmartDataTable, ColumnDef, WidgetDef } from '@/components/ui/SmartDataTable'
+import { SmartDataTable, ColumnDef, SortConfig, WidgetDef } from '@/components/ui/SmartDataTable'
 import { Toast } from '@/components/ui/Toast'
 import { createRealPersonMasterTabs } from '@/lib/identity/realPersonFormSections'
 import { createLegalEntityMasterTabs } from '@/lib/identity/legalEntityFormSections'
 import { isSoftDeletedRecord } from '@/lib/forms/entityState'
 import { companyService } from '@/lib/services/companyService'
+import type { ListMeta } from '@/lib/api/listEndpoint'
 
 type PageState = 'list' | 'create' | 'view' | 'edit'
 type ToastState = { type: 'success' | 'error' | 'warning'; title?: string; message: string }
@@ -275,6 +276,8 @@ export default function PaydaslarPage() {
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [includePassive, setIncludePassive] = useState(false)
+  const [listQuery, setListQuery] = useState({ page: 1, pageSize: 50, search: '', sort: 'created_at', direction: 'desc' as 'asc' | 'desc' })
+  const [listMeta, setListMeta] = useState<ListMeta>({ page: 1, pageSize: 50, total: 0, totalPages: 1 })
   const [toast, setToast] = useState<ToastState | null>(null)
 
   const isSelectedPassive = isSoftDeletedRecord(selectedStakeholder)
@@ -285,9 +288,10 @@ export default function PaydaslarPage() {
     setError(null)
     try {
       if (force) companyService.invalidateRelations()
-      const stakeholderPayload = await companyService.stakeholdersList({ includePassive, useCache: !force })
+      const stakeholderPayload = await companyService.stakeholdersList({ includePassive, useCache: !force, ...listQuery })
 
       setStakeholders(Array.isArray(stakeholderPayload.data) ? stakeholderPayload.data : [])
+      setListMeta(stakeholderPayload.meta ?? { page: listQuery.page, pageSize: listQuery.pageSize, total: stakeholderPayload.data?.length ?? 0, totalPages: 1 })
       loadCompanyOptions(force).catch(() => setCompanies([]))
     } catch (err: any) {
       setError(err.message)
@@ -297,7 +301,7 @@ export default function PaydaslarPage() {
   }
   useEffect(() => {
     loadData()
-  }, [includePassive])
+  }, [includePassive, listQuery])
 
   const loadCompanyOptions = async (force = false) => {
     if (companiesLoaded && !force) return
@@ -329,6 +333,12 @@ export default function PaydaslarPage() {
     { key: 'legal', label: 'Tüzel Kişi', render: () => tableData.filter(row => row.stakeholder_type === 'tuzel_kisi').length },
     { key: 'critical', label: 'Kritik', render: () => tableData.filter(row => row.priority_level === 'Kritik').length },
   ], [tableData])
+
+  const handleListSortChange = (sorts: SortConfig[]) => {
+    const sort = sorts[0]
+    setListQuery(prev => ({ ...prev, page: 1, sort: sort?.key || 'created_at', direction: sort?.direction || 'desc' }))
+  }
+
   const configuredTabs = [
     ...createRealPersonMasterTabs({
       visibleWhen: { field: 'stakeholder_type', operator: 'equals', value: 'gercek_kisi' },
@@ -449,7 +459,7 @@ export default function PaydaslarPage() {
       {pageState === 'list' && (
         <div className="mt-6">
           {error && <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-600 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">{error}</div>}
-          <SmartDataTable columns={columns} data={tableData} loading={loading} widgets={widgets} defaultView="list" storageKey="sirket-paydaslar-table" emptyText="Paydaş kaydı bulunamadı" onRowClick={handleRowClick} onRefresh={() => loadData(true)} showPassiveToggle includePassive={includePassive} onIncludePassiveChange={setIncludePassive} />
+          <SmartDataTable columns={columns} data={tableData} loading={loading} widgets={widgets} defaultView="list" storageKey="sirket-paydaslar-table" emptyText="Paydaş kaydı bulunamadı" onRowClick={handleRowClick} onRefresh={() => loadData(true)} defaultPageSize={listQuery.pageSize} pagination={{ mode: 'server', page: listMeta.page, pageSize: listMeta.pageSize, total: listMeta.total, onPageChange: page => setListQuery(prev => ({ ...prev, page })), onPageSizeChange: pageSize => setListQuery(prev => ({ ...prev, page: 1, pageSize })), onSearchChange: search => setListQuery(prev => ({ ...prev, page: 1, search })), onSortChange: handleListSortChange }} showPassiveToggle includePassive={includePassive} onIncludePassiveChange={(next) => { setIncludePassive(next); setListQuery(prev => ({ ...prev, page: 1 })) }} />
         </div>
       )}
 

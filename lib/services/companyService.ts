@@ -1,7 +1,9 @@
 import { apiClient, ApiClientOptions } from '@/lib/api/apiClient'
+import type { ListQuery, ListResponse } from '@/lib/api/listEndpoint'
 import type { Sirket, SirketDokuman, SirketLogo, SirketOrtak, SirketTemsilci } from '@/types/sirket'
 
-type RelationListOptions = ApiClientOptions & { includePassive?: boolean; companyId?: string }
+type RelationListOptions = ApiClientOptions & Partial<Pick<ListQuery, 'page' | 'pageSize' | 'search' | 'sort' | 'direction'>> & { includePassive?: boolean; companyId?: string }
+type CompanyListOptions = ApiClientOptions & Partial<Pick<ListQuery, 'page' | 'pageSize' | 'search' | 'sort' | 'direction'>> & { includePassive?: boolean }
 
 function relationListOptions(options: RelationListOptions = {}) {
   const { includePassive, companyId, ...clientOptions } = options
@@ -12,19 +14,29 @@ function relationListOptions(options: RelationListOptions = {}) {
     query: {
       ...(companyId ? { company_id: companyId } : {}),
       ...(includePassive ? { include_passive: 'true' } : {}),
+      page: clientOptions.query?.page ?? options.page,
+      pageSize: clientOptions.query?.pageSize ?? options.pageSize,
+      search: clientOptions.query?.search ?? options.search,
+      sort: clientOptions.query?.sort ?? options.sort,
+      direction: clientOptions.query?.direction ?? options.direction,
       ...clientOptions.query,
     },
   }
 }
 
 export const companyService = {
-  list(options: ApiClientOptions & { includePassive?: boolean } = {}) {
-    const { includePassive, ...clientOptions } = options
-    return apiClient.get<{ data: Sirket[] }>('/api/sirketler', {
+  list(options: CompanyListOptions = {}) {
+    const { includePassive, page, pageSize, search, sort, direction, ...clientOptions } = options
+    return apiClient.get<ListResponse<Sirket>>('/api/sirketler', {
       ...clientOptions,
       skipAuth: clientOptions.skipAuth ?? true,
       staleTime: clientOptions.staleTime ?? 120_000,
       query: {
+        page,
+        pageSize,
+        search,
+        sort,
+        direction,
         ...(includePassive ? { include_passive: 'true' } : {}),
         ...clientOptions.query,
       },
@@ -37,7 +49,7 @@ export const companyService = {
     return apiClient.get<{ data: SirketOrtak[] }>('/api/sirketler/ortaklar', relationListOptions({ ...options, companyId }))
   },
   partnersList(options: RelationListOptions = {}) {
-    return apiClient.get<{ data: Array<any> }>('/api/sirketler/ortaklar', {
+    return apiClient.get<ListResponse<Array<any>[number]>>('/api/sirketler/ortaklar', {
       ...relationListOptions(options),
     })
   },
@@ -48,7 +60,7 @@ export const companyService = {
     return apiClient.get<{ data: SirketTemsilci[] }>('/api/sirketler/temsilciler', relationListOptions({ ...options, companyId }))
   },
   representativesList(options: RelationListOptions = {}) {
-    return apiClient.get<{ data: SirketTemsilci[] }>('/api/sirketler/temsilciler', {
+    return apiClient.get<ListResponse<SirketTemsilci>>('/api/sirketler/temsilciler', {
       ...relationListOptions(options),
     })
   },
@@ -56,7 +68,7 @@ export const companyService = {
     return apiClient.get<{ data: SirketTemsilci }>(`/api/sirketler/temsilciler/${id}`, { skipAuth: true, staleTime: 120_000 })
   },
   stakeholdersList(options: RelationListOptions = {}) {
-    return apiClient.get<{ data: Array<any> }>('/api/sirketler/paydaslar', {
+    return apiClient.get<ListResponse<Array<any>[number]>>('/api/sirketler/paydaslar', {
       ...relationListOptions(options),
     })
   },

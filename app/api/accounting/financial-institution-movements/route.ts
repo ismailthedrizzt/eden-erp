@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { ACCOUNTING_PERMISSIONS } from '@/lib/modules/accounting/shared/accounting.permissions'
 import { requirePermission } from '@/lib/security/serverPermissions'
+import { listMeta, listRange, parseListQuery } from '@/lib/api/listEndpoint'
 import { fetchCompanyNames, isMissingTableError, missingTableResponse } from '../_banking'
 
 const MOVEMENT_LIST_COLUMNS = [
@@ -36,11 +37,15 @@ export async function GET(request: NextRequest) {
   if (permission instanceof NextResponse) return permission
 
   const { searchParams } = new URL(request.url)
+  const listQuery = parseListQuery(searchParams, { pageSize: 50, sort: 'movement_date', direction: 'desc' })
+  const { from, to } = listRange(listQuery)
+  const sortMap: Record<string, string> = { movement_date: 'movement_date', amount: 'amount', match_status: 'match_status', movement_type: 'movement_type', source_type: 'source_type', created_at: 'created_at' }
   let query = supabase
     .from('financial_institution_movements')
-    .select(MOVEMENT_LIST_COLUMNS)
+    .select(MOVEMENT_LIST_COLUMNS, { count: 'exact' })
     .eq('is_deleted', false)
-    .order('movement_date', { ascending: false })
+    .order(sortMap[listQuery.sort || ''] || 'movement_date', { ascending: listQuery.direction !== 'desc' })
+    .range(from, to)
 
   const filterMap: Array<[string, string]> = [
     ['bankConnectionId', 'bank_connection_id'],
@@ -62,15 +67,16 @@ export async function GET(request: NextRequest) {
   const dateTo = searchParams.get('dateTo')
   if (dateFrom) query = query.gte('movement_date', dateFrom)
   if (dateTo) query = query.lte('movement_date', dateTo)
+  if (listQuery.search) query = query.or(`description.ilike.%${listQuery.search}%,counterparty_name.ilike.%${listQuery.search}%,reference_no.ilike.%${listQuery.search}%`)
 
-  const { data, error } = await query
+  const { data, error, count } = await query
   if (error) {
     if (isMissingTableError(error)) return missingTableResponse('financial_institution_movements')
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
   const rows = await enrichMovementRows(supabase as any, data || [])
-  return NextResponse.json({ data: rows, summary: summarize(rows) })
+  return NextResponse.json({ data: rows, summary: summarize(rows), meta: listMeta(listQuery, count ?? 0) })
 }
 
 async function enrichMovementRows(supabase: ReturnType<typeof createServiceClient>, rows: any[]) {

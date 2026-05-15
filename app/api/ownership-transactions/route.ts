@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { z } from 'zod'
 import { OWNERSHIP_TRANSACTION_SELECT, nextTransactionNo, validateDraft } from './_shared'
+import { listMeta, listRange, parseListQuery } from '@/lib/api/listEndpoint'
 
 const TransactionSchema = z.object({
   company_id: z.string().uuid(),
@@ -50,22 +51,35 @@ const TransactionSchema = z.object({
 export async function GET(request: NextRequest) {
   const supabase = createServiceClient()
   const { searchParams } = new URL(request.url)
+  const listQuery = parseListQuery(searchParams, { pageSize: 50, sort: 'created_at', direction: 'desc' })
+  const { from, to } = listRange(listQuery)
+  const sortMap: Record<string, string> = {
+    transaction_no: 'transaction_no',
+    transaction_type: 'transaction_type',
+    transaction_date: 'transaction_date',
+    status: 'status',
+    approval_status: 'approval_status',
+    created_at: 'created_at',
+  }
+  const sortColumn = sortMap[listQuery.sort || ''] || 'created_at'
   const companyId = searchParams.get('company_id')
   const approvalStatus = searchParams.get('approval_status')
 
   let query = supabase
     .from('ownership_transactions')
-    .select(OWNERSHIP_TRANSACTION_SELECT)
+    .select(OWNERSHIP_TRANSACTION_SELECT, { count: 'exact' })
     .eq('is_deleted', false)
-    .order('created_at', { ascending: false })
+    .order(sortColumn, { ascending: listQuery.direction !== 'desc' })
+    .range(from, to)
 
   if (companyId) query = query.eq('company_id', companyId)
   if (approvalStatus) query = query.eq('approval_status', approvalStatus)
+  if (listQuery.search) query = query.or(`transaction_no.ilike.%${listQuery.search}%,transaction_type.ilike.%${listQuery.search}%,notes.ilike.%${listQuery.search}%`)
 
-  const { data, error } = await query
+  const { data, error, count } = await query
   if (error) return NextResponse.json({ error: error.message, code: error.code || 'FETCH_FAILED' }, { status: 500 })
 
-  return NextResponse.json({ data })
+  return NextResponse.json({ data: data || [], meta: listMeta(listQuery, count ?? 0) })
 }
 
 export async function POST(request: NextRequest) {

@@ -4,7 +4,7 @@ import { Suspense, useCallback, useEffect, useMemo, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { FileDown, Filter, Link2, Plus, RefreshCw, SearchCheck, WalletCards, X } from 'lucide-react'
 import { PageBanner } from '@/components/ui/PageBanner'
-import { SmartDataTable, type ColumnDef, type WidgetDef } from '@/components/ui/SmartDataTable'
+import { SmartDataTable, type ColumnDef, type SortConfig, type WidgetDef } from '@/components/ui/SmartDataTable'
 import { Toast } from '@/components/ui/Toast'
 import { usePermissions } from '@/lib/security/permissionStore'
 import { ACCOUNTING_PERMISSIONS } from '@/lib/modules/accounting/shared/accounting.permissions'
@@ -13,6 +13,7 @@ import {
   type FinancialInstitutionMovementRow,
   type MovementFilters,
 } from '@/lib/modules/accounting/bank-integration/financialInstitutionMovements.service'
+import type { ListMeta } from '@/lib/api/listEndpoint'
 
 type ToastState = { type: 'success' | 'error' | 'warning'; title?: string; message: string }
 
@@ -62,6 +63,8 @@ function FinancialInstitutionMovementsContent() {
   const [loading, setLoading] = useState(true)
   const [selected, setSelected] = useState<FinancialInstitutionMovementRow | null>(null)
   const [toast, setToast] = useState<ToastState | null>(null)
+  const [listQuery, setListQuery] = useState({ page: 1, pageSize: 50, search: '', sort: 'movement_date', direction: 'desc' as 'asc' | 'desc' })
+  const [listMeta, setListMeta] = useState<ListMeta>({ page: 1, pageSize: 50, total: 0, totalPages: 1 })
 
   const filters = useMemo<MovementFilters>(() => ({
     bankConnectionId: searchParams.get('bankConnectionId'),
@@ -77,15 +80,16 @@ function FinancialInstitutionMovementsContent() {
   const loadRows = useCallback(async () => {
     setLoading(true)
     try {
-      const payload = await financialInstitutionMovementsService.getMovements(filters)
+      const payload = await financialInstitutionMovementsService.getMovements({ ...filters, ...listQuery })
       setRows(payload.data || [])
       setSummary(payload.summary || {})
+      setListMeta(payload.meta ?? { page: listQuery.page, pageSize: listQuery.pageSize, total: payload.data?.length ?? 0, totalPages: 1 })
     } catch (error) {
       setToast({ type: 'error', title: 'Hata', message: error instanceof Error ? error.message : 'Hareketler yüklenemedi.' })
     } finally {
       setLoading(false)
     }
-  }, [filters])
+  }, [filters, listQuery])
 
   useEffect(() => {
     loadRows()
@@ -128,6 +132,11 @@ function FinancialInstitutionMovementsContent() {
     { key: 'debit', label: 'Toplam Çıkış', render: () => formatAmount(summary.totalDebit || 0) },
   ], [summary])
 
+  const handleListSortChange = (sorts: SortConfig[]) => {
+    const sort = sorts[0]
+    setListQuery(prev => ({ ...prev, page: 1, sort: sort?.key || 'movement_date', direction: sort?.direction || 'desc' }))
+  }
+
   if (!can(ACCOUNTING_PERMISSIONS.bankMovementsView)) {
     return <div className="rounded-lg border border-gray-200 bg-white p-6 text-sm text-gray-600 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300">Bu sayfayı görüntüleme yetkiniz yok.</div>
   }
@@ -165,6 +174,17 @@ function FinancialInstitutionMovementsContent() {
           emptyText="Filtreye uygun banka/kart hareketi bulunamadı"
           onRefresh={loadRows}
           onRowClick={(row: any) => setSelected(row)}
+          defaultPageSize={listQuery.pageSize}
+          pagination={{
+            mode: 'server',
+            page: listMeta.page,
+            pageSize: listMeta.pageSize,
+            total: listMeta.total,
+            onPageChange: page => setListQuery(prev => ({ ...prev, page })),
+            onPageSizeChange: pageSize => setListQuery(prev => ({ ...prev, page: 1, pageSize })),
+            onSearchChange: search => setListQuery(prev => ({ ...prev, page: 1, search })),
+            onSortChange: handleListSortChange,
+          }}
         />
       </div>
 
