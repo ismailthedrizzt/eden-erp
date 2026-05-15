@@ -46,6 +46,10 @@ export interface SlotImage {
   slotId: string
   file?: File
   previewUrl?: string
+  url?: string
+  preview_url?: string
+  signedUrl?: string
+  signed_url?: string
   name?: string
   size?: number
   uploadedAt?: Date
@@ -54,13 +58,22 @@ export interface SlotImage {
 const avatarSlotIds = new Set(['light_mode_avatar', 'dark_mode_avatar'])
 const avatarFallbackSlots = ['light_mode_avatar', 'dark_mode_avatar', 'document_logo', 'original_logo', 'logo_primary', 'photo_logo']
 
+function getImageUrl(image?: SlotImage | null) {
+  return image?.previewUrl || image?.url || image?.preview_url || image?.signedUrl || image?.signed_url || ''
+}
+
+function hasRenderableImage(image?: SlotImage | null) {
+  return !!(getImageUrl(image) || image?.file)
+}
+
 function findImageForSlot(images: SlotImage[], slotId: string) {
   const exact = images.find(img => img.slotId === slotId)
-  if (exact || !avatarSlotIds.has(slotId)) return exact
+  if (!avatarSlotIds.has(slotId)) return exact
+  if (hasRenderableImage(exact)) return exact
   return avatarFallbackSlots
     .filter(fallbackSlotId => fallbackSlotId !== slotId)
-    .map(fallbackSlotId => images.find(img => img.slotId === fallbackSlotId && (img.previewUrl || img.file)))
-    .find(Boolean) || images.find(img => img.previewUrl || img.file)
+    .map(fallbackSlotId => images.find(img => img.slotId === fallbackSlotId && hasRenderableImage(img)))
+    .find(Boolean) || images.find(hasRenderableImage)
 }
 
 interface ImageSlotUploaderProps {
@@ -129,8 +142,8 @@ export function ImageSlotUploader({
   const currentSlot = displaySlots[currentIndex]
   const currentImage = findImageForSlot(images, currentSlot.id)
   const isFallbackImage = !!currentImage && currentImage.slotId !== currentSlot.id
-  const currentImageUrl = currentImage?.previewUrl
-  const hasImage = !!currentImageUrl || !!currentImage?.file
+  const currentImageUrl = getImageUrl(currentImage)
+  const hasImage = hasRenderableImage(currentImage)
 
 
 
@@ -522,7 +535,7 @@ export function ImageSlotUploader({
               <X size={24} />
             </button>
             <img
-              src={previewImage.previewUrl || (previewImage.file ? URL.createObjectURL(previewImage.file) : '')}
+              src={getImageUrl(previewImage) || (previewImage.file ? URL.createObjectURL(previewImage.file) : '')}
               alt="Preview"
               className="w-full h-full object-contain rounded-lg"
             />

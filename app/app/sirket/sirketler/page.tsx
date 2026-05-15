@@ -48,6 +48,7 @@ const emptyDetailSectionState: DetailSectionState = {
   detailsReady: false,
   detailsError: false,
 }
+const COMPANY_DETAIL_CACHE_NAMESPACE = 'companies:phased-v2'
 
 const COMPANY_TYPE_SHORT_LABELS: Record<string, string> = {
   anonim: 'A.Ş.',
@@ -406,7 +407,7 @@ export default function SirketlerPage() {
     const requestId = detailRequestRef.current + 1
     detailRequestRef.current = requestId
     const snapshot = normalizeCompanyForForm(row as Sirket)
-    const cached = readEntityDetailCache<Sirket, DetailSectionState>('companies', row.id)
+    const cached = readEntityDetailCache<Sirket, DetailSectionState>(COMPANY_DETAIL_CACHE_NAMESPACE, row.id)
 
     if (cached) {
       setFormError(null)
@@ -440,7 +441,7 @@ export default function SirketlerPage() {
       if (detailRequestRef.current !== requestId) return
       const heroSections = { ...emptyDetailSectionState, heroLoading: false, heroReady: true, mediaLoading: true }
       setDetailSections(heroSections)
-      writeEntityDetailCache('companies', row.id, mergedData, { meta: { ...heroSections, mediaLoading: false } })
+      writeEntityDetailCache(COMPANY_DETAIL_CACHE_NAMESPACE, row.id, mergedData, { meta: { ...heroSections, mediaLoading: false } })
 
       try {
         const mediaResult = await companyService.detailSection(row.id, 'media')
@@ -449,7 +450,7 @@ export default function SirketlerPage() {
         if (detailRequestRef.current !== requestId) return
         setDetailSections(previous => {
           const next = { ...previous, mediaLoading: false, mediaReady: true, detailsLoading: true }
-          writeEntityDetailCache('companies', row.id, mergedData, { meta: { ...next, detailsLoading: false } })
+          writeEntityDetailCache(COMPANY_DETAIL_CACHE_NAMESPACE, row.id, mergedData, { meta: { ...next, detailsLoading: false } })
           return next
         })
       } catch {
@@ -463,7 +464,7 @@ export default function SirketlerPage() {
       if (detailRequestRef.current !== requestId) return
       setDetailSections(previous => {
         const next = { ...previous, detailsLoading: false, detailsReady: true }
-        writeEntityDetailCache('companies', row.id, mergedData, { meta: next })
+        writeEntityDetailCache(COMPANY_DETAIL_CACHE_NAMESPACE, row.id, mergedData, { meta: next })
         return next
       })
     } catch (error: any) {
@@ -546,9 +547,9 @@ export default function SirketlerPage() {
 
       const result = await response.json()
       if (mode === 'create') {
-        invalidateEntityDetailCache('companies')
+        invalidateEntityDetailCache(COMPANY_DETAIL_CACHE_NAMESPACE)
       } else {
-        invalidateEntityDetailCache('companies', selectedSirket?.id)
+        invalidateEntityDetailCache(COMPANY_DETAIL_CACHE_NAMESPACE, selectedSirket?.id)
       }
       if (result.data) setSelectedSirket(result.data)
       setToast({
@@ -574,7 +575,7 @@ export default function SirketlerPage() {
     setDeleting(true)
     try {
       const response = await fetch(`/api/sirketler/${selectedSirket.id}`, { method: 'DELETE' })
-      invalidateEntityDetailCache('companies', selectedSirket.id)
+      invalidateEntityDetailCache(COMPANY_DETAIL_CACHE_NAMESPACE, selectedSirket.id)
 
       if (!response.ok) {
         throw await createSaveError(response, 'Silme işlemi başarısız')
@@ -602,7 +603,7 @@ export default function SirketlerPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ is_deleted: false }),
       })
-      invalidateEntityDetailCache('companies', selectedSirket.id)
+      invalidateEntityDetailCache(COMPANY_DETAIL_CACHE_NAMESPACE, selectedSirket.id)
 
       if (!response.ok) {
         throw await createSaveError(response, 'Aktiflestirme basarisiz')

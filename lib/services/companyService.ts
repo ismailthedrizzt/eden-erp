@@ -48,7 +48,7 @@ export const companyService = {
   detailSection(id: string, section: 'hero' | 'media' | 'details') {
     return apiClient.get<{ data: Partial<Sirket> }>(`/api/sirketler/${id}`, {
       skipAuth: true,
-      staleTime: 120_000,
+      useCache: false,
       query: { section },
     })
   },
