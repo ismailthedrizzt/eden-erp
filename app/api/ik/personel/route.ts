@@ -89,6 +89,7 @@ const baseEmployeeListColumns = [
   'email',
   'calisma_durumu',
   'sgk_giris',
+  'fotograf_url',
   'sirket_id',
   'birim_id',
   'kadro_id',
@@ -220,7 +221,8 @@ export async function GET(request: NextRequest) {
     ...row,
     is_deleted: row.is_deleted ?? false,
     employee_no: row.employee_no || null,
-    photo_url: null,
+    photo_url: lightweightImageUrl(row.fotograf_url),
+    fotograf_url: lightweightImageUrl(row.fotograf_url),
     full_name: [row.ad, row.soyad].filter(Boolean).join(' '),
     national_id: row.tc_kimlik || null,
     passport_no: row.pasaport_no || null,
@@ -241,6 +243,14 @@ export async function GET(request: NextRequest) {
   const payload = { data: rows, meta: listMeta(listQuery, (listQuery as any).__count ?? 0) }
   setServerResponseCache(cacheKey, payload)
   return NextResponse.json(payload)
+}
+
+function lightweightImageUrl(value: unknown) {
+  if (typeof value !== 'string') return null
+  const photoUrl = value.trim()
+  if (!photoUrl) return null
+  if (photoUrl.startsWith('data:') && photoUrl.length > 500_000) return null
+  return photoUrl
 }
 
 // POST /api/ik/personel
