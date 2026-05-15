@@ -142,6 +142,13 @@ assertIncludes('lib/modules/accounting/bank-integration/financialInstitutionMove
 assertIncludes('lib/modules/accounting/bank-integration/financialInstitutionMovements.service.ts', 'function invalidateFinancialMovementCaches', 'financial movement mutations must invalidate cached lists')
 assertIncludes('lib/modules/accounting/account-cards/accountCards.service.ts', 'skipAuth: options?.skipAuth ?? true', 'account card list service must skip session lookup by default')
 assertIncludes('lib/modules/accounting/pre-accounting/preAccounting.service.ts', 'skipAuth: options?.skipAuth ?? true', 'pre-accounting services must skip session lookup by default')
+assertNotIncludes('app/app/sistem/system-parameters/page.tsx', "cache: 'no-store'", 'system parameter page must use apiClient cache for list GET')
+assertIncludes('app/app/sistem/system-parameters/page.tsx', "apiClient.get<{ data?: ParameterRow[]; warning?: string }>('/api/settings/system-parameters'", 'system parameter page must use apiClient for list GET')
+assertNotIncludes('app/app/sistem/entegrasyon-ayarlari/page.tsx', "cache: 'no-store'", 'integration parameter page must use apiClient cache for list GET')
+assertIncludes('app/app/sistem/entegrasyon-ayarlari/page.tsx', "apiClient.get<{ data?: any[] }>('/api/settings/integration-parameters'", 'integration parameter page must use apiClient for list GET')
+assertNotIncludes('components/modules/sirket/CompanyPublicTab.tsx', "cache: 'no-store'", 'company public NACE tab must use apiClient cache for list/reference GETs')
+assertIncludes('components/modules/sirket/CompanyPublicTab.tsx', "apiClient.get<{ data?: CompanyNaceRow[]; warning?: string }>", 'company public NACE rows must use apiClient')
+assertIncludes('components/modules/sirket/CompanyPublicTab.tsx', "apiClient.get<{ data?: NaceReferenceRow[]; warning?: string }>", 'company public NACE references must use apiClient')
 
 assertNotIncludes('app/app/sirket/araclar/page.tsx', "fetch('/api/sirket/araclar'", 'vehicles page must use companyVehicleService for cacheable list and mutations')
 assertIncludes('app/app/sirket/araclar/page.tsx', 'companyVehicleService.list({ useCache: !force })', 'vehicles page must use cacheable vehicle service list')

@@ -5,6 +5,7 @@ import { DatabaseZap } from 'lucide-react'
 import { PageBanner } from '@/components/ui/PageBanner'
 import { SmartDataTable, type ColumnDef } from '@/components/ui/SmartDataTable'
 import { Toast } from '@/components/ui/Toast'
+import { apiClient } from '@/lib/api/apiClient'
 
 type ToastState = { type: 'success' | 'error' | 'warning'; title?: string; message: string }
 type PageMode = 'list' | 'edit'
@@ -95,9 +96,7 @@ export default function IntegrationParametersPage() {
   const loadRows = async () => {
     setLoading(true)
     try {
-      const response = await fetch('/api/settings/integration-parameters', { cache: 'no-store' })
-      const payload = await response.json()
-      if (!response.ok) throw new Error(payload.error || 'Entegrasyon ayarları yüklenemedi.')
+      const payload = await apiClient.get<{ data?: any[] }>('/api/settings/integration-parameters', { skipAuth: true, staleTime: 120_000 })
       setStoredRows(payload.data || [])
     } catch (error) {
       setToast({ type: 'error', title: 'Hata', message: error instanceof Error ? error.message : 'Entegrasyon ayarları yüklenemedi.' })
@@ -128,16 +127,16 @@ export default function IntegrationParametersPage() {
     setSaving(true)
     try {
       const isPersisted = !!selected.id
-      const response = await fetch(isPersisted ? `/api/settings/integration-parameters/${selected.id}` : '/api/settings/integration-parameters', {
-        method: isPersisted ? 'PATCH' : 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...form,
-          settings_json: integrationSettingsFromForm(form),
-        }),
-      })
-      const payload = await response.json()
-      if (!response.ok) throw new Error(payload.error || 'Kayıt kaydedilemedi.')
+      const payload = {
+        ...form,
+        settings_json: integrationSettingsFromForm(form),
+      }
+      if (isPersisted) {
+        await apiClient.patch(`/api/settings/integration-parameters/${selected.id}`, payload)
+      } else {
+        await apiClient.post('/api/settings/integration-parameters', payload)
+      }
+      apiClient.invalidate('/api/settings/integration-parameters')
 
       setToast({ type: 'success', title: 'Kaydedildi', message: 'Entegrasyon ayarı kaydedildi.' })
       setMode('list')

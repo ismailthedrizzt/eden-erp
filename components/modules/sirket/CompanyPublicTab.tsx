@@ -14,6 +14,7 @@ import {
   ShieldCheck,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { apiClient } from '@/lib/api/apiClient'
 
 type PublicSection =
   | 'public_tax'
@@ -460,9 +461,7 @@ export function CompanyNaceCodesSection({
     if (!companyId) return
     setLoading(true)
     try {
-      const response = await fetch(`/api/companies/${companyId}/nace-codes`, { cache: 'no-store' })
-      const payload = await response.json().catch(() => ({}))
-      if (!response.ok) throw new Error(payload.error || 'NACE kodları alınamadı.')
+      const payload = await apiClient.get<{ data?: CompanyNaceRow[]; warning?: string }>(`/api/companies/${companyId}/nace-codes`, { skipAuth: true, staleTime: 120_000 })
       setRows(normalizeCompanyNaceRows(payload.data))
       setWarning(payload.warning || null)
     } catch (error) {
@@ -485,10 +484,11 @@ export function CompanyNaceCodesSection({
     let cancelled = false
     const timeout = window.setTimeout(async () => {
       try {
-        const params = new URLSearchParams()
-        if (search.trim()) params.set('q', search.trim())
-        const response = await fetch(`/api/reference/nace-codes${params.toString() ? `?${params}` : ''}`, { cache: 'no-store' })
-        const payload = await response.json().catch(() => ({}))
+        const payload = await apiClient.get<{ data?: NaceReferenceRow[]; warning?: string }>('/api/reference/nace-codes', {
+          query: search.trim() ? { q: search.trim() } : undefined,
+          skipAuth: true,
+          staleTime: 120_000,
+        })
         if (cancelled) return
         setOptions(Array.isArray(payload.data) ? payload.data : [])
         setWarning(payload.warning || null)
@@ -503,19 +503,18 @@ export function CompanyNaceCodesSection({
     }
   }, [search])
 
-  const runAction = async (url: string, init?: RequestInit) => {
+  const runAction = async (url: string, init?: { method?: string; body?: string }) => {
     if (!companyId) return
     setSaving(true)
     try {
-      const response = await fetch(url, {
-        ...init,
-        headers: {
-          'Content-Type': 'application/json',
-          ...(init?.headers || {}),
-        },
-      })
-      const payload = await response.json().catch(() => ({}))
-      if (!response.ok) throw new Error(payload.error || 'İşlem tamamlanamadı.')
+      const body = init?.body ? JSON.parse(init.body) as Record<string, unknown> : undefined
+      if (init?.method === 'PATCH') {
+        await apiClient.patch(url, body || {}, { useCache: false })
+      } else {
+        await apiClient.post(url, body, { useCache: false })
+      }
+      apiClient.invalidate(`/api/companies/${companyId}/nace-codes`)
+      apiClient.invalidate(`/api/sirketler/${companyId}`)
       setWarning(null)
       await loadRows()
     } catch (error) {

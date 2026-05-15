@@ -6,6 +6,7 @@ import { EntityForm, type FormField, type FormMode, type FormTab } from '@/compo
 import { PageBanner } from '@/components/ui/PageBanner'
 import { SmartDataTable, type ColumnDef } from '@/components/ui/SmartDataTable'
 import { Toast } from '@/components/ui/Toast'
+import { apiClient } from '@/lib/api/apiClient'
 import {
   systemParameterDefinitions,
   type SystemParameterDefinition,
@@ -108,9 +109,7 @@ export default function SystemParametersPage() {
   async function loadParameters() {
     setLoading(true)
     try {
-      const response = await fetch('/api/settings/system-parameters', { cache: 'no-store' })
-      const payload = await response.json().catch(() => ({}))
-      if (!response.ok) throw new Error(payload.error || 'Parametreler alınamadı.')
+      const payload = await apiClient.get<{ data?: ParameterRow[]; warning?: string }>('/api/settings/system-parameters', { skipAuth: true, staleTime: 120_000 })
       const nextRows = normalizeRows(payload.data)
       setRows(nextRows)
       setSelected(current => current ? nextRows.find(row => row.key === current.key) || current : current)
@@ -132,17 +131,12 @@ export default function SystemParametersPage() {
     if (!selected) return
     setSaving(true)
     try {
-      const response = await fetch('/api/settings/system-parameters', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          key: selected.key,
-          value: data.value,
-          description: data.descriptionOverride || selected.description || '',
-        }),
+      await apiClient.patch('/api/settings/system-parameters', {
+        key: selected.key,
+        value: data.value,
+        description: data.descriptionOverride || selected.description || '',
       })
-      const payload = await response.json().catch(() => ({}))
-      if (!response.ok) throw new Error(payload.error || 'Parametre kaydedilemedi.')
+      apiClient.invalidate('/api/settings/system-parameters')
       setToast({ type: 'success', title: 'Kaydedildi', message: 'Sistem parametresi güncellendi.' })
       setMode('view')
       await loadParameters()
