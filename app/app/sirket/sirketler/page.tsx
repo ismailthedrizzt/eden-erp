@@ -254,8 +254,10 @@ export default function SirketlerPage() {
   const [toast, setToast] = useState<ToastState | null>(null)
   const [taxOfficeOptions, setTaxOfficeOptions] = useState<TaxOfficeOption[]>([])
   const [tradeRegistryOfficeOptions, setTradeRegistryOfficeOptions] = useState<TaxOfficeOption[]>([])
+  const [publicReferenceOptionsLoaded, setPublicReferenceOptionsLoaded] = useState(false)
 
   useEffect(() => {
+    if (pageState === 'list' || publicReferenceOptionsLoaded) return
     let cancelled = false
 
     fetch('/api/reference/tax-offices')
@@ -284,10 +286,12 @@ export default function SirketlerPage() {
         if (!cancelled) setTradeRegistryOfficeOptions([])
       })
 
+    setPublicReferenceOptionsLoaded(true)
+
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [pageState, publicReferenceOptionsLoaded])
 
   const configuredHeroFields = heroFields.map(field =>
     field.name === 'vergi_dairesi' && taxOfficeOptions.length > 0

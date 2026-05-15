@@ -126,6 +126,7 @@ assertIncludes('app/app/sirket/teskilat/page.tsx', 'organizationService.list({ u
 assertNotIncludes('app/app/sirket/teskilat/page.tsx', 'Promise.all([\n        organizationService.list({ useCache: !force }),\n        companyService.list({ useCache: !force }),', 'teskilat list must not block initial tree on company options')
 assertIncludes('app/app/sirket/teskilat/page.tsx', 'const loadCompanyOptions = async (force = false) =>', 'teskilat company options must be lazy-loaded for the form')
 assertIncludes('app/app/sirket/teskilat/page.tsx', 'onRefresh={() => loadData(true)}', 'teskilat page refresh must force invalidate cache')
+assertIncludes('app/app/sirket/sirketler/page.tsx', "if (pageState === 'list' || publicReferenceOptionsLoaded) return", 'company page public reference options must not load while the list is open')
 
 assertIncludes('app/app/sirket/ortaklik-islemleri/page.tsx', 'ownershipTransactionsService.list()', 'ownership transactions page must use ownership service list')
 assertIncludes('app/app/sirket/ortaklik-islemleri/page.tsx', 'companyService.partnersList({ useCache: !force })', 'ownership transactions page must use cacheable partner list')
