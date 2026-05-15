@@ -189,6 +189,28 @@ assertIncludes('components/ui/ImageSlotUploader.tsx', 'src={currentThumbnailUrl 
 assertIncludes('app/api/ik/personel/route.ts', 'missingEmployeeRelation(error)', 'employee list GET must fall back when organization relations are unavailable')
 assertIncludes('app/api/ik/personel/route.ts', 'includeOrganizationRelations = false', 'employee list GET must not fail the whole list when organization joins are unavailable')
 assertIncludes('app/api/ik/personel/route.ts', "missingColumn === 'is_deleted'", 'employee list GET must fall back when legacy databases do not have is_deleted yet')
+assertIncludes('lib/services/employeeService.ts', "detailSection(id: string, section: 'hero' | 'media' | 'details')", 'employee service must expose phased detail section loading')
+assertIncludes('app/api/ik/personel/[id]/route.ts', "searchParams.get('section')", 'employee detail API must support sectioned reads')
+assertIncludes('app/api/ik/personel/[id]/route.ts', '.select([...baseColumns, ...enabledOptionalColumns].join(\',\'))', 'employee detail API must honor lightweight section column lists')
+assertIncludes('app/api/ik/personel/[id]/route.ts', "section === 'hero'", 'employee detail API must expose a lightweight hero section')
+assertIncludes('app/api/ik/personel/[id]/route.ts', "section === 'media'", 'employee detail API must expose a lightweight media section')
+assertIncludes('app/app/ik/personel/page.tsx', 'EMPLOYEE_DETAIL_CACHE_NAMESPACE', 'employee page must use a namespaced phased detail cache')
+assertIncludes('app/app/ik/personel/page.tsx', "await employeeService.detailSection(row.id, 'hero')", 'employee row open must load the hero section first')
+assertIncludes('app/app/ik/personel/page.tsx', "await employeeService.detailSection(row.id, 'media')", 'employee row open must load the media section after hero')
+assertIncludes('app/app/ik/personel/page.tsx', "await employeeService.detailSection(row.id, 'details')", 'employee row open must load detail fields after media')
+assertNotIncludes('app/app/ik/personel/page.tsx', 'await employeeService.detail(row.id)', 'employee row open must not fetch the full detail payload in one request')
+assertBefore(
+  'app/app/ik/personel/page.tsx',
+  "await employeeService.detailSection(row.id, 'hero')",
+  "await employeeService.detailSection(row.id, 'media')",
+  'employee phased detail loading must request media after hero'
+)
+assertBefore(
+  'app/app/ik/personel/page.tsx',
+  "await employeeService.detailSection(row.id, 'media')",
+  "await employeeService.detailSection(row.id, 'details')",
+  'employee phased detail loading must request details after media'
+)
 
 const instantOpenPages = [
   {
@@ -201,7 +223,7 @@ const instantOpenPages = [
     file: 'app/app/ik/personel/page.tsx',
     selected: 'setSelectedPersonel(cached?.data || row as Personel)',
     mode: "setPageState('view')",
-    detail: 'await employeeService.detail(row.id)',
+    detail: "await employeeService.detailSection(row.id, 'hero')",
   },
   {
     file: 'app/app/sirket/sirketler/ortaklar/page.tsx',

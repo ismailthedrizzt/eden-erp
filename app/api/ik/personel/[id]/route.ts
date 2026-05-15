@@ -128,6 +128,35 @@ const baseEmployeeDetailColumns = [
   'updated_at',
 ]
 
+const employeeHeroColumns = [
+  'id',
+  'person_id',
+  'ad',
+  'soyad',
+  'uyruk',
+  'tc_kimlik',
+  'pasaport_no',
+  'cinsiyet',
+  'dogum_yeri',
+  'dogum_tarihi',
+  'kan_grubu',
+  'gorev',
+  'calisma_durumu',
+  'sirket_id',
+  'birim_id',
+  'kadro_id',
+  'created_at',
+  'updated_at',
+]
+
+const employeeMediaColumns = [
+  'id',
+  'fotograf_url',
+  'cv_belgesi',
+  'diploma_belgesi',
+  'updated_at',
+]
+
 const optionalEmployeeDetailColumns = [
   'is_deleted',
   'employee_no',
@@ -139,13 +168,18 @@ const optionalEmployeeDetailColumns = [
   'version',
 ]
 
-async function fetchEmployeeDetail(supabase: ReturnType<typeof createServiceClient>, id: string): Promise<{ data: Record<string, any> | null; error: any }> {
-  let enabledOptionalColumns = [...optionalEmployeeDetailColumns]
+async function fetchEmployeeDetail(
+  supabase: ReturnType<typeof createServiceClient>,
+  id: string,
+  baseColumns = baseEmployeeDetailColumns,
+  optionalColumns = optionalEmployeeDetailColumns
+): Promise<{ data: Record<string, any> | null; error: any }> {
+  let enabledOptionalColumns = [...optionalColumns]
 
   while (true) {
     const result = await supabase
       .from('employees')
-      .select([...baseEmployeeDetailColumns, ...enabledOptionalColumns].join(','))
+      .select([...baseColumns, ...enabledOptionalColumns].join(','))
       .eq('id', id)
       .single()
 
@@ -166,6 +200,21 @@ export async function GET(
 ) {
   const { id } = await params
   const supabase = createServiceClient()
+  const section = new URL(request.url).searchParams.get('section')
+
+  if (section === 'hero') {
+    const { data, error } = await fetchEmployeeDetail(supabase, id, employeeHeroColumns, ['is_deleted', 'employee_no', 'employment_status', 'start_date'])
+    if (error) return handleEmployeeDetailError(error)
+    if (!data) return NextResponse.json({ error: 'Ã‡alÄ±ÅŸan bulunamadÄ±', code: 'EMPLOYEE_NOT_FOUND' }, { status: 404 })
+    return NextResponse.json({ data })
+  }
+
+  if (section === 'media') {
+    const { data, error } = await fetchEmployeeDetail(supabase, id, employeeMediaColumns, [])
+    if (error) return handleEmployeeDetailError(error)
+    if (!data) return NextResponse.json({ error: 'Ã‡alÄ±ÅŸan bulunamadÄ±', code: 'EMPLOYEE_NOT_FOUND' }, { status: 404 })
+    return NextResponse.json({ data })
+  }
 
   const { data, error } = await fetchEmployeeDetail(supabase, id)
 
@@ -205,6 +254,13 @@ export async function GET(
     { data: hydrated },
     { headers: { 'Cache-Control': 'no-store, max-age=0' } }
   )
+}
+
+function handleEmployeeDetailError(error: any) {
+  if (error.code === 'PGRST116') {
+    return NextResponse.json({ error: 'Ã‡alÄ±ÅŸan bulunamadÄ±', code: 'EMPLOYEE_NOT_FOUND' }, { status: 404 })
+  }
+  return NextResponse.json({ error: error.message, code: error.code || 'FETCH_FAILED' }, { status: 500 })
 }
 
 const employeeMasterOnlyFields = ['occupation', 'profession', 'meslek']

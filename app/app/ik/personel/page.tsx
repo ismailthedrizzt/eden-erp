@@ -13,7 +13,7 @@
  * @see components/ui/PageBanner.md
  */
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { Users } from 'lucide-react'
 import { usePersonel } from '@/hooks/usePersonel'
 import { PageBanner } from '@/components/ui/PageBanner'
@@ -38,6 +38,40 @@ import type { Personel } from '@/types'
 type PageState = 'list' | 'create' | 'view' | 'edit'
 type ToastState = { type: 'success' | 'error' | 'warning', title?: string, message: string }
 type SaveError = Error & { toast?: ToastState; fieldErrors?: Record<string, string> }
+type DetailSectionState = {
+  heroLoading: boolean
+  heroReady: boolean
+  heroError: boolean
+  mediaLoading: boolean
+  mediaReady: boolean
+  mediaError: boolean
+  detailsLoading: boolean
+  detailsReady: boolean
+  detailsError: boolean
+}
+
+const emptyDetailSectionState: DetailSectionState = {
+  heroLoading: false,
+  heroReady: false,
+  heroError: false,
+  mediaLoading: false,
+  mediaReady: false,
+  mediaError: false,
+  detailsLoading: false,
+  detailsReady: false,
+  detailsError: false,
+}
+const EMPLOYEE_DETAIL_CACHE_NAMESPACE = 'employees:phased-v1'
+
+function waitForStagePaint() {
+  return new Promise<void>(resolve => {
+    if (typeof requestAnimationFrame === 'function') {
+      requestAnimationFrame(() => resolve())
+      return
+    }
+    setTimeout(resolve, 0)
+  })
+}
 
 const PERSONEL_FIELD_LABELS: Record<string, string> = {
   ad: 'Ad',
@@ -107,10 +141,12 @@ export default function PersonelYonetimPage() {
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [detailLoading, setDetailLoading] = useState(false)
+  const [detailSections, setDetailSections] = useState<DetailSectionState>(emptyDetailSectionState)
   const [formError, setFormError] = useState<string | null>(null)
   const [saveFieldErrors, setSaveFieldErrors] = useState<Record<string, string>>({})
   const [toast, setToast] = useState<ToastState | null>(null)
   const [dashboardFilter, setDashboardFilter] = useState<DashboardFilterEvent | null>(null)
+  const detailRequestRef = useRef(0)
 
   // Transform data for table
   const tableData: PersonelTableRow[] = useMemo(() => (personel || []).map(p => ({
@@ -141,9 +177,12 @@ export default function PersonelYonetimPage() {
 
   // Event Handlers
   const handleAddClick = () => {
+    detailRequestRef.current += 1
     setSelectedPersonel(null)
     setFormError(null)
     setSaveFieldErrors({})
+    setDetailLoading(false)
+    setDetailSections(emptyDetailSectionState)
     setPageState('create')
   }
 
@@ -166,27 +205,109 @@ export default function PersonelYonetimPage() {
   }
 
   const handleRowClick = async (row: PersonelTableRow) => {
-    const cached = readEntityDetailCache<Personel>('employees', row.id)
+    const requestId = detailRequestRef.current + 1
+    detailRequestRef.current = requestId
+    const cached = readEntityDetailCache<Personel, DetailSectionState>(EMPLOYEE_DETAIL_CACHE_NAMESPACE, row.id)
     setFormError(null)
     setSaveFieldErrors({})
     setSelectedPersonel(cached?.data || row as Personel)
     setPageState('view')
     if (cached) {
       setDetailLoading(false)
+      setDetailSections(cached.meta || {
+        ...emptyDetailSectionState,
+        heroReady: true,
+        mediaReady: true,
+        detailsReady: true,
+      })
       return
     }
+    let mergedData = row as Personel
+    const applySection = (sectionData: Partial<Personel>) => {
+      if (detailRequestRef.current !== requestId) return
+      mergedData = { ...mergedData, ...sectionData } as Personel
+      setSelectedPersonel(mergedData)
+    }
+
     setDetailLoading(true)
+    setDetailSections({ ...emptyDetailSectionState, heroLoading: true })
 
     try {
-      const result = await employeeService.detail(row.id)
-      if (!result.data) throw new Error('Çalışan detayı yüklenemedi')
-      setSelectedPersonel(result.data)
-      writeEntityDetailCache('employees', row.id, result.data)
+      const heroResult = await employeeService.detailSection(row.id, 'hero')
+      if (!heroResult.data) throw new Error('Çalışan ana bilgileri yüklenemedi')
+      applySection(heroResult.data)
+      if (detailRequestRef.current !== requestId) return
+
+      const heroSections = {
+        ...emptyDetailSectionState,
+        heroLoading: false,
+        heroReady: true,
+        mediaLoading: true,
+      }
+      setDetailSections(heroSections)
+      writeEntityDetailCache(EMPLOYEE_DETAIL_CACHE_NAMESPACE, row.id, mergedData, {
+        meta: { ...heroSections, mediaLoading: false },
+      })
+      await waitForStagePaint()
+
+      try {
+        const mediaResult = await employeeService.detailSection(row.id, 'media')
+        if (!mediaResult.data) throw new Error('Calisan fotograf ve belgeleri yuklenemedi')
+        applySection(mediaResult.data)
+        if (detailRequestRef.current !== requestId) return
+
+        setDetailSections(previous => {
+          const next = {
+            ...previous,
+            mediaLoading: false,
+            mediaReady: true,
+            detailsLoading: true,
+          }
+          writeEntityDetailCache(EMPLOYEE_DETAIL_CACHE_NAMESPACE, row.id, mergedData, {
+            meta: { ...next, detailsLoading: false },
+          })
+          return next
+        })
+        await waitForStagePaint()
+      } catch {
+        if (detailRequestRef.current !== requestId) return
+        setDetailSections(previous => ({
+          ...previous,
+          mediaLoading: false,
+          mediaError: true,
+          detailsLoading: true,
+        }))
+        await waitForStagePaint()
+      }
+
+      const detailsResult = await employeeService.detailSection(row.id, 'details')
+      if (!detailsResult.data) throw new Error('Calisan detay alanlari yuklenemedi')
+      applySection(detailsResult.data)
+      if (detailRequestRef.current !== requestId) return
+
+      setDetailSections(previous => {
+        const next = {
+          ...previous,
+          detailsLoading: false,
+          detailsReady: true,
+        }
+        writeEntityDetailCache(EMPLOYEE_DETAIL_CACHE_NAMESPACE, row.id, mergedData, { meta: next })
+        return next
+      })
     } catch (err: any) {
+      if (detailRequestRef.current !== requestId) return
+      setDetailSections(previous => ({
+        ...previous,
+        heroLoading: false,
+        mediaLoading: false,
+        detailsLoading: false,
+        heroError: previous.heroReady ? previous.heroError : true,
+        detailsError: previous.heroReady ? true : previous.detailsError,
+      }))
       setFormError(err.message || 'Çalışan detayı yüklenemedi')
       setToast(err.toast || { type: 'error', title: 'Detay Yüklenemedi', message: err.message || 'Çalışan detayı yüklenemedi' })
     } finally {
-      setDetailLoading(false)
+      if (detailRequestRef.current === requestId) setDetailLoading(false)
     }
   }
 
@@ -228,13 +349,13 @@ export default function PersonelYonetimPage() {
       }
       
       if (mode === 'create') {
-        invalidateEntityDetailCache('employees')
+        invalidateEntityDetailCache(EMPLOYEE_DETAIL_CACHE_NAMESPACE)
       } else {
-        invalidateEntityDetailCache('employees', selectedPersonel?.id)
+        invalidateEntityDetailCache(EMPLOYEE_DETAIL_CACHE_NAMESPACE, selectedPersonel?.id)
       }
       // Refresh list and return to list view
       await yenile()
-      invalidateEntityDetailCache('employees', selectedPersonel?.id)
+      invalidateEntityDetailCache(EMPLOYEE_DETAIL_CACHE_NAMESPACE, selectedPersonel?.id)
       setPageState('list')
     } catch (err: any) {
       setFormError(err.message)
@@ -326,7 +447,7 @@ export default function PersonelYonetimPage() {
       
       setToast({ type: 'success', title: 'Kayıt Başarılı', message: lifecycleMessages?.deleteSuccess || 'Çalışan kaydı pasife çekildi' })
       await yenile()
-      invalidateEntityDetailCache('employees', selectedPersonel?.id)
+      invalidateEntityDetailCache(EMPLOYEE_DETAIL_CACHE_NAMESPACE, selectedPersonel?.id)
       setPageState('list')
     } catch (err: any) {
       setFormError(err.message)
@@ -356,7 +477,7 @@ export default function PersonelYonetimPage() {
       }
 
       const result = await response.json()
-      invalidateEntityDetailCache('employees', selectedPersonel.id)
+      invalidateEntityDetailCache(EMPLOYEE_DETAIL_CACHE_NAMESPACE, selectedPersonel.id)
       setSelectedPersonel(result.data)
       setToast({ type: 'success', title: 'Kayit Basarili', message: 'Calisan kaydi aktive edildi' })
       await yenile()
@@ -463,6 +584,7 @@ export default function PersonelYonetimPage() {
   const formLoadStages = createProgressiveFormLoadStages({
     mode: formMode,
     hasSnapshot: pageState !== 'create' && !!selectedPersonel,
+    ...detailSections,
     detailLoading,
     detailError: !!formError,
     detailReady: pageState !== 'create' && !!selectedPersonel && !detailLoading,
@@ -506,7 +628,12 @@ export default function PersonelYonetimPage() {
       formMode: formMode,
       title: formMode === 'passive' ? personelName || 'Pasif Calisan' : modeTitles[pageState as keyof typeof modeTitles],
       subtitle: formMode === 'passive' ? 'Pasif kaydi goruntule' : modeSubtitles[pageState as keyof typeof modeSubtitles],
-      onBackClick: () => setPageState('list')
+      onBackClick: () => {
+        detailRequestRef.current += 1
+        setDetailLoading(false)
+        setDetailSections(emptyDetailSectionState)
+        setPageState('list')
+      }
     }
   }
 
@@ -615,7 +742,12 @@ export default function PersonelYonetimPage() {
             loadStages={formLoadStages}
             externalFieldErrors={saveFieldErrors}
             onSave={handleSave}
-            onCancel={() => setPageState('list')}
+            onCancel={() => {
+              detailRequestRef.current += 1
+              setDetailLoading(false)
+              setDetailSections(emptyDetailSectionState)
+              setPageState('list')
+            }}
             onDelete={handleDelete}
             onActivate={handleActivate}
             onModeChange={(mode) => setPageState(mode)}

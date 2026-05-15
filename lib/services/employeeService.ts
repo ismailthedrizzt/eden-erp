@@ -34,6 +34,13 @@ export const employeeService = {
   detail(id: string) {
     return apiClient.get<{ data: Personel }>(`/api/ik/personel/${id}`, { skipAuth: true, staleTime: 120_000 })
   },
+  detailSection(id: string, section: 'hero' | 'media' | 'details') {
+    return apiClient.get<{ data: Partial<Personel> }>(`/api/ik/personel/${id}`, {
+      skipAuth: true,
+      useCache: false,
+      query: { section },
+    })
+  },
   create(payload: Omit<Personel, 'id' | 'created_at' | 'updated_at'>) {
     return apiClient.post<{ data: Personel }>('/api/ik/personel', payload)
   },
