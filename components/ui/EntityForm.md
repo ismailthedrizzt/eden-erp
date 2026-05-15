@@ -95,9 +95,12 @@ interface FormField {
   options?: { value: string; label: string }[]  // For select fields
   placeholder?: string
   colSpan?: 1 | 2 | 3    // Grid column span
+  automation?: FieldAutomationConfig // Shows AutomationBadge for fields that fill/derive other fields
   render?: (props) => ReactNode  // Custom render function
 }
 ```
+
+`automation` is required whenever a field input, lookup or button fills other fields. `type: 'iban'` fields receive the standard automation badge by default; custom derived fields should define `targetFields` and optional labels so the user sees `idle -> working -> done/no_data`.
 
 ### FormTab
 

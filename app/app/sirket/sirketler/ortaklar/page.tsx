@@ -10,6 +10,7 @@ import { normalizeCountryId } from '@/lib/reference/country-nationalities'
 import { createRealPersonMasterTabs } from '@/lib/identity/realPersonFormSections'
 import { createLegalEntityMasterTabs } from '@/lib/identity/legalEntityFormSections'
 import { isSoftDeletedRecord } from '@/lib/forms/entityState'
+import { createProgressiveFormLoadStages } from '@/lib/forms/progressiveFormLoading'
 import { companyService } from '@/lib/services/companyService'
 import { ownershipTransactionsService } from '@/lib/modules/ownership-transactions/ownershipTransactions.service'
 import type { ListMeta } from '@/lib/api/listEndpoint'
@@ -349,6 +350,9 @@ export default function OrtaklarPage() {
   const [representatives, setRepresentatives] = useState<RepresentativeAuthorityRow[]>([])
   const [selectedPartner, setSelectedPartner] = useState<Record<string, any> | null>(null)
   const [loading, setLoading] = useState(true)
+  const [detailLoading, setDetailLoading] = useState(false)
+  const [relationContextLoading, setRelationContextLoading] = useState(false)
+  const [relationContextError, setRelationContextError] = useState(false)
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [includePassive, setIncludePassive] = useState(false)
@@ -361,8 +365,22 @@ export default function OrtaklarPage() {
 
   const isSelectedPassive = isSoftDeletedRecord(selectedPartner)
   const formMode: FormMode = pageState === 'create' ? 'create' : isSelectedPassive ? 'passive' : pageState === 'edit' ? 'edit' : 'view'
+  const formLoadStages = createProgressiveFormLoadStages({
+    mode: formMode,
+    hasSnapshot: pageState !== 'create' && !!selectedPartner,
+    detailLoading,
+    detailError: !!formError,
+    detailReady: pageState !== 'create' && !!selectedPartner && !detailLoading,
+    hasMaster: !!(selectedPartner?.person_id || selectedPartner?.organization_id || selectedPartner?.master_record_id || selectedPartner?.master),
+    referencesLoading: relationContextLoading,
+    referencesReady: companies.length > 0 || representatives.length > 0 || currentOwnershipRows.length > 0,
+    referencesError: relationContextError,
+  })
 
   const loadRelationContext = useCallback(async (force = false) => {
+    setRelationContextLoading(true)
+    setRelationContextError(false)
+    try {
     const [companyPayload, representativePayload] = await Promise.all([
       companyService.list({ useCache: !force }),
       companyService.representativesList({ useCache: !force }),
@@ -381,6 +399,12 @@ export default function OrtaklarPage() {
       setCurrentOwnershipRows(Array.isArray(ownershipPayload.data) ? ownershipPayload.data : [])
     } else {
       setCurrentOwnershipRows([])
+    }
+    } catch (error) {
+      setRelationContextError(true)
+      throw error
+    } finally {
+      setRelationContextLoading(false)
     }
   }, [])
 
@@ -485,6 +509,7 @@ export default function OrtaklarPage() {
     setPageState('view')
     setFormError(null)
     setFieldErrors({})
+    setDetailLoading(true)
 
     try {
       const [response, transactionHistory] = await Promise.all([
@@ -502,6 +527,8 @@ export default function OrtaklarPage() {
     } catch (err: any) {
       setFormError(err.message || 'Ortak detayı yüklenemedi')
       setToast(err.toast || { type: 'error', title: 'Detay Yüklenemedi', message: err.message || 'Ortak detayı yüklenemedi' })
+    } finally {
+      setDetailLoading(false)
     }
   }
 
@@ -677,6 +704,7 @@ export default function OrtaklarPage() {
             saving={saving}
             deleting={deleting}
             error={formError}
+            loadStages={formLoadStages}
             externalFieldErrors={fieldErrors}
             onSave={handleSave}
             onCancel={() => setPageState('list')}

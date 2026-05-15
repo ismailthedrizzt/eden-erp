@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import { Bot, CheckCircle2, Loader2, Search } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { AutomationBadge, type AutomationBadgeStatus } from './AutomationBadge'
 import type { IdentityEntityKind, IdentityGateConfig, IdentityGateResolveResult, IdentityGateState } from '@/lib/identity-gate'
 import { COUNTRY_NATIONALITY_OPTIONS, COUNTRY_OPTIONS, isTurkishNationality, normalizeCountryId } from '@/lib/reference/country-nationalities'
 
@@ -18,7 +19,7 @@ interface MasterIdentityGateProps {
   roleScope?: Record<string, unknown>
 }
 
-type MasterMatchAutomationStatus = 'idle' | 'working' | 'done' | 'no_data'
+type MasterMatchAutomationStatus = AutomationBadgeStatus
 
 export function MasterIdentityGate({
   config,
@@ -181,7 +182,16 @@ export function MasterIdentityGate({
         <div>
           <div className="flex flex-wrap items-center gap-2">
             <h4 className="text-sm font-semibold text-gray-900 dark:text-white">Temel Kimlik Sorgulama/Oluşturma</h4>
-            {mode === 'create' && <MasterMatchAutomationBadge status={automationStatus} />}
+            {mode === 'create' && (
+              <AutomationBadge
+                status={automationStatus}
+                title="Eşleştir butonu master kayıt ve rol kaydı otomasyonunu çalıştırır."
+                idleLabel="Eşleşme bekliyor"
+                workingLabel="Eşleşiyor"
+                doneLabel="OK"
+                noDataLabel="Veri bulunamadı"
+              />
+            )}
           </div>
           {message && <p className="mt-1 text-xs text-gray-600 dark:text-gray-400">{message}</p>}
         </div>

@@ -55,12 +55,54 @@ assertIncludes('lib/api/listEndpoint.ts', 'export function listMeta', 'list endp
 assertIncludes('components/ui/SmartDataTable.tsx', 'export interface ServerPaginationConfig', 'SmartDataTable must support server-side pagination contract')
 assertIncludes('components/ui/SmartDataTable.tsx', "pagination?: ServerPaginationConfig", 'SmartDataTable props must expose server pagination')
 assertIncludes('components/ui/SmartDataTable.tsx', "if (isServerPaginated) return data", 'SmartDataTable server mode must not client-filter/sort the current backend page')
+assertIncludes('components/ui/SmartDataTable.tsx', 'function isActionColumn', 'SmartDataTable must centrally identify action columns')
+assertIncludes('components/ui/SmartDataTable.tsx', 'group-hover/row:bg-sky-50/80', 'clickable rows must keep a visible hover affordance')
+assertIncludes('components/ui/SmartDataTable.tsx', 'event.stopPropagation()', 'action columns must not trigger row navigation')
+assertIncludes('components/ui/EntityForm.tsx', 'export interface FormLoadStage', 'EntityForm must expose progressive form load stages')
+assertIncludes('components/ui/EntityForm.tsx', 'function FormLoadStages', 'EntityForm must render the standard progressive loading affordance')
+assertIncludes('components/ui/AutomationBadge.tsx', 'export function AutomationBadge', 'automation badge must be shared instead of reimplemented per field')
+assertIncludes('components/ui/EntityForm.tsx', 'export interface FieldAutomationConfig', 'EntityForm must expose automation metadata for fields that fill other fields')
+assertIncludes('components/ui/EntityForm.tsx', 'function getFieldAutomationState', 'EntityForm must render automation badges from field metadata')
+assertIncludes('components/ui/EntityForm.tsx', "field.type === 'iban'", 'IBAN fields must receive the default automation badge rule')
+assertIncludes('lib/forms/progressiveFormLoading.ts', 'createProgressiveFormLoadStages', 'progressive form loading helper must be shared by template pages')
+assertIncludes('lib/access/entityAccess.tsx', 'export function useEntityAccess', 'ERP pages must have a central module and permission access helper')
+assertIncludes('lib/access/entityAccess.tsx', 'export function ModuleDependencyGate', 'cross-module fields must have a standard dependency gate')
+assertIncludes('lib/access/entityAccess.tsx', 'ModuleDependencyNotice', 'disabled module dependencies must show a standard user-facing notice')
+assertIncludes('lib/workflow/entityWorkflow.ts', 'decideWorkflowRoute', 'forms must have a shared workflow routing decision helper')
+assertIncludes('components/ui/EntityForm.tsx', 'access?: Partial<EntityAccessState>', 'EntityForm must accept central access state')
+assertIncludes('components/ui/EntityForm.tsx', 'moduleDependencies?: ModuleDependency[]', 'EntityForm must render missing module dependencies')
+assertIncludes('docs/ArchitectureAccessWorkflow.md', 'useEntityAccess', 'architecture doc must explain access helper usage')
 assertIncludes('docs/templates/FastEntityListTemplate.md', "pagination={{", 'fast list template must use SmartDataTable server pagination')
 assertIncludes('docs/templates/FastEntityListTemplate.md', "select(ENTITY_LIST_SELECT, { count: 'exact' })", 'fast list template must require counted narrow selects')
 assertIncludes('docs/templates/FastEntityListTemplate.md', 'range(from, to)', 'fast list template must require backend pagination range')
 assertIncludes('docs/templates/FastEntityListTemplate.md', 'ListResponse<EntityListRow>', 'fast list template must use paginated list response typing')
+assertIncludes('docs/templates/FastEntityListTemplate.md', 'Satir acma davranisini ayrica her sayfada stillendirme', 'fast list template must keep row click affordance centralized')
+assertIncludes('docs/templates/FastEntityListTemplate.md', 'snapshot -> detail -> master -> references', 'fast list template must document progressive form loading')
+assertIncludes('docs/templates/FastEntityListTemplate.md', 'Form Automation Badge', 'fast list template must document automation badge usage')
+assertIncludes('docs/templates/FastEntityListTemplate.md', 'useEntityAccess', 'fast list template must include access/dependency/workflow contract')
 assertRegex('FrontendDataAccessRules.md', /SmartDataTable.*pagination=\{\{ mode: 'server'/s, 'frontend rules must require server pagination for main ERP lists')
+assertIncludes('FrontendDataAccessRules.md', '`actions`/`İşlemler` sutunu satir acma davranisindan ayridir', 'frontend rules must separate action-column clicks from row navigation')
+assertIncludes('FrontendDataAccessRules.md', 'loadStages={formLoadStages}', 'frontend rules must require EntityForm progressive loading stages')
+assertIncludes('FrontendDataAccessRules.md', 'AutomationBadge', 'frontend rules must require standard automation badges for derived fields')
+assertIncludes('FrontendDataAccessRules.md', 'ModuleDependencyGate', 'frontend rules must require standard module dependency handling')
+assertIncludes('FrontendDataAccessRules.md', 'requirePermission', 'frontend rules must state backend permission checks remain authoritative')
 assertIncludes('BackendApiMigration.md', 'parseListQuery', 'backend migration rules must reference list query parser')
+
+for (const file of [
+  'app/app/ik/personel/page.tsx',
+  'app/app/sirket/sirketler/page.tsx',
+  'app/app/sirket/sirketler/ortaklar/page.tsx',
+  'app/app/sirket/sirketler/temsilciler/page.tsx',
+  'app/app/sirket/sirketler/paydaslar/page.tsx',
+  'app/app/sirket/ortaklik-islemleri/page.tsx',
+  'app/app/sirket/teskilat/page.tsx',
+  'app/app/muhasebe/on-muhasebe-hareketleri/page.tsx',
+  'app/app/muhasebe/cari-kartlar/page.tsx',
+  'app/app/sistem/system-parameters/page.tsx',
+]) {
+  assertIncludes(file, 'createProgressiveFormLoadStages', 'template-derived EntityForm pages must use progressive form loading helper')
+  assertIncludes(file, 'loadStages={formLoadStages}', 'template-derived EntityForm pages must pass progressive loading stages to EntityForm')
+}
 
 const serverPaginatedSmartListPages = [
   'app/app/ik/personel/page.tsx',

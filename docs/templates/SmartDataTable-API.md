@@ -117,6 +117,12 @@ export interface ColumnDef {
 />
 ```
 
+### Clickable Row Affordance
+
+When `onRowClick` is provided, SmartDataTable automatically shows a row-hover affordance so users understand that the row opens the record in view mode. Do not restyle this per page.
+
+The `actions`/`İşlemler` column is separate from row navigation. Columns with `key: 'actions'` or `type: 'actions'` stop row click propagation so action buttons and menus remain independent.
+
 ### With All Features
 ```tsx
 <SmartDataTable

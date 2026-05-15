@@ -29,6 +29,7 @@ import { createRealPersonMasterTabs } from '@/lib/identity/realPersonFormSection
 import { formatPhoneInput, normalizeEmailInput } from '@/lib/utils'
 import { isTurkishNationality, normalizeCountryId } from '@/lib/reference/country-nationalities'
 import { isSoftDeletedRecord } from '@/lib/forms/entityState'
+import { createProgressiveFormLoadStages } from '@/lib/forms/progressiveFormLoading'
 import { employeeService } from '@/lib/services/employeeService'
 import type { Personel } from '@/types'
 
@@ -104,6 +105,7 @@ export default function PersonelYonetimPage() {
   // Form state
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [detailLoading, setDetailLoading] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
   const [saveFieldErrors, setSaveFieldErrors] = useState<Record<string, string>>({})
   const [toast, setToast] = useState<ToastState | null>(null)
@@ -167,6 +169,7 @@ export default function PersonelYonetimPage() {
     setSaveFieldErrors({})
     setSelectedPersonel(row as Personel)
     setPageState('view')
+    setDetailLoading(true)
 
     try {
       const result = await employeeService.detail(row.id)
@@ -175,6 +178,8 @@ export default function PersonelYonetimPage() {
     } catch (err: any) {
       setFormError(err.message || 'Çalışan detayı yüklenemedi')
       setToast(err.toast || { type: 'error', title: 'Detay Yüklenemedi', message: err.message || 'Çalışan detayı yüklenemedi' })
+    } finally {
+      setDetailLoading(false)
     }
   }
 
@@ -440,6 +445,15 @@ export default function PersonelYonetimPage() {
       !['ozel', 'iletisim', 'egitim', 'aile', 'banka'].includes(tab.id)
     ),
   ]
+  const formLoadStages = createProgressiveFormLoadStages({
+    mode: formMode,
+    hasSnapshot: pageState !== 'create' && !!selectedPersonel,
+    detailLoading,
+    detailError: !!formError,
+    detailReady: pageState !== 'create' && !!selectedPersonel && !detailLoading,
+    hasMaster: !!((selectedPersonel as any)?.person_id || (selectedPersonel as any)?.master_record_id || (selectedPersonel as any)?.master),
+    referencesReady: true,
+  })
 
   // Banner configuration based on page state
   const getBannerConfig = () => {
@@ -583,6 +597,7 @@ export default function PersonelYonetimPage() {
             saving={saving}
             deleting={deleting}
             error={formError}
+            loadStages={formLoadStages}
             externalFieldErrors={saveFieldErrors}
             onSave={handleSave}
             onCancel={() => setPageState('list')}

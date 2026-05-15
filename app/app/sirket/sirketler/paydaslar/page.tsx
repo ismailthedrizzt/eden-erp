@@ -9,6 +9,7 @@ import { Toast } from '@/components/ui/Toast'
 import { createRealPersonMasterTabs } from '@/lib/identity/realPersonFormSections'
 import { createLegalEntityMasterTabs } from '@/lib/identity/legalEntityFormSections'
 import { isSoftDeletedRecord } from '@/lib/forms/entityState'
+import { createProgressiveFormLoadStages } from '@/lib/forms/progressiveFormLoading'
 import { companyService } from '@/lib/services/companyService'
 import type { ListMeta } from '@/lib/api/listEndpoint'
 
@@ -270,6 +271,9 @@ export default function PaydaslarPage() {
   const [companiesLoaded, setCompaniesLoaded] = useState(false)
   const [selectedStakeholder, setSelectedStakeholder] = useState<Record<string, any> | null>(null)
   const [loading, setLoading] = useState(true)
+  const [detailLoading, setDetailLoading] = useState(false)
+  const [companyOptionsLoading, setCompanyOptionsLoading] = useState(false)
+  const [companyOptionsError, setCompanyOptionsError] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
@@ -282,6 +286,17 @@ export default function PaydaslarPage() {
 
   const isSelectedPassive = isSoftDeletedRecord(selectedStakeholder)
   const formMode: FormMode = pageState === 'create' ? 'create' : isSelectedPassive ? 'passive' : pageState === 'edit' ? 'edit' : 'view'
+  const formLoadStages = createProgressiveFormLoadStages({
+    mode: formMode,
+    hasSnapshot: pageState !== 'create' && !!selectedStakeholder,
+    detailLoading,
+    detailError: !!formError,
+    detailReady: pageState !== 'create' && !!selectedStakeholder && !detailLoading,
+    hasMaster: !!(selectedStakeholder?.person_id || selectedStakeholder?.organization_id || selectedStakeholder?.master_record_id || selectedStakeholder?.master),
+    referencesLoading: companyOptionsLoading,
+    referencesReady: companiesLoaded,
+    referencesError: companyOptionsError,
+  })
 
   const loadData = async (force = false) => {
     setLoading(true)
@@ -305,12 +320,21 @@ export default function PaydaslarPage() {
 
   const loadCompanyOptions = async (force = false) => {
     if (companiesLoaded && !force) return
+    setCompanyOptionsLoading(true)
+    setCompanyOptionsError(false)
+    try {
     const companyPayload = await companyService.list({ useCache: !force })
     setCompanies(Array.isArray(companyPayload.data) ? companyPayload.data.map((company: any) => ({
       value: company.id,
       label: company.ticari_unvan || company.kisa_unvan,
     })) : [])
     setCompaniesLoaded(true)
+    } catch (error) {
+      setCompanyOptionsError(true)
+      throw error
+    } finally {
+      setCompanyOptionsLoading(false)
+    }
   }
 
   useEffect(() => {
@@ -361,6 +385,7 @@ export default function PaydaslarPage() {
     setPageState('view')
     setFormError(null)
     setFieldErrors({})
+    setDetailLoading(true)
     try {
       const result = await companyService.stakeholderDetail(row.id)
       if (!result.data) throw new Error('Paydaş detayı yüklenemedi')
@@ -368,6 +393,8 @@ export default function PaydaslarPage() {
     } catch (err: any) {
       setFormError(err.message || 'Paydaş detayı yüklenemedi')
       setToast(err.toast || { type: 'error', title: 'Detay Yüklenemedi', message: err.message || 'Paydaş detayı yüklenemedi' })
+    } finally {
+      setDetailLoading(false)
     }
   }
 
@@ -489,6 +516,7 @@ export default function PaydaslarPage() {
             saving={saving}
             deleting={deleting}
             error={formError}
+            loadStages={formLoadStages}
             externalFieldErrors={fieldErrors}
             onSave={handleSave}
             onCancel={() => setPageState('list')}

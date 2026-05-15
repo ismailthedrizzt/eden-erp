@@ -19,6 +19,7 @@ import {
 import { getOwnershipTransactionCapabilities } from '@/lib/modules/ownership-transactions/ownershipTransactions.permissions'
 import { ownershipTransactionsService } from '@/lib/modules/ownership-transactions/ownershipTransactions.service'
 import { companyService } from '@/lib/services/companyService'
+import { createProgressiveFormLoadStages } from '@/lib/forms/progressiveFormLoading'
 import type { OwnershipTransaction } from '@/lib/modules/ownership-transactions/ownershipTransactions.types'
 import type { ListMeta } from '@/lib/api/listEndpoint'
 
@@ -67,6 +68,9 @@ function OwnershipTransactionsContent() {
   const [selected, setSelected] = useState<Record<string, any> | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [detailLoading, setDetailLoading] = useState(false)
+  const [referenceLoading, setReferenceLoading] = useState(false)
+  const [referenceError, setReferenceError] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
   const [toast, setToast] = useState<ToastState | null>(null)
@@ -94,8 +98,22 @@ function OwnershipTransactionsContent() {
         ? transactionTypes.filter(type => type !== newEntryTransactionType)
         : transactionTypes.filter(type => type !== newEntryTransactionType && !['Pay Devri', 'Kısmi Pay Devri', 'Ortaklıktan Çıkış'].includes(type))
     : transactionTypes
+  const formLoadStages = createProgressiveFormLoadStages({
+    mode: formMode,
+    hasSnapshot: pageState !== 'create' && !!selected,
+    detailLoading,
+    detailError: !!formError,
+    detailReady: pageState !== 'create' && !!selected && !detailLoading,
+    hasMaster: !!(selectedPartner?.person_id || selectedPartner?.organization_id),
+    referencesLoading: referenceLoading,
+    referencesReady: companies.length > 0 || partners.length > 0,
+    referencesError: referenceError,
+  })
 
   const loadReferenceData = useCallback(async (force = false) => {
+    setReferenceLoading(true)
+    setReferenceError(false)
+    try {
     const [companyPayload, partnerPayload] = await Promise.all([
       companyService.list({ useCache: !force }),
       companyService.partnersList({ useCache: !force }),
@@ -117,6 +135,12 @@ function OwnershipTransactionsContent() {
       person_id: partner.person_id || null,
       organization_id: partner.organization_id || null,
     })))
+    } catch (error) {
+      setReferenceError(true)
+      throw error
+    } finally {
+      setReferenceLoading(false)
+    }
   }, [])
 
   const loadData = useCallback(async (force = false) => {
@@ -232,11 +256,14 @@ function OwnershipTransactionsContent() {
     setSelected(normalizeForForm(row))
     setPageState('view')
     setFormError(null)
+    setDetailLoading(true)
     try {
       const detail = await ownershipTransactionsService.get(row.id)
       if (detail) setSelected(normalizeForForm(detail))
     } catch {
       // List row is enough for initial display.
+    } finally {
+      setDetailLoading(false)
     }
   }
 
@@ -384,6 +411,7 @@ function OwnershipTransactionsContent() {
             data={selectedFormData}
             saving={saving}
             error={formError}
+            loadStages={formLoadStages}
             canEdit={capabilities.canEdit}
             canCreate={capabilities.canInsert}
             onSave={handleSave}

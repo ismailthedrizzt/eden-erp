@@ -7,6 +7,7 @@ import { PageBanner } from '@/components/ui/PageBanner'
 import { SmartDataTable, type ColumnDef } from '@/components/ui/SmartDataTable'
 import { Toast } from '@/components/ui/Toast'
 import { apiClient } from '@/lib/api/apiClient'
+import { createProgressiveFormLoadStages } from '@/lib/forms/progressiveFormLoading'
 import {
   systemParameterDefinitions,
   type SystemParameterDefinition,
@@ -105,6 +106,11 @@ export default function SystemParametersPage() {
       ],
     },
   ], [selected])
+  const formLoadStages = createProgressiveFormLoadStages({
+    mode,
+    hasSnapshot: mode !== 'list' && !!selected,
+    detailReady: mode !== 'list' && !!selected,
+  })
 
   async function loadParameters() {
     setLoading(true)
@@ -184,6 +190,7 @@ export default function SystemParametersPage() {
             descriptionOverride: selected.descriptionOverride || selected.description || '',
           }}
           saving={saving}
+          loadStages={formLoadStages}
           canEdit
           heroLeftPanel={<ParameterHeroPanel row={selected} />}
           showHeroHeader

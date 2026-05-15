@@ -29,6 +29,15 @@ await apiClient.post('/api/companies', payload)
 await apiClient.patch(`/api/partners/${id}`, { version, data })
 ```
 
+## Modul, yetki ve workflow kontrati
+
+Yeni ERP sayfalari `useEntityAccess` kullanarak modul durumu, kullanici yetkileri ve workflow hazirligini tek yerden alir. Bagimli modul kapaliysa alanlar sessizce kaybolmaz; `ModuleDependencyGate` veya `EntityForm moduleDependencies` standart uyari gosterir.
+
+- Modul kapaliysa ilgili alan sadece uyari durumuna duser; zorunlu olmayan cross-module sorgular calistirilmaz.
+- Liste/form goruntuleme `view`, yeni kayit `insert`, guncelleme `edit`, onay `approve`, pasife alma `passivate` yetkileriyle kontrol edilir.
+- Frontend yetkisi yalnizca UI gating icindir; backend mutasyon route'lari `requirePermission` ile ayni permission key'i tekrar denetler.
+- Workflow aktifse form save akisi `decideWorkflowRoute` ile dogrudan yazma veya onay talebi olusturma kararini verir.
+
 ## Liste ve detay performans kontrati
 
 Ana ERP liste ekranlari icin hedef, ilk liste gorunumunun kullaniciya 0.2 saniye civarinda, satir tiklama sonrasi formun 0.5 saniye icinde gorunmesidir. Bu hedefi korumak icin yeni liste/detay ekranlari asagidaki kurallara uyar.
@@ -37,9 +46,12 @@ Ana ERP liste ekranlari icin hedef, ilk liste gorunumunun kullaniciya 0.2 saniye
 - Yetki karari API tarafinda service client veya endpoint guard ile veriliyorsa liste/detay servisinde `skipAuth: true` kullan; her liste acilisinda Supabase `getSession()` bekletme.
 - Liste GET servislerinde varsayilan `staleTime` en az `120_000` olmalidir. Mutasyonlardan sonra ilgili prefix `apiClient.invalidate(...)` ile temizlenir.
 - Satira tiklaninca once secili kaydi liste satiri verisiyle state'e koy ve form modunu `view` yap; detay verisini arka planda cek.
+- Form acilisi `snapshot -> detail -> master -> references` seklinde asamali olmalidir. Master kimlik ve referans/dropdown verileri formun gorunmesini bloke etmez; `EntityForm` bu durumlari `loadStages={formLoadStages}` ile gosterir.
+- Formda bir alan veri girilince, lookup calisinca veya butona basilinca baska alanlari dolduruyorsa standart `AutomationBadge` kullanilmalidir. `EntityForm` alanlari bunu `automation` metadata'si ile tasir; `type: 'iban'` varsayilan otomasyon badge'i alir. Custom formlar ayni `idle -> working -> done/no_data` durumlarini kullanir.
 - Satir detay fetch'lerinde `?t=${Date.now()}` ve `cache: 'no-store'` kullanma. Gercek zamanli tazelik gerekiyorsa servis cagrisina bilincli `useCache: false` ver ve bunu yorumla acikla.
 - Liste API'lerinde `select('*')` kullanma. Tablo icin gereken kolonlari acik listele; buyuk JSON/media/history kolonlarini detay endpointine birak.
 - Ana ERP listelerinde liste servisi `ListResponse<T>` donmeli ve `page`, `pageSize`, `search`, `sort`, `direction`, `include_passive` parametrelerini backend'e tasimalidir. `SmartDataTable` bu durumda `pagination={{ mode: 'server', ... }}` ile kullanilir; frontend'e tum tablo basilip client-side sayfalanmaz.
+- `onRowClick` verilen SmartDataTable satirlari hover'da tıklanabilir oldugunu gosteren merkezi satir vurgusunu korumalidir. `actions`/`İşlemler` sutunu satir acma davranisindan ayridir; bu hucre row click'i tetiklememeli, kendi buton/menu davranisini calistirmalidir.
 - Liste sort/filter alanlari icin migration ile indeks ekle. Soft delete kullanan ana listelerde indeksin ilk bolumu `is_deleted` filtresini desteklemelidir.
 - Tabloya verilen turetilmis data ve dashboard ozetleri `useMemo` ile hesaplanir.
 

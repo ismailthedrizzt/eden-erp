@@ -12,6 +12,7 @@ import { usePermissions } from '@/lib/security/permissionStore'
 import { accountCardsService } from '@/lib/modules/accounting/account-cards/accountCards.service'
 import { ACCOUNTING_PERMISSIONS } from '@/lib/modules/accounting/shared/accounting.permissions'
 import { getAccountingLauncherTargets } from '@/lib/modules/accounting/shared/formRegistry'
+import { createProgressiveFormLoadStages } from '@/lib/forms/progressiveFormLoading'
 import type { ListMeta } from '@/lib/api/listEndpoint'
 import type { AccountCardRow, AccountingEntityKind } from '@/lib/modules/accounting/shared/accounting.types'
 
@@ -97,6 +98,13 @@ export default function AccountCardsPage() {
     const sort = sorts[0]
     setListQuery(prev => ({ ...prev, page: 1, sort: sort?.key || 'display_name', direction: sort?.direction || 'asc' }))
   }
+  const formLoadStages = createProgressiveFormLoadStages({
+    mode,
+    hasSnapshot: !!selectedCard,
+    detailReady: !!selectedCard,
+    hasMaster: !!(selectedCard?.person_id || selectedCard?.organization_id),
+    referencesReady: !!selectedCard,
+  })
 
   const heroFields: FormField[] = [
     { name: 'display_name', label: 'Ad / Ünvan', type: 'custom', render: ({ value }) => <ReadOnlyField value={value} /> },
@@ -155,7 +163,7 @@ export default function AccountCardsPage() {
         </div>
       ) : (
         <div className="mt-6">
-          <EntityForm mode={mode} entityName="Cari Kartlar" entityNameSingular="Cari Kart" heroFields={heroFields} tabs={detailTabs} data={selectedCard as any} saving={saving} onSave={saveSettings} onCancel={() => mode === 'edit' ? setMode('view') : setSelectedCard(null)} onModeChange={setMode} canEdit={can(ACCOUNTING_PERMISSIONS.accountCardsEditFinancialSettings)} enableHistory additionalActions={<Link className="btn" href={`/app/muhasebe/on-muhasebe-hareketleri?counterparty=${selectedCard.person_id || selectedCard.organization_id}`}><Settings size={16} />Hareketleri Gör</Link>} />
+          <EntityForm mode={mode} entityName="Cari Kartlar" entityNameSingular="Cari Kart" heroFields={heroFields} tabs={detailTabs} data={selectedCard as any} saving={saving} loadStages={formLoadStages} onSave={saveSettings} onCancel={() => mode === 'edit' ? setMode('view') : setSelectedCard(null)} onModeChange={setMode} canEdit={can(ACCOUNTING_PERMISSIONS.accountCardsEditFinancialSettings)} enableHistory additionalActions={<Link className="btn" href={`/app/muhasebe/on-muhasebe-hareketleri?counterparty=${selectedCard.person_id || selectedCard.organization_id}`}><Settings size={16} />Hareketleri Gör</Link>} />
         </div>
       )}
 

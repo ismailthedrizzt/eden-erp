@@ -87,6 +87,8 @@ export function useEntities() {
 
 ## SmartDataTable
 
+`onRowClick` verilen listelerde satir tıklanabilirliği SmartDataTable'in merkezi hover vurgusuyla anlatilir. Satir acma davranisini ayrica her sayfada stillendirme; `actions`/`İşlemler` kolonu kendi buton/menu tiklamasini kullanir ve row click'i tetiklemez.
+
 ```tsx
 <SmartDataTable<EntityListRow>
   columns={columns}
@@ -130,6 +132,104 @@ const handleRowClick = async (row: EntityListRow) => {
   }
 }
 ```
+
+## Progressive Form Loading
+
+Form acilisi hicbir zaman master/ref verilerini beklemez. Standart akış `snapshot -> detail -> master -> references` seklindedir:
+
+1. `snapshot`: satira tiklaninca liste satiri hemen forma basilir.
+2. `detail`: sayfanin bagli oldugu ana tablo detayi arka planda gelir.
+3. `master`: master kisi/kurum kaydi varsa formu zenginlestirir, form acilisini bloke etmez.
+4. `references`: dropdown ve baska modullerden gelen secenekler alan bazinda tamamlanir.
+
+```ts
+const [detailLoading, setDetailLoading] = useState(false)
+const [referencesLoading, setReferencesLoading] = useState(false)
+const [referencesReady, setReferencesReady] = useState(false)
+
+const formLoadStages = createProgressiveFormLoadStages({
+  mode: formMode,
+  hasSnapshot: pageState !== 'create' && !!selectedEntity,
+  detailLoading,
+  detailError: !!formError,
+  detailReady: pageState !== 'create' && !!selectedEntity && !detailLoading,
+  hasMaster: !!(selectedEntity?.person_id || selectedEntity?.organization_id || selectedEntity?.master_record_id),
+  referencesLoading,
+  referencesReady,
+})
+```
+
+```tsx
+<EntityForm
+  mode={formMode}
+  data={selectedEntity}
+  loadStages={formLoadStages}
+  ...
+/>
+```
+
+Edit modu ana detay gelmeden acilmamalidir; referans gerektiren alanlar referanslar gelene kadar disabled/loading davranisi gostermelidir.
+
+## Form Automation Badge
+
+Bir alan veri girilince veya bir buton/lookup calisinca formdaki baska alanlari dolduruyorsa kullanici bunu alan etiketinden anlamalidir. Standart gosterim `AutomationBadge`'dir; `EntityForm` icinde alan `automation` metadata'si ile isaretlenir. `type: 'iban'` alanlari varsayilan olarak otomasyon badge'i alir.
+
+```ts
+const fields: FormField[] = [
+  {
+    name: 'iban',
+    label: 'IBAN',
+    type: 'iban',
+    automation: {
+      targetFields: ['bank_name', 'branch_name', 'branch_code', 'account_no'],
+      title: 'IBAN girilince banka ve hesap alanlari otomatik doldurulur.',
+      workingLabel: 'Cozuluyor',
+    },
+  },
+]
+```
+
+Custom formlarda ayni ana badge yapisi korunur: `idle -> working -> done/no_data`. Master kimlik eslestirme gibi butonla baslayan otomasyonlarda badge butona basildiktan sonra `working` durumuna gecer.
+
+## Access, Module Dependency and Workflow
+
+Yeni sayfalar `useEntityAccess` ile modul, yetki ve workflow hazirligini tek yerden alir. Kucuk firmalarda tek rol/legacy allow-all ile ayni yapi calisir; orta ve buyuk firmalarda rol bazli yetki ve onay akislari devreye girer.
+
+```ts
+const access = useEntityAccess({
+  module: 'employees',
+  moduleLabel: 'Insan Kaynaklari',
+  resource: 'employees',
+  permissions: {
+    view: 'employees.view',
+    insert: 'employees.insert',
+    edit: 'employees.edit',
+    approve: 'employees.approve',
+    passivate: 'employees.passivate',
+  },
+  dependencies: [
+    { module: 'organization', label: 'Teskilat ve Kadro', reason: 'Birim ve kadro alanlari icin gereklidir.' },
+  ],
+  workflow: {
+    enabled: true,
+    workflowKey: 'ik.personel',
+    approvalPermission: 'employees.approve',
+    interceptActions: ['create', 'update', 'passivate'],
+  },
+})
+```
+
+```tsx
+<EntityForm
+  access={access}
+  moduleDependencies={access.missingDependencies}
+  canCreate={access.canInsert}
+  canEdit={access.canEdit}
+  loadStages={formLoadStages}
+/>
+```
+
+Bagimli modul kapaliysa alan crash etmez; standart olarak `Bu alandan yararlanabilmek icin X modulunu etkinlestirmeniz gerekir` mesaji gosterilir.
 
 ## API List Route
 

@@ -23,6 +23,7 @@ import { SmartDataTable, ColumnDef, WidgetDef } from '@/components/ui/SmartDataT
 import { cn } from '@/lib/utils'
 import { companyService } from '@/lib/services/companyService'
 import { organizationService } from '@/lib/services/organizationService'
+import { createProgressiveFormLoadStages } from '@/lib/forms/progressiveFormLoading'
 
 type PageState = 'list' | 'create-unit' | 'view-unit' | 'edit-unit' | 'create-position'
 type UnitStatus = 'Aktif' | 'Pasif' | 'Kapatıldı' | 'Birleştirildi' | 'Taşındı'
@@ -112,9 +113,19 @@ export default function TeskilatPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [companiesLoaded, setCompaniesLoaded] = useState(false)
+  const [companiesLoading, setCompaniesLoading] = useState(false)
+  const [companiesError, setCompaniesError] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
 
   const formMode: FormMode = pageState === 'create-unit' || pageState === 'create-position' ? 'create' : pageState === 'edit-unit' ? 'edit' : 'view'
+  const formLoadStages = createProgressiveFormLoadStages({
+    mode: formMode,
+    hasSnapshot: pageState !== 'create-unit' && pageState !== 'create-position' && !!selectedUnit,
+    detailReady: pageState !== 'create-unit' && pageState !== 'create-position' && !!selectedUnit,
+    referencesLoading: companiesLoading,
+    referencesReady: companiesLoaded,
+    referencesError: companiesError,
+  })
 
   const loadData = async (force = false) => {
     setLoading(true)
@@ -137,9 +148,18 @@ export default function TeskilatPage() {
 
   const loadCompanyOptions = async (force = false) => {
     if (companiesLoaded && !force) return
+    setCompaniesLoading(true)
+    setCompaniesError(false)
+    try {
     const companyPayload = await companyService.list({ useCache: !force })
     setCompanies(Array.isArray(companyPayload.data) ? companyPayload.data.map((company: any) => ({ value: company.id, label: company.ticari_unvan || company.kisa_unvan })) : [])
     setCompaniesLoaded(true)
+    } catch (error) {
+      setCompaniesError(true)
+      throw error
+    } finally {
+      setCompaniesLoading(false)
+    }
   }
 
   useEffect(() => {
@@ -360,6 +380,7 @@ export default function TeskilatPage() {
           tabs={tabs}
           data={formData}
           saving={saving}
+          loadStages={formLoadStages}
           onSave={saveUnit}
           onCancel={() => setPageState('list')}
           onModeChange={(mode) => setPageState(mode === 'edit' ? 'edit-unit' : 'view-unit')}
@@ -376,6 +397,7 @@ export default function TeskilatPage() {
           tabs={positionTabs}
           data={{ unit_id: selectedUnit?.id || '', norm_count: 1, active_count: 0, status: 'Aktif', work_type: 'Tam Zamanlı' }}
           saving={saving}
+          loadStages={formLoadStages}
           onSave={savePosition}
           onCancel={() => setPageState('list')}
         />

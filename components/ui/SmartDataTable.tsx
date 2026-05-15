@@ -142,6 +142,10 @@ function mergeColumnConfig(allColumns: ColumnDef[], savedColumns?: ColumnDef[]) 
     .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
 }
 
+function isActionColumn(col: ColumnDef) {
+  return col.type === 'actions' || col.key === 'actions'
+}
+
 function quickLookWidgetId(kind: 'summary' | 'dashboard', key: string) {
   return `${kind}:${key}`
 }
@@ -1504,29 +1508,41 @@ export function SmartDataTable<T extends { id: string }>({
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-              {paginatedData.map(row => (
-                <tr
-                  key={row.id}
-                  className={cn(
-                    onRowClick && "cursor-pointer"
-                  )}
-                  onClick={() => onRowClick?.(row)}
-                >
-                  {visibleColumns.map(col => (
-                    <td
-                      key={col.key} 
-                      title={getCellTitle(getNestedValue(row, col.key))}
-                      className={cn(
-                        "px-2 py-2 text-gray-900 dark:text-gray-100 dark:[&_*]:!text-gray-100 border-r border-gray-100 dark:border-gray-800 last:border-r-0 whitespace-nowrap overflow-hidden",
-                        isLeftAlignedColumn(col) ? "text-left" : "text-center",
-                        col.fontSize === 'xs' ? 'text-xs' : 'text-sm'
-                      )}
-                      style={{ 
-                        width: col.calculatedWidth || estimateColumnWidth(col),
-                        minWidth: col.type === 'image' ? 52 : col.minWidth || 64,
-                        maxWidth: col.maxWidth || (col.type === 'image' ? 56 : 180)
-                      }}
-                    >
+              {paginatedData.map(row => {
+                const firstRowClickColumnKey = visibleColumns.find(col => !isActionColumn(col))?.key
+
+                return (
+                  <tr
+                    key={row.id}
+                    className={cn(
+                      "group/row transition-colors duration-150",
+                      onRowClick && "cursor-pointer"
+                    )}
+                    onClick={() => onRowClick?.(row)}
+                    title={onRowClick ? 'Detayi ac' : undefined}
+                  >
+                    {visibleColumns.map(col => {
+                      const actionColumn = isActionColumn(col)
+
+                      return (
+                        <td
+                          key={col.key}
+                          title={getCellTitle(getNestedValue(row, col.key))}
+                          onClick={actionColumn ? event => event.stopPropagation() : undefined}
+                          className={cn(
+                            "px-2 py-2 text-gray-900 dark:text-gray-100 dark:[&_*]:!text-gray-100 border-r border-gray-100 dark:border-gray-800 last:border-r-0 whitespace-nowrap overflow-hidden transition-[background-color,box-shadow] duration-150",
+                            onRowClick && !actionColumn && "group-hover/row:bg-sky-50/80 group-hover/row:shadow-[inset_0_1px_0_rgba(14,165,233,0.16),inset_0_-1px_0_rgba(14,165,233,0.16)] dark:group-hover/row:bg-sky-950/25",
+                            onRowClick && col.key === firstRowClickColumnKey && "relative before:absolute before:left-0 before:top-1.5 before:bottom-1.5 before:w-0.5 before:origin-center before:scale-y-50 before:rounded-full before:bg-sky-500 before:opacity-0 before:transition-all before:duration-150 group-hover/row:before:scale-y-100 group-hover/row:before:opacity-100",
+                            actionColumn && "cursor-default",
+                            isLeftAlignedColumn(col) ? "text-left" : "text-center",
+                            col.fontSize === 'xs' ? 'text-xs' : 'text-sm'
+                          )}
+                          style={{
+                            width: col.calculatedWidth || estimateColumnWidth(col),
+                            minWidth: col.type === 'image' ? 52 : col.minWidth || 64,
+                            maxWidth: col.maxWidth || (col.type === 'image' ? 56 : 180)
+                          }}
+                        >
                       <div className={cn(
                         "flex h-full min-w-0 truncate text-gray-900 dark:text-gray-100",
                         isLeftAlignedColumn(col) ? "items-center justify-start" : "items-center justify-center",
@@ -1537,11 +1553,12 @@ export function SmartDataTable<T extends { id: string }>({
                             {renderCellValue(col, getNestedValue(row, col.key), row)}
                           </span>
                         ) : renderCellValue(col, getNestedValue(row, col.key), row)}
-                      </div>
-                    </td>
-                  ))}
+                        </div>
+                      </td>
+                    )
+                  })}
                   {shouldShowActions && (
-                    <td className="sticky right-0 z-10 border-l border-gray-100 bg-white px-3 py-3 text-center shadow-[-6px_0_10px_-10px_rgba(0,0,0,0.45)] dark:border-gray-800 dark:bg-gray-800">
+                    <td className="sticky right-0 z-10 cursor-default border-l border-gray-100 bg-white px-3 py-3 text-center shadow-[-6px_0_10px_-10px_rgba(0,0,0,0.45)] dark:border-gray-800 dark:bg-gray-800" onClick={event => event.stopPropagation()}>
                       <button 
                         className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded pointer-events-auto"
                         onClick={(e) => {
@@ -1554,7 +1571,7 @@ export function SmartDataTable<T extends { id: string }>({
                     </td>
                   )}
                 </tr>
-              ))}
+              )})}
             </tbody>
           </table>
         </div>

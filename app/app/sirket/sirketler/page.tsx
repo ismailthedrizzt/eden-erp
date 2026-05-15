@@ -12,6 +12,7 @@ import { CompanyNaceCodesSection } from '@/components/modules/sirket/CompanyPubl
 import { formatPhoneInput, normalizeEmailInput } from '@/lib/utils'
 import { createFormModeState, mapPageStateToFormMode } from '@/lib/forms/formModeEngine'
 import { isSoftDeletedRecord } from '@/lib/forms/entityState'
+import { createProgressiveFormLoadStages } from '@/lib/forms/progressiveFormLoading'
 import { createLegalEntityMasterTabs } from '@/lib/identity/legalEntityFormSections'
 import { useModules } from '@/lib/security/moduleStore'
 import { usePermissions } from '@/lib/security/permissionStore'
@@ -250,6 +251,7 @@ export default function SirketlerPage() {
   const [selectedSirket, setSelectedSirket] = useState<Sirket | null>(null)
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [detailLoading, setDetailLoading] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [toast, setToast] = useState<ToastState | null>(null)
@@ -349,6 +351,16 @@ export default function SirketlerPage() {
       : pageState === 'edit' && formAccess.canSave
         ? 'edit'
         : 'view'
+  const formLoadStages = createProgressiveFormLoadStages({
+    mode: formMode,
+    hasSnapshot: pageState !== 'create' && !!selectedSirket,
+    detailLoading,
+    detailError: !!formError,
+    detailReady: pageState !== 'create' && !!selectedSirket && !detailLoading,
+    hasMaster: !!((selectedSirket as any)?.organization_id || (selectedSirket as any)?.master_record_id || (selectedSirket as any)?.master),
+    referencesLoading: pageState !== 'list' && !publicReferenceOptionsLoaded,
+    referencesReady: pageState !== 'list' && publicReferenceOptionsLoaded,
+  })
 
   if (!formAccess.canView) {
     return (
@@ -371,6 +383,7 @@ export default function SirketlerPage() {
     setFieldErrors({})
     setSelectedSirket(normalizeCompanyForForm(row as Sirket))
     setPageState('view')
+    setDetailLoading(true)
 
     try {
       const result = await companyService.detail(row.id)
@@ -386,6 +399,8 @@ export default function SirketlerPage() {
         title: 'Detay Yüklenemedi',
         message: error.message || 'Şirket detayı yüklenemedi',
       })
+    } finally {
+      setDetailLoading(false)
     }
   }
 
@@ -740,6 +755,7 @@ export default function SirketlerPage() {
             saving={saving}
             deleting={deleting}
             error={formError}
+            loadStages={formLoadStages}
             externalFieldErrors={fieldErrors}
             onSave={handleSave}
             onCancel={handleBackToList}

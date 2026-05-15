@@ -10,6 +10,7 @@ import { normalizeCountryId } from '@/lib/reference/country-nationalities'
 import { createRealPersonMasterTabs } from '@/lib/identity/realPersonFormSections'
 import { createLegalEntityMasterTabs } from '@/lib/identity/legalEntityFormSections'
 import { isSoftDeletedRecord } from '@/lib/forms/entityState'
+import { createProgressiveFormLoadStages } from '@/lib/forms/progressiveFormLoading'
 import { companyService } from '@/lib/services/companyService'
 import type { ListMeta } from '@/lib/api/listEndpoint'
 
@@ -347,6 +348,9 @@ export default function TemsilcilerPage() {
   const [companiesLoaded, setCompaniesLoaded] = useState(false)
   const [selectedRepresentative, setSelectedRepresentative] = useState<Record<string, any> | null>(null)
   const [loading, setLoading] = useState(true)
+  const [detailLoading, setDetailLoading] = useState(false)
+  const [companyOptionsLoading, setCompanyOptionsLoading] = useState(false)
+  const [companyOptionsError, setCompanyOptionsError] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [formError, setFormError] = useState<string | null>(null)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
@@ -359,6 +363,17 @@ export default function TemsilcilerPage() {
 
   const isSelectedPassive = isSoftDeletedRecord(selectedRepresentative)
   const formMode: FormMode = pageState === 'create' ? 'create' : isSelectedPassive ? 'passive' : pageState === 'edit' ? 'edit' : 'view'
+  const formLoadStages = createProgressiveFormLoadStages({
+    mode: formMode,
+    hasSnapshot: pageState !== 'create' && !!selectedRepresentative,
+    detailLoading,
+    detailError: !!formError,
+    detailReady: pageState !== 'create' && !!selectedRepresentative && !detailLoading,
+    hasMaster: !!(selectedRepresentative?.person_id || selectedRepresentative?.organization_id || selectedRepresentative?.master_record_id || selectedRepresentative?.master),
+    referencesLoading: companyOptionsLoading,
+    referencesReady: companiesLoaded,
+    referencesError: companyOptionsError,
+  })
 
   const loadData = async (force = false) => {
     setLoading(true)
@@ -382,12 +397,21 @@ export default function TemsilcilerPage() {
 
   const loadCompanyOptions = async (force = false) => {
     if (companiesLoaded && !force) return
+    setCompanyOptionsLoading(true)
+    setCompanyOptionsError(false)
+    try {
     const companyPayload = await companyService.list({ useCache: !force })
     setCompanies(Array.isArray(companyPayload.data) ? companyPayload.data.map((company: any) => ({
       value: company.id,
       label: company.ticari_unvan || company.kisa_unvan,
     })) : [])
     setCompaniesLoaded(true)
+    } catch (error) {
+      setCompanyOptionsError(true)
+      throw error
+    } finally {
+      setCompanyOptionsLoading(false)
+    }
   }
 
   useEffect(() => {
@@ -442,6 +466,7 @@ export default function TemsilcilerPage() {
     setPageState('view')
     setFormError(null)
     setFieldErrors({})
+    setDetailLoading(true)
 
     try {
       const result = await companyService.representativeDetail(row.id)
@@ -450,6 +475,8 @@ export default function TemsilcilerPage() {
     } catch (err: any) {
       setFormError(err.message || 'Temsilci detayı yüklenemedi')
       setToast(err.toast || { type: 'error', title: 'Detay Yüklenemedi', message: err.message || 'Temsilci detayı yüklenemedi' })
+    } finally {
+      setDetailLoading(false)
     }
   }
 
@@ -625,6 +652,7 @@ export default function TemsilcilerPage() {
             saving={saving}
             deleting={deleting}
             error={formError}
+            loadStages={formLoadStages}
             externalFieldErrors={fieldErrors}
             onSave={handleSave}
             onCancel={() => setPageState('list')}

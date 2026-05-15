@@ -1,8 +1,9 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { Bot, CheckCircle2, Eye, History, Loader2, Pencil, Plus, Star, Trash2, X } from 'lucide-react'
+import { CheckCircle2, Eye, History, Pencil, Plus, Star, Trash2, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { AutomationBadge, type AutomationBadgeStatus } from './AutomationBadge'
 import { usePermissions } from '@/lib/security/permissionStore'
 import { COUNTRY_OPTIONS } from '@/lib/reference/country-nationalities'
 import {
@@ -58,7 +59,7 @@ const localCodeTypeOptions = ['Bank Code', 'Branch Code', 'Routing Number / ABA'
 const currencyOptions = ['TRY', 'USD', 'EUR', 'GBP']
 const swiftChargeOptions = ['SHA', 'OUR', 'BEN']
 const countryOptionLabels = Object.fromEntries(COUNTRY_OPTIONS.map(option => [option.value, option.label]))
-type IbanAutomationStatus = 'idle' | 'working' | 'done' | 'no_data'
+type IbanAutomationStatus = AutomationBadgeStatus
 
 export function EntityBankAccountsPanel({ entityKind, entityId, masterName = '', masterCountry = '', readOnly = false, value, onChange }: Props) {
   const { can } = usePermissions()
@@ -337,7 +338,13 @@ function renderField(field: string, draft: Partial<EntityBankAccount>, disabled:
     <label key={field} className={cn("space-y-1", wide && "md:col-span-2")}>
       <span className="flex items-center gap-2 text-xs font-medium text-gray-600 dark:text-gray-400">
         {labels[field] || field}
-        {field === 'iban' && <IbanAutomationBadge status={ibanAutomationStatus} />}
+        {field === 'iban' && (
+          <AutomationBadge
+            status={ibanAutomationStatus}
+            title="IBAN girilince banka, şube ve para birimi alanları otomatik doldurulur."
+            workingLabel="Çözülüyor"
+          />
+        )}
       </span>
       {wide ? (
         <textarea value={value} disabled={disabled} rows={2} onChange={event => onChange(field, event.target.value)} className={common} />
@@ -345,45 +352,6 @@ function renderField(field: string, draft: Partial<EntityBankAccount>, disabled:
         <input value={value} disabled={disabled} onChange={event => field === 'iban' ? onIban(event.target.value) : onChange(field, event.target.value)} className={common} />
       )}
     </label>
-  )
-}
-
-function IbanAutomationBadge({ status }: { status: IbanAutomationStatus }) {
-  const config = {
-    idle: {
-      label: 'Otomasyon: veri bekliyor',
-      className: 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-300',
-      icon: <Bot size={12} />,
-    },
-    working: {
-      label: 'Otomasyon: cozuluyor',
-      className: 'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900/60 dark:bg-blue-950/30 dark:text-blue-300',
-      icon: <Loader2 size={12} className="animate-spin" />,
-    },
-    done: {
-      label: 'Otomasyon: OK',
-      className: 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-300',
-      icon: <CheckCircle2 size={12} />,
-    },
-    no_data: {
-      label: 'Otomasyon: veri bulunamadi',
-      className: 'border-gray-200 bg-gray-50 text-gray-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300',
-      icon: <Bot size={12} />,
-    },
-  }[status]
-
-  return (
-    <span
-      title={config.label}
-      className={cn(
-        "inline-flex h-5 min-w-[118px] items-center justify-center gap-1 rounded-full border px-2 text-[10px] font-semibold leading-none transition-colors",
-        status === 'working' && "animate-pulse",
-        config.className
-      )}
-    >
-      {config.icon}
-      {config.label.replace('Otomasyon: ', '')}
-    </span>
   )
 }
 

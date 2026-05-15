@@ -119,11 +119,19 @@ Before committing, verify:
 - [ ] Using `defaultView: 'list' | 'card'` (not 'default')
 - [ ] No `entityName`, `groupByCategory`, `showExport`, `columnSelector`, `views` props
 - [ ] `onRowClick` handler updates page state to 'view'
+- [ ] Row click affordance is left to SmartDataTable; no page-specific hover styling
+- [ ] `actions`/`İşlemler` column uses `key: 'actions'` or `type: 'actions'` so action clicks do not open the row
 
 ### EntityForm / Custom Forms
 - [ ] Mode type: `FormMode = 'create' | 'view' | 'edit'`
 - [ ] Using `onSave` and `onCancel` callbacks
 - [ ] Form handles its own state internally
+- [ ] Form receives `loadStages={formLoadStages}` from the progressive loading helper
+- [ ] Other fields populated by a field input/lookup expose the standard `AutomationBadge`; EntityForm fields use `automation` metadata or `type: 'iban'`
+- [ ] Row click opens with list snapshot first; detail, master and references complete progressively
+- [ ] Page uses `useEntityAccess` for module, permission and workflow-ready access decisions
+- [ ] Cross-module fields use `ModuleDependencyGate` or `EntityForm moduleDependencies` instead of failing or disappearing silently
+- [ ] Backend mutations still call `requirePermission`; frontend permissions are only UI gating
 
 ---
 

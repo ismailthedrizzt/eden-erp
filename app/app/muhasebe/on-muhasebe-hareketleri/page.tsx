@@ -10,6 +10,7 @@ import { usePermissions } from '@/lib/security/permissionStore'
 import { preAccountingService } from '@/lib/modules/accounting/pre-accounting/preAccounting.service'
 import { ACCOUNTING_PERMISSIONS } from '@/lib/modules/accounting/shared/accounting.permissions'
 import { MOVEMENT_STATUSES, MOVEMENT_TYPES, PAYMENT_METHODS, ROW_HEALTH_LABELS } from '@/lib/modules/accounting/shared/accounting.constants'
+import { createProgressiveFormLoadStages } from '@/lib/forms/progressiveFormLoading'
 import type { ListMeta } from '@/lib/api/listEndpoint'
 import type { AccountMovementRow } from '@/lib/modules/accounting/shared/accounting.types'
 
@@ -36,6 +37,8 @@ export default function PreAccountingMovementsPage() {
   const [saving, setSaving] = useState(false)
   const [refs, setRefs] = useState<{ persons: any[]; organizations: any[]; companies: any[] }>({ persons: [], organizations: [], companies: [] })
   const [refsLoaded, setRefsLoaded] = useState(false)
+  const [refsLoading, setRefsLoading] = useState(false)
+  const [refsError, setRefsError] = useState(false)
   const [toast, setToast] = useState<{ type: 'success' | 'error' | 'warning'; title?: string; message: string } | null>(null)
   const [listQuery, setListQuery] = useState({ page: 1, pageSize: 50, search: '', sort: 'movement_date', direction: 'desc' as 'asc' | 'desc' })
   const [listMeta, setListMeta] = useState<ListMeta>({ page: 1, pageSize: 50, total: 0, totalPages: 1 })
@@ -53,9 +56,18 @@ export default function PreAccountingMovementsPage() {
 
   const loadReferences = async () => {
     if (refsLoaded) return
+    setRefsLoading(true)
+    setRefsError(false)
+    try {
     const refPayload = await preAccountingService.getReferences()
     setRefs({ persons: refPayload.persons || [], organizations: refPayload.organizations || [], companies: refPayload.companies || [] })
     setRefsLoaded(true)
+    } catch (error) {
+      setRefsError(true)
+      throw error
+    } finally {
+      setRefsLoading(false)
+    }
   }
 
   useEffect(() => {
@@ -79,6 +91,14 @@ export default function PreAccountingMovementsPage() {
   })), [rows])
 
   const formMode: FormMode = pageState === 'create' ? 'create' : pageState === 'edit' ? 'edit' : 'view'
+  const formLoadStages = createProgressiveFormLoadStages({
+    mode: formMode,
+    hasSnapshot: pageState !== 'create' && !!selected,
+    detailReady: pageState !== 'create' && !!selected,
+    referencesLoading: refsLoading,
+    referencesReady: refsLoaded,
+    referencesError: refsError,
+  })
   const personOptions = refs.persons.map(person => ({ value: person.id, label: `${person.full_name}${person.national_id ? ` (${person.national_id})` : ''}` }))
   const organizationOptions = refs.organizations.map(org => ({ value: org.id, label: `${org.legal_name}${org.tax_number ? ` (${org.tax_number})` : ''}` }))
   const companyOptions = refs.companies.map(company => ({ value: company.id, label: company.kisa_unvan || company.ticari_unvan }))
@@ -167,7 +187,7 @@ export default function PreAccountingMovementsPage() {
         </div>
       ) : (
         <div className="mt-6">
-          <EntityForm mode={formMode} entityName="Ön Muhasebe Hareketleri" entityNameSingular="Hareket" heroFields={heroFields} tabs={tabs} data={selected || { movement_date: new Date().toISOString().slice(0, 10), currency: 'TRY', exchange_rate: 1, status: 'Taslak', document_status: 'none', invoice_match_status: 'none', bank_match_status: 'none', reconciliation_status: 'none', row_health_status: 'missing_document' }} saving={saving} onSave={save} onCancel={() => setPageState('list')} onModeChange={(nextMode) => setPageState(nextMode)} canCreate={can(ACCOUNTING_PERMISSIONS.preAccountingInsert)} canEdit={can(ACCOUNTING_PERMISSIONS.preAccountingEdit)} enableHistory />
+          <EntityForm mode={formMode} entityName="Ön Muhasebe Hareketleri" entityNameSingular="Hareket" heroFields={heroFields} tabs={tabs} data={selected || { movement_date: new Date().toISOString().slice(0, 10), currency: 'TRY', exchange_rate: 1, status: 'Taslak', document_status: 'none', invoice_match_status: 'none', bank_match_status: 'none', reconciliation_status: 'none', row_health_status: 'missing_document' }} saving={saving} loadStages={formLoadStages} onSave={save} onCancel={() => setPageState('list')} onModeChange={(nextMode) => setPageState(nextMode)} canCreate={can(ACCOUNTING_PERMISSIONS.preAccountingInsert)} canEdit={can(ACCOUNTING_PERMISSIONS.preAccountingEdit)} enableHistory />
         </div>
       )}
     </div>

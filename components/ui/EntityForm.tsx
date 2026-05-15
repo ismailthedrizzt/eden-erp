@@ -24,18 +24,20 @@
  */
 
 import { useState, useEffect, ReactNode, useCallback, useMemo } from 'react'
-import { Save, Loader2, Edit3, History, Clock, Plus, Trash2, Upload, Briefcase, LogOut, Building2, UserRound, FileText, RotateCcw } from 'lucide-react'
+import { Save, Loader2, Edit3, History, Clock, Plus, Trash2, Upload, Briefcase, LogOut, Building2, UserRound, FileText, RotateCcw, CheckCircle2, Circle, AlertCircle } from 'lucide-react'
 import { cn, formatPhoneInput, normalizeEmailInput, resolveTurkishIban } from '@/lib/utils'
 import { ImageSlotUploader, ImageSlot, SlotImage } from './ImageSlotUploader'
 import { DocumentSlotUploader, DocumentSlot, SlotDocument } from './DocumentSlotUploader'
 import { IBANInput } from './IBANInput'
 import { MasterIdentityGate } from './MasterIdentityGate'
+import { AutomationBadge, type AutomationBadgeStatus } from './AutomationBadge'
 import Modal from './Modal'
 import type { IdentityGateConfig, IdentityGateResolveResult } from '@/lib/identity-gate'
 import { COUNTRY_OPTIONS, normalizeCountryId } from '@/lib/reference/country-nationalities'
 import { isSoftDeletedRecord } from '@/lib/forms/entityState'
 import { companyService } from '@/lib/services/companyService'
 import { organizationService } from '@/lib/services/organizationService'
+import { ModuleDependencyNotice, type EntityAccessState, type ModuleDependency } from '@/lib/access/entityAccess'
 
 /** Historical value entry */
 export interface HistoryEntry {
@@ -73,8 +75,21 @@ export interface FormField {
   }
   /** History entries for this field */
   history?: HistoryEntry[]
+  /** Marks fields that trigger automation and fill or derive other form fields. */
+  automation?: FieldAutomationConfig
   /** Custom render function */
   render?: (props: { value: any; onChange: (val: any) => void; readOnly: boolean; data: Record<string, any>; mode: FormMode }) => ReactNode
+}
+
+export interface FieldAutomationConfig {
+  status?: AutomationBadgeStatus | ((data: Record<string, any>, field: FormField) => AutomationBadgeStatus)
+  sourceFields?: string[]
+  targetFields?: string[]
+  title?: string
+  idleLabel?: string
+  workingLabel?: string
+  doneLabel?: string
+  noDataLabel?: string
 }
 
 interface FieldCondition {
@@ -102,6 +117,16 @@ export interface FormTab {
 
 /** Form modes */
 export type FormMode = 'create' | 'view' | 'edit' | 'passive'
+
+export type FormLoadStageKey = 'snapshot' | 'detail' | 'master' | 'references'
+export type FormLoadStageStatus = 'idle' | 'loading' | 'ready' | 'error' | 'skipped'
+
+export interface FormLoadStage {
+  key: FormLoadStageKey
+  label: string
+  status: FormLoadStageStatus
+  description?: string
+}
 
 /** EntityForm props */
 export interface EntityFormProps {
@@ -137,6 +162,12 @@ export interface EntityFormProps {
   
   /** Whether the user has create permission (future: auth integration) */
   canCreate?: boolean
+
+  /** Central page/module/permission state for scalable ERP access control. */
+  access?: Partial<EntityAccessState>
+
+  /** Missing optional module dependencies shown as field-level notices instead of crashing forms. */
+  moduleDependencies?: ModuleDependency[]
   
   /** Custom hero left panel content (Photo, Documents, etc.) - overrides default */
   heroLeftPanel?: ReactNode
@@ -197,6 +228,9 @@ export interface EntityFormProps {
   
   /** Form-level error message */
   error?: string | null
+
+  /** Progressive loading stages for snapshot, detail, master, and reference data. */
+  loadStages?: FormLoadStage[]
   externalFieldErrors?: Record<string, string>
   onValidationError?: (missingFields: string[]) => void
   
@@ -512,6 +546,41 @@ function formatGender(value: unknown) {
 function isMasterIdentityHeroField(field: FormField) {
   if (field.type === 'section') return false
   return MASTER_IDENTITY_FIELD_NAMES.has(field.name)
+}
+
+function FormLoadStages({ stages }: { stages?: FormLoadStage[] }) {
+  const visibleStages = (stages || []).filter(stage => stage.status !== 'idle' && stage.status !== 'skipped')
+  if (!visibleStages.length) return null
+
+  return (
+    <div className="m-4 rounded-lg border border-sky-100 bg-sky-50/70 p-3 dark:border-sky-900/50 dark:bg-sky-950/20">
+      <div className="flex flex-wrap items-center gap-2">
+        {visibleStages.map(stage => (
+          <div
+            key={stage.key}
+            className={cn(
+              "inline-flex min-h-8 items-center gap-2 rounded-md border px-2.5 py-1.5 text-xs font-medium transition-colors",
+              stage.status === 'ready' && "border-emerald-200 bg-white text-emerald-700 dark:border-emerald-900/70 dark:bg-gray-900 dark:text-emerald-300",
+              stage.status === 'loading' && "border-sky-200 bg-white text-sky-700 dark:border-sky-900/70 dark:bg-gray-900 dark:text-sky-300",
+              stage.status === 'error' && "border-red-200 bg-white text-red-700 dark:border-red-900/70 dark:bg-gray-900 dark:text-red-300",
+            )}
+            title={stage.description}
+          >
+            {stage.status === 'ready' ? (
+              <CheckCircle2 size={14} />
+            ) : stage.status === 'loading' ? (
+              <Loader2 size={14} className="animate-spin" />
+            ) : stage.status === 'error' ? (
+              <AlertCircle size={14} />
+            ) : (
+              <Circle size={14} />
+            )}
+            <span>{stage.label}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
 }
 
 function buildIdentityResultFromExistingData(
@@ -1593,6 +1662,8 @@ export function EntityForm({
   deleting = false,
   canEdit = true,
   canCreate = true,
+  access,
+  moduleDependencies = access?.missingDependencies || [],
   heroLeftPanel,
   showHeroHeader = true,
   showMasterSummaryBadge = true,
@@ -1612,6 +1683,7 @@ export function EntityForm({
   onFieldChange,
   additionalActions,
   error,
+  loadStages,
   externalFieldErrors,
   onValidationError,
   className,
@@ -1807,8 +1879,12 @@ export function EntityForm({
   const isReadOnly = mode === 'view' || mode === 'passive'
   const isCreate = mode === 'create'
   const isEdit = mode === 'edit'
-  const canActivateRecord = isPassive && !!onActivate
-  const canPassivateRecord = !isPassive && canEdit && !!onDelete
+  const effectiveCanCreate = access?.canInsert ?? canCreate
+  const effectiveCanEdit = access?.canEdit ?? canEdit
+  const effectiveCanPassivate = access?.canPassivate ?? canEdit
+  const effectiveCanApprove = access?.canApprove ?? false
+  const canActivateRecord = isPassive && effectiveCanPassivate && !!onActivate
+  const canPassivateRecord = !isPassive && effectiveCanPassivate && !!onDelete
   const slotLoaderMode = isReadOnly ? 'view' : isCreate ? 'insert' : 'update'
   const isIdentityGateEnabled = !!identityGate?.enabled
   const effectiveIdentityGateResult = identityGateResult || buildIdentityResultFromExistingData(identityGate, formData)
@@ -2245,6 +2321,7 @@ export function EntityForm({
           ? 'col-span-1'
           : 'col-span-2 md:col-span-1'
     const fieldDisabled = isReadOnly || isIdentityGateLocked || (field.disabledWhen ? matchesCondition(field.disabledWhen, formData) : false)
+    const automationState = getFieldAutomationState(field, formData)
 
     if (field.type === 'section') {
       return (
@@ -2511,6 +2588,16 @@ export function EntityForm({
           {(showHistoryIcon || enableHistory) && field.history && field.history.length > 0 && (
             <FieldHistoryIndicator history={field.history} />
           )}
+          {automationState && (
+            <AutomationBadge
+              status={automationState.status}
+              title={automationState.title}
+              idleLabel={automationState.idleLabel}
+              workingLabel={automationState.workingLabel}
+              doneLabel={automationState.doneLabel}
+              noDataLabel={automationState.noDataLabel}
+            />
+          )}
         </div>
         {validationState.label && (
           <span className="pointer-events-none absolute right-2 top-7 z-10 rounded border border-red-300 bg-white px-1.5 py-0.5 text-[10px] font-medium leading-none text-red-600 dark:border-red-700 dark:bg-gray-900 dark:text-red-400">
@@ -2585,6 +2672,16 @@ export function EntityForm({
       {error && (
         <div className="m-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
           <p className="text-sm text-red-700 dark:text-red-400">{error}</p>
+        </div>
+      )}
+
+      <FormLoadStages stages={loadStages} />
+
+      {moduleDependencies.length > 0 && (
+        <div className="m-4 space-y-2">
+          {moduleDependencies.map(dependency => (
+            <ModuleDependencyNotice key={dependency.module} dependency={dependency} />
+          ))}
         </div>
       )}
 
@@ -2713,7 +2810,7 @@ export function EntityForm({
                   {canActivateRecord ? 'Aktive Et' : 'Pasife Al'}
                 </button>
               )}
-              {isReadOnly && canEdit && !isPassive && (
+              {isReadOnly && effectiveCanEdit && !isPassive && (
                 <button
                   onClick={() => handleModeChange('edit')}
                   className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
@@ -2734,13 +2831,18 @@ export function EntityForm({
                   </button>
                   <button
                     onClick={handleSave}
-                    disabled={saving || isIdentityGateLocked || (isCreate && !canCreate)}
+                    disabled={saving || isIdentityGateLocked || (isCreate && !effectiveCanCreate) || (isEdit && !effectiveCanEdit)}
                     className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium disabled:opacity-50"
                   >
                     {saving ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} />}
                     {isCreate ? 'Oluştur' : 'Güncelle'}
                   </button>
                 </>
+              )}
+              {isReadOnly && effectiveCanApprove && (
+                <span className="rounded-lg border border-emerald-200 px-3 py-2 text-xs font-medium text-emerald-700 dark:border-emerald-900/60 dark:text-emerald-300">
+                  Onay yetkisi var
+                </span>
               )}
             </div>
           </div>
@@ -2808,6 +2910,60 @@ export function EntityForm({
       )}
     </div>
   )
+}
+
+function getFieldAutomationState(field: FormField, data: Record<string, any>): (FieldAutomationConfig & { status: AutomationBadgeStatus }) | null {
+  const automation = field.automation || getDefaultFieldAutomation(field)
+  if (!automation) return null
+
+  if (typeof automation.status === 'function') {
+    return { ...automation, status: automation.status(data, field) }
+  }
+
+  if (automation.status) {
+    return { ...automation, status: automation.status }
+  }
+
+  if (field.type === 'iban' || field.name === 'beneficiary_iban' || field.name === 'beneficiary_iban_or_account_no') {
+    return { ...automation, status: getIbanAutomationStatus(data[field.name]) }
+  }
+
+  const sourceFields = automation.sourceFields?.length ? automation.sourceFields : [field.name]
+  const targetFields = automation.targetFields || []
+  const hasSourceValue = sourceFields.some(sourceField => hasNonEmptyValue(data[sourceField]))
+  if (!hasSourceValue) return { ...automation, status: 'idle' }
+  if (targetFields.length === 0) return { ...automation, status: 'working' }
+  return {
+    ...automation,
+    status: targetFields.some(targetField => hasNonEmptyValue(data[targetField])) ? 'done' : 'no_data',
+  }
+}
+
+function getDefaultFieldAutomation(field: FormField): FieldAutomationConfig | null {
+  if (field.type !== 'iban' && field.name !== 'beneficiary_iban' && field.name !== 'beneficiary_iban_or_account_no') return null
+  return {
+    sourceFields: [field.name],
+    targetFields: ['beneficiary_bank_name', 'beneficiary_bank_code', 'beneficiary_account_no', 'beneficiary_swift_bic'],
+    title: 'IBAN girilince banka, hesap ve SWIFT alanlari otomatik doldurulur.',
+    idleLabel: 'Veri bekliyor',
+    workingLabel: 'Çözülüyor',
+    doneLabel: 'OK',
+    noDataLabel: 'Veri yok',
+  }
+}
+
+function getIbanAutomationStatus(value: any): AutomationBadgeStatus {
+  const clean = String(value || '').replace(/\s/g, '').toUpperCase()
+  if (!clean) return 'idle'
+  const details = resolveTurkishIban(clean)
+  if (details && details.bankName !== 'Bilinmeyen Banka') return 'done'
+  if (clean.length < 10) return 'working'
+  return 'no_data'
+}
+
+function hasNonEmptyValue(value: any) {
+  if (Array.isArray(value)) return value.length > 0
+  return String(value ?? '').trim().length > 0
 }
 
 function isCountryField(field: string) {

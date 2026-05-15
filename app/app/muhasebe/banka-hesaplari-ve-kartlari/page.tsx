@@ -1,11 +1,12 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import Link from 'next/link'
 import { Eye, History, Landmark, Pencil, Power, Star } from 'lucide-react'
 import { PageBanner } from '@/components/ui/PageBanner'
 import Modal from '@/components/ui/Modal'
 import { SmartDataTable, type ColumnDef, type SortConfig, type WidgetDef } from '@/components/ui/SmartDataTable'
+import { AutomationBadge, type AutomationBadgeStatus } from '@/components/ui/AutomationBadge'
 import { Toast } from '@/components/ui/Toast'
 import { usePermissions } from '@/lib/security/permissionStore'
 import { getTurkishIbanBanks, resolveTurkishIban } from '@/lib/utils'
@@ -330,6 +331,7 @@ function RecordForm({
   const canEditAccountFields = !readOnly && hasCompany && form.record_type === 'account'
   const canEditCardFields = !readOnly && hasCompany && form.record_type === 'card' && !isCreate
   const resolvedIban = isAccount ? resolveTurkishIban(form.iban || '') : null
+  const ibanAutomationStatus = getBankAccountIbanAutomationStatus(form.iban, resolvedIban)
   const canSaveRecord = !saving && hasCompany && (!isCreate || (isAccount && !!resolvedIban))
   const handleIbanChange = (value: string) => {
     const normalizedIban = value.toUpperCase().replace(/[^A-Z0-9]/g, '')
@@ -362,7 +364,21 @@ function RecordForm({
         <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           <SelectField label="Şirket" value={form.company_id || ''} options={[['', 'Şirket seçiniz'], ...companies.map(company => [company.value, company.label])]} disabled={readOnly} onChange={value => onChange({ company_id: value || null })} />
           <SelectField label="Kayıt Tipi" value={form.record_type} options={[['account', 'Hesap'], ['card', 'Kart']]} disabled={!canEditRecordType} onChange={value => onChange({ record_type: value as RecordType })} />
-          {isAccount && <TextField label="IBAN" value={formatIbanInput(form.iban)} disabled={!canEditAccountFields} onChange={handleIbanChange} />}
+          {isAccount && (
+            <TextField
+              label="IBAN"
+              value={formatIbanInput(form.iban)}
+              disabled={!canEditAccountFields}
+              onChange={handleIbanChange}
+              automationBadge={(
+                <AutomationBadge
+                  status={ibanAutomationStatus}
+                  title="IBAN girilince banka, hesap ve şube alanları otomatik doldurulur."
+                  workingLabel="Çözülüyor"
+                />
+              )}
+            />
+          )}
           <SelectField label="Durum" value={form.status || 'active'} options={STATUSES} disabled={readOnly} onChange={value => onChange({ status: value })} />
         </div>
       </section>
@@ -425,13 +441,24 @@ function ActionButton({ children, icon, onClick }: { children: React.ReactNode; 
   return <button className="inline-flex items-center gap-1 rounded bg-gray-100 px-2 py-1 text-[11px] text-gray-700 dark:bg-gray-800 dark:text-gray-200" onClick={(event) => { event.stopPropagation(); onClick() }}>{icon}{children}</button>
 }
 
-function TextField({ label, value, onChange, readOnly, disabled, type = 'text' }: { label: string; value: any; onChange: (value: string) => void; readOnly?: boolean; disabled?: boolean; type?: string }) {
+function TextField({ label, value, onChange, readOnly, disabled, type = 'text', automationBadge }: { label: string; value: any; onChange: (value: string) => void; readOnly?: boolean; disabled?: boolean; type?: string; automationBadge?: ReactNode }) {
   return (
     <label className="block">
-      <span className="text-xs font-medium text-gray-500">{label}</span>
+      <span className="flex items-center gap-2 text-xs font-medium text-gray-500">
+        {label}
+        {automationBadge}
+      </span>
       <input type={type} value={value ?? ''} readOnly={readOnly} disabled={disabled} onChange={event => onChange(event.target.value)} className="mt-1 h-10 w-full rounded-md border border-gray-200 bg-white px-3 text-sm text-gray-900 outline-none focus:border-blue-400 read-only:bg-gray-50 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400 dark:border-gray-700 dark:bg-gray-950 dark:text-white dark:read-only:bg-gray-900 dark:disabled:bg-gray-900 dark:disabled:text-gray-500" />
     </label>
   )
+}
+
+function getBankAccountIbanAutomationStatus(value: any, resolvedIban: ReturnType<typeof resolveTurkishIban>): AutomationBadgeStatus {
+  const clean = String(value || '').replace(/\s/g, '').toUpperCase()
+  if (!clean) return 'idle'
+  if (resolvedIban) return 'done'
+  if (clean.length < 10) return 'working'
+  return 'no_data'
 }
 
 function SelectField({ label, value, options, onChange, disabled }: { label: string; value: any; options: string[][]; onChange: (value: string) => void; disabled?: boolean }) {
