@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { createServiceClient } from '@/lib/supabase/server'
-import { listMeta, listRange, parseListQuery } from '@/lib/api/listEndpoint'
+import { listMetaFromRows, listRange, parseListQuery } from '@/lib/api/listEndpoint'
 
 const SettingsSchema = z.object({
   company_id: z.string().uuid().optional().nullable(),
@@ -67,20 +67,21 @@ export async function GET(request: NextRequest) {
 
   let query = supabase
     .from('v_account_cards')
-    .select(ACCOUNT_CARD_VIEW_SELECT, { count: 'exact' })
+    .select(ACCOUNT_CARD_VIEW_SELECT)
     .order(sortMap[listQuery.sort || ''] || 'display_name', { ascending: listQuery.direction !== 'desc' })
     .range(from, to)
 
   if (companyId) query = query.eq('company_id', companyId)
   if (search) query = query.or(`display_name.ilike.%${search}%,identity_no.ilike.%${search}%,tax_no.ilike.%${search}%,account_code.ilike.%${search}%`)
 
-  const { data, error, count } = await query
+  const { data, error } = await query
   if (error) {
     if (error.message.includes('v_account_cards')) return NextResponse.json({ data: [], warning: 'Muhasebe migration uygulanmalı.' })
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  return NextResponse.json({ data: data || [], meta: listMeta(listQuery, count ?? 0) })
+  const rows = data || []
+  return NextResponse.json({ data: rows, meta: listMetaFromRows(listQuery, rows.length) })
 }
 
 export async function POST(request: NextRequest) {

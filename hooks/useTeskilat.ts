@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { organizationService } from '@/lib/services/organizationService'
 import type { Birim, NormKadro } from '@/types'
 
@@ -8,14 +8,16 @@ export function useTeskilat() {
   const [birimler, setBirimler] = useState<Birim[]>([])
   const [kadrolar, setKadrolar] = useState<NormKadro[]>([])
   const [loading, setLoading] = useState(true)
+  const hasDataRef = useRef(false)
 
   useEffect(() => {
     async function fetch() {
-      setLoading(true)
+      setLoading(previous => !hasDataRef.current ? true : previous)
       try {
         const result = await organizationService.list()
         setBirimler(result.birimler ?? [])
         setKadrolar(result.kadrolar ?? [])
+        hasDataRef.current = true
       } finally {
         setLoading(false)
       }

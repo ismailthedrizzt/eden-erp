@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { createServiceClient } from '@/lib/supabase/server'
-import { listMeta, listRange, parseListQuery } from '@/lib/api/listEndpoint'
+import { listMetaFromRows, listRange, parseListQuery } from '@/lib/api/listEndpoint'
 
 const MovementSchema = z.object({
   company_id: z.string().uuid().optional().nullable(),
@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
       performed_by:persons!account_movements_performed_by_person_id_fkey(id,full_name),
       counterparty_person:persons!account_movements_counterparty_person_id_fkey(id,full_name),
       counterparty_organization:organizations!account_movements_counterparty_organization_id_fkey(id,legal_name)
-    `, { count: 'exact' })
+    `)
     .eq('is_deleted', false)
     .order(sortMap[listQuery.sort || ''] || 'movement_date', { ascending: listQuery.direction !== 'desc' })
     .range(from, to)
@@ -58,7 +58,7 @@ export async function GET(request: NextRequest) {
   if (companyId) query = query.eq('company_id', companyId)
   if (linkedOwnershipTransactionId) query = query.eq('linked_ownership_transaction_id', linkedOwnershipTransactionId)
 
-  const { data, error, count } = await query
+  const { data, error } = await query
   if (error) {
     if (error.message.includes('account_movements')) return NextResponse.json({ data: [], warning: 'Muhasebe migration uygulanmalı.' })
     return NextResponse.json({ error: error.message }, { status: 500 })
@@ -71,7 +71,7 @@ export async function GET(request: NextRequest) {
       counterparty_name: row.counterparty_person?.full_name || row.counterparty_organization?.legal_name || null,
       partner_name: row.counterparty_person?.full_name || row.counterparty_organization?.legal_name || null,
     })),
-    meta: listMeta(listQuery, count ?? 0),
+    meta: listMetaFromRows(listQuery, data?.length ?? 0),
   })
 }
 

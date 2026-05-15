@@ -4,7 +4,7 @@ import { z } from 'zod'
 import { hydrateMasterContact, stripMasterDataForRoleProfile, syncMasterContact } from '@/lib/identity/masterContact'
 import { normalizeCountryId } from '@/lib/reference/country-nationalities'
 import { EntityBankAccountsService } from '@/lib/modules/entity-bank-accounts/entityBankAccounts.service'
-import { listMeta, listRange, parseListQuery } from '@/lib/api/listEndpoint'
+import { listMetaFromRows, listRange, parseListQuery } from '@/lib/api/listEndpoint'
 
 const PartnerSchema = z.object({
   company_id: z.string().uuid().optional(),
@@ -141,7 +141,7 @@ export async function GET(request: NextRequest) {
 
   let query = supabase
     .from('sirket_ortaklar')
-    .select('id,sirket_id,company_id,person_id,organization_id,owner_kind,ortak_tipi,display_name,ortak_adi,identity_number,tckn_vkn,share_ratio,hisse_orani,voting_ratio,profit_ratio,start_date,end_date,status,is_deleted,source_type,source_id,created_at', { count: 'exact' })
+    .select('id,sirket_id,company_id,person_id,organization_id,owner_kind,ortak_tipi,display_name,ortak_adi,identity_number,tckn_vkn,share_ratio,hisse_orani,voting_ratio,profit_ratio,start_date,end_date,status,is_deleted,source_type,source_id,created_at')
     .order(sortColumn, { ascending: listQuery.direction !== 'desc' })
     .range(from, to)
 
@@ -150,10 +150,11 @@ export async function GET(request: NextRequest) {
   if (!includePassive) query = query.eq('is_deleted', false)
   if (listQuery.search) query = query.or(`display_name.ilike.%${listQuery.search}%,ortak_adi.ilike.%${listQuery.search}%,identity_number.ilike.%${listQuery.search}%,tckn_vkn.ilike.%${listQuery.search}%`)
 
-  const { data, error, count } = await query
+  const { data, error } = await query
   if (error) return NextResponse.json({ error: error.message, code: error.code || 'FETCH_FAILED' }, { status: 500 })
 
-  return NextResponse.json({ data: data || [], meta: listMeta(listQuery, count ?? 0) })
+  const rows = data || []
+  return NextResponse.json({ data: rows, meta: listMetaFromRows(listQuery, rows.length) })
 }
 
 export async function POST(request: NextRequest) {

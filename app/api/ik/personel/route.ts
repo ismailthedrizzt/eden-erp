@@ -3,7 +3,7 @@ import { createServiceClient } from '@/lib/supabase/server'
 import { z } from 'zod'
 import { isTurkishNationality, normalizeCountryId } from '@/lib/reference/country-nationalities'
 import { hydrateMasterContact, syncMasterContact } from '@/lib/identity/masterContact'
-import { listMeta, listRange, parseListQuery } from '@/lib/api/listEndpoint'
+import { listMetaFromRows, listRange, parseListQuery } from '@/lib/api/listEndpoint'
 import { getServerResponseCache, serverListCacheKey, setServerResponseCache } from '@/lib/api/serverResponseCache'
 import { fetchCompanyNames } from '../../accounting/_banking'
 
@@ -186,7 +186,7 @@ export async function GET(request: NextRequest) {
 
     let query = supabase
       .from('employees')
-      .select(selectQuery, { count: 'planned' })
+      .select(selectQuery)
       .order(sortColumn, { ascending: listQuery.direction !== 'desc' })
       .range(from, to)
 
@@ -198,7 +198,6 @@ export async function GET(request: NextRequest) {
     const result = await query
     data = result.data
     error = result.error
-    ;(listQuery as any).__count = result.count ?? 0
 
     const missingColumn = missingEmployeeColumn(error, enabledOptionalColumns)
     if (missingColumn) {
@@ -240,8 +239,8 @@ export async function GET(request: NextRequest) {
     sgk_status: row.sgk_giris ? 'active' : 'pending',
     status: row.calisma_durumu || null,
   }))
-  const payload = { data: rows, meta: listMeta(listQuery, (listQuery as any).__count ?? 0) }
-  setServerResponseCache(cacheKey, payload)
+  const payload = { data: rows, meta: listMetaFromRows(listQuery, rows.length) }
+  setServerResponseCache(cacheKey, payload, 60_000)
   return NextResponse.json(payload)
 }
 
@@ -249,7 +248,7 @@ function lightweightImageUrl(value: unknown) {
   if (typeof value !== 'string') return null
   const photoUrl = value.trim()
   if (!photoUrl) return null
-  if (photoUrl.startsWith('data:') && photoUrl.length > 500_000) return null
+  if (photoUrl.startsWith('data:') && photoUrl.length > 20_000) return null
   return photoUrl
 }
 

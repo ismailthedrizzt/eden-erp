@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
-import { listMeta, listRange, parseListQuery } from '@/lib/api/listEndpoint'
+import { listMetaFromRows, listRange, parseListQuery } from '@/lib/api/listEndpoint'
 
 const missingTableCodes = ['42P01', 'PGRST205']
-const VEHICLE_SELECT = 'id,company_id,category,vehicle_type,brand,manufacturer,model,model_year,color,registration_no,vin_serial_no,status,ownership_type,assigned_to_employee_id,operator_employee_id,location_name,current_usage_value,usage_unit,fuel_type,insurance_policy_no,insurance_expiry_date,inspection_expiry_date,maintenance_due_date,purchase_date,lease_start_date,lease_end_date,budget_code,cost_center,notes,api_notes,media,documents,history,is_deleted,created_at,updated_at'
+const VEHICLE_SELECT = 'id,company_id,category,vehicle_type,brand,manufacturer,model,model_year,color,registration_no,vin_serial_no,status,ownership_type,assigned_to_employee_id,operator_employee_id,location_name,current_usage_value,usage_unit,fuel_type,insurance_policy_no,insurance_expiry_date,inspection_expiry_date,maintenance_due_date,purchase_date,lease_start_date,lease_end_date,budget_code,cost_center,is_deleted,created_at,updated_at'
 const EMPLOYEE_OPTION_SELECT = 'id,ad,soyad,unvan,email'
 const COMPANY_OPTION_SELECT = 'id,ticari_unvan,kisa_unvan'
 const trackedFields = [
@@ -49,9 +49,9 @@ export async function GET(request: NextRequest) {
     })
   }
 
-  const { data: vehicles, error, count } = await supabase
+  const { data: vehicles, error } = await supabase
     .from('company_vehicles')
-    .select(VEHICLE_SELECT, { count: 'exact' })
+    .select(VEHICLE_SELECT)
     .eq('is_deleted', false)
     .order(sortColumn, { ascending: listQuery.direction !== 'desc' })
     .range(from, to)
@@ -90,7 +90,7 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({
     vehicles: enrichedVehicles,
     data: enrichedVehicles,
-    meta: listMeta(listQuery, count ?? 0),
+    meta: listMetaFromRows(listQuery, enrichedVehicles.length),
     employees: includeReferences ? employees || [] : [],
     companies: includeReferences ? companies || [] : [],
   })

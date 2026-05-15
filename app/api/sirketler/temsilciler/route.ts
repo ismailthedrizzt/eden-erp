@@ -4,7 +4,7 @@ import { z } from 'zod'
 import { hydrateMasterContact, stripMasterDataForRoleProfile, syncMasterContact } from '@/lib/identity/masterContact'
 import { normalizeCountryId } from '@/lib/reference/country-nationalities'
 import { EntityBankAccountsService } from '@/lib/modules/entity-bank-accounts/entityBankAccounts.service'
-import { listMeta, listRange, parseListQuery } from '@/lib/api/listEndpoint'
+import { listMetaFromRows, listRange, parseListQuery } from '@/lib/api/listEndpoint'
 
 const RepresentativeSchema = z.object({
   company_id: z.string().uuid().optional(),
@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
 
   let query = supabase
     .from('sirket_temsilciler')
-    .select('id,sirket_id,company_id,person_id,organization_id,person_kind,source_type,source_id,display_name,ad_soyad,authority_types,gorev,yetki_turu,status,start_date,end_date,signature_type,transaction_limit,currency,requires_joint_signature,can_approve_alone,is_deleted,created_at', { count: 'exact' })
+    .select('id,sirket_id,company_id,person_id,organization_id,person_kind,source_type,source_id,display_name,ad_soyad,authority_types,gorev,yetki_turu,status,start_date,end_date,signature_type,transaction_limit,currency,requires_joint_signature,can_approve_alone,is_deleted,created_at')
     .order(sortColumn, { ascending: listQuery.direction !== 'desc' })
     .range(from, to)
 
@@ -68,10 +68,11 @@ export async function GET(request: NextRequest) {
   if (!includePassive) query = query.eq('is_deleted', false)
   if (listQuery.search) query = query.or(`display_name.ilike.%${listQuery.search}%,ad_soyad.ilike.%${listQuery.search}%,gorev.ilike.%${listQuery.search}%`)
 
-  const { data, error, count } = await query
+  const { data, error } = await query
   if (error) return NextResponse.json({ error: error.message, code: error.code || 'FETCH_FAILED' }, { status: 500 })
 
-  return NextResponse.json({ data: data || [], meta: listMeta(listQuery, count ?? 0) })
+  const rows = data || []
+  return NextResponse.json({ data: rows, meta: listMetaFromRows(listQuery, rows.length) })
 }
 
 export async function POST(request: NextRequest) {

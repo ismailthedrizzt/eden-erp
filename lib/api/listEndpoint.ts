@@ -51,6 +51,13 @@ export function listMeta(query: Pick<ListQuery, 'page' | 'pageSize'>, total: num
   }
 }
 
+export function listMetaFromRows(query: Pick<ListQuery, 'page' | 'pageSize'>, rowCount: number): ListMeta {
+  const total = rowCount < query.pageSize
+    ? (query.page - 1) * query.pageSize + rowCount
+    : query.page * query.pageSize + 1
+  return listMeta(query, total)
+}
+
 function parsePositiveInt(value: string | null, fallback: number) {
   const parsed = value ? Number.parseInt(value, 10) : fallback
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback

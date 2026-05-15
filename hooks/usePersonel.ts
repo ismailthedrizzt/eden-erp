@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useDebouncedValue } from '@/hooks/useDebouncedValue'
 import { employeeService, type EmployeeListQuery } from '@/lib/services/employeeService'
 import type { ListMeta } from '@/lib/api/listEndpoint'
@@ -37,14 +37,16 @@ export function usePersonel(filters: Filters = {}) {
   const [meta, setMeta] = useState<ListMeta>({ page: 1, pageSize: 50, total: 0, totalPages: 1 })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const hasDataRef = useRef(false)
 
   const fetch = useCallback(async (force = false) => {
-    setLoading(true)
+    setLoading(previous => force || !hasDataRef.current ? true : previous)
     setError(null)
     try {
       if (force) employeeService.invalidateList()
       const result = await employeeService.list(debouncedFilters, { useCache: !force })
       setData(result.data ?? [])
+      hasDataRef.current = true
       setMeta(result.meta ?? { page: debouncedFilters.page ?? 1, pageSize: debouncedFilters.pageSize ?? 50, total: result.data?.length ?? 0, totalPages: 1 })
     } catch (e: any) {
       console.error('usePersonel: Caught error:', e)

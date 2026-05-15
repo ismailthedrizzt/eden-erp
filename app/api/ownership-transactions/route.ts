@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { z } from 'zod'
 import { OWNERSHIP_TRANSACTION_SELECT, nextTransactionNo, validateDraft } from './_shared'
-import { listMeta, listRange, parseListQuery } from '@/lib/api/listEndpoint'
+import { listMetaFromRows, listRange, parseListQuery } from '@/lib/api/listEndpoint'
 
 const TransactionSchema = z.object({
   company_id: z.string().uuid(),
@@ -67,7 +67,7 @@ export async function GET(request: NextRequest) {
 
   let query = supabase
     .from('ownership_transactions')
-    .select(OWNERSHIP_TRANSACTION_SELECT, { count: 'exact' })
+    .select(OWNERSHIP_TRANSACTION_SELECT)
     .eq('is_deleted', false)
     .order(sortColumn, { ascending: listQuery.direction !== 'desc' })
     .range(from, to)
@@ -76,10 +76,11 @@ export async function GET(request: NextRequest) {
   if (approvalStatus) query = query.eq('approval_status', approvalStatus)
   if (listQuery.search) query = query.or(`transaction_no.ilike.%${listQuery.search}%,transaction_type.ilike.%${listQuery.search}%,notes.ilike.%${listQuery.search}%`)
 
-  const { data, error, count } = await query
+  const { data, error } = await query
   if (error) return NextResponse.json({ error: error.message, code: error.code || 'FETCH_FAILED' }, { status: 500 })
 
-  return NextResponse.json({ data: data || [], meta: listMeta(listQuery, count ?? 0) })
+  const rows = data || []
+  return NextResponse.json({ data: rows, meta: listMetaFromRows(listQuery, rows.length) })
 }
 
 export async function POST(request: NextRequest) {

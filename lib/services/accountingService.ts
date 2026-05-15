@@ -12,6 +12,7 @@ export const accountingService = {
   list(filters: CashTransactionFilters = {}, options: ApiClientOptions = {}) {
     return apiClient.get<{ data: NakitIslem[] }>('/api/muhasebe/islemler', {
       ...options,
+      staleTime: options.staleTime ?? 300_000,
       query: {
         islem_tarafi: filters.islemTarafi,
         proje: filters.proje,

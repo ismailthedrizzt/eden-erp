@@ -6,7 +6,7 @@ export const organizationService = {
     return apiClient.get<{ birimler: Birim[]; kadrolar: NormKadro[]; unitTypes?: Array<Record<string, any>> }>('/api/ik/teskilat', {
       ...options,
       skipAuth: options.skipAuth ?? true,
-      staleTime: options.staleTime ?? 120_000,
+      staleTime: options.staleTime ?? 300_000,
     })
   },
   invalidateList() {

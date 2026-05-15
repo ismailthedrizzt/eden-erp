@@ -4,7 +4,7 @@ import { z } from 'zod'
 import { hydrateMasterContact, stripMasterDataForRoleProfile, syncMasterContact } from '@/lib/identity/masterContact'
 import { normalizeCountryId } from '@/lib/reference/country-nationalities'
 import { EntityBankAccountsService } from '@/lib/modules/entity-bank-accounts/entityBankAccounts.service'
-import { listMeta, listRange, parseListQuery } from '@/lib/api/listEndpoint'
+import { listMetaFromRows, listRange, parseListQuery } from '@/lib/api/listEndpoint'
 
 const StakeholderSchema = z.object({
   company_id: z.string().uuid().optional(),
@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
 
   let query = supabase
     .from('stakeholders')
-    .select('id,company_id,person_id,organization_id,stakeholder_type,category,display_name,tax_id,phone,email,country,city,status,priority_level,internal_owner_employee_id,relationship_start_date,is_deleted,created_at', { count: 'exact' })
+    .select('id,company_id,person_id,organization_id,stakeholder_type,category,display_name,tax_id,phone,email,country,city,status,priority_level,internal_owner_employee_id,relationship_start_date,is_deleted,created_at')
     .order(sortColumn, { ascending: listQuery.direction !== 'desc' })
     .range(from, to)
 
@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
   if (!includePassive) query = query.eq('is_deleted', false)
   if (listQuery.search) query = query.or(`display_name.ilike.%${listQuery.search}%,tax_id.ilike.%${listQuery.search}%,email.ilike.%${listQuery.search}%`)
 
-  const { data, error, count } = await query
+  const { data, error } = await query
   if (error) {
     if (error.message.includes("Could not find the table")) {
       return NextResponse.json({ data: [], warning: 'stakeholders tablosu bulunamadı. Migration uygulanmalı.' })
@@ -76,7 +76,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: error.message, code: error.code || 'FETCH_FAILED' }, { status: 500 })
   }
 
-  return NextResponse.json({ data: data || [], meta: listMeta(listQuery, count ?? 0) })
+  const rows = data || []
+  return NextResponse.json({ data: rows, meta: listMetaFromRows(listQuery, rows.length) })
 }
 
 export async function POST(request: NextRequest) {

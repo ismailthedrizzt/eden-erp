@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useDebouncedValue } from '@/hooks/useDebouncedValue'
 import { accountingService } from '@/lib/services/accountingService'
 import type { NakitIslem } from '@/types'
@@ -25,14 +25,16 @@ export function useNakitIslemler(filters: Filters = {}) {
   const [data, setData] = useState<NakitIslem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const hasDataRef = useRef(false)
 
   const fetch = useCallback(async (force = false) => {
-    setLoading(true)
+    setLoading(previous => force || !hasDataRef.current ? true : previous)
     setError(null)
     try {
       if (force) accountingService.invalidateList()
       const result = await accountingService.list(debouncedFilters, { useCache: !force })
       setData(result.data ?? [])
+      hasDataRef.current = true
     } catch (e: any) {
       setError(e.message)
     } finally {

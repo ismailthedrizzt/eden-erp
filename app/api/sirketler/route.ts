@@ -3,7 +3,7 @@ import { createServiceClient } from '@/lib/supabase/server'
 import { z } from 'zod'
 import { syncMasterContact } from '@/lib/identity/masterContact'
 import { EntityBankAccountsService } from '@/lib/modules/entity-bank-accounts/entityBankAccounts.service'
-import { listMeta, listRange, parseListQuery } from '@/lib/api/listEndpoint'
+import { listMeta, listMetaFromRows, listRange, parseListQuery } from '@/lib/api/listEndpoint'
 import { getServerResponseCache, serverListCacheKey, setServerResponseCache } from '@/lib/api/serverResponseCache'
 
 const SirketSchema = z.object({
@@ -124,10 +124,7 @@ export async function GET(request: NextRequest) {
   }
 
   const rows = data || []
-  const visibleTotal = rows.length < listQuery.pageSize
-    ? (listQuery.page - 1) * listQuery.pageSize + rows.length
-    : listQuery.page * listQuery.pageSize + 1
-  const payload = { data: rows, meta: listMeta(listQuery, visibleTotal) }
+  const payload = { data: rows, meta: listMetaFromRows(listQuery, rows.length) }
   setServerResponseCache(cacheKey, payload, 60_000)
   return NextResponse.json(payload)
 }

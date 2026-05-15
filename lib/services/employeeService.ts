@@ -16,7 +16,7 @@ export const employeeService = {
     return apiClient.get<ListResponse<Personel>>('/api/ik/personel', {
       ...options,
       skipAuth: options.skipAuth ?? true,
-      staleTime: options.staleTime ?? 120_000,
+      staleTime: options.staleTime ?? 300_000,
       query: {
         page: filters.page,
         pageSize: filters.pageSize,

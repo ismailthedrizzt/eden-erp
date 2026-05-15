@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { ACCOUNTING_PERMISSIONS } from '@/lib/modules/accounting/shared/accounting.permissions'
 import { requirePermission } from '@/lib/security/serverPermissions'
-import { listMeta, listRange, parseListQuery } from '@/lib/api/listEndpoint'
+import { listMetaFromRows, listRange, parseListQuery } from '@/lib/api/listEndpoint'
 
 export async function GET(request: NextRequest) {
   const supabase = createServiceClient()
@@ -35,14 +35,14 @@ export async function GET(request: NextRequest) {
       match_status: row.match_status,
       linked_movement_id: row.matched_pre_accounting_movement_id,
     })),
-    meta: listMeta(listQuery, result.count ?? 0),
+    meta: listMetaFromRows(listQuery, result.data?.length ?? 0),
   })
 }
 
 function fetchFinancialInstitutionMovements(supabase: ReturnType<typeof createServiceClient>, filters: { matchStatus: string | null; companyId: string | null; listQuery: ReturnType<typeof parseListQuery>; from: number; to: number }) {
   let query = supabase
     .from('financial_institution_movements')
-    .select('id,bank_connection_id,company_id,source_type,source,external_transaction_id,movement_date,description,counterparty_name,direction,amount,currency,match_status,matched_pre_accounting_movement_id', { count: 'exact' })
+    .select('id,bank_connection_id,company_id,source_type,source,external_transaction_id,movement_date,description,counterparty_name,direction,amount,currency,match_status,matched_pre_accounting_movement_id')
     .eq('is_deleted', false)
     .in('source_type', ['bank_account', 'card'])
 
