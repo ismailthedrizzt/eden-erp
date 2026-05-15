@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Users } from 'lucide-react'
 import { EntityForm, FormField, FormMode, FormTab } from '@/components/ui/EntityForm'
 import { PageBanner } from '@/components/ui/PageBanner'
@@ -359,45 +359,53 @@ export default function OrtaklarPage() {
   const isSelectedPassive = isSoftDeletedRecord(selectedPartner)
   const formMode: FormMode = pageState === 'create' ? 'create' : isSelectedPassive ? 'passive' : pageState === 'edit' ? 'edit' : 'view'
 
-  const loadData = async (force = false) => {
+  const loadRelationContext = useCallback(async (force = false) => {
+    const [companyPayload, representativePayload] = await Promise.all([
+      companyService.list({ useCache: !force }),
+      companyService.representativesList({ useCache: !force }),
+    ])
+
+    setRepresentatives(Array.isArray(representativePayload.data) ? representativePayload.data : [])
+    const companyOptions: CompanyOption[] = Array.isArray(companyPayload.data) ? companyPayload.data.map((company: any) => ({
+      value: company.id,
+      label: company.ticari_unvan || company.kisa_unvan,
+      ticari_unvan: company.ticari_unvan,
+      kisa_unvan: company.kisa_unvan,
+    })) : []
+    setCompanies(companyOptions)
+    if (companyOptions.length > 0) {
+      const ownershipPayload = await companyService.currentOwnership(companyOptions.map(company => company.value), { useCache: !force })
+      setCurrentOwnershipRows(Array.isArray(ownershipPayload.data) ? ownershipPayload.data : [])
+    } else {
+      setCurrentOwnershipRows([])
+    }
+  }, [])
+
+  const loadData = useCallback(async (force = false) => {
     setLoading(true)
     setError(null)
     try {
       if (force) companyService.invalidateRelations()
-      const [partnerPayload, companyPayload, representativePayload] = await Promise.all([
-        companyService.partnersList({ includePassive, useCache: !force }),
-        companyService.list({ useCache: !force }),
-        companyService.representativesList({ useCache: !force }),
-      ])
+      const partnerPayload = await companyService.partnersList({ includePassive, useCache: !force })
 
       setPartners(Array.isArray(partnerPayload.data) ? partnerPayload.data : [])
-      setRepresentatives(Array.isArray(representativePayload.data) ? representativePayload.data : [])
-      const companyOptions: CompanyOption[] = Array.isArray(companyPayload.data) ? companyPayload.data.map((company: any) => ({
-        value: company.id,
-        label: company.ticari_unvan || company.kisa_unvan,
-        ticari_unvan: company.ticari_unvan,
-        kisa_unvan: company.kisa_unvan,
-      })) : []
-      setCompanies(companyOptions)
-      if (companyOptions.length > 0) {
-        const ownershipPayload = await companyService.currentOwnership(companyOptions.map(company => company.value), { useCache: !force })
-        setCurrentOwnershipRows(Array.isArray(ownershipPayload.data) ? ownershipPayload.data : [])
-      } else {
+      loadRelationContext(force).catch(() => {
+        setRepresentatives([])
         setCurrentOwnershipRows([])
-      }
+      })
     } catch (err: any) {
       setError(err.message)
     } finally {
       setLoading(false)
     }
-  }
+  }, [includePassive, loadRelationContext])
   useEffect(() => {
     loadData()
-  }, [includePassive])
+  }, [loadData])
 
   const companyNameById = useMemo(() => Object.fromEntries(companies.map(company => [company.value, company.label])), [companies])
   const currentOwnershipByPartnerId = useMemo(() => Object.fromEntries(currentOwnershipRows.map(row => [row.partner_id, row])), [currentOwnershipRows])
-  const representativeAuthoritiesForPartner = (partner: Record<string, any> | null | undefined) => {
+  const representativeAuthoritiesForPartner = useCallback((partner: Record<string, any> | null | undefined) => {
     if (!partner) return []
     const companyId = partner.company_id || partner.sirket_id
     const personId = partner.person_id
@@ -415,7 +423,7 @@ export default function OrtaklarPage() {
         (!!displayName && (representative.display_name === displayName || representative.ad_soyad === displayName))
       )
     )
-  }
+  }, [representatives])
 
   const tableData = useMemo(() => partners.map(partner => {
     const currentOwnership = currentOwnershipByPartnerId[partner.id]
@@ -433,7 +441,7 @@ export default function OrtaklarPage() {
     current_capital_amount: currentOwnership?.current_capital_amount ?? 0,
     representative_authorities: representativeAuthorities,
   })
-  }), [companyNameById, currentOwnershipByPartnerId, partners, representatives])
+  }), [companyNameById, currentOwnershipByPartnerId, partners, representativeAuthoritiesForPartner])
 
   const activePartners = useMemo(() => tableData.filter(partner => !isSoftDeletedRecord(partner)), [tableData])
   const widgets: WidgetDef<any>[] = useMemo(() => [

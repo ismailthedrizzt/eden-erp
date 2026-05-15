@@ -139,6 +139,8 @@ assertIncludes('app/app/sirket/ortaklik-islemleri/page.tsx', 'ownershipTransacti
 assertIncludes('lib/modules/ownership-transactions/ownershipTransactions.service.ts', 'approvedForCompany(companyId: string)', 'ownership service must expose cacheable approved transactions lookup')
 assertNotIncludes('app/app/sirket/sirketler/ortaklar/page.tsx', 'fetch(`/api/ownership-transactions?company_id=${companyId}&approval_status=approved`)', 'partner detail history must not call approved ownership transactions with raw fetch')
 assertIncludes('app/app/sirket/sirketler/ortaklar/page.tsx', 'ownershipTransactionsService.approvedForCompany(companyId)', 'partner detail history must use ownership service cache')
+assertNotIncludes('app/app/sirket/sirketler/ortaklar/page.tsx', 'const [partnerPayload, companyPayload, representativePayload] = await Promise.all([', 'partners list must not block initial table on company/representative references')
+assertIncludes('app/app/sirket/sirketler/ortaklar/page.tsx', 'const loadRelationContext = useCallback(async (force = false) =>', 'partners page must lazy-load relation context after initial table rows')
 
 assertNotIncludes('app/app/muhasebe/banka-hesaplari-ve-kartlari/page.tsx', "fetch('/api/sirketler'", 'bank accounts page must use companyService for company options')
 assertIncludes('app/app/muhasebe/banka-hesaplari-ve-kartlari/page.tsx', 'companyService.list()', 'bank accounts page must use cacheable company options')
