@@ -6,6 +6,7 @@ import { hydrateMasterContact, syncMasterContact } from '@/lib/identity/masterCo
 import { listMetaFromRows, listRange, parseListQuery } from '@/lib/api/listEndpoint'
 import { getServerResponseCache, serverListCacheKey, setServerResponseCache } from '@/lib/api/serverResponseCache'
 import { fetchCompanyNames } from '../../accounting/_banking'
+import { normalizeEmployeeAliasPayload } from '@/lib/modules/employees/employeePayload'
 
 const EmployeeSchema = z.object({
   person_id: z.string().uuid().optional().nullable(),
@@ -257,7 +258,7 @@ function lightweightImageUrl(value: unknown) {
 export async function POST(request: NextRequest) {
   const supabase = createServiceClient()
 
-  const body = omitNullishStrings(await request.json())
+  const body = normalizeEmployeeAliasPayload(omitNullishStrings(await request.json()))
   const parsed = EmployeeSchema.safeParse(body)
   if (!parsed.success) {
     return NextResponse.json({ error: 'Geçersiz veri', code: 'VALIDATION_FAILED', details: parsed.error.flatten() }, { status: 400 })

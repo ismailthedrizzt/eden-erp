@@ -33,6 +33,7 @@ import { isSoftDeletedRecord } from '@/lib/forms/entityState'
 import { createProgressiveFormLoadStages } from '@/lib/forms/progressiveFormLoading'
 import { invalidateEntityDetailCache, readEntityDetailCache, writeEntityDetailCache } from '@/lib/forms/entityDetailCache'
 import { employeeService } from '@/lib/services/employeeService'
+import { normalizeEmployeeAliasPayload } from '@/lib/modules/employees/employeePayload'
 import type { Personel } from '@/types'
 
 // Page state type following ERP pattern
@@ -370,7 +371,7 @@ export default function PersonelYonetimPage() {
   }
 
   const normalizeEmployeePayload = (raw: Record<string, any>) => {
-    const payload: Record<string, any> = {}
+    let payload: Record<string, any> = {}
 
     Object.entries(raw).forEach(([key, value]) => {
       if (key === 'cv_belgesi' && value === null) {
@@ -380,6 +381,8 @@ export default function PersonelYonetimPage() {
       if (value === '' || value === null || value === undefined) return
       payload[key] = value
     })
+
+    payload = normalizeEmployeeAliasPayload(payload)
 
     if (Array.isArray(payload.telefonlar)) {
       payload.telefonlar = payload.telefonlar.map((phone: Record<string, any>) => ({

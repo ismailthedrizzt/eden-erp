@@ -3,6 +3,7 @@ import { createServiceClient } from '@/lib/supabase/server'
 import { z } from 'zod'
 import { hydrateMasterContact, syncMasterContact } from '@/lib/identity/masterContact'
 import { normalizeCountryId } from '@/lib/reference/country-nationalities'
+import { normalizeEmployeeAliasPayload } from '@/lib/modules/employees/employeePayload'
 
 const EmployeeUpdateSchema = z.object({
   ad: z.string().min(1).max(100).optional(),
@@ -334,7 +335,7 @@ export async function PATCH(
   const { id } = await params
   const supabase = createServiceClient()
 
-  const body = omitNullishValues(await request.json())
+  const body = normalizeEmployeeAliasPayload(omitNullishValues(await request.json()))
   const parsed = EmployeeUpdateSchema.safeParse(body)
   
   if (!parsed.success) {

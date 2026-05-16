@@ -354,6 +354,8 @@ function MasterSummaryHero({
   showBadge = true,
   titleAsField = false,
   mode = 'default',
+  requiredFields = [],
+  fieldErrors = {},
   onFieldChange,
 }: {
   result: IdentityGateResolveResult | null
@@ -363,7 +365,9 @@ function MasterSummaryHero({
   showBadge?: boolean
   titleAsField?: boolean
   mode?: MasterSummaryMode
-  onFieldChange?: (field: string, value: any) => void
+  requiredFields?: FormField[]
+  fieldErrors?: Record<string, string>
+  onFieldChange?: (field: string, value: any, fieldKeys?: string[]) => void
 }) {
   const kind = result?.entityKind
   const master = result?.masterRecord || null
@@ -381,7 +385,7 @@ function MasterSummaryHero({
     ? effectiveMode === 'organizationIdentity'
       ? [
           { label: 'Ticari Unvan', value: readFirst(master, prefill, ['legal_name', 'trade_name', 'ticari_unvan', 'display_name']), fieldKeys: ['ticari_unvan', 'legal_name', 'trade_name'] },
-          { label: 'Kısa Ünvan', value: readFirst(master, prefill, ['short_name', 'kisa_unvan']), fieldKeys: ['kisa_unvan', 'short_name'] },
+          { label: 'Kısa Ünvan', value: readFirst(master, prefill, ['short_name', 'kisa_unvan']), fieldKeys: ['kisa_unvan', 'short_name', 'last_name'] },
           { label: 'VKN', value: readFirst(master, prefill, ['tax_number', 'vkn_tckn', 'tax_id', 'identity_number']), fieldKeys: ['vkn_tckn', 'tax_number', 'tax_id', 'identity_number'] },
           { label: 'Vergi Dairesi', value: readFirst(master, prefill, ['tax_office', 'vergi_dairesi']), fieldKeys: ['vergi_dairesi', 'tax_office'] },
           { label: 'Şirket Türü', value: readFirst(master, prefill, ['organization_type', 'company_type', 'sirket_turu']), fieldKeys: ['sirket_turu', 'company_type', 'organization_type'], inputType: 'select' as const, options: [
@@ -449,17 +453,51 @@ function MasterSummaryHero({
       </div>
       {items.length > 0 && (
         <div className="mt-3 grid gap-2 md:grid-cols-2 lg:grid-cols-3">
-          {items.map(item => (
-            <div key={item.label} className="rounded-lg border border-emerald-100 bg-white px-3 py-2 dark:border-emerald-900/50 dark:bg-gray-900">
-              <div className="text-[13px] font-medium leading-5 text-gray-500 dark:text-gray-400">{item.label}</div>
+          {items.map(item => {
+            const validationState = getMasterSummaryValidationState(item, sourceData, requiredFields, fieldErrors, readOnly)
+            return (
+            <div
+              key={item.label}
+              className={cn(
+                "rounded-lg border bg-white px-3 py-2 dark:bg-gray-900",
+                validationState.status === 'invalid'
+                  ? "border-red-200 dark:border-red-900/60"
+                  : validationState.status === 'valid'
+                    ? "border-emerald-200 dark:border-emerald-900/60"
+                    : "border-emerald-100 dark:border-emerald-900/50"
+              )}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <div className={cn(
+                  "text-[13px] font-medium leading-5",
+                  validationState.status === 'invalid'
+                    ? "text-red-700 dark:text-red-400"
+                    : validationState.status === 'valid'
+                      ? "text-emerald-700 dark:text-emerald-400"
+                      : "text-gray-500 dark:text-gray-400"
+                )}>
+                  {item.label}
+                </div>
+                {validationState.label && (
+                  <span className={cn(
+                    "shrink-0 rounded border bg-white px-1.5 py-0.5 text-[10px] font-medium leading-none dark:bg-gray-900",
+                    validationState.status === 'valid'
+                      ? "border-emerald-300 text-emerald-600 dark:border-emerald-700 dark:text-emerald-400"
+                      : "border-red-300 text-red-600 dark:border-red-700 dark:text-red-400"
+                  )}>
+                    {validationState.label}
+                  </span>
+                )}
+              </div>
               <MasterSummaryItemValue
                 item={item}
                 sourceData={sourceData}
                 readOnly={readOnly}
                 onFieldChange={onFieldChange}
+                validationState={validationState}
               />
             </div>
-          ))}
+          )})}
         </div>
       )}
     </div>
@@ -501,15 +539,17 @@ function MasterSummaryItemValue({
   sourceData,
   readOnly,
   onFieldChange,
+  validationState,
 }: {
   item: MasterSummaryItem
   sourceData: Record<string, any>
   readOnly: boolean
-  onFieldChange?: (field: string, value: any) => void
+  onFieldChange?: (field: string, value: any, fieldKeys?: string[]) => void
+  validationState: { status: FormControlState; label: string }
 }) {
   const fieldName = item.fieldKeys ? pickEditableFieldName(sourceData, item.fieldKeys) : null
   const canEdit = !!fieldName && !!onFieldChange && !readOnly
-  const inputClass = formControlClass({ state: 'valid', rounded: 'md', size: 'field', className: 'mt-1' })
+  const inputClass = formControlClass({ state: readOnly ? 'neutral' : validationState.status, rounded: 'md', size: 'field', className: 'mt-1' })
 
   if (!canEdit) {
     return <div className="mt-0.5 truncate text-[13px] leading-5 text-gray-900 dark:text-white">{formatSummaryValue(item.value, item)}</div>
@@ -520,7 +560,7 @@ function MasterSummaryItemValue({
     return (
       <select
         value={selectValue}
-        onChange={(event) => onFieldChange(fieldName, event.target.value)}
+        onChange={(event) => onFieldChange(fieldName, event.target.value, item.fieldKeys)}
         className={inputClass}
       >
         <option value="">Seçiniz</option>
@@ -536,10 +576,40 @@ function MasterSummaryItemValue({
       type="text"
       value={item.inputType === 'date' ? formatDateForDisplay(item.value) : String(item.value || '')}
       placeholder={item.inputType === 'date' ? 'gg.aa.yyyy' : undefined}
-      onChange={(event) => onFieldChange(fieldName, item.inputType === 'date' ? normalizeDateDisplayInput(event.target.value) : event.target.value)}
+      onChange={(event) => onFieldChange(fieldName, item.inputType === 'date' ? normalizeDateDisplayInput(event.target.value) : event.target.value, item.fieldKeys)}
       className={inputClass}
     />
   )
+}
+
+function getMasterSummaryValidationState(
+  item: MasterSummaryItem,
+  sourceData: Record<string, any>,
+  requiredFields: FormField[],
+  fieldErrors: Record<string, string>,
+  readOnly: boolean
+): { status: FormControlState; label: string } {
+  if (readOnly || !item.fieldKeys?.length) return { status: 'neutral', label: '' }
+
+  const error = item.fieldKeys.map(key => fieldErrors[key]).find(Boolean)
+  if (error) {
+    return {
+      status: 'invalid',
+      label: error.includes('format') || error.includes('olmalıdır') ? 'Geçersiz Format' : 'Zorunlu Alan',
+    }
+  }
+
+  const backingField = requiredFields.find(field =>
+    item.fieldKeys?.includes(field.name) && matchesCondition(field.visibleWhen, sourceData)
+  )
+  const required = !!backingField && (backingField.required || !!(backingField.requiredWhen && matchesCondition(backingField.requiredWhen, sourceData)))
+
+  if (!required) return { status: 'neutral', label: '' }
+
+  const filled = item.fieldKeys.some(key => hasValue(sourceData[key])) || hasValue(item.value)
+  return filled
+    ? { status: 'valid', label: 'Tamam' }
+    : { status: 'invalid', label: 'Zorunlu Alan' }
 }
 
 function normalizeSummarySelectValue(value: unknown, options: MasterSummaryItem['options']) {
@@ -2221,6 +2291,31 @@ export function EntityForm({
     }
   }
 
+  const handleMasterSummaryFieldChange = (field: string, value: any, fieldKeys?: string[]) => {
+    const aliases = Array.from(new Set(fieldKeys?.length ? fieldKeys : [field]))
+    if (aliases.length <= 1) {
+      handleChange(field, value)
+      return
+    }
+
+    setFormData(prev => {
+      const next = aliases.reduce(
+        (acc, alias) => ({ ...acc, [alias]: value }),
+        { ...prev } as Record<string, any>
+      )
+      onFieldChange?.(field, value, next)
+      return next
+    })
+
+    if (aliases.some(alias => fieldErrors[alias])) {
+      setFieldErrors(prev => {
+        const next = { ...prev }
+        aliases.forEach(alias => delete next[alias])
+        return next
+      })
+    }
+  }
+
   const handleIdentityResolved = (result: IdentityGateResolveResult) => {
     const resolvedImages = normalizeStoredImages(
       result.prefill[imageDataField] ||
@@ -3078,7 +3173,9 @@ export function EntityForm({
                   showBadge={showMasterSummaryBadge}
                   titleAsField={masterSummaryTitleAsField}
                   mode={masterSummaryMode}
-                  onFieldChange={handleChange}
+                  requiredFields={heroFields}
+                  fieldErrors={fieldErrors}
+                  onFieldChange={handleMasterSummaryFieldChange}
                 />
               )}
               {isIdentityGateLocked && fieldErrors.identity_gate && (
