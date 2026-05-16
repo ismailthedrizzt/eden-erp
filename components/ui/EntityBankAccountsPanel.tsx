@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { CheckCircle2, ChevronDown, Eye, History, Pencil, Plus, Star, Trash2, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { AutomationBadge, type AutomationBadgeStatus } from './AutomationBadge'
@@ -21,6 +21,7 @@ type Props = {
   masterName?: string
   masterCountry?: string
   readOnly?: boolean
+  multiple?: boolean
   value?: Array<Partial<EntityBankAccount>>
   onChange?: (rows: Array<Partial<EntityBankAccount>>) => void
 }
@@ -84,7 +85,7 @@ const intermediaryBankFields = new Set([
   'intermediary_account_number',
 ])
 
-export function EntityBankAccountsPanel({ entityKind, entityId, masterName = '', masterCountry = '', readOnly = false, value, onChange }: Props) {
+export function EntityBankAccountsPanel({ entityKind, entityId, masterName = '', masterCountry = '', readOnly = false, multiple = false, value, onChange }: Props) {
   const { can } = usePermissions()
   const [rows, setRows] = useState<EntityBankAccount[]>([])
   const [loading, setLoading] = useState(false)
@@ -95,6 +96,7 @@ export function EntityBankAccountsPanel({ entityKind, entityId, masterName = '',
   const [priorityMode, setPriorityMode] = useState<BankAccountFormPriorityMode>(getLocalPriorityMode(masterCountry))
   const [ibanAutomationStatus, setIbanAutomationStatus] = useState<IbanAutomationStatus>('idle')
   const [internationalOpen, setInternationalOpen] = useState(false)
+  const singleSelectionKeyRef = useRef('')
 
   const embedded = !!onChange
   const hasPersistedEntity = !!entityKind && !!entityId
@@ -141,6 +143,20 @@ export function EntityBankAccountsPanel({ entityKind, entityId, masterName = '',
   const primaryFields = useMemo(() => orderedFields.filter(field => !internationalTransferFields.has(field)), [orderedFields])
   const internationalFields = useMemo(() => orderedFields.filter(field => internationalTransferFields.has(field) && !intermediaryBankFields.has(field)), [orderedFields])
 
+  useEffect(() => {
+    if (multiple) return
+    const selected = rows.find(row => row.status === 'active' && row.is_default) || rows.find(row => row.status === 'active') || rows[0]
+    const nextDraft = selected || buildInitialDraft(rows.length === 0)
+    const selectionKey = selected?.id || 'new'
+    setDraft(nextDraft)
+    setMode(selected ? (readOnly ? 'view' : 'edit') : 'create')
+    if (selectionKey !== singleSelectionKeyRef.current) {
+      singleSelectionKeyRef.current = selectionKey
+      setIbanAutomationStatus(getInitialIbanAutomationStatus(nextDraft))
+      setInternationalOpen(false)
+    }
+  }, [multiple, rows, masterName, masterCountry, readOnly])
+
   if (!hasPersistedEntity && !embedded) {
     return <EmptyPanel text="Banka bilgileri master kişi/kurum kaydı oluşunca girilebilir." />
   }
@@ -149,8 +165,8 @@ export function EntityBankAccountsPanel({ entityKind, entityId, masterName = '',
     return <EmptyPanel text="Banka bilgilerini görüntüleme yetkiniz yok." />
   }
 
-  function startCreate() {
-    const nextDraft = {
+  function buildInitialDraft(markDefault: boolean) {
+    return {
       ...emptyDraft,
       id: `tmp-${Date.now()}`,
       beneficiary_name: masterName,
@@ -158,8 +174,12 @@ export function EntityBankAccountsPanel({ entityKind, entityId, masterName = '',
       account_country: masterCountry,
       bank_country: masterCountry,
       preferred_currency: masterCountry === 'TR' ? 'TRY' : 'USD',
-      is_default: rows.length === 0,
+      is_default: markDefault,
     } as Partial<EntityBankAccount>
+  }
+
+  function startCreate() {
+    const nextDraft = buildInitialDraft(rows.length === 0)
     setDraft(nextDraft)
     if (embedded) updateRows([...rows, nextDraft as EntityBankAccount])
     setIbanAutomationStatus('idle')
@@ -227,6 +247,55 @@ export function EntityBankAccountsPanel({ entityKind, entityId, masterName = '',
     } else {
       setIbanAutomationStatus('no_data')
     }
+  }
+
+  if (!multiple) {
+    return (
+      <div className="space-y-4">
+        {error && <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-300">{error}</div>}
+
+        {loading ? <EmptyPanel text="Yükleniyor..." /> : (
+          <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-900">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+              {primaryFields.map(field => renderField(field, draft, mode === 'view' || locked, updateDraft, parseIban, ibanAutomationStatus))}
+            </div>
+
+            {internationalFields.length > 0 && (
+              <div className="mt-4 border-t border-gray-100 pt-4 dark:border-gray-800">
+                <button
+                  type="button"
+                  onClick={() => setInternationalOpen(open => !open)}
+                  className="inline-flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
+                >
+                  <ChevronDown size={16} className={cn('transition-transform', internationalOpen && 'rotate-180')} />
+                  Uluslararası Para Transferi
+                </button>
+
+                {internationalOpen && (
+                  <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
+                    {internationalFields.map(field => renderField(field, draft, mode === 'view' || locked, updateDraft, parseIban, ibanAutomationStatus))}
+                    {draft.has_intermediary_bank && (
+                      <>
+                        {renderField('intermediary_bank_name', draft, mode === 'view' || locked, updateDraft, parseIban, ibanAutomationStatus)}
+                        {renderField('intermediary_swift_bic', draft, mode === 'view' || locked, updateDraft, parseIban, ibanAutomationStatus)}
+                        {renderField('intermediary_bank_address', draft, mode === 'view' || locked, updateDraft, parseIban, ibanAutomationStatus)}
+                        {renderField('intermediary_account_number', draft, mode === 'view' || locked, updateDraft, parseIban, ibanAutomationStatus)}
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {mode !== 'view' && !readOnly && !embedded && (
+              <div className="mt-4 flex justify-end">
+                <button type="button" onClick={save} className="rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700">Kaydet</button>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    )
   }
 
   return (
@@ -338,7 +407,8 @@ export function EntityBankAccountsPanel({ entityKind, entityId, masterName = '',
       const next = { ...prev, [field]: value }
       if (field === 'beneficiary_name' && masterName && value !== masterName) next.is_same_as_master_name = false
       if (embedded && next.id) {
-        updateRows(rows.map(row => row.id === next.id ? { ...row, ...next } : row))
+        const hasRow = rows.some(row => row.id === next.id)
+        updateRows(hasRow ? rows.map(row => row.id === next.id ? { ...row, ...next } : row) : [next as EntityBankAccount])
       }
       return next
     })
@@ -447,6 +517,7 @@ function getOrderedFields(mode: BankAccountFormPriorityMode) {
 
 function normalizeDraft(draft: Partial<EntityBankAccount>, masterName: string) {
   const payload = { ...draft }
+  if (String(payload.id || '').startsWith('tmp-')) delete payload.id
   if (!payload.beneficiary_name) payload.beneficiary_name = masterName
   if (!payload.iban && !payload.account_number) throw new Error('IBAN veya Account Number alanlarından biri zorunludur.')
   return payload

@@ -52,12 +52,12 @@ const ROLE_SELECT_BY_TABLE: Record<string, string> = {
 export async function POST(request: NextRequest) {
   const parsed = ResolveSchema.safeParse(await request.json().catch(() => null))
   if (!parsed.success) {
-    return NextResponse.json({ error: 'GeÃ§ersiz kimlik Ã§Ã¶zÃ¼mleme isteÄŸi', details: parsed.error.flatten() }, { status: 400 })
+    return NextResponse.json({ error: 'Geçersiz kimlik çözümleme isteği', details: parsed.error.flatten() }, { status: 400 })
   }
 
   const payload = parsed.data
   if (!allowedRoleTables.has(payload.roleTable)) {
-    return NextResponse.json({ error: 'Bu rol tablosu iÃ§in kimlik kapÄ±sÄ± desteklenmiyor' }, { status: 400 })
+    return NextResponse.json({ error: 'Bu rol tablosu için kimlik kapısı desteklenmiyor' }, { status: 400 })
   }
 
   const supabase = createServiceClient()
@@ -105,8 +105,8 @@ export async function POST(request: NextRequest) {
       roleRecord,
       prefill: buildPrefill(payload.entityKind, masterRecord),
       message: payload.entityKind === 'person'
-        ? 'Bu kiÅŸinin bu modÃ¼lde zaten kaydÄ± var. Mevcut kaydÄ± dÃ¼zenlemek ister misiniz?'
-        : 'Bu tÃ¼zel kiÅŸinin bu modÃ¼lde zaten kaydÄ± var. Mevcut kaydÄ± dÃ¼zenlemek ister misiniz?',
+        ? 'Bu kişinin bu modülde zaten kaydı var. Mevcut kaydı düzenlemek ister misiniz?'
+        : 'Bu tüzel kişinin bu modülde zaten kaydı var. Mevcut kaydı düzenlemek ister misiniz?',
     })
   }
 
@@ -120,8 +120,8 @@ export async function POST(request: NextRequest) {
       roleRecord: null,
       prefill: buildPrefill(payload.entityKind, masterRecord),
       message: payload.entityKind === 'person'
-        ? 'KiÅŸi bulundu. Ana KiÅŸi KaydÄ±na baÄŸlandÄ± ve kayÄ±tlÄ± veriler Ã§ekildi.'
-        : 'TÃ¼zel kiÅŸi bulundu. Ana Kurum KaydÄ±na baÄŸlandÄ± ve kayÄ±tlÄ± veriler Ã§ekildi.',
+        ? 'Kişi bulundu. Ana Kişi Kaydına bağlandı ve kayıtlı veriler çekildi.'
+        : 'Tüzel kişi bulundu. Ana Kurum Kaydına bağlandı ve kayıtlı veriler çekildi.',
     })
   }
 
@@ -134,10 +134,10 @@ export async function POST(request: NextRequest) {
     roleRecord: null,
     prefill: buildNewMasterPrefill(payload.entityKind, identity),
     message: payload.entityKind === 'person'
-      ? 'Bu gerÃ§ek kiÅŸi master kayÄ±tlarda bulunamadÄ±. Yeni kiÅŸi kaydÄ± oluÅŸturulacak.'
-      : 'Bu tÃ¼zel kiÅŸi master kayÄ±tlarda bulunamadÄ±. Yeni kurum kaydÄ± oluÅŸturulacak.',
+      ? 'Bu gerçek kişi master kayıtlarda bulunamadı. Yeni kişi kaydı oluşturulacak.'
+      : 'Bu tüzel kişi master kayıtlarda bulunamadı. Yeni kurum kaydı oluşturulacak.',
     warning: masterResult.warning || (payload.entityKind === 'organization' && !identity.tax_number && identity.registration_number
-      ? 'VKN olmadan ticaret sicil no ile ilerleniyor; kayÄ±t duplicate uyarÄ±sÄ± gerektirebilir.'
+      ? 'VKN olmadan ticaret sicil no ile ilerleniyor; kayıt duplicate uyarısı gerektirebilir.'
       : undefined),
   })
 }
@@ -148,14 +148,14 @@ async function findPerson(supabase: ReturnType<typeof createServiceClient>, iden
   const passportNo = clean(identity.passport_no)
 
   if (!nationalId && !passportNo) {
-    return { error: 'Devam etmek iÃ§in TC Kimlik No veya Pasaport No girin.' }
+    return { error: 'Devam etmek için TC Kimlik No veya Pasaport No girin.' }
   }
 
   let query = supabase.from('persons').select(PERSON_SELECT).eq('nationality', nationality)
   query = nationalId ? query.eq('national_id', nationalId) : query.eq('passport_no', passportNo)
   let { data, error } = await query.maybeSingle()
   if (isMissingTableError(error, 'persons')) {
-    return { record: null, warning: 'Girilen kiÅŸi kayÄ±tlÄ± kiÅŸiler listesinde bulunamadÄ±. Yeni kayÄ±t oluÅŸturulacak.' }
+    return { record: null, warning: 'Girilen kişi kayıtlı kişiler listesinde bulunamadı. Yeni kayıt oluşturulacak.' }
   }
   if (error) return { error: error.message }
   if (!data && nationalId) {
@@ -177,14 +177,14 @@ async function findOrganization(supabase: ReturnType<typeof createServiceClient>
   const registrationNumber = clean(identity.registration_number)
 
   if (!taxNumber && !registrationNumber) {
-    return { error: 'Devam etmek iÃ§in VKN veya Ticaret Sicil No girin.' }
+    return { error: 'Devam etmek için VKN veya Ticaret Sicil No girin.' }
   }
 
   let query = supabase.from('organizations').select(ORGANIZATION_SELECT).eq('country', country)
   query = taxNumber ? query.eq('tax_number', taxNumber) : query.eq('registration_number', registrationNumber)
   let { data, error } = await query.maybeSingle()
   if (isMissingTableError(error, 'organizations')) {
-    return { record: null, warning: 'Girilen kurum kayÄ±tlÄ± kurumlar listesinde bulunamadÄ±. Yeni kayÄ±t oluÅŸturulacak.' }
+    return { record: null, warning: 'Girilen kurum kayıtlı kurumlar listesinde bulunamadı. Yeni kayıt oluşturulacak.' }
   }
   if (error) return { error: error.message }
   if (!data && taxNumber) {
@@ -573,7 +573,7 @@ function normalizePersonImages(record: Record<string, any>) {
   const existing = Array.isArray(record.photo_logo) ? record.photo_logo : []
   if (existing.length) return existing
   const url = record.fotograf_url || record.photo_url || record.image_url
-  return url ? [{ slotId: 'photo_logo', name: 'FotoÄŸraf', previewUrl: url, url }] : []
+  return url ? [{ slotId: 'photo_logo', name: 'Fotoğraf', previewUrl: url, url }] : []
 }
 
 function normalizeOrganizationImages(record: Record<string, any>) {

@@ -258,14 +258,14 @@ export async function GET(
   if (section === 'hero') {
     const { data, error } = await fetchEmployeeDetail(supabase, id, employeeHeroColumns, ['employee_no', 'employment_status', 'record_status', 'start_date'])
     if (error) return handleEmployeeDetailError(error)
-    if (!data) return NextResponse.json({ error: 'Ã‡alÄ±ÅŸan bulunamadÄ±', code: 'EMPLOYEE_NOT_FOUND' }, { status: 404 })
+    if (!data) return NextResponse.json({ error: 'Çalışan bulunamadı', code: 'EMPLOYEE_NOT_FOUND' }, { status: 404 })
     return NextResponse.json({ data })
   }
 
   if (section === 'media') {
     const { data, error } = await fetchEmployeeDetail(supabase, id, employeeMediaColumns, [])
     if (error) return handleEmployeeDetailError(error)
-    if (!data) return NextResponse.json({ error: 'Ã‡alÄ±ÅŸan bulunamadÄ±', code: 'EMPLOYEE_NOT_FOUND' }, { status: 404 })
+    if (!data) return NextResponse.json({ error: 'Çalışan bulunamadı', code: 'EMPLOYEE_NOT_FOUND' }, { status: 404 })
     return NextResponse.json({ data })
   }
 
@@ -311,7 +311,7 @@ export async function GET(
 
 function handleEmployeeDetailError(error: any) {
   if (error.code === 'PGRST116') {
-    return NextResponse.json({ error: 'Ã‡alÄ±ÅŸan bulunamadÄ±', code: 'EMPLOYEE_NOT_FOUND' }, { status: 404 })
+    return NextResponse.json({ error: 'Çalışan bulunamadı', code: 'EMPLOYEE_NOT_FOUND' }, { status: 404 })
   }
   return NextResponse.json({ error: error.message, code: error.code || 'FETCH_FAILED' }, { status: 500 })
 }

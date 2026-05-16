@@ -75,6 +75,8 @@ export interface FormField {
   history?: HistoryEntry[]
   /** Marks fields that trigger automation and fill or derive other form fields. */
   automation?: FieldAutomationConfig
+  /** Hide the field label when the rendered control already provides its own structure. */
+  hideLabel?: boolean
   /** Custom render function */
   render?: (props: { value: any; onChange: (val: any) => void; readOnly: boolean; data: Record<string, any>; mode: FormMode }) => ReactNode
 }
@@ -1919,7 +1921,7 @@ export function EntityForm({
   // STANDARD FORM LAYOUT: Image and Document slots
   const resolvedImageSlots = typeof imageSlot.slots === 'function' ? imageSlot.slots(formData) : imageSlot.slots
   const imageSlots: ImageSlot[] = resolvedImageSlots || [
-    { id: 'photo', title: imageSlot.title || 'Foto?raf', required: imageSlot.required ?? false },
+    { id: 'photo', title: imageSlot.title || 'Fotoğraf', required: imageSlot.required ?? false },
   ]
   const imageDataField = imageSlot.dataField || 'fotograf_url'
   const primaryImageSlotId = imageSlots[0]?.id || 'photo'
@@ -1959,7 +1961,7 @@ export function EntityForm({
     if (imageSlot.dataField) {
       setImages(normalizeStoredImages(data?.[imageDataField]))
     } else if (data?.fotograf_url) {
-      setImages([{ slotId: 'photo', previewUrl: data.fotograf_url, name: 'Foto?raf' }])
+      setImages([{ slotId: 'photo', previewUrl: data.fotograf_url, name: 'Fotoğraf' }])
     } else if (Array.isArray(data?.photo_logo) && data.photo_logo.length > 0) {
       setImages(normalizeStoredImages(data.photo_logo).map((image, index) => ({
         ...image,
@@ -2081,7 +2083,7 @@ export function EntityForm({
   }, [formTabs, activeTab])
 
   useEffect(() => {
-    if (externalFieldErrors && Object.keys(externalFieldErrors).length > 0) {
+    if (externalFieldErrors) {
       setFieldErrors(externalFieldErrors)
     }
   }, [externalFieldErrors])
@@ -2453,11 +2455,51 @@ export function EntityForm({
       return false
     }
     
+    const validateListField = (field: FormField) => {
+      const listFields = field.listConfig?.fields || []
+      const rows = finalizeListValue(sourceData[field.name], listFields)
+      const rowErrors: string[] = []
+
+      rows.forEach((row, rowIndex) => {
+        listFields.forEach(item => {
+          if (item.type === 'section' || !matchesCondition(item.visibleWhen, row) || (item.disabledWhen && matchesCondition(item.disabledWhen, row))) return
+
+          const name = fieldName(item)
+          const label = item.errorLabel || item.label
+          const value = row[name]
+          const required = item.required || !!(item.requiredWhen && matchesCondition(item.requiredWhen, row))
+
+          if (required && !hasValue(value)) {
+            rowErrors.push(`${rowIndex + 1}. satır ${label} zorunludur`)
+            return
+          }
+
+          if (item.pattern && hasValue(value)) {
+            const regex = new RegExp(`^(?:${item.pattern})$`)
+            if (!regex.test(String(value))) {
+              rowErrors.push(`${rowIndex + 1}. satır ${label} formatı geçersiz`)
+            }
+          }
+        })
+      })
+
+      if (rowErrors.length > 0) {
+        const visibleErrors = rowErrors.slice(0, 3).join(', ')
+        const suffix = rowErrors.length > 3 ? ` ve ${rowErrors.length - 3} hata daha` : ''
+        errors[field.name] = `${field.label}: ${visibleErrors}${suffix}`
+      }
+    }
+
     const validateFields = (fields: FormField[]) => {
       fields.forEach(field => {
         if (field.type === 'section' || !matchesCondition(field.visibleWhen, sourceData)) return
         if (isFieldRequired(field, sourceData) && !hasValue(sourceData[field.name])) {
           errors[field.name] = `${field.errorLabel || field.label} zorunludur`
+          return
+        }
+
+        if (field.type === 'list') {
+          validateListField(field)
           return
         }
 
@@ -2808,31 +2850,33 @@ export function EntityForm({
 
     return (
       <div key={field.name} className={cn("relative space-y-1", colSpanClass)}>
-        <div className="flex items-center gap-2">
-          <label className={cn(
-            "text-sm font-medium",
-            validationState.status === 'invalid'
-              ? "text-red-700 dark:text-red-400"
-              : validationState.status === 'valid'
-                ? "text-emerald-700 dark:text-emerald-400"
-                : "text-gray-700 dark:text-gray-300"
-          )}>
-            {field.label}
-          </label>
-          {(showHistoryIcon || enableHistory) && field.history && field.history.length > 0 && (
-            <FieldHistoryIndicator history={field.history} />
-          )}
-          {automationState && (
-            <AutomationBadge
-              status={automationState.status}
-              title={automationState.title}
-              idleLabel={automationState.idleLabel}
-              workingLabel={automationState.workingLabel}
-              doneLabel={automationState.doneLabel}
-              noDataLabel={automationState.noDataLabel}
-            />
-          )}
-        </div>
+        {!field.hideLabel && (
+          <div className="flex items-center gap-2">
+            <label className={cn(
+              "text-sm font-medium",
+              validationState.status === 'invalid'
+                ? "text-red-700 dark:text-red-400"
+                : validationState.status === 'valid'
+                  ? "text-emerald-700 dark:text-emerald-400"
+                  : "text-gray-700 dark:text-gray-300"
+            )}>
+              {field.label}
+            </label>
+            {(showHistoryIcon || enableHistory) && field.history && field.history.length > 0 && (
+              <FieldHistoryIndicator history={field.history} />
+            )}
+            {automationState && (
+              <AutomationBadge
+                status={automationState.status}
+                title={automationState.title}
+                idleLabel={automationState.idleLabel}
+                workingLabel={automationState.workingLabel}
+                doneLabel={automationState.doneLabel}
+                noDataLabel={automationState.noDataLabel}
+              />
+            )}
+          </div>
+        )}
         {validationState.label && (
           <span className={cn(
             "pointer-events-none absolute right-2 top-7 z-10 rounded border bg-white px-1.5 py-0.5 text-[10px] font-medium leading-none dark:bg-gray-900",

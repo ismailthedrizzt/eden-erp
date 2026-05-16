@@ -390,6 +390,7 @@ export const personelModuleConfig: ModuleConfig<PersonelTableRow> = {
             {
               key: 'entity_bank_accounts',
               label: 'Banka Bilgileri',
+              hideLabel: true,
               type: 'custom',
               colSpan: 3,
               render: ({ data, readOnly }) => (

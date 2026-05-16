@@ -103,7 +103,7 @@ export async function GET(
 
     if (error) {
       if (error.code === 'PGRST116') {
-        return NextResponse.json({ error: 'Åirket bulunamadÄ±', code: 'COMPANY_NOT_FOUND' }, { status: 404 })
+        return NextResponse.json({ error: 'Şirket bulunamadı', code: 'COMPANY_NOT_FOUND' }, { status: 404 })
       }
       return NextResponse.json({ error: error.message, code: error.code || 'FETCH_FAILED' }, { status: 500 })
     }
@@ -125,7 +125,7 @@ export async function GET(
 
     if (error) {
       if (error.code === 'PGRST116') {
-        return NextResponse.json({ error: 'Åirket bulunamadÄ±', code: 'COMPANY_NOT_FOUND' }, { status: 404 })
+        return NextResponse.json({ error: 'Şirket bulunamadı', code: 'COMPANY_NOT_FOUND' }, { status: 404 })
       }
       return NextResponse.json({ error: error.message, code: error.code || 'FETCH_FAILED' }, { status: 500 })
     }

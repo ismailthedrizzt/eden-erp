@@ -191,6 +191,7 @@ export function createRealPersonMasterTabs({
         {
           name: 'entity_bank_accounts',
           label: 'Banka Bilgileri',
+          hideLabel: true,
           type: 'custom',
           colSpan: 3,
           render: ({ value, onChange, data, readOnly }) => (

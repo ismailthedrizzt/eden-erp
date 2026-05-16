@@ -13,7 +13,7 @@ const EmployeeSchema = z.object({
   ad: z.string().min(1).max(100),
   soyad: z.string().min(1).max(100),
   uyruk: z.string().default('TR').transform(normalizeCountryId),
-  tc_kimlik: z.string().regex(/^\d{11}$/, 'TC Kimlik No 11 haneli sayÄ± olmalÄ±dÄ±r').optional(),
+  tc_kimlik: z.string().regex(/^\d{11}$/, 'TC Kimlik No 11 haneli sayı olmalıdır').optional(),
   pasaport_no: z.string().optional(),
   cinsiyet: z.enum(['erkek', 'kadin']),
   dogum_yeri: z.string().optional(),
@@ -258,7 +258,7 @@ export async function POST(request: NextRequest) {
   const body = omitNullishStrings(await request.json())
   const parsed = EmployeeSchema.safeParse(body)
   if (!parsed.success) {
-    return NextResponse.json({ error: 'GeÃ§ersiz veri', code: 'VALIDATION_FAILED', details: parsed.error.flatten() }, { status: 400 })
+    return NextResponse.json({ error: 'Geçersiz veri', code: 'VALIDATION_FAILED', details: parsed.error.flatten() }, { status: 400 })
   }
 
   const masterPayload = parsed.data
@@ -320,7 +320,7 @@ async function ensureEmployeePersonLink(supabase: ReturnType<typeof createServic
       : null
 
   const existing = lookup ? await lookup : { data: null, error: null }
-  if (isMissingTableError(existing.error, 'persons')) throw new Error('Ana kiÅŸiler tablosu bulunamadÄ±; Ã§alÄ±ÅŸan kaydÄ± master baÄŸlantÄ±sÄ± olmadan oluÅŸturulamaz.')
+  if (isMissingTableError(existing.error, 'persons')) throw new Error('Ana kişiler tablosu bulunamadı; çalışan kaydı master bağlantısı olmadan oluşturulamaz.')
   if (existing.error) throw new Error(existing.error.message)
   if (existing.data?.id) return { ...employee, person_id: existing.data.id }
 
@@ -346,7 +346,7 @@ async function ensureEmployeePersonLink(supabase: ReturnType<typeof createServic
     .select('id')
     .single()
 
-  if (isMissingTableError(error, 'persons')) throw new Error('Ana kiÅŸiler tablosu bulunamadÄ±; Ã§alÄ±ÅŸan kaydÄ± master baÄŸlantÄ±sÄ± olmadan oluÅŸturulamaz.')
+  if (isMissingTableError(error, 'persons')) throw new Error('Ana kişiler tablosu bulunamadı; çalışan kaydı master bağlantısı olmadan oluşturulamaz.')
   if (error) throw new Error(error.message)
   return created?.id ? { ...employee, person_id: created.id } : employee
 }

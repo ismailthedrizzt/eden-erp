@@ -42,7 +42,7 @@ const financeFields: FormField[] = [
 
 const detailTabs: FormTab[] = [
   { id: 'hareketler', label: 'Hareketler', fields: [{ name: 'movement_summary', label: 'Hareket Özeti', type: 'custom', colSpan: 3, render: ({ value }) => <ReadOnlyBox text={value || 'Hareketler Ön Muhasebe Hareketleri ekranında yönetilir.'} /> }] },
-  { id: 'banka_bilgileri', label: 'Banka Bilgileri', fields: [{ name: 'entity_bank_accounts', label: 'Banka Bilgileri', type: 'custom', colSpan: 3, render: ({ data, readOnly }) => <EntityBankAccountsPanel entityKind={data.entity_kind} entityId={data.person_id || data.organization_id} masterName={data.display_name} masterCountry={data.country || data.nationality || data.ulke} readOnly={readOnly} /> }] },
+  { id: 'banka_bilgileri', label: 'Banka Bilgileri', fields: [{ name: 'entity_bank_accounts', label: 'Banka Bilgileri', hideLabel: true, type: 'custom', colSpan: 3, render: ({ data, readOnly }) => <EntityBankAccountsPanel entityKind={data.entity_kind} entityId={data.person_id || data.organization_id} masterName={data.display_name} masterCountry={data.country || data.nationality || data.ulke} readOnly={readOnly} /> }] },
   { id: 'finans', label: 'Finans Ayarları', fields: financeFields },
   { id: 'mutabakat', label: 'Mutabakat', fields: [{ name: 'reconciliation_summary', label: 'Mutabakat', type: 'custom', colSpan: 3, render: () => <ReadOnlyBox text="Mutabakat akışı için hazır alan." /> }] },
   { id: 'baglantilar', label: 'Bağlantılar', fields: [{ name: 'links', label: 'Bağlı Kayıt', type: 'custom', colSpan: 3, render: () => <ReadOnlyBox text="Kimlik değişiklikleri bağlı kaynak modülden yapılmalıdır." /> }] },
