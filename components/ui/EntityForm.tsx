@@ -818,60 +818,38 @@ function normalizeForDiff(value: unknown): unknown {
   return Object.fromEntries(entries.map(([key, item]) => [key, normalizeForDiff(item)]))
 }
 
-function readFileAsDataUrl(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload = () => resolve(String(reader.result || ''))
-    reader.onerror = () => reject(reader.error)
-    reader.readAsDataURL(file)
-  })
+type ImageVariantResult = {
+  previewUrl: string
+  thumbnailUrl?: string
+  previewSize?: number
 }
 
-function resizeImageFileAsDataUrl(file: File, maxDimension = 512, quality = 0.78): Promise<string> {
-  if (!file.type.startsWith('image/') || file.type === 'image/svg+xml') return readFileAsDataUrl(file)
+async function createImageVariantsOnServer(
+  file: File,
+  options: { maxDimension: number; thumbnailDimension?: number; quality?: number; thumbnailQuality?: number }
+): Promise<ImageVariantResult> {
+  const body = new FormData()
+  body.append('file', file)
+  body.append('maxDimension', String(options.maxDimension))
+  body.append('thumbnailDimension', String(options.thumbnailDimension ?? 96))
+  body.append('quality', String(options.quality ?? 0.78))
+  body.append('thumbnailQuality', String(options.thumbnailQuality ?? 0.72))
 
-  return new Promise(resolve => {
-    const objectUrl = URL.createObjectURL(file)
-    const image = new Image()
-
-    const fallback = async () => {
-      URL.revokeObjectURL(objectUrl)
-      resolve(await readFileAsDataUrl(file))
-    }
-
-    image.onload = () => {
-      try {
-        const sourceWidth = image.naturalWidth || image.width
-        const sourceHeight = image.naturalHeight || image.height
-        if (!sourceWidth || !sourceHeight) {
-          fallback()
-          return
-        }
-
-        const scale = Math.min(1, maxDimension / Math.max(sourceWidth, sourceHeight))
-        const width = Math.max(1, Math.round(sourceWidth * scale))
-        const height = Math.max(1, Math.round(sourceHeight * scale))
-        const canvas = document.createElement('canvas')
-        canvas.width = width
-        canvas.height = height
-        const context = canvas.getContext('2d')
-        if (!context) {
-          fallback()
-          return
-        }
-
-        context.drawImage(image, 0, 0, width, height)
-        const webp = canvas.toDataURL('image/webp', quality)
-        URL.revokeObjectURL(objectUrl)
-        resolve(webp.startsWith('data:image/webp') ? webp : canvas.toDataURL('image/jpeg', quality))
-      } catch {
-        fallback()
-      }
-    }
-
-    image.onerror = fallback
-    image.src = objectUrl
+  const response = await fetch('/api/uploads/image-variants', {
+    method: 'POST',
+    body,
   })
+
+  const result = await response.json().catch(() => ({}))
+  if (!response.ok || !result.previewUrl) {
+    throw new Error(result.error || 'Gorsel onizlemesi olusturulamadi')
+  }
+
+  return {
+    previewUrl: String(result.previewUrl),
+    thumbnailUrl: result.thumbnailUrl ? String(result.thumbnailUrl) : undefined,
+    previewSize: Number(result.previewSize || 0) || undefined,
+  }
 }
 
 function avatarImageMaxDimension(slotId?: string) {
@@ -2313,20 +2291,30 @@ export function EntityForm({
     setImages(nextImages)
 
     if (imageSlot.dataField) {
-      const hydratedImages = await Promise.all(nextImages.map(async image => {
-        if (!image.file) return image
-        const previewUrl = await resizeImageFileAsDataUrl(image.file, avatarImageMaxDimension(image.slotId))
-        const thumbnailUrl = await resizeImageFileAsDataUrl(image.file, 96, 0.72)
-        return {
-          ...image,
-          previewUrl,
-          thumbnailUrl,
-          name: image.name || image.file.name,
-          size: Math.round((previewUrl.length * 3) / 4),
-        }
-      }))
-      setImages(hydratedImages)
-      handleChange(imageDataField, hydratedImages.map(serializeImageForStorage))
+      try {
+        const hydratedImages = await Promise.all(nextImages.map(async image => {
+          if (!image.file) return image
+          const variants = await createImageVariantsOnServer(image.file, {
+            maxDimension: avatarImageMaxDimension(image.slotId),
+            thumbnailDimension: 96,
+            quality: 0.78,
+            thumbnailQuality: 0.72,
+          })
+          const { file, ...imageWithoutFile } = image
+          return {
+            ...imageWithoutFile,
+            previewUrl: variants.previewUrl,
+            thumbnailUrl: variants.thumbnailUrl,
+            name: image.name || file.name,
+            size: variants.previewSize || file.size,
+          }
+        }))
+        setImages(hydratedImages)
+        handleChange(imageDataField, hydratedImages.map(serializeImageForStorage))
+      } catch (error) {
+        console.error('Gorsel onizlemesi olusturulamadi:', error)
+        alert(error instanceof Error ? error.message : 'Gorsel onizlemesi olusturulamadi')
+      }
       return
     }
 
@@ -2337,11 +2325,28 @@ export function EntityForm({
     }
 
     if (photo.file) {
-      const dataUrl = await resizeImageFileAsDataUrl(photo.file, avatarImageMaxDimension(photo.slotId))
-      handleChange('fotograf_url', dataUrl)
-      setImages(current => current.map(image =>
-        image.slotId === photo.slotId ? { ...image, previewUrl: dataUrl, size: Math.round((dataUrl.length * 3) / 4) } : image
-      ))
+      try {
+        const variants = await createImageVariantsOnServer(photo.file, {
+          maxDimension: avatarImageMaxDimension(photo.slotId),
+          thumbnailDimension: 96,
+          quality: 0.78,
+          thumbnailQuality: 0.72,
+        })
+        handleChange('fotograf_url', variants.previewUrl)
+        setImages(current => current.map(image => {
+          if (image.slotId !== photo.slotId) return image
+          const { file, ...imageWithoutFile } = image
+          return {
+            ...imageWithoutFile,
+            previewUrl: variants.previewUrl,
+            thumbnailUrl: variants.thumbnailUrl,
+            size: variants.previewSize || file?.size || image.size,
+          }
+        }))
+      } catch (error) {
+        console.error('Gorsel onizlemesi olusturulamadi:', error)
+        alert(error instanceof Error ? error.message : 'Gorsel onizlemesi olusturulamadi')
+      }
       return
     }
 

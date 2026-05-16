@@ -249,10 +249,6 @@ function getDocumentThumbnailUrl(doc?: SlotDocument | null, signedUrl?: string) 
   return ''
 }
 
-function isFallbackDocumentThumbnail(value?: string) {
-  return !!value && value.startsWith('data:image/svg+xml')
-}
-
 function getDocumentTimestamp(doc?: SlotDocument | null) {
   const value = doc?.updatedAt || doc?.uploadedAt || doc?.replacedAt || doc?.deletedAt
   if (!value) return 0
@@ -312,15 +308,6 @@ async function uploadDocumentFile(file: File, slotId: string) {
   }
 }
 
-function readFileAsDataUrl(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onload = () => resolve(String(reader.result || ''))
-    reader.onerror = () => reject(reader.error)
-    reader.readAsDataURL(file)
-  })
-}
-
 function readFileAsArrayBuffer(file: File): Promise<ArrayBuffer> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader()
@@ -337,47 +324,6 @@ function readFileAsText(file: File): Promise<string> {
     reader.onerror = () => reject(reader.error)
     reader.readAsText(file)
   })
-}
-
-function dataUrlToBytes(dataUrl: string) {
-  const [header, payload = ''] = dataUrl.split(',')
-  if (!header.includes(';base64')) {
-    return new TextEncoder().encode(decodeURIComponent(payload))
-  }
-  const binary = atob(payload)
-  const bytes = new Uint8Array(binary.length)
-  for (let index = 0; index < binary.length; index += 1) {
-    bytes[index] = binary.charCodeAt(index)
-  }
-  return bytes
-}
-
-async function pdfSourceToBytes(source: File | string) {
-  if (typeof source !== 'string') return new Uint8Array(await readFileAsArrayBuffer(source))
-  if (source.startsWith('data:')) return dataUrlToBytes(source)
-
-  const response = await fetch(source)
-  if (!response.ok) throw new Error(`PDF okunamadi: ${response.status}`)
-  return new Uint8Array(await response.arrayBuffer())
-}
-
-async function generatePdfThumbnail(source: File | string) {
-  const pdfjs = await import('pdfjs-dist')
-  pdfjs.GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/build/pdf.worker.min.mjs', import.meta.url).toString()
-  const data = await pdfSourceToBytes(source)
-  const pdf = await pdfjs.getDocument({ data }).promise
-  const page = await pdf.getPage(1)
-  const viewport = page.getViewport({ scale: 0.42 })
-  const canvas = document.createElement('canvas')
-  const context = canvas.getContext('2d')
-  if (!context) return ''
-
-  canvas.width = Math.floor(viewport.width)
-  canvas.height = Math.floor(viewport.height)
-  await page.render({ canvasContext: context as any, viewport, canvas: canvas as any }).promise
-  await pdf.destroy()
-
-  return canvas.toDataURL('image/jpeg', 0.78)
 }
 
 function generateFallbackDocumentThumbnail(label: string, title = 'Belge') {
@@ -412,70 +358,6 @@ function escapeSvgText(value: string) {
     .replace(/'/g, '&apos;')
 }
 
-function generateTextThumbnail(text: string, title = 'Belge') {
-  const canvas = document.createElement('canvas')
-  canvas.width = 360
-  canvas.height = 510
-  const context = canvas.getContext('2d')
-  if (!context) return ''
-
-  context.fillStyle = '#ffffff'
-  context.fillRect(0, 0, canvas.width, canvas.height)
-  context.fillStyle = '#f3f4f6'
-  context.fillRect(0, 0, canvas.width, 52)
-  context.fillStyle = '#111827'
-  context.font = 'bold 18px Arial, sans-serif'
-  context.fillText(title.slice(0, 28), 22, 33)
-  context.font = '14px Arial, sans-serif'
-  context.fillStyle = '#374151'
-
-  const words = text.replace(/\s+/g, ' ').trim().split(' ')
-  const lines: string[] = []
-  let line = ''
-  words.forEach(word => {
-    const candidate = line ? `${line} ${word}` : word
-    if (context.measureText(candidate).width > 310) {
-      if (line) lines.push(line)
-      line = word
-    } else {
-      line = candidate
-    }
-  })
-  if (line) lines.push(line)
-
-  lines.slice(0, 23).forEach((item, index) => {
-    context.fillText(item, 22, 82 + index * 18)
-  })
-  return canvas.toDataURL('image/jpeg', 0.82)
-}
-
-async function createDocumentPreviewMetadata(file: File) {
-  const type = file.type || getEffectiveDocumentType({ slotId: 'preview', file, name: file.name, size: file.size, type: file.type })
-
-  if (type.startsWith('image/')) {
-    const dataUrl = await readFileAsDataUrl(file)
-    return { url: dataUrl, thumbnailUrl: dataUrl }
-  }
-
-  if (type === 'application/pdf') {
-    const [url, thumbnailUrl] = await Promise.all([
-      readFileAsDataUrl(file),
-      generatePdfThumbnail(file).catch(() => generateFallbackDocumentThumbnail('PDF', file.name)),
-    ])
-    return { url, thumbnailUrl: thumbnailUrl || undefined }
-  }
-
-  if (isTextDocument({ slotId: 'preview', file, name: file.name, size: file.size, type })) {
-    const text = await readFileAsText(file)
-    return {
-      url: `data:${type || 'text/plain'};charset=utf-8,${encodeURIComponent(text)}`,
-      thumbnailUrl: generateTextThumbnail(text, file.name),
-    }
-  }
-
-  return { url: await readFileAsDataUrl(file), thumbnailUrl: generateFallbackDocumentThumbnail('DOC', file.name) }
-}
-
 export function DocumentSlotUploader({
   slots,
   documents,
@@ -500,7 +382,6 @@ export function DocumentSlotUploader({
   const [extraSlotName, setExtraSlotName] = useState('')
   const [showExtraSlotInput, setShowExtraSlotInput] = useState(false)
   const [signedPreviewUrls, setSignedPreviewUrls] = useState<Record<string, string>>({})
-  const [generatedThumbnails, setGeneratedThumbnails] = useState<Record<string, string>>({})
   const [previewText, setPreviewText] = useState<{ loading: boolean; content: string; error: string }>({ loading: false, content: '', error: '' })
   
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -539,9 +420,8 @@ export function DocumentSlotUploader({
   )
   const currentDoc = currentSlot ? getLatestActiveDocument(documents, currentSlot.id) : undefined
   const currentDocSignedKey = currentDoc?.storagePath || currentDoc?.documentId || ''
-  const currentDocKey = currentDoc ? currentDocSignedKey || `${currentDoc.slotId}:${currentDoc.name}:${currentDoc.size}` : ''
   const currentDocUrl = getDocumentUrl(currentDoc) || (currentDocSignedKey ? signedPreviewUrls[currentDocSignedKey] : '')
-  const currentDocThumbnailUrl = (currentDocKey ? generatedThumbnails[currentDocKey] : '') || getDocumentThumbnailUrl(currentDoc, currentDocSignedKey ? signedPreviewUrls[currentDocSignedKey] : undefined)
+  const currentDocThumbnailUrl = getDocumentThumbnailUrl(currentDoc, currentDocSignedKey ? signedPreviewUrls[currentDocSignedKey] : undefined)
   const hasDocument = !!currentDoc
   const currentAcceptedTypes = currentSlot?.acceptedTypes || DEFAULT_DOCUMENT_ACCEPTED_TYPES
   const currentDocType = getEffectiveDocumentType(currentDoc)
@@ -602,48 +482,6 @@ export function DocumentSlotUploader({
       cancelled = true
     }
   }, [documents, signedPreviewUrls])
-
-  useEffect(() => {
-    const docsNeedingThumbnail = documents.filter(doc => {
-      const signedKey = doc.storagePath || doc.documentId || ''
-      const key = signedKey || `${doc.slotId}:${doc.name}:${doc.size}`
-      const url = doc.url || doc.previewUrl || (signedKey ? signedPreviewUrls[signedKey] : '')
-      const hasFinalThumbnail = doc.thumbnailUrl && !isFallbackDocumentThumbnail(doc.thumbnailUrl)
-      return !hasFinalThumbnail && !generatedThumbnails[key] && url && (isPdfDocument(doc) || isTextDocument(doc))
-    })
-    if (docsNeedingThumbnail.length === 0) return
-
-    let cancelled = false
-    Promise.all(docsNeedingThumbnail.map(async doc => {
-      const signedKey = doc.storagePath || doc.documentId || ''
-      const key = signedKey || `${doc.slotId}:${doc.name}:${doc.size}`
-      const url = doc.url || doc.previewUrl || (signedKey ? signedPreviewUrls[signedKey] : '') || ''
-      try {
-        if (isPdfDocument(doc)) return [key, await generatePdfThumbnail(url)] as const
-        const response = await fetch(url)
-        const text = await response.text()
-        return [key, generateTextThumbnail(text, doc.name)] as const
-      } catch {
-        return [key, generateFallbackDocumentThumbnail(isPdfDocument(doc) ? 'PDF' : 'TXT', doc.name)] as const
-      }
-    })).then(items => {
-      if (cancelled) return
-      const next = Object.fromEntries(items.filter((item): item is readonly [string, string] => !!item?.[1]))
-      if (Object.keys(next).length > 0) {
-        setGeneratedThumbnails(prev => ({ ...prev, ...next }))
-        if (canMutate) {
-          onChange(documents.map(doc => {
-            const key = doc.storagePath || doc.documentId || `${doc.slotId}:${doc.name}:${doc.size}`
-            return next[key] && (!doc.thumbnailUrl || isFallbackDocumentThumbnail(doc.thumbnailUrl)) ? { ...doc, thumbnailUrl: next[key] } : doc
-          }))
-        }
-      }
-    })
-
-    return () => {
-      cancelled = true
-    }
-  }, [canMutate, documents, generatedThumbnails, onChange, signedPreviewUrls])
 
   useEffect(() => {
     if (!previewDoc) {
@@ -933,8 +771,7 @@ export function DocumentSlotUploader({
           {sortedDocuments.map((doc, index) => {
             const signedKey = doc.storagePath || doc.documentId || ''
             const docUrl = getDocumentUrl(doc) || (signedKey ? signedPreviewUrls[signedKey] : '')
-            const docKey = signedKey || `${doc.slotId}:${doc.name}:${doc.size}`
-            const thumbUrl = generatedThumbnails[docKey] || getDocumentThumbnailUrl(doc, signedKey ? signedPreviewUrls[signedKey] : undefined)
+            const thumbUrl = getDocumentThumbnailUrl(doc, signedKey ? signedPreviewUrls[signedKey] : undefined)
             const config = getFileTypeConfig(getEffectiveDocumentType(doc))
             const Icon = config.icon
             const slotTitle = allSlots.find(slot => slot.id === doc.slotId)?.title || doc.slotTitle || doc.slotId
@@ -1065,8 +902,7 @@ export function DocumentSlotUploader({
             const expanded = expandedHistorySlotIds.includes(slot.id)
             const signedKey = doc?.storagePath || doc?.documentId || ''
             const docUrl = getDocumentUrl(doc) || (signedKey ? signedPreviewUrls[signedKey] : '')
-            const docKey = doc ? signedKey || `${doc.slotId}:${doc.name}:${doc.size}` : ''
-            const thumbUrl = doc ? generatedThumbnails[docKey] || getDocumentThumbnailUrl(doc, signedKey ? signedPreviewUrls[signedKey] : undefined) : ''
+            const thumbUrl = doc ? getDocumentThumbnailUrl(doc, signedKey ? signedPreviewUrls[signedKey] : undefined) : ''
             const config = getFileTypeConfig(getEffectiveDocumentType(doc))
             const Icon = config.icon
 
