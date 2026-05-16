@@ -451,7 +451,7 @@ function MasterSummaryHero({
         <div className="mt-3 grid gap-2 md:grid-cols-2 lg:grid-cols-3">
           {items.map(item => (
             <div key={item.label} className="rounded-lg border border-emerald-100 bg-white px-3 py-2 dark:border-emerald-900/50 dark:bg-gray-900">
-              <div className="text-[11px] font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">{item.label}</div>
+              <div className="text-[13px] font-medium leading-5 text-gray-500 dark:text-gray-400">{item.label}</div>
               <MasterSummaryItemValue
                 item={item}
                 sourceData={sourceData}
@@ -509,10 +509,10 @@ function MasterSummaryItemValue({
 }) {
   const fieldName = item.fieldKeys ? pickEditableFieldName(sourceData, item.fieldKeys) : null
   const canEdit = !!fieldName && !!onFieldChange && !readOnly
-  const inputClass = formControlClass({ state: 'valid', rounded: 'md', size: 'sm', className: 'mt-1' })
+  const inputClass = formControlClass({ state: 'valid', rounded: 'md', size: 'field', className: 'mt-1' })
 
   if (!canEdit) {
-    return <div className="mt-0.5 truncate text-sm text-gray-900 dark:text-white">{formatSummaryValue(item.value, item)}</div>
+    return <div className="mt-0.5 truncate text-[13px] leading-5 text-gray-900 dark:text-white">{formatSummaryValue(item.value, item)}</div>
   }
 
   if (item.inputType === 'select') {
@@ -2618,7 +2618,7 @@ export function EntityForm({
       )
     }
 
-    const baseInputClass = formControlClass({ state: fieldDisabled ? 'neutral' : validationState.status })
+    const baseInputClass = formControlClass({ state: fieldDisabled ? 'neutral' : validationState.status, size: 'field' })
 
     const renderInput = () => {
           if (field.render) {
@@ -2721,7 +2721,7 @@ export function EntityForm({
         case 'checkbox':
           const checkboxHasStatusLabel = ['engellilik', 'hukumluluk'].includes(field.name)
           return (
-            <label className="flex min-h-10 items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300">
+            <label className="flex min-h-10 items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 text-[13px] leading-5 text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300">
               <input
                 type="checkbox"
                 checked={!!formData[field.name]}
@@ -2870,7 +2870,7 @@ export function EntityForm({
         {!field.hideLabel && (
           <div className="flex items-center gap-2">
             <label className={cn(
-              "text-sm font-medium",
+              "text-[13px] font-medium leading-5",
               validationState.status === 'invalid'
                 ? "text-red-700 dark:text-red-400"
                 : validationState.status === 'valid'

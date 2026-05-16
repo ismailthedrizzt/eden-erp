@@ -5,7 +5,7 @@ export type FormControlState = 'neutral' | 'invalid' | 'valid'
 type FormControlClassOptions = {
   state?: FormControlState
   rounded?: 'md' | 'lg'
-  size?: 'sm' | 'md'
+  size?: 'sm' | 'field' | 'md'
   className?: string
 }
 
@@ -23,7 +23,7 @@ export function formControlClass({
     'dark:disabled:bg-gray-900 dark:disabled:text-gray-100 dark:disabled:[-webkit-text-fill-color:#f3f4f6]',
     'dark:read-only:bg-gray-900 dark:read-only:text-gray-100 dark:read-only:[-webkit-text-fill-color:#f3f4f6]',
     rounded === 'md' ? 'rounded-md' : 'rounded-lg',
-    size === 'sm' ? 'px-2 py-1.5 text-xs' : 'px-3 py-2 text-sm',
+    size === 'sm' ? 'px-2 py-1.5 text-xs' : size === 'field' ? 'px-2.5 py-1.5 text-[13px] leading-5' : 'px-3 py-2 text-sm',
     state === 'invalid'
       ? 'border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 dark:border-red-700'
       : state === 'valid'

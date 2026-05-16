@@ -295,7 +295,7 @@ export function MasterIdentityGate({
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <label className="space-y-1">
-      <span className="text-xs font-medium text-gray-600 dark:text-gray-400">{label}</span>
+      <span className="text-[13px] font-medium leading-5 text-gray-600 dark:text-gray-400">{label}</span>
       {children}
     </label>
   )
@@ -380,12 +380,12 @@ function SearchableGateSelect({
                 onChange(option.value)
                 setOpen(false)
               }}
-              className="block w-full px-3 py-2 text-left text-sm text-gray-800 hover:bg-blue-50 dark:text-gray-100 dark:hover:bg-blue-950/40"
+              className="block w-full px-3 py-2 text-left text-[13px] leading-5 text-gray-800 hover:bg-blue-50 dark:text-gray-100 dark:hover:bg-blue-950/40"
             >
               {option.label}
             </button>
           )) : (
-            <div className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">Sonuç bulunamadı</div>
+            <div className="px-3 py-2 text-[13px] leading-5 text-gray-500 dark:text-gray-400">Sonuç bulunamadı</div>
           )}
         </div>
       )}
@@ -588,7 +588,7 @@ function isTurkishOrganization(country?: string) {
 }
 
 function fieldClass(valid: boolean, touched?: boolean, disabled?: boolean) {
-  return formControlClass({ state: disabled ? 'neutral' : valid ? 'valid' : 'invalid' })
+  return formControlClass({ state: disabled ? 'neutral' : valid ? 'valid' : 'invalid', size: 'field' })
 }
 
 function buildRoleScope(config: IdentityGateConfig, formData: Record<string, any>, explicitScope?: Record<string, unknown>) {
