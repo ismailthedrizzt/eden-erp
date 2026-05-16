@@ -67,6 +67,7 @@ const migrationFiles = [
   '20260515_employee_sgk_lifecycle_fields.sql',
   '20260516_employee_work_lifecycle.sql',
   '20260516_partner_ownership_lifecycle.sql',
+  '20260517_remove_lifecycle_soft_delete_columns.sql',
   'add_employee_unique_constraint.sql',
 ];
 

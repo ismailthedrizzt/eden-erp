@@ -3,7 +3,7 @@ import { createServiceClient } from '@/lib/supabase/server'
 import { hydrateMasterContact, stripMasterDataForRoleProfile, syncMasterContact } from '@/lib/identity/masterContact'
 import { EntityBankAccountsService } from '@/lib/modules/entity-bank-accounts/entityBankAccounts.service'
 
-const PARTNER_DETAIL_SELECT = 'id,sirket_id,company_id,person_id,organization_id,owner_kind,ortak_tipi,display_name,ortak_adi,identity_number,tckn_vkn,hisse_orani,share_ratio,voting_ratio,profit_ratio,source_type,source_id,share_units,nominal_value,capital_amount,share_class,has_representation_right,imza_yetkisi,has_control_right,control_type,has_board_nomination_right,has_veto_right,has_privileged_share,beneficial_owner,is_beneficial_owner,beneficial_ratio,is_ultimate_controller,start_date,end_date,status,record_status,is_deleted,history,photo_logo,partner_documents,partner_profile,notes,created_at'
+const PARTNER_DETAIL_SELECT = 'id,sirket_id,company_id,person_id,organization_id,owner_kind,ortak_tipi,display_name,ortak_adi,identity_number,tckn_vkn,hisse_orani,share_ratio,voting_ratio,profit_ratio,source_type,source_id,share_units,nominal_value,capital_amount,share_class,has_representation_right,imza_yetkisi,has_control_right,control_type,has_board_nomination_right,has_veto_right,has_privileged_share,beneficial_owner,is_beneficial_owner,beneficial_ratio,is_ultimate_controller,start_date,end_date,status,record_status,history,photo_logo,partner_documents,partner_profile,notes,created_at'
 
 function buildFieldHistory(current: Record<string, any>, updates: Record<string, any>) {
   const existingHistory = Array.isArray(current.history) ? current.history : []
@@ -121,14 +121,10 @@ export async function DELETE(
     .from('sirket_ortaklar')
     .update({
       status: 'Pasif',
-      record_status: 'passive',
-      is_deleted: true,
-      deleted_at: new Date().toISOString(),
-      deleted_by: 'Sistem Kullanıcısı',
-    })
+      record_status: 'passive',    })
     .eq('id', id)
 
-  if (error) return NextResponse.json({ error: error.message, code: error.code || 'SOFT_DELETE_FAILED' }, { status: 500 })
+  if (error) return NextResponse.json({ error: error.message, code: error.code || 'PASSIVATE_FAILED' }, { status: 500 })
   return NextResponse.json({ success: true })
 }
 
@@ -177,11 +173,7 @@ function mapPartnerForDb(partner: Record<string, any>, current?: Record<string, 
     notes: partner.notes || null,
     photo_logo: partner.photo_logo || current?.photo_logo || [],
     partner_documents: partner.partner_documents || current?.partner_documents || [],
-    partner_profile: stripMasterDataForRoleProfile(partner),
-    is_deleted: !!(partner.is_deleted ?? current?.is_deleted),
-    deleted_at: 'deleted_at' in partner ? partner.deleted_at : current?.deleted_at ?? null,
-    deleted_by: 'deleted_by' in partner ? partner.deleted_by : current?.deleted_by ?? null,
-  }
+    partner_profile: stripMasterDataForRoleProfile(partner),  }
 }
 
 function toNullableNumber(value: unknown) {
@@ -201,7 +193,7 @@ async function hydratePartnerMasterAssets(supabase: ReturnType<typeof createServ
       .from('employees')
       .select('fotograf_url, cv_belgesi, diploma_belgesi, ise_giris_belgeleri, isten_cikis_belgeleri')
       .eq('person_id', partner.person_id)
-      .eq('is_deleted', false)
+      .neq('record_status', 'passive')
       .maybeSingle()
 
     const photoLogo = hasPhoto

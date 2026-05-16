@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+﻿import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { createServiceClient } from '@/lib/supabase/server'
 import { normalizeIdentityCountry } from '@/lib/identity-gate'
@@ -37,27 +37,27 @@ const roleTableAliases: Record<string, string> = {
   company_representatives: 'sirket_temsilciler',
 }
 
-const PERSON_SELECT = 'id,first_name,last_name,full_name,nationality,national_id,passport_no,birth_date,birth_place,gender,phone,email,address,city,district,metadata_json,is_deleted,updated_at'
-const ORGANIZATION_SELECT = 'id,legal_name,short_name,country,tax_number,registration_number,tax_office,organization_type,phone,email,address,city,district,metadata_json,is_deleted,updated_at'
+const PERSON_SELECT = 'id,first_name,last_name,full_name,nationality,national_id,passport_no,birth_date,birth_place,gender,phone,email,address,city,district,metadata_json,updated_at'
+const ORGANIZATION_SELECT = 'id,legal_name,short_name,country,tax_number,registration_number,tax_office,organization_type,phone,email,address,city,district,metadata_json,updated_at'
 const EMPLOYEE_IDENTITY_SELECT = 'id,person_id,ad,soyad,uyruk,tc_kimlik,pasaport_no,dogum_tarihi,dogum_yeri,cinsiyet,cep_telefonu,is_telefonu,email,adres,telefonlar,epostalar,gorev,engellilik,engellilik_yuzdesi,askerlik_durumu,tecil_tarihi,hukumluluk,okuryazar_degil,egitim_okullari,yabanci_diller,sertifikalar,medeni_durum,yakinlar,iban,kan_grubu,fotograf_url,cv_belgesi,diploma_belgesi,ise_giris_belgeleri,isten_cikis_belgeleri'
-const COMPANY_IDENTITY_SELECT = 'id,organization_id,ticari_unvan,kisa_unvan,ulke,vkn_tckn,ticaret_sicil_no,mersis_no,vergi_dairesi,sirket_turu,telefon,email,adres,il,ilce,kurulus_tarihi,logo_url,hero_images,hero_documents,is_deleted'
+const COMPANY_IDENTITY_SELECT = 'id,organization_id,ticari_unvan,kisa_unvan,ulke,vkn_tckn,ticaret_sicil_no,mersis_no,vergi_dairesi,sirket_turu,telefon,email,adres,il,ilce,kurulus_tarihi,logo_url,hero_images,hero_documents'
 const ROLE_SELECT_BY_TABLE: Record<string, string> = {
-  employees: 'id,person_id,ad,soyad,tc_kimlik,pasaport_no,calisma_durumu,is_deleted',
-  sirketler: 'id,organization_id,ticari_unvan,kisa_unvan,vkn_tckn,ticaret_sicil_no,is_deleted',
-  sirket_ortaklar: 'id,sirket_id,company_id,person_id,organization_id,display_name,ortak_adi,ad,soyad,tckn_vkn,share_ratio,hisse_orani,status,is_deleted',
-  sirket_temsilciler: 'id,sirket_id,company_id,person_id,organization_id,display_name,ad_soyad,authority_types,status,is_deleted',
-  stakeholders: 'id,company_id,person_id,organization_id,display_name,tax_id,stakeholder_type,status,is_deleted',
+  employees: 'id,person_id,ad,soyad,tc_kimlik,pasaport_no,calisma_durumu',
+  sirketler: 'id,organization_id,ticari_unvan,kisa_unvan,vkn_tckn,ticaret_sicil_no',
+  sirket_ortaklar: 'id,sirket_id,company_id,person_id,organization_id,display_name,ortak_adi,ad,soyad,tckn_vkn,share_ratio,hisse_orani,status',
+  sirket_temsilciler: 'id,sirket_id,company_id,person_id,organization_id,display_name,ad_soyad,authority_types,status',
+  stakeholders: 'id,company_id,person_id,organization_id,display_name,tax_id,stakeholder_type,status',
 }
 
 export async function POST(request: NextRequest) {
   const parsed = ResolveSchema.safeParse(await request.json().catch(() => null))
   if (!parsed.success) {
-    return NextResponse.json({ error: 'Geçersiz kimlik çözümleme isteği', details: parsed.error.flatten() }, { status: 400 })
+    return NextResponse.json({ error: 'GeÃ§ersiz kimlik Ã§Ã¶zÃ¼mleme isteÄŸi', details: parsed.error.flatten() }, { status: 400 })
   }
 
   const payload = parsed.data
   if (!allowedRoleTables.has(payload.roleTable)) {
-    return NextResponse.json({ error: 'Bu rol tablosu için kimlik kapısı desteklenmiyor' }, { status: 400 })
+    return NextResponse.json({ error: 'Bu rol tablosu iÃ§in kimlik kapÄ±sÄ± desteklenmiyor' }, { status: 400 })
   }
 
   const supabase = createServiceClient()
@@ -105,8 +105,8 @@ export async function POST(request: NextRequest) {
       roleRecord,
       prefill: buildPrefill(payload.entityKind, masterRecord),
       message: payload.entityKind === 'person'
-        ? 'Bu kişinin bu modülde zaten kaydı var. Mevcut kaydı düzenlemek ister misiniz?'
-        : 'Bu tüzel kişinin bu modülde zaten kaydı var. Mevcut kaydı düzenlemek ister misiniz?',
+        ? 'Bu kiÅŸinin bu modÃ¼lde zaten kaydÄ± var. Mevcut kaydÄ± dÃ¼zenlemek ister misiniz?'
+        : 'Bu tÃ¼zel kiÅŸinin bu modÃ¼lde zaten kaydÄ± var. Mevcut kaydÄ± dÃ¼zenlemek ister misiniz?',
     })
   }
 
@@ -120,8 +120,8 @@ export async function POST(request: NextRequest) {
       roleRecord: null,
       prefill: buildPrefill(payload.entityKind, masterRecord),
       message: payload.entityKind === 'person'
-        ? 'Kişi bulundu. Ana Kişi Kaydına bağlandı ve kayıtlı veriler çekildi.'
-        : 'Tüzel kişi bulundu. Ana Kurum Kaydına bağlandı ve kayıtlı veriler çekildi.',
+        ? 'KiÅŸi bulundu. Ana KiÅŸi KaydÄ±na baÄŸlandÄ± ve kayÄ±tlÄ± veriler Ã§ekildi.'
+        : 'TÃ¼zel kiÅŸi bulundu. Ana Kurum KaydÄ±na baÄŸlandÄ± ve kayÄ±tlÄ± veriler Ã§ekildi.',
     })
   }
 
@@ -134,10 +134,10 @@ export async function POST(request: NextRequest) {
     roleRecord: null,
     prefill: buildNewMasterPrefill(payload.entityKind, identity),
     message: payload.entityKind === 'person'
-      ? 'Bu gerçek kişi master kayıtlarda bulunamadı. Yeni kişi kaydı oluşturulacak.'
-      : 'Bu tüzel kişi master kayıtlarda bulunamadı. Yeni kurum kaydı oluşturulacak.',
+      ? 'Bu gerÃ§ek kiÅŸi master kayÄ±tlarda bulunamadÄ±. Yeni kiÅŸi kaydÄ± oluÅŸturulacak.'
+      : 'Bu tÃ¼zel kiÅŸi master kayÄ±tlarda bulunamadÄ±. Yeni kurum kaydÄ± oluÅŸturulacak.',
     warning: masterResult.warning || (payload.entityKind === 'organization' && !identity.tax_number && identity.registration_number
-      ? 'VKN olmadan ticaret sicil no ile ilerleniyor; kayıt duplicate uyarısı gerektirebilir.'
+      ? 'VKN olmadan ticaret sicil no ile ilerleniyor; kayÄ±t duplicate uyarÄ±sÄ± gerektirebilir.'
       : undefined),
   })
 }
@@ -148,14 +148,14 @@ async function findPerson(supabase: ReturnType<typeof createServiceClient>, iden
   const passportNo = clean(identity.passport_no)
 
   if (!nationalId && !passportNo) {
-    return { error: 'Devam etmek için TC Kimlik No veya Pasaport No girin.' }
+    return { error: 'Devam etmek iÃ§in TC Kimlik No veya Pasaport No girin.' }
   }
 
-  let query = supabase.from('persons').select(PERSON_SELECT).eq('nationality', nationality).eq('is_deleted', false)
+  let query = supabase.from('persons').select(PERSON_SELECT).eq('nationality', nationality)
   query = nationalId ? query.eq('national_id', nationalId) : query.eq('passport_no', passportNo)
   let { data, error } = await query.maybeSingle()
   if (isMissingTableError(error, 'persons')) {
-    return { record: null, warning: 'Girilen kişi kayıtlı kişiler listesinde bulunamadı. Yeni kayıt oluşturulacak.' }
+    return { record: null, warning: 'Girilen kiÅŸi kayÄ±tlÄ± kiÅŸiler listesinde bulunamadÄ±. Yeni kayÄ±t oluÅŸturulacak.' }
   }
   if (error) return { error: error.message }
   if (!data && nationalId) {
@@ -163,7 +163,7 @@ async function findPerson(supabase: ReturnType<typeof createServiceClient>, iden
       .from('persons')
       .select(PERSON_SELECT)
       .eq('national_id', nationalId)
-      .eq('is_deleted', false)
+      
       .limit(1)
     if (fallback.error) return { error: fallback.error.message }
     data = Array.isArray(fallback.data) ? fallback.data[0] || null : null
@@ -177,14 +177,14 @@ async function findOrganization(supabase: ReturnType<typeof createServiceClient>
   const registrationNumber = clean(identity.registration_number)
 
   if (!taxNumber && !registrationNumber) {
-    return { error: 'Devam etmek için VKN veya Ticaret Sicil No girin.' }
+    return { error: 'Devam etmek iÃ§in VKN veya Ticaret Sicil No girin.' }
   }
 
-  let query = supabase.from('organizations').select(ORGANIZATION_SELECT).eq('country', country).eq('is_deleted', false)
+  let query = supabase.from('organizations').select(ORGANIZATION_SELECT).eq('country', country)
   query = taxNumber ? query.eq('tax_number', taxNumber) : query.eq('registration_number', registrationNumber)
   let { data, error } = await query.maybeSingle()
   if (isMissingTableError(error, 'organizations')) {
-    return { record: null, warning: 'Girilen kurum kayıtlı kurumlar listesinde bulunamadı. Yeni kayıt oluşturulacak.' }
+    return { record: null, warning: 'Girilen kurum kayÄ±tlÄ± kurumlar listesinde bulunamadÄ±. Yeni kayÄ±t oluÅŸturulacak.' }
   }
   if (error) return { error: error.message }
   if (!data && taxNumber) {
@@ -192,7 +192,7 @@ async function findOrganization(supabase: ReturnType<typeof createServiceClient>
       .from('organizations')
       .select(ORGANIZATION_SELECT)
       .eq('tax_number', taxNumber)
-      .eq('is_deleted', false)
+      
       .limit(1)
     if (fallback.error) return { error: fallback.error.message }
     data = Array.isArray(fallback.data) ? fallback.data[0] || null : null
@@ -232,17 +232,17 @@ async function enrichOrganizationFromCompany(supabase: ReturnType<typeof createS
   let company: Record<string, any> | null = null
 
   if (organization.id) {
-    const { data } = await supabase.from('sirketler').select(COMPANY_IDENTITY_SELECT).eq('is_deleted', false).eq('organization_id', organization.id).limit(1)
+    const { data } = await supabase.from('sirketler').select(COMPANY_IDENTITY_SELECT).eq('organization_id', organization.id).limit(1)
     company = Array.isArray(data) ? data[0] || null : null
   }
 
   if (!company && organization.tax_number) {
-    const { data } = await supabase.from('sirketler').select(COMPANY_IDENTITY_SELECT).eq('is_deleted', false).eq('vkn_tckn', organization.tax_number).limit(1)
+    const { data } = await supabase.from('sirketler').select(COMPANY_IDENTITY_SELECT).eq('vkn_tckn', organization.tax_number).limit(1)
     company = Array.isArray(data) ? data[0] || null : null
   }
 
   if (!company && organization.registration_number) {
-    const { data } = await supabase.from('sirketler').select(COMPANY_IDENTITY_SELECT).eq('is_deleted', false).eq('ticaret_sicil_no', organization.registration_number).limit(1)
+    const { data } = await supabase.from('sirketler').select(COMPANY_IDENTITY_SELECT).eq('ticaret_sicil_no', organization.registration_number).limit(1)
     company = Array.isArray(data) ? data[0] || null : null
   }
 
@@ -303,7 +303,7 @@ async function findOrCreateOrganizationFromCompany(supabase: ReturnType<typeof c
 
   if (!taxNumber && !registrationNumber) return { record: null }
 
-  let query = supabase.from('sirketler').select(COMPANY_IDENTITY_SELECT).eq('is_deleted', false).limit(1)
+  let query = supabase.from('sirketler').select(COMPANY_IDENTITY_SELECT).limit(1)
   query = taxNumber ? query.eq('vkn_tckn', taxNumber) : query.eq('ticaret_sicil_no', registrationNumber)
   const { data, error } = await query
   if (error) return { record: null }
@@ -354,7 +354,7 @@ async function findRoleRecord(
     query = query.eq(input.roleTable === 'stakeholders' ? 'company_id' : 'sirket_id', companyId)
   }
 
-  query = query.eq('is_deleted', false)
+  query = query
 
   const { data, error } = await query
   if (error) return { error: error.message, record: null }
@@ -573,7 +573,7 @@ function normalizePersonImages(record: Record<string, any>) {
   const existing = Array.isArray(record.photo_logo) ? record.photo_logo : []
   if (existing.length) return existing
   const url = record.fotograf_url || record.photo_url || record.image_url
-  return url ? [{ slotId: 'photo_logo', name: 'Fotoğraf', previewUrl: url, url }] : []
+  return url ? [{ slotId: 'photo_logo', name: 'FotoÄŸraf', previewUrl: url, url }] : []
 }
 
 function normalizeOrganizationImages(record: Record<string, any>) {

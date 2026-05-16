@@ -472,7 +472,6 @@ export default function PersonelYonetimPage() {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          is_deleted: false,
           record_status: 'active',
           employment_status: 'active',
           calisma_durumu: 'gorevde',
@@ -841,7 +840,7 @@ function applyDashboardFilter(rows: PersonelTableRow[], event: DashboardFilterEv
 }
 
 function getEmployeeRecordStatus(employee: Record<string, any>) {
-  return employee.record_status || (employee.is_deleted ? 'passive' : employee.sgk_giris || employee.calisma_durumu === 'gorevde' ? 'active' : 'draft')
+  return employee.record_status || (employee.sgk_giris || employee.calisma_durumu === 'gorevde' ? 'active' : 'draft')
 }
 
 function getAgeGroup(value?: string | null) {

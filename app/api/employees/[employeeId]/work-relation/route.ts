@@ -8,7 +8,7 @@ export async function GET(_request: NextRequest, { params }: { params: Promise<{
     .from('employee_work_relations')
     .select('*')
     .eq('employee_id', employeeId)
-    .eq('is_deleted', false)
+    .neq('status', 'passive')
     .maybeSingle()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

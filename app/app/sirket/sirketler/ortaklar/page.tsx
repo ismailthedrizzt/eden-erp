@@ -54,7 +54,6 @@ interface PartnerRow {
   end_date?: string
   status?: string
   record_status?: 'draft' | 'active' | 'passive'
-  is_deleted?: boolean
   history?: Array<{ value: unknown; date: string; user?: string }>
   partner_profile?: Record<string, any>
   photo_logo?: Array<Record<string, any>>
@@ -107,7 +106,6 @@ interface OwnershipTransactionHistoryRow {
 interface RepresentativeAuthorityRow {
   id: string
   sirket_id?: string
-  is_deleted?: boolean
   person_id?: string | null
   organization_id?: string | null
   source_id?: string | null
@@ -605,11 +603,7 @@ export default function OrtaklarPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...selectedPartner,
-          status: 'Aktif',
-          is_deleted: false,
-          deleted_at: null,
-          deleted_by: null,
-        }),
+          status: 'Aktif',        }),
       })
       invalidateEntityDetailCache('company-partners', selectedPartner.id)
       if (!response.ok) throw await createSaveError(response, 'Aktiflestirme basarisiz')
@@ -647,11 +641,7 @@ export default function OrtaklarPage() {
           ...payload,
           status: 'Aktif',
           record_status: 'active',
-          ownership_action: 'ownership_defined',
-          is_deleted: false,
-          deleted_at: null,
-          deleted_by: null,
-        }),
+          ownership_action: 'ownership_defined',        }),
       })
       invalidateEntityDetailCache('company-partners', selectedPartner.id)
       if (!response.ok) throw await createSaveError(response, 'Ortaklık tanımlanamadı')

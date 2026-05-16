@@ -142,13 +142,13 @@ export async function GET(request: NextRequest) {
 
   let query = supabase
     .from('sirket_ortaklar')
-    .select('id,sirket_id,company_id,person_id,organization_id,owner_kind,ortak_tipi,display_name,ortak_adi,identity_number,tckn_vkn,share_ratio,hisse_orani,voting_ratio,profit_ratio,start_date,end_date,status,record_status,is_deleted,source_type,source_id,created_at')
+    .select('id,sirket_id,company_id,person_id,organization_id,owner_kind,ortak_tipi,display_name,ortak_adi,identity_number,tckn_vkn,share_ratio,hisse_orani,voting_ratio,profit_ratio,start_date,end_date,status,record_status,source_type,source_id,created_at')
     .order(sortColumn, { ascending: listQuery.direction !== 'desc' })
     .range(from, to)
 
   if (companyId) query = query.or(`company_id.eq.${companyId},sirket_id.eq.${companyId}`)
   if (status) query = query.eq('status', status)
-  if (!includePassive) query = query.eq('is_deleted', false)
+  if (!includePassive) query = query.neq('record_status', 'passive')
   if (listQuery.search) query = query.or(`display_name.ilike.%${listQuery.search}%,ortak_adi.ilike.%${listQuery.search}%,identity_number.ilike.%${listQuery.search}%,tckn_vkn.ilike.%${listQuery.search}%`)
 
   const { data, error } = await query
@@ -244,7 +244,6 @@ function mapPartnerForDb(partner: Record<string, any>) {
   photo_logo: partner.photo_logo || [],
   partner_documents: partner.partner_documents || [],
     partner_profile: stripMasterDataForRoleProfile(partner),
-    is_deleted: false,
   }
 }
 

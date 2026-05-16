@@ -84,7 +84,6 @@ const EmployeeUpdateSchema = z.object({
   fotograf_url: z.string().optional(),
   cv_belgesi: z.record(z.any()).optional().nullable(),
   diploma_belgesi: z.record(z.any()).optional().nullable(),
-  is_deleted: z.boolean().optional(),
   record_status: z.enum(['draft', 'active', 'passive']).optional(),
   employment_status: z.string().optional(),
 })
@@ -211,7 +210,6 @@ const employeeMediaColumns = [
 ]
 
 const optionalEmployeeDetailColumns = [
-  'is_deleted',
   'employee_no',
   'employment_status',
   'record_status',
@@ -258,7 +256,7 @@ export async function GET(
   const section = new URL(request.url).searchParams.get('section')
 
   if (section === 'hero') {
-    const { data, error } = await fetchEmployeeDetail(supabase, id, employeeHeroColumns, ['is_deleted', 'employee_no', 'employment_status', 'record_status', 'start_date'])
+    const { data, error } = await fetchEmployeeDetail(supabase, id, employeeHeroColumns, ['employee_no', 'employment_status', 'record_status', 'start_date'])
     if (error) return handleEmployeeDetailError(error)
     if (!data) return NextResponse.json({ error: 'Ã‡alÄ±ÅŸan bulunamadÄ±', code: 'EMPLOYEE_NOT_FOUND' }, { status: 404 })
     return NextResponse.json({ data })
@@ -415,7 +413,6 @@ export async function DELETE(
   const { error } = await supabase
     .from('employees')
     .update({
-      is_deleted: true,
       record_status: 'passive',
       employment_status: 'terminated',
       calisma_durumu: 'ayrilmis',
@@ -423,7 +420,7 @@ export async function DELETE(
     .eq('id', id)
 
   if (error) {
-    return NextResponse.json({ error: error.message, code: error.code || 'SOFT_DELETE_FAILED' }, { status: 500 })
+    return NextResponse.json({ error: error.message, code: error.code || 'PASSIVATE_FAILED' }, { status: 500 })
   }
 
   return NextResponse.json({ success: true })

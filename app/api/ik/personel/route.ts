@@ -13,7 +13,7 @@ const EmployeeSchema = z.object({
   ad: z.string().min(1).max(100),
   soyad: z.string().min(1).max(100),
   uyruk: z.string().default('TR').transform(normalizeCountryId),
-  tc_kimlik: z.string().regex(/^\d{11}$/, 'TC Kimlik No 11 haneli sayı olmalıdır').optional(),
+  tc_kimlik: z.string().regex(/^\d{11}$/, 'TC Kimlik No 11 haneli sayÄ± olmalÄ±dÄ±r').optional(),
   pasaport_no: z.string().optional(),
   cinsiyet: z.enum(['erkek', 'kadin']),
   dogum_yeri: z.string().optional(),
@@ -65,7 +65,6 @@ const EmployeeSchema = z.object({
   fotograf_url: z.string().optional(),
   cv_belgesi: z.record(z.any()).optional().nullable(),
   diploma_belgesi: z.record(z.any()).optional().nullable(),
-  is_deleted: z.boolean().default(false),
   record_status: z.enum(['draft', 'active', 'passive']).optional(),
   employment_status: z.string().optional(),
 })
@@ -101,7 +100,6 @@ const baseEmployeeListColumns = [
 ]
 
 const optionalEmployeeListColumns = [
-  'is_deleted',
   'employee_no',
   'employment_status',
   'record_status',
@@ -171,9 +169,8 @@ export async function GET(request: NextRequest) {
   const ara = searchParams.get('ara') || listQuery.search
   const includePassive = listQuery.includePassive
 
-  let enabledOptionalColumns = ['is_deleted']
+  let enabledOptionalColumns = ['record_status']
   let includeOrganizationRelations = false
-  let hasIsDeletedColumn = true
   let data: any[] | null = null
   let error: any = null
 
@@ -193,7 +190,7 @@ export async function GET(request: NextRequest) {
       .order(sortColumn, { ascending: listQuery.direction !== 'desc' })
       .range(from, to)
 
-    if (!includePassive && hasIsDeletedColumn) query = query.eq('is_deleted', false)
+    if (!includePassive) query = query.neq('record_status', 'passive')
     if (birimId) query = query.eq('birim_id', birimId)
     if (durum) query = query.eq('calisma_durumu', durum)
     if (ara) query = query.or(`ad.ilike.%${ara}%,soyad.ilike.%${ara}%,tc_kimlik.ilike.%${ara}%`)
@@ -205,7 +202,6 @@ export async function GET(request: NextRequest) {
     const missingColumn = missingEmployeeColumn(error, enabledOptionalColumns)
     if (missingColumn) {
       enabledOptionalColumns = enabledOptionalColumns.filter((column) => column !== missingColumn)
-      if (missingColumn === 'is_deleted') hasIsDeletedColumn = false
       continue
     }
 
@@ -221,7 +217,6 @@ export async function GET(request: NextRequest) {
   const companyNames = await fetchCompanyNames(supabase as any, (data || []).map((row: any) => row.sirket_id))
   const rows = (data || []).map((row: any) => ({
     ...row,
-    is_deleted: row.is_deleted ?? false,
     employee_no: row.employee_no || null,
     photo_url: lightweightImageUrl(row.fotograf_url),
     fotograf_url: lightweightImageUrl(row.fotograf_url),
@@ -235,7 +230,7 @@ export async function GET(request: NextRequest) {
     hire_date: row.sgk_giris || row.start_date || null,
     employment_type: row.calisma_tipi || null,
     employment_status: row.employment_status || row.calisma_durumu || null,
-    record_status: row.record_status || (row.is_deleted ? 'passive' : row.sgk_giris ? 'active' : 'draft'),
+    record_status: row.record_status || (row.sgk_giris ? 'active' : 'draft'),
     phone: row.cep_telefonu || null,
     gender: row.cinsiyet || null,
     birth_date: row.dogum_tarihi || null,
@@ -263,7 +258,7 @@ export async function POST(request: NextRequest) {
   const body = omitNullishStrings(await request.json())
   const parsed = EmployeeSchema.safeParse(body)
   if (!parsed.success) {
-    return NextResponse.json({ error: 'Geçersiz veri', code: 'VALIDATION_FAILED', details: parsed.error.flatten() }, { status: 400 })
+    return NextResponse.json({ error: 'GeÃ§ersiz veri', code: 'VALIDATION_FAILED', details: parsed.error.flatten() }, { status: 400 })
   }
 
   const masterPayload = parsed.data
@@ -273,7 +268,6 @@ export async function POST(request: NextRequest) {
     .from('employees')
     .insert({
       ...employeePayload,
-      is_deleted: employeePayload.is_deleted ?? false,
       record_status: employeePayload.record_status || 'draft',
       employment_status: employeePayload.employment_status || 'pending_entry',
       calisma_durumu: employeePayload.isten_ayrilis ? 'ayrilmis' : employeePayload.calisma_durumu || 'askida'
@@ -289,7 +283,6 @@ export async function POST(request: NextRequest) {
       .from('employees')
       .insert({
         ...employeePayload,
-        is_deleted: employeePayload.is_deleted ?? false,
         record_status: employeePayload.record_status || 'draft',
         employment_status: employeePayload.employment_status || 'pending_entry',
         calisma_durumu: employeePayload.isten_ayrilis ? 'ayrilmis' : employeePayload.calisma_durumu || 'askida'
@@ -321,13 +314,13 @@ async function ensureEmployeePersonLink(supabase: ReturnType<typeof createServic
   const passportNo = isTurkishNationality(nationality) ? null : employee.pasaport_no || null
 
   const lookup = nationalId
-    ? supabase.from('persons').select('id').eq('nationality', nationality).eq('national_id', nationalId).eq('is_deleted', false).maybeSingle()
+    ? supabase.from('persons').select('id').eq('nationality', nationality).eq('national_id', nationalId).maybeSingle()
     : passportNo
-      ? supabase.from('persons').select('id').eq('nationality', nationality).eq('passport_no', passportNo).eq('is_deleted', false).maybeSingle()
+      ? supabase.from('persons').select('id').eq('nationality', nationality).eq('passport_no', passportNo).maybeSingle()
       : null
 
   const existing = lookup ? await lookup : { data: null, error: null }
-  if (isMissingTableError(existing.error, 'persons')) throw new Error('Ana kişiler tablosu bulunamadı; çalışan kaydı master bağlantısı olmadan oluşturulamaz.')
+  if (isMissingTableError(existing.error, 'persons')) throw new Error('Ana kiÅŸiler tablosu bulunamadÄ±; Ã§alÄ±ÅŸan kaydÄ± master baÄŸlantÄ±sÄ± olmadan oluÅŸturulamaz.')
   if (existing.error) throw new Error(existing.error.message)
   if (existing.data?.id) return { ...employee, person_id: existing.data.id }
 
@@ -353,7 +346,7 @@ async function ensureEmployeePersonLink(supabase: ReturnType<typeof createServic
     .select('id')
     .single()
 
-  if (isMissingTableError(error, 'persons')) throw new Error('Ana kişiler tablosu bulunamadı; çalışan kaydı master bağlantısı olmadan oluşturulamaz.')
+  if (isMissingTableError(error, 'persons')) throw new Error('Ana kiÅŸiler tablosu bulunamadÄ±; Ã§alÄ±ÅŸan kaydÄ± master baÄŸlantÄ±sÄ± olmadan oluÅŸturulamaz.')
   if (error) throw new Error(error.message)
   return created?.id ? { ...employee, person_id: created.id } : employee
 }
