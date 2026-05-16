@@ -500,7 +500,7 @@ function Select({ label, value, options, optionLabels, disabled, onChange }: { l
   return (
     <label className="space-y-1">
       <span className="text-xs font-medium text-gray-600 dark:text-gray-400">{label}</span>
-      <select value={value || ''} disabled={disabled} onChange={event => onChange(event.target.value)} className={formControlClass()}>
+      <select value={value || ''} disabled={disabled} onChange={event => onChange(event.target.value)} className={formControlClass({ surface: 'enum' })}>
         {options.map((option, index) => <option key={`${option || 'empty'}-${index}`} value={option}>{option ? optionLabels?.[option] || option : 'Seçiniz'}</option>)}
       </select>
     </label>

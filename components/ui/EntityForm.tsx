@@ -1321,7 +1321,10 @@ function ListField({
     return 'neutral'
   }
 
-  const draftInputClass = (item: FormField) => formControlClass({ state: getDraftValidationState(item) })
+  const draftInputClass = (item: FormField) => formControlClass({
+    state: getDraftValidationState(item),
+    surface: item.type === 'select' ? 'enum' : 'default',
+  })
 
   const setDraftValue = (name: string, nextValue: any) => {
     const nextDraft = {
@@ -2618,7 +2621,9 @@ export function EntityForm({
       )
     }
 
-    const baseInputClass = formControlClass({ state: fieldDisabled ? 'neutral' : validationState.status, size: 'field' })
+    const fieldControlState = fieldDisabled ? 'neutral' : validationState.status
+    const baseInputClass = formControlClass({ state: fieldControlState, size: 'field' })
+    const enumInputClass = formControlClass({ state: fieldControlState, size: 'field', surface: 'enum' })
 
     const renderInput = () => {
           if (field.render) {
@@ -2639,7 +2644,7 @@ export function EntityForm({
             value={value || 'TR'}
             onChange={(e) => handleChange(field.name, e.target.value)}
             disabled={fieldDisabled}
-            className={cn(baseInputClass, fieldDisabled && "appearance-none")}
+            className={cn(enumInputClass, fieldDisabled && "appearance-none")}
           >
             {COUNTRY_OPTIONS.map(country => (
               <option key={country.value} value={country.value}>{country.label}</option>
@@ -2671,7 +2676,7 @@ export function EntityForm({
               handleChange(field.name === 'city' ? 'district' : 'ilce', '')
             }}
             disabled={fieldDisabled}
-            className={cn(baseInputClass, fieldDisabled && "appearance-none")}
+            className={cn(enumInputClass, fieldDisabled && "appearance-none")}
           >
             <option value="">Seçiniz</option>
             {turkeyProvinces.map(province => (
@@ -2705,8 +2710,8 @@ export function EntityForm({
             onChange={(e) => handleChange(field.name, e.target.value)}
             disabled={fieldDisabled || !selectedProvince}
             className={cn(
-              baseInputClass,
-              (fieldDisabled || !selectedProvince) && "appearance-none bg-white text-gray-900 [-webkit-text-fill-color:#111827] dark:bg-gray-900 dark:text-gray-100 dark:[-webkit-text-fill-color:#f3f4f6]"
+              enumInputClass,
+              (fieldDisabled || !selectedProvince) && "appearance-none"
             )}
           >
             <option value="">{selectedProvince ? 'Seçiniz' : 'Önce il seçiniz'}</option>
@@ -2783,7 +2788,7 @@ export function EntityForm({
                 field={field}
                 value={value}
                 disabled={fieldDisabled}
-                className={baseInputClass}
+                className={enumInputClass}
                 onChange={(nextValue) => handleChange(field.name, nextValue)}
               />
             )
@@ -2794,7 +2799,7 @@ export function EntityForm({
               value={value}
               onChange={(e) => handleChange(field.name, e.target.value)}
               disabled={fieldDisabled}
-              className={cn(baseInputClass, fieldDisabled && "appearance-none")}
+              className={cn(enumInputClass, fieldDisabled && "appearance-none")}
             >
               <option value="">Seçiniz</option>
               {field.options?.map((opt, index) => (

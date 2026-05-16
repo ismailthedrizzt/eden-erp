@@ -6,6 +6,7 @@ type FormControlClassOptions = {
   state?: FormControlState
   rounded?: 'md' | 'lg'
   size?: 'sm' | 'field' | 'md'
+  surface?: 'default' | 'enum'
   className?: string
 }
 
@@ -13,15 +14,19 @@ export function formControlClass({
   state = 'neutral',
   rounded = 'lg',
   size = 'md',
+  surface = 'default',
   className,
 }: FormControlClassOptions = {}) {
   return cn(
-    'w-full border bg-white text-gray-900 placeholder:text-gray-400 outline-none transition-colors [color-scheme:light] [-webkit-text-fill-color:#111827]',
-    'disabled:cursor-not-allowed disabled:bg-white disabled:text-gray-900 disabled:opacity-70 disabled:[-webkit-text-fill-color:#111827]',
-    'read-only:cursor-not-allowed read-only:bg-white read-only:text-gray-900 read-only:opacity-70 read-only:[-webkit-text-fill-color:#111827]',
-    'dark:bg-gray-900 dark:text-gray-100 dark:placeholder:text-gray-500 dark:[color-scheme:dark] dark:[-webkit-text-fill-color:#f3f4f6]',
-    'dark:disabled:bg-gray-900 dark:disabled:text-gray-100 dark:disabled:[-webkit-text-fill-color:#f3f4f6]',
-    'dark:read-only:bg-gray-900 dark:read-only:text-gray-100 dark:read-only:[-webkit-text-fill-color:#f3f4f6]',
+    'w-full border text-gray-900 placeholder:text-gray-400 outline-none transition-colors [color-scheme:light] [-webkit-text-fill-color:#111827]',
+    surface === 'enum'
+      ? 'bg-gray-50 disabled:bg-gray-50 read-only:bg-gray-50 dark:bg-gray-800/60 dark:disabled:bg-gray-800/60 dark:read-only:bg-gray-800/60'
+      : 'bg-white disabled:bg-white read-only:bg-white dark:bg-gray-900 dark:disabled:bg-gray-900 dark:read-only:bg-gray-900',
+    'disabled:cursor-not-allowed disabled:text-gray-900 disabled:opacity-70 disabled:[-webkit-text-fill-color:#111827]',
+    'read-only:cursor-not-allowed read-only:text-gray-900 read-only:opacity-70 read-only:[-webkit-text-fill-color:#111827]',
+    'dark:text-gray-100 dark:placeholder:text-gray-500 dark:[color-scheme:dark] dark:[-webkit-text-fill-color:#f3f4f6]',
+    'dark:disabled:text-gray-100 dark:disabled:[-webkit-text-fill-color:#f3f4f6]',
+    'dark:read-only:text-gray-100 dark:read-only:[-webkit-text-fill-color:#f3f4f6]',
     rounded === 'md' ? 'rounded-md' : 'rounded-lg',
     size === 'sm' ? 'px-2 py-1.5 text-xs' : size === 'field' ? 'px-2.5 py-1.5 text-[13px] leading-5' : 'px-3 py-2 text-sm',
     state === 'invalid'

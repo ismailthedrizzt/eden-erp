@@ -932,7 +932,7 @@ export function SmartDataTable<T extends { id: string }>({
     }
     
     if (col.type === 'enum') {
-      return <span className="inline-block text-gray-900 dark:text-gray-100">{value ?? '-'}</span>
+      return <span className="inline-block text-gray-500 dark:text-gray-400">{value ?? '-'}</span>
     }
 
     return value ?? '-'
@@ -1549,7 +1549,7 @@ export function SmartDataTable<T extends { id: string }>({
                         col.type !== 'image' && col.type !== 'boolean' && "dark:[&_*]:!text-gray-100"
                       )}>
                         {col.type === 'enum' ? (
-                          <span data-enum-cell className="inline-flex min-w-0 max-w-full items-center truncate text-gray-900 dark:text-gray-100">
+                          <span data-enum-cell className="inline-flex min-w-0 max-w-full items-center truncate text-gray-500 dark:text-gray-400">
                             {renderCellValue(col, getNestedValue(row, col.key), row)}
                           </span>
                         ) : renderCellValue(col, getNestedValue(row, col.key), row)}
@@ -1640,7 +1640,7 @@ export function SmartDataTable<T extends { id: string }>({
                         <span className="block truncate text-[11px] font-medium uppercase text-gray-500 dark:text-gray-400">{col.label}</span>
                         <div className="mt-0.5 truncate text-sm font-semibold text-gray-900 dark:text-white" title={getCellTitle(getNestedValue(row, col.key))}>
                           {col.type === 'enum' ? (
-                            <span data-enum-cell className="inline-flex min-w-0 max-w-full items-center truncate text-gray-900 dark:text-gray-100">
+                            <span data-enum-cell className="inline-flex min-w-0 max-w-full items-center truncate text-gray-500 dark:text-gray-400">
                               {renderCellValue(col, getNestedValue(row, col.key), row)}
                             </span>
                           ) : renderCellValue(col, getNestedValue(row, col.key), row)}

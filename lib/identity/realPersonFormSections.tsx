@@ -32,6 +32,23 @@ const maritalOptions = [
   { value: 'evli', label: 'Evli' },
 ]
 
+const foreignLanguageOptions = [
+  'İngilizce',
+  'Almanca',
+  'Fransızca',
+  'İspanyolca',
+  'İtalyanca',
+  'Rusça',
+  'Arapça',
+  'Çince',
+  'Japonca',
+  'Korece',
+  'Farsça',
+  'Portekizce',
+  'Felemenkçe',
+  'Yunanca',
+].map(value => ({ value, label: value }))
+
 function applyVisibleWhen(fields: FormField[], visibleWhen?: FieldCondition): FormField[] {
   if (!visibleWhen) return fields
   return fields.map(field => ({
@@ -147,7 +164,7 @@ export function createRealPersonMasterTabs({
           addLabel: 'Dil Ekle',
           emptyText: 'Yabancı dil eklenmedi.',
           fields: [
-            { name: 'dil', key: 'dil', label: 'Dil', type: 'text', required: true },
+            { name: 'dil', key: 'dil', label: 'Dil', type: 'select', required: true, options: foreignLanguageOptions },
             { name: 'seviye', key: 'seviye', label: 'Seviye', type: 'select', required: true, options: ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'].map(value => ({ value, label: value })) },
             { name: 'belge', key: 'belge', label: 'Belge', type: 'document', colSpan: 2 },
           ],

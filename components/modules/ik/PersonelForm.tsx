@@ -9,6 +9,23 @@ import { DocumentSlotUploader, DocumentSlot, SlotDocument } from '@/components/u
 import { IBANInput } from '@/components/ui/IBANInput'
 import { Toast, ToastType } from '@/components/ui/Toast'
 
+const foreignLanguageOptions = [
+  'İngilizce',
+  'Almanca',
+  'Fransızca',
+  'İspanyolca',
+  'İtalyanca',
+  'Rusça',
+  'Arapça',
+  'Çince',
+  'Japonca',
+  'Korece',
+  'Farsça',
+  'Portekizce',
+  'Felemenkçe',
+  'Yunanca',
+]
+
 export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () => void, onCancel: () => void }) {
   const [activeTab, setActiveTab] = useState('ozel')
   const [loading, setLoading] = useState(false)
@@ -522,17 +539,21 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Yabancı Dil</label>
-              <input
-                className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-                placeholder="Yabancı dil"
+              <select
+                className="w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900 focus:ring-2 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800/60 dark:text-white"
                 value={formData.yabanci_dil}
                 onChange={e => setFormData({ ...formData, yabanci_dil: e.target.value })}
-              />
+              >
+                <option value="">Seçiniz</option>
+                {foreignLanguageOptions.map(language => (
+                  <option key={language} value={language}>{language}</option>
+                ))}
+              </select>
             </div>
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Dil Seviyesi</label>
               <select
-                className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
+                className="w-full rounded-md border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900 focus:ring-2 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-800/60 dark:text-white"
                 value={formData.yabanci_dil_seviye}
                 onChange={e => setFormData({ ...formData, yabanci_dil_seviye: e.target.value })}
               >

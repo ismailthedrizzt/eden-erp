@@ -60,16 +60,6 @@
     -webkit-text-fill-color: #f3f4f6;
   }
 
-  [data-enum-cell],
-  [data-enum-cell] * {
-    color: #111827 !important;
-  }
-
-  .dark [data-enum-cell],
-  .dark [data-enum-cell] * {
-    color: #f3f4f6 !important;
-  }
-
   /* Custom scrollbar */
   ::-webkit-scrollbar { width: 5px; height: 5px; }
   ::-webkit-scrollbar-track { background: transparent; }

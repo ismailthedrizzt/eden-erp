@@ -5,6 +5,23 @@ import { COUNTRY_NATIONALITY_OPTIONS, getCountryNationalityLabel } from '@/lib/r
 import { EntityBankAccountsPanel } from '@/components/ui/EntityBankAccountsPanel'
 import { EmployeeWorkRegimeSummary } from '@/components/ui/EmployeeWorkRegimeSummary'
 
+const foreignLanguageOptions = [
+  'İngilizce',
+  'Almanca',
+  'Fransızca',
+  'İspanyolca',
+  'İtalyanca',
+  'Rusça',
+  'Arapça',
+  'Çince',
+  'Japonca',
+  'Korece',
+  'Farsça',
+  'Portekizce',
+  'Felemenkçe',
+  'Yunanca',
+].map(value => ({ value, label: value }))
+
 export type PersonelTableRow = Personel & {
   fullname: string
   employee_no?: string
@@ -304,7 +321,7 @@ export const personelModuleConfig: ModuleConfig<PersonelTableRow> = {
                 addLabel: 'Dil Ekle',
                 emptyText: 'Yabancı dil eklenmedi.',
                 fields: [
-                  { name: 'dil', key: 'dil', label: 'Dil', type: 'text', required: true },
+                  { name: 'dil', key: 'dil', label: 'Dil', type: 'select', required: true, options: foreignLanguageOptions },
                   {
                     name: 'seviye',
                     key: 'seviye',

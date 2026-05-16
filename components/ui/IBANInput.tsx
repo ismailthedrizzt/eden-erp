@@ -1,8 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import { Landmark } from 'lucide-react'
-import { cn, getIbanBankInfo } from '@/lib/utils'
+import { cn } from '@/lib/utils'
 import { formControlClass } from './formControlStyles'
 
 interface IBANInputProps {
@@ -13,21 +12,10 @@ interface IBANInputProps {
 }
 
 export function IBANInput({ value, onChange, disabled = false, className }: IBANInputProps) {
-  const [bankInfo, setBankInfo] = useState<ReturnType<typeof getIbanBankInfo>>(null)
-  const branchLabel = bankInfo?.branchName
-    ? bankInfo.branchName
-    : bankInfo?.branchCode
-      ? `Şube kodu: ${bankInfo.branchCode}`
-      : 'Şube adı çözümlenemedi'
-
   const formatIBAN = (iban: string) => {
     const cleaned = iban.replace(/[^a-zA-Z0-9]/g, '').toUpperCase()
     return cleaned.replace(/(.{4})/g, '$1 ').trim()
   }
-
-  useEffect(() => {
-    setBankInfo(getIbanBankInfo(value))
-  }, [value])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const cleaned = e.target.value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase()
@@ -35,57 +23,20 @@ export function IBANInput({ value, onChange, disabled = false, className }: IBAN
   }
 
   return (
-    <div className="space-y-2">
-      <div className="relative">
-        <input
-          type="text"
-          value={value}
-          onChange={handleChange}
-          disabled={disabled}
-          placeholder="TR00 0000 0000 0000 0000 0000 00"
-          maxLength={42}
-          className={cn(
-            formControlClass({ rounded: 'md', className: 'pl-10' }),
-            className
-          )}
-        />
-        <Landmark className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
-      </div>
-
-      {bankInfo && (
-        <div className={cn(
-          "flex items-center gap-2 p-2 rounded-md border",
-          bankInfo.bankName === 'Bilinmeyen Banka'
-            ? "bg-amber-50 border-amber-200 dark:bg-amber-900/20 dark:border-amber-800"
-            : "bg-gray-50 dark:bg-gray-800 border-gray-200 dark:border-gray-700"
-        )}>
-          <div
-            title={bankInfo.bankName}
-            className={cn(
-              "relative flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-md text-xs font-bold text-white",
-              bankInfo.bankName === 'Bilinmeyen Banka' ? "bg-amber-500" : "bg-[#003b79]"
-            )}
-          >
-            {bankInfo.logoUrl && (
-              <img
-                src={bankInfo.logoUrl}
-                alt=""
-                className="absolute h-6 w-6 rounded-sm bg-white object-contain"
-                onError={(event) => { event.currentTarget.style.display = 'none' }}
-              />
-            )}
-            {bankInfo.logoText}
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-xs font-medium text-gray-700 dark:text-gray-300 truncate">
-              <span className="text-gray-500 dark:text-gray-400">Banka Adı: </span>{bankInfo.bankName}
-            </p>
-            <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-              <span>Şube Adı: </span>{branchLabel}
-            </p>
-          </div>
-        </div>
-      )}
+    <div className="relative">
+      <input
+        type="text"
+        value={value}
+        onChange={handleChange}
+        disabled={disabled}
+        placeholder="TR00 0000 0000 0000 0000 0000 00"
+        maxLength={42}
+        className={cn(
+          formControlClass({ rounded: 'md', className: 'pl-10' }),
+          className
+        )}
+      />
+      <Landmark className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={16} />
     </div>
   )
 }
