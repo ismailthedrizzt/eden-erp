@@ -147,8 +147,9 @@ function toAuthorityLabel(value?: string | null) {
 
 const FIELD_LABELS: Record<string, string> = {
   partner_type: 'Ortak Türü',
-  first_name: 'Ad / Ünvan',
-  last_name: 'Kısa Ad / Soyad',
+  first_name: 'Adı',
+  last_name: 'Soyadı',
+  gender: 'Cinsiyeti',
   identity_number: 'TCKN / VKN',
   share_ratio: 'Pay Oranı',
   voting_ratio: 'Oy Hakkı',
@@ -176,7 +177,7 @@ const columns: ColumnDef[] = [
 const heroFields: FormField[] = [
   { name: 'company_id', label: 'Şirket', type: 'select', required: true },
   { name: 'first_name', label: 'Adı', type: 'text', required: true, visibleWhen: { field: 'partner_type', operator: 'equals', value: 'gercek_kisi' } },
-  { name: 'last_name', label: 'Soyadı', type: 'text', visibleWhen: { field: 'partner_type', operator: 'equals', value: 'gercek_kisi' } },
+  { name: 'last_name', label: 'Soyadı', type: 'text', required: true, visibleWhen: { field: 'partner_type', operator: 'equals', value: 'gercek_kisi' } },
   {
     name: 'uyruk',
     label: 'Uyruğu',
@@ -190,6 +191,17 @@ const heroFields: FormField[] = [
       { value: 'GB', label: 'Birleşik Krallık' },
       { value: 'FR', label: 'Fransa' },
       { value: 'OTHER', label: 'Diğer' },
+    ],
+  },
+  {
+    name: 'gender',
+    label: 'Cinsiyeti',
+    type: 'select',
+    required: true,
+    visibleWhen: { field: 'partner_type', operator: 'equals', value: 'gercek_kisi' },
+    options: [
+      { value: 'erkek', label: 'Erkek' },
+      { value: 'kadin', label: 'Kadın' },
     ],
   },
   { name: 'tc_kimlik', label: 'TC Kimlik No', type: 'text', maxLength: 11, visibleWhen: { field: 'partner_type', operator: 'equals', value: 'gercek_kisi' } },
@@ -225,6 +237,7 @@ const tabs: FormTab[] = [
         name: 'gender',
         label: 'Cinsiyet',
         type: 'select',
+        required: true,
         visibleWhen: { field: 'partner_type', operator: 'equals', value: 'gercek_kisi' },
         options: [
           { value: 'erkek', label: 'Erkek' },
@@ -552,6 +565,14 @@ export default function OrtaklarPage() {
     setFieldErrors({})
     try {
       const payload = normalizePayload(data, companies)
+      const missingPersonFields = getMissingPersonFields(payload)
+      if (missingPersonFields.length > 0) {
+        const message = missingPersonFields.map(field => FIELD_LABELS[field] || field).join(', ')
+        const error = new Error(`Eksik Zorunlu Alan [${message}]`) as SaveError
+        error.fieldErrors = Object.fromEntries(missingPersonFields.map(field => [field, `${FIELD_LABELS[field] || field} zorunludur`]))
+        error.toast = { type: 'warning', title: 'Eksik Zorunlu Alan', message }
+        throw error
+      }
       const response = await fetch(mode === 'create' ? '/api/sirketler/ortaklar' : `/api/sirketler/ortaklar/${selectedPartner?.id}`, {
         method: mode === 'create' ? 'POST' : 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -1334,6 +1355,17 @@ function normalizePayload(raw: Record<string, any>, companies: Option[]) {
   return payload
 }
 
+function getMissingPersonFields(payload: Record<string, any>) {
+  if (payload.partner_type !== 'gercek_kisi') return []
+  return [
+    ['first_name', payload.first_name],
+    ['last_name', payload.last_name],
+    ['gender', payload.gender],
+  ]
+    .filter(([, value]) => !String(value || '').trim())
+    .map(([field]) => field)
+}
+
 function buildEntityFieldHistory(history: any[]) {
   const trackedMap: Record<string, string> = {
     share_ratio: 'share_ratio',
@@ -1365,11 +1397,16 @@ async function createSaveError(response: Response, fallback: string): Promise<Sa
   const code = body.code || `HTTP_${response.status}`
   const zodFieldErrors = body.details?.fieldErrors || {}
   const fields = Object.keys(zodFieldErrors)
+  const rawMessage = String(body.error || '')
+  const masterPersonFields = rawMessage.includes('Adı') || rawMessage.includes('Soyadı') || rawMessage.includes('Cinsiyeti')
+    ? ['first_name', 'last_name', 'gender'].filter(field => rawMessage.includes(FIELD_LABELS[field]))
+    : []
+  const validationFields = fields.length > 0 ? fields : masterPersonFields
 
-  if (code === 'VALIDATION_FAILED' && fields.length > 0) {
-    const message = fields.map(field => FIELD_LABELS[field] || field).join(', ')
+  if ((code === 'VALIDATION_FAILED' || masterPersonFields.length > 0) && validationFields.length > 0) {
+    const message = validationFields.map(field => FIELD_LABELS[field] || field).join(', ')
     const error = new Error(`Eksik Zorunlu Alan [${message}]`) as SaveError
-    error.fieldErrors = Object.fromEntries(fields.map(field => [field, `${FIELD_LABELS[field] || field} zorunludur`]))
+    error.fieldErrors = Object.fromEntries(validationFields.map(field => [field, `${FIELD_LABELS[field] || field} zorunludur`]))
     error.toast = { type: 'warning', title: 'Eksik Zorunlu Alan', message }
     return error
   }

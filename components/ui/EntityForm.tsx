@@ -2155,7 +2155,7 @@ export function EntityForm({
     }
 
     if (isRequired && hasValue(value)) {
-      return { status: 'valid' as const, label: '' }
+      return { status: 'valid' as const, label: 'Tamam' }
     }
 
     return { status: 'neutral' as const, label: '' }
@@ -2560,7 +2560,7 @@ export function EntityForm({
         : validationState.status === 'valid'
           ? "border-emerald-500 dark:border-emerald-600 focus:border-emerald-500 focus:ring-emerald-500/20"
           : "border-gray-300 dark:border-gray-700 focus:border-blue-500",
-      fieldDisabled && "bg-gray-50 text-gray-900 dark:bg-gray-800 dark:text-gray-100 cursor-not-allowed"
+      fieldDisabled && "bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100 cursor-not-allowed"
     )
 
     const renderInput = () => {
@@ -2645,7 +2645,10 @@ export function EntityForm({
             value={value}
             onChange={(e) => handleChange(field.name, e.target.value)}
             disabled={fieldDisabled || !selectedProvince}
-            className={cn(baseInputClass, (fieldDisabled || !selectedProvince) && "appearance-none")}
+            className={cn(
+              baseInputClass,
+              (fieldDisabled || !selectedProvince) && "appearance-none bg-white text-gray-900 [-webkit-text-fill-color:#111827] dark:bg-gray-900 dark:text-gray-100 dark:[-webkit-text-fill-color:#f3f4f6]"
+            )}
           >
             <option value="">{selectedProvince ? 'Seçiniz' : 'Önce il seçiniz'}</option>
             {selectedProvince?.districts.map(district => (
@@ -2806,7 +2809,14 @@ export function EntityForm({
     return (
       <div key={field.name} className={cn("relative space-y-1", colSpanClass)}>
         <div className="flex items-center gap-2">
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+          <label className={cn(
+            "text-sm font-medium",
+            validationState.status === 'invalid'
+              ? "text-red-700 dark:text-red-400"
+              : validationState.status === 'valid'
+                ? "text-emerald-700 dark:text-emerald-400"
+                : "text-gray-700 dark:text-gray-300"
+          )}>
             {field.label}
           </label>
           {(showHistoryIcon || enableHistory) && field.history && field.history.length > 0 && (
@@ -2824,7 +2834,12 @@ export function EntityForm({
           )}
         </div>
         {validationState.label && (
-          <span className="pointer-events-none absolute right-2 top-7 z-10 rounded border border-red-300 bg-white px-1.5 py-0.5 text-[10px] font-medium leading-none text-red-600 dark:border-red-700 dark:bg-gray-900 dark:text-red-400">
+          <span className={cn(
+            "pointer-events-none absolute right-2 top-7 z-10 rounded border bg-white px-1.5 py-0.5 text-[10px] font-medium leading-none dark:bg-gray-900",
+            validationState.status === 'valid'
+              ? "border-emerald-300 text-emerald-600 dark:border-emerald-700 dark:text-emerald-400"
+              : "border-red-300 text-red-600 dark:border-red-700 dark:text-red-400"
+          )}>
             {validationState.label}
           </span>
         )}
@@ -2908,7 +2923,7 @@ export function EntityForm({
       )}
 
       {/* Hero Section - Two Column Layout */}
-      <div className="border-b border-gray-200 dark:border-gray-700 bg-gradient-to-br from-gray-50/50 to-transparent dark:from-gray-800/30">
+      <div className="border-b border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 p-6">
           
           {/* Left Panel - STANDARD FORM LAYOUT: Photo (expected) + CV (optional) */}

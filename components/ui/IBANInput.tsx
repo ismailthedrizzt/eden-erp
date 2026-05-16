@@ -20,7 +20,7 @@ export function IBANInput({ value, onChange, disabled = false, className }: IBAN
       : 'Şube adı çözümlenemedi'
 
   const formatIBAN = (iban: string) => {
-    const cleaned = iban.replace(/\s/g, '').toUpperCase()
+    const cleaned = iban.replace(/[^a-zA-Z0-9]/g, '').toUpperCase()
     return cleaned.replace(/(.{4})/g, '$1 ').trim()
   }
 
@@ -29,7 +29,7 @@ export function IBANInput({ value, onChange, disabled = false, className }: IBAN
   }, [value])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const cleaned = e.target.value.replace(/\s/g, '').toUpperCase()
+    const cleaned = e.target.value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase()
     onChange(formatIBAN(cleaned))
   }
 
@@ -42,11 +42,11 @@ export function IBANInput({ value, onChange, disabled = false, className }: IBAN
           onChange={handleChange}
           disabled={disabled}
           placeholder="TR00 0000 0000 0000 0000 0000 00"
-          maxLength={32}
+          maxLength={42}
           className={cn(
             "w-full border rounded-md px-3 py-2 text-sm pl-10",
             disabled
-              ? "bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-600 text-gray-400 dark:text-gray-500 cursor-not-allowed"
+              ? "bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100 cursor-not-allowed"
               : "bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500",
             className
           )}

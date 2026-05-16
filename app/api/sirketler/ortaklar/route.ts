@@ -166,6 +166,14 @@ export async function POST(request: NextRequest) {
   if (!parsed.success) {
     return NextResponse.json({ error: 'Geçersiz veri', code: 'VALIDATION_FAILED', details: parsed.error.flatten() }, { status: 400 })
   }
+  const missingPersonFields = getMissingPersonFields(parsed.data)
+  if (missingPersonFields.length > 0) {
+    return NextResponse.json({
+      error: 'Eksik zorunlu kişi alanı',
+      code: 'VALIDATION_FAILED',
+      details: { fieldErrors: Object.fromEntries(missingPersonFields.map(field => [field, ['Zorunlu alan']])) },
+    }, { status: 400 })
+  }
 
   const row = await attachPartnerIdentity(supabase, parsed.data, mapPartnerForDb(parsed.data))
 
@@ -247,6 +255,17 @@ function mapPartnerForDb(partner: Record<string, any>) {
   }
 }
 
+function getMissingPersonFields(partner: Record<string, any>) {
+  if (partner.partner_type !== 'gercek_kisi') return []
+  return [
+    ['first_name', partner.first_name],
+    ['last_name', partner.last_name],
+    ['gender', partner.gender],
+  ]
+    .filter(([, value]) => !String(value || '').trim())
+    .map(([field]) => field)
+}
+
 async function attachPartnerIdentity(supabase: ReturnType<typeof createServiceClient>, partner: Record<string, any>, row: Record<string, any>) {
   try {
     const kind = row.owner_kind === 'tuzel_kisi' ? 'organization' : 'person'
@@ -270,6 +289,8 @@ async function attachPartnerIdentity(supabase: ReturnType<typeof createServiceCl
         national_id: nationalId,
         passport_no: passportNo,
         birth_date: partner.birth_date || null,
+        birth_place: partner.birth_place || null,
+        gender: partner.gender || partner.cinsiyet || null,
         phone: partner.phone || partner.cep_telefonu || null,
         email: partner.email || null,
         address: partner.address || partner.adres || null,

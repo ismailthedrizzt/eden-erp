@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { CheckCircle2, ChevronDown, Eye, History, Pencil, Plus, Star, Trash2, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { AutomationBadge, type AutomationBadgeStatus } from './AutomationBadge'
+import { IBANInput } from './IBANInput'
 import { usePermissions } from '@/lib/security/permissionStore'
 import { COUNTRY_OPTIONS } from '@/lib/reference/country-nationalities'
 import {
@@ -389,19 +390,31 @@ function renderField(field: string, draft: Partial<EntityBankAccount>, disabled:
   if (field === 'preferred_currency' || field === 'account_currency') return <Select key={field} label={labels[field]} value={value} disabled={disabled} options={['', ...currencyOptions]} onChange={next => onChange(field, next)} />
   if (field === 'swift_charge_type') return <Select key={field} label={labels[field]} value={value} disabled={disabled} options={['', ...swiftChargeOptions]} onChange={next => onChange(field, next)} />
   if (field === 'verification_status') return <Select key={field} label={labels[field]} value={value} disabled={disabled} options={Object.keys(VERIFICATION_STATUS_LABELS)} optionLabels={VERIFICATION_STATUS_LABELS} onChange={next => onChange(field, next)} />
+  if (field === 'iban') {
+    return (
+      <label key={field} className="space-y-1">
+        <span className="flex items-center gap-2 text-xs font-medium text-gray-600 dark:text-gray-400">
+          {labels[field]}
+          <AutomationBadge
+            status={ibanAutomationStatus}
+            title="IBAN girilince banka, şube ve para birimi alanları otomatik doldurulur."
+            workingLabel="Çözülüyor"
+          />
+        </span>
+        <IBANInput
+          value={String(value || '')}
+          disabled={disabled}
+          onChange={onIban}
+        />
+      </label>
+    )
+  }
 
   const wide = ['bank_address', 'payment_note', 'beneficiary_name_note', 'document_reference_id'].includes(field)
   return (
     <label key={field} className={cn("space-y-1", wide && "md:col-span-2")}>
       <span className="flex items-center gap-2 text-xs font-medium text-gray-600 dark:text-gray-400">
         {labels[field] || field}
-        {field === 'iban' && (
-          <AutomationBadge
-            status={ibanAutomationStatus}
-            title="IBAN girilince banka, şube ve para birimi alanları otomatik doldurulur."
-            workingLabel="Çözülüyor"
-          />
-        )}
       </span>
       {wide ? (
         <textarea value={value} disabled={disabled} rows={2} onChange={event => onChange(field, event.target.value)} className={common} />
