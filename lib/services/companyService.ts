@@ -27,7 +27,7 @@ function relationListOptions(options: RelationListOptions = {}) {
 export const companyService = {
   list(options: CompanyListOptions = {}) {
     const { includePassive, page, pageSize, search, sort, direction, ...clientOptions } = options
-    return apiClient.get<ListResponse<Sirket>>('/api/sirketler', {
+    return apiClient.get<ListResponse<Sirket>>('/api/companies', {
       ...clientOptions,
       skipAuth: clientOptions.skipAuth ?? true,
       staleTime: clientOptions.staleTime ?? 300_000,
@@ -43,44 +43,44 @@ export const companyService = {
     })
   },
   detail(id: string) {
-    return apiClient.get<{ data: Sirket }>(`/api/sirketler/${id}`, { skipAuth: true, staleTime: 120_000 })
+    return apiClient.get<{ data: Sirket }>(`/api/companies/${id}`, { skipAuth: true, staleTime: 120_000 })
   },
   detailSection(id: string, section: 'hero' | 'media' | 'details') {
-    return apiClient.get<{ data: Partial<Sirket> }>(`/api/sirketler/${id}`, {
+    return apiClient.get<{ data: Partial<Sirket> }>(`/api/companies/${id}`, {
       skipAuth: true,
       useCache: false,
       query: { section },
     })
   },
   partners(companyId: string, options: ApiClientOptions = {}) {
-    return apiClient.get<{ data: SirketOrtak[] }>('/api/sirketler/ortaklar', relationListOptions({ ...options, companyId }))
+    return apiClient.get<{ data: SirketOrtak[] }>('/api/companies/partners', relationListOptions({ ...options, companyId }))
   },
   partnersList(options: RelationListOptions = {}) {
-    return apiClient.get<ListResponse<Array<any>[number]>>('/api/sirketler/ortaklar', {
+    return apiClient.get<ListResponse<Array<any>[number]>>('/api/companies/partners', {
       ...relationListOptions(options),
     })
   },
   partnerDetail(id: string) {
-    return apiClient.get<{ data: any }>(`/api/sirketler/ortaklar/${id}`, { skipAuth: true, staleTime: 120_000 })
+    return apiClient.get<{ data: any }>(`/api/companies/partners/${id}`, { skipAuth: true, staleTime: 120_000 })
   },
   representatives(companyId: string, options: ApiClientOptions = {}) {
-    return apiClient.get<{ data: SirketTemsilci[] }>('/api/sirketler/temsilciler', relationListOptions({ ...options, companyId }))
+    return apiClient.get<{ data: SirketTemsilci[] }>('/api/companies/representatives', relationListOptions({ ...options, companyId }))
   },
   representativesList(options: RelationListOptions = {}) {
-    return apiClient.get<ListResponse<SirketTemsilci>>('/api/sirketler/temsilciler', {
+    return apiClient.get<ListResponse<SirketTemsilci>>('/api/companies/representatives', {
       ...relationListOptions(options),
     })
   },
   representativeDetail(id: string) {
-    return apiClient.get<{ data: SirketTemsilci }>(`/api/sirketler/temsilciler/${id}`, { skipAuth: true, staleTime: 120_000 })
+    return apiClient.get<{ data: SirketTemsilci }>(`/api/companies/representatives/${id}`, { skipAuth: true, staleTime: 120_000 })
   },
   stakeholdersList(options: RelationListOptions = {}) {
-    return apiClient.get<ListResponse<Array<any>[number]>>('/api/sirketler/paydaslar', {
+    return apiClient.get<ListResponse<Array<any>[number]>>('/api/companies/stakeholders', {
       ...relationListOptions(options),
     })
   },
   stakeholderDetail(id: string) {
-    return apiClient.get<{ data: any }>(`/api/sirketler/paydaslar/${id}`, { skipAuth: true, staleTime: 120_000 })
+    return apiClient.get<{ data: any }>(`/api/companies/stakeholders/${id}`, { skipAuth: true, staleTime: 120_000 })
   },
   currentOwnership(companyIds: string[], options: ApiClientOptions = {}) {
     return apiClient.get<{ data: Array<any> }>('/api/companies/current-ownership', {
@@ -95,18 +95,18 @@ export const companyService = {
   },
   async documents(companyId: string): Promise<{ data: SirketDokuman[] }> {
     const result = await this.detail(companyId)
-    return { data: result.data.dokumanlar || [] }
+    return { data: result.data.documents || [] }
   },
   async logos(companyId: string): Promise<{ data: SirketLogo[] }> {
     const result = await this.detail(companyId)
-    return { data: result.data.logolar || [] }
+    return { data: result.data.logos || [] }
   },
   invalidateList() {
-    apiClient.invalidate('/api/sirketler')
+    apiClient.invalidate('/api/companies')
   },
   invalidateRelations() {
-    apiClient.invalidate('/api/sirketler/ortaklar')
-    apiClient.invalidate('/api/sirketler/temsilciler')
-    apiClient.invalidate('/api/sirketler/paydaslar')
+    apiClient.invalidate('/api/companies/partners')
+    apiClient.invalidate('/api/companies/representatives')
+    apiClient.invalidate('/api/companies/stakeholders')
   },
 }

@@ -2,15 +2,13 @@ import { isSoftDeletedRecord } from '@/lib/forms/entityState'
 
 export interface CorporatePartnerRecord {
   id?: string
-  sirket_id?: string
   company_id?: string
   owner_kind?: string
   source_type?: string
   source_id?: string
   display_name?: string
-  ortak_adi?: string
+  partner_name?: string
   share_ratio?: number | string | null
-  hisse_orani?: number | string | null
   voting_ratio?: number | string | null
   profit_ratio?: number | string | null
   has_control_right?: boolean
@@ -25,8 +23,8 @@ export interface CorporatePartnerRecord {
 
 export interface CorporateCompanyRecord {
   id: string
-  ticari_unvan?: string
-  kisa_unvan?: string
+  trade_name?: string
+  short_name?: string
 }
 
 export interface OwnershipGraphNode {
@@ -61,22 +59,22 @@ export function calculateCorporateStructure(
   const upstreamMainOwner = findMainOwner(activePartners)
   const downstreamRows = partners.filter((partner) =>
     isActivePartner(partner) &&
-    partner.owner_kind === 'tuzel_kisi' &&
+    partner.owner_kind === 'organization' &&
     partner.source_type === 'grup_sirketi' &&
     partner.source_id === companyId
   )
 
-  const totalActiveShare = round(activePartners.reduce((sum, partner) => sum + ratio(partner.share_ratio ?? partner.hisse_orani), 0))
+  const totalActiveShare = round(activePartners.reduce((sum, partner) => sum + ratio(partner.share_ratio ?? partner.share_ratio), 0))
   const totalVotingRight = round(activePartners.reduce((sum, partner) => sum + votingPower(partner), 0))
   const warnings: string[] = []
 
-  if (activePartners.length > 0 && totalActiveShare !== 100) warnings.push('Aktif hisse toplamı 100% değil')
-  if (activePartners.length > 0 && totalVotingRight !== 100) warnings.push('Toplam oy hakkı 100% değil')
+  if (activePartners.length > 0 && totalActiveShare !== 100) warnings.push('Aktif hisse toplamı 100% değcity')
+  if (activePartners.length > 0 && totalVotingRight !== 100) warnings.push('Toplam oy hakkı 100% değcity')
 
   const controlOwners = activePartners.filter((partner) =>
     partner.has_control_right ||
     ratio(partner.voting_ratio) > CONTROL_THRESHOLD ||
-    ratio(partner.share_ratio ?? partner.hisse_orani) > CONTROL_THRESHOLD
+    ratio(partner.share_ratio ?? partner.share_ratio) > CONTROL_THRESHOLD
   )
   if (controlOwners.length > 1) warnings.push('Birden fazla kontrol sahibi var')
   if (!upstreamMainOwner && activePartners.length > 0) warnings.push('Aktif ana ortak bulunamadı')
@@ -85,9 +83,9 @@ export function calculateCorporateStructure(
   warnings.push(...cycleWarnings)
 
   const ultimate = resolveUltimateController(upstreamMainOwner, partners, companyMap, new Set([companyId || '']), 100)
-  const subsidiaryCount = downstreamRows.filter((partner) => votingPower(partner) > CONTROL_THRESHOLD || ratio(partner.share_ratio ?? partner.hisse_orani) > CONTROL_THRESHOLD || partner.has_control_right).length
+  const subsidiaryCount = downstreamRows.filter((partner) => votingPower(partner) > CONTROL_THRESHOLD || ratio(partner.share_ratio ?? partner.share_ratio) > CONTROL_THRESHOLD || partner.has_control_right).length
   const affiliateCount = downstreamRows.filter((partner) => {
-    const ownership = ratio(partner.share_ratio ?? partner.hisse_orani)
+    const ownership = ratio(partner.share_ratio ?? partner.share_ratio)
     const votes = votingPower(partner)
     return (ownership > 0 || votes > 0) && ownership < CONTROL_THRESHOLD && votes < CONTROL_THRESHOLD && !partner.has_control_right
   }).length
@@ -99,7 +97,7 @@ export function calculateCorporateStructure(
     main_owner_id: upstreamMainOwner?.source_type === 'grup_sirketi' ? upstreamMainOwner.source_id : undefined,
     ultimate_controller: ultimate.name,
     ultimate_ownership_ratio: ultimate.ratio,
-    is_group_company: activePartners.some((partner) => partner.owner_kind === 'tuzel_kisi' && partner.source_type === 'grup_sirketi') || downstreamRows.length > 0,
+    is_group_company: activePartners.some((partner) => partner.owner_kind === 'organization' && partner.source_type === 'grup_sirketi') || downstreamRows.length > 0,
     subsidiary_count: subsidiaryCount,
     affiliate_count: affiliateCount,
     total_active_share: totalActiveShare,
@@ -113,7 +111,7 @@ function findMainOwner(activePartners: CorporatePartnerRecord[]) {
   const sorted = [...activePartners].sort((a, b) => votingPower(b) - votingPower(a))
   const first = sorted[0]
   if (!first) return undefined
-  return votingPower(first) > CONTROL_THRESHOLD || ratio(first.share_ratio ?? first.hisse_orani) > CONTROL_THRESHOLD ? first : undefined
+  return votingPower(first) > CONTROL_THRESHOLD || ratio(first.share_ratio ?? first.share_ratio) > CONTROL_THRESHOLD ? first : undefined
 }
 
 function resolveUltimateController(
@@ -125,10 +123,10 @@ function resolveUltimateController(
 ): { name: string; ratio: number } {
   if (!owner) return { name: '-', ratio: 0 }
 
-  const ownerRatio = votingPower(owner) || ratio(owner.share_ratio ?? owner.hisse_orani)
+  const ownerRatio = votingPower(owner) || ratio(owner.share_ratio ?? owner.share_ratio)
   const nextRatio = round((accumulatedRatio * ownerRatio) / 100)
 
-  if (owner.is_ultimate_controller || owner.owner_kind !== 'tuzel_kisi' || owner.source_type !== 'grup_sirketi' || !owner.source_id) {
+  if (owner.is_ultimate_controller || owner.owner_kind !== 'organization' || owner.source_type !== 'grup_sirketi' || !owner.source_id) {
     return { name: ownerName(owner, companyMap), ratio: nextRatio }
   }
 
@@ -145,7 +143,7 @@ function resolveUltimateController(
 function detectCycles(companyId: string | undefined, partners: CorporatePartnerRecord[]) {
   if (!companyId) return []
   const edges = partners
-    .filter((partner) => isActivePartner(partner) && partner.owner_kind === 'tuzel_kisi' && partner.source_type === 'grup_sirketi' && partner.source_id)
+    .filter((partner) => isActivePartner(partner) && partner.owner_kind === 'organization' && partner.source_type === 'grup_sirketi' && partner.source_id)
     .map((partner) => ({ from: partner.source_id as string, to: getCompanyId(partner) }))
     .filter((edge) => edge.to)
 
@@ -174,11 +172,11 @@ function buildOwnershipGraph(
   companyMap: Map<string, CorporateCompanyRecord>
 ) {
   const nodes: OwnershipGraphNode[] = []
-  if (mainOwner) nodes.push({ label: ownerName(mainOwner, companyMap), ratio: votingPower(mainOwner) || ratio(mainOwner.share_ratio ?? mainOwner.hisse_orani), kind: 'owner' })
+  if (mainOwner) nodes.push({ label: ownerName(mainOwner, companyMap), ratio: votingPower(mainOwner) || ratio(mainOwner.share_ratio ?? mainOwner.share_ratio), kind: 'owner' })
   nodes.push({ label: companyName(currentCompany) || 'Seçili Şirket', kind: 'current' })
   downstreamRows.forEach((partner) => {
     const company = companyMap.get(getCompanyId(partner) || '')
-    nodes.push({ label: companyName(company) || partner.display_name || 'Bağlı şirket', ratio: votingPower(partner) || ratio(partner.share_ratio ?? partner.hisse_orani), kind: 'downstream' })
+    nodes.push({ label: companyName(company) || partner.display_name || 'Bağlı şirket', ratio: votingPower(partner) || ratio(partner.share_ratio ?? partner.share_ratio), kind: 'downstream' })
   })
   return nodes
 }
@@ -188,11 +186,11 @@ function isActivePartner(partner: CorporatePartnerRecord) {
 }
 
 function getCompanyId(partner: CorporatePartnerRecord) {
-  return partner.sirket_id || partner.company_id
+  return partner.company_id || partner.company_id
 }
 
 function votingPower(partner: CorporatePartnerRecord) {
-  return ratio(partner.voting_ratio || partner.share_ratio || partner.hisse_orani)
+  return ratio(partner.voting_ratio || partner.share_ratio || partner.share_ratio)
 }
 
 function ratio(value: unknown) {
@@ -205,10 +203,10 @@ function round(value: number) {
 }
 
 function ownerName(partner: CorporatePartnerRecord, companyMap: Map<string, CorporateCompanyRecord>) {
-  if (partner.source_type === 'grup_sirketi' && partner.source_id) return companyName(companyMap.get(partner.source_id)) || partner.display_name || partner.ortak_adi || '-'
-  return partner.display_name || partner.ortak_adi || '-'
+  if (partner.source_type === 'grup_sirketi' && partner.source_id) return companyName(companyMap.get(partner.source_id)) || partner.display_name || partner.partner_name || '-'
+  return partner.display_name || partner.partner_name || '-'
 }
 
 function companyName(company?: CorporateCompanyRecord) {
-  return company?.ticari_unvan || company?.kisa_unvan || ''
+  return company?.trade_name || company?.short_name || ''
 }

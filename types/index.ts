@@ -1,16 +1,16 @@
-// ══════════════════════════════════════════════════════════════
-// EDEN ERP — Merkezi Tip Tanımları
-// ══════════════════════════════════════════════════════════════
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// EDEN ERP â€” Merkezi Tip TanÄ±mlarÄ±
+// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
 
-// ── Auth ──────────────────────────────────────────────────────
+// â”€â”€ Auth â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export interface Kullanici {
   id: string
   email?: string
   telefon?: string
   ad: string
-  soyad: string
+  last_name: string
   rol: KullaniciRol
-  birim_id?: string
+  unit_id?: string
   avatar_url?: string
   son_giris?: string
   created_at: string
@@ -26,159 +26,159 @@ export type KullaniciRol =
   | 'calisma_arkadasi'
   | 'izleyici'
 
-// ── Teşkilat ──────────────────────────────────────────────────
+// â”€â”€ TeÅŸkilat â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export interface Sirket {
   id: string
   ad: string
   vergi_no?: string
-  adres?: string
-  aktif: boolean
+  address?: string
+  active: boolean
   created_at: string
 }
 
 export interface Birim {
   id: string
-  sirket_id: string
-  ust_birim_id?: string
-  ad: string
-  tip: BirimTip
-  aktif: boolean
+  company_id: string
+  parent_unit_id?: string
+  name: string
+  type: BirimTip
+  active: boolean
   created_at: string
-  // İlişkiler
+  // Ä°liÅŸkiler
   sirket?: Sirket
   ust_birim?: Birim
   alt_birimler?: Birim[]
-  kadrolar?: NormKadro[]
+  positions?: NormKadro[]
 }
 
 export type BirimTip =
-  | 'sirket'
-  | 'genel_mudurluk'
-  | 'mudurluk'
-  | 'departman'
-  | 'bolum'
-  | 'takim'
+  | 'company'
+  | 'headquarters'
+  | 'management'
+  | 'department'
+  | 'division'
+  | 'team'
 
-// ── Norm Kadro ────────────────────────────────────────────────
+// â”€â”€ Norm Kadro â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export interface NormKadro {
   id: string
-  birim_id: string
-  unvan: string
+  unit_id: string
+  title: string
   aciklama?: string
-  amir: boolean
-  durum: KadroDurum
-  butce?: number
-  personel_id?: string
+  is_manager: boolean
+  status: KadroDurum
+  budget_amount?: number
+  employee_id?: string
   created_at: string
-  // İlişkiler
-  birim?: Birim
-  personel?: Personel
+  // Ä°liÅŸkiler
+  unit?: Birim
+  employees?: Personel
 }
 
-export type KadroDurum = 'dolu' | 'acik' | 'dondurulmus'
+export type KadroDurum = 'filled' | 'open' | 'frozen'
 
-// ── Personel ──────────────────────────────────────────────────
+// â”€â”€ Personel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export interface Personel {
   id: string
-  // Kişisel
-  ad: string
-  soyad: string
-  uyruk: string
-  tc_kimlik?: string
-  pasaport_no?: string
-  cinsiyet: 'erkek' | 'kadin'
-  dogum_yeri?: string
-  dogum_tarihi?: string
-  kan_grubu?: KanGrubu
-  askerlik_durumu?: AskerlikDurum
-  tecil_tarihi?: string
-  engellilik: boolean
-  engellilik_yuzdesi?: number
-  hukumluluk: boolean
-  // İletişim
-  telefonlar?: Array<Record<string, unknown>>
-  epostalar?: Array<Record<string, unknown>>
-  cep_telefonu?: string
-  is_telefonu?: string
-  ev_telefonu?: string
+  // KiÅŸisel
+  first_name: string
+  last_name: string
+  nationality: string
+  national_id?: string
+  passport_no?: string
+  gender: 'male' | 'female'
+  birth_place?: string
+  birth_date?: string
+  blood_type?: KanGrubu
+  military_status?: AskerlikDurum
+  deferment_date?: string
+  has_disability: boolean
+  disability_percentage?: number
+  has_conviction: boolean
+  // Ä°letiÅŸim
+  phones?: Array<Record<string, unknown>>
+  emails?: Array<Record<string, unknown>>
+  mobile_phone?: string
+  work_phone?: string
+  home_phone?: string
   email?: string
-  adres?: string
-  il?: string
-  ilce?: string
+  address?: string
+  city?: string
+  district?: string
   // Acil
-  acil_kisi_ad?: string
-  acil_kisi_soyad?: string
-  acil_kisi_yakinlik?: string
-  acil_kisi_telefon?: string
-  // İş
-  sgk_giris?: string
-  isten_ayrilis?: string
-  sgk_giris_yontemi?: 'servis' | 'web'
-  sgk_giris_referans_no?: string
-  sgk_giris_bildiren?: string
-  sgk_giris_sigorta_kolu?: string
-  sgk_giris_gorev_kodu?: string
-  sgk_giris_meslek_kodu?: string
-  sgk_giris_csgb_is_kolu?: string
-  sgk_giris_engelli?: 'E' | 'H'
-  sgk_giris_eski_hukumlu?: 'E' | 'H'
-  sgk_giris_ogrenim_kodu?: string
-  sgk_giris_mezuniyet_yili?: string
-  sgk_giris_mezuniyet_bolumu?: string
-  sgk_giris_kismi_gun_sayisi?: string
-  sgk_cikis_yontemi?: 'servis' | 'web'
-  sgk_cikis_referans_no?: string
-  sgk_cikis_bildiren?: string
-  sgk_cikis_nedeni?: string
-  sgk_cikis_meslek_kodu?: string
-  sgk_cikis_csgb_is_kolu?: string
-  sgk_cikis_ucret_yuzde_usulu?: 'E' | 'H'
-  sgk_cikis_onceki_belge_turu?: string
-  sgk_cikis_onceki_hakedilen_ucret?: string
-  sgk_cikis_bu_donem_belge_turu?: string
-  sgk_cikis_bu_donem_hakedilen_ucret?: string
-  calisma_durumu: PersonelDurum
-  calisma_tipi?: string
-  is_akdi_bicimi?: string
-  medeni_durum?: MedeniDurum
-  sirket_id?: string
-  birim_id?: string
-  kadro_id?: string
-  gorev?: string
-  okuryazar_degil?: boolean
-  egitim_okullari?: Array<Record<string, unknown>>
-  yabanci_diller?: Array<Record<string, unknown>>
-  sertifikalar?: Array<Record<string, unknown>>
-  yakinlar?: Array<Record<string, unknown>>
-  ise_giris_belgeleri?: Array<Record<string, unknown>>
-  isten_cikis_belgeleri?: Array<Record<string, unknown>>
-  // Kıyafet
-  ust_beden?: string
-  alt_beden?: string
-  ayakkabi?: string
+  emergency_contact_first_name?: string
+  emergency_contact_last_name?: string
+  emergency_contact_relationship?: string
+  emergency_contact_phone?: string
+  // Ä°ÅŸ
+  sgk_entry_date?: string
+  exit_date?: string
+  sgk_entry_method?: 'servis' | 'web'
+  sgk_entry_reference_no?: string
+  sgk_entry_reported_by?: string
+  sgk_entry_insurance_branch?: string
+  sgk_entry_duty_code?: string
+  sgk_entry_occupation_code?: string
+  sgk_entry_csgb_business_line?: string
+  sgk_entry_has_disability?: 'E' | 'H'
+  sgk_entry_has_prior_conviction?: 'E' | 'H'
+  sgk_entry_education_code?: string
+  sgk_entry_graduation_year?: string
+  sgk_entry_graduation_department?: string
+  sgk_entry_partial_day_count?: string
+  sgk_exit_method?: 'servis' | 'web'
+  sgk_exit_reference_no?: string
+  sgk_exit_reported_by?: string
+  sgk_exit_reason?: string
+  sgk_exit_occupation_code?: string
+  sgk_exit_csgb_business_line?: string
+  sgk_exit_percentage_wage_method?: 'E' | 'H'
+  sgk_exit_previous_document_type?: string
+  sgk_exit_previous_earned_wage?: string
+  sgk_exit_current_document_type?: string
+  sgk_exit_current_earned_wage?: string
+  work_status: PersonelDurum
+  work_type?: string
+  employment_contract_type?: string
+  marital_status?: MedeniDurum
+  company_id?: string
+  unit_id?: string
+  position_id?: string
+  job_title?: string
+  is_illiterate?: boolean
+  education_schools?: Array<Record<string, unknown>>
+  foreign_languages?: Array<Record<string, unknown>>
+  certificates?: Array<Record<string, unknown>>
+  relatives?: Array<Record<string, unknown>>
+  entry_documents?: Array<Record<string, unknown>>
+  exit_documents?: Array<Record<string, unknown>>
+  // KÄ±yafet
+  top_size?: string
+  bottom_size?: string
+  shoe_size?: string
   kep?: string
   // Banka
   iban?: string
   // Meta
-  notlar?: string
-  fotograf_url?: string
-  cv_belgesi?: Record<string, unknown> | null
-  diploma_belgesi?: Record<string, unknown> | null
+  notes?: string
+  photo_url?: string
+  cv_document?: Record<string, unknown> | null
+  diploma_document?: Record<string, unknown> | null
   created_at: string
   updated_at: string
   is_deleted?: boolean
   field_history?: Record<string, Array<{ value: unknown; date: string; user?: string }>>
-  // İlişkiler
-  birim?: Birim
-  kadro?: NormKadro
+  // Ä°liÅŸkiler
+  unit?: Birim
+  position?: NormKadro
 }
 
-export type PersonelDurum = 'gorevde' | 'izinde' | 'ayrilmis' | 'askida'
+export type PersonelDurum = 'active' | 'on_leave' | 'terminated' | 'suspended'
 export type KanGrubu = 'A+' | 'A-' | 'B+' | 'B-' | 'AB+' | 'AB-' | '0+' | '0-'
-export type MedeniDurum = 'bekar' | 'evli'
+export type MedeniDurum = 'single' | 'married'
 export type AskerlikDurum = 'muaf' | 'caginda_degil' | 'tecilli' | 'belirsiz' | 'bakaya' | 'yapti'
 
-// ── Muhasebe ──────────────────────────────────────────────────
+// â”€â”€ Muhasebe â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export interface NakitIslem {
   id: string
   tarih: string
@@ -201,17 +201,17 @@ export type Proje =
   | 'PG'
   | 'EPIRB'
   | 'Otel'
-  | 'İdari'
+  | 'Ä°dari'
   | 'Sermaye'
-  | 'Aktarım'
+  | 'AktarÄ±m'
   | 'Finansal'
   | 'Destek'
-  | 'Yatırım'
+  | 'YatÄ±rÄ±m'
 
-export type IslemTarafi = 'Eden' | 'İsmail ILGAR' | 'Canberk' | 'Ergün'
-export type HesapTipi = 'Vadesiz' | 'Yatırım' | 'Kredi Kartı' | 'Nakit' | 'Bonus'
+export type IslemTarafi = 'Eden' | 'Ä°smail ILGAR' | 'Canberk' | 'ErgÃ¼n'
+export type HesapTipi = 'Vadesiz' | 'YatÄ±rÄ±m' | 'Kredi KartÄ±' | 'Nakit' | 'Bonus'
 
-// ── API Response ──────────────────────────────────────────────
+// â”€â”€ API Response â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export interface ApiResponse<T = unknown> {
   data?: T
   error?: string
@@ -226,10 +226,10 @@ export interface PaginatedResponse<T> {
   totalPages: number
 }
 
-// ── Widget ────────────────────────────────────────────────────
+// â”€â”€ Widget â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export interface Widget {
   id: string
-  tip: WidgetTip
+  type: WidgetTip
   baslik: string
   modul: string
   gerekli_rol: KullaniciRol[]

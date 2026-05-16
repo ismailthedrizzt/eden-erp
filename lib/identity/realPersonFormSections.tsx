@@ -15,21 +15,21 @@ type RealPersonMasterTabOptions = {
 }
 
 const genderOptions = [
-  { value: 'erkek', label: 'Erkek' },
-  { value: 'kadin', label: 'Kadın' },
+  { value: 'male', label: 'Erkek' },
+  { value: 'female', label: 'Kadın' },
 ]
 
 const militaryOptions = [
   { value: 'muaf', label: 'Muaf' },
-  { value: 'caginda_degil', label: 'Askerlik Çağında Değil' },
+  { value: 'caginda_degil', label: 'Askerlik Çağında Değcity' },
   { value: 'belirsiz', label: 'Belirsiz' },
   { value: 'tecilli', label: 'Tecilli' },
   { value: 'bakaya', label: 'Bakaya' },
 ]
 
 const maritalOptions = [
-  { value: 'bekar', label: 'Bekar' },
-  { value: 'evli', label: 'Evli' },
+  { value: 'single', label: 'Bekar' },
+  { value: 'married', label: 'Evli' },
 ]
 
 const foreignLanguageOptions = [
@@ -68,7 +68,7 @@ export function createRealPersonMasterTabs({
 }: RealPersonMasterTabOptions = {}): FormTab[] {
   const contactFields: FormField[] = [
     {
-      name: 'telefonlar',
+      name: 'phones',
       label: 'Telefon',
       type: 'list',
       colSpan: 3,
@@ -76,13 +76,13 @@ export function createRealPersonMasterTabs({
         addLabel: 'Telefon Ekle',
         emptyText: 'Telefon eklenmedi.',
         fields: [
-          { name: 'etiket', key: 'etiket', label: 'Etiket', type: 'text', placeholder: 'Cep, iş, ev' },
-          { name: 'numara', key: 'numara', label: 'Telefon Numarası', type: 'tel', required: true, placeholder: '+90 5XX XXX XX XX' },
+          { name: 'label', key: 'label', label: 'Etiket', type: 'text', placeholder: 'Cep, iş, ev' },
+          { name: 'phone', key: 'phone', label: 'Telefon Numarası', type: 'tel', required: true, placeholder: '+90 5XX XXX XX XX' },
         ],
       },
     },
     {
-      name: 'epostalar',
+      name: 'emails',
       label: 'E-posta',
       type: 'list',
       colSpan: 3,
@@ -90,8 +90,8 @@ export function createRealPersonMasterTabs({
         addLabel: 'E-posta Ekle',
         emptyText: 'E-posta eklenmedi.',
         fields: [
-          { name: 'etiket', key: 'etiket', label: 'Etiket', type: 'text', placeholder: 'Kişisel, iş' },
-          { name: 'adres', key: 'adres', label: 'E-posta Adresi', type: 'email', required: true },
+          { name: 'label', key: 'label', label: 'Etiket', type: 'text', placeholder: 'Kişisel, iş' },
+          { name: 'address', key: 'address', label: 'E-posta Adresi', type: 'email', required: true },
         ],
       },
     },
@@ -103,44 +103,44 @@ export function createRealPersonMasterTabs({
   if (includeEmergencyContact) {
     contactFields.push(
       { name: 'acil_baslik', label: 'Acil Durumda Ulaşılacak Kişi', type: 'section', colSpan: 3 },
-      { name: 'acil_kisi_ad', label: 'Adı', errorLabel: 'Acil Kişi Adı', type: 'text', requiredGroup: 'acil_kisi' },
-      { name: 'acil_kisi_soyad', label: 'Soyadı', errorLabel: 'Acil Kişi Soyadı', type: 'text', requiredGroup: 'acil_kisi' },
-      { name: 'acil_kisi_yakinlik', label: 'Yakınlık Derecesi', errorLabel: 'Acil Kişi Yakınlık Derecesi', type: 'text', requiredGroup: 'acil_kisi' },
-      { name: 'acil_kisi_telefon', label: 'Telefon Numarası', errorLabel: 'Acil Kişi Telefonu', type: 'tel', requiredGroup: 'acil_kisi' },
+      { name: 'emergency_contact_first_name', label: 'Adı', errorLabel: 'Acil Kişi Adı', type: 'text', requiredGroup: 'emergency_contact' },
+      { name: 'emergency_contact_last_name', label: 'Soyadı', errorLabel: 'Acil Kişi Soyadı', type: 'text', requiredGroup: 'emergency_contact' },
+      { name: 'emergency_contact_relationship', label: 'Yakınlık Derecesi', errorLabel: 'Acil Kişi Yakınlık Derecesi', type: 'text', requiredGroup: 'emergency_contact' },
+      { name: 'emergency_contact_phone', label: 'Telefon Numarası', errorLabel: 'Acil Kişi Telefonu', type: 'tel', requiredGroup: 'emergency_contact' },
     )
   }
 
   return [
     {
-      id: 'gercek_kisi_ozel',
+      id: 'person_ozel',
       label: 'Özel',
       icon: <UserCircle size={16} />,
       fields: applyVisibleWhen([
-        { name: 'engellilik', label: 'Engellilik Durumu', type: 'checkbox', placeholder: 'Engellilik var', compact: true },
-        { name: 'engellilik_yuzdesi', label: 'Engellilik Yüzdesi', type: 'number', compact: true, visibleWhen: { field: 'engellilik', operator: 'equals', value: true } },
-        { name: 'askerlik_durumu', label: 'Askerlik Durumu', type: 'select', compact: true, options: militaryOptions },
-        { name: 'tecil_tarihi', label: 'Tecil Tarihi', type: 'date', compact: true, visibleWhen: { field: 'askerlik_durumu', operator: 'equals', value: 'tecilli' }, requiredWhen: { field: 'askerlik_durumu', operator: 'equals', value: 'tecilli' } },
-        { name: 'hukumluluk', label: 'Hükümlülük Durumu', type: 'checkbox', placeholder: 'Hükümlülük var', compact: true },
+        { name: 'has_disability', label: 'Engellilik Durumu', type: 'checkbox', placeholder: 'Engellilik var', compact: true },
+        { name: 'disability_percentage', label: 'Engellilik Yüzdesi', type: 'number', compact: true, visibleWhen: { field: 'has_disability', operator: 'equals', value: true } },
+        { name: 'military_status', label: 'Askerlik Durumu', type: 'select', compact: true, options: militaryOptions },
+        { name: 'deferment_date', label: 'Tecil Tarihi', type: 'date', compact: true, visibleWhen: { field: 'military_status', operator: 'equals', value: 'tecilli' }, requiredWhen: { field: 'military_status', operator: 'equals', value: 'tecilli' } },
+        { name: 'has_conviction', label: 'Hükümlülük Durumu', type: 'checkbox', placeholder: 'Hükümlülük var', compact: true },
       ], visibleWhen),
     },
     {
-      id: 'gercek_kisi_iletisim',
+      id: 'person_iletisim',
       label: 'İletişim',
       icon: <Phone size={16} />,
       fields: applyVisibleWhen(contactFields, visibleWhen),
     },
     {
-      id: 'gercek_kisi_egitim',
+      id: 'person_egitim',
       label: 'Eğitim',
       icon: <GraduationCap size={16} />,
       fields: applyVisibleWhen([
-        { name: 'okuryazar_degil', label: 'Okuryazar Değil', type: 'checkbox', placeholder: 'Okuryazar değil' },
+        { name: 'is_illiterate', label: 'Okuryazar Değcity', type: 'checkbox', placeholder: 'Okuryazar değcity' },
         {
-          name: 'egitim_okullari',
+          name: 'education_schools',
           label: 'Okullar',
           type: 'list',
           colSpan: 3,
-          disabledWhen: { field: 'okuryazar_degil', operator: 'equals', value: true },
+          disabledWhen: { field: 'is_illiterate', operator: 'equals', value: true },
           listConfig: {
             addLabel: 'Okul Ekle',
             emptyText: 'Okul bilgisi eklenmedi.',
@@ -160,7 +160,7 @@ export function createRealPersonMasterTabs({
             ],
           },
         },
-        { name: 'yabanci_diller', label: 'Yabancı Diller', type: 'list', colSpan: 3, listConfig: {
+        { name: 'foreign_languages', label: 'Yabancı Diller', type: 'list', colSpan: 3, listConfig: {
           addLabel: 'Dil Ekle',
           emptyText: 'Yabancı dil eklenmedi.',
           fields: [
@@ -169,7 +169,7 @@ export function createRealPersonMasterTabs({
             { name: 'belge', key: 'belge', label: 'Belge', type: 'document', colSpan: 2 },
           ],
         } },
-        { name: 'sertifikalar', label: 'Kurslar/Sertifikalar', type: 'list', colSpan: 3, listConfig: {
+        { name: 'certificates', label: 'Kurslar/Sertifikalar', type: 'list', colSpan: 3, listConfig: {
           addLabel: 'Kurs/Sertifika Ekle',
           emptyText: 'Kurs veya sertifika eklenmedi.',
           fields: [
@@ -183,25 +183,25 @@ export function createRealPersonMasterTabs({
       ], visibleWhen),
     },
     {
-      id: 'gercek_kisi_aile',
+      id: 'person_aile',
       label: 'Aile',
       icon: <Heart size={16} />,
       fields: applyVisibleWhen([
         { name: maritalStatusField, label: 'Medeni Durumu', type: 'select', compact: true, options: maritalOptions },
-        { name: 'yakinlar', label: 'Yakın Bilgileri', type: 'list', colSpan: 3, listConfig: {
+        { name: 'relatives', label: 'Yakın Bilgileri', type: 'list', colSpan: 3, listConfig: {
           addLabel: 'Yakın Ekle',
           emptyText: 'Yakın bilgisi eklenmedi.',
           maxItems: 10,
           fields: [
-            { name: 'ad_soyad', key: 'ad_soyad', label: 'Adı Soyadı', type: 'text', required: true },
-            { name: 'dogum_tarihi', key: 'dogum_tarihi', label: 'Doğum Tarihi', type: 'date' },
-            { name: 'akrabalik_bicimi', key: 'akrabalik_bicimi', label: 'Akrabalık Biçimi', type: 'text', required: true },
+            { name: 'full_name', key: 'full_name', label: 'Adı Soyadı', type: 'text', required: true },
+            { name: 'birth_date', key: 'birth_date', label: 'Doğum Tarihi', type: 'date' },
+            { name: 'relationship', key: 'relationship', label: 'Akrabalık Biçimi', type: 'text', required: true },
           ],
         } },
       ], visibleWhen),
     },
     {
-      id: 'gercek_kisi_banka',
+      id: 'person_banka',
       label: 'Banka',
       icon: <Landmark size={16} />,
       fields: applyVisibleWhen([
@@ -215,8 +215,8 @@ export function createRealPersonMasterTabs({
             <EntityBankAccountsPanel
               entityKind="person"
               entityId={data.master_record_id || data.person_id}
-              masterName={data.full_name || data.display_name || [data.first_name || data.ad, data.last_name || data.soyad].filter(Boolean).join(' ')}
-              masterCountry={data.nationality_country || data.country || data.uyruk}
+              masterName={data.full_name || data.display_name || [data.first_name, data.last_name].filter(Boolean).join(' ')}
+              masterCountry={data.nationality_country || data.country || data.nationality}
               readOnly={readOnly}
               value={Array.isArray(value) ? value : data.entity_bank_accounts}
               onChange={onChange}

@@ -1,0 +1,49 @@
+export const projectGlossary = {
+  employee: {
+    entity: {
+      singular: 'Çalışan',
+      plural: 'Çalışanlar',
+    },
+    fields: {
+      firstName: { label: 'Ad' },
+      lastName: { label: 'Soyad' },
+      fullName: { label: 'Ad Soyad' },
+      nationality: { label: 'Uyruk' },
+      nationalId: { label: 'TC Kimlik No' },
+      passportNo: { label: 'Pasaport No' },
+      birthDate: { label: 'Doğum Tarihi' },
+      birthPlace: { label: 'Doğum Yeri' },
+      gender: { label: 'Cinsiyet' },
+      bloodType: { label: 'Kan Grubu' },
+      militaryStatus: { label: 'Askerlik Durumu' },
+      defermentDate: { label: 'Tecil Tarihi' },
+      workPhone: { label: 'İş Telefonu' },
+      emergencyFirstName: { label: 'Acil Kişi Adı' },
+      emergencyLastName: { label: 'Acil Kişi Soyadı' },
+      emergencyRelationship: { label: 'Acil Kişi Yakınlık Derecesi' },
+      emergencyPhone: { label: 'Acil Kişi Telefonu' },
+      socialSecurityEntryDate: { label: 'SGK Giriş Tarihi' },
+      jobTitle: { label: 'Görev' },
+      topSize: { label: 'Üst Beden' },
+      bottomSize: { label: 'Alt Beden' },
+      shoeSize: { label: 'Ayakkabı' },
+      kepAddress: { label: 'Kep' },
+      iban: { label: 'IBAN' },
+      notes: { label: 'Notlar' },
+      photo: { label: 'Fotoğraf' },
+    },
+    enums: {
+      gender: {
+        male: 'Erkek',
+        female: 'Kadın',
+      },
+      employmentStatus: {
+        active: 'Görevde',
+        onLeave: 'İzinde',
+        terminated: 'Ayrılmış',
+        suspended: 'Askıda',
+      },
+    },
+  },
+} as const
+

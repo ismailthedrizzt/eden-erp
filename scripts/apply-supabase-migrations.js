@@ -6,70 +6,12 @@ const root = path.resolve(__dirname, '..');
 const envPath = path.join(root, '.env.local');
 const migrationsDir = path.join(root, 'supabase', 'migrations');
 
-const migrationFiles = [
-  'create_module_licenses.sql',
-  '20240501_create_sirketler_table.sql',
-  '20240502_complete_core_schema.sql',
-  '20240503_rename_personel_to_employees.sql',
-  '20240504_extend_employee_form_schema.sql',
-  '20240505_employee_soft_delete_and_history.sql',
-  '20240506_add_employee_cv_document.sql',
-  '20240507_reference_data_and_employee_optional_fields.sql',
-  '20240508_relax_employee_optional_fields.sql',
-  '20240509_company_soft_delete_and_history.sql',
-  '20240510_company_assets_and_types.sql',
-  '20240511_company_representatives_erp_model.sql',
-  '20240512_company_partners_ownership_model.sql',
-  '20240513_partner_detail_form_assets.sql',
-  '20240514_representative_detail_form_assets.sql',
-  '20240515_create_stakeholders.sql',
-  '20240516_company_public_institution_data.sql',
-  '20240517_partner_corporate_control_fields.sql',
-  '20240518_organization_and_positions_model.sql',
-  '20240519_company_vehicles.sql',
-  '20260503_backend_architecture_foundation.sql',
-  '20260503_identity_master_model.sql',
-  '20260508_employee_company_alias.sql',
-  '20260512_company_registration_status_fields.sql',
-  '20260514_single_soft_delete_flag.sql',
-  '20260509_accounting_module_foundation.sql',
-  '20260509_employee_contract_fields.sql',
-  '20260509_employee_list_optional_columns.sql',
-  '20260509_list_performance_indexes.sql',
-  '20260509_ownership_transactions.sql',
-  '20260510_ownership_transactions_scope_split.sql',
-  '20260510_document_media_registry.sql',
-  '20260512_fix_document_registry_audit_is_deleted.sql',
-  '20260510_employee_marital_status.sql',
-  '20260510_master_contact_standardization.sql',
-  '20260510_ownership_transactions_lean_scope.sql',
-  '20260511_document_file_thumbnails.sql',
-  '20260512_employee_diploma_document.sql',
-  '20260512_backfill_company_document_thumbnails.sql',
-  '20260512_remove_document_registry_tables.sql',
-  '20260512_remove_media_registry_tables.sql',
-  '20260512_compact_company_document_thumbnails.sql',
-  '20260512_strip_company_document_bitmap_thumbnails.sql',
-  '20260512_company_relation_english_alias_backfill.sql',
-  '20260512_master_role_conflict_report.sql',
-  '20260512_normalize_country_nationality_codes.sql',
-  '20260513_company_root_organization_units.sql',
-  '20260513_company_nace_codes.sql',
-  '20260513_bank_accounts_cards_and_movements.sql',
-  '20260513_system_parameters.sql',
-  '20260513_security_linter_hardening.sql',
-  '20260513_integration_parameters_and_bank_card_refs.sql',
-  '20260514_entity_bank_accounts.sql',
-  '20260514_fast_primary_lists.sql',
-  '20260515_bank_account_card_fast_lists.sql',
-  '20260515_employee_exit_date_drift.sql',
-  '20260515_employee_list_performance_drift.sql',
-  '20260515_employee_sgk_lifecycle_fields.sql',
-  '20260516_employee_work_lifecycle.sql',
-  '20260516_partner_ownership_lifecycle.sql',
-  '20260517_remove_lifecycle_soft_delete_columns.sql',
-  'add_employee_unique_constraint.sql',
-];
+function listMigrationFiles() {
+  return fs
+    .readdirSync(migrationsDir)
+    .filter((file) => file.endsWith('.sql'))
+    .sort();
+}
 
 function readEnv(filePath) {
   return Object.fromEntries(
@@ -104,19 +46,6 @@ async function applyMigration(client, name) {
     return;
   }
 
-  if (name === 'create_module_licenses.sql') {
-    const existing = await client.query(`
-      SELECT to_regclass('public.module_licenses') AS modules,
-             to_regclass('public.submodule_licenses') AS submodules;
-    `);
-
-    if (existing.rows[0].modules && existing.rows[0].submodules) {
-      await client.query('INSERT INTO public.schema_migrations (name) VALUES ($1)', [name]);
-      console.log(`mark ${name}`);
-      return;
-    }
-  }
-
   const sql = fs.readFileSync(path.join(migrationsDir, name), 'utf8').replace(/^\uFEFF/, '');
 
   await client.query('BEGIN');
@@ -147,7 +76,7 @@ async function main() {
   try {
     await ensureMigrationTable(client);
 
-    for (const file of migrationFiles) {
+    for (const file of listMigrationFiles()) {
       await applyMigration(client, file);
     }
   } finally {

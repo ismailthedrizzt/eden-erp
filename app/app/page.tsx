@@ -10,7 +10,6 @@ import { usePersonel } from '@/hooks/usePersonel'
 import { normalizeWidgetPreferenceIds, widgetPreferenceStorageKey } from '@/lib/dashboard/widgetPreferences'
 import {
   dashboardWidgetRegistry,
-  legacyHomeWidgetIdMap,
   uniqueWidgetModules,
   uniqueWidgetPages,
   type DashboardWidgetRegistryRecord,
@@ -23,10 +22,10 @@ import type { Personel } from '@/types'
 const WIDGET_STORAGE_KEY = 'user_widgets'
 const WIDGET_STORAGE_SCOPE = 'home'
 const CURRENT_USER = {
-  ad: 'İsmail',
-  soyad: 'ILGAR',
-  sgk_giris: '2024-01-15',
-  dogum_tarihi: '1990-04-27',
+  first_name: 'İsmail',
+  last_name: 'ILGAR',
+  sgk_entry_date: '2024-01-15',
+  birth_date: '1990-04-27',
 }
 
 interface WidgetModalProps {
@@ -180,7 +179,7 @@ function WidgetChoice({ widget, selected, onToggle }: { widget: DashboardWidgetR
 export default function AnaSayfa() {
   const [widgetModalOpen, setWidgetModalOpen] = useState(false)
   const [selectedWidgetIds, setSelectedWidgetIds] = useState<string[]>([])
-  const { data: personel } = usePersonel()
+  const { data: employees } = usePersonel()
 
   useEffect(() => {
     const preferenceKey = widgetPreferenceStorageKey(WIDGET_STORAGE_SCOPE)
@@ -194,9 +193,9 @@ export default function AnaSayfa() {
     }
   }, [])
 
-  const duration = useMemo(() => calculateDuration(CURRENT_USER.sgk_giris), [])
-  const birthday = isBirthday(CURRENT_USER.dogum_tarihi)
-  const employeeRows = useMemo(() => (personel || []).map(toEmployeeDashboardRow), [personel])
+  const duration = useMemo(() => calculateDuration(CURRENT_USER.sgk_entry_date), [])
+  const birthday = isBirthday(CURRENT_USER.birth_date)
+  const employeeRows = useMemo(() => (employees || []).map(toEmployeeDashboardRow), [employees])
   const availableWidgets = useMemo(() => {
     const homeWidgets = buildHomeDashboardWidgets(CURRENT_USER, duration, birthday)
     const companyWidgets = buildCompanyDashboardWidgets()
@@ -228,7 +227,7 @@ export default function AnaSayfa() {
 
       <PageBanner
         mode="list"
-        title={birthday ? `Doğum Günün Kutlu Olsun, ${CURRENT_USER.ad}!` : `Merhaba, ${CURRENT_USER.ad}`}
+        title={birthday ? `Doğum Günün Kutlu Olsun, ${CURRENT_USER.first_name}!` : `Merhaba, ${CURRENT_USER.first_name}`}
         subtitle={birthday
           ? 'Bugün senin özel günün.'
           : `${duration.years} yıl ${duration.months} ay, ${duration.days} gündür bizimlesin. İyi ki varsın!`
@@ -259,7 +258,7 @@ export default function AnaSayfa() {
 }
 
 function buildHomeDashboardWidgets(
-  currentUser: { ad: string; soyad: string; sgk_giris: string; dogum_tarihi: string },
+  currentUser: { first_name: string; last_name: string; sgk_entry_date: string; birth_date: string },
   duration: { years: number; months: number; days: number },
   birthday: boolean
 ): AnyDashboardWidgetConfig[] {
@@ -273,7 +272,7 @@ function buildHomeDashboardWidgets(
       dataSource: 'dashboard.home.tenure',
       permissions: [],
       value: `${duration.years} yıl ${duration.months} ay`,
-      label: `${currentUser.ad} ${currentUser.soyad}`,
+      label: `${currentUser.first_name} ${currentUser.last_name}`,
       subtitle: `${duration.days} gün`,
     },
     {
@@ -284,7 +283,7 @@ function buildHomeDashboardWidgets(
       size: { w: 4, h: 2 },
       dataSource: 'dashboard.home.birthday',
       permissions: [],
-      value: birthday ? 'Bugün' : nextBirthdayText(currentUser.dogum_tarihi),
+      value: birthday ? 'Bugün' : nextBirthdayText(currentUser.birth_date),
       label: birthday ? 'Kutlu olsun' : 'Sonraki doğum günü',
       subtitle: birthday ? 'Bugün özel bir gün.' : 'Takvim hatırlatıcısı',
     },
@@ -297,7 +296,7 @@ function buildHomeDashboardWidgets(
       dataSource: 'dashboard.home.actions',
       permissions: [],
       items: [
-        { id: 'open-personel', label: 'Çalışan kayıtlarını gözden geçir', description: 'İK / Çalışanlarımız', severity: 'info' },
+        { id: 'open-employees', label: 'Çalışan kayıtlarını gözden geçir', description: 'İK / Çalışanlarımız', severity: 'info' },
         { id: 'dashboard-widgets', label: 'Ana sayfa widget seçimini güncelle', description: 'Mevcut widget kayıtları', severity: 'success' },
       ],
     },
@@ -341,24 +340,23 @@ function buildRegisteredWidgetPlaceholder(id: string): AnyDashboardWidgetConfig 
   }
 }
 
-function toEmployeeDashboardRow(personel: Personel) {
+function toEmployeeDashboardRow(employees: Personel) {
   return {
-    id: personel.id,
-    cinsiyet: personel.cinsiyet,
-    egitim_durumu: getEducationSummary(personel),
-    calisma_tipi: (personel as any).calisma_tipi || '-',
-    calisma_durumu: personel.calisma_durumu,
-    employment_status: (personel as any).employment_status,
-    birim_adi: personel.birim?.ad || '-',
-    dogum_tarihi: personel.dogum_tarihi,
-    sgk_giris: personel.sgk_giris,
+    id: employees.id,
+    gender: employees.gender,
+    egitim_durumu: getEducationSummary(employees),
+    work_type: (employees as any).work_type || '-',
+    work_status: employees.work_status,
+    employment_status: (employees as any).employment_status,
+    unit_name: employees.unit?.name || '-',
+    birth_date: employees.birth_date,
+    sgk_entry_date: employees.sgk_entry_date,
   }
 }
 
 function normalizeSavedWidgetIds(ids: unknown[]) {
   const normalized = normalizeWidgetPreferenceIds(ids
-    .map(id => String(id))
-    .map(id => legacyHomeWidgetIdMap[id] || id), dashboardWidgetRegistry.map(widget => widget.id))
+    .map(id => String(id)), dashboardWidgetRegistry.map(widget => widget.id))
   return normalized
 }
 

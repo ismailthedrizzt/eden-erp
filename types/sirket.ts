@@ -8,50 +8,50 @@ export interface Sirket {
   id: string
   
   // Kimlik - Identity
-  ticari_unvan: string
-  kisa_unvan: string
-  vkn_tckn: string
-  vergi_dairesi: string
+  trade_name: string
+  short_name: string
+  tax_number: string
+  tax_office: string
   
   // Tescil - Registration
-  mersis_no?: string
-  ticaret_sicil_no?: string
-  kurulus_tarihi?: string
+  mersis_number?: string
+  trade_registry_number?: string
+  foundation_date?: string
   electronic_notification_address?: string
   trade_registry_office?: string
-  sirket_turu?: 'anonim' | 'limited' | 'komandit' | 'kolektif' | 'adi_komandit' | 'adi_sirket'
+  company_type?: 'anonim' | 'limited' | 'komandit' | 'kolektif' | 'adi_komandit' | 'adi_sirket'
   
   // Adres - Address
-  ulke: string
-  il: string
-  ilce: string
-  adres: string
+  country: string
+  city: string
+  district: string
+  address: string
   
   // Iletisim - Contact
-  telefon?: string
+  phone?: string
   email?: string
-  web_sitesi?: string
+  website?: string
   
   // Kurumsal Kimlik - Corporate Identity
   legal_entity?: string
   parent_company_id?: string
-  sirket_kodu?: string
+  company_code?: string
   
   // Vergi ve SGK - Tax and SGK
-  e_fatura_mukellefi: boolean
-  e_arsiv_mukellefi: boolean
-  e_irsaliye_mukellefi: boolean
-  sgk_is_yeri_sicil_no?: string
-  sgk_il?: string
-  sgk_sube?: string
-  nace_kodlari?: string[]
-  tehlike_sinifi?: 'az_tehlikeli' | 'tehlikeli' | 'cok_tehlikeli'
+  e_invoice_taxpayer: boolean
+  e_archive_taxpayer: boolean
+  e_waybill_taxpayer: boolean
+  sgk_workplace_registry_no?: string
+  sgk_province?: string
+  sgk_branch?: string
+  nace_codes?: string[]
+  risk_class?: 'az_tehlikeli' | 'tehlikeli' | 'cok_tehlikeli'
   
   // ERP Ayarlari - ERP Settings
-  varsayilan_para_birimi: string
-  varsayilan_dil: string
-  zaman_dilimi: string
-  mali_yil_baslangici: number
+  default_currency: string
+  default_language: string
+  time_zone: string
+  fiscal_year_start: number
   is_deleted?: boolean
   hero_images?: Array<Record<string, unknown>>
   hero_documents?: Array<Record<string, unknown>>
@@ -73,10 +73,10 @@ export interface Sirket {
   field_history?: Record<string, Array<{ value: unknown; date: string; user?: string }>>
   
   // Related Entities (for form handling)
-  ortaklar?: SirketOrtak[]
-  temsilciler?: SirketTemsilci[]
-  logolar?: SirketLogo[]
-  dokumanlar?: SirketDokuman[]
+  partners?: SirketOrtak[]
+  representatives?: SirketTemsilci[]
+  logos?: SirketLogo[]
+  documents?: SirketDokuman[]
   public_tax?: CompanyPublicTax | CompanyPublicTax[]
   public_sgk?: CompanyPublicSgk | CompanyPublicSgk[]
   public_incentives?: CompanyPublicIncentives | CompanyPublicIncentives[]
@@ -147,7 +147,7 @@ export interface CompanyPublicIncentives {
 export interface CompanyPublicRegistry {
   id?: string
   company_id?: string
-  mersis_no?: string
+  mersis_number?: string
   trade_registry_no?: string
   registry_office?: string
   chamber_registry_no?: string
@@ -192,15 +192,15 @@ export interface CompanyPublicChannels {
 
 export interface SirketOrtak {
   id: string
-  sirket_id: string
-  ad?: string
-  soyad?: string
-  ortak_adi: string
-  ortak_tipi: 'kisi' | 'sirket'
-  tckn_vkn: string
-  hisse_orani: number
-  imza_yetkisi: boolean
-  owner_kind?: 'gercek_kisi' | 'tuzel_kisi'
+  company_id: string
+  first_name?: string
+  last_name?: string
+  partner_name: string
+  partner_type: 'person' | 'organization'
+  identity_tax_number: string
+  share_ratio: number
+  signature_authority: boolean
+  owner_kind?: 'person' | 'organization'
   source_type?: string
   source_id?: string
   display_name?: string
@@ -209,7 +209,6 @@ export interface SirketOrtak {
   share_units?: number
   nominal_value?: number
   capital_amount?: number
-  share_ratio?: number
   voting_ratio?: number
   profit_ratio?: number
   beneficial_owner?: boolean
@@ -236,14 +235,14 @@ export interface SirketOrtak {
 
 export interface SirketTemsilci {
   id: string
-  sirket_id: string
-  ad_soyad?: string
-  gorev?: string
-  telefon?: string
+  company_id: string
+  full_name?: string
+  job_title?: string
+  phone?: string
   email?: string
-  yetki_turu?: 'ceo' | 'mali_musavir' | 'finans_muduru' | 'ik_muduru' | 'imza_sahibi' | 'diger'
+  authority_type?: 'ceo' | 'mali_musavir' | 'finans_muduru' | 'ik_muduru' | 'imza_sahibi' | 'diger'
   authority_types?: string[]
-  person_kind?: 'gercek_kisi' | 'tuzel_kisi'
+  person_kind?: 'person' | 'organization'
   source_type?: string
   source_id?: string
   display_name?: string
@@ -276,7 +275,7 @@ export interface SirketTemsilci {
 
 export interface SirketDokuman {
   id: string
-  sirket_id: string
+  company_id: string
   dokuman_turu: 'vergi_levhasi' | 'ticaret_sicil' | 'imza_sirkuleri' | 'faaliyet_belgesi' | 'diger'
   dosya_adi: string
   dosya_url: string
@@ -286,7 +285,7 @@ export interface SirketDokuman {
 
 export interface SirketLogo {
   id: string
-  sirket_id: string
+  company_id: string
   dosya_adi: string
   dosya_url: string
   is_primary: boolean

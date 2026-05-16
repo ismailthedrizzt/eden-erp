@@ -71,21 +71,21 @@ export function MasterIdentityGate({
     formData.owner_kind,
     formData.person_id,
     formData.organization_id,
-    formData.uyruk,
+    formData.nationality,
     formData.nationality,
     formData.nationality_country,
-    formData.tc_kimlik,
+    formData.national_id,
     formData.national_id,
     formData.identity_number,
-    formData.tckn_vkn,
-    formData.pasaport_no,
+    formData.identity_tax_number,
+    formData.passport_no,
     formData.passport_no,
     formData.country,
-    formData.ulke,
+    formData.country,
     formData.tax_number,
-    formData.vkn_tckn,
+    formData.tax_number,
     formData.registration_number,
-    formData.ticaret_sicil_no,
+    formData.trade_registry_number,
   ])
 
   const updateIdentity = (key: string, value: string) => {
@@ -422,23 +422,23 @@ function hasUsefulPrefillData(result: IdentityGateResolveResult) {
     'master_record_id',
     'master_entity_kind',
     'identity_gate_state',
-    'uyruk',
+    'nationality',
     'nationality',
     'nationality_country',
-    'tc_kimlik',
+    'national_id',
     'national_id',
     'tax_id',
     'identity_number',
-    'pasaport_no',
+    'passport_no',
     'passport_no',
     'stakeholder_type',
     'partner_type',
     'person_or_entity_type',
-    'ulke',
     'country',
-    'vkn_tckn',
+    'country',
     'tax_number',
-    'ticaret_sicil_no',
+    'tax_number',
+    'trade_registry_number',
     'registration_number',
   ])
 
@@ -482,11 +482,11 @@ function deriveEntityKind(config: IdentityGateConfig, formData: Record<string, a
     ''
   )
 
-  if (formData.organization_id || rawKind === 'organization' || rawKind === 'tuzel_kisi' || rawKind === 'sirket') {
+  if (formData.organization_id || rawKind === 'organization' || rawKind === 'organization' || rawKind === 'sirket') {
     return config.allowedEntityKinds.includes('organization') ? 'organization' : config.allowedEntityKinds[0] || 'person'
   }
 
-  if (formData.person_id || rawKind === 'person' || rawKind === 'gercek_kisi' || rawKind === 'kisi') {
+  if (formData.person_id || rawKind === 'person' || rawKind === 'person' || rawKind === 'kisi') {
     return config.allowedEntityKinds.includes('person') ? 'person' : config.allowedEntityKinds[0] || 'person'
   }
 
@@ -495,12 +495,12 @@ function deriveEntityKind(config: IdentityGateConfig, formData: Record<string, a
 
 function deriveIdentity(kind: IdentityEntityKind, formData: Record<string, any>, previous: Record<string, string>): Record<string, string> {
   if (kind === 'person') {
-    const rawIdentity = String(formData.identity_number || formData.tckn_vkn || '')
-    const nationalId = String(formData.tc_kimlik || formData.national_id || (/^\d{11}$/.test(rawIdentity) ? rawIdentity : '') || '')
-    const passportNo = String(formData.pasaport_no || formData.passport_no || (rawIdentity && !/^\d{11}$/.test(rawIdentity) ? rawIdentity : '') || '')
+    const rawIdentity = String(formData.identity_number || formData.identity_tax_number || '')
+    const nationalId = String(formData.national_id || formData.national_id || (/^\d{11}$/.test(rawIdentity) ? rawIdentity : '') || '')
+    const passportNo = String(formData.passport_no || formData.passport_no || (rawIdentity && !/^\d{11}$/.test(rawIdentity) ? rawIdentity : '') || '')
 
     return {
-      nationality: normalizeCountryId(formData.uyruk || formData.nationality || formData.nationality_country || previous.nationality || 'TR'),
+      nationality: normalizeCountryId(formData.nationality || formData.nationality || formData.nationality_country || previous.nationality || 'TR'),
       national_id: nationalId,
       passport_no: passportNo,
       country: previous.country || 'TR',
@@ -513,9 +513,9 @@ function deriveIdentity(kind: IdentityEntityKind, formData: Record<string, any>,
     nationality: previous.nationality || 'TR',
     national_id: previous.national_id || '',
     passport_no: previous.passport_no || '',
-    country: normalizeCountryId(formData.country || formData.ulke || formData.nationality_country || previous.country || 'TR'),
-    tax_number: String(formData.tax_number || formData.vkn_tckn || formData.identity_number || formData.tckn_vkn || previous.tax_number || ''),
-    registration_number: String(formData.registration_number || formData.ticaret_sicil_no || previous.registration_number || ''),
+    country: normalizeCountryId(formData.country || formData.country || formData.nationality_country || previous.country || 'TR'),
+    tax_number: String(formData.tax_number || formData.tax_number || formData.identity_number || formData.identity_tax_number || previous.tax_number || ''),
+    registration_number: String(formData.registration_number || formData.trade_registry_number || previous.registration_number || ''),
   }
 }
 
@@ -597,7 +597,7 @@ function buildRoleScope(config: IdentityGateConfig, formData: Record<string, any
     if (formData[field] !== undefined) scope[field] = formData[field]
   })
   if (formData.company_id && scope.company_id === undefined) scope.company_id = formData.company_id
-  if (formData.sirket_id && scope.sirket_id === undefined) scope.sirket_id = formData.sirket_id
+  if (formData.company_id && scope.company_id === undefined) scope.company_id = formData.company_id
   return scope
 }
 
@@ -611,7 +611,7 @@ function stateLabel(state: IdentityGateState) {
     role_checking: 'Rol kontrolü',
     role_not_found: 'Rol yok',
     role_found: 'Mevcut kayıt',
-    ready_for_insert: 'Form aktif',
+    ready_for_insert: 'Form active',
     ready_for_edit: 'Hazır',
     blocked_duplicate: 'Duplicate engelli',
   }

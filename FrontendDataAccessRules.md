@@ -29,6 +29,17 @@ await apiClient.post('/api/companies', payload)
 await apiClient.patch(`/api/partners/${id}`, { version, data })
 ```
 
+## Pipeline adlandirma ve sozluk kontrati
+
+Frontend, backend ve veritabani pipeline'inda her kavram icin tek canonical Ingilizce ad kullanilir. Frontend form state, API payload, servis tipi, backend validation ve yeni veritabani identifier'lari ayni kavram adini paylasir. Kullaniciya gorunen Turkce metinler `lib/projectGlossary.ts` icindeki ortak sozlukten gelir.
+
+- Yeni form, servis veya API route'u bir alan icin birden fazla payload/key adi kabul etmez.
+- Compatibility alias, otomatik alias normalizasyonu veya ayni degeri birden fazla field'a yazan helper eklenmez.
+- Yeni migration dosyalarinda tablo, kolon, index ve constraint adlari Ingilizce `snake_case` olmalidir.
+- Legacy veritabani kolonlari gerekiyorsa sadece acik adlandirilmis persistence mapper veya migration icinde domain alanina cevrilir; component ve route seviyesine tasinmaz.
+- Legacy tablo/kolonlar icin yeni alias kolon eklemek yerine rename/backfill migration'i veya explicit mapper kullanilir.
+- Enum value'lar kod kontratidir; Turkce karsiliklari label olarak sozlukte tutulur.
+
 ## Modul, yetki ve workflow kontrati
 
 Yeni ERP sayfalari `useEntityAccess` kullanarak modul durumu, kullanici yetkileri ve workflow hazirligini tek yerden alir. Bagimli modul kapaliysa alanlar sessizce kaybolmaz; `ModuleDependencyGate` veya `EntityForm moduleDependencies` standart uyari gosterir.

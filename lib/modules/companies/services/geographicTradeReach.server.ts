@@ -61,45 +61,45 @@ const SOURCE_TABLES: Array<{
     type: 'customer',
     companyKey: 'company_id',
     labelKeys: ['display_name', 'name', 'title', 'legal_name', 'customer_name'],
-    countryKeys: ['country', 'ulke'],
-    cityKeys: ['city', 'il'],
-    addressKeys: ['address', 'adres'],
+    countryKeys: ['country', 'country'],
+    cityKeys: ['city', 'city'],
+    addressKeys: ['address', 'address'],
   },
   {
     table: 'branches',
     type: 'branch',
     companyKey: 'company_id',
     labelKeys: ['name', 'branch_name', 'display_name'],
-    countryKeys: ['country', 'ulke'],
-    cityKeys: ['city', 'il'],
-    addressKeys: ['address', 'adres'],
+    countryKeys: ['country', 'country'],
+    cityKeys: ['city', 'city'],
+    addressKeys: ['address', 'address'],
   },
   {
     table: 'offices',
     type: 'office',
     companyKey: 'company_id',
     labelKeys: ['name', 'office_name', 'display_name'],
-    countryKeys: ['country', 'ulke'],
-    cityKeys: ['city', 'il'],
-    addressKeys: ['address', 'adres'],
+    countryKeys: ['country', 'country'],
+    cityKeys: ['city', 'city'],
+    addressKeys: ['address', 'address'],
   },
   {
     table: 'dealers',
     type: 'dealer',
     companyKey: 'company_id',
     labelKeys: ['name', 'dealer_name', 'display_name'],
-    countryKeys: ['country', 'ulke'],
-    cityKeys: ['city', 'il'],
-    addressKeys: ['address', 'adres'],
+    countryKeys: ['country', 'country'],
+    cityKeys: ['city', 'city'],
+    addressKeys: ['address', 'address'],
   },
   {
     table: 'project_locations',
     type: 'project',
     companyKey: 'company_id',
     labelKeys: ['name', 'project_name', 'display_name'],
-    countryKeys: ['country', 'ulke'],
-    cityKeys: ['city', 'il'],
-    addressKeys: ['address', 'adres'],
+    countryKeys: ['country', 'country'],
+    cityKeys: ['city', 'city'],
+    addressKeys: ['address', 'address'],
   },
 ]
 
@@ -135,8 +135,8 @@ async function collectRelationshipRows(supabase: SupabaseClient, params: Geograp
   const rows: RawGeoRelation[] = []
   const companyId = params.mode === 'selected' ? params.companyId : null
 
-  const companyRows = await fetchRows(supabase, 'sirketler', query => {
-    let next = query.select('id,kisa_unvan,ticari_unvan,ulke,il,ilce,adres,is_deleted')
+  const companyRows = await fetchRows(supabase, 'companies', query => {
+    let next = query.select('id,short_name,trade_name,country,city,district,address,is_deleted')
     if (companyId) next = next.eq('id', companyId)
     return next
   })
@@ -144,11 +144,11 @@ async function collectRelationshipRows(supabase: SupabaseClient, params: Geograp
   rows.push(...companyRows.map((row: Record<string, any>) => ({
     id: `company:${row.id}`,
     sourceType: 'company' as const,
-    sourceLabel: row.kisa_unvan || row.ticari_unvan || 'Şirket',
+    sourceLabel: row.short_name || row.trade_name || 'Şirket',
     companyId: row.id,
-    country: row.ulke || 'TR',
-    city: row.il,
-    address: row.adres,
+    country: row.country || 'TR',
+    city: row.city,
+    address: row.address,
   })))
 
   const stakeholderRows = await fetchRows(supabase, 'stakeholders', query => {
@@ -165,9 +165,9 @@ async function collectRelationshipRows(supabase: SupabaseClient, params: Geograp
       sourceType: 'stakeholder' as const,
       sourceLabel: row.display_name || 'Paydaş',
       companyId: row.company_id,
-      country: row.country || profile.country || profile.ulke,
-      city: row.city || profile.city || profile.il,
-      address: profile.address || profile.adres,
+      country: row.country || profile.country || profile.country,
+      city: row.city || profile.city || profile.city,
+      address: profile.address || profile.address,
       lat: readNumber(row, profile, ['lat', 'latitude', 'enlem']),
       lng: readNumber(row, profile, ['lng', 'lon', 'longitude', 'boylam']),
       stakeholderCategory: row.category || profile.category || profile.category_code,

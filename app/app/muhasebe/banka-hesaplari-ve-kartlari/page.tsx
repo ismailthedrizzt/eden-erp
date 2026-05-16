@@ -555,6 +555,6 @@ async function loadCompanies(): Promise<Option[]> {
   const payload = await companyService.list()
   return (payload.data || []).map((company: any) => ({
     value: company.id,
-    label: company.kisa_unvan || company.ticari_unvan || 'Şirket',
+    label: company.short_name || company.trade_name || 'Şirket',
   }))
 }

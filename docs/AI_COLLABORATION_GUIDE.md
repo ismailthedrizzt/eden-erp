@@ -226,7 +226,7 @@ setToast({ type: 'success' | 'error' | 'info', message: '...' })
 - **Files**: camelCase or PascalCase matching default export
 - **Variables**: camelCase
 - **Constants**: UPPER_SNAKE_CASE
-- **Backend and database identifiers**: English `snake_case` only for tables, columns, API payload keys, route params, service types, enum values, and storage/reference keys. Turkish is allowed only in user-facing labels, helper text, document titles, and externally mandated legal names. Existing Turkish legacy fields must be treated as compatibility aliases and normalized to English at module boundaries; do not introduce new Turkish backend identifiers.
+- **Project naming contract**: frontend state, API payload keys, route params, service types, enum values, and new database identifiers use one canonical English name per concept across the full frontend -> backend -> database pipeline. Turkish is allowed only in user-facing labels, helper text, document titles, and externally mandated legal names. Keep labels in `lib/projectGlossary.ts`. Do not add compatibility aliases or accept multiple field names for the same concept; legacy database columns may only be translated in explicit persistence mappers or rename/backfill migrations.
 - **CSS classes**: kebab-case
 
 ### File Organization

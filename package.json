@@ -14,7 +14,6 @@
     "clean": "node -e \"require('fs').rmSync('.next', { recursive: true, force: true })\"",
     "send-email": "node scripts/send-email.js",
     "supabase:migrate": "node scripts/apply-supabase-migrations.js",
-    "master:sync": "node scripts/sync-master-identities.js",
     "avatar:migrate": "node scripts/migrate-avatar-images.js",
     "avatar:migrate:dry": "node scripts/migrate-avatar-images.js --dry-run",
     "iban:banks": "node --use-system-ca scripts/update-turkish-bank-codes.js",

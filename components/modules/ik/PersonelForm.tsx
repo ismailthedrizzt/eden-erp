@@ -57,22 +57,22 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
   // Database-compatible field names (Turkish snake_case)
   const [formData, setFormData] = useState({
     ad: '',
-    soyad: '',
-    uyruk: 'tc',
-    tc_kimlik: '',
-    pasaport_no: '',
-    cinsiyet: '',
-    dogum_yeri: '',
-    dogum_tarihi: '',
-    medeni_durum: '',
-    adres: '',
-    il: '',
-    ilce: '',
+    last_name: '',
+    nationality: 'tc',
+    national_id: '',
+    passport_no: '',
+    gender: '',
+    birth_place: '',
+    birth_date: '',
+    marital_status: '',
+    address: '',
+    city: '',
+    district: '',
     eposta: '',
-    cep_telefonu: '',
-    askerlik_durumu: '',
-    tecil_tarihi: '',
-    kan_grubu: '',
+    mobile_phone: '',
+    military_status: '',
+    deferment_date: '',
+    blood_type: '',
     ehliyet: '',
     ogrenim_durumu: '',
     okul: '',
@@ -80,29 +80,29 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
     mezuniyet_tarihi: '',
     yabanci_dil: '',
     yabanci_dil_seviye: '',
-    acil_kisi_ad: '',
-    acil_kisi_telefon: '',
+    emergency_contact_first_name: '',
+    emergency_contact_phone: '',
     iban: '',
-    birim_id: '',
+    unit_id: '',
     pozisyon: '',
     is_deleted: false,
     ise_giris_tarihi: '',
     isten_cikis_tarihi: ''
   })
 
-  const isTurkey = formData.uyruk === 'tc'
+  const isTurkey = formData.nationality === 'tc'
 
   // Map API field names to display names for error messages
   const fieldDisplayNames: Record<string, string> = {
     ad: 'Ad',
-    soyad: 'Soyad',
-    uyruk: 'Uyruk',
-    tc_kimlik: 'T.C. Kimlik No',
-    pasaport_no: 'Pasaport No',
-    cinsiyet: 'Cinsiyet',
-    dogum_yeri: 'Doğum Yeri',
-    dogum_tarihi: 'Doğum Tarihi',
-    cep_telefonu: 'Cep Telefonu',
+    last_name: 'Soyad',
+    nationality: 'Uyruk',
+    national_id: 'T.C. Kimlik No',
+    passport_no: 'Pasaport No',
+    gender: 'Cinsiyet',
+    birth_place: 'Doğum Yeri',
+    birth_date: 'Doğum Tarihi',
+    mobile_phone: 'Cep Telefonu',
     email: 'E-posta'
   }
 
@@ -112,34 +112,34 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
 
     try {
       // Send data directly matching database schema
-      const response = await fetch('/api/ik/personel', {
+      const response = await fetch('/api/employees', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ad: formData.ad,
-          soyad: formData.soyad,
-          uyruk: formData.uyruk,
-          tc_kimlik: isTurkey ? formData.tc_kimlik : undefined,
-          pasaport_no: !isTurkey ? formData.pasaport_no : undefined,
-          cinsiyet: formData.cinsiyet,
-          dogum_yeri: formData.dogum_yeri,
-          dogum_tarihi: formData.dogum_tarihi || undefined,
-          medeni_durum: formData.medeni_durum || undefined,
-          adres: formData.adres,
-          il: formData.il,
-          ilce: formData.ilce,
+          last_name: formData.last_name,
+          nationality: formData.nationality,
+          national_id: isTurkey ? formData.national_id : undefined,
+          passport_no: !isTurkey ? formData.passport_no : undefined,
+          gender: formData.gender,
+          birth_place: formData.birth_place,
+          birth_date: formData.birth_date || undefined,
+          marital_status: formData.marital_status || undefined,
+          address: formData.address,
+          city: formData.city,
+          district: formData.district,
           email: formData.eposta || undefined,
-          cep_telefonu: formData.cep_telefonu,
-          askerlik_durumu: formData.askerlik_durumu || undefined,
-          kan_grubu: formData.kan_grubu || undefined,
-          acil_kisi_ad: formData.acil_kisi_ad || undefined,
-          acil_kisi_telefon: formData.acil_kisi_telefon || undefined,
+          mobile_phone: formData.mobile_phone,
+          military_status: formData.military_status || undefined,
+          blood_type: formData.blood_type || undefined,
+          emergency_contact_first_name: formData.emergency_contact_first_name || undefined,
+          emergency_contact_phone: formData.emergency_contact_phone || undefined,
           iban: formData.iban || undefined,
-          birim_id: formData.birim_id || undefined,
-          sgk_giris: formData.ise_giris_tarihi || undefined,
-          isten_ayrilis: formData.isten_cikis_tarihi || undefined,
+          unit_id: formData.unit_id || undefined,
+          sgk_entry_date: formData.ise_giris_tarihi || undefined,
+          exit_date: formData.isten_cikis_tarihi || undefined,
           is_deleted: formData.is_deleted,
-          calisma_durumu: formData.is_deleted ? 'ayrilmis' : 'gorevde'
+          work_status: formData.is_deleted ? 'terminated' : 'active'
         })
       })
 
@@ -239,13 +239,13 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
                 <input
                   className={cn(
                     "w-full bg-white dark:bg-gray-900 border rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500",
-                    fieldErrors.soyad ? "border-red-500 dark:border-red-500" : "border-gray-300 dark:border-gray-700"
+                    fieldErrors.last_name ? "border-red-500 dark:border-red-500" : "border-gray-300 dark:border-gray-700"
                   )}
                   placeholder="Soyad"
-                  value={formData.soyad}
-                  onChange={e => setFormData({ ...formData, soyad: e.target.value })}
+                  value={formData.last_name}
+                  onChange={e => setFormData({ ...formData, last_name: e.target.value })}
                 />
-                {fieldErrors.soyad && <span className="text-xs text-red-500">{fieldErrors.soyad}</span>}
+                {fieldErrors.last_name && <span className="text-xs text-red-500">{fieldErrors.last_name}</span>}
               </div>
             </div>
 
@@ -254,8 +254,8 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Uyruk *</label>
                 <select
                   className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-                  value={formData.uyruk}
-                  onChange={e => setFormData({ ...formData, uyruk: e.target.value })}
+                  value={formData.nationality}
+                  onChange={e => setFormData({ ...formData, nationality: e.target.value })}
                 >
                   <option value="tc">T.C.</option>
                   <option value="yabanci">Yabancı</option>
@@ -267,16 +267,16 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
                 <select
                   className={cn(
                     "w-full bg-white dark:bg-gray-900 border rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500",
-                    fieldErrors.cinsiyet ? "border-red-500 dark:border-red-500" : "border-gray-300 dark:border-gray-700"
+                    fieldErrors.gender ? "border-red-500 dark:border-red-500" : "border-gray-300 dark:border-gray-700"
                   )}
-                  value={formData.cinsiyet}
-                  onChange={e => setFormData({ ...formData, cinsiyet: e.target.value })}
+                  value={formData.gender}
+                  onChange={e => setFormData({ ...formData, gender: e.target.value })}
                 >
                   <option value="">Seçiniz</option>
-                  <option value="erkek">Erkek</option>
-                  <option value="kadin">Kadın</option>
+                  <option value="male">Erkek</option>
+                  <option value="female">Kadın</option>
                 </select>
-                {fieldErrors.cinsiyet && <span className="text-xs text-red-500">{fieldErrors.cinsiyet}</span>}
+                {fieldErrors.gender && <span className="text-xs text-red-500">{fieldErrors.gender}</span>}
               </div>
 
               {isTurkey ? (
@@ -285,13 +285,13 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
                   <input
                     className={cn(
                       "w-full bg-white dark:bg-gray-900 border rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500",
-                      fieldErrors.tc_kimlik ? "border-red-500 dark:border-red-500" : "border-gray-300 dark:border-gray-700"
+                      fieldErrors.national_id ? "border-red-500 dark:border-red-500" : "border-gray-300 dark:border-gray-700"
                     )}
                     placeholder="11 haneli"
-                    value={formData.tc_kimlik}
-                    onChange={e => setFormData({ ...formData, tc_kimlik: e.target.value })}
+                    value={formData.national_id}
+                    onChange={e => setFormData({ ...formData, national_id: e.target.value })}
                   />
-                  {fieldErrors.tc_kimlik && <span className="text-xs text-red-500">{fieldErrors.tc_kimlik}</span>}
+                  {fieldErrors.national_id && <span className="text-xs text-red-500">{fieldErrors.national_id}</span>}
                 </div>
               ) : (
                 <div className="flex flex-col gap-1.5 col-span-2">
@@ -299,13 +299,13 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
                   <input
                     className={cn(
                       "w-full bg-white dark:bg-gray-900 border rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500",
-                      fieldErrors.pasaport_no ? "border-red-500 dark:border-red-500" : "border-gray-300 dark:border-gray-700"
+                      fieldErrors.passport_no ? "border-red-500 dark:border-red-500" : "border-gray-300 dark:border-gray-700"
                     )}
                     placeholder="Pasaport No"
-                    value={formData.pasaport_no}
-                    onChange={e => setFormData({ ...formData, pasaport_no: e.target.value })}
+                    value={formData.passport_no}
+                    onChange={e => setFormData({ ...formData, passport_no: e.target.value })}
                   />
-                  {fieldErrors.pasaport_no && <span className="text-xs text-red-500">{fieldErrors.pasaport_no}</span>}
+                  {fieldErrors.passport_no && <span className="text-xs text-red-500">{fieldErrors.passport_no}</span>}
                 </div>
               )}
             </div>
@@ -316,8 +316,8 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
                 <input
                   className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
                   placeholder="Doğum yeri"
-                  value={formData.dogum_yeri}
-                  onChange={e => setFormData({ ...formData, dogum_yeri: e.target.value })}
+                  value={formData.birth_place}
+                  onChange={e => setFormData({ ...formData, birth_place: e.target.value })}
                 />
               </div>
 
@@ -326,8 +326,8 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
                 <input
                   type="date"
                   className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-                  value={formData.dogum_tarihi}
-                  onChange={e => setFormData({ ...formData, dogum_tarihi: e.target.value })}
+                  value={formData.birth_date}
+                  onChange={e => setFormData({ ...formData, birth_date: e.target.value })}
                 />
               </div>
             </div>
@@ -359,32 +359,32 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
       {activeTab === 'ozel' && (
         <div className="space-y-6">
           {/* Military Status (Conditional) */}
-          {formData.cinsiyet === 'erkek' && (
+          {formData.gender === 'male' && (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="flex flex-col gap-1.5">
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Askerlik Durumu</label>
                 <select
                   className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-                  value={formData.askerlik_durumu}
-                  onChange={e => setFormData({ ...formData, askerlik_durumu: e.target.value })}
+                  value={formData.military_status}
+                  onChange={e => setFormData({ ...formData, military_status: e.target.value })}
                 >
                   <option value="">Seçiniz</option>
                   <option value="muaf">Muaf</option>
-                  <option value="caginda_degil">Askerlik Çağında Değil</option>
+                  <option value="caginda_degil">Askerlik Çağında Değcity</option>
                   <option value="belirsiz">Belirsiz</option>
                   <option value="tecilli">Tecilli</option>
                   <option value="bakaya">Bakaya</option>
                 </select>
               </div>
 
-              {formData.askerlik_durumu === 'tecilli' && (
+              {formData.military_status === 'tecilli' && (
                 <div className="flex flex-col gap-1.5">
                   <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Tecil Tarihi *</label>
                   <input
                     type="date"
                     className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-                    value={formData.tecil_tarihi}
-                    onChange={e => setFormData({ ...formData, tecil_tarihi: e.target.value })}
+                    value={formData.deferment_date}
+                    onChange={e => setFormData({ ...formData, deferment_date: e.target.value })}
                   />
                 </div>
               )}
@@ -397,8 +397,8 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Kan Grubu</label>
               <select
                 className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-                value={formData.kan_grubu}
-                onChange={e => setFormData({ ...formData, kan_grubu: e.target.value })}
+                value={formData.blood_type}
+                onChange={e => setFormData({ ...formData, blood_type: e.target.value })}
               >
                 <option value="">Seçiniz</option>
                 <option value="A+">A+</option>
@@ -432,9 +432,9 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Açık Adres</label>
               <textarea
                 className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 min-h-20"
-                placeholder="Açık adres"
-                value={formData.adres}
-                onChange={e => setFormData({ ...formData, adres: e.target.value })}
+                placeholder="Açık address"
+                value={formData.address}
+                onChange={e => setFormData({ ...formData, address: e.target.value })}
               />
             </div>
 
@@ -444,8 +444,8 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
               <input
                 className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
                 placeholder="İl"
-                value={formData.il}
-                onChange={e => setFormData({ ...formData, il: e.target.value })}
+                value={formData.city}
+                onChange={e => setFormData({ ...formData, city: e.target.value })}
               />
             </div>
             <div className="flex flex-col gap-1.5">
@@ -453,8 +453,8 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
               <input
                 className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
                 placeholder="İlçe"
-                value={formData.ilce}
-                onChange={e => setFormData({ ...formData, ilce: e.target.value })}
+                value={formData.district}
+                onChange={e => setFormData({ ...formData, district: e.target.value })}
               />
             </div>
           </div>
@@ -465,8 +465,8 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
             <input
               className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
               placeholder="0555 555 55 55"
-              value={formData.cep_telefonu}
-              onChange={e => setFormData({ ...formData, cep_telefonu: e.target.value })}
+              value={formData.mobile_phone}
+              onChange={e => setFormData({ ...formData, mobile_phone: e.target.value })}
             />
           </div>
 
@@ -575,12 +575,12 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Medeni Durum</label>
             <select
               className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-              value={formData.medeni_durum}
-              onChange={e => setFormData({ ...formData, medeni_durum: e.target.value })}
+              value={formData.marital_status}
+              onChange={e => setFormData({ ...formData, marital_status: e.target.value })}
             >
               <option value="">Seçiniz</option>
-              <option value="bekar">Bekar</option>
-              <option value="evli">Evli</option>
+              <option value="single">Bekar</option>
+              <option value="married">Evli</option>
             </select>
           </div>
 
@@ -591,8 +591,8 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
               <input
                 className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
                 placeholder="Ad Soyad"
-                value={formData.acil_kisi_ad}
-                onChange={e => setFormData({ ...formData, acil_kisi_ad: e.target.value })}
+                value={formData.emergency_contact_first_name}
+                onChange={e => setFormData({ ...formData, emergency_contact_first_name: e.target.value })}
               />
             </div>
             <div className="flex flex-col gap-1.5">
@@ -600,8 +600,8 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
               <input
                 className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
                 placeholder="Telefon"
-                value={formData.acil_kisi_telefon}
-                onChange={e => setFormData({ ...formData, acil_kisi_telefon: e.target.value })}
+                value={formData.emergency_contact_phone}
+                onChange={e => setFormData({ ...formData, emergency_contact_phone: e.target.value })}
               />
             </div>
           </div>
@@ -713,8 +713,8 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
                         : "bg-gray-100 dark:bg-gray-800 border-gray-200 dark:border-gray-600 text-gray-400 dark:text-gray-500 cursor-not-allowed"
                     )}
                     placeholder="Birim ID"
-                    value={formData.birim_id}
-                    onChange={e => setFormData({ ...formData, birim_id: e.target.value })}
+                    value={formData.unit_id}
+                    onChange={e => setFormData({ ...formData, unit_id: e.target.value })}
                   />
                   {!isTeskilatActive && (
                     <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Teşkilat modülü pasif</p>

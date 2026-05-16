@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useState } from 'react'
 import Link from 'next/link'
@@ -37,30 +37,30 @@ const NAV: NavItem[] = [
   },
   {
     id: 'sirket',
-    label: 'Şirket Yönetimi',
+    label: '�irket Y�netimi',
     icon: <Building2 size={16} />,
     moduleKey: 'sirket',
     children: [
-      { label: 'Şirketlerimiz', href: '/app/sirket/sirketler', moduleKey: 'sirket', submoduleKey: 'sirketler' },
-      { label: 'Ortaklarımız', href: '/app/sirket/sirketler/ortaklar', moduleKey: 'sirket' },
-      { label: 'Ortaklık İşlemleri', href: '/app/sirket/ortaklik-islemleri', moduleKey: 'sirket' },
-      { label: 'Temsilcilerimiz', href: '/app/sirket/sirketler/temsilciler', moduleKey: 'sirket' },
-      { label: 'Paydaşlarımız', href: '/app/sirket/sirketler/paydaslar', moduleKey: 'sirket' },
-      { label: 'Teşkilat ve Kadro', href: '/app/sirket/teskilat', moduleKey: 'sirket', submoduleKey: 'teskilat' },
-      { label: 'Süreçlerimiz', href: '/app/sirket/surecler', moduleKey: 'sirket', submoduleKey: 'surecler' },
+      { label: '�irketlerimiz', href: '/app/sirket/companies', moduleKey: 'sirket', submoduleKey: 'companies' },
+      { label: 'Ortaklar�m�z', href: '/app/sirket/companies/partners', moduleKey: 'sirket' },
+      { label: 'Ortakl�k ��lemleri', href: '/app/sirket/ortaklik-islemleri', moduleKey: 'sirket' },
+      { label: 'Temsilcilerimiz', href: '/app/sirket/companies/representatives', moduleKey: 'sirket' },
+      { label: 'Payda�lar�m�z', href: '/app/sirket/companies/stakeholders', moduleKey: 'sirket' },
+      { label: 'Te�kilat ve Kadro', href: '/app/sirket/teskilat', moduleKey: 'sirket', submoduleKey: 'teskilat' },
+      { label: 'S�re�lerimiz', href: '/app/sirket/surecler', moduleKey: 'sirket', submoduleKey: 'surecler' },
       { label: 'Tesislerimiz', href: '/app/sirket/tesisler', moduleKey: 'sirket', submoduleKey: 'tesisler' },
-      { label: 'Araçlarımız', href: '/app/sirket/araclar', moduleKey: 'sirket', submoduleKey: 'araclar' },
-      { label: 'Demirbaşlar', href: '/app/sirket/demirbas', moduleKey: 'sirket', submoduleKey: 'demirbas' },
+      { label: 'Ara�lar�m�z', href: '/app/sirket/araclar', moduleKey: 'sirket', submoduleKey: 'araclar' },
+      { label: 'Demirba�lar', href: '/app/sirket/demirbas', moduleKey: 'sirket', submoduleKey: 'demirbas' },
     ],
   },
   {
     id: 'ik',
-    label: 'İnsan Kaynakları',
+    label: '�nsan Kaynaklar�',
     icon: <Users size={16} />,
     moduleKey: 'ik',
     children: [
-      { label: 'Çalışanlarımız', href: '/app/ik/personel', moduleKey: 'ik', submoduleKey: 'personel' },
-      { label: 'İzin Yönetimi', href: '/app/ik/izin', disabled: true },
+      { label: '�al��anlar�m�z', href: '/app/ik/employees', moduleKey: 'ik', submoduleKey: 'employees' },
+      { label: '�zin Y�netimi', href: '/app/ik/izin', disabled: true },
       { label: 'Performans', href: '/app/ik/performans', disabled: true },
     ],
   },
@@ -71,74 +71,74 @@ const NAV: NavItem[] = [
     moduleKey: 'muhasebe',
     children: [
       { label: 'Cari Kartlar', href: '/app/muhasebe/cari-kartlar', moduleKey: 'muhasebe' },
-      { label: 'Ön Muhasebe Hareketleri', href: '/app/muhasebe/on-muhasebe-hareketleri', moduleKey: 'muhasebe' },
-      { label: 'Banka Hesapları ve Kartları', href: '/app/muhasebe/banka-hesaplari-ve-kartlari', moduleKey: 'muhasebe', submoduleKey: 'banka-hesaplari-ve-kartlari' },
+      { label: '�n Muhasebe Hareketleri', href: '/app/muhasebe/on-muhasebe-hareketleri', moduleKey: 'muhasebe' },
+      { label: 'Banka Hesaplar� ve Kartlar�', href: '/app/muhasebe/banka-hesaplari-ve-kartlari', moduleKey: 'muhasebe', submoduleKey: 'banka-hesaplari-ve-kartlari' },
       { label: 'Hesap ve Kart Hareketleri', href: '/app/muhasebe/hesap-ve-kart-hareketleri', moduleKey: 'muhasebe', submoduleKey: 'hesap-ve-kart-hareketleri' },
     ],
   },  {
     id: 'stok',
-    label: 'Stok Yönetimi',
+    label: 'Stok Y�netimi',
     icon: <Package size={16} />,
-    badge: 'Yakında',
+    badge: 'Yak�nda',
     children: [
-      { label: 'Ürün Listesi', href: '/app/stok/urunler', disabled: true },
+      { label: '�r�n Listesi', href: '/app/stok/urunler', disabled: true },
       { label: 'Depo Hareketleri', href: '/app/stok/hareketler', disabled: true },
-      { label: 'Sayım', href: '/app/stok/sayim', disabled: true },
+      { label: 'Say�m', href: '/app/stok/sayim', disabled: true },
     ],
   },
   {
     id: 'satis',
-    label: 'Satış',
+    label: 'Sat��',
     icon: <ShoppingCart size={16} />,
-    badge: 'Yakında',
+    badge: 'Yak�nda',
     children: [
       { label: 'Teklifler', href: '/app/satis/teklifler', disabled: true },
-      { label: 'Siparişler', href: '/app/satis/siparisler', disabled: true },
-      { label: 'Müşteriler', href: '/app/satis/musteriler', disabled: true },
+      { label: 'Sipari�ler', href: '/app/satis/siparisler', disabled: true },
+      { label: 'M��teriler', href: '/app/satis/musteriler', disabled: true },
     ],
   },
   {
     id: 'uretim',
-    label: 'Üretim',
+    label: '�retim',
     icon: <Factory size={16} />,
-    badge: 'Yakında',
+    badge: 'Yak�nda',
     children: [
-      { label: 'İş Emirleri', href: '/app/uretim/is-emirleri', disabled: true },
-      { label: 'Reçeteler', href: '/app/uretim/receteler', disabled: true },
+      { label: '�� Emirleri', href: '/app/uretim/is-emirleri', disabled: true },
+      { label: 'Re�eteler', href: '/app/uretim/receteler', disabled: true },
     ],
   },
   {
     id: 'servis',
     label: 'Teknik Servis',
     icon: <Wrench size={16} />,
-    badge: 'Yakında',
+    badge: 'Yak�nda',
     children: [
-      { label: 'Servis Kayıtları', href: '/app/servis/kayitlar', disabled: true },
+      { label: 'Servis Kay�tlar�', href: '/app/servis/kayitlar', disabled: true },
     ],
   },
   {
     id: 'sys',
-    label: 'Sistem Yönetimi',
+    label: 'Sistem Y�netimi',
     icon: <Settings size={16} />,
     children: [
-      { label: 'Modül Lisansları', href: '/app/sistem/module-licenses' },
+      { label: 'Mod�l Lisanslar�', href: '/app/sistem/module-licenses' },
       { label: 'Sistem Parametreleri', href: '/app/sistem/system-parameters' },
-      { label: 'Entegrasyon Ayarları', href: '/app/sistem/entegrasyon-ayarlari', moduleKey: 'sistem', submoduleKey: 'entegrasyon-ayarlari' },
-      { label: 'Kullanıcılar', href: '/app/sistem/kullanicilar', disabled: true },
+      { label: 'Entegrasyon Ayarlar�', href: '/app/sistem/entegrasyon-ayarlari', moduleKey: 'sistem', submoduleKey: 'entegrasyon-ayarlari' },
+      { label: 'Kullan�c�lar', href: '/app/sistem/kullanicilar', disabled: true },
       { label: 'Roller & Yetkiler', href: '/app/sistem/roller', disabled: true },
-      { label: 'Sistem Logları', href: '/app/sistem/loglar', disabled: true },
+      { label: 'Sistem Loglar�', href: '/app/sistem/loglar', disabled: true },
     ],
   },
 ]
 
 const SECTION_LABELS: Record<string, string> = {
-  ik: 'İnsan Kaynakları',
+  ik: '�nsan Kaynaklar�',
   muhasebe: 'Muhasebe',
-  stok: 'Stok & Satış',
+  stok: 'Stok & Sat��',
   satis: '',
-  uretim: 'Üretim & Servis',
+  uretim: '�retim & Servis',
   servis: '',
-  sys: 'Yönetim',
+  sys: 'Y�netim',
 }
 
 interface SidebarProps {
@@ -311,7 +311,7 @@ export default function Sidebar({ collapsed = false, mobileOpen = false, onMobil
           className="ni text-white/35 text-xs"
         >
           <LogOut size={14} className="opacity-60 flex-shrink-0" />
-          {!collapsed && <span>Çıkış Yap</span>}
+          {!collapsed && <span>��k�� Yap</span>}
         </button>
       </div>
     </aside>

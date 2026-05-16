@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
 
 export default function LegacyPersonelDetayPage() {
-  redirect('/app/ik/personel')
+  redirect('/app/ik/employees')
 }

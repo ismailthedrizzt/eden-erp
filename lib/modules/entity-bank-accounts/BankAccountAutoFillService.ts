@@ -14,7 +14,7 @@ export type BankAccountSuggestion = {
 
 export class BankAccountAutoFillService {
   static getPriorityMode(master: MasterRecord): BankAccountFormPriorityMode {
-    const country = normalizeCountryId(master?.country || master?.ulke || master?.nationality_country || '')
+    const country = normalizeCountryId(master?.country || master?.country || master?.nationality_country || '')
     if (!country) return 'unknown_country'
     return country === 'TR' ? 'tr_priority' : 'international_priority'
   }
@@ -24,11 +24,11 @@ export class BankAccountAutoFillService {
     if (kind === 'person') {
       return master.full_name || [master.first_name, master.last_name].filter(Boolean).join(' ') || master.display_name || ''
     }
-    return master.legal_name || master.trade_name || master.ticari_unvan || master.display_name || master.short_name || ''
+    return master.legal_name || master.trade_name || master.trade_name || master.display_name || master.short_name || ''
   }
 
   static getMasterCountry(master: MasterRecord) {
-    return normalizeCountryId(master?.country || master?.ulke || master?.nationality_country || '') || ''
+    return normalizeCountryId(master?.country || master?.country || master?.nationality_country || '') || ''
   }
 
   static applyIban(input: Record<string, any>, previous: Record<string, any> = {}): BankAccountSuggestion {

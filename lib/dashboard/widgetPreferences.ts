@@ -1,6 +1,6 @@
 'use client'
 
-const DEFAULT_USER_KEY = 'legacy-user'
+const DEFAULT_USER_KEY = 'current-user'
 
 export function getCurrentWidgetPreferenceUserKey() {
   if (typeof window === 'undefined') return DEFAULT_USER_KEY

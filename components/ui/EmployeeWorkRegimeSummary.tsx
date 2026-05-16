@@ -21,8 +21,8 @@ export function EmployeeWorkRegimeSummary({ data }: { data: Record<string, any> 
     ['SGK Bildirim Sorumlusu', data.sgk_responsibility],
     ['Ücretlendirme Rejimi', data.payment_type],
     ['Çalışma Düzeni', summarizeWorkOrder(data)],
-    ['İşe Giriş Durumu', data.sgk_giris || data.entry_date ? `Tamamlandı (${formatDate(data.sgk_giris || data.entry_date)})` : labels[data.employment_status] || 'Bekliyor'],
-    ['İşten Çıkış Durumu', data.isten_ayrilis || data.exit_date ? `Tamamlandı (${formatDate(data.isten_ayrilis || data.exit_date)})` : 'Yok'],
+    ['İşe Giriş Durumu', data.sgk_entry_date || data.entry_date ? `Tamamlandı (${formatDate(data.sgk_entry_date || data.entry_date)})` : labels[data.employment_status] || 'Bekliyor'],
+    ['İşten Çıkış Durumu', data.exit_date || data.exit_date ? `Tamamlandı (${formatDate(data.exit_date || data.exit_date)})` : 'Yok'],
     ['Son İş Hareketi', data.last_work_lifecycle_event || '-'],
   ]
 

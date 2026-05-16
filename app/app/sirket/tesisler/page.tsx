@@ -63,7 +63,7 @@ export default function TesislerPage() {
                 Lokasyonlar
               </h3>
               <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                Coğrafi lokasyon ve adres yönetimi
+                Coğrafi lokasyon ve address yönetimi
               </p>
             </div>
             <ArrowRight className="w-5 h-5 text-gray-400" />

@@ -3,22 +3,22 @@ import { employeesDashboardLayout } from './employeesDashboard.config'
 
 interface EmployeeDashboardRow {
   id: string
-  cinsiyet?: string | null
+  gender?: string | null
   egitim_durumu?: string | null
-  calisma_tipi?: string | null
-  calisma_durumu?: string | null
+  work_type?: string | null
+  work_status?: string | null
   employment_status?: string | null
-  birim_adi?: string | null
-  dogum_tarihi?: string | null
-  sgk_giris?: string | null
+  unit_name?: string | null
+  birth_date?: string | null
+  sgk_entry_date?: string | null
 }
 
 const palette = ['#2563eb', '#16a34a', '#f59e0b', '#dc2626', '#7c3aed', '#0891b2', '#db2777', '#64748b']
 
 export function buildEmployeesDashboard(rows: EmployeeDashboardRow[]): AnyDashboardWidgetConfig[] {
   const total = rows.length
-  const active = rows.filter(row => normalize(row.calisma_durumu || row.employment_status) === 'gorevde').length
-  const thisMonthHires = rows.filter(row => isCurrentMonth(row.sgk_giris)).length
+  const active = rows.filter(row => normalize(row.work_status || row.employment_status) === 'active').length
+  const thisMonthHires = rows.filter(row => isCurrentMonth(row.sgk_entry_date)).length
 
   return employeesDashboardLayout.map(widget => {
     switch (widget.id) {
@@ -32,26 +32,26 @@ export function buildEmployeesDashboard(rows: EmployeeDashboardRow[]): AnyDashbo
           trend: { value: `+${thisMonthHires} bu ay`, direction: thisMonthHires > 0 ? 'up' : 'flat' },
         }
       case 'employees-gender':
-        return { ...widget, type: 'stackedBar', items: groupedItems(rows, 'cinsiyet', 'Belirtilmemiş'), normalize: true, showLegend: true }
+        return { ...widget, type: 'stackedBar', items: groupedItems(rows, 'gender', 'Belirtilmemiş'), normalize: true, showLegend: true }
       case 'employees-education':
         return { ...widget, type: 'stackedBar', items: groupedItems(rows, 'egitim_durumu', 'Belirtilmemiş'), normalize: true, showLegend: true }
       case 'employees-work-type':
-        return { ...widget, type: 'stackedBar', items: groupedItems(rows, 'calisma_tipi', 'Belirtilmemiş'), normalize: true, showLegend: true }
+        return { ...widget, type: 'stackedBar', items: groupedItems(rows, 'work_type', 'Belirtilmemiş'), normalize: true, showLegend: true }
       case 'employees-department':
-        return { ...widget, type: 'stackedBar', items: groupedItems(rows, 'birim_adi', 'Departmansız'), normalize: true, showLegend: true }
+        return { ...widget, type: 'stackedBar', items: groupedItems(rows, 'unit_name', 'Departmansız'), normalize: true, showLegend: true }
       case 'employees-age-group':
         return { ...widget, type: 'stackedBar', items: ageItems(rows), normalize: true, showLegend: true }
       case 'employees-hire-trend':
         return { ...widget, type: 'trend', range: '6m', points: hireTrend(rows) }
       case 'employees-department-detail':
-        return { ...widget, type: 'distribution', items: groupedItems(rows, 'birim_adi', 'Departmansız') as DistributionItem[] }
+        return { ...widget, type: 'distribution', items: groupedItems(rows, 'unit_name', 'Departmansız') as DistributionItem[] }
       case 'employees-actions':
         return {
           ...widget,
           type: 'actionList',
           items: [
-            { id: 'missing-sgk', label: 'SGK girişi bekleyenler', description: `${rows.filter(row => !row.sgk_giris).length} kayıt`, severity: 'warning', filter: { sgk_giris: null } },
-            { id: 'missing-birth-date', label: 'Doğum tarihi eksik kayıtlar', description: `${rows.filter(row => !row.dogum_tarihi).length} kayıt`, severity: 'info', filter: { dogum_tarihi: null } },
+            { id: 'missing-sgk', label: 'SGK girişi bekleyenler', description: `${rows.filter(row => !row.sgk_entry_date).length} kayıt`, severity: 'warning', filter: { sgk_entry_date: null } },
+            { id: 'missing-birth-date', label: 'Doğum tarihi eksik kayıtlar', description: `${rows.filter(row => !row.birth_date).length} kayıt`, severity: 'info', filter: { birth_date: null } },
           ],
         }
       default:
@@ -80,7 +80,7 @@ function groupedItems(rows: EmployeeDashboardRow[], field: keyof EmployeeDashboa
 function ageItems(rows: EmployeeDashboardRow[]): StackedBarItem[] {
   const buckets = new Map([['18-25', 0], ['26-35', 0], ['36-45', 0], ['46+', 0], ['Belirsiz', 0]])
   rows.forEach(row => {
-    const age = getAge(row.dogum_tarihi)
+    const age = getAge(row.birth_date)
     const key = age === null ? 'Belirsiz' : age <= 25 ? '18-25' : age <= 35 ? '26-35' : age <= 45 ? '36-45' : '46+'
     buckets.set(key, (buckets.get(key) || 0) + 1)
   })
@@ -97,7 +97,7 @@ function hireTrend(rows: EmployeeDashboardRow[]): TrendPoint[] {
     const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
     points.push({
       label: date.toLocaleDateString('tr-TR', { month: 'short' }),
-      value: rows.filter(row => String(row.sgk_giris || '').startsWith(key)).length,
+      value: rows.filter(row => String(row.sgk_entry_date || '').startsWith(key)).length,
     })
   }
   return points

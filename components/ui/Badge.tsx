@@ -22,16 +22,16 @@ export function ProjeBadge({ proje }: { proje: string }) {
   )
 }
 
-export function DurumBadge({ durum }: { durum: string }) {
+export function DurumBadge({ status }: { status: string }) {
   const map: Record<string, { label: string; variant: 'green' | 'blue' | 'gray' | 'red' }> = {
-    gorevde:  { label: 'Görevde',  variant: 'green' },
-    izinde:   { label: 'İzinde',   variant: 'blue'  },
-    ayrilmis: { label: 'Ayrılmış', variant: 'gray'  },
-    askida:   { label: 'Askıda',   variant: 'red'   },
+    active:  { label: 'Görevde',  variant: 'green' },
+    on_leave:   { label: 'İzinde',   variant: 'blue'  },
+    terminated: { label: 'Ayrılmış', variant: 'gray'  },
+    suspended:   { label: 'Askıda',   variant: 'red'   },
     dolu:     { label: 'Dolu',     variant: 'green' },
     acik:     { label: 'Açık',     variant: 'red'   },
     dondurulmus: { label: 'Dondurulmuş', variant: 'gray' },
   }
-  const m = map[durum] ?? { label: durum, variant: 'gray' as const }
+  const m = map[status] ?? { label: status, variant: 'gray' as const }
   return <Badge variant={m.variant}>{m.label}</Badge>
 }

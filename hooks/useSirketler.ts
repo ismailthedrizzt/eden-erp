@@ -12,10 +12,10 @@ interface UseSirketlerReturn {
   error: string | null
   yenile: () => void
   getSirket: (id: string) => Promise<Sirket | null>
-  getOrtaklar: (sirketId: string) => Promise<SirketOrtak[]>
-  getTemsilciler: (sirketId: string) => Promise<SirketTemsilci[]>
-  getDokumanlar: (sirketId: string) => Promise<SirketDokuman[]>
-  getLogolar: (sirketId: string) => Promise<SirketLogo[]>
+  getPartners: (sirketId: string) => Promise<SirketOrtak[]>
+  getRepresentatives: (sirketId: string) => Promise<SirketTemsilci[]>
+  getDocuments: (sirketId: string) => Promise<SirketDokuman[]>
+  getLogos: (sirketId: string) => Promise<SirketLogo[]>
 }
 
 export function useSirketler(options: { includePassive?: boolean } & Partial<Pick<ListQuery, 'page' | 'pageSize' | 'search' | 'sort' | 'direction'>> = {}): UseSirketlerReturn {
@@ -35,7 +35,7 @@ export function useSirketler(options: { includePassive?: boolean } & Partial<Pic
       hasDataRef.current = true
       setMeta(result.meta ?? { page: options.page ?? 1, pageSize: options.pageSize ?? 50, total: result.data?.length ?? 0, totalPages: 1 })
     } catch (err: any) {
-      console.error('Error fetching sirketler:', err)
+      console.error('Error fetching companies:', err)
       setError(err.message || 'Sirketler yuklenirken hata olustu')
     } finally {
       setLoading(false)
@@ -56,42 +56,42 @@ export function useSirketler(options: { includePassive?: boolean } & Partial<Pic
     }
   }
 
-  const getOrtaklar = async (sirketId: string): Promise<SirketOrtak[]> => {
+  const getPartners = async (sirketId: string): Promise<SirketOrtak[]> => {
     try {
       const result = await companyService.partners(sirketId)
       return result.data || []
     } catch (err) {
-      console.error('Error fetching ortaklar:', err)
+      console.error('Error fetching partners:', err)
       return []
     }
   }
 
-  const getTemsilciler = async (sirketId: string): Promise<SirketTemsilci[]> => {
+  const getRepresentatives = async (sirketId: string): Promise<SirketTemsilci[]> => {
     try {
       const result = await companyService.representatives(sirketId)
       return result.data || []
     } catch (err) {
-      console.error('Error fetching temsilciler:', err)
+      console.error('Error fetching representatives:', err)
       return []
     }
   }
 
-  const getDokumanlar = async (sirketId: string): Promise<SirketDokuman[]> => {
+  const getDocuments = async (sirketId: string): Promise<SirketDokuman[]> => {
     try {
       const result = await companyService.documents(sirketId)
       return result.data || []
     } catch (err) {
-      console.error('Error fetching dokumanlar:', err)
+      console.error('Error fetching documents:', err)
       return []
     }
   }
 
-  const getLogolar = async (sirketId: string): Promise<SirketLogo[]> => {
+  const getLogos = async (sirketId: string): Promise<SirketLogo[]> => {
     try {
       const result = await companyService.logos(sirketId)
       return result.data || []
     } catch (err) {
-      console.error('Error fetching logolar:', err)
+      console.error('Error fetching logos:', err)
       return []
     }
   }
@@ -103,9 +103,9 @@ export function useSirketler(options: { includePassive?: boolean } & Partial<Pic
     error,
     yenile: () => fetchSirketler(true),
     getSirket,
-    getOrtaklar,
-    getTemsilciler,
-    getDokumanlar,
-    getLogolar,
+    getPartners,
+    getRepresentatives,
+    getDocuments,
+    getLogos,
   }
 }

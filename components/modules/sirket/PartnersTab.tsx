@@ -20,7 +20,7 @@ import { isSoftDeletedRecord } from '@/lib/forms/entityState'
 import { companyService } from '@/lib/services/companyService'
 import { employeeService } from '@/lib/services/employeeService'
 
-type OwnerKind = 'gercek_kisi' | 'tuzel_kisi'
+type OwnerKind = 'person' | 'organization'
 type PartnerSourceType =
   | 'calisan'
   | 'mevcut_temsilci'
@@ -139,13 +139,13 @@ interface TransferState {
 }
 
 const SOURCE_OPTIONS: Record<OwnerKind, Array<{ value: PartnerSourceType; label: string }>> = {
-  gercek_kisi: [
+  person: [
     { value: 'calisan', label: 'Çalışan' },
     { value: 'mevcut_temsilci', label: 'Mevcut Temsilci' },
     { value: 'harici_kisi', label: 'Harici Kişi' },
     { value: 'yeni_kisi', label: 'Yeni Kişi' },
   ],
-  tuzel_kisi: [
+  organization: [
     { value: 'cari', label: 'Cari' },
     { value: 'paydas', label: 'Paydaş' },
     { value: 'grup_sirketi', label: 'Grup Şirketi' },
@@ -203,29 +203,29 @@ export function PartnersTab({ value, onChange, readOnly = false, representatives
     let cancelled = false
 
     Promise.all([
-      employeeService.list({ durum: 'gorevde' }),
+      employeeService.list({ status: 'active' }),
       companyService.list(),
     ]).then(([employeePayload, companyPayload]) => {
       if (cancelled) return
 
       setEmployees(Array.isArray(employeePayload?.data) ? employeePayload.data.map((employee: any) => ({
         id: employee.id,
-        displayName: [employee.ad, employee.soyad].filter(Boolean).join(' '),
-        identity: employee.tc_kimlik,
-        role: employee.gorev || employee.kadro?.unvan || employee.birim?.ad,
-        status: employee.calisma_durumu || 'Aktif',
-        kind: 'gercek_kisi' as OwnerKind,
+        displayName: [employee.ad, employee.last_name].filter(Boolean).join(' '),
+        identity: employee.national_id,
+        role: employee.job_title || employee.kadro?.title || employee.birim?.ad,
+        status: employee.work_status || 'Aktif',
+        kind: 'person' as OwnerKind,
       })) : [])
 
       setCompanies(Array.isArray(companyPayload?.data) ? companyPayload.data
         .filter((company: any) => company.id !== currentCompanyId)
         .map((company: any) => ({
           id: company.id,
-          displayName: company.ticari_unvan || company.kisa_unvan,
-          identity: company.vkn_tckn,
-          country: company.ulke || 'Türkiye',
+          displayName: company.trade_name || company.short_name,
+          identity: company.tax_number,
+          country: company.country || 'Türkiye',
           status: company.is_deleted ? 'Pasif' : 'Aktif',
-          kind: 'tuzel_kisi' as OwnerKind,
+          kind: 'organization' as OwnerKind,
         })) : [])
     }).catch(() => {
       if (!cancelled) {
@@ -241,19 +241,19 @@ export function PartnersTab({ value, onChange, readOnly = false, representatives
 
   const representativeRecords = useMemo<SourceRecord[]>(() => representatives.map((representative: any) => ({
     id: representative.id || representative.source_id || representative.display_name,
-    displayName: representative.display_name || representative.ad_soyad || 'Temsilci',
+    displayName: representative.display_name || representative.full_name || 'Temsilci',
     identity: representative.identity_number,
     role: (representative.authority_types || []).join(', '),
     status: representative.status || 'Aktif',
-    kind: representative.person_kind === 'tuzel_kisi' ? 'tuzel_kisi' as OwnerKind : 'gercek_kisi' as OwnerKind,
+    kind: representative.person_kind === 'organization' ? 'organization' as OwnerKind : 'person' as OwnerKind,
   })), [representatives])
 
   const sourceRecords = useMemo(() => {
     if (draft.source_type === 'calisan') return employees
-    if (draft.source_type === 'mevcut_temsilci') return representativeRecords.filter(record => record.kind === 'gercek_kisi')
+    if (draft.source_type === 'mevcut_temsilci') return representativeRecords.filter(record => record.kind === 'person')
     if (draft.source_type === 'grup_sirketi') return companies
-    if (['yeni_kisi', 'harici_kisi'].includes(draft.source_type)) return buildManualRecord(draft, 'gercek_kisi')
-    if (['yeni_sirket', 'harici_sirket'].includes(draft.source_type)) return buildManualRecord(draft, 'tuzel_kisi')
+    if (['yeni_kisi', 'harici_kisi'].includes(draft.source_type)) return buildManualRecord(draft, 'person')
+    if (['yeni_sirket', 'harici_sirket'].includes(draft.source_type)) return buildManualRecord(draft, 'organization')
     return []
   }, [companies, draft, employees, representativeRecords])
 
@@ -308,7 +308,7 @@ export function PartnersTab({ value, onChange, readOnly = false, representatives
       (row.share_class || 'Adi Pay') === (draft.share_class || 'Adi Pay')
     )
 
-    if (duplicate) nextErrors.source_id = 'Aynı kaynak ve hisse türü için aktif ortak var'
+    if (duplicate) nextErrors.source_id = 'Aynı kaynak ve hisse türü için active ortak var'
 
     setErrors(nextErrors)
     if (Object.keys(nextErrors).length > 0) return
@@ -452,15 +452,15 @@ export function PartnersTab({ value, onChange, readOnly = false, representatives
       <div className="grid grid-cols-1 gap-3 xl:grid-cols-5">
         <SummaryCard label="Toplam Hisse" value={`${totalShare}%`} tone={totalShare === 100 ? 'green' : 'amber'} />
         <SummaryCard label="Aktif Ortak Sayısı" value={activePartners.length} />
-        <SummaryCard label="Gerçek Kişi Ortak Sayısı" value={activePartners.filter(row => row.owner_kind === 'gercek_kisi').length} />
-        <SummaryCard label="Tüzel Kişi Ortak Sayısı" value={activePartners.filter(row => row.owner_kind === 'tuzel_kisi').length} />
+        <SummaryCard label="Gerçek Kişi Ortak Sayısı" value={activePartners.filter(row => row.owner_kind === 'person').length} />
+        <SummaryCard label="Tüzel Kişi Ortak Sayısı" value={activePartners.filter(row => row.owner_kind === 'organization').length} />
         <SummaryCard label="Kontrol Ortağı" value={controlPartner?.display_name || '-'} tone={controlPartner ? 'blue' : 'default'} />
       </div>
 
       {activePartners.length > 0 && totalShare !== 100 && (
         <div className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
           <AlertTriangle size={16} />
-          Aktif ortaklık toplamı 100% değil.
+          Aktif ortaklık toplamı 100% değcity.
         </div>
       )}
 
@@ -480,8 +480,8 @@ export function PartnersTab({ value, onChange, readOnly = false, representatives
               readOnly={readOnly}
               value={draft.owner_kind}
               options={[
-                { value: 'gercek_kisi', label: 'Gerçek Kişi', icon: User },
-                { value: 'tuzel_kisi', label: 'Tüzel Kişi', icon: Building2 },
+                { value: 'person', label: 'Gerçek Kişi', icon: User },
+                { value: 'organization', label: 'Tüzel Kişi', icon: Building2 },
               ]}
               onChange={(value) => selectOwnerKind(value as OwnerKind)}
             />
@@ -510,14 +510,14 @@ export function PartnersTab({ value, onChange, readOnly = false, representatives
                   value={draft.display_name}
                   onChange={event => setDraft(prev => ({ ...prev, display_name: event.target.value, source_id: event.target.value ? `manual-${event.target.value}` : '' }))}
                   disabled={readOnly}
-                  placeholder={draft.owner_kind === 'tuzel_kisi' ? 'Ticari Ünvan' : 'Ad Soyad'}
+                  placeholder={draft.owner_kind === 'organization' ? 'Ticari Ünvan' : 'Ad Soyad'}
                   className={inputClass(errors.source_id)}
                 />
                 <input
                   value={draft.identity_number}
                   onChange={event => setDraft(prev => ({ ...prev, identity_number: event.target.value }))}
                   disabled={readOnly}
-                  placeholder={draft.owner_kind === 'tuzel_kisi' ? 'VKN' : 'TCKN'}
+                  placeholder={draft.owner_kind === 'organization' ? 'VKN' : 'TCKN'}
                   className={inputClass()}
                 />
               </div>
@@ -830,13 +830,13 @@ function formatDateTime(value?: string) {
 }
 
 function getOwnerKindLabel(value?: OwnerKind) {
-  if (value === 'gercek_kisi') return 'Gerçek Kişi'
-  if (value === 'tuzel_kisi') return 'Tüzel Kişi'
+  if (value === 'person') return 'Gerçek Kişi'
+  if (value === 'organization') return 'Tüzel Kişi'
   return '-'
 }
 
 function getSourceLabel(value?: PartnerSourceType) {
-  return SOURCE_OPTIONS.gercek_kisi.concat(SOURCE_OPTIONS.tuzel_kisi).find(option => option.value === value)?.label || '-'
+  return SOURCE_OPTIONS.person.concat(SOURCE_OPTIONS.organization).find(option => option.value === value)?.label || '-'
 }
 
 function appendHistory(history: PartnerHistoryEntry[] = [], field: string, oldValue: unknown, newValue: unknown) {

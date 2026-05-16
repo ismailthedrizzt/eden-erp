@@ -22,7 +22,7 @@ import type { DashboardFilterEvent } from '@/components/dashboard/dashboard.type
 import { EntityForm, FormMode } from '@/components/ui/EntityForm'
 import { Toast } from '@/components/ui/Toast'
 import { EmployeeLifecycleWizard } from '@/components/ui/EmployeeLifecycleWizard'
-import { personelModuleConfig, PersonelTableRow } from '@/lib/modules/personel.config'
+import { personelModuleConfig, PersonelTableRow } from '@/lib/modules/employees.config'
 import { buildEmployeesDashboard } from '@/lib/modules/employees/dashboard/employeesDashboard.mock'
 import { getEducationSummary } from '@/lib/modules/employees/education'
 import { toEntityFormFields, toEntityFormTabs } from '@/types/module-config'
@@ -33,7 +33,7 @@ import { isSoftDeletedRecord } from '@/lib/forms/entityState'
 import { createProgressiveFormLoadStages } from '@/lib/forms/progressiveFormLoading'
 import { invalidateEntityDetailCache, readEntityDetailCache, writeEntityDetailCache } from '@/lib/forms/entityDetailCache'
 import { employeeService } from '@/lib/services/employeeService'
-import { normalizeEmployeeAliasPayload } from '@/lib/modules/employees/employeePayload'
+import { projectGlossary } from '@/lib/projectGlossary'
 import type { Personel } from '@/types'
 
 // Page state type following ERP pattern
@@ -75,50 +75,52 @@ function waitForStagePaint() {
   })
 }
 
+const employeeFieldLabels = projectGlossary.employee.fields
+
 const PERSONEL_FIELD_LABELS: Record<string, string> = {
-  ad: 'Ad',
-  soyad: 'Soyad',
-  uyruk: 'Uyruk',
-  tc_kimlik: 'TC Kimlik No',
-  pasaport_no: 'Pasaport No',
-  dogum_tarihi: 'Doğum Tarihi',
-  cinsiyet: 'Cinsiyet',
-  kan_grubu: 'Kan Grubu',
-  askerlik_durumu: 'Askerlik Durumu',
-  tecil_tarihi: 'Tecil Tarihi',
-  is_telefonu: 'İş Telefonu',
-  acil_kisi_ad: 'Acil Kişi Adı',
-  acil_kisi_soyad: 'Acil Kişi Soyadı',
-  acil_kisi_yakinlik: 'Acil Kişi Yakınlık Derecesi',
-  acil_kisi_telefon: 'Acil Kişi Telefonu',
-  sgk_giris: 'SGK Giriş Tarihi',
-  gorev: 'Görev',
-  ust_beden: 'Üst Beden',
-  alt_beden: 'Alt Beden',
-  ayakkabi: 'Ayakkabı',
-  kep: 'Kep',
-  iban: 'IBAN',
-  notlar: 'Notlar',
-  fotograf_url: 'Fotoğraf',
+  first_name: employeeFieldLabels.firstName.label,
+  last_name: employeeFieldLabels.lastName.label,
+  nationality: employeeFieldLabels.nationality.label,
+  national_id: employeeFieldLabels.nationalId.label,
+  passport_no: employeeFieldLabels.passportNo.label,
+  birth_date: employeeFieldLabels.birthDate.label,
+  gender: employeeFieldLabels.gender.label,
+  blood_type: employeeFieldLabels.bloodType.label,
+  military_status: employeeFieldLabels.militaryStatus.label,
+  deferment_date: employeeFieldLabels.defermentDate.label,
+  work_phone: employeeFieldLabels.workPhone.label,
+  emergency_contact_first_name: employeeFieldLabels.emergencyFirstName.label,
+  emergency_contact_last_name: employeeFieldLabels.emergencyLastName.label,
+  emergency_contact_relationship: employeeFieldLabels.emergencyRelationship.label,
+  emergency_contact_phone: employeeFieldLabels.emergencyPhone.label,
+  sgk_entry_date: employeeFieldLabels.socialSecurityEntryDate.label,
+  job_title: employeeFieldLabels.jobTitle.label,
+  top_size: employeeFieldLabels.topSize.label,
+  bottom_size: employeeFieldLabels.bottomSize.label,
+  shoe_size: employeeFieldLabels.shoeSize.label,
+  kep: employeeFieldLabels.kepAddress.label,
+  iban: employeeFieldLabels.iban.label,
+  notes: employeeFieldLabels.notes.label,
+  photo_url: employeeFieldLabels.photo.label,
 }
 
 const OPTIONAL_EMPLOYEE_FIELDS = new Set([
-  'askerlik_durumu',
-  'tecil_tarihi',
-  'is_telefonu',
-  'acil_kisi_ad',
-  'acil_kisi_soyad',
-  'acil_kisi_yakinlik',
-  'acil_kisi_telefon',
-  'sgk_giris',
-  'gorev',
-  'ust_beden',
-  'alt_beden',
-  'ayakkabi',
+  'military_status',
+  'deferment_date',
+  'work_phone',
+  'emergency_contact_first_name',
+  'emergency_contact_last_name',
+  'emergency_contact_relationship',
+  'emergency_contact_phone',
+  'sgk_entry_date',
+  'job_title',
+  'top_size',
+  'bottom_size',
+  'shoe_size',
   'kep',
   'iban',
-  'notlar',
-  'fotograf_url',
+  'notes',
+  'photo_url',
 ])
 
 const LANGUAGE_LEVELS = new Set(['A1', 'A2', 'B1', 'B2', 'C1', 'C2'])
@@ -129,10 +131,10 @@ const formatFieldList = (fields: string[]) => fields.map(getFieldLabel).join(', 
 
 export default function PersonelYonetimPage() {
   const [includePassive, setIncludePassive] = useState(false)
-  const [listQuery, setListQuery] = useState({ page: 1, pageSize: 50, search: '', sort: 'soyad', direction: 'asc' as 'asc' | 'desc' })
-  const { data: personel, meta: listMeta, loading: listLoading, error: listError, yenile } = usePersonel({ includePassive, ...listQuery })
+  const [listQuery, setListQuery] = useState({ page: 1, pageSize: 50, search: '', sort: 'last_name', direction: 'asc' as 'asc' | 'desc' })
+  const { data: employees, meta: listMeta, loading: listLoading, error: listError, yenile } = usePersonel({ includePassive, ...listQuery })
   const moduleConfig = personelModuleConfig
-  const apiBasePath = moduleConfig.entity.apiBasePath || '/api/ik/personel'
+  const apiBasePath = moduleConfig.entity.apiBasePath || '/api/employees'
   const lifecycleMessages = moduleConfig.form.lifecycle?.messages
   
   // Page state
@@ -152,20 +154,20 @@ export default function PersonelYonetimPage() {
   const detailRequestRef = useRef(0)
 
   // Transform data for table
-  const tableData: PersonelTableRow[] = useMemo(() => (personel || []).map(p => ({
+  const tableData: PersonelTableRow[] = useMemo(() => (employees || []).map(p => ({
     ...p,
     employee_no: (p as any).employee_no || '-',
-    fullname: `${p.ad || ''} ${p.soyad || ''}`.trim(),
-    identity_display: p.tc_kimlik || p.pasaport_no || '-',
-    sirket_adi: (p as any).sirket?.kisa_unvan || (p as any).sirket?.ticari_unvan || '-',
-    birim_adi: p.birim?.ad || '-',
-    kadro_unvani: p.kadro?.unvan || p.gorev || '-',
-    calisma_tipi: (p as any).calisma_tipi || '-',
-    employment_status: isSoftDeletedRecord(p as Record<string, any>) ? 'pasif' : (p as any).employment_status || p.calisma_durumu || '-',
+    fullname: `${p.first_name || ''} ${p.last_name || ''}`.trim(),
+    identity_display: p.national_id || p.passport_no || '-',
+    company_name: (p as any).company?.short_name || (p as any).company?.trade_name || '-',
+    unit_name: p.unit?.name || '-',
+    position_title: p.position?.title || p.job_title || '-',
+    work_type: (p as any).work_type || '-',
+    employment_status: isSoftDeletedRecord(p as Record<string, any>) ? 'pasif' : (p as any).employment_status || p.work_status || '-',
     egitim_durumu: getEducationSummary(p),
-    sgk_status: p.sgk_giris ? 'SGK girişi var' : 'SGK bekliyor',
+    sgk_status: p.sgk_entry_date ? 'SGK girişi var' : 'SGK bekliyor',
     __actions: ''
-  })), [personel])
+  })), [employees])
 
   const dashboardWidgets = useMemo(() => buildEmployeesDashboard(tableData), [tableData])
   const visibleTableData = useMemo(() => applyDashboardFilter(tableData, dashboardFilter), [tableData, dashboardFilter])
@@ -192,17 +194,17 @@ export default function PersonelYonetimPage() {
   const handleListSortChange = (sorts: SortConfig[]) => {
     const sort = sorts[0]
     const sortMap: Record<string, string> = {
-      fullname: 'soyad',
-      full_name: 'soyad',
-      sirket_adi: 'sirket_id',
-      birim_adi: 'birim_id',
-      kadro_unvani: 'kadro_id',
-      employment_status: 'calisma_durumu',
+      fullname: 'last_name',
+      full_name: 'last_name',
+      company_name: 'company_id',
+      unit_name: 'unit_id',
+      position_title: 'position_id',
+      employment_status: 'work_status',
     }
     setListQuery(prev => ({
       ...prev,
       page: 1,
-      sort: sort ? sortMap[sort.key] || sort.key : 'soyad',
+      sort: sort ? sortMap[sort.key] || sort.key : 'last_name',
       direction: sort?.direction || 'asc',
     }))
   }
@@ -374,7 +376,7 @@ export default function PersonelYonetimPage() {
     let payload: Record<string, any> = {}
 
     Object.entries(raw).forEach(([key, value]) => {
-      if (key === 'cv_belgesi' && value === null) {
+      if (key === 'cv_document' && value === null) {
         payload[key] = value
         return
       }
@@ -382,24 +384,22 @@ export default function PersonelYonetimPage() {
       payload[key] = value
     })
 
-    payload = normalizeEmployeeAliasPayload(payload)
-
-    if (Array.isArray(payload.telefonlar)) {
-      payload.telefonlar = payload.telefonlar.map((phone: Record<string, any>) => ({
+    if (Array.isArray(payload.phones)) {
+      payload.phones = payload.phones.map((phone: Record<string, any>) => ({
         ...phone,
-        numara: formatPhoneInput(String(phone.numara || ''))
+        phone: formatPhoneInput(String(phone.phone || ''))
       }))
     }
 
-    if (Array.isArray(payload.epostalar)) {
-      payload.epostalar = payload.epostalar.map((email: Record<string, any>) => ({
+    if (Array.isArray(payload.emails)) {
+      payload.emails = payload.emails.map((email: Record<string, any>) => ({
         ...email,
-        adres: normalizeEmailInput(String(email.adres || ''))
+        address: normalizeEmailInput(String(email.address || ''))
       }))
     }
 
-    if (Array.isArray(payload.yabanci_diller)) {
-      payload.yabanci_diller = payload.yabanci_diller.map((language: Record<string, any>) => ({
+    if (Array.isArray(payload.foreign_languages)) {
+      payload.foreign_languages = payload.foreign_languages.map((language: Record<string, any>) => ({
         ...language,
         seviye: LANGUAGE_LEVELS.has(String(language.seviye || '').toUpperCase())
           ? String(language.seviye).toUpperCase()
@@ -407,36 +407,36 @@ export default function PersonelYonetimPage() {
       }))
     }
 
-    if (payload.telefonlar?.length && !payload.cep_telefonu) {
-      payload.cep_telefonu = payload.telefonlar[0]?.numara
+    if (payload.phones?.length && !payload.mobile_phone) {
+      payload.mobile_phone = payload.phones[0]?.phone
     }
 
-    if (payload.epostalar?.length && !payload.email) {
-      payload.email = payload.epostalar[0]?.adres
+    if (payload.emails?.length && !payload.email) {
+      payload.email = payload.emails[0]?.address
     }
 
-    if (payload.cep_telefonu) payload.cep_telefonu = formatPhoneInput(String(payload.cep_telefonu))
-    if (payload.is_telefonu) payload.is_telefonu = formatPhoneInput(String(payload.is_telefonu))
-    if (payload.acil_kisi_telefon) payload.acil_kisi_telefon = formatPhoneInput(String(payload.acil_kisi_telefon))
+    if (payload.mobile_phone) payload.mobile_phone = formatPhoneInput(String(payload.mobile_phone))
+    if (payload.work_phone) payload.work_phone = formatPhoneInput(String(payload.work_phone))
+    if (payload.emergency_contact_phone) payload.emergency_contact_phone = formatPhoneInput(String(payload.emergency_contact_phone))
     if (payload.email) payload.email = normalizeEmailInput(String(payload.email))
 
-    if (payload.uyruk) payload.uyruk = normalizeCountryId(payload.uyruk)
+    if (payload.nationality) payload.nationality = normalizeCountryId(payload.nationality)
 
-    if (isTurkishNationality(payload.uyruk)) {
-      delete payload.pasaport_no
-    } else if (payload.uyruk) {
-      delete payload.tc_kimlik
+    if (isTurkishNationality(payload.nationality)) {
+      delete payload.passport_no
+    } else if (payload.nationality) {
+      delete payload.national_id
     }
 
-    if (!payload.sgk_giris) {
-      delete payload.isten_ayrilis
-      delete payload.isten_cikis_belgeleri
+    if (!payload.sgk_entry_date) {
+      delete payload.exit_date
+      delete payload.exit_documents
     }
 
     const selectedStatus = selectedPersonel as Record<string, any> | null
     payload.record_status = payload.record_status || (pageState === 'create' ? 'draft' : selectedStatus?.record_status || 'draft')
     payload.employment_status = payload.employment_status || (payload.record_status === 'draft' ? 'pending_entry' : selectedStatus?.employment_status)
-    payload.calisma_durumu = payload.isten_ayrilis ? 'ayrilmis' : payload.record_status === 'active' ? 'gorevde' : payload.record_status === 'passive' ? 'ayrilmis' : 'askida'
+    payload.work_status = payload.exit_date ? 'terminated' : payload.record_status === 'active' ? 'active' : payload.record_status === 'passive' ? 'terminated' : 'suspended'
     return payload
   }
 
@@ -477,7 +477,7 @@ export default function PersonelYonetimPage() {
         body: JSON.stringify({
           record_status: 'active',
           employment_status: 'active',
-          calisma_durumu: 'gorevde',
+          work_status: 'active',
         }),
       })
 
@@ -592,17 +592,17 @@ export default function PersonelYonetimPage() {
     {
       key: 'active',
       label: 'Görevde',
-      render: () => tableData.filter(p => p.calisma_durumu === 'gorevde').length
+      render: () => tableData.filter(p => p.work_status === 'active').length
     },
     {
       key: 'onLeave',
       label: 'İzinde',
-      render: () => tableData.filter(p => p.calisma_durumu === 'izinde').length
+      render: () => tableData.filter(p => p.work_status === 'on_leave').length
     },
     {
       key: 'left',
       label: 'Ayrılmış',
-      render: () => tableData.filter(p => p.calisma_durumu === 'ayrilmis').length
+      render: () => tableData.filter(p => p.work_status === 'terminated').length
     }
   ]
 
@@ -611,13 +611,13 @@ export default function PersonelYonetimPage() {
   const formMode: FormMode = pageState === 'create' ? 'create' :
                             pageState === 'edit' ? 'edit' :
                             selectedIsPassive ? 'passive' : 'view'
-  const hiddenEmployeeTabIds = new Set(['gercek_kisi_ozel', 'ozel', 'iletisim', 'egitim', 'aile', 'banka'])
+  const hiddenEmployeeTabIds = new Set(['person_ozel', 'ozel', 'iletisim', 'egitim', 'aile', 'banka'])
   const formTabs = [
     ...createRealPersonMasterTabs({
-      addressField: 'adres',
-      cityField: 'il',
-      districtField: 'ilce',
-      maritalStatusField: 'medeni_durum',
+      addressField: 'address',
+      cityField: 'city',
+      districtField: 'district',
+      maritalStatusField: 'marital_status',
       includeEmergencyContact: true,
     }),
     ...toEntityFormTabs(moduleConfig.form.tabs),
@@ -647,7 +647,7 @@ export default function PersonelYonetimPage() {
     
     const getPersonelName = () => {
       if (!selectedPersonel) return ''
-      return `${selectedPersonel.ad || ''} ${selectedPersonel.soyad || ''}`.trim()
+      return `${selectedPersonel.first_name || ''} ${selectedPersonel.last_name || ''}`.trim()
     }
     
     const personelName = getPersonelName()
@@ -802,8 +802,8 @@ export default function PersonelYonetimPage() {
             documentSlot={{
               title: 'Belgeler',
               slots: [
-                { id: 'cv', title: 'CV', required: false, storageField: 'cv_belgesi' },
-                { id: 'diploma', title: 'Diploma', required: false, storageField: 'diploma_belgesi' },
+                { id: 'cv', title: 'CV', required: false, storageField: 'cv_document' },
+                { id: 'diploma', title: 'Diploma', required: false, storageField: 'diploma_document' },
               ],
             }}
             onValidationError={(fields) => {
@@ -835,14 +835,14 @@ function applyDashboardFilter(rows: PersonelTableRow[], event: DashboardFilterEv
   if (entries.length === 0) return rows
 
   return rows.filter(row => entries.every(([field, value]) => {
-    if (field === 'ageGroup') return getAgeGroup((row as any).dogum_tarihi) === value
+    if (field === 'ageGroup') return getAgeGroup((row as any).birth_date) === value
     if (value === null) return !((row as any)[field])
     return String((row as any)[field] || '').toLocaleLowerCase('tr-TR') === String(value || '').toLocaleLowerCase('tr-TR')
   }))
 }
 
 function getEmployeeRecordStatus(employee: Record<string, any>) {
-  return employee.record_status || (employee.sgk_giris || employee.calisma_durumu === 'gorevde' ? 'active' : 'draft')
+  return employee.record_status || (employee.sgk_entry_date || employee.work_status === 'active' ? 'active' : 'draft')
 }
 
 function getAgeGroup(value?: string | null) {

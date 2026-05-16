@@ -123,8 +123,8 @@ export function SirketForm({
   // Extended form data with arrays
   const [formData, setFormData] = useState<Record<string, any>>({
     ...sirket,
-    ortaklar: sirket?.ortaklar || [],
-    temsilciler: sirket?.temsilciler || [],
+    partners: sirket?.partners || [],
+    representatives: sirket?.representatives || [],
     public_tax: (sirket as any)?.public_tax || {},
     public_sgk: (sirket as any)?.public_sgk || {},
     public_incentives: (sirket as any)?.public_incentives || {},
@@ -201,8 +201,8 @@ export function SirketForm({
                 <label className="text-xs text-gray-500 dark:text-gray-400">Ticari Ünvan *</label>
                 <input
                   type="text"
-                  value={formData.ticari_unvan || ''}
-                  onChange={(e) => handleFieldChange('ticari_unvan', e.target.value)}
+                  value={formData.trade_name || ''}
+                  onChange={(e) => handleFieldChange('trade_name', e.target.value)}
                   disabled={isReadOnly}
                   className="w-full px-3 py-2 text-sm border rounded-md bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700"
                   placeholder="Örn: Eden Yazılım ve Danışmanlık A.Ş."
@@ -213,8 +213,8 @@ export function SirketForm({
                 <label className="text-xs text-gray-500 dark:text-gray-400">Kısa Ünvan *</label>
                 <input
                   type="text"
-                  value={formData.kisa_unvan || ''}
-                  onChange={(e) => handleFieldChange('kisa_unvan', e.target.value)}
+                  value={formData.short_name || ''}
+                  onChange={(e) => handleFieldChange('short_name', e.target.value)}
                   disabled={isReadOnly}
                   className="w-full px-3 py-2 text-sm border rounded-md bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700"
                   placeholder="Örn: Eden"
@@ -226,8 +226,8 @@ export function SirketForm({
                   <label className="text-xs text-gray-500 dark:text-gray-400">VKN/TCKN *</label>
                   <input
                     type="text"
-                    value={formData.vkn_tckn || ''}
-                    onChange={(e) => handleFieldChange('vkn_tckn', e.target.value)}
+                    value={formData.tax_number || ''}
+                    onChange={(e) => handleFieldChange('tax_number', e.target.value)}
                     disabled={isReadOnly}
                     maxLength={11}
                     className="w-full px-3 py-2 text-sm border rounded-md bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700"
@@ -238,8 +238,8 @@ export function SirketForm({
                   <label className="text-xs text-gray-500 dark:text-gray-400">Vergi Dairesi *</label>
                   <input
                     type="text"
-                    value={formData.vergi_dairesi || ''}
-                    onChange={(e) => handleFieldChange('vergi_dairesi', e.target.value)}
+                    value={formData.tax_office || ''}
+                    onChange={(e) => handleFieldChange('tax_office', e.target.value)}
                     disabled={isReadOnly}
                     className="w-full px-3 py-2 text-sm border rounded-md bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700"
                     placeholder="Maltepe"
@@ -261,8 +261,8 @@ export function SirketForm({
                 <label className="text-xs text-gray-500 dark:text-gray-400">MERSİS No</label>
                 <input
                   type="text"
-                  value={formData.mersis_no || ''}
-                  onChange={(e) => handleFieldChange('mersis_no', e.target.value)}
+                  value={formData.mersis_number || ''}
+                  onChange={(e) => handleFieldChange('mersis_number', e.target.value)}
                   disabled={isReadOnly}
                   className="w-full px-3 py-2 text-sm border rounded-md bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700"
                   placeholder="0-1234-5678-9101112131"
@@ -273,8 +273,8 @@ export function SirketForm({
                 <label className="text-xs text-gray-500 dark:text-gray-400">Ticaret Sicil No</label>
                 <input
                   type="text"
-                  value={formData.ticaret_sicil_no || ''}
-                  onChange={(e) => handleFieldChange('ticaret_sicil_no', e.target.value)}
+                  value={formData.trade_registry_number || ''}
+                  onChange={(e) => handleFieldChange('trade_registry_number', e.target.value)}
                   disabled={isReadOnly}
                   className="w-full px-3 py-2 text-sm border rounded-md bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700"
                   placeholder="123456"
@@ -286,8 +286,8 @@ export function SirketForm({
                   <label className="text-xs text-gray-500 dark:text-gray-400">Kuruluş Tarihi</label>
                   <input
                     type="date"
-                    value={formData.kurulus_tarihi || ''}
-                    onChange={(e) => handleFieldChange('kurulus_tarihi', e.target.value)}
+                    value={formData.foundation_date || ''}
+                    onChange={(e) => handleFieldChange('foundation_date', e.target.value)}
                     disabled={isReadOnly}
                     className="w-full px-3 py-2 text-sm border rounded-md bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700"
                   />
@@ -295,8 +295,8 @@ export function SirketForm({
                 <div>
                   <label className="text-xs text-gray-500 dark:text-gray-400">Şirket Türü</label>
                   <select
-                    value={formData.sirket_turu || ''}
-                    onChange={(e) => handleFieldChange('sirket_turu', e.target.value)}
+                    value={formData.company_type || ''}
+                    onChange={(e) => handleFieldChange('company_type', e.target.value)}
                     disabled={isReadOnly}
                     className="w-full px-3 py-2 text-sm border rounded-md bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700"
                   >
@@ -322,8 +322,8 @@ export function SirketForm({
                 <div>
                   <label className="text-xs text-gray-500 dark:text-gray-400">Ülke *</label>
                   <select
-                    value={formData.ulke || 'Türkiye'}
-                    onChange={(e) => handleFieldChange('ulke', e.target.value)}
+                    value={formData.country || 'Türkiye'}
+                    onChange={(e) => handleFieldChange('country', e.target.value)}
                     disabled={isReadOnly}
                     className="w-full px-3 py-2 text-sm border rounded-md bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700"
                   >
@@ -335,8 +335,8 @@ export function SirketForm({
                   <label className="text-xs text-gray-500 dark:text-gray-400">İl *</label>
                   <input
                     type="text"
-                    value={formData.il || ''}
-                    onChange={(e) => handleFieldChange('il', e.target.value)}
+                    value={formData.city || ''}
+                    onChange={(e) => handleFieldChange('city', e.target.value)}
                     disabled={isReadOnly}
                     className="w-full px-3 py-2 text-sm border rounded-md bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700"
                     placeholder="İstanbul"
@@ -348,8 +348,8 @@ export function SirketForm({
                 <label className="text-xs text-gray-500 dark:text-gray-400">İlçe *</label>
                 <input
                   type="text"
-                  value={formData.ilce || ''}
-                  onChange={(e) => handleFieldChange('ilce', e.target.value)}
+                  value={formData.district || ''}
+                  onChange={(e) => handleFieldChange('district', e.target.value)}
                   disabled={isReadOnly}
                   className="w-full px-3 py-2 text-sm border rounded-md bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700"
                   placeholder="Maltepe"
@@ -359,8 +359,8 @@ export function SirketForm({
               <div>
                 <label className="text-xs text-gray-500 dark:text-gray-400">Adres *</label>
                 <textarea
-                  value={formData.adres || ''}
-                  onChange={(e) => handleFieldChange('adres', e.target.value)}
+                  value={formData.address || ''}
+                  onChange={(e) => handleFieldChange('address', e.target.value)}
                   disabled={isReadOnly}
                   rows={2}
                   className="w-full px-3 py-2 text-sm border rounded-md bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700"
@@ -406,8 +406,8 @@ export function SirketForm({
                 <label className="text-xs text-gray-500 dark:text-gray-400">Web Sitesi</label>
                 <input
                   type="url"
-                  value={formData.web_sitesi || ''}
-                  onChange={(e) => handleFieldChange('web_sitesi', e.target.value)}
+                  value={formData.website || ''}
+                  onChange={(e) => handleFieldChange('website', e.target.value)}
                   disabled={isReadOnly}
                   className="w-full px-3 py-2 text-sm border rounded-md bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-700"
                   placeholder="https://www.company.com"
@@ -428,7 +428,7 @@ export function SirketForm({
       icon: <Building2 size={18} />,
       fields: [
         {
-          name: 'sirket_kodu',
+          name: 'company_code',
           label: 'Şirket Kodu',
           type: 'text',
           placeholder: 'Internal kod (EDN001 vb.)'
@@ -451,7 +451,7 @@ export function SirketForm({
                   <label className="text-xs text-gray-500">VKN</label>
                   <input
                     type="text"
-                    value={formData.vkn_tckn || ''}
+                    value={formData.tax_number || ''}
                     disabled
                     className="w-full px-3 py-2 text-sm border rounded-md bg-gray-100 dark:bg-gray-900"
                   />
@@ -460,7 +460,7 @@ export function SirketForm({
                   <label className="text-xs text-gray-500">Vergi Dairesi</label>
                   <input
                     type="text"
-                    value={formData.vergi_dairesi || ''}
+                    value={formData.tax_office || ''}
                     disabled
                     className="w-full px-3 py-2 text-sm border rounded-md bg-gray-100 dark:bg-gray-900"
                   />
@@ -471,8 +471,8 @@ export function SirketForm({
                 <label className="flex items-center gap-2">
                   <input
                     type="checkbox"
-                    checked={formData.e_fatura_mukellefi || false}
-                    onChange={(e) => handleFieldChange('e_fatura_mukellefi', e.target.checked)}
+                    checked={formData.e_invoice_taxpayer || false}
+                    onChange={(e) => handleFieldChange('e_invoice_taxpayer', e.target.checked)}
                     disabled={isReadOnly}
                   />
                   <span className="text-sm">E-Fatura Mükellefi</span>
@@ -480,8 +480,8 @@ export function SirketForm({
                 <label className="flex items-center gap-2">
                   <input
                     type="checkbox"
-                    checked={formData.e_arsiv_mukellefi || false}
-                    onChange={(e) => handleFieldChange('e_arsiv_mukellefi', e.target.checked)}
+                    checked={formData.e_archive_taxpayer || false}
+                    onChange={(e) => handleFieldChange('e_archive_taxpayer', e.target.checked)}
                     disabled={isReadOnly}
                   />
                   <span className="text-sm">E-Arşiv Mükellefi</span>
@@ -489,8 +489,8 @@ export function SirketForm({
                 <label className="flex items-center gap-2">
                   <input
                     type="checkbox"
-                    checked={formData.e_irsaliye_mukellefi || false}
-                    onChange={(e) => handleFieldChange('e_irsaliye_mukellefi', e.target.checked)}
+                    checked={formData.e_waybill_taxpayer || false}
+                    onChange={(e) => handleFieldChange('e_waybill_taxpayer', e.target.checked)}
                     disabled={isReadOnly}
                   />
                   <span className="text-sm">E-İrsaliye Mükellefi</span>
@@ -508,8 +508,8 @@ export function SirketForm({
                 <label className="text-xs text-gray-500">SGK İş Yeri Sicil No</label>
                 <input
                   type="text"
-                  value={formData.sgk_is_yeri_sicil_no || ''}
-                  onChange={(e) => handleFieldChange('sgk_is_yeri_sicil_no', e.target.value)}
+                  value={formData.sgk_workplace_registry_no || ''}
+                  onChange={(e) => handleFieldChange('sgk_workplace_registry_no', e.target.value)}
                   disabled={isReadOnly}
                   className="w-full px-3 py-2 text-sm border rounded-md bg-white dark:bg-gray-800"
                 />
@@ -520,8 +520,8 @@ export function SirketForm({
                   <label className="text-xs text-gray-500">SGK İl</label>
                   <input
                     type="text"
-                    value={formData.sgk_il || ''}
-                    onChange={(e) => handleFieldChange('sgk_il', e.target.value)}
+                    value={formData.sgk_province || ''}
+                    onChange={(e) => handleFieldChange('sgk_province', e.target.value)}
                     disabled={isReadOnly}
                     className="w-full px-3 py-2 text-sm border rounded-md bg-white dark:bg-gray-800"
                   />
@@ -530,8 +530,8 @@ export function SirketForm({
                   <label className="text-xs text-gray-500">SGK Şube</label>
                   <input
                     type="text"
-                    value={formData.sgk_sube || ''}
-                    onChange={(e) => handleFieldChange('sgk_sube', e.target.value)}
+                    value={formData.sgk_branch || ''}
+                    onChange={(e) => handleFieldChange('sgk_branch', e.target.value)}
                     disabled={isReadOnly}
                     className="w-full px-3 py-2 text-sm border rounded-md bg-white dark:bg-gray-800"
                   />
@@ -542,8 +542,8 @@ export function SirketForm({
                 <label className="text-xs text-gray-500">NACE Kodları (virgülle ayırın)</label>
                 <input
                   type="text"
-                  value={(formData.nace_kodlari || []).join(', ')}
-                  onChange={(e) => handleFieldChange('nace_kodlari', e.target.value.split(',').map(s => s.trim()).filter(Boolean))}
+                  value={(formData.nace_codes || []).join(', ')}
+                  onChange={(e) => handleFieldChange('nace_codes', e.target.value.split(',').map(s => s.trim()).filter(Boolean))}
                   disabled={isReadOnly}
                   className="w-full px-3 py-2 text-sm border rounded-md bg-white dark:bg-gray-800"
                   placeholder="62.01, 63.11"
@@ -553,8 +553,8 @@ export function SirketForm({
               <div>
                 <label className="text-xs text-gray-500">Tehlike Sınıfı</label>
                 <select
-                  value={formData.tehlike_sinifi || ''}
-                  onChange={(e) => handleFieldChange('tehlike_sinifi', e.target.value)}
+                  value={formData.risk_class || ''}
+                  onChange={(e) => handleFieldChange('risk_class', e.target.value)}
                   disabled={isReadOnly}
                   className="w-full px-3 py-2 text-sm border rounded-md bg-white dark:bg-gray-800"
                 >
@@ -598,8 +598,8 @@ export function SirketForm({
                   <label className="text-xs text-gray-500">Ortak Adı *</label>
                   <input
                     type="text"
-                    value={ortak.ortak_adi || ''}
-                    onChange={(e) => onChange({ ...ortak, ortak_adi: e.target.value })}
+                    value={ortak.partner_name || ''}
+                    onChange={(e) => onChange({ ...ortak, partner_name: e.target.value })}
                     disabled={isReadOnly}
                     className="w-full px-3 py-2 text-sm border rounded-md"
                     placeholder="Ad Soyad / Şirket"
@@ -608,8 +608,8 @@ export function SirketForm({
                 <div className="col-span-2">
                   <label className="text-xs text-gray-500">Tipi *</label>
                   <select
-                    value={ortak.ortak_tipi || 'kisi'}
-                    onChange={(e) => onChange({ ...ortak, ortak_tipi: e.target.value as any })}
+                    value={ortak.partner_type || 'kisi'}
+                    onChange={(e) => onChange({ ...ortak, partner_type: e.target.value as any })}
                     disabled={isReadOnly}
                     className="w-full px-3 py-2 text-sm border rounded-md"
                   >
@@ -621,8 +621,8 @@ export function SirketForm({
                   <label className="text-xs text-gray-500">TCKN/VKN *</label>
                   <input
                     type="text"
-                    value={ortak.tckn_vkn || ''}
-                    onChange={(e) => onChange({ ...ortak, tckn_vkn: e.target.value })}
+                    value={ortak.identity_tax_number || ''}
+                    onChange={(e) => onChange({ ...ortak, identity_tax_number: e.target.value })}
                     disabled={isReadOnly}
                     className="w-full px-3 py-2 text-sm border rounded-md"
                     placeholder="12345678901"
@@ -632,8 +632,8 @@ export function SirketForm({
                   <label className="text-xs text-gray-500">Hisse %</label>
                   <input
                     type="number"
-                    value={ortak.hisse_orani || 0}
-                    onChange={(e) => onChange({ ...ortak, hisse_orani: parseFloat(e.target.value) })}
+                    value={ortak.share_ratio || 0}
+                    onChange={(e) => onChange({ ...ortak, share_ratio: parseFloat(e.target.value) })}
                     disabled={isReadOnly}
                     min={0}
                     max={100}
@@ -645,8 +645,8 @@ export function SirketForm({
                   <label className="flex items-center gap-1 text-xs">
                     <input
                       type="checkbox"
-                      checked={ortak.imza_yetkisi || false}
-                      onChange={(e) => onChange({ ...ortak, imza_yetkisi: e.target.checked })}
+                      checked={ortak.signature_authority || false}
+                      onChange={(e) => onChange({ ...ortak, signature_authority: e.target.checked })}
                       disabled={isReadOnly}
                     />
                     İmza
@@ -686,8 +686,8 @@ export function SirketForm({
                   <label className="text-xs text-gray-500">Ad Soyad *</label>
                   <input
                     type="text"
-                    value={temsilci.ad_soyad || ''}
-                    onChange={(e) => onChange({ ...temsilci, ad_soyad: e.target.value })}
+                    value={temsilci.full_name || ''}
+                    onChange={(e) => onChange({ ...temsilci, full_name: e.target.value })}
                     disabled={isReadOnly}
                     className="w-full px-3 py-2 text-sm border rounded-md"
                     placeholder="İsim Soyisim"
@@ -697,8 +697,8 @@ export function SirketForm({
                   <label className="text-xs text-gray-500">Görev</label>
                   <input
                     type="text"
-                    value={temsilci.gorev || ''}
-                    onChange={(e) => onChange({ ...temsilci, gorev: e.target.value })}
+                    value={temsilci.job_title || ''}
+                    onChange={(e) => onChange({ ...temsilci, job_title: e.target.value })}
                     disabled={isReadOnly}
                     className="w-full px-3 py-2 text-sm border rounded-md"
                     placeholder="Ünvan"
@@ -707,8 +707,8 @@ export function SirketForm({
                 <div className="col-span-2">
                   <label className="text-xs text-gray-500">Yetki Türü *</label>
                   <select
-                    value={temsilci.yetki_turu || 'diger'}
-                    onChange={(e) => onChange({ ...temsilci, yetki_turu: e.target.value as any })}
+                    value={temsilci.authority_type || 'diger'}
+                    onChange={(e) => onChange({ ...temsilci, authority_type: e.target.value as any })}
                     disabled={isReadOnly}
                     className="w-full px-3 py-2 text-sm border rounded-md"
                   >
@@ -721,8 +721,8 @@ export function SirketForm({
                   <label className="text-xs text-gray-500">Telefon</label>
                   <input
                     type="tel"
-                    value={temsilci.telefon || ''}
-                    onChange={(e) => onChange({ ...temsilci, telefon: e.target.value })}
+                    value={temsilci.phone || ''}
+                    onChange={(e) => onChange({ ...temsilci, phone: e.target.value })}
                     disabled={isReadOnly}
                     className="w-full px-3 py-2 text-sm border rounded-md"
                     placeholder="+90 ..."
@@ -766,8 +766,8 @@ export function SirketForm({
             <div>
               <label className="text-xs text-gray-500">Varsayılan Para Birimi</label>
               <select
-                value={formData.varsayilan_para_birimi || 'TRY'}
-                onChange={(e) => handleFieldChange('varsayilan_para_birimi', e.target.value)}
+                value={formData.default_currency || 'TRY'}
+                onChange={(e) => handleFieldChange('default_currency', e.target.value)}
                 disabled={isReadOnly}
                 className="w-full px-3 py-2 text-sm border rounded-md bg-white dark:bg-gray-800"
               >
@@ -780,8 +780,8 @@ export function SirketForm({
             <div>
               <label className="text-xs text-gray-500">Varsayılan Dil</label>
               <select
-                value={formData.varsayilan_dil || 'tr'}
-                onChange={(e) => handleFieldChange('varsayilan_dil', e.target.value)}
+                value={formData.default_language || 'tr'}
+                onChange={(e) => handleFieldChange('default_language', e.target.value)}
                 disabled={isReadOnly}
                 className="w-full px-3 py-2 text-sm border rounded-md bg-white dark:bg-gray-800"
               >
@@ -794,8 +794,8 @@ export function SirketForm({
             <div>
               <label className="text-xs text-gray-500">Zaman Dilimi</label>
               <select
-                value={formData.zaman_dilimi || 'Europe/Istanbul'}
-                onChange={(e) => handleFieldChange('zaman_dilimi', e.target.value)}
+                value={formData.time_zone || 'Europe/Istanbul'}
+                onChange={(e) => handleFieldChange('time_zone', e.target.value)}
                 disabled={isReadOnly}
                 className="w-full px-3 py-2 text-sm border rounded-md bg-white dark:bg-gray-800"
               >
@@ -810,8 +810,8 @@ export function SirketForm({
             <div>
               <label className="text-xs text-gray-500">Mali Yıl Başlangıcı (Ay)</label>
               <select
-                value={formData.mali_yil_baslangici || 1}
-                onChange={(e) => handleFieldChange('mali_yil_baslangici', parseInt(e.target.value))}
+                value={formData.fiscal_year_start || 1}
+                onChange={(e) => handleFieldChange('fiscal_year_start', parseInt(e.target.value))}
                 disabled={isReadOnly}
                 className="w-full px-3 py-2 text-sm border rounded-md bg-white dark:bg-gray-800"
               >
@@ -829,9 +829,9 @@ export function SirketForm({
                 checked={!formData.is_deleted}
                 onChange={(e) => handleFieldChange('is_deleted', !e.target.checked)}
                 disabled={isReadOnly}
-                id="sirket-aktif"
+                id="sirket-active"
               />
-              <label htmlFor="sirket-aktif" className="text-sm">
+              <label htmlFor="sirket-active" className="text-sm">
                 Şirket Aktif
               </label>
             </div>

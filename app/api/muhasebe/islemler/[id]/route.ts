@@ -33,7 +33,7 @@ export async function PATCH(
   }
 
   const { data, error } = await supabase
-    .from('nakit_islemler')
+    .from('cash_transactions')
     .update(parsed.data)
     .eq('id', id)
     .select()
@@ -57,7 +57,7 @@ export async function DELETE(
   const supabase = await createClient()
 
   const { error } = await supabase
-    .from('nakit_islemler')
+    .from('cash_transactions')
     .delete()
     .eq('id', id)
 

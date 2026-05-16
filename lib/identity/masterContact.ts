@@ -7,33 +7,30 @@ type EntityKind = 'person' | 'organization'
 const CONTACT_METADATA_KEY = 'contact'
 const PERSON_MASTER_METADATA_KEY = 'person_master'
 const ORGANIZATION_MASTER_METADATA_KEY = 'organization_master'
+
 const PERSON_CONTACT_SELECT = 'id,first_name,last_name,full_name,nationality,national_id,passport_no,birth_date,birth_place,gender,phone,email,address,city,district,metadata_json'
-const ORGANIZATION_CONTACT_SELECT = 'id,legal_name,short_name,country,tax_number,registration_number,tax_office,organization_type,phone,email,address,city,district,metadata_json'
-const EMPLOYEE_MASTER_ENRICH_SELECT = 'id,person_id,ad,soyad,tc_kimlik,pasaport_no,engellilik,engellilik_yuzdesi,askerlik_durumu,tecil_tarihi,hukumluluk,okuryazar_degil,egitim_okullari,yabanci_diller,sertifikalar,medeni_durum,yakinlar,iban,kan_grubu'
+const ORGANIZATION_CONTACT_SELECT = 'id,legal_name,trade_name,short_name,country,tax_number,registration_number,tax_office,organization_type,phone,email,address,city,district,metadata_json'
+const EMPLOYEE_MASTER_ENRICH_SELECT = 'id,person_id,first_name,last_name,national_id,passport_no,has_disability,disability_percentage,military_status,deferment_date,has_conviction,is_illiterate,education_schools,foreign_languages,certificates,marital_status,relatives,iban,blood_type,job_title'
 
 const PERSON_MASTER_PROFILE_KEYS = [
   'photo_logo',
-  'fotograf_url',
-  'engellilik',
-  'engellilik_yuzdesi',
-  'askerlik_durumu',
-  'tecil_tarihi',
-  'hukumluluk',
-  'okuryazar_degil',
-  'egitim_okullari',
-  'yabanci_diller',
-  'sertifikalar',
-  'medeni_durum',
+  'photo_url',
+  'has_disability',
+  'disability_percentage',
+  'military_status',
+  'deferment_date',
+  'has_conviction',
+  'is_illiterate',
+  'education_schools',
+  'foreign_languages',
+  'certificates',
   'marital_status',
-  'yakinlar',
+  'relatives',
   'iban',
   'bank_name',
   'occupation',
-  'profession',
-  'meslek',
-  'gorev',
+  'job_title',
   'blood_type',
-  'kan_grubu',
 ]
 
 const ORGANIZATION_MASTER_PROFILE_KEYS = [
@@ -51,59 +48,39 @@ const ORGANIZATION_MASTER_PROFILE_KEYS = [
 ]
 
 const MASTER_PROFILE_KEYS = new Set([
-  'ad',
-  'soyad',
   'first_name',
   'last_name',
   'full_name',
   'display_name',
   'trade_name',
   'legal_name',
-  'ticari_unvan',
-  'kisa_unvan',
   'short_name',
-  'uyruk',
   'nationality',
   'nationality_country',
-  'tc_kimlik',
   'national_id',
-  'pasaport_no',
   'passport_no',
   'identity_number',
   'tax_id',
-  'vkn_tckn',
   'tax_number',
-  'ticaret_sicil_no',
+  'trade_registry_number',
   'registration_number',
-  'mersis_no',
-  'dogum_tarihi',
+  'mersis_number',
   'birth_date',
-  'dogum_yeri',
   'birth_place',
-  'cinsiyet',
   'gender',
-  'vergi_dairesi',
   'tax_office',
-  'sirket_turu',
   'company_type',
   'foundation_date',
-  'kurulus_tarihi',
-  'telefon',
   'phone',
-  'cep_telefonu',
+  'mobile_phone',
   'email',
-  'adres',
   'address',
-  'il',
   'city',
-  'ilce',
   'district',
-  'telefonlar',
-  'epostalar',
+  'phones',
+  'emails',
   'entity_bank_accounts',
   ...ORGANIZATION_MASTER_PROFILE_KEYS,
-  'photo_logo',
-  'fotograf_url',
   ...PERSON_MASTER_PROFILE_KEYS,
 ])
 
@@ -119,11 +96,11 @@ export function stripMasterDataForRoleProfile(source: Record<string, any>) {
 export function normalizeContactPayload(source: Record<string, any>, kind: EntityKind) {
   const phones = normalizePhones(source)
   const emails = normalizeEmails(source)
-  const phone = clean(source.phone || source.cep_telefonu || source.telefon || source.phone_1 || phones[0]?.numara)
-  const email = clean(source.email || source.email_1 || emails[0]?.adres).toLowerCase()
-  const address = clean(source.address || source.adres)
-  const city = clean(source.city || source.il)
-  const district = clean(source.district || source.ilce)
+  const phone = clean(source.phone || source.mobile_phone || source.phone_1 || phones[0]?.phone)
+  const email = clean(source.email || source.email_1 || emails[0]?.address).toLowerCase()
+  const address = clean(source.address)
+  const city = clean(source.city)
+  const district = clean(source.district)
 
   return {
     phone: phone || null,
@@ -131,14 +108,14 @@ export function normalizeContactPayload(source: Record<string, any>, kind: Entit
     address: address || null,
     city: city || null,
     district: district || null,
-    telefonlar: phones,
-    epostalar: emails,
-    acil_kisi: kind === 'person'
+    phones,
+    emails,
+    emergency_contact: kind === 'person'
       ? {
-          ad: clean(source.acil_kisi_ad) || null,
-          soyad: clean(source.acil_kisi_soyad) || null,
-          yakinlik: clean(source.acil_kisi_yakinlik) || null,
-          telefon: clean(source.acil_kisi_telefon) || null,
+          first_name: clean(source.emergency_contact_first_name) || null,
+          last_name: clean(source.emergency_contact_last_name) || null,
+          relationship: clean(source.emergency_contact_relationship) || null,
+          phone: clean(source.emergency_contact_phone) || null,
         }
       : null,
   }
@@ -148,13 +125,15 @@ export function mergeMasterContactIntoRole(role: Record<string, any>, master: Re
   if (!master) return role
 
   const contact = readContactMetadata(master)
-  const contactPhones = Array.isArray(contact.telefonlar) && contact.telefonlar.length ? contact.telefonlar : master.telefonlar
-  const contactEmails = Array.isArray(contact.epostalar) && contact.epostalar.length ? contact.epostalar : master.epostalar
-  const telefonlar = normalizePhones({ telefonlar: contactPhones, phone: master.phone || master.cep_telefonu, is_telefonu: master.is_telefonu })
-  const epostalar = normalizeEmails({ epostalar: contactEmails, email: master.email })
+  const contactPhones = Array.isArray(contact.phones) && contact.phones.length ? contact.phones : master.phones
+  const contactEmails = Array.isArray(contact.emails) && contact.emails.length ? contact.emails : master.emails
+  const phones = normalizePhones({ phones: contactPhones, phone: master.phone || master.mobile_phone, work_phone: master.work_phone })
+  const emails = normalizeEmails({ emails: contactEmails, email: master.email })
   const personMaster = kind === 'person' ? readPersonMasterMetadata(master) : {}
   const organizationMaster = kind === 'organization' ? readOrganizationMasterMetadata(master) : {}
-  const emergency = kind === 'person' && contact.acil_kisi && typeof contact.acil_kisi === 'object' ? contact.acil_kisi : {}
+  const emergency = kind === 'person' && contact.emergency_contact && typeof contact.emergency_contact === 'object'
+    ? contact.emergency_contact
+    : {}
   const masterWithMetadata = kind === 'person' ? { ...master, ...personMaster } : { ...master, ...organizationMaster }
   const photoLogo: Array<Record<string, any>> = normalizeMasterImages(masterWithMetadata, kind, undefined)
 
@@ -170,35 +149,31 @@ export function mergeMasterContactIntoRole(role: Record<string, any>, master: Re
           display_name: master.full_name || [master.first_name, master.last_name].filter(Boolean).join(' '),
         }
       : {
-          trade_name: master.legal_name || '',
-          legal_name: master.legal_name || '',
+          trade_name: master.trade_name || master.legal_name || '',
+          legal_name: master.legal_name || master.trade_name || '',
           short_name: master.short_name || '',
-          display_name: master.legal_name || master.short_name || '',
+          display_name: master.legal_name || master.trade_name || master.short_name || '',
         }),
     phone: master.phone || '',
-    cep_telefonu: master.phone || '',
-    telefon: master.phone || '',
+    mobile_phone: master.phone || '',
     email: master.email || '',
     address: master.address || '',
-    adres: master.address || '',
     city: master.city || '',
-    il: master.city || '',
     district: master.district || '',
-    ilce: master.district || '',
-    phone_1: telefonlar[0]?.numara || master.phone || '',
-    phone_2: telefonlar[1]?.numara || '',
-    email_1: epostalar[0]?.adres || master.email || '',
-    email_2: epostalar[1]?.adres || '',
-    telefonlar,
-    epostalar,
+    phone_1: phones[0]?.phone || master.phone || '',
+    phone_2: phones[1]?.phone || '',
+    email_1: emails[0]?.address || master.email || '',
+    email_2: emails[1]?.address || '',
+    phones,
+    emails,
     photo_logo: photoLogo,
-    fotograf_url: photoLogo[0]?.previewUrl || photoLogo[0]?.url || '',
+    photo_url: photoLogo[0]?.previewUrl || photoLogo[0]?.url || '',
     ...(kind === 'person'
       ? {
-          acil_kisi_ad: emergency.ad || '',
-          acil_kisi_soyad: emergency.soyad || '',
-          acil_kisi_yakinlik: emergency.yakinlik || '',
-          acil_kisi_telefon: emergency.telefon || '',
+          emergency_contact_first_name: emergency.first_name || '',
+          emergency_contact_last_name: emergency.last_name || '',
+          emergency_contact_relationship: emergency.relationship || '',
+          emergency_contact_phone: emergency.phone || '',
         }
       : {}),
   }
@@ -225,10 +200,8 @@ function normalizeMasterImages(master: Record<string, any>, kind: EntityKind, fa
     }))
   }
 
-  const url = kind === 'person'
-    ? master.fotograf_url || master.photo_url || master.image_url
-    : master.logo_url || master.logoUrl
-  return url ? [{ slotId: 'photo_logo', name: kind === 'person' ? 'Fotoğraf' : 'Logo', previewUrl: url, url }] : []
+  const url = kind === 'person' ? master.photo_url || master.image_url : master.logo_url || master.logoUrl
+  return url ? [{ slotId: 'photo_logo', name: kind === 'person' ? 'Photo' : 'Logo', previewUrl: url, url }] : []
 }
 
 export async function syncMasterContact(supabase: SupabaseClient, kind: EntityKind, masterId: string | null | undefined, source: Record<string, any>) {
@@ -247,14 +220,18 @@ export async function syncMasterContact(supabase: SupabaseClient, kind: EntityKi
   const hasAny = (...keys: string[]) => keys.some(key => Object.prototype.hasOwnProperty.call(source, key))
 
   if (kind === 'person') {
-    if (hasAny('first_name', 'ad')) update.first_name = clean(source.first_name || source.ad) || null
-    if (hasAny('last_name', 'soyad')) update.last_name = clean(source.last_name || source.soyad) || null
-    if (hasAny('display_name', 'full_name', 'first_name', 'last_name', 'ad', 'soyad')) {
-      update.full_name = clean(source.display_name || source.full_name || [source.first_name ?? source.ad ?? current?.first_name, source.last_name ?? source.soyad ?? current?.last_name].filter(Boolean).join(' ')) || null
+    if (hasAny('first_name')) update.first_name = clean(source.first_name) || null
+    if (hasAny('last_name')) update.last_name = clean(source.last_name) || null
+    if (hasAny('display_name', 'full_name', 'first_name', 'last_name')) {
+      update.full_name = clean(
+        source.display_name ||
+        source.full_name ||
+        [source.first_name ?? current?.first_name, source.last_name ?? current?.last_name].filter(Boolean).join(' ')
+      ) || null
     }
-    if (hasAny('birth_date', 'dogum_tarihi')) update.birth_date = clean(source.birth_date || source.dogum_tarihi) || null
-    if (hasAny('birth_place', 'dogum_yeri')) update.birth_place = clean(source.birth_place || source.dogum_yeri) || null
-    if (hasAny('gender', 'cinsiyet')) update.gender = clean(source.gender || source.cinsiyet) || null
+    if (hasAny('birth_date')) update.birth_date = clean(source.birth_date) || null
+    if (hasAny('birth_place')) update.birth_place = clean(source.birth_place) || null
+    if (hasAny('gender')) update.gender = clean(source.gender) || null
     if (hasAny(...PERSON_MASTER_PROFILE_KEYS)) {
       update.metadata_json = {
         ...metadata,
@@ -265,12 +242,16 @@ export async function syncMasterContact(supabase: SupabaseClient, kind: EntityKi
       }
     }
   } else {
-    if (hasAny('trade_name', 'legal_name', 'display_name', 'ticari_unvan')) update.legal_name = clean(source.trade_name || source.legal_name || source.ticari_unvan || source.display_name) || null
-    if (hasAny('short_name', 'kisa_unvan')) update.short_name = clean(source.short_name || source.kisa_unvan) || null
-    if (hasAny('tax_number', 'tax_id', 'identity_number', 'vkn_tckn')) update.tax_number = clean(source.tax_number || source.tax_id || source.identity_number || source.vkn_tckn) || null
-    if (hasAny('tax_office', 'vergi_dairesi')) update.tax_office = clean(source.tax_office || source.vergi_dairesi) || null
-    if (hasAny('company_type', 'sirket_turu')) update.organization_type = clean(source.company_type || source.sirket_turu) || null
-    if (hasAny('trade_registry_no', 'ticaret_sicil_no', 'mersis_no')) update.registration_number = clean(source.trade_registry_no || source.ticaret_sicil_no || source.mersis_no) || null
+    if (hasAny('trade_name', 'legal_name', 'display_name')) {
+      const legalName = clean(source.legal_name || source.trade_name || source.display_name) || null
+      update.legal_name = legalName
+      if (hasAny('trade_name')) update.trade_name = clean(source.trade_name) || legalName
+    }
+    if (hasAny('short_name')) update.short_name = clean(source.short_name) || null
+    if (hasAny('tax_number')) update.tax_number = clean(source.tax_number) || null
+    if (hasAny('tax_office')) update.tax_office = clean(source.tax_office) || null
+    if (hasAny('company_type', 'organization_type')) update.organization_type = clean(source.organization_type || source.company_type) || null
+    if (hasAny('trade_registry_number', 'registration_number', 'mersis_number')) update.registration_number = clean(source.registration_number || source.trade_registry_number || source.mersis_number) || null
     if (hasAny(...ORGANIZATION_MASTER_PROFILE_KEYS)) {
       update.metadata_json = {
         ...metadata,
@@ -282,20 +263,20 @@ export async function syncMasterContact(supabase: SupabaseClient, kind: EntityKi
     }
   }
 
-  if (hasAny('phone', 'cep_telefonu', 'telefon', 'phone_1', 'telefonlar')) update.phone = contact.phone
-  if (hasAny('email', 'email_1', 'epostalar')) update.email = contact.email
-  if (hasAny('address', 'adres')) update.address = contact.address
-  if (hasAny('city', 'il')) update.city = contact.city
-  if (hasAny('district', 'ilce')) update.district = contact.district
+  if (hasAny('phone', 'mobile_phone', 'phone_1', 'phones')) update.phone = contact.phone
+  if (hasAny('email', 'email_1', 'emails')) update.email = contact.email
+  if (hasAny('address')) update.address = contact.address
+  if (hasAny('city')) update.city = contact.city
+  if (hasAny('district')) update.district = contact.district
 
-  if (hasAny('telefonlar', 'epostalar', 'acil_kisi_ad', 'acil_kisi_soyad', 'acil_kisi_yakinlik', 'acil_kisi_telefon')) {
+  if (hasAny('phones', 'emails', 'emergency_contact_first_name', 'emergency_contact_last_name', 'emergency_contact_relationship', 'emergency_contact_phone')) {
     update.metadata_json = {
       ...(update.metadata_json || metadata),
       [CONTACT_METADATA_KEY]: {
         ...(metadata[CONTACT_METADATA_KEY] || {}),
-        ...(hasAny('telefonlar') ? { telefonlar: contact.telefonlar } : {}),
-        ...(hasAny('epostalar') ? { epostalar: contact.epostalar } : {}),
-        ...(kind === 'person' && hasAny('acil_kisi_ad', 'acil_kisi_soyad', 'acil_kisi_yakinlik', 'acil_kisi_telefon') ? { acil_kisi: contact.acil_kisi } : {}),
+        ...(hasAny('phones') ? { phones: contact.phones } : {}),
+        ...(hasAny('emails') ? { emails: contact.emails } : {}),
+        ...(kind === 'person' && hasAny('emergency_contact_first_name', 'emergency_contact_last_name', 'emergency_contact_relationship', 'emergency_contact_phone') ? { emergency_contact: contact.emergency_contact } : {}),
       },
     }
   }
@@ -333,36 +314,33 @@ async function enrichPersonMasterFromEmployee(supabase: SupabaseClient, master: 
   employee = Array.isArray(byPerson.data) ? byPerson.data[0] || null : null
 
   if (!employee && master.national_id) {
-    const byNationalId = await supabase.from('employees').select(EMPLOYEE_MASTER_ENRICH_SELECT).eq('tc_kimlik', master.national_id).limit(1)
+    const byNationalId = await supabase.from('employees').select(EMPLOYEE_MASTER_ENRICH_SELECT).eq('national_id', master.national_id).limit(1)
     employee = Array.isArray(byNationalId.data) ? byNationalId.data[0] || null : null
   }
 
   if (!employee && master.passport_no) {
-    const byPassport = await supabase.from('employees').select(EMPLOYEE_MASTER_ENRICH_SELECT).eq('pasaport_no', master.passport_no).limit(1)
+    const byPassport = await supabase.from('employees').select(EMPLOYEE_MASTER_ENRICH_SELECT).eq('passport_no', master.passport_no).limit(1)
     employee = Array.isArray(byPassport.data) ? byPassport.data[0] || null : null
   }
 
   if (!employee) return master
 
   const employeeProfile: Record<string, any> = {
-    engellilik: employee.engellilik,
-    engellilik_yuzdesi: employee.engellilik_yuzdesi,
-    askerlik_durumu: employee.askerlik_durumu,
-    tecil_tarihi: employee.tecil_tarihi,
-    hukumluluk: employee.hukumluluk,
-    okuryazar_degil: employee.okuryazar_degil,
-    egitim_okullari: employee.egitim_okullari,
-    yabanci_diller: employee.yabanci_diller,
-    sertifikalar: employee.sertifikalar,
-    medeni_durum: employee.medeni_durum,
-    marital_status: employee.medeni_durum,
-    yakinlar: normalizeRelatives(employee.yakinlar),
+    has_disability: employee.has_disability,
+    disability_percentage: employee.disability_percentage,
+    military_status: employee.military_status,
+    deferment_date: employee.deferment_date,
+    has_conviction: employee.has_conviction,
+    is_illiterate: employee.is_illiterate,
+    education_schools: employee.education_schools,
+    foreign_languages: employee.foreign_languages,
+    certificates: employee.certificates,
+    marital_status: employee.marital_status,
+    relatives: normalizeRelatives(employee.relatives),
     iban: employee.iban,
-    occupation: employee.occupation || employee.profession || employee.meslek,
-    profession: employee.profession || employee.meslek,
-    meslek: employee.meslek || employee.profession,
-    blood_type: employee.kan_grubu,
-    kan_grubu: employee.kan_grubu,
+    occupation: employee.job_title,
+    job_title: employee.job_title,
+    blood_type: employee.blood_type,
   }
 
   return {
@@ -410,8 +388,8 @@ function readPersonMasterMetadata(master: Record<string, any>) {
   return {
     ...directProfile,
     ...(personMaster && typeof personMaster === 'object' ? personMaster : {}),
-    ...('yakinlar' in directProfile || (personMaster && typeof personMaster === 'object' && 'yakinlar' in personMaster)
-      ? { yakinlar: normalizeRelatives((personMaster && typeof personMaster === 'object' ? personMaster.yakinlar : undefined) || directProfile.yakinlar) }
+    ...('relatives' in directProfile || (personMaster && typeof personMaster === 'object' && 'relatives' in personMaster)
+      ? { relatives: normalizeRelatives((personMaster && typeof personMaster === 'object' ? personMaster.relatives : undefined) || directProfile.relatives) }
       : {}),
   }
 }
@@ -419,19 +397,7 @@ function readPersonMasterMetadata(master: Record<string, any>) {
 function readOrganizationMasterMetadata(master: Record<string, any>) {
   const metadata = master.metadata_json && typeof master.metadata_json === 'object' ? master.metadata_json : {}
   const organizationMaster = metadata[ORGANIZATION_MASTER_METADATA_KEY]
-  if (!organizationMaster || typeof organizationMaster !== 'object') return {}
-
-  const legacyAccount = clean(organizationMaster.beneficiary_iban_or_account_no)
-  const migrated = { ...organizationMaster }
-  if (legacyAccount && !clean(migrated.beneficiary_iban) && !clean(migrated.beneficiary_account_no)) {
-    if (legacyAccount.replace(/\s/g, '').toUpperCase().startsWith('TR')) {
-      migrated.beneficiary_iban = legacyAccount
-    } else {
-      migrated.beneficiary_account_no = legacyAccount
-    }
-  }
-
-  return migrated
+  return organizationMaster && typeof organizationMaster === 'object' ? organizationMaster : {}
 }
 
 function normalizePersonMasterPayload(source: Record<string, any>) {
@@ -440,10 +406,10 @@ function normalizePersonMasterPayload(source: Record<string, any>) {
       .filter(key => Object.prototype.hasOwnProperty.call(source, key))
       .map(key => [key, source[key] ?? null])
   )
-  if (Object.prototype.hasOwnProperty.call(source, 'yakinlar')) {
-    payload.yakinlar = normalizeRelatives(source.yakinlar)
+  if (Object.prototype.hasOwnProperty.call(source, 'relatives')) {
+    payload.relatives = normalizeRelatives(source.relatives)
   }
-  if (Object.prototype.hasOwnProperty.call(source, 'photo_logo') || Object.prototype.hasOwnProperty.call(source, 'fotograf_url')) {
+  if (Object.prototype.hasOwnProperty.call(source, 'photo_logo') || Object.prototype.hasOwnProperty.call(source, 'photo_url')) {
     payload.photo_logo = normalizeMasterImages(source, 'person', undefined)
   }
   return payload
@@ -454,25 +420,12 @@ function normalizeRelatives(value: unknown) {
 
   return value
     .filter((item): item is Record<string, any> => !!item && typeof item === 'object')
-    .map(item => {
-      const adSoyad = clean(
-        item.ad_soyad ||
-        item.full_name ||
-        item.display_name ||
-        item.name ||
-        [item.ad, item.soyad].filter(Boolean).join(' ')
-      )
-      const akrabalikBicimi = clean(item.akrabalik_bicimi || item.yakinlik || item.relationship)
-
-      return {
-        ...item,
-        ad_soyad: adSoyad || null,
-        dogum_tarihi: clean(item.dogum_tarihi || item.birth_date) || null,
-        akrabalik_bicimi: akrabalikBicimi || null,
-        ...(item.ad === undefined && adSoyad ? { ad: adSoyad } : {}),
-        ...(item.yakinlik === undefined && akrabalikBicimi ? { yakinlik: akrabalikBicimi } : {}),
-      }
-    })
+    .map(item => ({
+      ...item,
+      full_name: clean(item.full_name || item.display_name || item.name || [item.first_name, item.last_name].filter(Boolean).join(' ')) || null,
+      birth_date: clean(item.birth_date) || null,
+      relationship: clean(item.relationship) || null,
+    }))
 }
 
 function normalizeOrganizationMasterPayload(source: Record<string, any>) {
@@ -484,10 +437,6 @@ function normalizeOrganizationMasterPayload(source: Record<string, any>) {
 
   if (Object.prototype.hasOwnProperty.call(source, 'beneficiary_currency')) {
     payload.beneficiary_currency = clean(source.beneficiary_currency).toUpperCase() || null
-  }
-
-  if (!payload.beneficiary_iban_or_account_no && (payload.beneficiary_iban || payload.beneficiary_account_no)) {
-    payload.beneficiary_iban_or_account_no = payload.beneficiary_iban || payload.beneficiary_account_no
   }
 
   if (Object.prototype.hasOwnProperty.call(source, 'beneficiary_bank_code')) {
@@ -510,43 +459,43 @@ function normalizeContactPoints(value: unknown) {
   return value
     .filter((item: any) => item && typeof item === 'object')
     .map((item: Record<string, any>) => ({
-      name: clean(item.name || item.kisi_adi_soyadi || item.full_name),
-      department_title: clean(item.department_title || item.birimi_unvani || item.title),
-      phone: clean(item.phone || item.telefon),
-      email: clean(item.email || item.eposta).toLowerCase(),
+      name: clean(item.name || item.full_name),
+      department_title: clean(item.department_title || item.title),
+      phone: clean(item.phone),
+      email: clean(item.email).toLowerCase(),
     }))
     .filter((item: Record<string, any>) => item.name || item.department_title || item.phone || item.email)
 }
 
 function normalizePhones(source: Record<string, any>) {
-  const raw = Array.isArray(source.telefonlar)
-    ? source.telefonlar
+  const raw = Array.isArray(source.phones)
+    ? source.phones
     : [
-        source.phone || source.cep_telefonu || source.telefon || source.phone_1,
-        source.is_telefonu || source.phone_2,
-      ].filter(Boolean).map((numara, index) => ({ etiket: index === 0 ? 'Birincil' : 'Ikincil', numara }))
+        source.phone || source.mobile_phone || source.phone_1,
+        source.work_phone || source.phone_2,
+      ].filter(Boolean).map((phone, index) => ({ label: index === 0 ? 'Primary' : 'Secondary', phone }))
 
   return raw
     .filter((item: any) => item && typeof item === 'object')
     .map((item: Record<string, any>, index: number) => ({
-      etiket: clean(item.etiket || item.label || (index === 0 ? 'Birincil' : 'Ikincil')),
-      numara: clean(item.numara || item.phone || item.value),
+      label: clean(item.label || (index === 0 ? 'Primary' : 'Secondary')),
+      phone: clean(item.phone),
     }))
-    .filter((item: Record<string, any>) => item.numara)
+    .filter((item: Record<string, any>) => item.phone)
 }
 
 function normalizeEmails(source: Record<string, any>) {
-  const raw = Array.isArray(source.epostalar)
-    ? source.epostalar
-    : [source.email || source.email_1, source.email_2].filter(Boolean).map((adres, index) => ({ etiket: index === 0 ? 'Birincil' : 'Ikincil', adres }))
+  const raw = Array.isArray(source.emails)
+    ? source.emails
+    : [source.email || source.email_1, source.email_2].filter(Boolean).map((address, index) => ({ label: index === 0 ? 'Primary' : 'Secondary', address }))
 
   return raw
     .filter((item: any) => item && typeof item === 'object')
     .map((item: Record<string, any>, index: number) => ({
-      etiket: clean(item.etiket || item.label || (index === 0 ? 'Birincil' : 'Ikincil')),
-      adres: clean(item.adres || item.email || item.value).toLowerCase(),
+      label: clean(item.label || (index === 0 ? 'Primary' : 'Secondary')),
+      address: clean(item.address || item.email).toLowerCase(),
     }))
-    .filter((item: Record<string, any>) => item.adres)
+    .filter((item: Record<string, any>) => item.address)
 }
 
 function clean(value: unknown) {

@@ -10,22 +10,22 @@ const GEMINI_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models
 const EMPLOYEE_SCHEMA = {
   type: 'object',
   properties: {
-    ad: { type: 'string' },
-    soyad: { type: 'string' },
-    uyruk: { type: 'string', enum: ['tc', 'yabanci', ''] },
-    tc_kimlik: { type: 'string' },
-    pasaport_no: { type: 'string' },
-    cinsiyet: { type: 'string', enum: ['erkek', 'kadin', ''] },
-    dogum_tarihi: { type: 'string' },
-    dogum_yeri: { type: 'string' },
-    cep_telefonu: { type: 'string' },
+    first_name: { type: 'string' },
+    last_name: { type: 'string' },
+    nationality: { type: 'string', enum: ['tc', 'yabanci', ''] },
+    national_id: { type: 'string' },
+    passport_no: { type: 'string' },
+    gender: { type: 'string', enum: ['male', 'female', ''] },
+    birth_date: { type: 'string' },
+    birth_place: { type: 'string' },
+    mobile_phone: { type: 'string' },
     email: { type: 'string' },
-    adres: { type: 'string' },
-    il: { type: 'string' },
-    ilce: { type: 'string' },
+    address: { type: 'string' },
+    city: { type: 'string' },
+    district: { type: 'string' },
     pozisyon: { type: 'string' },
-    medeni_durum: { type: 'string', enum: ['bekar', 'evli', ''] },
-    egitim_okullari: {
+    marital_status: { type: 'string', enum: ['single', 'married', ''] },
+    education_schools: {
       type: 'array',
       items: {
         type: 'object',
@@ -37,7 +37,7 @@ const EMPLOYEE_SCHEMA = {
         },
       },
     },
-    yabanci_diller: {
+    foreign_languages: {
       type: 'array',
       items: {
         type: 'object',
@@ -47,7 +47,7 @@ const EMPLOYEE_SCHEMA = {
         },
       },
     },
-    sertifikalar: {
+    certificates: {
       type: 'array',
       items: {
         type: 'object',
@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
 
     if (!apiKey) {
       return NextResponse.json(
-        { error: 'GEMINI_API_KEY tanımlı değil. Ücretsiz Google AI Studio anahtarını Vercel Environment Variables içine ekleyin.' },
+        { error: 'GEMINI_API_KEY tanımlı değcity. Ücretsiz Google AI Studio anahtarını Vercel Environment Variables içine ekleyin.' },
         { status: 503 }
       )
     }
@@ -133,8 +133,8 @@ Kurallar:
 - Tarihleri YYYY-MM-DD formatinda yaz. Ay/yil varsa gunu bos birakmak yerine ilgili alani bos birak.
 - Telefonu Turkiye icin 0 5xx xxx xx xx formatina yaklastir.
 - E-posta adresini kucuk harfle yaz.
-- Ad ve soyadi ayir. Tek isimden emin degilsen ad alanina yaz, soyad bos kalsin.
-- Cinsiyet sadece metinde acikca geciyorsa erkek/kadin.
+- Ad ve soyadi ayir. Tek isimden emin degilsen first_name alanina yaz, last_name bos kalsin.
+- Cinsiyet sadece metinde acikca geciyorsa male/female.
 - Uyruk TC kimlik veya Turk/Turkiye ibaresiyle acikca anlasiliyorsa tc, aksi halde yabanci veya bos.
 
 CV:
@@ -192,8 +192,8 @@ function sanitizeExtractedData(value: unknown) {
     clean.email = clean.email.toLowerCase()
   }
 
-  if (clean.tc_kimlik && typeof clean.tc_kimlik === 'string') {
-    clean.tc_kimlik = clean.tc_kimlik.replace(/\D/g, '').slice(0, 11)
+  if (clean.national_id && typeof clean.national_id === 'string') {
+    clean.national_id = clean.national_id.replace(/\D/g, '').slice(0, 11)
   }
 
   return clean

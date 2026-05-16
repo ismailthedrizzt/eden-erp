@@ -53,7 +53,7 @@ export interface ColumnDef {
   permission?: string // Permission required to view
   render?: (value: any, row: any) => React.ReactNode
   order?: number // For drag-drop ordering
-  category?: string // For grouping columns in selector (e.g., 'Kişisel', 'İş', 'Eğitim')
+  category?: string // For grouping columns in selector (e.g., 'KiÅŸisel', 'Ä°ÅŸ', 'EÄŸitim')
 }
 
 export interface SortConfig {
@@ -158,7 +158,7 @@ export function SmartDataTable<T extends { id: string }>({
   onRefresh,
   showActions,
   loading = false,
-  emptyText = 'Kayıt bulunamadı',
+  emptyText = 'KayÄ±t bulunamadÄ±',
   storageKey = 'smart-table-default',
   widgets = [],
   dashboardWidgets = [],
@@ -172,7 +172,7 @@ export function SmartDataTable<T extends { id: string }>({
   showPassiveToggle = false,
   includePassive = false,
   onIncludePassiveChange,
-  includePassiveLabel = 'Pasif kayıtları da göster',
+  includePassiveLabel = 'Pasif kayÄ±tlarÄ± da gÃ¶ster',
 }: SmartDataTableProps<T>) {
   const isServerPaginated = pagination?.mode === 'server'
   const columnSignature = initialColumns.map(col => `${col.key}:${col.label}:${col.visible ?? ''}:${col.required ?? ''}:${col.fixed ?? ''}:${col.hideable ?? ''}`).join('|')
@@ -694,159 +694,159 @@ export function SmartDataTable<T extends { id: string }>({
     
     const nationalityMap: Record<string, string> = {
       // Turkish variations
-      'Türkiye': 'Türk',
-      'Turkey': 'Türk',
-      'TC': 'Türk',
-      'T.C.': 'Türk',
-      'T.C': 'Türk',
-      'TÜRKİYE CUMHURİYETİ': 'Türk',
-      'TURKIYE CUMHURIYETI': 'Türk',
-      'TURKEY CUMHURIYETI': 'Türk',
-      'TÜRKIYE': 'Türk',
-      'TURKIYE': 'Türk',
+      'TÃ¼rkiye': 'TÃ¼rk',
+      'Turkey': 'TÃ¼rk',
+      'TC': 'TÃ¼rk',
+      'T.C.': 'TÃ¼rk',
+      'T.C': 'TÃ¼rk',
+      'TÃœRKÄ°YE CUMHURÄ°YETÄ°': 'TÃ¼rk',
+      'TURKIYE CUMHURIYETI': 'TÃ¼rk',
+      'TURKEY CUMHURIYETI': 'TÃ¼rk',
+      'TÃœRKIYE': 'TÃ¼rk',
+      'TURKIYE': 'TÃ¼rk',
       'Yunanistan': 'Yunan',
       'Greece': 'Yunan',
       'Almanya': 'Alman',
       'Germany': 'Alman',
-      'Fransa': 'Fransız',
-      'France': 'Fransız',
-      'İngiltere': 'İngiliz',
-      'United Kingdom': 'İngiliz',
-      'İtalya': 'İtalyan',
-      'Italy': 'İtalyan',
-      'İspanya': 'İspanyol',
-      'Spain': 'İspanyol',
-      'ABD': 'Amerikalı',
-      'USA': 'Amerikalı',
-      'Amerika': 'Amerikalı',
+      'Fransa': 'FransÄ±z',
+      'France': 'FransÄ±z',
+      'Ä°ngiltere': 'Ä°ngiliz',
+      'United Kingdom': 'Ä°ngiliz',
+      'Ä°talya': 'Ä°talyan',
+      'Italy': 'Ä°talyan',
+      'Ä°spanya': 'Ä°spanyol',
+      'Spain': 'Ä°spanyol',
+      'ABD': 'AmerikalÄ±',
+      'USA': 'AmerikalÄ±',
+      'Amerika': 'AmerikalÄ±',
       'Rusya': 'Rus',
       'Russia': 'Rus',
-      'Çin': 'Çinli',
-      'China': 'Çinli',
+      'Ã‡in': 'Ã‡inli',
+      'China': 'Ã‡inli',
       'Japonya': 'Japon',
       'Japan': 'Japon',
-      'Hollanda': 'Hollandalı',
-      'Netherlands': 'Hollandalı',
-      'Belçika': 'Belçikalı',
-      'Belgium': 'Belçikalı',
-      'Avusturya': 'Avusturyalı',
-      'Austria': 'Avusturyalı',
-      'İsviçre': 'İsviçreli',
-      'Switzerland': 'İsviçreli',
-      'İsveç': 'İsveçli',
-      'Sweden': 'İsveçli',
-      'Norveç': 'Norveçli',
-      'Norway': 'Norveçli',
-      'Danimarka': 'Danimarkalı',
-      'Denmark': 'Danimarkalı',
+      'Hollanda': 'HollandalÄ±',
+      'Netherlands': 'HollandalÄ±',
+      'BelÃ§ika': 'BelÃ§ikalÄ±',
+      'Belgium': 'BelÃ§ikalÄ±',
+      'Avusturya': 'AvusturyalÄ±',
+      'Austria': 'AvusturyalÄ±',
+      'Ä°sviÃ§re': 'Ä°sviÃ§reli',
+      'Switzerland': 'Ä°sviÃ§reli',
+      'Ä°sveÃ§': 'Ä°sveÃ§li',
+      'Sweden': 'Ä°sveÃ§li',
+      'NorveÃ§': 'NorveÃ§li',
+      'Norway': 'NorveÃ§li',
+      'Danimarka': 'DanimarkalÄ±',
+      'Denmark': 'DanimarkalÄ±',
       'Finlandiya': 'Fin',
       'Finland': 'Fin',
-      'Polonya': 'Polonyalı',
-      'Poland': 'Polonyalı',
-      'Ukrayna': 'Ukraynalı',
-      'Ukraine': 'Ukraynalı',
+      'Polonya': 'PolonyalÄ±',
+      'Poland': 'PolonyalÄ±',
+      'Ukrayna': 'UkraynalÄ±',
+      'Ukraine': 'UkraynalÄ±',
       'Bulgaristan': 'Bulgar',
       'Bulgaria': 'Bulgar',
       'Romanya': 'Rumen',
       'Romania': 'Rumen',
-      'Sırbistan': 'Sırp',
-      'Serbia': 'Sırp',
-      'Hırvatistan': 'Hırvat',
-      'Croatia': 'Hırvat',
+      'SÄ±rbistan': 'SÄ±rp',
+      'Serbia': 'SÄ±rp',
+      'HÄ±rvatistan': 'HÄ±rvat',
+      'Croatia': 'HÄ±rvat',
       'Yugoslavya': 'Yugoslav',
       'Yugoslavia': 'Yugoslav',
-      'Çekya': 'Çek',
-      'Czech Republic': 'Çek',
+      'Ã‡ekya': 'Ã‡ek',
+      'Czech Republic': 'Ã‡ek',
       'Slovakya': 'Slovak',
       'Slovakia': 'Slovak',
       'Macaristan': 'Macar',
       'Hungary': 'Macar',
       'Portekiz': 'Portekizli',
       'Portugal': 'Portekizli',
-      'İrlanda': 'İrlandalı',
-      'Ireland': 'İrlandalı',
-      'Kanada': 'Kanadalı',
-      'Canada': 'Kanadalı',
-      'Avustralya': 'Avustralyalı',
-      'Australia': 'Avustralyalı',
-      'Brezilya': 'Brezilyalı',
-      'Brazil': 'Brezilyalı',
+      'Ä°rlanda': 'Ä°rlandalÄ±',
+      'Ireland': 'Ä°rlandalÄ±',
+      'Kanada': 'KanadalÄ±',
+      'Canada': 'KanadalÄ±',
+      'Avustralya': 'AvustralyalÄ±',
+      'Australia': 'AvustralyalÄ±',
+      'Brezilya': 'BrezilyalÄ±',
+      'Brazil': 'BrezilyalÄ±',
       'Arjantin': 'Arjantinli',
       'Argentina': 'Arjantinli',
-      'Meksika': 'Meksikalı',
-      'Mexico': 'Meksikalı',
-      'Mısır': 'Mısırlı',
-      'Egypt': 'Mısırlı',
-      'Güney Afrika': 'Güney Afrikalı',
-      'South Africa': 'Güney Afrikalı',
+      'Meksika': 'MeksikalÄ±',
+      'Mexico': 'MeksikalÄ±',
+      'MÄ±sÄ±r': 'MÄ±sÄ±rlÄ±',
+      'Egypt': 'MÄ±sÄ±rlÄ±',
+      'GÃ¼ney Afrika': 'GÃ¼ney AfrikalÄ±',
+      'South Africa': 'GÃ¼ney AfrikalÄ±',
       'Hindistan': 'Hintli',
       'India': 'Hintli',
-      'Pakistan': 'Pakistanlı',
-      'Bangladeş': 'Bangladeşli',
-      'Bangladesh': 'Bangladeşli',
-      'Endonezya': 'Endonezyalı',
-      'Indonesia': 'Endonezyalı',
+      'Pakistan': 'PakistanlÄ±',
+      'BangladeÅŸ': 'BangladeÅŸli',
+      'Bangladesh': 'BangladeÅŸli',
+      'Endonezya': 'EndonezyalÄ±',
+      'Indonesia': 'EndonezyalÄ±',
       'Malezya': 'Malezya',
       'Malaysia': 'Malezya',
-      'Tayland': 'Taylandlı',
-      'Thailand': 'Taylandlı',
-      'Vietnam': 'Vietnamlı',
-      'Güney Kore': 'Güney Koreli',
-      'South Korea': 'Güney Koreli',
+      'Tayland': 'TaylandlÄ±',
+      'Thailand': 'TaylandlÄ±',
+      'Vietnam': 'VietnamlÄ±',
+      'GÃ¼ney Kore': 'GÃ¼ney Koreli',
+      'South Korea': 'GÃ¼ney Koreli',
       'Kuzey Kore': 'Kuzey Koreli',
       'North Korea': 'Kuzey Koreli',
-      'İran': 'İranlı',
-      'Iran': 'İranlı',
-      'Irak': 'Iraklı',
-      'Iraq': 'Iraklı',
+      'Ä°ran': 'Ä°ranlÄ±',
+      'Iran': 'Ä°ranlÄ±',
+      'Irak': 'IraklÄ±',
+      'Iraq': 'IraklÄ±',
       'Suriye': 'Suriyeli',
       'Syria': 'Suriyeli',
-      'Suudi Arabistan': 'Suudi Arabistanlı',
-      'Saudi Arabia': 'Suudi Arabistanlı',
+      'Suudi Arabistan': 'Suudi ArabistanlÄ±',
+      'Saudi Arabia': 'Suudi ArabistanlÄ±',
       'BAE': 'BAE',
       'UAE': 'BAE',
-      'İsrail': 'İsrailli',
-      'Israel': 'İsrailli',
-      'Ürdün': 'Ürdünlü',
-      'Jordan': 'Ürdünlü',
-      'Lübnan': 'Lübnanlı',
-      'Lebanon': 'Lübnanlı',
+      'Ä°srail': 'Ä°srailli',
+      'Israel': 'Ä°srailli',
+      'ÃœrdÃ¼n': 'ÃœrdÃ¼nlÃ¼',
+      'Jordan': 'ÃœrdÃ¼nlÃ¼',
+      'LÃ¼bnan': 'LÃ¼bnanlÄ±',
+      'Lebanon': 'LÃ¼bnanlÄ±',
       'Tunus': 'Tunuslu',
       'Tunisia': 'Tunuslu',
-      'Fas': 'Faslı',
-      'Morocco': 'Faslı',
+      'Fas': 'FaslÄ±',
+      'Morocco': 'FaslÄ±',
       'Cezayir': 'Cezayirli',
       'Algeria': 'Cezayirli',
-      'Libya': 'Libyalı',
-      'Sudan': 'Sudanlı',
-      'Etiyopya': 'Etiyopyalı',
-      'Ethiopia': 'Etiyopyalı',
-      'Nijerya': 'Nijeryalı',
-      'Nigeria': 'Nijeryalı',
-      'Kenya': 'Kenyalı',
-      'Tanzanya': 'Tanzanyalı',
-      'Tanzania': 'Tanzanyalı',
+      'Libya': 'LibyalÄ±',
+      'Sudan': 'SudanlÄ±',
+      'Etiyopya': 'EtiyopyalÄ±',
+      'Ethiopia': 'EtiyopyalÄ±',
+      'Nijerya': 'NijeryalÄ±',
+      'Nigeria': 'NijeryalÄ±',
+      'Kenya': 'KenyalÄ±',
+      'Tanzanya': 'TanzanyalÄ±',
+      'Tanzania': 'TanzanyalÄ±',
       'Kamerun': 'Kamerunlu',
       'Cameroon': 'Kamerunlu',
-      'Uganda': 'Ugandalı',
-      'Gana': 'Ganalı',
-      'Ghana': 'Ganalı',
+      'Uganda': 'UgandalÄ±',
+      'Gana': 'GanalÄ±',
+      'Ghana': 'GanalÄ±',
       'Mozambik': 'Mozambikli',
       'Mozambique': 'Mozambikli',
-      'Zambiya': 'Zambiyalı',
-      'Zambia': 'Zambiyalı',
+      'Zambiya': 'ZambiyalÄ±',
+      'Zambia': 'ZambiyalÄ±',
       'Zimbabve': 'Zimbabveli',
       'Zimbabwe': 'Zimbabveli',
-      'Botsvana': 'Botsvanalı',
-      'Botswana': 'Botsvanalı',
-      'Namibya': 'Namibyalı',
-      'Namibia': 'Namibyalı',
-      'Angola': 'Angolalı',
-      'Madagaskar': 'Madagaskarlı',
-      'Madagascar': 'Madagaskarlı',
+      'Botsvana': 'BotsvanalÄ±',
+      'Botswana': 'BotsvanalÄ±',
+      'Namibya': 'NamibyalÄ±',
+      'Namibia': 'NamibyalÄ±',
+      'Angola': 'AngolalÄ±',
+      'Madagaskar': 'MadagaskarlÄ±',
+      'Madagascar': 'MadagaskarlÄ±',
       'Mauritius': 'Mauritiuslu',
-      'Seyşeller': 'Seyşelli',
-      'Seychelles': 'Seyşelli',
+      'SeyÅŸeller': 'SeyÅŸelli',
+      'Seychelles': 'SeyÅŸelli',
     }
     
     // Try exact match first, then uppercase match
@@ -863,9 +863,9 @@ export function SmartDataTable<T extends { id: string }>({
     
     // For image type, handle specially (even if custom render exists, prefer type-based render)
     if (col.type === 'image' || forceImageType) {
-      const imageUrl = value || r?.profileImage || r?.image || r?.photo || r?.avatar || r?.profile_image || r?.foto || r?.fotograf_url
-      const initials = (r?.firstName?.[0] || r?.name?.[0] || r?.ad?.[0] || r?.soyad?.[0] || '?').toUpperCase()
-      const fullName = r?.firstName || r?.name || r?.ad || r?.fullname || 'İsimsiz'
+      const imageUrl = value || r?.profileImage || r?.image || r?.photo || r?.avatar || r?.profile_image || r?.photo_url
+      const initials = (r?.first_name?.[0] || r?.firstName?.[0] || r?.name?.[0] || r?.last_name?.[0] || '?').toUpperCase()
+      const fullName = r?.full_name || r?.fullname || r?.first_name || r?.firstName || r?.name || 'Ä°simsiz'
       
       return (
         <div className="w-10 h-10 rounded-full overflow-hidden bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center flex-shrink-0 border-2 border-white shadow-sm">
@@ -898,22 +898,21 @@ export function SmartDataTable<T extends { id: string }>({
       return <span className="inline-block text-gray-900 dark:text-gray-100">{getCountryLabel(value)}</span>
     }
 
-    if (col.key === 'nationality' || col.key === 'uyruk' || col.key === 'vatandaslik') {
+    if (col.key === 'nationality' || col.key === 'nationality' || col.key === 'vatandaslik') {
       return <span className="inline-block text-gray-900 dark:text-gray-100">{convertToNationality(value)}</span>
     }
     
     // Handle gender column
-    if (col.key === 'gender' || col.key === 'cinsiyet') {
+    if (col.key === 'gender' || col.key === 'gender') {
       const genderMap: Record<string, string> = {
-        'erkek': 'Erkek',
-        'kadın': 'Kadın',
-        'kadin': 'Kadın',
         'male': 'Erkek',
-        'female': 'Kadın',
+        'kadÄ±n': 'KadÄ±n',
+        'female': 'KadÄ±n',
+
         'E': 'Erkek',
-        'K': 'Kadın',
+        'K': 'KadÄ±n',
         'M': 'Erkek',
-        'F': 'Kadın',
+        'F': 'KadÄ±n',
       }
       const gender = genderMap[String(value).toLowerCase()] || (value ? String(value).charAt(0).toUpperCase() + String(value).slice(1).toLowerCase() : '-')
       return gender
@@ -926,7 +925,7 @@ export function SmartDataTable<T extends { id: string }>({
         </span>
       ) : (
         <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-100">
-          Hayır
+          HayÄ±r
         </span>
       )
     }
@@ -983,7 +982,7 @@ export function SmartDataTable<T extends { id: string }>({
       <div className="flex items-center justify-between mb-3">
         <h3 className="font-medium text-blue-900 dark:text-blue-100 flex items-center gap-2">
           <Eye size={16} />
-          Hızlı Bakış
+          HÄ±zlÄ± BakÄ±ÅŸ
         </h3>
         <div className="flex items-center gap-2">
           <button
@@ -1062,7 +1061,7 @@ export function SmartDataTable<T extends { id: string }>({
 
         {!hasSelectedQuickLookContent && (
           <div className="text-center text-sm text-gray-500 dark:text-gray-400 py-4">
-            Tercihlerde seçili hızlı bakış widget&apos;ı yok.
+            Tercihlerde seÃ§ili hÄ±zlÄ± bakÄ±ÅŸ widget&apos;Ä± yok.
           </div>
         )}
       </div>
@@ -1121,7 +1120,7 @@ export function SmartDataTable<T extends { id: string }>({
               {screenSize}
             </span>
             {columnEconomy.overflow > 0 && (
-              <span title="Sütun genişliği aşıldı">
+              <span title="SÃ¼tun geniÅŸliÄŸi aÅŸÄ±ldÄ±">
                 <AlertTriangle size={14} className="text-orange-500" />
               </span>
             )}
@@ -1140,7 +1139,7 @@ export function SmartDataTable<T extends { id: string }>({
 
           {/* AI Assistant */}
           <button
-            onClick={() => alert('AI Asistan yakında geliyor!')}
+            onClick={() => alert('AI Asistan yakÄ±nda geliyor!')}
             className="p-2 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/30 text-purple-600 dark:text-purple-400 transition-colors"
             title="AI Asistan"
           >
@@ -1156,7 +1155,7 @@ export function SmartDataTable<T extends { id: string }>({
                 ? "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400" 
                 : "hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400"
             )}
-            title="Hızlı Bakış"
+            title="HÄ±zlÄ± BakÄ±ÅŸ"
           >
             <Eye size={18} />
             {hasQuickLookContent && (
@@ -1190,7 +1189,7 @@ export function SmartDataTable<T extends { id: string }>({
                   ? "bg-white dark:bg-gray-600 shadow text-gray-900 dark:text-white" 
                   : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
               )}
-              title="Liste görünümü"
+              title="Liste gÃ¶rÃ¼nÃ¼mÃ¼"
             >
               <List size={18} />
             </button>
@@ -1202,7 +1201,7 @@ export function SmartDataTable<T extends { id: string }>({
                   ? "bg-white dark:bg-gray-600 shadow text-gray-900 dark:text-white" 
                   : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
               )}
-              title="Kart görünümü"
+              title="Kart gÃ¶rÃ¼nÃ¼mÃ¼"
             >
               <Grid3X3 size={18} />
             </button>
@@ -1212,7 +1211,7 @@ export function SmartDataTable<T extends { id: string }>({
           <button
             onClick={() => exportToCSV(filteredData, visibleColumns)}
             className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400 transition-colors"
-            title="CSV olarak dışa aktar"
+            title="CSV olarak dÄ±ÅŸa aktar"
           >
             <FileDown size={18} />
           </button>
@@ -1227,7 +1226,7 @@ export function SmartDataTable<T extends { id: string }>({
                   ? "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400"
                   : "hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400"
               )}
-              title="Sütun ayarları"
+              title="SÃ¼tun ayarlarÄ±"
             >
               <Settings size={18} />
             </button>
@@ -1236,7 +1235,7 @@ export function SmartDataTable<T extends { id: string }>({
               <div className="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 z-50">
                 <div className="p-3 border-b border-gray-200 dark:border-gray-700 space-y-2">
                   <div className="flex items-center justify-between">
-                    <h3 className="font-medium text-gray-900 dark:text-white">Sütunlar</h3>
+                    <h3 className="font-medium text-gray-900 dark:text-white">SÃ¼tunlar</h3>
                     <span className="text-xs text-gray-500 dark:text-gray-400">
                       {columnConfig.filter(c => c.visible !== false).length} / {columnConfig.length}
                     </span>
@@ -1246,7 +1245,7 @@ export function SmartDataTable<T extends { id: string }>({
                     onClick={resetColumnsToDefault}
                     className="w-full rounded-md border border-gray-200 px-2 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-700"
                   >
-                    Sütunları Varsayılana Döndür
+                    SÃ¼tunlarÄ± VarsayÄ±lana DÃ¶ndÃ¼r
                   </button>
                   {hasQuickLookContent && (
                     <div className="rounded-lg border border-gray-200 p-2 dark:border-gray-700">
@@ -1254,7 +1253,7 @@ export function SmartDataTable<T extends { id: string }>({
                         <div>
                           <h4 className="text-xs font-semibold text-gray-700 dark:text-gray-200">Widget Tercihleri</h4>
                           <p className="text-[11px] text-gray-500 dark:text-gray-400">
-                            {selectedQuickLookWidgetIds.length} / {quickLookWidgetIds.length} seçili
+                            {selectedQuickLookWidgetIds.length} / {quickLookWidgetIds.length} seÃ§ili
                           </p>
                         </div>
                         <button
@@ -1262,7 +1261,7 @@ export function SmartDataTable<T extends { id: string }>({
                           onClick={resetQuickLookWidgetsToDefault}
                           className="rounded-md border border-gray-200 px-2 py-1 text-[11px] font-medium text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-700"
                         >
-                          Varsayılan
+                          VarsayÄ±lan
                         </button>
                       </div>
                       <div className="max-h-36 space-y-1 overflow-y-auto pr-1">
@@ -1300,7 +1299,7 @@ export function SmartDataTable<T extends { id: string }>({
                   {/* Width Quota Bar */}
                   <div className="space-y-1">
                     <div className="flex items-center justify-between text-xs">
-                      <span className="text-gray-500 dark:text-gray-400">Genişlik Kotası</span>
+                      <span className="text-gray-500 dark:text-gray-400">GeniÅŸlik KotasÄ±</span>
                       <span className={cn(
                         columnEconomy.overflow > 0 ? "text-orange-500" : "text-green-600 dark:text-green-400"
                       )}>
@@ -1319,12 +1318,12 @@ export function SmartDataTable<T extends { id: string }>({
                     {columnEconomy.overflow > 0 && (
                       <p className="text-xs text-orange-500 flex items-center gap-1">
                         <AlertTriangle size={12} />
-                        Ekrana sığmayan sütunlar var. Font boyutu küçültüldü.
+                        Ekrana sÄ±ÄŸmayan sÃ¼tunlar var. Font boyutu kÃ¼Ã§Ã¼ltÃ¼ldÃ¼.
                       </p>
                     )}
                     {!columnEconomy.canAddMore && (
                       <p className="text-xs text-amber-600 dark:text-amber-400">
-                        Kotanın üzerinde sütun seçilemez.
+                        KotanÄ±n Ã¼zerinde sÃ¼tun seÃ§ilemez.
                       </p>
                     )}
                   </div>
@@ -1340,10 +1339,10 @@ export function SmartDataTable<T extends { id: string }>({
                     }, {} as Record<string, ColumnDef[]>)
                     
                     const categoryStyles: Record<string, string> = {
-                      'Kişisel': 'bg-blue-50 dark:bg-blue-900/20 border-l-2 border-blue-400',
-                      'İş': 'bg-green-50 dark:bg-green-900/20 border-l-2 border-green-400',
-                      'Eğitim': 'bg-purple-50 dark:bg-purple-900/20 border-l-2 border-purple-400',
-                      'İletişim': 'bg-orange-50 dark:bg-orange-900/20 border-l-2 border-orange-400',
+                      'KiÅŸisel': 'bg-blue-50 dark:bg-blue-900/20 border-l-2 border-blue-400',
+                      'Ä°ÅŸ': 'bg-green-50 dark:bg-green-900/20 border-l-2 border-green-400',
+                      'EÄŸitim': 'bg-purple-50 dark:bg-purple-900/20 border-l-2 border-purple-400',
+                      'Ä°letiÅŸim': 'bg-orange-50 dark:bg-orange-900/20 border-l-2 border-orange-400',
                       'Adres': 'bg-gray-50 dark:bg-gray-700/30 border-l-2 border-gray-400',
                       'Genel': 'bg-gray-50 dark:bg-gray-700/30',
                     }
@@ -1408,13 +1407,13 @@ export function SmartDataTable<T extends { id: string }>({
           <div className="flex items-center justify-between">
             <h3 className="font-medium text-gray-900 dark:text-white flex items-center gap-2">
               <Filter size={16} />
-              Sütun Filtreleri
+              SÃ¼tun Filtreleri
             </h3>
             <button
               onClick={() => setFilters([])}
               className="text-sm text-red-600 hover:text-red-700"
             >
-              Tümünü Temizle
+              TÃ¼mÃ¼nÃ¼ Temizle
             </button>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
@@ -1502,7 +1501,7 @@ export function SmartDataTable<T extends { id: string }>({
                 })}
                 {shouldShowActions && (
                   <th className="sticky right-0 z-20 w-12 border-l border-gray-200 bg-gray-50 px-3 py-3 text-center text-xs font-medium text-gray-500 shadow-[-6px_0_10px_-10px_rgba(0,0,0,0.45)] dark:border-gray-700 dark:bg-gray-700">
-                    İşlem
+                    Ä°ÅŸlem
                   </th>
                 )}
               </tr>
@@ -1583,11 +1582,11 @@ export function SmartDataTable<T extends { id: string }>({
             const r = row as Record<string, any>
             const imageCol = columnConfig.find(c => c.type === 'image')
             const imageValue = imageCol ? getNestedValue(row, imageCol.key) : null
-            const imageUrl = imageValue || r?.profileImage || r?.image || r?.photo || r?.avatar || r?.profile_image || r?.foto || r?.fotograf_url
-            const firstInitial = (r?.firstName?.[0] || r?.name?.[0] || r?.ad?.[0] || '?').toUpperCase()
-            const lastInitial = (r?.soyad?.[0] || r?.lastName?.[0] || r?.surname?.[0] || '').toUpperCase()
+            const imageUrl = imageValue || r?.profileImage || r?.image || r?.photo || r?.avatar || r?.profile_image || r?.photo_url
+            const firstInitial = (r?.first_name?.[0] || r?.firstName?.[0] || r?.name?.[0] || '?').toUpperCase()
+            const lastInitial = (r?.last_name?.[0] || r?.lastName?.[0] || r?.surname?.[0] || '').toUpperCase()
             const initials = firstInitial + lastInitial || '?'
-            const fullName = r?.fullname || `${r?.ad || r?.firstName || r?.name || ''} ${r?.soyad || r?.lastName || r?.surname || ''}`.trim() || 'İsimsiz'
+            const fullName = r?.full_name || r?.fullname || `${r?.first_name || r?.firstName || r?.name || ''} ${r?.last_name || r?.lastName || r?.surname || ''}`.trim() || 'Ä°simsiz'
             
             const cardFieldPool = columnConfig.filter(c => c.type !== 'image' && c.type !== 'actions')
             const requiredCols = cardFieldPool.filter(c => c.required)
@@ -1648,7 +1647,7 @@ export function SmartDataTable<T extends { id: string }>({
                       </div>
                     )) : (
                       <div className="text-sm text-gray-500 dark:text-gray-400 italic">
-                        Zorunlu alan tanımlanmamış
+                        Zorunlu alan tanÄ±mlanmamÄ±ÅŸ
                       </div>
                     )}
                   </div>
@@ -1663,10 +1662,10 @@ export function SmartDataTable<T extends { id: string }>({
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
         <div className="flex items-center gap-4">
           <span className="text-sm text-gray-600 dark:text-gray-400">
-            Toplam {totalRows} kayıt
+            Toplam {totalRows} kayÄ±t
           </span>
           <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-600 dark:text-gray-400">Sayfa başı:</span>
+            <span className="text-sm text-gray-600 dark:text-gray-400">Sayfa baÅŸÄ±:</span>
             <select
               value={activePageSize}
               onChange={(e) => {
@@ -1687,7 +1686,7 @@ export function SmartDataTable<T extends { id: string }>({
             disabled={activePage === 1}
             className="px-3 py-1.5 rounded-lg text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300"
           >
-            İlk
+            Ä°lk
           </button>
           <button
             onClick={() => handlePageChange(activePage - 1)}
@@ -1740,7 +1739,7 @@ function ColumnFilterInput({
           onChange={(e) => onChange(e.target.value || null, 'equals')}
           className="w-full border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
         >
-          <option value="">Tümü</option>
+          <option value="">TÃ¼mÃ¼</option>
           {column.enumOptions.map(opt => (
             <option key={opt} value={opt}>{opt}</option>
           ))}
@@ -1762,7 +1761,7 @@ function ColumnFilterInput({
               onChange(newValue, 'between')
             }}
             className="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-2 py-1.5 text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
-            placeholder="Başlangıç"
+            placeholder="BaÅŸlangÄ±Ã§"
           />
           <input
             type="date"
@@ -1772,7 +1771,7 @@ function ColumnFilterInput({
               onChange(newValue, 'between')
             }}
             className="flex-1 border border-gray-300 dark:border-gray-600 rounded-lg px-2 py-1.5 text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
-            placeholder="Bitiş"
+            placeholder="BitiÅŸ"
           />
         </div>
       </div>
@@ -1799,7 +1798,7 @@ function exportToCSV<T extends { id: string }>(
   columns: ColumnDef[]
 ) {
   if (data.length === 0) {
-    alert('Dışa aktarılacak veri yok')
+    alert('DÄ±ÅŸa aktarÄ±lacak veri yok')
     return
   }
 

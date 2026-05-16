@@ -8,6 +8,16 @@ Frontend -> Backend API -> Supabase/PostgreSQL
 
 Frontend tarafinda bulunan her eski Supabase sorgusu modul endpointine tasinir. Endpoint yoksa once backend tarafinda olusturulur, sonra frontend API client'a cevrilir.
 
+## Pipeline naming contract
+
+Yeni islerde frontend, backend ve veritabani ayni canonical Ingilizce kavram adini kullanir. UI'da gorunen Turkce metinler `lib/projectGlossary.ts` icindeki sozlukten gelir.
+
+- Frontend form state ve API payload key'leri canonical Ingilizce adlari kullanir.
+- Backend validation schema ve service tipleri ayni canonical adlari kullanir.
+- Yeni migration'larda tablo, kolon, index ve constraint adlari Ingilizce `snake_case` olur.
+- Legacy veritabani adlari sadece explicit persistence mapper veya rename/backfill migration'i icinde ele alinir.
+- Compatibility alias veya ayni kavram icin ikinci payload/kolon adi eklenmez.
+
 ## Genel endpoint sekli
 
 ```text

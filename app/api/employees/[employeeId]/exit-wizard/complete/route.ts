@@ -10,7 +10,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
   const { data: current, error: currentError } = await supabase
     .from('employees')
-    .select('id,sirket_id,record_status,field_history')
+    .select('id,company_id,record_status,field_history')
     .eq('id', employeeId)
     .maybeSingle()
 
@@ -30,7 +30,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
   await supabase.from('employee_work_lifecycle_events').insert({
     employee_id: employeeId,
-    company_id: current.sirket_id || null,
+    company_id: current.company_id || null,
     event_type: 'exit_completed',
     event_date: exitDate,
     old_record_status: current.record_status || 'active',
@@ -45,10 +45,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     .update({
       record_status: 'passive',
       employment_status: 'terminated',
-      calisma_durumu: 'ayrilmis',
-      isten_ayrilis: exitDate,
-      sgk_cikis_yontemi: body.run_sgk_exit ? 'servis' : body.sgk_cikis_yontemi || 'web',
-      sgk_cikis_nedeni: body.sgk_cikis_nedeni || body.exit_reason || null,
+      work_status: 'terminated',
+      exit_date: exitDate,
+      sgk_exit_method: body.run_sgk_exit ? 'servis' : body.sgk_exit_method || 'web',
+      sgk_exit_reason: body.sgk_exit_reason || body.exit_reason || null,
       field_history: history,
     })
     .eq('id', employeeId)

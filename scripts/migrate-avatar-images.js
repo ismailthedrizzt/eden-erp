@@ -23,16 +23,16 @@ const supabase = createClient(supabaseUrl, serviceRoleKey, {
 })
 
 const jsonImageTargets = [
-  { table: 'sirketler', column: 'hero_images', maxDimension: 512, thumbnailDimension: 128 },
-  { table: 'sirket_ortaklar', column: 'photo_logo', maxDimension: 384, thumbnailDimension: 96 },
-  { table: 'sirket_temsilciler', column: 'photo_logo', maxDimension: 384, thumbnailDimension: 96 },
+  { table: 'companies', column: 'hero_images', maxDimension: 512, thumbnailDimension: 128 },
+  { table: 'company_partners', column: 'photo_logo', maxDimension: 384, thumbnailDimension: 96 },
+  { table: 'company_representatives', column: 'photo_logo', maxDimension: 384, thumbnailDimension: 96 },
   { table: 'stakeholders', column: 'photo_logo', maxDimension: 384, thumbnailDimension: 96 },
   { table: 'persons', column: 'photo_logo', maxDimension: 384, thumbnailDimension: 96, optional: true },
   { table: 'organizations', column: 'photo_logo', maxDimension: 384, thumbnailDimension: 96, optional: true },
 ]
 
 const textImageTargets = [
-  { table: 'employees', column: 'fotograf_url', maxDimension: 384 },
+  { table: 'employees', column: 'photo_url', maxDimension: 384 },
 ]
 
 main().catch(error => {

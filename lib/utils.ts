@@ -34,9 +34,9 @@ export function toInputDate(dateStr: string | null | undefined): string {
 }
 
 // İsim baş harfleri avatar
-export function initials(ad: string, soyad?: string): string {
+export function initials(ad: string, last_name?: string): string {
   const a = ad?.[0]?.toUpperCase() ?? ''
-  const s = soyad?.[0]?.toUpperCase() ?? ''
+  const s = last_name?.[0]?.toUpperCase() ?? ''
   return a + s
 }
 
@@ -108,7 +108,7 @@ export function getTurkishIbanBanks(): TurkishIbanBank[] {
 }
 
 // TCMB 2008/6 sayili Teblig ve guncel TCMB IBAN bilgisindeki TR format:
-// 2 ulke kodu + 2 kontrol + 5 banka/odeme hizmeti saglayicisi kodu
+// 2 country kodu + 2 kontrol + 5 banka/odeme hizmeti saglayicisi kodu
 // + 1 rezerv alan + 16 hesap numarasi alanidir.
 export function resolveTurkishIban(
   iban: string,

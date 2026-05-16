@@ -10,7 +10,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
   const { data: current, error: currentError } = await supabase
     .from('employees')
-    .select('id,sirket_id,record_status,field_history')
+    .select('id,company_id,record_status,field_history')
     .eq('id', employeeId)
     .maybeSingle()
 
@@ -19,7 +19,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
   await supabase.from('employee_work_relations').upsert({
     employee_id: employeeId,
-    company_id: body.company_id || current.sirket_id || null,
+    company_id: body.company_id || current.company_id || null,
     relationship_type: body.relationship_type || null,
     sgk_responsibility: body.sgk_responsibility || null,
     payroll_included: body.sgk_responsibility === 'sgk_company',
@@ -53,7 +53,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
   await supabase.from('employee_work_lifecycle_events').insert({
     employee_id: employeeId,
-    company_id: body.company_id || current.sirket_id || null,
+    company_id: body.company_id || current.company_id || null,
     event_type: body.sgk_responsibility === 'school' ? 'internship_started' : 'entry_completed',
     event_date: startDate,
     relationship_type: body.relationship_type || null,
@@ -69,9 +69,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     .update({
       record_status: 'active',
       employment_status: 'active',
-      calisma_durumu: 'gorevde',
-      sgk_giris: startDate,
-      sgk_giris_yontemi: body.run_sgk_entry ? 'servis' : body.sgk_giris_yontemi || 'web',
+      work_status: 'active',
+      sgk_entry_date: startDate,
+      sgk_entry_method: body.run_sgk_entry ? 'servis' : body.sgk_entry_method || 'web',
       field_history: history,
     })
     .eq('id', employeeId)

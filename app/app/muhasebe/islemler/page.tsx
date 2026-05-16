@@ -19,10 +19,10 @@ export default function IslemlerPage() {
   const [modalOpen, setModalOpen] = useState(false)
   const [taraf, setTaraf]   = useState('')
   const [proje, setProje]   = useState('')
-  const [tip,   setTip]     = useState('')
+  const [type,   setTip]     = useState('')
   const [ara,   setAra]     = useState('')
 
-  const { data, loading, yenile } = useNakitIslemler({ islemTarafi: taraf||undefined, proje: proje||undefined, tip: tip as any, ara: ara||undefined })
+  const { data, loading, yenile } = useNakitIslemler({ islemTarafi: taraf||undefined, proje: proje||undefined, type: type as any, ara: ara||undefined })
 
   const filteredTotal = {
     gelir: data.reduce((s,r)=>s+(r.gelir||0),0),
@@ -53,7 +53,7 @@ export default function IslemlerPage() {
           <option value="">Tüm Projeler</option>
           {PROJELER.map(p=><option key={p}>{p}</option>)}
         </select>
-        <select value={tip} onChange={e=>setTip(e.target.value)} className={SL} style={{width:140}}>
+        <select value={type} onChange={e=>setTip(e.target.value)} className={SL} style={{width:140}}>
           <option value="">Gelir & Gider</option>
           <option value="gelir">Sadece Gelir</option>
           <option value="gider">Sadece Gider</option>

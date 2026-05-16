@@ -399,7 +399,7 @@ export default function LoginPage() {
               </div>
               {fallbackCode && (
                 <p className="mt-4 rounded-lg border border-[#28445c] bg-[#091826] p-3 text-center text-xs text-white/45">
-                  Demo kodu ekrandaki geçici koddur. Gerçek SMS Supabase&apos;de aktif.
+                  Demo kodu ekrandaki geçici koddur. Gerçek SMS Supabase&apos;de active.
                 </p>
               )}
             </>

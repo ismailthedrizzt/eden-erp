@@ -16,7 +16,7 @@ type CompanyVehicleListOptions = ApiClientOptions & Partial<Pick<ListQuery, 'pag
 export const companyVehicleService = {
   list(options: CompanyVehicleListOptions = {}) {
     const { includeReferences, page, pageSize, search, sort, direction, ...clientOptions } = options
-    return apiClient.get<CompanyVehiclePayload>('/api/sirket/araclar', {
+    return apiClient.get<CompanyVehiclePayload>('/api/companies/vehicles', {
       ...clientOptions,
       skipAuth: clientOptions.skipAuth ?? true,
       staleTime: clientOptions.staleTime ?? 120_000,
@@ -33,7 +33,7 @@ export const companyVehicleService = {
   },
 
   references(options: ApiClientOptions = {}) {
-    return apiClient.get<Pick<CompanyVehiclePayload, 'employees' | 'companies'>>('/api/sirket/araclar', {
+    return apiClient.get<Pick<CompanyVehiclePayload, 'employees' | 'companies'>>('/api/companies/vehicles', {
       ...options,
       skipAuth: options.skipAuth ?? true,
       staleTime: options.staleTime ?? 120_000,
@@ -45,21 +45,21 @@ export const companyVehicleService = {
   },
 
   create(payload: Record<string, unknown>) {
-    return apiClient.post<{ data: any }>('/api/sirket/araclar', payload, { useCache: false })
+    return apiClient.post<{ data: any }>('/api/companies/vehicles', payload, { useCache: false })
   },
 
   update(payload: Record<string, unknown>) {
-    return apiClient.patch<{ data: any }>('/api/sirket/araclar', payload, { useCache: false })
+    return apiClient.patch<{ data: any }>('/api/companies/vehicles', payload, { useCache: false })
   },
 
   delete(id: string) {
-    return apiClient.delete<{ success: true }>('/api/sirket/araclar', {
+    return apiClient.delete<{ success: true }>('/api/companies/vehicles', {
       query: { id },
       useCache: false,
     })
   },
 
   invalidateList() {
-    apiClient.invalidate('/api/sirket/araclar')
+    apiClient.invalidate('/api/companies/vehicles')
   },
 }

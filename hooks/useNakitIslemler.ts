@@ -8,18 +8,18 @@ import type { NakitIslem } from '@/types'
 interface Filters {
   islemTarafi?: string
   proje?: string
-  tip?: 'gelir' | 'gider' | ''
+  type?: 'gelir' | 'gider' | ''
   ara?: string
 }
 
 export function useNakitIslemler(filters: Filters = {}) {
-  const filterKey = `${filters.islemTarafi ?? ''}|${filters.proje ?? ''}|${filters.tip ?? ''}|${filters.ara ?? ''}`
+  const filterKey = `${filters.islemTarafi ?? ''}|${filters.proje ?? ''}|${filters.type ?? ''}|${filters.ara ?? ''}`
   const debouncedFilterKey = useDebouncedValue(filterKey)
-  const [islemTarafi, proje, tip, ara] = debouncedFilterKey.split('|')
+  const [islemTarafi, proje, type, ara] = debouncedFilterKey.split('|')
   const debouncedFilters = {
     islemTarafi: islemTarafi || undefined,
     proje: proje || undefined,
-    tip: (tip || undefined) as Filters['tip'],
+    type: (type || undefined) as Filters['type'],
     ara: ara || undefined,
   }
   const [data, setData] = useState<NakitIslem[]>([])

@@ -11,17 +11,17 @@ const cookie = process.env.LOAD_TEST_COOKIE || 'demo_auth=true'
 const scenarios = [
   {
     name: 'employees-list',
-    path: '/api/ik/personel?page=1&pageSize=50&sort=ad&direction=asc',
+    path: '/api/employees?page=1&pageSize=50&sort=first_name&direction=asc',
     thresholds: { p97_5: 500, non2xx: 0 },
   },
   {
     name: 'companies-list',
-    path: '/api/sirketler?page=1&pageSize=50&sort=kisa_unvan&direction=asc',
+    path: '/api/companies?page=1&pageSize=50&sort=short_name&direction=asc',
     thresholds: { p97_5: 500, non2xx: 0 },
   },
   {
     name: 'partners-list',
-    path: '/api/sirketler/ortaklar?page=1&pageSize=50&sort=display_name&direction=asc',
+    path: '/api/companies/partners?page=1&pageSize=50&sort=display_name&direction=asc',
     thresholds: { p97_5: 650, non2xx: 0 },
   },
   {

@@ -398,7 +398,7 @@ function LicenseDetailPanel({
           <div className="mb-3 flex items-center justify-between gap-3">
             <div>
               <div className="text-sm font-semibold text-gray-900 dark:text-white">Modül Lisansı</div>
-              <div className="text-xs text-gray-500">Alt modüller varsa tri-state durum gösterir.</div>
+              <div className="text-xs text-gray-500">Alt modüller varsa tri-state status gösterir.</div>
             </div>
             {submodules.length > 0 ? (
               <TriStateToggle state={state} onChange={() => onModuleTriState(module.module_key, state)} />
@@ -498,8 +498,8 @@ function environmentOptions() {
     { value: 'development', label: 'Development' },
     { value: 'production', label: 'Production' },
     { value: 'test', label: 'Test' },
-    { value: 'dev', label: 'Dev (legacy)' },
-    { value: 'prod', label: 'Prod (legacy)' },
+    { value: 'dev', label: 'Dev' },
+    { value: 'prod', label: 'Prod' },
   ]
 }
 

@@ -23,7 +23,7 @@ export class BankSyncService {
       throw new Error(error.message)
     }
     if (!connection) throw new Error('Banka bağlantısı bulunamadı.')
-    if (connection.status !== 'active') throw new Error('Banka bağlantısı aktif değil.')
+    if (connection.status !== 'active') throw new Error('Banka bağlantısı active değcity.')
     if (!connection.credential_id) throw new Error('Banka bağlantısı için credential_id tanımlanmalıdır.')
 
     const normalizedConnection = {

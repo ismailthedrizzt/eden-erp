@@ -5,8 +5,8 @@ import { organizationService } from '@/lib/services/organizationService'
 import type { Birim, NormKadro } from '@/types'
 
 export function useTeskilat() {
-  const [birimler, setBirimler] = useState<Birim[]>([])
-  const [kadrolar, setKadrolar] = useState<NormKadro[]>([])
+  const [organization_units, setBirimler] = useState<Birim[]>([])
+  const [positions, setPositions] = useState<NormKadro[]>([])
   const [loading, setLoading] = useState(true)
   const hasDataRef = useRef(false)
 
@@ -15,8 +15,8 @@ export function useTeskilat() {
       setLoading(previous => !hasDataRef.current ? true : previous)
       try {
         const result = await organizationService.list()
-        setBirimler(result.birimler ?? [])
-        setKadrolar(result.kadrolar ?? [])
+        setBirimler(result.organization_units ?? [])
+        setPositions(result.positions ?? [])
         hasDataRef.current = true
       } finally {
         setLoading(false)
@@ -26,14 +26,14 @@ export function useTeskilat() {
   }, [])
 
   function buildTree(parentId: string | null = null): Birim[] {
-    return birimler
-      .filter(b => (b.ust_birim_id ?? null) === parentId)
-      .map(b => ({ ...b, alt_birimler: buildTree(b.id), kadrolar: kadrolar.filter(k => k.birim_id === b.id) }))
+    return organization_units
+      .filter(b => (b.parent_unit_id ?? null) === parentId)
+      .map(b => ({ ...b, alt_birimler: buildTree(b.id), positions: positions.filter(k => k.unit_id === b.id) }))
   }
 
-  const dolu = kadrolar.filter(k => k.durum === 'dolu').length
-  const acik = kadrolar.filter(k => k.durum === 'acik').length
-  const dolulukOrani = kadrolar.length ? Math.round((dolu / kadrolar.length) * 100) : 0
+  const filled = positions.filter(k => k.status === 'filled').length
+  const open = positions.filter(k => k.status === 'open').length
+  const fillRate = positions.length ? Math.round((filled / positions.length) * 100) : 0
 
-  return { birimler, kadrolar, loading, buildTree, dolu, acik, dolulukOrani }
+  return { organization_units, positions, loading, buildTree, filled, open, fillRate }
 }

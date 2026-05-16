@@ -1526,7 +1526,7 @@ export function DocumentSlotUploader({
               </h3>
             </div>
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
-              <strong>{(deleteTargetDoc || currentDoc)?.name}</strong> aktif listeden kaldırılacak, ancak geçmiş kayıtlar ve raporlar için saklanmaya devam edecek.
+              <strong>{(deleteTargetDoc || currentDoc)?.name}</strong> active listeden kaldırılacak, ancak geçmiş kayıtlar ve raporlar için saklanmaya devam edecek.
             </p>
             <div className="flex gap-3">
               <button

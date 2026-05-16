@@ -23,22 +23,22 @@ export async function GET(request: NextRequest) {
 
   const islemTarafi = searchParams.get('islem_tarafi')
   const proje = searchParams.get('proje')
-  const tip = searchParams.get('tip') // 'gelir' | 'gider'
+  const type = searchParams.get('type') // 'gelir' | 'gider'
   const ara = searchParams.get('ara')
   const page = parseInt(searchParams.get('page') ?? '1')
   const pageSize = parseInt(searchParams.get('pageSize') ?? '50')
   const includeCount = searchParams.get('includeCount') === 'true'
 
   let query = supabase
-    .from('nakit_islemler')
+    .from('cash_transactions')
     .select('id,tarih,gelir,gider,aciklama,proje,belge_no,islem_tarafi,karsi_taraf,banka,hesap_tipi,hesap_no,created_at,updated_at', includeCount ? { count: 'exact' } : undefined)
     .order('tarih', { ascending: false })
     .range((page - 1) * pageSize, page * pageSize - 1)
 
   if (islemTarafi) query = query.eq('islem_tarafi', islemTarafi)
   if (proje) query = query.eq('proje', proje)
-  if (tip === 'gelir') query = query.gt('gelir', 0)
-  if (tip === 'gider') query = query.gt('gider', 0)
+  if (type === 'gelir') query = query.gt('gelir', 0)
+  if (type === 'gider') query = query.gt('gider', 0)
   if (ara) query = query.or(`aciklama.ilike.%${ara}%,karsi_taraf.ilike.%${ara}%`)
 
   const { data, error, count } = await query
@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
   }
 
   const { data, error } = await supabase
-    .from('nakit_islemler')
+    .from('cash_transactions')
     .insert(parsed.data)
     .select()
     .single()

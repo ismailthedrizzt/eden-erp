@@ -13,7 +13,7 @@ export default function SirketDashboardPage() {
     {
       title: 'Şirketlerimiz',
       description: 'Yönetilen şirketler listesi ve detayları',
-      href: '/app/sirket/sirketler',
+      href: '/app/sirket/companies',
       icon: Building2,
       color: 'bg-blue-500'
     },

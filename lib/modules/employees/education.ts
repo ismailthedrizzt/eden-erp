@@ -43,10 +43,10 @@ export function getCompletedEducationValue(school: Record<string, unknown>) {
   return degree
 }
 
-export function getEducationLevelValue(personel: { okuryazar_degil?: boolean; egitim_okullari?: Array<Record<string, unknown>> }) {
-  if (personel.okuryazar_degil) return 'Okuryazar Değil'
+export function getEducationLevelValue(employees: { is_illiterate?: boolean; education_schools?: Array<Record<string, unknown>> }) {
+  if (employees.is_illiterate) return 'Okuryazar Değcity'
 
-  const schools = Array.isArray(personel.egitim_okullari) ? personel.egitim_okullari : []
+  const schools = Array.isArray(employees.education_schools) ? employees.education_schools : []
   let bestValue = ''
   let bestIndex = -1
 
@@ -62,11 +62,11 @@ export function getEducationLevelValue(personel: { okuryazar_degil?: boolean; eg
   return bestValue
 }
 
-export function getEducationSummary(personel: { okuryazar_degil?: boolean; egitim_okullari?: Array<Record<string, unknown>> }) {
-  if (personel.okuryazar_degil) return 'Okuryazar Değil'
+export function getEducationSummary(employees: { is_illiterate?: boolean; education_schools?: Array<Record<string, unknown>> }) {
+  if (employees.is_illiterate) return 'Okuryazar Değcity'
 
-  const schools = Array.isArray(personel.egitim_okullari) ? personel.egitim_okullari : []
-  const bestValue = getEducationLevelValue(personel)
+  const schools = Array.isArray(employees.education_schools) ? employees.education_schools : []
+  const bestValue = getEducationLevelValue(employees)
   const bestLabel = bestValue ? LEVEL_BY_VALUE[bestValue]?.label : ''
   const fallback = schools.find(school => school.derece || school.okul_adi)
 

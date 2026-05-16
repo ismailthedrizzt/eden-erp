@@ -4,7 +4,7 @@ import type { NakitIslem } from '@/types'
 export type CashTransactionFilters = {
   islemTarafi?: string
   proje?: string
-  tip?: 'gelir' | 'gider' | ''
+  type?: 'gelir' | 'gider' | ''
   ara?: string
 }
 
@@ -16,7 +16,7 @@ export const accountingService = {
       query: {
         islem_tarafi: filters.islemTarafi,
         proje: filters.proje,
-        tip: filters.tip,
+        type: filters.type,
         ara: filters.ara,
         ...options.query,
       },

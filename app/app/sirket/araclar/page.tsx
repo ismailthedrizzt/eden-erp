@@ -44,15 +44,15 @@ type VehicleStatus = 'Aktif' | 'Atanmış' | 'Bakımda' | 'Kirada' | 'Operasyon 
 interface Employee {
   id: string
   ad?: string
-  soyad?: string
-  unvan?: string
+  last_name?: string
+  title?: string
   email?: string
 }
 
 interface CompanyOption {
   id: string
-  ticari_unvan?: string
-  kisa_unvan?: string
+  trade_name?: string
+  short_name?: string
 }
 
 interface HistoryEntry {
@@ -405,7 +405,7 @@ function VehicleForm({
             <SelectField label="Durum" value={formData.status} onChange={(value) => updateField('status', value)} options={statusOptions} readOnly={readOnly} required history={fieldHistory(formData.history, 'status')} />
 
             <SelectField label="Mülkiyet Tipi" value={formData.ownership_type || 'Şirket Malı'} onChange={(value) => updateField('ownership_type', value)} options={ownershipOptions} readOnly={readOnly} />
-            <SelectField label="Bağlı Şirket" value={formData.company_id || ''} onChange={(value) => updateField('company_id', value || null)} options={companies.map((company) => ({ value: company.id, label: company.kisa_unvan || company.ticari_unvan || 'Şirket' }))} readOnly={readOnly} />
+            <SelectField label="Bağlı Şirket" value={formData.company_id || ''} onChange={(value) => updateField('company_id', value || null)} options={companies.map((company) => ({ value: company.id, label: company.short_name || company.trade_name || 'Şirket' }))} readOnly={readOnly} />
             <InputField label="Yerleşke / Lokasyon" value={formData.location_name || ''} onChange={(value) => updateField('location_name', value)} readOnly={readOnly} />
           </div>
         </Card>
@@ -413,7 +413,7 @@ function VehicleForm({
 
       <div className="rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
         <div className="flex gap-1 overflow-x-auto border-b border-gray-200 px-3 pt-3 dark:border-gray-700">
-          {['genel', 'atama', 'bakim', 'sigorta', 'kullanim', 'belgeler', 'notlar', 'gecmis'].map((tab) => (
+          {['genel', 'atama', 'bakim', 'sigorta', 'kullanim', 'belgeler', 'notes', 'gecmis'].map((tab) => (
             <button
               key={tab}
               type="button"
@@ -475,7 +475,7 @@ function VehicleForm({
             </div>
           )}
 
-          {activeTab === 'notlar' && (
+          {activeTab === 'notes' && (
             <TextareaField label="Notlar" value={formData.notes || ''} onChange={(value) => updateField('notes', value)} readOnly={readOnly} />
           )}
 
@@ -781,7 +781,7 @@ function vehicleTitle(vehicle?: Vehicle | null) {
 }
 
 function personName(person?: Employee | null) {
-  return [person?.ad, person?.soyad].filter(Boolean).join(' ').trim()
+  return [person?.ad, person?.last_name].filter(Boolean).join(' ').trim()
 }
 
 function hasUpcomingWarning(vehicle: Vehicle) {
@@ -838,7 +838,7 @@ function tabLabel(tab: string) {
     sigorta: 'Sigorta',
     kullanim: 'Kullanım / Yakıt',
     belgeler: 'Belgeler',
-    notlar: 'Notlar',
+    notes: 'Notlar',
     gecmis: 'Geçmiş',
   }
   return labels[tab] || tab

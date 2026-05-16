@@ -64,18 +64,18 @@ export function EmployeeLifecycleWizard({ type, employee, onClose, onComplete }:
   const [error, setError] = useState('')
   const [form, setForm] = useState<Record<string, any>>(() => ({
     relationship_type: employee.relationship_type || 'SGK’lı Çalışan',
-    start_date: employee.sgk_giris || employee.entry_date || new Date().toISOString().slice(0, 10),
-    company_id: employee.sirket_id || employee.company_id || '',
-    department_position: [employee.birim_adi, employee.kadro_unvani || employee.gorev].filter(Boolean).join(' / '),
+    start_date: employee.sgk_entry_date || employee.entry_date || new Date().toISOString().slice(0, 10),
+    company_id: employee.company_id || employee.company_id || '',
+    department_position: [employee.unit_name, employee.position_title || employee.job_title].filter(Boolean).join(' / '),
     sgk_responsibility: employee.sgk_responsibility || 'sgk_company',
-    sgk_entry_date: employee.sgk_giris || new Date().toISOString().slice(0, 10),
+    sgk_entry_date: employee.sgk_entry_date || new Date().toISOString().slice(0, 10),
     payment_type: employee.payment_type || 'Aylık Maaş',
     gross_net_type: employee.gross_net_type || 'brut',
     currency: employee.currency || 'TRY',
     payment_period: employee.payment_period || 'Aylık',
     weekly_working_days: employee.weekly_working_days || '5',
     daily_working_hours: employee.daily_working_hours || '7.5',
-    exit_date: employee.isten_ayrilis || new Date().toISOString().slice(0, 10),
+    exit_date: employee.exit_date || new Date().toISOString().slice(0, 10),
     exit_reason: employee.exit_reason || '',
     exit_type: employee.exit_type || '',
     final_payment_status: employee.final_payment_status || '',
@@ -133,7 +133,7 @@ export function EmployeeLifecycleWizard({ type, employee, onClose, onComplete }:
         <div className="flex items-center justify-between border-b border-gray-200 px-5 py-4 dark:border-gray-800">
           <div>
             <h3 className="text-base font-semibold text-gray-900 dark:text-white">{title}</h3>
-            <p className="text-xs text-gray-500 dark:text-gray-400">{employee.ad} {employee.soyad}</p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">{employee.first_name} {employee.last_name}</p>
           </div>
           <button type="button" onClick={onClose} className="rounded-md p-2 hover:bg-gray-100 dark:hover:bg-gray-800"><X size={18} /></button>
         </div>
@@ -188,9 +188,9 @@ function renderEntryStep(step: number, form: Record<string, any>, setForm: (upda
     <Select label="SGK Bildirim Sorumlusu" field="sgk_responsibility" value={form.sgk_responsibility} options={sgkResponsibilities.map(([, label]) => label)} values={sgkResponsibilities.map(([value]) => value)} setForm={setForm} />
     {companySgk && <>
       <Input label="SGK İşe Giriş Tarihi" field="sgk_entry_date" type="date" value={form.sgk_entry_date} setForm={setForm} />
-      <Input label="Sigorta Kolu" field="sgk_giris_sigorta_kolu" value={form.sgk_giris_sigorta_kolu} setForm={setForm} />
-      <Input label="Görev Kodu" field="sgk_giris_gorev_kodu" value={form.sgk_giris_gorev_kodu} setForm={setForm} />
-      <Input label="Meslek Kodu" field="sgk_giris_meslek_kodu" value={form.sgk_giris_meslek_kodu} setForm={setForm} />
+      <Input label="Sigorta Kolu" field="sgk_entry_insurance_branch" value={form.sgk_entry_insurance_branch} setForm={setForm} />
+      <Input label="Görev Kodu" field="sgk_entry_duty_code" value={form.sgk_entry_duty_code} setForm={setForm} />
+      <Input label="Meslek Kodu" field="sgk_entry_occupation_code" value={form.sgk_entry_occupation_code} setForm={setForm} />
       <Check label="SGK Girişi Yapılacak mı?" field="run_sgk_entry" value={form.run_sgk_entry} setForm={setForm} />
     </>}
     {school && <>
@@ -224,8 +224,8 @@ function renderExitStep(step: number, form: Record<string, any>, setForm: (updat
   if (step === 1) return <FieldGrid>
     {companySgk && <>
       <Input label="SGK İşten Çıkış Tarihi" field="sgk_exit_date" type="date" value={form.sgk_exit_date || form.exit_date} setForm={setForm} />
-      <Input label="SGK Çıkış Nedeni" field="sgk_cikis_nedeni" value={form.sgk_cikis_nedeni || form.exit_reason} setForm={setForm} />
-      <Input label="Meslek Kodu" field="sgk_cikis_meslek_kodu" value={form.sgk_cikis_meslek_kodu} setForm={setForm} />
+      <Input label="SGK Çıkış Nedeni" field="sgk_exit_reason" value={form.sgk_exit_reason || form.exit_reason} setForm={setForm} />
+      <Input label="Meslek Kodu" field="sgk_exit_occupation_code" value={form.sgk_exit_occupation_code} setForm={setForm} />
       <Check label="SGK Çıkışı Yapılacak mı?" field="run_sgk_exit" value={form.run_sgk_exit} setForm={setForm} />
     </>}
     <Input label="Sözleşme / Hizmet Bitiş Tarihi" field="contract_end_date" type="date" value={form.contract_end_date || form.exit_date} setForm={setForm} />

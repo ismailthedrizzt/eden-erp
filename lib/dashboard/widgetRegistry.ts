@@ -58,9 +58,9 @@ const employeeWidgets: DashboardWidgetRegistryRecord[] = employeesDashboardLayou
   description: widget.description || dataSourceLabel(widget.dataSource),
   moduleKey: 'ik',
   moduleLabel: 'İnsan Kaynakları',
-  pageKey: 'ik-personel',
+  pageKey: 'ik-employees',
   pageLabel: 'Çalışanlarımız',
-  pagePath: '/app/ik/personel',
+  pagePath: '/app/ik/employees',
 }))
 
 const companyWidgets: DashboardWidgetRegistryRecord[] = [
@@ -70,9 +70,9 @@ const companyWidgets: DashboardWidgetRegistryRecord[] = [
     description: 'Şirket bağlantılarını ve ticari ağı Türkiye/Dünya haritası üzerinde gösterir.',
     moduleKey: 'sirket',
     moduleLabel: 'Şirket Yönetimi',
-    pageKey: 'sirketler',
+    pageKey: 'companies',
     pageLabel: 'Şirketler',
-    pagePath: '/app/sirket/sirketler',
+    pagePath: '/app/sirket/companies',
   },
 ]
 
@@ -145,13 +145,6 @@ export const dashboardWidgetRegistry: DashboardWidgetRegistryRecord[] = [
   ...employeeWidgets,
   ...ownershipTransactionWidgets,
 ]
-
-export const legacyHomeWidgetIdMap: Record<string, string> = {
-  ik_ozeti: 'employees-total',
-  kadro_doluluk: 'employees-department',
-  duyurular: 'home-actions',
-  gorevlerim: 'home-actions',
-}
 
 export function uniqueWidgetModules(records: WidgetRegistryGroupRecord[] = dashboardWidgetRegistry) {
   return uniqueBy(records.map(record => ({

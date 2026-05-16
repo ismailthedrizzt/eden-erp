@@ -37,7 +37,7 @@ export default function SureclerPage() {
         </Link>
 
         <Link
-          href="/app/sirket/surecler/aktif"
+          href="/app/sirket/surecler/active"
           className="p-6 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 hover:border-purple-500 transition-all"
         >
           <div className="flex items-center justify-between">

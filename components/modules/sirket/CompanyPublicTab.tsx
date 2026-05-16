@@ -103,7 +103,7 @@ export function CompanyPublicTab({ data, onChange, readOnly = false }: CompanyPu
   const publicRegistry = normalizeObject(data.public_registry)
   const publicChannels = normalizeObject(data.public_channels)
   const licenses = normalizeArray<CompanyPublicLicense>(data.public_licenses)
-  const isForeignCompany = data.ulke && data.ulke !== 'Türkiye'
+  const isForeignCompany = data.country && data.country !== 'Türkiye'
   const primaryNace = getPrimaryNace(data.company_nace_codes)
 
   const mergedHistory = useMemo(
@@ -176,10 +176,10 @@ export function CompanyPublicTab({ data, onChange, readOnly = false }: CompanyPu
         <PublicCard title="Vergi" description="Gelir İdaresi ve mükellefiyet bilgileri">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
             <Field label="Vergi Numarası *">
-              <input className={inputClass} value={publicTax.tax_number ?? data.vkn_tckn ?? ''} onChange={(e) => updateSection('public_tax', 'tax_number', e.target.value)} disabled={readOnly} />
+              <input className={inputClass} value={publicTax.tax_number ?? data.tax_number ?? ''} onChange={(e) => updateSection('public_tax', 'tax_number', e.target.value)} disabled={readOnly} />
             </Field>
-            <Field label="Vergi Dairesi *" history={historyText(data.field_history?.vergi_dairesi)}>
-              <input className={inputClass} value={publicTax.tax_office ?? data.vergi_dairesi ?? ''} onChange={(e) => updateSection('public_tax', 'tax_office', e.target.value)} disabled={readOnly} />
+            <Field label="Vergi Dairesi *" history={historyText(data.field_history?.tax_office)}>
+              <input className={inputClass} value={publicTax.tax_office ?? data.tax_office ?? ''} onChange={(e) => updateSection('public_tax', 'tax_office', e.target.value)} disabled={readOnly} />
             </Field>
             <Field label="Vergi Türü">
               <Select value={publicTax.tax_type || ''} onChange={(value) => updateSection('public_tax', 'tax_type', value)} options={taxTypes} disabled={readOnly} />
@@ -187,10 +187,10 @@ export function CompanyPublicTab({ data, onChange, readOnly = false }: CompanyPu
             <Field label="Mükellefiyet Başlangıç Tarihi">
               <input type="date" className={inputClass} value={publicTax.liability_start_date || ''} onChange={(e) => updateSection('public_tax', 'liability_start_date', e.target.value)} disabled={readOnly} />
             </Field>
-            <ToggleField label="E-Fatura Mükellefi mi" checked={!!publicTax.e_invoice_taxpayer || !!data.e_fatura_mukellefi} onChange={(value) => updateSection('public_tax', 'e_invoice_taxpayer', value)} disabled={readOnly} />
-            <ToggleField label="E-Arşiv Mükellefi mi" checked={!!publicTax.e_archive_taxpayer || !!data.e_arsiv_mukellefi} onChange={(value) => updateSection('public_tax', 'e_archive_taxpayer', value)} disabled={readOnly} />
-            <ToggleField label="E-İrsaliye Kullanıyor mu" checked={!!publicTax.e_waybill_enabled || !!data.e_irsaliye_mukellefi} onChange={(value) => updateSection('public_tax', 'e_waybill_enabled', value)} disabled={readOnly} />
-            {(publicTax.e_invoice_taxpayer || data.e_fatura_mukellefi) && (
+            <ToggleField label="E-Fatura Mükellefi mi" checked={!!publicTax.e_invoice_taxpayer || !!data.e_invoice_taxpayer} onChange={(value) => updateSection('public_tax', 'e_invoice_taxpayer', value)} disabled={readOnly} />
+            <ToggleField label="E-Arşiv Mükellefi mi" checked={!!publicTax.e_archive_taxpayer || !!data.e_archive_taxpayer} onChange={(value) => updateSection('public_tax', 'e_archive_taxpayer', value)} disabled={readOnly} />
+            <ToggleField label="E-İrsaliye Kullanıyor mu" checked={!!publicTax.e_waybill_enabled || !!data.e_waybill_taxpayer} onChange={(value) => updateSection('public_tax', 'e_waybill_enabled', value)} disabled={readOnly} />
+            {(publicTax.e_invoice_taxpayer || data.e_invoice_taxpayer) && (
               <>
                 <Field label="GİB Kullanıcı Kodu">
                   <input className={inputClass} value={publicTax.gib_user_code || ''} onChange={(e) => updateSection('public_tax', 'gib_user_code', e.target.value)} disabled={readOnly} />
@@ -213,25 +213,25 @@ export function CompanyPublicTab({ data, onChange, readOnly = false }: CompanyPu
         <PublicCard title="SGK" description="İşyeri sicil, risk sınıfı, teşvik ve borç takip alanları">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
             <Field label="SGK İşyeri Sicil No">
-              <input className={inputClass} value={publicSgk.workplace_registry_no ?? data.sgk_is_yeri_sicil_no ?? ''} onChange={(e) => updateSection('public_sgk', 'workplace_registry_no', e.target.value)} disabled={readOnly} />
+              <input className={inputClass} value={publicSgk.workplace_registry_no ?? data.sgk_workplace_registry_no ?? ''} onChange={(e) => updateSection('public_sgk', 'workplace_registry_no', e.target.value)} disabled={readOnly} />
             </Field>
             {!isForeignCompany && (
               <>
                 <Field label="SGK İl">
-                  <input className={inputClass} value={publicSgk.province ?? data.sgk_il ?? ''} onChange={(e) => updateSection('public_sgk', 'province', e.target.value)} disabled={readOnly} />
+                  <input className={inputClass} value={publicSgk.province ?? data.sgk_province ?? ''} onChange={(e) => updateSection('public_sgk', 'province', e.target.value)} disabled={readOnly} />
                 </Field>
                 <Field label="SGK Şube">
-                  <input className={inputClass} value={publicSgk.branch ?? data.sgk_sube ?? ''} onChange={(e) => updateSection('public_sgk', 'branch', e.target.value)} disabled={readOnly} />
+                  <input className={inputClass} value={publicSgk.branch ?? data.sgk_branch ?? ''} onChange={(e) => updateSection('public_sgk', 'branch', e.target.value)} disabled={readOnly} />
                 </Field>
               </>
             )}
             <Field label="İşyeri Tescil Tarihi">
               <input type="date" className={inputClass} value={publicSgk.registration_date || ''} onChange={(e) => updateSection('public_sgk', 'registration_date', e.target.value)} disabled={readOnly} />
             </Field>
-            <Field label="Birincil NACE Kodu" history={historyText(data.field_history?.nace_kodlari)}>
+            <Field label="Birincil NACE Kodu" history={historyText(data.field_history?.nace_codes)}>
               <ReadOnlyValue value={primaryNace?.nace_code?.nace_code || publicSgk.nace_code || 'Birincil NACE kodu seçilmemiş'} />
             </Field>
-            <Field label="Tehlike Sınıfı" history={historyText(data.field_history?.tehlike_sinifi)}>
+            <Field label="Tehlike Sınıfı" history={historyText(data.field_history?.risk_class)}>
               <ReadOnlyBadge value={primaryNace?.nace_code?.hazard_class || publicSgk.risk_class || 'Hesaplanamaz'} />
               <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">Tehlike sınıfı, birincil NACE koduna göre otomatik belirlenir.</p>
             </Field>
@@ -293,11 +293,11 @@ export function CompanyPublicTab({ data, onChange, readOnly = false }: CompanyPu
       {activeTab === 'sicil' && (
         <PublicCard title="Sicil" description="MERSİS, ticaret sicil ve oda kayıtları">
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-            <Field label="MERSİS No" history={historyText(data.field_history?.mersis_no)}>
-              <input className={inputClass} value={publicRegistry.mersis_no ?? data.mersis_no ?? ''} onChange={(e) => updateSection('public_registry', 'mersis_no', e.target.value)} disabled={readOnly} />
+            <Field label="MERSİS No" history={historyText(data.field_history?.mersis_number)}>
+              <input className={inputClass} value={publicRegistry.mersis_number ?? data.mersis_number ?? ''} onChange={(e) => updateSection('public_registry', 'mersis_number', e.target.value)} disabled={readOnly} />
             </Field>
             <Field label="Ticaret Sicil No">
-              <input className={inputClass} value={publicRegistry.trade_registry_no ?? data.ticaret_sicil_no ?? ''} onChange={(e) => updateSection('public_registry', 'trade_registry_no', e.target.value)} disabled={readOnly} />
+              <input className={inputClass} value={publicRegistry.trade_registry_no ?? data.trade_registry_number ?? ''} onChange={(e) => updateSection('public_registry', 'trade_registry_no', e.target.value)} disabled={readOnly} />
             </Field>
             <Field label="Tescil Müdürlüğü">
               <input className={inputClass} value={publicRegistry.registry_office || ''} onChange={(e) => updateSection('public_registry', 'registry_office', e.target.value)} disabled={readOnly} />
@@ -324,7 +324,7 @@ export function CompanyPublicTab({ data, onChange, readOnly = false }: CompanyPu
       {activeTab === 'ruhsatlar' && (
         <PublicCard
           title="Ruhsatlar"
-          description="Çoklu belge, durum ve hatırlatma takibi"
+          description="Çoklu belge, status ve hatırlatma takibi"
           action={!readOnly && (
             <button type="button" onClick={addLicense} className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700">
               <Plus size={16} />
@@ -514,7 +514,7 @@ export function CompanyNaceCodesSection({
         await apiClient.post(url, body, { useCache: false })
       }
       apiClient.invalidate(`/api/companies/${companyId}/nace-codes`)
-      apiClient.invalidate(`/api/sirketler/${companyId}`)
+      apiClient.invalidate(`/api/companies/${companyId}`)
       setWarning(null)
       await loadRows()
     } catch (error) {
@@ -527,7 +527,7 @@ export function CompanyNaceCodesSection({
   const addNace = async () => {
     if (!selectedNaceId) return
     if (activeRows.length >= 5) {
-      setWarning('Bir şirket için en fazla 5 aktif NACE kodu tanımlanabilir.')
+      setWarning('Bir şirket için en fazla 5 active NACE kodu tanımlanabilir.')
       return
     }
     await runAction(`/api/companies/${companyId}/nace-codes`, {
@@ -784,7 +784,7 @@ function buildTimeline(
 
   if (tax.e_invoice_taxpayer) add(tax.updated_at || tax.liability_start_date, 'E-Fatura mükellefi oldu', tax.gib_user_code ? `GİB kodu: ${tax.gib_user_code}` : 'Vergi kaydı güncellendi')
   if (sgk.workplace_registry_no) add(sgk.updated_at || sgk.registration_date, 'SGK sicil no girildi', sgk.workplace_registry_no)
-  if (registry.mersis_no) add(registry.updated_at || registry.establishment_registration_date, 'MERSİS kaydı güncellendi', registry.mersis_no)
+  if (registry.mersis_number) add(registry.updated_at || registry.establishment_registration_date, 'MERSİS kaydı güncellendi', registry.mersis_number)
   if (channels.kep_address) add(channels.updated_at, 'KEP adresi değişti', channels.kep_address)
   if (incentives.result_status) add(incentives.updated_at || incentives.application_date, `Teşvik sonucu: ${incentives.result_status}`, incentives.active_support_program || incentives.incentive_type || 'Destek programı')
 
@@ -794,7 +794,7 @@ function buildTimeline(
   })
 
   Object.entries(fieldHistory || {}).forEach(([field, rows]) => {
-    if (!['vergi_dairesi', 'nace_kodlari', 'tehlike_sinifi', 'mersis_no'].includes(field)) return
+    if (!['tax_office', 'nace_codes', 'risk_class', 'mersis_number'].includes(field)) return
     rows.forEach((row) => add(row.changed_at || row.date, `${fieldLabel(field)} değişti`, `Önceki değer: ${String(row.value ?? row.old_value ?? '-')}`))
   })
 
@@ -805,10 +805,10 @@ function buildTimeline(
 
 function fieldLabel(field: string) {
   const labels: Record<string, string> = {
-    vergi_dairesi: 'Vergi dairesi',
-    nace_kodlari: 'NACE',
-    tehlike_sinifi: 'Tehlike sınıfı',
-    mersis_no: 'MERSİS',
+    tax_office: 'Vergi dairesi',
+    nace_codes: 'NACE',
+    risk_class: 'Tehlike sınıfı',
+    mersis_number: 'MERSİS',
   }
   return labels[field] || field
 }

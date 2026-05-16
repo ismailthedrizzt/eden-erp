@@ -55,7 +55,7 @@ export function createLegalEntityMasterTabs({
 }: LegalEntityMasterTabOptions = {}): FormTab[] {
   return [
     {
-      id: 'tuzel_kisi_iletisim',
+      id: 'organization_iletisim',
       label: 'İletişim',
       icon: <Phone size={16} />,
       fields: applyVisibleWhen([
@@ -69,7 +69,7 @@ export function createLegalEntityMasterTabs({
       ], visibleWhen),
     },
     {
-      id: 'tuzel_kisi_banka',
+      id: 'organization_banka',
       label: 'Banka',
       icon: <Landmark size={16} />,
       fields: applyVisibleWhen([
@@ -83,8 +83,8 @@ export function createLegalEntityMasterTabs({
             <EntityBankAccountsPanel
               entityKind="organization"
               entityId={data.master_record_id || data.organization_id}
-              masterName={data.legal_name || data.trade_name || data.ticari_unvan || data.display_name || data.kisa_unvan}
-              masterCountry={data.country || data.ulke}
+              masterName={data.legal_name || data.trade_name || data.trade_name || data.display_name || data.short_name}
+              masterCountry={data.country || data.country}
               readOnly={readOnly}
               value={Array.isArray(value) ? value : data.entity_bank_accounts}
               onChange={onChange}
@@ -94,7 +94,7 @@ export function createLegalEntityMasterTabs({
       ], visibleWhen),
     },
     {
-      id: 'tuzel_kisi_irtibat_noktalari',
+      id: 'organization_irtibat_noktalari',
       label: 'İrtibat Noktaları',
       icon: <ContactRound size={16} />,
       fields: applyVisibleWhen([

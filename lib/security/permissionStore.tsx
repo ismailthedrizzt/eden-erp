@@ -22,7 +22,7 @@ export function PermissionProvider({ children }: { children: React.ReactNode }) 
 
   const refetch = async () => {
     if (!process.env.NEXT_PUBLIC_API_BASE_URL) {
-      setPermissions(new Set(['__eden_legacy_allow_all__']))
+      setPermissions(new Set(['__eden_demo_allow_all__']))
       setLoading(false)
       setError(null)
       return
@@ -49,8 +49,8 @@ export function PermissionProvider({ children }: { children: React.ReactNode }) 
     permissions,
     loading,
     error,
-    can: (permission) => !permission || permissions.has('__eden_legacy_allow_all__') || permissions.has(permission),
-    canAll: (items) => permissions.has('__eden_legacy_allow_all__') || items.every((permission) => !permission || permissions.has(permission)),
+    can: (permission) => !permission || permissions.has('__eden_demo_allow_all__') || permissions.has(permission),
+    canAll: (items) => permissions.has('__eden_demo_allow_all__') || items.every((permission) => !permission || permissions.has(permission)),
     refetch,
   }), [permissions, loading, error])
 

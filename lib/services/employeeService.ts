@@ -3,9 +3,8 @@ import type { ListQuery, ListResponse } from '@/lib/api/listEndpoint'
 import type { Personel } from '@/types'
 
 export type EmployeeListFilters = {
-  birimId?: string
-  durum?: string
-  ara?: string
+  unitId?: string
+  status?: string
   includePassive?: boolean
 }
 
@@ -13,7 +12,7 @@ export type EmployeeListQuery = EmployeeListFilters & Pick<ListQuery, 'page' | '
 
 export const employeeService = {
   list(filters: Partial<EmployeeListQuery> = {}, options: ApiClientOptions = {}) {
-    return apiClient.get<ListResponse<Personel>>('/api/ik/personel', {
+    return apiClient.get<ListResponse<Personel>>('/api/employees', {
       ...options,
       skipAuth: options.skipAuth ?? true,
       staleTime: options.staleTime ?? 300_000,
@@ -23,31 +22,30 @@ export const employeeService = {
         search: filters.search,
         sort: filters.sort,
         direction: filters.direction,
-        birim_id: filters.birimId,
-        durum: filters.durum,
-        ara: filters.ara || filters.search,
+        unit_id: filters.unitId,
+        status: filters.status,
         include_passive: filters.includePassive ? 'true' : undefined,
         ...options.query,
       },
     })
   },
   detail(id: string) {
-    return apiClient.get<{ data: Personel }>(`/api/ik/personel/${id}`, { skipAuth: true, staleTime: 120_000 })
+    return apiClient.get<{ data: Personel }>(`/api/employees/${id}`, { skipAuth: true, staleTime: 120_000 })
   },
   detailSection(id: string, section: 'hero' | 'media' | 'details') {
-    return apiClient.get<{ data: Partial<Personel> }>(`/api/ik/personel/${id}`, {
+    return apiClient.get<{ data: Partial<Personel> }>(`/api/employees/${id}`, {
       skipAuth: true,
       useCache: false,
       query: { section },
     })
   },
   create(payload: Omit<Personel, 'id' | 'created_at' | 'updated_at'>) {
-    return apiClient.post<{ data: Personel }>('/api/ik/personel', payload)
+    return apiClient.post<{ data: Personel }>('/api/employees', payload)
   },
   update(id: string, payload: Partial<Personel>) {
-    return apiClient.patch<{ data: Personel }>(`/api/ik/personel/${id}`, payload)
+    return apiClient.patch<{ data: Personel }>(`/api/employees/${id}`, payload)
   },
   invalidateList() {
-    apiClient.invalidate('/api/ik/personel')
+    apiClient.invalidate('/api/employees')
   },
 }

@@ -69,7 +69,7 @@ async function main() {
       name: 'onurusluca/turkey-geo-api',
       url: 'https://github.com/onurusluca/turkey-geo-api',
       upstreamSources: [
-        'Nüfus ve Vatandaşlık İşleri adres sorgu',
+        'Nüfus ve Vatandaşlık İşleri address sorgu',
         'Türkiye İstatistik Kurumu',
         'Harita Genel Müdürlüğü',
       ],

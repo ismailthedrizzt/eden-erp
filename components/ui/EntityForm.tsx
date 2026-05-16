@@ -377,18 +377,18 @@ function MasterSummaryHero({
     : mode
   const Icon = kind === 'organization' ? Building2 : UserRound
   const title = kind === 'organization'
-    ? readFirst(master, prefill, ['legal_name', 'ticari_unvan', 'trade_name', 'display_name', 'short_name', 'kisa_unvan'])
-    : readFirst(master, prefill, ['full_name', 'display_name', 'ad_soyad'])
-      || [readFirst(master, prefill, ['first_name', 'ad']), readFirst(master, prefill, ['last_name', 'soyad'])].filter(Boolean).join(' ')
+    ? readFirst(master, prefill, ['legal_name', 'trade_name', 'display_name', 'short_name'])
+    : readFirst(master, prefill, ['full_name', 'display_name'])
+      || [readFirst(master, prefill, ['first_name']), readFirst(master, prefill, ['last_name'])].filter(Boolean).join(' ')
 
   const items = kind === 'organization'
     ? effectiveMode === 'organizationIdentity'
       ? [
-          { label: 'Ticari Unvan', value: readFirst(master, prefill, ['legal_name', 'trade_name', 'ticari_unvan', 'display_name']), fieldKeys: ['ticari_unvan', 'legal_name', 'trade_name'] },
-          { label: 'Kısa Ünvan', value: readFirst(master, prefill, ['short_name', 'kisa_unvan']), fieldKeys: ['kisa_unvan', 'short_name', 'last_name'] },
-          { label: 'VKN', value: readFirst(master, prefill, ['tax_number', 'vkn_tckn', 'tax_id', 'identity_number']), fieldKeys: ['vkn_tckn', 'tax_number', 'tax_id', 'identity_number'] },
-          { label: 'Vergi Dairesi', value: readFirst(master, prefill, ['tax_office', 'vergi_dairesi']), fieldKeys: ['vergi_dairesi', 'tax_office'] },
-          { label: 'Şirket Türü', value: readFirst(master, prefill, ['organization_type', 'company_type', 'sirket_turu']), fieldKeys: ['sirket_turu', 'company_type', 'organization_type'], inputType: 'select' as const, options: [
+          { label: 'Ticari Unvan', value: readFirst(master, prefill, ['legal_name', 'trade_name', 'display_name']), fieldKeys: ['trade_name', 'legal_name'] },
+          { label: 'Kısa Ünvan', value: readFirst(master, prefill, ['short_name']), fieldKeys: ['short_name'] },
+          { label: 'VKN', value: readFirst(master, prefill, ['tax_number']), fieldKeys: ['tax_number'] },
+          { label: 'Vergi Dairesi', value: readFirst(master, prefill, ['tax_office']), fieldKeys: ['tax_office'] },
+          { label: 'Şirket Türü', value: readFirst(master, prefill, ['organization_type', 'company_type']), fieldKeys: ['company_type', 'organization_type'], inputType: 'select' as const, options: [
             { value: 'anonim', label: 'Sermaye Şirketi - Anonim' },
             { value: 'limited', label: 'Sermaye Şirketi - Limited' },
             { value: 'komandit', label: 'Sermaye Şirketi - Komandit' },
@@ -396,31 +396,31 @@ function MasterSummaryHero({
             { value: 'adi_komandit', label: 'Şahıs Şirketi - Adi Komandit' },
             { value: 'adi_sirket', label: 'Şahıs Şirketi - Adi Şirket' },
           ] },
-          { label: 'Kuruluş Tarihi', value: readFirst(master, prefill, ['foundation_date', 'kurulus_tarihi']), fieldKeys: ['kurulus_tarihi', 'foundation_date'], inputType: 'date' as const },
+          { label: 'Kuruluş Tarihi', value: readFirst(master, prefill, ['foundation_date']), fieldKeys: ['foundation_date'], inputType: 'date' as const },
         ]
       : compactSummaryItems([
-          { label: 'Kısa Ünvan', value: readFirst(master, prefill, ['short_name', 'kisa_unvan']) },
-          { label: 'Vergi Dairesi', value: readFirst(master, prefill, ['tax_office', 'vergi_dairesi']) },
-          { label: 'Telefon', value: readFirst(master, prefill, ['phone', 'telefon', 'phone_1']) },
-          { label: 'E-posta', value: readFirst(master, prefill, ['email', 'email_1']) },
+          { label: 'Kısa Ünvan', value: readFirst(master, prefill, ['short_name']) },
+          { label: 'Vergi Dairesi', value: readFirst(master, prefill, ['tax_office']) },
+          { label: 'Telefon', value: readFirst(master, prefill, ['phone']) },
+          { label: 'E-posta', value: readFirst(master, prefill, ['email']) },
           { label: 'Adres', value: formatAddress(master, prefill) },
         ])
     : effectiveMode === 'personIdentity'
       ? [
-          { label: 'Ad', value: readFirst(master, prefill, ['first_name', 'ad']), fieldKeys: ['first_name', 'ad'] },
-          { label: 'Soyad', value: readFirst(master, prefill, ['last_name', 'soyad']), fieldKeys: ['last_name', 'soyad'] },
-          { label: 'Doğum Tarihi', value: readFirst(master, prefill, ['birth_date', 'dogum_tarihi']), fieldKeys: ['birth_date', 'dogum_tarihi'], inputType: 'date' as const },
-          { label: 'Doğum Yeri', value: readFirst(master, prefill, ['birth_place', 'dogum_yeri']), fieldKeys: ['birth_place', 'dogum_yeri'] },
-          { label: 'Cinsiyet', value: readFirst(master, prefill, ['gender', 'cinsiyet']), fieldKeys: ['gender', 'cinsiyet'], inputType: 'select' as const, options: [{ value: 'erkek', label: 'Erkek' }, { value: 'kadin', label: 'Kadın' }] },
-          { label: 'Mesleği', value: readFirst(master, prefill, ['occupation', 'profession', 'meslek']), fieldKeys: ['occupation', 'profession', 'meslek'] },
-          { label: 'Kan Grubu', value: readFirst(master, prefill, ['blood_type', 'kan_grubu']), fieldKeys: ['blood_type', 'kan_grubu'], inputType: 'select' as const, options: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', '0+', '0-'].map(value => ({ value, label: value })) },
+          { label: 'Ad', value: readFirst(master, prefill, ['first_name']), fieldKeys: ['first_name'] },
+          { label: 'Soyad', value: readFirst(master, prefill, ['last_name']), fieldKeys: ['last_name'] },
+          { label: 'Doğum Tarihi', value: readFirst(master, prefill, ['birth_date']), fieldKeys: ['birth_date'], inputType: 'date' as const },
+          { label: 'Doğum Yeri', value: readFirst(master, prefill, ['birth_place']), fieldKeys: ['birth_place'] },
+          { label: 'Cinsiyet', value: readFirst(master, prefill, ['gender']), fieldKeys: ['gender'], inputType: 'select' as const, options: [{ value: 'male', label: 'Erkek' }, { value: 'female', label: 'Kadın' }] },
+          { label: 'Mesleği', value: readFirst(master, prefill, ['occupation']), fieldKeys: ['occupation'] },
+          { label: 'Kan Grubu', value: readFirst(master, prefill, ['blood_type']), fieldKeys: ['blood_type'], inputType: 'select' as const, options: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', '0+', '0-'].map(value => ({ value, label: value })) },
         ]
     : compactSummaryItems([
         ...(titleAsField ? [{ label: 'Ad Soyad', value: title }] : []),
-        { label: 'Uyruk', value: readFirst(master, prefill, ['nationality', 'uyruk', 'nationality_country']) },
-        { label: 'Dogum', value: readFirst(master, prefill, ['birth_date', 'dogum_tarihi']) },
-        { label: 'Telefon', value: readFirst(master, prefill, ['phone', 'cep_telefonu', 'telefon', 'phone_1']) },
-        { label: 'E-posta', value: readFirst(master, prefill, ['email', 'email_1']) },
+        { label: 'Uyruk', value: readFirst(master, prefill, ['nationality']) },
+        { label: 'Dogum', value: readFirst(master, prefill, ['birth_date']) },
+        { label: 'Telefon', value: readFirst(master, prefill, ['phone', 'mobile_phone']) },
+        { label: 'E-posta', value: readFirst(master, prefill, ['email']) },
         { label: 'Adres', value: formatAddress(master, prefill) },
       ])
 
@@ -517,9 +517,9 @@ function readFirst(master: Record<string, any> | null, prefill: Record<string, a
 }
 
 function formatAddress(master: Record<string, any> | null, prefill: Record<string, any>) {
-  const address = readFirst(master, prefill, ['address', 'adres'])
-  const city = readFirst(master, prefill, ['city', 'il'])
-  const district = readFirst(master, prefill, ['district', 'ilce'])
+  const address = readFirst(master, prefill, ['address'])
+  const city = readFirst(master, prefill, ['city'])
+  const district = readFirst(master, prefill, ['district'])
   return [address, district, city].filter(Boolean).join(', ')
 }
 
@@ -656,8 +656,8 @@ function normalizeDateDisplayInput(value: string) {
 
 function formatGender(value: unknown) {
   const normalized = String(value || '').toLocaleLowerCase('tr-TR')
-  if (normalized === 'erkek') return 'Erkek'
-  if (normalized === 'kadin' || normalized === 'kadın') return 'Kadın'
+  if (normalized === 'male') return 'Erkek'
+  if (normalized === 'female' || normalized === 'kadın') return 'Kadın'
   return String(value || '')
 }
 
@@ -761,36 +761,36 @@ function extractMasterLikeRecord(kind: 'person' | 'organization', source: Record
   if (kind === 'organization') {
     return {
       id: source.organization_id || source.master_record_id || null,
-      legal_name: source.legal_name || source.trade_name || source.ticari_unvan || source.display_name || '',
-      short_name: source.short_name || source.kisa_unvan || '',
-      country: source.country || source.ulke || 'TR',
-      tax_number: source.tax_number || source.vkn_tckn || source.identity_number || source.tckn_vkn || '',
-      registration_number: source.registration_number || source.ticaret_sicil_no || source.mersis_no || '',
-      tax_office: source.tax_office || source.vergi_dairesi || '',
-      phone: source.phone || source.telefon || '',
+      legal_name: source.legal_name || source.trade_name || source.display_name || '',
+      short_name: source.short_name || '',
+      country: source.country || 'TR',
+      tax_number: source.tax_number || '',
+      registration_number: source.registration_number || source.trade_registry_number || source.mersis_number || '',
+      tax_office: source.tax_office || '',
+      phone: source.phone || '',
       email: source.email || '',
-      address: source.address || source.adres || '',
-      city: source.city || source.il || '',
-      district: source.district || source.ilce || '',
+      address: source.address || '',
+      city: source.city || '',
+      district: source.district || '',
     }
   }
 
   return {
     id: source.person_id || source.master_record_id || null,
-    first_name: source.first_name || source.ad || '',
-    last_name: source.last_name || source.soyad || '',
-    full_name: source.full_name || source.display_name || [source.ad, source.soyad].filter(Boolean).join(' '),
-    nationality: source.nationality || source.uyruk || source.nationality_country || 'TR',
-    national_id: source.national_id || source.tc_kimlik || '',
-    passport_no: source.passport_no || source.pasaport_no || '',
-    birth_date: source.birth_date || source.dogum_tarihi || '',
-    birth_place: source.birth_place || source.dogum_yeri || '',
-    gender: source.gender || source.cinsiyet || '',
-    phone: source.phone || source.cep_telefonu || source.telefon || '',
+    first_name: source.first_name || '',
+    last_name: source.last_name || '',
+    full_name: source.full_name || source.display_name || [source.first_name, source.last_name].filter(Boolean).join(' '),
+    nationality: source.nationality || 'TR',
+    national_id: source.national_id || '',
+    passport_no: source.passport_no || '',
+    birth_date: source.birth_date || '',
+    birth_place: source.birth_place || '',
+    gender: source.gender || '',
+    phone: source.phone || source.mobile_phone || '',
     email: source.email || '',
-    address: source.address || source.adres || '',
-    city: source.city || source.il || '',
-    district: source.district || source.ilce || '',
+    address: source.address || '',
+    city: source.city || '',
+    district: source.district || '',
   }
 }
 
@@ -805,10 +805,8 @@ type MasterSummaryItem = {
 type MasterSummaryMode = 'default' | 'personIdentity' | 'organizationIdentity' | 'entityIdentity'
 
 const MASTER_IDENTITY_FIELD_NAMES = new Set([
-  'ad',
-  'soyad',
-  'first_name',
   'last_name',
+  'first_name',
   'full_name',
   'display_name',
   'person_or_entity_type',
@@ -817,52 +815,30 @@ const MASTER_IDENTITY_FIELD_NAMES = new Set([
   'stakeholder_type',
   'trade_name',
   'legal_name',
-  'ticari_unvan',
-  'kisa_unvan',
   'short_name',
-  'uyruk',
   'nationality',
-  'nationality_country',
-  'tc_kimlik',
   'national_id',
-  'pasaport_no',
   'passport_no',
-  'identity_number',
-  'tax_id',
-  'vkn_tckn',
   'tax_number',
-  'ticaret_sicil_no',
+  'trade_registry_number',
   'registration_number',
-  'mersis_no',
-  'dogum_tarihi',
+  'mersis_number',
   'birth_date',
-  'dogum_yeri',
   'birth_place',
-  'cinsiyet',
   'gender',
   'occupation',
-  'profession',
-  'meslek',
   'blood_type',
-  'kan_grubu',
-  'vergi_dairesi',
   'tax_office',
-  'sirket_turu',
   'company_type',
   'foundation_date',
-  'kurulus_tarihi',
-  'telefon',
   'phone',
-  'cep_telefonu',
+  'mobile_phone',
   'email',
-  'adres',
   'address',
-  'il',
   'city',
-  'ilce',
   'district',
-  'telefonlar',
-  'epostalar',
+  'phones',
+  'emails',
 ])
 
 function buildChangedPayload(nextData: Record<string, any>, previousData: Record<string, any>) {
@@ -1083,8 +1059,8 @@ async function uploadDocumentFile(document: SlotDocument) {
 
 function getDocumentSlotStorageField(slot: DocumentSlot) {
   if (slot.storageField) return slot.storageField
-  if (slot.id === 'cv') return 'cv_belgesi'
-  if (slot.id === 'diploma') return 'diploma_belgesi'
+  if (slot.id === 'cv') return 'cv_document'
+  if (slot.id === 'diploma') return 'diploma_document'
   return undefined
 }
 
@@ -1340,12 +1316,8 @@ function getListCellValue(row: Record<string, any>, item: FormField) {
   const value = row[name]
   if (value) return value
 
-  if (name === 'ad_soyad') {
-    return [row.ad, row.soyad].filter(Boolean).join(' ')
-  }
-
-  if (name === 'akrabalik_bicimi') {
-    return row.yakinlik
+  if (name === 'full_name') {
+    return [row.first_name, row.last_name].filter(Boolean).join(' ')
   }
 
   return value
@@ -1597,21 +1569,21 @@ function WorkLifecycleField({
   onChange: (field: string, value: any) => void
   readOnly: boolean
 }) {
-  const isHired = !!formData.sgk_giris
-  const isExited = !!formData.isten_ayrilis
-  const [inlineHireDate, setInlineHireDate] = useState(formData.sgk_giris || '')
-  const [inlineExitDate, setInlineExitDate] = useState(formData.isten_ayrilis || '')
-  const [hireMode, setHireMode] = useState(formData.sgk_giris_yontemi || 'servis')
-  const [exitMode, setExitMode] = useState(formData.sgk_cikis_yontemi || 'servis')
+  const isHired = !!formData.sgk_entry_date
+  const isExited = !!formData.exit_date
+  const [inlineHireDate, setInlineHireDate] = useState(formData.sgk_entry_date || '')
+  const [inlineExitDate, setInlineExitDate] = useState(formData.exit_date || '')
+  const [hireMode, setHireMode] = useState(formData.sgk_entry_method || 'servis')
+  const [exitMode, setExitMode] = useState(formData.sgk_exit_method || 'servis')
   const [inlineError, setInlineError] = useState('')
   const [sgkCodeCategories, setSgkCodeCategories] = useState<SgkCodeCategories>({})
 
   useEffect(() => {
-    setInlineHireDate(formData.sgk_giris || '')
-    setInlineExitDate(formData.isten_ayrilis || '')
-    setHireMode(formData.sgk_giris_yontemi || 'servis')
-    setExitMode(formData.sgk_cikis_yontemi || 'servis')
-  }, [formData.sgk_giris, formData.isten_ayrilis, formData.sgk_giris_yontemi, formData.sgk_cikis_yontemi])
+    setInlineHireDate(formData.sgk_entry_date || '')
+    setInlineExitDate(formData.exit_date || '')
+    setHireMode(formData.sgk_entry_method || 'servis')
+    setExitMode(formData.sgk_exit_method || 'servis')
+  }, [formData.sgk_entry_date, formData.exit_date, formData.sgk_entry_method, formData.sgk_exit_method])
 
   useEffect(() => {
     let active = true
@@ -1633,12 +1605,12 @@ function WorkLifecycleField({
 
   const updateHireMode = (mode: string) => {
     setHireMode(mode)
-    onChange('sgk_giris_yontemi', mode)
+    onChange('sgk_entry_method', mode)
   }
 
   const updateExitMode = (mode: string) => {
     setExitMode(mode)
-    onChange('sgk_cikis_yontemi', mode)
+    onChange('sgk_exit_method', mode)
   }
 
   const activateInlineHire = () => {
@@ -1648,9 +1620,9 @@ function WorkLifecycleField({
     }
 
     setInlineError('')
-    onChange('sgk_giris_yontemi', hireMode)
-    onChange('sgk_giris', inlineHireDate)
-    onChange('calisma_durumu', 'gorevde')
+    onChange('sgk_entry_method', hireMode)
+    onChange('sgk_entry_date', inlineHireDate)
+    onChange('work_status', 'active')
   }
 
   const activateInlineExit = () => {
@@ -1660,9 +1632,9 @@ function WorkLifecycleField({
     }
 
     setInlineError('')
-    onChange('sgk_cikis_yontemi', exitMode)
-    onChange('isten_ayrilis', inlineExitDate)
-    onChange('calisma_durumu', 'ayrilmis')
+    onChange('sgk_exit_method', exitMode)
+    onChange('exit_date', inlineExitDate)
+    onChange('work_status', 'terminated')
   }
 
   const inputClass = formControlClass({ className: 'min-h-10' })
@@ -1724,24 +1696,24 @@ function WorkLifecycleField({
 
           {hireMode === 'servis' ? (
             <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
-              <SgkCodeField label="Sigorta kolu" field="sgk_giris_sigorta_kolu" value={formData.sgk_giris_sigorta_kolu || '0'} onChange={onChange} readOnly={hireReadOnly} className={compactInputClass} options={sgkCodeCategories.insuranceBranches} />
-              <SgkCodeField label="Görev kodu" field="sgk_giris_gorev_kodu" value={formData.sgk_giris_gorev_kodu || '2'} onChange={onChange} readOnly={hireReadOnly} className={compactInputClass} options={sgkCodeCategories.dutyCodes} />
-              <SgkCodeField label="Meslek kodu" field="sgk_giris_meslek_kodu" value={formData.sgk_giris_meslek_kodu || ''} onChange={onChange} readOnly={hireReadOnly} className={compactInputClass} options={sgkCodeCategories.occupationCodes} />
-              <SgkCodeField label="ÇSGB iş kolu" field="sgk_giris_csgb_is_kolu" value={formData.sgk_giris_csgb_is_kolu || ''} onChange={onChange} readOnly={hireReadOnly} className={compactInputClass} options={sgkCodeCategories.csgbBusinessLines} />
-              <SgkSelectField label="Engelli" field="sgk_giris_engelli" value={formData.sgk_giris_engelli || (formData.engellilik ? 'E' : 'H')} onChange={onChange} readOnly={hireReadOnly} className={compactInputClass} options={SGK_YES_NO_OPTIONS} />
-              <SgkSelectField label="Eski hükümlü" field="sgk_giris_eski_hukumlu" value={formData.sgk_giris_eski_hukumlu || (formData.hukumluluk ? 'E' : 'H')} onChange={onChange} readOnly={hireReadOnly} className={compactInputClass} options={SGK_YES_NO_OPTIONS} />
-              <SgkCodeField label="Öğrenim kodu" field="sgk_giris_ogrenim_kodu" value={formData.sgk_giris_ogrenim_kodu || ''} onChange={onChange} readOnly={hireReadOnly} className={compactInputClass} options={sgkCodeCategories.educationCodes} />
-              <SgkTextField label="Mezuniyet yılı" field="sgk_giris_mezuniyet_yili" value={formData.sgk_giris_mezuniyet_yili || ''} onChange={onChange} readOnly={hireReadOnly} className={compactInputClass} />
-              <SgkTextField label="Kısmi gün" field="sgk_giris_kismi_gun_sayisi" value={formData.sgk_giris_kismi_gun_sayisi || ''} onChange={onChange} readOnly={hireReadOnly} className={compactInputClass} />
-              <SgkTextField label="Referans kodu" field="sgk_giris_referans_no" value={formData.sgk_giris_referans_no || ''} onChange={onChange} readOnly={actionReadOnly} className={compactInputClass} />
+              <SgkCodeField label="Sigorta kolu" field="sgk_entry_insurance_branch" value={formData.sgk_entry_insurance_branch || '0'} onChange={onChange} readOnly={hireReadOnly} className={compactInputClass} options={sgkCodeCategories.insuranceBranches} />
+              <SgkCodeField label="Görev kodu" field="sgk_entry_duty_code" value={formData.sgk_entry_duty_code || '2'} onChange={onChange} readOnly={hireReadOnly} className={compactInputClass} options={sgkCodeCategories.dutyCodes} />
+              <SgkCodeField label="Meslek kodu" field="sgk_entry_occupation_code" value={formData.sgk_entry_occupation_code || ''} onChange={onChange} readOnly={hireReadOnly} className={compactInputClass} options={sgkCodeCategories.occupationCodes} />
+              <SgkCodeField label="ÇSGB iş kolu" field="sgk_entry_csgb_business_line" value={formData.sgk_entry_csgb_business_line || ''} onChange={onChange} readOnly={hireReadOnly} className={compactInputClass} options={sgkCodeCategories.csgbBusinessLines} />
+              <SgkSelectField label="Engelli" field="sgk_entry_has_disability" value={formData.sgk_entry_has_disability || (formData.has_disability ? 'E' : 'H')} onChange={onChange} readOnly={hireReadOnly} className={compactInputClass} options={SGK_YES_NO_OPTIONS} />
+              <SgkSelectField label="Eski hükümlü" field="sgk_entry_has_prior_conviction" value={formData.sgk_entry_has_prior_conviction || (formData.has_conviction ? 'E' : 'H')} onChange={onChange} readOnly={hireReadOnly} className={compactInputClass} options={SGK_YES_NO_OPTIONS} />
+              <SgkCodeField label="Öğrenim kodu" field="sgk_entry_education_code" value={formData.sgk_entry_education_code || ''} onChange={onChange} readOnly={hireReadOnly} className={compactInputClass} options={sgkCodeCategories.educationCodes} />
+              <SgkTextField label="Mezuniyet yılı" field="sgk_entry_graduation_year" value={formData.sgk_entry_graduation_year || ''} onChange={onChange} readOnly={hireReadOnly} className={compactInputClass} />
+              <SgkTextField label="Kısmi gün" field="sgk_entry_partial_day_count" value={formData.sgk_entry_partial_day_count || ''} onChange={onChange} readOnly={hireReadOnly} className={compactInputClass} />
+              <SgkTextField label="Referans kodu" field="sgk_entry_reference_no" value={formData.sgk_entry_reference_no || ''} onChange={onChange} readOnly={actionReadOnly} className={compactInputClass} />
               <div className="sm:col-span-2">
-                <SgkTextField label="Mezuniyet bölümü" field="sgk_giris_mezuniyet_bolumu" value={formData.sgk_giris_mezuniyet_bolumu || ''} onChange={onChange} readOnly={hireReadOnly} className={compactInputClass} />
+                <SgkTextField label="Mezuniyet bölümü" field="sgk_entry_graduation_department" value={formData.sgk_entry_graduation_department || ''} onChange={onChange} readOnly={hireReadOnly} className={compactInputClass} />
               </div>
             </div>
           ) : (
             <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
-              <SgkTextField label="Web referans / takip no" field="sgk_giris_referans_no" value={formData.sgk_giris_referans_no || ''} onChange={onChange} readOnly={hireReadOnly} className={compactInputClass} />
-              <SgkTextField label="Bildirim yapan" field="sgk_giris_bildiren" value={formData.sgk_giris_bildiren || ''} onChange={onChange} readOnly={hireReadOnly} className={compactInputClass} />
+              <SgkTextField label="Web referans / takip no" field="sgk_entry_reference_no" value={formData.sgk_entry_reference_no || ''} onChange={onChange} readOnly={hireReadOnly} className={compactInputClass} />
+              <SgkTextField label="Bildirim yapan" field="sgk_entry_reported_by" value={formData.sgk_entry_reported_by || ''} onChange={onChange} readOnly={hireReadOnly} className={compactInputClass} />
             </div>
           )}
         </div>
@@ -1799,20 +1771,20 @@ function WorkLifecycleField({
 
           {exitMode === 'servis' ? (
             <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
-              <SgkCodeField label="Çıkış nedeni" field="sgk_cikis_nedeni" value={formData.sgk_cikis_nedeni || ''} onChange={onChange} readOnly={exitReadOnly} className={compactInputClass} options={sgkCodeCategories.exitReasons} />
-              <SgkCodeField label="Meslek kodu" field="sgk_cikis_meslek_kodu" value={formData.sgk_cikis_meslek_kodu || formData.sgk_giris_meslek_kodu || ''} onChange={onChange} readOnly={exitReadOnly} className={compactInputClass} options={sgkCodeCategories.occupationCodes} />
-              <SgkCodeField label="ÇSGB iş kolu" field="sgk_cikis_csgb_is_kolu" value={formData.sgk_cikis_csgb_is_kolu || formData.sgk_giris_csgb_is_kolu || ''} onChange={onChange} readOnly={exitReadOnly} className={compactInputClass} options={sgkCodeCategories.csgbBusinessLines} />
-              <SgkSelectField label="Ücret yüzde usulü" field="sgk_cikis_ucret_yuzde_usulu" value={formData.sgk_cikis_ucret_yuzde_usulu || 'H'} onChange={onChange} readOnly={exitReadOnly} className={compactInputClass} options={SGK_YES_NO_OPTIONS} />
-              <SgkCodeField label="Önceki belge türü" field="sgk_cikis_onceki_belge_turu" value={formData.sgk_cikis_onceki_belge_turu || '1'} onChange={onChange} readOnly={exitReadOnly} className={compactInputClass} options={sgkCodeCategories.documentTypes} />
-              <SgkTextField label="Önceki hak edilen ücret" field="sgk_cikis_onceki_hakedilen_ucret" value={formData.sgk_cikis_onceki_hakedilen_ucret || ''} onChange={onChange} readOnly={exitReadOnly} className={compactInputClass} />
-              <SgkCodeField label="Bu dönem belge türü" field="sgk_cikis_bu_donem_belge_turu" value={formData.sgk_cikis_bu_donem_belge_turu || '1'} onChange={onChange} readOnly={exitReadOnly} className={compactInputClass} options={sgkCodeCategories.documentTypes} />
-              <SgkTextField label="Bu dönem hak edilen ücret" field="sgk_cikis_bu_donem_hakedilen_ucret" value={formData.sgk_cikis_bu_donem_hakedilen_ucret || ''} onChange={onChange} readOnly={exitReadOnly} className={compactInputClass} />
-              <SgkTextField label="Referans kodu" field="sgk_cikis_referans_no" value={formData.sgk_cikis_referans_no || ''} onChange={onChange} readOnly={actionReadOnly} className={compactInputClass} />
+              <SgkCodeField label="Çıkış nedeni" field="sgk_exit_reason" value={formData.sgk_exit_reason || ''} onChange={onChange} readOnly={exitReadOnly} className={compactInputClass} options={sgkCodeCategories.exitReasons} />
+              <SgkCodeField label="Meslek kodu" field="sgk_exit_occupation_code" value={formData.sgk_exit_occupation_code || formData.sgk_entry_occupation_code || ''} onChange={onChange} readOnly={exitReadOnly} className={compactInputClass} options={sgkCodeCategories.occupationCodes} />
+              <SgkCodeField label="ÇSGB iş kolu" field="sgk_exit_csgb_business_line" value={formData.sgk_exit_csgb_business_line || formData.sgk_entry_csgb_business_line || ''} onChange={onChange} readOnly={exitReadOnly} className={compactInputClass} options={sgkCodeCategories.csgbBusinessLines} />
+              <SgkSelectField label="Ücret yüzde usulü" field="sgk_exit_percentage_wage_method" value={formData.sgk_exit_percentage_wage_method || 'H'} onChange={onChange} readOnly={exitReadOnly} className={compactInputClass} options={SGK_YES_NO_OPTIONS} />
+              <SgkCodeField label="Önceki belge türü" field="sgk_exit_previous_document_type" value={formData.sgk_exit_previous_document_type || '1'} onChange={onChange} readOnly={exitReadOnly} className={compactInputClass} options={sgkCodeCategories.documentTypes} />
+              <SgkTextField label="Önceki hak edilen ücret" field="sgk_exit_previous_earned_wage" value={formData.sgk_exit_previous_earned_wage || ''} onChange={onChange} readOnly={exitReadOnly} className={compactInputClass} />
+              <SgkCodeField label="Bu dönem belge türü" field="sgk_exit_current_document_type" value={formData.sgk_exit_current_document_type || '1'} onChange={onChange} readOnly={exitReadOnly} className={compactInputClass} options={sgkCodeCategories.documentTypes} />
+              <SgkTextField label="Bu dönem hak edilen ücret" field="sgk_exit_current_earned_wage" value={formData.sgk_exit_current_earned_wage || ''} onChange={onChange} readOnly={exitReadOnly} className={compactInputClass} />
+              <SgkTextField label="Referans kodu" field="sgk_exit_reference_no" value={formData.sgk_exit_reference_no || ''} onChange={onChange} readOnly={actionReadOnly} className={compactInputClass} />
             </div>
           ) : (
             <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
-              <SgkTextField label="Web referans / takip no" field="sgk_cikis_referans_no" value={formData.sgk_cikis_referans_no || ''} onChange={onChange} readOnly={exitReadOnly} className={compactInputClass} />
-              <SgkTextField label="Bildirim yapan" field="sgk_cikis_bildiren" value={formData.sgk_cikis_bildiren || ''} onChange={onChange} readOnly={exitReadOnly} className={compactInputClass} />
+              <SgkTextField label="Web referans / takip no" field="sgk_exit_reference_no" value={formData.sgk_exit_reference_no || ''} onChange={onChange} readOnly={exitReadOnly} className={compactInputClass} />
+              <SgkTextField label="Bildirim yapan" field="sgk_exit_reported_by" value={formData.sgk_exit_reported_by || ''} onChange={onChange} readOnly={exitReadOnly} className={compactInputClass} />
             </div>
           )}
         </div>
@@ -1995,7 +1967,7 @@ export function EntityForm({
   const imageSlots: ImageSlot[] = resolvedImageSlots || [
     { id: 'photo', title: imageSlot.title || 'Fotoğraf', required: imageSlot.required ?? false },
   ]
-  const imageDataField = imageSlot.dataField || 'fotograf_url'
+  const imageDataField = imageSlot.dataField || 'photo_url'
   const primaryImageSlotId = imageSlots[0]?.id || 'photo'
   const [images, setImages] = useState<SlotImage[]>([])
   
@@ -2010,7 +1982,7 @@ export function EntityForm({
         maxSizeMB: effectiveDocumentSlot.maxSizeMB || 20
       },
     ], [effectiveDocumentSlot])
-  const documentDataField = effectiveDocumentSlot.dataField || 'cv_belgesi'
+  const documentDataField = effectiveDocumentSlot.dataField || 'cv_document'
   const [documents, setDocuments] = useState<SlotDocument[]>([])
   const visibleTabs = useMemo(() => tabs.filter(tab =>
     tab.fields.length === 0 || tab.fields.some(field => matchesCondition(field.visibleWhen, formData))
@@ -2032,8 +2004,8 @@ export function EntityForm({
   useEffect(() => {
     if (imageSlot.dataField) {
       setImages(normalizeStoredImages(data?.[imageDataField]))
-    } else if (data?.fotograf_url) {
-      setImages([{ slotId: 'photo', previewUrl: data.fotograf_url, name: 'Fotoğraf' }])
+    } else if (data?.photo_url) {
+      setImages([{ slotId: 'photo', previewUrl: data.photo_url, name: 'Fotoğraf' }])
     } else if (Array.isArray(data?.photo_logo) && data.photo_logo.length > 0) {
       setImages(normalizeStoredImages(data.photo_logo).map((image, index) => ({
         ...image,
@@ -2255,24 +2227,24 @@ export function EntityForm({
   const handleChange = (field: string, value: any) => {
     setFormData(prev => {
       if (isCountryField(field)) {
-        const previousCountry = normalizeCountryId(prev[field] || prev.country || prev.ulke)
+        const previousCountry = normalizeCountryId(prev[field] || prev.country || prev.country)
         const nextCountry = normalizeCountryId(value)
         const next = {
           ...prev,
           [field]: value,
-          ...(previousCountry !== nextCountry ? { il: '', ilce: '', city: '', district: '' } : {}),
+          ...(previousCountry !== nextCountry ? { city: '', district: '',} : {}),
         }
         onFieldChange?.(field, value, next)
         return next
       }
 
-      if (field === 'sgk_is_yeri_sicil_no') {
+      if (field === 'sgk_workplace_registry_no') {
         const parsed = parseSgkWorkplaceNumber(String(value || ''))
         const next = {
           ...prev,
           [field]: parsed.digits,
-          sgk_il: parsed.provinceLabel,
-          sgk_sube: parsed.branchLabel,
+          sgk_province: parsed.provinceLabel,
+          sgk_branch: parsed.branchLabel,
         }
         onFieldChange?.(field, parsed.digits, next)
         return next
@@ -2291,36 +2263,11 @@ export function EntityForm({
     }
   }
 
-  const handleMasterSummaryFieldChange = (field: string, value: any, fieldKeys?: string[]) => {
-    const aliases = Array.from(new Set(fieldKeys?.length ? fieldKeys : [field]))
-    if (aliases.length <= 1) {
-      handleChange(field, value)
-      return
-    }
-
-    setFormData(prev => {
-      const next = aliases.reduce(
-        (acc, alias) => ({ ...acc, [alias]: value }),
-        { ...prev } as Record<string, any>
-      )
-      onFieldChange?.(field, value, next)
-      return next
-    })
-
-    if (aliases.some(alias => fieldErrors[alias])) {
-      setFieldErrors(prev => {
-        const next = { ...prev }
-        aliases.forEach(alias => delete next[alias])
-        return next
-      })
-    }
-  }
-
   const handleIdentityResolved = (result: IdentityGateResolveResult) => {
     const resolvedImages = normalizeStoredImages(
       result.prefill[imageDataField] ||
       result.prefill.photo_logo ||
-      result.prefill.fotograf_url ||
+      result.prefill.photo_url ||
       []
     )
     const nextImages = imageSlot.dataField
@@ -2335,7 +2282,7 @@ export function EntityForm({
           result.prefill.partner_documents ||
           result.prefill.authority_documents ||
           result.prefill.stakeholder_documents ||
-          result.prefill.cv_belgesi ||
+          result.prefill.cv_document ||
           []
         )
       : []
@@ -2382,7 +2329,7 @@ export function EntityForm({
   }
 
   const handleFormattedFieldChange = (field: FormField, value: string) => {
-    if (field.name === 'tc_kimlik' || field.name === 'vkn_tckn' || field.name === 'sgk_is_yeri_sicil_no') {
+    if (field.name === 'national_id' || field.name === 'tax_number' || field.name === 'sgk_workplace_registry_no') {
       handleChange(field.name, value.replace(/\D/g, '').slice(0, field.maxLength || 11))
       return
     }
@@ -2439,7 +2386,7 @@ export function EntityForm({
 
     const photo = nextImages.find(image => image.slotId === 'photo')
     if (!photo) {
-      handleChange('fotograf_url', '')
+      handleChange('photo_url', '')
       return
     }
 
@@ -2451,7 +2398,7 @@ export function EntityForm({
           quality: 0.78,
           thumbnailQuality: 0.72,
         })
-        handleChange('fotograf_url', variants.previewUrl)
+        handleChange('photo_url', variants.previewUrl)
         setImages(current => current.map(image => {
           if (image.slotId !== photo.slotId) return image
           const { file, ...imageWithoutFile } = image
@@ -2469,7 +2416,7 @@ export function EntityForm({
       return
     }
 
-    handleChange('fotograf_url', photo.previewUrl || '')
+    handleChange('photo_url', photo.previewUrl || '')
   }
 
   const handleDocumentsChange = async (nextDocuments: SlotDocument[]) => {
@@ -2551,14 +2498,14 @@ export function EntityForm({
   const normalizeCvExtractedData = (extracted: Record<string, any>) => {
     const next: Record<string, any> = { ...extracted }
 
-    if (next.cep_telefonu) {
-      next.cep_telefonu = formatPhoneInput(String(next.cep_telefonu))
-      next.telefonlar = [{ etiket: 'Cep', numara: next.cep_telefonu }]
+    if (next.mobile_phone) {
+      next.mobile_phone = formatPhoneInput(String(next.mobile_phone))
+      next.phones = [{ label: 'Cep', phone: next.mobile_phone }]
     }
 
     if (next.email) {
       next.email = normalizeEmailInput(String(next.email))
-      next.epostalar = [{ etiket: 'Kişisel', adres: next.email }]
+      next.emails = [{ label: 'Kişisel', address: next.email }]
     }
 
     return next
@@ -2630,7 +2577,7 @@ export function EntityForm({
         if (field.pattern && hasValue(sourceData[field.name])) {
           const regex = new RegExp(`^(?:${field.pattern})$`)
           if (!regex.test(String(sourceData[field.name]))) {
-            errors[field.name] = field.name === 'tc_kimlik'
+            errors[field.name] = field.name === 'national_id'
               ? 'TC Kimlik No 11 haneli sayı olmalıdır'
               : `${field.errorLabel || field.label} formatı geçersiz`
           }
@@ -2749,7 +2696,7 @@ export function EntityForm({
       }
 
       if (isCityField(field.name)) {
-        const selectedCountry = normalizeCountryId(formData.ulke || formData.country || 'TR')
+        const selectedCountry = normalizeCountryId(formData.country || formData.country || 'TR')
         if (selectedCountry !== 'TR') {
           return (
             <input
@@ -2768,7 +2715,7 @@ export function EntityForm({
             value={value}
             onChange={(e) => {
               handleChange(field.name, e.target.value)
-              handleChange(field.name === 'city' ? 'district' : 'ilce', '')
+              handleChange(field.name === 'city' ? 'district' : 'district', '')
             }}
             disabled={fieldDisabled}
             className={cn(enumInputClass, fieldDisabled && "appearance-none")}
@@ -2782,7 +2729,7 @@ export function EntityForm({
       }
 
       if (isDistrictField(field.name)) {
-        const selectedCountry = normalizeCountryId(formData.ulke || formData.country || 'TR')
+        const selectedCountry = normalizeCountryId(formData.country || formData.country || 'TR')
         if (selectedCountry !== 'TR') {
           return (
             <input
@@ -2796,7 +2743,7 @@ export function EntityForm({
           )
         }
 
-        const cityField = field.name === 'district' ? 'city' : 'il'
+        const cityField = field.name === 'district' ? 'city' : 'city'
         const selectedProvince = turkeyProvinces.find(province => province.name === formData[cityField])
 
         return (
@@ -2809,7 +2756,7 @@ export function EntityForm({
               (fieldDisabled || !selectedProvince) && "appearance-none"
             )}
           >
-            <option value="">{selectedProvince ? 'Seçiniz' : 'Önce il seçiniz'}</option>
+            <option value="">{selectedProvince ? 'Seçiniz' : 'Önce city seçiniz'}</option>
             {selectedProvince?.districts.map(district => (
               <option key={district.id} value={district.name}>{district.name}</option>
             ))}
@@ -2819,7 +2766,7 @@ export function EntityForm({
 
       switch (field.type) {
         case 'checkbox':
-          const checkboxHasStatusLabel = ['engellilik', 'hukumluluk'].includes(field.name)
+          const checkboxHasStatusLabel = ['has_disability', 'has_conviction'].includes(field.name)
           return (
             <label className="flex min-h-10 items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 text-[13px] leading-5 text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300">
               <input
@@ -3054,7 +3001,7 @@ export function EntityForm({
       >
         <div className="space-y-3 text-sm text-gray-600 dark:text-gray-300">
           {canActivateRecord ? (
-            <p>Bu kayit tekrar aktif hale getirilecek ve aktif kayit listelerinde gorunecektir.</p>
+            <p>Bu kayit tekrar active hale getirilecek ve active kayit listelerinde gorunecektir.</p>
           ) : (
             <>
               <p>
@@ -3175,7 +3122,7 @@ export function EntityForm({
                   mode={masterSummaryMode}
                   requiredFields={heroFields}
                   fieldErrors={fieldErrors}
-                  onFieldChange={handleMasterSummaryFieldChange}
+                  onFieldChange={handleChange}
                 />
               )}
               {isIdentityGateLocked && fieldErrors.identity_gate && (
@@ -3378,21 +3325,21 @@ function hasNonEmptyValue(value: any) {
 }
 
 function isCountryField(field: string) {
-  return ['ulke', 'country', 'nationality_country', 'uyruk', 'nationality'].includes(field)
+  return ['country', 'country', 'nationality_country', 'nationality', 'nationality'].includes(field)
 }
 
 function applyLegalEntityBankDerivations(prev: Record<string, any>, field: string, value: any) {
   const next = { ...prev, [field]: value }
 
-  if (field === 'ticari_unvan' || field === 'legal_name' || field === 'trade_name') {
-    const previousName = pickText(prev.ticari_unvan, prev.legal_name, prev.trade_name)
+  if (field === 'trade_name' || field === 'legal_name' || field === 'trade_name') {
+    const previousName = pickText(prev.trade_name, prev.legal_name, prev.trade_name)
     if (shouldRefreshDerivedValue(prev.beneficiary_full_name, previousName)) {
       next.beneficiary_full_name = String(value || '')
     }
   }
 
-  if (field === 'adres' || field === 'address') {
-    const previousAddress = pickText(prev.adres, prev.address)
+  if (field === 'address' || field === 'address') {
+    const previousAddress = pickText(prev.address, prev.address)
     if (shouldRefreshDerivedValue(prev.beneficiary_address, previousAddress)) {
       next.beneficiary_address = String(value || '')
     }
@@ -3427,11 +3374,11 @@ function normalizeLegalEntityBankData(source: Record<string, any>) {
   const next = applyIbanDerivedBankFields({ ...source }, source.beneficiary_iban || source.beneficiary_iban_or_account_no)
 
   if (!String(next.beneficiary_full_name || '').trim()) {
-    next.beneficiary_full_name = pickText(next.ticari_unvan, next.legal_name, next.trade_name)
+    next.beneficiary_full_name = pickText(next.trade_name, next.legal_name, next.trade_name)
   }
 
   if (!String(next.beneficiary_address || '').trim()) {
-    next.beneficiary_address = pickText(next.adres, next.address)
+    next.beneficiary_address = pickText(next.address, next.address)
   }
 
   if (!String(next.beneficiary_iban_or_account_no || '').trim()) {
@@ -3485,11 +3432,11 @@ function pickText(...values: any[]) {
 }
 
 function isCityField(field: string) {
-  return field === 'il' || field === 'city'
+  return field === 'city' || field === 'city'
 }
 
 function isDistrictField(field: string) {
-  return field === 'ilce' || field === 'district'
+  return field === 'district' || field === 'district'
 }
 
 export default EntityForm

@@ -19,7 +19,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       .eq('status', 'active')
       .eq('is_deleted', false)
     if ((count || 0) > 1) {
-      return NextResponse.json({ error: 'Birincil NACE pasifleştirilecekse önce başka bir aktif NACE kodu birincil yapılmalıdır.', code: 'PRIMARY_NACE_REQUIRED' }, { status: 400 })
+      return NextResponse.json({ error: 'Birincil NACE pasifleştirilecekse önce başka bir active NACE kodu birincil yapılmalıdır.', code: 'PRIMARY_NACE_REQUIRED' }, { status: 400 })
     }
   }
 

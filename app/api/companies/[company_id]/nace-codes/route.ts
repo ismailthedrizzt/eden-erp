@@ -40,7 +40,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     .eq('status', 'active')
     .eq('is_deleted', false)
   if ((count || 0) >= 5) {
-    return NextResponse.json({ error: 'Bir şirket için en fazla 5 aktif NACE kodu tanımlanabilir.', code: 'NACE_LIMIT_EXCEEDED' }, { status: 400 })
+    return NextResponse.json({ error: 'Bir şirket için en fazla 5 active NACE kodu tanımlanabilir.', code: 'NACE_LIMIT_EXCEEDED' }, { status: 400 })
   }
 
   const { count: primaryCount } = await supabase

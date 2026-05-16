@@ -124,12 +124,12 @@ function OwnershipTransactionsContent() {
 
     setCompanies(companyRows.map((company: any) => ({
       value: company.id,
-      label: company.ticari_unvan || company.kisa_unvan || 'Sirket',
+      label: company.trade_name || company.short_name || 'Sirket',
     })))
     setPartners(partnerRows.filter((partner: any) => !partner.is_deleted).map((partner: any) => ({
       value: partner.id,
-      label: partner.display_name || partner.ortak_adi || 'Ortak',
-      company_id: partner.sirket_id || partner.company_id,
+      label: partner.display_name || partner.partner_name || 'Ortak',
+      company_id: partner.company_id || partner.company_id,
       owner_kind: partner.owner_kind,
       photo_logo: Array.isArray(partner.photo_logo) ? partner.photo_logo : [],
       person_id: partner.person_id || null,
@@ -396,7 +396,7 @@ function OwnershipTransactionsContent() {
           {hasSelectedCompanyWithoutPartners && (
             <div className="flex flex-col gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
               <div>Bu şirkete kayıtlı ortak bulunamadı. Önce Ortaklarımız sayfasından ortak kaydı oluşturmalısınız.</div>
-              <Link href="/app/sirket/sirketler/ortaklar" className="inline-flex w-fit items-center gap-2 rounded-lg border border-amber-300 bg-white px-3 py-2 font-medium text-amber-800 hover:bg-amber-100 dark:border-amber-800 dark:bg-gray-900 dark:text-amber-200">
+              <Link href="/app/sirket/companies/partners" className="inline-flex w-fit items-center gap-2 rounded-lg border border-amber-300 bg-white px-3 py-2 font-medium text-amber-800 hover:bg-amber-100 dark:border-amber-800 dark:bg-gray-900 dark:text-amber-200">
                 <Plus size={16} />
                 Ortaklarımız Sayfasına Git
               </Link>
@@ -422,13 +422,13 @@ function OwnershipTransactionsContent() {
               <WorkflowButtons row={selected as OwnershipTransaction} capabilities={capabilities} onAction={handleWorkflowAction} />
             ) : null}
             imageSlot={{
-              title: selectedPartner?.owner_kind === 'tuzel_kisi' ? 'Logo' : 'Fotoğraf',
+              title: selectedPartner?.owner_kind === 'organization' ? 'Logo' : 'Fotoğraf',
               dataField: 'photo_logo',
               readOnly: true,
               slots: [
                 {
                   id: 'photo_logo',
-                  title: selectedPartner?.owner_kind === 'tuzel_kisi' ? 'Logo' : 'Fotoğraf',
+                  title: selectedPartner?.owner_kind === 'organization' ? 'Logo' : 'Fotoğraf',
                   required: false,
                 },
               ],

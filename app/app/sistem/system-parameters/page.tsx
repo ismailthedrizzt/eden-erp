@@ -283,7 +283,7 @@ function EnumOptionsList({ row }: { row: ParameterRow }) {
   if (row.type !== 'enum' || !row.options?.length) {
     return (
       <div className="rounded-lg border border-dashed border-gray-200 bg-gray-50 px-4 py-5 text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-400">
-        Bu parametre için enum listesi tanımlı değil.
+        Bu parametre için enum listesi tanımlı değcity.
       </div>
     )
   }

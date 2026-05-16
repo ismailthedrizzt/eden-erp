@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
   const [persons, organizations, companies] = await Promise.all([
     supabase.from('persons').select('id,full_name,national_id,passport_no').eq('is_deleted', false).ilike('full_name', `%${q}%`).limit(50),
     supabase.from('organizations').select('id,legal_name,tax_number,registration_number').eq('is_deleted', false).ilike('legal_name', `%${q}%`).limit(50),
-    supabase.from('sirketler').select('id,kisa_unvan,ticari_unvan').eq('is_deleted', false).limit(50),
+    supabase.from('companies').select('id,short_name,trade_name').eq('is_deleted', false).limit(50),
   ])
 
   return NextResponse.json({

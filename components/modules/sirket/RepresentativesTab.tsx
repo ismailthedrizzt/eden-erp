@@ -25,17 +25,17 @@ import { isSoftDeletedRecord } from '@/lib/forms/entityState'
 import { employeeService } from '@/lib/services/employeeService'
 
 type AuthorityType =
-  | 'imza_yetkilisi'
-  | 'banka_yetkilisi'
-  | 'gib_yetkilisi'
-  | 'sgk_yetkilisi'
-  | 'sozlesme_yetkilisi'
-  | 'satinalma_onay_yetkilisi'
-  | 'odeme_onay_yetkilisi'
-  | 'mesul_mudur'
-  | 'kanuni_temsilci'
+  | 'signature_authority'
+  | 'bank_authority'
+  | 'gib_authority'
+  | 'sgk_authority'
+  | 'contract_authority'
+  | 'purchase_approval_authority'
+  | 'payment_approval_authority'
+  | 'responsible_manager'
+  | 'legal_representative'
 
-type PersonKind = 'gercek_kisi' | 'tuzel_kisi'
+type PersonKind = 'person' | 'organization'
 type SourceType = 'calisan' | 'ortak' | 'yonetim_kurulu_uyesi' | 'dis_kisi' | 'cari' | 'paydas' | 'ortak_sirket'
 type AuthorityStatus = 'Aktif' | 'Pasif' | 'Askıda' | 'Süresi Dolmuş'
 
@@ -129,25 +129,25 @@ interface DraftState {
 }
 
 const AUTHORITY_OPTIONS: Array<{ value: AuthorityType; label: string; icon: typeof PenLine }> = [
-  { value: 'imza_yetkilisi', label: 'İmza Yetkilisi', icon: PenLine },
-  { value: 'banka_yetkilisi', label: 'Banka Yetkilisi', icon: Landmark },
-  { value: 'gib_yetkilisi', label: 'GİB Yetkilisi', icon: ReceiptText },
-  { value: 'sgk_yetkilisi', label: 'SGK Yetkilisi', icon: ShieldCheck },
-  { value: 'sozlesme_yetkilisi', label: 'Sözleşme Yetkilisi', icon: FileSignature },
-  { value: 'satinalma_onay_yetkilisi', label: 'Satınalma Onay Yetkilisi', icon: ShoppingCart },
-  { value: 'odeme_onay_yetkilisi', label: 'Ödeme Onay Yetkilisi', icon: CreditCard },
-  { value: 'mesul_mudur', label: 'Mesul Müdür', icon: UserCheck },
-  { value: 'kanuni_temsilci', label: 'Kanuni Temsilci', icon: Scale },
+  { value: 'signature_authority', label: 'İmza Yetkilisi', icon: PenLine },
+  { value: 'bank_authority', label: 'Banka Yetkilisi', icon: Landmark },
+  { value: 'gib_authority', label: 'GİB Yetkilisi', icon: ReceiptText },
+  { value: 'sgk_authority', label: 'SGK Yetkilisi', icon: ShieldCheck },
+  { value: 'contract_authority', label: 'Sözleşme Yetkilisi', icon: FileSignature },
+  { value: 'purchase_approval_authority', label: 'Satınalma Onay Yetkilisi', icon: ShoppingCart },
+  { value: 'payment_approval_authority', label: 'Ödeme Onay Yetkilisi', icon: CreditCard },
+  { value: 'responsible_manager', label: 'Mesul Müdür', icon: UserCheck },
+  { value: 'legal_representative', label: 'Kanuni Temsilci', icon: Scale },
 ]
 
 const SOURCE_OPTIONS: Record<PersonKind, Array<{ value: SourceType; label: string; description: string }>> = {
-  gercek_kisi: [
+  person: [
     { value: 'calisan', label: 'Çalışan', description: 'Çalışanlar tablosundan seçilir' },
     { value: 'ortak', label: 'Ortak', description: 'Gerçek kişi ortaklardan seçilir' },
     { value: 'yonetim_kurulu_uyesi', label: 'Yönetim Kurulu Üyesi', description: 'Yönetim kurulu kayıtları' },
     { value: 'dis_kisi', label: 'Dış Kişi', description: 'Harici kişi veya kontak' },
   ],
-  tuzel_kisi: [
+  organization: [
     { value: 'cari', label: 'Cari', description: 'Cari hesap kayıtları' },
     { value: 'paydas', label: 'Paydaş', description: 'Paydaş kayıtları' },
     { value: 'ortak_sirket', label: 'Ortak Şirket', description: 'Tüzel kişi ortaklardan seçilir' },
@@ -198,16 +198,16 @@ export function RepresentativesTab({ value, onChange, readOnly = false, partners
   useEffect(() => {
     let cancelled = false
 
-    employeeService.list({ durum: 'gorevde' })
+    employeeService.list({ status: 'active' })
       .then(payload => {
         if (cancelled || !Array.isArray(payload?.data)) return
         setEmployees(payload.data.map((employee: any) => ({
           id: employee.id,
-          displayName: [employee.ad, employee.soyad].filter(Boolean).join(' '),
-          identity: employee.tc_kimlik,
-          role: employee.gorev || employee.kadro?.unvan || employee.birim?.ad,
-          status: employee.calisma_durumu || 'Aktif',
-          kind: 'gercek_kisi' as PersonKind,
+          displayName: [employee.ad, employee.last_name].filter(Boolean).join(' '),
+          identity: employee.national_id,
+          role: employee.job_title || employee.kadro?.title || employee.birim?.ad,
+          status: employee.work_status || 'Aktif',
+          kind: 'person' as PersonKind,
         })))
       })
       .catch(() => setEmployees([]))
@@ -218,19 +218,19 @@ export function RepresentativesTab({ value, onChange, readOnly = false, partners
   }, [])
 
   const partnerRecords = useMemo(() => partners.map((partner: any) => ({
-    id: partner.id || partner.temp_id || partner.tckn_vkn || partner.ortak_adi,
-    displayName: [partner.ad, partner.soyad].filter(Boolean).join(' ') || partner.ortak_adi || partner.display_name || 'Ortak',
-    identity: partner.tckn_vkn,
-    role: partner.hisse_orani ? `Hisse: %${partner.hisse_orani}` : 'Ortak',
-    status: partner.imza_yetkisi ? 'Yetkili' : 'Aktif',
-    kind: partner.ortak_tipi === 'sirket' ? 'tuzel_kisi' as PersonKind : 'gercek_kisi' as PersonKind,
+    id: partner.id || partner.temp_id || partner.identity_tax_number || partner.partner_name,
+    displayName: [partner.ad, partner.last_name].filter(Boolean).join(' ') || partner.partner_name || partner.display_name || 'Ortak',
+    identity: partner.identity_tax_number,
+    role: partner.share_ratio ? `Hisse: %${partner.share_ratio}` : 'Ortak',
+    status: partner.signature_authority ? 'Yetkili' : 'Aktif',
+    kind: partner.partner_type === 'sirket' ? 'organization' as PersonKind : 'person' as PersonKind,
   })), [partners])
 
   const sourceRecords = useMemo(() => {
     if (!draft.source_type) return []
     if (draft.source_type === 'calisan') return employees
-    if (draft.source_type === 'ortak') return partnerRecords.filter(record => record.kind === 'gercek_kisi')
-    if (draft.source_type === 'ortak_sirket') return partnerRecords.filter(record => record.kind === 'tuzel_kisi')
+    if (draft.source_type === 'ortak') return partnerRecords.filter(record => record.kind === 'person')
+    if (draft.source_type === 'ortak_sirket') return partnerRecords.filter(record => record.kind === 'organization')
     return []
   }, [draft.source_type, employees, partnerRecords])
 
@@ -447,8 +447,8 @@ export function RepresentativesTab({ value, onChange, readOnly = false, partners
               readOnly={readOnly || activeStep < 2}
               value={draft.person_kind}
               options={[
-                { value: 'gercek_kisi', label: 'Gerçek Kişi' },
-                { value: 'tuzel_kisi', label: 'Tüzel Kişi' },
+                { value: 'person', label: 'Gerçek Kişi' },
+                { value: 'organization', label: 'Tüzel Kişi' },
               ]}
               onChange={(value) => selectPersonKind(value as PersonKind)}
             />
@@ -749,7 +749,7 @@ function ConditionalFields({ draft, setDraft, readOnly }: { draft: DraftState; s
 
   return (
     <div className="mt-4 space-y-4">
-      {hasAuthority('banka_yetkilisi') && (
+      {hasAuthority('bank_authority') && (
         <ConditionalSection title="Banka Yetkilisi">
           <Field label="Banka Yetki Seviyesi"><input value={draft.bank_authority_level} onChange={event => setDraft(prev => ({ ...prev, bank_authority_level: event.target.value }))} disabled={readOnly} className={inputClass()} /></Field>
           <Field label="İşlem Limiti"><input type="number" value={draft.transaction_limit} onChange={event => setDraft(prev => ({ ...prev, transaction_limit: event.target.value }))} disabled={readOnly} className={inputClass()} /></Field>
@@ -758,7 +758,7 @@ function ConditionalFields({ draft, setDraft, readOnly }: { draft: DraftState; s
         </ConditionalSection>
       )}
 
-      {hasAuthority('odeme_onay_yetkilisi') && (
+      {hasAuthority('payment_approval_authority') && (
         <ConditionalSection title="Ödeme Onay Yetkilisi">
           <Field label="Ödeme Onay Limiti"><input type="number" value={draft.payment_approval_limit} onChange={event => setDraft(prev => ({ ...prev, payment_approval_limit: event.target.value }))} disabled={readOnly} className={inputClass()} /></Field>
           <Field label="Para Birimi"><CurrencySelect value={draft.currency} onChange={value => setDraft(prev => ({ ...prev, currency: value }))} readOnly={readOnly} /></Field>
@@ -766,7 +766,7 @@ function ConditionalFields({ draft, setDraft, readOnly }: { draft: DraftState; s
         </ConditionalSection>
       )}
 
-      {hasAuthority('satinalma_onay_yetkilisi') && (
+      {hasAuthority('purchase_approval_authority') && (
         <ConditionalSection title="Satınalma Onay Yetkilisi">
           <Field label="Satınalma Onay Limiti"><input type="number" value={draft.purchase_approval_limit} onChange={event => setDraft(prev => ({ ...prev, purchase_approval_limit: event.target.value }))} disabled={readOnly} className={inputClass()} /></Field>
           <Field label="Para Birimi"><CurrencySelect value={draft.currency} onChange={value => setDraft(prev => ({ ...prev, currency: value }))} readOnly={readOnly} /></Field>
@@ -774,7 +774,7 @@ function ConditionalFields({ draft, setDraft, readOnly }: { draft: DraftState; s
         </ConditionalSection>
       )}
 
-      {hasAuthority('imza_yetkilisi') && (
+      {hasAuthority('signature_authority') && (
         <ConditionalSection title="İmza Yetkilisi">
           <Field label="İmza Türü">
             <select value={draft.signature_type} onChange={event => setDraft(prev => ({ ...prev, signature_type: event.target.value }))} disabled={readOnly} className={inputClass()}>
@@ -790,7 +790,7 @@ function ConditionalFields({ draft, setDraft, readOnly }: { draft: DraftState; s
         </ConditionalSection>
       )}
 
-      {hasAuthority('gib_yetkilisi') && (
+      {hasAuthority('gib_authority') && (
         <ConditionalSection title="GİB Yetkilisi">
           <Field label="GİB İşlem Yetkileri"><input value={draft.gib_permissions} onChange={event => setDraft(prev => ({ ...prev, gib_permissions: event.target.value }))} disabled={readOnly} className={inputClass()} /></Field>
           <CheckField label="Beyanname Gönderme Yetkisi" checked={draft.can_submit_declaration} onChange={value => setDraft(prev => ({ ...prev, can_submit_declaration: value }))} readOnly={readOnly} />
@@ -798,7 +798,7 @@ function ConditionalFields({ draft, setDraft, readOnly }: { draft: DraftState; s
         </ConditionalSection>
       )}
 
-      {hasAuthority('sgk_yetkilisi') && (
+      {hasAuthority('sgk_authority') && (
         <ConditionalSection title="SGK Yetkilisi">
           <Field label="SGK İşlem Yetkileri"><input value={draft.sgk_permissions} onChange={event => setDraft(prev => ({ ...prev, sgk_permissions: event.target.value }))} disabled={readOnly} className={inputClass()} /></Field>
           <CheckField label="İşe Giriş Bildirgesi Yetkisi" checked={draft.can_submit_hiring_notice} onChange={value => setDraft(prev => ({ ...prev, can_submit_hiring_notice: value }))} readOnly={readOnly} />
@@ -908,13 +908,13 @@ function getAuthorityLabel(value: AuthorityType) {
 }
 
 function getPersonKindLabel(value?: PersonKind) {
-  if (value === 'gercek_kisi') return 'Gerçek Kişi'
-  if (value === 'tuzel_kisi') return 'Tüzel Kişi'
+  if (value === 'person') return 'Gerçek Kişi'
+  if (value === 'organization') return 'Tüzel Kişi'
   return '-'
 }
 
 function getSourceTypeLabel(value?: SourceType) {
-  return SOURCE_OPTIONS.gercek_kisi.concat(SOURCE_OPTIONS.tuzel_kisi).find(option => option.value === value)?.label || '-'
+  return SOURCE_OPTIONS.person.concat(SOURCE_OPTIONS.organization).find(option => option.value === value)?.label || '-'
 }
 
 function formatDate(value?: string) {

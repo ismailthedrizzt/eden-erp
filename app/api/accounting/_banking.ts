@@ -22,11 +22,11 @@ export async function fetchCompanyNames(supabase: SupabaseClient, companyIds: Ar
   if (!ids.length) return new Map<string, string>()
 
   const { data } = await supabase
-    .from('sirketler')
-    .select('id,kisa_unvan,ticari_unvan')
+    .from('companies')
+    .select('id,short_name,trade_name')
     .in('id', ids)
 
-  return new Map((data || []).map((row: any) => [row.id, row.kisa_unvan || row.ticari_unvan || 'Şirket']))
+  return new Map((data || []).map((row: any) => [row.id, row.short_name || row.trade_name || 'Şirket']))
 }
 
 export async function enrichConnections(supabase: SupabaseClient, connections: any[]) {

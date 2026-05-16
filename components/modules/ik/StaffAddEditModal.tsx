@@ -55,22 +55,22 @@ export default function StaffAddEditModal({ open, onClose, onSuccess }: { open: 
     setError(null)
 
     try {
-      const response = await fetch('/api/ik/personel', {
+      const response = await fetch('/api/employees', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ad: formData.fullname.split(' ')[0] || '',
-          soyad: formData.fullname.split(' ').slice(1).join(' ') || '',
-          uyruk: isTurkey ? 'tc' : 'yabanci',
-          tc_kimlik: isTurkey ? formData.idNumber : undefined,
-          pasaport_no: !isTurkey ? formData.idNumber : undefined,
-          cinsiyet: formData.gender,
-          dogum_yeri: formData.birthPlace,
-          dogum_tarihi: formData.birthDate,
-          adres: formData.address,
-          il: formData.city,
-          ilce: formData.district,
-          cep_telefonu: formData.phone,
+          last_name: formData.fullname.split(' ').slice(1).join(' ') || '',
+          nationality: isTurkey ? 'tc' : 'yabanci',
+          national_id: isTurkey ? formData.idNumber : undefined,
+          passport_no: !isTurkey ? formData.idNumber : undefined,
+          gender: formData.gender,
+          birth_place: formData.birthPlace,
+          birth_date: formData.birthDate,
+          address: formData.address,
+          city: formData.city,
+          district: formData.district,
+          mobile_phone: formData.phone,
           email: formData.email,
           iban: formData.iban
         })
@@ -150,8 +150,8 @@ export default function StaffAddEditModal({ open, onClose, onSuccess }: { open: 
           onChange={e => setFormData({ ...formData, gender: e.target.value })}
         >
           <option value="">Seçiniz</option>
-          <option value="erkek">Erkek</option>
-          <option value="kadin">Kadın</option>
+          <option value="male">Erkek</option>
+          <option value="female">Kadın</option>
         </select>
       </div>
 
@@ -192,7 +192,7 @@ export default function StaffAddEditModal({ open, onClose, onSuccess }: { open: 
             <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Adres</label>
             <textarea
               className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 min-h-20"
-              placeholder="Açık adres"
+              placeholder="Açık address"
               value={formData.address}
               onChange={e => setFormData({ ...formData, address: e.target.value })}
             />

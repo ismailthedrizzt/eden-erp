@@ -42,15 +42,15 @@ export async function validateDraft(supabase: ReturnType<typeof createServiceCli
     return { ok: false, code: 'REPRESENTATIVE_FIELD_NOT_ALLOWED', error: 'Temsil yetkisi alanları Ortaklık İşlemleri içinde kullanılamaz. Temsilciler modülünü kullanın.', warnings }
   }
 
-  const { data: company } = await supabase.from('sirketler').select('id').eq('id', data.company_id).maybeSingle()
+  const { data: company } = await supabase.from('companies').select('id').eq('id', data.company_id).maybeSingle()
   if (!company) return { ok: false, code: 'COMPANY_NOT_FOUND', error: 'Şirket bulunamadı', warnings }
 
   const requiredPartnerIds = Array.from(new Set([data.from_partner_id, data.to_partner_id, data.affected_partner_id].filter(Boolean)))
   if (requiredPartnerIds.length) {
     const { data: partners } = await supabase
-      .from('sirket_ortaklar')
+      .from('company_partners')
       .select('id')
-      .eq('sirket_id', data.company_id)
+      .eq('company_id', data.company_id)
       .in('id', requiredPartnerIds)
     if ((partners || []).length !== requiredPartnerIds.length) {
       return { ok: false, code: 'PARTNER_NOT_FOUND', error: 'Seçilen ortak şirket ortakları arasında bulunamadı', warnings }
@@ -93,7 +93,7 @@ export async function validateDraft(supabase: ReturnType<typeof createServiceCli
     const requestedShare = Number(data.share_ratio || 0)
 
     if (currentPartnerShare > 0) {
-      return { ok: false, code: 'PARTNER_ALREADY_HAS_ACTIVE_SHARE', error: 'Seçilen ortağın aktif hisse hakkı bulunduğu için Yeni Ortaklık Girişi yapılamaz', warnings }
+      return { ok: false, code: 'PARTNER_ALREADY_HAS_ACTIVE_SHARE', error: 'Seçilen ortağın active hisse hakkı bulunduğu için Yeni Ortaklık Girişi yapılamaz', warnings }
     }
     if (totalShare >= 99.99) {
       return { ok: false, code: 'OWNERSHIP_FULLY_DISTRIBUTED', error: 'Şirketin yürürlükteki onaylı hisse dağılımı %100 olduğu için Yeni Ortaklık Girişi yapılamaz', warnings }
@@ -103,8 +103,8 @@ export async function validateDraft(supabase: ReturnType<typeof createServiceCli
     }
   }
 
-  if (totalShare > 0 && Math.abs(totalShare - 100) > 0.01) warnings.push('Toplam hisse 100% değil')
-  if (totalVoting > 0 && Math.abs(totalVoting - 100) > 0.01) warnings.push('Toplam oy hakkı 100% değil')
+  if (totalShare > 0 && Math.abs(totalShare - 100) > 0.01) warnings.push('Toplam hisse 100% değcity')
+  if (totalVoting > 0 && Math.abs(totalVoting - 100) > 0.01) warnings.push('Toplam oy hakkı 100% değcity')
 
   return { ok: true, warnings }
 }
