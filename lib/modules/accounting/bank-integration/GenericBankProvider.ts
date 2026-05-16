@@ -23,4 +23,13 @@ export class GenericBankProvider implements BankProvider {
       providerStatus: 'generic_provider_ready',
     }
   }
+
+  async testConnection(input: BankProviderSyncInput) {
+    const result = await this.sync(input)
+    return {
+      ok: true,
+      providerStatus: result.providerStatus || 'generic_provider_ready',
+      accountCount: result.bankAccounts?.length || 0,
+    }
+  }
 }

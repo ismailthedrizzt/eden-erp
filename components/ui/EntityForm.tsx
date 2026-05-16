@@ -105,6 +105,13 @@ interface TurkeyProvince {
   districts: Array<{ id: number; name: string }>
 }
 
+type SgkCodeOption = {
+  value: string
+  label: string
+}
+
+type SgkCodeCategories = Record<string, SgkCodeOption[]>
+
 /** Tab configuration for grouping fields */
 export interface FormTab {
   id: string
@@ -1491,6 +1498,7 @@ function WorkLifecycleField({
   const [hireMode, setHireMode] = useState(formData.sgk_giris_yontemi || 'servis')
   const [exitMode, setExitMode] = useState(formData.sgk_cikis_yontemi || 'servis')
   const [inlineError, setInlineError] = useState('')
+  const [sgkCodeCategories, setSgkCodeCategories] = useState<SgkCodeCategories>({})
 
   useEffect(() => {
     setInlineHireDate(formData.sgk_giris || '')
@@ -1498,6 +1506,24 @@ function WorkLifecycleField({
     setHireMode(formData.sgk_giris_yontemi || 'servis')
     setExitMode(formData.sgk_cikis_yontemi || 'servis')
   }, [formData.sgk_giris, formData.isten_ayrilis, formData.sgk_giris_yontemi, formData.sgk_cikis_yontemi])
+
+  useEffect(() => {
+    let active = true
+
+    fetch('/api/reference/sgk-codes')
+      .then(response => response.ok ? response.json() : null)
+      .then(payload => {
+        if (!active) return
+        setSgkCodeCategories(payload?.categories || {})
+      })
+      .catch(() => {
+        if (active) setSgkCodeCategories({})
+      })
+
+    return () => {
+      active = false
+    }
+  }, [])
 
   const updateHireMode = (mode: string) => {
     setHireMode(mode)
@@ -1592,13 +1618,13 @@ function WorkLifecycleField({
 
           {hireMode === 'servis' ? (
             <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
-              <SgkTextField label="Sigorta kolu" field="sgk_giris_sigorta_kolu" value={formData.sgk_giris_sigorta_kolu || '0'} onChange={onChange} readOnly={hireReadOnly} className={compactInputClass} />
-              <SgkTextField label="Görev kodu" field="sgk_giris_gorev_kodu" value={formData.sgk_giris_gorev_kodu || '02'} onChange={onChange} readOnly={hireReadOnly} className={compactInputClass} />
-              <SgkTextField label="Meslek kodu" field="sgk_giris_meslek_kodu" value={formData.sgk_giris_meslek_kodu || ''} onChange={onChange} readOnly={hireReadOnly} className={compactInputClass} />
-              <SgkTextField label="ÇSGB iş kolu" field="sgk_giris_csgb_is_kolu" value={formData.sgk_giris_csgb_is_kolu || ''} onChange={onChange} readOnly={hireReadOnly} className={compactInputClass} />
+              <SgkCodeField label="Sigorta kolu" field="sgk_giris_sigorta_kolu" value={formData.sgk_giris_sigorta_kolu || '0'} onChange={onChange} readOnly={hireReadOnly} className={compactInputClass} options={sgkCodeCategories.insuranceBranches} />
+              <SgkCodeField label="Görev kodu" field="sgk_giris_gorev_kodu" value={formData.sgk_giris_gorev_kodu || '2'} onChange={onChange} readOnly={hireReadOnly} className={compactInputClass} options={sgkCodeCategories.dutyCodes} />
+              <SgkCodeField label="Meslek kodu" field="sgk_giris_meslek_kodu" value={formData.sgk_giris_meslek_kodu || ''} onChange={onChange} readOnly={hireReadOnly} className={compactInputClass} options={sgkCodeCategories.occupationCodes} />
+              <SgkCodeField label="ÇSGB iş kolu" field="sgk_giris_csgb_is_kolu" value={formData.sgk_giris_csgb_is_kolu || ''} onChange={onChange} readOnly={hireReadOnly} className={compactInputClass} options={sgkCodeCategories.csgbBusinessLines} />
               <SgkSelectField label="Engelli" field="sgk_giris_engelli" value={formData.sgk_giris_engelli || (formData.engellilik ? 'E' : 'H')} onChange={onChange} readOnly={hireReadOnly} className={compactInputClass} options={SGK_YES_NO_OPTIONS} />
               <SgkSelectField label="Eski hükümlü" field="sgk_giris_eski_hukumlu" value={formData.sgk_giris_eski_hukumlu || (formData.hukumluluk ? 'E' : 'H')} onChange={onChange} readOnly={hireReadOnly} className={compactInputClass} options={SGK_YES_NO_OPTIONS} />
-              <SgkTextField label="Öğrenim kodu" field="sgk_giris_ogrenim_kodu" value={formData.sgk_giris_ogrenim_kodu || ''} onChange={onChange} readOnly={hireReadOnly} className={compactInputClass} />
+              <SgkCodeField label="Öğrenim kodu" field="sgk_giris_ogrenim_kodu" value={formData.sgk_giris_ogrenim_kodu || ''} onChange={onChange} readOnly={hireReadOnly} className={compactInputClass} options={sgkCodeCategories.educationCodes} />
               <SgkTextField label="Mezuniyet yılı" field="sgk_giris_mezuniyet_yili" value={formData.sgk_giris_mezuniyet_yili || ''} onChange={onChange} readOnly={hireReadOnly} className={compactInputClass} />
               <SgkTextField label="Kısmi gün" field="sgk_giris_kismi_gun_sayisi" value={formData.sgk_giris_kismi_gun_sayisi || ''} onChange={onChange} readOnly={hireReadOnly} className={compactInputClass} />
               <SgkTextField label="Referans kodu" field="sgk_giris_referans_no" value={formData.sgk_giris_referans_no || ''} onChange={onChange} readOnly={actionReadOnly} className={compactInputClass} />
@@ -1667,13 +1693,13 @@ function WorkLifecycleField({
 
           {exitMode === 'servis' ? (
             <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
-              <SgkTextField label="Çıkış nedeni" field="sgk_cikis_nedeni" value={formData.sgk_cikis_nedeni || ''} onChange={onChange} readOnly={exitReadOnly} className={compactInputClass} />
-              <SgkTextField label="Meslek kodu" field="sgk_cikis_meslek_kodu" value={formData.sgk_cikis_meslek_kodu || formData.sgk_giris_meslek_kodu || ''} onChange={onChange} readOnly={exitReadOnly} className={compactInputClass} />
-              <SgkTextField label="ÇSGB iş kolu" field="sgk_cikis_csgb_is_kolu" value={formData.sgk_cikis_csgb_is_kolu || formData.sgk_giris_csgb_is_kolu || ''} onChange={onChange} readOnly={exitReadOnly} className={compactInputClass} />
+              <SgkCodeField label="Çıkış nedeni" field="sgk_cikis_nedeni" value={formData.sgk_cikis_nedeni || ''} onChange={onChange} readOnly={exitReadOnly} className={compactInputClass} options={sgkCodeCategories.exitReasons} />
+              <SgkCodeField label="Meslek kodu" field="sgk_cikis_meslek_kodu" value={formData.sgk_cikis_meslek_kodu || formData.sgk_giris_meslek_kodu || ''} onChange={onChange} readOnly={exitReadOnly} className={compactInputClass} options={sgkCodeCategories.occupationCodes} />
+              <SgkCodeField label="ÇSGB iş kolu" field="sgk_cikis_csgb_is_kolu" value={formData.sgk_cikis_csgb_is_kolu || formData.sgk_giris_csgb_is_kolu || ''} onChange={onChange} readOnly={exitReadOnly} className={compactInputClass} options={sgkCodeCategories.csgbBusinessLines} />
               <SgkSelectField label="Ücret yüzde usulü" field="sgk_cikis_ucret_yuzde_usulu" value={formData.sgk_cikis_ucret_yuzde_usulu || 'H'} onChange={onChange} readOnly={exitReadOnly} className={compactInputClass} options={SGK_YES_NO_OPTIONS} />
-              <SgkTextField label="Önceki belge türü" field="sgk_cikis_onceki_belge_turu" value={formData.sgk_cikis_onceki_belge_turu || '1'} onChange={onChange} readOnly={exitReadOnly} className={compactInputClass} />
+              <SgkCodeField label="Önceki belge türü" field="sgk_cikis_onceki_belge_turu" value={formData.sgk_cikis_onceki_belge_turu || '1'} onChange={onChange} readOnly={exitReadOnly} className={compactInputClass} options={sgkCodeCategories.documentTypes} />
               <SgkTextField label="Önceki hak edilen ücret" field="sgk_cikis_onceki_hakedilen_ucret" value={formData.sgk_cikis_onceki_hakedilen_ucret || ''} onChange={onChange} readOnly={exitReadOnly} className={compactInputClass} />
-              <SgkTextField label="Bu dönem belge türü" field="sgk_cikis_bu_donem_belge_turu" value={formData.sgk_cikis_bu_donem_belge_turu || '1'} onChange={onChange} readOnly={exitReadOnly} className={compactInputClass} />
+              <SgkCodeField label="Bu dönem belge türü" field="sgk_cikis_bu_donem_belge_turu" value={formData.sgk_cikis_bu_donem_belge_turu || '1'} onChange={onChange} readOnly={exitReadOnly} className={compactInputClass} options={sgkCodeCategories.documentTypes} />
               <SgkTextField label="Bu dönem hak edilen ücret" field="sgk_cikis_bu_donem_hakedilen_ucret" value={formData.sgk_cikis_bu_donem_hakedilen_ucret || ''} onChange={onChange} readOnly={exitReadOnly} className={compactInputClass} />
               <SgkTextField label="Referans kodu" field="sgk_cikis_referans_no" value={formData.sgk_cikis_referans_no || ''} onChange={onChange} readOnly={actionReadOnly} className={compactInputClass} />
             </div>
@@ -1697,6 +1723,49 @@ const SGK_YES_NO_OPTIONS = [
   { value: 'H', label: 'Hayır' },
   { value: 'E', label: 'Evet' },
 ]
+
+function SgkCodeField({
+  label,
+  field,
+  value,
+  onChange,
+  readOnly,
+  className,
+  options,
+}: {
+  label: string
+  field: string
+  value: string
+  onChange: (field: string, value: any) => void
+  readOnly: boolean
+  className: string
+  options?: SgkCodeOption[]
+}) {
+  const datalistId = `sgk-code-${field}`
+
+  return (
+    <label className="block">
+      <span className="mb-1 block text-xs font-medium text-gray-600 dark:text-gray-400">{label}</span>
+      <input
+        type="text"
+        list={options?.length ? datalistId : undefined}
+        value={value}
+        onChange={(event) => onChange(field, event.target.value)}
+        readOnly={readOnly}
+        className={className}
+      />
+      {options?.length ? (
+        <datalist id={datalistId}>
+          {options.map(option => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </datalist>
+      ) : null}
+    </label>
+  )
+}
 
 function SgkTextField({
   label,

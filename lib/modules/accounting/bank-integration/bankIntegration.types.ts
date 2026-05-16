@@ -33,6 +33,7 @@ export interface BankProviderCredentials {
   refreshToken?: string
   tokenEndpoint?: string
   apiBaseUrl?: string
+  redirectUri?: string
   scopes?: string[]
   consentId?: string
   extra?: Record<string, unknown>

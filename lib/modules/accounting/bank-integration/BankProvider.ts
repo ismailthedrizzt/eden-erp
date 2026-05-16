@@ -5,5 +5,13 @@ export interface BankProvider {
   readonly displayName: string
   readonly supportsOAuth2: boolean
   sync(input: BankProviderSyncInput): Promise<BankProviderSyncResult>
+  testConnection?(input: BankProviderSyncInput): Promise<BankProviderTestResult>
   refreshCredentials?(credentials: BankProviderCredentials): Promise<BankProviderCredentials>
+}
+
+export interface BankProviderTestResult {
+  ok: boolean
+  providerStatus: string
+  message?: string
+  accountCount?: number
 }

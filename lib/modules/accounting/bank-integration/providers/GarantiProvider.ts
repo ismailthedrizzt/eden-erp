@@ -65,6 +65,29 @@ export class GarantiProvider extends GenericBankProvider {
     }
   }
 
+  async testConnection(input: BankProviderSyncInput) {
+    const apiBaseUrl = normalizeBaseUrl(input.connection.base_url || input.credentials.apiBaseUrl || 'https://apis.garantibbva.com.tr:443')
+    await this.getOneTimeAccessToken(input.credentials, apiBaseUrl)
+
+    const consentId = readText(input.credentials.consentId) || readText(input.credentials.extra?.consentId)
+    if (!consentId) {
+      return {
+        ok: true,
+        providerStatus: 'oauth_token_received',
+        message: 'OAuth token alındı. Hesap bilgisi testi için consentId tanımlanmalı.',
+        accountCount: 0,
+      }
+    }
+
+    const result = await this.sync(input)
+    return {
+      ok: true,
+      providerStatus: result.providerStatus || 'account_information_synced',
+      message: 'Garanti BBVA sandbox bağlantısı ve hesap bilgisi çağrısı başarılı.',
+      accountCount: result.bankAccounts?.length || 0,
+    }
+  }
+
   private async getOneTimeAccessToken(credentials: BankProviderCredentials, apiBaseUrl: string) {
     if (!credentials.clientId || !credentials.clientSecret) {
       throw new Error('Garanti BBVA OAuth clientId ve clientSecret zorunludur.')
@@ -75,6 +98,8 @@ export class GarantiProvider extends GenericBankProvider {
     body.set('grant_type', 'client_credentials')
     const scopes = credentials.scopes?.length ? credentials.scopes : ['oob']
     body.set('scope', scopes.join(' '))
+    const redirectUri = readText(credentials.redirectUri) || readText(credentials.extra?.redirectUri) || readText(credentials.extra?.callbackUrl)
+    if (redirectUri) body.set('redirect_uri', redirectUri)
 
     const tokenAuthMethod = readText(credentials.extra?.tokenAuthMethod) || 'body'
     const headers: Record<string, string> = {

@@ -66,10 +66,12 @@ async function resolveCredentials(body: Record<string, any>): Promise<BankProvid
       clientSecret: inline.clientSecret,
       tokenEndpoint: inline.tokenEndpoint,
       apiBaseUrl: body.base_url || inline.apiBaseUrl,
+      redirectUri: inline.redirectUri || inline.callbackUrl,
       consentId: inline.consentId,
       extra: {
         ...(stored.extra || {}),
         ...(inline.extra || {}),
+        redirectUri: inline.redirectUri || inline.callbackUrl || stored.extra?.redirectUri,
         tokenAuthMethod: inline.tokenAuthMethod || stored.extra?.tokenAuthMethod,
         accounts: buildAccountFilters(inline),
       },
