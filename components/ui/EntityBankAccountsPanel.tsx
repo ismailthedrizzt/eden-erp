@@ -95,13 +95,14 @@ export function EntityBankAccountsPanel({ entityKind, entityId, masterName = '',
   const [ibanAutomationStatus, setIbanAutomationStatus] = useState<IbanAutomationStatus>('idle')
   const [internationalOpen, setInternationalOpen] = useState(false)
 
-  const canView = can(ENTITY_BANK_ACCOUNT_PERMISSIONS.view)
-  const canInsert = can(ENTITY_BANK_ACCOUNT_PERMISSIONS.insert)
-  const canEdit = can(ENTITY_BANK_ACCOUNT_PERMISSIONS.edit)
-  const canPassivate = can(ENTITY_BANK_ACCOUNT_PERMISSIONS.passivate)
-  const canSetDefault = can(ENTITY_BANK_ACCOUNT_PERMISSIONS.setDefault)
-  const locked = readOnly || !canEdit
   const embedded = !!onChange
+  const hasPersistedEntity = !!entityKind && !!entityId
+  const canView = embedded || can(ENTITY_BANK_ACCOUNT_PERMISSIONS.view)
+  const canInsert = embedded || can(ENTITY_BANK_ACCOUNT_PERMISSIONS.insert)
+  const canEdit = embedded || can(ENTITY_BANK_ACCOUNT_PERMISSIONS.edit)
+  const canPassivate = embedded || can(ENTITY_BANK_ACCOUNT_PERMISSIONS.passivate)
+  const canSetDefault = embedded || can(ENTITY_BANK_ACCOUNT_PERMISSIONS.setDefault)
+  const locked = readOnly || !canEdit
 
   const load = useCallback(async () => {
     if (!entityKind || !entityId) return
@@ -139,7 +140,7 @@ export function EntityBankAccountsPanel({ entityKind, entityId, masterName = '',
   const primaryFields = useMemo(() => orderedFields.filter(field => !internationalTransferFields.has(field)), [orderedFields])
   const internationalFields = useMemo(() => orderedFields.filter(field => internationalTransferFields.has(field) && !intermediaryBankFields.has(field)), [orderedFields])
 
-  if (!entityKind || !entityId) {
+  if (!hasPersistedEntity && !embedded) {
     return <EmptyPanel text="Banka bilgileri master kişi/kurum kaydı oluşunca girilebilir." />
   }
 
@@ -173,8 +174,12 @@ export function EntityBankAccountsPanel({ entityKind, entityId, masterName = '',
   }
 
   async function save() {
-    if (!entityKind || !entityId) return
     const payload = normalizeDraft(draft, masterName)
+    if (!hasPersistedEntity) {
+      updateRows(rows.map(row => row.id === draft.id ? { ...row, ...payload } as EntityBankAccount : row))
+      setMode('list')
+      return
+    }
     const url = mode === 'create'
       ? `/api/entities/${entityKind}/${entityId}/bank-accounts`
       : `/api/entity-bank-accounts/${draft.id}`
@@ -185,6 +190,14 @@ export function EntityBankAccountsPanel({ entityKind, entityId, masterName = '',
   }
 
   async function mutateRow(row: EntityBankAccount, action: 'set-default' | 'passivate') {
+    if (!hasPersistedEntity) {
+      if (action === 'passivate') {
+        updateRows(rows.map(item => item.id === row.id ? { ...item, status: 'passive' } : item))
+      } else {
+        updateRows(rows.map(item => ({ ...item, is_default: item.id === row.id })))
+      }
+      return
+    }
     await fetchJson(`/api/entity-bank-accounts/${row.id}/${action}`, { method: 'POST' })
     await load()
   }

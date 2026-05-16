@@ -561,9 +561,16 @@ function formatDateForDisplay(value: unknown) {
 
 function normalizeDateDisplayInput(value: string) {
   const text = value.trim()
+  const isoMatch = text.match(/^(\d{4})-(\d{2})-(\d{2})$/)
+  if (isoMatch) return text
   const displayMatch = text.match(/^(\d{2})\.(\d{2})\.(\d{4})$/)
   if (displayMatch) return `${displayMatch[3]}-${displayMatch[2]}-${displayMatch[1]}`
-  return text
+  const digits = text.replace(/\D/g, '').slice(0, 8)
+  if (!digits) return ''
+  if (digits.length <= 2) return digits
+  if (digits.length <= 4) return `${digits.slice(0, 2)}.${digits.slice(2)}`
+  if (digits.length < 8) return `${digits.slice(0, 2)}.${digits.slice(2, 4)}.${digits.slice(4)}`
+  return `${digits.slice(4)}-${digits.slice(2, 4)}-${digits.slice(0, 2)}`
 }
 
 function formatGender(value: unknown) {
@@ -2546,6 +2553,8 @@ export function EntityForm({
     const baseInputClass = cn(
       "w-full bg-white text-gray-900 dark:bg-gray-900 dark:text-white border rounded-lg px-3 py-2 text-sm placeholder:text-gray-400 dark:placeholder:text-gray-500",
       "transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500/20",
+      "disabled:text-gray-900 disabled:[-webkit-text-fill-color:#111827] read-only:text-gray-900 read-only:[-webkit-text-fill-color:#111827]",
+      "dark:disabled:text-gray-100 dark:disabled:[-webkit-text-fill-color:#f3f4f6] dark:read-only:text-gray-100 dark:read-only:[-webkit-text-fill-color:#f3f4f6]",
       validationState.status === 'invalid'
         ? "border-red-400 dark:border-red-700 focus:border-red-500 focus:ring-red-500/20"
         : validationState.status === 'valid'
@@ -2734,9 +2743,12 @@ export function EntityForm({
         case 'date':
           return (
             <input
-              type="date"
-              value={value ? value.split('T')[0] : ''}
-              onChange={(e) => handleChange(field.name, e.target.value)}
+              type="text"
+              value={formatDateForDisplay(value)}
+              onChange={(e) => handleChange(field.name, normalizeDateDisplayInput(e.target.value))}
+              placeholder={field.placeholder || 'gg.aa.yyyy'}
+              inputMode="numeric"
+              maxLength={10}
               readOnly={fieldDisabled}
               className={baseInputClass}
             />

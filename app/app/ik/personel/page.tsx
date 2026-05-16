@@ -608,6 +608,7 @@ export default function PersonelYonetimPage() {
   const formMode: FormMode = pageState === 'create' ? 'create' :
                             pageState === 'edit' ? 'edit' :
                             selectedIsPassive ? 'passive' : 'view'
+  const hiddenEmployeeTabIds = new Set(['gercek_kisi_ozel', 'ozel', 'iletisim', 'egitim', 'aile', 'banka'])
   const formTabs = [
     ...createRealPersonMasterTabs({
       addressField: 'adres',
@@ -616,10 +617,8 @@ export default function PersonelYonetimPage() {
       maritalStatusField: 'medeni_durum',
       includeEmergencyContact: true,
     }),
-    ...toEntityFormTabs(moduleConfig.form.tabs).filter(tab =>
-      !['ozel', 'iletisim', 'egitim', 'aile', 'banka'].includes(tab.id)
-    ),
-  ]
+    ...toEntityFormTabs(moduleConfig.form.tabs),
+  ].filter(tab => !hiddenEmployeeTabIds.has(tab.id))
   const formLoadStages = createProgressiveFormLoadStages({
     mode: formMode,
     hasSnapshot: pageState !== 'create' && !!selectedPersonel,
