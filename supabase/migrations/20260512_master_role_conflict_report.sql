@@ -49,7 +49,7 @@ WITH employee_conflicts AS (
       ('district', p.district, e.ilce)
   ) AS item(field_name, master_value, role_value)
   WHERE COALESCE(p.is_deleted, false) = false
-    AND COALESCE(e.is_active, true) = true
+    AND COALESCE(e.is_deleted, false) = false
     AND NULLIF(BTRIM(COALESCE(item.master_value, '')), '') IS NOT NULL
     AND NULLIF(BTRIM(COALESCE(item.role_value, '')), '') IS NOT NULL
     AND BTRIM(COALESCE(item.master_value, '')) IS DISTINCT FROM BTRIM(COALESCE(item.role_value, ''))
@@ -88,7 +88,7 @@ company_conflicts AS (
       ('district', o.district, s.ilce)
   ) AS item(field_name, master_value, role_value)
   WHERE COALESCE(o.is_deleted, false) = false
-    AND COALESCE(s.is_active, true) = true
+    AND COALESCE(s.is_deleted, false) = false
     AND NULLIF(BTRIM(COALESCE(item.master_value, '')), '') IS NOT NULL
     AND NULLIF(BTRIM(COALESCE(item.role_value, '')), '') IS NOT NULL
     AND BTRIM(COALESCE(item.master_value, '')) IS DISTINCT FROM BTRIM(COALESCE(item.role_value, ''))

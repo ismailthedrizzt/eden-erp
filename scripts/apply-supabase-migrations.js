@@ -7,6 +7,7 @@ const envPath = path.join(root, '.env.local');
 const migrationsDir = path.join(root, 'supabase', 'migrations');
 
 const migrationFiles = [
+  'create_module_licenses.sql',
   '20240501_create_sirketler_table.sql',
   '20240502_complete_core_schema.sql',
   '20240503_rename_personel_to_employees.sql',
@@ -28,6 +29,13 @@ const migrationFiles = [
   '20240519_company_vehicles.sql',
   '20260503_backend_architecture_foundation.sql',
   '20260503_identity_master_model.sql',
+  '20260508_employee_company_alias.sql',
+  '20260512_company_registration_status_fields.sql',
+  '20260514_single_soft_delete_flag.sql',
+  '20260509_accounting_module_foundation.sql',
+  '20260509_employee_contract_fields.sql',
+  '20260509_employee_list_optional_columns.sql',
+  '20260509_list_performance_indexes.sql',
   '20260509_ownership_transactions.sql',
   '20260510_ownership_transactions_scope_split.sql',
   '20260510_document_media_registry.sql',
@@ -42,7 +50,6 @@ const migrationFiles = [
   '20260512_remove_media_registry_tables.sql',
   '20260512_compact_company_document_thumbnails.sql',
   '20260512_strip_company_document_bitmap_thumbnails.sql',
-  '20260512_company_registration_status_fields.sql',
   '20260512_company_relation_english_alias_backfill.sql',
   '20260512_master_role_conflict_report.sql',
   '20260512_normalize_country_nationality_codes.sql',
@@ -53,9 +60,13 @@ const migrationFiles = [
   '20260513_security_linter_hardening.sql',
   '20260513_integration_parameters_and_bank_card_refs.sql',
   '20260514_entity_bank_accounts.sql',
+  '20260514_fast_primary_lists.sql',
+  '20260515_bank_account_card_fast_lists.sql',
   '20260515_employee_exit_date_drift.sql',
   '20260515_employee_list_performance_drift.sql',
-  'create_module_licenses.sql',
+  '20260515_employee_sgk_lifecycle_fields.sql',
+  '20260516_employee_work_lifecycle.sql',
+  '20260516_partner_ownership_lifecycle.sql',
   'add_employee_unique_constraint.sql',
 ];
 
@@ -105,7 +116,7 @@ async function applyMigration(client, name) {
     }
   }
 
-  const sql = fs.readFileSync(path.join(migrationsDir, name), 'utf8');
+  const sql = fs.readFileSync(path.join(migrationsDir, name), 'utf8').replace(/^\uFEFF/, '');
 
   await client.query('BEGIN');
   try {

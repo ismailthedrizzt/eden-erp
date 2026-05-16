@@ -113,11 +113,11 @@ settings_or_movements as (
   union
   select company_id, 'person'::text, person_id, null::uuid, 'TRY'::text
   from public.employees
-  where person_id is not null and coalesce(is_active, true) = true
+  where person_id is not null and coalesce(is_deleted, false) = false
   union
   select id, 'organization'::text, null::uuid, organization_id, 'TRY'::text
   from public.sirketler
-  where organization_id is not null and coalesce(is_active, true) = true and coalesce(is_deleted, false) = false
+  where organization_id is not null and coalesce(is_deleted, false) = false
   union
   select coalesce(company_id, sirket_id), 'person'::text, person_id, null::uuid, 'TRY'::text
   from public.sirket_ortaklar
@@ -152,8 +152,8 @@ select
   p.national_id as identity_no,
   o.tax_number as tax_no,
   array_remove(array[
-    case when base.person_id is not null and exists (select 1 from public.employees e where e.person_id = base.person_id and coalesce(e.is_active, true) = true) then 'Çalışan' end,
-    case when base.organization_id is not null and exists (select 1 from public.sirketler c where c.organization_id = base.organization_id and coalesce(c.is_active, true) = true and coalesce(c.is_deleted, false) = false) then 'Şirket' end,
+    case when base.person_id is not null and exists (select 1 from public.employees e where e.person_id = base.person_id and coalesce(e.is_deleted, false) = false) then 'Çalışan' end,
+    case when base.organization_id is not null and exists (select 1 from public.sirketler c where c.organization_id = base.organization_id and coalesce(c.is_deleted, false) = false) then 'Şirket' end,
     case when exists (select 1 from public.sirket_ortaklar sp where (sp.person_id = base.person_id or sp.organization_id = base.organization_id) and coalesce(sp.is_deleted, false) = false) then 'Ortak' end,
     case when exists (select 1 from public.sirket_temsilciler sr where (sr.person_id = base.person_id or sr.organization_id = base.organization_id) and coalesce(sr.is_deleted, false) = false) then 'Temsilci' end,
     case when exists (select 1 from public.stakeholders st where (st.person_id = base.person_id or st.organization_id = base.organization_id) and coalesce(st.is_deleted, false) = false) then 'Paydaş' end

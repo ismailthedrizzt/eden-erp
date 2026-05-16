@@ -5,13 +5,13 @@ create index if not exists idx_organizations_is_deleted
 on public.organizations (is_deleted);
 
 create index if not exists idx_employees_company_deleted_status
-on public.employees (company_id, is_active, calisma_durumu);
+on public.employees (company_id, is_deleted, calisma_durumu);
 
 create index if not exists idx_employees_updated_at
 on public.employees (updated_at);
 
 create index if not exists idx_sirketler_deleted_status
-on public.sirketler (is_deleted, is_active);
+on public.sirketler (is_deleted);
 
 create index if not exists idx_sirketler_updated_at
 on public.sirketler (updated_at);
