@@ -5,6 +5,7 @@ import { CheckCircle2, ChevronDown, Eye, History, Pencil, Plus, Star, Trash2, X 
 import { cn } from '@/lib/utils'
 import { AutomationBadge, type AutomationBadgeStatus } from './AutomationBadge'
 import { IBANInput } from './IBANInput'
+import { formControlClass } from './formControlStyles'
 import { usePermissions } from '@/lib/security/permissionStore'
 import { COUNTRY_OPTIONS } from '@/lib/reference/country-nationalities'
 import {
@@ -447,7 +448,7 @@ function renderField(field: string, draft: Partial<EntityBankAccount>, disabled:
     document_reference_id: 'Belge Referansı',
   }
   const value = (draft as any)[field] ?? ''
-  const common = "w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 disabled:bg-gray-100 disabled:text-gray-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:disabled:bg-gray-800"
+  const common = formControlClass()
 
   if (field === 'is_same_as_master_name' || field === 'has_intermediary_bank') {
     return <label key={field} className="flex items-center gap-2 text-sm"><input type="checkbox" checked={!!value} disabled={disabled} onChange={event => onChange(field, event.target.checked)} />{labels[field]}</label>
@@ -499,7 +500,7 @@ function Select({ label, value, options, optionLabels, disabled, onChange }: { l
   return (
     <label className="space-y-1">
       <span className="text-xs font-medium text-gray-600 dark:text-gray-400">{label}</span>
-      <select value={value || ''} disabled={disabled} onChange={event => onChange(event.target.value)} className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900">
+      <select value={value || ''} disabled={disabled} onChange={event => onChange(event.target.value)} className={formControlClass()}>
         {options.map((option, index) => <option key={`${option || 'empty'}-${index}`} value={option}>{option ? optionLabels?.[option] || option : 'Seçiniz'}</option>)}
       </select>
     </label>

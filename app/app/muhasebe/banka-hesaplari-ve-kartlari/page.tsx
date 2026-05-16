@@ -8,6 +8,7 @@ import Modal from '@/components/ui/Modal'
 import { SmartDataTable, type ColumnDef, type SortConfig, type WidgetDef } from '@/components/ui/SmartDataTable'
 import { AutomationBadge, type AutomationBadgeStatus } from '@/components/ui/AutomationBadge'
 import { Toast } from '@/components/ui/Toast'
+import { formControlClass } from '@/components/ui/formControlStyles'
 import { usePermissions } from '@/lib/security/permissionStore'
 import { getTurkishIbanBanks, resolveTurkishIban } from '@/lib/utils'
 import { ACCOUNTING_PERMISSIONS } from '@/lib/modules/accounting/shared/accounting.permissions'
@@ -448,7 +449,7 @@ function TextField({ label, value, onChange, readOnly, disabled, type = 'text', 
         {label}
         {automationBadge}
       </span>
-      <input type={type} value={value ?? ''} readOnly={readOnly} disabled={disabled} onChange={event => onChange(event.target.value)} className="mt-1 h-10 w-full rounded-md border border-gray-200 bg-white px-3 text-sm text-gray-900 outline-none focus:border-blue-400 read-only:bg-gray-50 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-400 dark:border-gray-700 dark:bg-gray-950 dark:text-white dark:read-only:bg-gray-900 dark:disabled:bg-gray-900 dark:disabled:text-gray-500" />
+      <input type={type} value={value ?? ''} readOnly={readOnly} disabled={disabled} onChange={event => onChange(event.target.value)} className={formControlClass({ rounded: 'md', className: 'mt-1 h-10' })} />
     </label>
   )
 }
@@ -465,7 +466,7 @@ function SelectField({ label, value, options, onChange, disabled }: { label: str
   return (
     <label className="block">
       <span className="text-xs font-medium text-gray-500">{label}</span>
-      <select value={value ?? ''} disabled={disabled} onChange={event => onChange(event.target.value)} className="mt-1 h-10 w-full rounded-md border border-gray-200 bg-white px-3 text-sm text-gray-900 outline-none focus:border-blue-400 disabled:bg-gray-50 dark:border-gray-700 dark:bg-gray-950 dark:text-white dark:disabled:bg-gray-900">
+      <select value={value ?? ''} disabled={disabled} onChange={event => onChange(event.target.value)} className={formControlClass({ rounded: 'md', className: 'mt-1 h-10' })}>
         {options.map(([optionValue, labelText]) => <option key={optionValue} value={optionValue}>{labelText}</option>)}
       </select>
     </label>

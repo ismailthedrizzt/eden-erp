@@ -18,6 +18,7 @@ import {
 } from 'lucide-react'
 import { PageBanner } from '@/components/ui/PageBanner'
 import { SmartDataTable, ColumnDef, WidgetDef } from '@/components/ui/SmartDataTable'
+import { formControlClass } from '@/components/ui/formControlStyles'
 import { ToggleSwitch } from '@/components/ui/ToggleSwitch'
 import { TriStateToggle } from '@/components/ui/TriStateToggle'
 import { useModuleLicense, ModuleLicense, SubmoduleLicense } from '@/hooks/useModuleLicense'
@@ -211,7 +212,7 @@ export default function ModuleLicensesPage() {
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="Modül, key veya ortam ara"
-                className="w-full rounded-lg border border-gray-300 bg-white py-2 pl-9 pr-3 text-sm dark:border-gray-700 dark:bg-gray-900"
+                className={formControlClass({ className: 'pl-9' })}
               />
             </div>
             <button onClick={refetch} className="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-900">
@@ -409,7 +410,7 @@ function LicenseDetailPanel({
           <select
             value={module.environment}
             onChange={(event) => onModuleEnvironment(module.module_key, event.target.value as Environment)}
-            className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900"
+            className={formControlClass({ className: 'mt-1' })}
           >
             {environmentOptions().map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
           </select>
@@ -433,7 +434,7 @@ function LicenseDetailPanel({
               <select
                 value={submodule.environment}
                 onChange={(event) => onSubmoduleEnvironment(submodule.module_key, submodule.submodule_key, event.target.value as Environment)}
-                className="mt-2 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs dark:border-gray-700 dark:bg-gray-900"
+                className={formControlClass({ size: 'sm', className: 'mt-2' })}
               >
                 {environmentOptions().map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
               </select>

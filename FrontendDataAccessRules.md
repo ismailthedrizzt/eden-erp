@@ -38,6 +38,15 @@ Yeni ERP sayfalari `useEntityAccess` kullanarak modul durumu, kullanici yetkiler
 - Frontend yetkisi yalnizca UI gating icindir; backend mutasyon route'lari `requirePermission` ile ayni permission key'i tekrar denetler.
 - Workflow aktifse form save akisi `decideWorkflowRoute` ile dogrudan yazma veya onay talebi olusturma kararini verir.
 
+## Form gorsel kontrati
+
+Sablondan gelen form kontrollerinde gorsel kontrat tek kaynaktir. Text input, select, textarea, IBAN, liste satiri editoru ve custom-rendered form controls `EntityForm` veya `formControlClass` ile stillenir.
+
+- Zorunlu alan bossa merkezi invalid/red, doluysa valid/green state gorunmelidir; sayfa veya modul bunu kendi Tailwind class'lariyla yeniden yazmaz.
+- `FormField.render` kullanan ozel alanlar `EntityForm` tarafindan verilen `className` ve `validationState` prop'larini kullanir.
+- Disabled/read-only alanlar light/dark modda okunur kalir; lokal `disabled:bg-gray-*`, `disabled:text-white`, `dark:text-white` gibi gri zemin ustu beyaz metin uretebilecek kombinasyonlar kullanilmaz.
+- Ozel sayfalar kendi alan tanimlarini, veri baglantilarini ve domain davranisini tanimlar; template form kontrolunun border/background/text kontratini tanimlamaz.
+
 ## Liste ve detay performans kontrati
 
 Ana ERP liste ekranlari icin hedef, ilk liste gorunumunun kullaniciya 0.2 saniye civarinda, satir tiklama sonrasi formun 0.5 saniye icinde gorunmesidir. Bu hedefi korumak icin yeni liste/detay ekranlari asagidaki kurallara uyar.

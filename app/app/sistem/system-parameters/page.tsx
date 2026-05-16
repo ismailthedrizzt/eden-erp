@@ -6,6 +6,7 @@ import { EntityForm, type FormField, type FormMode, type FormTab } from '@/compo
 import { PageBanner } from '@/components/ui/PageBanner'
 import { SmartDataTable, type ColumnDef } from '@/components/ui/SmartDataTable'
 import { Toast } from '@/components/ui/Toast'
+import { formControlClass } from '@/components/ui/formControlStyles'
 import { apiClient } from '@/lib/api/apiClient'
 import { createProgressiveFormLoadStages } from '@/lib/forms/progressiveFormLoading'
 import {
@@ -70,8 +71,8 @@ export default function SystemParametersPage() {
       label: 'Değer',
       type: 'custom',
       required: true,
-      render: ({ value, onChange, readOnly }) => selected
-        ? <ParameterValueInput row={selected} value={value} onChange={onChange} readOnly={readOnly} />
+      render: ({ value, onChange, readOnly, className }) => selected
+        ? <ParameterValueInput row={selected} value={value} onChange={onChange} readOnly={readOnly} className={className} />
         : <ReadOnlyField value={value} />,
     },
     {
@@ -248,11 +249,11 @@ function ReadOnlyField({ value, monospace = false }: { value: unknown; monospace
   )
 }
 
-function ParameterValueInput({ row, value, onChange, readOnly }: { row: ParameterRow; value: any; onChange: (value: any) => void; readOnly: boolean }) {
-  const className = 'min-h-10 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none focus:border-blue-400 disabled:cursor-not-allowed disabled:bg-gray-50 dark:border-gray-700 dark:bg-gray-950 dark:text-white dark:disabled:bg-gray-900'
+function ParameterValueInput({ row, value, onChange, readOnly, className }: { row: ParameterRow; value: any; onChange: (value: any) => void; readOnly: boolean; className?: string }) {
+  const controlClassName = className || formControlClass({ rounded: 'md', className: 'min-h-10' })
   if (row.type === 'enum') {
     return (
-      <select value={value ?? ''} disabled={readOnly} onChange={event => onChange(event.target.value)} className={className}>
+      <select value={value ?? ''} disabled={readOnly} onChange={event => onChange(event.target.value)} className={controlClassName}>
         {(row.options || []).map(option => <option key={option} value={option}>{option}</option>)}
       </select>
     )
@@ -260,7 +261,7 @@ function ParameterValueInput({ row, value, onChange, readOnly }: { row: Paramete
 
   if (row.type === 'boolean') {
     return (
-      <select value={String(value ?? row.defaultValue)} disabled={readOnly} onChange={event => onChange(event.target.value)} className={className}>
+      <select value={String(value ?? row.defaultValue)} disabled={readOnly} onChange={event => onChange(event.target.value)} className={controlClassName}>
         <option value="true">Açık</option>
         <option value="false">Kapalı</option>
       </select>
@@ -273,7 +274,7 @@ function ParameterValueInput({ row, value, onChange, readOnly }: { row: Paramete
       value={value ?? ''}
       readOnly={readOnly}
       onChange={event => onChange(event.target.value)}
-      className={className}
+      className={controlClassName}
     />
   )
 }

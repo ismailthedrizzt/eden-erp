@@ -171,6 +171,7 @@ export async function GET(request: NextRequest) {
 
   let enabledOptionalColumns = ['record_status']
   let includeOrganizationRelations = false
+  let canFilterRecordStatus = true
   let data: any[] | null = null
   let error: any = null
 
@@ -190,7 +191,7 @@ export async function GET(request: NextRequest) {
       .order(sortColumn, { ascending: listQuery.direction !== 'desc' })
       .range(from, to)
 
-    if (!includePassive) query = query.neq('record_status', 'passive')
+    if (!includePassive && canFilterRecordStatus) query = query.neq('record_status', 'passive')
     if (birimId) query = query.eq('birim_id', birimId)
     if (durum) query = query.eq('calisma_durumu', durum)
     if (ara) query = query.or(`ad.ilike.%${ara}%,soyad.ilike.%${ara}%,tc_kimlik.ilike.%${ara}%`)
@@ -201,6 +202,7 @@ export async function GET(request: NextRequest) {
 
     const missingColumn = missingEmployeeColumn(error, enabledOptionalColumns)
     if (missingColumn) {
+      if (missingColumn === 'record_status') canFilterRecordStatus = false
       enabledOptionalColumns = enabledOptionalColumns.filter((column) => column !== missingColumn)
       continue
     }

@@ -126,6 +126,8 @@ Before committing, verify:
 - [ ] Mode type: `FormMode = 'create' | 'view' | 'edit'`
 - [ ] Using `onSave` and `onCancel` callbacks
 - [ ] Form handles its own state internally
+- [ ] Text/select/textarea visuals come from `EntityForm` or `formControlClass`; required empty = red, required filled = green, disabled/read-only text remains readable
+- [ ] `FormField.render` custom renderers consume the provided `className`/`validationState` props instead of hardcoding border/background/text color classes
 - [ ] Form receives `loadStages={formLoadStages}` from the progressive loading helper
 - [ ] Other fields populated by a field input/lookup expose the standard `AutomationBadge`; EntityForm fields use `automation` metadata or `type: 'iban'`
 - [ ] Row click opens with list snapshot first; detail, master and references complete progressively

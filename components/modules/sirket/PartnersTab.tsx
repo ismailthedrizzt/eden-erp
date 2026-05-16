@@ -15,6 +15,7 @@ import {
   Users,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { formControlClass } from '@/components/ui/formControlStyles'
 import { isSoftDeletedRecord } from '@/lib/forms/entityState'
 import { companyService } from '@/lib/services/companyService'
 import { employeeService } from '@/lib/services/employeeService'
@@ -523,7 +524,7 @@ export function PartnersTab({ value, onChange, readOnly = false, representatives
             )}
             <div className="relative mb-2">
               <Search className="pointer-events-none absolute left-3 top-2.5 text-gray-400" size={14} />
-              <input value={search} onChange={event => setSearch(event.target.value)} disabled={readOnly || activeStep < 3} placeholder="Ad / ünvan ara" className="w-full rounded-lg border border-gray-300 bg-white py-2 pl-8 pr-3 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:cursor-not-allowed disabled:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:disabled:bg-gray-800" />
+              <input value={search} onChange={event => setSearch(event.target.value)} disabled={readOnly || activeStep < 3} placeholder="Ad / ünvan ara" className={formControlClass({ className: 'pl-8' })} />
             </div>
             <div className="max-h-48 space-y-2 overflow-auto pr-1">
               {activeStep >= 3 && filteredRecords.length === 0 && <p className="rounded-lg border border-dashed border-gray-200 p-3 text-xs text-gray-500 dark:border-gray-700">Bu kaynak için kayıt bulunamadı.</p>}
@@ -788,7 +789,7 @@ function choiceClass(selected: boolean, disabled?: boolean) {
 }
 
 function inputClass(error?: string) {
-  return cn("w-full rounded-lg border bg-white px-3 py-2 text-sm transition-colors focus:outline-none focus:ring-2 disabled:cursor-not-allowed disabled:bg-gray-50 dark:bg-gray-900 dark:disabled:bg-gray-800", error ? "border-red-400 focus:border-red-500 focus:ring-red-500/20 dark:border-red-700" : "border-gray-300 focus:border-blue-500 focus:ring-blue-500/20 dark:border-gray-700")
+  return formControlClass({ state: error ? 'invalid' : 'neutral' })
 }
 
 function buildManualRecord(draft: DraftState, kind: OwnerKind): SourceRecord[] {

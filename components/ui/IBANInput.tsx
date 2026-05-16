@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { Landmark } from 'lucide-react'
 import { cn, getIbanBankInfo } from '@/lib/utils'
+import { formControlClass } from './formControlStyles'
 
 interface IBANInputProps {
   value: string
@@ -44,10 +45,7 @@ export function IBANInput({ value, onChange, disabled = false, className }: IBAN
           placeholder="TR00 0000 0000 0000 0000 0000 00"
           maxLength={42}
           className={cn(
-            "w-full border rounded-md px-3 py-2 text-sm pl-10",
-            disabled
-              ? "bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-600 text-gray-900 dark:text-gray-100 cursor-not-allowed"
-              : "bg-white dark:bg-gray-900 border-gray-300 dark:border-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500",
+            formControlClass({ rounded: 'md', className: 'pl-10' }),
             className
           )}
         />

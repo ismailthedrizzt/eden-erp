@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { Check, SlidersHorizontal } from 'lucide-react'
+import { formControlClass } from '@/components/ui/formControlStyles'
 import { dashboardWidgetRegistry, uniqueWidgetModules, uniqueWidgetPages } from '@/lib/dashboard/widgetRegistry'
 
 export interface WidgetPickerItem {
@@ -86,7 +87,7 @@ export function WidgetPickerModal({
                   setModuleKey(event.target.value)
                   setPageKey('')
                 }}
-                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                className={formControlClass()}
               >
                 <option value="">Tum Moduller</option>
                 {modules.map(module => (
@@ -100,7 +101,7 @@ export function WidgetPickerModal({
               <select
                 value={pageKey}
                 onChange={(event) => setPageKey(event.target.value)}
-                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                className={formControlClass()}
               >
                 <option value="">Tum Sayfalar</option>
                 {pages.map(page => (

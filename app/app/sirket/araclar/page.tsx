@@ -32,6 +32,7 @@ import { PageBanner } from '@/components/ui/PageBanner'
 import { SmartDataTable, ColumnDef, SortConfig, WidgetDef } from '@/components/ui/SmartDataTable'
 import { DocumentSlotUploader, DocumentSlot, SlotDocument } from '@/components/ui/DocumentSlotUploader'
 import { ImageSlotUploader, ImageSlot, SlotImage } from '@/components/ui/ImageSlotUploader'
+import { formControlClass } from '@/components/ui/formControlStyles'
 import { companyVehicleService } from '@/lib/services/companyVehicleService'
 import type { ListMeta } from '@/lib/api/listEndpoint'
 import { cn } from '@/lib/utils'
@@ -557,7 +558,7 @@ function InputField({ label, value, onChange, type = 'text', readOnly, required,
         value={value}
         onChange={(event) => onChange(event.target.value)}
         readOnly={readOnly}
-        className={cn('mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-white', readOnly && 'bg-gray-50 text-gray-500 dark:bg-gray-950')}
+        className={formControlClass({ className: 'mt-1' })}
       />
     </label>
   )
@@ -571,7 +572,7 @@ function SelectField({ label, value, onChange, options, readOnly, required, hist
         value={value}
         onChange={(event) => onChange(event.target.value)}
         disabled={readOnly}
-        className={cn('mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-white', readOnly && 'bg-gray-50 text-gray-500 dark:bg-gray-950')}
+        className={formControlClass({ className: 'mt-1' })}
       >
         <option value="">Seçiniz</option>
         {options.map((option) => {
@@ -587,7 +588,7 @@ function TextareaField({ label, value, onChange, readOnly }: FieldProps) {
   return (
     <label className="block">
       <FieldLabel label={label} />
-      <textarea value={value} onChange={(event) => onChange(event.target.value)} readOnly={readOnly} rows={5} className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900" />
+      <textarea value={value} onChange={(event) => onChange(event.target.value)} readOnly={readOnly} rows={5} className={formControlClass({ className: 'mt-1' })} />
     </label>
   )
 }

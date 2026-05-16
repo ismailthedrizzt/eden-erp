@@ -3,8 +3,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import { Loader2, Search } from 'lucide-react'
-import { cn } from '@/lib/utils'
 import { AutomationBadge, type AutomationBadgeStatus } from './AutomationBadge'
+import { formControlClass } from './formControlStyles'
 import type { IdentityEntityKind, IdentityGateConfig, IdentityGateResolveResult, IdentityGateState } from '@/lib/identity-gate'
 import { COUNTRY_NATIONALITY_OPTIONS, COUNTRY_OPTIONS, isTurkishNationality, normalizeCountryId } from '@/lib/reference/country-nationalities'
 
@@ -450,8 +450,6 @@ function hasUsefulPrefillData(result: IdentityGateResolveResult) {
   })
 }
 
-const inputClass = 'w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-white disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-900 dark:disabled:bg-gray-800 dark:disabled:text-gray-100'
-
 function initialIdentity(kind: IdentityEntityKind): Record<string, string> {
   return kind === 'person'
     ? { nationality: 'TR', national_id: '', passport_no: '' }
@@ -590,11 +588,7 @@ function isTurkishOrganization(country?: string) {
 }
 
 function fieldClass(valid: boolean, touched?: boolean, disabled?: boolean) {
-  return cn(
-    inputClass,
-    !disabled && valid && 'border-emerald-500 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20',
-    !disabled && !valid && 'border-red-400 focus:border-red-500 focus:ring-2 focus:ring-red-500/20'
-  )
+  return formControlClass({ state: disabled ? 'neutral' : valid ? 'valid' : 'invalid' })
 }
 
 function buildRoleScope(config: IdentityGateConfig, formData: Record<string, any>, explicitScope?: Record<string, unknown>) {

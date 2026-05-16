@@ -6,6 +6,7 @@ import { EntityForm, FormField, FormMode, FormTab } from '@/components/ui/Entity
 import { PageBanner } from '@/components/ui/PageBanner'
 import { SmartDataTable, ColumnDef, SortConfig, WidgetDef } from '@/components/ui/SmartDataTable'
 import { Toast } from '@/components/ui/Toast'
+import { formControlClass } from '@/components/ui/formControlStyles'
 import { normalizeCountryId } from '@/lib/reference/country-nationalities'
 import { createRealPersonMasterTabs } from '@/lib/identity/realPersonFormSections'
 import { createLegalEntityMasterTabs } from '@/lib/identity/legalEntityFormSections'
@@ -973,7 +974,7 @@ function PartnerOwnershipActionWizard({
           <div className="mt-5 grid gap-4 sm:grid-cols-2">
             <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
               Şirket
-              <select value={form.company_id} onChange={event => update('company_id', event.target.value)} className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900">
+              <select value={form.company_id} onChange={event => update('company_id', event.target.value)} className={formControlClass({ className: 'mt-1' })}>
                 <option value="">Seçiniz</option>
                 {companies.map(company => (
                   <option key={company.value} value={company.value}>{company.label} - Boş pay %{Math.max(0, 100 - (allocatedByCompany[company.value] || 0)).toFixed(2)}</option>
@@ -982,27 +983,27 @@ function PartnerOwnershipActionWizard({
             </label>
             <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
               Başlangıç Tarihi
-              <input type="date" value={form.start_date} onChange={event => update('start_date', event.target.value)} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900" />
+              <input type="date" value={form.start_date} onChange={event => update('start_date', event.target.value)} className={formControlClass({ className: 'mt-1' })} />
             </label>
             <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
               Hisse Payı %
-              <input type="number" min="0" max="100" step="0.01" value={form.share_ratio} onChange={event => update('share_ratio', event.target.value)} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900" />
+              <input type="number" min="0" max="100" step="0.01" value={form.share_ratio} onChange={event => update('share_ratio', event.target.value)} className={formControlClass({ className: 'mt-1' })} />
             </label>
             <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
               Oy Hakkı %
-              <input type="number" min="0" max="100" step="0.01" value={form.voting_ratio} onChange={event => update('voting_ratio', event.target.value)} placeholder="Hisse payı ile aynı" className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900" />
+              <input type="number" min="0" max="100" step="0.01" value={form.voting_ratio} onChange={event => update('voting_ratio', event.target.value)} placeholder="Hisse payı ile aynı" className={formControlClass({ className: 'mt-1' })} />
             </label>
             <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
               Kar Payı %
-              <input type="number" min="0" max="100" step="0.01" value={form.profit_ratio} onChange={event => update('profit_ratio', event.target.value)} placeholder="Hisse payı ile aynı" className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900" />
+              <input type="number" min="0" max="100" step="0.01" value={form.profit_ratio} onChange={event => update('profit_ratio', event.target.value)} placeholder="Hisse payı ile aynı" className={formControlClass({ className: 'mt-1' })} />
             </label>
             <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
               Sermaye
-              <input type="number" min="0" step="0.01" value={form.capital_amount} onChange={event => update('capital_amount', event.target.value)} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900" />
+              <input type="number" min="0" step="0.01" value={form.capital_amount} onChange={event => update('capital_amount', event.target.value)} className={formControlClass({ className: 'mt-1' })} />
             </label>
             <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
               Pay Adedi
-              <input type="number" min="0" step="1" value={form.share_units} onChange={event => update('share_units', event.target.value)} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900" />
+              <input type="number" min="0" step="1" value={form.share_units} onChange={event => update('share_units', event.target.value)} className={formControlClass({ className: 'mt-1' })} />
             </label>
             <div className="rounded-lg border border-blue-100 bg-blue-50 p-3 text-sm text-blue-800 dark:border-blue-900 dark:bg-blue-950/30 dark:text-blue-200">
               Seçili şirkette kullanılabilir hisse payı: %{remainingShare.toFixed(2)}
@@ -1012,7 +1013,7 @@ function PartnerOwnershipActionWizard({
           <div className="mt-5 space-y-4">
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
               İşlem Türü
-              <select value={form.transaction_type} onChange={event => update('transaction_type', event.target.value)} className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900">
+              <select value={form.transaction_type} onChange={event => update('transaction_type', event.target.value)} className={formControlClass({ className: 'mt-1' })}>
                 <option value="share_transfer">Hisse Devri</option>
                 <option value="partial_share_transfer">Kısmi Pay Devri</option>
                 <option value="capital_increase">Sermaye Artırımı</option>

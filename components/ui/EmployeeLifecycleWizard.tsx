@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react'
 import { Loader2, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { formControlClass } from './formControlStyles'
 
 type WizardType = 'entry' | 'exit'
 
@@ -257,11 +258,11 @@ function FieldGrid({ children }: { children: React.ReactNode }) {
 }
 
 function Input({ label, field, value, setForm, type = 'text' }: { label: string; field: string; value: any; setForm: (updater: any) => void; type?: string }) {
-  return <label className="space-y-1"><span className="text-xs font-medium text-gray-600 dark:text-gray-400">{label}</span><input type={type} value={value || ''} onChange={event => setForm((prev: Record<string, any>) => ({ ...prev, [field]: event.target.value }))} className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900" /></label>
+  return <label className="space-y-1"><span className="text-xs font-medium text-gray-600 dark:text-gray-400">{label}</span><input type={type} value={value || ''} onChange={event => setForm((prev: Record<string, any>) => ({ ...prev, [field]: event.target.value }))} className={formControlClass()} /></label>
 }
 
 function Select({ label, field, value, setForm, options, values }: { label: string; field: string; value: any; setForm: (updater: any) => void; options: string[]; values?: string[] }) {
-  return <label className="space-y-1"><span className="text-xs font-medium text-gray-600 dark:text-gray-400">{label}</span><select value={value || ''} onChange={event => setForm((prev: Record<string, any>) => ({ ...prev, [field]: event.target.value }))} className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900">{options.map((option, index) => <option key={option} value={values?.[index] || option}>{option}</option>)}</select></label>
+  return <label className="space-y-1"><span className="text-xs font-medium text-gray-600 dark:text-gray-400">{label}</span><select value={value || ''} onChange={event => setForm((prev: Record<string, any>) => ({ ...prev, [field]: event.target.value }))} className={formControlClass()}>{options.map((option, index) => <option key={option} value={values?.[index] || option}>{option}</option>)}</select></label>
 }
 
 function Check({ label, field, value, setForm }: { label: string; field: string; value: any; setForm: (updater: any) => void }) {

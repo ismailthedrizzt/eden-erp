@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Check, Home, Settings, SlidersHorizontal } from 'lucide-react'
 import { DashboardGrid } from '@/components/dashboard/DashboardGrid'
+import { formControlClass } from '@/components/ui/formControlStyles'
 import type { AnyDashboardWidgetConfig } from '@/components/dashboard/dashboard.types'
 import { PageBanner } from '@/components/ui/PageBanner'
 import { usePersonel } from '@/hooks/usePersonel'
@@ -92,7 +93,7 @@ function WidgetModal({ open, selectedWidgetIds, onClose, onSave }: WidgetModalPr
                 setModuleKey(event.target.value)
                 setPageKey('')
               }}
-              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+              className={formControlClass()}
             >
               <option value="">Tüm Modüller</option>
               {modules.map(module => (
@@ -106,7 +107,7 @@ function WidgetModal({ open, selectedWidgetIds, onClose, onSave }: WidgetModalPr
             <select
               value={pageKey}
               onChange={(event) => setPageKey(event.target.value)}
-              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+              className={formControlClass()}
             >
               <option value="">Tüm Sayfalar</option>
               {pages.map(page => (

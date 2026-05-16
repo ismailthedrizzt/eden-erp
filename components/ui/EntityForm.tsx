@@ -32,6 +32,7 @@ import { IBANInput } from './IBANInput'
 import { MasterIdentityGate } from './MasterIdentityGate'
 import { AutomationBadge, type AutomationBadgeStatus } from './AutomationBadge'
 import Modal from './Modal'
+import { formControlClass, type FormControlState } from './formControlStyles'
 import type { IdentityGateConfig, IdentityGateResolveResult } from '@/lib/identity-gate'
 import { COUNTRY_OPTIONS, normalizeCountryId } from '@/lib/reference/country-nationalities'
 import { isSoftDeletedRecord } from '@/lib/forms/entityState'
@@ -78,7 +79,15 @@ export interface FormField {
   /** Hide the field label when the rendered control already provides its own structure. */
   hideLabel?: boolean
   /** Custom render function */
-  render?: (props: { value: any; onChange: (val: any) => void; readOnly: boolean; data: Record<string, any>; mode: FormMode }) => ReactNode
+  render?: (props: {
+    value: any
+    onChange: (val: any) => void
+    readOnly: boolean
+    data: Record<string, any>
+    mode: FormMode
+    className: string
+    validationState: { status: FormControlState; label: string }
+  }) => ReactNode
 }
 
 export interface FieldAutomationConfig {
@@ -500,7 +509,7 @@ function MasterSummaryItemValue({
 }) {
   const fieldName = item.fieldKeys ? pickEditableFieldName(sourceData, item.fieldKeys) : null
   const canEdit = !!fieldName && !!onFieldChange && !readOnly
-  const inputClass = "mt-1 w-full rounded-md border border-emerald-100 bg-white px-2 py-1.5 text-sm text-gray-900 outline-none transition focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 dark:border-emerald-900/50 dark:bg-gray-950 dark:text-white"
+  const inputClass = formControlClass({ state: 'valid', rounded: 'md', size: 'sm', className: 'mt-1' })
 
   if (!canEdit) {
     return <div className="mt-0.5 truncate text-sm text-gray-900 dark:text-white">{formatSummaryValue(item.value, item)}</div>
@@ -1293,14 +1302,26 @@ function ListField({
   const maxItems = field.listConfig?.maxItems
   const maxItemsReached = typeof maxItems === 'number' && rows.length >= maxItems
 
-  const inputClass = cn(
-    "w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900",
-    "[-webkit-text-fill-color:#111827] [color-scheme:light]",
-    "focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20",
-    "disabled:cursor-not-allowed disabled:bg-gray-100 disabled:text-gray-900 disabled:[-webkit-text-fill-color:#111827]",
-    "dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:[-webkit-text-fill-color:#ffffff] dark:[color-scheme:dark]",
-    "dark:disabled:bg-gray-800 dark:disabled:text-gray-100 dark:disabled:[-webkit-text-fill-color:#f3f4f6]"
-  )
+  const getDraftValidationState = (item: FormField): FormControlState => {
+    const name = fieldName(item)
+    const itemDisabled = disabled || readOnly || (item.disabledWhen ? matchesCondition(item.disabledWhen, draft) : false)
+    if (itemDisabled || item.type === 'section' || !matchesCondition(item.visibleWhen, draft)) return 'neutral'
+    if (errors[name]) return 'invalid'
+
+    const value = draft[name]
+    const required = item.required || !!(item.requiredWhen && matchesCondition(item.requiredWhen, draft))
+    if (required && !hasValue(value)) return 'invalid'
+
+    if (item.pattern && hasValue(value)) {
+      const regex = new RegExp(`^(?:${item.pattern})$`)
+      return regex.test(String(value)) ? (required ? 'valid' : 'neutral') : 'invalid'
+    }
+
+    if (required && hasValue(value)) return 'valid'
+    return 'neutral'
+  }
+
+  const draftInputClass = (item: FormField) => formControlClass({ state: getDraftValidationState(item) })
 
   const setDraftValue = (name: string, nextValue: any) => {
     const nextDraft = {
@@ -1367,7 +1388,7 @@ function ListField({
           value={draft[name] || ''}
           onChange={(event) => setDraftValue(name, event.target.value)}
           disabled={itemDisabled}
-          className={inputClass}
+          className={draftInputClass(item)}
         >
           <option value="">Seçiniz</option>
           {item.options?.map(option => (
@@ -1406,7 +1427,7 @@ function ListField({
           value={draft[name] || ''}
           onChange={(event) => setDraftValue(name, event.target.value)}
           disabled={itemDisabled}
-          className={inputClass}
+          className={draftInputClass(item)}
         />
       )
     }
@@ -1421,7 +1442,7 @@ function ListField({
         maxLength={item.maxLength}
         pattern={item.pattern}
         disabled={itemDisabled}
-        className={inputClass}
+        className={draftInputClass(item)}
       />
     )
   }
@@ -1571,8 +1592,8 @@ function WorkLifecycleField({
     onChange('calisma_durumu', 'ayrilmis')
   }
 
-  const inputClass = "min-h-10 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 read-only:cursor-not-allowed read-only:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:read-only:bg-gray-800"
-  const compactInputClass = "min-h-9 w-full rounded-md border border-gray-300 bg-white px-2 py-1.5 text-xs text-gray-900 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 read-only:cursor-not-allowed read-only:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-white dark:read-only:bg-gray-800"
+  const inputClass = formControlClass({ className: 'min-h-10' })
+  const compactInputClass = formControlClass({ rounded: 'md', size: 'sm', className: 'min-h-9' })
   const actionReadOnly = readOnly
   const hireReadOnly = actionReadOnly || isHired
   const exitReadOnly = actionReadOnly || !isHired || isExited
@@ -2597,18 +2618,7 @@ export function EntityForm({
       )
     }
 
-    const baseInputClass = cn(
-      "w-full bg-white text-gray-900 dark:bg-gray-900 dark:text-white border rounded-lg px-3 py-2 text-sm placeholder:text-gray-400 dark:placeholder:text-gray-500",
-      "transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500/20",
-      "disabled:text-gray-900 disabled:[-webkit-text-fill-color:#111827] read-only:text-gray-900 read-only:[-webkit-text-fill-color:#111827]",
-      "dark:disabled:text-gray-100 dark:disabled:[-webkit-text-fill-color:#f3f4f6] dark:read-only:text-gray-100 dark:read-only:[-webkit-text-fill-color:#f3f4f6]",
-      validationState.status === 'invalid'
-        ? "border-red-400 dark:border-red-700 focus:border-red-500 focus:ring-red-500/20"
-        : validationState.status === 'valid'
-          ? "border-emerald-500 dark:border-emerald-600 focus:border-emerald-500 focus:ring-emerald-500/20"
-          : "border-gray-300 dark:border-gray-700 focus:border-blue-500",
-      fieldDisabled && "bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100 cursor-not-allowed"
-    )
+    const baseInputClass = formControlClass({ state: fieldDisabled ? 'neutral' : validationState.status })
 
     const renderInput = () => {
           if (field.render) {
@@ -2618,6 +2628,8 @@ export function EntityForm({
               readOnly: fieldDisabled,
               data: formData,
               mode,
+              className: baseInputClass,
+              validationState,
             })
           }
 

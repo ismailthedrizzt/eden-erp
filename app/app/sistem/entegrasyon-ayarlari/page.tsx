@@ -5,6 +5,7 @@ import { DatabaseZap } from 'lucide-react'
 import { PageBanner } from '@/components/ui/PageBanner'
 import { SmartDataTable, type ColumnDef } from '@/components/ui/SmartDataTable'
 import { Toast } from '@/components/ui/Toast'
+import { formControlClass } from '@/components/ui/formControlStyles'
 import { apiClient } from '@/lib/api/apiClient'
 
 type ToastState = { type: 'success' | 'error' | 'warning'; title?: string; message: string }
@@ -259,7 +260,7 @@ function TextField({ label, value, onChange, readOnly, type = 'text' }: { label:
   return (
     <label className="block">
       <span className="text-xs font-medium text-gray-500">{label}</span>
-      <input type={type} value={value ?? ''} readOnly={readOnly} onChange={event => onChange(event.target.value)} className="mt-1 h-10 w-full rounded-md border border-gray-200 bg-white px-3 text-sm text-gray-900 outline-none focus:border-blue-400 read-only:bg-gray-50 dark:border-gray-700 dark:bg-gray-950 dark:text-white dark:read-only:bg-gray-900" />
+      <input type={type} value={value ?? ''} readOnly={readOnly} onChange={event => onChange(event.target.value)} className={formControlClass({ rounded: 'md', className: 'mt-1 h-10' })} />
     </label>
   )
 }
@@ -268,7 +269,7 @@ function SelectField({ label, value, options, onChange }: { label: string; value
   return (
     <label className="block">
       <span className="text-xs font-medium text-gray-500">{label}</span>
-      <select value={value ?? ''} onChange={event => onChange(event.target.value)} className="mt-1 h-10 w-full rounded-md border border-gray-200 bg-white px-3 text-sm text-gray-900 outline-none focus:border-blue-400 dark:border-gray-700 dark:bg-gray-950 dark:text-white">
+      <select value={value ?? ''} onChange={event => onChange(event.target.value)} className={formControlClass({ rounded: 'md', className: 'mt-1 h-10' })}>
         {options.map(([optionValue, labelText]) => <option key={optionValue} value={optionValue}>{labelText}</option>)}
       </select>
     </label>

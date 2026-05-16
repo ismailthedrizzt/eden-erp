@@ -14,6 +14,7 @@ import {
   ShieldCheck,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { formControlClass } from '@/components/ui/formControlStyles'
 import { apiClient } from '@/lib/api/apiClient'
 
 type PublicSection =
@@ -77,8 +78,7 @@ interface CompanyPublicTabProps {
   readOnly?: boolean
 }
 
-const inputClass =
-  'w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100 disabled:text-gray-500 dark:border-gray-700 dark:bg-gray-800 dark:text-white dark:disabled:bg-gray-900'
+const inputClass = formControlClass({ rounded: 'md' })
 
 const subTabs = [
   { id: 'vergi', label: 'Vergi', icon: Landmark },
@@ -555,13 +555,13 @@ export function CompanyNaceCodesSection({
         {!readOnly && companyId && (
           <div className="flex flex-wrap items-center gap-2">
             <input
-              className="w-56 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+              className={formControlClass({ rounded: 'md', className: 'w-56' })}
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               placeholder="Kod veya faaliyet ara"
             />
             <select
-              className="w-64 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
+              className={formControlClass({ rounded: 'md', className: 'w-64' })}
               value={selectedNaceId}
               onChange={(event) => setSelectedNaceId(event.target.value)}
               disabled={options.length === 0}

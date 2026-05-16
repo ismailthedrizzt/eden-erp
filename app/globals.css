@@ -41,6 +41,25 @@
     background-color: #111827;
   }
 
+  input:disabled,
+  select:disabled,
+  textarea:disabled,
+  input[readonly],
+  textarea[readonly] {
+    color: #111827;
+    -webkit-text-fill-color: #111827;
+    opacity: 1;
+  }
+
+  .dark input:disabled,
+  .dark select:disabled,
+  .dark textarea:disabled,
+  .dark input[readonly],
+  .dark textarea[readonly] {
+    color: #f3f4f6;
+    -webkit-text-fill-color: #f3f4f6;
+  }
+
   [data-enum-cell],
   [data-enum-cell] * {
     color: #111827 !important;

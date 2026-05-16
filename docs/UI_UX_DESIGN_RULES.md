@@ -2,7 +2,7 @@
 
 **Purpose**: Living document for UI/UX standards established throughout development. Updated via user directives or `/add_ux_rule` command.
 
-**Last Updated**: 2024-05-01
+**Last Updated**: 2026-05-16
 
 ---
 
@@ -176,6 +176,13 @@
 ---
 
 ## Form Input Standards
+
+### Shared Form Control Contract
+- All text input, select, textarea, IBAN, list-row editor and custom-rendered form controls must receive their visual classes from `EntityForm` or `formControlClass`.
+- Required field visual state is centralized: required + empty is invalid/red, required + filled is valid/green. A template-derived page must not reimplement this rule locally.
+- `FormField.render` custom renderers must use the `className` and `validationState` props provided by `EntityForm`. Local renderers may define behavior and layout, but not their own input border/background/text color contract.
+- Disabled and read-only controls must remain readable in light and dark mode. Do not use local `disabled:bg-gray-*`, `disabled:text-white`, `dark:text-white` or similar combinations on form controls unless they are composed through `formControlClass`.
+- Custom module pages define only their own fields, data bindings and domain behavior. They must not hardcode ad-hoc Tailwind strings for text/select/textarea visuals when the same control belongs to the shared ERP form template.
 
 ### Text Inputs
 - Border: `border-gray-200 dark:border-gray-700`
