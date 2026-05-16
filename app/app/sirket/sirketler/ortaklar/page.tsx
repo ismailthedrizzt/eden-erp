@@ -621,8 +621,8 @@ export default function OrtaklarPage() {
   }
 
   const handleOwnershipActionClick = () => {
-    if (!selectedPartner?.id || selectedRecordStatus === 'passive') return
-    if (selectedRecordStatus === 'draft') {
+    if (!selectedPartner?.id) return
+    if (selectedRecordStatus === 'draft' || selectedRecordStatus === 'passive') {
       setOwnershipNoticeOpen(true)
       return
     }
@@ -673,14 +673,14 @@ export default function OrtaklarPage() {
   }
 
   const renderOwnershipActions = () => {
-    if (!selectedPartner?.id || selectedRecordStatus === 'passive') return null
+    if (!selectedPartner?.id) return null
     return (
       <button
         type="button"
         onClick={handleOwnershipActionClick}
         className="rounded-lg border border-blue-200 px-3 py-2 text-sm font-medium text-blue-700 hover:bg-blue-50 dark:border-blue-800 dark:text-blue-300 dark:hover:bg-blue-950/30"
       >
-        Ortaklık İşlemi
+        {selectedRecordStatus === 'active' ? 'Ortaklık İşlemi' : 'Yeni Ortaklık'}
       </button>
     )
   }
@@ -940,7 +940,7 @@ function PartnerOwnershipActionWizard({
       <div className="w-full max-w-2xl rounded-lg border border-gray-200 bg-white p-5 shadow-xl dark:border-gray-800 dark:bg-gray-950">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{recordStatus === 'draft' ? 'Yeni Ortaklık' : 'Ortaklık İşlemi'}</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{recordStatus === 'active' ? 'Ortaklık İşlemi' : 'Yeni Ortaklık'}</h3>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{partner.display_name || partner.ortak_adi || 'Ortak'}</p>
           </div>
           <button type="button" onClick={onClose} className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-900">
@@ -948,7 +948,7 @@ function PartnerOwnershipActionWizard({
           </button>
         </div>
 
-        {recordStatus === 'draft' ? (
+        {recordStatus === 'draft' || recordStatus === 'passive' ? (
           <div className="mt-5 grid gap-4 sm:grid-cols-2">
             <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
               Şirket
@@ -1012,10 +1012,10 @@ function PartnerOwnershipActionWizard({
           <button
             type="button"
             disabled={saving}
-            onClick={recordStatus === 'draft' ? completeDraft : () => onContinueTransaction(form.transaction_type)}
+            onClick={recordStatus === 'active' ? () => onContinueTransaction(form.transaction_type) : completeDraft}
             className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60"
           >
-            {recordStatus === 'draft' ? 'Ortaklığı Tanımla' : 'İşlem Wizardına Devam Et'}
+            {recordStatus === 'active' ? 'İşlem Wizardına Devam Et' : 'Ortaklığı Tanımla'}
           </button>
         </div>
       </div>

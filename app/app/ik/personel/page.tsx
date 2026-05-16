@@ -513,10 +513,10 @@ export default function PersonelYonetimPage() {
   const renderLifecycleActions = () => {
     if (!selectedPersonel || pageState === 'create') return null
     const status = getEmployeeRecordStatus(selectedPersonel)
-    if (status === 'draft') {
+    if (status === 'draft' || status === 'passive') {
       return (
         <button type="button" onClick={() => setLifecycleWizard('entry')} className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700">
-          İşe Giriş Yap
+          {status === 'passive' ? 'Yeniden İşe Al' : 'İşe Giriş Yap'}
         </button>
       )
     }
