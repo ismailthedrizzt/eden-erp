@@ -17,7 +17,7 @@ const PartnerSchema = z.object({
   last_name: z.string().optional(),
   trade_name: z.string().optional(),
   short_name: z.string().optional(),
-  identity_number: z.string().min(1),
+  identity_number: z.string().optional(),
   source_type: z.string().optional(),
   source_id: z.string().optional(),
   nationality_country: z.string().optional(),
@@ -30,9 +30,9 @@ const PartnerSchema = z.object({
   share_ratio: z.coerce.number().min(0).max(100).optional().nullable(),
   voting_ratio: z.coerce.number().min(0).max(100).optional(),
   profit_ratio: z.coerce.number().min(0).max(100).optional(),
-  start_date: z.string().min(1),
+  start_date: z.string().optional(),
   end_date: z.string().optional(),
-  status: z.enum(['Aktif', 'Pasif', 'Devredildi', 'Askıda', 'Tarihsel']).default('Aktif'),
+  status: z.string().optional().default('Taslak'),
   has_representation_right: z.boolean().default(false),
   has_control_right: z.boolean().default(false),
   control_type: z.enum(['Hisse Çoğunluğu', 'Oy Çoğunluğu', 'Sözleşmesel Kontrol', 'Yönetim Kontrolü', 'Altın Hisse', 'Diğer']).optional(),
@@ -111,6 +111,7 @@ const PartnerSchema = z.object({
   notes: z.string().optional(),
   timeline: z.array(z.record(z.any())).optional(),
   entity_bank_accounts: z.array(z.record(z.any())).optional(),
+  record_status: z.enum(['draft', 'active', 'passive']).optional(),
 })
 
 function omitNullishValues(value: Record<string, any>) {
@@ -141,7 +142,7 @@ export async function GET(request: NextRequest) {
 
   let query = supabase
     .from('sirket_ortaklar')
-    .select('id,sirket_id,company_id,person_id,organization_id,owner_kind,ortak_tipi,display_name,ortak_adi,identity_number,tckn_vkn,share_ratio,hisse_orani,voting_ratio,profit_ratio,start_date,end_date,status,is_deleted,source_type,source_id,created_at')
+    .select('id,sirket_id,company_id,person_id,organization_id,owner_kind,ortak_tipi,display_name,ortak_adi,identity_number,tckn_vkn,share_ratio,hisse_orani,voting_ratio,profit_ratio,start_date,end_date,status,record_status,is_deleted,source_type,source_id,created_at')
     .order(sortColumn, { ascending: listQuery.direction !== 'desc' })
     .range(from, to)
 
@@ -167,9 +168,6 @@ export async function POST(request: NextRequest) {
   }
 
   const row = await attachPartnerIdentity(supabase, parsed.data, mapPartnerForDb(parsed.data))
-  if (!row.company_id) {
-    return NextResponse.json({ error: 'Bağlı şirket bulunamadı', code: 'COMPANY_REQUIRED' }, { status: 400 })
-  }
 
   const { data, error } = await supabase
     .from('sirket_ortaklar')
@@ -178,6 +176,14 @@ export async function POST(request: NextRequest) {
     .single()
 
   if (error) return NextResponse.json({ error: error.message, code: error.code || 'CREATE_FAILED' }, { status: 500 })
+  await supabase.from('partner_ownership_lifecycle_events').insert({
+    partner_id: data.id,
+    company_id: data.company_id || data.sirket_id || null,
+    event_type: 'created_as_draft',
+    old_record_status: null,
+    new_record_status: data.record_status || 'draft',
+    payload_json: { source: 'partners_page' },
+  })
   if (data?.person_id) await syncMasterContact(supabase, 'person', data.person_id, parsed.data)
   if (data?.organization_id) await syncMasterContact(supabase, 'organization', data.organization_id, parsed.data)
   if (parsed.data.entity_bank_accounts) {
@@ -229,9 +235,10 @@ function mapPartnerForDb(partner: Record<string, any>) {
     has_board_nomination_right: false,
     has_veto_right: false,
     has_privileged_share: false,
-    start_date: partner.start_date,
+    start_date: partner.start_date || null,
     end_date: partner.end_date || null,
-    status: partner.status || 'Aktif',
+    status: partner.status || 'Taslak',
+    record_status: partner.record_status || 'draft',
     notes: partner.notes || null,
     history: partner.timeline || [],
   photo_logo: partner.photo_logo || [],
@@ -312,3 +319,4 @@ function toNullableNumber(value: unknown) {
   const number = Number(value)
   return Number.isFinite(number) ? number : null
 }
+

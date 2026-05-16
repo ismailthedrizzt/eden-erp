@@ -21,6 +21,7 @@ import { SmartDataTable, SortConfig, WidgetDef } from '@/components/ui/SmartData
 import type { DashboardFilterEvent } from '@/components/dashboard/dashboard.types'
 import { EntityForm, FormMode } from '@/components/ui/EntityForm'
 import { Toast } from '@/components/ui/Toast'
+import { EmployeeLifecycleWizard } from '@/components/ui/EmployeeLifecycleWizard'
 import { personelModuleConfig, PersonelTableRow } from '@/lib/modules/personel.config'
 import { buildEmployeesDashboard } from '@/lib/modules/employees/dashboard/employeesDashboard.mock'
 import { getEducationSummary } from '@/lib/modules/employees/education'
@@ -145,6 +146,7 @@ export default function PersonelYonetimPage() {
   const [formError, setFormError] = useState<string | null>(null)
   const [saveFieldErrors, setSaveFieldErrors] = useState<Record<string, string>>({})
   const [toast, setToast] = useState<ToastState | null>(null)
+  const [lifecycleWizard, setLifecycleWizard] = useState<'entry' | 'exit' | null>(null)
   const [dashboardFilter, setDashboardFilter] = useState<DashboardFilterEvent | null>(null)
   const detailRequestRef = useRef(0)
 
@@ -428,7 +430,10 @@ export default function PersonelYonetimPage() {
       delete payload.isten_cikis_belgeleri
     }
 
-    payload.calisma_durumu = payload.isten_ayrilis ? 'ayrilmis' : 'gorevde'
+    const selectedStatus = selectedPersonel as Record<string, any> | null
+    payload.record_status = payload.record_status || (pageState === 'create' ? 'draft' : selectedStatus?.record_status || 'draft')
+    payload.employment_status = payload.employment_status || (payload.record_status === 'draft' ? 'pending_entry' : selectedStatus?.employment_status)
+    payload.calisma_durumu = payload.isten_ayrilis ? 'ayrilmis' : payload.record_status === 'active' ? 'gorevde' : payload.record_status === 'passive' ? 'ayrilmis' : 'askida'
     return payload
   }
 
@@ -468,6 +473,8 @@ export default function PersonelYonetimPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           is_deleted: false,
+          record_status: 'active',
+          employment_status: 'active',
           calisma_durumu: 'gorevde',
         }),
       })
@@ -489,6 +496,39 @@ export default function PersonelYonetimPage() {
     } finally {
       setDeleting(false)
     }
+  }
+
+  const handleLifecycleComplete = async (employee: Record<string, any>) => {
+    setLifecycleWizard(null)
+    if (selectedPersonel?.id) invalidateEntityDetailCache(EMPLOYEE_DETAIL_CACHE_NAMESPACE, selectedPersonel.id)
+    setSelectedPersonel(employee as Personel)
+    setPageState('view')
+    await yenile()
+    setToast({
+      type: 'success',
+      title: 'İşlem Tamamlandı',
+      message: employee.record_status === 'passive' ? 'İşten çıkış tamamlandı.' : 'İşe giriş tamamlandı.',
+    })
+  }
+
+  const renderLifecycleActions = () => {
+    if (!selectedPersonel || pageState === 'create') return null
+    const status = getEmployeeRecordStatus(selectedPersonel)
+    if (status === 'draft') {
+      return (
+        <button type="button" onClick={() => setLifecycleWizard('entry')} className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700">
+          İşe Giriş Yap
+        </button>
+      )
+    }
+    if (status === 'active') {
+      return (
+        <button type="button" onClick={() => setLifecycleWizard('exit')} className="rounded-lg border border-red-200 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50 dark:border-red-900/60 dark:text-red-300 dark:hover:bg-red-950/30">
+          İşten Çıkış Yap
+        </button>
+      )
+    }
+    return null
   }
 
   const createSaveError = async (response: Response, fallback: string): Promise<SaveError> => {
@@ -565,7 +605,7 @@ export default function PersonelYonetimPage() {
   ]
 
   // Determine form mode for display
-  const selectedIsPassive = isSoftDeletedRecord(selectedPersonel as Record<string, any> | null)
+  const selectedIsPassive = isSoftDeletedRecord(selectedPersonel as Record<string, any> | null) || (selectedPersonel ? getEmployeeRecordStatus(selectedPersonel) === 'passive' : false)
   const formMode: FormMode = pageState === 'create' ? 'create' :
                             pageState === 'edit' ? 'edit' :
                             selectedIsPassive ? 'passive' : 'view'
@@ -748,9 +788,10 @@ export default function PersonelYonetimPage() {
               setDetailSections(emptyDetailSectionState)
               setPageState('list')
             }}
-            onDelete={handleDelete}
+            onDelete={undefined}
             onActivate={handleActivate}
             onModeChange={(mode) => setPageState(mode)}
+            additionalActions={renderLifecycleActions()}
             onIdentityGateOpenExistingRole={async (roleRecord) => {
               await handleRowClick(roleRecord as PersonelTableRow)
               setPageState('view')
@@ -775,6 +816,14 @@ export default function PersonelYonetimPage() {
           />
         </div>
       )}
+      {lifecycleWizard && selectedPersonel && (
+        <EmployeeLifecycleWizard
+          type={lifecycleWizard}
+          employee={selectedPersonel as Record<string, any>}
+          onClose={() => setLifecycleWizard(null)}
+          onComplete={handleLifecycleComplete}
+        />
+      )}
     </div>
   )
 }
@@ -789,6 +838,10 @@ function applyDashboardFilter(rows: PersonelTableRow[], event: DashboardFilterEv
     if (value === null) return !((row as any)[field])
     return String((row as any)[field] || '').toLocaleLowerCase('tr-TR') === String(value || '').toLocaleLowerCase('tr-TR')
   }))
+}
+
+function getEmployeeRecordStatus(employee: Record<string, any>) {
+  return employee.record_status || (employee.is_deleted ? 'passive' : employee.sgk_giris || employee.calisma_durumu === 'gorevde' ? 'active' : 'draft')
 }
 
 function getAgeGroup(value?: string | null) {

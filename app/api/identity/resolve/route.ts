@@ -39,7 +39,7 @@ const roleTableAliases: Record<string, string> = {
 
 const PERSON_SELECT = 'id,first_name,last_name,full_name,nationality,national_id,passport_no,birth_date,birth_place,gender,phone,email,address,city,district,metadata_json,is_deleted,updated_at'
 const ORGANIZATION_SELECT = 'id,legal_name,short_name,country,tax_number,registration_number,tax_office,organization_type,phone,email,address,city,district,metadata_json,is_deleted,updated_at'
-const EMPLOYEE_IDENTITY_SELECT = 'id,person_id,ad,soyad,uyruk,tc_kimlik,pasaport_no,dogum_tarihi,dogum_yeri,cinsiyet,cep_telefonu,is_telefonu,email,adres,engellilik,engellilik_yuzdesi,askerlik_durumu,tecil_tarihi,hukumluluk,okuryazar_degil,egitim_okullari,yabanci_diller,sertifikalar,medeni_durum,yakinlar,iban,kan_grubu,fotograf_url,cv_belgesi,diploma_belgesi,ise_giris_belgeleri,isten_cikis_belgeleri'
+const EMPLOYEE_IDENTITY_SELECT = 'id,person_id,ad,soyad,uyruk,tc_kimlik,pasaport_no,dogum_tarihi,dogum_yeri,cinsiyet,cep_telefonu,is_telefonu,email,adres,telefonlar,epostalar,gorev,engellilik,engellilik_yuzdesi,askerlik_durumu,tecil_tarihi,hukumluluk,okuryazar_degil,egitim_okullari,yabanci_diller,sertifikalar,medeni_durum,yakinlar,iban,kan_grubu,fotograf_url,cv_belgesi,diploma_belgesi,ise_giris_belgeleri,isten_cikis_belgeleri'
 const COMPANY_IDENTITY_SELECT = 'id,organization_id,ticari_unvan,kisa_unvan,ulke,vkn_tckn,ticaret_sicil_no,mersis_no,vergi_dairesi,sirket_turu,telefon,email,adres,il,ilce,kurulus_tarihi,logo_url,hero_images,hero_documents,is_deleted'
 const ROLE_SELECT_BY_TABLE: Record<string, string> = {
   employees: 'id,person_id,ad,soyad,tc_kimlik,pasaport_no,calisma_durumu,is_deleted',
@@ -397,10 +397,17 @@ function buildPrefill(entityKind: 'person' | 'organization', record: Record<stri
       cinsiyet: record.gender || '',
       gender: record.gender || '',
       cep_telefonu: record.phone || '',
+      is_telefonu: record.is_telefonu || '',
       phone: record.phone || '',
       email: record.email || '',
+      telefonlar: Array.isArray(record.telefonlar) ? record.telefonlar : [],
+      epostalar: Array.isArray(record.epostalar) ? record.epostalar : [],
       adres: record.address || '',
       address: record.address || '',
+      gorev: record.gorev || record.occupation || record.profession || record.meslek || '',
+      occupation: record.occupation || record.gorev || record.profession || record.meslek || '',
+      profession: record.profession || record.gorev || record.occupation || record.meslek || '',
+      meslek: record.meslek || record.gorev || record.occupation || record.profession || '',
       fotograf_url: images[0]?.previewUrl || images[0]?.url || '',
       photo_logo: images,
       cv_belgesi: cvDocument,
@@ -503,7 +510,19 @@ function mergeEmployeeIntoPerson(person: Record<string, any>, employee: Record<s
     birth_place: person.birth_place || employee.dogum_yeri || '',
     gender: person.gender || employee.cinsiyet || '',
     phone: person.phone || employee.cep_telefonu || employee.is_telefonu || '',
+    cep_telefonu: employee.cep_telefonu || person.phone || '',
+    is_telefonu: employee.is_telefonu || '',
     email: person.email || employee.email || '',
+    telefonlar: normalizeRolePhones({
+      telefonlar: employee.telefonlar,
+      phone: person.phone || employee.cep_telefonu,
+      cep_telefonu: employee.cep_telefonu,
+      is_telefonu: employee.is_telefonu,
+    }),
+    epostalar: normalizeRoleEmails({
+      epostalar: employee.epostalar,
+      email: person.email || employee.email,
+    }),
     address: person.address || employee.adres || '',
     engellilik: person.engellilik ?? employee.engellilik ?? false,
     engellilik_yuzdesi: person.engellilik_yuzdesi ?? employee.engellilik_yuzdesi ?? null,
@@ -518,9 +537,10 @@ function mergeEmployeeIntoPerson(person: Record<string, any>, employee: Record<s
     marital_status: person.marital_status || employee.medeni_durum || '',
     yakinlar: Array.isArray(person.yakinlar) ? person.yakinlar : Array.isArray(employee.yakinlar) ? employee.yakinlar : [],
     iban: person.iban || employee.iban || '',
-    occupation: person.occupation || employee.occupation || employee.profession || employee.meslek || '',
-    profession: person.profession || employee.profession || employee.meslek || '',
-    meslek: person.meslek || employee.meslek || employee.profession || '',
+    occupation: person.occupation || employee.occupation || employee.gorev || employee.profession || employee.meslek || '',
+    profession: person.profession || employee.profession || employee.gorev || employee.meslek || '',
+    meslek: person.meslek || employee.meslek || employee.gorev || employee.profession || '',
+    gorev: employee.gorev || person.gorev || person.occupation || person.profession || person.meslek || employee.meslek || employee.profession || '',
     blood_type: person.blood_type || employee.kan_grubu || '',
     kan_grubu: person.kan_grubu || employee.kan_grubu || '',
     photo_logo: normalizePersonImages(person).length ? normalizePersonImages(person) : normalizePersonImages(employee),
@@ -614,6 +634,39 @@ function normalizeOrganizationDocuments(record: Record<string, any>) {
     previewUrl: doc.previewUrl || doc.preview_url || doc.url,
     thumbnailUrl: doc.thumbnailUrl || doc.thumbnail_url || doc.preview_thumb_url || doc.preview_image_url,
   }))
+}
+
+function normalizeRolePhones(source: Record<string, any>) {
+  const raw = Array.isArray(source.telefonlar) && source.telefonlar.length
+    ? source.telefonlar
+    : [
+        source.phone || source.cep_telefonu || source.telefon || source.phone_1,
+        source.is_telefonu || source.phone_2,
+      ].filter(Boolean).map((numara, index) => ({ etiket: index === 0 ? 'Birincil' : 'Ikincil', numara }))
+
+  return raw
+    .filter((item: any) => item && typeof item === 'object')
+    .map((item: Record<string, any>, index: number) => ({
+      etiket: clean(item.etiket || item.label || (index === 0 ? 'Birincil' : 'Ikincil')),
+      numara: clean(item.numara || item.phone || item.value),
+    }))
+    .filter((item: Record<string, any>) => item.numara)
+}
+
+function normalizeRoleEmails(source: Record<string, any>) {
+  const raw = Array.isArray(source.epostalar) && source.epostalar.length
+    ? source.epostalar
+    : [source.email || source.email_1, source.email_2]
+        .filter(Boolean)
+        .map((adres, index) => ({ etiket: index === 0 ? 'Birincil' : 'Ikincil', adres }))
+
+  return raw
+    .filter((item: any) => item && typeof item === 'object')
+    .map((item: Record<string, any>, index: number) => ({
+      etiket: clean(item.etiket || item.label || (index === 0 ? 'Birincil' : 'Ikincil')),
+      adres: clean(item.adres || item.email || item.value).toLowerCase(),
+    }))
+    .filter((item: Record<string, any>) => item.adres)
 }
 
 function clean(value: unknown) {

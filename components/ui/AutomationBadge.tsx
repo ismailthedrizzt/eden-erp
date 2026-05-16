@@ -1,14 +1,15 @@
 'use client'
 
-import { Bot, CheckCircle2, Loader2 } from 'lucide-react'
+import { Bot, CheckCircle2, Loader2, PencilLine } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-export type AutomationBadgeStatus = 'idle' | 'working' | 'done' | 'no_data'
+export type AutomationBadgeStatus = 'idle' | 'input' | 'working' | 'done' | 'no_data'
 
 export interface AutomationBadgeProps {
   status: AutomationBadgeStatus
   title?: string
   idleLabel?: string
+  inputLabel?: string
   workingLabel?: string
   doneLabel?: string
   noDataLabel?: string
@@ -18,10 +19,11 @@ export interface AutomationBadgeProps {
 export function AutomationBadge({
   status,
   title,
-  idleLabel = 'Veri bekliyor',
-  workingLabel = 'Çalışıyor',
-  doneLabel = 'OK',
-  noDataLabel = 'Veri yok',
+  idleLabel = 'Veri Bekleniyor',
+  inputLabel = 'Veri Girişi Yapılıyor',
+  workingLabel = 'Sorgulama Yapılıyor',
+  doneLabel = 'Veriler Çekildi',
+  noDataLabel = 'Veri Bulunamadı',
   className,
 }: AutomationBadgeProps) {
   const config = {
@@ -29,6 +31,11 @@ export function AutomationBadge({
       label: idleLabel,
       className: 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-300',
       icon: <Bot size={12} />,
+    },
+    input: {
+      label: inputLabel,
+      className: 'border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-900/60 dark:bg-sky-950/30 dark:text-sky-300',
+      icon: <PencilLine size={12} />,
     },
     working: {
       label: workingLabel,
@@ -51,7 +58,7 @@ export function AutomationBadge({
     <span
       title={title || `Otomasyon: ${config.label}`}
       className={cn(
-        'inline-flex h-5 min-w-[118px] items-center justify-center gap-1 rounded-full border px-2 text-[10px] font-semibold leading-none transition-colors',
+        'inline-flex h-5 min-w-[136px] items-center justify-center gap-1 rounded-full border px-2 text-[10px] font-semibold leading-none transition-colors',
         status === 'working' && 'animate-pulse',
         config.className,
         className

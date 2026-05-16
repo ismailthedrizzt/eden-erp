@@ -3,6 +3,7 @@ import type { ModuleConfig } from '@/types/module-config'
 import type { Personel } from '@/types'
 import { COUNTRY_NATIONALITY_OPTIONS, getCountryNationalityLabel } from '@/lib/reference/country-nationalities'
 import { EntityBankAccountsPanel } from '@/components/ui/EntityBankAccountsPanel'
+import { EmployeeWorkRegimeSummary } from '@/components/ui/EmployeeWorkRegimeSummary'
 
 export type PersonelTableRow = Personel & {
   fullname: string
@@ -147,6 +148,20 @@ export const personelModuleConfig: ModuleConfig<PersonelTableRow> = {
         { key: 'dogum_tarihi', label: 'Doğum Tarihi', type: 'date', compact: true },
         { key: 'dogum_yeri', label: 'Doğum Yeri', type: 'text' },
         { key: 'gorev', label: 'Mesleği', type: 'text' },
+        {
+          key: 'askerlik_durumu',
+          label: 'Askerlik Durumu',
+          type: 'select',
+          compact: true,
+          visibleWhen: { field: 'cinsiyet', includes: ['erkek', 'Erkek'] },
+          options: [
+            { value: 'muaf', label: 'Muaf' },
+            { value: 'caginda_degil', label: 'Askerlik Çağında Değil' },
+            { value: 'belirsiz', label: 'Belirsiz' },
+            { value: 'tecilli', label: 'Tecilli' },
+            { value: 'bakaya', label: 'Bakaya' }
+          ]
+        },
         {
           key: 'kan_grubu',
           label: 'Kan Grubu',
@@ -397,7 +412,13 @@ export const personelModuleConfig: ModuleConfig<PersonelTableRow> = {
         source: {
           type: 'fields',
           fields: [
-            { key: 'is_lifecycle', label: 'İş Hareketleri', type: 'workLifecycle', colSpan: 3 }
+            {
+              key: 'work_regime_summary',
+              label: 'Çalışma Rejimi Özeti',
+              type: 'custom',
+              colSpan: 3,
+              render: ({ data }) => <EmployeeWorkRegimeSummary data={data} />
+            }
           ]
         }
       },

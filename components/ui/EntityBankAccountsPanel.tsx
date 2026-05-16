@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { CheckCircle2, Eye, History, Pencil, Plus, Star, Trash2, X } from 'lucide-react'
+import { CheckCircle2, ChevronDown, Eye, History, Pencil, Plus, Star, Trash2, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { AutomationBadge, type AutomationBadgeStatus } from './AutomationBadge'
 import { usePermissions } from '@/lib/security/permissionStore'
@@ -60,6 +60,28 @@ const currencyOptions = ['TRY', 'USD', 'EUR', 'GBP']
 const swiftChargeOptions = ['SHA', 'OUR', 'BEN']
 const countryOptionLabels = Object.fromEntries(COUNTRY_OPTIONS.map(option => [option.value, option.label]))
 type IbanAutomationStatus = AutomationBadgeStatus
+const internationalTransferFields = new Set([
+  'preferred_currency',
+  'swift_bic',
+  'bank_country',
+  'bank_address',
+  'account_country',
+  'account_currency',
+  'local_clearing_code_type',
+  'local_clearing_code',
+  'has_intermediary_bank',
+  'payment_purpose',
+  'swift_charge_type',
+  'payment_note',
+  'verification_status',
+  'document_reference_id',
+])
+const intermediaryBankFields = new Set([
+  'intermediary_bank_name',
+  'intermediary_swift_bic',
+  'intermediary_bank_address',
+  'intermediary_account_number',
+])
 
 export function EntityBankAccountsPanel({ entityKind, entityId, masterName = '', masterCountry = '', readOnly = false, value, onChange }: Props) {
   const { can } = usePermissions()
@@ -71,6 +93,7 @@ export function EntityBankAccountsPanel({ entityKind, entityId, masterName = '',
   const [historyRow, setHistoryRow] = useState<EntityBankAccount | null>(null)
   const [priorityMode, setPriorityMode] = useState<BankAccountFormPriorityMode>(getLocalPriorityMode(masterCountry))
   const [ibanAutomationStatus, setIbanAutomationStatus] = useState<IbanAutomationStatus>('idle')
+  const [internationalOpen, setInternationalOpen] = useState(false)
 
   const canView = can(ENTITY_BANK_ACCOUNT_PERMISSIONS.view)
   const canInsert = can(ENTITY_BANK_ACCOUNT_PERMISSIONS.insert)
@@ -113,6 +136,8 @@ export function EntityBankAccountsPanel({ entityKind, entityId, masterName = '',
   }, [entityKind, entityId, canView, load, masterCountry])
 
   const orderedFields = useMemo(() => getOrderedFields(priorityMode), [priorityMode])
+  const primaryFields = useMemo(() => orderedFields.filter(field => !internationalTransferFields.has(field)), [orderedFields])
+  const internationalFields = useMemo(() => orderedFields.filter(field => internationalTransferFields.has(field) && !intermediaryBankFields.has(field)), [orderedFields])
 
   if (!entityKind || !entityId) {
     return <EmptyPanel text="Banka bilgileri master kişi/kurum kaydı oluşunca girilebilir." />
@@ -136,12 +161,14 @@ export function EntityBankAccountsPanel({ entityKind, entityId, masterName = '',
     setDraft(nextDraft)
     if (embedded) updateRows([...rows, nextDraft as EntityBankAccount])
     setIbanAutomationStatus('idle')
+    setInternationalOpen(false)
     setMode('create')
   }
 
   function startEdit(row: EntityBankAccount, nextMode: 'view' | 'edit') {
     setDraft(row)
     setIbanAutomationStatus(getInitialIbanAutomationStatus(row))
+    setInternationalOpen(false)
     setMode(nextMode)
   }
 
@@ -228,21 +255,38 @@ export function EntityBankAccountsPanel({ entityKind, entityId, masterName = '',
         </div>
       ) : (
         <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-900">
-          <div className="mb-4 flex items-center justify-between">
-            <h4 className="text-sm font-semibold text-gray-900 dark:text-white">{mode === 'create' ? 'Yeni Banka Bilgisi' : mode === 'view' ? 'Banka Bilgisi' : 'Banka Bilgisini Düzenle'}</h4>
+          <div className="mb-4 flex justify-end">
             <button type="button" onClick={() => setMode('list')} className="rounded-md p-2 hover:bg-gray-100 dark:hover:bg-gray-800"><X size={16} /></button>
           </div>
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-            {orderedFields.map(field => renderField(field, draft, mode === 'view' || locked, updateDraft, parseIban, ibanAutomationStatus))}
+            {primaryFields.map(field => renderField(field, draft, mode === 'view' || locked, updateDraft, parseIban, ibanAutomationStatus))}
           </div>
 
-          {draft.has_intermediary_bank && (
-            <div className="mt-4 grid grid-cols-1 gap-4 rounded-lg border border-gray-200 p-3 md:grid-cols-2 dark:border-gray-700">
-              {renderField('intermediary_bank_name', draft, mode === 'view' || locked, updateDraft, parseIban, ibanAutomationStatus)}
-              {renderField('intermediary_swift_bic', draft, mode === 'view' || locked, updateDraft, parseIban, ibanAutomationStatus)}
-              {renderField('intermediary_bank_address', draft, mode === 'view' || locked, updateDraft, parseIban, ibanAutomationStatus)}
-              {renderField('intermediary_account_number', draft, mode === 'view' || locked, updateDraft, parseIban, ibanAutomationStatus)}
+          {internationalFields.length > 0 && (
+            <div className="mt-4 border-t border-gray-100 pt-4 dark:border-gray-800">
+              <button
+                type="button"
+                onClick={() => setInternationalOpen(open => !open)}
+                className="inline-flex items-center gap-2 text-sm font-medium text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white"
+              >
+                <ChevronDown size={16} className={cn('transition-transform', internationalOpen && 'rotate-180')} />
+                Uluslararası Para Transferi
+              </button>
+
+              {internationalOpen && (
+                <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
+                  {internationalFields.map(field => renderField(field, draft, mode === 'view' || locked, updateDraft, parseIban, ibanAutomationStatus))}
+                  {draft.has_intermediary_bank && (
+                    <>
+                      {renderField('intermediary_bank_name', draft, mode === 'view' || locked, updateDraft, parseIban, ibanAutomationStatus)}
+                      {renderField('intermediary_swift_bic', draft, mode === 'view' || locked, updateDraft, parseIban, ibanAutomationStatus)}
+                      {renderField('intermediary_bank_address', draft, mode === 'view' || locked, updateDraft, parseIban, ibanAutomationStatus)}
+                      {renderField('intermediary_account_number', draft, mode === 'view' || locked, updateDraft, parseIban, ibanAutomationStatus)}
+                    </>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
@@ -311,7 +355,7 @@ function renderField(field: string, draft: Partial<EntityBankAccount>, disabled:
     local_clearing_code_type: 'Yerel Banka Kodu Tipi',
     local_clearing_code: 'Yerel Banka Kodu',
     has_intermediary_bank: 'Aracı Banka Var mı?',
-    preferred_currency: 'Tercih Edilen Para Birimi',
+    preferred_currency: 'Para Birimi',
     payment_purpose: 'Ödeme Amacı / Purpose',
     swift_charge_type: 'SWIFT Masraf Tipi',
     payment_note: 'Ödeme Notu',
@@ -370,7 +414,7 @@ function getOrderedFields(mode: BankAccountFormPriorityMode) {
   const commonTail = ['local_clearing_code_type', 'local_clearing_code', 'has_intermediary_bank', 'payment_purpose', 'swift_charge_type', 'payment_note', 'verification_status', 'document_reference_id']
   const identity = ['beneficiary_name', 'is_same_as_master_name', 'beneficiary_name_note']
   if (mode === 'international_priority') {
-    return [...identity, 'account_number', 'swift_bic', 'bank_name', 'bank_country', 'bank_address', 'local_clearing_code_type', 'local_clearing_code', 'iban', 'branch_name', 'branch_code', 'preferred_currency', 'account_currency', 'bank_code', 'account_country', 'has_intermediary_bank', 'payment_purpose', 'swift_charge_type', 'payment_note', 'verification_status', 'document_reference_id']
+    return [...identity, 'account_number', 'iban', 'bank_name', 'bank_code', 'branch_name', 'branch_code', 'preferred_currency', 'swift_bic', 'bank_country', 'bank_address', 'account_country', 'account_currency', ...commonTail]
   }
   return [...identity, 'iban', 'bank_name', 'bank_code', 'branch_name', 'branch_code', 'account_number', 'preferred_currency', 'swift_bic', 'bank_country', 'bank_address', 'account_country', 'account_currency', ...commonTail]
 }

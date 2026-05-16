@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
-import { Bot, CheckCircle2, Loader2, Search } from 'lucide-react'
+import { Loader2, Search } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { AutomationBadge, type AutomationBadgeStatus } from './AutomationBadge'
 import type { IdentityEntityKind, IdentityGateConfig, IdentityGateResolveResult, IdentityGateState } from '@/lib/identity-gate'
@@ -174,6 +174,8 @@ export function MasterIdentityGate({
     error,
     lastResult,
     automationStarted,
+    entityKind,
+    identity,
   })
 
   return (
@@ -186,10 +188,11 @@ export function MasterIdentityGate({
               <AutomationBadge
                 status={automationStatus}
                 title="Eşleştir butonu master kayıt ve rol kaydı otomasyonunu çalıştırır."
-                idleLabel="Eşleşme bekliyor"
-                workingLabel="Eşleşiyor"
-                doneLabel="OK"
-                noDataLabel="Veri bulunamadı"
+                idleLabel="Veri Bekleniyor"
+                inputLabel="Veri Girişi Yapılıyor"
+                workingLabel="Sorgulama Yapılıyor"
+                doneLabel="Veriler Çekildi"
+                noDataLabel="Veri Bulunamadı"
               />
             )}
           </div>
@@ -390,54 +393,61 @@ function SearchableGateSelect({
   )
 }
 
-function MasterMatchAutomationBadge({ status }: { status: MasterMatchAutomationStatus }) {
-  const config = {
-    idle: {
-      label: 'Eşleşme bekliyor',
-      className: 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-300',
-      icon: <Bot size={12} />,
-    },
-    working: {
-      label: 'Eşleşiyor',
-      className: 'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900/60 dark:bg-blue-950/30 dark:text-blue-300',
-      icon: <Loader2 size={12} className="animate-spin" />,
-    },
-    done: {
-      label: 'OK',
-      className: 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-300',
-      icon: <CheckCircle2 size={12} />,
-    },
-    no_data: {
-      label: 'Veri bulunamadı',
-      className: 'border-gray-200 bg-gray-50 text-gray-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300',
-      icon: <Bot size={12} />,
-    },
-  }[status]
-
-  return (
-    <span className={cn(
-      'inline-flex h-5 min-w-[118px] items-center justify-center gap-1 rounded-full border px-2 text-[10px] font-semibold leading-none transition-colors',
-      status === 'working' && 'animate-pulse',
-      config.className
-    )}>
-      {config.icon}
-      {config.label}
-    </span>
-  )
-}
-
 function getMasterMatchAutomationStatus(input: {
   state: IdentityGateState
   error: string | null
   lastResult: IdentityGateResolveResult | null
   automationStarted: boolean
+  entityKind: IdentityEntityKind
+  identity: Record<string, string>
 }): MasterMatchAutomationStatus {
   if (input.state === 'searching_master') return 'working'
-  if (!input.automationStarted) return 'idle'
-  if (input.error) return 'no_data'
-  if (!input.lastResult) return 'no_data'
-  if (input.lastResult.masterFound || input.lastResult.roleFound) return 'done'
-  return 'no_data'
+  if (input.lastResult) return hasUsefulPrefillData(input.lastResult) ? 'done' : 'no_data'
+  if (input.error || hasIdentityInputStarted(input.entityKind, input.identity) || input.automationStarted) return 'input'
+  return 'idle'
+}
+
+function hasIdentityInputStarted(kind: IdentityEntityKind, identity: Record<string, string>) {
+  if (kind === 'person') {
+    return !!String(identity.national_id || identity.passport_no || '').trim()
+  }
+
+  return !!String(identity.tax_number || identity.registration_number || '').trim()
+}
+
+function hasUsefulPrefillData(result: IdentityGateResolveResult) {
+  const ignoredKeys = new Set([
+    'person_id',
+    'organization_id',
+    'master_record_id',
+    'master_entity_kind',
+    'identity_gate_state',
+    'uyruk',
+    'nationality',
+    'nationality_country',
+    'tc_kimlik',
+    'national_id',
+    'tax_id',
+    'identity_number',
+    'pasaport_no',
+    'passport_no',
+    'stakeholder_type',
+    'partner_type',
+    'person_or_entity_type',
+    'ulke',
+    'country',
+    'vkn_tckn',
+    'tax_number',
+    'ticaret_sicil_no',
+    'registration_number',
+  ])
+
+  return Object.entries(result.prefill || {}).some(([key, value]) => {
+    if (ignoredKeys.has(key)) return false
+    if (Array.isArray(value)) return value.length > 0
+    if (value && typeof value === 'object') return Object.keys(value).length > 0
+    return !!String(value || '').trim()
+  })
 }
 
 const inputClass = 'w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 dark:border-gray-700 dark:bg-gray-900 dark:text-white disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-900 dark:disabled:bg-gray-800 dark:disabled:text-gray-100'

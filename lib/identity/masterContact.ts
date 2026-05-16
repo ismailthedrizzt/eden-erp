@@ -31,6 +31,7 @@ const PERSON_MASTER_PROFILE_KEYS = [
   'occupation',
   'profession',
   'meslek',
+  'gorev',
   'blood_type',
   'kan_grubu',
 ]
@@ -147,8 +148,10 @@ export function mergeMasterContactIntoRole(role: Record<string, any>, master: Re
   if (!master) return role
 
   const contact = readContactMetadata(master)
-  const telefonlar = normalizePhones({ telefonlar: contact.telefonlar, phone: master.phone })
-  const epostalar = normalizeEmails({ epostalar: contact.epostalar, email: master.email })
+  const contactPhones = Array.isArray(contact.telefonlar) && contact.telefonlar.length ? contact.telefonlar : master.telefonlar
+  const contactEmails = Array.isArray(contact.epostalar) && contact.epostalar.length ? contact.epostalar : master.epostalar
+  const telefonlar = normalizePhones({ telefonlar: contactPhones, phone: master.phone || master.cep_telefonu, is_telefonu: master.is_telefonu })
+  const epostalar = normalizeEmails({ epostalar: contactEmails, email: master.email })
   const personMaster = kind === 'person' ? readPersonMasterMetadata(master) : {}
   const organizationMaster = kind === 'organization' ? readOrganizationMasterMetadata(master) : {}
   const emergency = kind === 'person' && contact.acil_kisi && typeof contact.acil_kisi === 'object' ? contact.acil_kisi : {}

@@ -36,6 +36,8 @@ export class BankAccountAutoFillService {
     const sources: Record<string, string> = {}
     const iban = String(input.iban || '').replace(/\s/g, '').toUpperCase()
     if (!iban) return { values, sources, isValidIban: false }
+    const previousIban = String(previous.iban || '').replace(/\s/g, '').toUpperCase()
+    const forceIbanDerivedFields = !!iban && iban !== previousIban
 
     const ibanCountry = iban.slice(0, 2)
     if (/^[A-Z]{2}$/.test(ibanCountry)) {
@@ -45,24 +47,24 @@ export class BankAccountAutoFillService {
 
     const bankInfo = getIbanBankInfo(iban)
     if (bankInfo) {
-      setIfFresh(values, sources, previous, 'bank_code', bankInfo.bankCode, 'iban.bankCode')
-      if (bankInfo.bankName !== 'Bilinmeyen Banka') setIfFresh(values, sources, previous, 'bank_name', bankInfo.bankName, 'iban.bankCode')
-      if (bankInfo.swiftCode) setIfFresh(values, sources, previous, 'swift_bic', bankInfo.swiftCode, 'bankReference.swift')
-      if (bankInfo.branchCode) setIfFresh(values, sources, previous, 'branch_code', bankInfo.branchCode, 'iban.branchCode')
-      if (bankInfo.branchName) setIfFresh(values, sources, previous, 'branch_name', bankInfo.branchName, 'iban.branchCode')
+      setIfFresh(values, sources, previous, 'bank_code', bankInfo.bankCode, 'iban.bankCode', forceIbanDerivedFields)
+      if (bankInfo.bankName !== 'Bilinmeyen Banka') setIfFresh(values, sources, previous, 'bank_name', bankInfo.bankName, 'iban.bankCode', forceIbanDerivedFields)
+      if (bankInfo.swiftCode) setIfFresh(values, sources, previous, 'swift_bic', bankInfo.swiftCode, 'bankReference.swift', forceIbanDerivedFields)
+      if (bankInfo.branchCode) setIfFresh(values, sources, previous, 'branch_code', bankInfo.branchCode, 'iban.branchCode', forceIbanDerivedFields)
+      if (bankInfo.branchName) setIfFresh(values, sources, previous, 'branch_name', bankInfo.branchName, 'iban.branchCode', forceIbanDerivedFields)
     }
 
     const tr = resolveTurkishIban(iban)
     if (tr) {
       setIfFresh(values, sources, previous, 'iban', formatIban(iban), 'iban.input')
-      setIfFresh(values, sources, previous, 'account_number', tr.accountNo, 'iban.accountNo')
-      setIfFresh(values, sources, previous, 'bank_code', tr.bankCode, 'iban.bankCode')
-      if (tr.bankName !== 'Bilinmeyen Banka') setIfFresh(values, sources, previous, 'bank_name', tr.bankName, 'iban.bankCode')
-      if (tr.branchCode) setIfFresh(values, sources, previous, 'branch_code', tr.branchCode, 'iban.branchCode')
-      if (tr.branchName) setIfFresh(values, sources, previous, 'branch_name', tr.branchName, 'iban.branchCode')
-      if (tr.swiftCode) setIfFresh(values, sources, previous, 'swift_bic', tr.swiftCode, 'bankReference.swift')
-      setIfFresh(values, sources, previous, 'account_country', 'TR', 'iban.country')
-      setIfFresh(values, sources, previous, 'bank_country', 'TR', 'iban.country')
+      setIfFresh(values, sources, previous, 'account_number', tr.accountNo, 'iban.accountNo', forceIbanDerivedFields)
+      setIfFresh(values, sources, previous, 'bank_code', tr.bankCode, 'iban.bankCode', forceIbanDerivedFields)
+      if (tr.bankName !== 'Bilinmeyen Banka') setIfFresh(values, sources, previous, 'bank_name', tr.bankName, 'iban.bankCode', forceIbanDerivedFields)
+      if (tr.branchCode) setIfFresh(values, sources, previous, 'branch_code', tr.branchCode, 'iban.branchCode', forceIbanDerivedFields)
+      if (tr.branchName) setIfFresh(values, sources, previous, 'branch_name', tr.branchName, 'iban.branchCode', forceIbanDerivedFields)
+      if (tr.swiftCode) setIfFresh(values, sources, previous, 'swift_bic', tr.swiftCode, 'bankReference.swift', forceIbanDerivedFields)
+      setIfFresh(values, sources, previous, 'account_country', 'TR', 'iban.country', forceIbanDerivedFields)
+      setIfFresh(values, sources, previous, 'bank_country', 'TR', 'iban.country', forceIbanDerivedFields)
       return { values, sources, isValidIban: true }
     }
 
@@ -108,10 +110,11 @@ function setIfFresh(
   previous: Record<string, any>,
   field: string,
   value: any,
-  source: string
+  source: string,
+  force = false
 ) {
   const current = String(previous[field] || '').trim()
-  if (!current || current === String(value || '').trim()) {
+  if (force || !current || current === String(value || '').trim()) {
     values[field] = value
     sources[field] = source
   }

@@ -243,12 +243,24 @@ function resolveIsbankIbanBranch(details: {
   if (!/^\d{16}$/.test(details.accountNo)) return null
 
   // İş Bankası IBAN hesap numarası alanı: 0000 + hesap tipi + 4 hane şube + 7 hane hesap no.
-  const branchCode = String(Number(details.accountNo.slice(5, 9)))
+  const branchCandidates = [
+    details.accountNo.slice(5, 9),
+    details.accountNo.slice(4, 8),
+    details.accountNo.slice(0, 4),
+  ].map(normalizeBranchCode).filter(Boolean)
+  const branchCode = branchCandidates.find(code => ISBANK_BRANCHES[code]) || branchCandidates[0]
+  if (!branchCode) return null
   const branchName = ISBANK_BRANCHES[branchCode]
 
   if (!branchName) return { branchCode }
 
   return { branchCode, branchName }
+}
+
+function normalizeBranchCode(value: string) {
+  const digits = value.replace(/\D/g, '')
+  if (!digits) return ''
+  return String(Number(digits))
 }
 
 function resolveZiraatIbanBranch(details: {

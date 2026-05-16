@@ -3,7 +3,7 @@ import { createServiceClient } from '@/lib/supabase/server'
 import { hydrateMasterContact, stripMasterDataForRoleProfile, syncMasterContact } from '@/lib/identity/masterContact'
 import { EntityBankAccountsService } from '@/lib/modules/entity-bank-accounts/entityBankAccounts.service'
 
-const PARTNER_DETAIL_SELECT = 'id,sirket_id,company_id,person_id,organization_id,owner_kind,ortak_tipi,display_name,ortak_adi,identity_number,tckn_vkn,hisse_orani,share_ratio,voting_ratio,profit_ratio,source_type,source_id,share_units,nominal_value,capital_amount,share_class,has_representation_right,imza_yetkisi,has_control_right,control_type,has_board_nomination_right,has_veto_right,has_privileged_share,beneficial_owner,is_beneficial_owner,beneficial_ratio,is_ultimate_controller,start_date,end_date,status,is_deleted,history,photo_logo,partner_documents,partner_profile,notes,created_at'
+const PARTNER_DETAIL_SELECT = 'id,sirket_id,company_id,person_id,organization_id,owner_kind,ortak_tipi,display_name,ortak_adi,identity_number,tckn_vkn,hisse_orani,share_ratio,voting_ratio,profit_ratio,source_type,source_id,share_units,nominal_value,capital_amount,share_class,has_representation_right,imza_yetkisi,has_control_right,control_type,has_board_nomination_right,has_veto_right,has_privileged_share,beneficial_owner,is_beneficial_owner,beneficial_ratio,is_ultimate_controller,start_date,end_date,status,record_status,is_deleted,history,photo_logo,partner_documents,partner_profile,notes,created_at'
 
 function buildFieldHistory(current: Record<string, any>, updates: Record<string, any>) {
   const existingHistory = Array.isArray(current.history) ? current.history : []
@@ -80,6 +80,21 @@ export async function PATCH(
     .single()
 
   if (error) return NextResponse.json({ error: error.message, code: error.code || 'UPDATE_FAILED' }, { status: 500 })
+  const oldStatus = current.record_status || (current.status === 'Aktif' ? 'active' : current.status === 'Pasif' ? 'passive' : 'draft')
+  const newStatus = data.record_status || (data.status === 'Aktif' ? 'active' : data.status === 'Pasif' ? 'passive' : 'draft')
+  if (oldStatus !== newStatus || body.ownership_action) {
+    await supabase.from('partner_ownership_lifecycle_events').insert({
+      partner_id: data.id,
+      company_id: data.company_id || data.sirket_id || null,
+      event_type: oldStatus === 'draft' && newStatus === 'active' ? 'ownership_defined' : 'status_changed',
+      old_record_status: oldStatus,
+      new_record_status: newStatus,
+      payload_json: {
+        source: 'partners_page',
+        ownership_action: body.ownership_action || null,
+      },
+    })
+  }
   if (data?.person_id) await syncMasterContact(supabase, 'person', data.person_id, body)
   if (data?.organization_id) await syncMasterContact(supabase, 'organization', data.organization_id, body)
   if (Array.isArray(body.entity_bank_accounts)) {
@@ -106,6 +121,7 @@ export async function DELETE(
     .from('sirket_ortaklar')
     .update({
       status: 'Pasif',
+      record_status: 'passive',
       is_deleted: true,
       deleted_at: new Date().toISOString(),
       deleted_by: 'Sistem Kullanıcısı',
@@ -156,7 +172,8 @@ function mapPartnerForDb(partner: Record<string, any>, current?: Record<string, 
     has_privileged_share: !!current?.has_privileged_share,
     start_date: partner.start_date || current?.start_date,
     end_date: partner.end_date || null,
-    status: partner.status || current?.status || 'Aktif',
+    status: partner.status || current?.status || 'Taslak',
+    record_status: partner.record_status || current?.record_status || (partner.status === 'Aktif' ? 'active' : partner.status === 'Pasif' ? 'passive' : 'draft'),
     notes: partner.notes || null,
     photo_logo: partner.photo_logo || current?.photo_logo || [],
     partner_documents: partner.partner_documents || current?.partner_documents || [],

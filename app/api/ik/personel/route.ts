@@ -66,6 +66,8 @@ const EmployeeSchema = z.object({
   cv_belgesi: z.record(z.any()).optional().nullable(),
   diploma_belgesi: z.record(z.any()).optional().nullable(),
   is_deleted: z.boolean().default(false),
+  record_status: z.enum(['draft', 'active', 'passive']).optional(),
+  employment_status: z.string().optional(),
 })
 
 function omitNullishStrings(value: Record<string, any>) {
@@ -102,6 +104,7 @@ const optionalEmployeeListColumns = [
   'is_deleted',
   'employee_no',
   'employment_status',
+  'record_status',
   'start_date',
   'calisma_tipi',
   'is_akdi_bicimi',
@@ -232,6 +235,7 @@ export async function GET(request: NextRequest) {
     hire_date: row.sgk_giris || row.start_date || null,
     employment_type: row.calisma_tipi || null,
     employment_status: row.employment_status || row.calisma_durumu || null,
+    record_status: row.record_status || (row.is_deleted ? 'passive' : row.sgk_giris ? 'active' : 'draft'),
     phone: row.cep_telefonu || null,
     gender: row.cinsiyet || null,
     birth_date: row.dogum_tarihi || null,
@@ -270,7 +274,9 @@ export async function POST(request: NextRequest) {
     .insert({
       ...employeePayload,
       is_deleted: employeePayload.is_deleted ?? false,
-      calisma_durumu: employeePayload.isten_ayrilis ? 'ayrilmis' : employeePayload.calisma_durumu
+      record_status: employeePayload.record_status || 'draft',
+      employment_status: employeePayload.employment_status || 'pending_entry',
+      calisma_durumu: employeePayload.isten_ayrilis ? 'ayrilmis' : employeePayload.calisma_durumu || 'askida'
     })
     .select()
     .single()
@@ -284,7 +290,9 @@ export async function POST(request: NextRequest) {
       .insert({
         ...employeePayload,
         is_deleted: employeePayload.is_deleted ?? false,
-        calisma_durumu: employeePayload.isten_ayrilis ? 'ayrilmis' : employeePayload.calisma_durumu
+        record_status: employeePayload.record_status || 'draft',
+        employment_status: employeePayload.employment_status || 'pending_entry',
+        calisma_durumu: employeePayload.isten_ayrilis ? 'ayrilmis' : employeePayload.calisma_durumu || 'askida'
       })
       .select()
       .single()

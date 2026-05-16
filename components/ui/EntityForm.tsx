@@ -310,6 +310,31 @@ function formatHistoryValue(value: unknown): string {
   }
 }
 
+function RecordStatusBadge({ status }: { status?: unknown }) {
+  const normalized = String(status || 'draft')
+  const config: Record<string, { label: string; className: string }> = {
+    draft: {
+      label: 'Taslak',
+      className: 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-300',
+    },
+    active: {
+      label: 'Aktif',
+      className: 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-300',
+    },
+    passive: {
+      label: 'Pasif',
+      className: 'border-gray-200 bg-gray-50 text-gray-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300',
+    },
+  }
+  const selected = config[normalized] || config.draft
+
+  return (
+    <span className={cn('inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold', selected.className)}>
+      Durum: {selected.label}
+    </span>
+  )
+}
+
 function MasterSummaryHero({
   result,
   locked,
@@ -2921,13 +2946,21 @@ export function EntityForm({
             <SectionLoadIcon stage={heroLoadStage} />
             {/* Section Title */}
             {showHeroHeader && <div className="mb-4">
-              <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Temel Bilgiler
-              </h3>
+              <div className="flex flex-wrap items-center gap-2">
+                <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  Temel Bilgiler
+                </h3>
+                {formData.record_status && <RecordStatusBadge status={formData.record_status} />}
+              </div>
               <p className="text-xs text-gray-400 mt-1">
                 {isCreate ? 'Yeni kayıt oluşturun' : isEdit ? 'Bilgileri güncelleyin' : 'Kayıt detayları'}
               </p>
             </div>}
+            {!showHeroHeader && formData.record_status && (
+              <div className="mb-4">
+                <RecordStatusBadge status={formData.record_status} />
+              </div>
+            )}
 
             {/* Required Fields Grid */}
             <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 flex-1">
