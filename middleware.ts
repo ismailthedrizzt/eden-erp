@@ -7,7 +7,40 @@ type CookieToSet = {
   options?: Parameters<NextResponse['cookies']['set']>[2]
 }
 
+const LOGIN_BYPASS_ENABLED = process.env.EDEN_LOGIN_DISABLED !== 'false'
+const DEMO_AUTH_COOKIE_OPTIONS = {
+  path: '/',
+  maxAge: 60 * 60 * 24 * 30,
+  sameSite: 'lax' as const,
+}
+
+function withDemoAuth(response: NextResponse) {
+  response.cookies.set('demo_auth', 'true', DEMO_AUTH_COOKIE_OPTIONS)
+  return response
+}
+
 export async function middleware(request: NextRequest) {
+  const isAuthPage = request.nextUrl.pathname.startsWith('/login')
+  const isApiRoute = request.nextUrl.pathname.startsWith('/api')
+  const isPwaAsset = [
+    '/manifest.json',
+    '/sw.js',
+    '/workbox-',
+    '/offline',
+    '/icons/',
+    '/eden-icon-original.png',
+  ].some(path => request.nextUrl.pathname.startsWith(path))
+
+  if (LOGIN_BYPASS_ENABLED && !isApiRoute && !isPwaAsset) {
+    if (isAuthPage) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/app'
+      return withDemoAuth(NextResponse.redirect(url))
+    }
+
+    return withDemoAuth(NextResponse.next({ request }))
+  }
+
   let supabaseResponse = NextResponse.next({ request })
 
   const supabase = createServerClient(
@@ -39,16 +72,6 @@ export async function middleware(request: NextRequest) {
     // Supabase env veya baglanti hazir degilse uygulama en azindan acilabilsin.
   }
 
-  const isAuthPage = request.nextUrl.pathname.startsWith('/login')
-  const isApiRoute = request.nextUrl.pathname.startsWith('/api')
-  const isPwaAsset = [
-    '/manifest.json',
-    '/sw.js',
-    '/workbox-',
-    '/offline',
-    '/icons/',
-    '/eden-icon-original.png',
-  ].some(path => request.nextUrl.pathname.startsWith(path))
   const isPublic = isAuthPage || isApiRoute || isPwaAsset
   const isDemo = request.cookies.get('demo_auth')?.value === 'true'
 

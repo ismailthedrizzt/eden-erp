@@ -304,8 +304,8 @@ export default function Sidebar({ collapsed = false, mobileOpen = false, onMobil
         <button
           onClick={() => {
             if (typeof window !== 'undefined') {
-              document.cookie = 'demo_auth=; path=/; max-age=0; sameSite=lax'
-              window.location.href = '/login'
+              document.cookie = 'demo_auth=true; path=/; max-age=2592000; sameSite=lax'
+              window.location.href = '/app'
             }
           }}
           className="ni text-white/35 text-xs"

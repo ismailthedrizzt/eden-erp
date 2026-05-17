@@ -15,13 +15,19 @@ interface PermissionContextValue {
 
 const PermissionContext = createContext<PermissionContextValue | null>(null)
 
+function shouldUseDemoPermissions() {
+  if (!process.env.NEXT_PUBLIC_API_BASE_URL) return true
+  if (typeof document === 'undefined') return false
+  return document.cookie.split(';').some(cookie => cookie.trim() === 'demo_auth=true')
+}
+
 export function PermissionProvider({ children }: { children: React.ReactNode }) {
   const [permissions, setPermissions] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   const refetch = async () => {
-    if (!process.env.NEXT_PUBLIC_API_BASE_URL) {
+    if (shouldUseDemoPermissions()) {
       setPermissions(new Set(['__eden_demo_allow_all__']))
       setLoading(false)
       setError(null)
