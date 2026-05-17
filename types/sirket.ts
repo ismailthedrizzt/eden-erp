@@ -4,6 +4,78 @@
  * Company entity definitions for the ERP system
  */
 
+export type CompanyLifecycleStatus = 'draft' | 'active' | 'liquidation' | 'deregistered'
+
+export interface CompanyLifecycleEvent {
+  id: string
+  company_id: string
+  event_type: string
+  event_date?: string
+  old_status?: CompanyLifecycleStatus | string
+  new_status?: CompanyLifecycleStatus | string
+  payload_json?: Record<string, unknown>
+  document_reference_id?: string
+  created_at?: string
+  created_by?: string
+}
+
+export interface CompanyOpeningDetails {
+  id?: string
+  company_id?: string
+  foundation_date?: string
+  registration_date?: string
+  trade_registry_office?: string
+  trade_registry_no?: string
+  mersis_no?: string
+  tax_office_id?: string
+  tax_no?: string
+  sgk_workplace_no?: string
+  primary_nace_id?: string
+  opening_document_id?: string
+  payload_json?: Record<string, unknown>
+}
+
+export interface CompanyLiquidationDetails {
+  id?: string
+  company_id?: string
+  liquidation_decision_date?: string
+  liquidation_start_date?: string
+  decision_no?: string
+  decision_type?: string
+  liquidation_reason?: string
+  liquidator_person_id?: string
+  liquidator_organization_id?: string
+  liquidator_display_name?: string
+  liquidator_authority?: string
+  liquidator_authority_start_date?: string
+  liquidator_authority_document_id?: string
+  trade_registry_application_status?: string
+  tax_notification_status?: string
+  sgk_notification_status?: string
+  notes?: string
+  payload_json?: Record<string, unknown>
+}
+
+export interface CompanyDeregistrationDetails {
+  id?: string
+  company_id?: string
+  liquidation_completion_decision_date?: string
+  deregistration_application_date?: string
+  deregistration_registration_date?: string
+  deregistration_reference_no?: string
+  trade_registry_office?: string
+  tax_closure_status?: string
+  tax_closure_date?: string
+  sgk_closure_status?: string
+  sgk_closure_date?: string
+  kep_closure_status?: string
+  financial_seal_closure_note?: string
+  document_archive_responsible?: string
+  deregistration_document_id?: string
+  notes?: string
+  payload_json?: Record<string, unknown>
+}
+
 export interface Sirket {
   id: string
   
@@ -52,6 +124,8 @@ export interface Sirket {
   default_language: string
   time_zone: string
   fiscal_year_start: number
+  record_status?: CompanyLifecycleStatus
+  company_status?: CompanyLifecycleStatus
   is_deleted?: boolean
   hero_images?: Array<Record<string, unknown>>
   hero_documents?: Array<Record<string, unknown>>
@@ -83,6 +157,11 @@ export interface Sirket {
   public_registry?: CompanyPublicRegistry | CompanyPublicRegistry[]
   public_licenses?: CompanyPublicLicense[]
   public_channels?: CompanyPublicChannels | CompanyPublicChannels[]
+  lifecycle_events?: CompanyLifecycleEvent[]
+  lifecycle_last_event?: CompanyLifecycleEvent | null
+  opening_details?: CompanyOpeningDetails | null
+  liquidation_details?: CompanyLiquidationDetails | null
+  deregistration_details?: CompanyDeregistrationDetails | null
 }
 
 export interface CompanyPublicHistoryItem {

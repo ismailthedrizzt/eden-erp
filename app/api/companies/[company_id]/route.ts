@@ -74,10 +74,10 @@ function isMissingTableError(error: any) {
   return error?.code === '42P01' || String(error?.message || '').includes('Could not find the table')
 }
 
-const COMPANY_DETAIL_SELECT = 'id,organization_id,field_history,short_name,trade_name,tax_number,tax_office,company_type,city,district,address,phone,email,is_deleted,mersis_number,trade_registry_number,foundation_date,legal_entity,electronic_notification_address,trade_registry_office,parent_company_id,company_code,country,website,e_invoice_taxpayer,e_archive_taxpayer,e_waybill_taxpayer,sgk_workplace_registry_no,sgk_province,sgk_branch,nace_codes,risk_class,default_currency,default_language,time_zone,fiscal_year_start,hero_images,hero_documents,created_at,updated_at'
-const COMPANY_HERO_SELECT = 'id,organization_id,field_history,short_name,trade_name,tax_number,tax_office,company_type,is_deleted,created_at,updated_at'
+const COMPANY_DETAIL_SELECT = 'id,organization_id,field_history,short_name,trade_name,tax_number,tax_office,company_type,city,district,address,phone,email,is_deleted,record_status,company_status,mersis_number,trade_registry_number,foundation_date,legal_entity,electronic_notification_address,trade_registry_office,parent_company_id,company_code,country,website,e_invoice_taxpayer,e_archive_taxpayer,e_waybill_taxpayer,sgk_workplace_registry_no,sgk_province,sgk_branch,nace_codes,risk_class,default_currency,default_language,time_zone,fiscal_year_start,hero_images,hero_documents,created_at,updated_at'
+const COMPANY_HERO_SELECT = 'id,organization_id,field_history,short_name,trade_name,tax_number,tax_office,company_type,is_deleted,record_status,company_status,created_at,updated_at'
 const COMPANY_MEDIA_SELECT = 'id,hero_images,hero_documents,updated_at'
-const COMPANY_DETAILS_SELECT = 'id,organization_id,field_history,city,district,address,phone,email,mersis_number,trade_registry_number,foundation_date,legal_entity,electronic_notification_address,trade_registry_office,parent_company_id,company_code,country,website,e_invoice_taxpayer,e_archive_taxpayer,e_waybill_taxpayer,sgk_workplace_registry_no,sgk_province,sgk_branch,nace_codes,risk_class,default_currency,default_language,time_zone,fiscal_year_start,created_at,updated_at'
+const COMPANY_DETAILS_SELECT = 'id,organization_id,field_history,city,district,address,phone,email,is_deleted,record_status,company_status,mersis_number,trade_registry_number,foundation_date,legal_entity,electronic_notification_address,trade_registry_office,parent_company_id,company_code,country,website,e_invoice_taxpayer,e_archive_taxpayer,e_waybill_taxpayer,sgk_workplace_registry_no,sgk_province,sgk_branch,nace_codes,risk_class,default_currency,default_language,time_zone,fiscal_year_start,created_at,updated_at'
 const PUBLIC_TAX_SELECT = 'id,company_id,tax_number,tax_office,tax_type,liability_start_date,e_invoice_taxpayer,e_archive_taxpayer,e_waybill_enabled,gib_user_code,has_financial_seal,financial_seal_expiry_date,tax_debt_tracking_active,last_check_date,history,created_at,updated_at'
 const PUBLIC_SGK_SELECT = 'id,company_id,workplace_registry_no,province,branch,registration_date,nace_code,risk_class,uses_incentive,active_incentive_type,incentive_end_date,employee_count,debt_tracking_active,last_check_date,history,created_at,updated_at'
 const PUBLIC_INCENTIVES_SELECT = 'id,company_id,has_kosgeb_registration,kosgeb_no,active_support_program,application_date,result_status,incentive_type,incentive_end_date,responsible_person,notes,history,created_at,updated_at'
@@ -158,6 +158,10 @@ export async function GET(
     publicLicenses,
     publicChannels,
     currentOwnership,
+    openingDetails,
+    liquidationDetails,
+    deregistrationDetails,
+    lifecycleEvents,
   ] = await Promise.all([
     supabase.from('company_partners').select('id,company_id,company_id,person_id,organization_id,owner_kind,partner_type,display_name,partner_name,identity_number,identity_tax_number,share_ratio,share_ratio,voting_ratio,profit_ratio,has_representation_right,signature_authority,start_date,end_date,status,is_deleted,source_type,source_id,history,created_at').or(`company_id.eq.${id},company_id.eq.${id}`),
     supabase.from('company_representatives').select('id,company_id,company_id,person_id,organization_id,person_kind,source_type,source_id,display_name,full_name,authority_types,job_title,authority_type,status,start_date,end_date,signature_type,transaction_limit,currency,requires_joint_signature,can_approve_alone,is_deleted,history,created_at').or(`company_id.eq.${id},company_id.eq.${id}`),
@@ -170,6 +174,10 @@ export async function GET(
     supabase.from('company_public_licenses').select(PUBLIC_LICENSES_SELECT).eq('company_id', id),
     supabase.from('company_public_channels').select(PUBLIC_CHANNELS_SELECT).eq('company_id', id).maybeSingle(),
     supabase.from('v_current_ownership').select(CURRENT_OWNERSHIP_SELECT).eq('company_id', id),
+    supabase.from('company_opening_details').select('*').eq('company_id', id).maybeSingle(),
+    supabase.from('company_liquidation_details').select('*').eq('company_id', id).maybeSingle(),
+    supabase.from('company_deregistration_details').select('*').eq('company_id', id).maybeSingle(),
+    supabase.from('company_lifecycle_events').select('id,company_id,event_type,event_date,old_status,new_status,payload_json,document_reference_id,created_at,created_by').eq('company_id', id).order('created_at', { ascending: false }).limit(25),
   ])
 
   const relatedError = [
@@ -184,7 +192,11 @@ export async function GET(
     publicLicenses.error,
     publicChannels.error,
     currentOwnership.error,
-  ].find(Boolean)
+    openingDetails.error,
+    liquidationDetails.error,
+    deregistrationDetails.error,
+    lifecycleEvents.error,
+  ].find(error => error && !isMissingTableError(error))
 
   if (relatedError) {
     return NextResponse.json({
@@ -237,6 +249,11 @@ export async function GET(
     public_licenses: publicLicenses.data || [],
     public_channels: publicChannels.data || {},
     company_nace_codes: companyNaceCodes.data || [],
+    opening_details: openingDetails.error && isMissingTableError(openingDetails.error) ? null : openingDetails.data || null,
+    liquidation_details: liquidationDetails.error && isMissingTableError(liquidationDetails.error) ? null : liquidationDetails.data || null,
+    deregistration_details: deregistrationDetails.error && isMissingTableError(deregistrationDetails.error) ? null : deregistrationDetails.data || null,
+    lifecycle_events: lifecycleEvents.error && isMissingTableError(lifecycleEvents.error) ? [] : lifecycleEvents.data || [],
+    lifecycle_last_event: lifecycleEvents.error && isMissingTableError(lifecycleEvents.error) ? null : lifecycleEvents.data?.[0] || null,
   }
 
   const dataRow = data as Record<string, any>
@@ -266,7 +283,7 @@ export async function PATCH(
 
   const { data: current, error: currentError } = await supabase
     .from('companies')
-    .select('id,organization_id,field_history,short_name,trade_name,tax_number,tax_office,company_type,city,district,address,phone,email,is_deleted,mersis_number,trade_registry_number,foundation_date,legal_entity,electronic_notification_address,trade_registry_office,company_code,country,website,e_invoice_taxpayer,e_archive_taxpayer,e_waybill_taxpayer,sgk_workplace_registry_no,sgk_province,sgk_branch,risk_class,default_currency,default_language,time_zone,fiscal_year_start')
+    .select('id,organization_id,field_history,short_name,trade_name,tax_number,tax_office,company_type,city,district,address,phone,email,is_deleted,record_status,company_status,mersis_number,trade_registry_number,foundation_date,legal_entity,electronic_notification_address,trade_registry_office,company_code,country,website,e_invoice_taxpayer,e_archive_taxpayer,e_waybill_taxpayer,sgk_workplace_registry_no,sgk_province,sgk_branch,risk_class,default_currency,default_language,time_zone,fiscal_year_start')
     .eq('id', id)
     .single()
 
@@ -322,7 +339,7 @@ export async function PATCH(
       field_history: nextHistory,
     })
     .eq('id', id)
-    .select('id,short_name,trade_name,tax_number,is_deleted,updated_at')
+    .select('id,short_name,trade_name,tax_number,is_deleted,record_status,company_status,updated_at')
     .single()
 
   if (error) {
@@ -420,17 +437,11 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ company_id: string }> }
 ) {
-  const { company_id: id } = await params
-  const supabase = createServiceClient()
-
-  const { error } = await supabase
-    .from('companies')
-    .update({ is_deleted: true })
-    .eq('id', id)
-
-  if (error) return NextResponse.json({ error: error.message, code: error.code || 'SOFT_DELETE_FAILED' }, { status: 500 })
-
-  return NextResponse.json({ success: true })
+  await params
+  return NextResponse.json({
+    error: 'Sirket kapatma islemleri Terkin Wizardi ile tamamlanmalidir.',
+    code: 'USE_DEREGISTRATION_WIZARD',
+  }, { status: 409 })
 }
 
 function buildFieldHistory(current: Record<string, any>, updates: Record<string, any>) {

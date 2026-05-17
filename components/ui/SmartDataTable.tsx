@@ -858,9 +858,9 @@ export function SmartDataTable<T extends { id: string }>({
     const r = row as Record<string, any>
 
     if (col.type === 'actions') {
-      return <MoreHorizontal size={16} className="text-gray-400" />
+      return col.render ? col.render(value, row) : <MoreHorizontal size={16} className="text-gray-400" />
     }
-    
+
     // For image type, handle specially (even if custom render exists, prefer type-based render)
     if (col.type === 'image' || forceImageType) {
       const imageUrl = value || r?.profileImage || r?.image || r?.photo || r?.avatar || r?.profile_image || r?.photo_url

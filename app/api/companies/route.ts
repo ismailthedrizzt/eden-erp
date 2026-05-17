@@ -87,6 +87,9 @@ export async function GET(request: NextRequest) {
     tax_office: 'tax_office',
     company_type: 'company_type',
     is_deleted: 'is_deleted',
+    lifecycle_status: 'record_status',
+    record_status: 'record_status',
+    company_status: 'company_status',
     mersis_number: 'mersis_number',
     trade_registry_number: 'trade_registry_number',
     foundation_date: 'foundation_date',
@@ -100,7 +103,7 @@ export async function GET(request: NextRequest) {
 
   let query = supabase
     .from('companies')
-    .select('id,organization_id,short_name,trade_name,tax_number,tax_office,company_type,city,district,is_deleted,updated_at,created_at')
+    .select('id,organization_id,short_name,trade_name,tax_number,tax_office,company_type,city,district,is_deleted,record_status,company_status,updated_at,created_at')
     .order(sortColumn, { ascending: listQuery.direction !== 'desc' })
     .range(from, to)
 
@@ -178,7 +181,9 @@ export async function POST(request: NextRequest) {
   try {
     companyRow = await attachCompanyOrganization(supabase, {
       ...companyData,
-      is_deleted: companyData.is_deleted ?? false,
+      is_deleted: false,
+      record_status: 'draft',
+      company_status: 'draft',
     })
   } catch (error) {
     return NextResponse.json({
@@ -189,7 +194,7 @@ export async function POST(request: NextRequest) {
   const { data, error } = await supabase
     .from('companies')
     .insert(companyRow)
-    .select('id,short_name,trade_name,tax_number,is_deleted,updated_at')
+    .select('id,short_name,trade_name,tax_number,is_deleted,record_status,company_status,updated_at')
     .single()
 
   if (error) return NextResponse.json({ error: error.message, code: error.code || 'CREATE_FAILED' }, { status: 500 })
@@ -224,7 +229,30 @@ export async function POST(request: NextRequest) {
   })
   if (publicError) return NextResponse.json({ error: publicError.message, code: publicError.code || 'PUBLIC_SAVE_FAILED' }, { status: 500 })
 
+  const lifecycleError = await insertCompanyCreatedAsDraftEvent(supabase, data.id, companyRow)
+  if (lifecycleError) return NextResponse.json({ error: lifecycleError.message, code: lifecycleError.code || 'LIFECYCLE_EVENT_FAILED' }, { status: 500 })
+
   return NextResponse.json({ data }, { status: 201 })
+}
+
+async function insertCompanyCreatedAsDraftEvent(
+  supabase: ReturnType<typeof createServiceClient>,
+  companyId: string,
+  payload: Record<string, any>
+) {
+  const { error } = await supabase
+    .from('company_lifecycle_events')
+    .insert({
+      company_id: companyId,
+      event_type: 'company_created_as_draft',
+      event_date: new Date().toISOString().slice(0, 10),
+      old_status: null,
+      new_status: 'draft',
+      payload_json: payload,
+      document_reference_id: null,
+    })
+
+  return error
 }
 
 async function attachCompanyOrganization(supabase: ReturnType<typeof createServiceClient>, companyData: Record<string, any>) {

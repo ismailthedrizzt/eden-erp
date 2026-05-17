@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 import Sidebar from '@/components/layout/Sidebar'
+import { PendingActionsBell } from '@/components/layout/PendingActionsBell'
 import { Menu, Sun, Moon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ModuleLicenseProvider } from '@/hooks/useModuleLicense'
@@ -110,6 +111,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               </div>
             </div>
             <div className="flex items-center gap-3">
+              <PendingActionsBell />
               <button
                 onClick={toggleTheme}
                 className="w-8 h-8 rounded-lg border border-gray-200 dark:border-gray-700 flex items-center justify-center

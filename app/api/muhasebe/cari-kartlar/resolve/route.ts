@@ -21,7 +21,7 @@ const ACCOUNT_CARD_VIEW_SELECT = 'company_id,entity_kind,person_id,organization_
 
 export async function POST(request: NextRequest) {
   const parsed = ResolveSchema.safeParse(await request.json().catch(() => null))
-  if (!parsed.success) return NextResponse.json({ error: 'Geçersiz kimlik arama isteği' }, { status: 400 })
+  if (!parsed.success) return NextResponse.json({ error: 'GeÃ§ersiz kimlik arama isteÄŸi' }, { status: 400 })
 
   const supabase = createServiceClient()
   const { entityKind, identity } = parsed.data
@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       found: false,
       entityKind,
-      message: 'Bu kişi/kurum master kayıtlarda bulunamadı. Cari hareketlerde kullanabilmek için önce ilgili formdan oluşturulmalıdır.',
+      message: 'Bu kiÅŸi/kurum master kayÄ±tlarda bulunamadÄ±. Cari hareketlerde kullanabilmek iÃ§in Ã¶nce ilgili formdan oluÅŸturulmalÄ±dÄ±r.',
       roles: [],
       card: null,
     })
@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
     identityNo: entityKind === 'person' ? record.national_id || record.passport_no : record.tax_number || record.registration_number,
     roles,
     card,
-    message: 'Bu kayıt sistemde mevcut.',
+    message: 'Bu kayÄ±t sistemde mevcut.',
   })
 }
 
@@ -83,16 +83,16 @@ async function findOrganization(supabase: ReturnType<typeof createServiceClient>
 async function loadRoles(supabase: ReturnType<typeof createServiceClient>, kind: 'person' | 'organization', id: string) {
   const roleQueries = kind === 'person'
     ? [
-        { label: 'Çalışan', query: supabase.from('employees').select('id').eq('person_id', id).limit(1) },
+        { label: 'Ã‡alÄ±ÅŸan', query: supabase.from('employees').select('id').eq('person_id', id).limit(1) },
         { label: 'Ortak', query: supabase.from('company_partners').select('id').eq('person_id', id).limit(1) },
         { label: 'Temsilci', query: supabase.from('company_representatives').select('id').eq('person_id', id).limit(1) },
-        { label: 'Paydaş', query: supabase.from('stakeholders').select('id').eq('person_id', id).limit(1) },
+        { label: 'PaydaÅŸ', query: supabase.from('stakeholders').select('id').eq('person_id', id).limit(1) },
       ]
     : [
-        { label: 'Şirket', query: supabase.from('companies').select('id').eq('organization_id', id).limit(1) },
+        { label: 'Åirket', query: supabase.from('companies').select('id').eq('organization_id', id).limit(1) },
         { label: 'Ortak', query: supabase.from('company_partners').select('id').eq('organization_id', id).limit(1) },
         { label: 'Temsilci', query: supabase.from('company_representatives').select('id').eq('organization_id', id).limit(1) },
-        { label: 'Paydaş', query: supabase.from('stakeholders').select('id').eq('organization_id', id).limit(1) },
+        { label: 'PaydaÅŸ', query: supabase.from('stakeholders').select('id').eq('organization_id', id).limit(1) },
       ]
 
   const results = await Promise.all(

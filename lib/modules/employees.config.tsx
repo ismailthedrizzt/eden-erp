@@ -425,14 +425,14 @@ export const personelModuleConfig: ModuleConfig<PersonelTableRow> = {
       },
       {
         key: 'calisma',
-        label: 'Ä°ÅŸ',
+        label: 'Çalışma Rejimi',
         icon: <Briefcase size={16} />,
         source: {
           type: 'fields',
           fields: [
             {
               key: 'work_regime_summary',
-              label: 'Ã‡alÄ±ÅŸma Rejimi Ã–zeti',
+              label: 'Çalışma Rejimi Özeti',
               type: 'custom',
               colSpan: 3,
               render: ({ data }) => <EmployeeWorkRegimeSummary data={data} />

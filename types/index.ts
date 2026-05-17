@@ -112,6 +112,7 @@ export interface Personel {
   emergency_contact_phone?: string
   // Ä°ÅŸ
   sgk_entry_date?: string
+  entry_date?: string
   exit_date?: string
   sgk_entry_method?: 'servis' | 'web'
   sgk_entry_reference_no?: string
@@ -139,6 +140,12 @@ export interface Personel {
   sgk_exit_current_earned_wage?: string
   work_status: PersonelDurum
   work_type?: string
+  record_status?: 'draft' | 'active' | 'passive'
+  employment_status?: string
+  employment_type?: string
+  duration_type?: string
+  sgk_responsibility?: string
+  work_arrangement?: string
   employment_contract_type?: string
   marital_status?: MedeniDurum
   company_id?: string

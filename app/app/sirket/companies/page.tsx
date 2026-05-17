@@ -1,9 +1,10 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { BriefcaseBusiness, Building2, FileText, Landmark, Phone, Settings, Users } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { Archive, BriefcaseBusiness, Building2, CheckCircle2, CircleDot, FileText, History, Landmark, Phone, PlayCircle, Settings, ShieldAlert, Users } from 'lucide-react'
 import { useSirketler } from '@/hooks/useSirketler'
 import { EntityForm, FormField, FormMode, FormTab } from '@/components/ui/EntityForm'
+import { CompanyLifecycleWizard, type CompanyLifecycleWizardType } from '@/components/ui/CompanyLifecycleWizard'
 import { PageBanner } from '@/components/ui/PageBanner'
 import { SmartDataTable, ColumnDef, SortConfig, WidgetDef } from '@/components/ui/SmartDataTable'
 import { Toast } from '@/components/ui/Toast'
@@ -11,7 +12,6 @@ import type { AnyDashboardWidgetConfig } from '@/components/dashboard/dashboard.
 import { CompanyNaceCodesSection } from '@/components/modules/sirket/CompanyPublicTab'
 import { formatPhoneInput, normalizeEmailInput } from '@/lib/utils'
 import { createFormModeState, mapPageStateToFormMode } from '@/lib/forms/formModeEngine'
-import { isSoftDeletedRecord } from '@/lib/forms/entityState'
 import { createProgressiveFormLoadStages } from '@/lib/forms/progressiveFormLoading'
 import { invalidateEntityDetailCache, readEntityDetailCache, writeEntityDetailCache } from '@/lib/forms/entityDetailCache'
 import { createLegalEntityMasterTabs } from '@/lib/identity/legalEntityFormSections'
@@ -19,12 +19,12 @@ import { useModules } from '@/lib/security/moduleStore'
 import { usePermissions } from '@/lib/security/permissionStore'
 import { PERMISSIONS } from '@/packages/shared/src'
 import { companyService } from '@/lib/services/companyService'
-import type { Sirket } from '@/types/sirket'
+import type { CompanyLifecycleStatus, Sirket } from '@/types/sirket'
 
 type PageState = 'list' | 'create' | 'view' | 'edit'
 type ToastState = { type: 'success' | 'error' | 'warning'; title?: string; message: string }
 type SaveError = Error & { toast?: ToastState; fieldErrors?: Record<string, string> }
-type SirketTableRow = Sirket & { adres_ozet: string; logo_url: string }
+type SirketTableRow = Sirket & { adres_ozet: string; logo_url: string; lifecycle_status: CompanyLifecycleStatus }
 type TaxOfficeOption = { value: string; label: string }
 type DetailSectionState = {
   heroLoading: boolean
@@ -112,7 +112,7 @@ const columns: ColumnDef[] = [
   { key: 'adres_ozet', label: 'Adres', type: 'text', width: 250, category: 'İletişim' },
   { key: 'phone', label: 'Telefon', type: 'text', width: 150, category: 'İletişim' },
   { key: 'email', label: 'E-posta', type: 'text', width: 200, category: 'İletişim' },
-  { key: 'is_deleted', label: 'Durum', type: 'enum', width: 110, sortable: true, category: 'Durum', render: (value) => value ? 'Pasif' : 'Aktif' },
+  { key: 'lifecycle_status', label: 'Durum', type: 'enum', width: 160, sortable: true, category: 'Durum', render: (_value, row) => <LifecycleStatusBadge status={getCompanyLifecycleStatus(row)} /> },
   { key: 'mersis_number', label: FIELD_LABELS.mersis_number, type: 'text', width: 150, sortable: true, category: 'Tescil', required: false, visible: false },
   { key: 'trade_registry_number', label: FIELD_LABELS.trade_registry_number, type: 'text', width: 150, sortable: true, category: 'Tescil', required: false, visible: false },
   { key: 'foundation_date', label: FIELD_LABELS.foundation_date, type: 'date', width: 130, sortable: true, category: 'Tescil', required: false, visible: false },
@@ -293,6 +293,7 @@ export default function SirketlerPage() {
   const [taxOfficeOptions, setTaxOfficeOptions] = useState<TaxOfficeOption[]>([])
   const [tradeRegistryOfficeOptions, setTradeRegistryOfficeOptions] = useState<TaxOfficeOption[]>([])
   const [publicReferenceOptionsLoaded, setPublicReferenceOptionsLoaded] = useState(false)
+  const [lifecycleWizard, setLifecycleWizard] = useState<CompanyLifecycleWizardType | null>(null)
   const detailRequestRef = useRef(0)
 
   useEffect(() => {
@@ -332,11 +333,34 @@ export default function SirketlerPage() {
     }
   }, [pageState, publicReferenceOptionsLoaded])
 
-  const configuredHeroFields = heroFields.map(field =>
-    field.name === 'tax_office' && taxOfficeOptions.length > 0
-      ? { ...field, options: taxOfficeOptions }
-      : field
-  )
+  const configuredHeroFields = [
+    {
+      name: 'lifecycle_status_badge',
+      label: 'Durum',
+      type: 'custom',
+      render: () => <LifecycleStatusBadge status={pageState === 'create' ? 'draft' : getCompanyLifecycleStatus(selectedSirket)} />,
+    } as FormField,
+    ...heroFields.map(field =>
+      field.name === 'tax_office' && taxOfficeOptions.length > 0
+        ? { ...field, options: taxOfficeOptions }
+        : field
+    ),
+  ]
+
+  const lifecycleTab: FormTab = {
+    id: 'lifecycle',
+    label: 'Yaşam Döngüsü',
+    icon: <CircleDot size={16} />,
+    fields: [
+      {
+        name: 'company_lifecycle_summary',
+        label: 'Yaşam Döngüsü',
+        type: 'custom',
+        colSpan: 3,
+        render: () => <CompanyLifecycleSummary data={selectedSirket} />,
+      },
+    ],
+  }
 
   const configuredTabs = [
     ...createLegalEntityMasterTabs({
@@ -348,7 +372,8 @@ export default function SirketlerPage() {
       emailField: 'email',
       websiteField: 'website',
     }),
-    ...tabs.filter(tab => tab.id !== 'iletisim'),
+    ...(pageState !== 'create' ? [lifecycleTab] : []),
+    ...tabs.filter(tab => tab.id !== 'iletisim' && tab.id !== 'tescil'),
   ].map(tab => ({
     ...tab,
     fields: tab.fields.map(field =>
@@ -361,14 +386,49 @@ export default function SirketlerPage() {
   const tableData: SirketTableRow[] = useMemo(() => (companies || []).map(sirket => ({
     ...sirket,
     is_deleted: !!sirket.is_deleted,
+    lifecycle_status: getCompanyLifecycleStatus(sirket),
     adres_ozet: [sirket.district, sirket.city].filter(Boolean).join(', '),
     logo_url: extractLogoUrl((sirket as any).hero_images),
   })), [companies])
 
+  const handleListLifecycleAction = (row: SirketTableRow, type: CompanyLifecycleWizardType) => {
+    setFormError(null)
+    setFieldErrors({})
+    setDetailSections(emptyDetailSectionState)
+    setSelectedSirket(normalizeCompanyForForm(row as Sirket))
+    setPageState('view')
+    setLifecycleWizard(type)
+  }
+
+  const configuredColumns: ColumnDef[] = useMemo(() => [
+    ...columns,
+    {
+      key: 'lifecycle_actions',
+      label: 'İşlem',
+      type: 'actions',
+      width: 220,
+      fixedWidth: true,
+      hideable: false,
+      category: 'İşlem',
+      render: (_value, row: SirketTableRow) => (
+        <CompanyListLifecycleActions
+          row={row}
+          canOpen={can(PERMISSIONS.companies.openingStart)}
+          canLiquidate={can(PERMISSIONS.companies.liquidationStart)}
+          canUpdateLiquidation={can(PERMISSIONS.companies.liquidationUpdate)}
+          canDeregister={can(PERMISSIONS.companies.deregistrationStart)}
+          onAction={handleListLifecycleAction}
+        />
+      ),
+    },
+  ], [can])
+
   const widgets: WidgetDef<SirketTableRow>[] = useMemo(() => [
     { key: 'total', label: 'Toplam Şirket', render: () => tableData.length },
-    { key: 'active', label: 'Aktif', render: () => tableData.filter(row => !isSoftDeletedRecord(row)).length },
-    { key: 'passive', label: 'Pasif', render: () => tableData.filter(row => isSoftDeletedRecord(row)).length },
+    { key: 'draft', label: 'Taslak', render: () => tableData.filter(row => getCompanyLifecycleStatus(row) === 'draft').length },
+    { key: 'active', label: 'Aktif', render: () => tableData.filter(row => getCompanyLifecycleStatus(row) === 'active').length },
+    { key: 'liquidation', label: 'Tasfiye', render: () => tableData.filter(row => getCompanyLifecycleStatus(row) === 'liquidation').length },
+    { key: 'closed', label: 'Kapanmış', render: () => tableData.filter(row => getCompanyLifecycleStatus(row) === 'deregistered').length },
   ], [tableData])
 
   const moduleEnabled = isEnabled('companies')
@@ -379,12 +439,13 @@ export default function SirketlerPage() {
     canEdit: moduleWritable && can(PERMISSIONS.companies.edit),
     canApprove: moduleWritable && can(PERMISSIONS.companies.approve),
   })
-  const isSelectedPassive = isSoftDeletedRecord(selectedSirket)
+  const selectedLifecycleStatus = getCompanyLifecycleStatus(selectedSirket)
+  const isSelectedLiquidation = selectedLifecycleStatus === 'liquidation'
+  const isSelectedDeregistered = selectedLifecycleStatus === 'deregistered'
+  const canEditSelectedProfile = !isSelectedLiquidation && !isSelectedDeregistered
   const formMode: FormMode = pageState === 'create'
     ? 'create'
-    : isSelectedPassive
-      ? 'passive'
-      : pageState === 'edit' && formAccess.canSave
+    : pageState === 'edit' && formAccess.canSave && canEditSelectedProfile
         ? 'edit'
         : 'view'
   const formLoadStages = createProgressiveFormLoadStages({
@@ -504,6 +565,7 @@ export default function SirketlerPage() {
   const handleBackToList = () => {
     setPageState('list')
     setSelectedSirket(null)
+    setLifecycleWizard(null)
     setFormError(null)
     setFieldErrors({})
     setDetailSections(emptyDetailSectionState)
@@ -513,7 +575,7 @@ export default function SirketlerPage() {
     const payload: Record<string, any> = {}
 
     Object.entries(raw).forEach(([key, value]) => {
-      if (['partners', 'representatives', 'stakeholders', 'documents', 'logos'].includes(key)) return
+      if (['partners', 'representatives', 'stakeholders', 'documents', 'logos', 'lifecycle_status_badge', 'company_lifecycle_summary', 'record_status', 'company_status', 'opening_details', 'liquidation_details', 'deregistration_details', 'lifecycle_events', 'lifecycle_last_event'].includes(key)) return
       if (value === '' || value === null || value === undefined) return
       if (pageState !== 'create' && ['hero_documents', 'hero_images'].includes(key) && selectedSirket) {
         if (JSON.stringify(value) === JSON.stringify((selectedSirket as any)[key] || [])) return
@@ -529,7 +591,7 @@ export default function SirketlerPage() {
       payload.electronic_notification_address = digits.replace(/(\d{5})(?=\d)/g, '$1-')
     }
     if (payload.fiscal_year_start) payload.fiscal_year_start = Number(payload.fiscal_year_start)
-    payload.is_deleted = payload.is_deleted ?? false
+    if (pageState === 'create') payload.is_deleted = false
     if (pageState === 'create') {
       payload.country = payload.country || 'Türkiye'
       payload.default_currency = payload.default_currency || 'TRY'
@@ -634,6 +696,82 @@ export default function SirketlerPage() {
     } finally {
       setDeleting(false)
     }
+  }
+
+  const handleLifecycleComplete = async (companyUpdate?: Partial<Sirket>) => {
+    const nextCompany = normalizeCompanyForForm({
+      ...(selectedSirket || {}),
+      ...(companyUpdate || {}),
+    } as Sirket)
+    if (selectedSirket?.id) invalidateEntityDetailCache(COMPANY_DETAIL_CACHE_NAMESPACE, selectedSirket.id)
+    setSelectedSirket(nextCompany)
+    setLifecycleWizard(null)
+    setPageState('view')
+    await yenile()
+    const status = getCompanyLifecycleStatus(nextCompany)
+    setToast({
+      type: 'success',
+      title: 'Yaşam Döngüsü Güncellendi',
+      message: `Şirket durumu ${getCompanyLifecycleLabel(status)} olarak güncellendi`,
+    })
+  }
+
+  const openLifecycleWizard = (type: CompanyLifecycleWizardType) => {
+    if (!selectedSirket?.id) return
+    setLifecycleWizard(type)
+  }
+
+  const renderLifecycleActions = () => {
+    if (!selectedSirket?.id || pageState === 'create') return null
+    const status = getCompanyLifecycleStatus(selectedSirket)
+    const actions: Array<{ key: string; label: string; icon: ReactNode; onClick: () => void; visible: boolean }> = [
+      {
+        key: 'opening',
+        label: 'Şirket Açılışı Yap',
+        icon: <PlayCircle size={16} />,
+        onClick: () => openLifecycleWizard('opening'),
+        visible: status === 'draft' && can(PERMISSIONS.companies.openingStart),
+      },
+      {
+        key: 'liquidation',
+        label: status === 'liquidation' ? 'Tasfiye Bilgilerini Güncelle' : 'Tasfiye Başlat',
+        icon: <ShieldAlert size={16} />,
+        onClick: () => openLifecycleWizard('liquidation'),
+        visible: (status === 'active' && can(PERMISSIONS.companies.liquidationStart))
+          || (status === 'liquidation' && can(PERMISSIONS.companies.liquidationUpdate)),
+      },
+      {
+        key: 'deregistration',
+        label: 'Terkin Yap',
+        icon: <Archive size={16} />,
+        onClick: () => openLifecycleWizard('deregistration'),
+        visible: status === 'liquidation' && can(PERMISSIONS.companies.deregistrationStart),
+      },
+      {
+        key: 'history',
+        label: 'Geçmiş',
+        icon: <History size={16} />,
+        onClick: () => setToast({ type: 'success', title: 'Geçmiş', message: 'Yaşam döngüsü geçmişi özet kartında görüntüleniyor.' }),
+        visible: status === 'deregistered' && can(PERMISSIONS.companies.lifecycleView),
+      },
+    ]
+    const visibleActions = actions.filter(action => action.visible)
+    if (!visibleActions.length) return null
+    return (
+      <div className="flex flex-wrap items-center gap-2">
+        {visibleActions.map(action => (
+          <button
+            key={action.key}
+            type="button"
+            onClick={action.onClick}
+            className="inline-flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-medium text-blue-700 hover:bg-blue-100 dark:border-blue-900/60 dark:bg-blue-950/30 dark:text-blue-200 dark:hover:bg-blue-950/50"
+          >
+            {action.icon}
+            {action.label}
+          </button>
+        ))}
+      </div>
+    )
   }
 
   const createSaveError = async (response: Response, fallback: string): Promise<SaveError> => {
@@ -742,7 +880,7 @@ export default function SirketlerPage() {
           )}
 
           <SmartDataTable<SirketTableRow>
-            columns={columns}
+            columns={configuredColumns}
             data={tableData}
             loading={loading}
             onRowClick={handleRowClick}
@@ -864,8 +1002,6 @@ export default function SirketlerPage() {
             externalFieldErrors={fieldErrors}
             onSave={handleSave}
             onCancel={handleBackToList}
-            onDelete={handleDelete}
-            onActivate={handleActivate}
             onModeChange={(mode) => setPageState(mode === 'edit' && !formAccess.showEdit ? 'view' : mode)}
             onIdentityGateOpenExistingRole={async (roleRecord) => {
               await handleRowClick(roleRecord as SirketTableRow)
@@ -873,7 +1009,8 @@ export default function SirketlerPage() {
             }}
             onIdentityGateCancelDuplicate={handleBackToList}
             canCreate={formAccess.showAdd}
-            canEdit={formAccess.showEdit}
+            canEdit={formAccess.showEdit && canEditSelectedProfile}
+            additionalActions={renderLifecycleActions()}
             enableHistory
             showHeroHeader={false}
             showMasterSummaryBadge={false}
@@ -891,11 +1028,9 @@ export default function SirketlerPage() {
             documentSlot={{
               dataField: 'hero_documents',
               slots: [
-                { id: 'vergi_levhasi', title: 'Vergi Levhası', required: true },
-                { id: 'ticaret_sicil', title: 'Ticaret Sicil Gazetesi', required: true },
-                { id: 'sicil_tasdiknamesi', title: 'Sicil Tasdiknamesi', required: false },
-                { id: 'imza_sirkuleri', title: 'İmza Sirküleri', required: true },
-                { id: 'faaliyet_belgesi', title: 'Faaliyet Belgesi', required: false },
+                { id: 'general_company_document', title: 'Genel Şirket Belgesi', required: false },
+                { id: 'brand_document', title: 'Marka / Kurumsal Belge', required: false },
+                { id: 'other_profile_document', title: 'Diğer Profil Belgesi', required: false },
               ],
               acceptedTypes: ['application/pdf', 'image/png', 'image/jpeg', 'image/webp'],
               maxSizeMB: 20,
@@ -907,6 +1042,15 @@ export default function SirketlerPage() {
             })}
           />
         </div>
+      )}
+
+      {lifecycleWizard && selectedSirket && (
+        <CompanyLifecycleWizard
+          type={lifecycleWizard}
+          company={selectedSirket}
+          onClose={() => setLifecycleWizard(null)}
+          onComplete={handleLifecycleComplete}
+        />
       )}
     </div>
   )
@@ -931,6 +1075,206 @@ function extractLogoUrl(images: unknown) {
     || rows.find((image: any) => image?.slotId === 'original_logo' || image?.slot_id === 'original_logo' || image?.slotId === 'logo_primary' || image?.slot_id === 'logo_primary')
     || rows[0]
   return preferred?.url || preferred?.previewUrl || preferred?.preview_url || ''
+}
+
+function getCompanyLifecycleStatus(company?: Partial<Sirket> | null): CompanyLifecycleStatus {
+  const raw = company?.record_status || company?.company_status || (company?.is_deleted ? 'deregistered' : 'active')
+  if (raw === 'draft' || raw === 'active' || raw === 'liquidation' || raw === 'deregistered') return raw
+  return 'draft'
+}
+
+function getCompanyLifecycleLabel(status: CompanyLifecycleStatus) {
+  if (status === 'draft') return 'Taslak'
+  if (status === 'active') return 'Aktif'
+  if (status === 'liquidation') return 'Tasfiye Halinde'
+  return 'Terkin Edildi / Kapanmış'
+}
+
+function getCompanyLifecycleBadgeClass(status: CompanyLifecycleStatus) {
+  if (status === 'draft') return 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/70 dark:bg-amber-950/30 dark:text-amber-200'
+  if (status === 'active') return 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/70 dark:bg-emerald-950/30 dark:text-emerald-200'
+  if (status === 'liquidation') return 'border-orange-200 bg-orange-50 text-orange-700 dark:border-orange-900/70 dark:bg-orange-950/30 dark:text-orange-200'
+  return 'border-gray-300 bg-gray-100 text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200'
+}
+
+function LifecycleStatusBadge({ status }: { status: CompanyLifecycleStatus }) {
+  return (
+    <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold ${getCompanyLifecycleBadgeClass(status)}`}>
+      <CircleDot size={12} />
+      Durum: {getCompanyLifecycleLabel(status)}
+    </span>
+  )
+}
+
+function CompanyListLifecycleActions({
+  row,
+  canOpen,
+  canLiquidate,
+  canUpdateLiquidation,
+  canDeregister,
+  onAction,
+}: {
+  row: SirketTableRow
+  canOpen: boolean
+  canLiquidate: boolean
+  canUpdateLiquidation: boolean
+  canDeregister: boolean
+  onAction: (row: SirketTableRow, type: CompanyLifecycleWizardType) => void
+}) {
+  const status = getCompanyLifecycleStatus(row)
+  const actionClass = 'inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs font-semibold transition-colors'
+  const primaryClass = `${actionClass} border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 dark:border-blue-900/60 dark:bg-blue-950/30 dark:text-blue-200`
+  const warningClass = `${actionClass} border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100 dark:border-orange-900/60 dark:bg-orange-950/30 dark:text-orange-200`
+  const closedClass = `${actionClass} border-gray-200 bg-gray-50 text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400`
+
+  if (status === 'draft') {
+    return canOpen ? (
+      <button type="button" className={primaryClass} onClick={() => onAction(row, 'opening')}>
+        <PlayCircle size={14} />
+        Şirket Açılışı
+      </button>
+    ) : <span className={closedClass}>Yetki yok</span>
+  }
+
+  if (status === 'active') {
+    return canLiquidate ? (
+      <button type="button" className={warningClass} onClick={() => onAction(row, 'liquidation')}>
+        <ShieldAlert size={14} />
+        Tasfiye
+      </button>
+    ) : <span className={closedClass}>Aktif</span>
+  }
+
+  if (status === 'liquidation') {
+    return (
+      <div className="flex flex-wrap items-center justify-center gap-1.5">
+        {canUpdateLiquidation && (
+          <button type="button" className={warningClass} onClick={() => onAction(row, 'liquidation')}>
+            <ShieldAlert size={14} />
+            Güncelle
+          </button>
+        )}
+        {canDeregister && (
+          <button type="button" className={primaryClass} onClick={() => onAction(row, 'deregistration')}>
+            <Archive size={14} />
+            Terkin
+          </button>
+        )}
+      </div>
+    )
+  }
+
+  return (
+    <span className={closedClass}>
+      <History size={14} />
+      Kapanmış
+    </span>
+  )
+}
+
+function CompanyLifecycleSummary({ data }: { data?: Sirket | null }) {
+  const status = getCompanyLifecycleStatus(data)
+  const opening = (data as any)?.opening_details || {}
+  const liquidation = (data as any)?.liquidation_details || {}
+  const deregistration = (data as any)?.deregistration_details || {}
+  const events = Array.isArray((data as any)?.lifecycle_events) ? (data as any).lifecycle_events : []
+  const lastEvent = (data as any)?.lifecycle_last_event || events[0]
+
+  return (
+    <div className="col-span-2 space-y-4 lg:col-span-3">
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+        <LifecycleSummaryCard
+          icon={<CircleDot size={16} />}
+          title="Yaşam Döngüsü Durumu"
+          rows={[
+            ['Durum', getCompanyLifecycleLabel(status)],
+            ['Son Güncelleme', formatLifecycleDate(data?.updated_at)],
+          ]}
+        />
+        <LifecycleSummaryCard
+          icon={<CheckCircle2 size={16} />}
+          title="Açılış Bilgileri"
+          rows={[
+            ['Kuruluş', formatLifecycleDate(opening.foundation_date || data?.foundation_date)],
+            ['Tescil', formatLifecycleDate(opening.registration_date)],
+            ['Sicil', opening.trade_registry_no || data?.trade_registry_number || '-'],
+          ]}
+        />
+        <LifecycleSummaryCard
+          icon={<ShieldAlert size={16} />}
+          title="Tasfiye Bilgileri"
+          rows={[
+            ['Karar', formatLifecycleDate(liquidation.liquidation_decision_date)],
+            ['Başlangıç', formatLifecycleDate(liquidation.liquidation_start_date)],
+            ['Memur', liquidation.liquidator_display_name || '-'],
+          ]}
+        />
+        <LifecycleSummaryCard
+          icon={<Archive size={16} />}
+          title="Terkin Bilgileri"
+          rows={[
+            ['Başvuru', formatLifecycleDate(deregistration.deregistration_application_date)],
+            ['Tescil', formatLifecycleDate(deregistration.deregistration_registration_date)],
+            ['Referans', deregistration.deregistration_reference_no || '-'],
+          ]}
+        />
+        <LifecycleSummaryCard
+          icon={<FileText size={16} />}
+          title="Son Yaşam Döngüsü Olayı"
+          rows={[
+            ['Olay', formatLifecycleEvent(lastEvent?.event_type)],
+            ['Tarih', formatLifecycleDate(lastEvent?.event_date || lastEvent?.created_at)],
+            ['Yeni Durum', lastEvent?.new_status ? getCompanyLifecycleLabel(getCompanyLifecycleStatus({ record_status: lastEvent.new_status as CompanyLifecycleStatus })) : '-'],
+          ]}
+        />
+      </div>
+      <div className="rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-800 dark:border-blue-900/50 dark:bg-blue-950/30 dark:text-blue-200">
+        Açılış, tasfiye ve terkin bilgileri doğrudan form alanı değildir; ilgili wizard kayıtlarından read-only özet olarak gösterilir.
+      </div>
+    </div>
+  )
+}
+
+function LifecycleSummaryCard({ icon, title, rows }: { icon: ReactNode; title: string; rows: Array<[string, any]> }) {
+  return (
+    <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-950">
+      <div className="flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-white">
+        {icon}
+        {title}
+      </div>
+      <dl className="mt-3 space-y-2 text-sm">
+        {rows.map(([label, value]) => (
+          <div key={label} className="flex items-start justify-between gap-3">
+            <dt className="text-gray-500 dark:text-gray-400">{label}</dt>
+            <dd className="text-right font-medium text-gray-900 dark:text-gray-100">{value || '-'}</dd>
+          </div>
+        ))}
+      </dl>
+    </div>
+  )
+}
+
+function formatLifecycleDate(value: unknown) {
+  if (!value) return '-'
+  const date = new Date(String(value))
+  if (Number.isNaN(date.getTime())) return String(value)
+  return date.toLocaleDateString('tr-TR')
+}
+
+function formatLifecycleEvent(value: unknown) {
+  const event = String(value || '')
+  if (!event) return '-'
+  const labels: Record<string, string> = {
+    company_created_as_draft: 'Şirket taslak olarak oluşturuldu',
+    company_opening_started: 'Şirket açılışı başlatıldı',
+    company_opening_completed: 'Şirket açılışı tamamlandı',
+    company_liquidation_started: 'Tasfiye başlatıldı',
+    company_liquidation_updated: 'Tasfiye bilgileri güncellendi',
+    company_deregistration_started: 'Terkin başlatıldı',
+    company_deregistered: 'Terkin tamamlandı',
+    status_changed: 'Durum değişti',
+  }
+  return labels[event] || event
 }
 
 function RelatedSummaryTable({ type, rows }: { type: 'partners' | 'representatives' | 'stakeholders'; rows: any[] }) {

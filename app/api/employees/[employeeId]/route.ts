@@ -211,6 +211,7 @@ const optionalEmployeeDetailColumns = [
   'employee_no',
   'employment_status',
   'record_status',
+  'entry_date',
   'start_date',
   'work_type',
   'employment_contract_type',

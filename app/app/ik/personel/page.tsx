@@ -34,6 +34,7 @@ import { createProgressiveFormLoadStages } from '@/lib/forms/progressiveFormLoad
 import { invalidateEntityDetailCache, readEntityDetailCache, writeEntityDetailCache } from '@/lib/forms/entityDetailCache'
 import { employeeService } from '@/lib/services/employeeService'
 import { projectGlossary } from '@/lib/projectGlossary'
+import { usePermissions } from '@/lib/security/permissionStore'
 import type { Personel } from '@/types'
 
 // Page state type following ERP pattern
@@ -136,6 +137,7 @@ export default function PersonelYonetimPage() {
   const moduleConfig = personelModuleConfig
   const apiBasePath = moduleConfig.entity.apiBasePath || '/api/employees'
   const lifecycleMessages = moduleConfig.form.lifecycle?.messages
+  const permissions = usePermissions()
   
   // Page state
   const [pageState, setPageState] = useState<PageState>('list')
@@ -537,6 +539,8 @@ export default function PersonelYonetimPage() {
       render: (_value: unknown, row: PersonelTableRow) => (
         <EmployeeRowActions
           row={row}
+          canEntry={permissions.can('employees.entry.start')}
+          canExit={permissions.can('employees.exit.start')}
           onEntry={() => openLifecycleWizardFromRow(row, 'entry')}
           onExit={() => openLifecycleWizardFromRow(row, 'exit')}
         />
@@ -547,14 +551,14 @@ export default function PersonelYonetimPage() {
   const renderLifecycleActions = () => {
     if (!selectedPersonel || pageState === 'create') return null
     const status = getEmployeeRecordStatus(selectedPersonel)
-    if (status === 'draft' || status === 'passive') {
+    if (status === 'draft' && permissions.can('employees.entry.start')) {
       return (
         <button type="button" onClick={() => setLifecycleWizard('entry')} className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700">
-          {status === 'passive' ? 'Yeniden İşe Al' : 'İşe Giriş Yap'}
+          İşe Giriş Yap
         </button>
       )
     }
-    if (status === 'active') {
+    if (status === 'active' && permissions.can('employees.exit.start')) {
       return (
         <button type="button" onClick={() => setLifecycleWizard('exit')} className="rounded-lg border border-red-200 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50 dark:border-red-900/60 dark:text-red-300 dark:hover:bg-red-950/30">
           İşten Çıkış Yap
@@ -872,10 +876,10 @@ function applyDashboardFilter(rows: PersonelTableRow[], event: DashboardFilterEv
   }))
 }
 
-function EmployeeRowActions({ row, onEntry, onExit }: { row: PersonelTableRow; onEntry: () => void; onExit: () => void }) {
+function EmployeeRowActions({ row, canEntry, canExit, onEntry, onExit }: { row: PersonelTableRow; canEntry: boolean; canExit: boolean; onEntry: () => void; onExit: () => void }) {
   const status = getEmployeeRecordStatus(row)
 
-  if (status === 'draft') {
+  if (status === 'draft' && canEntry) {
     return (
       <button
         type="button"
@@ -892,7 +896,7 @@ function EmployeeRowActions({ row, onEntry, onExit }: { row: PersonelTableRow; o
     )
   }
 
-  if (status === 'active') {
+  if (status === 'active' && canExit) {
     return (
       <button
         type="button"
@@ -913,7 +917,10 @@ function EmployeeRowActions({ row, onEntry, onExit }: { row: PersonelTableRow; o
 }
 
 function getEmployeeRecordStatus(employee: Record<string, any>) {
-  return employee.record_status || (employee.sgk_entry_date || employee.work_status === 'active' ? 'active' : 'draft')
+  if (employee.record_status) return employee.record_status
+  if (employee.employment_status === 'terminated' || employee.work_status === 'terminated' || employee.is_deleted) return 'passive'
+  if (employee.employment_status === 'active' || employee.work_status === 'active' || employee.entry_date || employee.sgk_entry_date) return 'active'
+  return 'draft'
 }
 
 function getAgeGroup(value?: string | null) {
