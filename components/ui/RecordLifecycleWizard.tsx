@@ -303,7 +303,7 @@ function RecordLifecycleWizardFieldView({
   onFieldChange?: (field: string, value: any, previous: Record<string, any>) => Record<string, any>
 }) {
   const value = form[field.name] ?? ''
-  const disabled = !!field.disabled || matchesWizardCondition(field.disabledWhen, form)
+  const disabled = !!field.disabled || (!!field.disabledWhen && matchesWizardCondition(field.disabledWhen, form))
   const required = isWizardFieldRequired(field, form, allFields)
   const validationState = getWizardFieldValidationState(field, form, allFields)
   const fieldControlState = disabled ? 'neutral' : validationState.status
@@ -635,7 +635,8 @@ function isWizardStepComplete(step: RecordLifecycleWizardStep | undefined, form:
   if (!step) return false
   const fields = collectWizardFields([step])
   return fields.every(field => {
-    if (field.disabled || !matchesWizardCondition(field.visibleWhen, form)) return true
+    const disabled = !!field.disabled || (!!field.disabledWhen && matchesWizardCondition(field.disabledWhen, form))
+    if (disabled || !matchesWizardCondition(field.visibleWhen, form)) return true
     if (!isWizardFieldRequired(field, form, fields)) return true
     return hasWizardValue(form[field.name])
   })
