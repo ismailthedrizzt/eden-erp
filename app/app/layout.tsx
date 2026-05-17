@@ -11,20 +11,20 @@ import { ModuleProvider } from '@/lib/security/moduleStore'
 
 const BREADCRUMBS: Record<string, string> = {
   '/app': 'Ana Sayfa',
-  '/app/ik': 'Ýnsan Kaynaklarý',
-  '/app/ik/teskilat': 'Ýnsan Kaynaklarý › Teþkilat & Kadro',
-  '/app/ik/employees': 'Ýnsan Kaynaklarý › Çalýþanlarýmýz',
-  '/app/ik/employees/ekle': 'Ýnsan Kaynaklarý › Çalýþanlarýmýz › Çalýþan Ekle',
+  '/app/ik': 'Ä°nsan KaynaklarÄ±',
+  '/app/ik/teskilat': 'Ä°nsan KaynaklarÄ± â€º TeÅŸkilat & Kadro',
+  '/app/ik/employees': 'Ä°nsan KaynaklarÄ± â€º Ã‡alÄ±ÅŸanlarÄ±mÄ±z',
+  '/app/ik/employees/ekle': 'Ä°nsan KaynaklarÄ± â€º Ã‡alÄ±ÅŸanlarÄ±mÄ±z â€º Ã‡alÄ±ÅŸan Ekle',
   '/app/muhasebe': 'Muhasebe',
-  '/app/muhasebe/cari-kartlar': 'Muhasebe › Cari Kartlar',
-  '/app/muhasebe/on-muhasebe-hareketleri': 'Muhasebe › Ön Muhasebe Hareketleri',
-  '/app/muhasebe/dashboard': 'Muhasebe › Dashboard',
-  '/app/muhasebe/islemler': 'Muhasebe › Ýþlemler',
-  '/app/muhasebe/borclar': 'Muhasebe › Borç Takip',
-  '/app/muhasebe/projeler': 'Muhasebe › Proje Özeti',
-  '/app/muhasebe/hesaplar': 'Muhasebe › Hesaplar',
-  '/app/sistem/module-licenses': 'Sistem Yönetimi › Modül Lisanslarý',
-  '/app/sistem/system-parameters': 'Sistem Yönetimi › Sistem Parametreleri',
+  '/app/muhasebe/cari-kartlar': 'Muhasebe â€º Cari Kartlar',
+  '/app/muhasebe/on-muhasebe-hareketleri': 'Muhasebe â€º Ã–n Muhasebe Hareketleri',
+  '/app/muhasebe/dashboard': 'Muhasebe â€º Dashboard',
+  '/app/muhasebe/islemler': 'Muhasebe â€º Ä°ÅŸlemler',
+  '/app/muhasebe/borclar': 'Muhasebe â€º BorÃ§ Takip',
+  '/app/muhasebe/projeler': 'Muhasebe â€º Proje Ã–zeti',
+  '/app/muhasebe/hesaplar': 'Muhasebe â€º Hesaplar',
+  '/app/sistem/module-licenses': 'Sistem YÃ¶netimi â€º ModÃ¼l LisanslarÄ±',
+  '/app/sistem/system-parameters': 'Sistem YÃ¶netimi â€º Sistem Parametreleri',
 }
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
@@ -54,7 +54,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   }
 
   const breadcrumb = BREADCRUMBS[pathname] ?? 'Eden ERP'
-  const breadcrumbParts = breadcrumb.includes('›') ? breadcrumb.split('›') : breadcrumb.split('›')
+  const breadcrumbParts = breadcrumb.includes('â€º') ? breadcrumb.split('â€º') : breadcrumb.split('â€º')
 
   return (
     <ModuleLicenseProvider>
@@ -103,7 +103,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 <Menu size={15} />
               </button>
               <div className="text-xs text-gray-400 dark:text-gray-500">
-                Eden ERP ›{' '}
+                Eden ERP â€º{' '}
                 <span className="text-gray-700 dark:text-gray-200 font-medium">
                   {breadcrumbParts.length > 1 ? breadcrumbParts.pop()?.trim() : breadcrumb}
                 </span>
@@ -121,11 +121,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               <div className="flex items-center gap-2.5">
                 <div className="w-7 h-7 rounded-full bg-eden-blue flex items-center justify-center
                                 text-[10px] font-bold text-white">
-                  ÝÝ
+                  Ä°Ä°
                 </div>
                 <div className="min-w-0">
-                  <div className="text-xs font-medium text-gray-700 dark:text-gray-200 truncate">Ýsmail ILGAR</div>
-                  <div className="text-[10px] text-gray-500 dark:text-gray-400">Yönetici</div>
+                  <div className="text-xs font-medium text-gray-700 dark:text-gray-200 truncate">Ä°smail ILGAR</div>
+                  <div className="text-[10px] text-gray-500 dark:text-gray-400">YÃ¶netici</div>
                 </div>
               </div>
             </div>

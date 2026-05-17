@@ -14,7 +14,7 @@
  */
 
 import { useState, useEffect, useMemo, useRef } from 'react'
-import { Users } from 'lucide-react'
+import { LogIn, LogOut, Users } from 'lucide-react'
 import { usePersonel } from '@/hooks/usePersonel'
 import { PageBanner } from '@/components/ui/PageBanner'
 import { SmartDataTable, SortConfig, WidgetDef } from '@/components/ui/SmartDataTable'
@@ -513,6 +513,37 @@ export default function PersonelYonetimPage() {
     })
   }
 
+  const openLifecycleWizardFromRow = (employee: PersonelTableRow, type: 'entry' | 'exit') => {
+    detailRequestRef.current += 1
+    setFormError(null)
+    setSaveFieldErrors({})
+    setDetailLoading(false)
+    setDetailSections(emptyDetailSectionState)
+    setSelectedPersonel(employee as Personel)
+    setLifecycleWizard(type)
+  }
+
+  const listColumns = moduleConfig.list.columns.map(column => {
+    if (column.key !== '__actions') return column
+
+    return {
+      ...column,
+      label: 'İşlem',
+      type: 'text' as const,
+      width: 150,
+      minWidth: 132,
+      maxWidth: 170,
+      fixedWidth: true,
+      render: (_value: unknown, row: PersonelTableRow) => (
+        <EmployeeRowActions
+          row={row}
+          onEntry={() => openLifecycleWizardFromRow(row, 'entry')}
+          onExit={() => openLifecycleWizardFromRow(row, 'exit')}
+        />
+      ),
+    }
+  })
+
   const renderLifecycleActions = () => {
     if (!selectedPersonel || pageState === 'create') return null
     const status = getEmployeeRecordStatus(selectedPersonel)
@@ -714,7 +745,7 @@ export default function PersonelYonetimPage() {
 
           <SmartDataTable<PersonelTableRow>
             data={visibleTableData}
-            columns={moduleConfig.list.columns}
+            columns={listColumns}
             storageKey={moduleConfig.list.storageKey}
             widgets={widgets}
             dashboardWidgets={dashboardWidgets}
@@ -839,6 +870,46 @@ function applyDashboardFilter(rows: PersonelTableRow[], event: DashboardFilterEv
     if (value === null) return !((row as any)[field])
     return String((row as any)[field] || '').toLocaleLowerCase('tr-TR') === String(value || '').toLocaleLowerCase('tr-TR')
   }))
+}
+
+function EmployeeRowActions({ row, onEntry, onExit }: { row: PersonelTableRow; onEntry: () => void; onExit: () => void }) {
+  const status = getEmployeeRecordStatus(row)
+
+  if (status === 'draft') {
+    return (
+      <button
+        type="button"
+        title="İşe Giriş"
+        onClick={(event) => {
+          event.stopPropagation()
+          onEntry()
+        }}
+        className="inline-flex h-8 items-center justify-center gap-1.5 whitespace-nowrap rounded-md bg-emerald-50 px-2.5 text-xs font-medium text-emerald-700 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:hover:bg-emerald-950/70"
+      >
+        <LogIn size={14} />
+        <span>İşe Giriş</span>
+      </button>
+    )
+  }
+
+  if (status === 'active') {
+    return (
+      <button
+        type="button"
+        title="İşten Çıkış"
+        onClick={(event) => {
+          event.stopPropagation()
+          onExit()
+        }}
+        className="inline-flex h-8 items-center justify-center gap-1.5 whitespace-nowrap rounded-md bg-red-50 px-2.5 text-xs font-medium text-red-700 hover:bg-red-100 dark:bg-red-950/40 dark:text-red-300 dark:hover:bg-red-950/70"
+      >
+        <LogOut size={14} />
+        <span>İşten Çıkış</span>
+      </button>
+    )
+  }
+
+  return <span className="text-xs text-gray-400">-</span>
 }
 
 function getEmployeeRecordStatus(employee: Record<string, any>) {
