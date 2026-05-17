@@ -29,7 +29,7 @@ function buildHistory(current: Record<string, any>, updates: Record<string, any>
       old_value: previousValue ?? '',
       new_value: nextValue ?? '',
       changed_at: new Date().toISOString(),
-      changed_by: 'Sistem KullanÄ±cÄ±sÄ±',
+      changed_by: 'Sistem Kullanıcısı',
     })
   })
 
@@ -121,7 +121,7 @@ export async function DELETE(
       status: 'Pasif',
       is_deleted: true,
       deleted_at: new Date().toISOString(),
-      deleted_by: 'Sistem KullanÄ±cÄ±sÄ±',
+      deleted_by: 'Sistem Kullanıcısı',
     })
     .eq('id', id)
 

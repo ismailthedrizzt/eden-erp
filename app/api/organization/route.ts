@@ -53,7 +53,7 @@ export async function DELETE(request: NextRequest) {
   if (entity === 'position') {
     const { error } = await supabase
       .from('positions')
-      .update({ status: 'kapali', is_deleted: true, deleted_at: new Date().toISOString(), deleted_by: 'Sistem KullanÄ±cÄ±sÄ±' })
+      .update({ status: 'kapali', is_deleted: true, deleted_at: new Date().toISOString(), deleted_by: 'Sistem Kullanıcısı' })
       .eq('id', id)
     if (error) return NextResponse.json({ error: error.message, code: error.code || 'POSITION_SOFT_DELETE_FAILED' }, { status: 500 })
     return NextResponse.json({ success: true })
@@ -72,11 +72,11 @@ async function rollbackUnit(supabase: ReturnType<typeof createServiceClient>, un
 
   const targetUnit = (units || []).find((unit: Record<string, any>) => unit.id === unitId)
   if (!targetUnit || targetUnit.is_deleted) {
-    return NextResponse.json({ error: 'Birim bulunamadÄ±', code: 'UNIT_NOT_FOUND' }, { status: 404 })
+    return NextResponse.json({ error: 'Birim bulunamadı', code: 'UNIT_NOT_FOUND' }, { status: 404 })
   }
 
   if (!targetUnit.parent_unit_id && targetUnit.type === 'company') {
-    return NextResponse.json({ error: 'Åirket kÃ¶k birimi geri alÄ±namaz.', code: 'COMPANY_ROOT_UNIT_PROTECTED' }, { status: 400 })
+    return NextResponse.json({ error: 'Şirket kök birimi geri alınamaz.', code: 'COMPANY_ROOT_UNIT_PROTECTED' }, { status: 400 })
   }
 
   const unitIds = collectUnitSubtreeIds(units || [], unitId)
@@ -121,7 +121,7 @@ async function rollbackUnit(supabase: ReturnType<typeof createServiceClient>, un
         employee_id: null,
         is_deleted: true,
         deleted_at: now,
-        deleted_by: 'Sistem KullanÄ±cÄ±sÄ±',
+        deleted_by: 'Sistem Kullanıcısı',
       })
       .in('id', positionIds)
 
@@ -130,7 +130,7 @@ async function rollbackUnit(supabase: ReturnType<typeof createServiceClient>, un
 
   const { error: unitUpdateError } = await supabase
     .from('organization_units')
-    .update({ status: 'Pasif', active: false, is_deleted: true, deleted_at: now, deleted_by: 'Sistem KullanÄ±cÄ±sÄ±' })
+    .update({ status: 'Pasif', active: false, is_deleted: true, deleted_at: now, deleted_by: 'Sistem Kullanıcısı' })
     .in('id', unitIds)
 
   if (unitUpdateError) return NextResponse.json({ error: unitUpdateError.message, code: unitUpdateError.code || 'UNIT_ROLLBACK_FAILED' }, { status: 500 })
@@ -333,20 +333,20 @@ async function attachUnitType(supabase: ReturnType<typeof createServiceClient>, 
 
 function fallbackUnitTypes() {
   const rows = [
-    ['Åirket', 'company', '#0f766e'],
-    ['Genel MÃ¼dÃ¼rlÃ¼k', 'headquarters', '#1d4ed8'],
-    ['DirektÃ¶rlÃ¼k', 'directorate', '#7c3aed'],
-    ['MÃ¼dÃ¼rlÃ¼k', 'management', '#0891b2'],
+    ['Şirket', 'company', '#0f766e'],
+    ['Genel Müdürlük', 'headquarters', '#1d4ed8'],
+    ['Direktörlük', 'directorate', '#7c3aed'],
+    ['Müdürlük', 'management', '#0891b2'],
     ['Departman', 'department', '#2563eb'],
-    ['BÃ¶lÃ¼m', 'division', '#16a34a'],
-    ['TakÄ±m', 'team', '#65a30d'],
-    ['Åube', 'branch', '#ea580c'],
+    ['Bölüm', 'division', '#16a34a'],
+    ['Takım', 'team', '#65a30d'],
+    ['Şube', 'branch', '#ea580c'],
     ['Ofis', 'ofis', '#f59e0b'],
     ['Operasyon', 'operasyon', '#dc2626'],
     ['Proje Ofisi', 'project_office', '#9333ea'],
     ['Komite', 'committee', '#475569'],
     ['Kurul', 'board', '#334155'],
-    ['DiÄŸer', 'other', '#6b7280'],
+    ['Diğer', 'other', '#6b7280'],
   ]
 
   return rows.map(([name, slug, color], index) => ({
@@ -371,7 +371,7 @@ function mapPosition(body: Record<string, any>) {
     norm_count: normCount,
     active_count: activeCount,
     budget_code: body.budget_code || null,
-    work_type: body.work_type || 'Tam ZamanlÄ±',
+    work_type: body.work_type || 'Tam Zamanlı',
     status: body.status === 'Aktif' ? (activeCount > 0 ? 'filled' : 'open') : 'frozen',    budget_amount: body.budget_amount ? Number(body.budget_amount) : null,
     notes: body.notes || null,
     is_deleted: !!body.is_deleted,
@@ -419,7 +419,7 @@ function buildHistory(current: Record<string, any> | null, updates: Record<strin
       old_value: current[field] ?? '',
       new_value: updates[field] ?? '',
       changed_at: new Date().toISOString(),
-      changed_by: 'Sistem KullanÄ±cÄ±sÄ±',
+      changed_by: 'Sistem Kullanıcısı',
     })
   })
   return next
@@ -430,7 +430,7 @@ function slugify(value: string) {
     .toLocaleLowerCase('tr-TR')
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
-    .replace(/Ä±/g, 'i')
+    .replace(/ı/g, 'i')
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-|-$/g, '')
 }

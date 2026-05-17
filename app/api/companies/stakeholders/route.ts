@@ -18,8 +18,8 @@ const StakeholderSchema = z.object({
   email: z.union([z.literal(''), z.string().email()]).optional(),
   country: z.string().optional(),
   city: z.string().optional(),
-  status: z.enum(['Aktif', 'Pasif', 'AskÄ±da', 'Kara Liste', 'Ã‡alÄ±ÅŸma SonlandÄ±']).default('Aktif'),
-  priority_level: z.enum(['DÃ¼ÅŸÃ¼k', 'Orta', 'YÃ¼ksek', 'Kritik']).optional(),
+  status: z.enum(['Aktif', 'Pasif', 'Askıda', 'Kara Liste', 'Çalışma Sonlandı']).default('Aktif'),
+  priority_level: z.enum(['Düşük', 'Orta', 'Yüksek', 'Kritik']).optional(),
   internal_owner_employee_id: z.string().uuid().optional(),
   relationship_start_date: z.string().min(1),
   relationship_end_date: z.string().optional(),
@@ -71,7 +71,7 @@ export async function GET(request: NextRequest) {
   const { data, error } = await query
   if (error) {
     if (error.message.includes("Could not find the table")) {
-      return NextResponse.json({ data: [], warning: 'stakeholders tablosu bulunamadÄ±. Migration uygulanmalÄ±.' })
+      return NextResponse.json({ data: [], warning: 'stakeholders tablosu bulunamadı. Migration uygulanmalı.' })
     }
     return NextResponse.json({ error: error.message, code: error.code || 'FETCH_FAILED' }, { status: 500 })
   }
@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
   const parsed = StakeholderSchema.safeParse(body)
 
   if (!parsed.success) {
-    return NextResponse.json({ error: 'GeÃ§ersiz veri', code: 'VALIDATION_FAILED', details: parsed.error.flatten() }, { status: 400 })
+    return NextResponse.json({ error: 'Geçersiz veri', code: 'VALIDATION_FAILED', details: parsed.error.flatten() }, { status: 400 })
   }
 
   const stakeholder = {
@@ -97,7 +97,7 @@ export async function POST(request: NextRequest) {
   if (!stakeholder.display_name) {
     const field = stakeholder.stakeholder_type === 'organization' ? 'trade_name' : 'first_name'
     return NextResponse.json({
-      error: 'GeÃ§ersiz veri',
+      error: 'Geçersiz veri',
       code: 'VALIDATION_FAILED',
       details: { fieldErrors: { [field]: ['Zorunlu alan'] } },
     }, { status: 400 })
@@ -108,7 +108,7 @@ export async function POST(request: NextRequest) {
     row = await attachStakeholderIdentity(supabase, stakeholder, mapStakeholderForDb(stakeholder))
   } catch (error) {
     return NextResponse.json({
-      error: error instanceof Error ? error.message : 'PaydaÅŸ ana kayda baÄŸlanamadÄ±',
+      error: error instanceof Error ? error.message : 'Paydaş ana kayda bağlanamadı',
       code: 'MASTER_IDENTITY_LINK_FAILED',
     }, { status: 500 })
   }
@@ -200,7 +200,7 @@ async function attachStakeholderIdentity(supabase: ReturnType<typeof createServi
         district: stakeholder.district || null,
         metadata_json: { source: 'stakeholders_create' },
       }).select('id').single()).data?.id
-      if (!personId) throw new Error('Ana kiÅŸi kaydÄ± oluÅŸturulamadÄ±.')
+      if (!personId) throw new Error('Ana kişi kaydı oluşturulamadı.')
       return { ...row, stakeholder_kind: 'person', person_id: personId || null }
     }
 
@@ -227,9 +227,9 @@ async function attachStakeholderIdentity(supabase: ReturnType<typeof createServi
       district: stakeholder.district || null,
       metadata_json: { source: 'stakeholders_create' },
     }).select('id').single()).data?.id
-    if (!organizationId) throw new Error('Ana kurum kaydÄ± oluÅŸturulamadÄ±.')
+    if (!organizationId) throw new Error('Ana kurum kaydı oluşturulamadı.')
     return { ...row, stakeholder_kind: 'organization', organization_id: organizationId || null }
   } catch (error) {
-    throw error instanceof Error ? error : new Error('PaydaÅŸ ana kayda baÄŸlanamadÄ±.')
+    throw error instanceof Error ? error : new Error('Paydaş ana kayda bağlanamadı.')
   }
 }

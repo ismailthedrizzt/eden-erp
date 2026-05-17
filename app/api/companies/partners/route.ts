@@ -27,7 +27,7 @@ const PartnerSchema = z.object({
   status: z.string().optional().default('Taslak'),
   has_representation_right: z.boolean().default(false),
   has_control_right: z.boolean().default(false),
-  control_type: z.enum(['Hisse Ã‡oÄŸunluÄŸu', 'Oy Ã‡oÄŸunluÄŸu', 'SÃ¶zleÅŸmesel Kontrol', 'YÃ¶netim KontrolÃ¼', 'AltÄ±n Hisse', 'DiÄŸer']).optional(),
+  control_type: z.enum(['Hisse Çoğunluğu', 'Oy Çoğunluğu', 'Sözleşmesel Kontrol', 'Yönetim Kontrolü', 'Altın Hisse', 'Diğer']).optional(),
   has_board_nomination_right: z.boolean().default(false),
   has_veto_right: z.boolean().default(false),
   has_privileged_share: z.boolean().default(false),
@@ -147,12 +147,12 @@ export async function POST(request: NextRequest) {
   const parsed = PartnerSchema.safeParse(body)
 
   if (!parsed.success) {
-    return NextResponse.json({ error: 'GeÃ§ersiz veri', code: 'VALIDATION_FAILED', details: parsed.error.flatten() }, { status: 400 })
+    return NextResponse.json({ error: 'Geçersiz veri', code: 'VALIDATION_FAILED', details: parsed.error.flatten() }, { status: 400 })
   }
   const missingPersonFields = getMissingPersonFields(parsed.data)
   if (missingPersonFields.length > 0) {
     return NextResponse.json({
-      error: 'Eksik zorunlu kiÅŸi alanÄ±',
+      error: 'Eksik zorunlu kişi alanı',
       code: 'VALIDATION_FAILED',
       details: { fieldErrors: Object.fromEntries(missingPersonFields.map(field => [field, ['Zorunlu alan']])) },
     }, { status: 400 })

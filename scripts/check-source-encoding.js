@@ -29,6 +29,7 @@ const textExtensions = new Set([
   '.ts',
   '.tsx',
 ])
+const mojibakePattern = /[\uFFFD\u0080-\u009F\u00C2-\u00C5]|â(?:€|†|€¢|€¦|„|“|”|˜|‹|›|™|œ|ž|Ÿ)/
 
 function filePath(relativePath) {
   return path.join(root, relativePath)
@@ -66,6 +67,16 @@ function assertValidUtf8(relativePath, failures) {
   }
 }
 
+function assertNoMojibake(relativePath, failures) {
+  const content = fs.readFileSync(filePath(relativePath), 'utf8')
+  const lines = content.split(/\r?\n/)
+  lines.forEach((line, index) => {
+    if (mojibakePattern.test(line)) {
+      failures.push(`${relativePath}:${index + 1}: possible mojibake/Turkish character corruption`)
+    }
+  })
+}
+
 const files = new Set()
 for (const sourceRoot of sourceRoots) {
   for (const file of walkFiles(sourceRoot)) files.add(file)
@@ -75,7 +86,10 @@ for (const file of rootFiles) {
 }
 
 const failures = []
-for (const file of [...files].sort()) assertValidUtf8(file, failures)
+for (const file of [...files].sort()) {
+  assertValidUtf8(file, failures)
+  assertNoMojibake(file, failures)
+}
 
 if (failures.length) {
   console.error('Source encoding check failed:')

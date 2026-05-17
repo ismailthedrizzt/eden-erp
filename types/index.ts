@@ -1,8 +1,8 @@
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
-// EDEN ERP â€” Merkezi Tip TanÄ±mlarÄ±
-// â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+// ══════════════════════════════════════════════════════════════
+// EDEN ERP — Merkezi Tip Tanımları
+// ══════════════════════════════════════════════════════════════
 
-// â”€â”€ Auth â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Auth ──────────────────────────────────────────────────────
 export interface Kullanici {
   id: string
   email?: string
@@ -26,7 +26,7 @@ export type KullaniciRol =
   | 'calisma_arkadasi'
   | 'izleyici'
 
-// â”€â”€ TeÅŸkilat â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Teşkilat ──────────────────────────────────────────────────
 export interface Sirket {
   id: string
   ad: string
@@ -44,7 +44,7 @@ export interface Birim {
   type: BirimTip
   active: boolean
   created_at: string
-  // Ä°liÅŸkiler
+  // İlişkiler
   sirket?: Sirket
   ust_birim?: Birim
   alt_birimler?: Birim[]
@@ -59,7 +59,7 @@ export type BirimTip =
   | 'division'
   | 'team'
 
-// â”€â”€ Norm Kadro â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Norm Kadro ────────────────────────────────────────────────
 export interface NormKadro {
   id: string
   unit_id: string
@@ -70,17 +70,17 @@ export interface NormKadro {
   budget_amount?: number
   employee_id?: string
   created_at: string
-  // Ä°liÅŸkiler
+  // İlişkiler
   unit?: Birim
   employees?: Personel
 }
 
 export type KadroDurum = 'filled' | 'open' | 'frozen'
 
-// â”€â”€ Personel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Personel ──────────────────────────────────────────────────
 export interface Personel {
   id: string
-  // KiÅŸisel
+  // Kişisel
   first_name: string
   last_name: string
   nationality: string
@@ -95,7 +95,7 @@ export interface Personel {
   has_disability: boolean
   disability_percentage?: number
   has_conviction: boolean
-  // Ä°letiÅŸim
+  // İletişim
   phones?: Array<Record<string, unknown>>
   emails?: Array<Record<string, unknown>>
   mobile_phone?: string
@@ -110,7 +110,7 @@ export interface Personel {
   emergency_contact_last_name?: string
   emergency_contact_relationship?: string
   emergency_contact_phone?: string
-  // Ä°ÅŸ
+  // İş
   sgk_entry_date?: string
   entry_date?: string
   exit_date?: string
@@ -159,7 +159,7 @@ export interface Personel {
   relatives?: Array<Record<string, unknown>>
   entry_documents?: Array<Record<string, unknown>>
   exit_documents?: Array<Record<string, unknown>>
-  // KÄ±yafet
+  // Kıyafet
   top_size?: string
   bottom_size?: string
   shoe_size?: string
@@ -175,7 +175,7 @@ export interface Personel {
   updated_at: string
   is_deleted?: boolean
   field_history?: Record<string, Array<{ value: unknown; date: string; user?: string }>>
-  // Ä°liÅŸkiler
+  // İlişkiler
   unit?: Birim
   position?: NormKadro
 }
@@ -185,7 +185,7 @@ export type KanGrubu = 'A+' | 'A-' | 'B+' | 'B-' | 'AB+' | 'AB-' | '0+' | '0-'
 export type MedeniDurum = 'single' | 'married'
 export type AskerlikDurum = 'muaf' | 'caginda_degil' | 'tecilli' | 'belirsiz' | 'bakaya' | 'yapti'
 
-// â”€â”€ Muhasebe â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Muhasebe ──────────────────────────────────────────────────
 export interface NakitIslem {
   id: string
   tarih: string
@@ -208,17 +208,17 @@ export type Proje =
   | 'PG'
   | 'EPIRB'
   | 'Otel'
-  | 'Ä°dari'
+  | 'İdari'
   | 'Sermaye'
-  | 'AktarÄ±m'
+  | 'Aktarım'
   | 'Finansal'
   | 'Destek'
-  | 'YatÄ±rÄ±m'
+  | 'Yatırım'
 
-export type IslemTarafi = 'Eden' | 'Ä°smail ILGAR' | 'Canberk' | 'ErgÃ¼n'
-export type HesapTipi = 'Vadesiz' | 'YatÄ±rÄ±m' | 'Kredi KartÄ±' | 'Nakit' | 'Bonus'
+export type IslemTarafi = 'Eden' | 'İsmail ILGAR' | 'Canberk' | 'Ergün'
+export type HesapTipi = 'Vadesiz' | 'Yatırım' | 'Kredi Kartı' | 'Nakit' | 'Bonus'
 
-// â”€â”€ API Response â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── API Response ──────────────────────────────────────────────
 export interface ApiResponse<T = unknown> {
   data?: T
   error?: string
@@ -233,7 +233,7 @@ export interface PaginatedResponse<T> {
   totalPages: number
 }
 
-// â”€â”€ Widget â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Widget ────────────────────────────────────────────────────
 export interface Widget {
   id: string
   type: WidgetTip

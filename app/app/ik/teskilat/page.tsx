@@ -1,8 +1,8 @@
 'use client'
 
 // MODULE LICENSE: ik/teskilat
-// Ana ModÃƒÂ¼l: Ã„Â°nsan KaynaklarÃ„Â± (ik)
-// Alt ModÃƒÂ¼l: TeÃ…Å¸kilat & Kadro (teskilat)
+// Ana Modül: İnsan Kaynakları (ik)
+// Alt Modül: Teşkilat & Kadro (teskilat)
 
 import { useState } from 'react'
 import { useTeskilat } from '@/hooks/useTeskilat'
@@ -14,7 +14,7 @@ import type { Birim } from '@/types'
 const TAB_IDS = ['kadro', 'istatistik', 'gender', 'butce'] as const
 type TabId = typeof TAB_IDS[number]
 const TAB_LABELS: Record<TabId, string> = {
-  kadro: 'Norm Kadro', istatistik: 'Kadro Ã„Â°statistikleri', gender: 'Cinsiyet & Engelli', butce: 'BÃƒÂ¼tÃƒÂ§e Durumu'
+  kadro: 'Norm Kadro', istatistik: 'Kadro İstatistikleri', gender: 'Cinsiyet & Engelli', butce: 'Bütçe Durumu'
 }
 
 const TIP_ICON: Record<string, React.ReactNode> = {
@@ -66,8 +66,8 @@ export default function TeskilatPage() {
             {birim.type}
           </span>
           <div className="hidden group-hover:flex gap-0.5 ml-1">
-            <button className="w-5 h-5 flex items-center justify-center text-gray-400 hover:text-eden-blue rounded" title="GÃƒÂ¶rÃƒÂ¼ntÃƒÂ¼le"><Eye size={11}/></button>
-            <button className="w-5 h-5 flex items-center justify-center text-gray-400 hover:text-eden-blue rounded" title="DÃƒÂ¼zenle"><Pencil size={11}/></button>
+            <button className="w-5 h-5 flex items-center justify-center text-gray-400 hover:text-eden-blue rounded" title="Görüntüle"><Eye size={11}/></button>
+            <button className="w-5 h-5 flex items-center justify-center text-gray-400 hover:text-eden-blue rounded" title="Düzenle"><Pencil size={11}/></button>
             <button className="w-5 h-5 flex items-center justify-center text-gray-400 hover:text-eden-green rounded" title="Alt Birim Ekle"><Plus size={11}/></button>
           </div>
         </div>
@@ -84,14 +84,14 @@ export default function TeskilatPage() {
 
   return (
     <div>
-      <h1 className="text-xl font-bold font-display text-gray-900 dark:text-white mb-5">TeÃ…Å¸kilat & Norm Kadro</h1>
+      <h1 className="text-xl font-bold font-display text-gray-900 dark:text-white mb-5">Teşkilat & Norm Kadro</h1>
       <div className="flex gap-4 h-[calc(100vh-160px)]">
 
-        {/* AÃ„Å¸aÃƒÂ§ Paneli */}
+        {/* Ağaç Paneli */}
         <div className="w-72 flex-shrink-0 card flex flex-col overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
-            <span className="text-sm font-semibold text-gray-800 dark:text-white">TeÃ…Å¸kilat YapÃ„Â±sÃ„Â±</span>
-            <button className="btn btn-primary btn-sm text-xs py-1 px-2"><Plus size={12}/> Ã…Âirket</button>
+            <span className="text-sm font-semibold text-gray-800 dark:text-white">Teşkilat Yapısı</span>
+            <button className="btn btn-primary btn-sm text-xs py-1 px-2"><Plus size={12}/> Şirket</button>
           </div>
           <div className="flex-1 overflow-y-auto p-2">
             {loading ? (
@@ -126,11 +126,11 @@ export default function TeskilatPage() {
                 <div className="flex items-center justify-between px-5 py-3 border-b border-gray-100 dark:border-gray-800">
                   <div>
                     <div className="text-sm font-semibold text-gray-800 dark:text-white">
-                      {selBirim ? selBirim.name : 'Bir birim seÃƒÂ§in'}
+                      {selBirim ? selBirim.name : 'Bir birim seçin'}
                     </div>
                     {selBirim && (
                       <div className="text-xs text-gray-400 mt-0.5">
-                        {selKadrolar.length} Kadro Ã¢â‚¬Â¢ {selKadrolar.filter(k=>k.status==='filled').length} Dolu Ã¢â‚¬Â¢ {selKadrolar.filter(k=>k.status==='open').length} AÃƒÂ§Ã„Â±k
+                        {selKadrolar.length} Kadro • {selKadrolar.filter(k=>k.status==='filled').length} Dolu • {selKadrolar.filter(k=>k.status==='open').length} Açık
                       </div>
                     )}
                   </div>
@@ -138,29 +138,29 @@ export default function TeskilatPage() {
                 </div>
                 {!selBirim ? (
                   <div className="flex items-center justify-center h-40 text-gray-400 text-sm">
-                    Sol taraftan bir birim seÃƒÂ§in
+                    Sol taraftan bir birim seçin
                   </div>
                 ) : (
                   <table className="data-table">
-                    <thead><tr><th>Unvan</th><th>Ãƒâ€¡alÃ„Â±Ã…Å¸an</th><th>Durum</th><th className="text-right">BÃƒÂ¼tÃƒÂ§e</th><th></th></tr></thead>
+                    <thead><tr><th>Unvan</th><th>Çalışan</th><th>Durum</th><th className="text-right">Bütçe</th><th></th></tr></thead>
                     <tbody>
                       {selKadrolar.length === 0 ? (
-                        <tr><td colSpan={5} className="text-center py-10 text-gray-400 text-sm">Bu birimde kadro tanÃ„Â±mlanmamÃ„Â±Ã…Å¸</td></tr>
+                        <tr><td colSpan={5} className="text-center py-10 text-gray-400 text-sm">Bu birimde kadro tanımlanmamış</td></tr>
                       ) : selKadrolar.map(k => (
                         <tr key={k.id} className={k.status==='open' ? 'bg-red-50/50 dark:bg-red-900/10' : ''}>
                           <td>
                             <span className="font-medium text-sm">{k.title}</span>
-                            {k.is_manager && <span className="ml-2 text-[10px] text-eden-gold font-bold">Ã¢Ëœâ€¦ Amir</span>}
+                            {k.is_manager && <span className="ml-2 text-[10px] text-eden-gold font-bold">★ Amir</span>}
                           </td>
                           <td className="text-sm text-gray-500 italic">
-                            {k.status === 'open' ? 'Ã¢â‚¬â€ BoÃ…Å¸ Kadro Ã¢â‚¬â€' : ''}
+                            {k.status === 'open' ? '— Boş Kadro —' : ''}
                           </td>
                           <td><DurumBadge status={k.status} /></td>
-                          <td className="text-right text-xs text-gray-400">{k.budget_amount ? formatTRY(k.budget_amount) : 'Ã¢â‚¬â€'}</td>
+                          <td className="text-right text-xs text-gray-400">{k.budget_amount ? formatTRY(k.budget_amount) : '—'}</td>
                           <td>
                             {k.status === 'open'
-                              ? <button className="btn btn-primary btn-sm text-xs">Ã„Â°lan AÃƒÂ§</button>
-                              : <button className="btn btn-sm text-xs">Ã¢â€¹Â¯</button>}
+                              ? <button className="btn btn-primary btn-sm text-xs">İlan Aç</button>
+                              : <button className="btn btn-sm text-xs">⋯</button>}
                           </td>
                         </tr>
                       ))}
@@ -170,17 +170,17 @@ export default function TeskilatPage() {
               </div>
             )}
 
-            {/* Ã„Â°STATÃ„Â°STÃ„Â°K */}
+            {/* İSTATİSTİK */}
             {tab === 'istatistik' && (
               <div className="p-5 space-y-6">
                 <div className="grid grid-cols-3 gap-3">
                   {[
                     { n: positions.length, l: 'Toplam Kadro', c: 'text-gray-800 dark:text-white' },
                     { n: filled, l: 'Dolu', c: 'text-eden-green' },
-                    { n: open, l: 'AÃƒÂ§Ã„Â±k', c: 'text-red-600' },
-                    { n: formatTRY(positions.filter(k=>k.status==='filled').reduce((s,k)=>s+(k.budget_amount||0),0)), l: 'Dolu Kadro BÃƒÂ¼tÃƒÂ§e', c: 'text-gray-800 dark:text-white' },
-                    { n: `%${fillRate}`, l: 'Doluluk OranÃ„Â±', c: 'text-eden-green' },
-                    { n: organization_units.length, l: 'Birim SayÃ„Â±sÃ„Â±', c: 'text-eden-blue' },
+                    { n: open, l: 'Açık', c: 'text-red-600' },
+                    { n: formatTRY(positions.filter(k=>k.status==='filled').reduce((s,k)=>s+(k.budget_amount||0),0)), l: 'Dolu Kadro Bütçe', c: 'text-gray-800 dark:text-white' },
+                    { n: `%${fillRate}`, l: 'Doluluk Oranı', c: 'text-eden-green' },
+                    { n: organization_units.length, l: 'Birim Sayısı', c: 'text-eden-blue' },
                   ].map((s, i) => (
                     <div key={i} className="bg-gray-50 dark:bg-eden-navy rounded-xl p-4 text-center">
                       <div className={`text-2xl font-bold font-display ${s.c}`}>{s.n}</div>
@@ -189,7 +189,7 @@ export default function TeskilatPage() {
                   ))}
                 </div>
                 <div>
-                  <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Birim BazlÃ„Â± Doluluk</div>
+                  <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Birim Bazlı Doluluk</div>
                   <div className="space-y-2.5">
                     {organization_units.filter(b=>b.parent_unit_id !== null).map(b => {
                       const bK = positions.filter(k=>k.unit_id===b.id)
@@ -210,7 +210,7 @@ export default function TeskilatPage() {
               </div>
             )}
 
-            {/* CÃ„Â°NSÃ„Â°YET */}
+            {/* CİNSİYET */}
             {tab === 'gender' && (
               <div className="p-5">
                 <div className="grid grid-cols-3 gap-3 mb-6">
@@ -220,18 +220,18 @@ export default function TeskilatPage() {
                   </div>
                   <div className="bg-gray-50 dark:bg-eden-navy rounded-xl p-4 text-center">
                     <div className="text-2xl font-bold font-display" style={{color:'#d4537e'}}>5</div>
-                    <div className="text-xs text-gray-400 mt-1">KadÃ„Â±n (%42)</div>
+                    <div className="text-xs text-gray-400 mt-1">Kadın (%42)</div>
                   </div>
                   <div className="bg-gray-50 dark:bg-eden-navy rounded-xl p-4 text-center">
                     <div className="text-2xl font-bold font-display text-gray-800 dark:text-white">0</div>
                     <div className="text-xs text-gray-400 mt-1">Engelli</div>
                   </div>
                 </div>
-                <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Birim BazlÃ„Â± DaÃ„Å¸Ã„Â±lÃ„Â±m</div>
+                <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Birim Bazlı Dağılım</div>
                 {[
-                  { birim: 'MÃƒÂ¼hendislik', e: 2, k: 1 },
+                  { birim: 'Mühendislik', e: 2, k: 1 },
                   { birim: 'Operasyon',   e: 1, k: 1 },
-                  { birim: 'YÃƒÂ¶netim',     e: 1, k: 0 },
+                  { birim: 'Yönetim',     e: 1, k: 0 },
                 ].map(r => (
                   <div key={r.birim} className="flex items-center gap-3 mb-2.5">
                     <div className="w-24 text-xs text-gray-400 text-right">{r.birim}</div>
@@ -245,14 +245,14 @@ export default function TeskilatPage() {
               </div>
             )}
 
-            {/* BÃƒÅ“TÃƒâ€¡E */}
+            {/* BÜTÇE */}
             {tab === 'butce' && (
               <div className="p-5">
                 <div className="grid grid-cols-3 gap-3">
                   {[
-                    { n: formatTRY(positions.reduce((s,k)=>s+(k.budget_amount||0),0)), l: 'OnaylÃ„Â± BÃƒÂ¼tÃƒÂ§e', c:'text-gray-800 dark:text-white' },
-                    { n: formatTRY(positions.filter(k=>k.status==='filled').reduce((s,k)=>s+(k.budget_amount||0),0)), l: 'KullanÃ„Â±lan', c:'text-red-600' },
-                    { n: formatTRY(positions.filter(k=>k.status==='open').reduce((s,k)=>s+(k.budget_amount||0),0)), l: 'AÃƒÂ§Ã„Â±k Kadro BÃƒÂ¼tÃƒÂ§e', c:'text-eden-green' },
+                    { n: formatTRY(positions.reduce((s,k)=>s+(k.budget_amount||0),0)), l: 'Onaylı Bütçe', c:'text-gray-800 dark:text-white' },
+                    { n: formatTRY(positions.filter(k=>k.status==='filled').reduce((s,k)=>s+(k.budget_amount||0),0)), l: 'Kullanılan', c:'text-red-600' },
+                    { n: formatTRY(positions.filter(k=>k.status==='open').reduce((s,k)=>s+(k.budget_amount||0),0)), l: 'Açık Kadro Bütçe', c:'text-eden-green' },
                   ].map((s,i)=>(
                     <div key={i} className="bg-gray-50 dark:bg-eden-navy rounded-xl p-4 text-center">
                       <div className={`text-xl font-bold font-display ${s.c}`}>{s.n}</div>

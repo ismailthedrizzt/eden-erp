@@ -227,7 +227,7 @@ export function EmployeeLifecycleWizard({ type, employee, onClose, onComplete }:
     return nextForm
   }
   const finalContent = (
-    <SectionCard title={entry ? 'Ä°ÅŸe GiriÅŸ Ã–zeti' : 'Ä°ÅŸten Ã‡Ä±kÄ±ÅŸ Ã–zeti'} description="Tamamlamadan Ã¶nce alanlarÄ± kontrol edin.">
+    <SectionCard title={entry ? 'İşe Giriş Özeti' : 'İşten Çıkış Özeti'} description="Tamamlamadan önce alanları kontrol edin.">
       <div className="grid gap-3 md:grid-cols-2">
         {summary.map(([label, value]) => (
           <SummaryItem key={label} label={label} value={value} />
@@ -240,10 +240,10 @@ export function EmployeeLifecycleWizard({ type, employee, onClose, onComplete }:
             <button
               type="button"
               disabled
-              title="SGK entegrasyonu devam ediyor. Bu Ã¶zellik tamamlandÄ±ÄŸÄ±nda aktif olacaktÄ±r."
+              title="SGK entegrasyonu devam ediyor. Bu özellik tamamlandığında aktif olacaktır."
               className="inline-flex items-center gap-2 rounded-lg bg-gray-200 px-3 py-2 text-sm font-medium text-gray-500 opacity-80 dark:bg-gray-800 dark:text-gray-400"
             >
-              {entry ? 'SGKâ€™ya GÃ¶nder' : 'SGKâ€™ya Ã‡Ä±kÄ±ÅŸ GÃ¶nder'}
+              {entry ? 'SGK’ya Gönder' : 'SGK’ya Çıkış Gönder'}
               <HelpCircle size={15} />
             </button>
             <button
@@ -252,11 +252,11 @@ export function EmployeeLifecycleWizard({ type, employee, onClose, onComplete }:
               className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700"
             >
               <CheckCircle2 size={16} />
-              {entry ? 'SGK GiriÅŸi YapÄ±ldÄ±' : 'SGK Ã‡Ä±kÄ±ÅŸÄ± YapÄ±ldÄ±'}
+              {entry ? 'SGK Girişi Yapıldı' : 'SGK Çıkışı Yapıldı'}
             </button>
           </div>
           <p className="mt-2 text-xs text-blue-700 dark:text-blue-200">
-            SGK sorumlusu ÅŸirket olduÄŸu iÃ§in sÃ¼reÃ§ manuel SGK bilgileri girilerek tamamlanÄ±r.
+            SGK sorumlusu şirket olduğu için süreç manuel SGK bilgileri girilerek tamamlanır.
           </p>
 
           {manualSgkOpen && (
@@ -264,10 +264,10 @@ export function EmployeeLifecycleWizard({ type, employee, onClose, onComplete }:
               <div className="mb-3 flex items-start justify-between gap-3">
                 <div>
                   <h4 className="text-sm font-semibold text-gray-950 dark:text-white">
-                    {entry ? 'Manuel SGK GiriÅŸ Bilgileri' : 'Manuel SGK Ã‡Ä±kÄ±ÅŸ Bilgileri'}
+                    {entry ? 'Manuel SGK Giriş Bilgileri' : 'Manuel SGK Çıkış Bilgileri'}
                   </h4>
                   <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                    e-Devlet / SGK ekranÄ±nda tamamlanan bildirimin referans bilgilerini girin.
+                    e-Devlet / SGK ekranında tamamlanan bildirimin referans bilgilerini girin.
                   </p>
                 </div>
                 <button type="button" onClick={() => setManualSgkOpen(false)} className="rounded-md p-1.5 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800">
@@ -283,7 +283,7 @@ export function EmployeeLifecycleWizard({ type, employee, onClose, onComplete }:
                   className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {saving && <Loader2 size={16} className="animate-spin" />}
-                  {entry ? 'SGK Bilgisiyle AktifleÅŸtir' : 'SGK Bilgisiyle PasifleÅŸtir'}
+                  {entry ? 'SGK Bilgisiyle Aktifleştir' : 'SGK Bilgisiyle Pasifleştir'}
                 </button>
               </div>
             </div>
@@ -296,21 +296,21 @@ export function EmployeeLifecycleWizard({ type, employee, onClose, onComplete }:
   return (
     <RecordLifecycleWizard
       title={title}
-      subtitle={[employee.first_name, employee.last_name].filter(Boolean).join(' ') || 'Ã‡alÄ±ÅŸan'}
+      subtitle={[employee.first_name, employee.last_name].filter(Boolean).join(' ') || 'Çalışan'}
       steps={wizardSteps}
       form={form}
       setForm={setForm}
       onFieldChange={handleWizardFieldChange}
       onClose={onClose}
       onSubmit={() => commit(false)}
-      submitLabel={entry ? 'Tamamla' : 'Ä°ÅŸten Ã‡Ä±kÄ±ÅŸÄ± Tamamla'}
+      submitLabel={entry ? 'Tamamla' : 'İşten Çıkışı Tamamla'}
       saving={saving}
-      loadingMessage={contextLoading ? 'Wizard baÄŸlamÄ± yÃ¼kleniyor' : undefined}
+      loadingMessage={contextLoading ? 'Wizard bağlamı yükleniyor' : undefined}
       contextError={contextError}
       error={error}
-      sideInfo="Veriler son adÄ±ma kadar sadece wizard iÃ§inde tutulur. Tamamlama aksiyonu tek backend payload'u gÃ¶nderir."
+      sideInfo="Veriler son adıma kadar sadece wizard içinde tutulur. Tamamlama aksiyonu tek backend payload'u gönderir."
       finalContent={finalContent}
-      submitBlockedContent={companySgk ? 'SGK sorumlusu ÅŸirket olduÄŸu iÃ§in manuel SGK bilgisiyle tamamlayÄ±n.' : undefined}
+      submitBlockedContent={companySgk ? 'SGK sorumlusu şirket olduğu için manuel SGK bilgisiyle tamamlayın.' : undefined}
     />
   )
 
@@ -539,21 +539,21 @@ function buildEntryLifecycleWizardSteps(
       sections: [
         {
           id: 'employment-type',
-          title: 'Ä°stihdam Tipi',
-          description: 'DoÄŸru rejim seÃ§imi sonraki adÄ±mlardaki alanlarÄ± belirler.',
+          title: 'İstihdam Tipi',
+          description: 'Doğru rejim seçimi sonraki adımlardaki alanları belirler.',
           fields: [
-            { name: 'employment_type', label: 'Ä°stihdam Tipi', type: 'optionCards', required: true, colSpan: 3, options: EMPLOYMENT_TYPE_OPTIONS },
+            { name: 'employment_type', label: 'İstihdam Tipi', type: 'optionCards', required: true, colSpan: 3, options: EMPLOYMENT_TYPE_OPTIONS },
           ],
         },
         {
           id: 'work-regime',
-          title: 'Ã‡alÄ±ÅŸma Rejimi',
-          description: 'SGK sorumlusu ve Ã§alÄ±ÅŸma dÃ¼zeni aktivasyon kuralÄ±nÄ± etkiler.',
+          title: 'Çalışma Rejimi',
+          description: 'SGK sorumlusu ve çalışma düzeni aktivasyon kuralını etkiler.',
           fields: [
-            { name: 'duration_type', label: 'SÃ¼re Tipi', type: 'select', required: true, options: DURATION_TYPE_OPTIONS },
+            { name: 'duration_type', label: 'Süre Tipi', type: 'select', required: true, options: DURATION_TYPE_OPTIONS },
             { name: 'sgk_responsibility', label: 'SGK Sorumlusu', type: 'select', required: true, options: SGK_RESPONSIBILITY_OPTIONS },
-            { name: 'work_arrangement', label: 'Ã‡alÄ±ÅŸma DÃ¼zeni', type: 'select', required: true, options: WORK_ARRANGEMENT_OPTIONS },
-            { name: 'start_date', label: 'Ä°ÅŸe BaÅŸlama Tarihi', type: 'date', required: true },
+            { name: 'work_arrangement', label: 'Çalışma Düzeni', type: 'select', required: true, options: WORK_ARRANGEMENT_OPTIONS },
+            { name: 'start_date', label: 'İşe Başlama Tarihi', type: 'date', required: true },
           ],
         },
       ],
@@ -564,10 +564,10 @@ function buildEntryLifecycleWizardSteps(
       sections: [
         {
           id: 'organization-links',
-          title: 'ERP BaÄŸlantÄ±larÄ±',
-          description: 'BaÄŸlÄ± yÃ¶netici kullanÄ±cÄ±dan istenmez; teÅŸkilat ve kadro yapÄ±sÄ±ndan hesaplanÄ±r.',
+          title: 'ERP Bağlantıları',
+          description: 'Bağlı yönetici kullanıcıdan istenmez; teşkilat ve kadro yapısından hesaplanır.',
           fields: [
-            { name: 'company_id', label: 'Åirket', type: 'select', required: true, options: references.companyOptions },
+            { name: 'company_id', label: 'Şirket', type: 'select', required: true, options: references.companyOptions },
             {
               name: 'company_unit_id',
               label: 'Birim',
@@ -575,17 +575,17 @@ function buildEntryLifecycleWizardSteps(
               options: references.unitOptions,
               emptyOptionsRedirect: {
                 href: '/app/sirket/teskilat',
-                label: 'TeÅŸkilat modÃ¼lÃ¼ne git',
-                message: 'Bu ÅŸirkete baÄŸlÄ± birim bulunamadÄ±. Birim tanÄ±mlamak iÃ§in TeÅŸkilat modÃ¼lÃ¼ne gidin.',
+                label: 'Teşkilat modülüne git',
+                message: 'Bu şirkete bağlı birim bulunamadı. Birim tanımlamak için Teşkilat modülüne gidin.',
                 visibleWhen: { field: 'company_id', operator: 'exists' },
               },
               automation: {
                 sourceFields: ['company_id'],
                 targetFields: ['company_unit_id'],
-                title: 'Åirket seÃ§imine gÃ¶re teÅŸkilat birimleri sÃ¼zÃ¼lÃ¼r.',
-                idleLabel: 'Åirket Bekleniyor',
-                workingLabel: 'Birimler SÃ¼zÃ¼lÃ¼yor',
-                doneLabel: 'Birim SeÃ§ildi',
+                title: 'Şirket seçimine göre teşkilat birimleri süzülür.',
+                idleLabel: 'Şirket Bekleniyor',
+                workingLabel: 'Birimler Süzülüyor',
+                doneLabel: 'Birim Seçildi',
                 noDataLabel: 'Birim Bekleniyor',
               },
             },
@@ -595,24 +595,24 @@ function buildEntryLifecycleWizardSteps(
               type: 'select',
               options: references.positionOptions,
               disabledWhen: { field: 'company_unit_id', operator: 'notExists' },
-              placeholder: form.company_unit_id ? 'Kadro seÃ§iniz' : 'Ã–nce birim seÃ§iniz',
+              placeholder: form.company_unit_id ? 'Kadro seçiniz' : 'Önce birim seçiniz',
               emptyOptionsRedirect: {
                 href: '/app/sirket/teskilat',
-                label: 'TeÅŸkilat modÃ¼lÃ¼ne git',
-                message: 'SeÃ§ili birim altÄ±nda kadro/pozisyon bulunamadÄ±. Kadro tanÄ±mlamak iÃ§in TeÅŸkilat modÃ¼lÃ¼ne gidin.',
+                label: 'Teşkilat modülüne git',
+                message: 'Seçili birim altında kadro/pozisyon bulunamadı. Kadro tanımlamak için Teşkilat modülüne gidin.',
                 visibleWhen: { field: 'company_unit_id', operator: 'exists' },
               },
               automation: {
                 sourceFields: ['company_unit_id'],
                 targetFields: ['position_id'],
-                title: 'Birim seÃ§imine gÃ¶re kadro listesi teÅŸkilat modÃ¼lÃ¼nden sÃ¼zÃ¼lÃ¼r.',
+                title: 'Birim seçimine göre kadro listesi teşkilat modülünden süzülür.',
                 idleLabel: 'Birim Bekleniyor',
-                workingLabel: 'Kadro SÃ¼zÃ¼lÃ¼yor',
-                doneLabel: 'Kadro SeÃ§ildi',
+                workingLabel: 'Kadro Süzülüyor',
+                doneLabel: 'Kadro Seçildi',
                 noDataLabel: 'Kadro Bekleniyor',
               },
             },
-            { name: 'work_location_id', label: 'Ã‡alÄ±ÅŸma Lokasyonu', type: 'text', highlight: regime.fieldWork },
+            { name: 'work_location_id', label: 'Çalışma Lokasyonu', type: 'text', highlight: regime.fieldWork },
             { name: 'cost_center_id', label: 'Masraf Merkezi', type: 'text' },
             { name: 'project_id', label: 'Proje', type: 'text', highlight: regime.projectBased },
             { name: 'shift_group_id', label: 'Vardiya Grubu', type: 'text', highlight: regime.shiftBased },
@@ -620,7 +620,7 @@ function buildEntryLifecycleWizardSteps(
           ],
           children: (
             <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-600 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
-              {computedManagerText || 'BaÄŸlÄ± YÃ¶netici: TeÅŸkilat yapÄ±sÄ±ndan otomatik belirlenecek'}
+              {computedManagerText || 'Bağlı Yönetici: Teşkilat yapısından otomatik belirlenecek'}
             </div>
           ),
         },
@@ -632,71 +632,71 @@ function buildEntryLifecycleWizardSteps(
       sections: [
         ...(isCompanySgk(form.sgk_responsibility) ? [{
           id: 'sgk-entry',
-          title: 'SGK Ä°ÅŸe GiriÅŸ Bilgileri',
-          description: 'Åirket sorumlu olduÄŸunda SGK alanlarÄ± ve son adÄ±mda manuel tamamlamaya ait bilgiler alÄ±nÄ±r.',
+          title: 'SGK İşe Giriş Bilgileri',
+          description: 'Şirket sorumlu olduğunda SGK alanları ve son adımda manuel tamamlamaya ait bilgiler alınır.',
           fields: [
-            { name: 'sgk_entry_date', label: 'SGK Ä°ÅŸe GiriÅŸ Tarihi', type: 'date' },
+            { name: 'sgk_entry_date', label: 'SGK İşe Giriş Tarihi', type: 'date' },
             { name: 'insurance_branch', label: 'Sigorta Kolu', type: 'text' },
             { name: 'occupation_code', label: 'Meslek Kodu', type: 'text' },
-            { name: 'duty_code', label: 'GÃ¶rev Kodu', type: 'text' },
-            { name: 'csgb_work_branch', label: 'Ã‡SGB Ä°ÅŸ Kolu', type: 'text' },
+            { name: 'duty_code', label: 'Görev Kodu', type: 'text' },
+            { name: 'csgb_work_branch', label: 'ÇSGB İş Kolu', type: 'text' },
             { name: 'disability_status', label: 'Engellilik Durumu', type: 'text' },
-            { name: 'conviction_status', label: 'HÃ¼kÃ¼mlÃ¼lÃ¼k Durumu', type: 'text' },
-            { name: 'education_code', label: 'Ã–ÄŸrenim Kodu', type: 'text' },
-            { name: 'partial_day', label: 'KÄ±smi GÃ¼n', type: 'number' },
+            { name: 'conviction_status', label: 'Hükümlülük Durumu', type: 'text' },
+            { name: 'education_code', label: 'Öğrenim Kodu', type: 'text' },
+            { name: 'partial_day', label: 'Kısmi Gün', type: 'number' },
             { name: 'reference_code', label: 'Referans Kodu', type: 'text' },
           ],
         } satisfies RecordLifecycleWizardStep['sections'][number]] : []),
         ...(regime.internship ? [{
           id: 'internship',
           title: 'Staj Bilgileri',
-          description: 'Okul veya Ã¼niversite SGK sorumluluÄŸu olduÄŸunda SGKâ€™ya gÃ¶nder aksiyonu gÃ¶sterilmez.',
+          description: 'Okul veya üniversite SGK sorumluluğu olduğunda SGK’ya gönder aksiyonu gösterilmez.',
           fields: [
-            { name: 'school_or_university', label: 'Okul / Ãœniversite', type: 'text' },
-            { name: 'department_or_program', label: 'BÃ¶lÃ¼m / Program', type: 'text' },
-            { name: 'internship_type', label: 'Staj TÃ¼rÃ¼', type: 'select', options: INTERNSHIP_TYPE_OPTIONS },
-            { name: 'internship_start_date', label: 'Staj BaÅŸlangÄ±Ã§ Tarihi', type: 'date' },
-            { name: 'internship_end_date', label: 'Staj BitiÅŸ Tarihi', type: 'date' },
-            { name: 'school_sgk_notification_status', label: 'Okul SGK Bildirimi Var mÄ±?', type: 'select', options: STATUS_OPTIONS },
-            { name: 'school_coordinator', label: 'Sorumlu Ã–ÄŸretmen / KoordinatÃ¶r', type: 'text' },
-            { name: 'internship_protocol_document_id', label: 'Staj SÃ¶zleÅŸmesi / Protokol', type: 'document', description: 'Document Registry kullanÄ±lÄ±r; aynÄ± belge tekrar yÃ¼klenmez, mevcut belge referanslanabilir.' },
-            { name: 'school_sgk_document_id', label: 'Okul SGK Bildirge Belgesi', type: 'document', description: 'Document Registry kullanÄ±lÄ±r; aynÄ± belge tekrar yÃ¼klenmez, mevcut belge referanslanabilir.' },
+            { name: 'school_or_university', label: 'Okul / Üniversite', type: 'text' },
+            { name: 'department_or_program', label: 'Bölüm / Program', type: 'text' },
+            { name: 'internship_type', label: 'Staj Türü', type: 'select', options: INTERNSHIP_TYPE_OPTIONS },
+            { name: 'internship_start_date', label: 'Staj Başlangıç Tarihi', type: 'date' },
+            { name: 'internship_end_date', label: 'Staj Bitiş Tarihi', type: 'date' },
+            { name: 'school_sgk_notification_status', label: 'Okul SGK Bildirimi Var mı?', type: 'select', options: STATUS_OPTIONS },
+            { name: 'school_coordinator', label: 'Sorumlu Öğretmen / Koordinatör', type: 'text' },
+            { name: 'internship_protocol_document_id', label: 'Staj Sözleşmesi / Protokol', type: 'document', description: 'Document Registry kullanılır; aynı belge tekrar yüklenmez, mevcut belge referanslanabilir.' },
+            { name: 'school_sgk_document_id', label: 'Okul SGK Bildirge Belgesi', type: 'document', description: 'Document Registry kullanılır; aynı belge tekrar yüklenmez, mevcut belge referanslanabilir.' },
           ],
         } satisfies RecordLifecycleWizardStep['sections'][number]] : []),
         ...(regime.contractual ? [{
           id: 'contractual',
-          title: 'SÃ¶zleÅŸme / DÄ±ÅŸ Hizmet Bilgileri',
-          description: 'SÃ¶zleÅŸme ve Ã¶deme baÄŸlantÄ±larÄ± bu grupta tutulur.',
+          title: 'Sözleşme / Dış Hizmet Bilgileri',
+          description: 'Sözleşme ve ödeme bağlantıları bu grupta tutulur.',
           fields: [
-            { name: 'contract_type', label: 'SÃ¶zleÅŸme TÃ¼rÃ¼', type: 'select', options: CONTRACT_TYPE_OPTIONS },
-            { name: 'contract_start_date', label: 'SÃ¶zleÅŸme BaÅŸlangÄ±Ã§ Tarihi', type: 'date' },
-            { name: 'contract_end_date', label: 'SÃ¶zleÅŸme BitiÅŸ Tarihi', type: 'date' },
-            { name: 'service_type', label: 'Hizmet TÃ¼rÃ¼', type: 'text' },
+            { name: 'contract_type', label: 'Sözleşme Türü', type: 'select', options: CONTRACT_TYPE_OPTIONS },
+            { name: 'contract_start_date', label: 'Sözleşme Başlangıç Tarihi', type: 'date' },
+            { name: 'contract_end_date', label: 'Sözleşme Bitiş Tarihi', type: 'date' },
+            { name: 'service_type', label: 'Hizmet Türü', type: 'text' },
             { name: 'invoice_required', label: 'Fatura Kesiyor mu?', type: 'select', options: YES_NO_OPTIONS },
-            { name: 'account_card_id', label: 'Cari Kart BaÄŸlantÄ±sÄ±', type: 'text' },
-            { name: 'payment_period', label: 'Ã–deme Periyodu', type: 'select', options: PAYMENT_PERIOD_OPTIONS },
-            { name: 'contract_document_id', label: 'SÃ¶zleÅŸme Belgesi', type: 'document', description: 'Document Registry kullanÄ±lÄ±r; aynÄ± belge tekrar yÃ¼klenmez, mevcut belge referanslanabilir.' },
-            { name: 'nda_document_id', label: 'NDA / KVKK Belgesi', type: 'document', description: 'Document Registry kullanÄ±lÄ±r; aynÄ± belge tekrar yÃ¼klenmez, mevcut belge referanslanabilir.' },
+            { name: 'account_card_id', label: 'Cari Kart Bağlantısı', type: 'text' },
+            { name: 'payment_period', label: 'Ödeme Periyodu', type: 'select', options: PAYMENT_PERIOD_OPTIONS },
+            { name: 'contract_document_id', label: 'Sözleşme Belgesi', type: 'document', description: 'Document Registry kullanılır; aynı belge tekrar yüklenmez, mevcut belge referanslanabilir.' },
+            { name: 'nda_document_id', label: 'NDA / KVKK Belgesi', type: 'document', description: 'Document Registry kullanılır; aynı belge tekrar yüklenmez, mevcut belge referanslanabilir.' },
           ],
         } satisfies RecordLifecycleWizardStep['sections'][number]] : []),
         ...(regime.marine ? [{
           id: 'marine',
           title: 'Denizcilik / Sefer Bilgileri',
-          description: 'Deniz personeli, sefer bazlÄ± sÃ¼re tipi veya Deniz / Gemi dÃ¼zeninde gÃ¶rÃ¼nÃ¼r.',
+          description: 'Deniz personeli, sefer bazlı süre tipi veya Deniz / Gemi düzeninde görünür.',
           fields: [
             { name: 'vessel_or_platform_id', label: 'Gemi / Platform', type: 'text' },
-            { name: 'marine_rank', label: 'GÃ¶rev / Rank', type: 'text' },
-            { name: 'voyage_based', label: 'Sefer BazlÄ± mÄ±?', type: 'select', options: YES_NO_OPTIONS },
-            { name: 'marine_contract_start_date', label: 'Kontrat BaÅŸlangÄ±Ã§ Tarihi', type: 'date' },
-            { name: 'marine_contract_end_date', label: 'Kontrat BitiÅŸ Tarihi', type: 'date' },
+            { name: 'marine_rank', label: 'Görev / Rank', type: 'text' },
+            { name: 'voyage_based', label: 'Sefer Bazlı mı?', type: 'select', options: YES_NO_OPTIONS },
+            { name: 'marine_contract_start_date', label: 'Kontrat Başlangıç Tarihi', type: 'date' },
+            { name: 'marine_contract_end_date', label: 'Kontrat Bitiş Tarihi', type: 'date' },
             { name: 'rotation_model', label: 'Rotasyon Modeli', type: 'text' },
-            { name: 'sea_working_days', label: 'Denizde Ã‡alÄ±ÅŸma GÃ¼nleri', type: 'number' },
-            { name: 'shore_waiting_days', label: 'Karada Bekleme GÃ¼nleri', type: 'number' },
+            { name: 'sea_working_days', label: 'Denizde Çalışma Günleri', type: 'number' },
+            { name: 'shore_waiting_days', label: 'Karada Bekleme Günleri', type: 'number' },
             { name: 'marine_shift_model', label: 'Vardiya Modeli', type: 'text' },
-            { name: 'seafarer_document_no', label: 'GemiadamÄ± CÃ¼zdanÄ± / Belge No', type: 'text' },
-            { name: 'stcw_document_id', label: 'STCW Belgeleri', type: 'document', description: 'Document Registry kullanÄ±lÄ±r; aynÄ± belge tekrar yÃ¼klenmez, mevcut belge referanslanabilir.' },
-            { name: 'marine_health_report_document_id', label: 'SaÄŸlÄ±k Raporu', type: 'document', description: 'Document Registry kullanÄ±lÄ±r; aynÄ± belge tekrar yÃ¼klenmez, mevcut belge referanslanabilir.' },
-            { name: 'port_or_voyage_area', label: 'Liman / Sefer BÃ¶lgesi', type: 'text' },
+            { name: 'seafarer_document_no', label: 'Gemiadamı Cüzdanı / Belge No', type: 'text' },
+            { name: 'stcw_document_id', label: 'STCW Belgeleri', type: 'document', description: 'Document Registry kullanılır; aynı belge tekrar yüklenmez, mevcut belge referanslanabilir.' },
+            { name: 'marine_health_report_document_id', label: 'Sağlık Raporu', type: 'document', description: 'Document Registry kullanılır; aynı belge tekrar yüklenmez, mevcut belge referanslanabilir.' },
+            { name: 'port_or_voyage_area', label: 'Liman / Sefer Bölgesi', type: 'text' },
           ],
         } satisfies RecordLifecycleWizardStep['sections'][number]] : []),
         buildWorkPaymentWizardSection(),
@@ -724,16 +724,16 @@ function buildExitLifecycleWizardSteps(
       sections: [
         {
           id: 'exit-fields',
-          title: 'Ã‡Ä±kÄ±ÅŸ Bilgisi',
-          description: 'Ã‡Ä±kÄ±ÅŸ tÃ¼rÃ¼ mevcut Ã§alÄ±ÅŸma rejimine gÃ¶re Ã¶nerilir, gerektiÄŸinde deÄŸiÅŸtirilebilir.',
+          title: 'Çıkış Bilgisi',
+          description: 'Çıkış türü mevcut çalışma rejimine göre önerilir, gerektiğinde değiştirilebilir.',
           fields: [
-            { name: 'exit_date', label: 'Ä°ÅŸten Ã‡Ä±kÄ±ÅŸ / Ä°liÅŸki SonlandÄ±rma Tarihi', type: 'date', required: true },
-            { name: 'exit_reason', label: 'Ã‡Ä±kÄ±ÅŸ Nedeni', type: 'text', required: true },
-            { name: 'exit_type', label: 'Ã‡Ä±kÄ±ÅŸ TÃ¼rÃ¼', type: 'select', options: EXIT_TYPE_OPTIONS },
+            { name: 'exit_date', label: 'İşten Çıkış / İlişki Sonlandırma Tarihi', type: 'date', required: true },
+            { name: 'exit_reason', label: 'Çıkış Nedeni', type: 'text', required: true },
+            { name: 'exit_type', label: 'Çıkış Türü', type: 'select', options: EXIT_TYPE_OPTIONS },
           ],
           children: (
             <InfoPanel className="mt-4">
-              Ã–neri: {recommendedExitTypeLabel(workRelation || form)}
+              Öneri: {recommendedExitTypeLabel(workRelation || form)}
             </InfoPanel>
           ),
         },
@@ -745,65 +745,65 @@ function buildExitLifecycleWizardSteps(
       sections: [
         ...(isCompanySgk(form.sgk_responsibility || workRelation.sgk_responsibility) ? [{
           id: 'sgk-exit',
-          title: 'SGK Ä°ÅŸten Ã‡Ä±kÄ±ÅŸ Bilgileri',
-          description: 'Åirket sorumlu olduÄŸunda SGK Ã§Ä±kÄ±ÅŸÄ± entegrasyon hazÄ±r olana kadar manuel tamamlanÄ±r.',
+          title: 'SGK İşten Çıkış Bilgileri',
+          description: 'Şirket sorumlu olduğunda SGK çıkışı entegrasyon hazır olana kadar manuel tamamlanır.',
           fields: [
-            { name: 'sgk_exit_date', label: 'SGK Ä°ÅŸten Ã‡Ä±kÄ±ÅŸ Tarihi', type: 'date' },
-            { name: 'sgk_exit_reason', label: 'SGK Ã‡Ä±kÄ±ÅŸ Nedeni', type: 'text' },
+            { name: 'sgk_exit_date', label: 'SGK İşten Çıkış Tarihi', type: 'date' },
+            { name: 'sgk_exit_reason', label: 'SGK Çıkış Nedeni', type: 'text' },
             { name: 'sgk_exit_occupation_code', label: 'Meslek Kodu', type: 'text' },
-            { name: 'sgk_exit_csgb_work_branch', label: 'Ã‡SGB Ä°ÅŸ Kolu', type: 'text' },
-            { name: 'sgk_exit_previous_document_type', label: 'Ã–nceki Belge TÃ¼rÃ¼', type: 'text' },
-            { name: 'sgk_exit_previous_earned_wage', label: 'Ã–nceki Hak Edilen Ãœcret', type: 'text' },
-            { name: 'sgk_exit_current_document_type', label: 'Bu DÃ¶nem Belge TÃ¼rÃ¼', type: 'text' },
-            { name: 'sgk_exit_current_earned_wage', label: 'Bu DÃ¶nem Hak Edilen Ãœcret', type: 'text' },
-            { name: 'sgk_exit_percentage_wage_method', label: 'Ãœcret YÃ¼zde UsulÃ¼', type: 'select', options: YES_NO_OPTIONS },
+            { name: 'sgk_exit_csgb_work_branch', label: 'ÇSGB İş Kolu', type: 'text' },
+            { name: 'sgk_exit_previous_document_type', label: 'Önceki Belge Türü', type: 'text' },
+            { name: 'sgk_exit_previous_earned_wage', label: 'Önceki Hak Edilen Ücret', type: 'text' },
+            { name: 'sgk_exit_current_document_type', label: 'Bu Dönem Belge Türü', type: 'text' },
+            { name: 'sgk_exit_current_earned_wage', label: 'Bu Dönem Hak Edilen Ücret', type: 'text' },
+            { name: 'sgk_exit_percentage_wage_method', label: 'Ücret Yüzde Usulü', type: 'select', options: YES_NO_OPTIONS },
             { name: 'sgk_exit_reference_code', label: 'Referans Kodu', type: 'text' },
           ],
         } satisfies RecordLifecycleWizardStep['sections'][number]] : []),
         ...(regime.internship ? [{
           id: 'internship-close',
-          title: 'Staj KapanÄ±ÅŸÄ±',
-          description: 'Staj tamamlandÄ± veya sonlandÄ±rÄ±ldÄ± bilgisini okul bildirimiyle birlikte takip edin.',
+          title: 'Staj Kapanışı',
+          description: 'Staj tamamlandı veya sonlandırıldı bilgisini okul bildirimiyle birlikte takip edin.',
           fields: [
-            { name: 'internship_end_date', label: 'Staj BitiÅŸ Tarihi', type: 'date' },
-            { name: 'internship_completed', label: 'Staj TamamlandÄ± mÄ±?', type: 'select', options: YES_NO_OPTIONS },
-            { name: 'school_notified', label: 'Okula Bildirim YapÄ±ldÄ± mÄ±?', type: 'select', options: YES_NO_OPTIONS },
-            { name: 'school_exit_document_id', label: 'Okul Ã‡Ä±kÄ±ÅŸ / Tamamlama Belgesi', type: 'document', description: 'Document Registry kullanÄ±lÄ±r; aynÄ± belge tekrar yÃ¼klenmez, mevcut belge referanslanabilir.' },
-            { name: 'internship_evaluation_note', label: 'Staj DeÄŸerlendirme Notu', type: 'text' },
-            { name: 'internship_termination_reason', label: 'Staj SonlandÄ±rma Nedeni', type: 'text' },
+            { name: 'internship_end_date', label: 'Staj Bitiş Tarihi', type: 'date' },
+            { name: 'internship_completed', label: 'Staj Tamamlandı mı?', type: 'select', options: YES_NO_OPTIONS },
+            { name: 'school_notified', label: 'Okula Bildirim Yapıldı mı?', type: 'select', options: YES_NO_OPTIONS },
+            { name: 'school_exit_document_id', label: 'Okul Çıkış / Tamamlama Belgesi', type: 'document', description: 'Document Registry kullanılır; aynı belge tekrar yüklenmez, mevcut belge referanslanabilir.' },
+            { name: 'internship_evaluation_note', label: 'Staj Değerlendirme Notu', type: 'text' },
+            { name: 'internship_termination_reason', label: 'Staj Sonlandırma Nedeni', type: 'text' },
           ],
         } satisfies RecordLifecycleWizardStep['sections'][number]] : []),
         ...(regime.contractual ? [{
           id: 'contractual-close',
-          title: 'SÃ¶zleÅŸme / DÄ±ÅŸ Hizmet KapanÄ±ÅŸÄ±',
-          description: 'Cari, fatura, Ã¶deme ve devir durumlarÄ±nÄ± kapatÄ±n.',
+          title: 'Sözleşme / Dış Hizmet Kapanışı',
+          description: 'Cari, fatura, ödeme ve devir durumlarını kapatın.',
           fields: [
-            { name: 'contract_end_date', label: 'SÃ¶zleÅŸme BitiÅŸ Tarihi', type: 'date' },
-            { name: 'actual_service_end_date', label: 'Fiili Hizmet BitiÅŸ Tarihi', type: 'date' },
-            { name: 'termination_reason', label: 'SonlandÄ±rma Nedeni', type: 'text' },
+            { name: 'contract_end_date', label: 'Sözleşme Bitiş Tarihi', type: 'date' },
+            { name: 'actual_service_end_date', label: 'Fiili Hizmet Bitiş Tarihi', type: 'date' },
+            { name: 'termination_reason', label: 'Sonlandırma Nedeni', type: 'text' },
             { name: 'last_invoice_status', label: 'Son Fatura Durumu', type: 'select', options: STATUS_OPTIONS },
-            { name: 'last_payment_status', label: 'Son Ã–deme Durumu', type: 'select', options: STATUS_OPTIONS },
+            { name: 'last_payment_status', label: 'Son Ödeme Durumu', type: 'select', options: STATUS_OPTIONS },
             { name: 'account_reconciliation_status', label: 'Cari Mutabakat Durumu', type: 'select', options: STATUS_OPTIONS },
             { name: 'service_handover_status', label: 'Teslim / Devir Durumu', type: 'select', options: STATUS_OPTIONS },
-            { name: 'contract_closing_document_id', label: 'SÃ¶zleÅŸme KapanÄ±ÅŸ Belgesi', type: 'document', description: 'Document Registry kullanÄ±lÄ±r; aynÄ± belge tekrar yÃ¼klenmez, mevcut belge referanslanabilir.' },
+            { name: 'contract_closing_document_id', label: 'Sözleşme Kapanış Belgesi', type: 'document', description: 'Document Registry kullanılır; aynı belge tekrar yüklenmez, mevcut belge referanslanabilir.' },
           ],
         } satisfies RecordLifecycleWizardStep['sections'][number]] : []),
         ...(regime.marine ? [{
           id: 'marine-close',
-          title: 'Denizcilik / Sefer KapanÄ±ÅŸÄ±',
-          description: 'Sefer, kontrat ve gemi/platform ayrÄ±lÄ±ÅŸÄ± bilgileri birlikte kapatÄ±lÄ±r.',
+          title: 'Denizcilik / Sefer Kapanışı',
+          description: 'Sefer, kontrat ve gemi/platform ayrılışı bilgileri birlikte kapatılır.',
           fields: [
-            { name: 'marine_contract_end_date', label: 'Kontrat BitiÅŸ Tarihi', type: 'date' },
-            { name: 'actual_leave_date', label: 'Fiili AyrÄ±lÄ±ÅŸ Tarihi', type: 'date' },
-            { name: 'voyage_end_date', label: 'Sefer BitiÅŸ Tarihi', type: 'date' },
-            { name: 'vessel_leave_date', label: 'Gemi / Platformdan AyrÄ±lÄ±ÅŸ Tarihi', type: 'date' },
-            { name: 'departure_port', label: 'AyrÄ±lÄ±ÅŸ LimanÄ±', type: 'text' },
-            { name: 'voyage_termination_reason', label: 'Sefer SonlandÄ±rma Nedeni', type: 'text' },
-            { name: 'rotation_completed', label: 'Rotasyon TamamlandÄ± mÄ±?', type: 'select', options: YES_NO_OPTIONS },
+            { name: 'marine_contract_end_date', label: 'Kontrat Bitiş Tarihi', type: 'date' },
+            { name: 'actual_leave_date', label: 'Fiili Ayrılış Tarihi', type: 'date' },
+            { name: 'voyage_end_date', label: 'Sefer Bitiş Tarihi', type: 'date' },
+            { name: 'vessel_leave_date', label: 'Gemi / Platformdan Ayrılış Tarihi', type: 'date' },
+            { name: 'departure_port', label: 'Ayrılış Limanı', type: 'text' },
+            { name: 'voyage_termination_reason', label: 'Sefer Sonlandırma Nedeni', type: 'text' },
+            { name: 'rotation_completed', label: 'Rotasyon Tamamlandı mı?', type: 'select', options: YES_NO_OPTIONS },
             { name: 'marine_handover_status', label: 'Devir Teslim Durumu', type: 'select', options: STATUS_OPTIONS },
-            { name: 'marine_documents_return_status', label: 'Denizcilik Belgeleri Ä°ade / Kontrol Durumu', type: 'select', options: STATUS_OPTIONS },
-            { name: 'marine_health_note', label: 'SaÄŸlÄ±k / Uygunluk Notu', type: 'text' },
-            { name: 'marine_final_earned_payment_status', label: 'Son HakediÅŸ Durumu', type: 'select', options: STATUS_OPTIONS },
+            { name: 'marine_documents_return_status', label: 'Denizcilik Belgeleri İade / Kontrol Durumu', type: 'select', options: STATUS_OPTIONS },
+            { name: 'marine_health_note', label: 'Sağlık / Uygunluk Notu', type: 'text' },
+            { name: 'marine_final_earned_payment_status', label: 'Son Hakediş Durumu', type: 'select', options: STATUS_OPTIONS },
           ],
         } satisfies RecordLifecycleWizardStep['sections'][number]] : []),
       ],
@@ -815,13 +815,13 @@ function buildExitLifecycleWizardSteps(
         {
           id: 'documents-handover-fields',
           title: 'Belgeler ve Devir',
-          description: 'Belgeler Document Registry Ã¼zerinden referanslanÄ±r; aynÄ± belge tekrar yÃ¼klenmez.',
+          description: 'Belgeler Document Registry üzerinden referanslanır; aynı belge tekrar yüklenmez.',
           fields: [
-            { name: 'final_payment_status', label: 'Son Ã–deme Durumu', type: 'select', options: STATUS_OPTIONS },
-            { name: 'earned_payment_status', label: 'HakediÅŸ Durumu', type: 'select', options: STATUS_OPTIONS },
+            { name: 'final_payment_status', label: 'Son Ödeme Durumu', type: 'select', options: STATUS_OPTIONS },
+            { name: 'earned_payment_status', label: 'Hakediş Durumu', type: 'select', options: STATUS_OPTIONS },
             { name: 'handover_status', label: 'Zimmet / Devir Durumu', type: 'select', options: STATUS_OPTIONS },
-            { name: 'documents_completed', label: 'Belgeler TamamlandÄ± mÄ±?', type: 'select', options: YES_NO_OPTIONS },
-            { name: 'closing_document_id', label: 'KapanÄ±ÅŸ Belgesi', type: 'document', description: 'Document Registry kullanÄ±lÄ±r; aynÄ± belge tekrar yÃ¼klenmez, mevcut belge referanslanabilir.' },
+            { name: 'documents_completed', label: 'Belgeler Tamamlandı mı?', type: 'select', options: YES_NO_OPTIONS },
+            { name: 'closing_document_id', label: 'Kapanış Belgesi', type: 'document', description: 'Document Registry kullanılır; aynı belge tekrar yüklenmez, mevcut belge referanslanabilir.' },
             { name: 'notes', label: 'Notlar', type: 'textarea', colSpan: 2 },
           ],
         },
@@ -838,15 +838,15 @@ function buildExitLifecycleWizardSteps(
 function buildWorkPaymentWizardSection(): RecordLifecycleWizardStep['sections'][number] {
   return {
     id: 'work-payment',
-    title: 'Ãœcret ve Ã‡alÄ±ÅŸma DÃ¼zeni',
-    description: 'Bu alanlar tÃ¼m istihdam tipleri iÃ§in desteklenir.',
+    title: 'Ücret ve Çalışma Düzeni',
+    description: 'Bu alanlar tüm istihdam tipleri için desteklenir.',
     fields: [
-      { name: 'payment_type', label: 'Ãœcret Tipi', type: 'select', options: PAYMENT_TYPE_OPTIONS },
-      { name: 'gross_net_type', label: 'BrÃ¼t / Net', type: 'select', options: GROSS_NET_OPTIONS },
+      { name: 'payment_type', label: 'Ücret Tipi', type: 'select', options: PAYMENT_TYPE_OPTIONS },
+      { name: 'gross_net_type', label: 'Brüt / Net', type: 'select', options: GROSS_NET_OPTIONS },
       { name: 'currency', label: 'Para Birimi', type: 'select', options: CURRENCY_OPTIONS },
-      { name: 'payment_period', label: 'Ã–deme Periyodu', type: 'select', options: PAYMENT_PERIOD_OPTIONS },
-      { name: 'weekly_working_days', label: 'HaftalÄ±k Ã‡alÄ±ÅŸma GÃ¼nÃ¼', type: 'number' },
-      { name: 'daily_working_hours', label: 'GÃ¼nlÃ¼k Ã‡alÄ±ÅŸma Saati', type: 'number' },
+      { name: 'payment_period', label: 'Ödeme Periyodu', type: 'select', options: PAYMENT_PERIOD_OPTIONS },
+      { name: 'weekly_working_days', label: 'Haftalık Çalışma Günü', type: 'number' },
+      { name: 'daily_working_hours', label: 'Günlük Çalışma Saati', type: 'number' },
       ...workBooleanFields.map(field => ({
         name: field.field,
         label: field.label,

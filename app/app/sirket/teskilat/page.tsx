@@ -26,8 +26,8 @@ import { organizationService } from '@/lib/services/organizationService'
 import { createProgressiveFormLoadStages } from '@/lib/forms/progressiveFormLoading'
 
 type PageState = 'list' | 'create-unit' | 'view-unit' | 'edit-unit' | 'create-position'
-type UnitStatus = 'Aktif' | 'Pasif' | 'KapatÄ±ldÄ±' | 'BirleÅŸtirildi' | 'TaÅŸÄ±ndÄ±'
-type PositionStatus = 'Aktif' | 'Pasif' | 'KapatÄ±ldÄ±' | 'Donduruldu'
+type UnitStatus = 'Aktif' | 'Pasif' | 'Kapatıldı' | 'Birleştirildi' | 'Taşındı'
+type PositionStatus = 'Aktif' | 'Pasif' | 'Kapatıldı' | 'Donduruldu'
 
 interface UnitType {
   id: string
@@ -92,10 +92,10 @@ interface HistoryEntry {
   user?: string
 }
 
-const defaultUnitTypes = ['Åirket', 'Genel MÃ¼dÃ¼rlÃ¼k', 'DirektÃ¶rlÃ¼k', 'MÃ¼dÃ¼rlÃ¼k', 'Departman', 'BÃ¶lÃ¼m', 'TakÄ±m', 'Åube', 'Ofis', 'Operasyon', 'Proje Ofisi', 'Komite', 'Kurul', 'DiÄŸer']
-const unitStatuses: UnitStatus[] = ['Aktif', 'Pasif', 'KapatÄ±ldÄ±', 'BirleÅŸtirildi', 'TaÅŸÄ±ndÄ±']
-const positionStatuses: PositionStatus[] = ['Aktif', 'Pasif', 'KapatÄ±ldÄ±', 'Donduruldu']
-const locationOptions = ['Merkez', 'Fabrika', 'Åube', 'Ofis', 'Depo', 'Saha', 'MaÄŸaza', 'DiÄŸer'].map((value) => ({ value, label: value }))
+const defaultUnitTypes = ['Şirket', 'Genel Müdürlük', 'Direktörlük', 'Müdürlük', 'Departman', 'Bölüm', 'Takım', 'Şube', 'Ofis', 'Operasyon', 'Proje Ofisi', 'Komite', 'Kurul', 'Diğer']
+const unitStatuses: UnitStatus[] = ['Aktif', 'Pasif', 'Kapatıldı', 'Birleştirildi', 'Taşındı']
+const positionStatuses: PositionStatus[] = ['Aktif', 'Pasif', 'Kapatıldı', 'Donduruldu']
+const locationOptions = ['Merkez', 'Fabrika', 'Şube', 'Ofis', 'Depo', 'Saha', 'Mağaza', 'Diğer'].map((value) => ({ value, label: value }))
 
 export default function TeskilatPage() {
   const [units, setUnits] = useState<OrganizationUnit[]>([])
@@ -160,7 +160,7 @@ export default function TeskilatPage() {
 
   useEffect(() => {
     if (pageState !== 'list') {
-      loadCompanyOptions().catch(error => setToast(error instanceof Error ? error.message : 'Åirket seÃ§enekleri yÃ¼klenemedi'))
+      loadCompanyOptions().catch(error => setToast(error instanceof Error ? error.message : 'Şirket seçenekleri yüklenemedi'))
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pageState])
@@ -181,62 +181,62 @@ export default function TeskilatPage() {
   const overlayPositions = useMemo(() => positionOverlayUnit ? positions.filter((position) => position.unit_id === positionOverlayUnit.id && !position.is_deleted) : [], [positions, positionOverlayUnit])
 
   const columns: ColumnDef[] = [
-    { key: 'name', label: 'Birim AdÄ±', type: 'text', width: 300, render: (_, row) => <TreeNameCell row={row} openIds={openIds} setOpenIds={setOpenIds} /> },
+    { key: 'name', label: 'Birim Adı', type: 'text', width: 300, render: (_, row) => <TreeNameCell row={row} openIds={openIds} setOpenIds={setOpenIds} /> },
     { key: 'type_label', label: 'Tip', type: 'text', width: 150, render: (_, row) => <TypeBadge label={row.type_label} color={row.type_color} /> },
-    { key: 'parent_name', label: 'Ãœst Birim', type: 'text', width: 180 },
+    { key: 'parent_name', label: 'Üst Birim', type: 'text', width: 180 },
     { key: 'position_count', label: 'Kadro', type: 'number', width: 90 },
-    { key: 'filled_count', label: 'Ã‡alÄ±ÅŸan', type: 'number', width: 90 },
-    { key: 'open_count', label: 'BoÅŸ', type: 'number', width: 80 },
-    { key: 'location_name', label: 'YerleÅŸke', type: 'text', width: 130 },
+    { key: 'filled_count', label: 'Çalışan', type: 'number', width: 90 },
+    { key: 'open_count', label: 'Boş', type: 'number', width: 80 },
+    { key: 'location_name', label: 'Yerleşke', type: 'text', width: 130 },
     { key: 'status', label: 'Durum', type: 'enum', width: 120 },
-    { key: 'actions', label: 'Ä°ÅŸlemler', type: 'text', width: 230, render: (_, row) => <UnitActions unit={row} onView={openView} onEdit={openEdit} onPositions={setPositionOverlayUnit} onAddChild={openChildCreate} onRollback={rollbackUnit} /> },
+    { key: 'actions', label: 'İşlemler', type: 'text', width: 230, render: (_, row) => <UnitActions unit={row} onView={openView} onEdit={openEdit} onPositions={setPositionOverlayUnit} onAddChild={openChildCreate} onRollback={rollbackUnit} /> },
   ]
 
   const widgets: WidgetDef<any>[] = useMemo(() => [
     { key: 'unit-count', label: 'Aktif Birim', render: () => units.filter((unit) => !unit.is_deleted).length },
     { key: 'positions', label: 'Toplam Kadro', render: () => positions.filter((position) => !position.is_deleted).reduce((sum, position) => sum + numberValue(position.norm_count, 1), 0) },
     { key: 'filled', label: 'Dolu', render: () => positions.filter((position) => !position.is_deleted).reduce((sum, position) => sum + numberValue(position.active_count), 0) },
-    { key: 'open', label: 'BoÅŸ', render: () => positions.filter((position) => !position.is_deleted).reduce((sum, position) => sum + Math.max(numberValue(position.norm_count, 1) - numberValue(position.active_count), 0), 0) },
+    { key: 'open', label: 'Boş', render: () => positions.filter((position) => !position.is_deleted).reduce((sum, position) => sum + Math.max(numberValue(position.norm_count, 1) - numberValue(position.active_count), 0), 0) },
   ], [positions, units])
 
   const heroFields: FormField[] = [
-    { name: 'name', label: 'Birim AdÄ±', type: 'text', required: true },
-    { name: 'short_name', label: 'Birim KÄ±sa AdÄ±', type: 'text' },
+    { name: 'name', label: 'Birim Adı', type: 'text', required: true },
+    { name: 'short_name', label: 'Birim Kısa Adı', type: 'text' },
     { name: 'unit_type_id', label: 'Birim Tipi', type: 'select', required: true, options: unitTypeOptions },
-    { name: 'parent_unit_id', label: 'Ãœst Birim', type: 'select', options: unitOptions.filter((option) => option.value !== selectedUnit?.id) },
-    { name: 'company_id', label: 'BaÄŸlÄ± Åirket', type: 'select', required: true, options: companies },
+    { name: 'parent_unit_id', label: 'Üst Birim', type: 'select', options: unitOptions.filter((option) => option.value !== selectedUnit?.id) },
+    { name: 'company_id', label: 'Bağlı Şirket', type: 'select', required: true, options: companies },
     { name: 'status', label: 'Durum', type: 'select', required: true, options: unitStatuses.map((status) => ({ value: status, label: status })) },
-    { name: 'start_date', label: 'KuruluÅŸ Tarihi', type: 'date' },
+    { name: 'start_date', label: 'Kuruluş Tarihi', type: 'date' },
     { name: 'code', label: 'Kod', type: 'text' },
-    { name: 'location_name', label: 'YerleÅŸke', type: 'select', options: locationOptions },
+    { name: 'location_name', label: 'Yerleşke', type: 'select', options: locationOptions },
   ]
 
   const tabs: FormTab[] = [
     { id: 'kadro', label: 'Kadro', fields: [
       { name: 'positions', label: 'Kadrolar', type: 'custom', colSpan: 3, render: ({ readOnly }) => <PositionsTab unit={selectedUnit} positions={selectedPositions} readOnly={readOnly} openOverlay={() => selectedUnit && setPositionOverlayUnit(selectedUnit)} openCreate={() => openPositionCreate(selectedUnit)} /> },
     ] },
-    { id: 'butce', label: 'BÃ¼tÃ§e', fields: [
-      { name: 'budget_code', label: 'BÃ¼tÃ§e Kodu', type: 'text' },
-      { name: 'budget_note', label: 'BÃ¼tÃ§e Notu', type: 'textarea', colSpan: 3 },
+    { id: 'butce', label: 'Bütçe', fields: [
+      { name: 'budget_code', label: 'Bütçe Kodu', type: 'text' },
+      { name: 'budget_note', label: 'Bütçe Notu', type: 'textarea', colSpan: 3 },
     ] },
   ]
 
   const positionHeroFields: FormField[] = [
     { name: 'unit_id', label: 'Birim', type: 'select', required: true, options: unitOptions },
-    { name: 'title', label: 'Pozisyon AdÄ± / Ãœnvan', type: 'text', required: true },
+    { name: 'title', label: 'Pozisyon Adı / Ünvan', type: 'text', required: true },
     { name: 'grade', label: 'Kademe', type: 'text' },
-    { name: 'reports_to_position_id', label: 'BaÄŸlÄ± Ãœst Pozisyon', type: 'select', options: positionOptions },
+    { name: 'reports_to_position_id', label: 'Bağlı Üst Pozisyon', type: 'select', options: positionOptions },
     { name: 'is_manager', label: 'Amir mi', type: 'checkbox' },
     { name: 'norm_count', label: 'Norm Adet', type: 'number', required: true },
     { name: 'active_count', label: 'Aktif Dolu', type: 'number' },
-    { name: 'budget_code', label: 'BÃ¼tÃ§e Kodu', type: 'text' },
-    { name: 'work_type', label: 'Ã‡alÄ±ÅŸma Tipi', type: 'select', options: ['Tam ZamanlÄ±', 'YarÄ± ZamanlÄ±', 'Proje BazlÄ±', 'DÃ¶nemsel', 'Uzaktan'].map((value) => ({ value, label: value })) },
+    { name: 'budget_code', label: 'Bütçe Kodu', type: 'text' },
+    { name: 'work_type', label: 'Çalışma Tipi', type: 'select', options: ['Tam Zamanlı', 'Yarı Zamanlı', 'Proje Bazlı', 'Dönemsel', 'Uzaktan'].map((value) => ({ value, label: value })) },
     { name: 'status', label: 'Durum', type: 'select', options: positionStatuses.map((status) => ({ value: status, label: status })) },
   ]
 
   const positionTabs: FormTab[] = [
     { id: 'genel', label: 'Genel', fields: [{ name: 'notes', label: 'Notlar', type: 'textarea', colSpan: 3 }] },
-    { id: 'gecmis', label: 'GeÃ§miÅŸ', fields: [{ name: 'history', label: 'GeÃ§miÅŸ', type: 'custom', colSpan: 3, render: () => <Timeline history={[]} /> }] },
+    { id: 'gecmis', label: 'Geçmiş', fields: [{ name: 'history', label: 'Geçmiş', type: 'custom', colSpan: 3, render: () => <Timeline history={[]} /> }] },
   ]
 
   async function saveUnit(data: Record<string, any>, mode: FormMode) {
@@ -290,10 +290,10 @@ export default function TeskilatPage() {
     const response = await fetch(`/api/organization?entity=unit&id=${unit.id}`, { method: 'DELETE' })
     const payload = await response.json().catch(() => ({}))
     if (!response.ok) {
-      setToast(payload.error || 'Birim geri alÄ±namadÄ±')
+      setToast(payload.error || 'Birim geri alınamadı')
       return
     }
-    setToast(`${unitName(unit)} geri alÄ±ndÄ±. ${payload.clearedEmployeeCount || 0} Ã§alÄ±ÅŸanÄ±n birim ve gÃ¶rev alanÄ± boÅŸaltÄ±ldÄ±.`)
+    setToast(`${unitName(unit)} geri alındı. ${payload.clearedEmployeeCount || 0} çalışanın birim ve görev alanı boşaltıldı.`)
     await loadData(true)
   }
 
@@ -335,8 +335,8 @@ export default function TeskilatPage() {
       <PageBanner
         mode={pageState === 'list' ? 'list' : 'form'}
         formMode={formMode}
-        title={pageState === 'list' ? 'TeÅŸkilat ve Kadro' : pageIsPositionForm ? 'Yeni Kadro' : pageState === 'create-unit' ? 'Yeni Birim' : unitName(selectedUnit)}
-        subtitle={pageState === 'list' ? 'Ä°Ã§ organizasyon, birim hiyerarÅŸisi ve norm kadro yÃ¶netimi' : pageIsPositionForm ? 'SeÃ§ili birime pozisyon tanÄ±mlayÄ±n' : 'Birim detaylarÄ±nÄ± yÃ¶netin'}
+        title={pageState === 'list' ? 'Teşkilat ve Kadro' : pageIsPositionForm ? 'Yeni Kadro' : pageState === 'create-unit' ? 'Yeni Birim' : unitName(selectedUnit)}
+        subtitle={pageState === 'list' ? 'İç organizasyon, birim hiyerarşisi ve norm kadro yönetimi' : pageIsPositionForm ? 'Seçili birime pozisyon tanımlayın' : 'Birim detaylarını yönetin'}
         icon={<Network size={24} />}
         onAddClick={openCreate}
         addButtonText="Ekle"
@@ -359,7 +359,7 @@ export default function TeskilatPage() {
             loading={loading}
             defaultView="list"
             storageKey="teskilat-kadro-tree"
-            emptyText="Birim kaydÄ± bulunamadÄ±"
+            emptyText="Birim kaydı bulunamadı"
             onRowClick={openView}
             onRefresh={() => loadData(true)}
             showActions={false}
@@ -370,7 +370,7 @@ export default function TeskilatPage() {
       {pageState !== 'list' && !pageIsPositionForm && (
         <EntityForm
           mode={formMode}
-          entityName="TeÅŸkilat"
+          entityName="Teşkilat"
           entityNameSingular="Birim"
           heroFields={heroFields.map((field) => withHistory(field, selectedUnit?.history))}
           tabs={tabs}
@@ -391,7 +391,7 @@ export default function TeskilatPage() {
           entityNameSingular="Kadro"
           heroFields={positionHeroFields}
           tabs={positionTabs}
-          data={{ unit_id: selectedUnit?.id || '', norm_count: 1, active_count: 0, status: 'Aktif', work_type: 'Tam ZamanlÄ±' }}
+          data={{ unit_id: selectedUnit?.id || '', norm_count: 1, active_count: 0, status: 'Aktif', work_type: 'Tam Zamanlı' }}
           saving={saving}
           loadStages={formLoadStages}
           onSave={savePosition}
@@ -446,24 +446,24 @@ function UnitActions({ unit, onView, onEdit, onPositions, onAddChild, onRollback
   }
   return (
     <div className="flex items-center gap-1">
-      <button title="GÃ¶rÃ¼ntÃ¼le" onClick={(event) => action(event, () => onView(unit))} className="rounded-md p-1.5 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800"><Eye size={15} /></button>
-      <button title="DÃ¼zenle" onClick={(event) => action(event, () => onEdit(unit))} className="rounded-md p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/40"><Edit3 size={15} /></button>
+      <button title="Görüntüle" onClick={(event) => action(event, () => onView(unit))} className="rounded-md p-1.5 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800"><Eye size={15} /></button>
+      <button title="Düzenle" onClick={(event) => action(event, () => onEdit(unit))} className="rounded-md p-1.5 text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/40"><Edit3 size={15} /></button>
       <button title="Kadro" onClick={(event) => action(event, () => onPositions(unit))} className="rounded-md px-2 py-1.5 text-xs font-medium text-purple-700 hover:bg-purple-50 dark:text-purple-300 dark:hover:bg-purple-950/40">Kadro</button>
       <button title="Alt Birim Ekle" onClick={(event) => action(event, () => onAddChild(unit))} className="rounded-md p-1.5 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40"><Plus size={15} /></button>
       {canRollback && <button title="Geri Al" onClick={(event) => action(event, () => onRollback(unit))} className="rounded-md p-1.5 text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/40"><Clock size={15} /></button>}
-      <button title="GeÃ§miÅŸ" onClick={(event) => event.stopPropagation()} className="rounded-md p-1.5 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800"><History size={15} /></button>
+      <button title="Geçmiş" onClick={(event) => event.stopPropagation()} className="rounded-md p-1.5 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-800"><History size={15} /></button>
     </div>
   )
 }
 
 function PositionsTab({ unit, positions, readOnly, openOverlay, openCreate }: { unit: OrganizationUnit | null; positions: Position[]; readOnly: boolean; openOverlay: () => void; openCreate: () => void }) {
-  if (!unit) return <div className="rounded-lg border border-dashed border-gray-300 p-6 text-sm text-gray-500 dark:border-gray-700">Ã–nce birim seÃ§in.</div>
+  if (!unit) return <div className="rounded-lg border border-dashed border-gray-300 p-6 text-sm text-gray-500 dark:border-gray-700">Önce birim seçin.</div>
   return (
     <div className="space-y-3">
       <div className="flex justify-end gap-2">
         {!readOnly && <button type="button" onClick={openCreate} className="rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700">Kadro Ekle</button>}
-        {!readOnly && <button type="button" className="rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium dark:border-gray-700">Pozisyon AÃ§</button>}
-        <button type="button" onClick={openOverlay} className="rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium dark:border-gray-700">Overlayde GÃ¶r</button>
+        {!readOnly && <button type="button" className="rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium dark:border-gray-700">Pozisyon Aç</button>}
+        <button type="button" onClick={openOverlay} className="rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium dark:border-gray-700">Overlayde Gör</button>
       </div>
       <PositionTable positions={positions} />
     </div>
@@ -478,7 +478,7 @@ function PositionOverlay({ unit, positions, onClose, onCreate, onDelete }: { uni
       <div className="flex items-center justify-between border-b border-gray-200 p-4 dark:border-gray-700">
         <div>
           <h3 className="text-base font-semibold text-gray-900 dark:text-white">{unitName(unit)}</h3>
-          <p className="text-sm text-gray-500">Kadro hÄ±zlÄ± operasyon paneli</p>
+          <p className="text-sm text-gray-500">Kadro hızlı operasyon paneli</p>
         </div>
         <button onClick={onClose} className="rounded-md p-2 hover:bg-gray-100 dark:hover:bg-gray-800"><X size={18} /></button>
       </div>
@@ -503,27 +503,27 @@ function PositionTable({ positions, onDelete }: { positions: Position[]; onDelet
     <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
       <table className="min-w-full divide-y divide-gray-200 text-sm dark:divide-gray-700">
         <thead className="bg-gray-50 text-left text-xs font-medium uppercase text-gray-500 dark:bg-gray-800 dark:text-gray-400">
-          <tr><th className="px-3 py-2">Unvan</th><th className="px-3 py-2">Kademe</th><th className="px-3 py-2">Amir mi</th><th className="px-3 py-2">Norm Adet</th><th className="px-3 py-2">Dolu Adet</th><th className="px-3 py-2">BoÅŸ Adet</th><th className="px-3 py-2">Durum</th><th className="px-3 py-2">Ä°ÅŸlemler</th></tr>
+          <tr><th className="px-3 py-2">Unvan</th><th className="px-3 py-2">Kademe</th><th className="px-3 py-2">Amir mi</th><th className="px-3 py-2">Norm Adet</th><th className="px-3 py-2">Dolu Adet</th><th className="px-3 py-2">Boş Adet</th><th className="px-3 py-2">Durum</th><th className="px-3 py-2">İşlemler</th></tr>
         </thead>
         <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-          {positions.length === 0 && <tr><td colSpan={8} className="px-3 py-8 text-center text-gray-500">Bu birimde kadro tanÄ±mlÄ± deÄŸcity.</td></tr>}
+          {positions.length === 0 && <tr><td colSpan={8} className="px-3 py-8 text-center text-gray-500">Bu birimde kadro tanımlı değcity.</td></tr>}
           {positions.map((position) => {
             const open = Math.max(numberValue(position.norm_count, 1) - numberValue(position.active_count), 0)
             return (
               <tr key={position.id}>
-                <td className="px-3 py-2 font-medium text-gray-900 dark:text-white">{positionTitle(position)}<div className="text-xs font-normal text-gray-500">{position.employees ? `${position.employees.first_name} ${position.employees.last_name}` : 'BoÅŸ Kadro'}</div></td>
+                <td className="px-3 py-2 font-medium text-gray-900 dark:text-white">{positionTitle(position)}<div className="text-xs font-normal text-gray-500">{position.employees ? `${position.employees.first_name} ${position.employees.last_name}` : 'Boş Kadro'}</div></td>
                 <td className="px-3 py-2">{position.grade || '-'}</td>
-                <td className="px-3 py-2">{position.is_manager ? 'Evet' : 'HayÄ±r'}</td>
+                <td className="px-3 py-2">{position.is_manager ? 'Evet' : 'Hayır'}</td>
                 <td className="px-3 py-2">{numberValue(position.norm_count, 1)}</td>
                 <td className="px-3 py-2">{numberValue(position.active_count)}</td>
                 <td className="px-3 py-2">{open}</td>
                 <td className="px-3 py-2"><StatusPill value={position.status || (position.status === 'open' ? 'Aktif' : 'Aktif')} /></td>
                 <td className="px-3 py-2">
                   <div className="flex flex-wrap gap-1">
-                    {open > 0 && <button className="rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 dark:bg-blue-950/40 dark:text-blue-300">Ä°ÅŸe AlÄ±m Talebi AÃ§</button>}
-                    {open > 0 && <button className="rounded-md bg-gray-100 px-2 py-1 text-xs font-medium text-gray-700 dark:bg-gray-800 dark:text-gray-300">Ä°lan AÃ§</button>}
-                    {open > 0 && <button className="rounded-md bg-gray-100 px-2 py-1 text-xs font-medium text-gray-700 dark:bg-gray-800 dark:text-gray-300">Transfer Talebi AÃ§</button>}
-                    {onDelete && <button onClick={() => onDelete(position)} className="rounded-md bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700 dark:bg-amber-950/40 dark:text-amber-300">PasifleÅŸtir</button>}
+                    {open > 0 && <button className="rounded-md bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700 dark:bg-blue-950/40 dark:text-blue-300">İşe Alım Talebi Aç</button>}
+                    {open > 0 && <button className="rounded-md bg-gray-100 px-2 py-1 text-xs font-medium text-gray-700 dark:bg-gray-800 dark:text-gray-300">İlan Aç</button>}
+                    {open > 0 && <button className="rounded-md bg-gray-100 px-2 py-1 text-xs font-medium text-gray-700 dark:bg-gray-800 dark:text-gray-300">Transfer Talebi Aç</button>}
+                    {onDelete && <button onClick={() => onDelete(position)} className="rounded-md bg-amber-50 px-2 py-1 text-xs font-medium text-amber-700 dark:bg-amber-950/40 dark:text-amber-300">Pasifleştir</button>}
                   </div>
                 </td>
               </tr>
@@ -541,12 +541,12 @@ function StatsPanel({ positions }: { positions: Position[] }) {
   const pct = norm ? Math.round((filled / norm) * 100) : 0
   return (
     <div className="space-y-3 rounded-lg border border-gray-200 p-4 dark:border-gray-700">
-      <h4 className="flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-white"><BarChart3 size={16} />Ä°statistikler</h4>
+      <h4 className="flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-white"><BarChart3 size={16} />İstatistikler</h4>
       <div className="grid grid-cols-2 gap-3">
-        <MiniStat label="AÃ§Ä±k / Dolu Kadro" value={`${Math.max(norm - filled, 0)} / ${filled}`} />
-        <MiniStat label="BÃ¼tÃ§e Doluluk" value={`%${pct}`} tone={pct > 80 ? 'green' : 'amber'} />
-        <MiniStat label="Cinsiyet DaÄŸÄ±lÄ±mÄ±" value="ModÃ¼l baÄŸlantÄ±lÄ±" />
-        <MiniStat label="Turnover" value="HazÄ±r" />
+        <MiniStat label="Açık / Dolu Kadro" value={`${Math.max(norm - filled, 0)} / ${filled}`} />
+        <MiniStat label="Bütçe Doluluk" value={`%${pct}`} tone={pct > 80 ? 'green' : 'amber'} />
+        <MiniStat label="Cinsiyet Dağılımı" value="Modül bağlantılı" />
+        <MiniStat label="Turnover" value="Hazır" />
       </div>
     </div>
   )
@@ -559,7 +559,7 @@ function UnitTypeManager({ unitTypes, saveType }: { unitTypes: UnitType[]; saveT
       <div className="grid grid-cols-1 gap-2 md:grid-cols-4">
         <input value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} placeholder="Yeni Tip Ekle / Rename Et" className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900" />
         <input value={draft.color} onChange={(e) => setDraft({ ...draft, color: e.target.value })} type="color" className="h-10 rounded-lg border border-gray-300 px-2 dark:border-gray-700 dark:bg-gray-900" />
-        <input value={draft.icon} onChange={(e) => setDraft({ ...draft, icon: e.target.value })} placeholder="Ä°kon" className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900" />
+        <input value={draft.icon} onChange={(e) => setDraft({ ...draft, icon: e.target.value })} placeholder="İkon" className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900" />
         <select value={draft.parent_type_id} onChange={(e) => setDraft({ ...draft, parent_type_id: e.target.value })} className="rounded-lg border border-gray-300 px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900"><option value="">Parent Type</option>{unitTypes.map((type) => <option key={type.id} value={type.id}>{type.name}</option>)}</select>
       </div>
       <button type="button" onClick={() => draft.name && saveType(draft).then(() => setDraft({ name: '', color: '#2563eb', icon: 'Layers', parent_type_id: '' }))} className="rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white">Tipi Kaydet</button>
@@ -569,8 +569,8 @@ function UnitTypeManager({ unitTypes, saveType }: { unitTypes: UnitType[]; saveT
 }
 
 function Timeline({ history }: { history: HistoryEntry[] }) {
-  if (!history.length) return <div className="rounded-lg border border-dashed border-gray-300 p-6 text-sm text-gray-500 dark:border-gray-700">GeÃ§miÅŸ kaydÄ± yok.</div>
-  return <div className="space-y-2">{history.map((item, index) => <div key={index} className="rounded-lg border border-gray-200 px-3 py-2 text-sm dark:border-gray-700">{item.field}: {String(item.old_value ?? item.value ?? '-')} â†’ {String(item.new_value ?? '-')} <span className="text-xs text-gray-500">{formatDateTime(item.changed_at || item.date)}</span></div>)}</div>
+  if (!history.length) return <div className="rounded-lg border border-dashed border-gray-300 p-6 text-sm text-gray-500 dark:border-gray-700">Geçmiş kaydı yok.</div>
+  return <div className="space-y-2">{history.map((item, index) => <div key={index} className="rounded-lg border border-gray-200 px-3 py-2 text-sm dark:border-gray-700">{item.field}: {String(item.old_value ?? item.value ?? '-')} → {String(item.new_value ?? '-')} <span className="text-xs text-gray-500">{formatDateTime(item.changed_at || item.date)}</span></div>)}</div>
 }
 
 function MiniStat({ label, value, tone = 'default' }: { label: string; value: ReactNode; tone?: 'default' | 'green' | 'amber' }) {
@@ -644,7 +644,7 @@ function normalizeUnitForForm(unit: OrganizationUnit) {
 
 function withHistory(field: FormField, history?: HistoryEntry[]) {
   const rows = (history || []).filter((item) => item.field === field.name)
-  return rows.length ? { ...field, history: rows.map((item) => ({ value: `${item.old_value ?? '-'} â†’ ${item.new_value ?? '-'}`, date: item.changed_at || item.date || '', user: item.changed_by || item.user })) } : field
+  return rows.length ? { ...field, history: rows.map((item) => ({ value: `${item.old_value ?? '-'} → ${item.new_value ?? '-'}`, date: item.changed_at || item.date || '', user: item.changed_by || item.user })) } : field
 }
 
 function unitName(unit?: OrganizationUnit | null) {
@@ -652,7 +652,7 @@ function unitName(unit?: OrganizationUnit | null) {
 }
 
 function isCompanyUnit(unit: OrganizationUnit) {
-  return unit.unit_type?.slug === 'company' || unit.unit_type?.name === 'Åirket' || unit.type === 'company'
+  return unit.unit_type?.slug === 'company' || unit.unit_type?.name === 'Şirket' || unit.type === 'company'
 }
 
 function positionTitle(position: Position) {

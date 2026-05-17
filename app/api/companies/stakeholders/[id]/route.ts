@@ -20,7 +20,7 @@ function buildHistory(current: Record<string, any>, updates: Record<string, any>
       old_value: previousValue ?? '',
       new_value: nextValue ?? '',
       changed_at: new Date().toISOString(),
-      changed_by: 'Sistem KullanÄ±cÄ±sÄ±',
+      changed_by: 'Sistem Kullanıcısı',
     })
   })
 
@@ -88,7 +88,7 @@ export async function DELETE(
   const supabase = createServiceClient()
   const { error } = await supabase
     .from('stakeholders')
-    .update({ status: 'Pasif', is_deleted: true, deleted_at: new Date().toISOString(), deleted_by: 'Sistem KullanÄ±cÄ±sÄ±' })
+    .update({ status: 'Pasif', is_deleted: true, deleted_at: new Date().toISOString(), deleted_by: 'Sistem Kullanıcısı' })
     .eq('id', id)
 
   if (error) return NextResponse.json({ error: error.message, code: error.code || 'SOFT_DELETE_FAILED' }, { status: 500 })

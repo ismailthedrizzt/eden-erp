@@ -10,13 +10,13 @@ const SirketSchema = z.object({
   organization_id: z.string().uuid().optional().nullable(),
   trade_name: z.string().min(1).max(300),
   short_name: z.string().min(1).max(120),
-  tax_number: z.string().regex(/^\d{10}$/, 'VKN 10 haneli sayÄ± olmalÄ±dÄ±r'),
+  tax_number: z.string().regex(/^\d{10}$/, 'VKN 10 haneli sayı olmalıdır'),
   tax_office: z.string().min(1).max(120),
   mersis_number: z.string().optional(),
   trade_registry_number: z.string().optional(),
   foundation_date: z.string().optional(),
   company_type: z.enum(['anonim', 'limited', 'komandit', 'kolektif', 'adi_komandit', 'adi_sirket']).optional(),
-  country: z.string().min(1).default('TÃ¼rkiye'),
+  country: z.string().min(1).default('Türkiye'),
   city: z.string().min(1).max(120),
   district: z.string().min(1).max(120),
   address: z.string().min(1),
@@ -119,7 +119,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({
         data: [],
         meta: listMeta(listQuery, 0),
-        warning: 'companies tablosu bulunamadÄ±. supabase/migrations/20260516_initial_schema.sql uygulanmalÄ±.'
+        warning: 'companies tablosu bulunamadı. supabase/migrations/20260516_initial_schema.sql uygulanmalı.'
       })
     }
 
@@ -138,7 +138,7 @@ export async function POST(request: NextRequest) {
   const parsed = SirketSchema.safeParse(body)
 
   if (!parsed.success) {
-    return NextResponse.json({ error: 'GeÃ§ersiz veri', code: 'VALIDATION_FAILED', details: parsed.error.flatten() }, { status: 400 })
+    return NextResponse.json({ error: 'Geçersiz veri', code: 'VALIDATION_FAILED', details: parsed.error.flatten() }, { status: 400 })
   }
 
   const {
@@ -187,7 +187,7 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     return NextResponse.json({
-      error: error instanceof Error ? error.message : 'Åirket ana kurum kaydÄ±na baÄŸlanamadÄ±',
+      error: error instanceof Error ? error.message : 'Şirket ana kurum kaydına bağlanamadı',
       code: 'MASTER_ORGANIZATION_LINK_FAILED',
     }, { status: 500 })
   }
@@ -282,10 +282,10 @@ async function attachCompanyOrganization(supabase: ReturnType<typeof createServi
       metadata_json: { source: 'companies_create' },
     }).select('id').single()).data?.id
 
-    if (!organizationId) throw new Error('Ana kurum kaydÄ± oluÅŸturulamadÄ±.')
+    if (!organizationId) throw new Error('Ana kurum kaydı oluşturulamadı.')
     return { ...companyData, organization_id: organizationId }
   } catch (error) {
-    throw error instanceof Error ? error : new Error('Åirket ana kurum kaydÄ±na baÄŸlanamadÄ±.')
+    throw error instanceof Error ? error : new Error('Şirket ana kurum kaydına bağlanamadı.')
   }
 }
 
@@ -296,13 +296,13 @@ async function ensureCompanyRootUnit(
 ) {
   const { data: unitType, error: typeError } = await supabase
     .from('organization_unit_types')
-    .upsert({ name: 'Åirket', slug: 'company', color: '#0f766e', icon: 'Building2', sort_order: 0, is_active: true }, { onConflict: 'slug' })
+    .upsert({ name: 'Şirket', slug: 'company', color: '#0f766e', icon: 'Building2', sort_order: 0, is_active: true }, { onConflict: 'slug' })
     .select('id')
     .single()
 
   if (typeError) return typeError
 
-  const companyName = companyData.trade_name || companyData.short_name || 'Åirket'
+  const companyName = companyData.trade_name || companyData.short_name || 'Şirket'
   const { data: existing, error: findError } = await supabase
     .from('organization_units')
     .select('id')

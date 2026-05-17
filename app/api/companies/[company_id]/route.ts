@@ -9,7 +9,7 @@ const COMPANY_NACE_SELECT = 'id,company_id,nace_code_id,is_primary,status,start_
 const SirketUpdateSchema = z.object({
   trade_name: z.string().min(1).max(300).optional(),
   short_name: z.string().min(1).max(120).optional(),
-  tax_number: z.string().regex(/^\d{10}$/, 'VKN 10 haneli sayÄ± olmalÄ±dÄ±r').optional(),
+  tax_number: z.string().regex(/^\d{10}$/, 'VKN 10 haneli sayı olmalıdır').optional(),
   tax_office: z.string().min(1).max(120).optional(),
   mersis_number: z.string().optional(),
   trade_registry_number: z.string().optional(),
@@ -103,7 +103,7 @@ export async function GET(
 
     if (error) {
       if (error.code === 'PGRST116') {
-        return NextResponse.json({ error: 'Åirket bulunamadÄ±', code: 'COMPANY_NOT_FOUND' }, { status: 404 })
+        return NextResponse.json({ error: 'Şirket bulunamadı', code: 'COMPANY_NOT_FOUND' }, { status: 404 })
       }
       return NextResponse.json({ error: error.message, code: error.code || 'FETCH_FAILED' }, { status: 500 })
     }
@@ -125,7 +125,7 @@ export async function GET(
 
     if (error) {
       if (error.code === 'PGRST116') {
-        return NextResponse.json({ error: 'Åirket bulunamadÄ±', code: 'COMPANY_NOT_FOUND' }, { status: 404 })
+        return NextResponse.json({ error: 'Şirket bulunamadı', code: 'COMPANY_NOT_FOUND' }, { status: 404 })
       }
       return NextResponse.json({ error: error.message, code: error.code || 'FETCH_FAILED' }, { status: 500 })
     }
@@ -141,7 +141,7 @@ export async function GET(
 
   if (error) {
     if (error.code === 'PGRST116') {
-      return NextResponse.json({ error: 'Åirket bulunamadÄ±', code: 'COMPANY_NOT_FOUND' }, { status: 404 })
+      return NextResponse.json({ error: 'Şirket bulunamadı', code: 'COMPANY_NOT_FOUND' }, { status: 404 })
     }
     return NextResponse.json({ error: error.message, code: error.code || 'FETCH_FAILED' }, { status: 500 })
   }
@@ -278,7 +278,7 @@ export async function PATCH(
   const parsed = SirketUpdateSchema.safeParse(body)
 
   if (!parsed.success) {
-    return NextResponse.json({ error: 'GeÃ§ersiz veri', code: 'VALIDATION_FAILED', details: parsed.error.flatten() }, { status: 400 })
+    return NextResponse.json({ error: 'Geçersiz veri', code: 'VALIDATION_FAILED', details: parsed.error.flatten() }, { status: 400 })
   }
 
   const { data: current, error: currentError } = await supabase
@@ -289,7 +289,7 @@ export async function PATCH(
 
   if (currentError) {
     if (currentError.code === 'PGRST116') {
-      return NextResponse.json({ error: 'Åirket bulunamadÄ±', code: 'COMPANY_NOT_FOUND' }, { status: 404 })
+      return NextResponse.json({ error: 'Şirket bulunamadı', code: 'COMPANY_NOT_FOUND' }, { status: 404 })
     }
     return NextResponse.json({ error: currentError.message, code: currentError.code || 'FETCH_FAILED' }, { status: 500 })
   }
@@ -344,7 +344,7 @@ export async function PATCH(
 
   if (error) {
     if (error.code === 'PGRST116') {
-      return NextResponse.json({ error: 'Åirket bulunamadÄ±', code: 'COMPANY_NOT_FOUND' }, { status: 404 })
+      return NextResponse.json({ error: 'Şirket bulunamadı', code: 'COMPANY_NOT_FOUND' }, { status: 404 })
     }
     return NextResponse.json({ error: error.message, code: error.code || 'UPDATE_FAILED' }, { status: 500 })
   }
@@ -393,13 +393,13 @@ async function ensureCompanyRootUnit(
 ) {
   const { data: unitType, error: typeError } = await supabase
     .from('organization_unit_types')
-    .upsert({ name: 'Åirket', slug: 'company', color: '#0f766e', icon: 'Building2', sort_order: 0, is_active: true }, { onConflict: 'slug' })
+    .upsert({ name: 'Şirket', slug: 'company', color: '#0f766e', icon: 'Building2', sort_order: 0, is_active: true }, { onConflict: 'slug' })
     .select('id')
     .single()
 
   if (typeError) return typeError
 
-  const companyName = companyData.trade_name || companyData.short_name || 'Åirket'
+  const companyName = companyData.trade_name || companyData.short_name || 'Şirket'
   const { data: existing, error: findError } = await supabase
     .from('organization_units')
     .select('id')
@@ -459,7 +459,7 @@ function buildFieldHistory(current: Record<string, any>, updates: Record<string,
       {
         value: previousValue ?? '',
         date: new Date().toISOString(),
-        user: 'Sistem KullanÄ±cÄ±sÄ±',
+        user: 'Sistem Kullanıcısı',
       },
     ]
   })
@@ -487,7 +487,7 @@ async function replaceCompanyPartners(supabase: ReturnType<typeof createServiceC
         is_deleted: true,
         status: 'Pasif',
         deleted_at: new Date().toISOString(),
-        deleted_by: 'Sistem KullanÄ±cÄ±sÄ±',
+        deleted_by: 'Sistem Kullanıcısı',
       })
       .in('id', missingIds)
 
@@ -542,7 +542,7 @@ function mapPartnerForDb(companyId: string, partner: Record<string, any>) {
     history: partner.history || [],
     is_deleted: !!partner.is_deleted,
     deleted_at: partner.deleted_at || null,
-    deleted_by: partner.is_deleted ? 'Sistem KullanÄ±cÄ±sÄ±' : null,
+    deleted_by: partner.is_deleted ? 'Sistem Kullanıcısı' : null,
   }
 }
 
@@ -566,7 +566,7 @@ async function replaceCompanyRepresentatives(supabase: ReturnType<typeof createS
         is_deleted: true,
         status: 'Pasif',
         deleted_at: new Date().toISOString(),
-        deleted_by: 'Sistem KullanÄ±cÄ±sÄ±',
+        deleted_by: 'Sistem Kullanıcısı',
       })
       .in('id', missingIds)
 
@@ -637,7 +637,7 @@ function mapRepresentativeForDb(companyId: string, representative: Record<string
     history: representative.history || [],
     is_deleted: !!representative.is_deleted,
     deleted_at: representative.deleted_at || null,
-    deleted_by: representative.is_deleted ? 'Sistem KullanÄ±cÄ±sÄ±' : null,
+    deleted_by: representative.is_deleted ? 'Sistem Kullanıcısı' : null,
   }
 }
 
@@ -689,7 +689,7 @@ async function replaceCompanyPublicData(
           is_deleted: true,
           status: 'Pasif',
           deleted_at: new Date().toISOString(),
-          deleted_by: 'Sistem KullanÄ±cÄ±sÄ±',
+          deleted_by: 'Sistem Kullanıcısı',
         })
         .in('id', missingIds)
 

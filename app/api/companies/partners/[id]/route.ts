@@ -19,7 +19,7 @@ function buildFieldHistory(current: Record<string, any>, updates: Record<string,
       old_value: previousValue ?? '',
       new_value: nextValue ?? '',
       changed_at: new Date().toISOString(),
-      changed_by: 'Sistem KullanÄ±cÄ±sÄ±',
+      changed_by: 'Sistem Kullanıcısı',
     })
   })
 
@@ -195,7 +195,7 @@ async function hydratePartnerMasterAssets(supabase: ReturnType<typeof createServ
     const photoLogo = hasPhoto
       ? partner.photo_logo
       : employee?.photo_url
-        ? [{ slotId: 'photo_logo', name: 'FotoÄŸraf', previewUrl: employee.photo_url, url: employee.photo_url }]
+        ? [{ slotId: 'photo_logo', name: 'Fotoğraf', previewUrl: employee.photo_url, url: employee.photo_url }]
         : []
 
     const documents = hasDocuments ? partner.partner_documents : normalizeEmployeeDocuments(employee || {})

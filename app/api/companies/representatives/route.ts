@@ -14,7 +14,7 @@ const RepresentativeSchema = z.object({
   source_id: z.string().optional(),
   display_name: z.string().min(1),
   identity_number: z.string().optional(),
-  status: z.enum(['Aktif', 'Pasif', 'AskÄ±da', 'SÃ¼resi DolmuÅŸ']).default('Aktif'),
+  status: z.enum(['Aktif', 'Pasif', 'Askıda', 'Süresi Dolmuş']).default('Aktif'),
   start_date: z.string().min(1),
   end_date: z.string().optional(),
   primary_authority_type: z.string().min(1),
@@ -79,12 +79,12 @@ export async function POST(request: NextRequest) {
   const parsed = RepresentativeSchema.safeParse(body)
 
   if (!parsed.success) {
-    return NextResponse.json({ error: 'GeÃ§ersiz veri', code: 'VALIDATION_FAILED', details: parsed.error.flatten() }, { status: 400 })
+    return NextResponse.json({ error: 'Geçersiz veri', code: 'VALIDATION_FAILED', details: parsed.error.flatten() }, { status: 400 })
   }
 
   const row = await attachRepresentativeIdentity(supabase, parsed.data, mapRepresentativeForDb(parsed.data))
   if (!row.company_id) {
-    return NextResponse.json({ error: 'BaÄŸlÄ± ÅŸirket bulunamadÄ±', code: 'COMPANY_REQUIRED' }, { status: 400 })
+    return NextResponse.json({ error: 'Bağlı şirket bulunamadı', code: 'COMPANY_REQUIRED' }, { status: 400 })
   }
 
   const { data, error } = await supabase
