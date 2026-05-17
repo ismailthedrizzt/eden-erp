@@ -10,10 +10,9 @@ Zorunlu alanlar:
 
 - Ticari Ünvan
 - Şirket Türü
-- VKN
 - Vergi Dairesi
 
-VKN sadece 10 haneli sayı kabul eder. Kısa Ünvan veri kaydında ve liste görünümünde şirketin kısa adı olarak kullanılır.
+VKN Temel Kimlik Sorgulama/Oluşturma alanında alınır ve sadece 10 haneli sayı kabul eder. Kısa Ünvan veri kaydında ve liste görünümünde şirketin kısa adı olarak kullanılabilir, ancak zorunlu değildir.
 
 Beklenen resimler:
 
@@ -24,8 +23,7 @@ Beklenen belgeler:
 
 - Vergi Levhası
 - Ticaret Sicil Gazetesi
-- İmza Sirküleri
-- Faaliyet Belgesi
+- Sicil Tasdiknamesi
 
 Belge yükleyici PDF ve resim dosyalarında thumbnail/preview gösterir.
 

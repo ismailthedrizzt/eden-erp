@@ -121,6 +121,7 @@ const NAV: NavItem[] = [
     label: 'Sistem Yönetimi',
     icon: <Settings size={16} />,
     children: [
+      { label: 'Kurulum Sihirbazı', href: '/app/sistem/kurulum' },
       { label: 'Modül Lisansları', href: '/app/sistem/module-licenses' },
       { label: 'Sistem Parametreleri', href: '/app/sistem/system-parameters' },
       { label: 'Entegrasyon Ayarları', href: '/app/sistem/entegrasyon-ayarlari', moduleKey: 'sistem', submoduleKey: 'entegrasyon-ayarlari' },

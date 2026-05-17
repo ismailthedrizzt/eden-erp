@@ -6,10 +6,15 @@ import { EntityBankAccountsService } from '@/lib/modules/entity-bank-accounts/en
 import { listMeta, listMetaFromRows, listRange, parseListQuery } from '@/lib/api/listEndpoint'
 import { getServerResponseCache, serverListCacheKey, setServerResponseCache } from '@/lib/api/serverResponseCache'
 
+const OptionalShortNameSchema = z.preprocess(
+  value => value === '' ? undefined : value,
+  z.string().min(1).max(120).optional()
+)
+
 const SirketSchema = z.object({
   organization_id: z.string().uuid().optional().nullable(),
   trade_name: z.string().min(1).max(300),
-  short_name: z.string().min(1).max(120),
+  short_name: OptionalShortNameSchema,
   tax_number: z.string().regex(/^\d{10}$/, 'VKN 10 haneli sayı olmalıdır'),
   tax_office: z.string().min(1).max(120),
   mersis_number: z.string().optional(),

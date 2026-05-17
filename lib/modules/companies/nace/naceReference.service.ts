@@ -1,6 +1,7 @@
 import 'server-only'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { systemParameterDefaultValue } from '@/lib/system/systemParameters.config'
+import fallbackNaceCodes from '@/lib/data/nace-codes.json'
 
 export interface NaceReferenceRow {
   nace_code: string
@@ -21,6 +22,22 @@ interface ImportOptions {
     description?: string
     hazardClass?: string
   }
+}
+
+interface FallbackNacePayload {
+  sourceName?: string
+  sourceUrl?: string
+  sourceReference?: string
+  records?: Array<{
+    nace_code: string
+    description: string
+  }>
+}
+
+const FALLBACK_NACE_PAYLOAD = fallbackNaceCodes as FallbackNacePayload
+const FALLBACK_NACE_SOURCE = {
+  name: FALLBACK_NACE_PAYLOAD.sourceName || 'Yerel NACE referans listesi',
+  url: FALLBACK_NACE_PAYLOAD.sourceReference || FALLBACK_NACE_PAYLOAD.sourceUrl || 'lib/data/nace-codes.json',
 }
 
 const TRUSTED_SOURCES = [
@@ -173,14 +190,30 @@ export class NaceReferenceUpdateService {
         const response = await fetch(discovered.url, { cache: 'no-store' })
         if (!response.ok) throw new Error(`HTTP ${response.status}`)
         const buffer = Buffer.from(await response.arrayBuffer())
-        return importService.importBuffer(buffer, discovered.filename, {
+        const result = await importService.importBuffer(buffer, discovered.filename, {
           sourceName: source.name,
           sourceUrl: discovered.url,
           sourceReference: 'referenceUrl' in source ? source.referenceUrl : source.url,
         })
+        if (!result.warning) return result
       } catch (error) {
         await this.log('failed', source, error instanceof Error ? error.message : 'Kaynak okunamadı')
       }
+    }
+
+    try {
+      const fallbackRows = await buildFallbackNaceRows(this.supabase)
+      if (fallbackRows.length > 0) {
+        const result = await importService.upsertRows(fallbackRows)
+        await this.log(
+          'success',
+          FALLBACK_NACE_SOURCE,
+          `Yerel NACE referans listesi içe aktarıldı (${fallbackRows.length} kayıt).`
+        )
+        return { ...result, rows: fallbackRows }
+      }
+    } catch (error) {
+      await this.log('failed', FALLBACK_NACE_SOURCE, error instanceof Error ? error.message : 'Yerel NACE listesi okunamadı')
     }
 
     return {
@@ -332,6 +365,22 @@ async function getDefaultHazardClass(supabase: SupabaseClient): Promise<NaceRefe
     .eq('parameter_key', 'nace.default_hazard_class')
     .maybeSingle()
   return normalizeHazardClass((data as any)?.value?.value) || fallback
+}
+
+async function buildFallbackNaceRows(supabase: SupabaseClient): Promise<NaceReferenceRow[]> {
+  const defaultHazardClass = await getDefaultHazardClass(supabase)
+  const records = Array.isArray(FALLBACK_NACE_PAYLOAD.records) ? FALLBACK_NACE_PAYLOAD.records : []
+
+  return records
+    .map<NaceReferenceRow>(record => ({
+      nace_code: normalizeNaceCode(record.nace_code),
+      description: String(record.description || '').trim(),
+      hazard_class: defaultHazardClass,
+      source_name: FALLBACK_NACE_PAYLOAD.sourceName || 'Yerel NACE referans listesi',
+      source_url: FALLBACK_NACE_PAYLOAD.sourceUrl || null,
+      source_reference: FALLBACK_NACE_PAYLOAD.sourceReference || null,
+    }))
+    .filter(row => /^\d{2}(\.\d{1,2}){0,2}$/.test(row.nace_code) && !!row.description)
 }
 
 function findColumn(headers: string[], explicit: string | undefined, candidates: string[]) {

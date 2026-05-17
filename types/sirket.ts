@@ -81,7 +81,7 @@ export interface Sirket {
   
   // Kimlik - Identity
   trade_name: string
-  short_name: string
+  short_name?: string | null
   tax_number: string
   tax_office: string
   
@@ -355,7 +355,7 @@ export interface SirketTemsilci {
 export interface SirketDokuman {
   id: string
   company_id: string
-  dokuman_turu: 'vergi_levhasi' | 'ticaret_sicil' | 'imza_sirkuleri' | 'faaliyet_belgesi' | 'diger'
+  dokuman_turu: 'vergi_levhasi' | 'ticaret_sicil_gazetesi' | 'sicil_tasdiknamesi' | 'diger'
   dosya_adi: string
   dosya_url: string
   yuklenme_tarihi: string
@@ -374,9 +374,8 @@ export interface SirketLogo {
 // Form için gerekli yapılandırılmış doküman tipleri
 export const SIRKET_DOKUMAN_TIPLERI = [
   { value: 'vergi_levhasi', label: 'Vergi Levhası', required: true },
-  { value: 'ticaret_sicil', label: 'Ticaret Sicil Gazetesi', required: true },
-  { value: 'imza_sirkuleri', label: 'İmza Sirküleri', required: true },
-  { value: 'faaliyet_belgesi', label: 'Faaliyet Belgesi', required: false },
+  { value: 'ticaret_sicil_gazetesi', label: 'Ticaret Sicil Gazetesi', required: true },
+  { value: 'sicil_tasdiknamesi', label: 'Sicil Tasdiknamesi', required: true },
   { value: 'diger', label: 'Diğer Belgeler', required: false }
 ] as const
 

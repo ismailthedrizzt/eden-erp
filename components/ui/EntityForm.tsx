@@ -380,14 +380,15 @@ function MasterSummaryHero({
     ? readFirst(master, prefill, ['legal_name', 'trade_name', 'display_name', 'short_name'])
     : readFirst(master, prefill, ['full_name', 'display_name'])
       || [readFirst(master, prefill, ['first_name']), readFirst(master, prefill, ['last_name'])].filter(Boolean).join(' ')
+  const summaryField = (...names: string[]) => requiredFields.find(field => names.includes(field.name))
+  const taxOfficeField = summaryField('tax_office')
 
   const items = kind === 'organization'
     ? effectiveMode === 'organizationIdentity'
       ? [
           { label: 'Ticari Unvan', value: readFirst(master, prefill, ['legal_name', 'trade_name', 'display_name']), fieldKeys: ['trade_name', 'legal_name'] },
           { label: 'Kısa Ünvan', value: readFirst(master, prefill, ['short_name']), fieldKeys: ['short_name'] },
-          { label: 'VKN', value: readFirst(master, prefill, ['tax_number']), fieldKeys: ['tax_number'] },
-          { label: 'Vergi Dairesi', value: readFirst(master, prefill, ['tax_office']), fieldKeys: ['tax_office'] },
+          { label: 'Vergi Dairesi', value: readFirst(master, prefill, ['tax_office']), fieldKeys: ['tax_office'], inputType: 'select' as const, searchable: taxOfficeField?.searchable, options: taxOfficeField?.options || [] },
           { label: 'Şirket Türü', value: readFirst(master, prefill, ['organization_type', 'company_type']), fieldKeys: ['company_type', 'organization_type'], inputType: 'select' as const, options: [
             { value: 'anonim', label: 'Sermaye Şirketi - Anonim' },
             { value: 'limited', label: 'Sermaye Şirketi - Limited' },
@@ -550,6 +551,7 @@ function MasterSummaryItemValue({
   const fieldName = item.fieldKeys ? pickEditableFieldName(sourceData, item.fieldKeys) : null
   const canEdit = !!fieldName && !!onFieldChange && !readOnly
   const inputClass = formControlClass({ state: readOnly ? 'neutral' : validationState.status, rounded: 'md', size: 'field', className: 'mt-1' })
+  const editableFieldName = fieldName || item.fieldKeys?.[0] || item.label
 
   if (!canEdit) {
     return <div className="mt-0.5 truncate text-[13px] leading-5 text-gray-900 dark:text-white">{formatSummaryValue(item.value, item)}</div>
@@ -557,10 +559,22 @@ function MasterSummaryItemValue({
 
   if (item.inputType === 'select') {
     const selectValue = normalizeSummarySelectValue(item.value, item.options)
+    if (item.searchable) {
+      return (
+        <SearchableSelectField
+          field={{ name: editableFieldName, label: item.label, type: 'select', searchable: true, options: item.options || [] }}
+          value={selectValue}
+          disabled={readOnly}
+          className={inputClass}
+          onChange={(nextValue) => onFieldChange(editableFieldName, nextValue, item.fieldKeys)}
+        />
+      )
+    }
+
     return (
       <select
         value={selectValue}
-        onChange={(event) => onFieldChange(fieldName, event.target.value, item.fieldKeys)}
+        onChange={(event) => onFieldChange(editableFieldName, event.target.value, item.fieldKeys)}
         className={inputClass}
       >
         <option value="">Seçiniz</option>
@@ -576,7 +590,7 @@ function MasterSummaryItemValue({
       type="text"
       value={item.inputType === 'date' ? formatDateForDisplay(item.value) : String(item.value || '')}
       placeholder={item.inputType === 'date' ? 'gg.aa.yyyy' : undefined}
-      onChange={(event) => onFieldChange(fieldName, item.inputType === 'date' ? normalizeDateDisplayInput(event.target.value) : event.target.value, item.fieldKeys)}
+      onChange={(event) => onFieldChange(editableFieldName, item.inputType === 'date' ? normalizeDateDisplayInput(event.target.value) : event.target.value, item.fieldKeys)}
       className={inputClass}
     />
   )
@@ -799,6 +813,7 @@ type MasterSummaryItem = {
   value: unknown
   fieldKeys?: string[]
   inputType?: 'text' | 'date' | 'select'
+  searchable?: boolean
   options?: { value: string; label: string }[]
 }
 

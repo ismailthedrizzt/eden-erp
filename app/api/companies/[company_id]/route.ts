@@ -6,9 +6,14 @@ import { EntityBankAccountsService } from '@/lib/modules/entity-bank-accounts/en
 
 const COMPANY_NACE_SELECT = 'id,company_id,nace_code_id,is_primary,status,start_date,end_date,notes,is_deleted,created_at,updated_at,version,nace_code:nace_codes(id,nace_code,description,hazard_class,source_name,source_url,source_reference,valid_from,valid_to,is_active,last_checked_at)'
 
+const OptionalShortNameSchema = z.preprocess(
+  value => value === '' ? undefined : value,
+  z.string().min(1).max(120).optional()
+)
+
 const SirketUpdateSchema = z.object({
   trade_name: z.string().min(1).max(300).optional(),
-  short_name: z.string().min(1).max(120).optional(),
+  short_name: OptionalShortNameSchema,
   tax_number: z.string().regex(/^\d{10}$/, 'VKN 10 haneli sayı olmalıdır').optional(),
   tax_office: z.string().min(1).max(120).optional(),
   mersis_number: z.string().optional(),

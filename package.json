@@ -22,7 +22,8 @@
     "iban:garanti-branches": "node --use-system-ca scripts/update-garanti-bbva-branches.js",
     "iban:isbank-branches": "node --use-system-ca scripts/update-isbank-branches.js",
     "reference:locations": "node scripts/update-turkey-locations.js",
-    "reference:tax-offices": "node scripts/update-tax-offices.js"
+    "reference:tax-offices": "node scripts/update-tax-offices.js",
+    "reference:nace-codes": "node --use-system-ca scripts/update-nace-codes.js"
   },
   "engines": {
     "node": ">=22 <25",

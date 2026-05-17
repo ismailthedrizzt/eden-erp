@@ -6,7 +6,7 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 class CompanyCreate(BaseModel):
     ticari_unvan: str = Field(min_length=1, max_length=300)
-    kisa_unvan: str = Field(min_length=1, max_length=120)
+    kisa_unvan: str | None = Field(default=None, min_length=1, max_length=120)
     vkn_tckn: str = Field(pattern=r"^\d{10}$")
     vergi_dairesi: str = Field(min_length=1, max_length=120)
     sirket_turu: str | None = None

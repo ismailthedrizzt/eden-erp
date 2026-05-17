@@ -138,7 +138,7 @@ const columns: ColumnDef[] = [
 ]
 
 const heroFields: FormField[] = [
-  { name: 'short_name', label: 'Kısa Ünvan', type: 'text', required: true },
+  { name: 'short_name', label: 'Kısa Ünvan', type: 'text' },
   { name: 'trade_name', label: 'Ticari Unvan', type: 'text', required: true, colSpan: 2 },
   { name: 'tax_office', label: 'Vergi Dairesi', type: 'select', required: true, searchable: true },
   {
@@ -341,7 +341,7 @@ export default function SirketlerPage() {
       render: () => <LifecycleStatusBadge status={pageState === 'create' ? 'draft' : getCompanyLifecycleStatus(selectedSirket)} />,
     } as FormField,
     ...heroFields.map(field =>
-      field.name === 'tax_office' && taxOfficeOptions.length > 0
+      field.name === 'tax_office'
         ? { ...field, options: taxOfficeOptions }
         : field
     ),
@@ -815,7 +815,7 @@ export default function SirketlerPage() {
     : {
         mode: 'form' as const,
         formMode,
-        title: pageState === 'create' ? 'Yeni Şirket' : selectedSirket?.short_name || 'Şirket Detayı',
+        title: pageState === 'create' ? 'Yeni Şirket' : selectedSirket?.short_name || selectedSirket?.trade_name || 'Şirket Detayı',
         subtitle: pageState === 'create'
           ? 'Yeni şirket kaydı oluştur'
           : pageState === 'edit'
@@ -1028,9 +1028,9 @@ export default function SirketlerPage() {
             documentSlot={{
               dataField: 'hero_documents',
               slots: [
-                { id: 'general_company_document', title: 'Genel Şirket Belgesi', required: false },
-                { id: 'brand_document', title: 'Marka / Kurumsal Belge', required: false },
-                { id: 'other_profile_document', title: 'Diğer Profil Belgesi', required: false },
+                { id: 'vergi_levhasi', title: 'Vergi Levhası', required: true },
+                { id: 'ticaret_sicil_gazetesi', title: 'Ticaret Sicil Gazetesi', required: true },
+                { id: 'sicil_tasdiknamesi', title: 'Sicil Tasdiknamesi', required: true },
               ],
               acceptedTypes: ['application/pdf', 'image/png', 'image/jpeg', 'image/webp'],
               maxSizeMB: 20,
