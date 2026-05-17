@@ -97,8 +97,56 @@ function omitNullishValues(value: Record<string, any>) {
 const baseEmployeeDetailColumns = [
   'id',
   'person_id',
-  'first_name',
-  'last_name',
+  'created_at',
+  'updated_at',
+]
+
+const employeeSgkColumns = [
+  'sgk_entry_method',
+  'sgk_entry_reference_no',
+  'sgk_entry_reported_by',
+  'sgk_entry_insurance_branch',
+  'sgk_entry_duty_code',
+  'sgk_entry_occupation_code',
+  'sgk_entry_csgb_business_line',
+  'sgk_entry_has_disability',
+  'sgk_entry_has_prior_conviction',
+  'sgk_entry_education_code',
+  'sgk_entry_graduation_year',
+  'sgk_entry_graduation_department',
+  'sgk_entry_partial_day_count',
+  'sgk_exit_method',
+  'sgk_exit_reference_no',
+  'sgk_exit_reported_by',
+  'sgk_exit_reason',
+  'sgk_exit_occupation_code',
+  'sgk_exit_csgb_business_line',
+  'sgk_exit_percentage_wage_method',
+  'sgk_exit_previous_document_type',
+  'sgk_exit_previous_earned_wage',
+  'sgk_exit_current_document_type',
+  'sgk_exit_current_earned_wage',
+]
+
+const employeeHeroColumns = [
+  'id',
+  'person_id',
+  'created_at',
+  'updated_at',
+]
+
+const employeeMediaColumns = [
+  'id',
+  'updated_at',
+]
+
+const optionalEmployeeMediaColumns = [
+  'photo_url',
+  'cv_document',
+  'diploma_document',
+]
+
+const optionalEmployeeDetailColumns = [
   'nationality',
   'national_id',
   'passport_no',
@@ -147,67 +195,6 @@ const baseEmployeeDetailColumns = [
   'cv_document',
   'diploma_document',
   'field_history',
-  'created_at',
-  'updated_at',
-]
-
-const employeeSgkColumns = [
-  'sgk_entry_method',
-  'sgk_entry_reference_no',
-  'sgk_entry_reported_by',
-  'sgk_entry_insurance_branch',
-  'sgk_entry_duty_code',
-  'sgk_entry_occupation_code',
-  'sgk_entry_csgb_business_line',
-  'sgk_entry_has_disability',
-  'sgk_entry_has_prior_conviction',
-  'sgk_entry_education_code',
-  'sgk_entry_graduation_year',
-  'sgk_entry_graduation_department',
-  'sgk_entry_partial_day_count',
-  'sgk_exit_method',
-  'sgk_exit_reference_no',
-  'sgk_exit_reported_by',
-  'sgk_exit_reason',
-  'sgk_exit_occupation_code',
-  'sgk_exit_csgb_business_line',
-  'sgk_exit_percentage_wage_method',
-  'sgk_exit_previous_document_type',
-  'sgk_exit_previous_earned_wage',
-  'sgk_exit_current_document_type',
-  'sgk_exit_current_earned_wage',
-]
-
-const employeeHeroColumns = [
-  'id',
-  'person_id',
-  'first_name',
-  'last_name',
-  'nationality',
-  'national_id',
-  'passport_no',
-  'gender',
-  'birth_place',
-  'birth_date',
-  'blood_type',
-  'job_title',
-  'work_status',
-  'company_id',
-  'unit_id',
-  'position_id',
-  'created_at',
-  'updated_at',
-]
-
-const employeeMediaColumns = [
-  'id',
-  'photo_url',
-  'cv_document',
-  'diploma_document',
-  'updated_at',
-]
-
-const optionalEmployeeDetailColumns = [
   'employee_no',
   'employment_status',
   'record_status',
@@ -227,6 +214,8 @@ async function fetchEmployeeDetail(
   optionalColumns = optionalEmployeeDetailColumns
 ): Promise<{ data: Record<string, any> | null; error: any }> {
   let enabledOptionalColumns = [...optionalColumns]
+  let useLegacyColumns = false
+  const legacyOptionalColumns = ['record_status']
 
   while (true) {
     const result = await supabase
@@ -237,6 +226,11 @@ async function fetchEmployeeDetail(
 
     const missingColumn = missingEmployeeColumn(result.error, enabledOptionalColumns)
     if (missingColumn) {
+      if (!useLegacyColumns && optionalColumns.length > legacyOptionalColumns.length) {
+        useLegacyColumns = true
+        enabledOptionalColumns = enabledOptionalColumns.filter(column => legacyOptionalColumns.includes(column))
+        continue
+      }
       enabledOptionalColumns = enabledOptionalColumns.filter((column) => column !== missingColumn)
       continue
     }
@@ -258,11 +252,12 @@ export async function GET(
     const { data, error } = await fetchEmployeeDetail(supabase, id, employeeHeroColumns, ['employee_no', 'employment_status', 'record_status', 'start_date'])
     if (error) return handleEmployeeDetailError(error)
     if (!data) return NextResponse.json({ error: 'Çalışan bulunamadı', code: 'EMPLOYEE_NOT_FOUND' }, { status: 404 })
-    return NextResponse.json({ data })
+    const hydrated = data.person_id ? await hydrateMasterContact(supabase, 'person', data) : data
+    return NextResponse.json({ data: hydrated })
   }
 
   if (section === 'media') {
-    const { data, error } = await fetchEmployeeDetail(supabase, id, employeeMediaColumns, [])
+    const { data, error } = await fetchEmployeeDetail(supabase, id, employeeMediaColumns, optionalEmployeeMediaColumns)
     if (error) return handleEmployeeDetailError(error)
     if (!data) return NextResponse.json({ error: 'Çalışan bulunamadı', code: 'EMPLOYEE_NOT_FOUND' }, { status: 404 })
     return NextResponse.json({ data })
@@ -368,7 +363,7 @@ export async function PATCH(
     .select()
     .single()
 
-  let missingColumn = missingEmployeeColumn(error, ['employment_contract_type', 'work_type', 'marital_status'])
+  let missingColumn = missingEmployeeColumn(error, Object.keys(updatePayload))
   while (missingColumn) {
     updatePayload = { ...updatePayload }
     delete (updatePayload as Record<string, any>)[missingColumn]
@@ -384,7 +379,7 @@ export async function PATCH(
       .single()
     data = retry.data
     error = retry.error
-    missingColumn = missingEmployeeColumn(error, ['employment_contract_type', 'work_type', 'marital_status'])
+    missingColumn = missingEmployeeColumn(error, Object.keys(updatePayload))
   }
 
   if (error) {

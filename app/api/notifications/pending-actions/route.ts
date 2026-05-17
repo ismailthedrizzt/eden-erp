@@ -21,12 +21,7 @@ export async function GET() {
       'id,short_name,trade_name,record_status,company_status,updated_at,created_at,is_deleted',
       query => query.in('record_status', ['draft', 'liquidation']).eq('is_deleted', false).limit(25)
     ),
-    safeList(
-      supabase,
-      'employees',
-      'id,first_name,last_name,record_status,employment_status,updated_at,created_at',
-      query => query.in('record_status', ['draft']).limit(25)
-    ),
+    fetchPendingEmployees(supabase),
     safeList(
       supabase,
       'ownership_transactions',
@@ -56,7 +51,7 @@ export async function GET() {
     ...(employees.data || []).map((employee: any) => ({
       id: `employee-${employee.id}`,
       type: 'employee_entry',
-      title: [employee.first_name, employee.last_name].filter(Boolean).join(' ') || 'Çalışan kaydı',
+      title: employee.display_name || 'Çalışan kaydı',
       subtitle: 'İşe giriş wizardı bekliyor',
       statusLabel: 'Taslak',
       href: `/app/ik/personel?pending=entry&id=${employee.id}`,
@@ -95,6 +90,50 @@ async function safeList(
   const result = await apply(supabase.from(table).select(select))
   if (result.error && isMissingSourceError(result.error)) return { data: [], error: null }
   return result
+}
+
+async function fetchPendingEmployees(supabase: ReturnType<typeof createServiceClient>) {
+  const result = await supabase
+    .from('employees')
+    .select('id,person_id,record_status,employment_status,updated_at,created_at')
+    .in('record_status', ['draft'])
+    .limit(25)
+
+  if (result.error) {
+    if (isMissingSourceError(result.error)) return { data: [], error: null }
+    return result
+  }
+
+  const employees = result.data || []
+  const personIds = Array.from(new Set(
+    employees
+      .map((employee: any) => employee.person_id)
+      .filter((id: unknown): id is string => typeof id === 'string' && id.length > 0)
+  ))
+
+  if (personIds.length === 0) return { data: employees, error: null }
+
+  const people = await safeList(
+    supabase,
+    'persons',
+    'id,first_name,last_name,full_name',
+    query => query.in('id', personIds)
+  )
+  if (people.error) return people
+
+  const personById = new Map((people.data || []).map((person: any) => [person.id, person]))
+  return {
+    data: employees.map((employee: any) => {
+      const person = personById.get(employee.person_id) as Record<string, any> | undefined
+      return {
+        ...employee,
+        first_name: person?.first_name || '',
+        last_name: person?.last_name || '',
+        display_name: person?.full_name || [person?.first_name, person?.last_name].filter(Boolean).join(' '),
+      }
+    }),
+    error: null,
+  }
 }
 
 function isMissingSourceError(error: any) {

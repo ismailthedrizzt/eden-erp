@@ -4,7 +4,6 @@ import { listMetaFromRows, listRange, parseListQuery } from '@/lib/api/listEndpo
 
 const missingTableCodes = ['42P01', 'PGRST205']
 const VEHICLE_SELECT = 'id,company_id,category,vehicle_type,brand,manufacturer,model,model_year,color,registration_no,vin_serial_no,status,ownership_type,assigned_to_employee_id,operator_employee_id,location_name,current_usage_value,usage_unit,fuel_type,insurance_policy_no,insurance_expiry_date,inspection_expiry_date,maintenance_due_date,purchase_date,lease_start_date,lease_end_date,budget_code,cost_center,is_deleted,created_at,updated_at'
-const EMPLOYEE_OPTION_SELECT = 'id,first_name,last_name,title,email'
 const COMPANY_OPTION_SELECT = 'id,trade_name,short_name'
 const trackedFields = [
   'category',
@@ -37,14 +36,14 @@ export async function GET(request: NextRequest) {
   const sortColumn = sortMap[listQuery.sort || ''] || 'created_at'
 
   if (refsOnly) {
-    const [{ data: employees }, { data: companies }] = await Promise.all([
-      supabase.from('employees').select(EMPLOYEE_OPTION_SELECT).order('first_name'),
+    const [employees, { data: companies }] = await Promise.all([
+      fetchVehicleEmployees(supabase),
       supabase.from('companies').select(COMPANY_OPTION_SELECT).eq('is_deleted', false).order('short_name'),
     ])
 
     return NextResponse.json({
       vehicles: [],
-      employees: employees || [],
+      employees: employees.data || [],
       companies: companies || [],
     })
   }
@@ -59,12 +58,12 @@ export async function GET(request: NextRequest) {
   const vehicleRows = vehicles || []
   const employeeIds = uniqueIds(vehicleRows.flatMap(vehicle => [vehicle.assigned_to_employee_id, vehicle.operator_employee_id]))
   const companyIds = uniqueIds(vehicleRows.map(vehicle => vehicle.company_id))
-  const [{ data: employees }, { data: companies }] = await Promise.all([
+  const [employees, { data: companies }] = await Promise.all([
     includeReferences
-      ? supabase.from('employees').select(EMPLOYEE_OPTION_SELECT).order('first_name')
+      ? fetchVehicleEmployees(supabase)
       : employeeIds.length
-        ? supabase.from('employees').select(EMPLOYEE_OPTION_SELECT).in('id', employeeIds)
-        : Promise.resolve({ data: [] }),
+        ? fetchVehicleEmployees(supabase, employeeIds)
+        : Promise.resolve({ data: [], error: null }),
     includeReferences
       ? supabase.from('companies').select(COMPANY_OPTION_SELECT).eq('is_deleted', false).order('short_name')
       : companyIds.length
@@ -74,9 +73,9 @@ export async function GET(request: NextRequest) {
 
   if (error) {
     if (missingTableCodes.includes(error.code || '')) {
-      return NextResponse.json({
+        return NextResponse.json({
         vehicles: [],
-        employees: employees || [],
+        employees: employees.data || [],
         companies: companies || [],
         warning: 'company_vehicles tablosu bulunamadı. supabase/migrations/20240519_company_vehicles.sql uygulanmalı.',
       })
@@ -85,13 +84,13 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: error.message, code: error.code || 'VEHICLES_FETCH_FAILED' }, { status: 500 })
   }
 
-  const enrichedVehicles = attachPeople(vehicleRows, employees || [], companies || [])
+  const enrichedVehicles = attachPeople(vehicleRows, employees.data || [], companies || [])
 
   return NextResponse.json({
     vehicles: enrichedVehicles,
     data: enrichedVehicles,
     meta: listMetaFromRows(listQuery, enrichedVehicles.length),
-    employees: includeReferences ? employees || [] : [],
+    employees: includeReferences ? employees.data || [] : [],
     companies: includeReferences ? companies || [] : [],
   })
 }
@@ -225,10 +224,63 @@ function attachPeople(vehicles: Record<string, any>[], employees: Record<string,
   }))
 }
 
+async function fetchVehicleEmployees(supabase: ReturnType<typeof createServiceClient>, ids?: string[]) {
+  let query = supabase
+    .from('employees')
+    .select('id,person_id')
+
+  if (ids?.length) query = query.in('id', ids)
+
+  const employees = await query
+  if (employees.error) {
+    if (isMissingSourceError(employees.error)) return { data: [], error: null }
+    return employees
+  }
+
+  const rows = employees.data || []
+  const personIds = uniqueIds(rows.map((employee: any) => employee.person_id))
+  if (personIds.length === 0) return { data: rows, error: null }
+
+  const people = await supabase
+    .from('persons')
+    .select('id,first_name,last_name,full_name,email')
+    .in('id', personIds)
+
+  if (people.error) {
+    if (isMissingSourceError(people.error)) return { data: rows, error: null }
+    return people
+  }
+
+  const personById = new Map((people.data || []).map((person: any) => [person.id, person]))
+  return {
+    data: rows.map((employee: any) => {
+      const person = personById.get(employee.person_id)
+      return {
+        ...employee,
+        first_name: person?.first_name || '',
+        last_name: person?.last_name || '',
+        full_name: person?.full_name || [person?.first_name, person?.last_name].filter(Boolean).join(' '),
+        email: person?.email || '',
+      }
+    }),
+    error: null,
+  }
+}
+
 function emptyToNull(value: unknown) {
   return value === '' || value === undefined ? null : value
 }
 
 function uniqueIds(values: unknown[]) {
   return Array.from(new Set(values.filter((value): value is string => typeof value === 'string' && value.length > 0)))
+}
+
+function isMissingSourceError(error: any) {
+  const message = String(error?.message || '')
+  return error?.code === '42P01'
+    || error?.code === '42703'
+    || error?.code === 'PGRST205'
+    || message.includes('Could not find')
+    || message.includes('does not exist')
+    || message.includes('schema cache')
 }

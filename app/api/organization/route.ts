@@ -8,20 +8,20 @@ const UNIT_TYPE_SELECT = 'id,name,slug,color,icon,parent_type_id,sort_order,is_a
 export async function GET() {
   const supabase = createServiceClient()
 
-  const [{ data: organization_units, error: unitError }, { data: positions, error: positionError }, { data: unitTypes, error: typeError }, { data: employees, error: employeeError }] = await Promise.all([
+  const [{ data: organization_units, error: unitError }, { data: positions, error: positionError }, { data: unitTypes, error: typeError }, employees] = await Promise.all([
     supabase.from('organization_units').select(UNIT_SELECT).order('name'),
     supabase.from('positions').select(POSITION_SELECT).order('title'),
     supabase.from('organization_unit_types').select(UNIT_TYPE_SELECT).order('sort_order', { ascending: true }).order('name'),
-    supabase.from('employees').select('id,first_name,last_name,gender,birth_date'),
+    fetchOrganizationEmployees(supabase),
   ])
 
-  if (unitError) return NextResponse.json({ error: unitError.message, code: unitError.code || 'UNITS_FETCH_FAILED' }, { status: 500 })
-  if (positionError) return NextResponse.json({ error: positionError.message, code: positionError.code || 'POSITIONS_FETCH_FAILED' }, { status: 500 })
+  if (unitError && !isMissingSourceError(unitError)) return NextResponse.json({ error: unitError.message, code: unitError.code || 'UNITS_FETCH_FAILED' }, { status: 500 })
+  if (positionError && !isMissingSourceError(positionError)) return NextResponse.json({ error: positionError.message, code: positionError.code || 'POSITIONS_FETCH_FAILED' }, { status: 500 })
   if (typeError && !['42P01', 'PGRST205'].includes(typeError.code || '')) return NextResponse.json({ error: typeError.message, code: typeError.code || 'UNIT_TYPES_FETCH_FAILED' }, { status: 500 })
-  if (employeeError) return NextResponse.json({ error: employeeError.message, code: employeeError.code || 'EMPLOYEES_FETCH_FAILED' }, { status: 500 })
+  if (employees.error) return NextResponse.json({ error: employees.error.message, code: employees.error.code || 'EMPLOYEES_FETCH_FAILED' }, { status: 500 })
 
   const resolvedUnitTypes = unitTypes || fallbackUnitTypes()
-  return NextResponse.json({ organization_units: attachUnitTypes(organization_units || [], resolvedUnitTypes), positions: attachEmployees(positions || [], employees || []), unitTypes: resolvedUnitTypes })
+  return NextResponse.json({ organization_units: attachUnitTypes(unitError ? [] : organization_units || [], resolvedUnitTypes), positions: attachEmployees(positionError ? [] : positions || [], employees.data || []), unitTypes: resolvedUnitTypes })
 }
 
 export async function POST(request: NextRequest) {
@@ -320,6 +320,52 @@ function attachEmployees(positions: Record<string, any>[], employees: Record<str
   }))
 }
 
+async function fetchOrganizationEmployees(supabase: ReturnType<typeof createServiceClient>) {
+  const employees = await supabase
+    .from('employees')
+    .select('id,person_id')
+
+  if (employees.error) {
+    if (isMissingSourceError(employees.error)) return { data: [], error: null }
+    return employees
+  }
+
+  const rows = employees.data || []
+  const personIds = Array.from(new Set(
+    rows
+      .map((employee: any) => employee.person_id)
+      .filter((id: unknown): id is string => typeof id === 'string' && id.length > 0)
+  ))
+
+  if (personIds.length === 0) return { data: rows, error: null }
+
+  const people = await supabase
+    .from('persons')
+    .select('id,first_name,last_name,full_name,gender,birth_date')
+    .in('id', personIds)
+
+  if (people.error) {
+    if (isMissingSourceError(people.error)) return { data: rows, error: null }
+    return people
+  }
+
+  const personById = new Map((people.data || []).map((person: any) => [person.id, person]))
+  return {
+    data: rows.map((employee: any) => {
+      const person = personById.get(employee.person_id)
+      return {
+        ...employee,
+        first_name: person?.first_name || '',
+        last_name: person?.last_name || '',
+        full_name: person?.full_name || [person?.first_name, person?.last_name].filter(Boolean).join(' '),
+        gender: person?.gender || '',
+        birth_date: person?.birth_date || '',
+      }
+    }),
+    error: null,
+  }
+}
+
 async function attachUnitType(supabase: ReturnType<typeof createServiceClient>, unit: Record<string, any>) {
   if (!unit?.unit_type_id) return { ...unit, unit_type: null }
   const { data } = await supabase
@@ -358,6 +404,16 @@ function fallbackUnitTypes() {
     sort_order: (index + 1) * 10,
     is_active: true,
   }))
+}
+
+function isMissingSourceError(error: any) {
+  const message = String(error?.message || '')
+  return error?.code === '42P01'
+    || error?.code === '42703'
+    || error?.code === 'PGRST205'
+    || message.includes('Could not find')
+    || message.includes('does not exist')
+    || message.includes('schema cache')
 }
 
 function mapPosition(body: Record<string, any>) {

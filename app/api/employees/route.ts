@@ -77,8 +77,12 @@ function omitNullishStrings(value: Record<string, any>) {
 
 const baseEmployeeListColumns = [
   'id',
-  'first_name',
-  'last_name',
+  'person_id',
+  'created_at',
+  'updated_at',
+]
+
+const optionalEmployeeListColumns = [
   'nationality',
   'national_id',
   'passport_no',
@@ -86,18 +90,13 @@ const baseEmployeeListColumns = [
   'birth_date',
   'mobile_phone',
   'email',
+  'photo_url',
   'work_status',
   'sgk_entry_date',
-  'photo_url',
   'company_id',
   'unit_id',
   'position_id',
   'job_title',
-  'created_at',
-  'updated_at',
-]
-
-const optionalEmployeeListColumns = [
   'employee_no',
   'employment_status',
   'record_status',
@@ -147,30 +146,34 @@ export async function GET(request: NextRequest) {
 
   const supabase = createServiceClient()
   const { searchParams } = new URL(request.url)
-  const listQuery = parseListQuery(searchParams, { pageSize: 50, sort: 'last_name', direction: 'asc' })
+  const listQuery = parseListQuery(searchParams, { pageSize: 50, sort: 'updated_at', direction: 'desc' })
   const { from, to } = listRange(listQuery)
   const sortMap: Record<string, string> = {
-    first_name: 'first_name',
-    last_name: 'last_name',
-    employee_no: 'employee_no',
-    national_id: 'national_id',
+    first_name: 'updated_at',
+    last_name: 'updated_at',
+    employee_no: 'updated_at',
+    national_id: 'updated_at',
     work_status: 'work_status',
     created_at: 'created_at',
     updated_at: 'updated_at',
-    company_id: 'company_id',
-    unit_id: 'unit_id',
-    position_id: 'position_id',
+    company_id: 'updated_at',
+    unit_id: 'updated_at',
+    position_id: 'updated_at',
   }
-  const sortColumn = sortMap[listQuery.sort || ''] || 'last_name'
+  let sortColumn = sortMap[listQuery.sort || ''] || 'updated_at'
 
   const unitId = searchParams.get('unit_id')
   const status = searchParams.get('status')
   const search = listQuery.search
   const includePassive = listQuery.includePassive
+  const matchingPersonIds = search ? await findPersonIds(supabase, search) : null
 
-  let enabledOptionalColumns = ['record_status']
+  let enabledOptionalColumns = [...optionalEmployeeListColumns]
   let includeOrganizationRelations = false
+  let useLegacyEmployeeColumns = false
   let canFilterRecordStatus = true
+  let canFilterWorkStatus = true
+  let canFilterUnitId = true
   let data: any[] | null = null
   let error: any = null
 
@@ -191,17 +194,28 @@ export async function GET(request: NextRequest) {
       .range(from, to)
 
     if (!includePassive && canFilterRecordStatus) query = query.neq('record_status', 'passive')
-    if (unitId) query = query.eq('unit_id', unitId)
-    if (status) query = query.eq('work_status', status)
-    if (search) query = query.or(`first_name.ilike.%${search}%,last_name.ilike.%${search}%,national_id.ilike.%${search}%`)
+    if (unitId && canFilterUnitId) query = query.eq('unit_id', unitId)
+    if (status && canFilterWorkStatus) query = query.eq('work_status', status)
+    if (search && matchingPersonIds?.length) query = query.in('person_id', matchingPersonIds)
+    if (search && matchingPersonIds && matchingPersonIds.length === 0) query = query.eq('person_id', '00000000-0000-0000-0000-000000000000')
 
     const result = await query
     data = result.data
     error = result.error
 
-    const missingColumn = missingEmployeeColumn(error, enabledOptionalColumns)
+    const missingColumn = missingEmployeeColumn(error, [...enabledOptionalColumns, 'work_status', 'unit_id'])
     if (missingColumn) {
       if (missingColumn === 'record_status') canFilterRecordStatus = false
+      if (missingColumn === 'work_status') canFilterWorkStatus = false
+      if (missingColumn === 'unit_id') canFilterUnitId = false
+      if (missingColumn === sortColumn) sortColumn = 'updated_at'
+      if (!useLegacyEmployeeColumns && optionalEmployeeListColumns.includes(missingColumn)) {
+        useLegacyEmployeeColumns = true
+        enabledOptionalColumns = ['record_status']
+        if (!baseEmployeeListColumns.includes(sortColumn)) sortColumn = 'updated_at'
+        includeOrganizationRelations = false
+        continue
+      }
       enabledOptionalColumns = enabledOptionalColumns.filter((column) => column !== missingColumn)
       continue
     }
@@ -215,28 +229,33 @@ export async function GET(request: NextRequest) {
   }
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  const people = await fetchPeopleByIds(supabase, (data || []).map((row: any) => row.person_id))
   const companyNames = await fetchCompanyNames(supabase as any, (data || []).map((row: any) => row.company_id))
-  const rows = (data || []).map((row: any) => ({
-    ...row,
-    employee_no: row.employee_no || null,
-    photo_url: lightweightImageUrl(row.photo_url),    full_name: [row.first_name, row.last_name].filter(Boolean).join(' '),
-    national_id: row.national_id || null,
-    passport_no: row.passport_no || null,
-    nationality: row.nationality || null,
-    company_name: row.company_id ? companyNames.get(row.company_id) || null : null,
-    department_name: row.unit?.name || null,
-    position_title: row.position?.title || row.job_title || null,
-    hire_date: row.entry_date || row.sgk_entry_date || row.start_date || null,
-    employment_type: row.work_type || null,
-    employment_status: row.employment_status || row.work_status || null,
-    record_status: row.record_status || (row.sgk_entry_date ? 'active' : 'draft'),
-    phone: row.mobile_phone || null,
-    gender: row.gender || null,
-    birth_date: row.birth_date || null,
-    education_level: null,
-    sgk_status: row.sgk_entry_date ? 'active' : 'pending',
-    status: row.work_status || null,
-  }))
+  const rows = (data || []).map((row: any) => {
+    const personFields = employeePersonFields(row, people.get(row.person_id))
+    return {
+      ...row,
+      ...personFields,
+      employee_no: row.employee_no || null,
+      photo_url: lightweightImageUrl(row.photo_url),
+      national_id: personFields.national_id,
+      passport_no: personFields.passport_no,
+      nationality: personFields.nationality,
+      company_name: row.company_id ? companyNames.get(row.company_id) || null : null,
+      department_name: row.unit?.name || null,
+      position_title: row.position?.title || row.job_title || null,
+      hire_date: row.entry_date || row.sgk_entry_date || row.start_date || null,
+      employment_type: row.work_type || null,
+      employment_status: row.employment_status || row.work_status || null,
+      record_status: row.record_status || (row.sgk_entry_date ? 'active' : 'draft'),
+      phone: personFields.mobile_phone,
+      gender: personFields.gender,
+      birth_date: personFields.birth_date,
+      education_level: null,
+      sgk_status: row.sgk_entry_date ? 'active' : 'pending',
+      status: row.work_status || null,
+    }
+  })
   const payload = { data: rows, meta: listMetaFromRows(listQuery, rows.length) }
   setServerResponseCache(cacheKey, payload, 60_000)
   return NextResponse.json(payload)
@@ -248,6 +267,52 @@ function lightweightImageUrl(value: unknown) {
   if (!photoUrl) return null
   if (photoUrl.startsWith('data:') && photoUrl.length > 20_000) return null
   return photoUrl
+}
+
+async function findPersonIds(supabase: ReturnType<typeof createServiceClient>, search: string) {
+  const term = String(search || '').trim()
+  if (!term) return []
+
+  const { data, error } = await supabase
+    .from('persons')
+    .select('id')
+    .or(`first_name.ilike.%${term}%,last_name.ilike.%${term}%,full_name.ilike.%${term}%,national_id.ilike.%${term}%,passport_no.ilike.%${term}%`)
+    .limit(500)
+
+  if (error) return null
+  return (data || []).map((person: any) => person.id).filter(Boolean)
+}
+
+async function fetchPeopleByIds(supabase: ReturnType<typeof createServiceClient>, ids: unknown[]) {
+  const personIds = Array.from(new Set(ids.filter((id): id is string => typeof id === 'string' && id.length > 0)))
+  if (personIds.length === 0) return new Map<string, any>()
+
+  const { data, error } = await supabase
+    .from('persons')
+    .select('id,first_name,last_name,full_name,nationality,national_id,passport_no,birth_date,gender,phone,email')
+    .in('id', personIds)
+
+  if (error) return new Map<string, any>()
+  return new Map((data || []).map((person: any) => [person.id, person]))
+}
+
+function employeePersonFields(employee: Record<string, any>, person?: Record<string, any>) {
+  const firstName = employee.first_name || person?.first_name || ''
+  const lastName = employee.last_name || person?.last_name || ''
+  const fullName = person?.full_name || [firstName, lastName].filter(Boolean).join(' ')
+  return {
+    first_name: firstName,
+    last_name: lastName,
+    full_name: fullName,
+    display_name: fullName,
+    nationality: employee.nationality || person?.nationality || null,
+    national_id: employee.national_id || person?.national_id || null,
+    passport_no: employee.passport_no || person?.passport_no || null,
+    birth_date: employee.birth_date || person?.birth_date || null,
+    gender: employee.gender || person?.gender || null,
+    email: employee.email || person?.email || null,
+    mobile_phone: employee.mobile_phone || person?.phone || null,
+  }
 }
 
 // POST /api/employees
@@ -274,7 +339,7 @@ export async function POST(request: NextRequest) {
     .select()
     .single()
 
-  let missingMutationColumn = missingEmployeeColumn(error, ['employment_contract_type', 'work_type', 'marital_status'])
+  let missingMutationColumn = missingEmployeeColumn(error, Object.keys(employeePayload))
   while (missingMutationColumn) {
     employeePayload = { ...employeePayload }
     delete (employeePayload as Record<string, any>)[missingMutationColumn]
@@ -290,7 +355,7 @@ export async function POST(request: NextRequest) {
       .single()
     data = retry.data
     error = retry.error
-    missingMutationColumn = missingEmployeeColumn(error, ['employment_contract_type', 'work_type', 'marital_status'])
+    missingMutationColumn = missingEmployeeColumn(error, Object.keys(employeePayload))
   }
 
   if (error) return NextResponse.json({ error: error.message, code: error.code || 'CREATE_FAILED' }, { status: 500 })

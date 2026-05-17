@@ -23,8 +23,10 @@ type MutationResult = { data: any; error: any }
 
 const BASE_EMPLOYEE_COLUMNS = [
   'id',
-  'first_name',
-  'last_name',
+  'person_id',
+]
+
+const OPTIONAL_EMPLOYEE_COLUMNS = [
   'company_id',
   'unit_id',
   'position_id',
@@ -35,9 +37,6 @@ const BASE_EMPLOYEE_COLUMNS = [
   'sgk_entry_date',
   'exit_date',
   'field_history',
-]
-
-const OPTIONAL_EMPLOYEE_COLUMNS = [
   'employee_no',
   'entry_date',
   'start_date',
@@ -269,6 +268,8 @@ export async function fetchLifecycleEvents(supabase: Supabase, employeeId: strin
 
 async function fetchEmployee(supabase: Supabase, employeeId: string) {
   let optionalColumns = [...OPTIONAL_EMPLOYEE_COLUMNS]
+  let useLegacyColumns = false
+  const legacyOptionalColumns = ['record_status']
 
   while (true) {
     const result = await supabase
@@ -279,11 +280,35 @@ async function fetchEmployee(supabase: Supabase, employeeId: string) {
 
     const missing = missingPayloadColumn(result.error, optionalColumns)
     if (missing) {
+      if (!useLegacyColumns) {
+        useLegacyColumns = true
+        optionalColumns = optionalColumns.filter(column => legacyOptionalColumns.includes(column))
+        continue
+      }
       optionalColumns = optionalColumns.filter(column => column !== missing)
       continue
     }
 
-    return result
+    if (result.error || !result.data) return result
+    return { data: await attachPersonName(supabase, result.data), error: null }
+  }
+}
+
+async function attachPersonName(supabase: Supabase, employee: Record<string, any>) {
+  if (!employee.person_id) return employee
+
+  const { data } = await supabase
+    .from('persons')
+    .select('id,first_name,last_name,full_name')
+    .eq('id', employee.person_id)
+    .maybeSingle()
+
+  if (!data) return employee
+  return {
+    ...employee,
+    first_name: data.first_name || '',
+    last_name: data.last_name || '',
+    full_name: data.full_name || [data.first_name, data.last_name].filter(Boolean).join(' '),
   }
 }
 

@@ -10,7 +10,7 @@ const ORGANIZATION_MASTER_METADATA_KEY = 'organization_master'
 
 const PERSON_CONTACT_SELECT = 'id,first_name,last_name,full_name,nationality,national_id,passport_no,birth_date,birth_place,gender,phone,email,address,city,district,metadata_json'
 const ORGANIZATION_CONTACT_SELECT = 'id,legal_name,trade_name,short_name,country,tax_number,registration_number,tax_office,organization_type,phone,email,address,city,district,metadata_json'
-const EMPLOYEE_MASTER_ENRICH_SELECT = 'id,person_id,first_name,last_name,national_id,passport_no,has_disability,disability_percentage,military_status,deferment_date,has_conviction,is_illiterate,education_schools,foreign_languages,certificates,marital_status,relatives,iban,blood_type,job_title'
+const EMPLOYEE_MASTER_ENRICH_SELECT = 'id,person_id,national_id,passport_no,has_disability,disability_percentage,military_status,deferment_date,has_conviction,is_illiterate,education_schools,foreign_languages,certificates,marital_status,relatives,iban,blood_type,job_title'
 
 const PERSON_MASTER_PROFILE_KEYS = [
   'photo_logo',

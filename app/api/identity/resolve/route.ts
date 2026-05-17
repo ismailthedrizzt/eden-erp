@@ -30,10 +30,10 @@ const allowedRoleTables = new Set([
 
 const PERSON_SELECT = 'id,first_name,last_name,full_name,nationality,national_id,passport_no,birth_date,birth_place,gender,phone,email,address,city,district,metadata_json,updated_at'
 const ORGANIZATION_SELECT = 'id,legal_name,short_name,country,tax_number,registration_number,tax_office,organization_type,phone,email,address,city,district,metadata_json,updated_at'
-const EMPLOYEE_IDENTITY_SELECT = 'id,person_id,first_name,last_name,nationality,national_id,passport_no,birth_date,birth_place,gender,mobile_phone,work_phone,email,address,phones,emails,job_title,has_disability,disability_percentage,military_status,deferment_date,has_conviction,is_illiterate,education_schools,foreign_languages,certificates,marital_status,relatives,iban,blood_type,photo_url,cv_document,diploma_document,entry_documents,exit_documents'
+const EMPLOYEE_IDENTITY_SELECT = 'id,person_id,nationality,national_id,passport_no,birth_date,birth_place,gender,mobile_phone,work_phone,email,address,phones,emails,job_title,has_disability,disability_percentage,military_status,deferment_date,has_conviction,is_illiterate,education_schools,foreign_languages,certificates,marital_status,relatives,iban,blood_type,photo_url,cv_document,diploma_document,entry_documents,exit_documents'
 const COMPANY_IDENTITY_SELECT = 'id,organization_id,trade_name,short_name,country,tax_number,trade_registry_number,mersis_number,tax_office,company_type,phone,email,address,city,district,foundation_date,logo_url,hero_images,hero_documents'
 const ROLE_SELECT_BY_TABLE: Record<string, string> = {
-  employees: 'id,person_id,first_name,last_name,national_id,passport_no,work_status',
+  employees: 'id,person_id,national_id,passport_no,work_status',
   companies: 'id,organization_id,trade_name,short_name,tax_number,trade_registry_number',
   company_partners: 'id,company_id,company_id,person_id,organization_id,display_name,partner_name,first_name,last_name,identity_tax_number,share_ratio,share_ratio,status',
   company_representatives: 'id,company_id,company_id,person_id,organization_id,display_name,full_name,authority_types,status',
@@ -252,7 +252,7 @@ async function findOrCreatePersonFromEmployee(supabase: ReturnType<typeof create
   const { data, error } = await query
   if (error) return { record: null }
 
-  const employee = Array.isArray(data) ? data[0] : null
+  const employee = Array.isArray(data) ? data[0] as Record<string, any> : null
   if (!employee) return { record: null }
 
   if (employee.person_id) {
