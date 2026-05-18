@@ -31,6 +31,8 @@ class Settings(BaseSettings):
     database_url: str
     cors_origins_raw: str = "http://localhost:3000"
     default_instance_id: str = "00000000-0000-0000-0000-000000000000"
+    default_tenant_id: str = "00000000-0000-0000-0000-000000000000"
+    tenancy_isolation_mode: str = "shared_schema"
 
     @model_validator(mode="before")
     @classmethod
@@ -45,7 +47,9 @@ class Settings(BaseSettings):
             "supabase_jwt_secret": env_value(data, "supabase_jwt_secret", "SUPABASE_JWT_SECRET"),
             "database_url": env_value(data, "database_url", "DATABASE_URL"),
             "cors_origins_raw": env_value(data, "cors_origins_raw", "CORS_ORIGINS", "NEXT_PUBLIC_APP_URL") or "http://localhost:3000",
-            "default_instance_id": env_value(data, "default_instance_id", "DEFAULT_INSTANCE_ID") or "00000000-0000-0000-0000-000000000000",
+            "default_instance_id": env_value(data, "default_instance_id", "DEFAULT_INSTANCE_ID", "EDEN_DEFAULT_TENANT_ID", "DEFAULT_TENANT_ID") or "00000000-0000-0000-0000-000000000000",
+            "default_tenant_id": env_value(data, "default_tenant_id", "EDEN_DEFAULT_TENANT_ID", "DEFAULT_TENANT_ID", "DEFAULT_INSTANCE_ID") or "00000000-0000-0000-0000-000000000000",
+            "tenancy_isolation_mode": env_value(data, "tenancy_isolation_mode", "EDEN_TENANCY_ISOLATION_MODE") or "shared_schema",
         }
 
     @property

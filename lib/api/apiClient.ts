@@ -1,6 +1,7 @@
 'use client'
 
 import { createClient } from '@/lib/supabase/client'
+import { tenantRequestHeaders } from '@/lib/tenancy/client'
 
 export class ApiError extends Error {
   status: number
@@ -21,6 +22,7 @@ export interface ApiClientOptions extends RequestInit {
   query?: Record<string, string | number | boolean | null | undefined>
   useCache?: boolean
   staleTime?: number
+  tenantId?: string | null
 }
 
 const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || ''
@@ -48,7 +50,7 @@ function buildUrl(path: string, query?: ApiClientOptions['query']) {
 }
 
 async function request<T>(path: string, options: ApiClientOptions = {}): Promise<T> {
-  const { query, useCache, staleTime, ...requestOptions } = options
+  const { query, useCache, staleTime, tenantId, ...requestOptions } = options
   const method = (requestOptions.method || 'GET').toUpperCase()
   const url = buildUrl(path, query)
   const shouldCache = method === 'GET' && useCache !== false
@@ -64,6 +66,10 @@ async function request<T>(path: string, options: ApiClientOptions = {}): Promise
 
   const headers = new Headers(options.headers)
   if (!headers.has('Content-Type') && options.body) headers.set('Content-Type', 'application/json')
+
+  Object.entries(tenantRequestHeaders(tenantId)).forEach(([key, value]) => {
+    if (!headers.has(key)) headers.set(key, value)
+  })
 
   if (!options.skipAuth) {
     const supabase = createClient()

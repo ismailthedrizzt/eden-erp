@@ -27,8 +27,37 @@ def _decode_supabase_jwt(token: str) -> dict:
     return jwt.get_unverified_claims(token)
 
 
+def _first_non_empty(*values: str | None) -> str | None:
+    for value in values:
+        if value and value.strip():
+            return value.strip()
+    return None
+
+
+def _tenant_from_claims(claims: dict) -> str | None:
+    metadata = claims.get("app_metadata") or {}
+    return _first_non_empty(
+        metadata.get("tenant_id"),
+        metadata.get("workspace_id"),
+        metadata.get("instance_id"),
+    )
+
+
+def _apply_tenant_session(db: Connection, user: CurrentUser) -> None:
+    db.execute(
+        """
+        select
+          set_config('app.tenant_id', %s, true),
+          set_config('app.instance_id', %s, true)
+        """,
+        (user.tenant_id, user.instance_id),
+    )
+
+
 def get_current_user(
     authorization: Annotated[str | None, Header()] = None,
+    x_eden_tenant_id: Annotated[str | None, Header(alias="x-eden-tenant-id")] = None,
+    x_eden_workspace_id: Annotated[str | None, Header(alias="x-eden-workspace-id")] = None,
     db: Connection = Depends(get_db),
 ) -> CurrentUser:
     token = _bearer_token(authorization)
@@ -37,11 +66,22 @@ def get_current_user(
     if not user_id:
         raise HTTPException(status_code=401, detail={"code": "INVALID_TOKEN", "message": "Missing subject"})
 
+    tenant_id = _first_non_empty(
+        x_eden_tenant_id,
+        x_eden_workspace_id,
+        _tenant_from_claims(claims),
+        settings.default_tenant_id,
+        settings.default_instance_id,
+    ) or settings.default_tenant_id
+
     user = CurrentUser(
         id=user_id,
         email=claims.get("email"),
-        instance_id=claims.get("app_metadata", {}).get("instance_id") or settings.default_instance_id,
+        instance_id=tenant_id,
+        tenant_id=tenant_id,
+        workspace_id=tenant_id,
     )
+    _apply_tenant_session(db, user)
 
     rows = db.execute(
         """
