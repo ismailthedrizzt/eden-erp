@@ -10,6 +10,42 @@ const optionalText = z.preprocess(
 )
 
 const SETUP_COMPANY_COUNTRY = 'TR'
+const SetupScaleSchema = z.enum(['small', 'medium', 'corporate', 'enterprise'])
+
+const SETUP_SCALE_PROFILES = {
+  small: {
+    label: 'Küçük',
+    user_range: '1–5 Kullanıcı',
+    company_range: 'Tek şirket',
+    authorization_management: false,
+    workflow_management: false,
+    multi_company: false,
+  },
+  medium: {
+    label: 'Orta',
+    user_range: '6–25 Kullanıcı',
+    company_range: '1–3 şirket',
+    authorization_management: true,
+    workflow_management: false,
+    multi_company: false,
+  },
+  corporate: {
+    label: 'Kurumsal',
+    user_range: '26–300 Kullanıcı',
+    company_range: '1–10 şirket',
+    authorization_management: true,
+    workflow_management: true,
+    multi_company: false,
+  },
+  enterprise: {
+    label: 'Holding / Grup',
+    user_range: '301+ Kullanıcı',
+    company_range: '10+ şirket',
+    authorization_management: true,
+    workflow_management: true,
+    multi_company: true,
+  },
+} as const
 
 const CompanyPayloadSchema = z.object({
   trade_name: z.string().trim().min(2, 'Ticari unvan zorunludur.'),
@@ -22,8 +58,7 @@ const CompanyPayloadSchema = z.object({
   address: z.string().trim().min(5, 'Adres zorunludur.'),
 })
 
-const PersonRolePayloadSchema = z.object({
-  company_id: z.string().uuid('Şirket kaydı bulunamadı.'),
+const PersonPayloadSchema = z.object({
   role: z.enum(['partner', 'employee']),
   first_name: z.string().trim().min(2, 'Ad zorunludur.'),
   last_name: z.string().trim().min(2, 'Soyad zorunludur.'),
@@ -34,9 +69,14 @@ const PersonRolePayloadSchema = z.object({
   phone: optionalText,
 })
 
+const PersonRolePayloadSchema = PersonPayloadSchema.extend({
+  company_id: z.string().uuid('Şirket kaydı bulunamadı.'),
+})
+
 const RequestSchema = z.discriminatedUnion('action', [
   z.object({ action: z.literal('create_company'), company: CompanyPayloadSchema }),
   z.object({ action: z.literal('create_person_role'), person: PersonRolePayloadSchema }),
+  z.object({ action: z.literal('complete_setup'), company: CompanyPayloadSchema, scale: SetupScaleSchema, person: PersonPayloadSchema }),
 ])
 
 type Supabase = ReturnType<typeof createServiceClient>
@@ -60,6 +100,28 @@ export async function POST(request: NextRequest) {
     if (parsed.action === 'create_company') {
       const result = await createFirstCompany(supabase, parsed.company)
       return NextResponse.json({ data: result }, { status: result.reused ? 200 : 201 })
+    }
+
+    if (parsed.action === 'complete_setup') {
+      const companyResult = await createFirstCompany(supabase, parsed.company)
+      await saveCompanySetupProfile(supabase, companyResult.company, parsed.scale)
+      const roleResult = await createPersonRole(supabase, {
+        ...parsed.person,
+        company_id: companyResult.company.id,
+      })
+
+      return NextResponse.json(
+        {
+          data: {
+            company: companyResult.company,
+            scale: parsed.scale,
+            company_reused: companyResult.reused,
+            role: parsed.person.role,
+            role_reused: roleResult.reused,
+          },
+        },
+        { status: companyResult.reused && roleResult.reused ? 200 : 201 }
+      )
     }
 
     const result = await createPersonRole(supabase, parsed.person)
@@ -116,6 +178,45 @@ async function createFirstCompany(supabase: Supabase, payload: z.infer<typeof Co
   if (rootUnitError && !isMissingTableError(rootUnitError)) throw new Error(rootUnitError.message)
 
   return { company: data, reused: false }
+}
+
+async function saveCompanySetupProfile(
+  supabase: Supabase,
+  company: { organization_id?: string | null },
+  scale: z.infer<typeof SetupScaleSchema>
+) {
+  if (!company.organization_id) return
+
+  const { data: organization, error: findError } = await supabase
+    .from('organizations')
+    .select('metadata_json')
+    .eq('id', company.organization_id)
+    .maybeSingle()
+
+  if (findError) throw new Error(findError.message)
+
+  const metadata = organization?.metadata_json && typeof organization.metadata_json === 'object' && !Array.isArray(organization.metadata_json)
+    ? organization.metadata_json
+    : {}
+
+  const { error } = await supabase
+    .from('organizations')
+    .update({
+      metadata_json: {
+        ...metadata,
+        setup_wizard: {
+          ...((metadata as Record<string, any>).setup_wizard || {}),
+          company_scale: {
+            key: scale,
+            ...SETUP_SCALE_PROFILES[scale],
+          },
+          updated_at: new Date().toISOString(),
+        },
+      },
+    })
+    .eq('id', company.organization_id)
+
+  if (error) throw new Error(error.message)
 }
 
 async function createPersonRole(supabase: Supabase, payload: z.infer<typeof PersonRolePayloadSchema>) {

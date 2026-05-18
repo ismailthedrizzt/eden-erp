@@ -37,7 +37,7 @@ interface ModuleRow extends ModuleLicense {
   last_updated: string
 }
 
-const MODULE_ORDER = ['sirket', 'ik', 'teskilat', 'kadro', 'muhasebe', 'stok', 'satis', 'uretim', 'servis']
+const MODULE_ORDER = ['tenancy', 'sirket', 'ik', 'teskilat', 'kadro', 'muhasebe', 'product_services', 'stok', 'satis', 'after_sales', 'uretim', 'servis']
 
 export default function ModuleLicensesPage() {
   const { modules, submodules, loading, error, refetch } = useModuleLicense()

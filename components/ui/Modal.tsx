@@ -43,7 +43,7 @@ export default function Modal({ open, onClose, title, children, footer, size = '
       )}>
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex-shrink-0">
-          <h2 className="text-base font-bold font-display text-gray-900 dark:text-white">{title}</h2>
+          <h2 className="text-lg font-bold leading-7 tracking-normal text-gray-900 dark:text-white">{title}</h2>
           <button
             onClick={onClose}
             className="w-7 h-7 rounded-lg flex items-center justify-center text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"

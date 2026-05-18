@@ -1,4 +1,4 @@
-export const PERMISSION_ACTIONS = ['view', 'insert', 'edit', 'approve', 'passivate', 'export', 'set_default', 'view_sensitive', 'verify', 'start', 'complete', 'update', 'manual_sgk'] as const
+export const PERMISSION_ACTIONS = ['view', 'insert', 'create', 'edit', 'delete', 'manage', 'approve', 'passivate', 'export', 'set_default', 'view_sensitive', 'verify', 'start', 'complete', 'update', 'manual_sgk'] as const
 
 export type PermissionAction = typeof PERMISSION_ACTIONS[number]
 
@@ -13,6 +13,9 @@ export const MODULE_CODES = [
   'inventory',
   'documents',
   'identity',
+  'tenancy',
+  'product_services',
+  'after_sales',
 ] as const
 
 export type ModuleCode = typeof MODULE_CODES[number]
@@ -82,6 +85,27 @@ export const PERMISSIONS = {
     setDefault: 'entity_bank_accounts.set_default',
     viewSensitive: 'entity_bank_accounts.view_sensitive',
     verify: 'entity_bank_accounts.verify',
+  },
+  tenancy: {
+    view: 'tenants.view',
+    create: 'tenants.create',
+    edit: 'tenants.edit',
+    delete: 'tenants.delete',
+    manage: 'tenants.manage',
+  },
+  productServices: {
+    view: 'product_services.view',
+    create: 'product_services.create',
+    edit: 'product_services.edit',
+    delete: 'product_services.delete',
+    manage: 'product_services.manage',
+  },
+  afterSales: {
+    view: 'after_sales.view',
+    create: 'after_sales.create',
+    edit: 'after_sales.edit',
+    delete: 'after_sales.delete',
+    manage: 'after_sales.manage',
   },
 } as const
 

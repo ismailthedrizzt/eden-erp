@@ -113,8 +113,3 @@ export function withTenantInsertScope<T extends Record<string, unknown>>(row: T,
   if (!tenantColumnWritesEnabled()) return row
   return { ...row, tenant_id: context.tenantId }
 }
-
-export function withTenantWorkspaceInsertScope<T extends Record<string, unknown>>(row: T, context: TenantContext): T & { tenant_workspace_id?: string } {
-  if (!tenantColumnWritesEnabled()) return row
-  return { ...row, tenant_workspace_id: context.workspaceId }
-}

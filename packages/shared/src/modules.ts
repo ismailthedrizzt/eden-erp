@@ -24,4 +24,7 @@ export const ERP_MODULES: Array<{ code: ModuleCode; label: string }> = [
   { code: 'workflow', label: 'Workflow' },
   { code: 'inventory', label: 'Inventory' },
   { code: 'documents', label: 'Documents' },
+  { code: 'tenancy', label: 'Tenancy' },
+  { code: 'product_services', label: 'Product & Services' },
+  { code: 'after_sales', label: 'After Sales' },
 ]

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
@@ -8,7 +8,7 @@ import { useModuleLicense } from '@/hooks/useModuleLicense'
 import {
   Home, Users, Building2, CreditCard, Package, ShoppingCart,
   Settings, Factory, Wrench, ChevronRight, LogOut, Download,
-  BarChart2, List, AlertCircle, FolderOpen, Wallet, X
+  BarChart2, List, AlertCircle, FolderOpen, Wallet, X, Headphones, Tags
 } from 'lucide-react'
 
 interface NavItem {
@@ -75,7 +75,23 @@ const NAV: NavItem[] = [
       { label: 'Banka Hesapları ve Kartları', href: '/app/muhasebe/banka-hesaplari-ve-kartlari', moduleKey: 'muhasebe', submoduleKey: 'banka-hesaplari-ve-kartlari' },
       { label: 'Hesap ve Kart Hareketleri', href: '/app/muhasebe/hesap-ve-kart-hareketleri', moduleKey: 'muhasebe', submoduleKey: 'hesap-ve-kart-hareketleri' },
     ],
-  },  {
+  },
+  {
+    id: 'product_services',
+    label: 'Ürün ve Hizmetler',
+    icon: <Tags size={16} />,
+    moduleKey: 'product_services',
+    children: [
+      { label: 'Genel Bakış', href: '/app/urun-ve-hizmetler', moduleKey: 'product_services' },
+      { label: 'Ürün Kartları', href: '/app/urun-ve-hizmetler/urun-kartlari', moduleKey: 'product_services', submoduleKey: 'urun-kartlari' },
+      { label: 'Hizmet Kartları', href: '/app/urun-ve-hizmetler/hizmet-kartlari', moduleKey: 'product_services', submoduleKey: 'hizmet-kartlari' },
+      { label: 'Lisans / Abonelik Ürünleri', href: '/app/urun-ve-hizmetler/lisans-abonelik-urunleri', moduleKey: 'product_services', submoduleKey: 'lisans-abonelik-urunleri' },
+      { label: 'Seri Numaralı Ürünler', href: '/app/urun-ve-hizmetler/seri-numarali-urunler', moduleKey: 'product_services', submoduleKey: 'seri-numarali-urunler' },
+      { label: 'Garanti Şablonları', href: '/app/urun-ve-hizmetler/garanti-sablonlari', moduleKey: 'product_services', submoduleKey: 'garanti-sablonlari' },
+      { label: 'Bakım Paketleri', href: '/app/urun-ve-hizmetler/bakim-paketleri', moduleKey: 'product_services', submoduleKey: 'bakim-paketleri' },
+    ],
+  },
+  {
     id: 'stok',
     label: 'Stok Yönetimi',
     icon: <Package size={16} />,
@@ -95,6 +111,20 @@ const NAV: NavItem[] = [
       { label: 'Teklifler', href: '/app/satis/teklifler', disabled: true },
       { label: 'Siparişler', href: '/app/satis/siparisler', disabled: true },
       { label: 'Müşteriler', href: '/app/satis/musteriler', disabled: true },
+    ],
+  },
+  {
+    id: 'after_sales',
+    label: 'Satış Sonrası Hizmetler',
+    icon: <Headphones size={16} />,
+    moduleKey: 'after_sales',
+    children: [
+      { label: 'Genel Bakış', href: '/app/satis-sonrasi', moduleKey: 'after_sales' },
+      { label: 'Garanti Takip', href: '/app/satis-sonrasi/garanti-takip', moduleKey: 'after_sales', submoduleKey: 'garanti-takip' },
+      { label: 'Lisans Takip', href: '/app/satis-sonrasi/lisans-takip', moduleKey: 'after_sales', submoduleKey: 'lisans-takip' },
+      { label: 'Servis ve Destek Kayıtları', href: '/app/satis-sonrasi/servis-destek-kayitlari', moduleKey: 'after_sales', submoduleKey: 'servis-destek-kayitlari' },
+      { label: 'Bakım ve Sözleşme Takip', href: '/app/satis-sonrasi/bakim-sozlesme-takip', moduleKey: 'after_sales', submoduleKey: 'bakim-sozlesme-takip' },
+      { label: 'Müşterideki Ürünler', href: '/app/satis-sonrasi/musterideki-urunler', moduleKey: 'after_sales', submoduleKey: 'musterideki-urunler' },
     ],
   },
   {
@@ -122,6 +152,7 @@ const NAV: NavItem[] = [
     icon: <Settings size={16} />,
     children: [
       { label: 'Kurulum Sihirbazı', href: '/app/sistem/kurulum' },
+      { label: 'Login Sayfası', href: '/app/sistem/login-sayfasi' },
       { label: 'Modül Lisansları', href: '/app/sistem/module-licenses' },
       { label: 'Sistem Parametreleri', href: '/app/sistem/system-parameters' },
       { label: 'Entegrasyon Ayarları', href: '/app/sistem/entegrasyon-ayarlari', moduleKey: 'sistem', submoduleKey: 'entegrasyon-ayarlari' },
@@ -135,8 +166,10 @@ const NAV: NavItem[] = [
 const SECTION_LABELS: Record<string, string> = {
   ik: 'İnsan Kaynakları',
   muhasebe: 'Muhasebe',
+  product_services: 'Katalog',
   stok: 'Stok & Satış',
   satis: '',
+  after_sales: 'Satış Sonrası',
   uretim: 'Üretim & Servis',
   servis: '',
   sys: 'Yönetim',
@@ -152,6 +185,12 @@ export default function Sidebar({ collapsed = false, mobileOpen = false, onMobil
   const pathname = usePathname()
   const { isModuleActive, isSubmoduleActive } = useModuleLicense()
   const [openMods, setOpenMods] = useState<string[]>([])
+
+  useEffect(() => {
+    const activeModule = NAV.find(item => item.children?.some(child => pathname.startsWith(child.href)))?.id
+    if (!activeModule) return
+    setOpenMods(prev => prev.includes(activeModule) ? prev : [activeModule])
+  }, [pathname])
 
   function toggleMod(id: string) {
     setOpenMods(prev => (prev.includes(id) ? [] : [id]))
