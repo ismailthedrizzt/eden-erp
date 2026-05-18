@@ -9,13 +9,14 @@ const optionalText = z.preprocess(
   z.string().trim().optional()
 )
 
+const SETUP_COMPANY_COUNTRY = 'TR'
+
 const CompanyPayloadSchema = z.object({
   trade_name: z.string().trim().min(2, 'Ticari unvan zorunludur.'),
   short_name: optionalText,
   tax_number: z.string().trim().regex(/^\d{10}$/, 'VKN 10 haneli olmalıdır.'),
   tax_office: z.string().trim().min(2, 'Vergi dairesi zorunludur.'),
   company_type: z.string().trim().min(2, 'Şirket türü zorunludur.'),
-  country: z.string().trim().default('TR'),
   city: z.string().trim().min(2, 'İl zorunludur.'),
   district: z.string().trim().min(2, 'İlçe zorunludur.'),
   address: z.string().trim().min(5, 'Adres zorunludur.'),
@@ -88,7 +89,7 @@ async function createFirstCompany(supabase: Supabase, payload: z.infer<typeof Co
     tax_number: payload.tax_number,
     tax_office: payload.tax_office,
     company_type: payload.company_type,
-    country: payload.country || 'TR',
+    country: SETUP_COMPANY_COUNTRY,
     city: payload.city,
     district: payload.district,
     address: payload.address,
@@ -161,7 +162,7 @@ async function findOrCreateOrganization(supabase: Supabase, payload: z.infer<typ
   const { data: existing, error: findError } = await supabase
     .from('organizations')
     .select('id')
-    .eq('country', payload.country || 'TR')
+    .eq('country', SETUP_COMPANY_COUNTRY)
     .eq('tax_number', payload.tax_number)
     .eq('is_deleted', false)
     .maybeSingle()
@@ -175,7 +176,7 @@ async function findOrCreateOrganization(supabase: Supabase, payload: z.infer<typ
       legal_name: payload.trade_name,
       trade_name: payload.trade_name,
       short_name: payload.short_name || null,
-      country: payload.country || 'TR',
+      country: SETUP_COMPANY_COUNTRY,
       tax_number: payload.tax_number,
       tax_office: payload.tax_office,
       organization_type: payload.company_type,

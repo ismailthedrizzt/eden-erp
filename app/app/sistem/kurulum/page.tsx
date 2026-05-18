@@ -60,6 +60,21 @@ type TaxOfficesResponse = {
   offices?: { name: string; province?: string; district?: string }[]
 }
 
+type TurkeyDistrict = {
+  id: number
+  name: string
+}
+
+type TurkeyProvince = {
+  id: number
+  name: string
+  districts: TurkeyDistrict[]
+}
+
+type TurkeyLocationsResponse = {
+  provinces?: TurkeyProvince[]
+}
+
 const STEPS: { id: WizardStep; label: string }[] = [
   { id: 'welcome', label: 'Karşılama' },
   { id: 'company', label: 'Şirket' },
@@ -83,7 +98,6 @@ const initialCompanyForm = {
   tax_number: '',
   tax_office: '',
   company_type: 'limited',
-  country: 'TR',
   city: '',
   district: '',
   address: '',
@@ -208,6 +222,7 @@ function SetupWizardModal({
   const [role, setRole] = useState<UserRole>('partner')
   const [person, setPerson] = useState(initialPersonForm)
   const [taxOffices, setTaxOffices] = useState<string[]>([])
+  const [turkeyProvinces, setTurkeyProvinces] = useState<TurkeyProvince[]>([])
   const [busy, setBusy] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
 
@@ -226,7 +241,6 @@ function SetupWizardModal({
       tax_number: existingCompany.tax_number || current.tax_number,
       tax_office: existingCompany.tax_office || current.tax_office,
       company_type: existingCompany.company_type || current.company_type,
-      country: existingCompany.country || current.country,
       city: existingCompany.city || current.city,
       district: existingCompany.district || current.district,
       address: existingCompany.address || current.address,
@@ -235,15 +249,17 @@ function SetupWizardModal({
 
   useEffect(() => {
     let alive = true
-    apiClient.get<TaxOfficesResponse>('/api/reference/tax-offices', { skipAuth: true, useCache: true })
-      .then(response => {
+    Promise.allSettled([
+      apiClient.get<TaxOfficesResponse>('/api/reference/tax-offices', { skipAuth: true, useCache: true }),
+      apiClient.get<TurkeyLocationsResponse>('/api/reference/turkey-locations', { skipAuth: true, useCache: true }),
+    ])
+      .then(([taxOfficesResult, locationsResult]) => {
         if (!alive) return
-        const names = Array.from(new Set((response.offices || []).map(office => office.name).filter(Boolean))).sort((a, b) => a.localeCompare(b, 'tr'))
+        const taxOfficesResponse = taxOfficesResult.status === 'fulfilled' ? taxOfficesResult.value : null
+        const locationsResponse = locationsResult.status === 'fulfilled' ? locationsResult.value : null
+        const names = Array.from(new Set((taxOfficesResponse?.offices || []).map(office => office.name).filter(Boolean))).sort((a, b) => a.localeCompare(b, 'tr'))
         setTaxOffices(names)
-      })
-      .catch(() => {
-        if (!alive) return
-        setTaxOffices([])
+        setTurkeyProvinces(Array.isArray(locationsResponse?.provinces) ? locationsResponse.provinces : [])
       })
 
     return () => { alive = false }
@@ -372,6 +388,7 @@ function SetupWizardModal({
           <CompanyStep
             value={company}
             taxOffices={taxOffices}
+            turkeyProvinces={turkeyProvinces}
             onChange={setCompany}
           />
         )}
@@ -444,13 +461,28 @@ function WelcomeStep() {
 function CompanyStep({
   value,
   taxOffices,
+  turkeyProvinces,
   onChange,
 }: {
   value: typeof initialCompanyForm
   taxOffices: string[]
+  turkeyProvinces: TurkeyProvince[]
   onChange: (value: typeof initialCompanyForm) => void
 }) {
   const setField = (field: keyof typeof initialCompanyForm, nextValue: string) => onChange({ ...value, [field]: nextValue })
+  const selectedProvince = useMemo(() => findTurkeyProvince(turkeyProvinces, value.city), [turkeyProvinces, value.city])
+  const selectedDistrict = useMemo(
+    () => selectedProvince?.districts.find(district => normalizeTurkeyLocationName(district.name) === normalizeTurkeyLocationName(value.district)),
+    [selectedProvince, value.district]
+  )
+  const cityValue = selectedProvince?.name || value.city
+  const districtValue = selectedDistrict?.name || value.district
+
+  const setCity = (nextCity: string) => {
+    const nextProvince = findTurkeyProvince(turkeyProvinces, nextCity)
+    const keepDistrict = nextProvince?.districts.some(district => normalizeTurkeyLocationName(district.name) === normalizeTurkeyLocationName(value.district))
+    onChange({ ...value, city: nextProvince?.name || nextCity, district: keepDistrict ? value.district : '' })
+  }
 
   return (
     <div className="space-y-5">
@@ -491,14 +523,24 @@ function CompanyStep({
             {COMPANY_TYPES.map(option => <option key={option.value} value={option.value}>{option.label}</option>)}
           </select>
         </Field>
-        <Field label="Ülke" required>
-          <input value={value.country} readOnly className={formControlClass()} />
-        </Field>
         <Field label="İl" required>
-          <input value={value.city} onChange={event => setField('city', event.target.value)} className={formControlClass()} />
+          <select value={cityValue} onChange={event => setCity(event.target.value)} className={formControlClass({ surface: 'enum' })}>
+            <option value="">İl seçiniz</option>
+            {value.city && !selectedProvince && <option value={value.city}>{value.city}</option>}
+            {turkeyProvinces.map(province => <option key={province.id} value={province.name}>{province.name}</option>)}
+          </select>
         </Field>
         <Field label="İlçe" required>
-          <input value={value.district} onChange={event => setField('district', event.target.value)} className={formControlClass()} />
+          <select
+            value={districtValue}
+            onChange={event => setField('district', event.target.value)}
+            disabled={!selectedProvince}
+            className={formControlClass({ surface: 'enum' })}
+          >
+            <option value="">{selectedProvince ? 'İlçe seçiniz' : 'Önce il seçiniz'}</option>
+            {value.district && selectedProvince && !selectedDistrict && <option value={value.district}>{value.district}</option>}
+            {selectedProvince?.districts.map(district => <option key={district.id} value={district.name}>{district.name}</option>)}
+          </select>
         </Field>
       </div>
       <Field label="Adres" required>
@@ -696,6 +738,16 @@ function nextIcon(step: WizardStep) {
 
 function onlyDigits(value: string, maxLength: number) {
   return value.replace(/\D/g, '').slice(0, maxLength)
+}
+
+function findTurkeyProvince(provinces: TurkeyProvince[], value?: string | null) {
+  const normalizedValue = normalizeTurkeyLocationName(value)
+  if (!normalizedValue) return undefined
+  return provinces.find(province => normalizeTurkeyLocationName(province.name) === normalizedValue)
+}
+
+function normalizeTurkeyLocationName(value?: string | null) {
+  return String(value || '').trim().toLocaleLowerCase('tr-TR')
 }
 
 function validateCompany(company: typeof initialCompanyForm) {
