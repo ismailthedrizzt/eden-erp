@@ -337,6 +337,24 @@ async function findRoleRecord(
   supabase: ReturnType<typeof createServiceClient>,
   input: { roleTable: string; entityKind: 'person' | 'organization'; masterId: string; roleScope: Record<string, unknown> }
 ) {
+  const shouldFilterDeleted = ['employees', 'company_partners', 'company_representatives', 'stakeholders'].includes(input.roleTable)
+  let { data, error } = await queryRoleRecord(supabase, input, shouldFilterDeleted)
+
+  if (error && shouldFilterDeleted && isMissingColumnError(error, 'is_deleted')) {
+    const retry = await queryRoleRecord(supabase, input, false)
+    data = retry.data
+    error = retry.error
+  }
+
+  if (error) return { error: error.message, record: null }
+  return { error: null, record: Array.isArray(data) ? data[0] || null : null }
+}
+
+async function queryRoleRecord(
+  supabase: ReturnType<typeof createServiceClient>,
+  input: { roleTable: string; entityKind: 'person' | 'organization'; masterId: string; roleScope: Record<string, unknown> },
+  filterDeleted: boolean
+) {
   let query = supabase.from(input.roleTable).select(ROLE_SELECT_BY_TABLE[input.roleTable] || 'id').limit(1)
   query = query.eq(input.entityKind === 'person' ? 'person_id' : 'organization_id', input.masterId)
 
@@ -345,13 +363,8 @@ async function findRoleRecord(
     query = query.eq('company_id', companyId)
   }
 
-  if (['employees', 'company_partners', 'company_representatives', 'stakeholders'].includes(input.roleTable)) {
-    query = query.eq('is_deleted', false)
-  }
-
-  const { data, error } = await query
-  if (error) return { error: error.message, record: null }
-  return { error: null, record: Array.isArray(data) ? data[0] || null : null }
+  if (filterDeleted) query = query.eq('is_deleted', false)
+  return query
 }
 
 function buildPrefill(entityKind: 'person' | 'organization', record: Record<string, any>) {
@@ -631,4 +644,9 @@ function normalizePersonUyruk(value: unknown) {
 function isMissingTableError(error: { message?: string; code?: string } | null, tableName: string) {
   const message = error?.message || ''
   return error?.code === 'PGRST205' || message.includes(`'public.${tableName}'`) || message.includes(`table '${tableName}'`) || message.includes('schema cache')
+}
+
+function isMissingColumnError(error: { message?: string; code?: string } | null, columnName: string) {
+  const message = error?.message || ''
+  return message.includes(columnName) && (message.includes('does not exist') || message.includes('schema cache'))
 }
