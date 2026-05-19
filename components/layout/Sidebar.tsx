@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
@@ -39,6 +40,7 @@ const NAV: NavItem[] = [
     id: 'sirket',
     label: 'Şirket Yönetimi',
     icon: <Building2 size={16} />,
+    badge: 'Geliştirilmekte',
     moduleKey: 'sirket',
     children: [
       { label: 'Şirketlerimiz', href: '/app/sirket/companies', moduleKey: 'sirket', submoduleKey: 'companies' },
@@ -57,6 +59,7 @@ const NAV: NavItem[] = [
     id: 'ik',
     label: 'İnsan Kaynakları',
     icon: <Users size={16} />,
+    badge: 'Geliştirilmekte',
     moduleKey: 'ik',
     children: [
       { label: 'Çalışanlarımız', href: '/app/ik/employees', moduleKey: 'ik', submoduleKey: 'employees' },
@@ -68,6 +71,7 @@ const NAV: NavItem[] = [
     id: 'muhasebe',
     label: 'Muhasebe',
     icon: <CreditCard size={16} />,
+    badge: 'Geliştirilmekte',
     moduleKey: 'muhasebe',
     children: [
       { label: 'Cari Kartlar', href: '/app/muhasebe/cari-kartlar', moduleKey: 'muhasebe' },
@@ -77,60 +81,10 @@ const NAV: NavItem[] = [
     ],
   },
   {
-    id: 'product_services',
-    label: 'Ürün ve Hizmetler',
-    icon: <Tags size={16} />,
-    moduleKey: 'product_services',
-    children: [
-      { label: 'Genel Bakış', href: '/app/urun-ve-hizmetler', moduleKey: 'product_services' },
-      { label: 'Ürün Kartları', href: '/app/urun-ve-hizmetler/urun-kartlari', moduleKey: 'product_services', submoduleKey: 'urun-kartlari' },
-      { label: 'Hizmet Kartları', href: '/app/urun-ve-hizmetler/hizmet-kartlari', moduleKey: 'product_services', submoduleKey: 'hizmet-kartlari' },
-      { label: 'Lisans / Abonelik Ürünleri', href: '/app/urun-ve-hizmetler/lisans-abonelik-urunleri', moduleKey: 'product_services', submoduleKey: 'lisans-abonelik-urunleri' },
-      { label: 'Seri Numaralı Ürünler', href: '/app/urun-ve-hizmetler/seri-numarali-urunler', moduleKey: 'product_services', submoduleKey: 'seri-numarali-urunler' },
-      { label: 'Garanti Şablonları', href: '/app/urun-ve-hizmetler/garanti-sablonlari', moduleKey: 'product_services', submoduleKey: 'garanti-sablonlari' },
-      { label: 'Bakım Paketleri', href: '/app/urun-ve-hizmetler/bakim-paketleri', moduleKey: 'product_services', submoduleKey: 'bakim-paketleri' },
-    ],
-  },
-  {
-    id: 'stok',
-    label: 'Stok Yönetimi',
-    icon: <Package size={16} />,
-    badge: 'Yakında',
-    children: [
-      { label: 'Ürün Listesi', href: '/app/stok/urunler', disabled: true },
-      { label: 'Depo Hareketleri', href: '/app/stok/hareketler', disabled: true },
-      { label: 'Sayım', href: '/app/stok/sayim', disabled: true },
-    ],
-  },
-  {
-    id: 'satis',
-    label: 'Satış',
-    icon: <ShoppingCart size={16} />,
-    badge: 'Yakında',
-    children: [
-      { label: 'Teklifler', href: '/app/satis/teklifler', disabled: true },
-      { label: 'Siparişler', href: '/app/satis/siparisler', disabled: true },
-      { label: 'Müşteriler', href: '/app/satis/musteriler', disabled: true },
-    ],
-  },
-  {
-    id: 'after_sales',
-    label: 'Satış Sonrası Hizmetler',
-    icon: <Headphones size={16} />,
-    moduleKey: 'after_sales',
-    children: [
-      { label: 'Genel Bakış', href: '/app/satis-sonrasi', moduleKey: 'after_sales' },
-      { label: 'Garanti Takip', href: '/app/satis-sonrasi/garanti-takip', moduleKey: 'after_sales', submoduleKey: 'garanti-takip' },
-      { label: 'Lisans Takip', href: '/app/satis-sonrasi/lisans-takip', moduleKey: 'after_sales', submoduleKey: 'lisans-takip' },
-      { label: 'Servis ve Destek Kayıtları', href: '/app/satis-sonrasi/servis-destek-kayitlari', moduleKey: 'after_sales', submoduleKey: 'servis-destek-kayitlari' },
-      { label: 'Bakım ve Sözleşme Takip', href: '/app/satis-sonrasi/bakim-sozlesme-takip', moduleKey: 'after_sales', submoduleKey: 'bakim-sozlesme-takip' },
-      { label: 'Müşterideki Ürünler', href: '/app/satis-sonrasi/musterideki-urunler', moduleKey: 'after_sales', submoduleKey: 'musterideki-urunler' },
-    ],
-  },
-  {
     id: 'project_management',
     label: 'Görev ve Proje Yönetimi',
     icon: <ListChecks size={16} />,
+    badge: 'Yakında',
     moduleKey: 'project_management',
     children: [
       { label: 'Genel Bakış', href: '/app/gorev-ve-proje-yonetimi', moduleKey: 'project_management' },
@@ -156,6 +110,59 @@ const NAV: NavItem[] = [
     ],
   },
   {
+    id: 'stok',
+    label: 'Stok Yönetimi',
+    icon: <Package size={16} />,
+    badge: 'Yakında',
+    children: [
+      { label: 'Ürün Listesi', href: '/app/stok/urunler', disabled: true },
+      { label: 'Depo Hareketleri', href: '/app/stok/hareketler', disabled: true },
+      { label: 'Sayım', href: '/app/stok/sayim', disabled: true },
+    ],
+  },
+  {
+    id: 'product_services',
+    label: 'Ürün ve Hizmetler',
+    icon: <Tags size={16} />,
+    badge: 'Yakında',
+    moduleKey: 'product_services',
+    children: [
+      { label: 'Genel Bakış', href: '/app/urun-ve-hizmetler', moduleKey: 'product_services' },
+      { label: 'Ürün Kartları', href: '/app/urun-ve-hizmetler/urun-kartlari', moduleKey: 'product_services', submoduleKey: 'urun-kartlari' },
+      { label: 'Hizmet Kartları', href: '/app/urun-ve-hizmetler/hizmet-kartlari', moduleKey: 'product_services', submoduleKey: 'hizmet-kartlari' },
+      { label: 'Lisans / Abonelik Ürünleri', href: '/app/urun-ve-hizmetler/lisans-abonelik-urunleri', moduleKey: 'product_services', submoduleKey: 'lisans-abonelik-urunleri' },
+      { label: 'Seri Numaralı Ürünler', href: '/app/urun-ve-hizmetler/seri-numarali-urunler', moduleKey: 'product_services', submoduleKey: 'seri-numarali-urunler' },
+      { label: 'Garanti Şablonları', href: '/app/urun-ve-hizmetler/garanti-sablonlari', moduleKey: 'product_services', submoduleKey: 'garanti-sablonlari' },
+      { label: 'Bakım Paketleri', href: '/app/urun-ve-hizmetler/bakim-paketleri', moduleKey: 'product_services', submoduleKey: 'bakim-paketleri' },
+    ],
+  },
+  {
+    id: 'satis',
+    label: 'Satış',
+    icon: <ShoppingCart size={16} />,
+    badge: 'Yakında',
+    children: [
+      { label: 'Teklifler', href: '/app/satis/teklifler', disabled: true },
+      { label: 'Siparişler', href: '/app/satis/siparisler', disabled: true },
+      { label: 'Müşteriler', href: '/app/satis/musteriler', disabled: true },
+    ],
+  },
+  {
+    id: 'after_sales',
+    label: 'Satış Sonrası Hizmetler',
+    icon: <Headphones size={16} />,
+    badge: 'Yakında',
+    moduleKey: 'after_sales',
+    children: [
+      { label: 'Genel Bakış', href: '/app/satis-sonrasi', moduleKey: 'after_sales' },
+      { label: 'Garanti Takip', href: '/app/satis-sonrasi/garanti-takip', moduleKey: 'after_sales', submoduleKey: 'garanti-takip' },
+      { label: 'Lisans Takip', href: '/app/satis-sonrasi/lisans-takip', moduleKey: 'after_sales', submoduleKey: 'lisans-takip' },
+      { label: 'Servis ve Destek Kayıtları', href: '/app/satis-sonrasi/servis-destek-kayitlari', moduleKey: 'after_sales', submoduleKey: 'servis-destek-kayitlari' },
+      { label: 'Bakım ve Sözleşme Takip', href: '/app/satis-sonrasi/bakim-sozlesme-takip', moduleKey: 'after_sales', submoduleKey: 'bakim-sozlesme-takip' },
+      { label: 'Müşterideki Ürünler', href: '/app/satis-sonrasi/musterideki-urunler', moduleKey: 'after_sales', submoduleKey: 'musterideki-urunler' },
+    ],
+  },
+  {
     id: 'servis',
     label: 'Teknik Servis',
     icon: <Wrench size={16} />,
@@ -168,6 +175,7 @@ const NAV: NavItem[] = [
     id: 'sys',
     label: 'Sistem Yönetimi',
     icon: <Settings size={16} />,
+    badge: 'Geliştirilmekte',
     children: [
       { label: 'Kurulum Sihirbazı', href: '/app/sistem/kurulum' },
       { label: 'Login Sayfası', href: '/app/sistem/login-sayfasi' },
@@ -181,26 +189,14 @@ const NAV: NavItem[] = [
   },
 ]
 
-const SECTION_LABELS: Record<string, string> = {
-  ik: 'İnsan Kaynakları',
-  muhasebe: 'Muhasebe',
-  product_services: 'Katalog',
-  stok: 'Stok & Satış',
-  satis: '',
-  after_sales: 'Satış Sonrası',
-  project_management: 'İş Takibi',
-  uretim: 'Üretim & Servis',
-  servis: '',
-  sys: 'Yönetim',
-}
-
 interface SidebarProps {
   collapsed?: boolean
   mobileOpen?: boolean
   onMobileClose?: () => void
+  onExpand?: () => void
 }
 
-export default function Sidebar({ collapsed = false, mobileOpen = false, onMobileClose }: SidebarProps) {
+export default function Sidebar({ collapsed = false, mobileOpen = false, onMobileClose, onExpand }: SidebarProps) {
   const pathname = usePathname()
   const { isModuleActive, isSubmoduleActive } = useModuleLicense()
   const [openMods, setOpenMods] = useState<string[]>([])
@@ -212,6 +208,11 @@ export default function Sidebar({ collapsed = false, mobileOpen = false, onMobil
   }, [pathname])
 
   function toggleMod(id: string) {
+    if (collapsed && !mobileOpen) {
+      onExpand?.()
+      setOpenMods([id])
+      return
+    }
     setOpenMods(prev => (prev.includes(id) ? [] : [id]))
   }
 
@@ -221,11 +222,10 @@ export default function Sidebar({ collapsed = false, mobileOpen = false, onMobil
   }
 
   // Auto-open active module on mount
-  const renderItem = (item: NavItem, idx: number) => {
+  const renderItem = (item: NavItem) => {
     const isActive = isModActive(item)
     const isOpen = openMods.includes(item.id)
     const hasChildren = !!item.children?.length
-    const showLabel = SECTION_LABELS[item.id]
 
     // Check if module is active (in production, hide if inactive)
     const isModuleAvailable = !item.moduleKey || isModuleActive(item.moduleKey)
@@ -236,17 +236,13 @@ export default function Sidebar({ collapsed = false, mobileOpen = false, onMobil
 
     return (
       <div key={item.id}>
-        {/* Section label */}
-        {showLabel && !collapsed && (
-          <div className="text-[9px] font-semibold text-white/25 uppercase tracking-widest
-                          px-2 pt-3 pb-1 mt-1">
-            {showLabel}
-          </div>
-        )}
-
         {/* Main nav item */}
         {item.href ? (
           <Link href={item.href}
+                title={collapsed && !mobileOpen ? item.label : undefined}
+                onClick={() => {
+                  if (collapsed && !mobileOpen) onExpand?.()
+                }}
                 className={cn('ni', isActive && 'active')}>
             <span className={cn('flex-shrink-0 opacity-60', isActive && 'opacity-90')}>{item.icon}</span>
             {!collapsed && <span className="flex-1">{item.label}</span>}
@@ -254,6 +250,7 @@ export default function Sidebar({ collapsed = false, mobileOpen = false, onMobil
         ) : (
           <button
             onClick={() => toggleMod(item.id)}
+            title={collapsed && !mobileOpen ? item.label : undefined}
             className={cn('ni', (isActive || isOpen) && 'open')}
           >
             <span className={cn('flex-shrink-0 opacity-60', (isActive || isOpen) && 'opacity-90')}>
@@ -261,9 +258,14 @@ export default function Sidebar({ collapsed = false, mobileOpen = false, onMobil
             </span>
             {!collapsed && (
               <>
-                <span className="flex-1 text-left">{item.label}</span>
+                <span className="min-w-0 flex-1 truncate text-left">{item.label}</span>
                 {item.badge && (
-                  <span className="text-[10px] px-1.5 py-0.5 bg-eden-gold/20 text-eden-gold rounded-full">
+                  <span className={cn(
+                    "shrink-0 rounded-full py-0.5 font-semibold leading-none",
+                    item.badge === 'Geliştirilmekte'
+                      ? "bg-sky-400/15 px-1.5 text-[9px] text-sky-200"
+                      : "bg-eden-gold/20 px-1 text-[8px] text-eden-gold"
+                  )}>
                     {item.badge}
                   </span>
                 )}
@@ -318,28 +320,29 @@ export default function Sidebar({ collapsed = false, mobileOpen = false, onMobil
   return (
     <aside className={cn(
       'flex flex-col bg-eden-navy transition-all duration-200 overflow-hidden flex-shrink-0 h-full',
-      mobileOpen ? 'w-64' : (collapsed ? 'w-16' : 'w-64')
+      mobileOpen ? 'w-80' : (collapsed ? 'w-16' : 'w-80')
     )}>
       {/* Logo & Mobile Close */}
       <div className="px-4 py-4 border-b border-white/[0.07] flex items-center justify-between flex-shrink-0">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 bg-eden-blue rounded-lg flex items-center justify-center flex-shrink-0">
-            <svg width="18" height="18" fill="none" stroke="white" strokeWidth="2" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round"
-                d="M12 3l9 4.5-9 4.5-9-4.5L12 3zM3 12l9 4.5 9-4.5M3 17l9 4.5 9-4.5"/>
-            </svg>
-          </div>
-          {!collapsed && !mobileOpen && (
-            <div className="min-w-0">
-              <div className="text-[9px] font-semibold text-eden-gold uppercase tracking-widest">Eden Teknoloji</div>
-              <div className="text-sm font-bold font-display text-white mt-0.5">ERP</div>
-            </div>
-          )}
-          {mobileOpen && (
-            <div className="min-w-0">
-              <div className="text-[9px] font-semibold text-eden-gold uppercase tracking-widest">Eden Teknoloji</div>
-              <div className="text-sm font-bold font-display text-white mt-0.5">ERP</div>
-            </div>
+        <div className="flex min-w-0 items-center">
+          {collapsed && !mobileOpen ? (
+            <Image
+              src="/eden-icon-original.png"
+              alt="Eden"
+              width={40}
+              height={40}
+              className="h-10 w-10 object-contain"
+              priority
+            />
+          ) : (
+            <Image
+              src="/brand/eden-logo-colored.png"
+              alt="Eden Teknoloji"
+              width={192}
+              height={86}
+              className="h-auto max-h-14 w-36 object-contain"
+              priority
+            />
           )}
         </div>
         {/* Mobile Close Button */}
@@ -355,7 +358,7 @@ export default function Sidebar({ collapsed = false, mobileOpen = false, onMobil
 
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto px-2 py-2 space-y-0.5 scrollbar-thin">
-        {NAV.map((item, idx) => renderItem(item, idx))}
+        {NAV.map(item => renderItem(item))}
       </nav>
 
       {/* Footer */}

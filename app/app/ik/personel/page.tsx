@@ -13,8 +13,8 @@
  * @see components/ui/PageBanner.md
  */
 
-import { useState, useEffect, useMemo, useRef } from 'react'
-import { LogIn, LogOut, Users } from 'lucide-react'
+import { useState, useEffect, useMemo, useRef, type MouseEvent as ReactMouseEvent, type ReactNode } from 'react'
+import { LogIn, LogOut, MoreHorizontal, Trash2, UserCheck, Users } from 'lucide-react'
 import { usePersonel } from '@/hooks/usePersonel'
 import { PageBanner } from '@/components/ui/PageBanner'
 import { SmartDataTable, SortConfig, WidgetDef } from '@/components/ui/SmartDataTable'
@@ -22,12 +22,13 @@ import type { DashboardFilterEvent } from '@/components/dashboard/dashboard.type
 import { EntityForm, FormMode } from '@/components/ui/EntityForm'
 import { Toast } from '@/components/ui/Toast'
 import { EmployeeLifecycleWizard } from '@/components/ui/EmployeeLifecycleWizard'
+import Modal from '@/components/ui/Modal'
 import { personelModuleConfig, PersonelTableRow } from '@/lib/modules/employees.config'
 import { buildEmployeesDashboard } from '@/lib/modules/employees/dashboard/employeesDashboard.mock'
 import { getEducationSummary } from '@/lib/modules/employees/education'
 import { toEntityFormFields, toEntityFormTabs } from '@/types/module-config'
 import { createRealPersonMasterTabs } from '@/lib/identity/realPersonFormSections'
-import { formatPhoneInput, normalizeEmailInput } from '@/lib/utils'
+import { cn, formatPhoneInput, normalizeEmailInput } from '@/lib/utils'
 import { isTurkishNationality, normalizeCountryId } from '@/lib/reference/country-nationalities'
 import { isSoftDeletedRecord } from '@/lib/forms/entityState'
 import { createProgressiveFormLoadStages } from '@/lib/forms/progressiveFormLoading'
@@ -138,6 +139,10 @@ export default function PersonelYonetimPage() {
   const apiBasePath = moduleConfig.entity.apiBasePath || '/api/employees'
   const lifecycleMessages = moduleConfig.form.lifecycle?.messages
   const permissions = usePermissions()
+  const canUseAction = (permission?: string | null) => {
+    if (permissions.error || (!permissions.loading && permissions.permissions.size === 0)) return true
+    return permissions.can(permission)
+  }
   
   // Page state
   const [pageState, setPageState] = useState<PageState>('list')
@@ -153,6 +158,8 @@ export default function PersonelYonetimPage() {
   const [toast, setToast] = useState<ToastState | null>(null)
   const [lifecycleWizard, setLifecycleWizard] = useState<'entry' | 'exit' | null>(null)
   const [dashboardFilter, setDashboardFilter] = useState<DashboardFilterEvent | null>(null)
+  const [rowActionBusyId, setRowActionBusyId] = useState<string | null>(null)
+  const [pendingDeleteRow, setPendingDeleteRow] = useState<PersonelTableRow | null>(null)
   const detailRequestRef = useRef(0)
 
   // Transform data for table
@@ -466,6 +473,51 @@ export default function PersonelYonetimPage() {
     }
   }
 
+  const handleDeleteRow = async (row: PersonelTableRow) => {
+    setPendingDeleteRow(row)
+  }
+
+  const confirmDeleteRow = async () => {
+    if (!pendingDeleteRow) return
+
+    const row = pendingDeleteRow
+    setRowActionBusyId(row.id)
+    try {
+      await employeeService.delete(row.id)
+      invalidateEntityDetailCache(EMPLOYEE_DETAIL_CACHE_NAMESPACE, row.id)
+      if (selectedPersonel?.id === row.id) {
+        setSelectedPersonel(null)
+        setPageState('list')
+      }
+      await yenile()
+      setToast({ type: 'success', title: 'Kayıt Başarılı', message: 'Çalışan taslak kaydı kalıcı olarak silindi' })
+      setPendingDeleteRow(null)
+    } catch (err: any) {
+      setToast(err.toast || { type: 'error', title: 'Kayıt Başarısız', message: err.message || 'Çalışan kaydı silinemedi' })
+    } finally {
+      setRowActionBusyId(null)
+    }
+  }
+
+  const handleActivateRow = async (row: PersonelTableRow) => {
+    setRowActionBusyId(row.id)
+    try {
+      const result = await employeeService.update(row.id, {
+        record_status: 'active',
+        employment_status: 'active',
+        work_status: 'active',
+      } as any)
+      invalidateEntityDetailCache(EMPLOYEE_DETAIL_CACHE_NAMESPACE, row.id)
+      if (selectedPersonel?.id === row.id) setSelectedPersonel(result.data)
+      await yenile()
+      setToast({ type: 'success', title: 'Kayıt Başarılı', message: 'Çalışan kaydı aktive edildi' })
+    } catch (err: any) {
+      setToast(err.toast || { type: 'error', title: 'Aktivasyon Başarısız', message: err.message || 'Çalışan kaydı aktive edilemedi' })
+    } finally {
+      setRowActionBusyId(null)
+    }
+  }
+
   const handleLifecycleComplete = async (employee: Record<string, any>) => {
     setLifecycleWizard(null)
     if (selectedPersonel?.id) invalidateEntityDetailCache(EMPLOYEE_DETAIL_CACHE_NAMESPACE, selectedPersonel.id)
@@ -489,24 +541,29 @@ export default function PersonelYonetimPage() {
     setLifecycleWizard(type)
   }
 
-  const listColumns = moduleConfig.list.columns.map(column => {
+  const listColumns = moduleConfig.list.columns.filter(column => column.key !== 'work_status').map(column => {
     if (column.key !== '__actions') return column
 
     return {
       ...column,
       label: 'İşlem',
-      type: 'text' as const,
-      width: 150,
-      minWidth: 132,
-      maxWidth: 170,
+      type: 'actions' as const,
+      width: 48,
+      minWidth: 44,
+      maxWidth: 56,
       fixedWidth: true,
       render: (_value: unknown, row: PersonelTableRow) => (
         <EmployeeRowActions
           row={row}
-          canEntry={permissions.can('employees.entry.start')}
-          canExit={permissions.can('employees.exit.start')}
+          canEntry
+          canExit
+          canDelete
+          canActivate
+          isBusy={rowActionBusyId === row.id}
           onEntry={() => openLifecycleWizardFromRow(row, 'entry')}
           onExit={() => openLifecycleWizardFromRow(row, 'exit')}
+          onDelete={() => handleDeleteRow(row)}
+          onActivate={() => handleActivateRow(row)}
         />
       ),
     }
@@ -515,14 +572,14 @@ export default function PersonelYonetimPage() {
   const renderLifecycleActions = () => {
     if (!selectedPersonel || pageState === 'create') return null
     const status = getEmployeeRecordStatus(selectedPersonel)
-    if (status === 'draft' && permissions.can('employees.entry.start')) {
+    if (status === 'draft' && canUseAction('employees.entry.start')) {
       return (
         <button type="button" onClick={() => setLifecycleWizard('entry')} className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700">
           İşe Giriş Yap
         </button>
       )
     }
-    if (status === 'active' && permissions.can('employees.exit.start')) {
+    if (status === 'active' && canUseAction('employees.exit.start')) {
       return (
         <button type="button" onClick={() => setLifecycleWizard('exit')} className="rounded-lg border border-red-200 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50 dark:border-red-900/60 dark:text-red-300 dark:hover:bg-red-950/30">
           İşten Çıkış Yap
@@ -678,6 +735,8 @@ export default function PersonelYonetimPage() {
   }
 
   const bannerConfig = getBannerConfig()
+  const pendingDeleteName = pendingDeleteRow?.fullname || `${pendingDeleteRow?.first_name || ''} ${pendingDeleteRow?.last_name || ''}`.trim() || 'Bu çalışan'
+  const deletingPendingRow = Boolean(pendingDeleteRow && rowActionBusyId === pendingDeleteRow.id)
 
   return (
     <div className="relative">
@@ -701,6 +760,41 @@ export default function PersonelYonetimPage() {
           onClose={() => setToast(null)}
         />
       )}
+
+      <Modal
+        open={Boolean(pendingDeleteRow)}
+        onClose={() => !deletingPendingRow && setPendingDeleteRow(null)}
+        title="Taslak Kaydı Sil"
+        size="sm"
+        footer={
+          <>
+            <button
+              type="button"
+              onClick={() => setPendingDeleteRow(null)}
+              disabled={deletingPendingRow}
+              className="rounded-lg px-4 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50 dark:text-gray-300 dark:hover:bg-gray-800"
+            >
+              Vazgeç
+            </button>
+            <button
+              type="button"
+              onClick={confirmDeleteRow}
+              disabled={deletingPendingRow}
+              className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <Trash2 size={16} />
+              {deletingPendingRow ? 'Siliniyor...' : 'Sil'}
+            </button>
+          </>
+        }
+      >
+        <div className="space-y-3 text-sm text-gray-600 dark:text-gray-300">
+          <p>
+            <span className="font-semibold text-gray-900 dark:text-white">{pendingDeleteName}</span> taslak kaydı kalıcı olarak silinecek.
+          </p>
+          <p>Taslak kayıtlar henüz resmi akışa dönüşmediği için bu işlem geri alınamaz.</p>
+        </div>
+      </Modal>
 
       {/* List View */}
       {pageState === 'list' && (
@@ -840,7 +934,185 @@ function applyDashboardFilter(rows: PersonelTableRow[], event: DashboardFilterEv
   }))
 }
 
-function EmployeeRowActions({ row, canEntry, canExit, onEntry, onExit }: { row: PersonelTableRow; canEntry: boolean; canExit: boolean; onEntry: () => void; onExit: () => void }) {
+type EmployeeRowAction = {
+  key: string
+  label: string
+  description: string
+  icon: ReactNode
+  tone?: 'default' | 'success' | 'danger'
+  onClick: () => void | Promise<void>
+}
+
+type EmployeeRowActionsProps = {
+  row: PersonelTableRow
+  canEntry: boolean
+  canExit: boolean
+  canDelete: boolean
+  canActivate: boolean
+  isBusy: boolean
+  onEntry: () => void
+  onExit: () => void
+  onDelete: () => void | Promise<void>
+  onActivate: () => void | Promise<void>
+}
+
+function EmployeeRowActions({
+  row,
+  canEntry,
+  canExit,
+  canDelete,
+  canActivate,
+  isBusy,
+  onEntry,
+  onExit,
+  onDelete,
+  onActivate,
+}: EmployeeRowActionsProps) {
+  const status = getEmployeeRecordStatus(row)
+  const [open, setOpen] = useState(false)
+  const [menuPosition, setMenuPosition] = useState<{ top: number; left: number } | null>(null)
+  const buttonRef = useRef<HTMLButtonElement>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  const actions: EmployeeRowAction[] = [
+    ...(status === 'draft' && canEntry ? [{
+      key: 'entry',
+      label: 'İşe Al',
+      description: 'İşe giriş wizardını aç',
+      icon: <LogIn size={15} />,
+      tone: 'success' as const,
+      onClick: onEntry,
+    }] : []),
+    ...(status === 'draft' && canDelete ? [{
+      key: 'delete',
+      label: 'Sil',
+      description: 'Taslak kaydı kalıcı olarak sil',
+      icon: <Trash2 size={15} />,
+      tone: 'danger' as const,
+      onClick: onDelete,
+    }] : []),
+    ...(status === 'active' && canExit ? [{
+      key: 'exit',
+      label: 'İşten Çıkış',
+      description: 'İşten çıkış wizardını aç',
+      icon: <LogOut size={15} />,
+      tone: 'danger' as const,
+      onClick: onExit,
+    }] : []),
+    ...(status === 'passive' && canActivate ? [{
+      key: 'activate',
+      label: 'Aktive Et',
+      description: 'Çalışan kaydını tekrar aktif yap',
+      icon: <UserCheck size={15} />,
+      tone: 'success' as const,
+      onClick: onActivate,
+    }] : []),
+  ]
+
+  useEffect(() => {
+    if (!open) return
+
+    const closeOnOutside = (event: MouseEvent) => {
+      const target = event.target as Node
+      if (buttonRef.current?.contains(target) || menuRef.current?.contains(target)) return
+      setOpen(false)
+    }
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setOpen(false)
+    }
+    const closeOnScroll = () => setOpen(false)
+
+    document.addEventListener('mousedown', closeOnOutside)
+    document.addEventListener('keydown', closeOnEscape)
+    window.addEventListener('scroll', closeOnScroll, true)
+    return () => {
+      document.removeEventListener('mousedown', closeOnOutside)
+      document.removeEventListener('keydown', closeOnEscape)
+      window.removeEventListener('scroll', closeOnScroll, true)
+    }
+  }, [open])
+
+  if (actions.length === 0) {
+    return <span className="text-xs text-gray-400">-</span>
+  }
+
+  const toggleMenu = (event: ReactMouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation()
+    if (isBusy) return
+    if (open) {
+      setOpen(false)
+      return
+    }
+
+    const rect = buttonRef.current?.getBoundingClientRect()
+    if (rect) {
+      const menuWidth = 216
+      setMenuPosition({
+        top: Math.min(window.innerHeight - 16, rect.bottom + 6),
+        left: Math.max(8, Math.min(window.innerWidth - menuWidth - 8, rect.right - menuWidth)),
+      })
+    }
+    setOpen(true)
+  }
+
+  const runAction = (event: ReactMouseEvent<HTMLButtonElement>, action: EmployeeRowAction) => {
+    event.stopPropagation()
+    setOpen(false)
+    void action.onClick()
+  }
+
+  return (
+    <div className="flex justify-center">
+      <button
+        ref={buttonRef}
+        type="button"
+        title="İşlemler"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        disabled={isBusy}
+        onClick={toggleMenu}
+        className={cn(
+          'inline-flex h-8 w-8 items-center justify-center rounded-md border border-gray-200 bg-white text-gray-500 shadow-sm transition-colors hover:bg-gray-50 hover:text-gray-700 disabled:cursor-wait disabled:opacity-60 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800',
+          open && 'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950/40 dark:text-blue-300'
+        )}
+      >
+        <MoreHorizontal size={18} />
+      </button>
+
+      {open && menuPosition && (
+        <div
+          ref={menuRef}
+          role="menu"
+          style={{ top: menuPosition.top, left: menuPosition.left }}
+          className="fixed z-[100] w-[216px] overflow-hidden rounded-lg border border-gray-200 bg-white py-1 shadow-xl dark:border-gray-700 dark:bg-gray-900"
+          onClick={event => event.stopPropagation()}
+        >
+          {actions.map(action => (
+            <button
+              key={action.key}
+              type="button"
+              role="menuitem"
+              onClick={event => runAction(event, action)}
+              className={cn(
+                'flex w-full items-start gap-2 px-3 py-2 text-left transition-colors hover:bg-gray-50 dark:hover:bg-gray-800',
+                action.tone === 'danger' && 'text-red-700 hover:bg-red-50 dark:text-red-300 dark:hover:bg-red-950/30',
+                action.tone === 'success' && 'text-emerald-700 hover:bg-emerald-50 dark:text-emerald-300 dark:hover:bg-emerald-950/30'
+              )}
+            >
+              <span className="mt-0.5 shrink-0">{action.icon}</span>
+              <span className="min-w-0">
+                <span className="block text-sm font-medium leading-5">{action.label}</span>
+                <span className="block text-xs leading-4 text-gray-500 dark:text-gray-400">{action.description}</span>
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function LegacyEmployeeRowActions({ row, canEntry, canExit, onEntry, onExit }: { row: PersonelTableRow; canEntry: boolean; canExit: boolean; onEntry: () => void; onExit: () => void }) {
   const status = getEmployeeRecordStatus(row)
 
   if (status === 'draft' && canEntry) {

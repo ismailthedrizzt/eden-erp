@@ -32,6 +32,12 @@ export const preAccountingService = {
     return result
   },
 
+  async delete(id: string) {
+    const result = await apiClient.delete<{ success: true }>(`/api/muhasebe/on-muhasebe-hareketleri/${id}`)
+    preAccountingService.invalidate()
+    return result
+  },
+
   invalidate() {
     apiClient.invalidate('/api/muhasebe/on-muhasebe-hareketleri')
     apiClient.invalidate('/api/muhasebe/cari-kartlar')

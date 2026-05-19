@@ -11,6 +11,7 @@ import { preAccountingService } from '@/lib/modules/accounting/pre-accounting/pr
 import { ACCOUNTING_PERMISSIONS } from '@/lib/modules/accounting/shared/accounting.permissions'
 import { MOVEMENT_STATUSES, MOVEMENT_TYPES, PAYMENT_METHODS, ROW_HEALTH_LABELS } from '@/lib/modules/accounting/shared/accounting.constants'
 import { createProgressiveFormLoadStages } from '@/lib/forms/progressiveFormLoading'
+import { isDraftRecord } from '@/lib/forms/entityState'
 import type { ListMeta } from '@/lib/api/listEndpoint'
 import type { AccountMovementRow } from '@/lib/modules/accounting/shared/accounting.types'
 
@@ -35,6 +36,7 @@ export default function PreAccountingMovementsPage() {
   const [pageState, setPageState] = useState<'list' | 'create' | 'view' | 'edit'>('list')
   const [selected, setSelected] = useState<AccountMovementRow | null>(null)
   const [saving, setSaving] = useState(false)
+  const [deleting, setDeleting] = useState(false)
   const [refs, setRefs] = useState<{ persons: any[]; organizations: any[]; companies: any[] }>({ persons: [], organizations: [], companies: [] })
   const [refsLoaded, setRefsLoaded] = useState(false)
   const [refsLoading, setRefsLoading] = useState(false)
@@ -162,6 +164,23 @@ export default function PreAccountingMovementsPage() {
     }
   }
 
+  const deleteDraft = async () => {
+    if (!selected?.id) return
+    setDeleting(true)
+    try {
+      await preAccountingService.delete(selected.id)
+      setToast({ type: 'success', title: 'Silindi', message: 'Taslak ön muhasebe hareketi silindi.' })
+      setPageState('list')
+      setSelected(null)
+      await loadData()
+    } catch (error) {
+      setToast({ type: 'error', title: 'Silinemedi', message: error instanceof Error ? error.message : 'Taslak hareket silinemedi.' })
+      throw error
+    } finally {
+      setDeleting(false)
+    }
+  }
+
   return (
     <div className="relative">
       <PageBanner
@@ -187,7 +206,7 @@ export default function PreAccountingMovementsPage() {
         </div>
       ) : (
         <div className="mt-6">
-          <EntityForm mode={formMode} entityName="Ön Muhasebe Hareketleri" entityNameSingular="Hareket" heroFields={heroFields} tabs={tabs} data={selected || { movement_date: new Date().toISOString().slice(0, 10), currency: 'TRY', exchange_rate: 1, status: 'Taslak', document_status: 'none', invoice_match_status: 'none', bank_match_status: 'none', reconciliation_status: 'none', row_health_status: 'missing_document' }} saving={saving} loadStages={formLoadStages} onSave={save} onCancel={() => setPageState('list')} onModeChange={(nextMode) => setPageState(nextMode)} canCreate={can(ACCOUNTING_PERMISSIONS.preAccountingInsert)} canEdit={can(ACCOUNTING_PERMISSIONS.preAccountingEdit)} enableHistory />
+          <EntityForm mode={formMode} entityName="Ön Muhasebe Hareketleri" entityNameSingular="Hareket" heroFields={heroFields} tabs={tabs} data={selected || { movement_date: new Date().toISOString().slice(0, 10), currency: 'TRY', exchange_rate: 1, status: 'Taslak', document_status: 'none', invoice_match_status: 'none', bank_match_status: 'none', reconciliation_status: 'none', row_health_status: 'missing_document' }} saving={saving} deleting={deleting} loadStages={formLoadStages} onSave={save} onCancel={() => setPageState('list')} onModeChange={(nextMode) => setPageState(nextMode)} onDelete={selected && isDraftRecord(selected as Record<string, any>) ? deleteDraft : undefined} canCreate={can(ACCOUNTING_PERMISSIONS.preAccountingInsert)} canEdit={can(ACCOUNTING_PERMISSIONS.preAccountingEdit)} enableHistory />
         </div>
       )}
     </div>

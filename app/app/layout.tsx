@@ -89,7 +89,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <div className={cn('flex h-screen overflow-hidden', dark && 'dark')}>
             {/* Desktop Sidebar */}
             <div className="hidden lg:block">
-              <Sidebar collapsed={collapsed} mobileOpen={false} onMobileClose={() => {}} />
+              <Sidebar collapsed={collapsed} mobileOpen={false} onMobileClose={() => {}} onExpand={() => setCollapsed(false)} />
             </div>
 
             {/* Mobile Sidebar Overlay */}

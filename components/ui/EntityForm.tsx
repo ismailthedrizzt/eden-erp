@@ -2160,7 +2160,7 @@ export function EntityForm({
   const canHardDeleteRecord = !isCreate && !isPassive && isDraftRecord(effectiveStatusData) && effectiveCanPassivate && !!onDelete
   const canPassivateRecord = !isPassive && !canHardDeleteRecord && effectiveCanPassivate && !!onDelete
   const canDeleteRecord = canHardDeleteRecord || canPassivateRecord
-  const deleteActionLabel = canActivateRecord ? 'Aktive Et' : canHardDeleteRecord ? 'Kalici Sil' : 'Pasife Al'
+  const deleteActionLabel = canActivateRecord ? 'Aktive Et' : canHardDeleteRecord ? 'Sil' : 'Pasife Al'
   const slotLoaderMode = isReadOnly ? 'view' : isCreate ? 'insert' : 'update'
   const getLoadStage = (key: FormLoadStageKey) => loadStages?.find(stage => stage.key === key)
   const mediaLoadStage = getLoadStage('media') || getLoadStage('detail')

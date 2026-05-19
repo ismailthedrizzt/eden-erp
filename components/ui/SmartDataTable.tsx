@@ -202,6 +202,7 @@ export function SmartDataTable<T extends { id: string }>({
   const [showWidgets, setShowWidgets] = useState(true)
   const [showWidgetPicker, setShowWidgetPicker] = useState(false)
   const [selectedQuickLookWidgetIds, setSelectedQuickLookWidgetIds] = useState<string[]>(quickLookWidgetIds)
+  const [loadedPreferenceSignature, setLoadedPreferenceSignature] = useState<string | null>(null)
   const [draggedColumn, setDraggedColumn] = useState<string | null>(null)
   const [dropTarget, setDropTarget] = useState<string | null>(null)
 
@@ -220,6 +221,7 @@ export function SmartDataTable<T extends { id: string }>({
   const columnSelectorRef = useRef<HTMLDivElement>(null)
   const serverPaginationRef = useRef(pagination)
   const serverFilterSignatureRef = useRef(JSON.stringify(filters))
+  const preferenceSignature = `${storageKey}|${defaultView}|${defaultPageSize}|${columnSignature}|${quickLookWidgetSignature}`
 
   useEffect(() => {
     serverPaginationRef.current = pagination
@@ -255,8 +257,9 @@ export function SmartDataTable<T extends { id: string }>({
       localStorage.getItem(`${widgetPreferenceKey}:ids`) ?? localStorage.getItem(`${storageKey}-widgets`),
       quickLookWidgetIds,
     ))
+    setLoadedPreferenceSignature(preferenceSignature)
     setPreferencesLoaded(true)
-  }, [storageKey, defaultView, defaultPageSize, columnSignature, quickLookWidgetSignature])
+  }, [storageKey, defaultView, defaultPageSize, columnSignature, quickLookWidgetSignature, preferenceSignature])
 
   useEffect(() => {
     setColumnConfig(prev => mergeColumnConfig(initialColumns, prev))
@@ -275,13 +278,24 @@ export function SmartDataTable<T extends { id: string }>({
   // Persist preferences
   useEffect(() => {
     if (!preferencesLoaded) return
+    if (loadedPreferenceSignature !== preferenceSignature) return
     localStorage.setItem(`${storageKey}-view`, viewMode)
     localStorage.setItem(`${storageKey}-pageSize`, pageSize.toString())
     localStorage.setItem(`${storageKey}-columns`, JSON.stringify(columnConfig))
     const widgetPreferenceKey = widgetPreferenceStorageKey(quickLookPreferenceScope)
     localStorage.setItem(`${widgetPreferenceKey}:open`, String(showWidgets))
+    localStorage.setItem(`${storageKey}-quickLook`, String(showWidgets))
     localStorage.setItem(`${widgetPreferenceKey}:ids`, JSON.stringify(selectedQuickLookWidgetIds))
-  }, [preferencesLoaded, viewMode, pageSize, columnConfig, showWidgets, selectedQuickLookWidgetIds, storageKey, quickLookPreferenceScope])
+  }, [preferencesLoaded, loadedPreferenceSignature, preferenceSignature, viewMode, pageSize, columnConfig, showWidgets, selectedQuickLookWidgetIds, storageKey, quickLookPreferenceScope])
+
+  const setQuickLookOpen = useCallback((nextOpen: boolean) => {
+    setShowWidgets(nextOpen)
+    if (typeof window === 'undefined') return
+
+    const widgetPreferenceKey = widgetPreferenceStorageKey(quickLookPreferenceScope)
+    localStorage.setItem(`${widgetPreferenceKey}:open`, String(nextOpen))
+    localStorage.setItem(`${storageKey}-quickLook`, String(nextOpen))
+  }, [quickLookPreferenceScope, storageKey])
 
   // Click outside handler for column selector
   useEffect(() => {
@@ -996,7 +1010,7 @@ export function SmartDataTable<T extends { id: string }>({
           </button>
           <button
             onClick={() => {
-              setShowWidgets(false)
+              setQuickLookOpen(false)
               setHoveredRow(null)
             }}
             className="text-blue-600 dark:text-blue-400 hover:text-blue-800"
@@ -1148,7 +1162,7 @@ export function SmartDataTable<T extends { id: string }>({
 
           {/* Quick Look Toggle */}
           <button
-            onClick={() => setShowWidgets(!showWidgets)}
+            onClick={() => setQuickLookOpen(!showWidgets)}
             className={cn(
               "p-2 rounded-lg transition-colors relative",
               showWidgets 
