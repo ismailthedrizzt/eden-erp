@@ -1,4 +1,4 @@
-import { getCountryLabel, normalizeCountryId } from '@/lib/reference/country-nationalities'
+import { normalizeCountryId } from '@/lib/reference/country-nationalities'
 import { getIbanBankInfo, resolveTurkishIban } from '@/lib/utils'
 import type { BankAccountFormPriorityMode, EntityBankAccountKind } from './entityBankAccounts.types'
 
@@ -14,7 +14,7 @@ export type BankAccountSuggestion = {
 
 export class BankAccountAutoFillService {
   static getPriorityMode(master: MasterRecord): BankAccountFormPriorityMode {
-    const country = normalizeCountryId(master?.country || master?.country || master?.nationality_country || '')
+    const country = normalizeCountryId(master?.country || master?.nationality_country || master?.nationality || '')
     if (!country) return 'unknown_country'
     return country === 'TR' ? 'tr_priority' : 'international_priority'
   }
@@ -28,7 +28,7 @@ export class BankAccountAutoFillService {
   }
 
   static getMasterCountry(master: MasterRecord) {
-    return normalizeCountryId(master?.country || master?.country || master?.nationality_country || '') || ''
+    return normalizeCountryId(master?.country || master?.nationality_country || master?.nationality || '') || ''
   }
 
   static applyIban(input: Record<string, any>, previous: Record<string, any> = {}): BankAccountSuggestion {
@@ -98,8 +98,6 @@ export class BankAccountAutoFillService {
       verification_status: 'unverified',
       status: 'active',
       has_intermediary_bank: false,
-      priorityMode: this.getPriorityMode(master),
-      countryLabel: country ? getCountryLabel(country) : '',
     }
   }
 }

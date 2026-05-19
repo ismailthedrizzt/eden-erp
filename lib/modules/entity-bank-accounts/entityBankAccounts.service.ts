@@ -3,8 +3,8 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { BankAccountAutoFillService } from './BankAccountAutoFillService'
 import type { EntityBankAccountKind } from './entityBankAccounts.types'
 
-const PERSON_MASTER_SELECT = 'id,full_name,first_name,last_name,display_name,country,country,nationality_country'
-const ORGANIZATION_MASTER_SELECT = 'id,legal_name,trade_name,trade_name,display_name,short_name,country,country,nationality_country'
+const PERSON_MASTER_SELECT = 'id,full_name,first_name,last_name,nationality'
+const ORGANIZATION_MASTER_SELECT = 'id,legal_name,short_name,country'
 const BANK_ACCOUNT_SELECT = 'id,entity_kind,person_id,organization_id,beneficiary_name,is_same_as_master_name,beneficiary_name_note,iban,account_number,account_country,account_currency,bank_name,bank_country,bank_code,branch_name,branch_code,swift_bic,bank_address,local_clearing_code_type,local_clearing_code,has_intermediary_bank,intermediary_bank_name,intermediary_swift_bic,intermediary_bank_address,intermediary_account_number,preferred_currency,payment_purpose,swift_charge_type,payment_note,verification_status,document_reference_id,is_default,status,history,autofill_sources,created_at,created_by,updated_at,updated_by,is_deleted,deleted_at,deleted_by,version'
 
 export const EntityBankAccountSchema = z.object({
