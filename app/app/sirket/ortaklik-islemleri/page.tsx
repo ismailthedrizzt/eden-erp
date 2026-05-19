@@ -29,7 +29,7 @@ type ToastState = { type: 'success' | 'error' | 'warning'; title?: string; messa
 type Option = { value: string; label: string }
 
 interface PartnerOption extends Option {
-  company_id: string
+  company_id?: string | null
   owner_kind?: string
   photo_logo?: any[]
   person_id?: string | null
@@ -82,7 +82,7 @@ function OwnershipTransactionsContent() {
   const capabilities = getOwnershipTransactionCapabilities()
   const formMode: FormMode = pageState === 'create' ? 'create' : pageState === 'edit' ? 'edit' : 'view'
   const selectedCompanyId = selected?.company_id || (companies.length === 1 ? companies[0]?.value : '')
-  const partnerOptions = partners.filter(partner => !selectedCompanyId || partner.company_id === selectedCompanyId)
+  const partnerOptions = partners
   const partnerNameById = useMemo(() => Object.fromEntries(partners.map(partner => [partner.value, partner.label])), [partners])
   const companyNameById = useMemo(() => Object.fromEntries(companies.map(company => [company.value, company.label])), [companies])
   const newEntryTransactionType = transactionTypes[0]
@@ -182,8 +182,7 @@ function OwnershipTransactionsContent() {
 
   function startCreate(companyId?: string, partnerId?: string) {
     const nextCompanyId = companyId || (companies.length === 1 ? companies[0]?.value : '')
-    const companyPartners = partners.filter(partner => !nextCompanyId || partner.company_id === nextCompanyId)
-    const nextPartnerId = partnerId || (companyPartners.length === 1 ? companyPartners[0].value : '')
+    const nextPartnerId = partnerId || (partners.length === 1 ? partners[0].value : '')
     const nextTransactionType = resolveTransactionTypeForPartner(
       transactions,
       nextCompanyId,
@@ -212,15 +211,9 @@ function OwnershipTransactionsContent() {
 
     const nextCompanyId = field === 'company_id' ? value : nextData.company_id
     let nextPartnerId = field === 'affected_partner_id' ? value : nextData.affected_partner_id
-    const companyPartners = partners.filter(partner => !nextCompanyId || partner.company_id === nextCompanyId)
 
-    if (field === 'company_id') {
-      const currentPartnerBelongsToCompany = companyPartners.some(partner => partner.value === nextPartnerId)
-      nextPartnerId = currentPartnerBelongsToCompany
-        ? nextPartnerId
-        : companyPartners.length === 1
-          ? companyPartners[0].value
-          : ''
+    if (field === 'company_id' && !nextPartnerId && partners.length === 1) {
+      nextPartnerId = partners[0].value
     }
 
     const currentType = field === 'transaction_type' ? value : nextData.transaction_type

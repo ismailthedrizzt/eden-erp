@@ -140,8 +140,7 @@ export const personelModuleConfig: ModuleConfig<PersonelTableRow> = {
         person: ['nationality', 'national_id', 'passport_no'],
       },
       roleTable: 'employees',
-      roleDuplicateCheck: 'company_id + person_id + active',
-      roleScopeFields: ['company_id', 'company_id'],
+      roleDuplicateCheck: 'person_id',
     },
     hero: {
       mediaSlots: [

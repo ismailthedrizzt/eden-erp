@@ -6,6 +6,7 @@ import { normalizeCountryId } from '@/lib/reference/country-nationalities'
 import { EntityBankAccountsService } from '@/lib/modules/entity-bank-accounts/entityBankAccounts.service'
 import { parseListQuery } from '@/lib/api/listEndpoint'
 import { safeCreateRecord, safeCrudResponse, safeListRecords } from '@/lib/crud/safeCrudService'
+import { ensureUniqueRoleMaster, roleUniquenessResponse } from '@/lib/identity/roleUniqueness'
 
 const PartnerSchema = z.object({
   company_id: z.string().uuid().optional(),  person_id: z.string().uuid().optional().nullable(),
@@ -158,6 +159,11 @@ export async function POST(request: NextRequest) {
   }
 
   const row = await attachPartnerIdentity(supabase, parsed.data, mapPartnerForDb(parsed.data))
+  const uniqueness = await ensureUniqueRoleMaster(supabase as any, {
+    tableName: 'company_partners',
+    identity: row,
+  })
+  if (!uniqueness.ok) return roleUniquenessResponse(uniqueness)
 
   const createResult = await safeCreateRecord({
     supabase,

@@ -16,11 +16,16 @@ Backend endpoints must not rely only on frontend checks. They must enforce dupli
 
 Expected examples:
 
-- Employees: `company_id + person_id + active`
+- Employees: `person_id`
 - Companies: `organization_id + active`
-- Partners: `company_id + person_id/organization_id + active`
+- Partners: `person_id/organization_id`
 - Representatives: `company_id + person_id/organization_id + authority_type + active`
-- Stakeholders: `company_id + person_id/organization_id + category + active`
+- Stakeholders: `person_id/organization_id`
+
+Partners, employees, and stakeholders are role-master records. A person or
+organization can have one record in each role list. Company-specific partner
+activity is modeled by ownership transactions that point to the existing partner
+record, not by creating another partner row.
 
 Duplicate role creation should return:
 

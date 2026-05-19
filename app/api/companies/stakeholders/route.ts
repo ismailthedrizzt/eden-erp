@@ -5,6 +5,7 @@ import { hydrateMasterContact, stripMasterDataForRoleProfile, syncMasterContact 
 import { normalizeCountryId } from '@/lib/reference/country-nationalities'
 import { EntityBankAccountsService } from '@/lib/modules/entity-bank-accounts/entityBankAccounts.service'
 import { listMetaFromRows, listRange, parseListQuery } from '@/lib/api/listEndpoint'
+import { ensureUniqueRoleMaster, roleUniquenessResponse } from '@/lib/identity/roleUniqueness'
 
 const StakeholderSchema = z.object({
   company_id: z.string().uuid().optional(),
@@ -112,6 +113,12 @@ export async function POST(request: NextRequest) {
       code: 'MASTER_IDENTITY_LINK_FAILED',
     }, { status: 500 })
   }
+
+  const uniqueness = await ensureUniqueRoleMaster(supabase as any, {
+    tableName: 'stakeholders',
+    identity: row,
+  })
+  if (!uniqueness.ok) return roleUniquenessResponse(uniqueness)
 
   const { data, error } = await supabase
     .from('stakeholders')

@@ -516,8 +516,7 @@ export default function PaydaslarPage() {
                 organization: ['country', 'tax_number', 'registration_number'],
               },
               roleTable: 'stakeholders',
-              roleDuplicateCheck: 'company_id + person_id/organization_id + category + active',
-              roleScopeFields: ['company_id', 'company_id'],
+              roleDuplicateCheck: 'entity_kind + person_id/organization_id',
             }}
             heroFields={heroFields.map(withFieldHistory)}
             tabs={configuredTabs.map(tab => ({ ...tab, fields: tab.fields.map(withFieldHistory) }))}

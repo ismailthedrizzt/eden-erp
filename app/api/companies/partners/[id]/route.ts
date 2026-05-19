@@ -8,6 +8,7 @@ import {
   type SafeHardDeleteReferenceCheck,
 } from '@/lib/workflow/safeHardDeleteDraftRecord'
 import { diffRecord, safeCrudResponse, safeReadRecord, safeUpdateRecord } from '@/lib/crud/safeCrudService'
+import { ensureUniqueRoleMaster } from '@/lib/identity/roleUniqueness'
 
 const PARTNER_DETAIL_SELECT = 'id,company_id,company_id,person_id,organization_id,owner_kind,partner_type,display_name,partner_name,identity_number,identity_tax_number,share_ratio,share_ratio,voting_ratio,profit_ratio,source_type,source_id,share_units,nominal_value,capital_amount,share_class,has_representation_right,signature_authority,has_control_right,control_type,has_board_nomination_right,has_veto_right,has_privileged_share,beneficial_owner,is_beneficial_owner,beneficial_ratio,is_ultimate_controller,start_date,end_date,status,record_status,history,photo_logo,partner_documents,partner_profile,notes,created_at'
 
@@ -71,6 +72,14 @@ export async function PATCH(
     patch: body,
     select: PARTNER_DETAIL_SELECT,
     currentSelect: PARTNER_DETAIL_SELECT,
+    guard: async ({ current, patch }) => {
+      const mapped = mapPartnerForDb(patch, current)
+      return ensureUniqueRoleMaster(supabase as any, {
+        tableName: 'company_partners',
+        identity: mapped,
+        excludeId: id,
+      })
+    },
     beforeUpdate: ({ current, patch }) => {
       const mapped = mapPartnerForDb(patch, current)
       return {

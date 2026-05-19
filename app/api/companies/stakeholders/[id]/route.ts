@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { hydrateMasterContact, stripMasterDataForRoleProfile, syncMasterContact } from '@/lib/identity/masterContact'
 import { EntityBankAccountsService } from '@/lib/modules/entity-bank-accounts/entityBankAccounts.service'
+import { ensureUniqueRoleMaster, roleUniquenessResponse } from '@/lib/identity/roleUniqueness'
 
 const STAKEHOLDER_DETAIL_SELECT = 'id,company_id,person_id,organization_id,stakeholder_type,category,display_name,tax_id,phone,email,country,city,status,priority_level,internal_owner_employee_id,relationship_start_date,relationship_end_date,iban,bank_name,currency,contract_status,notes,photo_logo,stakeholder_documents,stakeholder_profile,history,is_deleted,created_at'
 
@@ -57,6 +58,16 @@ export async function PATCH(
   if (currentError) return NextResponse.json({ error: currentError.message, code: currentError.code || 'FETCH_FAILED' }, { status: 500 })
 
   const mapped = mapStakeholderForDb(body, current)
+  const uniqueness = await ensureUniqueRoleMaster(supabase as any, {
+    tableName: 'stakeholders',
+    identity: {
+      person_id: body.person_id || current.person_id,
+      organization_id: body.organization_id || current.organization_id,
+    },
+    excludeId: id,
+  })
+  if (!uniqueness.ok) return roleUniquenessResponse(uniqueness)
+
   const { data, error } = await supabase
     .from('stakeholders')
     .update({ ...mapped, history: buildHistory(current, mapped) })

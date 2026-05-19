@@ -341,11 +341,13 @@ async function findRoleRecord(
   query = query.eq(input.entityKind === 'person' ? 'person_id' : 'organization_id', input.masterId)
 
   const companyId = clean(input.roleScope.company_id || input.roleScope.company_id)
-  if (companyId && ['company_partners', 'company_representatives', 'stakeholders'].includes(input.roleTable)) {
-    query = query.eq(input.roleTable === 'stakeholders' ? 'company_id' : 'company_id', companyId)
+  if (companyId && input.roleTable === 'company_representatives') {
+    query = query.eq('company_id', companyId)
   }
 
-  query = query
+  if (['employees', 'company_partners', 'company_representatives', 'stakeholders'].includes(input.roleTable)) {
+    query = query.eq('is_deleted', false)
+  }
 
   const { data, error } = await query
   if (error) return { error: error.message, record: null }

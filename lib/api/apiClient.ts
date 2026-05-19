@@ -85,10 +85,12 @@ async function request<T>(path: string, options: ApiClientOptions = {}): Promise
     if (!response.ok) {
       const body = await response.json().catch(() => ({}))
       const detail = body.detail || body
+      const serverMessage = detail?.message || body.error
       const message =
-        response.status === 409
-          ? 'Bu kayıt başka bir kullanıcı tarafından güncellendi. Lütfen kaydı yenileyin.'
-          : detail?.message || body.error || response.statusText
+        serverMessage ||
+        (response.status === 409
+          ? 'Bu kayit baska bir kullanici tarafindan guncellendi. Lutfen kaydi yenileyin.'
+          : response.statusText)
       throw new ApiError(message, response.status, detail?.code || body.code, detail)
     }
 

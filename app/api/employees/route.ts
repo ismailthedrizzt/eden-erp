@@ -6,6 +6,7 @@ import { hydrateMasterContact, syncMasterContact } from '@/lib/identity/masterCo
 import { listMetaFromRows, listRange, parseListQuery } from '@/lib/api/listEndpoint'
 import { getServerResponseCache, serverListCacheKey, setServerResponseCache } from '@/lib/api/serverResponseCache'
 import { fetchCompanyNames } from '../accounting/_banking'
+import { ensureUniqueRoleMaster, roleUniquenessResponse } from '@/lib/identity/roleUniqueness'
 
 const EmployeeSchema = z.object({
   person_id: z.string().uuid().optional().nullable(),
@@ -327,6 +328,11 @@ export async function POST(request: NextRequest) {
 
   const masterPayload = parsed.data
   let employeePayload = await ensureEmployeePersonLink(supabase, stripEmployeeMasterOnlyFields(masterPayload))
+  const uniqueness = await ensureUniqueRoleMaster(supabase as any, {
+    tableName: 'employees',
+    identity: employeePayload,
+  })
+  if (!uniqueness.ok) return roleUniquenessResponse(uniqueness)
 
   let { data, error } = await supabase
     .from('employees')

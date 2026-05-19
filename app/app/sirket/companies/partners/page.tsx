@@ -778,9 +778,7 @@ export default function OrtaklarPage() {
                 organization: ['country', 'tax_number', 'registration_number'],
               },
               roleTable: 'company_partners',
-              roleDuplicateCheck: 'company_id + entity_kind + person_id/organization_id + active',
-              roleScopeFields: ['company_id', 'company_id'],
-              allowMultipleActiveRoles: true,
+              roleDuplicateCheck: 'entity_kind + person_id/organization_id',
             }}
             heroFields={configuredHeroFields.map(withFieldHistory)}
             tabs={configuredTabs.map(tab => ({ ...tab, fields: tab.fields.map(withFieldHistory) }))}
