@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState, type ClipboardEvent, type ReactNode } from 'react'
+import Image from 'next/image'
 import { LogIn, UserPlus } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -352,11 +353,14 @@ export function LoginExperience({
       <div className="relative hidden flex-1 flex-col items-center justify-center overflow-hidden bg-gradient-to-br from-[#0a1623] via-[#102b40] to-[#216688] p-16 lg:flex">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_70%,rgba(14,140,97,0.14),transparent_58%)]" />
         <div className="relative max-w-sm text-center">
-          <div className="mx-auto mb-8 flex h-20 w-20 items-center justify-center rounded-2xl bg-eden-blue shadow-lg">
-            <svg width="44" height="44" fill="none" stroke="white" strokeWidth="1.5" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 3l9 4.5-9 4.5-9-4.5L12 3zM3 12l9 4.5 9-4.5M3 17l9 4.5 9-4.5" />
-            </svg>
-          </div>
+          <Image
+            src="/brand/eden-logo-colored.png"
+            alt="Eden Teknoloji"
+            width={280}
+            height={125}
+            className="mx-auto mb-8 h-auto w-64 object-contain drop-shadow-lg"
+            priority
+          />
           <h1 className="mb-3 font-display text-3xl font-bold text-white">Eden Teknoloji</h1>
           <p className="mb-10 text-sm leading-relaxed text-white/60">
             Kurumsal ERP platformuna erişmek veya yeni kullanıcı kaydı başlatmak için kurumsal e-posta adresinizi ya da kayıtlı telefon numaranızı kullanın.
@@ -378,11 +382,14 @@ export function LoginExperience({
       <div className="flex w-full items-center justify-center bg-[#0b1724] p-6 sm:p-10 lg:w-[440px] lg:border-l lg:border-[#28445c]">
         <div className="w-full max-w-sm rounded-2xl border border-[#28445c] bg-[#0f2233]/92 p-6 shadow-2xl shadow-black/25 sm:p-8 lg:border-0 lg:bg-transparent lg:p-0 lg:shadow-none">
           <div className="mb-10 flex items-center gap-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-eden-blue">
-              <svg width="20" height="20" fill="none" stroke="white" strokeWidth="2" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 3l9 4.5-9 4.5-9-4.5L12 3z" />
-              </svg>
-            </div>
+            <Image
+              src="/eden-icon-original.png"
+              alt="Eden"
+              width={44}
+              height={44}
+              className="h-11 w-11 flex-shrink-0 object-contain"
+              priority
+            />
             <div>
               <div className="text-[10px] font-semibold uppercase tracking-widest text-white/45">Eden Teknoloji</div>
               <div className="font-display text-base font-bold text-white">ERP Sistemi</div>

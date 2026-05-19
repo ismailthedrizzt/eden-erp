@@ -30,7 +30,7 @@ const allowedRoleTables = new Set([
 
 const PERSON_SELECT = 'id,first_name,last_name,full_name,nationality,national_id,passport_no,birth_date,birth_place,gender,phone,email,address,city,district,metadata_json,updated_at'
 const ORGANIZATION_SELECT = 'id,legal_name,short_name,country,tax_number,registration_number,tax_office,organization_type,phone,email,address,city,district,metadata_json,updated_at'
-const EMPLOYEE_IDENTITY_SELECT = 'id,person_id,nationality,national_id,passport_no,birth_date,birth_place,gender,mobile_phone,work_phone,email,address,phones,emails,job_title,has_disability,disability_percentage,military_status,deferment_date,has_conviction,is_illiterate,education_schools,foreign_languages,certificates,marital_status,relatives,iban,blood_type,photo_url,cv_document,diploma_document,entry_documents,exit_documents'
+const EMPLOYEE_IDENTITY_SELECT = 'id,person_id,nationality,national_id,passport_no,birth_date,birth_place,gender,mobile_phone,work_phone,email,address,phones,emails,job_title,is_illiterate,education_schools,foreign_languages,certificates,marital_status,relatives,iban,photo_url,cv_document,diploma_document,entry_documents,exit_documents'
 const COMPANY_IDENTITY_SELECT = 'id,organization_id,trade_name,short_name,country,tax_number,trade_registry_number,mersis_number,tax_office,company_type,phone,email,address,city,district,foundation_date,logo_url,hero_images,hero_documents'
 const ROLE_SELECT_BY_TABLE: Record<string, string> = {
   employees: 'id,person_id,national_id,passport_no,work_status',
@@ -474,11 +474,6 @@ function mergeEmployeeIntoPerson(person: Record<string, any>, employee: Record<s
       email: person.email || employee.email,
     }),
     address: person.address || employee.address || '',
-    has_disability: person.has_disability ?? employee.has_disability ?? false,
-    disability_percentage: person.disability_percentage ?? employee.disability_percentage ?? null,
-    military_status: person.military_status || employee.military_status || '',
-    deferment_date: person.deferment_date || employee.deferment_date || '',
-    has_conviction: person.has_conviction ?? employee.has_conviction ?? false,
     is_illiterate: person.is_illiterate ?? employee.is_illiterate ?? false,
     education_schools: Array.isArray(person.education_schools) ? person.education_schools : Array.isArray(employee.education_schools) ? employee.education_schools : [],
     foreign_languages: Array.isArray(person.foreign_languages) ? person.foreign_languages : Array.isArray(employee.foreign_languages) ? employee.foreign_languages : [],
@@ -487,7 +482,7 @@ function mergeEmployeeIntoPerson(person: Record<string, any>, employee: Record<s
     iban: person.iban || employee.iban || '',
     occupation: person.occupation || employee.occupation || employee.job_title || '',
     job_title: employee.job_title || person.job_title || person.occupation || employee.occupation || '',
-    blood_type: person.blood_type || employee.blood_type || '',    photo_logo: normalizePersonImages(person).length ? normalizePersonImages(person) : normalizePersonImages(employee),
+    photo_logo: normalizePersonImages(person).length ? normalizePersonImages(person) : normalizePersonImages(employee),
     partner_documents: normalizePersonDocuments(employee),
   }
 }

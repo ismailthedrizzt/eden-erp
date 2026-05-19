@@ -1,4 +1,4 @@
-import { Briefcase, FileText, GraduationCap, Heart, Landmark, Phone, UserCircle } from 'lucide-react'
+import { Briefcase, FileText, GraduationCap, Heart, Landmark, Phone, Shirt } from 'lucide-react'
 import type { ModuleConfig } from '@/types/module-config'
 import type { Personel } from '@/types'
 import { COUNTRY_NATIONALITY_OPTIONS, getCountryNationalityLabel } from '@/lib/reference/country-nationalities'
@@ -164,67 +164,9 @@ export const personelModuleConfig: ModuleConfig<PersonelTableRow> = {
         { key: 'birth_date', label: 'Doğum Tarihi', type: 'date', compact: true },
         { key: 'birth_place', label: 'Doğum Yeri', type: 'text' },
         { key: 'job_title', label: 'Mesleği', type: 'text' },
-        {
-          key: 'military_status',
-          label: 'Askerlik Durumu',
-          type: 'select',
-          compact: true,
-          visibleWhen: { field: 'gender', includes: ['male', 'Erkek'] },
-          options: [
-            { value: 'muaf', label: 'Muaf' },
-            { value: 'caginda_degil', label: 'Askerlik Çağında Değcity' },
-            { value: 'belirsiz', label: 'Belirsiz' },
-            { value: 'tecilli', label: 'Tecilli' },
-            { value: 'bakaya', label: 'Bakaya' }
-          ]
-        },
-        {
-          key: 'blood_type',
-          label: 'Kan Grubu',
-          type: 'select',
-          compact: true,
-          options: [
-            { value: 'A+', label: 'A+' },
-            { value: 'A-', label: 'A-' },
-            { value: 'B+', label: 'B+' },
-            { value: 'B-', label: 'B-' },
-            { value: 'AB+', label: 'AB+' },
-            { value: 'AB-', label: 'AB-' },
-            { value: '0+', label: '0+' },
-            { value: '0-', label: '0-' }
-          ]
-        },
       ]
     },
     tabs: [
-      {
-        key: 'ozel',
-        label: 'Özel',
-        icon: <UserCircle size={16} />,
-        source: {
-          type: 'fields',
-          fields: [
-            { key: 'has_disability', label: 'Engellilik Durumu', type: 'checkbox', placeholder: 'Engellilik var', compact: true },
-            { key: 'disability_percentage', label: 'Engellilik Yüzdesi', type: 'number', compact: true, visibleWhen: { field: 'has_disability', operator: 'equals', value: true } },
-            {
-              key: 'military_status',
-              label: 'Askerlik Durumu',
-              type: 'select',
-              compact: true,
-              visibleWhen: { field: 'gender', includes: ['male', 'Erkek'] },
-              options: [
-                { value: 'muaf', label: 'Muaf' },
-                { value: 'caginda_degil', label: 'Askerlik Çağında Değcity' },
-                { value: 'belirsiz', label: 'Belirsiz' },
-                { value: 'tecilli', label: 'Tecilli' },
-                { value: 'bakaya', label: 'Bakaya' }
-              ]
-            },
-            { key: 'deferment_date', label: 'Tecil Tarihi', type: 'date', compact: true, visibleWhen: { field: 'military_status', operator: 'equals', value: 'tecilli' }, requiredWhen: { field: 'military_status', operator: 'equals', value: 'tecilli' } },
-            { key: 'has_conviction', label: 'Hükümlülük Durumu', type: 'checkbox', placeholder: 'Hükümlülük var', compact: true }
-          ]
-        }
-      },
       {
         key: 'iletisim',
         label: 'İletişim',
@@ -442,7 +384,7 @@ export const personelModuleConfig: ModuleConfig<PersonelTableRow> = {
       {
         key: 'kiyafet',
         label: 'Kıyafet',
-        icon: <UserCircle size={16} />,
+        icon: <Shirt size={16} />,
         source: {
           type: 'fields',
           fields: [

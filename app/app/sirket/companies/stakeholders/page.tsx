@@ -520,7 +520,7 @@ export default function PaydaslarPage() {
             }}
             heroFields={heroFields.map(withFieldHistory)}
             tabs={configuredTabs.map(tab => ({ ...tab, fields: tab.fields.map(withFieldHistory) }))}
-            roleHeroCardTitle="Forma Özel"
+            roleHeroCardTitle="Rol Bilgileri"
             masterSummaryMode="entityIdentity"
             data={selectedStakeholder || undefined}
             saving={saving}

@@ -126,12 +126,6 @@ const employeeMainFields = [
   'gender',
   'birth_place',
   'birth_date',
-  'blood_type',
-  'military_status',
-  'deferment_date',
-  'has_disability',
-  'disability_percentage',
-  'has_conviction',
   'phones',
   'emails',
   'mobile_phone',
@@ -227,7 +221,6 @@ const personMasterFields = [
   'marital_status',
   'relatives',
   'iban',
-  'blood_type',
 ]
 
 const partnerMainFields = [
@@ -282,12 +275,6 @@ const partnerPersonMasterFields = [
   'birth_place',
   'gender',
   'occupation',
-  'blood_type',
-  'has_disability',
-  'disability_percentage',
-  'military_status',
-  'deferment_date',
-  'has_conviction',
   'is_illiterate',
   'education_schools',
   'foreign_languages',

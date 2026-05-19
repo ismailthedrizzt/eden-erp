@@ -14,9 +14,6 @@ export const projectGlossary = {
       birthDate: { label: 'Doğum Tarihi' },
       birthPlace: { label: 'Doğum Yeri' },
       gender: { label: 'Cinsiyet' },
-      bloodType: { label: 'Kan Grubu' },
-      militaryStatus: { label: 'Askerlik Durumu' },
-      defermentDate: { label: 'Tecil Tarihi' },
       workPhone: { label: 'İş Telefonu' },
       emergencyFirstName: { label: 'Acil Kişi Adı' },
       emergencyLastName: { label: 'Acil Kişi Soyadı' },
@@ -46,4 +43,3 @@ export const projectGlossary = {
     },
   },
 } as const
-

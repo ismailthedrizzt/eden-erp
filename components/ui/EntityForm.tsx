@@ -414,7 +414,6 @@ function MasterSummaryHero({
           { label: 'Doğum Yeri', value: readFirst(master, prefill, ['birth_place']), fieldKeys: ['birth_place'] },
           { label: 'Cinsiyet', value: readFirst(master, prefill, ['gender']), fieldKeys: ['gender'], inputType: 'select' as const, options: [{ value: 'male', label: 'Erkek' }, { value: 'female', label: 'Kadın' }] },
           { label: 'Mesleği', value: readFirst(master, prefill, ['occupation']), fieldKeys: ['occupation'] },
-          { label: 'Kan Grubu', value: readFirst(master, prefill, ['blood_type']), fieldKeys: ['blood_type'], inputType: 'select' as const, options: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', '0+', '0-'].map(value => ({ value, label: value })) },
         ]
     : compactSummaryItems([
         ...(titleAsField ? [{ label: 'Ad Soyad', value: title }] : []),
@@ -842,7 +841,6 @@ const MASTER_IDENTITY_FIELD_NAMES = new Set([
   'birth_place',
   'gender',
   'occupation',
-  'blood_type',
   'tax_office',
   'company_type',
   'foundation_date',
@@ -1715,8 +1713,8 @@ function WorkLifecycleField({
               <SgkCodeField label="Görev kodu" field="sgk_entry_duty_code" value={formData.sgk_entry_duty_code || '2'} onChange={onChange} readOnly={hireReadOnly} className={compactInputClass} options={sgkCodeCategories.dutyCodes} />
               <SgkCodeField label="Meslek kodu" field="sgk_entry_occupation_code" value={formData.sgk_entry_occupation_code || ''} onChange={onChange} readOnly={hireReadOnly} className={compactInputClass} options={sgkCodeCategories.occupationCodes} />
               <SgkCodeField label="ÇSGB iş kolu" field="sgk_entry_csgb_business_line" value={formData.sgk_entry_csgb_business_line || ''} onChange={onChange} readOnly={hireReadOnly} className={compactInputClass} options={sgkCodeCategories.csgbBusinessLines} />
-              <SgkSelectField label="Engelli" field="sgk_entry_has_disability" value={formData.sgk_entry_has_disability || (formData.has_disability ? 'E' : 'H')} onChange={onChange} readOnly={hireReadOnly} className={compactInputClass} options={SGK_YES_NO_OPTIONS} />
-              <SgkSelectField label="Eski hükümlü" field="sgk_entry_has_prior_conviction" value={formData.sgk_entry_has_prior_conviction || (formData.has_conviction ? 'E' : 'H')} onChange={onChange} readOnly={hireReadOnly} className={compactInputClass} options={SGK_YES_NO_OPTIONS} />
+              <SgkSelectField label="Engelli" field="sgk_entry_has_disability" value={formData.sgk_entry_has_disability || 'H'} onChange={onChange} readOnly={hireReadOnly} className={compactInputClass} options={SGK_YES_NO_OPTIONS} />
+              <SgkSelectField label="Eski hükümlü" field="sgk_entry_has_prior_conviction" value={formData.sgk_entry_has_prior_conviction || 'H'} onChange={onChange} readOnly={hireReadOnly} className={compactInputClass} options={SGK_YES_NO_OPTIONS} />
               <SgkCodeField label="Öğrenim kodu" field="sgk_entry_education_code" value={formData.sgk_entry_education_code || ''} onChange={onChange} readOnly={hireReadOnly} className={compactInputClass} options={sgkCodeCategories.educationCodes} />
               <SgkTextField label="Mezuniyet yılı" field="sgk_entry_graduation_year" value={formData.sgk_entry_graduation_year || ''} onChange={onChange} readOnly={hireReadOnly} className={compactInputClass} />
               <SgkTextField label="Kısmi gün" field="sgk_entry_partial_day_count" value={formData.sgk_entry_partial_day_count || ''} onChange={onChange} readOnly={hireReadOnly} className={compactInputClass} />
@@ -2784,7 +2782,6 @@ export function EntityForm({
 
       switch (field.type) {
         case 'checkbox':
-          const checkboxHasStatusLabel = ['has_disability', 'has_conviction'].includes(field.name)
           return (
             <label className="flex min-h-10 items-center gap-2 rounded-lg border border-gray-300 bg-white px-3 py-2 text-[13px] leading-5 text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300">
               <input
@@ -2794,13 +2791,7 @@ export function EntityForm({
                 disabled={fieldDisabled}
                 className="h-4 w-4 rounded border-gray-400 bg-white text-blue-600 accent-blue-600 focus:ring-2 focus:ring-blue-500/30 disabled:cursor-not-allowed disabled:opacity-60 dark:border-gray-600 dark:bg-gray-900 dark:accent-blue-500"
               />
-              {checkboxHasStatusLabel ? (
-                <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-700 dark:bg-gray-800 dark:text-gray-200">
-                  {formData[field.name] ? 'Var' : 'Yok'}
-                </span>
-              ) : (
-                field.placeholder || field.label
-              )}
+              {field.placeholder || field.label}
             </label>
           )
         case 'iban':

@@ -782,7 +782,7 @@ export default function OrtaklarPage() {
             }}
             heroFields={configuredHeroFields.map(withFieldHistory)}
             tabs={configuredTabs.map(tab => ({ ...tab, fields: tab.fields.map(withFieldHistory) }))}
-            roleHeroCardTitle="Forma Özel"
+            roleHeroCardTitle="Rol Bilgileri"
             masterSummaryMode="entityIdentity"
             data={selectedPartner || undefined}
             saving={saving}

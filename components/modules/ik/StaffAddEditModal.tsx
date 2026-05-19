@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { User, Phone, GraduationCap, Briefcase, Landmark } from 'lucide-react'
+import { Phone, GraduationCap, Briefcase, Landmark } from 'lucide-react'
 import EdenModal from '@/components/ui/EdenModal'
 import { ModalHeroSection } from '@/components/ui/ModalHeroSection'
 
@@ -178,11 +178,6 @@ export default function StaffAddEditModal({ open, onClose, onSuccess }: { open: 
   )
 
   const tabs = [
-    {
-      label: 'Özel',
-      icon: <User size={16} />,
-      content: <div className="p-4">Özel bilgileri</div>
-    },
     {
       label: 'İletişim',
       icon: <Phone size={16} />,

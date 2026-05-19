@@ -89,12 +89,6 @@ export interface Personel {
   gender: 'male' | 'female'
   birth_place?: string
   birth_date?: string
-  blood_type?: KanGrubu
-  military_status?: AskerlikDurum
-  deferment_date?: string
-  has_disability: boolean
-  disability_percentage?: number
-  has_conviction: boolean
   // İletişim
   phones?: Array<Record<string, unknown>>
   emails?: Array<Record<string, unknown>>
@@ -181,9 +175,7 @@ export interface Personel {
 }
 
 export type PersonelDurum = 'active' | 'on_leave' | 'terminated' | 'suspended'
-export type KanGrubu = 'A+' | 'A-' | 'B+' | 'B-' | 'AB+' | 'AB-' | '0+' | '0-'
 export type MedeniDurum = 'single' | 'married'
-export type AskerlikDurum = 'muaf' | 'caginda_degil' | 'tecilli' | 'belirsiz' | 'bakaya' | 'yapti'
 
 // ── Muhasebe ──────────────────────────────────────────────────
 export interface NakitIslem {

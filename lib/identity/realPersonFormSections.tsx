@@ -1,4 +1,4 @@
-import { GraduationCap, Heart, Landmark, Phone, UserCircle } from 'lucide-react'
+import { GraduationCap, Heart, Landmark, Phone } from 'lucide-react'
 import type { FormField, FormTab } from '@/components/ui/EntityForm'
 import { EntityBankAccountsPanel } from '@/components/ui/EntityBankAccountsPanel'
 
@@ -17,14 +17,6 @@ type RealPersonMasterTabOptions = {
 const genderOptions = [
   { value: 'male', label: 'Erkek' },
   { value: 'female', label: 'Kadın' },
-]
-
-const militaryOptions = [
-  { value: 'muaf', label: 'Muaf' },
-  { value: 'caginda_degil', label: 'Askerlik Çağında Değcity' },
-  { value: 'belirsiz', label: 'Belirsiz' },
-  { value: 'tecilli', label: 'Tecilli' },
-  { value: 'bakaya', label: 'Bakaya' },
 ]
 
 const maritalOptions = [
@@ -111,18 +103,6 @@ export function createRealPersonMasterTabs({
   }
 
   return [
-    {
-      id: 'person_ozel',
-      label: 'Özel',
-      icon: <UserCircle size={16} />,
-      fields: applyVisibleWhen([
-        { name: 'has_disability', label: 'Engellilik Durumu', type: 'checkbox', placeholder: 'Engellilik var', compact: true },
-        { name: 'disability_percentage', label: 'Engellilik Yüzdesi', type: 'number', compact: true, visibleWhen: { field: 'has_disability', operator: 'equals', value: true } },
-        { name: 'military_status', label: 'Askerlik Durumu', type: 'select', compact: true, options: militaryOptions },
-        { name: 'deferment_date', label: 'Tecil Tarihi', type: 'date', compact: true, visibleWhen: { field: 'military_status', operator: 'equals', value: 'tecilli' }, requiredWhen: { field: 'military_status', operator: 'equals', value: 'tecilli' } },
-        { name: 'has_conviction', label: 'Hükümlülük Durumu', type: 'checkbox', placeholder: 'Hükümlülük var', compact: true },
-      ], visibleWhen),
-    },
     {
       id: 'person_iletisim',
       label: 'İletişim',

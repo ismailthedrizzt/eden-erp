@@ -87,9 +87,6 @@ const PERSONEL_FIELD_LABELS: Record<string, string> = {
   passport_no: employeeFieldLabels.passportNo.label,
   birth_date: employeeFieldLabels.birthDate.label,
   gender: employeeFieldLabels.gender.label,
-  blood_type: employeeFieldLabels.bloodType.label,
-  military_status: employeeFieldLabels.militaryStatus.label,
-  deferment_date: employeeFieldLabels.defermentDate.label,
   work_phone: employeeFieldLabels.workPhone.label,
   emergency_contact_first_name: employeeFieldLabels.emergencyFirstName.label,
   emergency_contact_last_name: employeeFieldLabels.emergencyLastName.label,
@@ -107,8 +104,6 @@ const PERSONEL_FIELD_LABELS: Record<string, string> = {
 }
 
 const OPTIONAL_EMPLOYEE_FIELDS = new Set([
-  'military_status',
-  'deferment_date',
   'work_phone',
   'emergency_contact_first_name',
   'emergency_contact_last_name',
@@ -667,7 +662,7 @@ export default function PersonelYonetimPage() {
   const formMode: FormMode = pageState === 'create' ? 'create' :
                             pageState === 'edit' ? 'edit' :
                             selectedIsPassive ? 'passive' : 'view'
-  const hiddenEmployeeTabIds = new Set(['person_ozel', 'ozel', 'iletisim', 'egitim', 'aile', 'banka'])
+  const hiddenEmployeeTabIds = new Set(['iletisim', 'egitim', 'aile', 'banka'])
   const formTabs = [
     ...createRealPersonMasterTabs({
       addressField: 'address',

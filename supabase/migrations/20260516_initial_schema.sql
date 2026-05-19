@@ -178,12 +178,6 @@ CREATE TABLE public.employees (
   gender text,
   birth_place text,
   birth_date date,
-  blood_type text,
-  military_status text,
-  deferment_date date,
-  has_disability boolean NOT NULL DEFAULT false,
-  disability_percentage numeric,
-  has_conviction boolean NOT NULL DEFAULT false,
   phones jsonb NOT NULL DEFAULT '[]'::jsonb,
   emails jsonb NOT NULL DEFAULT '[]'::jsonb,
   mobile_phone text,
@@ -289,7 +283,7 @@ CREATE TABLE public.employee_work_lifecycle_events (
 
 CREATE TABLE public.company_partners (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  company_id uuid NOT NULL REFERENCES public.companies(id),
+  company_id uuid REFERENCES public.companies(id),
   person_id uuid REFERENCES public.persons(id),
   organization_id uuid REFERENCES public.organizations(id),
   first_name text,

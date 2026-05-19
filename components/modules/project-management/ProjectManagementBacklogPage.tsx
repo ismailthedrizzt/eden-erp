@@ -187,7 +187,7 @@ export function ProjectManagementBacklogPage() {
               Sorumlu
             </button>
             <button type="button" onClick={moveSelectedToSprint} disabled={!canEdit || selectedCount === 0 || !targetSprintId} className="inline-flex items-center gap-2 rounded-lg bg-eden-blue px-3 py-2 text-sm font-semibold text-white hover:bg-eden-blue-dk disabled:opacity-50">
-              Sprint'e al
+              {"Sprint'e al"}
               <MoveRight size={16} />
             </button>
           </div>

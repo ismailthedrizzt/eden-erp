@@ -643,7 +643,7 @@ export default function TemsilcilerPage() {
             }}
             heroFields={heroFields.map(withFieldHistory)}
             tabs={configuredTabs.map(tab => ({ ...tab, fields: tab.fields.map(withFieldHistory) }))}
-            roleHeroCardTitle="Forma Özel"
+            roleHeroCardTitle="Rol Bilgileri"
             masterSummaryMode="entityIdentity"
             data={selectedRepresentative || undefined}
             saving={saving}

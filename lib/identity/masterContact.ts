@@ -10,16 +10,11 @@ const ORGANIZATION_MASTER_METADATA_KEY = 'organization_master'
 
 const PERSON_CONTACT_SELECT = 'id,first_name,last_name,full_name,nationality,national_id,passport_no,birth_date,birth_place,gender,phone,email,address,city,district,metadata_json'
 const ORGANIZATION_CONTACT_SELECT = 'id,legal_name,trade_name,short_name,country,tax_number,registration_number,tax_office,organization_type,phone,email,address,city,district,metadata_json'
-const EMPLOYEE_MASTER_ENRICH_SELECT = 'id,person_id,national_id,passport_no,has_disability,disability_percentage,military_status,deferment_date,has_conviction,is_illiterate,education_schools,foreign_languages,certificates,marital_status,relatives,iban,blood_type,job_title'
+const EMPLOYEE_MASTER_ENRICH_SELECT = 'id,person_id,national_id,passport_no,is_illiterate,education_schools,foreign_languages,certificates,marital_status,relatives,iban,job_title'
 
 const PERSON_MASTER_PROFILE_KEYS = [
   'photo_logo',
   'photo_url',
-  'has_disability',
-  'disability_percentage',
-  'military_status',
-  'deferment_date',
-  'has_conviction',
   'is_illiterate',
   'education_schools',
   'foreign_languages',
@@ -30,7 +25,6 @@ const PERSON_MASTER_PROFILE_KEYS = [
   'bank_name',
   'occupation',
   'job_title',
-  'blood_type',
 ]
 
 const ORGANIZATION_MASTER_PROFILE_KEYS = [
@@ -326,11 +320,6 @@ async function enrichPersonMasterFromEmployee(supabase: SupabaseClient, master: 
   if (!employee) return master
 
   const employeeProfile: Record<string, any> = {
-    has_disability: employee.has_disability,
-    disability_percentage: employee.disability_percentage,
-    military_status: employee.military_status,
-    deferment_date: employee.deferment_date,
-    has_conviction: employee.has_conviction,
     is_illiterate: employee.is_illiterate,
     education_schools: employee.education_schools,
     foreign_languages: employee.foreign_languages,
@@ -340,7 +329,6 @@ async function enrichPersonMasterFromEmployee(supabase: SupabaseClient, master: 
     iban: employee.iban,
     occupation: employee.job_title,
     job_title: employee.job_title,
-    blood_type: employee.blood_type,
   }
 
   return {

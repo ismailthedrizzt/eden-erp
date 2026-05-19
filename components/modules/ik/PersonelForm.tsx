@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { User, Phone, GraduationCap, Briefcase, Landmark, X, Briefcase as Job } from 'lucide-react'
+import { Phone, GraduationCap, Briefcase, Landmark, X, Briefcase as Job } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useModuleLicense } from '@/hooks/useModuleLicense'
 import { ImageSlotUploader, ImageSlot, SlotImage } from '@/components/ui/ImageSlotUploader'
@@ -27,7 +27,7 @@ const foreignLanguageOptions = [
 ]
 
 export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () => void, onCancel: () => void }) {
-  const [activeTab, setActiveTab] = useState('ozel')
+  const [activeTab, setActiveTab] = useState('iletisim')
   const [loading, setLoading] = useState(false)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [showHireModal, setShowHireModal] = useState(false)
@@ -70,10 +70,6 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
     district: '',
     eposta: '',
     mobile_phone: '',
-    military_status: '',
-    deferment_date: '',
-    blood_type: '',
-    ehliyet: '',
     ogrenim_durumu: '',
     okul: '',
     bolum: '',
@@ -130,8 +126,6 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
           district: formData.district,
           email: formData.eposta || undefined,
           mobile_phone: formData.mobile_phone,
-          military_status: formData.military_status || undefined,
-          blood_type: formData.blood_type || undefined,
           emergency_contact_first_name: formData.emergency_contact_first_name || undefined,
           emergency_contact_phone: formData.emergency_contact_phone || undefined,
           iban: formData.iban || undefined,
@@ -180,7 +174,6 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
   }
 
   const tabs = [
-    { id: 'ozel', label: 'Özel', icon: <User size={16} /> },
     { id: 'iletisim', label: 'İletişim', icon: <Phone size={16} /> },
     { id: 'egitim', label: 'Eğitim', icon: <GraduationCap size={16} /> },
     { id: 'aile', label: 'Aile', icon: <Briefcase size={16} /> },
@@ -356,75 +349,6 @@ export default function PersonelForm({ onSuccess, onCancel }: { onSuccess: () =>
       </div>
 
       {/* Tab Content */}
-      {activeTab === 'ozel' && (
-        <div className="space-y-6">
-          {/* Military Status (Conditional) */}
-          {formData.gender === 'male' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Askerlik Durumu</label>
-                <select
-                  className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-                  value={formData.military_status}
-                  onChange={e => setFormData({ ...formData, military_status: e.target.value })}
-                >
-                  <option value="">Seçiniz</option>
-                  <option value="muaf">Muaf</option>
-                  <option value="caginda_degil">Askerlik Çağında Değcity</option>
-                  <option value="belirsiz">Belirsiz</option>
-                  <option value="tecilli">Tecilli</option>
-                  <option value="bakaya">Bakaya</option>
-                </select>
-              </div>
-
-              {formData.military_status === 'tecilli' && (
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Tecil Tarihi *</label>
-                  <input
-                    type="date"
-                    className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-                    value={formData.deferment_date}
-                    onChange={e => setFormData({ ...formData, deferment_date: e.target.value })}
-                  />
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Sağlık ve Ehliyet */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Kan Grubu</label>
-              <select
-                className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-                value={formData.blood_type}
-                onChange={e => setFormData({ ...formData, blood_type: e.target.value })}
-              >
-                <option value="">Seçiniz</option>
-                <option value="A+">A+</option>
-                <option value="A-">A-</option>
-                <option value="B+">B+</option>
-                <option value="B-">B-</option>
-                <option value="AB+">AB+</option>
-                <option value="AB-">AB-</option>
-                <option value="0+">0+</option>
-                <option value="0-">0-</option>
-              </select>
-            </div>
-
-            <div className="flex flex-col gap-1.5">
-              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">Ehliyet</label>
-              <input
-                className="w-full bg-white dark:bg-gray-900 border border-gray-300 dark:border-gray-700 rounded-md px-3 py-2 text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500"
-                placeholder="B, C, D vb."
-                value={formData.ehliyet}
-                onChange={e => setFormData({ ...formData, ehliyet: e.target.value })}
-              />
-            </div>
-          </div>
-        </div>
-      )}
-
       {activeTab === 'iletisim' && (
         <div className="space-y-6">
           <div className="space-y-4">
