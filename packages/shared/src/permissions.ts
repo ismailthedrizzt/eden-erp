@@ -16,6 +16,7 @@ export const MODULE_CODES = [
   'tenancy',
   'product_services',
   'after_sales',
+  'project_management',
 ] as const
 
 export type ModuleCode = typeof MODULE_CODES[number]
@@ -106,6 +107,18 @@ export const PERMISSIONS = {
     edit: 'after_sales.edit',
     delete: 'after_sales.delete',
     manage: 'after_sales.manage',
+  },
+  projectManagement: {
+    view: 'project_management.view',
+    createTask: 'project_management.create_task',
+    editTask: 'project_management.edit_task',
+    deleteTask: 'project_management.delete_task',
+    assignTask: 'project_management.assign_task',
+    manageProjects: 'project_management.manage_projects',
+    manageBoards: 'project_management.manage_boards',
+    manageWorkflows: 'project_management.manage_workflows',
+    viewReports: 'project_management.view_reports',
+    manageAll: 'project_management.manage_all',
   },
 } as const
 

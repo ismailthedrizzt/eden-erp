@@ -8,7 +8,7 @@ import { useModuleLicense } from '@/hooks/useModuleLicense'
 import {
   Home, Users, Building2, CreditCard, Package, ShoppingCart,
   Settings, Factory, Wrench, ChevronRight, LogOut, Download,
-  BarChart2, List, AlertCircle, FolderOpen, Wallet, X, Headphones, Tags
+  BarChart2, List, AlertCircle, FolderOpen, Wallet, X, Headphones, Tags, ListChecks
 } from 'lucide-react'
 
 interface NavItem {
@@ -128,6 +128,24 @@ const NAV: NavItem[] = [
     ],
   },
   {
+    id: 'project_management',
+    label: 'Görev ve Proje Yönetimi',
+    icon: <ListChecks size={16} />,
+    moduleKey: 'project_management',
+    children: [
+      { label: 'Genel Bakış', href: '/app/gorev-ve-proje-yonetimi', moduleKey: 'project_management' },
+      { label: 'Görevler', href: '/app/gorev-ve-proje-yonetimi/gorevler', moduleKey: 'project_management', submoduleKey: 'gorevler' },
+      { label: 'Projeler', href: '/app/gorev-ve-proje-yonetimi/projeler', moduleKey: 'project_management', submoduleKey: 'projeler' },
+      { label: 'Kanban Board', href: '/app/gorev-ve-proje-yonetimi/kanban-board', moduleKey: 'project_management', submoduleKey: 'kanban-board' },
+      { label: 'Backlog', href: '/app/gorev-ve-proje-yonetimi/backlog', moduleKey: 'project_management', submoduleKey: 'backlog' },
+      { label: 'Sprintler', href: '/app/gorev-ve-proje-yonetimi/sprintler', moduleKey: 'project_management', submoduleKey: 'sprintler' },
+      { label: 'Takvim', href: '/app/gorev-ve-proje-yonetimi/takvim', moduleKey: 'project_management', submoduleKey: 'takvim' },
+      { label: 'Zaman Takibi', href: '/app/gorev-ve-proje-yonetimi/zaman-takibi', moduleKey: 'project_management', submoduleKey: 'zaman-takibi' },
+      { label: 'İş Akışları', href: '/app/gorev-ve-proje-yonetimi/is-akislari', moduleKey: 'project_management', submoduleKey: 'is-akislari' },
+      { label: 'Raporlar', href: '/app/gorev-ve-proje-yonetimi/raporlar', moduleKey: 'project_management', submoduleKey: 'raporlar' },
+    ],
+  },
+  {
     id: 'uretim',
     label: 'Üretim',
     icon: <Factory size={16} />,
@@ -170,6 +188,7 @@ const SECTION_LABELS: Record<string, string> = {
   stok: 'Stok & Satış',
   satis: '',
   after_sales: 'Satış Sonrası',
+  project_management: 'İş Takibi',
   uretim: 'Üretim & Servis',
   servis: '',
   sys: 'Yönetim',

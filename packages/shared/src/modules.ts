@@ -27,4 +27,5 @@ export const ERP_MODULES: Array<{ code: ModuleCode; label: string }> = [
   { code: 'tenancy', label: 'Tenancy' },
   { code: 'product_services', label: 'Product & Services' },
   { code: 'after_sales', label: 'After Sales' },
+  { code: 'project_management', label: 'Project Management' },
 ]
