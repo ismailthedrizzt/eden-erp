@@ -3,6 +3,11 @@ import { createServiceClient } from '@/lib/supabase/server'
 import { z } from 'zod'
 import { hydrateMasterContact, syncMasterContact } from '@/lib/identity/masterContact'
 import { normalizeCountryId } from '@/lib/reference/country-nationalities'
+import {
+  safeHardDeleteDraftRecord,
+  safeHardDeleteDraftRecordResponse,
+  type SafeHardDeleteReferenceCheck,
+} from '@/lib/workflow/safeHardDeleteDraftRecord'
 
 const EmployeeUpdateSchema = z.object({
   first_name: z.string().min(1).max(100).optional(),
@@ -404,6 +409,21 @@ export async function DELETE(
   const { employeeId: id } = await params
   const supabase = createServiceClient()
 
+  const draftDelete = await safeHardDeleteDraftRecord({
+    supabase,
+    request,
+    tableName: 'employees',
+    recordId: id,
+    select: 'id,record_status',
+    lifecycleStatusField: 'record_status',
+    draftStatusValue: 'draft',
+    permissionKey: 'employees.edit',
+    referenceChecks: employeeDraftDeleteReferenceChecks(),
+  })
+
+  if (draftDelete.ok) return safeHardDeleteDraftRecordResponse(draftDelete)
+  if (draftDelete.code !== 'NOT_DRAFT_RECORD') return safeHardDeleteDraftRecordResponse(draftDelete)
+
   const { error } = await supabase
     .from('employees')
     .update({
@@ -418,6 +438,18 @@ export async function DELETE(
   }
 
   return NextResponse.json({ success: true })
+}
+
+function employeeDraftDeleteReferenceChecks(): SafeHardDeleteReferenceCheck[] {
+  return [
+    { tableName: 'positions', foreignKey: 'employee_id', label: 'Pozisyon ataması', optional: true },
+    { tableName: 'project_management_tasks', foreignKey: 'assignee_id', label: 'Atanmış görevler', optional: true },
+    { tableName: 'project_management_tasks', foreignKey: 'reporter_id', label: 'Raporlanan görevler', optional: true },
+    { tableName: 'project_management_time_entries', foreignKey: 'user_id', label: 'Zaman kayıtları', optional: true },
+    { tableName: 'after_sales_records', foreignKey: 'responsible_employee_id', label: 'Satış sonrası kayıtları', optional: true },
+    { tableName: 'employee_work_lifecycle_events', foreignKey: 'employee_id', label: 'İş yaşam döngüsü olayları', mode: 'cascadeDelete', optional: true },
+    { tableName: 'employee_work_relations', foreignKey: 'employee_id', label: 'Çalışma ilişkileri', mode: 'cascadeDelete', optional: true },
+  ]
 }
 
 function buildFieldHistory(current: Record<string, any>, updates: Record<string, any>) {

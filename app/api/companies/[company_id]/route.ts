@@ -3,6 +3,12 @@ import { createServiceClient } from '@/lib/supabase/server'
 import { z } from 'zod'
 import { hydrateMasterContact, syncMasterContact } from '@/lib/identity/masterContact'
 import { EntityBankAccountsService } from '@/lib/modules/entity-bank-accounts/entityBankAccounts.service'
+import {
+  safeHardDeleteDraftRecord,
+  safeHardDeleteDraftRecordResponse,
+  type SafeHardDeleteReferenceCheck,
+} from '@/lib/workflow/safeHardDeleteDraftRecord'
+import { safeCrudResponse, safeReadRecord, safeUpdateRecord } from '@/lib/crud/safeCrudService'
 
 const COMPANY_NACE_SELECT = 'id,company_id,nace_code_id,is_primary,status,start_date,end_date,notes,is_deleted,created_at,updated_at,version,nace_code:nace_codes(id,nace_code,description,hazard_class,source_name,source_url,source_reference,valid_from,valid_to,is_active,last_checked_at)'
 
@@ -286,18 +292,16 @@ export async function PATCH(
     return NextResponse.json({ error: 'Geçersiz veri', code: 'VALIDATION_FAILED', details: parsed.error.flatten() }, { status: 400 })
   }
 
-  const { data: current, error: currentError } = await supabase
-    .from('companies')
-    .select('id,organization_id,field_history,short_name,trade_name,tax_number,tax_office,company_type,city,district,address,phone,email,is_deleted,record_status,company_status,mersis_number,trade_registry_number,foundation_date,legal_entity,electronic_notification_address,trade_registry_office,company_code,country,website,e_invoice_taxpayer,e_archive_taxpayer,e_waybill_taxpayer,sgk_workplace_registry_no,sgk_province,sgk_branch,risk_class,default_currency,default_language,time_zone,fiscal_year_start')
-    .eq('id', id)
-    .single()
-
-  if (currentError) {
-    if (currentError.code === 'PGRST116') {
-      return NextResponse.json({ error: 'Şirket bulunamadı', code: 'COMPANY_NOT_FOUND' }, { status: 404 })
-    }
-    return NextResponse.json({ error: currentError.message, code: currentError.code || 'FETCH_FAILED' }, { status: 500 })
-  }
+  let current: Record<string, any> | null = null
+  const currentRead = await safeReadRecord({
+    supabase,
+    request,
+    tableName: 'companies',
+    recordId: id,
+    select: 'id,organization_id,field_history,short_name,trade_name,tax_number,tax_office,company_type,city,district,address,phone,email,is_deleted,record_status,company_status,mersis_number,trade_registry_number,foundation_date,legal_entity,electronic_notification_address,trade_registry_office,company_code,country,website,e_invoice_taxpayer,e_archive_taxpayer,e_waybill_taxpayer,sgk_workplace_registry_no,sgk_province,sgk_branch,risk_class,default_currency,default_language,time_zone,fiscal_year_start',
+  })
+  if (!currentRead.ok) return safeCrudResponse(currentRead)
+  current = currentRead.data
 
   const {
     partners,
@@ -336,23 +340,21 @@ export async function PATCH(
     ...(beneficiary_currency !== undefined ? { beneficiary_currency } : {}),
   }
   const companyUpdates = rawCompanyUpdates
-  const nextHistory = buildFieldHistory(current, companyUpdates)
-  const { data, error } = await supabase
-    .from('companies')
-    .update({
-      ...companyUpdates,
-      field_history: nextHistory,
-    })
-    .eq('id', id)
-    .select('id,short_name,trade_name,tax_number,is_deleted,record_status,company_status,updated_at')
-    .single()
+  const updateResult = await safeUpdateRecord({
+    supabase,
+    request,
+    tableName: 'companies',
+    recordId: id,
+    patch: companyUpdates,
+    select: 'id,short_name,trade_name,tax_number,is_deleted,record_status,company_status,updated_at',
+    currentSelect: 'id,organization_id,field_history,short_name,trade_name,tax_number,tax_office,company_type,city,district,address,phone,email,is_deleted,record_status,company_status,mersis_number,trade_registry_number,foundation_date,legal_entity,electronic_notification_address,trade_registry_office,company_code,country,website,e_invoice_taxpayer,e_archive_taxpayer,e_waybill_taxpayer,sgk_workplace_registry_no,sgk_province,sgk_branch,risk_class,default_currency,default_language,time_zone,fiscal_year_start',
+    fieldHistory: {
+      ignoredFields: ['hero_images', 'hero_documents'],
+    },
+  })
 
-  if (error) {
-    if (error.code === 'PGRST116') {
-      return NextResponse.json({ error: 'Şirket bulunamadı', code: 'COMPANY_NOT_FOUND' }, { status: 404 })
-    }
-    return NextResponse.json({ error: error.message, code: error.code || 'UPDATE_FAILED' }, { status: 500 })
-  }
+  if (!updateResult.ok) return safeCrudResponse(updateResult)
+  const data = updateResult.data
 
   const organizationUnitError = await ensureCompanyRootUnit(supabase, id, { ...current, ...companyUpdates })
   if (organizationUnitError) return NextResponse.json({ error: organizationUnitError.message, code: organizationUnitError.code || 'COMPANY_ORG_UNIT_SAVE_FAILED' }, { status: 500 })
@@ -442,11 +444,92 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ company_id: string }> }
 ) {
-  await params
+  const { company_id: id } = await params
+  const supabase = createServiceClient()
+
+  const draftDelete = await safeHardDeleteDraftRecord({
+    supabase,
+    request,
+    tableName: 'companies',
+    recordId: id,
+    select: 'id,record_status,company_status,is_deleted',
+    lifecycleStatusField: ['record_status', 'company_status'],
+    draftStatusValue: 'draft',
+    permissionKey: 'companies.edit',
+    referenceChecks: companyDraftDeleteReferenceChecks(),
+  })
+
+  if (draftDelete.ok) return safeHardDeleteDraftRecordResponse(draftDelete)
+  if (draftDelete.code !== 'NOT_DRAFT_RECORD') return safeHardDeleteDraftRecordResponse(draftDelete)
+
   return NextResponse.json({
     error: 'Sirket kapatma islemleri Terkin Wizardi ile tamamlanmalidir.',
     code: 'USE_DEREGISTRATION_WIZARD',
   }, { status: 409 })
+}
+
+function companyDraftDeleteReferenceChecks(): SafeHardDeleteReferenceCheck[] {
+  const companyBlockTables: SafeHardDeleteReferenceCheck[] = [
+    { tableName: 'bank_connections', foreignKey: 'company_id', label: 'Banka bağlantıları', optional: true },
+    { tableName: 'bank_accounts', foreignKey: 'company_id', label: 'Banka hesapları', optional: true },
+    { tableName: 'bank_cards', foreignKey: 'company_id', label: 'Banka kartları', optional: true },
+    { tableName: 'financial_institution_movements', foreignKey: 'company_id', label: 'Finans hareketleri', optional: true },
+    { tableName: 'account_movements', foreignKey: 'company_id', label: 'Muhasebe hareketleri', optional: true },
+    { tableName: 'account_card_settings', foreignKey: 'company_id', label: 'Cari kart ayarları', optional: true },
+    { tableName: 'after_sales_records', foreignKey: 'owner_company_id', label: 'Satış sonrası kayıtları', optional: true },
+    { tableName: 'after_sales_records', foreignKey: 'related_company_id', label: 'İlişkili satış sonrası kayıtları', optional: true },
+    { tableName: 'project_management_projects', foreignKey: 'company_id', label: 'Proje kayıtları', optional: true },
+    { tableName: 'project_management_tasks', foreignKey: 'company_id', label: 'Görev kayıtları', optional: true },
+    { tableName: 'project_management_time_entries', foreignKey: 'company_id', label: 'Zaman kayıtları', optional: true },
+    { tableName: 'product_categories', foreignKey: 'company_id', label: 'Ürün kategorileri', optional: true },
+    { tableName: 'product_brands', foreignKey: 'company_id', label: 'Ürün markaları', optional: true },
+    { tableName: 'product_service_items', foreignKey: 'company_id', label: 'Ürün/hizmet kartları', optional: true },
+  ]
+
+  return [
+    ...companyBlockTables,
+    {
+      tableName: 'partner_ownership_lifecycle_events',
+      foreignKey: 'partner_id',
+      label: 'Ortak yaşam döngüsü kayıtları',
+      mode: 'cascadeDelete',
+      optional: true,
+      resolveForeignValues: async ({ supabase, recordId }) => {
+        const { data, error } = await supabase.from('company_partners').select('id').eq('company_id', recordId)
+        if (error) throw error
+        return (data || []).map((row: any) => row.id).filter(Boolean)
+      },
+    },
+    { tableName: 'partner_ownership_lifecycle_events', foreignKey: 'company_id', label: 'Ortak yaşam döngüsü kayıtları', mode: 'cascadeDelete', optional: true },
+    { tableName: 'ownership_transactions', foreignKey: 'company_id', label: 'Ortaklık işlemleri', mode: 'cascadeDelete', optional: true },
+    { tableName: 'company_representatives', foreignKey: 'company_id', label: 'Temsilciler', mode: 'cascadeDelete', optional: true },
+    { tableName: 'stakeholders', foreignKey: 'company_id', label: 'Paydaşlar', mode: 'cascadeDelete', optional: true },
+    { tableName: 'company_partners', foreignKey: 'company_id', label: 'Ortaklar', mode: 'cascadeDelete', optional: true },
+    { tableName: 'company_nace_codes', foreignKey: 'company_id', label: 'NACE kodları', mode: 'cascadeDelete', optional: true },
+    { tableName: 'company_public_licenses', foreignKey: 'company_id', label: 'Lisans kayıtları', mode: 'cascadeDelete', optional: true },
+    { tableName: 'company_public_channels', foreignKey: 'company_id', label: 'Kanal bilgileri', mode: 'cascadeDelete', optional: true },
+    { tableName: 'company_public_registry', foreignKey: 'company_id', label: 'Sicil bilgileri', mode: 'cascadeDelete', optional: true },
+    { tableName: 'company_public_incentives', foreignKey: 'company_id', label: 'Teşvik bilgileri', mode: 'cascadeDelete', optional: true },
+    { tableName: 'company_public_sgk', foreignKey: 'company_id', label: 'SGK bilgileri', mode: 'cascadeDelete', optional: true },
+    { tableName: 'company_public_tax', foreignKey: 'company_id', label: 'Vergi bilgileri', mode: 'cascadeDelete', optional: true },
+    { tableName: 'company_logos', foreignKey: 'company_id', label: 'Şirket logoları', mode: 'cascadeDelete', optional: true },
+    { tableName: 'company_vehicles', foreignKey: 'company_id', label: 'Araçlar', mode: 'cascadeDelete', optional: true },
+    { tableName: 'employee_work_relations', foreignKey: 'company_id', label: 'Çalışma ilişkileri', mode: 'cascadeDelete', optional: true },
+    {
+      tableName: 'positions',
+      foreignKey: 'unit_id',
+      label: 'Pozisyonlar',
+      mode: 'cascadeDelete',
+      optional: true,
+      resolveForeignValues: async ({ supabase, recordId }) => {
+        const { data, error } = await supabase.from('organization_units').select('id').eq('company_id', recordId)
+        if (error) throw error
+        return (data || []).map((row: any) => row.id).filter(Boolean)
+      },
+    },
+    { tableName: 'organization_units', foreignKey: 'company_id', label: 'Organizasyon birimleri', mode: 'cascadeDelete', optional: true },
+    { tableName: 'entity_bank_accounts', foreignKey: 'entity_id', match: { entity_kind: 'company' }, label: 'Şirket banka hesapları', mode: 'cascadeDelete', optional: true },
+  ]
 }
 
 function buildFieldHistory(current: Record<string, any>, updates: Record<string, any>) {

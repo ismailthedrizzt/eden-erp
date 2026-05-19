@@ -9,6 +9,7 @@ import { SmartDataTable } from '@/components/ui/SmartDataTable'
 import { Toast } from '@/components/ui/Toast'
 import { useModuleLicense } from '@/hooks/useModuleLicense'
 import { createProgressiveFormLoadStages } from '@/lib/forms/progressiveFormLoading'
+import { isDraftRecord } from '@/lib/forms/entityState'
 import { usePermissions } from '@/lib/security/permissionStore'
 import {
   AFTER_SALES_MODULE_KEY,
@@ -137,6 +138,14 @@ export function AfterSalesRecordsPage({ areaKey }: { areaKey: AfterSalesAreaKey 
     if (!selected) return
     setDeleting(true)
     try {
+      if (isDraftRecord(selected as Record<string, any>)) {
+        setRows(current => current.filter(row => row.id !== selected.id))
+        setSelected(null)
+        setPageState('list')
+        setToast({ type: 'success', title: 'Kalici silindi', message: `${area.singularTitle} taslagi kalici olarak silindi.` })
+        return
+      }
+
       const nextRecord: AfterSalesRecord = {
         ...selected,
         record_status: 'passive',

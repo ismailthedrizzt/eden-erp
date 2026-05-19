@@ -2,3 +2,18 @@ export function isSoftDeletedRecord(record?: Record<string, any> | null) {
   const status = String(record?.record_status || record?.status || record?.work_status || '').toLocaleLowerCase('tr-TR')
   return ['passive', 'pasif', 'terminated', 'ayrılmış', 'kapatıldı', 'kapali', 'kapalı'].includes(status)
 }
+
+export function isDraftRecord(record?: Record<string, any> | null) {
+  const statuses = [
+    record?.record_status,
+    record?.approval_status,
+    record?.workflow_status,
+    record?.status,
+    record?.company_status,
+  ]
+
+  return statuses.some(value => {
+    const status = String(value || '').trim().toLocaleLowerCase('tr-TR')
+    return status === 'draft' || status === 'taslak'
+  })
+}

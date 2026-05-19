@@ -1,6 +1,13 @@
 import { apiClient, ApiClientOptions } from '@/lib/api/apiClient'
 import type { ListQuery, ListResponse } from '@/lib/api/listEndpoint'
 import type { Sirket, SirketDokuman, SirketLogo, SirketOrtak, SirketTemsilci } from '@/types/sirket'
+import {
+  createEntityRecord,
+  deleteEntityRecord,
+  listEntityRecords,
+  readEntityRecord,
+  updateEntityRecord,
+} from '@/lib/crud/entityCrudClient'
 
 type RelationListOptions = ApiClientOptions & Partial<Pick<ListQuery, 'page' | 'pageSize' | 'search' | 'sort' | 'direction'>> & { includePassive?: boolean; companyId?: string }
 type CompanyListOptions = ApiClientOptions & Partial<Pick<ListQuery, 'page' | 'pageSize' | 'search' | 'sort' | 'direction'>> & { includePassive?: boolean }
@@ -27,10 +34,8 @@ function relationListOptions(options: RelationListOptions = {}) {
 export const companyService = {
   list(options: CompanyListOptions = {}) {
     const { includePassive, page, pageSize, search, sort, direction, ...clientOptions } = options
-    return apiClient.get<ListResponse<Sirket>>('/api/companies', {
-      ...clientOptions,
-      skipAuth: clientOptions.skipAuth ?? true,
-      staleTime: clientOptions.staleTime ?? 300_000,
+    return listEntityRecords<Sirket>({
+      endpoint: { collectionPath: '/api/companies' },
       query: {
         page,
         pageSize,
@@ -38,18 +43,42 @@ export const companyService = {
         sort,
         direction,
         ...(includePassive ? { include_passive: 'true' } : {}),
-        ...clientOptions.query,
+      },
+      options: {
+      ...clientOptions,
+      skipAuth: clientOptions.skipAuth ?? true,
+      staleTime: clientOptions.staleTime ?? 300_000,
       },
     })
   },
   detail(id: string) {
-    return apiClient.get<{ data: Sirket }>(`/api/companies/${id}`, { skipAuth: true, staleTime: 120_000 })
+    return readEntityRecord<Sirket>({
+      endpoint: { collectionPath: '/api/companies' },
+      id,
+      options: { skipAuth: true, staleTime: 120_000 },
+    })
   },
   detailSection(id: string, section: 'hero' | 'media' | 'details') {
-    return apiClient.get<{ data: Partial<Sirket> }>(`/api/companies/${id}`, {
-      skipAuth: true,
-      useCache: false,
+    return readEntityRecord<Partial<Sirket>>({
+      endpoint: { collectionPath: '/api/companies' },
+      id,
       query: { section },
+      options: {
+        skipAuth: true,
+        useCache: false,
+      },
+    })
+  },
+  create(payload: Record<string, any>) {
+    return createEntityRecord<Sirket>({ collectionPath: '/api/companies' }, payload)
+  },
+  update(id: string, payload: Record<string, any>) {
+    return updateEntityRecord<Sirket>({ collectionPath: '/api/companies' }, id, payload)
+  },
+  delete(id: string) {
+    return deleteEntityRecord<{ success?: boolean; hardDeleted?: boolean }>({
+      endpoint: { collectionPath: '/api/companies' },
+      id,
     })
   },
   partners(companyId: string, options: ApiClientOptions = {}) {
@@ -61,7 +90,23 @@ export const companyService = {
     })
   },
   partnerDetail(id: string) {
-    return apiClient.get<{ data: any }>(`/api/companies/partners/${id}`, { skipAuth: true, staleTime: 120_000 })
+    return readEntityRecord<any>({
+      endpoint: { collectionPath: '/api/companies/partners' },
+      id,
+      options: { skipAuth: true, staleTime: 120_000 },
+    })
+  },
+  createPartner(payload: Record<string, any>) {
+    return createEntityRecord<any>({ collectionPath: '/api/companies/partners' }, payload)
+  },
+  updatePartner(id: string, payload: Record<string, any>) {
+    return updateEntityRecord<any>({ collectionPath: '/api/companies/partners' }, id, payload)
+  },
+  deletePartner(id: string) {
+    return deleteEntityRecord<{ success?: boolean; hardDeleted?: boolean }>({
+      endpoint: { collectionPath: '/api/companies/partners' },
+      id,
+    })
   },
   representatives(companyId: string, options: ApiClientOptions = {}) {
     return apiClient.get<{ data: SirketTemsilci[] }>('/api/companies/representatives', relationListOptions({ ...options, companyId }))

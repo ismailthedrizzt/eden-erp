@@ -572,13 +572,9 @@ export default function OrtaklarPage() {
         error.toast = { type: 'warning', title: 'Eksik Zorunlu Alan', message }
         throw error
       }
-      const response = await fetch(mode === 'create' ? '/api/companies/partners' : `/api/companies/partners/${selectedPartner?.id}`, {
-        method: mode === 'create' ? 'POST' : 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      })
-      if (!response.ok) throw await createSaveError(response, mode === 'create' ? 'Ortak oluşturulamadı' : 'Güncelleme başarısız')
-      const result = await response.json()
+      const result = mode === 'create'
+        ? await companyService.createPartner(payload)
+        : await companyService.updatePartner(selectedPartner?.id || '', payload)
       const normalized = result.data ? normalizePartnerForForm(result.data) : null
       if (normalized) setSelectedPartner(normalized)
       setToast({ type: 'success', title: 'Kayıt Başarılı', message: mode === 'create' ? 'Ortak kaydı oluşturuldu' : 'Ortak bilgileri güncellendi' })
@@ -600,10 +596,9 @@ export default function OrtaklarPage() {
     if (!selectedPartner?.id) return
     setDeleting(true)
     try {
-      const response = await fetch(`/api/companies/partners/${selectedPartner.id}`, { method: 'DELETE' })
+      await companyService.deletePartner(selectedPartner.id)
       invalidateEntityDetailCache('company-partners', selectedPartner.id)
-      if (!response.ok) throw await createSaveError(response, 'Pasifleştirme başarısız')
-      setToast({ type: 'success', title: 'Kayıt Başarılı', message: 'Ortak kaydı pasife çekildi' })
+      setToast({ type: 'success', title: 'Kayıt Başarılı', message: selectedRecordStatus === 'draft' ? 'Ortak taslak kaydi kalici olarak silindi' : 'Ortak kaydı pasife çekildi' })
       await loadData(true)
       setPageState('list')
     } catch (err: any) {
@@ -618,16 +613,11 @@ export default function OrtaklarPage() {
     if (!selectedPartner?.id) return
     setDeleting(true)
     try {
-      const response = await fetch(`/api/companies/partners/${selectedPartner.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...selectedPartner,
-          status: 'Aktif',        }),
+      const result = await companyService.updatePartner(selectedPartner.id, {
+        ...selectedPartner,
+        status: 'Aktif',
       })
       invalidateEntityDetailCache('company-partners', selectedPartner.id)
-      if (!response.ok) throw await createSaveError(response, 'Aktiflestirme basarisiz')
-      const result = await response.json()
       if (result.data) setSelectedPartner(normalizePartnerForForm(result.data))
       setToast({ type: 'success', title: 'Kayit Basarili', message: 'Ortak kaydi aktive edildi' })
       await loadData(true)
@@ -653,19 +643,14 @@ export default function OrtaklarPage() {
     if (!selectedPartner?.id) return
     setSaving(true)
     try {
-      const response = await fetch(`/api/companies/partners/${selectedPartner.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...selectedPartner,
-          ...payload,
-          status: 'Aktif',
-          record_status: 'active',
-          ownership_action: 'ownership_defined',        }),
+      const result = await companyService.updatePartner(selectedPartner.id, {
+        ...selectedPartner,
+        ...payload,
+        status: 'Aktif',
+        record_status: 'active',
+        ownership_action: 'ownership_defined',
       })
       invalidateEntityDetailCache('company-partners', selectedPartner.id)
-      if (!response.ok) throw await createSaveError(response, 'Ortaklık tanımlanamadı')
-      const result = await response.json()
       const normalized = result.data ? normalizePartnerForForm(result.data) : null
       if (normalized) setSelectedPartner(normalized)
       setOwnershipWizardOpen(false)
@@ -809,7 +794,7 @@ export default function OrtaklarPage() {
             externalFieldErrors={fieldErrors}
             onSave={handleSave}
             onCancel={() => setPageState('list')}
-            onDelete={undefined}
+            onDelete={selectedRecordStatus === 'draft' ? handleDelete : undefined}
             onActivate={undefined}
             onModeChange={(mode) => setPageState(mode)}
             additionalActions={renderOwnershipActions()}

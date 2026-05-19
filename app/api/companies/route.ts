@@ -5,6 +5,7 @@ import { syncMasterContact } from '@/lib/identity/masterContact'
 import { EntityBankAccountsService } from '@/lib/modules/entity-bank-accounts/entityBankAccounts.service'
 import { listMeta, listMetaFromRows, listRange, parseListQuery } from '@/lib/api/listEndpoint'
 import { getServerResponseCache, serverListCacheKey, setServerResponseCache } from '@/lib/api/serverResponseCache'
+import { safeCreateRecord, safeCrudResponse, safeListRecords } from '@/lib/crud/safeCrudService'
 
 const OptionalShortNameSchema = z.preprocess(
   value => value === '' ? undefined : value,
@@ -84,7 +85,6 @@ export async function GET(request: NextRequest) {
   const supabase = createServiceClient()
   const { searchParams } = new URL(request.url)
   const listQuery = parseListQuery(searchParams, { pageSize: 50, sort: 'short_name', direction: 'asc' })
-  const { from, to } = listRange(listQuery)
   const sortMap: Record<string, string> = {
     short_name: 'short_name',
     trade_name: 'trade_name',
@@ -101,26 +101,22 @@ export async function GET(request: NextRequest) {
     updated_at: 'updated_at',
     created_at: 'created_at',
   }
-  const sortColumn = sortMap[listQuery.sort || ''] || 'short_name'
-
   const ara = searchParams.get('ara') || listQuery.search
-  const includePassive = listQuery.includePassive
 
-  let query = supabase
-    .from('companies')
-    .select('id,organization_id,short_name,trade_name,tax_number,tax_office,company_type,city,district,is_deleted,record_status,company_status,updated_at,created_at')
-    .order(sortColumn, { ascending: listQuery.direction !== 'desc' })
-    .range(from, to)
+  const result = await safeListRecords({
+    supabase,
+    request,
+    tableName: 'companies',
+    select: 'id,organization_id,short_name,trade_name,tax_number,tax_office,company_type,city,district,is_deleted,record_status,company_status,updated_at,created_at',
+    listQuery: { ...listQuery, search: ara },
+    sortMap,
+    defaultSort: 'short_name',
+    passiveField: 'is_deleted',
+    searchFields: ['short_name', 'trade_name', 'tax_number'],
+  })
 
-  if (ara) {
-    query = query.or(`short_name.ilike.%${ara}%,trade_name.ilike.%${ara}%,tax_number.ilike.%${ara}%`)
-  }
-
-  if (!includePassive) query = query.eq('is_deleted', false)
-
-  const { data, error } = await query
-  if (error) {
-    if (error.message.includes("Could not find the table 'public.companies'")) {
+  if (!result.ok) {
+    if (result.error.includes("Could not find the table 'public.companies'")) {
       return NextResponse.json({
         data: [],
         meta: listMeta(listQuery, 0),
@@ -128,11 +124,10 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    return NextResponse.json({ error: error.message, code: error.code || 'FETCH_FAILED' }, { status: 500 })
+    return safeCrudResponse(result)
   }
 
-  const rows = data || []
-  const payload = { data: rows, meta: listMetaFromRows(listQuery, rows.length) }
+  const payload = { data: result.data, meta: result.meta }
   setServerResponseCache(cacheKey, payload, 60_000)
   return NextResponse.json(payload)
 }
@@ -196,13 +191,16 @@ export async function POST(request: NextRequest) {
       code: 'MASTER_ORGANIZATION_LINK_FAILED',
     }, { status: 500 })
   }
-  const { data, error } = await supabase
-    .from('companies')
-    .insert(companyRow)
-    .select('id,short_name,trade_name,tax_number,is_deleted,record_status,company_status,updated_at')
-    .single()
+  const createResult = await safeCreateRecord({
+    supabase,
+    request,
+    tableName: 'companies',
+    values: companyRow,
+    select: 'id,short_name,trade_name,tax_number,is_deleted,record_status,company_status,updated_at',
+  })
 
-  if (error) return NextResponse.json({ error: error.message, code: error.code || 'CREATE_FAILED' }, { status: 500 })
+  if (!createResult.ok) return safeCrudResponse(createResult)
+  const data = createResult.data
 
   const organizationUnitError = await ensureCompanyRootUnit(supabase, data.id, companyRow)
   if (organizationUnitError) return NextResponse.json({ error: organizationUnitError.message, code: organizationUnitError.code || 'COMPANY_ORG_UNIT_SAVE_FAILED' }, { status: 500 })

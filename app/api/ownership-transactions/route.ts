@@ -3,6 +3,7 @@ import { createServiceClient } from '@/lib/supabase/server'
 import { z } from 'zod'
 import { OWNERSHIP_TRANSACTION_SELECT, nextTransactionNo, validateDraft } from './_shared'
 import { listMetaFromRows, listRange, parseListQuery } from '@/lib/api/listEndpoint'
+import { safeCreateRecord, safeCrudResponse, safeListRecords } from '@/lib/crud/safeCrudService'
 
 const TransactionSchema = z.object({
   company_id: z.string().uuid(),
@@ -52,7 +53,6 @@ export async function GET(request: NextRequest) {
   const supabase = createServiceClient()
   const { searchParams } = new URL(request.url)
   const listQuery = parseListQuery(searchParams, { pageSize: 50, sort: 'created_at', direction: 'desc' })
-  const { from, to } = listRange(listQuery)
   const sortMap: Record<string, string> = {
     transaction_no: 'transaction_no',
     transaction_type: 'transaction_type',
@@ -61,26 +61,25 @@ export async function GET(request: NextRequest) {
     approval_status: 'approval_status',
     created_at: 'created_at',
   }
-  const sortColumn = sortMap[listQuery.sort || ''] || 'created_at'
   const companyId = searchParams.get('company_id')
   const approvalStatus = searchParams.get('approval_status')
+  const result = await safeListRecords({
+    supabase,
+    request,
+    tableName: 'ownership_transactions',
+    select: OWNERSHIP_TRANSACTION_SELECT,
+    listQuery,
+    sortMap,
+    defaultSort: 'created_at',
+    passiveField: 'is_deleted',
+    searchFields: ['transaction_no', 'transaction_type', 'notes'],
+    filters: {
+      ...(companyId ? { company_id: companyId } : {}),
+      ...(approvalStatus ? { approval_status: approvalStatus } : {}),
+    },
+  })
 
-  let query = supabase
-    .from('ownership_transactions')
-    .select(OWNERSHIP_TRANSACTION_SELECT)
-    .eq('is_deleted', false)
-    .order(sortColumn, { ascending: listQuery.direction !== 'desc' })
-    .range(from, to)
-
-  if (companyId) query = query.eq('company_id', companyId)
-  if (approvalStatus) query = query.eq('approval_status', approvalStatus)
-  if (listQuery.search) query = query.or(`transaction_no.ilike.%${listQuery.search}%,transaction_type.ilike.%${listQuery.search}%,notes.ilike.%${listQuery.search}%`)
-
-  const { data, error } = await query
-  if (error) return NextResponse.json({ error: error.message, code: error.code || 'FETCH_FAILED' }, { status: 500 })
-
-  const rows = data || []
-  return NextResponse.json({ data: rows, meta: listMetaFromRows(listQuery, rows.length) })
+  return safeCrudResponse(result)
 }
 
 export async function POST(request: NextRequest) {
@@ -105,12 +104,13 @@ export async function POST(request: NextRequest) {
     updated_at: now,
   }
 
-  const { data, error } = await supabase
-    .from('ownership_transactions')
-    .insert(row)
-    .select(OWNERSHIP_TRANSACTION_SELECT)
-    .single()
+  const result = await safeCreateRecord({
+    supabase,
+    request,
+    tableName: 'ownership_transactions',
+    values: row,
+    select: OWNERSHIP_TRANSACTION_SELECT,
+  })
 
-  if (error) return NextResponse.json({ error: error.message, code: error.code || 'CREATE_FAILED' }, { status: 500 })
-  return NextResponse.json({ data }, { status: 201 })
+  return safeCrudResponse(result, 201)
 }

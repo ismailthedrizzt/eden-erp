@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { OWNERSHIP_TRANSACTION_SELECT, validateDraft } from '../_shared'
+import {
+  safeHardDeleteDraftRecord,
+  safeHardDeleteDraftRecordResponse,
+  type SafeHardDeleteReferenceCheck,
+} from '@/lib/workflow/safeHardDeleteDraftRecord'
+import { safeCrudResponse, safeReadRecord, safeUpdateRecord } from '@/lib/crud/safeCrudService'
 
 const LOCKED_WHEN_APPROVED = new Set([
   'company_id',
@@ -34,15 +40,16 @@ export async function GET(
 ) {
   const { id } = await params
   const supabase = createServiceClient()
-  const { data, error } = await supabase
-    .from('ownership_transactions')
-    .select(OWNERSHIP_TRANSACTION_SELECT)
-    .eq('id', id)
-    .eq('is_deleted', false)
-    .single()
+  const result = await safeReadRecord({
+    supabase,
+    request,
+    tableName: 'ownership_transactions',
+    recordId: id,
+    select: OWNERSHIP_TRANSACTION_SELECT,
+    notDeletedField: 'is_deleted',
+  })
 
-  if (error) return NextResponse.json({ error: error.message, code: error.code || 'FETCH_FAILED' }, { status: 500 })
-  return NextResponse.json({ data })
+  return safeCrudResponse(result)
 }
 
 export async function PATCH(
@@ -53,49 +60,57 @@ export async function PATCH(
   const supabase = createServiceClient()
   const body = await request.json()
 
-  const { data: current, error: currentError } = await supabase
-    .from('ownership_transactions')
-    .select(OWNERSHIP_TRANSACTION_SELECT)
-    .eq('id', id)
-    .eq('is_deleted', false)
-    .single()
+  const result = await safeUpdateRecord({
+    supabase,
+    request,
+    tableName: 'ownership_transactions',
+    recordId: id,
+    patch: body,
+    select: OWNERSHIP_TRANSACTION_SELECT,
+    currentSelect: OWNERSHIP_TRANSACTION_SELECT,
+    notDeletedField: 'is_deleted',
+    versionField: 'version',
+    guard: async ({ current, patch }) => {
+      if (current.approval_status === 'approved' && Object.keys(patch).some(key => LOCKED_WHEN_APPROVED.has(key))) {
+        return {
+          ok: false,
+          status: 409,
+          code: 'APPROVED_RECORD_LOCKED',
+          error: 'Onayli islem sessizce degistirilemez. Ters kayit veya duzeltme kaydi olusturun.',
+        }
+      }
 
-  if (currentError) return NextResponse.json({ error: currentError.message, code: currentError.code || 'FETCH_FAILED' }, { status: 500 })
-  const currentRecord = current as Record<string, any>
-  if (current.approval_status === 'approved' && Object.keys(body).some(key => LOCKED_WHEN_APPROVED.has(key))) {
-    return NextResponse.json({ error: 'Onaylı işlem sessizce değiştirilemez. Ters kayıt veya düzeltme kaydı oluşturun.', code: 'APPROVED_RECORD_LOCKED' }, { status: 409 })
-  }
+      const validation = await validateDraft(supabase, { ...current, ...patch })
+      if (!validation.ok) {
+        return {
+          ok: false,
+          status: 400,
+          code: validation.code || 'VALIDATION_FAILED',
+          error: validation.error || 'Ortaklik islemi dogrulanamadi.',
+        }
+      }
+      return { ok: true }
+    },
+    beforeUpdate: async ({ current, patch }) => {
+      const validation = await validateDraft(supabase, { ...current, ...patch })
+      return {
+        ...patch,
+        warnings: validation.ok ? validation.warnings : [],
+        history: [
+          ...(Array.isArray(current.history) ? current.history : []),
+          ...Object.entries(patch).map(([field, nextValue]) => ({
+            field,
+            old_value: current[field],
+            new_value: nextValue,
+            changed_at: new Date().toISOString(),
+            changed_by: 'Sistem Kullanicisi',
+          })),
+        ],
+      }
+    },
+  })
 
-  const merged = { ...currentRecord, ...body }
-  const validation = await validateDraft(supabase, merged)
-  if (!validation.ok) return NextResponse.json({ error: validation.error, code: validation.code }, { status: 400 })
-
-  const history = [
-    ...(Array.isArray(currentRecord.history) ? currentRecord.history : []),
-    ...Object.entries(body).map(([field, nextValue]) => ({
-      field,
-      old_value: currentRecord[field],
-      new_value: nextValue,
-      changed_at: new Date().toISOString(),
-      changed_by: 'Sistem Kullanıcısı',
-    })),
-  ]
-
-  const { data, error } = await supabase
-    .from('ownership_transactions')
-    .update({
-      ...body,
-      warnings: validation.warnings,
-      history,
-      version: Number(current.version || 1) + 1,
-      updated_at: new Date().toISOString(),
-    })
-    .eq('id', id)
-    .select(OWNERSHIP_TRANSACTION_SELECT)
-    .single()
-
-  if (error) return NextResponse.json({ error: error.message, code: error.code || 'UPDATE_FAILED' }, { status: 500 })
-  return NextResponse.json({ data })
+  return safeCrudResponse(result)
 }
 
 export async function DELETE(
@@ -104,6 +119,22 @@ export async function DELETE(
 ) {
   const { id } = await params
   const supabase = createServiceClient()
+
+  const draftDelete = await safeHardDeleteDraftRecord({
+    supabase,
+    request,
+    tableName: 'ownership_transactions',
+    recordId: id,
+    select: OWNERSHIP_TRANSACTION_SELECT,
+    lifecycleStatusField: 'approval_status',
+    draftStatusValue: 'draft',
+    permissionKey: ['ownership_transactions.edit', 'companies.edit'],
+    referenceChecks: ownershipTransactionDraftDeleteReferenceChecks(),
+  })
+
+  if (draftDelete.ok) return safeHardDeleteDraftRecordResponse(draftDelete)
+  if (draftDelete.code !== 'NOT_DRAFT_RECORD') return safeHardDeleteDraftRecordResponse(draftDelete)
+
   const { error } = await supabase
     .from('ownership_transactions')
     .update({
@@ -116,4 +147,12 @@ export async function DELETE(
 
   if (error) return NextResponse.json({ error: error.message, code: error.code || 'SOFT_DELETE_FAILED' }, { status: 500 })
   return NextResponse.json({ success: true })
+}
+
+function ownershipTransactionDraftDeleteReferenceChecks(): SafeHardDeleteReferenceCheck[] {
+  return [
+    { tableName: 'ownership_transactions', foreignKey: 'correction_transaction_id', label: 'Duzeltme islemleri', optional: true },
+    { tableName: 'ownership_transactions', foreignKey: 'reversal_transaction_id', label: 'Ters kayit islemleri', optional: true },
+    { tableName: 'account_movements', foreignKey: 'linked_ownership_transaction_id', label: 'Muhasebe hareketleri', optional: true },
+  ]
 }

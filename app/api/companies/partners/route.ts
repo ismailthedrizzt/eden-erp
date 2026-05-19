@@ -4,7 +4,8 @@ import { z } from 'zod'
 import { hydrateMasterContact, stripMasterDataForRoleProfile, syncMasterContact } from '@/lib/identity/masterContact'
 import { normalizeCountryId } from '@/lib/reference/country-nationalities'
 import { EntityBankAccountsService } from '@/lib/modules/entity-bank-accounts/entityBankAccounts.service'
-import { listMetaFromRows, listRange, parseListQuery } from '@/lib/api/listEndpoint'
+import { parseListQuery } from '@/lib/api/listEndpoint'
+import { safeCreateRecord, safeCrudResponse, safeListRecords } from '@/lib/crud/safeCrudService'
 
 const PartnerSchema = z.object({
   company_id: z.string().uuid().optional(),  person_id: z.string().uuid().optional().nullable(),
@@ -107,7 +108,6 @@ export async function GET(request: NextRequest) {
   const supabase = createServiceClient()
   const { searchParams } = new URL(request.url)
   const listQuery = parseListQuery(searchParams, { pageSize: 50, sort: 'created_at', direction: 'desc' })
-  const { from, to } = listRange(listQuery)
   const sortMap: Record<string, string> = {
     display_name: 'display_name',
     partner_name: 'partner_name',
@@ -118,27 +118,26 @@ export async function GET(request: NextRequest) {
     status: 'status',
     created_at: 'created_at',
   }
-  const sortColumn = sortMap[listQuery.sort || ''] || 'created_at'
   const companyId = searchParams.get('company_id')
   const status = searchParams.get('status')
-  const includePassive = listQuery.includePassive
+  const result = await safeListRecords({
+    supabase,
+    request,
+    tableName: 'company_partners',
+    select: 'id,company_id,company_id,person_id,organization_id,owner_kind,partner_type,display_name,partner_name,identity_number,identity_tax_number,share_ratio,share_ratio,voting_ratio,profit_ratio,start_date,end_date,status,record_status,source_type,source_id,created_at',
+    listQuery,
+    sortMap,
+    defaultSort: 'created_at',
+    passiveField: 'record_status',
+    passiveValue: 'passive',
+    searchFields: ['display_name', 'partner_name', 'identity_number', 'identity_tax_number'],
+    filters: {
+      ...(companyId ? { company_id: companyId } : {}),
+      ...(status ? { status } : {}),
+    },
+  })
 
-  let query = supabase
-    .from('company_partners')
-    .select('id,company_id,company_id,person_id,organization_id,owner_kind,partner_type,display_name,partner_name,identity_number,identity_tax_number,share_ratio,share_ratio,voting_ratio,profit_ratio,start_date,end_date,status,record_status,source_type,source_id,created_at')
-    .order(sortColumn, { ascending: listQuery.direction !== 'desc' })
-    .range(from, to)
-
-  if (companyId) query = query.or(`company_id.eq.${companyId},company_id.eq.${companyId}`)
-  if (status) query = query.eq('status', status)
-  if (!includePassive) query = query.neq('record_status', 'passive')
-  if (listQuery.search) query = query.or(`display_name.ilike.%${listQuery.search}%,partner_name.ilike.%${listQuery.search}%,identity_number.ilike.%${listQuery.search}%,identity_tax_number.ilike.%${listQuery.search}%`)
-
-  const { data, error } = await query
-  if (error) return NextResponse.json({ error: error.message, code: error.code || 'FETCH_FAILED' }, { status: 500 })
-
-  const rows = data || []
-  return NextResponse.json({ data: rows, meta: listMetaFromRows(listQuery, rows.length) })
+  return safeCrudResponse(result)
 }
 
 export async function POST(request: NextRequest) {
@@ -160,13 +159,16 @@ export async function POST(request: NextRequest) {
 
   const row = await attachPartnerIdentity(supabase, parsed.data, mapPartnerForDb(parsed.data))
 
-  const { data, error } = await supabase
-    .from('company_partners')
-    .insert(row)
-    .select()
-    .single()
+  const createResult = await safeCreateRecord({
+    supabase,
+    request,
+    tableName: 'company_partners',
+    values: row,
+    select: '*',
+  })
+  if (!createResult.ok) return safeCrudResponse(createResult)
 
-  if (error) return NextResponse.json({ error: error.message, code: error.code || 'CREATE_FAILED' }, { status: 500 })
+  const data = createResult.data
   await supabase.from('partner_ownership_lifecycle_events').insert({
     partner_id: data.id,
     company_id: data.company_id || data.company_id || null,

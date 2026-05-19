@@ -326,33 +326,12 @@ export default function PersonelYonetimPage() {
     
     try {
       if (mode === 'create') {
-        // Create new employee
-        const response = await fetch(apiBasePath, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        })
-        
-        if (!response.ok) {
-          throw await createSaveError(response, 'Kayıt oluşturulamadı')
-        }
-        
-        setToast({ type: 'success', title: 'Kayıt Başarılı', message: lifecycleMessages?.createSuccess || 'Çalışan kaydı oluşturuldu' })
+        await employeeService.create(payload as any)
+        setToast({ type: 'success', title: 'Kayit Basarili', message: lifecycleMessages?.createSuccess || 'Calisan kaydi olusturuldu' })
       } else {
-        // Update existing employee
-        const response = await fetch(`${apiBasePath}/${selectedPersonel?.id}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        })
-        
-        if (!response.ok) {
-          throw await createSaveError(response, 'Güncelleme başarısız')
-        }
-        
-        const result = await response.json()
+        const result = await employeeService.update(selectedPersonel?.id || '', payload as any)
         setSelectedPersonel(result.data)
-        setToast({ type: 'success', title: 'Kayıt Başarılı', message: lifecycleMessages?.updateSuccess || 'Çalışan bilgileri güncellendi' })
+        setToast({ type: 'success', title: 'Kayit Basarili', message: lifecycleMessages?.updateSuccess || 'Calisan bilgileri guncellendi' })
       }
       
       if (mode === 'create') {
@@ -445,17 +424,12 @@ export default function PersonelYonetimPage() {
   const handleDelete = async () => {
     if (!selectedPersonel) return
     
+    const isDraft = getEmployeeRecordStatus(selectedPersonel) === 'draft'
     setDeleting(true)
     try {
-      const response = await fetch(`${apiBasePath}/${selectedPersonel.id}`, {
-        method: 'DELETE'
-      })
+      await employeeService.delete(selectedPersonel.id)
       
-      if (!response.ok) {
-        throw await createSaveError(response, 'Silme işlemi başarısız')
-      }
-      
-      setToast({ type: 'success', title: 'Kayıt Başarılı', message: lifecycleMessages?.deleteSuccess || 'Çalışan kaydı pasife çekildi' })
+      setToast({ type: 'success', title: 'Kayıt Başarılı', message: isDraft ? 'Calisan taslak kaydi kalici olarak silindi' : lifecycleMessages?.deleteSuccess || 'Çalışan kaydı pasife çekildi' })
       await yenile()
       invalidateEntityDetailCache(EMPLOYEE_DETAIL_CACHE_NAMESPACE, selectedPersonel?.id)
       setPageState('list')
@@ -473,21 +447,11 @@ export default function PersonelYonetimPage() {
 
     setDeleting(true)
     try {
-      const response = await fetch(`${apiBasePath}/${selectedPersonel.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          record_status: 'active',
-          employment_status: 'active',
-          work_status: 'active',
-        }),
-      })
-
-      if (!response.ok) {
-        throw await createSaveError(response, 'Aktivasyon islemi basarisiz')
-      }
-
-      const result = await response.json()
+      const result = await employeeService.update(selectedPersonel.id, {
+        record_status: 'active',
+        employment_status: 'active',
+        work_status: 'active',
+      } as any)
       invalidateEntityDetailCache(EMPLOYEE_DETAIL_CACHE_NAMESPACE, selectedPersonel.id)
       setSelectedPersonel(result.data)
       setToast({ type: 'success', title: 'Kayit Basarili', message: 'Calisan kaydi aktive edildi' })
@@ -824,7 +788,7 @@ export default function PersonelYonetimPage() {
               setDetailSections(emptyDetailSectionState)
               setPageState('list')
             }}
-            onDelete={undefined}
+            onDelete={selectedPersonel && getEmployeeRecordStatus(selectedPersonel) === 'draft' ? handleDelete : undefined}
             onActivate={handleActivate}
             onModeChange={(mode) => setPageState(mode)}
             additionalActions={renderLifecycleActions()}

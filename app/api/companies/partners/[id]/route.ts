@@ -2,6 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { hydrateMasterContact, stripMasterDataForRoleProfile, syncMasterContact } from '@/lib/identity/masterContact'
 import { EntityBankAccountsService } from '@/lib/modules/entity-bank-accounts/entityBankAccounts.service'
+import {
+  safeHardDeleteDraftRecord,
+  safeHardDeleteDraftRecordResponse,
+  type SafeHardDeleteReferenceCheck,
+} from '@/lib/workflow/safeHardDeleteDraftRecord'
+import { diffRecord, safeCrudResponse, safeReadRecord, safeUpdateRecord } from '@/lib/crud/safeCrudService'
 
 const PARTNER_DETAIL_SELECT = 'id,company_id,company_id,person_id,organization_id,owner_kind,partner_type,display_name,partner_name,identity_number,identity_tax_number,share_ratio,share_ratio,voting_ratio,profit_ratio,source_type,source_id,share_units,nominal_value,capital_amount,share_class,has_representation_right,signature_authority,has_control_right,control_type,has_board_nomination_right,has_veto_right,has_privileged_share,beneficial_owner,is_beneficial_owner,beneficial_ratio,is_ultimate_controller,start_date,end_date,status,record_status,history,photo_logo,partner_documents,partner_profile,notes,created_at'
 
@@ -33,21 +39,18 @@ export async function GET(
   const { id } = await params
   const supabase = createServiceClient()
 
-  const { data, error } = await supabase
-    .from('company_partners')
-    .select(PARTNER_DETAIL_SELECT)
-    .eq('id', id)
-    .single()
+  const result = await safeReadRecord({
+    supabase,
+    request,
+    tableName: 'company_partners',
+    recordId: id,
+    select: PARTNER_DETAIL_SELECT,
+    afterRead: async ({ record }) => hydratePartnerDetail(supabase, record),
+  })
 
-  if (error) return NextResponse.json({ error: error.message, code: error.code || 'FETCH_FAILED' }, { status: 500 })
-  const assetHydrated = await hydratePartnerMasterAssets(supabase, data)
-  const contactHydrated = assetHydrated?.person_id
-    ? await hydrateMasterContact(supabase, 'person', assetHydrated)
-    : assetHydrated?.organization_id
-      ? await hydrateMasterContact(supabase, 'organization', assetHydrated)
-      : assetHydrated
+  if (!result.ok) return safeCrudResponse(result)
   return NextResponse.json(
-    { data: contactHydrated },
+    { data: result.data },
     { headers: { 'Cache-Control': 'no-store, max-age=0' } }
   )
 }
@@ -60,54 +63,49 @@ export async function PATCH(
   const supabase = createServiceClient()
   const body = await request.json()
 
-  const { data: current, error: currentError } = await supabase
-    .from('company_partners')
-    .select(PARTNER_DETAIL_SELECT)
-    .eq('id', id)
-    .single()
+  const result = await safeUpdateRecord({
+    supabase,
+    request,
+    tableName: 'company_partners',
+    recordId: id,
+    patch: body,
+    select: PARTNER_DETAIL_SELECT,
+    currentSelect: PARTNER_DETAIL_SELECT,
+    beforeUpdate: ({ current, patch }) => {
+      const mapped = mapPartnerForDb(patch, current)
+      return {
+        ...diffRecord(mapped, current),
+        history: buildFieldHistory(current, mapped),
+      }
+    },
+    afterUpdate: async ({ current, record }) => {
+      const oldStatus = current.record_status || (current.status === 'Aktif' ? 'active' : current.status === 'Pasif' ? 'passive' : 'draft')
+      const newStatus = record.record_status || (record.status === 'Aktif' ? 'active' : record.status === 'Pasif' ? 'passive' : 'draft')
+      if (oldStatus !== newStatus || body.ownership_action) {
+        await supabase.from('partner_ownership_lifecycle_events').insert({
+          partner_id: record.id,
+          company_id: record.company_id || record.company_id || null,
+          event_type: oldStatus === 'draft' && newStatus === 'active' ? 'ownership_defined' : 'status_changed',
+          old_record_status: oldStatus,
+          new_record_status: newStatus,
+          payload_json: {
+            source: 'partners_page',
+            ownership_action: body.ownership_action || null,
+          },
+        })
+      }
+      if (record?.person_id) await syncMasterContact(supabase, 'person', record.person_id, body)
+      if (record?.organization_id) await syncMasterContact(supabase, 'organization', record.organization_id, body)
+      if (Array.isArray(body.entity_bank_accounts)) {
+        const kind = record?.person_id ? 'person' : record?.organization_id ? 'organization' : null
+        const masterId = record?.person_id || record?.organization_id
+        if (kind && masterId) await new EntityBankAccountsService(supabase as any).syncMany(kind, masterId, body.entity_bank_accounts, null)
+      }
+      return hydratePartnerDetail(supabase, record)
+    },
+  })
 
-  if (currentError) return NextResponse.json({ error: currentError.message, code: currentError.code || 'FETCH_FAILED' }, { status: 500 })
-
-  const mapped = mapPartnerForDb(body, current)
-  const { data, error } = await supabase
-    .from('company_partners')
-    .update({
-      ...mapped,
-      history: buildFieldHistory(current, mapped),
-    })
-    .eq('id', id)
-    .select(PARTNER_DETAIL_SELECT)
-    .single()
-
-  if (error) return NextResponse.json({ error: error.message, code: error.code || 'UPDATE_FAILED' }, { status: 500 })
-  const oldStatus = current.record_status || (current.status === 'Aktif' ? 'active' : current.status === 'Pasif' ? 'passive' : 'draft')
-  const newStatus = data.record_status || (data.status === 'Aktif' ? 'active' : data.status === 'Pasif' ? 'passive' : 'draft')
-  if (oldStatus !== newStatus || body.ownership_action) {
-    await supabase.from('partner_ownership_lifecycle_events').insert({
-      partner_id: data.id,
-      company_id: data.company_id || data.company_id || null,
-      event_type: oldStatus === 'draft' && newStatus === 'active' ? 'ownership_defined' : 'status_changed',
-      old_record_status: oldStatus,
-      new_record_status: newStatus,
-      payload_json: {
-        source: 'partners_page',
-        ownership_action: body.ownership_action || null,
-      },
-    })
-  }
-  if (data?.person_id) await syncMasterContact(supabase, 'person', data.person_id, body)
-  if (data?.organization_id) await syncMasterContact(supabase, 'organization', data.organization_id, body)
-  if (Array.isArray(body.entity_bank_accounts)) {
-    const kind = data?.person_id ? 'person' : data?.organization_id ? 'organization' : null
-    const masterId = data?.person_id || data?.organization_id
-    if (kind && masterId) await new EntityBankAccountsService(supabase as any).syncMany(kind, masterId, body.entity_bank_accounts, null)
-  }
-  const hydrated = data?.person_id
-    ? await hydrateMasterContact(supabase, 'person', data)
-    : data?.organization_id
-      ? await hydrateMasterContact(supabase, 'organization', data)
-      : data
-  return NextResponse.json({ data: hydrated })
+  return safeCrudResponse(result)
 }
 
 export async function DELETE(
@@ -117,15 +115,53 @@ export async function DELETE(
   const { id } = await params
   const supabase = createServiceClient()
 
+  const draftDelete = await safeHardDeleteDraftRecord({
+    supabase,
+    request,
+    tableName: 'company_partners',
+    recordId: id,
+    select: 'id,record_status,status',
+    lifecycleStatusField: ['record_status', 'status'],
+    draftStatusValue: ['draft', 'taslak'],
+    permissionKey: ['partners.delete', 'partners.edit', 'companies.edit'],
+    referenceChecks: partnerDraftDeleteReferenceChecks(id),
+  })
+
+  if (draftDelete.ok) return safeHardDeleteDraftRecordResponse(draftDelete)
+  if (draftDelete.code !== 'NOT_DRAFT_RECORD') return safeHardDeleteDraftRecordResponse(draftDelete)
+
   const { error } = await supabase
     .from('company_partners')
     .update({
       status: 'Pasif',
-      record_status: 'passive',    })
+      record_status: 'passive',
+    })
     .eq('id', id)
 
   if (error) return NextResponse.json({ error: error.message, code: error.code || 'PASSIVATE_FAILED' }, { status: 500 })
   return NextResponse.json({ success: true })
+}
+
+function partnerDraftDeleteReferenceChecks(partnerId: string): SafeHardDeleteReferenceCheck[] {
+  const partnerTransactionFilter = (query: any) =>
+    query.or(`from_partner_id.eq.${partnerId},to_partner_id.eq.${partnerId},affected_partner_id.eq.${partnerId}`)
+
+  return [
+    {
+      tableName: 'ownership_transactions',
+      label: 'Onaylanmış/bekleyen ortaklık işlemleri',
+      optional: true,
+      query: query => partnerTransactionFilter(query).neq('approval_status', 'draft'),
+    },
+    {
+      tableName: 'ownership_transactions',
+      label: 'Taslak ortaklık işlemleri',
+      mode: 'cascadeDelete',
+      optional: true,
+      query: query => partnerTransactionFilter(query).eq('approval_status', 'draft'),
+    },
+    { tableName: 'partner_ownership_lifecycle_events', foreignKey: 'partner_id', label: 'Ortak yaşam döngüsü kayıtları', mode: 'cascadeDelete', optional: true },
+  ]
 }
 
 function mapPartnerForDb(partner: Record<string, any>, current?: Record<string, any>) {
@@ -176,6 +212,15 @@ function toNullableNumber(value: unknown) {
   if (value === '' || value === null || value === undefined) return null
   const number = Number(value)
   return Number.isFinite(number) ? number : null
+}
+
+async function hydratePartnerDetail(supabase: ReturnType<typeof createServiceClient>, partner: Record<string, any>) {
+  const assetHydrated = await hydratePartnerMasterAssets(supabase, partner)
+  return assetHydrated?.person_id
+    ? hydrateMasterContact(supabase, 'person', assetHydrated)
+    : assetHydrated?.organization_id
+      ? hydrateMasterContact(supabase, 'organization', assetHydrated)
+      : assetHydrated
 }
 
 async function hydratePartnerMasterAssets(supabase: ReturnType<typeof createServiceClient>, partner: Record<string, any>) {

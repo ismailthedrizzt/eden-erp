@@ -8,6 +8,7 @@ import { SmartDataTable } from '@/components/ui/SmartDataTable'
 import { Toast } from '@/components/ui/Toast'
 import { useModuleLicense } from '@/hooks/useModuleLicense'
 import { createProgressiveFormLoadStages } from '@/lib/forms/progressiveFormLoading'
+import { isDraftRecord } from '@/lib/forms/entityState'
 import { usePermissions } from '@/lib/security/permissionStore'
 import { AFTER_SALES_MODULE_KEY } from '@/lib/modules/after-sales/afterSales.config'
 import { AFTER_SALES_PERMISSIONS } from '@/lib/modules/after-sales/afterSales.permissions'
@@ -120,6 +121,14 @@ export function CustomerAssetsPage() {
     if (!selected) return
     setDeleting(true)
     try {
+      if (isDraftRecord(selected as Record<string, any>)) {
+        setRows(current => current.filter(row => row.id !== selected.id))
+        setSelected(null)
+        setPageState('list')
+        setToast({ type: 'success', title: 'Kalici silindi', message: 'Musterideki urun taslagi kalici olarak silindi.' })
+        return
+      }
+
       const nextAsset: CustomerAsset = {
         ...selected,
         is_active: false,

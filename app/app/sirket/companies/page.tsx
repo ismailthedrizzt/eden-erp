@@ -610,17 +610,9 @@ export default function SirketlerPage() {
 
     try {
       const payload = normalizePayload(data)
-      const response = await fetch(mode === 'create' ? '/api/companies' : `/api/companies/${selectedSirket?.id}`, {
-        method: mode === 'create' ? 'POST' : 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      })
-
-      if (!response.ok) {
-        throw await createSaveError(response, mode === 'create' ? 'Şirket oluşturulamadı' : 'Güncelleme başarısız')
-      }
-
-      const result = await response.json()
+      const result = mode === 'create'
+        ? await companyService.create(payload)
+        : await companyService.update(selectedSirket?.id || '', payload)
       if (mode === 'create') {
         invalidateEntityDetailCache(COMPANY_DETAIL_CACHE_NAMESPACE)
       } else {
@@ -647,16 +639,13 @@ export default function SirketlerPage() {
   const handleDelete = async () => {
     if (!selectedSirket) return
 
+    const isDraft = getCompanyLifecycleStatus(selectedSirket) === 'draft'
     setDeleting(true)
     try {
-      const response = await fetch(`/api/companies/${selectedSirket.id}`, { method: 'DELETE' })
+      await companyService.delete(selectedSirket.id)
       invalidateEntityDetailCache(COMPANY_DETAIL_CACHE_NAMESPACE, selectedSirket.id)
 
-      if (!response.ok) {
-        throw await createSaveError(response, 'Silme işlemi başarısız')
-      }
-
-      setToast({ type: 'success', title: 'Kayıt Başarılı', message: 'Şirket kaydı pasife çekildi' })
+      setToast({ type: 'success', title: 'Kayıt Başarılı', message: isDraft ? 'Sirket taslak kaydi kalici olarak silindi' : 'Şirket kaydı pasife çekildi' })
       await yenile()
       setPageState('list')
     } catch (error: any) {
@@ -673,18 +662,8 @@ export default function SirketlerPage() {
 
     setDeleting(true)
     try {
-      const response = await fetch(`/api/companies/${selectedSirket.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ is_deleted: false }),
-      })
+      const result = await companyService.update(selectedSirket.id, { is_deleted: false })
       invalidateEntityDetailCache(COMPANY_DETAIL_CACHE_NAMESPACE, selectedSirket.id)
-
-      if (!response.ok) {
-        throw await createSaveError(response, 'Aktiflestirme basarisiz')
-      }
-
-      const result = await response.json()
       if (result.data) setSelectedSirket({ ...selectedSirket, ...result.data, is_deleted: false })
       setToast({ type: 'success', title: 'Kayit Basarili', message: 'Sirket kaydi aktive edildi' })
       await yenile()
@@ -1002,6 +981,7 @@ export default function SirketlerPage() {
             externalFieldErrors={fieldErrors}
             onSave={handleSave}
             onCancel={handleBackToList}
+            onDelete={selectedSirket && getCompanyLifecycleStatus(selectedSirket) === 'draft' ? handleDelete : undefined}
             onModeChange={(mode) => setPageState(mode === 'edit' && !formAccess.showEdit ? 'view' : mode)}
             onIdentityGateOpenExistingRole={async (roleRecord) => {
               await handleRowClick(roleRecord as SirketTableRow)

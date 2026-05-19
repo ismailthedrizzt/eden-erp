@@ -20,6 +20,7 @@ import { SmartDataTable } from '@/components/ui/SmartDataTable'
 import { Toast } from '@/components/ui/Toast'
 import { useModuleLicense } from '@/hooks/useModuleLicense'
 import { createProgressiveFormLoadStages } from '@/lib/forms/progressiveFormLoading'
+import { isDraftRecord } from '@/lib/forms/entityState'
 import { usePermissions } from '@/lib/security/permissionStore'
 import {
   PROJECT_MANAGEMENT_MODULE_KEY,
@@ -155,6 +156,14 @@ export function ProjectManagementRecordsPage({ areaKey }: { areaKey: ProjectMana
     if (!selected) return
     setDeleting(true)
     try {
+      if (isDraftRecord(selected as Record<string, any>)) {
+        setRows(current => current.filter(row => row.id !== selected.id))
+        setSelected(null)
+        setPageState('list')
+        setToast({ type: 'success', title: 'Kalici silindi', message: `${area.singularTitle} taslagi kalici olarak silindi.` })
+        return
+      }
+
       const nextRecord = {
         ...selected,
         record_status: 'passive' as const,

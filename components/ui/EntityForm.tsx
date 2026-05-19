@@ -35,7 +35,7 @@ import Modal from './Modal'
 import { formControlClass, type FormControlState } from './formControlStyles'
 import type { IdentityGateConfig, IdentityGateResolveResult } from '@/lib/identity-gate'
 import { COUNTRY_OPTIONS, normalizeCountryId } from '@/lib/reference/country-nationalities'
-import { isSoftDeletedRecord } from '@/lib/forms/entityState'
+import { isDraftRecord, isSoftDeletedRecord } from '@/lib/forms/entityState'
 import { ModuleDependencyNotice, type EntityAccessState, type ModuleDependency } from '@/lib/access/entityAccess'
 
 /** Historical value entry */
@@ -2157,7 +2157,10 @@ export function EntityForm({
   const effectiveCanPassivate = access?.canPassivate ?? canEdit
   const effectiveCanApprove = access?.canApprove ?? false
   const canActivateRecord = isPassive && effectiveCanPassivate && !!onActivate
-  const canPassivateRecord = !isPassive && effectiveCanPassivate && !!onDelete
+  const canHardDeleteRecord = !isCreate && !isPassive && isDraftRecord(effectiveStatusData) && effectiveCanPassivate && !!onDelete
+  const canPassivateRecord = !isPassive && !canHardDeleteRecord && effectiveCanPassivate && !!onDelete
+  const canDeleteRecord = canHardDeleteRecord || canPassivateRecord
+  const deleteActionLabel = canActivateRecord ? 'Aktive Et' : canHardDeleteRecord ? 'Kalici Sil' : 'Pasife Al'
   const slotLoaderMode = isReadOnly ? 'view' : isCreate ? 'insert' : 'update'
   const getLoadStage = (key: FormLoadStageKey) => loadStages?.find(stage => stage.key === key)
   const mediaLoadStage = getLoadStage('media') || getLoadStage('detail')
@@ -2987,7 +2990,7 @@ export function EntityForm({
       <Modal
         open={showDeleteConfirm}
         onClose={() => !deleting && setShowDeleteConfirm(false)}
-        title={`${entityNameSingular} ${canActivateRecord ? 'Aktive Et' : 'Pasife Al'}`}
+        title={`${entityNameSingular} ${deleteActionLabel}`}
         size="sm"
         footer={
           <>
@@ -3009,7 +3012,7 @@ export function EntityForm({
               )}
             >
               {deleting ? <Loader2 className="animate-spin" size={16} /> : canActivateRecord ? <RotateCcw size={16} /> : <Trash2 size={16} />}
-              {canActivateRecord ? 'Aktive Et' : 'Pasife Al'}
+              {deleteActionLabel}
             </button>
           </>
         }
@@ -3017,6 +3020,15 @@ export function EntityForm({
         <div className="space-y-3 text-sm text-gray-600 dark:text-gray-300">
           {canActivateRecord ? (
             <p>Bu kayit tekrar active hale getirilecek ve active kayit listelerinde gorunecektir.</p>
+          ) : canHardDeleteRecord ? (
+            <>
+              <p>
+                Bu taslak kayit kalici olarak silinecektir.
+              </p>
+              <p>
+                Taslak kayitlar henuz resmi akis veya gecmis veriye donusmedigi icin silme islemi geri alinamaz.
+              </p>
+            </>
           ) : (
             <>
               <p>
@@ -3167,7 +3179,7 @@ export function EntityForm({
               {additionalActions}
               
               {/* View Mode: Edit Button */}
-              {!isCreate && (canActivateRecord || canPassivateRecord) && (
+              {!isCreate && (canActivateRecord || canDeleteRecord) && (
                 <button
                   onClick={handleDelete}
                   disabled={deleting}
@@ -3179,7 +3191,7 @@ export function EntityForm({
                   )}
                 >
                   {deleting ? <Loader2 className="animate-spin" size={16} /> : canActivateRecord ? <RotateCcw size={16} /> : <Trash2 size={16} />}
-                  {canActivateRecord ? 'Aktive Et' : 'Pasife Al'}
+                  {deleteActionLabel}
                 </button>
               )}
               {isReadOnly && effectiveCanEdit && !isPassive && (

@@ -20,6 +20,7 @@ import { getOwnershipTransactionCapabilities } from '@/lib/modules/ownership-tra
 import { ownershipTransactionsService } from '@/lib/modules/ownership-transactions/ownershipTransactions.service'
 import { companyService } from '@/lib/services/companyService'
 import { createProgressiveFormLoadStages } from '@/lib/forms/progressiveFormLoading'
+import { isDraftRecord } from '@/lib/forms/entityState'
 import type { OwnershipTransaction } from '@/lib/modules/ownership-transactions/ownershipTransactions.types'
 import type { ListMeta } from '@/lib/api/listEndpoint'
 
@@ -68,6 +69,7 @@ function OwnershipTransactionsContent() {
   const [selected, setSelected] = useState<Record<string, any> | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [deleting, setDeleting] = useState(false)
   const [detailLoading, setDetailLoading] = useState(false)
   const [referenceLoading, setReferenceLoading] = useState(false)
   const [referenceError, setReferenceError] = useState(false)
@@ -274,13 +276,7 @@ function OwnershipTransactionsContent() {
 
   async function handleWorkflowAction(action: 'send-approval' | 'approve' | 'reject' | 'cancel' | 'reverse', row: OwnershipTransaction) {
     try {
-      const response = await fetch(`/api/ownership-transactions/${row.id}/${action}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({}),
-      })
-      const payload = await response.json().catch(() => ({}))
-      if (!response.ok) throw new Error(payload.error || 'İşlem tamamlanamadı')
+      const payload = await ownershipTransactionsService.action(row.id, action, {})
       setToast({ type: 'success', title: 'İşlem Tamamlandı', message: workflowActionLabel(action) })
       await loadData(true)
       if (payload.data) setSelected(normalizeForForm(payload.data))
@@ -294,16 +290,12 @@ function OwnershipTransactionsContent() {
     setFormError(null)
     try {
       const payload = normalizePayload(data, companies, partners)
-      const response = await fetch(mode === 'create' ? '/api/ownership-transactions' : `/api/ownership-transactions/${selected?.id}`, {
-        method: mode === 'create' ? 'POST' : 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      })
-      const result = await response.json().catch(() => ({}))
-      if (!response.ok) throw new Error(result.error || 'Ortaklık işlemi kaydedilemedi')
+      const saved = mode === 'create'
+        ? await ownershipTransactionsService.create(payload)
+        : await ownershipTransactionsService.update(selected?.id || '', payload)
       setToast({ type: 'success', title: 'Kayıt Başarılı', message: mode === 'create' ? 'Ortaklık işlemi oluşturuldu' : 'Ortaklık işlemi güncellendi' })
       await loadData(true)
-      setSelected(result.data ? normalizeForForm(result.data) : null)
+      setSelected(saved ? normalizeForForm(saved) : null)
       setPageState('list')
     } catch (err: any) {
       setFormError(err.message)
@@ -311,6 +303,32 @@ function OwnershipTransactionsContent() {
       throw err
     } finally {
       setSaving(false)
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!selected?.id) return
+
+    const isDraft = isDraftRecord(selected)
+    setDeleting(true)
+    setFormError(null)
+    try {
+      await ownershipTransactionsService.delete(selected.id)
+
+      setToast({
+        type: 'success',
+        title: 'Kayıt Başarılı',
+        message: isDraft ? 'Ortaklik islemi taslagi kalici olarak silindi' : 'Ortaklik islemi pasife cekildi',
+      })
+      await loadData(true)
+      setSelected(null)
+      setPageState('list')
+    } catch (err: any) {
+      setFormError(err.message)
+      setToast({ type: 'error', title: 'Kayıt Başarısız', message: err.message })
+      throw err
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -410,12 +428,14 @@ function OwnershipTransactionsContent() {
             tabs={[]}
             data={selectedFormData}
             saving={saving}
+            deleting={deleting}
             error={formError}
             loadStages={formLoadStages}
             canEdit={capabilities.canEdit}
             canCreate={capabilities.canInsert}
             onSave={handleSave}
             onCancel={() => setPageState('list')}
+            onDelete={selected?.id && isDraftRecord(selected) ? handleDelete : undefined}
             onModeChange={(mode) => setPageState(mode === 'create' ? 'create' : mode === 'edit' ? 'edit' : 'view')}
             onFieldChange={handleFormFieldChange}
             additionalActions={selected?.id ? (
