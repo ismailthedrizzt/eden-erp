@@ -57,9 +57,6 @@ export interface SlotImage {
   uploadedAt?: Date
 }
 
-const avatarSlotIds = new Set(['light_mode_avatar', 'dark_mode_avatar'])
-const avatarFallbackSlots = ['light_mode_avatar', 'dark_mode_avatar', 'document_logo', 'original_logo', 'logo_primary', 'photo_logo']
-
 function getImageUrl(image?: SlotImage | null) {
   return image?.previewUrl || image?.url || image?.preview_url || image?.signedUrl || image?.signed_url || ''
 }
@@ -73,13 +70,7 @@ function hasRenderableImage(image?: SlotImage | null) {
 }
 
 function findImageForSlot(images: SlotImage[], slotId: string) {
-  const exact = images.find(img => img.slotId === slotId)
-  if (!avatarSlotIds.has(slotId)) return exact
-  if (hasRenderableImage(exact)) return exact
-  return avatarFallbackSlots
-    .filter(fallbackSlotId => fallbackSlotId !== slotId)
-    .map(fallbackSlotId => images.find(img => img.slotId === fallbackSlotId && hasRenderableImage(img)))
-    .find(Boolean) || images.find(hasRenderableImage)
+  return images.find(img => img.slotId === slotId)
 }
 
 interface ImageSlotUploaderProps {
@@ -147,7 +138,6 @@ export function ImageSlotUploader({
 
   const currentSlot = displaySlots[currentIndex]
   const currentImage = findImageForSlot(images, currentSlot.id)
-  const isFallbackImage = !!currentImage && currentImage.slotId !== currentSlot.id
   const currentImageUrl = getImageUrl(currentImage)
   const currentThumbnailUrl = getImageThumbnailUrl(currentImage)
   const hasImage = hasRenderableImage(currentImage)
@@ -243,12 +233,12 @@ export function ImageSlotUploader({
 
   const handleDelete = useCallback(() => {
     if (!canMutate) return
-    if (!currentImage || isFallbackImage) return
+    if (!currentImage) return
     
     const updatedImages = images.filter(img => img.slotId !== currentSlot.id)
     onChange(updatedImages)
     setShowDeleteConfirm(false)
-  }, [canMutate, currentImage, currentSlot, images, isFallbackImage, onChange])
+  }, [canMutate, currentImage, currentSlot, images, onChange])
 
   const handleExtraSlotCreate = useCallback(() => {
     if (!canMutate) return
@@ -369,15 +359,13 @@ export function ImageSlotUploader({
                   >
                     <RefreshCw size={20} className="text-gray-700" />
                   </button>
-                  {!isFallbackImage && (
-                    <button
-                      onClick={() => setShowDeleteConfirm(true)}
-                      className="p-2 bg-white rounded-lg hover:bg-red-50 transition-colors"
-                      title="Delete"
-                    >
-                      <Trash2 size={20} className="text-red-600" />
-                    </button>
-                  )}
+                  <button
+                    onClick={() => setShowDeleteConfirm(true)}
+                    className="p-2 bg-white rounded-lg hover:bg-red-50 transition-colors"
+                    title="Delete"
+                  >
+                    <Trash2 size={20} className="text-red-600" />
+                  </button>
                 </div>
               )}
               
@@ -498,7 +486,7 @@ export function ImageSlotUploader({
                 "w-1.5 h-1.5 rounded-full transition-colors",
                 index === currentIndex 
                   ? "bg-blue-600" 
-                  : findImageForSlot(images, slot.id)
+                  : hasRenderableImage(findImageForSlot(images, slot.id))
                     ? "bg-green-400"
                     : "bg-gray-300 dark:bg-gray-600"
               )}

@@ -31,6 +31,8 @@ const textExtensions = new Set([
 ])
 const mojibakePattern = /[\uFFFD\u0080-\u009F\u00C2-\u00C5]|â(?:€|†|€¢|€¦|„|“|”|˜|‹|›|™|œ|ž|Ÿ)/
 
+const replacementMojibakePattern = /\u00EF\u00BF\u00BD/
+
 function filePath(relativePath) {
   return path.join(root, relativePath)
 }
@@ -71,7 +73,7 @@ function assertNoMojibake(relativePath, failures) {
   const content = fs.readFileSync(filePath(relativePath), 'utf8')
   const lines = content.split(/\r?\n/)
   lines.forEach((line, index) => {
-    if (mojibakePattern.test(line)) {
+    if (mojibakePattern.test(line) || replacementMojibakePattern.test(line)) {
       failures.push(`${relativePath}:${index + 1}: possible mojibake/Turkish character corruption`)
     }
   })

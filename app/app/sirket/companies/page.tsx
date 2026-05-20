@@ -26,6 +26,7 @@ type ToastState = { type: 'success' | 'error' | 'warning'; title?: string; messa
 type SaveError = Error & { toast?: ToastState; fieldErrors?: Record<string, string> }
 type SirketTableRow = Sirket & { adres_ozet: string; logo_url: string; lifecycle_status: CompanyLifecycleStatus }
 type TaxOfficeOption = { value: string; label: string }
+type TaxOfficeReference = { code?: string | null; name?: string | null; province?: string | null; district?: string | null }
 type DetailSectionState = {
   heroLoading: boolean
   heroReady: boolean
@@ -275,6 +276,24 @@ const tabs: FormTab[] = [
 const getFieldLabel = (field: string) => FIELD_LABELS[field] || field
 const formatFieldList = (fields: string[]) => fields.map(getFieldLabel).join(', ')
 
+function taxOfficeOptionsFromPayload(payload: unknown): TaxOfficeOption[] {
+  const offices = Array.isArray((payload as { offices?: unknown[] } | null)?.offices)
+    ? ((payload as { offices: TaxOfficeReference[] }).offices)
+    : []
+  const byName = new Map<string, TaxOfficeOption>()
+
+  offices.forEach(office => {
+    const name = String(office?.name || '').trim()
+    if (!name || byName.has(name)) return
+    const location = [office.province, office.district].map(value => String(value || '').trim()).filter(Boolean).join('/')
+    const code = String(office.code || '').trim()
+    const label = [code ? `${code} - ${name}` : name, location ? `(${location})` : ''].filter(Boolean).join(' ')
+    byName.set(name, { value: name, label })
+  })
+
+  return Array.from(byName.values()).sort((a, b) => a.label.localeCompare(b.label, 'tr'))
+}
+
 export default function SirketlerPage() {
   const [includePassive, setIncludePassive] = useState(false)
   const [listQuery, setListQuery] = useState({ page: 1, pageSize: 10, search: '', sort: 'short_name', direction: 'asc' as 'asc' | 'desc' })
@@ -304,13 +323,13 @@ export default function SirketlerPage() {
       .then(response => response.ok ? response.json() : null)
       .then(payload => {
         if (cancelled || !Array.isArray(payload?.offices)) return
-        setTaxOfficeOptions(payload.offices.map((office: any) => {
-          const label = `${office.code ? `${office.code} - ` : ''}${office.name} (${office.province}/${office.district})`
-          return { value: label, label }
-        }))
+        setTaxOfficeOptions(taxOfficeOptionsFromPayload(payload))
       })
       .catch(() => {
         if (!cancelled) setTaxOfficeOptions([])
+      })
+      .finally(() => {
+        if (!cancelled) setPublicReferenceOptionsLoaded(true)
       })
 
     fetch('/api/reference/trade-registry-offices')
@@ -325,9 +344,6 @@ export default function SirketlerPage() {
       .catch(() => {
         if (!cancelled) setTradeRegistryOfficeOptions([])
       })
-
-    setPublicReferenceOptionsLoaded(true)
-
     return () => {
       cancelled = true
     }

@@ -412,13 +412,13 @@ function VehicleForm({
       </div>
 
       <div className="rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
-        <div className="flex gap-1 overflow-x-auto border-b border-gray-200 px-3 pt-3 dark:border-gray-700">
+        <div className="flex flex-wrap gap-1 border-b border-gray-200 px-3 pt-3 dark:border-gray-700">
           {['genel', 'atama', 'bakim', 'sigorta', 'kullanim', 'belgeler', 'notes', 'gecmis'].map((tab) => (
             <button
               key={tab}
               type="button"
               onClick={() => setActiveTab(tab)}
-              className={cn('whitespace-nowrap rounded-t-lg px-3 py-2 text-sm font-medium', activeTab === tab ? 'bg-gray-100 text-gray-900 dark:bg-gray-900 dark:text-white' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white')}
+              className={cn('rounded-t-lg px-3 py-2 text-left text-sm font-medium', activeTab === tab ? 'bg-gray-100 text-gray-900 dark:bg-gray-900 dark:text-white' : 'text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white')}
             >
               {tabLabel(tab)}
             </button>

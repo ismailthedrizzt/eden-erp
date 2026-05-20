@@ -905,12 +905,12 @@ export function SirketForm({
       {/* Tabs */}
       <div className="border-t border-gray-200 dark:border-gray-700 pt-6">
         {/* Tab Navigation */}
-        <div className="flex gap-1 mb-4 overflow-x-auto">
+        <div className="mb-4 flex flex-wrap gap-1">
           {tabs.map((tab) => (
             <button
               key={tab.id}
               type="button"
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+              className="inline-flex max-w-full items-center gap-2 rounded-lg px-4 py-2 text-left text-sm font-medium text-gray-600 transition-colors hover:bg-blue-50 hover:text-blue-600 dark:text-gray-400 dark:hover:bg-blue-900/20 dark:hover:text-blue-400"
             >
               {tab.icon}
               {tab.label}

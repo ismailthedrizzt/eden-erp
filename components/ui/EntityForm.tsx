@@ -3226,17 +3226,17 @@ export function EntityForm({
 
       {formTabs.length > 0 && (
         <div className="border-b border-gray-200 dark:border-gray-700">
-          <div className="flex overflow-x-auto">
+          <div className="flex flex-wrap gap-2 px-4 py-3">
             {formTabs.map(tab => (
               <button
                 key={tab.id}
                 disabled={isIdentityGateLocked}
                 onClick={() => setActiveTab(tab.id)}
                 className={cn(
-                  "flex items-center gap-2 px-4 py-3 text-sm font-medium whitespace-nowrap transition-colors border-b-2",
+                  "inline-flex max-w-full items-center gap-2 rounded-lg border px-3 py-2 text-left text-sm font-medium transition-colors",
                   activeTab === tab.id
-                    ? "border-blue-600 text-blue-600 dark:text-blue-400"
-                    : "border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200",
+                    ? "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900/60 dark:bg-blue-950/30 dark:text-blue-300"
+                    : "border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-900 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400 dark:hover:border-gray-700 dark:hover:text-gray-200",
                   tab.id !== DOCUMENTS_FORM_TAB_ID && getTabValidationStatus(tab) === 'invalid' && "text-red-600 dark:text-red-400",
                   tab.id !== DOCUMENTS_FORM_TAB_ID && getTabValidationStatus(tab) === 'valid' && "text-emerald-600 dark:text-emerald-400",
                   isIdentityGateLocked && "cursor-not-allowed opacity-50"
