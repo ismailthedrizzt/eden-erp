@@ -814,11 +814,11 @@ export default function SirketlerPage() {
   }
 
   const validationMessageForField = (field: string, messages: unknown) => {
-    const firstMessage = Array.isArray(messages)
+    const firstMessage = (Array.isArray(messages)
       ? messages.find((message): message is string => typeof message === 'string' && message.trim().length > 0)
       : typeof messages === 'string'
         ? messages
-        : ''
+        : '') || ''
     const label = getFieldLabel(field)
     const normalized = firstMessage.toLowerCase()
 
