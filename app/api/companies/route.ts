@@ -7,13 +7,28 @@ import { listMeta, listMetaFromRows, listRange, parseListQuery } from '@/lib/api
 import { getServerResponseCache, serverListCacheKey, setServerResponseCache } from '@/lib/api/serverResponseCache'
 import { safeCreateRecord, safeCrudResponse, safeListRecords } from '@/lib/crud/safeCrudService'
 
+const emptyStringToUndefined = (value: unknown) => value === '' ? undefined : value
+const optionalUuid = z.preprocess(emptyStringToUndefined, z.string().uuid().optional().nullable())
+const optionalCompanyType = z.preprocess(
+  emptyStringToUndefined,
+  z.enum(['anonim', 'limited', 'komandit', 'kolektif', 'adi_komandit', 'adi_sirket']).optional()
+)
+const optionalRiskClass = z.preprocess(
+  emptyStringToUndefined,
+  z.enum(['az_tehlikeli', 'tehlikeli', 'cok_tehlikeli']).optional()
+)
+const optionalElectronicNotificationAddress = z.preprocess(
+  emptyStringToUndefined,
+  z.string().regex(/^\d{5}-\d{5}-\d{5}$/, 'Elektronik tebligat adresi 25888-57689-53086 formatinda olmalidir').optional()
+)
+
 const OptionalShortNameSchema = z.preprocess(
-  value => value === '' ? undefined : value,
+  emptyStringToUndefined,
   z.string().min(1).max(120).optional()
 )
 
 const SirketSchema = z.object({
-  organization_id: z.string().uuid().optional().nullable(),
+  organization_id: optionalUuid,
   trade_name: z.string().min(1).max(300),
   short_name: OptionalShortNameSchema,
   tax_number: z.string().regex(/^\d{10}$/, 'VKN 10 haneli sayı olmalıdır'),
@@ -21,7 +36,7 @@ const SirketSchema = z.object({
   mersis_number: z.string().optional(),
   trade_registry_number: z.string().optional(),
   foundation_date: z.string().optional(),
-  company_type: z.enum(['anonim', 'limited', 'komandit', 'kolektif', 'adi_komandit', 'adi_sirket']).optional(),
+  company_type: optionalCompanyType,
   country: z.string().min(1).default('Türkiye'),
   city: z.string().min(1).max(120),
   district: z.string().min(1).max(120),
@@ -30,9 +45,9 @@ const SirketSchema = z.object({
   email: z.union([z.literal(''), z.string().email()]).optional(),
   website: z.string().optional(),
   legal_entity: z.string().optional(),
-  electronic_notification_address: z.string().regex(/^\d{5}-\d{5}-\d{5}$/, 'Elektronik tebligat adresi 25888-57689-53086 formatinda olmalidir').optional(),
+  electronic_notification_address: optionalElectronicNotificationAddress,
   trade_registry_office: z.string().optional(),
-  parent_company_id: z.string().uuid().optional().nullable(),
+  parent_company_id: optionalUuid,
   company_code: z.string().optional(),
   e_invoice_taxpayer: z.boolean().default(false),
   e_archive_taxpayer: z.boolean().default(false),
@@ -41,7 +56,7 @@ const SirketSchema = z.object({
   sgk_province: z.string().optional(),
   sgk_branch: z.string().optional(),
   nace_codes: z.array(z.string()).optional(),
-  risk_class: z.enum(['az_tehlikeli', 'tehlikeli', 'cok_tehlikeli']).optional(),
+  risk_class: optionalRiskClass,
   default_currency: z.string().default('TRY'),
   default_language: z.string().default('tr'),
   time_zone: z.string().default('Europe/Istanbul'),

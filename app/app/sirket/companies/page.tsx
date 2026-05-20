@@ -275,6 +275,7 @@ const tabs: FormTab[] = [
 
 const getFieldLabel = (field: string) => FIELD_LABELS[field] || field
 const formatFieldList = (fields: string[]) => fields.map(getFieldLabel).join(', ')
+const companyRequiredMasterFields = new Set(['city', 'district', 'address'])
 
 function taxOfficeOptionsFromPayload(payload: unknown): TaxOfficeOption[] {
   const offices = Array.isArray((payload as { offices?: unknown[] } | null)?.offices)
@@ -292,6 +293,17 @@ function taxOfficeOptionsFromPayload(payload: unknown): TaxOfficeOption[] {
   })
 
   return Array.from(byName.values()).sort((a, b) => a.label.localeCompare(b.label, 'tr'))
+}
+
+function requireCompanyMasterAddressFields(tabs: FormTab[]) {
+  return tabs.map(tab => ({
+    ...tab,
+    fields: tab.fields.map(field =>
+      companyRequiredMasterFields.has(field.name)
+        ? { ...field, required: true }
+        : field
+    ),
+  }))
 }
 
 export default function SirketlerPage() {
@@ -379,7 +391,7 @@ export default function SirketlerPage() {
   }
 
   const configuredTabs = [
-    ...createLegalEntityMasterTabs({
+    ...requireCompanyMasterAddressFields(createLegalEntityMasterTabs({
       addressField: 'address',
       countryField: 'country',
       cityField: 'city',
@@ -387,7 +399,7 @@ export default function SirketlerPage() {
       phoneField: 'phone',
       emailField: 'email',
       websiteField: 'website',
-    }),
+    })),
     ...(pageState !== 'create' ? [lifecycleTab] : []),
     ...tabs.filter(tab => tab.id !== 'iletisim' && tab.id !== 'tescil'),
   ].map(tab => ({
@@ -643,10 +655,11 @@ export default function SirketlerPage() {
       await yenile()
       setPageState('list')
     } catch (error: any) {
-      setFormError(error.message)
-      setFieldErrors(error.fieldErrors || {})
-      setToast(error.toast || { type: 'error', title: 'Kayıt Başarısız', message: error.message })
-      throw error
+      const saveError = normalizeSaveError(error)
+      setFormError(saveError.message)
+      setFieldErrors(saveError.fieldErrors || {})
+      setToast(saveError.toast || { type: 'error', title: 'Kayıt Başarısız', message: saveError.message })
+      throw saveError
     } finally {
       setSaving(false)
     }
@@ -769,29 +782,53 @@ export default function SirketlerPage() {
     )
   }
 
-  const createSaveError = async (response: Response, fallback: string): Promise<SaveError> => {
-    const body = await response.json().catch(() => ({}))
-    const code = body.code || `HTTP_${response.status}`
-    const zodFieldErrors = body.details?.fieldErrors || {}
+  const normalizeSaveError = (error: any): SaveError => {
+    if (error?.fieldErrors || error?.toast) return error as SaveError
+
+    const body = error?.details && typeof error.details === 'object'
+      ? error.details as Record<string, any>
+      : {}
+    const code = body.code || error?.code || 'SAVE_FAILED'
+    const validationDetails = body.details && typeof body.details === 'object'
+      ? body.details as Record<string, any>
+      : body
+    const zodFieldErrors = validationDetails.fieldErrors && typeof validationDetails.fieldErrors === 'object'
+      ? validationDetails.fieldErrors as Record<string, unknown>
+      : {}
     const fields = Object.keys(zodFieldErrors)
 
     if (code === 'VALIDATION_FAILED' && fields.length > 0) {
-      const message = formatFieldList(fields)
-      const error = new Error(`Eksik Zorunlu Alan [${message}]`) as SaveError
-      error.fieldErrors = Object.fromEntries(
-        fields.map(field => {
-          const firstMessage = Array.isArray(zodFieldErrors[field]) ? zodFieldErrors[field][0] : null
-          return [field, typeof firstMessage === 'string' ? firstMessage : `${getFieldLabel(field)} zorunludur`]
-        })
+      const fieldList = formatFieldList(fields)
+      const saveError = new Error(`Eksik veya hatalı alan [${fieldList}]`) as SaveError
+      saveError.fieldErrors = Object.fromEntries(
+        fields.map(field => [field, validationMessageForField(field, zodFieldErrors[field])])
       )
-      error.toast = { type: 'warning', title: 'Eksik Zorunlu Alan', message }
-      return error
+      saveError.toast = { type: 'warning', title: 'Alanları Kontrol Et', message: fieldList }
+      return saveError
     }
 
-    const message = `${body.error || fallback} [${code}]`
-    const error = new Error(message) as SaveError
-    error.toast = { type: 'error', title: 'Kayıt Başarısız', message }
-    return error
+    const message = `${body.error || error?.message || 'Kayıt başarısız'} [${code}]`
+    const saveError = new Error(message) as SaveError
+    saveError.toast = { type: 'error', title: 'Kayıt Başarısız', message }
+    return saveError
+  }
+
+  const validationMessageForField = (field: string, messages: unknown) => {
+    const firstMessage = Array.isArray(messages)
+      ? messages.find((message): message is string => typeof message === 'string' && message.trim().length > 0)
+      : typeof messages === 'string'
+        ? messages
+        : ''
+    const label = getFieldLabel(field)
+    const normalized = firstMessage.toLowerCase()
+
+    if (!firstMessage || normalized.includes('required') || normalized.includes('received undefined')) {
+      return `${label} zorunludur`
+    }
+    if (normalized.includes('invalid enum')) return `${label} seçimi geçersiz`
+    if (normalized.includes('invalid input')) return `${label} geçersiz`
+
+    return firstMessage
   }
 
   const withFieldHistory = (field: FormField) => {

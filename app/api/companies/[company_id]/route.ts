@@ -12,8 +12,23 @@ import { safeCrudResponse, safeReadRecord, safeUpdateRecord } from '@/lib/crud/s
 
 const COMPANY_NACE_SELECT = 'id,company_id,nace_code_id,is_primary,status,start_date,end_date,notes,is_deleted,created_at,updated_at,version,nace_code:nace_codes(id,nace_code,description,hazard_class,source_name,source_url,source_reference,valid_from,valid_to,is_active,last_checked_at)'
 
+const emptyStringToUndefined = (value: unknown) => value === '' ? undefined : value
+const optionalUuid = z.preprocess(emptyStringToUndefined, z.string().uuid().optional().nullable())
+const optionalCompanyType = z.preprocess(
+  emptyStringToUndefined,
+  z.enum(['anonim', 'limited', 'komandit', 'kolektif', 'adi_komandit', 'adi_sirket']).optional()
+)
+const optionalRiskClass = z.preprocess(
+  emptyStringToUndefined,
+  z.enum(['az_tehlikeli', 'tehlikeli', 'cok_tehlikeli']).optional()
+)
+const optionalElectronicNotificationAddress = z.preprocess(
+  emptyStringToUndefined,
+  z.string().regex(/^\d{5}-\d{5}-\d{5}$/, 'Elektronik tebligat adresi 25888-57689-53086 formatinda olmalidir').optional()
+)
+
 const OptionalShortNameSchema = z.preprocess(
-  value => value === '' ? undefined : value,
+  emptyStringToUndefined,
   z.string().min(1).max(120).optional()
 )
 
@@ -25,7 +40,7 @@ const SirketUpdateSchema = z.object({
   mersis_number: z.string().optional(),
   trade_registry_number: z.string().optional(),
   foundation_date: z.string().optional(),
-  company_type: z.enum(['anonim', 'limited', 'komandit', 'kolektif', 'adi_komandit', 'adi_sirket']).optional(),
+  company_type: optionalCompanyType,
   country: z.string().min(1).optional(),
   city: z.string().min(1).max(120).optional(),
   district: z.string().min(1).max(120).optional(),
@@ -34,9 +49,9 @@ const SirketUpdateSchema = z.object({
   email: z.union([z.literal(''), z.string().email()]).optional(),
   website: z.string().optional(),
   legal_entity: z.string().optional(),
-  electronic_notification_address: z.string().regex(/^\d{5}-\d{5}-\d{5}$/, 'Elektronik tebligat adresi 25888-57689-53086 formatinda olmalidir').optional(),
+  electronic_notification_address: optionalElectronicNotificationAddress,
   trade_registry_office: z.string().optional(),
-  parent_company_id: z.string().uuid().optional().nullable(),
+  parent_company_id: optionalUuid,
   company_code: z.string().optional(),
   e_invoice_taxpayer: z.boolean().optional(),
   e_archive_taxpayer: z.boolean().optional(),
@@ -45,7 +60,7 @@ const SirketUpdateSchema = z.object({
   sgk_province: z.string().optional(),
   sgk_branch: z.string().optional(),
   nace_codes: z.array(z.string()).optional(),
-  risk_class: z.enum(['az_tehlikeli', 'tehlikeli', 'cok_tehlikeli']).optional(),
+  risk_class: optionalRiskClass,
   default_currency: z.string().optional(),
   default_language: z.string().optional(),
   time_zone: z.string().optional(),
