@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import { Archive, BriefcaseBusiness, Building2, CheckCircle2, CircleDot, FileText, History, Landmark, Phone, PlayCircle, Settings, ShieldAlert, Users } from 'lucide-react'
+import { Archive, BriefcaseBusiness, Building2, CheckCircle2, CircleDot, FileText, History, Landmark, PlayCircle, Settings, ShieldAlert, Users } from 'lucide-react'
 import { useSirketler } from '@/hooks/useSirketler'
 import { EntityForm, FormField, FormMode, FormTab } from '@/components/ui/EntityForm'
 import { CompanyLifecycleWizard, type CompanyLifecycleWizardType } from '@/components/ui/CompanyLifecycleWizard'
@@ -156,6 +156,13 @@ const heroFields: FormField[] = [
       { value: 'adi_sirket', label: 'Şahıs Şirketi - Adi Şirket' },
     ],
   },
+  { name: 'phone', label: 'Telefon', type: 'tel' },
+  { name: 'email', label: 'E-posta', type: 'email' },
+  { name: 'website', label: 'Web Sitesi', type: 'text' },
+  { name: 'country', label: 'Ülke', type: 'select', compact: true },
+  { name: 'city', label: 'İl', type: 'text', required: true, compact: true },
+  { name: 'district', label: 'İlçe', type: 'text', required: true, compact: true },
+  { name: 'address', label: 'Adres', type: 'textarea', required: true, colSpan: 3 },
 ]
 
 const tabs: FormTab[] = [
@@ -196,19 +203,6 @@ const tabs: FormTab[] = [
         type: 'custom',
         colSpan: 3,
       },
-    ],
-  },
-  {
-    id: 'iletisim',
-    label: 'İletişim',
-    icon: <Phone size={16} />,
-    fields: [
-      { name: 'city', label: 'İl', type: 'text', required: true },
-      { name: 'district', label: 'İlçe', type: 'text', required: true },
-      { name: 'address', label: 'Adres', type: 'textarea', required: true, colSpan: 3 },
-      { name: 'phone', label: 'Telefon', type: 'tel' },
-      { name: 'email', label: 'E-posta', type: 'email' },
-      { name: 'website', label: 'Web Sitesi', type: 'text', colSpan: 2 },
     ],
   },
   {
@@ -275,7 +269,6 @@ const tabs: FormTab[] = [
 
 const getFieldLabel = (field: string) => FIELD_LABELS[field] || field
 const formatFieldList = (fields: string[]) => fields.map(getFieldLabel).join(', ')
-const companyRequiredMasterFields = new Set(['city', 'district', 'address'])
 
 function taxOfficeOptionsFromPayload(payload: unknown): TaxOfficeOption[] {
   const offices = Array.isArray((payload as { offices?: unknown[] } | null)?.offices)
@@ -293,17 +286,6 @@ function taxOfficeOptionsFromPayload(payload: unknown): TaxOfficeOption[] {
   })
 
   return Array.from(byName.values()).sort((a, b) => a.label.localeCompare(b.label, 'tr'))
-}
-
-function requireCompanyMasterAddressFields(tabs: FormTab[]) {
-  return tabs.map(tab => ({
-    ...tab,
-    fields: tab.fields.map(field =>
-      companyRequiredMasterFields.has(field.name)
-        ? { ...field, required: true }
-        : field
-    ),
-  }))
 }
 
 export default function SirketlerPage() {
@@ -391,7 +373,7 @@ export default function SirketlerPage() {
   }
 
   const configuredTabs = [
-    ...requireCompanyMasterAddressFields(createLegalEntityMasterTabs({
+    ...createLegalEntityMasterTabs({
       addressField: 'address',
       countryField: 'country',
       cityField: 'city',
@@ -399,9 +381,9 @@ export default function SirketlerPage() {
       phoneField: 'phone',
       emailField: 'email',
       websiteField: 'website',
-    })),
+    }).filter(tab => tab.id !== 'organization_iletisim'),
     ...(pageState !== 'create' ? [lifecycleTab] : []),
-    ...tabs.filter(tab => tab.id !== 'iletisim' && tab.id !== 'tescil'),
+    ...tabs,
   ].map(tab => ({
     ...tab,
     fields: tab.fields.map(field =>

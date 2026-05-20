@@ -382,6 +382,7 @@ function MasterSummaryHero({
       || [readFirst(master, prefill, ['first_name']), readFirst(master, prefill, ['last_name'])].filter(Boolean).join(' ')
   const summaryField = (...names: string[]) => requiredFields.find(field => names.includes(field.name))
   const taxOfficeField = summaryField('tax_office')
+  const countryField = summaryField('country')
 
   const items = kind === 'organization'
     ? effectiveMode === 'organizationIdentity'
@@ -398,6 +399,13 @@ function MasterSummaryHero({
             { value: 'adi_sirket', label: 'Şahıs Şirketi - Adi Şirket' },
           ] },
           { label: 'Kuruluş Tarihi', value: readFirst(master, prefill, ['foundation_date']), fieldKeys: ['foundation_date'], inputType: 'date' as const },
+          { label: 'Telefon', value: readFirst(master, prefill, ['phone']), fieldKeys: ['phone'] },
+          { label: 'E-posta', value: readFirst(master, prefill, ['email']), fieldKeys: ['email'] },
+          { label: 'Web Sitesi', value: readFirst(master, prefill, ['website']), fieldKeys: ['website'] },
+          { label: 'Ülke', value: readFirst(master, prefill, ['country']), fieldKeys: ['country'], inputType: 'select' as const, options: countryField?.options?.length ? countryField.options : COUNTRY_OPTIONS },
+          { label: 'İl', value: readFirst(master, prefill, ['city']), fieldKeys: ['city'] },
+          { label: 'İlçe', value: readFirst(master, prefill, ['district']), fieldKeys: ['district'] },
+          { label: 'Adres', value: readFirst(master, prefill, ['address']), fieldKeys: ['address'], inputType: 'textarea' as const },
         ]
       : compactSummaryItems([
           { label: 'Kısa Ünvan', value: readFirst(master, prefill, ['short_name']) },
@@ -581,6 +589,17 @@ function MasterSummaryItemValue({
           <option key={option.value} value={option.value}>{option.label}</option>
         ))}
       </select>
+    )
+  }
+
+  if (item.inputType === 'textarea') {
+    return (
+      <textarea
+        value={String(item.value || '')}
+        onChange={(event) => onFieldChange(editableFieldName, event.target.value, item.fieldKeys)}
+        rows={2}
+        className={inputClass}
+      />
     )
   }
 
@@ -811,7 +830,7 @@ type MasterSummaryItem = {
   label: string
   value: unknown
   fieldKeys?: string[]
-  inputType?: 'text' | 'date' | 'select'
+  inputType?: 'text' | 'date' | 'select' | 'textarea'
   searchable?: boolean
   options?: { value: string; label: string }[]
 }
