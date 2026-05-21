@@ -4,6 +4,7 @@ import { z } from 'zod'
 import { OWNERSHIP_TRANSACTION_SELECT, nextTransactionNo, validateDraft } from './_shared'
 import { listMetaFromRows, listRange, parseListQuery } from '@/lib/api/listEndpoint'
 import { safeCreateRecord, safeCrudResponse, safeListRecords } from '@/lib/crud/safeCrudService'
+import { requirePermission } from '@/lib/security/serverPermissions'
 
 const TransactionSchema = z.object({
   company_id: z.string().uuid(),
@@ -67,6 +68,7 @@ export async function GET(request: NextRequest) {
     supabase,
     request,
     tableName: 'ownership_transactions',
+    permissionKey: ['ownership_transactions.view', 'companies.view'],
     select: OWNERSHIP_TRANSACTION_SELECT,
     listQuery,
     sortMap,
@@ -84,6 +86,8 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   const supabase = createServiceClient()
+  const permission = await requirePermission(request, supabase, 'ownership_transactions.edit')
+  if (permission instanceof NextResponse) return permission
   const body = await request.json()
   const parsed = TransactionSchema.safeParse(body)
 
@@ -108,6 +112,7 @@ export async function POST(request: NextRequest) {
     supabase,
     request,
     tableName: 'ownership_transactions',
+    permissionKey: ['ownership_transactions.edit', 'companies.edit'],
     values: row,
     select: OWNERSHIP_TRANSACTION_SELECT,
   })

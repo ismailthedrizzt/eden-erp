@@ -6,6 +6,8 @@ import { EntityBankAccountsService } from '@/lib/modules/entity-bank-accounts/en
 import { listMeta, listMetaFromRows, listRange, parseListQuery } from '@/lib/api/listEndpoint'
 import { getServerResponseCache, serverListCacheKey, setServerResponseCache } from '@/lib/api/serverResponseCache'
 import { safeCreateRecord, safeCrudResponse, safeListRecords } from '@/lib/crud/safeCrudService'
+import { applyTenantQueryScope, resolveTenantContext, type TenantContext, withTenantInsertScopeForTable } from '@/lib/tenancy/server'
+import { requirePermission } from '@/lib/security/serverPermissions'
 
 const emptyStringToUndefined = (value: unknown) => value === '' ? undefined : value
 const optionalUuid = z.preprocess(emptyStringToUndefined, z.string().uuid().optional().nullable())
@@ -131,6 +133,7 @@ export async function GET(request: NextRequest) {
     supabase,
     request,
     tableName: 'companies',
+    permissionKey: 'companies.view',
     select: 'id,organization_id,short_name,trade_name,tax_number,tax_office,company_type,city,district,is_deleted,record_status,company_status,updated_at,created_at',
     listQuery: { ...listQuery, search: ara },
     sortMap,
@@ -158,6 +161,9 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   const supabase = createServiceClient()
+  const permission = await requirePermission(request, supabase, 'companies.edit')
+  if (permission instanceof NextResponse) return permission
+  const tenantContext = resolveTenantContext(request)
   const body = omitNullishValues(await request.json())
   const parsed = SirketSchema.safeParse(body)
 
@@ -206,7 +212,7 @@ export async function POST(request: NextRequest) {
     companyRow = await attachCompanyOrganization(supabase, {
       ...companyData,
       is_deleted: false,
-    })
+    }, tenantContext)
   } catch (error) {
     return NextResponse.json({
       error: error instanceof Error ? error.message : 'Şirket ana kurum kaydına bağlanamadı',
@@ -217,6 +223,7 @@ export async function POST(request: NextRequest) {
     supabase,
     request,
     tableName: 'companies',
+    permissionKey: 'companies.edit',
     values: companyRow,
     select: 'id,short_name,trade_name,tax_number,is_deleted,record_status,company_status,updated_at',
   })
@@ -224,7 +231,7 @@ export async function POST(request: NextRequest) {
   if (!createResult.ok) return safeCrudResponse(createResult)
   const data = createResult.data
 
-  const organizationUnitError = await ensureCompanyRootUnit(supabase, data.id, companyRow)
+  const organizationUnitError = await ensureCompanyRootUnit(supabase, data.id, companyRow, tenantContext)
   if (organizationUnitError) return NextResponse.json({ error: organizationUnitError.message, code: organizationUnitError.code || 'COMPANY_ORG_UNIT_SAVE_FAILED' }, { status: 500 })
 
   await syncMasterContact(
@@ -238,10 +245,10 @@ export async function POST(request: NextRequest) {
     await new EntityBankAccountsService(supabase as any).syncMany('organization', companyRow.organization_id, entity_bank_accounts, null)
   }
 
-  const partnerError = await replaceCompanyPartners(supabase, data.id, partners || [])
+  const partnerError = await replaceCompanyPartners(supabase, data.id, partners || [], tenantContext)
   if (partnerError) return NextResponse.json({ error: partnerError.message, code: partnerError.code || 'PARTNER_SAVE_FAILED' }, { status: 500 })
 
-  const representativeError = await replaceCompanyRepresentatives(supabase, data.id, representatives || [])
+  const representativeError = await replaceCompanyRepresentatives(supabase, data.id, representatives || [], tenantContext)
   if (representativeError) return NextResponse.json({ error: representativeError.message, code: representativeError.code || 'REPRESENTATIVE_SAVE_FAILED' }, { status: 500 })
 
   const publicError = await replaceCompanyPublicData(supabase, data.id, {
@@ -251,10 +258,10 @@ export async function POST(request: NextRequest) {
     public_registry,
     public_licenses,
     public_channels,
-  })
+  }, tenantContext)
   if (publicError) return NextResponse.json({ error: publicError.message, code: publicError.code || 'PUBLIC_SAVE_FAILED' }, { status: 500 })
 
-  const lifecycleError = await insertCompanyCreatedAsDraftEvent(supabase, data.id, companyRow)
+  const lifecycleError = await insertCompanyCreatedAsDraftEvent(supabase, data.id, companyRow, tenantContext)
   if (lifecycleError && !isMissingTableError(lifecycleError)) {
     return NextResponse.json({ error: lifecycleError.message, code: lifecycleError.code || 'LIFECYCLE_EVENT_FAILED' }, { status: 500 })
   }
@@ -265,11 +272,12 @@ export async function POST(request: NextRequest) {
 async function insertCompanyCreatedAsDraftEvent(
   supabase: ReturnType<typeof createServiceClient>,
   companyId: string,
-  payload: Record<string, any>
+  payload: Record<string, any>,
+  tenantContext: TenantContext
 ) {
   const { error } = await supabase
     .from('company_lifecycle_events')
-    .insert({
+    .insert(withTenantInsertScopeForTable({
       company_id: companyId,
       event_type: 'company_created_as_draft',
       event_date: new Date().toISOString().slice(0, 10),
@@ -277,23 +285,30 @@ async function insertCompanyCreatedAsDraftEvent(
       new_status: 'draft',
       payload_json: payload,
       document_reference_id: null,
-    })
+    }, 'company_lifecycle_events', tenantContext))
 
   return error
 }
 
-async function attachCompanyOrganization(supabase: ReturnType<typeof createServiceClient>, companyData: Record<string, any>) {
+async function attachCompanyOrganization(
+  supabase: ReturnType<typeof createServiceClient>,
+  companyData: Record<string, any>,
+  tenantContext: TenantContext
+) {
   try {
     if (companyData.organization_id) return companyData
 
     const country = companyData.country || 'TR'
     const taxNumber = companyData.tax_number || null
-    const { data: existing, error: findError } = taxNumber
-      ? await supabase.from('organizations').select('id').eq('country', country).eq('tax_number', taxNumber).maybeSingle()
-      : await supabase.from('organizations').select('id').eq('country', country).eq('legal_name', companyData.trade_name).maybeSingle()
+    let query = taxNumber
+      ? supabase.from('organizations').select('id').eq('country', country).eq('tax_number', taxNumber)
+      : supabase.from('organizations').select('id').eq('country', country).eq('legal_name', companyData.trade_name)
+    query = applyTenantQueryScope(query, 'organizations', tenantContext)
+
+    const { data: existing, error: findError } = await query.maybeSingle()
     if (findError) throw new Error(findError.message)
 
-    const organizationId = existing?.id || (await supabase.from('organizations').insert({
+    const organizationId = existing?.id || (await supabase.from('organizations').insert(withTenantInsertScopeForTable({
       legal_name: companyData.trade_name,
       short_name: companyData.short_name || null,
       country,
@@ -307,7 +322,7 @@ async function attachCompanyOrganization(supabase: ReturnType<typeof createServi
       city: companyData.city || null,
       district: companyData.district || null,
       metadata_json: { source: 'companies_create' },
-    }).select('id').single()).data?.id
+    }, 'organizations', tenantContext)).select('id').single()).data?.id
 
     if (!organizationId) throw new Error('Ana kurum kaydı oluşturulamadı.')
     return { ...companyData, organization_id: organizationId }
@@ -319,7 +334,8 @@ async function attachCompanyOrganization(supabase: ReturnType<typeof createServi
 async function ensureCompanyRootUnit(
   supabase: ReturnType<typeof createServiceClient>,
   companyId: string,
-  companyData: Record<string, any>
+  companyData: Record<string, any>,
+  tenantContext: TenantContext
 ) {
   const { data: unitType, error: typeError } = await supabase
     .from('organization_unit_types')
@@ -330,7 +346,7 @@ async function ensureCompanyRootUnit(
   if (typeError) return isMissingTableError(typeError) ? null : typeError
 
   const companyName = companyData.trade_name || companyData.short_name || 'Şirket'
-  const { data: existing, error: findError } = await supabase
+  let existingQuery = supabase
     .from('organization_units')
     .select('id')
     .eq('company_id', companyId)
@@ -338,11 +354,13 @@ async function ensureCompanyRootUnit(
     .eq('type', 'company')
     .eq('is_deleted', false)
     .limit(1)
-    .maybeSingle()
+
+  existingQuery = applyTenantQueryScope(existingQuery, 'organization_units', tenantContext)
+  const { data: existing, error: findError } = await existingQuery.maybeSingle()
 
   if (findError) return isMissingTableError(findError) ? null : findError
 
-  const payload = {
+  const payload = withTenantInsertScopeForTable({
     company_id: companyId,
     parent_unit_id: null,
     name: companyName,
@@ -352,10 +370,12 @@ async function ensureCompanyRootUnit(
     status: 'Aktif',
     active: true,
     is_deleted: false,
-  }
+  }, 'organization_units', tenantContext)
 
   if (existing?.id) {
-    const { error } = await supabase.from('organization_units').update(payload).eq('id', existing.id)
+    let updateQuery = supabase.from('organization_units').update(payload).eq('id', existing.id)
+    updateQuery = applyTenantQueryScope(updateQuery, 'organization_units', tenantContext)
+    const { error } = await updateQuery
     return isMissingTableError(error) ? null : error
   }
 
@@ -373,7 +393,8 @@ async function replaceCompanyPublicData(
     public_registry?: Record<string, any>
     public_licenses?: Record<string, any>[]
     public_channels?: Record<string, any>
-  }
+  },
+  tenantContext: TenantContext
 ) {
   const singleRows = [
     ['company_public_tax', payload.public_tax],
@@ -387,21 +408,21 @@ async function replaceCompanyPublicData(
     if (!row || Object.keys(row).length === 0) continue
     const { error } = await supabase
       .from(table)
-      .upsert({ ...cleanPublicRow(row), company_id: companyId }, { onConflict: 'company_id' })
+      .upsert(withTenantInsertScopeForTable({ ...cleanPublicRow(row), company_id: companyId }, table, tenantContext), { onConflict: 'company_id' })
     if (error) return error
   }
 
   if (payload.public_licenses?.length) {
     const { error } = await supabase
       .from('company_public_licenses')
-      .insert(payload.public_licenses.map((license) => ({
+      .insert(payload.public_licenses.map((license) => withTenantInsertScopeForTable({
         ...cleanPublicRow(license),
         company_id: companyId,
         reminder_days: license.reminder_days ? Number(license.reminder_days) : null,
         is_deleted: !!license.is_deleted,
         deleted_at: license.deleted_at || null,
         deleted_by: license.deleted_by || null,
-      })))
+      }, 'company_public_licenses', tenantContext)))
     if (error) return error
   }
 
@@ -421,12 +442,17 @@ function cleanPublicRow(row: Record<string, any>) {
   )
 }
 
-async function replaceCompanyPartners(supabase: ReturnType<typeof createServiceClient>, companyId: string, partners: Record<string, any>[]) {
+async function replaceCompanyPartners(
+  supabase: ReturnType<typeof createServiceClient>,
+  companyId: string,
+  partners: Record<string, any>[],
+  tenantContext: TenantContext
+) {
   if (!partners.length) return null
 
   const { error } = await supabase
     .from('company_partners')
-    .insert(partners.map(partner => mapPartnerForDb(companyId, partner)))
+    .insert(partners.map(partner => withTenantInsertScopeForTable(mapPartnerForDb(companyId, partner), 'company_partners', tenantContext)))
 
   return error
 }
@@ -472,12 +498,19 @@ function mapPartnerForDb(companyId: string, partner: Record<string, any>) {
   }
 }
 
-async function replaceCompanyRepresentatives(supabase: ReturnType<typeof createServiceClient>, companyId: string, representatives: Record<string, any>[]) {
+async function replaceCompanyRepresentatives(
+  supabase: ReturnType<typeof createServiceClient>,
+  companyId: string,
+  representatives: Record<string, any>[],
+  tenantContext: TenantContext
+) {
   if (!representatives.length) return null
 
   const { error } = await supabase
     .from('company_representatives')
-    .insert(representatives.map(representative => mapRepresentativeForDb(companyId, representative)))
+    .insert(representatives.map(representative =>
+      withTenantInsertScopeForTable(mapRepresentativeForDb(companyId, representative), 'company_representatives', tenantContext)
+    ))
 
   return error
 }

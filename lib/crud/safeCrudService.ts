@@ -7,6 +7,11 @@ import { listMetaFromRows, listRange } from '@/lib/api/listEndpoint'
 import { requirePermission } from '@/lib/security/serverPermissions'
 import type { EntityContract } from '@/lib/crud/entityContracts'
 import { getUnknownEntityPayloadFields } from '@/lib/crud/entityContracts'
+import {
+  applyTenantQueryScope,
+  resolveTenantContext,
+  withTenantInsertScopeForTable,
+} from '@/lib/tenancy/server'
 
 type QueryBuilder = any
 type CrudPermissionKey = string | string[]
@@ -127,6 +132,7 @@ export type SafeCrudResult<T = unknown> =
 export async function safeReadRecord(options: SafeReadRecordOptions): Promise<SafeCrudResult<CrudRecord>> {
   const permission = await resolvePermission(options)
   if (!permission.ok) return permission
+  const tenantContext = options.request ? resolveTenantContext(options.request) : null
 
   const primaryKey = options.primaryKey || 'id'
   let query = options.supabase
@@ -134,6 +140,7 @@ export async function safeReadRecord(options: SafeReadRecordOptions): Promise<Sa
     .select(options.select || '*')
     .eq(primaryKey, options.recordId)
 
+  query = applyTenantQueryScope(query, options.tableName, tenantContext)
   query = applyCompanyScope(query, options)
   if (options.notDeletedField && !options.includeDeleted) query = query.eq(options.notDeletedField, false)
   if (options.query) query = options.query(query)
@@ -153,6 +160,7 @@ export async function safeReadRecord(options: SafeReadRecordOptions): Promise<Sa
 export async function safeListRecords(options: SafeListRecordOptions): Promise<SafeCrudResult<CrudRecord[]>> {
   const permission = await resolvePermission(options)
   if (!permission.ok) return permission
+  const tenantContext = options.request ? resolveTenantContext(options.request) : null
 
   const { from, to } = listRange(options.listQuery)
   const sortColumn = resolveSortColumn(options)
@@ -162,6 +170,7 @@ export async function safeListRecords(options: SafeListRecordOptions): Promise<S
     .order(sortColumn, { ascending: options.listQuery.direction !== 'desc' })
     .range(from, to)
 
+  query = applyTenantQueryScope(query, options.tableName, tenantContext)
   query = applyCompanyScope(query, options)
   query = applyListFilters(query, options)
   if (options.query) query = options.query(query)
@@ -185,8 +194,9 @@ export async function safeListRecords(options: SafeListRecordOptions): Promise<S
 export async function safeCreateRecord(options: SafeCreateRecordOptions): Promise<SafeCrudResult<CrudRecord>> {
   const permission = await resolvePermission(options)
   if (!permission.ok) return permission
+  const tenantContext = options.request ? resolveTenantContext(options.request) : null
 
-  let values = stripUndefined(options.values)
+  let values = stripUndefined(withTenantInsertScopeForTable(options.values, options.tableName, tenantContext))
   const contractFailure = validateContractPayload(options.contract, values, options.rejectUnknownFields)
   if (contractFailure) return contractFailure
 
@@ -217,6 +227,7 @@ export async function safeCreateRecord(options: SafeCreateRecordOptions): Promis
 export async function safeUpdateRecord(options: SafeUpdateRecordOptions): Promise<SafeCrudResult<CrudRecord>> {
   const permission = await resolvePermission(options)
   if (!permission.ok) return permission
+  const tenantContext = options.request ? resolveTenantContext(options.request) : null
 
   const primaryKey = options.primaryKey || 'id'
   let currentQuery = options.supabase
@@ -224,6 +235,7 @@ export async function safeUpdateRecord(options: SafeUpdateRecordOptions): Promis
     .select(options.currentSelect || options.select || '*')
     .eq(primaryKey, options.recordId)
 
+  currentQuery = applyTenantQueryScope(currentQuery, options.tableName, tenantContext)
   currentQuery = applyCompanyScope(currentQuery, options)
   if (options.notDeletedField && !options.includeDeleted) currentQuery = currentQuery.eq(options.notDeletedField, false)
 
@@ -255,10 +267,14 @@ export async function safeUpdateRecord(options: SafeUpdateRecordOptions): Promis
   if (options.autoUpdatedBy) patch.updated_by = permission.userId
   if (options.versionField) patch[options.versionField] = Number(currentRecord[options.versionField] || 1) + 1
 
-  const { data, error } = await options.supabase
+  let updateQuery = options.supabase
     .from(options.tableName)
     .update(patch)
     .eq(primaryKey, options.recordId)
+
+  updateQuery = applyTenantQueryScope(updateQuery, options.tableName, tenantContext)
+
+  const { data, error } = await updateQuery
     .select(options.select || '*')
     .single()
 

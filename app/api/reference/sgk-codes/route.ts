@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { getFallbackSgkCodeLists, normalizeSgkCodeListsPayload, type SgkCodeListsPayload } from '@/lib/reference/sgk-code-lists'
+import { referenceQueryRequiredResponse, wantsFullReferencePayload } from '@/lib/reference/guardrails'
 
 export const runtime = 'nodejs'
 
@@ -8,6 +9,10 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const category = searchParams.get('category')
   const q = normalizeSearch(searchParams.get('q'))
+
+  if (!category && !q && !wantsFullReferencePayload(searchParams)) {
+    return referenceQueryRequiredResponse('SGK kod')
+  }
 
   let payload = getFallbackSgkCodeLists()
   let cachedAt: string | undefined

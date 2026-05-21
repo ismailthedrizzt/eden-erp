@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useMemo, useRef, useState, type ReactNode } from 'react'
 import { Archive, BriefcaseBusiness, Building2, CheckCircle2, CircleDot, FileText, History, Landmark, PlayCircle, Settings, ShieldAlert, Users } from 'lucide-react'
 import { useSirketler } from '@/hooks/useSirketler'
 import { EntityForm, FormField, FormMode, FormTab } from '@/components/ui/EntityForm'
@@ -25,8 +25,6 @@ type PageState = 'list' | 'create' | 'view' | 'edit'
 type ToastState = { type: 'success' | 'error' | 'warning'; title?: string; message: string }
 type SaveError = Error & { toast?: ToastState; fieldErrors?: Record<string, string> }
 type SirketTableRow = Sirket & { adres_ozet: string; logo_url: string; lifecycle_status: CompanyLifecycleStatus }
-type TaxOfficeOption = { value: string; label: string }
-type TaxOfficeReference = { code?: string | null; name?: string | null; province?: string | null; district?: string | null }
 type DetailSectionState = {
   heroLoading: boolean
   heroReady: boolean
@@ -141,7 +139,18 @@ const columns: ColumnDef[] = [
 const heroFields: FormField[] = [
   { name: 'short_name', label: 'Kısa Ünvan', type: 'text' },
   { name: 'trade_name', label: 'Ticari Unvan', type: 'text', required: true, colSpan: 2 },
-  { name: 'tax_office', label: 'Vergi Dairesi', type: 'select', required: true, searchable: true },
+  {
+    name: 'tax_office',
+    label: 'Vergi Dairesi',
+    type: 'select',
+    required: true,
+    searchable: true,
+    remoteOptions: {
+      endpoint: '/api/reference/tax-offices',
+      minQueryLength: 2,
+      limit: 40,
+    },
+  },
   {
     name: 'company_type',
     label: 'Şirket Türü',
@@ -214,7 +223,17 @@ const tabs: FormTab[] = [
       { name: 'trade_registry_number', label: 'Ticaret Sicil No', type: 'text' },
       { name: 'foundation_date', label: 'Kuruluş Tarihi', type: 'date' },
       { name: 'electronic_notification_address', label: 'Elektronik Tebligat Adresi', type: 'text', maxLength: 17, inputMode: 'numeric', pattern: '\\d{5}-\\d{5}-\\d{5}', placeholder: '11111-22222-33333' },
-      { name: 'trade_registry_office', label: 'Ticaret Sicili Müdürlüğü', type: 'select', searchable: true },
+      {
+        name: 'trade_registry_office',
+        label: 'Ticaret Sicili Müdürlüğü',
+        type: 'select',
+        searchable: true,
+        remoteOptions: {
+          endpoint: '/api/reference/trade-registry-offices',
+          minQueryLength: 2,
+          limit: 40,
+        },
+      },
       { name: 'company_code', label: 'Şirket Kodu', type: 'text' },
     ],
   },
@@ -270,24 +289,6 @@ const tabs: FormTab[] = [
 const getFieldLabel = (field: string) => FIELD_LABELS[field] || field
 const formatFieldList = (fields: string[]) => fields.map(getFieldLabel).join(', ')
 
-function taxOfficeOptionsFromPayload(payload: unknown): TaxOfficeOption[] {
-  const offices = Array.isArray((payload as { offices?: unknown[] } | null)?.offices)
-    ? ((payload as { offices: TaxOfficeReference[] }).offices)
-    : []
-  const byName = new Map<string, TaxOfficeOption>()
-
-  offices.forEach(office => {
-    const name = String(office?.name || '').trim()
-    if (!name || byName.has(name)) return
-    const location = [office.province, office.district].map(value => String(value || '').trim()).filter(Boolean).join('/')
-    const code = String(office.code || '').trim()
-    const label = [code ? `${code} - ${name}` : name, location ? `(${location})` : ''].filter(Boolean).join(' ')
-    byName.set(name, { value: name, label })
-  })
-
-  return Array.from(byName.values()).sort((a, b) => a.label.localeCompare(b.label, 'tr'))
-}
-
 export default function SirketlerPage() {
   const [includePassive, setIncludePassive] = useState(false)
   const [listQuery, setListQuery] = useState({ page: 1, pageSize: 10, search: '', sort: 'short_name', direction: 'asc' as 'asc' | 'desc' })
@@ -303,45 +304,8 @@ export default function SirketlerPage() {
   const [formError, setFormError] = useState<string | null>(null)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [toast, setToast] = useState<ToastState | null>(null)
-  const [taxOfficeOptions, setTaxOfficeOptions] = useState<TaxOfficeOption[]>([])
-  const [tradeRegistryOfficeOptions, setTradeRegistryOfficeOptions] = useState<TaxOfficeOption[]>([])
-  const [publicReferenceOptionsLoaded, setPublicReferenceOptionsLoaded] = useState(false)
   const [lifecycleWizard, setLifecycleWizard] = useState<CompanyLifecycleWizardType | null>(null)
   const detailRequestRef = useRef(0)
-
-  useEffect(() => {
-    if (pageState === 'list' || publicReferenceOptionsLoaded) return
-    let cancelled = false
-
-    fetch('/api/reference/tax-offices')
-      .then(response => response.ok ? response.json() : null)
-      .then(payload => {
-        if (cancelled || !Array.isArray(payload?.offices)) return
-        setTaxOfficeOptions(taxOfficeOptionsFromPayload(payload))
-      })
-      .catch(() => {
-        if (!cancelled) setTaxOfficeOptions([])
-      })
-      .finally(() => {
-        if (!cancelled) setPublicReferenceOptionsLoaded(true)
-      })
-
-    fetch('/api/reference/trade-registry-offices')
-      .then(response => response.ok ? response.json() : null)
-      .then(payload => {
-        if (cancelled || !Array.isArray(payload?.offices)) return
-        setTradeRegistryOfficeOptions(payload.offices.map((office: any) => {
-          const label = `${office.name} Ticaret Sicili Müdürlüğü`
-          return { value: label, label }
-        }))
-      })
-      .catch(() => {
-        if (!cancelled) setTradeRegistryOfficeOptions([])
-      })
-    return () => {
-      cancelled = true
-    }
-  }, [pageState, publicReferenceOptionsLoaded])
 
   const configuredHeroFields = [
     {
@@ -350,11 +314,7 @@ export default function SirketlerPage() {
       type: 'custom',
       render: () => <LifecycleStatusBadge status={pageState === 'create' ? 'draft' : getCompanyLifecycleStatus(selectedSirket)} />,
     } as FormField,
-    ...heroFields.map(field =>
-      field.name === 'tax_office'
-        ? { ...field, options: taxOfficeOptions }
-        : field
-    ),
+    ...heroFields,
   ]
 
   const lifecycleTab: FormTab = {
@@ -384,14 +344,7 @@ export default function SirketlerPage() {
     }).filter(tab => tab.id !== 'organization_iletisim'),
     ...(pageState !== 'create' ? [lifecycleTab] : []),
     ...tabs,
-  ].map(tab => ({
-    ...tab,
-    fields: tab.fields.map(field =>
-      field.name === 'trade_registry_office' && tradeRegistryOfficeOptions.length > 0
-        ? { ...field, options: tradeRegistryOfficeOptions }
-        : field
-    ),
-  }))
+  ]
 
   const tableData: SirketTableRow[] = useMemo(() => (companies || []).map(sirket => ({
     ...sirket,
@@ -463,8 +416,8 @@ export default function SirketlerPage() {
     hasSnapshot: pageState !== 'create' && !!selectedSirket,
     ...detailSections,
     hasMaster: !!((selectedSirket as any)?.organization_id || (selectedSirket as any)?.master_record_id || (selectedSirket as any)?.master),
-    referencesLoading: pageState !== 'list' && !publicReferenceOptionsLoaded,
-    referencesReady: pageState !== 'list' && publicReferenceOptionsLoaded,
+    referencesLoading: false,
+    referencesReady: pageState !== 'list',
   })
 
   if (!formAccess.canView) {

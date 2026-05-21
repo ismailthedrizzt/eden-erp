@@ -55,12 +55,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const [collapsed, setCollapsed] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const [dark, setDark] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('theme') === 'dark'
-    }
-    return false
-  })
+  const [dark, setDark] = useState(false)
 
   useEffect(() => {
     const savedTheme = localStorage.getItem('theme')
@@ -79,6 +74,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   const breadcrumb = BREADCRUMBS[pathname] ?? 'Eden ERP'
   const breadcrumbParts = breadcrumb.includes('›') ? breadcrumb.split('›') : breadcrumb.split('›')
+  const isPublicSetupRoute = pathname.startsWith('/app/sistem/kurulum')
+
+  if (isPublicSetupRoute) {
+    return (
+      <div className={cn('min-h-screen overflow-y-auto bg-gray-50 p-5 dark:bg-[#09141e]', dark && 'dark')}>
+        {children}
+      </div>
+    )
+  }
 
   return (
     <ModuleLicenseProvider>

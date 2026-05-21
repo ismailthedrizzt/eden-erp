@@ -11,6 +11,51 @@ import {
   WORKSPACE_ID_HEADER,
 } from './constants'
 
+const TENANT_SCOPED_TABLES = new Set([
+  'companies',
+  'persons',
+  'organizations',
+  'employees',
+  'company_partners',
+  'company_representatives',
+  'stakeholders',
+  'ownership_transactions',
+  'partner_ownership_lifecycle_events',
+  'company_lifecycle_events',
+  'company_logos',
+  'company_public_tax',
+  'company_public_sgk',
+  'company_public_incentives',
+  'company_public_registry',
+  'company_public_licenses',
+  'company_public_channels',
+  'company_nace_codes',
+  'company_vehicles',
+  'entity_bank_accounts',
+  'bank_connections',
+  'bank_accounts',
+  'bank_cards',
+  'financial_institution_movements',
+  'account_card_settings',
+  'account_movements',
+  'cash_transactions',
+  'organization_units',
+  'positions',
+  'employee_work_relations',
+  'after_sales_records',
+  'after_sales_record_events',
+  'product_categories',
+  'product_brands',
+  'product_service_items',
+  'product_serials',
+  'warranty_templates',
+  'maintenance_packages',
+  'customer_assets',
+  'project_management_projects',
+  'project_management_tasks',
+  'project_management_time_entries',
+])
+
 export type TenantResolutionSource = 'header' | 'cookie' | 'env' | 'default'
 
 export interface TenantContext {
@@ -111,5 +156,28 @@ export function tenantResponseHeaders(context: TenantContext) {
 
 export function withTenantInsertScope<T extends Record<string, unknown>>(row: T, context: TenantContext): T & { tenant_id?: string } {
   if (!tenantColumnWritesEnabled()) return row
+  return { ...row, tenant_id: context.tenantId }
+}
+
+export function isTenantScopedTable(tableName: string | undefined) {
+  if (!tableName) return false
+  return TENANT_SCOPED_TABLES.has(tableName.replace(/^public\./, ''))
+}
+
+export function applyTenantQueryScope<TQuery extends { eq: (field: string, value: unknown) => TQuery }>(
+  query: TQuery,
+  tableName: string | undefined,
+  context: TenantContext | null | undefined
+) {
+  if (!context || !isTenantScopedTable(tableName)) return query
+  return query.eq('tenant_id', context.tenantId)
+}
+
+export function withTenantInsertScopeForTable<T extends Record<string, unknown>>(
+  row: T,
+  tableName: string | undefined,
+  context: TenantContext | null | undefined
+): T & { tenant_id?: string } {
+  if (!context || !isTenantScopedTable(tableName)) return row
   return { ...row, tenant_id: context.tenantId }
 }

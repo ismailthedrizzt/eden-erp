@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { lookupTenantUserAccess } from '@/lib/auth/tenantUserLookup'
+import { enforceRateLimit } from '@/lib/security/rateLimit'
 
 export const runtime = 'nodejs'
 
@@ -11,9 +12,12 @@ const RequestSchema = z.object({
 export async function POST(request: NextRequest) {
   try {
     const parsed = RequestSchema.parse(await request.json())
+    const limited = enforceRateLimit(request, 'tenant-access', parsed.identifier, { limit: 12, windowMs: 10 * 60 * 1000 })
+    if (limited) return limited
+
     const result = await lookupTenantUserAccess(parsed.identifier)
 
-    return NextResponse.json({ data: result })
+    return NextResponse.json({ data: result }, { headers: { 'Cache-Control': 'no-store' } })
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(

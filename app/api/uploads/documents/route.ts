@@ -1,10 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 import { createServiceClient } from '@/lib/supabase/server'
+import { requirePermission } from '@/lib/security/serverPermissions'
+import { resolveTenantContext } from '@/lib/tenancy/server'
 
 const DOCUMENT_BUCKET = 'eden-documents'
+const MAX_DOCUMENT_BYTES = 20 * 1024 * 1024
+const ALLOWED_DOCUMENT_TYPES = new Set([
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-excel',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'text/plain',
+])
 
 export async function POST(request: NextRequest) {
+  const supabase = createServiceClient()
+  const permission = await requirePermission(request, supabase, 'documents.export')
+  if (permission instanceof NextResponse) return permission
+  const tenantContext = resolveTenantContext(request)
+
   const formData = await request.formData()
   const file = formData.get('file')
   const slotId = safePathPart(String(formData.get('slotId') || 'document'))
@@ -13,9 +32,16 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Dosya bulunamadı', code: 'FILE_REQUIRED' }, { status: 400 })
   }
 
-  const supabase = createServiceClient()
+  if (file.size > MAX_DOCUMENT_BYTES) {
+    return NextResponse.json({ error: 'Dosya cok buyuk', code: 'FILE_TOO_LARGE' }, { status: 413 })
+  }
+
+  if (!ALLOWED_DOCUMENT_TYPES.has(file.type || '')) {
+    return NextResponse.json({ error: 'Dosya turu desteklenmiyor', code: 'INVALID_FILE_TYPE' }, { status: 400 })
+  }
+
   const fileName = safeFileName(file.name || 'document')
-  const storagePath = `form-documents/${slotId}/${Date.now()}-${crypto.randomUUID()}-${fileName}`
+  const storagePath = `form-documents/${tenantContext.tenantId}/${slotId}/${Date.now()}-${crypto.randomUUID()}-${fileName}`
   const buffer = Buffer.from(await file.arrayBuffer())
 
   const { error } = await supabase.storage

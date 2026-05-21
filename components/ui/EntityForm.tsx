@@ -35,7 +35,6 @@ import Modal from './Modal'
 import { formControlClass, type FormControlState } from './formControlStyles'
 import type { IdentityGateConfig, IdentityGateResolveResult } from '@/lib/identity-gate'
 import { COUNTRY_OPTIONS, normalizeCountryId } from '@/lib/reference/country-nationalities'
-import { getFallbackTurkeyLocations } from '@/lib/reference/turkey-locations'
 import { isDraftRecord, isSoftDeletedRecord } from '@/lib/forms/entityState'
 import { ModuleDependencyNotice, type EntityAccessState, type ModuleDependency } from '@/lib/access/entityAccess'
 
@@ -46,6 +45,16 @@ export interface HistoryEntry {
   user?: string
 }
 
+type FieldOption = { value: string; label: string }
+
+export interface RemoteFieldOptions {
+  endpoint: string
+  queryParam?: string
+  minQueryLength?: number
+  limit?: number
+  preload?: boolean
+}
+
 /** Form field configuration */
 export interface FormField {
   name: string
@@ -54,7 +63,8 @@ export interface FormField {
   errorLabel?: string
   type: 'text' | 'email' | 'tel' | 'date' | 'select' | 'textarea' | 'number' | 'checkbox' | 'section' | 'list' | 'iban' | 'document' | 'workLifecycle' | 'custom'
   required?: boolean
-  options?: { value: string; label: string }[]
+  options?: FieldOption[]
+  remoteOptions?: RemoteFieldOptions
   searchable?: boolean
   placeholder?: string
   maxLength?: number
@@ -891,7 +901,7 @@ type MasterSummaryItem = {
   fieldKeys?: string[]
   inputType?: 'text' | 'date' | 'select' | 'textarea'
   searchable?: boolean
-  options?: { value: string; label: string }[]
+  options?: FieldOption[]
 }
 
 type MasterSummaryMode = 'default' | 'personIdentity' | 'organizationIdentity' | 'entityIdentity'
@@ -1268,32 +1278,122 @@ function SearchableSelectField({
   className: string
   onChange: (value: string) => void
 }) {
-  const selectedLabel = field.options?.find(option => option.value === value)?.label || value || ''
+  const staticOptions = field.options || []
+  const remoteConfig = field.remoteOptions
+  const hasRemoteOptions = !!remoteConfig?.endpoint
+  const [remoteOptions, setRemoteOptions] = useState<FieldOption[]>([])
+  const [remoteLoading, setRemoteLoading] = useState(false)
+  const [remoteError, setRemoteError] = useState<string | null>(null)
+  const loadedOptions = useMemo(() => mergeFieldOptions(staticOptions, remoteOptions), [staticOptions, remoteOptions])
+  const selectedLabel = loadedOptions.find(option => option.value === value)?.label || value || ''
   const [query, setQuery] = useState(selectedLabel)
   const [open, setOpen] = useState(false)
-  const options = field.options || []
-  const filteredOptions = options
-    .filter(option => {
-      const q = query.toLocaleLowerCase('tr-TR')
-      return option.label.toLocaleLowerCase('tr-TR').includes(q) || option.value.toLocaleLowerCase('tr-TR').includes(q)
-    })
-    .slice(0, 80)
+  const commitOptions = useMemo(() => (
+    value && !loadedOptions.some(option => option.value === value)
+      ? [{ value, label: selectedLabel }, ...loadedOptions]
+      : loadedOptions
+  ), [loadedOptions, selectedLabel, value])
+  const filteredOptions = hasRemoteOptions
+    ? remoteOptions.slice(0, 80)
+    : commitOptions
+        .filter(option => {
+          const q = normalizeSearchableEnumText(query)
+          return normalizeSearchableEnumText(option.label).includes(q) || normalizeSearchableEnumText(option.value).includes(q)
+        })
+        .slice(0, 80)
+  const minQueryLength = remoteConfig?.minQueryLength ?? 0
+  const showMinimumHint = hasRemoteOptions && !remoteConfig?.preload && query.trim().length < minQueryLength
 
   useEffect(() => {
     setQuery(selectedLabel)
   }, [selectedLabel])
 
+  useEffect(() => {
+    if (!hasRemoteOptions || disabled || !open || !remoteConfig?.endpoint) return
+    const trimmedQuery = query.trim()
+    if (!remoteConfig.preload && trimmedQuery.length < minQueryLength) {
+      setRemoteOptions([])
+      setRemoteLoading(false)
+      setRemoteError(null)
+      return
+    }
+
+    const controller = new AbortController()
+    const timeoutId = window.setTimeout(() => {
+      const url = new URL(remoteConfig.endpoint, window.location.origin)
+      url.searchParams.set(remoteConfig.queryParam || 'q', trimmedQuery)
+      if (remoteConfig.limit) url.searchParams.set('limit', String(remoteConfig.limit))
+
+      setRemoteLoading(true)
+      setRemoteError(null)
+      fetch(url.toString(), { signal: controller.signal })
+        .then(response => {
+          if (!response.ok) throw new Error('Seçenekler alınamadı')
+          return response.json()
+        })
+        .then(payload => {
+          setRemoteOptions(parseRemoteOptionsPayload(payload))
+        })
+        .catch(error => {
+          if (controller.signal.aborted) return
+          setRemoteOptions([])
+          setRemoteError(error instanceof Error ? error.message : 'Seçenekler alınamadı')
+        })
+        .finally(() => {
+          if (!controller.signal.aborted) setRemoteLoading(false)
+        })
+    }, 180)
+
+    return () => {
+      controller.abort()
+      window.clearTimeout(timeoutId)
+    }
+  }, [
+    disabled,
+    hasRemoteOptions,
+    minQueryLength,
+    open,
+    query,
+    remoteConfig?.endpoint,
+    remoteConfig?.limit,
+    remoteConfig?.preload,
+    remoteConfig?.queryParam,
+  ])
+
   const commitIfExactMatch = (text: string) => {
-    const normalized = text.trim().toLocaleLowerCase('tr-TR')
-    const exact = options.find(option =>
-      option.label.toLocaleLowerCase('tr-TR') === normalized ||
-      option.value.toLocaleLowerCase('tr-TR') === normalized
+    const normalized = normalizeSearchableEnumText(text)
+    if (!normalized) {
+      setQuery('')
+      onChange('')
+      return
+    }
+
+    const exact = commitOptions.find(option =>
+      normalizeSearchableEnumText(option.label) === normalized ||
+      normalizeSearchableEnumText(option.value) === normalized
     )
     if (exact) {
       setQuery(exact.label)
       onChange(exact.value)
       return
     }
+
+    const prefixMatches = commitOptions.filter(option =>
+      normalizeSearchableEnumText(option.label).startsWith(normalized) ||
+      normalizeSearchableEnumText(option.value).startsWith(normalized)
+    )
+    if (normalized && prefixMatches.length === 1) {
+      setQuery(prefixMatches[0].label)
+      onChange(prefixMatches[0].value)
+      return
+    }
+
+    if (hasRemoteOptions) {
+      setQuery(text)
+      onChange(text)
+      return
+    }
+
     setQuery(selectedLabel)
   }
 
@@ -1319,7 +1419,7 @@ function SearchableSelectField({
         className={className}
       />
       {open && !disabled && (
-        <div className="absolute z-50 mt-1 max-h-64 w-full overflow-auto rounded-lg border border-gray-200 bg-white py-1 shadow-lg dark:border-gray-700 dark:bg-gray-900">
+        <div className="absolute left-0 top-full z-[80] mt-1 max-h-64 w-full overflow-auto rounded-lg border border-gray-200 bg-white py-1 shadow-lg dark:border-gray-700 dark:bg-gray-900">
           {filteredOptions.length > 0 ? filteredOptions.map((opt, index) => (
             <button
               key={`${opt.value}-${index}`}
@@ -1335,12 +1435,76 @@ function SearchableSelectField({
               {opt.label}
             </button>
           )) : (
-            <div className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">Sonuç bulunamadı</div>
+            <div className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">
+              {showMinimumHint
+                ? `Aramak için en az ${minQueryLength} karakter yazın`
+                : remoteLoading
+                  ? 'Aranıyor...'
+                  : remoteError || 'Sonuç bulunamadı'}
+            </div>
           )}
         </div>
       )}
     </div>
   )
+}
+
+function mergeFieldOptions(...optionGroups: FieldOption[][]): FieldOption[] {
+  const merged: FieldOption[] = []
+  const seen = new Set<string>()
+
+  optionGroups.flat().forEach(option => {
+    const cleanOption = asFieldOption(option)
+    if (!cleanOption) return
+    const key = `${cleanOption.value}\u0000${cleanOption.label}`
+    if (seen.has(key)) return
+    seen.add(key)
+    merged.push(cleanOption)
+  })
+
+  return merged
+}
+
+function parseRemoteOptionsPayload(payload: unknown): FieldOption[] {
+  const candidate = payload as {
+    options?: unknown[]
+    offices?: unknown[]
+    provinces?: unknown[]
+    districts?: unknown[]
+  } | null
+  const source = Array.isArray(candidate?.options)
+    ? candidate.options
+    : Array.isArray(candidate?.districts)
+      ? candidate.districts
+      : Array.isArray(candidate?.provinces)
+        ? candidate.provinces
+        : Array.isArray(candidate?.offices)
+          ? candidate.offices
+          : []
+
+  return source.map(asFieldOption).filter((option): option is FieldOption => !!option)
+}
+
+function asFieldOption(option: unknown): FieldOption | null {
+  if (!option || typeof option !== 'object') return null
+  const candidate = option as { value?: unknown; label?: unknown; name?: unknown; code?: unknown }
+  const label = String(candidate.label ?? candidate.name ?? '').trim()
+  const value = String(candidate.value ?? candidate.name ?? label).trim()
+  if (!value || !label) return null
+  const code = String(candidate.code ?? '').trim()
+  return {
+    value,
+    label: !candidate.label && code ? `${code} - ${label}` : label,
+  }
+}
+
+function normalizeSearchableEnumText(value: unknown) {
+  return String(value || '')
+    .trim()
+    .toLocaleLowerCase('tr-TR')
+    .replace(/\u0131/g, 'i')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
 }
 
 const CV_DOCUMENT_ACCEPTED_TYPES = [
@@ -1678,12 +1842,28 @@ function WorkLifecycleField({
 
   useEffect(() => {
     let active = true
+    const categories = [
+      'insuranceBranches',
+      'dutyCodes',
+      'occupationCodes',
+      'csgbBusinessLines',
+      'educationCodes',
+      'exitReasons',
+      'documentTypes',
+    ]
 
-    fetch('/api/reference/sgk-codes')
-      .then(response => response.ok ? response.json() : null)
-      .then(payload => {
+    Promise.all(categories.map(category =>
+      fetch(`/api/reference/sgk-codes?category=${encodeURIComponent(category)}`)
+        .then(response => response.ok ? response.json() : null)
+        .catch(() => null)
+    ))
+      .then(payloads => {
         if (!active) return
-        setSgkCodeCategories(payload?.categories || {})
+        const nextCategories = payloads.reduce<SgkCodeCategories>((accumulator, payload) => ({
+          ...accumulator,
+          ...(payload?.categories || {}),
+        }), {})
+        setSgkCodeCategories(nextCategories)
       })
       .catch(() => {
         if (active) setSgkCodeCategories({})
@@ -2050,7 +2230,12 @@ export function EntityForm({
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [identityGateResult, setIdentityGateResult] = useState<IdentityGateResolveResult | null>(null)
   const [cvExtractStatus, setCvExtractStatus] = useState<{ type: 'idle' | 'loading' | 'success' | 'error'; message: string }>({ type: 'idle', message: '' })
-  const [turkeyProvinces, setTurkeyProvinces] = useState<TurkeyProvince[]>(() => getFallbackTurkeyLocations().provinces)
+  const [turkeyProvinces, setTurkeyProvinces] = useState<TurkeyProvince[]>([])
+  const [turkeyDistrictsByProvince, setTurkeyDistrictsByProvince] = useState<Record<string, Array<{ id: number; name: string }>>>({})
+  const enrichedTurkeyProvinces = useMemo(() => turkeyProvinces.map(province => ({
+    ...province,
+    districts: turkeyDistrictsByProvince[normalizeTurkeyLocationName(province.name)] || province.districts || [],
+  })), [turkeyDistrictsByProvince, turkeyProvinces])
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   
   // STANDARD FORM LAYOUT: Image and Document slots
@@ -2194,7 +2379,7 @@ export function EntityForm({
   useEffect(() => {
     let cancelled = false
 
-    fetch('/api/reference/turkey-locations')
+    fetch('/api/reference/turkey-locations?scope=provinces')
       .then(response => response.ok ? response.json() : null)
       .then(payload => {
         if (!cancelled && Array.isArray(payload?.provinces)) {
@@ -2202,13 +2387,36 @@ export function EntityForm({
         }
       })
       .catch(() => {
-        if (!cancelled) setTurkeyProvinces(getFallbackTurkeyLocations().provinces)
+        if (!cancelled) setTurkeyProvinces([])
       })
 
     return () => {
       cancelled = true
     }
   }, [])
+
+  useEffect(() => {
+    const selectedCountry = normalizeCountryId(formData.country || 'TR')
+    const city = String(formData.city || '').trim()
+    const key = normalizeTurkeyLocationName(city)
+    if (selectedCountry !== 'TR' || !key || turkeyDistrictsByProvince[key]) return
+
+    let cancelled = false
+    fetch(`/api/reference/turkey-locations?province=${encodeURIComponent(city)}&limit=200`)
+      .then(response => response.ok ? response.json() : null)
+      .then(payload => {
+        if (cancelled || !Array.isArray(payload?.districts)) return
+        setTurkeyDistrictsByProvince(previous => ({
+          ...previous,
+          [key]: payload.districts,
+        }))
+      })
+      .catch(() => {})
+
+    return () => {
+      cancelled = true
+    }
+  }, [formData.city, formData.country, turkeyDistrictsByProvince])
 
   // Reset active tab when mode changes
   useEffect(() => {
@@ -2794,7 +3002,7 @@ export function EntityForm({
 
       if (isCityField(field.name)) {
         const selectedCountry = normalizeCountryId(formData.country || formData.country || 'TR')
-        const selectedProvince = findTurkeyProvince(turkeyProvinces, value)
+        const selectedProvince = findTurkeyProvince(enrichedTurkeyProvinces, value)
         const cityValue = selectedProvince?.name || value
         if (selectedCountry !== 'TR') {
           return (
@@ -2813,7 +3021,7 @@ export function EntityForm({
           <select
             value={cityValue}
             onChange={(e) => {
-              const nextProvince = findTurkeyProvince(turkeyProvinces, e.target.value)
+              const nextProvince = findTurkeyProvince(enrichedTurkeyProvinces, e.target.value)
               const nextCity = nextProvince?.name || e.target.value
               const keepDistrict = nextProvince?.districts.some(district =>
                 normalizeTurkeyLocationName(district.name) === normalizeTurkeyLocationName(formData.district)
@@ -2826,7 +3034,7 @@ export function EntityForm({
           >
             <option value="">İl seçiniz</option>
             {cityValue && !selectedProvince && <option value={cityValue}>{cityValue}</option>}
-            {turkeyProvinces.map(province => (
+            {enrichedTurkeyProvinces.map(province => (
               <option key={province.id} value={province.name}>{province.name}</option>
             ))}
           </select>
@@ -2849,7 +3057,7 @@ export function EntityForm({
         }
 
         const cityField = field.name === 'district' ? 'city' : 'city'
-        const selectedProvince = findTurkeyProvince(turkeyProvinces, formData[cityField])
+        const selectedProvince = findTurkeyProvince(enrichedTurkeyProvinces, formData[cityField])
         const selectedDistrict = selectedProvince?.districts.find(district =>
           normalizeTurkeyLocationName(district.name) === normalizeTurkeyLocationName(value)
         )
@@ -3234,7 +3442,7 @@ export function EntityForm({
                   mode={masterSummaryMode}
                   requiredFields={heroFields}
                   fieldErrors={fieldErrors}
-                  turkeyProvinces={turkeyProvinces}
+                  turkeyProvinces={enrichedTurkeyProvinces}
                   onFieldChange={handleChange}
                 />
               )}

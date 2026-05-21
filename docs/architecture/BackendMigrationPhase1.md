@@ -4,7 +4,7 @@
 
 - Frontend framework: Next.js 15 App Router with TypeScript, React 19, Tailwind CSS.
 - Routing: pages live under `app/`; existing API routes live under `app/api/`.
-- Auth flow: Supabase SSR middleware protects non-API routes and redirects unauthenticated users to `/login`. A `demo_auth` cookie bypass exists for demo access.
+- Auth flow: Supabase SSR middleware protects non-API routes and redirects unauthenticated users to `/login`. Demo cookie bypass access has been removed; only Supabase sessions or server-signed app sessions may pass protected routes.
 - Supabase usage:
   - Browser clients still exist in `hooks/useTeskilat.ts`, `hooks/useSirketler.ts`, `hooks/usePersonel.ts`, and `hooks/useNakitIslemler.ts`.
   - Sensitive direct client writes still exist in `usePersonel` and `useNakitIslemler`.

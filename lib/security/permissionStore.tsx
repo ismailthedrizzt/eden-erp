@@ -17,8 +17,7 @@ const PermissionContext = createContext<PermissionContextValue | null>(null)
 
 function shouldUseDemoPermissions() {
   if (!process.env.NEXT_PUBLIC_API_BASE_URL) return true
-  if (typeof document === 'undefined') return false
-  return document.cookie.split(';').some(cookie => cookie.trim() === 'demo_auth=true')
+  return false
 }
 
 export function PermissionProvider({ children }: { children: React.ReactNode }) {

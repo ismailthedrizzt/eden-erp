@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { isDraftRecord } from '@/lib/forms/entityState'
 import { requirePermission } from '@/lib/security/serverPermissions'
+import { applyTenantQueryScope, resolveTenantContext, type TenantContext } from '@/lib/tenancy/server'
 
 type QueryBuilder = any
 
@@ -32,6 +33,7 @@ export interface SafeHardDeleteContext {
   recordId: string
   companyId?: string | null
   userId: string | null
+  tenantContext: TenantContext | null
   record: Record<string, any>
 }
 
@@ -74,11 +76,17 @@ export async function safeHardDeleteDraftRecord(
 ): Promise<SafeHardDeleteDraftRecordResult> {
   const primaryKey = options.primaryKey || 'id'
   const select = options.select || '*'
-  const { data: record, error: fetchError } = await options.supabase
+  const permission = await resolvePermission(options)
+  if (!permission.ok) return permission
+  const tenantContext = options.request ? resolveTenantContext(options.request) : null
+
+  let recordQuery = options.supabase
     .from(options.tableName)
     .select(select)
     .eq(primaryKey, options.recordId)
-    .maybeSingle()
+
+  recordQuery = applyTenantQueryScope(recordQuery, options.tableName, tenantContext)
+  const { data: record, error: fetchError } = await recordQuery.maybeSingle()
 
   if (fetchError) {
     return failure(500, fetchError.code || 'FETCH_FAILED', fetchError.message)
@@ -98,15 +106,13 @@ export async function safeHardDeleteDraftRecord(
     return failure(409, 'NOT_DRAFT_RECORD', 'Sadece taslak kayıtlar kalıcı olarak silinebilir.', undefined, currentRecord)
   }
 
-  const permission = await resolvePermission(options)
-  if (!permission.ok) return { ...permission, record: currentRecord }
-
   const context: SafeHardDeleteContext = {
     supabase: options.supabase,
     tableName: options.tableName,
     recordId: options.recordId,
     companyId: options.companyId ?? currentRecord[options.companyIdField || 'company_id'] ?? null,
     userId: permission.userId,
+    tenantContext,
     record: currentRecord,
   }
 
@@ -124,10 +130,13 @@ export async function safeHardDeleteDraftRecord(
     }
   }
 
-  const { error: deleteError } = await options.supabase
+  let deleteQuery = options.supabase
     .from(options.tableName)
     .delete()
     .eq(primaryKey, options.recordId)
+
+  deleteQuery = applyTenantQueryScope(deleteQuery, options.tableName, tenantContext)
+  const { error: deleteError } = await deleteQuery
 
   if (deleteError) {
     return failure(
@@ -266,6 +275,7 @@ async function fetchReferenceRows(
   if (values && values.length === 0) return { ok: true, rows: [] }
 
   let query = context.supabase.from(check.tableName).select(select)
+  query = applyTenantQueryScope(query, check.tableName, context.tenantContext)
   query = applyReferenceFilters(query, check, values)
   if (check.query) query = check.query(query, context)
   if (mode === 'block') query = query.limit(1)
@@ -288,6 +298,7 @@ async function deleteReferenceRows(
   context: SafeHardDeleteContext
 ): Promise<{ ok: true } | { ok: false; status: number; code: string; error: string; details?: unknown }> {
   let query = context.supabase.from(check.tableName).delete()
+  query = applyTenantQueryScope(query, check.tableName, context.tenantContext)
 
   if (check.deleteQuery) {
     query = check.deleteQuery(query, rows, context)

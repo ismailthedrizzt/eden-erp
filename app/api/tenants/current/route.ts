@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { resolveTenantContext, tenantResponseHeaders } from '@/lib/tenancy/server'
+import { requirePermission } from '@/lib/security/serverPermissions'
 
 export const runtime = 'nodejs'
 
@@ -39,6 +40,8 @@ type Supabase = ReturnType<typeof createServiceClient>
 export async function GET(request: NextRequest) {
   const context = resolveTenantContext(request)
   const supabase = createServiceClient()
+  const permission = await requirePermission(request, supabase, 'tenants.view')
+  if (permission instanceof NextResponse) return permission
 
   const [workspace, binding] = await Promise.all([
     fetchWorkspace(supabase, context.tenantId),

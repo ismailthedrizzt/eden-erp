@@ -323,8 +323,8 @@ function SearchableGateSelect({
   const [open, setOpen] = useState(false)
   const filteredOptions = options
     .filter(option => {
-      const q = query.toLocaleLowerCase('tr-TR')
-      return option.label.toLocaleLowerCase('tr-TR').includes(q) || option.value.toLocaleLowerCase('tr-TR').includes(q)
+      const q = normalizeSearchableGateText(query)
+      return normalizeSearchableGateText(option.label).includes(q) || normalizeSearchableGateText(option.value).includes(q)
     })
     .slice(0, 80)
 
@@ -333,16 +333,27 @@ function SearchableGateSelect({
   }, [selectedLabel])
 
   const commitIfExactMatch = (text: string) => {
-    const normalized = text.trim().toLocaleLowerCase('tr-TR')
+    const normalized = normalizeSearchableGateText(text)
     const exact = options.find(option =>
-      option.label.toLocaleLowerCase('tr-TR') === normalized ||
-      option.value.toLocaleLowerCase('tr-TR') === normalized
+      normalizeSearchableGateText(option.label) === normalized ||
+      normalizeSearchableGateText(option.value) === normalized
     )
     if (exact) {
       setQuery(exact.label)
       onChange(exact.value)
       return
     }
+
+    const prefixMatches = options.filter(option =>
+      normalizeSearchableGateText(option.label).startsWith(normalized) ||
+      normalizeSearchableGateText(option.value).startsWith(normalized)
+    )
+    if (normalized && prefixMatches.length === 1) {
+      setQuery(prefixMatches[0].label)
+      onChange(prefixMatches[0].value)
+      return
+    }
+
     setQuery(selectedLabel)
   }
 
@@ -369,7 +380,7 @@ function SearchableGateSelect({
         className={className}
       />
       {open && !disabled && (
-        <div className="absolute z-50 mt-1 max-h-64 w-full overflow-auto rounded-lg border border-gray-200 bg-white py-1 shadow-lg dark:border-gray-700 dark:bg-gray-900">
+        <div className="absolute left-0 top-full z-[80] mt-1 max-h-64 w-full overflow-auto rounded-lg border border-gray-200 bg-white py-1 shadow-lg dark:border-gray-700 dark:bg-gray-900">
           {filteredOptions.length > 0 ? filteredOptions.map((option, index) => (
             <button
               key={`${option.value}-${index}`}
@@ -391,6 +402,20 @@ function SearchableGateSelect({
       )}
     </div>
   )
+}
+
+function normalizeSearchableGateText(value: unknown) {
+  return String(value || '')
+    .trim()
+    .toLocaleLowerCase('tr-TR')
+    .replace(/ı/g, 'i')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/ğ/g, 'g')
+    .replace(/ü/g, 'u')
+    .replace(/ş/g, 's')
+    .replace(/ö/g, 'o')
+    .replace(/ç/g, 'c')
 }
 
 function getMasterMatchAutomationStatus(input: {

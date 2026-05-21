@@ -1,6 +1,6 @@
 # Load Testing
 
-Eden ERP ana liste endpointleri yuk testi ile korunur. Hedef, liste ekranlarinda P95 gecikmeyi kucuk ve olculebilir tutmak; yuzlerce kullaniciya cikmadan once yavas sorgu, eksik indeks ve yetki/session darboğazlarini yakalamaktir.
+Eden ERP ana liste endpointleri yuk testi ile korunur. Hedef, liste ekranlarinda P95 gecikmeyi kucuk ve olculebilir tutmak; yuzlerce kullaniciya cikmadan once yavas sorgu, eksik indeks ve yetki/session darbogazlarini yakalamaktir.
 
 ## Komutlar
 
@@ -23,7 +23,7 @@ LOAD_TEST_BASE_URL=https://example.vercel.app npm run load:test
 - `LOAD_TEST_CONNECTIONS`: Eszamanli baglanti sayisi. Varsayilan `20`.
 - `LOAD_TEST_PIPELINING`: HTTP pipelining. Varsayilan `1`.
 - `LOAD_TEST_AUTH_TOKEN`: Gereken endpointlerde Bearer token.
-- `LOAD_TEST_COOKIE`: Demo veya oturum cookie'si. Varsayilan lokal smoke test icin `demo_auth=true`.
+- `LOAD_TEST_COOKIE`: Gecerli oturum cookie'si. Varsayilan bos gelir; lokal smoke test icin ya `LOAD_TEST_AUTH_TOKEN` verin ya da test ortaminda bilerek `EDEN_ALLOW_LEGACY_API_ACCESS=true` kullanin.
 
 ## Baslangic Esikleri
 

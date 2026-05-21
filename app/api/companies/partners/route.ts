@@ -7,6 +7,8 @@ import { EntityBankAccountsService } from '@/lib/modules/entity-bank-accounts/en
 import { parseListQuery } from '@/lib/api/listEndpoint'
 import { safeCreateRecord, safeCrudResponse, safeListRecords } from '@/lib/crud/safeCrudService'
 import { ensureUniqueRoleMaster, roleUniquenessResponse } from '@/lib/identity/roleUniqueness'
+import { applyTenantQueryScope, resolveTenantContext, type TenantContext, withTenantInsertScopeForTable } from '@/lib/tenancy/server'
+import { requirePermission } from '@/lib/security/serverPermissions'
 
 const PartnerSchema = z.object({
   company_id: z.string().uuid().optional(),  person_id: z.string().uuid().optional().nullable(),
@@ -120,6 +122,7 @@ export async function GET(request: NextRequest) {
     supabase,
     request,
     tableName: 'company_partners',
+    permissionKey: ['partners.view', 'companies.view'],
     select: 'id,company_id,company_id,person_id,organization_id,owner_kind,partner_type,display_name,partner_name,identity_number,identity_tax_number,share_ratio,share_ratio,voting_ratio,profit_ratio,start_date,end_date,status,record_status,source_type,source_id,created_at',
     listQuery,
     sortMap,
@@ -138,6 +141,9 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   const supabase = createServiceClient()
+  const permission = await requirePermission(request, supabase, 'partners.edit')
+  if (permission instanceof NextResponse) return permission
+  const tenantContext = resolveTenantContext(request)
   const body = omitNullishValues(await request.json())
   const parsed = PartnerSchema.safeParse(body)
 
@@ -153,7 +159,7 @@ export async function POST(request: NextRequest) {
     }, { status: 400 })
   }
 
-  const row = await attachPartnerIdentity(supabase, parsed.data, mapPartnerForDb(parsed.data))
+  const row = await attachPartnerIdentity(supabase, parsed.data, mapPartnerForDb(parsed.data), tenantContext)
   const uniqueness = await ensureUniqueRoleMaster(supabase as any, {
     tableName: 'company_partners',
     identity: row,
@@ -164,20 +170,21 @@ export async function POST(request: NextRequest) {
     supabase,
     request,
     tableName: 'company_partners',
+    permissionKey: ['partners.edit', 'companies.edit'],
     values: row,
     select: '*',
   })
   if (!createResult.ok) return safeCrudResponse(createResult)
 
   const data = createResult.data
-  await supabase.from('partner_ownership_lifecycle_events').insert({
+  await supabase.from('partner_ownership_lifecycle_events').insert(withTenantInsertScopeForTable({
     partner_id: data.id,
     company_id: data.company_id || data.company_id || null,
     event_type: 'created_as_draft',
     old_record_status: null,
     new_record_status: data.record_status || 'draft',
     payload_json: { source: 'partners_page' },
-  })
+  }, 'partner_ownership_lifecycle_events', tenantContext))
   if (data?.person_id) await syncMasterContact(supabase, 'person', data.person_id, parsed.data)
   if (data?.organization_id) await syncMasterContact(supabase, 'organization', data.organization_id, parsed.data)
   if (parsed.data.entity_bank_accounts) {
@@ -248,7 +255,12 @@ function getMissingPersonFields(partner: Record<string, any>) {
     .map(([field]) => field)
 }
 
-async function attachPartnerIdentity(supabase: ReturnType<typeof createServiceClient>, partner: Record<string, any>, row: Record<string, any>) {
+async function attachPartnerIdentity(
+  supabase: ReturnType<typeof createServiceClient>,
+  partner: Record<string, any>,
+  row: Record<string, any>,
+  tenantContext: TenantContext
+) {
   try {
     const kind = row.owner_kind === 'organization' ? 'organization' : 'person'
     if (kind === 'person') {
@@ -259,11 +271,12 @@ async function attachPartnerIdentity(supabase: ReturnType<typeof createServiceCl
       const identityNumber = partner.identity_number || partner.national_id || partner.national_id || partner.passport_no || partner.passport_no
       const nationalId = identityNumber && String(identityNumber).length === 11 ? String(identityNumber) : null
       const passportNo = nationalId ? null : partner.passport_no || partner.passport_no || null
-      let query = supabase.from('persons').select('id').eq('nationality', nationality).eq(nationalId ? 'national_id' : 'passport_no', nationalId || passportNo).maybeSingle()
-      if (!nationalId && !passportNo) query = supabase.from('persons').select('id').eq('full_name', fullName).maybeSingle()
-      const { data: existing, error: findError } = await query
+      let query = supabase.from('persons').select('id').eq('nationality', nationality).eq(nationalId ? 'national_id' : 'passport_no', nationalId || passportNo)
+      if (!nationalId && !passportNo) query = supabase.from('persons').select('id').eq('full_name', fullName)
+      query = applyTenantQueryScope(query, 'persons', tenantContext)
+      const { data: existing, error: findError } = await query.maybeSingle()
       if (findError) return row
-      const personId = existing?.id || (await supabase.from('persons').insert({
+      const personId = existing?.id || (await supabase.from('persons').insert(withTenantInsertScopeForTable({
         first_name: partner.first_name || null,
         last_name: partner.last_name || null,
         full_name: fullName,
@@ -279,7 +292,7 @@ async function attachPartnerIdentity(supabase: ReturnType<typeof createServiceCl
         city: partner.city || partner.city || null,
         district: partner.district || partner.district || null,
         metadata_json: { source: 'partners_create' },
-      }).select('id').single()).data?.id
+      }, 'persons', tenantContext)).select('id').single()).data?.id
       return { ...row, person_id: personId || null, source_type: 'master_person', source_id: personId || null }
     }
 
@@ -288,14 +301,16 @@ async function attachPartnerIdentity(supabase: ReturnType<typeof createServiceCl
 
     const country = normalizeCountryId(partner.country || partner.nationality_country || 'TR')
     const taxNumber = partner.tax_number || partner.identity_number || null
-    const { data: existing, error: findError } = await supabase
+    let organizationQuery = supabase
       .from('organizations')
       .select('id')
       .eq('country', country)
       .eq(taxNumber ? 'tax_number' : 'legal_name', taxNumber || legalName)
-      .maybeSingle()
+
+    organizationQuery = applyTenantQueryScope(organizationQuery, 'organizations', tenantContext)
+    const { data: existing, error: findError } = await organizationQuery.maybeSingle()
     if (findError) return row
-    const organizationId = existing?.id || (await supabase.from('organizations').insert({
+    const organizationId = existing?.id || (await supabase.from('organizations').insert(withTenantInsertScopeForTable({
       legal_name: legalName,
       short_name: partner.short_name || null,
       country,
@@ -309,7 +324,7 @@ async function attachPartnerIdentity(supabase: ReturnType<typeof createServiceCl
       city: partner.city || partner.city || null,
       district: partner.district || partner.district || null,
       metadata_json: { source: 'partners_create' },
-    }).select('id').single()).data?.id
+    }, 'organizations', tenantContext)).select('id').single()).data?.id
     return { ...row, organization_id: organizationId || null, source_type: 'master_organization', source_id: organizationId || null }
   } catch {
     return row

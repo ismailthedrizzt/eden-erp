@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { APP_SESSION_COOKIE_NAME, verifyAppSessionToken } from '@/lib/auth/appSession'
 
 type CookieToSet = {
   name: string
@@ -8,21 +9,24 @@ type CookieToSet = {
 }
 
 const LOGIN_BYPASS_ENABLED = process.env.EDEN_LOGIN_DISABLED === 'true'
-const DEMO_AUTH_COOKIE_OPTIONS = {
-  path: '/',
-  maxAge: 60 * 60 * 24 * 30,
-  sameSite: 'lax' as const,
-}
+const UNSAFE_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE'])
+const PUBLIC_API_PREFIXES = [
+  '/api/auth',
+  '/api/cron',
+  '/api/reference',
+  '/api/settings/setup-wizard',
+]
 
-function withDemoAuth(response: NextResponse) {
-  response.cookies.set('demo_auth', 'true', DEMO_AUTH_COOKIE_OPTIONS)
-  return response
+function isPathOrChild(pathname: string, prefix: string) {
+  return pathname === prefix || pathname.startsWith(`${prefix}/`)
 }
 
 export async function middleware(request: NextRequest) {
-  const isAuthPage = request.nextUrl.pathname.startsWith('/login')
-  const isApiRoute = request.nextUrl.pathname.startsWith('/api')
-  const isSetupWizardPage = request.nextUrl.pathname.startsWith('/app/sistem/kurulum')
+  const pathname = request.nextUrl.pathname
+  const isAuthPage = pathname.startsWith('/login')
+  const isApiRoute = pathname.startsWith('/api')
+  const isPublicApiRoute = isApiRoute && PUBLIC_API_PREFIXES.some(prefix => isPathOrChild(pathname, prefix))
+  const isSetupWizardPage = pathname.startsWith('/app/sistem/kurulum')
   const isPwaAsset = [
     '/manifest.json',
     '/sw.js',
@@ -30,26 +34,33 @@ export async function middleware(request: NextRequest) {
     '/offline',
     '/icons/',
     '/eden-icon-original.png',
-  ].some(path => request.nextUrl.pathname.startsWith(path))
+  ].some(path => pathname.startsWith(path))
 
-  if (LOGIN_BYPASS_ENABLED && !isApiRoute && !isPwaAsset) {
+  if (isApiRoute && UNSAFE_METHODS.has(request.method.toUpperCase()) && !isAllowedRequestOrigin(request)) {
+    return withSecurityHeaders(
+      NextResponse.json({ error: 'Request origin rejected', code: 'ORIGIN_REJECTED' }, { status: 403 }),
+      request
+    )
+  }
+
+  if (LOGIN_BYPASS_ENABLED && !isPwaAsset) {
     if (isAuthPage) {
       const url = request.nextUrl.clone()
       url.pathname = '/app'
-      return withDemoAuth(NextResponse.redirect(url))
+      return withSecurityHeaders(NextResponse.redirect(url), request)
     }
 
-    return withDemoAuth(NextResponse.next({ request }))
+    return withSecurityHeaders(NextResponse.next({ request }), request)
   }
 
-  const isPublic = isAuthPage || isApiRoute || isPwaAsset || isSetupWizardPage
-  const isDemo = request.cookies.get('demo_auth')?.value === 'true'
+  const isPublic = isAuthPage || isPublicApiRoute || isPwaAsset || isSetupWizardPage
+  const appSession = await verifyAppSessionToken(request.cookies.get(APP_SESSION_COOKIE_NAME)?.value)
 
-  if (isPublic || isDemo) {
-    return NextResponse.next({ request })
+  if (isPublic || appSession) {
+    return withSecurityHeaders(NextResponse.next({ request }), request)
   }
 
-  let supabaseResponse = NextResponse.next({ request })
+  let supabaseResponse = withSecurityHeaders(NextResponse.next({ request }), request)
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -59,7 +70,7 @@ export async function middleware(request: NextRequest) {
         getAll() { return request.cookies.getAll() },
         setAll(cookiesToSet: CookieToSet[]) {
           cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
-          supabaseResponse = NextResponse.next({ request })
+          supabaseResponse = withSecurityHeaders(NextResponse.next({ request }), request)
           cookiesToSet.forEach(({ name, value, options }) =>
             supabaseResponse.cookies.set(name, value, options)
           )
@@ -69,25 +80,68 @@ export async function middleware(request: NextRequest) {
   )
 
   const auth = supabase.auth as typeof supabase.auth & {
-    getUser: () => Promise<{ data: { user: any } }>
+    getUser: (jwt?: string) => Promise<{ data: { user: any } }>
   }
 
   let user = null
   try {
-    const { data } = await auth.getUser()
+    const authorizationToken = request.headers.get('authorization')?.replace(/^Bearer\s+/i, '')
+    const { data } = await auth.getUser(authorizationToken || undefined)
     user = data.user
   } catch {
-    // Supabase env veya baglanti hazir degilse uygulama en azindan acilabilsin.
+    user = null
   }
 
-  // Giriş yapılmamış ve korunan sayfaya erişim → Login'e yönlendir
+  // Redirect unauthenticated protected requests.
   if (!user) {
+    if (isApiRoute) {
+      const response = NextResponse.json({ error: 'Authentication required', code: 'AUTH_REQUIRED' }, { status: 401 })
+      response.cookies.set(APP_SESSION_COOKIE_NAME, '', { path: '/', maxAge: 0 })
+      response.cookies.set('demo_auth', '', { path: '/', maxAge: 0 })
+      return withSecurityHeaders(response, request)
+    }
+
     const url = request.nextUrl.clone()
     url.pathname = '/login'
-    return NextResponse.redirect(url)
+    const response = NextResponse.redirect(url)
+    response.cookies.set(APP_SESSION_COOKIE_NAME, '', { path: '/', maxAge: 0 })
+    response.cookies.set('demo_auth', '', { path: '/', maxAge: 0 })
+    return withSecurityHeaders(response, request)
   }
 
-  return supabaseResponse
+  return withSecurityHeaders(supabaseResponse, request)
+}
+
+function isAllowedRequestOrigin(request: NextRequest) {
+  const origin = request.headers.get('origin')
+  if (!origin) return true
+  if (origin === request.nextUrl.origin) return true
+
+  const configuredOrigins = (process.env.EDEN_ALLOWED_ORIGINS || '')
+    .split(',')
+    .map(value => value.trim())
+    .filter(Boolean)
+
+  return configuredOrigins.includes(origin)
+}
+
+function withSecurityHeaders(response: NextResponse, request: NextRequest) {
+  response.headers.set('X-Content-Type-Options', 'nosniff')
+  response.headers.set('X-Frame-Options', 'DENY')
+  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
+  response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=(), usb=()')
+  response.headers.set('Cross-Origin-Opener-Policy', 'same-origin')
+  response.headers.set('Content-Security-Policy', "frame-ancestors 'none'; base-uri 'self'; object-src 'none'")
+
+  if (process.env.NODE_ENV === 'production' && request.nextUrl.protocol === 'https:') {
+    response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains')
+  }
+
+  if (request.nextUrl.pathname.startsWith('/api/auth') || UNSAFE_METHODS.has(request.method.toUpperCase())) {
+    response.headers.set('Cache-Control', 'no-store')
+  }
+
+  return response
 }
 
 export const config = {

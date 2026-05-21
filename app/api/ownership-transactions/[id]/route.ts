@@ -7,6 +7,7 @@ import {
   type SafeHardDeleteReferenceCheck,
 } from '@/lib/workflow/safeHardDeleteDraftRecord'
 import { safeCrudResponse, safeReadRecord, safeUpdateRecord } from '@/lib/crud/safeCrudService'
+import { applyTenantQueryScope, resolveTenantContext } from '@/lib/tenancy/server'
 
 const LOCKED_WHEN_APPROVED = new Set([
   'company_id',
@@ -45,6 +46,7 @@ export async function GET(
     request,
     tableName: 'ownership_transactions',
     recordId: id,
+    permissionKey: ['ownership_transactions.view', 'companies.view'],
     select: OWNERSHIP_TRANSACTION_SELECT,
     notDeletedField: 'is_deleted',
   })
@@ -65,6 +67,7 @@ export async function PATCH(
     request,
     tableName: 'ownership_transactions',
     recordId: id,
+    permissionKey: ['ownership_transactions.edit', 'companies.edit'],
     patch: body,
     select: OWNERSHIP_TRANSACTION_SELECT,
     currentSelect: OWNERSHIP_TRANSACTION_SELECT,
@@ -119,6 +122,7 @@ export async function DELETE(
 ) {
   const { id } = await params
   const supabase = createServiceClient()
+  const tenantContext = resolveTenantContext(request)
 
   const draftDelete = await safeHardDeleteDraftRecord({
     supabase,
@@ -135,7 +139,7 @@ export async function DELETE(
   if (draftDelete.ok) return safeHardDeleteDraftRecordResponse(draftDelete)
   if (draftDelete.code !== 'NOT_DRAFT_RECORD') return safeHardDeleteDraftRecordResponse(draftDelete)
 
-  const { error } = await supabase
+  let deleteQuery = supabase
     .from('ownership_transactions')
     .update({
       is_deleted: true,
@@ -144,6 +148,9 @@ export async function DELETE(
       updated_at: new Date().toISOString(),
     })
     .eq('id', id)
+
+  deleteQuery = applyTenantQueryScope(deleteQuery, 'ownership_transactions', tenantContext)
+  const { error } = await deleteQuery
 
   if (error) return NextResponse.json({ error: error.message, code: error.code || 'SOFT_DELETE_FAILED' }, { status: 500 })
   return NextResponse.json({ success: true })

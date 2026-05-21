@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import sharp from 'sharp'
+import { createServiceClient } from '@/lib/supabase/server'
+import { requirePermission } from '@/lib/security/serverPermissions'
+import { enforceRateLimit } from '@/lib/security/rateLimit'
 
 export const runtime = 'nodejs'
 
@@ -9,6 +12,16 @@ const DEFAULT_PREVIEW_DIMENSION = 512
 const DEFAULT_THUMBNAIL_DIMENSION = 96
 
 export async function POST(request: NextRequest) {
+  const supabase = createServiceClient()
+  const permission = await requirePermission(request, supabase, 'documents.export')
+  if (permission instanceof NextResponse) return permission
+
+  const limited = enforceRateLimit(request, 'image-variants', permission.userId || 'system', {
+    limit: 30,
+    windowMs: 10 * 60 * 1000,
+  })
+  if (limited) return limited
+
   const formData = await request.formData()
   const file = formData.get('file')
 

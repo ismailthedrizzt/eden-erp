@@ -1,5 +1,5 @@
 import 'server-only'
-import { createHmac, timingSafeEqual } from 'crypto'
+import { createHmac, randomInt, timingSafeEqual } from 'crypto'
 
 const OTP_TTL_SECONDS = 5 * 60
 const OTP_COOKIE_NAME = 'eden_email_otp'
@@ -11,10 +11,10 @@ type OtpPayload = {
 }
 
 function getOtpSecret() {
-  const secret = process.env.OTP_SECRET || process.env.CRON_SECRET
+  const secret = process.env.OTP_SECRET || (process.env.NODE_ENV === 'production' ? '' : process.env.CRON_SECRET)
 
   if (!secret) {
-    throw new Error('OTP_SECRET veya CRON_SECRET tanimli degil.')
+    throw new Error('OTP_SECRET tanimli degil.')
   }
 
   return secret
@@ -30,7 +30,7 @@ function hashOtp(email: string, otp: string, expiresAt: number) {
 
 export function createEmailOtp(email: string) {
   const normalizedEmail = email.trim().toLowerCase()
-  const otp = String(Math.floor(100000 + Math.random() * 900000))
+  const otp = String(randomInt(100000, 1000000))
   const expiresAt = Date.now() + OTP_TTL_SECONDS * 1000
   const payload: OtpPayload = {
     email: normalizedEmail,
@@ -52,7 +52,7 @@ export function verifyEmailOtp(cookieValue: string | undefined, email: string, o
   if (!cookieValue) return false
 
   const [encodedPayload, signature] = cookieValue.split('.')
-  if (!encodedPayload || !signature || sign(encodedPayload) !== signature) return false
+  if (!encodedPayload || !signature || !safeEqual(signature, sign(encodedPayload))) return false
 
   let payload: OtpPayload
   try {
@@ -71,3 +71,9 @@ export function verifyEmailOtp(cookieValue: string | undefined, email: string, o
 }
 
 export { OTP_COOKIE_NAME }
+
+function safeEqual(left: string, right: string) {
+  const leftBuffer = Buffer.from(left)
+  const rightBuffer = Buffer.from(right)
+  return leftBuffer.length === rightBuffer.length && timingSafeEqual(leftBuffer, rightBuffer)
+}

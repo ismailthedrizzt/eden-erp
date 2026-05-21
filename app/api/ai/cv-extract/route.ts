@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import mammoth from 'mammoth'
 import { PDFParse } from 'pdf-parse'
+import { createServiceClient } from '@/lib/supabase/server'
+import { requirePermission } from '@/lib/security/serverPermissions'
+import { enforceRateLimit } from '@/lib/security/rateLimit'
 
 export const runtime = 'nodejs'
 
 const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-3-flash-preview'
 const GEMINI_ENDPOINT = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`
+const MAX_CV_BYTES = 8 * 1024 * 1024
 
 const EMPLOYEE_SCHEMA = {
   type: 'object',
@@ -69,6 +73,16 @@ const ALLOWED_TYPES = new Set([
 
 export async function POST(request: NextRequest) {
   try {
+    const supabase = createServiceClient()
+    const permission = await requirePermission(request, supabase, 'employees.edit')
+    if (permission instanceof NextResponse) return permission
+
+    const limited = enforceRateLimit(request, 'ai-cv-extract', permission.userId || 'system', {
+      limit: 10,
+      windowMs: 10 * 60 * 1000,
+    })
+    if (limited) return limited
+
     const apiKey = process.env.GEMINI_API_KEY
 
     if (!apiKey) {
@@ -87,6 +101,10 @@ export async function POST(request: NextRequest) {
 
     if (!ALLOWED_TYPES.has(file.type)) {
       return NextResponse.json({ error: 'CV çözümleme yalnızca PDF ve DOCX dosyaları için desteklenir.' }, { status: 400 })
+    }
+
+    if (file.size > MAX_CV_BYTES) {
+      return NextResponse.json({ error: 'CV dosyasi cok buyuk.', code: 'FILE_TOO_LARGE' }, { status: 413 })
     }
 
     const buffer = Buffer.from(await file.arrayBuffer())

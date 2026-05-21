@@ -9,6 +9,8 @@ import {
   type SafeHardDeleteReferenceCheck,
 } from '@/lib/workflow/safeHardDeleteDraftRecord'
 import { safeCrudResponse, safeReadRecord, safeUpdateRecord } from '@/lib/crud/safeCrudService'
+import { requirePermission } from '@/lib/security/serverPermissions'
+import { applyTenantQueryScope, resolveTenantContext, type TenantContext, withTenantInsertScopeForTable } from '@/lib/tenancy/server'
 
 const COMPANY_NACE_SELECT = 'id,company_id,nace_code_id,is_primary,status,start_date,end_date,notes,is_deleted,created_at,updated_at,version,nace_code:nace_codes(id,nace_code,description,hazard_class,source_name,source_url,source_reference,valid_from,valid_to,is_active,last_checked_at)'
 
@@ -124,13 +126,18 @@ export async function GET(
   const { company_id: id } = await params
   const supabase = createServiceClient()
   const section = request.nextUrl.searchParams.get('section')
+  const permission = await requirePermission(request, supabase, 'companies.view')
+  if (permission instanceof NextResponse) return permission
+  const tenantContext = resolveTenantContext(request)
 
   if (section === 'hero') {
-    const { data: company, error } = await supabase
+    let query = supabase
       .from('companies')
       .select(COMPANY_HERO_SELECT)
       .eq('id', id)
-      .single()
+
+    query = applyTenantQueryScope(query, 'companies', tenantContext)
+    const { data: company, error } = await query.single()
 
     if (error) {
       if (error.code === 'PGRST116') {
@@ -148,11 +155,13 @@ export async function GET(
   }
 
   if (section === 'media') {
-    const { data, error } = await supabase
+    let query = supabase
       .from('companies')
       .select(COMPANY_MEDIA_SELECT)
       .eq('id', id)
-      .single()
+
+    query = applyTenantQueryScope(query, 'companies', tenantContext)
+    const { data, error } = await query.single()
 
     if (error) {
       if (error.code === 'PGRST116') {
@@ -164,11 +173,13 @@ export async function GET(
     return NextResponse.json({ data }, { headers: { 'Cache-Control': 'no-store, max-age=0' } })
   }
 
-  const { data: company, error } = await supabase
+  let companyQuery = supabase
     .from('companies')
     .select((section === 'details' ? COMPANY_DETAILS_SELECT : COMPANY_DETAIL_SELECT) as string)
     .eq('id', id)
-    .single()
+
+  companyQuery = applyTenantQueryScope(companyQuery, 'companies', tenantContext)
+  const { data: company, error } = await companyQuery.single()
 
   if (error) {
     if (error.code === 'PGRST116') {
@@ -304,6 +315,7 @@ export async function PATCH(
 ) {
   const { company_id: id } = await params
   const supabase = createServiceClient()
+  const tenantContext = resolveTenantContext(request)
 
   const body = omitNullishValues(await request.json())
   const parsed = SirketUpdateSchema.safeParse(body)
@@ -318,6 +330,7 @@ export async function PATCH(
     request,
     tableName: 'companies',
     recordId: id,
+    permissionKey: 'companies.edit',
     select: 'id,organization_id,field_history,short_name,trade_name,tax_number,tax_office,company_type,city,district,address,phone,email,is_deleted,record_status,company_status,mersis_number,trade_registry_number,foundation_date,legal_entity,electronic_notification_address,trade_registry_office,company_code,country,website,e_invoice_taxpayer,e_archive_taxpayer,e_waybill_taxpayer,sgk_workplace_registry_no,sgk_province,sgk_branch,risk_class,default_currency,default_language,time_zone,fiscal_year_start',
   })
   if (!currentRead.ok) return safeCrudResponse(currentRead)
@@ -365,6 +378,7 @@ export async function PATCH(
     request,
     tableName: 'companies',
     recordId: id,
+    permissionKey: 'companies.edit',
     patch: companyUpdates,
     select: 'id,short_name,trade_name,tax_number,is_deleted,record_status,company_status,updated_at',
     currentSelect: 'id,organization_id,field_history,short_name,trade_name,tax_number,tax_office,company_type,city,district,address,phone,email,is_deleted,record_status,company_status,mersis_number,trade_registry_number,foundation_date,legal_entity,electronic_notification_address,trade_registry_office,company_code,country,website,e_invoice_taxpayer,e_archive_taxpayer,e_waybill_taxpayer,sgk_workplace_registry_no,sgk_province,sgk_branch,risk_class,default_currency,default_language,time_zone,fiscal_year_start',
@@ -376,7 +390,7 @@ export async function PATCH(
   if (!updateResult.ok) return safeCrudResponse(updateResult)
   const data = updateResult.data
 
-  const organizationUnitError = await ensureCompanyRootUnit(supabase, id, { ...current, ...companyUpdates })
+  const organizationUnitError = await ensureCompanyRootUnit(supabase, id, { ...current, ...companyUpdates }, tenantContext)
   if (organizationUnitError && !isMissingTableError(organizationUnitError)) {
     return NextResponse.json({ error: organizationUnitError.message, code: organizationUnitError.code || 'COMPANY_ORG_UNIT_SAVE_FAILED' }, { status: 500 })
   }
@@ -393,12 +407,12 @@ export async function PATCH(
   }
 
   if (partners) {
-    const partnerError = await replaceCompanyPartners(supabase, id, partners)
+    const partnerError = await replaceCompanyPartners(supabase, id, partners, tenantContext)
     if (partnerError) return NextResponse.json({ error: partnerError.message, code: partnerError.code || 'PARTNER_SAVE_FAILED' }, { status: 500 })
   }
 
   if (representatives) {
-    const representativeError = await replaceCompanyRepresentatives(supabase, id, representatives)
+    const representativeError = await replaceCompanyRepresentatives(supabase, id, representatives, tenantContext)
     if (representativeError) return NextResponse.json({ error: representativeError.message, code: representativeError.code || 'REPRESENTATIVE_SAVE_FAILED' }, { status: 500 })
   }
 
@@ -409,7 +423,7 @@ export async function PATCH(
     public_registry,
     public_licenses,
     public_channels,
-  })
+  }, tenantContext)
   if (publicError) return NextResponse.json({ error: publicError.message, code: publicError.code || 'PUBLIC_SAVE_FAILED' }, { status: 500 })
 
   return NextResponse.json({ data })
@@ -418,7 +432,8 @@ export async function PATCH(
 async function ensureCompanyRootUnit(
   supabase: ReturnType<typeof createServiceClient>,
   companyId: string,
-  companyData: Record<string, any>
+  companyData: Record<string, any>,
+  tenantContext: TenantContext
 ) {
   const { data: unitType, error: typeError } = await supabase
     .from('organization_unit_types')
@@ -429,7 +444,7 @@ async function ensureCompanyRootUnit(
   if (typeError) return isMissingTableError(typeError) ? null : typeError
 
   const companyName = companyData.trade_name || companyData.short_name || 'Şirket'
-  const { data: existing, error: findError } = await supabase
+  let existingQuery = supabase
     .from('organization_units')
     .select('id')
     .eq('company_id', companyId)
@@ -437,11 +452,13 @@ async function ensureCompanyRootUnit(
     .eq('type', 'company')
     .eq('is_deleted', false)
     .limit(1)
-    .maybeSingle()
+
+  existingQuery = applyTenantQueryScope(existingQuery, 'organization_units', tenantContext)
+  const { data: existing, error: findError } = await existingQuery.maybeSingle()
 
   if (findError) return isMissingTableError(findError) ? null : findError
 
-  const payload = {
+  const payload = withTenantInsertScopeForTable({
     company_id: companyId,
     parent_unit_id: null,
     name: companyName,
@@ -451,10 +468,12 @@ async function ensureCompanyRootUnit(
     status: 'Aktif',
     active: true,
     is_deleted: false,
-  }
+  }, 'organization_units', tenantContext)
 
   if (existing?.id) {
-    const { error } = await supabase.from('organization_units').update(payload).eq('id', existing.id)
+    let updateQuery = supabase.from('organization_units').update(payload).eq('id', existing.id)
+    updateQuery = applyTenantQueryScope(updateQuery, 'organization_units', tenantContext)
+    const { error } = await updateQuery
     return isMissingTableError(error) ? null : error
   }
 
@@ -516,8 +535,10 @@ function companyDraftDeleteReferenceChecks(): SafeHardDeleteReferenceCheck[] {
       label: 'Ortak yaşam döngüsü kayıtları',
       mode: 'cascadeDelete',
       optional: true,
-      resolveForeignValues: async ({ supabase, recordId }) => {
-        const { data, error } = await supabase.from('company_partners').select('id').eq('company_id', recordId)
+      resolveForeignValues: async ({ supabase, recordId, tenantContext }) => {
+        let query = supabase.from('company_partners').select('id').eq('company_id', recordId)
+        query = applyTenantQueryScope(query, 'company_partners', tenantContext)
+        const { data, error } = await query
         if (error) throw error
         return (data || []).map((row: any) => row.id).filter(Boolean)
       },
@@ -543,8 +564,10 @@ function companyDraftDeleteReferenceChecks(): SafeHardDeleteReferenceCheck[] {
       label: 'Pozisyonlar',
       mode: 'cascadeDelete',
       optional: true,
-      resolveForeignValues: async ({ supabase, recordId }) => {
-        const { data, error } = await supabase.from('organization_units').select('id').eq('company_id', recordId)
+      resolveForeignValues: async ({ supabase, recordId, tenantContext }) => {
+        let query = supabase.from('organization_units').select('id').eq('company_id', recordId)
+        query = applyTenantQueryScope(query, 'organization_units', tenantContext)
+        const { data, error } = await query
         if (error) throw error
         return (data || []).map((row: any) => row.id).filter(Boolean)
       },
@@ -577,11 +600,19 @@ function buildFieldHistory(current: Record<string, any>, updates: Record<string,
   return nextHistory
 }
 
-async function replaceCompanyPartners(supabase: ReturnType<typeof createServiceClient>, companyId: string, partners: Record<string, any>[]) {
-  const { data: existing, error: fetchError } = await supabase
+async function replaceCompanyPartners(
+  supabase: ReturnType<typeof createServiceClient>,
+  companyId: string,
+  partners: Record<string, any>[],
+  tenantContext: TenantContext
+) {
+  let existingQuery = supabase
     .from('company_partners')
     .select('id')
     .or(`company_id.eq.${companyId},company_id.eq.${companyId}`)
+
+  existingQuery = applyTenantQueryScope(existingQuery, 'company_partners', tenantContext)
+  const { data: existing, error: fetchError } = await existingQuery
 
   if (fetchError) return fetchError
 
@@ -591,7 +622,7 @@ async function replaceCompanyPartners(supabase: ReturnType<typeof createServiceC
     .filter(id => !incomingIds.has(id))
 
   if (missingIds.length > 0) {
-    const { error } = await supabase
+    let deleteQuery = supabase
       .from('company_partners')
       .update({
         is_deleted: true,
@@ -601,6 +632,9 @@ async function replaceCompanyPartners(supabase: ReturnType<typeof createServiceC
       })
       .in('id', missingIds)
 
+    deleteQuery = applyTenantQueryScope(deleteQuery, 'company_partners', tenantContext)
+    const { error } = await deleteQuery
+
     if (error) return error
   }
 
@@ -608,7 +642,9 @@ async function replaceCompanyPartners(supabase: ReturnType<typeof createServiceC
 
   const { error } = await supabase
     .from('company_partners')
-    .upsert(partners.map(partner => mapPartnerForDb(companyId, partner)), { onConflict: 'id' })
+    .upsert(partners.map(partner =>
+      withTenantInsertScopeForTable(mapPartnerForDb(companyId, partner), 'company_partners', tenantContext)
+    ), { onConflict: 'id' })
 
   return error
 }
@@ -656,11 +692,19 @@ function mapPartnerForDb(companyId: string, partner: Record<string, any>) {
   }
 }
 
-async function replaceCompanyRepresentatives(supabase: ReturnType<typeof createServiceClient>, companyId: string, representatives: Record<string, any>[]) {
-  const { data: existing, error: fetchError } = await supabase
+async function replaceCompanyRepresentatives(
+  supabase: ReturnType<typeof createServiceClient>,
+  companyId: string,
+  representatives: Record<string, any>[],
+  tenantContext: TenantContext
+) {
+  let existingQuery = supabase
     .from('company_representatives')
     .select('id')
     .or(`company_id.eq.${companyId},company_id.eq.${companyId}`)
+
+  existingQuery = applyTenantQueryScope(existingQuery, 'company_representatives', tenantContext)
+  const { data: existing, error: fetchError } = await existingQuery
 
   if (fetchError) return fetchError
 
@@ -670,7 +714,7 @@ async function replaceCompanyRepresentatives(supabase: ReturnType<typeof createS
     .filter(id => !incomingIds.has(id))
 
   if (missingIds.length > 0) {
-    const { error } = await supabase
+    let deleteQuery = supabase
       .from('company_representatives')
       .update({
         is_deleted: true,
@@ -680,12 +724,17 @@ async function replaceCompanyRepresentatives(supabase: ReturnType<typeof createS
       })
       .in('id', missingIds)
 
+    deleteQuery = applyTenantQueryScope(deleteQuery, 'company_representatives', tenantContext)
+    const { error } = await deleteQuery
+
     if (error) return error
   }
 
   if (!representatives.length) return null
 
-  const rows = representatives.map(representative => mapRepresentativeForDb(companyId, representative))
+  const rows = representatives.map(representative =>
+    withTenantInsertScopeForTable(mapRepresentativeForDb(companyId, representative), 'company_representatives', tenantContext)
+  )
   const { error } = await supabase
     .from('company_representatives')
     .upsert(rows, { onConflict: 'id' })
@@ -761,7 +810,8 @@ async function replaceCompanyPublicData(
     public_registry?: Record<string, any>
     public_licenses?: Record<string, any>[]
     public_channels?: Record<string, any>
-  }
+  },
+  tenantContext: TenantContext
 ) {
   const singleRows = [
     ['company_public_tax', payload.public_tax],
@@ -775,15 +825,18 @@ async function replaceCompanyPublicData(
     if (!row || Object.keys(row).length === 0) continue
     const { error } = await supabase
       .from(table)
-      .upsert({ ...cleanPublicRow(row), company_id: companyId }, { onConflict: 'company_id' })
+      .upsert(withTenantInsertScopeForTable({ ...cleanPublicRow(row), company_id: companyId }, table, tenantContext), { onConflict: 'company_id' })
     if (error) return error
   }
 
   if (payload.public_licenses) {
-    const { data: existing, error: fetchError } = await supabase
+    let existingQuery = supabase
       .from('company_public_licenses')
       .select('id')
       .eq('company_id', companyId)
+
+    existingQuery = applyTenantQueryScope(existingQuery, 'company_public_licenses', tenantContext)
+    const { data: existing, error: fetchError } = await existingQuery
 
     if (fetchError) return fetchError
 
@@ -793,7 +846,7 @@ async function replaceCompanyPublicData(
       .filter((licenseId) => !incomingIds.has(licenseId))
 
     if (missingIds.length > 0) {
-      const { error } = await supabase
+      let deleteQuery = supabase
         .from('company_public_licenses')
         .update({
           is_deleted: true,
@@ -803,13 +856,16 @@ async function replaceCompanyPublicData(
         })
         .in('id', missingIds)
 
+      deleteQuery = applyTenantQueryScope(deleteQuery, 'company_public_licenses', tenantContext)
+      const { error } = await deleteQuery
+
       if (error) return error
     }
 
     if (payload.public_licenses.length > 0) {
       const { error } = await supabase
         .from('company_public_licenses')
-        .upsert(payload.public_licenses.map((license) => ({
+        .upsert(payload.public_licenses.map((license) => withTenantInsertScopeForTable({
           ...cleanPublicRow(license),
           ...(license.id ? { id: license.id } : {}),
           company_id: companyId,
@@ -817,7 +873,7 @@ async function replaceCompanyPublicData(
           is_deleted: !!license.is_deleted,
           deleted_at: license.deleted_at || null,
           deleted_by: license.deleted_by || null,
-        })), { onConflict: 'id' })
+        }, 'company_public_licenses', tenantContext)), { onConflict: 'id' })
 
       if (error) return error
     }

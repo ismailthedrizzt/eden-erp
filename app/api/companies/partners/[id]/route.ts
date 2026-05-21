@@ -9,6 +9,7 @@ import {
 } from '@/lib/workflow/safeHardDeleteDraftRecord'
 import { diffRecord, safeCrudResponse, safeReadRecord, safeUpdateRecord } from '@/lib/crud/safeCrudService'
 import { ensureUniqueRoleMaster } from '@/lib/identity/roleUniqueness'
+import { applyTenantQueryScope, resolveTenantContext, withTenantInsertScopeForTable } from '@/lib/tenancy/server'
 
 const PARTNER_DETAIL_SELECT = 'id,company_id,company_id,person_id,organization_id,owner_kind,partner_type,display_name,partner_name,identity_number,identity_tax_number,share_ratio,share_ratio,voting_ratio,profit_ratio,source_type,source_id,share_units,nominal_value,capital_amount,share_class,has_representation_right,signature_authority,has_control_right,control_type,has_board_nomination_right,has_veto_right,has_privileged_share,beneficial_owner,is_beneficial_owner,beneficial_ratio,is_ultimate_controller,start_date,end_date,status,record_status,history,photo_logo,partner_documents,partner_profile,notes,created_at'
 
@@ -45,6 +46,7 @@ export async function GET(
     request,
     tableName: 'company_partners',
     recordId: id,
+    permissionKey: ['partners.view', 'companies.view'],
     select: PARTNER_DETAIL_SELECT,
     afterRead: async ({ record }) => hydratePartnerDetail(supabase, record),
   })
@@ -62,6 +64,7 @@ export async function PATCH(
 ) {
   const { id } = await params
   const supabase = createServiceClient()
+  const tenantContext = resolveTenantContext(request)
   const body = await request.json()
 
   const result = await safeUpdateRecord({
@@ -69,6 +72,7 @@ export async function PATCH(
     request,
     tableName: 'company_partners',
     recordId: id,
+    permissionKey: ['partners.edit', 'companies.edit'],
     patch: body,
     select: PARTNER_DETAIL_SELECT,
     currentSelect: PARTNER_DETAIL_SELECT,
@@ -91,7 +95,7 @@ export async function PATCH(
       const oldStatus = current.record_status || (current.status === 'Aktif' ? 'active' : current.status === 'Pasif' ? 'passive' : 'draft')
       const newStatus = record.record_status || (record.status === 'Aktif' ? 'active' : record.status === 'Pasif' ? 'passive' : 'draft')
       if (oldStatus !== newStatus || body.ownership_action) {
-        await supabase.from('partner_ownership_lifecycle_events').insert({
+        await supabase.from('partner_ownership_lifecycle_events').insert(withTenantInsertScopeForTable({
           partner_id: record.id,
           company_id: record.company_id || record.company_id || null,
           event_type: oldStatus === 'draft' && newStatus === 'active' ? 'ownership_defined' : 'status_changed',
@@ -101,7 +105,7 @@ export async function PATCH(
             source: 'partners_page',
             ownership_action: body.ownership_action || null,
           },
-        })
+        }, 'partner_ownership_lifecycle_events', tenantContext))
       }
       if (record?.person_id) await syncMasterContact(supabase, 'person', record.person_id, body)
       if (record?.organization_id) await syncMasterContact(supabase, 'organization', record.organization_id, body)
@@ -123,6 +127,7 @@ export async function DELETE(
 ) {
   const { id } = await params
   const supabase = createServiceClient()
+  const tenantContext = resolveTenantContext(request)
 
   const draftDelete = await safeHardDeleteDraftRecord({
     supabase,
@@ -139,13 +144,16 @@ export async function DELETE(
   if (draftDelete.ok) return safeHardDeleteDraftRecordResponse(draftDelete)
   if (draftDelete.code !== 'NOT_DRAFT_RECORD') return safeHardDeleteDraftRecordResponse(draftDelete)
 
-  const { error } = await supabase
+  let passivateQuery = supabase
     .from('company_partners')
     .update({
       status: 'Pasif',
       record_status: 'passive',
     })
     .eq('id', id)
+
+  passivateQuery = applyTenantQueryScope(passivateQuery, 'company_partners', tenantContext)
+  const { error } = await passivateQuery
 
   if (error) return NextResponse.json({ error: error.message, code: error.code || 'PASSIVATE_FAILED' }, { status: 500 })
   return NextResponse.json({ success: true })

@@ -2,14 +2,50 @@
 
 import { useEffect, useRef, useState, type ClipboardEvent, type ReactNode } from 'react'
 import Image from 'next/image'
-import { LogIn, UserPlus } from 'lucide-react'
+import {
+  Building2,
+  BrainCircuit,
+  BriefcaseBusiness,
+  Calculator,
+  Factory,
+  Landmark,
+  LogIn,
+  PackageCheck,
+  UserPlus,
+  Users,
+  Wrench,
+} from 'lucide-react'
+import { setStoredTenantId } from '@/lib/tenancy/client'
 import { cn } from '@/lib/utils'
 
 const MODULES = [
-  { color: '#34d399', name: 'İnsan Kaynakları', desc: 'Teşkilat, kadro, çalışan yönetimi' },
-  { color: '#60a5fa', name: 'Muhasebe', desc: 'Nakit akışı, borç takip, raporlar' },
-  { color: '#fb923c', name: 'Üretim & Teknik Servis', desc: 'İş emirleri, servis takibi' },
-  { color: '#a78bfa', name: 'Stok & Satış', desc: 'Ürünler, teklifler, siparişler' },
+  { color: '#34d399', icon: Users, name: 'İnsan Kaynakları', desc: 'Teşkilat, kadro, çalışan yönetimi' },
+  { color: '#60a5fa', icon: Calculator, name: 'Muhasebe', desc: 'Nakit akışı, borç takip, raporlar' },
+  { color: '#fb923c', icon: Factory, name: 'Üretim', desc: 'İş emirleri, kapasite ve süreç takibi' },
+  { color: '#a78bfa', icon: PackageCheck, name: 'Stok & Satış', desc: 'Ürünler, teklifler, siparişler' },
+  { color: '#facc15', icon: Wrench, name: 'Teknik Servis', desc: 'Servis kabul, planlama ve saha akışı' },
+  { color: '#2dd4bf', icon: BriefcaseBusiness, name: 'Şirket Yönetimi', desc: 'Çok şirketli yapı ve yetki modeli' },
+]
+
+const PLATFORM_FEATURES = [
+  {
+    color: '#38bdf8',
+    icon: Building2,
+    title: 'Her Ölçekte Uyum',
+    desc: 'Küçük ekiplerden holding yapılarına kadar ölçeklenebilir çalışma düzeni.',
+  },
+  {
+    color: '#34d399',
+    icon: BrainCircuit,
+    title: 'AI destekli yapı',
+    desc: 'Veriyi anlamlandıran, süreçleri hızlandıran akıllı operasyon katmanı.',
+  },
+  {
+    color: '#f59e0b',
+    icon: Landmark,
+    title: 'Bank Native',
+    desc: 'Finansal hareketleri ERP akışının doğal parçası haline getiren mimari.',
+  },
 ]
 
 const textInputClass =
@@ -29,6 +65,33 @@ type TenantAccessLookupResponse = {
     }>
     message?: string
     status?: 'found' | 'no_tenants'
+  }
+  error?: string
+}
+
+type TenantLoginStatusResponse = {
+  data?: {
+    login_enabled?: boolean
+    tenant_count?: number
+    status?: 'ready' | 'empty'
+  }
+  error?: string
+}
+
+type OtpSendResponse = {
+  data?: {
+    delivery?: 'email' | 'screen'
+    fallbackCode?: string
+  }
+  error?: string
+  code?: string
+  detail?: string
+}
+
+type OtpVerifyResponse = {
+  tenant?: {
+    tenant_id: string
+    tenant_name: string
   }
   error?: string
 }
@@ -75,7 +138,21 @@ function getErrorMessage(cause: unknown, fallback: string) {
   return cause instanceof Error ? cause.message : fallback
 }
 
-function AuthModeSwitch({ mode, onChange }: { mode: AuthMode; onChange: (mode: AuthMode) => void }) {
+function normalizeAuthIdentifier(value: string) {
+  const trimmedValue = value.trim()
+  const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedValue)
+
+  if (isEmail) return { type: 'email' as const, value: trimmedValue.toLowerCase() }
+
+  let digits = trimmedValue.replace(/\D/g, '')
+  if (digits.length === 12 && digits.startsWith('90')) digits = digits.slice(2)
+
+  if (/^[0-9]{10,11}$/.test(digits)) return { type: 'phone' as const, value: digits }
+
+  return null
+}
+
+function AuthModeSwitch({ mode, onChange, loginEnabled }: { mode: AuthMode; onChange: (mode: AuthMode) => void; loginEnabled: boolean }) {
   const options: Array<{ value: AuthMode; label: string; icon: ReactNode }> = [
     { value: 'login', label: 'Giriş Yap', icon: <LogIn size={15} /> },
     { value: 'signup', label: 'Kaydol', icon: <UserPlus size={15} /> },
@@ -85,15 +162,20 @@ function AuthModeSwitch({ mode, onChange }: { mode: AuthMode; onChange: (mode: A
     <div className="mb-6 grid grid-cols-2 rounded-xl border border-[#28445c] bg-[#091826] p-1">
       {options.map(option => {
         const selected = option.value === mode
+        const disabled = option.value === 'login' && !loginEnabled
         return (
           <button
             key={option.value}
             type="button"
             aria-pressed={selected}
+            aria-disabled={disabled}
+            disabled={disabled}
             onClick={() => onChange(option.value)}
             className={cn(
               'flex h-10 items-center justify-center gap-2 rounded-lg text-sm font-semibold transition',
-              selected
+              disabled
+                ? 'cursor-not-allowed text-white/25'
+                : selected
                 ? 'bg-eden-blue text-white shadow-lg shadow-eden-blue/20'
                 : 'text-white/55 hover:bg-white/5 hover:text-white'
             )}
@@ -122,11 +204,12 @@ export function LoginExperience({
   className,
   signupRedirectPath = '/app/sistem/kurulum',
 }: LoginExperienceProps) {
-  const [authMode, setAuthMode] = useState<AuthMode>('login')
+  const [authMode, setAuthMode] = useState<AuthMode>('signup')
   const [step, setStep] = useState<'kimlik' | 'otp'>('kimlik')
   const [value, setValue] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
+  const [loginEnabled, setLoginEnabled] = useState(false)
   const [otp, setOtp] = useState(['', '', '', '', '', ''])
   const [otpError, setOtpError] = useState('')
   const [success, setSuccess] = useState(false)
@@ -135,7 +218,8 @@ export function LoginExperience({
   const [resendActive, setResendActive] = useState(false)
   const otpRefs = useRef<(HTMLInputElement | null)[]>([])
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
-  const isEmailLogin = value.includes('@')
+  const userSelectedAuthModeRef = useRef(false)
+  const isEmailLogin = normalizeAuthIdentifier(value)?.type === 'email'
   const modeCopy = AUTH_MODE_COPY[authMode]
 
   useEffect(() => {
@@ -144,6 +228,38 @@ export function LoginExperience({
       if (timerRef.current) clearInterval(timerRef.current)
     }
   }, [step])
+
+  useEffect(() => {
+    let active = true
+
+    async function loadTenantStatus() {
+      try {
+        const response = await fetch('/api/auth/tenant-status', { cache: 'no-store' })
+        const data = await response.json().catch(() => ({})) as TenantLoginStatusResponse
+        const enabled = response.ok && Boolean(data.data?.login_enabled)
+
+        if (!active) return
+
+        setLoginEnabled(enabled)
+        setAuthMode(current => {
+          if (!enabled && current === 'login') return 'signup'
+          if (enabled && !userSelectedAuthModeRef.current) return 'login'
+          return current
+        })
+      } catch {
+        if (!active) return
+
+        setLoginEnabled(false)
+        setAuthMode(current => current === 'login' ? 'signup' : current)
+      }
+    }
+
+    loadTenantStatus()
+
+    return () => {
+      active = false
+    }
+  }, [])
 
   function startTimer() {
     setTimer(300)
@@ -165,15 +281,11 @@ export function LoginExperience({
     return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`
   }
 
-  function createFallbackCode() {
-    const code = String(Math.floor(100000 + Math.random() * 900000))
-    setFallbackCode(code)
-    return code
-  }
-
   function switchAuthMode(nextMode: AuthMode) {
     if (nextMode === authMode) return
+    if (nextMode === 'login' && !loginEnabled) return
 
+    userSelectedAuthModeRef.current = true
     setAuthMode(nextMode)
     setStep('kimlik')
     setError('')
@@ -183,13 +295,13 @@ export function LoginExperience({
     setOtp(['', '', '', '', '', ''])
   }
 
-  async function sendEmailOtp(email: string) {
+  async function sendOtp(identifier: string, purpose: AuthMode = authMode) {
     const response = await fetch('/api/auth/otp/send', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email }),
+      body: JSON.stringify({ identifier, purpose }),
     })
-    const data = await response.json().catch(() => ({}))
+    const data = await response.json().catch(() => ({})) as OtpSendResponse
 
     if (!response.ok) {
       const detail = [data.code, data.detail].filter(Boolean).join(' - ')
@@ -199,6 +311,8 @@ export function LoginExperience({
           : data.error || 'Doğrulama kodu gönderilemedi.'
       )
     }
+
+    return data.data || null
   }
 
   async function lookupTenantAccess(identifier: string) {
@@ -223,11 +337,35 @@ export function LoginExperience({
     window.location.href = `${signupRedirectPath}?${params.toString()}`
   }
 
+  function completeAuthFlow() {
+    setSuccess(true)
+
+    if (authMode === 'signup') {
+      const normalizedIdentifier = normalizeAuthIdentifier(value)
+      if (!normalizedIdentifier) {
+        setOtpError('Gecerli bir e-posta veya telefon numarasi giriniz.')
+        return
+      }
+
+      startSignupSetup(normalizedIdentifier.value)
+      return
+    }
+
+    if (!redirectOnSuccess) return
+
+    if (typeof window !== 'undefined') {
+      window.location.href = '/app'
+    }
+  }
+
   async function handleStep1() {
-    const trimmedValue = value.trim()
-    const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedValue)
-    const isPhone = /^[0-9]{10,11}$/.test(trimmedValue.replace(/\s/g, ''))
-    if (!isEmail && !isPhone) {
+    if (authMode === 'login' && !loginEnabled) {
+      setError('Kurulum henuz hazir degil. Once kayit baslatin.')
+      return
+    }
+
+    const normalizedIdentifier = normalizeAuthIdentifier(value)
+    if (!normalizedIdentifier) {
       setError('Geçerli bir e-posta veya telefon numarası giriniz.')
       return
     }
@@ -238,22 +376,27 @@ export function LoginExperience({
     setSuccess(false)
     setOtp(['', '', '', '', '', ''])
     try {
-      const normalizedIdentifier = isEmail ? trimmedValue.toLowerCase() : trimmedValue.replace(/\s/g, '')
-
       if (authMode === 'signup') {
-        startSignupSetup(normalizedIdentifier)
+        setValue(normalizedIdentifier.value)
+        const delivery = await sendOtp(normalizedIdentifier.value, 'signup')
+        setFallbackCode(delivery?.fallbackCode || null)
+
+        setStep('otp')
         return
       }
 
-      const lookup = await lookupTenantAccess(normalizedIdentifier)
+      const lookup = await lookupTenantAccess(normalizedIdentifier.value)
       const tenantCount = lookup?.tenants?.length || 0
 
       if (!tenantCount) {
-        setError(lookup?.message || 'Henüz aktif tenant bulunmadığı için giriş geçici olarak pasif.')
+        setError(lookup?.message || 'Henuz aktif sirket bulunmadigi icin giris gecici olarak pasif.')
         return
       }
 
-      setError('Tenant seçimi ve şifre adımı initialization sonrasında aktive edilecek.')
+      setValue(normalizedIdentifier.value)
+      const delivery = await sendOtp(normalizedIdentifier.value, 'login')
+      setFallbackCode(delivery?.fallbackCode || null)
+      setStep('otp')
     } catch (cause) {
       console.error('Kullanıcı sorgulama hatası:', getErrorMessage(cause, 'Bilinmeyen hata'))
       setError(getErrorMessage(cause, 'Kullanıcı sorgusu tamamlanamadı. Lütfen tekrar deneyin.'))
@@ -262,26 +405,23 @@ export function LoginExperience({
     }
   }
 
-  async function verifyEmailCode(code: string) {
+  async function verifyOtpCode(code: string) {
+    const normalizedIdentifier = normalizeAuthIdentifier(value)
+    if (!normalizedIdentifier) throw new Error('Geçerli bir e-posta veya telefon numarası giriniz.')
+
     const response = await fetch('/api/auth/otp', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type: 'email', identifier: value.trim().toLowerCase(), token: code }),
+      body: JSON.stringify({ type: normalizedIdentifier.type, identifier: normalizedIdentifier.value, token: code, purpose: authMode }),
     })
-    const data = await response.json().catch(() => ({}))
+    const data = await response.json().catch(() => ({})) as OtpVerifyResponse
 
     if (!response.ok) {
       throw new Error(data.error || 'Kod hatalı. Lütfen tekrar deneyin.')
     }
-  }
 
-  function completeLogin() {
-    setSuccess(true)
-    if (!redirectOnSuccess) return
-
-    if (typeof window !== 'undefined') {
-      document.cookie = 'demo_auth=true; path=/; max-age=3600; sameSite=lax'
-      window.location.href = '/app'
+    if (authMode === 'login' && data.tenant?.tenant_id) {
+      setStoredTenantId(data.tenant.tenant_id)
     }
   }
 
@@ -297,20 +437,15 @@ export function LoginExperience({
       setLoading(true)
       setOtpError('')
       try {
-        if (fallbackCode && code === fallbackCode) {
-          completeLogin()
+        if (fallbackCode && code !== fallbackCode) {
+          setOtpError('Kod hatalı. Lütfen tekrar deneyin.')
+          setOtp(['', '', '', '', '', ''])
+          otpRefs.current[0]?.focus()
           return
         }
 
-        if (isEmailLogin) {
-          await verifyEmailCode(code)
-          completeLogin()
-          return
-        }
-
-        setOtpError('Kod hatalı. Lütfen tekrar deneyin.')
-        setOtp(['', '', '', '', '', ''])
-        otpRefs.current[0]?.focus()
+        await verifyOtpCode(code)
+        completeAuthFlow()
       } catch (cause) {
         setOtpError(getErrorMessage(cause, 'Kod hatalı. Lütfen tekrar deneyin.'))
         setOtp(['', '', '', '', '', ''])
@@ -325,20 +460,15 @@ export function LoginExperience({
     setLoading(true)
     setOtpError('')
     try {
-      if (fallbackCode && code === fallbackCode) {
-        completeLogin()
+      if (fallbackCode && code !== fallbackCode) {
+        setOtpError('Kod hatalı. Lütfen tekrar deneyin.')
+        setOtp(['', '', '', '', '', ''])
+        otpRefs.current[0]?.focus()
         return
       }
 
-      if (isEmailLogin) {
-        await verifyEmailCode(code)
-        completeLogin()
-        return
-      }
-
-      setOtpError('Kod hatalı. Lütfen tekrar deneyin.')
-      setOtp(['', '', '', '', '', ''])
-      otpRefs.current[0]?.focus()
+      await verifyOtpCode(code)
+      completeAuthFlow()
     } catch (cause) {
       setOtpError(getErrorMessage(cause, 'Kod hatalı. Lütfen tekrar deneyin.'))
       setOtp(['', '', '', '', '', ''])
@@ -372,11 +502,10 @@ export function LoginExperience({
     setOtpError('')
     setLoading(true)
     try {
-      if (isEmailLogin) {
-        await sendEmailOtp(value.trim().toLowerCase())
-      } else {
-        createFallbackCode()
-      }
+      const normalizedIdentifier = normalizeAuthIdentifier(value)
+      if (!normalizedIdentifier) throw new Error('Geçerli bir e-posta veya telefon numarası giriniz.')
+      const delivery = await sendOtp(normalizedIdentifier.value, authMode)
+      setFallbackCode(delivery?.fallbackCode || null)
       startTimer()
     } catch (cause) {
       setOtpError(getErrorMessage(cause, 'Kod tekrar gönderilemedi.'))
@@ -393,31 +522,57 @@ export function LoginExperience({
         className
       )}
     >
-      <div className="relative hidden flex-1 flex-col items-center justify-center overflow-hidden bg-gradient-to-br from-[#0a1623] via-[#102b40] to-[#216688] p-16 lg:flex">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_70%,rgba(14,140,97,0.14),transparent_58%)]" />
-        <div className="relative max-w-sm text-center">
-          <Image
-            src="/brand/eden-logo-colored.png"
-            alt="Eden Teknoloji"
-            width={280}
-            height={125}
-            className="mx-auto mb-8 h-auto w-64 object-contain drop-shadow-lg"
-            priority
-          />
-          <h1 className="mb-3 font-display text-3xl font-bold text-white">Eden Teknoloji</h1>
-          <p className="mb-10 text-sm leading-relaxed text-white/60">
-            Kurumsal ERP platformuna erişmek veya yeni kullanıcı kaydı başlatmak için kurumsal e-posta adresinizi ya da kayıtlı telefon numaranızı kullanın.
-          </p>
-          <div className="flex flex-col gap-3">
-            {MODULES.map(module => (
-              <div key={module.name} className="flex items-center gap-3 rounded-xl border border-[#35657a]/70 bg-[#10283a]/70 px-4 py-3 text-left">
-                <div className="h-2 w-2 flex-shrink-0 rounded-full" style={{ background: module.color }} />
-                <div>
-                  <div className="text-sm font-medium text-white/85">{module.name}</div>
-                  <div className="mt-0.5 text-xs text-white/45">{module.desc}</div>
+      <div className="relative hidden flex-1 flex-col items-center justify-center overflow-hidden bg-gradient-to-br from-[#07131f] via-[#10283b] to-[#1c617f] p-10 xl:p-14 lg:flex">
+        <div className="absolute inset-0 opacity-35 [background-image:linear-gradient(rgba(255,255,255,0.06)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.05)_1px,transparent_1px)] [background-size:44px_44px]" />
+        <div className="relative flex w-full max-w-2xl flex-col gap-7">
+          <div>
+            <Image
+              src="/brand/eden-logo-colored.png"
+              alt="Eden ERP"
+              width={280}
+              height={125}
+              className="mb-5 h-auto w-56 object-contain drop-shadow-lg"
+              priority
+            />
+            <h1 className="font-display text-4xl font-bold leading-tight text-white">Eden ERP</h1>
+          </div>
+
+          <div className="grid gap-3 xl:grid-cols-3">
+            {PLATFORM_FEATURES.map(feature => {
+              const Icon = feature.icon
+              return (
+                <div key={feature.title} className="rounded-xl border border-white/[0.12] bg-white/[0.07] p-4 text-left shadow-lg shadow-black/10 backdrop-blur">
+                  <div
+                    className="mb-3 flex h-10 w-10 items-center justify-center rounded-lg text-white"
+                    style={{ background: `${feature.color}26`, color: feature.color }}
+                  >
+                    <Icon size={20} />
+                  </div>
+                  <div className="text-sm font-semibold text-white">{feature.title}</div>
+                  <div className="mt-1.5 text-xs leading-5 text-white/50">{feature.desc}</div>
                 </div>
-              </div>
-            ))}
+              )
+            })}
+          </div>
+
+          <div className="grid gap-3 xl:grid-cols-2">
+            {MODULES.map(module => {
+              const Icon = module.icon
+              return (
+                <div key={module.name} className="flex min-h-[76px] items-center gap-3 rounded-xl border border-[#35657a]/60 bg-[#0f293b]/80 px-4 py-3 text-left shadow-lg shadow-black/10">
+                  <div
+                    className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg"
+                    style={{ background: `${module.color}20`, color: module.color }}
+                  >
+                    <Icon size={19} />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="truncate text-sm font-semibold text-white/90">{module.name}</div>
+                    <div className="mt-0.5 text-xs leading-5 text-white/[0.48]">{module.desc}</div>
+                  </div>
+                </div>
+              )
+            })}
           </div>
         </div>
       </div>
@@ -441,7 +596,7 @@ export function LoginExperience({
 
           {step === 'kimlik' ? (
             <>
-              <AuthModeSwitch mode={authMode} onChange={switchAuthMode} />
+              <AuthModeSwitch mode={authMode} onChange={switchAuthMode} loginEnabled={loginEnabled} />
               <h2 className="mb-1 font-display text-2xl font-bold text-white">{modeCopy.title}</h2>
               <p className="mb-7 text-sm text-white/55">{modeCopy.subtitle}</p>
               <div className="mb-4">
@@ -464,6 +619,7 @@ export function LoginExperience({
                 {error && <p className="mt-1.5 text-xs text-red-300">{error}</p>}
               </div>
               <button
+                type="button"
                 onClick={handleStep1}
                 disabled={loading}
                 className="mb-3 w-full rounded-xl bg-eden-blue py-3 text-sm font-semibold text-white transition-colors hover:bg-eden-blue-dk disabled:opacity-60"
@@ -497,7 +653,7 @@ export function LoginExperience({
                   <div className="mb-1 font-semibold">{modeCopy.temporaryCodeTitle}</div>
                   <div className="font-mono text-lg">{fallbackCode}</div>
                   <div className="mt-2 text-xs text-sky-100/70">
-                    Bu kod, SMS gelmediğinde demo amaçlı kullanılabilir.
+                    SMS servisi baglanana kadar bu gecici kodu kullanin.
                   </div>
                   {error && (
                     <div className="mt-3 rounded-xl border border-eden-blue/25 bg-[#0b1d2d] px-3 py-2 text-xs text-sky-100">
@@ -556,7 +712,7 @@ export function LoginExperience({
               </div>
               {fallbackCode && (
                 <p className="mt-4 rounded-lg border border-[#28445c] bg-[#091826] p-3 text-center text-xs text-white/45">
-                  Demo kodu ekrandaki geçici koddur. Gerçek SMS Supabase&apos;de active.
+                  Telefon dogrulama servisi hazir olana kadar kod ekranda gosterilir.
                 </p>
               )}
             </>

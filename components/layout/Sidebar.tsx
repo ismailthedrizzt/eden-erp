@@ -362,8 +362,9 @@ export default function Sidebar({ collapsed = false, mobileOpen = false, onMobil
       {/* Footer */}
       <div className="px-2 py-2 border-t border-white/[0.07] flex-shrink-0">
         <button
-          onClick={() => {
+          onClick={async () => {
             if (typeof window !== 'undefined') {
+              await fetch('/api/auth/logout', { method: 'POST' }).catch(() => undefined)
               document.cookie = 'demo_auth=; path=/; max-age=0; sameSite=lax'
               window.location.href = '/login'
             }

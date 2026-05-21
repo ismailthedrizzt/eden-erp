@@ -7,6 +7,8 @@ import { listMetaFromRows, listRange, parseListQuery } from '@/lib/api/listEndpo
 import { getServerResponseCache, serverListCacheKey, setServerResponseCache } from '@/lib/api/serverResponseCache'
 import { fetchCompanyNames } from '../accounting/_banking'
 import { ensureUniqueRoleMaster, roleUniquenessResponse } from '@/lib/identity/roleUniqueness'
+import { requirePermission } from '@/lib/security/serverPermissions'
+import { applyTenantQueryScope, resolveTenantContext, type TenantContext, withTenantInsertScopeForTable } from '@/lib/tenancy/server'
 
 const EmployeeSchema = z.object({
   person_id: z.string().uuid().optional().nullable(),
@@ -140,6 +142,9 @@ export async function GET(request: NextRequest) {
   if (cached) return NextResponse.json(cached)
 
   const supabase = createServiceClient()
+  const permission = await requirePermission(request, supabase, 'employees.view')
+  if (permission instanceof NextResponse) return permission
+  const tenantContext = resolveTenantContext(request)
   const { searchParams } = new URL(request.url)
   const listQuery = parseListQuery(searchParams, { pageSize: 50, sort: 'updated_at', direction: 'desc' })
   const { from, to } = listRange(listQuery)
@@ -161,7 +166,7 @@ export async function GET(request: NextRequest) {
   const status = searchParams.get('status')
   const search = listQuery.search
   const includePassive = listQuery.includePassive
-  const matchingPersonIds = search ? await findPersonIds(supabase, search) : null
+  const matchingPersonIds = search ? await findPersonIds(supabase, search, tenantContext) : null
 
   let enabledOptionalColumns = [...optionalEmployeeListColumns]
   let includeOrganizationRelations = false
@@ -188,6 +193,7 @@ export async function GET(request: NextRequest) {
       .order(sortColumn, { ascending: listQuery.direction !== 'desc' })
       .range(from, to)
 
+    query = applyTenantQueryScope(query, 'employees', tenantContext)
     if (!includePassive && canFilterRecordStatus) query = query.neq('record_status', 'passive')
     if (unitId && canFilterUnitId) query = query.eq('unit_id', unitId)
     if (status && canFilterWorkStatus) query = query.eq('work_status', status)
@@ -224,7 +230,7 @@ export async function GET(request: NextRequest) {
   }
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  const people = await fetchPeopleByIds(supabase, (data || []).map((row: any) => row.person_id))
+  const people = await fetchPeopleByIds(supabase, (data || []).map((row: any) => row.person_id), tenantContext)
   const companyNames = await fetchCompanyNames(supabase as any, (data || []).map((row: any) => row.company_id))
   const rows = (data || []).map((row: any) => {
     const personFields = employeePersonFields(row, people.get(row.person_id))
@@ -264,28 +270,34 @@ function lightweightImageUrl(value: unknown) {
   return photoUrl
 }
 
-async function findPersonIds(supabase: ReturnType<typeof createServiceClient>, search: string) {
+async function findPersonIds(supabase: ReturnType<typeof createServiceClient>, search: string, tenantContext: TenantContext) {
   const term = String(search || '').trim()
   if (!term) return []
 
-  const { data, error } = await supabase
+  let query = supabase
     .from('persons')
     .select('id')
     .or(`first_name.ilike.%${term}%,last_name.ilike.%${term}%,full_name.ilike.%${term}%,national_id.ilike.%${term}%,passport_no.ilike.%${term}%`)
     .limit(500)
 
+  query = applyTenantQueryScope(query, 'persons', tenantContext)
+  const { data, error } = await query
+
   if (error) return null
   return (data || []).map((person: any) => person.id).filter(Boolean)
 }
 
-async function fetchPeopleByIds(supabase: ReturnType<typeof createServiceClient>, ids: unknown[]) {
+async function fetchPeopleByIds(supabase: ReturnType<typeof createServiceClient>, ids: unknown[], tenantContext: TenantContext) {
   const personIds = Array.from(new Set(ids.filter((id): id is string => typeof id === 'string' && id.length > 0)))
   if (personIds.length === 0) return new Map<string, any>()
 
-  const { data, error } = await supabase
+  let query = supabase
     .from('persons')
     .select('id,first_name,last_name,full_name,nationality,national_id,passport_no,birth_date,gender,phone,email')
     .in('id', personIds)
+
+  query = applyTenantQueryScope(query, 'persons', tenantContext)
+  const { data, error } = await query
 
   if (error) return new Map<string, any>()
   return new Map((data || []).map((person: any) => [person.id, person]))
@@ -313,6 +325,9 @@ function employeePersonFields(employee: Record<string, any>, person?: Record<str
 // POST /api/employees
 export async function POST(request: NextRequest) {
   const supabase = createServiceClient()
+  const permission = await requirePermission(request, supabase, 'employees.edit')
+  if (permission instanceof NextResponse) return permission
+  const tenantContext = resolveTenantContext(request)
 
   const body = omitNullishStrings(await request.json())
   const parsed = EmployeeSchema.safeParse(body)
@@ -321,41 +336,33 @@ export async function POST(request: NextRequest) {
   }
 
   const masterPayload = parsed.data
-  let employeePayload = await ensureEmployeePersonLink(supabase, stripEmployeeMasterOnlyFields(masterPayload))
+  let employeePayload = await ensureEmployeePersonLink(supabase, stripEmployeeMasterOnlyFields(masterPayload), tenantContext)
   const uniqueness = await ensureUniqueRoleMaster(supabase as any, {
     tableName: 'employees',
     identity: employeePayload,
   })
   if (!uniqueness.ok) return roleUniquenessResponse(uniqueness)
 
+  let insertPayload = buildEmployeeInsertPayload(employeePayload, tenantContext)
   let { data, error } = await supabase
     .from('employees')
-    .insert({
-      ...employeePayload,
-      record_status: employeePayload.record_status || 'draft',
-      employment_status: employeePayload.employment_status || 'pending_entry',
-      work_status: employeePayload.exit_date ? 'terminated' : employeePayload.work_status || 'suspended'
-    })
+    .insert(insertPayload)
     .select()
     .single()
 
-  let missingMutationColumn = missingEmployeeColumn(error, Object.keys(employeePayload))
+  let missingMutationColumn = missingEmployeeColumn(error, Object.keys(insertPayload))
   while (missingMutationColumn) {
     employeePayload = { ...employeePayload }
     delete (employeePayload as Record<string, any>)[missingMutationColumn]
+    insertPayload = buildEmployeeInsertPayload(employeePayload, tenantContext)
     const retry = await supabase
       .from('employees')
-      .insert({
-        ...employeePayload,
-        record_status: employeePayload.record_status || 'draft',
-        employment_status: employeePayload.employment_status || 'pending_entry',
-        work_status: employeePayload.exit_date ? 'terminated' : employeePayload.work_status || 'suspended'
-      })
+      .insert(insertPayload)
       .select()
       .single()
     data = retry.data
     error = retry.error
-    missingMutationColumn = missingEmployeeColumn(error, Object.keys(employeePayload))
+    missingMutationColumn = missingEmployeeColumn(error, Object.keys(insertPayload))
   }
 
   if (error) return NextResponse.json({ error: error.message, code: error.code || 'CREATE_FAILED' }, { status: 500 })
@@ -367,7 +374,20 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({ data: hydrated }, { status: 201 })
 }
 
-async function ensureEmployeePersonLink(supabase: ReturnType<typeof createServiceClient>, employee: z.infer<typeof EmployeeSchema>) {
+function buildEmployeeInsertPayload(employeePayload: Record<string, any>, tenantContext: TenantContext) {
+  return {
+    ...withTenantInsertScopeForTable(employeePayload, 'employees', tenantContext),
+    record_status: employeePayload.record_status || 'draft',
+    employment_status: employeePayload.employment_status || 'pending_entry',
+    work_status: employeePayload.exit_date ? 'terminated' : employeePayload.work_status || 'suspended'
+  }
+}
+
+async function ensureEmployeePersonLink(
+  supabase: ReturnType<typeof createServiceClient>,
+  employee: z.infer<typeof EmployeeSchema>,
+  tenantContext: TenantContext
+) {
   if (employee.person_id) return employee
 
   const fullName = [employee.first_name, employee.last_name].filter(Boolean).join(' ').trim()
@@ -377,20 +397,21 @@ async function ensureEmployeePersonLink(supabase: ReturnType<typeof createServic
   const nationalId = isTurkishNationality(nationality) ? employee.national_id || null : null
   const passportNo = isTurkishNationality(nationality) ? null : employee.passport_no || null
 
-  const lookup = nationalId
-    ? supabase.from('persons').select('id').eq('nationality', nationality).eq('national_id', nationalId).maybeSingle()
+  let lookup = nationalId
+    ? supabase.from('persons').select('id').eq('nationality', nationality).eq('national_id', nationalId)
     : passportNo
-      ? supabase.from('persons').select('id').eq('nationality', nationality).eq('passport_no', passportNo).maybeSingle()
+      ? supabase.from('persons').select('id').eq('nationality', nationality).eq('passport_no', passportNo)
       : null
 
-  const existing = lookup ? await lookup : { data: null, error: null }
+  lookup = lookup ? applyTenantQueryScope(lookup, 'persons', tenantContext) : null
+  const existing = lookup ? await lookup.maybeSingle() : { data: null, error: null }
   if (isMissingTableError(existing.error, 'persons')) throw new Error('Ana kişiler tablosu bulunamadı; çalışan kaydı master bağlantısı olmadan oluşturulamaz.')
   if (existing.error) throw new Error(existing.error.message)
   if (existing.data?.id) return { ...employee, person_id: existing.data.id }
 
   const { data: created, error } = await supabase
     .from('persons')
-    .insert({
+    .insert(withTenantInsertScopeForTable({
       first_name: employee.first_name,
       last_name: employee.last_name,
       full_name: fullName,
@@ -406,7 +427,7 @@ async function ensureEmployeePersonLink(supabase: ReturnType<typeof createServic
       city: employee.city || null,
       district: employee.district || null,
       metadata_json: { source_table: 'employees', source: 'identity_gate' },
-    })
+    }, 'persons', tenantContext))
     .select('id')
     .single()
 

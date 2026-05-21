@@ -16,6 +16,7 @@
     "typecheck:ci": "npm run typecheck:shared && npm run typecheck:app",
     "typecheck:full": "tsc --noEmit -p tsconfig.typecheck.json",
     "encoding:guard": "node scripts/check-source-encoding.js",
+    "security:guard": "node scripts/check-security-reference-contracts.js",
     "perf:guard": "npm run encoding:guard && node scripts/check-performance-contracts.js",
     "load:test": "node scripts/load-test.js",
     "load:test:smoke": "node scripts/load-test.js --duration=5 --connections=5",

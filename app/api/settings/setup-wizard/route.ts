@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
+import { APP_SESSION_COOKIE_NAME, appSessionCookieOptions, createAppSessionToken } from '@/lib/auth/appSession'
+import { SETUP_INTENT_COOKIE_NAME, verifySetupIntentToken } from '@/lib/auth/setupIntent'
+import { normalizeLoginIdentifier } from '@/lib/auth/tenantUserLookup'
+import { ensureSetupDatabaseSchema } from '@/lib/db/setupSchema'
+import { ACCOUNTING_PERMISSIONS } from '@/lib/modules/accounting/shared/accounting.permissions'
 import { createServiceClient } from '@/lib/supabase/server'
+import { TENANT_ID_COOKIE, WORKSPACE_ID_COOKIE } from '@/lib/tenancy/constants'
+import { ERP_MODULES, PERMISSIONS } from '@/packages/shared/src'
 
 export const runtime = 'nodejs'
 
@@ -11,6 +18,9 @@ const optionalText = z.preprocess(
 
 const SETUP_COMPANY_COUNTRY = 'TR'
 const SetupScaleSchema = z.enum(['small', 'medium', 'corporate', 'enterprise'])
+const SetupPaymentChoiceSchema = z.enum(['pay_now', 'demo'])
+const ADMIN_ROLE_KEY = 'yonetici'
+const ADMIN_ROLE_NAME = 'Yönetici'
 
 const SETUP_SCALE_PROFILES = {
   small: {
@@ -76,7 +86,13 @@ const PersonRolePayloadSchema = PersonPayloadSchema.extend({
 const RequestSchema = z.discriminatedUnion('action', [
   z.object({ action: z.literal('create_company'), company: CompanyPayloadSchema }),
   z.object({ action: z.literal('create_person_role'), person: PersonRolePayloadSchema }),
-  z.object({ action: z.literal('complete_setup'), company: CompanyPayloadSchema, scale: SetupScaleSchema, person: PersonPayloadSchema }),
+  z.object({
+    action: z.literal('complete_setup'),
+    company: CompanyPayloadSchema,
+    scale: SetupScaleSchema,
+    payment_choice: SetupPaymentChoiceSchema.default('demo'),
+    person: PersonPayloadSchema,
+  }),
 ])
 
 type Supabase = ReturnType<typeof createServiceClient>
@@ -95,6 +111,10 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const parsed = RequestSchema.parse(await request.json())
+    const setupAccessFailure = validateSetupAccess(request, parsed)
+    if (setupAccessFailure) return setupAccessFailure
+
+    await ensureSetupDatabaseSchema()
     const supabase = createServiceClient()
 
     if (parsed.action === 'create_company') {
@@ -103,18 +123,23 @@ export async function POST(request: NextRequest) {
     }
 
     if (parsed.action === 'complete_setup') {
-      const companyResult = await createFirstCompany(supabase, parsed.company)
+      const tenant = await initializeTenant(supabase, parsed.company, parsed.scale, parsed.payment_choice)
+      const companyResult = await createFirstCompany(supabase, parsed.company, { tenantId: tenant.id, reuseExisting: false })
       await saveCompanySetupProfile(supabase, companyResult.company, parsed.scale)
+      await ensureTenantCompanyScope(supabase, tenant.id, companyResult.company.id)
       const roleResult = await createPersonRole(supabase, {
         ...parsed.person,
         company_id: companyResult.company.id,
-      })
+      }, tenant.id)
+      await ensureSetupAdminUser(supabase, tenant.id, roleResult.person, parsed.person)
 
-      return NextResponse.json(
+      const response = NextResponse.json(
         {
           data: {
+            tenant,
             company: companyResult.company,
             scale: parsed.scale,
+            payment_choice: parsed.payment_choice,
             company_reused: companyResult.reused,
             role: parsed.person.role,
             role_reused: roleResult.reused,
@@ -122,10 +147,16 @@ export async function POST(request: NextRequest) {
         },
         { status: companyResult.reused && roleResult.reused ? 200 : 201 }
       )
+
+      await attachSetupSession(response, tenant.id, roleResult.person, parsed.person)
+      clearSetupIntent(response)
+      return response
     }
 
     const result = await createPersonRole(supabase, parsed.person)
-    return NextResponse.json({ data: result }, { status: result.reused ? 200 : 201 })
+    const response = NextResponse.json({ data: result }, { status: result.reused ? 200 : 201 })
+    clearSetupIntent(response)
+    return response
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
@@ -139,11 +170,332 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function createFirstCompany(supabase: Supabase, payload: z.infer<typeof CompanyPayloadSchema>) {
-  const existing = await fetchFirstCompany(supabase)
-  if (existing) return { company: existing, reused: true }
+function validateSetupAccess(request: NextRequest, parsed: z.infer<typeof RequestSchema>) {
+  const setupIntent = verifySetupIntentToken(request.cookies.get(SETUP_INTENT_COOKIE_NAME)?.value)
+  if (!setupIntent) {
+    return NextResponse.json(
+      { error: 'Kurulum icin once OTP dogrulamasi yapilmalidir.', code: 'SETUP_VERIFICATION_REQUIRED' },
+      { status: 403, headers: { 'Cache-Control': 'no-store' } }
+    )
+  }
 
-  const organization = await findOrCreateOrganization(supabase, payload)
+  if (parsed.action === 'create_company') return null
+
+  const person = parsed.person
+  const candidates = [person.email, person.phone]
+    .map(value => normalizeLoginIdentifier(String(value || '')))
+    .filter((value): value is NonNullable<ReturnType<typeof normalizeLoginIdentifier>> => Boolean(value))
+
+  const matchesVerifiedIdentifier = candidates.some(candidate =>
+    candidate.type === setupIntent.identifierType && candidate.identifier === setupIntent.identifier
+  )
+
+  if (matchesVerifiedIdentifier) return null
+
+  return NextResponse.json(
+    { error: 'Kurulumdaki kullanici bilgisi OTP ile dogrulanan e-posta veya telefonla eslesmiyor.', code: 'SETUP_IDENTITY_MISMATCH' },
+    { status: 403, headers: { 'Cache-Control': 'no-store' } }
+  )
+}
+
+function clearSetupIntent(response: NextResponse) {
+  response.cookies.set(SETUP_INTENT_COOKIE_NAME, '', {
+    path: '/',
+    maxAge: 0,
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+  })
+}
+
+async function initializeTenant(
+  supabase: Supabase,
+  company: z.infer<typeof CompanyPayloadSchema>,
+  scale: z.infer<typeof SetupScaleSchema>,
+  paymentChoice: z.infer<typeof SetupPaymentChoiceSchema>
+) {
+  const tenantKey = await createUniqueTenantKey(supabase, company.short_name || company.trade_name || company.tax_number)
+  const now = new Date().toISOString()
+  const { data, error } = await supabase
+    .from('erp_instances')
+    .insert({
+      name: company.trade_name,
+      code: tenantKey,
+      tenant_key: tenantKey,
+      tenant_type: 'customer',
+      status: 'active',
+      isolation_mode: 'shared_schema',
+      schema_name: 'public',
+      activation_phase: 'active',
+      activated_at: now,
+      metadata_json: {
+        source: 'setup_wizard',
+        payment_choice: paymentChoice,
+        company_tax_number: company.tax_number,
+        company_scale: {
+          key: scale,
+          ...SETUP_SCALE_PROFILES[scale],
+        },
+        initialized_at: now,
+      },
+    })
+    .select('id, name, tenant_key')
+    .single()
+
+  if (error) throw new Error(error.message)
+  if (!data?.id) throw new Error('Tenant kaydı oluşturulamadı.')
+
+  await ensureTenantDatabaseBinding(supabase, data.id)
+  await ensureTenantModules(supabase, data.id)
+
+  return data
+}
+
+async function ensureTenantDatabaseBinding(supabase: Supabase, tenantId: string) {
+  const { error } = await supabase
+    .from('tenant_database_bindings')
+    .upsert({
+      tenant_id: tenantId,
+      isolation_mode: 'shared_schema',
+      schema_name: 'public',
+      connection_name: 'default',
+      status: 'active',
+      activated_at: new Date().toISOString(),
+      metadata_json: { source: 'setup_wizard' },
+    }, { onConflict: 'tenant_id' })
+
+  if (error) throw new Error(error.message)
+}
+
+async function ensureTenantModules(supabase: Supabase, tenantId: string) {
+  const now = new Date().toISOString()
+  const rows = ERP_MODULES.map(module => ({
+    instance_id: tenantId,
+    module_code: module.code,
+    status: 'enabled',
+    enabled_at: now,
+    settings_json: { source: 'setup_wizard' },
+  }))
+
+  const { error } = await supabase
+    .from('instance_modules')
+    .upsert(rows, { onConflict: 'instance_id,module_code' })
+
+  if (error) throw new Error(error.message)
+}
+
+async function ensureTenantCompanyScope(supabase: Supabase, tenantId: string, companyId: string) {
+  const { error } = await supabase
+    .from('tenant_company_scopes')
+    .upsert({
+      tenant_id: tenantId,
+      company_id: companyId,
+      scope_type: 'owned',
+      is_primary: true,
+      status: 'active',
+      metadata_json: { source: 'setup_wizard' },
+    }, { onConflict: 'tenant_id,company_id' })
+
+  if (error) throw new Error(error.message)
+}
+
+async function ensureSetupAdminUser(
+  supabase: Supabase,
+  tenantId: string,
+  person: Record<string, any>,
+  payload: z.infer<typeof PersonPayloadSchema>
+) {
+  const role = await ensureAdminRole(supabase)
+  await grantAllKnownPermissionsToRole(supabase, role.id)
+
+  const userRolePayload = {
+    instance_id: tenantId,
+    user_id: person.id,
+    role_id: role.id,
+    status: 'active',
+  }
+  const { error: userRoleError } = await supabase
+    .from('user_roles')
+    .upsert(userRolePayload, { onConflict: 'instance_id,user_id,role_id' })
+
+  if (userRoleError) throw new Error(userRoleError.message)
+
+  const { error: membershipError } = await supabase
+    .from('tenant_memberships')
+    .upsert({
+      tenant_id: tenantId,
+      user_id: person.id,
+      role_key: ADMIN_ROLE_KEY,
+      status: 'active',
+      is_default: true,
+      metadata_json: {
+        source: 'setup_wizard',
+        person_id: person.id,
+        email: normalizeSetupEmail(payload.email || person.email) || null,
+        phone: normalizeSetupPhone(payload.phone || person.phone) || null,
+      },
+    }, { onConflict: 'tenant_id,user_id,role_key' })
+
+  if (membershipError) throw new Error(membershipError.message)
+}
+
+async function ensureAdminRole(supabase: Supabase) {
+  const { data, error } = await supabase
+    .from('roles')
+    .upsert({
+      role_key: ADMIN_ROLE_KEY,
+      name: ADMIN_ROLE_NAME,
+      status: 'active',
+    }, { onConflict: 'role_key' })
+    .select('id, role_key, name')
+    .single()
+
+  if (error) throw new Error(error.message)
+  if (!data?.id) throw new Error('Yönetici rolü oluşturulamadı.')
+  return data
+}
+
+async function grantAllKnownPermissionsToRole(supabase: Supabase, roleId: string) {
+  const knownPermissionKeys = Array.from(new Set([
+    ...flattenPermissionKeys(PERMISSIONS),
+    ...Object.values(ACCOUNTING_PERMISSIONS),
+    'partners.view',
+    'partners.insert',
+    'partners.edit',
+    'partners.delete',
+    'stakeholders.view',
+    'stakeholders.insert',
+    'stakeholders.edit',
+    'stakeholders.delete',
+    'representatives.view',
+    'representatives.insert',
+    'representatives.edit',
+    'representatives.delete',
+    'ownership_transactions.view',
+    'ownership_transactions.insert',
+    'ownership_transactions.edit',
+    'ownership_transactions.delete',
+    'ownership_transactions.view_sensitive',
+  ]))
+
+  if (knownPermissionKeys.length) {
+    const { error: permissionUpsertError } = await supabase
+      .from('permissions')
+      .upsert(
+        knownPermissionKeys.map(permissionKey => ({ permission_key: permissionKey, name: permissionKey })),
+        { onConflict: 'permission_key' }
+      )
+
+    if (permissionUpsertError) throw new Error(permissionUpsertError.message)
+  }
+
+  const { data: permissions, error: permissionsError } = await supabase
+    .from('permissions')
+    .select('id')
+
+  if (permissionsError) throw new Error(permissionsError.message)
+
+  const rows = (permissions || [])
+    .filter(permission => permission.id)
+    .map(permission => ({ role_id: roleId, permission_id: permission.id }))
+
+  if (!rows.length) return
+
+  const { error } = await supabase
+    .from('role_permissions')
+    .upsert(rows, { onConflict: 'role_id,permission_id' })
+
+  if (error) throw new Error(error.message)
+}
+
+async function attachSetupSession(
+  response: NextResponse,
+  tenantId: string,
+  person: Record<string, any>,
+  payload: z.infer<typeof PersonPayloadSchema>
+) {
+  const sessionToken = await createAppSessionToken({
+    sub: person.id,
+    userId: person.id,
+    tenantId,
+    email: normalizeSetupEmail(payload.email || person.email) || undefined,
+    phone: normalizeSetupPhone(payload.phone || person.phone) || undefined,
+  })
+
+  response.cookies.set(APP_SESSION_COOKIE_NAME, sessionToken, appSessionCookieOptions())
+  response.cookies.set(TENANT_ID_COOKIE, tenantId, {
+    path: '/',
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 60 * 60 * 24 * 365,
+  })
+  response.cookies.set(WORKSPACE_ID_COOKIE, tenantId, {
+    path: '/',
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 60 * 60 * 24 * 365,
+  })
+}
+
+async function createUniqueTenantKey(supabase: Supabase, source: string) {
+  const base = slugifyTenantKey(source) || `tenant-${Date.now().toString(36)}`
+
+  for (let index = 0; index < 20; index += 1) {
+    const candidate = index === 0 ? base : `${base}-${index + 1}`
+    const { data, error } = await supabase
+      .from('erp_instances')
+      .select('id')
+      .eq('tenant_key', candidate)
+      .maybeSingle()
+
+    if (error) throw new Error(error.message)
+    if (!data?.id) return candidate
+  }
+
+  return `${base}-${Date.now().toString(36)}`
+}
+
+function slugifyTenantKey(value: string) {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 48)
+}
+
+function flattenPermissionKeys(source: unknown): string[] {
+  if (!source) return []
+  if (typeof source === 'string') return [source]
+  if (Array.isArray(source)) return source.flatMap(item => flattenPermissionKeys(item))
+  if (typeof source === 'object') return Object.values(source as Record<string, unknown>).flatMap(item => flattenPermissionKeys(item))
+  return []
+}
+
+function normalizeSetupEmail(value?: string | null) {
+  const email = String(value || '').trim().toLowerCase()
+  return email || null
+}
+
+function normalizeSetupPhone(value?: string | null) {
+  let digits = String(value || '').replace(/\D/g, '')
+  if (digits.length === 12 && digits.startsWith('90')) digits = digits.slice(2)
+  if (digits.length === 11 && digits.startsWith('0')) digits = digits.slice(1)
+  return digits || null
+}
+
+async function createFirstCompany(
+  supabase: Supabase,
+  payload: z.infer<typeof CompanyPayloadSchema>,
+  options: { tenantId?: string; reuseExisting?: boolean } = {}
+) {
+  if (options.reuseExisting !== false) {
+    const existing = await fetchFirstCompany(supabase, options.tenantId)
+    if (existing) return { company: existing, reused: true }
+  }
+
+  const organization = await findOrCreateOrganization(supabase, payload, options.tenantId, options.reuseExisting !== false)
   const companyPayload = {
     organization_id: organization.id,
     trade_name: payload.trade_name,
@@ -163,6 +515,7 @@ async function createFirstCompany(supabase: Supabase, payload: z.infer<typeof Co
     hero_images: [],
     hero_documents: [],
     field_history: {},
+    ...(options.tenantId ? { tenant_id: options.tenantId } : {}),
   }
 
   const { data, error } = await supabase
@@ -174,7 +527,7 @@ async function createFirstCompany(supabase: Supabase, payload: z.infer<typeof Co
   if (error) throw new Error(error.message)
   if (!data?.id) throw new Error('İlk şirket kaydı oluşturulamadı.')
 
-  const rootUnitError = await ensureCompanyRootUnit(supabase, data.id, data)
+  const rootUnitError = await ensureCompanyRootUnit(supabase, data.id, data, options.tenantId)
   if (rootUnitError && !isMissingTableError(rootUnitError)) throw new Error(rootUnitError.message)
 
   return { company: data, reused: false }
@@ -219,29 +572,33 @@ async function saveCompanySetupProfile(
   if (error) throw new Error(error.message)
 }
 
-async function createPersonRole(supabase: Supabase, payload: z.infer<typeof PersonRolePayloadSchema>) {
+async function createPersonRole(supabase: Supabase, payload: z.infer<typeof PersonRolePayloadSchema>, tenantId?: string) {
   const company = await fetchCompanyById(supabase, payload.company_id)
   if (!company) throw new Error('Rol bağlanacak şirket kaydı bulunamadı.')
 
-  const person = await findOrCreatePerson(supabase, payload)
+  const resolvedTenantId = tenantId || company.tenant_id || undefined
+  const person = await findOrCreatePerson(supabase, payload, resolvedTenantId)
 
   if (payload.role === 'partner') {
-    const partner = await findOrCreatePartner(supabase, company.id, person, payload)
+    const partner = await findOrCreatePartner(supabase, company.id, person, payload, resolvedTenantId)
     return { person, role: 'partner', role_record: partner.record, reused: partner.reused }
   }
 
-  const employee = await findOrCreateEmployee(supabase, company.id, person, payload)
+  const employee = await findOrCreateEmployee(supabase, company.id, person, payload, resolvedTenantId)
   return { person, role: 'employee', role_record: employee.record, reused: employee.reused }
 }
 
-async function fetchFirstCompany(supabase: Supabase) {
-  const { data, error } = await supabase
+async function fetchFirstCompany(supabase: Supabase, tenantId?: string) {
+  let query = supabase
     .from('companies')
     .select('id, organization_id, trade_name, short_name, tax_number, tax_office, company_type, country, city, district, address')
     .eq('is_deleted', false)
     .order('created_at', { ascending: true })
     .limit(1)
-    .maybeSingle()
+
+  if (tenantId) query = query.eq('tenant_id', tenantId)
+
+  const { data, error } = await query.maybeSingle()
 
   if (error && !isMissingTableError(error)) throw new Error(error.message)
   return data || null
@@ -250,7 +607,7 @@ async function fetchFirstCompany(supabase: Supabase) {
 async function fetchCompanyById(supabase: Supabase, companyId: string) {
   const { data, error } = await supabase
     .from('companies')
-    .select('id, trade_name')
+    .select('id, trade_name, tenant_id')
     .eq('id', companyId)
     .eq('is_deleted', false)
     .maybeSingle()
@@ -259,17 +616,27 @@ async function fetchCompanyById(supabase: Supabase, companyId: string) {
   return data || null
 }
 
-async function findOrCreateOrganization(supabase: Supabase, payload: z.infer<typeof CompanyPayloadSchema>) {
-  const { data: existing, error: findError } = await supabase
-    .from('organizations')
-    .select('id')
-    .eq('country', SETUP_COMPANY_COUNTRY)
-    .eq('tax_number', payload.tax_number)
-    .eq('is_deleted', false)
-    .maybeSingle()
+async function findOrCreateOrganization(
+  supabase: Supabase,
+  payload: z.infer<typeof CompanyPayloadSchema>,
+  tenantId?: string,
+  reuseExisting = true
+) {
+  if (reuseExisting) {
+    let query = supabase
+      .from('organizations')
+      .select('id')
+      .eq('country', SETUP_COMPANY_COUNTRY)
+      .eq('tax_number', payload.tax_number)
+      .eq('is_deleted', false)
 
-  if (findError && !isMissingTableError(findError)) throw new Error(findError.message)
-  if (existing?.id) return existing
+    if (tenantId) query = query.eq('tenant_id', tenantId)
+
+    const { data: existing, error: findError } = await query.maybeSingle()
+
+    if (findError && !isMissingTableError(findError)) throw new Error(findError.message)
+    if (existing?.id) return existing
+  }
 
   const { data, error } = await supabase
     .from('organizations')
@@ -287,6 +654,7 @@ async function findOrCreateOrganization(supabase: Supabase, payload: z.infer<typ
       status: 'active',
       is_deleted: false,
       metadata_json: { source: 'setup_wizard' },
+      ...(tenantId ? { tenant_id: tenantId } : {}),
     })
     .select('id')
     .single()
@@ -296,7 +664,7 @@ async function findOrCreateOrganization(supabase: Supabase, payload: z.infer<typ
   return data
 }
 
-async function ensureCompanyRootUnit(supabase: Supabase, companyId: string, companyData: Record<string, any>) {
+async function ensureCompanyRootUnit(supabase: Supabase, companyId: string, companyData: Record<string, any>, tenantId?: string) {
   const { data: unitType, error: typeError } = await supabase
     .from('organization_unit_types')
     .upsert(
@@ -330,6 +698,7 @@ async function ensureCompanyRootUnit(supabase: Supabase, companyId: string, comp
     status: 'Aktif',
     active: true,
     is_deleted: false,
+    ...(tenantId ? { tenant_id: tenantId } : {}),
   }
 
   const result = existing?.id
@@ -339,15 +708,20 @@ async function ensureCompanyRootUnit(supabase: Supabase, companyId: string, comp
   return result.error
 }
 
-async function findOrCreatePerson(supabase: Supabase, payload: z.infer<typeof PersonRolePayloadSchema>) {
+async function findOrCreatePerson(supabase: Supabase, payload: z.infer<typeof PersonRolePayloadSchema>, tenantId?: string) {
   const nationality = payload.nationality || 'TR'
-  const { data: existing, error: findError } = await supabase
+  const email = normalizeSetupEmail(payload.email)
+  const phone = normalizeSetupPhone(payload.phone)
+  let query = supabase
     .from('persons')
     .select('id, first_name, last_name, full_name, national_id, nationality, gender, phone, email')
     .eq('nationality', nationality)
     .eq('national_id', payload.national_id)
     .eq('is_deleted', false)
-    .maybeSingle()
+
+  if (tenantId) query = query.eq('tenant_id', tenantId)
+
+  const { data: existing, error: findError } = await query.maybeSingle()
 
   if (findError) throw new Error(findError.message)
   if (existing?.id) return existing
@@ -362,11 +736,12 @@ async function findOrCreatePerson(supabase: Supabase, payload: z.infer<typeof Pe
       nationality,
       national_id: payload.national_id,
       gender: payload.gender,
-      phone: payload.phone || null,
-      email: payload.email || null,
+      phone: phone || null,
+      email: email || null,
       status: 'active',
       is_deleted: false,
       metadata_json: { source: 'setup_wizard' },
+      ...(tenantId ? { tenant_id: tenantId } : {}),
     })
     .select('id, first_name, last_name, full_name, national_id, nationality, gender, phone, email')
     .single()
@@ -380,7 +755,8 @@ async function findOrCreatePartner(
   supabase: Supabase,
   companyId: string,
   person: Record<string, any>,
-  payload: z.infer<typeof PersonRolePayloadSchema>
+  payload: z.infer<typeof PersonRolePayloadSchema>,
+  tenantId?: string
 ) {
   const { data: existing, error: findError } = await supabase
     .from('company_partners')
@@ -412,12 +788,13 @@ async function findOrCreatePartner(
       record_status: 'active',
       start_date: new Date().toISOString().slice(0, 10),
       history: [{ type: 'setup_wizard_created', at: new Date().toISOString() }],
+      ...(tenantId ? { tenant_id: tenantId } : {}),
     })
     .select('id, company_id, person_id, display_name, status')
     .single()
 
   if (error) throw new Error(error.message)
-  await insertPartnerLifecycleEvent(supabase, data?.id, companyId, payload)
+  await insertPartnerLifecycleEvent(supabase, data?.id, companyId, payload, tenantId)
   return { record: data, reused: false }
 }
 
@@ -425,8 +802,11 @@ async function findOrCreateEmployee(
   supabase: Supabase,
   companyId: string,
   person: Record<string, any>,
-  payload: z.infer<typeof PersonRolePayloadSchema>
+  payload: z.infer<typeof PersonRolePayloadSchema>,
+  tenantId?: string
 ) {
+  const email = normalizeSetupEmail(payload.email)
+  const phone = normalizeSetupPhone(payload.phone)
   const { data: existing, error: findError } = await supabase
     .from('employees')
     .select('id, company_id, person_id, first_name, last_name, record_status, work_status')
@@ -451,8 +831,8 @@ async function findOrCreateEmployee(
       nationality: payload.nationality || 'TR',
       national_id: payload.national_id,
       gender: payload.gender,
-      mobile_phone: payload.phone || null,
-      email: payload.email || null,
+      mobile_phone: phone || null,
+      email: email || null,
       work_status: 'active',
       employment_status: 'active',
       record_status: 'active',
@@ -460,12 +840,13 @@ async function findOrCreateEmployee(
       sgk_entry_date: today,
       field_history: {},
       is_deleted: false,
+      ...(tenantId ? { tenant_id: tenantId } : {}),
     })
     .select('id, company_id, person_id, first_name, last_name, record_status, work_status')
     .single()
 
   if (error) throw new Error(error.message)
-  await insertEmployeeWorkRelation(supabase, data?.id, companyId, today)
+  await insertEmployeeWorkRelation(supabase, data?.id, companyId, today, tenantId)
   return { record: data, reused: false }
 }
 
@@ -481,7 +862,8 @@ async function insertPartnerLifecycleEvent(
   supabase: Supabase,
   partnerId: string | undefined,
   companyId: string,
-  payload: z.infer<typeof PersonRolePayloadSchema>
+  payload: z.infer<typeof PersonRolePayloadSchema>,
+  tenantId?: string
 ) {
   if (!partnerId) return
 
@@ -499,6 +881,7 @@ async function insertPartnerLifecycleEvent(
         last_name: payload.last_name,
         national_id: payload.national_id,
       },
+      ...(tenantId ? { tenant_id: tenantId } : {}),
     })
 
   if (error && !isMissingTableError(error)) throw new Error(error.message)
@@ -508,7 +891,8 @@ async function insertEmployeeWorkRelation(
   supabase: Supabase,
   employeeId: string | undefined,
   companyId: string,
-  startDate: string
+  startDate: string,
+  tenantId?: string
 ) {
   if (!employeeId) return
 
@@ -521,6 +905,7 @@ async function insertEmployeeWorkRelation(
       start_date: startDate,
       status: 'active',
       history: [{ type: 'setup_wizard_created', at: new Date().toISOString() }],
+      ...(tenantId ? { tenant_id: tenantId } : {}),
     })
 
   if (error && !isMissingTableError(error)) throw new Error(error.message)

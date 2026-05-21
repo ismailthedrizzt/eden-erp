@@ -6,7 +6,7 @@ const duration = Number(args.duration || process.env.LOAD_TEST_DURATION || 20)
 const connections = Number(args.connections || process.env.LOAD_TEST_CONNECTIONS || 20)
 const pipelining = Number(args.pipelining || process.env.LOAD_TEST_PIPELINING || 1)
 const authToken = process.env.LOAD_TEST_AUTH_TOKEN || ''
-const cookie = process.env.LOAD_TEST_COOKIE || 'demo_auth=true'
+const cookie = process.env.LOAD_TEST_COOKIE || ''
 
 const scenarios = [
   {
