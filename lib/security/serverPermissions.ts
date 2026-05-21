@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
-const LOGIN_BYPASS_ENABLED = process.env.EDEN_LOGIN_DISABLED !== 'false'
+const LOGIN_BYPASS_ENABLED = process.env.EDEN_LOGIN_DISABLED === 'true'
 
 export async function requirePermission(
   request: NextRequest,

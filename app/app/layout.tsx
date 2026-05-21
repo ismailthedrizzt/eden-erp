@@ -47,8 +47,6 @@ const BREADCRUMBS: Record<string, string> = {
   '/app/gorev-ve-proje-yonetimi/zaman-takibi': 'Görev ve Proje Yönetimi › Zaman Takibi',
   '/app/gorev-ve-proje-yonetimi/is-akislari': 'Görev ve Proje Yönetimi › İş Akışları',
   '/app/gorev-ve-proje-yonetimi/raporlar': 'Görev ve Proje Yönetimi › Raporlar',
-  '/app/sistem/kurulum': 'Sistem Yönetimi › Kurulum Sihirbazı',
-  '/app/sistem/login-sayfasi': 'Sistem Yönetimi › Login Sayfası',
   '/app/sistem/module-licenses': 'Sistem Yönetimi › Modül Lisansları',
   '/app/sistem/system-parameters': 'Sistem Yönetimi › Sistem Parametreleri',
 }

@@ -97,7 +97,12 @@ function omitNullishValues(value: Record<string, any>) {
 }
 
 function isMissingTableError(error: any) {
-  return error?.code === '42P01' || String(error?.message || '').includes('Could not find the table')
+  const message = String(error?.message || '')
+  return error?.code === '42P01'
+    || error?.code === 'PGRST205'
+    || message.includes('Could not find the table')
+    || message.includes('schema cache')
+    || message.includes('does not exist')
 }
 
 const COMPANY_DETAIL_SELECT = 'id,organization_id,field_history,short_name,trade_name,tax_number,tax_office,company_type,city,district,address,phone,email,is_deleted,record_status,company_status,mersis_number,trade_registry_number,foundation_date,legal_entity,electronic_notification_address,trade_registry_office,parent_company_id,company_code,country,website,e_invoice_taxpayer,e_archive_taxpayer,e_waybill_taxpayer,sgk_workplace_registry_no,sgk_province,sgk_branch,nace_codes,risk_class,default_currency,default_language,time_zone,fiscal_year_start,hero_images,hero_documents,created_at,updated_at'
@@ -372,7 +377,9 @@ export async function PATCH(
   const data = updateResult.data
 
   const organizationUnitError = await ensureCompanyRootUnit(supabase, id, { ...current, ...companyUpdates })
-  if (organizationUnitError) return NextResponse.json({ error: organizationUnitError.message, code: organizationUnitError.code || 'COMPANY_ORG_UNIT_SAVE_FAILED' }, { status: 500 })
+  if (organizationUnitError && !isMissingTableError(organizationUnitError)) {
+    return NextResponse.json({ error: organizationUnitError.message, code: organizationUnitError.code || 'COMPANY_ORG_UNIT_SAVE_FAILED' }, { status: 500 })
+  }
 
   await syncMasterContact(
     supabase,
@@ -419,7 +426,7 @@ async function ensureCompanyRootUnit(
     .select('id')
     .single()
 
-  if (typeError) return typeError
+  if (typeError) return isMissingTableError(typeError) ? null : typeError
 
   const companyName = companyData.trade_name || companyData.short_name || 'Şirket'
   const { data: existing, error: findError } = await supabase
@@ -432,7 +439,7 @@ async function ensureCompanyRootUnit(
     .limit(1)
     .maybeSingle()
 
-  if (findError) return findError
+  if (findError) return isMissingTableError(findError) ? null : findError
 
   const payload = {
     company_id: companyId,
@@ -448,11 +455,11 @@ async function ensureCompanyRootUnit(
 
   if (existing?.id) {
     const { error } = await supabase.from('organization_units').update(payload).eq('id', existing.id)
-    return error
+    return isMissingTableError(error) ? null : error
   }
 
   const { error } = await supabase.from('organization_units').insert(payload)
-  return error
+  return isMissingTableError(error) ? null : error
 }
 
 export async function DELETE(

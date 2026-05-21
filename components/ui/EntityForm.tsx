@@ -35,6 +35,7 @@ import Modal from './Modal'
 import { formControlClass, type FormControlState } from './formControlStyles'
 import type { IdentityGateConfig, IdentityGateResolveResult } from '@/lib/identity-gate'
 import { COUNTRY_OPTIONS, normalizeCountryId } from '@/lib/reference/country-nationalities'
+import { getFallbackTurkeyLocations } from '@/lib/reference/turkey-locations'
 import { isDraftRecord, isSoftDeletedRecord } from '@/lib/forms/entityState'
 import { ModuleDependencyNotice, type EntityAccessState, type ModuleDependency } from '@/lib/access/entityAccess'
 
@@ -356,6 +357,7 @@ function MasterSummaryHero({
   mode = 'default',
   requiredFields = [],
   fieldErrors = {},
+  turkeyProvinces = [],
   onFieldChange,
 }: {
   result: IdentityGateResolveResult | null
@@ -367,6 +369,7 @@ function MasterSummaryHero({
   mode?: MasterSummaryMode
   requiredFields?: FormField[]
   fieldErrors?: Record<string, string>
+  turkeyProvinces?: TurkeyProvince[]
   onFieldChange?: (field: string, value: any, fieldKeys?: string[]) => void
 }) {
   const kind = result?.entityKind
@@ -501,6 +504,7 @@ function MasterSummaryHero({
                 item={item}
                 sourceData={sourceData}
                 readOnly={readOnly}
+                turkeyProvinces={turkeyProvinces}
                 onFieldChange={onFieldChange}
                 validationState={validationState}
               />
@@ -546,12 +550,14 @@ function MasterSummaryItemValue({
   item,
   sourceData,
   readOnly,
+  turkeyProvinces = [],
   onFieldChange,
   validationState,
 }: {
   item: MasterSummaryItem
   sourceData: Record<string, any>
   readOnly: boolean
+  turkeyProvinces?: TurkeyProvince[]
   onFieldChange?: (field: string, value: any, fieldKeys?: string[]) => void
   validationState: { status: FormControlState; label: string }
 }) {
@@ -559,9 +565,62 @@ function MasterSummaryItemValue({
   const canEdit = !!fieldName && !!onFieldChange && !readOnly
   const inputClass = formControlClass({ state: readOnly ? 'neutral' : validationState.status, rounded: 'md', size: 'field', className: 'mt-1' })
   const editableFieldName = fieldName || item.fieldKeys?.[0] || item.label
+  const isCitySummaryField = item.fieldKeys?.includes('city')
+  const isDistrictSummaryField = item.fieldKeys?.includes('district')
+  const selectedCountry = normalizeCountryId(sourceData.country || 'TR')
 
   if (!canEdit) {
     return <div className="mt-0.5 truncate text-[13px] leading-5 text-gray-900 dark:text-white">{formatSummaryValue(item.value, item)}</div>
+  }
+
+  if (isCitySummaryField && selectedCountry === 'TR') {
+    const selectedProvince = findTurkeyProvince(turkeyProvinces, item.value)
+    const cityValue = selectedProvince?.name || String(item.value || '')
+
+    return (
+      <select
+        value={cityValue}
+        onChange={(event) => {
+          const nextProvince = findTurkeyProvince(turkeyProvinces, event.target.value)
+          const nextCity = nextProvince?.name || event.target.value
+          const keepDistrict = nextProvince?.districts.some(district =>
+            normalizeTurkeyLocationName(district.name) === normalizeTurkeyLocationName(sourceData.district)
+          )
+          onFieldChange(editableFieldName, nextCity, item.fieldKeys)
+          if (!keepDistrict) onFieldChange('district', '', ['district'])
+        }}
+        className={inputClass}
+      >
+        <option value="">İl seçiniz</option>
+        {cityValue && !selectedProvince && <option value={cityValue}>{cityValue}</option>}
+        {turkeyProvinces.map(province => (
+          <option key={province.id} value={province.name}>{province.name}</option>
+        ))}
+      </select>
+    )
+  }
+
+  if (isDistrictSummaryField && selectedCountry === 'TR') {
+    const selectedProvince = findTurkeyProvince(turkeyProvinces, sourceData.city)
+    const selectedDistrict = selectedProvince?.districts.find(district =>
+      normalizeTurkeyLocationName(district.name) === normalizeTurkeyLocationName(item.value)
+    )
+    const districtValue = selectedDistrict?.name || String(item.value || '')
+
+    return (
+      <select
+        value={districtValue}
+        onChange={(event) => onFieldChange(editableFieldName, event.target.value, item.fieldKeys)}
+        disabled={!selectedProvince}
+        className={cn(inputClass, !selectedProvince && "appearance-none")}
+      >
+        <option value="">{selectedProvince ? 'İlçe seçiniz' : 'Önce il seçiniz'}</option>
+        {districtValue && selectedProvince && !selectedDistrict && <option value={districtValue}>{districtValue}</option>}
+        {selectedProvince?.districts.map(district => (
+          <option key={district.id} value={district.name}>{district.name}</option>
+        ))}
+      </select>
+    )
   }
 
   if (item.inputType === 'select') {
@@ -1991,7 +2050,7 @@ export function EntityForm({
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [identityGateResult, setIdentityGateResult] = useState<IdentityGateResolveResult | null>(null)
   const [cvExtractStatus, setCvExtractStatus] = useState<{ type: 'idle' | 'loading' | 'success' | 'error'; message: string }>({ type: 'idle', message: '' })
-  const [turkeyProvinces, setTurkeyProvinces] = useState<TurkeyProvince[]>([])
+  const [turkeyProvinces, setTurkeyProvinces] = useState<TurkeyProvince[]>(() => getFallbackTurkeyLocations().provinces)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   
   // STANDARD FORM LAYOUT: Image and Document slots
@@ -2143,7 +2202,7 @@ export function EntityForm({
         }
       })
       .catch(() => {
-        if (!cancelled) setTurkeyProvinces([])
+        if (!cancelled) setTurkeyProvinces(getFallbackTurkeyLocations().provinces)
       })
 
     return () => {
@@ -2716,13 +2775,16 @@ export function EntityForm({
           }
 
       if (isCountryField(field.name) && field.type === 'select' && (!field.options || field.options.length === 0)) {
+        const normalizedValue = normalizeCountryId(value || 'TR')
+        const hasCountryOption = COUNTRY_OPTIONS.some(country => country.value === normalizedValue)
         return (
           <select
-            value={value || 'TR'}
+            value={hasCountryOption ? normalizedValue : value || 'TR'}
             onChange={(e) => handleChange(field.name, e.target.value)}
             disabled={fieldDisabled}
             className={cn(enumInputClass, fieldDisabled && "appearance-none")}
           >
+            {!hasCountryOption && value ? <option value={value}>{value}</option> : null}
             {COUNTRY_OPTIONS.map(country => (
               <option key={country.value} value={country.value}>{country.label}</option>
             ))}
@@ -2732,11 +2794,13 @@ export function EntityForm({
 
       if (isCityField(field.name)) {
         const selectedCountry = normalizeCountryId(formData.country || formData.country || 'TR')
+        const selectedProvince = findTurkeyProvince(turkeyProvinces, value)
+        const cityValue = selectedProvince?.name || value
         if (selectedCountry !== 'TR') {
           return (
             <input
               type="text"
-              value={value}
+              value={cityValue}
               onChange={(e) => handleChange(field.name, e.target.value)}
               disabled={fieldDisabled}
               className={baseInputClass}
@@ -2747,15 +2811,21 @@ export function EntityForm({
 
         return (
           <select
-            value={value}
+            value={cityValue}
             onChange={(e) => {
-              handleChange(field.name, e.target.value)
-              handleChange(field.name === 'city' ? 'district' : 'district', '')
+              const nextProvince = findTurkeyProvince(turkeyProvinces, e.target.value)
+              const nextCity = nextProvince?.name || e.target.value
+              const keepDistrict = nextProvince?.districts.some(district =>
+                normalizeTurkeyLocationName(district.name) === normalizeTurkeyLocationName(formData.district)
+              )
+              handleChange(field.name, nextCity)
+              if (!keepDistrict) handleChange('district', '')
             }}
             disabled={fieldDisabled}
             className={cn(enumInputClass, fieldDisabled && "appearance-none")}
           >
-            <option value="">Seçiniz</option>
+            <option value="">İl seçiniz</option>
+            {cityValue && !selectedProvince && <option value={cityValue}>{cityValue}</option>}
             {turkeyProvinces.map(province => (
               <option key={province.id} value={province.name}>{province.name}</option>
             ))}
@@ -2779,11 +2849,15 @@ export function EntityForm({
         }
 
         const cityField = field.name === 'district' ? 'city' : 'city'
-        const selectedProvince = turkeyProvinces.find(province => province.name === formData[cityField])
+        const selectedProvince = findTurkeyProvince(turkeyProvinces, formData[cityField])
+        const selectedDistrict = selectedProvince?.districts.find(district =>
+          normalizeTurkeyLocationName(district.name) === normalizeTurkeyLocationName(value)
+        )
+        const districtValue = selectedDistrict?.name || value
 
         return (
           <select
-            value={value}
+            value={districtValue}
             onChange={(e) => handleChange(field.name, e.target.value)}
             disabled={fieldDisabled || !selectedProvince}
             className={cn(
@@ -2791,7 +2865,8 @@ export function EntityForm({
               (fieldDisabled || !selectedProvince) && "appearance-none"
             )}
           >
-            <option value="">{selectedProvince ? 'Seçiniz' : 'Önce city seçiniz'}</option>
+            <option value="">{selectedProvince ? 'İlçe seçiniz' : 'Önce il seçiniz'}</option>
+            {districtValue && selectedProvince && !selectedDistrict && <option value={districtValue}>{districtValue}</option>}
             {selectedProvince?.districts.map(district => (
               <option key={district.id} value={district.name}>{district.name}</option>
             ))}
@@ -3159,6 +3234,7 @@ export function EntityForm({
                   mode={masterSummaryMode}
                   requiredFields={heroFields}
                   fieldErrors={fieldErrors}
+                  turkeyProvinces={turkeyProvinces}
                   onFieldChange={handleChange}
                 />
               )}
@@ -3474,6 +3550,16 @@ function isCityField(field: string) {
 
 function isDistrictField(field: string) {
   return field === 'district' || field === 'district'
+}
+
+function findTurkeyProvince(provinces: TurkeyProvince[], value?: unknown) {
+  const normalizedValue = normalizeTurkeyLocationName(value)
+  if (!normalizedValue) return undefined
+  return provinces.find(province => normalizeTurkeyLocationName(province.name) === normalizedValue)
+}
+
+function normalizeTurkeyLocationName(value?: unknown) {
+  return String(value || '').trim().toLocaleLowerCase('tr-TR')
 }
 
 export default EntityForm

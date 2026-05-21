@@ -335,7 +335,10 @@ const EXTRA_COUNTRIES: CountryNationality[] = [
   { id: 'XK', phoneCode: '+383', country: 'Kosova', nationality: 'Kosovalı' },
 ]
 
+const extraCountryIds = new Set(EXTRA_COUNTRIES.map(item => item.id))
+
 const generatedCountries = Object.keys(countries.getAlpha2Codes())
+  .filter(id => !extraCountryIds.has(id))
   .map((id): CountryNationality => {
     const country = countries.getName(id, 'tr') || id
     return {

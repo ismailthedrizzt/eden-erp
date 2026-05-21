@@ -7,7 +7,7 @@ type CookieToSet = {
   options?: Parameters<NextResponse['cookies']['set']>[2]
 }
 
-const LOGIN_BYPASS_ENABLED = process.env.EDEN_LOGIN_DISABLED !== 'false'
+const LOGIN_BYPASS_ENABLED = process.env.EDEN_LOGIN_DISABLED === 'true'
 const DEMO_AUTH_COOKIE_OPTIONS = {
   path: '/',
   maxAge: 60 * 60 * 24 * 30,
@@ -22,6 +22,7 @@ function withDemoAuth(response: NextResponse) {
 export async function middleware(request: NextRequest) {
   const isAuthPage = request.nextUrl.pathname.startsWith('/login')
   const isApiRoute = request.nextUrl.pathname.startsWith('/api')
+  const isSetupWizardPage = request.nextUrl.pathname.startsWith('/app/sistem/kurulum')
   const isPwaAsset = [
     '/manifest.json',
     '/sw.js',
@@ -39,6 +40,13 @@ export async function middleware(request: NextRequest) {
     }
 
     return withDemoAuth(NextResponse.next({ request }))
+  }
+
+  const isPublic = isAuthPage || isApiRoute || isPwaAsset || isSetupWizardPage
+  const isDemo = request.cookies.get('demo_auth')?.value === 'true'
+
+  if (isPublic || isDemo) {
+    return NextResponse.next({ request })
   }
 
   let supabaseResponse = NextResponse.next({ request })
@@ -72,20 +80,10 @@ export async function middleware(request: NextRequest) {
     // Supabase env veya baglanti hazir degilse uygulama en azindan acilabilsin.
   }
 
-  const isPublic = isAuthPage || isApiRoute || isPwaAsset
-  const isDemo = request.cookies.get('demo_auth')?.value === 'true'
-
   // Giriş yapılmamış ve korunan sayfaya erişim → Login'e yönlendir
-  if (!user && !isDemo && !isPublic) {
+  if (!user) {
     const url = request.nextUrl.clone()
     url.pathname = '/login'
-    return NextResponse.redirect(url)
-  }
-
-  // Giriş yapılmış veya demo giriş yapılmışsa login sayfasına erişim → Ana sayfaya yönlendir
-  if ((user || isDemo) && isAuthPage) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/'
     return NextResponse.redirect(url)
   }
 

@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import {
   ArrowLeft,
   ArrowRight,
@@ -112,6 +112,22 @@ const initialPersonForm = {
   phone: '',
 }
 
+function personFormWithSignupIdentity(signupIdentity?: string | null) {
+  const value = String(signupIdentity || '').trim()
+  const base = { ...initialPersonForm }
+
+  if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+    return { ...base, email: value.toLowerCase() }
+  }
+
+  const phone = value.replace(/\s/g, '')
+  if (/^[0-9]{10,11}$/.test(phone)) {
+    return { ...base, phone }
+  }
+
+  return base
+}
+
 const SCALE_OPTIONS: Array<{
   value: CompanyScale
   eyebrow: string
@@ -198,6 +214,8 @@ const SCALE_OPTIONS: Array<{
 ]
 
 export default function SetupWizardPage() {
+  const searchParams = useSearchParams()
+  const signupIdentity = searchParams.get('signupIdentity')
   const [open, setOpen] = useState(true)
   const [existingCompany, setExistingCompany] = useState<SetupCompany | null>(null)
   const [toast, setToast] = useState<{ type: ToastType; title?: string; message: string } | null>(null)
@@ -269,6 +287,7 @@ export default function SetupWizardPage() {
       <SetupWizardModal
         open={open}
         existingCompany={existingCompany}
+        signupIdentity={signupIdentity}
         onCompanyCreated={company => setExistingCompany(company)}
         onToast={setToast}
         onClose={() => setOpen(false)}
@@ -289,12 +308,14 @@ export default function SetupWizardPage() {
 function SetupWizardModal({
   open,
   existingCompany,
+  signupIdentity,
   onCompanyCreated,
   onToast,
   onClose,
 }: {
   open: boolean
   existingCompany: SetupCompany | null
+  signupIdentity?: string | null
   onCompanyCreated: (company: SetupCompany) => void
   onToast: (toast: { type: ToastType; title?: string; message: string }) => void
   onClose: () => void
@@ -305,7 +326,7 @@ function SetupWizardModal({
   const [scale, setScale] = useState<CompanyScale>('small')
   const [createdCompany, setCreatedCompany] = useState<SetupCompany | null>(null)
   const [role, setRole] = useState<UserRole>('partner')
-  const [person, setPerson] = useState(initialPersonForm)
+  const [person, setPerson] = useState(() => personFormWithSignupIdentity(signupIdentity))
   const [taxOffices, setTaxOffices] = useState<string[]>([])
   const [turkeyProvinces, setTurkeyProvinces] = useState<TurkeyProvince[]>([])
   const [busy, setBusy] = useState(false)
@@ -315,6 +336,17 @@ function SetupWizardModal({
     if (!open) return
     setFormError(null)
   }, [open, step])
+
+  useEffect(() => {
+    const identityPerson = personFormWithSignupIdentity(signupIdentity)
+    if (!identityPerson.email && !identityPerson.phone) return
+
+    setPerson(current => ({
+      ...current,
+      email: current.email || identityPerson.email,
+      phone: current.phone || identityPerson.phone,
+    }))
+  }, [signupIdentity])
 
   useEffect(() => {
     if (!existingCompany) return

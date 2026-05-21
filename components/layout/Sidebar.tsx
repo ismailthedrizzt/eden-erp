@@ -177,8 +177,6 @@ const NAV: NavItem[] = [
     icon: <Settings size={16} />,
     badge: 'Geliştirilmekte',
     children: [
-      { label: 'Kurulum Sihirbazı', href: '/app/sistem/kurulum' },
-      { label: 'Login Sayfası', href: '/app/sistem/login-sayfasi' },
       { label: 'Modül Lisansları', href: '/app/sistem/module-licenses' },
       { label: 'Sistem Parametreleri', href: '/app/sistem/system-parameters' },
       { label: 'Entegrasyon Ayarları', href: '/app/sistem/entegrasyon-ayarlari', moduleKey: 'sistem', submoduleKey: 'entegrasyon-ayarlari' },
@@ -366,8 +364,8 @@ export default function Sidebar({ collapsed = false, mobileOpen = false, onMobil
         <button
           onClick={() => {
             if (typeof window !== 'undefined') {
-              document.cookie = 'demo_auth=true; path=/; max-age=2592000; sameSite=lax'
-              window.location.href = '/app'
+              document.cookie = 'demo_auth=; path=/; max-age=0; sameSite=lax'
+              window.location.href = '/login'
             }
           }}
           className="ni text-white/35 text-xs"

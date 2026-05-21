@@ -20,6 +20,19 @@ const otpInputClass =
 
 type AuthMode = 'login' | 'signup'
 
+type TenantAccessLookupResponse = {
+  data?: {
+    tenants?: Array<{
+      tenant_id: string
+      tenant_name: string
+      role_label?: string | null
+    }>
+    message?: string
+    status?: 'found' | 'no_tenants'
+  }
+  error?: string
+}
+
 const AUTH_MODE_COPY: Record<AuthMode, {
   title: string
   subtitle: string
@@ -99,6 +112,7 @@ type LoginExperienceProps = {
   redirectOnSuccess?: boolean
   autoFocus?: boolean
   className?: string
+  signupRedirectPath?: string
 }
 
 export function LoginExperience({
@@ -106,6 +120,7 @@ export function LoginExperience({
   redirectOnSuccess = true,
   autoFocus = true,
   className,
+  signupRedirectPath = '/app/sistem/kurulum',
 }: LoginExperienceProps) {
   const [authMode, setAuthMode] = useState<AuthMode>('login')
   const [step, setStep] = useState<'kimlik' | 'otp'>('kimlik')
@@ -186,6 +201,28 @@ export function LoginExperience({
     }
   }
 
+  async function lookupTenantAccess(identifier: string) {
+    const response = await fetch('/api/auth/tenant-access', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ identifier }),
+    })
+    const data = await response.json().catch(() => ({})) as TenantAccessLookupResponse
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Kullanıcı sorgusu tamamlanamadı.')
+    }
+
+    return data.data
+  }
+
+  function startSignupSetup(identifier: string) {
+    if (typeof window === 'undefined') return
+
+    const params = new URLSearchParams({ signupIdentity: identifier })
+    window.location.href = `${signupRedirectPath}?${params.toString()}`
+  }
+
   async function handleStep1() {
     const trimmedValue = value.trim()
     const isEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedValue)
@@ -201,19 +238,25 @@ export function LoginExperience({
     setSuccess(false)
     setOtp(['', '', '', '', '', ''])
     try {
-      if (isEmail) {
-        await sendEmailOtp(trimmedValue.toLowerCase())
-        setStep('otp')
+      const normalizedIdentifier = isEmail ? trimmedValue.toLowerCase() : trimmedValue.replace(/\s/g, '')
+
+      if (authMode === 'signup') {
+        startSignupSetup(normalizedIdentifier)
         return
       }
 
-      const code = createFallbackCode()
-      setStep('otp')
-      setError(modeCopy.demoCodeMessage)
-      console.log('Geçici OTP kodu:', code)
+      const lookup = await lookupTenantAccess(normalizedIdentifier)
+      const tenantCount = lookup?.tenants?.length || 0
+
+      if (!tenantCount) {
+        setError(lookup?.message || 'Henüz aktif tenant bulunmadığı için giriş geçici olarak pasif.')
+        return
+      }
+
+      setError('Tenant seçimi ve şifre adımı initialization sonrasında aktive edilecek.')
     } catch (cause) {
-      console.error('Kod gönderim hatası:', getErrorMessage(cause, 'Bilinmeyen hata'))
-      setError(getErrorMessage(cause, 'Kod gönderilemedi. Lütfen tekrar deneyin.'))
+      console.error('Kullanıcı sorgulama hatası:', getErrorMessage(cause, 'Bilinmeyen hata'))
+      setError(getErrorMessage(cause, 'Kullanıcı sorgusu tamamlanamadı. Lütfen tekrar deneyin.'))
     } finally {
       setLoading(false)
     }

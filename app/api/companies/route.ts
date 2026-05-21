@@ -92,6 +92,15 @@ function omitNullishValues(value: Record<string, any>) {
   )
 }
 
+function isMissingTableError(error: any) {
+  const message = String(error?.message || '')
+  return error?.code === '42P01'
+    || error?.code === 'PGRST205'
+    || message.includes('Could not find the table')
+    || message.includes('schema cache')
+    || message.includes('does not exist')
+}
+
 export async function GET(request: NextRequest) {
   const cacheKey = serverListCacheKey(request, 'companies:list')
   const cached = getServerResponseCache<Record<string, unknown>>(cacheKey)
@@ -197,8 +206,6 @@ export async function POST(request: NextRequest) {
     companyRow = await attachCompanyOrganization(supabase, {
       ...companyData,
       is_deleted: false,
-      record_status: 'draft',
-      company_status: 'draft',
     })
   } catch (error) {
     return NextResponse.json({
@@ -248,7 +255,9 @@ export async function POST(request: NextRequest) {
   if (publicError) return NextResponse.json({ error: publicError.message, code: publicError.code || 'PUBLIC_SAVE_FAILED' }, { status: 500 })
 
   const lifecycleError = await insertCompanyCreatedAsDraftEvent(supabase, data.id, companyRow)
-  if (lifecycleError) return NextResponse.json({ error: lifecycleError.message, code: lifecycleError.code || 'LIFECYCLE_EVENT_FAILED' }, { status: 500 })
+  if (lifecycleError && !isMissingTableError(lifecycleError)) {
+    return NextResponse.json({ error: lifecycleError.message, code: lifecycleError.code || 'LIFECYCLE_EVENT_FAILED' }, { status: 500 })
+  }
 
   return NextResponse.json({ data }, { status: 201 })
 }
@@ -318,7 +327,7 @@ async function ensureCompanyRootUnit(
     .select('id')
     .single()
 
-  if (typeError) return typeError
+  if (typeError) return isMissingTableError(typeError) ? null : typeError
 
   const companyName = companyData.trade_name || companyData.short_name || 'Şirket'
   const { data: existing, error: findError } = await supabase
@@ -331,7 +340,7 @@ async function ensureCompanyRootUnit(
     .limit(1)
     .maybeSingle()
 
-  if (findError) return findError
+  if (findError) return isMissingTableError(findError) ? null : findError
 
   const payload = {
     company_id: companyId,
@@ -347,11 +356,11 @@ async function ensureCompanyRootUnit(
 
   if (existing?.id) {
     const { error } = await supabase.from('organization_units').update(payload).eq('id', existing.id)
-    return error
+    return isMissingTableError(error) ? null : error
   }
 
   const { error } = await supabase.from('organization_units').insert(payload)
-  return error
+  return isMissingTableError(error) ? null : error
 }
 
 async function replaceCompanyPublicData(
