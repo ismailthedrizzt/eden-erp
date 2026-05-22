@@ -651,6 +651,7 @@ async function replaceCompanyPartners(
 
 function mapPartnerForDb(companyId: string, partner: Record<string, any>) {
   const displayName = partner.display_name || [partner.first_name, partner.last_name].filter(Boolean).join(' ').trim() || partner.partner_name || 'Ortak'
+  const status = partner.status || partnerStatusLabel(partner.record_status)
 
   return {
     ...(partner.id ? { id: partner.id } : {}),
@@ -682,7 +683,8 @@ function mapPartnerForDb(companyId: string, partner: Record<string, any>) {
     has_privileged_share: !!partner.has_privileged_share,
     start_date: partner.start_date || null,
     end_date: partner.end_date || null,
-    status: partner.status || 'Aktif',
+    status,
+    record_status: partner.record_status || normalizePartnerRecordStatus(status),
     document_reference_id: partner.document_reference_id || null,
     notes: partner.notes || null,
     history: partner.history || [],
@@ -690,6 +692,19 @@ function mapPartnerForDb(companyId: string, partner: Record<string, any>) {
     deleted_at: partner.deleted_at || null,
     deleted_by: partner.is_deleted ? 'Sistem Kullanıcısı' : null,
   }
+}
+
+function normalizePartnerRecordStatus(status: unknown): 'draft' | 'active' | 'passive' {
+  const normalized = String(status || '').trim().toLocaleLowerCase('tr-TR')
+  if (normalized === 'active' || normalized === 'aktif') return 'active'
+  if (normalized === 'passive' || normalized === 'pasif') return 'passive'
+  return 'draft'
+}
+
+function partnerStatusLabel(recordStatus: unknown) {
+  if (recordStatus === 'active') return 'Aktif'
+  if (recordStatus === 'passive') return 'Pasif'
+  return 'Taslak'
 }
 
 async function replaceCompanyRepresentatives(

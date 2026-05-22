@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
 import type * as React from 'react'
 import {
@@ -119,15 +119,12 @@ export function RecordLifecycleWizard({
   }
 
   return (
-    <div data-tour-id="record-lifecycle-wizard" className="fixed inset-0 z-50 flex items-stretch justify-end bg-black/45 p-0 sm:p-4">
-      <div className="flex h-full w-full flex-col overflow-hidden bg-white shadow-2xl dark:bg-gray-950 sm:max-w-6xl sm:rounded-2xl">
-        <div className="border-b border-gray-200 bg-white px-5 py-4 dark:border-gray-800 dark:bg-gray-950">
+    <div data-tour-id="record-lifecycle-wizard" className="fixed inset-0 z-50 flex items-start justify-end overflow-y-auto bg-black/45 p-0 sm:p-4">
+      <div className="flex h-[100dvh] min-h-0 w-full flex-col overflow-hidden bg-white shadow-2xl dark:bg-gray-950 sm:h-[calc(100dvh-2rem)] sm:max-w-6xl sm:rounded-2xl">
+        <div className="shrink-0 border-b border-gray-200 bg-white px-5 py-4 dark:border-gray-800 dark:bg-gray-950">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <div className="text-xs font-medium uppercase tracking-wide text-blue-600 dark:text-blue-300">
-                {step + 1} / {steps.length} - {currentStep.title}
-              </div>
-              <h3 className="mt-1 text-lg font-semibold text-gray-950 dark:text-white">{title}</h3>
+              <h3 className="text-lg font-semibold text-gray-950 dark:text-white">{title}</h3>
               {subtitle && <div className="mt-1 text-sm text-gray-500 dark:text-gray-400">{subtitle}</div>}
             </div>
             <button
@@ -146,7 +143,7 @@ export function RecordLifecycleWizard({
         </div>
 
         <div className="grid min-h-0 flex-1 grid-cols-1 overflow-hidden lg:grid-cols-[280px_1fr]">
-          <aside className="border-b border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-950/80 lg:border-b-0 lg:border-r">
+          <aside className="min-h-0 overflow-y-auto overscroll-contain border-b border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-950/80 lg:border-b-0 lg:border-r">
             <ol className="space-y-2">
               {steps.map((item, index) => (
                 <li
@@ -171,7 +168,7 @@ export function RecordLifecycleWizard({
             {sideInfo && <InfoPanel className="mt-4">{sideInfo}</InfoPanel>}
           </aside>
 
-          <main className="min-h-0 overflow-auto p-5">
+          <main className="min-h-0 overflow-y-auto overscroll-contain p-5">
             {loadingMessage && (
               <div className="mb-4 flex items-center gap-2 rounded-xl border border-blue-100 bg-blue-50 px-3 py-2 text-sm text-blue-700 dark:border-blue-950 dark:bg-blue-950/30 dark:text-blue-200">
                 <Loader2 size={16} className="animate-spin" />
@@ -211,7 +208,8 @@ export function RecordLifecycleWizard({
           </main>
         </div>
 
-        <div className="flex items-center justify-between gap-3 border-t border-gray-200 bg-white px-5 py-4 dark:border-gray-800 dark:bg-gray-950">
+        <div className="shrink-0 border-t border-gray-200 bg-white px-5 py-4 dark:border-gray-800 dark:bg-gray-950">
+          <div className="flex items-center justify-between gap-3">
           <button
             type="button"
             onClick={() => step === 0 ? onClose() : setStep(current => current - 1)}
@@ -244,6 +242,7 @@ export function RecordLifecycleWizard({
               {submitLabel}
             </button>
           )}
+          </div>
         </div>
       </div>
     </div>
@@ -421,6 +420,14 @@ function RecordLifecycleWizardFieldView({
           readOnly={disabled}
           className={formControlClass({ state: fieldControlState, className: 'min-h-24 resize-y' })}
         />
+      ) : field.type === 'select' && (field.searchable || field.remoteOptions) ? (
+        <SearchableWizardSelectField
+          field={field}
+          value={value || ''}
+          disabled={disabled}
+          className={inputClass}
+          onChange={updateValue}
+        />
       ) : field.type === 'select' ? (
         <select
           value={value || ''}
@@ -475,6 +482,249 @@ function RecordLifecycleWizardFieldView({
       )}
     </div>
   )
+}
+
+function SearchableWizardSelectField({
+  field,
+  value,
+  disabled,
+  className,
+  onChange,
+}: {
+  field: RecordLifecycleWizardField
+  value: string
+  disabled: boolean
+  className: string
+  onChange: (value: string) => void
+}) {
+  const staticOptions = field.options || []
+  const remoteConfig = field.remoteOptions
+  const hasRemoteOptions = !!remoteConfig?.endpoint
+  const [remoteOptions, setRemoteOptions] = useState<RecordLifecycleWizardOption[]>([])
+  const [remoteLoading, setRemoteLoading] = useState(false)
+  const [remoteError, setRemoteError] = useState<string | null>(null)
+  const loadedOptions = useMemo(() => mergeWizardOptions(staticOptions, remoteOptions), [staticOptions, remoteOptions])
+  const selectedLabel = loadedOptions.find(option => option.value === value)?.label || value || ''
+  const [query, setQuery] = useState(selectedLabel)
+  const [open, setOpen] = useState(false)
+  const commitOptions = useMemo(() => (
+    value && !loadedOptions.some(option => option.value === value)
+      ? [{ value, label: selectedLabel }, ...loadedOptions]
+      : loadedOptions
+  ), [loadedOptions, selectedLabel, value])
+  const filteredOptions = hasRemoteOptions
+    ? remoteOptions.slice(0, 80)
+    : commitOptions
+        .filter(option => {
+          const normalizedQuery = normalizeWizardEnumText(query)
+          return normalizeWizardEnumText(option.label).includes(normalizedQuery) ||
+            normalizeWizardEnumText(option.value).includes(normalizedQuery)
+        })
+        .slice(0, 80)
+  const minQueryLength = remoteConfig?.minQueryLength ?? 0
+  const showMinimumHint = hasRemoteOptions && !remoteConfig?.preload && query.trim().length < minQueryLength
+
+  useEffect(() => {
+    setQuery(selectedLabel)
+  }, [selectedLabel])
+
+  useEffect(() => {
+    if (!hasRemoteOptions || disabled || !open || !remoteConfig?.endpoint) return
+    const trimmedQuery = query.trim()
+    if (!remoteConfig.preload && trimmedQuery.length < minQueryLength) {
+      setRemoteOptions([])
+      setRemoteLoading(false)
+      setRemoteError(null)
+      return
+    }
+
+    const controller = new AbortController()
+    const timeoutId = window.setTimeout(() => {
+      const url = new URL(remoteConfig.endpoint, window.location.origin)
+      url.searchParams.set(remoteConfig.queryParam || 'q', trimmedQuery)
+      if (remoteConfig.limit) url.searchParams.set('limit', String(remoteConfig.limit))
+
+      setRemoteLoading(true)
+      setRemoteError(null)
+      fetch(url.toString(), { signal: controller.signal })
+        .then(response => {
+          if (!response.ok) throw new Error('Seçenekler alınamadı')
+          return response.json()
+        })
+        .then(payload => {
+          setRemoteOptions(parseWizardRemoteOptionsPayload(payload))
+        })
+        .catch(error => {
+          if (controller.signal.aborted) return
+          setRemoteOptions([])
+          setRemoteError(error instanceof Error ? error.message : 'Seçenekler alınamadı')
+        })
+        .finally(() => {
+          if (!controller.signal.aborted) setRemoteLoading(false)
+        })
+    }, 180)
+
+    return () => {
+      controller.abort()
+      window.clearTimeout(timeoutId)
+    }
+  }, [
+    disabled,
+    hasRemoteOptions,
+    minQueryLength,
+    open,
+    query,
+    remoteConfig?.endpoint,
+    remoteConfig?.limit,
+    remoteConfig?.preload,
+    remoteConfig?.queryParam,
+  ])
+
+  const commitIfExactMatch = (text: string) => {
+    const normalized = normalizeWizardEnumText(text)
+    if (!normalized) {
+      setQuery('')
+      onChange('')
+      return
+    }
+
+    const exact = commitOptions.find(option =>
+      normalizeWizardEnumText(option.label) === normalized ||
+      normalizeWizardEnumText(option.value) === normalized
+    )
+    if (exact) {
+      setQuery(exact.label)
+      onChange(exact.value)
+      return
+    }
+
+    const prefixMatches = commitOptions.filter(option =>
+      normalizeWizardEnumText(option.label).startsWith(normalized) ||
+      normalizeWizardEnumText(option.value).startsWith(normalized)
+    )
+    if (normalized && prefixMatches.length === 1) {
+      setQuery(prefixMatches[0].label)
+      onChange(prefixMatches[0].value)
+      return
+    }
+
+    if (hasRemoteOptions) {
+      setQuery(text)
+      onChange(text)
+      return
+    }
+
+    setQuery(selectedLabel)
+  }
+
+  return (
+    <div className="relative">
+      <input
+        type="text"
+        value={query}
+        onChange={(event) => {
+          setQuery(event.target.value)
+          setOpen(true)
+        }}
+        onFocus={(event) => {
+          event.currentTarget.select()
+          setOpen(true)
+        }}
+        onBlur={() => {
+          commitIfExactMatch(query)
+          window.setTimeout(() => setOpen(false), 120)
+        }}
+        placeholder={field.placeholder || 'Yazarak arayın'}
+        readOnly={disabled}
+        className={className}
+      />
+      {open && !disabled && (
+        <div className="absolute left-0 top-full z-[80] mt-1 max-h-64 w-full overflow-auto rounded-lg border border-gray-200 bg-white py-1 shadow-lg dark:border-gray-700 dark:bg-gray-900">
+          {filteredOptions.length > 0 ? filteredOptions.map((option, index) => (
+            <button
+              key={`${option.value}-${index}`}
+              type="button"
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={() => {
+                setQuery(option.label)
+                onChange(option.value)
+                setOpen(false)
+              }}
+              className="block w-full px-3 py-2 text-left text-sm text-gray-800 hover:bg-blue-50 dark:text-gray-100 dark:hover:bg-blue-950/40"
+            >
+              {option.label}
+            </button>
+          )) : (
+            <div className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">
+              {showMinimumHint
+                ? `Aramak için en az ${minQueryLength} karakter yazın`
+                : remoteLoading
+                  ? 'Aranıyor...'
+                  : remoteError || 'Sonuç bulunamadı'}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function mergeWizardOptions(...optionGroups: RecordLifecycleWizardOption[][]): RecordLifecycleWizardOption[] {
+  const merged: RecordLifecycleWizardOption[] = []
+  const seen = new Set<string>()
+
+  optionGroups.flat().forEach(option => {
+    const cleanOption = asWizardOption(option)
+    if (!cleanOption) return
+    const key = `${cleanOption.value}\u0000${cleanOption.label}`
+    if (seen.has(key)) return
+    seen.add(key)
+    merged.push(cleanOption)
+  })
+
+  return merged
+}
+
+function parseWizardRemoteOptionsPayload(payload: unknown): RecordLifecycleWizardOption[] {
+  const candidate = payload as {
+    options?: unknown[]
+    offices?: unknown[]
+    provinces?: unknown[]
+    districts?: unknown[]
+  } | null
+  const source = Array.isArray(candidate?.options)
+    ? candidate.options
+    : Array.isArray(candidate?.districts)
+      ? candidate.districts
+      : Array.isArray(candidate?.provinces)
+        ? candidate.provinces
+        : Array.isArray(candidate?.offices)
+          ? candidate.offices
+          : []
+
+  return source.map(asWizardOption).filter((option): option is RecordLifecycleWizardOption => !!option)
+}
+
+function asWizardOption(option: unknown): RecordLifecycleWizardOption | null {
+  if (!option || typeof option !== 'object') return null
+  const candidate = option as { value?: unknown; label?: unknown; name?: unknown; code?: unknown }
+  const label = String(candidate.label ?? candidate.name ?? '').trim()
+  const value = String(candidate.value ?? candidate.name ?? label).trim()
+  if (!value || !label) return null
+  const code = String(candidate.code ?? '').trim()
+  return {
+    value,
+    label: !candidate.label && code ? `${code} - ${label}` : label,
+  }
+}
+
+function normalizeWizardEnumText(value: unknown) {
+  return String(value || '')
+    .trim()
+    .toLocaleLowerCase('tr-TR')
+    .replace(/\u0131/g, 'i')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
 }
 
 function FieldLabel({

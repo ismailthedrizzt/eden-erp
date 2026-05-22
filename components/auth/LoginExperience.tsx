@@ -788,13 +788,13 @@ export function LoginExperience({
       <div className="flex w-full items-center justify-center bg-[#0b1724] p-6 sm:p-10 lg:w-[440px] lg:border-l lg:border-[#28445c]">
         <div className="w-full max-w-sm rounded-2xl border border-[#28445c] bg-[#0f2233]/92 p-6 shadow-2xl shadow-black/25 sm:p-8 lg:border-0 lg:bg-transparent lg:p-0 lg:shadow-none">
           <div className="mb-10">
-            <div className="inline-flex rounded-xl bg-white px-3 py-2 shadow-lg shadow-black/20">
+            <div className="inline-flex">
               <Image
                 src="/brand/eden-logo-colored.png"
                 alt="Eden ERP"
                 width={180}
                 height={80}
-                className="h-auto w-36 object-contain"
+                className="h-auto w-36 object-contain drop-shadow-lg"
                 priority
               />
             </div>

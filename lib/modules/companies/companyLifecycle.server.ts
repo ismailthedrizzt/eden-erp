@@ -18,6 +18,10 @@ export const COMPANY_LIFECYCLE_PERMISSIONS = {
 type Supabase = ReturnType<typeof createServiceClient>
 type WizardMode = 'opening' | 'liquidation' | 'deregistration'
 type PermissionResult = { userId: string | null }
+type OpeningNacePayloadRow = {
+  nace_code_id: string
+  is_primary: boolean
+}
 
 const COMPANY_CONTEXT_SELECT = [
   'id',
@@ -118,7 +122,12 @@ export async function completeCompanyWizard(
   const permission = await requireModeCompletePermission(request, supabase, mode)
   if (permission instanceof NextResponse) return permission
 
-  const body = await request.json().catch(() => ({}))
+  const parsedBody = await request.json().catch(() => ({}))
+  const openingNaceCodes = mode === 'opening' ? normalizeOpeningNaceCodes(parsedBody?.nace_codes) : []
+  const primaryNaceCode = openingNaceCodes.find(row => row.is_primary)
+  const body = mode === 'opening'
+    ? { ...parsedBody, nace_codes: openingNaceCodes, primary_nace_id: primaryNaceCode?.nace_code_id || '' }
+    : parsedBody
   const statusError = validateRequiredPayload(mode, body)
   if (statusError) return statusError
 
@@ -133,6 +142,11 @@ export async function completeCompanyWizard(
   }
   const invalid = validateModeStatus(mode, getCompanyStatus(company as Record<string, any>))
   if (invalid) return invalid
+
+  if (mode === 'opening') {
+    const naceSyncError = await syncOpeningNaceCodes(supabase, companyId, openingNaceCodes, permission.userId)
+    if (naceSyncError) return naceSyncError
+  }
 
   const rpcName = mode === 'opening'
     ? 'complete_company_opening_wizard'
@@ -151,6 +165,12 @@ export async function completeCompanyWizard(
       error: normalizeLifecycleError(error.message),
       code: error.code || modeErrorCode(mode),
     }, { status: lifecycleErrorStatus(error.message) })
+  }
+
+  if (mode === 'opening') {
+    const identitySync = await syncOpeningCompanyIdentity(supabase, companyId, body, permission.userId, data)
+    if (identitySync instanceof NextResponse) return identitySync
+    return NextResponse.json({ data: identitySync })
   }
 
   return NextResponse.json({ data })
@@ -297,6 +317,214 @@ function validateRequiredPayload(mode: WizardMode, payload: Record<string, any>)
     code: 'VALIDATION_FAILED',
     details: { fieldErrors: Object.fromEntries(missing.map(field => [field, ['Zorunlu alan']])) },
   }, { status: 400 })
+}
+
+function validateOpeningNaceCodes(rows: OpeningNacePayloadRow[]) {
+  if (rows.length === 0) {
+    return NextResponse.json({
+      error: 'En az 1 NACE kodu seçilmelidir.',
+      code: 'VALIDATION_FAILED',
+      details: { fieldErrors: { nace_codes: ['En az 1 NACE kodu seçilmelidir.'] } },
+    }, { status: 400 })
+  }
+
+  if (rows.length > 5) {
+    return NextResponse.json({
+      error: 'En fazla 5 NACE kodu seçilebilir.',
+      code: 'VALIDATION_FAILED',
+      details: { fieldErrors: { nace_codes: ['En fazla 5 NACE kodu seçilebilir.'] } },
+    }, { status: 400 })
+  }
+
+  const primaryCount = rows.filter(row => row.is_primary).length
+  if (primaryCount !== 1) {
+    return NextResponse.json({
+      error: 'Tam olarak 1 birincil NACE kodu seçilmelidir.',
+      code: 'VALIDATION_FAILED',
+      details: { fieldErrors: { nace_codes: ['Tam olarak 1 birincil NACE kodu seçilmelidir.'] } },
+    }, { status: 400 })
+  }
+
+  return null
+}
+
+function normalizeOpeningNaceCodes(value: unknown): OpeningNacePayloadRow[] {
+  const rows = Array.isArray(value) ? value : []
+  const seen = new Set<string>()
+  const normalized = rows
+    .map((row: any) => {
+      const naceCodeId = String(row?.nace_code_id || row?.naceCodeId || row?.nace_code?.id || '').trim()
+      if (!naceCodeId || seen.has(naceCodeId)) return null
+      seen.add(naceCodeId)
+      return {
+        nace_code_id: naceCodeId,
+        is_primary: row?.is_primary === true || row?.isPrimary === true,
+      }
+    })
+    .filter((row): row is OpeningNacePayloadRow => !!row)
+    .slice(0, 5)
+
+  if (normalized.length === 0) return []
+  const primaryIndex = normalized.findIndex(row => row.is_primary)
+  return normalized.map((row, index) => ({
+    ...row,
+    is_primary: primaryIndex >= 0 ? index === primaryIndex : index === 0,
+  }))
+}
+
+async function syncOpeningNaceCodes(
+  supabase: Supabase,
+  companyId: string,
+  rows: OpeningNacePayloadRow[],
+  userId: string | null
+) {
+  const validation = validateOpeningNaceCodes(rows)
+  if (validation) return validation
+
+  const selectedIds = rows.map(row => row.nace_code_id)
+  const selectedSet = new Set(selectedIds)
+  const primaryRow = rows.find(row => row.is_primary)
+
+  const { data: naceCodes, error: naceError } = await supabase
+    .from('nace_codes')
+    .select('id,nace_code,hazard_class')
+    .in('id', selectedIds)
+    .eq('is_active', true)
+
+  if (naceError) {
+    if (isMissingTableError(naceError)) {
+      return NextResponse.json({ error: 'NACE referans tablosu bulunamadı.', code: 'NACE_REFERENCE_MISSING' }, { status: 500 })
+    }
+    return NextResponse.json({ error: naceError.message, code: naceError.code || 'NACE_REFERENCE_FAILED' }, { status: 500 })
+  }
+
+  if ((naceCodes || []).length !== selectedIds.length) {
+    return NextResponse.json({
+      error: 'Seçilen NACE kodlarından biri aktif referans listesinde bulunamadı.',
+      code: 'NACE_REFERENCE_INVALID',
+    }, { status: 400 })
+  }
+
+  const { data: existingRows, error: existingError } = await supabase
+    .from('company_nace_codes')
+    .select('id,nace_code_id,status,is_deleted')
+    .eq('company_id', companyId)
+
+  if (existingError) {
+    if (isMissingTableError(existingError)) return null
+    return NextResponse.json({ error: existingError.message, code: existingError.code || 'COMPANY_NACE_FETCH_FAILED' }, { status: 500 })
+  }
+
+  const existing = existingRows || []
+  const activeUnselectedIds = existing
+    .filter(row => !row.is_deleted && row.status !== 'passive' && !selectedSet.has(row.nace_code_id))
+    .map(row => row.id)
+
+  if (activeUnselectedIds.length > 0) {
+    const { error } = await supabase
+      .from('company_nace_codes')
+      .update({
+        status: 'passive',
+        is_deleted: true,
+        updated_by: userId,
+        updated_at: new Date().toISOString(),
+      })
+      .in('id', activeUnselectedIds)
+
+    if (error) return NextResponse.json({ error: error.message, code: error.code || 'COMPANY_NACE_PASSIVATE_FAILED' }, { status: 500 })
+  }
+
+  for (const row of rows) {
+    const matching = existing.find(existingRow => existingRow.nace_code_id === row.nace_code_id)
+    if (matching) {
+      const { error } = await supabase
+        .from('company_nace_codes')
+        .update({
+          is_primary: row.is_primary,
+          status: 'active',
+          is_deleted: false,
+          end_date: null,
+          updated_by: userId,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', matching.id)
+
+      if (error) return NextResponse.json({ error: error.message, code: error.code || 'COMPANY_NACE_UPDATE_FAILED' }, { status: 500 })
+      continue
+    }
+
+    const { error } = await supabase
+      .from('company_nace_codes')
+      .insert({
+        company_id: companyId,
+        nace_code_id: row.nace_code_id,
+        is_primary: row.is_primary,
+        status: 'active',
+        start_date: new Date().toISOString().slice(0, 10),
+        created_by: userId,
+        updated_by: userId,
+      })
+
+    if (error) return NextResponse.json({ error: error.message, code: error.code || 'COMPANY_NACE_INSERT_FAILED' }, { status: 500 })
+  }
+
+  const primaryCode = (naceCodes || []).find(code => code.id === primaryRow?.nace_code_id)
+  if (primaryCode) {
+    const { error } = await supabase.from('company_public_sgk').upsert({
+      company_id: companyId,
+      nace_code: primaryCode.nace_code || null,
+      risk_class: primaryCode.hazard_class || null,
+      updated_at: new Date().toISOString(),
+    }, { onConflict: 'company_id' })
+
+    if (error && !isMissingTableError(error)) {
+      return NextResponse.json({ error: error.message, code: error.code || 'PRIMARY_NACE_SYNC_FAILED' }, { status: 500 })
+    }
+  }
+
+  return null
+}
+
+async function syncOpeningCompanyIdentity(
+  supabase: Supabase,
+  companyId: string,
+  payload: Record<string, any>,
+  userId: string | null,
+  rpcData: any
+) {
+  const updates: Record<string, any> = {}
+  const tradeName = String(payload.trade_name || '').trim()
+
+  if (tradeName) updates.trade_name = tradeName
+  if (Object.prototype.hasOwnProperty.call(payload, 'short_name')) {
+    updates.short_name = String(payload.short_name || '').trim() || null
+  }
+
+  if (Object.keys(updates).length === 0) return rpcData
+
+  const { data: company, error } = await supabase
+    .from('companies')
+    .update({
+      ...updates,
+      updated_by: userId,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', companyId)
+    .select('id,short_name,trade_name,updated_at')
+    .single()
+
+  if (error) {
+    return NextResponse.json({
+      error: error.message,
+      code: error.code || 'COMPANY_IDENTITY_SYNC_FAILED',
+    }, { status: 500 })
+  }
+
+  if (rpcData?.company && company) {
+    return { ...rpcData, company: { ...rpcData.company, ...company } }
+  }
+
+  return rpcData
 }
 
 function isMissingTableError(error: any) {

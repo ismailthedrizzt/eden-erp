@@ -1,14 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
-import { requirePermission } from '@/lib/security/serverPermissions'
 import { NaceReferenceUpdateService } from '@/lib/modules/companies/nace/naceReference.service'
 
 const EMPTY_NACE_WARNING = 'NACE referans listesi oluşturulamadı. Resmi Ticaret Bakanlığı listesi okunamadı.'
 
 export async function GET(request: NextRequest) {
   const supabase = createServiceClient()
-  const permission = await requirePermission(request, supabase, 'nace_reference.view')
-  if (permission instanceof NextResponse) return permission
 
   const { searchParams } = new URL(request.url)
   const queryText = searchParams.get('q')
@@ -23,8 +20,8 @@ export async function GET(request: NextRequest) {
 
   let data = firstResult.data || []
   if (data.length === 0) {
-    const updateResult = await new NaceReferenceUpdateService(supabase).updateFromTrustedSources()
-    if (!updateResult.warning) {
+    const seedResult = await new NaceReferenceUpdateService(supabase).seedFromFallback(queryText, 50)
+    if (!seedResult.warning) {
       const refreshed = await queryNaceCodes(supabase, queryText)
       data = refreshed.data || []
     }

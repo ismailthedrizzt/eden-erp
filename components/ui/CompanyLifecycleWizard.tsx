@@ -1,12 +1,14 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { AlertTriangle, CheckCircle2, ShieldCheck } from 'lucide-react'
+import { AlertTriangle, CheckCircle2, Plus, Search, ShieldCheck, Star, Trash2 } from 'lucide-react'
 import {
   RecordLifecycleWizard,
   type RecordLifecycleWizardOption,
   type RecordLifecycleWizardStep,
 } from './RecordLifecycleWizard'
+import { cn } from '@/lib/utils'
+import { formControlClass } from '@/components/ui/formControlStyles'
 import type { Sirket } from '@/types/sirket'
 
 export type CompanyLifecycleWizardType = 'opening' | 'liquidation' | 'deregistration'
@@ -16,6 +18,19 @@ type CompanyLifecycleWizardProps = {
   company: Sirket
   onClose: () => void
   onComplete: (company?: Partial<Sirket>) => void
+}
+
+type NaceReferenceRow = {
+  id: string
+  nace_code: string
+  description?: string | null
+  hazard_class?: string | null
+}
+
+type WizardNaceSelection = {
+  nace_code_id: string
+  is_primary: boolean
+  nace_code?: NaceReferenceRow | null
 }
 
 const YES_NO_OPTIONS: RecordLifecycleWizardOption[] = [
@@ -60,7 +75,7 @@ export function CompanyLifecycleWizard({ type, company, onClose, onComplete }: C
     fetch(`/api/companies/${company.id}/${meta.endpoint}/context`)
       .then(async response => {
         const payload = await response.json().catch(() => ({}))
-        if (!response.ok) throw new Error(payload.error || 'Wizard bağlamı yüklenemedi')
+        if (!response.ok) throw new Error(payload.error || 'Bilgiler yüklenemedi')
         return payload.data || {}
       })
       .then(payload => {
@@ -70,7 +85,7 @@ export function CompanyLifecycleWizard({ type, company, onClose, onComplete }: C
       })
       .catch(fetchError => {
         if (cancelled) return
-        setContextError(fetchError.message || 'Wizard bağlamı yüklenemedi')
+        setContextError(fetchError.message || 'Bilgiler yüklenemedi')
         setForm(createInitialForm(type, company, null))
       })
       .finally(() => {
@@ -113,6 +128,14 @@ export function CompanyLifecycleWizard({ type, company, onClose, onComplete }: C
       const option = options.liquidators.find(item => item.value === value)
       next.liquidator_display_name = option?.label || ''
     }
+    if (field === 'nace_codes') {
+      const naceCodes = normalizeWizardNaceSelections(value)
+      const primary = naceCodes.find(row => row.is_primary) || null
+      next.nace_codes = naceCodes
+      next.nace_codes_available = naceCodes.length > 0 ? 'true' : ''
+      next.primary_nace_selected = primary ? 'true' : ''
+      next.primary_nace_id = primary?.nace_code_id || ''
+    }
     if (field === 'sgk_workplace_registered' && value !== 'true') {
       next.sgk_workplace_no = ''
     }
@@ -122,7 +145,6 @@ export function CompanyLifecycleWizard({ type, company, onClose, onComplete }: C
   return (
     <RecordLifecycleWizard
       title={meta.title}
-      subtitle={<span>{company.short_name || company.trade_name} yaşam döngüsü işlemi</span>}
       steps={steps}
       form={form}
       setForm={setForm}
@@ -130,7 +152,7 @@ export function CompanyLifecycleWizard({ type, company, onClose, onComplete }: C
       onSubmit={handleSubmit}
       submitLabel={submitLabel}
       saving={saving}
-      loadingMessage={loading ? 'Wizard bağlamı yükleniyor...' : undefined}
+      loadingMessage={loading ? 'Bilgiler yükleniyor...' : undefined}
       contextError={contextError || undefined}
       error={error || undefined}
       sideInfo={<WizardSideInfo type={type} />}
@@ -154,31 +176,49 @@ function openingSteps(options: ReturnType<typeof buildContextOptions>): RecordLi
   return [
     {
       id: 'identity',
-      title: 'Şirket Kimliği ve Tescil',
-      description: 'Master kayıt ve tescil bilgileri tamamlanır.',
+      title: 'Kimlik',
       sections: [{
         id: 'identity-fields',
-        title: 'Kimlik ve tescil',
+        title: 'Şirket bilgileri',
         fields: [
-          { name: 'company_display', label: 'Şirket', type: 'text', disabled: true },
           { name: 'trade_name', label: 'Ticari Ünvan', type: 'text', required: true, colSpan: 2 },
+          { name: 'short_name', label: 'Kısa Ünvan', type: 'text' },
           { name: 'company_type', label: 'Şirket Türü', type: 'select', required: true, options: companyTypeOptions() },
           { name: 'foundation_date', label: 'Kuruluş Tarihi', type: 'date', required: true },
           { name: 'registration_date', label: 'Tescil Tarihi', type: 'date', required: true },
-          { name: 'trade_registry_office', label: 'Ticaret Sicil Müdürlüğü', type: 'text', required: true },
+          {
+            name: 'trade_registry_office',
+            label: 'Ticaret Sicil Müdürlüğü',
+            type: 'select',
+            required: true,
+            searchable: true,
+            remoteOptions: {
+              endpoint: '/api/reference/trade-registry-offices',
+              minQueryLength: 2,
+              limit: 40,
+            },
+          },
           { name: 'trade_registry_no', label: 'Ticaret Sicil No', type: 'text', required: true },
           { name: 'mersis_no', label: 'MERSİS No', type: 'text' },
-          { name: 'opening_note', label: 'Kuruluş Açıklaması', type: 'textarea', colSpan: 3 },
+          {
+            name: 'nace_codes',
+            label: 'NACE / Faaliyet Kodları',
+            type: 'custom',
+            required: true,
+            colSpan: 3,
+            render: ({ value, onChange, readOnly }) => (
+              <NaceCodesWizardField value={value} onChange={onChange} readOnly={readOnly} />
+            ),
+          },
         ],
       }],
     },
     {
       id: 'public',
-      title: 'Kamu Başlangıç Bilgileri',
-      description: 'Kamu sekmesindeki kaynak bilgiler kontrol edilir.',
+      title: 'Kamu',
       sections: [{
         id: 'public-fields',
-        title: 'Vergi, SGK ve NACE',
+        title: 'Vergi ve SGK',
         fields: [
           {
             name: 'tax_no',
@@ -205,15 +245,6 @@ function openingSteps(options: ReturnType<typeof buildContextOptions>): RecordLi
             visibleWhen: { field: 'sgk_workplace_registered', operator: 'equals', value: 'true' },
             automation: publicAutomation('SGK sicili Kamu sekmesinden okunur.'),
           },
-          { name: 'nace_codes_available', label: 'NACE / Faaliyet Kodları Var mı?', type: 'select', required: true, options: YES_NO_OPTIONS },
-          {
-            name: 'primary_nace_selected',
-            label: 'Birincil NACE Seçildi mi?',
-            type: 'select',
-            requiredWhen: { field: 'nace_codes_available', operator: 'equals', value: 'true' },
-            options: YES_NO_OPTIONS,
-            automation: publicAutomation('Birincil NACE seçimi Kamu sekmesinden okunur.'),
-          },
           {
             name: 'kep_info_available',
             label: 'KEP / e-Tebligat Bilgisi Var mı?',
@@ -228,7 +259,6 @@ function openingSteps(options: ReturnType<typeof buildContextOptions>): RecordLi
     {
       id: 'documents',
       title: 'Belgeler',
-      description: 'Document Registry üzerinden yeni belge yüklenir veya mevcut belge seçilir.',
       sections: [{
         id: 'opening-documents',
         title: 'Açılış belgeleri',
@@ -244,7 +274,7 @@ function openingSteps(options: ReturnType<typeof buildContextOptions>): RecordLi
         ],
       }],
     },
-    confirmationStep('Onay ve Aktivasyon'),
+    confirmationStep('Onay'),
   ]
 }
 
@@ -252,7 +282,7 @@ function liquidationSteps(options: ReturnType<typeof buildContextOptions>): Reco
   return [
     {
       id: 'decision',
-      title: 'Tasfiye Kararı',
+      title: 'Karar',
       sections: [{
         id: 'decision-fields',
         title: 'Karar bilgileri',
@@ -268,10 +298,10 @@ function liquidationSteps(options: ReturnType<typeof buildContextOptions>): Reco
     },
     {
       id: 'liquidators',
-      title: 'Tasfiye Yetkilileri',
+      title: 'Yetkililer',
       sections: [{
         id: 'liquidator-fields',
-        title: 'Tasfiye memuru ve temsil yetkisi',
+        title: 'Yetki bilgileri',
         fields: [
           {
             name: 'liquidator_id',
@@ -294,11 +324,10 @@ function liquidationSteps(options: ReturnType<typeof buildContextOptions>): Reco
     },
     {
       id: 'controls',
-      title: 'Kamu ve Operasyon Kontrolleri',
+      title: 'Kontroller',
       sections: [{
         id: 'control-fields',
         title: 'Kontrol listesi',
-        description: 'Bu kontroller ilk aşamada uyarı niteliğindedir; sistem ayarlarıyla blokaja çevrilebilir.',
         fields: [
           { name: 'tax_notification_required', label: 'Vergi dairesi bildirimi gerekli mi?', type: 'select', options: YES_NO_OPTIONS },
           { name: 'sgk_notification_required', label: 'SGK bildirimi gerekli mi?', type: 'select', options: YES_NO_OPTIONS },
@@ -327,7 +356,7 @@ function liquidationSteps(options: ReturnType<typeof buildContextOptions>): Reco
         ],
       }],
     },
-    confirmationStep('Onay ve Tasfiyeye Alma'),
+    confirmationStep('Onay'),
   ]
 }
 
@@ -335,10 +364,10 @@ function deregistrationSteps(options: ReturnType<typeof buildContextOptions>, fo
   return [
     {
       id: 'completion-controls',
-      title: 'Tasfiye Tamamlama Kontrolü',
+      title: 'Kontroller',
       sections: [{
         id: 'completion-fields',
-        title: 'Kapanış öncesi kontroller',
+        title: 'Kapanış kontrolleri',
         children: hasDeregistrationWarnings(form) ? <WarningBox /> : null,
         fields: [
           { name: 'liquidation_completed', label: 'Tasfiye işlemleri tamamlandı mı?', type: 'select', options: YES_NO_OPTIONS },
@@ -354,7 +383,7 @@ function deregistrationSteps(options: ReturnType<typeof buildContextOptions>, fo
     },
     {
       id: 'deregistration-info',
-      title: 'Terkin Bilgileri',
+      title: 'Terkin',
       sections: [{
         id: 'deregistration-fields',
         title: 'Terkin tescil bilgileri',
@@ -370,10 +399,10 @@ function deregistrationSteps(options: ReturnType<typeof buildContextOptions>, fo
     },
     {
       id: 'public-closure',
-      title: 'Kamu Kapanış Bilgileri',
+      title: 'Kamu',
       sections: [{
         id: 'public-closure-fields',
-        title: 'Vergi, SGK ve e-Tebligat kapanışı',
+        title: 'Kapanış bilgileri',
         fields: [
           { name: 'tax_closure_status', label: 'Vergi Kapanış Durumu', type: 'select', required: true, options: STATUS_OPTIONS },
           { name: 'tax_closure_date', label: 'Vergi Kapanış Tarihi', type: 'date' },
@@ -412,7 +441,7 @@ function deregistrationSteps(options: ReturnType<typeof buildContextOptions>, fo
         ],
       }],
     },
-    confirmationStep('Onay ve Kapatma'),
+    confirmationStep('Onay'),
   ]
 }
 
@@ -420,10 +449,9 @@ function confirmationStep(title: string): RecordLifecycleWizardStep {
   return {
     id: 'confirmation',
     title,
-    description: 'Son adımda tüm bilgiler tek payload olarak transaction içinde kaydedilir.',
     sections: [{
       id: 'confirmation-placeholder',
-      title: 'Özet ve onay',
+      title: 'Özet',
       fields: [],
     }],
   }
@@ -444,7 +472,7 @@ function createInitialForm(type: CompanyLifecycleWizardType, company: Sirket, co
 
   if (type === 'opening') {
     return {
-      company_display: current.short_name || current.trade_name || '',
+      short_name: current.short_name || '',
       trade_name: current.trade_name || '',
       company_type: current.company_type || '',
       foundation_date: opening.foundation_date || current.foundation_date || '',
@@ -452,7 +480,7 @@ function createInitialForm(type: CompanyLifecycleWizardType, company: Sirket, co
       trade_registry_office: opening.trade_registry_office || current.trade_registry_office || publicRegistry.registry_office || '',
       trade_registry_no: opening.trade_registry_no || current.trade_registry_number || publicRegistry.trade_registry_no || '',
       mersis_no: opening.mersis_no || current.mersis_number || publicRegistry.mersis_number || '',
-      opening_note: opening.payload_json?.opening_note || '',
+      nace_codes: normalizeWizardNaceSelections(opening.payload_json?.nace_codes || naceRows),
       tax_no: opening.tax_no || current.tax_number || publicTax.tax_number || '',
       tax_office: opening.tax_office_id || current.tax_office || publicTax.tax_office || '',
       public_info_completed: publicTax.tax_number || publicSgk.workplace_registry_no || publicRegistry.mersis_number ? 'true' : '',
@@ -560,13 +588,15 @@ function CompanyLifecycleSummaryPreview({ type, form }: { type: CompanyLifecycle
 
 function summaryRows(type: CompanyLifecycleWizardType, form: Record<string, any>): Array<[string, any]> {
   if (type === 'opening') {
+    const naceCodes = normalizeWizardNaceSelections(form.nace_codes)
+    const primaryNace = naceCodes.find(row => row.is_primary)
     return [
-      ['Şirket', form.company_display || form.trade_name],
+      ['Şirket', form.short_name || form.trade_name],
       ['Kuruluş Tarihi', form.foundation_date],
       ['Tescil Tarihi', form.registration_date],
       ['Vergi Bilgileri', [form.tax_no, form.tax_office].filter(Boolean).join(' / ')],
       ['SGK Bilgileri', form.sgk_workplace_no || (form.sgk_workplace_registered === 'true' ? 'Var' : 'Yok')],
-      ['NACE Durumu', form.primary_nace_selected === 'true' ? 'Birincil NACE seçildi' : 'Eksik / bekliyor'],
+      ['NACE Durumu', primaryNace ? `${naceLabel(primaryNace)} (${naceCodes.length}/5)` : 'Eksik / bekliyor'],
       ['Belgeler', countDocumentFields(form)],
     ]
   }
@@ -601,9 +631,8 @@ function WizardSideInfo({ type }: { type: CompanyLifecycleWizardType }) {
     <div className="space-y-2">
       <div className="flex items-center gap-2 font-semibold">
         <CheckCircle2 size={14} />
-        Son durum: {finalStatus}
+        Durum: {finalStatus}
       </div>
-      <p>Adımlar veritabanına parça parça yazılmaz; son onayda detail, belge referansı, lifecycle event, durum ve history tek transaction ile kaydedilir.</p>
     </div>
   )
 }
@@ -613,6 +642,208 @@ function WarningBox() {
     <div className="mb-3 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-900/70 dark:bg-amber-950/30 dark:text-amber-200">
       <AlertTriangle size={15} className="mt-0.5 shrink-0" />
       Eksik kapanış kontrolleri varsa terkin öncesi operasyonel uyarı olarak izlenir.
+    </div>
+  )
+}
+
+function NaceCodesWizardField({
+  value,
+  onChange,
+  readOnly,
+}: {
+  value: any
+  onChange: (value: WizardNaceSelection[]) => void
+  readOnly: boolean
+}) {
+  const rows = normalizeWizardNaceSelections(value)
+  const [query, setQuery] = useState('')
+  const [selectedNaceId, setSelectedNaceId] = useState('')
+  const [options, setOptions] = useState<NaceReferenceRow[]>([])
+  const [loading, setLoading] = useState(false)
+  const [warning, setWarning] = useState<string | null>(null)
+  const primaryRow = rows.find(row => row.is_primary)
+  const trimmedQuery = query.trim()
+  const canSearchNace = trimmedQuery.length >= 2
+
+  useEffect(() => {
+    let cancelled = false
+    if (readOnly || query.trim().length < 2) {
+      setOptions([])
+      setSelectedNaceId('')
+      setLoading(false)
+      setWarning(null)
+      return () => {
+        cancelled = true
+      }
+    }
+
+    const timeout = window.setTimeout(() => {
+      const url = new URL('/api/reference/nace-codes', window.location.origin)
+      url.searchParams.set('q', query.trim())
+
+      setLoading(true)
+      fetch(url.toString())
+        .then(async response => {
+          const payload = await response.json().catch(() => ({}))
+          if (!response.ok) throw new Error(payload.error || 'NACE listesi alınamadı.')
+          return payload as { data?: NaceReferenceRow[]; warning?: string }
+        })
+        .then(payload => {
+          if (cancelled) return
+          setOptions(Array.isArray(payload.data) ? payload.data : [])
+          setWarning(payload.warning || null)
+        })
+        .catch(error => {
+          if (cancelled) return
+          setOptions([])
+          setWarning(error instanceof Error ? error.message : 'NACE listesi alınamadı.')
+        })
+        .finally(() => {
+          if (!cancelled) setLoading(false)
+        })
+    }, 250)
+
+    return () => {
+      cancelled = true
+      window.clearTimeout(timeout)
+    }
+  }, [query, readOnly])
+
+  const emitRows = (nextRows: WizardNaceSelection[]) => {
+    const normalizedRows = enforceSinglePrimary(normalizeWizardNaceSelections(nextRows).slice(0, 5))
+    onChange(normalizedRows)
+  }
+
+  const addNace = () => {
+    const option = options.find(item => item.id === selectedNaceId)
+    if (!option) return
+    if (rows.length >= 5) {
+      setWarning('En fazla 5 NACE kodu seçilebilir.')
+      return
+    }
+    if (rows.some(row => row.nace_code_id === option.id)) {
+      setWarning('Bu NACE kodu zaten seçildi.')
+      return
+    }
+
+    emitRows([
+      ...rows,
+      {
+        nace_code_id: option.id,
+        is_primary: rows.length === 0,
+        nace_code: option,
+      },
+    ])
+    setSelectedNaceId('')
+    setQuery('')
+    setWarning(null)
+  }
+
+  const removeNace = (naceCodeId: string) => {
+    emitRows(rows.filter(row => row.nace_code_id !== naceCodeId))
+  }
+
+  const setPrimary = (naceCodeId: string) => {
+    emitRows(rows.map(row => ({ ...row, is_primary: row.nace_code_id === naceCodeId })))
+  }
+
+  return (
+    <div className="rounded-xl border border-gray-200 bg-gray-50 p-3 dark:border-gray-800 dark:bg-gray-900/50">
+      <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <div className="text-sm font-semibold text-gray-900 dark:text-white">NACE / Faaliyet Kodları</div>
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">En fazla 5 kod seçin; tam olarak 1 kod birincil olmalıdır.</p>
+        </div>
+        <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700 dark:bg-blue-950/40 dark:text-blue-200">
+          {rows.length}/5
+        </span>
+      </div>
+
+      {!readOnly && (
+        <div className="mb-3 grid gap-2 lg:grid-cols-[220px_1fr_auto]">
+          <label className="relative">
+            <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input
+              className={formControlClass({ rounded: 'md', className: 'pl-9' })}
+              value={query}
+              onChange={event => setQuery(event.target.value)}
+              placeholder="Kod veya faaliyet ara"
+            />
+          </label>
+          <select
+            className={formControlClass({ rounded: 'md' })}
+            value={selectedNaceId}
+            onChange={event => setSelectedNaceId(event.target.value)}
+            disabled={!canSearchNace || loading || options.length === 0 || rows.length >= 5}
+          >
+            <option value="">{loading ? 'Aranıyor...' : canSearchNace ? 'NACE kodu seç' : 'En az 2 karakter yazın'}</option>
+            {options.map(option => (
+              <option key={option.id} value={option.id} disabled={rows.some(row => row.nace_code_id === option.id)}>
+                {naceReferenceLabel(option)}
+              </option>
+            ))}
+          </select>
+          <button
+            type="button"
+            onClick={addNace}
+            disabled={!selectedNaceId || loading || rows.length >= 5}
+            className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-500"
+          >
+            <Plus size={16} />
+            Ekle
+          </button>
+        </div>
+      )}
+
+      {(warning || !primaryRow) && (
+        <div className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-200">
+          {warning || 'Birincil NACE kodu seçilmelidir.'}
+        </div>
+      )}
+
+      <div className="overflow-hidden rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-950">
+        {rows.length === 0 ? (
+          <div className="px-3 py-5 text-center text-sm text-gray-500 dark:text-gray-400">NACE kodu seçilmedi.</div>
+        ) : (
+          <div className="divide-y divide-gray-200 dark:divide-gray-800">
+            {rows.map(row => (
+              <div key={row.nace_code_id} className="grid gap-2 px-3 py-2 text-sm md:grid-cols-[1fr_auto_auto] md:items-center">
+                <div className="min-w-0">
+                  <div className="font-semibold text-gray-900 dark:text-white">{naceLabel(row)}</div>
+                  {row.nace_code?.hazard_class && (
+                    <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">Tehlike sınıfı: {row.nace_code.hazard_class}</div>
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setPrimary(row.nace_code_id)}
+                  disabled={readOnly || row.is_primary}
+                  className={cn(
+                    'inline-flex items-center justify-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-semibold',
+                    row.is_primary
+                      ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-200'
+                      : 'text-blue-700 hover:bg-blue-50 dark:text-blue-300 dark:hover:bg-blue-950/40',
+                    readOnly && 'cursor-default'
+                  )}
+                >
+                  <Star size={14} />
+                  {row.is_primary ? 'Birincil' : 'Birincil Yap'}
+                </button>
+                {!readOnly && (
+                  <button
+                    type="button"
+                    onClick={() => removeNace(row.nace_code_id)}
+                    className="inline-flex items-center justify-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 dark:text-red-300 dark:hover:bg-red-950/30"
+                  >
+                    <Trash2 size={14} />
+                    Kaldır
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   )
 }
@@ -633,14 +864,58 @@ function hasDeregistrationWarnings(form: Record<string, any>) {
 
 function publicAutomation(title: string) {
   return {
-    sourceFields: ['company_display'],
-    targetFields: ['tax_no', 'tax_office', 'sgk_workplace_no', 'primary_nace_selected', 'kep_info_available'],
+    sourceFields: ['short_name', 'trade_name'],
+    targetFields: ['tax_no', 'tax_office', 'sgk_workplace_no', 'kep_info_available'],
     title,
     idleLabel: 'Kaynak bekliyor',
     workingLabel: 'Okunuyor',
     doneLabel: 'OK',
     noDataLabel: 'Veri yok',
   }
+}
+
+function normalizeWizardNaceSelections(value: any): WizardNaceSelection[] {
+  const rows = Array.isArray(value) ? value : []
+  const seen = new Set<string>()
+  const normalized: WizardNaceSelection[] = rows
+    .map((row: any): WizardNaceSelection | null => {
+      const naceCode = row?.nace_code || row?.naceCode || null
+      const naceCodeId = String(row?.nace_code_id || row?.naceCodeId || naceCode?.id || row?.id || '').trim()
+      if (!naceCodeId || seen.has(naceCodeId)) return null
+      seen.add(naceCodeId)
+      return {
+        nace_code_id: naceCodeId,
+        is_primary: row?.is_primary === true || row?.isPrimary === true,
+        nace_code: naceCode ? {
+          id: String(naceCode.id || naceCodeId),
+          nace_code: String(naceCode.nace_code || ''),
+          description: naceCode.description || null,
+          hazard_class: naceCode.hazard_class || null,
+        } : null,
+      }
+    })
+    .filter((row): row is WizardNaceSelection => !!row)
+    .slice(0, 5)
+
+  return enforceSinglePrimary(normalized)
+}
+
+function enforceSinglePrimary(rows: WizardNaceSelection[]) {
+  if (rows.length === 0) return []
+  const primaryIndex = rows.findIndex(row => row.is_primary)
+  return rows.map((row, index) => ({
+    ...row,
+    is_primary: primaryIndex >= 0 ? index === primaryIndex : index === 0,
+  }))
+}
+
+function naceReferenceLabel(option: NaceReferenceRow) {
+  return [option.nace_code, option.description].filter(Boolean).join(' - ')
+}
+
+function naceLabel(row: WizardNaceSelection) {
+  const code = row.nace_code?.nace_code || row.nace_code_id
+  return [code, row.nace_code?.description].filter(Boolean).join(' - ')
 }
 
 function companyTypeOptions(): RecordLifecycleWizardOption[] {

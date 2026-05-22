@@ -181,6 +181,43 @@ export class NaceReferenceImportService {
 export class NaceReferenceUpdateService {
   constructor(private supabase: SupabaseClient) {}
 
+  async seedFromFallback(queryText?: string | null, limit?: number) {
+    const fallbackRows = filterFallbackRows(await buildFallbackNaceRows(this.supabase), queryText)
+    const rows = typeof limit === 'number' ? fallbackRows.slice(0, limit) : fallbackRows
+
+    if (rows.length === 0) {
+      return {
+        imported: 0,
+        updated: 0,
+        rows: [] as NaceReferenceRow[],
+        warning: 'NACE referans listesi oluşturulamadı. Resmi Ticaret Bakanlığı listesi okunamadı.',
+      }
+    }
+
+    const now = new Date().toISOString()
+    const { error } = await this.supabase.from('nace_codes').upsert(
+      rows.map(row => ({
+        ...row,
+        is_active: true,
+        last_checked_at: now,
+        updated_at: now,
+      })),
+      { onConflict: 'nace_code' }
+    )
+    if (error) throw error
+
+    try {
+      await this.log(
+        'success',
+        FALLBACK_NACE_SOURCE,
+        `Yerel NACE referans listesi içe aktarıldı (${rows.length} kayıt).`
+      )
+    } catch {
+      // Reference lookup should not fail just because update logging is unavailable.
+    }
+    return { imported: rows.length, updated: 0, rows }
+  }
+
   async updateFromTrustedSources() {
     const importService = new NaceReferenceImportService(this.supabase)
 
@@ -381,6 +418,12 @@ async function buildFallbackNaceRows(supabase: SupabaseClient): Promise<NaceRefe
       source_reference: FALLBACK_NACE_PAYLOAD.sourceReference || null,
     }))
     .filter(row => /^\d{2}(\.\d{1,2}){0,2}$/.test(row.nace_code) && !!row.description)
+}
+
+function filterFallbackRows(rows: NaceReferenceRow[], queryText?: string | null) {
+  const needle = normalizeHeader(String(queryText || ''))
+  if (!needle) return rows
+  return rows.filter(row => normalizeHeader(`${row.nace_code} ${row.description}`).includes(needle))
 }
 
 function findColumn(headers: string[], explicit: string | undefined, candidates: string[]) {

@@ -69,7 +69,7 @@ export async function GET(request: NextRequest) {
       id: `employee-${employee.id}`,
       type: 'employee_entry',
       title: employee.display_name || 'Çalışan kaydı',
-      subtitle: 'İşe giriş wizardı bekliyor',
+      subtitle: 'İşe giriş bekliyor',
       statusLabel: 'Taslak',
       href: `/app/ik/personel?pending=entry&id=${employee.id}`,
       severity: 'info',
@@ -78,8 +78,8 @@ export async function GET(request: NextRequest) {
     ...(partners.data || []).map((partner: any) => ({
       id: `partner-${partner.id}`,
       type: 'partner_entry',
-      title: partner.display_name || partner.partner_name || 'Ortak kaydÄ±',
-      subtitle: `${partner.company_name || 'Åirket'} iÃ§in ortaklÄ±k kaydÄ± bekliyor`,
+      title: partner.display_name || partner.partner_name || 'Ortak kaydı',
+      subtitle: `${partner.company_name || 'Şirket'} için ortaklık kaydı bekliyor`,
       statusLabel: 'Taslak',
       href: `/app/sirket/companies/partners?pending=entry&id=${partner.id}`,
       severity: 'info',
@@ -133,7 +133,7 @@ async function fetchPendingPartners(supabase: ReturnType<typeof createServiceCli
   const result = await supabase
     .from('company_partners')
     .select('id,company_id,display_name,partner_name,record_status,status,updated_at,created_at,is_deleted')
-    .in('record_status', ['draft'])
+    .or('record_status.eq.draft,status.eq.Taslak,status.eq.taslak,status.eq.draft')
     .eq('is_deleted', false)
     .eq('tenant_id', workspaceId)
     .limit(25)

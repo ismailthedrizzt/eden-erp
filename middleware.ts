@@ -32,6 +32,7 @@ export async function middleware(request: NextRequest) {
     '/sw.js',
     '/workbox-',
     '/offline',
+    '/brand/',
     '/icons/',
     '/eden-icon-original.png',
   ].some(path => pathname.startsWith(path))
@@ -146,6 +147,6 @@ function withSecurityHeaders(response: NextResponse, request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|manifest.json|sw.js|workbox-.*\\.js|icons|eden-icon-original.png).*)',
+    '/((?!_next/static|_next/image|favicon.ico|manifest.json|sw.js|workbox-.*\\.js|brand|icons|eden-icon-original.png).*)',
   ],
 }
