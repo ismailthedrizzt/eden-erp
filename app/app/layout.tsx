@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { Suspense, useState, useEffect, useRef } from 'react'
 import { usePathname, useSearchParams } from 'next/navigation'
 import Sidebar from '@/components/layout/Sidebar'
 import { PendingActionsBell } from '@/components/layout/PendingActionsBell'
@@ -67,6 +67,14 @@ type TenantWorkspaceOption = {
 }
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-gray-50 dark:bg-[#09141e]" />}>
+      <AppLayoutShell>{children}</AppLayoutShell>
+    </Suspense>
+  )
+}
+
+function AppLayoutShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const forceTourToken = searchParams.get('tour') === '1' ? searchParams.toString() : ''
