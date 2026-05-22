@@ -11,7 +11,7 @@ type PgClient = {
 
 const REQUIRED_BASE_TABLES = ['erp_instances', 'companies', 'persons', 'organizations', 'roles', 'permissions', 'user_roles']
 const REQUIRED_TENANT_TABLES = ['tenant_database_bindings', 'tenant_company_scopes', 'tenant_memberships', 'instance_modules']
-const REQUIRED_TENANT_COLUMNS = ['companies', 'persons', 'organizations', 'company_partners', 'employees']
+const REQUIRED_TENANT_COLUMNS = ['companies', 'persons', 'organizations', 'company_partners', 'employees', 'company_lifecycle_events']
 const TENANT_FOUNDATION_MIGRATION = '20260518_tenant_foundation.sql'
 const ROLE_MASTER_TENANT_SAFE_MIGRATION = '20260522_role_master_tenant_safe.sql'
 const GLOBAL_COMPANY_IDENTITY_MIGRATION = '20260522_global_company_identity.sql'

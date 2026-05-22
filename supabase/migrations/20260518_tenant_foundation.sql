@@ -240,6 +240,7 @@ DECLARE
     'company_partners',
     'company_representatives',
     'stakeholders',
+    'company_lifecycle_events',
     'partner_ownership_lifecycle_events',
     'ownership_transactions',
     'record_history',
