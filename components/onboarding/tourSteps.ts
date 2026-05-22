@@ -28,8 +28,8 @@ export const systemTourSteps: TourStep[] = [
   {
     id: 'workspace-switcher',
     target: "[data-tour-id='workspace-switcher']",
-    title: 'Tenantlar arasında buradan geçersiniz',
-    description: 'Birden fazla tenant üyeliğiniz varsa aktif çalışma alanını buradan değiştirirsiniz. Her tenant kendi rol ve yetkileriyle yüklenir; geçiş sonrası menüler ve izinler yeni tenant için yenilenir.',
+    title: 'Farklı şirketlere kayıtlı çalışma alanları',
+    description: 'Birden fazla şirkette yetkiniz varsa aktif çalışma alanını buradan değiştirirsiniz. Geçiş sonrası menüler ve izinler seçtiğiniz şirket için yenilenir.',
     placement: 'bottom',
     path: '/app',
   },
