@@ -13,10 +13,12 @@ export type AppSessionPayload = {
 
 function getSessionSecret() {
   const secret = process.env.APP_SESSION_SECRET
-    || (process.env.NODE_ENV === 'production' ? '' : process.env.OTP_SECRET || process.env.CRON_SECRET)
+    || process.env.SETUP_INTENT_SECRET
+    || process.env.OTP_SECRET
+    || (process.env.NODE_ENV === 'production' ? '' : process.env.CRON_SECRET)
 
   if (!secret) {
-    throw new Error('APP_SESSION_SECRET tanimli degil.')
+    throw new Error('APP_SESSION_SECRET, SETUP_INTENT_SECRET veya OTP_SECRET tanimli degil.')
   }
 
   return secret

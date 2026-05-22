@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
       : isMissingMailKey
         ? 'EDEN_MAIL_API_KEY ortam degiskeni Vercel runtime ortaminda tanimli degil.'
         : isMissingOtpSecret
-          ? 'OTP_SECRET ortam degiskeni Vercel runtime ortaminda tanimli degil.'
+          ? 'OTP_SECRET, APP_SESSION_SECRET veya SETUP_INTENT_SECRET ortam degiskenlerinden biri Vercel runtime ortaminda tanimli olmali.'
           : undefined
 
     return NextResponse.json({

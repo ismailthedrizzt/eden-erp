@@ -11,10 +11,13 @@ type OtpPayload = {
 }
 
 function getOtpSecret() {
-  const secret = process.env.OTP_SECRET || (process.env.NODE_ENV === 'production' ? '' : process.env.CRON_SECRET)
+  const secret = process.env.OTP_SECRET
+    || process.env.APP_SESSION_SECRET
+    || process.env.SETUP_INTENT_SECRET
+    || (process.env.NODE_ENV === 'production' ? '' : process.env.CRON_SECRET)
 
   if (!secret) {
-    throw new Error('OTP_SECRET tanimli degil.')
+    throw new Error('OTP_SECRET, APP_SESSION_SECRET veya SETUP_INTENT_SECRET tanimli degil.')
   }
 
   return secret
