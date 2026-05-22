@@ -140,7 +140,12 @@ export async function completeCompanyWizard(
   const openingNaceCodes = mode === 'opening' ? normalizeOpeningNaceCodes(parsedBody?.nace_codes) : []
   const primaryNaceCode = openingNaceCodes.find(row => row.is_primary)
   const body = mode === 'opening'
-    ? { ...parsedBody, nace_codes: openingNaceCodes, primary_nace_id: primaryNaceCode?.nace_code_id || '' }
+    ? {
+        ...parsedBody,
+        foundation_date: parsedBody?.foundation_date || parsedBody?.registration_date || '',
+        nace_codes: openingNaceCodes,
+        primary_nace_id: primaryNaceCode?.nace_code_id || '',
+      }
     : parsedBody
   const statusError = validateRequiredPayload(mode, body)
   if (statusError) return statusError
@@ -336,7 +341,7 @@ function validateModeStatus(mode: WizardMode, status: string) {
 
 function validateRequiredPayload(mode: WizardMode, payload: Record<string, any>) {
   const required = mode === 'opening'
-    ? ['foundation_date', 'registration_date']
+    ? ['registration_date']
     : mode === 'liquidation'
       ? ['liquidation_decision_date', 'liquidation_start_date']
       : ['liquidation_completion_decision_date', 'deregistration_registration_date']

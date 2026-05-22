@@ -184,7 +184,6 @@ function openingSteps(options: ReturnType<typeof buildContextOptions>): RecordLi
           { name: 'trade_name', label: 'Ticari Ünvan', type: 'text', required: true, colSpan: 2 },
           { name: 'short_name', label: 'Kısa Ünvan', type: 'text' },
           { name: 'company_type', label: 'Şirket Türü', type: 'select', required: true, options: companyTypeOptions() },
-          { name: 'foundation_date', label: 'Kuruluş Tarihi', type: 'date', required: true },
           { name: 'registration_date', label: 'Tescil Tarihi', type: 'date', required: true },
           {
             name: 'trade_registry_office',
@@ -475,8 +474,7 @@ function createInitialForm(type: CompanyLifecycleWizardType, company: Sirket, co
       short_name: current.short_name || '',
       trade_name: current.trade_name || '',
       company_type: current.company_type || '',
-      foundation_date: opening.foundation_date || current.foundation_date || '',
-      registration_date: opening.registration_date || publicRegistry.establishment_registration_date || '',
+      registration_date: opening.registration_date || publicRegistry.establishment_registration_date || opening.foundation_date || current.foundation_date || '',
       trade_registry_office: opening.trade_registry_office || current.trade_registry_office || publicRegistry.registry_office || '',
       trade_registry_no: opening.trade_registry_no || current.trade_registry_number || publicRegistry.trade_registry_no || '',
       mersis_no: opening.mersis_no || current.mersis_number || publicRegistry.mersis_number || '',
@@ -592,7 +590,6 @@ function summaryRows(type: CompanyLifecycleWizardType, form: Record<string, any>
     const primaryNace = naceCodes.find(row => row.is_primary)
     return [
       ['Şirket', form.short_name || form.trade_name],
-      ['Kuruluş Tarihi', form.foundation_date],
       ['Tescil Tarihi', form.registration_date],
       ['Vergi Bilgileri', [form.tax_no, form.tax_office].filter(Boolean).join(' / ')],
       ['SGK Bilgileri', form.sgk_workplace_no || (form.sgk_workplace_registered === 'true' ? 'Var' : 'Yok')],
