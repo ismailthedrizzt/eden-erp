@@ -18,9 +18,11 @@ import { companyGeographicReachWidgetConfig } from '@/lib/modules/companies/dash
 import { buildEmployeesDashboard } from '@/lib/modules/employees/dashboard/employeesDashboard.mock'
 import { getEducationSummary } from '@/lib/modules/employees/education'
 import type { Personel } from '@/types'
+import { getCachedTablePreference, syncUiPreferencesPatch } from '@/lib/user-state/client'
 
 const WIDGET_STORAGE_KEY = 'user_widgets'
 const WIDGET_STORAGE_SCOPE = 'home'
+const HOME_WIDGET_PREFERENCE_KEY = 'home-dashboard-widgets'
 const CURRENT_USER = {
   first_name: 'İsmail',
   last_name: 'ILGAR',
@@ -182,6 +184,12 @@ export default function AnaSayfa() {
   const { data: employees } = usePersonel()
 
   useEffect(() => {
+    const cachedWidgetPreference = getCachedTablePreference<{ selectedWidgetIds?: unknown[] }>(HOME_WIDGET_PREFERENCE_KEY)
+    if (Array.isArray(cachedWidgetPreference?.selectedWidgetIds)) {
+      setSelectedWidgetIds(normalizeSavedWidgetIds(cachedWidgetPreference.selectedWidgetIds))
+      return
+    }
+
     const preferenceKey = widgetPreferenceStorageKey(WIDGET_STORAGE_SCOPE)
     const saved = localStorage.getItem(`${preferenceKey}:ids`) ?? localStorage.getItem(WIDGET_STORAGE_KEY)
     if (!saved) return
@@ -214,6 +222,13 @@ export default function AnaSayfa() {
     const normalizedIds = normalizeSavedWidgetIds(ids)
     setSelectedWidgetIds(normalizedIds)
     localStorage.setItem(`${widgetPreferenceStorageKey(WIDGET_STORAGE_SCOPE)}:ids`, JSON.stringify(normalizedIds))
+    syncUiPreferencesPatch({
+      tablePreferences: {
+        [HOME_WIDGET_PREFERENCE_KEY]: {
+          selectedWidgetIds: normalizedIds,
+        },
+      },
+    }).catch(() => undefined)
   }
 
   return (
@@ -227,6 +242,7 @@ export default function AnaSayfa() {
 
       <PageBanner
         mode="list"
+        tourId="page-banner"
         title={birthday ? `Doğum Günün Kutlu Olsun, ${CURRENT_USER.first_name}!` : `Merhaba, ${CURRENT_USER.first_name}`}
         subtitle={birthday
           ? 'Bugün senin özel günün.'
@@ -235,6 +251,7 @@ export default function AnaSayfa() {
         icon={<Home size={24} />}
         onAddClick={() => setWidgetModalOpen(true)}
         addButtonText="Ekle"
+        addButtonTourId="quick-actions"
       />
 
       <div className="mt-6">

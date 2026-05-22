@@ -1,5 +1,10 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
+import {
+  ensureUserRegistrationRequestSchema,
+  isTenantRegistrationAdmin,
+} from '@/lib/auth/userRegistrationRequests'
 import { createServiceClient } from '@/lib/supabase/server'
+import { getAuthenticatedWorkspaceContext } from '@/lib/user-state/server'
 
 type PendingActionItem = {
   id: string
@@ -12,25 +17,37 @@ type PendingActionItem = {
   createdAt?: string
 }
 
-export async function GET() {
-  const supabase = createServiceClient()
-  const [companies, employees, ownershipTransactions] = await Promise.all([
+export async function GET(request: NextRequest) {
+  const context = await getAuthenticatedWorkspaceContext(request)
+  if (context instanceof NextResponse) return context
+
+  const { supabase, userId, workspaceId } = context
+  const isAdmin = await isTenantRegistrationAdmin(supabase, userId, workspaceId)
+  if (!isAdmin) {
+    return NextResponse.json({ data: { count: 0, items: [] } }, { headers: { 'Cache-Control': 'no-store' } })
+  }
+
+  await ensureUserRegistrationRequestSchema()
+
+  const [companies, partners, employees, ownershipTransactions, userRegistrationRequests] = await Promise.all([
     safeList(
       supabase,
       'companies',
       'id,short_name,trade_name,record_status,company_status,updated_at,created_at,is_deleted',
-      query => query.in('record_status', ['draft', 'liquidation']).eq('is_deleted', false).limit(25)
+      query => query.in('record_status', ['draft', 'liquidation']).eq('is_deleted', false).eq('tenant_id', workspaceId).limit(25)
     ),
-    fetchPendingEmployees(supabase),
+    fetchPendingPartners(supabase, workspaceId),
+    fetchPendingEmployees(supabase, workspaceId),
     safeList(
       supabase,
       'ownership_transactions',
       'id,transaction_no,transaction_type,approval_status,workflow_status,updated_at,created_at,is_deleted',
-      query => query.in('approval_status', ['draft', 'pending_approval']).eq('is_deleted', false).limit(25)
+      query => query.in('approval_status', ['draft', 'pending_approval']).eq('is_deleted', false).eq('tenant_id', workspaceId).limit(25)
     ),
+    fetchPendingUserRegistrationRequests(supabase, workspaceId),
   ])
 
-  const error = [companies.error, employees.error, ownershipTransactions.error].find(Boolean)
+  const error = [companies.error, partners.error, employees.error, ownershipTransactions.error, userRegistrationRequests.error].find(Boolean)
   if (error) return NextResponse.json({ error: error.message, code: error.code || 'PENDING_NOTIFICATIONS_FAILED' }, { status: 500 })
 
   const items: PendingActionItem[] = [
@@ -58,6 +75,16 @@ export async function GET() {
       severity: 'info',
       createdAt: employee.updated_at || employee.created_at,
     } satisfies PendingActionItem)),
+    ...(partners.data || []).map((partner: any) => ({
+      id: `partner-${partner.id}`,
+      type: 'partner_entry',
+      title: partner.display_name || partner.partner_name || 'Ortak kaydÄ±',
+      subtitle: `${partner.company_name || 'Åirket'} iÃ§in ortaklÄ±k kaydÄ± bekliyor`,
+      statusLabel: 'Taslak',
+      href: `/app/sirket/companies/partners?pending=entry&id=${partner.id}`,
+      severity: 'info',
+      createdAt: partner.updated_at || partner.created_at,
+    } satisfies PendingActionItem)),
     ...(ownershipTransactions.data || []).map((transaction: any) => {
       const pendingApproval = transaction.approval_status === 'pending_approval'
       return {
@@ -71,6 +98,16 @@ export async function GET() {
         createdAt: transaction.updated_at || transaction.created_at,
       } satisfies PendingActionItem
     }),
+    ...(userRegistrationRequests.data || []).map((registrationRequest: any) => ({
+      id: `user-registration-${registrationRequest.id}`,
+      type: 'user_registration_request',
+      title: registrationRequest.full_name || [registrationRequest.first_name, registrationRequest.last_name].filter(Boolean).join(' ') || 'Kullanıcı kayıt talebi',
+      subtitle: `${registrationRequest.company_name || 'Şirket'} için kullanıcı talebi`,
+      statusLabel: 'Onay Bekliyor',
+      href: `/app/sistem/kullanici-talepleri?id=${registrationRequest.id}`,
+      severity: 'warning',
+      createdAt: registrationRequest.created_at,
+    } satisfies PendingActionItem)),
   ].sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
 
   return NextResponse.json({
@@ -92,11 +129,56 @@ async function safeList(
   return result
 }
 
-async function fetchPendingEmployees(supabase: ReturnType<typeof createServiceClient>) {
+async function fetchPendingPartners(supabase: ReturnType<typeof createServiceClient>, workspaceId: string) {
+  const result = await supabase
+    .from('company_partners')
+    .select('id,company_id,display_name,partner_name,record_status,status,updated_at,created_at,is_deleted')
+    .in('record_status', ['draft'])
+    .eq('is_deleted', false)
+    .eq('tenant_id', workspaceId)
+    .limit(25)
+
+  if (result.error) {
+    if (isMissingSourceError(result.error)) return { data: [], error: null }
+    return result
+  }
+
+  const partners = result.data || []
+  const companyIds = Array.from(new Set(
+    partners
+      .map((partner: any) => partner.company_id)
+      .filter((id: unknown): id is string => typeof id === 'string' && id.length > 0)
+  ))
+
+  if (companyIds.length === 0) return { data: partners, error: null }
+
+  const companies = await safeList(
+    supabase,
+    'companies',
+    'id,short_name,trade_name',
+    query => query.in('id', companyIds)
+  )
+  if (companies.error) return companies
+
+  const companyById = new Map((companies.data || []).map((company: any) => [company.id, company]))
+  return {
+    data: partners.map((partner: any) => {
+      const company = companyById.get(partner.company_id) as Record<string, any> | undefined
+      return {
+        ...partner,
+        company_name: company?.short_name || company?.trade_name || '',
+      }
+    }),
+    error: null,
+  }
+}
+
+async function fetchPendingEmployees(supabase: ReturnType<typeof createServiceClient>, workspaceId: string) {
   const result = await supabase
     .from('employees')
     .select('id,person_id,record_status,employment_status,updated_at,created_at')
     .in('record_status', ['draft'])
+    .eq('tenant_id', workspaceId)
     .limit(25)
 
   if (result.error) {
@@ -130,6 +212,50 @@ async function fetchPendingEmployees(supabase: ReturnType<typeof createServiceCl
         first_name: person?.first_name || '',
         last_name: person?.last_name || '',
         display_name: person?.full_name || [person?.first_name, person?.last_name].filter(Boolean).join(' '),
+      }
+    }),
+    error: null,
+  }
+}
+
+async function fetchPendingUserRegistrationRequests(supabase: ReturnType<typeof createServiceClient>, workspaceId: string) {
+  const result = await supabase
+    .from('user_registration_requests')
+    .select('id,company_id,first_name,last_name,full_name,email,phone,status,created_at')
+    .eq('tenant_id', workspaceId)
+    .eq('status', 'pending')
+    .order('created_at', { ascending: false })
+    .limit(25)
+
+  if (result.error) {
+    if (isMissingSourceError(result.error)) return { data: [], error: null }
+    return result
+  }
+
+  const requests = result.data || []
+  const companyIds = Array.from(new Set(
+    requests
+      .map((item: any) => item.company_id)
+      .filter((id: unknown): id is string => typeof id === 'string' && id.length > 0)
+  ))
+
+  if (companyIds.length === 0) return { data: requests, error: null }
+
+  const companies = await safeList(
+    supabase,
+    'companies',
+    'id,short_name,trade_name',
+    query => query.in('id', companyIds)
+  )
+  if (companies.error) return companies
+
+  const companyById = new Map((companies.data || []).map((company: any) => [company.id, company]))
+  return {
+    data: requests.map((item: any) => {
+      const company = companyById.get(item.company_id) as Record<string, any> | undefined
+      return {
+        ...item,
+        company_name: company?.short_name || company?.trade_name || '',
       }
     }),
     error: null,

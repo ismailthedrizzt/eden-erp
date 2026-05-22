@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import { apiClient } from '@/lib/api/apiClient'
+import { hasPublicApiBaseUrl } from '@/lib/api/publicApiBaseUrl'
 import type { PermissionKey } from '@/packages/shared/src'
 
 interface PermissionContextValue {
@@ -16,8 +17,7 @@ interface PermissionContextValue {
 const PermissionContext = createContext<PermissionContextValue | null>(null)
 
 function shouldUseDemoPermissions() {
-  if (!process.env.NEXT_PUBLIC_API_BASE_URL) return true
-  return false
+  return !hasPublicApiBaseUrl()
 }
 
 export function PermissionProvider({ children }: { children: React.ReactNode }) {

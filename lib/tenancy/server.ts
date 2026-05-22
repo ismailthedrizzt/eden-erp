@@ -54,6 +54,7 @@ const TENANT_SCOPED_TABLES = new Set([
   'project_management_projects',
   'project_management_tasks',
   'project_management_time_entries',
+  'user_registration_requests',
 ])
 
 export type TenantResolutionSource = 'header' | 'cookie' | 'env' | 'default'

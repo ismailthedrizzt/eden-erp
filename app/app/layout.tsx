@@ -1,14 +1,18 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { usePathname } from 'next/navigation'
+import { usePathname, useSearchParams } from 'next/navigation'
 import Sidebar from '@/components/layout/Sidebar'
 import { PendingActionsBell } from '@/components/layout/PendingActionsBell'
-import { Menu, Sun, Moon } from 'lucide-react'
+import { Building2, Menu, Sun, Moon } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ModuleLicenseProvider } from '@/hooks/useModuleLicense'
 import { PermissionProvider } from '@/lib/security/permissionStore'
 import { ModuleProvider } from '@/lib/security/moduleStore'
+import { GuidedSystemTour } from '@/components/onboarding/GuidedSystemTour'
+import { cacheUiPreferences, readCachedUiPreferences, syncUiPreferencesPatch } from '@/lib/user-state/client'
+import { tenantRequestHeaders } from '@/lib/tenancy/client'
+import type { SessionBootstrapResponse, UiThemePreference } from '@/lib/user-state/types'
 
 const BREADCRUMBS: Record<string, string> = {
   '/app': 'Ana Sayfa',
@@ -49,27 +53,104 @@ const BREADCRUMBS: Record<string, string> = {
   '/app/gorev-ve-proje-yonetimi/raporlar': 'Görev ve Proje Yönetimi › Raporlar',
   '/app/sistem/module-licenses': 'Sistem Yönetimi › Modül Lisansları',
   '/app/sistem/system-parameters': 'Sistem Yönetimi › Sistem Parametreleri',
+  '/app/sistem/kullanici-talepleri': 'Sistem Yönetimi › Kullanıcı Kayıt Talepleri',
 }
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const forceTourToken = searchParams.get('tour') === '1' ? searchParams.toString() : ''
   const [collapsed, setCollapsed] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [dark, setDark] = useState(false)
+  const [workspaceName, setWorkspaceName] = useState('Çalışma Alanı')
+  const [workspaceLogoUrl, setWorkspaceLogoUrl] = useState<string | null>(null)
+  const [workspaceLogoFailed, setWorkspaceLogoFailed] = useState(false)
+  const [tourOpen, setTourOpen] = useState(false)
+  const [tourShouldOpen, setTourShouldOpen] = useState(false)
+  const [tourInitialStep, setTourInitialStep] = useState<string | null>(null)
+  const [tourClosedThisSession, setTourClosedThisSession] = useState(false)
 
   useEffect(() => {
-    const savedTheme = localStorage.getItem('theme')
-    if (savedTheme) {
-      setDark(savedTheme === 'dark')
-      document.documentElement.classList.toggle('dark', savedTheme === 'dark')
+    const cachedPreferences = readCachedUiPreferences()
+    setDark(applyThemePreference(cachedPreferences.theme))
+    setCollapsed(Boolean(cachedPreferences.sidebarCollapsed))
+
+    const forceTour = new URLSearchParams(window.location.search).get('tour') === '1'
+      || window.localStorage.getItem('eden.forceSystemTour') === 'true'
+    if (forceTour) {
+      window.localStorage.removeItem('eden.forceSystemTour')
+      setTourInitialStep(null)
+      setTourShouldOpen(true)
+      setTourClosedThisSession(false)
+    }
+
+    let cancelled = false
+
+    fetch('/api/session/bootstrap', {
+      cache: 'no-store',
+      headers: tenantRequestHeaders(),
+    })
+      .then(async response => {
+        const payload = await response.json().catch(() => ({}))
+        if (!response.ok) throw new Error(payload.error || 'Oturum hazirligi tamamlanamadi.')
+        return payload as SessionBootstrapResponse
+      })
+      .then(payload => {
+        if (cancelled) return
+        setWorkspaceName(payload.workspace?.name || 'Çalışma Alanı')
+        setWorkspaceLogoUrl(payload.workspace?.logoUrl || null)
+        setWorkspaceLogoFailed(false)
+        cacheUiPreferences(payload.userState.uiPreferences)
+        setDark(applyThemePreference(payload.userState.uiPreferences.theme))
+        setCollapsed(Boolean(payload.userState.uiPreferences.sidebarCollapsed))
+        setTourInitialStep(payload.userState.introCurrentStep)
+        setTourShouldOpen(forceTour || Boolean(payload.userState.shouldShowSystemTour))
+      })
+      .catch(() => {
+        // Ana ekran, tanitim veya tercih hazirligi aksasa da acilmaya devam eder.
+      })
+
+    return () => {
+      cancelled = true
     }
   }, [])
 
+  useEffect(() => {
+    if (tourShouldOpen && !tourClosedThisSession && pathname === '/app') {
+      setTourOpen(true)
+    }
+  }, [pathname, tourClosedThisSession, tourShouldOpen])
+
+  useEffect(() => {
+    if (!forceTourToken) return
+
+    setTourInitialStep(null)
+    setTourClosedThisSession(false)
+    setTourShouldOpen(true)
+    setTourOpen(false)
+
+    const timer = window.setTimeout(() => setTourOpen(true), 0)
+    return () => window.clearTimeout(timer)
+  }, [forceTourToken])
+
+  useEffect(() => {
+    if (tourOpen && collapsed) setCollapsed(false)
+  }, [collapsed, tourOpen])
+
   function toggleTheme() {
-    const newDark = !dark
-    setDark(newDark)
-    document.documentElement.classList.toggle('dark', newDark)
-    localStorage.setItem('theme', newDark ? 'dark' : 'light')
+    const nextTheme: UiThemePreference = dark ? 'light' : 'dark'
+    setDark(applyThemePreference(nextTheme))
+    localStorage.setItem('theme', nextTheme)
+    syncUiPreferencesPatch({ theme: nextTheme }).catch(() => undefined)
+  }
+
+  function toggleSidebar() {
+    setCollapsed(previous => {
+      const next = !previous
+      syncUiPreferencesPatch({ sidebarCollapsed: next }).catch(() => undefined)
+      return next
+    })
   }
 
   const breadcrumb = BREADCRUMBS[pathname] ?? 'Eden ERP'
@@ -91,7 +172,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <div className={cn('flex h-screen overflow-hidden', dark && 'dark')}>
             {/* Desktop Sidebar */}
             <div className="hidden lg:block">
-              <Sidebar collapsed={collapsed} mobileOpen={false} onMobileClose={() => {}} onExpand={() => setCollapsed(false)} />
+              <Sidebar
+                collapsed={collapsed}
+                mobileOpen={false}
+                onMobileClose={() => {}}
+                onExpand={() => {
+                  setCollapsed(false)
+                  syncUiPreferencesPatch({ sidebarCollapsed: false }).catch(() => undefined)
+                }}
+              />
             </div>
 
             {/* Mobile Sidebar Overlay */}
@@ -111,8 +200,11 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
             <div className="flex-1 flex flex-col overflow-hidden min-w-0">
           {/* Topbar */}
-          <header className="h-14 bg-white dark:bg-eden-navy-2 border-b border-gray-200 dark:border-eden-navy
+          <header
+            data-tour-id="app-header"
+            className="h-14 bg-white dark:bg-eden-navy-2 border-b border-gray-200 dark:border-eden-navy
                              px-3 sm:px-5 flex items-center justify-between flex-shrink-0 z-10">
+          
             <div className="flex items-center gap-3">
               {/* Mobile Menu Button */}
               <button
@@ -124,11 +216,31 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               </button>
               {/* Desktop Toggle */}
               <button
-                onClick={() => setCollapsed(!collapsed)}
+                onClick={toggleSidebar}
                 className="hidden lg:flex w-8 h-8 rounded-lg border border-gray-200 dark:border-gray-700 items-center justify-center
                            text-gray-500 hover:bg-gray-50 dark:hover:bg-eden-navy transition-colors"
               >
                 <Menu size={15} />
+              </button>
+              <button
+                type="button"
+                data-tour-id="workspace-switcher"
+                className="hidden min-w-0 items-center gap-2 rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-600 transition hover:bg-gray-50 dark:border-gray-700 dark:bg-eden-navy-2 dark:text-gray-200 dark:hover:bg-eden-navy sm:flex"
+                title={workspaceName}
+              >
+                {workspaceLogoUrl && !workspaceLogoFailed ? (
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center overflow-hidden rounded-md border border-gray-200 bg-white dark:border-gray-700 dark:bg-eden-navy">
+                    <img
+                      src={workspaceLogoUrl}
+                      alt=""
+                      className="h-full w-full object-contain"
+                      onError={() => setWorkspaceLogoFailed(true)}
+                    />
+                  </span>
+                ) : (
+                  <Building2 size={14} className="shrink-0 text-eden-green" />
+                )}
+                <span className="max-w-40 truncate">{workspaceName}</span>
               </button>
               <div className="text-xs text-gray-400 dark:text-gray-500">
                 Eden ERP ›{' '}
@@ -139,15 +251,18 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             </div>
             <div className="flex items-center gap-3">
               <PendingActionsBell />
+              <div data-tour-id="user-settings" className="flex items-center gap-3">
               <button
                 onClick={toggleTheme}
+                data-tour-id="theme-toggle"
                 className="w-8 h-8 rounded-lg border border-gray-200 dark:border-gray-700 flex items-center justify-center
                            text-gray-500 hover:bg-gray-50 dark:hover:bg-eden-navy transition-colors"
+                title="Tema"
               >
                 {dark ? <Sun size={15} /> : <Moon size={15} />}
               </button>
               {/* User Profile */}
-              <div className="flex items-center gap-2.5">
+              <div data-tour-id="header-user-info" className="flex items-center gap-2.5">
                 <div className="w-7 h-7 rounded-full bg-eden-blue flex items-center justify-center
                                 text-[10px] font-bold text-white">
                   İİ
@@ -157,18 +272,35 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   <div className="text-[10px] text-gray-500 dark:text-gray-400">Yönetici</div>
                 </div>
               </div>
+              </div>
             </div>
           </header>
 
           {/* Content */}
-          <main className="flex-1 overflow-y-auto bg-gray-50 dark:bg-[#09141e] p-5">
+          <main data-tour-id="page-template" className="flex-1 overflow-y-auto bg-gray-50 dark:bg-[#09141e] p-5">
             {children}
           </main>
             </div>
+            <GuidedSystemTour
+              open={tourOpen}
+              initialStepId={tourInitialStep}
+              onOpenChange={(nextOpen) => {
+                setTourOpen(nextOpen)
+                if (!nextOpen) setTourClosedThisSession(true)
+              }}
+            />
           </div>
         </PermissionProvider>
       </ModuleProvider>
     </ModuleLicenseProvider>
   )
+}
+
+function applyThemePreference(theme: UiThemePreference) {
+  const prefersDark = typeof window !== 'undefined'
+    && window.matchMedia?.('(prefers-color-scheme: dark)').matches
+  const shouldUseDark = theme === 'dark' || (theme === 'system' && prefersDark)
+  document.documentElement.classList.toggle('dark', shouldUseDark)
+  return shouldUseDark
 }
 

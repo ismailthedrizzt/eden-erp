@@ -119,7 +119,7 @@ export function RecordLifecycleWizard({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-stretch justify-end bg-black/45 p-0 sm:p-4">
+    <div data-tour-id="record-lifecycle-wizard" className="fixed inset-0 z-50 flex items-stretch justify-end bg-black/45 p-0 sm:p-4">
       <div className="flex h-full w-full flex-col overflow-hidden bg-white shadow-2xl dark:bg-gray-950 sm:max-w-6xl sm:rounded-2xl">
         <div className="border-b border-gray-200 bg-white px-5 py-4 dark:border-gray-800 dark:bg-gray-950">
           <div className="flex items-start justify-between gap-4">
@@ -132,6 +132,7 @@ export function RecordLifecycleWizard({
             </div>
             <button
               type="button"
+              data-tour-id="record-lifecycle-wizard-close"
               onClick={onClose}
               className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-900 dark:hover:text-white"
               aria-label="Kapat"

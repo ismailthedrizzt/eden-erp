@@ -1,6 +1,7 @@
 'use client'
 
-import { useMemo, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { Archive, BriefcaseBusiness, Building2, CheckCircle2, CircleDot, FileText, History, Landmark, PlayCircle, Settings, ShieldAlert, Users } from 'lucide-react'
 import { useSirketler } from '@/hooks/useSirketler'
 import { EntityForm, FormField, FormMode, FormTab } from '@/components/ui/EntityForm'
@@ -289,7 +290,48 @@ const tabs: FormTab[] = [
 const getFieldLabel = (field: string) => FIELD_LABELS[field] || field
 const formatFieldList = (fields: string[]) => fields.map(getFieldLabel).join(', ')
 
+function createTourDraftCompany(): Sirket {
+  const now = new Date().toISOString()
+
+  return {
+    id: 'tour-draft-company',
+    short_name: 'EDEN Demo',
+    trade_name: 'EDEN Demo Teknoloji A.Ş.',
+    tax_number: '1111111111',
+    tax_office: 'Kadıköy',
+    company_type: 'anonim',
+    country: 'Türkiye',
+    city: 'İstanbul',
+    district: 'Kadıköy',
+    address: 'Demo Mahallesi, Eğitim Sokak No: 1',
+    phone: '+90 212 000 00 00',
+    email: 'demo@eden.local',
+    website: 'https://eden.local',
+    record_status: 'draft',
+    company_status: 'draft',
+    is_deleted: false,
+    partners: [],
+    representatives: [],
+    stakeholders: [],
+    lifecycle_events: [
+      {
+        event_type: 'company_created_as_draft',
+        event_date: now,
+        new_status: 'draft',
+      },
+    ],
+    lifecycle_last_event: {
+      event_type: 'company_created_as_draft',
+      event_date: now,
+      new_status: 'draft',
+    },
+    created_at: now,
+    updated_at: now,
+  } as unknown as Sirket
+}
+
 export default function SirketlerPage() {
+  const searchParams = useSearchParams()
   const [includePassive, setIncludePassive] = useState(false)
   const [listQuery, setListQuery] = useState({ page: 1, pageSize: 10, search: '', sort: 'short_name', direction: 'asc' as 'asc' | 'desc' })
   const { data: companies, meta: listMeta, loading, error: listError, yenile } = useSirketler({ includePassive, ...listQuery })
@@ -306,13 +348,14 @@ export default function SirketlerPage() {
   const [toast, setToast] = useState<ToastState | null>(null)
   const [lifecycleWizard, setLifecycleWizard] = useState<CompanyLifecycleWizardType | null>(null)
   const detailRequestRef = useRef(0)
+  const tourLifecycleOpenedRef = useRef(false)
 
   const configuredHeroFields = [
     {
       name: 'lifecycle_status_badge',
       label: 'Durum',
       type: 'custom',
-      render: () => <LifecycleStatusBadge status={pageState === 'create' ? 'draft' : getCompanyLifecycleStatus(selectedSirket)} />,
+      render: () => <LifecycleStatusBadge status={pageState === 'create' ? 'draft' : getCompanyLifecycleStatus(selectedSirket)} tourId="record-lifecycle" />,
     } as FormField,
     ...heroFields,
   ]
@@ -419,6 +462,20 @@ export default function SirketlerPage() {
     referencesLoading: false,
     referencesReady: pageState !== 'list',
   })
+
+  useEffect(() => {
+    if (searchParams.get('systemTour') !== 'lifecycle') return
+    if (tourLifecycleOpenedRef.current || pageState !== 'list' || loading) return
+
+    const draftCompany = tableData.find(row => getCompanyLifecycleStatus(row) === 'draft')
+      || createTourDraftCompany()
+    tourLifecycleOpenedRef.current = true
+    setFormError(null)
+    setFieldErrors({})
+    setDetailSections(emptyDetailSectionState)
+    setSelectedSirket(normalizeCompanyForForm(draftCompany as Sirket))
+    setPageState('view')
+  }, [loading, pageState, searchParams, tableData])
 
   if (!formAccess.canView) {
     return (
@@ -701,11 +758,12 @@ export default function SirketlerPage() {
     const visibleActions = actions.filter(action => action.visible)
     if (!visibleActions.length) return null
     return (
-      <div className="flex flex-wrap items-center gap-2">
+      <div data-tour-id="record-lifecycle-actions" className="flex flex-wrap items-center gap-2">
         {visibleActions.map(action => (
           <button
             key={action.key}
             type="button"
+            data-tour-id={action.key === 'opening' ? 'company-opening-action' : undefined}
             onClick={action.onClick}
             className="inline-flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-medium text-blue-700 hover:bg-blue-100 dark:border-blue-900/60 dark:bg-blue-950/30 dark:text-blue-200 dark:hover:bg-blue-950/50"
           >
@@ -881,6 +939,8 @@ export default function SirketlerPage() {
               }
             }}
             defaultView="list"
+            quickLookDefaultOpen={false}
+            forceQuickLookClosed={searchParams.has('systemTour')}
             storageKey="companies-table"
             emptyText="Şirket kaydı bulunamadı"
           />
@@ -1065,9 +1125,12 @@ function getCompanyLifecycleBadgeClass(status: CompanyLifecycleStatus) {
   return 'border-gray-300 bg-gray-100 text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200'
 }
 
-function LifecycleStatusBadge({ status }: { status: CompanyLifecycleStatus }) {
+function LifecycleStatusBadge({ status, tourId }: { status: CompanyLifecycleStatus; tourId?: string }) {
   return (
-    <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold ${getCompanyLifecycleBadgeClass(status)}`}>
+    <span
+      data-tour-id={tourId}
+      className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-semibold ${getCompanyLifecycleBadgeClass(status)}`}
+    >
       <CircleDot size={12} />
       Durum: {getCompanyLifecycleLabel(status)}
     </span>
@@ -1149,7 +1212,7 @@ function CompanyLifecycleSummary({ data }: { data?: Sirket | null }) {
   const lastEvent = (data as any)?.lifecycle_last_event || events[0]
 
   return (
-    <div className="col-span-2 space-y-4 lg:col-span-3">
+    <div data-tour-id="record-lifecycle-summary" className="col-span-2 space-y-4 lg:col-span-3">
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
         <LifecycleSummaryCard
           icon={<CircleDot size={16} />}

@@ -1,6 +1,7 @@
 'use client'
 
 import { createClient } from '@/lib/supabase/client'
+import { getPublicApiBaseUrl } from '@/lib/api/publicApiBaseUrl'
 import { tenantRequestHeaders } from '@/lib/tenancy/client'
 
 export class ApiError extends Error {
@@ -25,7 +26,6 @@ export interface ApiClientOptions extends RequestInit {
   tenantId?: string | null
 }
 
-const apiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || ''
 const DEFAULT_STALE_TIME = 60_000
 const getCache = new Map<string, { expiresAt: number; value: unknown }>()
 const inFlightGets = new Map<string, Promise<unknown>>()
@@ -33,6 +33,7 @@ const inFlightGets = new Map<string, Promise<unknown>>()
 type JsonBody = Record<string, unknown> | unknown[] | string | number | boolean | null
 
 function buildUrl(path: string, query?: ApiClientOptions['query']) {
+  const apiBaseUrl = getPublicApiBaseUrl()
   const url = path.startsWith('http') || path.startsWith('/api/')
     ? path
     : `${apiBaseUrl}${path}`

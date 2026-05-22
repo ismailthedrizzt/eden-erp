@@ -180,6 +180,7 @@ const NAV: NavItem[] = [
       { label: 'Modül Lisansları', href: '/app/sistem/module-licenses' },
       { label: 'Sistem Parametreleri', href: '/app/sistem/system-parameters' },
       { label: 'Entegrasyon Ayarları', href: '/app/sistem/entegrasyon-ayarlari', moduleKey: 'sistem', submoduleKey: 'entegrasyon-ayarlari' },
+      { label: 'Kullanıcı Talepleri', href: '/app/sistem/kullanici-talepleri' },
       { label: 'Kullanıcılar', href: '/app/sistem/kullanicilar', disabled: true },
       { label: 'Roller & Yetkiler', href: '/app/sistem/roller', disabled: true },
       { label: 'Sistem Logları', href: '/app/sistem/loglar', disabled: true },
@@ -233,7 +234,7 @@ export default function Sidebar({ collapsed = false, mobileOpen = false, onMobil
     if (isProd && !isModuleAvailable) return null
 
     return (
-      <div key={item.id}>
+      <div key={item.id} data-tour-id={item.id === 'sirket' ? 'sidebar-pages' : undefined}>
         {/* Main nav item */}
         {item.href ? (
           <Link href={item.href}
@@ -319,7 +320,9 @@ export default function Sidebar({ collapsed = false, mobileOpen = false, onMobil
     <aside className={cn(
       'flex flex-col bg-eden-navy transition-all duration-200 overflow-hidden flex-shrink-0 h-full',
       mobileOpen ? 'w-80' : (collapsed ? 'w-16' : 'w-80')
-    )}>
+    )}
+      data-tour-id="sidebar-menu"
+    >
       {/* Logo & Mobile Close */}
       <div className="px-4 py-4 border-b border-white/[0.07] flex items-center justify-between flex-shrink-0">
         <div className="flex min-w-0 items-center">
@@ -355,12 +358,12 @@ export default function Sidebar({ collapsed = false, mobileOpen = false, onMobil
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 overflow-y-auto px-2 py-2 space-y-0.5 scrollbar-thin">
+      <nav data-tour-id="sidebar-modules" className="flex-1 overflow-y-auto px-2 py-2 space-y-0.5 scrollbar-thin">
         {NAV.map(item => renderItem(item))}
       </nav>
 
       {/* Footer */}
-      <div className="px-2 py-2 border-t border-white/[0.07] flex-shrink-0">
+      <div data-tour-id="sidebar-logout" className="px-2 py-2 border-t border-white/[0.07] flex-shrink-0">
         <button
           onClick={async () => {
             if (typeof window !== 'undefined') {

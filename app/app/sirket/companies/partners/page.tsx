@@ -1,6 +1,7 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { Users } from 'lucide-react'
 import { EntityForm, FormField, FormMode, FormTab } from '@/components/ui/EntityForm'
 import { PageBanner } from '@/components/ui/PageBanner'
@@ -357,6 +358,8 @@ const tabs: FormTab[] = [
 ]
 
 export default function OrtaklarPage() {
+  const searchParams = useSearchParams()
+  const pendingPartnerOpenRef = useRef<string | null>(null)
   const [pageState, setPageState] = useState<PageState>('list')
   const [partners, setPartners] = useState<PartnerRow[]>([])
   const [companies, setCompanies] = useState<CompanyOption[]>([])
@@ -557,6 +560,17 @@ export default function OrtaklarPage() {
       setDetailLoading(false)
     }
   }
+
+  useEffect(() => {
+    const pendingPartnerId = searchParams.get('id')
+    if (!pendingPartnerId || loading || pageState !== 'list' || pendingPartnerOpenRef.current === pendingPartnerId) return
+
+    const pendingPartner = tableData.find(partner => partner.id === pendingPartnerId)
+    if (!pendingPartner) return
+
+    pendingPartnerOpenRef.current = pendingPartnerId
+    void handleRowClick(pendingPartner)
+  }, [loading, pageState, searchParams, tableData])
 
   const handleSave = async (data: Record<string, any>, mode: FormMode) => {
     setSaving(true)

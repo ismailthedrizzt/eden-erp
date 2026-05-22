@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Bell, Building2, CheckSquare, Loader2, Users, X } from 'lucide-react'
+import { Bell, Building2, CheckSquare, Loader2, UserPlus, Users, X } from 'lucide-react'
+import { tenantRequestHeaders } from '@/lib/tenancy/client'
 
 type PendingActionItem = {
   id: string
@@ -46,7 +47,10 @@ export function PendingActionsBell() {
     setLoading(true)
     setError(null)
     try {
-      const response = await fetch('/api/notifications/pending-actions', { cache: 'no-store' })
+      const response = await fetch('/api/notifications/pending-actions', {
+        cache: 'no-store',
+        headers: tenantRequestHeaders(),
+      })
       const payload = await response.json().catch(() => ({}))
       if (!response.ok) throw new Error(payload.error || 'Bildirimler alınamadı')
       setItems(Array.isArray(payload.data?.items) ? payload.data.items : [])
@@ -58,7 +62,7 @@ export function PendingActionsBell() {
   }
 
   return (
-    <div ref={containerRef} className="relative">
+    <div ref={containerRef} data-tour-id="notifications" className="relative">
       <button
         type="button"
         onClick={() => setOpen(previous => !previous)}
@@ -141,5 +145,7 @@ export function PendingActionsBell() {
 function notificationIcon(type: string) {
   if (type === 'company_lifecycle') return <Building2 size={15} />
   if (type === 'employee_entry') return <Users size={15} />
+  if (type === 'partner_entry') return <Users size={15} />
+  if (type === 'user_registration_request') return <UserPlus size={15} />
   return <CheckSquare size={15} />
 }

@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react'
 import { apiClient } from '@/lib/api/apiClient'
+import { hasPublicApiBaseUrl } from '@/lib/api/publicApiBaseUrl'
 import type { InstanceModule, ModuleStatus } from '@/packages/shared/src'
 
 interface ModuleContextValue {
@@ -22,7 +23,7 @@ export function ModuleProvider({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState<string | null>(null)
 
   const refetch = async () => {
-    if (!process.env.NEXT_PUBLIC_API_BASE_URL) {
+    if (!hasPublicApiBaseUrl()) {
       setModules({})
       setLoading(false)
       setError(null)

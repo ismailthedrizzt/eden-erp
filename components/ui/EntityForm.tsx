@@ -351,7 +351,10 @@ function RecordStatusBadge({ status }: { status?: unknown }) {
   const selected = config[normalized] || config.draft
 
   return (
-    <span className={cn('inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold', selected.className)}>
+    <span
+      data-tour-id="record-lifecycle"
+      className={cn('inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-semibold', selected.className)}
+    >
       Durum: {selected.label}
     </span>
   )
@@ -479,6 +482,7 @@ function MasterSummaryHero({
             return (
             <div
               key={item.label}
+              data-tour-field={item.fieldKeys?.[0]}
               className={cn(
                 "rounded-lg border bg-white px-3 py-2 dark:bg-gray-900",
                 validationState.status === 'invalid'
@@ -3224,7 +3228,11 @@ export function EntityForm({
     }
 
     return (
-      <div key={field.name} className={cn("relative space-y-1", colSpanClass)}>
+      <div
+        key={field.name}
+        data-tour-field={field.name}
+        className={cn("relative space-y-1", colSpanClass)}
+      >
         {!field.hideLabel && (
           <div className="flex items-center gap-2">
             <label className={cn(
@@ -3279,7 +3287,10 @@ export function EntityForm({
   }
 
   return (
-    <div className={cn("bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden", className)}>
+    <div
+      data-tour-id="record-forms"
+      className={cn("bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 overflow-hidden", className)}
+    >
       <Modal
         open={showDeleteConfirm}
         onClose={() => !deleting && setShowDeleteConfirm(false)}
@@ -3355,7 +3366,7 @@ export function EntityForm({
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 p-6">
           
           {/* Left Panel - STANDARD FORM LAYOUT: Photo (expected) + CV (optional) */}
-          <div className="relative lg:col-span-1">
+          <div data-tour-id="record-form-media" className="relative lg:col-span-1">
             <SectionLoadIcon stage={mediaLoadStage} />
             {heroLeftPanel || (
               <div className="flex flex-col gap-4">
@@ -3397,7 +3408,7 @@ export function EntityForm({
           </div>
 
           {/* Right Panel - Fields + Actions */}
-          <div className="relative lg:col-span-3 flex flex-col">
+          <div data-tour-id="record-form-main" className="relative lg:col-span-3 flex flex-col">
             <SectionLoadIcon stage={heroLoadStage} />
             {/* Section Title */}
             {showHeroHeader && <div className="mb-4">
@@ -3418,7 +3429,7 @@ export function EntityForm({
             )}
 
             {/* Required Fields Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 flex-1">
+            <div data-tour-id="record-form-fields" className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 flex-1">
               {identityGate?.enabled && (
                 <MasterIdentityGate
                   config={identityGate}
@@ -3468,7 +3479,7 @@ export function EntityForm({
             </div>
 
             {/* Form Action Area - Bottom Right */}
-            <div className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-end gap-2">
+            <div data-tour-id="record-form-actions" className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-end gap-2">
               {/* Future: Workflow Actions (Approve, Reject, etc.) */}
               {additionalActions}
               
@@ -3490,6 +3501,7 @@ export function EntityForm({
               )}
               {isReadOnly && effectiveCanEdit && !isPassive && (
                 <button
+                  data-tour-id="record-form-edit-button"
                   onClick={() => handleModeChange('edit')}
                   className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
                 >
@@ -3529,10 +3541,11 @@ export function EntityForm({
 
       {formTabs.length > 0 && (
         <div className="border-b border-gray-200 dark:border-gray-700">
-          <div className="flex flex-wrap gap-2 px-4 py-3">
+          <div data-tour-id="record-form-tabs" className="flex flex-wrap gap-2 px-4 py-3">
             {formTabs.map(tab => (
               <button
                 key={tab.id}
+                data-tour-id={tab.id === 'lifecycle' ? 'record-lifecycle-tab' : tab.id === 'organization_banka' ? 'record-bank-tab' : undefined}
                 disabled={isIdentityGateLocked}
                 onClick={() => setActiveTab(tab.id)}
                 className={cn(
@@ -3554,7 +3567,7 @@ export function EntityForm({
       )}
 
       {(formTabs.length > 0 || isIdentityGateLocked) && (
-        <div className="relative p-6">
+        <div data-tour-id="record-form-tab-content" className="relative p-6">
           <SectionLoadIcon stage={detailsLoadStage} />
           {isIdentityGateLocked && (
             <div className="mb-4 rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-3 text-sm text-gray-600 dark:border-gray-700 dark:bg-gray-800/50 dark:text-gray-300">

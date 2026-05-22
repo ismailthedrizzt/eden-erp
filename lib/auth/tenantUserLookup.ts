@@ -1,12 +1,14 @@
 import 'server-only'
 
 import { createServiceClient } from '@/lib/supabase/server'
+import { fetchWorkspaceSummary } from '@/lib/user-state/server'
 
 export type LoginIdentifierType = 'email' | 'phone'
 
 export type TenantAccessOption = {
   tenant_id: string
   tenant_name: string
+  logoUrl?: string | null
   role_label?: string | null
   role_key?: string | null
   is_default?: boolean
@@ -103,13 +105,25 @@ export async function lookupTenantUserAccess(value: string): Promise<TenantUserL
   if (tenantError) throw new Error(tenantError.message || 'Tenant bilgisi sorgulanamadı.')
 
   const tenantById = new Map((tenantRows || []).map(tenant => [tenant.id, tenant]))
+  const workspaceSummaries = await Promise.all(
+    tenantIds.map(async tenantId => {
+      try {
+        return [tenantId, await fetchWorkspaceSummary(supabase, tenantId)] as const
+      } catch {
+        return [tenantId, null] as const
+      }
+    })
+  )
+  const workspaceSummaryById = new Map(workspaceSummaries)
   const tenants = activeMemberships
     .filter(membership => tenantById.has(membership.tenant_id))
     .map(membership => {
       const tenant = tenantById.get(membership.tenant_id)
+      const workspaceSummary = workspaceSummaryById.get(membership.tenant_id)
       return {
         tenant_id: membership.tenant_id,
-        tenant_name: tenant?.name || 'Eden ERP',
+        tenant_name: workspaceSummary?.name || tenant?.name || 'Eden ERP',
+        logoUrl: workspaceSummary?.logoUrl || null,
         role_key: membership.role_key || null,
         role_label: roleLabel(membership.role_key),
         is_default: Boolean(membership.is_default),

@@ -30,7 +30,7 @@ export function setStoredTenantId(tenantId: string | null) {
   window.localStorage.setItem(TENANT_STORAGE_KEY, normalized)
 }
 
-export function tenantRequestHeaders(tenantId?: string | null) {
+export function tenantRequestHeaders(tenantId?: string | null): Record<string, string> {
   const resolvedTenantId = normalizeTenantId(tenantId) || getStoredTenantId()
   if (!resolvedTenantId) return {}
 

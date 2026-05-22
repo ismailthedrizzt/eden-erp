@@ -7,10 +7,12 @@ import {
   BrainCircuit,
   BriefcaseBusiness,
   Calculator,
+  CheckCircle2,
   Factory,
   Landmark,
   LogIn,
   PackageCheck,
+  Search,
   UserPlus,
   Users,
   Wrench,
@@ -55,12 +57,14 @@ const otpInputClass =
   'h-11 w-8 rounded-xl border border-[#28445c] bg-[#091826] text-center text-lg font-bold text-white outline-none transition-all focus:border-eden-blue focus:ring-2 focus:ring-eden-blue/25 sm:h-14 sm:w-12 sm:text-xl'
 
 type AuthMode = 'login' | 'signup'
+type SignupFlow = 'new_company' | 'join_company'
 
 type TenantAccessLookupResponse = {
   data?: {
     tenants?: Array<{
       tenant_id: string
       tenant_name: string
+      logoUrl?: string | null
       role_label?: string | null
     }>
     message?: string
@@ -94,6 +98,35 @@ type OtpVerifyResponse = {
     tenant_name: string
   }
   error?: string
+}
+
+type CompanyJoinMatch = {
+  tenant_id: string
+  tenant_name: string
+  company_id: string
+  company_name: string
+  trade_name?: string | null
+  tax_number: string
+}
+
+type CompanyJoinResponse = {
+  data?: {
+    matches?: CompanyJoinMatch[]
+    message?: string
+    request?: Record<string, any>
+    company?: CompanyJoinMatch
+  }
+  error?: string
+}
+
+type JoinFormState = {
+  tax_number: string
+  first_name: string
+  last_name: string
+  national_id: string
+  gender: 'male' | 'female'
+  email: string
+  phone: string
 }
 
 const AUTH_MODE_COPY: Record<AuthMode, {
@@ -134,6 +167,29 @@ const AUTH_MODE_COPY: Record<AuthMode, {
   },
 }
 
+const SIGNUP_FLOW_OPTIONS: Array<{ value: SignupFlow; label: string; description: string }> = [
+  {
+    value: 'new_company',
+    label: 'Yeni şirket kaydı',
+    description: 'Yeni çalışma alanı ve şirket kurulumu başlatılır.',
+  },
+  {
+    value: 'join_company',
+    label: 'Kayıtlı şirketime katılmak istiyorum',
+    description: 'VKN ile şirket bulunur, yönetici onayına kullanıcı talebi düşer.',
+  },
+]
+
+const initialJoinForm: JoinFormState = {
+  tax_number: '',
+  first_name: '',
+  last_name: '',
+  national_id: '',
+  gender: 'male',
+  email: '',
+  phone: '',
+}
+
 function getErrorMessage(cause: unknown, fallback: string) {
   return cause instanceof Error ? cause.message : fallback
 }
@@ -149,6 +205,32 @@ function normalizeAuthIdentifier(value: string) {
 
   if (/^[0-9]{10,11}$/.test(digits)) return { type: 'phone' as const, value: digits }
 
+  return null
+}
+
+function onlyDigits(value: string, maxLength: number) {
+  return value.replace(/\D/g, '').slice(0, maxLength)
+}
+
+function joinContactIdentifier(form: JoinFormState) {
+  return normalizeAuthIdentifier(form.email) || normalizeAuthIdentifier(form.phone)
+}
+
+function joinFormWithIdentifier(form: JoinFormState, identifier: string) {
+  const normalized = normalizeAuthIdentifier(identifier)
+  if (!normalized) return form
+  if (normalized.type === 'email') return { ...form, email: normalized.value }
+  return { ...form, phone: normalized.value }
+}
+
+function validateJoinForm(form: JoinFormState, selectedCompanyId: string | null) {
+  if (!/^\d{10}$/.test(form.tax_number)) return 'Şirket VKN 10 haneli olmalıdır.'
+  if (!selectedCompanyId) return 'Devam etmek için VKN sorgusundan şirket seçin.'
+  if (form.first_name.trim().length < 2) return 'Ad zorunludur.'
+  if (form.last_name.trim().length < 2) return 'Soyad zorunludur.'
+  if (!/^\d{11}$/.test(form.national_id)) return 'TC kimlik no 11 haneli olmalıdır.'
+  if (!joinContactIdentifier(form)) return 'Geçerli bir e-posta veya telefon numarası giriniz.'
+  if (form.email && !normalizeAuthIdentifier(form.email)) return 'E-posta adresi geçerli değil.'
   return null
 }
 
@@ -205,11 +287,18 @@ export function LoginExperience({
   signupRedirectPath = '/app/sistem/kurulum',
 }: LoginExperienceProps) {
   const [authMode, setAuthMode] = useState<AuthMode>('signup')
+  const [signupFlow, setSignupFlow] = useState<SignupFlow>('new_company')
   const [step, setStep] = useState<'kimlik' | 'otp'>('kimlik')
   const [value, setValue] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [loginEnabled, setLoginEnabled] = useState(false)
+  const [joinForm, setJoinForm] = useState<JoinFormState>(initialJoinForm)
+  const [joinMatches, setJoinMatches] = useState<CompanyJoinMatch[]>([])
+  const [selectedJoinCompanyId, setSelectedJoinCompanyId] = useState<string | null>(null)
+  const [joinLookupLoading, setJoinLookupLoading] = useState(false)
+  const [joinLookupMessage, setJoinLookupMessage] = useState<string | null>(null)
+  const [joinRequestMessage, setJoinRequestMessage] = useState<string | null>(null)
   const [otp, setOtp] = useState(['', '', '', '', '', ''])
   const [otpError, setOtpError] = useState('')
   const [success, setSuccess] = useState(false)
@@ -292,7 +381,24 @@ export function LoginExperience({
     setOtpError('')
     setSuccess(false)
     setFallbackCode(null)
+    setJoinRequestMessage(null)
     setOtp(['', '', '', '', '', ''])
+  }
+
+  function switchSignupFlow(nextFlow: SignupFlow) {
+    if (nextFlow === signupFlow) return
+    setSignupFlow(nextFlow)
+    setStep('kimlik')
+    setError('')
+    setOtpError('')
+    setSuccess(false)
+    setFallbackCode(null)
+    setJoinRequestMessage(null)
+    setOtp(['', '', '', '', '', ''])
+
+    if (nextFlow === 'join_company') {
+      setJoinForm(current => joinFormWithIdentifier(current, value))
+    }
   }
 
   async function sendOtp(identifier: string, purpose: AuthMode = authMode) {
@@ -330,6 +436,42 @@ export function LoginExperience({
     return data.data
   }
 
+  async function lookupCompanyJoinMatches(taxNumber = joinForm.tax_number) {
+    const normalizedTaxNumber = onlyDigits(taxNumber, 10)
+    setJoinForm(current => ({ ...current, tax_number: normalizedTaxNumber }))
+    setSelectedJoinCompanyId(null)
+    setJoinMatches([])
+    setJoinLookupMessage(null)
+
+    if (!/^\d{10}$/.test(normalizedTaxNumber)) {
+      setJoinLookupMessage('VKN 10 haneli olmalıdır.')
+      return []
+    }
+
+    setJoinLookupLoading(true)
+    try {
+      const response = await fetch('/api/auth/company-join', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'lookup', tax_number: normalizedTaxNumber }),
+      })
+      const data = await response.json().catch(() => ({})) as CompanyJoinResponse
+      if (!response.ok) throw new Error(data.error || 'Şirket sorgusu tamamlanamadı.')
+
+      const matches = Array.isArray(data.data?.matches) ? data.data.matches : []
+      setJoinMatches(matches)
+      setSelectedJoinCompanyId(matches[0]?.company_id || null)
+      setJoinLookupMessage(matches.length ? null : 'Bu VKN ile kayıtlı aktif şirket bulunamadı.')
+      return matches
+    } catch (cause) {
+      const message = getErrorMessage(cause, 'Şirket sorgusu tamamlanamadı.')
+      setJoinLookupMessage(message)
+      return []
+    } finally {
+      setJoinLookupLoading(false)
+    }
+  }
+
   function startSignupSetup(identifier: string) {
     if (typeof window === 'undefined') return
 
@@ -337,20 +479,55 @@ export function LoginExperience({
     window.location.href = `${signupRedirectPath}?${params.toString()}`
   }
 
-  function completeAuthFlow() {
-    setSuccess(true)
+  async function submitCompanyJoinRequest() {
+    const selectedCompany = joinMatches.find(match => match.company_id === selectedJoinCompanyId)
+    if (!selectedCompany) throw new Error('Devam etmek için VKN sorgusundan şirket seçin.')
 
+    const response = await fetch('/api/auth/company-join', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'create_request',
+        tax_number: joinForm.tax_number,
+        tenant_id: selectedCompany.tenant_id,
+        company_id: selectedCompany.company_id,
+        person: {
+          first_name: joinForm.first_name,
+          last_name: joinForm.last_name,
+          nationality: 'TR',
+          national_id: joinForm.national_id,
+          gender: joinForm.gender,
+          email: joinForm.email,
+          phone: joinForm.phone,
+        },
+      }),
+    })
+    const data = await response.json().catch(() => ({})) as CompanyJoinResponse
+    if (!response.ok) throw new Error(data.error || 'Kullanıcı kayıt talebi oluşturulamadı.')
+
+    setJoinRequestMessage(data.data?.message || 'Kullanıcı kayıt talebiniz oluşturuldu.')
+  }
+
+  async function completeAuthFlow() {
     if (authMode === 'signup') {
+      if (signupFlow === 'join_company') {
+        await submitCompanyJoinRequest()
+        setSuccess(true)
+        return
+      }
+
       const normalizedIdentifier = normalizeAuthIdentifier(value)
       if (!normalizedIdentifier) {
         setOtpError('Gecerli bir e-posta veya telefon numarasi giriniz.')
         return
       }
 
+      setSuccess(true)
       startSignupSetup(normalizedIdentifier.value)
       return
     }
 
+    setSuccess(true)
     if (!redirectOnSuccess) return
 
     if (typeof window !== 'undefined') {
@@ -364,7 +541,9 @@ export function LoginExperience({
       return
     }
 
-    const normalizedIdentifier = normalizeAuthIdentifier(value)
+    const normalizedIdentifier = authMode === 'signup' && signupFlow === 'join_company'
+      ? joinContactIdentifier(joinForm)
+      : normalizeAuthIdentifier(value)
     if (!normalizedIdentifier) {
       setError('Geçerli bir e-posta veya telefon numarası giriniz.')
       return
@@ -373,10 +552,39 @@ export function LoginExperience({
     setLoading(true)
     setError('')
     setFallbackCode(null)
+    setJoinRequestMessage(null)
     setSuccess(false)
     setOtp(['', '', '', '', '', ''])
     try {
       if (authMode === 'signup') {
+        if (signupFlow === 'join_company') {
+          const selectedCompanyId = selectedJoinCompanyId
+          let matches = joinMatches
+          if (!matches.length && /^\d{10}$/.test(joinForm.tax_number)) {
+            matches = await lookupCompanyJoinMatches(joinForm.tax_number)
+          }
+
+          const selectedCompany = matches.find(match => match.company_id === selectedCompanyId) || matches[0]
+          const errorMessage = validateJoinForm(joinForm, selectedCompany?.company_id || null)
+          if (errorMessage) {
+            setError(errorMessage)
+            return
+          }
+
+          setSelectedJoinCompanyId(selectedCompany.company_id)
+          const contact = joinContactIdentifier(joinForm)
+          if (!contact) {
+            setError('Geçerli bir e-posta veya telefon numarası giriniz.')
+            return
+          }
+
+          setValue(contact.value)
+          const delivery = await sendOtp(contact.value, 'signup')
+          setFallbackCode(delivery?.fallbackCode || null)
+          setStep('otp')
+          return
+        }
+
         setValue(normalizedIdentifier.value)
         const delivery = await sendOtp(normalizedIdentifier.value, 'signup')
         setFallbackCode(delivery?.fallbackCode || null)
@@ -445,7 +653,7 @@ export function LoginExperience({
         }
 
         await verifyOtpCode(code)
-        completeAuthFlow()
+        await completeAuthFlow()
       } catch (cause) {
         setOtpError(getErrorMessage(cause, 'Kod hatalı. Lütfen tekrar deneyin.'))
         setOtp(['', '', '', '', '', ''])
@@ -468,7 +676,7 @@ export function LoginExperience({
       }
 
       await verifyOtpCode(code)
-      completeAuthFlow()
+      await completeAuthFlow()
     } catch (cause) {
       setOtpError(getErrorMessage(cause, 'Kod hatalı. Lütfen tekrar deneyin.'))
       setOtp(['', '', '', '', '', ''])
@@ -579,18 +787,16 @@ export function LoginExperience({
 
       <div className="flex w-full items-center justify-center bg-[#0b1724] p-6 sm:p-10 lg:w-[440px] lg:border-l lg:border-[#28445c]">
         <div className="w-full max-w-sm rounded-2xl border border-[#28445c] bg-[#0f2233]/92 p-6 shadow-2xl shadow-black/25 sm:p-8 lg:border-0 lg:bg-transparent lg:p-0 lg:shadow-none">
-          <div className="mb-10 flex items-center gap-3">
-            <Image
-              src="/eden-icon-original.png"
-              alt="Eden"
-              width={44}
-              height={44}
-              className="h-11 w-11 flex-shrink-0 object-contain"
-              priority
-            />
-            <div>
-              <div className="text-[10px] font-semibold uppercase tracking-widest text-white/45">Eden Teknoloji</div>
-              <div className="font-display text-base font-bold text-white">ERP Sistemi</div>
+          <div className="mb-10">
+            <div className="inline-flex rounded-xl bg-white px-3 py-2 shadow-lg shadow-black/20">
+              <Image
+                src="/brand/eden-logo-colored.png"
+                alt="Eden ERP"
+                width={180}
+                height={80}
+                className="h-auto w-36 object-contain"
+                priority
+              />
             </div>
           </div>
 

@@ -466,11 +466,13 @@ function renderField(field: string, draft: Partial<EntityBankAccount>, disabled:
       <label key={field} className="space-y-1">
         <span className="flex items-center gap-2 text-xs font-medium text-gray-600 dark:text-gray-400">
           {labels[field]}
-          <AutomationBadge
-            status={ibanAutomationStatus}
-            title="IBAN girilince banka, şube ve para birimi alanları otomatik doldurulur."
-            workingLabel="Çözülüyor"
-          />
+          <span data-tour-id="entity-bank-iban-automation">
+            <AutomationBadge
+              status={ibanAutomationStatus}
+              title="IBAN girilince banka, şube ve para birimi alanları otomatik doldurulur."
+              workingLabel="Çözülüyor"
+            />
+          </span>
         </span>
         <IBANInput
           value={String(value || '')}
