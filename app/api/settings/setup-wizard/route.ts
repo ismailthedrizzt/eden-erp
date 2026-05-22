@@ -6,6 +6,12 @@ import { normalizeLoginIdentifier } from '@/lib/auth/tenantUserLookup'
 import { ensureSetupDatabaseSchema } from '@/lib/db/setupSchema'
 import { ACCOUNTING_PERMISSIONS } from '@/lib/modules/accounting/shared/accounting.permissions'
 import { createServiceClient } from '@/lib/supabase/server'
+import {
+  findGlobalOrganizationByIdentity,
+  findOwnedCompanyScopeByOrganization,
+  normalizeLegalCountry,
+  normalizeLegalTaxNumber,
+} from '@/lib/tenancy/companyScopes'
 import { TENANT_ID_COOKIE, WORKSPACE_ID_COOKIE } from '@/lib/tenancy/constants'
 import { ERP_MODULES, PERMISSIONS } from '@/packages/shared/src'
 
@@ -98,12 +104,10 @@ const RequestSchema = z.discriminatedUnion('action', [
 type Supabase = ReturnType<typeof createServiceClient>
 
 export async function GET() {
-  const supabase = createServiceClient()
-  const company = await fetchFirstCompany(supabase)
   return NextResponse.json({
     data: {
-      has_company: Boolean(company),
-      company,
+      has_company: false,
+      company: null,
     },
   })
 }
@@ -118,13 +122,23 @@ export async function POST(request: NextRequest) {
     const supabase = createServiceClient()
 
     if (parsed.action === 'create_company') {
-      const result = await createFirstCompany(supabase, parsed.company)
-      return NextResponse.json({ data: result }, { status: result.reused ? 200 : 201 })
+      await ensureCompanyCanOpenTenant(supabase, parsed.company)
+      return NextResponse.json({ data: { can_create: true, company: null } })
     }
 
     if (parsed.action === 'complete_setup') {
-      const tenant = await initializeTenant(supabase, parsed.company, parsed.scale, parsed.payment_choice)
-      const companyResult = await createFirstCompany(supabase, parsed.company, { tenantId: tenant.id, reuseExisting: false })
+      const recoveredSetup = await findRecoverableSetup(supabase, parsed.company)
+      if (!recoveredSetup) await ensureCompanyCanOpenTenant(supabase, parsed.company)
+      const tenant = recoveredSetup?.tenant || await initializeTenant(supabase, parsed.company, parsed.scale, parsed.payment_choice)
+
+      if (recoveredSetup?.tenant) {
+        await ensureTenantDatabaseBinding(supabase, tenant.id)
+        await ensureTenantModules(supabase, tenant.id)
+      }
+
+      const companyResult = recoveredSetup?.company
+        ? { company: recoveredSetup.company, reused: true }
+        : await createFirstCompany(supabase, parsed.company, { tenantId: tenant.id, reuseExisting: false })
       await saveCompanySetupProfile(supabase, companyResult.company, parsed.scale)
       await ensureTenantCompanyScope(supabase, tenant.id, companyResult.company.id)
       const roleResult = await createPersonRole(supabase, {
@@ -165,8 +179,10 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    const status = error instanceof SetupWizardError ? error.status : 500
+    const code = error instanceof SetupWizardError ? error.code : undefined
     const message = error instanceof Error ? error.message : 'Kurulum adımı tamamlanamadı.'
-    return NextResponse.json({ error: message }, { status: 500 })
+    return NextResponse.json({ error: message, ...(code ? { code } : {}) }, { status })
   }
 }
 
@@ -206,6 +222,116 @@ function clearSetupIntent(response: NextResponse) {
     sameSite: 'lax',
     secure: process.env.NODE_ENV === 'production',
   })
+}
+
+class SetupWizardError extends Error {
+  status: number
+  code: string
+
+  constructor(message: string, status: number, code: string) {
+    super(message)
+    this.name = 'SetupWizardError'
+    this.status = status
+    this.code = code
+  }
+}
+
+async function ensureCompanyCanOpenTenant(
+  supabase: Supabase,
+  company: z.infer<typeof CompanyPayloadSchema>
+) {
+  const existingOrganization = await findGlobalOrganizationByIdentity(supabase, {
+    country: SETUP_COMPANY_COUNTRY,
+    taxNumber: company.tax_number,
+    legalName: company.trade_name,
+    select: 'id,short_name,legal_name,tax_number',
+  })
+  if (!existingOrganization?.id) return
+
+  const ownerScope = await findOwnedCompanyScopeByOrganization(supabase, existingOrganization.id)
+  if (!ownerScope) return
+
+  throw new SetupWizardError(
+    'Bu VKN ile şirket zaten sistemde kayıtlı. Yeni tenant açmak yerine Kayıtlı şirketime katılmak istiyorum seçeneğiyle kullanıcı talebi oluşturun.',
+    409,
+    'COMPANY_ALREADY_REGISTERED'
+  )
+}
+
+async function findRecoverableSetup(
+  supabase: Supabase,
+  company: z.infer<typeof CompanyPayloadSchema>
+) {
+  const { data: companies, error: companyError } = await supabase
+    .from('companies')
+    .select('id, organization_id, trade_name, short_name, tax_number, tax_office, company_type, country, city, district, address, tenant_id, created_at')
+    .eq('tax_number', company.tax_number)
+    .eq('is_deleted', false)
+    .not('tenant_id', 'is', null)
+    .order('created_at', { ascending: false })
+    .limit(10)
+
+  if (companyError && !isMissingTableError(companyError)) throw new Error(companyError.message)
+  if (!companies?.length) return null
+
+  const tenantIds = Array.from(new Set(companies.map(item => item.tenant_id).filter(Boolean)))
+  if (!tenantIds.length) return null
+
+  const { data: tenants, error: tenantError } = await supabase
+    .from('erp_instances')
+    .select('id, name, tenant_key, status, metadata_json, created_at')
+    .in('id', tenantIds)
+    .eq('status', 'active')
+
+  if (tenantError && !isMissingTableError(tenantError)) throw new Error(tenantError.message)
+
+  const tenantById = new Map((tenants || []).map(tenant => [tenant.id, tenant]))
+  const match = companies.find(row => {
+    const tenant = tenantById.get(row.tenant_id)
+    const metadata = tenant?.metadata_json && typeof tenant.metadata_json === 'object' && !Array.isArray(tenant.metadata_json)
+      ? tenant.metadata_json as Record<string, any>
+      : {}
+
+    return metadata.source === 'setup_wizard' && metadata.company_tax_number === company.tax_number
+  })
+
+  if (!match) return null
+
+  const tenant = tenantById.get(match.tenant_id)
+  if (!tenant?.id) return null
+
+  const { data: membership, error: membershipError } = await supabase
+    .from('tenant_memberships')
+    .select('id')
+    .eq('tenant_id', tenant.id)
+    .eq('status', 'active')
+    .limit(1)
+    .maybeSingle()
+
+  if (membershipError && !isMissingTableError(membershipError)) throw new Error(membershipError.message)
+  if (membership?.id) return null
+
+  return {
+    tenant: {
+      id: tenant.id,
+      name: tenant.name,
+      tenant_key: tenant.tenant_key,
+    },
+    company: {
+      id: match.id,
+      organization_id: match.organization_id,
+      trade_name: match.trade_name,
+      short_name: match.short_name,
+      tax_number: match.tax_number,
+      tax_office: match.tax_office,
+      company_type: match.company_type,
+      country: match.country,
+      city: match.city,
+      district: match.district,
+      address: match.address,
+      tenant_id: match.tenant_id,
+    },
+  }
 }
 
 async function initializeTenant(
@@ -259,6 +385,8 @@ async function ensureTenantDatabaseBinding(supabase: Supabase, tenantId: string)
       isolation_mode: 'shared_schema',
       schema_name: 'public',
       connection_name: 'default',
+      protected_data: false,
+      migration_status: 'not_required',
       status: 'active',
       activated_at: new Date().toISOString(),
       metadata_json: { source: 'setup_wizard' },
@@ -320,6 +448,7 @@ async function ensureSetupAdminUser(
 
   if (userRoleError) throw new Error(userRoleError.message)
 
+  const isDefaultMembership = await shouldUseDefaultTenantMembership(supabase, tenantId, person, payload)
   const { error: membershipError } = await supabase
     .from('tenant_memberships')
     .upsert({
@@ -327,7 +456,7 @@ async function ensureSetupAdminUser(
       user_id: person.id,
       role_key: ADMIN_ROLE_KEY,
       status: 'active',
-      is_default: true,
+      is_default: isDefaultMembership,
       metadata_json: {
         source: 'setup_wizard',
         person_id: person.id,
@@ -337,6 +466,66 @@ async function ensureSetupAdminUser(
     }, { onConflict: 'tenant_id,user_id,role_key' })
 
   if (membershipError) throw new Error(membershipError.message)
+}
+
+async function shouldUseDefaultTenantMembership(
+  supabase: Supabase,
+  tenantId: string,
+  person: Record<string, any>,
+  payload: z.infer<typeof PersonPayloadSchema>
+) {
+  const userIds = await findRelatedPersonIds(supabase, person, payload)
+  const { data, error } = await supabase
+    .from('tenant_memberships')
+    .select('tenant_id, user_id')
+    .in('user_id', userIds)
+    .eq('status', 'active')
+    .eq('is_default', true)
+
+  if (error && !isMissingTableError(error)) throw new Error(error.message)
+  return !(data || []).some(membership => membership.tenant_id !== tenantId)
+}
+
+async function findRelatedPersonIds(
+  supabase: Supabase,
+  person: Record<string, any>,
+  payload: z.infer<typeof PersonPayloadSchema>
+) {
+  const ids = new Set<string>([person.id].filter(Boolean))
+  const email = normalizeSetupEmail(payload.email || person.email)
+  const phone = normalizeSetupPhone(payload.phone || person.phone)
+
+  if (!email && !phone) return Array.from(ids)
+
+  const lookups = []
+  if (email) {
+    lookups.push(
+      supabase
+        .from('persons')
+        .select('id')
+        .eq('is_deleted', false)
+        .eq('email', email)
+    )
+  }
+  if (phone) {
+    lookups.push(
+      supabase
+        .from('persons')
+        .select('id')
+        .eq('is_deleted', false)
+        .in('phone', phone.length === 10 ? [phone, `0${phone}`] : [phone])
+    )
+  }
+
+  const results = await Promise.all(lookups)
+  results.forEach(({ data, error }) => {
+    if (error && !isMissingTableError(error)) throw new Error(error.message)
+    ;(data || []).forEach(row => {
+      if (row.id) ids.add(row.id)
+    })
+  })
+
+  return Array.from(ids)
 }
 
 async function ensureAdminRole(supabase: Supabase) {
@@ -521,7 +710,7 @@ async function createFirstCompany(
   const { data, error } = await supabase
     .from('companies')
     .insert(companyPayload)
-    .select('id, organization_id, trade_name, short_name, tax_number, tax_office, company_type, country, city, district, address')
+    .select('id, organization_id, trade_name, short_name, tax_number, tax_office, company_type, country, city, district, address, tenant_id')
     .single()
 
   if (error) throw new Error(error.message)
@@ -538,38 +727,9 @@ async function saveCompanySetupProfile(
   company: { organization_id?: string | null },
   scale: z.infer<typeof SetupScaleSchema>
 ) {
-  if (!company.organization_id) return
-
-  const { data: organization, error: findError } = await supabase
-    .from('organizations')
-    .select('metadata_json')
-    .eq('id', company.organization_id)
-    .maybeSingle()
-
-  if (findError) throw new Error(findError.message)
-
-  const metadata = organization?.metadata_json && typeof organization.metadata_json === 'object' && !Array.isArray(organization.metadata_json)
-    ? organization.metadata_json
-    : {}
-
-  const { error } = await supabase
-    .from('organizations')
-    .update({
-      metadata_json: {
-        ...metadata,
-        setup_wizard: {
-          ...((metadata as Record<string, any>).setup_wizard || {}),
-          company_scale: {
-            key: scale,
-            ...SETUP_SCALE_PROFILES[scale],
-          },
-          updated_at: new Date().toISOString(),
-        },
-      },
-    })
-    .eq('id', company.organization_id)
-
-  if (error) throw new Error(error.message)
+  void supabase
+  void company
+  void scale
 }
 
 async function createPersonRole(supabase: Supabase, payload: z.infer<typeof PersonRolePayloadSchema>, tenantId?: string) {
@@ -591,7 +751,7 @@ async function createPersonRole(supabase: Supabase, payload: z.infer<typeof Pers
 async function fetchFirstCompany(supabase: Supabase, tenantId?: string) {
   let query = supabase
     .from('companies')
-    .select('id, organization_id, trade_name, short_name, tax_number, tax_office, company_type, country, city, district, address')
+    .select('id, organization_id, trade_name, short_name, tax_number, tax_office, company_type, country, city, district, address, tenant_id')
     .eq('is_deleted', false)
     .order('created_at', { ascending: true })
     .limit(1)
@@ -622,39 +782,32 @@ async function findOrCreateOrganization(
   tenantId?: string,
   reuseExisting = true
 ) {
-  if (reuseExisting) {
-    let query = supabase
-      .from('organizations')
-      .select('id')
-      .eq('country', SETUP_COMPANY_COUNTRY)
-      .eq('tax_number', payload.tax_number)
-      .eq('is_deleted', false)
+  void tenantId
+  void reuseExisting
 
-    if (tenantId) query = query.eq('tenant_id', tenantId)
+  const existing = await findGlobalOrganizationByIdentity(supabase, {
+    country: SETUP_COMPANY_COUNTRY,
+    taxNumber: payload.tax_number,
+    legalName: payload.trade_name,
+    select: 'id',
+  })
+  if (existing?.id) return existing
 
-    const { data: existing, error: findError } = await query.maybeSingle()
-
-    if (findError && !isMissingTableError(findError)) throw new Error(findError.message)
-    if (existing?.id) return existing
-  }
-
+  const country = normalizeLegalCountry(SETUP_COMPANY_COUNTRY)
+  const taxNumber = normalizeLegalTaxNumber(payload.tax_number, country)
   const { data, error } = await supabase
     .from('organizations')
     .insert({
       legal_name: payload.trade_name,
       trade_name: payload.trade_name,
       short_name: payload.short_name || null,
-      country: SETUP_COMPANY_COUNTRY,
-      tax_number: payload.tax_number,
+      country,
+      tax_number: taxNumber,
       tax_office: payload.tax_office,
       organization_type: payload.company_type,
-      address: payload.address,
-      city: payload.city,
-      district: payload.district,
       status: 'active',
       is_deleted: false,
       metadata_json: { source: 'setup_wizard' },
-      ...(tenantId ? { tenant_id: tenantId } : {}),
     })
     .select('id')
     .single()

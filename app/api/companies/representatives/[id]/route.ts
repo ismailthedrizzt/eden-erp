@@ -2,6 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { hydrateMasterContact, stripMasterDataForRoleProfile, syncMasterContact } from '@/lib/identity/masterContact'
 import { EntityBankAccountsService } from '@/lib/modules/entity-bank-accounts/entityBankAccounts.service'
+import { requirePermission } from '@/lib/security/serverPermissions'
+import { applyTenantQueryScope, resolveTenantContext } from '@/lib/tenancy/server'
+import { getTenantCompanyScope, isWritableCompanyScope } from '@/lib/tenancy/companyScopes'
 
 const REPRESENTATIVE_DETAIL_SELECT = 'id,company_id,company_id,person_id,organization_id,person_kind,source_type,source_id,display_name,full_name,phone,email,authority_types,job_title,authority_type,status,start_date,end_date,signature_type,transaction_limit,currency,requires_joint_signature,can_approve_alone,is_deleted,history,photo_logo,authority_documents,representative_profile,notes,created_at'
 
@@ -42,14 +45,23 @@ export async function GET(
 ) {
   const { id } = await params
   const supabase = createServiceClient()
+  const permission = await requirePermission(request, supabase, 'representatives.view')
+  if (permission instanceof NextResponse) return permission
+  const tenantContext = resolveTenantContext(request)
 
-  const { data, error } = await supabase
+  let query = supabase
     .from('company_representatives')
     .select(REPRESENTATIVE_DETAIL_SELECT)
     .eq('id', id)
-    .single()
+  query = applyTenantQueryScope(query, 'company_representatives', tenantContext)
+  const { data, error } = await query.single()
 
+  if (error?.code === 'PGRST116') return NextResponse.json({ error: 'Temsilci bulunamadı', code: 'REPRESENTATIVE_NOT_FOUND' }, { status: 404 })
   if (error) return NextResponse.json({ error: error.message, code: error.code || 'FETCH_FAILED' }, { status: 500 })
+  if (data?.company_id) {
+    const scope = await getTenantCompanyScope(supabase, tenantContext.tenantId, data.company_id)
+    if (!scope) return NextResponse.json({ error: 'Şirket bulunamadı', code: 'COMPANY_NOT_FOUND' }, { status: 404 })
+  }
   const hydrated = data?.person_id
     ? await hydrateMasterContact(supabase, 'person', data)
     : data?.organization_id
@@ -67,18 +79,28 @@ export async function PATCH(
 ) {
   const { id } = await params
   const supabase = createServiceClient()
+  const permission = await requirePermission(request, supabase, 'representatives.edit')
+  if (permission instanceof NextResponse) return permission
+  const tenantContext = resolveTenantContext(request)
   const body = await request.json()
 
-  const { data: current, error: currentError } = await supabase
+  let currentQuery = supabase
     .from('company_representatives')
     .select(REPRESENTATIVE_DETAIL_SELECT)
     .eq('id', id)
-    .single()
+  currentQuery = applyTenantQueryScope(currentQuery, 'company_representatives', tenantContext)
+  const { data: current, error: currentError } = await currentQuery.single()
 
+  if (currentError?.code === 'PGRST116') return NextResponse.json({ error: 'Temsilci bulunamadı', code: 'REPRESENTATIVE_NOT_FOUND' }, { status: 404 })
   if (currentError) return NextResponse.json({ error: currentError.message, code: currentError.code || 'FETCH_FAILED' }, { status: 500 })
+  if (current.company_id) {
+    const scope = await getTenantCompanyScope(supabase, tenantContext.tenantId, current.company_id)
+    if (!scope) return NextResponse.json({ error: 'Şirket bulunamadı', code: 'COMPANY_NOT_FOUND' }, { status: 404 })
+    if (!isWritableCompanyScope(scope)) return NextResponse.json({ error: 'Bu şirket için yalnızca görüntüleme yetkiniz var.', code: 'COMPANY_SCOPE_READONLY' }, { status: 403 })
+  }
 
   const mapped = mapRepresentativeForDb(body, current)
-  const { data, error } = await supabase
+  let updateQuery = supabase
     .from('company_representatives')
     .update({
       ...mapped,
@@ -86,7 +108,8 @@ export async function PATCH(
     })
     .eq('id', id)
     .select(REPRESENTATIVE_DETAIL_SELECT)
-    .single()
+  updateQuery = applyTenantQueryScope(updateQuery, 'company_representatives', tenantContext)
+  const { data, error } = await updateQuery.single()
 
   if (error) return NextResponse.json({ error: error.message, code: error.code || 'UPDATE_FAILED' }, { status: 500 })
   if (data?.person_id) await syncMasterContact(supabase, 'person', data.person_id, body)
@@ -114,8 +137,11 @@ export async function DELETE(
 ) {
   const { id } = await params
   const supabase = createServiceClient()
+  const permission = await requirePermission(request, supabase, 'representatives.delete')
+  if (permission instanceof NextResponse) return permission
+  const tenantContext = resolveTenantContext(request)
 
-  const { error } = await supabase
+  let deleteQuery = supabase
     .from('company_representatives')
     .update({
       status: 'Pasif',
@@ -124,6 +150,8 @@ export async function DELETE(
       deleted_by: 'Sistem Kullanıcısı',
     })
     .eq('id', id)
+  deleteQuery = applyTenantQueryScope(deleteQuery, 'company_representatives', tenantContext)
+  const { error } = await deleteQuery
 
   if (error) return NextResponse.json({ error: error.message, code: error.code || 'SOFT_DELETE_FAILED' }, { status: 500 })
   return NextResponse.json({ success: true })

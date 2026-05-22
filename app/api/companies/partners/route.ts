@@ -8,6 +8,7 @@ import { parseListQuery } from '@/lib/api/listEndpoint'
 import { safeCreateRecord, safeCrudResponse, safeListRecords } from '@/lib/crud/safeCrudService'
 import { ensureUniqueRoleMaster, roleUniquenessResponse } from '@/lib/identity/roleUniqueness'
 import { applyTenantQueryScope, resolveTenantContext, type TenantContext, withTenantInsertScopeForTable } from '@/lib/tenancy/server'
+import { findGlobalOrganizationByIdentity, normalizeLegalCountry, normalizeLegalTaxNumber } from '@/lib/tenancy/companyScopes'
 import { requirePermission } from '@/lib/security/serverPermissions'
 
 const PartnerSchema = z.object({
@@ -163,6 +164,7 @@ export async function POST(request: NextRequest) {
   const uniqueness = await ensureUniqueRoleMaster(supabase as any, {
     tableName: 'company_partners',
     identity: row,
+    tenantContext,
   })
   if (!uniqueness.ok) return roleUniquenessResponse(uniqueness)
 
@@ -299,18 +301,15 @@ async function attachPartnerIdentity(
     const legalName = partner.trade_name || row.display_name
     if (partner.organization_id) return { ...row, organization_id: partner.organization_id, source_type: 'master_organization', source_id: partner.organization_id }
 
-    const country = normalizeCountryId(partner.country || partner.nationality_country || 'TR')
-    const taxNumber = partner.tax_number || partner.identity_number || null
-    let organizationQuery = supabase
-      .from('organizations')
-      .select('id')
-      .eq('country', country)
-      .eq(taxNumber ? 'tax_number' : 'legal_name', taxNumber || legalName)
-
-    organizationQuery = applyTenantQueryScope(organizationQuery, 'organizations', tenantContext)
-    const { data: existing, error: findError } = await organizationQuery.maybeSingle()
-    if (findError) return row
-    const organizationId = existing?.id || (await supabase.from('organizations').insert(withTenantInsertScopeForTable({
+    const country = normalizeLegalCountry(partner.country || partner.nationality_country || 'TR')
+    const taxNumber = normalizeLegalTaxNumber(partner.tax_number || partner.identity_number || null, country)
+    const existing = await findGlobalOrganizationByIdentity(supabase, {
+      country,
+      taxNumber,
+      legalName,
+      select: 'id',
+    }).catch(() => null)
+    const organizationId = existing?.id || (await supabase.from('organizations').insert({
       legal_name: legalName,
       short_name: partner.short_name || null,
       country,
@@ -324,7 +323,7 @@ async function attachPartnerIdentity(
       city: partner.city || partner.city || null,
       district: partner.district || partner.district || null,
       metadata_json: { source: 'partners_create' },
-    }, 'organizations', tenantContext)).select('id').single()).data?.id
+    }).select('id').single()).data?.id
     return { ...row, organization_id: organizationId || null, source_type: 'master_organization', source_id: organizationId || null }
   } catch {
     return row

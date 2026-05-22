@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { resolveTenantContext, tenantResponseHeaders } from '@/lib/tenancy/server'
+import { fetchTenantDatabaseBinding, resolveTenantDataBoundary } from '@/lib/tenancy/databaseRouting'
 import { requirePermission } from '@/lib/security/serverPermissions'
 
 export const runtime = 'nodejs'
@@ -22,19 +23,6 @@ const WORKSPACE_SELECT = [
 
 const LEGACY_WORKSPACE_SELECT = 'id,name,code,status,metadata_json'
 
-const BINDING_SELECT = [
-  'id',
-  'tenant_id',
-  'isolation_mode',
-  'schema_name',
-  'connection_name',
-  'connection_secret_name',
-  'read_role_name',
-  'write_role_name',
-  'status',
-  'metadata_json',
-].join(',')
-
 type Supabase = ReturnType<typeof createServiceClient>
 
 export async function GET(request: NextRequest) {
@@ -45,8 +33,9 @@ export async function GET(request: NextRequest) {
 
   const [workspace, binding] = await Promise.all([
     fetchWorkspace(supabase, context.tenantId),
-    fetchBinding(supabase, context.tenantId),
+    fetchTenantDatabaseBinding(supabase, context.tenantId),
   ])
+  const databaseBoundary = resolveTenantDataBoundary(context.tenantId, binding)
 
   return NextResponse.json(
     {
@@ -54,6 +43,8 @@ export async function GET(request: NextRequest) {
         context,
         workspace,
         database_binding: binding,
+        database_boundary: databaseBoundary,
+        routing_ready: databaseBoundary.routable,
         foundation_ready: Boolean(workspace && binding),
       },
     },
@@ -79,17 +70,6 @@ async function fetchWorkspace(supabase: Supabase, tenantId: string) {
 
   if (legacy.error && !isMissingFoundationError(legacy.error)) throw new Error(legacy.error.message)
   return normalizeWorkspace(legacy.data)
-}
-
-async function fetchBinding(supabase: Supabase, tenantId: string) {
-  const result = await supabase
-    .from('tenant_database_bindings')
-    .select(BINDING_SELECT)
-    .eq('tenant_id', tenantId)
-    .maybeSingle()
-
-  if (result.error && !isMissingFoundationError(result.error)) throw new Error(result.error.message)
-  return result.data || null
 }
 
 function normalizeWorkspace(row: Record<string, any> | null) {

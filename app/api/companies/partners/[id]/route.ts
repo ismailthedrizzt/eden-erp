@@ -82,6 +82,7 @@ export async function PATCH(
         tableName: 'company_partners',
         identity: mapped,
         excludeId: id,
+        tenantContext,
       })
     },
     beforeUpdate: ({ current, patch }) => {

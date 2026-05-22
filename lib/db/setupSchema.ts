@@ -13,6 +13,8 @@ const REQUIRED_BASE_TABLES = ['erp_instances', 'companies', 'persons', 'organiza
 const REQUIRED_TENANT_TABLES = ['tenant_database_bindings', 'tenant_company_scopes', 'tenant_memberships', 'instance_modules']
 const REQUIRED_TENANT_COLUMNS = ['companies', 'persons', 'organizations', 'company_partners', 'employees']
 const TENANT_FOUNDATION_MIGRATION = '20260518_tenant_foundation.sql'
+const ROLE_MASTER_TENANT_SAFE_MIGRATION = '20260522_role_master_tenant_safe.sql'
+const GLOBAL_COMPANY_IDENTITY_MIGRATION = '20260522_global_company_identity.sql'
 
 let setupSchemaPromise: Promise<void> | null = null
 
@@ -40,7 +42,7 @@ async function applySetupDatabaseSchema() {
     const publicTables = await listPublicTables(client)
     const readiness = await getSchemaReadiness(client)
 
-    if (readiness.baseReady && readiness.tenantReady && readiness.tenantColumnsReady) {
+    if (readiness.baseReady && readiness.tenantReady && readiness.tenantColumnsReady && readiness.roleMasterReady && readiness.globalCompanyIdentityReady) {
       await reloadPostgrestSchema(client)
       return
     }
@@ -55,6 +57,10 @@ async function applySetupDatabaseSchema() {
       await applyPendingMigrations(client)
     } else if (!readiness.tenantReady || !readiness.tenantColumnsReady) {
       await applyMigration(client, TENANT_FOUNDATION_MIGRATION, { force: true })
+    } else if (!readiness.roleMasterReady) {
+      await applyMigration(client, ROLE_MASTER_TENANT_SAFE_MIGRATION, { force: true })
+    } else if (!readiness.globalCompanyIdentityReady) {
+      await applyMigration(client, GLOBAL_COMPANY_IDENTITY_MIGRATION, { force: true })
     }
 
     await reloadPostgrestSchema(client)
@@ -64,7 +70,7 @@ async function applySetupDatabaseSchema() {
 }
 
 async function getSchemaReadiness(client: PgClient) {
-  const [tables, tenantColumns] = await Promise.all([
+  const [tables, tenantColumns, roleMasterStatus, globalCompanyIdentityStatus] = await Promise.all([
     listPublicTables(client),
     client.query(
       `
@@ -76,6 +82,8 @@ async function getSchemaReadiness(client: PgClient) {
       `,
       [REQUIRED_TENANT_COLUMNS]
     ),
+    getRoleMasterReadiness(client),
+    getGlobalCompanyIdentityReadiness(client),
   ])
 
   const tableSet = new Set(tables)
@@ -85,6 +93,90 @@ async function getSchemaReadiness(client: PgClient) {
     baseReady: REQUIRED_BASE_TABLES.every(table => tableSet.has(table)),
     tenantReady: REQUIRED_TENANT_TABLES.every(table => tableSet.has(table)),
     tenantColumnsReady: REQUIRED_TENANT_COLUMNS.every(table => !tableSet.has(table) || tenantColumnTables.has(table)),
+    roleMasterReady: roleMasterStatus.ready,
+    globalCompanyIdentityReady: globalCompanyIdentityStatus.ready,
+  }
+}
+
+async function getGlobalCompanyIdentityReadiness(client: PgClient) {
+  const [indexResult, bindingColumnResult, triggerResult] = await Promise.all([
+    client.query(`
+    SELECT indexname
+    FROM pg_indexes
+    WHERE schemaname = 'public'
+      AND indexname IN (
+        'organizations_global_tax_uidx',
+        'companies_tenant_tax_uidx',
+        'tenant_company_scopes_owned_company_uidx',
+        'tenant_database_bindings_protected_idx',
+        'tenant_database_bindings_dedicated_connection_uidx'
+      )
+    `),
+    client.query(`
+      SELECT column_name
+      FROM information_schema.columns
+      WHERE table_schema = 'public'
+        AND table_name = 'tenant_database_bindings'
+        AND column_name IN ('protected_data', 'migration_status', 'migration_started_at', 'cutover_at')
+    `),
+    client.query(`
+      SELECT tgname
+      FROM pg_trigger
+      WHERE tgname = 'enforce_single_owned_company_scope_per_organization_trg'
+        AND NOT tgisinternal
+    `),
+  ])
+  const indexes = new Set(indexResult.rows.map(row => String(row.indexname)))
+  const bindingColumns = new Set(bindingColumnResult.rows.map(row => String(row.column_name)))
+  const triggers = new Set(triggerResult.rows.map(row => String(row.tgname)))
+
+  return {
+    ready:
+      indexes.has('organizations_global_tax_uidx') &&
+      indexes.has('companies_tenant_tax_uidx') &&
+      indexes.has('tenant_company_scopes_owned_company_uidx') &&
+      indexes.has('tenant_database_bindings_protected_idx') &&
+      indexes.has('tenant_database_bindings_dedicated_connection_uidx') &&
+      triggers.has('enforce_single_owned_company_scope_per_organization_trg') &&
+      bindingColumns.has('protected_data') &&
+      bindingColumns.has('migration_status') &&
+      bindingColumns.has('migration_started_at') &&
+      bindingColumns.has('cutover_at'),
+  }
+}
+
+async function getRoleMasterReadiness(client: PgClient) {
+  const { rows } = await client.query(`
+    SELECT pg_get_functiondef(p.oid) AS definition
+    FROM pg_proc p
+    JOIN pg_namespace n ON n.oid = p.pronamespace
+    WHERE n.nspname = 'public'
+      AND p.proname = 'enforce_single_master_role'
+    LIMIT 1
+  `)
+
+  const definition = String(rows[0]?.definition || '')
+  if (!definition) return { ready: true }
+
+  const indexResult = await client.query(`
+    SELECT indexname
+    FROM pg_indexes
+    WHERE schemaname = 'public'
+      AND indexname IN (
+        'idx_employees_unique_tenant_person_role',
+        'idx_company_partners_unique_tenant_person_role',
+        'idx_company_partners_unique_tenant_organization_role'
+      )
+  `)
+  const indexNames = new Set(indexResult.rows.map(row => String(row.indexname)))
+
+  return {
+    ready:
+      definition.includes('to_jsonb(NEW)') &&
+      definition.includes('COALESCE(tenant_id') &&
+      indexNames.has('idx_employees_unique_tenant_person_role') &&
+      indexNames.has('idx_company_partners_unique_tenant_person_role') &&
+      indexNames.has('idx_company_partners_unique_tenant_organization_role'),
   }
 }
 

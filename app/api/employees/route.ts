@@ -340,6 +340,7 @@ export async function POST(request: NextRequest) {
   const uniqueness = await ensureUniqueRoleMaster(supabase as any, {
     tableName: 'employees',
     identity: employeePayload,
+    tenantContext,
   })
   if (!uniqueness.ok) return roleUniquenessResponse(uniqueness)
 

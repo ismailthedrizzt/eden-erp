@@ -584,7 +584,7 @@ function SetupWizardModal({
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Kurulum paketi işlenemedi.'
       setFormError(message)
-      failProgress('İlk kurulum tamamlanamadı. Lütfen bilgileri kontrol edip tekrar deneyin.')
+      failProgress(message || 'İlk kurulum tamamlanamadı. Lütfen bilgileri kontrol edip tekrar deneyin.')
     } finally {
       setBusy(false)
     }

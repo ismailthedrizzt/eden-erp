@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { createServiceClient } from '@/lib/supabase/server'
 import { normalizeIdentityCountry } from '@/lib/identity-gate'
 import { mergeMasterContactIntoRole } from '@/lib/identity/masterContact'
+import { applyTenantQueryScope, resolveTenantContext, type TenantContext, withTenantInsertScopeForTable } from '@/lib/tenancy/server'
 
 const ResolveSchema = z.object({
   entityKind: z.enum(['person', 'organization']),
@@ -52,12 +53,13 @@ export async function POST(request: NextRequest) {
   }
 
   const supabase = createServiceClient()
+  const tenantContext = resolveTenantContext(request)
   const roleTable = payload.roleTable
   const identity = payload.identity
 
   let masterResult = payload.entityKind === 'person'
-    ? await findPerson(supabase, identity)
-    : await findOrganization(supabase, identity)
+    ? await findPerson(supabase, identity, tenantContext)
+    : await findOrganization(supabase, identity, tenantContext)
 
   if ('error' in masterResult) {
     return NextResponse.json({ error: masterResult.error }, { status: 400 })
@@ -65,8 +67,8 @@ export async function POST(request: NextRequest) {
 
   if (!masterResult.record && !masterResult.warning) {
     masterResult = payload.entityKind === 'person'
-      ? await findOrCreatePersonFromEmployee(supabase, identity)
-      : await findOrCreateOrganizationFromCompany(supabase, identity)
+      ? await findOrCreatePersonFromEmployee(supabase, identity, tenantContext)
+      : await findOrCreateOrganizationFromCompany(supabase, identity, tenantContext)
   }
 
   const masterRecord = masterResult.record as Record<string, any> | null
@@ -78,6 +80,7 @@ export async function POST(request: NextRequest) {
       entityKind: payload.entityKind,
       masterId: masterRecord.id,
       roleScope: payload.roleScope || {},
+      tenantContext,
     })
 
     if (roleResult.error) {
@@ -133,7 +136,11 @@ export async function POST(request: NextRequest) {
   })
 }
 
-async function findPerson(supabase: ReturnType<typeof createServiceClient>, identity: z.infer<typeof ResolveSchema>['identity']) {
+async function findPerson(
+  supabase: ReturnType<typeof createServiceClient>,
+  identity: z.infer<typeof ResolveSchema>['identity'],
+  tenantContext: TenantContext
+) {
   const nationality = normalizeIdentityCountry(identity.nationality)
   const nationalId = onlyDigits(identity.national_id)
   const passportNo = clean(identity.passport_no)
@@ -144,25 +151,31 @@ async function findPerson(supabase: ReturnType<typeof createServiceClient>, iden
 
   let query = supabase.from('persons').select(PERSON_SELECT).eq('nationality', nationality)
   query = nationalId ? query.eq('national_id', nationalId) : query.eq('passport_no', passportNo)
+  query = applyTenantQueryScope(query, 'persons', tenantContext)
   let { data, error } = await query.maybeSingle()
   if (isMissingTableError(error, 'persons')) {
     return { record: null, warning: 'Girilen kişi kayıtlı kişiler listesinde bulunamadı. Yeni kayıt oluşturulacak.' }
   }
   if (error) return { error: error.message }
   if (!data && nationalId) {
-    const fallback = await supabase
+    let fallbackQuery = supabase
       .from('persons')
       .select(PERSON_SELECT)
       .eq('national_id', nationalId)
-      
       .limit(1)
+    fallbackQuery = applyTenantQueryScope(fallbackQuery, 'persons', tenantContext)
+    const fallback = await fallbackQuery
     if (fallback.error) return { error: fallback.error.message }
     data = Array.isArray(fallback.data) ? fallback.data[0] || null : null
   }
-  return { record: data ? await enrichPersonFromEmployee(supabase, data) : null }
+  return { record: data ? await enrichPersonFromEmployee(supabase, data, tenantContext) : null }
 }
 
-async function findOrganization(supabase: ReturnType<typeof createServiceClient>, identity: z.infer<typeof ResolveSchema>['identity']) {
+async function findOrganization(
+  supabase: ReturnType<typeof createServiceClient>,
+  identity: z.infer<typeof ResolveSchema>['identity'],
+  tenantContext: TenantContext
+) {
   const country = normalizeIdentityCountry(identity.country)
   const taxNumber = normalizeOrganizationTaxNumber(identity.tax_number, country)
   const registrationNumber = clean(identity.registration_number)
@@ -188,26 +201,36 @@ async function findOrganization(supabase: ReturnType<typeof createServiceClient>
     if (fallback.error) return { error: fallback.error.message }
     data = Array.isArray(fallback.data) ? fallback.data[0] || null : null
   }
-  return { record: data ? await enrichOrganizationFromCompany(supabase, data) : null }
+  return { record: data ? await enrichOrganizationFromCompany(supabase, data, tenantContext) : null }
 }
 
-async function enrichPersonFromEmployee(supabase: ReturnType<typeof createServiceClient>, person: Record<string, any>) {
+async function enrichPersonFromEmployee(
+  supabase: ReturnType<typeof createServiceClient>,
+  person: Record<string, any>,
+  tenantContext: TenantContext
+) {
   const existingImages = normalizePersonImages(person)
 
   let employee: Record<string, any> | null = null
 
   if (person.id) {
-    const { data } = await supabase.from('employees').select(EMPLOYEE_IDENTITY_SELECT).eq('person_id', person.id).limit(1)
+    let query = supabase.from('employees').select(EMPLOYEE_IDENTITY_SELECT).eq('person_id', person.id).limit(1)
+    query = applyTenantQueryScope(query, 'employees', tenantContext)
+    const { data } = await query
     employee = Array.isArray(data) ? data[0] || null : null
   }
 
   if (!employee && person.national_id) {
-    const { data } = await supabase.from('employees').select(EMPLOYEE_IDENTITY_SELECT).eq('national_id', person.national_id).limit(1)
+    let query = supabase.from('employees').select(EMPLOYEE_IDENTITY_SELECT).eq('national_id', person.national_id).limit(1)
+    query = applyTenantQueryScope(query, 'employees', tenantContext)
+    const { data } = await query
     employee = Array.isArray(data) ? data[0] || null : null
   }
 
   if (!employee && person.passport_no) {
-    const { data } = await supabase.from('employees').select(EMPLOYEE_IDENTITY_SELECT).eq('passport_no', person.passport_no).limit(1)
+    let query = supabase.from('employees').select(EMPLOYEE_IDENTITY_SELECT).eq('passport_no', person.passport_no).limit(1)
+    query = applyTenantQueryScope(query, 'employees', tenantContext)
+    const { data } = await query
     employee = Array.isArray(data) ? data[0] || null : null
   }
 
@@ -216,31 +239,45 @@ async function enrichPersonFromEmployee(supabase: ReturnType<typeof createServic
     : { ...person, photo_logo: existingImages }
 }
 
-async function enrichOrganizationFromCompany(supabase: ReturnType<typeof createServiceClient>, organization: Record<string, any>) {
+async function enrichOrganizationFromCompany(
+  supabase: ReturnType<typeof createServiceClient>,
+  organization: Record<string, any>,
+  tenantContext: TenantContext
+) {
   const existingImages = normalizeOrganizationImages(organization)
   if (existingImages.length) return { ...organization, photo_logo: existingImages }
 
   let company: Record<string, any> | null = null
 
   if (organization.id) {
-    const { data } = await supabase.from('companies').select(COMPANY_IDENTITY_SELECT).eq('organization_id', organization.id).limit(1)
+    let query = supabase.from('companies').select(COMPANY_IDENTITY_SELECT).eq('organization_id', organization.id).limit(1)
+    query = applyTenantQueryScope(query, 'companies', tenantContext)
+    const { data } = await query
     company = Array.isArray(data) ? data[0] || null : null
   }
 
   if (!company && organization.tax_number) {
-    const { data } = await supabase.from('companies').select(COMPANY_IDENTITY_SELECT).eq('tax_number', organization.tax_number).limit(1)
+    let query = supabase.from('companies').select(COMPANY_IDENTITY_SELECT).eq('tax_number', organization.tax_number).limit(1)
+    query = applyTenantQueryScope(query, 'companies', tenantContext)
+    const { data } = await query
     company = Array.isArray(data) ? data[0] || null : null
   }
 
   if (!company && organization.registration_number) {
-    const { data } = await supabase.from('companies').select(COMPANY_IDENTITY_SELECT).eq('trade_registry_number', organization.registration_number).limit(1)
+    let query = supabase.from('companies').select(COMPANY_IDENTITY_SELECT).eq('trade_registry_number', organization.registration_number).limit(1)
+    query = applyTenantQueryScope(query, 'companies', tenantContext)
+    const { data } = await query
     company = Array.isArray(data) ? data[0] || null : null
   }
 
   return company ? mergeCompanyIntoOrganization(organization, company) : organization
 }
 
-async function findOrCreatePersonFromEmployee(supabase: ReturnType<typeof createServiceClient>, identity: z.infer<typeof ResolveSchema>['identity']) {
+async function findOrCreatePersonFromEmployee(
+  supabase: ReturnType<typeof createServiceClient>,
+  identity: z.infer<typeof ResolveSchema>['identity'],
+  tenantContext: TenantContext
+) {
   const nationality = normalizeIdentityCountry(identity.nationality)
   const nationalId = onlyDigits(identity.national_id)
   const passportNo = clean(identity.passport_no)
@@ -249,6 +286,7 @@ async function findOrCreatePersonFromEmployee(supabase: ReturnType<typeof create
 
   let query = supabase.from('employees').select(EMPLOYEE_IDENTITY_SELECT).limit(1)
   query = nationalId ? query.eq('national_id', nationalId) : query.eq('passport_no', passportNo)
+  query = applyTenantQueryScope(query, 'employees', tenantContext)
   const { data, error } = await query
   if (error) return { record: null }
 
@@ -256,14 +294,16 @@ async function findOrCreatePersonFromEmployee(supabase: ReturnType<typeof create
   if (!employee) return { record: null }
 
   if (employee.person_id) {
-    const { data: existingPerson } = await supabase.from('persons').select(PERSON_SELECT).eq('id', employee.person_id).maybeSingle()
+    let existingPersonQuery = supabase.from('persons').select(PERSON_SELECT).eq('id', employee.person_id)
+    existingPersonQuery = applyTenantQueryScope(existingPersonQuery, 'persons', tenantContext)
+    const { data: existingPerson } = await existingPersonQuery.maybeSingle()
     if (existingPerson) return { record: mergeEmployeeIntoPerson(existingPerson, employee) }
   }
 
   const fullName = [employee.first_name, employee.last_name].filter(Boolean).join(' ').trim()
   const { data: created, error: createError } = await supabase
     .from('persons')
-    .insert({
+    .insert(withTenantInsertScopeForTable({
       first_name: employee.first_name || null,
       last_name: employee.last_name || null,
       full_name: fullName,
@@ -277,17 +317,23 @@ async function findOrCreatePersonFromEmployee(supabase: ReturnType<typeof create
       email: employee.email || null,
       address: employee.address || null,
       metadata_json: { source_table: 'employees', source_id: employee.id, source: 'identity_resolve' },
-    })
+    }, 'persons', tenantContext))
     .select(PERSON_SELECT)
     .single()
 
   if (createError || !created) return { record: null }
 
-  await supabase.from('employees').update({ person_id: created.id }).eq('id', employee.id)
+  let employeeUpdateQuery = supabase.from('employees').update({ person_id: created.id }).eq('id', employee.id)
+  employeeUpdateQuery = applyTenantQueryScope(employeeUpdateQuery, 'employees', tenantContext)
+  await employeeUpdateQuery
   return { record: mergeEmployeeIntoPerson(created, employee) }
 }
 
-async function findOrCreateOrganizationFromCompany(supabase: ReturnType<typeof createServiceClient>, identity: z.infer<typeof ResolveSchema>['identity']) {
+async function findOrCreateOrganizationFromCompany(
+  supabase: ReturnType<typeof createServiceClient>,
+  identity: z.infer<typeof ResolveSchema>['identity'],
+  tenantContext: TenantContext
+) {
   const country = normalizeIdentityCountry(identity.country)
   const taxNumber = normalizeOrganizationTaxNumber(identity.tax_number, country)
   const registrationNumber = clean(identity.registration_number)
@@ -296,6 +342,7 @@ async function findOrCreateOrganizationFromCompany(supabase: ReturnType<typeof c
 
   let query = supabase.from('companies').select(COMPANY_IDENTITY_SELECT).limit(1)
   query = taxNumber ? query.eq('tax_number', taxNumber) : query.eq('trade_registry_number', registrationNumber)
+  query = applyTenantQueryScope(query, 'companies', tenantContext)
   const { data, error } = await query
   if (error) return { record: null }
 
@@ -317,11 +364,6 @@ async function findOrCreateOrganizationFromCompany(supabase: ReturnType<typeof c
       registration_number: company.trade_registry_number || company.mersis_number || registrationNumber || null,
       tax_office: company.tax_office || null,
       organization_type: company.company_type || null,
-      phone: company.phone || null,
-      email: company.email || null,
-      address: company.address || null,
-      city: company.city || null,
-      district: company.district || null,
       metadata_json: { source_table: 'companies', source_id: company.id, source: 'identity_resolve' },
     })
     .select(ORGANIZATION_SELECT)
@@ -329,13 +371,15 @@ async function findOrCreateOrganizationFromCompany(supabase: ReturnType<typeof c
 
   if (createError || !created) return { record: null }
 
-  await supabase.from('companies').update({ organization_id: created.id }).eq('id', company.id)
+  let updateCompanyQuery = supabase.from('companies').update({ organization_id: created.id }).eq('id', company.id)
+  updateCompanyQuery = applyTenantQueryScope(updateCompanyQuery, 'companies', tenantContext)
+  await updateCompanyQuery
   return { record: mergeCompanyIntoOrganization(created, company) }
 }
 
 async function findRoleRecord(
   supabase: ReturnType<typeof createServiceClient>,
-  input: { roleTable: string; entityKind: 'person' | 'organization'; masterId: string; roleScope: Record<string, unknown> }
+  input: { roleTable: string; entityKind: 'person' | 'organization'; masterId: string; roleScope: Record<string, unknown>; tenantContext: TenantContext }
 ) {
   const shouldFilterDeleted = ['employees', 'company_partners', 'company_representatives', 'stakeholders'].includes(input.roleTable)
   let { data, error } = await queryRoleRecord(supabase, input, shouldFilterDeleted)
@@ -352,11 +396,12 @@ async function findRoleRecord(
 
 async function queryRoleRecord(
   supabase: ReturnType<typeof createServiceClient>,
-  input: { roleTable: string; entityKind: 'person' | 'organization'; masterId: string; roleScope: Record<string, unknown> },
+  input: { roleTable: string; entityKind: 'person' | 'organization'; masterId: string; roleScope: Record<string, unknown>; tenantContext: TenantContext },
   filterDeleted: boolean
 ) {
   let query = supabase.from(input.roleTable).select(ROLE_SELECT_BY_TABLE[input.roleTable] || 'id').limit(1)
   query = query.eq(input.entityKind === 'person' ? 'person_id' : 'organization_id', input.masterId)
+  query = applyTenantQueryScope(query, input.roleTable, input.tenantContext)
 
   const companyId = clean(input.roleScope.company_id || input.roleScope.company_id)
   if (companyId && input.roleTable === 'company_representatives') {

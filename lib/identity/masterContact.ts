@@ -124,12 +124,18 @@ export function mergeMasterContactIntoRole(role: Record<string, any>, master: Re
   const phones = normalizePhones({ phones: contactPhones, phone: master.phone || master.mobile_phone, work_phone: master.work_phone })
   const emails = normalizeEmails({ emails: contactEmails, email: master.email })
   const personMaster = kind === 'person' ? readPersonMasterMetadata(master) : {}
-  const organizationMaster = kind === 'organization' ? readOrganizationMasterMetadata(master) : {}
+  const organizationMaster = {}
+  const rolePhones = normalizePhones({ phones: role.phones, phone: role.phone || role.mobile_phone || role.phone_1, work_phone: role.work_phone || role.phone_2 })
+  const roleEmails = normalizeEmails({ emails: role.emails, email: role.email || role.email_1 })
   const emergency = kind === 'person' && contact.emergency_contact && typeof contact.emergency_contact === 'object'
     ? contact.emergency_contact
     : {}
   const masterWithMetadata = kind === 'person' ? { ...master, ...personMaster } : { ...master, ...organizationMaster }
-  const photoLogo: Array<Record<string, any>> = normalizeMasterImages(masterWithMetadata, kind, undefined)
+  const photoLogo: Array<Record<string, any>> = normalizeMasterImages(
+    masterWithMetadata,
+    kind,
+    kind === 'organization' ? role.photo_logo || role.hero_images : undefined
+  )
 
   return {
     ...role,
@@ -148,18 +154,18 @@ export function mergeMasterContactIntoRole(role: Record<string, any>, master: Re
           short_name: master.short_name || '',
           display_name: master.legal_name || master.trade_name || master.short_name || '',
         }),
-    phone: master.phone || '',
-    mobile_phone: master.phone || '',
-    email: master.email || '',
-    address: master.address || '',
-    city: master.city || '',
-    district: master.district || '',
-    phone_1: phones[0]?.phone || master.phone || '',
-    phone_2: phones[1]?.phone || '',
-    email_1: emails[0]?.address || master.email || '',
-    email_2: emails[1]?.address || '',
-    phones,
-    emails,
+    phone: kind === 'organization' ? clean(role.phone) || master.phone || '' : master.phone || '',
+    mobile_phone: kind === 'organization' ? clean(role.mobile_phone || role.phone) || master.phone || '' : master.phone || '',
+    email: kind === 'organization' ? clean(role.email) || master.email || '' : master.email || '',
+    address: kind === 'organization' ? clean(role.address) || master.address || '' : master.address || '',
+    city: kind === 'organization' ? clean(role.city) || master.city || '' : master.city || '',
+    district: kind === 'organization' ? clean(role.district) || master.district || '' : master.district || '',
+    phone_1: kind === 'organization' ? rolePhones[0]?.phone || phones[0]?.phone || master.phone || '' : phones[0]?.phone || master.phone || '',
+    phone_2: kind === 'organization' ? rolePhones[1]?.phone || phones[1]?.phone || '' : phones[1]?.phone || '',
+    email_1: kind === 'organization' ? roleEmails[0]?.address || emails[0]?.address || master.email || '' : emails[0]?.address || master.email || '',
+    email_2: kind === 'organization' ? roleEmails[1]?.address || emails[1]?.address || '' : emails[1]?.address || '',
+    phones: kind === 'organization' && rolePhones.length ? rolePhones : phones,
+    emails: kind === 'organization' && roleEmails.length ? roleEmails : emails,
     photo_logo: photoLogo,
     photo_url: photoLogo[0]?.previewUrl || photoLogo[0]?.url || '',
     ...(kind === 'person'
@@ -246,24 +252,17 @@ export async function syncMasterContact(supabase: SupabaseClient, kind: EntityKi
     if (hasAny('tax_office')) update.tax_office = clean(source.tax_office) || null
     if (hasAny('company_type', 'organization_type')) update.organization_type = clean(source.organization_type || source.company_type) || null
     if (hasAny('trade_registry_number', 'registration_number', 'mersis_number')) update.registration_number = clean(source.registration_number || source.trade_registry_number || source.mersis_number) || null
-    if (hasAny(...ORGANIZATION_MASTER_PROFILE_KEYS)) {
-      update.metadata_json = {
-        ...metadata,
-        [ORGANIZATION_MASTER_METADATA_KEY]: {
-          ...(metadata[ORGANIZATION_MASTER_METADATA_KEY] || {}),
-          ...normalizeOrganizationMasterPayload(source),
-        },
-      }
-    }
   }
 
-  if (hasAny('phone', 'mobile_phone', 'phone_1', 'phones')) update.phone = contact.phone
-  if (hasAny('email', 'email_1', 'emails')) update.email = contact.email
-  if (hasAny('address')) update.address = contact.address
-  if (hasAny('city')) update.city = contact.city
-  if (hasAny('district')) update.district = contact.district
+  if (kind === 'person') {
+    if (hasAny('phone', 'mobile_phone', 'phone_1', 'phones')) update.phone = contact.phone
+    if (hasAny('email', 'email_1', 'emails')) update.email = contact.email
+    if (hasAny('address')) update.address = contact.address
+    if (hasAny('city')) update.city = contact.city
+    if (hasAny('district')) update.district = contact.district
+  }
 
-  if (hasAny('phones', 'emails', 'emergency_contact_first_name', 'emergency_contact_last_name', 'emergency_contact_relationship', 'emergency_contact_phone')) {
+  if (kind === 'person' && hasAny('phones', 'emails', 'emergency_contact_first_name', 'emergency_contact_last_name', 'emergency_contact_relationship', 'emergency_contact_phone')) {
     update.metadata_json = {
       ...(update.metadata_json || metadata),
       [CONTACT_METADATA_KEY]: {

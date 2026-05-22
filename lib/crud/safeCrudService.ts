@@ -27,6 +27,7 @@ export interface SafeCrudBaseOptions {
   permissionKey?: CrudPermissionKey
   companyId?: string | null
   companyIdField?: string
+  skipTenantScope?: boolean
 }
 
 export interface SafeReadRecordOptions extends SafeCrudBaseOptions {
@@ -140,7 +141,7 @@ export async function safeReadRecord(options: SafeReadRecordOptions): Promise<Sa
     .select(options.select || '*')
     .eq(primaryKey, options.recordId)
 
-  query = applyTenantQueryScope(query, options.tableName, tenantContext)
+  if (!options.skipTenantScope) query = applyTenantQueryScope(query, options.tableName, tenantContext)
   query = applyCompanyScope(query, options)
   if (options.notDeletedField && !options.includeDeleted) query = query.eq(options.notDeletedField, false)
   if (options.query) query = options.query(query)
@@ -170,7 +171,7 @@ export async function safeListRecords(options: SafeListRecordOptions): Promise<S
     .order(sortColumn, { ascending: options.listQuery.direction !== 'desc' })
     .range(from, to)
 
-  query = applyTenantQueryScope(query, options.tableName, tenantContext)
+  if (!options.skipTenantScope) query = applyTenantQueryScope(query, options.tableName, tenantContext)
   query = applyCompanyScope(query, options)
   query = applyListFilters(query, options)
   if (options.query) query = options.query(query)
@@ -196,7 +197,9 @@ export async function safeCreateRecord(options: SafeCreateRecordOptions): Promis
   if (!permission.ok) return permission
   const tenantContext = options.request ? resolveTenantContext(options.request) : null
 
-  let values = stripUndefined(withTenantInsertScopeForTable(options.values, options.tableName, tenantContext))
+  let values = stripUndefined(options.skipTenantScope
+    ? options.values
+    : withTenantInsertScopeForTable(options.values, options.tableName, tenantContext))
   const contractFailure = validateContractPayload(options.contract, values, options.rejectUnknownFields)
   if (contractFailure) return contractFailure
 
@@ -235,7 +238,7 @@ export async function safeUpdateRecord(options: SafeUpdateRecordOptions): Promis
     .select(options.currentSelect || options.select || '*')
     .eq(primaryKey, options.recordId)
 
-  currentQuery = applyTenantQueryScope(currentQuery, options.tableName, tenantContext)
+  if (!options.skipTenantScope) currentQuery = applyTenantQueryScope(currentQuery, options.tableName, tenantContext)
   currentQuery = applyCompanyScope(currentQuery, options)
   if (options.notDeletedField && !options.includeDeleted) currentQuery = currentQuery.eq(options.notDeletedField, false)
 
@@ -272,7 +275,7 @@ export async function safeUpdateRecord(options: SafeUpdateRecordOptions): Promis
     .update(patch)
     .eq(primaryKey, options.recordId)
 
-  updateQuery = applyTenantQueryScope(updateQuery, options.tableName, tenantContext)
+  if (!options.skipTenantScope) updateQuery = applyTenantQueryScope(updateQuery, options.tableName, tenantContext)
 
   const { data, error } = await updateQuery
     .select(options.select || '*')

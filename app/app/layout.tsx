@@ -1,17 +1,17 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { usePathname, useSearchParams } from 'next/navigation'
 import Sidebar from '@/components/layout/Sidebar'
 import { PendingActionsBell } from '@/components/layout/PendingActionsBell'
-import { Building2, Menu, Sun, Moon } from 'lucide-react'
+import { Building2, Check, ChevronDown, Loader2, Menu, Moon, Sun } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ModuleLicenseProvider } from '@/hooks/useModuleLicense'
 import { PermissionProvider } from '@/lib/security/permissionStore'
 import { ModuleProvider } from '@/lib/security/moduleStore'
 import { GuidedSystemTour } from '@/components/onboarding/GuidedSystemTour'
 import { cacheUiPreferences, readCachedUiPreferences, syncUiPreferencesPatch } from '@/lib/user-state/client'
-import { tenantRequestHeaders } from '@/lib/tenancy/client'
+import { setStoredTenantId, tenantRequestHeaders } from '@/lib/tenancy/client'
 import type { SessionBootstrapResponse, UiThemePreference } from '@/lib/user-state/types'
 
 const BREADCRUMBS: Record<string, string> = {
@@ -56,6 +56,16 @@ const BREADCRUMBS: Record<string, string> = {
   '/app/sistem/kullanici-talepleri': 'Sistem Yönetimi › Kullanıcı Kayıt Talepleri',
 }
 
+type TenantWorkspaceOption = {
+  id: string
+  name: string
+  logoUrl?: string | null
+  role_key?: string | null
+  role_label?: string | null
+  is_default?: boolean
+  is_current?: boolean
+}
+
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -63,13 +73,19 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [dark, setDark] = useState(false)
+  const [workspaceId, setWorkspaceId] = useState<string | null>(null)
   const [workspaceName, setWorkspaceName] = useState('Çalışma Alanı')
   const [workspaceLogoUrl, setWorkspaceLogoUrl] = useState<string | null>(null)
   const [workspaceLogoFailed, setWorkspaceLogoFailed] = useState(false)
+  const [workspaceOptions, setWorkspaceOptions] = useState<TenantWorkspaceOption[]>([])
+  const [workspaceMenuOpen, setWorkspaceMenuOpen] = useState(false)
+  const [workspaceSwitchError, setWorkspaceSwitchError] = useState<string | null>(null)
+  const [switchingWorkspaceId, setSwitchingWorkspaceId] = useState<string | null>(null)
   const [tourOpen, setTourOpen] = useState(false)
   const [tourShouldOpen, setTourShouldOpen] = useState(false)
   const [tourInitialStep, setTourInitialStep] = useState<string | null>(null)
   const [tourClosedThisSession, setTourClosedThisSession] = useState(false)
+  const workspaceMenuRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
     const cachedPreferences = readCachedUiPreferences()
@@ -98,6 +114,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       })
       .then(payload => {
         if (cancelled) return
+        setWorkspaceId(payload.workspace?.id || null)
         setWorkspaceName(payload.workspace?.name || 'Çalışma Alanı')
         setWorkspaceLogoUrl(payload.workspace?.logoUrl || null)
         setWorkspaceLogoFailed(false)
@@ -111,10 +128,47 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         // Ana ekran, tanitim veya tercih hazirligi aksasa da acilmaya devam eder.
       })
 
+    fetch('/api/tenants/options', {
+      cache: 'no-store',
+      headers: tenantRequestHeaders(),
+    })
+      .then(async response => {
+        const payload = await response.json().catch(() => ({}))
+        if (!response.ok) throw new Error(payload.error || 'Calisma alanlari yuklenemedi.')
+        return payload.data as TenantWorkspaceOption[]
+      })
+      .then(options => {
+        if (cancelled) return
+        const rows = Array.isArray(options) ? options : []
+        setWorkspaceOptions(rows)
+
+        const current = rows.find(option => option.is_current)
+        if (current) {
+          setWorkspaceId(current.id)
+          setWorkspaceName(current.name || 'Calisma Alani')
+          setWorkspaceLogoUrl(current.logoUrl || null)
+          setWorkspaceLogoFailed(false)
+        }
+      })
+      .catch(() => undefined)
+
     return () => {
       cancelled = true
     }
   }, [])
+
+  useEffect(() => {
+    if (!workspaceMenuOpen) return
+
+    function closeOnOutsideClick(event: MouseEvent) {
+      if (!workspaceMenuRef.current?.contains(event.target as Node)) {
+        setWorkspaceMenuOpen(false)
+      }
+    }
+
+    document.addEventListener('mousedown', closeOnOutsideClick)
+    return () => document.removeEventListener('mousedown', closeOnOutsideClick)
+  }, [workspaceMenuOpen])
 
   useEffect(() => {
     if (tourShouldOpen && !tourClosedThisSession && pathname === '/app') {
@@ -151,6 +205,35 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       syncUiPreferencesPatch({ sidebarCollapsed: next }).catch(() => undefined)
       return next
     })
+  }
+
+  async function switchWorkspace(option: TenantWorkspaceOption) {
+    if (option.id === workspaceId || option.is_current) {
+      setWorkspaceMenuOpen(false)
+      return
+    }
+
+    setWorkspaceSwitchError(null)
+    setSwitchingWorkspaceId(option.id)
+
+    try {
+      const response = await fetch('/api/tenants/switch', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...tenantRequestHeaders(),
+        },
+        body: JSON.stringify({ tenant_id: option.id }),
+      })
+      const payload = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(payload.error || 'Calisma alani degistirilemedi.')
+
+      setStoredTenantId(option.id)
+      window.location.reload()
+    } catch (error) {
+      setWorkspaceSwitchError(error instanceof Error ? error.message : 'Calisma alani degistirilemedi.')
+      setSwitchingWorkspaceId(null)
+    }
   }
 
   const breadcrumb = BREADCRUMBS[pathname] ?? 'Eden ERP'
@@ -222,26 +305,80 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               >
                 <Menu size={15} />
               </button>
-              <button
-                type="button"
-                data-tour-id="workspace-switcher"
-                className="hidden min-w-0 items-center gap-2 rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-600 transition hover:bg-gray-50 dark:border-gray-700 dark:bg-eden-navy-2 dark:text-gray-200 dark:hover:bg-eden-navy sm:flex"
-                title={workspaceName}
-              >
-                {workspaceLogoUrl && !workspaceLogoFailed ? (
-                  <span className="flex h-5 w-5 shrink-0 items-center justify-center overflow-hidden rounded-md border border-gray-200 bg-white dark:border-gray-700 dark:bg-eden-navy">
-                    <img
-                      src={workspaceLogoUrl}
-                      alt=""
-                      className="h-full w-full object-contain"
-                      onError={() => setWorkspaceLogoFailed(true)}
-                    />
-                  </span>
-                ) : (
-                  <Building2 size={14} className="shrink-0 text-eden-green" />
+              <div ref={workspaceMenuRef} data-tour-id="workspace-switcher" className="relative hidden sm:block">
+                <button
+                  type="button"
+                  onClick={() => setWorkspaceMenuOpen(open => !open)}
+                  className="flex min-w-0 items-center gap-2 rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-600 transition hover:bg-gray-50 dark:border-gray-700 dark:bg-eden-navy-2 dark:text-gray-200 dark:hover:bg-eden-navy"
+                  title={workspaceName}
+                >
+                  {workspaceLogoUrl && !workspaceLogoFailed ? (
+                    <span className="flex h-5 w-5 shrink-0 items-center justify-center overflow-hidden rounded-md border border-gray-200 bg-white dark:border-gray-700 dark:bg-eden-navy">
+                      <img
+                        src={workspaceLogoUrl}
+                        alt=""
+                        className="h-full w-full object-contain"
+                        onError={() => setWorkspaceLogoFailed(true)}
+                      />
+                    </span>
+                  ) : (
+                    <Building2 size={14} className="shrink-0 text-eden-green" />
+                  )}
+                  <span className="max-w-36 truncate">{workspaceName}</span>
+                  <ChevronDown size={13} className={cn('shrink-0 text-gray-400 transition-transform', workspaceMenuOpen && 'rotate-180')} />
+                </button>
+
+                {workspaceMenuOpen && (
+                  <div className="absolute left-0 top-full z-50 mt-2 w-80 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-eden-navy-2">
+                    <div className="max-h-80 overflow-y-auto py-1">
+                      {workspaceOptions.length ? workspaceOptions.map(option => {
+                        const isCurrent = option.id === workspaceId || option.is_current
+                        const isSwitching = switchingWorkspaceId === option.id
+
+                        return (
+                          <button
+                            key={option.id}
+                            type="button"
+                            onClick={() => switchWorkspace(option)}
+                            disabled={Boolean(switchingWorkspaceId)}
+                            className={cn(
+                              'flex w-full items-center gap-2 px-3 py-2 text-left transition hover:bg-gray-50 disabled:cursor-wait disabled:opacity-70 dark:hover:bg-eden-navy',
+                              isCurrent && 'bg-gray-50 dark:bg-eden-navy'
+                            )}
+                          >
+                            <span className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-gray-200 bg-white text-eden-green dark:border-gray-700 dark:bg-eden-navy">
+                              {option.logoUrl ? (
+                                <img src={option.logoUrl} alt="" className="h-full w-full object-contain" />
+                              ) : (
+                                <Building2 size={16} />
+                              )}
+                            </span>
+                            <span className="min-w-0 flex-1">
+                              <span className="block truncate text-xs font-semibold text-gray-800 dark:text-gray-100">{option.name}</span>
+                              <span className="mt-0.5 flex items-center gap-1.5 text-[10px] text-gray-500 dark:text-gray-400">
+                                {option.role_label && <span>{option.role_label}</span>}
+                                {option.is_default && <span>Varsayilan</span>}
+                              </span>
+                            </span>
+                            {isSwitching ? (
+                              <Loader2 size={15} className="shrink-0 animate-spin text-gray-400" />
+                            ) : isCurrent ? (
+                              <Check size={15} className="shrink-0 text-eden-green" />
+                            ) : null}
+                          </button>
+                        )
+                      }) : (
+                        <div className="px-3 py-3 text-xs text-gray-500 dark:text-gray-400">Erisilebilir baska calisma alani yok.</div>
+                      )}
+                    </div>
+                    {workspaceSwitchError && (
+                      <div className="border-t border-gray-200 px-3 py-2 text-xs text-red-600 dark:border-gray-700 dark:text-red-300">
+                        {workspaceSwitchError}
+                      </div>
+                    )}
+                  </div>
                 )}
-                <span className="max-w-40 truncate">{workspaceName}</span>
-              </button>
+              </div>
               <div className="text-xs text-gray-400 dark:text-gray-500">
                 Eden ERP ›{' '}
                 <span className="text-gray-700 dark:text-gray-200 font-medium">

@@ -5,8 +5,18 @@ import { syncMasterContact } from '@/lib/identity/masterContact'
 import { EntityBankAccountsService } from '@/lib/modules/entity-bank-accounts/entityBankAccounts.service'
 import { listMeta, listMetaFromRows, listRange, parseListQuery } from '@/lib/api/listEndpoint'
 import { getServerResponseCache, serverListCacheKey, setServerResponseCache } from '@/lib/api/serverResponseCache'
-import { safeCreateRecord, safeCrudResponse, safeListRecords } from '@/lib/crud/safeCrudService'
+import { safeCreateRecord, safeCrudResponse } from '@/lib/crud/safeCrudService'
 import { applyTenantQueryScope, resolveTenantContext, type TenantContext, withTenantInsertScopeForTable } from '@/lib/tenancy/server'
+import {
+  ensureTenantCompanyScope,
+  fetchScopedCompanyIds,
+  findGlobalOrganizationByIdentity,
+  findOwnedCompanyScopeByOrganization,
+  findTenantCompanyByTaxNumber,
+  getTenantCompanyScope,
+  normalizeLegalCountry,
+  normalizeLegalTaxNumber,
+} from '@/lib/tenancy/companyScopes'
 import { requirePermission } from '@/lib/security/serverPermissions'
 
 const emptyStringToUndefined = (value: unknown) => value === '' ? undefined : value
@@ -109,6 +119,9 @@ export async function GET(request: NextRequest) {
   if (cached) return NextResponse.json(cached)
 
   const supabase = createServiceClient()
+  const permission = await requirePermission(request, supabase, 'companies.view')
+  if (permission instanceof NextResponse) return permission
+  const tenantContext = resolveTenantContext(request)
   const { searchParams } = new URL(request.url)
   const listQuery = parseListQuery(searchParams, { pageSize: 50, sort: 'short_name', direction: 'asc' })
   const sortMap: Record<string, string> = {
@@ -129,21 +142,35 @@ export async function GET(request: NextRequest) {
   }
   const ara = searchParams.get('ara') || listQuery.search
 
-  const result = await safeListRecords({
-    supabase,
-    request,
-    tableName: 'companies',
-    permissionKey: 'companies.view',
-    select: 'id,organization_id,short_name,trade_name,tax_number,tax_office,company_type,city,district,is_deleted,record_status,company_status,updated_at,created_at',
-    listQuery: { ...listQuery, search: ara },
-    sortMap,
-    defaultSort: 'short_name',
-    passiveField: 'is_deleted',
-    searchFields: ['short_name', 'trade_name', 'tax_number'],
-  })
+  const scopedCompanyIds = await fetchScopedCompanyIds(supabase, tenantContext.tenantId)
+  if (!scopedCompanyIds.length) {
+    const payload = { data: [], meta: listMeta(listQuery, 0) }
+    setServerResponseCache(cacheKey, payload, 60_000)
+    return NextResponse.json(payload)
+  }
 
-  if (!result.ok) {
-    if (result.error.includes("Could not find the table 'public.companies'")) {
+  const { from, to } = listRange(listQuery)
+  const sortColumn = sortMap[listQuery.sort || ''] || 'short_name'
+  let query = supabase
+    .from('companies')
+    .select('id,organization_id,short_name,trade_name,tax_number,tax_office,company_type,city,district,is_deleted,record_status,company_status,updated_at,created_at')
+    .in('id', scopedCompanyIds)
+    .order(sortColumn, { ascending: listQuery.direction !== 'desc' })
+    .range(from, to)
+
+  query = applyTenantQueryScope(query, 'companies', tenantContext)
+
+  if (!listQuery.includePassive) query = query.eq('is_deleted', false)
+
+  const searchTerm = String(ara || '').replace(/[%(),]/g, '').trim()
+  if (searchTerm) {
+    query = query.or(['short_name', 'trade_name', 'tax_number'].map(field => `${field}.ilike.%${searchTerm}%`).join(','))
+  }
+
+  const { data, error } = await query
+
+  if (error) {
+    if (error.message.includes("Could not find the table 'public.companies'")) {
       return NextResponse.json({
         data: [],
         meta: listMeta(listQuery, 0),
@@ -151,10 +178,10 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    return safeCrudResponse(result)
+    return NextResponse.json({ error: error.message, code: error.code || 'FETCH_FAILED' }, { status: 500 })
   }
 
-  const payload = { data: result.data, meta: result.meta }
+  const payload = { data: data || [], meta: listMetaFromRows(listQuery, data?.length || 0) }
   setServerResponseCache(cacheKey, payload, 60_000)
   return NextResponse.json(payload)
 }
@@ -207,6 +234,45 @@ export async function POST(request: NextRequest) {
     ...(beneficiary_bank_address !== undefined ? { beneficiary_bank_address } : {}),
     ...(beneficiary_currency !== undefined ? { beneficiary_currency } : {}),
   }
+
+  const existingTenantCompany = await findTenantCompanyByTaxNumber(supabase, {
+    tenantId: tenantContext.tenantId,
+    country: companyData.country,
+    taxNumber: companyData.tax_number,
+    select: 'id,organization_id,short_name,trade_name,tax_number,tax_office,company_type,city,district,is_deleted,record_status,company_status,updated_at,created_at,tenant_id,country',
+  })
+  if (existingTenantCompany?.id) {
+    const currentScope = await getTenantCompanyScope(supabase, tenantContext.tenantId, existingTenantCompany.id)
+    if (currentScope) {
+      return NextResponse.json({
+        error: 'Bu VKN ile kayıtlı şirket zaten Şirketlerimiz listesinde bulunuyor.',
+        code: 'COMPANY_ALREADY_IN_WORKSPACE',
+        details: { company_id: existingTenantCompany.id, tax_number: companyData.tax_number },
+      }, { status: 409 })
+    }
+
+    const ownerScope = existingTenantCompany.organization_id
+      ? await findOwnedCompanyScopeByOrganization(supabase, existingTenantCompany.organization_id)
+      : null
+    await ensureTenantCompanyScope(supabase, {
+      tenantId: tenantContext.tenantId,
+      companyId: existingTenantCompany.id,
+      scopeType: ownerScope ? 'managed' : 'owned',
+      source: 'companies_create_existing_global',
+      metadata: {
+        requested_tax_number: companyData.tax_number,
+        owner_tenant_id: ownerScope?.tenant_id || null,
+      },
+    })
+
+    return NextResponse.json({
+      data: existingTenantCompany,
+      warning: ownerScope
+        ? 'Bu VKN ile global şirket kaydı zaten vardı; yeni şirket açılmadı, Şirketlerimiz listesine yönetim kapsamı olarak eklendi.'
+        : 'Bu VKN ile mevcut global şirket kaydı Şirketlerimiz listesine eklendi.',
+    }, { status: 200 })
+  }
+
   let companyRow: Record<string, any>
   try {
     companyRow = await attachCompanyOrganization(supabase, {
@@ -219,6 +285,9 @@ export async function POST(request: NextRequest) {
       code: 'MASTER_ORGANIZATION_LINK_FAILED',
     }, { status: 500 })
   }
+  const ownerScope = companyRow.organization_id
+    ? await findOwnedCompanyScopeByOrganization(supabase, companyRow.organization_id)
+    : null
   const createResult = await safeCreateRecord({
     supabase,
     request,
@@ -230,6 +299,16 @@ export async function POST(request: NextRequest) {
 
   if (!createResult.ok) return safeCrudResponse(createResult)
   const data = createResult.data
+  await ensureTenantCompanyScope(supabase, {
+    tenantId: tenantContext.tenantId,
+    companyId: data.id,
+    scopeType: ownerScope ? 'managed' : 'owned',
+    source: ownerScope ? 'companies_create_managed_profile' : 'companies_create',
+    metadata: {
+      organization_id: companyRow.organization_id || null,
+      owner_tenant_id: ownerScope?.tenant_id || null,
+    },
+  })
 
   const organizationUnitError = await ensureCompanyRootUnit(supabase, data.id, companyRow, tenantContext)
   if (organizationUnitError) return NextResponse.json({ error: organizationUnitError.message, code: organizationUnitError.code || 'COMPANY_ORG_UNIT_SAVE_FAILED' }, { status: 500 })
@@ -266,7 +345,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: lifecycleError.message, code: lifecycleError.code || 'LIFECYCLE_EVENT_FAILED' }, { status: 500 })
   }
 
-  return NextResponse.json({ data }, { status: 201 })
+  return NextResponse.json({
+    data,
+    ...(ownerScope ? {
+      warning: 'Bu VKN ile tuzel kimlik daha once kaydedilmis. Bu tenant icin ayri bir sirket profili acildi; ozel bilgiler tenant icinde kalir.',
+    } : {}),
+  }, { status: 201 })
 }
 
 async function insertCompanyCreatedAsDraftEvent(
@@ -298,17 +382,16 @@ async function attachCompanyOrganization(
   try {
     if (companyData.organization_id) return companyData
 
-    const country = companyData.country || 'TR'
-    const taxNumber = companyData.tax_number || null
-    let query = taxNumber
-      ? supabase.from('organizations').select('id').eq('country', country).eq('tax_number', taxNumber)
-      : supabase.from('organizations').select('id').eq('country', country).eq('legal_name', companyData.trade_name)
-    query = applyTenantQueryScope(query, 'organizations', tenantContext)
+    const country = normalizeLegalCountry(companyData.country || 'TR')
+    const taxNumber = normalizeLegalTaxNumber(companyData.tax_number, country)
+    const existing = await findGlobalOrganizationByIdentity(supabase, {
+      country,
+      taxNumber,
+      legalName: companyData.trade_name,
+      select: 'id',
+    })
 
-    const { data: existing, error: findError } = await query.maybeSingle()
-    if (findError) throw new Error(findError.message)
-
-    const organizationId = existing?.id || (await supabase.from('organizations').insert(withTenantInsertScopeForTable({
+    const organizationId = existing?.id || (await supabase.from('organizations').insert({
       legal_name: companyData.trade_name,
       short_name: companyData.short_name || null,
       country,
@@ -316,13 +399,8 @@ async function attachCompanyOrganization(
       registration_number: companyData.trade_registry_number || companyData.mersis_number || null,
       tax_office: companyData.tax_office || null,
       organization_type: companyData.company_type || null,
-      phone: companyData.phone || null,
-      email: companyData.email || null,
-      address: companyData.address || null,
-      city: companyData.city || null,
-      district: companyData.district || null,
       metadata_json: { source: 'companies_create' },
-    }, 'organizations', tenantContext)).select('id').single()).data?.id
+    }).select('id').single()).data?.id
 
     if (!organizationId) throw new Error('Ana kurum kaydı oluşturulamadı.')
     return { ...companyData, organization_id: organizationId }

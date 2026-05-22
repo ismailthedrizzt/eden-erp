@@ -104,12 +104,41 @@ async function lookupCompaniesByTaxNumber(supabase: Supabase, taxNumber: string)
 
   if (error) throw new Error(error.message)
 
-  const rows = (companies || [])
-    .map(company => ({
-      ...company,
-      tenant_id: company.tenant_id || DEFAULT_TENANT_ID,
-    }))
-    .filter(company => company.id && company.tenant_id)
+  const companyRows = (companies || []).filter(company => company.id)
+  if (!companyRows.length) return []
+
+  const companyById = new Map(companyRows.map(company => [company.id, company]))
+  const companyIds = companyRows.map(company => company.id).filter(Boolean)
+  const { data: scopes, error: scopeError } = await supabase
+    .from('tenant_company_scopes')
+    .select('tenant_id, company_id, scope_type, status')
+    .in('company_id', companyIds)
+    .eq('status', 'active')
+    .eq('scope_type', 'owned')
+
+  if (scopeError && !isMissingTenantScopeError(scopeError)) throw new Error(scopeError.message)
+
+  const scopedRows = (scopes || [])
+    .map(scope => {
+      const company = companyById.get(scope.company_id)
+      if (!company) return null
+      return {
+        ...company,
+        tenant_id: scope.tenant_id,
+        scope_type: scope.scope_type,
+      }
+    })
+    .filter((row): row is NonNullable<typeof row> => Boolean(row?.tenant_id))
+
+  const rows = scopedRows.length
+    ? scopedRows
+    : companyRows
+      .map(company => ({
+        ...company,
+        tenant_id: company.tenant_id || DEFAULT_TENANT_ID,
+        scope_type: 'owned',
+      }))
+      .filter(company => company.id && company.tenant_id)
 
   if (!rows.length) return []
 
@@ -131,12 +160,22 @@ async function lookupCompaniesByTaxNumber(supabase: Supabase, taxNumber: string)
       return {
         tenant_id: company.tenant_id,
         tenant_name: tenant?.name || 'Eden ERP',
+        scope_type: company.scope_type || 'owned',
         company_id: company.id,
         company_name: company.short_name || company.trade_name || 'Şirket kaydı',
         trade_name: company.trade_name || null,
         tax_number: company.tax_number,
       }
     })
+}
+
+function isMissingTenantScopeError(error: { code?: string; message?: string } | null) {
+  const message = error?.message || ''
+  return error?.code === '42P01'
+    || error?.code === 'PGRST205'
+    || message.includes('tenant_company_scopes')
+    || message.includes('schema cache')
+    || message.includes('does not exist')
 }
 
 function validateVerifiedSignupContact(request: NextRequest, person: z.infer<typeof PersonPayloadSchema>) {
@@ -231,7 +270,7 @@ async function createJoinRequest(
   return {
     request: data,
     company: match,
-    message: 'Kullanıcı kayıt talebiniz oluşturuldu. Şirket yöneticileri onayladığında bilgilendirileceksiniz.',
+    message: 'Talebiniz Sistem Yöneticilerine gönderildi. Onaylandığında telefon ve e-posta üzerinden bilgilendirileceksiniz.',
   }
 }
 

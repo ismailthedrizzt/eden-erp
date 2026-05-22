@@ -6,6 +6,9 @@ import { normalizeCountryId } from '@/lib/reference/country-nationalities'
 import { EntityBankAccountsService } from '@/lib/modules/entity-bank-accounts/entityBankAccounts.service'
 import { listMetaFromRows, listRange, parseListQuery } from '@/lib/api/listEndpoint'
 import { ensureUniqueRoleMaster, roleUniquenessResponse } from '@/lib/identity/roleUniqueness'
+import { applyTenantQueryScope, resolveTenantContext, type TenantContext, withTenantInsertScopeForTable } from '@/lib/tenancy/server'
+import { findGlobalOrganizationByIdentity, getTenantCompanyScope, isWritableCompanyScope, normalizeLegalCountry, normalizeLegalTaxNumber } from '@/lib/tenancy/companyScopes'
+import { requirePermission } from '@/lib/security/serverPermissions'
 
 const StakeholderSchema = z.object({
   company_id: z.string().uuid().optional(),
@@ -41,6 +44,9 @@ function omitNullishValues(value: Record<string, any>) {
 
 export async function GET(request: NextRequest) {
   const supabase = createServiceClient()
+  const permission = await requirePermission(request, supabase, 'stakeholders.view')
+  if (permission instanceof NextResponse) return permission
+  const tenantContext = resolveTenantContext(request)
   const { searchParams } = new URL(request.url)
   const listQuery = parseListQuery(searchParams, { pageSize: 50, sort: 'created_at', direction: 'desc' })
   const { from, to } = listRange(listQuery)
@@ -64,7 +70,12 @@ export async function GET(request: NextRequest) {
     .order(sortColumn, { ascending: listQuery.direction !== 'desc' })
     .range(from, to)
 
-  if (companyId) query = query.eq('company_id', companyId)
+  query = applyTenantQueryScope(query, 'stakeholders', tenantContext)
+  if (companyId) {
+    const scope = await getTenantCompanyScope(supabase, tenantContext.tenantId, companyId)
+    if (!scope) return NextResponse.json({ error: 'Şirket bulunamadı', code: 'COMPANY_NOT_FOUND' }, { status: 404 })
+    query = query.eq('company_id', companyId)
+  }
   if (status) query = query.eq('status', status)
   if (!includePassive) query = query.eq('is_deleted', false)
   if (listQuery.search) query = query.or(`display_name.ilike.%${listQuery.search}%,tax_id.ilike.%${listQuery.search}%,email.ilike.%${listQuery.search}%`)
@@ -83,6 +94,9 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   const supabase = createServiceClient()
+  const permission = await requirePermission(request, supabase, 'stakeholders.insert')
+  if (permission instanceof NextResponse) return permission
+  const tenantContext = resolveTenantContext(request)
   const body = omitNullishValues(await request.json())
   const parsed = StakeholderSchema.safeParse(body)
 
@@ -106,23 +120,26 @@ export async function POST(request: NextRequest) {
 
   let row: Record<string, any>
   try {
-    row = await attachStakeholderIdentity(supabase, stakeholder, mapStakeholderForDb(stakeholder))
+    row = await attachStakeholderIdentity(supabase, stakeholder, mapStakeholderForDb(stakeholder), tenantContext)
   } catch (error) {
     return NextResponse.json({
       error: error instanceof Error ? error.message : 'Paydaş ana kayda bağlanamadı',
       code: 'MASTER_IDENTITY_LINK_FAILED',
     }, { status: 500 })
   }
+  const scopeResponse = await requireWritableCompanyScope(supabase, tenantContext, row.company_id)
+  if (scopeResponse) return scopeResponse
 
   const uniqueness = await ensureUniqueRoleMaster(supabase as any, {
     tableName: 'stakeholders',
     identity: row,
+    tenantContext,
   })
   if (!uniqueness.ok) return roleUniquenessResponse(uniqueness)
 
   const { data, error } = await supabase
     .from('stakeholders')
-    .insert(row)
+    .insert(withTenantInsertScopeForTable(row, 'stakeholders', tenantContext))
     .select()
     .single()
 
@@ -177,7 +194,26 @@ function buildDisplayName(source: Record<string, any>) {
     : [source.first_name, source.last_name].filter(Boolean).join(' ').trim() || source.full_name || ''
 }
 
-async function attachStakeholderIdentity(supabase: ReturnType<typeof createServiceClient>, stakeholder: Record<string, any>, row: Record<string, any>) {
+async function requireWritableCompanyScope(
+  supabase: ReturnType<typeof createServiceClient>,
+  tenantContext: TenantContext,
+  companyId?: string | null
+) {
+  if (!companyId) return null
+  const scope = await getTenantCompanyScope(supabase, tenantContext.tenantId, companyId)
+  if (!scope) return NextResponse.json({ error: 'Şirket bulunamadı', code: 'COMPANY_NOT_FOUND' }, { status: 404 })
+  if (!isWritableCompanyScope(scope)) {
+    return NextResponse.json({ error: 'Bu şirket için yalnızca görüntüleme yetkiniz var.', code: 'COMPANY_SCOPE_READONLY' }, { status: 403 })
+  }
+  return null
+}
+
+async function attachStakeholderIdentity(
+  supabase: ReturnType<typeof createServiceClient>,
+  stakeholder: Record<string, any>,
+  row: Record<string, any>,
+  tenantContext: TenantContext
+) {
   try {
     const kind = stakeholder.stakeholder_type === 'organization' ? 'organization' : 'person'
     if (kind === 'person') {
@@ -186,13 +222,16 @@ async function attachStakeholderIdentity(supabase: ReturnType<typeof createServi
       const fullName = stakeholder.display_name || buildDisplayName(stakeholder)
       const nationalId = stakeholder.tax_id && String(stakeholder.tax_id).length === 11 ? String(stakeholder.tax_id) : null
       const passportNo = nationalId ? null : stakeholder.passport_no || stakeholder.tax_id || null
-      const { data: existing, error: findError } = nationalId
-        ? await supabase.from('persons').select('id').eq('nationality', normalizeCountryId(stakeholder.country || 'TR')).eq('national_id', nationalId).maybeSingle()
+      let personQuery = supabase.from('persons').select('id')
+      personQuery = nationalId
+        ? personQuery.eq('nationality', normalizeCountryId(stakeholder.country || 'TR')).eq('national_id', nationalId)
         : passportNo
-          ? await supabase.from('persons').select('id').eq('nationality', normalizeCountryId(stakeholder.country || 'TR')).eq('passport_no', passportNo).maybeSingle()
-          : await supabase.from('persons').select('id').eq('full_name', fullName).maybeSingle()
+          ? personQuery.eq('nationality', normalizeCountryId(stakeholder.country || 'TR')).eq('passport_no', passportNo)
+          : personQuery.eq('full_name', fullName)
+      personQuery = applyTenantQueryScope(personQuery, 'persons', tenantContext)
+      const { data: existing, error: findError } = await personQuery.maybeSingle()
       if (findError) throw new Error(findError.message)
-      const personId = existing?.id || (await supabase.from('persons').insert({
+      const personId = existing?.id || (await supabase.from('persons').insert(withTenantInsertScopeForTable({
         first_name: stakeholder.first_name || null,
         last_name: stakeholder.last_name || null,
         full_name: fullName,
@@ -206,7 +245,7 @@ async function attachStakeholderIdentity(supabase: ReturnType<typeof createServi
         city: stakeholder.city || null,
         district: stakeholder.district || null,
         metadata_json: { source: 'stakeholders_create' },
-      }).select('id').single()).data?.id
+      }, 'persons', tenantContext)).select('id').single()).data?.id
       if (!personId) throw new Error('Ana kişi kaydı oluşturulamadı.')
       return { ...row, stakeholder_kind: 'person', person_id: personId || null }
     }
@@ -214,12 +253,14 @@ async function attachStakeholderIdentity(supabase: ReturnType<typeof createServi
     const legalName = stakeholder.trade_name || stakeholder.display_name
     if (stakeholder.organization_id) return { ...row, stakeholder_kind: 'organization', organization_id: stakeholder.organization_id }
 
-    const country = normalizeCountryId(stakeholder.country || 'TR')
-    const taxNumber = stakeholder.tax_id || stakeholder.tax_number || null
-    const { data: existing, error: findError } = taxNumber
-      ? await supabase.from('organizations').select('id').eq('country', country).eq('tax_number', taxNumber).maybeSingle()
-      : await supabase.from('organizations').select('id').eq('country', country).eq('legal_name', legalName).maybeSingle()
-    if (findError) throw new Error(findError.message)
+    const country = normalizeLegalCountry(stakeholder.country || 'TR')
+    const taxNumber = normalizeLegalTaxNumber(stakeholder.tax_id || stakeholder.tax_number || null, country)
+    const existing = await findGlobalOrganizationByIdentity(supabase, {
+      country,
+      taxNumber,
+      legalName,
+      select: 'id',
+    })
     const organizationId = existing?.id || (await supabase.from('organizations').insert({
       legal_name: legalName,
       short_name: stakeholder.short_name || null,

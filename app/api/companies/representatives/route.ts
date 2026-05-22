@@ -5,6 +5,9 @@ import { hydrateMasterContact, stripMasterDataForRoleProfile, syncMasterContact 
 import { normalizeCountryId } from '@/lib/reference/country-nationalities'
 import { EntityBankAccountsService } from '@/lib/modules/entity-bank-accounts/entityBankAccounts.service'
 import { listMetaFromRows, listRange, parseListQuery } from '@/lib/api/listEndpoint'
+import { requirePermission } from '@/lib/security/serverPermissions'
+import { applyTenantQueryScope, resolveTenantContext, type TenantContext, withTenantInsertScopeForTable } from '@/lib/tenancy/server'
+import { findGlobalOrganizationByIdentity, getTenantCompanyScope, isWritableCompanyScope, normalizeLegalCountry, normalizeLegalTaxNumber } from '@/lib/tenancy/companyScopes'
 
 const RepresentativeSchema = z.object({
   company_id: z.string().uuid().optional(),  person_id: z.string().uuid().optional().nullable(),
@@ -39,6 +42,9 @@ function omitNullishValues(value: Record<string, any>) {
 
 export async function GET(request: NextRequest) {
   const supabase = createServiceClient()
+  const permission = await requirePermission(request, supabase, 'representatives.view')
+  if (permission instanceof NextResponse) return permission
+  const tenantContext = resolveTenantContext(request)
   const { searchParams } = new URL(request.url)
   const listQuery = parseListQuery(searchParams, { pageSize: 50, sort: 'created_at', direction: 'desc' })
   const { from, to } = listRange(listQuery)
@@ -61,7 +67,12 @@ export async function GET(request: NextRequest) {
     .order(sortColumn, { ascending: listQuery.direction !== 'desc' })
     .range(from, to)
 
-  if (companyId) query = query.or(`company_id.eq.${companyId},company_id.eq.${companyId}`)
+  query = applyTenantQueryScope(query, 'company_representatives', tenantContext)
+  if (companyId) {
+    const scope = await getTenantCompanyScope(supabase, tenantContext.tenantId, companyId)
+    if (!scope) return NextResponse.json({ error: 'Şirket bulunamadı', code: 'COMPANY_NOT_FOUND' }, { status: 404 })
+    query = query.or(`company_id.eq.${companyId},company_id.eq.${companyId}`)
+  }
   if (status) query = query.eq('status', status)
   if (!includePassive) query = query.eq('is_deleted', false)
   if (listQuery.search) query = query.or(`display_name.ilike.%${listQuery.search}%,full_name.ilike.%${listQuery.search}%,job_title.ilike.%${listQuery.search}%`)
@@ -75,6 +86,9 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   const supabase = createServiceClient()
+  const permission = await requirePermission(request, supabase, 'representatives.insert')
+  if (permission instanceof NextResponse) return permission
+  const tenantContext = resolveTenantContext(request)
   const body = omitNullishValues(await request.json())
   const parsed = RepresentativeSchema.safeParse(body)
 
@@ -82,14 +96,17 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Geçersiz veri', code: 'VALIDATION_FAILED', details: parsed.error.flatten() }, { status: 400 })
   }
 
-  const row = await attachRepresentativeIdentity(supabase, parsed.data, mapRepresentativeForDb(parsed.data))
+  const row = await attachRepresentativeIdentity(supabase, parsed.data, mapRepresentativeForDb(parsed.data), tenantContext)
   if (!row.company_id) {
     return NextResponse.json({ error: 'Bağlı şirket bulunamadı', code: 'COMPANY_REQUIRED' }, { status: 400 })
   }
 
+  const scopeResponse = await requireWritableCompanyScope(supabase, tenantContext, row.company_id)
+  if (scopeResponse) return scopeResponse
+
   const { data, error } = await supabase
     .from('company_representatives')
-    .insert(row)
+    .insert(withTenantInsertScopeForTable(row, 'company_representatives', tenantContext))
     .select()
     .single()
 
@@ -150,7 +167,26 @@ function buildDisplayName(source: Record<string, any>) {
     : [source.first_name, source.last_name].filter(Boolean).join(' ').trim()
 }
 
-async function attachRepresentativeIdentity(supabase: ReturnType<typeof createServiceClient>, representative: Record<string, any>, row: Record<string, any>) {
+async function requireWritableCompanyScope(
+  supabase: ReturnType<typeof createServiceClient>,
+  tenantContext: TenantContext,
+  companyId?: string | null
+) {
+  if (!companyId) return null
+  const scope = await getTenantCompanyScope(supabase, tenantContext.tenantId, companyId)
+  if (!scope) return NextResponse.json({ error: 'Şirket bulunamadı', code: 'COMPANY_NOT_FOUND' }, { status: 404 })
+  if (!isWritableCompanyScope(scope)) {
+    return NextResponse.json({ error: 'Bu şirket için yalnızca görüntüleme yetkiniz var.', code: 'COMPANY_SCOPE_READONLY' }, { status: 403 })
+  }
+  return null
+}
+
+async function attachRepresentativeIdentity(
+  supabase: ReturnType<typeof createServiceClient>,
+  representative: Record<string, any>,
+  row: Record<string, any>,
+  tenantContext: TenantContext
+) {
   try {
     const kind = representative.person_or_entity_type === 'organization' ? 'organization' : 'person'
     if (kind === 'person') {
@@ -160,13 +196,16 @@ async function attachRepresentativeIdentity(supabase: ReturnType<typeof createSe
       const nationalId = representative.identity_number && String(representative.identity_number).length === 11 ? String(representative.identity_number) : null
       const passportNo = nationalId ? null : representative.passport_no || representative.identity_number || null
       const nationality = normalizeCountryId(representative.nationality || representative.nationality_country || 'TR')
-      const { data: existing, error: findError } = nationalId
-        ? await supabase.from('persons').select('id').eq('nationality', nationality).eq('national_id', nationalId).maybeSingle()
+      let personQuery = supabase.from('persons').select('id')
+      personQuery = nationalId
+        ? personQuery.eq('nationality', nationality).eq('national_id', nationalId)
         : passportNo
-          ? await supabase.from('persons').select('id').eq('nationality', nationality).eq('passport_no', passportNo).maybeSingle()
-          : await supabase.from('persons').select('id').eq('full_name', fullName).maybeSingle()
+          ? personQuery.eq('nationality', nationality).eq('passport_no', passportNo)
+          : personQuery.eq('full_name', fullName)
+      personQuery = applyTenantQueryScope(personQuery, 'persons', tenantContext)
+      const { data: existing, error: findError } = await personQuery.maybeSingle()
       if (findError) return row
-      const personId = existing?.id || (await supabase.from('persons').insert({
+      const personId = existing?.id || (await supabase.from('persons').insert(withTenantInsertScopeForTable({
         first_name: representative.first_name || null,
         last_name: representative.last_name || null,
         full_name: fullName,
@@ -179,19 +218,21 @@ async function attachRepresentativeIdentity(supabase: ReturnType<typeof createSe
         city: representative.city || representative.city || null,
         district: representative.district || representative.district || null,
         metadata_json: { source: 'representatives_create' },
-      }).select('id').single()).data?.id
+      }, 'persons', tenantContext)).select('id').single()).data?.id
       return { ...row, person_id: personId || null, source_id: row.source_id || personId || null }
     }
 
     const legalName = representative.trade_name || representative.display_name
     if (representative.organization_id) return { ...row, organization_id: representative.organization_id, source_id: row.source_id || representative.organization_id }
 
-    const country = normalizeCountryId(representative.country || representative.nationality_country || 'TR')
-    const taxNumber = representative.identity_number || null
-    const { data: existing, error: findError } = taxNumber
-      ? await supabase.from('organizations').select('id').eq('country', country).eq('tax_number', taxNumber).maybeSingle()
-      : await supabase.from('organizations').select('id').eq('country', country).eq('legal_name', legalName).maybeSingle()
-    if (findError) return row
+    const country = normalizeLegalCountry(representative.country || representative.nationality_country || 'TR')
+    const taxNumber = normalizeLegalTaxNumber(representative.identity_number || null, country)
+    const existing = await findGlobalOrganizationByIdentity(supabase, {
+      country,
+      taxNumber,
+      legalName,
+      select: 'id',
+    }).catch(() => null)
     const organizationId = existing?.id || (await supabase.from('organizations').insert({
       legal_name: legalName,
       short_name: representative.short_name || null,

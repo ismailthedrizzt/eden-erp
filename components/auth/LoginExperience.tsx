@@ -59,20 +59,6 @@ const otpInputClass =
 type AuthMode = 'login' | 'signup'
 type SignupFlow = 'new_company' | 'join_company'
 
-type TenantAccessLookupResponse = {
-  data?: {
-    tenants?: Array<{
-      tenant_id: string
-      tenant_name: string
-      logoUrl?: string | null
-      role_label?: string | null
-    }>
-    message?: string
-    status?: 'found' | 'no_tenants'
-  }
-  error?: string
-}
-
 type TenantLoginStatusResponse = {
   data?: {
     login_enabled?: boolean
@@ -190,8 +176,23 @@ const initialJoinForm: JoinFormState = {
   phone: '',
 }
 
+const JOIN_REQUEST_SUCCESS_MESSAGE = 'Talebiniz Sistem Yöneticilerine gönderildi. Onaylandığında telefon ve e-posta üzerinden bilgilendirileceksiniz.'
+
 function getErrorMessage(cause: unknown, fallback: string) {
-  return cause instanceof Error ? cause.message : fallback
+  const message = cause instanceof Error ? cause.message : ''
+  if (!message) return fallback
+
+  const normalized = message.toLowerCase()
+  if (
+    normalized.includes('fetch failed')
+    || normalized.includes('failed to fetch')
+    || normalized.includes('networkerror')
+    || normalized.includes('load failed')
+  ) {
+    return fallback
+  }
+
+  return message
 }
 
 function normalizeAuthIdentifier(value: string) {
@@ -310,6 +311,10 @@ export function LoginExperience({
   const userSelectedAuthModeRef = useRef(false)
   const isEmailLogin = normalizeAuthIdentifier(value)?.type === 'email'
   const modeCopy = AUTH_MODE_COPY[authMode]
+  const joinRequestCompleted = authMode === 'signup'
+    && signupFlow === 'join_company'
+    && success
+    && Boolean(joinRequestMessage)
 
   useEffect(() => {
     if (step === 'otp') startTimer()
@@ -421,21 +426,6 @@ export function LoginExperience({
     return data.data || null
   }
 
-  async function lookupTenantAccess(identifier: string) {
-    const response = await fetch('/api/auth/tenant-access', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ identifier }),
-    })
-    const data = await response.json().catch(() => ({})) as TenantAccessLookupResponse
-
-    if (!response.ok) {
-      throw new Error(data.error || 'Kullanıcı sorgusu tamamlanamadı.')
-    }
-
-    return data.data
-  }
-
   async function lookupCompanyJoinMatches(taxNumber = joinForm.tax_number) {
     const normalizedTaxNumber = onlyDigits(taxNumber, 10)
     setJoinForm(current => ({ ...current, tax_number: normalizedTaxNumber }))
@@ -505,13 +495,15 @@ export function LoginExperience({
     const data = await response.json().catch(() => ({})) as CompanyJoinResponse
     if (!response.ok) throw new Error(data.error || 'Kullanıcı kayıt talebi oluşturulamadı.')
 
-    setJoinRequestMessage(data.data?.message || 'Kullanıcı kayıt talebiniz oluşturuldu.')
+    setJoinRequestMessage(data.data?.message || JOIN_REQUEST_SUCCESS_MESSAGE)
   }
 
   async function completeAuthFlow() {
     if (authMode === 'signup') {
       if (signupFlow === 'join_company') {
         await submitCompanyJoinRequest()
+        if (timerRef.current) clearInterval(timerRef.current)
+        setResendActive(false)
         setSuccess(true)
         return
       }
@@ -590,14 +582,6 @@ export function LoginExperience({
         setFallbackCode(delivery?.fallbackCode || null)
 
         setStep('otp')
-        return
-      }
-
-      const lookup = await lookupTenantAccess(normalizedIdentifier.value)
-      const tenantCount = lookup?.tenants?.length || 0
-
-      if (!tenantCount) {
-        setError(lookup?.message || 'Henuz aktif sirket bulunmadigi icin giris gecici olarak pasif.')
         return
       }
 
@@ -804,26 +788,179 @@ export function LoginExperience({
             <>
               <AuthModeSwitch mode={authMode} onChange={switchAuthMode} loginEnabled={loginEnabled} />
               <h2 className="mb-1 font-display text-2xl font-bold text-white">{modeCopy.title}</h2>
-              <p className="mb-7 text-sm text-white/55">{modeCopy.subtitle}</p>
-              <div className="mb-4">
-                <label className="mb-1.5 block text-xs font-semibold text-white/60">
-                  Cep Telefonu veya E-posta
-                </label>
-                <input
-                  type="text"
-                  value={value}
-                  onChange={event => {
-                    setValue(event.target.value)
-                    setError('')
-                  }}
-                  onKeyDown={event => event.key === 'Enter' && handleStep1()}
-                  placeholder="5554443322 veya ornek@eden.com"
-                  className={textInputClass}
-                  autoComplete="username"
-                  autoFocus={autoFocus}
-                />
-                {error && <p className="mt-1.5 text-xs text-red-300">{error}</p>}
-              </div>
+              <p className="mb-7 text-sm text-white/55">
+                {authMode === 'signup'
+                  ? 'Yeni bir şirket hesabı açabilir veya kayıtlı şirketinize katılma talebi gönderebilirsiniz.'
+                  : modeCopy.subtitle}
+              </p>
+
+              {authMode === 'signup' && (
+                <div className="mb-5 grid gap-2">
+                  {SIGNUP_FLOW_OPTIONS.map(option => {
+                    const selected = signupFlow === option.value
+                    return (
+                      <button
+                        key={option.value}
+                        type="button"
+                        onClick={() => switchSignupFlow(option.value)}
+                        className={cn(
+                          'rounded-xl border p-3 text-left transition',
+                          selected
+                            ? 'border-eden-blue bg-eden-blue/15 text-white shadow-lg shadow-eden-blue/10'
+                            : 'border-[#28445c] bg-[#091826] text-white/70 hover:border-white/25 hover:bg-white/[0.04]'
+                        )}
+                      >
+                        <span className="flex items-start gap-2">
+                          <span className={cn(
+                            'mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border',
+                            selected ? 'border-eden-blue bg-eden-blue text-white' : 'border-white/20 text-transparent'
+                          )}>
+                            <CheckCircle2 size={13} />
+                          </span>
+                          <span className="min-w-0">
+                            <span className="block text-sm font-semibold">{option.label}</span>
+                            <span className="mt-1 block text-xs leading-5 text-white/45">{option.description}</span>
+                          </span>
+                        </span>
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
+
+              {authMode === 'signup' && signupFlow === 'join_company' ? (
+                <div className="mb-4 space-y-3">
+                  <div>
+                    <label className="mb-1.5 block text-xs font-semibold text-white/60">Şirket VKN</label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={joinForm.tax_number}
+                        onChange={event => {
+                          setJoinForm(current => ({ ...current, tax_number: onlyDigits(event.target.value, 10) }))
+                          setSelectedJoinCompanyId(null)
+                          setJoinMatches([])
+                          setJoinLookupMessage(null)
+                          setError('')
+                        }}
+                        onKeyDown={event => event.key === 'Enter' && lookupCompanyJoinMatches()}
+                        placeholder="10 haneli VKN"
+                        className={textInputClass}
+                        inputMode="numeric"
+                        autoFocus={autoFocus}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => lookupCompanyJoinMatches()}
+                        disabled={joinLookupLoading}
+                        className="flex w-12 shrink-0 items-center justify-center rounded-xl border border-[#28445c] bg-[#10283a] text-white/70 transition hover:bg-white/10 disabled:opacity-50"
+                        title="VKN sorgula"
+                      >
+                        {joinLookupLoading ? <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/20 border-t-white" /> : <Search size={17} />}
+                      </button>
+                    </div>
+                    {joinLookupMessage && <p className="mt-1.5 text-xs text-amber-200">{joinLookupMessage}</p>}
+                  </div>
+
+                  {joinMatches.length > 0 && (
+                    <div className="space-y-2">
+                      {joinMatches.map(match => {
+                        const selected = selectedJoinCompanyId === match.company_id
+                        return (
+                          <button
+                            key={`${match.tenant_id}-${match.company_id}`}
+                            type="button"
+                            onClick={() => setSelectedJoinCompanyId(match.company_id)}
+                            className={cn(
+                              'w-full rounded-xl border px-3 py-2 text-left transition',
+                              selected ? 'border-eden-blue bg-eden-blue/15' : 'border-[#28445c] bg-[#091826] hover:bg-white/[0.04]'
+                            )}
+                          >
+                            <span className="block text-sm font-semibold text-white">{match.company_name}</span>
+                            <span className="mt-0.5 block text-xs text-white/45">{match.tenant_name}</span>
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <input
+                      type="text"
+                      value={joinForm.first_name}
+                      onChange={event => setJoinForm(current => ({ ...current, first_name: event.target.value }))}
+                      placeholder="Ad"
+                      className={textInputClass}
+                    />
+                    <input
+                      type="text"
+                      value={joinForm.last_name}
+                      onChange={event => setJoinForm(current => ({ ...current, last_name: event.target.value }))}
+                      placeholder="Soyad"
+                      className={textInputClass}
+                    />
+                  </div>
+
+                  <input
+                    type="text"
+                    value={joinForm.national_id}
+                    onChange={event => setJoinForm(current => ({ ...current, national_id: onlyDigits(event.target.value, 11) }))}
+                    placeholder="TC kimlik no"
+                    className={textInputClass}
+                    inputMode="numeric"
+                  />
+
+                  <div className="grid grid-cols-2 gap-2">
+                    <input
+                      type="email"
+                      value={joinForm.email}
+                      onChange={event => setJoinForm(current => ({ ...current, email: event.target.value }))}
+                      placeholder="E-posta"
+                      className={textInputClass}
+                      autoComplete="email"
+                    />
+                    <input
+                      type="tel"
+                      value={joinForm.phone}
+                      onChange={event => setJoinForm(current => ({ ...current, phone: onlyDigits(event.target.value, 11) }))}
+                      placeholder="Telefon"
+                      className={textInputClass}
+                      autoComplete="tel"
+                    />
+                  </div>
+
+                  <select
+                    value={joinForm.gender}
+                    onChange={event => setJoinForm(current => ({ ...current, gender: event.target.value as JoinFormState['gender'] }))}
+                    className={textInputClass}
+                  >
+                    <option value="male">Erkek</option>
+                    <option value="female">Kadın</option>
+                  </select>
+
+                  {error && <p className="text-xs text-red-300">{error}</p>}
+                </div>
+              ) : (
+                <div className="mb-4">
+                  <label className="mb-1.5 block text-xs font-semibold text-white/60">
+                    Cep Telefonu veya E-posta
+                  </label>
+                  <input
+                    type="text"
+                    value={value}
+                    onChange={event => {
+                      setValue(event.target.value)
+                      setError('')
+                    }}
+                    onKeyDown={event => event.key === 'Enter' && handleStep1()}
+                    placeholder="5554443322 veya ornek@eden.com"
+                    className={textInputClass}
+                    autoComplete="username"
+                    autoFocus={autoFocus}
+                  />
+                  {error && <p className="mt-1.5 text-xs text-red-300">{error}</p>}
+                </div>
+              )}
               <button
                 type="button"
                 onClick={handleStep1}
@@ -849,12 +986,16 @@ export function LoginExperience({
               >
                 ← Geri
               </button>
-              <h2 className="mb-1 font-display text-2xl font-bold text-white">{modeCopy.otpTitle}</h2>
+              <h2 className="mb-1 font-display text-2xl font-bold text-white">
+                {joinRequestCompleted ? 'Talep Alındı' : modeCopy.otpTitle}
+              </h2>
               <p className="mb-7 text-sm text-white/55">
-                {isEmailLogin ? `${value} adresine` : `${value} numarasına`} {modeCopy.otpSubtitleSuffix}
+                {joinRequestCompleted
+                  ? 'Başvurunuz onay sürecine alındı.'
+                  : `${isEmailLogin ? `${value} adresine` : `${value} numarasına`} ${modeCopy.otpSubtitleSuffix}`}
               </p>
 
-              {fallbackCode && (
+              {!joinRequestCompleted && fallbackCode && (
                 <div className="mb-4 rounded-2xl border border-eden-blue/40 bg-[#10283a] px-4 py-3 text-sm text-sky-100">
                   <div className="mb-1 font-semibold">{modeCopy.temporaryCodeTitle}</div>
                   <div className="font-mono text-lg">{fallbackCode}</div>
@@ -869,54 +1010,78 @@ export function LoginExperience({
                 </div>
               )}
 
-              {!fallbackCode && error && (
+              {!joinRequestCompleted && !fallbackCode && error && (
                 <div className="mb-4 rounded-2xl border border-red-400/30 bg-red-500/10 px-4 py-3 text-sm text-red-100">
                   {error}
                 </div>
               )}
 
-              <div className="mb-4 flex justify-between gap-1.5 sm:gap-2.5">
-                {otp.map((digit, index) => (
-                  <input
-                    key={index}
-                    ref={element => {
-                      otpRefs.current[index] = element
-                    }}
-                    type="text"
-                    inputMode="numeric"
-                    maxLength={1}
-                    value={digit}
-                    onChange={event => handleOtpInput(index, event.target.value)}
-                    onPaste={handleOtpPaste}
-                    onKeyDown={event => {
-                      if (event.key === 'Backspace' && !digit && index > 0) otpRefs.current[index - 1]?.focus()
-                    }}
-                    className={otpInputClass}
-                    aria-label={`Kod hanesi ${index + 1}`}
-                    autoComplete={index === 0 ? 'one-time-code' : 'off'}
-                    autoFocus={autoFocus && index === 0}
-                  />
-                ))}
-              </div>
-
-              {otpError && <p className="mb-3 text-xs text-red-300">{otpError}</p>}
-              {success && (
-                <div className="mb-3 rounded-xl border border-emerald-400/30 bg-emerald-500/15 py-3 text-center text-sm font-medium text-emerald-100">
-                  {redirectOnSuccess ? modeCopy.successMessage : 'Kod doğrulandı.'}
+              {!joinRequestCompleted && (
+                <div className="mb-4 flex justify-between gap-1.5 sm:gap-2.5">
+                  {otp.map((digit, index) => (
+                    <input
+                      key={index}
+                      ref={element => {
+                        otpRefs.current[index] = element
+                      }}
+                      type="text"
+                      inputMode="numeric"
+                      maxLength={1}
+                      value={digit}
+                      onChange={event => handleOtpInput(index, event.target.value)}
+                      onPaste={handleOtpPaste}
+                      onKeyDown={event => {
+                        if (event.key === 'Backspace' && !digit && index > 0) otpRefs.current[index - 1]?.focus()
+                      }}
+                      className={otpInputClass}
+                      aria-label={`Kod hanesi ${index + 1}`}
+                      autoComplete={index === 0 ? 'one-time-code' : 'off'}
+                      autoFocus={autoFocus && index === 0}
+                    />
+                  ))}
                 </div>
               )}
 
-              <div className="flex items-center justify-between text-xs text-white/45">
-                <span>Kalan süre: <b>{formatTimer(timer)}</b></span>
+              {!joinRequestCompleted && otpError && <p className="mb-3 text-xs text-red-300">{otpError}</p>}
+              {success && (
+                <div className="mb-3 rounded-xl border border-emerald-400/30 bg-emerald-500/15 py-3 text-center text-sm font-medium text-emerald-100">
+                  {joinRequestCompleted ? joinRequestMessage : redirectOnSuccess ? modeCopy.successMessage : 'Kod doğrulandı.'}
+                </div>
+              )}
+
+              {joinRequestCompleted && (
                 <button
-                  onClick={handleResend}
-                  disabled={!resendActive || loading}
-                  className={`transition-colors ${resendActive && !loading ? 'cursor-pointer text-sky-300 hover:text-white' : 'cursor-not-allowed opacity-50'}`}
+                  onClick={() => {
+                    if (loginEnabled) {
+                      switchAuthMode('login')
+                      return
+                    }
+                    setStep('kimlik')
+                    setSuccess(false)
+                    setJoinRequestMessage(null)
+                    setOtp(['', '', '', '', '', ''])
+                    setFallbackCode(null)
+                    setOtpError('')
+                  }}
+                  className="mt-2 w-full rounded-xl bg-eden-blue px-4 py-3 text-sm font-semibold text-white shadow-lg shadow-eden-blue/20 transition hover:bg-eden-blue-dark"
                 >
-                  Kodu tekrar gönder
+                  Giriş ekranına dön
                 </button>
-              </div>
-              {fallbackCode && (
+              )}
+
+              {!joinRequestCompleted && (
+                <div className="flex items-center justify-between text-xs text-white/45">
+                  <span>Kalan süre: <b>{formatTimer(timer)}</b></span>
+                  <button
+                    onClick={handleResend}
+                    disabled={!resendActive || loading}
+                    className={`transition-colors ${resendActive && !loading ? 'cursor-pointer text-sky-300 hover:text-white' : 'cursor-not-allowed opacity-50'}`}
+                  >
+                    Kodu tekrar gönder
+                  </button>
+                </div>
+              )}
+              {!joinRequestCompleted && fallbackCode && (
                 <p className="mt-4 rounded-lg border border-[#28445c] bg-[#091826] p-3 text-center text-xs text-white/45">
                   Telefon dogrulama servisi hazir olana kadar kod ekranda gosterilir.
                 </p>

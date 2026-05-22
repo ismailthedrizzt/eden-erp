@@ -3,6 +3,8 @@ import 'server-only'
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { requirePermission } from '@/lib/security/serverPermissions'
+import { applyTenantQueryScope, resolveTenantContext, type TenantContext, withTenantInsertScopeForTable } from '@/lib/tenancy/server'
+import { getTenantCompanyScope, isWritableCompanyScope } from '@/lib/tenancy/companyScopes'
 
 export const COMPANY_LIFECYCLE_PERMISSIONS = {
   lifecycleView: 'companies.lifecycle.view',
@@ -49,8 +51,11 @@ export async function getCompanyLifecycle(request: NextRequest, companyId: strin
   const supabase = createServiceClient()
   const permission = await requirePermission(request, supabase, COMPANY_LIFECYCLE_PERMISSIONS.lifecycleView)
   if (permission instanceof NextResponse) return permission
+  const tenantContext = resolveTenantContext(request)
+  const scopeError = await requireCompanyScopeAccess(supabase, tenantContext, companyId)
+  if (scopeError) return scopeError
 
-  const lifecycle = await buildCompanyLifecyclePayload(supabase, companyId)
+  const lifecycle = await buildCompanyLifecyclePayload(supabase, companyId, tenantContext)
   if (lifecycle.error) return lifecycle.error
   return NextResponse.json({ data: lifecycle.data })
 }
@@ -59,12 +64,15 @@ export async function getCompanyLifecycleEvents(request: NextRequest, companyId:
   const supabase = createServiceClient()
   const permission = await requirePermission(request, supabase, COMPANY_LIFECYCLE_PERMISSIONS.lifecycleView)
   if (permission instanceof NextResponse) return permission
+  const tenantContext = resolveTenantContext(request)
+  const scopeError = await requireCompanyScopeAccess(supabase, tenantContext, companyId)
+  if (scopeError) return scopeError
 
   const events = await safeList(
     supabase,
     'company_lifecycle_events',
     'id,company_id,event_type,event_date,old_status,new_status,payload_json,document_reference_id,created_at,created_by',
-    query => query.eq('company_id', companyId).order('created_at', { ascending: false })
+    query => applyTenantQueryScope(query.eq('company_id', companyId), 'company_lifecycle_events', tenantContext).order('created_at', { ascending: false })
   )
   if (events.error) return NextResponse.json({ error: events.error.message, code: events.error.code || 'LIFECYCLE_EVENTS_FAILED' }, { status: 500 })
   return NextResponse.json({ data: events.data || [] })
@@ -78,8 +86,11 @@ export async function getCompanyWizardContext(
   const supabase = createServiceClient()
   const permission = await requireModeStartPermission(request, supabase, mode)
   if (permission instanceof NextResponse) return permission
+  const tenantContext = resolveTenantContext(request)
+  const scopeError = await requireCompanyScopeAccess(supabase, tenantContext, companyId, true)
+  if (scopeError) return scopeError
 
-  const lifecycle = await buildCompanyLifecyclePayload(supabase, companyId)
+  const lifecycle = await buildCompanyLifecyclePayload(supabase, companyId, tenantContext)
   if (lifecycle.error) return lifecycle.error
   const company = lifecycle.data.company as Record<string, any>
   const status = getCompanyStatus(company)
@@ -89,10 +100,10 @@ export async function getCompanyWizardContext(
 
   const [documents, representatives, partners, stakeholders, naceCodes] = await Promise.all([
     safeCompanyDocuments(company),
-    safeList(supabase, 'company_representatives', 'id,display_name,full_name,person_id,organization_id,status,is_deleted', query => query.eq('company_id', companyId)),
-    safeList(supabase, 'company_partners', 'id,display_name,partner_name,person_id,organization_id,status,is_deleted', query => query.eq('company_id', companyId)),
-    safeList(supabase, 'stakeholders', 'id,display_name,person_id,organization_id,status,is_deleted', query => query.eq('company_id', companyId)),
-    safeList(supabase, 'company_nace_codes', 'id,nace_code_id,is_primary,status,is_deleted,nace_code:nace_codes(id,nace_code,description,hazard_class)', query => query.eq('company_id', companyId).eq('is_deleted', false)),
+    safeList(supabase, 'company_representatives', 'id,display_name,full_name,person_id,organization_id,status,is_deleted', query => applyTenantQueryScope(query.eq('company_id', companyId), 'company_representatives', tenantContext)),
+    safeList(supabase, 'company_partners', 'id,display_name,partner_name,person_id,organization_id,status,is_deleted', query => applyTenantQueryScope(query.eq('company_id', companyId), 'company_partners', tenantContext)),
+    safeList(supabase, 'stakeholders', 'id,display_name,person_id,organization_id,status,is_deleted', query => applyTenantQueryScope(query.eq('company_id', companyId), 'stakeholders', tenantContext)),
+    safeList(supabase, 'company_nace_codes', 'id,nace_code_id,is_primary,status,is_deleted,nace_code:nace_codes(id,nace_code,description,hazard_class)', query => applyTenantQueryScope(query.eq('company_id', companyId).eq('is_deleted', false), 'company_nace_codes', tenantContext)),
   ])
 
   const referenceError = [representatives.error, partners.error, stakeholders.error, naceCodes.error].find(Boolean)
@@ -121,6 +132,9 @@ export async function completeCompanyWizard(
   const supabase = createServiceClient()
   const permission = await requireModeCompletePermission(request, supabase, mode)
   if (permission instanceof NextResponse) return permission
+  const tenantContext = resolveTenantContext(request)
+  const scopeError = await requireCompanyScopeAccess(supabase, tenantContext, companyId, true)
+  if (scopeError) return scopeError
 
   const parsedBody = await request.json().catch(() => ({}))
   const openingNaceCodes = mode === 'opening' ? normalizeOpeningNaceCodes(parsedBody?.nace_codes) : []
@@ -131,11 +145,12 @@ export async function completeCompanyWizard(
   const statusError = validateRequiredPayload(mode, body)
   if (statusError) return statusError
 
-  const { data: company, error: companyError } = await supabase
+  let companyQuery = supabase
     .from('companies')
     .select('id,record_status,company_status,is_deleted')
     .eq('id', companyId)
-    .single()
+  companyQuery = applyTenantQueryScope(companyQuery, 'companies', tenantContext)
+  const { data: company, error: companyError } = await companyQuery.single()
   if (companyError) {
     if (companyError.code === 'PGRST116') return NextResponse.json({ error: 'Sirket bulunamadi.', code: 'COMPANY_NOT_FOUND' }, { status: 404 })
     return NextResponse.json({ error: companyError.message, code: companyError.code || 'COMPANY_FETCH_FAILED' }, { status: 500 })
@@ -144,7 +159,7 @@ export async function completeCompanyWizard(
   if (invalid) return invalid
 
   if (mode === 'opening') {
-    const naceSyncError = await syncOpeningNaceCodes(supabase, companyId, openingNaceCodes, permission.userId)
+    const naceSyncError = await syncOpeningNaceCodes(supabase, companyId, openingNaceCodes, permission.userId, tenantContext)
     if (naceSyncError) return naceSyncError
   }
 
@@ -168,7 +183,7 @@ export async function completeCompanyWizard(
   }
 
   if (mode === 'opening') {
-    const identitySync = await syncOpeningCompanyIdentity(supabase, companyId, body, permission.userId, data)
+    const identitySync = await syncOpeningCompanyIdentity(supabase, companyId, body, permission.userId, data, tenantContext)
     if (identitySync instanceof NextResponse) return identitySync
     return NextResponse.json({ data: identitySync })
   }
@@ -176,12 +191,27 @@ export async function completeCompanyWizard(
   return NextResponse.json({ data })
 }
 
-async function buildCompanyLifecyclePayload(supabase: Supabase, companyId: string) {
-  const { data: company, error } = await supabase
+async function requireCompanyScopeAccess(
+  supabase: Supabase,
+  tenantContext: TenantContext,
+  companyId: string,
+  writable = false
+) {
+  const scope = await getTenantCompanyScope(supabase, tenantContext.tenantId, companyId)
+  if (!scope) return NextResponse.json({ error: 'Sirket bulunamadi.', code: 'COMPANY_NOT_FOUND' }, { status: 404 })
+  if (writable && !isWritableCompanyScope(scope)) {
+    return NextResponse.json({ error: 'Bu sirket icin yalnizca goruntuleme yetkiniz var.', code: 'COMPANY_SCOPE_READONLY' }, { status: 403 })
+  }
+  return null
+}
+
+async function buildCompanyLifecyclePayload(supabase: Supabase, companyId: string, tenantContext: TenantContext) {
+  let companyQuery = supabase
     .from('companies')
     .select(COMPANY_CONTEXT_SELECT)
     .eq('id', companyId)
-    .single()
+  companyQuery = applyTenantQueryScope(companyQuery, 'companies', tenantContext)
+  const { data: company, error } = await companyQuery.single()
 
   if (error) {
     if (error.code === 'PGRST116') {
@@ -194,11 +224,11 @@ async function buildCompanyLifecyclePayload(supabase: Supabase, companyId: strin
     safeMaybeSingle(supabase, 'company_opening_details', '*', query => query.eq('company_id', companyId)),
     safeMaybeSingle(supabase, 'company_liquidation_details', '*', query => query.eq('company_id', companyId)),
     safeMaybeSingle(supabase, 'company_deregistration_details', '*', query => query.eq('company_id', companyId)),
-    safeList(supabase, 'company_lifecycle_events', 'id,company_id,event_type,event_date,old_status,new_status,payload_json,document_reference_id,created_at,created_by', query => query.eq('company_id', companyId).order('created_at', { ascending: false }).limit(25)),
-    safeMaybeSingle(supabase, 'company_public_tax', '*', query => query.eq('company_id', companyId)),
-    safeMaybeSingle(supabase, 'company_public_sgk', '*', query => query.eq('company_id', companyId)),
-    safeMaybeSingle(supabase, 'company_public_registry', '*', query => query.eq('company_id', companyId)),
-    safeMaybeSingle(supabase, 'company_public_channels', '*', query => query.eq('company_id', companyId)),
+    safeList(supabase, 'company_lifecycle_events', 'id,company_id,event_type,event_date,old_status,new_status,payload_json,document_reference_id,created_at,created_by', query => applyTenantQueryScope(query.eq('company_id', companyId), 'company_lifecycle_events', tenantContext).order('created_at', { ascending: false }).limit(25)),
+    safeMaybeSingle(supabase, 'company_public_tax', '*', query => applyTenantQueryScope(query.eq('company_id', companyId), 'company_public_tax', tenantContext)),
+    safeMaybeSingle(supabase, 'company_public_sgk', '*', query => applyTenantQueryScope(query.eq('company_id', companyId), 'company_public_sgk', tenantContext)),
+    safeMaybeSingle(supabase, 'company_public_registry', '*', query => applyTenantQueryScope(query.eq('company_id', companyId), 'company_public_registry', tenantContext)),
+    safeMaybeSingle(supabase, 'company_public_channels', '*', query => applyTenantQueryScope(query.eq('company_id', companyId), 'company_public_channels', tenantContext)),
   ])
 
   const relatedError = [opening.error, liquidation.error, deregistration.error, events.error, publicTax.error, publicSgk.error, publicRegistry.error, publicChannels.error].find(Boolean)
@@ -376,7 +406,8 @@ async function syncOpeningNaceCodes(
   supabase: Supabase,
   companyId: string,
   rows: OpeningNacePayloadRow[],
-  userId: string | null
+  userId: string | null,
+  tenantContext: TenantContext
 ) {
   const validation = validateOpeningNaceCodes(rows)
   if (validation) return validation
@@ -405,10 +436,12 @@ async function syncOpeningNaceCodes(
     }, { status: 400 })
   }
 
-  const { data: existingRows, error: existingError } = await supabase
+  let existingQuery = supabase
     .from('company_nace_codes')
     .select('id,nace_code_id,status,is_deleted')
     .eq('company_id', companyId)
+  existingQuery = applyTenantQueryScope(existingQuery, 'company_nace_codes', tenantContext)
+  const { data: existingRows, error: existingError } = await existingQuery
 
   if (existingError) {
     if (isMissingTableError(existingError)) return null
@@ -421,7 +454,7 @@ async function syncOpeningNaceCodes(
     .map(row => row.id)
 
   if (activeUnselectedIds.length > 0) {
-    const { error } = await supabase
+    let passivateQuery = supabase
       .from('company_nace_codes')
       .update({
         status: 'passive',
@@ -430,6 +463,8 @@ async function syncOpeningNaceCodes(
         updated_at: new Date().toISOString(),
       })
       .in('id', activeUnselectedIds)
+    passivateQuery = applyTenantQueryScope(passivateQuery, 'company_nace_codes', tenantContext)
+    const { error } = await passivateQuery
 
     if (error) return NextResponse.json({ error: error.message, code: error.code || 'COMPANY_NACE_PASSIVATE_FAILED' }, { status: 500 })
   }
@@ -437,7 +472,7 @@ async function syncOpeningNaceCodes(
   for (const row of rows) {
     const matching = existing.find(existingRow => existingRow.nace_code_id === row.nace_code_id)
     if (matching) {
-      const { error } = await supabase
+      let updateQuery = supabase
         .from('company_nace_codes')
         .update({
           is_primary: row.is_primary,
@@ -448,6 +483,8 @@ async function syncOpeningNaceCodes(
           updated_at: new Date().toISOString(),
         })
         .eq('id', matching.id)
+      updateQuery = applyTenantQueryScope(updateQuery, 'company_nace_codes', tenantContext)
+      const { error } = await updateQuery
 
       if (error) return NextResponse.json({ error: error.message, code: error.code || 'COMPANY_NACE_UPDATE_FAILED' }, { status: 500 })
       continue
@@ -455,7 +492,7 @@ async function syncOpeningNaceCodes(
 
     const { error } = await supabase
       .from('company_nace_codes')
-      .insert({
+      .insert(withTenantInsertScopeForTable({
         company_id: companyId,
         nace_code_id: row.nace_code_id,
         is_primary: row.is_primary,
@@ -463,7 +500,7 @@ async function syncOpeningNaceCodes(
         start_date: new Date().toISOString().slice(0, 10),
         created_by: userId,
         updated_by: userId,
-      })
+      }, 'company_nace_codes', tenantContext))
 
     if (error) return NextResponse.json({ error: error.message, code: error.code || 'COMPANY_NACE_INSERT_FAILED' }, { status: 500 })
   }
@@ -471,10 +508,12 @@ async function syncOpeningNaceCodes(
   const primaryCode = (naceCodes || []).find(code => code.id === primaryRow?.nace_code_id)
   if (primaryCode) {
     const { error } = await supabase.from('company_public_sgk').upsert({
-      company_id: companyId,
-      nace_code: primaryCode.nace_code || null,
-      risk_class: primaryCode.hazard_class || null,
-      updated_at: new Date().toISOString(),
+      ...withTenantInsertScopeForTable({
+        company_id: companyId,
+        nace_code: primaryCode.nace_code || null,
+        risk_class: primaryCode.hazard_class || null,
+        updated_at: new Date().toISOString(),
+      }, 'company_public_sgk', tenantContext),
     }, { onConflict: 'company_id' })
 
     if (error && !isMissingTableError(error)) {
@@ -490,7 +529,8 @@ async function syncOpeningCompanyIdentity(
   companyId: string,
   payload: Record<string, any>,
   userId: string | null,
-  rpcData: any
+  rpcData: any,
+  tenantContext: TenantContext
 ) {
   const updates: Record<string, any> = {}
   const tradeName = String(payload.trade_name || '').trim()
@@ -502,7 +542,7 @@ async function syncOpeningCompanyIdentity(
 
   if (Object.keys(updates).length === 0) return rpcData
 
-  const { data: company, error } = await supabase
+  let updateQuery = supabase
     .from('companies')
     .update({
       ...updates,
@@ -511,7 +551,8 @@ async function syncOpeningCompanyIdentity(
     })
     .eq('id', companyId)
     .select('id,short_name,trade_name,updated_at')
-    .single()
+  updateQuery = applyTenantQueryScope(updateQuery, 'companies', tenantContext)
+  const { data: company, error } = await updateQuery.single()
 
   if (error) {
     return NextResponse.json({

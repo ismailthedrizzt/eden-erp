@@ -11,6 +11,7 @@ import {
 import { safeCrudResponse, safeReadRecord, safeUpdateRecord } from '@/lib/crud/safeCrudService'
 import { requirePermission } from '@/lib/security/serverPermissions'
 import { applyTenantQueryScope, resolveTenantContext, type TenantContext, withTenantInsertScopeForTable } from '@/lib/tenancy/server'
+import { getTenantCompanyScope, isWritableCompanyScope } from '@/lib/tenancy/companyScopes'
 
 const COMPANY_NACE_SELECT = 'id,company_id,nace_code_id,is_primary,status,start_date,end_date,notes,is_deleted,created_at,updated_at,version,nace_code:nace_codes(id,nace_code,description,hazard_class,source_name,source_url,source_reference,valid_from,valid_to,is_active,last_checked_at)'
 
@@ -129,14 +130,18 @@ export async function GET(
   const permission = await requirePermission(request, supabase, 'companies.view')
   if (permission instanceof NextResponse) return permission
   const tenantContext = resolveTenantContext(request)
+  const companyScope = await getTenantCompanyScope(supabase, tenantContext.tenantId, id)
+  if (!companyScope) {
+    return NextResponse.json({ error: 'Şirket bulunamadı', code: 'COMPANY_NOT_FOUND' }, { status: 404 })
+  }
 
   if (section === 'hero') {
     let query = supabase
       .from('companies')
       .select(COMPANY_HERO_SELECT)
       .eq('id', id)
-
     query = applyTenantQueryScope(query, 'companies', tenantContext)
+
     const { data: company, error } = await query.single()
 
     if (error) {
@@ -159,8 +164,8 @@ export async function GET(
       .from('companies')
       .select(COMPANY_MEDIA_SELECT)
       .eq('id', id)
-
     query = applyTenantQueryScope(query, 'companies', tenantContext)
+
     const { data, error } = await query.single()
 
     if (error) {
@@ -177,8 +182,8 @@ export async function GET(
     .from('companies')
     .select((section === 'details' ? COMPANY_DETAILS_SELECT : COMPANY_DETAIL_SELECT) as string)
     .eq('id', id)
-
   companyQuery = applyTenantQueryScope(companyQuery, 'companies', tenantContext)
+
   const { data: company, error } = await companyQuery.single()
 
   if (error) {
@@ -188,6 +193,7 @@ export async function GET(
     return NextResponse.json({ error: error.message, code: error.code || 'FETCH_FAILED' }, { status: 500 })
   }
 
+  const scoped = (tableName: string, query: any) => applyTenantQueryScope(query, tableName, tenantContext)
   const [
     partners,
     representatives,
@@ -205,21 +211,21 @@ export async function GET(
     deregistrationDetails,
     lifecycleEvents,
   ] = await Promise.all([
-    supabase.from('company_partners').select('id,company_id,company_id,person_id,organization_id,owner_kind,partner_type,display_name,partner_name,identity_number,identity_tax_number,share_ratio,share_ratio,voting_ratio,profit_ratio,has_representation_right,signature_authority,start_date,end_date,status,is_deleted,source_type,source_id,history,created_at').or(`company_id.eq.${id},company_id.eq.${id}`),
-    supabase.from('company_representatives').select('id,company_id,company_id,person_id,organization_id,person_kind,source_type,source_id,display_name,full_name,authority_types,job_title,authority_type,status,start_date,end_date,signature_type,transaction_limit,currency,requires_joint_signature,can_approve_alone,is_deleted,history,created_at').or(`company_id.eq.${id},company_id.eq.${id}`),
-    supabase.from('stakeholders').select('id,company_id,person_id,organization_id,stakeholder_type,category,display_name,tax_id,phone,email,country,city,status,priority_level,relationship_start_date,is_deleted,history,created_at').eq('company_id', id),
-    supabase.from('company_logos').select('id,company_id,file_name,file_url,is_primary,created_at').eq('company_id', id),
-    supabase.from('company_public_tax').select(PUBLIC_TAX_SELECT).eq('company_id', id).maybeSingle(),
-    supabase.from('company_public_sgk').select(PUBLIC_SGK_SELECT).eq('company_id', id).maybeSingle(),
-    supabase.from('company_public_incentives').select(PUBLIC_INCENTIVES_SELECT).eq('company_id', id).maybeSingle(),
-    supabase.from('company_public_registry').select(PUBLIC_REGISTRY_SELECT).eq('company_id', id).maybeSingle(),
-    supabase.from('company_public_licenses').select(PUBLIC_LICENSES_SELECT).eq('company_id', id),
-    supabase.from('company_public_channels').select(PUBLIC_CHANNELS_SELECT).eq('company_id', id).maybeSingle(),
+    scoped('company_partners', supabase.from('company_partners').select('id,company_id,company_id,person_id,organization_id,owner_kind,partner_type,display_name,partner_name,identity_number,identity_tax_number,share_ratio,share_ratio,voting_ratio,profit_ratio,has_representation_right,signature_authority,start_date,end_date,status,is_deleted,source_type,source_id,history,created_at').or(`company_id.eq.${id},company_id.eq.${id}`)),
+    scoped('company_representatives', supabase.from('company_representatives').select('id,company_id,company_id,person_id,organization_id,person_kind,source_type,source_id,display_name,full_name,authority_types,job_title,authority_type,status,start_date,end_date,signature_type,transaction_limit,currency,requires_joint_signature,can_approve_alone,is_deleted,history,created_at').or(`company_id.eq.${id},company_id.eq.${id}`)),
+    scoped('stakeholders', supabase.from('stakeholders').select('id,company_id,person_id,organization_id,stakeholder_type,category,display_name,tax_id,phone,email,country,city,status,priority_level,relationship_start_date,is_deleted,history,created_at').eq('company_id', id)),
+    scoped('company_logos', supabase.from('company_logos').select('id,company_id,file_name,file_url,is_primary,created_at').eq('company_id', id)),
+    scoped('company_public_tax', supabase.from('company_public_tax').select(PUBLIC_TAX_SELECT).eq('company_id', id)).maybeSingle(),
+    scoped('company_public_sgk', supabase.from('company_public_sgk').select(PUBLIC_SGK_SELECT).eq('company_id', id)).maybeSingle(),
+    scoped('company_public_incentives', supabase.from('company_public_incentives').select(PUBLIC_INCENTIVES_SELECT).eq('company_id', id)).maybeSingle(),
+    scoped('company_public_registry', supabase.from('company_public_registry').select(PUBLIC_REGISTRY_SELECT).eq('company_id', id)).maybeSingle(),
+    scoped('company_public_licenses', supabase.from('company_public_licenses').select(PUBLIC_LICENSES_SELECT).eq('company_id', id)),
+    scoped('company_public_channels', supabase.from('company_public_channels').select(PUBLIC_CHANNELS_SELECT).eq('company_id', id)).maybeSingle(),
     supabase.from('v_current_ownership').select(CURRENT_OWNERSHIP_SELECT).eq('company_id', id),
     supabase.from('company_opening_details').select('*').eq('company_id', id).maybeSingle(),
     supabase.from('company_liquidation_details').select('*').eq('company_id', id).maybeSingle(),
     supabase.from('company_deregistration_details').select('*').eq('company_id', id).maybeSingle(),
-    supabase.from('company_lifecycle_events').select('id,company_id,event_type,event_date,old_status,new_status,payload_json,document_reference_id,created_at,created_by').eq('company_id', id).order('created_at', { ascending: false }).limit(25),
+    scoped('company_lifecycle_events', supabase.from('company_lifecycle_events').select('id,company_id,event_type,event_date,old_status,new_status,payload_json,document_reference_id,created_at,created_by').eq('company_id', id)).order('created_at', { ascending: false }).limit(25),
   ])
 
   const relatedError = [
@@ -247,11 +253,12 @@ export async function GET(
     }, { status: 500 })
   }
 
-  const companyNaceCodes = await supabase
+  const companyNaceCodes = await scoped('company_nace_codes', supabase
     .from('company_nace_codes')
     .select(COMPANY_NACE_SELECT)
     .eq('company_id', id)
     .eq('is_deleted', false)
+  )
     .order('is_primary', { ascending: false })
     .order('created_at', { ascending: false })
 
@@ -316,6 +323,13 @@ export async function PATCH(
   const { company_id: id } = await params
   const supabase = createServiceClient()
   const tenantContext = resolveTenantContext(request)
+  const companyScope = await getTenantCompanyScope(supabase, tenantContext.tenantId, id)
+  if (!companyScope) {
+    return NextResponse.json({ error: 'Şirket bulunamadı', code: 'COMPANY_NOT_FOUND' }, { status: 404 })
+  }
+  if (!isWritableCompanyScope(companyScope)) {
+    return NextResponse.json({ error: 'Bu şirket için yalnızca görüntüleme yetkiniz var.', code: 'COMPANY_SCOPE_READONLY' }, { status: 403 })
+  }
 
   const body = omitNullishValues(await request.json())
   const parsed = SirketUpdateSchema.safeParse(body)

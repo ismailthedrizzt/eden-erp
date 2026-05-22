@@ -2,6 +2,7 @@ import 'server-only'
 
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { NextResponse } from 'next/server'
+import { applyTenantQueryScope, type TenantContext } from '@/lib/tenancy/server'
 
 type RoleTableName = 'employees' | 'company_partners' | 'stakeholders'
 
@@ -36,6 +37,7 @@ export async function ensureUniqueRoleMaster(
     tableName: RoleTableName
     identity: RoleMasterIdentity
     excludeId?: string | null
+    tenantContext?: TenantContext | null
   }
 ): Promise<RoleUniquenessResult> {
   const personId = cleanId(options.identity.person_id)
@@ -52,6 +54,7 @@ export async function ensureUniqueRoleMaster(
     masterField,
     masterId,
     excludeId: options.excludeId,
+    tenantContext: options.tenantContext,
     filterDeleted: true,
   })
 
@@ -101,6 +104,7 @@ async function queryExistingRole(
     masterField: 'person_id' | 'organization_id'
     masterId: string
     excludeId?: string | null
+    tenantContext?: TenantContext | null
     filterDeleted: boolean
   }
 ) {
@@ -110,6 +114,7 @@ async function queryExistingRole(
     .eq(options.masterField, options.masterId)
     .limit(1)
 
+  query = applyTenantQueryScope(query, options.tableName, options.tenantContext)
   if (options.excludeId) query = query.neq('id', options.excludeId)
   if (options.filterDeleted) query = query.eq('is_deleted', false)
 
@@ -122,6 +127,7 @@ async function queryExistingRole(
       .eq(options.masterField, options.masterId)
       .limit(1)
 
+    retry = applyTenantQueryScope(retry, options.tableName, options.tenantContext)
     if (options.excludeId) retry = retry.neq('id', options.excludeId)
     const retryResult = await retry
     data = retryResult.data
