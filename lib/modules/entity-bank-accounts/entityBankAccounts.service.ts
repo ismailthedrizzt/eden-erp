@@ -6,6 +6,7 @@ import type { EntityBankAccountKind } from './entityBankAccounts.types'
 const PERSON_MASTER_SELECT = 'id,full_name,first_name,last_name,nationality'
 const ORGANIZATION_MASTER_SELECT = 'id,legal_name,short_name,country'
 const BANK_ACCOUNT_SELECT = 'id,entity_kind,person_id,organization_id,beneficiary_name,is_same_as_master_name,beneficiary_name_note,iban,account_number,account_country,account_currency,bank_name,bank_country,bank_code,branch_name,branch_code,swift_bic,bank_address,local_clearing_code_type,local_clearing_code,has_intermediary_bank,intermediary_bank_name,intermediary_swift_bic,intermediary_bank_address,intermediary_account_number,preferred_currency,payment_purpose,swift_charge_type,payment_note,verification_status,document_reference_id,is_default,status,history,autofill_sources,created_at,created_by,updated_at,updated_by,is_deleted,deleted_at,deleted_by,version'
+const LEGACY_BANK_ACCOUNT_SELECT = 'id,entity_kind,entity_id,account_holder_name,iban,account_no,bank_code,bank_name,branch_code,branch_name,currency,is_default,status,notes,is_deleted,created_at,updated_at'
 
 export const EntityBankAccountSchema = z.object({
   beneficiary_name: z.string().min(1),
@@ -63,13 +64,19 @@ export class EntityBankAccountsService {
       .order('is_default', { ascending: false })
       .order('updated_at', { ascending: false })
 
-    if (error) throw error
+    if (error) {
+      if (isLegacyBankAccountSchemaError(error)) return this.listLegacy(kind, id)
+      throw error
+    }
     return data || []
   }
 
   async get(id: string) {
     const { data, error } = await this.supabase.from('entity_bank_accounts').select(BANK_ACCOUNT_SELECT).eq('id', id).maybeSingle()
-    if (error) throw error
+    if (error) {
+      if (isLegacyBankAccountSchemaError(error)) return this.getLegacy(id)
+      throw error
+    }
     return data
   }
 
@@ -89,7 +96,17 @@ export class EntityBankAccountsService {
 
     if (row.is_default) await this.clearDefault(kind, entityId)
     const { data, error } = await this.supabase.from('entity_bank_accounts').insert(row).select(BANK_ACCOUNT_SELECT).single()
-    if (error) throw error
+    if (error) {
+      if (!isLegacyBankAccountSchemaError(error)) throw error
+      const legacyResult = await this.supabase
+        .from('entity_bank_accounts')
+        .insert(toLegacyBankAccountRow(kind, entityId, row))
+        .select(LEGACY_BANK_ACCOUNT_SELECT)
+        .single()
+      if (legacyResult.error) throw legacyResult.error
+      if (!row.is_default) await this.ensureOneDefault(kind, entityId)
+      return fromLegacyBankAccount(legacyResult.data, kind)
+    }
     if (!row.is_default) await this.ensureOneDefault(kind, entityId)
     return data
   }
@@ -138,7 +155,17 @@ export class EntityBankAccountsService {
     }
 
     const { data, error } = await this.supabase.from('entity_bank_accounts').update(next).eq('id', id).select(BANK_ACCOUNT_SELECT).single()
-    if (error) throw error
+    if (error) {
+      if (!isLegacyBankAccountSchemaError(error)) throw error
+      const legacyResult = await this.supabase
+        .from('entity_bank_accounts')
+        .update(toLegacyBankAccountPatch(next))
+        .eq('id', id)
+        .select(LEGACY_BANK_ACCOUNT_SELECT)
+        .single()
+      if (legacyResult.error) throw legacyResult.error
+      return fromLegacyBankAccount(legacyResult.data, current.entity_kind)
+    }
     return data
   }
 
@@ -154,7 +181,17 @@ export class EntityBankAccountsService {
       .eq('id', id)
       .select(BANK_ACCOUNT_SELECT)
       .single()
-    if (error) throw error
+    if (error) {
+      if (!isLegacyBankAccountSchemaError(error)) throw error
+      const legacyResult = await this.supabase
+        .from('entity_bank_accounts')
+        .update({ is_default: true, updated_at: new Date().toISOString() })
+        .eq('id', id)
+        .select(LEGACY_BANK_ACCOUNT_SELECT)
+        .single()
+      if (legacyResult.error) throw legacyResult.error
+      return fromLegacyBankAccount(legacyResult.data, current.entity_kind)
+    }
     return data
   }
 
@@ -168,9 +205,45 @@ export class EntityBankAccountsService {
       .eq('id', id)
       .select(BANK_ACCOUNT_SELECT)
       .single()
-    if (error) throw error
+    if (error) {
+      if (!isLegacyBankAccountSchemaError(error)) throw error
+      const legacyResult = await this.supabase
+        .from('entity_bank_accounts')
+        .update({ status: 'passive', is_default: false, is_deleted: true, updated_at: new Date().toISOString() })
+        .eq('id', id)
+        .select(LEGACY_BANK_ACCOUNT_SELECT)
+        .single()
+      if (legacyResult.error) throw legacyResult.error
+      await this.ensureOneDefault(current.entity_kind, current.person_id || current.organization_id)
+      return fromLegacyBankAccount(legacyResult.data, current.entity_kind)
+    }
     await this.ensureOneDefault(current.entity_kind, current.person_id || current.organization_id)
     return data
+  }
+
+  private async listLegacy(kind: EntityBankAccountKind, id: string) {
+    const { data, error } = await this.supabase
+      .from('entity_bank_accounts')
+      .select(LEGACY_BANK_ACCOUNT_SELECT)
+      .eq('entity_kind', kind)
+      .eq('entity_id', id)
+      .eq('is_deleted', false)
+      .order('is_default', { ascending: false })
+      .order('updated_at', { ascending: false })
+
+    if (error) throw error
+    return (data || []).map(row => fromLegacyBankAccount(row, kind))
+  }
+
+  private async getLegacy(id: string) {
+    const { data, error } = await this.supabase
+      .from('entity_bank_accounts')
+      .select(LEGACY_BANK_ACCOUNT_SELECT)
+      .eq('id', id)
+      .maybeSingle()
+
+    if (error) throw error
+    return data ? fromLegacyBankAccount(data) : null
   }
 
   private normalize(row: Record<string, any>) {
@@ -187,12 +260,24 @@ export class EntityBankAccountsService {
   private async clearDefault(kind: EntityBankAccountKind, entityId?: string | null) {
     if (!entityId) return
     const column = kind === 'person' ? 'person_id' : 'organization_id'
-    await this.supabase
+    const { error } = await this.supabase
       .from('entity_bank_accounts')
       .update({ is_default: false, updated_at: new Date().toISOString() })
       .eq('entity_kind', kind)
       .eq(column, entityId)
       .eq('is_deleted', false)
+
+    if (error && isLegacyBankAccountSchemaError(error)) {
+      const legacyResult = await this.supabase
+        .from('entity_bank_accounts')
+        .update({ is_default: false, updated_at: new Date().toISOString() })
+        .eq('entity_kind', kind)
+        .eq('entity_id', entityId)
+        .eq('is_deleted', false)
+      if (legacyResult.error) throw legacyResult.error
+      return
+    }
+    if (error) throw error
   }
 
   private async ensureOneDefault(kind: EntityBankAccountKind, entityId?: string | null) {
@@ -201,6 +286,94 @@ export class EntityBankAccountsService {
     if (rows.some(row => row.is_default && row.status === 'active')) return
     const first = rows.find(row => row.status === 'active')
     if (first) await this.supabase.from('entity_bank_accounts').update({ is_default: true }).eq('id', first.id)
+  }
+}
+
+function isLegacyBankAccountSchemaError(error: any) {
+  const message = String(error?.message || error?.details || '')
+  const code = String(error?.code || '')
+  if (code === '42703' || code === 'PGRST204') return true
+  return [
+    'person_id',
+    'organization_id',
+    'beneficiary_name',
+    'account_number',
+    'preferred_currency',
+    'verification_status',
+    'autofill_sources',
+  ].some(column => message.includes(column))
+}
+
+function fromLegacyBankAccount(row: Record<string, any>, fallbackKind?: EntityBankAccountKind) {
+  const kind = row.entity_kind === 'person' || row.entity_kind === 'organization'
+    ? row.entity_kind as EntityBankAccountKind
+    : fallbackKind || 'organization'
+
+  return {
+    id: row.id,
+    entity_kind: kind,
+    person_id: kind === 'person' ? row.entity_id : null,
+    organization_id: kind === 'organization' ? row.entity_id : null,
+    beneficiary_name: row.account_holder_name || '',
+    is_same_as_master_name: true,
+    beneficiary_name_note: null,
+    iban: row.iban || null,
+    account_number: row.account_no || null,
+    account_country: null,
+    account_currency: row.currency || null,
+    bank_name: row.bank_name || null,
+    bank_country: null,
+    bank_code: row.bank_code || null,
+    branch_name: row.branch_name || null,
+    branch_code: row.branch_code || null,
+    swift_bic: null,
+    bank_address: null,
+    local_clearing_code_type: null,
+    local_clearing_code: null,
+    has_intermediary_bank: false,
+    intermediary_bank_name: null,
+    intermediary_swift_bic: null,
+    intermediary_bank_address: null,
+    intermediary_account_number: null,
+    preferred_currency: row.currency || 'TRY',
+    payment_purpose: null,
+    swift_charge_type: 'SHA',
+    payment_note: row.notes || null,
+    verification_status: 'unverified',
+    document_reference_id: null,
+    is_default: !!row.is_default,
+    status: row.status || 'active',
+    history: row.notes ? [historyItem('Not', null, { new_value: row.notes })] : [],
+    autofill_sources: {},
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+    version: 1,
+  }
+}
+
+function toLegacyBankAccountRow(kind: EntityBankAccountKind, entityId: string, row: Record<string, any>) {
+  return {
+    entity_kind: kind,
+    entity_id: entityId,
+    ...toLegacyBankAccountPatch(row),
+  }
+}
+
+function toLegacyBankAccountPatch(row: Record<string, any>) {
+  return {
+    account_holder_name: row.beneficiary_name || null,
+    iban: row.iban || null,
+    account_no: row.account_number || null,
+    bank_code: row.bank_code || null,
+    bank_name: row.bank_name || null,
+    branch_code: row.branch_code || null,
+    branch_name: row.branch_name || null,
+    currency: row.preferred_currency || row.account_currency || 'TRY',
+    is_default: !!row.is_default,
+    status: row.status || 'active',
+    notes: row.payment_note || row.notes || null,
+    is_deleted: !!row.is_deleted,
+    updated_at: new Date().toISOString(),
   }
 }
 

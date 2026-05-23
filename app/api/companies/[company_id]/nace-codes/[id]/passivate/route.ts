@@ -1,33 +1,52 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
-import { requirePermission } from '@/lib/security/serverPermissions'
-
-const COMPANY_NACE_SELECT = 'id,company_id,nace_code_id,is_primary,status,start_date,end_date,notes,is_deleted,created_at,updated_at,version,nace_code:nace_codes(id,nace_code,description,hazard_class,source_name,source_url,source_reference,valid_from,valid_to,is_active,last_checked_at)'
+import { COMPANY_NACE_SELECT, requireCompanyNaceAccess, scopeCompanyNaceQuery } from '../../_shared'
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ company_id: string; id: string }> }) {
   const { company_id, id } = await params
   const supabase = createServiceClient()
-  const permission = await requirePermission(request, supabase, 'company_nace.passivate')
-  if (permission instanceof NextResponse) return permission
+  const access = await requireCompanyNaceAccess(request, supabase, company_id, 'edit')
+  if (access instanceof NextResponse) return access
 
-  const { data: row } = await supabase.from('company_nace_codes').select('id,is_primary').eq('id', id).eq('company_id', company_id).single()
+  let rowQuery = supabase
+    .from('company_nace_codes')
+    .select('id,is_primary')
+    .eq('id', id)
+    .eq('company_id', company_id)
+  rowQuery = scopeCompanyNaceQuery(rowQuery, access.tenantContext)
+  const { data: row } = await rowQuery.single()
+
   if (row?.is_primary) {
-    const { count } = await supabase
+    let activeCountQuery = supabase
       .from('company_nace_codes')
       .select('id', { count: 'exact', head: true })
       .eq('company_id', company_id)
       .eq('status', 'active')
       .eq('is_deleted', false)
+    activeCountQuery = scopeCompanyNaceQuery(activeCountQuery, access.tenantContext)
+    const { count } = await activeCountQuery
     if ((count || 0) > 1) {
-      return NextResponse.json({ error: 'Birincil NACE pasifleştirilecekse önce başka bir active NACE kodu birincil yapılmalıdır.', code: 'PRIMARY_NACE_REQUIRED' }, { status: 400 })
+      return NextResponse.json({ error: 'Birincil NACE pasiflestirilmeden once baska bir aktif NACE kodu birincil yapilmalidir.', code: 'PRIMARY_NACE_REQUIRED' }, { status: 400 })
     }
   }
 
-  const { data, error } = await supabase
+  let query = supabase
     .from('company_nace_codes')
-    .update({ status: 'passive', is_deleted: true, is_primary: false, deleted_at: new Date().toISOString(), deleted_by: permission.userId })
+    .update({
+      status: 'passive',
+      is_deleted: true,
+      is_primary: false,
+      deleted_at: new Date().toISOString(),
+      deleted_by: access.userId,
+      updated_by: access.userId,
+      updated_at: new Date().toISOString(),
+    })
     .eq('id', id)
     .eq('company_id', company_id)
+
+  query = scopeCompanyNaceQuery(query, access.tenantContext)
+
+  const { data, error } = await query
     .select(COMPANY_NACE_SELECT)
     .single()
 

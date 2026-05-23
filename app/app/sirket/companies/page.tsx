@@ -2,20 +2,33 @@
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Archive, BriefcaseBusiness, Building2, CheckCircle2, CircleDot, FileText, History, Landmark, PlayCircle, Settings, ShieldAlert, Users } from 'lucide-react'
+import { Archive, BriefcaseBusiness, Building2, CheckCircle2, CircleDot, FileText, History, Landmark, MoreVertical, Pencil, PlayCircle, Settings, ShieldAlert, Trash2, Users } from 'lucide-react'
 import { useSirketler } from '@/hooks/useSirketler'
 import { EntityForm, FormField, FormMode, FormTab } from '@/components/ui/EntityForm'
 import { CompanyLifecycleWizard, type CompanyLifecycleWizardType } from '@/components/ui/CompanyLifecycleWizard'
 import { PageBanner } from '@/components/ui/PageBanner'
-import { SmartDataTable, ColumnDef, SortConfig, WidgetDef } from '@/components/ui/SmartDataTable'
+import { SmartDataTable, ColumnDef, SortConfig, WidgetDef, type TableStatusFilterOption } from '@/components/ui/SmartDataTable'
 import { Toast } from '@/components/ui/Toast'
 import type { AnyDashboardWidgetConfig } from '@/components/dashboard/dashboard.types'
 import { CompanyNaceCodesSection } from '@/components/modules/sirket/CompanyPublicTab'
-import { formatPhoneInput, normalizeEmailInput } from '@/lib/utils'
+import { cn, formatPhoneInput, normalizeEmailInput } from '@/lib/utils'
 import { createFormModeState, mapPageStateToFormMode } from '@/lib/forms/formModeEngine'
 import { createProgressiveFormLoadStages } from '@/lib/forms/progressiveFormLoading'
 import { invalidateEntityDetailCache, readEntityDetailCache, writeEntityDetailCache } from '@/lib/forms/entityDetailCache'
 import { createLegalEntityMasterTabs } from '@/lib/identity/legalEntityFormSections'
+import { extractCompanyLogoUrl } from '@/lib/media/companyLogo'
+import {
+  buildFiscalYearStartValue,
+  daysInFiscalYearMonth,
+  formatFiscalYearStart,
+  normalizeFiscalYearStartParts,
+  normalizeFiscalYearStartStorage,
+} from '@/lib/companies/fiscalYear'
+import {
+  LIFECYCLE_EVENTS_KEY,
+  LIFECYCLE_FIELD_HISTORY_KEY,
+  LIFECYCLE_HISTORY_TAB_ID,
+} from '@/lib/lifecycle/lifecycleWizardTemplate'
 import { useModules } from '@/lib/security/moduleStore'
 import { usePermissions } from '@/lib/security/permissionStore'
 import { PERMISSIONS } from '@/packages/shared/src'
@@ -25,7 +38,14 @@ import type { CompanyLifecycleStatus, Sirket } from '@/types/sirket'
 type PageState = 'list' | 'create' | 'view' | 'edit'
 type ToastState = { type: 'success' | 'error' | 'warning'; title?: string; message: string }
 type SaveError = Error & { toast?: ToastState; fieldErrors?: Record<string, string> }
-type SirketTableRow = Sirket & { adres_ozet: string; logo_url: string; lifecycle_status: CompanyLifecycleStatus }
+type SirketTableRow = Sirket & {
+  adres_ozet: string
+  logo_url: string
+  logo_url_light?: string | null
+  logo_url_dark?: string | null
+  lifecycle_status: CompanyLifecycleStatus
+}
+type CompanyStatusFilterValue = 'draft' | 'active' | 'passive'
 type DetailSectionState = {
   heroLoading: boolean
   heroReady: boolean
@@ -48,7 +68,21 @@ const emptyDetailSectionState: DetailSectionState = {
   detailsReady: false,
   detailsError: false,
 }
-const COMPANY_DETAIL_CACHE_NAMESPACE = 'companies:phased-v2'
+const COMPANY_DETAIL_CACHE_NAMESPACE = 'companies:phased-v3'
+const COMPANY_HISTORY_TAB_ID = LIFECYCLE_HISTORY_TAB_ID
+const COMPANY_STATUS_FILTERS: CompanyStatusFilterValue[] = ['draft', 'active', 'passive']
+const DEFAULT_COMPANY_STATUS_FILTERS: CompanyStatusFilterValue[] = ['draft', 'active']
+const COMPANY_STATUS_FILTER_OPTIONS: TableStatusFilterOption[] = [
+  { value: 'draft', label: 'Taslak', tone: 'draft' },
+  { value: 'active', label: 'Aktif', tone: 'active' },
+  { value: 'passive', label: 'Pasif', tone: 'passive' },
+]
+
+function normalizeCompanyStatusFilters(values: string[]): CompanyStatusFilterValue[] {
+  const allowed = new Set(COMPANY_STATUS_FILTERS)
+  const next = values.filter((value): value is CompanyStatusFilterValue => allowed.has(value as CompanyStatusFilterValue))
+  return next.length ? next : DEFAULT_COMPANY_STATUS_FILTERS
+}
 
 function waitForStagePaint() {
   return new Promise<void>(resolve => {
@@ -99,11 +133,12 @@ const FIELD_LABELS: Record<string, string> = {
   default_currency: 'Varsayılan Para Birimi',
   default_language: 'Varsayılan Dil',
   time_zone: 'Zaman Dilimi',
-  fiscal_year_start: 'Mali Yıl Başlangıcı',
+  fiscal_year_start: 'Mali Yıl Başlangıcı (Ay/Gün)',
 }
 
 const columns: ColumnDef[] = [
-  { key: 'logo_url', label: 'Logo', type: 'image', width: 64, fixedWidth: true, category: 'Kimlik' },
+  { key: 'lifecycle_status', label: 'Durum', type: 'enum', width: 44, minWidth: 44, maxWidth: 44, fixedWidth: true, sortable: false, hideHeaderLabel: true, category: 'Durum', order: -10, render: (_value, row) => <LifecycleStatusDot status={getCompanyLifecycleStatus(row)} /> },
+  { key: 'logo_url', label: 'Logo', type: 'image', width: 52, maxWidth: 52, fixedWidth: true, sortable: false, hideHeaderLabel: true, category: 'Kimlik', imageFit: 'contain', imageShape: 'rounded' },
   { key: 'short_name', label: 'Kısa Ünvan', type: 'text', width: 200, sortable: true, category: 'Kimlik' },
   { key: 'trade_name', label: 'Ticari Unvan', type: 'text', width: 280, sortable: true, category: 'Kimlik' },
   { key: 'tax_number', label: 'VKN', type: 'text', width: 120, sortable: true, category: 'Kimlik' },
@@ -112,7 +147,6 @@ const columns: ColumnDef[] = [
   { key: 'adres_ozet', label: 'Adres', type: 'text', width: 250, category: 'İletişim' },
   { key: 'phone', label: 'Telefon', type: 'text', width: 150, category: 'İletişim' },
   { key: 'email', label: 'E-posta', type: 'text', width: 200, category: 'İletişim' },
-  { key: 'lifecycle_status', label: 'Durum', type: 'enum', width: 160, sortable: true, category: 'Durum', render: (_value, row) => <LifecycleStatusBadge status={getCompanyLifecycleStatus(row)} /> },
   { key: 'mersis_number', label: FIELD_LABELS.mersis_number, type: 'text', width: 150, sortable: true, category: 'Tescil', required: false, visible: false },
   { key: 'trade_registry_number', label: FIELD_LABELS.trade_registry_number, type: 'text', width: 150, sortable: true, category: 'Tescil', required: false, visible: false },
   { key: 'foundation_date', label: FIELD_LABELS.foundation_date, type: 'date', width: 130, sortable: true, category: 'Tescil', required: false, visible: false },
@@ -134,7 +168,7 @@ const columns: ColumnDef[] = [
   { key: 'default_currency', label: FIELD_LABELS.default_currency, type: 'text', width: 150, sortable: true, category: 'Ayarlar', required: false, visible: false },
   { key: 'default_language', label: FIELD_LABELS.default_language, type: 'text', width: 130, sortable: true, category: 'Ayarlar', required: false, visible: false },
   { key: 'time_zone', label: FIELD_LABELS.time_zone, type: 'text', width: 170, sortable: true, category: 'Ayarlar', required: false, visible: false },
-  { key: 'fiscal_year_start', label: FIELD_LABELS.fiscal_year_start, type: 'number', width: 150, sortable: true, category: 'Ayarlar', required: false, visible: false },
+  { key: 'fiscal_year_start', label: FIELD_LABELS.fiscal_year_start, type: 'text', width: 150, sortable: true, category: 'Ayarlar', required: false, visible: false, render: (value) => formatFiscalYearStart(value) },
 ]
 
 const heroFields: FormField[] = [
@@ -282,13 +316,58 @@ const tabs: FormTab[] = [
         ],
       },
       { name: 'time_zone', label: 'Zaman Dilimi', type: 'text', defaultValue: 'Europe/Istanbul' },
-      { name: 'fiscal_year_start', label: 'Mali Yıl Başlangıcı', type: 'number', defaultValue: 1 },
+      { name: 'fiscal_year_start', label: 'Mali Yıl Başlangıcı (Ay/Gün)', type: 'custom', defaultValue: 101, render: renderFiscalYearStartField },
     ],
   },
 ]
 
 const getFieldLabel = (field: string) => FIELD_LABELS[field] || field
 const formatFieldList = (fields: string[]) => fields.map(getFieldLabel).join(', ')
+const fiscalYearMonthOptions = Array.from({ length: 12 }, (_, index) => ({
+  value: index + 1,
+  label: new Intl.DateTimeFormat('tr-TR', { month: 'long' }).format(new Date(2024, index, 1)),
+}))
+
+function renderFiscalYearStartField({
+  value,
+  onChange,
+  readOnly,
+  className,
+}: Parameters<NonNullable<FormField['render']>>[0]) {
+  const { month, day } = normalizeFiscalYearStartParts(value)
+  const dayOptions = Array.from({ length: daysInFiscalYearMonth(month) }, (_, index) => index + 1)
+
+  const updateMonth = (nextMonth: number) => {
+    onChange(buildFiscalYearStartValue(nextMonth, Math.min(day, daysInFiscalYearMonth(nextMonth))))
+  }
+
+  return (
+    <div className="grid grid-cols-2 gap-2">
+      <select
+        aria-label="Mali yil baslangic ayi"
+        value={month}
+        onChange={(event) => updateMonth(Number(event.target.value))}
+        disabled={readOnly}
+        className={className}
+      >
+        {fiscalYearMonthOptions.map(option => (
+          <option key={option.value} value={option.value}>{option.label}</option>
+        ))}
+      </select>
+      <select
+        aria-label="Mali yil baslangic gunu"
+        value={day}
+        onChange={(event) => onChange(buildFiscalYearStartValue(month, Number(event.target.value)))}
+        disabled={readOnly}
+        className={className}
+      >
+        {dayOptions.map(option => (
+          <option key={option} value={option}>{String(option).padStart(2, '0')}</option>
+        ))}
+      </select>
+    </div>
+  )
+}
 
 function createTourDraftCompany(): Sirket {
   const now = new Date().toISOString()
@@ -332,9 +411,10 @@ function createTourDraftCompany(): Sirket {
 
 export default function SirketlerPage() {
   const searchParams = useSearchParams()
-  const [includePassive, setIncludePassive] = useState(false)
+  const [statusFilters, setStatusFilters] = useState<CompanyStatusFilterValue[]>(DEFAULT_COMPANY_STATUS_FILTERS)
   const [listQuery, setListQuery] = useState({ page: 1, pageSize: 10, search: '', sort: 'short_name', direction: 'asc' as 'asc' | 'desc' })
-  const { data: companies, meta: listMeta, loading, error: listError, yenile } = useSirketler({ includePassive, ...listQuery })
+  const includePassive = statusFilters.includes('passive')
+  const { data: companies, meta: listMeta, loading, error: listError, yenile } = useSirketler({ includePassive, statuses: statusFilters, ...listQuery })
   const { can } = usePermissions()
   const { isEnabled, isWritable } = useModules()
   const [pageState, setPageState] = useState<PageState>('list')
@@ -348,7 +428,10 @@ export default function SirketlerPage() {
   const [toast, setToast] = useState<ToastState | null>(null)
   const [lifecycleWizard, setLifecycleWizard] = useState<CompanyLifecycleWizardType | null>(null)
   const detailRequestRef = useRef(0)
+  const mediaProbeRef = useRef<Record<string, boolean>>({})
+  const [preferredFormTabId, setPreferredFormTabId] = useState<string | null>(null)
   const tourLifecycleOpenedRef = useRef(false)
+  const isDarkMode = useDarkModeFlag()
 
   const configuredHeroFields = [
     {
@@ -360,17 +443,17 @@ export default function SirketlerPage() {
     ...heroFields,
   ]
 
-  const lifecycleTab: FormTab = {
-    id: 'lifecycle',
-    label: 'Yaşam Döngüsü',
-    icon: <CircleDot size={16} />,
+  const historyTab: FormTab = {
+    id: COMPANY_HISTORY_TAB_ID,
+    label: 'Geçmiş',
+    icon: <History size={16} />,
     fields: [
       {
-        name: 'company_lifecycle_summary',
-        label: 'Yaşam Döngüsü',
+        name: 'company_history',
+        label: 'Geçmiş',
         type: 'custom',
         colSpan: 3,
-        render: () => <CompanyLifecycleSummary data={selectedSirket} />,
+        render: () => <CompanyHistoryPanel data={selectedSirket} />,
       },
     ],
   }
@@ -385,8 +468,8 @@ export default function SirketlerPage() {
       emailField: 'email',
       websiteField: 'website',
     }).filter(tab => tab.id !== 'organization_iletisim'),
-    ...(pageState !== 'create' ? [lifecycleTab] : []),
     ...tabs,
+    ...(pageState !== 'create' ? [historyTab] : []),
   ]
 
   const tableData: SirketTableRow[] = useMemo(() => (companies || []).map(sirket => ({
@@ -394,48 +477,58 @@ export default function SirketlerPage() {
     is_deleted: !!sirket.is_deleted,
     lifecycle_status: getCompanyLifecycleStatus(sirket),
     adres_ozet: [sirket.district, sirket.city].filter(Boolean).join(', '),
-    logo_url: extractLogoUrl((sirket as any).hero_images),
-  })), [companies])
+    logo_url: resolveCompanyLogoUrl(sirket, isDarkMode),
+  })), [companies, isDarkMode])
 
   const handleListLifecycleAction = (row: SirketTableRow, type: CompanyLifecycleWizardType) => {
     setFormError(null)
     setFieldErrors({})
     setDetailSections(emptyDetailSectionState)
+    setPreferredFormTabId(null)
     setSelectedSirket(normalizeCompanyForForm(row as Sirket))
     setPageState('view')
     setLifecycleWizard(type)
   }
 
-  const configuredColumns: ColumnDef[] = useMemo(() => [
-    ...columns,
-    {
-      key: 'lifecycle_actions',
-      label: 'İşlem',
-      type: 'actions',
-      width: 220,
-      fixedWidth: true,
-      hideable: false,
-      category: 'İşlem',
-      render: (_value, row: SirketTableRow) => (
-        <CompanyListLifecycleActions
-          row={row}
-          canOpen={can(PERMISSIONS.companies.openingStart)}
-          canLiquidate={can(PERMISSIONS.companies.liquidationStart)}
-          canUpdateLiquidation={can(PERMISSIONS.companies.liquidationUpdate)}
-          canDeregister={can(PERMISSIONS.companies.deregistrationStart)}
-          onAction={handleListLifecycleAction}
-        />
-      ),
-    },
-  ], [can])
+  const handleListEditAction = async (row: SirketTableRow) => {
+    await handleRowClick(row)
+    setPageState('edit')
+  }
 
-  const widgets: WidgetDef<SirketTableRow>[] = useMemo(() => [
-    { key: 'total', label: 'Toplam Şirket', render: () => tableData.length },
-    { key: 'draft', label: 'Taslak', render: () => tableData.filter(row => getCompanyLifecycleStatus(row) === 'draft').length },
-    { key: 'active', label: 'Aktif', render: () => tableData.filter(row => getCompanyLifecycleStatus(row) === 'active').length },
-    { key: 'liquidation', label: 'Tasfiye', render: () => tableData.filter(row => getCompanyLifecycleStatus(row) === 'liquidation').length },
-    { key: 'closed', label: 'Kapanmış', render: () => tableData.filter(row => getCompanyLifecycleStatus(row) === 'deregistered').length },
-  ], [tableData])
+  const handleListDeleteAction = async (row: SirketTableRow) => {
+    const status = getCompanyLifecycleStatus(row)
+    const confirmed = window.confirm(
+      status === 'draft'
+        ? 'Taslak şirket kaydı kalıcı olarak silinsin mi?'
+        : 'Şirket kaydı pasife alınsın mı?'
+    )
+    if (!confirmed) return
+
+    setDeleting(true)
+    try {
+      await companyService.delete(row.id)
+      invalidateEntityDetailCache(COMPANY_DETAIL_CACHE_NAMESPACE, row.id)
+      if (selectedSirket?.id === row.id) {
+        setSelectedSirket(null)
+        setPageState('list')
+      }
+      setToast({
+        type: 'success',
+        title: 'Kayıt Başarılı',
+        message: status === 'draft' ? 'Şirket taslak kaydı kalıcı olarak silindi' : 'Şirket kaydı pasife çekildi',
+      })
+      await yenile()
+    } catch (error: any) {
+      setFormError(error.message)
+      setToast(error.toast || { type: 'error', title: 'Kayıt Başarısız', message: error.message })
+    } finally {
+      setDeleting(false)
+    }
+  }
+
+  const handleListHistoryAction = async (row: SirketTableRow) => {
+    await handleRowClick(row, COMPANY_HISTORY_TAB_ID)
+  }
 
   const moduleEnabled = isEnabled('companies')
   const moduleWritable = isWritable('companies')
@@ -445,6 +538,48 @@ export default function SirketlerPage() {
     canEdit: moduleWritable && can(PERMISSIONS.companies.edit),
     canApprove: moduleWritable && can(PERMISSIONS.companies.approve),
   })
+
+  const configuredColumns: ColumnDef[] = useMemo(() => [
+    ...columns,
+    {
+      key: 'lifecycle_actions',
+      label: '⋯',
+      type: 'actions',
+      width: 64,
+      minWidth: 56,
+      maxWidth: 72,
+      fixedWidth: true,
+      hideable: false,
+      order: 10000,
+      category: 'İşlem',
+      render: (_value, row: SirketTableRow) => (
+        <CompanyListLifecycleActions
+          row={row}
+          busy={deleting}
+          canEditProfile={formAccess.showEdit}
+          canDeleteDraft={formAccess.showEdit}
+          canOpen={can(PERMISSIONS.companies.openingStart)}
+          canLiquidate={can(PERMISSIONS.companies.liquidationStart)}
+          canUpdateLiquidation={can(PERMISSIONS.companies.liquidationUpdate)}
+          canDeregister={can(PERMISSIONS.companies.deregistrationStart)}
+          canViewHistory={can(PERMISSIONS.companies.lifecycleView)}
+          onAction={handleListLifecycleAction}
+          onEdit={handleListEditAction}
+          onDelete={handleListDeleteAction}
+          onHistory={() => handleListHistoryAction(row)}
+        />
+      ),
+    },
+  ], [can, deleting, formAccess.showEdit, selectedSirket?.id])
+
+  const widgets: WidgetDef<SirketTableRow>[] = useMemo(() => [
+    { key: 'total', label: 'Toplam Şirket', render: () => tableData.length },
+    { key: 'draft', label: 'Taslak', render: () => tableData.filter(row => getCompanyLifecycleStatus(row) === 'draft').length },
+    { key: 'active', label: 'Aktif', render: () => tableData.filter(row => getCompanyLifecycleStatus(row) === 'active').length },
+    { key: 'liquidation', label: 'Tasfiye', render: () => tableData.filter(row => getCompanyLifecycleStatus(row) === 'liquidation').length },
+    { key: 'closed', label: 'Kapanmış', render: () => tableData.filter(row => getCompanyLifecycleStatus(row) === 'deregistered').length },
+  ], [tableData])
+
   const selectedLifecycleStatus = getCompanyLifecycleStatus(selectedSirket)
   const isSelectedLiquidation = selectedLifecycleStatus === 'liquidation'
   const isSelectedDeregistered = selectedLifecycleStatus === 'deregistered'
@@ -462,6 +597,42 @@ export default function SirketlerPage() {
     referencesLoading: false,
     referencesReady: pageState !== 'list',
   })
+  const selectedHeroDocumentCount = Array.isArray((selectedSirket as any)?.hero_documents)
+    ? (selectedSirket as any).hero_documents.length
+    : 0
+
+  useEffect(() => {
+    if (pageState === 'list' || pageState === 'create') return
+    if (!selectedSirket?.id || detailLoading || detailSections.mediaLoading) return
+    if (selectedHeroDocumentCount > 0) return
+    if (mediaProbeRef.current[selectedSirket.id]) return
+
+    const companyId = selectedSirket.id
+    mediaProbeRef.current[companyId] = true
+    let cancelled = false
+
+    setDetailSections(previous => ({ ...previous, mediaLoading: true, mediaError: false }))
+    companyService.detailSection(companyId, 'media')
+      .then(result => {
+        if (cancelled) return
+        if (result.data) {
+          setSelectedSirket(previous => {
+            if (!previous || previous.id !== companyId) return previous
+            return normalizeCompanyForForm({ ...previous, ...result.data } as Sirket)
+          })
+        }
+        setDetailSections(previous => ({ ...previous, mediaLoading: false, mediaReady: true }))
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setDetailSections(previous => ({ ...previous, mediaLoading: false, mediaError: true }))
+        }
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [detailLoading, detailSections.mediaLoading, pageState, selectedHeroDocumentCount, selectedSirket?.id])
 
   useEffect(() => {
     if (searchParams.get('systemTour') !== 'lifecycle') return
@@ -491,16 +662,18 @@ export default function SirketlerPage() {
     setFormError(null)
     setFieldErrors({})
     setDetailSections(emptyDetailSectionState)
+    setPreferredFormTabId(null)
     setPageState('create')
   }
 
-  const handleRowClick = async (row: SirketTableRow) => {
+  const handleRowClick = async (row: SirketTableRow, preferredTabId?: string) => {
     const requestId = detailRequestRef.current + 1
     detailRequestRef.current = requestId
+    setPreferredFormTabId(preferredTabId || null)
     const snapshot = normalizeCompanyForForm(row as Sirket)
     const cached = readEntityDetailCache<Sirket, DetailSectionState>(COMPANY_DETAIL_CACHE_NAMESPACE, row.id)
 
-    if (cached) {
+    if (cached?.meta?.heroReady && cached.meta.mediaReady && cached.meta.detailsReady) {
       setFormError(null)
       setFieldErrors({})
       setSelectedSirket(cached.data)
@@ -589,6 +762,7 @@ export default function SirketlerPage() {
     setFormError(null)
     setFieldErrors({})
     setDetailSections(emptyDetailSectionState)
+    setPreferredFormTabId(null)
   }
 
   const normalizePayload = (raw: Record<string, any>) => {
@@ -610,17 +784,28 @@ export default function SirketlerPage() {
       const digits = String(payload.electronic_notification_address).replace(/\D/g, '').slice(0, 15)
       payload.electronic_notification_address = digits.replace(/(\d{5})(?=\d)/g, '$1-')
     }
-    if (payload.fiscal_year_start) payload.fiscal_year_start = Number(payload.fiscal_year_start)
+    if (payload.fiscal_year_start !== undefined) payload.fiscal_year_start = normalizeFiscalYearStartStorage(payload.fiscal_year_start)
     if (pageState === 'create') payload.is_deleted = false
     if (pageState === 'create') {
       payload.country = payload.country || 'Türkiye'
       payload.default_currency = payload.default_currency || 'TRY'
       payload.default_language = payload.default_language || 'tr'
       payload.time_zone = payload.time_zone || 'Europe/Istanbul'
-      payload.fiscal_year_start = payload.fiscal_year_start || 1
+      payload.fiscal_year_start = payload.fiscal_year_start || 101
     }
 
     return payload
+  }
+
+  const handleFormFieldChange = (field: string, value: any) => {
+    if (pageState === 'create' || !selectedSirket) return
+    if (!['hero_documents', 'hero_images'].includes(field)) return
+
+    const merged = normalizeCompanyForForm({ ...selectedSirket, [field]: value } as Sirket)
+    setSelectedSirket(merged)
+    writeEntityDetailCache(COMPANY_DETAIL_CACHE_NAMESPACE, merged.id, merged, {
+      meta: { ...detailSections, mediaReady: true, mediaLoading: false },
+    })
   }
 
   const handleSave = async (data: Record<string, any>, mode: FormMode) => {
@@ -638,7 +823,12 @@ export default function SirketlerPage() {
       } else {
         invalidateEntityDetailCache(COMPANY_DETAIL_CACHE_NAMESPACE, selectedSirket?.id)
       }
-      if (result.data) setSelectedSirket(result.data)
+      if (result.data) {
+        setSelectedSirket(normalizeCompanyForForm({
+          ...(selectedSirket || {}),
+          ...result.data,
+        } as Sirket))
+      }
       setToast({
         type: 'success',
         title: 'Kayıt Başarılı',
@@ -751,7 +941,7 @@ export default function SirketlerPage() {
         key: 'history',
         label: 'Geçmiş',
         icon: <History size={16} />,
-        onClick: () => setToast({ type: 'success', title: 'Geçmiş', message: 'Yaşam döngüsü geçmişi özet kartında görüntüleniyor.' }),
+        onClick: () => setPreferredFormTabId(COMPANY_HISTORY_TAB_ID),
         visible: status === 'deregistered' && can(PERMISSIONS.companies.lifecycleView),
       },
     ]
@@ -922,9 +1112,10 @@ export default function SirketlerPage() {
               onSortChange: handleListSortChange,
             }}
             showPassiveToggle
-            includePassive={includePassive}
-            onIncludePassiveChange={(next) => {
-              setIncludePassive(next)
+            statusFilterOptions={COMPANY_STATUS_FILTER_OPTIONS}
+            activeStatusFilters={statusFilters}
+            onStatusFiltersChange={(next) => {
+              setStatusFilters(normalizeCompanyStatusFilters(next))
               setListQuery(prev => ({ ...prev, page: 1 }))
             }}
             widgets={widgets}
@@ -1021,6 +1212,7 @@ export default function SirketlerPage() {
                 }
               }),
             }))}
+            initialActiveTabId={preferredFormTabId || undefined}
             data={selectedSirket || undefined}
             saving={saving}
             deleting={deleting}
@@ -1031,6 +1223,7 @@ export default function SirketlerPage() {
             onCancel={handleBackToList}
             onDelete={selectedSirket && getCompanyLifecycleStatus(selectedSirket) === 'draft' ? handleDelete : undefined}
             onModeChange={(mode) => setPageState(mode === 'edit' && !formAccess.showEdit ? 'view' : mode)}
+            onFieldChange={handleFormFieldChange}
             onIdentityGateOpenExistingRole={async (roleRecord) => {
               await handleRowClick(roleRecord as SirketTableRow)
               setPageState('edit')
@@ -1059,6 +1252,9 @@ export default function SirketlerPage() {
                 { id: 'vergi_levhasi', title: 'Vergi Levhası', required: true },
                 { id: 'ticaret_sicil_gazetesi', title: 'Ticaret Sicil Gazetesi', required: true },
                 { id: 'sicil_tasdiknamesi', title: 'Sicil Tasdiknamesi', required: true },
+                { id: 'faaliyet_belgesi', title: 'Faaliyet Belgesi', required: false },
+                { id: 'imza_sirkuleri', title: 'İmza Sirküleri', required: false },
+                { id: 'diger', title: 'Diğer Belgeler', required: false },
               ],
               acceptedTypes: ['application/pdf', 'image/png', 'image/jpeg', 'image/webp'],
               maxSizeMB: 20,
@@ -1093,16 +1289,40 @@ function formatHazardClass(value: unknown) {
   return String(value || '')
 }
 
-function extractLogoUrl(images: unknown) {
-  const rows = Array.isArray(images) ? images : []
-  const isDark = typeof document !== 'undefined' && document.documentElement.classList.contains('dark')
+function extractLogoUrl(images: unknown, darkMode?: boolean) {
+  const isDark = darkMode ?? (typeof document !== 'undefined' && document.documentElement.classList.contains('dark'))
   const preferredSlot = isDark ? 'dark_mode_avatar' : 'light_mode_avatar'
-  const preferred = rows.find((image: any) => image?.slotId === preferredSlot || image?.slot_id === preferredSlot)
-    || rows.find((image: any) => image?.slotId === 'light_mode_avatar' || image?.slot_id === 'light_mode_avatar')
-    || rows.find((image: any) => image?.slotId === 'document_logo' || image?.slot_id === 'document_logo')
-    || rows.find((image: any) => image?.slotId === 'original_logo' || image?.slot_id === 'original_logo' || image?.slotId === 'logo_primary' || image?.slot_id === 'logo_primary')
-    || rows[0]
-  return preferred?.url || preferred?.previewUrl || preferred?.preview_url || ''
+  return extractCompanyLogoUrl(images, { preferredSlotId: preferredSlot })
+}
+
+function resolveCompanyLogoUrl(company: Partial<Sirket> | Record<string, any>, isDarkMode: boolean) {
+  const lightLogoUrl = extractLogoUrl((company as any).hero_images, false)
+    || (company as any).logo_url_light
+    || (company as any).logo_url
+    || ''
+  const darkLogoUrl = extractLogoUrl((company as any).hero_images, true)
+    || (company as any).logo_url_dark
+    || lightLogoUrl
+    || (company as any).logo_url
+    || ''
+
+  return isDarkMode ? darkLogoUrl : lightLogoUrl
+}
+
+function useDarkModeFlag() {
+  const [isDarkMode, setIsDarkMode] = useState(false)
+
+  useEffect(() => {
+    const root = document.documentElement
+    const update = () => setIsDarkMode(root.classList.contains('dark'))
+    update()
+
+    const observer = new MutationObserver(update)
+    observer.observe(root, { attributes: true, attributeFilter: ['class'] })
+    return () => observer.disconnect()
+  }, [])
+
+  return isDarkMode
 }
 
 function getCompanyLifecycleStatus(company?: Partial<Sirket> | null): CompanyLifecycleStatus {
@@ -1125,6 +1345,23 @@ function getCompanyLifecycleBadgeClass(status: CompanyLifecycleStatus) {
   return 'border-gray-300 bg-gray-100 text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200'
 }
 
+function getCompanyLifecycleDotClass(status: CompanyLifecycleStatus) {
+  if (status === 'draft') return 'border-amber-200 bg-amber-400 dark:border-amber-300'
+  if (status === 'active') return 'border-emerald-200 bg-emerald-500 dark:border-emerald-300'
+  if (status === 'liquidation') return 'border-orange-200 bg-orange-500 dark:border-orange-300'
+  return 'border-gray-300 bg-gray-500 dark:border-gray-500'
+}
+
+function LifecycleStatusDot({ status }: { status: CompanyLifecycleStatus }) {
+  const label = getCompanyLifecycleLabel(status)
+
+  return (
+    <span className="inline-flex w-full justify-center" title={label} aria-label={label}>
+      <span className={`h-3.5 w-3.5 rounded-full border ${getCompanyLifecycleDotClass(status)}`} aria-hidden="true" />
+    </span>
+  )
+}
+
 function LifecycleStatusBadge({ status, tourId }: { status: CompanyLifecycleStatus; tourId?: string }) {
   return (
     <span
@@ -1139,67 +1376,173 @@ function LifecycleStatusBadge({ status, tourId }: { status: CompanyLifecycleStat
 
 function CompanyListLifecycleActions({
   row,
+  busy,
+  canEditProfile,
+  canDeleteDraft,
   canOpen,
   canLiquidate,
   canUpdateLiquidation,
   canDeregister,
+  canViewHistory,
   onAction,
+  onEdit,
+  onDelete,
+  onHistory,
 }: {
   row: SirketTableRow
+  busy?: boolean
+  canEditProfile: boolean
+  canDeleteDraft: boolean
   canOpen: boolean
   canLiquidate: boolean
   canUpdateLiquidation: boolean
   canDeregister: boolean
+  canViewHistory: boolean
   onAction: (row: SirketTableRow, type: CompanyLifecycleWizardType) => void
+  onEdit: (row: SirketTableRow) => void | Promise<void>
+  onDelete: (row: SirketTableRow) => void | Promise<void>
+  onHistory: () => void
 }) {
+  const [open, setOpen] = useState(false)
+  const [position, setPosition] = useState<{ top: number; left: number } | null>(null)
+  const buttonRef = useRef<HTMLButtonElement | null>(null)
+  const menuRef = useRef<HTMLDivElement | null>(null)
   const status = getCompanyLifecycleStatus(row)
-  const actionClass = 'inline-flex items-center gap-1.5 rounded-md border px-2 py-1 text-xs font-semibold transition-colors'
-  const primaryClass = `${actionClass} border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 dark:border-blue-900/60 dark:bg-blue-950/30 dark:text-blue-200`
-  const warningClass = `${actionClass} border-orange-200 bg-orange-50 text-orange-700 hover:bg-orange-100 dark:border-orange-900/60 dark:bg-orange-950/30 dark:text-orange-200`
-  const closedClass = `${actionClass} border-gray-200 bg-gray-50 text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400`
+  const canEditThisProfile = canEditProfile && status !== 'liquidation' && status !== 'deregistered'
+  const actions: Array<{ key: string; label: string; icon: ReactNode; danger?: boolean; onClick: () => void | Promise<void>; visible: boolean }> = [
+    {
+      key: 'opening',
+      label: 'Şirket Açılışı',
+      icon: <PlayCircle size={15} />,
+      onClick: () => onAction(row, 'opening'),
+      visible: status === 'draft' && canOpen,
+    },
+    {
+      key: 'liquidation',
+      label: status === 'liquidation' ? 'Tasfiye Bilgilerini Güncelle' : 'Tasfiye',
+      icon: <ShieldAlert size={15} />,
+      onClick: () => onAction(row, 'liquidation'),
+      visible: (status === 'active' && canLiquidate) || (status === 'liquidation' && canUpdateLiquidation),
+    },
+    {
+      key: 'deregistration',
+      label: 'Terkin',
+      icon: <Archive size={15} />,
+      onClick: () => onAction(row, 'deregistration'),
+      visible: status === 'liquidation' && canDeregister,
+    },
+    {
+      key: 'edit',
+      label: 'Düzenle',
+      icon: <Pencil size={15} />,
+      onClick: () => onEdit(row),
+      visible: canEditThisProfile,
+    },
+    {
+      key: 'delete',
+      label: 'Sil',
+      icon: <Trash2 size={15} />,
+      danger: true,
+      onClick: () => onDelete(row),
+      visible: status === 'draft' && canDeleteDraft,
+    },
+    {
+      key: 'history',
+      label: 'Geçmiş',
+      icon: <History size={15} />,
+      onClick: onHistory,
+      visible: canViewHistory,
+    },
+  ]
+  const visibleActions = actions.filter(action => action.visible)
 
-  if (status === 'draft') {
-    return canOpen ? (
-      <button type="button" className={primaryClass} onClick={() => onAction(row, 'opening')}>
-        <PlayCircle size={14} />
-        Şirket Açılışı
-      </button>
-    ) : <span className={closedClass}>Yetki yok</span>
+  useEffect(() => {
+    if (!open) return
+
+    function closeOnOutsideClick(event: MouseEvent) {
+      const target = event.target as Node
+      if (buttonRef.current?.contains(target)) return
+      if (menuRef.current?.contains(target)) return
+      setOpen(false)
+    }
+
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === 'Escape') setOpen(false)
+    }
+
+    document.addEventListener('mousedown', closeOnOutsideClick)
+    document.addEventListener('keydown', closeOnEscape)
+    return () => {
+      document.removeEventListener('mousedown', closeOnOutsideClick)
+      document.removeEventListener('keydown', closeOnEscape)
+    }
+  }, [open])
+
+  const toggleMenu = () => {
+    const rect = buttonRef.current?.getBoundingClientRect()
+    if (rect) {
+      const menuWidth = 232
+      const menuHeight = Math.max(44, visibleActions.length * 37 + 8)
+      const preferredTop = rect.bottom + 6
+      const top = preferredTop + menuHeight > window.innerHeight - 8
+        ? Math.max(8, rect.top - menuHeight - 6)
+        : preferredTop
+      setPosition({
+        top,
+        left: Math.max(8, Math.min(window.innerWidth - menuWidth - 8, rect.right - menuWidth)),
+      })
+    }
+    setOpen(previous => !previous)
   }
 
-  if (status === 'active') {
-    return canLiquidate ? (
-      <button type="button" className={warningClass} onClick={() => onAction(row, 'liquidation')}>
-        <ShieldAlert size={14} />
-        Tasfiye
-      </button>
-    ) : <span className={closedClass}>Aktif</span>
-  }
-
-  if (status === 'liquidation') {
-    return (
-      <div className="flex flex-wrap items-center justify-center gap-1.5">
-        {canUpdateLiquidation && (
-          <button type="button" className={warningClass} onClick={() => onAction(row, 'liquidation')}>
-            <ShieldAlert size={14} />
-            Güncelle
-          </button>
-        )}
-        {canDeregister && (
-          <button type="button" className={primaryClass} onClick={() => onAction(row, 'deregistration')}>
-            <Archive size={14} />
-            Terkin
-          </button>
-        )}
-      </div>
-    )
+  const runAction = async (action: (typeof actions)[number]) => {
+    setOpen(false)
+    await action.onClick()
   }
 
   return (
-    <span className={closedClass}>
-      <History size={14} />
-      Kapanmış
-    </span>
+    <div className="flex justify-center">
+      <button
+        ref={buttonRef}
+        type="button"
+        aria-label="Satır işlemleri"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        disabled={busy}
+        onClick={toggleMenu}
+        className="inline-grid h-8 w-8 place-items-center rounded-lg border border-gray-200 bg-white text-gray-500 transition hover:bg-gray-50 hover:text-gray-800 disabled:cursor-wait disabled:opacity-60 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white"
+        title="İşlemler"
+      >
+        <MoreVertical size={17} />
+      </button>
+
+      {open && position && (
+        <div
+          ref={menuRef}
+          role="menu"
+          style={{ top: position.top, left: position.left }}
+          className="fixed z-[90] w-[232px] overflow-hidden rounded-lg border border-gray-200 bg-white py-1 text-left shadow-xl dark:border-gray-700 dark:bg-gray-950"
+        >
+          {visibleActions.length ? visibleActions.map(action => (
+            <button
+              key={action.key}
+              type="button"
+              role="menuitem"
+              onClick={() => runAction(action)}
+              className={cn(
+                'flex w-full items-center gap-2 px-3 py-2 text-sm font-medium transition hover:bg-gray-50 dark:hover:bg-gray-900',
+                action.danger ? 'text-red-600 dark:text-red-300' : 'text-gray-700 dark:text-gray-200'
+              )}
+            >
+              {action.icon}
+              <span className="min-w-0 truncate">{action.label}</span>
+            </button>
+          )) : (
+            <div className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">İşlem yok</div>
+          )}
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -1208,8 +1551,6 @@ function CompanyLifecycleSummary({ data }: { data?: Sirket | null }) {
   const opening = (data as any)?.opening_details || {}
   const liquidation = (data as any)?.liquidation_details || {}
   const deregistration = (data as any)?.deregistration_details || {}
-  const events = Array.isArray((data as any)?.lifecycle_events) ? (data as any).lifecycle_events : []
-  const lastEvent = (data as any)?.lifecycle_last_event || events[0]
 
   return (
     <div data-tour-id="record-lifecycle-summary" className="col-span-2 space-y-4 lg:col-span-3">
@@ -1249,20 +1590,90 @@ function CompanyLifecycleSummary({ data }: { data?: Sirket | null }) {
             ['Referans', deregistration.deregistration_reference_no || '-'],
           ]}
         />
-        <LifecycleSummaryCard
-          icon={<FileText size={16} />}
-          title="Son Yaşam Döngüsü Olayı"
-          rows={[
-            ['Olay', formatLifecycleEvent(lastEvent?.event_type)],
-            ['Tarih', formatLifecycleDate(lastEvent?.event_date || lastEvent?.created_at)],
-            ['Yeni Durum', lastEvent?.new_status ? getCompanyLifecycleLabel(getCompanyLifecycleStatus({ record_status: lastEvent.new_status as CompanyLifecycleStatus })) : '-'],
-          ]}
-        />
       </div>
       <div className="rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-800 dark:border-blue-900/50 dark:bg-blue-950/30 dark:text-blue-200">
         Açılış, tasfiye ve terkin bilgileri doğrudan form alanı değildir; ilgili wizard kayıtlarından read-only özet olarak gösterilir.
       </div>
     </div>
+  )
+}
+
+function CompanyHistoryPanel({ data }: { data?: Sirket | null }) {
+  const fieldHistorySource = (data as any)?.[LIFECYCLE_FIELD_HISTORY_KEY]
+  const fieldHistory = (fieldHistorySource && typeof fieldHistorySource === 'object')
+    ? fieldHistorySource as Record<string, Array<{ value?: unknown; date?: string; user?: string }>>
+    : {}
+  const fieldChanges = Object.entries(fieldHistory)
+    .flatMap(([field, entries]) => (Array.isArray(entries) ? entries : []).map(entry => ({ field, ...entry })))
+    .sort((a, b) => getHistoryTime(b.date) - getHistoryTime(a.date))
+  const events = (Array.isArray((data as any)?.[LIFECYCLE_EVENTS_KEY]) ? (data as any)[LIFECYCLE_EVENTS_KEY] : [])
+    .slice()
+    .sort((a: any, b: any) => getHistoryTime(b.created_at || b.event_date) - getHistoryTime(a.created_at || a.event_date))
+
+  return (
+    <div className="col-span-2 space-y-6 lg:col-span-3">
+      <HistorySection
+        title="Yaşam Döngüsü Olayları"
+        description="Açılış, tasfiye ve terkin işlemlerinin kısa olay kayıtları"
+        emptyText="Bu kayıt için yaşam döngüsü olayı bulunmuyor."
+      >
+        {events.map((event: any, index: number) => (
+          <div key={event.id || index} className="flex flex-col gap-1 border-b border-gray-100 py-3 text-sm last:border-0 dark:border-gray-800 md:flex-row md:items-start md:justify-between">
+            <div className="min-w-0">
+              <div className="font-medium text-gray-900 dark:text-white">{formatLifecycleEvent(event.event_type)}</div>
+              <div className="mt-1 text-xs leading-5 text-gray-500 dark:text-gray-400">{formatLifecycleEventSummary(event)}</div>
+            </div>
+            <div className="shrink-0 text-xs text-gray-500 dark:text-gray-400 md:text-right">
+              {formatHistoryDateTime(event.created_at || event.event_date)}
+            </div>
+          </div>
+        ))}
+      </HistorySection>
+
+      <HistorySection
+        title="Yapılan Değişiklikler"
+        description="Form alanlarında yapılan kayıt değişiklikleri"
+        emptyText="Bu kayıt için alan değişikliği bulunmuyor."
+      >
+        {fieldChanges.map((entry, index) => (
+          <div key={`${entry.field}-${entry.date || index}`} className="flex flex-wrap items-center gap-x-2 gap-y-1 border-b border-gray-100 py-2.5 text-sm last:border-0 dark:border-gray-800">
+            <span className="text-xs text-gray-500 dark:text-gray-400">{formatHistoryDateTime(entry.date)}</span>
+            <span className="font-medium text-gray-900 dark:text-white">{formatHistoryFieldLabel(entry.field)}</span>
+            <span className="text-gray-600 dark:text-gray-300">değişti.</span>
+            <span className="text-gray-500 dark:text-gray-400">Önceki: {formatHistoryValue(entry.value)}</span>
+            <span className="text-xs text-gray-400 dark:text-gray-500">{entry.user || 'Sistem Kullanıcısı'}</span>
+          </div>
+        ))}
+      </HistorySection>
+    </div>
+  )
+}
+
+function HistorySection({
+  title,
+  description,
+  emptyText,
+  children,
+}: {
+  title: string
+  description: string
+  emptyText: string
+  children: ReactNode
+}) {
+  const hasItems = Array.isArray(children) ? children.length > 0 : !!children
+
+  return (
+    <section className="rounded-lg border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-950">
+      <div className="border-b border-gray-100 px-4 py-3 dark:border-gray-800">
+        <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{title}</h3>
+        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{description}</p>
+      </div>
+      <div className="px-4">
+        {hasItems ? children : (
+          <div className="py-8 text-center text-sm text-gray-500 dark:text-gray-400">{emptyText}</div>
+        )}
+      </div>
+    </section>
   )
 }
 
@@ -1292,6 +1703,29 @@ function formatLifecycleDate(value: unknown) {
   return date.toLocaleDateString('tr-TR')
 }
 
+function formatHistoryDateTime(value: unknown) {
+  if (!value) return '-'
+  const date = new Date(String(value))
+  if (Number.isNaN(date.getTime())) return String(value)
+  return date.toLocaleString('tr-TR', { dateStyle: 'short', timeStyle: 'short' })
+}
+
+function getHistoryTime(value: unknown) {
+  if (!value) return 0
+  const time = new Date(String(value)).getTime()
+  return Number.isFinite(time) ? time : 0
+}
+
+function formatHistoryValue(value: unknown) {
+  if (value === null || value === undefined || value === '') return '-'
+  if (typeof value === 'boolean') return value ? 'Evet' : 'Hayır'
+  if (typeof value === 'number') return value.toLocaleString('tr-TR')
+  if (typeof value === 'string') return value
+  if (Array.isArray(value)) return `${value.length} kayıt`
+  if (typeof value === 'object') return 'Yapılandırılmış veri'
+  return String(value)
+}
+
 function formatLifecycleEvent(value: unknown) {
   const event = String(value || '')
   if (!event) return '-'
@@ -1305,7 +1739,38 @@ function formatLifecycleEvent(value: unknown) {
     company_deregistered: 'Terkin tamamlandı',
     status_changed: 'Durum değişti',
   }
-  return labels[event] || event
+  return labels[event] || 'Yaşam döngüsü olayı kaydedildi'
+}
+
+function formatHistoryFieldLabel(field: string) {
+  if (FIELD_LABELS[field]) return FIELD_LABELS[field]
+  return field
+    .replace(/_/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/^./, first => first.toLocaleUpperCase('tr-TR'))
+}
+
+function formatLifecycleEventSummary(event: any) {
+  const parts: string[] = []
+  const oldStatus = event?.old_status ? formatLifecycleStatusLabel(event.old_status) : ''
+  const newStatus = event?.new_status ? formatLifecycleStatusLabel(event.new_status) : ''
+
+  if (oldStatus && newStatus) {
+    parts.push(`Durum ${oldStatus} iken ${newStatus} oldu.`)
+  } else if (newStatus) {
+    parts.push(`Durum ${newStatus} oldu.`)
+  }
+
+  if (event?.event_date) {
+    parts.push(`İşlem tarihi: ${formatLifecycleDate(event.event_date)}.`)
+  }
+
+  return parts.join(' ') || 'Olay kaydı oluşturuldu.'
+}
+
+function formatLifecycleStatusLabel(value: unknown) {
+  return getCompanyLifecycleLabel(getCompanyLifecycleStatus({ record_status: value as CompanyLifecycleStatus }))
 }
 
 function RelatedSummaryTable({ type, rows }: { type: 'partners' | 'representatives' | 'stakeholders'; rows: any[] }) {
@@ -1465,6 +1930,9 @@ function normalizeCompanyForForm(company: Sirket) {
   return {
     ...company,
     is_deleted: !!company.is_deleted,
+    logo_url: extractLogoUrl((company as any).hero_images) || (company as any).logo_url || '',
+    logo_url_light: extractLogoUrl((company as any).hero_images, false) || (company as any).logo_url_light || (company as any).logo_url || '',
+    logo_url_dark: extractLogoUrl((company as any).hero_images, true) || (company as any).logo_url_dark || (company as any).logo_url_light || (company as any).logo_url || '',
     partners: (company.partners || []).map((partner: any) => {
       const parts = String(partner.partner_name || '').trim().split(/\s+/)
       return {

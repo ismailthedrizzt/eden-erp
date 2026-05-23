@@ -171,6 +171,9 @@ export interface EntityFormProps {
   
   /** Tab sections for detailed information */
   tabs: FormTab[]
+
+  /** Optional tab id to activate from parent-driven workflows */
+  initialActiveTabId?: string
   
   /** Current data (for view/edit modes) */
   data?: Record<string, any>
@@ -986,7 +989,7 @@ type ImageVariantResult = {
 
 async function createImageVariantsOnServer(
   file: File,
-  options: { maxDimension: number; thumbnailDimension?: number; quality?: number; thumbnailQuality?: number }
+  options: { maxDimension: number; thumbnailDimension?: number; quality?: number; thumbnailQuality?: number; transparentBackground?: boolean }
 ): Promise<ImageVariantResult> {
   const body = new FormData()
   body.append('file', file)
@@ -994,6 +997,7 @@ async function createImageVariantsOnServer(
   body.append('thumbnailDimension', String(options.thumbnailDimension ?? 96))
   body.append('quality', String(options.quality ?? 0.78))
   body.append('thumbnailQuality', String(options.thumbnailQuality ?? 0.72))
+  if (options.transparentBackground) body.append('transparentBackground', 'true')
 
   const response = await fetch('/api/uploads/image-variants', {
     method: 'POST',
@@ -1018,6 +1022,10 @@ function avatarImageMaxDimension(slotId?: string) {
   return 512
 }
 
+function shouldUseTransparentImageBackground(slotId?: string) {
+  return !!slotId && ['light_mode_avatar', 'dark_mode_avatar', 'document_logo', 'original_logo', 'logo_primary'].includes(slotId)
+}
+
 function normalizeStoredImages(value: unknown): SlotImage[] {
   const images = Array.isArray(value) ? value : value ? [value] : []
 
@@ -1025,7 +1033,7 @@ function normalizeStoredImages(value: unknown): SlotImage[] {
     .filter((image): image is Record<string, any> => !!image && typeof image === 'object')
     .map(image => ({
       slotId: image.slotId || image.slot_id || 'photo',
-      previewUrl: image.previewUrl || image.preview_url || image.url || image.signedUrl || image.signed_url,
+      previewUrl: image.previewUrl || image.preview_url || image.url || image.signedUrl || image.signed_url || image.thumbnailUrl || image.thumbnail_url || image.preview_thumb_url || image.preview_image_url,
       thumbnailUrl: image.thumbnailUrl || image.thumbnail_url || image.preview_thumb_url || image.preview_image_url,
       name: image.name || image.file_name || image.fileName || 'Görsel',
       size: Number(image.size || 0),
@@ -1071,6 +1079,7 @@ function normalizeStoredDocuments(value: unknown, fallbackSlotId = 'cv'): SlotDo
         isDeleted: Boolean(doc.isDeleted || doc.is_deleted),
         url,
         thumbnailUrl: doc.thumbnailUrl || doc.thumbnail_url || doc.preview_thumb_url || doc.preview_image_url,
+        thumbnailPath: doc.thumbnailPath || doc.thumbnail_path || doc.preview_thumb_path || doc.preview_image_path,
       }
     })
 }
@@ -1100,7 +1109,8 @@ function serializeDocumentForStorage(doc: SlotDocument) {
     slotTitle: doc.slotTitle,
     isDeleted: doc.isDeleted,
     url: doc.storagePath || !url || url.startsWith('blob:') || url.startsWith('data:') ? undefined : url,
-    thumbnailUrl
+    thumbnailUrl,
+    thumbnailPath: doc.thumbnailPath
   }
 }
 
@@ -1129,8 +1139,9 @@ function getLatestActiveStoredDocument(documents: SlotDocument[], slotId: string
 }
 
 function isPersistableThumbnailUrl(value: string) {
+  if (value.startsWith('data:image/svg+xml')) return false
   if (!value.startsWith('data:')) return true
-  return value.startsWith('data:image/svg+xml')
+  return false
 }
 
 async function uploadDocumentFile(document: SlotDocument) {
@@ -1155,7 +1166,8 @@ async function uploadDocumentFile(document: SlotDocument) {
     storagePath: result.storagePath,
     url: result.url,
     previewUrl: result.url,
-    thumbnailUrl: document.type?.startsWith('image/') ? result.url : document.thumbnailUrl,
+    thumbnailUrl: result.thumbnailUrl || (document.type?.startsWith('image/') ? result.url : document.thumbnailUrl),
+    thumbnailPath: result.thumbnailPath || document.thumbnailPath,
     name: document.name || result.name || document.file.name,
     size: document.size || result.size || document.file.size,
     type: document.type || result.type || document.file.type,
@@ -2189,6 +2201,7 @@ export function EntityForm({
   entityNameSingular,
   heroFields,
   tabs,
+  initialActiveTabId,
   data,
   loading = false,
   saving = false,
@@ -2229,7 +2242,7 @@ export function EntityForm({
 }: EntityFormProps) {
   // Internal mode state
   const [mode, setMode] = useState<FormMode>(initialMode)
-  const [activeTab, setActiveTab] = useState(tabs[0]?.id || '')
+  const [activeTab, setActiveTab] = useState(initialActiveTabId || tabs[0]?.id || '')
   const [formData, setFormData] = useState<Record<string, any>>({})
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [identityGateResult, setIdentityGateResult] = useState<IdentityGateResolveResult | null>(null)
@@ -2428,6 +2441,12 @@ export function EntityForm({
       setActiveTab(formTabs[0].id)
     }
   }, [formTabs, activeTab])
+
+  useEffect(() => {
+    if (!initialActiveTabId) return
+    if (!formTabs.find(tab => tab.id === initialActiveTabId)) return
+    setActiveTab(initialActiveTabId)
+  }, [formTabs, initialActiveTabId])
 
   useEffect(() => {
     if (externalFieldErrors) {
@@ -2671,6 +2690,7 @@ export function EntityForm({
             thumbnailDimension: 96,
             quality: 0.78,
             thumbnailQuality: 0.72,
+            transparentBackground: shouldUseTransparentImageBackground(image.slotId),
           })
           const { file, ...imageWithoutFile } = image
           return {
@@ -2703,6 +2723,7 @@ export function EntityForm({
           thumbnailDimension: 96,
           quality: 0.78,
           thumbnailQuality: 0.72,
+          transparentBackground: shouldUseTransparentImageBackground(photo.slotId),
         })
         handleChange('photo_url', variants.previewUrl)
         setImages(current => current.map(image => {

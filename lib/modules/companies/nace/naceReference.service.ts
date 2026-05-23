@@ -421,9 +421,30 @@ async function buildFallbackNaceRows(supabase: SupabaseClient): Promise<NaceRefe
 }
 
 function filterFallbackRows(rows: NaceReferenceRow[], queryText?: string | null) {
-  const needle = normalizeHeader(String(queryText || ''))
-  if (!needle) return rows
-  return rows.filter(row => normalizeHeader(`${row.nace_code} ${row.description}`).includes(needle))
+  const needles = normalizeFallbackSearchTerms(queryText)
+  if (needles.length === 0) return rows
+  return rows.filter(row => {
+    const haystack = normalizeHeader(`${row.nace_code} ${row.description}`)
+    return needles.every(needle => haystack.includes(needle))
+  })
+}
+
+function normalizeFallbackSearchTerms(queryText?: string | null) {
+  const normalizedText = String(queryText || '').normalize('NFKC').trim()
+  if (!normalizedText) return []
+
+  const seen = new Set<string>()
+  const terms: string[] = []
+
+  for (const part of normalizedText.split(/[\s,;:!?()\[\]{}"'\u2018\u2019\u201c\u201d`~@#$%^&*+=<>\\|\/]+/)) {
+    const term = normalizeHeader(part.replace(/^[-.]+|[-.]+$/g, '').replace(/[%_]/g, ''))
+    if (!term || seen.has(term)) continue
+    seen.add(term)
+    terms.push(term)
+    if (terms.length >= 6) break
+  }
+
+  return terms
 }
 
 function findColumn(headers: string[], explicit: string | undefined, candidates: string[]) {

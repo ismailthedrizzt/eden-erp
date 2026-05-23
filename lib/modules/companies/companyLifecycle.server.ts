@@ -5,6 +5,14 @@ import { createServiceClient } from '@/lib/supabase/server'
 import { requirePermission } from '@/lib/security/serverPermissions'
 import { applyTenantQueryScope, resolveTenantContext, type TenantContext, withTenantInsertScopeForTable } from '@/lib/tenancy/server'
 import { getTenantCompanyScope, isWritableCompanyScope } from '@/lib/tenancy/companyScopes'
+import {
+  deriveOpeningHeroDocumentsFromPayload,
+  mergeOpeningHeroDocuments,
+} from '@/lib/modules/companies/openingDocuments'
+import {
+  COMPANY_LIFECYCLE_PROCESSES,
+  type CompanyLifecycleWizardType,
+} from '@/lib/lifecycle/processes/companyLifecycleProcesses'
 
 export const COMPANY_LIFECYCLE_PERMISSIONS = {
   lifecycleView: 'companies.lifecycle.view',
@@ -18,7 +26,7 @@ export const COMPANY_LIFECYCLE_PERMISSIONS = {
 } as const
 
 type Supabase = ReturnType<typeof createServiceClient>
-type WizardMode = 'opening' | 'liquidation' | 'deregistration'
+type WizardMode = CompanyLifecycleWizardType
 type PermissionResult = { userId: string | null }
 type OpeningNacePayloadRow = {
   nace_code_id: string
@@ -139,10 +147,28 @@ export async function completeCompanyWizard(
   const parsedBody = await request.json().catch(() => ({}))
   const openingNaceCodes = mode === 'opening' ? normalizeOpeningNaceCodes(parsedBody?.nace_codes) : []
   const primaryNaceCode = openingNaceCodes.find(row => row.is_primary)
+  const electronicNotificationAddress = String(parsedBody?.electronic_notification_address || parsedBody?.e_notification_address || '').trim()
+  const openingPayload = mode === 'opening' ? omitOpeningShareRatioFields(parsedBody) : parsedBody
+  const foundationCapitalAmount = mode === 'opening'
+    ? normalizeOptionalNumber(parsedBody?.foundation_capital_amount ?? parsedBody?.capital_amount)
+    : ''
+  const foundationShareUnits = mode === 'opening'
+    ? normalizeOptionalNumber(parsedBody?.foundation_share_units ?? parsedBody?.share_units)
+    : ''
+  const foundationNominalValue = mode === 'opening'
+    ? calculateNominalValue(foundationCapitalAmount, foundationShareUnits)
+    : ''
   const body = mode === 'opening'
     ? {
-        ...parsedBody,
+        ...openingPayload,
         foundation_date: parsedBody?.foundation_date || parsedBody?.registration_date || '',
+        foundation_capital_amount: foundationCapitalAmount,
+        foundation_share_units: foundationShareUnits,
+        foundation_nominal_value: foundationNominalValue,
+        share_units: foundationShareUnits,
+        nominal_value: foundationNominalValue,
+        electronic_notification_address: electronicNotificationAddress,
+        kep_info_available: parsedBody?.kep_info_available ?? (electronicNotificationAddress ? 'true' : ''),
         nace_codes: openingNaceCodes,
         primary_nace_id: primaryNaceCode?.nace_code_id || '',
       }
@@ -187,13 +213,44 @@ export async function completeCompanyWizard(
     }, { status: lifecycleErrorStatus(error.message) })
   }
 
+  const lifecycleEventScopeError = await syncLifecycleEventTenantScope(supabase, companyId, tenantContext)
+  if (lifecycleEventScopeError) return lifecycleEventScopeError
+
   if (mode === 'opening') {
-    const identitySync = await syncOpeningCompanyIdentity(supabase, companyId, body, permission.userId, data, tenantContext)
+    const syncedHeroDocuments = await syncOpeningHeroDocuments(supabase, companyId, body, permission.userId, tenantContext)
+    if (syncedHeroDocuments instanceof NextResponse) return syncedHeroDocuments
+
+    const dataWithDocuments = syncedHeroDocuments && data?.company
+      ? { ...data, company: { ...data.company, hero_documents: syncedHeroDocuments } }
+      : data
+    const identitySync = await syncOpeningCompanyIdentity(supabase, companyId, body, permission.userId, dataWithDocuments, tenantContext)
     if (identitySync instanceof NextResponse) return identitySync
     return NextResponse.json({ data: identitySync })
   }
 
   return NextResponse.json({ data })
+}
+
+async function syncLifecycleEventTenantScope(
+  supabase: Supabase,
+  companyId: string,
+  tenantContext: TenantContext
+) {
+  const { error } = await supabase
+    .from('company_lifecycle_events')
+    .update({ tenant_id: tenantContext.tenantId })
+    .eq('company_id', companyId)
+    .is('tenant_id', null)
+
+  if (error) {
+    if (isMissingTableError(error) || error.code === '42703') return null
+    return NextResponse.json({
+      error: error.message,
+      code: error.code || 'LIFECYCLE_EVENT_SCOPE_SYNC_FAILED',
+    }, { status: 500 })
+  }
+
+  return null
 }
 
 async function requireCompanyScopeAccess(
@@ -341,7 +398,7 @@ function validateModeStatus(mode: WizardMode, status: string) {
 
 function validateRequiredPayload(mode: WizardMode, payload: Record<string, any>) {
   const required = mode === 'opening'
-    ? ['registration_date']
+    ? ['registration_date', 'foundation_trade_registry_gazette', 'registry_certificate_document', 'tax_plate_document']
     : mode === 'liquidation'
       ? ['liquidation_decision_date', 'liquidation_start_date']
       : ['liquidation_completion_decision_date', 'deregistration_registration_date']
@@ -405,6 +462,24 @@ function normalizeOpeningNaceCodes(value: unknown): OpeningNacePayloadRow[] {
     ...row,
     is_primary: primaryIndex >= 0 ? index === primaryIndex : index === 0,
   }))
+}
+
+function normalizeOptionalNumber(value: unknown) {
+  if (value === undefined || value === null || value === '') return ''
+  const numeric = Number(String(value).replace(',', '.'))
+  return Number.isFinite(numeric) ? numeric : ''
+}
+
+function omitOpeningShareRatioFields(payload: Record<string, any>) {
+  const next = { ...(payload || {}) }
+  delete next.foundation_share_ratio
+  delete next.share_ratio
+  return next
+}
+
+function calculateNominalValue(capitalAmount: number | '', shareUnits: number | '') {
+  if (typeof capitalAmount !== 'number' || typeof shareUnits !== 'number' || shareUnits <= 0) return ''
+  return Number((capitalAmount / shareUnits).toFixed(6))
 }
 
 async function syncOpeningNaceCodes(
@@ -529,6 +604,57 @@ async function syncOpeningNaceCodes(
   return null
 }
 
+async function syncOpeningHeroDocuments(
+  supabase: Supabase,
+  companyId: string,
+  payload: Record<string, any>,
+  userId: string | null,
+  tenantContext: TenantContext
+) {
+  const openingDocuments = deriveOpeningHeroDocumentsFromPayload(payload)
+  if (openingDocuments.length === 0) return null
+
+  let currentQuery = supabase
+    .from('companies')
+    .select('id,hero_documents')
+    .eq('id', companyId)
+  currentQuery = applyTenantQueryScope(currentQuery, 'companies', tenantContext)
+  const { data: current, error: currentError } = await currentQuery.single()
+
+  if (currentError) {
+    return NextResponse.json({
+      error: currentError.message,
+      code: currentError.code || 'OPENING_DOCUMENTS_FETCH_FAILED',
+    }, { status: 500 })
+  }
+
+  const mergedDocuments = mergeOpeningHeroDocuments(current?.hero_documents, openingDocuments)
+  if (JSON.stringify(mergedDocuments) === JSON.stringify(current?.hero_documents || [])) {
+    return mergedDocuments
+  }
+
+  let updateQuery = supabase
+    .from('companies')
+    .update({
+      hero_documents: mergedDocuments,
+      updated_by: userId,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', companyId)
+    .select('hero_documents')
+  updateQuery = applyTenantQueryScope(updateQuery, 'companies', tenantContext)
+  const { data: updated, error: updateError } = await updateQuery.single()
+
+  if (updateError) {
+    return NextResponse.json({
+      error: updateError.message,
+      code: updateError.code || 'OPENING_DOCUMENTS_SYNC_FAILED',
+    }, { status: 500 })
+  }
+
+  return updated?.hero_documents || mergedDocuments
+}
+
 async function syncOpeningCompanyIdentity(
   supabase: Supabase,
   companyId: string,
@@ -538,12 +664,19 @@ async function syncOpeningCompanyIdentity(
   tenantContext: TenantContext
 ) {
   const updates: Record<string, any> = {}
-  const tradeName = String(payload.trade_name || '').trim()
+  const directCompanyTargets = new Set(['trade_name', 'short_name', 'electronic_notification_address'])
 
-  if (tradeName) updates.trade_name = tradeName
-  if (Object.prototype.hasOwnProperty.call(payload, 'short_name')) {
-    updates.short_name = String(payload.short_name || '').trim() || null
-  }
+  COMPANY_LIFECYCLE_PROCESSES.opening.completion.formWrites.forEach(write => {
+    if (!directCompanyTargets.has(write.targetField)) return
+    if (!Object.prototype.hasOwnProperty.call(payload, write.sourceField)) return
+
+    const value = String(payload[write.sourceField] || '').trim()
+    if (write.targetField === 'trade_name') {
+      if (value) updates.trade_name = value
+      return
+    }
+    updates[write.targetField] = value || null
+  })
 
   if (Object.keys(updates).length === 0) return rpcData
 
@@ -555,7 +688,7 @@ async function syncOpeningCompanyIdentity(
       updated_at: new Date().toISOString(),
     })
     .eq('id', companyId)
-    .select('id,short_name,trade_name,updated_at')
+    .select('id,short_name,trade_name,electronic_notification_address,updated_at')
   updateQuery = applyTenantQueryScope(updateQuery, 'companies', tenantContext)
   const { data: company, error } = await updateQuery.single()
 

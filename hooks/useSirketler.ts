@@ -18,12 +18,15 @@ interface UseSirketlerReturn {
   getLogos: (sirketId: string) => Promise<SirketLogo[]>
 }
 
-export function useSirketler(options: { includePassive?: boolean } & Partial<Pick<ListQuery, 'page' | 'pageSize' | 'search' | 'sort' | 'direction'>> = {}): UseSirketlerReturn {
+type SirketListOptions = { includePassive?: boolean; statuses?: string[] } & Partial<Pick<ListQuery, 'page' | 'pageSize' | 'search' | 'sort' | 'direction'>>
+
+export function useSirketler(options: SirketListOptions = {}): UseSirketlerReturn {
   const [data, setData] = useState<Sirket[]>([])
   const [meta, setMeta] = useState<ListMeta>({ page: 1, pageSize: 50, total: 0, totalPages: 1 })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const hasDataRef = useRef(false)
+  const statusesKey = options.statuses?.join(',')
 
   const fetchSirketler = useCallback(async (force = false) => {
     try {
@@ -40,7 +43,7 @@ export function useSirketler(options: { includePassive?: boolean } & Partial<Pic
     } finally {
       setLoading(false)
     }
-  }, [options.includePassive, options.page, options.pageSize, options.search, options.sort, options.direction])
+  }, [options.includePassive, statusesKey, options.page, options.pageSize, options.search, options.sort, options.direction])
 
   useEffect(() => {
     fetchSirketler()

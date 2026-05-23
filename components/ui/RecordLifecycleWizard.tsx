@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import type * as React from 'react'
 import {
@@ -14,6 +14,7 @@ import {
   Info,
   Link2,
   Loader2,
+  Plus,
   Upload,
   X,
 } from 'lucide-react'
@@ -35,6 +36,7 @@ export type RecordLifecycleWizardField = Omit<FormField, 'type' | 'options' | 'r
   description?: string
   highlight?: boolean
   disabled?: boolean
+  documentMode?: 'registry' | 'newOnly'
   emptyOptionsRedirect?: {
     href: string
     label?: string
@@ -807,6 +809,9 @@ function DocumentRegistryField({
 }) {
   const current = typeof value === 'object' && value ? value : value ? { documentId: value, name: String(value) } : null
   const [mode, setMode] = useState<'new' | 'existing' | ''>(current?.source || '')
+  const [uploading, setUploading] = useState(false)
+  const [uploadError, setUploadError] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement | null>(null)
   const display = current?.name || current?.documentId || current?.storagePath || ''
 
   const chooseNew = () => {
@@ -825,6 +830,97 @@ function DocumentRegistryField({
       documentId: current?.documentId || '',
       name: current?.name || '',
     })
+  }
+
+  const clearDocument = () => {
+    setMode('')
+    setUploadError(null)
+    onChange('')
+  }
+
+  const uploadNewOnlyDocument = async (file: File | undefined) => {
+    if (!file) return
+    setUploading(true)
+    setUploadError(null)
+    try {
+      const uploaded = await uploadWizardDocumentFile(file, field.name)
+      setMode('new')
+      onChange({
+        source: 'new',
+        documentId: uploaded.storagePath || uploaded.url || `pending:${field.name}:${Date.now()}`,
+        storagePath: uploaded.storagePath || undefined,
+        url: uploaded.url || undefined,
+        thumbnailUrl: uploaded.thumbnailUrl || undefined,
+        thumbnailPath: uploaded.thumbnailPath || undefined,
+        name: uploaded.name || file.name,
+        size: uploaded.size || file.size,
+        type: uploaded.type || file.type || 'application/octet-stream',
+        uploadedAt: new Date().toISOString(),
+      })
+    } catch (error) {
+      setUploadError(error instanceof Error ? error.message : 'Belge yüklenemedi')
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  if (field.documentMode === 'newOnly') {
+    return (
+      <div className="flex flex-col gap-3 rounded-lg border border-gray-200 bg-white px-3 py-3 dark:border-gray-800 dark:bg-gray-950 sm:flex-row sm:items-center">
+        <input
+          ref={fileInputRef}
+          type="file"
+          className="hidden"
+          accept="application/pdf,image/png,image/jpeg,image/webp"
+          onChange={event => {
+            const file = event.target.files?.[0]
+            event.target.value = ''
+            uploadNewOnlyDocument(file)
+          }}
+        />
+        <div className="flex min-w-0 flex-1 items-start gap-3">
+          <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-300">
+            <FileText size={16} />
+          </span>
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-sm font-semibold text-gray-900 dark:text-white">{field.label}</span>
+              {field.required && <span className="rounded-full bg-red-50 px-1.5 py-0.5 text-[10px] font-semibold text-red-600 dark:bg-red-950/40 dark:text-red-300">Zorunlu</span>}
+            </div>
+            <div className="mt-1 truncate text-xs text-gray-500 dark:text-gray-400">
+              {uploading ? 'Belge yükleniyor...' : display || 'Belge eklenmedi'}
+            </div>
+            {uploadError && <div className="mt-1 text-xs font-medium text-red-600 dark:text-red-400">{uploadError}</div>}
+          </div>
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
+            className={cn(
+              'inline-flex items-center justify-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-semibold transition-colors disabled:cursor-wait disabled:opacity-60',
+              current
+                ? 'border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-200 dark:hover:bg-emerald-950/50'
+                : 'border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100 dark:border-blue-900 dark:bg-blue-950/30 dark:text-blue-200 dark:hover:bg-blue-950/50'
+            )}
+          >
+            {uploading ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
+            {current ? 'Değiştir' : 'Ekle'}
+          </button>
+          {current && (
+            <button
+              type="button"
+              onClick={clearDocument}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-md text-gray-500 hover:bg-red-50 hover:text-red-600 dark:text-gray-400 dark:hover:bg-red-950/30 dark:hover:text-red-300"
+              aria-label={`${field.label} belgesini kaldır`}
+            >
+              <X size={14} />
+            </button>
+          )}
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -871,6 +967,29 @@ function DocumentRegistryField({
       )}
     </div>
   )
+}
+
+async function uploadWizardDocumentFile(file: File, slotId: string) {
+  const body = new FormData()
+  body.append('file', file)
+  body.append('slotId', slotId)
+
+  const response = await fetch('/api/uploads/documents', {
+    method: 'POST',
+    body,
+  })
+  const result = await response.json().catch(() => ({}))
+  if (!response.ok) throw new Error(result.error || 'Belge yüklenemedi')
+
+  return {
+    storagePath: String(result.storagePath || ''),
+    url: String(result.url || ''),
+    thumbnailPath: String(result.thumbnailPath || ''),
+    thumbnailUrl: String(result.thumbnailUrl || ''),
+    name: String(result.name || file.name),
+    size: Number(result.size || file.size),
+    type: String(result.type || file.type || 'application/octet-stream'),
+  }
 }
 
 function InfoPanel({ children, className }: { children: ReactNode; className?: string }) {

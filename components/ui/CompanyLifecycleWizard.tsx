@@ -1,17 +1,25 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { AlertTriangle, CheckCircle2, Plus, Search, ShieldCheck, Star, Trash2 } from 'lucide-react'
+import { AlertTriangle, Search, Star, Trash2 } from 'lucide-react'
 import {
   RecordLifecycleWizard,
   type RecordLifecycleWizardOption,
   type RecordLifecycleWizardStep,
 } from './RecordLifecycleWizard'
+import {
+  createLifecycleDocumentsStep,
+  createLifecycleInformationStep,
+} from './lifecycleWizardTemplate'
+import {
+  COMPANY_LIFECYCLE_PROCESSES,
+  type CompanyLifecycleWizardType,
+} from '@/lib/lifecycle/processes/companyLifecycleProcesses'
 import { cn } from '@/lib/utils'
 import { formControlClass } from '@/components/ui/formControlStyles'
 import type { Sirket } from '@/types/sirket'
 
-export type CompanyLifecycleWizardType = 'opening' | 'liquidation' | 'deregistration'
+export type { CompanyLifecycleWizardType } from '@/lib/lifecycle/processes/companyLifecycleProcesses'
 
 type CompanyLifecycleWizardProps = {
   type: CompanyLifecycleWizardType
@@ -51,12 +59,6 @@ const DECISION_TYPE_OPTIONS: RecordLifecycleWizardOption[] = [
   { value: 'other', label: 'Diğer' },
 ]
 
-const WIZARD_META: Record<CompanyLifecycleWizardType, { title: string; endpoint: string; submitLabel: string }> = {
-  opening: { title: 'Şirket Açılışı', endpoint: 'opening-wizard', submitLabel: 'Şirket Açılışını Tamamla' },
-  liquidation: { title: 'Tasfiye', endpoint: 'liquidation-wizard', submitLabel: 'Tasfiyeyi Başlat' },
-  deregistration: { title: 'Terkin', endpoint: 'deregistration-wizard', submitLabel: 'Terkin İşlemini Tamamla' },
-}
-
 export function CompanyLifecycleWizard({ type, company, onClose, onComplete }: CompanyLifecycleWizardProps) {
   const [form, setForm] = useState<Record<string, any>>({})
   const [context, setContext] = useState<Record<string, any> | null>(null)
@@ -64,7 +66,7 @@ export function CompanyLifecycleWizard({ type, company, onClose, onComplete }: C
   const [contextError, setContextError] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const meta = WIZARD_META[type]
+  const template = COMPANY_LIFECYCLE_PROCESSES[type]
 
   useEffect(() => {
     let cancelled = false
@@ -72,7 +74,7 @@ export function CompanyLifecycleWizard({ type, company, onClose, onComplete }: C
     setContextError(null)
     setError(null)
 
-    fetch(`/api/companies/${company.id}/${meta.endpoint}/context`)
+    fetch(`/api/companies/${company.id}/${template.endpoint}/context`)
       .then(async response => {
         const payload = await response.json().catch(() => ({}))
         if (!response.ok) throw new Error(payload.error || 'Bilgiler yüklenemedi')
@@ -95,22 +97,22 @@ export function CompanyLifecycleWizard({ type, company, onClose, onComplete }: C
     return () => {
       cancelled = true
     }
-  }, [company, meta.endpoint, type])
+  }, [company, template.endpoint, type])
 
   const options = useMemo(() => buildContextOptions(context), [context])
   const steps = useMemo(() => buildSteps(type, options, form), [type, options, form])
   const submitLabel = type === 'liquidation' && getCompanyLifecycleStatus(company) === 'liquidation'
     ? 'Tasfiye Bilgilerini Güncelle'
-    : meta.submitLabel
+    : template.submitLabel
 
   const handleSubmit = async () => {
     setSaving(true)
     setError(null)
     try {
-      const response = await fetch(`/api/companies/${company.id}/${meta.endpoint}/complete`, {
+      const response = await fetch(`/api/companies/${company.id}/${template.endpoint}/complete`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify(type === 'opening' ? buildOpeningSubmitForm(form) : form),
       })
       const payload = await response.json().catch(() => ({}))
       if (!response.ok) throw new Error(payload.error || 'Wizard tamamlanamadı')
@@ -136,15 +138,17 @@ export function CompanyLifecycleWizard({ type, company, onClose, onComplete }: C
       next.primary_nace_selected = primary ? 'true' : ''
       next.primary_nace_id = primary?.nace_code_id || ''
     }
-    if (field === 'sgk_workplace_registered' && value !== 'true') {
-      next.sgk_workplace_no = ''
+    if (type === 'opening' && (field === 'foundation_capital_amount' || field === 'foundation_share_units')) {
+      next.foundation_nominal_value = calculateShareValue(next.foundation_capital_amount, next.foundation_share_units)
+      delete next.foundation_share_ratio
+      delete next.share_ratio
     }
     return next
   }
 
   return (
     <RecordLifecycleWizard
-      title={meta.title}
+      title={template.title}
       steps={steps}
       form={form}
       setForm={setForm}
@@ -155,8 +159,6 @@ export function CompanyLifecycleWizard({ type, company, onClose, onComplete }: C
       loadingMessage={loading ? 'Bilgiler yükleniyor...' : undefined}
       contextError={contextError || undefined}
       error={error || undefined}
-      sideInfo={<WizardSideInfo type={type} />}
-      finalContent={<CompanyLifecycleSummaryPreview type={type} form={form} />}
       onFieldChange={handleFieldChange}
     />
   )
@@ -172,288 +174,231 @@ function buildSteps(
   return deregistrationSteps(options, form)
 }
 
-function openingSteps(options: ReturnType<typeof buildContextOptions>): RecordLifecycleWizardStep[] {
+function openingSteps(_options: ReturnType<typeof buildContextOptions>): RecordLifecycleWizardStep[] {
   return [
-    {
-      id: 'identity',
-      title: 'Kimlik',
-      sections: [{
-        id: 'identity-fields',
-        title: 'Şirket bilgileri',
-        fields: [
-          { name: 'trade_name', label: 'Ticari Ünvan', type: 'text', required: true, colSpan: 2 },
-          { name: 'short_name', label: 'Kısa Ünvan', type: 'text' },
-          { name: 'company_type', label: 'Şirket Türü', type: 'select', required: true, options: companyTypeOptions() },
-          { name: 'registration_date', label: 'Tescil Tarihi', type: 'date', required: true },
-          {
-            name: 'trade_registry_office',
-            label: 'Ticaret Sicil Müdürlüğü',
-            type: 'select',
-            required: true,
-            searchable: true,
-            remoteOptions: {
-              endpoint: '/api/reference/trade-registry-offices',
-              minQueryLength: 2,
-              limit: 40,
+    createLifecycleInformationStep([
+        {
+          id: 'identity-fields',
+          title: 'Şirket bilgileri',
+          fields: [
+            { name: 'trade_name', label: 'Ticari Ünvan', type: 'text', required: true, colSpan: 2 },
+            { name: 'short_name', label: 'Kısa Ünvan', type: 'text' },
+            { name: 'company_type', label: 'Şirket Türü', type: 'select', required: true, options: companyTypeOptions() },
+            {
+              name: 'foundation_capital_amount',
+              label: 'Kuruluş Sermayesi',
+              type: 'custom',
+              render: ({ value, onChange, readOnly, className }) => (
+                <CurrencyWizardInput
+                  value={value}
+                  onChange={onChange}
+                  readOnly={readOnly}
+                  className={className}
+                />
+              ),
             },
-          },
-          { name: 'trade_registry_no', label: 'Ticaret Sicil No', type: 'text', required: true },
-          { name: 'mersis_no', label: 'MERSİS No', type: 'text' },
-          {
-            name: 'nace_codes',
-            label: 'NACE / Faaliyet Kodları',
-            type: 'custom',
-            required: true,
-            colSpan: 3,
-            render: ({ value, onChange, readOnly }) => (
-              <NaceCodesWizardField value={value} onChange={onChange} readOnly={readOnly} />
-            ),
-          },
-        ],
-      }],
-    },
-    {
-      id: 'public',
-      title: 'Kamu',
-      sections: [{
-        id: 'public-fields',
-        title: 'Vergi ve SGK',
-        fields: [
-          {
-            name: 'tax_no',
-            label: 'VKN',
-            type: 'text',
-            required: true,
-            pattern: '\\d{10}',
-            automation: publicAutomation('VKN ve vergi dairesi Kamu sekmesinden okunur.'),
-          },
-          {
-            name: 'tax_office',
-            label: 'Vergi Dairesi',
-            type: 'text',
-            required: true,
-            automation: publicAutomation('Vergi dairesi Kamu sekmesinden okunur.'),
-          },
-          { name: 'public_info_completed', label: 'Kamu Sekmesi Bilgileri Tamamlandı mı?', type: 'select', required: true, options: YES_NO_OPTIONS },
-          { name: 'sgk_workplace_registered', label: 'SGK İşveren Kaydı Var mı?', type: 'select', required: true, options: YES_NO_OPTIONS },
-          {
-            name: 'sgk_workplace_no',
-            label: 'SGK İşyeri Sicil No',
-            type: 'text',
-            requiredWhen: { field: 'sgk_workplace_registered', operator: 'equals', value: 'true' },
-            visibleWhen: { field: 'sgk_workplace_registered', operator: 'equals', value: 'true' },
-            automation: publicAutomation('SGK sicili Kamu sekmesinden okunur.'),
-          },
-          {
-            name: 'kep_info_available',
-            label: 'KEP / e-Tebligat Bilgisi Var mı?',
-            type: 'select',
-            required: true,
-            options: YES_NO_OPTIONS,
-            automation: publicAutomation('KEP ve e-Tebligat bilgisi Kamu sekmesinden okunur.'),
-          },
-        ],
-      }],
-    },
-    {
-      id: 'documents',
-      title: 'Belgeler',
-      sections: [{
-        id: 'opening-documents',
-        title: 'Açılış belgeleri',
-        fields: [
-          { name: 'foundation_trade_registry_gazette', label: 'Kuruluş Ticaret Sicil Gazetesi', type: 'document', required: true },
-          { name: 'articles_of_association_document', label: 'Ana Sözleşme', type: 'document' },
-          { name: 'tax_plate_document', label: 'Vergi Levhası', type: 'document' },
-          { name: 'signature_circular_document', label: 'İmza Sirküleri', type: 'document' },
-          { name: 'activity_certificate_document', label: 'Faaliyet Belgesi', type: 'document' },
-          { name: 'sgk_opening_document', label: 'SGK İşyeri Açılış Belgesi', type: 'document' },
-          { name: 'mersis_document', label: 'MERSİS Belgesi', type: 'document' },
-          { name: 'other_opening_document', label: 'Diğer', type: 'document' },
-        ],
-      }],
-    },
-    confirmationStep('Onay'),
+            { name: 'foundation_share_units', label: 'Pay Sayısı', type: 'number', inputMode: 'numeric' },
+            {
+              name: 'foundation_nominal_value',
+              label: 'Pay Değeri',
+              type: 'custom',
+              disabled: true,
+              render: ({ data, className }) => (
+                <CalculatedShareValueField
+                  className={className}
+                  capitalAmount={data.foundation_capital_amount}
+                  shareUnits={data.foundation_share_units}
+                />
+              ),
+            },
+            { name: 'registration_date', label: 'Tescil Tarihi', type: 'date', required: true },
+            {
+              name: 'trade_registry_office',
+              label: 'Ticaret Sicil Müdürlüğü',
+              type: 'select',
+              required: true,
+              searchable: true,
+              remoteOptions: {
+                endpoint: '/api/reference/trade-registry-offices',
+                minQueryLength: 2,
+                limit: 40,
+              },
+            },
+            { name: 'trade_registry_no', label: 'Ticaret Sicil No', type: 'text', required: true },
+            { name: 'mersis_no', label: 'MERSİS No', type: 'text' },
+            {
+              name: 'nace_codes',
+              label: 'NACE / Faaliyet Kodları',
+              type: 'custom',
+              required: true,
+              colSpan: 3,
+              render: ({ value, onChange, readOnly }) => (
+                <NaceCodesWizardField value={value} onChange={onChange} readOnly={readOnly} />
+              ),
+            },
+          ],
+        },
+        {
+          id: 'public-fields',
+          title: 'Vergi ve SGK',
+          fields: [
+            {
+              name: 'tax_no',
+              label: 'VKN',
+              type: 'text',
+              required: true,
+              pattern: '\\d{10}',
+              automation: publicAutomation('VKN ve vergi dairesi kamu kayıtlarından okunur.'),
+            },
+            {
+              name: 'tax_office',
+              label: 'Vergi Dairesi',
+              type: 'text',
+              required: true,
+              automation: publicAutomation('Vergi dairesi kamu kayıtlarından okunur.'),
+            },
+            {
+              name: 'sgk_workplace_no',
+              label: 'SGK İşyeri Sicil No',
+              type: 'text',
+              automation: publicAutomation('SGK sicili kamu kayıtlarından okunur.'),
+            },
+            {
+              name: 'electronic_notification_address',
+              label: 'Elektronik Tebligat Adresi',
+              type: 'email',
+              automation: publicAutomation('Elektronik tebligat adresi kamu kayıtlarından okunur.'),
+            },
+          ],
+        },
+      ]),
+    createLifecycleDocumentsStep({
+      sectionId: 'opening-documents',
+      sectionTitle: 'Açılış belgeleri',
+      documents: COMPANY_LIFECYCLE_PROCESSES.opening.completion.documentWrites,
+    }),
   ]
 }
 
 function liquidationSteps(options: ReturnType<typeof buildContextOptions>): RecordLifecycleWizardStep[] {
   return [
-    {
-      id: 'decision',
-      title: 'Karar',
-      sections: [{
-        id: 'decision-fields',
-        title: 'Karar bilgileri',
-        fields: [
-          { name: 'liquidation_decision_date', label: 'Tasfiye Karar Tarihi', type: 'date', required: true },
-          { name: 'liquidation_start_date', label: 'Tasfiye Başlangıç Tarihi', type: 'date', required: true },
-          { name: 'decision_type', label: 'Karar Türü', type: 'select', required: true, options: DECISION_TYPE_OPTIONS },
-          { name: 'decision_no', label: 'Karar No', type: 'text', required: true },
-          { name: 'liquidation_reason', label: 'Tasfiye Gerekçesi', type: 'textarea', required: true, colSpan: 3 },
-          { name: 'notes', label: 'Açıklama', type: 'textarea', colSpan: 3 },
-        ],
-      }],
-    },
-    {
-      id: 'liquidators',
-      title: 'Yetkililer',
-      sections: [{
-        id: 'liquidator-fields',
-        title: 'Yetki bilgileri',
-        fields: [
-          {
-            name: 'liquidator_id',
-            label: 'Tasfiye Memuru / Memurları',
-            type: 'select',
-            required: true,
-            searchable: true,
-            options: options.liquidators,
-            emptyOptionsRedirect: {
-              href: '/app/sirket/companies/representatives',
-              label: 'Temsilci sayfasına git',
-              message: 'Tasfiye memuru seçmek için temsilci / paydaş kaydı bulunamadı.',
+    createLifecycleInformationStep([
+        {
+          id: 'decision-fields',
+          title: 'Karar bilgileri',
+          fields: [
+            { name: 'liquidation_decision_date', label: 'Tasfiye Karar Tarihi', type: 'date', required: true },
+            { name: 'liquidation_start_date', label: 'Tasfiye Başlangıç Tarihi', type: 'date', required: true },
+            { name: 'decision_type', label: 'Karar Türü', type: 'select', required: true, options: DECISION_TYPE_OPTIONS },
+            { name: 'decision_no', label: 'Karar No', type: 'text', required: true },
+            { name: 'liquidation_reason', label: 'Tasfiye Gerekçesi', type: 'textarea', required: true, colSpan: 3 },
+            { name: 'notes', label: 'Açıklama', type: 'textarea', colSpan: 3 },
+          ],
+        },
+        {
+          id: 'liquidator-fields',
+          title: 'Yetki bilgileri',
+          fields: [
+            {
+              name: 'liquidator_id',
+              label: 'Tasfiye Memuru / Memurları',
+              type: 'select',
+              required: true,
+              searchable: true,
+              options: options.liquidators,
+              emptyOptionsRedirect: {
+                href: '/app/sirket/companies/representatives',
+                label: 'Temsilci sayfasına git',
+                message: 'Tasfiye memuru seçmek için temsilci / paydaş kaydı bulunamadı.',
+              },
             },
-          },
-          { name: 'liquidator_authority', label: 'Tasfiye Temsil Yetkisi', type: 'text', required: true },
-          { name: 'liquidator_authority_start_date', label: 'Yetki Başlangıç Tarihi', type: 'date', required: true },
-          { name: 'liquidator_authority_document', label: 'Yetki Belgesi', type: 'document', required: true },
-        ],
-      }],
-    },
-    {
-      id: 'controls',
-      title: 'Kontroller',
-      sections: [{
-        id: 'control-fields',
-        title: 'Kontrol listesi',
-        fields: [
-          { name: 'tax_notification_required', label: 'Vergi dairesi bildirimi gerekli mi?', type: 'select', options: YES_NO_OPTIONS },
-          { name: 'sgk_notification_required', label: 'SGK bildirimi gerekli mi?', type: 'select', options: YES_NO_OPTIONS },
-          { name: 'bank_accounts_checked', label: 'Banka hesapları kontrol edildi mi?', type: 'select', options: YES_NO_OPTIONS },
-          { name: 'open_current_movements_checked', label: 'Açık cari hareketler var mı?', type: 'select', options: YES_NO_OPTIONS },
-          { name: 'open_contracts_checked', label: 'Açık sözleşmeler var mı?', type: 'select', options: YES_NO_OPTIONS },
-          { name: 'active_employees_checked', label: 'Aktif çalışan var mı?', type: 'select', options: YES_NO_OPTIONS },
-          { name: 'active_assets_checked', label: 'Aktif araç / varlık var mı?', type: 'select', options: YES_NO_OPTIONS },
-          { name: 'open_legal_obligations_checked', label: 'Açık dava / yükümlülük var mı?', type: 'select', options: YES_NO_OPTIONS },
-        ],
-      }],
-    },
-    {
-      id: 'documents',
-      title: 'Belgeler',
-      sections: [{
-        id: 'liquidation-documents',
-        title: 'Tasfiye belgeleri',
-        fields: [
-          { name: 'liquidation_decision_document', label: 'Tasfiye Kararı', type: 'document', required: true },
-          { name: 'assembly_decision_document', label: 'Genel Kurul / Ortaklar Kurulu Kararı', type: 'document' },
-          { name: 'liquidator_assignment_document', label: 'Tasfiye Memuru Atama Belgesi', type: 'document' },
-          { name: 'trade_registry_application_document', label: 'Ticaret Sicil Başvuru Belgesi', type: 'document' },
-          { name: 'liquidation_announcement_document', label: 'Tasfiye İlanı', type: 'document' },
-          { name: 'other_liquidation_document', label: 'Diğer', type: 'document' },
-        ],
-      }],
-    },
-    confirmationStep('Onay'),
+            { name: 'liquidator_authority', label: 'Tasfiye Temsil Yetkisi', type: 'text', required: true },
+            { name: 'liquidator_authority_start_date', label: 'Yetki Başlangıç Tarihi', type: 'date', required: true },
+          ],
+        },
+        {
+          id: 'control-fields',
+          title: 'Kontrol listesi',
+          fields: [
+            { name: 'tax_notification_required', label: 'Vergi dairesi bildirimi gerekli mi?', type: 'select', options: YES_NO_OPTIONS },
+            { name: 'sgk_notification_required', label: 'SGK bildirimi gerekli mi?', type: 'select', options: YES_NO_OPTIONS },
+            { name: 'bank_accounts_checked', label: 'Banka hesapları kontrol edildi mi?', type: 'select', options: YES_NO_OPTIONS },
+            { name: 'open_current_movements_checked', label: 'Açık cari hareketler var mı?', type: 'select', options: YES_NO_OPTIONS },
+            { name: 'open_contracts_checked', label: 'Açık sözleşmeler var mı?', type: 'select', options: YES_NO_OPTIONS },
+            { name: 'active_employees_checked', label: 'Aktif çalışan var mı?', type: 'select', options: YES_NO_OPTIONS },
+            { name: 'active_assets_checked', label: 'Aktif araç / varlık var mı?', type: 'select', options: YES_NO_OPTIONS },
+            { name: 'open_legal_obligations_checked', label: 'Açık dava / yükümlülük var mı?', type: 'select', options: YES_NO_OPTIONS },
+          ],
+        },
+      ]),
+    createLifecycleDocumentsStep({
+      sectionId: 'liquidation-documents',
+      sectionTitle: 'Tasfiye belgeleri',
+      documents: COMPANY_LIFECYCLE_PROCESSES.liquidation.completion.documentWrites,
+    }),
   ]
 }
 
 function deregistrationSteps(options: ReturnType<typeof buildContextOptions>, form: Record<string, any>): RecordLifecycleWizardStep[] {
   return [
-    {
-      id: 'completion-controls',
-      title: 'Kontroller',
-      sections: [{
-        id: 'completion-fields',
-        title: 'Kapanış kontrolleri',
-        children: hasDeregistrationWarnings(form) ? <WarningBox /> : null,
-        fields: [
-          { name: 'liquidation_completed', label: 'Tasfiye işlemleri tamamlandı mı?', type: 'select', options: YES_NO_OPTIONS },
-          { name: 'receivables_payables_settled', label: 'Alacak / borç tasfiyesi tamamlandı mı?', type: 'select', options: YES_NO_OPTIONS },
-          { name: 'bank_accounts_closed', label: 'Banka hesapları kapatıldı mı veya devredildi mi?', type: 'select', options: YES_NO_OPTIONS },
-          { name: 'no_active_employees', label: 'Aktif çalışan kalmadı mı?', type: 'select', options: YES_NO_OPTIONS },
-          { name: 'tax_closure_completed', label: 'Vergi kapanış süreci tamamlandı mı?', type: 'select', options: YES_NO_OPTIONS },
-          { name: 'sgk_closure_completed', label: 'SGK kapanış süreci tamamlandı mı?', type: 'select', options: YES_NO_OPTIONS },
-          { name: 'final_balance_ready', label: 'Son bilanço / nihai hesap hazır mı?', type: 'select', options: YES_NO_OPTIONS },
-          { name: 'archive_responsible_selected', label: 'Defter ve belgelerin saklama sorumlusu belirlendi mi?', type: 'select', options: YES_NO_OPTIONS },
-        ],
-      }],
-    },
-    {
-      id: 'deregistration-info',
-      title: 'Terkin',
-      sections: [{
-        id: 'deregistration-fields',
-        title: 'Terkin tescil bilgileri',
-        fields: [
-          { name: 'liquidation_completion_decision_date', label: 'Tasfiye Sonu Karar Tarihi', type: 'date', required: true },
-          { name: 'deregistration_application_date', label: 'Terkin Başvuru Tarihi', type: 'date', required: true },
-          { name: 'deregistration_registration_date', label: 'Terkin Tescil Tarihi', type: 'date', required: true },
-          { name: 'deregistration_reference_no', label: 'Terkin Sicil No / Referans', type: 'text', required: true },
-          { name: 'trade_registry_office', label: 'Ticaret Sicil Müdürlüğü', type: 'text', required: true },
-          { name: 'notes', label: 'Açıklama', type: 'textarea', colSpan: 3 },
-        ],
-      }],
-    },
-    {
-      id: 'public-closure',
-      title: 'Kamu',
-      sections: [{
-        id: 'public-closure-fields',
-        title: 'Kapanış bilgileri',
-        fields: [
-          { name: 'tax_closure_status', label: 'Vergi Kapanış Durumu', type: 'select', required: true, options: STATUS_OPTIONS },
-          { name: 'tax_closure_date', label: 'Vergi Kapanış Tarihi', type: 'date' },
-          { name: 'sgk_closure_status', label: 'SGK Kapanış Durumu', type: 'select', required: true, options: STATUS_OPTIONS },
-          { name: 'sgk_closure_date', label: 'SGK Kapanış Tarihi', type: 'date' },
-          { name: 'kep_closure_status', label: 'KEP / e-Tebligat Kapanış Durumu', type: 'select', options: STATUS_OPTIONS },
-          { name: 'financial_seal_closure_note', label: 'Mali Mühür / e-İmza Kapanış Notu', type: 'textarea', colSpan: 3 },
-          {
-            name: 'document_archive_responsible',
-            label: 'Defter / Belge Saklama Sorumlusu',
-            type: 'select',
-            options: options.archiveResponsibles,
-            emptyOptionsRedirect: {
-              href: '/app/sirket/companies/stakeholders',
-              label: 'Paydaş sayfasına git',
-              message: 'Saklama sorumlusu seçmek için kişi, temsilci veya paydaş kaydı bulunamadı.',
+    createLifecycleInformationStep([
+        {
+          id: 'completion-fields',
+          title: 'Kapanış kontrolleri',
+          children: hasDeregistrationWarnings(form) ? <WarningBox /> : null,
+          fields: [
+            { name: 'liquidation_completed', label: 'Tasfiye işlemleri tamamlandı mı?', type: 'select', options: YES_NO_OPTIONS },
+            { name: 'receivables_payables_settled', label: 'Alacak / borç tasfiyesi tamamlandı mı?', type: 'select', options: YES_NO_OPTIONS },
+            { name: 'bank_accounts_closed', label: 'Banka hesapları kapatıldı mı veya devredildi mi?', type: 'select', options: YES_NO_OPTIONS },
+            { name: 'no_active_employees', label: 'Aktif çalışan kalmadı mı?', type: 'select', options: YES_NO_OPTIONS },
+            { name: 'tax_closure_completed', label: 'Vergi kapanış süreci tamamlandı mı?', type: 'select', options: YES_NO_OPTIONS },
+            { name: 'sgk_closure_completed', label: 'SGK kapanış süreci tamamlandı mı?', type: 'select', options: YES_NO_OPTIONS },
+            { name: 'final_balance_ready', label: 'Son bilanço / nihai hesap hazır mı?', type: 'select', options: YES_NO_OPTIONS },
+            { name: 'archive_responsible_selected', label: 'Defter ve belgelerin saklama sorumlusu belirlendi mi?', type: 'select', options: YES_NO_OPTIONS },
+          ],
+        },
+        {
+          id: 'deregistration-fields',
+          title: 'Terkin tescil bilgileri',
+          fields: [
+            { name: 'liquidation_completion_decision_date', label: 'Tasfiye Sonu Karar Tarihi', type: 'date', required: true },
+            { name: 'deregistration_application_date', label: 'Terkin Başvuru Tarihi', type: 'date', required: true },
+            { name: 'deregistration_registration_date', label: 'Terkin Tescil Tarihi', type: 'date', required: true },
+            { name: 'deregistration_reference_no', label: 'Terkin Sicil No / Referans', type: 'text', required: true },
+            { name: 'trade_registry_office', label: 'Ticaret Sicil Müdürlüğü', type: 'text', required: true },
+            { name: 'notes', label: 'Açıklama', type: 'textarea', colSpan: 3 },
+          ],
+        },
+        {
+          id: 'public-closure-fields',
+          title: 'Kapanış bilgileri',
+          fields: [
+            { name: 'tax_closure_status', label: 'Vergi Kapanış Durumu', type: 'select', required: true, options: STATUS_OPTIONS },
+            { name: 'tax_closure_date', label: 'Vergi Kapanış Tarihi', type: 'date' },
+            { name: 'sgk_closure_status', label: 'SGK Kapanış Durumu', type: 'select', required: true, options: STATUS_OPTIONS },
+            { name: 'sgk_closure_date', label: 'SGK Kapanış Tarihi', type: 'date' },
+            { name: 'kep_closure_status', label: 'KEP / e-Tebligat Kapanış Durumu', type: 'select', options: STATUS_OPTIONS },
+            { name: 'financial_seal_closure_note', label: 'Mali Mühür / e-İmza Kapanış Notu', type: 'textarea', colSpan: 3 },
+            {
+              name: 'document_archive_responsible',
+              label: 'Defter / Belge Saklama Sorumlusu',
+              type: 'select',
+              options: options.archiveResponsibles,
+              emptyOptionsRedirect: {
+                href: '/app/sirket/companies/stakeholders',
+                label: 'Paydaş sayfasına git',
+                message: 'Saklama sorumlusu seçmek için kişi, temsilci veya paydaş kaydı bulunamadı.',
+              },
             },
-          },
-        ],
-      }],
-    },
-    {
-      id: 'documents',
-      title: 'Belgeler',
-      sections: [{
-        id: 'deregistration-documents',
-        title: 'Terkin belgeleri',
-        fields: [
-          { name: 'deregistration_trade_registry_gazette', label: 'Terkin Ticaret Sicil Gazetesi', type: 'document', required: true },
-          { name: 'liquidation_completion_decision_document', label: 'Tasfiye Sonu Kararı', type: 'document' },
-          { name: 'final_balance_document', label: 'Son Bilanço / Nihai Hesap', type: 'document' },
-          { name: 'tax_closure_document', label: 'Vergi Kapanış Belgesi', type: 'document' },
-          { name: 'sgk_closure_document', label: 'SGK Kapanış Belgesi', type: 'document' },
-          { name: 'archive_minutes_document', label: 'Defter / Belge Saklama Tutanağı', type: 'document' },
-          { name: 'other_deregistration_document', label: 'Diğer', type: 'document' },
-        ],
-      }],
-    },
-    confirmationStep('Onay'),
+          ],
+        },
+      ]),
+    createLifecycleDocumentsStep({
+      sectionId: 'deregistration-documents',
+      sectionTitle: 'Terkin belgeleri',
+      documents: COMPANY_LIFECYCLE_PROCESSES.deregistration.completion.documentWrites,
+    }),
   ]
-}
-
-function confirmationStep(title: string): RecordLifecycleWizardStep {
-  return {
-    id: 'confirmation',
-    title,
-    sections: [{
-      id: 'confirmation-placeholder',
-      title: 'Özet',
-      fields: [],
-    }],
-  }
 }
 
 function createInitialForm(type: CompanyLifecycleWizardType, company: Sirket, context: Record<string, any> | null) {
@@ -470,6 +415,10 @@ function createInitialForm(type: CompanyLifecycleWizardType, company: Sirket, co
   const hasPrimaryNace = Array.isArray(naceRows) && naceRows.some((row: any) => row?.is_primary)
 
   if (type === 'opening') {
+    const foundationCapitalAmount = opening.payload_json?.foundation_capital_amount ?? opening.payload_json?.capital_amount ?? ''
+    const foundationShareUnits = opening.payload_json?.foundation_share_units ?? opening.payload_json?.share_units ?? ''
+    const foundationNominalValue = opening.payload_json?.foundation_nominal_value ?? opening.payload_json?.nominal_value ?? calculateShareValue(foundationCapitalAmount, foundationShareUnits)
+
     return {
       short_name: current.short_name || '',
       trade_name: current.trade_name || '',
@@ -479,15 +428,15 @@ function createInitialForm(type: CompanyLifecycleWizardType, company: Sirket, co
       trade_registry_no: opening.trade_registry_no || current.trade_registry_number || publicRegistry.trade_registry_no || '',
       mersis_no: opening.mersis_no || current.mersis_number || publicRegistry.mersis_number || '',
       nace_codes: normalizeWizardNaceSelections(opening.payload_json?.nace_codes || naceRows),
+      foundation_capital_amount: foundationCapitalAmount,
+      foundation_share_units: foundationShareUnits,
+      foundation_nominal_value: foundationNominalValue,
       tax_no: opening.tax_no || current.tax_number || publicTax.tax_number || '',
       tax_office: opening.tax_office_id || current.tax_office || publicTax.tax_office || '',
-      public_info_completed: publicTax.tax_number || publicSgk.workplace_registry_no || publicRegistry.mersis_number ? 'true' : '',
-      sgk_workplace_registered: publicSgk.workplace_registry_no || opening.sgk_workplace_no ? 'true' : '',
       sgk_workplace_no: opening.sgk_workplace_no || current.sgk_workplace_registry_no || publicSgk.workplace_registry_no || '',
       nace_codes_available: hasNace ? 'true' : '',
       primary_nace_selected: hasPrimaryNace ? 'true' : '',
       primary_nace_id: naceRows.find((row: any) => row?.is_primary)?.id || '',
-      kep_info_available: publicChannels.kep_address || publicChannels.e_notification_address || current.electronic_notification_address ? 'true' : '',
       kep_address: publicChannels.kep_address || '',
       electronic_notification_address: publicChannels.e_notification_address || current.electronic_notification_address || '',
     }
@@ -564,76 +513,6 @@ function uniqueOptions(options: RecordLifecycleWizardOption[]) {
   })
 }
 
-function CompanyLifecycleSummaryPreview({ type, form }: { type: CompanyLifecycleWizardType; form: Record<string, any> }) {
-  const rows = summaryRows(type, form)
-  return (
-    <div className="rounded-xl border border-emerald-100 bg-emerald-50/70 p-4 dark:border-emerald-950 dark:bg-emerald-950/20">
-      <div className="flex items-center gap-2 text-sm font-semibold text-emerald-800 dark:text-emerald-200">
-        <ShieldCheck size={16} />
-        Onay özeti
-      </div>
-      <div className="mt-3 grid gap-2 md:grid-cols-2">
-        {rows.map(([label, value]) => (
-          <div key={label} className="rounded-lg bg-white px-3 py-2 text-sm shadow-sm dark:bg-gray-950">
-            <div className="text-xs text-gray-500 dark:text-gray-400">{label}</div>
-            <div className="mt-0.5 font-medium text-gray-900 dark:text-gray-100">{formatSummaryValue(value)}</div>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-function summaryRows(type: CompanyLifecycleWizardType, form: Record<string, any>): Array<[string, any]> {
-  if (type === 'opening') {
-    const naceCodes = normalizeWizardNaceSelections(form.nace_codes)
-    const primaryNace = naceCodes.find(row => row.is_primary)
-    return [
-      ['Şirket', form.short_name || form.trade_name],
-      ['Tescil Tarihi', form.registration_date],
-      ['Vergi Bilgileri', [form.tax_no, form.tax_office].filter(Boolean).join(' / ')],
-      ['SGK Bilgileri', form.sgk_workplace_no || (form.sgk_workplace_registered === 'true' ? 'Var' : 'Yok')],
-      ['NACE Durumu', primaryNace ? `${naceLabel(primaryNace)} (${naceCodes.length}/5)` : 'Eksik / bekliyor'],
-      ['Belgeler', countDocumentFields(form)],
-    ]
-  }
-  if (type === 'liquidation') {
-    return [
-      ['Karar Tarihi', form.liquidation_decision_date],
-      ['Başlangıç Tarihi', form.liquidation_start_date],
-      ['Karar No', form.decision_no],
-      ['Tasfiye Memuru', form.liquidator_display_name || form.liquidator_id],
-      ['Gerekçe', form.liquidation_reason],
-      ['Belgeler', countDocumentFields(form)],
-    ]
-  }
-  return [
-    ['Tasfiye Sonu Kararı', form.liquidation_completion_decision_date],
-    ['Terkin Başvuru', form.deregistration_application_date],
-    ['Terkin Tescil', form.deregistration_registration_date],
-    ['Terkin Referansı', form.deregistration_reference_no],
-    ['Vergi / SGK Kapanış', `${optionLabel(STATUS_OPTIONS, form.tax_closure_status)} / ${optionLabel(STATUS_OPTIONS, form.sgk_closure_status)}`],
-    ['Belgeler', countDocumentFields(form)],
-  ]
-}
-
-function countDocumentFields(form: Record<string, any>) {
-  const count = Object.entries(form).filter(([key, value]) => key.includes('document') && hasValue(value)).length
-  return count > 0 ? `${count} belge seçildi` : 'Belge seçilmedi'
-}
-
-function WizardSideInfo({ type }: { type: CompanyLifecycleWizardType }) {
-  const finalStatus = type === 'opening' ? 'Aktif' : type === 'liquidation' ? 'Tasfiye Halinde' : 'Terkin Edildi'
-  return (
-    <div className="space-y-2">
-      <div className="flex items-center gap-2 font-semibold">
-        <CheckCircle2 size={14} />
-        Durum: {finalStatus}
-      </div>
-    </div>
-  )
-}
-
 function WarningBox() {
   return (
     <div className="mb-3 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-900/70 dark:bg-amber-950/30 dark:text-amber-200">
@@ -654,19 +533,19 @@ function NaceCodesWizardField({
 }) {
   const rows = normalizeWizardNaceSelections(value)
   const [query, setQuery] = useState('')
-  const [selectedNaceId, setSelectedNaceId] = useState('')
+  const [open, setOpen] = useState(false)
   const [options, setOptions] = useState<NaceReferenceRow[]>([])
   const [loading, setLoading] = useState(false)
   const [warning, setWarning] = useState<string | null>(null)
   const primaryRow = rows.find(row => row.is_primary)
   const trimmedQuery = query.trim()
   const canSearchNace = trimmedQuery.length >= 2
+  const availableOptions = options.filter(option => !rows.some(row => row.nace_code_id === option.id)).slice(0, 30)
 
   useEffect(() => {
     let cancelled = false
     if (readOnly || query.trim().length < 2) {
       setOptions([])
-      setSelectedNaceId('')
       setLoading(false)
       setWarning(null)
       return () => {
@@ -711,8 +590,7 @@ function NaceCodesWizardField({
     onChange(normalizedRows)
   }
 
-  const addNace = () => {
-    const option = options.find(item => item.id === selectedNaceId)
+  const addNace = (option: NaceReferenceRow) => {
     if (!option) return
     if (rows.length >= 5) {
       setWarning('En fazla 5 NACE kodu seçilebilir.')
@@ -731,8 +609,8 @@ function NaceCodesWizardField({
         nace_code: option,
       },
     ])
-    setSelectedNaceId('')
     setQuery('')
+    setOpen(false)
     setWarning(null)
   }
 
@@ -757,42 +635,51 @@ function NaceCodesWizardField({
       </div>
 
       {!readOnly && (
-        <div className="mb-3 grid gap-2 lg:grid-cols-[220px_1fr_auto]">
-          <label className="relative">
+        <div className="mb-3">
+          <label className="relative block">
             <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
             <input
               className={formControlClass({ rounded: 'md', className: 'pl-9' })}
               value={query}
-              onChange={event => setQuery(event.target.value)}
-              placeholder="Kod veya faaliyet ara"
+              onChange={event => {
+                setQuery(event.target.value)
+                setOpen(true)
+              }}
+              onFocus={() => setOpen(true)}
+              onBlur={() => window.setTimeout(() => setOpen(false), 120)}
+              onKeyDown={event => {
+                if (event.key === 'Enter' && availableOptions.length === 1) {
+                  event.preventDefault()
+                  addNace(availableOptions[0])
+                }
+              }}
+              placeholder={rows.length >= 5 ? '5 NACE kodu seçildi' : 'NACE kodu veya faaliyet adı ara'}
+              disabled={rows.length >= 5}
             />
+            {open && rows.length < 5 && (
+              <div className="absolute left-0 top-full z-[80] mt-1 max-h-72 w-full overflow-auto rounded-lg border border-gray-200 bg-white py-1 shadow-lg dark:border-gray-700 dark:bg-gray-900">
+                {canSearchNace && availableOptions.length > 0 ? availableOptions.map(option => (
+                  <button
+                    key={option.id}
+                    type="button"
+                    onMouseDown={event => event.preventDefault()}
+                    onClick={() => addNace(option)}
+                    className="block w-full px-3 py-2 text-left text-sm text-gray-800 hover:bg-blue-50 dark:text-gray-100 dark:hover:bg-blue-950/40"
+                  >
+                    {naceReferenceLabel(option)}
+                  </button>
+                )) : (
+                  <div className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">
+                    {!canSearchNace ? 'Aramak için en az 2 karakter yazın' : loading ? 'Aranıyor...' : warning || 'Sonuç bulunamadı'}
+                  </div>
+                )}
+              </div>
+            )}
           </label>
-          <select
-            className={formControlClass({ rounded: 'md' })}
-            value={selectedNaceId}
-            onChange={event => setSelectedNaceId(event.target.value)}
-            disabled={!canSearchNace || loading || options.length === 0 || rows.length >= 5}
-          >
-            <option value="">{loading ? 'Aranıyor...' : canSearchNace ? 'NACE kodu seç' : 'En az 2 karakter yazın'}</option>
-            {options.map(option => (
-              <option key={option.id} value={option.id} disabled={rows.some(row => row.nace_code_id === option.id)}>
-                {naceReferenceLabel(option)}
-              </option>
-            ))}
-          </select>
-          <button
-            type="button"
-            onClick={addNace}
-            disabled={!selectedNaceId || loading || rows.length >= 5}
-            className="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-500"
-          >
-            <Plus size={16} />
-            Ekle
-          </button>
         </div>
       )}
 
-      {(warning || !primaryRow) && (
+      {(warning || (rows.length > 0 && !primaryRow)) && (
         <div className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-200">
           {warning || 'Birincil NACE kodu seçilmelidir.'}
         </div>
@@ -862,13 +749,93 @@ function hasDeregistrationWarnings(form: Record<string, any>) {
 function publicAutomation(title: string) {
   return {
     sourceFields: ['short_name', 'trade_name'],
-    targetFields: ['tax_no', 'tax_office', 'sgk_workplace_no', 'kep_info_available'],
+    targetFields: ['tax_no', 'tax_office', 'sgk_workplace_no', 'electronic_notification_address'],
     title,
     idleLabel: 'Kaynak bekliyor',
     workingLabel: 'Okunuyor',
     doneLabel: 'OK',
     noDataLabel: 'Veri yok',
   }
+}
+
+function buildOpeningSubmitForm(form: Record<string, any>) {
+  const foundationNominalValue = calculateShareValue(form.foundation_capital_amount, form.foundation_share_units)
+  const next: Record<string, any> = {
+    ...form,
+    foundation_nominal_value: foundationNominalValue,
+  }
+
+  delete next.foundation_share_ratio
+  delete next.share_ratio
+
+  if (hasValue(form.foundation_share_units)) next.share_units = form.foundation_share_units
+  else delete next.share_units
+
+  if (hasValue(foundationNominalValue)) next.nominal_value = foundationNominalValue
+  else delete next.nominal_value
+
+  return next
+}
+
+function CurrencyWizardInput({
+  value,
+  onChange,
+  readOnly,
+  className,
+}: {
+  value: any
+  onChange: (value: any) => void
+  readOnly: boolean
+  className: string
+}) {
+  return (
+    <div className="relative">
+      <input
+        type="number"
+        value={value || ''}
+        onChange={event => onChange(event.target.value)}
+        inputMode="decimal"
+        step="0.01"
+        readOnly={readOnly}
+        className={cn(className, 'pr-12')}
+      />
+      <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-gray-500 dark:text-gray-400">
+        TL
+      </span>
+    </div>
+  )
+}
+
+function CalculatedShareValueField({
+  className,
+  capitalAmount,
+  shareUnits,
+}: {
+  className: string
+  capitalAmount: any
+  shareUnits: any
+}) {
+  const formattedValue = formatMoneyValue(calculateShareValue(capitalAmount, shareUnits))
+
+  return (
+    <div className={cn(className, 'flex min-h-[42px] items-center')}>
+      {formattedValue || '-'}
+    </div>
+  )
+}
+
+function calculateShareValue(capitalAmount: any, shareUnits: any) {
+  const capital = parseWizardNumber(capitalAmount)
+  const units = parseWizardNumber(shareUnits)
+
+  if (capital === null || units === null || units <= 0) return ''
+  return Number((capital / units).toFixed(6))
+}
+
+function parseWizardNumber(value: any) {
+  if (value === undefined || value === null || value === '') return null
+  const numeric = Number(String(value).replace(',', '.'))
+  return Number.isFinite(numeric) ? numeric : null
 }
 
 function normalizeWizardNaceSelections(value: any): WizardNaceSelection[] {
@@ -926,15 +893,11 @@ function companyTypeOptions(): RecordLifecycleWizardOption[] {
   ]
 }
 
-function optionLabel(options: RecordLifecycleWizardOption[], value: any) {
-  return options.find(option => option.value === value)?.label || (value ? String(value) : '-')
-}
-
-function formatSummaryValue(value: any) {
-  if (value === 'true') return 'Evet'
-  if (value === 'false') return 'Hayır'
-  if (!hasValue(value)) return '-'
-  return String(value)
+function formatMoneyValue(value: any) {
+  if (!hasValue(value)) return ''
+  const numeric = Number(String(value).replace(',', '.'))
+  if (!Number.isFinite(numeric)) return String(value)
+  return new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', maximumFractionDigits: 2 }).format(numeric)
 }
 
 function hasValue(value: any) {

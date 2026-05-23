@@ -3,6 +3,7 @@ import 'server-only'
 import { NextRequest, NextResponse } from 'next/server'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { APP_SESSION_COOKIE_NAME, verifyAppSessionToken } from '@/lib/auth/appSession'
+import { extractCompanyLogoVariants } from '@/lib/media/companyLogo'
 import { createServiceClient } from '@/lib/supabase/server'
 import { DEFAULT_TENANT_ID } from '@/lib/tenancy/constants'
 import { resolveTenantContext } from '@/lib/tenancy/server'
@@ -87,19 +88,21 @@ export async function fetchWorkspaceSummary(supabase: ServiceSupabase, workspace
   ])
 
   if (instanceResult.error) {
+    const logoUrls = resolveCompanyLogoUrls(company)
     return {
       id: workspaceId,
       name: 'Eden ERP',
-      logoUrl: resolveCompanyLogoUrl(company),
+      ...logoUrls,
     }
   }
 
   const companyName = getWorkspaceCompanyName(company)
+  const logoUrls = resolveCompanyLogoUrls(company)
 
   return {
     id: instanceResult.data?.id || workspaceId,
     name: companyName || instanceResult.data?.name || 'Eden ERP',
-    logoUrl: resolveCompanyLogoUrl(company),
+    ...logoUrls,
   }
 }
 
@@ -169,26 +172,17 @@ function firstWords(value: unknown, count: number) {
   return cleanText(value).split(/\s+/).filter(Boolean).slice(0, count).join(' ')
 }
 
-function resolveCompanyLogoUrl(company: WorkspaceCompanySummary | null) {
-  return cleanText(company?.logo_url) || extractLogoUrlFromImages(company?.hero_images) || null
-}
+function resolveCompanyLogoUrls(company: WorkspaceCompanySummary | null) {
+  const variants = extractCompanyLogoVariants(company?.hero_images, {
+    fallbackUrl: cleanText(company?.logo_url),
+    preferThumbnail: true,
+  })
 
-function extractLogoUrlFromImages(images: unknown) {
-  const rows = Array.isArray(images) ? images : []
-  const preferred = findImageBySlot(rows, 'light_mode_avatar')
-    || findImageBySlot(rows, 'document_logo')
-    || findImageBySlot(rows, 'original_logo')
-    || findImageBySlot(rows, 'logo_primary')
-    || rows[0]
-
-  return cleanText((preferred as any)?.url)
-    || cleanText((preferred as any)?.previewUrl)
-    || cleanText((preferred as any)?.preview_url)
-    || ''
-}
-
-function findImageBySlot(rows: unknown[], slotId: string) {
-  return rows.find((image: any) => image?.slotId === slotId || image?.slot_id === slotId)
+  return {
+    logoUrl: variants.logoUrl || null,
+    lightLogoUrl: variants.lightLogoUrl || null,
+    darkLogoUrl: variants.darkLogoUrl || variants.lightLogoUrl || null,
+  }
 }
 
 export async function ensureUserStateRow(

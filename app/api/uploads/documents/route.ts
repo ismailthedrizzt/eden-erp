@@ -3,8 +3,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { requirePermission } from '@/lib/security/serverPermissions'
 import { resolveTenantContext } from '@/lib/tenancy/server'
+import { createAndUploadDocumentThumbnail, DOCUMENT_BUCKET } from '@/lib/documents/documentThumbnails.server'
 
-const DOCUMENT_BUCKET = 'eden-documents'
+export const runtime = 'nodejs'
+
 const MAX_DOCUMENT_BYTES = 20 * 1024 * 1024
 const ALLOWED_DOCUMENT_TYPES = new Set([
   'application/pdf',
@@ -63,13 +65,47 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: signedError.message, code: 'SIGNED_URL_FAILED' }, { status: 500 })
   }
 
+  const thumbnail = await createDocumentThumbnailSafely(supabase, {
+    buffer,
+    mimeType: file.type || 'application/octet-stream',
+    storagePath,
+    tenantId: tenantContext.tenantId,
+    fileName: file.name,
+  })
+
   return NextResponse.json({
     storagePath,
     url: data.signedUrl,
+    thumbnailPath: thumbnail?.storagePath,
+    thumbnailUrl: thumbnail?.signedUrl,
     name: file.name,
     size: file.size,
     type: file.type || 'application/octet-stream',
   })
+}
+
+async function createDocumentThumbnailSafely(
+  supabase: ReturnType<typeof createServiceClient>,
+  input: {
+    buffer: Buffer
+    mimeType: string
+    storagePath: string
+    tenantId: string
+    fileName: string
+  }
+) {
+  try {
+    return await createAndUploadDocumentThumbnail(supabase, {
+      buffer: input.buffer,
+      mimeType: input.mimeType,
+      sourceStoragePath: input.storagePath,
+      tenantId: input.tenantId,
+      fileName: input.fileName,
+    })
+  } catch (error) {
+    console.warn('Document thumbnail could not be generated', error)
+    return null
+  }
 }
 
 function safePathPart(value: string) {

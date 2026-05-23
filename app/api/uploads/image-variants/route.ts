@@ -42,11 +42,12 @@ export async function POST(request: NextRequest) {
   const thumbnailDimension = parseDimension(formData.get('thumbnailDimension'), DEFAULT_THUMBNAIL_DIMENSION)
   const previewQuality = parseQuality(formData.get('quality'), 78)
   const thumbnailQuality = parseQuality(formData.get('thumbnailQuality'), 72)
+  const transparentBackground = parseBoolean(formData.get('transparentBackground'))
 
   try {
     const [preview, thumbnail] = await Promise.all([
-      createWebpVariant(buffer, previewDimension, previewQuality),
-      createWebpVariant(buffer, thumbnailDimension, thumbnailQuality),
+      createWebpVariant(buffer, previewDimension, previewQuality, transparentBackground),
+      createWebpVariant(buffer, thumbnailDimension, thumbnailQuality, transparentBackground),
     ])
 
     return NextResponse.json({
@@ -66,7 +67,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function createWebpVariant(input: Buffer, dimension: number, quality: number) {
+async function createWebpVariant(input: Buffer, dimension: number, quality: number, transparentBackground: boolean) {
   const image = sharp(input, { animated: false, limitInputPixels: 50_000_000 })
     .rotate()
     .resize({
@@ -75,9 +76,23 @@ async function createWebpVariant(input: Buffer, dimension: number, quality: numb
       fit: 'inside',
       withoutEnlargement: true,
     })
-    .webp({ quality, effort: 4 })
 
-  const { data, info } = await image.toBuffer({ resolveWithObject: true })
+  if (transparentBackground) {
+    const transparent = await makeBackgroundTransparent(image)
+    const { data, info } = await sharp(transparent.data, {
+      raw: {
+        width: transparent.width,
+        height: transparent.height,
+        channels: 4,
+      },
+    })
+      .webp({ quality, effort: 4 })
+      .toBuffer({ resolveWithObject: true })
+
+    return { buffer: data, width: info.width, height: info.height }
+  }
+
+  const { data, info } = await image.webp({ quality, effort: 4 }).toBuffer({ resolveWithObject: true })
   return { buffer: data, width: info.width, height: info.height }
 }
 
@@ -96,4 +111,86 @@ function parseQuality(value: FormDataEntryValue | null, fallback: number) {
   if (!Number.isFinite(parsed)) return fallback
   const normalized = parsed <= 1 ? parsed * 100 : parsed
   return Math.max(1, Math.min(100, Math.round(normalized)))
+}
+
+function parseBoolean(value: FormDataEntryValue | null) {
+  return value === 'true' || value === '1' || value === 'yes'
+}
+
+async function makeBackgroundTransparent(image: sharp.Sharp) {
+  const { data, info } = await image
+    .ensureAlpha()
+    .raw()
+    .toBuffer({ resolveWithObject: true })
+
+  if (info.channels !== 4 || info.width <= 0 || info.height <= 0) {
+    return { data, width: info.width, height: info.height }
+  }
+
+  const background = sampleCornerBackground(data, info.width, info.height)
+  if (!background) return { data, width: info.width, height: info.height }
+
+  applyBackgroundTransparency(data, background)
+  return { data, width: info.width, height: info.height }
+}
+
+function sampleCornerBackground(data: Buffer, width: number, height: number) {
+  const sampleSize = Math.max(1, Math.min(10, Math.floor(Math.min(width, height) / 6) || 1))
+  const corners = [
+    [0, 0],
+    [Math.max(0, width - sampleSize), 0],
+    [0, Math.max(0, height - sampleSize)],
+    [Math.max(0, width - sampleSize), Math.max(0, height - sampleSize)],
+  ] as const
+  let red = 0
+  let green = 0
+  let blue = 0
+  let count = 0
+
+  corners.forEach(([startX, startY]) => {
+    for (let y = startY; y < Math.min(height, startY + sampleSize); y += 1) {
+      for (let x = startX; x < Math.min(width, startX + sampleSize); x += 1) {
+        const index = (y * width + x) * 4
+        const alpha = data[index + 3]
+        if (alpha < 220) continue
+        red += data[index]
+        green += data[index + 1]
+        blue += data[index + 2]
+        count += 1
+      }
+    }
+  })
+
+  if (count < sampleSize * sampleSize) return null
+  return {
+    red: red / count,
+    green: green / count,
+    blue: blue / count,
+  }
+}
+
+function applyBackgroundTransparency(data: Buffer, background: { red: number; green: number; blue: number }) {
+  const hardThreshold = 18
+  const softThreshold = 58
+
+  for (let index = 0; index < data.length; index += 4) {
+    const alpha = data[index + 3]
+    if (alpha === 0) continue
+
+    const distance = Math.sqrt(
+      ((data[index] - background.red) ** 2)
+      + ((data[index + 1] - background.green) ** 2)
+      + ((data[index + 2] - background.blue) ** 2)
+    )
+
+    if (distance <= hardThreshold) {
+      data[index + 3] = 0
+      continue
+    }
+
+    if (distance < softThreshold) {
+      const opacity = (distance - hardThreshold) / (softThreshold - hardThreshold)
+      data[index + 3] = Math.max(0, Math.min(255, Math.round(alpha * opacity)))
+    }
+  }
 }

@@ -1,6 +1,7 @@
 'use client'
 
 import React, { createContext, useContext, ReactNode, useEffect, useState } from 'react'
+import { tenantRequestHeaders } from '@/lib/tenancy/client'
 
 export interface ModuleLicense {
   module_key: string
@@ -45,7 +46,9 @@ export function ModuleLicenseProvider({ children, initialLicenses }: ModuleLicen
 
   const fetchLicenses = async () => {
     try {
-      const res = await fetch('/api/settings/module-licenses')
+      const res = await fetch('/api/settings/module-licenses', {
+        headers: tenantRequestHeaders(),
+      })
       if (!res.ok) {
         throw new Error(`HTTP error! status: ${res.status}`)
       }

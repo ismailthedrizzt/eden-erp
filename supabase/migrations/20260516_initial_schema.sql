@@ -91,7 +91,7 @@ CREATE TABLE public.companies (
   default_currency text NOT NULL DEFAULT 'TRY',
   default_language text NOT NULL DEFAULT 'tr',
   time_zone text NOT NULL DEFAULT 'Europe/Istanbul',
-  fiscal_year_start integer NOT NULL DEFAULT 1,
+  fiscal_year_start integer NOT NULL DEFAULT 101,
   hero_images jsonb NOT NULL DEFAULT '[]'::jsonb,
   hero_documents jsonb NOT NULL DEFAULT '[]'::jsonb,
   field_history jsonb NOT NULL DEFAULT '{}'::jsonb,

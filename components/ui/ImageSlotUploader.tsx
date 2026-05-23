@@ -58,7 +58,7 @@ export interface SlotImage {
 }
 
 function getImageUrl(image?: SlotImage | null) {
-  return image?.previewUrl || image?.url || image?.preview_url || image?.signedUrl || image?.signed_url || ''
+  return image?.previewUrl || image?.url || image?.preview_url || image?.signedUrl || image?.signed_url || image?.thumbnailUrl || image?.thumbnail_url || ''
 }
 
 function getImageThumbnailUrl(image?: SlotImage | null) {

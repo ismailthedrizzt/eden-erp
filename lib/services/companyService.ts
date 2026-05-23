@@ -10,7 +10,7 @@ import {
 } from '@/lib/crud/entityCrudClient'
 
 type RelationListOptions = ApiClientOptions & Partial<Pick<ListQuery, 'page' | 'pageSize' | 'search' | 'sort' | 'direction'>> & { includePassive?: boolean; companyId?: string }
-type CompanyListOptions = ApiClientOptions & Partial<Pick<ListQuery, 'page' | 'pageSize' | 'search' | 'sort' | 'direction'>> & { includePassive?: boolean }
+type CompanyListOptions = ApiClientOptions & Partial<Pick<ListQuery, 'page' | 'pageSize' | 'search' | 'sort' | 'direction'>> & { includePassive?: boolean; statuses?: string[] }
 
 function relationListOptions(options: RelationListOptions = {}) {
   const { includePassive, companyId, ...clientOptions } = options
@@ -33,7 +33,7 @@ function relationListOptions(options: RelationListOptions = {}) {
 
 export const companyService = {
   list(options: CompanyListOptions = {}) {
-    const { includePassive, page, pageSize, search, sort, direction, ...clientOptions } = options
+    const { includePassive, statuses, page, pageSize, search, sort, direction, ...clientOptions } = options
     return listEntityRecords<Sirket>({
       endpoint: { collectionPath: '/api/companies' },
       query: {
@@ -43,6 +43,8 @@ export const companyService = {
         sort,
         direction,
         ...(includePassive ? { include_passive: 'true' } : {}),
+        ...(statuses?.length ? { statuses: statuses.join(',') } : {}),
+        ...(clientOptions.useCache === false ? { _refresh: Date.now() } : {}),
       },
       options: {
       ...clientOptions,

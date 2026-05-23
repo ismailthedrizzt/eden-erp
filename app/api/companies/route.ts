@@ -6,6 +6,7 @@ import { EntityBankAccountsService } from '@/lib/modules/entity-bank-accounts/en
 import { listMeta, listMetaFromRows, listRange, parseListQuery } from '@/lib/api/listEndpoint'
 import { getServerResponseCache, serverListCacheKey, setServerResponseCache } from '@/lib/api/serverResponseCache'
 import { safeCreateRecord, safeCrudResponse } from '@/lib/crud/safeCrudService'
+import { extractCompanyLogoVariants } from '@/lib/media/companyLogo'
 import { applyTenantQueryScope, resolveTenantContext, type TenantContext, withTenantInsertScopeForTable } from '@/lib/tenancy/server'
 import {
   ensureTenantCompanyScope,
@@ -18,6 +19,7 @@ import {
   normalizeLegalTaxNumber,
 } from '@/lib/tenancy/companyScopes'
 import { requirePermission } from '@/lib/security/serverPermissions'
+import { DEFAULT_FISCAL_YEAR_START, isValidFiscalYearStart, parseFiscalYearStartStorage } from '@/lib/companies/fiscalYear'
 
 const emptyStringToUndefined = (value: unknown) => value === '' ? undefined : value
 const optionalUuid = z.preprocess(emptyStringToUndefined, z.string().uuid().optional().nullable())
@@ -37,6 +39,12 @@ const optionalElectronicNotificationAddress = z.preprocess(
 const OptionalShortNameSchema = z.preprocess(
   emptyStringToUndefined,
   z.string().min(1).max(120).optional()
+)
+const FiscalYearStartSchema = z.preprocess(
+  (value) => value === '' || value === null || value === undefined
+    ? undefined
+    : parseFiscalYearStartStorage(value),
+  z.number().int().refine(isValidFiscalYearStart, 'Mali yil baslangici ay ve gun olarak girilmelidir.')
 )
 
 const SirketSchema = z.object({
@@ -72,7 +80,7 @@ const SirketSchema = z.object({
   default_currency: z.string().default('TRY'),
   default_language: z.string().default('tr'),
   time_zone: z.string().default('Europe/Istanbul'),
-  fiscal_year_start: z.number().int().min(1).max(12).default(1),
+  fiscal_year_start: FiscalYearStartSchema.default(DEFAULT_FISCAL_YEAR_START),
   is_deleted: z.boolean().default(false),
   hero_images: z.array(z.record(z.any())).optional(),
   hero_documents: z.array(z.record(z.any())).optional(),
@@ -111,6 +119,80 @@ function isMissingTableError(error: any) {
     || message.includes('Could not find the table')
     || message.includes('schema cache')
     || message.includes('does not exist')
+}
+
+type CompanyStatusFilter = 'draft' | 'active' | 'passive'
+const COMPANY_STATUS_FILTERS = new Set<CompanyStatusFilter>(['draft', 'active', 'passive'])
+
+function normalizeCompanyStatusFilters(statuses?: string[]) {
+  return (statuses || []).filter((status): status is CompanyStatusFilter =>
+    COMPANY_STATUS_FILTERS.has(status as CompanyStatusFilter)
+  )
+}
+
+function applyCompanyStatusFilters(query: any, statuses: string[] | undefined, includePassive: boolean) {
+  const requested = normalizeCompanyStatusFilters(statuses)
+  if (!requested.length) return includePassive ? query : query.eq('is_deleted', false)
+
+  const hasDraft = requested.includes('draft')
+  const hasActive = requested.includes('active')
+  const hasPassive = requested.includes('passive')
+
+  if (hasDraft && hasActive && hasPassive) return query
+  if (hasDraft && hasActive && !hasPassive) return query.eq('is_deleted', false)
+  if (hasDraft && !hasActive && !hasPassive) return query.eq('is_deleted', false).eq('record_status', 'draft')
+  if (!hasDraft && hasActive && !hasPassive) return query.eq('is_deleted', false).neq('record_status', 'draft')
+  if (!hasDraft && !hasActive && hasPassive) return query.eq('is_deleted', true)
+
+  const clauses: string[] = []
+  if (hasDraft) clauses.push('and(is_deleted.eq.false,record_status.eq.draft)')
+  if (hasActive) clauses.push('and(is_deleted.eq.false,record_status.neq.draft)')
+  if (hasPassive) clauses.push('is_deleted.eq.true')
+
+  return clauses.length ? query.or(clauses.join(',')) : query.eq('is_deleted', false)
+}
+
+function withDerivedCompanyLogo<T extends Record<string, any>>(company: T): T {
+  if (!Object.prototype.hasOwnProperty.call(company, 'hero_images')) return company
+  const { logoUrl } = extractCompanyLogoVariants(company.hero_images, {
+    fallbackUrl: company.logo_url,
+    preferThumbnail: true,
+  })
+  return { ...company, logo_url: logoUrl || null }
+}
+
+async function hydrateCompanyLogoUrls(
+  supabase: ReturnType<typeof createServiceClient>,
+  rows: Record<string, any>[],
+  tenantContext: TenantContext
+) {
+  const rowIds = rows.map(row => row.id).filter(Boolean)
+
+  if (!rowIds.length) return rows
+
+  let mediaQuery = supabase
+    .from('companies')
+    .select('id,hero_images')
+    .in('id', rowIds)
+
+  mediaQuery = applyTenantQueryScope(mediaQuery, 'companies', tenantContext)
+  const { data, error } = await mediaQuery
+  if (error) return rows
+
+  const variantsById = new Map(
+    (data || [])
+      .map((row: Record<string, any>) => [row.id, extractCompanyLogoVariants(row.hero_images, { preferThumbnail: true })] as const)
+  )
+
+  return rows.map(row => {
+    const variants = variantsById.get(row.id)
+    return {
+      ...row,
+      logo_url: variants?.logoUrl || row.logo_url || null,
+      logo_url_light: variants?.lightLogoUrl || row.logo_url || null,
+      logo_url_dark: variants?.darkLogoUrl || variants?.lightLogoUrl || row.logo_url || null,
+    }
+  })
 }
 
 export async function GET(request: NextRequest) {
@@ -153,14 +235,14 @@ export async function GET(request: NextRequest) {
   const sortColumn = sortMap[listQuery.sort || ''] || 'short_name'
   let query = supabase
     .from('companies')
-    .select('id,organization_id,short_name,trade_name,tax_number,tax_office,company_type,city,district,is_deleted,record_status,company_status,updated_at,created_at')
+    .select('id,organization_id,short_name,trade_name,tax_number,tax_office,company_type,city,district,phone,email,logo_url,is_deleted,record_status,company_status,updated_at,created_at')
     .in('id', scopedCompanyIds)
     .order(sortColumn, { ascending: listQuery.direction !== 'desc' })
     .range(from, to)
 
   query = applyTenantQueryScope(query, 'companies', tenantContext)
 
-  if (!listQuery.includePassive) query = query.eq('is_deleted', false)
+  query = applyCompanyStatusFilters(query, listQuery.statuses, !!listQuery.includePassive)
 
   const searchTerm = String(ara || '').replace(/[%(),]/g, '').trim()
   if (searchTerm) {
@@ -181,7 +263,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: error.message, code: error.code || 'FETCH_FAILED' }, { status: 500 })
   }
 
-  const payload = { data: data || [], meta: listMetaFromRows(listQuery, data?.length || 0) }
+  const rows = await hydrateCompanyLogoUrls(supabase, (data || []) as Record<string, any>[], tenantContext)
+  const payload = { data: rows, meta: listMetaFromRows(listQuery, rows.length) }
   setServerResponseCache(cacheKey, payload, 60_000)
   return NextResponse.json(payload)
 }
@@ -219,8 +302,9 @@ export async function POST(request: NextRequest) {
     public_licenses,
     public_channels,
     entity_bank_accounts,
-    ...companyData
+    ...parsedCompanyData
   } = parsed.data
+  const companyData = withDerivedCompanyLogo(parsedCompanyData)
   const organizationMasterData = {
     ...(contact_points !== undefined ? { contact_points } : {}),
     ...(beneficiary_full_name !== undefined ? { beneficiary_full_name } : {}),
@@ -239,7 +323,7 @@ export async function POST(request: NextRequest) {
     tenantId: tenantContext.tenantId,
     country: companyData.country,
     taxNumber: companyData.tax_number,
-    select: 'id,organization_id,short_name,trade_name,tax_number,tax_office,company_type,city,district,is_deleted,record_status,company_status,updated_at,created_at,tenant_id,country',
+    select: 'id,organization_id,short_name,trade_name,tax_number,tax_office,company_type,city,district,logo_url,is_deleted,record_status,company_status,updated_at,created_at,tenant_id,country',
   })
   if (existingTenantCompany?.id) {
     const currentScope = await getTenantCompanyScope(supabase, tenantContext.tenantId, existingTenantCompany.id)
@@ -294,7 +378,7 @@ export async function POST(request: NextRequest) {
     tableName: 'companies',
     permissionKey: 'companies.edit',
     values: companyRow,
-    select: 'id,short_name,trade_name,tax_number,is_deleted,record_status,company_status,updated_at',
+    select: 'id,short_name,trade_name,tax_number,logo_url,hero_images,is_deleted,record_status,company_status,updated_at',
   })
 
   if (!createResult.ok) return safeCrudResponse(createResult)

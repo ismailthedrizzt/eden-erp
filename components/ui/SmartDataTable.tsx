@@ -53,6 +53,9 @@ export interface ColumnDef {
   moduleDependency?: string // Module that must be active
   permission?: string // Permission required to view
   render?: (value: any, row: any) => React.ReactNode
+  imageFit?: 'cover' | 'contain'
+  imageShape?: 'circle' | 'rounded'
+  hideHeaderLabel?: boolean
   order?: number // For drag-drop ordering
   category?: string // For grouping columns in selector (e.g., 'Kişisel', 'İş', 'Eğitim')
 }
@@ -68,6 +71,14 @@ export interface FilterConfig {
   type: ColumnType
   value: any
   operator: 'contains' | 'equals' | 'gt' | 'lt' | 'between'
+}
+
+export type TableStatusFilterTone = 'draft' | 'active' | 'passive' | 'neutral'
+
+export interface TableStatusFilterOption {
+  value: string
+  label: string
+  tone?: TableStatusFilterTone
 }
 
 export interface ServerPaginationConfig {
@@ -111,6 +122,9 @@ interface SmartDataTableProps<T extends { id: string }> {
   includePassive?: boolean
   onIncludePassiveChange?: (includePassive: boolean) => void
   includePassiveLabel?: string
+  statusFilterOptions?: TableStatusFilterOption[]
+  activeStatusFilters?: string[]
+  onStatusFiltersChange?: (values: string[]) => void
   quickLookDefaultOpen?: boolean
   forceQuickLookClosed?: boolean
 }
@@ -153,7 +167,7 @@ function mergeColumnConfig(allColumns: ColumnDef[], savedColumns?: ColumnDef[]) 
       return {
         ...col,
         visible: canHide ? saved?.visible ?? getDefaultColumnVisibility(col) : true,
-        order: saved?.order ?? col.order ?? index,
+        order: col.order ?? saved?.order ?? index,
       }
     })
     .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
@@ -165,6 +179,151 @@ function isActionColumn(col: ColumnDef) {
 
 function quickLookWidgetId(kind: 'summary' | 'dashboard', key: string) {
   return `${kind}:${key}`
+}
+
+const LEGACY_PASSIVE_STATUS_FILTERS: TableStatusFilterOption[] = [
+  { value: 'active', label: 'Aktif', tone: 'active' },
+  { value: 'passive', label: 'Pasif', tone: 'passive' },
+]
+
+const statusFilterToneClasses: Record<TableStatusFilterTone, { dot: string; active: string; inactive: string }> = {
+  draft: {
+    dot: 'bg-amber-400',
+    active: 'border-amber-500 bg-amber-50 text-amber-900 shadow-sm dark:border-amber-400 dark:bg-amber-500/15 dark:text-amber-100',
+    inactive: 'border-amber-200 bg-white text-amber-700 opacity-55 hover:opacity-80 dark:border-amber-500/30 dark:bg-gray-900 dark:text-amber-200',
+  },
+  active: {
+    dot: 'bg-emerald-500',
+    active: 'border-emerald-500 bg-emerald-50 text-emerald-900 shadow-sm dark:border-emerald-400 dark:bg-emerald-500/15 dark:text-emerald-100',
+    inactive: 'border-emerald-200 bg-white text-emerald-700 opacity-55 hover:opacity-80 dark:border-emerald-500/30 dark:bg-gray-900 dark:text-emerald-200',
+  },
+  passive: {
+    dot: 'bg-slate-400',
+    active: 'border-slate-500 bg-slate-100 text-slate-900 shadow-sm dark:border-slate-300 dark:bg-slate-500/20 dark:text-slate-100',
+    inactive: 'border-slate-200 bg-white text-slate-600 opacity-55 hover:opacity-80 dark:border-slate-500/30 dark:bg-gray-900 dark:text-slate-300',
+  },
+  neutral: {
+    dot: 'bg-blue-500',
+    active: 'border-blue-500 bg-blue-50 text-blue-900 shadow-sm dark:border-blue-400 dark:bg-blue-500/15 dark:text-blue-100',
+    inactive: 'border-blue-200 bg-white text-blue-700 opacity-55 hover:opacity-80 dark:border-blue-500/30 dark:bg-gray-900 dark:text-blue-200',
+  },
+}
+
+function StatusDotFilter({
+  options,
+  activeValues,
+  lockedValues = [],
+  ariaLabel,
+  onChange,
+}: {
+  options: TableStatusFilterOption[]
+  activeValues: string[]
+  lockedValues?: string[]
+  ariaLabel: string
+  onChange: (values: string[]) => void
+}) {
+  const [open, setOpen] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement | null>(null)
+  const activeSet = new Set(activeValues)
+  const lockedSet = new Set(lockedValues)
+  const activeOptions = options.filter(option => activeSet.has(option.value))
+
+  useEffect(() => {
+    if (!open) return
+
+    function closeOnOutsideClick(event: MouseEvent) {
+      if (!dropdownRef.current?.contains(event.target as Node)) setOpen(false)
+    }
+
+    document.addEventListener('mousedown', closeOnOutsideClick)
+    return () => document.removeEventListener('mousedown', closeOnOutsideClick)
+  }, [open])
+
+  const toggle = (value: string) => {
+    if (lockedSet.has(value) && activeSet.has(value)) return
+
+    const next = activeSet.has(value)
+      ? activeValues.filter(item => item !== value)
+      : [...activeValues, value]
+
+    if (!next.length) return
+    onChange(options.map(option => option.value).filter(value => next.includes(value)))
+  }
+
+  return (
+    <div
+      ref={dropdownRef}
+      className="relative shrink-0"
+      aria-label={ariaLabel}
+    >
+      <button
+        type="button"
+        aria-expanded={open}
+        aria-haspopup="menu"
+        onClick={() => setOpen(previous => !previous)}
+        className="flex h-10 max-w-full items-center gap-2 rounded-lg border border-gray-200 bg-white px-2.5 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-100 dark:hover:bg-gray-800"
+      >
+        <span className="flex shrink-0 items-center -space-x-1" aria-hidden="true">
+          {(activeOptions.length ? activeOptions : options.slice(0, 1)).slice(0, 5).map(option => (
+            <span
+              key={option.value}
+              className={cn(
+                'h-3 w-3 rounded-full border border-white dark:border-gray-900',
+                activeSet.has(option.value) ? statusFilterToneClasses[option.tone || 'neutral'].dot : 'bg-gray-300 dark:bg-gray-600'
+              )}
+            />
+          ))}
+        </span>
+        <span className="rounded-md bg-gray-100 px-1.5 py-0.5 text-xs font-bold text-gray-700 dark:bg-gray-800 dark:text-gray-200">
+          {activeOptions.length}/{options.length}
+        </span>
+        <ChevronDown size={15} className={cn('shrink-0 text-gray-500 transition-transform dark:text-gray-400', open && 'rotate-180')} />
+      </button>
+
+      {open && (
+        <div
+          role="menu"
+          className="absolute left-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-lg border border-gray-200 bg-white py-1 shadow-xl dark:border-gray-700 dark:bg-gray-950"
+        >
+          {options.map(option => {
+            const tone = statusFilterToneClasses[option.tone || 'neutral']
+            const active = activeSet.has(option.value)
+            const locked = lockedSet.has(option.value) && active
+
+            return (
+              <button
+                key={option.value}
+                type="button"
+                role="menuitemcheckbox"
+                aria-checked={active}
+                aria-label={`${option.label} kayıtları ${active ? 'gizle' : 'göster'}`}
+                disabled={locked}
+                onClick={() => toggle(option.value)}
+                className={cn(
+                  'flex w-full items-center gap-2 px-3 py-2 text-left text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-default disabled:opacity-80 dark:text-gray-200 dark:hover:bg-gray-900',
+                  active && 'bg-gray-50 dark:bg-gray-900'
+                )}
+              >
+                <span
+                  className={cn(
+                    'grid h-5 w-5 shrink-0 place-items-center rounded border text-[13px] leading-none',
+                    active
+                      ? 'border-gray-800 bg-gray-100 text-gray-900 dark:border-gray-100 dark:bg-gray-100 dark:text-gray-900'
+                      : 'border-gray-300 bg-white dark:border-gray-600 dark:bg-gray-950'
+                  )}
+                  aria-hidden="true"
+                >
+                  {active ? '✓' : ''}
+                </span>
+                <span className={cn('h-3.5 w-3.5 shrink-0 rounded-full', tone.dot)} aria-hidden="true" />
+                <span className="min-w-0 truncate">{option.label}</span>
+              </button>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
 }
 
 export function SmartDataTable<T extends { id: string }>({
@@ -189,18 +348,42 @@ export function SmartDataTable<T extends { id: string }>({
   showPassiveToggle = false,
   includePassive = false,
   onIncludePassiveChange,
-  includePassiveLabel = 'Pasif kayıtları da göster',
+  statusFilterOptions,
+  activeStatusFilters,
+  onStatusFiltersChange,
   quickLookDefaultOpen = false,
   forceQuickLookClosed = false,
 }: SmartDataTableProps<T>) {
   const isServerPaginated = pagination?.mode === 'server'
-  const columnSignature = initialColumns.map(col => `${col.key}:${col.label}:${col.visible ?? ''}:${col.required ?? ''}:${col.fixed ?? ''}:${col.hideable ?? ''}`).join('|')
+  const columnSignature = initialColumns.map(col => `${col.key}:${col.label}:${col.visible ?? ''}:${col.required ?? ''}:${col.fixed ?? ''}:${col.hideable ?? ''}:${col.order ?? ''}:${col.width ?? ''}:${col.fixedWidth ?? ''}`).join('|')
   const quickLookWidgetIds = [
     ...dashboardWidgets.map(widget => quickLookWidgetId('dashboard', widget.id)),
     ...widgets.map(widget => quickLookWidgetId('summary', widget.key)),
   ]
   const quickLookWidgetSignature = quickLookWidgetIds.join('|')
   const quickLookPreferenceScope = `${storageKey}:quick-look`
+  const customStatusFiltersEnabled = !!statusFilterOptions?.length
+  const resolvedStatusFilterOptions = customStatusFiltersEnabled
+    ? statusFilterOptions ?? []
+    : showPassiveToggle
+      ? LEGACY_PASSIVE_STATUS_FILTERS
+      : []
+  const resolvedActiveStatusFilters = customStatusFiltersEnabled
+    ? activeStatusFilters?.length
+      ? activeStatusFilters
+      : resolvedStatusFilterOptions.map(option => option.value)
+    : includePassive
+      ? ['active', 'passive']
+      : ['active']
+  const lockedStatusFilters = customStatusFiltersEnabled ? [] : ['active']
+  const handleStatusFiltersChange = (values: string[]) => {
+    if (customStatusFiltersEnabled) {
+      onStatusFiltersChange?.(values)
+      return
+    }
+
+    onIncludePassiveChange?.(values.includes('passive'))
+  }
 
   // User Preferences State
   const [preferencesLoaded, setPreferencesLoaded] = useState(false)
@@ -937,15 +1120,23 @@ export function SmartDataTable<T extends { id: string }>({
       const imageUrl = value || r?.profileImage || r?.image || r?.photo || r?.avatar || r?.profile_image || r?.photo_url
       const initials = (r?.first_name?.[0] || r?.firstName?.[0] || r?.name?.[0] || r?.last_name?.[0] || '?').toUpperCase()
       const fullName = r?.full_name || r?.fullname || r?.first_name || r?.firstName || r?.name || 'İsimsiz'
+      const imageFit = col.imageFit || 'cover'
+      const imageShape = col.imageShape || 'circle'
       
       return (
-        <div className="w-10 h-10 rounded-full overflow-hidden bg-gradient-to-br from-blue-100 to-blue-200 flex items-center justify-center flex-shrink-0 border-2 border-white shadow-sm">
+        <div className={cn(
+          'w-10 h-10 overflow-hidden flex items-center justify-center flex-shrink-0 shadow-sm',
+          imageShape === 'rounded' ? 'rounded-lg' : 'rounded-full',
+          imageFit === 'contain'
+            ? 'border border-gray-200 bg-transparent dark:border-gray-700'
+            : 'border-2 border-white bg-gradient-to-br from-blue-100 to-blue-200'
+        )}>
           {imageUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img 
               src={imageUrl} 
               alt={fullName}
-              className="w-full h-full object-cover"
+              className={cn('w-full h-full', imageFit === 'contain' ? 'object-contain p-1' : 'object-cover')}
               onError={(e) => {
                 const target = e.target as HTMLImageElement
                 target.style.display = 'none'
@@ -1169,16 +1360,14 @@ export function SmartDataTable<T extends { id: string }>({
             />
           </div>
 
-          {showPassiveToggle && (
-            <label className="flex w-full min-w-0 items-center justify-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-xs font-medium text-gray-600 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 sm:w-auto sm:justify-start">
-              <input
-                type="checkbox"
-                checked={includePassive}
-                onChange={(event) => onIncludePassiveChange?.(event.target.checked)}
-                className="h-4 w-4 shrink-0 rounded border-gray-300 text-blue-600 accent-blue-600"
-              />
-              <span className="min-w-0 truncate">{includePassiveLabel}</span>
-            </label>
+          {!!resolvedStatusFilterOptions.length && (
+            <StatusDotFilter
+              options={resolvedStatusFilterOptions}
+              activeValues={resolvedActiveStatusFilters}
+              lockedValues={lockedStatusFilters}
+              ariaLabel="Kayıt durumu filtresi"
+              onChange={handleStatusFiltersChange}
+            />
           )}
         </div>
 
@@ -1536,6 +1725,7 @@ export function SmartDataTable<T extends { id: string }>({
               <tr>
                 {visibleColumns.map(col => {
                   const sort = sortConfigs.find(s => s.key === col.key)
+                  const showHeaderLabel = !col.hideHeaderLabel
                   return (
                     <th
                       key={col.key}
@@ -1559,10 +1749,14 @@ export function SmartDataTable<T extends { id: string }>({
                     >
                       <div className="flex items-center justify-center gap-1 sm:gap-2 w-full min-w-0">
                         <GripVertical size={14} className="hidden sm:block text-gray-400 opacity-0 hover:opacity-100 transition-opacity flex-shrink-0" />
-                        <span className={cn(
-                          "whitespace-nowrap font-medium truncate",
-                          col.fontSize === 'xs' ? 'text-xs' : 'text-sm'
-                        )}>{col.label}</span>
+                        {showHeaderLabel ? (
+                          <span className={cn(
+                            "whitespace-nowrap font-medium truncate",
+                            col.fontSize === 'xs' ? 'text-xs' : 'text-sm'
+                          )}>{col.label}</span>
+                        ) : (
+                          <span className="sr-only">{col.label}</span>
+                        )}
                         {sort && (
                           <span className="flex items-center gap-1 text-blue-600">
                             {sort.direction === 'asc' ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
@@ -1658,6 +1852,7 @@ export function SmartDataTable<T extends { id: string }>({
             const imageCol = columnConfig.find(c => c.type === 'image')
             const imageValue = imageCol ? getNestedValue(row, imageCol.key) : null
             const imageUrl = imageValue || r?.profileImage || r?.image || r?.photo || r?.avatar || r?.profile_image || r?.photo_url
+            const imageFit = imageCol?.imageFit || 'contain'
             const firstInitial = (r?.first_name?.[0] || r?.firstName?.[0] || r?.name?.[0] || '?').toUpperCase()
             const lastInitial = (r?.last_name?.[0] || r?.lastName?.[0] || r?.surname?.[0] || '').toUpperCase()
             const initials = firstInitial + lastInitial || '?'
@@ -1687,13 +1882,18 @@ export function SmartDataTable<T extends { id: string }>({
                   </button>
                 )}
                 <div className="flex min-h-44">
-                  <div className="relative flex w-32 shrink-0 self-stretch overflow-hidden bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-900/30 dark:to-indigo-900/30 sm:w-36 xl:w-40">
+                  <div className={cn(
+                    'relative flex w-32 shrink-0 self-stretch overflow-hidden sm:w-36 xl:w-40',
+                    imageFit === 'contain'
+                      ? 'bg-transparent'
+                      : 'bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-900/30 dark:to-indigo-900/30'
+                  )}>
                     {imageUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img 
                         src={imageUrl} 
                         alt={fullName}
-                        className="h-full w-full object-contain p-2"
+                        className={cn('h-full w-full', imageFit === 'contain' ? 'object-contain p-2' : 'object-cover')}
                         onError={(e) => {
                           const target = e.target as HTMLImageElement
                           target.style.display = 'none'

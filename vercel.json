@@ -12,6 +12,10 @@
     {
       "path": "/api/cron/update-reference-data",
       "schedule": "0 0 * * 0"
+    },
+    {
+      "path": "/api/cron/document-thumbnails",
+      "schedule": "0 * * * *"
     }
   ]
 }

@@ -14,6 +14,8 @@ import { cacheUiPreferences, readCachedUiPreferences, syncUiPreferencesPatch } f
 import { setStoredTenantId, tenantRequestHeaders } from '@/lib/tenancy/client'
 import type { SessionBootstrapResponse, UiThemePreference } from '@/lib/user-state/types'
 
+const THEME_TRANSITION_SUPPRESS_MS = 120
+
 const BREADCRUMBS: Record<string, string> = {
   '/app': 'Ana Sayfa',
   '/app/ik': 'İnsan Kaynakları',
@@ -54,16 +56,28 @@ const BREADCRUMBS: Record<string, string> = {
   '/app/sistem/module-licenses': 'Sistem Yönetimi › Modül Lisansları',
   '/app/sistem/system-parameters': 'Sistem Yönetimi › Sistem Parametreleri',
   '/app/sistem/kullanici-talepleri': 'Sistem Yönetimi › Kullanıcı Kayıt Talepleri',
+  '/app/sirket/companies': 'Şirket Yönetimi › Şirketlerimiz',
+  '/app/sirket/companies/partners': 'Şirket Yönetimi › Ortaklarımız',
+  '/app/sirket/companies/representatives': 'Şirket Yönetimi › Temsilcilerimiz',
+  '/app/sirket/companies/stakeholders': 'Şirket Yönetimi › Paydaşlarımız',
 }
 
 type TenantWorkspaceOption = {
   id: string
   name: string
   logoUrl?: string | null
+  lightLogoUrl?: string | null
+  darkLogoUrl?: string | null
   role_key?: string | null
   role_label?: string | null
   is_default?: boolean
   is_current?: boolean
+}
+
+type ThemedLogoSource = {
+  logoUrl?: string | null
+  lightLogoUrl?: string | null
+  darkLogoUrl?: string | null
 }
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
@@ -83,9 +97,11 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
   const [dark, setDark] = useState(false)
   const [workspaceId, setWorkspaceId] = useState<string | null>(null)
   const [workspaceName, setWorkspaceName] = useState('Çalışma Alanı')
-  const [workspaceLogoUrl, setWorkspaceLogoUrl] = useState<string | null>(null)
+  const [workspaceLogo, setWorkspaceLogo] = useState<ThemedLogoSource>({})
   const [workspaceLogoFailed, setWorkspaceLogoFailed] = useState(false)
   const [workspaceOptions, setWorkspaceOptions] = useState<TenantWorkspaceOption[]>([])
+  const [sessionBootstrapLoading, setSessionBootstrapLoading] = useState(true)
+  const [workspaceOptionsLoading, setWorkspaceOptionsLoading] = useState(true)
   const [workspaceMenuOpen, setWorkspaceMenuOpen] = useState(false)
   const [workspaceSwitchError, setWorkspaceSwitchError] = useState<string | null>(null)
   const [switchingWorkspaceId, setSwitchingWorkspaceId] = useState<string | null>(null)
@@ -124,8 +140,9 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
         if (cancelled) return
         setWorkspaceId(payload.workspace?.id || null)
         setWorkspaceName(payload.workspace?.name || 'Çalışma Alanı')
-        setWorkspaceLogoUrl(payload.workspace?.logoUrl || null)
+        setWorkspaceLogo(payload.workspace || {})
         setWorkspaceLogoFailed(false)
+        if (payload.workspace?.id) setStoredTenantId(payload.workspace.id)
         cacheUiPreferences(payload.userState.uiPreferences)
         setDark(applyThemePreference(payload.userState.uiPreferences.theme))
         setCollapsed(Boolean(payload.userState.uiPreferences.sidebarCollapsed))
@@ -134,6 +151,9 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
       })
       .catch(() => {
         // Ana ekran, tanitim veya tercih hazirligi aksasa da acilmaya devam eder.
+      })
+      .finally(() => {
+        if (!cancelled) setSessionBootstrapLoading(false)
       })
 
     fetch('/api/tenants/options', {
@@ -154,11 +174,15 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
         if (current) {
           setWorkspaceId(current.id)
           setWorkspaceName(current.name || 'Calisma Alani')
-          setWorkspaceLogoUrl(current.logoUrl || null)
+          setWorkspaceLogo(current)
           setWorkspaceLogoFailed(false)
+          setStoredTenantId(current.id)
         }
       })
       .catch(() => undefined)
+      .finally(() => {
+        if (!cancelled) setWorkspaceOptionsLoading(false)
+      })
 
     return () => {
       cancelled = true
@@ -178,11 +202,13 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
     return () => document.removeEventListener('mousedown', closeOnOutsideClick)
   }, [workspaceMenuOpen])
 
+  const workspacesLoading = sessionBootstrapLoading || workspaceOptionsLoading
+
   useEffect(() => {
-    if (tourShouldOpen && !tourClosedThisSession && pathname === '/app') {
+    if (!workspacesLoading && tourShouldOpen && !tourClosedThisSession && pathname === '/app') {
       setTourOpen(true)
     }
-  }, [pathname, tourClosedThisSession, tourShouldOpen])
+  }, [pathname, tourClosedThisSession, tourShouldOpen, workspacesLoading])
 
   useEffect(() => {
     if (!forceTourToken) return
@@ -192,9 +218,11 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
     setTourShouldOpen(true)
     setTourOpen(false)
 
+    if (workspacesLoading) return
+
     const timer = window.setTimeout(() => setTourOpen(true), 0)
     return () => window.clearTimeout(timer)
-  }, [forceTourToken])
+  }, [forceTourToken, workspacesLoading])
 
   useEffect(() => {
     if (tourOpen && collapsed) setCollapsed(false)
@@ -244,9 +272,14 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
     }
   }
 
-  const breadcrumb = BREADCRUMBS[pathname] ?? 'Eden ERP'
-  const breadcrumbParts = breadcrumb.includes('›') ? breadcrumb.split('›') : breadcrumb.split('›')
+  const breadcrumb = BREADCRUMBS[pathname] ?? ''
+  const breadcrumbParts = breadcrumb.split('›').map(part => part.trim()).filter(Boolean)
   const isPublicSetupRoute = pathname.startsWith('/app/sistem/kurulum')
+  const workspaceLogoUrl = resolveThemedLogoUrl(workspaceLogo, dark)
+
+  useEffect(() => {
+    setWorkspaceLogoFailed(false)
+  }, [workspaceLogoUrl])
 
   if (isPublicSetupRoute) {
     return (
@@ -254,6 +287,10 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
         {children}
       </div>
     )
+  }
+
+  if (workspacesLoading) {
+    return <WorkspaceLoadingScreen dark={dark} />
   }
 
   return (
@@ -342,6 +379,7 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
                       {workspaceOptions.length ? workspaceOptions.map(option => {
                         const isCurrent = option.id === workspaceId || option.is_current
                         const isSwitching = switchingWorkspaceId === option.id
+                        const optionLogoUrl = resolveThemedLogoUrl(option, dark)
 
                         return (
                           <button
@@ -355,8 +393,8 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
                             )}
                           >
                             <span className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-gray-200 bg-white text-eden-green dark:border-gray-700 dark:bg-eden-navy">
-                              {option.logoUrl ? (
-                                <img src={option.logoUrl} alt="" className="h-full w-full object-contain" />
+                              {optionLogoUrl ? (
+                                <img src={optionLogoUrl} alt="" className="h-full w-full object-contain" />
                               ) : (
                                 <Building2 size={16} />
                               )}
@@ -387,12 +425,16 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
                   </div>
                 )}
               </div>
-              <div className="text-xs text-gray-400 dark:text-gray-500">
-                Eden ERP ›{' '}
-                <span className="text-gray-700 dark:text-gray-200 font-medium">
-                  {breadcrumbParts.length > 1 ? breadcrumbParts.pop()?.trim() : breadcrumb}
-                </span>
-              </div>
+              {!!breadcrumbParts.length && (
+                <div className="hidden min-w-0 items-center gap-1 text-xs text-gray-400 dark:text-gray-500 md:flex">
+                  {breadcrumbParts.map((part, index) => (
+                    <span key={`${part}-${index}`} className={cn('min-w-0 truncate', index === breadcrumbParts.length - 1 && 'font-medium text-gray-700 dark:text-gray-200')}>
+                      {index > 0 && <span className="mx-1 text-gray-300 dark:text-gray-600">›</span>}
+                      {part}
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
             <div className="flex items-center gap-3">
               <PendingActionsBell />
@@ -427,7 +469,7 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
           </main>
             </div>
             <GuidedSystemTour
-              open={tourOpen}
+              open={!workspacesLoading && tourOpen}
               initialStepId={tourInitialStep}
               onOpenChange={(nextOpen) => {
                 setTourOpen(nextOpen)
@@ -441,11 +483,45 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
   )
 }
 
+function WorkspaceLoadingScreen({ dark }: { dark: boolean }) {
+  return (
+    <div className={cn('flex min-h-screen items-center justify-center px-5', dark ? 'dark bg-[#09141e]' : 'bg-gray-50')}>
+      <div
+        role="status"
+        aria-live="polite"
+        className="flex w-full max-w-sm flex-col items-center rounded-xl border border-gray-200 bg-white px-6 py-7 text-center shadow-sm dark:border-gray-800 dark:bg-eden-navy-2"
+      >
+        <Loader2 size={30} className="animate-spin text-eden-green" />
+        <div className="mt-4 text-sm font-semibold text-gray-900 dark:text-gray-100">
+          Çalışma alanları yükleniyor
+        </div>
+        <div className="mt-1 text-xs leading-5 text-gray-500 dark:text-gray-400">
+          Yetki ve modül bilgileri hazırlanıyor.
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function applyThemePreference(theme: UiThemePreference) {
   const prefersDark = typeof window !== 'undefined'
     && window.matchMedia?.('(prefers-color-scheme: dark)').matches
   const shouldUseDark = theme === 'dark' || (theme === 'system' && prefersDark)
-  document.documentElement.classList.toggle('dark', shouldUseDark)
+  const root = document.documentElement
+
+  if (root.classList.contains('dark') !== shouldUseDark) {
+    root.classList.add('theme-transition-suppressed')
+    root.classList.toggle('dark', shouldUseDark)
+    window.setTimeout(() => root.classList.remove('theme-transition-suppressed'), THEME_TRANSITION_SUPPRESS_MS)
+  }
+
   return shouldUseDark
+}
+
+function resolveThemedLogoUrl(source: ThemedLogoSource | null | undefined, dark: boolean) {
+  if (!source) return null
+  return dark
+    ? source.darkLogoUrl || source.lightLogoUrl || source.logoUrl || null
+    : source.lightLogoUrl || source.logoUrl || source.darkLogoUrl || null
 }
 

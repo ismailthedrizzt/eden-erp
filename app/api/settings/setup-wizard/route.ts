@@ -699,7 +699,7 @@ async function createFirstCompany(
     default_currency: 'TRY',
     default_language: 'tr',
     time_zone: 'Europe/Istanbul',
-    fiscal_year_start: 1,
+    fiscal_year_start: 101,
     is_deleted: false,
     hero_images: [],
     hero_documents: [],
@@ -913,7 +913,7 @@ async function findOrCreatePartner(
 ) {
   const { data: existing, error: findError } = await supabase
     .from('company_partners')
-    .select('id, company_id, person_id, display_name, status')
+    .select('id, company_id, person_id, display_name, status, record_status')
     .eq('company_id', companyId)
     .eq('person_id', person.id)
     .eq('is_deleted', false)
@@ -937,13 +937,13 @@ async function findOrCreatePartner(
       display_name: displayName,
       partner_name: displayName,
       identity_number: payload.national_id,
-      status: 'active',
-      record_status: 'active',
+      status: 'Taslak',
+      record_status: 'draft',
       start_date: new Date().toISOString().slice(0, 10),
       history: [{ type: 'setup_wizard_created', at: new Date().toISOString() }],
       ...(tenantId ? { tenant_id: tenantId } : {}),
     })
-    .select('id, company_id, person_id, display_name, status')
+    .select('id, company_id, person_id, display_name, status, record_status')
     .single()
 
   if (error) throw new Error(error.message)
@@ -1028,7 +1028,7 @@ async function insertPartnerLifecycleEvent(
       event_type: 'setup_wizard_partner_created',
       event_date: new Date().toISOString().slice(0, 10),
       old_status: null,
-      new_status: 'active',
+      new_status: 'draft',
       payload: {
         first_name: payload.first_name,
         last_name: payload.last_name,

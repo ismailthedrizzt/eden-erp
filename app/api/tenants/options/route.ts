@@ -71,6 +71,8 @@ export async function GET(request: NextRequest) {
           tenant_key: tenant?.tenant_key || null,
           tenant_type: tenant?.tenant_type || null,
           logoUrl: summary.logoUrl || null,
+          lightLogoUrl: summary.lightLogoUrl || null,
+          darkLogoUrl: summary.darkLogoUrl || null,
           role_key: membership?.role_key || null,
           role_label: roleLabel(membership?.role_key),
           is_default: Boolean(membership?.is_default),

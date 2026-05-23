@@ -108,6 +108,9 @@ export interface Sirket {
   legal_entity?: string
   parent_company_id?: string
   company_code?: string
+  logo_url?: string | null
+  logo_url_light?: string | null
+  logo_url_dark?: string | null
   
   // Vergi ve SGK - Tax and SGK
   e_invoice_taxpayer: boolean
@@ -353,13 +356,25 @@ export interface SirketTemsilci {
 }
 
 export interface SirketDokuman {
-  id: string
-  company_id: string
-  dokuman_turu: 'vergi_levhasi' | 'ticaret_sicil_gazetesi' | 'sicil_tasdiknamesi' | 'diger'
-  dosya_adi: string
-  dosya_url: string
-  yuklenme_tarihi: string
-  yukleyen_kullanici_id: string
+  slotId: string
+  documentId?: string
+  documentLinkId?: string
+  storagePath?: string
+  name: string
+  size: number
+  type: string
+  uploadedAt?: string
+  updatedAt?: string
+  deletedAt?: string
+  replacedAt?: string
+  status?: 'active' | 'archived' | 'deleted' | string
+  version?: number
+  slotTitle?: string
+  isDeleted?: boolean
+  url?: string
+  previewUrl?: string
+  thumbnailUrl?: string
+  thumbnailPath?: string
 }
 
 export interface SirketLogo {
@@ -376,6 +391,8 @@ export const SIRKET_DOKUMAN_TIPLERI = [
   { value: 'vergi_levhasi', label: 'Vergi Levhası', required: true },
   { value: 'ticaret_sicil_gazetesi', label: 'Ticaret Sicil Gazetesi', required: true },
   { value: 'sicil_tasdiknamesi', label: 'Sicil Tasdiknamesi', required: true },
+  { value: 'faaliyet_belgesi', label: 'Faaliyet Belgesi', required: false },
+  { value: 'imza_sirkuleri', label: 'İmza Sirküleri', required: false },
   { value: 'diger', label: 'Diğer Belgeler', required: false }
 ] as const
 

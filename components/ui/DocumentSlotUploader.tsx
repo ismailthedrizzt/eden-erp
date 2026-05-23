@@ -71,6 +71,7 @@ export interface SlotDocument {
   url?: string
   previewUrl?: string
   thumbnailUrl?: string
+  thumbnailPath?: string
 }
 
 interface DocumentSlotUploaderProps {
@@ -242,11 +243,17 @@ function getDocumentUrl(doc?: SlotDocument | null) {
   return doc.url || doc.previewUrl || (doc.file ? URL.createObjectURL(doc.file) : '')
 }
 
-function getDocumentThumbnailUrl(doc?: SlotDocument | null, signedUrl?: string) {
+function isFallbackDocumentThumbnailUrl(value?: string) {
+  return !!value && value.startsWith('data:image/svg+xml')
+}
+
+function getDocumentThumbnailUrl(doc?: SlotDocument | null, thumbnailSignedUrl?: string, signedUrl?: string) {
   if (!doc) return ''
-  if (doc.thumbnailUrl) return doc.thumbnailUrl
+  if (thumbnailSignedUrl) return thumbnailSignedUrl
+  if (doc.thumbnailUrl && !isFallbackDocumentThumbnailUrl(doc.thumbnailUrl)) return doc.thumbnailUrl
   if (isImageDocument(doc)) return doc.previewUrl || signedUrl || doc.url || (doc.file ? URL.createObjectURL(doc.file) : '')
-  return ''
+  const label = isPdfDocument(doc) ? 'PDF' : isTextDocument(doc) ? 'TXT' : getFileTypeConfig(getEffectiveDocumentType(doc)).label
+  return generateFallbackDocumentThumbnail(label, doc.name)
 }
 
 function getDocumentTimestamp(doc?: SlotDocument | null) {
@@ -302,6 +309,8 @@ async function uploadDocumentFile(file: File, slotId: string) {
   return {
     storagePath: String(result.storagePath || ''),
     url: String(result.url || ''),
+    thumbnailPath: String(result.thumbnailPath || ''),
+    thumbnailUrl: String(result.thumbnailUrl || ''),
     name: String(result.name || file.name),
     size: Number(result.size || file.size),
     type: String(result.type || file.type || 'application/octet-stream'),
@@ -420,50 +429,72 @@ export function DocumentSlotUploader({
   )
   const currentDoc = currentSlot ? getLatestActiveDocument(documents, currentSlot.id) : undefined
   const currentDocSignedKey = currentDoc?.storagePath || currentDoc?.documentId || ''
+  const currentDocThumbnailSignedKey = currentDoc?.thumbnailPath || ''
   const currentDocUrl = getDocumentUrl(currentDoc) || (currentDocSignedKey ? signedPreviewUrls[currentDocSignedKey] : '')
-  const currentDocThumbnailUrl = getDocumentThumbnailUrl(currentDoc, currentDocSignedKey ? signedPreviewUrls[currentDocSignedKey] : undefined)
+  const currentDocThumbnailUrl = getDocumentThumbnailUrl(
+    currentDoc,
+    currentDocThumbnailSignedKey ? signedPreviewUrls[currentDocThumbnailSignedKey] : undefined,
+    currentDocSignedKey ? signedPreviewUrls[currentDocSignedKey] : undefined
+  )
   const hasDocument = !!currentDoc
   const currentAcceptedTypes = currentSlot?.acceptedTypes || DEFAULT_DOCUMENT_ACCEPTED_TYPES
   const currentDocType = getEffectiveDocumentType(currentDoc)
   const canPreviewCurrentDoc = canInlinePreview(currentDoc, currentDocUrl)
   const hasVisualThumbnail = Boolean(currentDocThumbnailUrl)
+  const activeDocumentSlotKey = useMemo(
+    () => documents
+      .filter(isActiveDocument)
+      .map(doc => `${doc.slotId}:${getDocumentIdentity(doc)}`)
+      .join('|'),
+    [documents]
+  )
 
   useEffect(() => {
-    const nextDocuments = documents.map(doc => {
-      if (doc.thumbnailUrl || isImageDocument(doc)) return doc
-      const label = isPdfDocument(doc) ? 'PDF' : isTextDocument(doc) ? 'TXT' : getFileTypeConfig(getEffectiveDocumentType(doc)).label
-      return {
-        ...doc,
-        thumbnailUrl: generateFallbackDocumentThumbnail(label, doc.name),
-      }
-    })
-
-    if (canMutate && nextDocuments.some((doc, index) => doc !== documents[index])) {
-      onChange(nextDocuments)
-    }
-  }, [canMutate, documents, onChange])
+    if (displaySlots.length === 0) return
+    if (currentIndex < displaySlots.length) return
+    setCurrentIndex(0)
+  }, [currentIndex, displaySlots.length])
 
   useEffect(() => {
-    const docsNeedingSignedUrl = documents.filter(doc =>
-      doc.storagePath &&
-      !doc.url &&
-      !doc.previewUrl &&
-      !signedPreviewUrls[doc.storagePath]
+    if (!activeDocumentSlotKey) return
+    const currentSlotHasDocument = currentSlot?.id
+      ? !!getLatestActiveDocument(documents, currentSlot.id)
+      : false
+    if (currentSlotHasDocument) return
+
+    const firstDocumentSlotIndex = displaySlots.findIndex(slot =>
+      slot.id !== '__extra__' && !!getLatestActiveDocument(documents, slot.id)
     )
-    if (docsNeedingSignedUrl.length === 0) return
+    if (firstDocumentSlotIndex >= 0) setCurrentIndex(firstDocumentSlotIndex)
+  // Run when the available document set changes; manual slot navigation should remain under the user's control.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeDocumentSlotKey])
+
+  useEffect(() => {
+    const pathsNeedingSignedUrl = Array.from(new Set(documents.flatMap(doc => {
+      const paths: string[] = []
+      if (doc.storagePath && !doc.url && !doc.previewUrl && !signedPreviewUrls[doc.storagePath]) {
+        paths.push(doc.storagePath)
+      }
+      if (doc.thumbnailPath && !signedPreviewUrls[doc.thumbnailPath]) {
+        paths.push(doc.thumbnailPath)
+      }
+      return paths
+    })))
+    if (pathsNeedingSignedUrl.length === 0) return
 
     let cancelled = false
     Promise.all(
-      docsNeedingSignedUrl.map(doc =>
+      pathsNeedingSignedUrl.map(path =>
         fetch('/api/uploads/documents/signed-url', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ storagePath: doc.storagePath }),
+          body: JSON.stringify({ storagePath: path }),
         })
           .then(async response => {
             if (!response.ok) return null
             const result = await response.json()
-            return [doc.storagePath!, String(result.signedUrl || '')] as const
+            return [path, String(result.signedUrl || '')] as const
           })
           .catch(() => null)
       )
@@ -577,8 +608,7 @@ export function DocumentSlotUploader({
         const uploaded = await uploadDocumentFile(file, targetSlot.id)
         clearInterval(progressInterval)
         setUploadProgress(100)
-        const fallbackThumbnail = generateFallbackDocumentThumbnail(getFileTypeConfig(file.type).label, file.name)
-        const thumbnailUrl = file.type.startsWith('image/') ? uploaded.url : fallbackThumbnail
+        const thumbnailUrl = uploaded.thumbnailUrl || (file.type.startsWith('image/') ? uploaded.url : undefined)
         const now = new Date()
         const nextVersion = documents
           .filter(doc => doc.slotId === targetSlot.id)
@@ -598,6 +628,7 @@ export function DocumentSlotUploader({
           url: uploaded.url,
           previewUrl: uploaded.url,
           thumbnailUrl,
+          thumbnailPath: uploaded.thumbnailPath || undefined,
         }
 
         const updatedDocs = documents.map(doc =>
@@ -770,8 +801,13 @@ export function DocumentSlotUploader({
         <div className="max-h-[360px] divide-y divide-gray-100 overflow-auto dark:divide-gray-700">
           {sortedDocuments.map((doc, index) => {
             const signedKey = doc.storagePath || doc.documentId || ''
+            const thumbnailSignedKey = doc.thumbnailPath || ''
             const docUrl = getDocumentUrl(doc) || (signedKey ? signedPreviewUrls[signedKey] : '')
-            const thumbUrl = getDocumentThumbnailUrl(doc, signedKey ? signedPreviewUrls[signedKey] : undefined)
+            const thumbUrl = getDocumentThumbnailUrl(
+              doc,
+              thumbnailSignedKey ? signedPreviewUrls[thumbnailSignedKey] : undefined,
+              signedKey ? signedPreviewUrls[signedKey] : undefined
+            )
             const config = getFileTypeConfig(getEffectiveDocumentType(doc))
             const Icon = config.icon
             const slotTitle = allSlots.find(slot => slot.id === doc.slotId)?.title || doc.slotTitle || doc.slotId
@@ -901,8 +937,13 @@ export function DocumentSlotUploader({
             const historyDocs = sortedDocuments.filter(item => item.slotId === slot.id && !isActiveDocument(item))
             const expanded = expandedHistorySlotIds.includes(slot.id)
             const signedKey = doc?.storagePath || doc?.documentId || ''
+            const thumbnailSignedKey = doc?.thumbnailPath || ''
             const docUrl = getDocumentUrl(doc) || (signedKey ? signedPreviewUrls[signedKey] : '')
-            const thumbUrl = doc ? getDocumentThumbnailUrl(doc, signedKey ? signedPreviewUrls[signedKey] : undefined) : ''
+            const thumbUrl = doc ? getDocumentThumbnailUrl(
+              doc,
+              thumbnailSignedKey ? signedPreviewUrls[thumbnailSignedKey] : undefined,
+              signedKey ? signedPreviewUrls[signedKey] : undefined
+            ) : ''
             const config = getFileTypeConfig(getEffectiveDocumentType(doc))
             const Icon = config.icon
 

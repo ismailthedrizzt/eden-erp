@@ -31,6 +31,8 @@ export interface BootstrapWorkspace {
   id: string
   name: string
   logoUrl?: string | null
+  lightLogoUrl?: string | null
+  darkLogoUrl?: string | null
 }
 
 export interface BootstrapUserState {

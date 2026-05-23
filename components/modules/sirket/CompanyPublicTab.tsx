@@ -546,7 +546,7 @@ export function CompanyNaceCodesSection({
     : null
 
   return (
-    <div className="mt-6 rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900/40">
+    <div className="mt-6 min-w-0 rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-gray-700 dark:bg-gray-900/40">
       <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
         <div>
           <h5 className="text-sm font-semibold text-gray-900 dark:text-white">NACE / Faaliyet Kodları</h5>
@@ -592,8 +592,18 @@ export function CompanyNaceCodesSection({
         </div>
       )}
 
-      <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
-        <table className="min-w-full divide-y divide-gray-200 text-sm dark:divide-gray-700">
+      <div className="w-full overflow-x-auto rounded-lg border border-gray-200 bg-white pb-2 dark:border-gray-700 dark:bg-gray-800">
+        <table className="w-[1290px] min-w-full table-fixed divide-y divide-gray-200 text-sm dark:divide-gray-700">
+          <colgroup>
+            <col style={{ width: 120 }} />
+            <col style={{ width: 360 }} />
+            <col style={{ width: 140 }} />
+            <col style={{ width: 110 }} />
+            <col style={{ width: 90 }} />
+            <col style={{ width: 140 }} />
+            <col style={{ width: 160 }} />
+            <col style={{ width: 170 }} />
+          </colgroup>
           <thead className="bg-gray-100 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:bg-gray-900 dark:text-gray-400">
             <tr>
               <th className="px-3 py-2">NACE Kodu</th>
@@ -620,13 +630,25 @@ export function CompanyNaceCodesSection({
             {!loading && rows.map((row) => (
               <tr key={row.id} className="align-top">
                 <td className="px-3 py-2 font-medium text-gray-900 dark:text-white">{row.nace_code?.nace_code || '-'}</td>
-                <td className="max-w-md px-3 py-2 text-gray-700 dark:text-gray-200">{row.nace_code?.description || '-'}</td>
+                <td className="px-3 py-2 text-gray-700 dark:text-gray-200">
+                  <div
+                    title={row.nace_code?.description || '-'}
+                    className="max-w-[336px] overflow-hidden leading-5"
+                    style={{ display: '-webkit-box', WebkitBoxOrient: 'vertical', WebkitLineClamp: 2 }}
+                  >
+                    {row.nace_code?.description || '-'}
+                  </div>
+                </td>
                 <td className="px-3 py-2"><ReadOnlyBadge value={row.nace_code?.hazard_class || '-'} /></td>
                 <td className="px-3 py-2">{row.is_primary ? 'Evet' : 'Hayır'}</td>
                 <td className="px-3 py-2">{row.status === 'active' ? 'Aktif' : 'Pasif'}</td>
                 <td className="px-3 py-2">{formatDate(row.updated_at)}</td>
-                <td className="px-3 py-2">{row.nace_code?.source_name || row.nace_code?.source_reference || '-'}</td>
                 <td className="px-3 py-2">
+                  <div className="truncate" title={row.nace_code?.source_name || row.nace_code?.source_reference || '-'}>
+                    {row.nace_code?.source_name || row.nace_code?.source_reference || '-'}
+                  </div>
+                </td>
+                <td className="sticky right-0 z-10 bg-white px-3 py-2 shadow-[-8px_0_12px_-12px_rgba(15,23,42,0.7)] dark:bg-gray-800">
                   <div className="flex flex-wrap gap-1">
                     {!readOnly && row.status === 'active' && !row.is_primary && (
                       <button type="button" className="rounded-md px-2 py-1 text-xs font-medium text-blue-700 hover:bg-blue-50 dark:text-blue-300 dark:hover:bg-blue-900/30" onClick={() => runAction(`/api/companies/${companyId}/nace-codes/${row.id}/set-primary`, { method: 'POST' })}>

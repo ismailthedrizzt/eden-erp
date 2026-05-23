@@ -7,6 +7,7 @@ export interface ListQuery {
   sort?: string
   direction?: ListSortDirection
   includePassive?: boolean
+  statuses?: string[]
 }
 
 export interface ListMeta {
@@ -34,6 +35,7 @@ export function parseListQuery(searchParams: URLSearchParams, defaults: Partial<
     sort: searchParams.get('sort') || defaults.sort,
     direction,
     includePassive: searchParams.get('include_passive') === 'true' || defaults.includePassive === true,
+    statuses: parseCsvList(searchParams.get('statuses')) || defaults.statuses,
   }
 }
 
@@ -61,4 +63,10 @@ export function listMetaFromRows(query: Pick<ListQuery, 'page' | 'pageSize'>, ro
 function parsePositiveInt(value: string | null, fallback: number) {
   const parsed = value ? Number.parseInt(value, 10) : fallback
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback
+}
+
+function parseCsvList(value: string | null) {
+  if (!value) return undefined
+  const items = value.split(',').map(item => item.trim()).filter(Boolean)
+  return items.length ? items : undefined
 }
