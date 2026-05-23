@@ -287,13 +287,13 @@ export function LoginExperience({
   className,
   signupRedirectPath = '/app/sistem/kurulum',
 }: LoginExperienceProps) {
-  const [authMode, setAuthMode] = useState<AuthMode>('signup')
+  const [authMode, setAuthMode] = useState<AuthMode>('login')
   const [signupFlow, setSignupFlow] = useState<SignupFlow>('new_company')
   const [step, setStep] = useState<'kimlik' | 'otp'>('kimlik')
   const [value, setValue] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
-  const [loginEnabled, setLoginEnabled] = useState(false)
+  const [loginEnabled, setLoginEnabled] = useState(true)
   const [joinForm, setJoinForm] = useState<JoinFormState>(initialJoinForm)
   const [joinMatches, setJoinMatches] = useState<CompanyJoinMatch[]>([])
   const [selectedJoinCompanyId, setSelectedJoinCompanyId] = useState<string | null>(null)
