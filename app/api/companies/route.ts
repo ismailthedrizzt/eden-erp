@@ -1,25 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { z } from 'zod'
-import { syncMasterContact } from '@/lib/identity/masterContact'
-import { EntityBankAccountsService } from '@/lib/modules/entity-bank-accounts/entityBankAccounts.service'
 import { listMeta, listMetaFromRows, listRange, parseListQuery } from '@/lib/api/listEndpoint'
 import { getServerResponseCache, serverListCacheKey, setServerResponseCache } from '@/lib/api/serverResponseCache'
 import { safeCreateRecord, safeCrudResponse } from '@/lib/crud/safeCrudService'
 import { extractCompanyLogoVariants } from '@/lib/media/companyLogo'
-import { applyTenantQueryScope, resolveTenantContext, type TenantContext, withTenantInsertScopeForTable } from '@/lib/tenancy/server'
+import { applyTenantQueryScope, resolveTenantContext, type TenantContext } from '@/lib/tenancy/server'
 import {
   ensureTenantCompanyScope,
   fetchScopedCompanyIds,
-  findGlobalOrganizationByIdentity,
   findOwnedCompanyScopeByOrganization,
   findTenantCompanyByTaxNumber,
   getTenantCompanyScope,
-  normalizeLegalCountry,
-  normalizeLegalTaxNumber,
 } from '@/lib/tenancy/companyScopes'
 import { requirePermission } from '@/lib/security/serverPermissions'
 import { DEFAULT_FISCAL_YEAR_START, isValidFiscalYearStart, parseFiscalYearStartStorage } from '@/lib/companies/fiscalYear'
+import { attachCompanyOrganization, runCompanyCreateSideEffects } from '@/lib/modules/companies/companyCreateOrchestrator'
 
 const emptyStringToUndefined = (value: unknown) => value === '' ? undefined : value
 const optionalUuid = z.preprocess(emptyStringToUndefined, z.string().uuid().optional().nullable())
@@ -110,15 +106,6 @@ function omitNullishValues(value: Record<string, any>) {
   return Object.fromEntries(
     Object.entries(value).filter(([, item]) => item !== null && item !== undefined)
   )
-}
-
-function isMissingTableError(error: any) {
-  const message = String(error?.message || '')
-  return error?.code === '42P01'
-    || error?.code === 'PGRST205'
-    || message.includes('Could not find the table')
-    || message.includes('schema cache')
-    || message.includes('does not exist')
 }
 
 type CompanyStatusFilter = 'draft' | 'active' | 'passive'
@@ -362,7 +349,7 @@ export async function POST(request: NextRequest) {
     companyRow = await attachCompanyOrganization(supabase, {
       ...companyData,
       is_deleted: false,
-    }, tenantContext)
+    })
   } catch (error) {
     return NextResponse.json({
       error: error instanceof Error ? error.message : 'Şirket ana kurum kaydına bağlanamadı',
@@ -394,356 +381,32 @@ export async function POST(request: NextRequest) {
     },
   })
 
-  const organizationUnitError = await ensureCompanyRootUnit(supabase, data.id, companyRow, tenantContext)
-  if (organizationUnitError) return NextResponse.json({ error: organizationUnitError.message, code: organizationUnitError.code || 'COMPANY_ORG_UNIT_SAVE_FAILED' }, { status: 500 })
-
-  await syncMasterContact(
+  const sideEffects = await runCompanyCreateSideEffects({
     supabase,
-    'organization',
-    companyRow.organization_id,
-    { ...companyRow, ...organizationMasterData }
-  )
+    companyId: data.id,
+    companyRow,
+    organizationMasterData,
+    tenantContext,
+    entityBankAccounts: entity_bank_accounts,
+    partners,
+    representatives,
+    publicData: {
+      public_tax,
+      public_sgk,
+      public_incentives,
+      public_registry,
+      public_licenses,
+      public_channels,
+    },
+  })
 
-  if (entity_bank_accounts && companyRow.organization_id) {
-    await new EntityBankAccountsService(supabase as any).syncMany('organization', companyRow.organization_id, entity_bank_accounts, null)
-  }
-
-  const partnerError = await replaceCompanyPartners(supabase, data.id, partners || [], tenantContext)
-  if (partnerError) return NextResponse.json({ error: partnerError.message, code: partnerError.code || 'PARTNER_SAVE_FAILED' }, { status: 500 })
-
-  const representativeError = await replaceCompanyRepresentatives(supabase, data.id, representatives || [], tenantContext)
-  if (representativeError) return NextResponse.json({ error: representativeError.message, code: representativeError.code || 'REPRESENTATIVE_SAVE_FAILED' }, { status: 500 })
-
-  const publicError = await replaceCompanyPublicData(supabase, data.id, {
-    public_tax,
-    public_sgk,
-    public_incentives,
-    public_registry,
-    public_licenses,
-    public_channels,
-  }, tenantContext)
-  if (publicError) return NextResponse.json({ error: publicError.message, code: publicError.code || 'PUBLIC_SAVE_FAILED' }, { status: 500 })
-
-  const lifecycleError = await insertCompanyCreatedAsDraftEvent(supabase, data.id, companyRow, tenantContext)
-  if (lifecycleError && !isMissingTableError(lifecycleError)) {
-    return NextResponse.json({ error: lifecycleError.message, code: lifecycleError.code || 'LIFECYCLE_EVENT_FAILED' }, { status: 500 })
-  }
+  const warnings = [
+    ...(ownerScope ? ['Bu VKN ile tüzel kimlik daha önce kaydedilmiş. Bu tenant için ayrı bir şirket profili açıldı; özel bilgiler tenant içinde kalır.'] : []),
+    ...sideEffects.warnings.map(warning => warning.message),
+  ]
 
   return NextResponse.json({
     data,
-    ...(ownerScope ? {
-      warning: 'Bu VKN ile tuzel kimlik daha once kaydedilmis. Bu tenant icin ayri bir sirket profili acildi; ozel bilgiler tenant icinde kalir.',
-    } : {}),
+    ...(warnings.length ? { warning: warnings.join(' '), partial_warnings: sideEffects.warnings } : {}),
   }, { status: 201 })
-}
-
-async function insertCompanyCreatedAsDraftEvent(
-  supabase: ReturnType<typeof createServiceClient>,
-  companyId: string,
-  payload: Record<string, any>,
-  tenantContext: TenantContext
-) {
-  const { error } = await supabase
-    .from('company_lifecycle_events')
-    .insert(withTenantInsertScopeForTable({
-      company_id: companyId,
-      event_type: 'company_created_as_draft',
-      event_date: new Date().toISOString().slice(0, 10),
-      old_status: null,
-      new_status: 'draft',
-      payload_json: payload,
-      document_reference_id: null,
-    }, 'company_lifecycle_events', tenantContext))
-
-  return error
-}
-
-async function attachCompanyOrganization(
-  supabase: ReturnType<typeof createServiceClient>,
-  companyData: Record<string, any>,
-  tenantContext: TenantContext
-) {
-  try {
-    if (companyData.organization_id) return companyData
-
-    const country = normalizeLegalCountry(companyData.country || 'TR')
-    const taxNumber = normalizeLegalTaxNumber(companyData.tax_number, country)
-    const existing = await findGlobalOrganizationByIdentity(supabase, {
-      country,
-      taxNumber,
-      legalName: companyData.trade_name,
-      select: 'id',
-    })
-
-    const organizationId = existing?.id || (await supabase.from('organizations').insert({
-      legal_name: companyData.trade_name,
-      short_name: companyData.short_name || null,
-      country,
-      tax_number: taxNumber,
-      registration_number: companyData.trade_registry_number || companyData.mersis_number || null,
-      tax_office: companyData.tax_office || null,
-      organization_type: companyData.company_type || null,
-      metadata_json: { source: 'companies_create' },
-    }).select('id').single()).data?.id
-
-    if (!organizationId) throw new Error('Ana kurum kaydı oluşturulamadı.')
-    return { ...companyData, organization_id: organizationId }
-  } catch (error) {
-    throw error instanceof Error ? error : new Error('Şirket ana kurum kaydına bağlanamadı.')
-  }
-}
-
-async function ensureCompanyRootUnit(
-  supabase: ReturnType<typeof createServiceClient>,
-  companyId: string,
-  companyData: Record<string, any>,
-  tenantContext: TenantContext
-) {
-  const { data: unitType, error: typeError } = await supabase
-    .from('organization_unit_types')
-    .upsert({ name: 'Şirket', slug: 'company', color: '#0f766e', icon: 'Building2', sort_order: 0, is_active: true }, { onConflict: 'slug' })
-    .select('id')
-    .single()
-
-  if (typeError) return isMissingTableError(typeError) ? null : typeError
-
-  const companyName = companyData.trade_name || companyData.short_name || 'Şirket'
-  let existingQuery = supabase
-    .from('organization_units')
-    .select('id')
-    .eq('company_id', companyId)
-    .is('parent_unit_id', null)
-    .eq('type', 'company')
-    .eq('is_deleted', false)
-    .limit(1)
-
-  existingQuery = applyTenantQueryScope(existingQuery, 'organization_units', tenantContext)
-  const { data: existing, error: findError } = await existingQuery.maybeSingle()
-
-  if (findError) return isMissingTableError(findError) ? null : findError
-
-  const payload = withTenantInsertScopeForTable({
-    company_id: companyId,
-    parent_unit_id: null,
-    name: companyName,
-    short_name: companyData.short_name || null,
-    type: 'company',
-    unit_type_id: unitType?.id || null,
-    status: 'Aktif',
-    active: true,
-    is_deleted: false,
-  }, 'organization_units', tenantContext)
-
-  if (existing?.id) {
-    let updateQuery = supabase.from('organization_units').update(payload).eq('id', existing.id)
-    updateQuery = applyTenantQueryScope(updateQuery, 'organization_units', tenantContext)
-    const { error } = await updateQuery
-    return isMissingTableError(error) ? null : error
-  }
-
-  const { error } = await supabase.from('organization_units').insert(payload)
-  return isMissingTableError(error) ? null : error
-}
-
-async function replaceCompanyPublicData(
-  supabase: ReturnType<typeof createServiceClient>,
-  companyId: string,
-  payload: {
-    public_tax?: Record<string, any>
-    public_sgk?: Record<string, any>
-    public_incentives?: Record<string, any>
-    public_registry?: Record<string, any>
-    public_licenses?: Record<string, any>[]
-    public_channels?: Record<string, any>
-  },
-  tenantContext: TenantContext
-) {
-  const singleRows = [
-    ['company_public_tax', payload.public_tax],
-    ['company_public_sgk', payload.public_sgk],
-    ['company_public_incentives', payload.public_incentives],
-    ['company_public_registry', payload.public_registry],
-    ['company_public_channels', payload.public_channels],
-  ] as const
-
-  for (const [table, row] of singleRows) {
-    if (!row || Object.keys(row).length === 0) continue
-    const { error } = await supabase
-      .from(table)
-      .upsert(withTenantInsertScopeForTable({ ...cleanPublicRow(row), company_id: companyId }, table, tenantContext), { onConflict: 'company_id' })
-    if (error) return error
-  }
-
-  if (payload.public_licenses?.length) {
-    const { error } = await supabase
-      .from('company_public_licenses')
-      .insert(payload.public_licenses.map((license) => withTenantInsertScopeForTable({
-        ...cleanPublicRow(license),
-        company_id: companyId,
-        reminder_days: license.reminder_days ? Number(license.reminder_days) : null,
-        is_deleted: !!license.is_deleted,
-        deleted_at: license.deleted_at || null,
-        deleted_by: license.deleted_by || null,
-      }, 'company_public_licenses', tenantContext)))
-    if (error) return error
-  }
-
-  return null
-}
-
-function cleanPublicRow(row: Record<string, any>) {
-  const { id, company_id, created_at, updated_at, ...rest } = row
-  return Object.fromEntries(
-    Object.entries(rest)
-      .filter(([, value]) => value !== undefined)
-      .map(([key, value]) => {
-        if (value === '') return [key, null]
-        if (key === 'employee_count') return [key, value ? Number(value) : null]
-        return [key, value]
-      })
-  )
-}
-
-async function replaceCompanyPartners(
-  supabase: ReturnType<typeof createServiceClient>,
-  companyId: string,
-  partners: Record<string, any>[],
-  tenantContext: TenantContext
-) {
-  if (!partners.length) return null
-
-  const { error } = await supabase
-    .from('company_partners')
-    .insert(partners.map(partner => withTenantInsertScopeForTable(mapPartnerForDb(companyId, partner), 'company_partners', tenantContext)))
-
-  return error
-}
-
-function mapPartnerForDb(companyId: string, partner: Record<string, any>) {
-  const displayName = partner.display_name || [partner.first_name, partner.last_name].filter(Boolean).join(' ').trim() || partner.partner_name || 'Ortak'
-  const status = partner.status || partnerStatusLabel(partner.record_status)
-
-  return {
-    company_id: companyId,    partner_name: displayName,
-    partner_type: partner.owner_kind === 'organization' || partner.partner_type === 'company' ? 'company' : 'person',
-    identity_tax_number: partner.identity_number || partner.identity_tax_number || null,
-    share_ratio: partner.share_ratio || partner.share_ratio ? Number(partner.share_ratio ?? partner.share_ratio) : null,
-    signature_authority: !!(partner.has_representation_right ?? partner.signature_authority),
-    owner_kind: partner.owner_kind || (partner.partner_type === 'company' ? 'organization' : 'person'),
-    source_type: partner.source_type || null,
-    source_id: partner.source_id || null,
-    display_name: displayName,
-    identity_number: partner.identity_number || partner.identity_tax_number || null,
-    share_class: partner.share_class || 'Adi Pay',
-    share_units: partner.share_units ? Number(partner.share_units) : null,
-    nominal_value: partner.nominal_value ? Number(partner.nominal_value) : null,
-    capital_amount: partner.capital_amount ? Number(partner.capital_amount) : null,    voting_ratio: partner.voting_ratio ? Number(partner.voting_ratio) : null,
-    profit_ratio: partner.profit_ratio ? Number(partner.profit_ratio) : null,
-    beneficial_owner: !!partner.beneficial_owner,
-    is_beneficial_owner: !!(partner.beneficial_owner || partner.is_beneficial_owner),
-    beneficial_ratio: partner.beneficial_ratio ? Number(partner.beneficial_ratio) : null,
-    beneficial_note: partner.beneficial_note || null,
-    is_ultimate_controller: !!partner.is_ultimate_controller,
-    has_representation_right: !!(partner.has_representation_right ?? partner.signature_authority),
-    has_control_right: !!partner.has_control_right,
-    control_type: partner.control_type || null,
-    has_board_nomination_right: !!partner.has_board_nomination_right,
-    has_veto_right: !!partner.has_veto_right,
-    has_privileged_share: !!partner.has_privileged_share,
-    start_date: partner.start_date || null,
-    end_date: partner.end_date || null,
-    status,
-    record_status: partner.record_status || normalizePartnerRecordStatus(status),
-    document_reference_id: partner.document_reference_id || null,
-    notes: partner.notes || null,
-    history: partner.history || [],
-    is_deleted: !!partner.is_deleted,
-    deleted_at: partner.deleted_at || null,
-  }
-}
-
-function normalizePartnerRecordStatus(status: unknown): 'draft' | 'active' | 'passive' {
-  const normalized = String(status || '').trim().toLocaleLowerCase('tr-TR')
-  if (normalized === 'active' || normalized === 'aktif') return 'active'
-  if (normalized === 'passive' || normalized === 'pasif') return 'passive'
-  return 'draft'
-}
-
-function partnerStatusLabel(recordStatus: unknown) {
-  if (recordStatus === 'active') return 'Aktif'
-  if (recordStatus === 'passive') return 'Pasif'
-  return 'Taslak'
-}
-
-async function replaceCompanyRepresentatives(
-  supabase: ReturnType<typeof createServiceClient>,
-  companyId: string,
-  representatives: Record<string, any>[],
-  tenantContext: TenantContext
-) {
-  if (!representatives.length) return null
-
-  const { error } = await supabase
-    .from('company_representatives')
-    .insert(representatives.map(representative =>
-      withTenantInsertScopeForTable(mapRepresentativeForDb(companyId, representative), 'company_representatives', tenantContext)
-    ))
-
-  return error
-}
-
-function normalizeCompanyRepresentativeAuthority(value: unknown) {
-  return String(value || '').trim()
-}
-
-function getCompanyRepresentativePrimaryAuthority(representative: Record<string, any>) {
-  const candidates = [
-    representative.job_title,
-    representative.primary_authority_type,
-    Array.isArray(representative.authority_types) ? representative.authority_types[0] : null,
-    representative.authority_type,
-  ]
-  return candidates.map(normalizeCompanyRepresentativeAuthority).find(Boolean) || ''
-}
-
-function mapRepresentativeForDb(companyId: string, representative: Record<string, any>) {
-  const primaryAuthority = getCompanyRepresentativePrimaryAuthority(representative)
-  const authorityTypes = Array.isArray(representative.authority_types) && representative.authority_types.length
-    ? representative.authority_types.map(normalizeCompanyRepresentativeAuthority).filter(Boolean)
-    : [primaryAuthority].filter(Boolean)
-
-  return {
-    company_id: companyId,    full_name: representative.display_name || representative.full_name || 'Temsilci',
-    job_title: primaryAuthority || null,
-    authority_type: primaryAuthority || 'other',
-    authority_types: authorityTypes,
-    person_kind: representative.person_kind || 'person',
-    source_type: representative.source_type || null,
-    source_id: representative.source_id || null,
-    display_name: representative.display_name || representative.full_name || null,
-    start_date: representative.start_date || null,
-    end_date: representative.end_date || null,
-    status: representative.status || 'Aktif',
-    document_reference_id: representative.document_reference_id || null,
-    notes: representative.notes || null,
-    bank_authority_level: representative.bank_authority_level || null,
-    transaction_limit: representative.transaction_limit ? Number(representative.transaction_limit) : null,
-    payment_approval_limit: representative.payment_approval_limit ? Number(representative.payment_approval_limit) : null,
-    purchase_approval_limit: representative.purchase_approval_limit ? Number(representative.purchase_approval_limit) : null,
-    currency: representative.currency || 'TRY',
-    signature_type: representative.signature_type || null,
-    signature_degree: representative.signature_degree || null,
-    requires_joint_signature: !!representative.requires_joint_signature,
-    can_approve_alone: !!representative.can_approve_alone,
-    department_scope: representative.department_scope || null,
-    gib_permissions: representative.gib_permissions || null,
-    can_submit_declaration: !!representative.can_submit_declaration,
-    can_process_e_invoice: !!representative.can_process_e_invoice,
-    sgk_permissions: representative.sgk_permissions || null,
-    can_submit_hiring_notice: !!representative.can_submit_hiring_notice,
-    can_submit_termination_notice: !!representative.can_submit_termination_notice,
-    history: representative.history || [],
-    is_deleted: !!representative.is_deleted,
-    deleted_at: representative.deleted_at || null,
-  }
 }

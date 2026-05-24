@@ -5,6 +5,7 @@
  */
 
 export type CompanyLifecycleStatus = 'draft' | 'active' | 'liquidation' | 'deregistered'
+export type CompanyRelatedStatus = 'ok' | 'module_closed' | 'error'
 
 export interface CompanyLifecycleEvent {
   id: string
@@ -168,6 +169,8 @@ export interface Sirket {
   opening_details?: CompanyOpeningDetails | null
   liquidation_details?: CompanyLiquidationDetails | null
   deregistration_details?: CompanyDeregistrationDetails | null
+  related_status?: Record<string, CompanyRelatedStatus>
+  related_errors?: Record<string, string>
 }
 
 export interface CompanyPublicHistoryItem {

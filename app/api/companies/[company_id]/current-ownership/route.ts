@@ -1,5 +1,6 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
+import { applyTenantQueryScope, resolveTenantContext } from '@/lib/tenancy/server'
 
 const CURRENT_OWNERSHIP_COLUMNS = [
   'company_id',
@@ -19,14 +20,18 @@ const CURRENT_OWNERSHIP_COLUMNS = [
   'warnings',
 ].join(',')
 
-export async function GET(_request: Request, { params }: { params: Promise<{ company_id: string }> }) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ company_id: string }> }) {
   const { company_id } = await params
   const supabase = createServiceClient()
-  const { data, error } = await supabase
+  const tenantContext = resolveTenantContext(request)
+  let query = supabase
     .from('v_current_ownership')
     .select(CURRENT_OWNERSHIP_COLUMNS)
     .eq('company_id', company_id)
     .order('current_share_ratio', { ascending: false })
+
+  query = applyTenantQueryScope(query, 'v_current_ownership', tenantContext)
+  const { data, error } = await query
 
   if (error) return NextResponse.json({ error: error.message, code: error.code || 'FETCH_FAILED' }, { status: 500 })
   return NextResponse.json({ data })

@@ -11,9 +11,20 @@ import {
 import { safeCrudResponse, safeReadRecord, safeUpdateRecord } from '@/lib/crud/safeCrudService'
 import { extractCompanyLogoVariants } from '@/lib/media/companyLogo'
 import { requirePermission } from '@/lib/security/serverPermissions'
-import { applyTenantQueryScope, resolveTenantContext, type TenantContext, withTenantInsertScopeForTable } from '@/lib/tenancy/server'
+import { applyTenantQueryScope, resolveTenantContext } from '@/lib/tenancy/server'
 import { getTenantCompanyScope, isWritableCompanyScope } from '@/lib/tenancy/companyScopes'
 import { isValidFiscalYearStart, parseFiscalYearStartStorage } from '@/lib/companies/fiscalYear'
+import { isMissingTableError } from '@/lib/modules/companies/companyErrors'
+import {
+  fetchCompanyRelatedSection,
+  relatedErrorMap,
+  relatedStatusMap,
+} from '@/lib/modules/companies/companyRelatedSections.server'
+import { ensureCompanyRootUnit } from '@/lib/modules/companies/companyRelations.service'
+import {
+  getDisallowedCompanyRelationPatchViolation,
+  getOperationControlledCompanyPatchViolation,
+} from '@/lib/modules/companies/companyOperationControls'
 
 const COMPANY_NACE_SELECT = 'id,company_id,nace_code_id,is_primary,status,start_date,end_date,notes,is_deleted,created_at,updated_at,version,nace_code:nace_codes(id,nace_code,description,hazard_class,source_name,source_url,source_reference,valid_from,valid_to,is_active,last_checked_at)'
 
@@ -105,15 +116,6 @@ function omitNullishValues(value: Record<string, any>) {
   return Object.fromEntries(
     Object.entries(value).filter(([, item]) => item !== null && item !== undefined)
   )
-}
-
-function isMissingTableError(error: any) {
-  const message = String(error?.message || '')
-  return error?.code === '42P01'
-    || error?.code === 'PGRST205'
-    || message.includes('Could not find the table')
-    || message.includes('schema cache')
-    || message.includes('does not exist')
 }
 
 const COMPANY_DETAIL_SELECT = 'id,organization_id,field_history,short_name,trade_name,tax_number,tax_office,company_type,city,district,address,phone,email,is_deleted,record_status,company_status,committed_capital_amount,paid_capital_amount,mersis_number,trade_registry_number,foundation_date,legal_entity,electronic_notification_address,trade_registry_office,parent_company_id,company_code,logo_url,country,website,e_invoice_taxpayer,e_archive_taxpayer,e_waybill_taxpayer,sgk_workplace_registry_no,sgk_province,sgk_branch,nace_codes,risk_class,default_currency,default_language,time_zone,fiscal_year_start,hero_images,hero_documents,created_at,updated_at'
@@ -210,84 +212,104 @@ export async function GET(
     return NextResponse.json({ error: error.message, code: error.code || 'FETCH_FAILED' }, { status: 500 })
   }
 
-  const scoped = (tableName: string, query: any) => applyTenantQueryScope(query, tableName, tenantContext)
-  const [
-    partners,
-    representatives,
-    stakeholders,
-    logos,
-    publicTax,
-    publicSgk,
-    publicIncentives,
-    publicRegistry,
-    publicLicenses,
-    publicChannels,
-    currentOwnership,
-    openingDetails,
-    liquidationDetails,
-    deregistrationDetails,
-    lifecycleEvents,
-  ] = await Promise.all([
-    scoped('company_partners', supabase.from('company_partners').select('id,company_id,company_id,person_id,organization_id,owner_kind,partner_type,display_name,partner_name,identity_number,identity_tax_number,share_ratio,share_ratio,voting_ratio,profit_ratio,has_representation_right,signature_authority,start_date,end_date,status,is_deleted,source_type,source_id,history,created_at').or(`company_id.eq.${id},company_id.eq.${id}`)),
-    scoped('company_representatives', supabase.from('company_representatives').select('id,company_id,company_id,person_id,organization_id,person_kind,source_type,source_id,display_name,full_name,authority_types,job_title,authority_type,status,start_date,end_date,signature_type,transaction_limit,currency,requires_joint_signature,can_approve_alone,is_deleted,history,created_at').or(`company_id.eq.${id},company_id.eq.${id}`)),
-    scoped('stakeholders', supabase.from('stakeholders').select('id,company_id,person_id,organization_id,stakeholder_type,category,display_name,tax_id,phone,email,country,city,status,priority_level,relationship_start_date,is_deleted,history,created_at').eq('company_id', id)),
-    scoped('company_logos', supabase.from('company_logos').select('id,company_id,file_name,file_url,is_primary,created_at').eq('company_id', id)),
-    scoped('company_public_tax', supabase.from('company_public_tax').select(PUBLIC_TAX_SELECT).eq('company_id', id)).maybeSingle(),
-    scoped('company_public_sgk', supabase.from('company_public_sgk').select(PUBLIC_SGK_SELECT).eq('company_id', id)).maybeSingle(),
-    scoped('company_public_incentives', supabase.from('company_public_incentives').select(PUBLIC_INCENTIVES_SELECT).eq('company_id', id)).maybeSingle(),
-    scoped('company_public_registry', supabase.from('company_public_registry').select(PUBLIC_REGISTRY_SELECT).eq('company_id', id)).maybeSingle(),
-    scoped('company_public_licenses', supabase.from('company_public_licenses').select(PUBLIC_LICENSES_SELECT).eq('company_id', id)),
-    scoped('company_public_channels', supabase.from('company_public_channels').select(PUBLIC_CHANNELS_SELECT).eq('company_id', id)).maybeSingle(),
-    supabase.from('v_current_ownership').select(CURRENT_OWNERSHIP_SELECT).eq('company_id', id),
-    supabase.from('company_opening_details').select('*').eq('company_id', id).maybeSingle(),
-    supabase.from('company_liquidation_details').select('*').eq('company_id', id).maybeSingle(),
-    supabase.from('company_deregistration_details').select('*').eq('company_id', id).maybeSingle(),
-    scoped('company_lifecycle_events', supabase.from('company_lifecycle_events').select('id,company_id,event_type,event_date,old_status,new_status,payload_json,document_reference_id,created_at,created_by').eq('company_id', id)).order('created_at', { ascending: false }).limit(25),
+  const relatedSections = await Promise.all([
+    fetchCompanyRelatedSection({
+      supabase,
+      table: 'company_partners',
+      key: 'partners',
+      label: 'Ortaklar',
+      companyId: id,
+      tenantContext,
+      fallback: [] as Record<string, any>[],
+      select: 'id,company_id,person_id,organization_id,owner_kind,partner_type,display_name,partner_name,identity_number,identity_tax_number,share_ratio,voting_ratio,profit_ratio,has_representation_right,signature_authority,start_date,end_date,status,is_deleted,source_type,source_id,history,created_at',
+    }),
+    fetchCompanyRelatedSection({
+      supabase,
+      table: 'company_representatives',
+      key: 'representatives',
+      label: 'Temsilciler',
+      companyId: id,
+      tenantContext,
+      fallback: [] as Record<string, any>[],
+      select: 'id,company_id,person_id,organization_id,person_kind,source_type,source_id,display_name,full_name,authority_types,job_title,authority_type,status,start_date,end_date,signature_type,transaction_limit,currency,requires_joint_signature,can_approve_alone,is_deleted,history,created_at',
+    }),
+    fetchCompanyRelatedSection({
+      supabase,
+      table: 'stakeholders',
+      key: 'stakeholders',
+      label: 'Paydaşlar',
+      companyId: id,
+      tenantContext,
+      fallback: [] as Record<string, any>[],
+      select: 'id,company_id,person_id,organization_id,stakeholder_type,category,display_name,tax_id,phone,email,country,city,status,priority_level,relationship_start_date,is_deleted,history,created_at',
+    }),
+    fetchCompanyRelatedSection({
+      supabase,
+      table: 'company_logos',
+      key: 'logos',
+      label: 'Logolar',
+      companyId: id,
+      tenantContext,
+      fallback: [] as Record<string, any>[],
+      select: 'id,company_id,file_name,file_url,is_primary,created_at',
+    }),
+    fetchCompanyRelatedSection({ supabase, table: 'company_public_tax', key: 'public_tax', label: 'Vergi bilgileri', companyId: id, tenantContext, fallback: {}, select: PUBLIC_TAX_SELECT, mode: 'maybeSingle' }),
+    fetchCompanyRelatedSection({ supabase, table: 'company_public_sgk', key: 'public_sgk', label: 'SGK bilgileri', companyId: id, tenantContext, fallback: {}, select: PUBLIC_SGK_SELECT, mode: 'maybeSingle' }),
+    fetchCompanyRelatedSection({ supabase, table: 'company_public_incentives', key: 'public_incentives', label: 'Teşvik bilgileri', companyId: id, tenantContext, fallback: {}, select: PUBLIC_INCENTIVES_SELECT, mode: 'maybeSingle' }),
+    fetchCompanyRelatedSection({ supabase, table: 'company_public_registry', key: 'public_registry', label: 'Sicil bilgileri', companyId: id, tenantContext, fallback: {}, select: PUBLIC_REGISTRY_SELECT, mode: 'maybeSingle' }),
+    fetchCompanyRelatedSection({ supabase, table: 'company_public_licenses', key: 'public_licenses', label: 'Ruhsat bilgileri', companyId: id, tenantContext, fallback: [] as Record<string, any>[], select: PUBLIC_LICENSES_SELECT }),
+    fetchCompanyRelatedSection({ supabase, table: 'company_public_channels', key: 'public_channels', label: 'Dijital kamu kanalları', companyId: id, tenantContext, fallback: {}, select: PUBLIC_CHANNELS_SELECT, mode: 'maybeSingle' }),
+    fetchCompanyRelatedSection({ supabase, table: 'v_current_ownership', key: 'current_ownership', label: 'Güncel ortaklık', companyId: id, tenantContext, fallback: [] as Record<string, any>[], select: CURRENT_OWNERSHIP_SELECT }),
+    fetchCompanyRelatedSection({ supabase, table: 'company_opening_details', key: 'opening_details', label: 'Açılış bilgileri', companyId: id, tenantContext, fallback: null as Record<string, any> | null, mode: 'maybeSingle' }),
+    fetchCompanyRelatedSection({ supabase, table: 'company_liquidation_details', key: 'liquidation_details', label: 'Tasfiye bilgileri', companyId: id, tenantContext, fallback: null as Record<string, any> | null, mode: 'maybeSingle' }),
+    fetchCompanyRelatedSection({ supabase, table: 'company_deregistration_details', key: 'deregistration_details', label: 'Terkin bilgileri', companyId: id, tenantContext, fallback: null as Record<string, any> | null, mode: 'maybeSingle' }),
+    fetchCompanyRelatedSection({
+      supabase,
+      table: 'company_lifecycle_events',
+      key: 'lifecycle_events',
+      label: 'Yaşam döngüsü geçmişi',
+      companyId: id,
+      tenantContext,
+      fallback: [] as Record<string, any>[],
+      select: 'id,company_id,event_type,event_date,old_status,new_status,payload_json,document_reference_id,created_at,created_by',
+      query: query => query.eq('company_id', id).order('created_at', { ascending: false }).limit(25),
+    }),
+    fetchCompanyRelatedSection({
+      supabase,
+      table: 'company_nace_codes',
+      key: 'company_nace_codes',
+      label: 'NACE kodları',
+      companyId: id,
+      tenantContext,
+      fallback: [] as Record<string, any>[],
+      select: COMPANY_NACE_SELECT,
+      query: query => query.eq('company_id', id).eq('is_deleted', false).order('is_primary', { ascending: false }).order('created_at', { ascending: false }),
+    }),
   ])
 
-  const relatedError = [
-    partners.error,
-    representatives.error,
-    stakeholders.error,
-    logos.error,
-    publicTax.error,
-    publicSgk.error,
-    publicIncentives.error,
-    publicRegistry.error,
-    publicLicenses.error,
-    publicChannels.error,
-    currentOwnership.error,
-    openingDetails.error,
-    liquidationDetails.error,
-    deregistrationDetails.error,
-    lifecycleEvents.error,
-  ].find(error => error && !isMissingTableError(error))
+  const relatedByKey = Object.fromEntries(relatedSections.map(result => [result.key, result]))
+  const partners = relatedByKey.partners
+  const representatives = relatedByKey.representatives
+  const stakeholders = relatedByKey.stakeholders
+  const logos = relatedByKey.logos
+  const publicTax = relatedByKey.public_tax
+  const publicSgk = relatedByKey.public_sgk
+  const publicIncentives = relatedByKey.public_incentives
+  const publicRegistry = relatedByKey.public_registry
+  const publicLicenses = relatedByKey.public_licenses
+  const publicChannels = relatedByKey.public_channels
+  const currentOwnership = relatedByKey.current_ownership
+  const openingDetails = relatedByKey.opening_details
+  const liquidationDetails = relatedByKey.liquidation_details
+  const deregistrationDetails = relatedByKey.deregistration_details
+  const lifecycleEvents = relatedByKey.lifecycle_events
+  const companyNaceCodes = relatedByKey.company_nace_codes
 
-  if (relatedError) {
-    return NextResponse.json({
-      error: relatedError.message,
-      code: relatedError.code || 'RELATED_FETCH_FAILED',
-    }, { status: 500 })
-  }
-
-  const companyNaceCodes = await scoped('company_nace_codes', supabase
-    .from('company_nace_codes')
-    .select(COMPANY_NACE_SELECT)
-    .eq('company_id', id)
-    .eq('is_deleted', false)
-  )
-    .order('is_primary', { ascending: false })
-    .order('created_at', { ascending: false })
-
-  if (companyNaceCodes.error && !isMissingTableError(companyNaceCodes.error)) {
-    return NextResponse.json({
-      error: companyNaceCodes.error.message,
-      code: companyNaceCodes.error.code || 'COMPANY_NACE_FETCH_FAILED',
-    }, { status: 500 })
-  }
-
-  const ownershipByPartnerId = new Map((currentOwnership.data || []).map((row: Record<string, any>) => [row.partner_id, row]))
-  const partnersWithOwnership = (partners.data || []).map((partner: Record<string, any>) => {
+  const currentOwnershipRows = Array.isArray(currentOwnership.data) ? currentOwnership.data : []
+  const partnerRows = Array.isArray(partners.data) ? partners.data : []
+  const lifecycleRows = Array.isArray(lifecycleEvents.data) ? lifecycleEvents.data : []
+  const ownershipByPartnerId = new Map(currentOwnershipRows.map((row: Record<string, any>) => [row.partner_id, row]))
+  const partnersWithOwnership = partnerRows.map((partner: Record<string, any>) => {
     const ownership = ownershipByPartnerId.get(partner.id)
     if (!ownership) return partner
     return {
@@ -315,11 +337,13 @@ export async function GET(
     public_licenses: publicLicenses.data || [],
     public_channels: publicChannels.data || {},
     company_nace_codes: companyNaceCodes.data || [],
-    opening_details: openingDetails.error && isMissingTableError(openingDetails.error) ? null : openingDetails.data || null,
-    liquidation_details: liquidationDetails.error && isMissingTableError(liquidationDetails.error) ? null : liquidationDetails.data || null,
-    deregistration_details: deregistrationDetails.error && isMissingTableError(deregistrationDetails.error) ? null : deregistrationDetails.data || null,
-    lifecycle_events: lifecycleEvents.error && isMissingTableError(lifecycleEvents.error) ? [] : lifecycleEvents.data || [],
-    lifecycle_last_event: lifecycleEvents.error && isMissingTableError(lifecycleEvents.error) ? null : lifecycleEvents.data?.[0] || null,
+    opening_details: openingDetails.data || null,
+    liquidation_details: liquidationDetails.data || null,
+    deregistration_details: deregistrationDetails.data || null,
+    lifecycle_events: lifecycleRows,
+    lifecycle_last_event: lifecycleRows[0] || null,
+    related_status: relatedStatusMap(relatedSections),
+    related_errors: relatedErrorMap(relatedSections),
   }
 
   const dataRow = data as Record<string, any>
@@ -350,9 +374,18 @@ export async function PATCH(
 
   const body = omitNullishValues(await request.json())
   const parsed = SirketUpdateSchema.safeParse(body)
+  const relationViolation = getDisallowedCompanyRelationPatchViolation(body)
 
   if (!parsed.success) {
     return NextResponse.json({ error: 'Geçersiz veri', code: 'VALIDATION_FAILED', details: parsed.error.flatten() }, { status: 400 })
+  }
+
+  if (relationViolation) {
+    return NextResponse.json({
+      error: relationViolation.message,
+      code: relationViolation.code,
+      details: { fields: relationViolation.fields },
+    }, { status: 409 })
   }
 
   let current: Record<string, any> | null = null
@@ -367,9 +400,16 @@ export async function PATCH(
   if (!currentRead.ok) return safeCrudResponse(currentRead)
   current = currentRead.data
 
+  const operationViolation = getOperationControlledCompanyPatchViolation(body, current)
+  if (operationViolation) {
+    return NextResponse.json({
+      error: operationViolation.message,
+      code: operationViolation.code,
+      details: { fields: operationViolation.fields },
+    }, { status: 409 })
+  }
+
   const {
-    partners,
-    representatives,
     contact_points,
     beneficiary_full_name,
     beneficiary_address,
@@ -381,12 +421,6 @@ export async function PATCH(
     beneficiary_bank_name,
     beneficiary_bank_address,
     beneficiary_currency,
-    public_tax,
-    public_sgk,
-    public_incentives,
-    public_registry,
-    public_licenses,
-    public_channels,
     entity_bank_accounts,
     ...rawCompanyUpdates
   } = parsed.data
@@ -437,79 +471,7 @@ export async function PATCH(
     await new EntityBankAccountsService(supabase as any).syncMany('organization', current.organization_id, entity_bank_accounts, null)
   }
 
-  if (partners) {
-    const partnerError = await replaceCompanyPartners(supabase, id, partners, tenantContext)
-    if (partnerError) return NextResponse.json({ error: partnerError.message, code: partnerError.code || 'PARTNER_SAVE_FAILED' }, { status: 500 })
-  }
-
-  if (representatives) {
-    const representativeError = await replaceCompanyRepresentatives(supabase, id, representatives, tenantContext)
-    if (representativeError) return NextResponse.json({ error: representativeError.message, code: representativeError.code || 'REPRESENTATIVE_SAVE_FAILED' }, { status: 500 })
-  }
-
-  const publicError = await replaceCompanyPublicData(supabase, id, {
-    public_tax,
-    public_sgk,
-    public_incentives,
-    public_registry,
-    public_licenses,
-    public_channels,
-  }, tenantContext)
-  if (publicError) return NextResponse.json({ error: publicError.message, code: publicError.code || 'PUBLIC_SAVE_FAILED' }, { status: 500 })
-
   return NextResponse.json({ data })
-}
-
-async function ensureCompanyRootUnit(
-  supabase: ReturnType<typeof createServiceClient>,
-  companyId: string,
-  companyData: Record<string, any>,
-  tenantContext: TenantContext
-) {
-  const { data: unitType, error: typeError } = await supabase
-    .from('organization_unit_types')
-    .upsert({ name: 'Şirket', slug: 'company', color: '#0f766e', icon: 'Building2', sort_order: 0, is_active: true }, { onConflict: 'slug' })
-    .select('id')
-    .single()
-
-  if (typeError) return isMissingTableError(typeError) ? null : typeError
-
-  const companyName = companyData.trade_name || companyData.short_name || 'Şirket'
-  let existingQuery = supabase
-    .from('organization_units')
-    .select('id')
-    .eq('company_id', companyId)
-    .is('parent_unit_id', null)
-    .eq('type', 'company')
-    .eq('is_deleted', false)
-    .limit(1)
-
-  existingQuery = applyTenantQueryScope(existingQuery, 'organization_units', tenantContext)
-  const { data: existing, error: findError } = await existingQuery.maybeSingle()
-
-  if (findError) return isMissingTableError(findError) ? null : findError
-
-  const payload = withTenantInsertScopeForTable({
-    company_id: companyId,
-    parent_unit_id: null,
-    name: companyName,
-    short_name: companyData.short_name || null,
-    type: 'company',
-    unit_type_id: unitType?.id || null,
-    status: 'Aktif',
-    active: true,
-    is_deleted: false,
-  }, 'organization_units', tenantContext)
-
-  if (existing?.id) {
-    let updateQuery = supabase.from('organization_units').update(payload).eq('id', existing.id)
-    updateQuery = applyTenantQueryScope(updateQuery, 'organization_units', tenantContext)
-    const { error } = await updateQuery
-    return isMissingTableError(error) ? null : error
-  }
-
-  const { error } = await supabase.from('organization_units').insert(payload)
-  return isMissingTableError(error) ? null : error
 }
 
 export async function DELETE(
@@ -606,337 +568,4 @@ function companyDraftDeleteReferenceChecks(): SafeHardDeleteReferenceCheck[] {
     { tableName: 'organization_units', foreignKey: 'company_id', label: 'Organizasyon birimleri', mode: 'cascadeDelete', optional: true },
     { tableName: 'entity_bank_accounts', foreignKey: 'entity_id', match: { entity_kind: 'company' }, label: 'Şirket banka hesapları', mode: 'cascadeDelete', optional: true },
   ]
-}
-
-function buildFieldHistory(current: Record<string, any>, updates: Record<string, any>) {
-  const existingHistory = (current.field_history && typeof current.field_history === 'object') ? current.field_history : {}
-  const nextHistory: Record<string, any[]> = { ...existingHistory }
-  const ignored = new Set(['id', 'created_at', 'updated_at', 'created_by', 'field_history', 'hero_images', 'hero_documents'])
-
-  Object.entries(updates).forEach(([field, nextValue]) => {
-    if (ignored.has(field)) return
-    const previousValue = current[field]
-    if (JSON.stringify(previousValue ?? null) === JSON.stringify(nextValue ?? null)) return
-
-    nextHistory[field] = [
-      ...(nextHistory[field] || []),
-      {
-        value: previousValue ?? '',
-        date: new Date().toISOString(),
-        user: 'Sistem Kullanıcısı',
-      },
-    ]
-  })
-
-  return nextHistory
-}
-
-async function replaceCompanyPartners(
-  supabase: ReturnType<typeof createServiceClient>,
-  companyId: string,
-  partners: Record<string, any>[],
-  tenantContext: TenantContext
-) {
-  let existingQuery = supabase
-    .from('company_partners')
-    .select('id')
-    .or(`company_id.eq.${companyId},company_id.eq.${companyId}`)
-
-  existingQuery = applyTenantQueryScope(existingQuery, 'company_partners', tenantContext)
-  const { data: existing, error: fetchError } = await existingQuery
-
-  if (fetchError) return fetchError
-
-  const incomingIds = new Set(partners.map(row => row.id).filter(Boolean))
-  const missingIds = (existing || [])
-    .map(row => row.id)
-    .filter(id => !incomingIds.has(id))
-
-  if (missingIds.length > 0) {
-    let deleteQuery = supabase
-      .from('company_partners')
-      .update({
-        is_deleted: true,
-        status: 'Pasif',
-        deleted_at: new Date().toISOString(),
-        deleted_by: 'Sistem Kullanıcısı',
-      })
-      .in('id', missingIds)
-
-    deleteQuery = applyTenantQueryScope(deleteQuery, 'company_partners', tenantContext)
-    const { error } = await deleteQuery
-
-    if (error) return error
-  }
-
-  if (!partners.length) return null
-
-  const { error } = await supabase
-    .from('company_partners')
-    .upsert(partners.map(partner =>
-      withTenantInsertScopeForTable(mapPartnerForDb(companyId, partner), 'company_partners', tenantContext)
-    ), { onConflict: 'id' })
-
-  return error
-}
-
-function mapPartnerForDb(companyId: string, partner: Record<string, any>) {
-  const displayName = partner.display_name || [partner.first_name, partner.last_name].filter(Boolean).join(' ').trim() || partner.partner_name || 'Ortak'
-  const status = partner.status || partnerStatusLabel(partner.record_status)
-
-  return {
-    ...(partner.id ? { id: partner.id } : {}),
-    company_id: companyId,    partner_name: displayName,
-    partner_type: partner.owner_kind === 'organization' || partner.partner_type === 'company' ? 'company' : 'person',
-    identity_tax_number: partner.identity_number || partner.identity_tax_number || null,
-    share_ratio: partner.share_ratio || partner.share_ratio ? Number(partner.share_ratio ?? partner.share_ratio) : null,
-    signature_authority: !!(partner.has_representation_right ?? partner.signature_authority),
-    owner_kind: partner.owner_kind || (partner.partner_type === 'company' ? 'organization' : 'person'),
-    source_type: partner.source_type || null,
-    source_id: partner.source_id || null,
-    display_name: displayName,
-    identity_number: partner.identity_number || partner.identity_tax_number || null,
-    share_class: partner.share_class || 'Adi Pay',
-    share_units: partner.share_units ? Number(partner.share_units) : null,
-    nominal_value: partner.nominal_value ? Number(partner.nominal_value) : null,
-    capital_amount: partner.capital_amount ? Number(partner.capital_amount) : null,    voting_ratio: partner.voting_ratio ? Number(partner.voting_ratio) : null,
-    profit_ratio: partner.profit_ratio ? Number(partner.profit_ratio) : null,
-    beneficial_owner: !!partner.beneficial_owner,
-    is_beneficial_owner: !!(partner.beneficial_owner || partner.is_beneficial_owner),
-    beneficial_ratio: partner.beneficial_ratio ? Number(partner.beneficial_ratio) : null,
-    beneficial_note: partner.beneficial_note || null,
-    is_ultimate_controller: !!partner.is_ultimate_controller,
-    has_representation_right: !!(partner.has_representation_right ?? partner.signature_authority),
-    has_control_right: !!partner.has_control_right,
-    control_type: partner.control_type || null,
-    has_board_nomination_right: !!partner.has_board_nomination_right,
-    has_veto_right: !!partner.has_veto_right,
-    has_privileged_share: !!partner.has_privileged_share,
-    start_date: partner.start_date || null,
-    end_date: partner.end_date || null,
-    status,
-    record_status: partner.record_status || normalizePartnerRecordStatus(status),
-    document_reference_id: partner.document_reference_id || null,
-    notes: partner.notes || null,
-    history: partner.history || [],
-    is_deleted: !!partner.is_deleted,
-    deleted_at: partner.deleted_at || null,
-    deleted_by: partner.is_deleted ? 'Sistem Kullanıcısı' : null,
-  }
-}
-
-function normalizePartnerRecordStatus(status: unknown): 'draft' | 'active' | 'passive' {
-  const normalized = String(status || '').trim().toLocaleLowerCase('tr-TR')
-  if (normalized === 'active' || normalized === 'aktif') return 'active'
-  if (normalized === 'passive' || normalized === 'pasif') return 'passive'
-  return 'draft'
-}
-
-function partnerStatusLabel(recordStatus: unknown) {
-  if (recordStatus === 'active') return 'Aktif'
-  if (recordStatus === 'passive') return 'Pasif'
-  return 'Taslak'
-}
-
-async function replaceCompanyRepresentatives(
-  supabase: ReturnType<typeof createServiceClient>,
-  companyId: string,
-  representatives: Record<string, any>[],
-  tenantContext: TenantContext
-) {
-  let existingQuery = supabase
-    .from('company_representatives')
-    .select('id')
-    .or(`company_id.eq.${companyId},company_id.eq.${companyId}`)
-
-  existingQuery = applyTenantQueryScope(existingQuery, 'company_representatives', tenantContext)
-  const { data: existing, error: fetchError } = await existingQuery
-
-  if (fetchError) return fetchError
-
-  const incomingIds = new Set(representatives.map(row => row.id).filter(Boolean))
-  const missingIds = (existing || [])
-    .map(row => row.id)
-    .filter(id => !incomingIds.has(id))
-
-  if (missingIds.length > 0) {
-    let deleteQuery = supabase
-      .from('company_representatives')
-      .update({
-        is_deleted: true,
-        status: 'Pasif',
-        deleted_at: new Date().toISOString(),
-        deleted_by: 'Sistem Kullanıcısı',
-      })
-      .in('id', missingIds)
-
-    deleteQuery = applyTenantQueryScope(deleteQuery, 'company_representatives', tenantContext)
-    const { error } = await deleteQuery
-
-    if (error) return error
-  }
-
-  if (!representatives.length) return null
-
-  const rows = representatives.map(representative =>
-    withTenantInsertScopeForTable(mapRepresentativeForDb(companyId, representative), 'company_representatives', tenantContext)
-  )
-  const { error } = await supabase
-    .from('company_representatives')
-    .upsert(rows, { onConflict: 'id' })
-
-  return error
-}
-
-function normalizeCompanyRepresentativeAuthority(value: unknown) {
-  return String(value || '').trim()
-}
-
-function getCompanyRepresentativePrimaryAuthority(representative: Record<string, any>) {
-  const candidates = [
-    representative.job_title,
-    representative.primary_authority_type,
-    Array.isArray(representative.authority_types) ? representative.authority_types[0] : null,
-    representative.authority_type,
-  ]
-  return candidates.map(normalizeCompanyRepresentativeAuthority).find(Boolean) || ''
-}
-
-function mapRepresentativeForDb(companyId: string, representative: Record<string, any>) {
-  const primaryAuthority = getCompanyRepresentativePrimaryAuthority(representative)
-  const authorityTypes = Array.isArray(representative.authority_types) && representative.authority_types.length
-    ? representative.authority_types.map(normalizeCompanyRepresentativeAuthority).filter(Boolean)
-    : [primaryAuthority].filter(Boolean)
-
-  return {
-    ...(representative.id ? { id: representative.id } : {}),
-    company_id: companyId,    full_name: representative.display_name || representative.full_name || 'Temsilci',
-    job_title: primaryAuthority || null,
-    authority_type: primaryAuthority || 'other',
-    authority_types: authorityTypes,
-    person_kind: representative.person_kind || 'person',
-    source_type: representative.source_type || null,
-    source_id: representative.source_id || null,
-    display_name: representative.display_name || representative.full_name || null,
-    start_date: representative.start_date || null,
-    end_date: representative.end_date || null,
-    status: representative.status || 'Aktif',
-    document_reference_id: representative.document_reference_id || null,
-    notes: representative.notes || null,
-    bank_authority_level: representative.bank_authority_level || null,
-    transaction_limit: representative.transaction_limit ? Number(representative.transaction_limit) : null,
-    payment_approval_limit: representative.payment_approval_limit ? Number(representative.payment_approval_limit) : null,
-    purchase_approval_limit: representative.purchase_approval_limit ? Number(representative.purchase_approval_limit) : null,
-    currency: representative.currency || 'TRY',
-    signature_type: representative.signature_type || null,
-    signature_degree: representative.signature_degree || null,
-    requires_joint_signature: !!representative.requires_joint_signature,
-    can_approve_alone: !!representative.can_approve_alone,
-    department_scope: representative.department_scope || null,
-    gib_permissions: representative.gib_permissions || null,
-    can_submit_declaration: !!representative.can_submit_declaration,
-    can_process_e_invoice: !!representative.can_process_e_invoice,
-    sgk_permissions: representative.sgk_permissions || null,
-    can_submit_hiring_notice: !!representative.can_submit_hiring_notice,
-    can_submit_termination_notice: !!representative.can_submit_termination_notice,
-    history: representative.history || [],
-    is_deleted: !!representative.is_deleted,
-    deleted_at: representative.deleted_at || null,
-    deleted_by: representative.is_deleted ? 'Sistem Kullanıcısı' : null,
-  }
-}
-
-async function replaceCompanyPublicData(
-  supabase: ReturnType<typeof createServiceClient>,
-  companyId: string,
-  payload: {
-    public_tax?: Record<string, any>
-    public_sgk?: Record<string, any>
-    public_incentives?: Record<string, any>
-    public_registry?: Record<string, any>
-    public_licenses?: Record<string, any>[]
-    public_channels?: Record<string, any>
-  },
-  tenantContext: TenantContext
-) {
-  const singleRows = [
-    ['company_public_tax', payload.public_tax],
-    ['company_public_sgk', payload.public_sgk],
-    ['company_public_incentives', payload.public_incentives],
-    ['company_public_registry', payload.public_registry],
-    ['company_public_channels', payload.public_channels],
-  ] as const
-
-  for (const [table, row] of singleRows) {
-    if (!row || Object.keys(row).length === 0) continue
-    const { error } = await supabase
-      .from(table)
-      .upsert(withTenantInsertScopeForTable({ ...cleanPublicRow(row), company_id: companyId }, table, tenantContext), { onConflict: 'company_id' })
-    if (error) return error
-  }
-
-  if (payload.public_licenses) {
-    let existingQuery = supabase
-      .from('company_public_licenses')
-      .select('id')
-      .eq('company_id', companyId)
-
-    existingQuery = applyTenantQueryScope(existingQuery, 'company_public_licenses', tenantContext)
-    const { data: existing, error: fetchError } = await existingQuery
-
-    if (fetchError) return fetchError
-
-    const incomingIds = new Set(payload.public_licenses.map((row) => row.id).filter(Boolean))
-    const missingIds = (existing || [])
-      .map((row) => row.id)
-      .filter((licenseId) => !incomingIds.has(licenseId))
-
-    if (missingIds.length > 0) {
-      let deleteQuery = supabase
-        .from('company_public_licenses')
-        .update({
-          is_deleted: true,
-          status: 'Pasif',
-          deleted_at: new Date().toISOString(),
-          deleted_by: 'Sistem Kullanıcısı',
-        })
-        .in('id', missingIds)
-
-      deleteQuery = applyTenantQueryScope(deleteQuery, 'company_public_licenses', tenantContext)
-      const { error } = await deleteQuery
-
-      if (error) return error
-    }
-
-    if (payload.public_licenses.length > 0) {
-      const { error } = await supabase
-        .from('company_public_licenses')
-        .upsert(payload.public_licenses.map((license) => withTenantInsertScopeForTable({
-          ...cleanPublicRow(license),
-          ...(license.id ? { id: license.id } : {}),
-          company_id: companyId,
-          reminder_days: license.reminder_days ? Number(license.reminder_days) : null,
-          is_deleted: !!license.is_deleted,
-          deleted_at: license.deleted_at || null,
-          deleted_by: license.deleted_by || null,
-        }, 'company_public_licenses', tenantContext)), { onConflict: 'id' })
-
-      if (error) return error
-    }
-  }
-
-  return null
-}
-
-function cleanPublicRow(row: Record<string, any>) {
-  const { id, company_id, created_at, updated_at, ...rest } = row
-  return Object.fromEntries(
-    Object.entries(rest)
-      .filter(([, value]) => value !== undefined)
-      .map(([key, value]) => {
-        if (value === '') return [key, null]
-        if (key === 'employee_count') return [key, value ? Number(value) : null]
-        return [key, value]
-      })
-  )
 }

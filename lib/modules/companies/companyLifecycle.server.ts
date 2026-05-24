@@ -283,9 +283,9 @@ async function buildCompanyLifecyclePayload(supabase: Supabase, companyId: strin
   }
 
   const [opening, liquidation, deregistration, events, publicTax, publicSgk, publicRegistry, publicChannels] = await Promise.all([
-    safeMaybeSingle(supabase, 'company_opening_details', '*', query => query.eq('company_id', companyId)),
-    safeMaybeSingle(supabase, 'company_liquidation_details', '*', query => query.eq('company_id', companyId)),
-    safeMaybeSingle(supabase, 'company_deregistration_details', '*', query => query.eq('company_id', companyId)),
+    safeMaybeSingle(supabase, 'company_opening_details', '*', query => applyTenantQueryScope(query.eq('company_id', companyId), 'company_opening_details', tenantContext)),
+    safeMaybeSingle(supabase, 'company_liquidation_details', '*', query => applyTenantQueryScope(query.eq('company_id', companyId), 'company_liquidation_details', tenantContext)),
+    safeMaybeSingle(supabase, 'company_deregistration_details', '*', query => applyTenantQueryScope(query.eq('company_id', companyId), 'company_deregistration_details', tenantContext)),
     safeList(supabase, 'company_lifecycle_events', 'id,company_id,event_type,event_date,old_status,new_status,payload_json,document_reference_id,created_at,created_by', query => applyTenantQueryScope(query.eq('company_id', companyId), 'company_lifecycle_events', tenantContext).order('created_at', { ascending: false }).limit(25)),
     safeMaybeSingle(supabase, 'company_public_tax', '*', query => applyTenantQueryScope(query.eq('company_id', companyId), 'company_public_tax', tenantContext)),
     safeMaybeSingle(supabase, 'company_public_sgk', '*', query => applyTenantQueryScope(query.eq('company_id', companyId), 'company_public_sgk', tenantContext)),

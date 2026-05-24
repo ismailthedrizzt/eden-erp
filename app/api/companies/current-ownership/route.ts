@@ -1,5 +1,6 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
+import { applyTenantQueryScope, resolveTenantContext } from '@/lib/tenancy/server'
 
 const CURRENT_OWNERSHIP_COLUMNS = [
   'company_id',
@@ -19,8 +20,9 @@ const CURRENT_OWNERSHIP_COLUMNS = [
   'warnings',
 ].join(',')
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   const supabase = createServiceClient()
+  const tenantContext = resolveTenantContext(request)
   const { searchParams } = new URL(request.url)
   const companyIds = searchParams.get('company_ids')?.split(',').map(value => value.trim()).filter(Boolean) || []
 
@@ -31,6 +33,7 @@ export async function GET(request: Request) {
     .order('current_share_ratio', { ascending: false })
 
   if (companyIds.length > 0) query = query.in('company_id', companyIds)
+  query = applyTenantQueryScope(query, 'v_current_ownership', tenantContext)
 
   const { data, error } = await query
   if (error) return NextResponse.json({ error: error.message, code: error.code || 'FETCH_FAILED' }, { status: 500 })

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Archive, BriefcaseBusiness, Building2, CheckCircle2, CircleDot, FileText, History, Landmark, MoreVertical, Pencil, PlayCircle, Settings, ShieldAlert, Trash2, TrendingUp, Users } from 'lucide-react'
+import { AlertTriangle, Archive, BriefcaseBusiness, Building2, CheckCircle2, CircleDot, FileText, History, Landmark, MoreVertical, Pencil, PlayCircle, Settings, ShieldAlert, Trash2, TrendingUp, Users } from 'lucide-react'
 import { useSirketler } from '@/hooks/useSirketler'
 import { EntityForm, FormField, FormMode, FormTab, type FormOperationActionGroup } from '@/components/ui/EntityForm'
 import { CompanyCapitalIncreaseWizard, type CapitalIncreasePrecheckContext, type CapitalIncreaseSubmitPayload } from '@/components/ui/CompanyCapitalIncreaseWizard'
@@ -47,6 +47,9 @@ import type { CompanyLifecycleStatus, Sirket } from '@/types/sirket'
 type PageState = 'list' | 'create' | 'view' | 'edit'
 type ToastState = { type: 'success' | 'error' | 'warning'; title?: string; message: string }
 type SaveError = Error & { toast?: ToastState; fieldErrors?: Record<string, string> }
+type CompanyRelatedStatus = 'ok' | 'module_closed' | 'error'
+type CompanyRelatedStatusMap = Record<string, CompanyRelatedStatus | undefined>
+type CompanyRelatedErrorsMap = Record<string, string | undefined>
 type SirketTableRow = Sirket & {
   adres_ozet: string
   logo_url: string
@@ -304,9 +307,9 @@ const tabs: FormTab[] = [
     label: 'Kamu',
     icon: <Landmark size={16} />,
     fields: [
-      { name: 'e_invoice_taxpayer', label: 'E-Fatura Mükellefi', type: 'checkbox' },
-      { name: 'e_archive_taxpayer', label: 'E-Arşiv Mükellefi', type: 'checkbox' },
-      { name: 'e_waybill_taxpayer', label: 'E-İrsaliye Mükellefi', type: 'checkbox' },
+      { name: 'e_invoice_taxpayer', label: 'E-Fatura Mükellefi', type: 'checkbox', controlledByOperation: COMPANY_PUBLIC_REGISTRATION_CONTROL },
+      { name: 'e_archive_taxpayer', label: 'E-Arşiv Mükellefi', type: 'checkbox', controlledByOperation: COMPANY_PUBLIC_REGISTRATION_CONTROL },
+      { name: 'e_waybill_taxpayer', label: 'E-İrsaliye Mükellefi', type: 'checkbox', controlledByOperation: COMPANY_PUBLIC_REGISTRATION_CONTROL },
       { name: 'sgk_workplace_registry_no', label: 'SGK İşyeri Sicil No', type: 'text', maxLength: 26, inputMode: 'numeric', placeholder: '26 hane: M + 4 işkolu + 2 eski şube + 2 yeni şube + 7 sıra + 3 city + 2 cityçe + 2 kontrol + 3 aracı', controlledByOperation: COMPANY_PUBLIC_REGISTRATION_CONTROL },
       { name: 'sgk_province', label: 'SGK İl', type: 'text', placeholder: 'SGK sicil no girilince otomatik dolar', controlledByOperation: COMPANY_PUBLIC_REGISTRATION_CONTROL },
       { name: 'sgk_branch', label: 'SGK Şube', type: 'text', placeholder: 'SGK sicil no girilince otomatik dolar', controlledByOperation: COMPANY_PUBLIC_REGISTRATION_CONTROL },
@@ -350,6 +353,31 @@ const tabs: FormTab[] = [
 
 const getFieldLabel = (field: string) => FIELD_LABELS[field] || field
 const formatFieldList = (fields: string[]) => fields.map(getFieldLabel).join(', ')
+const OPERATION_CONTROLLED_FORM_FIELDS = new Set([
+  'trade_name',
+  'tax_number',
+  'tax_office',
+  'mersis_number',
+  'trade_registry_number',
+  'foundation_date',
+  'company_type',
+  'country',
+  'city',
+  'district',
+  'address',
+  'committed_capital_amount',
+  'paid_capital_amount',
+  'electronic_notification_address',
+  'trade_registry_office',
+  'e_invoice_taxpayer',
+  'e_archive_taxpayer',
+  'e_waybill_taxpayer',
+  'sgk_workplace_registry_no',
+  'sgk_province',
+  'sgk_branch',
+  'risk_class',
+  'nace_codes',
+])
 const fiscalYearMonthOptions = Array.from({ length: 12 }, (_, index) => ({
   value: index + 1,
   label: new Intl.DateTimeFormat('tr-TR', { month: 'long' }).format(new Date(2024, index, 1)),
@@ -799,7 +827,8 @@ export default function SirketlerPage() {
     const payload: Record<string, any> = {}
 
     Object.entries(raw).forEach(([key, value]) => {
-      if (['partners', 'representatives', 'stakeholders', 'documents', 'logos', 'lifecycle_status_badge', 'company_lifecycle_summary', 'record_status', 'company_status', 'opening_details', 'liquidation_details', 'deregistration_details', 'lifecycle_events', 'lifecycle_last_event', 'capital_completion_ratio', 'committed_capital_amount', 'paid_capital_amount'].includes(key)) return
+      if (pageState !== 'create' && OPERATION_CONTROLLED_FORM_FIELDS.has(key)) return
+      if (['partners', 'representatives', 'stakeholders', 'documents', 'logos', 'lifecycle_status_badge', 'company_lifecycle_summary', 'record_status', 'company_status', 'opening_details', 'liquidation_details', 'deregistration_details', 'lifecycle_events', 'lifecycle_last_event', 'capital_completion_ratio', 'committed_capital_amount', 'paid_capital_amount', 'company_nace_codes', 'public_tax', 'public_sgk', 'public_incentives', 'public_registry', 'public_licenses', 'public_channels', 'related_status', 'related_errors'].includes(key)) return
       if (value === '' || value === null || value === undefined) return
       if (pageState !== 'create' && ['hero_documents', 'hero_images'].includes(key) && selectedSirket) {
         if (JSON.stringify(value) === JSON.stringify((selectedSirket as any)[key] || [])) return
@@ -859,10 +888,11 @@ export default function SirketlerPage() {
           ...result.data,
         } as Sirket))
       }
+      const resultWarning = (result as any)?.warning
       setToast({
-        type: 'success',
-        title: 'Kayıt Başarılı',
-        message: mode === 'create' ? 'Şirket kaydı oluşturuldu' : 'Şirket bilgileri güncellendi',
+        type: resultWarning ? 'warning' : 'success',
+        title: resultWarning ? 'Kısmi Kayıt' : 'Kayıt Başarılı',
+        message: resultWarning || (mode === 'create' ? 'Şirket kaydı oluşturuldu' : 'Şirket bilgileri güncellendi'),
       })
       await yenile()
       setPageState('list')
@@ -1264,15 +1294,18 @@ export default function SirketlerPage() {
                 if (nextField.name === 'risk_class') {
                   return {
                     ...nextField,
-                    render: () => {
+                    render: ({ data }) => {
                       const rows = Array.isArray((selectedSirket as any)?.company_nace_codes) ? (selectedSirket as any).company_nace_codes : []
                       const primary = rows.find((row: any) => row?.is_primary && row?.status !== 'passive')
                       const hazardClass = formatHazardClass(primary?.nace_code?.hazard_class || (selectedSirket as any)?.public_sgk?.risk_class || (selectedSirket as any)?.risk_class) || 'Birincil NACE seçilmemiş'
 
                       return (
-                        <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm dark:border-gray-700 dark:bg-gray-900/50">
-                          <span className="inline-flex rounded-full bg-blue-50 px-3 py-1 text-sm font-semibold text-blue-700 dark:bg-blue-900/30 dark:text-blue-200">{hazardClass}</span>
-                          <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">Tehlike sınıfı, birincil NACE koduna göre otomatik belirlenir.</p>
+                        <div className="space-y-3">
+                          <RelatedSectionNotice data={data} sections={['public_sgk', 'company_nace_codes']} />
+                          <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 text-sm dark:border-gray-700 dark:bg-gray-900/50">
+                            <span className="inline-flex rounded-full bg-blue-50 px-3 py-1 text-sm font-semibold text-blue-700 dark:bg-blue-900/30 dark:text-blue-200">{hazardClass}</span>
+                            <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">Tehlike sınıfı, birincil NACE koduna göre otomatik belirlenir.</p>
+                          </div>
                         </div>
                       )
                     },
@@ -1282,12 +1315,15 @@ export default function SirketlerPage() {
                 if (nextField.name === 'company_nace_codes') {
                   return {
                     ...nextField,
-                    render: ({ value }) => (
-                      <CompanyNaceCodesSection
-                        companyId={selectedSirket?.id}
-                        initialRows={Array.isArray(value) ? value : (selectedSirket as any)?.company_nace_codes}
-                        readOnly={pageState !== 'edit'}
-                      />
+                    render: ({ value, data }) => (
+                      <div className="space-y-3">
+                        <RelatedSectionNotice data={data} sections={['public_tax', 'public_sgk', 'public_registry', 'public_licenses', 'public_channels', 'company_nace_codes']} />
+                        <CompanyNaceCodesSection
+                          companyId={selectedSirket?.id}
+                          initialRows={Array.isArray(value) ? value : (selectedSirket as any)?.company_nace_codes}
+                          readOnly={pageState !== 'edit'}
+                        />
+                      </div>
                     ),
                   }
                 }
@@ -1307,14 +1343,24 @@ export default function SirketlerPage() {
                 if (nextField.name === 'partners') {
                   return {
                     ...nextField,
-                    render: ({ value }) => <RelatedSummaryTable type="partners" rows={Array.isArray(value) ? value : []} />,
+                    render: ({ value, data }) => (
+                      <div className="space-y-3">
+                        <RelatedSectionNotice data={data} sections={['partners', 'current_ownership']} />
+                        <RelatedSummaryTable type="partners" rows={Array.isArray(value) ? value : []} />
+                      </div>
+                    ),
                   }
                 }
 
                 if (nextField.name === 'stakeholders') {
                   return {
                     ...nextField,
-                    render: ({ value }) => <RelatedSummaryTable type="stakeholders" rows={Array.isArray(value) ? value : []} />,
+                    render: ({ value, data }) => (
+                      <div className="space-y-3">
+                        <RelatedSectionNotice data={data} sections={['stakeholders']} />
+                        <RelatedSummaryTable type="stakeholders" rows={Array.isArray(value) ? value : []} />
+                      </div>
+                    ),
                   }
                 }
 
@@ -1322,7 +1368,12 @@ export default function SirketlerPage() {
 
                 return {
                   ...nextField,
-                  render: ({ value }) => <RelatedSummaryTable type="representatives" rows={Array.isArray(value) ? value : []} />,
+                  render: ({ value, data }) => (
+                    <div className="space-y-3">
+                      <RelatedSectionNotice data={data} sections={['representatives']} />
+                      <RelatedSummaryTable type="representatives" rows={Array.isArray(value) ? value : []} />
+                    </div>
+                  ),
                 }
               }),
             }))}
@@ -1944,6 +1995,47 @@ function formatLifecycleEventSummary(event: any) {
 
 function formatLifecycleStatusLabel(value: unknown) {
   return getCompanyLifecycleLabel(getCompanyLifecycleStatus({ record_status: value as CompanyLifecycleStatus }))
+}
+
+const RELATED_SECTION_LABELS: Record<string, string> = {
+  partners: 'Ortaklar',
+  representatives: 'Temsilciler',
+  stakeholders: 'Paydaşlar',
+  public_tax: 'Vergi bilgileri',
+  public_sgk: 'SGK bilgileri',
+  public_registry: 'Sicil bilgileri',
+  public_licenses: 'Ruhsat bilgileri',
+  public_channels: 'Dijital kamu kanalları',
+  company_nace_codes: 'NACE kodları',
+  current_ownership: 'Güncel ortaklık',
+}
+
+function RelatedSectionNotice({ data, sections }: { data?: Record<string, any>; sections: string[] }) {
+  const statuses = (data?.related_status || {}) as CompanyRelatedStatusMap
+  const errors = (data?.related_errors || {}) as CompanyRelatedErrorsMap
+  const warnings = sections
+    .map(section => {
+      const status = statuses[section]
+      if (!status || status === 'ok') return null
+      const label = RELATED_SECTION_LABELS[section] || section
+      return errors[section] || (status === 'module_closed'
+        ? `${label} modülü kapalı veya migration eksik.`
+        : `${label} yüklenemedi.`)
+    })
+    .filter(Boolean) as string[]
+
+  if (!warnings.length) return null
+
+  return (
+    <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+      <div className="flex gap-2">
+        <AlertTriangle size={16} className="mt-0.5 flex-shrink-0" />
+        <div className="space-y-1">
+          {warnings.map(warning => <div key={warning}>{warning}</div>)}
+        </div>
+      </div>
+    </div>
+  )
 }
 
 function RelatedSummaryTable({ type, rows }: { type: 'partners' | 'representatives' | 'stakeholders'; rows: any[] }) {

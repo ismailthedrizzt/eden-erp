@@ -160,11 +160,12 @@ export async function buildCapitalIncreasePrecheck(
     }
   }
 
-  const { data: openingDetails } = await supabase
+  let openingQuery = supabase
     .from('company_opening_details')
     .select('payload_json,foundation_date')
     .eq('company_id', companyId)
-    .maybeSingle()
+  openingQuery = applyTenantQueryScope(openingQuery, 'company_opening_details', tenantContext)
+  const { data: openingDetails } = await openingQuery.maybeSingle()
 
   let partnersQuery = supabase
     .from('company_partners')
