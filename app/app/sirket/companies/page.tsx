@@ -970,36 +970,6 @@ export default function SirketlerPage() {
     if (!selectedSirket?.id) return
     const readOnly = !!options.readOnly
 
-    if (readOnly) {
-      try {
-        let sourceCompany = selectedSirket
-        if (!hasCompanyLifecycleDetail(sourceCompany, type)) {
-          const result = await companyService.detail(selectedSirket.id)
-          if (result.data) {
-            sourceCompany = normalizeCompanyForForm(result.data)
-            setSelectedSirket(sourceCompany)
-            writeEntityDetailCache(COMPANY_DETAIL_CACHE_NAMESPACE, selectedSirket.id, sourceCompany)
-          }
-        }
-
-        if (!hasCompanyLifecycleDetail(sourceCompany, type)) {
-          setToast({
-            type: 'warning',
-            title: 'İşlem Detayı Bulunamadı',
-            message: 'Bu işlem tamamlanmış görünüyor ancak detay form kaydı bulunamadı.',
-          })
-          return
-        }
-      } catch (error: any) {
-        setToast({
-          type: 'warning',
-          title: 'İşlem Detayı Açılamadı',
-          message: error?.message || 'Bu işlem tamamlanmış görünüyor ancak detay form kaydı bulunamadı.',
-        })
-        return
-      }
-    }
-
     setLifecycleWizardReadOnly(readOnly)
     setLifecycleWizard(type)
   }
@@ -1609,13 +1579,6 @@ function getCompanyLifecycleOperationProgress(status: CompanyLifecycleStatus): F
     return { completedActionKeys: ['opening'], activeActionKeys: ['liquidation', 'deregistration'] }
   }
   return { completedActionKeys: ['opening', 'liquidation', 'deregistration'] }
-}
-
-function hasCompanyLifecycleDetail(company: Partial<Sirket> | Record<string, any> | null | undefined, type: CompanyLifecycleWizardType) {
-  if (!company) return false
-  if (type === 'opening') return !!(company as any).opening_details
-  if (type === 'liquidation') return !!(company as any).liquidation_details
-  return !!(company as any).deregistration_details
 }
 
 function getCompanyLifecycleLabel(status: CompanyLifecycleStatus) {

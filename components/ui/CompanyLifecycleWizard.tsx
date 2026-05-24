@@ -60,6 +60,8 @@ const DECISION_TYPE_OPTIONS: RecordLifecycleWizardOption[] = [
   { value: 'other', label: 'Diğer' },
 ]
 
+const COMPLETED_OPERATION_DETAIL_MISSING_MESSAGE = 'Bu işlem tamamlanmış görünüyor ancak detay form kaydı bulunamadı.'
+
 export function CompanyLifecycleWizard({ type, company, readOnly = false, onClose, onComplete }: CompanyLifecycleWizardProps) {
   const [form, setForm] = useState<Record<string, any>>({})
   const [context, setContext] = useState<Record<string, any> | null>(null)
@@ -84,7 +86,9 @@ export function CompanyLifecycleWizard({ type, company, readOnly = false, onClos
       })
       .then(payload => {
         if (cancelled) return
+        const missingReadOnlyDetail = readOnly && !getLifecycleOperationDetail(type, company, payload)
         setContext(payload)
+        setContextError(missingReadOnlyDetail ? COMPLETED_OPERATION_DETAIL_MISSING_MESSAGE : null)
         setForm(createInitialForm(type, company, payload))
       })
       .catch(fetchError => {
@@ -484,9 +488,9 @@ function deregistrationSteps(options: ReturnType<typeof buildContextOptions>, fo
 
 function createInitialForm(type: CompanyLifecycleWizardType, company: Sirket, context: Record<string, any> | null) {
   const current = context?.company || company
-  const opening = context?.opening || company.opening_details || {}
-  const liquidation = context?.liquidation || company.liquidation_details || {}
-  const deregistration = context?.deregistration || company.deregistration_details || {}
+  const opening = getLifecycleOperationDetail('opening', company, context) || {}
+  const liquidation = getLifecycleOperationDetail('liquidation', company, context) || {}
+  const deregistration = getLifecycleOperationDetail('deregistration', company, context) || {}
   const publicTax = context?.public?.tax || company.public_tax || {}
   const publicSgk = context?.public?.sgk || company.public_sgk || {}
   const publicRegistry = context?.public?.registry || company.public_registry || {}
@@ -564,6 +568,75 @@ function createInitialForm(type: CompanyLifecycleWizardType, company: Sirket, co
     document_archive_responsible: deregistration.document_archive_responsible || '',
     notes: deregistration.notes || '',
   }
+}
+
+function getLifecycleOperationDetail(
+  type: CompanyLifecycleWizardType,
+  company: Sirket,
+  context: Record<string, any> | null
+): Record<string, any> | null {
+  const contextDetail = context?.[getLifecycleDetailKey(type)]
+  if (isUsableLifecycleDetail(contextDetail)) return normalizeLifecycleDetailPayload(contextDetail)
+
+  const eventDetail = getLifecycleEventDetail(type, context?.events)
+  if (eventDetail) return eventDetail
+
+  const companyDetail = (company as any)?.[`${getLifecycleDetailKey(type)}_details`]
+  if (isUsableLifecycleDetail(companyDetail)) return normalizeLifecycleDetailPayload(companyDetail)
+
+  return null
+}
+
+function getLifecycleDetailKey(type: CompanyLifecycleWizardType) {
+  if (type === 'opening') return 'opening'
+  if (type === 'liquidation') return 'liquidation'
+  return 'deregistration'
+}
+
+function getLifecycleEventDetail(type: CompanyLifecycleWizardType, events: unknown): Record<string, any> | null {
+  if (!Array.isArray(events)) return null
+  const event = events.find(item => isLifecycleEventForType(type, item))
+  if (!event || typeof event !== 'object') return null
+
+  const payload = normalizeLifecyclePayloadRecord((event as any).payload_json)
+  if (!isNonEmptyRecord(payload)) return null
+
+  return {
+    ...payload,
+    payload_json: payload,
+    document_reference_id: (event as any).document_reference_id,
+    event_date: (event as any).event_date,
+    created_at: (event as any).created_at,
+  }
+}
+
+function isLifecycleEventForType(type: CompanyLifecycleWizardType, event: unknown) {
+  const eventType = String((event as any)?.event_type || '')
+  if (type === 'opening') return eventType === 'company_opening_completed'
+  if (type === 'liquidation') return eventType === 'company_liquidation_started' || eventType === 'company_liquidation_updated'
+  return eventType === 'company_deregistered' || eventType === 'company_deregistration_completed'
+}
+
+function normalizeLifecycleDetailPayload(detail: Record<string, any>): Record<string, any> {
+  const payload = normalizeLifecyclePayloadRecord(detail.payload_json)
+  return isNonEmptyRecord(payload) ? { ...payload, ...detail, payload_json: payload } : detail
+}
+
+function normalizeLifecyclePayloadRecord(value: unknown): Record<string, any> {
+  if (!value || typeof value !== 'object') return {}
+  const record = value as Record<string, any>
+  if (record.payload && typeof record.payload === 'object') return record.payload as Record<string, any>
+  return record
+}
+
+function isUsableLifecycleDetail(value: unknown) {
+  if (!value || typeof value !== 'object') return false
+  const record = value as Record<string, any>
+  return isNonEmptyRecord(record) || isNonEmptyRecord(normalizeLifecyclePayloadRecord(record.payload_json))
+}
+
+function isNonEmptyRecord(value: unknown) {
+  return !!value && typeof value === 'object' && Object.keys(value as Record<string, any>).length > 0
 }
 
 function buildContextOptions(context: Record<string, any> | null) {
