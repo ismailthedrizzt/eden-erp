@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { ListChecks, Users } from 'lucide-react'
-import { EntityForm, FormField, FormMode, FormTab, type FormOperationActionGroup } from '@/components/ui/EntityForm'
+import { EntityForm, FormField, FormMode, FormTab, type FormOperationAction, type FormOperationActionGroup, type FormOperationProgress } from '@/components/ui/EntityForm'
 import { PageBanner } from '@/components/ui/PageBanner'
 import {
   DEFAULT_RECORD_STATUS_FILTERS,
@@ -140,6 +140,8 @@ type PartnerHistorySectionsValue = {
   ownershipTransactions?: OwnershipTransactionHistoryRow[]
   technicalChanges?: any[]
 }
+
+const PARTNER_OWNERSHIP_ENTRY_ACTION_KEY = 'ownership_entry'
 
 const AUTHORITY_LABEL_BY_VALUE: Record<string, string> = {
   signature_authority: 'İmza Yetkilisi',
@@ -790,21 +792,46 @@ export default function OrtaklarPage() {
   }
 
   const getFormOperationActions = (): FormOperationActionGroup[] => {
-    if (!selectedPartner?.id) return []
-    const actions = getPartnerFunctionActions(selectedPartner)
-    if (!actions.length) return []
+    if (!selectedPartner?.id || pageState === 'create') return []
     const recordStatus = getPartnerRecordStatus(selectedPartner)
-
-    return [{
-      key: recordStatus === 'draft' ? 'lifecycle' : 'update',
-      title: recordStatus === 'draft' ? 'Yaşam Döngüsü İşlemleri' : 'Tescil İşlemleri',
-      actions: actions.map(action => ({
-        key: action.key,
-        label: action.label,
-        icon: action.icon,
-        onClick: () => handleOwnershipActionClick(action.label as OwnershipTransactionType),
-      })),
+    const lifecycleActions: FormOperationAction[] = [{
+      key: PARTNER_OWNERSHIP_ENTRY_ACTION_KEY,
+      label: transactionTypes[0],
+      icon: <ListChecks size={15} />,
+      onClick: () => handleOwnershipActionClick(transactionTypes[0]),
+      disabled: recordStatus !== 'draft',
     }]
+    const officialUpdateActions: FormOperationAction[] = recordStatus === 'active'
+      ? transactionTypes.filter(type => type !== transactionTypes[0]).map(transactionType => ({
+          key: `ownership-${transactionType}`,
+          label: transactionType,
+          icon: <ListChecks size={15} />,
+          onClick: () => handleOwnershipActionClick(transactionType),
+        }))
+      : []
+    const basicUpdateActions: FormOperationAction[] = pageState === 'view' && recordStatus !== 'passive'
+      ? [{
+          key: 'edit',
+          label: 'Güncelle',
+          onClick: () => setPageState('edit'),
+        }]
+      : []
+
+    return [
+      {
+        key: 'lifecycle',
+        progress: getPartnerLifecycleOperationProgress(recordStatus),
+        actions: lifecycleActions,
+      },
+      ...(officialUpdateActions.length ? [{
+        key: 'official_updates',
+        actions: officialUpdateActions,
+      }] : []),
+      ...(basicUpdateActions.length ? [{
+        key: 'basic_update',
+        actions: basicUpdateActions,
+      }] : []),
+    ]
   }
 
   const bannerConfig = pageState === 'list'
@@ -1500,6 +1527,13 @@ function getPartnerRecordStatus(partner?: Record<string, any> | null): RecordSta
   if (partner.record_status === 'passive' || isSoftDeletedRecord(partner) || partner.status === 'Pasif') return 'passive'
   if (partner.record_status === 'active' || partner.status === 'Aktif') return 'active'
   return 'draft'
+}
+
+function getPartnerLifecycleOperationProgress(status: RecordStatusFilterValue): FormOperationProgress {
+  if (status === 'draft') {
+    return { activeActionKeys: [PARTNER_OWNERSHIP_ENTRY_ACTION_KEY] }
+  }
+  return { completedActionKeys: [PARTNER_OWNERSHIP_ENTRY_ACTION_KEY] }
 }
 
 function normalizePayload(raw: Record<string, any>, companies: Option[]) {

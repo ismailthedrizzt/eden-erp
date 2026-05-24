@@ -175,6 +175,12 @@ export type FormOperationCrudIntent = 'create_delete' | 'official_update' | 'upd
 export type FormOperationDisplayMode = 'dropdown_button' | 'single_button' | 'inline_buttons' | 'action_card' | 'dropdown_card'
 export type FormOperationActionState = 'completed' | 'active' | 'upcoming'
 
+export interface FormOperationProgress {
+  completedActionKeys?: string[]
+  activeActionKey?: string | null
+  activeActionKeys?: string[]
+}
+
 export interface FormOperationAction {
   key: string
   label: string
@@ -196,6 +202,7 @@ export interface FormOperationActionGroup {
   displayMode?: FormOperationDisplayMode
   description?: string
   dataTourId?: string
+  progress?: FormOperationProgress
   actions: FormOperationAction[]
 }
 
@@ -2244,16 +2251,58 @@ function SgkSelectField({
 
 const DEFAULT_OPERATION_GROUP_TITLES: Record<string, string> = {
   lifecycle: 'Yaşam Döngüsü',
+  official_updates: 'Resmi Değişiklikler',
   registration: 'Resmi Değişiklikler',
   update: 'Resmi Değişiklikler',
+  basic_update: 'Güncelle',
   other: 'Diğer İşlemler',
 }
 
 const DEFAULT_OPERATION_GROUP_ICONS: Record<string, ReactNode> = {
   lifecycle: <Clock size={15} />,
+  official_updates: <FileText size={15} />,
   registration: <FileText size={15} />,
   update: <FileText size={15} />,
+  basic_update: <Edit3 size={15} />,
   other: <Briefcase size={15} />,
+}
+
+const STANDARD_OPERATION_GROUP_CONFIG: Record<string, Partial<FormOperationActionGroup>> = {
+  lifecycle: {
+    title: 'Yaşam Döngüsü',
+    operationKind: 'lifecycle',
+    crudIntent: 'create_delete',
+    displayMode: 'dropdown_button',
+    dataTourId: 'record-operation-lifecycle',
+  },
+  official_updates: {
+    title: 'Resmi Değişiklikler',
+    operationKind: 'official_update',
+    crudIntent: 'official_update',
+    displayMode: 'dropdown_button',
+    dataTourId: 'record-operation-official-updates',
+  },
+  registration: {
+    title: 'Resmi Değişiklikler',
+    operationKind: 'official_update',
+    crudIntent: 'official_update',
+    displayMode: 'dropdown_button',
+    dataTourId: 'record-operation-official-updates',
+  },
+  update: {
+    title: 'Resmi Değişiklikler',
+    operationKind: 'official_update',
+    crudIntent: 'official_update',
+    displayMode: 'dropdown_button',
+    dataTourId: 'record-operation-official-updates',
+  },
+  basic_update: {
+    title: 'Güncelle',
+    operationKind: 'basic_update',
+    crudIntent: 'update',
+    displayMode: 'single_button',
+    dataTourId: 'record-operation-basic-update',
+  },
 }
 
 const OPERATION_GROUP_ORDER: Record<FormOperationKind, number> = {
@@ -2261,6 +2310,114 @@ const OPERATION_GROUP_ORDER: Record<FormOperationKind, number> = {
   official_update: 1,
   basic_update: 2,
   general: 3,
+}
+
+const OPERATION_KIND_DEFAULT_CONFIG: Record<FormOperationKind, Partial<FormOperationActionGroup>> = {
+  lifecycle: {
+    title: 'Yaşam Döngüsü',
+    crudIntent: 'create_delete',
+    displayMode: 'dropdown_button',
+    dataTourId: 'record-operation-lifecycle',
+  },
+  official_update: {
+    title: 'Resmi Değişiklikler',
+    crudIntent: 'official_update',
+    displayMode: 'dropdown_button',
+    dataTourId: 'record-operation-official-updates',
+  },
+  basic_update: {
+    title: 'Güncelle',
+    crudIntent: 'update',
+    displayMode: 'single_button',
+    dataTourId: 'record-operation-basic-update',
+  },
+  general: {},
+}
+
+function normalizeFormOperationGroups(groups?: FormOperationActionGroup[]) {
+  return (groups || [])
+    .filter(group => !isHistoryOperationGroup(group))
+    .map(group => {
+      const keyConfig = STANDARD_OPERATION_GROUP_CONFIG[group.key] || {}
+      const operationKind = (keyConfig.operationKind || group.operationKind || inferOperationKind(group.key)) as FormOperationKind
+      const kindConfig = OPERATION_KIND_DEFAULT_CONFIG[operationKind] || OPERATION_KIND_DEFAULT_CONFIG.general
+      const normalizedGroup: FormOperationActionGroup = {
+        ...group,
+        title: (keyConfig.title || group.title || kindConfig.title) as string | undefined,
+        operationKind,
+        crudIntent: (keyConfig.crudIntent || group.crudIntent || kindConfig.crudIntent) as FormOperationCrudIntent | undefined,
+        displayMode: (group.displayMode || keyConfig.displayMode || kindConfig.displayMode) as FormOperationDisplayMode | undefined,
+        dataTourId: group.dataTourId || keyConfig.dataTourId || kindConfig.dataTourId,
+        actions: group.actions.filter(action => !action.hidden && !isHistoryOperationAction(action)),
+      }
+
+      return {
+        ...normalizedGroup,
+        actions: resolveOperationActionStates(normalizedGroup),
+      }
+    })
+    .filter(group => group.actions.length > 0)
+}
+
+function inferOperationKind(groupKey: FormOperationActionGroupKey): FormOperationKind {
+  if (groupKey === 'lifecycle') return 'lifecycle'
+  if (groupKey === 'official_updates' || groupKey === 'registration' || groupKey === 'update') return 'official_update'
+  if (groupKey === 'basic_update') return 'basic_update'
+  return 'general'
+}
+
+function resolveOperationActionStates(group: FormOperationActionGroup) {
+  if (group.operationKind !== 'lifecycle' || !group.progress) return group.actions
+
+  const completedKeys = new Set(group.progress.completedActionKeys || [])
+  const activeKeys = new Set([
+    ...(group.progress.activeActionKeys || []),
+    group.progress.activeActionKey || '',
+  ].filter(Boolean))
+  const activeIndexes = group.actions
+    .map((action, index) => activeKeys.has(action.key) ? index : -1)
+    .filter(index => index >= 0)
+  const firstActiveIndex = activeIndexes.length ? Math.min(...activeIndexes) : -1
+  const lastActiveIndex = activeIndexes.length ? Math.max(...activeIndexes) : -1
+
+  return group.actions.map((action, index) => ({
+    ...action,
+    state: action.state || resolveOperationActionState(action, index, completedKeys, activeKeys, firstActiveIndex, lastActiveIndex),
+  }))
+}
+
+function resolveOperationActionState(
+  action: FormOperationAction,
+  index: number,
+  completedKeys: Set<string>,
+  activeKeys: Set<string>,
+  firstActiveIndex: number,
+  lastActiveIndex: number
+): FormOperationActionState | undefined {
+  if (completedKeys.has(action.key)) return 'completed'
+  if (activeKeys.has(action.key)) return 'active'
+  if (firstActiveIndex >= 0 && index < firstActiveIndex) return 'completed'
+  if (lastActiveIndex >= 0 && index > lastActiveIndex) return 'upcoming'
+  if (completedKeys.size > 0 || activeKeys.size > 0) return 'upcoming'
+  return undefined
+}
+
+function isHistoryOperationGroup(group: FormOperationActionGroup) {
+  return isHistoryOperationText(group.key) || isHistoryOperationText(group.title)
+}
+
+function isHistoryOperationAction(action: FormOperationAction) {
+  return isHistoryOperationText(action.key) || isHistoryOperationText(action.label)
+}
+
+function isHistoryOperationText(value?: string) {
+  if (!value) return false
+  const normalized = value
+    .toLocaleLowerCase('tr-TR')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[\s_-]+/g, '')
+  return normalized.includes('history') || normalized.includes('gecmis')
 }
 
 type FormOperationActionsVariant = 'compact' | 'legacy' | 'all'
@@ -2276,12 +2433,7 @@ function FormOperationActions({
 }) {
   const [openGroupKey, setOpenGroupKey] = useState<FormOperationActionGroupKey | null>(null)
   const actionsRef = useRef<HTMLDivElement | null>(null)
-  const visibleGroups = useMemo(() => (groups || [])
-    .map(group => ({
-      ...group,
-      actions: group.actions.filter(action => !action.hidden),
-    }))
-    .filter(group => group.actions.length > 0), [groups])
+  const visibleGroups = useMemo(() => normalizeFormOperationGroups(groups), [groups])
 
   useEffect(() => {
     if (!openGroupKey) return
@@ -2895,10 +3047,11 @@ export function EntityForm({
   const canPassivateRecord = !isPassive && !canHardDeleteRecord && effectiveCanPassivate && !!onDelete
   const canDeleteRecord = canHardDeleteRecord || canPassivateRecord
   const deleteActionLabel = canActivateRecord ? 'Aktive Et' : canHardDeleteRecord ? 'Sil' : 'Pasife Al'
-  const hasBasicUpdateOperationAction = isReadOnly && (operationActions || []).some(group =>
+  const normalizedOperationActions = useMemo(() => normalizeFormOperationGroups(operationActions), [operationActions])
+  const hasBasicUpdateOperationAction = isReadOnly && normalizedOperationActions.some(group =>
     group.operationKind === 'basic_update'
     && isCompactOperationGroup(group)
-    && group.actions.some(action => !action.hidden)
+    && group.actions.length > 0
   )
   const slotLoaderMode = isReadOnly ? 'view' : isCreate ? 'insert' : 'update'
   const getLoadStage = (key: FormLoadStageKey) => loadStages?.find(stage => stage.key === key)
@@ -3959,10 +4112,10 @@ export function EntityForm({
 
             {/* Form Action Area */}
             <div data-tour-id="record-form-command-area" className="mt-6 border-t border-gray-200 pt-4 dark:border-gray-700">
-              <FormOperationActions groups={operationActions} mode={mode} variant="compact" />
+              <FormOperationActions groups={normalizedOperationActions} mode={mode} variant="compact" />
 
               <div className="mt-3 flex flex-wrap items-center justify-end gap-2">
-                <FormOperationActions groups={operationActions} mode={mode} variant="legacy" />
+                <FormOperationActions groups={normalizedOperationActions} mode={mode} variant="legacy" />
 
                 {additionalActions}
 

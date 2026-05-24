@@ -2,9 +2,9 @@
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Activity, AlertTriangle, Archive, BriefcaseBusiness, Building2, CheckCircle2, CircleDot, FileText, History, Landmark, PencilLine, PlayCircle, ScrollText, Settings, ShieldAlert, TrendingUp, Users } from 'lucide-react'
+import { AlertTriangle, Archive, BriefcaseBusiness, Building2, CheckCircle2, CircleDot, FileText, History, Landmark, PencilLine, PlayCircle, Settings, ShieldAlert, TrendingUp, Users } from 'lucide-react'
 import { useSirketler } from '@/hooks/useSirketler'
-import { EntityForm, FormField, FormMode, FormTab, type FormOperationActionGroup, type FormOperationActionState, type FormOperationActionTone } from '@/components/ui/EntityForm'
+import { EntityForm, FormField, FormMode, FormTab, type FormOperationAction, type FormOperationActionGroup, type FormOperationProgress } from '@/components/ui/EntityForm'
 import { CompanyCapitalIncreaseWizard, type CapitalIncreasePrecheckContext, type CapitalIncreaseSubmitPayload } from '@/components/ui/CompanyCapitalIncreaseWizard'
 import { CompanyLifecycleWizard, type CompanyLifecycleWizardType } from '@/components/ui/CompanyLifecycleWizard'
 import { PageBanner } from '@/components/ui/PageBanner'
@@ -56,17 +56,6 @@ type SirketTableRow = Sirket & {
   logo_url_light?: string | null
   logo_url_dark?: string | null
   lifecycle_status: CompanyLifecycleStatus
-}
-type CompanyFormOperationAction = {
-  key: string
-  label: string
-  icon: ReactNode
-  onClick: () => void
-  visible: boolean
-  disabled?: boolean
-  tone?: FormOperationActionTone
-  state?: FormOperationActionState
-  dataTourId?: string
 }
 type CompanyStatusFilterValue = RecordStatusFilterValue
 type DetailSectionState = {
@@ -1029,22 +1018,17 @@ export default function SirketlerPage() {
   const getFormOperationActions = (): FormOperationActionGroup[] => {
     if (!selectedSirket?.id || pageState === 'create') return []
     const status = getCompanyLifecycleStatus(selectedSirket)
-    const isOpeningCompleted = status === 'active' || status === 'liquidation' || status === 'deregistered'
-    const isLiquidationCompleted = status === 'deregistered'
-    const isDeregistrationCompleted = status === 'deregistered'
     const canStartOpening = status === 'draft' && can(PERMISSIONS.companies.openingStart)
     const canStartLiquidation = status === 'active' && can(PERMISSIONS.companies.liquidationStart)
     const canUpdateLiquidation = status === 'liquidation' && can(PERMISSIONS.companies.liquidationUpdate)
     const canStartDeregistration = status === 'liquidation' && can(PERMISSIONS.companies.deregistrationStart)
-    const lifecycleActions: CompanyFormOperationAction[] = [
+    const lifecycleActions: FormOperationAction[] = [
       {
         key: 'opening',
         label: 'Şirket Açılışı',
         icon: <PlayCircle size={16} />,
         onClick: () => openLifecycleWizard('opening'),
-        visible: true,
         disabled: !canStartOpening,
-        state: isOpeningCompleted ? 'completed' as const : canStartOpening ? 'active' as const : 'upcoming' as const,
         dataTourId: 'record-operation-company-opening',
       },
       {
@@ -1052,33 +1036,24 @@ export default function SirketlerPage() {
         label: status === 'liquidation' ? 'Tasfiye Bilgilerini Güncelle' : 'Tasfiye Başlat',
         icon: <ShieldAlert size={16} />,
         onClick: () => openLifecycleWizard('liquidation'),
-        visible: true,
         disabled: !(canStartLiquidation || canUpdateLiquidation),
-        state: isLiquidationCompleted
-          ? 'completed' as const
-          : canStartLiquidation || canUpdateLiquidation
-            ? 'active' as const
-            : 'upcoming' as const,
       },
       {
         key: 'deregistration',
         label: 'Terkin Başlat',
         icon: <Archive size={16} />,
         onClick: () => openLifecycleWizard('deregistration'),
-        visible: true,
         disabled: !canStartDeregistration,
-        state: isDeregistrationCompleted ? 'completed' as const : canStartDeregistration ? 'active' as const : 'upcoming' as const,
       },
-    ].filter(action => action.visible)
+    ]
 
     const canUseOfficialUpdates = status !== 'deregistered' && can(PERMISSIONS.companies.edit)
-    const officialUpdateActions: CompanyFormOperationAction[] = [
+    const officialUpdateActions: FormOperationAction[] = canUseOfficialUpdates ? [
       {
         key: 'capital_increase',
         label: 'Sermaye Artırımı',
         icon: <TrendingUp size={16} />,
         onClick: openCapitalIncreaseWizard,
-        visible: canUseOfficialUpdates,
         disabled: status !== 'active',
       },
       {
@@ -1086,7 +1061,6 @@ export default function SirketlerPage() {
         label: 'Sermaye Azaltımı',
         icon: <TrendingUp size={16} />,
         onClick: () => undefined,
-        visible: canUseOfficialUpdates,
         disabled: true,
         tone: 'neutral' as const,
       },
@@ -1095,7 +1069,6 @@ export default function SirketlerPage() {
         label: 'Unvan Değişikliği',
         icon: <FileText size={16} />,
         onClick: () => undefined,
-        visible: canUseOfficialUpdates,
         disabled: true,
         tone: 'neutral' as const,
       },
@@ -1104,7 +1077,6 @@ export default function SirketlerPage() {
         label: 'Adres Değişikliği',
         icon: <Building2 size={16} />,
         onClick: () => undefined,
-        visible: canUseOfficialUpdates,
         disabled: true,
         tone: 'neutral' as const,
       },
@@ -1113,72 +1085,33 @@ export default function SirketlerPage() {
         label: 'Kamu / Tescil Bilgisi Güncelleme',
         icon: <Landmark size={16} />,
         onClick: () => undefined,
-        visible: canUseOfficialUpdates,
         disabled: true,
         tone: 'neutral' as const,
       },
-    ].filter(action => action.visible)
+    ] : []
 
-    const basicUpdateActions: CompanyFormOperationAction[] = [
-      {
-        key: 'edit',
-        label: 'Güncelle',
-        icon: <PencilLine size={16} />,
-        onClick: () => setPageState('edit'),
-        visible: pageState === 'view' && formAccess.showEdit && canEditSelectedProfile,
-      },
-    ].filter(action => action.visible)
+    const basicUpdateActions: FormOperationAction[] = pageState === 'view' && formAccess.showEdit && canEditSelectedProfile
+      ? [{
+          key: 'edit',
+          label: 'Güncelle',
+          icon: <PencilLine size={16} />,
+          onClick: () => setPageState('edit'),
+        }]
+      : []
 
     return [
       ...(lifecycleActions.length ? [{
         key: 'lifecycle',
-        title: 'Yaşam Döngüsü',
-        operationKind: 'lifecycle' as const,
-        crudIntent: 'create_delete' as const,
-        displayMode: 'dropdown_button' as const,
-        icon: <Activity size={16} />,
-        dataTourId: 'record-operation-lifecycle',
-        actions: lifecycleActions.map(action => ({
-          key: action.key,
-          label: action.label,
-          icon: action.icon,
-          onClick: action.onClick,
-          disabled: action.disabled,
-          state: action.state,
-          dataTourId: action.dataTourId,
-        })),
+        progress: getCompanyLifecycleOperationProgress(status),
+        actions: lifecycleActions,
       }] : []),
       ...(officialUpdateActions.length ? [{
         key: 'official_updates',
-        title: 'Resmi Değişiklikler',
-        operationKind: 'official_update' as const,
-        crudIntent: 'official_update' as const,
-        displayMode: 'dropdown_button' as const,
-        icon: <ScrollText size={16} />,
-        dataTourId: 'record-operation-official-updates',
-        actions: officialUpdateActions.map(action => ({
-          key: action.key,
-          label: action.label,
-          icon: action.icon,
-          onClick: action.onClick,
-          disabled: action.disabled,
-          tone: action.tone,
-        })),
+        actions: officialUpdateActions,
       }] : []),
       ...(basicUpdateActions.length ? [{
         key: 'basic_update',
-        title: 'Güncelle',
-        operationKind: 'basic_update' as const,
-        crudIntent: 'update' as const,
-        displayMode: 'single_button' as const,
-        icon: <PencilLine size={16} />,
-        dataTourId: 'record-operation-basic-update',
-        actions: basicUpdateActions.map(action => ({
-          key: action.key,
-          label: action.label,
-          icon: action.icon,
-          onClick: action.onClick,
-        })),
+        actions: basicUpdateActions,
       }] : []),
     ]
   }
@@ -1589,6 +1522,19 @@ function getCompanyLifecycleStatus(company?: Partial<Sirket> | null): CompanyLif
   const raw = company?.record_status || company?.company_status || (company?.is_deleted ? 'deregistered' : 'active')
   if (raw === 'draft' || raw === 'active' || raw === 'liquidation' || raw === 'deregistered') return raw
   return 'draft'
+}
+
+function getCompanyLifecycleOperationProgress(status: CompanyLifecycleStatus): FormOperationProgress {
+  if (status === 'draft') {
+    return { activeActionKeys: ['opening'] }
+  }
+  if (status === 'active') {
+    return { completedActionKeys: ['opening'], activeActionKeys: ['liquidation'] }
+  }
+  if (status === 'liquidation') {
+    return { completedActionKeys: ['opening'], activeActionKeys: ['liquidation', 'deregistration'] }
+  }
+  return { completedActionKeys: ['opening', 'liquidation', 'deregistration'] }
 }
 
 function getCompanyLifecycleLabel(status: CompanyLifecycleStatus) {
