@@ -25,6 +25,18 @@ Standart form sabittir:
 
 Modul ozel ihtiyaclari sablonu degistirmez; config uzerinden alan, relation tab, custom tab, custom action veya lifecycle hook olarak eklenir.
 
+## Form Islem Gruplari
+
+Form uzerindeki islem aksiyonlari standart olarak is amacina gore gruplanir:
+
+- `lifecycle`: Kaydin yasam durumunu degistiren islemler. Ornek: sirket acilisi, tasfiye, terkin, ise giris, isten cikis.
+- `update`: Aktif kaydin resmi/tescil verilerini degistiren islemler. Ornek: sermaye artirimi, adres degisikligi, unvan degisikligi, ortaklik degisikligi.
+- `other`: Bagli sayfa, gecmis, hareket goruntuleme gibi lifecycle veya kontrollu guncelleme olmayan islemler.
+
+`FormActionConfig.category` bu ayrimi tasir. Sayfa seviyesinde dinamik uretilen aksiyonlar `EntityForm.operationActions` ile ayni kategori modeline baglanir.
+
+Bu islemlere tabi alanlar `FormField.controlledByOperation` ile isaretlenir. Standart form bu alanlari edit modunda manuel degisiklige kapatir ve alan etiketinde "Bu alan tescil islemleriyle degistirilebilir. Islemler: ..." aciklamasini gosteren bilgi ikonunu basar.
+
 ## Ilk Uygulama
 
 Personel modulunun config'i:

@@ -45,7 +45,6 @@ const NAV: NavItem[] = [
     children: [
       { label: 'Şirketlerimiz', href: '/app/sirket/companies', moduleKey: 'sirket', submoduleKey: 'companies' },
       { label: 'Ortaklarımız', href: '/app/sirket/companies/partners', moduleKey: 'sirket' },
-      { label: 'Ortaklık İşlemleri', href: '/app/sirket/ortaklik-islemleri', moduleKey: 'sirket' },
       { label: 'Temsilcilerimiz', href: '/app/sirket/companies/representatives', moduleKey: 'sirket' },
       { label: 'Paydaşlarımız', href: '/app/sirket/companies/stakeholders', moduleKey: 'sirket' },
       { label: 'Teşkilat ve Kadro', href: '/app/sirket/teskilat', moduleKey: 'sirket', submoduleKey: 'teskilat' },

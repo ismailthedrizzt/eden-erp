@@ -78,6 +78,7 @@ Designed to work with any database entity (Personnel, Customers, Products, Suppl
 |------|------|-------------|
 | `customHero` | `ReactNode` | Override default hero section |
 | `headerActions` | `ReactNode` | Additional actions in header |
+| `operationActions` | `FormOperationActionGroup[]` | Business operations grouped as `lifecycle`, `update`, or `other` |
 | `className` | `string` | CSS class for container |
 
 ---
@@ -92,9 +93,11 @@ interface FormField {
   label: string          // Display label
   type: 'text' | 'email' | 'tel' | 'date' | 'select' | 'textarea' | 'number' | 'custom'
   required?: boolean     // Validation requirement
+  readOnly?: boolean     // Manual edits are disabled in the standard form
   options?: { value: string; label: string }[]  // For select fields
   placeholder?: string
   colSpan?: 1 | 2 | 3    // Grid column span
+  controlledByOperation?: FormFieldOperationControl // Field is changed by a controlled operation
   automation?: FieldAutomationConfig // Shows AutomationBadge for fields that fill/derive other fields
   render?: (props) => ReactNode  // Custom render function
 }
@@ -118,6 +121,45 @@ interface FormTab {
 ```typescript
 type FormMode = 'create' | 'view' | 'edit'
 ```
+
+### FormOperationActionGroup
+
+```typescript
+type FormOperationActionGroupKey = 'lifecycle' | 'registration' | 'update' | 'other' | string
+
+interface FormOperationAction {
+  key: string
+  label: string
+  icon?: ReactNode
+  onClick: () => void
+  hidden?: boolean
+  disabled?: boolean
+  tone?: 'primary' | 'neutral' | 'danger' | 'success'
+  dataTourId?: string
+}
+
+interface FormOperationActionGroup {
+  key: FormOperationActionGroupKey
+  title?: string
+  icon?: ReactNode
+  actions: FormOperationAction[]
+}
+```
+
+Use `lifecycle` for operations that move the record through its life states, such as company opening, employee entry, employee exit, liquidation, or deregistration. Use `update` for formal registration/amendment flows that change active record data through a controlled process, such as capital increase, address change, title change, or ownership change.
+
+### FormFieldOperationControl
+
+```typescript
+interface FormFieldOperationControl {
+  category: 'lifecycle' | 'registration' | 'update' | 'other'
+  operations?: string[]
+  message?: string
+  lockInModes?: FormMode[] // Defaults to ['edit']
+}
+```
+
+Fields with `controlledByOperation` cannot be manually edited in the configured modes. The label shows an info icon with an explanation such as "Bu alan tescil işlemleriyle değiştirilebilir. İşlemler: Sermaye Artırımı, Adres Değişikliği."
 
 ---
 

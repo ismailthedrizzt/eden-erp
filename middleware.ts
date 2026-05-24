@@ -118,12 +118,33 @@ function isAllowedRequestOrigin(request: NextRequest) {
   if (!origin) return true
   if (origin === request.nextUrl.origin) return true
 
-  const configuredOrigins = (process.env.EDEN_ALLOWED_ORIGINS || '')
-    .split(',')
-    .map(value => value.trim())
+  const configuredOrigins = [
+    process.env.NEXT_PUBLIC_APP_URL,
+    ...(process.env.EDEN_ALLOWED_ORIGINS || '').split(','),
+  ]
+    .map(value => value?.trim())
     .filter(Boolean)
 
-  return configuredOrigins.includes(origin)
+  if (configuredOrigins.includes(origin)) return true
+
+  return process.env.NODE_ENV !== 'production' && isLocalDevOriginPair(origin, request.nextUrl.origin)
+}
+
+function isLocalDevOriginPair(origin: string, requestOrigin: string) {
+  try {
+    const originUrl = new URL(origin)
+    const requestUrl = new URL(requestOrigin)
+    const localHosts = new Set(['localhost', '127.0.0.1', '0.0.0.0', '[::1]', '::1'])
+
+    return (
+      originUrl.protocol === requestUrl.protocol &&
+      originUrl.port === requestUrl.port &&
+      localHosts.has(originUrl.hostname) &&
+      localHosts.has(requestUrl.hostname)
+    )
+  } catch {
+    return false
+  }
 }
 
 function withSecurityHeaders(response: NextResponse, request: NextRequest) {

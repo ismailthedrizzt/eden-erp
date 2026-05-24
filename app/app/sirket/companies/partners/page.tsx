@@ -2,10 +2,19 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Users } from 'lucide-react'
-import { EntityForm, FormField, FormMode, FormTab } from '@/components/ui/EntityForm'
+import { ListChecks, Users } from 'lucide-react'
+import { EntityForm, FormField, FormMode, FormTab, type FormOperationActionGroup } from '@/components/ui/EntityForm'
 import { PageBanner } from '@/components/ui/PageBanner'
-import { SmartDataTable, ColumnDef, SortConfig, WidgetDef } from '@/components/ui/SmartDataTable'
+import {
+  DEFAULT_RECORD_STATUS_FILTERS,
+  SmartDataTable,
+  ColumnDef,
+  SortConfig,
+  WidgetDef,
+  normalizeRecordStatusFilters,
+  type TableRowAction,
+  type RecordStatusFilterValue,
+} from '@/components/ui/SmartDataTable'
 import { Toast } from '@/components/ui/Toast'
 import { formControlClass } from '@/components/ui/formControlStyles'
 import { normalizeCountryId } from '@/lib/reference/country-nationalities'
@@ -16,6 +25,10 @@ import { createProgressiveFormLoadStages } from '@/lib/forms/progressiveFormLoad
 import { invalidateEntityDetailCache, readEntityDetailCache, writeEntityDetailCache } from '@/lib/forms/entityDetailCache'
 import { companyService } from '@/lib/services/companyService'
 import { ownershipTransactionsService } from '@/lib/modules/ownership-transactions/ownershipTransactions.service'
+import {
+  transactionTypes,
+} from '@/lib/modules/ownership-transactions/ownershipTransactions.config'
+import type { OwnershipTransactionType } from '@/lib/modules/ownership-transactions/ownershipTransactions.types'
 import type { ListMeta } from '@/lib/api/listEndpoint'
 
 type PageState = 'list' | 'create' | 'view' | 'edit'
@@ -161,7 +174,18 @@ const FIELD_LABELS: Record<string, string> = {
   status: 'Durum',
 }
 
+const PARTNER_LIFECYCLE_CONTROL = {
+  category: 'lifecycle' as const,
+  operations: ['Yeni Ortaklık Girişi', 'Ortaklıktan Çıkış', 'Pasife Alma'],
+}
+
+const PARTNER_OWNERSHIP_REGISTRATION_CONTROL = {
+  category: 'registration' as const,
+  operations: ['Pay Devri', 'Ortaklıktan Çıkış', 'Sermaye Artırımı', 'Düzeltme Kaydı'],
+}
+
 const columns: ColumnDef[] = [
+  { key: 'record_status', label: 'Durum', type: 'enum', width: 44, minWidth: 44, maxWidth: 44, fixedWidth: true, sortable: false, hideHeaderLabel: true, category: 'Durum', order: -10, render: (_value, row) => <PartnerStatusDot status={getPartnerRecordStatus(row)} /> },
   { key: 'display_name', label: 'Ortak Adı / Ünvanı', type: 'text', width: 280, sortable: true, category: 'Kimlik', render: (value, row) => <PartnerNameCell value={value} row={row} /> },
   { key: 'partner_type_label', label: 'Ortak Türü', type: 'enum', width: 130, category: 'Kimlik' },
   { key: 'company_name', label: 'Şirket', type: 'text', width: 220, category: 'Şirket' },
@@ -171,11 +195,10 @@ const columns: ColumnDef[] = [
   { key: 'current_capital_amount', label: 'Sermaye', type: 'number', width: 130, category: 'Hesaplanan' },
   { key: 'start_date', label: 'Başlangıç', type: 'date', width: 120, category: 'Dönem' },
   { key: 'end_date', label: 'Bitiş', type: 'date', width: 120, category: 'Dönem' },
-  { key: 'status', label: 'Durum', type: 'enum', width: 120, sortable: true, category: 'Durum' },
 ]
 
 const heroFields: FormField[] = [
-  { name: 'company_id', label: 'Şirket', type: 'select', required: true },
+  { name: 'company_id', label: 'Şirket', type: 'select', required: true, controlledByOperation: PARTNER_LIFECYCLE_CONTROL },
   { name: 'first_name', label: 'Adı', type: 'text', required: true, visibleWhen: { field: 'partner_type', operator: 'equals', value: 'person' } },
   { name: 'last_name', label: 'Soyadı', type: 'text', required: true, visibleWhen: { field: 'partner_type', operator: 'equals', value: 'person' } },
   {
@@ -209,12 +232,13 @@ const heroFields: FormField[] = [
   { name: 'first_name', label: 'Ticari Unvan', type: 'text', required: true, visibleWhen: { field: 'partner_type', operator: 'equals', value: 'organization' } },
   { name: 'last_name', label: 'Kısa Unvan', type: 'text', visibleWhen: { field: 'partner_type', operator: 'equals', value: 'organization' } },
   { name: 'identity_number', label: 'VKN', type: 'text', visibleWhen: { field: 'partner_type', operator: 'equals', value: 'organization' } },
-  { name: 'start_date', label: 'Başlangıç Tarihi', type: 'date', required: true },
+  { name: 'start_date', label: 'Başlangıç Tarihi', type: 'date', required: true, controlledByOperation: PARTNER_LIFECYCLE_CONTROL },
   {
     name: 'status',
     label: 'Durum',
     type: 'select',
     required: true,
+    controlledByOperation: PARTNER_LIFECYCLE_CONTROL,
     options: [
       { value: 'Taslak', label: 'Taslak' },
       { value: 'Aktif', label: 'Aktif' },
@@ -303,6 +327,7 @@ const tabs: FormTab[] = [
         label: 'Onaylı İşlemlerden Hesaplanan Sermaye',
         type: 'custom',
         colSpan: 3,
+        controlledByOperation: PARTNER_OWNERSHIP_REGISTRATION_CONTROL,
         render: ({ value }) => <CurrentOwnershipPanel value={value} section="capital" />,
       },
     ],
@@ -316,6 +341,7 @@ const tabs: FormTab[] = [
         label: 'Onaylı İşlemlerden Hesaplanan Yönetim Hakları',
         type: 'custom',
         colSpan: 3,
+        controlledByOperation: PARTNER_OWNERSHIP_REGISTRATION_CONTROL,
         render: ({ value }) => <CurrentOwnershipPanel value={value} section="rights" />,
       },
       {
@@ -372,7 +398,7 @@ export default function OrtaklarPage() {
   const [relationContextError, setRelationContextError] = useState(false)
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(false)
-  const [includePassive, setIncludePassive] = useState(false)
+  const [statusFilters, setStatusFilters] = useState<RecordStatusFilterValue[]>(DEFAULT_RECORD_STATUS_FILTERS)
   const [listQuery, setListQuery] = useState({ page: 1, pageSize: 50, search: '', sort: 'created_at', direction: 'desc' as 'asc' | 'desc' })
   const [listMeta, setListMeta] = useState<ListMeta>({ page: 1, pageSize: 50, total: 0, totalPages: 1 })
   const [error, setError] = useState<string | null>(null)
@@ -381,7 +407,10 @@ export default function OrtaklarPage() {
   const [toast, setToast] = useState<ToastState | null>(null)
   const [ownershipNoticeOpen, setOwnershipNoticeOpen] = useState(false)
   const [ownershipWizardOpen, setOwnershipWizardOpen] = useState(false)
+  const [ownershipWizardPartner, setOwnershipWizardPartner] = useState<Record<string, any> | null>(null)
+  const [ownershipWizardInitialType, setOwnershipWizardInitialType] = useState<OwnershipTransactionType | null>(null)
 
+  const includePassive = statusFilters.includes('passive')
   const selectedRecordStatus = getPartnerRecordStatus(selectedPartner)
   const isSelectedPassive = selectedRecordStatus === 'passive'
   const formMode: FormMode = pageState === 'create' ? 'create' : isSelectedPassive ? 'passive' : pageState === 'edit' ? 'edit' : 'view'
@@ -433,7 +462,7 @@ export default function OrtaklarPage() {
     setError(null)
     try {
       if (force) companyService.invalidateRelations()
-      const partnerPayload = await companyService.partnersList({ includePassive, useCache: !force, ...listQuery })
+      const partnerPayload = await companyService.partnersList({ includePassive, statuses: statusFilters, useCache: !force, ...listQuery })
 
       setPartners(Array.isArray(partnerPayload.data) ? partnerPayload.data : [])
       setListMeta(partnerPayload.meta ?? { page: listQuery.page, pageSize: listQuery.pageSize, total: partnerPayload.data?.length ?? 0, totalPages: 1 })
@@ -446,7 +475,7 @@ export default function OrtaklarPage() {
     } finally {
       setLoading(false)
     }
-  }, [includePassive, listQuery, loadRelationContext])
+  }, [includePassive, listQuery, loadRelationContext, statusFilters])
   useEffect(() => {
     loadData()
   }, [loadData])
@@ -519,7 +548,21 @@ export default function OrtaklarPage() {
       visibleWhen: { field: 'partner_type', operator: 'equals', value: 'organization' },
       websiteField: 'website',
     }),
-    ...tabs.filter(tab => !['genel', 'iletisim'].includes(tab.id)),
+    ...tabs.filter(tab => !['genel', 'iletisim'].includes(tab.id)).map(tab => ({
+      ...tab,
+      fields: tab.fields.map(field => field.name === 'current_ownership'
+        ? {
+            ...field,
+            render: ({ value }: { value: any }) => (
+              <CurrentOwnershipPanel
+                value={value}
+                section={tab.id === 'sermaye' ? 'capital' : 'rights'}
+                onCreate={() => selectedPartner && openOwnershipWizard(selectedPartner)}
+              />
+            ),
+          }
+        : field),
+    })),
   ]
   const withFieldHistory = (field: FormField) => {
     const history = selectedPartner?.field_history?.[field.name]
@@ -644,13 +687,25 @@ export default function OrtaklarPage() {
     }
   }
 
-  const handleOwnershipActionClick = () => {
-    if (!selectedPartner?.id) return
-    if (selectedRecordStatus === 'draft' || selectedRecordStatus === 'passive') {
+  function openOwnershipWizard(partner: Record<string, any>, transactionType?: OwnershipTransactionType) {
+    if (!partner?.id) return
+    const normalized = normalizePartnerForForm(partner as PartnerRow)
+    const recordStatus = getPartnerRecordStatus(normalized)
+    setSelectedPartner(prev => prev?.id === normalized.id ? prev : normalized)
+    setOwnershipWizardPartner(normalized)
+    setOwnershipWizardInitialType(transactionType || null)
+
+    if (recordStatus === 'draft' && transactionType !== transactionTypes[0]) {
       setOwnershipNoticeOpen(true)
       return
     }
+
     setOwnershipWizardOpen(true)
+  }
+
+  const handleOwnershipActionClick = (transactionType?: OwnershipTransactionType) => {
+    if (!selectedPartner?.id) return
+    openOwnershipWizard(selectedPartner, transactionType)
   }
 
   const handleCompleteNewOwnership = async (payload: Record<string, any>) => {
@@ -680,28 +735,76 @@ export default function OrtaklarPage() {
   }
 
   const handleContinueOwnershipTransaction = (transactionType: string) => {
-    if (!selectedPartner?.id) return
-    const params = new URLSearchParams({
-      mode: 'create',
-      partner_id: selectedPartner.id,
-      transaction_type: transactionType,
-    })
-    const companyId = selectedPartner.company_id || selectedPartner.company_id
-    if (companyId) params.set('company_id', companyId)
-    window.location.href = `/app/sirket/ortaklik-islemleri?${params.toString()}`
+    handleOwnershipActionClick(transactionType as OwnershipTransactionType)
   }
 
-  const renderOwnershipActions = () => {
-    if (!selectedPartner?.id) return null
-    return (
-      <button
-        type="button"
-        onClick={handleOwnershipActionClick}
-        className="rounded-lg border border-blue-200 px-3 py-2 text-sm font-medium text-blue-700 hover:bg-blue-50 dark:border-blue-800 dark:text-blue-300 dark:hover:bg-blue-950/30"
-      >
-        {selectedRecordStatus === 'active' ? 'Ortaklık İşlemi' : 'Yeni Ortaklık'}
-      </button>
-    )
+  const handleCreateOwnershipTransaction = async (partner: Record<string, any>, payload: Record<string, any>) => {
+    if (!partner?.id) return
+    setSaving(true)
+    try {
+      await ownershipTransactionsService.create(payload)
+
+      if (payload.transaction_type === transactionTypes[0] && getPartnerRecordStatus(partner) === 'draft') {
+        const result = await companyService.updatePartner(partner.id, {
+          ...partner,
+          status: 'Aktif',
+          record_status: 'active',
+          ownership_action: 'ownership_defined',
+        })
+        const normalized = result.data ? normalizePartnerForForm(result.data) : null
+        if (normalized) setSelectedPartner(normalized)
+      }
+
+      ownershipTransactionsService.invalidateList()
+      invalidateEntityDetailCache('company-partners', partner.id)
+      setOwnershipWizardOpen(false)
+      setOwnershipWizardPartner(null)
+      setOwnershipWizardInitialType(null)
+      setToast({ type: 'success', title: 'Ortaklık İşlemi Oluşturuldu', message: 'İşlem taslağı Ortaklarımız sayfasından oluşturuldu.' })
+      await loadData(true)
+      setPageState('view')
+    } catch (err: any) {
+      setToast(err.toast || { type: 'error', title: 'Ortaklık İşlemi Başarısız', message: err.message })
+      throw err
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const getPartnerFunctionActions = (partner: Record<string, any>): TableRowAction<any>[] => {
+    if (!partner?.id) return []
+    const recordStatus = getPartnerRecordStatus(partner)
+    if (recordStatus === 'passive') return []
+
+    const actionTypes = recordStatus === 'active'
+      ? transactionTypes.filter(type => type !== transactionTypes[0])
+      : [transactionTypes[0]]
+
+    return actionTypes.map(transactionType => ({
+      key: `ownership-${partner.id}-${transactionType}`,
+      label: transactionType,
+      icon: <ListChecks size={15} />,
+      tone: 'primary' as const,
+      onClick: () => openOwnershipWizard(partner, transactionType),
+    }))
+  }
+
+  const getFormOperationActions = (): FormOperationActionGroup[] => {
+    if (!selectedPartner?.id) return []
+    const actions = getPartnerFunctionActions(selectedPartner)
+    if (!actions.length) return []
+    const recordStatus = getPartnerRecordStatus(selectedPartner)
+
+    return [{
+      key: recordStatus === 'draft' ? 'lifecycle' : 'update',
+      title: recordStatus === 'draft' ? 'Yaşam Döngüsü İşlemleri' : 'Tescil İşlemleri',
+      actions: actions.map(action => ({
+        key: action.key,
+        label: action.label,
+        icon: action.icon,
+        onClick: () => handleOwnershipActionClick(action.label as OwnershipTransactionType),
+      })),
+    }]
   }
 
   const bannerConfig = pageState === 'list'
@@ -756,6 +859,7 @@ export default function OrtaklarPage() {
             emptyText="Ortak kaydı bulunamadı"
             onRowClick={handleRowClick}
             onRefresh={() => loadData(true)}
+            rowActions={getPartnerFunctionActions}
             defaultPageSize={listQuery.pageSize}
             pagination={{
               mode: 'server',
@@ -768,9 +872,9 @@ export default function OrtaklarPage() {
               onSortChange: handleListSortChange,
             }}
             showPassiveToggle
-            includePassive={includePassive}
-            onIncludePassiveChange={(next) => {
-              setIncludePassive(next)
+            activeStatusFilters={statusFilters}
+            onStatusFiltersChange={(next) => {
+              setStatusFilters(normalizeRecordStatusFilters(next))
               setListQuery(prev => ({ ...prev, page: 1 }))
             }}
           />
@@ -809,7 +913,7 @@ export default function OrtaklarPage() {
             onDelete={selectedRecordStatus === 'draft' ? handleDelete : undefined}
             onActivate={undefined}
             onModeChange={(mode) => setPageState(mode)}
-            additionalActions={renderOwnershipActions()}
+            operationActions={getFormOperationActions()}
             onIdentityGateOpenExistingRole={async (roleRecord) => {
               await handleRowClick(roleRecord as any)
               setPageState('edit')
@@ -857,16 +961,21 @@ export default function OrtaklarPage() {
         />
       )}
 
-      {ownershipWizardOpen && selectedPartner && (
+      {ownershipWizardOpen && (ownershipWizardPartner || selectedPartner) && (
         <PartnerOwnershipActionWizard
-          partner={selectedPartner}
+          partner={(ownershipWizardPartner || selectedPartner) as Record<string, any>}
           companies={companies}
+          partners={tableData}
           ownershipRows={currentOwnershipRows}
-          recordStatus={selectedRecordStatus}
+          initialTransactionType={ownershipWizardInitialType}
+          recordStatus={getPartnerRecordStatus(ownershipWizardPartner || selectedPartner)}
           saving={saving}
-          onClose={() => setOwnershipWizardOpen(false)}
-          onCompleteNewOwnership={handleCompleteNewOwnership}
-          onContinueTransaction={handleContinueOwnershipTransaction}
+          onClose={() => {
+            setOwnershipWizardOpen(false)
+            setOwnershipWizardPartner(null)
+            setOwnershipWizardInitialType(null)
+          }}
+          onSubmit={handleCreateOwnershipTransaction}
         />
       )}
     </div>
@@ -897,21 +1006,23 @@ function PartnerOwnershipNotice({ onCancel, onConfirm }: { onCancel: () => void;
 function PartnerOwnershipActionWizard({
   partner,
   companies,
+  partners,
   ownershipRows,
+  initialTransactionType,
   recordStatus,
   saving,
   onClose,
-  onCompleteNewOwnership,
-  onContinueTransaction,
+  onSubmit,
 }: {
   partner: Record<string, any>
   companies: CompanyOption[]
+  partners: Record<string, any>[]
   ownershipRows: CurrentOwnershipRow[]
+  initialTransactionType?: OwnershipTransactionType | null
   recordStatus: 'draft' | 'active' | 'passive'
   saving: boolean
   onClose: () => void
-  onCompleteNewOwnership: (payload: Record<string, any>) => Promise<void>
-  onContinueTransaction: (transactionType: string) => void
+  onSubmit: (partner: Record<string, any>, payload: Record<string, any>) => Promise<void>
 }) {
   const [form, setForm] = useState({
     company_id: partner.company_id || partner.company_id || '',
@@ -921,7 +1032,10 @@ function PartnerOwnershipActionWizard({
     profit_ratio: '',
     share_units: '',
     capital_amount: '',
-    transaction_type: 'share_transfer',
+    to_partner_id: '',
+    document_reference_id: '',
+    notes: '',
+    transaction_type: initialTransactionType || (recordStatus === 'active' ? transactionTypes[1] : transactionTypes[0]),
   })
   const [localError, setLocalError] = useState<string | null>(null)
   const allocatedByCompany = useMemo(() => {
@@ -933,6 +1047,7 @@ function PartnerOwnershipActionWizard({
   }, [ownershipRows])
   const selectedAllocated = allocatedByCompany[form.company_id] || 0
   const remainingShare = Math.max(0, 100 - selectedAllocated)
+  const companyPartners = partners.filter(item => (item.company_id || '') === form.company_id)
   const update = (name: string, value: string) => setForm(prev => ({ ...prev, [name]: value }))
   const completeDraft = async () => {
     setLocalError(null)
@@ -940,13 +1055,49 @@ function PartnerOwnershipActionWizard({
     const shareRatio = Number(form.share_ratio)
     if (!Number.isFinite(shareRatio) || shareRatio <= 0) return setLocalError('Hisse payı 0 dan büyük olmalıdır.')
     if (shareRatio > remainingShare) return setLocalError(`Seçilen şirkette kullanılabilir hisse payı %${remainingShare.toFixed(2)}.`)
-    await onCompleteNewOwnership({
-      company_id: form.company_id,      start_date: form.start_date,
+    await onSubmit(partner, {
+      company_id: form.company_id,
+      transaction_type: transactionTypes[0],
+      transaction_date: form.start_date,
+      effective_date: form.start_date,
+      to_partner_id: partner.id,
       share_ratio: shareRatio,
       voting_ratio: form.voting_ratio === '' ? shareRatio : Number(form.voting_ratio),
       profit_ratio: form.profit_ratio === '' ? shareRatio : Number(form.profit_ratio),
       share_units: form.share_units === '' ? null : Number(form.share_units),
       capital_amount: form.capital_amount === '' ? null : Number(form.capital_amount),
+      status: 'draft',
+      approval_status: 'draft',
+      workflow_status: 'draft',
+      document_status: form.document_reference_id ? 'Yüklendi' : 'Belge Yok',
+      document_reference_id: form.document_reference_id || null,
+      notes: form.notes || null,
+    })
+  }
+
+  const completeActiveTransaction = async () => {
+    setLocalError(null)
+    if (!form.company_id) return setLocalError('Şirket seçimi zorunludur.')
+    const transactionType = form.transaction_type as OwnershipTransactionType
+    if (['Pay Devri', 'Kısmi Pay Devri'].includes(transactionType) && !form.to_partner_id) return setLocalError('Devralan ortak seçimi zorunludur.')
+
+    await onSubmit(partner, {
+      company_id: form.company_id,
+      transaction_type: transactionType,
+      transaction_date: form.start_date,
+      effective_date: form.start_date,
+      from_partner_id: ['Pay Devri', 'Kısmi Pay Devri', 'Ortaklıktan Çıkış'].includes(transactionType) ? partner.id : null,
+      to_partner_id: ['Pay Devri', 'Kısmi Pay Devri'].includes(transactionType) ? form.to_partner_id : null,
+      affected_partner_id: ['Oy Hakkı Değişikliği', 'Kar Payı Oranı Değişikliği', 'İmtiyazlı Pay Tanımı', 'İmtiyazlı Pay Kaldırma', 'Düzeltme Kaydı', 'Ters Kayıt'].includes(transactionType) ? partner.id : null,
+      share_ratio: form.share_ratio === '' ? null : Number(form.share_ratio),
+      voting_ratio: form.voting_ratio === '' ? null : Number(form.voting_ratio),
+      profit_ratio: form.profit_ratio === '' ? null : Number(form.profit_ratio),
+      status: 'draft',
+      approval_status: 'draft',
+      workflow_status: 'draft',
+      document_status: form.document_reference_id ? 'Yüklendi' : 'Belge Yok',
+      document_reference_id: form.document_reference_id || null,
+      notes: form.notes || null,
     })
   }
 
@@ -1007,11 +1158,47 @@ function PartnerOwnershipActionWizard({
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
               İşlem Türü
               <select value={form.transaction_type} onChange={event => update('transaction_type', event.target.value)} className={formControlClass({ className: 'mt-1' })}>
-                <option value="share_transfer">Hisse Devri</option>
-                <option value="partial_share_transfer">Kısmi Pay Devri</option>
-                <option value="capital_increase">Sermaye Artırımı</option>
-                <option value="correction">Düzeltme Kaydı</option>
+                {transactionTypes.filter(type => type !== transactionTypes[0]).map(type => (
+                  <option key={type} value={type}>{type}</option>
+                ))}
               </select>
+            </label>
+            {['Pay Devri', 'Kısmi Pay Devri'].includes(form.transaction_type) && (
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
+                Devralan Ortak
+                <select value={form.to_partner_id} onChange={event => update('to_partner_id', event.target.value)} className={formControlClass({ className: 'mt-1' })}>
+                  <option value="">Seçiniz</option>
+                  {companyPartners.filter(item => item.id !== partner.id).map(item => (
+                    <option key={item.id} value={item.id}>{item.display_name || item.partner_name || 'Ortak'}</option>
+                  ))}
+                </select>
+              </label>
+            )}
+            {['Pay Devri', 'Kısmi Pay Devri', 'Ortaklıktan Çıkış'].includes(form.transaction_type) && (
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
+                Hisse Oranı
+                <input type="number" min="0" max="100" step="0.01" value={form.share_ratio} onChange={event => update('share_ratio', event.target.value)} className={formControlClass({ className: 'mt-1' })} />
+              </label>
+            )}
+            {['Pay Devri', 'Kısmi Pay Devri', 'Oy Hakkı Değişikliği'].includes(form.transaction_type) && (
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
+                Oy Hakkı Oranı
+                <input type="number" min="0" max="100" step="0.01" value={form.voting_ratio} onChange={event => update('voting_ratio', event.target.value)} className={formControlClass({ className: 'mt-1' })} />
+              </label>
+            )}
+            {['Pay Devri', 'Kısmi Pay Devri', 'Kar Payı Oranı Değişikliği'].includes(form.transaction_type) && (
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
+                Kar Payı Oranı
+                <input type="number" min="0" max="100" step="0.01" value={form.profit_ratio} onChange={event => update('profit_ratio', event.target.value)} className={formControlClass({ className: 'mt-1' })} />
+              </label>
+            )}
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
+              Belge Referansı
+              <input value={form.document_reference_id} onChange={event => update('document_reference_id', event.target.value)} className={formControlClass({ className: 'mt-1' })} />
+            </label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
+              Açıklama
+              <textarea value={form.notes} onChange={event => update('notes', event.target.value)} rows={3} className={formControlClass({ className: 'mt-1' })} />
             </label>
             <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
               Hissesi tamamen devredilen ortak, onaylı işlemlerden sonra pasif statüye düşecektir. Ayrı bir Ortaklıktan Ayrılma işlemi oluşturulmaz.
@@ -1027,10 +1214,10 @@ function PartnerOwnershipActionWizard({
           <button
             type="button"
             disabled={saving}
-            onClick={recordStatus === 'active' ? () => onContinueTransaction(form.transaction_type) : completeDraft}
+            onClick={recordStatus === 'active' ? completeActiveTransaction : completeDraft}
             className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60"
           >
-            {recordStatus === 'active' ? 'İşlem Wizardına Devam Et' : 'Ortaklığı Tanımla'}
+            {recordStatus === 'active' ? 'İşlem Taslağı Oluştur' : 'Ortaklığı Tanımla'}
           </button>
         </div>
       </div>
@@ -1038,12 +1225,32 @@ function PartnerOwnershipActionWizard({
   )
 }
 
-function PartnerNameCell({ value, row }: { value: any; row: any }) {
+function getPartnerStatusLabel(status: RecordStatusFilterValue) {
+  if (status === 'draft') return 'Taslak'
+  if (status === 'active') return 'Aktif'
+  return 'Pasif'
+}
+
+function getPartnerStatusDotClass(status: RecordStatusFilterValue) {
+  if (status === 'draft') return 'border-amber-200 bg-amber-400 dark:border-amber-300'
+  if (status === 'active') return 'border-emerald-200 bg-emerald-500 dark:border-emerald-300'
+  return 'border-gray-300 bg-gray-500 dark:border-gray-500'
+}
+
+function PartnerStatusDot({ status }: { status: RecordStatusFilterValue }) {
+  const label = getPartnerStatusLabel(status)
+
+  return (
+    <span className="inline-flex w-full justify-center" title={label} aria-label={label}>
+      <span className={`h-3.5 w-3.5 rounded-full border ${getPartnerStatusDotClass(status)}`} aria-hidden="true" />
+    </span>
+  )
+}
+
+function PartnerNameCell({ value }: { value: any; row: any }) {
   return (
     <div className="flex flex-wrap items-center gap-1.5">
       <span className="font-medium">{value || '-'}</span>
-      {getPartnerRecordStatus(row) === 'draft' && <span className="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-950/40 dark:text-amber-300">Taslak</span>}
-      {row.status === 'Tarihsel' && <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">Tarihsel</span>}
     </div>
   )
 }
@@ -1066,14 +1273,9 @@ async function fetchApprovedOwnershipTransactionsForPartner(partner: Record<stri
     )
 }
 
-function CurrentOwnershipPanel({ value, section }: { value?: CurrentOwnershipRow | null; section: 'capital' | 'rights' }) {
+function CurrentOwnershipPanel({ value, section, onCreate }: { value?: CurrentOwnershipRow | null; section: 'capital' | 'rights'; onCreate?: () => void }) {
   const createOwnershipTransaction = () => {
-    if (typeof window === 'undefined') return
-    const params = new URLSearchParams()
-    if (value?.company_id) params.set('company_id', value.company_id)
-    if (value?.partner_id) params.set('partner_id', value.partner_id)
-    params.set('mode', 'create')
-    window.location.href = `/app/sirket/ortaklik-islemleri?${params.toString()}`
+    onCreate?.()
   }
 
   if (!value) {
@@ -1293,7 +1495,7 @@ function normalizePartnerType(value: unknown): 'person' | 'organization' {
   return 'person'
 }
 
-function getPartnerRecordStatus(partner?: Record<string, any> | null): 'draft' | 'active' | 'passive' {
+function getPartnerRecordStatus(partner?: Record<string, any> | null): RecordStatusFilterValue {
   if (!partner) return 'draft'
   if (partner.record_status === 'passive' || isSoftDeletedRecord(partner) || partner.status === 'Pasif') return 'passive'
   if (partner.record_status === 'active' || partner.status === 'Aktif') return 'active'

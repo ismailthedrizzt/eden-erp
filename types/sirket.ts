@@ -89,6 +89,9 @@ export interface Sirket {
   mersis_number?: string
   trade_registry_number?: string
   foundation_date?: string
+  committed_capital_amount?: number
+  paid_capital_amount?: number
+  capital_completion_ratio?: number
   electronic_notification_address?: string
   trade_registry_office?: string
   company_type?: 'anonim' | 'limited' | 'komandit' | 'kolektif' | 'adi_komandit' | 'adi_sirket'
@@ -291,6 +294,7 @@ export interface SirketOrtak {
   share_units?: number
   nominal_value?: number
   capital_amount?: number
+  paid_capital_amount?: number
   voting_ratio?: number
   profit_ratio?: number
   beneficial_owner?: boolean

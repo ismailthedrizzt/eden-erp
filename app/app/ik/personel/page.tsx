@@ -19,7 +19,7 @@ import { usePersonel } from '@/hooks/usePersonel'
 import { PageBanner } from '@/components/ui/PageBanner'
 import { SmartDataTable, SortConfig, WidgetDef } from '@/components/ui/SmartDataTable'
 import type { DashboardFilterEvent } from '@/components/dashboard/dashboard.types'
-import { EntityForm, FormMode } from '@/components/ui/EntityForm'
+import { EntityForm, FormMode, type FormOperationActionGroup } from '@/components/ui/EntityForm'
 import { Toast } from '@/components/ui/Toast'
 import { EmployeeLifecycleWizard } from '@/components/ui/EmployeeLifecycleWizard'
 import Modal from '@/components/ui/Modal'
@@ -564,24 +564,32 @@ export default function PersonelYonetimPage() {
     }
   })
 
-  const renderLifecycleActions = () => {
-    if (!selectedPersonel || pageState === 'create') return null
+  const getFormOperationActions = (): FormOperationActionGroup[] => {
+    if (!selectedPersonel || pageState === 'create') return []
     const status = getEmployeeRecordStatus(selectedPersonel)
+    const lifecycleActions = []
     if (status === 'draft' && canUseAction('employees.entry.start')) {
-      return (
-        <button type="button" onClick={() => setLifecycleWizard('entry')} className="rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700">
-          İşe Giriş Yap
-        </button>
-      )
+      lifecycleActions.push({
+        key: 'entry',
+        label: 'İşe Giriş Yap',
+        icon: <LogIn size={16} />,
+        onClick: () => setLifecycleWizard('entry'),
+        tone: 'success' as const,
+      })
     }
     if (status === 'active' && canUseAction('employees.exit.start')) {
-      return (
-        <button type="button" onClick={() => setLifecycleWizard('exit')} className="rounded-lg border border-red-200 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50 dark:border-red-900/60 dark:text-red-300 dark:hover:bg-red-950/30">
-          İşten Çıkış Yap
-        </button>
-      )
+      lifecycleActions.push({
+        key: 'exit',
+        label: 'İşten Çıkış Yap',
+        icon: <LogOut size={16} />,
+        onClick: () => setLifecycleWizard('exit'),
+        tone: 'danger' as const,
+      })
     }
-    return null
+
+    return lifecycleActions.length
+      ? [{ key: 'lifecycle', title: 'Yaşam Döngüsü İşlemleri', actions: lifecycleActions }]
+      : []
   }
 
   const createSaveError = async (response: Response, fallback: string): Promise<SaveError> => {
@@ -880,7 +888,7 @@ export default function PersonelYonetimPage() {
             onDelete={selectedPersonel && getEmployeeRecordStatus(selectedPersonel) === 'draft' ? handleDelete : undefined}
             onActivate={handleActivate}
             onModeChange={(mode) => setPageState(mode)}
-            additionalActions={renderLifecycleActions()}
+            operationActions={getFormOperationActions()}
             onIdentityGateOpenExistingRole={async (roleRecord) => {
               await handleRowClick(roleRecord as PersonelTableRow)
               setPageState('view')

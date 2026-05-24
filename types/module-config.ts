@@ -168,6 +168,8 @@ export interface FormLifecycleConfig {
 export interface FormActionConfig {
   key: 'cancel' | 'save' | 'saveDraft' | 'submitApproval' | 'delete' | string
   label: string
+  category?: 'lifecycle' | 'registration' | 'update' | 'other'
+  groupLabel?: string
   variant?: 'primary' | 'secondary' | 'danger'
   visibleWhen?: ConditionConfig
   disabledWhen?: ConditionConfig
@@ -215,9 +217,11 @@ export interface ModuleConfig<TRow = any> {
 }
 
 export function toEntityFormField(field: FieldConfig): FormField {
+  const { readonly, ...rest } = field
   return {
-    ...field,
+    ...rest,
     name: field.key,
+    readOnly: field.readOnly || readonly,
     type: normalizeEntityFormFieldType(field.type)
   }
 }

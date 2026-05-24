@@ -186,7 +186,7 @@ function openingSteps(_options: ReturnType<typeof buildContextOptions>): RecordL
             { name: 'company_type', label: 'Şirket Türü', type: 'select', required: true, options: companyTypeOptions() },
             {
               name: 'foundation_capital_amount',
-              label: 'Kuruluş Sermayesi',
+              label: 'Taahhüt Edilen Sermaye',
               type: 'custom',
               render: ({ value, onChange, readOnly, className }) => (
                 <CurrencyWizardInput

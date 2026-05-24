@@ -22,6 +22,11 @@ const foreignLanguageOptions = [
   'Yunanca',
 ].map(value => ({ value, label: value }))
 
+const EMPLOYEE_WORK_LIFECYCLE_CONTROL = {
+  category: 'lifecycle' as const,
+  operations: ['İşe Giriş', 'İşten Çıkış', 'Çalışma Bilgisi Düzeltme'],
+}
+
 export type PersonelTableRow = Personel & {
   fullname: string
   employee_no?: string
@@ -376,6 +381,7 @@ export const personelModuleConfig: ModuleConfig<PersonelTableRow> = {
               label: 'Çalışma Rejimi Özeti',
               type: 'custom',
               colSpan: 3,
+              controlledByOperation: EMPLOYEE_WORK_LIFECYCLE_CONTROL,
               render: ({ data }) => <EmployeeWorkRegimeSummary data={data} />
             }
           ]

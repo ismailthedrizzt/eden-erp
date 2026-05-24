@@ -81,6 +81,22 @@ export interface TableStatusFilterOption {
   tone?: TableStatusFilterTone
 }
 
+export type RecordStatusFilterValue = 'draft' | 'active' | 'passive'
+
+export const RECORD_STATUS_FILTERS: RecordStatusFilterValue[] = ['draft', 'active', 'passive']
+export const DEFAULT_RECORD_STATUS_FILTERS: RecordStatusFilterValue[] = ['draft', 'active']
+export const RECORD_STATUS_FILTER_OPTIONS: TableStatusFilterOption[] = [
+  { value: 'draft', label: 'Taslak', tone: 'draft' },
+  { value: 'active', label: 'Aktif', tone: 'active' },
+  { value: 'passive', label: 'Pasif', tone: 'passive' },
+]
+
+export function normalizeRecordStatusFilters(values: string[]): RecordStatusFilterValue[] {
+  const allowed = new Set(RECORD_STATUS_FILTERS)
+  const next = values.filter((value): value is RecordStatusFilterValue => allowed.has(value as RecordStatusFilterValue))
+  return next.length ? next : DEFAULT_RECORD_STATUS_FILTERS
+}
+
 export interface ServerPaginationConfig {
   mode: 'server'
   page: number
@@ -91,6 +107,17 @@ export interface ServerPaginationConfig {
   onSearchChange?: (search: string) => void
   onSortChange?: (sorts: SortConfig[]) => void
   onFilterChange?: (filters: FilterConfig[]) => void
+}
+
+export interface TableRowAction<T> {
+  key: string
+  label: string
+  title?: string
+  icon?: React.ReactNode
+  tone?: 'default' | 'primary' | 'danger'
+  disabled?: boolean
+  hidden?: boolean
+  onClick: (row: T) => void
 }
 
 interface SmartDataTableProps<T extends { id: string }> {
@@ -117,6 +144,9 @@ interface SmartDataTableProps<T extends { id: string }> {
   pollingInterval?: number
   /** Whether to show action column. Only shown when explicitly enabled. */
   showActions?: boolean
+  /** Central row action surface rendered in the sticky right "İşlem" column. */
+  rowActions?: TableRowAction<T>[] | ((row: T) => TableRowAction<T>[])
+  renderRowActions?: (row: T) => React.ReactNode
   /** Shows a toolbar toggle that asks the parent page to include passive records. */
   showPassiveToggle?: boolean
   includePassive?: boolean
@@ -185,6 +215,8 @@ const LEGACY_PASSIVE_STATUS_FILTERS: TableStatusFilterOption[] = [
   { value: 'active', label: 'Aktif', tone: 'active' },
   { value: 'passive', label: 'Pasif', tone: 'passive' },
 ]
+
+const ACTION_COLUMN_WIDTH = 132
 
 const statusFilterToneClasses: Record<TableStatusFilterTone, { dot: string; active: string; inactive: string }> = {
   draft: {
@@ -333,6 +365,8 @@ export function SmartDataTable<T extends { id: string }>({
   onRowClick,
   onRefresh,
   showActions,
+  rowActions,
+  renderRowActions,
   loading = false,
   emptyText = 'Kayıt bulunamadı',
   storageKey = 'smart-table-default',
@@ -362,10 +396,13 @@ export function SmartDataTable<T extends { id: string }>({
   ]
   const quickLookWidgetSignature = quickLookWidgetIds.join('|')
   const quickLookPreferenceScope = `${storageKey}:quick-look`
-  const customStatusFiltersEnabled = !!statusFilterOptions?.length
-  const resolvedStatusFilterOptions = customStatusFiltersEnabled
+  const recordStatusFiltersEnabled = !!onStatusFiltersChange || !!activeStatusFilters?.length
+  const customStatusFiltersEnabled = !!statusFilterOptions?.length || recordStatusFiltersEnabled
+  const resolvedStatusFilterOptions = statusFilterOptions?.length
     ? statusFilterOptions ?? []
-    : showPassiveToggle
+    : recordStatusFiltersEnabled
+      ? RECORD_STATUS_FILTER_OPTIONS
+      : showPassiveToggle
       ? LEGACY_PASSIVE_STATUS_FILTERS
       : []
   const resolvedActiveStatusFilters = customStatusFiltersEnabled
@@ -407,6 +444,7 @@ export function SmartDataTable<T extends { id: string }>({
   const [loadedPreferenceSignature, setLoadedPreferenceSignature] = useState<string | null>(null)
   const [draggedColumn, setDraggedColumn] = useState<string | null>(null)
   const [dropTarget, setDropTarget] = useState<string | null>(null)
+  const [openActionRowId, setOpenActionRowId] = useState<string | null>(null)
 
   // Screen Size Detection
   const [screenSize, setScreenSize] = useState<'sm' | 'md' | 'lg' | 'xl'>('lg')
@@ -415,7 +453,7 @@ export function SmartDataTable<T extends { id: string }>({
 
   // Computed: Action column visibility
   // General rule: hide the action column unless an action surface is explicitly defined.
-  const shouldShowActions = showActions === true
+  const shouldShowActions = showActions === true || !!rowActions || !!renderRowActions
 
   // Refs
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
@@ -738,7 +776,7 @@ export function SmartDataTable<T extends { id: string }>({
   // Visible columns with responsive limits
   const visibleColumns = useMemo(() => {
     const cols = columnConfig.filter(col => col.visible !== false)
-    const availableWidth = Math.max(280, columnEconomy.availableWidth - (shouldShowActions ? 48 : 0))
+    const availableWidth = Math.max(280, columnEconomy.availableWidth - (shouldShowActions ? ACTION_COLUMN_WIDTH : 0))
 
     if (screenSize === 'sm' || screenSize === 'md') {
       const minColumns = screenSize === 'sm' ? 3 : 4
@@ -782,7 +820,7 @@ export function SmartDataTable<T extends { id: string }>({
     const columnsWidth = visibleColumns.reduce((sum, col) => {
       return sum + (col.calculatedWidth || estimateColumnWidth(col))
     }, 0)
-    return columnsWidth + (shouldShowActions ? 48 : 0)
+    return columnsWidth + (shouldShowActions ? ACTION_COLUMN_WIDTH : 0)
   }, [visibleColumns, shouldShowActions, estimateColumnWidth])
 
   // Handlers
@@ -1208,6 +1246,85 @@ export function SmartDataTable<T extends { id: string }>({
 
   function isLeftAlignedColumn(col: ColumnDef): boolean {
     return col.type === 'text' || col.type === 'enum' || col.type === 'badge'
+  }
+
+  function resolveRowActions(row: T): TableRowAction<T>[] {
+    const actions = typeof rowActions === 'function' ? rowActions(row) : rowActions
+    return (actions || []).filter(action => !action.hidden)
+  }
+
+  function renderActionButton(action: TableRowAction<T>, row: T, compact = false) {
+    const toneClass = action.tone === 'danger'
+      ? 'text-red-700 hover:bg-red-50 dark:text-red-300 dark:hover:bg-red-950/30'
+      : action.tone === 'primary'
+        ? 'text-blue-700 hover:bg-blue-50 dark:text-blue-300 dark:hover:bg-blue-950/30'
+        : 'text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-800'
+
+    return (
+      <button
+        key={action.key}
+        type="button"
+        title={action.title || action.label}
+        disabled={action.disabled}
+        onClick={(event) => {
+          event.stopPropagation()
+          if (action.disabled) return
+          setOpenActionRowId(null)
+          action.onClick(row)
+        }}
+        className={cn(
+          'inline-flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-50',
+          compact && 'justify-center px-2',
+          toneClass
+        )}
+      >
+        {action.icon && <span className="shrink-0">{action.icon}</span>}
+        {!compact && <span className="min-w-0 truncate">{action.label}</span>}
+      </button>
+    )
+  }
+
+  function renderRowActionControl(row: T, compact = false) {
+    if (renderRowActions) return renderRowActions(row)
+
+    const actions = resolveRowActions(row)
+    if (actions.length === 0) {
+      return showActions ? <MoreHorizontal size={16} className="text-gray-400" /> : <span className="text-gray-400">-</span>
+    }
+
+    if (actions.length === 1) {
+      return renderActionButton(actions[0], row, compact)
+    }
+
+    const open = openActionRowId === row.id
+
+    return (
+      <div className="relative inline-flex justify-center">
+        <button
+          type="button"
+          title="İşlem"
+          aria-haspopup="menu"
+          aria-expanded={open}
+          onClick={(event) => {
+            event.stopPropagation()
+            setOpenActionRowId(open ? null : row.id)
+          }}
+          className="inline-flex min-w-0 items-center justify-center gap-1.5 rounded-md border border-gray-200 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-700 shadow-sm hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800"
+        >
+          <MoreHorizontal size={15} className="shrink-0 text-gray-500 dark:text-gray-300" />
+          <span className="hidden truncate sm:inline">İşlem</span>
+          <ChevronDown size={13} className={cn('shrink-0 text-gray-400 transition-transform', open && 'rotate-180')} />
+        </button>
+        {open && (
+          <div
+            role="menu"
+            className="absolute right-0 top-full z-50 mt-1 w-64 rounded-lg border border-gray-200 bg-white p-1 text-left shadow-lg dark:border-gray-700 dark:bg-gray-900"
+          >
+            {actions.map(action => renderActionButton(action, row))}
+          </div>
+        )}
+      </div>
+    )
   }
 
   const dashboardWidgetByQuickLookId = new Map(dashboardWidgets.map(widget => [quickLookWidgetId('dashboard', widget.id), widget]))
@@ -1768,7 +1885,10 @@ export function SmartDataTable<T extends { id: string }>({
                   )
                 })}
                 {shouldShowActions && (
-                  <th className="sticky right-0 z-20 w-12 border-l border-gray-200 bg-gray-50 px-3 py-3 text-center text-xs font-medium text-gray-500 shadow-[-6px_0_10px_-10px_rgba(0,0,0,0.45)] dark:border-gray-700 dark:bg-gray-700">
+                  <th
+                    className="sticky right-0 z-20 border-l border-gray-200 bg-gray-50 px-3 py-3 text-center text-xs font-medium text-gray-500 shadow-[-6px_0_10px_-10px_rgba(0,0,0,0.45)] dark:border-gray-700 dark:bg-gray-700"
+                    style={{ width: ACTION_COLUMN_WIDTH, minWidth: ACTION_COLUMN_WIDTH }}
+                  >
                     İşlem
                   </th>
                 )}
@@ -1826,16 +1946,12 @@ export function SmartDataTable<T extends { id: string }>({
                     )
                   })}
                   {shouldShowActions && (
-                    <td className="sticky right-0 z-10 cursor-default border-l border-gray-100 bg-white px-3 py-3 text-center shadow-[-6px_0_10px_-10px_rgba(0,0,0,0.45)] dark:border-gray-800 dark:bg-gray-800" onClick={event => event.stopPropagation()}>
-                      <button 
-                        className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded pointer-events-auto"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          // Action menu logic here
-                        }}
-                      >
-                        <MoreHorizontal size={16} className="text-gray-400" />
-                      </button>
+                    <td
+                      className="sticky right-0 z-10 cursor-default overflow-visible border-l border-gray-100 bg-white px-2 py-2 text-center shadow-[-6px_0_10px_-10px_rgba(0,0,0,0.45)] dark:border-gray-800 dark:bg-gray-800"
+                      style={{ width: ACTION_COLUMN_WIDTH, minWidth: ACTION_COLUMN_WIDTH }}
+                      onClick={event => event.stopPropagation()}
+                    >
+                      {renderRowActionControl(row)}
                     </td>
                   )}
                 </tr>
@@ -1871,15 +1987,12 @@ export function SmartDataTable<T extends { id: string }>({
               >
                 {/* Action Button - Top Right */}
                 {shouldShowActions && (
-                  <button 
-                    className="absolute top-2 right-2 z-10 p-1.5 bg-white/80 dark:bg-gray-800/80 backdrop-blur rounded-full shadow-sm hover:bg-gray-100 dark:hover:bg-gray-700 pointer-events-auto"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      // Action menu logic here
-                    }}
+                  <div
+                    className="absolute right-2 top-2 z-20"
+                    onClick={(event) => event.stopPropagation()}
                   >
-                    <MoreHorizontal size={18} className="text-gray-500 dark:text-gray-400" />
-                  </button>
+                    {renderRowActionControl(row, true)}
+                  </div>
                 )}
                 <div className="flex min-h-44">
                   <div className={cn(

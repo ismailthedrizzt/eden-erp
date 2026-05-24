@@ -2,12 +2,21 @@
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Archive, BriefcaseBusiness, Building2, CheckCircle2, CircleDot, FileText, History, Landmark, MoreVertical, Pencil, PlayCircle, Settings, ShieldAlert, Trash2, Users } from 'lucide-react'
+import { Archive, BriefcaseBusiness, Building2, CheckCircle2, CircleDot, FileText, History, Landmark, MoreVertical, Pencil, PlayCircle, Settings, ShieldAlert, Trash2, TrendingUp, Users } from 'lucide-react'
 import { useSirketler } from '@/hooks/useSirketler'
-import { EntityForm, FormField, FormMode, FormTab } from '@/components/ui/EntityForm'
+import { EntityForm, FormField, FormMode, FormTab, type FormOperationActionGroup } from '@/components/ui/EntityForm'
+import { CompanyCapitalIncreaseWizard, type CapitalIncreasePrecheckContext, type CapitalIncreaseSubmitPayload } from '@/components/ui/CompanyCapitalIncreaseWizard'
 import { CompanyLifecycleWizard, type CompanyLifecycleWizardType } from '@/components/ui/CompanyLifecycleWizard'
 import { PageBanner } from '@/components/ui/PageBanner'
-import { SmartDataTable, ColumnDef, SortConfig, WidgetDef, type TableStatusFilterOption } from '@/components/ui/SmartDataTable'
+import {
+  DEFAULT_RECORD_STATUS_FILTERS,
+  SmartDataTable,
+  ColumnDef,
+  SortConfig,
+  WidgetDef,
+  normalizeRecordStatusFilters,
+  type RecordStatusFilterValue,
+} from '@/components/ui/SmartDataTable'
 import { Toast } from '@/components/ui/Toast'
 import type { AnyDashboardWidgetConfig } from '@/components/dashboard/dashboard.types'
 import { CompanyNaceCodesSection } from '@/components/modules/sirket/CompanyPublicTab'
@@ -45,7 +54,7 @@ type SirketTableRow = Sirket & {
   logo_url_dark?: string | null
   lifecycle_status: CompanyLifecycleStatus
 }
-type CompanyStatusFilterValue = 'draft' | 'active' | 'passive'
+type CompanyStatusFilterValue = RecordStatusFilterValue
 type DetailSectionState = {
   heroLoading: boolean
   heroReady: boolean
@@ -70,20 +79,6 @@ const emptyDetailSectionState: DetailSectionState = {
 }
 const COMPANY_DETAIL_CACHE_NAMESPACE = 'companies:phased-v3'
 const COMPANY_HISTORY_TAB_ID = LIFECYCLE_HISTORY_TAB_ID
-const COMPANY_STATUS_FILTERS: CompanyStatusFilterValue[] = ['draft', 'active', 'passive']
-const DEFAULT_COMPANY_STATUS_FILTERS: CompanyStatusFilterValue[] = ['draft', 'active']
-const COMPANY_STATUS_FILTER_OPTIONS: TableStatusFilterOption[] = [
-  { value: 'draft', label: 'Taslak', tone: 'draft' },
-  { value: 'active', label: 'Aktif', tone: 'active' },
-  { value: 'passive', label: 'Pasif', tone: 'passive' },
-]
-
-function normalizeCompanyStatusFilters(values: string[]): CompanyStatusFilterValue[] {
-  const allowed = new Set(COMPANY_STATUS_FILTERS)
-  const next = values.filter((value): value is CompanyStatusFilterValue => allowed.has(value as CompanyStatusFilterValue))
-  return next.length ? next : DEFAULT_COMPANY_STATUS_FILTERS
-}
-
 function waitForStagePaint() {
   return new Promise<void>(resolve => {
     if (typeof requestAnimationFrame === 'function') {
@@ -123,6 +118,9 @@ const FIELD_LABELS: Record<string, string> = {
   electronic_notification_address: 'Elektronik Tebligat Adresi',
   trade_registry_office: 'Ticaret Sicili Müdürlüğü',
   company_code: 'Şirket Kodu',
+  capital_completion_ratio: 'Sermaye Tamamlanma Oranı',
+  committed_capital_amount: 'Taahhüt Edilen Sermaye',
+  paid_capital_amount: 'Yatırılan Sermaye',
   e_invoice_taxpayer: 'E-Fatura Mükellefi',
   e_archive_taxpayer: 'E-Arşiv Mükellefi',
   e_waybill_taxpayer: 'E-İrsaliye Mükellefi',
@@ -134,6 +132,31 @@ const FIELD_LABELS: Record<string, string> = {
   default_language: 'Varsayılan Dil',
   time_zone: 'Zaman Dilimi',
   fiscal_year_start: 'Mali Yıl Başlangıcı (Ay/Gün)',
+}
+
+const COMPANY_OPENING_REGISTRATION_CONTROL = {
+  category: 'registration' as const,
+  operations: ['Şirket Açılışı', 'Tescil Bilgisi Düzeltme'],
+}
+
+const COMPANY_TITLE_REGISTRATION_CONTROL = {
+  category: 'registration' as const,
+  operations: ['Şirket Açılışı', 'Unvan Değişikliği'],
+}
+
+const COMPANY_ADDRESS_REGISTRATION_CONTROL = {
+  category: 'registration' as const,
+  operations: ['Şirket Açılışı', 'Adres Değişikliği'],
+}
+
+const COMPANY_CAPITAL_REGISTRATION_CONTROL = {
+  category: 'registration' as const,
+  operations: ['Şirket Açılışı', 'Sermaye Artırımı', 'Sermaye Azaltımı'],
+}
+
+const COMPANY_PUBLIC_REGISTRATION_CONTROL = {
+  category: 'registration' as const,
+  operations: ['Şirket Açılışı', 'Kamu / Tescil Bilgisi Değişikliği'],
 }
 
 const columns: ColumnDef[] = [
@@ -173,12 +196,13 @@ const columns: ColumnDef[] = [
 
 const heroFields: FormField[] = [
   { name: 'short_name', label: 'Kısa Ünvan', type: 'text' },
-  { name: 'trade_name', label: 'Ticari Unvan', type: 'text', required: true, colSpan: 2 },
+  { name: 'trade_name', label: 'Ticari Unvan', type: 'text', required: true, colSpan: 2, controlledByOperation: COMPANY_TITLE_REGISTRATION_CONTROL },
   {
     name: 'tax_office',
     label: 'Vergi Dairesi',
     type: 'select',
     required: true,
+    controlledByOperation: COMPANY_PUBLIC_REGISTRATION_CONTROL,
     searchable: true,
     remoteOptions: {
       endpoint: '/api/reference/tax-offices',
@@ -191,6 +215,7 @@ const heroFields: FormField[] = [
     label: 'Şirket Türü',
     type: 'select',
     required: true,
+    controlledByOperation: COMPANY_OPENING_REGISTRATION_CONTROL,
     options: [
       { value: 'anonim', label: 'Sermaye Şirketi - Anonim' },
       { value: 'limited', label: 'Sermaye Şirketi - Limited' },
@@ -203,10 +228,10 @@ const heroFields: FormField[] = [
   { name: 'phone', label: 'Telefon', type: 'tel' },
   { name: 'email', label: 'E-posta', type: 'email' },
   { name: 'website', label: 'Web Sitesi', type: 'text' },
-  { name: 'country', label: 'Ülke', type: 'select', compact: true },
-  { name: 'city', label: 'İl', type: 'text', required: true, compact: true },
-  { name: 'district', label: 'İlçe', type: 'text', required: true, compact: true },
-  { name: 'address', label: 'Adres', type: 'textarea', required: true, colSpan: 3 },
+  { name: 'country', label: 'Ülke', type: 'select', compact: true, controlledByOperation: COMPANY_ADDRESS_REGISTRATION_CONTROL },
+  { name: 'city', label: 'İl', type: 'text', required: true, compact: true, controlledByOperation: COMPANY_ADDRESS_REGISTRATION_CONTROL },
+  { name: 'district', label: 'İlçe', type: 'text', required: true, compact: true, controlledByOperation: COMPANY_ADDRESS_REGISTRATION_CONTROL },
+  { name: 'address', label: 'Adres', type: 'textarea', required: true, colSpan: 3, controlledByOperation: COMPANY_ADDRESS_REGISTRATION_CONTROL },
 ]
 
 const tabs: FormTab[] = [
@@ -254,14 +279,16 @@ const tabs: FormTab[] = [
     label: 'Tescil',
     icon: <FileText size={16} />,
     fields: [
-      { name: 'mersis_number', label: 'MERSİS No', type: 'text' },
-      { name: 'trade_registry_number', label: 'Ticaret Sicil No', type: 'text' },
-      { name: 'foundation_date', label: 'Kuruluş Tarihi', type: 'date' },
-      { name: 'electronic_notification_address', label: 'Elektronik Tebligat Adresi', type: 'text', maxLength: 17, inputMode: 'numeric', pattern: '\\d{5}-\\d{5}-\\d{5}', placeholder: '11111-22222-33333' },
+      { name: 'mersis_number', label: 'MERSİS No', type: 'text', controlledByOperation: COMPANY_OPENING_REGISTRATION_CONTROL },
+      { name: 'trade_registry_number', label: 'Ticaret Sicil No', type: 'text', controlledByOperation: COMPANY_OPENING_REGISTRATION_CONTROL },
+      { name: 'foundation_date', label: 'Kuruluş Tarihi', type: 'date', controlledByOperation: COMPANY_OPENING_REGISTRATION_CONTROL },
+      { name: 'capital_completion_ratio', label: 'Sermaye Tamamlanma Oranı', type: 'custom', colSpan: 3, controlledByOperation: COMPANY_CAPITAL_REGISTRATION_CONTROL },
+      { name: 'electronic_notification_address', label: 'Elektronik Tebligat Adresi', type: 'text', maxLength: 17, inputMode: 'numeric', pattern: '\\d{5}-\\d{5}-\\d{5}', placeholder: '11111-22222-33333', controlledByOperation: COMPANY_PUBLIC_REGISTRATION_CONTROL },
       {
         name: 'trade_registry_office',
         label: 'Ticaret Sicili Müdürlüğü',
         type: 'select',
+        controlledByOperation: COMPANY_OPENING_REGISTRATION_CONTROL,
         searchable: true,
         remoteOptions: {
           endpoint: '/api/reference/trade-registry-offices',
@@ -280,11 +307,11 @@ const tabs: FormTab[] = [
       { name: 'e_invoice_taxpayer', label: 'E-Fatura Mükellefi', type: 'checkbox' },
       { name: 'e_archive_taxpayer', label: 'E-Arşiv Mükellefi', type: 'checkbox' },
       { name: 'e_waybill_taxpayer', label: 'E-İrsaliye Mükellefi', type: 'checkbox' },
-      { name: 'sgk_workplace_registry_no', label: 'SGK İşyeri Sicil No', type: 'text', maxLength: 26, inputMode: 'numeric', placeholder: '26 hane: M + 4 işkolu + 2 eski şube + 2 yeni şube + 7 sıra + 3 city + 2 cityçe + 2 kontrol + 3 aracı' },
-      { name: 'sgk_province', label: 'SGK İl', type: 'text', placeholder: 'SGK sicil no girilince otomatik dolar' },
-      { name: 'sgk_branch', label: 'SGK Şube', type: 'text', placeholder: 'SGK sicil no girilince otomatik dolar' },
-      { name: 'risk_class', label: 'Tehlike Sınıfı', type: 'custom', colSpan: 3 },
-      { name: 'company_nace_codes', label: 'NACE / Faaliyet Kodları', type: 'custom', colSpan: 3 },
+      { name: 'sgk_workplace_registry_no', label: 'SGK İşyeri Sicil No', type: 'text', maxLength: 26, inputMode: 'numeric', placeholder: '26 hane: M + 4 işkolu + 2 eski şube + 2 yeni şube + 7 sıra + 3 city + 2 cityçe + 2 kontrol + 3 aracı', controlledByOperation: COMPANY_PUBLIC_REGISTRATION_CONTROL },
+      { name: 'sgk_province', label: 'SGK İl', type: 'text', placeholder: 'SGK sicil no girilince otomatik dolar', controlledByOperation: COMPANY_PUBLIC_REGISTRATION_CONTROL },
+      { name: 'sgk_branch', label: 'SGK Şube', type: 'text', placeholder: 'SGK sicil no girilince otomatik dolar', controlledByOperation: COMPANY_PUBLIC_REGISTRATION_CONTROL },
+      { name: 'risk_class', label: 'Tehlike Sınıfı', type: 'custom', colSpan: 3, controlledByOperation: COMPANY_PUBLIC_REGISTRATION_CONTROL },
+      { name: 'company_nace_codes', label: 'NACE / Faaliyet Kodları', type: 'custom', colSpan: 3, controlledByOperation: COMPANY_PUBLIC_REGISTRATION_CONTROL },
     ],
   },
   {
@@ -411,7 +438,7 @@ function createTourDraftCompany(): Sirket {
 
 export default function SirketlerPage() {
   const searchParams = useSearchParams()
-  const [statusFilters, setStatusFilters] = useState<CompanyStatusFilterValue[]>(DEFAULT_COMPANY_STATUS_FILTERS)
+  const [statusFilters, setStatusFilters] = useState<CompanyStatusFilterValue[]>(DEFAULT_RECORD_STATUS_FILTERS)
   const [listQuery, setListQuery] = useState({ page: 1, pageSize: 10, search: '', sort: 'short_name', direction: 'asc' as 'asc' | 'desc' })
   const includePassive = statusFilters.includes('passive')
   const { data: companies, meta: listMeta, loading, error: listError, yenile } = useSirketler({ includePassive, statuses: statusFilters, ...listQuery })
@@ -427,6 +454,8 @@ export default function SirketlerPage() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [toast, setToast] = useState<ToastState | null>(null)
   const [lifecycleWizard, setLifecycleWizard] = useState<CompanyLifecycleWizardType | null>(null)
+  const [capitalIncreaseContext, setCapitalIncreaseContext] = useState<CapitalIncreasePrecheckContext | null>(null)
+  const [capitalIncreaseSaving, setCapitalIncreaseSaving] = useState(false)
   const detailRequestRef = useRef(0)
   const mediaProbeRef = useRef<Record<string, boolean>>({})
   const [preferredFormTabId, setPreferredFormTabId] = useState<string | null>(null)
@@ -759,6 +788,7 @@ export default function SirketlerPage() {
     setPageState('list')
     setSelectedSirket(null)
     setLifecycleWizard(null)
+    setCapitalIncreaseContext(null)
     setFormError(null)
     setFieldErrors({})
     setDetailSections(emptyDetailSectionState)
@@ -769,7 +799,7 @@ export default function SirketlerPage() {
     const payload: Record<string, any> = {}
 
     Object.entries(raw).forEach(([key, value]) => {
-      if (['partners', 'representatives', 'stakeholders', 'documents', 'logos', 'lifecycle_status_badge', 'company_lifecycle_summary', 'record_status', 'company_status', 'opening_details', 'liquidation_details', 'deregistration_details', 'lifecycle_events', 'lifecycle_last_event'].includes(key)) return
+      if (['partners', 'representatives', 'stakeholders', 'documents', 'logos', 'lifecycle_status_badge', 'company_lifecycle_summary', 'record_status', 'company_status', 'opening_details', 'liquidation_details', 'deregistration_details', 'lifecycle_events', 'lifecycle_last_event', 'capital_completion_ratio', 'committed_capital_amount', 'paid_capital_amount'].includes(key)) return
       if (value === '' || value === null || value === undefined) return
       if (pageState !== 'create' && ['hero_documents', 'hero_images'].includes(key) && selectedSirket) {
         if (JSON.stringify(value) === JSON.stringify((selectedSirket as any)[key] || [])) return
@@ -911,10 +941,67 @@ export default function SirketlerPage() {
     setLifecycleWizard(type)
   }
 
-  const renderLifecycleActions = () => {
-    if (!selectedSirket?.id || pageState === 'create') return null
+  const openCapitalIncreaseWizard = async () => {
+    if (!selectedSirket?.id) return
+    setFormError(null)
+    setFieldErrors({})
+    try {
+      const result = await companyService.capitalIncreasePrecheck(selectedSirket.id)
+      const context = result.data as CapitalIncreasePrecheckContext
+      if (!context?.ok) {
+        setToast({
+          type: 'warning',
+          title: 'Sermaye Artırımı Başlatılamaz',
+          message: context?.message || 'Sermaye artırımı ön kontrolleri tamamlanamadı.',
+        })
+        return
+      }
+      setCapitalIncreaseContext(context)
+    } catch (error: any) {
+      setToast({
+        type: 'error',
+        title: 'Ön Kontrol Başarısız',
+        message: error?.message || 'Sermaye artırımı ön kontrolü yapılamadı.',
+      })
+    }
+  }
+
+  const completeCapitalIncrease = async (payload: CapitalIncreaseSubmitPayload) => {
+    if (!selectedSirket?.id) return
+    setCapitalIncreaseSaving(true)
+    try {
+      const result = await companyService.completeCapitalIncrease(selectedSirket.id, payload as unknown as Record<string, any>)
+      invalidateEntityDetailCache(COMPANY_DETAIL_CACHE_NAMESPACE, selectedSirket.id)
+      if (result.data?.company) {
+        setSelectedSirket(normalizeCompanyForForm({
+          ...selectedSirket,
+          ...result.data.company,
+        } as Sirket))
+      }
+      setCapitalIncreaseContext(null)
+      setPreferredFormTabId('tescil')
+      setToast({
+        type: 'success',
+        title: 'Sermaye Artırımı Tamamlandı',
+        message: `Şirket sermayesi ${formatCurrencyAmount(result.data?.new_capital_amount || 0)} olarak güncellendi.`,
+      })
+      await yenile()
+    } catch (error: any) {
+      setToast({
+        type: 'error',
+        title: 'Sermaye Artırımı Tamamlanamadı',
+        message: error?.message || 'Sermaye artırımı kaydı oluşturulamadı.',
+      })
+      throw error
+    } finally {
+      setCapitalIncreaseSaving(false)
+    }
+  }
+
+  const getFormOperationActions = (): FormOperationActionGroup[] => {
+    if (!selectedSirket?.id || pageState === 'create') return []
     const status = getCompanyLifecycleStatus(selectedSirket)
-    const actions: Array<{ key: string; label: string; icon: ReactNode; onClick: () => void; visible: boolean }> = [
+    const lifecycleActions = [
       {
         key: 'opening',
         label: 'Şirket Açılışı Yap',
@@ -944,25 +1031,41 @@ export default function SirketlerPage() {
         onClick: () => setPreferredFormTabId(COMPANY_HISTORY_TAB_ID),
         visible: status === 'deregistered' && can(PERMISSIONS.companies.lifecycleView),
       },
+    ].filter(action => action.visible)
+
+    const updateActions = [
+      {
+        key: 'capital_increase',
+        label: 'Sermaye Artırımı',
+        icon: <TrendingUp size={16} />,
+        onClick: openCapitalIncreaseWizard,
+        visible: status === 'active' && can(PERMISSIONS.companies.edit),
+      },
+    ].filter(action => action.visible)
+
+    return [
+      ...(lifecycleActions.length ? [{
+        key: 'lifecycle',
+        title: 'Yaşam Döngüsü İşlemleri',
+        actions: lifecycleActions.map(action => ({
+          key: action.key,
+          label: action.label,
+          icon: action.icon,
+          onClick: action.onClick,
+          dataTourId: action.key === 'opening' ? 'company-opening-action' : undefined,
+        })),
+      }] : []),
+      ...(updateActions.length ? [{
+        key: 'update',
+        title: 'Tescil İşlemleri',
+        actions: updateActions.map(action => ({
+          key: action.key,
+          label: action.label,
+          icon: action.icon,
+          onClick: action.onClick,
+        })),
+      }] : []),
     ]
-    const visibleActions = actions.filter(action => action.visible)
-    if (!visibleActions.length) return null
-    return (
-      <div data-tour-id="record-lifecycle-actions" className="flex flex-wrap items-center gap-2">
-        {visibleActions.map(action => (
-          <button
-            key={action.key}
-            type="button"
-            data-tour-id={action.key === 'opening' ? 'company-opening-action' : undefined}
-            onClick={action.onClick}
-            className="inline-flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm font-medium text-blue-700 hover:bg-blue-100 dark:border-blue-900/60 dark:bg-blue-950/30 dark:text-blue-200 dark:hover:bg-blue-950/50"
-          >
-            {action.icon}
-            {action.label}
-          </button>
-        ))}
-      </div>
-    )
   }
 
   const normalizeSaveError = (error: any): SaveError => {
@@ -1112,10 +1215,9 @@ export default function SirketlerPage() {
               onSortChange: handleListSortChange,
             }}
             showPassiveToggle
-            statusFilterOptions={COMPANY_STATUS_FILTER_OPTIONS}
             activeStatusFilters={statusFilters}
             onStatusFiltersChange={(next) => {
-              setStatusFilters(normalizeCompanyStatusFilters(next))
+              setStatusFilters(normalizeRecordStatusFilters(next))
               setListQuery(prev => ({ ...prev, page: 1 }))
             }}
             widgets={widgets}
@@ -1190,6 +1292,18 @@ export default function SirketlerPage() {
                   }
                 }
 
+                if (nextField.name === 'capital_completion_ratio') {
+                  return {
+                    ...nextField,
+                    render: ({ data }) => (
+                      <CapitalCompletionField
+                        company={data as Sirket}
+                        loading={detailSections.detailsLoading && !(data as any)?.opening_details}
+                      />
+                    ),
+                  }
+                }
+
                 if (nextField.name === 'partners') {
                   return {
                     ...nextField,
@@ -1231,7 +1345,7 @@ export default function SirketlerPage() {
             onIdentityGateCancelDuplicate={handleBackToList}
             canCreate={formAccess.showAdd}
             canEdit={formAccess.showEdit && canEditSelectedProfile}
-            additionalActions={renderLifecycleActions()}
+            operationActions={getFormOperationActions()}
             enableHistory
             showHeroHeader={false}
             showMasterSummaryBadge={false}
@@ -1274,6 +1388,16 @@ export default function SirketlerPage() {
           company={selectedSirket}
           onClose={() => setLifecycleWizard(null)}
           onComplete={handleLifecycleComplete}
+        />
+      )}
+
+      {capitalIncreaseContext && selectedSirket && (
+        <CompanyCapitalIncreaseWizard
+          companyName={selectedSirket.short_name || selectedSirket.trade_name || 'Şirket'}
+          context={capitalIncreaseContext}
+          saving={capitalIncreaseSaving}
+          onClose={() => !capitalIncreaseSaving && setCapitalIncreaseContext(null)}
+          onComplete={completeCapitalIncrease}
         />
       )}
     </div>
@@ -1703,6 +1827,55 @@ function formatLifecycleDate(value: unknown) {
   return date.toLocaleDateString('tr-TR')
 }
 
+function CapitalCompletionField({ company, loading = false }: { company?: Partial<Sirket> | null; loading?: boolean }) {
+  const committedCapital = getCommittedCapitalAmount(company)
+  const paidCapital = getPaidCapitalAmount(company)
+  const ratio = committedCapital > 0 ? (paidCapital / committedCapital) * 100 : 0
+  const progressPercent = Math.max(0, Math.min(100, ratio))
+
+  if (loading && committedCapital <= 0) {
+    return (
+      <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-900">
+        <div className="h-6 w-24 animate-pulse rounded bg-gray-200 dark:bg-gray-800" />
+        <div className="mt-3 grid gap-2 sm:grid-cols-2">
+          <div className="h-14 animate-pulse rounded-md bg-gray-100 dark:bg-gray-800" />
+          <div className="h-14 animate-pulse rounded-md bg-gray-100 dark:bg-gray-800" />
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-900">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <div className="text-2xl font-semibold text-gray-900 dark:text-white">{formatCompletionRatio(ratio)}</div>
+          <div className="mt-1 text-xs font-medium text-gray-500 dark:text-gray-400">Yatırılan / taahhüt edilen sermaye</div>
+        </div>
+        <div className="grid gap-2 text-sm sm:min-w-[360px] sm:grid-cols-2">
+          <CapitalMetric label="Taahhüt Edilen Sermaye" value={formatCurrencyAmount(committedCapital)} />
+          <CapitalMetric label="Yatırılan Sermaye" value={formatCurrencyAmount(paidCapital)} />
+        </div>
+      </div>
+      <div className="mt-4 h-2 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
+        <div
+          className="h-full rounded-full bg-emerald-500 transition-[width]"
+          style={{ width: `${progressPercent}%` }}
+        />
+      </div>
+    </div>
+  )
+}
+
+function CapitalMetric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-md border border-gray-100 bg-gray-50 px-3 py-2 dark:border-gray-800 dark:bg-gray-950">
+      <div className="text-xs font-medium text-gray-500 dark:text-gray-400">{label}</div>
+      <div className="mt-1 truncate text-sm font-semibold text-gray-900 dark:text-gray-100">{value}</div>
+    </div>
+  )
+}
+
 function formatHistoryDateTime(value: unknown) {
   if (!value) return '-'
   const date = new Date(String(value))
@@ -1886,6 +2059,49 @@ function formatPercent(value: unknown) {
   return `%${number.toLocaleString('tr-TR', { maximumFractionDigits: 2 })}`
 }
 
+function formatCompletionRatio(value: number) {
+  if (!Number.isFinite(value)) return '0%'
+  return `${value.toLocaleString('tr-TR', { maximumFractionDigits: 2 })}%`
+}
+
+function formatCurrencyAmount(value: unknown) {
+  const amount = toNumber(value)
+  return amount.toLocaleString('tr-TR', {
+    style: 'currency',
+    currency: 'TRY',
+    maximumFractionDigits: 2,
+  })
+}
+
+function getCommittedCapitalAmount(company?: Partial<Sirket> | null) {
+  const explicitCommitted = toNumber((company as any)?.committed_capital_amount)
+  if (explicitCommitted > 0) return explicitCommitted
+  const opening = (company as any)?.opening_details || {}
+  const payload = opening?.payload_json && typeof opening.payload_json === 'object' ? opening.payload_json : {}
+  return toNumber(
+    payload.foundation_capital_amount
+    ?? payload.capital_amount
+    ?? opening.foundation_capital_amount
+    ?? (company as any)?.foundation_capital_amount
+    ?? (company as any)?.committed_capital_amount
+  )
+}
+
+function getPaidCapitalAmount(company?: Partial<Sirket> | null) {
+  return toNumber((company as any)?.paid_capital_amount)
+}
+
+function toNumber(value: unknown) {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : 0
+  if (typeof value !== 'string') return 0
+  const trimmed = value.trim()
+  if (!trimmed) return 0
+  const direct = Number(trimmed)
+  if (Number.isFinite(direct)) return direct
+  const localized = Number(trimmed.replace(/\s/g, '').replace(/\./g, '').replace(',', '.'))
+  return Number.isFinite(localized) ? localized : 0
+}
+
 function formatAuthorityType(value?: string) {
   const labels: Record<string, string> = {
     signature_authority: 'İmza Yetkilisi',
@@ -1927,9 +2143,16 @@ function formatSourceType(value?: string) {
 }
 
 function normalizeCompanyForForm(company: Sirket) {
+  const committedCapitalAmount = getCommittedCapitalAmount(company)
+  const paidCapitalAmount = getPaidCapitalAmount(company)
+  const capitalCompletionRatio = committedCapitalAmount > 0 ? (paidCapitalAmount / committedCapitalAmount) * 100 : 0
+
   return {
     ...company,
     is_deleted: !!company.is_deleted,
+    committed_capital_amount: committedCapitalAmount,
+    paid_capital_amount: paidCapitalAmount,
+    capital_completion_ratio: capitalCompletionRatio,
     logo_url: extractLogoUrl((company as any).hero_images) || (company as any).logo_url || '',
     logo_url_light: extractLogoUrl((company as any).hero_images, false) || (company as any).logo_url_light || (company as any).logo_url || '',
     logo_url_dark: extractLogoUrl((company as any).hero_images, true) || (company as any).logo_url_dark || (company as any).logo_url_light || (company as any).logo_url || '',

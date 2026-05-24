@@ -11,6 +11,9 @@ import { applyTenantQueryScope, resolveTenantContext, type TenantContext, withTe
 import { findGlobalOrganizationByIdentity, normalizeLegalCountry, normalizeLegalTaxNumber } from '@/lib/tenancy/companyScopes'
 import { requirePermission } from '@/lib/security/serverPermissions'
 
+type PartnerStatusFilter = 'draft' | 'active' | 'passive'
+const PARTNER_STATUS_FILTERS = new Set<PartnerStatusFilter>(['draft', 'active', 'passive'])
+
 const PartnerSchema = z.object({
   company_id: z.string().uuid().optional(),  person_id: z.string().uuid().optional().nullable(),
   organization_id: z.string().uuid().optional().nullable(),
@@ -103,10 +106,38 @@ function omitNullishValues(value: Record<string, any>) {
   )
 }
 
+function normalizePartnerStatusFilters(statuses?: string[]) {
+  return (statuses || []).filter((status): status is PartnerStatusFilter =>
+    PARTNER_STATUS_FILTERS.has(status as PartnerStatusFilter)
+  )
+}
+
+function applyPartnerStatusFilters(query: any, statuses: PartnerStatusFilter[]) {
+  if (!statuses.length) return query
+
+  const hasDraft = statuses.includes('draft')
+  const hasActive = statuses.includes('active')
+  const hasPassive = statuses.includes('passive')
+
+  if (hasDraft && hasActive && hasPassive) return query
+  if (hasDraft && hasActive && !hasPassive) return query.neq('record_status', 'passive').eq('is_deleted', false)
+  if (hasDraft && !hasActive && !hasPassive) return query.eq('record_status', 'draft').eq('is_deleted', false)
+  if (!hasDraft && hasActive && !hasPassive) return query.eq('record_status', 'active').eq('is_deleted', false)
+  if (!hasDraft && !hasActive && hasPassive) return query.or('record_status.eq.passive,is_deleted.eq.true')
+
+  const clauses: string[] = []
+  if (hasDraft) clauses.push('and(record_status.eq.draft,is_deleted.eq.false)')
+  if (hasActive) clauses.push('and(record_status.eq.active,is_deleted.eq.false)')
+  if (hasPassive) clauses.push('record_status.eq.passive', 'is_deleted.eq.true')
+
+  return clauses.length ? query.or(clauses.join(',')) : query.neq('record_status', 'passive').eq('is_deleted', false)
+}
+
 export async function GET(request: NextRequest) {
   const supabase = createServiceClient()
   const { searchParams } = new URL(request.url)
   const listQuery = parseListQuery(searchParams, { pageSize: 50, sort: 'created_at', direction: 'desc' })
+  const statusFilters = normalizePartnerStatusFilters(listQuery.statuses)
   const sortMap: Record<string, string> = {
     display_name: 'display_name',
     partner_name: 'partner_name',
@@ -115,6 +146,7 @@ export async function GET(request: NextRequest) {
     voting_ratio: 'voting_ratio',
     profit_ratio: 'profit_ratio',
     status: 'status',
+    record_status: 'record_status',
     created_at: 'created_at',
   }
   const companyId = searchParams.get('company_id')
@@ -128,13 +160,14 @@ export async function GET(request: NextRequest) {
     listQuery,
     sortMap,
     defaultSort: 'created_at',
-    passiveField: 'record_status',
+    passiveField: statusFilters.length ? undefined : 'record_status',
     passiveValue: 'passive',
     searchFields: ['display_name', 'partner_name', 'identity_number', 'identity_tax_number'],
     filters: {
       ...(companyId ? { company_id: companyId } : {}),
       ...(status ? { status } : {}),
     },
+    query: statusFilters.length ? query => applyPartnerStatusFilters(query, statusFilters) : undefined,
   })
 
   return safeCrudResponse(result)

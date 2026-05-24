@@ -93,7 +93,7 @@ export async function GET(request: NextRequest) {
         title: transaction.transaction_no || transaction.transaction_type || 'Ortaklık işlemi',
         subtitle: pendingApproval ? 'Onay bekliyor' : 'Onaya gönderilmeyi bekliyor',
         statusLabel: pendingApproval ? 'Onay Bekliyor' : 'Taslak',
-        href: `/app/sirket/ortaklik-islemleri?pending=${transaction.approval_status}&id=${transaction.id}`,
+        href: `/app/sirket/companies/partners?pending=ownership_transaction&transaction_id=${transaction.id}`,
         severity: pendingApproval ? 'warning' : 'info',
         createdAt: transaction.updated_at || transaction.created_at,
       } satisfies PendingActionItem

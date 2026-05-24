@@ -114,10 +114,33 @@ Every data management page in the ERP follows the **same architectural pattern**
   data={selectedRecord}
   heroFields={[...]}
   tabs={[...]}
+  operationActions={[
+    {
+      key: 'lifecycle',
+      title: 'Yaşam Döngüsü İşlemleri',
+      actions: [
+        { key: 'activate', label: 'Aktifleştir', onClick: startActivationWizard },
+      ],
+    },
+    {
+      key: 'update',
+      title: 'Tescil İşlemleri',
+      actions: [
+        { key: 'formal-change', label: 'Resmi Değişiklik Başlat', onClick: startChangeWizard },
+      ],
+    },
+  ]}
   onSave={handleSave}
   onCancel={() => setFormMode('list')}
 />
 ```
+
+**Operation grouping rule**:
+- `lifecycle`: the operation changes the entity life state, such as opening, activation, employee entry/exit, liquidation, or deregistration.
+- `update`: the entity stays active, but official/controlled registration data changes through documents, preconditions, approvals, or history snapshots.
+- `other`: navigation or related actions that are not lifecycle or controlled update flows.
+
+Fields governed by these flows should use `controlledByOperation`; the form locks them in edit mode and shows the explanatory info icon.
 
 ---
 

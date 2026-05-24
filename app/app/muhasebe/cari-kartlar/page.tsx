@@ -2,10 +2,11 @@
 
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Download, Filter, Settings, WalletCards } from 'lucide-react'
 import { PageBanner } from '@/components/ui/PageBanner'
 import { SmartDataTable, ColumnDef, SortConfig, WidgetDef } from '@/components/ui/SmartDataTable'
-import { EntityForm, FormField, FormMode, FormTab } from '@/components/ui/EntityForm'
+import { EntityForm, FormField, FormMode, FormTab, type FormOperationActionGroup } from '@/components/ui/EntityForm'
 import { Toast } from '@/components/ui/Toast'
 import { EntityBankAccountsPanel } from '@/components/ui/EntityBankAccountsPanel'
 import { usePermissions } from '@/lib/security/permissionStore'
@@ -51,6 +52,7 @@ const detailTabs: FormTab[] = [
 ]
 
 export default function AccountCardsPage() {
+  const router = useRouter()
   const { can } = usePermissions()
   const [cards, setCards] = useState<AccountCardRow[]>([])
   const [loading, setLoading] = useState(true)
@@ -139,6 +141,21 @@ export default function AccountCardsPage() {
     }
   }
 
+  const getFormOperationActions = (): FormOperationActionGroup[] => {
+    if (!selectedCard) return []
+    return [{
+      key: 'other',
+      title: 'Bağlı İşlemler',
+      actions: [{
+        key: 'movements',
+        label: 'Hareketleri Gör',
+        icon: <Settings size={16} />,
+        onClick: () => router.push(`/app/muhasebe/on-muhasebe-hareketleri?counterparty=${selectedCard.person_id || selectedCard.organization_id}`),
+        tone: 'neutral',
+      }],
+    }]
+  }
+
   return (
     <div className="relative">
       <PageBanner
@@ -163,7 +180,7 @@ export default function AccountCardsPage() {
         </div>
       ) : (
         <div className="mt-6">
-          <EntityForm mode={mode} entityName="Cari Kartlar" entityNameSingular="Cari Kart" heroFields={heroFields} tabs={detailTabs} data={selectedCard as any} saving={saving} loadStages={formLoadStages} onSave={saveSettings} onCancel={() => mode === 'edit' ? setMode('view') : setSelectedCard(null)} onModeChange={setMode} canEdit={can(ACCOUNTING_PERMISSIONS.accountCardsEditFinancialSettings)} enableHistory additionalActions={<Link className="btn" href={`/app/muhasebe/on-muhasebe-hareketleri?counterparty=${selectedCard.person_id || selectedCard.organization_id}`}><Settings size={16} />Hareketleri Gör</Link>} />
+          <EntityForm mode={mode} entityName="Cari Kartlar" entityNameSingular="Cari Kart" heroFields={heroFields} tabs={detailTabs} data={selectedCard as any} saving={saving} loadStages={formLoadStages} onSave={saveSettings} onCancel={() => mode === 'edit' ? setMode('view') : setSelectedCard(null)} onModeChange={setMode} canEdit={can(ACCOUNTING_PERMISSIONS.accountCardsEditFinancialSettings)} enableHistory operationActions={getFormOperationActions()} />
         </div>
       )}
 

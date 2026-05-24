@@ -24,7 +24,7 @@
  */
 
 import { useState, useEffect, ReactNode, useCallback, useMemo } from 'react'
-import { Save, Loader2, Edit3, History, Clock, Plus, Trash2, Upload, Briefcase, LogOut, Building2, UserRound, FileText, RotateCcw, CheckCircle2, Circle, AlertCircle } from 'lucide-react'
+import { Save, Loader2, Edit3, History, Clock, Plus, Trash2, Upload, Briefcase, LogOut, Building2, UserRound, FileText, RotateCcw, CheckCircle2, Circle, AlertCircle, ChevronDown, Info } from 'lucide-react'
 import { cn, formatPhoneInput, normalizeEmailInput, resolveTurkishIban } from '@/lib/utils'
 import { ImageSlotUploader, ImageSlot, SlotImage } from './ImageSlotUploader'
 import { DocumentSlotUploader, DocumentSlot, SlotDocument } from './DocumentSlotUploader'
@@ -63,6 +63,7 @@ export interface FormField {
   errorLabel?: string
   type: 'text' | 'email' | 'tel' | 'date' | 'select' | 'textarea' | 'number' | 'checkbox' | 'section' | 'list' | 'iban' | 'document' | 'workLifecycle' | 'custom'
   required?: boolean
+  readOnly?: boolean
   options?: FieldOption[]
   remoteOptions?: RemoteFieldOptions
   searchable?: boolean
@@ -87,6 +88,8 @@ export interface FormField {
   history?: HistoryEntry[]
   /** Marks fields that trigger automation and fill or derive other form fields. */
   automation?: FieldAutomationConfig
+  /** Locks manual edits when this field is governed by a lifecycle or registration operation. */
+  controlledByOperation?: FormFieldOperationControl
   /** Hide the field label when the rendered control already provides its own structure. */
   hideLabel?: boolean
   /** Custom render function */
@@ -99,6 +102,15 @@ export interface FormField {
     className: string
     validationState: { status: FormControlState; label: string }
   }) => ReactNode
+}
+
+export type FormFieldOperationCategory = 'lifecycle' | 'registration' | 'update' | 'other'
+
+export interface FormFieldOperationControl {
+  category: FormFieldOperationCategory
+  operations?: string[]
+  message?: string
+  lockInModes?: FormMode[]
 }
 
 export interface FieldAutomationConfig {
@@ -153,6 +165,27 @@ export interface FormLoadStage {
   label: string
   status: FormLoadStageStatus
   description?: string
+}
+
+export type FormOperationActionGroupKey = 'lifecycle' | 'registration' | 'update' | 'other' | string
+export type FormOperationActionTone = 'primary' | 'neutral' | 'danger' | 'success'
+
+export interface FormOperationAction {
+  key: string
+  label: string
+  icon?: ReactNode
+  onClick: () => void
+  hidden?: boolean
+  disabled?: boolean
+  tone?: FormOperationActionTone
+  dataTourId?: string
+}
+
+export interface FormOperationActionGroup {
+  key: FormOperationActionGroupKey
+  title?: string
+  icon?: ReactNode
+  actions: FormOperationAction[]
 }
 
 /** EntityForm props */
@@ -252,6 +285,9 @@ export interface EntityFormProps {
 
   /** Optional field change observer for parent-driven dynamic forms */
   onFieldChange?: (field: string, value: any, data: Record<string, any>) => void
+
+  /** Structured form operations grouped by business intent. */
+  operationActions?: FormOperationActionGroup[]
   
   /** Additional actions in form action area (future: workflow) */
   additionalActions?: ReactNode
@@ -2195,6 +2231,143 @@ function SgkSelectField({
   )
 }
 
+const DEFAULT_OPERATION_GROUP_TITLES: Record<string, string> = {
+  lifecycle: 'Yaşam Döngüsü İşlemleri',
+  registration: 'Tescil İşlemleri',
+  update: 'Tescil İşlemleri',
+  other: 'Diğer İşlemler',
+}
+
+const DEFAULT_OPERATION_GROUP_ICONS: Record<string, ReactNode> = {
+  lifecycle: <Clock size={15} />,
+  registration: <FileText size={15} />,
+  update: <FileText size={15} />,
+  other: <Briefcase size={15} />,
+}
+
+function FormOperationActions({ groups }: { groups?: FormOperationActionGroup[] }) {
+  const visibleGroups = useMemo(() => (groups || [])
+    .map(group => ({
+      ...group,
+      actions: group.actions.filter(action => !action.hidden),
+    }))
+    .filter(group => group.actions.length > 0), [groups])
+
+  if (!visibleGroups.length) return null
+
+  return (
+    <div className="flex flex-wrap items-center justify-end gap-2">
+      {visibleGroups.map(group => (
+        <FormOperationActionGroupMenu key={group.key} group={group} />
+      ))}
+    </div>
+  )
+}
+
+function FormOperationActionGroupMenu({ group }: { group: FormOperationActionGroup }) {
+  const [open, setOpen] = useState(false)
+  const title = group.title || DEFAULT_OPERATION_GROUP_TITLES[group.key] || group.key
+  const icon = group.icon || DEFAULT_OPERATION_GROUP_ICONS[group.key] || DEFAULT_OPERATION_GROUP_ICONS.other
+
+  return (
+    <div className="relative inline-flex">
+      <button
+        type="button"
+        aria-expanded={open}
+        aria-haspopup="menu"
+        onClick={() => setOpen(previous => !previous)}
+        className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800"
+      >
+        {icon}
+        <span>{title}</span>
+        <ChevronDown size={14} className={cn('transition-transform', open && 'rotate-180')} />
+      </button>
+      {open && (
+        <div
+          role="menu"
+          className="absolute right-0 top-full z-40 mt-1 w-72 rounded-lg border border-gray-200 bg-white p-1 shadow-lg dark:border-gray-700 dark:bg-gray-900"
+        >
+          {group.actions.map(action => (
+            <button
+              key={action.key}
+              type="button"
+              role="menuitem"
+              data-tour-id={action.dataTourId}
+              disabled={action.disabled}
+              onClick={() => {
+                setOpen(false)
+                action.onClick()
+              }}
+              className={cn(
+                'flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50',
+                getOperationActionToneClass(action.tone)
+              )}
+            >
+              {action.icon}
+              <span className="min-w-0 truncate">{action.label}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function getOperationActionToneClass(tone: FormOperationActionTone = 'primary') {
+  switch (tone) {
+    case 'danger':
+      return 'text-red-700 hover:bg-red-50 dark:text-red-300 dark:hover:bg-red-950/30'
+    case 'success':
+      return 'text-emerald-700 hover:bg-emerald-50 dark:text-emerald-300 dark:hover:bg-emerald-950/30'
+    case 'neutral':
+      return 'text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-800'
+    case 'primary':
+    default:
+      return 'text-blue-700 hover:bg-blue-50 dark:text-blue-300 dark:hover:bg-blue-950/30'
+  }
+}
+
+function FieldOperationLockIndicator({ control }: { control: FormFieldOperationControl }) {
+  const [showTooltip, setShowTooltip] = useState(false)
+  const message = getFieldOperationLockMessage(control)
+
+  return (
+    <div className="relative inline-flex">
+      <button
+        type="button"
+        aria-label="Alan işlem bilgisi"
+        title={message}
+        onFocus={() => setShowTooltip(true)}
+        onBlur={() => setShowTooltip(false)}
+        onMouseEnter={() => setShowTooltip(true)}
+        onMouseLeave={() => setShowTooltip(false)}
+        className="inline-grid h-5 w-5 place-items-center rounded-full text-amber-600 transition-colors hover:bg-amber-50 hover:text-amber-700 dark:text-amber-300 dark:hover:bg-amber-950/30"
+      >
+        <Info size={14} />
+      </button>
+      {showTooltip && (
+        <div className="absolute left-1/2 top-full z-50 mt-1 w-72 -translate-x-1/2 rounded-lg border border-amber-200 bg-white p-3 text-xs leading-5 text-gray-700 shadow-lg dark:border-amber-900/60 dark:bg-gray-950 dark:text-gray-200">
+          {message}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function getFieldOperationLockMessage(control: FormFieldOperationControl) {
+  if (control.message) return control.message
+
+  const categoryLabel = control.category === 'lifecycle'
+    ? 'yaşam döngüsü işlemleriyle'
+    : control.category === 'registration' || control.category === 'update'
+      ? 'tescil işlemleriyle'
+      : 'ilgili işlemle'
+  const operations = control.operations?.filter(Boolean) || []
+  const operationText = operations.length ? ` İşlemler: ${operations.join(', ')}.` : ''
+
+  return `Bu alan ${categoryLabel} değiştirilebilir.${operationText}`
+}
+
 export function EntityForm({
   mode: initialMode,
   entityName,
@@ -2227,6 +2400,7 @@ export function EntityForm({
   onActivate,
   onModeChange,
   onFieldChange,
+  operationActions,
   additionalActions,
   error,
   loadStages,
@@ -2487,6 +2661,16 @@ export function EntityForm({
     ...flattenFields(roleHeroFields),
     ...visibleTabs.flatMap(tab => flattenFields(tab.fields))
   ]
+  const isOperationControlledLocked = (field: FormField) => {
+    if (!field.controlledByOperation) return false
+    const lockInModes = field.controlledByOperation.lockInModes || ['edit']
+    return lockInModes.includes(mode)
+  }
+  const operationLockedFieldNames = new Set(
+    allFormFields
+      .filter(isOperationControlledLocked)
+      .map(field => field.name)
+  )
 
   const isFieldRequired = (field: FormField, sourceData = formData) => {
     if (field.required) return true
@@ -2499,7 +2683,7 @@ export function EntityForm({
   }
 
   const getFieldValidationState = (field: FormField) => {
-    if (isReadOnly || field.type === 'section' || !matchesCondition(field.visibleWhen, formData)) {
+    if (isReadOnly || isOperationControlledLocked(field) || field.type === 'section' || !matchesCondition(field.visibleWhen, formData)) {
       return { status: 'neutral' as const, label: '' }
     }
 
@@ -2550,6 +2734,7 @@ export function EntityForm({
   }
 
   const handleChange = (field: string, value: any) => {
+    if (operationLockedFieldNames.has(field)) return
     setFormData(prev => {
       if (isCountryField(field)) {
         const previousCountry = normalizeCountryId(prev[field] || prev.country || prev.country)
@@ -2891,6 +3076,7 @@ export function EntityForm({
     const validateFields = (fields: FormField[]) => {
       fields.forEach(field => {
         if (field.type === 'section' || !matchesCondition(field.visibleWhen, sourceData)) return
+        if (isOperationControlledLocked(field)) return
         if (isFieldRequired(field, sourceData) && !hasValue(sourceData[field.name])) {
           errors[field.name] = `${field.errorLabel || field.label} zorunludur`
           return
@@ -2936,6 +3122,11 @@ export function EntityForm({
     setFormData(finalizedData)
     if (!validate(finalizedData)) return
     const payload = isEdit && data ? buildChangedPayload(finalizedData, data) : finalizedData
+    if (isEdit && operationLockedFieldNames.size > 0) {
+      operationLockedFieldNames.forEach(fieldName => {
+        delete payload[fieldName]
+      })
+    }
     if (isEdit && Object.keys(payload).length === 0) {
       handleModeChange('view')
       return
@@ -2979,7 +3170,12 @@ export function EntityForm({
         : field.compact
           ? 'col-span-1'
           : 'col-span-2 md:col-span-1'
-    const fieldDisabled = isReadOnly || isIdentityGateLocked || (field.disabledWhen ? matchesCondition(field.disabledWhen, formData) : false)
+    const fieldOperationControl = !isCreate ? field.controlledByOperation : undefined
+    const fieldDisabled = isReadOnly
+      || !!field.readOnly
+      || isIdentityGateLocked
+      || isOperationControlledLocked(field)
+      || (field.disabledWhen ? matchesCondition(field.disabledWhen, formData) : false)
     const automationState = getFieldAutomationState(field, formData)
 
     if (field.type === 'section') {
@@ -3269,6 +3465,9 @@ export function EntityForm({
             {(showHistoryIcon || enableHistory) && field.history && field.history.length > 0 && (
               <FieldHistoryIndicator history={field.history} />
             )}
+            {fieldOperationControl && (
+              <FieldOperationLockIndicator control={fieldOperationControl} />
+            )}
             {automationState && (
               <AutomationBadge
                 status={automationState.status}
@@ -3501,7 +3700,8 @@ export function EntityForm({
 
             {/* Form Action Area - Bottom Right */}
             <div data-tour-id="record-form-actions" className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-end gap-2">
-              {/* Future: Workflow Actions (Approve, Reject, etc.) */}
+              <FormOperationActions groups={operationActions} />
+
               {additionalActions}
               
               {/* View Mode: Edit Button */}

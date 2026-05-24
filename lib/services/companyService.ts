@@ -9,11 +9,11 @@ import {
   updateEntityRecord,
 } from '@/lib/crud/entityCrudClient'
 
-type RelationListOptions = ApiClientOptions & Partial<Pick<ListQuery, 'page' | 'pageSize' | 'search' | 'sort' | 'direction'>> & { includePassive?: boolean; companyId?: string }
+type RelationListOptions = ApiClientOptions & Partial<Pick<ListQuery, 'page' | 'pageSize' | 'search' | 'sort' | 'direction'>> & { includePassive?: boolean; companyId?: string; statuses?: string[] }
 type CompanyListOptions = ApiClientOptions & Partial<Pick<ListQuery, 'page' | 'pageSize' | 'search' | 'sort' | 'direction'>> & { includePassive?: boolean; statuses?: string[] }
 
 function relationListOptions(options: RelationListOptions = {}) {
-  const { includePassive, companyId, ...clientOptions } = options
+  const { includePassive, companyId, statuses, ...clientOptions } = options
   return {
     ...clientOptions,
     skipAuth: clientOptions.skipAuth ?? true,
@@ -21,6 +21,7 @@ function relationListOptions(options: RelationListOptions = {}) {
     query: {
       ...(companyId ? { company_id: companyId } : {}),
       ...(includePassive ? { include_passive: 'true' } : {}),
+      ...(statuses?.length ? { statuses: statuses.join(',') } : {}),
       page: clientOptions.query?.page ?? options.page,
       pageSize: clientOptions.query?.pageSize ?? options.pageSize,
       search: clientOptions.query?.search ?? options.search,
@@ -82,6 +83,14 @@ export const companyService = {
       endpoint: { collectionPath: '/api/companies' },
       id,
     })
+  },
+  capitalIncreasePrecheck(companyId: string) {
+    return apiClient.get<{ data: any }>(`/api/companies/${companyId}/capital-increases/precheck`, {
+      useCache: false,
+    })
+  },
+  completeCapitalIncrease(companyId: string, payload: Record<string, any>) {
+    return apiClient.post<{ data: any }>(`/api/companies/${companyId}/capital-increases`, payload)
   },
   partners(companyId: string, options: ApiClientOptions = {}) {
     return apiClient.get<{ data: SirketOrtak[] }>('/api/companies/partners', relationListOptions({ ...options, companyId }))
