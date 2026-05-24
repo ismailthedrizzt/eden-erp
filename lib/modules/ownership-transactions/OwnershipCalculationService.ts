@@ -84,6 +84,8 @@ export class OwnershipCalculationService {
     row.current_share_ratio += Number(item.share_ratio || 0) * direction
     row.current_voting_ratio += Number(item.voting_ratio || 0) * direction
     row.current_profit_ratio += Number(item.profit_ratio || 0) * direction
+    row.current_capital_amount += Number(item.capital_amount || item.committed_capital_amount || 0) * direction
+    row.current_share_units += Number(item.share_units || 0) * direction
     row.has_veto_right = row.has_veto_right || !!item.has_veto_right
     row.has_board_nomination_right = row.has_board_nomination_right || !!item.has_board_nomination_right
     row.has_privileged_share = row.has_privileged_share || !!item.has_privileged_share

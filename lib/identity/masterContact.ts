@@ -124,7 +124,7 @@ export function mergeMasterContactIntoRole(role: Record<string, any>, master: Re
   const phones = normalizePhones({ phones: contactPhones, phone: master.phone || master.mobile_phone, work_phone: master.work_phone })
   const emails = normalizeEmails({ emails: contactEmails, email: master.email })
   const personMaster = kind === 'person' ? readPersonMasterMetadata(master) : {}
-  const organizationMaster = {}
+  const organizationMaster = kind === 'organization' ? readOrganizationMasterMetadata(master) : {}
   const rolePhones = normalizePhones({ phones: role.phones, phone: role.phone || role.mobile_phone || role.phone_1, work_phone: role.work_phone || role.phone_2 })
   const roleEmails = normalizeEmails({ emails: role.emails, email: role.email || role.email_1 })
   const emergency = kind === 'person' && contact.emergency_contact && typeof contact.emergency_contact === 'object'
@@ -252,6 +252,15 @@ export async function syncMasterContact(supabase: SupabaseClient, kind: EntityKi
     if (hasAny('tax_office')) update.tax_office = clean(source.tax_office) || null
     if (hasAny('company_type', 'organization_type')) update.organization_type = clean(source.organization_type || source.company_type) || null
     if (hasAny('trade_registry_number', 'registration_number', 'mersis_number')) update.registration_number = clean(source.registration_number || source.trade_registry_number || source.mersis_number) || null
+    if (hasAny(...ORGANIZATION_MASTER_PROFILE_KEYS)) {
+      update.metadata_json = {
+        ...(update.metadata_json || metadata),
+        [ORGANIZATION_MASTER_METADATA_KEY]: {
+          ...(metadata[ORGANIZATION_MASTER_METADATA_KEY] || {}),
+          ...normalizeOrganizationMasterPayload(source),
+        },
+      }
+    }
   }
 
   if (kind === 'person') {

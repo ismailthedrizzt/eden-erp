@@ -14,6 +14,7 @@
  */
 
 import { useState, useEffect, useMemo, useRef, type MouseEvent as ReactMouseEvent, type ReactNode } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { LogIn, LogOut, MoreHorizontal, Trash2, UserCheck, Users } from 'lucide-react'
 import { usePersonel } from '@/hooks/usePersonel'
 import { PageBanner } from '@/components/ui/PageBanner'
@@ -127,6 +128,7 @@ const getFieldLabel = (field: string) => PERSONEL_FIELD_LABELS[field] || field
 const formatFieldList = (fields: string[]) => fields.map(getFieldLabel).join(', ')
 
 export default function PersonelYonetimPage() {
+  const searchParams = useSearchParams()
   const [includePassive, setIncludePassive] = useState(false)
   const [listQuery, setListQuery] = useState({ page: 1, pageSize: 50, search: '', sort: 'last_name', direction: 'asc' as 'asc' | 'desc' })
   const { data: employees, meta: listMeta, loading: listLoading, error: listError, yenile } = usePersonel({ includePassive, ...listQuery })
@@ -156,6 +158,7 @@ export default function PersonelYonetimPage() {
   const [rowActionBusyId, setRowActionBusyId] = useState<string | null>(null)
   const [pendingDeleteRow, setPendingDeleteRow] = useState<PersonelTableRow | null>(null)
   const detailRequestRef = useRef(0)
+  const notificationEmployeeOpenRef = useRef<string | null>(null)
 
   // Transform data for table
   const tableData: PersonelTableRow[] = useMemo(() => (employees || []).map(p => ({
@@ -317,6 +320,37 @@ export default function PersonelYonetimPage() {
       setToast(err.toast || { type: 'error', title: 'Detay Yüklenemedi', message: err.message || 'Çalışan detayı yüklenemedi' })
     } finally {
       if (detailRequestRef.current === requestId) setDetailLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    const notificationEmployeeId = searchParams.get('id')
+    const pendingAction = searchParams.get('pending')
+    if (!notificationEmployeeId || !pendingAction) return
+    if (listLoading || pageState !== 'list' || notificationEmployeeOpenRef.current === notificationEmployeeId) return
+
+    notificationEmployeeOpenRef.current = notificationEmployeeId
+    void openEmployeeFromNotification(notificationEmployeeId)
+  }, [listLoading, pageState, searchParams, tableData])
+
+  async function openEmployeeFromNotification(employeeId: string) {
+    try {
+      const tableRow = tableData.find(row => row.id === employeeId)
+      if (tableRow) {
+        await handleRowClick(tableRow)
+        return
+      }
+
+      const result = await employeeService.detail(employeeId)
+      if (!result.data) throw new Error('Çalışan kaydı bulunamadı')
+      await handleRowClick(result.data as PersonelTableRow)
+    } catch (error: any) {
+      notificationEmployeeOpenRef.current = null
+      setToast({
+        type: 'error',
+        title: 'Bildirim Açılamadı',
+        message: error?.message || 'Bildirimdeki çalışan formu açılamadı.',
+      })
     }
   }
 

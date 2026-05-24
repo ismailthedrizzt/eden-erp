@@ -9,6 +9,7 @@ type RoleTableName = 'employees' | 'company_partners' | 'stakeholders'
 type RoleMasterIdentity = {
   person_id?: string | null
   organization_id?: string | null
+  company_id?: string | null
 }
 
 export type RoleUniquenessResult =
@@ -22,7 +23,7 @@ const roleTableConfig: Record<RoleTableName, { label: string; select: string; pa
   },
   company_partners: {
     label: 'Ortaklar',
-    select: 'id,person_id,organization_id,display_name,partner_name,record_status,status',
+    select: 'id,company_id,person_id,organization_id,display_name,partner_name,record_status,status',
     partnerFlow: true,
   },
   stakeholders: {
@@ -48,11 +49,13 @@ export async function ensureUniqueRoleMaster(
   if (!masterField || !masterId) return { ok: true }
 
   const config = roleTableConfig[options.tableName]
+  const companyId = options.tableName === 'company_partners' ? cleanId(options.identity.company_id) : null
   const queryResult = await queryExistingRole(supabase, {
     tableName: options.tableName,
     select: config.select,
     masterField,
     masterId,
+    companyId,
     excludeId: options.excludeId,
     tenantContext: options.tenantContext,
     filterDeleted: true,
@@ -70,16 +73,22 @@ export async function ensureUniqueRoleMaster(
 
   if (!queryResult.record) return { ok: true }
 
+  const existingRecord = queryResult.record as Record<string, any>
   const subject = masterField === 'person_id' ? 'Bu kisi' : 'Bu kurum'
+  const existingStatus = String(existingRecord.record_status || existingRecord.status || '').toLocaleLowerCase('tr-TR')
   const flowHint = config.partnerFlow
-    ? ' Farkli sirketlerdeki ortakliklar Ortaklik Islemleri uzerinden mevcut ortak kaydina baglanmalidir.'
+    ? existingStatus === 'draft' || existingStatus === 'taslak'
+      ? ' Secilen sirkette bu kimlik icin zaten taslak ortak kaydi var. Mevcut taslagi acip devam edin.'
+      : ' Secilen sirkette bu kimlik icin zaten aktif ortak kaydi var.'
     : ''
 
   return {
     ok: false,
     status: 409,
     code: 'DUPLICATE_ROLE_MASTER',
-    error: `${subject} ${config.label} listesinde zaten kayitli. Ayni master kimlik bu listede tek kayitla temsil edilir.${flowHint}`,
+    error: config.partnerFlow
+      ? `${subject} ${config.label} listesinde bu sirket icin zaten kayitli.${flowHint}`
+      : `${subject} ${config.label} listesinde zaten kayitli. Ayni master kimlik bu listede tek kayitla temsil edilir.`,
     details: {
       tableName: options.tableName,
       masterField,
@@ -103,6 +112,7 @@ async function queryExistingRole(
     select: string
     masterField: 'person_id' | 'organization_id'
     masterId: string
+    companyId?: string | null
     excludeId?: string | null
     tenantContext?: TenantContext | null
     filterDeleted: boolean
@@ -115,6 +125,12 @@ async function queryExistingRole(
     .limit(1)
 
   query = applyTenantQueryScope(query, options.tableName, options.tenantContext)
+  if (options.tableName === 'company_partners') {
+    if (!options.companyId) return { record: null, error: null }
+    query = query
+      .eq('company_id', options.companyId)
+      .or('record_status.eq.draft,record_status.eq.active,status.eq.Taslak,status.eq.Aktif')
+  }
   if (options.excludeId) query = query.neq('id', options.excludeId)
   if (options.filterDeleted) query = query.eq('is_deleted', false)
 
@@ -128,6 +144,12 @@ async function queryExistingRole(
       .limit(1)
 
     retry = applyTenantQueryScope(retry, options.tableName, options.tenantContext)
+    if (options.tableName === 'company_partners') {
+      if (!options.companyId) return { record: null, error: null }
+      retry = retry
+        .eq('company_id', options.companyId)
+        .or('record_status.eq.draft,record_status.eq.active,status.eq.Taslak,status.eq.Aktif')
+    }
     if (options.excludeId) retry = retry.neq('id', options.excludeId)
     const retryResult = await retry
     data = retryResult.data

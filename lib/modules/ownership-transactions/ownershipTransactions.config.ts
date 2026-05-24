@@ -1,7 +1,10 @@
 import type { ColumnDef } from '@/components/ui/SmartDataTable'
 
+export const INITIAL_PARTNERSHIP_ENTRY_TYPE = 'initial_partnership_entry'
+const LEGACY_INITIAL_PARTNERSHIP_ENTRY_TYPE = 'Yeni Ortaklık Girişi'
+
 export const transactionTypes = [
-  'Yeni Ortaklık Girişi',
+  INITIAL_PARTNERSHIP_ENTRY_TYPE,
   'Pay Devri',
   'Kısmi Pay Devri',
   'Ortaklıktan Çıkış',
@@ -12,6 +15,19 @@ export const transactionTypes = [
   'Düzeltme Kaydı',
   'Ters Kayıt',
 ] as const
+
+export const transactionTypeLabels: Record<string, string> = {
+  [INITIAL_PARTNERSHIP_ENTRY_TYPE]: 'İlk Ortaklık Girişi',
+  [LEGACY_INITIAL_PARTNERSHIP_ENTRY_TYPE]: 'İlk Ortaklık Girişi',
+}
+
+export function isInitialPartnershipEntryType(value?: string | null) {
+  return value === INITIAL_PARTNERSHIP_ENTRY_TYPE || value === LEGACY_INITIAL_PARTNERSHIP_ENTRY_TYPE
+}
+
+export function getOwnershipTransactionTypeLabel(value?: string | null) {
+  return value ? transactionTypeLabels[value] || value : ''
+}
 
 export const transactionReasonOptions = [
   'Kuruluş',
@@ -70,7 +86,7 @@ export function getPartyFieldVisibility(transactionType?: string) {
   return {
     showFrom: ['Pay Devri', 'Kısmi Pay Devri'].includes(transactionType || ''),
     showExit: transactionType === 'Ortaklıktan Çıkış',
-    showTo: ['Yeni Ortaklık Girişi', 'Pay Devri', 'Kısmi Pay Devri', 'Ortaklıktan Çıkış'].includes(transactionType || ''),
+    showTo: isInitialPartnershipEntryType(transactionType) || ['Pay Devri', 'Kısmi Pay Devri', 'Ortaklıktan Çıkış'].includes(transactionType || ''),
     showAffected: [
       'Oy Hakkı Değişikliği',
       'Kar Payı Oranı Değişikliği',

@@ -552,12 +552,14 @@ export default function SirketlerPage() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [toast, setToast] = useState<ToastState | null>(null)
   const [lifecycleWizard, setLifecycleWizard] = useState<CompanyLifecycleWizardType | null>(null)
+  const [lifecycleWizardReadOnly, setLifecycleWizardReadOnly] = useState(false)
   const [capitalIncreaseContext, setCapitalIncreaseContext] = useState<CapitalIncreasePrecheckContext | null>(null)
   const [capitalIncreaseSaving, setCapitalIncreaseSaving] = useState(false)
   const detailRequestRef = useRef(0)
   const mediaProbeRef = useRef<Record<string, boolean>>({})
   const [preferredFormTabId, setPreferredFormTabId] = useState<string | null>(null)
   const tourLifecycleOpenedRef = useRef(false)
+  const notificationCompanyOpenRef = useRef<string | null>(null)
   const isDarkMode = useDarkModeFlag()
 
   const configuredHeroFields = [
@@ -690,6 +692,16 @@ export default function SirketlerPage() {
     setDetailSections(emptyDetailSectionState)
     setSelectedSirket(normalizeCompanyForForm(draftCompany as Sirket))
     setPageState('view')
+  }, [loading, pageState, searchParams, tableData])
+
+  useEffect(() => {
+    const notificationCompanyId = searchParams.get('id')
+    const pendingAction = searchParams.get('pending')
+    if (!notificationCompanyId || !pendingAction || searchParams.has('systemTour')) return
+    if (loading || pageState !== 'list' || notificationCompanyOpenRef.current === notificationCompanyId) return
+
+    notificationCompanyOpenRef.current = notificationCompanyId
+    void openCompanyFromNotification(notificationCompanyId)
   }, [loading, pageState, searchParams, tableData])
 
   if (!formAccess.canView) {
@@ -943,6 +955,7 @@ export default function SirketlerPage() {
     if (selectedSirket?.id) invalidateEntityDetailCache(COMPANY_DETAIL_CACHE_NAMESPACE, selectedSirket.id)
     setSelectedSirket(nextCompany)
     setLifecycleWizard(null)
+    setLifecycleWizardReadOnly(false)
     setPageState('view')
     await yenile()
     const status = getCompanyLifecycleStatus(nextCompany)
@@ -953,8 +966,41 @@ export default function SirketlerPage() {
     })
   }
 
-  const openLifecycleWizard = (type: CompanyLifecycleWizardType) => {
+  const openLifecycleWizard = async (type: CompanyLifecycleWizardType, options: { readOnly?: boolean } = {}) => {
     if (!selectedSirket?.id) return
+    const readOnly = !!options.readOnly
+
+    if (readOnly) {
+      try {
+        let sourceCompany = selectedSirket
+        if (!hasCompanyLifecycleDetail(sourceCompany, type)) {
+          const result = await companyService.detail(selectedSirket.id)
+          if (result.data) {
+            sourceCompany = normalizeCompanyForForm(result.data)
+            setSelectedSirket(sourceCompany)
+            writeEntityDetailCache(COMPANY_DETAIL_CACHE_NAMESPACE, selectedSirket.id, sourceCompany)
+          }
+        }
+
+        if (!hasCompanyLifecycleDetail(sourceCompany, type)) {
+          setToast({
+            type: 'warning',
+            title: 'İşlem Detayı Bulunamadı',
+            message: 'Bu işlem tamamlanmış görünüyor ancak detay form kaydı bulunamadı.',
+          })
+          return
+        }
+      } catch (error: any) {
+        setToast({
+          type: 'warning',
+          title: 'İşlem Detayı Açılamadı',
+          message: error?.message || 'Bu işlem tamamlanmış görünüyor ancak detay form kaydı bulunamadı.',
+        })
+        return
+      }
+    }
+
+    setLifecycleWizardReadOnly(readOnly)
     setLifecycleWizard(type)
   }
 
@@ -1022,28 +1068,31 @@ export default function SirketlerPage() {
     const canStartLiquidation = status === 'active' && can(PERMISSIONS.companies.liquidationStart)
     const canUpdateLiquidation = status === 'liquidation' && can(PERMISSIONS.companies.liquidationUpdate)
     const canStartDeregistration = status === 'liquidation' && can(PERMISSIONS.companies.deregistrationStart)
+    const lifecycleProgress = getCompanyLifecycleOperationProgress(status)
+    const completedLifecycleActions = new Set(lifecycleProgress.completedActionKeys || [])
+    const isCompletedLifecycleAction = (actionKey: CompanyLifecycleWizardType) => completedLifecycleActions.has(actionKey)
     const lifecycleActions: FormOperationAction[] = [
       {
         key: 'opening',
         label: 'Şirket Açılışı',
         icon: <PlayCircle size={16} />,
-        onClick: () => openLifecycleWizard('opening'),
-        disabled: !canStartOpening,
+        onClick: () => openLifecycleWizard('opening', { readOnly: isCompletedLifecycleAction('opening') }),
+        disabled: !isCompletedLifecycleAction('opening') && !canStartOpening,
         dataTourId: 'record-operation-company-opening',
       },
       {
         key: 'liquidation',
         label: status === 'liquidation' ? 'Tasfiye Bilgilerini Güncelle' : 'Tasfiye Başlat',
         icon: <ShieldAlert size={16} />,
-        onClick: () => openLifecycleWizard('liquidation'),
-        disabled: !(canStartLiquidation || canUpdateLiquidation),
+        onClick: () => openLifecycleWizard('liquidation', { readOnly: isCompletedLifecycleAction('liquidation') }),
+        disabled: !isCompletedLifecycleAction('liquidation') && !(canStartLiquidation || canUpdateLiquidation),
       },
       {
         key: 'deregistration',
         label: 'Terkin Başlat',
         icon: <Archive size={16} />,
-        onClick: () => openLifecycleWizard('deregistration'),
-        disabled: !canStartDeregistration,
+        onClick: () => openLifecycleWizard('deregistration', { readOnly: isCompletedLifecycleAction('deregistration') }),
+        disabled: !isCompletedLifecycleAction('deregistration') && !canStartDeregistration,
       },
     ]
 
@@ -1102,7 +1151,7 @@ export default function SirketlerPage() {
     return [
       ...(lifecycleActions.length ? [{
         key: 'lifecycle',
-        progress: getCompanyLifecycleOperationProgress(status),
+        progress: lifecycleProgress,
         actions: lifecycleActions,
       }] : []),
       ...(officialUpdateActions.length ? [{
@@ -1114,6 +1163,27 @@ export default function SirketlerPage() {
         actions: basicUpdateActions,
       }] : []),
     ]
+  }
+
+  async function openCompanyFromNotification(companyId: string) {
+    try {
+      const tableRow = tableData.find(row => row.id === companyId)
+      if (tableRow) {
+        await handleRowClick(tableRow)
+        return
+      }
+
+      const result = await companyService.detail(companyId)
+      if (!result.data) throw new Error('Şirket kaydı bulunamadı')
+      await handleRowClick(normalizeCompanyForForm(result.data) as unknown as SirketTableRow)
+    } catch (error: any) {
+      notificationCompanyOpenRef.current = null
+      setToast({
+        type: 'error',
+        title: 'Bildirim Açılamadı',
+        message: error?.message || 'Bildirimdeki şirket formu açılamadı.',
+      })
+    }
   }
 
   const normalizeSaveError = (error: any): SaveError => {
@@ -1455,7 +1525,11 @@ export default function SirketlerPage() {
         <CompanyLifecycleWizard
           type={lifecycleWizard}
           company={selectedSirket}
-          onClose={() => setLifecycleWizard(null)}
+          readOnly={lifecycleWizardReadOnly}
+          onClose={() => {
+            setLifecycleWizard(null)
+            setLifecycleWizardReadOnly(false)
+          }}
           onComplete={handleLifecycleComplete}
         />
       )}
@@ -1535,6 +1609,13 @@ function getCompanyLifecycleOperationProgress(status: CompanyLifecycleStatus): F
     return { completedActionKeys: ['opening'], activeActionKeys: ['liquidation', 'deregistration'] }
   }
   return { completedActionKeys: ['opening', 'liquidation', 'deregistration'] }
+}
+
+function hasCompanyLifecycleDetail(company: Partial<Sirket> | Record<string, any> | null | undefined, type: CompanyLifecycleWizardType) {
+  if (!company) return false
+  if (type === 'opening') return !!(company as any).opening_details
+  if (type === 'liquidation') return !!(company as any).liquidation_details
+  return !!(company as any).deregistration_details
 }
 
 function getCompanyLifecycleLabel(status: CompanyLifecycleStatus) {
@@ -1868,6 +1949,7 @@ const RELATED_SECTION_LABELS: Record<string, string> = {
   company_nace_codes: 'NACE kodları',
   current_ownership: 'Güncel ortaklık',
 }
+const SILENT_MODULE_CLOSED_RELATED_SECTIONS = new Set(['current_ownership'])
 
 function RelatedSectionNotice({ data, sections }: { data?: Record<string, any>; sections: string[] }) {
   const statuses = (data?.related_status || {}) as CompanyRelatedStatusMap
@@ -1876,6 +1958,7 @@ function RelatedSectionNotice({ data, sections }: { data?: Record<string, any>; 
     .map(section => {
       const status = statuses[section]
       if (!status || status === 'ok') return null
+      if (status === 'module_closed' && SILENT_MODULE_CLOSED_RELATED_SECTIONS.has(section)) return null
       const label = RELATED_SECTION_LABELS[section] || section
       return errors[section] || (status === 'module_closed'
         ? `${label} modülü kapalı veya migration eksik.`

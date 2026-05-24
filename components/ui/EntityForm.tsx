@@ -256,6 +256,9 @@ export interface EntityFormProps {
   /** Optional hero presentation controls for module-specific layouts */
   showHeroHeader?: boolean
   showMasterSummaryBadge?: boolean
+  masterSummaryTitle?: string
+  masterSummaryBadgeLabel?: string
+  masterSummaryReadOnly?: boolean
   masterSummaryTitleAsField?: boolean
   masterSummaryMode?: MasterSummaryMode
   showResolvedMasterHeroFields?: boolean
@@ -423,6 +426,8 @@ function MasterSummaryHero({
   sourceData = {},
   readOnly = false,
   showBadge = true,
+  titleLabel,
+  badgeLabel = 'Temel Bilgiler',
   titleAsField = false,
   mode = 'default',
   requiredFields = [],
@@ -435,6 +440,8 @@ function MasterSummaryHero({
   sourceData?: Record<string, any>
   readOnly?: boolean
   showBadge?: boolean
+  titleLabel?: string
+  badgeLabel?: string
   titleAsField?: boolean
   mode?: MasterSummaryMode
   requiredFields?: FormField[]
@@ -517,6 +524,11 @@ function MasterSummaryHero({
 
   return (
     <div className="col-span-2 lg:col-span-3 rounded-xl border border-emerald-100 bg-emerald-50/70 p-4 dark:border-emerald-900/60 dark:bg-emerald-950/20">
+      {titleLabel && (
+        <div className="mb-3 text-sm font-semibold text-gray-900 dark:text-white">
+          {titleLabel}
+        </div>
+      )}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="flex items-start gap-3">
           <div className="rounded-lg bg-white p-2 text-emerald-700 shadow-sm dark:bg-gray-900 dark:text-emerald-300">
@@ -529,7 +541,7 @@ function MasterSummaryHero({
           </div>}
         </div>
         {showBadge && <span className="rounded-full bg-white px-2.5 py-1 text-xs font-medium text-emerald-700 dark:bg-gray-900 dark:text-emerald-300">
-          Temel Bilgiler
+          {badgeLabel}
         </span>}
       </div>
       {items.length > 0 && (
@@ -2682,7 +2694,7 @@ function OperationMenuActionButton({
   onRun: () => void
   truncateLabel?: boolean
 }) {
-  const disabled = action.disabled || action.state === 'completed' || action.state === 'upcoming'
+  const disabled = action.state === 'upcoming' || (action.disabled && action.state !== 'completed')
   const icon = action.state === 'completed'
     ? <CheckCircle2 size={16} />
     : action.icon
@@ -2710,7 +2722,7 @@ function OperationMenuActionButton({
 
 function getOperationMenuActionClass(action: FormOperationAction) {
   if (action.state === 'completed') {
-    return 'cursor-default text-emerald-700 dark:text-emerald-300'
+    return 'text-emerald-700 hover:bg-emerald-50 dark:text-emerald-300 dark:hover:bg-emerald-950/30'
   }
   if (action.state === 'upcoming' || action.disabled) {
     return 'cursor-not-allowed text-gray-400 dark:text-gray-500'
@@ -2791,6 +2803,9 @@ export function EntityForm({
   heroLeftPanel,
   showHeroHeader = true,
   showMasterSummaryBadge = true,
+  masterSummaryTitle,
+  masterSummaryBadgeLabel,
+  masterSummaryReadOnly = false,
   masterSummaryTitleAsField = false,
   masterSummaryMode = 'default',
   showResolvedMasterHeroFields = false,
@@ -4079,8 +4094,10 @@ export function EntityForm({
                   result={effectiveIdentityGateResult}
                   locked={isIdentityGateLocked}
                   sourceData={formData}
-                  readOnly={isReadOnly}
+                  readOnly={isReadOnly || masterSummaryReadOnly}
                   showBadge={showMasterSummaryBadge}
+                  titleLabel={masterSummaryTitle}
+                  badgeLabel={masterSummaryBadgeLabel}
                   titleAsField={masterSummaryTitleAsField}
                   mode={masterSummaryMode}
                   requiredFields={heroFields}

@@ -16,6 +16,7 @@ import {
 import { requirePermission } from '@/lib/security/serverPermissions'
 import { DEFAULT_FISCAL_YEAR_START, isValidFiscalYearStart, parseFiscalYearStartStorage } from '@/lib/companies/fiscalYear'
 import { attachCompanyOrganization, runCompanyCreateSideEffects } from '@/lib/modules/companies/companyCreateOrchestrator'
+import { hydrateMasterContact } from '@/lib/identity/masterContact'
 
 const emptyStringToUndefined = (value: unknown) => value === '' ? undefined : value
 const optionalUuid = z.preprocess(emptyStringToUndefined, z.string().uuid().optional().nullable())
@@ -222,7 +223,7 @@ export async function GET(request: NextRequest) {
   const sortColumn = sortMap[listQuery.sort || ''] || 'short_name'
   let query = supabase
     .from('companies')
-    .select('id,organization_id,short_name,trade_name,tax_number,tax_office,company_type,city,district,phone,email,logo_url,is_deleted,record_status,company_status,committed_capital_amount,paid_capital_amount,updated_at,created_at')
+    .select('id,organization_id,short_name,trade_name,tax_number,tax_office,company_type,city,district,phone,email,logo_url,is_deleted,record_status,company_status,committed_capital_amount,paid_capital_amount,default_currency,updated_at,created_at')
     .in('id', scopedCompanyIds)
     .order(sortColumn, { ascending: listQuery.direction !== 'desc' })
     .range(from, to)
@@ -405,8 +406,12 @@ export async function POST(request: NextRequest) {
     ...sideEffects.warnings.map(warning => warning.message),
   ]
 
+  const hydratedData = companyRow.organization_id
+    ? await hydrateMasterContact(supabase, 'organization', { ...companyRow, ...data })
+    : data
+
   return NextResponse.json({
-    data,
+    data: hydratedData,
     ...(warnings.length ? { warning: warnings.join(' '), partial_warnings: sideEffects.warnings } : {}),
   }, { status: 201 })
 }

@@ -1,8 +1,9 @@
 import type { AnyDashboardWidgetConfig } from '@/components/dashboard/dashboard.types'
 import type { OwnershipTransaction } from './ownershipTransactions.types'
+import { INITIAL_PARTNERSHIP_ENTRY_TYPE, getOwnershipTransactionTypeLabel, isInitialPartnershipEntryType } from './ownershipTransactions.config'
 
 const distributionTypes = [
-  'Yeni Ortaklık Girişi',
+  INITIAL_PARTNERSHIP_ENTRY_TYPE,
   'Pay Devri',
   'Oy Hakkı Değişikliği',
   'Kar Payı Oranı Değişikliği',
@@ -44,7 +45,7 @@ export function buildOwnershipTransactionsDashboard(rows: OwnershipTransaction[]
       size: { w: 2, h: 1 },
       dataSource: 'ownershipTransactions.byType',
       items: distributionTypes.map((type, index) => ({
-        label: type,
+        label: getOwnershipTransactionTypeLabel(type),
         value: rows.filter(row => normalizeType(row.transaction_type) === type).length,
         color: ['#2563eb', '#16a34a', '#f59e0b', '#ef4444', '#7c3aed', '#0891b2', '#be123c', '#64748b'][index % 8],
         filter: { transaction_type: type },
@@ -105,6 +106,7 @@ export function buildOwnershipTransactionsDashboard(rows: OwnershipTransaction[]
 }
 
 function normalizeType(type: string) {
+  if (isInitialPartnershipEntryType(type)) return INITIAL_PARTNERSHIP_ENTRY_TYPE
   if (type === 'Kısmi Pay Devri') return 'Pay Devri'
   return type
 }

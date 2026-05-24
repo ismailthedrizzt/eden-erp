@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { AlertTriangle, Search, Star, Trash2 } from 'lucide-react'
+import { AlertTriangle, CheckCircle2, FileText, Search, Star, Trash2 } from 'lucide-react'
 import {
   RecordLifecycleWizard,
   type RecordLifecycleWizardOption,
@@ -24,6 +24,7 @@ export type { CompanyLifecycleWizardType } from '@/lib/lifecycle/processes/compa
 type CompanyLifecycleWizardProps = {
   type: CompanyLifecycleWizardType
   company: Sirket
+  readOnly?: boolean
   onClose: () => void
   onComplete: (company?: Partial<Sirket>) => void
 }
@@ -59,7 +60,7 @@ const DECISION_TYPE_OPTIONS: RecordLifecycleWizardOption[] = [
   { value: 'other', label: 'Diğer' },
 ]
 
-export function CompanyLifecycleWizard({ type, company, onClose, onComplete }: CompanyLifecycleWizardProps) {
+export function CompanyLifecycleWizard({ type, company, readOnly = false, onClose, onComplete }: CompanyLifecycleWizardProps) {
   const [form, setForm] = useState<Record<string, any>>({})
   const [context, setContext] = useState<Record<string, any> | null>(null)
   const [loading, setLoading] = useState(true)
@@ -74,7 +75,8 @@ export function CompanyLifecycleWizard({ type, company, onClose, onComplete }: C
     setContextError(null)
     setError(null)
 
-    fetch(`/api/companies/${company.id}/${template.endpoint}/context`)
+    const contextUrl = `/api/companies/${company.id}/${template.endpoint}/context${readOnly ? '?readonly=true' : ''}`
+    fetch(contextUrl)
       .then(async response => {
         const payload = await response.json().catch(() => ({}))
         if (!response.ok) throw new Error(payload.error || 'Bilgiler yüklenemedi')
@@ -97,10 +99,11 @@ export function CompanyLifecycleWizard({ type, company, onClose, onComplete }: C
     return () => {
       cancelled = true
     }
-  }, [company, template.endpoint, type])
+  }, [company, readOnly, template.endpoint, type])
 
   const options = useMemo(() => buildContextOptions(context), [context])
   const steps = useMemo(() => buildSteps(type, options, form), [type, options, form])
+  const openingCompletionIssues = useMemo(() => type === 'opening' ? getOpeningCompletionIssues(form) : [], [form, type])
   const submitLabel = type === 'liquidation' && getCompanyLifecycleStatus(company) === 'liquidation'
     ? 'Tasfiye Bilgilerini Güncelle'
     : template.submitLabel
@@ -159,6 +162,10 @@ export function CompanyLifecycleWizard({ type, company, onClose, onComplete }: C
       loadingMessage={loading ? 'Bilgiler yükleniyor...' : undefined}
       contextError={contextError || undefined}
       error={error || undefined}
+      submitBlockedContent={type === 'opening' && openingCompletionIssues.length > 0 ? (
+        <span>Eksik açılış bilgileri: {openingCompletionIssues.join(', ')}</span>
+      ) : undefined}
+      readOnly={readOnly}
       onFieldChange={handleFieldChange}
     />
   )
@@ -169,12 +176,12 @@ function buildSteps(
   options: ReturnType<typeof buildContextOptions>,
   form: Record<string, any>
 ): RecordLifecycleWizardStep[] {
-  if (type === 'opening') return openingSteps(options)
+  if (type === 'opening') return openingSteps(options, form)
   if (type === 'liquidation') return liquidationSteps(options)
   return deregistrationSteps(options, form)
 }
 
-function openingSteps(_options: ReturnType<typeof buildContextOptions>): RecordLifecycleWizardStep[] {
+function openingSteps(_options: ReturnType<typeof buildContextOptions>, form: Record<string, any>): RecordLifecycleWizardStep[] {
   return [
     createLifecycleInformationStep([
         {
@@ -224,8 +231,8 @@ function openingSteps(_options: ReturnType<typeof buildContextOptions>): RecordL
                 limit: 40,
               },
             },
-            { name: 'trade_registry_no', label: 'Ticaret Sicil No', type: 'text', required: true },
-            { name: 'mersis_no', label: 'MERSİS No', type: 'text' },
+            { name: 'trade_registry_number', label: 'Ticaret Sicil No', type: 'text', required: true },
+            { name: 'mersis_number', label: 'MERSİS No', type: 'text' },
             {
               name: 'nace_codes',
               label: 'NACE / Faaliyet Kodları',
@@ -243,7 +250,7 @@ function openingSteps(_options: ReturnType<typeof buildContextOptions>): RecordL
           title: 'Vergi ve SGK',
           fields: [
             {
-              name: 'tax_no',
+              name: 'tax_number',
               label: 'VKN',
               type: 'text',
               required: true,
@@ -258,7 +265,7 @@ function openingSteps(_options: ReturnType<typeof buildContextOptions>): RecordL
               automation: publicAutomation('Vergi dairesi kamu kayıtlarından okunur.'),
             },
             {
-              name: 'sgk_workplace_no',
+              name: 'sgk_workplace_registry_no',
               label: 'SGK İşyeri Sicil No',
               type: 'text',
               automation: publicAutomation('SGK sicili kamu kayıtlarından okunur.'),
@@ -277,7 +284,81 @@ function openingSteps(_options: ReturnType<typeof buildContextOptions>): RecordL
       sectionTitle: 'Açılış belgeleri',
       documents: COMPANY_LIFECYCLE_PROCESSES.opening.completion.documentWrites,
     }),
+    createOpeningPreviewStep(form),
   ]
+}
+
+function createOpeningPreviewStep(form: Record<string, any>): RecordLifecycleWizardStep {
+  const documentStatuses = getOpeningDocumentStatuses(form)
+  const missingRequiredDocuments = documentStatuses.filter(item => item.required && !item.ready)
+  const summaryRows = getOpeningPreviewRows(form)
+
+  return {
+    id: 'preview-complete',
+    title: 'Önizleme ve Tamamla',
+    description: 'Açılış kaydı tamamlanmadan önce son kontrol.',
+    sections: [
+      {
+        id: 'opening-preview-summary',
+        title: 'Şirket açılış özeti',
+        children: (
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {summaryRows.map(row => (
+              <div key={row.label} className="rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-800 dark:bg-gray-900">
+                <div className="text-xs font-medium text-gray-500 dark:text-gray-400">{row.label}</div>
+                <div className="mt-1 text-sm font-semibold text-gray-900 dark:text-white">{row.value || '-'}</div>
+              </div>
+            ))}
+          </div>
+        ),
+      },
+      {
+        id: 'opening-preview-documents',
+        title: 'Belge kontrolü',
+        children: (
+          <div className="space-y-3">
+            <div className="grid gap-2 md:grid-cols-2">
+              {documentStatuses.map(document => (
+                <div
+                  key={document.field}
+                  className={cn(
+                    'flex items-center gap-2 rounded-lg border px-3 py-2 text-sm',
+                    document.ready
+                      ? 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-200'
+                      : document.required
+                        ? 'border-red-200 bg-red-50 text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-200'
+                        : 'border-gray-200 bg-gray-50 text-gray-600 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300'
+                  )}
+                >
+                  {document.ready ? <CheckCircle2 size={15} /> : <FileText size={15} />}
+                  <span className="min-w-0 flex-1">{document.label}</span>
+                  {document.required && <span className="text-xs font-semibold">Zorunlu</span>}
+                </div>
+              ))}
+            </div>
+            {missingRequiredDocuments.length > 0 ? (
+              <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-200">
+                Eksik zorunlu belgeler: {missingRequiredDocuments.map(document => document.label).join(', ')}
+              </div>
+            ) : (
+              <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-200">
+                Zorunlu açılış belgeleri tamam.
+              </div>
+            )}
+          </div>
+        ),
+      },
+      {
+        id: 'opening-preview-confirmation',
+        title: 'Tamamlama etkisi',
+        children: (
+          <div className="rounded-lg border border-blue-100 bg-blue-50 p-3 text-sm leading-6 text-blue-900 dark:border-blue-900/60 dark:bg-blue-950/30 dark:text-blue-100">
+            Bu işlem tamamlandığında taslak şirket aktif hale gelir; tescil, vergi, SGK, NACE ve açılış belgeleri ilgili şirket kayıtlarına yazılır.
+          </div>
+        ),
+      },
+    ],
+  }
 }
 
 function liquidationSteps(options: ReturnType<typeof buildContextOptions>): RecordLifecycleWizardStep[] {
@@ -425,15 +506,15 @@ function createInitialForm(type: CompanyLifecycleWizardType, company: Sirket, co
       company_type: current.company_type || '',
       registration_date: opening.registration_date || publicRegistry.establishment_registration_date || opening.foundation_date || current.foundation_date || '',
       trade_registry_office: opening.trade_registry_office || current.trade_registry_office || publicRegistry.registry_office || '',
-      trade_registry_no: opening.trade_registry_no || current.trade_registry_number || publicRegistry.trade_registry_no || '',
-      mersis_no: opening.mersis_no || current.mersis_number || publicRegistry.mersis_number || '',
+      trade_registry_number: opening.trade_registry_number || opening.trade_registry_no || current.trade_registry_number || publicRegistry.trade_registry_no || '',
+      mersis_number: opening.mersis_number || opening.mersis_no || current.mersis_number || publicRegistry.mersis_number || '',
       nace_codes: normalizeWizardNaceSelections(opening.payload_json?.nace_codes || naceRows),
       foundation_capital_amount: foundationCapitalAmount,
       foundation_share_units: foundationShareUnits,
       foundation_nominal_value: foundationNominalValue,
-      tax_no: opening.tax_no || current.tax_number || publicTax.tax_number || '',
+      tax_number: opening.tax_number || opening.tax_no || current.tax_number || publicTax.tax_number || '',
       tax_office: opening.tax_office_id || current.tax_office || publicTax.tax_office || '',
-      sgk_workplace_no: opening.sgk_workplace_no || current.sgk_workplace_registry_no || publicSgk.workplace_registry_no || '',
+      sgk_workplace_registry_no: opening.sgk_workplace_registry_no || opening.sgk_workplace_no || current.sgk_workplace_registry_no || publicSgk.workplace_registry_no || '',
       nace_codes_available: hasNace ? 'true' : '',
       primary_nace_selected: hasPrimaryNace ? 'true' : '',
       primary_nace_id: naceRows.find((row: any) => row?.is_primary)?.id || '',
@@ -749,7 +830,7 @@ function hasDeregistrationWarnings(form: Record<string, any>) {
 function publicAutomation(title: string) {
   return {
     sourceFields: ['short_name', 'trade_name'],
-    targetFields: ['tax_no', 'tax_office', 'sgk_workplace_no', 'electronic_notification_address'],
+    targetFields: ['tax_number', 'tax_office', 'sgk_workplace_registry_no', 'electronic_notification_address'],
     title,
     idleLabel: 'Kaynak bekliyor',
     workingLabel: 'Okunuyor',
@@ -758,15 +839,95 @@ function publicAutomation(title: string) {
   }
 }
 
+function getOpeningPreviewRows(form: Record<string, any>) {
+  const companyType = companyTypeOptions().find(option => option.value === form.company_type)?.label || form.company_type
+  const naceCodes = normalizeWizardNaceSelections(form.nace_codes)
+  const primaryNace = naceCodes.find(row => row.is_primary)
+
+  return [
+    { label: 'Ticari Ünvan', value: form.trade_name },
+    { label: 'Kısa Ünvan', value: form.short_name },
+    { label: 'Şirket Türü', value: companyType },
+    { label: 'Tescil Tarihi', value: formatWizardDate(form.registration_date) },
+    { label: 'Ticaret Sicil Müdürlüğü', value: form.trade_registry_office },
+    { label: 'Ticaret Sicil No', value: form.trade_registry_number },
+    { label: 'MERSİS No', value: form.mersis_number },
+    { label: 'VKN', value: form.tax_number },
+    { label: 'Vergi Dairesi', value: form.tax_office },
+    { label: 'SGK İşyeri Sicil No', value: form.sgk_workplace_registry_no },
+    { label: 'Elektronik Tebligat Adresi', value: form.electronic_notification_address },
+    { label: 'Taahhüt Edilen Sermaye', value: formatMoneyValue(form.foundation_capital_amount) },
+    { label: 'Pay Sayısı', value: formatPlainNumber(form.foundation_share_units) },
+    { label: 'Pay Değeri', value: formatMoneyValue(calculateShareValue(form.foundation_capital_amount, form.foundation_share_units)) },
+    { label: 'Birincil NACE', value: primaryNace ? naceLabel(primaryNace) : '' },
+    { label: 'NACE Kod Sayısı', value: String(naceCodes.length || '') },
+  ]
+}
+
+function getOpeningDocumentStatuses(form: Record<string, any>) {
+  return COMPANY_LIFECYCLE_PROCESSES.opening.completion.documentWrites.map(write => ({
+    field: write.sourceField,
+    label: write.label || write.slotTitle,
+    required: !!write.required,
+    ready: hasOpeningDocumentValue(form[write.sourceField]),
+  }))
+}
+
+function getOpeningCompletionIssues(form: Record<string, any>) {
+  const issues: string[] = []
+  const requiredFields = [
+    ['trade_name', 'Ticari Ünvan'],
+    ['company_type', 'Şirket Türü'],
+    ['registration_date', 'Tescil Tarihi'],
+    ['trade_registry_office', 'Ticaret Sicil Müdürlüğü'],
+    ['trade_registry_number', 'Ticaret Sicil No'],
+    ['tax_number', 'VKN'],
+    ['tax_office', 'Vergi Dairesi'],
+  ]
+
+  requiredFields.forEach(([field, label]) => {
+    if (!hasValue(form[field])) issues.push(label)
+  })
+
+  if (hasValue(form.tax_number) && !/^\d{10}$/.test(String(form.tax_number))) {
+    issues.push('VKN formatı')
+  }
+
+  const naceCodes = normalizeWizardNaceSelections(form.nace_codes)
+  if (naceCodes.length === 0) issues.push('NACE / Faaliyet Kodları')
+  if (naceCodes.length > 0 && !naceCodes.some(row => row.is_primary)) issues.push('Birincil NACE')
+
+  getOpeningDocumentStatuses(form).forEach(document => {
+    if (document.required && !document.ready) issues.push(document.label)
+  })
+
+  return Array.from(new Set(issues))
+}
+
+function hasOpeningDocumentValue(value: any) {
+  if (!value) return false
+  if (typeof value === 'string') return value.trim() !== ''
+  if (typeof value !== 'object') return false
+  return Boolean(value.storagePath || value.documentId || value.url || value.previewUrl || value.name)
+}
+
 function buildOpeningSubmitForm(form: Record<string, any>) {
   const foundationNominalValue = calculateShareValue(form.foundation_capital_amount, form.foundation_share_units)
   const next: Record<string, any> = {
     ...form,
+    trade_registry_number: form.trade_registry_number || form.trade_registry_no || '',
+    mersis_number: form.mersis_number || form.mersis_no || '',
+    tax_number: form.tax_number || form.tax_no || '',
+    sgk_workplace_registry_no: form.sgk_workplace_registry_no || form.sgk_workplace_no || '',
     foundation_nominal_value: foundationNominalValue,
   }
 
   delete next.foundation_share_ratio
   delete next.share_ratio
+  delete next.trade_registry_no
+  delete next.mersis_no
+  delete next.tax_no
+  delete next.sgk_workplace_no
 
   if (hasValue(form.foundation_share_units)) next.share_units = form.foundation_share_units
   else delete next.share_units
@@ -898,6 +1059,20 @@ function formatMoneyValue(value: any) {
   const numeric = Number(String(value).replace(',', '.'))
   if (!Number.isFinite(numeric)) return String(value)
   return new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', maximumFractionDigits: 2 }).format(numeric)
+}
+
+function formatPlainNumber(value: any) {
+  if (!hasValue(value)) return ''
+  const numeric = Number(String(value).replace(',', '.'))
+  if (!Number.isFinite(numeric)) return String(value)
+  return numeric.toLocaleString('tr-TR', { maximumFractionDigits: 4 })
+}
+
+function formatWizardDate(value: any) {
+  if (!hasValue(value)) return ''
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return String(value)
+  return date.toLocaleDateString('tr-TR')
 }
 
 function hasValue(value: any) {

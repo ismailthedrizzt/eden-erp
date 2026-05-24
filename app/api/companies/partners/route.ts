@@ -8,7 +8,7 @@ import { parseListQuery } from '@/lib/api/listEndpoint'
 import { safeCreateRecord, safeCrudResponse, safeListRecords } from '@/lib/crud/safeCrudService'
 import { ensureUniqueRoleMaster, roleUniquenessResponse } from '@/lib/identity/roleUniqueness'
 import { applyTenantQueryScope, resolveTenantContext, type TenantContext, withTenantInsertScopeForTable } from '@/lib/tenancy/server'
-import { findGlobalOrganizationByIdentity, normalizeLegalCountry, normalizeLegalTaxNumber } from '@/lib/tenancy/companyScopes'
+import { findGlobalOrganizationByIdentity, getTenantCompanyScope, normalizeLegalCountry, normalizeLegalTaxNumber } from '@/lib/tenancy/companyScopes'
 import { requirePermission } from '@/lib/security/serverPermissions'
 
 type PartnerStatusFilter = 'draft' | 'active' | 'passive'
@@ -133,6 +133,60 @@ function applyPartnerStatusFilters(query: any, statuses: PartnerStatusFilter[]) 
   return clauses.length ? query.or(clauses.join(',')) : query.neq('record_status', 'passive').eq('is_deleted', false)
 }
 
+async function validatePartnerCompanyForCreate(
+  supabase: ReturnType<typeof createServiceClient>,
+  companyId: string | undefined,
+  tenantContext: TenantContext
+) {
+  if (!companyId) {
+    return NextResponse.json({
+      error: 'Ortak kaydı oluşturmak için önce ortağı olduğu aktif şirketi seçmelisiniz.',
+      code: 'PARTNER_COMPANY_REQUIRED',
+      details: { fieldErrors: { company_id: ['Ortağı Olduğu Şirket zorunludur'] } },
+    }, { status: 400 })
+  }
+
+  const scope = await getTenantCompanyScope(supabase, tenantContext.tenantId, companyId)
+  if (!scope) {
+    return NextResponse.json({
+      error: 'Seçilen şirket Şirketlerimiz listesinde bulunamadı veya erişiminiz yok.',
+      code: 'PARTNER_COMPANY_NOT_IN_SCOPE',
+      details: { fieldErrors: { company_id: ['Erişilebilir bir şirket seçin'] } },
+    }, { status: 404 })
+  }
+
+  let query = supabase
+    .from('companies')
+    .select('id,record_status,company_status,is_deleted')
+    .eq('id', companyId)
+  query = applyTenantQueryScope(query, 'companies', tenantContext)
+  const { data: company, error } = await query.maybeSingle()
+
+  if (error) {
+    return NextResponse.json({ error: error.message, code: error.code || 'PARTNER_COMPANY_FETCH_FAILED' }, { status: 500 })
+  }
+
+  if (!company || !isCompanyActiveForPartnerCreate(company)) {
+    return NextResponse.json({
+      error: 'Seçilen şirket aktif durumda olmadığı için bu şirkete yeni ortak eklenemez.',
+      code: 'PARTNER_COMPANY_NOT_ACTIVE',
+      details: { fieldErrors: { company_id: ['Yalnızca aktif şirket seçilebilir'] } },
+    }, { status: 409 })
+  }
+
+  return null
+}
+
+function isCompanyActiveForPartnerCreate(company: Record<string, any>) {
+  if (company.is_deleted) return false
+  const recordStatus = String(company.record_status || '').trim().toLocaleLowerCase('tr-TR')
+  const companyStatus = String(company.company_status || '').trim().toLocaleLowerCase('tr-TR')
+  const activeValues = new Set(['active', 'opened'])
+  if (recordStatus && !activeValues.has(recordStatus)) return false
+  if (companyStatus && !activeValues.has(companyStatus)) return false
+  return activeValues.has(recordStatus || companyStatus || 'active')
+}
+
 export async function GET(request: NextRequest) {
   const supabase = createServiceClient()
   const { searchParams } = new URL(request.url)
@@ -192,6 +246,8 @@ export async function POST(request: NextRequest) {
       details: { fieldErrors: Object.fromEntries(missingPersonFields.map(field => [field, ['Zorunlu alan']])) },
     }, { status: 400 })
   }
+  const companyValidation = await validatePartnerCompanyForCreate(supabase, parsed.data.company_id, tenantContext)
+  if (companyValidation) return companyValidation
 
   const row = await attachPartnerIdentity(supabase, parsed.data, mapPartnerForDb(parsed.data), tenantContext)
   const uniqueness = await ensureUniqueRoleMaster(supabase as any, {

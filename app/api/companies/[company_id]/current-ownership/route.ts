@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { applyTenantQueryScope, resolveTenantContext } from '@/lib/tenancy/server'
+import { isMissingTableError } from '@/lib/modules/companies/companyErrors'
 
 const CURRENT_OWNERSHIP_COLUMNS = [
   'company_id',
@@ -33,6 +34,14 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   query = applyTenantQueryScope(query, 'v_current_ownership', tenantContext)
   const { data, error } = await query
 
-  if (error) return NextResponse.json({ error: error.message, code: error.code || 'FETCH_FAILED' }, { status: 500 })
-  return NextResponse.json({ data })
+  if (error) {
+    if (isMissingTableError(error)) {
+      return NextResponse.json({
+        data: [],
+        warning: 'Güncel ortaklık görünümü hazır değil; ortaklık bilgileri işlem geçmişi uygulanınca gösterilecek.',
+      })
+    }
+    return NextResponse.json({ error: error.message, code: error.code || 'FETCH_FAILED' }, { status: 500 })
+  }
+  return NextResponse.json({ data: data || [] })
 }

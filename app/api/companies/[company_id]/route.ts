@@ -471,7 +471,16 @@ export async function PATCH(
     await new EntityBankAccountsService(supabase as any).syncMany('organization', current.organization_id, entity_bank_accounts, null)
   }
 
-  return NextResponse.json({ data })
+  const responseData: Record<string, any> = {
+    ...current,
+    ...companyUpdates,
+    ...data,
+  }
+  const hydratedData = responseData.organization_id
+    ? await hydrateMasterContact(supabase, 'organization', responseData)
+    : responseData
+
+  return NextResponse.json({ data: hydratedData })
 }
 
 export async function DELETE(

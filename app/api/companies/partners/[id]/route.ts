@@ -99,7 +99,9 @@ export async function PATCH(
         await supabase.from('partner_ownership_lifecycle_events').insert(withTenantInsertScopeForTable({
           partner_id: record.id,
           company_id: record.company_id || record.company_id || null,
-          event_type: oldStatus === 'draft' && newStatus === 'active' ? 'ownership_defined' : 'status_changed',
+          event_type: body.ownership_action === 'initial_partnership_entry_completed'
+            ? 'initial_partnership_entry_completed'
+            : oldStatus === 'draft' && newStatus === 'active' ? 'ownership_defined' : 'status_changed',
           old_record_status: oldStatus,
           new_record_status: newStatus,
           payload_json: {
@@ -215,7 +217,7 @@ function mapPartnerForDb(partner: Record<string, any>, current?: Record<string, 
     control_type: current?.control_type || null,
     has_board_nomination_right: !!current?.has_board_nomination_right,
     has_veto_right: !!current?.has_veto_right,
-    has_privileged_share: !!current?.has_privileged_share,
+    has_privileged_share: !!(partner.has_privileged_share ?? current?.has_privileged_share),
     start_date: partner.start_date || current?.start_date,
     end_date: partner.end_date || null,
     status: partner.status || current?.status || 'Taslak',

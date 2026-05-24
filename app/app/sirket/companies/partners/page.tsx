@@ -1,9 +1,10 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { ListChecks, Users } from 'lucide-react'
+import { AlertCircle, CheckCircle2, FileText, ListChecks, X, Users } from 'lucide-react'
 import { EntityForm, FormField, FormMode, FormTab, type FormOperationAction, type FormOperationActionGroup, type FormOperationProgress } from '@/components/ui/EntityForm'
+import { DocumentSlotUploader, type DocumentSlot, type SlotDocument } from '@/components/ui/DocumentSlotUploader'
 import { PageBanner } from '@/components/ui/PageBanner'
 import {
   DEFAULT_RECORD_STATUS_FILTERS,
@@ -17,6 +18,7 @@ import {
 } from '@/components/ui/SmartDataTable'
 import { Toast } from '@/components/ui/Toast'
 import { formControlClass } from '@/components/ui/formControlStyles'
+import { cn } from '@/lib/utils'
 import { normalizeCountryId } from '@/lib/reference/country-nationalities'
 import { createRealPersonMasterTabs } from '@/lib/identity/realPersonFormSections'
 import { createLegalEntityMasterTabs } from '@/lib/identity/legalEntityFormSections'
@@ -26,6 +28,9 @@ import { invalidateEntityDetailCache, readEntityDetailCache, writeEntityDetailCa
 import { companyService } from '@/lib/services/companyService'
 import { ownershipTransactionsService } from '@/lib/modules/ownership-transactions/ownershipTransactions.service'
 import {
+  INITIAL_PARTNERSHIP_ENTRY_TYPE,
+  getOwnershipTransactionTypeLabel,
+  isInitialPartnershipEntryType,
   transactionTypes,
 } from '@/lib/modules/ownership-transactions/ownershipTransactions.config'
 import type { OwnershipTransactionType } from '@/lib/modules/ownership-transactions/ownershipTransactions.types'
@@ -35,7 +40,17 @@ type PageState = 'list' | 'create' | 'view' | 'edit'
 type ToastState = { type: 'success' | 'error' | 'warning'; title?: string; message: string }
 type SaveError = Error & { toast?: ToastState; fieldErrors?: Record<string, string> }
 type Option = { value: string; label: string }
-type CompanyOption = Option & { trade_name?: string; short_name?: string }
+type CompanyOption = Option & {
+  trade_name?: string
+  short_name?: string
+  tax_number?: string
+  record_status?: string
+  company_status?: string
+  is_deleted?: boolean
+  committed_capital_amount?: number
+  paid_capital_amount?: number
+  default_currency?: string
+}
 
 interface PartnerRow {
   id: string
@@ -95,10 +110,12 @@ interface CurrentOwnershipRow {
 
 interface OwnershipTransactionHistoryRow {
   id: string
+  company_id?: string
   transaction_no?: string
   transaction_type?: string
   transaction_date?: string
   effective_date?: string
+  status?: string
   approval_status?: string
   from_partner_id?: string | null
   to_partner_id?: string | null
@@ -107,12 +124,22 @@ interface OwnershipTransactionHistoryRow {
   voting_ratio?: number | null
   profit_ratio?: number | null
   capital_amount?: number | null
+  committed_capital_amount?: number | null
   share_units?: number | null
+  nominal_value?: number | null
+  currency?: string | null
   has_control_right?: boolean
   control_type?: string | null
   has_veto_right?: boolean
   has_board_nomination_right?: boolean
   has_privileged_share?: boolean
+  privilege_type?: string | null
+  privilege_description?: string | null
+  document_status?: string | null
+  document_files?: Record<string, any>[] | null
+  new_values?: Record<string, any> | string | null
+  notes?: string | null
+  description?: string | null
   created_at?: string
 }
 
@@ -161,6 +188,7 @@ function toAuthorityLabel(value?: string | null) {
 }
 
 const FIELD_LABELS: Record<string, string> = {
+  company_id: 'Ortağı Olduğu Şirket',
   partner_type: 'Ortak Türü',
   first_name: 'Adı',
   last_name: 'Soyadı',
@@ -178,7 +206,7 @@ const FIELD_LABELS: Record<string, string> = {
 
 const PARTNER_LIFECYCLE_CONTROL = {
   category: 'lifecycle' as const,
-  operations: ['Yeni Ortaklık Girişi', 'Ortaklıktan Çıkış', 'Pasife Alma'],
+  operations: ['İlk Ortaklık Girişi', 'Ortaklıktan Çıkış', 'Pasife Alma'],
 }
 
 const PARTNER_OWNERSHIP_REGISTRATION_CONTROL = {
@@ -200,7 +228,7 @@ const columns: ColumnDef[] = [
 ]
 
 const heroFields: FormField[] = [
-  { name: 'company_id', label: 'Şirket', type: 'select', required: true, controlledByOperation: PARTNER_LIFECYCLE_CONTROL },
+  { name: 'company_id', label: 'Ortağı Olduğu Şirket', type: 'select', required: true, searchable: true, controlledByOperation: PARTNER_LIFECYCLE_CONTROL },
   { name: 'first_name', label: 'Adı', type: 'text', required: true, visibleWhen: { field: 'partner_type', operator: 'equals', value: 'person' } },
   { name: 'last_name', label: 'Soyadı', type: 'text', required: true, visibleWhen: { field: 'partner_type', operator: 'equals', value: 'person' } },
   {
@@ -411,6 +439,8 @@ export default function OrtaklarPage() {
   const [ownershipWizardOpen, setOwnershipWizardOpen] = useState(false)
   const [ownershipWizardPartner, setOwnershipWizardPartner] = useState<Record<string, any> | null>(null)
   const [ownershipWizardInitialType, setOwnershipWizardInitialType] = useState<OwnershipTransactionType | null>(null)
+  const [ownershipWizardReadOnly, setOwnershipWizardReadOnly] = useState(false)
+  const [ownershipWizardSourceTransaction, setOwnershipWizardSourceTransaction] = useState<OwnershipTransactionHistoryRow | null>(null)
 
   const includePassive = statusFilters.includes('passive')
   const selectedRecordStatus = getPartnerRecordStatus(selectedPartner)
@@ -433,16 +463,23 @@ export default function OrtaklarPage() {
     setRelationContextError(false)
     try {
     const [companyPayload, representativePayload] = await Promise.all([
-      companyService.list({ useCache: !force }),
+      companyService.list({ pageSize: 500, useCache: !force }),
       companyService.representativesList({ useCache: !force }),
     ])
 
     setRepresentatives(Array.isArray(representativePayload.data) ? representativePayload.data : [])
     const companyOptions: CompanyOption[] = Array.isArray(companyPayload.data) ? companyPayload.data.map((company: any) => ({
       value: company.id,
-      label: company.trade_name || company.short_name,
+      label: formatCompanyOptionLabel(company),
       trade_name: company.trade_name,
       short_name: company.short_name,
+      tax_number: company.tax_number,
+      record_status: company.record_status,
+      company_status: company.company_status,
+      is_deleted: !!company.is_deleted,
+      committed_capital_amount: Number(company.committed_capital_amount || 0),
+      paid_capital_amount: Number(company.paid_capital_amount || 0),
+      default_currency: company.default_currency || 'TRY',
     })) : []
     setCompanies(companyOptions)
     if (companyOptions.length > 0) {
@@ -482,6 +519,7 @@ export default function OrtaklarPage() {
     loadData()
   }, [loadData])
 
+  const activeCompanyOptions = useMemo(() => companies.filter(isActiveCompanyForNewPartner), [companies])
   const companyNameById = useMemo(() => Object.fromEntries(companies.map(company => [company.value, company.label])), [companies])
   const currentOwnershipByPartnerId = useMemo(() => Object.fromEntries(currentOwnershipRows.map(row => [row.partner_id, row])), [currentOwnershipRows])
   const representativeAuthoritiesForPartner = useCallback((partner: Record<string, any> | null | undefined) => {
@@ -536,9 +574,17 @@ export default function OrtaklarPage() {
   }
 
   const configuredHeroFields = heroFields.filter(field =>
-    pageState !== 'create' || !['company_id', 'start_date', 'status'].includes(field.name)
+    pageState !== 'create' || !['start_date', 'status'].includes(field.name)
   ).map(field => {
-    if (field.name === 'company_id') return { ...field, options: companies }
+    if (field.name === 'company_id') {
+      return {
+        ...field,
+        options: pageState === 'create' ? activeCompanyOptions : companies,
+        placeholder: pageState === 'create' && activeCompanyOptions.length === 0
+          ? 'Aktif şirket bulunamadı'
+          : field.placeholder,
+      }
+    }
     return field
   })
   const configuredTabs = [
@@ -608,13 +654,12 @@ export default function OrtaklarPage() {
 
   useEffect(() => {
     const pendingPartnerId = searchParams.get('id')
-    if (!pendingPartnerId || loading || pageState !== 'list' || pendingPartnerOpenRef.current === pendingPartnerId) return
+    const pendingTransactionId = searchParams.get('transaction_id')
+    const pendingOpenKey = pendingPartnerId ? `partner:${pendingPartnerId}` : pendingTransactionId ? `transaction:${pendingTransactionId}` : ''
+    if (!pendingOpenKey || loading || pageState !== 'list' || pendingPartnerOpenRef.current === pendingOpenKey) return
 
-    const pendingPartner = tableData.find(partner => partner.id === pendingPartnerId)
-    if (!pendingPartner) return
-
-    pendingPartnerOpenRef.current = pendingPartnerId
-    void handleRowClick(pendingPartner)
+    pendingPartnerOpenRef.current = pendingOpenKey
+    void openPartnerFromNotification({ partnerId: pendingPartnerId, transactionId: pendingTransactionId })
   }, [loading, pageState, searchParams, tableData])
 
   const handleSave = async (data: Record<string, any>, mode: FormMode) => {
@@ -622,7 +667,9 @@ export default function OrtaklarPage() {
     setFormError(null)
     setFieldErrors({})
     try {
-      const payload = normalizePayload(data, companies)
+      const payload = normalizePayload(data, activeCompanyOptions)
+      const companySelectionError = getPartnerCompanySelectionError(payload, activeCompanyOptions)
+      if (companySelectionError) throw companySelectionError
       const missingPersonFields = getMissingPersonFields(payload)
       if (missingPersonFields.length > 0) {
         const message = missingPersonFields.map(field => FIELD_LABELS[field] || field).join(', ')
@@ -693,16 +740,91 @@ export default function OrtaklarPage() {
     if (!partner?.id) return
     const normalized = normalizePartnerForForm(partner as PartnerRow)
     const recordStatus = getPartnerRecordStatus(normalized)
+    setOwnershipWizardReadOnly(false)
+    setOwnershipWizardSourceTransaction(null)
     setSelectedPartner(prev => prev?.id === normalized.id ? prev : normalized)
     setOwnershipWizardPartner(normalized)
     setOwnershipWizardInitialType(transactionType || null)
 
-    if (recordStatus === 'draft' && transactionType !== transactionTypes[0]) {
+    if (recordStatus === 'draft' && !isInitialPartnershipEntryType(transactionType)) {
       setOwnershipNoticeOpen(true)
       return
     }
 
     setOwnershipWizardOpen(true)
+  }
+
+  async function openCompletedInitialPartnershipViewer() {
+    if (!selectedPartner?.id) return
+
+    try {
+      let sourcePartner = selectedPartner
+      let transaction = findInitialPartnershipTransaction(sourcePartner)
+
+      if (!transaction) {
+        const transactionHistory = await fetchApprovedOwnershipTransactionsForPartner(sourcePartner)
+        transaction = findInitialPartnershipTransaction({ ...sourcePartner, ownership_transaction_history: transactionHistory })
+        if (transaction) {
+          sourcePartner = { ...sourcePartner, ownership_transaction_history: transactionHistory }
+          setSelectedPartner(sourcePartner)
+          writeEntityDetailCache('company-partners', sourcePartner.id, sourcePartner)
+        }
+      }
+
+      if (!transaction) {
+        setToast({
+          type: 'warning',
+          title: 'İşlem Detayı Bulunamadı',
+          message: 'Bu işlem tamamlanmış görünüyor ancak detay form kaydı bulunamadı.',
+        })
+        return
+      }
+
+      setOwnershipWizardReadOnly(true)
+      setOwnershipWizardSourceTransaction(transaction)
+      setOwnershipWizardPartner(sourcePartner)
+      setOwnershipWizardInitialType(INITIAL_PARTNERSHIP_ENTRY_TYPE)
+      setOwnershipWizardOpen(true)
+    } catch (error: any) {
+      setToast({
+        type: 'warning',
+        title: 'İşlem Detayı Açılamadı',
+        message: error?.message || 'Bu işlem tamamlanmış görünüyor ancak detay form kaydı bulunamadı.',
+      })
+    }
+  }
+
+  async function openPartnerFromNotification({ partnerId, transactionId }: { partnerId?: string | null; transactionId?: string | null }) {
+    try {
+      let resolvedPartnerId = partnerId || ''
+
+      if (!resolvedPartnerId && transactionId) {
+        const transaction = await ownershipTransactionsService.get(transactionId)
+        resolvedPartnerId = transaction.affected_partner_id
+          || transaction.to_partner_id
+          || transaction.from_partner_id
+          || ''
+      }
+
+      if (!resolvedPartnerId) throw new Error('Bildirimle ilişkili ortak kaydı bulunamadı')
+
+      const tableRow = tableData.find(partner => partner.id === resolvedPartnerId)
+      if (tableRow) {
+        await handleRowClick(tableRow)
+        return
+      }
+
+      const result = await companyService.partnerDetail(resolvedPartnerId)
+      if (!result.data) throw new Error('Ortak kaydı bulunamadı')
+      await handleRowClick(normalizePartnerForForm(result.data))
+    } catch (error: any) {
+      pendingPartnerOpenRef.current = null
+      setToast({
+        type: 'error',
+        title: 'Bildirim Açılamadı',
+        message: error?.message || 'Bildirimdeki ortak formu açılamadı.',
+      })
+    }
   }
 
   const handleOwnershipActionClick = (transactionType?: OwnershipTransactionType) => {
@@ -746,12 +868,22 @@ export default function OrtaklarPage() {
     try {
       await ownershipTransactionsService.create(payload)
 
-      if (payload.transaction_type === transactionTypes[0] && getPartnerRecordStatus(partner) === 'draft') {
+      if (isInitialPartnershipEntryType(String(payload.transaction_type || '')) && getPartnerRecordStatus(partner) === 'draft') {
         const result = await companyService.updatePartner(partner.id, {
           ...partner,
+          company_id: payload.company_id,
+          share_ratio: payload.share_ratio,
+          voting_ratio: payload.voting_ratio,
+          profit_ratio: payload.profit_ratio,
+          share_units: payload.share_units,
+          nominal_value: payload.nominal_value,
+          capital_amount: payload.capital_amount,
+          has_privileged_share: payload.has_privileged_share,
+          notes: payload.notes || partner.notes,
+          start_date: payload.effective_date,
           status: 'Aktif',
           record_status: 'active',
-          ownership_action: 'ownership_defined',
+          ownership_action: 'initial_partnership_entry_completed',
         })
         const normalized = result.data ? normalizePartnerForForm(result.data) : null
         if (normalized) setSelectedPartner(normalized)
@@ -779,32 +911,41 @@ export default function OrtaklarPage() {
     if (recordStatus === 'passive') return []
 
     const actionTypes = recordStatus === 'active'
-      ? transactionTypes.filter(type => type !== transactionTypes[0])
-      : [transactionTypes[0]]
+      ? transactionTypes.filter(type => !isInitialPartnershipEntryType(type))
+      : [INITIAL_PARTNERSHIP_ENTRY_TYPE]
 
     return actionTypes.map(transactionType => ({
       key: `ownership-${partner.id}-${transactionType}`,
-      label: transactionType,
+      label: getOwnershipTransactionTypeLabel(transactionType),
       icon: <ListChecks size={15} />,
       tone: 'primary' as const,
-      onClick: () => openOwnershipWizard(partner, transactionType),
+      onClick: () => openOwnershipWizard(partner, transactionType as OwnershipTransactionType),
     }))
   }
 
   const getFormOperationActions = (): FormOperationActionGroup[] => {
     if (!selectedPartner?.id || pageState === 'create') return []
     const recordStatus = getPartnerRecordStatus(selectedPartner)
+    const lifecycleProgress = getPartnerLifecycleOperationProgress(recordStatus)
+    const completedLifecycleActions = new Set(lifecycleProgress.completedActionKeys || [])
+    const initialPartnershipCompleted = completedLifecycleActions.has(PARTNER_OWNERSHIP_ENTRY_ACTION_KEY)
     const lifecycleActions: FormOperationAction[] = [{
       key: PARTNER_OWNERSHIP_ENTRY_ACTION_KEY,
-      label: transactionTypes[0],
+      label: getOwnershipTransactionTypeLabel(INITIAL_PARTNERSHIP_ENTRY_TYPE),
       icon: <ListChecks size={15} />,
-      onClick: () => handleOwnershipActionClick(transactionTypes[0]),
-      disabled: recordStatus !== 'draft',
+      onClick: () => {
+        if (initialPartnershipCompleted) {
+          void openCompletedInitialPartnershipViewer()
+          return
+        }
+        handleOwnershipActionClick(INITIAL_PARTNERSHIP_ENTRY_TYPE)
+      },
+      disabled: !initialPartnershipCompleted && recordStatus !== 'draft',
     }]
     const officialUpdateActions: FormOperationAction[] = recordStatus === 'active'
-      ? transactionTypes.filter(type => type !== transactionTypes[0]).map(transactionType => ({
+      ? transactionTypes.filter(type => !isInitialPartnershipEntryType(type)).map(transactionType => ({
           key: `ownership-${transactionType}`,
-          label: transactionType,
+          label: getOwnershipTransactionTypeLabel(transactionType),
           icon: <ListChecks size={15} />,
           onClick: () => handleOwnershipActionClick(transactionType),
         }))
@@ -820,7 +961,7 @@ export default function OrtaklarPage() {
     return [
       {
         key: 'lifecycle',
-        progress: getPartnerLifecycleOperationProgress(recordStatus),
+        progress: lifecycleProgress,
         actions: lifecycleActions,
       },
       ...(officialUpdateActions.length ? [{
@@ -923,11 +1064,14 @@ export default function OrtaklarPage() {
                 organization: ['country', 'tax_number', 'registration_number'],
               },
               roleTable: 'company_partners',
-              roleDuplicateCheck: 'entity_kind + person_id/organization_id',
+              roleDuplicateCheck: 'company_id + person_id/organization_id',
             }}
             heroFields={configuredHeroFields.map(withFieldHistory)}
             tabs={configuredTabs.map(tab => ({ ...tab, fields: tab.fields.map(withFieldHistory) }))}
-            roleHeroCardTitle="Rol Bilgileri"
+            roleHeroCardTitle="Ortaklık Rol Bilgileri"
+            masterSummaryTitle="Seçilen Ortak Özeti"
+            masterSummaryBadgeLabel="Ortak Olan Kişi/Kurum"
+            masterSummaryReadOnly
             masterSummaryMode="entityIdentity"
             data={selectedPartner || undefined}
             saving={saving}
@@ -1001,7 +1145,11 @@ export default function OrtaklarPage() {
             setOwnershipWizardOpen(false)
             setOwnershipWizardPartner(null)
             setOwnershipWizardInitialType(null)
+            setOwnershipWizardReadOnly(false)
+            setOwnershipWizardSourceTransaction(null)
           }}
+          readOnly={ownershipWizardReadOnly}
+          sourceTransaction={ownershipWizardSourceTransaction}
           onSubmit={handleCreateOwnershipTransaction}
         />
       )}
@@ -1030,17 +1178,7 @@ function PartnerOwnershipNotice({ onCancel, onConfirm }: { onCancel: () => void;
   )
 }
 
-function PartnerOwnershipActionWizard({
-  partner,
-  companies,
-  partners,
-  ownershipRows,
-  initialTransactionType,
-  recordStatus,
-  saving,
-  onClose,
-  onSubmit,
-}: {
+type PartnerOwnershipActionWizardProps = {
   partner: Record<string, any>
   companies: CompanyOption[]
   partners: Record<string, any>[]
@@ -1048,9 +1186,33 @@ function PartnerOwnershipActionWizard({
   initialTransactionType?: OwnershipTransactionType | null
   recordStatus: 'draft' | 'active' | 'passive'
   saving: boolean
+  readOnly?: boolean
+  sourceTransaction?: OwnershipTransactionHistoryRow | null
   onClose: () => void
   onSubmit: (partner: Record<string, any>, payload: Record<string, any>) => Promise<void>
-}) {
+}
+
+function PartnerOwnershipActionWizard(props: PartnerOwnershipActionWizardProps) {
+  if (props.readOnly && isInitialPartnershipEntryType(String(props.initialTransactionType || ''))) {
+    return <InitialPartnershipEntryWizard {...props} />
+  }
+
+  if (props.recordStatus !== 'active') {
+    return <InitialPartnershipEntryWizard {...props} />
+  }
+
+  return <ActiveOwnershipTransactionWizard {...props} />
+}
+
+function ActiveOwnershipTransactionWizard({
+  partner,
+  companies,
+  partners,
+  initialTransactionType,
+  saving,
+  onClose,
+  onSubmit,
+}: PartnerOwnershipActionWizardProps) {
   const [form, setForm] = useState({
     company_id: partner.company_id || partner.company_id || '',
     start_date: new Date().toISOString().slice(0, 10),
@@ -1062,45 +1224,13 @@ function PartnerOwnershipActionWizard({
     to_partner_id: '',
     document_reference_id: '',
     notes: '',
-    transaction_type: initialTransactionType || (recordStatus === 'active' ? transactionTypes[1] : transactionTypes[0]),
+    transaction_type: initialTransactionType && !isInitialPartnershipEntryType(initialTransactionType)
+      ? initialTransactionType
+      : transactionTypes.find(type => !isInitialPartnershipEntryType(type)) || transactionTypes[1],
   })
   const [localError, setLocalError] = useState<string | null>(null)
-  const allocatedByCompany = useMemo(() => {
-    return ownershipRows.reduce((acc: Record<string, number>, row) => {
-      if (!row.company_id) return acc
-      acc[row.company_id] = (acc[row.company_id] || 0) + Number(row.current_share_ratio || 0)
-      return acc
-    }, {})
-  }, [ownershipRows])
-  const selectedAllocated = allocatedByCompany[form.company_id] || 0
-  const remainingShare = Math.max(0, 100 - selectedAllocated)
   const companyPartners = partners.filter(item => (item.company_id || '') === form.company_id)
   const update = (name: string, value: string) => setForm(prev => ({ ...prev, [name]: value }))
-  const completeDraft = async () => {
-    setLocalError(null)
-    if (!form.company_id) return setLocalError('Şirket seçimi zorunludur.')
-    const shareRatio = Number(form.share_ratio)
-    if (!Number.isFinite(shareRatio) || shareRatio <= 0) return setLocalError('Hisse payı 0 dan büyük olmalıdır.')
-    if (shareRatio > remainingShare) return setLocalError(`Seçilen şirkette kullanılabilir hisse payı %${remainingShare.toFixed(2)}.`)
-    await onSubmit(partner, {
-      company_id: form.company_id,
-      transaction_type: transactionTypes[0],
-      transaction_date: form.start_date,
-      effective_date: form.start_date,
-      to_partner_id: partner.id,
-      share_ratio: shareRatio,
-      voting_ratio: form.voting_ratio === '' ? shareRatio : Number(form.voting_ratio),
-      profit_ratio: form.profit_ratio === '' ? shareRatio : Number(form.profit_ratio),
-      share_units: form.share_units === '' ? null : Number(form.share_units),
-      capital_amount: form.capital_amount === '' ? null : Number(form.capital_amount),
-      status: 'draft',
-      approval_status: 'draft',
-      workflow_status: 'draft',
-      document_status: form.document_reference_id ? 'Yüklendi' : 'Belge Yok',
-      document_reference_id: form.document_reference_id || null,
-      notes: form.notes || null,
-    })
-  }
 
   const completeActiveTransaction = async () => {
     setLocalError(null)
@@ -1133,7 +1263,7 @@ function PartnerOwnershipActionWizard({
       <div className="w-full max-w-2xl rounded-lg border border-gray-200 bg-white p-5 shadow-xl dark:border-gray-800 dark:bg-gray-950">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{recordStatus === 'active' ? 'Ortaklık İşlemi' : 'Yeni Ortaklık'}</h3>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Ortaklık İşlemi</h3>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{partner.display_name || partner.partner_name || 'Ortak'}</p>
           </div>
           <button type="button" onClick={onClose} className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-900">
@@ -1141,52 +1271,12 @@ function PartnerOwnershipActionWizard({
           </button>
         </div>
 
-        {recordStatus === 'draft' || recordStatus === 'passive' ? (
-          <div className="mt-5 grid gap-4 sm:grid-cols-2">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
-              Şirket
-              <select value={form.company_id} onChange={event => update('company_id', event.target.value)} className={formControlClass({ className: 'mt-1' })}>
-                <option value="">Seçiniz</option>
-                {companies.map(company => (
-                  <option key={company.value} value={company.value}>{company.label} - Boş pay %{Math.max(0, 100 - (allocatedByCompany[company.value] || 0)).toFixed(2)}</option>
-                ))}
-              </select>
-            </label>
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
-              Başlangıç Tarihi
-              <input type="date" value={form.start_date} onChange={event => update('start_date', event.target.value)} className={formControlClass({ className: 'mt-1' })} />
-            </label>
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
-              Hisse Payı %
-              <input type="number" min="0" max="100" step="0.01" value={form.share_ratio} onChange={event => update('share_ratio', event.target.value)} className={formControlClass({ className: 'mt-1' })} />
-            </label>
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
-              Oy Hakkı %
-              <input type="number" min="0" max="100" step="0.01" value={form.voting_ratio} onChange={event => update('voting_ratio', event.target.value)} placeholder="Hisse payı ile aynı" className={formControlClass({ className: 'mt-1' })} />
-            </label>
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
-              Kar Payı %
-              <input type="number" min="0" max="100" step="0.01" value={form.profit_ratio} onChange={event => update('profit_ratio', event.target.value)} placeholder="Hisse payı ile aynı" className={formControlClass({ className: 'mt-1' })} />
-            </label>
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
-              Sermaye
-              <input type="number" min="0" step="0.01" value={form.capital_amount} onChange={event => update('capital_amount', event.target.value)} className={formControlClass({ className: 'mt-1' })} />
-            </label>
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
-              Pay Adedi
-              <input type="number" min="0" step="1" value={form.share_units} onChange={event => update('share_units', event.target.value)} className={formControlClass({ className: 'mt-1' })} />
-            </label>
-            <div className="rounded-lg border border-blue-100 bg-blue-50 p-3 text-sm text-blue-800 dark:border-blue-900 dark:bg-blue-950/30 dark:text-blue-200">
-              Seçili şirkette kullanılabilir hisse payı: %{remainingShare.toFixed(2)}
-            </div>
-          </div>
-        ) : (
-          <div className="mt-5 space-y-4">
+        <div className="mt-5 space-y-4">
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
               İşlem Türü
               <select value={form.transaction_type} onChange={event => update('transaction_type', event.target.value)} className={formControlClass({ className: 'mt-1' })}>
-                {transactionTypes.filter(type => type !== transactionTypes[0]).map(type => (
-                  <option key={type} value={type}>{type}</option>
+                {transactionTypes.filter(type => !isInitialPartnershipEntryType(type)).map(type => (
+                  <option key={type} value={type}>{getOwnershipTransactionTypeLabel(type)}</option>
                 ))}
               </select>
             </label>
@@ -1230,8 +1320,7 @@ function PartnerOwnershipActionWizard({
             <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
               Hissesi tamamen devredilen ortak, onaylı işlemlerden sonra pasif statüye düşecektir. Ayrı bir Ortaklıktan Ayrılma işlemi oluşturulmaz.
             </div>
-          </div>
-        )}
+        </div>
 
         {localError && <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-200">{localError}</div>}
         <div className="mt-5 flex justify-end gap-2">
@@ -1241,15 +1330,1059 @@ function PartnerOwnershipActionWizard({
           <button
             type="button"
             disabled={saving}
-            onClick={recordStatus === 'active' ? completeActiveTransaction : completeDraft}
+            onClick={completeActiveTransaction}
             className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60"
           >
-            {recordStatus === 'active' ? 'İşlem Taslağı Oluştur' : 'Ortaklığı Tanımla'}
+            İşlem Taslağı Oluştur
           </button>
         </div>
       </div>
     </div>
   )
+}
+
+const initialPartnershipStepLabels = ['Bilgiler', 'Belgeler', 'Önizleme ve Tamamla'] as const
+
+const initialPartnershipBaseDocumentSlots: DocumentSlot[] = [
+  { id: 'partnership_entry_basis_document', title: 'Ortaklık Giriş Dayanak Belgesi', required: true },
+  { id: 'company_resolution_document', title: 'Şirket / Ortaklar Kurulu Kararı', required: true },
+  { id: 'articles_of_association_document', title: 'Şirket Sözleşmesi / Ana Sözleşme İlgili Bölümü' },
+  { id: 'registry_document', title: 'Tescil / Sicil Belgesi' },
+  { id: 'other_supporting_documents', title: 'Diğer Destekleyici Belgeler' },
+]
+
+const privilegeDocumentSlot: DocumentSlot = {
+  id: 'privilege_basis_document',
+  title: 'Farklı Hak / İmtiyaz Dayanak Belgesi',
+  required: true,
+}
+
+function InitialPartnershipEntryWizard({
+  partner,
+  companies,
+  partners,
+  ownershipRows,
+  saving,
+  readOnly = false,
+  sourceTransaction,
+  onClose,
+  onSubmit,
+}: PartnerOwnershipActionWizardProps) {
+  const activeCompanies = useMemo(() => companies.filter(isActiveCompanyForNewPartner), [companies])
+  const selectableCompanies = readOnly ? companies : activeCompanies
+  const initialForm = useMemo(
+    () => buildInitialPartnershipInitialForm(partner, sourceTransaction),
+    [partner, sourceTransaction]
+  )
+  const initialDocuments = useMemo(
+    () => hydrateInitialPartnershipDocuments(sourceTransaction),
+    [sourceTransaction]
+  )
+  const [step, setStep] = useState(0)
+  const [companyDetail, setCompanyDetail] = useState<Record<string, any> | null>(null)
+  const [companyLoading, setCompanyLoading] = useState(false)
+  const [form, setForm] = useState<InitialPartnershipFormState>(() => initialForm)
+  const [documents, setDocuments] = useState<SlotDocument[]>(() => initialDocuments.documents)
+  const [documentMeta, setDocumentMeta] = useState<Record<string, { document_date?: string; description?: string }>>(() => initialDocuments.meta)
+  const [localError, setLocalError] = useState<string | null>(null)
+
+  const selectedCompany = selectableCompanies.find(company => company.value === form.company_id)
+  const documentSlots = useMemo(
+    () => form.has_non_proportional_rights
+      ? [...initialPartnershipBaseDocumentSlots, privilegeDocumentSlot]
+      : initialPartnershipBaseDocumentSlots,
+    [form.has_non_proportional_rights]
+  )
+
+  useEffect(() => {
+    let cancelled = false
+    if (!form.company_id) {
+      setCompanyDetail(null)
+      return
+    }
+
+    setCompanyLoading(true)
+    companyService.detail(form.company_id)
+      .then(result => {
+        if (!cancelled) setCompanyDetail(result.data || null)
+      })
+      .catch(() => {
+        if (!cancelled) setCompanyDetail(null)
+      })
+      .finally(() => {
+        if (!cancelled) setCompanyLoading(false)
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [form.company_id])
+
+  useEffect(() => {
+    if (!readOnly) return
+    setForm(initialForm)
+    setDocuments(initialDocuments.documents)
+    setDocumentMeta(initialDocuments.meta)
+    setLocalError(null)
+    setStep(0)
+  }, [initialDocuments, initialForm, readOnly])
+
+  const capital = useMemo(() => readOnly && sourceTransaction
+    ? buildInitialPartnershipCapitalInfoFromTransaction({
+        transaction: sourceTransaction,
+        company: selectedCompany,
+        companyDetail,
+      })
+    : buildInitialPartnershipCapitalInfo({
+        company: selectedCompany,
+        companyDetail,
+        ownershipRows,
+        partners,
+        partnerId: partner.id,
+        companyId: form.company_id,
+      }), [companyDetail, form.company_id, ownershipRows, partner.id, partners, readOnly, selectedCompany, sourceTransaction])
+
+  const calculations = useMemo(() => {
+    const amount = parseLocalizedNumber(form.partner_committed_capital_amount)
+    const shareUnits = capital.share_nominal_value > 0 ? amount / capital.share_nominal_value : 0
+    const shareRatio = capital.company_committed_capital_amount > 0
+      ? (amount / capital.company_committed_capital_amount) * 100
+      : 0
+    const votingRatio = form.has_non_proportional_rights
+      ? parseLocalizedNumber(form.partner_voting_ratio)
+      : shareRatio
+    const profitRatio = form.has_non_proportional_rights
+      ? parseLocalizedNumber(form.partner_profit_ratio)
+      : shareRatio
+    const lowerAmount = capital.share_nominal_value > 0
+      ? Math.max(0, Math.floor(amount / capital.share_nominal_value) * capital.share_nominal_value)
+      : 0
+    const upperAmount = capital.share_nominal_value > 0
+      ? Math.ceil(amount / capital.share_nominal_value) * capital.share_nominal_value
+      : 0
+    const suggestedAmounts = [lowerAmount, upperAmount]
+      .filter(value => value > 0 && value <= capital.available_capital_amount)
+      .filter((value, index, values) => values.findIndex(item => Math.abs(item - value) < 0.0001) === index)
+
+    return {
+      partner_committed_capital_amount: roundMoney(amount),
+      partner_share_units: shareUnits,
+      partner_share_ratio: roundRatio(shareRatio),
+      partner_voting_ratio: roundRatio(votingRatio),
+      partner_profit_ratio: roundRatio(profitRatio),
+      isShareUnitWhole: shareUnits > 0 && Math.abs(shareUnits - Math.round(shareUnits)) < 0.0001,
+      suggestedAmounts,
+      remaining_capital_after_entry: roundMoney(capital.available_capital_amount - amount),
+      remaining_share_units_after_entry: capital.share_nominal_value > 0 ? (capital.available_capital_amount - amount) / capital.share_nominal_value : 0,
+    }
+  }, [capital, form.has_non_proportional_rights, form.partner_committed_capital_amount, form.partner_profit_ratio, form.partner_voting_ratio])
+
+  const infoErrors = useMemo(() => getInitialPartnershipInfoErrors({
+    form,
+    selectedCompany,
+    capital,
+    calculations,
+  }), [calculations, capital, form, selectedCompany])
+  const documentErrors = useMemo(() => getInitialPartnershipDocumentErrors(documentSlots, documents), [documentSlots, documents])
+
+  const update = (name: string, value: string | boolean) => {
+    if (readOnly) return
+    setForm(prev => ({ ...prev, [name]: value }))
+  }
+
+  const validateStep = (targetStep: number) => {
+    if (readOnly) return null
+    if (targetStep >= 0 && infoErrors.length) return infoErrors[0]
+    if (targetStep >= 1 && documentErrors.length) return documentErrors[0]
+    return null
+  }
+
+  const nextStep = () => {
+    const validationError = step === 0 ? validateStep(0) : validateStep(1)
+    if (validationError) {
+      setLocalError(validationError)
+      return
+    }
+    setLocalError(null)
+    setStep(prev => Math.min(prev + 1, initialPartnershipStepLabels.length - 1))
+  }
+
+  const complete = async () => {
+    if (readOnly) return
+    const validationError = validateStep(1)
+    if (validationError) {
+      setLocalError(validationError)
+      return
+    }
+    setLocalError(null)
+    await onSubmit(partner, {
+      company_id: form.company_id,
+      transaction_type: INITIAL_PARTNERSHIP_ENTRY_TYPE,
+      transaction_date: form.transaction_date,
+      effective_date: form.transaction_date,
+      to_partner_id: partner.id,
+      affected_partner_id: partner.id,
+      share_ratio: calculations.partner_share_ratio,
+      voting_ratio: calculations.partner_voting_ratio,
+      profit_ratio: calculations.partner_profit_ratio,
+      share_units: Math.round(calculations.partner_share_units),
+      nominal_value: roundMoney(capital.share_nominal_value),
+      capital_amount: calculations.partner_committed_capital_amount,
+      committed_capital_amount: calculations.partner_committed_capital_amount,
+      currency: capital.currency,
+      commitment_date: form.transaction_date,
+      status: 'active',
+      approval_status: 'approved',
+      workflow_status: 'approved',
+      document_status: documents.some(isActiveDocument) ? 'Yüklendi' : 'Eksik',
+      document_files: serializeInitialPartnershipDocuments(documents, documentMeta),
+      has_privileged_share: form.has_non_proportional_rights,
+      privilege_type: form.expected_privilege_document_type || null,
+      privilege_description: form.privilege_description || null,
+      new_values: {
+        has_non_proportional_rights: form.has_non_proportional_rights,
+        expected_privilege_document_type: form.expected_privilege_document_type || null,
+        partner_committed_capital_amount: calculations.partner_committed_capital_amount,
+        partner_share_units: Math.round(calculations.partner_share_units),
+        partner_share_ratio: calculations.partner_share_ratio,
+        partner_voting_ratio: calculations.partner_voting_ratio,
+        partner_profit_ratio: calculations.partner_profit_ratio,
+        available_capital_amount_before_entry: capital.available_capital_amount,
+        available_share_units_before_entry: capital.available_share_units,
+      },
+      transaction_reason: INITIAL_PARTNERSHIP_ENTRY_TYPE,
+      description: 'İlk Ortaklık Girişi',
+      notes: form.notes || null,
+      capital_distribution: [{
+        partner_id: partner.id,
+        company_id: form.company_id,
+        committed_capital_amount: calculations.partner_committed_capital_amount,
+        share_units: Math.round(calculations.partner_share_units),
+        share_ratio: calculations.partner_share_ratio,
+        voting_ratio: calculations.partner_voting_ratio,
+        profit_ratio: calculations.partner_profit_ratio,
+        currency: capital.currency,
+      }],
+    })
+  }
+
+  return (
+    <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/45 px-4 py-6">
+      <div className="flex max-h-[92vh] w-full max-w-6xl flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow-2xl dark:border-gray-800 dark:bg-gray-950">
+        <div className="flex items-start justify-between gap-4 border-b border-gray-100 px-5 py-4 dark:border-gray-800">
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">İlk Ortaklık Girişi</h2>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              {readOnly ? 'Tamamlanmış işlem görüntüleniyor' : partner.display_name || partner.partner_name || 'Taslak ortak'}
+            </p>
+          </div>
+          <button type="button" aria-label="İlk ortaklık girişi penceresini kapat" onClick={onClose} className="inline-grid h-9 w-9 place-items-center rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-900">
+            <X size={18} />
+          </button>
+        </div>
+
+        <div className="border-b border-gray-100 px-5 py-3 dark:border-gray-800">
+          <div className="grid gap-2 md:grid-cols-3">
+            {initialPartnershipStepLabels.map((label, index) => (
+              <button
+                key={label}
+                type="button"
+                onClick={() => index <= step && setStep(index)}
+                className={cn(
+                  'flex items-center gap-2 rounded-lg border px-3 py-2 text-left text-sm font-medium',
+                  index === step
+                    ? 'border-blue-300 bg-blue-50 text-blue-800 dark:border-blue-800 dark:bg-blue-950/40 dark:text-blue-200'
+                    : index < step
+                      ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-200'
+                      : 'border-gray-200 bg-white text-gray-500 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-400'
+                )}
+              >
+                <span className="inline-grid h-6 w-6 shrink-0 place-items-center rounded-full bg-white text-xs shadow-sm dark:bg-gray-900">{index < step ? <CheckCircle2 size={14} /> : index + 1}</span>
+                <span className="min-w-0">{label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="min-h-0 flex-1 overflow-auto px-5 py-5">
+          {step === 0 && (
+            <InitialPartnershipInfoStep
+              partner={partner}
+              activeCompanies={activeCompanies}
+              selectedCompany={selectedCompany}
+              companyLoading={companyLoading}
+              capital={capital}
+              calculations={calculations}
+              form={form}
+              readOnly={readOnly}
+              onUpdate={update}
+            />
+          )}
+
+          {step === 1 && (
+            <InitialPartnershipDocumentsStep
+              slots={documentSlots}
+              documents={documents}
+              documentMeta={documentMeta}
+              onDocumentsChange={setDocuments}
+              onDocumentMetaChange={setDocumentMeta}
+              readOnly={readOnly}
+            />
+          )}
+
+          {step === 2 && (
+            <InitialPartnershipPreviewStep
+              partner={partner}
+              company={selectedCompany}
+              capital={capital}
+              calculations={calculations}
+              documents={documents}
+              documentSlots={documentSlots}
+              form={form}
+            />
+          )}
+        </div>
+
+        {localError && (
+          <div className="mx-5 mb-3 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-200">
+            {localError}
+          </div>
+        )}
+
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-gray-100 px-5 py-4 dark:border-gray-800">
+          <button type="button" onClick={onClose} className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-900">
+            {readOnly ? 'Kapat' : 'Vazgeç'}
+          </button>
+          <div className="flex items-center gap-2">
+            {step > 0 && (
+              <button type="button" onClick={() => setStep(prev => Math.max(prev - 1, 0))} className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-900">
+                Geri
+              </button>
+            )}
+            {readOnly && step === initialPartnershipStepLabels.length - 1 ? (
+              <div className="text-xs font-medium text-gray-500 dark:text-gray-400">Salt okunur görüntüleme</div>
+            ) : (
+              <button
+                type="button"
+                disabled={saving}
+                onClick={step === initialPartnershipStepLabels.length - 1 ? complete : nextStep}
+                className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60"
+              >
+                {readOnly ? 'Devam' : step === initialPartnershipStepLabels.length - 1 ? 'Tamamla' : 'Devam'}
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function InitialPartnershipInfoStep({
+  partner,
+  activeCompanies,
+  selectedCompany,
+  companyLoading,
+  capital,
+  calculations,
+  form,
+  readOnly,
+  onUpdate,
+}: {
+  partner: Record<string, any>
+  activeCompanies: CompanyOption[]
+  selectedCompany?: CompanyOption
+  companyLoading: boolean
+  capital: InitialPartnershipCapitalInfo
+  calculations: InitialPartnershipCalculations
+  form: InitialPartnershipFormState
+  readOnly: boolean
+  onUpdate: (name: string, value: string | boolean) => void
+}) {
+  const partnerSummary = getInitialPartnershipPartnerSummary(partner)
+  const noShareUnits = !!selectedCompany && !companyLoading && capital.company_total_share_units <= 0
+  const noAvailableCapital = !!selectedCompany && !companyLoading && capital.company_total_share_units > 0 && capital.available_capital_amount <= 0
+  const amountDisabled = readOnly || !selectedCompany || companyLoading || noShareUnits || noAvailableCapital || capital.share_nominal_value <= 0
+
+  return (
+    <div className="space-y-5">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(280px,360px)]">
+        <section className="rounded-lg border border-gray-200 p-4 dark:border-gray-800">
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-white">{partnerSummary.title}</h3>
+          <dl className="mt-3 grid gap-3 sm:grid-cols-2">
+            {partnerSummary.rows.map(row => (
+              <div key={row.label}>
+                <dt className="text-xs font-medium text-gray-500 dark:text-gray-400">{row.label}</dt>
+                <dd className="mt-1 text-sm font-medium text-gray-900 dark:text-gray-100">{row.value || '-'}</dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+
+        <section className="rounded-lg border border-gray-200 p-4 dark:border-gray-800">
+          <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Ortağı Olunacak Şirket</h3>
+          <label className="mt-3 block text-sm font-medium text-gray-700 dark:text-gray-200">
+            Ortağı Olduğu Şirket
+            <select value={form.company_id} disabled={readOnly} onChange={event => onUpdate('company_id', event.target.value)} className={formControlClass({ className: 'mt-1' })}>
+              <option value="">Seçiniz</option>
+              {activeCompanies.map(company => (
+                <option key={company.value} value={company.value}>{company.label}</option>
+              ))}
+            </select>
+          </label>
+          <label className="mt-3 block text-sm font-medium text-gray-700 dark:text-gray-200">
+            İşlem Tarihi
+            <input type="date" value={form.transaction_date} disabled={readOnly} onChange={event => onUpdate('transaction_date', event.target.value)} className={formControlClass({ className: 'mt-1' })} />
+          </label>
+        </section>
+      </div>
+
+      {companyLoading && (
+        <div className="rounded-lg border border-blue-100 bg-blue-50 p-3 text-sm text-blue-800 dark:border-blue-900/60 dark:bg-blue-950/30 dark:text-blue-200">
+          Şirket sermaye bilgileri yükleniyor.
+        </div>
+      )}
+
+      {noShareUnits && (
+        <InitialPartnershipWarning>
+          Şirketin toplam pay adedi tanımlı olmadığı için pay itibari değeri hesaplanamıyor. Bu bilgi şirket sermaye bilgilerinden tamamlanmalıdır.
+        </InitialPartnershipWarning>
+      )}
+
+      {noAvailableCapital && (
+        <InitialPartnershipWarning>
+          Bu şirkette ortaklara tahsis edilmemiş taahhüt edilebilir sermaye bulunmuyor. Yeni ortak girişi için önce sermaye artırımı yapılmalıdır.
+        </InitialPartnershipWarning>
+      )}
+
+      <section className="rounded-lg border border-gray-200 p-4 dark:border-gray-800">
+        <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Şirket Sermaye ve Pay Bilgileri</h3>
+        <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <InitialPartnershipMetric label="Şirket Taahhüt Edilmiş Sermayesi" value={formatCurrency(capital.company_committed_capital_amount, capital.currency)} />
+          <InitialPartnershipMetric label="Toplam Pay Adedi" value={formatNumber(capital.company_total_share_units)} />
+          <InitialPartnershipMetric label="Pay İtibari Değeri" value={formatCurrency(capital.share_nominal_value, capital.currency)} />
+          <InitialPartnershipMetric label="Ortaklara Tahsis Edilmiş Sermaye" value={formatCurrency(capital.allocated_capital_amount, capital.currency)} />
+          <InitialPartnershipMetric label="Taahhüt Edilebilir Sermaye" value={formatCurrency(capital.available_capital_amount, capital.currency)} />
+          <InitialPartnershipMetric label="Taahhüt Edilebilir Pay Adedi" value={formatNumber(capital.available_share_units)} />
+          <InitialPartnershipMetric label="Para Birimi" value={capital.currency} />
+          <InitialPartnershipMetric label="İşlem Sonrası Kalan Sermaye" value={formatCurrency(calculations.remaining_capital_after_entry, capital.currency)} />
+        </div>
+      </section>
+
+      <section className="rounded-lg border border-gray-200 p-4 dark:border-gray-800">
+        <div className="grid gap-4 lg:grid-cols-2">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
+            Taahhüt Edilecek Sermaye
+            <input
+              type="text"
+              inputMode="decimal"
+              disabled={amountDisabled}
+              value={form.partner_committed_capital_amount}
+              onChange={event => onUpdate('partner_committed_capital_amount', event.target.value)}
+              placeholder={capital.currency}
+              className={formControlClass({ className: 'mt-1' })}
+            />
+          </label>
+          <div className="rounded-lg border border-blue-100 bg-blue-50 p-3 text-sm text-blue-800 dark:border-blue-900/60 dark:bg-blue-950/30 dark:text-blue-200">
+            Hisse oranı ve pay adedi kullanıcı tarafından girilmez; taahhüt edilecek sermaye ve pay itibari değerinden otomatik hesaplanır.
+          </div>
+        </div>
+
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <InitialPartnershipMetric label="Ortağın Pay Adedi" value={formatNumber(calculations.partner_share_units)} />
+          <InitialPartnershipMetric label="Ortağın Hisse Oranı" value={formatPercent(calculations.partner_share_ratio)} />
+          <InitialPartnershipMetric label="Oy Hakkı Oranı" value={formatPercent(calculations.partner_voting_ratio)} caption="Varsayılan olarak hisse oranıyla aynı hesaplanır." />
+          <InitialPartnershipMetric label="Kâr Payı Oranı" value={formatPercent(calculations.partner_profit_ratio)} caption="Varsayılan olarak hisse oranıyla aynı hesaplanır." />
+        </div>
+
+        {form.partner_committed_capital_amount && !calculations.isShareUnitWhole && calculations.suggestedAmounts.length > 0 && (
+          <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+            Taahhüt edilecek sermaye, pay itibari değeri olan {formatCurrency(capital.share_nominal_value, capital.currency)} tutarının katı olmalıdır. En yakın uygun tutarlar: {calculations.suggestedAmounts.map(value => formatCurrency(value, capital.currency)).join(' veya ')}.
+          </div>
+        )}
+      </section>
+
+      <section className="rounded-lg border border-gray-200 p-4 dark:border-gray-800">
+        <label className="flex items-start gap-3 text-sm font-medium text-gray-800 dark:text-gray-100">
+          <input
+            type="checkbox"
+            checked={form.has_non_proportional_rights}
+            disabled={readOnly}
+            onChange={event => onUpdate('has_non_proportional_rights', event.target.checked)}
+            className="mt-1 h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+          />
+          <span>Oy hakkı veya kâr payı hisse oranından farklı olacak</span>
+        </label>
+
+        {form.has_non_proportional_rights && (
+          <div className="mt-4 space-y-4">
+            <InitialPartnershipWarning>
+              Oy hakkı veya kâr payı hisse oranından farklı tanımlanıyorsa bu durum şirket sözleşmesi, ortaklar kurulu/genel kurul kararı veya ilgili resmi belgeye dayanmalıdır.
+            </InitialPartnershipWarning>
+            <div className="grid gap-4 md:grid-cols-2">
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                Oy Hakkı Oranı
+                <input type="number" min="0" max="100" step="0.01" value={form.partner_voting_ratio} disabled={readOnly} onChange={event => onUpdate('partner_voting_ratio', event.target.value)} className={formControlClass({ className: 'mt-1' })} />
+              </label>
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                Kâr Payı Oranı
+                <input type="number" min="0" max="100" step="0.01" value={form.partner_profit_ratio} disabled={readOnly} onChange={event => onUpdate('partner_profit_ratio', event.target.value)} className={formControlClass({ className: 'mt-1' })} />
+              </label>
+              <label className="md:col-span-2 text-sm font-medium text-gray-700 dark:text-gray-200">
+                Farklı Hak / İmtiyaz Açıklaması
+                <textarea value={form.privilege_description} disabled={readOnly} onChange={event => onUpdate('privilege_description', event.target.value)} rows={3} className={formControlClass({ className: 'mt-1' })} />
+              </label>
+              <label className="md:col-span-2 text-sm font-medium text-gray-700 dark:text-gray-200">
+                Beklenen Dayanak Belge Türü
+                <input value={form.expected_privilege_document_type} disabled={readOnly} onChange={event => onUpdate('expected_privilege_document_type', event.target.value)} className={formControlClass({ className: 'mt-1' })} />
+              </label>
+            </div>
+          </div>
+        )}
+      </section>
+    </div>
+  )
+}
+
+function InitialPartnershipDocumentsStep({
+  slots,
+  documents,
+  documentMeta,
+  onDocumentsChange,
+  onDocumentMetaChange,
+  readOnly,
+}: {
+  slots: DocumentSlot[]
+  documents: SlotDocument[]
+  documentMeta: Record<string, { document_date?: string; description?: string }>
+  onDocumentsChange: (documents: SlotDocument[]) => void
+  onDocumentMetaChange: (meta: Record<string, { document_date?: string; description?: string }>) => void
+  readOnly: boolean
+}) {
+  return (
+    <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_340px]">
+      <DocumentSlotUploader
+        slots={slots}
+        documents={documents}
+        onChange={onDocumentsChange}
+        allowExtraSlots={false}
+        readOnly={readOnly}
+        mode={readOnly ? 'view' : 'update'}
+        defaultTab={readOnly ? 'documents' : 'upload'}
+      />
+      <div className="space-y-3">
+        {slots.map(slot => (
+          <div key={slot.id} className="rounded-lg border border-gray-200 p-3 dark:border-gray-800">
+            <div className="flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-white">
+              <FileText size={15} />
+              {slot.title}
+              {slot.required && <span className="text-xs font-medium text-red-600 dark:text-red-300">Zorunlu</span>}
+            </div>
+            <label className="mt-3 block text-xs font-medium text-gray-600 dark:text-gray-300">
+              Belge Tarihi
+              <input
+                type="date"
+                value={documentMeta[slot.id]?.document_date || ''}
+                disabled={readOnly}
+                onChange={event => onDocumentMetaChange({ ...documentMeta, [slot.id]: { ...documentMeta[slot.id], document_date: event.target.value } })}
+                className={formControlClass({ size: 'sm', className: 'mt-1' })}
+              />
+            </label>
+            <label className="mt-2 block text-xs font-medium text-gray-600 dark:text-gray-300">
+              Açıklama
+              <input
+                value={documentMeta[slot.id]?.description || ''}
+                disabled={readOnly}
+                onChange={event => onDocumentMetaChange({ ...documentMeta, [slot.id]: { ...documentMeta[slot.id], description: event.target.value } })}
+                className={formControlClass({ size: 'sm', className: 'mt-1' })}
+              />
+            </label>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+function InitialPartnershipPreviewStep({
+  partner,
+  company,
+  capital,
+  calculations,
+  documents,
+  documentSlots,
+  form,
+}: {
+  partner: Record<string, any>
+  company?: CompanyOption
+  capital: InitialPartnershipCapitalInfo
+  calculations: InitialPartnershipCalculations
+  documents: SlotDocument[]
+  documentSlots: DocumentSlot[]
+  form: InitialPartnershipFormState
+}) {
+  const rows = [
+    ['Ortak olacak kişi/kurum', partner.display_name || partner.partner_name || '-'],
+    ['Ortağı olduğu şirket', company?.label || '-'],
+    ['Şirket taahhüt edilmiş sermayesi', formatCurrency(capital.company_committed_capital_amount, capital.currency)],
+    ['Toplam pay adedi', formatNumber(capital.company_total_share_units)],
+    ['Pay itibari değeri', formatCurrency(capital.share_nominal_value, capital.currency)],
+    ['Taahhüt edilebilir sermaye', formatCurrency(capital.available_capital_amount, capital.currency)],
+    ['Taahhüt edilebilir pay adedi', formatNumber(capital.available_share_units)],
+    ['Ortağın taahhüt edeceği sermaye', formatCurrency(calculations.partner_committed_capital_amount, capital.currency)],
+    ['Ortağın pay adedi', formatNumber(calculations.partner_share_units)],
+    ['Ortağın hisse oranı', formatPercent(calculations.partner_share_ratio)],
+    ['Oy hakkı oranı', formatPercent(calculations.partner_voting_ratio)],
+    ['Kâr payı oranı', formatPercent(calculations.partner_profit_ratio)],
+  ]
+  const missingRequiredDocuments = documentSlots.filter(slot => slot.required && !documents.some(document => document.slotId === slot.id && isActiveDocument(document)))
+
+  return (
+    <div className="space-y-5">
+      <section className="rounded-lg border border-gray-200 p-4 dark:border-gray-800">
+        <h3 className="text-sm font-semibold text-gray-900 dark:text-white">İşlem Özeti</h3>
+        <dl className="mt-3 grid gap-3 md:grid-cols-2">
+          {rows.map(([label, value]) => (
+            <div key={label}>
+              <dt className="text-xs font-medium text-gray-500 dark:text-gray-400">{label}</dt>
+              <dd className="mt-1 text-sm font-medium text-gray-900 dark:text-gray-100">{value}</dd>
+            </div>
+          ))}
+        </dl>
+        {form.has_non_proportional_rights && (
+          <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+            <div className="font-semibold">Farklı hak / imtiyaz</div>
+            <div className="mt-1">{form.privilege_description || '-'}</div>
+          </div>
+        )}
+      </section>
+
+      <section className="rounded-lg border border-gray-200 p-4 dark:border-gray-800">
+        <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Belge Kontrolü</h3>
+        <div className="mt-3 grid gap-2 md:grid-cols-2">
+          {documentSlots.map(slot => {
+            const ready = documents.some(document => document.slotId === slot.id && isActiveDocument(document))
+            return (
+              <div key={slot.id} className={cn(
+                'flex items-center gap-2 rounded-lg border px-3 py-2 text-sm',
+                ready
+                  ? 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-200'
+                  : slot.required
+                    ? 'border-red-200 bg-red-50 text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-200'
+                    : 'border-gray-200 bg-gray-50 text-gray-600 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300'
+              )}>
+                {ready ? <CheckCircle2 size={15} /> : <FileText size={15} />}
+                <span>{slot.title}</span>
+              </div>
+            )
+          })}
+        </div>
+        {missingRequiredDocuments.length > 0 && (
+          <p className="mt-3 text-sm text-red-600 dark:text-red-300">
+            Eksik zorunlu belgeler: {missingRequiredDocuments.map(slot => slot.title).join(', ')}
+          </p>
+        )}
+      </section>
+
+      <div className="rounded-lg border border-blue-100 bg-blue-50 p-4 text-sm leading-6 text-blue-900 dark:border-blue-900/60 dark:bg-blue-950/30 dark:text-blue-100">
+        Bu işlem tamamlandığında taslak ortak kaydı aktif ortak haline getirilecek ve şirketin ortaklık dağılımına dahil edilecektir. Ödenen sermaye bilgisi bu işlemle değiştirilmeyecektir.
+      </div>
+    </div>
+  )
+}
+
+function InitialPartnershipMetric({ label, value, caption }: { label: string; value: string; caption?: string }) {
+  return (
+    <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-800 dark:bg-gray-900">
+      <div className="text-xs font-medium text-gray-500 dark:text-gray-400">{label}</div>
+      <div className="mt-1 text-sm font-semibold text-gray-900 dark:text-white">{value}</div>
+      {caption && <div className="mt-1 text-xs leading-5 text-gray-500 dark:text-gray-400">{caption}</div>}
+    </div>
+  )
+}
+
+function InitialPartnershipWarning({ children }: { children: ReactNode }) {
+  return (
+    <div className="flex gap-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+      <AlertCircle size={16} className="mt-0.5 shrink-0" />
+      <div>{children}</div>
+    </div>
+  )
+}
+
+type InitialPartnershipFormState = {
+  company_id: string
+  transaction_date: string
+  partner_committed_capital_amount: string
+  has_non_proportional_rights: boolean
+  partner_voting_ratio: string
+  partner_profit_ratio: string
+  privilege_description: string
+  expected_privilege_document_type: string
+  notes: string
+}
+
+type InitialPartnershipCapitalInfo = {
+  company_committed_capital_amount: number
+  company_total_share_units: number
+  share_nominal_value: number
+  allocated_capital_amount: number
+  available_capital_amount: number
+  available_share_units: number
+  currency: string
+}
+
+type InitialPartnershipCalculations = {
+  partner_committed_capital_amount: number
+  partner_share_units: number
+  partner_share_ratio: number
+  partner_voting_ratio: number
+  partner_profit_ratio: number
+  isShareUnitWhole: boolean
+  suggestedAmounts: number[]
+  remaining_capital_after_entry: number
+  remaining_share_units_after_entry: number
+}
+
+function buildInitialPartnershipInitialForm(
+  partner: Record<string, any>,
+  transaction?: OwnershipTransactionHistoryRow | null
+): InitialPartnershipFormState {
+  const newValues = getTransactionNewValues(transaction)
+  const partnerCommittedCapital = firstPositiveNumber(
+    transaction?.committed_capital_amount,
+    transaction?.capital_amount,
+    newValues.partner_committed_capital_amount
+  )
+  const hasNonProportionalRights = Boolean(
+    newValues.has_non_proportional_rights ??
+    transaction?.has_privileged_share ??
+    transaction?.privilege_description
+  )
+
+  return {
+    company_id: String(transaction?.company_id || partner.company_id || ''),
+    transaction_date: String(transaction?.effective_date || transaction?.transaction_date || new Date().toISOString().slice(0, 10)),
+    partner_committed_capital_amount: partnerCommittedCapital > 0 ? String(partnerCommittedCapital) : '',
+    has_non_proportional_rights: hasNonProportionalRights,
+    partner_voting_ratio: valueToInputString(newValues.partner_voting_ratio ?? transaction?.voting_ratio),
+    partner_profit_ratio: valueToInputString(newValues.partner_profit_ratio ?? transaction?.profit_ratio),
+    privilege_description: String(transaction?.privilege_description || newValues.privilege_description || ''),
+    expected_privilege_document_type: String(transaction?.privilege_type || newValues.expected_privilege_document_type || ''),
+    notes: String(transaction?.notes || ''),
+  }
+}
+
+function buildInitialPartnershipCapitalInfoFromTransaction({
+  transaction,
+  company,
+  companyDetail,
+}: {
+  transaction: OwnershipTransactionHistoryRow
+  company?: CompanyOption
+  companyDetail: Record<string, any> | null
+}): InitialPartnershipCapitalInfo {
+  const newValues = getTransactionNewValues(transaction)
+  const partnerCommittedCapital = firstPositiveNumber(
+    transaction.committed_capital_amount,
+    transaction.capital_amount,
+    newValues.partner_committed_capital_amount
+  )
+  const partnerShareRatio = parseLocalizedNumber(newValues.partner_share_ratio ?? transaction.share_ratio)
+  const committedFromRatio = partnerCommittedCapital > 0 && partnerShareRatio > 0
+    ? partnerCommittedCapital / (partnerShareRatio / 100)
+    : 0
+  const shareUnits = firstPositiveNumber(transaction.share_units, newValues.partner_share_units)
+  const nominalValue = firstPositiveNumber(
+    transaction.nominal_value,
+    newValues.share_nominal_value,
+    shareUnits > 0 ? partnerCommittedCapital / shareUnits : 0
+  )
+  const committed = firstPositiveNumber(
+    newValues.company_committed_capital_amount,
+    (transaction as any).company_committed_capital_amount,
+    committedFromRatio,
+    companyDetail?.committed_capital_amount,
+    company?.committed_capital_amount
+  )
+  const totalShareUnits = firstPositiveNumber(
+    newValues.company_total_share_units,
+    committed > 0 && nominalValue > 0 ? committed / nominalValue : 0,
+    companyDetail?.total_share_units,
+    companyDetail?.share_units
+  )
+  const availableBeforeEntry = firstPositiveNumber(
+    newValues.available_capital_amount_before_entry,
+    newValues.available_capital_amount,
+    partnerCommittedCapital
+  )
+  const allocatedBeforeEntry = committed > 0 ? Math.max(0, committed - availableBeforeEntry) : 0
+
+  return {
+    company_committed_capital_amount: roundMoney(committed),
+    company_total_share_units: totalShareUnits,
+    share_nominal_value: nominalValue,
+    allocated_capital_amount: roundMoney(allocatedBeforeEntry),
+    available_capital_amount: roundMoney(availableBeforeEntry),
+    available_share_units: nominalValue > 0 ? availableBeforeEntry / nominalValue : 0,
+    currency: String(transaction.currency || companyDetail?.default_currency || company?.default_currency || 'TRY'),
+  }
+}
+
+function hydrateInitialPartnershipDocuments(transaction?: OwnershipTransactionHistoryRow | null): {
+  documents: SlotDocument[]
+  meta: Record<string, { document_date?: string; description?: string }>
+} {
+  const files = Array.isArray(transaction?.document_files) ? transaction.document_files : []
+  const meta: Record<string, { document_date?: string; description?: string }> = {}
+  const documents = files.map((file, index) => {
+    const slotId = String(file.slotId || file.slot_id || file.document_type || 'other_supporting_documents')
+    const documentDate = optionalString(file.document_date || file.documentDate)
+    const description = optionalString(file.description || file.notes)
+
+    if (documentDate || description) {
+      meta[slotId] = {
+        document_date: documentDate,
+        description,
+      }
+    }
+
+    return {
+      slotId,
+      documentId: optionalString(file.documentId || file.document_id || file.id),
+      documentLinkId: optionalString(file.documentLinkId || file.document_link_id),
+      storagePath: optionalString(file.storagePath || file.storage_path || file.path),
+      name: String(file.name || file.file_name || file.filename || file.title || `Belge ${index + 1}`),
+      size: Number(file.size || file.file_size || 0),
+      type: String(file.type || file.mime_type || file.content_type || 'application/octet-stream'),
+      uploadedAt: file.uploadedAt || file.uploaded_at || transaction?.created_at,
+      status: String(file.status || 'active'),
+      url: optionalString(file.url || file.download_url),
+      previewUrl: optionalString(file.previewUrl || file.preview_url || file.url),
+      thumbnailUrl: optionalString(file.thumbnailUrl || file.thumbnail_url),
+    }
+  })
+
+  return { documents, meta }
+}
+
+function getTransactionNewValues(transaction?: OwnershipTransactionHistoryRow | null): Record<string, any> {
+  return parseJsonRecord(transaction?.new_values)
+}
+
+function valueToInputString(value: unknown) {
+  return value === null || value === undefined ? '' : String(value)
+}
+
+function optionalString(value: unknown) {
+  if (value === null || value === undefined) return undefined
+  const text = String(value)
+  return text || undefined
+}
+
+function buildInitialPartnershipCapitalInfo({
+  company,
+  companyDetail,
+  ownershipRows,
+  partners,
+  partnerId,
+  companyId,
+}: {
+  company?: CompanyOption
+  companyDetail: Record<string, any> | null
+  ownershipRows: CurrentOwnershipRow[]
+  partners: Record<string, any>[]
+  partnerId: string
+  companyId: string
+}): InitialPartnershipCapitalInfo {
+  const openingDetails = companyDetail?.opening_details || {}
+  const openingPayload = parseJsonRecord(openingDetails?.payload_json)
+  const committed = firstPositiveNumber(
+    companyDetail?.committed_capital_amount,
+    company?.committed_capital_amount,
+    openingPayload.foundation_capital_amount,
+    openingPayload.capital_amount,
+    openingDetails.foundation_capital_amount,
+    openingDetails.capital_amount
+  )
+  const totalShareUnits = firstPositiveNumber(
+    companyDetail?.total_share_units,
+    companyDetail?.share_units,
+    openingPayload.foundation_share_units,
+    openingPayload.share_units,
+    openingPayload.company_total_share_units,
+    openingDetails.foundation_share_units,
+    openingDetails.share_units
+  )
+  const shareNominalValue = committed > 0 && totalShareUnits > 0 ? committed / totalShareUnits : 0
+  const allocatedFromOwnership = ownershipRows
+    .filter(row => row.company_id === companyId && row.partner_id !== partnerId)
+    .reduce((sum, row) => {
+      const explicitCapital = parseLocalizedNumber(row.current_capital_amount)
+      if (explicitCapital > 0) return sum + explicitCapital
+      return sum + committed * (parseLocalizedNumber(row.current_share_ratio) / 100)
+    }, 0)
+  const allocatedFromPartners = partners
+    .filter(item => (item.company_id || '') === companyId && item.id !== partnerId && getPartnerRecordStatus(item) === 'active')
+    .reduce((sum, item) => {
+      const explicitCapital = parseLocalizedNumber(item.capital_amount || item.committed_capital_amount)
+      if (explicitCapital > 0) return sum + explicitCapital
+      return sum + committed * (parseLocalizedNumber(item.share_ratio || item.current_share_ratio) / 100)
+    }, 0)
+  const allocated = roundMoney(allocatedFromOwnership > 0 ? allocatedFromOwnership : allocatedFromPartners)
+  const availableCapital = roundMoney(Math.max(0, committed - allocated))
+
+  return {
+    company_committed_capital_amount: roundMoney(committed),
+    company_total_share_units: totalShareUnits,
+    share_nominal_value: shareNominalValue,
+    allocated_capital_amount: allocated,
+    available_capital_amount: availableCapital,
+    available_share_units: shareNominalValue > 0 ? availableCapital / shareNominalValue : 0,
+    currency: String(companyDetail?.default_currency || company?.default_currency || 'TRY'),
+  }
+}
+
+function getInitialPartnershipInfoErrors({
+  form,
+  selectedCompany,
+  capital,
+  calculations,
+}: {
+  form: InitialPartnershipFormState
+  selectedCompany?: CompanyOption
+  capital: InitialPartnershipCapitalInfo
+  calculations: InitialPartnershipCalculations
+}) {
+  const errors: string[] = []
+  if (!form.company_id) errors.push('Ortak kaydı oluşturmak için önce ortağı olduğu aktif şirketi seçmelisiniz.')
+  if (form.company_id && !selectedCompany) errors.push('Seçilen şirket aktif durumda olmadığı için bu şirkete yeni ortak eklenemez.')
+  if (capital.company_committed_capital_amount <= 0) errors.push('Şirketin taahhüt edilmiş sermayesi tanımlı olmadığı için işlem tamamlanamaz.')
+  if (capital.company_total_share_units <= 0) errors.push('Şirketin toplam pay adedi tanımlı olmadığı için pay itibari değeri hesaplanamıyor. Bu bilgi şirket sermaye bilgilerinden tamamlanmalıdır.')
+  if (capital.share_nominal_value <= 0) errors.push('Pay itibari değeri hesaplanamadığı için işlem tamamlanamaz.')
+  if (capital.available_capital_amount <= 0) errors.push('Bu şirkette ortaklara tahsis edilmemiş taahhüt edilebilir sermaye bulunmuyor. Yeni ortak girişi için önce sermaye artırımı yapılmalıdır.')
+  if (calculations.partner_committed_capital_amount <= 0) errors.push('Taahhüt edilecek sermaye 0’dan büyük olmalıdır.')
+  if (calculations.partner_committed_capital_amount > capital.available_capital_amount) errors.push('Taahhüt edilecek sermaye, taahhüt edilebilir sermayeden büyük olamaz.')
+  if (calculations.partner_committed_capital_amount > 0 && !calculations.isShareUnitWhole) {
+    errors.push(`Taahhüt edilecek sermaye, pay itibari değeri olan ${formatCurrency(capital.share_nominal_value, capital.currency)} tutarının katı olmalıdır.`)
+  }
+  if (form.has_non_proportional_rights) {
+    if (!Number.isFinite(calculations.partner_voting_ratio) || calculations.partner_voting_ratio < 0 || calculations.partner_voting_ratio > 100) errors.push('Oy Hakkı Oranı 0 ile 100 arasında olmalıdır.')
+    if (!Number.isFinite(calculations.partner_profit_ratio) || calculations.partner_profit_ratio < 0 || calculations.partner_profit_ratio > 100) errors.push('Kâr Payı Oranı 0 ile 100 arasında olmalıdır.')
+    if (!form.privilege_description.trim()) errors.push('Farklı hak / imtiyaz açıklaması zorunludur.')
+  }
+  return errors
+}
+
+function getInitialPartnershipDocumentErrors(slots: DocumentSlot[], documents: SlotDocument[]) {
+  return slots
+    .filter(slot => slot.required && !documents.some(document => document.slotId === slot.id && isActiveDocument(document)))
+    .map(slot => `${slot.title} yüklenmeden işlem tamamlanamaz.`)
+}
+
+function getInitialPartnershipPartnerSummary(partner: Record<string, any>) {
+  const kind = normalizePartnerType(partner.owner_kind || partner.partner_type)
+  if (kind === 'organization') {
+    return {
+      title: 'Ortak olacak kurum',
+      rows: [
+        { label: 'Ticari unvan', value: partner.display_name || partner.partner_name || partner.trade_name },
+        { label: 'VKN', value: partner.identity_tax_number || partner.tax_number || partner.identity_number },
+        { label: 'Ülke', value: partner.country || partner.nationality_country || 'Türkiye' },
+        { label: 'Kişi tipi', value: 'Tüzel kişi' },
+      ],
+    }
+  }
+
+  return {
+    title: 'Ortak olacak kişi',
+    rows: [
+      { label: 'Ad Soyad', value: partner.display_name || partner.partner_name || [partner.first_name, partner.last_name].filter(Boolean).join(' ') },
+      { label: 'Uyruk', value: partner.nationality_country || partner.nationality || partner.country || 'Türkiye' },
+      { label: 'TCKN / Pasaport No', value: partner.identity_number || partner.national_id || partner.passport_no || partner.identity_tax_number },
+      { label: 'Kişi tipi', value: 'Gerçek kişi' },
+    ],
+  }
+}
+
+function isActiveDocument(document: SlotDocument) {
+  if (document.isDeleted || document.status === 'deleted' || document.status === 'archived') return false
+  return Boolean(document.file || document.storagePath || document.documentId || document.url || document.previewUrl || document.documentLinkId)
+}
+
+function serializeInitialPartnershipDocuments(documents: SlotDocument[], meta: Record<string, { document_date?: string; description?: string }>) {
+  return documents.filter(isActiveDocument).map(document => {
+    const safeDocument: Record<string, any> = { ...document }
+    delete safeDocument.file
+    return {
+      ...safeDocument,
+      document_type: document.slotId,
+      document_date: meta[document.slotId]?.document_date || null,
+      description: meta[document.slotId]?.description || null,
+    }
+  })
+}
+
+function parseJsonRecord(value: unknown): Record<string, any> {
+  if (!value) return {}
+  if (typeof value === 'object') return value as Record<string, any>
+  if (typeof value !== 'string') return {}
+  try {
+    const parsed = JSON.parse(value)
+    return parsed && typeof parsed === 'object' ? parsed as Record<string, any> : {}
+  } catch {
+    return {}
+  }
+}
+
+function firstPositiveNumber(...values: unknown[]) {
+  for (const value of values) {
+    const number = parseLocalizedNumber(value)
+    if (number > 0) return number
+  }
+  return 0
+}
+
+function parseLocalizedNumber(value: unknown) {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : 0
+  if (typeof value !== 'string') return 0
+  const compact = value.trim().replace(/\s/g, '')
+  if (!compact) return 0
+  const normalized = compact.includes(',')
+    ? compact.replace(/\./g, '').replace(',', '.')
+    : /^\d{1,3}(\.\d{3})+$/.test(compact)
+      ? compact.replace(/\./g, '')
+      : compact
+  const number = Number(normalized)
+  return Number.isFinite(number) ? number : 0
+}
+
+function roundMoney(value: number) {
+  return Math.round((Number.isFinite(value) ? value : 0) * 100) / 100
+}
+
+function roundRatio(value: number) {
+  return Math.round((Number.isFinite(value) ? value : 0) * 10000) / 10000
+}
+
+function formatCurrency(value: number, currency = 'TRY') {
+  try {
+    return new Intl.NumberFormat('tr-TR', {
+      style: 'currency',
+      currency,
+      maximumFractionDigits: 2,
+    }).format(Number.isFinite(value) ? value : 0)
+  } catch {
+    return `${formatNumber(value)} ${currency}`
+  }
+}
+
+function formatNumber(value: number) {
+  return (Number.isFinite(value) ? value : 0).toLocaleString('tr-TR', { maximumFractionDigits: 4 })
+}
+
+function formatPercent(value: number) {
+  return `%${formatNumber(value)}`
 }
 
 function getPartnerStatusLabel(status: RecordStatusFilterValue) {
@@ -1420,12 +2553,12 @@ function PartnerHistorySections({ value }: { value?: PartnerHistorySectionsValue
               <div key={transaction.id} className="border-b border-gray-100 px-3 py-2 text-sm last:border-b-0 dark:border-gray-800">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <span className="font-medium text-gray-900 dark:text-white">
-                    {transaction.transaction_no || transaction.transaction_type || 'Ortaklık işlemi'}
+                    {transaction.transaction_no || getOwnershipTransactionTypeLabel(transaction.transaction_type) || 'Ortaklık işlemi'}
                   </span>
                   <span className="text-xs text-emerald-700 dark:text-emerald-300">Onaylı</span>
                 </div>
                 <div className="mt-1 text-xs text-gray-500">
-                  {transaction.effective_date || transaction.transaction_date || '-'} · {transaction.transaction_type || 'İşlem'}
+                  {transaction.effective_date || transaction.transaction_date || '-'} · {getOwnershipTransactionTypeLabel(transaction.transaction_type) || 'İşlem'}
                 </div>
                 <div className="mt-2 flex flex-wrap gap-2 text-xs text-gray-600 dark:text-gray-300">
                   {transaction.share_ratio != null && <span>Pay %{Number(transaction.share_ratio).toFixed(2)}</span>}
@@ -1529,11 +2662,44 @@ function getPartnerRecordStatus(partner?: Record<string, any> | null): RecordSta
   return 'draft'
 }
 
+function formatCompanyOptionLabel(company: Record<string, any>) {
+  const title = company.short_name || company.trade_name || 'Şirket'
+  return company.tax_number ? `${title} — ${company.tax_number}` : title
+}
+
+function getCompanyLifecycleStatusForPartnerOption(company: Partial<CompanyOption>) {
+  const raw = company.record_status || company.company_status || (company.is_deleted ? 'deregistered' : 'active')
+  return String(raw || '').toLocaleLowerCase('tr-TR')
+}
+
+function isActiveCompanyForNewPartner(company: CompanyOption) {
+  if (!company.value || company.is_deleted) return false
+  const recordStatus = String(company.record_status || '').toLocaleLowerCase('tr-TR')
+  const companyStatus = String(company.company_status || '').toLocaleLowerCase('tr-TR')
+  if (recordStatus && recordStatus !== 'active' && recordStatus !== 'opened') return false
+  if (companyStatus && companyStatus !== 'active' && companyStatus !== 'opened') return false
+  const lifecycleStatus = getCompanyLifecycleStatusForPartnerOption(company)
+  return lifecycleStatus === 'active' || lifecycleStatus === 'opened'
+}
+
 function getPartnerLifecycleOperationProgress(status: RecordStatusFilterValue): FormOperationProgress {
   if (status === 'draft') {
     return { activeActionKeys: [PARTNER_OWNERSHIP_ENTRY_ACTION_KEY] }
   }
   return { completedActionKeys: [PARTNER_OWNERSHIP_ENTRY_ACTION_KEY] }
+}
+
+function findInitialPartnershipTransaction(partner?: Record<string, any> | null): OwnershipTransactionHistoryRow | null {
+  const transactions = Array.isArray(partner?.ownership_transaction_history)
+    ? partner.ownership_transaction_history as OwnershipTransactionHistoryRow[]
+    : []
+
+  return transactions.find(transaction =>
+    isInitialPartnershipEntryType(String(transaction.transaction_type || '')) &&
+    (transaction.approval_status === 'approved' || transaction.status === 'active')
+  ) || transactions.find(transaction =>
+    isInitialPartnershipEntryType(String(transaction.transaction_type || ''))
+  ) || null
 }
 
 function normalizePayload(raw: Record<string, any>, companies: Option[]) {
@@ -1580,6 +2746,24 @@ function normalizePayload(raw: Record<string, any>, companies: Option[]) {
   delete payload.timeline
   payload.field_history = undefined
   return payload
+}
+
+function getPartnerCompanySelectionError(payload: Record<string, any>, activeCompanies: Option[]): SaveError | null {
+  if (!payload.company_id) {
+    const error = new Error('Ortak kaydı oluşturmak için önce ortağı olduğu aktif şirketi seçmelisiniz.') as SaveError
+    error.fieldErrors = { company_id: 'Ortağı Olduğu Şirket zorunludur' }
+    error.toast = { type: 'warning', title: 'Aktif Şirket Seçin', message: error.message }
+    return error
+  }
+
+  if (!activeCompanies.some(company => company.value === payload.company_id)) {
+    const error = new Error('Seçilen şirket aktif durumda olmadığı için bu şirkete yeni ortak eklenemez.') as SaveError
+    error.fieldErrors = { company_id: 'Yalnızca aktif şirket seçilebilir' }
+    error.toast = { type: 'warning', title: 'Şirket Aktif Değil', message: error.message }
+    return error
+  }
+
+  return null
 }
 
 function getMissingPersonFields(payload: Record<string, any>) {

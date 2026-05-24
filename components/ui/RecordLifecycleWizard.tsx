@@ -85,6 +85,7 @@ type RecordLifecycleWizardProps = {
   sideInfo?: ReactNode
   finalContent?: ReactNode
   submitBlockedContent?: ReactNode
+  readOnly?: boolean
   onFieldChange?: (field: string, value: any, previous: Record<string, any>) => Record<string, any>
 }
 
@@ -104,12 +105,13 @@ export function RecordLifecycleWizard({
   sideInfo,
   finalContent,
   submitBlockedContent,
+  readOnly,
   onFieldChange,
 }: RecordLifecycleWizardProps) {
   const [step, setStep] = useState(0)
   const currentStep = steps[Math.min(step, Math.max(steps.length - 1, 0))]
   const isLastStep = step === steps.length - 1
-  const stepComplete = useMemo(() => isWizardStepComplete(currentStep, form), [currentStep, form])
+  const stepComplete = useMemo(() => readOnly || isWizardStepComplete(currentStep, form), [currentStep, form, readOnly])
 
   const goNext = () => {
     if (!stepComplete) return
@@ -194,6 +196,7 @@ export function RecordLifecycleWizard({
                     form={form}
                     setForm={setForm}
                     allFields={collectWizardFields(steps)}
+                    readOnly={!!readOnly}
                     onFieldChange={onFieldChange}
                   />
                 ))}
@@ -231,6 +234,8 @@ export function RecordLifecycleWizard({
               Devam
               <ChevronRight size={16} />
             </button>
+          ) : readOnly ? (
+            <div className="text-xs font-medium text-gray-500 dark:text-gray-400">Salt okunur görüntüleme</div>
           ) : submitBlockedContent ? (
             <div className="text-xs text-gray-500 dark:text-gray-400">{submitBlockedContent}</div>
           ) : (
@@ -256,12 +261,14 @@ export function RecordLifecycleWizardSectionView({
   form,
   setForm,
   allFields,
+  readOnly,
   onFieldChange,
 }: {
   section: RecordLifecycleWizardSection
   form: Record<string, any>
   setForm: React.Dispatch<React.SetStateAction<Record<string, any>>>
   allFields: RecordLifecycleWizardField[]
+  readOnly?: boolean
   onFieldChange?: (field: string, value: any, previous: Record<string, any>) => Record<string, any>
 }) {
   return (
@@ -281,6 +288,7 @@ export function RecordLifecycleWizardSectionView({
                 form={form}
                 setForm={setForm}
                 allFields={allFields}
+                readOnly={!!readOnly}
                 onFieldChange={onFieldChange}
               />
             ))}
@@ -296,16 +304,18 @@ function RecordLifecycleWizardFieldView({
   form,
   setForm,
   allFields,
+  readOnly,
   onFieldChange,
 }: {
   field: RecordLifecycleWizardField
   form: Record<string, any>
   setForm: React.Dispatch<React.SetStateAction<Record<string, any>>>
   allFields: RecordLifecycleWizardField[]
+  readOnly?: boolean
   onFieldChange?: (field: string, value: any, previous: Record<string, any>) => Record<string, any>
 }) {
   const value = form[field.name] ?? ''
-  const disabled = !!field.disabled || (!!field.disabledWhen && matchesWizardCondition(field.disabledWhen, form))
+  const disabled = !!readOnly || !!field.disabled || (!!field.disabledWhen && matchesWizardCondition(field.disabledWhen, form))
   const required = isWizardFieldRequired(field, form, allFields)
   const validationState = getWizardFieldValidationState(field, form, allFields)
   const fieldControlState = disabled ? 'neutral' : validationState.status
@@ -388,7 +398,7 @@ function RecordLifecycleWizardFieldView({
   if (field.type === 'document') {
     return (
       <div className={cn(colSpanClass)}>
-        <DocumentRegistryField field={field} value={value} onChange={updateValue} />
+        <DocumentRegistryField field={field} value={value} onChange={updateValue} readOnly={disabled} />
       </div>
     )
   }
@@ -802,10 +812,12 @@ function DocumentRegistryField({
   field,
   value,
   onChange,
+  readOnly,
 }: {
   field: RecordLifecycleWizardField
   value: any
   onChange: (value: any) => void
+  readOnly?: boolean
 }) {
   const current = typeof value === 'object' && value ? value : value ? { documentId: value, name: String(value) } : null
   const [mode, setMode] = useState<'new' | 'existing' | ''>(current?.source || '')
@@ -815,6 +827,7 @@ function DocumentRegistryField({
   const display = current?.name || current?.documentId || current?.storagePath || ''
 
   const chooseNew = () => {
+    if (readOnly) return
     setMode('new')
     onChange({
       source: 'new',
@@ -824,6 +837,7 @@ function DocumentRegistryField({
   }
 
   const chooseExisting = () => {
+    if (readOnly) return
     setMode('existing')
     onChange({
       source: 'existing',
@@ -833,12 +847,14 @@ function DocumentRegistryField({
   }
 
   const clearDocument = () => {
+    if (readOnly) return
     setMode('')
     setUploadError(null)
     onChange('')
   }
 
   const uploadNewOnlyDocument = async (file: File | undefined) => {
+    if (readOnly) return
     if (!file) return
     setUploading(true)
     setUploadError(null)
@@ -877,6 +893,7 @@ function DocumentRegistryField({
             event.target.value = ''
             uploadNewOnlyDocument(file)
           }}
+          disabled={readOnly}
         />
         <div className="flex min-w-0 flex-1 items-start gap-3">
           <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-300">
@@ -897,7 +914,7 @@ function DocumentRegistryField({
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            disabled={uploading}
+            disabled={uploading || readOnly}
             className={cn(
               'inline-flex items-center justify-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-semibold transition-colors disabled:cursor-wait disabled:opacity-60',
               current
@@ -912,6 +929,7 @@ function DocumentRegistryField({
             <button
               type="button"
               onClick={clearDocument}
+              disabled={readOnly}
               className="inline-flex h-8 w-8 items-center justify-center rounded-md text-gray-500 hover:bg-red-50 hover:text-red-600 dark:text-gray-400 dark:hover:bg-red-950/30 dark:hover:text-red-300"
               aria-label={`${field.label} belgesini kaldır`}
             >
@@ -937,6 +955,7 @@ function DocumentRegistryField({
         <button
           type="button"
           onClick={chooseNew}
+          disabled={readOnly}
           className={cn('inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium', mode === 'new' ? 'border-blue-300 bg-blue-50 text-blue-700 dark:border-blue-900 dark:bg-blue-950/30 dark:text-blue-200' : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-100 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-300')}
         >
           <Upload size={14} />
@@ -945,6 +964,7 @@ function DocumentRegistryField({
         <button
           type="button"
           onClick={chooseExisting}
+          disabled={readOnly}
           className={cn('inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-medium', mode === 'existing' ? 'border-blue-300 bg-blue-50 text-blue-700 dark:border-blue-900 dark:bg-blue-950/30 dark:text-blue-200' : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-100 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-300')}
         >
           <Link2 size={14} />
@@ -956,6 +976,7 @@ function DocumentRegistryField({
           value={display}
           onChange={event => onChange({ source: 'existing', documentId: event.target.value, name: event.target.value })}
           placeholder="Belge adı veya referans no"
+          readOnly={readOnly}
           className={formControlClass({ size: 'sm' })}
         />
       )}

@@ -92,10 +92,13 @@ export async function getCompanyWizardContext(
   mode: WizardMode
 ) {
   const supabase = createServiceClient()
-  const permission = await requireModeStartPermission(request, supabase, mode)
+  const readOnly = request.nextUrl.searchParams.get('readonly') === 'true'
+  const permission = readOnly
+    ? await requirePermission(request, supabase, COMPANY_LIFECYCLE_PERMISSIONS.lifecycleView)
+    : await requireModeStartPermission(request, supabase, mode)
   if (permission instanceof NextResponse) return permission
   const tenantContext = resolveTenantContext(request)
-  const scopeError = await requireCompanyScopeAccess(supabase, tenantContext, companyId, true)
+  const scopeError = await requireCompanyScopeAccess(supabase, tenantContext, companyId, !readOnly)
   if (scopeError) return scopeError
 
   const lifecycle = await buildCompanyLifecyclePayload(supabase, companyId, tenantContext)
@@ -103,8 +106,10 @@ export async function getCompanyWizardContext(
   const company = lifecycle.data.company as Record<string, any>
   const status = getCompanyStatus(company)
 
-  const invalid = validateModeStatus(mode, status)
-  if (invalid) return invalid
+  if (!readOnly) {
+    const invalid = validateModeStatus(mode, status)
+    if (invalid) return invalid
+  }
 
   const [documents, representatives, partners, stakeholders, naceCodes] = await Promise.all([
     safeCompanyDocuments(company),
@@ -145,15 +150,16 @@ export async function completeCompanyWizard(
   if (scopeError) return scopeError
 
   const parsedBody = await request.json().catch(() => ({}))
-  const openingNaceCodes = mode === 'opening' ? normalizeOpeningNaceCodes(parsedBody?.nace_codes) : []
+  const requestBody = mode === 'opening' ? normalizeOpeningPayloadAliases(parsedBody) : parsedBody
+  const openingNaceCodes = mode === 'opening' ? normalizeOpeningNaceCodes(requestBody?.nace_codes) : []
   const primaryNaceCode = openingNaceCodes.find(row => row.is_primary)
-  const electronicNotificationAddress = String(parsedBody?.electronic_notification_address || parsedBody?.e_notification_address || '').trim()
-  const openingPayload = mode === 'opening' ? omitOpeningShareRatioFields(parsedBody) : parsedBody
+  const electronicNotificationAddress = String(requestBody?.electronic_notification_address || requestBody?.e_notification_address || '').trim()
+  const openingPayload = mode === 'opening' ? omitOpeningShareRatioFields(requestBody) : requestBody
   const foundationCapitalAmount = mode === 'opening'
-    ? normalizeOptionalNumber(parsedBody?.foundation_capital_amount ?? parsedBody?.capital_amount)
+    ? normalizeOptionalNumber(requestBody?.foundation_capital_amount ?? requestBody?.capital_amount)
     : ''
   const foundationShareUnits = mode === 'opening'
-    ? normalizeOptionalNumber(parsedBody?.foundation_share_units ?? parsedBody?.share_units)
+    ? normalizeOptionalNumber(requestBody?.foundation_share_units ?? requestBody?.share_units)
     : ''
   const foundationNominalValue = mode === 'opening'
     ? calculateNominalValue(foundationCapitalAmount, foundationShareUnits)
@@ -161,18 +167,18 @@ export async function completeCompanyWizard(
   const body = mode === 'opening'
     ? {
         ...openingPayload,
-        foundation_date: parsedBody?.foundation_date || parsedBody?.registration_date || '',
+        foundation_date: requestBody?.foundation_date || requestBody?.registration_date || '',
         foundation_capital_amount: foundationCapitalAmount,
         foundation_share_units: foundationShareUnits,
         foundation_nominal_value: foundationNominalValue,
         share_units: foundationShareUnits,
         nominal_value: foundationNominalValue,
         electronic_notification_address: electronicNotificationAddress,
-        kep_info_available: parsedBody?.kep_info_available ?? (electronicNotificationAddress ? 'true' : ''),
+        kep_info_available: requestBody?.kep_info_available ?? (electronicNotificationAddress ? 'true' : ''),
         nace_codes: openingNaceCodes,
         primary_nace_id: primaryNaceCode?.nace_code_id || '',
       }
-    : parsedBody
+    : requestBody
   const statusError = validateRequiredPayload(mode, body)
   if (statusError) return statusError
 
@@ -468,6 +474,29 @@ function normalizeOptionalNumber(value: unknown) {
   if (value === undefined || value === null || value === '') return ''
   const numeric = Number(String(value).replace(',', '.'))
   return Number.isFinite(numeric) ? numeric : ''
+}
+
+function normalizeOpeningPayloadAliases(payload: Record<string, any>) {
+  const next = { ...(payload || {}) }
+  const aliases = [
+    ['trade_registry_no', 'trade_registry_number'],
+    ['mersis_no', 'mersis_number'],
+    ['tax_no', 'tax_number'],
+    ['sgk_workplace_no', 'sgk_workplace_registry_no'],
+  ]
+
+  aliases.forEach(([legacyField, canonicalField]) => {
+    if (!hasPayloadValue(next[canonicalField]) && hasPayloadValue(next[legacyField])) {
+      next[canonicalField] = next[legacyField]
+    }
+    delete next[legacyField]
+  })
+
+  return next
+}
+
+function hasPayloadValue(value: unknown) {
+  return value !== undefined && value !== null && value !== ''
 }
 
 function omitOpeningShareRatioFields(payload: Record<string, any>) {
