@@ -45,6 +45,10 @@ const DIRECT_RELATION_PATCH_FIELDS: OperationControlledField[] = [
 
 const operationControlledByField = new Map(COMPANY_OPERATION_CONTROLLED_FIELDS.map(field => [field.field, field]))
 const relationControlledByField = new Map(DIRECT_RELATION_PATCH_FIELDS.map(field => [field.field, field]))
+const DRAFT_STRICT_OPERATION_CONTROLLED_FIELDS = new Set([
+  'committed_capital_amount',
+  'paid_capital_amount',
+])
 
 export type CompanyPatchViolation = {
   code: 'COMPANY_OPERATION_CONTROLLED_FIELDS' | 'COMPANY_RELATION_PATCH_NOT_ALLOWED'
@@ -67,7 +71,10 @@ export function getOperationControlledCompanyPatchViolation(
   payload: Record<string, unknown>,
   current: Record<string, unknown>
 ): CompanyPatchViolation | null {
-  const fields = COMPANY_OPERATION_CONTROLLED_FIELDS.filter(item => {
+  const controlledFields = isDraftCompanyRecord(current)
+    ? COMPANY_OPERATION_CONTROLLED_FIELDS.filter(item => DRAFT_STRICT_OPERATION_CONTROLLED_FIELDS.has(item.field))
+    : COMPANY_OPERATION_CONTROLLED_FIELDS
+  const fields = controlledFields.filter(item => {
     if (!Object.prototype.hasOwnProperty.call(payload, item.field)) return false
     return !sameCompanyPatchValue(item.field, payload[item.field], current[item.field])
   })
@@ -96,6 +103,11 @@ function sameCompanyPatchValue(field: string, nextValue: unknown, currentValue: 
   }
 
   return JSON.stringify(normalizeComparableValue(nextValue)) === JSON.stringify(normalizeComparableValue(currentValue))
+}
+
+function isDraftCompanyRecord(current: Record<string, unknown>) {
+  const status = String(current.record_status || current.company_status || '').toLocaleLowerCase('tr-TR')
+  return status === 'draft' || status === 'taslak'
 }
 
 function normalizeComparableValue(value: unknown) {

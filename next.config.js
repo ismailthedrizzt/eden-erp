@@ -72,6 +72,7 @@ const withPWA = require('next-pwa')({
 })
 
 const nextConfig = {
+  serverExternalPackages: ['@napi-rs/canvas'],
   allowedDevOrigins: [
     'http://localhost:3000',
     'http://127.0.0.1:3000',

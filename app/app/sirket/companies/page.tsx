@@ -2,9 +2,9 @@
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { AlertTriangle, Archive, BriefcaseBusiness, Building2, CheckCircle2, CircleDot, FileText, History, Landmark, MoreVertical, Pencil, PlayCircle, Settings, ShieldAlert, Trash2, TrendingUp, Users } from 'lucide-react'
+import { Activity, AlertTriangle, Archive, BriefcaseBusiness, Building2, CheckCircle2, CircleDot, FileText, History, Landmark, PencilLine, PlayCircle, ScrollText, Settings, ShieldAlert, TrendingUp, Users } from 'lucide-react'
 import { useSirketler } from '@/hooks/useSirketler'
-import { EntityForm, FormField, FormMode, FormTab, type FormOperationActionGroup } from '@/components/ui/EntityForm'
+import { EntityForm, FormField, FormMode, FormTab, type FormOperationActionGroup, type FormOperationActionState, type FormOperationActionTone } from '@/components/ui/EntityForm'
 import { CompanyCapitalIncreaseWizard, type CapitalIncreasePrecheckContext, type CapitalIncreaseSubmitPayload } from '@/components/ui/CompanyCapitalIncreaseWizard'
 import { CompanyLifecycleWizard, type CompanyLifecycleWizardType } from '@/components/ui/CompanyLifecycleWizard'
 import { PageBanner } from '@/components/ui/PageBanner'
@@ -56,6 +56,17 @@ type SirketTableRow = Sirket & {
   logo_url_light?: string | null
   logo_url_dark?: string | null
   lifecycle_status: CompanyLifecycleStatus
+}
+type CompanyFormOperationAction = {
+  key: string
+  label: string
+  icon: ReactNode
+  onClick: () => void
+  visible: boolean
+  disabled?: boolean
+  tone?: FormOperationActionTone
+  state?: FormOperationActionState
+  dataTourId?: string
 }
 type CompanyStatusFilterValue = RecordStatusFilterValue
 type DetailSectionState = {
@@ -140,16 +151,19 @@ const FIELD_LABELS: Record<string, string> = {
 const COMPANY_OPENING_REGISTRATION_CONTROL = {
   category: 'registration' as const,
   operations: ['Şirket Açılışı', 'Tescil Bilgisi Düzeltme'],
+  allowDraftEdit: true,
 }
 
 const COMPANY_TITLE_REGISTRATION_CONTROL = {
   category: 'registration' as const,
   operations: ['Şirket Açılışı', 'Unvan Değişikliği'],
+  allowDraftEdit: true,
 }
 
 const COMPANY_ADDRESS_REGISTRATION_CONTROL = {
   category: 'registration' as const,
   operations: ['Şirket Açılışı', 'Adres Değişikliği'],
+  allowDraftEdit: true,
 }
 
 const COMPANY_CAPITAL_REGISTRATION_CONTROL = {
@@ -160,6 +174,12 @@ const COMPANY_CAPITAL_REGISTRATION_CONTROL = {
 const COMPANY_PUBLIC_REGISTRATION_CONTROL = {
   category: 'registration' as const,
   operations: ['Şirket Açılışı', 'Kamu / Tescil Bilgisi Değişikliği'],
+  allowDraftEdit: true,
+}
+
+const COMPANY_PUBLIC_RELATION_REGISTRATION_CONTROL = {
+  ...COMPANY_PUBLIC_REGISTRATION_CONTROL,
+  allowDraftEdit: false,
 }
 
 const columns: ColumnDef[] = [
@@ -314,7 +334,7 @@ const tabs: FormTab[] = [
       { name: 'sgk_province', label: 'SGK İl', type: 'text', placeholder: 'SGK sicil no girilince otomatik dolar', controlledByOperation: COMPANY_PUBLIC_REGISTRATION_CONTROL },
       { name: 'sgk_branch', label: 'SGK Şube', type: 'text', placeholder: 'SGK sicil no girilince otomatik dolar', controlledByOperation: COMPANY_PUBLIC_REGISTRATION_CONTROL },
       { name: 'risk_class', label: 'Tehlike Sınıfı', type: 'custom', colSpan: 3, controlledByOperation: COMPANY_PUBLIC_REGISTRATION_CONTROL },
-      { name: 'company_nace_codes', label: 'NACE / Faaliyet Kodları', type: 'custom', colSpan: 3, controlledByOperation: COMPANY_PUBLIC_REGISTRATION_CONTROL },
+      { name: 'company_nace_codes', label: 'NACE / Faaliyet Kodları', type: 'custom', colSpan: 3, controlledByOperation: COMPANY_PUBLIC_RELATION_REGISTRATION_CONTROL },
     ],
   },
   {
@@ -378,6 +398,67 @@ const OPERATION_CONTROLLED_FORM_FIELDS = new Set([
   'risk_class',
   'nace_codes',
 ])
+const DRAFT_EDITABLE_OPERATION_FORM_FIELDS = new Set([
+  'trade_name',
+  'tax_number',
+  'tax_office',
+  'mersis_number',
+  'trade_registry_number',
+  'foundation_date',
+  'company_type',
+  'country',
+  'city',
+  'district',
+  'address',
+  'electronic_notification_address',
+  'trade_registry_office',
+  'e_invoice_taxpayer',
+  'e_archive_taxpayer',
+  'e_waybill_taxpayer',
+  'sgk_workplace_registry_no',
+  'sgk_province',
+  'sgk_branch',
+  'risk_class',
+  'nace_codes',
+])
+
+function buildCompanySaveToast(result: Record<string, any>, mode: FormMode): ToastState {
+  const partialWarnings = normalizePartialWarnings(result?.partial_warnings)
+  const warning = typeof result?.warning === 'string' ? result.warning : ''
+
+  if (partialWarnings.length) {
+    return {
+      type: 'warning',
+      title: 'Kısmi Kayıt',
+      message: [
+        mode === 'create' ? 'Şirket oluşturuldu.' : 'Şirket bilgileri güncellendi.',
+        'Ancak bazı bağlı bilgiler kaydedilemedi:',
+        ...partialWarnings.map(message => `- ${message}`),
+      ].join('\n'),
+    }
+  }
+
+  if (warning) {
+    return {
+      type: 'warning',
+      title: 'Kısmi Kayıt',
+      message: warning,
+    }
+  }
+
+  return {
+    type: 'success',
+    title: 'Kayıt Başarılı',
+    message: mode === 'create' ? 'Şirket kaydı oluşturuldu' : 'Şirket bilgileri güncellendi',
+  }
+}
+
+function normalizePartialWarnings(value: unknown) {
+  if (!Array.isArray(value)) return []
+  return value
+    .map(item => typeof item === 'string' ? item : item?.message)
+    .filter((message): message is string => typeof message === 'string' && message.trim().length > 0)
+}
 const fiscalYearMonthOptions = Array.from({ length: 12 }, (_, index) => ({
   value: index + 1,
   label: new Intl.DateTimeFormat('tr-TR', { month: 'long' }).format(new Date(2024, index, 1)),
@@ -537,56 +618,6 @@ export default function SirketlerPage() {
     logo_url: resolveCompanyLogoUrl(sirket, isDarkMode),
   })), [companies, isDarkMode])
 
-  const handleListLifecycleAction = (row: SirketTableRow, type: CompanyLifecycleWizardType) => {
-    setFormError(null)
-    setFieldErrors({})
-    setDetailSections(emptyDetailSectionState)
-    setPreferredFormTabId(null)
-    setSelectedSirket(normalizeCompanyForForm(row as Sirket))
-    setPageState('view')
-    setLifecycleWizard(type)
-  }
-
-  const handleListEditAction = async (row: SirketTableRow) => {
-    await handleRowClick(row)
-    setPageState('edit')
-  }
-
-  const handleListDeleteAction = async (row: SirketTableRow) => {
-    const status = getCompanyLifecycleStatus(row)
-    const confirmed = window.confirm(
-      status === 'draft'
-        ? 'Taslak şirket kaydı kalıcı olarak silinsin mi?'
-        : 'Şirket kaydı pasife alınsın mı?'
-    )
-    if (!confirmed) return
-
-    setDeleting(true)
-    try {
-      await companyService.delete(row.id)
-      invalidateEntityDetailCache(COMPANY_DETAIL_CACHE_NAMESPACE, row.id)
-      if (selectedSirket?.id === row.id) {
-        setSelectedSirket(null)
-        setPageState('list')
-      }
-      setToast({
-        type: 'success',
-        title: 'Kayıt Başarılı',
-        message: status === 'draft' ? 'Şirket taslak kaydı kalıcı olarak silindi' : 'Şirket kaydı pasife çekildi',
-      })
-      await yenile()
-    } catch (error: any) {
-      setFormError(error.message)
-      setToast(error.toast || { type: 'error', title: 'Kayıt Başarısız', message: error.message })
-    } finally {
-      setDeleting(false)
-    }
-  }
-
-  const handleListHistoryAction = async (row: SirketTableRow) => {
-    await handleRowClick(row, COMPANY_HISTORY_TAB_ID)
-  }
-
   const moduleEnabled = isEnabled('companies')
   const moduleWritable = isWritable('companies')
   const formAccess = createFormModeState(mapPageStateToFormMode(pageState), {
@@ -595,39 +626,6 @@ export default function SirketlerPage() {
     canEdit: moduleWritable && can(PERMISSIONS.companies.edit),
     canApprove: moduleWritable && can(PERMISSIONS.companies.approve),
   })
-
-  const configuredColumns: ColumnDef[] = useMemo(() => [
-    ...columns,
-    {
-      key: 'lifecycle_actions',
-      label: '⋯',
-      type: 'actions',
-      width: 64,
-      minWidth: 56,
-      maxWidth: 72,
-      fixedWidth: true,
-      hideable: false,
-      order: 10000,
-      category: 'İşlem',
-      render: (_value, row: SirketTableRow) => (
-        <CompanyListLifecycleActions
-          row={row}
-          busy={deleting}
-          canEditProfile={formAccess.showEdit}
-          canDeleteDraft={formAccess.showEdit}
-          canOpen={can(PERMISSIONS.companies.openingStart)}
-          canLiquidate={can(PERMISSIONS.companies.liquidationStart)}
-          canUpdateLiquidation={can(PERMISSIONS.companies.liquidationUpdate)}
-          canDeregister={can(PERMISSIONS.companies.deregistrationStart)}
-          canViewHistory={can(PERMISSIONS.companies.lifecycleView)}
-          onAction={handleListLifecycleAction}
-          onEdit={handleListEditAction}
-          onDelete={handleListDeleteAction}
-          onHistory={() => handleListHistoryAction(row)}
-        />
-      ),
-    },
-  ], [can, deleting, formAccess.showEdit, selectedSirket?.id])
 
   const widgets: WidgetDef<SirketTableRow>[] = useMemo(() => [
     { key: 'total', label: 'Toplam Şirket', render: () => tableData.length },
@@ -825,9 +823,14 @@ export default function SirketlerPage() {
 
   const normalizePayload = (raw: Record<string, any>) => {
     const payload: Record<string, any> = {}
+    const isDraftEdit = pageState !== 'create' && getCompanyLifecycleStatus(selectedSirket) === 'draft'
 
     Object.entries(raw).forEach(([key, value]) => {
-      if (pageState !== 'create' && OPERATION_CONTROLLED_FORM_FIELDS.has(key)) return
+      if (
+        pageState !== 'create'
+        && OPERATION_CONTROLLED_FORM_FIELDS.has(key)
+        && !(isDraftEdit && DRAFT_EDITABLE_OPERATION_FORM_FIELDS.has(key))
+      ) return
       if (['partners', 'representatives', 'stakeholders', 'documents', 'logos', 'lifecycle_status_badge', 'company_lifecycle_summary', 'record_status', 'company_status', 'opening_details', 'liquidation_details', 'deregistration_details', 'lifecycle_events', 'lifecycle_last_event', 'capital_completion_ratio', 'committed_capital_amount', 'paid_capital_amount', 'company_nace_codes', 'public_tax', 'public_sgk', 'public_incentives', 'public_registry', 'public_licenses', 'public_channels', 'related_status', 'related_errors'].includes(key)) return
       if (value === '' || value === null || value === undefined) return
       if (pageState !== 'create' && ['hero_documents', 'hero_images'].includes(key) && selectedSirket) {
@@ -888,12 +891,7 @@ export default function SirketlerPage() {
           ...result.data,
         } as Sirket))
       }
-      const resultWarning = (result as any)?.warning
-      setToast({
-        type: resultWarning ? 'warning' : 'success',
-        title: resultWarning ? 'Kısmi Kayıt' : 'Kayıt Başarılı',
-        message: resultWarning || (mode === 'create' ? 'Şirket kaydı oluşturuldu' : 'Şirket bilgileri güncellendi'),
-      })
+      setToast(buildCompanySaveToast(result as Record<string, any>, mode))
       await yenile()
       setPageState('list')
     } catch (error: any) {
@@ -1031,64 +1029,151 @@ export default function SirketlerPage() {
   const getFormOperationActions = (): FormOperationActionGroup[] => {
     if (!selectedSirket?.id || pageState === 'create') return []
     const status = getCompanyLifecycleStatus(selectedSirket)
-    const lifecycleActions = [
+    const isOpeningCompleted = status === 'active' || status === 'liquidation' || status === 'deregistered'
+    const isLiquidationCompleted = status === 'deregistered'
+    const isDeregistrationCompleted = status === 'deregistered'
+    const canStartOpening = status === 'draft' && can(PERMISSIONS.companies.openingStart)
+    const canStartLiquidation = status === 'active' && can(PERMISSIONS.companies.liquidationStart)
+    const canUpdateLiquidation = status === 'liquidation' && can(PERMISSIONS.companies.liquidationUpdate)
+    const canStartDeregistration = status === 'liquidation' && can(PERMISSIONS.companies.deregistrationStart)
+    const lifecycleActions: CompanyFormOperationAction[] = [
       {
         key: 'opening',
-        label: 'Şirket Açılışı Yap',
+        label: 'Şirket Açılışı',
         icon: <PlayCircle size={16} />,
         onClick: () => openLifecycleWizard('opening'),
-        visible: status === 'draft' && can(PERMISSIONS.companies.openingStart),
+        visible: true,
+        disabled: !canStartOpening,
+        state: isOpeningCompleted ? 'completed' as const : canStartOpening ? 'active' as const : 'upcoming' as const,
+        dataTourId: 'record-operation-company-opening',
       },
       {
         key: 'liquidation',
         label: status === 'liquidation' ? 'Tasfiye Bilgilerini Güncelle' : 'Tasfiye Başlat',
         icon: <ShieldAlert size={16} />,
         onClick: () => openLifecycleWizard('liquidation'),
-        visible: (status === 'active' && can(PERMISSIONS.companies.liquidationStart))
-          || (status === 'liquidation' && can(PERMISSIONS.companies.liquidationUpdate)),
+        visible: true,
+        disabled: !(canStartLiquidation || canUpdateLiquidation),
+        state: isLiquidationCompleted
+          ? 'completed' as const
+          : canStartLiquidation || canUpdateLiquidation
+            ? 'active' as const
+            : 'upcoming' as const,
       },
       {
         key: 'deregistration',
-        label: 'Terkin Yap',
+        label: 'Terkin Başlat',
         icon: <Archive size={16} />,
         onClick: () => openLifecycleWizard('deregistration'),
-        visible: status === 'liquidation' && can(PERMISSIONS.companies.deregistrationStart),
-      },
-      {
-        key: 'history',
-        label: 'Geçmiş',
-        icon: <History size={16} />,
-        onClick: () => setPreferredFormTabId(COMPANY_HISTORY_TAB_ID),
-        visible: status === 'deregistered' && can(PERMISSIONS.companies.lifecycleView),
+        visible: true,
+        disabled: !canStartDeregistration,
+        state: isDeregistrationCompleted ? 'completed' as const : canStartDeregistration ? 'active' as const : 'upcoming' as const,
       },
     ].filter(action => action.visible)
 
-    const updateActions = [
+    const canUseOfficialUpdates = status !== 'deregistered' && can(PERMISSIONS.companies.edit)
+    const officialUpdateActions: CompanyFormOperationAction[] = [
       {
         key: 'capital_increase',
         label: 'Sermaye Artırımı',
         icon: <TrendingUp size={16} />,
         onClick: openCapitalIncreaseWizard,
-        visible: status === 'active' && can(PERMISSIONS.companies.edit),
+        visible: canUseOfficialUpdates,
+        disabled: status !== 'active',
+      },
+      {
+        key: 'capital_decrease',
+        label: 'Sermaye Azaltımı',
+        icon: <TrendingUp size={16} />,
+        onClick: () => undefined,
+        visible: canUseOfficialUpdates,
+        disabled: true,
+        tone: 'neutral' as const,
+      },
+      {
+        key: 'title_change',
+        label: 'Unvan Değişikliği',
+        icon: <FileText size={16} />,
+        onClick: () => undefined,
+        visible: canUseOfficialUpdates,
+        disabled: true,
+        tone: 'neutral' as const,
+      },
+      {
+        key: 'address_change',
+        label: 'Adres Değişikliği',
+        icon: <Building2 size={16} />,
+        onClick: () => undefined,
+        visible: canUseOfficialUpdates,
+        disabled: true,
+        tone: 'neutral' as const,
+      },
+      {
+        key: 'public_registration_update',
+        label: 'Kamu / Tescil Bilgisi Güncelleme',
+        icon: <Landmark size={16} />,
+        onClick: () => undefined,
+        visible: canUseOfficialUpdates,
+        disabled: true,
+        tone: 'neutral' as const,
+      },
+    ].filter(action => action.visible)
+
+    const basicUpdateActions: CompanyFormOperationAction[] = [
+      {
+        key: 'edit',
+        label: 'Güncelle',
+        icon: <PencilLine size={16} />,
+        onClick: () => setPageState('edit'),
+        visible: pageState === 'view' && formAccess.showEdit && canEditSelectedProfile,
       },
     ].filter(action => action.visible)
 
     return [
       ...(lifecycleActions.length ? [{
         key: 'lifecycle',
-        title: 'Yaşam Döngüsü İşlemleri',
+        title: 'Yaşam Döngüsü',
+        operationKind: 'lifecycle' as const,
+        crudIntent: 'create_delete' as const,
+        displayMode: 'dropdown_button' as const,
+        icon: <Activity size={16} />,
+        dataTourId: 'record-operation-lifecycle',
         actions: lifecycleActions.map(action => ({
           key: action.key,
           label: action.label,
           icon: action.icon,
           onClick: action.onClick,
-          dataTourId: action.key === 'opening' ? 'company-opening-action' : undefined,
+          disabled: action.disabled,
+          state: action.state,
+          dataTourId: action.dataTourId,
         })),
       }] : []),
-      ...(updateActions.length ? [{
-        key: 'update',
-        title: 'Tescil İşlemleri',
-        actions: updateActions.map(action => ({
+      ...(officialUpdateActions.length ? [{
+        key: 'official_updates',
+        title: 'Resmi Değişiklikler',
+        operationKind: 'official_update' as const,
+        crudIntent: 'official_update' as const,
+        displayMode: 'dropdown_button' as const,
+        icon: <ScrollText size={16} />,
+        dataTourId: 'record-operation-official-updates',
+        actions: officialUpdateActions.map(action => ({
+          key: action.key,
+          label: action.label,
+          icon: action.icon,
+          onClick: action.onClick,
+          disabled: action.disabled,
+          tone: action.tone,
+        })),
+      }] : []),
+      ...(basicUpdateActions.length ? [{
+        key: 'basic_update',
+        title: 'Güncelle',
+        operationKind: 'basic_update' as const,
+        crudIntent: 'update' as const,
+        displayMode: 'single_button' as const,
+        icon: <PencilLine size={16} />,
+        dataTourId: 'record-operation-basic-update',
+        actions: basicUpdateActions.map(action => ({
           key: action.key,
           label: action.label,
           icon: action.icon,
@@ -1228,7 +1313,7 @@ export default function SirketlerPage() {
           )}
 
           <SmartDataTable<SirketTableRow>
-            columns={configuredColumns}
+            columns={columns}
             data={tableData}
             loading={loading}
             onRowClick={handleRowClick}
@@ -1546,178 +1631,6 @@ function LifecycleStatusBadge({ status, tourId }: { status: CompanyLifecycleStat
       <CircleDot size={12} />
       Durum: {getCompanyLifecycleLabel(status)}
     </span>
-  )
-}
-
-function CompanyListLifecycleActions({
-  row,
-  busy,
-  canEditProfile,
-  canDeleteDraft,
-  canOpen,
-  canLiquidate,
-  canUpdateLiquidation,
-  canDeregister,
-  canViewHistory,
-  onAction,
-  onEdit,
-  onDelete,
-  onHistory,
-}: {
-  row: SirketTableRow
-  busy?: boolean
-  canEditProfile: boolean
-  canDeleteDraft: boolean
-  canOpen: boolean
-  canLiquidate: boolean
-  canUpdateLiquidation: boolean
-  canDeregister: boolean
-  canViewHistory: boolean
-  onAction: (row: SirketTableRow, type: CompanyLifecycleWizardType) => void
-  onEdit: (row: SirketTableRow) => void | Promise<void>
-  onDelete: (row: SirketTableRow) => void | Promise<void>
-  onHistory: () => void
-}) {
-  const [open, setOpen] = useState(false)
-  const [position, setPosition] = useState<{ top: number; left: number } | null>(null)
-  const buttonRef = useRef<HTMLButtonElement | null>(null)
-  const menuRef = useRef<HTMLDivElement | null>(null)
-  const status = getCompanyLifecycleStatus(row)
-  const canEditThisProfile = canEditProfile && status !== 'liquidation' && status !== 'deregistered'
-  const actions: Array<{ key: string; label: string; icon: ReactNode; danger?: boolean; onClick: () => void | Promise<void>; visible: boolean }> = [
-    {
-      key: 'opening',
-      label: 'Şirket Açılışı',
-      icon: <PlayCircle size={15} />,
-      onClick: () => onAction(row, 'opening'),
-      visible: status === 'draft' && canOpen,
-    },
-    {
-      key: 'liquidation',
-      label: status === 'liquidation' ? 'Tasfiye Bilgilerini Güncelle' : 'Tasfiye',
-      icon: <ShieldAlert size={15} />,
-      onClick: () => onAction(row, 'liquidation'),
-      visible: (status === 'active' && canLiquidate) || (status === 'liquidation' && canUpdateLiquidation),
-    },
-    {
-      key: 'deregistration',
-      label: 'Terkin',
-      icon: <Archive size={15} />,
-      onClick: () => onAction(row, 'deregistration'),
-      visible: status === 'liquidation' && canDeregister,
-    },
-    {
-      key: 'edit',
-      label: 'Düzenle',
-      icon: <Pencil size={15} />,
-      onClick: () => onEdit(row),
-      visible: canEditThisProfile,
-    },
-    {
-      key: 'delete',
-      label: 'Sil',
-      icon: <Trash2 size={15} />,
-      danger: true,
-      onClick: () => onDelete(row),
-      visible: status === 'draft' && canDeleteDraft,
-    },
-    {
-      key: 'history',
-      label: 'Geçmiş',
-      icon: <History size={15} />,
-      onClick: onHistory,
-      visible: canViewHistory,
-    },
-  ]
-  const visibleActions = actions.filter(action => action.visible)
-
-  useEffect(() => {
-    if (!open) return
-
-    function closeOnOutsideClick(event: MouseEvent) {
-      const target = event.target as Node
-      if (buttonRef.current?.contains(target)) return
-      if (menuRef.current?.contains(target)) return
-      setOpen(false)
-    }
-
-    function closeOnEscape(event: KeyboardEvent) {
-      if (event.key === 'Escape') setOpen(false)
-    }
-
-    document.addEventListener('mousedown', closeOnOutsideClick)
-    document.addEventListener('keydown', closeOnEscape)
-    return () => {
-      document.removeEventListener('mousedown', closeOnOutsideClick)
-      document.removeEventListener('keydown', closeOnEscape)
-    }
-  }, [open])
-
-  const toggleMenu = () => {
-    const rect = buttonRef.current?.getBoundingClientRect()
-    if (rect) {
-      const menuWidth = 232
-      const menuHeight = Math.max(44, visibleActions.length * 37 + 8)
-      const preferredTop = rect.bottom + 6
-      const top = preferredTop + menuHeight > window.innerHeight - 8
-        ? Math.max(8, rect.top - menuHeight - 6)
-        : preferredTop
-      setPosition({
-        top,
-        left: Math.max(8, Math.min(window.innerWidth - menuWidth - 8, rect.right - menuWidth)),
-      })
-    }
-    setOpen(previous => !previous)
-  }
-
-  const runAction = async (action: (typeof actions)[number]) => {
-    setOpen(false)
-    await action.onClick()
-  }
-
-  return (
-    <div className="flex justify-center">
-      <button
-        ref={buttonRef}
-        type="button"
-        aria-label="Satır işlemleri"
-        aria-haspopup="menu"
-        aria-expanded={open}
-        disabled={busy}
-        onClick={toggleMenu}
-        className="inline-grid h-8 w-8 place-items-center rounded-lg border border-gray-200 bg-white text-gray-500 transition hover:bg-gray-50 hover:text-gray-800 disabled:cursor-wait disabled:opacity-60 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white"
-        title="İşlemler"
-      >
-        <MoreVertical size={17} />
-      </button>
-
-      {open && position && (
-        <div
-          ref={menuRef}
-          role="menu"
-          style={{ top: position.top, left: position.left }}
-          className="fixed z-[90] w-[232px] overflow-hidden rounded-lg border border-gray-200 bg-white py-1 text-left shadow-xl dark:border-gray-700 dark:bg-gray-950"
-        >
-          {visibleActions.length ? visibleActions.map(action => (
-            <button
-              key={action.key}
-              type="button"
-              role="menuitem"
-              onClick={() => runAction(action)}
-              className={cn(
-                'flex w-full items-center gap-2 px-3 py-2 text-sm font-medium transition hover:bg-gray-50 dark:hover:bg-gray-900',
-                action.danger ? 'text-red-600 dark:text-red-300' : 'text-gray-700 dark:text-gray-200'
-              )}
-            >
-              {action.icon}
-              <span className="min-w-0 truncate">{action.label}</span>
-            </button>
-          )) : (
-            <div className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">İşlem yok</div>
-          )}
-        </div>
-      )}
-    </div>
   )
 }
 

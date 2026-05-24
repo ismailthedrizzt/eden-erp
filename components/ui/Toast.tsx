@@ -49,7 +49,7 @@ export function Toast({ type, title, message, duration = 4500, onClose }: ToastP
       {icons[type]}
       <div className="min-w-0">
         {title && <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">{title}</p>}
-        <p className="text-sm text-gray-700 dark:text-gray-200">{message}</p>
+        <p className="whitespace-pre-line text-sm text-gray-700 dark:text-gray-200">{message}</p>
       </div>
       <button
         onClick={() => {

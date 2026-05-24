@@ -23,7 +23,7 @@
  * />
  */
 
-import { useState, useEffect, ReactNode, useCallback, useMemo } from 'react'
+import { useState, useEffect, ReactNode, useCallback, useMemo, useRef } from 'react'
 import { Save, Loader2, Edit3, History, Clock, Plus, Trash2, Upload, Briefcase, LogOut, Building2, UserRound, FileText, RotateCcw, CheckCircle2, Circle, AlertCircle, ChevronDown, Info } from 'lucide-react'
 import { cn, formatPhoneInput, normalizeEmailInput, resolveTurkishIban } from '@/lib/utils'
 import { ImageSlotUploader, ImageSlot, SlotImage } from './ImageSlotUploader'
@@ -111,6 +111,7 @@ export interface FormFieldOperationControl {
   operations?: string[]
   message?: string
   lockInModes?: FormMode[]
+  allowDraftEdit?: boolean
 }
 
 export interface FieldAutomationConfig {
@@ -169,6 +170,10 @@ export interface FormLoadStage {
 
 export type FormOperationActionGroupKey = 'lifecycle' | 'registration' | 'update' | 'other' | string
 export type FormOperationActionTone = 'primary' | 'neutral' | 'danger' | 'success'
+export type FormOperationKind = 'lifecycle' | 'official_update' | 'basic_update' | 'general'
+export type FormOperationCrudIntent = 'create_delete' | 'official_update' | 'update' | 'general'
+export type FormOperationDisplayMode = 'dropdown_button' | 'single_button' | 'inline_buttons' | 'action_card' | 'dropdown_card'
+export type FormOperationActionState = 'completed' | 'active' | 'upcoming'
 
 export interface FormOperationAction {
   key: string
@@ -179,12 +184,18 @@ export interface FormOperationAction {
   disabled?: boolean
   tone?: FormOperationActionTone
   dataTourId?: string
+  state?: FormOperationActionState
 }
 
 export interface FormOperationActionGroup {
   key: FormOperationActionGroupKey
   title?: string
   icon?: ReactNode
+  operationKind?: FormOperationKind
+  crudIntent?: FormOperationCrudIntent
+  displayMode?: FormOperationDisplayMode
+  description?: string
+  dataTourId?: string
   actions: FormOperationAction[]
 }
 
@@ -2232,9 +2243,9 @@ function SgkSelectField({
 }
 
 const DEFAULT_OPERATION_GROUP_TITLES: Record<string, string> = {
-  lifecycle: 'Yaşam Döngüsü İşlemleri',
-  registration: 'Tescil İşlemleri',
-  update: 'Tescil İşlemleri',
+  lifecycle: 'Yaşam Döngüsü',
+  registration: 'Resmi Değişiklikler',
+  update: 'Resmi Değişiklikler',
   other: 'Diğer İşlemler',
 }
 
@@ -2245,7 +2256,26 @@ const DEFAULT_OPERATION_GROUP_ICONS: Record<string, ReactNode> = {
   other: <Briefcase size={15} />,
 }
 
-function FormOperationActions({ groups }: { groups?: FormOperationActionGroup[] }) {
+const OPERATION_GROUP_ORDER: Record<FormOperationKind, number> = {
+  lifecycle: 0,
+  official_update: 1,
+  basic_update: 2,
+  general: 3,
+}
+
+type FormOperationActionsVariant = 'compact' | 'legacy' | 'all'
+
+function FormOperationActions({
+  groups,
+  mode,
+  variant = 'all',
+}: {
+  groups?: FormOperationActionGroup[]
+  mode: FormMode
+  variant?: FormOperationActionsVariant
+}) {
+  const [openGroupKey, setOpenGroupKey] = useState<FormOperationActionGroupKey | null>(null)
+  const actionsRef = useRef<HTMLDivElement | null>(null)
   const visibleGroups = useMemo(() => (groups || [])
     .map(group => ({
       ...group,
@@ -2253,29 +2283,216 @@ function FormOperationActions({ groups }: { groups?: FormOperationActionGroup[] 
     }))
     .filter(group => group.actions.length > 0), [groups])
 
-  if (!visibleGroups.length) return null
+  useEffect(() => {
+    if (!openGroupKey) return
+
+    const handlePointerDown = (event: MouseEvent | TouchEvent) => {
+      if (!actionsRef.current || actionsRef.current.contains(event.target as Node)) return
+      setOpenGroupKey(null)
+    }
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setOpenGroupKey(null)
+    }
+
+    document.addEventListener('mousedown', handlePointerDown)
+    document.addEventListener('touchstart', handlePointerDown)
+    document.addEventListener('keydown', handleKeyDown)
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown)
+      document.removeEventListener('touchstart', handlePointerDown)
+      document.removeEventListener('keydown', handleKeyDown)
+    }
+  }, [openGroupKey])
+
+  useEffect(() => {
+    if (openGroupKey && !visibleGroups.some(group => group.key === openGroupKey)) {
+      setOpenGroupKey(null)
+    }
+  }, [openGroupKey, visibleGroups])
+
+  const compactGroups = useMemo(
+    () => mode === 'view' && variant !== 'legacy'
+      ? visibleGroups
+        .filter(isCompactOperationGroup)
+        .sort((first, second) => getOperationGroupOrder(first) - getOperationGroupOrder(second))
+      : [],
+    [mode, variant, visibleGroups]
+  )
+  const legacyGroups = useMemo(
+    () => variant !== 'compact' ? visibleGroups.filter(group => !isCompactOperationGroup(group)) : [],
+    [variant, visibleGroups]
+  )
+
+  if (!compactGroups.length && !legacyGroups.length) return null
 
   return (
-    <div className="flex flex-wrap items-center justify-end gap-2">
-      {visibleGroups.map(group => (
-        <FormOperationActionGroupMenu key={group.key} group={group} />
-      ))}
+    <div ref={actionsRef} className={cn(compactGroups.length ? 'w-full' : 'flex flex-wrap items-center justify-end gap-2')}>
+      {compactGroups.length ? (
+        <CompactOperationArea
+          groups={compactGroups}
+          openGroupKey={openGroupKey}
+          onOpenChange={(groupKey, nextOpen) => setOpenGroupKey(nextOpen ? groupKey : null)}
+        />
+      ) : null}
+      {legacyGroups.length ? (
+        <div className={cn('flex flex-wrap items-center justify-end gap-2', compactGroups.length && 'mt-3')}>
+          {legacyGroups.map(group => (
+            <FormOperationActionGroupMenu
+              key={group.key}
+              group={group}
+              open={openGroupKey === group.key}
+              onOpenChange={(nextOpen) => setOpenGroupKey(nextOpen ? group.key : null)}
+            />
+          ))}
+        </div>
+      ) : null}
     </div>
   )
 }
 
-function FormOperationActionGroupMenu({ group }: { group: FormOperationActionGroup }) {
-  const [open, setOpen] = useState(false)
+function isCompactOperationGroup(group: FormOperationActionGroup) {
+  return group.displayMode === 'dropdown_button'
+    || group.displayMode === 'single_button'
+    || group.displayMode === 'dropdown_card'
+    || group.displayMode === 'action_card'
+}
+
+function getOperationGroupOrder(group: FormOperationActionGroup) {
+  return OPERATION_GROUP_ORDER[group.operationKind || 'general'] ?? OPERATION_GROUP_ORDER.general
+}
+
+function CompactOperationArea({
+  groups,
+  openGroupKey,
+  onOpenChange,
+}: {
+  groups: FormOperationActionGroup[]
+  openGroupKey: FormOperationActionGroupKey | null
+  onOpenChange: (groupKey: FormOperationActionGroupKey, open: boolean) => void
+}) {
+  return (
+    <section
+      data-tour-id="record-operation-area"
+      className="flex flex-col gap-2 sm:flex-row sm:items-center"
+    >
+      <div className="shrink-0 text-sm font-semibold text-gray-900 dark:text-white">
+        İşlemler
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        {groups.map(group => (
+          <CompactOperationControl
+            key={group.key}
+            group={group}
+            open={openGroupKey === group.key}
+            onOpenChange={(nextOpen) => onOpenChange(group.key, nextOpen)}
+          />
+        ))}
+      </div>
+    </section>
+  )
+}
+
+function CompactOperationControl({
+  group,
+  open,
+  onOpenChange,
+}: {
+  group: FormOperationActionGroup
+  open: boolean
+  onOpenChange: (open: boolean) => void
+}) {
+  const title = group.title || DEFAULT_OPERATION_GROUP_TITLES[group.key] || group.key
+  const icon = group.icon || DEFAULT_OPERATION_GROUP_ICONS[group.key] || DEFAULT_OPERATION_GROUP_ICONS.other
+  const primaryAction = group.actions[0]
+  const shouldUseSingleButton = (group.displayMode === 'single_button' || group.displayMode === 'action_card') && group.actions.length === 1
+  const buttonLabel = shouldUseSingleButton ? primaryAction?.label || title : title
+
+  if (!primaryAction) return null
+
+  if (shouldUseSingleButton) {
+    return (
+      <button
+        type="button"
+        data-tour-id={group.dataTourId || primaryAction.dataTourId}
+        title={group.description || title}
+        disabled={primaryAction.disabled}
+        onClick={() => {
+          if (primaryAction.disabled) return
+          primaryAction.onClick()
+        }}
+        className={cn(
+          'inline-flex h-9 max-w-full items-center justify-center gap-2 rounded-lg border px-3 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50',
+          getOperationButtonToneClass(primaryAction.tone, group.operationKind)
+        )}
+      >
+        {primaryAction.icon || icon}
+        <span className="min-w-0 truncate">{buttonLabel}</span>
+      </button>
+    )
+  }
+
+  return (
+    <div className="relative inline-flex max-w-full">
+      <button
+        type="button"
+        data-tour-id={group.dataTourId}
+        title={group.description || title}
+        aria-expanded={open}
+        aria-haspopup="menu"
+        onClick={() => onOpenChange(!open)}
+        className="inline-flex h-9 max-w-full items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-3 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-200 dark:hover:bg-gray-800"
+      >
+        {icon}
+        <span className="min-w-0 truncate">{title}</span>
+        <ChevronDown size={14} className={cn('shrink-0 transition-transform', open && 'rotate-180')} />
+      </button>
+      {open && (
+        <div
+          role="menu"
+          className="absolute left-0 top-full z-50 mt-1 w-72 max-w-[calc(100vw-2rem)] rounded-lg border border-gray-200 bg-white p-1 shadow-lg dark:border-gray-700 dark:bg-gray-950"
+        >
+          {group.actions.map(action => (
+            <OperationMenuActionButton
+              key={action.key}
+              action={action}
+              onRun={() => {
+                onOpenChange(false)
+                action.onClick()
+              }}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+function getOperationButtonToneClass(tone: FormOperationActionTone = 'primary', kind?: FormOperationKind) {
+  if (tone === 'danger') return 'border-red-200 bg-white text-red-700 hover:bg-red-50 dark:border-red-900/60 dark:bg-gray-950 dark:text-red-300 dark:hover:bg-red-950/30'
+  if (tone === 'success') return 'border-emerald-200 bg-white text-emerald-700 hover:bg-emerald-50 dark:border-emerald-900/60 dark:bg-gray-950 dark:text-emerald-300 dark:hover:bg-emerald-950/30'
+  if (tone === 'neutral' || kind === 'basic_update') return 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-200 dark:hover:bg-gray-800'
+  return 'border-blue-600 bg-blue-600 text-white hover:bg-blue-700 dark:border-blue-500 dark:bg-blue-500 dark:hover:bg-blue-600'
+}
+
+function FormOperationActionGroupMenu({
+  group,
+  open,
+  onOpenChange,
+}: {
+  group: FormOperationActionGroup
+  open: boolean
+  onOpenChange: (open: boolean) => void
+}) {
   const title = group.title || DEFAULT_OPERATION_GROUP_TITLES[group.key] || group.key
   const icon = group.icon || DEFAULT_OPERATION_GROUP_ICONS[group.key] || DEFAULT_OPERATION_GROUP_ICONS.other
 
   return (
-    <div className="relative inline-flex">
+    <div className="relative z-50 inline-flex">
       <button
         type="button"
         aria-expanded={open}
         aria-haspopup="menu"
-        onClick={() => setOpen(previous => !previous)}
+        onClick={() => onOpenChange(!open)}
         className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200 dark:hover:bg-gray-800"
       >
         {icon}
@@ -2288,29 +2505,65 @@ function FormOperationActionGroupMenu({ group }: { group: FormOperationActionGro
           className="absolute right-0 top-full z-40 mt-1 w-72 rounded-lg border border-gray-200 bg-white p-1 shadow-lg dark:border-gray-700 dark:bg-gray-900"
         >
           {group.actions.map(action => (
-            <button
+            <OperationMenuActionButton
               key={action.key}
-              type="button"
-              role="menuitem"
-              data-tour-id={action.dataTourId}
-              disabled={action.disabled}
-              onClick={() => {
-                setOpen(false)
+              action={action}
+              truncateLabel
+              onRun={() => {
+                onOpenChange(false)
                 action.onClick()
               }}
-              className={cn(
-                'flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50',
-                getOperationActionToneClass(action.tone)
-              )}
-            >
-              {action.icon}
-              <span className="min-w-0 truncate">{action.label}</span>
-            </button>
+            />
           ))}
         </div>
       )}
     </div>
   )
+}
+
+function OperationMenuActionButton({
+  action,
+  onRun,
+  truncateLabel = false,
+}: {
+  action: FormOperationAction
+  onRun: () => void
+  truncateLabel?: boolean
+}) {
+  const disabled = action.disabled || action.state === 'completed' || action.state === 'upcoming'
+  const icon = action.state === 'completed'
+    ? <CheckCircle2 size={16} />
+    : action.icon
+
+  return (
+    <button
+      type="button"
+      role="menuitem"
+      data-tour-id={action.dataTourId}
+      disabled={disabled}
+      onClick={() => {
+        if (disabled) return
+        onRun()
+      }}
+      className={cn(
+        'flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm font-medium transition-colors',
+        getOperationMenuActionClass(action)
+      )}
+    >
+      {icon}
+      <span className={cn('min-w-0', truncateLabel ? 'truncate' : 'whitespace-normal')}>{action.label}</span>
+    </button>
+  )
+}
+
+function getOperationMenuActionClass(action: FormOperationAction) {
+  if (action.state === 'completed') {
+    return 'cursor-default text-emerald-700 dark:text-emerald-300'
+  }
+  if (action.state === 'upcoming' || action.disabled) {
+    return 'cursor-not-allowed text-gray-400 dark:text-gray-500'
+  }
+  return getOperationActionToneClass(action.tone)
 }
 
 function getOperationActionToneClass(tone: FormOperationActionTone = 'primary') {
@@ -2642,6 +2895,11 @@ export function EntityForm({
   const canPassivateRecord = !isPassive && !canHardDeleteRecord && effectiveCanPassivate && !!onDelete
   const canDeleteRecord = canHardDeleteRecord || canPassivateRecord
   const deleteActionLabel = canActivateRecord ? 'Aktive Et' : canHardDeleteRecord ? 'Sil' : 'Pasife Al'
+  const hasBasicUpdateOperationAction = isReadOnly && (operationActions || []).some(group =>
+    group.operationKind === 'basic_update'
+    && isCompactOperationGroup(group)
+    && group.actions.some(action => !action.hidden)
+  )
   const slotLoaderMode = isReadOnly ? 'view' : isCreate ? 'insert' : 'update'
   const getLoadStage = (key: FormLoadStageKey) => loadStages?.find(stage => stage.key === key)
   const mediaLoadStage = getLoadStage('media') || getLoadStage('detail')
@@ -2663,6 +2921,7 @@ export function EntityForm({
   ]
   const isOperationControlledLocked = (field: FormField) => {
     if (!field.controlledByOperation) return false
+    if (field.controlledByOperation.allowDraftEdit && mode === 'edit' && isDraftRecord(effectiveStatusData)) return false
     const lockInModes = field.controlledByOperation.lockInModes || ['edit']
     return lockInModes.includes(mode)
   }
@@ -3698,63 +3957,67 @@ export function EntityForm({
               ) : null}
             </div>
 
-            {/* Form Action Area - Bottom Right */}
-            <div data-tour-id="record-form-actions" className="mt-6 pt-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-end gap-2">
-              <FormOperationActions groups={operationActions} />
+            {/* Form Action Area */}
+            <div data-tour-id="record-form-command-area" className="mt-6 border-t border-gray-200 pt-4 dark:border-gray-700">
+              <FormOperationActions groups={operationActions} mode={mode} variant="compact" />
 
-              {additionalActions}
-              
-              {/* View Mode: Edit Button */}
-              {!isCreate && (canActivateRecord || canDeleteRecord) && (
-                <button
-                  onClick={handleDelete}
-                  disabled={deleting}
-                  className={cn(
-                    "flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50",
-                    canActivateRecord
-                      ? "border-emerald-200 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-900/60 dark:text-emerald-300 dark:hover:bg-emerald-950/30"
-                      : "border-red-200 text-red-700 hover:bg-red-50 dark:border-red-900/60 dark:text-red-300 dark:hover:bg-red-950/30"
-                  )}
-                >
-                  {deleting ? <Loader2 className="animate-spin" size={16} /> : canActivateRecord ? <RotateCcw size={16} /> : <Trash2 size={16} />}
-                  {deleteActionLabel}
-                </button>
-              )}
-              {isReadOnly && effectiveCanEdit && !isPassive && (
-                <button
-                  data-tour-id="record-form-edit-button"
-                  onClick={() => handleModeChange('edit')}
-                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
-                >
-                  <Edit3 size={16} />
-                  Düzenle
-                </button>
-              )}
+              <div className="mt-3 flex flex-wrap items-center justify-end gap-2">
+                <FormOperationActions groups={operationActions} mode={mode} variant="legacy" />
 
-              {/* Edit/Create Mode: Cancel & Save */}
-              {(isEdit || isCreate) && (
-                <>
+                {additionalActions}
+
+                {/* View Mode: Edit Button */}
+                {!isCreate && (canActivateRecord || canDeleteRecord) && (
                   <button
-                    onClick={() => isCreate ? onCancel() : handleModeChange('view')}
-                    className="px-4 py-2 text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800 rounded-lg transition-colors text-sm font-medium"
+                    onClick={handleDelete}
+                    disabled={deleting}
+                    className={cn(
+                      "flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50",
+                      canActivateRecord
+                        ? "border-emerald-200 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-900/60 dark:text-emerald-300 dark:hover:bg-emerald-950/30"
+                        : "border-red-200 text-red-700 hover:bg-red-50 dark:border-red-900/60 dark:text-red-300 dark:hover:bg-red-950/30"
+                    )}
                   >
-                    İptal
+                    {deleting ? <Loader2 className="animate-spin" size={16} /> : canActivateRecord ? <RotateCcw size={16} /> : <Trash2 size={16} />}
+                    {deleteActionLabel}
                   </button>
+                )}
+                {isReadOnly && effectiveCanEdit && !isPassive && !hasBasicUpdateOperationAction && (
                   <button
-                    onClick={handleSave}
-                    disabled={saving || isIdentityGateLocked || (isCreate && !effectiveCanCreate) || (isEdit && !effectiveCanEdit)}
-                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium disabled:opacity-50"
+                    data-tour-id="record-form-edit-button"
+                    onClick={() => handleModeChange('edit')}
+                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
                   >
-                    {saving ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} />}
-                    {isCreate ? 'Oluştur' : 'Güncelle'}
+                    <Edit3 size={16} />
+                    Düzenle
                   </button>
-                </>
-              )}
-              {isReadOnly && effectiveCanApprove && (
-                <span className="rounded-lg border border-emerald-200 px-3 py-2 text-xs font-medium text-emerald-700 dark:border-emerald-900/60 dark:text-emerald-300">
-                  Onay yetkisi var
-                </span>
-              )}
+                )}
+
+                {/* Edit/Create Mode: Cancel & Save */}
+                {(isEdit || isCreate) && (
+                  <>
+                    <button
+                      onClick={() => isCreate ? onCancel() : handleModeChange('view')}
+                      className="px-4 py-2 text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800 rounded-lg transition-colors text-sm font-medium"
+                    >
+                      İptal
+                    </button>
+                    <button
+                      onClick={handleSave}
+                      disabled={saving || isIdentityGateLocked || (isCreate && !effectiveCanCreate) || (isEdit && !effectiveCanEdit)}
+                      className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium disabled:opacity-50"
+                    >
+                      {saving ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} />}
+                      {isCreate ? 'Oluştur' : 'Güncelle'}
+                    </button>
+                  </>
+                )}
+                {isReadOnly && effectiveCanApprove && (
+                  <span className="rounded-lg border border-emerald-200 px-3 py-2 text-xs font-medium text-emerald-700 dark:border-emerald-900/60 dark:text-emerald-300">
+                    Onay yetkisi var
+                  </span>
+                )}
+              </div>
             </div>
           </div>
         </div>

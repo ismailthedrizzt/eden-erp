@@ -4,6 +4,7 @@ import { Suspense, useState, useEffect, useRef } from 'react'
 import { usePathname, useSearchParams } from 'next/navigation'
 import Sidebar from '@/components/layout/Sidebar'
 import { PendingActionsBell } from '@/components/layout/PendingActionsBell'
+import { ProductVersionBadge } from '@/components/layout/ProductVersionBadge'
 import { Building2, Check, ChevronDown, Loader2, Menu, Moon, Sun } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ModuleLicenseProvider } from '@/hooks/useModuleLicense'
@@ -350,6 +351,7 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
               >
                 <Menu size={15} />
               </button>
+              <ProductVersionBadge className="hidden md:inline-flex" />
               <div ref={workspaceMenuRef} data-tour-id="workspace-switcher" className="relative hidden sm:block">
                 <button
                   type="button"
