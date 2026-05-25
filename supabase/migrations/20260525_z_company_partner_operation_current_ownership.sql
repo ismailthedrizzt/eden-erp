@@ -86,6 +86,39 @@ ALTER TABLE public.outbox_events
   ADD COLUMN IF NOT EXISTS published_at timestamptz,
   ADD COLUMN IF NOT EXISTS error_json jsonb;
 
+DO $$
+DECLARE
+  table_name text;
+  default_tenant uuid := '00000000-0000-0000-0000-000000000000';
+  tenant_tables text[] := ARRAY[
+    'companies',
+    'company_partners',
+    'ownership_transactions'
+  ];
+BEGIN
+  FOREACH table_name IN ARRAY tenant_tables LOOP
+    IF to_regclass(format('public.%I', table_name)) IS NOT NULL THEN
+      EXECUTE format(
+        'ALTER TABLE public.%I ADD COLUMN IF NOT EXISTS tenant_id uuid REFERENCES public.erp_instances(id)',
+        table_name
+      );
+
+      EXECUTE format(
+        'UPDATE public.%I SET tenant_id = %L WHERE tenant_id IS NULL',
+        table_name,
+        default_tenant
+      );
+
+      EXECUTE format(
+        'CREATE INDEX IF NOT EXISTS %I ON public.%I(tenant_id)',
+        left('idx_' || table_name || '_tenant_id', 60),
+        table_name
+      );
+    END IF;
+  END LOOP;
+END;
+$$;
+
 CREATE INDEX IF NOT EXISTS outbox_events_status_created_idx
   ON public.outbox_events(status, created_at);
 

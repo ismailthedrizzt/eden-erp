@@ -222,7 +222,7 @@ export async function GET(
         companyId: id,
         tenantContext,
         fallback: [] as Record<string, any>[],
-        select: 'id,company_id,display_name,full_name,status,authority_types,is_deleted',
+        select: 'id,company_id,display_name,full_name,status,record_status,authority_types,is_deleted,version,updated_at',
       }),
       fetchCompanyRelatedSection({ supabase, table: 'v_current_ownership', key: 'current_ownership', label: 'Guncel ortaklik', companyId: id, tenantContext, fallback: [] as Record<string, any>[], select: CURRENT_OWNERSHIP_SELECT }),
     ])
@@ -307,7 +307,7 @@ export async function GET(
       companyId: id,
       tenantContext,
       fallback: [] as Record<string, any>[],
-      select: 'id,company_id,person_id,organization_id,person_kind,source_type,source_id,display_name,full_name,authority_types,job_title,authority_type,status,start_date,end_date,signature_type,transaction_limit,currency,requires_joint_signature,can_approve_alone,is_deleted,history,created_at,updated_at,version',
+      select: 'id,company_id,person_id,organization_id,person_kind,source_type,source_id,display_name,full_name,authority_types,job_title,authority_type,status,record_status,start_date,end_date,signature_type,transaction_limit,currency,requires_joint_signature,can_approve_alone,is_deleted,history,created_at,updated_at,version',
     }),
     fetchCompanyRelatedSection({
       supabase,

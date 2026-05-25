@@ -20,6 +20,7 @@ const CURRENT_OWNERSHIP_COLUMNS = [
   'is_beneficial_owner',
   'beneficial_ratio',
   'warnings',
+  'tenant_id',
 ].join(',')
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ company_id: string }> }) {
