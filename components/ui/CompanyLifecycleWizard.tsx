@@ -1257,5 +1257,18 @@ function hasValue(value: any) {
 }
 
 function getCompanyLifecycleStatus(company: Sirket) {
-  return company.record_status || company.company_status || (company.is_deleted ? 'deregistered' : 'active')
+  if (company.is_deleted === true) return 'deregistered'
+
+  const values = [company.record_status, company.company_status]
+    .map(value => String(value || '').trim().toLocaleLowerCase('tr-TR'))
+    .filter(Boolean)
+
+  for (const value of values) {
+    if (['draft', 'taslak'].includes(value)) return 'draft'
+    if (['active', 'opened', 'aktif'].includes(value)) return 'active'
+    if (['liquidation', 'tasfiye', 'tasfiye halinde'].includes(value)) return 'liquidation'
+    if (['deregistered', 'passive', 'closed', 'deleted', 'pasif', 'kapalı', 'kapanmış'].includes(value)) return 'deregistered'
+  }
+
+  return values.length ? 'unknown' : 'active'
 }

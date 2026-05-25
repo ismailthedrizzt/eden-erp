@@ -32,20 +32,20 @@ const emptyStringToUndefined = (value: unknown) => value === '' ? undefined : va
 const optionalUuid = z.preprocess(emptyStringToUndefined, z.string().uuid().optional().nullable())
 const optionalCompanyType = z.preprocess(
   emptyStringToUndefined,
-  z.enum(['anonim', 'limited', 'komandit', 'kolektif', 'adi_komandit', 'adi_sirket']).optional()
+  z.enum(['anonim', 'limited', 'komandit', 'kolektif', 'adi_komandit', 'adi_sirket']).optional().nullable()
 )
 const optionalRiskClass = z.preprocess(
   emptyStringToUndefined,
-  z.enum(['az_tehlikeli', 'tehlikeli', 'cok_tehlikeli']).optional()
+  z.enum(['az_tehlikeli', 'tehlikeli', 'cok_tehlikeli']).optional().nullable()
 )
 const optionalElectronicNotificationAddress = z.preprocess(
   emptyStringToUndefined,
-  z.string().regex(/^\d{5}-\d{5}-\d{5}$/, 'Elektronik tebligat adresi 25888-57689-53086 formatinda olmalidir').optional()
+  z.string().regex(/^\d{5}-\d{5}-\d{5}$/, 'Elektronik tebligat adresi 25888-57689-53086 formatinda olmalidir').optional().nullable()
 )
 
 const OptionalShortNameSchema = z.preprocess(
   emptyStringToUndefined,
-  z.string().min(1).max(120).optional()
+  z.string().min(1).max(120).optional().nullable()
 )
 const OptionalFiscalYearStartSchema = z.preprocess(
   (value) => value === '' || value === null || value === undefined
@@ -59,28 +59,28 @@ const SirketUpdateSchema = z.object({
   short_name: OptionalShortNameSchema,
   tax_number: z.string().regex(/^\d{10}$/, 'VKN 10 haneli sayı olmalıdır').optional(),
   tax_office: z.string().min(1).max(120).optional(),
-  mersis_number: z.string().optional(),
-  trade_registry_number: z.string().optional(),
-  foundation_date: z.string().optional(),
+  mersis_number: z.string().optional().nullable(),
+  trade_registry_number: z.string().optional().nullable(),
+  foundation_date: z.string().optional().nullable(),
   company_type: optionalCompanyType,
   country: z.string().min(1).optional(),
   city: z.string().min(1).max(120).optional(),
   district: z.string().min(1).max(120).optional(),
   address: z.string().min(1).optional(),
-  phone: z.string().optional(),
-  email: z.union([z.literal(''), z.string().email()]).optional(),
-  website: z.string().optional(),
-  legal_entity: z.string().optional(),
+  phone: z.string().optional().nullable(),
+  email: z.union([z.literal(''), z.string().email()]).optional().nullable(),
+  website: z.string().optional().nullable(),
+  legal_entity: z.string().optional().nullable(),
   electronic_notification_address: optionalElectronicNotificationAddress,
-  trade_registry_office: z.string().optional(),
+  trade_registry_office: z.string().optional().nullable(),
   parent_company_id: optionalUuid,
-  company_code: z.string().optional(),
+  company_code: z.string().optional().nullable(),
   e_invoice_taxpayer: z.boolean().optional(),
   e_archive_taxpayer: z.boolean().optional(),
   e_waybill_taxpayer: z.boolean().optional(),
-  sgk_workplace_registry_no: z.string().optional(),
-  sgk_province: z.string().optional(),
-  sgk_branch: z.string().optional(),
+  sgk_workplace_registry_no: z.string().optional().nullable(),
+  sgk_province: z.string().optional().nullable(),
+  sgk_branch: z.string().optional().nullable(),
   nace_codes: z.array(z.string()).optional(),
   risk_class: optionalRiskClass,
   default_currency: z.string().optional(),
@@ -91,16 +91,16 @@ const SirketUpdateSchema = z.object({
   hero_images: z.array(z.record(z.any())).optional(),
   hero_documents: z.array(z.record(z.any())).optional(),
   contact_points: z.array(z.record(z.any())).optional(),
-  beneficiary_full_name: z.string().optional(),
-  beneficiary_address: z.string().optional(),
-  beneficiary_iban: z.string().optional(),
-  beneficiary_account_no: z.string().optional(),
-  beneficiary_iban_or_account_no: z.string().optional(),
-  beneficiary_bank_code: z.string().optional(),
-  beneficiary_swift_bic: z.string().optional(),
-  beneficiary_bank_name: z.string().optional(),
-  beneficiary_bank_address: z.string().optional(),
-  beneficiary_currency: z.string().optional(),
+  beneficiary_full_name: z.string().optional().nullable(),
+  beneficiary_address: z.string().optional().nullable(),
+  beneficiary_iban: z.string().optional().nullable(),
+  beneficiary_account_no: z.string().optional().nullable(),
+  beneficiary_iban_or_account_no: z.string().optional().nullable(),
+  beneficiary_bank_code: z.string().optional().nullable(),
+  beneficiary_swift_bic: z.string().optional().nullable(),
+  beneficiary_bank_name: z.string().optional().nullable(),
+  beneficiary_bank_address: z.string().optional().nullable(),
+  beneficiary_currency: z.string().optional().nullable(),
   partners: z.array(z.record(z.any())).optional(),
   representatives: z.array(z.record(z.any())).optional(),
   public_tax: z.record(z.any()).optional(),
@@ -114,7 +114,7 @@ const SirketUpdateSchema = z.object({
 
 function omitNullishValues(value: Record<string, any>) {
   return Object.fromEntries(
-    Object.entries(value).filter(([, item]) => item !== null && item !== undefined)
+    Object.entries(value).filter(([, item]) => item !== undefined)
   )
 }
 

@@ -64,7 +64,7 @@ export function calculateCorporateStructure(
     partner.source_id === companyId
   )
 
-  const totalActiveShare = round(activePartners.reduce((sum, partner) => sum + ratio(partner.share_ratio ?? partner.share_ratio), 0))
+  const totalActiveShare = round(activePartners.reduce((sum, partner) => sum + ratio(partner.share_ratio), 0))
   const totalVotingRight = round(activePartners.reduce((sum, partner) => sum + votingPower(partner), 0))
   const warnings: string[] = []
 
@@ -74,7 +74,7 @@ export function calculateCorporateStructure(
   const controlOwners = activePartners.filter((partner) =>
     partner.has_control_right ||
     ratio(partner.voting_ratio) > CONTROL_THRESHOLD ||
-    ratio(partner.share_ratio ?? partner.share_ratio) > CONTROL_THRESHOLD
+    ratio(partner.share_ratio) > CONTROL_THRESHOLD
   )
   if (controlOwners.length > 1) warnings.push('Birden fazla kontrol sahibi var')
   if (!upstreamMainOwner && activePartners.length > 0) warnings.push('Aktif ana ortak bulunamadı')
@@ -83,9 +83,9 @@ export function calculateCorporateStructure(
   warnings.push(...cycleWarnings)
 
   const ultimate = resolveUltimateController(upstreamMainOwner, partners, companyMap, new Set([companyId || '']), 100)
-  const subsidiaryCount = downstreamRows.filter((partner) => votingPower(partner) > CONTROL_THRESHOLD || ratio(partner.share_ratio ?? partner.share_ratio) > CONTROL_THRESHOLD || partner.has_control_right).length
+  const subsidiaryCount = downstreamRows.filter((partner) => votingPower(partner) > CONTROL_THRESHOLD || ratio(partner.share_ratio) > CONTROL_THRESHOLD || partner.has_control_right).length
   const affiliateCount = downstreamRows.filter((partner) => {
-    const ownership = ratio(partner.share_ratio ?? partner.share_ratio)
+    const ownership = ratio(partner.share_ratio)
     const votes = votingPower(partner)
     return (ownership > 0 || votes > 0) && ownership < CONTROL_THRESHOLD && votes < CONTROL_THRESHOLD && !partner.has_control_right
   }).length
@@ -111,7 +111,7 @@ function findMainOwner(activePartners: CorporatePartnerRecord[]) {
   const sorted = [...activePartners].sort((a, b) => votingPower(b) - votingPower(a))
   const first = sorted[0]
   if (!first) return undefined
-  return votingPower(first) > CONTROL_THRESHOLD || ratio(first.share_ratio ?? first.share_ratio) > CONTROL_THRESHOLD ? first : undefined
+  return votingPower(first) > CONTROL_THRESHOLD || ratio(first.share_ratio) > CONTROL_THRESHOLD ? first : undefined
 }
 
 function resolveUltimateController(
@@ -123,7 +123,7 @@ function resolveUltimateController(
 ): { name: string; ratio: number } {
   if (!owner) return { name: '-', ratio: 0 }
 
-  const ownerRatio = votingPower(owner) || ratio(owner.share_ratio ?? owner.share_ratio)
+  const ownerRatio = votingPower(owner) || ratio(owner.share_ratio)
   const nextRatio = round((accumulatedRatio * ownerRatio) / 100)
 
   if (owner.is_ultimate_controller || owner.owner_kind !== 'organization' || owner.source_type !== 'grup_sirketi' || !owner.source_id) {
@@ -172,11 +172,11 @@ function buildOwnershipGraph(
   companyMap: Map<string, CorporateCompanyRecord>
 ) {
   const nodes: OwnershipGraphNode[] = []
-  if (mainOwner) nodes.push({ label: ownerName(mainOwner, companyMap), ratio: votingPower(mainOwner) || ratio(mainOwner.share_ratio ?? mainOwner.share_ratio), kind: 'owner' })
+  if (mainOwner) nodes.push({ label: ownerName(mainOwner, companyMap), ratio: votingPower(mainOwner) || ratio(mainOwner.share_ratio), kind: 'owner' })
   nodes.push({ label: companyName(currentCompany) || 'Seçili Şirket', kind: 'current' })
   downstreamRows.forEach((partner) => {
     const company = companyMap.get(getCompanyId(partner) || '')
-    nodes.push({ label: companyName(company) || partner.display_name || 'Bağlı şirket', ratio: votingPower(partner) || ratio(partner.share_ratio ?? partner.share_ratio), kind: 'downstream' })
+    nodes.push({ label: companyName(company) || partner.display_name || 'Bağlı şirket', ratio: votingPower(partner) || ratio(partner.share_ratio), kind: 'downstream' })
   })
   return nodes
 }
@@ -186,11 +186,11 @@ function isActivePartner(partner: CorporatePartnerRecord) {
 }
 
 function getCompanyId(partner: CorporatePartnerRecord) {
-  return partner.company_id || partner.company_id
+  return partner.company_id
 }
 
 function votingPower(partner: CorporatePartnerRecord) {
-  return ratio(partner.voting_ratio || partner.share_ratio || partner.share_ratio)
+  return ratio(partner.voting_ratio || partner.share_ratio)
 }
 
 function ratio(value: unknown) {

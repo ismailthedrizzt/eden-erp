@@ -91,15 +91,16 @@ export async function insertCompanyRepresentatives(
 function mapPartnerForDb(companyId: string, partner: Record<string, any>) {
   const displayName = partner.display_name || [partner.first_name, partner.last_name].filter(Boolean).join(' ').trim() || partner.partner_name || 'Ortak'
   const status = partner.status || partnerStatusLabel(partner.record_status)
+  const ownerKind = normalizePartnerKind(partner.owner_kind || partner.partner_type)
 
   return {
     company_id: companyId,
     partner_name: displayName,
-    partner_type: partner.owner_kind === 'organization' || partner.partner_type === 'company' ? 'company' : 'person',
+    partner_type: ownerKind,
     identity_tax_number: partner.identity_number || partner.identity_tax_number || null,
     share_ratio: partner.share_ratio ? Number(partner.share_ratio) : null,
     signature_authority: !!(partner.has_representation_right ?? partner.signature_authority),
-    owner_kind: partner.owner_kind || (partner.partner_type === 'company' ? 'organization' : 'person'),
+    owner_kind: ownerKind,
     source_type: partner.source_type || null,
     source_id: partner.source_id || null,
     display_name: displayName,
@@ -131,6 +132,11 @@ function mapPartnerForDb(companyId: string, partner: Record<string, any>) {
     is_deleted: !!partner.is_deleted,
     deleted_at: partner.deleted_at || null,
   }
+}
+
+function normalizePartnerKind(value: unknown): 'person' | 'organization' {
+  const text = String(value || '').trim().toLocaleLowerCase('tr-TR')
+  return ['organization', 'company', 'sirket', 'şirket', 'tüzel_kisi'].includes(text) ? 'organization' : 'person'
 }
 
 function normalizePartnerRecordStatus(status: unknown): 'draft' | 'active' | 'passive' {

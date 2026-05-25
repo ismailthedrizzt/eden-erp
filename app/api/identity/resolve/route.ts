@@ -36,8 +36,8 @@ const COMPANY_IDENTITY_SELECT = 'id,organization_id,trade_name,short_name,countr
 const ROLE_SELECT_BY_TABLE: Record<string, string> = {
   employees: 'id,person_id,national_id,passport_no,work_status',
   companies: 'id,organization_id,trade_name,short_name,tax_number,trade_registry_number',
-  company_partners: 'id,company_id,company_id,person_id,organization_id,display_name,partner_name,first_name,last_name,identity_tax_number,share_ratio,share_ratio,status,record_status',
-  company_representatives: 'id,company_id,company_id,person_id,organization_id,display_name,full_name,authority_types,status',
+  company_partners: 'id,company_id,person_id,organization_id,display_name,partner_name,first_name,last_name,identity_tax_number,share_ratio,status,record_status',
+  company_representatives: 'id,company_id,person_id,organization_id,display_name,full_name,authority_types,status',
   stakeholders: 'id,company_id,person_id,organization_id,display_name,tax_id,stakeholder_type,status',
 }
 

@@ -1621,6 +1621,7 @@ function mergeFieldOptions(...optionGroups: FieldOption[][]): FieldOption[] {
 
 function parseRemoteOptionsPayload(payload: unknown): FieldOption[] {
   const candidate = payload as {
+    data?: unknown[]
     options?: unknown[]
     offices?: unknown[]
     provinces?: unknown[]
@@ -1628,6 +1629,8 @@ function parseRemoteOptionsPayload(payload: unknown): FieldOption[] {
   } | null
   const source = Array.isArray(candidate?.options)
     ? candidate.options
+    : Array.isArray(candidate?.data)
+      ? candidate.data
     : Array.isArray(candidate?.districts)
       ? candidate.districts
       : Array.isArray(candidate?.provinces)
@@ -1641,9 +1644,12 @@ function parseRemoteOptionsPayload(payload: unknown): FieldOption[] {
 
 function asFieldOption(option: unknown): FieldOption | null {
   if (!option || typeof option !== 'object') return null
-  const candidate = option as { value?: unknown; label?: unknown; name?: unknown; code?: unknown }
-  const label = String(candidate.label ?? candidate.name ?? '').trim()
-  const value = String(candidate.value ?? candidate.name ?? label).trim()
+  const candidate = option as { value?: unknown; label?: unknown; name?: unknown; code?: unknown; id?: unknown; short_name?: unknown; trade_name?: unknown; display_name?: unknown; tax_number?: unknown }
+  const name = candidate.name ?? candidate.short_name ?? candidate.trade_name ?? candidate.display_name
+  const labelBase = String(candidate.label ?? name ?? '').trim()
+  const value = String(candidate.value ?? candidate.id ?? candidate.name ?? labelBase).trim()
+  const taxNumber = String(candidate.tax_number ?? '').trim()
+  const label = !candidate.label && taxNumber && labelBase ? `${labelBase} — ${taxNumber}` : labelBase
   if (!value || !label) return null
   const code = String(candidate.code ?? '').trim()
   return {

@@ -535,15 +535,15 @@ export default function TemsilcilerPage() {
           deleted_by: null,
         }),
       })
-      if (!response.ok) throw await createSaveError(response, 'Aktiflestirme basarisiz')
+      if (!response.ok) throw await createSaveError(response, 'Aktifleştirme başarısız')
       const result = await response.json()
       if (result.data) setSelectedRepresentative(normalizeRepresentativeForForm(result.data))
-      setToast({ type: 'success', title: 'Kayit Basarili', message: 'Temsilci kaydi aktive edildi' })
+      setToast({ type: 'success', title: 'Kayıt Başarılı', message: 'Temsilci kaydı aktive edildi' })
       invalidateEntityDetailCache('company-representatives', selectedRepresentative.id)
       await loadData(true)
       setPageState('view')
     } catch (err: any) {
-      setToast(err.toast || { type: 'error', title: 'Kayit Basarisiz', message: err.message })
+      setToast(err.toast || { type: 'error', title: 'Kayıt Başarısız', message: err.message })
       throw err
     } finally {
       setDeleting(false)
@@ -806,7 +806,7 @@ function normalizeRepresentativeForForm(representative: RepresentativeRow) {
 
 function normalizeRepresentativeEntityType(value: unknown): 'person' | 'organization' {
   const text = String(value || '').toLocaleLowerCase('tr-TR')
-  if (['organization', 'tüzel_kisi', 'sirket', 'şirket', 'organization'].includes(text)) return 'organization'
+  if (['organization', 'company', 'tüzel_kisi', 'sirket', 'şirket'].includes(text)) return 'organization'
   return 'person'
 }
 

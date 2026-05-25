@@ -14,11 +14,16 @@ import { requirePermission } from '@/lib/security/serverPermissions'
 type PartnerStatusFilter = 'draft' | 'active' | 'passive'
 const PARTNER_STATUS_FILTERS = new Set<PartnerStatusFilter>(['draft', 'active', 'passive'])
 
+const partnerKindSchema = z.preprocess(
+  value => value === 'company' || value === 'sirket' || value === 'şirket' ? 'organization' : value,
+  z.enum(['person', 'organization'])
+)
+
 const PartnerSchema = z.object({
   company_id: z.string().uuid().optional(),  person_id: z.string().uuid().optional().nullable(),
   organization_id: z.string().uuid().optional().nullable(),
-  partner_type: z.enum(['person', 'organization']).default('person'),
-  owner_kind: z.enum(['person', 'organization']).optional(),
+  partner_type: partnerKindSchema.default('person'),
+  owner_kind: partnerKindSchema.optional(),
   first_name: z.string().optional(),
   last_name: z.string().optional(),
   trade_name: z.string().optional(),
@@ -210,7 +215,7 @@ export async function GET(request: NextRequest) {
     request,
     tableName: 'company_partners',
     permissionKey: ['partners.view', 'companies.view'],
-    select: 'id,company_id,company_id,person_id,organization_id,owner_kind,partner_type,display_name,partner_name,identity_number,identity_tax_number,share_ratio,share_ratio,voting_ratio,profit_ratio,start_date,end_date,status,record_status,source_type,source_id,created_at',
+    select: 'id,company_id,person_id,organization_id,owner_kind,partner_type,display_name,partner_name,identity_number,identity_tax_number,share_ratio,voting_ratio,profit_ratio,start_date,end_date,status,record_status,source_type,source_id,created_at',
     listQuery,
     sortMap,
     defaultSort: 'created_at',
@@ -238,12 +243,12 @@ export async function POST(request: NextRequest) {
   if (!parsed.success) {
     return NextResponse.json({ error: 'Geçersiz veri', code: 'VALIDATION_FAILED', details: parsed.error.flatten() }, { status: 400 })
   }
-  const missingPersonFields = getMissingPersonFields(parsed.data)
-  if (missingPersonFields.length > 0) {
+  const missingPartnerFields = getMissingPartnerFields(parsed.data)
+  if (missingPartnerFields.length > 0) {
     return NextResponse.json({
-      error: 'Eksik zorunlu kişi alanı',
+      error: 'Eksik zorunlu ortak alanı',
       code: 'VALIDATION_FAILED',
-      details: { fieldErrors: Object.fromEntries(missingPersonFields.map(field => [field, ['Zorunlu alan']])) },
+      details: { fieldErrors: Object.fromEntries(missingPartnerFields.map(field => [field, ['Zorunlu alan']])) },
     }, { status: 400 })
   }
   const companyValidation = await validatePartnerCompanyForCreate(supabase, parsed.data.company_id, tenantContext)
@@ -292,16 +297,17 @@ export async function POST(request: NextRequest) {
 }
 
 function mapPartnerForDb(partner: Record<string, any>) {
-  const ownerKind = partner.partner_type || partner.owner_kind || 'person'
+  const ownerKind = normalizePartnerKind(partner.partner_type || partner.owner_kind)
   const displayName = ownerKind === 'organization'
     ? partner.trade_name || partner.short_name
     : [partner.first_name, partner.last_name].filter(Boolean).join(' ').trim()
 
   return {
-    company_id: partner.company_id || partner.company_id,    partner_name: displayName || 'Ortak',
-    partner_type: ownerKind === 'organization' ? 'company' : 'person',
+    company_id: partner.company_id,
+    partner_name: displayName || 'Ortak',
+    partner_type: ownerKind,
     identity_tax_number: partner.identity_number,
-    share_ratio: toNullableNumber(partner.share_ratio ?? partner.share_ratio),
+    share_ratio: toNullableNumber(partner.share_ratio),
     signature_authority: !!partner.has_representation_right,
     owner_kind: ownerKind,
     source_type: partner.source_type || 'partners_sayfasi',
@@ -335,15 +341,30 @@ function mapPartnerForDb(partner: Record<string, any>) {
   }
 }
 
-function getMissingPersonFields(partner: Record<string, any>) {
-  if (partner.partner_type !== 'person') return []
-  return [
-    ['first_name', partner.first_name],
-    ['last_name', partner.last_name],
-    ['gender', partner.gender],
-  ]
-    .filter(([, value]) => !String(value || '').trim())
-    .map(([field]) => field)
+function normalizePartnerKind(value: unknown): 'person' | 'organization' {
+  const text = String(value || '').trim().toLocaleLowerCase('tr-TR')
+  return ['organization', 'company', 'sirket', 'şirket', 'tüzel_kisi'].includes(text) ? 'organization' : 'person'
+}
+
+function getMissingPartnerFields(partner: Record<string, any>) {
+  const kind = normalizePartnerKind(partner.partner_type || partner.owner_kind)
+  if (kind === 'person') {
+    return [
+      ['first_name', partner.first_name],
+      ['last_name', partner.last_name],
+      ['gender', partner.gender],
+    ]
+      .filter(([, value]) => !String(value || '').trim())
+      .map(([field]) => field)
+  }
+
+  const missing: string[] = []
+  const country = normalizeCountryId(partner.country || partner.nationality_country || 'TR')
+  if (!String(partner.country || partner.nationality_country || '').trim()) missing.push('country')
+  if (!String(partner.trade_name || partner.first_name || '').trim()) missing.push('trade_name')
+  if (!String(partner.identity_number || partner.tax_number || partner.trade_registry_no || partner.mersis_number || '').trim()) missing.push('tax_number')
+  if (country === 'TR' && !String(partner.trade_registry_no || partner.mersis_number || '').trim()) missing.push('trade_registry_no')
+  return missing
 }
 
 async function attachPartnerIdentity(
@@ -353,7 +374,7 @@ async function attachPartnerIdentity(
   tenantContext: TenantContext
 ) {
   try {
-    const kind = row.owner_kind === 'organization' ? 'organization' : 'person'
+    const kind = normalizePartnerKind(row.owner_kind || row.partner_type)
     if (kind === 'person') {
       if (partner.person_id) return { ...row, person_id: partner.person_id, source_type: 'master_person', source_id: partner.person_id }
 
@@ -362,11 +383,14 @@ async function attachPartnerIdentity(
       const identityNumber = partner.identity_number || partner.national_id || partner.national_id || partner.passport_no || partner.passport_no
       const nationalId = identityNumber && String(identityNumber).length === 11 ? String(identityNumber) : null
       const passportNo = nationalId ? null : partner.passport_no || partner.passport_no || null
-      let query = supabase.from('persons').select('id').eq('nationality', nationality).eq(nationalId ? 'national_id' : 'passport_no', nationalId || passportNo)
-      if (!nationalId && !passportNo) query = supabase.from('persons').select('id').eq('full_name', fullName)
-      query = applyTenantQueryScope(query, 'persons', tenantContext)
-      const { data: existing, error: findError } = await query.maybeSingle()
-      if (findError) return row
+      let existing: Record<string, any> | null = null
+      if (nationalId || passportNo) {
+        let query = supabase.from('persons').select('id').eq('nationality', nationality).eq(nationalId ? 'national_id' : 'passport_no', nationalId || passportNo)
+        query = applyTenantQueryScope(query, 'persons', tenantContext)
+        const { data, error: findError } = await query.maybeSingle()
+        if (findError) return row
+        existing = data || null
+      }
       const personId = existing?.id || (await supabase.from('persons').insert(withTenantInsertScopeForTable({
         first_name: partner.first_name || null,
         last_name: partner.last_name || null,

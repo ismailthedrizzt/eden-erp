@@ -56,7 +56,7 @@ interface PartnerRow {
   id: string
   company_id?: string
   owner_kind?: 'person' | 'organization'
-  partner_type?: 'kisi' | 'sirket'
+  partner_type?: 'person' | 'organization' | 'company' | 'kisi' | 'sirket'
   display_name?: string
   partner_name?: string
   identity_number?: string
@@ -194,6 +194,11 @@ const FIELD_LABELS: Record<string, string> = {
   last_name: 'Soyadı',
   gender: 'Cinsiyeti',
   identity_number: 'TCKN / VKN',
+  trade_name: 'Ticari Unvan',
+  tax_number: 'VKN',
+  country: 'Ülke',
+  mersis_number: 'MERSİS',
+  trade_registry_no: 'Ticaret Sicil No',
   share_ratio: 'Pay Oranı',
   voting_ratio: 'Oy Hakkı',
   profit_ratio: 'Kar Payı',
@@ -521,10 +526,10 @@ export default function OrtaklarPage() {
 
   const activeCompanyOptions = useMemo(() => companies.filter(isActiveCompanyForNewPartner), [companies])
   const companyNameById = useMemo(() => Object.fromEntries(companies.map(company => [company.value, company.label])), [companies])
-  const currentOwnershipByPartnerId = useMemo(() => Object.fromEntries(currentOwnershipRows.map(row => [row.partner_id, row])), [currentOwnershipRows])
+  const currentOwnershipByCompanyPartnerKey = useMemo(() => Object.fromEntries(currentOwnershipRows.map(row => [ownershipKey(row.company_id, row.partner_id), row])), [currentOwnershipRows])
   const representativeAuthoritiesForPartner = useCallback((partner: Record<string, any> | null | undefined) => {
     if (!partner) return []
-    const companyId = partner.company_id || partner.company_id
+    const companyId = partner.company_id
     const personId = partner.person_id
     const organizationId = partner.organization_id
     const sourceId = partner.source_id || personId || organizationId
@@ -543,14 +548,15 @@ export default function OrtaklarPage() {
   }, [representatives])
 
   const tableData = useMemo(() => partners.map(partner => {
-    const currentOwnership = currentOwnershipByPartnerId[partner.id]
+    const currentOwnership = currentOwnershipByCompanyPartnerKey[ownershipKey(partner.company_id, partner.id)]
     const representativeAuthorities = representativeAuthoritiesForPartner(partner)
+    const partnerType = normalizePartnerType(partner.owner_kind || partner.partner_type)
     return ({
     ...partner,
     display_name: partner.display_name || partner.partner_name || '',
     identity_number: partner.identity_number || partner.identity_tax_number || '',
-    partner_type_label: (partner.owner_kind || partner.partner_type) === 'organization' || partner.partner_type === 'sirket' ? 'Tüzel Kişi' : 'Gerçek Kişi',
-    company_name: companyNameById[partner.company_id || partner.company_id || ''] || '-',
+    partner_type_label: partnerType === 'organization' ? 'Tüzel Kişi' : 'Gerçek Kişi',
+    company_name: companyNameById[partner.company_id || ''] || '-',
     current_ownership: currentOwnership || null,
     current_share_ratio: currentOwnership?.current_share_ratio ?? 0,
     current_voting_ratio: currentOwnership?.current_voting_ratio ?? 0,
@@ -558,7 +564,7 @@ export default function OrtaklarPage() {
     current_capital_amount: currentOwnership?.current_capital_amount ?? 0,
     representative_authorities: representativeAuthorities,
   })
-  }), [companyNameById, currentOwnershipByPartnerId, partners, representativeAuthoritiesForPartner])
+  }), [companyNameById, currentOwnershipByCompanyPartnerKey, partners, representativeAuthoritiesForPartner])
 
   const activePartners = useMemo(() => tableData.filter(partner => getPartnerRecordStatus(partner) === 'active'), [tableData])
   const widgets: WidgetDef<any>[] = useMemo(() => [
@@ -580,6 +586,14 @@ export default function OrtaklarPage() {
       return {
         ...field,
         options: pageState === 'create' ? activeCompanyOptions : companies,
+        remoteOptions: {
+          endpoint: pageState === 'create'
+            ? '/api/companies?statuses=active&pageSize=40'
+            : '/api/companies?statuses=draft,active&pageSize=40',
+          queryParam: 'ara',
+          minQueryLength: 2,
+          limit: 40,
+        },
         placeholder: pageState === 'create' && activeCompanyOptions.length === 0
           ? 'Aktif şirket bulunamadı'
           : field.placeholder,
@@ -672,11 +686,11 @@ export default function OrtaklarPage() {
         : payload
       const companySelectionError = mode === 'create' ? getPartnerCompanySelectionError(validationPayload, activeCompanyOptions) : null
       if (companySelectionError) throw companySelectionError
-      const missingPersonFields = getMissingPersonFields(validationPayload)
-      if (missingPersonFields.length > 0) {
-        const message = missingPersonFields.map(field => FIELD_LABELS[field] || field).join(', ')
+      const missingPartnerFields = getMissingPartnerFields(validationPayload)
+      if (missingPartnerFields.length > 0) {
+        const message = missingPartnerFields.map(field => FIELD_LABELS[field] || field).join(', ')
         const error = new Error(`Eksik Zorunlu Alan [${message}]`) as SaveError
-        error.fieldErrors = Object.fromEntries(missingPersonFields.map(field => [field, `${FIELD_LABELS[field] || field} zorunludur`]))
+        error.fieldErrors = Object.fromEntries(missingPartnerFields.map(field => [field, `${FIELD_LABELS[field] || field} zorunludur`]))
         error.toast = { type: 'warning', title: 'Eksik Zorunlu Alan', message }
         throw error
       }
@@ -727,11 +741,11 @@ export default function OrtaklarPage() {
       })
       invalidateEntityDetailCache('company-partners', selectedPartner.id)
       if (result.data) setSelectedPartner(normalizePartnerForForm(result.data))
-      setToast({ type: 'success', title: 'Kayit Basarili', message: 'Ortak kaydi aktive edildi' })
+      setToast({ type: 'success', title: 'Kayıt Başarılı', message: 'Ortak kaydı aktive edildi' })
       await loadData(true)
       setPageState('view')
     } catch (err: any) {
-      setToast(err.toast || { type: 'error', title: 'Kayit Basarisiz', message: err.message })
+      setToast(err.toast || { type: 'error', title: 'Kayıt Başarısız', message: err.message })
       throw err
     } finally {
       setDeleting(false)
@@ -1103,7 +1117,7 @@ export default function OrtaklarPage() {
               ],
             }}
             documentSlot={{
-              title: 'Belgeler',
+              title: 'Ortak Profil Belgeleri',
               dataField: 'partner_documents',
               slots: [
                 { id: 'kimlik_pasaport', title: 'Kimlik / Pasaport', required: false },
@@ -1166,14 +1180,17 @@ function PartnerOwnershipNotice({ onCancel, onConfirm }: { onCancel: () => void;
       <div className="w-full max-w-lg rounded-lg border border-amber-200 bg-white p-5 shadow-xl dark:border-amber-900 dark:bg-gray-950">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Taslak Ortaklık Uyarısı</h3>
         <p className="mt-3 text-sm leading-6 text-gray-700 dark:text-gray-200">
+          Bu ortak henüz taslak durumdadır. Taslak ortak, yalnızca şirkette tahsis edilmemiş pay/sermaye varsa doğrudan ortaklığa alınabilir. Şirket paylarının tamamı dağıtılmışsa yeni ortak girişi sermaye artırımı veya pay devri işlemiyle yapılmalıdır.
+          <span className="hidden">
           Taslak ortaklara ortaklık ancak Hisse Payında boşluk olan şirketlere ortak atamakta kullanılabilir. Hisse payı halihazırda ortaklara dağıtılmış şirketlerdeki pay değişiklikleri Hissesini devreden ortak üzerinden yapmanız gerekmektedir.
+          </span>
         </p>
         <div className="mt-5 flex justify-end gap-2">
           <button type="button" onClick={onCancel} className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-900">
             Vazgeç
           </button>
           <button type="button" onClick={onConfirm} className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
-            OK
+            Devam Et
           </button>
         </div>
       </div>
@@ -2582,8 +2599,12 @@ function normalizePartnerForForm(partner: PartnerRow) {
 
 function normalizePartnerType(value: unknown): 'person' | 'organization' {
   const text = String(value || '').toLocaleLowerCase('tr-TR')
-  if (['organization', 'tüzel_kisi', 'sirket', 'şirket', 'organization'].includes(text)) return 'organization'
+  if (['organization', 'company', 'tüzel_kisi', 'sirket', 'şirket'].includes(text)) return 'organization'
   return 'person'
+}
+
+function ownershipKey(companyId?: string | null, partnerId?: string | null) {
+  return `${companyId || ''}::${partnerId || ''}`
 }
 
 function getPartnerRecordStatus(partner?: Record<string, any> | null): RecordStatusFilterValue {
@@ -2638,9 +2659,10 @@ function normalizePayload(raw: Record<string, any>, companies: Option[], mode: F
     Object.entries(raw).filter(([, value]) => value !== '' && value !== null && value !== undefined)
   )
 
-  payload.company_id = payload.company_id || payload.company_id
+  payload.company_id = payload.company_id
   if (payload.master_entity_kind === 'person') payload.partner_type = 'person'
   if (payload.master_entity_kind === 'organization') payload.partner_type = 'organization'
+  payload.partner_type = normalizePartnerType(payload.partner_type || payload.owner_kind)
   const normalizedGender = normalizeGenderValue(payload.gender)
   if (normalizedGender) payload.gender = normalizedGender
   const hasNationalityLikeValue = hasOwnPayloadValue(payload, 'nationality_country') || hasOwnPayloadValue(payload, 'country') || hasOwnPayloadValue(payload, 'nationality')
@@ -2649,7 +2671,7 @@ function normalizePayload(raw: Record<string, any>, companies: Option[], mode: F
     payload.nationality = normalizeCountryId(payload.nationality || payload.nationality_country)
     payload.country = normalizeCountryId(payload.country || payload.nationality_country || payload.nationality || 'TR')
   }
-  payload.identity_number = payload.identity_number || payload.national_id || payload.national_id || payload.tax_number || payload.tax_number || payload.passport_no || payload.passport_no
+  payload.identity_number = payload.identity_number || payload.national_id || payload.tax_number || payload.passport_no || payload.trade_registry_no || payload.mersis_number
   payload.owner_kind = payload.partner_type || payload.owner_kind
   if (mode === 'create') {
     payload.status = payload.status || 'Taslak'
@@ -2723,15 +2745,25 @@ function getPartnerCompanySelectionError(payload: Record<string, any>, activeCom
   return null
 }
 
-function getMissingPersonFields(payload: Record<string, any>) {
-  if (payload.partner_type !== 'person') return []
-  return [
-    ['first_name', payload.first_name],
-    ['last_name', payload.last_name],
-    ['gender', payload.gender],
-  ]
-    .filter(([, value]) => !String(value || '').trim())
-    .map(([field]) => field)
+function getMissingPartnerFields(payload: Record<string, any>) {
+  const partnerType = normalizePartnerType(payload.partner_type || payload.owner_kind)
+  if (partnerType === 'person') {
+    return [
+      ['first_name', payload.first_name],
+      ['last_name', payload.last_name],
+      ['gender', payload.gender],
+    ]
+      .filter(([, value]) => !String(value || '').trim())
+      .map(([field]) => field)
+  }
+
+  const missing: string[] = []
+  if (!String(payload.country || payload.nationality_country || '').trim()) missing.push('country')
+  if (!String(payload.trade_name || payload.first_name || '').trim()) missing.push('trade_name')
+  if (!String(payload.identity_number || payload.tax_number || payload.trade_registry_no || payload.mersis_number || '').trim()) missing.push('tax_number')
+  const country = normalizeCountryId(payload.country || payload.nationality_country || 'TR')
+  if (country === 'TR' && !String(payload.trade_registry_no || payload.mersis_number || '').trim()) missing.push('trade_registry_no')
+  return missing
 }
 
 function buildEntityFieldHistory(history: any[]) {

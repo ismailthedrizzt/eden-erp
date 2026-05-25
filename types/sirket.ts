@@ -4,7 +4,7 @@
  * Company entity definitions for the ERP system
  */
 
-export type CompanyLifecycleStatus = 'draft' | 'active' | 'liquidation' | 'deregistered'
+export type CompanyLifecycleStatus = 'draft' | 'active' | 'liquidation' | 'deregistered' | 'unknown'
 export type CompanyRelatedStatus = 'ok' | 'module_closed' | 'error'
 
 export interface CompanyLifecycleEvent {

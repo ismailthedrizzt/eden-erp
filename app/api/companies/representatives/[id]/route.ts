@@ -6,7 +6,7 @@ import { requirePermission } from '@/lib/security/serverPermissions'
 import { applyTenantQueryScope, resolveTenantContext } from '@/lib/tenancy/server'
 import { getTenantCompanyScope, isWritableCompanyScope } from '@/lib/tenancy/companyScopes'
 
-const REPRESENTATIVE_DETAIL_SELECT = 'id,company_id,company_id,person_id,organization_id,person_kind,source_type,source_id,display_name,full_name,phone,email,authority_types,job_title,authority_type,status,start_date,end_date,signature_type,transaction_limit,currency,requires_joint_signature,can_approve_alone,is_deleted,history,photo_logo,authority_documents,representative_profile,notes,created_at'
+const REPRESENTATIVE_DETAIL_SELECT = 'id,company_id,person_id,organization_id,person_kind,source_type,source_id,display_name,full_name,phone,email,authority_types,job_title,authority_type,status,start_date,end_date,signature_type,transaction_limit,currency,requires_joint_signature,can_approve_alone,is_deleted,history,photo_logo,authority_documents,representative_profile,notes,created_at'
 
 const TRACKED_FIELDS = new Set([
   'status',

@@ -248,6 +248,19 @@ const heroFields: FormField[] = [
 
 const tabs: FormTab[] = [
   {
+    id: 'lifecycle_summary',
+    label: 'Yaşam Döngüsü',
+    icon: <CircleDot size={16} />,
+    fields: [
+      {
+        name: 'company_lifecycle_summary',
+        label: 'Durum Özeti',
+        type: 'custom',
+        colSpan: 3,
+      },
+    ],
+  },
+  {
     id: 'partners',
     label: 'Ortaklar',
     icon: <Users size={16} />,
@@ -319,7 +332,7 @@ const tabs: FormTab[] = [
       { name: 'e_invoice_taxpayer', label: 'E-Fatura Mükellefi', type: 'checkbox', controlledByOperation: COMPANY_PUBLIC_REGISTRATION_CONTROL },
       { name: 'e_archive_taxpayer', label: 'E-Arşiv Mükellefi', type: 'checkbox', controlledByOperation: COMPANY_PUBLIC_REGISTRATION_CONTROL },
       { name: 'e_waybill_taxpayer', label: 'E-İrsaliye Mükellefi', type: 'checkbox', controlledByOperation: COMPANY_PUBLIC_REGISTRATION_CONTROL },
-      { name: 'sgk_workplace_registry_no', label: 'SGK İşyeri Sicil No', type: 'text', maxLength: 26, inputMode: 'numeric', placeholder: '26 hane: M + 4 işkolu + 2 eski şube + 2 yeni şube + 7 sıra + 3 city + 2 cityçe + 2 kontrol + 3 aracı', controlledByOperation: COMPANY_PUBLIC_REGISTRATION_CONTROL },
+      { name: 'sgk_workplace_registry_no', label: 'SGK İşyeri Sicil No', type: 'text', maxLength: 26, inputMode: 'numeric', placeholder: '26 hane: M + 4 işkolu + 2 eski şube + 2 yeni şube + 7 sıra + 3 il + 2 ilçe + 2 kontrol + 3 aracı', controlledByOperation: COMPANY_PUBLIC_REGISTRATION_CONTROL },
       { name: 'sgk_province', label: 'SGK İl', type: 'text', placeholder: 'SGK sicil no girilince otomatik dolar', controlledByOperation: COMPANY_PUBLIC_REGISTRATION_CONTROL },
       { name: 'sgk_branch', label: 'SGK Şube', type: 'text', placeholder: 'SGK sicil no girilince otomatik dolar', controlledByOperation: COMPANY_PUBLIC_REGISTRATION_CONTROL },
       { name: 'risk_class', label: 'Tehlike Sınıfı', type: 'custom', colSpan: 3, controlledByOperation: COMPANY_PUBLIC_REGISTRATION_CONTROL },
@@ -833,7 +846,11 @@ export default function SirketlerPage() {
         && !(isDraftEdit && DRAFT_EDITABLE_OPERATION_FORM_FIELDS.has(key))
       ) return
       if (['partners', 'representatives', 'stakeholders', 'documents', 'logos', 'lifecycle_status_badge', 'company_lifecycle_summary', 'record_status', 'company_status', 'opening_details', 'liquidation_details', 'deregistration_details', 'lifecycle_events', 'lifecycle_last_event', 'capital_completion_ratio', 'committed_capital_amount', 'paid_capital_amount', 'company_nace_codes', 'public_tax', 'public_sgk', 'public_incentives', 'public_registry', 'public_licenses', 'public_channels', 'related_status', 'related_errors'].includes(key)) return
-      if (value === '' || value === null || value === undefined) return
+      if (value === undefined) return
+      if (value === '' || value === null) {
+        if (pageState !== 'create') payload[key] = null
+        return
+      }
       if (pageState !== 'create' && ['hero_documents', 'hero_images'].includes(key) && selectedSirket) {
         if (JSON.stringify(value) === JSON.stringify((selectedSirket as any)[key] || [])) return
       }
@@ -915,7 +932,7 @@ export default function SirketlerPage() {
       await companyService.delete(selectedSirket.id)
       invalidateEntityDetailCache(COMPANY_DETAIL_CACHE_NAMESPACE, selectedSirket.id)
 
-      setToast({ type: 'success', title: 'Kayıt Başarılı', message: isDraft ? 'Sirket taslak kaydi kalici olarak silindi' : 'Şirket kaydı pasife çekildi' })
+      setToast({ type: 'success', title: 'Kayıt Başarılı', message: isDraft ? 'Şirket taslak kaydı kalıcı olarak silindi' : 'Şirket kaydı pasife çekildi' })
       await yenile()
       setPageState('list')
     } catch (error: any) {
@@ -935,12 +952,12 @@ export default function SirketlerPage() {
       const result = await companyService.update(selectedSirket.id, { is_deleted: false })
       invalidateEntityDetailCache(COMPANY_DETAIL_CACHE_NAMESPACE, selectedSirket.id)
       if (result.data) setSelectedSirket({ ...selectedSirket, ...result.data, is_deleted: false })
-      setToast({ type: 'success', title: 'Kayit Basarili', message: 'Sirket kaydi aktive edildi' })
+      setToast({ type: 'success', title: 'Kayıt Başarılı', message: 'Şirket kaydı aktive edildi' })
       await yenile()
       setPageState('view')
     } catch (error: any) {
       setFormError(error.message)
-      setToast(error.toast || { type: 'error', title: 'Kayit Basarisiz', message: error.message })
+      setToast(error.toast || { type: 'error', title: 'Kayıt Başarısız', message: error.message })
       throw error
     } finally {
       setDeleting(false)
@@ -1370,6 +1387,15 @@ export default function SirketlerPage() {
                   }
                 }
 
+                if (nextField.name === 'company_lifecycle_summary') {
+                  return {
+                    ...nextField,
+                    render: ({ data }) => (
+                      <CompanyLifecycleSummary data={(data as Sirket) || selectedSirket} />
+                    ),
+                  }
+                }
+
                 if (nextField.name === 'company_nace_codes') {
                   return {
                     ...nextField,
@@ -1471,11 +1497,12 @@ export default function SirketlerPage() {
               ],
             }}
             documentSlot={{
+              title: 'Şirket Belgeleri',
               dataField: 'hero_documents',
               slots: [
-                { id: 'vergi_levhasi', title: 'Vergi Levhası', required: true },
-                { id: 'ticaret_sicil_gazetesi', title: 'Ticaret Sicil Gazetesi', required: true },
-                { id: 'sicil_tasdiknamesi', title: 'Sicil Tasdiknamesi', required: true },
+                { id: 'vergi_levhasi', title: 'Vergi Levhası', required: false },
+                { id: 'ticaret_sicil_gazetesi', title: 'Ticaret Sicil Gazetesi', required: false },
+                { id: 'sicil_tasdiknamesi', title: 'Sicil Tasdiknamesi', required: false },
                 { id: 'faaliyet_belgesi', title: 'Faaliyet Belgesi', required: false },
                 { id: 'imza_sirkuleri', title: 'İmza Sirküleri', required: false },
                 { id: 'diger', title: 'Diğer Belgeler', required: false },
@@ -1564,9 +1591,21 @@ function useDarkModeFlag() {
 }
 
 function getCompanyLifecycleStatus(company?: Partial<Sirket> | null): CompanyLifecycleStatus {
-  const raw = company?.record_status || company?.company_status || (company?.is_deleted ? 'deregistered' : 'active')
-  if (raw === 'draft' || raw === 'active' || raw === 'liquidation' || raw === 'deregistered') return raw
-  return 'draft'
+  if (!company) return 'draft'
+  if (company.is_deleted === true) return 'deregistered'
+
+  const values = [company.record_status, company.company_status]
+    .map(value => String(value || '').trim().toLocaleLowerCase('tr-TR'))
+    .filter(Boolean)
+
+  for (const value of values) {
+    if (['draft', 'taslak'].includes(value)) return 'draft'
+    if (['active', 'opened', 'aktif'].includes(value)) return 'active'
+    if (['liquidation', 'tasfiye', 'tasfiye halinde'].includes(value)) return 'liquidation'
+    if (['deregistered', 'passive', 'closed', 'deleted', 'pasif', 'kapalı', 'kapanmış'].includes(value)) return 'deregistered'
+  }
+
+  return values.length ? 'unknown' : 'active'
 }
 
 function getCompanyLifecycleOperationProgress(status: CompanyLifecycleStatus): FormOperationProgress {
@@ -1579,6 +1618,7 @@ function getCompanyLifecycleOperationProgress(status: CompanyLifecycleStatus): F
   if (status === 'liquidation') {
     return { completedActionKeys: ['opening'], activeActionKeys: ['liquidation', 'deregistration'] }
   }
+  if (status === 'unknown') return {}
   return { completedActionKeys: ['opening', 'liquidation', 'deregistration'] }
 }
 
@@ -1586,6 +1626,7 @@ function getCompanyLifecycleLabel(status: CompanyLifecycleStatus) {
   if (status === 'draft') return 'Taslak'
   if (status === 'active') return 'Aktif'
   if (status === 'liquidation') return 'Tasfiye Halinde'
+  if (status === 'unknown') return 'Bilinmeyen'
   return 'Terkin Edildi / Kapanmış'
 }
 
@@ -1630,6 +1671,7 @@ function CompanyLifecycleSummary({ data }: { data?: Sirket | null }) {
   const opening = (data as any)?.opening_details || {}
   const liquidation = (data as any)?.liquidation_details || {}
   const deregistration = (data as any)?.deregistration_details || {}
+  const missingDocuments = status === 'active' ? getMissingCompanyProfileDocuments(data) : []
 
   return (
     <div data-tour-id="record-lifecycle-summary" className="col-span-2 space-y-4 lg:col-span-3">
@@ -1673,8 +1715,33 @@ function CompanyLifecycleSummary({ data }: { data?: Sirket | null }) {
       <div className="rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-800 dark:border-blue-900/50 dark:bg-blue-950/30 dark:text-blue-200">
         Açılış, tasfiye ve terkin bilgileri doğrudan form alanı değildir; ilgili wizard kayıtlarından read-only özet olarak gösterilir.
       </div>
+      {missingDocuments.length > 0 && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-200">
+          Aktif şirket profilinde eksik belge var: {missingDocuments.join(', ')}.
+        </div>
+      )}
     </div>
   )
+}
+
+function getMissingCompanyProfileDocuments(data?: Sirket | null) {
+  const documents: any[] = Array.isArray((data as any)?.hero_documents) ? (data as any).hero_documents : []
+  const required = [
+    ['vergi_levhasi', 'Vergi Levhası'],
+    ['ticaret_sicil_gazetesi', 'Ticaret Sicil Gazetesi'],
+    ['sicil_tasdiknamesi', 'Sicil Tasdiknamesi'],
+  ] as const
+
+  return required
+    .filter(([slotId]) => !documents.some(document => isCompanyDocumentReadyForSlot(document, slotId)))
+    .map(([, title]) => title)
+}
+
+function isCompanyDocumentReadyForSlot(document: any, slotId: string) {
+  if (!document || document.isDeleted || document.is_deleted || document.status === 'deleted' || document.status === 'archived') return false
+  const documentSlotId = String(document.slotId || document.slot_id || document.document_type || '')
+  if (documentSlotId !== slotId) return false
+  return Boolean(document.storagePath || document.documentId || document.document_id || document.url || document.previewUrl || document.name)
 }
 
 function CompanyHistoryPanel({ data }: { data?: Sirket | null }) {
@@ -2010,8 +2077,8 @@ function RelatedSummaryTable({ type, rows }: { type: 'partners' | 'representativ
                 {isPartners ? (
                   <>
                     <td className="px-3 py-2 font-medium text-gray-900 dark:text-white">{row.display_name || row.partner_name || '-'}</td>
-                    <td className="px-3 py-2 text-gray-600 dark:text-gray-300">{row.owner_kind === 'organization' || row.partner_type === 'organization' ? 'Tüzel Kişi' : 'Gerçek Kişi'}</td>
-                    <td className="px-3 py-2 text-gray-600 dark:text-gray-300">{formatPercent(row.share_ratio ?? row.share_ratio ?? row.current_share_ratio)}</td>
+                    <td className="px-3 py-2 text-gray-600 dark:text-gray-300">{isOrganizationPartner(row) ? 'Tüzel Kişi' : 'Gerçek Kişi'}</td>
+                    <td className="px-3 py-2 text-gray-600 dark:text-gray-300">{formatPercent(row.share_ratio ?? row.current_share_ratio)}</td>
                     <td className="px-3 py-2 text-gray-600 dark:text-gray-300">{formatPercent(row.voting_ratio ?? row.current_voting_ratio)}</td>
                     <td className="px-3 py-2"><StatusPill status={row.is_deleted ? 'Pasif' : row.status || 'Aktif'} /></td>
                   </>
@@ -2055,6 +2122,11 @@ function formatPercent(value: unknown) {
   const number = Number(value)
   if (!Number.isFinite(number)) return '-'
   return `%${number.toLocaleString('tr-TR', { maximumFractionDigits: 2 })}`
+}
+
+function isOrganizationPartner(row: Record<string, any>) {
+  const kind = String(row.owner_kind || row.partner_type || '').trim().toLocaleLowerCase('tr-TR')
+  return ['organization', 'company', 'sirket', 'şirket', 'tüzel_kisi'].includes(kind)
 }
 
 function formatCompletionRatio(value: number) {
@@ -2158,12 +2230,12 @@ function normalizeCompanyForForm(company: Sirket) {
       const parts = String(partner.partner_name || '').trim().split(/\s+/)
       return {
         ...partner,
-        owner_kind: partner.owner_kind || (partner.partner_type === 'organization' ? 'organization' : 'person'),
-        source_type: partner.source_type || (partner.partner_type === 'organization' ? 'external_organization' : 'external_person'),
+        owner_kind: partner.owner_kind || (isOrganizationPartner(partner) ? 'organization' : 'person'),
+        source_type: partner.source_type || (isOrganizationPartner(partner) ? 'external_organization' : 'external_person'),
         source_id: partner.source_id || partner.id,
         display_name: partner.display_name || partner.partner_name || '',
         identity_number: partner.identity_number || partner.identity_tax_number || '',
-        share_ratio: partner.share_ratio ?? partner.share_ratio ?? partner.current_share_ratio ?? '',
+        share_ratio: partner.share_ratio ?? partner.current_share_ratio ?? '',
         voting_ratio: partner.voting_ratio ?? partner.current_voting_ratio ?? '',
         profit_ratio: partner.profit_ratio ?? partner.current_profit_ratio ?? '',
         has_representation_right: partner.has_representation_right ?? !!partner.signature_authority,
@@ -2171,7 +2243,7 @@ function normalizeCompanyForForm(company: Sirket) {
         history: partner.history || [],
         first_name: partner.first_name || parts.slice(0, -1).join(' ') || partner.partner_name || '',
         last_name: partner.last_name || (parts.length > 1 ? parts.at(-1) : ''),
-        partner_type: partner.partner_type || 'person',
+        partner_type: isOrganizationPartner(partner) ? 'organization' : 'person',
         identity_tax_number: partner.identity_tax_number || '',        signature_authority: !!partner.signature_authority,
       }
     }),

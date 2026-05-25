@@ -11,7 +11,7 @@ import { diffRecord, safeCrudResponse, safeReadRecord, safeUpdateRecord } from '
 import { ensureUniqueRoleMaster } from '@/lib/identity/roleUniqueness'
 import { applyTenantQueryScope, resolveTenantContext, withTenantInsertScopeForTable } from '@/lib/tenancy/server'
 
-const PARTNER_DETAIL_SELECT = 'id,company_id,company_id,person_id,organization_id,owner_kind,partner_type,display_name,partner_name,identity_number,identity_tax_number,share_ratio,share_ratio,voting_ratio,profit_ratio,source_type,source_id,share_units,nominal_value,capital_amount,share_class,has_representation_right,signature_authority,has_control_right,control_type,has_board_nomination_right,has_veto_right,has_privileged_share,beneficial_owner,is_beneficial_owner,beneficial_ratio,is_ultimate_controller,start_date,end_date,status,record_status,history,photo_logo,partner_documents,partner_profile,notes,created_at'
+const PARTNER_DETAIL_SELECT = 'id,company_id,person_id,organization_id,owner_kind,partner_type,display_name,partner_name,identity_number,identity_tax_number,share_ratio,voting_ratio,profit_ratio,source_type,source_id,share_units,nominal_value,capital_amount,share_class,has_representation_right,signature_authority,has_control_right,control_type,has_board_nomination_right,has_veto_right,has_privileged_share,beneficial_owner,is_beneficial_owner,beneficial_ratio,is_ultimate_controller,start_date,end_date,status,record_status,history,photo_logo,partner_documents,partner_profile,notes,created_at'
 
 function buildFieldHistory(current: Record<string, any>, updates: Record<string, any>) {
   const existingHistory = Array.isArray(current.history) ? current.history : []
@@ -185,16 +185,17 @@ function partnerDraftDeleteReferenceChecks(partnerId: string): SafeHardDeleteRef
 }
 
 function mapPartnerForDb(partner: Record<string, any>, current?: Record<string, any>) {
-  const ownerKind = partner.partner_type || partner.owner_kind || current?.owner_kind || 'person'
+  const ownerKind = normalizePartnerKind(partner.partner_type || partner.owner_kind || current?.owner_kind || current?.partner_type)
   const displayName = ownerKind === 'organization'
     ? partner.trade_name || partner.short_name || current?.display_name
     : [partner.first_name, partner.last_name].filter(Boolean).join(' ').trim() || current?.display_name
 
   return {
-    company_id: partner.company_id || partner.company_id || current?.company_id || current?.company_id,    partner_name: displayName || 'Ortak',
-    partner_type: ownerKind === 'organization' ? 'company' : 'person',
+    company_id: partner.company_id || current?.company_id,
+    partner_name: displayName || 'Ortak',
+    partner_type: ownerKind,
     identity_tax_number: partner.identity_number || current?.identity_tax_number,
-    share_ratio: toNullableNumber(partner.share_ratio ?? partner.share_ratio ?? current?.share_ratio),
+    share_ratio: toNullableNumber(partner.share_ratio ?? current?.share_ratio),
     signature_authority: !!(partner.has_representation_right ?? current?.signature_authority),
     owner_kind: ownerKind,
     source_type: partner.person_id ? 'master_person' : partner.organization_id ? 'master_organization' : partner.source_type || current?.source_type || 'partners_sayfasi',
@@ -225,7 +226,13 @@ function mapPartnerForDb(partner: Record<string, any>, current?: Record<string, 
     notes: partner.notes || null,
     photo_logo: partner.photo_logo || current?.photo_logo || [],
     partner_documents: partner.partner_documents || current?.partner_documents || [],
-    partner_profile: stripMasterDataForRoleProfile(partner),  }
+    partner_profile: stripMasterDataForRoleProfile(partner),
+  }
+}
+
+function normalizePartnerKind(value: unknown): 'person' | 'organization' {
+  const text = String(value || '').trim().toLocaleLowerCase('tr-TR')
+  return ['organization', 'company', 'sirket', 'şirket', 'tüzel_kisi'].includes(text) ? 'organization' : 'person'
 }
 
 function toNullableNumber(value: unknown) {

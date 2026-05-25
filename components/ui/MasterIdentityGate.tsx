@@ -505,13 +505,13 @@ function deriveEntityKind(config: IdentityGateConfig, formData: Record<string, a
     formData.stakeholder_type ||
     formData.owner_kind ||
     ''
-  )
+  ).trim().toLocaleLowerCase('tr-TR')
 
-  if (formData.organization_id || rawKind === 'organization' || rawKind === 'organization' || rawKind === 'sirket') {
+  if (formData.organization_id || ['organization', 'company', 'sirket', 'şirket', 'tüzel_kisi'].includes(rawKind)) {
     return config.allowedEntityKinds.includes('organization') ? 'organization' : config.allowedEntityKinds[0] || 'person'
   }
 
-  if (formData.person_id || rawKind === 'person' || rawKind === 'person' || rawKind === 'kisi') {
+  if (formData.person_id || ['person', 'kisi', 'kişi', 'gercek_kisi', 'gerçek_kisi'].includes(rawKind)) {
     return config.allowedEntityKinds.includes('person') ? 'person' : config.allowedEntityKinds[0] || 'person'
   }
 

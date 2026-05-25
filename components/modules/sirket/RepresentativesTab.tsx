@@ -98,6 +98,11 @@ interface RepresentativesTabProps {
   documents?: Array<Record<string, any>>
 }
 
+function isOrganizationPartner(partner: Record<string, any>) {
+  const kind = String(partner.owner_kind || partner.partner_type || '').trim().toLocaleLowerCase('tr-TR')
+  return ['organization', 'company', 'sirket', 'şirket', 'tüzel_kisi'].includes(kind)
+}
+
 interface DraftState {
   editIndex: number | null
   authority_types: AuthorityType[]
@@ -223,7 +228,7 @@ export function RepresentativesTab({ value, onChange, readOnly = false, partners
     identity: partner.identity_tax_number,
     role: partner.share_ratio ? `Hisse: %${partner.share_ratio}` : 'Ortak',
     status: partner.signature_authority ? 'Yetkili' : 'Aktif',
-    kind: partner.partner_type === 'sirket' ? 'organization' as PersonKind : 'person' as PersonKind,
+    kind: isOrganizationPartner(partner) ? 'organization' as PersonKind : 'person' as PersonKind,
   })), [partners])
 
   const sourceRecords = useMemo(() => {
