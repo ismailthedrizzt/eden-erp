@@ -370,6 +370,18 @@ async function updateRepresentativeNormally({
       const scope = await getTenantCompanyScope(supabase, tenantContext.tenantId, nextCompanyId)
       if (!scope) return { ok: false, status: 404, code: 'COMPANY_NOT_FOUND', error: 'Şirket bulunamadı' }
       if (!isWritableCompanyScope(scope)) return { ok: false, status: 403, code: 'COMPANY_SCOPE_READONLY', error: 'Bu şirket için yalnızca görüntüleme yetkiniz var.' }
+      if (body.company_id && body.company_id !== current.company_id) {
+        const duplicate = await findExistingRepresentativeForCompany(supabase, {
+          companyId: nextCompanyId,
+          personId: current.person_id || null,
+          organizationId: current.organization_id || null,
+          excludeId: representativeId,
+          tenantContext,
+        })
+        if (duplicate) {
+          return { ok: false, status: 409, code: 'DUPLICATE_REPRESENTATIVE', error: 'Bu şirket için aynı kişi/kurum adına temsilci kartı zaten var.' }
+        }
+      }
       return { ok: true }
     },
     beforeUpdate: ({ current, patch }) => {
@@ -615,6 +627,34 @@ function toNullableNumber(value: unknown) {
   if (value === '' || value === null || value === undefined) return null
   const number = Number(value)
   return Number.isFinite(number) ? number : null
+}
+
+async function findExistingRepresentativeForCompany(
+  supabase: ReturnType<typeof createServiceClient>,
+  input: {
+    companyId: string
+    personId?: string | null
+    organizationId?: string | null
+    excludeId?: string | null
+    tenantContext: ReturnType<typeof resolveTenantContext>
+  }
+) {
+  const masterColumn = input.personId ? 'person_id' : input.organizationId ? 'organization_id' : null
+  const masterId = input.personId || input.organizationId || null
+  if (!masterColumn || !masterId) return null
+
+  let query = supabase
+    .from('company_representatives')
+    .select('id')
+    .eq('company_id', input.companyId)
+    .eq(masterColumn, masterId)
+    .eq('is_deleted', false)
+    .limit(1)
+  if (input.excludeId) query = query.neq('id', input.excludeId)
+  query = applyTenantQueryScope(query, 'company_representatives', input.tenantContext)
+  const { data, error } = await query
+  if (error) throw error
+  return Array.isArray(data) ? data[0] || null : null
 }
 
 async function hydrateRepresentativeDetail(

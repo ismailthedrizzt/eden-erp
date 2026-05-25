@@ -142,6 +142,25 @@ const REPRESENTATIVE_OPERATION_CONTROLLED_FIELDS = new Set([
   'authority_transaction_history',
 ])
 
+const REPRESENTATIVE_CREATE_HIDDEN_HERO_FIELDS = new Set([
+  'start_date',
+  'end_date',
+  'primary_authority_type',
+  'signature_type',
+  'authority_limit',
+  'currency',
+])
+
+const REPRESENTATIVE_MASTER_TAB_LABELS: Record<string, string> = {
+  person_iletisim: 'Kişi İletişim',
+  person_egitim: 'Kişi Eğitim',
+  person_aile: 'Kişi Aile',
+  person_banka: 'Kişi Banka',
+  organization_iletisim: 'Kurum İletişim',
+  organization_banka: 'Kurum Banka',
+  organization_irtibat_noktalari: 'Kurum İrtibat Noktaları',
+}
+
 function toAuthorityValue(value: string) {
   return value
 }
@@ -408,6 +427,100 @@ const tabs: FormTab[] = [
   },
 ]
 
+const representativeRelationTabs: FormTab[] = [
+  {
+    id: 'representative_status',
+    label: 'Temsilcilik Durumu',
+    fields: [
+      {
+        name: 'status',
+        label: 'Yetki Durumu',
+        type: 'custom',
+        readOnly: true,
+        render: ({ data }) => <RepresentativeStatusSummary representative={data} />,
+      },
+      { name: 'start_date', label: 'Başlangıç Tarihi', type: 'date' },
+      { name: 'end_date', label: 'Bitiş Tarihi', type: 'date' },
+    ],
+  },
+  {
+    id: 'representative_current_authorities',
+    label: 'Güncel Yetkiler',
+    fields: [
+      {
+        name: 'authority_types',
+        label: 'Yetki Tipleri',
+        type: 'custom',
+        colSpan: 3,
+        render: ({ value, data }) => <AuthoritySummary value={Array.isArray(value) ? value : data.current_authority?.authority_types || []} />,
+      },
+      { name: 'signature_type', label: 'İmza Türü', type: 'select', options: [
+        { value: 'Münferit', label: 'Münferit' },
+        { value: 'Müşterek', label: 'Müşterek' },
+        { value: 'Sınırlı', label: 'Sınırlı' },
+        { value: 'Süresiz', label: 'Süresiz' },
+        { value: 'Yok', label: 'Yok' },
+      ] },
+      { name: 'transaction_limit', label: 'Genel Limit', type: 'number' },
+      { name: 'currency', label: 'Para Birimi', type: 'select', defaultValue: 'TRY', options: [
+        { value: 'TRY', label: 'TRY' },
+        { value: 'USD', label: 'USD' },
+        { value: 'EUR', label: 'EUR' },
+        { value: 'GBP', label: 'GBP' },
+      ] },
+      { name: 'payment_approval_limit', label: 'Ödeme Onay Limiti', type: 'number' },
+      { name: 'purchase_approval_limit', label: 'Satınalma Onay Limiti', type: 'number' },
+      { name: 'bank_transaction_limit', label: 'Banka İşlem Limiti', type: 'number' },
+      { name: 'contract_signature_limit', label: 'Sözleşme İmza Limiti', type: 'number' },
+      { name: 'requires_joint_signature', label: 'Müşterek İmza Gerekli mi?', type: 'checkbox' },
+      { name: 'can_approve_alone', label: 'Tek Başına Onaylayabilir mi?', type: 'checkbox' },
+      { name: 'scope_section', label: 'Yetki Kapsamı', type: 'section', colSpan: 3 },
+      { name: 'bank_authority_level', label: 'Banka Yetki Seviyesi', type: 'text' },
+      { name: 'department_scope', label: 'Departman Kapsamı', type: 'text' },
+      { name: 'gib_permissions', label: 'GİB Yetkileri', type: 'textarea', colSpan: 2 },
+      { name: 'can_submit_declaration', label: 'Beyanname Gönderme Yetkisi', type: 'checkbox' },
+      { name: 'can_process_e_invoice', label: 'E-Fatura İşlem Yetkisi', type: 'checkbox' },
+      { name: 'sgk_permissions', label: 'SGK Yetkileri', type: 'textarea', colSpan: 2 },
+      { name: 'can_submit_hiring_notice', label: 'İşe Giriş Bildirgesi Yetkisi', type: 'checkbox' },
+      { name: 'can_submit_termination_notice', label: 'İşten Çıkış Bildirgesi Yetkisi', type: 'checkbox' },
+      { name: 'official_correspondence_authority', label: 'Resmi Yazışma Yetkisi', type: 'checkbox' },
+    ],
+  },
+  {
+    id: 'representative_authority_documents',
+    label: 'Yetki Belgeleri',
+    fields: [
+      {
+        name: 'document_summary',
+        label: 'Yetki Belgeleri',
+        type: 'custom',
+        colSpan: 3,
+        render: ({ value }) => <SummaryList items={Array.isArray(value) ? value : []} emptyText="Yüklü yetki belgesi bulunamadı." />,
+      },
+    ],
+  },
+  {
+    id: 'representative_authority_history',
+    label: 'Yetki Geçmişi',
+    fields: [
+      {
+        name: 'timeline',
+        label: 'Yetki Geçmişi',
+        type: 'custom',
+        colSpan: 3,
+        render: ({ value }) => <Timeline value={Array.isArray(value) ? value : []} />,
+      },
+    ],
+  },
+  {
+    id: 'representative_notes',
+    label: 'Notlar',
+    fields: [
+      { name: 'notes', label: 'Notlar', type: 'textarea', colSpan: 3 },
+    ],
+  },
+]
+
 export default function TemsilcilerPage() {
   const [pageState, setPageState] = useState<PageState>('list')
   const [representatives, setRepresentatives] = useState<RepresentativeRow[]>([])
@@ -504,7 +617,7 @@ export default function TemsilcilerPage() {
 
   const widgets: WidgetDef<any>[] = useMemo(() => [
     { key: 'total', label: 'Toplam Temsilci', render: () => tableData.length },
-    { key: 'active', label: 'Aktif', render: () => tableData.filter(row => !isSoftDeletedRecord(row)).length },
+    { key: 'active', label: 'Aktif', render: () => tableData.filter(row => getRepresentativeRecordStatus(row) === 'active').length },
     { key: 'signature', label: 'İmza Yetkilisi', render: () => tableData.filter(row => row.authority_types?.some(type => toAuthorityValue(type) === 'signature_authority')).length },
     { key: 'bank', label: 'Banka Yetkilisi', render: () => tableData.filter(row => row.authority_types?.some(type => toAuthorityValue(type) === 'bank_authority')).length },
   ], [tableData])
@@ -523,11 +636,29 @@ export default function TemsilcilerPage() {
       ...field,
       required: false,
       requiredWhen: undefined,
-      controlledByOperation: field.controlledByOperation || control,
+      controlledByOperation: {
+        ...(field.controlledByOperation || control),
+        lockInModes: ['create', 'edit'],
+        allowDraftEdit: false,
+      },
     }
   }
 
-  const configuredHeroFields = heroFields.map(field => {
+  const configuredHeroFields = heroFields.filter(field => {
+    if (pageState !== 'create') return true
+    return !REPRESENTATIVE_CREATE_HIDDEN_HERO_FIELDS.has(field.name)
+  }).map(field => {
+    if (field.name === 'status') {
+      return withRepresentativeOperationControl({
+        ...field,
+        type: 'custom',
+        readOnly: true,
+        required: false,
+        requiredWhen: undefined,
+        options: undefined,
+        render: ({ data }) => <RepresentativeStatusSummary representative={data} />,
+      })
+    }
     if (field.name === 'company_id') {
       return {
         ...field,
@@ -544,7 +675,7 @@ export default function TemsilcilerPage() {
     return withRepresentativeOperationControl(field)
   })
 
-  const configuredTabs = [
+  const configuredMasterTabs = [
     ...createRealPersonMasterTabs({
       visibleWhen: { field: 'person_or_entity_type', operator: 'equals', value: 'person' },
       includeEmergencyContact: true,
@@ -553,12 +684,17 @@ export default function TemsilcilerPage() {
       visibleWhen: { field: 'person_or_entity_type', operator: 'equals', value: 'organization' },
       websiteField: 'website',
     }),
-    ...tabs
-      .filter(tab => !['genel', 'iletisim'].includes(tab.id))
-      .map(tab => {
-        const nextTab = tab.id === 'banka' ? { ...tab, id: 'banka_yetkileri', label: 'Banka Yetkileri' } : tab
-        return { ...nextTab, fields: nextTab.fields.map(withRepresentativeOperationControl) }
-      }),
+  ].map(tab => ({
+    ...tab,
+    label: REPRESENTATIVE_MASTER_TAB_LABELS[tab.id] || tab.label,
+  }))
+
+  const configuredTabs = [
+    ...configuredMasterTabs,
+    ...representativeRelationTabs.map(tab => ({
+      ...tab,
+      fields: tab.fields.map(withRepresentativeOperationControl),
+    })),
   ]
 
   const withFieldHistory = (field: FormField) => {
@@ -712,6 +848,7 @@ export default function TemsilcilerPage() {
           key: `representative-${transactionType}`,
           label: transactionType,
           icon: <ListChecks size={15} />,
+          disabled: transactionType === 'Ters Kayıt',
           onClick: () => openAuthorityWizard(transactionType),
         }))
       : []
@@ -833,8 +970,8 @@ export default function TemsilcilerPage() {
                 organization: ['country', 'tax_number', 'registration_number'],
               },
               roleTable: 'company_representatives',
-              roleDuplicateCheck: 'company_id + person_id/organization_id + authority_type + active',
-              roleScopeFields: ['company_id', 'company_id'],
+              roleDuplicateCheck: 'company_id + person_id/organization_id',
+              roleScopeFields: ['company_id'],
             }}
             heroFields={configuredHeroFields.map(withFieldHistory)}
             tabs={configuredTabs.map(tab => ({ ...tab, fields: tab.fields.map(withFieldHistory) }))}
@@ -853,7 +990,7 @@ export default function TemsilcilerPage() {
             operationActions={getRepresentativeOperationActions()}
             onIdentityGateOpenExistingRole={async (roleRecord) => {
               await handleRowClick(roleRecord as any)
-              setPageState('edit')
+              setPageState('view')
             }}
             onIdentityGateCancelDuplicate={() => setPageState('list')}
 
@@ -900,6 +1037,46 @@ export default function TemsilcilerPage() {
           onSubmit={handleAuthorityWizardSubmit}
         />
       )}
+    </div>
+  )
+}
+
+function RepresentativeStatusSummary({ representative }: { representative: Record<string, any> }) {
+  const recordStatus = getRepresentativeRecordStatus(representative)
+  const label = getRepresentativeStatusLabel(recordStatus, representative.status)
+  const toneClass = {
+    draft: 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200',
+    active: 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-200',
+    suspended: 'border-orange-200 bg-orange-50 text-orange-700 dark:border-orange-900 dark:bg-orange-950/30 dark:text-orange-200',
+    expired: 'border-gray-200 bg-gray-50 text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200',
+    terminated: 'border-red-200 bg-red-50 text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-200',
+    passive: 'border-gray-200 bg-gray-50 text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400',
+  }[recordStatus] || 'border-gray-200 bg-gray-50 text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200'
+
+  return (
+    <div className={`inline-flex min-h-10 w-full items-center rounded-lg border px-3 py-2 text-sm font-semibold ${toneClass}`}>
+      {label}
+    </div>
+  )
+}
+
+function AuthoritySummary({ value }: { value: string[] }) {
+  const authorities = value.map(toAuthorityValue).filter(Boolean)
+  if (!authorities.length) {
+    return (
+      <div className="rounded-lg border border-dashed border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-400">
+        Henüz aktif temsil yetkisi yok. Yetkiler Temsilcilik Başlatma veya Yetki işlemleriyle tanımlanır.
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex flex-wrap gap-2">
+      {authorities.map(authority => (
+        <span key={authority} className="rounded-full border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-medium text-blue-700 dark:border-blue-900 dark:bg-blue-950/30 dark:text-blue-200">
+          {toAuthorityLabel(authority)}
+        </span>
+      ))}
     </div>
   )
 }
@@ -1139,17 +1316,18 @@ function SummaryList({ items, emptyText }: { items: any[]; emptyText: string }) 
 }
 
 function Timeline({ value }: { value: any[] }) {
-  const items = value.length ? value : [
-    { text: '01.01.2025 → İmza Yetkilisi olarak eklendi' },
-    { text: '15.03.2025 → Banka işlem limiti 500.000 TL oldu' },
-    { text: '20.06.2025 → GİB yetkisi pasifleştirildi' },
-  ]
+  const items = value.filter(Boolean)
+  if (!items.length) {
+    return <div className="rounded-lg border border-dashed border-gray-200 p-4 text-sm text-gray-500 dark:border-gray-700">Henüz temsilcilik/yetki işlemi yok.</div>
+  }
 
   return (
     <div className="space-y-2">
       {items.map((item, index) => (
         <div key={index} className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200">
-          {item.text || `${item.changed_at || ''} → ${item.field || 'Değişiklik'}: ${item.old_value ?? '-'} → ${item.new_value ?? '-'}`}
+          {item.text || (item.transaction_type
+            ? `${item.effective_date || item.created_at || ''} → ${item.transaction_type}${item.workflow_status ? ` (${item.workflow_status})` : ''}`
+            : `${item.changed_at || ''} → ${item.field || 'Değişiklik'}: ${item.old_value ?? '-'} → ${item.new_value ?? '-'}`)}
         </div>
       ))}
     </div>
@@ -1274,6 +1452,18 @@ function getRepresentativeCompanySelectionError(payload: Record<string, any>): S
   error.fieldErrors = { company_id: 'Şirket seçimi zorunludur' }
   error.toast = { type: 'warning', title: 'Eksik Zorunlu Alan', message: 'Şirket' }
   return error
+}
+
+function getRepresentativeStatusLabel(recordStatus: string, fallback?: string) {
+  const labels: Record<string, string> = {
+    draft: 'Taslak',
+    active: 'Aktif',
+    suspended: 'Askıda',
+    expired: 'Süresi Dolmuş',
+    terminated: 'Sonlandırıldı',
+    passive: 'Pasif',
+  }
+  return labels[recordStatus] || fallback || 'Taslak'
 }
 
 function getRepresentativeRecordStatus(representative?: Record<string, any> | null) {

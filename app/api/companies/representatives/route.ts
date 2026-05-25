@@ -170,6 +170,20 @@ export async function POST(request: NextRequest) {
       if (operation) await operationService.markFailed(operation.id, { code: 'COMPANY_REQUIRED', error: 'Bağlı şirket bulunamadı' })
       return NextResponse.json({ error: 'Bağlı şirket bulunamadı', code: 'COMPANY_REQUIRED' }, { status: 400 })
     }
+    const existingRepresentative = await findExistingCompanyRepresentative(supabase, row, tenantContext)
+    if (existingRepresentative) {
+      if (operation) await operationService.markFailed(operation.id, {
+        code: 'DUPLICATE_REPRESENTATIVE',
+        error: 'Bu şirket için aynı kişi/kurum adına temsilci kartı zaten var.',
+      })
+      const [hydratedExisting] = await mergeCurrentRepresentativeAuthorities(supabase, [existingRepresentative], tenantContext)
+      return NextResponse.json({
+        error: 'Bu şirket için aynı kişi/kurum adına temsilci kartı zaten var.',
+        code: 'DUPLICATE_REPRESENTATIVE',
+        data: hydratedExisting,
+        details: { existing_id: existingRepresentative.id },
+      }, { status: 409 })
+    }
 
     const { data, error } = await supabase
       .from('company_representatives')
@@ -357,6 +371,28 @@ async function attachRepresentativeIdentity(
   } catch {
     return row
   }
+}
+
+async function findExistingCompanyRepresentative(
+  supabase: ReturnType<typeof createServiceClient>,
+  row: Record<string, any>,
+  tenantContext: TenantContext
+) {
+  const masterColumn = row.person_id ? 'person_id' : row.organization_id ? 'organization_id' : null
+  const masterId = row.person_id || row.organization_id || null
+  if (!row.company_id || !masterColumn || !masterId) return null
+
+  let query = supabase
+    .from('company_representatives')
+    .select(REPRESENTATIVE_LIST_SELECT)
+    .eq('company_id', row.company_id)
+    .eq(masterColumn, masterId)
+    .eq('is_deleted', false)
+    .limit(1)
+  query = applyTenantQueryScope(query, 'company_representatives', tenantContext)
+  const { data, error } = await query
+  if (error) throw error
+  return Array.isArray(data) ? data[0] || null : null
 }
 
 async function mergeCurrentRepresentativeAuthorities(
