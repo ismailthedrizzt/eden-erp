@@ -15,44 +15,8 @@ import { operationStatusMessage } from '@/lib/operations/operationStatus'
 import { OutboxEventService } from '@/lib/outbox/outboxEventService'
 import { isMissingTableError } from '@/lib/modules/companies/companyErrors'
 
-const REPRESENTATIVE_LIST_SELECT = 'id,company_id,person_id,organization_id,person_kind,source_type,source_id,display_name,full_name,authority_types,job_title,authority_type,status,record_status,start_date,end_date,signature_type,transaction_limit,currency,requires_joint_signature,can_approve_alone,is_deleted,created_at,updated_at,version'
+const REPRESENTATIVE_LIST_SELECT = 'id,company_id,person_id,organization_id,person_kind,source_type,source_id,display_name,full_name,authority_types,job_title,authority_type,status,record_status,start_date,end_date,signature_type,transaction_limit,payment_approval_limit,purchase_approval_limit,bank_transaction_limit,contract_signature_limit,currency,requires_joint_signature,can_approve_alone,representative_profile,is_deleted,created_at,updated_at,version'
 const CURRENT_AUTHORITY_SELECT = 'company_id,representative_id,display_name,person_id,organization_id,record_status,status,authority_types,signature_type,transaction_limit,payment_approval_limit,purchase_approval_limit,bank_transaction_limit,contract_signature_limit,currency,limits,scope,requires_joint_signature,can_approve_alone,effective_date,end_date,warnings,tenant_id'
-
-const REPRESENTATIVE_OPERATION_CONTROLLED_FIELDS = new Set([
-  'status',
-  'record_status',
-  'start_date',
-  'end_date',
-  'primary_authority_type',
-  'authority_type',
-  'authority_types',
-  'job_title',
-  'signature_type',
-  'authority_limit',
-  'transaction_limit',
-  'payment_approval_limit',
-  'purchase_approval_limit',
-  'bank_transaction_limit',
-  'contract_signature_limit',
-  'currency',
-  'bank_currency',
-  'limit_currency',
-  'limit_start_date',
-  'limit_end_date',
-  'requires_joint_signature',
-  'can_approve_alone',
-  'bank_authority_level',
-  'department_scope',
-  'gib_permissions',
-  'can_submit_declaration',
-  'can_process_e_invoice',
-  'sgk_permissions',
-  'can_submit_hiring_notice',
-  'can_submit_termination_notice',
-  'official_correspondence_authority',
-  'current_authority',
-  'authority_transaction_history',
-])
 
 const RepresentativeSchema = z.object({
   company_id: z.string().uuid(),
@@ -76,11 +40,12 @@ function omitNullishValues(value: Record<string, any>) {
   )
 }
 
-function stripRepresentativeAuthorityControlledFields(body: Record<string, any>) {
+function stripRepresentativeCreateLifecycleFields(body: Record<string, any>) {
   const next = { ...body }
-  REPRESENTATIVE_OPERATION_CONTROLLED_FIELDS.forEach(field => {
-    delete next[field]
-  })
+  delete next.status
+  delete next.record_status
+  delete next.current_authority
+  delete next.authority_transaction_history
   return next
 }
 
@@ -104,6 +69,10 @@ export async function GET(request: NextRequest) {
   const sortColumn = sortMap[listQuery.sort || ''] || 'created_at'
   const companyId = searchParams.get('company_id')
   const status = searchParams.get('status')
+  const statuses = (searchParams.get('statuses') || '')
+    .split(',')
+    .map(item => item.trim())
+    .filter(Boolean)
   const includePassive = listQuery.includePassive
 
   let query = supabase
@@ -119,7 +88,16 @@ export async function GET(request: NextRequest) {
     query = query.eq('company_id', companyId)
   }
   if (status) query = query.eq('status', status)
-  if (!includePassive) query = query.eq('is_deleted', false).neq('record_status', 'passive')
+  if (statuses.length) {
+    if (statuses.includes('passive')) {
+      const activeStatuses = statuses.filter(item => item !== 'passive')
+      query = activeStatuses.length
+        ? query.or(`record_status.in.(${activeStatuses.join(',')}),record_status.eq.passive,is_deleted.eq.true`)
+        : query.or('record_status.eq.passive,is_deleted.eq.true')
+    } else {
+      query = query.in('record_status', statuses).eq('is_deleted', false)
+    }
+  } else if (!includePassive) query = query.eq('is_deleted', false).neq('record_status', 'passive')
   if (listQuery.search) query = query.or(`display_name.ilike.%${listQuery.search}%,full_name.ilike.%${listQuery.search}%,job_title.ilike.%${listQuery.search}%`)
 
   const { data, error } = await query
@@ -136,7 +114,7 @@ export async function POST(request: NextRequest) {
   const tenantContext = resolveTenantContext(request)
   const rawBody = await request.json()
   const clientRequestId = resolveClientRequestId(request, rawBody)
-  const body = stripRepresentativeAuthorityControlledFields(omitNullishValues(stripOperationControlFields(rawBody)))
+  const body = stripRepresentativeCreateLifecycleFields(omitNullishValues(stripOperationControlFields(rawBody)))
   const parsed = RepresentativeSchema.safeParse(body)
 
   if (!parsed.success) {
@@ -252,26 +230,40 @@ function normalizeAuthorityType(value: unknown) {
 }
 
 function mapRepresentativeForDb(representative: Record<string, any>) {
+  const authorityTypes = normalizeAuthorityTypes(representative.authority_types || representative.primary_authority_type || representative.authority_type)
   return {
     company_id: representative.company_id,
     full_name: representative.display_name || buildDisplayName(representative) || 'Temsilci',
-    job_title: null,
-    authority_type: 'other',
-    authority_types: [],
+    job_title: representative.job_title || representative.primary_authority_type || authorityTypes[0] || null,
+    authority_type: authorityTypes[0] || 'other',
+    authority_types: authorityTypes,
     person_kind: representative.person_or_entity_type,
     source_type: representative.source_type || (representative.person_or_entity_type === 'organization' ? 'master_organization' : 'master_person'),
     source_id: representative.source_id || null,
     display_name: representative.display_name || buildDisplayName(representative),
-    start_date: null,
-    end_date: null,
+    start_date: representative.start_date || null,
+    end_date: representative.end_date || null,
     status: 'Taslak',
     record_status: 'draft',
     notes: representative.notes || null,
-    signature_type: null,
-    transaction_limit: null,
-    currency: 'TRY',
-    requires_joint_signature: false,
-    can_approve_alone: false,
+    signature_type: representative.signature_type || null,
+    transaction_limit: toNullableNumber(representative.transaction_limit ?? representative.authority_limit),
+    payment_approval_limit: toNullableNumber(representative.payment_approval_limit),
+    purchase_approval_limit: toNullableNumber(representative.purchase_approval_limit),
+    bank_transaction_limit: toNullableNumber(representative.bank_transaction_limit),
+    contract_signature_limit: toNullableNumber(representative.contract_signature_limit),
+    currency: representative.currency || 'TRY',
+    requires_joint_signature: !!representative.requires_joint_signature,
+    can_approve_alone: !!representative.can_approve_alone,
+    bank_authority_level: representative.bank_authority_level || null,
+    department_scope: representative.department_scope || null,
+    gib_permissions: representative.gib_permissions || null,
+    can_submit_declaration: !!representative.can_submit_declaration,
+    can_process_e_invoice: !!representative.can_process_e_invoice,
+    sgk_permissions: representative.sgk_permissions || null,
+    can_submit_hiring_notice: !!representative.can_submit_hiring_notice,
+    can_submit_termination_notice: !!representative.can_submit_termination_notice,
+    official_correspondence_authority: !!representative.official_correspondence_authority,
     photo_logo: representative.photo_logo || [],
     authority_documents: representative.authority_documents || [],
     representative_profile: stripMasterDataForRoleProfile(representative),
@@ -373,6 +365,17 @@ async function attachRepresentativeIdentity(
   }
 }
 
+function normalizeAuthorityTypes(value: unknown) {
+  const source = Array.isArray(value) ? value : [value]
+  return Array.from(new Set(source.map(normalizeAuthorityType).filter(Boolean)))
+}
+
+function toNullableNumber(value: unknown) {
+  if (value === '' || value === null || value === undefined) return null
+  const number = Number(value)
+  return Number.isFinite(number) ? number : null
+}
+
 async function findExistingCompanyRepresentative(
   supabase: ReturnType<typeof createServiceClient>,
   row: Record<string, any>,
@@ -401,10 +404,11 @@ async function mergeCurrentRepresentativeAuthorities(
   tenantContext: TenantContext
 ) {
   if (!rows.length) return rows
+  const representativeIds = rows.map(row => row.id)
   let query = supabase
     .from('v_current_representative_authorities')
     .select(CURRENT_AUTHORITY_SELECT)
-    .in('representative_id', rows.map(row => row.id))
+    .in('representative_id', representativeIds)
   query = applyTenantQueryScope(query, 'v_current_representative_authorities', tenantContext)
   const { data, error } = await query
   if (error) {
@@ -412,13 +416,32 @@ async function mergeCurrentRepresentativeAuthorities(
     throw error
   }
 
+  let transactionQuery = supabase
+    .from('company_representative_authority_transactions')
+    .select('id,representative_id,transaction_type,effective_date,approval_status,workflow_status,status,created_at')
+    .in('representative_id', representativeIds)
+    .eq('is_deleted', false)
+    .order('effective_date', { ascending: false })
+    .order('created_at', { ascending: false })
+  transactionQuery = applyTenantQueryScope(transactionQuery, 'company_representative_authority_transactions', tenantContext)
+  const { data: transactionRows, error: transactionError } = await transactionQuery
+  if (transactionError && !isMissingTableError(transactionError)) throw transactionError
+
   const currentByRepresentative = Object.fromEntries((data || []).map(row => [row.representative_id, row]))
+  const lastTransactionByRepresentative: Record<string, Record<string, any>> = {}
+  for (const transaction of transactionRows || []) {
+    if (!lastTransactionByRepresentative[transaction.representative_id]) {
+      lastTransactionByRepresentative[transaction.representative_id] = transaction
+    }
+  }
   return rows.map(row => {
     const current = currentByRepresentative[row.id] as Record<string, any> | undefined
-    if (!current) return row
+    const lastTransaction = lastTransactionByRepresentative[row.id]
+    if (!current) return { ...row, last_authority_transaction: lastTransaction || null }
     return {
       ...row,
       current_authority: current,
+      last_authority_transaction: lastTransaction || null,
       authority_types: current.authority_types || row.authority_types,
       job_title: Array.isArray(current.authority_types) ? current.authority_types[0] || row.job_title : row.job_title,
       status: current.status || row.status,

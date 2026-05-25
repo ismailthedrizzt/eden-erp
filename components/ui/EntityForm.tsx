@@ -409,9 +409,13 @@ function formatHistoryValue(value: unknown): string {
 }
 
 function RecordStatusBadge({ status }: { status?: unknown }) {
-  const normalized = String(status || 'draft')
+  const normalized = String(status || 'draft').trim().toLocaleLowerCase('tr-TR')
   const config: Record<string, { label: string; className: string }> = {
     draft: {
+      label: 'Taslak',
+      className: 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-300',
+    },
+    taslak: {
       label: 'Taslak',
       className: 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-300',
     },
@@ -419,7 +423,43 @@ function RecordStatusBadge({ status }: { status?: unknown }) {
       label: 'Aktif',
       className: 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-300',
     },
+    aktif: {
+      label: 'Aktif',
+      className: 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-300',
+    },
+    suspended: {
+      label: 'Askıda',
+      className: 'border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-900/60 dark:bg-sky-950/30 dark:text-sky-300',
+    },
+    'askıda': {
+      label: 'Askıda',
+      className: 'border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-900/60 dark:bg-sky-950/30 dark:text-sky-300',
+    },
+    expired: {
+      label: 'Süresi Dolmuş',
+      className: 'border-orange-200 bg-orange-50 text-orange-700 dark:border-orange-900/60 dark:bg-orange-950/30 dark:text-orange-300',
+    },
+    'süresi dolmuş': {
+      label: 'Süresi Dolmuş',
+      className: 'border-orange-200 bg-orange-50 text-orange-700 dark:border-orange-900/60 dark:bg-orange-950/30 dark:text-orange-300',
+    },
+    terminated: {
+      label: 'Sona Erdi',
+      className: 'border-red-200 bg-red-50 text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300',
+    },
+    'sonlandırıldı': {
+      label: 'Sona Erdi',
+      className: 'border-red-200 bg-red-50 text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300',
+    },
+    'sona erdi': {
+      label: 'Sona Erdi',
+      className: 'border-red-200 bg-red-50 text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-300',
+    },
     passive: {
+      label: 'Pasif',
+      className: 'border-gray-200 bg-gray-50 text-gray-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300',
+    },
+    pasif: {
       label: 'Pasif',
       className: 'border-gray-200 bg-gray-50 text-gray-600 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300',
     },
