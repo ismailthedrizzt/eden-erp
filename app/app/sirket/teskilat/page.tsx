@@ -506,7 +506,7 @@ function PositionTable({ positions, onDelete }: { positions: Position[]; onDelet
           <tr><th className="px-3 py-2">Unvan</th><th className="px-3 py-2">Kademe</th><th className="px-3 py-2">Amir mi</th><th className="px-3 py-2">Norm Adet</th><th className="px-3 py-2">Dolu Adet</th><th className="px-3 py-2">Boş Adet</th><th className="px-3 py-2">Durum</th><th className="px-3 py-2">İşlemler</th></tr>
         </thead>
         <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-          {positions.length === 0 && <tr><td colSpan={8} className="px-3 py-8 text-center text-gray-500">Bu birimde kadro tanımlı değcity.</td></tr>}
+          {positions.length === 0 && <tr><td colSpan={8} className="px-3 py-8 text-center text-gray-500">Bu birimde kadro tanımlı değil.</td></tr>}
           {positions.map((position) => {
             const open = Math.max(numberValue(position.norm_count, 1) - numberValue(position.active_count), 0)
             return (

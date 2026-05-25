@@ -40,7 +40,7 @@ const FALLBACK_SGK_CODE_LISTS: SgkCodeListsPayload = {
     ],
     educationCodes: [
       { value: '0', label: 'Bilinmeyen' },
-      { value: '1', label: 'Okur yazar değcity' },
+      { value: '1', label: 'Okur yazar değil' },
       { value: '2', label: 'İlkokul' },
       { value: '3', label: 'Ortaokul ya da ilköğretim okulu' },
       { value: '4', label: 'Lise veya dengi okul' },

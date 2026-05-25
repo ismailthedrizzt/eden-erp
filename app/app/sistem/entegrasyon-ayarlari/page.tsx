@@ -19,8 +19,8 @@ type IntegrationRow = Record<string, any> & {
 }
 
 const ENVIRONMENTS = [['sandbox', 'Sandbox'], ['production', 'Production']]
-const CONNECTION_STATUSES = [['not_connected', 'Bağlı Değcity'], ['connected', 'Bağlı'], ['pending_test', 'Test Bekliyor'], ['error', 'Hata'], ['expired', 'Yetki Süresi Doldu']]
-const CREDENTIAL_STATUSES = [['not_configured', 'Tanımlı Değcity'], ['configured', 'Tanımlı'], ['expired', 'Süresi Doldu'], ['rotation_required', 'Rotasyon Gerekli']]
+const CONNECTION_STATUSES = [['not_connected', 'Bağlı Değil'], ['connected', 'Bağlı'], ['pending_test', 'Test Bekliyor'], ['error', 'Hata'], ['expired', 'Yetki Süresi Doldu']]
+const CREDENTIAL_STATUSES = [['not_configured', 'Tanımlı Değil'], ['configured', 'Tanımlı'], ['expired', 'Süresi Doldu'], ['rotation_required', 'Rotasyon Gerekli']]
 const STATUSES = [['active', 'Aktif'], ['passive', 'Pasif']]
 
 const INTEGRATION_CATALOG: IntegrationRow[] = [

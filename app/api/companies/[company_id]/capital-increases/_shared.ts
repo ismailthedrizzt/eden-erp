@@ -3,6 +3,7 @@ import { createServiceClient } from '@/lib/supabase/server'
 import { applyTenantQueryScope, resolveTenantContext, type TenantContext, withTenantInsertScopeForTable } from '@/lib/tenancy/server'
 import { getTenantCompanyScope, isWritableCompanyScope } from '@/lib/tenancy/companyScopes'
 import { requirePermission } from '@/lib/security/serverPermissions'
+import { isMissingTenantColumnError } from '@/lib/modules/companies/companyErrors'
 
 type SupabaseClient = ReturnType<typeof createServiceClient>
 
@@ -165,7 +166,16 @@ export async function buildCapitalIncreasePrecheck(
     .select('payload_json,foundation_date')
     .eq('company_id', companyId)
   openingQuery = applyTenantQueryScope(openingQuery, 'company_opening_details', tenantContext)
-  const { data: openingDetails } = await openingQuery.maybeSingle()
+  let { data: openingDetails, error: openingError } = await openingQuery.maybeSingle()
+  if (openingError && isMissingTenantColumnError(openingError)) {
+    const fallbackOpening = await supabase
+      .from('company_opening_details')
+      .select('payload_json,foundation_date')
+      .eq('company_id', companyId)
+      .maybeSingle()
+    openingDetails = fallbackOpening.data
+    openingError = fallbackOpening.error
+  }
 
   let partnersQuery = supabase
     .from('company_partners')

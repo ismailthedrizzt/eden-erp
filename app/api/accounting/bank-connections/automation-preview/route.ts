@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
   const providerCode = String(body.provider_code || '').toLowerCase()
 
   if (!AUTOMATION_PROVIDERS.has(providerCode)) {
-    return NextResponse.json({ error: 'Bu banka için otomasyon henüz tanımlı değcity.', code: 'AUTOMATION_NOT_AVAILABLE' }, { status: 400 })
+    return NextResponse.json({ error: 'Bu banka için otomasyon henüz tanımlı değil.', code: 'AUTOMATION_NOT_AVAILABLE' }, { status: 400 })
   }
 
   try {

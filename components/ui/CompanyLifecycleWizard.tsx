@@ -500,9 +500,36 @@ function createInitialForm(type: CompanyLifecycleWizardType, company: Sirket, co
   const hasPrimaryNace = Array.isArray(naceRows) && naceRows.some((row: any) => row?.is_primary)
 
   if (type === 'opening') {
-    const foundationCapitalAmount = opening.payload_json?.foundation_capital_amount ?? opening.payload_json?.capital_amount ?? ''
-    const foundationShareUnits = opening.payload_json?.foundation_share_units ?? opening.payload_json?.share_units ?? ''
-    const foundationNominalValue = opening.payload_json?.foundation_nominal_value ?? opening.payload_json?.nominal_value ?? calculateShareValue(foundationCapitalAmount, foundationShareUnits)
+    const openingPayload = parseWizardRecord(opening.payload_json)
+    const foundationCapitalAmount = firstPresentWizardValue(
+      openingPayload.foundation_capital_amount,
+      openingPayload.capital_amount,
+      opening.foundation_capital_amount,
+      opening.capital_amount,
+      current.foundation_capital_amount,
+      current.committed_capital_amount
+    )
+    const foundationShareUnits = firstPresentWizardValue(
+      openingPayload.foundation_share_units,
+      openingPayload.share_units,
+      openingPayload.company_total_share_units,
+      opening.foundation_share_units,
+      opening.share_units,
+      current.foundation_share_units,
+      current.share_units
+    )
+    const foundationNominalValue = firstPresentWizardValue(
+      openingPayload.foundation_nominal_value,
+      openingPayload.nominal_value,
+      opening.foundation_nominal_value,
+      opening.nominal_value,
+      calculateShareValue(foundationCapitalAmount, foundationShareUnits)
+    )
+    const openingDocumentValues = getLifecycleDocumentFormValues(
+      COMPANY_LIFECYCLE_PROCESSES.opening.completion.documentWrites,
+      openingPayload,
+      current.hero_documents || company.hero_documents
+    )
 
     return {
       short_name: current.short_name || '',
@@ -512,7 +539,7 @@ function createInitialForm(type: CompanyLifecycleWizardType, company: Sirket, co
       trade_registry_office: opening.trade_registry_office || current.trade_registry_office || publicRegistry.registry_office || '',
       trade_registry_number: opening.trade_registry_number || opening.trade_registry_no || current.trade_registry_number || publicRegistry.trade_registry_no || '',
       mersis_number: opening.mersis_number || opening.mersis_no || current.mersis_number || publicRegistry.mersis_number || '',
-      nace_codes: normalizeWizardNaceSelections(opening.payload_json?.nace_codes || naceRows),
+      nace_codes: normalizeWizardNaceSelections(openingPayload.nace_codes || naceRows),
       foundation_capital_amount: foundationCapitalAmount,
       foundation_share_units: foundationShareUnits,
       foundation_nominal_value: foundationNominalValue,
@@ -524,6 +551,7 @@ function createInitialForm(type: CompanyLifecycleWizardType, company: Sirket, co
       primary_nace_id: naceRows.find((row: any) => row?.is_primary)?.id || '',
       kep_address: publicChannels.kep_address || '',
       electronic_notification_address: publicChannels.e_notification_address || current.electronic_notification_address || '',
+      ...openingDocumentValues,
     }
   }
 
@@ -1025,11 +1053,10 @@ function CurrencyWizardInput({
   return (
     <div className="relative">
       <input
-        type="number"
+        type="text"
         value={value || ''}
         onChange={event => onChange(event.target.value)}
         inputMode="decimal"
-        step="0.01"
         readOnly={readOnly}
         className={cn(className, 'pr-12')}
       />
@@ -1070,6 +1097,81 @@ function parseWizardNumber(value: any) {
   if (value === undefined || value === null || value === '') return null
   const numeric = Number(String(value).replace(',', '.'))
   return Number.isFinite(numeric) ? numeric : null
+}
+
+function parseWizardRecord(value: any): Record<string, any> {
+  if (!value) return {}
+  if (typeof value === 'object') return value as Record<string, any>
+  if (typeof value !== 'string') return {}
+  try {
+    const parsed = JSON.parse(value)
+    return parsed && typeof parsed === 'object' ? parsed as Record<string, any> : {}
+  } catch {
+    return {}
+  }
+}
+
+function firstPresentWizardValue(...values: any[]) {
+  return values.find(value => hasValue(value)) ?? ''
+}
+
+function getLifecycleDocumentFormValues(
+  documentWrites: readonly { sourceField: string; slotId: string; slotTitle: string }[],
+  payload: Record<string, any>,
+  heroDocuments: any
+) {
+  const documents = Array.isArray(heroDocuments) ? heroDocuments : []
+  return Object.fromEntries(
+    documentWrites
+      .map(write => {
+        const document = normalizeWizardDocumentValue(payload[write.sourceField], write)
+          || normalizeWizardDocumentValue(findHeroDocumentForSlot(documents, write.slotId), write)
+        return document ? [write.sourceField, document] : null
+      })
+      .filter((entry): entry is [string, Record<string, any>] => !!entry)
+  )
+}
+
+function findHeroDocumentForSlot(documents: any[], slotId: string) {
+  return documents.find(document => {
+    if (!document || typeof document !== 'object') return false
+    if (document.isDeleted || document.is_deleted || document.status === 'deleted') return false
+    return document.slotId === slotId
+      || document.slot_id === slotId
+      || document.document_type === slotId
+      || document.documentType === slotId
+  })
+}
+
+function normalizeWizardDocumentValue(
+  value: any,
+  write: { slotId: string; slotTitle: string }
+): Record<string, any> | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null
+  if (value.isDeleted || value.is_deleted || value.status === 'deleted') return null
+
+  const storagePath = stringWizardValue(value.storagePath || value.storage_path)
+  const url = stringWizardValue(value.url || value.previewUrl || value.preview_url || value.signedUrl || value.signed_url)
+  const documentId = stringWizardValue(value.documentId || value.document_id || storagePath || url)
+  const name = stringWizardValue(value.name || value.file_name || value.fileName || write.slotTitle)
+  if (!storagePath && !url && !documentId && !name) return null
+
+  return {
+    ...value,
+    source: value.source || 'new',
+    slotId: value.slotId || value.slot_id || write.slotId,
+    slotTitle: value.slotTitle || value.slot_title || write.slotTitle,
+    documentId,
+    storagePath,
+    name,
+    ...(url ? { url, previewUrl: value.previewUrl || value.preview_url || url } : {}),
+    ...(value.thumbnailUrl || value.thumbnail_url ? { thumbnailUrl: value.thumbnailUrl || value.thumbnail_url } : {}),
+    ...(value.thumbnailPath || value.thumbnail_path ? { thumbnailPath: value.thumbnailPath || value.thumbnail_path } : {}),
+  }
+}
+
+function stringWizardValue(value: any) {
+  return value === undefined || value === null ? '' : String(value)
 }
 
 function normalizeWizardNaceSelections(value: any): WizardNaceSelection[] {

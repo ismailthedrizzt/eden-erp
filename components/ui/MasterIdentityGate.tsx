@@ -183,7 +183,7 @@ export function MasterIdentityGate({
       <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
         <div>
           <div className="flex flex-wrap items-center gap-2">
-            <h4 className="text-sm font-semibold text-gray-900 dark:text-white">Temel Kimlik Sorgulama/Oluşturma</h4>
+            <h4 className="text-sm font-semibold text-gray-900 dark:text-white">Temel Kimlik</h4>
             {mode === 'create' && (
               <AutomationBadge
                 status={automationStatus}

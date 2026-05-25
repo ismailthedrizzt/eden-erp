@@ -62,7 +62,7 @@ function buildWarnings(rows: any[]) {
   const warnings: string[] = []
   const totalShare = rows.reduce((sum, row) => sum + Number(row.current_share_ratio || 0), 0)
   const totalVoting = rows.reduce((sum, row) => sum + Number(row.current_voting_ratio || 0), 0)
-  if (rows.length && Math.abs(totalShare - 100) > 0.01) warnings.push('Toplam hisse 100% değcity')
-  if (rows.length && Math.abs(totalVoting - 100) > 0.01) warnings.push('Toplam oy hakkı 100% değcity')
+  if (rows.length && Math.abs(totalShare - 100) > 0.01) warnings.push('Toplam hisse 100% değil')
+  if (rows.length && Math.abs(totalVoting - 100) > 0.01) warnings.push('Toplam oy hakkı 100% değil')
   return warnings
 }

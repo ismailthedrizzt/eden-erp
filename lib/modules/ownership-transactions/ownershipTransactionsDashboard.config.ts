@@ -96,7 +96,7 @@ export function buildOwnershipTransactionsDashboard(rows: OwnershipTransaction[]
       dataSource: 'ownershipTransactions.attention',
       items: [
         { id: 'missing-documents', label: 'Belge eksik', description: `${missingDocuments.length} işlem`, severity: missingDocuments.length ? 'warning' : 'success' },
-        { id: 'share-total', label: 'Toplam hisse 100% değcity', severity: 'warning' },
+        { id: 'share-total', label: 'Toplam hisse 100% değil', severity: 'warning' },
         { id: 'pending', label: 'Onay bekliyor', description: `${pending.length} işlem`, severity: pending.length ? 'info' : 'success' },
         { id: 'overlap', label: 'Tarihsel çakışma var', severity: 'info' },
         { id: 'circular', label: 'Döngüsel ortaklık riski', severity: 'info' },

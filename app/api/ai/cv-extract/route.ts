@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
 
     if (!apiKey) {
       return NextResponse.json(
-        { error: 'GEMINI_API_KEY tanımlı değcity. Ücretsiz Google AI Studio anahtarını Vercel Environment Variables içine ekleyin.' },
+        { error: 'GEMINI_API_KEY tanımlı değil. Ücretsiz Google AI Studio anahtarını Vercel Environment Variables içine ekleyin.' },
         { status: 503 }
       )
     }

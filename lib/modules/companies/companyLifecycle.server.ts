@@ -5,6 +5,7 @@ import { createServiceClient } from '@/lib/supabase/server'
 import { requirePermission } from '@/lib/security/serverPermissions'
 import { applyTenantQueryScope, resolveTenantContext, type TenantContext, withTenantInsertScopeForTable } from '@/lib/tenancy/server'
 import { getTenantCompanyScope, isWritableCompanyScope } from '@/lib/tenancy/companyScopes'
+import { isMissingTenantColumnError } from '@/lib/modules/companies/companyErrors'
 import {
   deriveOpeningHeroDocumentsFromPayload,
   mergeOpeningHeroDocuments,
@@ -76,11 +77,12 @@ export async function getCompanyLifecycleEvents(request: NextRequest, companyId:
   const scopeError = await requireCompanyScopeAccess(supabase, tenantContext, companyId)
   if (scopeError) return scopeError
 
-  const events = await safeList(
+  const events = await safeListWithTenantFallback(
     supabase,
     'company_lifecycle_events',
     'id,company_id,event_type,event_date,old_status,new_status,payload_json,document_reference_id,created_at,created_by',
-    query => applyTenantQueryScope(query.eq('company_id', companyId), 'company_lifecycle_events', tenantContext).order('created_at', { ascending: false })
+    tenantContext,
+    query => query.eq('company_id', companyId).order('created_at', { ascending: false })
   )
   if (events.error) return NextResponse.json({ error: events.error.message, code: events.error.code || 'LIFECYCLE_EVENTS_FAILED' }, { status: 500 })
   return NextResponse.json({ data: events.data || [] })
@@ -113,10 +115,10 @@ export async function getCompanyWizardContext(
 
   const [documents, representatives, partners, stakeholders, naceCodes] = await Promise.all([
     safeCompanyDocuments(company),
-    safeList(supabase, 'company_representatives', 'id,display_name,full_name,person_id,organization_id,status,is_deleted', query => applyTenantQueryScope(query.eq('company_id', companyId), 'company_representatives', tenantContext)),
-    safeList(supabase, 'company_partners', 'id,display_name,partner_name,person_id,organization_id,status,is_deleted', query => applyTenantQueryScope(query.eq('company_id', companyId), 'company_partners', tenantContext)),
-    safeList(supabase, 'stakeholders', 'id,display_name,person_id,organization_id,status,is_deleted', query => applyTenantQueryScope(query.eq('company_id', companyId), 'stakeholders', tenantContext)),
-    safeList(supabase, 'company_nace_codes', 'id,nace_code_id,is_primary,status,is_deleted,nace_code:nace_codes(id,nace_code,description,hazard_class)', query => applyTenantQueryScope(query.eq('company_id', companyId).eq('is_deleted', false), 'company_nace_codes', tenantContext)),
+    safeListWithTenantFallback(supabase, 'company_representatives', 'id,display_name,full_name,person_id,organization_id,status,is_deleted', tenantContext, query => query.eq('company_id', companyId)),
+    safeListWithTenantFallback(supabase, 'company_partners', 'id,display_name,partner_name,person_id,organization_id,status,is_deleted', tenantContext, query => query.eq('company_id', companyId)),
+    safeListWithTenantFallback(supabase, 'stakeholders', 'id,display_name,person_id,organization_id,status,is_deleted', tenantContext, query => query.eq('company_id', companyId)),
+    safeListWithTenantFallback(supabase, 'company_nace_codes', 'id,nace_code_id,is_primary,status,is_deleted,nace_code:nace_codes(id,nace_code,description,hazard_class)', tenantContext, query => query.eq('company_id', companyId).eq('is_deleted', false)),
   ])
 
   const referenceError = [representatives.error, partners.error, stakeholders.error, naceCodes.error].find(Boolean)
@@ -289,14 +291,14 @@ async function buildCompanyLifecyclePayload(supabase: Supabase, companyId: strin
   }
 
   const [opening, liquidation, deregistration, events, publicTax, publicSgk, publicRegistry, publicChannels] = await Promise.all([
-    safeMaybeSingle(supabase, 'company_opening_details', '*', query => applyTenantQueryScope(query.eq('company_id', companyId), 'company_opening_details', tenantContext)),
-    safeMaybeSingle(supabase, 'company_liquidation_details', '*', query => applyTenantQueryScope(query.eq('company_id', companyId), 'company_liquidation_details', tenantContext)),
-    safeMaybeSingle(supabase, 'company_deregistration_details', '*', query => applyTenantQueryScope(query.eq('company_id', companyId), 'company_deregistration_details', tenantContext)),
-    safeList(supabase, 'company_lifecycle_events', 'id,company_id,event_type,event_date,old_status,new_status,payload_json,document_reference_id,created_at,created_by', query => applyTenantQueryScope(query.eq('company_id', companyId), 'company_lifecycle_events', tenantContext).order('created_at', { ascending: false }).limit(25)),
-    safeMaybeSingle(supabase, 'company_public_tax', '*', query => applyTenantQueryScope(query.eq('company_id', companyId), 'company_public_tax', tenantContext)),
-    safeMaybeSingle(supabase, 'company_public_sgk', '*', query => applyTenantQueryScope(query.eq('company_id', companyId), 'company_public_sgk', tenantContext)),
-    safeMaybeSingle(supabase, 'company_public_registry', '*', query => applyTenantQueryScope(query.eq('company_id', companyId), 'company_public_registry', tenantContext)),
-    safeMaybeSingle(supabase, 'company_public_channels', '*', query => applyTenantQueryScope(query.eq('company_id', companyId), 'company_public_channels', tenantContext)),
+    safeMaybeSingleWithTenantFallback(supabase, 'company_opening_details', '*', tenantContext, query => query.eq('company_id', companyId)),
+    safeMaybeSingleWithTenantFallback(supabase, 'company_liquidation_details', '*', tenantContext, query => query.eq('company_id', companyId)),
+    safeMaybeSingleWithTenantFallback(supabase, 'company_deregistration_details', '*', tenantContext, query => query.eq('company_id', companyId)),
+    safeListWithTenantFallback(supabase, 'company_lifecycle_events', 'id,company_id,event_type,event_date,old_status,new_status,payload_json,document_reference_id,created_at,created_by', tenantContext, query => query.eq('company_id', companyId).order('created_at', { ascending: false }).limit(25)),
+    safeMaybeSingleWithTenantFallback(supabase, 'company_public_tax', '*', tenantContext, query => query.eq('company_id', companyId)),
+    safeMaybeSingleWithTenantFallback(supabase, 'company_public_sgk', '*', tenantContext, query => query.eq('company_id', companyId)),
+    safeMaybeSingleWithTenantFallback(supabase, 'company_public_registry', '*', tenantContext, query => query.eq('company_id', companyId)),
+    safeMaybeSingleWithTenantFallback(supabase, 'company_public_channels', '*', tenantContext, query => query.eq('company_id', companyId)),
   ])
 
   const relatedError = [opening.error, liquidation.error, deregistration.error, events.error, publicTax.error, publicSgk.error, publicRegistry.error, publicChannels.error].find(Boolean)
@@ -366,6 +368,28 @@ async function safeMaybeSingle(
   return result
 }
 
+async function safeMaybeSingleWithTenantFallback(
+  supabase: Supabase,
+  table: string,
+  select: string,
+  tenantContext: TenantContext,
+  apply: (query: any) => any
+) {
+  const run = (useTenantScope: boolean) => {
+    let query = apply(supabase.from(table).select(select))
+    if (useTenantScope) query = applyTenantQueryScope(query, table, tenantContext)
+    return query.maybeSingle()
+  }
+
+  let result = await run(true)
+  if (result.error && isMissingTenantColumnError(result.error)) {
+    result = await run(false)
+  }
+  if (result.error && isMissingTableError(result.error)) return { data: null, error: null }
+  if (result.error && result.error.code === 'PGRST116') return { data: null, error: null }
+  return result
+}
+
 async function safeList(
   supabase: Supabase,
   table: string,
@@ -373,6 +397,27 @@ async function safeList(
   apply: (query: any) => any
 ) {
   const result = await apply(supabase.from(table).select(select))
+  if (result.error && isMissingTableError(result.error)) return { data: [], error: null }
+  return result
+}
+
+async function safeListWithTenantFallback(
+  supabase: Supabase,
+  table: string,
+  select: string,
+  tenantContext: TenantContext,
+  apply: (query: any) => any
+) {
+  const run = (useTenantScope: boolean) => {
+    let query = apply(supabase.from(table).select(select))
+    if (useTenantScope) query = applyTenantQueryScope(query, table, tenantContext)
+    return query
+  }
+
+  let result = await run(true)
+  if (result.error && isMissingTenantColumnError(result.error)) {
+    result = await run(false)
+  }
   if (result.error && isMissingTableError(result.error)) return { data: [], error: null }
   return result
 }

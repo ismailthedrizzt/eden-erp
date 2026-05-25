@@ -67,7 +67,6 @@ CREATE INDEX IF NOT EXISTS idx_company_deregistration_details_tenant_company
 
 CREATE OR REPLACE VIEW public.v_current_ownership AS
 SELECT
-  tenant_id,
   company_id,
   id AS partner_id,
   display_name,
@@ -85,6 +84,7 @@ SELECT
   COALESCE(beneficial_ratio, 0) AS beneficial_ratio,
   ARRAY[]::text[] AS warnings,
   COALESCE(capital_amount, 0) AS committed_capital_amount,
-  COALESCE(paid_capital_amount, 0) AS paid_capital_amount
+  COALESCE(paid_capital_amount, 0) AS paid_capital_amount,
+  tenant_id
 FROM public.company_partners
 WHERE is_deleted = false;

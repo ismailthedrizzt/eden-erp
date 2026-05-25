@@ -44,7 +44,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         },
         cursor: null,
       })
-      : { ok: true, providerStatus: 'provider_test_not_implemented', message: 'Provider test metodu tanımlı değcity.', accountCount: 0 }
+      : { ok: true, providerStatus: 'provider_test_not_implemented', message: 'Provider test metodu tanımlı değil.', accountCount: 0 }
 
     const { data, error } = await supabase
       .from('bank_connections')

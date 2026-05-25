@@ -225,7 +225,7 @@ export const personelModuleConfig: ModuleConfig<PersonelTableRow> = {
         source: {
           type: 'fields',
           fields: [
-            { key: 'is_illiterate', label: 'Okuryazar Değcity', type: 'checkbox', placeholder: 'Okuryazar değcity' },
+            { key: 'is_illiterate', label: 'Okuryazar Değil', type: 'checkbox', placeholder: 'Okuryazar değil' },
             {
               key: 'education_schools',
               label: 'Okullar',

@@ -44,7 +44,7 @@ export function getCompletedEducationValue(school: Record<string, unknown>) {
 }
 
 export function getEducationLevelValue(employees: { is_illiterate?: boolean; education_schools?: Array<Record<string, unknown>> }) {
-  if (employees.is_illiterate) return 'Okuryazar Değcity'
+  if (employees.is_illiterate) return 'Okuryazar Değil'
 
   const schools = Array.isArray(employees.education_schools) ? employees.education_schools : []
   let bestValue = ''
@@ -63,7 +63,7 @@ export function getEducationLevelValue(employees: { is_illiterate?: boolean; edu
 }
 
 export function getEducationSummary(employees: { is_illiterate?: boolean; education_schools?: Array<Record<string, unknown>> }) {
-  if (employees.is_illiterate) return 'Okuryazar Değcity'
+  if (employees.is_illiterate) return 'Okuryazar Değil'
 
   const schools = Array.isArray(employees.education_schools) ? employees.education_schools : []
   const bestValue = getEducationLevelValue(employees)

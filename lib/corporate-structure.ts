@@ -68,8 +68,8 @@ export function calculateCorporateStructure(
   const totalVotingRight = round(activePartners.reduce((sum, partner) => sum + votingPower(partner), 0))
   const warnings: string[] = []
 
-  if (activePartners.length > 0 && totalActiveShare !== 100) warnings.push('Aktif hisse toplamı 100% değcity')
-  if (activePartners.length > 0 && totalVotingRight !== 100) warnings.push('Toplam oy hakkı 100% değcity')
+  if (activePartners.length > 0 && totalActiveShare !== 100) warnings.push('Aktif hisse toplamı 100% değil')
+  if (activePartners.length > 0 && totalVotingRight !== 100) warnings.push('Toplam oy hakkı 100% değil')
 
   const controlOwners = activePartners.filter((partner) =>
     partner.has_control_right ||

@@ -7,6 +7,12 @@ export function isMissingTableError(error: any) {
     || message.includes('does not exist')
 }
 
+export function isMissingTenantColumnError(error: any) {
+  const message = String(error?.message || '')
+  return (error?.code === '42703' || message.includes('does not exist'))
+    && message.includes('tenant_id')
+}
+
 export function errorMessage(error: unknown, fallback: string) {
   if (error instanceof Error) return error.message
   const message = (error as any)?.message

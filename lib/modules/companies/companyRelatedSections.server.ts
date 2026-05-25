@@ -2,7 +2,7 @@ import 'server-only'
 
 import { createServiceClient } from '@/lib/supabase/server'
 import { applyTenantQueryScope, type TenantContext } from '@/lib/tenancy/server'
-import { isMissingTableError } from './companyErrors'
+import { isMissingTableError, isMissingTenantColumnError } from './companyErrors'
 
 export type CompanyRelatedSectionStatus = 'ok' | 'module_closed' | 'error'
 
@@ -32,14 +32,10 @@ export async function fetchCompanyRelatedSection<T = any>(
   options: FetchCompanyRelatedSectionOptions<T>
 ): Promise<CompanyRelatedSectionResult<T>> {
   const mode = options.mode || 'list'
-  let query = options.supabase
-    .from(options.table)
-    .select(options.select || '*')
-
-  query = options.query ? options.query(query) : query.eq('company_id', options.companyId)
-  query = applyTenantQueryScope(query, options.table, options.tenantContext)
-
-  const response = await runRelatedQuery(query, mode)
+  let response = await runRelatedQuery(buildRelatedQuery(options, true), mode)
+  if (response.error && isMissingTenantColumnError(response.error)) {
+    response = await runRelatedQuery(buildRelatedQuery(options, false), mode)
+  }
   const { data, error } = response
 
   if (error) {
@@ -68,6 +64,15 @@ export async function fetchCompanyRelatedSection<T = any>(
     status: 'ok',
     error: null,
   }
+}
+
+function buildRelatedQuery<T>(options: FetchCompanyRelatedSectionOptions<T>, useTenantScope: boolean) {
+  let query = options.supabase
+    .from(options.table)
+    .select(options.select || '*')
+
+  query = options.query ? options.query(query) : query.eq('company_id', options.companyId)
+  return useTenantScope ? applyTenantQueryScope(query, options.table, options.tenantContext) : query
 }
 
 export function relatedStatusMap(results: Array<CompanyRelatedSectionResult<any>>) {

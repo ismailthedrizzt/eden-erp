@@ -114,7 +114,7 @@ export function createRealPersonMasterTabs({
       label: 'Eğitim',
       icon: <GraduationCap size={16} />,
       fields: applyVisibleWhen([
-        { name: 'is_illiterate', label: 'Okuryazar Değcity', type: 'checkbox', placeholder: 'Okuryazar değcity' },
+        { name: 'is_illiterate', label: 'Okuryazar Değil', type: 'checkbox', placeholder: 'Okuryazar değil' },
         {
           name: 'education_schools',
           label: 'Okullar',

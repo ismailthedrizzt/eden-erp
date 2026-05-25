@@ -1458,6 +1458,7 @@ export default function SirketlerPage() {
             enableHistory
             showHeroHeader={false}
             showMasterSummaryBadge={false}
+            masterSummaryTitle="Şirket Bilgileri"
             masterSummaryMode="organizationIdentity"
             hideRoleHeroFields
             showEmptyRoleHeroState={false}

@@ -96,8 +96,8 @@ export class OwnershipCalculationService {
     const warnings: string[] = []
     const totalShare = rows.reduce((sum, row) => sum + row.current_share_ratio, 0)
     const totalVoting = rows.reduce((sum, row) => sum + row.current_voting_ratio, 0)
-    if (Math.abs(totalShare - 100) > 0.01) warnings.push('Toplam hisse 100% değcity')
-    if (Math.abs(totalVoting - 100) > 0.01) warnings.push('Toplam oy hakkı 100% değcity')
+    if (Math.abs(totalShare - 100) > 0.01) warnings.push('Toplam hisse 100% değil')
+    if (Math.abs(totalVoting - 100) > 0.01) warnings.push('Toplam oy hakkı 100% değil')
     return warnings
   }
 }
