@@ -13,7 +13,7 @@ import { operationStatusMessage } from '@/lib/operations/operationStatus'
 import { OutboxEventService } from '@/lib/outbox/outboxEventService'
 import { isMissingTableError } from '@/lib/modules/companies/companyErrors'
 
-const REPRESENTATIVE_DETAIL_SELECT = 'id,company_id,person_id,organization_id,person_kind,source_type,source_id,display_name,full_name,phone,email,authority_types,job_title,authority_type,status,record_status,start_date,end_date,signature_type,transaction_limit,currency,requires_joint_signature,can_approve_alone,is_deleted,history,photo_logo,authority_documents,representative_profile,notes,created_at,updated_at,version'
+const REPRESENTATIVE_DETAIL_SELECT = 'id,company_id,person_id,organization_id,person_kind,source_type,source_id,display_name,full_name,phone,email,authority_types,job_title,authority_type,status,record_status,start_date,end_date,signature_type,transaction_limit,payment_approval_limit,purchase_approval_limit,bank_transaction_limit,contract_signature_limit,currency,requires_joint_signature,can_approve_alone,bank_authority_level,department_scope,gib_permissions,can_submit_declaration,can_process_e_invoice,sgk_permissions,can_submit_hiring_notice,can_submit_termination_notice,official_correspondence_authority,is_deleted,history,photo_logo,authority_documents,representative_profile,notes,created_at,updated_at,version'
 const CURRENT_AUTHORITY_SELECT = 'company_id,representative_id,display_name,person_id,organization_id,record_status,status,authority_types,signature_type,transaction_limit,payment_approval_limit,purchase_approval_limit,bank_transaction_limit,contract_signature_limit,currency,limits,scope,requires_joint_signature,can_approve_alone,effective_date,end_date,warnings,tenant_id'
 const AUTHORITY_TRANSACTION_SELECT = 'id,company_id,representative_id,person_id,organization_id,transaction_no,transaction_type,authority_types,signature_type,transaction_limit,payment_approval_limit,purchase_approval_limit,bank_transaction_limit,contract_signature_limit,currency,limits,scope,requires_joint_signature,can_approve_alone,document_files,effective_date,end_date,approval_status,workflow_status,status,notes,warnings,reversal_transaction_id,new_values,created_at,updated_at,version'
 
@@ -132,9 +132,10 @@ export async function PATCH(
   const clientRequestId = resolveClientRequestId(request, rawBody)
   const baseVersion = resolveBaseVersion(rawBody)
   const baseUpdatedAt = resolveBaseUpdatedAt(rawBody)
+  const rawPatch = stripOperationControlFields(rawBody)
   const body = isAuthorityTransaction
-    ? stripOperationControlFields(rawBody)
-    : stripRepresentativeOperationControlledFields(stripOperationControlFields(rawBody))
+    ? rawPatch
+    : stripRepresentativeOperationControlledFields(rawPatch)
 
   const permission = await requirePermission(request, supabase, 'representatives.edit')
   if (permission instanceof NextResponse) return permission
@@ -264,8 +265,7 @@ export async function DELETE(
   if (currentError) return NextResponse.json({ error: currentError.message, code: currentError.code || 'FETCH_FAILED' }, { status: 500 })
   if (!current) return NextResponse.json({ error: 'Temsilci bulunamadı', code: 'REPRESENTATIVE_NOT_FOUND' }, { status: 404 })
 
-  const currentAuthority = await fetchCurrentAuthority(supabase, id, tenantContext)
-  const effectiveStatus = String(currentAuthority?.record_status || current.record_status || '').toLocaleLowerCase('tr-TR')
+  const effectiveStatus = normalizeMainRecordStatus(current.record_status || current.status)
   const hasAuthorityTransactions = await representativeHasAuthorityTransactions(supabase, id, tenantContext)
   if (effectiveStatus !== 'draft' || hasAuthorityTransactions) {
     return NextResponse.json({
@@ -370,6 +370,18 @@ async function updateRepresentativeNormally({
       const scope = await getTenantCompanyScope(supabase, tenantContext.tenantId, nextCompanyId)
       if (!scope) return { ok: false, status: 404, code: 'COMPANY_NOT_FOUND', error: 'Şirket bulunamadı' }
       if (!isWritableCompanyScope(scope)) return { ok: false, status: 403, code: 'COMPANY_SCOPE_READONLY', error: 'Bu şirket için yalnızca görüntüleme yetkiniz var.' }
+      if (body.company_id && body.company_id !== current.company_id) {
+        const duplicate = await findExistingRepresentativeForCompany(supabase, {
+          companyId: nextCompanyId,
+          personId: current.person_id || null,
+          organizationId: current.organization_id || null,
+          excludeId: representativeId,
+          tenantContext,
+        })
+        if (duplicate) {
+          return { ok: false, status: 409, code: 'DUPLICATE_REPRESENTATIVE', error: 'Bu şirket için aynı kişi/kurum adına temsilci kartı zaten var.' }
+        }
+      }
       return { ok: true }
     },
     beforeUpdate: ({ current, patch }) => {
@@ -434,10 +446,28 @@ async function applyAuthorityTransaction({
   if (!AUTHORITY_TRANSACTION_TYPES.has(transactionType)) {
     return { ok: false as const, status: 400, code: 'INVALID_TRANSACTION_TYPE', error: 'Geçersiz temsilcilik işlem tipi.' }
   }
+  const currentAuthority = await fetchCurrentAuthority(supabase, representativeId, tenantContext)
+  const recordStatus = normalizeMainRecordStatus(current.record_status || current.status)
+  const authorityRecordStatus = normalizeAuthorityRecordStatus(currentAuthority?.record_status || currentAuthority?.status)
+  const lifecycleViolation = validateRepresentativeLifecycleTransition(transactionType, recordStatus, authorityRecordStatus)
+  if (lifecycleViolation) return lifecycleViolation
 
   const authorityTypes = Array.isArray(body.authority_types)
     ? body.authority_types.filter(Boolean)
     : [body.primary_authority_type].filter(Boolean)
+  const documentFiles = Array.isArray(body.document_files)
+    ? body.document_files
+    : Array.isArray(current.authority_documents)
+      ? current.authority_documents
+      : []
+  const precheck = validateRepresentativeAuthorityTransactionPayload(transactionType, {
+    authorityTypes,
+    signatureType: body.signature_type,
+    effectiveDate: body.effective_date || body.start_date,
+    documentFiles,
+    terminationReason: body.termination_reason || body.notes,
+  })
+  if (precheck) return precheck
   const limits = {
     transaction_limit: toNullableNumber(body.transaction_limit ?? body.authority_limit),
     payment_approval_limit: toNullableNumber(body.payment_approval_limit),
@@ -457,8 +487,8 @@ async function applyAuthorityTransaction({
     official_correspondence_authority: !!body.official_correspondence_authority,
   }
   const effectiveDate = body.effective_date || body.start_date || new Date().toISOString().slice(0, 10)
-  const approvalStatus = body.approval_status || 'approved'
-  const workflowStatus = body.workflow_status || approvalStatus
+  const approvalStatus = resolveRepresentativeAuthorityApprovalStatus()
+  const workflowStatus = approvalStatus
   const { count } = await supabase
     .from('company_representative_authority_transactions')
     .select('id', { count: 'exact', head: true })
@@ -482,7 +512,7 @@ async function applyAuthorityTransaction({
     scope: scopePayload,
     requires_joint_signature: !!body.requires_joint_signature,
     can_approve_alone: !!body.can_approve_alone,
-    document_files: Array.isArray(body.document_files) ? body.document_files : Array.isArray(current.authority_documents) ? current.authority_documents : [],
+    document_files: documentFiles,
     effective_date: effectiveDate,
     end_date: body.end_date || null,
     approval_status: approvalStatus,
@@ -542,16 +572,82 @@ async function applyAuthorityTransaction({
 }
 
 function representativeStatusPatchForTransaction(transactionType: string, effectiveDate: string, endDate?: string | null) {
-  if (transactionType === 'Askıya Alma') {
-    return { status: 'Askıda', record_status: 'suspended', start_date: effectiveDate, end_date: endDate || null }
+  return { status: 'Aktif', record_status: 'active', start_date: effectiveDate, end_date: endDate || null }
+}
+
+function normalizeMainRecordStatus(value: unknown) {
+  const text = String(value || '').toLocaleLowerCase('tr-TR')
+  if (text.includes('pasif') || text === 'passive') return 'passive'
+  if (text.includes('aktif') || ['active', 'suspended', 'expired', 'terminated'].includes(text) || text.includes('ask') || text.includes('son')) return 'active'
+  return 'draft'
+}
+
+function normalizeAuthorityRecordStatus(value: unknown) {
+  const text = String(value || '').toLocaleLowerCase('tr-TR')
+  if (text.includes('ask')) return 'suspended'
+  if (text.includes('sona') || text.includes('son')) return 'terminated'
+  if (text.includes('aktif') || text === 'active') return 'active'
+  if (text.includes('pasif') || text === 'passive') return 'passive'
+  return text || 'draft'
+}
+
+function resolveRepresentativeAuthorityApprovalStatus() {
+  return 'approved'
+}
+
+function validateRepresentativeLifecycleTransition(transactionType: string, recordStatus: string, authorityRecordStatus: string) {
+  if (transactionType === 'Temsilcilik Başlatma' && recordStatus !== 'draft') {
+    return { ok: false as const, status: 409, code: 'REPRESENTATIVE_ACTIVATION_REQUIRES_DRAFT', error: 'Temsilcilik Başlatma yalnızca Taslak temsilci kartları için çalışır.' }
+  }
+  if (['Yetki Yenileme', 'Yetki Kapsamı Değişikliği', 'Limit Değişikliği', 'Düzeltme Kaydı'].includes(transactionType) && recordStatus !== 'active') {
+    return { ok: false as const, status: 409, code: 'REPRESENTATIVE_AUTHORITY_CHANGE_REQUIRES_ACTIVE', error: 'Yetki, limit, kurum veya imza değişiklikleri yalnızca Aktif temsilciler için operation olarak yapılabilir.' }
+  }
+  if (transactionType === 'Yetki Yenileme' && authorityRecordStatus === 'suspended') return null
+  if (['Yetki Kapsamı Değişikliği', 'Limit Değişikliği', 'Düzeltme Kaydı'].includes(transactionType) && authorityRecordStatus !== 'active') {
+    return { ok: false as const, status: 409, code: 'REPRESENTATIVE_AUTHORITY_CHANGE_REQUIRES_ACTIVE_AUTHORITY', error: 'Bu işlem için güncel yetki Aktif olmalıdır.' }
+  }
+  if (transactionType === 'Askıya Alma' && (recordStatus !== 'active' || authorityRecordStatus !== 'active')) {
+    return { ok: false as const, status: 409, code: 'REPRESENTATIVE_SUSPEND_REQUIRES_ACTIVE', error: 'Askıya alma yalnızca Aktif temsilciler için yapılabilir.' }
+  }
+  if (transactionType === 'Sonlandırma' && (recordStatus !== 'active' || !['active', 'suspended'].includes(authorityRecordStatus))) {
+    return { ok: false as const, status: 409, code: 'REPRESENTATIVE_TERMINATE_REQUIRES_ACTIVE', error: 'Temsilcilik Sonlandırma yalnızca Aktif veya Askıda temsilciler için yapılabilir.' }
+  }
+  return null
+}
+
+function validateRepresentativeAuthorityTransactionPayload(
+  transactionType: string,
+  input: {
+    authorityTypes: string[]
+    signatureType?: string | null
+    effectiveDate?: string | null
+    documentFiles: unknown[]
+    terminationReason?: string | null
+  }
+) {
+  if (!input.effectiveDate) {
+    return { ok: false as const, status: 400, code: 'EFFECTIVE_DATE_REQUIRED', error: 'Yürürlük tarihi zorunludur.' }
+  }
+  if (transactionType !== 'Sonlandırma') {
+    if (!input.authorityTypes.length) {
+      return { ok: false as const, status: 400, code: 'AUTHORITY_TYPE_REQUIRED', error: 'En az bir yetki tipi seçilmelidir.' }
+    }
+    if (input.authorityTypes.includes('signature_authority') && !input.signatureType) {
+      return { ok: false as const, status: 400, code: 'SIGNATURE_TYPE_REQUIRED', error: 'İmza yetkisi için imza türü zorunludur.' }
+    }
+  }
+  if (transactionType === 'Temsilcilik Başlatma' && !input.documentFiles.length) {
+    return { ok: false as const, status: 400, code: 'AUTHORITY_DOCUMENT_REQUIRED', error: 'Aktivasyon için en az bir yetki belgesi gereklidir.' }
   }
   if (transactionType === 'Sonlandırma') {
-    return { status: 'Sonlandırıldı', record_status: 'terminated', end_date: endDate || effectiveDate }
+    if (!input.terminationReason) {
+      return { ok: false as const, status: 400, code: 'TERMINATION_REASON_REQUIRED', error: 'Sonlandırma nedeni zorunludur.' }
+    }
+    if (!input.documentFiles.length) {
+      return { ok: false as const, status: 400, code: 'TERMINATION_DOCUMENT_REQUIRED', error: 'Sonlandırma işlemi için belge gereklidir.' }
+    }
   }
-  if (transactionType === 'Ters Kayıt') {
-    return { status: 'Aktif', record_status: 'active' }
-  }
-  return { status: 'Aktif', record_status: 'active', start_date: effectiveDate, end_date: endDate || null }
+  return null
 }
 
 function detectRepresentativeConflict(current: Record<string, any>, baseVersion: number | null, baseUpdatedAt: string | null) {
@@ -578,10 +674,16 @@ function normalizeAuthorityType(value: unknown) {
   return String(value || '').trim()
 }
 
+function normalizeAuthorityTypes(value: unknown) {
+  const source = Array.isArray(value) ? value : [value]
+  return Array.from(new Set(source.map(normalizeAuthorityType).filter(Boolean)))
+}
+
 function mapRepresentativeForDb(representative: Record<string, any>, current?: Record<string, any>) {
   const profilePatch = stripMasterDataForRoleProfile(representative)
   const hasProfilePatch = Object.keys(profilePatch).length > 0
   const displayName = representative.display_name || buildDisplayName(representative, current) || current?.display_name || current?.full_name || 'Temsilci'
+  const authorityTypes = normalizeAuthorityTypes(representative.authority_types ?? representative.primary_authority_type ?? representative.authority_type ?? current?.authority_types)
 
   return {
     company_id: representative.company_id || current?.company_id,
@@ -590,6 +692,29 @@ function mapRepresentativeForDb(representative: Record<string, any>, current?: R
     source_type: representative.source_type || current?.source_type,
     source_id: representative.source_id || current?.source_id,
     display_name: displayName,
+    start_date: representative.start_date ?? current?.start_date ?? null,
+    end_date: representative.end_date ?? current?.end_date ?? null,
+    authority_types: authorityTypes,
+    authority_type: authorityTypes[0] || current?.authority_type || 'other',
+    job_title: representative.job_title || representative.primary_authority_type || authorityTypes[0] || current?.job_title || null,
+    signature_type: representative.signature_type ?? current?.signature_type ?? null,
+    transaction_limit: toNullableNumber(representative.transaction_limit ?? representative.authority_limit ?? current?.transaction_limit),
+    payment_approval_limit: toNullableNumber(representative.payment_approval_limit ?? current?.payment_approval_limit),
+    purchase_approval_limit: toNullableNumber(representative.purchase_approval_limit ?? current?.purchase_approval_limit),
+    bank_transaction_limit: toNullableNumber(representative.bank_transaction_limit ?? current?.bank_transaction_limit),
+    contract_signature_limit: toNullableNumber(representative.contract_signature_limit ?? current?.contract_signature_limit),
+    currency: representative.currency || current?.currency || 'TRY',
+    requires_joint_signature: representative.requires_joint_signature ?? current?.requires_joint_signature ?? false,
+    can_approve_alone: representative.can_approve_alone ?? current?.can_approve_alone ?? false,
+    bank_authority_level: representative.bank_authority_level ?? current?.bank_authority_level ?? null,
+    department_scope: representative.department_scope ?? current?.department_scope ?? null,
+    gib_permissions: representative.gib_permissions ?? current?.gib_permissions ?? null,
+    can_submit_declaration: representative.can_submit_declaration ?? current?.can_submit_declaration ?? false,
+    can_process_e_invoice: representative.can_process_e_invoice ?? current?.can_process_e_invoice ?? false,
+    sgk_permissions: representative.sgk_permissions ?? current?.sgk_permissions ?? null,
+    can_submit_hiring_notice: representative.can_submit_hiring_notice ?? current?.can_submit_hiring_notice ?? false,
+    can_submit_termination_notice: representative.can_submit_termination_notice ?? current?.can_submit_termination_notice ?? false,
+    official_correspondence_authority: representative.official_correspondence_authority ?? current?.official_correspondence_authority ?? false,
     notes: representative.notes ?? current?.notes ?? null,
     phone: representative.phone ?? current?.phone ?? null,
     email: representative.email ?? current?.email ?? null,
@@ -617,6 +742,34 @@ function toNullableNumber(value: unknown) {
   return Number.isFinite(number) ? number : null
 }
 
+async function findExistingRepresentativeForCompany(
+  supabase: ReturnType<typeof createServiceClient>,
+  input: {
+    companyId: string
+    personId?: string | null
+    organizationId?: string | null
+    excludeId?: string | null
+    tenantContext: ReturnType<typeof resolveTenantContext>
+  }
+) {
+  const masterColumn = input.personId ? 'person_id' : input.organizationId ? 'organization_id' : null
+  const masterId = input.personId || input.organizationId || null
+  if (!masterColumn || !masterId) return null
+
+  let query = supabase
+    .from('company_representatives')
+    .select('id')
+    .eq('company_id', input.companyId)
+    .eq(masterColumn, masterId)
+    .eq('is_deleted', false)
+    .limit(1)
+  if (input.excludeId) query = query.neq('id', input.excludeId)
+  query = applyTenantQueryScope(query, 'company_representatives', input.tenantContext)
+  const { data, error } = await query
+  if (error) throw error
+  return Array.isArray(data) ? data[0] || null : null
+}
+
 async function hydrateRepresentativeDetail(
   supabase: ReturnType<typeof createServiceClient>,
   representative: Record<string, any>,
@@ -627,12 +780,12 @@ async function hydrateRepresentativeDetail(
   const merged: Record<string, any> = currentAuthority ? {
     ...representative,
     current_authority: currentAuthority,
+    authority_status: currentAuthority.status || null,
+    authority_record_status: currentAuthority.record_status || null,
+    authority_start_date: currentAuthority.effective_date || null,
+    authority_end_date: currentAuthority.end_date || null,
     authority_types: currentAuthority.authority_types || representative.authority_types,
     job_title: Array.isArray(currentAuthority.authority_types) ? currentAuthority.authority_types[0] || representative.job_title : representative.job_title,
-    status: currentAuthority.status || representative.status,
-    record_status: currentAuthority.record_status || representative.record_status,
-    start_date: currentAuthority.effective_date || representative.start_date,
-    end_date: currentAuthority.end_date || representative.end_date,
     signature_type: currentAuthority.signature_type ?? representative.signature_type,
     transaction_limit: currentAuthority.transaction_limit ?? representative.transaction_limit,
     currency: currentAuthority.currency || representative.currency,
