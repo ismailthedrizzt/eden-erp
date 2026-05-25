@@ -19,6 +19,7 @@ import { OutboxEventService } from '@/lib/outbox/outboxEventService'
 
 const PARTNER_DETAIL_SELECT = 'id,company_id,person_id,organization_id,owner_kind,partner_type,display_name,partner_name,identity_number,identity_tax_number,share_ratio,voting_ratio,profit_ratio,source_type,source_id,share_units,nominal_value,capital_amount,share_class,has_representation_right,signature_authority,has_control_right,control_type,has_board_nomination_right,has_veto_right,has_privileged_share,beneficial_owner,is_beneficial_owner,beneficial_ratio,is_ultimate_controller,start_date,end_date,status,record_status,history,photo_logo,partner_documents,partner_profile,notes,created_at,updated_at,version'
 const PARTNER_SECTION_BASE_SELECT = 'id,company_id,person_id,organization_id,source_id,display_name,partner_name,version,updated_at'
+const REPRESENTATIVE_CURRENT_AUTHORITY_SELECT = 'representative_id,company_id,tenant_id,authority_status,authority_record_status,authority_status_label,authority_types,signature_type,transaction_limit,payment_approval_limit,purchase_approval_limit,bank_transaction_limit,contract_signature_limit,currency,limits,scope,requires_joint_signature,can_approve_alone,effective_date,end_date,warnings,last_transaction_id,last_transaction_type'
 const PARTNER_OPERATION_CONTROLLED_FIELDS = new Set([
   'share_ratio',
   'voting_ratio',
@@ -44,6 +45,15 @@ const PARTNER_OPERATION_CONTROLLED_FIELDS = new Set([
   'current_profit_ratio',
   'current_capital_amount',
   'current_share_units',
+  'start_date',
+  'end_date',
+  'status',
+  'record_status',
+  'approval_status',
+  'workflow_status',
+  'transaction_status',
+  'ownership_action',
+  'ownership_transaction_history',
 ])
 
 function buildFieldHistory(current: Record<string, any>, updates: Record<string, any>) {
@@ -114,9 +124,39 @@ export async function GET(
         (!!displayName && (representative.display_name === displayName || representative.full_name === displayName))
       )
     )
+    const representativeIds = representativeAuthorities.map((representative: Record<string, any>) => representative.id).filter(Boolean)
+    let representativeAuthoritiesWithCurrent: Record<string, any>[] = representativeAuthorities as Record<string, any>[]
+    if (representativeIds.length) {
+      let currentQuery = supabase
+        .from('v_current_representative_authorities')
+        .select(REPRESENTATIVE_CURRENT_AUTHORITY_SELECT)
+        .in('representative_id', representativeIds)
+      currentQuery = applyTenantQueryScope(currentQuery, 'v_current_representative_authorities', tenantContext)
+      const { data: currentRows, error: currentError } = await currentQuery
+      if (currentError) return NextResponse.json({ error: currentError.message, code: currentError.code || 'FETCH_FAILED' }, { status: 500 })
+      const currentByRepresentative = new Map((currentRows || []).map((row: Record<string, any>) => [row.representative_id, row]))
+      representativeAuthoritiesWithCurrent = representativeAuthorities.map((representative: Record<string, any>) => {
+        const current = currentByRepresentative.get(representative.id) as Record<string, any> | undefined
+        if (!current) return representative
+        return {
+          ...representative,
+          current_authority: current,
+          authority_status: current.authority_status || null,
+          authority_record_status: current.authority_record_status || null,
+          authority_types: current.authority_types || representative.authority_types,
+          signature_type: current.signature_type ?? representative.signature_type,
+          transaction_limit: current.transaction_limit ?? representative.transaction_limit,
+          currency: current.currency || representative.currency,
+          start_date: current.effective_date || representative.start_date,
+          end_date: current.end_date || representative.end_date,
+          requires_joint_signature: current.requires_joint_signature ?? representative.requires_joint_signature,
+          can_approve_alone: current.can_approve_alone ?? representative.can_approve_alone,
+        }
+      })
+    }
 
     return NextResponse.json(
-      { data: { representative_authorities: representativeAuthorities } },
+      { data: { representative_authorities: representativeAuthoritiesWithCurrent } },
       { headers: { 'Cache-Control': 'no-store, max-age=0' } }
     )
   }
@@ -217,7 +257,7 @@ export async function PATCH(
       baseVersion,
       baseUpdatedAt,
       guard: async ({ current, patch }) => {
-        const mapped = mapPartnerForDb(patch, current)
+        const mapped = mapPartnerCardForDb(patch, current)
         return ensureUniqueRoleMaster(supabase as any, {
           tableName: 'company_partners',
           identity: mapped,
@@ -226,7 +266,7 @@ export async function PATCH(
         })
       },
       beforeUpdate: ({ current, patch }) => {
-        const mapped = mapPartnerForDb(patch, current)
+        const mapped = mapPartnerCardForDb(patch, current)
         return {
           ...diffRecord(mapped, current),
           history: buildFieldHistory(current, mapped),
@@ -349,32 +389,14 @@ export async function DELETE(
     }).catch(() => null)
     return safeHardDeleteDraftRecordResponse(draftDelete)
   }
-  if (draftDelete.code !== 'NOT_DRAFT_RECORD') return safeHardDeleteDraftRecordResponse(draftDelete)
+  if (!['NOT_DRAFT_RECORD', 'REFERENCE_EXISTS', 'REFERENCE_NOT_SAFE_TO_CASCADE', 'P0001'].includes(draftDelete.code)) {
+    return safeHardDeleteDraftRecordResponse(draftDelete)
+  }
 
-  let passivateQuery = supabase
-    .from('company_partners')
-    .update({
-      status: 'Pasif',
-      record_status: 'passive',
-    })
-    .eq('id', id)
-
-  passivateQuery = applyTenantQueryScope(passivateQuery, 'company_partners', tenantContext)
-  const { data, error } = await passivateQuery
-    .select('id,company_id')
-    .single()
-
-  if (error) return NextResponse.json({ error: error.message, code: error.code || 'PASSIVATE_FAILED' }, { status: 500 })
-  await new OutboxEventService(supabase as any).enqueue({
-    tenantId: tenantContext.tenantId,
-    companyId: data?.company_id || null,
-    moduleKey: 'sirket',
-    eventType: 'partner.passivated',
-    aggregateType: 'company_partner',
-    aggregateId: id,
-    payload: { id, company_id: data?.company_id || null },
-  }).catch(() => null)
-  return NextResponse.json({ success: true })
+  return NextResponse.json({
+    error: 'Aktif veya işlem geçmişi olan ortak doğrudan silinemez. Ortaklıktan çıkış / pay devri işlemi kullanılmalıdır.',
+    code: 'PARTNER_DELETE_REQUIRES_OWNERSHIP_EXIT',
+  }, { status: 409 })
 }
 
 function partnerDraftDeleteReferenceChecks(partnerId: string): SafeHardDeleteReferenceCheck[] {
@@ -384,34 +406,27 @@ function partnerDraftDeleteReferenceChecks(partnerId: string): SafeHardDeleteRef
   return [
     {
       tableName: 'ownership_transactions',
-      label: 'Onaylanmış/bekleyen ortaklık işlemleri',
+      label: 'Ortaklık işlemleri',
       optional: true,
-      query: query => partnerTransactionFilter(query).neq('approval_status', 'draft'),
-    },
-    {
-      tableName: 'ownership_transactions',
-      label: 'Taslak ortaklık işlemleri',
-      mode: 'cascadeDelete',
-      optional: true,
-      query: query => partnerTransactionFilter(query).eq('approval_status', 'draft'),
+      query: query => partnerTransactionFilter(query),
     },
     { tableName: 'partner_ownership_lifecycle_events', foreignKey: 'partner_id', label: 'Ortak yaşam döngüsü kayıtları', mode: 'cascadeDelete', optional: true },
   ]
 }
 
-function mapPartnerForDb(partner: Record<string, any>, current?: Record<string, any>) {
+function mapPartnerCardForDb(partner: Record<string, any>, current?: Record<string, any>) {
   const ownerKind = normalizePartnerKind(partner.partner_type || partner.owner_kind || current?.owner_kind || current?.partner_type)
   const displayName = ownerKind === 'organization'
     ? partner.trade_name || partner.short_name || current?.display_name
     : [partner.first_name, partner.last_name].filter(Boolean).join(' ').trim() || current?.display_name
+  const profilePatch = stripMasterDataForRoleProfile(partner)
+  const hasProfilePatch = Object.keys(profilePatch).length > 0
 
   return {
     company_id: partner.company_id || current?.company_id,
     partner_name: displayName || 'Ortak',
     partner_type: ownerKind,
     identity_tax_number: partner.identity_number || current?.identity_tax_number,
-    share_ratio: toNullableNumber(partner.share_ratio ?? current?.share_ratio),
-    signature_authority: !!(partner.has_representation_right ?? current?.signature_authority),
     owner_kind: ownerKind,
     source_type: partner.person_id ? 'master_person' : partner.organization_id ? 'master_organization' : partner.source_type || current?.source_type || 'partners_sayfasi',
     source_id: partner.person_id || partner.organization_id || partner.source_id || current?.source_id || null,
@@ -419,29 +434,39 @@ function mapPartnerForDb(partner: Record<string, any>, current?: Record<string, 
     organization_id: partner.organization_id || current?.organization_id || null,
     display_name: displayName || 'Ortak',
     identity_number: partner.identity_number || current?.identity_number,
-    share_class: partner.share_class || current?.share_class || 'Adi Pay',
-    share_units: toNullableNumber(partner.share_units ?? current?.share_units),
-    nominal_value: toNullableNumber(partner.nominal_value ?? current?.nominal_value),
-    capital_amount: toNullableNumber(partner.capital_amount ?? current?.capital_amount),    voting_ratio: toNullableNumber(partner.voting_ratio ?? current?.voting_ratio),
-    profit_ratio: toNullableNumber(partner.profit_ratio ?? current?.profit_ratio),
-    beneficial_owner: !!current?.beneficial_owner,
-    is_beneficial_owner: !!current?.is_beneficial_owner,
-    beneficial_ratio: toNullableNumber(partner.beneficial_ratio ?? current?.beneficial_ratio),
-    is_ultimate_controller: !!current?.is_ultimate_controller,
-    has_representation_right: !!(partner.has_representation_right ?? current?.has_representation_right),
-    has_control_right: !!current?.has_control_right,
-    control_type: current?.control_type || null,
-    has_board_nomination_right: !!current?.has_board_nomination_right,
-    has_veto_right: !!current?.has_veto_right,
-    has_privileged_share: !!(partner.has_privileged_share ?? current?.has_privileged_share),
-    start_date: partner.start_date || current?.start_date,
-    end_date: partner.end_date || null,
-    status: partner.status || current?.status || 'Taslak',
-    record_status: partner.record_status || current?.record_status || (partner.status === 'Aktif' ? 'active' : partner.status === 'Pasif' ? 'passive' : 'draft'),
     notes: partner.notes || null,
     photo_logo: partner.photo_logo || current?.photo_logo || [],
     partner_documents: partner.partner_documents || current?.partner_documents || [],
-    partner_profile: stripMasterDataForRoleProfile(partner),
+    partner_profile: hasProfilePatch
+      ? { ...(current?.partner_profile || {}), ...profilePatch }
+      : current?.partner_profile || {},
+  }
+}
+
+function mapOwnershipTransactionForDb(body: Record<string, any>) {
+  return {
+    transaction_type: body.transaction_type,
+    transaction_date: body.transaction_date,
+    effective_date: body.effective_date,
+    from_partner_id: body.from_partner_id || null,
+    to_partner_id: body.to_partner_id || null,
+    affected_partner_id: body.affected_partner_id || null,
+    share_ratio: toNullableNumber(body.share_ratio),
+    voting_ratio: toNullableNumber(body.voting_ratio),
+    profit_ratio: toNullableNumber(body.profit_ratio),
+    share_units: toNullableNumber(body.share_units),
+    nominal_value: toNullableNumber(body.nominal_value),
+    capital_amount: toNullableNumber(body.capital_amount),
+    committed_capital_amount: toNullableNumber(body.committed_capital_amount),
+    share_class: body.share_class || null,
+    has_control_right: !!body.has_control_right,
+    control_type: body.control_type || null,
+    has_board_nomination_right: !!body.has_board_nomination_right,
+    has_veto_right: !!body.has_veto_right,
+    has_privileged_share: !!body.has_privileged_share,
+    is_beneficial_owner: !!body.is_beneficial_owner,
+    beneficial_ratio: toNullableNumber(body.beneficial_ratio),
+    new_values: body.new_values || body,
   }
 }
 

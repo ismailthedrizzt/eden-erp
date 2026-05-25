@@ -279,19 +279,12 @@ const heroFields: FormField[] = [
   { name: 'identity_number', label: 'VKN', type: 'text', visibleWhen: { field: 'partner_type', operator: 'equals', value: 'organization' } },
   { name: 'start_date', label: 'Başlangıç Tarihi', type: 'date', required: true, controlledByOperation: PARTNER_LIFECYCLE_CONTROL },
   {
-    name: 'status',
-    label: 'Durum',
-    type: 'select',
-    required: true,
-    controlledByOperation: PARTNER_LIFECYCLE_CONTROL,
-    options: [
-      { value: 'Taslak', label: 'Taslak' },
-      { value: 'Aktif', label: 'Aktif' },
-      { value: 'Pasif', label: 'Pasif' },
-      { value: 'Devredildi', label: 'Devredildi' },
-      { value: 'Askıda', label: 'Askıda' },
-      { value: 'Tarihsel', label: 'Tarihsel' },
-    ],
+    name: 'partner_status_summary',
+    label: 'Durum Ozeti',
+    type: 'custom',
+    colSpan: 3,
+    hideLabel: true,
+    render: ({ data }: { data?: Record<string, any> }) => <PartnerStatusSummary partner={data} />,
   },
 ]
 
@@ -599,7 +592,7 @@ export default function OrtaklarPage() {
   }
 
   const configuredHeroFields = heroFields.filter(field =>
-    pageState !== 'create' || !['start_date', 'status'].includes(field.name)
+    pageState !== 'create' || !['start_date', 'partner_status_summary'].includes(field.name)
   ).map(field => {
     if (field.name === 'company_id') {
       return {
@@ -785,27 +778,11 @@ export default function OrtaklarPage() {
       await loadData(true)
       setPageState('list')
     } catch (err: any) {
-      setToast(err.toast || { type: 'error', title: 'Kayıt Başarısız', message: err.message })
-      throw err
-    } finally {
-      setDeleting(false)
-    }
-  }
-
-  const handleActivate = async () => {
-    if (!selectedPartner?.id) return
-    setDeleting(true)
-    try {
-      const result = await companyService.updatePartner(selectedPartner.id, withPartnerConcurrency(buildPartnerChangedPatch(selectedPartner, {
-        status: 'Aktif',
-        record_status: 'active',
-      }), selectedPartner))
-      invalidateEntityDetailCache('company-partners', selectedPartner.id)
-      if (result.data) setSelectedPartner(normalizePartnerForForm(result.data))
-      setToast({ type: 'success', title: 'Kayıt Başarılı', message: 'Ortak kaydı aktive edildi' })
-      await loadData(true)
-      setPageState('view')
-    } catch (err: any) {
+      if (err?.code === 'PARTNER_DELETE_REQUIRES_OWNERSHIP_EXIT') {
+        const message = 'Aktif veya işlem geçmişi olan ortak doğrudan silinemez. Ortaklıktan çıkış / pay devri işlemi kullanılmalıdır.'
+        setToast({ type: 'warning', title: 'Ortaklık İşlemi Gerekli', message })
+        return
+      }
       setToast(err.toast || { type: 'error', title: 'Kayıt Başarısız', message: err.message })
       throw err
     } finally {
@@ -911,33 +888,6 @@ export default function OrtaklarPage() {
     openOwnershipWizard(selectedPartner, transactionType)
   }
 
-  const handleCompleteNewOwnership = async (payload: Record<string, any>) => {
-    if (!selectedPartner?.id) return
-    setSaving(true)
-    try {
-      const result = await companyService.updatePartner(selectedPartner.id, withPartnerConcurrency(buildPartnerChangedPatch(selectedPartner, {
-        company_id: payload.company_id,
-        notes: payload.notes,
-        start_date: payload.effective_date,
-        status: 'Aktif',
-        record_status: 'active',
-        ownership_action: 'ownership_defined',
-      }), selectedPartner))
-      invalidateEntityDetailCache('company-partners', selectedPartner.id)
-      const normalized = result.data ? normalizePartnerForForm(result.data) : null
-      if (normalized) setSelectedPartner(normalized)
-      setOwnershipWizardOpen(false)
-      setToast({ type: 'success', title: 'Ortaklık Tanımlandı', message: 'Taslak ortak kaydı active ortaklığa çevrildi' })
-      await loadData(true)
-      setPageState('view')
-    } catch (err: any) {
-      setToast(err.toast || { type: 'error', title: 'Ortaklık İşlemi Başarısız', message: err.message })
-      throw err
-    } finally {
-      setSaving(false)
-    }
-  }
-
   const handleContinueOwnershipTransaction = (transactionType: string) => {
     handleOwnershipActionClick(transactionType as OwnershipTransactionType)
   }
@@ -947,19 +897,6 @@ export default function OrtaklarPage() {
     setSaving(true)
     try {
       const transactionResult = await ownershipTransactionsService.create(payload)
-
-      if (isInitialPartnershipEntryType(String(payload.transaction_type || '')) && getPartnerRecordStatus(partner) === 'draft') {
-        const result = await companyService.updatePartner(partner.id, withPartnerConcurrency(buildPartnerChangedPatch(partner, {
-          company_id: payload.company_id,
-          notes: payload.notes,
-          start_date: payload.effective_date,
-          status: 'Aktif',
-          record_status: 'active',
-          ownership_action: 'initial_partnership_entry_completed',
-        }), partner))
-        const normalized = result.data ? normalizePartnerForForm(result.data) : null
-        if (normalized) setSelectedPartner(normalized)
-      }
 
       ownershipTransactionsService.invalidateList()
       invalidateEntityDetailCache('company-partners', partner.id)
@@ -2414,6 +2351,56 @@ function PartnerNameCell({ value }: { value: any; row: any }) {
   )
 }
 
+function PartnerStatusSummary({ partner }: { partner?: Record<string, any> }) {
+  const recordStatus = getPartnerRecordStatus(partner)
+  const currentOwnership = partner?.current_ownership || null
+  const transactions = Array.isArray(partner?.ownership_transaction_history)
+    ? partner?.ownership_transaction_history
+    : []
+  const lastTransaction = transactions[0]
+  const ownershipStatus = recordStatus === 'passive'
+    ? 'Pasif'
+    : Number(currentOwnership?.current_share_ratio || 0) > 0
+      ? 'Aktif ortaklik'
+      : transactions.length
+        ? 'Islem bekliyor'
+        : 'Baslatilmadi'
+  const warnings = normalizeSummaryWarnings(currentOwnership?.warnings)
+
+  return (
+    <div className="grid gap-3 rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm dark:border-gray-700 dark:bg-gray-900/40 md:grid-cols-2">
+      <StatusSummaryItem label="Kayit Durumu" value={getPartnerStatusLabel(recordStatus)} />
+      <StatusSummaryItem label="Guncel Ortaklik Durumu" value={ownershipStatus} />
+      <StatusSummaryItem label="Son Ortaklik Islemi" value={lastTransaction?.transaction_type || '-'} />
+      <StatusSummaryItem label="Yururluk Baslangici" value={formatSummaryDate(lastTransaction?.effective_date || partner?.start_date)} />
+      <StatusSummaryItem label="Yururluk Bitisi" value={formatSummaryDate(lastTransaction?.end_date || partner?.end_date)} />
+      <StatusSummaryItem label="Uyarilar" value={warnings.length ? warnings.join(', ') : '-'} />
+    </div>
+  )
+}
+
+function StatusSummaryItem({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="min-w-0">
+      <div className="text-xs font-medium text-gray-500 dark:text-gray-400">{label}</div>
+      <div className="truncate text-sm font-semibold text-gray-900 dark:text-gray-100" title={value}>{value}</div>
+    </div>
+  )
+}
+
+function normalizeSummaryWarnings(value: unknown): string[] {
+  if (Array.isArray(value)) return value.map(item => String(item || '').trim()).filter(Boolean)
+  const text = String(value || '').trim()
+  return text ? [text] : []
+}
+
+function formatSummaryDate(value: unknown) {
+  if (!value) return '-'
+  const date = new Date(String(value))
+  if (Number.isNaN(date.getTime())) return String(value)
+  return date.toLocaleDateString('tr-TR')
+}
+
 async function fetchApprovedOwnershipTransactionsForPartner(partner: Record<string, any>): Promise<OwnershipTransactionHistoryRow[]> {
   const companyId = partner.company_id || partner.company_id
   const partnerId = partner.id
@@ -2738,10 +2725,6 @@ function normalizePayload(raw: Record<string, any>, companies: Option[], mode: F
   }
   payload.identity_number = payload.identity_number || payload.national_id || payload.tax_number || payload.passport_no || payload.trade_registry_no || payload.mersis_number
   payload.owner_kind = payload.partner_type || payload.owner_kind
-  if (mode === 'create') {
-    payload.status = payload.status || 'Taslak'
-    payload.record_status = payload.record_status || 'draft'
-  }
   if (payload.partner_type === 'organization') {
     payload.trade_name = payload.first_name
     payload.short_name = payload.last_name
@@ -2772,6 +2755,13 @@ function normalizePayload(raw: Record<string, any>, companies: Option[], mode: F
   delete payload.timeline
   delete payload.__authoritiesLoaded
   delete payload.__ownershipLoaded
+  delete payload.status
+  delete payload.record_status
+  delete payload.start_date
+  delete payload.end_date
+  delete payload.approval_status
+  delete payload.workflow_status
+  delete payload.transaction_status
   payload.field_history = undefined
   return payload
 }

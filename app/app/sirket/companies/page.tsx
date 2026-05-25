@@ -941,16 +941,21 @@ export default function SirketlerPage() {
   const handleDelete = async () => {
     if (!selectedSirket) return
 
-    const isDraft = getCompanyLifecycleStatus(selectedSirket) === 'draft'
     setDeleting(true)
     try {
       await companyService.delete(selectedSirket.id)
       invalidateEntityDetailCache(COMPANY_DETAIL_CACHE_NAMESPACE, selectedSirket.id)
 
-      setToast({ type: 'success', title: 'Kayıt Başarılı', message: isDraft ? 'Şirket taslak kaydı kalıcı olarak silindi' : 'Şirket kaydı pasife çekildi' })
+      setToast({ type: 'success', title: 'Kayıt Başarılı', message: 'Şirket taslak kaydı kalıcı olarak silindi.' })
       await yenile()
       setPageState('list')
     } catch (error: any) {
+      if (error?.code === 'USE_DEREGISTRATION_WIZARD') {
+        const message = 'Aktif veya lifecycle’a girmiş şirket doğrudan silinemez. Kapanış işlemi için Terkin Wizardı kullanılmalıdır.'
+        setFormError(message)
+        setToast({ type: 'warning', title: 'Terkin Wizardı Gerekli', message })
+        return
+      }
       setFormError(error.message)
       setToast(error.toast || { type: 'error', title: 'Kayıt Başarısız', message: error.message })
       throw error

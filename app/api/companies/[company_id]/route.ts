@@ -297,7 +297,7 @@ export async function GET(
       companyId: id,
       tenantContext,
       fallback: [] as Record<string, any>[],
-      select: 'id,company_id,person_id,organization_id,owner_kind,partner_type,display_name,partner_name,identity_number,identity_tax_number,share_ratio,voting_ratio,profit_ratio,has_representation_right,signature_authority,start_date,end_date,status,is_deleted,source_type,source_id,history,created_at,updated_at,version',
+      select: 'id,company_id,person_id,organization_id,owner_kind,partner_type,display_name,partner_name,identity_number,identity_tax_number,share_ratio,voting_ratio,profit_ratio,has_representation_right,signature_authority,start_date,end_date,status,record_status,is_deleted,source_type,source_id,history,created_at,updated_at,version',
     }),
     fetchCompanyRelatedSection({
       supabase,

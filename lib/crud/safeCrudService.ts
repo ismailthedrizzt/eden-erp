@@ -3,7 +3,7 @@ import 'server-only'
 import { NextRequest, NextResponse } from 'next/server'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { ListQuery } from '@/lib/api/listEndpoint'
-import { listMetaFromRows, listRange } from '@/lib/api/listEndpoint'
+import { listMeta, listRange } from '@/lib/api/listEndpoint'
 import { requirePermission } from '@/lib/security/serverPermissions'
 import type { EntityContract } from '@/lib/crud/entityContracts'
 import { getUnknownEntityPayloadFields } from '@/lib/crud/entityContracts'
@@ -170,7 +170,7 @@ export async function safeListRecords(options: SafeListRecordOptions): Promise<S
   const sortColumn = resolveSortColumn(options)
   let query = options.supabase
     .from(options.tableName)
-    .select(options.select || '*')
+    .select(options.select || '*', { count: 'exact' })
     .order(sortColumn, { ascending: options.listQuery.direction !== 'desc' })
     .range(from, to)
 
@@ -179,7 +179,7 @@ export async function safeListRecords(options: SafeListRecordOptions): Promise<S
   query = applyListFilters(query, options)
   if (options.query) query = options.query(query)
 
-  const { data, error } = await query
+  const { data, error, count } = await query
   if (error) return databaseFailure(error, 'FETCH_FAILED')
 
   const rows = (data || []) as CrudRecord[]
@@ -191,7 +191,7 @@ export async function safeListRecords(options: SafeListRecordOptions): Promise<S
     ok: true,
     data: resultRows,
     userId: permission.userId,
-    meta: listMetaFromRows(options.listQuery, rows.length),
+    meta: listMeta(options.listQuery, count || 0),
   }
 }
 

@@ -226,7 +226,7 @@ export async function POST(request: NextRequest) {
   if (operation) await operationService.markProcessing(operation.id)
 
   try {
-    const row = await attachRepresentativeIdentity(supabase, parsed.data, mapRepresentativeForDb(parsed.data), tenantContext)
+    const row = await attachRepresentativeIdentity(supabase, parsed.data, mapRepresentativeCardForDb(parsed.data), tenantContext)
     if (!row.company_id) {
       if (operation) await operationService.markFailed(operation.id, { code: 'COMPANY_REQUIRED', error: 'Bağlı şirket bulunamadı' })
       return NextResponse.json({ error: 'Bağlı şirket bulunamadı', code: 'COMPANY_REQUIRED' }, { status: 400 })
@@ -322,42 +322,18 @@ function normalizeRepresentativeAuthorityStatusFilters(values: string[]) {
   return values.filter(value => allowed.has(value))
 }
 
-function mapRepresentativeForDb(representative: Record<string, any>) {
+function mapRepresentativeCardForDb(representative: Record<string, any>) {
   return {
     company_id: representative.company_id,
     full_name: representative.display_name || buildDisplayName(representative) || 'Temsilci',
-    job_title: null,
-    authority_type: 'other',
-    authority_types: [],
     person_kind: representative.person_or_entity_type,
     source_type: representative.source_type || (representative.person_or_entity_type === 'organization' ? 'master_organization' : 'master_person'),
     source_id: representative.source_id || null,
     display_name: representative.display_name || buildDisplayName(representative),
-    start_date: null,
-    end_date: null,
     status: 'Taslak',
     record_status: 'draft',
     notes: representative.notes || null,
-    signature_type: null,
-    transaction_limit: null,
-    payment_approval_limit: null,
-    purchase_approval_limit: null,
-    bank_transaction_limit: null,
-    contract_signature_limit: null,
-    currency: representative.currency || 'TRY',
-    requires_joint_signature: false,
-    can_approve_alone: false,
-    bank_authority_level: null,
-    department_scope: null,
-    gib_permissions: null,
-    can_submit_declaration: false,
-    can_process_e_invoice: false,
-    sgk_permissions: null,
-    can_submit_hiring_notice: false,
-    can_submit_termination_notice: false,
-    official_correspondence_authority: false,
     photo_logo: representative.photo_logo || [],
-    authority_documents: [],
     representative_profile: stripMasterDataForRoleProfile(representative),
     history: [],
     is_deleted: false,

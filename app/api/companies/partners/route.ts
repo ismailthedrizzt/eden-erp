@@ -21,6 +21,35 @@ import { OutboxEventService } from '@/lib/outbox/outboxEventService'
 
 type PartnerStatusFilter = 'draft' | 'active' | 'passive'
 const PARTNER_STATUS_FILTERS = new Set<PartnerStatusFilter>(['draft', 'active', 'passive'])
+const PARTNER_CREATE_OPERATION_CONTROLLED_FIELDS = new Set([
+  'share_ratio',
+  'voting_ratio',
+  'profit_ratio',
+  'share_units',
+  'nominal_value',
+  'capital_amount',
+  'committed_capital_amount',
+  'share_class',
+  'has_privileged_share',
+  'has_privilege',
+  'has_control_right',
+  'control_type',
+  'has_board_nomination_right',
+  'has_veto_right',
+  'beneficial_owner',
+  'is_beneficial_owner',
+  'beneficial_ratio',
+  'is_ultimate_controller',
+  'start_date',
+  'end_date',
+  'status',
+  'record_status',
+  'approval_status',
+  'workflow_status',
+  'transaction_status',
+  'current_ownership',
+  'ownership_transaction_history',
+])
 
 const partnerKindSchema = z.preprocess(
   value => value === 'company' || value === 'sirket' || value === 'şirket' ? 'organization' : value,
@@ -45,7 +74,7 @@ const PartnerSchema = z.object({
   profit_ratio: z.coerce.number().min(0).max(100).optional(),
   start_date: z.string().optional(),
   end_date: z.string().optional(),
-  status: z.string().optional().default('Taslak'),
+  status: z.string().optional(),
   has_representation_right: z.boolean().default(false),
   has_control_right: z.boolean().default(false),
   control_type: z.enum(['Hisse Çoğunluğu', 'Oy Çoğunluğu', 'Sözleşmesel Kontrol', 'Yönetim Kontrolü', 'Altın Hisse', 'Diğer']).optional(),
@@ -117,6 +146,14 @@ function omitNullishValues(value: Record<string, any>) {
   return Object.fromEntries(
     Object.entries(value).filter(([, item]) => item !== null && item !== undefined)
   )
+}
+
+function stripPartnerCreateOperationControlledFields(body: Record<string, any>) {
+  const next = { ...body }
+  PARTNER_CREATE_OPERATION_CONTROLLED_FIELDS.forEach(field => {
+    delete next[field]
+  })
+  return next
 }
 
 function normalizePartnerStatusFilters(statuses?: string[]) {
@@ -299,7 +336,7 @@ export async function POST(request: NextRequest) {
   const tenantContext = resolveTenantContext(request)
   const rawBody = await request.json()
   const clientRequestId = resolveClientRequestId(request, rawBody)
-  const body = omitNullishValues(stripOperationControlFields(rawBody))
+  const body = omitNullishValues(stripPartnerCreateOperationControlledFields(stripOperationControlFields(rawBody)))
   const parsed = PartnerSchema.safeParse(body)
 
   if (!parsed.success) {
@@ -334,7 +371,7 @@ export async function POST(request: NextRequest) {
   const operation = operationCreate.ok ? operationCreate.operation : null
   if (operation) await operationService.markProcessing(operation.id)
 
-  const row = await attachPartnerIdentity(supabase, parsed.data, mapPartnerForDb(parsed.data), tenantContext)
+  const row = await attachPartnerIdentity(supabase, parsed.data, mapPartnerCardForDb(parsed.data), tenantContext)
   const uniqueness = await ensureUniqueRoleMaster(supabase as any, {
     tableName: 'company_partners',
     identity: row,
@@ -419,7 +456,7 @@ export async function POST(request: NextRequest) {
   }, { status: 201 })
 }
 
-function mapPartnerForDb(partner: Record<string, any>) {
+function mapPartnerCardForDb(partner: Record<string, any>) {
   const ownerKind = normalizePartnerKind(partner.partner_type || partner.owner_kind)
   const displayName = ownerKind === 'organization'
     ? partner.trade_name || partner.short_name
@@ -430,36 +467,37 @@ function mapPartnerForDb(partner: Record<string, any>) {
     partner_name: displayName || 'Ortak',
     partner_type: ownerKind,
     identity_tax_number: partner.identity_number,
-    share_ratio: toNullableNumber(partner.share_ratio),
-    signature_authority: !!partner.has_representation_right,
+    signature_authority: false,
     owner_kind: ownerKind,
     source_type: partner.source_type || 'partners_sayfasi',
     source_id: partner.source_id || partner.person_id || partner.organization_id || null,
     display_name: displayName || 'Ortak',
     identity_number: partner.identity_number || partner.national_id || partner.national_id || partner.tax_number || partner.tax_number || partner.passport_no || partner.passport_no,
-    share_class: partner.share_class || 'Adi Pay',
-    share_units: toNullableNumber(partner.share_units),
-    nominal_value: toNullableNumber(partner.nominal_value),
-    capital_amount: toNullableNumber(partner.capital_amount),    voting_ratio: toNullableNumber(partner.voting_ratio),
-    profit_ratio: toNullableNumber(partner.profit_ratio),
+    share_ratio: null,
+    voting_ratio: null,
+    profit_ratio: null,
+    share_class: null,
+    share_units: null,
+    nominal_value: null,
+    capital_amount: null,
     beneficial_owner: false,
     is_beneficial_owner: false,
-    beneficial_ratio: toNullableNumber(partner.beneficial_ratio),
+    beneficial_ratio: null,
     is_ultimate_controller: false,
-    has_representation_right: !!partner.has_representation_right,
+    has_representation_right: false,
     has_control_right: false,
     control_type: null,
     has_board_nomination_right: false,
     has_veto_right: false,
     has_privileged_share: false,
-    start_date: partner.start_date || null,
-    end_date: partner.end_date || null,
-    status: partner.status || 'Taslak',
-    record_status: partner.record_status || 'draft',
+    start_date: null,
+    end_date: null,
+    status: 'Taslak',
+    record_status: 'draft',
     notes: partner.notes || null,
     history: partner.timeline || [],
-  photo_logo: partner.photo_logo || [],
-  partner_documents: partner.partner_documents || [],
+    photo_logo: partner.photo_logo || [],
+    partner_documents: partner.partner_documents || [],
     partner_profile: stripMasterDataForRoleProfile(partner),
   }
 }
@@ -564,11 +602,5 @@ async function attachPartnerIdentity(
   } catch {
     return row
   }
-}
-
-function toNullableNumber(value: unknown) {
-  if (value === '' || value === null || value === undefined) return null
-  const number = Number(value)
-  return Number.isFinite(number) ? number : null
 }
 

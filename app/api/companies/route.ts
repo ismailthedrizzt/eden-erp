@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { z } from 'zod'
-import { listMeta, listMetaFromRows, listRange, parseListQuery } from '@/lib/api/listEndpoint'
+import { listMeta, listRange, parseListQuery } from '@/lib/api/listEndpoint'
 import { getServerResponseCache, serverListCacheKey, setServerResponseCache } from '@/lib/api/serverResponseCache'
 import { safeCreateRecord, safeCrudResponse } from '@/lib/crud/safeCrudService'
 import { listProjectionRecords, projectionResponseMeta } from '@/lib/read-models/listProjection.server'
@@ -251,7 +251,7 @@ export async function GET(request: NextRequest) {
   const sortColumn = sortMap[effectiveListQuery.sort || ''] || 'short_name'
   let query = supabase
     .from('companies')
-    .select('id,organization_id,short_name,trade_name,tax_number,tax_office,company_type,city,district,phone,email,logo_url,is_deleted,record_status,company_status,committed_capital_amount,paid_capital_amount,default_currency,updated_at,created_at,version')
+    .select('id,organization_id,short_name,trade_name,tax_number,tax_office,company_type,city,district,phone,email,logo_url,is_deleted,record_status,company_status,committed_capital_amount,paid_capital_amount,default_currency,updated_at,created_at,version', { count: 'exact' })
     .in('id', scopedCompanyIds)
     .order(sortColumn, { ascending: effectiveListQuery.direction !== 'desc' })
     .range(from, to)
@@ -265,7 +265,7 @@ export async function GET(request: NextRequest) {
     query = query.or(['short_name', 'trade_name', 'tax_number'].map(field => `${field}.ilike.%${searchTerm}%`).join(','))
   }
 
-  const { data, error } = await query
+  const { data, error, count } = await query
 
   if (error) {
     if (error.message.includes("Could not find the table 'public.companies'")) {
@@ -280,7 +280,7 @@ export async function GET(request: NextRequest) {
   }
 
   const rows = await hydrateCompanyLogoUrls(supabase, (data || []) as Record<string, any>[], tenantContext)
-  const payload = { data: rows, meta: listMetaFromRows(effectiveListQuery, rows.length) }
+  const payload = { data: rows, meta: listMeta(effectiveListQuery, count || 0) }
   setServerResponseCache(cacheKey, payload, 60_000)
   return NextResponse.json(payload)
 }

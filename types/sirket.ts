@@ -279,6 +279,8 @@ export interface CompanyPublicChannels {
   history?: CompanyPublicHistoryItem[]
 }
 
+export type PartnerRecordStatus = 'draft' | 'active' | 'passive'
+
 export interface SirketOrtak {
   id: string
   company_id: string
@@ -314,7 +316,9 @@ export interface SirketOrtak {
   has_privileged_share?: boolean
   start_date?: string
   end_date?: string
-  status?: 'Aktif' | 'Pasif' | 'Devredildi' | 'Askıda' | 'Tasfiye Sürecinde'
+  /** Legacy/display-only field. Do not use for lifecycle decisions. */
+  status?: string
+  record_status?: PartnerRecordStatus
   document_reference_id?: string
   notes?: string
   history?: Array<{ field: string; old_value: unknown; new_value: unknown; changed_at: string; changed_by?: string }>
