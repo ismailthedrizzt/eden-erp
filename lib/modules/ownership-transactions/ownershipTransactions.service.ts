@@ -50,9 +50,14 @@ export const ownershipTransactionsService = {
     apiClient.invalidate('/api/ownership-transactions')
   },
 
-  async create(data: Record<string, unknown>): Promise<OwnershipTransaction> {
+  async create(data: Record<string, unknown>): Promise<OwnershipTransaction & Record<string, unknown>> {
     const payload = await createEntityRecord<OwnershipTransaction>({ collectionPath: '/api/ownership-transactions' }, data)
-    return payload.data
+    return {
+      ...(payload.data || {} as OwnershipTransaction),
+      operation_id: (payload as any).operation_id,
+      operation_status: (payload as any).operation_status,
+      message: (payload as any).message,
+    }
   },
 
   async update(id: string, data: Record<string, unknown>): Promise<OwnershipTransaction> {

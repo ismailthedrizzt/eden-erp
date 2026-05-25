@@ -6,6 +6,24 @@ type ProgressiveFormLoadingInput = {
   heroLoading?: boolean
   heroReady?: boolean
   heroError?: boolean
+  mediaMetadataLoading?: boolean
+  mediaMetadataReady?: boolean
+  mediaMetadataError?: boolean
+  profileLoading?: boolean
+  profileReady?: boolean
+  profileError?: boolean
+  relationsSummaryLoading?: boolean
+  relationsSummaryReady?: boolean
+  relationsSummaryError?: boolean
+  sectionDetailLoading?: boolean
+  sectionDetailReady?: boolean
+  sectionDetailError?: boolean
+  historyLoading?: boolean
+  historyReady?: boolean
+  historyError?: boolean
+  fullMediaLoading?: boolean
+  fullMediaReady?: boolean
+  fullMediaError?: boolean
   mediaLoading?: boolean
   mediaReady?: boolean
   mediaError?: boolean
@@ -28,6 +46,18 @@ export function createProgressiveFormLoadStages(input: ProgressiveFormLoadingInp
   if (
     input.heroLoading !== undefined ||
     input.heroReady !== undefined ||
+    input.mediaMetadataLoading !== undefined ||
+    input.mediaMetadataReady !== undefined ||
+    input.profileLoading !== undefined ||
+    input.profileReady !== undefined ||
+    input.relationsSummaryLoading !== undefined ||
+    input.relationsSummaryReady !== undefined ||
+    input.sectionDetailLoading !== undefined ||
+    input.sectionDetailReady !== undefined ||
+    input.historyLoading !== undefined ||
+    input.historyReady !== undefined ||
+    input.fullMediaLoading !== undefined ||
+    input.fullMediaReady !== undefined ||
     input.mediaLoading !== undefined ||
     input.mediaReady !== undefined ||
     input.detailsLoading !== undefined ||
@@ -39,6 +69,36 @@ export function createProgressiveFormLoadStages(input: ProgressiveFormLoadingInp
         label: 'Hero alanı',
         status: sectionStatus(input.heroLoading, input.heroReady || input.hasSnapshot, input.heroError),
         description: 'Hero alanındaki temel bilgiler yükleniyor.',
+      },
+      {
+        key: 'mediaMetadata',
+        label: 'Medya metadata',
+        status: sectionStatus(input.mediaMetadataLoading ?? input.mediaLoading, input.mediaMetadataReady ?? input.mediaReady, input.mediaMetadataError ?? input.mediaError),
+        description: 'Belge ve görsel metadata bilgileri yükleniyor.',
+      },
+      {
+        key: 'profile',
+        label: 'Profil',
+        status: sectionStatus(input.profileLoading ?? input.detailsLoading, input.profileReady ?? input.detailsReady, input.profileError ?? input.detailsError),
+        description: 'Ana düzenlenebilir profil alanları yükleniyor.',
+      },
+      {
+        key: 'relationsSummary',
+        label: 'İlişki özeti',
+        status: sectionStatus(input.relationsSummaryLoading, input.relationsSummaryReady, input.relationsSummaryError),
+        description: 'İlişkili kayıtların hafif özetleri yükleniyor.',
+      },
+      {
+        key: 'sectionDetail',
+        label: 'Bölüm detayı',
+        status: sectionStatus(input.sectionDetailLoading, input.sectionDetailReady, input.sectionDetailError),
+        description: 'Açılan sekmeye ait detay verisi yükleniyor.',
+      },
+      {
+        key: 'history',
+        label: 'Geçmiş',
+        status: sectionStatus(input.historyLoading, input.historyReady, input.historyError),
+        description: 'Geçmiş yalnızca ilgili bölüm açıldığında yüklenir.',
       },
       {
         key: 'media',

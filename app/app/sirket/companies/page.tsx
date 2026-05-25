@@ -42,6 +42,7 @@ import { useModules } from '@/lib/security/moduleStore'
 import { usePermissions } from '@/lib/security/permissionStore'
 import { PERMISSIONS } from '@/packages/shared/src'
 import { companyService } from '@/lib/services/companyService'
+import { buildOperationToast } from '@/lib/operations/operationClient'
 import type { CompanyLifecycleStatus, Sirket } from '@/types/sirket'
 
 type PageState = 'list' | 'create' | 'view' | 'edit'
@@ -425,6 +426,13 @@ const DRAFT_EDITABLE_OPERATION_FORM_FIELDS = new Set([
 ])
 
 function buildCompanySaveToast(result: Record<string, any>, mode: FormMode): ToastState {
+  const operationToast = buildOperationToast(result, {
+    type: 'success',
+    title: 'Kayıt Başarılı',
+    message: mode === 'create' ? 'Şirket kaydı oluşturuldu' : 'Şirket bilgileri güncellendi',
+  })
+  if (result?.operation_status) return operationToast
+
   const partialWarnings = normalizePartialWarnings(result?.partial_warnings)
   const warning = typeof result?.warning === 'string' ? result.warning : ''
 

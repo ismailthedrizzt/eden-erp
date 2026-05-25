@@ -75,6 +75,9 @@ export interface SafeUpdateRecordOptions extends SafeCrudBaseOptions {
   autoUpdatedAt?: boolean
   autoUpdatedBy?: boolean
   versionField?: string
+  baseVersion?: number | null
+  baseUpdatedAt?: string | null
+  updatedAtField?: string
   diffOnly?: boolean
 }
 
@@ -247,6 +250,14 @@ export async function safeUpdateRecord(options: SafeUpdateRecordOptions): Promis
   if (!current) return failure(404, 'RECORD_NOT_FOUND', 'Kayıt bulunamadı.')
 
   const currentRecord = current as CrudRecord
+  const conflict = detectVersionConflict(currentRecord, {
+    baseVersion: options.baseVersion,
+    baseUpdatedAt: options.baseUpdatedAt,
+    versionField: options.versionField,
+    updatedAtField: options.updatedAtField,
+  })
+  if (conflict) return conflict
+
   let patch = stripUndefined(options.diffOnly === false ? options.patch : diffRecord(options.patch, currentRecord))
   const contractFailure = validateContractPayload(options.contract, patch, options.rejectUnknownFields)
   if (contractFailure) return contractFailure
@@ -460,6 +471,47 @@ function databaseFailure(error: { code?: string; message?: string; details?: unk
       : 500
 
   return failure(status, code, error.message || 'Veritabanı işlemi tamamlanamadı.', error)
+}
+
+function detectVersionConflict(
+  current: CrudRecord,
+  options: {
+    baseVersion?: number | null
+    baseUpdatedAt?: string | null
+    versionField?: string
+    updatedAtField?: string
+  }
+) {
+  if (options.baseVersion !== undefined && options.baseVersion !== null) {
+    const versionField = options.versionField || 'version'
+    const currentVersion = Number(current[versionField])
+    if (Number.isFinite(currentVersion) && currentVersion !== options.baseVersion) {
+      return failure(409, 'VERSION_CONFLICT', 'Kayıt siz formu açtıktan sonra değişmiş.', {
+        current_version: currentVersion,
+        base_version: options.baseVersion,
+      })
+    }
+  }
+
+  if (options.baseUpdatedAt) {
+    const updatedAtField = options.updatedAtField || 'updated_at'
+    const currentUpdatedAt = normalizeDateForConflict(current[updatedAtField])
+    const baseUpdatedAt = normalizeDateForConflict(options.baseUpdatedAt)
+    if (currentUpdatedAt && baseUpdatedAt && currentUpdatedAt !== baseUpdatedAt) {
+      return failure(409, 'VERSION_CONFLICT', 'Kayıt siz formu açtıktan sonra değişmiş.', {
+        current_updated_at: current[updatedAtField],
+        base_updated_at: options.baseUpdatedAt,
+      })
+    }
+  }
+
+  return null
+}
+
+function normalizeDateForConflict(value: unknown) {
+  const date = value ? new Date(String(value)) : null
+  if (!date || Number.isNaN(date.getTime())) return ''
+  return date.toISOString()
 }
 
 function failure(status: number, code: string, error: string, details?: unknown): Extract<SafeCrudResult, { ok: false }> {

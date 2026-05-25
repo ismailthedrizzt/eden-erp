@@ -26,6 +26,7 @@ import { isSoftDeletedRecord } from '@/lib/forms/entityState'
 import { createProgressiveFormLoadStages } from '@/lib/forms/progressiveFormLoading'
 import { invalidateEntityDetailCache, readEntityDetailCache, writeEntityDetailCache } from '@/lib/forms/entityDetailCache'
 import { companyService } from '@/lib/services/companyService'
+import { buildOperationToast } from '@/lib/operations/operationClient'
 import { ownershipTransactionsService } from '@/lib/modules/ownership-transactions/ownershipTransactions.service'
 import {
   INITIAL_PARTNERSHIP_ENTRY_TYPE,
@@ -55,6 +56,7 @@ type CompanyOption = Option & {
 interface PartnerRow {
   id: string
   company_id?: string
+  company_name?: string
   owner_kind?: 'person' | 'organization'
   partner_type?: 'person' | 'organization' | 'company' | 'kisi' | 'sirket'
   display_name?: string
@@ -87,7 +89,16 @@ interface PartnerRow {
   photo_logo?: Array<Record<string, any>>
   partner_documents?: Array<Record<string, any>>
   current_ownership?: CurrentOwnershipRow | null
+  current_share_ratio?: number
+  current_voting_ratio?: number
+  current_profit_ratio?: number
+  current_capital_amount?: number
+  current_share_units?: number
+  representative_authority_count?: number
+  representative_authorities?: RepresentativeAuthorityRow[]
   ownership_transaction_history?: OwnershipTransactionHistoryRow[]
+  updated_at?: string
+  version?: number
 }
 
 interface CurrentOwnershipRow {
@@ -425,7 +436,7 @@ export default function OrtaklarPage() {
   const [partners, setPartners] = useState<PartnerRow[]>([])
   const [companies, setCompanies] = useState<CompanyOption[]>([])
   const [currentOwnershipRows, setCurrentOwnershipRows] = useState<CurrentOwnershipRow[]>([])
-  const [representatives, setRepresentatives] = useState<RepresentativeAuthorityRow[]>([])
+  const [representatives] = useState<RepresentativeAuthorityRow[]>([])
   const [selectedPartner, setSelectedPartner] = useState<Record<string, any> | null>(null)
   const [loading, setLoading] = useState(true)
   const [detailLoading, setDetailLoading] = useState(false)
@@ -459,7 +470,7 @@ export default function OrtaklarPage() {
     detailReady: pageState !== 'create' && !!selectedPartner && !detailLoading,
     hasMaster: !!(selectedPartner?.person_id || selectedPartner?.organization_id || selectedPartner?.master_record_id || selectedPartner?.master),
     referencesLoading: relationContextLoading,
-    referencesReady: companies.length > 0 || representatives.length > 0 || currentOwnershipRows.length > 0,
+    referencesReady: companies.length > 0 || currentOwnershipRows.length > 0,
     referencesError: relationContextError,
   })
 
@@ -467,32 +478,22 @@ export default function OrtaklarPage() {
     setRelationContextLoading(true)
     setRelationContextError(false)
     try {
-    const [companyPayload, representativePayload] = await Promise.all([
-      companyService.list({ pageSize: 500, useCache: !force }),
-      companyService.representativesList({ useCache: !force }),
-    ])
+      const companyPayload = await companyService.list({ statuses: ['active'], pageSize: 100, useCache: !force })
 
-    setRepresentatives(Array.isArray(representativePayload.data) ? representativePayload.data : [])
-    const companyOptions: CompanyOption[] = Array.isArray(companyPayload.data) ? companyPayload.data.map((company: any) => ({
-      value: company.id,
-      label: formatCompanyOptionLabel(company),
-      trade_name: company.trade_name,
-      short_name: company.short_name,
-      tax_number: company.tax_number,
-      record_status: company.record_status,
-      company_status: company.company_status,
-      is_deleted: !!company.is_deleted,
-      committed_capital_amount: Number(company.committed_capital_amount || 0),
-      paid_capital_amount: Number(company.paid_capital_amount || 0),
-      default_currency: company.default_currency || 'TRY',
-    })) : []
-    setCompanies(companyOptions)
-    if (companyOptions.length > 0) {
-      const ownershipPayload = await companyService.currentOwnership(companyOptions.map(company => company.value), { useCache: !force })
-      setCurrentOwnershipRows(Array.isArray(ownershipPayload.data) ? ownershipPayload.data : [])
-    } else {
-      setCurrentOwnershipRows([])
-    }
+      const companyOptions: CompanyOption[] = Array.isArray(companyPayload.data) ? companyPayload.data.map((company: any) => ({
+        value: company.id,
+        label: formatCompanyOptionLabel(company),
+        trade_name: company.trade_name,
+        short_name: company.short_name,
+        tax_number: company.tax_number,
+        record_status: company.record_status,
+        company_status: company.company_status,
+        is_deleted: !!company.is_deleted,
+        committed_capital_amount: Number(company.committed_capital_amount || 0),
+        paid_capital_amount: Number(company.paid_capital_amount || 0),
+        default_currency: company.default_currency || 'TRY',
+      })) : []
+      setCompanies(companyOptions)
     } catch (error) {
       setRelationContextError(true)
       throw error
@@ -500,6 +501,17 @@ export default function OrtaklarPage() {
       setRelationContextLoading(false)
     }
   }, [])
+
+  const loadOwnershipContext = useCallback(async (force = false, companyIds?: string[]) => {
+    const scopedCompanyIds = (companyIds?.length ? companyIds : companies.map(company => company.value)).filter(Boolean)
+    if (!scopedCompanyIds.length) {
+      setCurrentOwnershipRows([])
+      return
+    }
+
+    const ownershipPayload = await companyService.currentOwnership(scopedCompanyIds, { useCache: !force })
+    setCurrentOwnershipRows(Array.isArray(ownershipPayload.data) ? ownershipPayload.data : [])
+  }, [companies])
 
   const loadData = useCallback(async (force = false) => {
     setLoading(true)
@@ -510,16 +522,12 @@ export default function OrtaklarPage() {
 
       setPartners(Array.isArray(partnerPayload.data) ? partnerPayload.data : [])
       setListMeta(partnerPayload.meta ?? { page: listQuery.page, pageSize: listQuery.pageSize, total: partnerPayload.data?.length ?? 0, totalPages: 1 })
-      loadRelationContext(force).catch(() => {
-        setRepresentatives([])
-        setCurrentOwnershipRows([])
-      })
     } catch (err: any) {
       setError(err.message)
     } finally {
       setLoading(false)
     }
-  }, [includePassive, listQuery, loadRelationContext, statusFilters])
+  }, [includePassive, listQuery, statusFilters])
   useEffect(() => {
     loadData()
   }, [loadData])
@@ -529,6 +537,7 @@ export default function OrtaklarPage() {
   const currentOwnershipByCompanyPartnerKey = useMemo(() => Object.fromEntries(currentOwnershipRows.map(row => [ownershipKey(row.company_id, row.partner_id), row])), [currentOwnershipRows])
   const representativeAuthoritiesForPartner = useCallback((partner: Record<string, any> | null | undefined) => {
     if (!partner) return []
+    if (Array.isArray(partner.representative_authorities)) return partner.representative_authorities
     const companyId = partner.company_id
     const personId = partner.person_id
     const organizationId = partner.organization_id
@@ -548,7 +557,18 @@ export default function OrtaklarPage() {
   }, [representatives])
 
   const tableData = useMemo(() => partners.map(partner => {
-    const currentOwnership = currentOwnershipByCompanyPartnerKey[ownershipKey(partner.company_id, partner.id)]
+    const projectionOwnership: CurrentOwnershipRow | null = hasProjectionOwnership(partner)
+      ? {
+          company_id: partner.company_id || '',
+          partner_id: partner.id,
+          current_share_ratio: partner.current_share_ratio,
+          current_voting_ratio: partner.current_voting_ratio,
+          current_profit_ratio: partner.current_profit_ratio,
+          current_capital_amount: partner.current_capital_amount,
+          current_share_units: partner.current_share_units,
+        }
+      : null
+    const currentOwnership = partner.current_ownership || projectionOwnership || currentOwnershipByCompanyPartnerKey[ownershipKey(partner.company_id, partner.id)]
     const representativeAuthorities = representativeAuthoritiesForPartner(partner)
     const partnerType = normalizePartnerType(partner.owner_kind || partner.partner_type)
     return ({
@@ -556,12 +576,12 @@ export default function OrtaklarPage() {
     display_name: partner.display_name || partner.partner_name || '',
     identity_number: partner.identity_number || partner.identity_tax_number || '',
     partner_type_label: partnerType === 'organization' ? 'Tüzel Kişi' : 'Gerçek Kişi',
-    company_name: companyNameById[partner.company_id || ''] || '-',
+    company_name: partner.company_name || companyNameById[partner.company_id || ''] || '-',
     current_ownership: currentOwnership || null,
-    current_share_ratio: currentOwnership?.current_share_ratio ?? 0,
-    current_voting_ratio: currentOwnership?.current_voting_ratio ?? 0,
-    current_profit_ratio: currentOwnership?.current_profit_ratio ?? 0,
-    current_capital_amount: currentOwnership?.current_capital_amount ?? 0,
+    current_share_ratio: currentOwnership?.current_share_ratio ?? partner.current_share_ratio ?? 0,
+    current_voting_ratio: currentOwnership?.current_voting_ratio ?? partner.current_voting_ratio ?? 0,
+    current_profit_ratio: currentOwnership?.current_profit_ratio ?? partner.current_profit_ratio ?? 0,
+    current_capital_amount: currentOwnership?.current_capital_amount ?? partner.current_capital_amount ?? 0,
     representative_authorities: representativeAuthorities,
   })
   }), [companyNameById, currentOwnershipByCompanyPartnerKey, partners, representativeAuthoritiesForPartner])
@@ -665,6 +685,41 @@ export default function OrtaklarPage() {
     }
   }
 
+  const handleFormTabChange = useCallback(async (tabId: string) => {
+    const partnerId = selectedPartner?.id
+    if (!partnerId) return
+
+    if (tabId === 'yetkiler' && !selectedPartner.__authoritiesLoaded) {
+      try {
+        const result = await companyService.partnerDetailSection(partnerId, 'authorities')
+        const next = normalizePartnerForForm({
+          ...(selectedPartner as PartnerRow),
+          ...(result.data || {}),
+          __authoritiesLoaded: true,
+        } as PartnerRow)
+        setSelectedPartner(next)
+        writeEntityDetailCache('company-partners', partnerId, next)
+      } catch {
+        setToast({ type: 'warning', title: 'Yetki Özeti Yüklenemedi', message: 'Temsilci yetkileri şu anda yüklenemedi.' })
+      }
+    }
+
+    if (tabId === 'sermaye' && !selectedPartner.__ownershipLoaded) {
+      try {
+        const result = await companyService.partnerDetailSection(partnerId, 'ownership')
+        const next = normalizePartnerForForm({
+          ...(selectedPartner as PartnerRow),
+          ...(result.data || {}),
+          __ownershipLoaded: true,
+        } as PartnerRow)
+        setSelectedPartner(next)
+        writeEntityDetailCache('company-partners', partnerId, next)
+      } catch {
+        setToast({ type: 'warning', title: 'Sermaye Özeti Yüklenemedi', message: 'Güncel ortaklık özeti şu anda yüklenemedi.' })
+      }
+    }
+  }, [selectedPartner])
+
   useEffect(() => {
     const pendingPartnerId = searchParams.get('id')
     const pendingTransactionId = searchParams.get('transaction_id')
@@ -699,7 +754,11 @@ export default function OrtaklarPage() {
         : await companyService.updatePartner(selectedPartner?.id || '', payload)
       const normalized = result.data ? normalizePartnerForForm(result.data) : null
       if (normalized) setSelectedPartner(normalized)
-      setToast({ type: 'success', title: 'Kayıt Başarılı', message: mode === 'create' ? 'Ortak kaydı oluşturuldu' : 'Ortak bilgileri güncellendi' })
+      setToast(buildOperationToast(result as any, {
+        type: 'success',
+        title: 'Kayıt Başarılı',
+        message: mode === 'create' ? 'Ortak kaydı oluşturuldu' : 'Ortak bilgileri güncellendi',
+      }))
       await loadData(true)
       if (mode === 'create') invalidateEntityDetailCache('company-partners')
       else invalidateEntityDetailCache('company-partners', selectedPartner?.id)
@@ -761,6 +820,8 @@ export default function OrtaklarPage() {
     setSelectedPartner(prev => prev?.id === normalized.id ? prev : normalized)
     setOwnershipWizardPartner(normalized)
     setOwnershipWizardInitialType(transactionType || null)
+    if (!companies.length) loadRelationContext(false).catch(() => undefined)
+    if (normalized.company_id) loadOwnershipContext(false, [normalized.company_id]).catch(() => undefined)
 
     if (recordStatus === 'draft' && !isInitialPartnershipEntryType(transactionType)) {
       setOwnershipNoticeOpen(true)
@@ -882,7 +943,7 @@ export default function OrtaklarPage() {
     if (!partner?.id) return
     setSaving(true)
     try {
-      await ownershipTransactionsService.create(payload)
+      const transactionResult = await ownershipTransactionsService.create(payload)
 
       if (isInitialPartnershipEntryType(String(payload.transaction_type || '')) && getPartnerRecordStatus(partner) === 'draft') {
         const result = await companyService.updatePartner(partner.id, {
@@ -910,7 +971,11 @@ export default function OrtaklarPage() {
       setOwnershipWizardOpen(false)
       setOwnershipWizardPartner(null)
       setOwnershipWizardInitialType(null)
-      setToast({ type: 'success', title: 'Ortaklık İşlemi Oluşturuldu', message: 'İşlem taslağı Ortaklarımız sayfasından oluşturuldu.' })
+      setToast(buildOperationToast(transactionResult as any, {
+        type: 'success',
+        title: 'Ortaklık İşlemi Oluşturuldu',
+        message: 'İşlem taslağı Ortaklarımız sayfasından oluşturuldu.',
+      }))
       await loadData(true)
       setPageState('view')
     } catch (err: any) {
@@ -999,6 +1064,7 @@ export default function OrtaklarPage() {
         onAddClick: () => {
           setSelectedPartner(null)
           setPageState('create')
+          if (!companies.length) loadRelationContext(false).catch(() => undefined)
         },
         addButtonText: 'Ekle',
       }
@@ -1101,6 +1167,7 @@ export default function OrtaklarPage() {
             onDelete={selectedRecordStatus === 'draft' ? handleDelete : undefined}
             onActivate={undefined}
             onModeChange={(mode) => setPageState(mode)}
+            onActiveTabChange={handleFormTabChange}
             operationActions={getFormOperationActions()}
             onIdentityGateOpenExistingRole={async (roleRecord) => {
               await handleRowClick(roleRecord as any)
@@ -2607,6 +2674,14 @@ function ownershipKey(companyId?: string | null, partnerId?: string | null) {
   return `${companyId || ''}::${partnerId || ''}`
 }
 
+function hasProjectionOwnership(partner: PartnerRow) {
+  return partner.current_share_ratio !== undefined
+    || partner.current_voting_ratio !== undefined
+    || partner.current_profit_ratio !== undefined
+    || partner.current_capital_amount !== undefined
+    || partner.current_share_units !== undefined
+}
+
 function getPartnerRecordStatus(partner?: Record<string, any> | null): RecordStatusFilterValue {
   if (!partner) return 'draft'
   if (partner.record_status === 'passive' || isSoftDeletedRecord(partner) || partner.status === 'Pasif') return 'passive'
@@ -2705,6 +2780,8 @@ function normalizePayload(raw: Record<string, any>, companies: Option[], mode: F
   delete payload.history_sections
   delete payload.ownership_transaction_history
   delete payload.timeline
+  delete payload.__authoritiesLoaded
+  delete payload.__ownershipLoaded
   payload.field_history = undefined
   return payload
 }
@@ -2735,7 +2812,7 @@ function getPartnerCompanySelectionError(payload: Record<string, any>, activeCom
     return error
   }
 
-  if (!activeCompanies.some(company => company.value === payload.company_id)) {
+  if (activeCompanies.length > 0 && !activeCompanies.some(company => company.value === payload.company_id)) {
     const error = new Error('Seçilen şirket aktif durumda olmadığı için bu şirkete yeni ortak eklenemez.') as SaveError
     error.fieldErrors = { company_id: 'Yalnızca aktif şirket seçilebilir' }
     error.toast = { type: 'warning', title: 'Şirket Aktif Değil', message: error.message }

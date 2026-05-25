@@ -110,11 +110,24 @@ async function request<T>(path: string, options: ApiClientOptions = {}): Promise
 }
 
 function withJsonBody(method: string, body?: JsonBody, options: ApiClientOptions = {}) {
+  const nextBody = addClientRequestId(method, body)
   return {
     ...options,
     method,
-    body: body === undefined ? undefined : JSON.stringify(body),
+    body: nextBody === undefined ? undefined : JSON.stringify(nextBody),
   }
+}
+
+function addClientRequestId(method: string, body?: JsonBody): JsonBody | undefined {
+  if (body === undefined) return undefined
+  if (!['POST', 'PATCH', 'PUT', 'DELETE'].includes(method.toUpperCase())) return body
+  if (!body || Array.isArray(body) || typeof body !== 'object') return body
+  const record = body as Record<string, unknown>
+  if (record.client_request_id || record.clientRequestId) return body
+  const randomId = typeof crypto !== 'undefined' && 'randomUUID' in crypto
+    ? crypto.randomUUID()
+    : `${Date.now()}-${Math.random().toString(36).slice(2)}`
+  return { ...record, client_request_id: `ui:${randomId}` }
 }
 
 export const apiClient = Object.assign(request, {

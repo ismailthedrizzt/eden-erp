@@ -10,8 +10,10 @@ import {
 import { diffRecord, safeCrudResponse, safeReadRecord, safeUpdateRecord } from '@/lib/crud/safeCrudService'
 import { ensureUniqueRoleMaster } from '@/lib/identity/roleUniqueness'
 import { applyTenantQueryScope, resolveTenantContext, withTenantInsertScopeForTable } from '@/lib/tenancy/server'
+import { resolveBaseUpdatedAt, resolveBaseVersion, stripOperationControlFields } from '@/lib/operations/idempotency'
 
-const PARTNER_DETAIL_SELECT = 'id,company_id,person_id,organization_id,owner_kind,partner_type,display_name,partner_name,identity_number,identity_tax_number,share_ratio,voting_ratio,profit_ratio,source_type,source_id,share_units,nominal_value,capital_amount,share_class,has_representation_right,signature_authority,has_control_right,control_type,has_board_nomination_right,has_veto_right,has_privileged_share,beneficial_owner,is_beneficial_owner,beneficial_ratio,is_ultimate_controller,start_date,end_date,status,record_status,history,photo_logo,partner_documents,partner_profile,notes,created_at'
+const PARTNER_DETAIL_SELECT = 'id,company_id,person_id,organization_id,owner_kind,partner_type,display_name,partner_name,identity_number,identity_tax_number,share_ratio,voting_ratio,profit_ratio,source_type,source_id,share_units,nominal_value,capital_amount,share_class,has_representation_right,signature_authority,has_control_right,control_type,has_board_nomination_right,has_veto_right,has_privileged_share,beneficial_owner,is_beneficial_owner,beneficial_ratio,is_ultimate_controller,start_date,end_date,status,record_status,history,photo_logo,partner_documents,partner_profile,notes,created_at,updated_at,version'
+const PARTNER_SECTION_BASE_SELECT = 'id,company_id,person_id,organization_id,source_id,display_name,partner_name'
 
 function buildFieldHistory(current: Record<string, any>, updates: Record<string, any>) {
   const existingHistory = Array.isArray(current.history) ? current.history : []
@@ -40,6 +42,73 @@ export async function GET(
 ) {
   const { id } = await params
   const supabase = createServiceClient()
+  const section = request.nextUrl.searchParams.get('section')
+
+  if (section === 'authorities' || section === 'relationsSummary') {
+    const partnerResult = await safeReadRecord({
+      supabase,
+      request,
+      tableName: 'company_partners',
+      recordId: id,
+      permissionKey: ['partners.view', 'companies.view'],
+      select: PARTNER_SECTION_BASE_SELECT,
+    })
+    if (!partnerResult.ok) return safeCrudResponse(partnerResult)
+
+    const partner = partnerResult.data
+    const tenantContext = resolveTenantContext(request)
+    let query = supabase
+      .from('company_representatives')
+      .select('id,company_id,person_id,organization_id,source_id,display_name,full_name,status,authority_types,job_title,signature_type,transaction_limit,currency,requires_joint_signature,can_approve_alone,start_date,end_date,is_deleted')
+      .eq('company_id', partner.company_id)
+      .limit(100)
+    query = applyTenantQueryScope(query, 'company_representatives', tenantContext)
+    const { data, error } = await query
+    if (error) return NextResponse.json({ error: error.message, code: error.code || 'FETCH_FAILED' }, { status: 500 })
+
+    const displayName = partner.display_name || partner.partner_name
+    const representativeAuthorities = (data || []).filter((representative: Record<string, any>) =>
+      !representative.is_deleted && (
+        (partner.person_id && representative.person_id === partner.person_id) ||
+        (partner.organization_id && representative.organization_id === partner.organization_id) ||
+        (partner.source_id && representative.source_id === partner.source_id) ||
+        (!!displayName && (representative.display_name === displayName || representative.full_name === displayName))
+      )
+    )
+
+    return NextResponse.json(
+      { data: { representative_authorities: representativeAuthorities } },
+      { headers: { 'Cache-Control': 'no-store, max-age=0' } }
+    )
+  }
+
+  if (section === 'ownership') {
+    const partnerResult = await safeReadRecord({
+      supabase,
+      request,
+      tableName: 'company_partners',
+      recordId: id,
+      permissionKey: ['partners.view', 'companies.view'],
+      select: PARTNER_SECTION_BASE_SELECT,
+    })
+    if (!partnerResult.ok) return safeCrudResponse(partnerResult)
+
+    const partner = partnerResult.data
+    const tenantContext = resolveTenantContext(request)
+    let query = supabase
+      .from('v_current_ownership')
+      .select('company_id,partner_id,display_name,current_share_ratio,current_voting_ratio,current_profit_ratio,current_capital_amount,current_share_units,has_control_right,control_type,has_veto_right,has_board_nomination_right,has_privileged_share,is_beneficial_owner,beneficial_ratio,warnings')
+      .eq('company_id', partner.company_id)
+      .eq('partner_id', id)
+    query = applyTenantQueryScope(query, 'v_current_ownership', tenantContext)
+    const { data, error } = await query.maybeSingle()
+    if (error) return NextResponse.json({ error: error.message, code: error.code || 'FETCH_FAILED' }, { status: 500 })
+
+    return NextResponse.json(
+      { data: { current_ownership: data || null } },
+      { headers: { 'Cache-Control': 'no-store, max-age=0' } }
+    )
+  }
 
   const result = await safeReadRecord({
     supabase,
@@ -65,7 +134,10 @@ export async function PATCH(
   const { id } = await params
   const supabase = createServiceClient()
   const tenantContext = resolveTenantContext(request)
-  const body = await request.json()
+  const rawBody = await request.json()
+  const baseVersion = resolveBaseVersion(rawBody)
+  const baseUpdatedAt = resolveBaseUpdatedAt(rawBody)
+  const body = stripOperationControlFields(rawBody)
 
   const result = await safeUpdateRecord({
     supabase,
@@ -76,6 +148,9 @@ export async function PATCH(
     patch: body,
     select: PARTNER_DETAIL_SELECT,
     currentSelect: PARTNER_DETAIL_SELECT,
+    versionField: 'version',
+    baseVersion,
+    baseUpdatedAt,
     guard: async ({ current, patch }) => {
       const mapped = mapPartnerForDb(patch, current)
       return ensureUniqueRoleMaster(supabase as any, {

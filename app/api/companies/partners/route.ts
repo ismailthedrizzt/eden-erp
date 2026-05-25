@@ -6,10 +6,18 @@ import { normalizeCountryId } from '@/lib/reference/country-nationalities'
 import { EntityBankAccountsService } from '@/lib/modules/entity-bank-accounts/entityBankAccounts.service'
 import { parseListQuery } from '@/lib/api/listEndpoint'
 import { safeCreateRecord, safeCrudResponse, safeListRecords } from '@/lib/crud/safeCrudService'
+import { listProjectionRecords, projectionResponseMeta } from '@/lib/read-models/listProjection.server'
+import { companyPartnerListProjection } from '@/lib/read-models/moduleListProjectionConfig'
 import { ensureUniqueRoleMaster, roleUniquenessResponse } from '@/lib/identity/roleUniqueness'
 import { applyTenantQueryScope, resolveTenantContext, type TenantContext, withTenantInsertScopeForTable } from '@/lib/tenancy/server'
 import { findGlobalOrganizationByIdentity, getTenantCompanyScope, normalizeLegalCountry, normalizeLegalTaxNumber } from '@/lib/tenancy/companyScopes'
 import { requirePermission } from '@/lib/security/serverPermissions'
+import { isMissingTableError } from '@/lib/modules/companies/companyErrors'
+import { OperationRequestService } from '@/lib/operations/operationRequestService'
+import { resolveClientRequestId, stripOperationControlFields } from '@/lib/operations/idempotency'
+import { operationStatusMessage } from '@/lib/operations/operationStatus'
+import { duplicateOperationJsonResponse } from '@/lib/operations/apiResponse'
+import { OutboxEventService } from '@/lib/outbox/outboxEventService'
 
 type PartnerStatusFilter = 'draft' | 'active' | 'passive'
 const PARTNER_STATUS_FILTERS = new Set<PartnerStatusFilter>(['draft', 'active', 'passive'])
@@ -210,6 +218,28 @@ export async function GET(request: NextRequest) {
   }
   const companyId = searchParams.get('company_id')
   const status = searchParams.get('status')
+  const projectionResult = await listProjectionRecords({
+    supabase,
+    request,
+    projectionKey: companyPartnerListProjection.key,
+    permissionKey: ['partners.view', 'companies.view'],
+    listQuery,
+    filters: {
+      ...(companyId ? { company_id: companyId } : {}),
+      ...(status ? { status } : {}),
+    },
+    query: statusFilters.length ? query => applyPartnerStatusFilters(query, statusFilters) : undefined,
+  })
+
+  if (projectionResult.ok) {
+    const { meta, projection } = projectionResponseMeta(projectionResult.meta)
+    return NextResponse.json({ data: projectionResult.data, meta, projection })
+  }
+
+  if (!isMissingTableError({ code: projectionResult.code, message: projectionResult.error })) {
+    return safeCrudResponse(projectionResult)
+  }
+
   const result = await safeListRecords({
     supabase,
     request,
@@ -237,7 +267,9 @@ export async function POST(request: NextRequest) {
   const permission = await requirePermission(request, supabase, 'partners.edit')
   if (permission instanceof NextResponse) return permission
   const tenantContext = resolveTenantContext(request)
-  const body = omitNullishValues(await request.json())
+  const rawBody = await request.json()
+  const clientRequestId = resolveClientRequestId(request, rawBody)
+  const body = omitNullishValues(stripOperationControlFields(rawBody))
   const parsed = PartnerSchema.safeParse(body)
 
   if (!parsed.success) {
@@ -254,13 +286,38 @@ export async function POST(request: NextRequest) {
   const companyValidation = await validatePartnerCompanyForCreate(supabase, parsed.data.company_id, tenantContext)
   if (companyValidation) return companyValidation
 
+  const operationService = new OperationRequestService(supabase as any)
+  const operationCreate = await operationService.createOrGet({
+    tenantId: tenantContext.tenantId,
+    companyId: parsed.data.company_id || null,
+    moduleKey: 'sirket',
+    entityType: 'company_partner',
+    operationType: 'partner.create',
+    clientRequestId,
+    requestedBy: permission.userId,
+    payload: parsed.data,
+  })
+  if (operationCreate.ok && operationCreate.duplicate) return duplicateOperationJsonResponse(operationCreate.operation)
+  if (!operationCreate.ok && !operationCreate.missingInfrastructure) {
+    return NextResponse.json({ error: operationCreate.error, code: operationCreate.code || 'OPERATION_REQUEST_FAILED' }, { status: 500 })
+  }
+  const operation = operationCreate.ok ? operationCreate.operation : null
+  if (operation) await operationService.markProcessing(operation.id)
+
   const row = await attachPartnerIdentity(supabase, parsed.data, mapPartnerForDb(parsed.data), tenantContext)
   const uniqueness = await ensureUniqueRoleMaster(supabase as any, {
     tableName: 'company_partners',
     identity: row,
     tenantContext,
   })
-  if (!uniqueness.ok) return roleUniquenessResponse(uniqueness)
+  if (!uniqueness.ok) {
+    if (operation) await operationService.markFailed(operation.id, {
+      code: uniqueness.code || 'ROLE_DUPLICATE',
+      error: uniqueness.error || 'Role kaydi benzersiz degil.',
+      details: uniqueness,
+    })
+    return roleUniquenessResponse(uniqueness)
+  }
 
   const createResult = await safeCreateRecord({
     supabase,
@@ -270,7 +327,23 @@ export async function POST(request: NextRequest) {
     values: row,
     select: '*',
   })
-  if (!createResult.ok) return safeCrudResponse(createResult)
+  if (!createResult.ok) {
+    if (operation) await operationService.markFailed(operation.id, {
+      code: createResult.code,
+      error: createResult.error,
+      details: createResult.details,
+    })
+    return NextResponse.json({
+      error: createResult.error,
+      code: createResult.code,
+      details: createResult.details,
+      ...(operation ? {
+        operation_id: operation.id,
+        operation_status: 'failed',
+        message: operationStatusMessage('failed'),
+      } : {}),
+    }, { status: createResult.status })
+  }
 
   const data = createResult.data
   await supabase.from('partner_ownership_lifecycle_events').insert(withTenantInsertScopeForTable({
@@ -293,7 +366,27 @@ export async function POST(request: NextRequest) {
     : data?.organization_id
       ? await hydrateMasterContact(supabase, 'organization', data)
       : data
-  return NextResponse.json({ data: hydrated }, { status: 201 })
+  if (operation) {
+    await operationService.markCompleted(operation.id, { id: hydrated.id, data: hydrated })
+    await new OutboxEventService(supabase as any).enqueue({
+      tenantId: tenantContext.tenantId,
+      companyId: data.company_id || null,
+      moduleKey: 'sirket',
+      eventType: 'partner.created',
+      aggregateType: 'company_partner',
+      aggregateId: data.id,
+      operationId: operation.id,
+      payload: { id: data.id, company_id: data.company_id || null },
+    }).catch(() => null)
+  }
+  return NextResponse.json({
+    data: hydrated,
+    ...(operation ? {
+      operation_id: operation.id,
+      operation_status: 'completed',
+      message: operationStatusMessage('completed'),
+    } : {}),
+  }, { status: 201 })
 }
 
 function mapPartnerForDb(partner: Record<string, any>) {

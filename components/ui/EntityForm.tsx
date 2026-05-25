@@ -158,7 +158,20 @@ export interface FormTab {
 /** Form modes */
 export type FormMode = 'create' | 'view' | 'edit' | 'passive'
 
-export type FormLoadStageKey = 'snapshot' | 'detail' | 'master' | 'references' | 'hero' | 'media' | 'details'
+export type FormLoadStageKey =
+  | 'snapshot'
+  | 'detail'
+  | 'master'
+  | 'references'
+  | 'hero'
+  | 'media'
+  | 'mediaMetadata'
+  | 'profile'
+  | 'relationsSummary'
+  | 'sectionDetail'
+  | 'history'
+  | 'fullMedia'
+  | 'details'
 export type FormLoadStageStatus = 'idle' | 'loading' | 'ready' | 'error' | 'skipped'
 
 export interface FormLoadStage {
@@ -303,6 +316,9 @@ export interface EntityFormProps {
 
   /** Mode change handler (view -> edit) */
   onModeChange?: (mode: 'create' | 'view' | 'edit') => void
+
+  /** Active tab observer for parent-driven lazy section hydration. */
+  onActiveTabChange?: (tabId: string) => void
 
   /** Optional field change observer for parent-driven dynamic forms */
   onFieldChange?: (field: string, value: any, data: Record<string, any>) => void
@@ -2913,6 +2929,7 @@ export function EntityForm({
   onDelete,
   onActivate,
   onModeChange,
+  onActiveTabChange,
   onFieldChange,
   operationActions,
   additionalActions,
@@ -3252,6 +3269,11 @@ export function EntityForm({
     setMode(newMode)
     onModeChange?.(newMode)
     setFieldErrors({})
+  }
+
+  const handleActiveTabChange = (tabId: string) => {
+    setActiveTab(tabId)
+    onActiveTabChange?.(tabId)
   }
 
   const handleChange = (field: string, value: any) => {
@@ -3638,6 +3660,10 @@ export function EntityForm({
     setFormData(finalizedData)
     if (!validate(finalizedData)) return
     const payload = isEdit && data ? buildChangedPayload(finalizedData, data) : finalizedData
+    if (isEdit && data) {
+      if (data.version !== undefined && payload.base_version === undefined) payload.base_version = data.version
+      if (data.updated_at !== undefined && payload.base_updated_at === undefined) payload.base_updated_at = data.updated_at
+    }
     if (isEdit && operationLockedFieldNames.size > 0) {
       operationLockedFieldNames.forEach(fieldName => {
         delete payload[fieldName]
@@ -4290,7 +4316,7 @@ export function EntityForm({
                 key={tab.id}
                 data-tour-id={tab.id === 'lifecycle' ? 'record-lifecycle-tab' : tab.id === 'organization_banka' ? 'record-bank-tab' : undefined}
                 disabled={isIdentityGateLocked}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => handleActiveTabChange(tab.id)}
                 className={cn(
                   "inline-flex max-w-full items-center gap-2 rounded-lg border px-3 py-2 text-left text-sm font-medium transition-colors",
                   activeTab === tab.id

@@ -61,7 +61,7 @@ export const companyService = {
       options: { skipAuth: true, staleTime: 120_000 },
     })
   },
-  detailSection(id: string, section: 'hero' | 'media' | 'details') {
+  detailSection(id: string, section: 'hero' | 'media' | 'mediaMetadata' | 'details' | 'profile' | 'relationsSummary' | 'history') {
     return readEntityRecord<Partial<Sirket>>({
       endpoint: { collectionPath: '/api/companies' },
       id,
@@ -105,6 +105,17 @@ export const companyService = {
       endpoint: { collectionPath: '/api/companies/partners' },
       id,
       options: { skipAuth: true, staleTime: 120_000 },
+    })
+  },
+  partnerDetailSection(id: string, section: 'authorities' | 'relationsSummary' | 'ownership') {
+    return readEntityRecord<any>({
+      endpoint: { collectionPath: '/api/companies/partners' },
+      id,
+      query: { section },
+      options: {
+        skipAuth: true,
+        useCache: false,
+      },
     })
   },
   createPartner(payload: Record<string, any>) {

@@ -5,6 +5,12 @@ import { OWNERSHIP_TRANSACTION_SELECT, nextTransactionNo, validateDraft } from '
 import { listMetaFromRows, listRange, parseListQuery } from '@/lib/api/listEndpoint'
 import { safeCreateRecord, safeCrudResponse, safeListRecords } from '@/lib/crud/safeCrudService'
 import { requirePermission } from '@/lib/security/serverPermissions'
+import { resolveTenantContext } from '@/lib/tenancy/server'
+import { OperationRequestService } from '@/lib/operations/operationRequestService'
+import { resolveClientRequestId, stripOperationControlFields } from '@/lib/operations/idempotency'
+import { operationStatusMessage } from '@/lib/operations/operationStatus'
+import { duplicateOperationJsonResponse } from '@/lib/operations/apiResponse'
+import { OutboxEventService } from '@/lib/outbox/outboxEventService'
 
 const TransactionSchema = z.object({
   company_id: z.string().uuid(),
@@ -100,7 +106,10 @@ export async function POST(request: NextRequest) {
   const supabase = createServiceClient()
   const permission = await requirePermission(request, supabase, 'ownership_transactions.edit')
   if (permission instanceof NextResponse) return permission
-  const body = await request.json()
+  const tenantContext = resolveTenantContext(request)
+  const rawBody = await request.json()
+  const clientRequestId = resolveClientRequestId(request, rawBody)
+  const body = stripOperationControlFields(rawBody)
   const parsed = TransactionSchema.safeParse(body)
 
   if (!parsed.success) {
@@ -109,6 +118,24 @@ export async function POST(request: NextRequest) {
 
   const validation = await validateDraft(supabase, parsed.data)
   if (!validation.ok) return NextResponse.json({ error: validation.error, code: validation.code }, { status: 400 })
+
+  const operationService = new OperationRequestService(supabase as any)
+  const operationCreate = await operationService.createOrGet({
+    tenantId: tenantContext.tenantId,
+    companyId: parsed.data.company_id,
+    moduleKey: 'sirket',
+    entityType: 'ownership_transaction',
+    operationType: 'ownership_transaction.create',
+    clientRequestId,
+    requestedBy: permission.userId,
+    payload: parsed.data,
+  })
+  if (operationCreate.ok && operationCreate.duplicate) return duplicateOperationJsonResponse(operationCreate.operation)
+  if (!operationCreate.ok && !operationCreate.missingInfrastructure) {
+    return NextResponse.json({ error: operationCreate.error, code: operationCreate.code || 'OPERATION_REQUEST_FAILED' }, { status: 500 })
+  }
+  const operation = operationCreate.ok ? operationCreate.operation : null
+  if (operation) await operationService.markProcessing(operation.id)
 
   const now = new Date().toISOString()
   const row = {
@@ -129,5 +156,44 @@ export async function POST(request: NextRequest) {
     select: OWNERSHIP_TRANSACTION_SELECT,
   })
 
-  return safeCrudResponse(result, 201)
+  if (!result.ok) {
+    if (operation) await operationService.markFailed(operation.id, {
+      code: result.code,
+      error: result.error,
+      details: result.details,
+    })
+    return NextResponse.json({
+      error: result.error,
+      code: result.code,
+      details: result.details,
+      ...(operation ? {
+        operation_id: operation.id,
+        operation_status: 'failed',
+        message: operationStatusMessage('failed'),
+      } : {}),
+    }, { status: result.status })
+  }
+
+  if (operation) {
+    await operationService.markCompleted(operation.id, { id: result.data.id, data: result.data, warnings: validation.warnings || [] })
+    await new OutboxEventService(supabase as any).enqueue({
+      tenantId: tenantContext.tenantId,
+      companyId: result.data.company_id || parsed.data.company_id,
+      moduleKey: 'sirket',
+      eventType: 'ownership_transaction.created',
+      aggregateType: 'ownership_transaction',
+      aggregateId: result.data.id,
+      operationId: operation.id,
+      payload: { id: result.data.id, company_id: result.data.company_id || parsed.data.company_id },
+    }).catch(() => null)
+  }
+
+  return NextResponse.json({
+    data: result.data,
+    ...(operation ? {
+      operation_id: operation.id,
+      operation_status: 'completed',
+      message: operationStatusMessage('completed'),
+    } : {}),
+  }, { status: 201 })
 }

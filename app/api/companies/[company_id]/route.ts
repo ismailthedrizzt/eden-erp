@@ -25,6 +25,11 @@ import {
   getDisallowedCompanyRelationPatchViolation,
   getOperationControlledCompanyPatchViolation,
 } from '@/lib/modules/companies/companyOperationControls'
+import { OperationRequestService } from '@/lib/operations/operationRequestService'
+import { resolveBaseUpdatedAt, resolveBaseVersion, resolveClientRequestId, stripOperationControlFields } from '@/lib/operations/idempotency'
+import { operationStatusMessage } from '@/lib/operations/operationStatus'
+import { duplicateOperationJsonResponse } from '@/lib/operations/apiResponse'
+import { OutboxEventService } from '@/lib/outbox/outboxEventService'
 
 const COMPANY_NACE_SELECT = 'id,company_id,nace_code_id,is_primary,status,start_date,end_date,notes,is_deleted,created_at,updated_at,version,nace_code:nace_codes(id,nace_code,description,hazard_class,source_name,source_url,source_reference,valid_from,valid_to,is_active,last_checked_at)'
 
@@ -178,7 +183,7 @@ export async function GET(
     return NextResponse.json({ data: hydrated }, { headers: { 'Cache-Control': 'no-store, max-age=0' } })
   }
 
-  if (section === 'media') {
+  if (section === 'media' || section === 'mediaMetadata') {
     let query = supabase
       .from('companies')
       .select(COMPANY_MEDIA_SELECT)
@@ -197,9 +202,68 @@ export async function GET(
     return NextResponse.json({ data }, { headers: { 'Cache-Control': 'no-store, max-age=0' } })
   }
 
+  if (section === 'relationsSummary') {
+    const relatedSections = await Promise.all([
+      fetchCompanyRelatedSection({
+        supabase,
+        table: 'company_partners',
+        key: 'partners',
+        label: 'Ortaklar',
+        companyId: id,
+        tenantContext,
+        fallback: [] as Record<string, any>[],
+        select: 'id,company_id,display_name,partner_name,partner_type,owner_kind,record_status,status',
+      }),
+      fetchCompanyRelatedSection({
+        supabase,
+        table: 'company_representatives',
+        key: 'representatives',
+        label: 'Temsilciler',
+        companyId: id,
+        tenantContext,
+        fallback: [] as Record<string, any>[],
+        select: 'id,company_id,display_name,full_name,status,authority_types,is_deleted',
+      }),
+      fetchCompanyRelatedSection({ supabase, table: 'v_current_ownership', key: 'current_ownership', label: 'Guncel ortaklik', companyId: id, tenantContext, fallback: [] as Record<string, any>[], select: CURRENT_OWNERSHIP_SELECT }),
+    ])
+    const relatedByKey = Object.fromEntries(relatedSections.map(result => [result.key, result]))
+    return NextResponse.json({
+      data: {
+        partners: relatedByKey.partners?.data || [],
+        representatives: relatedByKey.representatives?.data || [],
+        current_ownership: relatedByKey.current_ownership?.data || [],
+        related_status: relatedStatusMap(relatedSections),
+        related_errors: relatedErrorMap(relatedSections),
+      },
+    }, { headers: { 'Cache-Control': 'no-store, max-age=0' } })
+  }
+
+  if (section === 'history') {
+    const lifecycleEvents = await fetchCompanyRelatedSection({
+      supabase,
+      table: 'company_lifecycle_events',
+      key: 'lifecycle_events',
+      label: 'Yasam dongusu gecmisi',
+      companyId: id,
+      tenantContext,
+      fallback: [] as Record<string, any>[],
+      select: 'id,company_id,event_type,event_date,old_status,new_status,payload_json,document_reference_id,created_at,created_by',
+      query: query => query.eq('company_id', id).order('created_at', { ascending: false }).limit(25),
+    })
+    const rows = Array.isArray(lifecycleEvents.data) ? lifecycleEvents.data : []
+    return NextResponse.json({
+      data: {
+        lifecycle_events: rows,
+        lifecycle_last_event: rows[0] || null,
+        related_status: relatedStatusMap([lifecycleEvents]),
+        related_errors: relatedErrorMap([lifecycleEvents]),
+      },
+    }, { headers: { 'Cache-Control': 'no-store, max-age=0' } })
+  }
+
   let companyQuery = supabase
     .from('companies')
-    .select((section === 'details' ? COMPANY_DETAILS_SELECT : COMPANY_DETAIL_SELECT) as string)
+    .select((section === 'details' || section === 'profile' ? COMPANY_DETAILS_SELECT : COMPANY_DETAIL_SELECT) as string)
     .eq('id', id)
   companyQuery = applyTenantQueryScope(companyQuery, 'companies', tenantContext)
 
@@ -210,6 +274,18 @@ export async function GET(
       return NextResponse.json({ error: 'Şirket bulunamadı', code: 'COMPANY_NOT_FOUND' }, { status: 404 })
     }
     return NextResponse.json({ error: error.message, code: error.code || 'FETCH_FAILED' }, { status: 500 })
+  }
+
+  if (section === 'details' || section === 'profile') {
+    const companyRow = company as Record<string, any>
+    const hydrated = companyRow.organization_id
+      ? await hydrateMasterContact(supabase, 'organization', companyRow)
+      : companyRow
+
+    return NextResponse.json(
+      { data: hydrated },
+      { headers: { 'Cache-Control': 'no-store, max-age=0' } }
+    )
   }
 
   const relatedSections = await Promise.all([
@@ -308,9 +384,9 @@ export async function GET(
   const currentOwnershipRows = Array.isArray(currentOwnership.data) ? currentOwnership.data : []
   const partnerRows = Array.isArray(partners.data) ? partners.data : []
   const lifecycleRows = Array.isArray(lifecycleEvents.data) ? lifecycleEvents.data : []
-  const ownershipByPartnerId = new Map(currentOwnershipRows.map((row: Record<string, any>) => [row.partner_id, row]))
+  const ownershipByPartnerKey = new Map(currentOwnershipRows.map((row: Record<string, any>) => [`${row.company_id || ''}::${row.partner_id || ''}`, row]))
   const partnersWithOwnership = partnerRows.map((partner: Record<string, any>) => {
-    const ownership = ownershipByPartnerId.get(partner.id)
+    const ownership = ownershipByPartnerKey.get(`${partner.company_id || ''}::${partner.id || ''}`)
     if (!ownership) return partner
     return {
       ...partner,
@@ -372,7 +448,11 @@ export async function PATCH(
     return NextResponse.json({ error: 'Bu şirket için yalnızca görüntüleme yetkiniz var.', code: 'COMPANY_SCOPE_READONLY' }, { status: 403 })
   }
 
-  const body = omitNullishValues(await request.json())
+  const rawBody = await request.json()
+  const clientRequestId = resolveClientRequestId(request, rawBody)
+  const baseVersion = resolveBaseVersion(rawBody)
+  const baseUpdatedAt = resolveBaseUpdatedAt(rawBody)
+  const body = omitNullishValues(stripOperationControlFields(rawBody))
   const parsed = SirketUpdateSchema.safeParse(body)
   const relationViolation = getDisallowedCompanyRelationPatchViolation(body)
 
@@ -395,7 +475,7 @@ export async function PATCH(
     tableName: 'companies',
     recordId: id,
     permissionKey: 'companies.edit',
-    select: 'id,organization_id,field_history,short_name,trade_name,tax_number,tax_office,company_type,city,district,address,phone,email,is_deleted,record_status,company_status,committed_capital_amount,paid_capital_amount,mersis_number,trade_registry_number,foundation_date,legal_entity,electronic_notification_address,trade_registry_office,company_code,logo_url,country,website,e_invoice_taxpayer,e_archive_taxpayer,e_waybill_taxpayer,sgk_workplace_registry_no,sgk_province,sgk_branch,risk_class,default_currency,default_language,time_zone,fiscal_year_start,hero_images,hero_documents',
+    select: 'id,organization_id,field_history,short_name,trade_name,tax_number,tax_office,company_type,city,district,address,phone,email,is_deleted,record_status,company_status,committed_capital_amount,paid_capital_amount,mersis_number,trade_registry_number,foundation_date,legal_entity,electronic_notification_address,trade_registry_office,company_code,logo_url,country,website,e_invoice_taxpayer,e_archive_taxpayer,e_waybill_taxpayer,sgk_workplace_registry_no,sgk_province,sgk_branch,risk_class,default_currency,default_language,time_zone,fiscal_year_start,hero_images,hero_documents,version,updated_at',
   })
   if (!currentRead.ok) return safeCrudResponse(currentRead)
   current = currentRead.data
@@ -408,6 +488,29 @@ export async function PATCH(
       details: { fields: operationViolation.fields },
     }, { status: 409 })
   }
+
+  const permission = await requirePermission(request, supabase, 'companies.edit')
+  if (permission instanceof NextResponse) return permission
+  const operationService = new OperationRequestService(supabase as any)
+  const operationCreate = await operationService.createOrGet({
+    tenantId: tenantContext.tenantId,
+    companyId: id,
+    moduleKey: 'sirket',
+    entityType: 'company',
+    entityId: id,
+    operationType: 'company.update',
+    clientRequestId,
+    baseVersion,
+    baseUpdatedAt,
+    requestedBy: permission.userId,
+    payload: body,
+  })
+  if (operationCreate.ok && operationCreate.duplicate) return duplicateOperationJsonResponse(operationCreate.operation)
+  if (!operationCreate.ok && !operationCreate.missingInfrastructure) {
+    return NextResponse.json({ error: operationCreate.error, code: operationCreate.code || 'OPERATION_REQUEST_FAILED' }, { status: 500 })
+  }
+  const operation = operationCreate.ok ? operationCreate.operation : null
+  if (operation) await operationService.markProcessing(operation.id)
 
   const {
     contact_points,
@@ -445,18 +548,41 @@ export async function PATCH(
     recordId: id,
     permissionKey: 'companies.edit',
     patch: companyUpdates,
-    select: 'id,short_name,trade_name,tax_number,logo_url,hero_images,is_deleted,record_status,company_status,committed_capital_amount,paid_capital_amount,updated_at',
-    currentSelect: 'id,organization_id,field_history,short_name,trade_name,tax_number,tax_office,company_type,city,district,address,phone,email,is_deleted,record_status,company_status,mersis_number,trade_registry_number,foundation_date,legal_entity,electronic_notification_address,trade_registry_office,company_code,logo_url,country,website,e_invoice_taxpayer,e_archive_taxpayer,e_waybill_taxpayer,sgk_workplace_registry_no,sgk_province,sgk_branch,risk_class,default_currency,default_language,time_zone,fiscal_year_start,hero_images,hero_documents',
+    select: 'id,short_name,trade_name,tax_number,logo_url,hero_images,is_deleted,record_status,company_status,committed_capital_amount,paid_capital_amount,version,updated_at',
+    currentSelect: 'id,organization_id,field_history,short_name,trade_name,tax_number,tax_office,company_type,city,district,address,phone,email,is_deleted,record_status,company_status,mersis_number,trade_registry_number,foundation_date,legal_entity,electronic_notification_address,trade_registry_office,company_code,logo_url,country,website,e_invoice_taxpayer,e_archive_taxpayer,e_waybill_taxpayer,sgk_workplace_registry_no,sgk_province,sgk_branch,risk_class,default_currency,default_language,time_zone,fiscal_year_start,hero_images,hero_documents,version,updated_at',
+    versionField: 'version',
+    baseVersion,
+    baseUpdatedAt,
     fieldHistory: {
       ignoredFields: ['hero_images', 'hero_documents', 'logo_url'],
     },
   })
 
-  if (!updateResult.ok) return safeCrudResponse(updateResult)
+  if (!updateResult.ok) {
+    if (operation) await operationService.markFailed(operation.id, {
+      code: updateResult.code,
+      error: updateResult.error,
+      details: updateResult.details,
+    })
+    return NextResponse.json({
+      error: updateResult.error,
+      code: updateResult.code,
+      details: updateResult.details,
+      ...(operation ? {
+        operation_id: operation.id,
+        operation_status: 'failed',
+        message: operationStatusMessage('failed'),
+      } : {}),
+    }, { status: updateResult.status })
+  }
   const data = updateResult.data
 
   const organizationUnitError = await ensureCompanyRootUnit(supabase, id, { ...current, ...companyUpdates }, tenantContext)
   if (organizationUnitError && !isMissingTableError(organizationUnitError)) {
+    if (operation) await operationService.markFailed(operation.id, {
+      code: organizationUnitError.code || 'COMPANY_ORG_UNIT_SAVE_FAILED',
+      error: organizationUnitError.message,
+    })
     return NextResponse.json({ error: organizationUnitError.message, code: organizationUnitError.code || 'COMPANY_ORG_UNIT_SAVE_FAILED' }, { status: 500 })
   }
 
@@ -480,7 +606,28 @@ export async function PATCH(
     ? await hydrateMasterContact(supabase, 'organization', responseData)
     : responseData
 
-  return NextResponse.json({ data: hydratedData })
+  if (operation) {
+    await operationService.markCompleted(operation.id, { id: hydratedData.id, data: hydratedData })
+    await new OutboxEventService(supabase as any).enqueue({
+      tenantId: tenantContext.tenantId,
+      companyId: id,
+      moduleKey: 'sirket',
+      eventType: 'company.updated',
+      aggregateType: 'company',
+      aggregateId: id,
+      operationId: operation.id,
+      payload: { id, changed_fields: Object.keys(companyUpdates) },
+    }).catch(() => null)
+  }
+
+  return NextResponse.json({
+    data: hydratedData,
+    ...(operation ? {
+      operation_id: operation.id,
+      operation_status: 'completed',
+      message: operationStatusMessage('completed'),
+    } : {}),
+  })
 }
 
 export async function DELETE(

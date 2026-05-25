@@ -4,6 +4,8 @@ import { z } from 'zod'
 import { listMeta, listMetaFromRows, listRange, parseListQuery } from '@/lib/api/listEndpoint'
 import { getServerResponseCache, serverListCacheKey, setServerResponseCache } from '@/lib/api/serverResponseCache'
 import { safeCreateRecord, safeCrudResponse } from '@/lib/crud/safeCrudService'
+import { listProjectionRecords, projectionResponseMeta } from '@/lib/read-models/listProjection.server'
+import { companyListProjection } from '@/lib/read-models/moduleListProjectionConfig'
 import { extractCompanyLogoVariants } from '@/lib/media/companyLogo'
 import { applyTenantQueryScope, resolveTenantContext, type TenantContext } from '@/lib/tenancy/server'
 import {
@@ -17,6 +19,11 @@ import { requirePermission } from '@/lib/security/serverPermissions'
 import { DEFAULT_FISCAL_YEAR_START, isValidFiscalYearStart, parseFiscalYearStartStorage } from '@/lib/companies/fiscalYear'
 import { attachCompanyOrganization, runCompanyCreateSideEffects } from '@/lib/modules/companies/companyCreateOrchestrator'
 import { hydrateMasterContact } from '@/lib/identity/masterContact'
+import { isMissingTableError } from '@/lib/modules/companies/companyErrors'
+import { OperationRequestService } from '@/lib/operations/operationRequestService'
+import { resolveBaseUpdatedAt, resolveBaseVersion, resolveClientRequestId, stripOperationControlFields } from '@/lib/operations/idempotency'
+import { operationStatusMessage } from '@/lib/operations/operationStatus'
+import { OutboxEventService } from '@/lib/outbox/outboxEventService'
 
 const emptyStringToUndefined = (value: unknown) => value === '' ? undefined : value
 const optionalUuid = z.preprocess(emptyStringToUndefined, z.string().uuid().optional().nullable())
@@ -211,26 +218,47 @@ export async function GET(request: NextRequest) {
     created_at: 'created_at',
   }
   const ara = searchParams.get('ara') || listQuery.search
+  const effectiveListQuery = { ...listQuery, search: ara || listQuery.search }
 
   const scopedCompanyIds = await fetchScopedCompanyIds(supabase, tenantContext.tenantId)
   if (!scopedCompanyIds.length) {
-    const payload = { data: [], meta: listMeta(listQuery, 0) }
+    const payload = { data: [], meta: listMeta(effectiveListQuery, 0), projection: { name: companyListProjection.sourceName, version: companyListProjection.version } }
     setServerResponseCache(cacheKey, payload, 60_000)
     return NextResponse.json(payload)
   }
 
-  const { from, to } = listRange(listQuery)
-  const sortColumn = sortMap[listQuery.sort || ''] || 'short_name'
+  const projectionResult = await listProjectionRecords({
+    supabase,
+    request,
+    projectionKey: companyListProjection.key,
+    permissionKey: 'companies.view',
+    listQuery: effectiveListQuery,
+    query: query => applyCompanyStatusFilters(query.in('id', scopedCompanyIds), effectiveListQuery.statuses, !!effectiveListQuery.includePassive),
+  })
+
+  if (projectionResult.ok) {
+    const { meta, projection } = projectionResponseMeta(projectionResult.meta)
+    const payload = { data: projectionResult.data, meta, projection }
+    setServerResponseCache(cacheKey, payload, 60_000)
+    return NextResponse.json(payload)
+  }
+
+  if (!isMissingTableError({ code: projectionResult.code, message: projectionResult.error })) {
+    return safeCrudResponse(projectionResult)
+  }
+
+  const { from, to } = listRange(effectiveListQuery)
+  const sortColumn = sortMap[effectiveListQuery.sort || ''] || 'short_name'
   let query = supabase
     .from('companies')
     .select('id,organization_id,short_name,trade_name,tax_number,tax_office,company_type,city,district,phone,email,logo_url,is_deleted,record_status,company_status,committed_capital_amount,paid_capital_amount,default_currency,updated_at,created_at')
     .in('id', scopedCompanyIds)
-    .order(sortColumn, { ascending: listQuery.direction !== 'desc' })
+    .order(sortColumn, { ascending: effectiveListQuery.direction !== 'desc' })
     .range(from, to)
 
   query = applyTenantQueryScope(query, 'companies', tenantContext)
 
-  query = applyCompanyStatusFilters(query, listQuery.statuses, !!listQuery.includePassive)
+  query = applyCompanyStatusFilters(query, effectiveListQuery.statuses, !!effectiveListQuery.includePassive)
 
   const searchTerm = String(ara || '').replace(/[%(),]/g, '').trim()
   if (searchTerm) {
@@ -243,7 +271,7 @@ export async function GET(request: NextRequest) {
     if (error.message.includes("Could not find the table 'public.companies'")) {
       return NextResponse.json({
         data: [],
-        meta: listMeta(listQuery, 0),
+        meta: listMeta(effectiveListQuery, 0),
         warning: 'companies tablosu bulunamadı. supabase/migrations/20260516_initial_schema.sql uygulanmalı.'
       })
     }
@@ -252,7 +280,7 @@ export async function GET(request: NextRequest) {
   }
 
   const rows = await hydrateCompanyLogoUrls(supabase, (data || []) as Record<string, any>[], tenantContext)
-  const payload = { data: rows, meta: listMetaFromRows(listQuery, rows.length) }
+  const payload = { data: rows, meta: listMetaFromRows(effectiveListQuery, rows.length) }
   setServerResponseCache(cacheKey, payload, 60_000)
   return NextResponse.json(payload)
 }
@@ -262,12 +290,33 @@ export async function POST(request: NextRequest) {
   const permission = await requirePermission(request, supabase, 'companies.edit')
   if (permission instanceof NextResponse) return permission
   const tenantContext = resolveTenantContext(request)
-  const body = omitNullishValues(await request.json())
+  const rawBody = await request.json()
+  const clientRequestId = resolveClientRequestId(request, rawBody)
+  const body = omitNullishValues(stripOperationControlFields(rawBody))
   const parsed = SirketSchema.safeParse(body)
 
   if (!parsed.success) {
     return NextResponse.json({ error: 'Geçersiz veri', code: 'VALIDATION_FAILED', details: parsed.error.flatten() }, { status: 400 })
   }
+
+  const operationService = new OperationRequestService(supabase as any)
+  const operationCreate = await operationService.createOrGet({
+    tenantId: tenantContext.tenantId,
+    moduleKey: 'sirket',
+    entityType: 'company',
+    operationType: 'company.create',
+    clientRequestId,
+    baseVersion: resolveBaseVersion(rawBody),
+    baseUpdatedAt: resolveBaseUpdatedAt(rawBody),
+    requestedBy: permission.userId,
+    payload: parsed.data,
+  })
+  if (operationCreate.ok && operationCreate.duplicate) return duplicateOperationResponse(operationCreate.operation)
+  if (!operationCreate.ok && !operationCreate.missingInfrastructure) {
+    return NextResponse.json({ error: operationCreate.error, code: operationCreate.code || 'OPERATION_REQUEST_FAILED' }, { status: 500 })
+  }
+  const operation = operationCreate.ok ? operationCreate.operation : null
+  if (operation) await operationService.markProcessing(operation.id)
 
   const {
     partners,
@@ -316,6 +365,13 @@ export async function POST(request: NextRequest) {
   if (existingTenantCompany?.id) {
     const currentScope = await getTenantCompanyScope(supabase, tenantContext.tenantId, existingTenantCompany.id)
     if (currentScope) {
+      if (operation) {
+        await operationService.markFailed(operation.id, {
+          message: 'Bu VKN ile kayıtlı şirket zaten Şirketlerimiz listesinde bulunuyor.',
+          code: 'COMPANY_ALREADY_IN_WORKSPACE',
+          details: { company_id: existingTenantCompany.id, tax_number: companyData.tax_number },
+        })
+      }
       return NextResponse.json({
         error: 'Bu VKN ile kayıtlı şirket zaten Şirketlerimiz listesinde bulunuyor.',
         code: 'COMPANY_ALREADY_IN_WORKSPACE',
@@ -337,8 +393,27 @@ export async function POST(request: NextRequest) {
       },
     })
 
+    const completedOperation = operation
+      ? await operationService.markCompleted(operation.id, { data: existingTenantCompany })
+      : null
+    await new OutboxEventService(supabase as any).enqueue({
+      tenantId: tenantContext.tenantId,
+      companyId: existingTenantCompany.id,
+      moduleKey: 'sirket',
+      eventType: 'company.scope_attached',
+      aggregateType: 'company',
+      aggregateId: existingTenantCompany.id,
+      operationId: completedOperation?.id || operation?.id || null,
+      payload: { company_id: existingTenantCompany.id },
+    }).catch(() => null)
+
     return NextResponse.json({
       data: existingTenantCompany,
+      ...(completedOperation ? {
+        operation_id: completedOperation.id,
+        operation_status: completedOperation.operation_status,
+        message: operationStatusMessage(completedOperation.operation_status),
+      } : {}),
       warning: ownerScope
         ? 'Bu VKN ile global şirket kaydı zaten vardı; yeni şirket açılmadı, Şirketlerimiz listesine yönetim kapsamı olarak eklendi.'
         : 'Bu VKN ile mevcut global şirket kaydı Şirketlerimiz listesine eklendi.',
@@ -352,6 +427,12 @@ export async function POST(request: NextRequest) {
       is_deleted: false,
     })
   } catch (error) {
+    if (operation) {
+      await operationService.markFailed(operation.id, {
+        message: error instanceof Error ? error.message : 'Şirket ana kurum kaydına bağlanamadı',
+        code: 'MASTER_ORGANIZATION_LINK_FAILED',
+      })
+    }
     return NextResponse.json({
       error: error instanceof Error ? error.message : 'Şirket ana kurum kaydına bağlanamadı',
       code: 'MASTER_ORGANIZATION_LINK_FAILED',
@@ -369,7 +450,16 @@ export async function POST(request: NextRequest) {
     select: 'id,short_name,trade_name,tax_number,logo_url,hero_images,is_deleted,record_status,company_status,committed_capital_amount,paid_capital_amount,updated_at',
   })
 
-  if (!createResult.ok) return safeCrudResponse(createResult)
+  if (!createResult.ok) {
+    if (operation) {
+      await operationService.markFailed(operation.id, {
+        message: createResult.error,
+        code: createResult.code,
+        details: createResult.details,
+      })
+    }
+    return safeCrudResponse(createResult)
+  }
   const data = createResult.data
   await ensureTenantCompanyScope(supabase, {
     tenantId: tenantContext.tenantId,
@@ -409,9 +499,57 @@ export async function POST(request: NextRequest) {
   const hydratedData = companyRow.organization_id
     ? await hydrateMasterContact(supabase, 'organization', { ...companyRow, ...data })
     : data
+  const completedOperation = operation
+    ? await operationService.markCompleted(operation.id, { data: hydratedData }, warnings)
+    : null
+  await new OutboxEventService(supabase as any).enqueue({
+    tenantId: tenantContext.tenantId,
+    companyId: data.id,
+    moduleKey: 'sirket',
+    eventType: 'company.created',
+    aggregateType: 'company',
+    aggregateId: data.id,
+    operationId: completedOperation?.id || operation?.id || null,
+    payload: { company_id: data.id },
+  }).catch(() => null)
 
   return NextResponse.json({
     data: hydratedData,
+    ...(completedOperation ? {
+      operation_id: completedOperation.id,
+      operation_status: completedOperation.operation_status,
+      message: operationStatusMessage(completedOperation.operation_status),
+    } : {}),
     ...(warnings.length ? { warning: warnings.join(' '), partial_warnings: sideEffects.warnings } : {}),
   }, { status: 201 })
+}
+
+function duplicateOperationResponse(operation: { id: string; operation_status: string; result_json?: any; error_json?: any }) {
+  if (operation.operation_status === 'completed') {
+    return NextResponse.json({
+      ok: true,
+      data: operation.result_json?.data || operation.result_json,
+      operation_id: operation.id,
+      operation_status: operation.operation_status,
+      message: operationStatusMessage('completed'),
+    })
+  }
+
+  if (operation.operation_status === 'failed') {
+    return NextResponse.json({
+      ok: false,
+      error: operation.error_json?.message || operation.error_json?.error || 'İşlem tamamlanamadı.',
+      code: operation.error_json?.code || 'OPERATION_FAILED',
+      operation_id: operation.id,
+      operation_status: operation.operation_status,
+      message: operationStatusMessage('failed'),
+    }, { status: 409 })
+  }
+
+  return NextResponse.json({
+    ok: true,
+    operation_id: operation.id,
+    operation_status: operation.operation_status,
+    message: operationStatusMessage(operation.operation_status as any),
+  }, { status: 202 })
 }
