@@ -19,24 +19,27 @@ export async function requirePermission(
   const token = request.headers.get('authorization')?.replace(/^Bearer\s+/i, '')
   const appSession = await verifyAppSessionToken(request.cookies.get(APP_SESSION_COOKIE_NAME)?.value)
   const tenantContext = resolveTenantContext(request)
+  const tenantId = tenantContext.source === 'default' && appSession?.tenantId
+    ? appSession.tenantId
+    : tenantContext.tenantId
 
-  if (LOGIN_BYPASS_ENABLED) return { userId: null, tenantId: tenantContext.tenantId }
+  if (LOGIN_BYPASS_ENABLED) return { userId: null, tenantId }
 
   if (appSession) {
     if (!appSession.userId) {
       return NextResponse.json({ error: 'Invalid session', code: 'INVALID_SESSION' }, { status: 401 })
     }
 
-    const tenantAccess = await validateTenantMembership(supabase, appSession.userId, tenantContext.tenantId)
+    const tenantAccess = await validateTenantMembership(supabase, appSession.userId, tenantId)
     if (tenantAccess instanceof NextResponse) return tenantAccess
 
-    const hasPermission = await userHasPermissionSafe(supabase, appSession.userId, tenantContext.tenantId, permissionKey, tenantAccess.roleKey)
+    const hasPermission = await userHasPermissionSafe(supabase, appSession.userId, tenantId, permissionKey, tenantAccess.roleKey)
     if (hasPermission instanceof NextResponse) return hasPermission
     if (!hasPermission && process.env.EDEN_ALLOW_LEGACY_API_ACCESS !== 'true') {
       return NextResponse.json({ error: 'Permission denied', code: 'PERMISSION_DENIED' }, { status: 403 })
     }
 
-    return { userId: appSession.userId, tenantId: tenantContext.tenantId }
+    return { userId: appSession.userId, tenantId }
   }
 
   if (!token) {
@@ -50,14 +53,14 @@ export async function requirePermission(
   }
 
   const userId = userData.user.id
-  const hasPermission = await userHasPermissionSafe(supabase, userId, tenantContext.tenantId, permissionKey)
+  const hasPermission = await userHasPermissionSafe(supabase, userId, tenantId, permissionKey)
   if (hasPermission instanceof NextResponse) return hasPermission
 
   if (!hasPermission && process.env.EDEN_ALLOW_LEGACY_API_ACCESS !== 'true') {
     return NextResponse.json({ error: 'Permission denied', code: 'PERMISSION_DENIED' }, { status: 403 })
   }
 
-  return { userId, tenantId: tenantContext.tenantId }
+  return { userId, tenantId }
 }
 
 async function userHasPermissionSafe(

@@ -1,38 +1,56 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
-import {
-  APP_SESSION_COOKIE_NAME,
-  appSessionCookieOptions,
-  createAppSessionToken,
-  verifyAppSessionToken,
-} from '@/lib/auth/appSession'
+import { APP_SESSION_COOKIE_NAME, verifyAppSessionToken } from '@/lib/auth/appSession'
 import { normalizeLoginIdentifier } from '@/lib/auth/tenantUserLookup'
 import { createServiceClient } from '@/lib/supabase/server'
-import { TENANT_ID_COOKIE, WORKSPACE_ID_COOKIE } from '@/lib/tenancy/constants'
 import { fetchWorkspaceSummary } from '@/lib/user-state/server'
 
 export const runtime = 'nodejs'
 
 type Supabase = ReturnType<typeof createServiceClient>
 
-const SwitchTenantSchema = z.object({
+const SetDefaultTenantSchema = z.object({
   tenant_id: z.string().uuid('Gecerli bir calisma alani seciniz.'),
 })
 
 export async function POST(request: NextRequest) {
   const supabase = createServiceClient()
-  const parsed = SwitchTenantSchema.safeParse(await request.json().catch(() => ({})))
+  const parsed = SetDefaultTenantSchema.safeParse(await request.json().catch(() => ({})))
 
   if (!parsed.success) {
     return NextResponse.json(
       { error: parsed.error.issues[0]?.message || 'Form verileri gecersiz.', code: 'VALIDATION_FAILED' },
-      { status: 400 }
+      { status: 400, headers: { 'Cache-Control': 'no-store' } }
     )
   }
 
   const auth = await resolveAuthenticatedUser(request, supabase)
   if (!auth.personIds.length) {
-    return NextResponse.json({ error: 'Oturum bulunamadi.', code: 'AUTH_REQUIRED' }, { status: 401 })
+    return NextResponse.json(
+      { error: 'Oturum bulunamadi.', code: 'AUTH_REQUIRED' },
+      { status: 401, headers: { 'Cache-Control': 'no-store' } }
+    )
+  }
+
+  const { data: tenant, error: tenantError } = await supabase
+    .from('erp_instances')
+    .select('id,status')
+    .eq('id', parsed.data.tenant_id)
+    .eq('status', 'active')
+    .maybeSingle()
+
+  if (tenantError) {
+    return NextResponse.json(
+      { error: tenantError.message, code: 'TENANT_LOOKUP_FAILED' },
+      { status: 500, headers: { 'Cache-Control': 'no-store' } }
+    )
+  }
+
+  if (!tenant) {
+    return NextResponse.json(
+      { error: 'Calisma alani aktif degil.', code: 'TENANT_NOT_ACTIVE' },
+      { status: 404, headers: { 'Cache-Control': 'no-store' } }
+    )
   }
 
   const { data: memberships, error: membershipError } = await supabase
@@ -61,56 +79,38 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  const { data: tenant, error: tenantError } = await supabase
-    .from('erp_instances')
-    .select('id,status')
-    .eq('id', parsed.data.tenant_id)
+  const clearDefaults = await supabase
+    .from('tenant_memberships')
+    .update({ is_default: false })
+    .in('user_id', auth.personIds)
     .eq('status', 'active')
-    .maybeSingle()
+    .eq('is_default', true)
 
-  if (tenantError) {
+  if (clearDefaults.error) {
     return NextResponse.json(
-      { error: tenantError.message, code: 'TENANT_LOOKUP_FAILED' },
+      { error: clearDefaults.error.message, code: 'TENANT_DEFAULT_CLEAR_FAILED' },
       { status: 500, headers: { 'Cache-Control': 'no-store' } }
     )
   }
 
-  if (!tenant) {
+  const setDefault = await supabase
+    .from('tenant_memberships')
+    .update({ is_default: true })
+    .eq('id', membership.id)
+
+  if (setDefault.error) {
     return NextResponse.json(
-      { error: 'Calisma alani aktif degil.', code: 'TENANT_NOT_ACTIVE' },
-      { status: 404, headers: { 'Cache-Control': 'no-store' } }
+      { error: setDefault.error.message, code: 'TENANT_DEFAULT_SET_FAILED' },
+      { status: 500, headers: { 'Cache-Control': 'no-store' } }
     )
   }
 
   const workspace = await fetchWorkspaceSummary(supabase, parsed.data.tenant_id)
-  const response = NextResponse.json(
+
+  return NextResponse.json(
     { data: { tenant_id: parsed.data.tenant_id, workspace } },
     { headers: { 'Cache-Control': 'no-store' } }
   )
-
-  if (auth.appSession) {
-    const sessionUserId = membership.user_id || auth.userId
-    const sessionToken = await createAppSessionToken({
-      sub: sessionUserId,
-      userId: sessionUserId,
-      tenantId: parsed.data.tenant_id,
-      email: auth.appSession.email,
-      phone: auth.appSession.phone,
-    })
-    response.cookies.set(APP_SESSION_COOKIE_NAME, sessionToken, appSessionCookieOptions())
-  }
-
-  const cookieOptions = {
-    path: '/',
-    sameSite: 'lax' as const,
-    secure: process.env.NODE_ENV === 'production',
-    maxAge: 60 * 60 * 24 * 365,
-  }
-
-  response.cookies.set(TENANT_ID_COOKIE, parsed.data.tenant_id, cookieOptions)
-  response.cookies.set(WORKSPACE_ID_COOKIE, parsed.data.tenant_id, cookieOptions)
-
-  return response
 }
 
 async function resolveAuthenticatedUser(request: NextRequest, supabase: Supabase) {
@@ -122,14 +122,14 @@ async function resolveAuthenticatedUser(request: NextRequest, supabase: Supabase
       phone: appSession.phone,
     })
 
-    return { userId: appSession.userId, personIds, appSession }
+    return { userId: appSession.userId, personIds }
   }
 
   const token = request.headers.get('authorization')?.replace(/^Bearer\s+/i, '')
-  if (!token) return { userId: null, personIds: [], appSession: null }
+  if (!token) return { userId: null, personIds: [] }
 
   const { data, error } = await supabase.auth.getUser(token)
-  if (error || !data.user?.id) return { userId: null, personIds: [], appSession: null }
+  if (error || !data.user?.id) return { userId: null, personIds: [] }
 
   const personIds = await findSessionPersonIds(supabase, {
     userId: data.user.id,
@@ -137,7 +137,7 @@ async function resolveAuthenticatedUser(request: NextRequest, supabase: Supabase
     phone: data.user.phone,
   })
 
-  return { userId: data.user.id, personIds, appSession: null }
+  return { userId: data.user.id, personIds }
 }
 
 async function findSessionPersonIds(

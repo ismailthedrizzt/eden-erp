@@ -60,6 +60,7 @@ export type RecordLifecycleWizardSection = {
   fields?: RecordLifecycleWizardField[]
   children?: ReactNode
   visible?: boolean
+  frameless?: boolean
 }
 
 export type RecordLifecycleWizardStep = {
@@ -87,6 +88,7 @@ type RecordLifecycleWizardProps = {
   submitBlockedContent?: ReactNode
   readOnly?: boolean
   onFieldChange?: (field: string, value: any, previous: Record<string, any>) => Record<string, any>
+  validateStep?: (stepIndex: number) => ReactNode | string | null | undefined
 }
 
 export function RecordLifecycleWizard({
@@ -107,19 +109,34 @@ export function RecordLifecycleWizard({
   submitBlockedContent,
   readOnly,
   onFieldChange,
+  validateStep,
 }: RecordLifecycleWizardProps) {
   const [step, setStep] = useState(0)
+  const [navigationError, setNavigationError] = useState<ReactNode | null>(null)
   const currentStep = steps[Math.min(step, Math.max(steps.length - 1, 0))]
   const isLastStep = step === steps.length - 1
   const stepComplete = useMemo(() => readOnly || isWizardStepComplete(currentStep, form), [currentStep, form, readOnly])
 
   const goNext = () => {
     if (!stepComplete) return
+    const validationMessage = validateStep?.(step)
+    if (validationMessage) {
+      setNavigationError(validationMessage)
+      return
+    }
+    setNavigationError(null)
     if (!isLastStep) {
       setStep(current => Math.min(current + 1, steps.length - 1))
       return
     }
     onSubmit()
+  }
+
+  const selectStep = (index: number) => {
+    if (index === step) return
+    if (!readOnly && index > step) return
+    setNavigationError(null)
+    setStep(index)
   }
 
   return (
@@ -144,35 +161,40 @@ export function RecordLifecycleWizard({
           <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-gray-100 dark:bg-gray-900">
             <div className="h-full rounded-full bg-blue-600 transition-all" style={{ width: `${((step + 1) / steps.length) * 100}%` }} />
           </div>
+          <div className="mt-4 overflow-x-auto pb-1">
+            <ol className="grid min-w-max gap-2 sm:min-w-0" style={{ gridTemplateColumns: `repeat(${Math.max(steps.length, 1)}, minmax(180px, 1fr))` }}>
+              {steps.map((item, index) => {
+                const selectable = readOnly || index <= step
+                return (
+                  <li key={item.id}>
+                    <button
+                      type="button"
+                      onClick={() => selectStep(index)}
+                      disabled={!selectable}
+                      className={cn(
+                        'h-full w-full rounded-lg border px-3 py-2 text-left text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-60',
+                        index === step
+                          ? 'border-blue-200 bg-white text-blue-700 shadow-sm dark:border-blue-900/70 dark:bg-blue-950/20 dark:text-blue-200'
+                          : index < step
+                            ? 'border-emerald-100 bg-emerald-50/70 text-emerald-800 dark:border-emerald-950 dark:bg-emerald-950/20 dark:text-emerald-200'
+                            : 'border-transparent text-gray-500 dark:text-gray-400'
+                      )}
+                    >
+                      <div className="flex items-center gap-2 font-semibold">
+                        {index < step ? <CheckCircle2 size={16} /> : <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gray-200 text-xs dark:bg-gray-800">{index + 1}</span>}
+                        {item.title}
+                      </div>
+                      {item.description && <p className="mt-1 pl-7 text-xs leading-5 opacity-80">{item.description}</p>}
+                    </button>
+                  </li>
+                )
+              })}
+            </ol>
+          </div>
+          {sideInfo && <InfoPanel className="mt-3">{sideInfo}</InfoPanel>}
         </div>
 
-        <div className="grid min-h-0 flex-1 grid-cols-1 overflow-hidden lg:grid-cols-[280px_1fr]">
-          <aside className="min-h-0 overflow-y-auto overscroll-contain border-b border-gray-200 bg-gray-50 p-4 dark:border-gray-800 dark:bg-gray-950/80 lg:border-b-0 lg:border-r">
-            <ol className="space-y-2">
-              {steps.map((item, index) => (
-                <li
-                  key={item.id}
-                  className={cn(
-                    'rounded-xl border px-3 py-3 text-sm transition-colors',
-                    index === step
-                      ? 'border-blue-200 bg-white text-blue-700 shadow-sm dark:border-blue-900/70 dark:bg-blue-950/20 dark:text-blue-200'
-                      : index < step
-                        ? 'border-emerald-100 bg-emerald-50/70 text-emerald-800 dark:border-emerald-950 dark:bg-emerald-950/20 dark:text-emerald-200'
-                        : 'border-transparent text-gray-500 dark:text-gray-400'
-                  )}
-                >
-                  <div className="flex items-center gap-2 font-semibold">
-                    {index < step ? <CheckCircle2 size={16} /> : <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gray-200 text-xs dark:bg-gray-800">{index + 1}</span>}
-                    {item.title}
-                  </div>
-                  {item.description && <p className="mt-1 pl-7 text-xs leading-5 opacity-80">{item.description}</p>}
-                </li>
-              ))}
-            </ol>
-            {sideInfo && <InfoPanel className="mt-4">{sideInfo}</InfoPanel>}
-          </aside>
-
-          <main className="min-h-0 overflow-y-auto overscroll-contain p-5">
+        <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-5">
             {loadingMessage && (
               <div className="mb-4 flex items-center gap-2 rounded-xl border border-blue-100 bg-blue-50 px-3 py-2 text-sm text-blue-700 dark:border-blue-950 dark:bg-blue-950/30 dark:text-blue-200">
                 <Loader2 size={16} className="animate-spin" />
@@ -203,15 +225,14 @@ export function RecordLifecycleWizard({
 
               {isLastStep && finalContent}
 
-              {error && (
+              {(navigationError || error) && (
                 <div className="flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-950 dark:bg-red-950/30 dark:text-red-200">
                   <AlertCircle size={16} className="mt-0.5" />
-                  <span>{error}</span>
+                  <span>{navigationError || error}</span>
                 </div>
               )}
             </div>
-          </main>
-        </div>
+        </main>
 
         <div className="shrink-0 border-t border-gray-200 bg-white px-5 py-4 dark:border-gray-800 dark:bg-gray-950">
           <div className="flex items-center justify-between gap-3">
@@ -221,7 +242,7 @@ export function RecordLifecycleWizard({
             className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-900"
           >
             {step === 0 ? <X size={16} /> : <ChevronLeft size={16} />}
-            {step === 0 ? 'İptal' : 'Geri'}
+            {step === 0 ? (readOnly ? 'Kapat' : 'İptal') : 'Geri'}
           </button>
 
           {!isLastStep ? (
@@ -235,7 +256,14 @@ export function RecordLifecycleWizard({
               <ChevronRight size={16} />
             </button>
           ) : readOnly ? (
-            <div className="text-xs font-medium text-gray-500 dark:text-gray-400">Salt okunur görüntüleme</div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-900"
+            >
+              <X size={16} />
+              Kapat
+            </button>
           ) : submitBlockedContent ? (
             <div className="text-xs text-gray-500 dark:text-gray-400">{submitBlockedContent}</div>
           ) : (
@@ -271,12 +299,8 @@ export function RecordLifecycleWizardSectionView({
   readOnly?: boolean
   onFieldChange?: (field: string, value: any, previous: Record<string, any>) => Record<string, any>
 }) {
-  return (
-    <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-950">
-      <div className="mb-4">
-        <h4 className="text-sm font-semibold text-gray-950 dark:text-white">{section.title}</h4>
-        {section.description && <p className="mt-1 text-xs leading-5 text-gray-500 dark:text-gray-400">{section.description}</p>}
-      </div>
+  const content = (
+    <>
       {section.fields && (
         <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
           {section.fields
@@ -295,6 +319,30 @@ export function RecordLifecycleWizardSectionView({
         </div>
       )}
       {section.children}
+    </>
+  )
+
+  if (section.frameless) {
+    return (
+      <section className="space-y-4">
+        {(section.title || section.description) && (
+          <div>
+            {section.title && <h4 className="text-sm font-semibold text-gray-950 dark:text-white">{section.title}</h4>}
+            {section.description && <p className="mt-1 text-xs leading-5 text-gray-500 dark:text-gray-400">{section.description}</p>}
+          </div>
+        )}
+        {content}
+      </section>
+    )
+  }
+
+  return (
+    <section className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-950">
+      <div className="mb-4">
+        <h4 className="text-sm font-semibold text-gray-950 dark:text-white">{section.title}</h4>
+        {section.description && <p className="mt-1 text-xs leading-5 text-gray-500 dark:text-gray-400">{section.description}</p>}
+      </div>
+      {content}
     </section>
   )
 }

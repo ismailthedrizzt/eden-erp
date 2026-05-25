@@ -522,23 +522,36 @@ function MasterSummaryHero({
 
   if (!result) return null
 
+  const fallbackTitle = kind === 'organization' ? 'Tuzel kisi master kaydi' : 'Gercek kisi master kaydi'
+  const showRecordTitle = !titleAsField && effectiveMode !== 'organizationIdentity'
+
   return (
     <div className="col-span-2 lg:col-span-3 rounded-xl border border-emerald-100 bg-emerald-50/70 p-4 dark:border-emerald-900/60 dark:bg-emerald-950/20">
-      {titleLabel && (
-        <div className="mb-3 text-sm font-semibold text-gray-900 dark:text-white">
-          {titleLabel}
-        </div>
-      )}
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="flex items-start gap-3">
+        <div className="flex min-w-0 items-start gap-3">
           <div className="rounded-lg bg-white p-2 text-emerald-700 shadow-sm dark:bg-gray-900 dark:text-emerald-300">
             <Icon size={18} />
           </div>
-          {!titleAsField && effectiveMode !== 'organizationIdentity' && <div>
-            <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
-              {title || (kind === 'organization' ? 'Tuzel kisi master kaydi' : 'Gercek kisi master kaydi')}
-            </h4>
-          </div>}
+          {(titleLabel || showRecordTitle) && (
+            <div className="min-w-0 flex-1">
+              {titleLabel && (
+                <h4 className="text-sm font-semibold text-gray-900 dark:text-white">
+                  {titleLabel}
+                </h4>
+              )}
+              {showRecordTitle && (
+                titleLabel ? (
+                  <p className="mt-0.5 truncate text-xs font-medium leading-5 text-gray-500 dark:text-gray-400">
+                    {title || fallbackTitle}
+                  </p>
+                ) : (
+                  <h4 className="truncate text-sm font-semibold text-gray-900 dark:text-white">
+                    {title || fallbackTitle}
+                  </h4>
+                )
+              )}
+            </div>
+          )}
         </div>
         {showBadge && <span className="rounded-full bg-white px-2.5 py-1 text-xs font-medium text-emerald-700 dark:bg-gray-900 dark:text-emerald-300">
           {badgeLabel}
@@ -1014,6 +1027,65 @@ const MASTER_IDENTITY_FIELD_NAMES = new Set([
   'phones',
   'emails',
 ])
+
+function readIdentityResultValue(result: IdentityGateResolveResult, field: string) {
+  const prefill = result.prefill || {}
+  if (hasValue(prefill[field])) return prefill[field]
+  if (hasValue(result.masterRecord?.[field])) return result.masterRecord?.[field]
+  return undefined
+}
+
+function mergeIdentityResultIntoFormData(
+  currentData: Record<string, any>,
+  result: IdentityGateResolveResult
+) {
+  const next = { ...currentData }
+
+  Object.entries(result.prefill || {}).forEach(([key, value]) => {
+    if (hasValue(value) || !hasValue(next[key])) {
+      next[key] = value
+    }
+  })
+
+  MASTER_IDENTITY_FIELD_NAMES.forEach(field => {
+    if (hasValue(next[field])) return
+    const value = readIdentityResultValue(result, field)
+    if (hasValue(value)) next[field] = value
+  })
+
+  return {
+    ...next,
+    master_entity_kind: result.entityKind,
+    master_record_id: result.masterRecord?.id || null,
+    identity_gate_state: result.state,
+  }
+}
+
+function enrichFormDataWithIdentityResult(
+  sourceData: Record<string, any>,
+  result: IdentityGateResolveResult | null
+) {
+  if (!result) return sourceData
+
+  const next = { ...sourceData }
+  Object.entries(result.prefill || {}).forEach(([key, value]) => {
+    if (!hasValue(next[key]) && hasValue(value)) {
+      next[key] = value
+    }
+  })
+
+  MASTER_IDENTITY_FIELD_NAMES.forEach(field => {
+    if (hasValue(next[field])) return
+    const value = readIdentityResultValue(result, field)
+    if (hasValue(value)) next[field] = value
+  })
+
+  if (!hasValue(next.master_entity_kind)) next.master_entity_kind = result.entityKind
+  if (!hasValue(next.master_record_id) && hasValue(result.masterRecord?.id)) next.master_record_id = result.masterRecord?.id
+  if (!hasValue(next.identity_gate_state)) next.identity_gate_state = result.state
+
+  return next
+}
 
 function buildChangedPayload(nextData: Record<string, any>, previousData: Record<string, any>) {
   return Object.fromEntries(
@@ -1651,10 +1723,26 @@ function isLongSelectField(field: FormField) {
 function getListCellValue(row: Record<string, any>, item: FormField) {
   const name = fieldName(item)
   const value = row[name]
-  if (value) return value
 
   if (name === 'full_name') {
-    return [row.first_name, row.last_name].filter(Boolean).join(' ')
+    const fullName = [row.first_name, row.last_name].filter(Boolean).join(' ')
+    if (fullName) return fullName
+  }
+
+  if (!hasValue(value)) return value
+
+  if (item.type === 'select' && item.options?.length) {
+    const normalized = normalizeSummarySelectValue(value, item.options)
+    return item.options.find(option => option.value === normalized)?.label || String(value)
+  }
+
+  if (item.type === 'date') {
+    return formatDateForDisplay(value)
+  }
+
+  if (item.type === 'document' && value && typeof value === 'object') {
+    const documentValue = value as Record<string, any>
+    return documentValue.name || documentValue.fileName || documentValue.file_name || documentValue.title || 'Belge'
   }
 
   return value
@@ -3225,13 +3313,7 @@ export function EntityForm({
       : []
 
     setIdentityGateResult(result)
-    setFormData(prev => ({
-      ...prev,
-      ...result.prefill,
-      master_entity_kind: result.entityKind,
-      master_record_id: result.masterRecord?.id || null,
-      identity_gate_state: result.state,
-    }))
+    setFormData(prev => mergeIdentityResultIntoFormData(prev, result))
     if (nextImages.length) setImages(nextImages)
     if (nextDocuments.length) setDocuments(nextDocuments)
     onIdentityResolved?.(result)
@@ -3258,7 +3340,8 @@ export function EntityForm({
       }
     }
 
-    return normalizeLegalEntityBankData(next)
+    const identityResultForSave = identityGateResult || buildIdentityResultFromExistingData(identityGate, next)
+    return normalizeLegalEntityBankData(enrichFormDataWithIdentityResult(next, identityResultForSave))
   }
 
   const resetIdentityGate = () => {
@@ -3459,7 +3542,7 @@ export function EntityForm({
     const errors: Record<string, string> = {}
 
     if (isIdentityGateLocked) {
-      errors.identity_gate = 'Devam etmek için önce Temel Kimlik Sorgulama/Oluşturma alanını eşleştirin.'
+      errors.identity_gate = 'Devam etmek için önce Temel Kimlik alanını eşleştirin.'
       setFieldErrors(errors)
       onValidationError?.([errors.identity_gate])
       return false
@@ -3540,9 +3623,9 @@ export function EntityForm({
     if (isIdentityGateLocked) {
       setFieldErrors(prev => ({
         ...prev,
-        identity_gate: 'Devam etmek için önce Temel Kimlik Sorgulama/Oluşturma alanını eşleştirin.',
+        identity_gate: 'Devam etmek için önce Temel Kimlik alanını eşleştirin.',
       }))
-      onValidationError?.(['Devam etmek için önce Temel Kimlik Sorgulama/Oluşturma alanını eşleştirin.'])
+      onValidationError?.(['Devam etmek için önce Temel Kimlik alanını eşleştirin.'])
       return
     }
     const finalizedData = finalizeFormDataForSave(formData)
@@ -4225,7 +4308,7 @@ export function EntityForm({
           <SectionLoadIcon stage={detailsLoadStage} />
           {isIdentityGateLocked && (
             <div className="mb-4 rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-3 text-sm text-gray-600 dark:border-gray-700 dark:bg-gray-800/50 dark:text-gray-300">
-              Devam etmek için önce Temel Kimlik Sorgulama/Oluşturma alanını eşleştirin.
+              Devam etmek için önce Temel Kimlik alanını eşleştirin.
             </div>
           )}
           {formTabs.map(tab => (

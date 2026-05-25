@@ -5,7 +5,7 @@ import { usePathname, useSearchParams } from 'next/navigation'
 import Sidebar from '@/components/layout/Sidebar'
 import { PendingActionsBell } from '@/components/layout/PendingActionsBell'
 import { ProductVersionBadge } from '@/components/layout/ProductVersionBadge'
-import { Building2, Check, ChevronDown, Loader2, Menu, Moon, Sun } from 'lucide-react'
+import { Building2, Check, ChevronDown, Loader2, Menu, Moon, Star, Sun } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ModuleLicenseProvider } from '@/hooks/useModuleLicense'
 import { PermissionProvider } from '@/lib/security/permissionStore'
@@ -106,6 +106,7 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
   const [workspaceMenuOpen, setWorkspaceMenuOpen] = useState(false)
   const [workspaceSwitchError, setWorkspaceSwitchError] = useState<string | null>(null)
   const [switchingWorkspaceId, setSwitchingWorkspaceId] = useState<string | null>(null)
+  const [defaultingWorkspaceId, setDefaultingWorkspaceId] = useState<string | null>(null)
   const [tourOpen, setTourOpen] = useState(false)
   const [tourShouldOpen, setTourShouldOpen] = useState(false)
   const [tourInitialStep, setTourInitialStep] = useState<string | null>(null)
@@ -273,6 +274,35 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
     }
   }
 
+  async function setDefaultWorkspace(option: TenantWorkspaceOption) {
+    if (option.is_default || defaultingWorkspaceId) return
+
+    setWorkspaceSwitchError(null)
+    setDefaultingWorkspaceId(option.id)
+
+    try {
+      const response = await fetch('/api/tenants/default', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...tenantRequestHeaders(),
+        },
+        body: JSON.stringify({ tenant_id: option.id }),
+      })
+      const payload = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(payload.error || 'Varsayilan calisma alani degistirilemedi.')
+
+      setWorkspaceOptions(previous => previous.map(row => ({
+        ...row,
+        is_default: row.id === option.id,
+      })))
+    } catch (error) {
+      setWorkspaceSwitchError(error instanceof Error ? error.message : 'Varsayilan calisma alani degistirilemedi.')
+    } finally {
+      setDefaultingWorkspaceId(null)
+    }
+  }
+
   const breadcrumb = BREADCRUMBS[pathname] ?? ''
   const breadcrumbParts = breadcrumb.split('›').map(part => part.trim()).filter(Boolean)
   const isPublicSetupRoute = pathname.startsWith('/app/sistem/kurulum')
@@ -384,36 +414,56 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
                         const optionLogoUrl = resolveThemedLogoUrl(option, dark)
 
                         return (
-                          <button
+                          <div
                             key={option.id}
-                            type="button"
-                            onClick={() => switchWorkspace(option)}
-                            disabled={Boolean(switchingWorkspaceId)}
                             className={cn(
-                              'flex w-full items-center gap-2 px-3 py-2 text-left transition hover:bg-gray-50 disabled:cursor-wait disabled:opacity-70 dark:hover:bg-eden-navy',
+                              'flex w-full items-center gap-2 px-3 py-2 transition hover:bg-gray-50 dark:hover:bg-eden-navy',
                               isCurrent && 'bg-gray-50 dark:bg-eden-navy'
                             )}
                           >
-                            <span className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-gray-200 bg-white text-eden-green dark:border-gray-700 dark:bg-eden-navy">
-                              {optionLogoUrl ? (
-                                <img src={optionLogoUrl} alt="" className="h-full w-full object-contain" />
-                              ) : (
-                                <Building2 size={16} />
-                              )}
-                            </span>
-                            <span className="min-w-0 flex-1">
-                              <span className="block truncate text-xs font-semibold text-gray-800 dark:text-gray-100">{option.name}</span>
-                              <span className="mt-0.5 flex items-center gap-1.5 text-[10px] text-gray-500 dark:text-gray-400">
-                                {option.role_label && <span>{option.role_label}</span>}
-                                {option.is_default && <span>Varsayilan</span>}
+                            <button
+                              type="button"
+                              onClick={() => switchWorkspace(option)}
+                              disabled={Boolean(switchingWorkspaceId || defaultingWorkspaceId)}
+                              className="flex min-w-0 flex-1 items-center gap-2 rounded-md text-left disabled:cursor-wait disabled:opacity-70"
+                            >
+                              <span className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-lg border border-gray-200 bg-white text-eden-green dark:border-gray-700 dark:bg-eden-navy">
+                                {optionLogoUrl ? (
+                                  <img src={optionLogoUrl} alt="" className="h-full w-full object-contain" />
+                                ) : (
+                                  <Building2 size={16} />
+                                )}
                               </span>
-                            </span>
+                              <span className="min-w-0 flex-1">
+                                <span className="block truncate text-xs font-semibold text-gray-800 dark:text-gray-100">{option.name}</span>
+                                <span className="mt-0.5 flex items-center gap-1.5 text-[10px] text-gray-500 dark:text-gray-400">
+                                  {option.role_label && <span>{option.role_label}</span>}
+                                  {option.is_default && <span>Varsayilan</span>}
+                                </span>
+                              </span>
+                            </button>
+                            {defaultingWorkspaceId === option.id ? (
+                              <Loader2 size={15} className="shrink-0 animate-spin text-gray-400" />
+                            ) : option.is_default ? (
+                              <Star size={15} className="shrink-0 fill-eden-green text-eden-green" aria-label="Varsayilan calisma alani" />
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => setDefaultWorkspace(option)}
+                                disabled={Boolean(switchingWorkspaceId || defaultingWorkspaceId)}
+                                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-gray-400 transition hover:bg-white hover:text-eden-green disabled:cursor-wait disabled:opacity-60 dark:hover:bg-eden-navy-3"
+                                title="Varsayilan yap"
+                                aria-label={`${option.name} varsayilan yap`}
+                              >
+                                <Star size={14} />
+                              </button>
+                            )}
                             {isSwitching ? (
                               <Loader2 size={15} className="shrink-0 animate-spin text-gray-400" />
                             ) : isCurrent ? (
                               <Check size={15} className="shrink-0 text-eden-green" />
                             ) : null}
-                          </button>
+                          </div>
                         )
                       }) : (
                         <div className="px-3 py-3 text-xs text-gray-500 dark:text-gray-400">Erisilebilir baska calisma alani yok.</div>

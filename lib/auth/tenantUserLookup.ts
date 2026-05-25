@@ -190,9 +190,18 @@ async function findPersonsByIdentifier(
 }
 
 function phoneCandidates(phone: string) {
-  const candidates = new Set<string>([phone])
-  if (phone.length === 10) candidates.add(`0${phone}`)
-  if (phone.length === 11 && phone.startsWith('0')) candidates.add(phone.slice(1))
+  const digits = phone.replace(/\D/g, '')
+  const local = digits.length === 12 && digits.startsWith('90')
+    ? digits.slice(2)
+    : digits.length === 11 && digits.startsWith('0')
+      ? digits.slice(1)
+      : digits
+  const candidates = new Set<string>([phone, digits, local])
+  if (local.length === 10) {
+    candidates.add(`0${local}`)
+    candidates.add(`90${local}`)
+    candidates.add(`+90${local}`)
+  }
   return Array.from(candidates)
 }
 

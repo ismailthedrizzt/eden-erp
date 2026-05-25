@@ -70,7 +70,9 @@ export async function getAuthenticatedWorkspaceContext(
     return NextResponse.json({ error: 'Oturum bulunamadi.', code: 'AUTH_REQUIRED' }, { status: 401 })
   }
 
-  const workspaceId = tenantContext.workspaceId || appSession?.tenantId || DEFAULT_TENANT_ID
+  const workspaceId = tenantContext.source === 'default' && appSession?.tenantId
+    ? appSession.tenantId
+    : tenantContext.workspaceId || appSession?.tenantId || DEFAULT_TENANT_ID
   const membership = await validateWorkspaceMembership(supabase, userId, workspaceId)
   if (membership instanceof NextResponse) return membership
 

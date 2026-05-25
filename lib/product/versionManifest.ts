@@ -59,7 +59,7 @@ export const roadmapStageLabels: Record<RoadmapStage, string> = {
 
 const maturityBadgeClasses: Record<ProductMaturity, string> = {
   planned: 'inline-flex items-center rounded-full border border-gray-300/60 bg-gray-100 px-1.5 py-0.5 text-[9px] font-semibold leading-none text-gray-600 dark:border-white/10 dark:bg-white/[0.08] dark:text-gray-300',
-  dev: 'inline-flex items-center rounded-full border border-sky-300/50 bg-sky-50 px-1.5 py-0.5 text-[9px] font-semibold leading-none text-sky-700 dark:border-sky-300/20 dark:bg-sky-400/10 dark:text-sky-200',
+  dev: 'inline-flex items-center rounded-full border border-red-300/60 bg-red-50 px-1.5 py-0.5 text-[9px] font-semibold leading-none text-red-700 dark:border-red-300/20 dark:bg-red-500/10 dark:text-red-200',
   alpha: 'inline-flex items-center rounded-full border border-amber-300/60 bg-amber-50 px-1.5 py-0.5 text-[9px] font-semibold leading-none text-amber-700 dark:border-amber-300/20 dark:bg-amber-400/10 dark:text-amber-200',
   beta: 'inline-flex items-center rounded-full border border-emerald-300/60 bg-emerald-50 px-1.5 py-0.5 text-[9px] font-semibold leading-none text-emerald-700 dark:border-emerald-300/20 dark:bg-emerald-400/10 dark:text-emerald-200',
   stable: 'inline-flex items-center rounded-full border border-eden-green/30 bg-eden-green-lt px-1.5 py-0.5 text-[9px] font-semibold leading-none text-eden-green-dk dark:border-eden-green/30 dark:bg-eden-green/15 dark:text-emerald-200',

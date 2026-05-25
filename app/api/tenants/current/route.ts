@@ -26,16 +26,21 @@ const LEGACY_WORKSPACE_SELECT = 'id,name,code,status,metadata_json'
 type Supabase = ReturnType<typeof createServiceClient>
 
 export async function GET(request: NextRequest) {
-  const context = resolveTenantContext(request)
+  const resolvedContext = resolveTenantContext(request)
   const supabase = createServiceClient()
   const permission = await requirePermission(request, supabase, 'tenants.view')
   if (permission instanceof NextResponse) return permission
 
+  const tenantId = permission.tenantId || resolvedContext.tenantId
+  const context = tenantId === resolvedContext.tenantId
+    ? resolvedContext
+    : { ...resolvedContext, tenantId, workspaceId: tenantId }
+
   const [workspace, binding] = await Promise.all([
-    fetchWorkspace(supabase, context.tenantId),
-    fetchTenantDatabaseBinding(supabase, context.tenantId),
+    fetchWorkspace(supabase, tenantId),
+    fetchTenantDatabaseBinding(supabase, tenantId),
   ])
-  const databaseBoundary = resolveTenantDataBoundary(context.tenantId, binding)
+  const databaseBoundary = resolveTenantDataBoundary(tenantId, binding)
 
   return NextResponse.json(
     {

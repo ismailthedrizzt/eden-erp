@@ -47,6 +47,9 @@ export async function GET(request: NextRequest) {
   }
 
   const context = resolveTenantContext(request)
+  const currentTenantId = context.source === 'default' && access.sessionTenantId
+    ? access.sessionTenantId
+    : context.tenantId
   const tenantById = new Map((tenants || []).map(tenant => [tenant.id, tenant]))
   const membershipByTenantId = new Map<string, NonNullable<typeof memberships>[number]>()
   ;(memberships || []).forEach(membership => {
@@ -76,7 +79,7 @@ export async function GET(request: NextRequest) {
           role_key: membership?.role_key || null,
           role_label: roleLabel(membership?.role_key),
           is_default: Boolean(membership?.is_default),
-          is_current: tenantId === context.tenantId,
+          is_current: tenantId === currentTenantId,
         }
       })
   )
@@ -99,14 +102,14 @@ async function resolveUserAccess(request: NextRequest, supabase: Supabase) {
       phone: appSession.phone,
     })
 
-    return { currentUserId: appSession.userId, personIds }
+    return { currentUserId: appSession.userId, personIds, sessionTenantId: appSession.tenantId || null }
   }
 
   const token = request.headers.get('authorization')?.replace(/^Bearer\s+/i, '')
-  if (!token) return { currentUserId: null, personIds: [] }
+  if (!token) return { currentUserId: null, personIds: [], sessionTenantId: null }
 
   const { data, error } = await supabase.auth.getUser(token)
-  if (error || !data.user?.id) return { currentUserId: null, personIds: [] }
+  if (error || !data.user?.id) return { currentUserId: null, personIds: [], sessionTenantId: null }
 
   const personIds = await findSessionPersonIds(supabase, {
     userId: data.user.id,
@@ -114,7 +117,7 @@ async function resolveUserAccess(request: NextRequest, supabase: Supabase) {
     phone: data.user.phone,
   })
 
-  return { currentUserId: data.user.id, personIds }
+  return { currentUserId: data.user.id, personIds, sessionTenantId: null }
 }
 
 async function findSessionPersonIds(
@@ -155,9 +158,18 @@ async function findSessionPersonIds(
 }
 
 function phoneCandidates(phone: string) {
-  const candidates = new Set<string>([phone])
-  if (phone.length === 10) candidates.add(`0${phone}`)
-  if (phone.length === 11 && phone.startsWith('0')) candidates.add(phone.slice(1))
+  const digits = phone.replace(/\D/g, '')
+  const local = digits.length === 12 && digits.startsWith('90')
+    ? digits.slice(2)
+    : digits.length === 11 && digits.startsWith('0')
+      ? digits.slice(1)
+      : digits
+  const candidates = new Set<string>([phone, digits, local])
+  if (local.length === 10) {
+    candidates.add(`0${local}`)
+    candidates.add(`90${local}`)
+    candidates.add(`+90${local}`)
+  }
   return Array.from(candidates)
 }
 

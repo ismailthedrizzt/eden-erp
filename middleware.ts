@@ -1,6 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { APP_SESSION_COOKIE_NAME, verifyAppSessionToken } from '@/lib/auth/appSession'
+import { TENANT_ID_COOKIE, WORKSPACE_ID_COOKIE } from '@/lib/tenancy/constants'
 
 type CookieToSet = {
   name: string
@@ -58,7 +59,11 @@ export async function middleware(request: NextRequest) {
   const appSession = await verifyAppSessionToken(request.cookies.get(APP_SESSION_COOKIE_NAME)?.value)
 
   if (isPublic || appSession) {
-    return withSecurityHeaders(NextResponse.next({ request }), request)
+    if (appSession?.tenantId) setRequestTenantCookies(request, appSession.tenantId)
+
+    const response = withSecurityHeaders(NextResponse.next({ request }), request)
+    if (appSession?.tenantId) setResponseTenantCookies(response, appSession.tenantId)
+    return response
   }
 
   let supabaseResponse = withSecurityHeaders(NextResponse.next({ request }), request)
@@ -164,6 +169,31 @@ function withSecurityHeaders(response: NextResponse, request: NextRequest) {
   }
 
   return response
+}
+
+function tenantCookieOptions() {
+  return {
+    path: '/',
+    sameSite: 'lax' as const,
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 60 * 60 * 24 * 365,
+  }
+}
+
+function setRequestTenantCookies(request: NextRequest, tenantId: string) {
+  if (request.cookies.get(TENANT_ID_COOKIE)?.value !== tenantId) {
+    request.cookies.set(TENANT_ID_COOKIE, tenantId)
+  }
+
+  if (request.cookies.get(WORKSPACE_ID_COOKIE)?.value !== tenantId) {
+    request.cookies.set(WORKSPACE_ID_COOKIE, tenantId)
+  }
+}
+
+function setResponseTenantCookies(response: NextResponse, tenantId: string) {
+  const options = tenantCookieOptions()
+  response.cookies.set(TENANT_ID_COOKIE, tenantId, options)
+  response.cookies.set(WORKSPACE_ID_COOKIE, tenantId, options)
 }
 
 export const config = {
