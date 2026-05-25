@@ -121,6 +121,12 @@ const REPRESENTATIVE_AUTHORITY_CONTROL = {
 const REPRESENTATIVE_OPERATION_CONTROLLED_FIELDS = new Set([
   'status',
   'record_status',
+  'authority_status',
+  'authority_record_status',
+  'authority_effect_status',
+  'transaction_status',
+  'approval_status',
+  'workflow_status',
   'start_date',
   'end_date',
   'primary_authority_type',
@@ -507,8 +513,8 @@ export default function TemsilcilerPage() {
     signature_type_label: representative.current_authority?.signature_type || representative.signature_type || '-',
     record_status: getRepresentativeRecordStatus(representative),
     authority_status: getRepresentativeAuthorityStatus(representative),
-    authority_record_status: representative.current_authority?.record_status || representative.authority_record_status || '',
-    authority_status_label: getRepresentativeAuthorityStatusLabel(getRepresentativeAuthorityStatus(representative), representative.current_authority?.status || representative.authority_status),
+    authority_record_status: representative.current_authority?.authority_record_status || representative.authority_record_status || '',
+    authority_status_label: getRepresentativeAuthorityStatusLabel(getRepresentativeAuthorityStatus(representative), representative.current_authority?.authority_status || representative.authority_status),
     authority_start_date: representative.current_authority?.effective_date || representative.authority_start_date || representative.start_date || '',
     authority_end_date: representative.current_authority?.end_date || representative.authority_end_date || representative.end_date || '',
     last_operation_label: getRepresentativeLastOperationLabel(representative),
@@ -1478,8 +1484,8 @@ function normalizeRepresentativeForForm(representative: RepresentativeRow) {
     authority_types: authorityTypes,
     status,
     record_status: recordStatus,
-    authority_status: currentAuthority.status || representative.authority_status || getRepresentativeAuthorityStatusLabel(authorityStatus),
-    authority_record_status: currentAuthority.record_status || representative.authority_record_status || '',
+    authority_status: currentAuthority.authority_status || representative.authority_status || getRepresentativeAuthorityStatusLabel(authorityStatus),
+    authority_record_status: currentAuthority.authority_record_status || representative.authority_record_status || '',
     start_date: currentAuthority.effective_date || representative.start_date || '',
     end_date: currentAuthority.end_date || representative.end_date || '',
     signature_type: currentAuthority.signature_type || representative.signature_type || '',
@@ -1596,7 +1602,7 @@ function RepresentativeNameCell({ value }: { value: any; row: any }) {
 function getRepresentativeAuthorityStatusLabel(recordStatus: string, fallback?: string) {
   const labels: Record<string, string> = {
     draft: 'Başlatılmadı',
-    active: 'Aktif',
+    active: 'Yetkili',
     suspended: 'Askıda',
     expired: 'Süresi Dolmuş',
     terminated: 'Sona Erdi',
@@ -1624,7 +1630,7 @@ function getRepresentativeRecordLifecycleStatus(representative?: Record<string, 
 
 function getRepresentativeAuthorityStatus(representative?: Record<string, any> | null) {
   const currentAuthority = representative?.current_authority || {}
-  const raw = currentAuthority.record_status || representative?.authority_record_status || currentAuthority.status || representative?.authority_status
+  const raw = currentAuthority.authority_record_status || representative?.authority_record_status || currentAuthority.authority_status || representative?.authority_status
   const text = String(raw || '').toLocaleLowerCase('tr-TR')
   if (text.includes('ask') || text === 'suspended') return 'suspended'
   if (text.includes('süre') || text.includes('sure') || text === 'expired') return 'expired'

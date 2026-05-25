@@ -323,6 +323,15 @@ export interface SirketOrtak {
   deleted_by?: string
 }
 
+export type RepresentativeRecordStatus = 'draft' | 'active' | 'passive'
+
+export type RepresentativeAuthorityRecordStatus =
+  | 'draft'
+  | 'active'
+  | 'suspended'
+  | 'expired'
+  | 'terminated'
+
 export interface SirketTemsilci {
   id: string
   company_id: string
@@ -338,8 +347,13 @@ export interface SirketTemsilci {
   display_name?: string
   start_date?: string
   end_date?: string
+  /** Legacy/display-only field. Do not use for lifecycle decisions. */
   status?: 'Taslak' | 'Aktif' | 'Pasif' | 'Askıda' | 'Süresi Dolmuş' | 'Sonlandırıldı' | string
-  record_status?: 'draft' | 'active' | 'suspended' | 'expired' | 'terminated' | 'passive'
+  record_status?: RepresentativeRecordStatus
+  authority_record_status?: RepresentativeAuthorityRecordStatus
+  authority_status?: string
+  authority_start_date?: string
+  authority_end_date?: string
   document_reference_id?: string
   notes?: string
   bank_authority_level?: string

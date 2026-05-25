@@ -44,6 +44,563 @@ This document ensures consistent, coherent development across all AI-assisted se
 }
 ```
 
+## Company-Related Lifecycle, Operation and Payload Architecture
+
+### Core Rule
+
+Company-related pages such as Companies, Partners, Representatives, Stakeholders and future similar role-based pages must separate the following concepts:
+
+1. Main record lifecycle
+2. Official/business operation lifecycle
+3. Current calculated state / read model
+4. Workflow / approval status
+5. Technical persistence status
+
+Never mix these into a single `status` field.
+
+A page is not complete if only the frontend is updated. Every lifecycle-driven change must be checked across:
+
+```text
+Frontend form fields
+-> normalizePayload
+-> service layer
+-> API route parser
+-> operation request
+-> mapper
+-> transaction table insert
+-> main table patch
+-> current view / read model
+-> frontend read model
+-> shared type contract
+-> DB migration and constraints
+-> RLS / tenant scope
+-> outbox event
+```
+
+---
+
+### Main Record Lifecycle
+
+Main records must use a narrow `record_status`.
+
+For representative-like role cards:
+
+```ts
+type MainRecordStatus = 'draft' | 'active' | 'passive'
+```
+
+Do not put operation-result states such as the following into the main record lifecycle:
+
+```ts
+'suspended' | 'expired' | 'terminated' | 'transferred' | 'liquidated'
+```
+
+These belong to operation/current-view status fields, not to the main card lifecycle unless the conceptual entity itself truly has that lifecycle stage.
+
+For Representatives:
+
+```text
+company_representatives.record_status:
+- draft
+- active
+- passive
+```
+
+Representative authority state must be separate:
+
+```ts
+type RepresentativeAuthorityRecordStatus =
+  | 'draft'
+  | 'active'
+  | 'suspended'
+  | 'expired'
+  | 'terminated'
+```
+
+Use separate fields:
+
+```ts
+record_status              // main representative card lifecycle
+authority_status           // current authority display/status
+authority_record_status    // authority lifecycle from current view
+current_authority          // current authority read model
+```
+
+---
+
+### Operation / Transaction Tables
+
+Any real-world official event must be represented as an operation/transaction record, not as direct field edits on the main card.
+
+Examples for Partners:
+
+```text
+Initial Partnership Entry
+Share Transfer
+Partial Share Transfer
+Exit from Partnership
+Voting / Profit Share Change
+Capital Increase
+Correction Entry
+Reversal Entry
+```
+
+Examples for Representatives:
+
+```text
+Start Representation
+Renew Authority
+Change Authority Scope
+Change Limit
+Suspend Authority
+Terminate Authority
+Correction Entry
+Reversal Entry
+```
+
+The main card may be created as a draft first. The official operation activates or changes the business state.
+
+---
+
+### Current View / Read Model
+
+Calculated current state must be read from a current view / read model.
+
+Examples:
+
+```text
+v_current_ownership
+v_current_representative_authorities
+```
+
+Current views may expose calculated fields such as:
+
+```ts
+current_share_ratio
+current_voting_ratio
+current_profit_ratio
+authority_status
+authority_record_status
+effective_date
+end_date
+warnings
+```
+
+Current views must not overwrite, replace or semantically blur the main table's `record_status`.
+
+Correct API response pattern:
+
+```ts
+{
+  record_status: row.record_status,
+  authority_status: current?.authority_status,
+  authority_record_status: current?.authority_record_status,
+  current_authority: current
+}
+```
+
+Incorrect pattern:
+
+```ts
+{
+  record_status: current.record_status || row.record_status
+}
+```
+
+---
+
+### Normal Card Update vs Official Operation Update
+
+Normal card updates may only update identity, contact, profile and card-level fields.
+
+Normal card updates must not update:
+
+```text
+status
+record_status
+official authority fields
+ownership/share/capital fields
+limits
+signature authority
+effective dates
+approval/workflow fields
+current view fields
+```
+
+Use separate mappers.
+
+Correct pattern:
+
+```ts
+mapRepresentativeCardForDb()
+mapRepresentativeAuthorityTransactionForDb()
+
+mapPartnerCardForDb()
+mapOwnershipTransactionForDb()
+```
+
+Do not use one generic mapper for both card updates and official operations.
+
+---
+
+### Payload Pipeline Acceptance Rule
+
+Before accepting any lifecycle/operation-driven page, verify the complete payload pipeline:
+
+```text
+1. Frontend form fields
+2. Frontend normalizePayload
+3. Service layer method
+4. API route parser
+5. Operation request creation
+6. DB mapper
+7. Transaction table insert
+8. Main table patch
+9. Current view / read model
+10. Frontend read model
+11. Shared type definitions
+12. DB migrations and constraints
+13. RLS / tenant scope
+14. Outbox event
+```
+
+A change is incomplete if it only updates React components or page layout.
+
+---
+
+### List Page Rule
+
+List pages are for viewing, filtering and selecting records.
+
+Do not add:
+
+```text
+action column
+rowActions
+three-dot action menu
+inline edit/delete/operation buttons
+```
+
+The list may have:
+
+```text
+lifecycle status icon as the first column
+widgets
+filters
+search
+sorting
+pagination
+row click to open the form
+```
+
+All lifecycle / operation actions must be triggered from the form through `EntityForm.operationActions`.
+
+---
+
+### Lifecycle Icon Rule
+
+The first list column for lifecycle-driven records must be a fixed-width lifecycle icon column.
+
+Standard pattern:
+
+```ts
+{
+  key: 'record_status',
+  label: 'Durum',
+  type: 'enum',
+  width: 44,
+  minWidth: 44,
+  maxWidth: 44,
+  fixedWidth: true,
+  sortable: false,
+  hideHeaderLabel: true,
+  category: 'Durum',
+  order: -10,
+  render: (_value, row) => <RecordStatusDot status={getRecordLifecycleStatus(row)} />
+}
+```
+
+This icon is status-only. It must not open an action menu or trigger an operation.
+
+---
+
+### Form Operation Rule
+
+Lifecycle and official operation actions must be shown inside the form via `EntityForm.operationActions`.
+
+Example operation groups:
+
+```text
+Lifecycle
+Official Updates
+Card Information
+```
+
+Examples for Representatives:
+
+```text
+Lifecycle:
+- Start Representation
+- Suspend Authority
+- Terminate Authority
+
+Official Updates:
+- Renew Authority
+- Change Authority Scope
+- Change Limit
+- Correction Entry
+- Reversal Entry
+
+Card Information:
+- Update Card Information
+```
+
+Card information updates must not mutate lifecycle, authority, ownership, limit, effective date or workflow fields.
+
+---
+
+### Workflow Rule
+
+Frontend must never hard-code workflow or approval completion.
+
+Never send from frontend:
+
+```ts
+approval_status: 'approved'
+workflow_status: 'approved'
+```
+
+Frontend creates an operation request. Backend policy/workflow determines approval status.
+
+Temporary auto-approval is allowed only as an explicit backend policy for simple/small-business mode. It must not be hidden in frontend payloads.
+
+---
+
+### Authority / Operation Status Rule
+
+Do not use a single `status` field for all of the following:
+
+```text
+workflow status
+approval status
+transaction status
+authority effect status
+main record status
+```
+
+Use separate fields.
+
+Recommended pattern:
+
+```ts
+record_status                 // main card lifecycle
+workflow_status               // workflow state
+approval_status               // approval state
+transaction_status            // transaction processing state
+authority_effect_status       // business effect of authority transaction
+authority_record_status       // current authority lifecycle
+```
+
+For Representative authority transactions:
+
+```text
+Start Representation       => authority active
+Renew Authority             => authority active
+Change Authority Scope      => authority active
+Change Limit                => authority active
+Suspend Authority           => authority suspended
+Terminate Authority         => authority terminated
+Correction Entry            => corrected target state
+Reversal Entry              => reversal/previous effective state
+```
+
+---
+
+### Database Acceptance Rule
+
+Before marking a lifecycle/operation page as complete, verify migrations and DB constraints.
+
+Required checks:
+
+```text
+table exists
+transaction table exists
+current view exists
+tenant_id exists
+RLS or tenant scope exists
+check constraints match conceptual lifecycle
+old invalid status values are migrated
+indexes exist for tenant/company/record/effective date fields
+current view returns the fields expected by API/frontend
+```
+
+If migration files cannot be found or verified, do not mark the task complete.
+
+---
+
+### Representative DB Rules
+
+For representatives:
+
+```text
+company_representatives.record_status
+```
+
+must only allow:
+
+```text
+draft
+active
+passive
+```
+
+Old values must be migrated:
+
+```text
+suspended  -> active
+expired    -> active
+terminated -> active
+```
+
+because these are authority states, not main card states.
+
+Representative authority current state must come from:
+
+```text
+v_current_representative_authorities
+```
+
+The view must expose:
+
+```text
+representative_id
+company_id
+tenant_id
+authority_status
+authority_record_status
+authority_status_label
+authority_types
+signature_type
+transaction_limit
+payment_approval_limit
+purchase_approval_limit
+bank_transaction_limit
+contract_signature_limit
+currency
+limits
+scope
+requires_joint_signature
+can_approve_alone
+effective_date
+end_date
+warnings
+last_transaction_id
+last_transaction_type
+```
+
+---
+
+### Atomicity Rule
+
+Official operations must be atomic.
+
+Do not split these into independent non-transactional writes:
+
+```text
+operation request creation/update
+transaction row insert
+main record patch
+outbox event creation
+```
+
+Use a DB transaction or RPC when multiple writes must succeed/fail together.
+
+Preferred pattern:
+
+```sql
+perform_representative_authority_transaction(...)
+perform_ownership_transaction(...)
+```
+
+The RPC / transaction should:
+
+```text
+lock the main row
+check optimistic version
+validate lifecycle transition
+insert transaction row
+patch main record if required
+update operation request
+insert outbox event
+commit or rollback as one unit
+```
+
+---
+
+### Delete Policy Rule
+
+Hard delete is allowed only for records that have not entered lifecycle/business operations.
+
+For representatives, hard delete is allowed only when:
+
+```text
+record_status = draft
+is_deleted = false
+no authority transaction exists
+```
+
+Active, suspended-authority, terminated-authority or transaction-history records must not be hard deleted.
+
+The API should return a clear conflict code such as:
+
+```text
+REPRESENTATIVE_DELETE_REQUIRES_TERMINATION
+```
+
+---
+
+### Type Contract Rule
+
+After changing lifecycle or payload semantics, update all shared types.
+
+If a DB field is constrained to:
+
+```ts
+'draft' | 'active' | 'passive'
+```
+
+then no shared frontend/backend type may still allow:
+
+```ts
+'suspended' | 'expired' | 'terminated'
+```
+
+Those values must belong to authority/current-view types, not main record types.
+
+---
+
+### Final Acceptance Checklist for Lifecycle Pages
+
+Before saying a page is complete, check:
+
+```text
+[ ] List starts with lifecycle icon column.
+[ ] List has no action column, rowActions or inline operation buttons.
+[ ] Row click opens form in view mode.
+[ ] Form uses operationActions for lifecycle/official operations.
+[ ] Create form creates only a draft card.
+[ ] Official operations are wizard/transaction based.
+[ ] Normal update cannot mutate official operation fields.
+[ ] Payload pipeline is checked end-to-end.
+[ ] Backend guards lifecycle transitions.
+[ ] DB migrations exist and are verified.
+[ ] Current view/read model returns correct calculated state.
+[ ] Shared types match DB constraints.
+[ ] Workflow is not hard-coded in frontend.
+[ ] Official operations are atomic or implemented via RPC.
+[ ] Delete policy blocks hard delete after lifecycle entry.
+```
+
 ## Architecture Patterns (Non-negotiable)
 
 ### 1. Directory Structure

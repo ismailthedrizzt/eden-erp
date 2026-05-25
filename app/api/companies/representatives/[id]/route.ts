@@ -3,7 +3,7 @@ import { createServiceClient } from '@/lib/supabase/server'
 import { hydrateMasterContact, stripMasterDataForRoleProfile, syncMasterContact } from '@/lib/identity/masterContact'
 import { EntityBankAccountsService } from '@/lib/modules/entity-bank-accounts/entityBankAccounts.service'
 import { requirePermission } from '@/lib/security/serverPermissions'
-import { applyTenantQueryScope, resolveTenantContext, withTenantInsertScopeForTable } from '@/lib/tenancy/server'
+import { applyTenantQueryScope, resolveTenantContext } from '@/lib/tenancy/server'
 import { getTenantCompanyScope, isWritableCompanyScope } from '@/lib/tenancy/companyScopes'
 import { diffRecord, safeCrudResponse, safeReadRecord, safeUpdateRecord } from '@/lib/crud/safeCrudService'
 import { OperationRequestService } from '@/lib/operations/operationRequestService'
@@ -14,12 +14,18 @@ import { OutboxEventService } from '@/lib/outbox/outboxEventService'
 import { isMissingTableError } from '@/lib/modules/companies/companyErrors'
 
 const REPRESENTATIVE_DETAIL_SELECT = 'id,company_id,person_id,organization_id,person_kind,source_type,source_id,display_name,full_name,phone,email,authority_types,job_title,authority_type,status,record_status,start_date,end_date,signature_type,transaction_limit,payment_approval_limit,purchase_approval_limit,bank_transaction_limit,contract_signature_limit,currency,requires_joint_signature,can_approve_alone,bank_authority_level,department_scope,gib_permissions,can_submit_declaration,can_process_e_invoice,sgk_permissions,can_submit_hiring_notice,can_submit_termination_notice,official_correspondence_authority,is_deleted,history,photo_logo,authority_documents,representative_profile,notes,created_at,updated_at,version'
-const CURRENT_AUTHORITY_SELECT = 'company_id,representative_id,display_name,person_id,organization_id,record_status,status,authority_types,signature_type,transaction_limit,payment_approval_limit,purchase_approval_limit,bank_transaction_limit,contract_signature_limit,currency,limits,scope,requires_joint_signature,can_approve_alone,effective_date,end_date,warnings,tenant_id'
-const AUTHORITY_TRANSACTION_SELECT = 'id,company_id,representative_id,person_id,organization_id,transaction_no,transaction_type,authority_types,signature_type,transaction_limit,payment_approval_limit,purchase_approval_limit,bank_transaction_limit,contract_signature_limit,currency,limits,scope,requires_joint_signature,can_approve_alone,document_files,effective_date,end_date,approval_status,workflow_status,status,notes,warnings,reversal_transaction_id,new_values,created_at,updated_at,version'
+const CURRENT_AUTHORITY_SELECT = 'representative_id,company_id,tenant_id,authority_status,authority_record_status,authority_status_label,authority_types,signature_type,transaction_limit,payment_approval_limit,purchase_approval_limit,bank_transaction_limit,contract_signature_limit,currency,limits,scope,requires_joint_signature,can_approve_alone,effective_date,end_date,warnings,last_transaction_id,last_transaction_type,display_name,person_id,organization_id'
+const AUTHORITY_TRANSACTION_SELECT = 'id,company_id,representative_id,person_id,organization_id,transaction_no,transaction_type,transaction_status,authority_effect_status,authority_record_status,authority_types,signature_type,transaction_limit,payment_approval_limit,purchase_approval_limit,bank_transaction_limit,contract_signature_limit,currency,limits,scope,requires_joint_signature,can_approve_alone,document_files,effective_date,end_date,approval_status,workflow_status,notes,warnings,reversal_transaction_id,new_values,created_at,updated_at,version'
 
 const REPRESENTATIVE_OPERATION_CONTROLLED_FIELDS = new Set([
   'status',
   'record_status',
+  'authority_status',
+  'authority_record_status',
+  'authority_effect_status',
+  'transaction_status',
+  'approval_status',
+  'workflow_status',
   'start_date',
   'end_date',
   'primary_authority_type',
@@ -141,25 +147,28 @@ export async function PATCH(
   if (permission instanceof NextResponse) return permission
 
   const operationService = new OperationRequestService(supabase as any)
-  const operationCreate = await operationService.createOrGet({
-    tenantId: tenantContext.tenantId,
-    companyId: body.company_id || null,
-    moduleKey: 'sirket',
-    entityType: 'company_representative',
-    entityId: id,
-    operationType: isAuthorityTransaction ? 'representative.authority.transaction' : 'representative.update',
-    clientRequestId,
-    baseVersion,
-    baseUpdatedAt,
-    requestedBy: permission.userId,
-    payload: body,
-  })
-  if (operationCreate.ok && operationCreate.duplicate) return duplicateOperationJsonResponse(operationCreate.operation)
-  if (!operationCreate.ok && !operationCreate.missingInfrastructure) {
-    return NextResponse.json({ error: operationCreate.error, code: operationCreate.code || 'OPERATION_REQUEST_FAILED' }, { status: 500 })
+  let operation = null
+  if (!isAuthorityTransaction) {
+    const operationCreate = await operationService.createOrGet({
+      tenantId: tenantContext.tenantId,
+      companyId: body.company_id || null,
+      moduleKey: 'sirket',
+      entityType: 'company_representative',
+      entityId: id,
+      operationType: 'representative.update',
+      clientRequestId,
+      baseVersion,
+      baseUpdatedAt,
+      requestedBy: permission.userId,
+      payload: body,
+    })
+    if (operationCreate.ok && operationCreate.duplicate) return duplicateOperationJsonResponse(operationCreate.operation)
+    if (!operationCreate.ok && !operationCreate.missingInfrastructure) {
+      return NextResponse.json({ error: operationCreate.error, code: operationCreate.code || 'OPERATION_REQUEST_FAILED' }, { status: 500 })
+    }
+    operation = operationCreate.ok ? operationCreate.operation : null
+    if (operation) await operationService.markProcessing(operation.id)
   }
-  const operation = operationCreate.ok ? operationCreate.operation : null
-  if (operation) await operationService.markProcessing(operation.id)
 
   try {
     const result = isAuthorityTransaction
@@ -170,6 +179,7 @@ export async function PATCH(
         body,
         baseVersion,
         baseUpdatedAt,
+        clientRequestId,
         requestedBy: permission.userId,
         tenantContext,
       })
@@ -219,13 +229,21 @@ export async function PATCH(
       }).catch(() => null)
     }
 
-    return NextResponse.json({
-      data: result.data,
-      ...(operation ? {
+    const operationMetadata = (result as any).operation_id
+      ? {
+        operation_id: (result as any).operation_id,
+        operation_status: (result as any).operation_status || 'completed',
+        message: operationStatusMessage(((result as any).operation_status || 'completed') as any),
+      }
+      : operation ? {
         operation_id: operation.id,
         operation_status: 'completed',
         message: operationStatusMessage('completed'),
-      } : {}),
+      } : {}
+
+    return NextResponse.json({
+      data: result.data,
+      ...operationMetadata,
     })
   } catch (error: any) {
     if (operation) await operationService.markFailed(operation.id, {
@@ -385,7 +403,7 @@ async function updateRepresentativeNormally({
       return { ok: true }
     },
     beforeUpdate: ({ current, patch }) => {
-      const mapped = mapRepresentativeForDb(patch, current)
+      const mapped = mapRepresentativeCardForDb(patch, current)
       const changed = diffRecord(mapped, current)
       if (!Object.keys(changed).length) return {}
       return {
@@ -413,6 +431,7 @@ async function applyAuthorityTransaction({
   body,
   baseVersion,
   baseUpdatedAt,
+  clientRequestId,
   requestedBy,
   tenantContext,
 }: {
@@ -422,6 +441,7 @@ async function applyAuthorityTransaction({
   body: Record<string, any>
   baseVersion: number | null
   baseUpdatedAt: string | null
+  clientRequestId: string
   requestedBy?: string | null
   tenantContext: ReturnType<typeof resolveTenantContext>
 }) {
@@ -448,7 +468,7 @@ async function applyAuthorityTransaction({
   }
   const currentAuthority = await fetchCurrentAuthority(supabase, representativeId, tenantContext)
   const recordStatus = normalizeMainRecordStatus(current.record_status || current.status)
-  const authorityRecordStatus = normalizeAuthorityRecordStatus(currentAuthority?.record_status || currentAuthority?.status)
+  const authorityRecordStatus = normalizeAuthorityRecordStatus(currentAuthority?.authority_record_status || currentAuthority?.authority_status)
   const lifecycleViolation = validateRepresentativeLifecycleTransition(transactionType, recordStatus, authorityRecordStatus)
   if (lifecycleViolation) return lifecycleViolation
 
@@ -468,91 +488,31 @@ async function applyAuthorityTransaction({
     terminationReason: body.termination_reason || body.notes,
   })
   if (precheck) return precheck
-  const limits = {
-    transaction_limit: toNullableNumber(body.transaction_limit ?? body.authority_limit),
-    payment_approval_limit: toNullableNumber(body.payment_approval_limit),
-    purchase_approval_limit: toNullableNumber(body.purchase_approval_limit),
-    bank_transaction_limit: toNullableNumber(body.bank_transaction_limit),
-    contract_signature_limit: toNullableNumber(body.contract_signature_limit),
-  }
-  const scopePayload = {
-    bank_authority_level: body.bank_authority_level || null,
-    department_scope: body.department_scope || null,
-    gib_permissions: body.gib_permissions || null,
-    can_submit_declaration: !!body.can_submit_declaration,
-    can_process_e_invoice: !!body.can_process_e_invoice,
-    sgk_permissions: body.sgk_permissions || null,
-    can_submit_hiring_notice: !!body.can_submit_hiring_notice,
-    can_submit_termination_notice: !!body.can_submit_termination_notice,
-    official_correspondence_authority: !!body.official_correspondence_authority,
-  }
-  const effectiveDate = body.effective_date || body.start_date || new Date().toISOString().slice(0, 10)
-  const approvalStatus = resolveRepresentativeAuthorityApprovalStatus()
-  const workflowStatus = approvalStatus
-  const { count } = await supabase
-    .from('company_representative_authority_transactions')
-    .select('id', { count: 'exact', head: true })
+  const transactionPayload = mapRepresentativeAuthorityTransactionForDb(body, current, currentAuthority, transactionType)
+  const { data: rpcResult, error: rpcError } = await supabase.rpc('perform_representative_authority_transaction', {
+    p_representative_id: representativeId,
+    p_transaction_type: transactionType,
+    p_payload: transactionPayload,
+    p_client_request_id: clientRequestId,
+    p_requested_by: requestedBy || null,
+    p_base_version: baseVersion,
+    p_base_updated_at: baseUpdatedAt,
+  })
 
-  const transactionRow = withTenantInsertScopeForTable({
-    company_id: current.company_id,
-    representative_id: representativeId,
-    person_id: current.person_id || null,
-    organization_id: current.organization_id || null,
-    transaction_no: `RT-${new Date().getFullYear()}-${String((count || 0) + 1).padStart(5, '0')}`,
-    transaction_type: transactionType,
-    authority_types: authorityTypes,
-    signature_type: body.signature_type || null,
-    transaction_limit: limits.transaction_limit,
-    payment_approval_limit: limits.payment_approval_limit,
-    purchase_approval_limit: limits.purchase_approval_limit,
-    bank_transaction_limit: limits.bank_transaction_limit,
-    contract_signature_limit: limits.contract_signature_limit,
-    currency: body.currency || current.currency || 'TRY',
-    limits,
-    scope: scopePayload,
-    requires_joint_signature: !!body.requires_joint_signature,
-    can_approve_alone: !!body.can_approve_alone,
-    document_files: documentFiles,
-    effective_date: effectiveDate,
-    end_date: body.end_date || null,
-    approval_status: approvalStatus,
-    workflow_status: workflowStatus,
-    status: approvalStatus === 'approved' ? 'active' : 'draft',
-    notes: body.notes || null,
-    warnings: [],
-    reversal_transaction_id: body.reversal_transaction_id || null,
-    new_values: body.new_values || body,
-    approved_by: approvalStatus === 'approved' ? requestedBy || null : null,
-    approved_at: approvalStatus === 'approved' ? new Date().toISOString() : null,
-    created_by: requestedBy || null,
-    updated_by: requestedBy || null,
-  }, 'company_representative_authority_transactions', tenantContext)
-
-  const { data: transaction, error: transactionError } = await supabase
-    .from('company_representative_authority_transactions')
-    .insert(transactionRow)
-    .select(AUTHORITY_TRANSACTION_SELECT)
-    .single()
-
-  if (transactionError) {
-    return { ok: false as const, status: 500, code: transactionError.code || 'AUTHORITY_TRANSACTION_CREATE_FAILED', error: transactionError.message }
+  if (rpcError) {
+    return { ok: false as const, status: 500, code: rpcError.code || 'AUTHORITY_TRANSACTION_FAILED', error: rpcError.message }
   }
 
-  if (approvalStatus === 'approved') {
-    const statusPatch = representativeStatusPatchForTransaction(transactionType, effectiveDate, body.end_date)
-    let updateQuery = supabase
-      .from('company_representatives')
-      .update({
-        ...statusPatch,
-        updated_at: new Date().toISOString(),
-        version: Number(current.version || 1) + 1,
-        history: buildHistory(current, statusPatch),
-      })
-      .eq('id', representativeId)
-    updateQuery = applyTenantQueryScope(updateQuery, 'company_representatives', tenantContext)
-    const { error: updateError } = await updateQuery
-    if (updateError) {
-      return { ok: false as const, status: 500, code: updateError.code || 'REPRESENTATIVE_STATUS_UPDATE_FAILED', error: updateError.message }
+  const operationResult = (rpcResult || {}) as Record<string, any>
+  if (operationResult.ok === false) {
+    return {
+      ok: false as const,
+      status: Number(operationResult.http_status || 409),
+      code: operationResult.code || 'AUTHORITY_TRANSACTION_REJECTED',
+      error: operationResult.error || 'Temsilcilik işlemi tamamlanamadı.',
+      details: operationResult.details,
+      operation_id: operationResult.operation_id,
+      operation_status: operationResult.operation_status,
     }
   }
 
@@ -565,14 +525,16 @@ async function applyAuthorityTransaction({
     select: REPRESENTATIVE_DETAIL_SELECT,
     afterRead: async ({ record }) => hydrateRepresentativeDetail(supabase, {
       ...record,
-      last_authority_transaction: transaction,
+      last_authority_transaction: operationResult.transaction || null,
     }, tenantContext),
   })
-  return refreshed
-}
-
-function representativeStatusPatchForTransaction(transactionType: string, effectiveDate: string, endDate?: string | null) {
-  return { status: 'Aktif', record_status: 'active', start_date: effectiveDate, end_date: endDate || null }
+  return refreshed.ok
+    ? {
+      ...refreshed,
+      operation_id: operationResult.operation_id,
+      operation_status: operationResult.operation_status || 'completed',
+    }
+    : refreshed
 }
 
 function normalizeMainRecordStatus(value: unknown) {
@@ -586,24 +548,30 @@ function normalizeAuthorityRecordStatus(value: unknown) {
   const text = String(value || '').toLocaleLowerCase('tr-TR')
   if (text.includes('ask')) return 'suspended'
   if (text.includes('sona') || text.includes('son')) return 'terminated'
+  if (text.includes('süre') || text.includes('sure') || text === 'expired') return 'expired'
   if (text.includes('aktif') || text === 'active') return 'active'
-  if (text.includes('pasif') || text === 'passive') return 'passive'
   return text || 'draft'
 }
 
-function resolveRepresentativeAuthorityApprovalStatus() {
-  return 'approved'
+function getAuthorityEffectStatusForTransaction(transactionType: string, body: Record<string, any>) {
+  const explicit = normalizeAuthorityRecordStatus(body.authority_effect_status || body.authority_record_status)
+  if (explicit !== 'draft') return explicit
+  const normalizedType = transactionType.toLocaleLowerCase('tr-TR')
+  if (normalizedType.includes('ask')) return 'suspended'
+  if (normalizedType.includes('son')) return 'terminated'
+  if (normalizedType.includes('ters')) return 'terminated'
+  return 'active'
 }
 
 function validateRepresentativeLifecycleTransition(transactionType: string, recordStatus: string, authorityRecordStatus: string) {
   if (transactionType === 'Temsilcilik Başlatma' && recordStatus !== 'draft') {
     return { ok: false as const, status: 409, code: 'REPRESENTATIVE_ACTIVATION_REQUIRES_DRAFT', error: 'Temsilcilik Başlatma yalnızca Taslak temsilci kartları için çalışır.' }
   }
-  if (['Yetki Yenileme', 'Yetki Kapsamı Değişikliği', 'Limit Değişikliği', 'Düzeltme Kaydı'].includes(transactionType) && recordStatus !== 'active') {
+  if (['Yetki Yenileme', 'Yetki Kapsamı Değişikliği', 'Limit Değişikliği', 'Düzeltme Kaydı', 'Ters Kayıt'].includes(transactionType) && recordStatus !== 'active') {
     return { ok: false as const, status: 409, code: 'REPRESENTATIVE_AUTHORITY_CHANGE_REQUIRES_ACTIVE', error: 'Yetki, limit, kurum veya imza değişiklikleri yalnızca Aktif temsilciler için operation olarak yapılabilir.' }
   }
   if (transactionType === 'Yetki Yenileme' && authorityRecordStatus === 'suspended') return null
-  if (['Yetki Kapsamı Değişikliği', 'Limit Değişikliği', 'Düzeltme Kaydı'].includes(transactionType) && authorityRecordStatus !== 'active') {
+  if (['Yetki Kapsamı Değişikliği', 'Limit Değişikliği', 'Düzeltme Kaydı', 'Ters Kayıt'].includes(transactionType) && authorityRecordStatus !== 'active') {
     return { ok: false as const, status: 409, code: 'REPRESENTATIVE_AUTHORITY_CHANGE_REQUIRES_ACTIVE_AUTHORITY', error: 'Bu işlem için güncel yetki Aktif olmalıdır.' }
   }
   if (transactionType === 'Askıya Alma' && (recordStatus !== 'active' || authorityRecordStatus !== 'active')) {
@@ -679,11 +647,10 @@ function normalizeAuthorityTypes(value: unknown) {
   return Array.from(new Set(source.map(normalizeAuthorityType).filter(Boolean)))
 }
 
-function mapRepresentativeForDb(representative: Record<string, any>, current?: Record<string, any>) {
+function mapRepresentativeCardForDb(representative: Record<string, any>, current?: Record<string, any>) {
   const profilePatch = stripMasterDataForRoleProfile(representative)
   const hasProfilePatch = Object.keys(profilePatch).length > 0
   const displayName = representative.display_name || buildDisplayName(representative, current) || current?.display_name || current?.full_name || 'Temsilci'
-  const authorityTypes = normalizeAuthorityTypes(representative.authority_types ?? representative.primary_authority_type ?? representative.authority_type ?? current?.authority_types)
 
   return {
     company_id: representative.company_id || current?.company_id,
@@ -692,40 +659,68 @@ function mapRepresentativeForDb(representative: Record<string, any>, current?: R
     source_type: representative.source_type || current?.source_type,
     source_id: representative.source_id || current?.source_id,
     display_name: displayName,
-    start_date: representative.start_date ?? current?.start_date ?? null,
-    end_date: representative.end_date ?? current?.end_date ?? null,
-    authority_types: authorityTypes,
-    authority_type: authorityTypes[0] || current?.authority_type || 'other',
-    job_title: representative.job_title || representative.primary_authority_type || authorityTypes[0] || current?.job_title || null,
-    signature_type: representative.signature_type ?? current?.signature_type ?? null,
-    transaction_limit: toNullableNumber(representative.transaction_limit ?? representative.authority_limit ?? current?.transaction_limit),
-    payment_approval_limit: toNullableNumber(representative.payment_approval_limit ?? current?.payment_approval_limit),
-    purchase_approval_limit: toNullableNumber(representative.purchase_approval_limit ?? current?.purchase_approval_limit),
-    bank_transaction_limit: toNullableNumber(representative.bank_transaction_limit ?? current?.bank_transaction_limit),
-    contract_signature_limit: toNullableNumber(representative.contract_signature_limit ?? current?.contract_signature_limit),
-    currency: representative.currency || current?.currency || 'TRY',
-    requires_joint_signature: representative.requires_joint_signature ?? current?.requires_joint_signature ?? false,
-    can_approve_alone: representative.can_approve_alone ?? current?.can_approve_alone ?? false,
-    bank_authority_level: representative.bank_authority_level ?? current?.bank_authority_level ?? null,
-    department_scope: representative.department_scope ?? current?.department_scope ?? null,
-    gib_permissions: representative.gib_permissions ?? current?.gib_permissions ?? null,
-    can_submit_declaration: representative.can_submit_declaration ?? current?.can_submit_declaration ?? false,
-    can_process_e_invoice: representative.can_process_e_invoice ?? current?.can_process_e_invoice ?? false,
-    sgk_permissions: representative.sgk_permissions ?? current?.sgk_permissions ?? null,
-    can_submit_hiring_notice: representative.can_submit_hiring_notice ?? current?.can_submit_hiring_notice ?? false,
-    can_submit_termination_notice: representative.can_submit_termination_notice ?? current?.can_submit_termination_notice ?? false,
-    official_correspondence_authority: representative.official_correspondence_authority ?? current?.official_correspondence_authority ?? false,
     notes: representative.notes ?? current?.notes ?? null,
     phone: representative.phone ?? current?.phone ?? null,
     email: representative.email ?? current?.email ?? null,
     photo_logo: representative.photo_logo || current?.photo_logo || [],
-    authority_documents: representative.authority_documents || current?.authority_documents || [],
     representative_profile: hasProfilePatch
       ? { ...(current?.representative_profile || {}), ...profilePatch }
       : current?.representative_profile || {},
-    is_deleted: !!current?.is_deleted,
-    deleted_at: current?.deleted_at ?? null,
-    deleted_by: current?.deleted_by ?? null,
+  }
+}
+
+function mapRepresentativeAuthorityTransactionForDb(
+  body: Record<string, any>,
+  current: Record<string, any>,
+  currentAuthority: Record<string, any> | null,
+  transactionType: string
+) {
+  const authorityTypes = Array.isArray(body.authority_types)
+    ? normalizeAuthorityTypes(body.authority_types)
+    : normalizeAuthorityTypes(body.primary_authority_type ?? currentAuthority?.authority_types ?? current.authority_types)
+  const documentFiles = Array.isArray(body.document_files)
+    ? body.document_files
+    : Array.isArray(body.authority_documents)
+      ? body.authority_documents
+      : []
+  const limits = {
+    transaction_limit: toNullableNumber(body.transaction_limit ?? body.authority_limit ?? currentAuthority?.transaction_limit),
+    payment_approval_limit: toNullableNumber(body.payment_approval_limit ?? currentAuthority?.payment_approval_limit),
+    purchase_approval_limit: toNullableNumber(body.purchase_approval_limit ?? currentAuthority?.purchase_approval_limit),
+    bank_transaction_limit: toNullableNumber(body.bank_transaction_limit ?? currentAuthority?.bank_transaction_limit),
+    contract_signature_limit: toNullableNumber(body.contract_signature_limit ?? currentAuthority?.contract_signature_limit),
+  }
+  const scope = {
+    bank_authority_level: body.bank_authority_level ?? currentAuthority?.scope?.bank_authority_level ?? null,
+    department_scope: body.department_scope ?? currentAuthority?.scope?.department_scope ?? null,
+    gib_permissions: body.gib_permissions ?? currentAuthority?.scope?.gib_permissions ?? null,
+    can_submit_declaration: !!(body.can_submit_declaration ?? currentAuthority?.scope?.can_submit_declaration),
+    can_process_e_invoice: !!(body.can_process_e_invoice ?? currentAuthority?.scope?.can_process_e_invoice),
+    sgk_permissions: body.sgk_permissions ?? currentAuthority?.scope?.sgk_permissions ?? null,
+    can_submit_hiring_notice: !!(body.can_submit_hiring_notice ?? currentAuthority?.scope?.can_submit_hiring_notice),
+    can_submit_termination_notice: !!(body.can_submit_termination_notice ?? currentAuthority?.scope?.can_submit_termination_notice),
+    official_correspondence_authority: !!(body.official_correspondence_authority ?? currentAuthority?.scope?.official_correspondence_authority),
+  }
+
+  return {
+    transaction_type: transactionType,
+    authority_types: authorityTypes,
+    signature_type: body.signature_type ?? currentAuthority?.signature_type ?? null,
+    ...limits,
+    currency: body.currency || currentAuthority?.currency || current.currency || 'TRY',
+    limits,
+    scope,
+    requires_joint_signature: !!(body.requires_joint_signature ?? currentAuthority?.requires_joint_signature),
+    can_approve_alone: !!(body.can_approve_alone ?? currentAuthority?.can_approve_alone),
+    document_files: documentFiles,
+    effective_date: body.effective_date || body.start_date || new Date().toISOString().slice(0, 10),
+    end_date: body.end_date || null,
+    notes: body.notes || body.termination_reason || null,
+    termination_reason: body.termination_reason || null,
+    reversal_transaction_id: body.reversal_transaction_id || null,
+    correction_transaction_id: body.correction_transaction_id || null,
+    authority_effect_status: getAuthorityEffectStatusForTransaction(transactionType, body),
+    new_values: body.new_values || body,
   }
 }
 
@@ -780,8 +775,8 @@ async function hydrateRepresentativeDetail(
   const merged: Record<string, any> = currentAuthority ? {
     ...representative,
     current_authority: currentAuthority,
-    authority_status: currentAuthority.status || null,
-    authority_record_status: currentAuthority.record_status || null,
+    authority_status: currentAuthority.authority_status || null,
+    authority_record_status: currentAuthority.authority_record_status || null,
     authority_start_date: currentAuthority.effective_date || null,
     authority_end_date: currentAuthority.end_date || null,
     authority_types: currentAuthority.authority_types || representative.authority_types,

@@ -16,7 +16,7 @@ import { OutboxEventService } from '@/lib/outbox/outboxEventService'
 import { isMissingTableError } from '@/lib/modules/companies/companyErrors'
 
 const REPRESENTATIVE_LIST_SELECT = 'id,company_id,person_id,organization_id,person_kind,source_type,source_id,display_name,full_name,authority_types,job_title,authority_type,status,record_status,start_date,end_date,signature_type,transaction_limit,payment_approval_limit,purchase_approval_limit,bank_transaction_limit,contract_signature_limit,currency,requires_joint_signature,can_approve_alone,representative_profile,is_deleted,created_at,updated_at,version'
-const CURRENT_AUTHORITY_SELECT = 'company_id,representative_id,display_name,person_id,organization_id,record_status,status,authority_types,signature_type,transaction_limit,payment_approval_limit,purchase_approval_limit,bank_transaction_limit,contract_signature_limit,currency,limits,scope,requires_joint_signature,can_approve_alone,effective_date,end_date,warnings,tenant_id'
+const CURRENT_AUTHORITY_SELECT = 'representative_id,company_id,tenant_id,authority_status,authority_record_status,authority_status_label,authority_types,signature_type,transaction_limit,payment_approval_limit,purchase_approval_limit,bank_transaction_limit,contract_signature_limit,currency,limits,scope,requires_joint_signature,can_approve_alone,effective_date,end_date,warnings,last_transaction_id,last_transaction_type,display_name,person_id,organization_id'
 
 const REPRESENTATIVE_AUTHORITY_CONTROLLED_FIELDS = new Set([
   'start_date',
@@ -49,6 +49,12 @@ const REPRESENTATIVE_AUTHORITY_CONTROLLED_FIELDS = new Set([
   'can_submit_termination_notice',
   'official_correspondence_authority',
   'authority_documents',
+  'authority_status',
+  'authority_record_status',
+  'authority_effect_status',
+  'transaction_status',
+  'approval_status',
+  'workflow_status',
 ])
 
 const RepresentativeSchema = z.object({
@@ -109,7 +115,36 @@ export async function GET(request: NextRequest) {
     .split(',')
     .map(item => item.trim())
     .filter(Boolean)
+  const authorityStatuses = (searchParams.get('authority_statuses') || '')
+    .split(',')
+    .map(item => item.trim())
+    .filter(Boolean)
+  const normalizedAuthorityStatuses = normalizeRepresentativeAuthorityStatusFilters(authorityStatuses)
   const includePassive = listQuery.includePassive
+
+  let authorityFilteredIds: string[] | null = null
+  const includeAuthorityDraft = normalizedAuthorityStatuses.includes('draft')
+  const authorityViewStatuses = normalizedAuthorityStatuses.filter(statusValue => statusValue !== 'draft')
+  if (authorityViewStatuses.length) {
+    let authorityFilterQuery = supabase
+      .from('v_current_representative_authorities')
+      .select('representative_id')
+      .in('authority_record_status', authorityViewStatuses)
+    authorityFilterQuery = applyTenantQueryScope(authorityFilterQuery, 'v_current_representative_authorities', tenantContext)
+    if (companyId) authorityFilterQuery = authorityFilterQuery.eq('company_id', companyId)
+    const { data: authorityMatches, error: authorityFilterError } = await authorityFilterQuery
+    if (authorityFilterError) {
+      if (isMissingTableError(authorityFilterError)) {
+        authorityFilteredIds = []
+      } else {
+        return NextResponse.json({ error: authorityFilterError.message, code: authorityFilterError.code || 'AUTHORITY_FILTER_FAILED' }, { status: 500 })
+      }
+    } else {
+      authorityFilteredIds = Array.from(new Set((authorityMatches || []).map(row => row.representative_id).filter(Boolean)))
+    }
+  } else if (normalizedAuthorityStatuses.length) {
+    authorityFilteredIds = []
+  }
 
   let query = supabase
     .from('company_representatives')
@@ -122,6 +157,17 @@ export async function GET(request: NextRequest) {
     const scope = await getTenantCompanyScope(supabase, tenantContext.tenantId, companyId)
     if (!scope) return NextResponse.json({ error: 'Şirket bulunamadı', code: 'COMPANY_NOT_FOUND' }, { status: 404 })
     query = query.eq('company_id', companyId)
+  }
+  if (normalizedAuthorityStatuses.length) {
+    if (includeAuthorityDraft && authorityFilteredIds?.length) {
+      query = query.or(`id.in.(${authorityFilteredIds.join(',')}),record_status.eq.draft`)
+    } else if (includeAuthorityDraft) {
+      query = query.eq('record_status', 'draft')
+    } else if (authorityFilteredIds?.length) {
+      query = query.in('id', authorityFilteredIds)
+    } else {
+      return NextResponse.json({ data: [], meta: listMeta(listQuery, 0) })
+    }
   }
   if (status) query = query.eq('status', status)
   const recordStatuses = normalizeRepresentativeMainStatusFilters(statuses)
@@ -268,6 +314,11 @@ function normalizeAuthorityType(value: unknown) {
 
 function normalizeRepresentativeMainStatusFilters(values: string[]) {
   const allowed = new Set(['draft', 'active', 'passive'])
+  return values.filter(value => allowed.has(value))
+}
+
+function normalizeRepresentativeAuthorityStatusFilters(values: string[]) {
+  const allowed = new Set(['draft', 'active', 'suspended', 'expired', 'terminated'])
   return values.filter(value => allowed.has(value))
 }
 
@@ -483,8 +534,8 @@ async function mergeCurrentRepresentativeAuthorities(
       ...row,
       current_authority: current,
       last_authority_transaction: lastTransaction || null,
-      authority_status: current.status || null,
-      authority_record_status: current.record_status || null,
+      authority_status: current.authority_status || null,
+      authority_record_status: current.authority_record_status || null,
       authority_start_date: current.effective_date || null,
       authority_end_date: current.end_date || null,
       authority_types: current.authority_types || row.authority_types,
