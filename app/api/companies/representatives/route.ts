@@ -8,25 +8,61 @@ import { listMetaFromRows, listRange, parseListQuery } from '@/lib/api/listEndpo
 import { requirePermission } from '@/lib/security/serverPermissions'
 import { applyTenantQueryScope, resolveTenantContext, type TenantContext, withTenantInsertScopeForTable } from '@/lib/tenancy/server'
 import { findGlobalOrganizationByIdentity, getTenantCompanyScope, isWritableCompanyScope, normalizeLegalCountry, normalizeLegalTaxNumber } from '@/lib/tenancy/companyScopes'
+import { OperationRequestService } from '@/lib/operations/operationRequestService'
+import { duplicateOperationJsonResponse } from '@/lib/operations/apiResponse'
+import { resolveClientRequestId, stripOperationControlFields } from '@/lib/operations/idempotency'
+import { operationStatusMessage } from '@/lib/operations/operationStatus'
+import { OutboxEventService } from '@/lib/outbox/outboxEventService'
+import { isMissingTableError } from '@/lib/modules/companies/companyErrors'
+
+const REPRESENTATIVE_LIST_SELECT = 'id,company_id,person_id,organization_id,person_kind,source_type,source_id,display_name,full_name,authority_types,job_title,authority_type,status,record_status,start_date,end_date,signature_type,transaction_limit,currency,requires_joint_signature,can_approve_alone,is_deleted,created_at,updated_at,version'
+const CURRENT_AUTHORITY_SELECT = 'company_id,representative_id,display_name,person_id,organization_id,record_status,status,authority_types,signature_type,transaction_limit,payment_approval_limit,purchase_approval_limit,bank_transaction_limit,contract_signature_limit,currency,limits,scope,requires_joint_signature,can_approve_alone,effective_date,end_date,warnings,tenant_id'
+
+const REPRESENTATIVE_OPERATION_CONTROLLED_FIELDS = new Set([
+  'status',
+  'record_status',
+  'start_date',
+  'end_date',
+  'primary_authority_type',
+  'authority_type',
+  'authority_types',
+  'job_title',
+  'signature_type',
+  'authority_limit',
+  'transaction_limit',
+  'payment_approval_limit',
+  'purchase_approval_limit',
+  'bank_transaction_limit',
+  'contract_signature_limit',
+  'currency',
+  'bank_currency',
+  'limit_currency',
+  'limit_start_date',
+  'limit_end_date',
+  'requires_joint_signature',
+  'can_approve_alone',
+  'bank_authority_level',
+  'department_scope',
+  'gib_permissions',
+  'can_submit_declaration',
+  'can_process_e_invoice',
+  'sgk_permissions',
+  'can_submit_hiring_notice',
+  'can_submit_termination_notice',
+  'official_correspondence_authority',
+  'current_authority',
+  'authority_transaction_history',
+])
 
 const RepresentativeSchema = z.object({
-  company_id: z.string().uuid().optional(),  person_id: z.string().uuid().optional().nullable(),
+  company_id: z.string().uuid(),
+  person_id: z.string().uuid().optional().nullable(),
   organization_id: z.string().uuid().optional().nullable(),
   person_or_entity_type: z.enum(['person', 'organization']).default('person'),
   source_type: z.string().optional(),
   source_id: z.string().optional(),
   display_name: z.string().min(1),
   identity_number: z.string().optional(),
-  status: z.enum(['Aktif', 'Pasif', 'Askıda', 'Süresi Dolmuş']).default('Aktif'),
-  start_date: z.string().min(1),
-  end_date: z.string().optional(),
-  primary_authority_type: z.string().min(1),
-  authority_types: z.array(z.string()).optional(),
-  signature_type: z.string().optional(),
-  authority_limit: z.coerce.number().optional(),
-  currency: z.string().optional(),
-  requires_joint_signature: z.boolean().default(false),
-  can_approve_alone: z.boolean().default(false),
   photo_logo: z.array(z.record(z.any())).optional(),
   authority_documents: z.array(z.record(z.any())).optional(),
   notes: z.string().optional(),
@@ -38,6 +74,14 @@ function omitNullishValues(value: Record<string, any>) {
   return Object.fromEntries(
     Object.entries(value).filter(([, item]) => item !== null && item !== undefined)
   )
+}
+
+function stripRepresentativeAuthorityControlledFields(body: Record<string, any>) {
+  const next = { ...body }
+  REPRESENTATIVE_OPERATION_CONTROLLED_FIELDS.forEach(field => {
+    delete next[field]
+  })
+  return next
 }
 
 export async function GET(request: NextRequest) {
@@ -54,6 +98,7 @@ export async function GET(request: NextRequest) {
     job_title: 'job_title',
     authority_type: 'authority_type',
     status: 'status',
+    record_status: 'record_status',
     created_at: 'created_at',
   }
   const sortColumn = sortMap[listQuery.sort || ''] || 'created_at'
@@ -63,7 +108,7 @@ export async function GET(request: NextRequest) {
 
   let query = supabase
     .from('company_representatives')
-    .select('id,company_id,person_id,organization_id,person_kind,source_type,source_id,display_name,full_name,authority_types,job_title,authority_type,status,start_date,end_date,signature_type,transaction_limit,currency,requires_joint_signature,can_approve_alone,is_deleted,created_at')
+    .select(REPRESENTATIVE_LIST_SELECT)
     .order(sortColumn, { ascending: listQuery.direction !== 'desc' })
     .range(from, to)
 
@@ -71,16 +116,16 @@ export async function GET(request: NextRequest) {
   if (companyId) {
     const scope = await getTenantCompanyScope(supabase, tenantContext.tenantId, companyId)
     if (!scope) return NextResponse.json({ error: 'Şirket bulunamadı', code: 'COMPANY_NOT_FOUND' }, { status: 404 })
-    query = query.or(`company_id.eq.${companyId},company_id.eq.${companyId}`)
+    query = query.eq('company_id', companyId)
   }
   if (status) query = query.eq('status', status)
-  if (!includePassive) query = query.eq('is_deleted', false)
+  if (!includePassive) query = query.eq('is_deleted', false).neq('record_status', 'passive')
   if (listQuery.search) query = query.or(`display_name.ilike.%${listQuery.search}%,full_name.ilike.%${listQuery.search}%,job_title.ilike.%${listQuery.search}%`)
 
   const { data, error } = await query
   if (error) return NextResponse.json({ error: error.message, code: error.code || 'FETCH_FAILED' }, { status: 500 })
 
-  const rows = data || []
+  const rows = await mergeCurrentRepresentativeAuthorities(supabase, data || [], tenantContext)
   return NextResponse.json({ data: rows, meta: listMetaFromRows(listQuery, rows.length) })
 }
 
@@ -89,41 +134,103 @@ export async function POST(request: NextRequest) {
   const permission = await requirePermission(request, supabase, 'representatives.insert')
   if (permission instanceof NextResponse) return permission
   const tenantContext = resolveTenantContext(request)
-  const body = omitNullishValues(await request.json())
+  const rawBody = await request.json()
+  const clientRequestId = resolveClientRequestId(request, rawBody)
+  const body = stripRepresentativeAuthorityControlledFields(omitNullishValues(stripOperationControlFields(rawBody)))
   const parsed = RepresentativeSchema.safeParse(body)
 
   if (!parsed.success) {
     return NextResponse.json({ error: 'Geçersiz veri', code: 'VALIDATION_FAILED', details: parsed.error.flatten() }, { status: 400 })
   }
 
-  const row = await attachRepresentativeIdentity(supabase, parsed.data, mapRepresentativeForDb(parsed.data), tenantContext)
-  if (!row.company_id) {
-    return NextResponse.json({ error: 'Bağlı şirket bulunamadı', code: 'COMPANY_REQUIRED' }, { status: 400 })
-  }
-
-  const scopeResponse = await requireWritableCompanyScope(supabase, tenantContext, row.company_id)
+  const scopeResponse = await requireWritableCompanyScope(supabase, tenantContext, parsed.data.company_id)
   if (scopeResponse) return scopeResponse
 
-  const { data, error } = await supabase
-    .from('company_representatives')
-    .insert(withTenantInsertScopeForTable(row, 'company_representatives', tenantContext))
-    .select()
-    .single()
-
-  if (error) return NextResponse.json({ error: error.message, code: error.code || 'CREATE_FAILED' }, { status: 500 })
-  if (data?.person_id) await syncMasterContact(supabase, 'person', data.person_id, parsed.data)
-  if (data?.organization_id) await syncMasterContact(supabase, 'organization', data.organization_id, parsed.data)
-  if (Array.isArray(parsed.data.entity_bank_accounts)) {
-    const kind = data?.person_id ? 'person' : data?.organization_id ? 'organization' : null
-    const masterId = data?.person_id || data?.organization_id
-    if (kind && masterId) await new EntityBankAccountsService(supabase as any).syncMany(kind, masterId, parsed.data.entity_bank_accounts, null)
+  const operationService = new OperationRequestService(supabase as any)
+  const operationCreate = await operationService.createOrGet({
+    tenantId: tenantContext.tenantId,
+    companyId: parsed.data.company_id,
+    moduleKey: 'sirket',
+    entityType: 'company_representative',
+    operationType: 'representative.create',
+    clientRequestId,
+    requestedBy: permission.userId,
+    payload: body,
+  })
+  if (operationCreate.ok && operationCreate.duplicate) return duplicateOperationJsonResponse(operationCreate.operation)
+  if (!operationCreate.ok && !operationCreate.missingInfrastructure) {
+    return NextResponse.json({ error: operationCreate.error, code: operationCreate.code || 'OPERATION_REQUEST_FAILED' }, { status: 500 })
   }
-  const hydrated = data?.person_id
-    ? await hydrateMasterContact(supabase, 'person', data)
-    : data?.organization_id
-      ? await hydrateMasterContact(supabase, 'organization', data)
-      : data
-  return NextResponse.json({ data: hydrated }, { status: 201 })
+  const operation = operationCreate.ok ? operationCreate.operation : null
+  if (operation) await operationService.markProcessing(operation.id)
+
+  try {
+    const row = await attachRepresentativeIdentity(supabase, parsed.data, mapRepresentativeForDb(parsed.data), tenantContext)
+    if (!row.company_id) {
+      if (operation) await operationService.markFailed(operation.id, { code: 'COMPANY_REQUIRED', error: 'Bağlı şirket bulunamadı' })
+      return NextResponse.json({ error: 'Bağlı şirket bulunamadı', code: 'COMPANY_REQUIRED' }, { status: 400 })
+    }
+
+    const { data, error } = await supabase
+      .from('company_representatives')
+      .insert(withTenantInsertScopeForTable(row, 'company_representatives', tenantContext))
+      .select(REPRESENTATIVE_LIST_SELECT)
+      .single()
+
+    if (error) {
+      if (operation) await operationService.markFailed(operation.id, { code: error.code || 'CREATE_FAILED', error: error.message })
+      return NextResponse.json({ error: error.message, code: error.code || 'CREATE_FAILED' }, { status: 500 })
+    }
+    if (data?.person_id) await syncMasterContact(supabase, 'person', data.person_id, parsed.data)
+    if (data?.organization_id) await syncMasterContact(supabase, 'organization', data.organization_id, parsed.data)
+    if (Array.isArray(parsed.data.entity_bank_accounts)) {
+      const kind = data?.person_id ? 'person' : data?.organization_id ? 'organization' : null
+      const masterId = data?.person_id || data?.organization_id
+      if (kind && masterId) await new EntityBankAccountsService(supabase as any).syncMany(kind, masterId, parsed.data.entity_bank_accounts, null)
+    }
+    const hydrated = data?.person_id
+      ? await hydrateMasterContact(supabase, 'person', data)
+      : data?.organization_id
+        ? await hydrateMasterContact(supabase, 'organization', data)
+        : data
+
+    if (operation) {
+      await operationService.markCompleted(operation.id, { id: hydrated.id, data: hydrated })
+      await new OutboxEventService(supabase as any).enqueue({
+        tenantId: tenantContext.tenantId,
+        companyId: hydrated.company_id || parsed.data.company_id,
+        moduleKey: 'sirket',
+        eventType: 'representative.created',
+        aggregateType: 'company_representative',
+        aggregateId: hydrated.id,
+        operationId: operation.id,
+        payload: { id: hydrated.id, company_id: hydrated.company_id || parsed.data.company_id },
+      }).catch(() => null)
+    }
+
+    return NextResponse.json({
+      data: hydrated,
+      ...(operation ? {
+        operation_id: operation.id,
+        operation_status: 'completed',
+        message: operationStatusMessage('completed'),
+      } : {}),
+    }, { status: 201 })
+  } catch (error: any) {
+    if (operation) await operationService.markFailed(operation.id, {
+      code: error?.code || 'REPRESENTATIVE_CREATE_FAILED',
+      error: error?.message || 'Temsilci oluşturulamadı.',
+    })
+    return NextResponse.json({
+      error: error?.message || 'Temsilci oluşturulamadı.',
+      code: error?.code || 'REPRESENTATIVE_CREATE_FAILED',
+      ...(operation ? {
+        operation_id: operation.id,
+        operation_status: 'failed',
+        message: operationStatusMessage('failed'),
+      } : {}),
+    }, { status: 500 })
+  }
 }
 
 function normalizeAuthorityType(value: unknown) {
@@ -131,28 +238,26 @@ function normalizeAuthorityType(value: unknown) {
 }
 
 function mapRepresentativeForDb(representative: Record<string, any>) {
-  const authorityTypes = representative.authority_types?.length
-    ? representative.authority_types.map(normalizeAuthorityType)
-    : [normalizeAuthorityType(representative.primary_authority_type)].filter(Boolean)
-
   return {
-    company_id: representative.company_id || representative.company_id,    full_name: representative.display_name || buildDisplayName(representative) || 'Temsilci',
-    job_title: normalizeAuthorityType(representative.primary_authority_type) || null,
+    company_id: representative.company_id,
+    full_name: representative.display_name || buildDisplayName(representative) || 'Temsilci',
+    job_title: null,
     authority_type: 'other',
-    authority_types: authorityTypes,
+    authority_types: [],
     person_kind: representative.person_or_entity_type,
     source_type: representative.source_type || (representative.person_or_entity_type === 'organization' ? 'master_organization' : 'master_person'),
     source_id: representative.source_id || null,
     display_name: representative.display_name || buildDisplayName(representative),
-    start_date: representative.start_date,
-    end_date: representative.end_date || null,
-    status: representative.status || 'Aktif',
+    start_date: null,
+    end_date: null,
+    status: 'Taslak',
+    record_status: 'draft',
     notes: representative.notes || null,
-    signature_type: representative.signature_type || null,
-    transaction_limit: representative.authority_limit || null,
-    currency: representative.currency || 'TRY',
-    requires_joint_signature: !!representative.requires_joint_signature,
-    can_approve_alone: !!representative.can_approve_alone,
+    signature_type: null,
+    transaction_limit: null,
+    currency: 'TRY',
+    requires_joint_signature: false,
+    can_approve_alone: false,
     photo_logo: representative.photo_logo || [],
     authority_documents: representative.authority_documents || [],
     representative_profile: stripMasterDataForRoleProfile(representative),
@@ -172,7 +277,7 @@ async function requireWritableCompanyScope(
   tenantContext: TenantContext,
   companyId?: string | null
 ) {
-  if (!companyId) return null
+  if (!companyId) return NextResponse.json({ error: 'Bağlı şirket bulunamadı', code: 'COMPANY_REQUIRED' }, { status: 400 })
   const scope = await getTenantCompanyScope(supabase, tenantContext.tenantId, companyId)
   if (!scope) return NextResponse.json({ error: 'Şirket bulunamadı', code: 'COMPANY_NOT_FOUND' }, { status: 404 })
   if (!isWritableCompanyScope(scope)) {
@@ -214,9 +319,9 @@ async function attachRepresentativeIdentity(
         passport_no: passportNo,
         phone: representative.phone || null,
         email: representative.email || null,
-        address: representative.address || representative.address || null,
-        city: representative.city || representative.city || null,
-        district: representative.district || representative.district || null,
+        address: representative.address || null,
+        city: representative.city || null,
+        district: representative.district || null,
         metadata_json: { source: 'representatives_create' },
       }, 'persons', tenantContext)).select('id').single()).data?.id
       return { ...row, person_id: personId || null, source_id: row.source_id || personId || null }
@@ -243,13 +348,52 @@ async function attachRepresentativeIdentity(
       registration_number: representative.trade_registry_no || representative.mersis_number || null,
       phone: representative.phone || null,
       email: representative.email || null,
-      address: representative.address || representative.address || null,
-      city: representative.city || representative.city || null,
-      district: representative.district || representative.district || null,
+      address: representative.address || null,
+      city: representative.city || null,
+      district: representative.district || null,
       metadata_json: { source: 'representatives_create' },
     }).select('id').single()).data?.id
     return { ...row, organization_id: organizationId || null, source_id: row.source_id || organizationId || null }
   } catch {
     return row
   }
+}
+
+async function mergeCurrentRepresentativeAuthorities(
+  supabase: ReturnType<typeof createServiceClient>,
+  rows: Record<string, any>[],
+  tenantContext: TenantContext
+) {
+  if (!rows.length) return rows
+  let query = supabase
+    .from('v_current_representative_authorities')
+    .select(CURRENT_AUTHORITY_SELECT)
+    .in('representative_id', rows.map(row => row.id))
+  query = applyTenantQueryScope(query, 'v_current_representative_authorities', tenantContext)
+  const { data, error } = await query
+  if (error) {
+    if (isMissingTableError(error)) return rows
+    throw error
+  }
+
+  const currentByRepresentative = Object.fromEntries((data || []).map(row => [row.representative_id, row]))
+  return rows.map(row => {
+    const current = currentByRepresentative[row.id] as Record<string, any> | undefined
+    if (!current) return row
+    return {
+      ...row,
+      current_authority: current,
+      authority_types: current.authority_types || row.authority_types,
+      job_title: Array.isArray(current.authority_types) ? current.authority_types[0] || row.job_title : row.job_title,
+      status: current.status || row.status,
+      record_status: current.record_status || row.record_status,
+      start_date: current.effective_date || row.start_date,
+      end_date: current.end_date || row.end_date,
+      signature_type: current.signature_type ?? row.signature_type,
+      transaction_limit: current.transaction_limit ?? row.transaction_limit,
+      currency: current.currency || row.currency,
+      requires_joint_signature: current.requires_joint_signature ?? row.requires_joint_signature,
+      can_approve_alone: current.can_approve_alone ?? row.can_approve_alone,
+    }
+  })
 }

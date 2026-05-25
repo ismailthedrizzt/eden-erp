@@ -338,7 +338,8 @@ export interface SirketTemsilci {
   display_name?: string
   start_date?: string
   end_date?: string
-  status?: 'Aktif' | 'Pasif' | 'Askıda' | 'Süresi Dolmuş'
+  status?: 'Taslak' | 'Aktif' | 'Pasif' | 'Askıda' | 'Süresi Dolmuş' | 'Sonlandırıldı' | string
+  record_status?: 'draft' | 'active' | 'suspended' | 'expired' | 'terminated' | 'passive'
   document_reference_id?: string
   notes?: string
   bank_authority_level?: string
@@ -361,6 +362,10 @@ export interface SirketTemsilci {
   is_deleted?: boolean
   deleted_at?: string
   deleted_by?: string
+  version?: number
+  updated_at?: string
+  current_authority?: Record<string, unknown>
+  authority_transaction_history?: Array<Record<string, unknown>>
 }
 
 export interface SirketDokuman {

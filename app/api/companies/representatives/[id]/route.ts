@@ -3,20 +3,65 @@ import { createServiceClient } from '@/lib/supabase/server'
 import { hydrateMasterContact, stripMasterDataForRoleProfile, syncMasterContact } from '@/lib/identity/masterContact'
 import { EntityBankAccountsService } from '@/lib/modules/entity-bank-accounts/entityBankAccounts.service'
 import { requirePermission } from '@/lib/security/serverPermissions'
-import { applyTenantQueryScope, resolveTenantContext } from '@/lib/tenancy/server'
+import { applyTenantQueryScope, resolveTenantContext, withTenantInsertScopeForTable } from '@/lib/tenancy/server'
 import { getTenantCompanyScope, isWritableCompanyScope } from '@/lib/tenancy/companyScopes'
+import { diffRecord, safeCrudResponse, safeReadRecord, safeUpdateRecord } from '@/lib/crud/safeCrudService'
+import { OperationRequestService } from '@/lib/operations/operationRequestService'
+import { duplicateOperationJsonResponse } from '@/lib/operations/apiResponse'
+import { resolveBaseUpdatedAt, resolveBaseVersion, resolveClientRequestId, stripOperationControlFields } from '@/lib/operations/idempotency'
+import { operationStatusMessage } from '@/lib/operations/operationStatus'
+import { OutboxEventService } from '@/lib/outbox/outboxEventService'
+import { isMissingTableError } from '@/lib/modules/companies/companyErrors'
 
-const REPRESENTATIVE_DETAIL_SELECT = 'id,company_id,person_id,organization_id,person_kind,source_type,source_id,display_name,full_name,phone,email,authority_types,job_title,authority_type,status,start_date,end_date,signature_type,transaction_limit,currency,requires_joint_signature,can_approve_alone,is_deleted,history,photo_logo,authority_documents,representative_profile,notes,created_at'
+const REPRESENTATIVE_DETAIL_SELECT = 'id,company_id,person_id,organization_id,person_kind,source_type,source_id,display_name,full_name,phone,email,authority_types,job_title,authority_type,status,record_status,start_date,end_date,signature_type,transaction_limit,currency,requires_joint_signature,can_approve_alone,is_deleted,history,photo_logo,authority_documents,representative_profile,notes,created_at,updated_at,version'
+const CURRENT_AUTHORITY_SELECT = 'company_id,representative_id,display_name,person_id,organization_id,record_status,status,authority_types,signature_type,transaction_limit,payment_approval_limit,purchase_approval_limit,bank_transaction_limit,contract_signature_limit,currency,limits,scope,requires_joint_signature,can_approve_alone,effective_date,end_date,warnings,tenant_id'
+const AUTHORITY_TRANSACTION_SELECT = 'id,company_id,representative_id,person_id,organization_id,transaction_no,transaction_type,authority_types,signature_type,transaction_limit,payment_approval_limit,purchase_approval_limit,bank_transaction_limit,contract_signature_limit,currency,limits,scope,requires_joint_signature,can_approve_alone,document_files,effective_date,end_date,approval_status,workflow_status,status,notes,warnings,reversal_transaction_id,new_values,created_at,updated_at,version'
 
-const TRACKED_FIELDS = new Set([
+const REPRESENTATIVE_OPERATION_CONTROLLED_FIELDS = new Set([
   'status',
-  'authority_types',
-  'signature_type',
-  'transaction_limit',
+  'record_status',
   'start_date',
   'end_date',
-  'source_type',
-  'source_id',
+  'primary_authority_type',
+  'authority_type',
+  'authority_types',
+  'job_title',
+  'signature_type',
+  'authority_limit',
+  'transaction_limit',
+  'payment_approval_limit',
+  'purchase_approval_limit',
+  'bank_transaction_limit',
+  'contract_signature_limit',
+  'currency',
+  'bank_currency',
+  'limit_currency',
+  'limit_start_date',
+  'limit_end_date',
+  'requires_joint_signature',
+  'can_approve_alone',
+  'bank_authority_level',
+  'department_scope',
+  'gib_permissions',
+  'can_submit_declaration',
+  'can_process_e_invoice',
+  'sgk_permissions',
+  'can_submit_hiring_notice',
+  'can_submit_termination_notice',
+  'official_correspondence_authority',
+  'current_authority',
+  'authority_transaction_history',
+])
+
+const AUTHORITY_TRANSACTION_TYPES = new Set([
+  'Temsilcilik Başlatma',
+  'Yetki Yenileme',
+  'Yetki Kapsamı Değişikliği',
+  'Limit Değişikliği',
+  'Askıya Alma',
+  'Sonlandırma',
+  'Düzeltme Kaydı',
+  'Ters Kayıt',
 ])
 
 function buildHistory(current: Record<string, any>, updates: Record<string, any>) {
@@ -24,7 +69,6 @@ function buildHistory(current: Record<string, any>, updates: Record<string, any>
   const nextHistory = [...existingHistory]
 
   Object.entries(updates).forEach(([field, nextValue]) => {
-    if (!TRACKED_FIELDS.has(field)) return
     const previousValue = current[field]
     if (JSON.stringify(previousValue ?? null) === JSON.stringify(nextValue ?? null)) return
     nextHistory.push({
@@ -39,36 +83,39 @@ function buildHistory(current: Record<string, any>, updates: Record<string, any>
   return nextHistory
 }
 
+function stripRepresentativeOperationControlledFields(body: Record<string, any>) {
+  const next = { ...body }
+  REPRESENTATIVE_OPERATION_CONTROLLED_FIELDS.forEach(field => {
+    delete next[field]
+  })
+  return next
+}
+
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params
   const supabase = createServiceClient()
-  const permission = await requirePermission(request, supabase, 'representatives.view')
-  if (permission instanceof NextResponse) return permission
   const tenantContext = resolveTenantContext(request)
 
-  let query = supabase
-    .from('company_representatives')
-    .select(REPRESENTATIVE_DETAIL_SELECT)
-    .eq('id', id)
-  query = applyTenantQueryScope(query, 'company_representatives', tenantContext)
-  const { data, error } = await query.single()
+  const result = await safeReadRecord({
+    supabase,
+    request,
+    tableName: 'company_representatives',
+    recordId: id,
+    permissionKey: 'representatives.view',
+    select: REPRESENTATIVE_DETAIL_SELECT,
+    afterRead: async ({ record }) => hydrateRepresentativeDetail(supabase, record, tenantContext),
+  })
 
-  if (error?.code === 'PGRST116') return NextResponse.json({ error: 'Temsilci bulunamadı', code: 'REPRESENTATIVE_NOT_FOUND' }, { status: 404 })
-  if (error) return NextResponse.json({ error: error.message, code: error.code || 'FETCH_FAILED' }, { status: 500 })
-  if (data?.company_id) {
-    const scope = await getTenantCompanyScope(supabase, tenantContext.tenantId, data.company_id)
+  if (!result.ok) return safeCrudResponse(result)
+  if (result.data?.company_id) {
+    const scope = await getTenantCompanyScope(supabase, tenantContext.tenantId, result.data.company_id)
     if (!scope) return NextResponse.json({ error: 'Şirket bulunamadı', code: 'COMPANY_NOT_FOUND' }, { status: 404 })
   }
-  const hydrated = data?.person_id
-    ? await hydrateMasterContact(supabase, 'person', data)
-    : data?.organization_id
-      ? await hydrateMasterContact(supabase, 'organization', data)
-      : data
   return NextResponse.json(
-    { data: hydrated },
+    { data: result.data },
     { headers: { 'Cache-Control': 'no-store, max-age=0' } }
   )
 }
@@ -79,56 +126,121 @@ export async function PATCH(
 ) {
   const { id } = await params
   const supabase = createServiceClient()
+  const tenantContext = resolveTenantContext(request)
+  const rawBody = await request.json()
+  const isAuthorityTransaction = !!rawBody.authority_action || AUTHORITY_TRANSACTION_TYPES.has(String(rawBody.transaction_type || ''))
+  const clientRequestId = resolveClientRequestId(request, rawBody)
+  const baseVersion = resolveBaseVersion(rawBody)
+  const baseUpdatedAt = resolveBaseUpdatedAt(rawBody)
+  const body = isAuthorityTransaction
+    ? stripOperationControlFields(rawBody)
+    : stripRepresentativeOperationControlledFields(stripOperationControlFields(rawBody))
+
   const permission = await requirePermission(request, supabase, 'representatives.edit')
   if (permission instanceof NextResponse) return permission
-  const tenantContext = resolveTenantContext(request)
-  const body = await request.json()
 
-  let currentQuery = supabase
-    .from('company_representatives')
-    .select(REPRESENTATIVE_DETAIL_SELECT)
-    .eq('id', id)
-  currentQuery = applyTenantQueryScope(currentQuery, 'company_representatives', tenantContext)
-  const { data: current, error: currentError } = await currentQuery.single()
-
-  if (currentError?.code === 'PGRST116') return NextResponse.json({ error: 'Temsilci bulunamadı', code: 'REPRESENTATIVE_NOT_FOUND' }, { status: 404 })
-  if (currentError) return NextResponse.json({ error: currentError.message, code: currentError.code || 'FETCH_FAILED' }, { status: 500 })
-  if (current.company_id) {
-    const scope = await getTenantCompanyScope(supabase, tenantContext.tenantId, current.company_id)
-    if (!scope) return NextResponse.json({ error: 'Şirket bulunamadı', code: 'COMPANY_NOT_FOUND' }, { status: 404 })
-    if (!isWritableCompanyScope(scope)) return NextResponse.json({ error: 'Bu şirket için yalnızca görüntüleme yetkiniz var.', code: 'COMPANY_SCOPE_READONLY' }, { status: 403 })
+  const operationService = new OperationRequestService(supabase as any)
+  const operationCreate = await operationService.createOrGet({
+    tenantId: tenantContext.tenantId,
+    companyId: body.company_id || null,
+    moduleKey: 'sirket',
+    entityType: 'company_representative',
+    entityId: id,
+    operationType: isAuthorityTransaction ? 'representative.authority.transaction' : 'representative.update',
+    clientRequestId,
+    baseVersion,
+    baseUpdatedAt,
+    requestedBy: permission.userId,
+    payload: body,
+  })
+  if (operationCreate.ok && operationCreate.duplicate) return duplicateOperationJsonResponse(operationCreate.operation)
+  if (!operationCreate.ok && !operationCreate.missingInfrastructure) {
+    return NextResponse.json({ error: operationCreate.error, code: operationCreate.code || 'OPERATION_REQUEST_FAILED' }, { status: 500 })
   }
+  const operation = operationCreate.ok ? operationCreate.operation : null
+  if (operation) await operationService.markProcessing(operation.id)
 
-  const mapped = mapRepresentativeForDb(body, current)
-  let updateQuery = supabase
-    .from('company_representatives')
-    .update({
-      ...mapped,
-      history: buildHistory(current, mapped),
+  try {
+    const result = isAuthorityTransaction
+      ? await applyAuthorityTransaction({
+        supabase,
+        request,
+        representativeId: id,
+        body,
+        baseVersion,
+        baseUpdatedAt,
+        requestedBy: permission.userId,
+        tenantContext,
+      })
+      : await updateRepresentativeNormally({
+        supabase,
+        request,
+        representativeId: id,
+        body,
+        baseVersion,
+        baseUpdatedAt,
+        tenantContext,
+      })
+
+    if (!result.ok) {
+      if (operation) await operationService.markFailed(operation.id, {
+        code: result.code,
+        error: result.error,
+        details: (result as any).details,
+      })
+      if (!operation) return safeCrudResponse(result)
+      return NextResponse.json({
+        error: result.error,
+        code: result.code,
+        details: (result as any).details,
+        operation_id: operation.id,
+        operation_status: 'failed',
+        message: operationStatusMessage('failed'),
+      }, { status: result.status })
+    }
+
+    if (operation) {
+      await operationService.markCompleted(operation.id, { id: result.data.id, data: result.data })
+      await new OutboxEventService(supabase as any).enqueue({
+        tenantId: tenantContext.tenantId,
+        companyId: result.data.company_id || body.company_id || null,
+        moduleKey: 'sirket',
+        eventType: isAuthorityTransaction ? 'representative.authority.updated' : 'representative.updated',
+        aggregateType: 'company_representative',
+        aggregateId: id,
+        operationId: operation.id,
+        payload: {
+          id,
+          company_id: result.data.company_id || body.company_id || null,
+          transaction_type: isAuthorityTransaction ? body.transaction_type : null,
+          changed_fields: Object.keys(body),
+        },
+      }).catch(() => null)
+    }
+
+    return NextResponse.json({
+      data: result.data,
+      ...(operation ? {
+        operation_id: operation.id,
+        operation_status: 'completed',
+        message: operationStatusMessage('completed'),
+      } : {}),
     })
-    .eq('id', id)
-    .select(REPRESENTATIVE_DETAIL_SELECT)
-  updateQuery = applyTenantQueryScope(updateQuery, 'company_representatives', tenantContext)
-  const { data, error } = await updateQuery.single()
-
-  if (error) return NextResponse.json({ error: error.message, code: error.code || 'UPDATE_FAILED' }, { status: 500 })
-  if (data?.person_id) await syncMasterContact(supabase, 'person', data.person_id, body)
-  if (data?.organization_id) await syncMasterContact(supabase, 'organization', data.organization_id, body)
-  if (Array.isArray(body.entity_bank_accounts)) {
-    const kind = data?.person_id ? 'person' : data?.organization_id ? 'organization' : null
-    const masterId = data?.person_id || data?.organization_id
-    if (kind && masterId) await new EntityBankAccountsService(supabase as any).syncMany(kind, masterId, body.entity_bank_accounts, null)
+  } catch (error: any) {
+    if (operation) await operationService.markFailed(operation.id, {
+      code: error?.code || 'REPRESENTATIVE_UPDATE_FAILED',
+      error: error?.message || 'Temsilci güncellemesi tamamlanamadı.',
+    })
+    return NextResponse.json({
+      error: error?.message || 'Temsilci güncellemesi tamamlanamadı.',
+      code: error?.code || 'REPRESENTATIVE_UPDATE_FAILED',
+      ...(operation ? {
+        operation_id: operation.id,
+        operation_status: 'failed',
+        message: operationStatusMessage('failed'),
+      } : {}),
+    }, { status: 500 })
   }
-  const hydrated = data?.person_id
-    ? await hydrateMasterContact(supabase, 'person', data)
-    : data?.organization_id
-      ? await hydrateMasterContact(supabase, 'organization', data)
-      : data
-  return NextResponse.json({ data: hydrated })
-}
-
-function normalizeAuthorityType(value: unknown) {
-  return String(value || '').trim()
 }
 
 export async function DELETE(
@@ -140,58 +252,459 @@ export async function DELETE(
   const permission = await requirePermission(request, supabase, 'representatives.delete')
   if (permission instanceof NextResponse) return permission
   const tenantContext = resolveTenantContext(request)
+  const rawBody = await request.json().catch(() => ({}))
+  const clientRequestId = resolveClientRequestId(request, rawBody)
+
+  let currentQuery = supabase
+    .from('company_representatives')
+    .select(REPRESENTATIVE_DETAIL_SELECT)
+    .eq('id', id)
+  currentQuery = applyTenantQueryScope(currentQuery, 'company_representatives', tenantContext)
+  const { data: current, error: currentError } = await currentQuery.maybeSingle()
+  if (currentError) return NextResponse.json({ error: currentError.message, code: currentError.code || 'FETCH_FAILED' }, { status: 500 })
+  if (!current) return NextResponse.json({ error: 'Temsilci bulunamadı', code: 'REPRESENTATIVE_NOT_FOUND' }, { status: 404 })
+
+  const currentAuthority = await fetchCurrentAuthority(supabase, id, tenantContext)
+  const effectiveStatus = String(currentAuthority?.record_status || current.record_status || '').toLocaleLowerCase('tr-TR')
+  const hasAuthorityTransactions = await representativeHasAuthorityTransactions(supabase, id, tenantContext)
+  if (effectiveStatus !== 'draft' || hasAuthorityTransactions) {
+    return NextResponse.json({
+      error: 'Aktif veya işlem geçmişi olan temsilci doğrudan silinemez. Yetkiyi Sonlandırma wizardı ile kapatın.',
+      code: 'REPRESENTATIVE_DELETE_REQUIRES_TERMINATION',
+    }, { status: 409 })
+  }
+
+  const operationService = new OperationRequestService(supabase as any)
+  const operationCreate = await operationService.createOrGet({
+    tenantId: tenantContext.tenantId,
+    companyId: current.company_id || null,
+    moduleKey: 'sirket',
+    entityType: 'company_representative',
+    entityId: id,
+    operationType: 'representative.delete',
+    clientRequestId,
+    requestedBy: permission.userId,
+    payload: { id },
+  })
+  if (operationCreate.ok && operationCreate.duplicate) return duplicateOperationJsonResponse(operationCreate.operation)
+  if (!operationCreate.ok && !operationCreate.missingInfrastructure) {
+    return NextResponse.json({ error: operationCreate.error, code: operationCreate.code || 'OPERATION_REQUEST_FAILED' }, { status: 500 })
+  }
+  const operation = operationCreate.ok ? operationCreate.operation : null
+  if (operation) await operationService.markProcessing(operation.id)
 
   let deleteQuery = supabase
     .from('company_representatives')
-    .update({
-      status: 'Pasif',
-      is_deleted: true,
-      deleted_at: new Date().toISOString(),
-      deleted_by: 'Sistem Kullanıcısı',
-    })
+    .delete()
     .eq('id', id)
   deleteQuery = applyTenantQueryScope(deleteQuery, 'company_representatives', tenantContext)
   const { error } = await deleteQuery
 
-  if (error) return NextResponse.json({ error: error.message, code: error.code || 'SOFT_DELETE_FAILED' }, { status: 500 })
-  return NextResponse.json({ success: true })
+  if (error) {
+    if (operation) await operationService.markFailed(operation.id, { code: error.code || 'DELETE_FAILED', error: error.message })
+    return NextResponse.json({ error: error.message, code: error.code || 'DELETE_FAILED' }, { status: 500 })
+  }
+
+  if (operation) {
+    await operationService.markCompleted(operation.id, { id, deleted: true })
+    await new OutboxEventService(supabase as any).enqueue({
+      tenantId: tenantContext.tenantId,
+      companyId: current.company_id || null,
+      moduleKey: 'sirket',
+      eventType: 'representative.deleted',
+      aggregateType: 'company_representative',
+      aggregateId: id,
+      operationId: operation.id,
+      payload: { id, company_id: current.company_id || null, hard_deleted: true },
+    }).catch(() => null)
+  }
+  return NextResponse.json({
+    success: true,
+    hardDeleted: true,
+    ...(operation ? {
+      operation_id: operation.id,
+      operation_status: 'completed',
+      message: operationStatusMessage('completed'),
+    } : {}),
+  })
+}
+
+async function updateRepresentativeNormally({
+  supabase,
+  request,
+  representativeId,
+  body,
+  baseVersion,
+  baseUpdatedAt,
+  tenantContext,
+}: {
+  supabase: ReturnType<typeof createServiceClient>
+  request: NextRequest
+  representativeId: string
+  body: Record<string, any>
+  baseVersion: number | null
+  baseUpdatedAt: string | null
+  tenantContext: ReturnType<typeof resolveTenantContext>
+}) {
+  return safeUpdateRecord({
+    supabase,
+    request,
+    tableName: 'company_representatives',
+    recordId: representativeId,
+    permissionKey: ['representatives.edit', 'companies.edit'],
+    patch: body,
+    select: REPRESENTATIVE_DETAIL_SELECT,
+    currentSelect: REPRESENTATIVE_DETAIL_SELECT,
+    versionField: 'version',
+    baseVersion,
+    baseUpdatedAt,
+    guard: async ({ current }) => {
+      const nextCompanyId = body.company_id || current.company_id
+      if (body.company_id && body.company_id !== current.company_id) {
+        const recordStatus = String(current.record_status || '').toLocaleLowerCase('tr-TR')
+        if (recordStatus && recordStatus !== 'draft') {
+          return { ok: false, status: 409, code: 'REPRESENTATIVE_COMPANY_IMMUTABLE', error: 'Aktif temsilcilik ilişkisi normal edit ile başka şirkete taşınamaz.' }
+        }
+      }
+      if (!nextCompanyId) return { ok: true }
+      const scope = await getTenantCompanyScope(supabase, tenantContext.tenantId, nextCompanyId)
+      if (!scope) return { ok: false, status: 404, code: 'COMPANY_NOT_FOUND', error: 'Şirket bulunamadı' }
+      if (!isWritableCompanyScope(scope)) return { ok: false, status: 403, code: 'COMPANY_SCOPE_READONLY', error: 'Bu şirket için yalnızca görüntüleme yetkiniz var.' }
+      return { ok: true }
+    },
+    beforeUpdate: ({ current, patch }) => {
+      const mapped = mapRepresentativeForDb(patch, current)
+      const changed = diffRecord(mapped, current)
+      if (!Object.keys(changed).length) return {}
+      return {
+        ...changed,
+        history: buildHistory(current, changed),
+      }
+    },
+    afterUpdate: async ({ record }) => {
+      if (record?.person_id) await syncMasterContact(supabase, 'person', record.person_id, body)
+      if (record?.organization_id) await syncMasterContact(supabase, 'organization', record.organization_id, body)
+      if (Array.isArray(body.entity_bank_accounts)) {
+        const kind = record?.person_id ? 'person' : record?.organization_id ? 'organization' : null
+        const masterId = record?.person_id || record?.organization_id
+        if (kind && masterId) await new EntityBankAccountsService(supabase as any).syncMany(kind, masterId, body.entity_bank_accounts, null)
+      }
+      return hydrateRepresentativeDetail(supabase, record, tenantContext)
+    },
+  })
+}
+
+async function applyAuthorityTransaction({
+  supabase,
+  request,
+  representativeId,
+  body,
+  baseVersion,
+  baseUpdatedAt,
+  requestedBy,
+  tenantContext,
+}: {
+  supabase: ReturnType<typeof createServiceClient>
+  request: NextRequest
+  representativeId: string
+  body: Record<string, any>
+  baseVersion: number | null
+  baseUpdatedAt: string | null
+  requestedBy?: string | null
+  tenantContext: ReturnType<typeof resolveTenantContext>
+}) {
+  const currentResult = await safeReadRecord({
+    supabase,
+    request,
+    tableName: 'company_representatives',
+    recordId: representativeId,
+    permissionKey: ['representatives.edit', 'companies.edit'],
+    select: REPRESENTATIVE_DETAIL_SELECT,
+  })
+  if (!currentResult.ok) return currentResult
+  const current = currentResult.data
+  const conflict = detectRepresentativeConflict(current, baseVersion, baseUpdatedAt)
+  if (conflict) return conflict
+
+  const scope = current.company_id ? await getTenantCompanyScope(supabase, tenantContext.tenantId, current.company_id) : null
+  if (!scope) return { ok: false as const, status: 404, code: 'COMPANY_NOT_FOUND', error: 'Şirket bulunamadı' }
+  if (!isWritableCompanyScope(scope)) return { ok: false as const, status: 403, code: 'COMPANY_SCOPE_READONLY', error: 'Bu şirket için yalnızca görüntüleme yetkiniz var.' }
+
+  const transactionType = String(body.transaction_type || '')
+  if (!AUTHORITY_TRANSACTION_TYPES.has(transactionType)) {
+    return { ok: false as const, status: 400, code: 'INVALID_TRANSACTION_TYPE', error: 'Geçersiz temsilcilik işlem tipi.' }
+  }
+
+  const authorityTypes = Array.isArray(body.authority_types)
+    ? body.authority_types.filter(Boolean)
+    : [body.primary_authority_type].filter(Boolean)
+  const limits = {
+    transaction_limit: toNullableNumber(body.transaction_limit ?? body.authority_limit),
+    payment_approval_limit: toNullableNumber(body.payment_approval_limit),
+    purchase_approval_limit: toNullableNumber(body.purchase_approval_limit),
+    bank_transaction_limit: toNullableNumber(body.bank_transaction_limit),
+    contract_signature_limit: toNullableNumber(body.contract_signature_limit),
+  }
+  const scopePayload = {
+    bank_authority_level: body.bank_authority_level || null,
+    department_scope: body.department_scope || null,
+    gib_permissions: body.gib_permissions || null,
+    can_submit_declaration: !!body.can_submit_declaration,
+    can_process_e_invoice: !!body.can_process_e_invoice,
+    sgk_permissions: body.sgk_permissions || null,
+    can_submit_hiring_notice: !!body.can_submit_hiring_notice,
+    can_submit_termination_notice: !!body.can_submit_termination_notice,
+    official_correspondence_authority: !!body.official_correspondence_authority,
+  }
+  const effectiveDate = body.effective_date || body.start_date || new Date().toISOString().slice(0, 10)
+  const approvalStatus = body.approval_status || 'approved'
+  const workflowStatus = body.workflow_status || approvalStatus
+  const { count } = await supabase
+    .from('company_representative_authority_transactions')
+    .select('id', { count: 'exact', head: true })
+
+  const transactionRow = withTenantInsertScopeForTable({
+    company_id: current.company_id,
+    representative_id: representativeId,
+    person_id: current.person_id || null,
+    organization_id: current.organization_id || null,
+    transaction_no: `RT-${new Date().getFullYear()}-${String((count || 0) + 1).padStart(5, '0')}`,
+    transaction_type: transactionType,
+    authority_types: authorityTypes,
+    signature_type: body.signature_type || null,
+    transaction_limit: limits.transaction_limit,
+    payment_approval_limit: limits.payment_approval_limit,
+    purchase_approval_limit: limits.purchase_approval_limit,
+    bank_transaction_limit: limits.bank_transaction_limit,
+    contract_signature_limit: limits.contract_signature_limit,
+    currency: body.currency || current.currency || 'TRY',
+    limits,
+    scope: scopePayload,
+    requires_joint_signature: !!body.requires_joint_signature,
+    can_approve_alone: !!body.can_approve_alone,
+    document_files: Array.isArray(body.document_files) ? body.document_files : Array.isArray(current.authority_documents) ? current.authority_documents : [],
+    effective_date: effectiveDate,
+    end_date: body.end_date || null,
+    approval_status: approvalStatus,
+    workflow_status: workflowStatus,
+    status: approvalStatus === 'approved' ? 'active' : 'draft',
+    notes: body.notes || null,
+    warnings: [],
+    reversal_transaction_id: body.reversal_transaction_id || null,
+    new_values: body.new_values || body,
+    approved_by: approvalStatus === 'approved' ? requestedBy || null : null,
+    approved_at: approvalStatus === 'approved' ? new Date().toISOString() : null,
+    created_by: requestedBy || null,
+    updated_by: requestedBy || null,
+  }, 'company_representative_authority_transactions', tenantContext)
+
+  const { data: transaction, error: transactionError } = await supabase
+    .from('company_representative_authority_transactions')
+    .insert(transactionRow)
+    .select(AUTHORITY_TRANSACTION_SELECT)
+    .single()
+
+  if (transactionError) {
+    return { ok: false as const, status: 500, code: transactionError.code || 'AUTHORITY_TRANSACTION_CREATE_FAILED', error: transactionError.message }
+  }
+
+  if (approvalStatus === 'approved') {
+    const statusPatch = representativeStatusPatchForTransaction(transactionType, effectiveDate, body.end_date)
+    let updateQuery = supabase
+      .from('company_representatives')
+      .update({
+        ...statusPatch,
+        updated_at: new Date().toISOString(),
+        version: Number(current.version || 1) + 1,
+        history: buildHistory(current, statusPatch),
+      })
+      .eq('id', representativeId)
+    updateQuery = applyTenantQueryScope(updateQuery, 'company_representatives', tenantContext)
+    const { error: updateError } = await updateQuery
+    if (updateError) {
+      return { ok: false as const, status: 500, code: updateError.code || 'REPRESENTATIVE_STATUS_UPDATE_FAILED', error: updateError.message }
+    }
+  }
+
+  const refreshed = await safeReadRecord({
+    supabase,
+    request,
+    tableName: 'company_representatives',
+    recordId: representativeId,
+    permissionKey: ['representatives.view', 'companies.view'],
+    select: REPRESENTATIVE_DETAIL_SELECT,
+    afterRead: async ({ record }) => hydrateRepresentativeDetail(supabase, {
+      ...record,
+      last_authority_transaction: transaction,
+    }, tenantContext),
+  })
+  return refreshed
+}
+
+function representativeStatusPatchForTransaction(transactionType: string, effectiveDate: string, endDate?: string | null) {
+  if (transactionType === 'Askıya Alma') {
+    return { status: 'Askıda', record_status: 'suspended', start_date: effectiveDate, end_date: endDate || null }
+  }
+  if (transactionType === 'Sonlandırma') {
+    return { status: 'Sonlandırıldı', record_status: 'terminated', end_date: endDate || effectiveDate }
+  }
+  if (transactionType === 'Ters Kayıt') {
+    return { status: 'Aktif', record_status: 'active' }
+  }
+  return { status: 'Aktif', record_status: 'active', start_date: effectiveDate, end_date: endDate || null }
+}
+
+function detectRepresentativeConflict(current: Record<string, any>, baseVersion: number | null, baseUpdatedAt: string | null) {
+  if (baseVersion !== null && Number(current.version || 0) !== Number(baseVersion)) {
+    return {
+      ok: false as const,
+      status: 409,
+      code: 'VERSION_CONFLICT',
+      error: 'Kayıt başka bir işlem tarafından güncellendi. Lütfen sayfayı yenileyip tekrar deneyin.',
+    }
+  }
+  if (baseUpdatedAt && current.updated_at && new Date(current.updated_at).getTime() !== new Date(baseUpdatedAt).getTime()) {
+    return {
+      ok: false as const,
+      status: 409,
+      code: 'VERSION_CONFLICT',
+      error: 'Kayıt başka bir işlem tarafından güncellendi. Lütfen sayfayı yenileyip tekrar deneyin.',
+    }
+  }
+  return null
+}
+
+function normalizeAuthorityType(value: unknown) {
+  return String(value || '').trim()
 }
 
 function mapRepresentativeForDb(representative: Record<string, any>, current?: Record<string, any>) {
-  const authorityTypes = representative.authority_types?.length
-    ? representative.authority_types.map(normalizeAuthorityType)
-    : [normalizeAuthorityType(representative.primary_authority_type || current?.authority_types?.[0])].filter(Boolean)
+  const profilePatch = stripMasterDataForRoleProfile(representative)
+  const hasProfilePatch = Object.keys(profilePatch).length > 0
+  const displayName = representative.display_name || buildDisplayName(representative, current) || current?.display_name || current?.full_name || 'Temsilci'
 
   return {
-    company_id: representative.company_id || representative.company_id || current?.company_id || current?.company_id,    full_name: representative.display_name || buildDisplayName(representative, current) || current?.display_name || 'Temsilci',
-    job_title: normalizeAuthorityType(representative.primary_authority_type || current?.job_title) || null,
-    authority_type: 'other',
-    authority_types: authorityTypes,
+    company_id: representative.company_id || current?.company_id,
+    full_name: displayName,
     person_kind: representative.person_or_entity_type || current?.person_kind || 'person',
     source_type: representative.source_type || current?.source_type,
     source_id: representative.source_id || current?.source_id,
-    display_name: representative.display_name || buildDisplayName(representative, current) || current?.display_name,
-    start_date: representative.start_date || current?.start_date,
-    end_date: representative.end_date || null,
-    status: representative.status || current?.status || 'Aktif',
-    notes: representative.notes || null,
-    signature_type: representative.signature_type || null,
-    transaction_limit: representative.authority_limit || representative.transaction_limit || null,
-    currency: representative.currency || current?.currency || 'TRY',
-    requires_joint_signature: !!(representative.requires_joint_signature ?? current?.requires_joint_signature),
-    can_approve_alone: !!(representative.can_approve_alone ?? current?.can_approve_alone),
+    display_name: displayName,
+    notes: representative.notes ?? current?.notes ?? null,
+    phone: representative.phone ?? current?.phone ?? null,
+    email: representative.email ?? current?.email ?? null,
     photo_logo: representative.photo_logo || current?.photo_logo || [],
     authority_documents: representative.authority_documents || current?.authority_documents || [],
-    representative_profile: stripMasterDataForRoleProfile(representative),
-    is_deleted: !!(representative.is_deleted ?? current?.is_deleted),
-    deleted_at: 'deleted_at' in representative ? representative.deleted_at : current?.deleted_at ?? null,
-    deleted_by: 'deleted_by' in representative ? representative.deleted_by : current?.deleted_by ?? null,
+    representative_profile: hasProfilePatch
+      ? { ...(current?.representative_profile || {}), ...profilePatch }
+      : current?.representative_profile || {},
+    is_deleted: !!current?.is_deleted,
+    deleted_at: current?.deleted_at ?? null,
+    deleted_by: current?.deleted_by ?? null,
   }
 }
 
 function buildDisplayName(source: Record<string, any>, current?: Record<string, any>) {
   const kind = source.person_or_entity_type || current?.person_kind
   return kind === 'organization'
-    ? source.trade_name || source.short_name || ''
+    ? source.trade_name || source.short_name || current?.display_name || current?.full_name || ''
     : [source.first_name ?? current?.first_name, source.last_name ?? current?.last_name].filter(Boolean).join(' ').trim()
+}
+
+function toNullableNumber(value: unknown) {
+  if (value === '' || value === null || value === undefined) return null
+  const number = Number(value)
+  return Number.isFinite(number) ? number : null
+}
+
+async function hydrateRepresentativeDetail(
+  supabase: ReturnType<typeof createServiceClient>,
+  representative: Record<string, any>,
+  tenantContext: ReturnType<typeof resolveTenantContext>
+) {
+  const currentAuthority = await fetchCurrentAuthority(supabase, representative.id, tenantContext)
+  const transactionHistory = await fetchAuthorityTransactions(supabase, representative.id, tenantContext)
+  const merged: Record<string, any> = currentAuthority ? {
+    ...representative,
+    current_authority: currentAuthority,
+    authority_types: currentAuthority.authority_types || representative.authority_types,
+    job_title: Array.isArray(currentAuthority.authority_types) ? currentAuthority.authority_types[0] || representative.job_title : representative.job_title,
+    status: currentAuthority.status || representative.status,
+    record_status: currentAuthority.record_status || representative.record_status,
+    start_date: currentAuthority.effective_date || representative.start_date,
+    end_date: currentAuthority.end_date || representative.end_date,
+    signature_type: currentAuthority.signature_type ?? representative.signature_type,
+    transaction_limit: currentAuthority.transaction_limit ?? representative.transaction_limit,
+    currency: currentAuthority.currency || representative.currency,
+    requires_joint_signature: currentAuthority.requires_joint_signature ?? representative.requires_joint_signature,
+    can_approve_alone: currentAuthority.can_approve_alone ?? representative.can_approve_alone,
+    authority_transaction_history: transactionHistory,
+  } : {
+    ...representative,
+    authority_transaction_history: transactionHistory,
+  }
+
+  return merged?.person_id
+    ? hydrateMasterContact(supabase, 'person', merged)
+    : merged?.organization_id
+      ? hydrateMasterContact(supabase, 'organization', merged)
+      : merged
+}
+
+async function fetchCurrentAuthority(
+  supabase: ReturnType<typeof createServiceClient>,
+  representativeId: string,
+  tenantContext: ReturnType<typeof resolveTenantContext>
+) {
+  let query = supabase
+    .from('v_current_representative_authorities')
+    .select(CURRENT_AUTHORITY_SELECT)
+    .eq('representative_id', representativeId)
+  query = applyTenantQueryScope(query, 'v_current_representative_authorities', tenantContext)
+  const { data, error } = await query.maybeSingle()
+  if (error) {
+    if (isMissingTableError(error)) return null
+    throw error
+  }
+  return data || null
+}
+
+async function fetchAuthorityTransactions(
+  supabase: ReturnType<typeof createServiceClient>,
+  representativeId: string,
+  tenantContext: ReturnType<typeof resolveTenantContext>
+) {
+  let query = supabase
+    .from('company_representative_authority_transactions')
+    .select(AUTHORITY_TRANSACTION_SELECT)
+    .eq('representative_id', representativeId)
+    .eq('is_deleted', false)
+    .order('effective_date', { ascending: false })
+    .order('created_at', { ascending: false })
+  query = applyTenantQueryScope(query, 'company_representative_authority_transactions', tenantContext)
+  const { data, error } = await query
+  if (error) {
+    if (isMissingTableError(error)) return []
+    throw error
+  }
+  return data || []
+}
+
+async function representativeHasAuthorityTransactions(
+  supabase: ReturnType<typeof createServiceClient>,
+  representativeId: string,
+  tenantContext: ReturnType<typeof resolveTenantContext>
+) {
+  let query = supabase
+    .from('company_representative_authority_transactions')
+    .select('id', { count: 'exact', head: true })
+    .eq('representative_id', representativeId)
+    .eq('is_deleted', false)
+  query = applyTenantQueryScope(query, 'company_representative_authority_transactions', tenantContext)
+  const { count, error } = await query
+  if (error) {
+    if (isMissingTableError(error)) return false
+    throw error
+  }
+  return Number(count || 0) > 0
 }
