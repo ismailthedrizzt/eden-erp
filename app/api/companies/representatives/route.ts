@@ -4,7 +4,7 @@ import { z } from 'zod'
 import { hydrateMasterContact, stripMasterDataForRoleProfile, syncMasterContact } from '@/lib/identity/masterContact'
 import { normalizeCountryId } from '@/lib/reference/country-nationalities'
 import { EntityBankAccountsService } from '@/lib/modules/entity-bank-accounts/entityBankAccounts.service'
-import { listMetaFromRows, listRange, parseListQuery } from '@/lib/api/listEndpoint'
+import { listMeta, listRange, parseListQuery } from '@/lib/api/listEndpoint'
 import { requirePermission } from '@/lib/security/serverPermissions'
 import { applyTenantQueryScope, resolveTenantContext, type TenantContext, withTenantInsertScopeForTable } from '@/lib/tenancy/server'
 import { findGlobalOrganizationByIdentity, getTenantCompanyScope, isWritableCompanyScope, normalizeLegalCountry, normalizeLegalTaxNumber } from '@/lib/tenancy/companyScopes'
@@ -17,6 +17,39 @@ import { isMissingTableError } from '@/lib/modules/companies/companyErrors'
 
 const REPRESENTATIVE_LIST_SELECT = 'id,company_id,person_id,organization_id,person_kind,source_type,source_id,display_name,full_name,authority_types,job_title,authority_type,status,record_status,start_date,end_date,signature_type,transaction_limit,payment_approval_limit,purchase_approval_limit,bank_transaction_limit,contract_signature_limit,currency,requires_joint_signature,can_approve_alone,representative_profile,is_deleted,created_at,updated_at,version'
 const CURRENT_AUTHORITY_SELECT = 'company_id,representative_id,display_name,person_id,organization_id,record_status,status,authority_types,signature_type,transaction_limit,payment_approval_limit,purchase_approval_limit,bank_transaction_limit,contract_signature_limit,currency,limits,scope,requires_joint_signature,can_approve_alone,effective_date,end_date,warnings,tenant_id'
+
+const REPRESENTATIVE_AUTHORITY_CONTROLLED_FIELDS = new Set([
+  'start_date',
+  'end_date',
+  'primary_authority_type',
+  'authority_type',
+  'authority_types',
+  'job_title',
+  'signature_type',
+  'authority_limit',
+  'transaction_limit',
+  'payment_approval_limit',
+  'purchase_approval_limit',
+  'bank_transaction_limit',
+  'contract_signature_limit',
+  'currency',
+  'bank_currency',
+  'limit_currency',
+  'limit_start_date',
+  'limit_end_date',
+  'requires_joint_signature',
+  'can_approve_alone',
+  'bank_authority_level',
+  'department_scope',
+  'gib_permissions',
+  'can_submit_declaration',
+  'can_process_e_invoice',
+  'sgk_permissions',
+  'can_submit_hiring_notice',
+  'can_submit_termination_notice',
+  'official_correspondence_authority',
+  'authority_documents',
+])
 
 const RepresentativeSchema = z.object({
   company_id: z.string().uuid(),
@@ -46,6 +79,9 @@ function stripRepresentativeCreateLifecycleFields(body: Record<string, any>) {
   delete next.record_status
   delete next.current_authority
   delete next.authority_transaction_history
+  REPRESENTATIVE_AUTHORITY_CONTROLLED_FIELDS.forEach(field => {
+    delete next[field]
+  })
   return next
 }
 
@@ -77,7 +113,7 @@ export async function GET(request: NextRequest) {
 
   let query = supabase
     .from('company_representatives')
-    .select(REPRESENTATIVE_LIST_SELECT)
+    .select(REPRESENTATIVE_LIST_SELECT, { count: 'exact' })
     .order(sortColumn, { ascending: listQuery.direction !== 'desc' })
     .range(from, to)
 
@@ -88,23 +124,24 @@ export async function GET(request: NextRequest) {
     query = query.eq('company_id', companyId)
   }
   if (status) query = query.eq('status', status)
-  if (statuses.length) {
-    if (statuses.includes('passive')) {
-      const activeStatuses = statuses.filter(item => item !== 'passive')
+  const recordStatuses = normalizeRepresentativeMainStatusFilters(statuses)
+  if (recordStatuses.length) {
+    if (recordStatuses.includes('passive')) {
+      const activeStatuses = recordStatuses.filter(item => item !== 'passive')
       query = activeStatuses.length
         ? query.or(`record_status.in.(${activeStatuses.join(',')}),record_status.eq.passive,is_deleted.eq.true`)
         : query.or('record_status.eq.passive,is_deleted.eq.true')
     } else {
-      query = query.in('record_status', statuses).eq('is_deleted', false)
+      query = query.in('record_status', recordStatuses).eq('is_deleted', false)
     }
   } else if (!includePassive) query = query.eq('is_deleted', false).neq('record_status', 'passive')
   if (listQuery.search) query = query.or(`display_name.ilike.%${listQuery.search}%,full_name.ilike.%${listQuery.search}%,job_title.ilike.%${listQuery.search}%`)
 
-  const { data, error } = await query
+  const { data, error, count } = await query
   if (error) return NextResponse.json({ error: error.message, code: error.code || 'FETCH_FAILED' }, { status: 500 })
 
   const rows = await mergeCurrentRepresentativeAuthorities(supabase, data || [], tenantContext)
-  return NextResponse.json({ data: rows, meta: listMetaFromRows(listQuery, rows.length) })
+  return NextResponse.json({ data: rows, meta: listMeta(listQuery, count || 0) })
 }
 
 export async function POST(request: NextRequest) {
@@ -229,45 +266,49 @@ function normalizeAuthorityType(value: unknown) {
   return String(value || '').trim()
 }
 
+function normalizeRepresentativeMainStatusFilters(values: string[]) {
+  const allowed = new Set(['draft', 'active', 'passive'])
+  return values.filter(value => allowed.has(value))
+}
+
 function mapRepresentativeForDb(representative: Record<string, any>) {
-  const authorityTypes = normalizeAuthorityTypes(representative.authority_types || representative.primary_authority_type || representative.authority_type)
   return {
     company_id: representative.company_id,
     full_name: representative.display_name || buildDisplayName(representative) || 'Temsilci',
-    job_title: representative.job_title || representative.primary_authority_type || authorityTypes[0] || null,
-    authority_type: authorityTypes[0] || 'other',
-    authority_types: authorityTypes,
+    job_title: null,
+    authority_type: 'other',
+    authority_types: [],
     person_kind: representative.person_or_entity_type,
     source_type: representative.source_type || (representative.person_or_entity_type === 'organization' ? 'master_organization' : 'master_person'),
     source_id: representative.source_id || null,
     display_name: representative.display_name || buildDisplayName(representative),
-    start_date: representative.start_date || null,
-    end_date: representative.end_date || null,
+    start_date: null,
+    end_date: null,
     status: 'Taslak',
     record_status: 'draft',
     notes: representative.notes || null,
-    signature_type: representative.signature_type || null,
-    transaction_limit: toNullableNumber(representative.transaction_limit ?? representative.authority_limit),
-    payment_approval_limit: toNullableNumber(representative.payment_approval_limit),
-    purchase_approval_limit: toNullableNumber(representative.purchase_approval_limit),
-    bank_transaction_limit: toNullableNumber(representative.bank_transaction_limit),
-    contract_signature_limit: toNullableNumber(representative.contract_signature_limit),
+    signature_type: null,
+    transaction_limit: null,
+    payment_approval_limit: null,
+    purchase_approval_limit: null,
+    bank_transaction_limit: null,
+    contract_signature_limit: null,
     currency: representative.currency || 'TRY',
-    requires_joint_signature: !!representative.requires_joint_signature,
-    can_approve_alone: !!representative.can_approve_alone,
-    bank_authority_level: representative.bank_authority_level || null,
-    department_scope: representative.department_scope || null,
-    gib_permissions: representative.gib_permissions || null,
-    can_submit_declaration: !!representative.can_submit_declaration,
-    can_process_e_invoice: !!representative.can_process_e_invoice,
-    sgk_permissions: representative.sgk_permissions || null,
-    can_submit_hiring_notice: !!representative.can_submit_hiring_notice,
-    can_submit_termination_notice: !!representative.can_submit_termination_notice,
-    official_correspondence_authority: !!representative.official_correspondence_authority,
+    requires_joint_signature: false,
+    can_approve_alone: false,
+    bank_authority_level: null,
+    department_scope: null,
+    gib_permissions: null,
+    can_submit_declaration: false,
+    can_process_e_invoice: false,
+    sgk_permissions: null,
+    can_submit_hiring_notice: false,
+    can_submit_termination_notice: false,
+    official_correspondence_authority: false,
     photo_logo: representative.photo_logo || [],
-    authority_documents: representative.authority_documents || [],
+    authority_documents: [],
     representative_profile: stripMasterDataForRoleProfile(representative),
-    history: representative.timeline || [],
+    history: [],
     is_deleted: false,
   }
 }
@@ -442,12 +483,12 @@ async function mergeCurrentRepresentativeAuthorities(
       ...row,
       current_authority: current,
       last_authority_transaction: lastTransaction || null,
+      authority_status: current.status || null,
+      authority_record_status: current.record_status || null,
+      authority_start_date: current.effective_date || null,
+      authority_end_date: current.end_date || null,
       authority_types: current.authority_types || row.authority_types,
       job_title: Array.isArray(current.authority_types) ? current.authority_types[0] || row.job_title : row.job_title,
-      status: current.status || row.status,
-      record_status: current.record_status || row.record_status,
-      start_date: current.effective_date || row.start_date,
-      end_date: current.end_date || row.end_date,
       signature_type: current.signature_type ?? row.signature_type,
       transaction_limit: current.transaction_limit ?? row.transaction_limit,
       currency: current.currency || row.currency,

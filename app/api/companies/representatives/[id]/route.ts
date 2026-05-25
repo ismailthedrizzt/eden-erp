@@ -91,15 +91,6 @@ function stripRepresentativeOperationControlledFields(body: Record<string, any>)
   return next
 }
 
-function stripRepresentativeLifecycleStatusFields(body: Record<string, any>) {
-  const next = { ...body }
-  delete next.status
-  delete next.record_status
-  delete next.current_authority
-  delete next.authority_transaction_history
-  return next
-}
-
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -142,14 +133,9 @@ export async function PATCH(
   const baseVersion = resolveBaseVersion(rawBody)
   const baseUpdatedAt = resolveBaseUpdatedAt(rawBody)
   const rawPatch = stripOperationControlFields(rawBody)
-  const draftEditable = !isAuthorityTransaction
-    ? await representativeAllowsDraftControlledEdit(supabase, id, tenantContext)
-    : false
   const body = isAuthorityTransaction
     ? rawPatch
-    : draftEditable
-      ? stripRepresentativeLifecycleStatusFields(rawPatch)
-      : stripRepresentativeOperationControlledFields(rawPatch)
+    : stripRepresentativeOperationControlledFields(rawPatch)
 
   const permission = await requirePermission(request, supabase, 'representatives.edit')
   if (permission instanceof NextResponse) return permission
@@ -279,8 +265,7 @@ export async function DELETE(
   if (currentError) return NextResponse.json({ error: currentError.message, code: currentError.code || 'FETCH_FAILED' }, { status: 500 })
   if (!current) return NextResponse.json({ error: 'Temsilci bulunamadı', code: 'REPRESENTATIVE_NOT_FOUND' }, { status: 404 })
 
-  const currentAuthority = await fetchCurrentAuthority(supabase, id, tenantContext)
-  const effectiveStatus = String(currentAuthority?.record_status || current.record_status || '').toLocaleLowerCase('tr-TR')
+  const effectiveStatus = normalizeMainRecordStatus(current.record_status || current.status)
   const hasAuthorityTransactions = await representativeHasAuthorityTransactions(supabase, id, tenantContext)
   if (effectiveStatus !== 'draft' || hasAuthorityTransactions) {
     return NextResponse.json({
@@ -461,8 +446,10 @@ async function applyAuthorityTransaction({
   if (!AUTHORITY_TRANSACTION_TYPES.has(transactionType)) {
     return { ok: false as const, status: 400, code: 'INVALID_TRANSACTION_TYPE', error: 'Geçersiz temsilcilik işlem tipi.' }
   }
-  const recordStatus = normalizeRecordStatus(current.record_status || current.status)
-  const lifecycleViolation = validateRepresentativeLifecycleTransition(transactionType, recordStatus)
+  const currentAuthority = await fetchCurrentAuthority(supabase, representativeId, tenantContext)
+  const recordStatus = normalizeMainRecordStatus(current.record_status || current.status)
+  const authorityRecordStatus = normalizeAuthorityRecordStatus(currentAuthority?.record_status || currentAuthority?.status)
+  const lifecycleViolation = validateRepresentativeLifecycleTransition(transactionType, recordStatus, authorityRecordStatus)
   if (lifecycleViolation) return lifecycleViolation
 
   const authorityTypes = Array.isArray(body.authority_types)
@@ -500,8 +487,8 @@ async function applyAuthorityTransaction({
     official_correspondence_authority: !!body.official_correspondence_authority,
   }
   const effectiveDate = body.effective_date || body.start_date || new Date().toISOString().slice(0, 10)
-  const approvalStatus = body.approval_status || 'approved'
-  const workflowStatus = body.workflow_status || approvalStatus
+  const approvalStatus = resolveRepresentativeAuthorityApprovalStatus()
+  const workflowStatus = approvalStatus
   const { count } = await supabase
     .from('company_representative_authority_transactions')
     .select('id', { count: 'exact', head: true })
@@ -585,19 +572,17 @@ async function applyAuthorityTransaction({
 }
 
 function representativeStatusPatchForTransaction(transactionType: string, effectiveDate: string, endDate?: string | null) {
-  if (transactionType === 'Askıya Alma') {
-    return { status: 'Askıda', record_status: 'suspended', start_date: effectiveDate, end_date: endDate || null }
-  }
-  if (transactionType === 'Sonlandırma') {
-    return { status: 'Sona Erdi', record_status: 'terminated', end_date: endDate || effectiveDate }
-  }
-  if (transactionType === 'Ters Kayıt') {
-    return { status: 'Aktif', record_status: 'active' }
-  }
   return { status: 'Aktif', record_status: 'active', start_date: effectiveDate, end_date: endDate || null }
 }
 
-function normalizeRecordStatus(value: unknown) {
+function normalizeMainRecordStatus(value: unknown) {
+  const text = String(value || '').toLocaleLowerCase('tr-TR')
+  if (text.includes('pasif') || text === 'passive') return 'passive'
+  if (text.includes('aktif') || ['active', 'suspended', 'expired', 'terminated'].includes(text) || text.includes('ask') || text.includes('son')) return 'active'
+  return 'draft'
+}
+
+function normalizeAuthorityRecordStatus(value: unknown) {
   const text = String(value || '').toLocaleLowerCase('tr-TR')
   if (text.includes('ask')) return 'suspended'
   if (text.includes('sona') || text.includes('son')) return 'terminated'
@@ -606,17 +591,25 @@ function normalizeRecordStatus(value: unknown) {
   return text || 'draft'
 }
 
-function validateRepresentativeLifecycleTransition(transactionType: string, recordStatus: string) {
+function resolveRepresentativeAuthorityApprovalStatus() {
+  return 'approved'
+}
+
+function validateRepresentativeLifecycleTransition(transactionType: string, recordStatus: string, authorityRecordStatus: string) {
   if (transactionType === 'Temsilcilik Başlatma' && recordStatus !== 'draft') {
-    return { ok: false as const, status: 409, code: 'REPRESENTATIVE_ACTIVATION_REQUIRES_DRAFT', error: 'Temsilci Yetkilendirme / Aktive Etme yalnızca Taslak kayıtlar için çalışır.' }
+    return { ok: false as const, status: 409, code: 'REPRESENTATIVE_ACTIVATION_REQUIRES_DRAFT', error: 'Temsilcilik Başlatma yalnızca Taslak temsilci kartları için çalışır.' }
   }
   if (['Yetki Yenileme', 'Yetki Kapsamı Değişikliği', 'Limit Değişikliği', 'Düzeltme Kaydı'].includes(transactionType) && recordStatus !== 'active') {
     return { ok: false as const, status: 409, code: 'REPRESENTATIVE_AUTHORITY_CHANGE_REQUIRES_ACTIVE', error: 'Yetki, limit, kurum veya imza değişiklikleri yalnızca Aktif temsilciler için operation olarak yapılabilir.' }
   }
-  if (transactionType === 'Askıya Alma' && recordStatus !== 'active') {
+  if (transactionType === 'Yetki Yenileme' && authorityRecordStatus === 'suspended') return null
+  if (['Yetki Kapsamı Değişikliği', 'Limit Değişikliği', 'Düzeltme Kaydı'].includes(transactionType) && authorityRecordStatus !== 'active') {
+    return { ok: false as const, status: 409, code: 'REPRESENTATIVE_AUTHORITY_CHANGE_REQUIRES_ACTIVE_AUTHORITY', error: 'Bu işlem için güncel yetki Aktif olmalıdır.' }
+  }
+  if (transactionType === 'Askıya Alma' && (recordStatus !== 'active' || authorityRecordStatus !== 'active')) {
     return { ok: false as const, status: 409, code: 'REPRESENTATIVE_SUSPEND_REQUIRES_ACTIVE', error: 'Askıya alma yalnızca Aktif temsilciler için yapılabilir.' }
   }
-  if (transactionType === 'Sonlandırma' && !['active', 'suspended'].includes(recordStatus)) {
+  if (transactionType === 'Sonlandırma' && (recordStatus !== 'active' || !['active', 'suspended'].includes(authorityRecordStatus))) {
     return { ok: false as const, status: 409, code: 'REPRESENTATIVE_TERMINATE_REQUIRES_ACTIVE', error: 'Temsilcilik Sonlandırma yalnızca Aktif veya Askıda temsilciler için yapılabilir.' }
   }
   return null
@@ -749,21 +742,6 @@ function toNullableNumber(value: unknown) {
   return Number.isFinite(number) ? number : null
 }
 
-async function representativeAllowsDraftControlledEdit(
-  supabase: ReturnType<typeof createServiceClient>,
-  representativeId: string,
-  tenantContext: ReturnType<typeof resolveTenantContext>
-) {
-  let query = supabase
-    .from('company_representatives')
-    .select('id,record_status,is_deleted')
-    .eq('id', representativeId)
-  query = applyTenantQueryScope(query, 'company_representatives', tenantContext)
-  const { data, error } = await query.maybeSingle()
-  if (error || !data || data.is_deleted) return false
-  return String(data.record_status || '').toLocaleLowerCase('tr-TR') === 'draft'
-}
-
 async function findExistingRepresentativeForCompany(
   supabase: ReturnType<typeof createServiceClient>,
   input: {
@@ -802,12 +780,12 @@ async function hydrateRepresentativeDetail(
   const merged: Record<string, any> = currentAuthority ? {
     ...representative,
     current_authority: currentAuthority,
+    authority_status: currentAuthority.status || null,
+    authority_record_status: currentAuthority.record_status || null,
+    authority_start_date: currentAuthority.effective_date || null,
+    authority_end_date: currentAuthority.end_date || null,
     authority_types: currentAuthority.authority_types || representative.authority_types,
     job_title: Array.isArray(currentAuthority.authority_types) ? currentAuthority.authority_types[0] || representative.job_title : representative.job_title,
-    status: currentAuthority.status || representative.status,
-    record_status: currentAuthority.record_status || representative.record_status,
-    start_date: currentAuthority.effective_date || representative.start_date,
-    end_date: currentAuthority.end_date || representative.end_date,
     signature_type: currentAuthority.signature_type ?? representative.signature_type,
     transaction_limit: currentAuthority.transaction_limit ?? representative.transaction_limit,
     currency: currentAuthority.currency || representative.currency,
