@@ -749,9 +749,12 @@ export default function OrtaklarPage() {
         error.toast = { type: 'warning', title: 'Eksik Zorunlu Alan', message }
         throw error
       }
+      const updatePayload = mode === 'edit' && selectedPartner
+        ? withPartnerConcurrency(payload, selectedPartner)
+        : payload
       const result = mode === 'create'
         ? await companyService.createPartner(payload)
-        : await companyService.updatePartner(selectedPartner?.id || '', payload)
+        : await companyService.updatePartner(selectedPartner?.id || '', updatePayload)
       const normalized = result.data ? normalizePartnerForForm(result.data) : null
       if (normalized) setSelectedPartner(normalized)
       setToast(buildOperationToast(result as any, {
@@ -794,10 +797,10 @@ export default function OrtaklarPage() {
     if (!selectedPartner?.id) return
     setDeleting(true)
     try {
-      const result = await companyService.updatePartner(selectedPartner.id, {
-        ...selectedPartner,
+      const result = await companyService.updatePartner(selectedPartner.id, withPartnerConcurrency(buildPartnerChangedPatch(selectedPartner, {
         status: 'Aktif',
-      })
+        record_status: 'active',
+      }), selectedPartner))
       invalidateEntityDetailCache('company-partners', selectedPartner.id)
       if (result.data) setSelectedPartner(normalizePartnerForForm(result.data))
       setToast({ type: 'success', title: 'Kayıt Başarılı', message: 'Ortak kaydı aktive edildi' })
@@ -913,13 +916,14 @@ export default function OrtaklarPage() {
     if (!selectedPartner?.id) return
     setSaving(true)
     try {
-      const result = await companyService.updatePartner(selectedPartner.id, {
-        ...selectedPartner,
-        ...payload,
+      const result = await companyService.updatePartner(selectedPartner.id, withPartnerConcurrency(buildPartnerChangedPatch(selectedPartner, {
+        company_id: payload.company_id,
+        notes: payload.notes,
+        start_date: payload.effective_date,
         status: 'Aktif',
         record_status: 'active',
         ownership_action: 'ownership_defined',
-      })
+      }), selectedPartner))
       invalidateEntityDetailCache('company-partners', selectedPartner.id)
       const normalized = result.data ? normalizePartnerForForm(result.data) : null
       if (normalized) setSelectedPartner(normalized)
@@ -946,22 +950,14 @@ export default function OrtaklarPage() {
       const transactionResult = await ownershipTransactionsService.create(payload)
 
       if (isInitialPartnershipEntryType(String(payload.transaction_type || '')) && getPartnerRecordStatus(partner) === 'draft') {
-        const result = await companyService.updatePartner(partner.id, {
-          ...partner,
+        const result = await companyService.updatePartner(partner.id, withPartnerConcurrency(buildPartnerChangedPatch(partner, {
           company_id: payload.company_id,
-          share_ratio: payload.share_ratio,
-          voting_ratio: payload.voting_ratio,
-          profit_ratio: payload.profit_ratio,
-          share_units: payload.share_units,
-          nominal_value: payload.nominal_value,
-          capital_amount: payload.capital_amount,
-          has_privileged_share: payload.has_privileged_share,
-          notes: payload.notes || partner.notes,
+          notes: payload.notes,
           start_date: payload.effective_date,
           status: 'Aktif',
           record_status: 'active',
           ownership_action: 'initial_partnership_entry_completed',
-        })
+        }), partner))
         const normalized = result.data ? normalizePartnerForForm(result.data) : null
         if (normalized) setSelectedPartner(normalized)
       }
@@ -2714,6 +2710,22 @@ function getPartnerLifecycleOperationProgress(status: RecordStatusFilterValue): 
     return { activeActionKeys: [PARTNER_OWNERSHIP_ENTRY_ACTION_KEY] }
   }
   return { completedActionKeys: [PARTNER_OWNERSHIP_ENTRY_ACTION_KEY] }
+}
+
+function withPartnerConcurrency(payload: Record<string, any>, partner?: Record<string, any> | null) {
+  return {
+    ...payload,
+    base_version: partner?.version,
+    base_updated_at: partner?.updated_at,
+  }
+}
+
+function buildPartnerChangedPatch(partner: Record<string, any> | null | undefined, changes: Record<string, any>) {
+  return Object.fromEntries(
+    Object.entries(changes).filter(([field, value]) =>
+      value !== undefined && JSON.stringify(value ?? null) !== JSON.stringify(partner?.[field] ?? null)
+    )
+  )
 }
 
 function findInitialPartnershipTransaction(partner?: Record<string, any> | null): OwnershipTransactionHistoryRow | null {

@@ -251,7 +251,7 @@ export async function GET(request: NextRequest) {
   const sortColumn = sortMap[effectiveListQuery.sort || ''] || 'short_name'
   let query = supabase
     .from('companies')
-    .select('id,organization_id,short_name,trade_name,tax_number,tax_office,company_type,city,district,phone,email,logo_url,is_deleted,record_status,company_status,committed_capital_amount,paid_capital_amount,default_currency,updated_at,created_at')
+    .select('id,organization_id,short_name,trade_name,tax_number,tax_office,company_type,city,district,phone,email,logo_url,is_deleted,record_status,company_status,committed_capital_amount,paid_capital_amount,default_currency,updated_at,created_at,version')
     .in('id', scopedCompanyIds)
     .order(sortColumn, { ascending: effectiveListQuery.direction !== 'desc' })
     .range(from, to)
@@ -360,7 +360,7 @@ export async function POST(request: NextRequest) {
     tenantId: tenantContext.tenantId,
     country: companyData.country,
     taxNumber: companyData.tax_number,
-    select: 'id,organization_id,short_name,trade_name,tax_number,tax_office,company_type,city,district,logo_url,is_deleted,record_status,company_status,committed_capital_amount,paid_capital_amount,updated_at,created_at,tenant_id,country',
+    select: 'id,organization_id,short_name,trade_name,tax_number,tax_office,company_type,city,district,logo_url,is_deleted,record_status,company_status,committed_capital_amount,paid_capital_amount,updated_at,created_at,tenant_id,country,version',
   })
   if (existingTenantCompany?.id) {
     const currentScope = await getTenantCompanyScope(supabase, tenantContext.tenantId, existingTenantCompany.id)
@@ -447,7 +447,7 @@ export async function POST(request: NextRequest) {
     tableName: 'companies',
     permissionKey: 'companies.edit',
     values: companyRow,
-    select: 'id,short_name,trade_name,tax_number,logo_url,hero_images,is_deleted,record_status,company_status,committed_capital_amount,paid_capital_amount,updated_at',
+    select: 'id,short_name,trade_name,tax_number,logo_url,hero_images,is_deleted,record_status,company_status,committed_capital_amount,paid_capital_amount,updated_at,version',
   })
 
   if (!createResult.ok) {

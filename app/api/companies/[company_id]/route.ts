@@ -123,17 +123,17 @@ function omitNullishValues(value: Record<string, any>) {
   )
 }
 
-const COMPANY_DETAIL_SELECT = 'id,organization_id,field_history,short_name,trade_name,tax_number,tax_office,company_type,city,district,address,phone,email,is_deleted,record_status,company_status,committed_capital_amount,paid_capital_amount,mersis_number,trade_registry_number,foundation_date,legal_entity,electronic_notification_address,trade_registry_office,parent_company_id,company_code,logo_url,country,website,e_invoice_taxpayer,e_archive_taxpayer,e_waybill_taxpayer,sgk_workplace_registry_no,sgk_province,sgk_branch,nace_codes,risk_class,default_currency,default_language,time_zone,fiscal_year_start,hero_images,hero_documents,created_at,updated_at'
-const COMPANY_HERO_SELECT = 'id,organization_id,field_history,short_name,trade_name,tax_number,tax_office,company_type,logo_url,is_deleted,record_status,company_status,committed_capital_amount,paid_capital_amount,created_at,updated_at'
-const COMPANY_MEDIA_SELECT = 'id,logo_url,hero_images,hero_documents,updated_at'
-const COMPANY_DETAILS_SELECT = 'id,organization_id,field_history,city,district,address,phone,email,is_deleted,record_status,company_status,committed_capital_amount,paid_capital_amount,mersis_number,trade_registry_number,foundation_date,legal_entity,electronic_notification_address,trade_registry_office,parent_company_id,company_code,country,website,e_invoice_taxpayer,e_archive_taxpayer,e_waybill_taxpayer,sgk_workplace_registry_no,sgk_province,sgk_branch,nace_codes,risk_class,default_currency,default_language,time_zone,fiscal_year_start,created_at,updated_at'
+const COMPANY_DETAIL_SELECT = 'id,organization_id,field_history,short_name,trade_name,tax_number,tax_office,company_type,city,district,address,phone,email,is_deleted,record_status,company_status,committed_capital_amount,paid_capital_amount,mersis_number,trade_registry_number,foundation_date,legal_entity,electronic_notification_address,trade_registry_office,parent_company_id,company_code,logo_url,country,website,e_invoice_taxpayer,e_archive_taxpayer,e_waybill_taxpayer,sgk_workplace_registry_no,sgk_province,sgk_branch,nace_codes,risk_class,default_currency,default_language,time_zone,fiscal_year_start,hero_images,hero_documents,created_at,updated_at,version'
+const COMPANY_HERO_SELECT = 'id,organization_id,field_history,short_name,trade_name,tax_number,tax_office,company_type,logo_url,is_deleted,record_status,company_status,committed_capital_amount,paid_capital_amount,created_at,updated_at,version'
+const COMPANY_MEDIA_SELECT = 'id,logo_url,hero_images,hero_documents,updated_at,version'
+const COMPANY_DETAILS_SELECT = 'id,organization_id,field_history,city,district,address,phone,email,is_deleted,record_status,company_status,committed_capital_amount,paid_capital_amount,mersis_number,trade_registry_number,foundation_date,legal_entity,electronic_notification_address,trade_registry_office,parent_company_id,company_code,country,website,e_invoice_taxpayer,e_archive_taxpayer,e_waybill_taxpayer,sgk_workplace_registry_no,sgk_province,sgk_branch,nace_codes,risk_class,default_currency,default_language,time_zone,fiscal_year_start,created_at,updated_at,version'
 const PUBLIC_TAX_SELECT = 'id,company_id,tax_number,tax_office,tax_type,liability_start_date,e_invoice_taxpayer,e_archive_taxpayer,e_waybill_enabled,gib_user_code,has_financial_seal,financial_seal_expiry_date,tax_debt_tracking_active,last_check_date,history,created_at,updated_at'
 const PUBLIC_SGK_SELECT = 'id,company_id,workplace_registry_no,province,branch,registration_date,nace_code,risk_class,uses_incentive,active_incentive_type,incentive_end_date,employee_count,debt_tracking_active,last_check_date,history,created_at,updated_at'
 const PUBLIC_INCENTIVES_SELECT = 'id,company_id,has_kosgeb_registration,kosgeb_no,active_support_program,application_date,result_status,incentive_type,incentive_end_date,responsible_person,notes,history,created_at,updated_at'
 const PUBLIC_REGISTRY_SELECT = 'id,company_id,mersis_number,trade_registry_no,registry_office,chamber_registry_no,chamber_name,establishment_registration_date,last_change_date,liquidation_status,history,created_at,updated_at'
 const PUBLIC_LICENSES_SELECT = 'id,company_id,license_type,document_no,issuing_authority,start_date,end_date,status,document_file,reminder_days,history,is_deleted,created_at,updated_at'
 const PUBLIC_CHANNELS_SELECT = 'id,company_id,kep_address,kep_provider,e_notification_address,e_notification_active,e_government_authority_status,official_notification_email,official_notification_phone,has_web_service_integration,api_notes,history,created_at,updated_at'
-const CURRENT_OWNERSHIP_SELECT = 'company_id,partner_id,display_name,current_share_ratio,current_voting_ratio,current_profit_ratio'
+const CURRENT_OWNERSHIP_SELECT = 'company_id,partner_id,display_name,current_share_ratio,current_voting_ratio,current_profit_ratio,current_capital_amount,current_share_units,has_control_right,control_type,has_veto_right,has_board_nomination_right,has_privileged_share,is_beneficial_owner,beneficial_ratio,warnings'
 
 function withDerivedCompanyLogo<T extends Record<string, any>>(company: T): T {
   if (!Object.prototype.hasOwnProperty.call(company, 'hero_images')) return company
@@ -212,7 +212,7 @@ export async function GET(
         companyId: id,
         tenantContext,
         fallback: [] as Record<string, any>[],
-        select: 'id,company_id,display_name,partner_name,partner_type,owner_kind,record_status,status',
+        select: 'id,company_id,display_name,partner_name,partner_type,owner_kind,record_status,status,version',
       }),
       fetchCompanyRelatedSection({
         supabase,
@@ -297,7 +297,7 @@ export async function GET(
       companyId: id,
       tenantContext,
       fallback: [] as Record<string, any>[],
-      select: 'id,company_id,person_id,organization_id,owner_kind,partner_type,display_name,partner_name,identity_number,identity_tax_number,share_ratio,voting_ratio,profit_ratio,has_representation_right,signature_authority,start_date,end_date,status,is_deleted,source_type,source_id,history,created_at',
+      select: 'id,company_id,person_id,organization_id,owner_kind,partner_type,display_name,partner_name,identity_number,identity_tax_number,share_ratio,voting_ratio,profit_ratio,has_representation_right,signature_authority,start_date,end_date,status,is_deleted,source_type,source_id,history,created_at,updated_at,version',
     }),
     fetchCompanyRelatedSection({
       supabase,
@@ -307,7 +307,7 @@ export async function GET(
       companyId: id,
       tenantContext,
       fallback: [] as Record<string, any>[],
-      select: 'id,company_id,person_id,organization_id,person_kind,source_type,source_id,display_name,full_name,authority_types,job_title,authority_type,status,start_date,end_date,signature_type,transaction_limit,currency,requires_joint_signature,can_approve_alone,is_deleted,history,created_at',
+      select: 'id,company_id,person_id,organization_id,person_kind,source_type,source_id,display_name,full_name,authority_types,job_title,authority_type,status,start_date,end_date,signature_type,transaction_limit,currency,requires_joint_signature,can_approve_alone,is_deleted,history,created_at,updated_at,version',
     }),
     fetchCompanyRelatedSection({
       supabase,
@@ -317,7 +317,7 @@ export async function GET(
       companyId: id,
       tenantContext,
       fallback: [] as Record<string, any>[],
-      select: 'id,company_id,person_id,organization_id,stakeholder_type,category,display_name,tax_id,phone,email,country,city,status,priority_level,relationship_start_date,is_deleted,history,created_at',
+      select: 'id,company_id,person_id,organization_id,stakeholder_type,category,display_name,tax_id,phone,email,country,city,status,priority_level,relationship_start_date,is_deleted,history,created_at,updated_at,version',
     }),
     fetchCompanyRelatedSection({
       supabase,

@@ -6,7 +6,7 @@ export const companyListProjection = registerListProjection({
   entityType: 'company',
   sourceName: 'v_company_list_projection',
   sourceType: 'view',
-  version: '2026-05-25.1',
+  version: '2026-05-25.2',
   defaultColumns: [
     'id',
     'organization_id',
@@ -29,6 +29,7 @@ export const companyListProjection = registerListProjection({
     'tenant_id',
     'updated_at',
     'created_at',
+    'version',
   ],
   searchableFields: ['short_name', 'trade_name', 'tax_number'],
   sortableFields: {
@@ -54,7 +55,7 @@ export const companyPartnerListProjection = registerListProjection({
   entityType: 'company_partner',
   sourceName: 'v_company_partner_list_projection',
   sourceType: 'view',
-  version: '2026-05-25.1',
+  version: '2026-05-25.2',
   defaultColumns: [
     'id',
     'company_id',
@@ -86,6 +87,7 @@ export const companyPartnerListProjection = registerListProjection({
     'tenant_id',
     'created_at',
     'updated_at',
+    'version',
   ],
   searchableFields: ['display_name', 'partner_name', 'identity_number', 'identity_tax_number', 'company_name'],
   sortableFields: {

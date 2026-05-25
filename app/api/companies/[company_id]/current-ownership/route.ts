@@ -6,6 +6,7 @@ import { isMissingTableError } from '@/lib/modules/companies/companyErrors'
 const CURRENT_OWNERSHIP_COLUMNS = [
   'company_id',
   'partner_id',
+  'display_name',
   'current_share_ratio',
   'current_voting_ratio',
   'current_profit_ratio',

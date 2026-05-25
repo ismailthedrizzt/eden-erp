@@ -240,12 +240,13 @@ export async function GET(request: NextRequest) {
     return safeCrudResponse(projectionResult)
   }
 
+  const tenantContext = resolveTenantContext(request)
   const result = await safeListRecords({
     supabase,
     request,
     tableName: 'company_partners',
     permissionKey: ['partners.view', 'companies.view'],
-    select: 'id,company_id,person_id,organization_id,owner_kind,partner_type,display_name,partner_name,identity_number,identity_tax_number,share_ratio,voting_ratio,profit_ratio,start_date,end_date,status,record_status,source_type,source_id,created_at',
+    select: 'id,company_id,person_id,organization_id,owner_kind,partner_type,display_name,partner_name,identity_number,identity_tax_number,share_ratio,voting_ratio,profit_ratio,start_date,end_date,status,record_status,is_deleted,source_type,source_id,created_at,updated_at,version',
     listQuery,
     sortMap,
     defaultSort: 'created_at',
@@ -257,6 +258,35 @@ export async function GET(request: NextRequest) {
       ...(status ? { status } : {}),
     },
     query: statusFilters.length ? query => applyPartnerStatusFilters(query, statusFilters) : undefined,
+    afterList: async ({ rows }) => {
+      const companyIds = Array.from(new Set(rows.map(row => row.company_id).filter(Boolean)))
+      const partnerIds = Array.from(new Set(rows.map(row => row.id).filter(Boolean)))
+      if (!companyIds.length || !partnerIds.length) return rows
+
+      let ownershipQuery = supabase
+        .from('v_current_ownership')
+        .select('company_id,partner_id,display_name,current_share_ratio,current_voting_ratio,current_profit_ratio,current_capital_amount,current_share_units,has_control_right,control_type,has_veto_right,has_board_nomination_right,has_privileged_share,is_beneficial_owner,beneficial_ratio,warnings')
+        .in('company_id', companyIds)
+        .in('partner_id', partnerIds)
+      ownershipQuery = applyTenantQueryScope(ownershipQuery, 'v_current_ownership', tenantContext)
+      const { data: ownershipRows, error } = await ownershipQuery
+      if (error) return rows
+
+      const ownershipByKey = new Map((ownershipRows || []).map((row: Record<string, any>) => [`${row.company_id || ''}::${row.partner_id || ''}`, row]))
+      return rows.map(row => {
+        const ownership = ownershipByKey.get(`${row.company_id || ''}::${row.id || ''}`)
+        if (!ownership) return row
+        return {
+          ...row,
+          current_ownership: ownership,
+          current_share_ratio: ownership.current_share_ratio,
+          current_voting_ratio: ownership.current_voting_ratio,
+          current_profit_ratio: ownership.current_profit_ratio,
+          current_capital_amount: ownership.current_capital_amount,
+          current_share_units: ownership.current_share_units,
+        }
+      })
+    },
   })
 
   return safeCrudResponse(result)

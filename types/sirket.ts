@@ -150,6 +150,7 @@ export interface Sirket {
   // Metadata
   created_at: string
   updated_at: string
+  version?: number
   created_by: string
   field_history?: Record<string, Array<{ value: unknown; date: string; user?: string }>>
   

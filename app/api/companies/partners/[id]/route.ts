@@ -10,10 +10,41 @@ import {
 import { diffRecord, safeCrudResponse, safeReadRecord, safeUpdateRecord } from '@/lib/crud/safeCrudService'
 import { ensureUniqueRoleMaster } from '@/lib/identity/roleUniqueness'
 import { applyTenantQueryScope, resolveTenantContext, withTenantInsertScopeForTable } from '@/lib/tenancy/server'
-import { resolveBaseUpdatedAt, resolveBaseVersion, stripOperationControlFields } from '@/lib/operations/idempotency'
+import { requirePermission } from '@/lib/security/serverPermissions'
+import { OperationRequestService } from '@/lib/operations/operationRequestService'
+import { resolveBaseUpdatedAt, resolveBaseVersion, resolveClientRequestId, stripOperationControlFields } from '@/lib/operations/idempotency'
+import { operationStatusMessage } from '@/lib/operations/operationStatus'
+import { duplicateOperationJsonResponse } from '@/lib/operations/apiResponse'
+import { OutboxEventService } from '@/lib/outbox/outboxEventService'
 
 const PARTNER_DETAIL_SELECT = 'id,company_id,person_id,organization_id,owner_kind,partner_type,display_name,partner_name,identity_number,identity_tax_number,share_ratio,voting_ratio,profit_ratio,source_type,source_id,share_units,nominal_value,capital_amount,share_class,has_representation_right,signature_authority,has_control_right,control_type,has_board_nomination_right,has_veto_right,has_privileged_share,beneficial_owner,is_beneficial_owner,beneficial_ratio,is_ultimate_controller,start_date,end_date,status,record_status,history,photo_logo,partner_documents,partner_profile,notes,created_at,updated_at,version'
-const PARTNER_SECTION_BASE_SELECT = 'id,company_id,person_id,organization_id,source_id,display_name,partner_name'
+const PARTNER_SECTION_BASE_SELECT = 'id,company_id,person_id,organization_id,source_id,display_name,partner_name,version,updated_at'
+const PARTNER_OPERATION_CONTROLLED_FIELDS = new Set([
+  'share_ratio',
+  'voting_ratio',
+  'profit_ratio',
+  'share_units',
+  'nominal_value',
+  'capital_amount',
+  'committed_capital_amount',
+  'share_class',
+  'has_privileged_share',
+  'has_privilege',
+  'has_control_right',
+  'control_type',
+  'has_board_nomination_right',
+  'has_veto_right',
+  'beneficial_owner',
+  'is_beneficial_owner',
+  'beneficial_ratio',
+  'is_ultimate_controller',
+  'current_ownership',
+  'current_share_ratio',
+  'current_voting_ratio',
+  'current_profit_ratio',
+  'current_capital_amount',
+  'current_share_units',
+])
 
 function buildFieldHistory(current: Record<string, any>, updates: Record<string, any>) {
   const existingHistory = Array.isArray(current.history) ? current.history : []
@@ -34,6 +65,14 @@ function buildFieldHistory(current: Record<string, any>, updates: Record<string,
   })
 
   return nextHistory
+}
+
+function stripPartnerOperationControlledFields(body: Record<string, any>) {
+  const next = { ...body }
+  PARTNER_OPERATION_CONTROLLED_FIELDS.forEach(field => {
+    delete next[field]
+  })
+  return next
 }
 
 export async function GET(
@@ -135,68 +174,147 @@ export async function PATCH(
   const supabase = createServiceClient()
   const tenantContext = resolveTenantContext(request)
   const rawBody = await request.json()
+  const clientRequestId = resolveClientRequestId(request, rawBody)
   const baseVersion = resolveBaseVersion(rawBody)
   const baseUpdatedAt = resolveBaseUpdatedAt(rawBody)
-  const body = stripOperationControlFields(rawBody)
+  const body = stripPartnerOperationControlledFields(stripOperationControlFields(rawBody))
 
-  const result = await safeUpdateRecord({
-    supabase,
-    request,
-    tableName: 'company_partners',
-    recordId: id,
-    permissionKey: ['partners.edit', 'companies.edit'],
-    patch: body,
-    select: PARTNER_DETAIL_SELECT,
-    currentSelect: PARTNER_DETAIL_SELECT,
-    versionField: 'version',
+  const permission = await requirePermission(request, supabase, 'partners.edit')
+  if (permission instanceof NextResponse) return permission
+  const operationService = new OperationRequestService(supabase as any)
+  const operationCreate = await operationService.createOrGet({
+    tenantId: tenantContext.tenantId,
+    companyId: body.company_id || null,
+    moduleKey: 'sirket',
+    entityType: 'company_partner',
+    entityId: id,
+    operationType: 'partner.update',
+    clientRequestId,
     baseVersion,
     baseUpdatedAt,
-    guard: async ({ current, patch }) => {
-      const mapped = mapPartnerForDb(patch, current)
-      return ensureUniqueRoleMaster(supabase as any, {
-        tableName: 'company_partners',
-        identity: mapped,
-        excludeId: id,
-        tenantContext,
-      })
-    },
-    beforeUpdate: ({ current, patch }) => {
-      const mapped = mapPartnerForDb(patch, current)
-      return {
-        ...diffRecord(mapped, current),
-        history: buildFieldHistory(current, mapped),
-      }
-    },
-    afterUpdate: async ({ current, record }) => {
-      const oldStatus = current.record_status || (current.status === 'Aktif' ? 'active' : current.status === 'Pasif' ? 'passive' : 'draft')
-      const newStatus = record.record_status || (record.status === 'Aktif' ? 'active' : record.status === 'Pasif' ? 'passive' : 'draft')
-      if (oldStatus !== newStatus || body.ownership_action) {
-        await supabase.from('partner_ownership_lifecycle_events').insert(withTenantInsertScopeForTable({
-          partner_id: record.id,
-          company_id: record.company_id || record.company_id || null,
-          event_type: body.ownership_action === 'initial_partnership_entry_completed'
-            ? 'initial_partnership_entry_completed'
-            : oldStatus === 'draft' && newStatus === 'active' ? 'ownership_defined' : 'status_changed',
-          old_record_status: oldStatus,
-          new_record_status: newStatus,
-          payload_json: {
-            source: 'partners_page',
-            ownership_action: body.ownership_action || null,
-          },
-        }, 'partner_ownership_lifecycle_events', tenantContext))
-      }
-      if (record?.person_id) await syncMasterContact(supabase, 'person', record.person_id, body)
-      if (record?.organization_id) await syncMasterContact(supabase, 'organization', record.organization_id, body)
-      if (Array.isArray(body.entity_bank_accounts)) {
-        const kind = record?.person_id ? 'person' : record?.organization_id ? 'organization' : null
-        const masterId = record?.person_id || record?.organization_id
-        if (kind && masterId) await new EntityBankAccountsService(supabase as any).syncMany(kind, masterId, body.entity_bank_accounts, null)
-      }
-      return hydratePartnerDetail(supabase, record)
-    },
+    requestedBy: permission.userId,
+    payload: body,
   })
+  if (operationCreate.ok && operationCreate.duplicate) return duplicateOperationJsonResponse(operationCreate.operation)
+  if (!operationCreate.ok && !operationCreate.missingInfrastructure) {
+    return NextResponse.json({ error: operationCreate.error, code: operationCreate.code || 'OPERATION_REQUEST_FAILED' }, { status: 500 })
+  }
+  const operation = operationCreate.ok ? operationCreate.operation : null
+  if (operation) await operationService.markProcessing(operation.id)
 
-  return safeCrudResponse(result)
+  let result: Awaited<ReturnType<typeof safeUpdateRecord>>
+  try {
+    result = await safeUpdateRecord({
+      supabase,
+      request,
+      tableName: 'company_partners',
+      recordId: id,
+      permissionKey: ['partners.edit', 'companies.edit'],
+      patch: body,
+      select: PARTNER_DETAIL_SELECT,
+      currentSelect: PARTNER_DETAIL_SELECT,
+      versionField: 'version',
+      baseVersion,
+      baseUpdatedAt,
+      guard: async ({ current, patch }) => {
+        const mapped = mapPartnerForDb(patch, current)
+        return ensureUniqueRoleMaster(supabase as any, {
+          tableName: 'company_partners',
+          identity: mapped,
+          excludeId: id,
+          tenantContext,
+        })
+      },
+      beforeUpdate: ({ current, patch }) => {
+        const mapped = mapPartnerForDb(patch, current)
+        return {
+          ...diffRecord(mapped, current),
+          history: buildFieldHistory(current, mapped),
+        }
+      },
+      afterUpdate: async ({ current, record }) => {
+        const oldStatus = current.record_status || (current.status === 'Aktif' ? 'active' : current.status === 'Pasif' ? 'passive' : 'draft')
+        const newStatus = record.record_status || (record.status === 'Aktif' ? 'active' : record.status === 'Pasif' ? 'passive' : 'draft')
+        if (oldStatus !== newStatus || body.ownership_action) {
+          await supabase.from('partner_ownership_lifecycle_events').insert(withTenantInsertScopeForTable({
+            partner_id: record.id,
+            company_id: record.company_id || record.company_id || null,
+            event_type: body.ownership_action === 'initial_partnership_entry_completed'
+              ? 'initial_partnership_entry_completed'
+              : oldStatus === 'draft' && newStatus === 'active' ? 'ownership_defined' : 'status_changed',
+            old_record_status: oldStatus,
+            new_record_status: newStatus,
+            payload_json: {
+              source: 'partners_page',
+              ownership_action: body.ownership_action || null,
+            },
+          }, 'partner_ownership_lifecycle_events', tenantContext))
+        }
+        if (record?.person_id) await syncMasterContact(supabase, 'person', record.person_id, body)
+        if (record?.organization_id) await syncMasterContact(supabase, 'organization', record.organization_id, body)
+        if (Array.isArray(body.entity_bank_accounts)) {
+          const kind = record?.person_id ? 'person' : record?.organization_id ? 'organization' : null
+          const masterId = record?.person_id || record?.organization_id
+          if (kind && masterId) await new EntityBankAccountsService(supabase as any).syncMany(kind, masterId, body.entity_bank_accounts, null)
+        }
+        return hydratePartnerDetail(supabase, record)
+      },
+    })
+  } catch (error: any) {
+    if (operation) await operationService.markFailed(operation.id, {
+      code: error?.code || 'PARTNER_UPDATE_FAILED',
+      error: error?.message || 'Ortak güncellemesi tamamlanamadı.',
+    })
+    return NextResponse.json({
+      error: error?.message || 'Ortak güncellemesi tamamlanamadı.',
+      code: error?.code || 'PARTNER_UPDATE_FAILED',
+      ...(operation ? {
+        operation_id: operation.id,
+        operation_status: 'failed',
+        message: operationStatusMessage('failed'),
+      } : {}),
+    }, { status: 500 })
+  }
+
+  if (!result.ok) {
+    if (operation) await operationService.markFailed(operation.id, {
+      code: result.code,
+      error: result.error,
+      details: result.details,
+    })
+    if (!operation) return safeCrudResponse(result)
+    return NextResponse.json({
+      error: result.error,
+      code: result.code,
+      details: result.details,
+      operation_id: operation.id,
+      operation_status: 'failed',
+      message: operationStatusMessage('failed'),
+    }, { status: result.status })
+  }
+
+  if (operation) {
+    await operationService.markCompleted(operation.id, { id: result.data.id, data: result.data })
+    await new OutboxEventService(supabase as any).enqueue({
+      tenantId: tenantContext.tenantId,
+      companyId: result.data.company_id || body.company_id || null,
+      moduleKey: 'sirket',
+      eventType: 'partner.updated',
+      aggregateType: 'company_partner',
+      aggregateId: id,
+      operationId: operation.id,
+      payload: { id, company_id: result.data.company_id || body.company_id || null, changed_fields: Object.keys(body) },
+    }).catch(() => null)
+  }
+
+  return NextResponse.json({
+    data: result.data,
+    ...(operation ? {
+      operation_id: operation.id,
+      operation_status: 'completed',
+      message: operationStatusMessage('completed'),
+    } : {}),
+  })
 }
 
 export async function DELETE(
@@ -212,14 +330,25 @@ export async function DELETE(
     request,
     tableName: 'company_partners',
     recordId: id,
-    select: 'id,record_status,status',
+    select: 'id,company_id,record_status,status',
     lifecycleStatusField: ['record_status', 'status'],
     draftStatusValue: ['draft', 'taslak'],
     permissionKey: ['partners.delete', 'partners.edit', 'companies.edit'],
     referenceChecks: partnerDraftDeleteReferenceChecks(id),
   })
 
-  if (draftDelete.ok) return safeHardDeleteDraftRecordResponse(draftDelete)
+  if (draftDelete.ok) {
+    await new OutboxEventService(supabase as any).enqueue({
+      tenantId: tenantContext.tenantId,
+      companyId: draftDelete.record.company_id || null,
+      moduleKey: 'sirket',
+      eventType: 'partner.deleted',
+      aggregateType: 'company_partner',
+      aggregateId: id,
+      payload: { id, company_id: draftDelete.record.company_id || null, hard_deleted: true },
+    }).catch(() => null)
+    return safeHardDeleteDraftRecordResponse(draftDelete)
+  }
   if (draftDelete.code !== 'NOT_DRAFT_RECORD') return safeHardDeleteDraftRecordResponse(draftDelete)
 
   let passivateQuery = supabase
@@ -231,9 +360,20 @@ export async function DELETE(
     .eq('id', id)
 
   passivateQuery = applyTenantQueryScope(passivateQuery, 'company_partners', tenantContext)
-  const { error } = await passivateQuery
+  const { data, error } = await passivateQuery
+    .select('id,company_id')
+    .single()
 
   if (error) return NextResponse.json({ error: error.message, code: error.code || 'PASSIVATE_FAILED' }, { status: 500 })
+  await new OutboxEventService(supabase as any).enqueue({
+    tenantId: tenantContext.tenantId,
+    companyId: data?.company_id || null,
+    moduleKey: 'sirket',
+    eventType: 'partner.passivated',
+    aggregateType: 'company_partner',
+    aggregateId: id,
+    payload: { id, company_id: data?.company_id || null },
+  }).catch(() => null)
   return NextResponse.json({ success: true })
 }
 

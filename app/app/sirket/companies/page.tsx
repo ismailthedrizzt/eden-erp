@@ -903,9 +903,16 @@ export default function SirketlerPage() {
 
     try {
       const payload = normalizePayload(data)
+      const updatePayload = mode === 'create' || !selectedSirket
+        ? payload
+        : {
+          ...payload,
+          base_version: selectedSirket.version,
+          base_updated_at: selectedSirket.updated_at,
+        }
       const result = mode === 'create'
         ? await companyService.create(payload)
-        : await companyService.update(selectedSirket?.id || '', payload)
+        : await companyService.update(selectedSirket?.id || '', updatePayload)
       if (mode === 'create') {
         invalidateEntityDetailCache(COMPANY_DETAIL_CACHE_NAMESPACE)
       } else {
