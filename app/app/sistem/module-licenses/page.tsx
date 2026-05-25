@@ -234,7 +234,6 @@ export default function ModuleLicensesPage() {
             emptyText="Modül lisansı bulunamadı"
             onRowClick={(row) => setSelectedModuleKey(row.module_key)}
             onRefresh={refetch}
-            showActions={false}
           />
 
           <div className="space-y-3">

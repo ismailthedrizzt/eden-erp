@@ -554,7 +554,7 @@ Before using ANY component:
 | Rule | Description | Enforcement |
 |------|-------------|-------------|
 | **No Duplicate Titles** | SmartDataTable should NOT have `title` prop when PageBanner is present | STRICT |
-| **Action Column Visibility** | SmartDataTable action column only shows when `showActions={true}` or `onRowClick` is provided | REQUIRED |
+| **Action Column Visibility** | SmartDataTable does not render row-level action columns; lifecycle/operation actions belong in the form/detail surface | REQUIRED |
 | **PageBanner Pattern** | Use `mode="list"` with `onAddClick` OR `mode="form"` with `onBackClick` | STRICT |
 | **Standardized Add Button** | `addButtonText` is always "Ekle" on all pages (no customization) | STRICT |
 | **Image Components** | ONLY `ImageSlotUploader` for ALL image operations | STRICT |

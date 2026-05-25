@@ -141,6 +141,45 @@ export const companyService = {
   representativeDetail(id: string) {
     return apiClient.get<{ data: SirketTemsilci }>(`/api/companies/representatives/${id}`, { skipAuth: true, staleTime: 120_000 })
   },
+  createRepresentative(payload: Record<string, any>) {
+    return createEntityRecord<any>({ collectionPath: '/api/companies/representatives' }, payload)
+  },
+  updateRepresentative(id: string, payload: Record<string, any>) {
+    return updateEntityRecord<any>({ collectionPath: '/api/companies/representatives' }, id, payload)
+  },
+  deleteRepresentativeDraft(id: string) {
+    return deleteEntityRecord<{ success?: boolean; hardDeleted?: boolean }>({
+      endpoint: { collectionPath: '/api/companies/representatives' },
+      id,
+    })
+  },
+  startRepresentativeAuthority(id: string, payload: Record<string, any>) {
+    return representativeAuthorityOperation(id, 'Temsilcilik Başlatma', payload)
+  },
+  renewRepresentativeAuthority(id: string, payload: Record<string, any>) {
+    return representativeAuthorityOperation(id, 'Yetki Yenileme', payload)
+  },
+  changeRepresentativeAuthorityScope(id: string, payload: Record<string, any>) {
+    return representativeAuthorityOperation(id, 'Yetki Kapsamı Değişikliği', payload)
+  },
+  changeRepresentativeLimit(id: string, payload: Record<string, any>) {
+    return representativeAuthorityOperation(id, 'Limit Değişikliği', payload)
+  },
+  suspendRepresentativeAuthority(id: string, payload: Record<string, any>) {
+    return representativeAuthorityOperation(id, 'Askıya Alma', payload)
+  },
+  resumeRepresentativeAuthority(id: string, payload: Record<string, any>) {
+    return representativeAuthorityOperation(id, 'Yetki Yenileme', payload)
+  },
+  terminateRepresentativeAuthority(id: string, payload: Record<string, any>) {
+    return representativeAuthorityOperation(id, 'Sonlandırma', payload)
+  },
+  correctRepresentativeAuthority(id: string, payload: Record<string, any>) {
+    return representativeAuthorityOperation(id, 'Düzeltme Kaydı', payload)
+  },
+  reverseRepresentativeAuthority(id: string, payload: Record<string, any>) {
+    return representativeAuthorityOperation(id, 'Ters Kayıt', payload)
+  },
   stakeholdersList(options: RelationListOptions = {}) {
     return apiClient.get<ListResponse<Array<any>[number]>>('/api/companies/stakeholders', {
       ...relationListOptions(options),
@@ -176,4 +215,12 @@ export const companyService = {
     apiClient.invalidate('/api/companies/representatives')
     apiClient.invalidate('/api/companies/stakeholders')
   },
+}
+
+function representativeAuthorityOperation(id: string, transactionType: string, payload: Record<string, any>) {
+  return apiClient.patch<{ data: any }>(`/api/companies/representatives/${id}`, {
+    ...payload,
+    transaction_type: transactionType,
+    authority_action: true,
+  })
 }

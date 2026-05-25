@@ -13,7 +13,6 @@ import {
   SortConfig,
   WidgetDef,
   normalizeRecordStatusFilters,
-  type TableRowAction,
   type RecordStatusFilterValue,
 } from '@/components/ui/SmartDataTable'
 import { Toast } from '@/components/ui/Toast'
@@ -982,24 +981,6 @@ export default function OrtaklarPage() {
     }
   }
 
-  const getPartnerFunctionActions = (partner: Record<string, any>): TableRowAction<any>[] => {
-    if (!partner?.id) return []
-    const recordStatus = getPartnerRecordStatus(partner)
-    if (recordStatus === 'passive') return []
-
-    const actionTypes = recordStatus === 'active'
-      ? transactionTypes.filter(type => !isInitialPartnershipEntryType(type))
-      : [INITIAL_PARTNERSHIP_ENTRY_TYPE]
-
-    return actionTypes.map(transactionType => ({
-      key: `ownership-${partner.id}-${transactionType}`,
-      label: getOwnershipTransactionTypeLabel(transactionType),
-      icon: <ListChecks size={15} />,
-      tone: 'primary' as const,
-      onClick: () => openOwnershipWizard(partner, transactionType as OwnershipTransactionType),
-    }))
-  }
-
   const getFormOperationActions = (): FormOperationActionGroup[] => {
     if (!selectedPartner?.id || pageState === 'create') return []
     const recordStatus = getPartnerRecordStatus(selectedPartner)
@@ -1105,7 +1086,6 @@ export default function OrtaklarPage() {
             emptyText="Ortak kaydı bulunamadı"
             onRowClick={handleRowClick}
             onRefresh={() => loadData(true)}
-            rowActions={getPartnerFunctionActions}
             defaultPageSize={listQuery.pageSize}
             pagination={{
               mode: 'server',
@@ -1604,8 +1584,6 @@ function InitialPartnershipEntryWizard({
       currency: capital.currency,
       commitment_date: form.transaction_date,
       status: 'active',
-      approval_status: 'approved',
-      workflow_status: 'approved',
       document_status: documentSlots.some(slot => isInitialPartnershipDocumentReady(form[slot.id])) ? 'Yüklendi' : 'Belge Yok',
       document_files: serializeInitialPartnershipDocuments(form, documentSlots),
       has_privileged_share: form.has_non_proportional_rights,

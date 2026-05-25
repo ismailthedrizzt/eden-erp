@@ -362,7 +362,6 @@ export default function TeskilatPage() {
             emptyText="Birim kaydı bulunamadı"
             onRowClick={openView}
             onRefresh={() => loadData(true)}
-            showActions={false}
           />
         </div>
       )}

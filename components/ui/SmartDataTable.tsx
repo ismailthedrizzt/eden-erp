@@ -20,8 +20,7 @@ import {
   RefreshCw,
   FileDown,
   Plus,
-  Sparkles,
-  MoreVertical
+  Sparkles
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { DashboardGrid } from '@/components/dashboard/DashboardGrid'
@@ -109,17 +108,6 @@ export interface ServerPaginationConfig {
   onFilterChange?: (filters: FilterConfig[]) => void
 }
 
-export interface TableRowAction<T> {
-  key: string
-  label: string
-  title?: string
-  icon?: React.ReactNode
-  tone?: 'default' | 'primary' | 'danger'
-  disabled?: boolean
-  hidden?: boolean
-  onClick: (row: T) => void
-}
-
 interface SmartDataTableProps<T extends { id: string }> {
   data: T[]
   columns: ColumnDef[]
@@ -142,12 +130,6 @@ interface SmartDataTableProps<T extends { id: string }> {
   pagination?: ServerPaginationConfig
   realtime?: boolean
   pollingInterval?: number
-  /** @deprecated SmartLists no longer render row-level action columns; use form/detail actions. */
-  showActions?: boolean
-  /** @deprecated SmartLists no longer render row-level action columns; use form/detail actions. */
-  rowActions?: TableRowAction<T>[] | ((row: T) => TableRowAction<T>[])
-  /** @deprecated SmartLists no longer render row-level action columns; use form/detail actions. */
-  renderRowActions?: (row: T) => React.ReactNode
   /** Shows a toolbar toggle that asks the parent page to include passive records. */
   showPassiveToggle?: boolean
   includePassive?: boolean
@@ -373,8 +355,6 @@ export function SmartDataTable<T extends { id: string }>({
   defaultPageSize = 10,
   pageSizeOptions = [10, 25, 50, 100],
   pagination,
-  rowActions,
-  renderRowActions,
   realtime = false,
   pollingInterval = 30000,
   showPassiveToggle = false,
@@ -438,7 +418,6 @@ export function SmartDataTable<T extends { id: string }>({
   const [hoveredRow, setHoveredRow] = useState<string | null>(null)
   const [showWidgets, setShowWidgets] = useState(quickLookDefaultOpen)
   const [showWidgetPicker, setShowWidgetPicker] = useState(false)
-  const [openActionRowId, setOpenActionRowId] = useState<string | null>(null)
   const [selectedQuickLookWidgetIds, setSelectedQuickLookWidgetIds] = useState<string[]>(quickLookWidgetIds)
   const [loadedPreferenceSignature, setLoadedPreferenceSignature] = useState<string | null>(null)
   const [draggedColumn, setDraggedColumn] = useState<string | null>(null)
@@ -816,14 +795,12 @@ export function SmartDataTable<T extends { id: string }>({
     })
   }, [displayColumnConfig, columnEconomy, screenSize, estimateColumnWidth])
 
-  const hasRowActions = !!rowActions || !!renderRowActions
-  const actionColumnWidth = hasRowActions ? 64 : 0
   const visibleTableWidth = useMemo(() => {
     const columnsWidth = visibleColumns.reduce((sum, col) => {
       return sum + (col.calculatedWidth || estimateColumnWidth(col))
     }, 0)
-    return columnsWidth + actionColumnWidth
-  }, [visibleColumns, estimateColumnWidth, actionColumnWidth])
+    return columnsWidth
+  }, [visibleColumns, estimateColumnWidth])
 
   // Handlers
   const handleSearch = useCallback((value: string) => {
@@ -1244,81 +1221,6 @@ export function SmartDataTable<T extends { id: string }>({
 
   function isLeftAlignedColumn(col: ColumnDef): boolean {
     return col.type === 'text' || col.type === 'enum' || col.type === 'badge'
-  }
-
-  function getRowActions(row: T): TableRowAction<T>[] {
-    const actions = typeof rowActions === 'function'
-      ? rowActions(row)
-      : rowActions || []
-    return actions.filter(action => !action.hidden)
-  }
-
-  function closeRowActions() {
-    setOpenActionRowId(null)
-  }
-
-  function renderRowActionMenu(row: T, placement: 'table' | 'card' = 'table') {
-    if (renderRowActions) {
-      return (
-        <div onClick={event => event.stopPropagation()}>
-          {renderRowActions(row)}
-        </div>
-      )
-    }
-
-    const actions = getRowActions(row)
-    if (!actions.length) return null
-    const open = openActionRowId === row.id
-
-    return (
-      <div className="relative flex justify-center" onClick={event => event.stopPropagation()}>
-        <button
-          type="button"
-          aria-haspopup="menu"
-          aria-expanded={open}
-          onClick={() => setOpenActionRowId(current => current === row.id ? null : row.id)}
-          className="inline-flex h-8 w-8 items-center justify-center rounded-lg text-gray-500 transition hover:bg-gray-100 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-white"
-          title="Satır işlemleri"
-        >
-          <MoreVertical size={17} />
-        </button>
-        {open && (
-          <div
-            role="menu"
-            className={cn(
-              "absolute z-40 min-w-52 overflow-hidden rounded-lg border border-gray-200 bg-white py-1 text-left shadow-xl dark:border-gray-700 dark:bg-gray-950",
-              placement === 'card' ? "right-2 top-10" : "right-2 top-8"
-            )}
-          >
-            {actions.map(action => (
-              <button
-                key={action.key}
-                type="button"
-                role="menuitem"
-                disabled={action.disabled}
-                title={action.title}
-                onClick={() => {
-                  if (action.disabled) return
-                  closeRowActions()
-                  action.onClick(row)
-                }}
-                className={cn(
-                  "flex w-full items-center gap-2 px-3 py-2 text-left text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50",
-                  action.tone === 'danger'
-                    ? "text-red-700 hover:bg-red-50 dark:text-red-300 dark:hover:bg-red-950/30"
-                    : action.tone === 'primary'
-                      ? "text-blue-700 hover:bg-blue-50 dark:text-blue-300 dark:hover:bg-blue-950/30"
-                      : "text-gray-700 hover:bg-gray-50 dark:text-gray-200 dark:hover:bg-gray-900"
-                )}
-              >
-                {action.icon}
-                <span className="min-w-0 truncate">{action.label}</span>
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-    )
   }
 
   const dashboardWidgetByQuickLookId = new Map(dashboardWidgets.map(widget => [quickLookWidgetId('dashboard', widget.id), widget]))
@@ -1878,14 +1780,6 @@ export function SmartDataTable<T extends { id: string }>({
                     </th>
                   )
                 })}
-                {hasRowActions && (
-                  <th
-                    className="w-16 px-2 py-3 text-center font-medium text-gray-700 dark:text-gray-300"
-                    style={{ width: actionColumnWidth, minWidth: actionColumnWidth }}
-                  >
-                    <span className="sr-only">İşlemler</span>
-                  </th>
-                )}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
@@ -1935,17 +1829,6 @@ export function SmartDataTable<T extends { id: string }>({
                       </td>
                     )
                   })}
-                    {hasRowActions && (
-                      <td
-                        className={cn(
-                          "px-2 py-2 text-center transition-[background-color,box-shadow] duration-150",
-                          onRowClick && "group-hover/row:bg-sky-50/80 dark:group-hover/row:bg-sky-950/25"
-                        )}
-                        style={{ width: actionColumnWidth, minWidth: actionColumnWidth }}
-                      >
-                        {renderRowActionMenu(row)}
-                      </td>
-                    )}
                 </tr>
               )})}
             </tbody>
@@ -1977,11 +1860,6 @@ export function SmartDataTable<T extends { id: string }>({
                 onClick={() => onRowClick?.(row)}
                 className="relative min-h-44 cursor-pointer overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800"
               >
-                {hasRowActions && (
-                  <div className="absolute right-2 top-2 z-10">
-                    {renderRowActionMenu(row, 'card')}
-                  </div>
-                )}
                 <div className="flex min-h-44">
                   <div className={cn(
                     'relative flex w-32 shrink-0 self-stretch overflow-hidden sm:w-36 xl:w-40',

@@ -201,7 +201,6 @@ export function ProjectManagementBacklogPage() {
         defaultView="list"
         storageKey="project-management-backlog"
         emptyText="Backlog kaydı bulunamadı"
-        showActions={false}
       />
     </div>
   )

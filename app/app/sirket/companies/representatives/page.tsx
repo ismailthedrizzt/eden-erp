@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import type { Dispatch, SetStateAction } from 'react'
-import { BadgeCheck, ListChecks, PencilLine, Trash2 } from 'lucide-react'
+import { BadgeCheck, ListChecks } from 'lucide-react'
 import { EntityForm, FormField, FormMode, FormOperationActionGroup, FormTab } from '@/components/ui/EntityForm'
 import { PageBanner } from '@/components/ui/PageBanner'
 import { RecordLifecycleWizard, type RecordLifecycleWizardStep } from '@/components/ui/RecordLifecycleWizard'
@@ -14,7 +14,6 @@ import {
   WidgetDef,
   normalizeRecordStatusFilters,
   type RecordStatusFilterValue,
-  type TableRowAction,
 } from '@/components/ui/SmartDataTable'
 import { Toast } from '@/components/ui/Toast'
 import { normalizeCountryId } from '@/lib/reference/country-nationalities'
@@ -188,7 +187,7 @@ function getRepresentativePrimaryAuthority(representative: Record<string, any>) 
 }
 
 const columns: ColumnDef[] = [
-  { key: 'record_status', label: 'Durum', type: 'enum', width: 44, minWidth: 44, maxWidth: 44, fixedWidth: true, sortable: false, hideHeaderLabel: true, category: 'Durum', order: -10, render: (_value, row) => <RepresentativeStatusDot status={getRepresentativeRecordStatus(row)} /> },
+  { key: 'record_status', label: 'Durum', type: 'enum', width: 44, minWidth: 44, maxWidth: 44, fixedWidth: true, sortable: false, hideHeaderLabel: true, category: 'Durum', order: -10, render: (_value, row) => <RepresentativeStatusDot status={getRepresentativeRecordLifecycleStatus(row)} /> },
   { key: 'display_name', label: 'Ad Soyad / Ünvan', type: 'text', width: 260, minWidth: 180, sortable: true, category: 'Kimlik', required: true, render: (value, row) => <RepresentativeNameCell value={value} row={row} /> },
   { key: 'company_name', label: 'Temsil Ettiği Şirket', type: 'text', width: 220, category: 'Şirket', required: true },
   { key: 'representative_type_label', label: 'Temsilci Tipi', type: 'enum', width: 160, category: 'Kimlik', required: true },
@@ -201,6 +200,7 @@ const columns: ColumnDef[] = [
   { key: 'authority_end_date', label: 'Yürürlük Bitişi', type: 'date', width: 130, category: 'Tarih' },
   { key: 'limit_summary', label: 'Limit Özeti', type: 'text', width: 170, category: 'Yetki' },
   { key: 'last_operation_label', label: 'Son İşlem', type: 'enum', width: 180, category: 'Durum' },
+  { key: 'warnings_summary', label: 'Uyarılar', type: 'text', width: 220, category: 'Durum' },
 ]
 
 const heroFields: FormField[] = [
@@ -427,7 +427,6 @@ export default function TemsilcilerPage() {
   const [listQuery, setListQuery] = useState({ page: 1, pageSize: 50, search: '', sort: 'created_at', direction: 'desc' as 'asc' | 'desc' })
   const [listMeta, setListMeta] = useState<ListMeta>({ page: 1, pageSize: 50, total: 0, totalPages: 1 })
   const [toast, setToast] = useState<ToastState | null>(null)
-  const [createWizardOpen, setCreateWizardOpen] = useState(false)
   const [authorityWizardOpen, setAuthorityWizardOpen] = useState(false)
   const [authorityWizardType, setAuthorityWizardType] = useState<RepresentativeAuthorityTransactionType>('Temsilcilik Başlatma')
 
@@ -508,13 +507,14 @@ export default function TemsilcilerPage() {
     signature_type_label: representative.current_authority?.signature_type || representative.signature_type || '-',
     record_status: getRepresentativeRecordStatus(representative),
     authority_status: getRepresentativeAuthorityStatus(representative),
-    authority_record_status: getRepresentativeAuthorityStatus(representative),
+    authority_record_status: representative.current_authority?.record_status || representative.authority_record_status || '',
     authority_status_label: getRepresentativeAuthorityStatusLabel(getRepresentativeAuthorityStatus(representative), representative.current_authority?.status || representative.authority_status),
     authority_start_date: representative.current_authority?.effective_date || representative.authority_start_date || representative.start_date || '',
     authority_end_date: representative.current_authority?.end_date || representative.authority_end_date || representative.end_date || '',
     last_operation_label: getRepresentativeLastOperationLabel(representative),
     authority_limit: representative.current_authority?.transaction_limit ?? representative.transaction_limit,
     limit_summary: getRepresentativeLimitSummary(representative),
+    warnings_summary: getRepresentativeWarningsSummary(representative),
   })), [companyNameById, representatives])
 
   const widgets: WidgetDef<any>[] = useMemo(() => [
@@ -567,7 +567,9 @@ export default function TemsilcilerPage() {
     return withRepresentativeOperationControl(field)
   })
 
-  const configuredTabs = tabs.map(tab => ({
+  const configuredTabs = tabs
+    .filter(tab => pageState !== 'create' || ['genel', 'belgeler', 'notes'].includes(tab.id))
+    .map(tab => ({
     ...tab,
     fields: tab.fields.map(withRepresentativeOperationControl),
   }))
@@ -603,41 +605,6 @@ export default function TemsilcilerPage() {
     }
   }
 
-  const handleCreateWizardSubmit = async (data: Record<string, any>) => {
-    setSaving(true)
-    setFormError(null)
-    setFieldErrors({})
-    try {
-      const payload = normalizePayload(data, undefined, 'create')
-      const companySelectionError = getRepresentativeCompanySelectionError(payload)
-      if (companySelectionError) throw companySelectionError
-      const response = await fetch('/api/companies/representatives', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      })
-      if (!response.ok) throw await createSaveError(response, 'Temsilci taslağı oluşturulamadı')
-      const result = await response.json()
-      const normalized = result.data ? normalizeRepresentativeForForm(result.data) : null
-      if (normalized) {
-        setSelectedRepresentative(normalized)
-        writeEntityDetailCache('company-representatives', normalized.id, normalized)
-      }
-      setCreateWizardOpen(false)
-      setToast({ type: 'success', title: 'Taslak Oluşturuldu', message: 'Temsilci taslağı oluşturuldu. Yetkilendirme için lifecycle wizardını kullanın.' })
-      await loadData(true)
-      invalidateEntityDetailCache('company-representatives')
-      setPageState(normalized ? 'view' : 'list')
-    } catch (err: any) {
-      setFormError(err.message)
-      setFieldErrors(err.fieldErrors || {})
-      setToast(err.toast || { type: 'error', title: 'Taslak Oluşturulamadı', message: err.message })
-      throw err
-    } finally {
-      setSaving(false)
-    }
-  }
-
   const handleSave = async (data: Record<string, any>, mode: FormMode) => {
     setSaving(true)
     setFormError(null)
@@ -649,13 +616,9 @@ export default function TemsilcilerPage() {
       const requestPayload = mode === 'create'
         ? payload
         : withRepresentativeConcurrency(payload, selectedRepresentative)
-      const response = await fetch(mode === 'create' ? '/api/companies/representatives' : `/api/companies/representatives/${selectedRepresentative?.id}`, {
-        method: mode === 'create' ? 'POST' : 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(requestPayload),
-      })
-      if (!response.ok) throw await createSaveError(response, mode === 'create' ? 'Temsilci oluşturulamadı' : 'Güncelleme başarısız')
-      const result = await response.json()
+      const result = mode === 'create'
+        ? await companyService.createRepresentative(requestPayload)
+        : await companyService.updateRepresentative(selectedRepresentative?.id || '', requestPayload)
       if (result.data) setSelectedRepresentative(normalizeRepresentativeForForm(result.data))
       setToast({ type: 'success', title: 'Kayıt Başarılı', message: mode === 'create' ? 'Temsilci kaydı oluşturuldu' : 'Temsilci bilgileri güncellendi' })
       await loadData(true)
@@ -663,10 +626,11 @@ export default function TemsilcilerPage() {
       else invalidateEntityDetailCache('company-representatives', selectedRepresentative?.id)
       setPageState('list')
     } catch (err: any) {
-      setFormError(err.message)
-      setFieldErrors(err.fieldErrors || {})
-      setToast(err.toast || { type: 'error', title: 'Kayıt Başarısız', message: err.message })
-      throw err
+      const saveError = createSaveErrorFromService(err, mode === 'create' ? 'Temsilci oluşturulamadı' : 'Güncelleme başarısız')
+      setFormError(saveError.message)
+      setFieldErrors(saveError.fieldErrors || {})
+      setToast(saveError.toast || { type: 'error', title: 'Kayıt Başarısız', message: saveError.message })
+      throw saveError
     } finally {
       setSaving(false)
     }
@@ -676,26 +640,25 @@ export default function TemsilcilerPage() {
     if (!representativeId) return
     setDeleting(true)
     try {
-      const response = await fetch(`/api/companies/representatives/${representativeId}`, { method: 'DELETE' })
-      if (!response.ok) throw await createSaveError(response, 'Silme işlemi başarısız')
-      const result = await response.json().catch(() => ({}))
+      const result = await companyService.deleteRepresentativeDraft(representativeId)
       setToast({
         type: 'success',
         title: result.hardDeleted ? 'Taslak Silindi' : 'Silme İşlemi Tamamlandı',
         message: result.hardDeleted
-          ? 'İşlem geçmişi olmayan taslak temsilci kalıcı olarak silindi.'
+          ? 'Temsilci taslak kaydı kalıcı olarak silindi.'
           : 'Temsilci kaydı backend sonucuna göre güncellendi.',
       })
       await loadData(true)
       setPageState('list')
     } catch (err: any) {
-      if (err.code === 'REPRESENTATIVE_DELETE_REQUIRES_TERMINATION') {
-        setToast({ type: 'warning', title: 'Sonlandırma Gerekli', message: err.message })
+      const saveError = createSaveErrorFromService(err, 'Silme işlemi başarısız')
+      if (saveError.code === 'REPRESENTATIVE_DELETE_REQUIRES_TERMINATION') {
+        setToast({ type: 'warning', title: 'Sonlandırma Gerekli', message: 'Bu temsilci silinemez. Temsilcilik Sonlandırma işlemini kullanın.' })
         if (selectedRepresentative?.id === representativeId) openAuthorityWizard('Sonlandırma')
       } else {
-        setToast(err.toast || { type: 'error', title: 'Kayıt Başarısız', message: err.message })
+        setToast(saveError.toast || { type: 'error', title: 'Kayıt Başarısız', message: saveError.message })
       }
-      throw err
+      throw saveError
     } finally {
       setDeleting(false)
     }
@@ -707,122 +670,12 @@ export default function TemsilcilerPage() {
     setAuthorityWizardOpen(true)
   }
 
-  const openAuthorityWizardForRow = async (row: any, transactionType: RepresentativeAuthorityTransactionType) => {
-    await handleRowClick(row)
-    setAuthorityWizardType(transactionType)
-    setAuthorityWizardOpen(true)
-  }
-
-  const getRepresentativeRowActions = (row: any): TableRowAction<any>[] => {
-    const recordStatus = getRepresentativeRecordStatus(row)
-    const authorityStatus = getRepresentativeAuthorityStatus(row)
-    if (recordStatus === 'passive') {
-      return [{
-        key: 'view',
-        label: 'Görüntüle',
-        icon: <PencilLine size={15} />,
-        onClick: () => void handleRowClick(row),
-      }]
-    }
-
-    const actions: TableRowAction<any>[] = [{
-      key: 'view',
-      label: 'Detayı Aç',
-      icon: <PencilLine size={15} />,
-      onClick: () => void handleRowClick(row),
-    }]
-    if (recordStatus === 'draft') {
-      actions.push({
-        key: 'start',
-        label: 'Temsilcilik Başlat',
-        icon: <ListChecks size={15} />,
-        tone: 'primary',
-        onClick: () => void openAuthorityWizardForRow(row, 'Temsilcilik Başlatma'),
-      })
-      if (canHardDeleteRepresentative(row)) {
-        actions.push({
-          key: 'delete-draft',
-          label: 'Taslağı Sil',
-          icon: <Trash2 size={15} />,
-          tone: 'danger',
-          onClick: () => void handleDelete(row.id),
-        })
-      }
-      return actions
-    }
-
-    if (authorityStatus === 'suspended') {
-      actions.push(
-        {
-          key: 'renew-from-suspend',
-          label: 'Askıdan Kaldır / Yetki Yenile',
-          icon: <ListChecks size={15} />,
-          tone: 'primary',
-          onClick: () => void openAuthorityWizardForRow(row, 'Yetki Yenileme'),
-        },
-        {
-          key: 'terminate',
-          label: 'Sonlandır',
-          icon: <ListChecks size={15} />,
-          tone: 'danger',
-          onClick: () => void openAuthorityWizardForRow(row, 'Sonlandırma'),
-        }
-      )
-      return actions
-    }
-
-    if (recordStatus === 'active') {
-      actions.push(
-        {
-          key: 'renew',
-          label: 'Yetki Yenile',
-          icon: <ListChecks size={15} />,
-          onClick: () => void openAuthorityWizardForRow(row, 'Yetki Yenileme'),
-        },
-        {
-          key: 'change-scope',
-          label: 'Yetki Kapsamı Değiştir',
-          icon: <ListChecks size={15} />,
-          onClick: () => void openAuthorityWizardForRow(row, 'Yetki Kapsamı Değişikliği'),
-        },
-        {
-          key: 'change-limit',
-          label: 'Limit Değiştir',
-          icon: <ListChecks size={15} />,
-          onClick: () => void openAuthorityWizardForRow(row, 'Limit Değişikliği'),
-        },
-        {
-          key: 'suspend',
-          label: 'Askıya Al',
-          icon: <ListChecks size={15} />,
-          onClick: () => void openAuthorityWizardForRow(row, 'Askıya Alma'),
-        },
-        {
-          key: 'terminate',
-          label: 'Sonlandır',
-          icon: <ListChecks size={15} />,
-          tone: 'danger',
-          onClick: () => void openAuthorityWizardForRow(row, 'Sonlandırma'),
-        }
-      )
-    }
-    return actions
-  }
-
   const handleAuthorityWizardSubmit = async (payload: Record<string, any>) => {
     if (!selectedRepresentative?.id) return
     setSaving(true)
     try {
-      const response = await fetch(`/api/companies/representatives/${selectedRepresentative.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(withRepresentativeConcurrency({
-          ...payload,
-          authority_action: true,
-        }, selectedRepresentative)),
-      })
-      if (!response.ok) throw await createSaveError(response, 'Temsilcilik işlemi tamamlanamadı')
-      const result = await response.json()
+      const requestPayload = withRepresentativeConcurrency(payload, selectedRepresentative)
+      const result = await runRepresentativeAuthorityService(selectedRepresentative.id, payload.transaction_type, requestPayload)
       if (result.data) setSelectedRepresentative(normalizeRepresentativeForForm(result.data))
       setAuthorityWizardOpen(false)
       invalidateEntityDetailCache('company-representatives', selectedRepresentative.id)
@@ -830,8 +683,9 @@ export default function TemsilcilerPage() {
       setToast({ type: 'success', title: 'Temsilcilik İşlemi Oluşturuldu', message: `${payload.transaction_type} operation kaydı oluşturuldu.` })
       setPageState('view')
     } catch (err: any) {
-      setToast(err.toast || { type: 'error', title: 'Temsilcilik İşlemi Başarısız', message: err.message })
-      throw err
+      const saveError = createSaveErrorFromService(err, 'Temsilcilik işlemi tamamlanamadı')
+      setToast(saveError.toast || { type: 'error', title: 'Temsilcilik İşlemi Başarısız', message: saveError.message })
+      throw saveError
     } finally {
       setSaving(false)
     }
@@ -841,19 +695,35 @@ export default function TemsilcilerPage() {
     if (!selectedRepresentative?.id || pageState === 'create') return []
     const recordStatus = getRepresentativeRecordStatus(selectedRepresentative)
     const authorityStatus = getRepresentativeAuthorityStatus(selectedRepresentative)
-    const lifecycleActions = recordStatus === 'draft'
-      ? [{
+    if (recordStatus === 'passive') return []
+
+    const lifecycleActions = (() => {
+      if (recordStatus === 'draft') return [{
           key: 'representative-start',
           label: 'Temsilcilik Başlat',
           icon: <ListChecks size={15} />,
           onClick: () => openAuthorityWizard('Temsilcilik Başlatma'),
         }]
-      : [
+      if (recordStatus === 'active' && authorityStatus === 'suspended') return [
+        {
+          key: 'representative-resume',
+          label: 'Askıdan Kaldır / Yetki Yenile',
+          icon: <ListChecks size={15} />,
+          onClick: () => openAuthorityWizard('Yetki Yenileme'),
+        },
+        {
+          key: 'representative-terminate',
+          label: 'Sonlandır',
+          icon: <ListChecks size={15} />,
+          tone: 'danger' as const,
+          onClick: () => openAuthorityWizard('Sonlandırma'),
+        },
+      ]
+      if (recordStatus === 'active' && authorityStatus === 'active') return [
           {
             key: 'representative-suspend',
-            label: 'Askıya Alma',
+            label: 'Askıya Al',
             icon: <ListChecks size={15} />,
-            disabled: recordStatus !== 'active' || authorityStatus !== 'active',
             onClick: () => openAuthorityWizard('Askıya Alma'),
           },
           {
@@ -861,35 +731,53 @@ export default function TemsilcilerPage() {
             label: 'Sonlandır',
             icon: <ListChecks size={15} />,
             tone: 'danger' as const,
-            disabled: recordStatus !== 'active' || !['active', 'suspended'].includes(authorityStatus),
             onClick: () => openAuthorityWizard('Sonlandırma'),
           },
         ]
+      return []
+    })()
 
-    const authorityActions = recordStatus === 'active'
+    const authorityActions = recordStatus === 'active' && authorityStatus === 'active'
       ? (['Yetki Yenileme', 'Yetki Kapsamı Değişikliği', 'Limit Değişikliği', 'Düzeltme Kaydı', 'Ters Kayıt'] as RepresentativeAuthorityTransactionType[]).map(transactionType => ({
           key: `representative-${transactionType}`,
-          label: authorityStatus === 'suspended' && transactionType === 'Yetki Yenileme' ? 'Askıdan Kaldır / Yetki Yenile' : transactionType,
+          label: transactionType === 'Yetki Kapsamı Değişikliği'
+            ? 'Yetki Kapsamı Değiştir'
+            : transactionType === 'Limit Değişikliği'
+              ? 'Limit Değiştir'
+              : transactionType,
           icon: <ListChecks size={15} />,
-          disabled: transactionType === 'Ters Kayıt' || (authorityStatus === 'suspended' && transactionType !== 'Yetki Yenileme'),
           onClick: () => openAuthorityWizard(transactionType),
         }))
       : []
 
+    const cardActions = pageState === 'view'
+      ? [{
+          key: 'representative-card-edit',
+          label: 'Kart Bilgilerini Güncelle',
+          onClick: () => setPageState('edit'),
+        }]
+      : []
+
     return [
-      {
+      ...(lifecycleActions.length ? [{
         key: 'lifecycle',
-        title: 'Temsilcilik Yaşam Döngüsü',
-        operationKind: 'lifecycle',
+        title: 'Yaşam Döngüsü',
+        operationKind: 'lifecycle' as const,
         progress: getRepresentativeLifecycleOperationProgress(recordStatus),
         actions: lifecycleActions,
-      },
-      {
+      }] : []),
+      ...(authorityActions.length ? [{
         key: 'registration',
-        title: 'Resmi Yetki İşlemleri',
-        operationKind: 'official_update',
+        title: 'Resmî Yetki İşlemleri',
+        operationKind: 'official_update' as const,
         actions: authorityActions,
-      },
+      }] : []),
+      ...(cardActions.length ? [{
+        key: 'card',
+        title: 'Kart Bilgileri',
+        operationKind: 'basic_update' as const,
+        actions: cardActions,
+      }] : []),
     ]
   }
 
@@ -900,7 +788,7 @@ export default function TemsilcilerPage() {
         subtitle: 'Şirket temsilci ve yetki kayıtlarını yönetin',
         onAddClick: () => {
           setSelectedRepresentative(null)
-          setCreateWizardOpen(true)
+          setPageState('create')
           if (!companies.length) loadCompanyOptions().catch(() => setCompanies([]))
         },
         addButtonText: 'Yeni Temsilci',
@@ -946,7 +834,6 @@ export default function TemsilcilerPage() {
             emptyText="Temsilci kaydı bulunamadı"
             onRowClick={handleRowClick}
             onRefresh={() => loadData(true)}
-            rowActions={getRepresentativeRowActions}
             defaultPageSize={listQuery.pageSize}
             pagination={{
               mode: 'server',
@@ -1040,15 +927,6 @@ export default function TemsilcilerPage() {
         </div>
       )}
 
-      {createWizardOpen && (
-        <NewRepresentativeWizard
-          companies={companies}
-          saving={saving}
-          onClose={() => setCreateWizardOpen(false)}
-          onSubmit={handleCreateWizardSubmit}
-        />
-      )}
-
       {authorityWizardOpen && selectedRepresentative && (
         <RepresentativeAuthorityWizard
           representative={selectedRepresentative}
@@ -1061,216 +939,6 @@ export default function TemsilcilerPage() {
       )}
     </div>
   )
-}
-
-function NewRepresentativeWizard({
-  companies,
-  saving,
-  onClose,
-  onSubmit,
-}: {
-  companies: Option[]
-  saving: boolean
-  onClose: () => void
-  onSubmit: (payload: Record<string, any>) => Promise<void>
-}) {
-  const [form, setForm] = useState<Record<string, any>>({
-    company_id: '',
-    person_or_entity_type: 'person',
-    source_type: 'new',
-    source_id: '',
-    display_name: '',
-    first_name: '',
-    last_name: '',
-    trade_name: '',
-    short_name: '',
-    identity_number: '',
-    notes: '',
-  })
-  const [localError, setLocalError] = useState<string | null>(null)
-  const selectedCompany = companies.find(company => company.value === form.company_id)
-  const steps = useMemo<RecordLifecycleWizardStep[]>(() => buildNewRepresentativeWizardSteps({
-    form,
-    companies,
-    companyLabel: selectedCompany?.label || '',
-  }), [companies, form, selectedCompany?.label])
-
-  const complete = async () => {
-    setLocalError(null)
-    const validation = validateNewRepresentativeDraft(form)
-    if (validation) {
-      setLocalError(validation)
-      return
-    }
-    await onSubmit({
-      ...form,
-      person_id: form.source_type === 'master_person' ? form.source_id || null : null,
-      organization_id: form.source_type === 'master_organization' ? form.source_id || null : null,
-    })
-  }
-
-  return (
-    <RecordLifecycleWizard
-      title="Yeni Temsilci Tanımlama"
-      subtitle="Temsilci kartı taslağı oluşturma"
-      steps={steps}
-      form={form}
-      setForm={setForm as Dispatch<SetStateAction<Record<string, any>>>}
-      onClose={onClose}
-      onSubmit={complete}
-      submitLabel="Taslak Temsilci Oluştur"
-      saving={saving}
-      error={localError || undefined}
-      sideInfo="Bu akış yalnızca ana temsilci kartını Taslak olarak oluşturur. Yetki tipi, imza, limit ve kurum yetkileri Temsilcilik Başlatma wizardı ile girilir."
-    />
-  )
-}
-
-function buildNewRepresentativeWizardSteps({
-  form,
-  companies,
-  companyLabel,
-}: {
-  form: Record<string, any>
-  companies: Option[]
-  companyLabel: string
-}): RecordLifecycleWizardStep[] {
-  return [
-    {
-      id: 'new-representative-context',
-      title: 'Bağlam',
-      description: 'Bağlı şirket, kişi/kurum tipi ve kaynak türü.',
-      sections: [{
-        id: 'new-representative-context-fields',
-        title: 'Temsilci bağlamı',
-        fields: [
-          {
-            name: 'company_id',
-            label: 'Bağlı Şirket',
-            type: 'select',
-            required: true,
-            searchable: true,
-            options: companies,
-            remoteOptions: {
-              endpoint: '/api/companies?statuses=active&pageSize=40',
-              queryParam: 'ara',
-              minQueryLength: 2,
-              limit: 40,
-            },
-          },
-          {
-            name: 'person_or_entity_type',
-            label: 'Kişi/Kurum Tipi',
-            type: 'optionCards',
-            required: true,
-            options: [
-              { value: 'person', label: 'Gerçek Kişi', description: 'TCKN veya pasaport ile kişi master kaydına bağlanır.' },
-              { value: 'organization', label: 'Tüzel Kişi', description: 'VKN veya ticaret sicil bilgisi ile kurum master kaydına bağlanır.' },
-            ],
-          },
-          {
-            name: 'source_type',
-            label: 'Kaynak Türü',
-            type: 'select',
-            required: true,
-            options: [
-              { value: 'new', label: 'Yeni Kayıt' },
-              { value: 'master_person', label: 'Mevcut Kişi Master' },
-              { value: 'master_organization', label: 'Mevcut Kurum Master' },
-              { value: 'partner', label: 'Ortak Kaydı' },
-              { value: 'employee', label: 'Çalışan Kaydı' },
-              { value: 'external', label: 'Harici Kaynak' },
-            ],
-          },
-        ],
-      }],
-    },
-    {
-      id: 'new-representative-identity',
-      title: 'Kayıt Seçimi',
-      description: 'Mevcut master kaydı seçin veya yeni kişi/kurum bilgilerini girin.',
-      sections: [{
-        id: 'new-representative-identity-fields',
-        title: 'Kimlik bilgileri',
-        fields: [
-          {
-            name: 'source_id',
-            label: 'Kayıt Seçimi',
-            type: 'text',
-            requiredWhen: { field: 'source_type', operator: 'notEquals', value: 'new' },
-            placeholder: 'Mevcut master/kaynak kayıt ID',
-            visibleWhen: { field: 'source_type', operator: 'notEquals', value: 'new' },
-          },
-          { name: 'display_name', label: 'Kayıt Görünür Adı/Ünvanı', type: 'text', visibleWhen: { field: 'source_type', operator: 'notEquals', value: 'new' } },
-          { name: 'identity_number', label: 'TCKN / Pasaport / VKN', type: 'text', required: true },
-          { name: 'first_name', label: 'Ad', type: 'text', required: true, visibleWhen: { field: 'person_or_entity_type', operator: 'equals', value: 'person' } },
-          { name: 'last_name', label: 'Soyad', type: 'text', required: true, visibleWhen: { field: 'person_or_entity_type', operator: 'equals', value: 'person' } },
-          { name: 'trade_name', label: 'Ticari Ünvan', type: 'text', required: true, visibleWhen: { field: 'person_or_entity_type', operator: 'equals', value: 'organization' } },
-          { name: 'short_name', label: 'Kısa Ünvan', type: 'text', visibleWhen: { field: 'person_or_entity_type', operator: 'equals', value: 'organization' } },
-        ],
-      }],
-    },
-    {
-      id: 'new-representative-note',
-      title: 'Not',
-      description: 'Kart taslağına ait açıklama.',
-      sections: [{
-        id: 'new-representative-note-fields',
-        title: 'Açıklama',
-        fields: [
-          { name: 'notes', label: 'Notlar', type: 'textarea', colSpan: 3 },
-        ],
-      }],
-    },
-    {
-      id: 'new-representative-preview',
-      title: 'Ön İzleme',
-      description: 'Taslak oluşturulmadan önce son kontrol.',
-      sections: [{
-        id: 'new-representative-preview-section',
-        title: 'Taslak özeti',
-        frameless: true,
-        children: <NewRepresentativePreviewStep form={form} companyLabel={companyLabel} />,
-      }],
-    },
-  ]
-}
-
-function NewRepresentativePreviewStep({ form, companyLabel }: { form: Record<string, any>; companyLabel: string }) {
-  const displayName = form.person_or_entity_type === 'organization'
-    ? form.trade_name || form.short_name || form.display_name || '-'
-    : [form.first_name, form.last_name].filter(Boolean).join(' ') || form.display_name || '-'
-
-  return (
-    <div className="space-y-4">
-      <div className="grid gap-3 md:grid-cols-2">
-        <SummaryMetric label="Durum" value="Taslak" />
-        <SummaryMetric label="Temsilci" value={displayName} />
-        <SummaryMetric label="Bağlı Şirket" value={companyLabel || form.company_id || '-'} />
-        <SummaryMetric label="Kişi/Kurum Tipi" value={form.person_or_entity_type === 'organization' ? 'Tüzel Kişi' : 'Gerçek Kişi'} />
-        <SummaryMetric label="Kaynak Türü" value={getRepresentativeSourceTypeLabel(form.source_type)} />
-        <SummaryMetric label="Kimlik" value={form.identity_number || '-'} />
-        <SummaryMetric label="Not" value={form.notes || '-'} />
-      </div>
-
-      <div className="rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-950">
-        <div className="text-sm font-semibold text-gray-950 dark:text-white">Yetki bilgileri</div>
-        <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
-          Yetki tipi, imza türü, limitler, kurum yetkileri ve yürürlük tarihleri Temsilcilik Başlatma wizardı ile operation olarak oluşturulur.
-        </p>
-      </div>
-    </div>
-  )
-}
-
-function validateNewRepresentativeDraft(form: Record<string, any>) {
-  if (!form.company_id) return 'Bağlı şirket seçimi zorunludur.'
-  if (!form.person_or_entity_type) return 'Kişi/kurum tipi zorunludur.'
-  if (form.source_type !== 'new' && !form.source_id) return 'Mevcut kayıt seçimi zorunludur.'
-  if (!form.identity_number) return 'TCKN / Pasaport / VKN zorunludur.'
-  if (form.person_or_entity_type === 'person' && form.source_type === 'new' && (!form.first_name || !form.last_name)) return 'Ad ve soyad zorunludur.'
-  if (form.person_or_entity_type === 'organization' && form.source_type === 'new' && !form.trade_name) return 'Ticari ünvan zorunludur.'
-  return null
 }
 
 function RepresentativeAuthorityWizard({
@@ -1644,18 +1312,37 @@ function SummaryMetric({ label, value }: { label: string; value: unknown }) {
   )
 }
 
+function runRepresentativeAuthorityService(
+  representativeId: string,
+  transactionType: RepresentativeAuthorityTransactionType,
+  payload: Record<string, any>
+) {
+  if (transactionType === 'Temsilcilik Başlatma') return companyService.startRepresentativeAuthority(representativeId, payload)
+  if (transactionType === 'Yetki Yenileme') return companyService.renewRepresentativeAuthority(representativeId, payload)
+  if (transactionType === 'Yetki Kapsamı Değişikliği') return companyService.changeRepresentativeAuthorityScope(representativeId, payload)
+  if (transactionType === 'Limit Değişikliği') return companyService.changeRepresentativeLimit(representativeId, payload)
+  if (transactionType === 'Askıya Alma') return companyService.suspendRepresentativeAuthority(representativeId, payload)
+  if (transactionType === 'Sonlandırma') return companyService.terminateRepresentativeAuthority(representativeId, payload)
+  if (transactionType === 'Düzeltme Kaydı') return companyService.correctRepresentativeAuthority(representativeId, payload)
+  if (transactionType === 'Ters Kayıt') return companyService.reverseRepresentativeAuthority(representativeId, payload)
+  return companyService.updateRepresentative(representativeId, { ...payload, authority_action: true, transaction_type: transactionType })
+}
+
 function RepresentativeStatusSummary({ data }: { data: Record<string, any> }) {
   const recordStatus = getRepresentativeRecordStatus(data)
   const authorityStatus = getRepresentativeAuthorityStatus(data)
   const startDate = data.current_authority?.effective_date || data.authority_start_date || data.start_date || '-'
   const endDate = data.current_authority?.end_date || data.authority_end_date || data.end_date || 'Süresiz'
+  const warnings = getRepresentativeWarningsSummary(data)
 
   return (
-    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
       <SummaryMetric label="Kayıt Durumu" value={getRepresentativeRecordStatusLabel(recordStatus)} />
       <SummaryMetric label="Güncel Yetki Durumu" value={getRepresentativeAuthorityStatusLabel(authorityStatus, data.authority_status)} />
       <SummaryMetric label="Son İşlem" value={getRepresentativeLastOperationLabel(data)} />
-      <SummaryMetric label="Yürürlük Tarihleri" value={`${startDate} / ${endDate}`} />
+      <SummaryMetric label="Yürürlük Başlangıcı" value={startDate} />
+      <SummaryMetric label="Yürürlük Bitişi" value={endDate} />
+      <SummaryMetric label="Uyarılar" value={warnings} />
     </div>
   )
 }
@@ -1738,7 +1425,7 @@ function SummaryList({ items, emptyText }: { items: any[]; emptyText: string }) 
 function Timeline({ value }: { value: any[] }) {
   const items = value.filter(Boolean)
   if (!items.length) {
-    return <div className="rounded-lg border border-dashed border-gray-200 p-4 text-sm text-gray-500 dark:border-gray-700">Henüz işlem geçmişi bulunmuyor.</div>
+    return <div className="rounded-lg border border-dashed border-gray-200 p-4 text-sm text-gray-500 dark:border-gray-700">Henüz temsilcilik işlem geçmişi bulunmuyor.</div>
   }
 
   return (
@@ -1792,7 +1479,7 @@ function normalizeRepresentativeForForm(representative: RepresentativeRow) {
     status,
     record_status: recordStatus,
     authority_status: currentAuthority.status || representative.authority_status || getRepresentativeAuthorityStatusLabel(authorityStatus),
-    authority_record_status: authorityStatus,
+    authority_record_status: currentAuthority.record_status || representative.authority_record_status || '',
     start_date: currentAuthority.effective_date || representative.start_date || '',
     end_date: currentAuthority.end_date || representative.end_date || '',
     signature_type: currentAuthority.signature_type || representative.signature_type || '',
@@ -1908,7 +1595,7 @@ function RepresentativeNameCell({ value }: { value: any; row: any }) {
 
 function getRepresentativeAuthorityStatusLabel(recordStatus: string, fallback?: string) {
   const labels: Record<string, string> = {
-    draft: 'Taslak',
+    draft: 'Başlatılmadı',
     active: 'Aktif',
     suspended: 'Askıda',
     expired: 'Süresi Dolmuş',
@@ -1929,6 +1616,10 @@ function getRepresentativeRecordStatus(representative?: Record<string, any> | nu
   if (status.includes('pasif')) return 'passive'
   if (status.includes('aktif') || status.includes('ask') || status.includes('son')) return 'active'
   return 'draft'
+}
+
+function getRepresentativeRecordLifecycleStatus(representative?: Record<string, any> | null): RecordStatusFilterValue {
+  return getRepresentativeRecordStatus(representative)
 }
 
 function getRepresentativeAuthorityStatus(representative?: Record<string, any> | null) {
@@ -1957,6 +1648,16 @@ function getRepresentativeLimitSummary(representative: Record<string, any>) {
     .filter(value => Number.isFinite(value) && value > 0)
   if (!limits.length) return '-'
   return `${Math.max(...limits).toLocaleString('tr-TR')} ${currency}`
+}
+
+function getRepresentativeWarningsSummary(representative: Record<string, any>) {
+  const warnings = representative.current_authority?.warnings || representative.warnings || representative.representative_profile?.warnings
+  if (Array.isArray(warnings) && warnings.length) return warnings.filter(Boolean).join(', ')
+  if (typeof warnings === 'string' && warnings.trim()) return warnings
+  const authorityStatus = getRepresentativeAuthorityStatus(representative)
+  if (authorityStatus === 'expired') return 'Süresi dolmuş yetki'
+  if (authorityStatus === 'terminated') return 'Yetki sonlandırılmış'
+  return '-'
 }
 
 function getRepresentativeTypeLabel(representative: Record<string, any>) {
@@ -2027,9 +1728,10 @@ function buildEntityFieldHistory(history: any[]) {
   }, {})
 }
 
-async function createSaveError(response: Response, fallback: string): Promise<SaveError> {
-  const body = await response.json().catch(() => ({}))
-  const code = body.code || `HTTP_${response.status}`
+function createSaveErrorFromService(errorLike: any, fallback: string): SaveError {
+  if ((errorLike as SaveError)?.toast || (errorLike as SaveError)?.fieldErrors) return errorLike as SaveError
+  const body = errorLike?.details || {}
+  const code = errorLike?.code || body.code || (errorLike?.status ? `HTTP_${errorLike.status}` : 'REQUEST_FAILED')
   const zodFieldErrors = body.details?.fieldErrors || {}
   const fields = Object.keys(zodFieldErrors)
 
@@ -2041,7 +1743,7 @@ async function createSaveError(response: Response, fallback: string): Promise<Sa
     return error
   }
 
-  const message = `${body.error || fallback} [${code}]`
+  const message = `${body.error || errorLike?.message || fallback} [${code}]`
   const error = new Error(message) as SaveError
   error.code = code
   error.toast = { type: 'error', title: 'Kayıt Başarısız', message }

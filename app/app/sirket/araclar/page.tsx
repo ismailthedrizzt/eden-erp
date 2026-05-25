@@ -301,7 +301,6 @@ export default function AraclarPage() {
               onSearchChange: search => setListQuery(prev => ({ ...prev, page: 1, search })),
               onSortChange: handleListSortChange,
             }}
-            showActions={false}
           />
         </div>
       )}
