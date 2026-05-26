@@ -221,7 +221,7 @@ const FIELD_LABELS: Record<string, string> = {
 
 const PARTNER_LIFECYCLE_CONTROL = {
   category: 'lifecycle' as const,
-  operations: ['İlk Ortaklık Girişi', 'Ortaklıktan Çıkış', 'Pasife Alma'],
+  operations: ['İlk Ortaklık Girişi', 'Ortaklıktan Çıkış', 'Pay Devri'],
 }
 
 const PARTNER_OWNERSHIP_REGISTRATION_CONTROL = {
@@ -774,7 +774,7 @@ export default function OrtaklarPage() {
     try {
       await companyService.deletePartner(selectedPartner.id)
       invalidateEntityDetailCache('company-partners', selectedPartner.id)
-      setToast({ type: 'success', title: 'Kayıt Başarılı', message: selectedRecordStatus === 'draft' ? 'Ortak taslak kaydi kalici olarak silindi' : 'Ortak kaydı pasife çekildi' })
+      setToast({ type: 'success', title: 'Kayıt Başarılı', message: 'Ortak taslak kaydı kalıcı olarak silindi.' })
       await loadData(true)
       setPageState('list')
     } catch (err: any) {
@@ -926,7 +926,7 @@ export default function OrtaklarPage() {
     const initialPartnershipCompleted = completedLifecycleActions.has(PARTNER_OWNERSHIP_ENTRY_ACTION_KEY)
     const lifecycleActions: FormOperationAction[] = [{
       key: PARTNER_OWNERSHIP_ENTRY_ACTION_KEY,
-      label: getOwnershipTransactionTypeLabel(INITIAL_PARTNERSHIP_ENTRY_TYPE),
+      label: initialPartnershipCompleted ? 'İlk Ortaklık Girişini Görüntüle' : getOwnershipTransactionTypeLabel(INITIAL_PARTNERSHIP_ENTRY_TYPE),
       icon: <ListChecks size={15} />,
       onClick: () => {
         if (initialPartnershipCompleted) {
@@ -2361,20 +2361,20 @@ function PartnerStatusSummary({ partner }: { partner?: Record<string, any> }) {
   const ownershipStatus = recordStatus === 'passive'
     ? 'Pasif'
     : Number(currentOwnership?.current_share_ratio || 0) > 0
-      ? 'Aktif ortaklik'
+      ? 'Aktif ortaklık'
       : transactions.length
-        ? 'Islem bekliyor'
-        : 'Baslatilmadi'
+        ? 'İşlem bekliyor'
+        : 'Başlatılmadı'
   const warnings = normalizeSummaryWarnings(currentOwnership?.warnings)
 
   return (
     <div className="grid gap-3 rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm dark:border-gray-700 dark:bg-gray-900/40 md:grid-cols-2">
-      <StatusSummaryItem label="Kayit Durumu" value={getPartnerStatusLabel(recordStatus)} />
-      <StatusSummaryItem label="Guncel Ortaklik Durumu" value={ownershipStatus} />
-      <StatusSummaryItem label="Son Ortaklik Islemi" value={lastTransaction?.transaction_type || '-'} />
-      <StatusSummaryItem label="Yururluk Baslangici" value={formatSummaryDate(lastTransaction?.effective_date || partner?.start_date)} />
-      <StatusSummaryItem label="Yururluk Bitisi" value={formatSummaryDate(lastTransaction?.end_date || partner?.end_date)} />
-      <StatusSummaryItem label="Uyarilar" value={warnings.length ? warnings.join(', ') : '-'} />
+      <StatusSummaryItem label="Kayıt Durumu" value={getPartnerStatusLabel(recordStatus)} />
+      <StatusSummaryItem label="Güncel Ortaklık Durumu" value={ownershipStatus} />
+      <StatusSummaryItem label="Son Ortaklık İşlemi" value={lastTransaction?.transaction_type || '-'} />
+      <StatusSummaryItem label="Yürürlük Başlangıcı" value={formatSummaryDate(lastTransaction?.effective_date || partner?.start_date)} />
+      <StatusSummaryItem label="Yürürlük Bitişi" value={formatSummaryDate(lastTransaction?.end_date || partner?.end_date)} />
+      <StatusSummaryItem label="Uyarılar" value={warnings.length ? warnings.join(', ') : '-'} />
     </div>
   )
 }

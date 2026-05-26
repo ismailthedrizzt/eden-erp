@@ -19,6 +19,8 @@ const TENANT_SCOPED_TABLES = new Set([
   'company_partners',
   'company_representatives',
   'company_representative_authority_transactions',
+  'company_branches',
+  'company_official_change_transactions',
   'stakeholders',
   'ownership_transactions',
   'company_capital_increase_transactions',

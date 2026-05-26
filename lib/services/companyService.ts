@@ -9,11 +9,18 @@ import {
   updateEntityRecord,
 } from '@/lib/crud/entityCrudClient'
 
-type RelationListOptions = ApiClientOptions & Partial<Pick<ListQuery, 'page' | 'pageSize' | 'search' | 'sort' | 'direction'>> & { includePassive?: boolean; companyId?: string; statuses?: string[] }
+type RelationListOptions = ApiClientOptions & Partial<Pick<ListQuery, 'page' | 'pageSize' | 'search' | 'sort' | 'direction'>> & {
+  includePassive?: boolean
+  companyId?: string
+  statuses?: string[]
+  authorityStatuses?: string[]
+  authority_statuses?: string[]
+}
 type CompanyListOptions = ApiClientOptions & Partial<Pick<ListQuery, 'page' | 'pageSize' | 'search' | 'sort' | 'direction'>> & { includePassive?: boolean; statuses?: string[] }
 
 function relationListOptions(options: RelationListOptions = {}) {
-  const { includePassive, companyId, statuses, ...clientOptions } = options
+  const { includePassive, companyId, statuses, authorityStatuses, authority_statuses, ...clientOptions } = options
+  const representativeAuthorityStatuses = authorityStatuses || authority_statuses
   return {
     ...clientOptions,
     skipAuth: clientOptions.skipAuth ?? true,
@@ -22,6 +29,7 @@ function relationListOptions(options: RelationListOptions = {}) {
       ...(companyId ? { company_id: companyId } : {}),
       ...(includePassive ? { include_passive: 'true' } : {}),
       ...(statuses?.length ? { statuses: statuses.join(',') } : {}),
+      ...(representativeAuthorityStatuses?.length ? { authority_statuses: representativeAuthorityStatuses.join(',') } : {}),
       page: clientOptions.query?.page ?? options.page,
       pageSize: clientOptions.query?.pageSize ?? options.pageSize,
       search: clientOptions.query?.search ?? options.search,
@@ -91,6 +99,74 @@ export const companyService = {
   },
   completeCapitalIncrease(companyId: string, payload: Record<string, any>) {
     return apiClient.post<{ data: any }>(`/api/companies/${companyId}/capital-increases`, payload)
+  },
+  capitalDecreasePrecheck(companyId: string) {
+    return apiClient.get<{ data: any }>(`/api/companies/${companyId}/capital-decreases/precheck`, {
+      useCache: false,
+    })
+  },
+  requestCapitalDecrease(companyId: string, payload: Record<string, any>) {
+    return apiClient.post<{ data: any }>(`/api/companies/${companyId}/capital-decreases`, payload)
+  },
+  officialChangePrecheck(companyId: string, changeType: 'title_change' | 'address_change' | 'public_registration_update') {
+    return apiClient.get<{ data: any }>(`/api/companies/${companyId}/official-changes/${officialChangePath(changeType)}/precheck`, {
+      useCache: false,
+    })
+  },
+  completeOfficialChange(companyId: string, changeType: 'title_change' | 'address_change' | 'public_registration_update', payload: Record<string, any>) {
+    return apiClient.post<{ data: any }>(`/api/companies/${companyId}/official-changes/${officialChangePath(changeType)}`, payload)
+  },
+  branchesList(options: RelationListOptions = {}) {
+    return apiClient.get<ListResponse<Array<any>[number]>>('/api/companies/branches', {
+      ...relationListOptions(options),
+    })
+  },
+  branchDetail(id: string) {
+    return readEntityRecord<any>({
+      endpoint: { collectionPath: '/api/companies/branches' },
+      id,
+      options: { skipAuth: true, staleTime: 120_000 },
+    })
+  },
+  updateBranch(id: string, payload: Record<string, any>) {
+    return updateEntityRecord<any>({ collectionPath: '/api/companies/branches' }, id, payload)
+  },
+  branchOpeningPrecheck(companyId: string, params: { branchName?: string; address?: string } = {}) {
+    return apiClient.get<{ data: any }>(`/api/companies/${companyId}/official-changes/branch-opening/precheck`, {
+      useCache: false,
+      query: {
+        ...(params.branchName ? { branch_name: params.branchName } : {}),
+        ...(params.address ? { address: params.address } : {}),
+      },
+    })
+  },
+  completeBranchOpening(companyId: string, payload: Record<string, any>) {
+    return apiClient.post<{ data: any; operation_id?: string; operation_status?: string; message?: string }>(`/api/companies/${companyId}/official-changes/branch-opening`, payload)
+  },
+  branchClosingPrecheck(companyId: string, branchId?: string | null) {
+    return apiClient.get<{ data: any }>(`/api/companies/${companyId}/official-changes/branch-closing/precheck`, {
+      useCache: false,
+      query: branchId ? { branch_id: branchId } : undefined,
+    })
+  },
+  completeBranchClosing(companyId: string, payload: Record<string, any>) {
+    return apiClient.post<{ data: any; operation_id?: string; operation_status?: string; message?: string }>(`/api/companies/${companyId}/official-changes/branch-closing`, payload)
+  },
+  naceChangePrecheck(companyId: string) {
+    return apiClient.get<{ data: any }>(`/api/companies/${companyId}/official-changes/nace-change/precheck`, {
+      useCache: false,
+    })
+  },
+  completeNaceChange(companyId: string, payload: Record<string, any>) {
+    return apiClient.post<{ data: any; operation_id?: string; operation_status?: string; message?: string }>(`/api/companies/${companyId}/official-changes/nace-change`, payload)
+  },
+  activitySubjectChangePrecheck(companyId: string) {
+    return apiClient.get<{ data: any }>(`/api/companies/${companyId}/official-changes/activity-subject-change/precheck`, {
+      useCache: false,
+    })
+  },
+  completeActivitySubjectChange(companyId: string, payload: Record<string, any>) {
+    return apiClient.post<{ data: any; operation_id?: string; operation_status?: string; message?: string }>(`/api/companies/${companyId}/official-changes/activity-subject-change`, payload)
   },
   partners(companyId: string, options: ApiClientOptions = {}) {
     return apiClient.get<{ data: SirketOrtak[] }>('/api/companies/partners', relationListOptions({ ...options, companyId }))
@@ -214,6 +290,7 @@ export const companyService = {
     apiClient.invalidate('/api/companies/partners')
     apiClient.invalidate('/api/companies/representatives')
     apiClient.invalidate('/api/companies/stakeholders')
+    apiClient.invalidate('/api/companies/branches')
   },
 }
 
@@ -223,4 +300,10 @@ function representativeAuthorityOperation(id: string, transactionType: string, p
     transaction_type: transactionType,
     authority_action: true,
   })
+}
+
+function officialChangePath(changeType: 'title_change' | 'address_change' | 'public_registration_update') {
+  if (changeType === 'title_change') return 'title-change'
+  if (changeType === 'address_change') return 'address-change'
+  return 'public-registration-update'
 }

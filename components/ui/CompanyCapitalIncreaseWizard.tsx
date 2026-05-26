@@ -24,43 +24,58 @@ export type CapitalIncreasePrecheckContext = {
   ok: boolean
   message?: string
   reasons?: string[]
+  warnings?: string[]
+  blocking_reasons?: string[]
+  is_company_active?: boolean
+  company_status?: string
+  record_status?: string
+  has_full_share_distribution?: boolean
   total_share_ratio: number
   current_capital_amount: number
   paid_capital_amount: number
   unpaid_capital_amount: number
   active_partners: CapitalPartnerSnapshot[]
   draft_partners: CapitalPartnerSnapshot[]
+  current_ownership_distribution?: CapitalPartnerSnapshot[]
 }
 
-type PartnerParticipationDraft = {
+type DistributionMethod = 'proportional' | 'manual'
+type CapitalSource = 'Nakdi' | 'Ayni' | 'İç Kaynaklardan' | 'Ortak Alacağından'
+
+type PartnerDistributionDraft = {
   partner_id: string
-  increase_amount: string
+  new_committed_capital_amount: string
+  new_share_ratio: string
   capital_source: CapitalSource | ''
   description: string
 }
 
-type NewPartnerDraft = {
-  mode: 'existing_draft' | 'new_record'
-  partner_id: string
-  owner_kind: 'person' | 'organization'
-  display_name: string
-  identity_tax_number: string
-}
-
-type CapitalSource = 'Nakdi' | 'Ayni' | 'İç Kaynaklardan' | 'Ortak Alacağından'
-
 export type CapitalIncreaseSubmitPayload = {
+  client_request_id: string
   increase_type: string
   transaction_date: string
+  effective_date: string
+  registration_date: string
+  old_capital_amount: number
+  increase_amount: number
+  new_capital_amount: number
+  currency: string
+  increase_reason: string
+  distribution_method: DistributionMethod
   participants: Array<{
     partner_id: string
+    old_committed_capital_amount: number
     increase_amount: number
+    new_committed_capital_amount: number
+    old_share_ratio: number
+    new_share_ratio: number
+    old_voting_ratio: number
+    new_voting_ratio: number
+    old_profit_ratio: number
+    new_profit_ratio: number
     capital_source: CapitalSource | null
     description: string | null
   }>
-  new_partner?: NewPartnerDraft | null
-  new_partner_increase_amount?: number | null
-  new_partner_capital_source?: CapitalSource | null
   notes?: string | null
   document_files: SlotDocument[]
   document_meta: Record<string, { document_date?: string | null; description?: string | null }>
@@ -71,22 +86,29 @@ const capitalIncreaseTypes = [
   'İç kaynaklardan sermaye artırımı',
   'Ortak alacağının sermayeye eklenmesi',
   'Ayni sermaye konulması',
-  'Yeni ortak girişiyle sermaye artırımı',
   'Mevcut ortakların farklı oranlarda katılımıyla artırım',
   'Karma artırım',
-  'Sermaye azaltımı ile eş zamanlı sermaye artırımı',
+]
+
+const capitalIncreaseReasons = [
+  'Büyüme ve yatırım finansmanı',
+  'İşletme sermayesi ihtiyacı',
+  'Ortak alacağının sermayeye eklenmesi',
+  'İç kaynakların sermayeye eklenmesi',
+  'Yasal / sözleşmesel zorunluluk',
+  'Diğer',
 ]
 
 const sourceOptions: CapitalSource[] = ['Nakdi', 'Ayni', 'İç Kaynaklardan', 'Ortak Alacağından']
 
 const documentSlots: DocumentSlot[] = [
-  { id: 'board_resolution', title: 'Kurul Kararı', required: true },
-  { id: 'financial_advisor_document', title: 'Mali Müşavir Belgesi', required: true },
-  { id: 'registration_document', title: 'Tescil Belgesi', required: true },
-  { id: 'trade_registry_gazette', title: 'Ticaret Sicili Gazetesi İlanı', required: true },
+  { id: 'board_resolution', title: 'Kurul / Genel Kurul Kararı', required: false },
+  { id: 'financial_advisor_document', title: 'Mali Müşavir / YMM Raporu', required: false },
+  { id: 'registration_document', title: 'Tescil Belgesi', required: false },
+  { id: 'trade_registry_gazette', title: 'Ticaret Sicili Gazetesi İlanı', required: false },
 ]
 
-const stepLabels = ['Sermaye Artırım Türü', 'Ortak / Katılım Bilgileri', 'Belgeler', 'Önizleme ve Tamamlama']
+const stepLabels = ['Ön Kontrol', 'Sermaye Bilgileri', 'Ortaklara Dağıtım', 'Belgeler', 'Özet ve Onay']
 
 export function CompanyCapitalIncreaseWizard({
   companyName,
@@ -104,90 +126,103 @@ export function CompanyCapitalIncreaseWizard({
   const [step, setStep] = useState(0)
   const [increaseType, setIncreaseType] = useState(capitalIncreaseTypes[0])
   const [transactionDate, setTransactionDate] = useState(() => new Date().toISOString().slice(0, 10))
-  const [rows, setRows] = useState<PartnerParticipationDraft[]>([])
-  const [newPartner, setNewPartner] = useState<NewPartnerDraft>({
-    mode: context.draft_partners.length ? 'existing_draft' : 'new_record',
-    partner_id: '',
-    owner_kind: 'person',
-    display_name: '',
-    identity_tax_number: '',
-  })
-  const [newPartnerAmount, setNewPartnerAmount] = useState('')
-  const [newPartnerSource, setNewPartnerSource] = useState<CapitalSource | ''>('')
+  const [effectiveDate, setEffectiveDate] = useState(() => new Date().toISOString().slice(0, 10))
+  const [registrationDate, setRegistrationDate] = useState(() => new Date().toISOString().slice(0, 10))
+  const [oldCapitalAmount, setOldCapitalAmount] = useState(String(context.current_capital_amount || 0))
+  const [increaseAmount, setIncreaseAmount] = useState('')
+  const [newCapitalAmount, setNewCapitalAmount] = useState(String(context.current_capital_amount || 0))
+  const [currency, setCurrency] = useState('TRY')
+  const [increaseReason, setIncreaseReason] = useState(capitalIncreaseReasons[0])
+  const [distributionMethod, setDistributionMethod] = useState<DistributionMethod>('proportional')
+  const [rows, setRows] = useState<PartnerDistributionDraft[]>([])
   const [notes, setNotes] = useState('')
   const [documents, setDocuments] = useState<SlotDocument[]>([])
   const [documentMeta, setDocumentMeta] = useState<Record<string, { document_date?: string; description?: string }>>({})
   const [error, setError] = useState<string | null>(null)
+  const [clientRequestId] = useState(() => {
+    const randomId = typeof crypto !== 'undefined' && 'randomUUID' in crypto
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(36).slice(2)}`
+    return `capital-increase:${randomId}`
+  })
 
-  const isNewPartnerIncrease = increaseType === 'Yeni ortak girişiyle sermaye artırımı'
-  const currentCapital = context.current_capital_amount || 0
+  const partners = context.current_ownership_distribution?.length
+    ? context.current_ownership_distribution
+    : context.active_partners
+  const oldCapital = toNumber(oldCapitalAmount)
+  const increase = toNumber(increaseAmount)
+  const newCapital = toNumber(newCapitalAmount)
+  const precheckWarnings = Array.from(new Set([...(context.warnings || []), ...(context.reasons || [])]))
+  const blockingReasons = context.blocking_reasons || (!context.ok && context.message ? [context.message] : [])
 
   useEffect(() => {
-    setRows(context.active_partners.map(partner => ({
-      partner_id: partner.id,
-      increase_amount: '',
-      capital_source: defaultSourceForType(increaseType),
-      description: '',
-    })))
-  }, [context.active_partners, increaseType])
+    const nextCapital = roundMoney(toNumber(oldCapitalAmount) + toNumber(increaseAmount))
+    setNewCapitalAmount(nextCapital > 0 ? String(nextCapital) : '')
+  }, [increaseAmount, oldCapitalAmount])
+
+  useEffect(() => {
+    setRows(buildDistributionDraftRows(partners, toNumber(oldCapitalAmount), toNumber(newCapitalAmount), distributionMethod, rows))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [distributionMethod, newCapitalAmount, oldCapitalAmount, partners])
 
   const calculations = useMemo(() => {
-    const activeRows = context.active_partners.map(partner => {
+    const participantRows = partners.map(partner => {
       const draft = rows.find(row => row.partner_id === partner.id)
-      const increase = isNewPartnerIncrease ? 0 : toNumber(draft?.increase_amount)
+      const oldCommitted = roundMoney(partner.committed_capital_amount || (oldCapital * partner.share_ratio / 100))
+      const newCommitted = roundMoney(toNumber(draft?.new_committed_capital_amount))
+      const newShare = newCapital > 0 ? roundRatio((newCommitted / newCapital) * 100) : toNumber(draft?.new_share_ratio)
+      const oldShare = roundRatio(partner.share_ratio || (oldCapital > 0 ? (oldCommitted / oldCapital) * 100 : 0))
+      const increaseForPartner = roundMoney(newCommitted - oldCommitted)
+
       return {
         partner,
         draft,
-        increase_amount: increase,
-        new_committed_capital_amount: roundMoney(partner.committed_capital_amount + increase),
+        old_committed_capital_amount: oldCommitted,
+        increase_amount: increaseForPartner,
+        new_committed_capital_amount: newCommitted,
+        old_share_ratio: oldShare,
+        new_share_ratio: newShare,
+        old_voting_ratio: roundRatio(partner.voting_ratio || oldShare),
+        new_voting_ratio: newShare,
+        old_profit_ratio: roundRatio(partner.profit_ratio || oldShare),
+        new_profit_ratio: newShare,
       }
     })
-    const newPartnerIncrease = isNewPartnerIncrease ? toNumber(newPartnerAmount) : 0
-    const totalIncrease = roundMoney(activeRows.reduce((sum, row) => sum + row.increase_amount, 0) + newPartnerIncrease)
-    const newCapital = roundMoney(currentCapital + totalIncrease)
-    const participants = activeRows.map(row => ({
-      ...row,
-      old_share_ratio: row.partner.share_ratio,
-      new_share_ratio: newCapital > 0 ? roundRatio((row.new_committed_capital_amount / newCapital) * 100) : 0,
-    }))
-    const newPartnerPreview = isNewPartnerIncrease && newPartnerIncrease > 0
-      ? {
-          display_name: selectedNewPartnerName(context.draft_partners, newPartner) || 'Yeni ortak',
-          increase_amount: newPartnerIncrease,
-          new_committed_capital_amount: newPartnerIncrease,
-          old_share_ratio: 0,
-          new_share_ratio: newCapital > 0 ? roundRatio((newPartnerIncrease / newCapital) * 100) : 0,
-          capital_source: newPartnerSource || null,
-        }
-      : null
-    const totalShare = roundRatio(participants.reduce((sum, row) => sum + row.new_share_ratio, 0) + (newPartnerPreview?.new_share_ratio || 0))
 
     return {
-      participants,
-      newPartnerPreview,
-      totalIncrease,
-      newCapital,
-      totalShare,
+      participants: participantRows,
+      totalNewCommitted: roundMoney(participantRows.reduce((sum, row) => sum + row.new_committed_capital_amount, 0)),
+      totalIncrease: roundMoney(participantRows.reduce((sum, row) => sum + row.increase_amount, 0)),
+      totalShare: roundRatio(participantRows.reduce((sum, row) => sum + row.new_share_ratio, 0)),
     }
-  }, [context.active_partners, context.draft_partners, currentCapital, isNewPartnerIncrease, newPartner, newPartnerAmount, newPartnerSource, rows])
-
-  const requiredDocumentsReady = documentSlots.every(slot => !slot.required || documents.some(document => document.slotId === slot.id && isActiveDocument(document)))
+  }, [newCapital, oldCapital, partners, rows])
 
   const validateCurrentStep = (targetStep = step) => {
-    if (targetStep >= 0 && !increaseType) return 'Sermaye artırım türü seçilmelidir.'
-    if (targetStep >= 1) {
-      if (calculations.totalIncrease <= 0) return 'Sermaye artırım tutarı 0’dan büyük olmalıdır.'
-      if (isNewPartnerIncrease) {
-        if (newPartner.mode === 'existing_draft' && !newPartner.partner_id) return 'Eklenecek taslak ortak seçilmelidir.'
-        if (newPartner.mode === 'new_record' && !newPartner.display_name.trim()) return 'Yeni ortak adı / ünvanı girilmelidir.'
-        if (!newPartnerSource) return 'Artırım kaynağı seçilmelidir.'
-      } else {
-        const missingSource = rows.some(row => toNumber(row.increase_amount) > 0 && !row.capital_source)
-        if (missingSource) return 'Artırım tutarı girilen her ortak için artırım kaynağı seçilmelidir.'
-      }
-      if (Math.abs(calculations.totalShare - 100) > 0.05) return 'Yeni hisse oranları toplamı %100 olmalıdır.'
+    if (targetStep >= 0 && (!context.ok || blockingReasons.length)) {
+      return blockingReasons[0] || 'Sermaye artırımı bu şirket için başlatılamaz.'
     }
-    if (targetStep >= 2 && !requiredDocumentsReady) return 'Zorunlu belgeler yüklenmeden işlem tamamlanamaz.'
+    if (targetStep >= 1) {
+      if (!transactionDate) return 'İşlem tarihi zorunludur.'
+      if (!effectiveDate) return 'Yürürlük / tescil tarihi zorunludur.'
+      if (oldCapital <= 0) return 'Eski sermaye 0’dan büyük olmalıdır.'
+      if (increase <= 0) return 'Artırılacak tutar 0’dan büyük olmalıdır.'
+      if (newCapital <= oldCapital) return 'Yeni sermaye eski sermayeden büyük olmalıdır.'
+      if (Math.abs(newCapital - (oldCapital + increase)) > 0.05) return 'Yeni sermaye, eski sermaye ve artırılacak tutar ile uyumlu olmalıdır.'
+      if (!currency) return 'Para birimi seçilmelidir.'
+      if (!increaseReason) return 'Artırım nedeni seçilmelidir.'
+    }
+    if (targetStep >= 2) {
+      if (!partners.length) return 'Sermaye dağıtımı yapılacak aktif ortak bulunamadı.'
+      if (Math.abs(calculations.totalNewCommitted - newCapital) > 0.05) return 'Manuel dağıtımda toplam sermaye yeni sermayeye eşit olmalıdır.'
+      if (Math.abs(calculations.totalShare - 100) > 0.05) return 'Manuel dağıtımda toplam pay oranı %100 olmalıdır.'
+      const negative = calculations.participants.find(row => row.new_committed_capital_amount < row.old_committed_capital_amount)
+      if (negative) return 'Sermaye artırımı mevcut ortak sermayesini azaltamaz. Azaltım ayrı operasyonla yapılmalıdır.'
+      const missingSource = rows.some(row => {
+        const participant = calculations.participants.find(item => item.partner.id === row.partner_id)
+        return participant && participant.increase_amount > 0 && !row.capital_source
+      })
+      if (missingSource) return 'Artırım yapılan her ortak için kaynak seçilmelidir.'
+    }
     return null
   }
 
@@ -202,24 +237,38 @@ export function CompanyCapitalIncreaseWizard({
   }
 
   const complete = async () => {
-    const validationError = validateCurrentStep(3)
+    const validationError = validateCurrentStep(4)
     if (validationError) {
       setError(validationError)
       return
     }
     setError(null)
     await onComplete({
+      client_request_id: clientRequestId,
       increase_type: increaseType,
       transaction_date: transactionDate,
-      participants: rows.map(row => ({
-        partner_id: row.partner_id,
-        increase_amount: toNumber(row.increase_amount),
-        capital_source: row.capital_source || null,
-        description: row.description || null,
+      effective_date: effectiveDate,
+      registration_date: registrationDate || effectiveDate,
+      old_capital_amount: oldCapital,
+      increase_amount: increase,
+      new_capital_amount: newCapital,
+      currency,
+      increase_reason: increaseReason,
+      distribution_method: distributionMethod,
+      participants: calculations.participants.map(row => ({
+        partner_id: row.partner.id,
+        old_committed_capital_amount: row.old_committed_capital_amount,
+        increase_amount: row.increase_amount,
+        new_committed_capital_amount: row.new_committed_capital_amount,
+        old_share_ratio: row.old_share_ratio,
+        new_share_ratio: row.new_share_ratio,
+        old_voting_ratio: row.old_voting_ratio,
+        new_voting_ratio: row.new_voting_ratio,
+        old_profit_ratio: row.old_profit_ratio,
+        new_profit_ratio: row.new_profit_ratio,
+        capital_source: row.draft?.capital_source || null,
+        description: row.draft?.description || null,
       })),
-      new_partner: isNewPartnerIncrease ? newPartner : null,
-      new_partner_increase_amount: isNewPartnerIncrease ? toNumber(newPartnerAmount) : null,
-      new_partner_capital_source: isNewPartnerIncrease ? newPartnerSource || null : null,
       notes: notes || null,
       document_files: documents,
       document_meta: documentMeta,
@@ -240,14 +289,14 @@ export function CompanyCapitalIncreaseWizard({
         </div>
 
         <div className="border-b border-gray-100 px-5 py-3 dark:border-gray-800">
-          <div className="grid gap-2 md:grid-cols-4">
+          <div className="grid gap-2 md:grid-cols-5">
             {stepLabels.map((label, index) => (
               <button
                 key={label}
                 type="button"
                 onClick={() => index <= step && setStep(index)}
                 className={cn(
-                  'flex items-center gap-2 rounded-lg border px-3 py-2 text-left text-sm font-medium',
+                  'flex min-h-[48px] items-center gap-2 rounded-lg border px-3 py-2 text-left text-sm font-medium',
                   index === step
                     ? 'border-blue-300 bg-blue-50 text-blue-800 dark:border-blue-800 dark:bg-blue-950/40 dark:text-blue-200'
                     : index < step
@@ -264,76 +313,91 @@ export function CompanyCapitalIncreaseWizard({
 
         <div className="min-h-0 flex-1 overflow-auto px-5 py-5">
           {step === 0 && (
-            <div className="grid gap-3 md:grid-cols-2">
-              {capitalIncreaseTypes.map(type => (
-                <button
-                  key={type}
-                  type="button"
-                  onClick={() => {
-                    setIncreaseType(type)
-                    setError(null)
-                  }}
-                  className={cn(
-                    'rounded-lg border p-4 text-left transition',
-                    increaseType === type
-                      ? 'border-blue-400 bg-blue-50 text-blue-900 dark:border-blue-700 dark:bg-blue-950/40 dark:text-blue-100'
-                      : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-800 dark:bg-gray-950 dark:text-gray-200 dark:hover:bg-gray-900'
-                  )}
-                >
-                  <div className="flex items-center gap-2">
-                    <Landmark size={16} />
-                    <span className="font-semibold">{type}</span>
-                  </div>
-                </button>
-              ))}
-            </div>
+            <PrecheckStep context={context} warnings={precheckWarnings} blockingReasons={blockingReasons} />
           )}
 
           {step === 1 && (
-            <div className="space-y-4">
-              <div className="rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-800 dark:border-blue-900/60 dark:bg-blue-950/30 dark:text-blue-200">
-                Bu işlem ödeme kaydı oluşturmaz. Ortakların taahhüt edilen sermaye tutarları güncellenir. Ödemeler daha sonra Muhasebe sekmesinden işlenecektir.
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-3">
+            <div className="space-y-5">
+              <div className="grid gap-3 md:grid-cols-3">
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
                   İşlem Tarihi
                   <input type="date" value={transactionDate} onChange={event => setTransactionDate(event.target.value)} className={formControlClass({ className: 'mt-1' })} />
                 </label>
-                <CapitalMetric label="Mevcut Sermaye" value={formatCurrency(currentCapital)} />
-                <CapitalMetric label="Yeni Sermaye" value={formatCurrency(calculations.newCapital)} />
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                  Yürürlük / Tescil Tarihi
+                  <input type="date" value={effectiveDate} onChange={event => {
+                    setEffectiveDate(event.target.value)
+                    setRegistrationDate(event.target.value)
+                  }} className={formControlClass({ className: 'mt-1' })} />
+                </label>
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                  Ticaret Sicili Tescil Tarihi
+                  <input type="date" value={registrationDate} onChange={event => setRegistrationDate(event.target.value)} className={formControlClass({ className: 'mt-1' })} />
+                </label>
               </div>
 
-              {isNewPartnerIncrease ? (
-                <NewPartnerStep
-                  draftPartners={context.draft_partners}
-                  newPartner={newPartner}
-                  setNewPartner={setNewPartner}
-                  amount={newPartnerAmount}
-                  setAmount={setNewPartnerAmount}
-                  source={newPartnerSource}
-                  setSource={setNewPartnerSource}
-                  notes={notes}
-                  setNotes={setNotes}
-                />
-              ) : (
-                <ExistingPartnersStep
-                  partners={context.active_partners}
-                  rows={rows}
-                  setRows={setRows}
-                  calculations={calculations}
-                />
-              )}
+              <div className="grid gap-3 md:grid-cols-4">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                  Eski Sermaye
+                  <input type="number" min="0" step="0.01" value={oldCapitalAmount} readOnly className={formControlClass({ className: 'mt-1 bg-gray-50 dark:bg-gray-900' })} />
+                </label>
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                  Artırılacak Tutar
+                  <input type="number" min="0" step="0.01" value={increaseAmount} onChange={event => setIncreaseAmount(event.target.value)} className={formControlClass({ className: 'mt-1' })} />
+                </label>
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                  Yeni Sermaye
+                  <input type="number" min="0" step="0.01" value={newCapitalAmount} onChange={event => setNewCapitalAmount(event.target.value)} className={formControlClass({ className: 'mt-1' })} />
+                </label>
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                  Para Birimi
+                  <select value={currency} onChange={event => setCurrency(event.target.value)} className={formControlClass({ className: 'mt-1' })}>
+                    {['TRY', 'USD', 'EUR', 'GBP'].map(option => <option key={option} value={option}>{option}</option>)}
+                  </select>
+                </label>
+              </div>
+
+              <div className="grid gap-3 md:grid-cols-2">
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                  Artırım Türü
+                  <select value={increaseType} onChange={event => setIncreaseType(event.target.value)} className={formControlClass({ className: 'mt-1' })}>
+                    {capitalIncreaseTypes.map(type => <option key={type} value={type}>{type}</option>)}
+                  </select>
+                </label>
+                <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
+                  Artırım Nedeni
+                  <select value={increaseReason} onChange={event => setIncreaseReason(event.target.value)} className={formControlClass({ className: 'mt-1' })}>
+                    {capitalIncreaseReasons.map(reason => <option key={reason} value={reason}>{reason}</option>)}
+                  </select>
+                </label>
+              </div>
+
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
+                Açıklama / Not
+                <textarea value={notes} onChange={event => setNotes(event.target.value)} rows={3} className={formControlClass({ className: 'mt-1' })} />
+              </label>
             </div>
           )}
 
           {step === 2 && (
+            <DistributionStep
+              partners={partners}
+              rows={rows}
+              setRows={setRows}
+              calculations={calculations}
+              distributionMethod={distributionMethod}
+              setDistributionMethod={setDistributionMethod}
+              currency={currency}
+            />
+          )}
+
+          {step === 3 && (
             <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
               <DocumentSlotUploader
                 slots={documentSlots}
                 documents={documents}
                 onChange={setDocuments}
-                allowExtraSlots={false}
+                allowExtraSlots
                 mode="update"
                 defaultTab="upload"
               />
@@ -367,13 +431,16 @@ export function CompanyCapitalIncreaseWizard({
             </div>
           )}
 
-          {step === 3 && (
+          {step === 4 && (
             <PreviewStep
               increaseType={increaseType}
-              currentCapital={currentCapital}
+              oldCapital={oldCapital}
+              increase={increase}
+              newCapital={newCapital}
+              currency={currency}
               calculations={calculations}
               documents={documents}
-              newPartnerName={selectedNewPartnerName(context.draft_partners, newPartner)}
+              distributionMethod={distributionMethod}
             />
           )}
         </div>
@@ -386,9 +453,9 @@ export function CompanyCapitalIncreaseWizard({
 
         <div className="flex items-center justify-between gap-3 border-t border-gray-100 px-5 py-4 dark:border-gray-800">
           <div className="text-xs text-gray-500 dark:text-gray-400">
-            Toplam artırım: <span className="font-semibold text-gray-900 dark:text-white">{formatCurrency(calculations.totalIncrease)}</span>
-            <span className="mx-2">•</span>
-            Yeni hisse toplamı: <span className="font-semibold text-gray-900 dark:text-white">%{formatNumber(calculations.totalShare)}</span>
+            Toplam yeni sermaye: <span className="font-semibold text-gray-900 dark:text-white">{formatCurrency(calculations.totalNewCommitted, currency)}</span>
+            <span className="mx-2">-</span>
+            Toplam pay: <span className="font-semibold text-gray-900 dark:text-white">%{formatNumber(calculations.totalShare)}</span>
           </div>
           <div className="flex items-center gap-2">
             <button type="button" onClick={onClose} className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-900">
@@ -399,7 +466,7 @@ export function CompanyCapitalIncreaseWizard({
                 Geri
               </button>
             )}
-            {step < 3 ? (
+            {step < stepLabels.length - 1 ? (
               <button type="button" onClick={nextStep} className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700">
                 Devam
               </button>
@@ -415,158 +482,70 @@ export function CompanyCapitalIncreaseWizard({
   )
 }
 
-function NewPartnerStep({
-  draftPartners,
-  newPartner,
-  setNewPartner,
-  amount,
-  setAmount,
-  source,
-  setSource,
-  notes,
-  setNotes,
+function PrecheckStep({
+  context,
+  warnings,
+  blockingReasons,
 }: {
-  draftPartners: CapitalPartnerSnapshot[]
-  newPartner: NewPartnerDraft
-  setNewPartner: (value: NewPartnerDraft) => void
-  amount: string
-  setAmount: (value: string) => void
-  source: CapitalSource | ''
-  setSource: (value: CapitalSource | '') => void
-  notes: string
-  setNotes: (value: string) => void
+  context: CapitalIncreasePrecheckContext
+  warnings: string[]
+  blockingReasons: string[]
 }) {
-  const update = (patch: Partial<NewPartnerDraft>) => setNewPartner({ ...newPartner, ...patch })
-
   return (
-    <div className="grid gap-4 lg:grid-cols-3">
-      <div className="space-y-3 rounded-lg border border-gray-200 p-4 dark:border-gray-800 lg:col-span-2">
-        <div className="flex flex-wrap gap-2">
-          <button type="button" onClick={() => update({ mode: 'existing_draft' })} disabled={!draftPartners.length} className={toggleClass(newPartner.mode === 'existing_draft')}>
-            Mevcut Taslak Ortak
-          </button>
-          <button type="button" onClick={() => update({ mode: 'new_record', partner_id: '' })} className={toggleClass(newPartner.mode === 'new_record')}>
-            Yeni Kayıt
-          </button>
-        </div>
-
-        {newPartner.mode === 'existing_draft' ? (
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
-            Eklenecek Ortak
-            <select value={newPartner.partner_id} onChange={event => update({ partner_id: event.target.value })} className={formControlClass({ className: 'mt-1' })}>
-              <option value="">Seçiniz</option>
-              {draftPartners.map(partner => (
-                <option key={partner.id} value={partner.id}>{partner.display_name}</option>
-              ))}
-            </select>
-          </label>
-        ) : (
-          <div className="grid gap-3 sm:grid-cols-2">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
-              Gerçek / Tüzel Kişi
-              <select value={newPartner.owner_kind} onChange={event => update({ owner_kind: event.target.value as NewPartnerDraft['owner_kind'] })} className={formControlClass({ className: 'mt-1' })}>
-                <option value="person">Gerçek Kişi</option>
-                <option value="organization">Tüzel Kişi</option>
-              </select>
-            </label>
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
-              Ortak Adı / Ünvanı
-              <input value={newPartner.display_name} onChange={event => update({ display_name: event.target.value })} className={formControlClass({ className: 'mt-1' })} />
-            </label>
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-200 sm:col-span-2">
-              TCKN / VKN
-              <input value={newPartner.identity_tax_number} onChange={event => update({ identity_tax_number: event.target.value })} className={formControlClass({ className: 'mt-1' })} />
-            </label>
-          </div>
-        )}
-
-        <div className="grid gap-3 sm:grid-cols-2">
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
-            Artırılacak Sermaye Tutarı
-            <input type="number" min="0" step="0.01" value={amount} onChange={event => setAmount(event.target.value)} className={formControlClass({ className: 'mt-1' })} />
-          </label>
-          <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
-            Artırım Kaynağı
-            <select value={source} onChange={event => setSource(event.target.value as CapitalSource | '')} className={formControlClass({ className: 'mt-1' })}>
-              <option value="">Seçiniz</option>
-              {sourceOptions.map(option => <option key={option} value={option}>{option}</option>)}
-            </select>
-          </label>
-        </div>
-
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
-          Açıklama
-          <textarea value={notes} onChange={event => setNotes(event.target.value)} rows={3} className={formControlClass({ className: 'mt-1' })} />
-        </label>
+    <div className="space-y-5">
+      <div className="grid gap-3 md:grid-cols-4">
+        <CapitalMetric label="Şirket Durumu" value={context.is_company_active ? 'Aktif' : (context.company_status || context.record_status || 'Kontrol edilemedi')} />
+        <CapitalMetric label="Taahhüt Edilen Sermaye" value={formatCurrency(context.current_capital_amount)} />
+        <CapitalMetric label="Ödenmiş Sermaye" value={formatCurrency(context.paid_capital_amount)} />
+        <CapitalMetric label="Pay Toplamı" value={`%${formatNumber(context.total_share_ratio)}`} />
       </div>
 
-      <div className="rounded-lg border border-gray-200 p-4 text-sm dark:border-gray-800">
-        <div className="font-semibold text-gray-900 dark:text-white">Ortak Kayıt Durumu</div>
-        <div className="mt-2 rounded-md bg-gray-50 px-3 py-2 text-gray-700 dark:bg-gray-900 dark:text-gray-200">
-          {newPartner.mode === 'existing_draft' ? 'Taslak ortak tamamla aşamasında aktifleşir.' : 'Yeni ortak tamamla aşamasında oluşturulur.'}
+      {blockingReasons.length ? (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-800 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-200">
+          <div className="font-semibold">İşlem başlatılamaz</div>
+          <ul className="mt-2 list-disc space-y-1 pl-5">
+            {blockingReasons.map(reason => <li key={reason}>{reason}</li>)}
+          </ul>
         </div>
-      </div>
-    </div>
-  )
-}
+      ) : (
+        <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-200">
+          Ön kontrol tamamlandı. Sermaye artırımı aktif şirket kartı üzerinden resmi operasyon olarak başlatılabilir.
+        </div>
+      )}
 
-function ExistingPartnersStep({
-  partners,
-  rows,
-  setRows,
-  calculations,
-}: {
-  partners: CapitalPartnerSnapshot[]
-  rows: PartnerParticipationDraft[]
-  setRows: (rows: PartnerParticipationDraft[]) => void
-  calculations: ReturnType<typeof capitalCalculationShape>
-}) {
-  const updateRow = (partnerId: string, patch: Partial<PartnerParticipationDraft>) => {
-    setRows(rows.map(row => row.partner_id === partnerId ? { ...row, ...patch } : row))
-  }
+      {warnings.length ? (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-200">
+          <div className="font-semibold">Dikkat edilmesi gerekenler</div>
+          <ul className="mt-2 list-disc space-y-1 pl-5">
+            {warnings.map(warning => <li key={warning}>{warning}</li>)}
+          </ul>
+        </div>
+      ) : null}
 
-  return (
-    <div className="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-800">
-      <div className="max-h-[430px] overflow-auto">
-        <table className="min-w-[1120px] divide-y divide-gray-200 text-sm dark:divide-gray-800">
-          <thead className="sticky top-0 z-10 bg-gray-50 text-left text-xs font-semibold uppercase text-gray-500 dark:bg-gray-900 dark:text-gray-400">
+      <div className="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-800">
+        <table className="min-w-full divide-y divide-gray-200 text-sm dark:divide-gray-800">
+          <thead className="bg-gray-50 text-left text-xs font-semibold uppercase text-gray-500 dark:bg-gray-900 dark:text-gray-400">
             <tr>
-              <th className="px-3 py-2">Ortak adı</th>
-              <th className="px-3 py-2">Ortak tipi</th>
-              <th className="px-3 py-2">Mevcut taahhüt</th>
-              <th className="px-3 py-2">Mevcut ödenen</th>
-              <th className="px-3 py-2">Mevcut hisse</th>
-              <th className="px-3 py-2">Katılacağı tutar</th>
-              <th className="px-3 py-2">Artırım kaynağı</th>
-              <th className="px-3 py-2">Yeni taahhüt</th>
-              <th className="px-3 py-2">Yeni hisse</th>
+              <th className="px-3 py-2">Ortak</th>
+              <th className="px-3 py-2">Pay</th>
+              <th className="px-3 py-2">Taahhüt</th>
+              <th className="px-3 py-2">Ödenen</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-            {partners.map(partner => {
-              const row = rows.find(item => item.partner_id === partner.id)
-              const calculated = calculations.participants.find(item => item.partner.id === partner.id)
-              return (
-                <tr key={partner.id}>
-                  <td className="px-3 py-2 font-medium text-gray-900 dark:text-white">{partner.display_name}</td>
-                  <td className="px-3 py-2 text-gray-600 dark:text-gray-300">{partner.owner_kind === 'organization' ? 'Tüzel Kişi' : 'Gerçek Kişi'}</td>
-                  <td className="px-3 py-2 text-gray-600 dark:text-gray-300">{formatCurrency(partner.committed_capital_amount)}</td>
-                  <td className="px-3 py-2 text-gray-600 dark:text-gray-300">{formatCurrency(partner.paid_capital_amount)}</td>
-                  <td className="px-3 py-2 text-gray-600 dark:text-gray-300">%{formatNumber(partner.share_ratio)}</td>
-                  <td className="px-3 py-2">
-                    <input type="number" min="0" step="0.01" value={row?.increase_amount || ''} onChange={event => updateRow(partner.id, { increase_amount: event.target.value })} className={formControlClass({ size: 'sm', className: 'min-w-[130px]' })} />
-                  </td>
-                  <td className="px-3 py-2">
-                    <select value={row?.capital_source || ''} onChange={event => updateRow(partner.id, { capital_source: event.target.value as CapitalSource | '' })} className={formControlClass({ size: 'sm', className: 'min-w-[150px]' })}>
-                      <option value="">Seçiniz</option>
-                      {sourceOptions.map(option => <option key={option} value={option}>{option}</option>)}
-                    </select>
-                  </td>
-                  <td className="px-3 py-2 font-medium text-gray-900 dark:text-white">{formatCurrency(calculated?.new_committed_capital_amount || partner.committed_capital_amount)}</td>
-                  <td className="px-3 py-2 font-medium text-gray-900 dark:text-white">%{formatNumber(calculated?.new_share_ratio || 0)}</td>
-                </tr>
-              )
-            })}
+            {context.active_partners.map(partner => (
+              <tr key={partner.id}>
+                <td className="px-3 py-2 font-medium text-gray-900 dark:text-white">{partner.display_name}</td>
+                <td className="px-3 py-2">%{formatNumber(partner.share_ratio)}</td>
+                <td className="px-3 py-2">{formatCurrency(partner.committed_capital_amount)}</td>
+                <td className="px-3 py-2">{formatCurrency(partner.paid_capital_amount)}</td>
+              </tr>
+            ))}
+            {!context.active_partners.length && (
+              <tr>
+                <td colSpan={4} className="px-3 py-6 text-center text-gray-500">Aktif ortak bulunamadı.</td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>
@@ -574,51 +553,131 @@ function ExistingPartnersStep({
   )
 }
 
+function DistributionStep({
+  partners,
+  rows,
+  setRows,
+  calculations,
+  distributionMethod,
+  setDistributionMethod,
+  currency,
+}: {
+  partners: CapitalPartnerSnapshot[]
+  rows: PartnerDistributionDraft[]
+  setRows: (rows: PartnerDistributionDraft[]) => void
+  calculations: ReturnType<typeof calculateShape>
+  distributionMethod: DistributionMethod
+  setDistributionMethod: (value: DistributionMethod) => void
+  currency: string
+}) {
+  const updateRow = (partnerId: string, patch: Partial<PartnerDistributionDraft>) => {
+    setRows(rows.map(row => row.partner_id === partnerId ? { ...row, ...patch } : row))
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap gap-2">
+        <button type="button" onClick={() => setDistributionMethod('proportional')} className={toggleClass(distributionMethod === 'proportional')}>
+          Mevcut oranlara göre otomatik dağıt
+        </button>
+        <button type="button" onClick={() => setDistributionMethod('manual')} className={toggleClass(distributionMethod === 'manual')}>
+          Manuel ortak bazlı dağıtım
+        </button>
+      </div>
+
+      <div className="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-800">
+        <div className="max-h-[430px] overflow-auto">
+          <table className="min-w-[1120px] divide-y divide-gray-200 text-sm dark:divide-gray-800">
+            <thead className="sticky top-0 z-10 bg-gray-50 text-left text-xs font-semibold uppercase text-gray-500 dark:bg-gray-900 dark:text-gray-400">
+              <tr>
+                <th className="px-3 py-2">Ortak</th>
+                <th className="px-3 py-2">Mevcut Sermaye</th>
+                <th className="px-3 py-2">Mevcut Pay</th>
+                <th className="px-3 py-2">Yeni Sermaye</th>
+                <th className="px-3 py-2">Artış</th>
+                <th className="px-3 py-2">Yeni Pay</th>
+                <th className="px-3 py-2">Kaynak</th>
+                <th className="px-3 py-2">Açıklama</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+              {partners.map(partner => {
+                const row = rows.find(item => item.partner_id === partner.id)
+                const calculated = calculations.participants.find(item => item.partner.id === partner.id)
+                return (
+                  <tr key={partner.id}>
+                    <td className="px-3 py-2 font-medium text-gray-900 dark:text-white">{partner.display_name}</td>
+                    <td className="px-3 py-2 text-gray-600 dark:text-gray-300">{formatCurrency(calculated?.old_committed_capital_amount || partner.committed_capital_amount, currency)}</td>
+                    <td className="px-3 py-2 text-gray-600 dark:text-gray-300">%{formatNumber(calculated?.old_share_ratio || partner.share_ratio)}</td>
+                    <td className="px-3 py-2">
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        value={row?.new_committed_capital_amount || ''}
+                        readOnly={distributionMethod === 'proportional'}
+                        onChange={event => updateRow(partner.id, { new_committed_capital_amount: event.target.value })}
+                        className={formControlClass({ size: 'sm', className: 'min-w-[130px]' })}
+                      />
+                    </td>
+                    <td className="px-3 py-2 font-medium text-gray-900 dark:text-white">{formatCurrency(calculated?.increase_amount || 0, currency)}</td>
+                    <td className="px-3 py-2 font-medium text-gray-900 dark:text-white">%{formatNumber(calculated?.new_share_ratio || 0)}</td>
+                    <td className="px-3 py-2">
+                      <select value={row?.capital_source || ''} onChange={event => updateRow(partner.id, { capital_source: event.target.value as CapitalSource | '' })} className={formControlClass({ size: 'sm', className: 'min-w-[150px]' })}>
+                        <option value="">Seçiniz</option>
+                        {sourceOptions.map(option => <option key={option} value={option}>{option}</option>)}
+                      </select>
+                    </td>
+                    <td className="px-3 py-2">
+                      <input value={row?.description || ''} onChange={event => updateRow(partner.id, { description: event.target.value })} className={formControlClass({ size: 'sm', className: 'min-w-[180px]' })} />
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div className="grid gap-3 md:grid-cols-3">
+        <CapitalMetric label="Dağıtılan Yeni Sermaye" value={formatCurrency(calculations.totalNewCommitted, currency)} />
+        <CapitalMetric label="Toplam Pay" value={`%${formatNumber(calculations.totalShare)}`} />
+        <CapitalMetric label="Toplam Artış" value={formatCurrency(calculations.totalIncrease, currency)} />
+      </div>
+    </div>
+  )
+}
+
 function PreviewStep({
   increaseType,
-  currentCapital,
+  oldCapital,
+  increase,
+  newCapital,
+  currency,
   calculations,
   documents,
-  newPartnerName,
+  distributionMethod,
 }: {
   increaseType: string
-  currentCapital: number
-  calculations: ReturnType<typeof capitalCalculationShape>
+  oldCapital: number
+  increase: number
+  newCapital: number
+  currency: string
+  calculations: ReturnType<typeof calculateShape>
   documents: SlotDocument[]
-  newPartnerName: string
+  distributionMethod: DistributionMethod
 }) {
-  const rows = [
-    ...calculations.participants.map(row => ({
-      key: row.partner.id,
-      name: row.partner.display_name,
-      oldCommitted: row.partner.committed_capital_amount,
-      increase: row.increase_amount,
-      newCommitted: row.new_committed_capital_amount,
-      oldShare: row.old_share_ratio,
-      newShare: row.new_share_ratio,
-    })),
-    ...(calculations.newPartnerPreview ? [{
-      key: 'new_partner',
-      name: calculations.newPartnerPreview.display_name || newPartnerName || 'Yeni ortak',
-      oldCommitted: 0,
-      increase: calculations.newPartnerPreview.increase_amount,
-      newCommitted: calculations.newPartnerPreview.new_committed_capital_amount,
-      oldShare: 0,
-      newShare: calculations.newPartnerPreview.new_share_ratio,
-    }] : []),
-  ]
-
   return (
     <div className="space-y-5">
       <div className="grid gap-3 md:grid-cols-4">
-        <CapitalMetric label="Mevcut Sermaye" value={formatCurrency(currentCapital)} />
-        <CapitalMetric label="Artırım Tutarı" value={formatCurrency(calculations.totalIncrease)} />
-        <CapitalMetric label="Yeni Sermaye" value={formatCurrency(calculations.newCapital)} />
-        <CapitalMetric label="Artırım Türü" value={increaseType} />
+        <CapitalMetric label="Eski Sermaye" value={formatCurrency(oldCapital, currency)} />
+        <CapitalMetric label="Artırılacak Tutar" value={formatCurrency(increase, currency)} />
+        <CapitalMetric label="Yeni Sermaye" value={formatCurrency(newCapital, currency)} />
+        <CapitalMetric label="Dağıtım" value={distributionMethod === 'proportional' ? 'Mevcut oranlara göre' : 'Manuel dağıtım'} />
       </div>
 
       <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-200">
-        Bu işlem tamamlandığında şirketin sermaye tutarı ve ortakların taahhüt edilen sermaye bilgileri güncellenecek, eski ortaklık yapısı geçmişe alınacaktır. Ödenen sermaye bilgileri bu işlemle değiştirilmeyecektir.
+        Bu işlem tamamlandığında şirketin taahhüt edilen sermayesi güncellenir ve ortaklık dağılımı ownership transaction kayıtları üzerinden yeniden hesaplanır.
       </div>
 
       <div className="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-800">
@@ -626,22 +685,22 @@ function PreviewStep({
           <thead className="bg-gray-50 text-left text-xs font-semibold uppercase text-gray-500 dark:bg-gray-900 dark:text-gray-400">
             <tr>
               <th className="px-3 py-2">Ortak</th>
-              <th className="px-3 py-2">Eski taahhüt</th>
-              <th className="px-3 py-2">Katılım</th>
-              <th className="px-3 py-2">Yeni taahhüt</th>
-              <th className="px-3 py-2">Eski hisse</th>
-              <th className="px-3 py-2">Yeni hisse</th>
+              <th className="px-3 py-2">Eski Sermaye</th>
+              <th className="px-3 py-2">Artış</th>
+              <th className="px-3 py-2">Yeni Sermaye</th>
+              <th className="px-3 py-2">Eski Pay</th>
+              <th className="px-3 py-2">Yeni Pay</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
-            {rows.map(row => (
-              <tr key={row.key}>
-                <td className="px-3 py-2 font-medium text-gray-900 dark:text-white">{row.name}</td>
-                <td className="px-3 py-2">{formatCurrency(row.oldCommitted)}</td>
-                <td className="px-3 py-2">{formatCurrency(row.increase)}</td>
-                <td className="px-3 py-2">{formatCurrency(row.newCommitted)}</td>
-                <td className="px-3 py-2">%{formatNumber(row.oldShare)}</td>
-                <td className="px-3 py-2 font-semibold">%{formatNumber(row.newShare)}</td>
+            {calculations.participants.map(row => (
+              <tr key={row.partner.id}>
+                <td className="px-3 py-2 font-medium text-gray-900 dark:text-white">{row.partner.display_name}</td>
+                <td className="px-3 py-2">{formatCurrency(row.old_committed_capital_amount, currency)}</td>
+                <td className="px-3 py-2">{formatCurrency(row.increase_amount, currency)}</td>
+                <td className="px-3 py-2">{formatCurrency(row.new_committed_capital_amount, currency)}</td>
+                <td className="px-3 py-2">%{formatNumber(row.old_share_ratio)}</td>
+                <td className="px-3 py-2 font-semibold">%{formatNumber(row.new_share_ratio)}</td>
               </tr>
             ))}
           </tbody>
@@ -651,7 +710,7 @@ function PreviewStep({
       <div className="rounded-lg border border-gray-200 p-4 dark:border-gray-800">
         <div className="flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-white">
           <CheckCircle2 size={16} />
-          Yüklenen Belgeler
+          Yüklenecek Belgeler
         </div>
         <div className="mt-3 grid gap-2 md:grid-cols-2">
           {documentSlots.map(slot => {
@@ -665,6 +724,8 @@ function PreviewStep({
           })}
         </div>
       </div>
+
+      <CapitalMetric label="Artırım Türü" value={increaseType} />
     </div>
   )
 }
@@ -678,35 +739,52 @@ function CapitalMetric({ label, value }: { label: string; value: string }) {
   )
 }
 
-function capitalCalculationShape() {
+function calculateShape() {
   return {
     participants: [] as Array<{
       partner: CapitalPartnerSnapshot
-      draft?: PartnerParticipationDraft
+      draft?: PartnerDistributionDraft
+      old_committed_capital_amount: number
       increase_amount: number
       new_committed_capital_amount: number
       old_share_ratio: number
       new_share_ratio: number
+      old_voting_ratio: number
+      new_voting_ratio: number
+      old_profit_ratio: number
+      new_profit_ratio: number
     }>,
-    newPartnerPreview: null as null | {
-      display_name: string
-      increase_amount: number
-      new_committed_capital_amount: number
-      old_share_ratio: number
-      new_share_ratio: number
-      capital_source: CapitalSource | null
-    },
+    totalNewCommitted: 0,
     totalIncrease: 0,
-    newCapital: 0,
     totalShare: 0,
   }
 }
 
-function selectedNewPartnerName(draftPartners: CapitalPartnerSnapshot[], newPartner: NewPartnerDraft) {
-  if (newPartner.mode === 'existing_draft') {
-    return draftPartners.find(partner => partner.id === newPartner.partner_id)?.display_name || ''
-  }
-  return newPartner.display_name.trim()
+function buildDistributionDraftRows(
+  partners: CapitalPartnerSnapshot[],
+  oldCapital: number,
+  newCapital: number,
+  method: DistributionMethod,
+  previousRows: PartnerDistributionDraft[]
+) {
+  return partners.map(partner => {
+    const previous = previousRows.find(row => row.partner_id === partner.id)
+    const oldCommitted = roundMoney(partner.committed_capital_amount || (oldCapital * partner.share_ratio / 100))
+    const nextCommitted = method === 'proportional'
+      ? roundMoney(oldCommitted + Math.max(0, newCapital - oldCapital) * (partner.share_ratio / 100))
+      : toNumber(previous?.new_committed_capital_amount) > 0
+        ? toNumber(previous?.new_committed_capital_amount)
+        : oldCommitted
+    const nextShare = newCapital > 0 ? roundRatio((nextCommitted / newCapital) * 100) : 0
+
+    return {
+      partner_id: partner.id,
+      new_committed_capital_amount: String(nextCommitted),
+      new_share_ratio: String(nextShare),
+      capital_source: previous?.capital_source || defaultSourceForType(method === 'proportional' ? 'Nakdi sermaye taahhüdü ile artırım' : ''),
+      description: previous?.description || '',
+    }
+  })
 }
 
 function defaultSourceForType(type: string): CapitalSource | '' {
@@ -719,7 +797,7 @@ function defaultSourceForType(type: string): CapitalSource | '' {
 
 function toggleClass(active: boolean) {
   return cn(
-    'rounded-lg border px-3 py-2 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50',
+    'rounded-lg border px-3 py-2 text-sm font-medium transition',
     active
       ? 'border-blue-300 bg-blue-50 text-blue-800 dark:border-blue-800 dark:bg-blue-950/40 dark:text-blue-200'
       : 'border-gray-200 text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-900'
@@ -733,8 +811,10 @@ function isActiveDocument(document: SlotDocument) {
 function toNumber(value: unknown) {
   const text = String(value ?? '').trim()
   if (!text) return 0
-  const number = Number(text)
-  return Number.isFinite(number) ? number : 0
+  const direct = Number(text)
+  if (Number.isFinite(direct)) return direct
+  const localized = Number(text.replace(/\s/g, '').replace(/\./g, '').replace(',', '.'))
+  return Number.isFinite(localized) ? localized : 0
 }
 
 function roundMoney(value: number) {
@@ -745,8 +825,8 @@ function roundRatio(value: number) {
   return Math.round((value + Number.EPSILON) * 10000) / 10000
 }
 
-function formatCurrency(value: unknown) {
-  return toNumber(value).toLocaleString('tr-TR', { style: 'currency', currency: 'TRY', maximumFractionDigits: 2 })
+function formatCurrency(value: unknown, currency = 'TRY') {
+  return toNumber(value).toLocaleString('tr-TR', { style: 'currency', currency, maximumFractionDigits: 2 })
 }
 
 function formatNumber(value: unknown) {

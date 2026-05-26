@@ -104,6 +104,16 @@ export const productVersionManifest: ProductVersionManifest = {
           requiredForSmallBusiness: true,
           notes: 'Şirket kartı, phased detail loading, lifecycle aksiyonları, company opening/liquidation/deregistration akışı, sermaye artırımı, optimistic locking, operation request ve outbox altyapısı ile manuel test seviyesine getirildi.',
         },
+        branches: {
+          id: 'branches',
+          label: 'Şubelerimiz',
+          href: '/app/sirket/companies/branches',
+          table: 'company_branches',
+          version: '0.1.0',
+          maturity: 'alpha',
+          requiredForSmallBusiness: true,
+          notes: 'Şube, bağlı şirket altında resmi/operasyonel birim olarak modellenir; açılış ve kapanış resmi şirket operasyonlarıyla yürütülür.',
+        },
         partners: {
           id: 'partners',
           label: 'Ortaklarımız',

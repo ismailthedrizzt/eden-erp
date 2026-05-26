@@ -14,6 +14,7 @@ import {
   WidgetDef,
   normalizeRecordStatusFilters,
   type RecordStatusFilterValue,
+  type TableStatusFilterOption,
 } from '@/components/ui/SmartDataTable'
 import { Toast } from '@/components/ui/Toast'
 import { normalizeCountryId } from '@/lib/reference/country-nationalities'
@@ -27,6 +28,32 @@ type PageState = 'list' | 'create' | 'view' | 'edit'
 type ToastState = { type: 'success' | 'error' | 'warning'; title?: string; message: string }
 type SaveError = Error & { toast?: ToastState; fieldErrors?: Record<string, string>; code?: string }
 type Option = { value: string; label: string }
+type RepresentativeAuthorityStatusFilterValue = 'draft' | 'active' | 'suspended' | 'expired' | 'terminated'
+
+const REPRESENTATIVE_RECORD_STATUS_FILTER_OPTIONS: TableStatusFilterOption[] = [
+  { value: 'draft', label: 'Taslak Kart', tone: 'draft' },
+  { value: 'active', label: 'Aktif Kart', tone: 'active' },
+  { value: 'passive', label: 'Pasif Kart', tone: 'passive' },
+]
+
+const REPRESENTATIVE_AUTHORITY_STATUS_FILTER_OPTIONS: TableStatusFilterOption[] = [
+  { value: 'draft', label: 'Taslak Yetki', tone: 'draft' },
+  { value: 'active', label: 'Aktif Yetki', tone: 'active' },
+  { value: 'suspended', label: 'Askıda', tone: 'neutral' },
+  { value: 'expired', label: 'Süresi Dolmuş', tone: 'passive' },
+  { value: 'terminated', label: 'Sonlandırılmış', tone: 'passive' },
+]
+
+const DEFAULT_REPRESENTATIVE_AUTHORITY_STATUS_FILTERS: RepresentativeAuthorityStatusFilterValue[] =
+  REPRESENTATIVE_AUTHORITY_STATUS_FILTER_OPTIONS.map(option => option.value as RepresentativeAuthorityStatusFilterValue)
+
+function normalizeRepresentativeAuthorityStatusFilters(values: string[]): RepresentativeAuthorityStatusFilterValue[] {
+  const allowed = new Set(DEFAULT_REPRESENTATIVE_AUTHORITY_STATUS_FILTERS)
+  const next = values.filter((value): value is RepresentativeAuthorityStatusFilterValue =>
+    allowed.has(value as RepresentativeAuthorityStatusFilterValue)
+  )
+  return next.length ? next : DEFAULT_REPRESENTATIVE_AUTHORITY_STATUS_FILTERS
+}
 
 interface RepresentativeRow {
   id: string
@@ -430,6 +457,7 @@ export default function TemsilcilerPage() {
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [statusFilters, setStatusFilters] = useState<RecordStatusFilterValue[]>(DEFAULT_RECORD_STATUS_FILTERS)
+  const [authorityStatusFilters, setAuthorityStatusFilters] = useState<RepresentativeAuthorityStatusFilterValue[]>(DEFAULT_REPRESENTATIVE_AUTHORITY_STATUS_FILTERS)
   const [listQuery, setListQuery] = useState({ page: 1, pageSize: 50, search: '', sort: 'created_at', direction: 'desc' as 'asc' | 'desc' })
   const [listMeta, setListMeta] = useState<ListMeta>({ page: 1, pageSize: 50, total: 0, totalPages: 1 })
   const [toast, setToast] = useState<ToastState | null>(null)
@@ -455,8 +483,11 @@ export default function TemsilcilerPage() {
     setError(null)
     try {
       if (force) companyService.invalidateRelations()
+      const shouldFilterAuthorityStatuses =
+        authorityStatusFilters.length < REPRESENTATIVE_AUTHORITY_STATUS_FILTER_OPTIONS.length
       const representativePayload = await companyService.representativesList({
         statuses: statusFilters,
+        authorityStatuses: shouldFilterAuthorityStatuses ? authorityStatusFilters : undefined,
         includePassive: statusFilters.includes('passive'),
         useCache: !force,
         ...listQuery,
@@ -473,7 +504,7 @@ export default function TemsilcilerPage() {
   }
   useEffect(() => {
     loadData()
-  }, [statusFilters, listQuery])
+  }, [statusFilters, authorityStatusFilters, listQuery])
 
   const loadCompanyOptions = async (force = false) => {
     if (companiesLoaded && !force) return
@@ -824,12 +855,19 @@ export default function TemsilcilerPage() {
       {toast && <Toast type={toast.type} title={toast.title} message={toast.message} onClose={() => setToast(null)} />}
 
       {pageState === 'list' && (
-        <div className="mt-6">
+        <div className="mt-6 space-y-4">
           {error && (
             <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-800 dark:bg-red-900/20">
               <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
             </div>
           )}
+          <RepresentativeAuthorityStatusFilterBar
+            activeValues={authorityStatusFilters}
+            onChange={(next) => {
+              setAuthorityStatusFilters(normalizeRepresentativeAuthorityStatusFilters(next))
+              setListQuery(prev => ({ ...prev, page: 1 }))
+            }}
+          />
           <SmartDataTable
             columns={columns}
             data={tableData}
@@ -852,6 +890,7 @@ export default function TemsilcilerPage() {
                 onSortChange: handleListSortChange,
               }}
             showPassiveToggle
+            statusFilterOptions={REPRESENTATIVE_RECORD_STATUS_FILTER_OPTIONS}
             activeStatusFilters={statusFilters}
             onStatusFiltersChange={(next) => {
               setStatusFilters(normalizeRecordStatusFilters(next))
@@ -1316,6 +1355,70 @@ function SummaryMetric({ label, value }: { label: string; value: unknown }) {
       <div className="mt-1 min-h-5 text-sm font-semibold text-gray-900 dark:text-white">{String(value || '-')}</div>
     </div>
   )
+}
+
+function RepresentativeAuthorityStatusFilterBar({
+  activeValues,
+  onChange,
+}: {
+  activeValues: RepresentativeAuthorityStatusFilterValue[]
+  onChange: (values: string[]) => void
+}) {
+  const activeSet = new Set(activeValues)
+  const allSelected = activeValues.length === REPRESENTATIVE_AUTHORITY_STATUS_FILTER_OPTIONS.length
+
+  const toggle = (value: string) => {
+    const statusValue = value as RepresentativeAuthorityStatusFilterValue
+    const next = activeSet.has(statusValue)
+      ? activeValues.filter(item => item !== statusValue)
+      : [...activeValues, statusValue]
+    onChange(next.length ? next : DEFAULT_REPRESENTATIVE_AUTHORITY_STATUS_FILTERS)
+  }
+
+  return (
+    <div className="flex flex-col gap-3 rounded-lg border border-gray-200 bg-white px-4 py-3 shadow-sm dark:border-gray-800 dark:bg-gray-950">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <div className="text-sm font-semibold text-gray-900 dark:text-white">Yetki Durumu</div>
+          <div className="text-xs text-gray-500 dark:text-gray-400">
+            Güncel temsil yetkisi
+          </div>
+        </div>
+        <span className="rounded-md bg-gray-100 px-2 py-1 text-xs font-semibold text-gray-600 dark:bg-gray-900 dark:text-gray-300">
+          {allSelected ? 'Tüm yetki durumları' : `${activeValues.length}/${REPRESENTATIVE_AUTHORITY_STATUS_FILTER_OPTIONS.length} seçili`}
+        </span>
+      </div>
+      <div className="flex flex-wrap gap-2" role="group" aria-label="Yetki durumu filtreleri">
+        {REPRESENTATIVE_AUTHORITY_STATUS_FILTER_OPTIONS.map(option => {
+          const active = activeSet.has(option.value as RepresentativeAuthorityStatusFilterValue)
+          return (
+            <button
+              key={option.value}
+              type="button"
+              aria-pressed={active}
+              onClick={() => toggle(option.value)}
+              className={[
+                'inline-flex h-8 items-center gap-2 rounded-lg border px-2.5 text-xs font-semibold transition-colors',
+                active
+                  ? 'border-blue-500 bg-blue-50 text-blue-800 shadow-sm dark:border-blue-400 dark:bg-blue-500/15 dark:text-blue-100'
+                  : 'border-gray-200 bg-white text-gray-600 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-300 dark:hover:bg-gray-900',
+              ].join(' ')}
+            >
+              <span className={`h-2.5 w-2.5 rounded-full ${getAuthorityFilterDotClass(option.tone)}`} aria-hidden="true" />
+              <span>{option.label}</span>
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+function getAuthorityFilterDotClass(tone?: TableStatusFilterOption['tone']) {
+  if (tone === 'draft') return 'bg-amber-400'
+  if (tone === 'active') return 'bg-emerald-500'
+  if (tone === 'passive') return 'bg-slate-400'
+  return 'bg-blue-500'
 }
 
 function runRepresentativeAuthorityService(

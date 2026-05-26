@@ -102,6 +102,7 @@ export interface Sirket {
   city: string
   district: string
   address: string
+  postal_code?: string | null
   
   // Iletisim - Contact
   phone?: string
@@ -125,6 +126,7 @@ export interface Sirket {
   sgk_branch?: string
   nace_codes?: string[]
   risk_class?: 'az_tehlikeli' | 'tehlikeli' | 'cok_tehlikeli'
+  activity_subject?: string | null
   
   // ERP Ayarlari - ERP Settings
   default_currency: string

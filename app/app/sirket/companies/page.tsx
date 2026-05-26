@@ -1,11 +1,18 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
-import { AlertTriangle, Archive, BriefcaseBusiness, Building2, CheckCircle2, CircleDot, FileText, History, Landmark, PencilLine, PlayCircle, Settings, ShieldAlert, TrendingUp, Users } from 'lucide-react'
+import { AlertTriangle, Archive, BriefcaseBusiness, Building2, CheckCircle2, CircleDot, FileText, GitBranch, History, Landmark, PencilLine, PlayCircle, Settings, ShieldAlert, TrendingDown, TrendingUp, Users, XCircle } from 'lucide-react'
 import { useSirketler } from '@/hooks/useSirketler'
 import { EntityForm, FormField, FormMode, FormTab, type FormOperationAction, type FormOperationActionGroup, type FormOperationProgress } from '@/components/ui/EntityForm'
 import { CompanyCapitalIncreaseWizard, type CapitalIncreasePrecheckContext, type CapitalIncreaseSubmitPayload } from '@/components/ui/CompanyCapitalIncreaseWizard'
+import { CompanyCapitalDecreaseWizard, type CapitalDecreasePrecheckContext } from '@/components/ui/CompanyCapitalDecreaseWizard'
+import { CompanyOfficialChangeWizard, type CompanyOfficialChangeSubmitPayload, type CompanyOfficialChangeType, type OfficialChangePrecheckContext } from '@/components/ui/CompanyOfficialChangeWizard'
+import { CompanyBranchOpeningWizard, type BranchOpeningPrecheckContext, type BranchOpeningSubmitPayload } from '@/components/ui/CompanyBranchOpeningWizard'
+import { CompanyBranchClosingWizard, type BranchClosingPrecheckContext, type BranchClosingSubmitPayload } from '@/components/ui/CompanyBranchClosingWizard'
+import { CompanyNaceChangeWizard, type CompanyNaceChangeSubmitPayload, type CompanyNacePrecheckContext, type NaceWizardRow } from '@/components/ui/CompanyNaceChangeWizard'
+import { CompanyActivitySubjectChangeWizard, type CompanyActivitySubjectChangeSubmitPayload, type CompanyActivitySubjectPrecheckContext } from '@/components/ui/CompanyActivitySubjectChangeWizard'
 import { CompanyLifecycleWizard, type CompanyLifecycleWizardType } from '@/components/ui/CompanyLifecycleWizard'
 import { PageBanner } from '@/components/ui/PageBanner'
 import {
@@ -115,6 +122,7 @@ const FIELD_LABELS: Record<string, string> = {
   city: 'İl',
   district: 'İlçe',
   address: 'Adres',
+  postal_code: 'Posta Kodu',
   phone: 'Telefon',
   email: 'E-posta',
   website: 'Web Sitesi',
@@ -132,6 +140,7 @@ const FIELD_LABELS: Record<string, string> = {
   sgk_province: 'SGK İl',
   sgk_branch: 'SGK Şube',
   risk_class: 'Tehlike Sınıfı',
+  activity_subject: 'Faaliyet Konusu',
   default_currency: 'Varsayılan Para Birimi',
   default_language: 'Varsayılan Dil',
   time_zone: 'Zaman Dilimi',
@@ -163,13 +172,20 @@ const COMPANY_CAPITAL_REGISTRATION_CONTROL = {
 
 const COMPANY_PUBLIC_REGISTRATION_CONTROL = {
   category: 'registration' as const,
-  operations: ['Şirket Açılışı', 'Kamu / Tescil Bilgisi Değişikliği'],
+  operations: ['Şirket Açılışı', 'Kamu / Tescil Bilgisi Güncelleme'],
   allowDraftEdit: true,
 }
 
-const COMPANY_PUBLIC_RELATION_REGISTRATION_CONTROL = {
-  ...COMPANY_PUBLIC_REGISTRATION_CONTROL,
-  allowDraftEdit: false,
+const COMPANY_NACE_REGISTRATION_CONTROL = {
+  category: 'registration' as const,
+  operations: ['Şirket Açılışı', 'NACE / Faaliyet Kodu Güncelleme'],
+  allowDraftEdit: true,
+}
+
+const COMPANY_ACTIVITY_SUBJECT_REGISTRATION_CONTROL = {
+  category: 'registration' as const,
+  operations: ['Şirket Açılışı', 'Faaliyet Konusu Değişikliği'],
+  allowDraftEdit: true,
 }
 
 const columns: ColumnDef[] = [
@@ -208,7 +224,7 @@ const columns: ColumnDef[] = [
 ]
 
 const heroFields: FormField[] = [
-  { name: 'short_name', label: 'Kısa Ünvan', type: 'text' },
+  { name: 'short_name', label: 'Kısa Ünvan', type: 'text', controlledByOperation: COMPANY_TITLE_REGISTRATION_CONTROL },
   { name: 'trade_name', label: 'Ticari Unvan', type: 'text', required: true, colSpan: 2, controlledByOperation: COMPANY_TITLE_REGISTRATION_CONTROL },
   {
     name: 'tax_office',
@@ -301,12 +317,25 @@ const tabs: FormTab[] = [
     ],
   },
   {
+    id: 'branches',
+    label: 'Şubeler / Lokasyonlar',
+    icon: <GitBranch size={16} />,
+    fields: [
+      {
+        name: 'company_branches_summary',
+        label: 'Şubeler / Lokasyonlar',
+        type: 'custom',
+        colSpan: 3,
+      },
+    ],
+  },
+  {
     id: 'tescil',
     label: 'Tescil',
     icon: <FileText size={16} />,
     fields: [
-      { name: 'mersis_number', label: 'MERSİS No', type: 'text', controlledByOperation: COMPANY_OPENING_REGISTRATION_CONTROL },
-      { name: 'trade_registry_number', label: 'Ticaret Sicil No', type: 'text', controlledByOperation: COMPANY_OPENING_REGISTRATION_CONTROL },
+      { name: 'mersis_number', label: 'MERSİS No', type: 'text', controlledByOperation: COMPANY_PUBLIC_REGISTRATION_CONTROL },
+      { name: 'trade_registry_number', label: 'Ticaret Sicil No', type: 'text', controlledByOperation: COMPANY_PUBLIC_REGISTRATION_CONTROL },
       { name: 'foundation_date', label: 'Kuruluş Tarihi', type: 'date', controlledByOperation: COMPANY_OPENING_REGISTRATION_CONTROL },
       { name: 'capital_completion_ratio', label: 'Sermaye Tamamlanma Oranı', type: 'custom', colSpan: 3, controlledByOperation: COMPANY_CAPITAL_REGISTRATION_CONTROL },
       { name: 'electronic_notification_address', label: 'Elektronik Tebligat Adresi', type: 'text', maxLength: 17, inputMode: 'numeric', pattern: '\\d{5}-\\d{5}-\\d{5}', placeholder: '11111-22222-33333', controlledByOperation: COMPANY_PUBLIC_REGISTRATION_CONTROL },
@@ -314,7 +343,7 @@ const tabs: FormTab[] = [
         name: 'trade_registry_office',
         label: 'Ticaret Sicili Müdürlüğü',
         type: 'select',
-        controlledByOperation: COMPANY_OPENING_REGISTRATION_CONTROL,
+        controlledByOperation: COMPANY_PUBLIC_REGISTRATION_CONTROL,
         searchable: true,
         remoteOptions: {
           endpoint: '/api/reference/trade-registry-offices',
@@ -336,8 +365,10 @@ const tabs: FormTab[] = [
       { name: 'sgk_workplace_registry_no', label: 'SGK İşyeri Sicil No', type: 'text', maxLength: 26, inputMode: 'numeric', placeholder: '26 hane: M + 4 işkolu + 2 eski şube + 2 yeni şube + 7 sıra + 3 il + 2 ilçe + 2 kontrol + 3 aracı', controlledByOperation: COMPANY_PUBLIC_REGISTRATION_CONTROL },
       { name: 'sgk_province', label: 'SGK İl', type: 'text', placeholder: 'SGK sicil no girilince otomatik dolar', controlledByOperation: COMPANY_PUBLIC_REGISTRATION_CONTROL },
       { name: 'sgk_branch', label: 'SGK Şube', type: 'text', placeholder: 'SGK sicil no girilince otomatik dolar', controlledByOperation: COMPANY_PUBLIC_REGISTRATION_CONTROL },
-      { name: 'risk_class', label: 'Tehlike Sınıfı', type: 'custom', colSpan: 3, controlledByOperation: COMPANY_PUBLIC_REGISTRATION_CONTROL },
-      { name: 'company_nace_codes', label: 'NACE / Faaliyet Kodları', type: 'custom', colSpan: 3, controlledByOperation: COMPANY_PUBLIC_RELATION_REGISTRATION_CONTROL },
+      { name: 'activity_subject', label: 'Faaliyet Konusu Özeti', type: 'textarea', colSpan: 3, controlledByOperation: COMPANY_ACTIVITY_SUBJECT_REGISTRATION_CONTROL },
+      { name: 'nace_activity_summary', label: 'NACE / Faaliyet Özeti', type: 'custom', colSpan: 3, controlledByOperation: COMPANY_NACE_REGISTRATION_CONTROL },
+      { name: 'risk_class', label: 'Tehlike Sınıfı', type: 'custom', colSpan: 3, controlledByOperation: COMPANY_NACE_REGISTRATION_CONTROL },
+      { name: 'company_nace_codes', label: 'NACE / Faaliyet Kodları', type: 'custom', colSpan: 3, controlledByOperation: COMPANY_NACE_REGISTRATION_CONTROL },
     ],
   },
   {
@@ -378,6 +409,7 @@ const getFieldLabel = (field: string) => FIELD_LABELS[field] || field
 const formatFieldList = (fields: string[]) => fields.map(getFieldLabel).join(', ')
 const OPERATION_CONTROLLED_FORM_FIELDS = new Set([
   'trade_name',
+  'short_name',
   'tax_number',
   'tax_office',
   'mersis_number',
@@ -388,6 +420,7 @@ const OPERATION_CONTROLLED_FORM_FIELDS = new Set([
   'city',
   'district',
   'address',
+  'postal_code',
   'committed_capital_amount',
   'paid_capital_amount',
   'electronic_notification_address',
@@ -400,9 +433,11 @@ const OPERATION_CONTROLLED_FORM_FIELDS = new Set([
   'sgk_branch',
   'risk_class',
   'nace_codes',
+  'activity_subject',
 ])
 const DRAFT_EDITABLE_OPERATION_FORM_FIELDS = new Set([
   'trade_name',
+  'short_name',
   'tax_number',
   'tax_office',
   'mersis_number',
@@ -413,6 +448,7 @@ const DRAFT_EDITABLE_OPERATION_FORM_FIELDS = new Set([
   'city',
   'district',
   'address',
+  'postal_code',
   'electronic_notification_address',
   'trade_registry_office',
   'e_invoice_taxpayer',
@@ -423,6 +459,7 @@ const DRAFT_EDITABLE_OPERATION_FORM_FIELDS = new Set([
   'sgk_branch',
   'risk_class',
   'nace_codes',
+  'activity_subject',
 ])
 
 function buildCompanySaveToast(result: Record<string, any>, mode: FormMode): ToastState {
@@ -468,6 +505,12 @@ function normalizePartialWarnings(value: unknown) {
   return value
     .map(item => typeof item === 'string' ? item : item?.message)
     .filter((message): message is string => typeof message === 'string' && message.trim().length > 0)
+}
+
+function officialChangeSuccessMessage(type: CompanyOfficialChangeType) {
+  if (type === 'title_change') return 'Unvan değişikliği tamamlandı ve şirket bilgileri güncellendi.'
+  if (type === 'address_change') return 'Adres değişikliği tamamlandı ve şirket bilgileri güncellendi.'
+  return 'Kamu / tescil bilgisi güncellemesi tamamlandı.'
 }
 const fiscalYearMonthOptions = Array.from({ length: 12 }, (_, index) => ({
   value: index + 1,
@@ -576,6 +619,15 @@ export default function SirketlerPage() {
   const [lifecycleWizardReadOnly, setLifecycleWizardReadOnly] = useState(false)
   const [capitalIncreaseContext, setCapitalIncreaseContext] = useState<CapitalIncreasePrecheckContext | null>(null)
   const [capitalIncreaseSaving, setCapitalIncreaseSaving] = useState(false)
+  const [capitalDecreaseContext, setCapitalDecreaseContext] = useState<CapitalDecreasePrecheckContext | null>(null)
+  const [officialChangeWizard, setOfficialChangeWizard] = useState<{ type: CompanyOfficialChangeType; context: OfficialChangePrecheckContext } | null>(null)
+  const [officialChangeSaving, setOfficialChangeSaving] = useState(false)
+  const [branchOpeningWizard, setBranchOpeningWizard] = useState<BranchOpeningPrecheckContext | null>(null)
+  const [branchClosingWizard, setBranchClosingWizard] = useState<BranchClosingPrecheckContext | null>(null)
+  const [branchOperationSaving, setBranchOperationSaving] = useState(false)
+  const [naceChangeWizard, setNaceChangeWizard] = useState<CompanyNacePrecheckContext | null>(null)
+  const [activitySubjectWizard, setActivitySubjectWizard] = useState<{ context: CompanyActivitySubjectPrecheckContext; candidateRows?: NaceWizardRow[] } | null>(null)
+  const [naceOperationSaving, setNaceOperationSaving] = useState(false)
   const detailRequestRef = useRef(0)
   const mediaProbeRef = useRef<Record<string, boolean>>({})
   const [preferredFormTabId, setPreferredFormTabId] = useState<string | null>(null)
@@ -837,6 +889,12 @@ export default function SirketlerPage() {
     setSelectedSirket(null)
     setLifecycleWizard(null)
     setCapitalIncreaseContext(null)
+    setCapitalDecreaseContext(null)
+    setOfficialChangeWizard(null)
+    setBranchOpeningWizard(null)
+    setBranchClosingWizard(null)
+    setNaceChangeWizard(null)
+    setActivitySubjectWizard(null)
     setFormError(null)
     setFieldErrors({})
     setDetailSections(emptyDetailSectionState)
@@ -853,7 +911,7 @@ export default function SirketlerPage() {
         && OPERATION_CONTROLLED_FORM_FIELDS.has(key)
         && !(isDraftEdit && DRAFT_EDITABLE_OPERATION_FORM_FIELDS.has(key))
       ) return
-      if (['partners', 'representatives', 'stakeholders', 'documents', 'logos', 'lifecycle_status_badge', 'company_lifecycle_summary', 'record_status', 'company_status', 'opening_details', 'liquidation_details', 'deregistration_details', 'lifecycle_events', 'lifecycle_last_event', 'capital_completion_ratio', 'committed_capital_amount', 'paid_capital_amount', 'company_nace_codes', 'public_tax', 'public_sgk', 'public_incentives', 'public_registry', 'public_licenses', 'public_channels', 'related_status', 'related_errors'].includes(key)) return
+      if (['partners', 'representatives', 'stakeholders', 'documents', 'logos', 'lifecycle_status_badge', 'company_lifecycle_summary', 'record_status', 'company_status', 'opening_details', 'liquidation_details', 'deregistration_details', 'lifecycle_events', 'lifecycle_last_event', 'capital_completion_ratio', 'committed_capital_amount', 'paid_capital_amount', 'company_nace_codes', 'nace_activity_summary', 'public_tax', 'public_sgk', 'public_incentives', 'public_registry', 'public_licenses', 'public_channels', 'related_status', 'related_errors'].includes(key)) return
       if (value === undefined) return
       if (value === '' || value === null) {
         if (pageState !== 'create') payload[key] = null
@@ -1040,7 +1098,11 @@ export default function SirketlerPage() {
     if (!selectedSirket?.id) return
     setCapitalIncreaseSaving(true)
     try {
-      const result = await companyService.completeCapitalIncrease(selectedSirket.id, payload as unknown as Record<string, any>)
+      const result = await companyService.completeCapitalIncrease(selectedSirket.id, {
+        ...(payload as unknown as Record<string, any>),
+        base_version: (selectedSirket as any).version ?? null,
+        base_updated_at: (selectedSirket as any).updated_at ?? null,
+      })
       invalidateEntityDetailCache(COMPANY_DETAIL_CACHE_NAMESPACE, selectedSirket.id)
       if (result.data?.company) {
         setSelectedSirket(normalizeCompanyForForm({
@@ -1068,6 +1130,324 @@ export default function SirketlerPage() {
     }
   }
 
+  const openCapitalDecreaseWizard = async () => {
+    if (!selectedSirket?.id) return
+    setFormError(null)
+    setFieldErrors({})
+    try {
+      const result = await companyService.capitalDecreasePrecheck(selectedSirket.id)
+      setCapitalDecreaseContext(result.data as CapitalDecreasePrecheckContext)
+    } catch (error: any) {
+      setToast({
+        type: 'error',
+        title: 'Ön Kontrol Başarısız',
+        message: error?.message || 'Sermaye azaltımı ön kontrolü yapılamadı.',
+      })
+    }
+  }
+
+  const openOfficialChangeWizard = async (type: CompanyOfficialChangeType) => {
+    if (!selectedSirket?.id) return
+    setFormError(null)
+    setFieldErrors({})
+    try {
+      const result = await companyService.officialChangePrecheck(selectedSirket.id, type)
+      const context = result.data as OfficialChangePrecheckContext
+      if (!context?.ok) {
+        setToast({
+          type: 'warning',
+          title: 'İşlem Başlatılamaz',
+          message: context?.message || 'Şirketin mevcut durumunda bu resmi değişiklik başlatılamaz.',
+        })
+        return
+      }
+      setOfficialChangeWizard({ type, context })
+    } catch (error: any) {
+      setToast({
+        type: 'error',
+        title: 'Ön Kontrol Başarısız',
+        message: error?.message || 'Resmi değişiklik ön kontrolü yapılamadı.',
+      })
+    }
+  }
+
+  const completeOfficialChange = async (type: CompanyOfficialChangeType, payload: CompanyOfficialChangeSubmitPayload) => {
+    if (!selectedSirket?.id) return
+    setOfficialChangeSaving(true)
+    try {
+      const result = await companyService.completeOfficialChange(selectedSirket.id, type, {
+        ...(payload as unknown as Record<string, any>),
+        base_version: (selectedSirket as any).version ?? null,
+        base_updated_at: (selectedSirket as any).updated_at ?? null,
+      })
+      invalidateEntityDetailCache(COMPANY_DETAIL_CACHE_NAMESPACE, selectedSirket.id)
+      companyService.invalidateList()
+      if (result.data?.company) {
+        setSelectedSirket(normalizeCompanyForForm({
+          ...selectedSirket,
+          ...result.data.company,
+        } as Sirket))
+      }
+      setOfficialChangeWizard(null)
+      setPreferredFormTabId(type === 'public_registration_update' ? 'tescil' : null)
+      setToast({
+        type: 'success',
+        title: 'Resmi Değişiklik Tamamlandı',
+        message: officialChangeSuccessMessage(type),
+      })
+      await yenile()
+    } catch (error: any) {
+      setToast({
+        type: 'error',
+        title: 'Resmi Değişiklik Tamamlanamadı',
+        message: error?.message || 'İşlem kaydı oluşturulamadı.',
+      })
+      throw error
+    } finally {
+      setOfficialChangeSaving(false)
+    }
+  }
+
+  const openBranchOpeningWizard = async () => {
+    if (!selectedSirket?.id) return
+    setFormError(null)
+    setFieldErrors({})
+    try {
+      const result = await companyService.branchOpeningPrecheck(selectedSirket.id)
+      const context = result.data as BranchOpeningPrecheckContext
+      if (!context?.ok) {
+        setToast({
+          type: 'warning',
+          title: 'Şube Açılışı Başlatılamaz',
+          message: context?.message || 'Şirketin mevcut durumunda şube açılışı başlatılamaz.',
+        })
+        return
+      }
+      setBranchOpeningWizard(context)
+    } catch (error: any) {
+      setToast({
+        type: 'error',
+        title: 'Ön Kontrol Başarısız',
+        message: error?.message || 'Şube açılışı ön kontrolü yapılamadı.',
+      })
+    }
+  }
+
+  const openBranchClosingWizard = async () => {
+    if (!selectedSirket?.id) return
+    setFormError(null)
+    setFieldErrors({})
+    try {
+      const result = await companyService.branchClosingPrecheck(selectedSirket.id)
+      const context = result.data as BranchClosingPrecheckContext
+      if (!context?.ok) {
+        setToast({
+          type: 'warning',
+          title: 'Şube Kapanışı Başlatılamaz',
+          message: context?.message || 'Kapatılabilecek aktif şube bulunmuyor.',
+        })
+        return
+      }
+      setBranchClosingWizard(context)
+    } catch (error: any) {
+      setToast({
+        type: 'error',
+        title: 'Ön Kontrol Başarısız',
+        message: error?.message || 'Şube kapanışı ön kontrolü yapılamadı.',
+      })
+    }
+  }
+
+  const completeBranchOpening = async (payload: BranchOpeningSubmitPayload) => {
+    if (!selectedSirket?.id) return
+    setBranchOperationSaving(true)
+    try {
+      await companyService.completeBranchOpening(selectedSirket.id, {
+        ...(payload as unknown as Record<string, any>),
+        base_version: (selectedSirket as any).version ?? null,
+        base_updated_at: (selectedSirket as any).updated_at ?? null,
+      })
+      invalidateEntityDetailCache(COMPANY_DETAIL_CACHE_NAMESPACE, selectedSirket.id)
+      companyService.invalidateList()
+      companyService.invalidateRelations()
+      setBranchOpeningWizard(null)
+      setPreferredFormTabId('branches')
+      setToast({
+        type: 'success',
+        title: 'Şube Açılışı Tamamlandı',
+        message: 'Şube açılışı tamamlandı. Yeni şube Şubelerimiz sayfasında görünecek.',
+      })
+      await yenile()
+    } catch (error: any) {
+      setToast({
+        type: 'error',
+        title: 'Şube Açılışı Tamamlanamadı',
+        message: error?.message || 'Şube açılışı işlem kaydı oluşturulamadı.',
+      })
+      throw error
+    } finally {
+      setBranchOperationSaving(false)
+    }
+  }
+
+  const completeBranchClosing = async (payload: BranchClosingSubmitPayload) => {
+    if (!selectedSirket?.id) return
+    setBranchOperationSaving(true)
+    try {
+      await companyService.completeBranchClosing(selectedSirket.id, {
+        ...(payload as unknown as Record<string, any>),
+        base_version: (selectedSirket as any).version ?? null,
+        base_updated_at: (selectedSirket as any).updated_at ?? null,
+      })
+      invalidateEntityDetailCache(COMPANY_DETAIL_CACHE_NAMESPACE, selectedSirket.id)
+      companyService.invalidateList()
+      companyService.invalidateRelations()
+      setBranchClosingWizard(null)
+      setPreferredFormTabId('branches')
+      setToast({
+        type: 'success',
+        title: 'Şube Kapanışı Tamamlandı',
+        message: 'Şube kapanışı tamamlandı. Şube kapalı durumuna alındı.',
+      })
+      await yenile()
+    } catch (error: any) {
+      setToast({
+        type: 'error',
+        title: 'Şube Kapanışı Tamamlanamadı',
+        message: error?.message || 'Şube kapanışı işlem kaydı oluşturulamadı.',
+      })
+      throw error
+    } finally {
+      setBranchOperationSaving(false)
+    }
+  }
+
+  const openNaceChangeWizard = async () => {
+    if (!selectedSirket?.id) return
+    setFormError(null)
+    setFieldErrors({})
+    try {
+      const result = await companyService.naceChangePrecheck(selectedSirket.id)
+      const context = result.data as CompanyNacePrecheckContext
+      if (!context?.ok) {
+        setToast({
+          type: 'warning',
+          title: 'NACE Güncelleme Başlatılamaz',
+          message: context?.message || 'Şirketin mevcut durumunda NACE / faaliyet kodu güncellemesi başlatılamaz.',
+        })
+        return
+      }
+      setNaceChangeWizard(context)
+    } catch (error: any) {
+      setToast({
+        type: 'error',
+        title: 'Ön Kontrol Başarısız',
+        message: error?.message || 'NACE / faaliyet kodu güncelleme ön kontrolü yapılamadı.',
+      })
+    }
+  }
+
+  const openActivitySubjectChangeWizard = async (candidateRows?: NaceWizardRow[]) => {
+    if (!selectedSirket?.id) return
+    setFormError(null)
+    setFieldErrors({})
+    try {
+      const result = await companyService.activitySubjectChangePrecheck(selectedSirket.id)
+      const context = result.data as CompanyActivitySubjectPrecheckContext
+      if (!context?.ok) {
+        setToast({
+          type: 'warning',
+          title: 'Faaliyet Konusu Değişikliği Başlatılamaz',
+          message: context?.message || 'Şirketin mevcut durumunda faaliyet konusu değişikliği başlatılamaz.',
+        })
+        return
+      }
+      setActivitySubjectWizard({ context, candidateRows })
+    } catch (error: any) {
+      setToast({
+        type: 'error',
+        title: 'Ön Kontrol Başarısız',
+        message: error?.message || 'Faaliyet konusu değişikliği ön kontrolü yapılamadı.',
+      })
+    }
+  }
+
+  const completeNaceChange = async (payload: CompanyNaceChangeSubmitPayload) => {
+    if (!selectedSirket?.id) return
+    setNaceOperationSaving(true)
+    try {
+      const result = await companyService.completeNaceChange(selectedSirket.id, {
+        ...(payload as unknown as Record<string, any>),
+        base_version: (selectedSirket as any).version ?? null,
+        base_updated_at: (selectedSirket as any).updated_at ?? null,
+      })
+      invalidateEntityDetailCache(COMPANY_DETAIL_CACHE_NAMESPACE, selectedSirket.id)
+      companyService.invalidateList()
+      companyService.invalidateRelations()
+      if (result.data?.company) {
+        setSelectedSirket(normalizeCompanyForForm({
+          ...selectedSirket,
+          ...result.data.company,
+        } as Sirket))
+      }
+      setNaceChangeWizard(null)
+      setPreferredFormTabId('vergi')
+      setToast({
+        type: 'success',
+        title: 'NACE Güncelleme Tamamlandı',
+        message: 'NACE / faaliyet kodu güncellemesi tamamlandı.',
+      })
+      await yenile()
+    } catch (error: any) {
+      setToast({
+        type: 'error',
+        title: 'NACE Güncelleme Tamamlanamadı',
+        message: error?.message || 'NACE / faaliyet kodu güncellemesi tamamlanamadı.',
+      })
+      throw error
+    } finally {
+      setNaceOperationSaving(false)
+    }
+  }
+
+  const completeActivitySubjectChange = async (payload: CompanyActivitySubjectChangeSubmitPayload) => {
+    if (!selectedSirket?.id) return
+    setNaceOperationSaving(true)
+    try {
+      const result = await companyService.completeActivitySubjectChange(selectedSirket.id, {
+        ...(payload as unknown as Record<string, any>),
+        base_version: (selectedSirket as any).version ?? null,
+        base_updated_at: (selectedSirket as any).updated_at ?? null,
+      })
+      invalidateEntityDetailCache(COMPANY_DETAIL_CACHE_NAMESPACE, selectedSirket.id)
+      companyService.invalidateList()
+      companyService.invalidateRelations()
+      if (result.data?.company) {
+        setSelectedSirket(normalizeCompanyForForm({
+          ...selectedSirket,
+          ...result.data.company,
+        } as Sirket))
+      }
+      setActivitySubjectWizard(null)
+      setPreferredFormTabId('vergi')
+      setToast({
+        type: 'success',
+        title: 'Faaliyet Konusu Değişikliği Tamamlandı',
+        message: 'Faaliyet konusu ve NACE etkileri resmi işlem olarak güncellendi.',
+      })
+      await yenile()
+    } catch (error: any) {
+      setToast({
+        type: 'error',
+        title: 'Faaliyet Konusu Değişikliği Tamamlanamadı',
+        message: error?.message || 'Faaliyet konusu değişikliği tamamlanamadı.',
+      })
+      throw error
+    } finally {
+      setNaceOperationSaving(false)
+    }
+  }
+
   const getFormOperationActions = (): FormOperationActionGroup[] => {
     if (!selectedSirket?.id || pageState === 'create') return []
     const status = getCompanyLifecycleStatus(selectedSirket)
@@ -1078,28 +1458,39 @@ export default function SirketlerPage() {
     const lifecycleProgress = getCompanyLifecycleOperationProgress(status)
     const completedLifecycleActions = new Set(lifecycleProgress.completedActionKeys || [])
     const isCompletedLifecycleAction = (actionKey: CompanyLifecycleWizardType) => completedLifecycleActions.has(actionKey)
+    const openingCompleted = isCompletedLifecycleAction('opening')
+    const liquidationCompleted = isCompletedLifecycleAction('liquidation')
+    const deregistrationCompleted = isCompletedLifecycleAction('deregistration')
+    const liquidationLabel = liquidationCompleted
+      ? 'Tasfiye Bilgilerini Görüntüle'
+      : status === 'liquidation'
+        ? 'Tasfiye Bilgilerini Güncelle'
+        : 'Tasfiye Başlat'
+    const deregistrationLabel = deregistrationCompleted
+      ? 'Terkin Bilgilerini Görüntüle'
+      : 'Terkin Başlat'
     const lifecycleActions: FormOperationAction[] = [
       {
         key: 'opening',
-        label: 'Şirket Açılışı',
+        label: openingCompleted ? 'Şirket Açılışı Bilgilerini Görüntüle' : 'Şirket Açılışı',
         icon: <PlayCircle size={16} />,
-        onClick: () => openLifecycleWizard('opening', { readOnly: isCompletedLifecycleAction('opening') }),
-        disabled: !isCompletedLifecycleAction('opening') && !canStartOpening,
+        onClick: () => openLifecycleWizard('opening', { readOnly: openingCompleted }),
+        disabled: !openingCompleted && !canStartOpening,
         dataTourId: 'record-operation-company-opening',
       },
       {
         key: 'liquidation',
-        label: status === 'liquidation' ? 'Tasfiye Bilgilerini Güncelle' : 'Tasfiye Başlat',
+        label: liquidationLabel,
         icon: <ShieldAlert size={16} />,
-        onClick: () => openLifecycleWizard('liquidation', { readOnly: isCompletedLifecycleAction('liquidation') }),
-        disabled: !isCompletedLifecycleAction('liquidation') && !(canStartLiquidation || canUpdateLiquidation),
+        onClick: () => openLifecycleWizard('liquidation', { readOnly: liquidationCompleted }),
+        disabled: !liquidationCompleted && !(canStartLiquidation || canUpdateLiquidation),
       },
       {
         key: 'deregistration',
-        label: 'Terkin Başlat',
+        label: deregistrationLabel,
         icon: <Archive size={16} />,
-        onClick: () => openLifecycleWizard('deregistration', { readOnly: isCompletedLifecycleAction('deregistration') }),
-        disabled: !isCompletedLifecycleAction('deregistration') && !canStartDeregistration,
+        onClick: () => openLifecycleWizard('deregistration', { readOnly: deregistrationCompleted }),
+        disabled: !deregistrationCompleted && !canStartDeregistration,
       },
     ]
 
@@ -1114,34 +1505,66 @@ export default function SirketlerPage() {
       },
       {
         key: 'capital_decrease',
-        label: 'Sermaye Azaltımı',
-        icon: <TrendingUp size={16} />,
-        onClick: () => undefined,
-        disabled: true,
+        label: status === 'active' ? 'Sermaye Azaltımı Ön Kontrol' : 'Sermaye Azaltımı Hazırlanıyor',
+        icon: <TrendingDown size={16} />,
+        onClick: openCapitalDecreaseWizard,
+        disabled: status !== 'active',
         tone: 'neutral' as const,
       },
       {
         key: 'title_change',
         label: 'Unvan Değişikliği',
         icon: <FileText size={16} />,
-        onClick: () => undefined,
-        disabled: true,
+        onClick: () => openOfficialChangeWizard('title_change'),
+        disabled: status !== 'active',
         tone: 'neutral' as const,
       },
       {
         key: 'address_change',
         label: 'Adres Değişikliği',
         icon: <Building2 size={16} />,
-        onClick: () => undefined,
-        disabled: true,
+        onClick: () => openOfficialChangeWizard('address_change'),
+        disabled: status !== 'active',
         tone: 'neutral' as const,
       },
       {
         key: 'public_registration_update',
         label: 'Kamu / Tescil Bilgisi Güncelleme',
         icon: <Landmark size={16} />,
-        onClick: () => undefined,
-        disabled: true,
+        onClick: () => openOfficialChangeWizard('public_registration_update'),
+        disabled: status !== 'active',
+        tone: 'neutral' as const,
+      },
+      {
+        key: 'nace_change',
+        label: 'NACE / Faaliyet Kodu Güncelleme',
+        icon: <FileText size={16} />,
+        onClick: openNaceChangeWizard,
+        disabled: status !== 'active',
+        tone: 'neutral' as const,
+      },
+      {
+        key: 'activity_subject_change',
+        label: 'Faaliyet Konusu Değişikliği',
+        icon: <BriefcaseBusiness size={16} />,
+        onClick: () => openActivitySubjectChangeWizard(),
+        disabled: status !== 'active',
+        tone: 'neutral' as const,
+      },
+      {
+        key: 'branch_opening',
+        label: 'Şube Açılışı',
+        icon: <GitBranch size={16} />,
+        onClick: openBranchOpeningWizard,
+        disabled: status !== 'active',
+        tone: 'neutral' as const,
+      },
+      {
+        key: 'branch_closing',
+        label: 'Şube Kapanışı',
+        icon: <XCircle size={16} />,
+        onClick: openBranchClosingWizard,
+        disabled: status !== 'active',
         tone: 'neutral' as const,
       },
     ] : []
@@ -1425,9 +1848,18 @@ export default function SirketlerPage() {
                         <CompanyNaceCodesSection
                           companyId={selectedSirket?.id}
                           initialRows={Array.isArray(value) ? value : (selectedSirket as any)?.company_nace_codes}
-                          readOnly={pageState !== 'edit'}
+                          readOnly={pageState !== 'edit' || getCompanyLifecycleStatus(selectedSirket) !== 'draft'}
                         />
                       </div>
+                    ),
+                  }
+                }
+
+                if (nextField.name === 'nace_activity_summary') {
+                  return {
+                    ...nextField,
+                    render: ({ data }) => (
+                      <CompanyNaceActivitySummary data={(data as Sirket) || selectedSirket} />
                     ),
                   }
                 }
@@ -1464,6 +1896,19 @@ export default function SirketlerPage() {
                         <RelatedSectionNotice data={data} sections={['stakeholders']} />
                         <RelatedSummaryTable type="stakeholders" rows={Array.isArray(value) ? value : []} />
                       </div>
+                    ),
+                  }
+                }
+
+                if (nextField.name === 'company_branches_summary') {
+                  return {
+                    ...nextField,
+                    render: ({ data }) => (
+                      <CompanyBranchesSummary
+                        companyId={selectedSirket?.id || (data as any)?.id}
+                        onOpenBranchOpening={openBranchOpeningWizard}
+                        onOpenBranchClosing={openBranchClosingWizard}
+                      />
                     ),
                   }
                 }
@@ -1561,8 +2006,181 @@ export default function SirketlerPage() {
           onComplete={completeCapitalIncrease}
         />
       )}
+
+      {capitalDecreaseContext && selectedSirket && (
+        <CompanyCapitalDecreaseWizard
+          companyName={selectedSirket.short_name || selectedSirket.trade_name || 'Şirket'}
+          context={capitalDecreaseContext}
+          onClose={() => setCapitalDecreaseContext(null)}
+        />
+      )}
+
+      {officialChangeWizard && selectedSirket && (
+        <CompanyOfficialChangeWizard
+          type={officialChangeWizard.type}
+          companyName={selectedSirket.short_name || selectedSirket.trade_name || 'Şirket'}
+          context={officialChangeWizard.context}
+          saving={officialChangeSaving}
+          onClose={() => !officialChangeSaving && setOfficialChangeWizard(null)}
+          onComplete={completeOfficialChange}
+        />
+      )}
+
+      {branchOpeningWizard && selectedSirket && (
+        <CompanyBranchOpeningWizard
+          companyName={selectedSirket.short_name || selectedSirket.trade_name || 'Şirket'}
+          context={branchOpeningWizard}
+          saving={branchOperationSaving}
+          onClose={() => !branchOperationSaving && setBranchOpeningWizard(null)}
+          onComplete={completeBranchOpening}
+        />
+      )}
+
+      {branchClosingWizard && selectedSirket && (
+        <CompanyBranchClosingWizard
+          companyId={selectedSirket.id}
+          companyName={selectedSirket.short_name || selectedSirket.trade_name || 'Şirket'}
+          context={branchClosingWizard}
+          saving={branchOperationSaving}
+          onClose={() => !branchOperationSaving && setBranchClosingWizard(null)}
+          onComplete={completeBranchClosing}
+        />
+      )}
+
+      {naceChangeWizard && selectedSirket && (
+        <CompanyNaceChangeWizard
+          companyName={selectedSirket.short_name || selectedSirket.trade_name || 'Şirket'}
+          context={naceChangeWizard}
+          saving={naceOperationSaving}
+          onClose={() => !naceOperationSaving && setNaceChangeWizard(null)}
+          onComplete={completeNaceChange}
+          onRedirectToActivitySubject={(candidateRows) => {
+            setNaceChangeWizard(null)
+            void openActivitySubjectChangeWizard(candidateRows)
+          }}
+        />
+      )}
+
+      {activitySubjectWizard && selectedSirket && (
+        <CompanyActivitySubjectChangeWizard
+          companyName={selectedSirket.short_name || selectedSirket.trade_name || 'Şirket'}
+          context={activitySubjectWizard.context}
+          candidateNaceRows={activitySubjectWizard.candidateRows}
+          saving={naceOperationSaving}
+          onClose={() => !naceOperationSaving && setActivitySubjectWizard(null)}
+          onComplete={completeActivitySubjectChange}
+        />
+      )}
     </div>
   )
+}
+
+function CompanyNaceActivitySummary({ data }: { data?: Partial<Sirket> | null }) {
+  const rows = Array.isArray((data as any)?.company_nace_codes) ? (data as any).company_nace_codes : []
+  const activeRows = rows.filter((row: any) => !row?.is_deleted && String(row?.status || 'active').toLocaleLowerCase('tr-TR') !== 'passive')
+  const primary = activeRows.find((row: any) => row?.is_primary)
+  const secondaryCount = activeRows.filter((row: any) => !row?.is_primary).length
+  const hazardClass = formatHazardClass(primary?.nace_code?.hazard_class || (data as any)?.public_sgk?.risk_class || (data as any)?.risk_class)
+  const activitySubject = String((data as any)?.activity_subject || '').trim()
+
+  return (
+    <div className="space-y-4">
+      <div className="grid gap-3 md:grid-cols-5">
+        <SummaryMetric label="Birincil NACE" value={primary?.nace_code?.nace_code || '-'} />
+        <SummaryMetric label="Birincil NACE Adı" value={primary?.nace_code?.description || '-'} />
+        <SummaryMetric label="SGK Tehlike Sınıfı" value={hazardClass || '-'} />
+        <SummaryMetric label="İkincil NACE" value={String(secondaryCount)} />
+        <SummaryMetric label="Faaliyet Konusu" value={activitySubject ? `${activitySubject.slice(0, 80)}${activitySubject.length > 80 ? '...' : ''}` : '-'} />
+      </div>
+      <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+        Aktif şirketlerde NACE kodları, faaliyet konusu ve SGK tehlike sınıfı normal form editinden değil ilgili resmi değişiklik wizardları üzerinden güncellenir.
+      </div>
+    </div>
+  )
+}
+
+function CompanyBranchesSummary({
+  companyId,
+  onOpenBranchOpening,
+  onOpenBranchClosing,
+}: {
+  companyId?: string
+  onOpenBranchOpening: () => void
+  onOpenBranchClosing: () => void
+}) {
+  const [branches, setBranches] = useState<Array<Record<string, any>>>([])
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    if (!companyId) return
+    let cancelled = false
+    setLoading(true)
+    companyService.branchesList({
+      companyId,
+      statuses: ['active', 'passive', 'closed'],
+      pageSize: 100,
+      useCache: false,
+    }).then(result => {
+      if (!cancelled) setBranches(result.data || [])
+    }).catch(() => {
+      if (!cancelled) setBranches([])
+    }).finally(() => {
+      if (!cancelled) setLoading(false)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [companyId])
+
+  const activeBranches = branches.filter(isActiveCompanyBranch)
+  const officialBranches = activeBranches.filter(branch => branch.is_official_branch)
+  const operationPoints = activeBranches.filter(branch => ['liaison_office', 'operation_point'].includes(String(branch.branch_type)))
+  const closedBranches = branches.filter(branch => String(branch.record_status || branch.status).toLocaleLowerCase('tr-TR') === 'closed')
+  const lastOpened = [...branches]
+    .filter(branch => branch.opening_registration_date || branch.start_date || branch.created_at)
+    .sort((left, right) => String(right.opening_registration_date || right.start_date || right.created_at || '').localeCompare(String(left.opening_registration_date || left.start_date || left.created_at || '')))[0]
+
+  return (
+    <div className="space-y-4">
+      <div className="grid gap-3 md:grid-cols-5">
+        <SummaryMetric label="Aktif Şube" value={loading ? '...' : String(activeBranches.length)} />
+        <SummaryMetric label="Resmi Şube" value={loading ? '...' : String(officialBranches.length)} />
+        <SummaryMetric label="Ofis / Operasyon" value={loading ? '...' : String(operationPoints.length)} />
+        <SummaryMetric label="Kapanmış Şube" value={loading ? '...' : String(closedBranches.length)} />
+        <SummaryMetric label="Son Açılan" value={lastOpened?.branch_name || '-'} />
+      </div>
+      <div className="flex flex-wrap items-center gap-2">
+        <button type="button" onClick={onOpenBranchOpening} className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700">
+          <GitBranch size={16} />
+          Şube Açılışı
+        </button>
+        <button type="button" onClick={onOpenBranchClosing} className="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-900">
+          <XCircle size={16} />
+          Şube Kapanışı
+        </button>
+        <Link href={companyId ? `/app/sirket/companies/branches?company_id=${companyId}` : '/app/sirket/companies/branches'} className="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-900">
+          Şubelerimiz sayfasına git
+        </Link>
+      </div>
+      <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
+        Şube detay yönetimi bu form içinde yapılmaz. Açılış ve kapanış resmi işlem olarak başlatılır; açılmış şubeler ayrı Şubelerimiz sayfasında yönetilir.
+      </div>
+    </div>
+  )
+}
+
+function SummaryMetric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-lg border border-gray-200 bg-white px-4 py-3 dark:border-gray-800 dark:bg-gray-950">
+      <div className="text-xs font-medium text-gray-500 dark:text-gray-400">{label}</div>
+      <div className="mt-1 break-words text-sm font-semibold text-gray-900 dark:text-white">{value || '-'}</div>
+    </div>
+  )
+}
+
+function isActiveCompanyBranch(branch: Record<string, any>) {
+  const values = [branch.record_status, branch.status].map(value => String(value || '').toLocaleLowerCase('tr-TR'))
+  return !branch.is_deleted && values.some(value => value === 'active' || value === 'aktif')
 }
 
 function formatHazardClass(value: unknown) {

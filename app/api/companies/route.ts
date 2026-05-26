@@ -65,6 +65,7 @@ const SirketSchema = z.object({
   city: z.string().min(1).max(120),
   district: z.string().min(1).max(120),
   address: z.string().min(1),
+  postal_code: z.string().optional(),
   phone: z.string().optional(),
   email: z.union([z.literal(''), z.string().email()]).optional(),
   website: z.string().optional(),
@@ -81,6 +82,7 @@ const SirketSchema = z.object({
   sgk_branch: z.string().optional(),
   nace_codes: z.array(z.string()).optional(),
   risk_class: optionalRiskClass,
+  activity_subject: z.string().optional(),
   default_currency: z.string().default('TRY'),
   default_language: z.string().default('tr'),
   time_zone: z.string().default('Europe/Istanbul'),
@@ -251,7 +253,7 @@ export async function GET(request: NextRequest) {
   const sortColumn = sortMap[effectiveListQuery.sort || ''] || 'short_name'
   let query = supabase
     .from('companies')
-    .select('id,organization_id,short_name,trade_name,tax_number,tax_office,company_type,city,district,phone,email,logo_url,is_deleted,record_status,company_status,committed_capital_amount,paid_capital_amount,default_currency,updated_at,created_at,version', { count: 'exact' })
+    .select('id,organization_id,short_name,trade_name,tax_number,tax_office,company_type,city,district,postal_code,phone,email,logo_url,is_deleted,record_status,company_status,committed_capital_amount,paid_capital_amount,default_currency,updated_at,created_at,version', { count: 'exact' })
     .in('id', scopedCompanyIds)
     .order(sortColumn, { ascending: effectiveListQuery.direction !== 'desc' })
     .range(from, to)
@@ -360,7 +362,7 @@ export async function POST(request: NextRequest) {
     tenantId: tenantContext.tenantId,
     country: companyData.country,
     taxNumber: companyData.tax_number,
-    select: 'id,organization_id,short_name,trade_name,tax_number,tax_office,company_type,city,district,logo_url,is_deleted,record_status,company_status,committed_capital_amount,paid_capital_amount,updated_at,created_at,tenant_id,country,version',
+    select: 'id,organization_id,short_name,trade_name,tax_number,tax_office,company_type,city,district,postal_code,logo_url,is_deleted,record_status,company_status,committed_capital_amount,paid_capital_amount,updated_at,created_at,tenant_id,country,version',
   })
   if (existingTenantCompany?.id) {
     const currentScope = await getTenantCompanyScope(supabase, tenantContext.tenantId, existingTenantCompany.id)
@@ -447,7 +449,7 @@ export async function POST(request: NextRequest) {
     tableName: 'companies',
     permissionKey: 'companies.edit',
     values: companyRow,
-    select: 'id,short_name,trade_name,tax_number,logo_url,hero_images,is_deleted,record_status,company_status,committed_capital_amount,paid_capital_amount,updated_at,version',
+    select: 'id,short_name,trade_name,tax_number,logo_url,hero_images,is_deleted,record_status,company_status,committed_capital_amount,paid_capital_amount,postal_code,updated_at,version',
   })
 
   if (!createResult.ok) {

@@ -12,10 +12,8 @@ export const CAPITAL_INCREASE_TYPES = [
   'İç kaynaklardan sermaye artırımı',
   'Ortak alacağının sermayeye eklenmesi',
   'Ayni sermaye konulması',
-  'Yeni ortak girişiyle sermaye artırımı',
   'Mevcut ortakların farklı oranlarda katılımıyla artırım',
   'Karma artırım',
-  'Sermaye azaltımı ile eş zamanlı sermaye artırımı',
 ] as const
 
 export const CAPITAL_SOURCES = ['Nakdi', 'Ayni', 'İç Kaynaklardan', 'Ortak Alacağından'] as const
@@ -31,9 +29,14 @@ export const CAPITAL_INCREASE_SELECT = [
   'id',
   'tenant_id',
   'company_id',
+  'operation_id',
   'transaction_no',
   'increase_type',
   'transaction_date',
+  'effective_date',
+  'currency',
+  'increase_reason',
+  'distribution_method',
   'current_capital_amount',
   'increase_amount',
   'new_capital_amount',
@@ -41,6 +44,7 @@ export const CAPITAL_INCREASE_SELECT = [
   'participants',
   'previous_ownership',
   'new_ownership',
+  'ownership_transaction_ids',
   'new_partner_id',
   'document_files',
   'status',
@@ -77,12 +81,19 @@ export type CapitalIncreasePrecheck = {
   ok: boolean
   message?: string
   reasons: string[]
+  warnings: string[]
+  blocking_reasons: string[]
+  is_company_active: boolean
+  company_status?: string
+  record_status?: string
+  has_full_share_distribution: boolean
   total_share_ratio: number
   current_capital_amount: number
   paid_capital_amount: number
   unpaid_capital_amount: number
   active_partners: CapitalPartnerSnapshot[]
   draft_partners: CapitalPartnerSnapshot[]
+  current_ownership_distribution: CapitalPartnerSnapshot[]
 }
 
 export function numberValue(value: unknown) {
@@ -115,8 +126,23 @@ export function getCompanyCapitalAmount(company: Record<string, any> | null, ope
   )
 }
 
-export function capitalIncreaseError(message: string, code: string, status = 400, details?: Record<string, unknown>) {
-  return NextResponse.json({ error: message, code, ...(details ? { details } : {}) }, { status })
+export function capitalIncreaseError(
+  message: string,
+  code: string,
+  status = 400,
+  details?: Record<string, unknown>,
+  operation?: { id?: string | null; operation_status?: string | null } | null
+) {
+  return NextResponse.json({
+    error: message,
+    code,
+    message,
+    ...(details ? { details } : {}),
+    ...(operation?.id ? {
+      operation_id: operation.id,
+      operation_status: operation.operation_status || 'failed',
+    } : {}),
+  }, { status })
 }
 
 export async function ensureCapitalIncreaseAccess(request: NextRequest, supabase: SupabaseClient, companyId: string, permissionKey = 'companies.edit') {
@@ -126,13 +152,13 @@ export async function ensureCapitalIncreaseAccess(request: NextRequest, supabase
   const tenantContext = resolveTenantContext(request)
   const companyScope = await getTenantCompanyScope(supabase, tenantContext.tenantId, companyId)
   if (!companyScope) {
-    return { response: capitalIncreaseError('Şirket bulunamadı', 'COMPANY_NOT_FOUND', 404) }
+    return { response: capitalIncreaseError('Şirket bulunamadı.', 'COMPANY_NOT_FOUND', 404) }
   }
   if (permissionKey !== 'companies.view' && !isWritableCompanyScope(companyScope)) {
     return { response: capitalIncreaseError('Bu şirket için yalnızca görüntüleme yetkiniz var.', 'COMPANY_SCOPE_READONLY', 403) }
   }
 
-  return { tenantContext }
+  return { tenantContext, userId: permission.userId }
 }
 
 export async function buildCapitalIncreasePrecheck(
@@ -147,19 +173,7 @@ export async function buildCapitalIncreasePrecheck(
   companyQuery = applyTenantQueryScope(companyQuery, 'companies', tenantContext)
   const { data: company, error: companyError } = await companyQuery.maybeSingle()
   if (companyError) throw new Error(companyError.message)
-  if (!company) {
-    return {
-      ok: false,
-      message: 'Şirket bulunamadı',
-      reasons: ['Şirket bulunamadı.'],
-      total_share_ratio: 0,
-      current_capital_amount: 0,
-      paid_capital_amount: 0,
-      unpaid_capital_amount: 0,
-      active_partners: [],
-      draft_partners: [],
-    }
-  }
+  if (!company) return emptyPrecheck('Şirket bulunamadı.', ['Şirket bulunamadı.'])
 
   let openingQuery = supabase
     .from('company_opening_details')
@@ -177,6 +191,66 @@ export async function buildCapitalIncreasePrecheck(
     openingError = fallbackOpening.error
   }
 
+  const currentCapital = getCompanyCapitalAmount(company as Record<string, any>, openingDetails as Record<string, any> | null)
+  const paidCapital = numberValue((company as Record<string, any>).paid_capital_amount)
+  const lifecycle = getCompanyLifecycle(company as Record<string, any>)
+  const blockingReasons: string[] = []
+  const warnings: string[] = []
+
+  if (lifecycle !== 'active') {
+    blockingReasons.push('Sermaye artırımı yalnızca aktif şirketlerde başlatılabilir. Taslak, tasfiye halinde veya terkin edilmiş şirketlerde bu işlem kullanılamaz.')
+  }
+
+  const partnerSnapshots = await loadPartnerSnapshots(supabase, companyId, tenantContext, currentCapital)
+  const activePartners = partnerSnapshots.filter(isActivePartner)
+  const draftPartners = partnerSnapshots.filter(isDraftPartner)
+  const ownershipDistribution = await loadCurrentOwnershipDistribution(supabase, companyId, tenantContext, activePartners)
+  const sourceRows = ownershipDistribution.length ? ownershipDistribution : activePartners
+
+  const totalShare = roundRatio(sourceRows.reduce((sum, partner) => sum + partner.share_ratio, 0))
+  const hasFullShareDistribution = Math.abs(totalShare - 100) <= 0.01
+  const partnerCommittedTotal = roundMoney(sourceRows.reduce((sum, partner) => sum + partner.committed_capital_amount, 0))
+  const committedForDebtCheck = partnerCommittedTotal > 0 ? partnerCommittedTotal : currentCapital
+  const partnerPaidTotal = roundMoney(sourceRows.reduce((sum, partner) => sum + partner.paid_capital_amount, 0))
+  const paidForDebtCheck = partnerPaidTotal > 0 ? partnerPaidTotal : paidCapital
+  const unpaidCapital = roundMoney(Math.max(0, committedForDebtCheck - paidForDebtCheck))
+
+  if (!sourceRows.length) {
+    blockingReasons.push('Sermaye dağıtımı yapılacak aktif ortak bulunamadı. Önce ortaklık kayıtları oluşturulmalıdır.')
+  }
+  if (!hasFullShareDistribution) {
+    warnings.push(`Mevcut pay dağılımı %100 değil. Güncel toplam: %${totalShare.toLocaleString('tr-TR', { maximumFractionDigits: 4 })}.`)
+  }
+  if (unpaidCapital > 0.01) {
+    warnings.push(`Mevcut sermaye taahhütlerinde ${unpaidCapital.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' })} ödenmemiş tutar bulunuyor.`)
+  }
+
+  return {
+    ok: blockingReasons.length === 0,
+    message: blockingReasons[0] || undefined,
+    reasons: warnings,
+    warnings,
+    blocking_reasons: blockingReasons,
+    is_company_active: lifecycle === 'active',
+    company_status: String((company as Record<string, any>).company_status || ''),
+    record_status: String((company as Record<string, any>).record_status || ''),
+    has_full_share_distribution: hasFullShareDistribution,
+    total_share_ratio: totalShare,
+    current_capital_amount: roundMoney(currentCapital),
+    paid_capital_amount: roundMoney(paidForDebtCheck),
+    unpaid_capital_amount: unpaidCapital,
+    active_partners: sourceRows,
+    draft_partners: draftPartners,
+    current_ownership_distribution: sourceRows,
+  }
+}
+
+async function loadPartnerSnapshots(
+  supabase: SupabaseClient,
+  companyId: string,
+  tenantContext: TenantContext,
+  currentCapital: number
+) {
   let partnersQuery = supabase
     .from('company_partners')
     .select('id,display_name,partner_name,owner_kind,partner_type,record_status,status,share_ratio,voting_ratio,profit_ratio,capital_amount,paid_capital_amount,is_deleted,end_date,history')
@@ -185,40 +259,42 @@ export async function buildCapitalIncreasePrecheck(
   partnersQuery = applyTenantQueryScope(partnersQuery, 'company_partners', tenantContext)
   const { data: partners, error: partnerError } = await partnersQuery
   if (partnerError) throw new Error(partnerError.message)
+  return (partners || []).map((partner: Record<string, any>) => normalizePartnerSnapshot(partner, currentCapital))
+}
 
-  const currentCapital = getCompanyCapitalAmount(company as Record<string, any>, openingDetails as Record<string, any> | null)
-  const paidCapital = numberValue((company as Record<string, any>).paid_capital_amount)
-  const normalizedPartners = (partners || []).map((partner: Record<string, any>) => normalizePartnerSnapshot(partner, currentCapital))
-  const activePartners = normalizedPartners.filter(isActivePartner)
-  const draftPartners = normalizedPartners.filter(isDraftPartner)
-  const totalShare = roundRatio(activePartners.reduce((sum, partner) => sum + partner.share_ratio, 0))
-  const partnerCommittedTotal = roundMoney(activePartners.reduce((sum, partner) => sum + partner.committed_capital_amount, 0))
-  const committedForDebtCheck = partnerCommittedTotal > 0 ? partnerCommittedTotal : currentCapital
-  const partnerPaidTotal = roundMoney(activePartners.reduce((sum, partner) => sum + partner.paid_capital_amount, 0))
-  const paidForDebtCheck = partnerPaidTotal > 0 ? partnerPaidTotal : paidCapital
-  const unpaidCapital = roundMoney(Math.max(0, committedForDebtCheck - paidForDebtCheck))
-  const reasons: string[] = []
+async function loadCurrentOwnershipDistribution(
+  supabase: SupabaseClient,
+  companyId: string,
+  tenantContext: TenantContext,
+  fallbackPartners: CapitalPartnerSnapshot[]
+) {
+  let ownershipQuery = supabase
+    .from('v_current_ownership')
+    .select('partner_id,display_name,current_share_ratio,current_voting_ratio,current_profit_ratio,current_capital_amount,current_share_units,committed_capital_amount,paid_capital_amount,warnings')
+    .eq('company_id', companyId)
+  ownershipQuery = applyTenantQueryScope(ownershipQuery, 'v_current_ownership', tenantContext)
+  const { data: ownershipRows, error } = await ownershipQuery
+  if (error) return []
+  const partnerMap = new Map(fallbackPartners.map(partner => [partner.id, partner]))
 
-  if (Math.abs(totalShare - 100) > 0.01) {
-    reasons.push(`Mevcut pay dağılımı %100 değil. Güncel toplam: %${totalShare.toLocaleString('tr-TR', { maximumFractionDigits: 4 })}.`)
-  }
-  if (unpaidCapital > 0.01) {
-    reasons.push(`Mevcut sermaye taahhütlerinde ${unpaidCapital.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' })} ödenmemiş tutar bulunuyor.`)
-  }
-
-  return {
-    ok: reasons.length === 0,
-    message: reasons.length
-      ? 'Bu şirket için sermaye artırımı işlemi başlatılamaz. Sermaye artırımı yapılabilmesi için mevcut payların %100’ünün ortaklara dağıtılmış olması ve mevcut sermaye taahhütlerinin tamamen ödenmiş olması gerekir.'
-      : undefined,
-    reasons,
-    total_share_ratio: totalShare,
-    current_capital_amount: roundMoney(currentCapital),
-    paid_capital_amount: roundMoney(paidForDebtCheck),
-    unpaid_capital_amount: unpaidCapital,
-    active_partners: activePartners,
-    draft_partners: draftPartners,
-  }
+  return (ownershipRows || [])
+    .filter((row: Record<string, any>) => numberValue(row.current_share_ratio) > 0 || numberValue(row.current_capital_amount) > 0)
+    .map((row: Record<string, any>) => {
+      const partner = partnerMap.get(String(row.partner_id))
+      return {
+        id: String(row.partner_id),
+        display_name: String(row.display_name || partner?.display_name || 'Ortak'),
+        owner_kind: partner?.owner_kind || 'person',
+        partner_type: partner?.partner_type || 'person',
+        record_status: partner?.record_status || 'active',
+        status: partner?.status || 'active',
+        share_ratio: numberValue(row.current_share_ratio),
+        voting_ratio: numberValue(row.current_voting_ratio || row.current_share_ratio),
+        profit_ratio: numberValue(row.current_profit_ratio || row.current_share_ratio),
+        committed_capital_amount: numberValue(row.current_capital_amount || row.committed_capital_amount),
+        paid_capital_amount: numberValue(row.paid_capital_amount),
+      } satisfies CapitalPartnerSnapshot
+    })
 }
 
 export function normalizePartnerSnapshot(partner: Record<string, any>, companyCapital: number): CapitalPartnerSnapshot {
@@ -234,10 +310,45 @@ export function normalizePartnerSnapshot(partner: Record<string, any>, companyCa
     record_status: String(partner.record_status || ''),
     status: String(partner.status || ''),
     share_ratio: shareRatio,
-    voting_ratio: numberValue(partner.voting_ratio),
-    profit_ratio: numberValue(partner.profit_ratio),
+    voting_ratio: numberValue(partner.voting_ratio || shareRatio),
+    profit_ratio: numberValue(partner.profit_ratio || shareRatio),
     committed_capital_amount: committed > 0 ? committed : inferredCommitted,
     paid_capital_amount: numberValue(partner.paid_capital_amount),
+  }
+}
+
+export function getCompanyLifecycle(company: Record<string, any>) {
+  if (company.is_deleted === true) return 'deregistered'
+  const values = [company.record_status, company.company_status]
+    .map(value => String(value || '').trim().toLocaleLowerCase('tr-TR'))
+    .filter(Boolean)
+
+  for (const value of values) {
+    if (['draft', 'taslak'].includes(value)) return 'draft'
+    if (['active', 'opened', 'aktif'].includes(value)) return 'active'
+    if (['liquidation', 'tasfiye', 'tasfiye halinde'].includes(value)) return 'liquidation'
+    if (['deregistered', 'passive', 'closed', 'deleted', 'pasif', 'kapalı', 'kapanmış'].includes(value)) return 'deregistered'
+  }
+
+  return values.length ? 'unknown' : 'active'
+}
+
+function emptyPrecheck(message: string, blockingReasons: string[]): CapitalIncreasePrecheck {
+  return {
+    ok: false,
+    message,
+    reasons: [],
+    warnings: [],
+    blocking_reasons: blockingReasons,
+    is_company_active: false,
+    has_full_share_distribution: false,
+    total_share_ratio: 0,
+    current_capital_amount: 0,
+    paid_capital_amount: 0,
+    unpaid_capital_amount: 0,
+    active_partners: [],
+    draft_partners: [],
+    current_ownership_distribution: [],
   }
 }
 

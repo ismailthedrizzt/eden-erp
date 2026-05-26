@@ -89,6 +89,7 @@ const companyMainFields = [
   'sgk_branch',
   'nace_codes',
   'risk_class',
+  'activity_subject',
   'default_currency',
   'default_language',
   'time_zone',

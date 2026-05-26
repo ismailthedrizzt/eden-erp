@@ -37,6 +37,23 @@ export async function requireCompanyNaceAccess(
     if (mode === 'edit' && !isWritableCompanyScope(companyScope)) {
       return NextResponse.json({ error: 'Bu sirket icin yalnizca goruntuleme yetkiniz var.', code: 'COMPANY_SCOPE_READONLY' }, { status: 403 })
     }
+
+    if (mode === 'edit') {
+      let companyQuery = supabase
+        .from('companies')
+        .select('id,record_status,company_status,is_deleted')
+        .eq('id', companyId)
+      companyQuery = applyTenantQueryScope(companyQuery, 'companies', tenantContext)
+      const { data: company, error: companyError } = await companyQuery.maybeSingle()
+      if (companyError) throw companyError
+      const lifecycle = getCompanyLifecycle(company || {})
+      if (lifecycle !== 'draft') {
+        return NextResponse.json({
+          error: 'Aktif veya lifecycle’a girmiş şirketlerde NACE kodları normal formdan değiştirilemez. Lütfen NACE / Faaliyet Kodu Güncelleme wizardını kullanın.',
+          code: 'NACE_OPERATION_CONTROLLED',
+        }, { status: 409 })
+      }
+    }
   } catch (error) {
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Sirket kapsami kontrol edilemedi.', code: 'COMPANY_SCOPE_CHECK_FAILED' },
@@ -45,6 +62,18 @@ export async function requireCompanyNaceAccess(
   }
 
   return { userId: permission.userId, tenantContext }
+}
+
+function getCompanyLifecycle(company: Record<string, any>) {
+  if (company.is_deleted === true) return 'deregistered'
+  const values = [company.record_status, company.company_status]
+    .map(value => String(value || '').trim().toLocaleLowerCase('tr-TR'))
+    .filter(Boolean)
+  if (values.some(value => ['draft', 'taslak'].includes(value))) return 'draft'
+  if (values.some(value => ['active', 'opened', 'aktif'].includes(value))) return 'active'
+  if (values.some(value => ['liquidation', 'tasfiye', 'tasfiye halinde'].includes(value))) return 'liquidation'
+  if (values.some(value => ['deregistered', 'passive', 'closed', 'deleted', 'pasif', 'kapalı', 'kapanmış', 'terkin'].includes(value))) return 'deregistered'
+  return values.length ? 'unknown' : 'active'
 }
 
 export function scopeCompanyNaceQuery<TQuery extends { eq: (field: string, value: unknown) => TQuery }>(

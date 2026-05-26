@@ -72,6 +72,7 @@ const SirketUpdateSchema = z.object({
   city: z.string().min(1).max(120).optional(),
   district: z.string().min(1).max(120).optional(),
   address: z.string().min(1).optional(),
+  postal_code: z.string().optional().nullable(),
   phone: z.string().optional().nullable(),
   email: z.union([z.literal(''), z.string().email()]).optional().nullable(),
   website: z.string().optional().nullable(),
@@ -88,6 +89,7 @@ const SirketUpdateSchema = z.object({
   sgk_branch: z.string().optional().nullable(),
   nace_codes: z.array(z.string()).optional(),
   risk_class: optionalRiskClass,
+  activity_subject: z.string().optional().nullable(),
   default_currency: z.string().optional(),
   default_language: z.string().optional(),
   time_zone: z.string().optional(),
@@ -123,10 +125,10 @@ function omitNullishValues(value: Record<string, any>) {
   )
 }
 
-const COMPANY_DETAIL_SELECT = 'id,organization_id,field_history,short_name,trade_name,tax_number,tax_office,company_type,city,district,address,phone,email,is_deleted,record_status,company_status,committed_capital_amount,paid_capital_amount,mersis_number,trade_registry_number,foundation_date,legal_entity,electronic_notification_address,trade_registry_office,parent_company_id,company_code,logo_url,country,website,e_invoice_taxpayer,e_archive_taxpayer,e_waybill_taxpayer,sgk_workplace_registry_no,sgk_province,sgk_branch,nace_codes,risk_class,default_currency,default_language,time_zone,fiscal_year_start,hero_images,hero_documents,created_at,updated_at,version'
+const COMPANY_DETAIL_SELECT = 'id,organization_id,field_history,short_name,trade_name,tax_number,tax_office,company_type,city,district,address,postal_code,phone,email,is_deleted,record_status,company_status,committed_capital_amount,paid_capital_amount,mersis_number,trade_registry_number,foundation_date,legal_entity,electronic_notification_address,trade_registry_office,parent_company_id,company_code,logo_url,country,website,e_invoice_taxpayer,e_archive_taxpayer,e_waybill_taxpayer,sgk_workplace_registry_no,sgk_province,sgk_branch,nace_codes,risk_class,activity_subject,default_currency,default_language,time_zone,fiscal_year_start,hero_images,hero_documents,created_at,updated_at,version'
 const COMPANY_HERO_SELECT = 'id,organization_id,field_history,short_name,trade_name,tax_number,tax_office,company_type,logo_url,is_deleted,record_status,company_status,committed_capital_amount,paid_capital_amount,created_at,updated_at,version'
 const COMPANY_MEDIA_SELECT = 'id,logo_url,hero_images,hero_documents,updated_at,version'
-const COMPANY_DETAILS_SELECT = 'id,organization_id,field_history,city,district,address,phone,email,is_deleted,record_status,company_status,committed_capital_amount,paid_capital_amount,mersis_number,trade_registry_number,foundation_date,legal_entity,electronic_notification_address,trade_registry_office,parent_company_id,company_code,country,website,e_invoice_taxpayer,e_archive_taxpayer,e_waybill_taxpayer,sgk_workplace_registry_no,sgk_province,sgk_branch,nace_codes,risk_class,default_currency,default_language,time_zone,fiscal_year_start,created_at,updated_at,version'
+const COMPANY_DETAILS_SELECT = 'id,organization_id,field_history,city,district,address,postal_code,phone,email,is_deleted,record_status,company_status,committed_capital_amount,paid_capital_amount,mersis_number,trade_registry_number,foundation_date,legal_entity,electronic_notification_address,trade_registry_office,parent_company_id,company_code,country,website,e_invoice_taxpayer,e_archive_taxpayer,e_waybill_taxpayer,sgk_workplace_registry_no,sgk_province,sgk_branch,nace_codes,risk_class,activity_subject,default_currency,default_language,time_zone,fiscal_year_start,created_at,updated_at,version'
 const PUBLIC_TAX_SELECT = 'id,company_id,tax_number,tax_office,tax_type,liability_start_date,e_invoice_taxpayer,e_archive_taxpayer,e_waybill_enabled,gib_user_code,has_financial_seal,financial_seal_expiry_date,tax_debt_tracking_active,last_check_date,history,created_at,updated_at'
 const PUBLIC_SGK_SELECT = 'id,company_id,workplace_registry_no,province,branch,registration_date,nace_code,risk_class,uses_incentive,active_incentive_type,incentive_end_date,employee_count,debt_tracking_active,last_check_date,history,created_at,updated_at'
 const PUBLIC_INCENTIVES_SELECT = 'id,company_id,has_kosgeb_registration,kosgeb_no,active_support_program,application_date,result_status,incentive_type,incentive_end_date,responsible_person,notes,history,created_at,updated_at'
@@ -475,7 +477,7 @@ export async function PATCH(
     tableName: 'companies',
     recordId: id,
     permissionKey: 'companies.edit',
-    select: 'id,organization_id,field_history,short_name,trade_name,tax_number,tax_office,company_type,city,district,address,phone,email,is_deleted,record_status,company_status,committed_capital_amount,paid_capital_amount,mersis_number,trade_registry_number,foundation_date,legal_entity,electronic_notification_address,trade_registry_office,company_code,logo_url,country,website,e_invoice_taxpayer,e_archive_taxpayer,e_waybill_taxpayer,sgk_workplace_registry_no,sgk_province,sgk_branch,risk_class,default_currency,default_language,time_zone,fiscal_year_start,hero_images,hero_documents,version,updated_at',
+    select: 'id,organization_id,field_history,short_name,trade_name,tax_number,tax_office,company_type,city,district,address,postal_code,phone,email,is_deleted,record_status,company_status,committed_capital_amount,paid_capital_amount,mersis_number,trade_registry_number,foundation_date,legal_entity,electronic_notification_address,trade_registry_office,company_code,logo_url,country,website,e_invoice_taxpayer,e_archive_taxpayer,e_waybill_taxpayer,sgk_workplace_registry_no,sgk_province,sgk_branch,risk_class,default_currency,default_language,time_zone,fiscal_year_start,hero_images,hero_documents,version,updated_at',
   })
   if (!currentRead.ok) return safeCrudResponse(currentRead)
   current = currentRead.data
@@ -548,8 +550,8 @@ export async function PATCH(
     recordId: id,
     permissionKey: 'companies.edit',
     patch: companyUpdates,
-    select: 'id,short_name,trade_name,tax_number,logo_url,hero_images,is_deleted,record_status,company_status,committed_capital_amount,paid_capital_amount,version,updated_at',
-    currentSelect: 'id,organization_id,field_history,short_name,trade_name,tax_number,tax_office,company_type,city,district,address,phone,email,is_deleted,record_status,company_status,mersis_number,trade_registry_number,foundation_date,legal_entity,electronic_notification_address,trade_registry_office,company_code,logo_url,country,website,e_invoice_taxpayer,e_archive_taxpayer,e_waybill_taxpayer,sgk_workplace_registry_no,sgk_province,sgk_branch,risk_class,default_currency,default_language,time_zone,fiscal_year_start,hero_images,hero_documents,version,updated_at',
+    select: 'id,short_name,trade_name,tax_number,logo_url,hero_images,is_deleted,record_status,company_status,committed_capital_amount,paid_capital_amount,postal_code,version,updated_at',
+    currentSelect: 'id,organization_id,field_history,short_name,trade_name,tax_number,tax_office,company_type,city,district,address,postal_code,phone,email,is_deleted,record_status,company_status,mersis_number,trade_registry_number,foundation_date,legal_entity,electronic_notification_address,trade_registry_office,company_code,logo_url,country,website,e_invoice_taxpayer,e_archive_taxpayer,e_waybill_taxpayer,sgk_workplace_registry_no,sgk_province,sgk_branch,risk_class,default_currency,default_language,time_zone,fiscal_year_start,hero_images,hero_documents,version,updated_at',
     versionField: 'version',
     baseVersion,
     baseUpdatedAt,
