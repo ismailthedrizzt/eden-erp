@@ -1,0 +1,324 @@
+import 'server-only'
+
+import type { NextRequest } from 'next/server'
+import { z } from 'zod'
+import { createServiceClient } from '@/lib/supabase/server'
+import { applyTenantQueryScope } from '@/lib/tenancy/server'
+import { resolveBaseUpdatedAt, resolveBaseVersion, resolveClientRequestId } from '@/lib/operations/idempotency'
+import { executeWithTransactionBoundary } from '@/lib/operations/transactionBoundary'
+import { BRANCH_PERMISSIONS } from '@/lib/modules/companies/branchPermissions'
+import {
+  OFFICIAL_BRANCH_SELECT,
+  OFFICIAL_CHANGE_EVENT_TYPES,
+  OFFICIAL_CHANGE_OPERATION_TYPES,
+  OfficialDocumentMetaSchema,
+  OfficialDocumentSchema,
+  buildBranchClosingPrecheck,
+  emptyToNull,
+  ensureOfficialChangeAccess,
+  insertOfficialChangeTransaction,
+  insertOfficialLifecycleEvent,
+  isActiveBranch,
+  normalizeDocuments,
+  normalizeOptionalString,
+  updateFacilityForBranchClosing,
+  updateOrganizationUnitForBranchClosing,
+  validateOfficialDates,
+} from '@/app/api/companies/[company_id]/official-changes/_shared'
+import {
+  completeOfficialChangeOperation,
+  createOfficialChangeOperation,
+  enqueueOfficialChangeOutbox,
+  failOfficialChangeOperation,
+} from './companyOfficialChange.orchestrator'
+import { orchestratorError, resultFromNextResponse } from './orchestratorResponse'
+import type { OperationOrchestratorResult } from './types'
+
+const emptyStringToUndefined = (value: unknown) => value === '' ? undefined : value
+const optionalUuid = z.preprocess(emptyStringToUndefined, z.string().uuid().optional().nullable())
+
+export const CompanyBranchClosingSchema = z.object({
+  branch_id: z.string().uuid(),
+  closing_reason: z.string().min(1).max(500),
+  closing_decision_date: z.string().min(1),
+  closing_registration_date: z.string().optional().nullable(),
+  trade_registry_gazette_date: z.string().optional().nullable(),
+  trade_registry_gazette_number: z.string().optional().nullable(),
+  sgk_closing_notification: z.boolean().default(false),
+  tax_office_notification: z.boolean().default(false),
+  organization_unit_action: z.enum(['deactivate', 'reassign', 'keep_open']),
+  target_organization_unit_id: optionalUuid,
+  facility_action: z.enum(['deactivate', 'keep_open', 'reuse']),
+  notes: z.string().optional().nullable(),
+  document_files: z.array(OfficialDocumentSchema).default([]),
+  document_meta: OfficialDocumentMetaSchema,
+})
+
+export type CompanyBranchClosingInput = z.infer<typeof CompanyBranchClosingSchema>
+
+type BranchClosingMutationResult = {
+  company: Record<string, any>
+  transaction: Record<string, any>
+  branch: Record<string, any>
+  organization_unit: Record<string, any> | null
+  facility: Record<string, any> | null
+  warnings: string[]
+}
+
+export async function runCompanyBranchClosingOrchestrator({
+  request,
+  companyId,
+  input,
+  rawBody,
+}: {
+  request: NextRequest
+  companyId: string
+  input: CompanyBranchClosingInput
+  rawBody: Record<string, any>
+}): Promise<OperationOrchestratorResult> {
+  const supabase = createServiceClient()
+  const access = await ensureOfficialChangeAccess(request, supabase, companyId, BRANCH_PERMISSIONS.closingStart, 'companies.edit')
+  if (access.response) return resultFromNextResponse(access.response)
+
+  const baseVersion = resolveBaseVersion(rawBody) ?? (rawBody.base_branch_version === undefined ? null : Number(rawBody.base_branch_version))
+  const baseUpdatedAt = resolveBaseUpdatedAt(rawBody) ?? (rawBody.base_branch_updated_at ? String(rawBody.base_branch_updated_at) : null)
+  const operationCreate = await createOfficialChangeOperation({
+    supabase,
+    tenantContext: access.tenantContext,
+    companyId,
+    entityType: 'company_branch',
+    entityId: input.branch_id,
+    operationType: OFFICIAL_CHANGE_OPERATION_TYPES.branch_closing,
+    clientRequestId: resolveClientRequestId(request, rawBody),
+    baseVersion,
+    baseUpdatedAt,
+    requestedBy: access.userId || null,
+    payload: input,
+  })
+  if ('result' in operationCreate) return operationCreate.result
+
+  const operation = operationCreate.operation
+  const operationService = operationCreate.service
+
+  try {
+    const boundary = await executeWithTransactionBoundary<BranchClosingMutationResult>({
+      supabase,
+      rpcName: 'perform_company_branch_closing',
+      rpcPayload: { company_id: companyId, branch_id: input.branch_id, payload: input, operation_id: operation?.id || null },
+      fallback: () => performBranchClosingApplicationFlow({
+        supabase,
+        companyId,
+        input,
+        tenantContext: access.tenantContext,
+        userId: access.userId || null,
+        operationId: operation?.id || null,
+        baseVersion,
+        baseUpdatedAt,
+      }),
+    })
+
+    if (!boundary.ok) {
+      return failOfficialChangeOperation({
+        service: operationService,
+        operation,
+        message: boundary.error,
+        code: boundary.code,
+        status: boundary.status,
+        details: boundary.details,
+      })
+    }
+
+    const result = boundary.data
+    await enqueueOfficialChangeOutbox({
+      supabase,
+      tenantContext: access.tenantContext,
+      companyId,
+      eventType: OFFICIAL_CHANGE_EVENT_TYPES.branch_closing,
+      aggregateType: 'company_branch',
+      aggregateId: result.branch.id,
+      operation,
+      payload: {
+        company_id: companyId,
+        branch_id: result.branch.id,
+        transaction_id: result.transaction.id,
+        organization_unit_action: input.organization_unit_action,
+        facility_action: input.facility_action,
+        transaction_boundary: boundary.used,
+      },
+    })
+
+    return completeOfficialChangeOperation({
+      service: operationService,
+      operation,
+      data: {
+        company: result.company,
+        transaction: result.transaction,
+        branch: result.branch,
+        organization_unit: result.organization_unit,
+        facility: result.facility,
+      },
+      warnings: result.warnings,
+    })
+  } catch (error: any) {
+    return failOfficialChangeOperation({
+      service: operationService,
+      operation,
+      message: error?.message || 'Sube kapanisi tamamlanamadi.',
+      code: error?.code || 'BRANCH_CLOSING_FAILED',
+      status: error?.status || 500,
+      details: error?.details,
+    })
+  }
+}
+
+async function performBranchClosingApplicationFlow({
+  supabase,
+  companyId,
+  input,
+  tenantContext,
+  userId,
+  operationId,
+  baseVersion,
+  baseUpdatedAt,
+}: {
+  supabase: ReturnType<typeof createServiceClient>
+  companyId: string
+  input: CompanyBranchClosingInput
+  tenantContext: any
+  userId?: string | null
+  operationId?: string | null
+  baseVersion?: number | null
+  baseUpdatedAt?: string | null
+}): Promise<BranchClosingMutationResult> {
+  const precheck = await buildBranchClosingPrecheck(supabase, companyId, tenantContext, input.branch_id)
+  if (!precheck.ok) {
+    throw Object.assign(new Error(precheck.message), {
+      code: 'BRANCH_CLOSING_PRECHECK_FAILED',
+      status: 409,
+      details: { reasons: precheck.blocking_reasons, warnings: precheck.warnings },
+    })
+  }
+
+  const branch = precheck.selected_branch
+  if (!branch) throw validationError('Kapatilacak sube bulunamadi.', 'BRANCH_NOT_FOUND', 404)
+  if (!isActiveBranch(branch)) throw validationError('Kapali veya pasif sube tekrar kapatilamaz.', 'BRANCH_ALREADY_CLOSED', 409)
+  if (input.organization_unit_action === 'reassign' && !input.target_organization_unit_id) {
+    throw validationError('Organizasyon birimi baska birime baglanacaksa hedef birim secilmelidir.', 'TARGET_ORGANIZATION_UNIT_REQUIRED', 400)
+  }
+  if (baseVersion !== null && baseVersion !== undefined && Number(branch.version || 0) !== Number(baseVersion)) {
+    throw validationError('Sube kaydi bu islem hazirlanirken degismis. Lutfen kaydi yenileyip tekrar deneyin.', 'VERSION_CONFLICT', 409, { current_version: branch.version, base_version: baseVersion })
+  }
+  if (baseUpdatedAt && branch.updated_at && new Date(branch.updated_at).getTime() !== new Date(baseUpdatedAt).getTime()) {
+    throw validationError('Sube kaydi bu islem hazirlanirken degismis. Lutfen kaydi yenileyip tekrar deneyin.', 'VERSION_CONFLICT', 409, { current_updated_at: branch.updated_at, base_updated_at: baseUpdatedAt })
+  }
+
+  const dateValidation = validateOfficialDates({
+    decisionDate: input.closing_decision_date,
+    registrationDate: input.closing_registration_date,
+    tradeRegistryGazetteDate: input.trade_registry_gazette_date,
+  })
+  if (!dateValidation.ok) throw validationError(dateValidation.message, dateValidation.code, 400)
+
+  const documents = normalizeDocuments(input.document_files, input.document_meta)
+  const previousDocumentFiles = Array.isArray(branch.document_files) ? branch.document_files : []
+  const now = new Date().toISOString()
+  const updatePayload = {
+    status: 'closed',
+    record_status: 'closed',
+    closing_decision_date: emptyToNull(input.closing_decision_date),
+    closing_registration_date: emptyToNull(input.closing_registration_date),
+    trade_registry_gazette_date: emptyToNull(input.trade_registry_gazette_date),
+    trade_registry_gazette_number: normalizeOptionalString(input.trade_registry_gazette_number),
+    end_date: emptyToNull(input.closing_registration_date || input.closing_decision_date),
+    document_files: [...previousDocumentFiles, ...documents.map(document => ({ ...document, closing_document: true }))],
+    metadata_json: {
+      ...(branch.metadata_json || {}),
+      closing_reason: input.closing_reason,
+      sgk_closing_notification: input.sgk_closing_notification,
+      tax_office_notification: input.tax_office_notification,
+      organization_unit_action: input.organization_unit_action,
+      target_organization_unit_id: input.target_organization_unit_id || null,
+      facility_action: input.facility_action,
+      closed_operation_id: operationId || null,
+    },
+    notes: normalizeOptionalString(input.notes) || branch.notes || null,
+    updated_by: userId || null,
+    updated_at: now,
+    version: Number(branch.version || 1) + 1,
+  }
+
+  let updateQuery = supabase.from('company_branches').update(updatePayload).eq('id', branch.id)
+  updateQuery = applyTenantQueryScope(updateQuery, 'company_branches', tenantContext)
+  const { data: updatedBranch, error: updateError } = await updateQuery.select(OFFICIAL_BRANCH_SELECT).single()
+  if (updateError) throw updateError
+
+  const organizationUnitResult = await updateOrganizationUnitForBranchClosing({
+    supabase,
+    companyId,
+    unitId: branch.organization_unit_id,
+    action: input.organization_unit_action,
+    targetUnitId: input.target_organization_unit_id || null,
+    tenantContext,
+    endDate: input.closing_registration_date || input.closing_decision_date,
+  })
+  if (!organizationUnitResult.ok) {
+    throw validationError(organizationUnitResult.error, organizationUnitResult.code, organizationUnitResult.status, organizationUnitResult.details)
+  }
+
+  const facility = await updateFacilityForBranchClosing({
+    supabase,
+    facilityId: branch.facility_id,
+    action: input.facility_action,
+    tenantContext,
+    endDate: input.closing_registration_date || input.closing_decision_date,
+    userId,
+  })
+
+  const changedFields = Object.keys(updatePayload)
+  const oldValues = Object.fromEntries(changedFields.map(field => [field, branch[field] ?? null]))
+  const updated = updatedBranch as Record<string, any>
+  const newValues = Object.fromEntries(changedFields.map(field => [field, updated[field] ?? null]))
+  const warnings = [...(precheck.warnings || []), ...dateValidation.warnings]
+  const transaction = await insertOfficialChangeTransaction({
+    supabase,
+    companyId,
+    branchId: branch.id,
+    tenantContext,
+    userId,
+    operationId,
+    transactionType: 'branch_closing',
+    oldValues,
+    newValues,
+    changedFields,
+    documentFiles: documents,
+    decisionDate: input.closing_decision_date,
+    registrationDate: input.closing_registration_date,
+    tradeRegistryGazetteDate: input.trade_registry_gazette_date,
+    tradeRegistryGazetteNumber: input.trade_registry_gazette_number,
+    effectiveDate: input.closing_registration_date || input.closing_decision_date,
+    notes: input.notes || input.closing_reason,
+    warnings,
+  })
+  await insertOfficialLifecycleEvent({
+    supabase,
+    companyId,
+    tenantContext,
+    userId,
+    transaction,
+    eventType: 'company_branch_closing_completed',
+    eventDate: input.closing_registration_date || input.closing_decision_date,
+  })
+
+  return {
+    company: precheck.current,
+    transaction,
+    branch: updated,
+    organization_unit: organizationUnitResult.unit,
+    facility,
+    warnings,
+  }
+}
+
+function validationError(message: string, code: string, status = 400, details?: Record<string, any>) {
+  return Object.assign(new Error(message), { code, status, details })
+}

@@ -21,14 +21,14 @@ export function ActionGuideCommandButton({ action, onExecuted }: ActionGuideComm
       body: JSON.stringify(action),
     }).catch(() => undefined)
 
-    if (action.action_type === 'navigate' || action.action_type === 'start_create') {
+    if (action.action_type === 'navigate' || action.action_type === 'start_create' || action.action_type === 'open_record') {
       if (action.action_type === 'start_create') {
         window.dispatchEvent(new CustomEvent('eden:action-guide-command', { detail: action }))
       }
       if (action.target_page) router.push(action.target_page)
     }
 
-    if (action.action_type === 'open_wizard') {
+    if (action.action_type === 'open_wizard' || action.action_type === 'focus_record') {
       window.dispatchEvent(new CustomEvent('eden:action-guide-command', { detail: action }))
       if (action.target_page) router.push(action.target_page)
     }
