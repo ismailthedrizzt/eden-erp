@@ -813,8 +813,8 @@ export async function buildBranchClosingPrecheck(
 
   if (selectedBranch) {
     impact = await buildBranchImpact(supabase, selectedBranch, tenantContext)
-    if ((impact.employee_count || 0) > 0 || (impact.position_count || 0) > 0) {
-      warnings.push('Şubeye bağlı aktif kadro veya personel görünüyor. Kapanışta organizasyon birimi için aksiyon seçilmelidir.')
+    if ((impact.open_relation_count || 0) > 0) {
+      warnings.push('Şubeye bağlı aktif ilişki görünüyor. Kapanışta organizasyon birimi ve lokasyon/tesis için aksiyon seçilmelidir.')
     }
   }
 
@@ -1368,12 +1368,17 @@ export async function setOrganizationUnitPassive({
   tenantContext: TenantContext
   endDate?: string | null
 }) {
+  const current = await loadOrganizationUnitWithHistory(supabase, unitId, tenantContext)
   let query = supabase
     .from('organization_units')
     .update({
       status: 'Pasif',
       active: false,
       end_date: emptyToNull(endDate),
+      history: appendHistoryEntry(current?.history, 'branch_closed_unit_deactivated', {
+        message: 'Şube kapatıldı ve organizasyon birimi pasife alındı.',
+        end_date: endDate || null,
+      }),
       updated_at: new Date().toISOString(),
     })
     .eq('id', unitId)
@@ -1406,17 +1411,59 @@ export async function updateOrganizationUnitForBranchClosing({
     return { ok: true as const, unit }
   }
   if (action === 'keep_open') {
-    const unit = await appendOrganizationUnitHistory({
-      supabase,
-      unitId,
-      tenantContext,
-      event: 'branch_closed_unit_kept_open',
-      payload: { end_date: endDate || null },
-    })
+    const unit = await markOrganizationUnitKeptOpen({ supabase, unitId, tenantContext, endDate })
     return { ok: true as const, unit }
   }
 
-  const validation = await validateOrganizationUnitReassignTarget({
+  return reassignOrganizationUnit({
+    supabase,
+    companyId,
+    unitId,
+    targetUnitId,
+    tenantContext,
+    endDate,
+  })
+}
+
+export async function markOrganizationUnitKeptOpen({
+  supabase,
+  unitId,
+  tenantContext,
+  endDate,
+}: {
+  supabase: SupabaseClient
+  unitId: string
+  tenantContext: TenantContext
+  endDate?: string | null
+}) {
+  return appendOrganizationUnitHistory({
+    supabase,
+    unitId,
+    tenantContext,
+    event: 'branch_closed_unit_kept_open',
+    payload: {
+      message: 'Şube kapatıldı ancak organizasyon birimi açık bırakıldı.',
+      end_date: endDate || null,
+    },
+  })
+}
+
+export async function reassignOrganizationUnit({
+  supabase,
+  companyId,
+  unitId,
+  targetUnitId,
+  tenantContext,
+  endDate,
+}: {
+  supabase: SupabaseClient
+  companyId: string
+  unitId: string
+  targetUnitId?: string | null
+  tenantContext: TenantContext
+  endDate?: string | null
+}) {
+  const validation = await assertValidOrganizationUnitReassignTarget({
     supabase,
     companyId,
     unitId,
@@ -1425,12 +1472,14 @@ export async function updateOrganizationUnitForBranchClosing({
   })
   if (!validation.ok) return validation
 
+  const current = await loadOrganizationUnitWithHistory(supabase, unitId, tenantContext)
   let query = supabase
     .from('organization_units')
     .update({
       parent_unit_id: targetUnitId,
-      history: appendHistoryEntry(validation.unit?.history, 'branch_closed_unit_reassigned', {
-        previous_parent_unit_id: validation.unit?.parent_unit_id || null,
+      history: appendHistoryEntry(current?.history, 'branch_closed_unit_reassigned', {
+        message: 'Şube kapatıldı; organizasyon birimi hedef birime bağlandı.',
+        previous_parent_unit_id: current?.parent_unit_id || validation.unit?.parent_unit_id || null,
         target_organization_unit_id: targetUnitId,
         end_date: endDate || null,
       }),
@@ -1465,38 +1514,136 @@ export async function updateFacilityForBranchClosing({
   const facility = await loadCompanyFacilityById(supabase, facilityId, tenantContext)
   if (!facility) return null
 
+  if (action === 'deactivate') {
+    return setFacilityPassive({ supabase, facility, tenantContext, endDate, userId })
+  }
+  if (action === 'reuse') {
+    return markFacilityReusable({ supabase, facility, tenantContext, endDate, userId })
+  }
+  return markFacilityKeptOpen({ supabase, facility, tenantContext, endDate, userId })
+}
+
+export async function setFacilityPassive({
+  supabase,
+  facility,
+  tenantContext,
+  endDate,
+  userId,
+}: {
+  supabase: SupabaseClient
+  facility: Record<string, any>
+  tenantContext: TenantContext
+  endDate?: string | null
+  userId?: string | null
+}) {
   const now = new Date().toISOString()
-  const updatePayload = action === 'deactivate'
-    ? {
+  return updateFacilityRow({
+    supabase,
+    facility,
+    tenantContext,
+    userId,
+    patch: {
       status: 'closed',
       record_status: 'passive',
       end_date: emptyToNull(endDate),
-      metadata_json: {
-        ...(facility.metadata_json || {}),
+      metadata_json: appendFacilityMetadata(facility, 'branch_closed_facility_deactivated', {
+        message: 'Şube kapatıldı ve lokasyon/tesis pasife alındı.',
         branch_closing_action: 'deactivate',
-        branch_closed_facility_deactivated_at: now,
-      },
-    }
-    : {
-      status: action === 'reuse' ? 'reusable' : (facility.status || 'active'),
-      record_status: facility.record_status || 'active',
-      metadata_json: {
-        ...(facility.metadata_json || {}),
-        branch_closing_action: action,
-        branch_closed_facility_kept_open_at: now,
-        reusable_after_branch_closing: action === 'reuse',
-      },
-    }
+        end_date: endDate || null,
+        changed_at: now,
+      }),
+    },
+  })
+}
 
+export async function markFacilityKeptOpen({
+  supabase,
+  facility,
+  tenantContext,
+  endDate,
+  userId,
+}: {
+  supabase: SupabaseClient
+  facility: Record<string, any>
+  tenantContext: TenantContext
+  endDate?: string | null
+  userId?: string | null
+}) {
+  const now = new Date().toISOString()
+  return updateFacilityRow({
+    supabase,
+    facility,
+    tenantContext,
+    userId,
+    patch: {
+      status: facility.status || 'active',
+      record_status: facility.record_status || 'active',
+      metadata_json: appendFacilityMetadata(facility, 'branch_closed_facility_kept_open', {
+        message: 'Şube kapatıldı ancak lokasyon/tesis açık bırakıldı.',
+        branch_closing_action: 'keep_open',
+        end_date: endDate || null,
+        changed_at: now,
+      }),
+    },
+  })
+}
+
+export async function markFacilityReusable({
+  supabase,
+  facility,
+  tenantContext,
+  endDate,
+  userId,
+}: {
+  supabase: SupabaseClient
+  facility: Record<string, any>
+  tenantContext: TenantContext
+  endDate?: string | null
+  userId?: string | null
+}) {
+  const now = new Date().toISOString()
+  return updateFacilityRow({
+    supabase,
+    facility,
+    tenantContext,
+    userId,
+    patch: {
+      status: 'reusable',
+      record_status: 'active',
+      metadata_json: appendFacilityMetadata(facility, 'branch_closed_facility_reusable', {
+        message: 'Şube kapatıldı; lokasyon/tesis tekrar kullanılabilir olarak işaretlendi.',
+        branch_closing_action: 'reuse',
+        reusable_after_branch_closing: true,
+        end_date: endDate || null,
+        changed_at: now,
+      }),
+    },
+  })
+}
+
+async function updateFacilityRow({
+  supabase,
+  facility,
+  tenantContext,
+  userId,
+  patch,
+}: {
+  supabase: SupabaseClient
+  facility: Record<string, any>
+  tenantContext: TenantContext
+  userId?: string | null
+  patch: Record<string, any>
+}) {
+  const now = new Date().toISOString()
   let query = supabase
     .from('company_facilities')
     .update({
-      ...updatePayload,
+      ...patch,
       updated_by: userId || null,
       updated_at: now,
       version: Number(facility.version || 1) + 1,
     })
-    .eq('id', facilityId)
+    .eq('id', facility.id)
   query = applyTenantQueryScope(query, 'company_facilities', tenantContext)
   const { data, error } = await query.select(OFFICIAL_FACILITY_SELECT).single()
   if (error) {
@@ -1547,7 +1694,25 @@ async function appendOrganizationUnitHistory({
   return data as Record<string, any>
 }
 
-async function validateOrganizationUnitReassignTarget({
+async function loadOrganizationUnitWithHistory(
+  supabase: SupabaseClient,
+  unitId: string,
+  tenantContext: TenantContext
+) {
+  let query = supabase
+    .from('organization_units')
+    .select(`${OFFICIAL_ORGANIZATION_UNIT_SELECT},history`)
+    .eq('id', unitId)
+  query = applyTenantQueryScope(query, 'organization_units', tenantContext)
+  const { data, error } = await query.maybeSingle()
+  if (error) {
+    if (isMissingInfrastructureError(error)) return null
+    throw error
+  }
+  return (data || null) as Record<string, any> | null
+}
+
+export async function assertValidOrganizationUnitReassignTarget({
   supabase,
   companyId,
   unitId,
@@ -1586,7 +1751,7 @@ async function validateOrganizationUnitReassignTarget({
   return { ok: true as const, unit, target }
 }
 
-function wouldCreateOrganizationCycle(units: Record<string, any>[], unitId: string, targetUnitId: string) {
+export function wouldCreateOrganizationCycle(units: Record<string, any>[], unitId: string, targetUnitId: string) {
   const byId = new Map(units.map(unit => [unit.id, unit]))
   let cursor = byId.get(targetUnitId)
   const seen = new Set<string>()
@@ -1596,6 +1761,18 @@ function wouldCreateOrganizationCycle(units: Record<string, any>[], unitId: stri
     cursor = cursor.parent_unit_id ? byId.get(cursor.parent_unit_id) : undefined
   }
   return false
+}
+
+function appendFacilityMetadata(facility: Record<string, any>, event: string, payload: Record<string, any>) {
+  const metadata = facility.metadata_json && typeof facility.metadata_json === 'object'
+    ? facility.metadata_json
+    : {}
+  return {
+    ...metadata,
+    branch_closing_action: payload.branch_closing_action,
+    reusable_after_branch_closing: payload.reusable_after_branch_closing ?? metadata.reusable_after_branch_closing,
+    history: appendHistoryEntry((metadata as Record<string, any>).history, event, payload),
+  }
 }
 
 function appendHistoryEntry(history: unknown, event: string, payload: Record<string, any>) {
@@ -1697,7 +1874,10 @@ async function safeEmployeeCount(
     tenantContext,
     tableName: 'employees',
     label,
-    applyFilter: query => applyFilter(query).eq('is_deleted', false),
+    applyFilter: query => applyFilter(query)
+      .eq('is_deleted', false)
+      .eq('record_status', 'active')
+      .in('work_status', ['active', 'on_leave']),
     warnings,
   })
 }

@@ -21,8 +21,10 @@ export interface ListResponse<T> {
   data: T[]
   meta: ListMeta
   projection?: {
+    key?: string
     name: string
     version: string
+    sourceName?: string
   }
   warning?: string
 }

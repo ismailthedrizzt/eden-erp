@@ -4,41 +4,85 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { applyTenantQueryScope, type TenantContext } from '@/lib/tenancy/server'
 import { isMissingInfrastructureError } from '@/lib/operations/operationRequestService'
 import { COMPANY_BRANCH_SELECT } from '@/lib/modules/companies/companyBranchSelect'
-import type { ReadModelProjection } from '../registry'
+import type { ProjectionDefinition } from '../projection.types'
 
-export const branchListProjection: ReadModelProjection = {
+export const branchListProjection: ProjectionDefinition = {
   key: 'branchList',
   name: 'Subelerimiz liste projection',
-  version: 1,
-  sources: ['company_branches', 'companies', 'organization_units', 'company_facilities', 'company_official_change_transactions'],
-  fallbackQuery: 'company_branches + reference hydration',
-  cacheDurationSeconds: 0,
+  version: '2026-05-26.1',
+  sourceName: 'v_company_branch_list',
+  sourceType: 'view',
+  sourceTables: ['company_branches', 'companies', 'organization_units', 'company_facilities', 'company_official_change_transactions'],
+  defaultSort: 'branch_name',
+  defaultDirection: 'asc',
   fields: [
     'id',
+    'tenant_id',
     'company_id',
     'company_name',
-    'branch_name',
-    'branch_short_name',
-    'branch_type',
-    'is_official_branch',
-    'record_status',
-    'status',
-    'city',
-    'district',
-    'address_summary',
-    'phone',
-    'email',
-    'opening_registration_date',
-    'closing_registration_date',
     'organization_unit_id',
     'organization_unit_name',
     'facility_id',
     'facility_name',
+    'branch_name',
+    'branch_short_name',
+    'branch_type',
+    'branch_type_label',
+    'is_official_branch',
+    'country',
+    'city',
+    'district',
+    'neighborhood',
+    'address',
+    'address_summary',
+    'postal_code',
+    'phone',
+    'email',
+    'trade_registry_number',
+    'trade_registry_office',
+    'tax_office',
+    'sgk_workplace_registry_no',
+    'opening_decision_date',
+    'opening_registration_date',
+    'closing_decision_date',
+    'closing_registration_date',
+    'status',
+    'record_status',
+    'start_date',
+    'end_date',
+    'responsible_person_id',
+    'responsible_person_name',
     'last_operation',
+    'last_transaction_id',
+    'warning_count',
+    'document_count',
+    'created_at',
     'updated_at',
     'version',
+    'is_deleted',
   ],
-  refreshStrategy: 'outbox_invalidation',
+  searchableFields: ['branch_name', 'branch_short_name', 'company_name', 'city', 'district', 'address', 'trade_registry_number', 'tax_office'],
+  sortableFields: {
+    branch_name: 'branch_name',
+    branch_short_name: 'branch_short_name',
+    company_name: 'company_name',
+    city: 'city',
+    district: 'district',
+    opening_registration_date: 'opening_registration_date',
+    closing_registration_date: 'closing_registration_date',
+    record_status: 'record_status',
+    updated_at: 'updated_at',
+    created_at: 'created_at',
+  },
+  statusField: 'record_status',
+  tenantScoped: true,
+  companyScoped: true,
+  cacheMs: 60_000,
+  fallback: {
+    type: 'function',
+    tableName: 'company_branches',
+    hydrate: 'branchListFallback',
+  },
 }
 
 export async function fetchBranchListProjection({
@@ -70,7 +114,9 @@ export async function fetchBranchListProjection({
     city: 'city',
     district: 'district',
     status: 'record_status',
+    record_status: 'record_status',
     opening_registration_date: 'opening_registration_date',
+    closing_registration_date: 'closing_registration_date',
     created_at: 'created_at',
     updated_at: 'updated_at',
   }
@@ -121,7 +167,7 @@ export async function attachBranchProjectionReferences(
   let transactionsQuery = branchIds.length
     ? supabase
       .from('company_official_change_transactions')
-      .select('id,branch_id,transaction_type,created_at')
+      .select('id,branch_id,transaction_type,warnings,document_files,created_at')
       .in('branch_id', branchIds)
       .eq('is_deleted', false)
       .order('created_at', { ascending: false })
@@ -129,10 +175,10 @@ export async function attachBranchProjectionReferences(
   if (transactionsQuery) transactionsQuery = applyTenantQueryScope(transactionsQuery, 'company_official_change_transactions', tenantContext)
 
   const [companies, units, facilities, transactions] = await Promise.all([
-    companiesQuery,
-    unitsQuery || Promise.resolve({ data: [], error: null }),
-    facilitiesQuery || Promise.resolve({ data: [], error: null }),
-    transactionsQuery || Promise.resolve({ data: [], error: null }),
+    runProjectionQuery(companiesQuery, { allowMissingInfrastructure: false }),
+    runProjectionQuery(unitsQuery, { allowMissingInfrastructure: true }),
+    runProjectionQuery(facilitiesQuery, { allowMissingInfrastructure: true }),
+    runProjectionQuery(transactionsQuery, { allowMissingInfrastructure: true }),
   ])
 
   const companyById = new Map((companies.data || []).map((company: any) => [company.id, company]))
@@ -158,12 +204,46 @@ export async function attachBranchProjectionReferences(
       organization_unit_name: unit?.name || '',
       facility: facility || null,
       facility_name: facility?.facility_name || row.metadata_json?.facility_name || '',
+      branch_type_label: branchTypeLabel(row.branch_type),
       address_summary: [row.district, row.city].filter(Boolean).join(', ') || row.address || '',
       last_operation: lastTransaction?.transaction_type || (row.record_status === 'closed' ? 'branch_closing' : 'branch_opening'),
+      last_transaction_id: lastTransaction?.id || null,
+      warning_count: Array.isArray(lastTransaction?.warnings) ? lastTransaction.warnings.length : 0,
+      document_count: Array.isArray(row.document_files)
+        ? row.document_files.length
+        : Array.isArray(lastTransaction?.document_files)
+          ? lastTransaction.document_files.length
+          : 0,
+      responsible_person_name: row.responsible_person_name || null,
     }
   })
 }
 
 function unique(values: Array<string | null | undefined>) {
   return Array.from(new Set(values.filter((value): value is string => typeof value === 'string' && value.length > 0)))
+}
+
+async function runProjectionQuery(
+  query: any,
+  options: { allowMissingInfrastructure: boolean }
+): Promise<{ data: any[]; error: null }> {
+  if (!query) return { data: [], error: null }
+  const { data, error } = await query
+  if (error) {
+    if (options.allowMissingInfrastructure && isMissingInfrastructureError(error)) {
+      return { data: [], error: null }
+    }
+    throw error
+  }
+  return { data: data || [], error: null }
+}
+
+function branchTypeLabel(value: unknown) {
+  const labels: Record<string, string> = {
+    official_branch: 'Resmi Sube',
+    branch: 'Sube',
+    liaison_office: 'Irtibat Burosu',
+    operation_point: 'Operasyon Noktasi',
+  }
+  return labels[String(value || '')] || String(value || '')
 }

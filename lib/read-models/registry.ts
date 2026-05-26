@@ -1,30 +1,44 @@
+import type { ProjectionDefinition } from './projection.types'
 import { branchListProjection } from './projections/branchList.projection'
+import { branchSummaryProjection } from './projections/branchSummary.projection'
 import { companyDetailProjection } from './projections/companyDetail.projection'
 import { companyListProjection } from './projections/companyList.projection'
 import { partnerListProjection } from './projections/partnerList.projection'
 import { pendingActionsProjection } from './projections/pendingActions.projection'
 import { representativeListProjection } from './projections/representativeList.projection'
+import { stakeholderListProjection } from './projections/stakeholderList.projection'
 
-export type ReadModelProjection = {
-  key: string
-  name: string
-  version: number
-  sources: string[]
-  fallbackQuery: string
-  cacheDurationSeconds: number
-  fields: string[]
-  refreshStrategy: 'on_read' | 'outbox_invalidation' | 'scheduled'
-}
+export type ReadModelProjection = ProjectionDefinition
 
 export const projectionRegistry = {
   companyList: companyListProjection,
   companyDetail: companyDetailProjection,
+  branchList: branchListProjection,
+  branchSummary: branchSummaryProjection,
   partnerList: partnerListProjection,
   representativeList: representativeListProjection,
-  branchList: branchListProjection,
+  stakeholderList: stakeholderListProjection,
   pendingActions: pendingActionsProjection,
-} satisfies Record<string, ReadModelProjection>
+} satisfies Record<string, ProjectionDefinition>
 
-export function getProjection(key: keyof typeof projectionRegistry) {
+export type ProjectionRegistryKey = keyof typeof projectionRegistry
+
+export const legacyListProjectionKeyMap: Record<string, ProjectionRegistryKey> = {
+  'companies.list': 'companyList',
+  'company_partners.list': 'partnerList',
+  'company_representatives.list': 'representativeList',
+  'company_branches.list': 'branchList',
+  'stakeholders.list': 'stakeholderList',
+}
+
+export function getProjection(key: ProjectionRegistryKey) {
   return projectionRegistry[key]
+}
+
+export function getProjectionDefinition(key: string) {
+  return projectionRegistry[key as ProjectionRegistryKey] || projectionRegistry[legacyListProjectionKeyMap[key]] || null
+}
+
+export function listProjectionDefinitions() {
+  return Object.values(projectionRegistry)
 }

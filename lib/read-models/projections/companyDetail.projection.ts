@@ -2,17 +2,54 @@ import 'server-only'
 
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { applyTenantQueryScope, type TenantContext } from '@/lib/tenancy/server'
-import type { ReadModelProjection } from '../registry'
+import { isMissingInfrastructureError } from '@/lib/operations/operationRequestService'
+import type { ProjectionDefinition } from '../projection.types'
+import {
+  buildBranchSummaryReadModel,
+  buildCompanyBranchSummaryProjection as buildBranchSummaryProjection,
+} from './branchSummary.projection'
 
-export const companyDetailProjection: ReadModelProjection = {
+export const companyDetailProjection: ProjectionDefinition = {
   key: 'companyDetail',
   name: 'Sirket detay projection',
-  version: 1,
-  sources: ['companies', 'company_branches', 'organization_units', 'company_facilities'],
-  fallbackQuery: 'company detail route related sections',
-  cacheDurationSeconds: 0,
-  fields: ['branches', 'branch_summary'],
-  refreshStrategy: 'outbox_invalidation',
+  version: '2026-05-26.1',
+  sourceName: 'companies',
+  sourceType: 'table',
+  sourceTables: ['companies', 'company_partners', 'company_representatives', 'stakeholders', 'company_branches', 'organization_units', 'company_facilities'],
+  fields: ['company', 'partners', 'representatives', 'stakeholders', 'public_sections', 'current_ownership', 'lifecycle_events', 'company_nace_codes', 'branches', 'branch_summary'],
+  tenantScoped: true,
+  companyScoped: false,
+  cacheMs: 60_000,
+  fallback: {
+    type: 'function',
+    tableName: 'companies',
+    hydrate: 'companyDetailFallback',
+  },
+}
+
+export async function buildCompanyDetailReadModel({
+  supabase,
+  company,
+  tenantContext,
+  related,
+}: {
+  supabase: SupabaseClient
+  company: Record<string, any>
+  tenantContext: TenantContext
+  related?: Record<string, any>
+}) {
+  const branchReadModel = await buildBranchSummaryReadModel({
+    supabase,
+    companyId: company.id,
+    tenantContext,
+  })
+  return {
+    ...company,
+    ...(related || {}),
+    branches: branchReadModel.branches,
+    branch_summary: branchReadModel.branch_summary,
+    ...(branchReadModel.warning ? { projection_warning: branchReadModel.warning } : {}),
+  }
 }
 
 export async function hydrateCompanyBranchesForDetailProjection(
@@ -33,8 +70,8 @@ export async function hydrateCompanyBranchesForDetailProjection(
   if (facilityQuery) facilityQuery = applyTenantQueryScope(facilityQuery, 'company_facilities', tenantContext)
 
   const [units, facilities] = await Promise.all([
-    unitQuery || Promise.resolve({ data: [], error: null }),
-    facilityQuery || Promise.resolve({ data: [], error: null }),
+    runProjectionQuery(unitQuery),
+    runProjectionQuery(facilityQuery),
   ])
   const unitById = new Map((units.data || []).map((unit: any) => [unit.id, unit]))
   const facilityById = new Map((facilities.data || []).map((facility: any) => [facility.id, facility]))
@@ -66,33 +103,19 @@ export async function hydrateCompanyBranchesForDetailProjection(
 }
 
 export function buildCompanyBranchSummaryProjection(rows: Record<string, any>[]) {
-  const activeRows = rows.filter(isActiveBranchSummaryRow)
-  const closedRows = rows.filter(row => String(row.record_status || row.status).toLocaleLowerCase('tr-TR') === 'closed')
-  const officialRows = activeRows.filter(row => row.is_official_branch)
-  const operationPointRows = activeRows.filter(row => ['liaison_office', 'operation_point'].includes(String(row.branch_type || '')))
-  const byOpeningDate = [...rows]
-    .filter(row => row.opening_registration_date || row.created_at)
-    .sort((left, right) => String(right.opening_registration_date || right.created_at || '').localeCompare(String(left.opening_registration_date || left.created_at || '')))
-  const byClosingDate = [...closedRows]
-    .filter(row => row.closing_registration_date || row.updated_at)
-    .sort((left, right) => String(right.closing_registration_date || right.updated_at || '').localeCompare(String(left.closing_registration_date || left.updated_at || '')))
-
-  return {
-    total_branch_count: rows.length,
-    active_branch_count: activeRows.length,
-    official_branch_count: officialRows.length,
-    operation_point_count: operationPointRows.length,
-    closed_branch_count: closedRows.length,
-    last_opened_branch: byOpeningDate[0] || null,
-    last_closed_branch: byClosingDate[0] || null,
-  }
-}
-
-function isActiveBranchSummaryRow(row: Record<string, any>) {
-  const values = [row.record_status, row.status].map(value => String(value || '').toLocaleLowerCase('tr-TR'))
-  return !row.is_deleted && values.some(value => value === 'active' || value === 'aktif')
+  return buildBranchSummaryProjection(rows)
 }
 
 function uniqueIds(values: Array<string | null | undefined>) {
   return Array.from(new Set(values.filter((value): value is string => typeof value === 'string' && value.length > 0)))
+}
+
+async function runProjectionQuery(query: any): Promise<{ data: any[]; error: null }> {
+  if (!query) return { data: [], error: null }
+  const { data, error } = await query
+  if (error) {
+    if (isMissingInfrastructureError(error)) return { data: [], error: null }
+    throw error
+  }
+  return { data: data || [], error: null }
 }

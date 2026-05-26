@@ -14,6 +14,11 @@ import { resolveClientRequestId, stripOperationControlFields } from '@/lib/opera
 import { operationStatusMessage } from '@/lib/operations/operationStatus'
 import { OutboxEventService } from '@/lib/outbox/outboxEventService'
 import { isMissingTableError } from '@/lib/modules/companies/companyErrors'
+import { projectionMeta } from '@/lib/read-models/projectionQuery.server'
+import {
+  normalizeRepresentativeProjectionScope,
+  representativeListProjection,
+} from '@/lib/read-models/projections/representativeList.projection'
 
 const REPRESENTATIVE_LIST_SELECT = 'id,company_id,person_id,organization_id,person_kind,source_type,source_id,display_name,full_name,authority_types,job_title,authority_type,status,record_status,start_date,end_date,signature_type,transaction_limit,payment_approval_limit,purchase_approval_limit,bank_transaction_limit,contract_signature_limit,currency,requires_joint_signature,can_approve_alone,representative_profile,is_deleted,created_at,updated_at,version'
 const CURRENT_AUTHORITY_SELECT = 'representative_id,company_id,tenant_id,authority_status,authority_record_status,authority_status_label,authority_types,signature_type,transaction_limit,payment_approval_limit,purchase_approval_limit,bank_transaction_limit,contract_signature_limit,currency,limits,scope,requires_joint_signature,can_approve_alone,effective_date,end_date,warnings,last_transaction_id,last_transaction_type,display_name,person_id,organization_id'
@@ -181,7 +186,11 @@ export async function GET(request: NextRequest) {
     } else if (authorityFilteredIds?.length) {
       query = query.in('id', authorityFilteredIds)
     } else {
-      return NextResponse.json({ data: [], meta: listMeta(listQuery, 0) })
+      return NextResponse.json({
+        data: [],
+        meta: listMeta(listQuery, 0),
+        projection: projectionMeta(representativeListProjection, 'company_representatives'),
+      })
     }
   }
   if (status) query = query.eq('status', status)
@@ -201,8 +210,16 @@ export async function GET(request: NextRequest) {
   const { data, error, count } = await query
   if (error) return NextResponse.json({ error: error.message, code: error.code || 'FETCH_FAILED' }, { status: 500 })
 
-  const rows = await mergeCurrentRepresentativeAuthorities(supabase, data || [], tenantContext)
-  return NextResponse.json({ data: rows, meta: listMeta(listQuery, count || 0) })
+  const rows = await hydrateRepresentativeProjectionScopes(
+    supabase,
+    await mergeCurrentRepresentativeAuthorities(supabase, data || [], tenantContext),
+    tenantContext
+  )
+  return NextResponse.json({
+    data: rows,
+    meta: listMeta(listQuery, count || 0),
+    projection: projectionMeta(representativeListProjection, 'company_representatives'),
+  })
 }
 
 export async function POST(request: NextRequest) {
@@ -548,8 +565,8 @@ async function mergeCurrentRepresentativeAuthorities(
   return rows.map(row => {
     const current = currentByRepresentative[row.id] as Record<string, any> | undefined
     const lastTransaction = lastTransactionByRepresentative[row.id]
-    if (!current) return { ...row, last_authority_transaction: lastTransaction || null }
-    return {
+    if (!current) return normalizeRepresentativeProjectionScope({ ...row, last_authority_transaction: lastTransaction || null })
+    return normalizeRepresentativeProjectionScope({
       ...row,
       current_authority: current,
       scope_type: current.scope?.scope_type || 'company_wide',
@@ -570,6 +587,66 @@ async function mergeCurrentRepresentativeAuthorities(
       currency: current.currency || row.currency,
       requires_joint_signature: current.requires_joint_signature ?? row.requires_joint_signature,
       can_approve_alone: current.can_approve_alone ?? row.can_approve_alone,
+    })
+  })
+}
+
+async function hydrateRepresentativeProjectionScopes(
+  supabase: ReturnType<typeof createServiceClient>,
+  rows: Record<string, any>[],
+  tenantContext: TenantContext
+) {
+  if (!rows.length) return rows
+  const companyIds = uniqueIds(rows.map(row => row.company_id))
+  const branchIds = uniqueIds(rows.map(row => row.branch_id))
+  const organizationUnitIds = uniqueIds(rows.map(row => row.organization_unit_id))
+  const facilityIds = uniqueIds(rows.map(row => row.facility_id))
+
+  let companiesQuery = companyIds.length ? supabase.from('companies').select('id,trade_name,short_name').in('id', companyIds) : null
+  if (companiesQuery) companiesQuery = applyTenantQueryScope(companiesQuery, 'companies', tenantContext)
+  let branchesQuery = branchIds.length ? supabase.from('company_branches').select('id,branch_name,branch_short_name').in('id', branchIds) : null
+  if (branchesQuery) branchesQuery = applyTenantQueryScope(branchesQuery, 'company_branches', tenantContext)
+  let unitsQuery = organizationUnitIds.length ? supabase.from('organization_units').select('id,name,short_name').in('id', organizationUnitIds) : null
+  if (unitsQuery) unitsQuery = applyTenantQueryScope(unitsQuery, 'organization_units', tenantContext)
+  let facilitiesQuery = facilityIds.length ? supabase.from('company_facilities').select('id,facility_name').in('id', facilityIds) : null
+  if (facilitiesQuery) facilitiesQuery = applyTenantQueryScope(facilitiesQuery, 'company_facilities', tenantContext)
+
+  const [companies, branches, units, facilities] = await Promise.all([
+    runRepresentativeReferenceQuery(companiesQuery),
+    runRepresentativeReferenceQuery(branchesQuery),
+    runRepresentativeReferenceQuery(unitsQuery),
+    runRepresentativeReferenceQuery(facilitiesQuery),
+  ])
+  const companyById = new Map<string, Record<string, any>>(companies.map((company: any) => [company.id, company]))
+  const branchById = new Map<string, Record<string, any>>(branches.map((branch: any) => [branch.id, branch]))
+  const unitById = new Map<string, Record<string, any>>(units.map((unit: any) => [unit.id, unit]))
+  const facilityById = new Map<string, Record<string, any>>(facilities.map((facility: any) => [facility.id, facility]))
+
+  return rows.map(row => {
+    const company = row.company_id ? companyById.get(row.company_id) : null
+    const branch = row.branch_id ? branchById.get(row.branch_id) : null
+    const unit = row.organization_unit_id ? unitById.get(row.organization_unit_id) : null
+    const facility = row.facility_id ? facilityById.get(row.facility_id) : null
+    return {
+      ...row,
+      company_name: row.company_name || company?.trade_name || company?.short_name || '',
+      branch_name: row.branch_name || branch?.branch_name || branch?.branch_short_name || null,
+      organization_unit_name: row.organization_unit_name || unit?.name || unit?.short_name || null,
+      facility_name: row.facility_name || facility?.facility_name || null,
     }
   })
+}
+
+async function runRepresentativeReferenceQuery(query: any) {
+  if (!query) return []
+  const { data, error } = await query
+  if (error) {
+    if (isMissingTableError(error)) return []
+    throw error
+  }
+  return data || []
+}
+
+function uniqueIds(values: Array<string | null | undefined>) {
+  return Array.from(new Set(values.filter((value): value is string => typeof value === 'string' && value.length > 0)))
 }

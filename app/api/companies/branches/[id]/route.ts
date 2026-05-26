@@ -89,11 +89,17 @@ export async function PATCH(
   const companyScope = await getTenantCompanyScope(supabase, tenantContext.tenantId, current.company_id)
   if (!companyScope) return NextResponse.json({ error: 'Şube bağlı şirket scope dışında.', code: 'COMPANY_SCOPE_NOT_FOUND' }, { status: 404 })
   if (!isWritableCompanyScope(companyScope)) return NextResponse.json({ error: 'Bu şirketin şubeleri için yalnızca görüntüleme yetkiniz var.', code: 'COMPANY_SCOPE_READONLY' }, { status: 403 })
+  const conflictDetails = {
+    current_version: current.version,
+    base_version: baseVersion,
+    current_updated_at: current.updated_at,
+    base_updated_at: baseUpdatedAt,
+  }
   if (baseVersion !== null && Number(current.version || 0) !== Number(baseVersion)) {
     return NextResponse.json({
       error: 'Şube kaydı bu işlem hazırlanırken değişmiş. Lütfen kaydı yenileyip tekrar deneyin.',
       code: 'VERSION_CONFLICT',
-      details: { current_version: current.version, base_version: baseVersion },
+      details: conflictDetails,
       message: 'İşlem tamamlanamadı',
     }, { status: 409 })
   }
@@ -101,7 +107,7 @@ export async function PATCH(
     return NextResponse.json({
       error: 'Şube kaydı bu işlem hazırlanırken değişmiş. Lütfen kaydı yenileyip tekrar deneyin.',
       code: 'VERSION_CONFLICT',
-      details: { current_updated_at: current.updated_at, base_updated_at: baseUpdatedAt },
+      details: conflictDetails,
       message: 'İşlem tamamlanamadı',
     }, { status: 409 })
   }

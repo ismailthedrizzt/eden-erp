@@ -13,6 +13,7 @@ import {
   OFFICIAL_CHANGE_OPERATION_TYPES,
   OfficialDocumentMetaSchema,
   OfficialDocumentSchema,
+  assertValidOrganizationUnitReassignTarget,
   buildBranchClosingPrecheck,
   emptyToNull,
   ensureOfficialChangeAccess,
@@ -205,11 +206,17 @@ async function performBranchClosingApplicationFlow({
   if (input.organization_unit_action === 'reassign' && !input.target_organization_unit_id) {
     throw validationError('Organizasyon birimi baska birime baglanacaksa hedef birim secilmelidir.', 'TARGET_ORGANIZATION_UNIT_REQUIRED', 400)
   }
+  const conflictDetails = {
+    current_version: branch.version,
+    base_version: baseVersion ?? null,
+    current_updated_at: branch.updated_at ?? null,
+    base_updated_at: baseUpdatedAt ?? null,
+  }
   if (baseVersion !== null && baseVersion !== undefined && Number(branch.version || 0) !== Number(baseVersion)) {
-    throw validationError('Sube kaydi bu islem hazirlanirken degismis. Lutfen kaydi yenileyip tekrar deneyin.', 'VERSION_CONFLICT', 409, { current_version: branch.version, base_version: baseVersion })
+    throw validationError('Sube kaydi bu islem hazirlanirken degismis. Lutfen kaydi yenileyip tekrar deneyin.', 'VERSION_CONFLICT', 409, conflictDetails)
   }
   if (baseUpdatedAt && branch.updated_at && new Date(branch.updated_at).getTime() !== new Date(baseUpdatedAt).getTime()) {
-    throw validationError('Sube kaydi bu islem hazirlanirken degismis. Lutfen kaydi yenileyip tekrar deneyin.', 'VERSION_CONFLICT', 409, { current_updated_at: branch.updated_at, base_updated_at: baseUpdatedAt })
+    throw validationError('Sube kaydi bu islem hazirlanirken degismis. Lutfen kaydi yenileyip tekrar deneyin.', 'VERSION_CONFLICT', 409, conflictDetails)
   }
 
   const dateValidation = validateOfficialDates({
@@ -218,6 +225,24 @@ async function performBranchClosingApplicationFlow({
     tradeRegistryGazetteDate: input.trade_registry_gazette_date,
   })
   if (!dateValidation.ok) throw validationError(dateValidation.message, dateValidation.code, 400)
+
+  if (input.organization_unit_action === 'reassign' && branch.organization_unit_id) {
+    const reassignValidation = await assertValidOrganizationUnitReassignTarget({
+      supabase,
+      companyId,
+      unitId: branch.organization_unit_id,
+      targetUnitId: input.target_organization_unit_id || null,
+      tenantContext,
+    })
+    if (!reassignValidation.ok) {
+      throw validationError(
+        reassignValidation.error,
+        reassignValidation.code,
+        reassignValidation.status,
+        reassignValidation.details
+      )
+    }
+  }
 
   const documents = normalizeDocuments(input.document_files, input.document_meta)
   const previousDocumentFiles = Array.isArray(branch.document_files) ? branch.document_files : []

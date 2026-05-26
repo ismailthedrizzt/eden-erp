@@ -39,6 +39,25 @@ export function orchestratorError(
   }
 }
 
+export const orchestratorFailure = orchestratorError
+
+export function orchestratorConflict(
+  error: string,
+  code = 'VERSION_CONFLICT',
+  details?: any,
+  operation?: { id?: string | null; operation_status?: string | null } | null
+): OperationOrchestratorResult {
+  return orchestratorError(error, code, 409, details, operation)
+}
+
+export function orchestratorValidationError(
+  error: string,
+  details?: any,
+  code = 'VALIDATION_FAILED'
+): OperationOrchestratorResult {
+  return orchestratorError(error, code, 400, details)
+}
+
 export function duplicateOperationResult(operation: OperationRequestRecord): OperationOrchestratorResult {
   if (operation.operation_status === 'completed') {
     return orchestratorSuccess(operation.result_json || {}, {
@@ -104,6 +123,8 @@ export function orchestratorResultToNextResponse(result: OperationOrchestratorRe
     message: 'Islem tamamlanamadi',
   }, { status: result.status || 500 })
 }
+
+export const toNextResponse = orchestratorResultToNextResponse
 
 function normalizeWarnings(value: unknown): string[] | undefined {
   if (!value) return undefined

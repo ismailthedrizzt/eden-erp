@@ -1,12 +1,99 @@
-import type { ReadModelProjection } from '../registry'
+import type { ProjectionDefinition } from '../projection.types'
 
-export const representativeListProjection: ReadModelProjection = {
+export const representativeListProjection: ProjectionDefinition = {
   key: 'representativeList',
   name: 'Temsilcilerimiz liste projection',
-  version: 1,
-  sources: ['company_representatives', 'company_representative_authority_transactions', 'v_current_representative_authorities'],
-  fallbackQuery: 'company_representatives + v_current_representative_authorities',
-  cacheDurationSeconds: 0,
-  fields: ['id', 'company_id', 'display_name', 'authority_status', 'scope_type', 'branch_id', 'organization_unit_id', 'facility_id', 'updated_at'],
-  refreshStrategy: 'outbox_invalidation',
+  version: '2026-05-26.1',
+  sourceName: 'v_current_representative_authorities',
+  sourceType: 'view',
+  sourceTables: ['company_representatives', 'company_representative_authority_transactions', 'v_current_representative_authorities'],
+  defaultSort: 'created_at',
+  defaultDirection: 'desc',
+  fields: [
+    'id',
+    'company_id',
+    'company_name',
+    'person_id',
+    'organization_id',
+    'display_name',
+    'full_name',
+    'person_kind',
+    'source_type',
+    'source_id',
+    'record_status',
+    'status',
+    'authority_status',
+    'authority_record_status',
+    'authority_status_label',
+    'authority_types',
+    'signature_type',
+    'transaction_limit',
+    'currency',
+    'effective_date',
+    'end_date',
+    'scope_type',
+    'branch_id',
+    'branch_name',
+    'organization_unit_id',
+    'organization_unit_name',
+    'facility_id',
+    'facility_name',
+    'scope_label',
+    'last_transaction_id',
+    'last_transaction_type',
+    'warning_count',
+    'created_at',
+    'updated_at',
+    'version',
+  ],
+  searchableFields: ['display_name', 'full_name', 'company_name', 'scope_label'],
+  sortableFields: {
+    display_name: 'display_name',
+    full_name: 'full_name',
+    company_name: 'company_name',
+    status: 'status',
+    record_status: 'record_status',
+    authority_status: 'authority_status',
+    authority_record_status: 'authority_record_status',
+    created_at: 'created_at',
+    updated_at: 'updated_at',
+  },
+  statusField: 'record_status',
+  tenantScoped: true,
+  companyScoped: true,
+  cacheMs: 60_000,
+  fallback: {
+    type: 'function',
+    tableName: 'company_representatives',
+    hydrate: 'representativeListFallback',
+  },
+}
+
+export function normalizeRepresentativeProjectionScope(row: Record<string, any>) {
+  const currentAuthority = row.current_authority && typeof row.current_authority === 'object'
+    ? row.current_authority
+    : {}
+  const scope = currentAuthority.scope && typeof currentAuthority.scope === 'object'
+    ? currentAuthority.scope
+    : {}
+  const warnings = currentAuthority.warnings || row.warnings
+  return {
+    ...row,
+    authority_status: row.authority_status ?? currentAuthority.authority_status ?? null,
+    authority_record_status: row.authority_record_status ?? currentAuthority.authority_record_status ?? null,
+    authority_status_label: row.authority_status_label ?? currentAuthority.authority_status_label ?? null,
+    effective_date: row.effective_date ?? currentAuthority.effective_date ?? row.authority_start_date ?? null,
+    end_date: row.end_date ?? currentAuthority.end_date ?? row.authority_end_date ?? null,
+    scope_type: row.scope_type ?? scope.scope_type ?? 'company_wide',
+    branch_id: row.branch_id ?? scope.branch_id ?? null,
+    organization_unit_id: row.organization_unit_id ?? scope.organization_unit_id ?? null,
+    facility_id: row.facility_id ?? scope.facility_id ?? null,
+    scope_label: row.scope_label ?? scope.scope_label ?? '',
+    branch_name: row.branch_name ?? null,
+    organization_unit_name: row.organization_unit_name ?? null,
+    facility_name: row.facility_name ?? null,
+    last_transaction_id: row.last_transaction_id ?? currentAuthority.last_transaction_id ?? row.last_authority_transaction?.id ?? null,
+    last_transaction_type: row.last_transaction_type ?? currentAuthority.last_transaction_type ?? row.last_authority_transaction?.transaction_type ?? null,
+    warning_count: Array.isArray(warnings) ? warnings.length : 0,
+  }
 }

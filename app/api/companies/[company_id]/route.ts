@@ -30,14 +30,10 @@ import { resolveBaseUpdatedAt, resolveBaseVersion, resolveClientRequestId, strip
 import { operationStatusMessage } from '@/lib/operations/operationStatus'
 import { duplicateOperationJsonResponse } from '@/lib/operations/apiResponse'
 import { OutboxEventService } from '@/lib/outbox/outboxEventService'
-import {
-  buildCompanyBranchSummaryProjection,
-  hydrateCompanyBranchesForDetailProjection,
-} from '@/lib/read-models/projections/companyDetail.projection'
+import { buildBranchSummaryReadModel } from '@/lib/read-models/projections/branchSummary.projection'
 
 const COMPANY_NACE_SELECT = 'id,company_id,nace_code_id,is_primary,status,start_date,end_date,notes,is_deleted,created_at,updated_at,version,nace_code:nace_codes(id,nace_code,description,hazard_class,source_name,source_url,source_reference,valid_from,valid_to,is_active,last_checked_at)'
 const COMPANY_BRANCH_DETAIL_SELECT = 'id,company_id,organization_unit_id,facility_id,branch_name,branch_short_name,branch_type,is_official_branch,country,city,district,neighborhood,address,postal_code,phone,email,trade_registry_number,trade_registry_office,tax_office,sgk_workplace_registry_no,opening_registration_date,closing_registration_date,status,record_status,start_date,end_date,metadata_json,updated_at,created_at,version,is_deleted'
-
 const emptyStringToUndefined = (value: unknown) => value === '' ? undefined : value
 const optionalUuid = z.preprocess(emptyStringToUndefined, z.string().uuid().optional().nullable())
 const optionalCompanyType = z.preprocess(
@@ -398,7 +394,6 @@ export async function GET(
   const deregistrationDetails = relatedByKey.deregistration_details
   const lifecycleEvents = relatedByKey.lifecycle_events
   const companyNaceCodes = relatedByKey.company_nace_codes
-  const branchSection = relatedByKey.branches
 
   const currentOwnershipRows = Array.isArray(currentOwnership.data) ? currentOwnership.data : []
   const partnerRows = Array.isArray(partners.data) ? partners.data : []
@@ -418,12 +413,7 @@ export async function GET(
       profit_ratio: partner.profit_ratio ?? ownership.current_profit_ratio,
     }
   })
-  const branchRows = await hydrateCompanyBranchesForDetailProjection(
-    supabase,
-    Array.isArray(branchSection.data) ? branchSection.data : [],
-    tenantContext
-  )
-  const branchSummary = buildCompanyBranchSummaryProjection(branchRows)
+  const branchReadModel = await buildBranchSummaryReadModel({ supabase, companyId: id, tenantContext })
 
   const data = {
     ...(company as Record<string, any>),
@@ -438,8 +428,8 @@ export async function GET(
     public_licenses: publicLicenses.data || [],
     public_channels: publicChannels.data || {},
     company_nace_codes: companyNaceCodes.data || [],
-    branches: branchRows,
-    branch_summary: branchSummary,
+    branches: branchReadModel.branches,
+    branch_summary: branchReadModel.branch_summary,
     opening_details: openingDetails.data || null,
     liquidation_details: liquidationDetails.data || null,
     deregistration_details: deregistrationDetails.data || null,

@@ -24,3 +24,19 @@ export async function requireBranchPermission(
 ): Promise<PermissionContext | NextResponse> {
   return requireAnyPermission(request, supabase, [permissionKey, fallbackPermissionKey])
 }
+
+export function requireBranchViewPermission(request: NextRequest, supabase: SupabaseClient) {
+  return requireBranchPermission(request, supabase, BRANCH_PERMISSIONS.view, PERMISSIONS.companies.view)
+}
+
+export function requireBranchEditPermission(request: NextRequest, supabase: SupabaseClient) {
+  return requireBranchPermission(request, supabase, BRANCH_PERMISSIONS.edit, PERMISSIONS.companies.edit)
+}
+
+export function requireBranchOpeningPermission(request: NextRequest, supabase: SupabaseClient) {
+  return requireBranchPermission(request, supabase, BRANCH_PERMISSIONS.openingStart, PERMISSIONS.companies.edit)
+}
+
+export function requireBranchClosingPermission(request: NextRequest, supabase: SupabaseClient) {
+  return requireBranchPermission(request, supabase, BRANCH_PERMISSIONS.closingStart, PERMISSIONS.companies.edit)
+}
