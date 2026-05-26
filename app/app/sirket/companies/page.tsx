@@ -30,6 +30,7 @@ import { SmartEmptyState } from '@/components/ui/SmartEmptyState'
 import { PageContextTour } from '@/components/onboarding/PageContextTour'
 import { pageTourSteps } from '@/components/onboarding/tourSteps'
 import { useRegisterActionGuideContext } from '@/components/ai/ActionGuideContext'
+import { RecordPendingActionsPanel } from '@/components/action-center/RecordPendingActionsPanel'
 import type { AnyDashboardWidgetConfig } from '@/components/dashboard/dashboard.types'
 import { CompanyNaceCodesSection } from '@/components/modules/sirket/CompanyPublicTab'
 import { cn, formatPhoneInput, normalizeEmailInput } from '@/lib/utils'
@@ -57,6 +58,7 @@ import { companyService } from '@/lib/services/companyService'
 import { buildOperationToast } from '@/lib/operations/operationClient'
 import { applyFieldControlsToFields, applyFieldControlsToTabs } from '@/lib/field-controls/fieldControlResolver'
 import { getControlledFieldNames, listFieldControls } from '@/lib/field-controls/fieldControlRegistry'
+import { applyVisibilityToOperationGroups } from '@/lib/visibility/actionVisibility'
 import type { CompanyLifecycleStatus, Sirket } from '@/types/sirket'
 
 type PageState = 'list' | 'create' | 'view' | 'edit'
@@ -563,8 +565,10 @@ export default function SirketlerPage() {
   const [listQuery, setListQuery] = useState({ page: 1, pageSize: 10, search: '', sort: 'short_name', direction: 'asc' as 'asc' | 'desc' })
   const includePassive = statusFilters.includes('passive')
   const { data: companies, meta: listMeta, loading, error: listError, yenile } = useSirketler({ includePassive, statuses: statusFilters, ...listQuery })
-  const { can } = usePermissions()
-  const { isEnabled, isWritable } = useModules()
+  const permissions = usePermissions()
+  const { can } = permissions
+  const modules = useModules()
+  const { isEnabled, isWritable } = modules
   const [pageState, setPageState] = useState<PageState>('list')
   const [selectedSirket, setSelectedSirket] = useState<Sirket | null>(null)
   const [saving, setSaving] = useState(false)
@@ -687,6 +691,16 @@ export default function SirketlerPage() {
   const selectedHeroDocumentCount = Array.isArray((selectedSirket as any)?.hero_documents)
     ? (selectedSirket as any).hero_documents.length
     : 0
+  const operationVisibilityContext = useMemo(() => ({
+    currentPage: 'companies',
+    moduleKey: 'companies',
+    recordType: 'company',
+    recordId: selectedSirket?.id,
+    recordStatus: selectedSirket ? selectedLifecycleStatus : undefined,
+    companyId: selectedSirket?.id,
+    permissions: Array.from(permissions.permissions),
+    modules: modules.runtimeModules,
+  }), [modules.runtimeModules, permissions.permissions, selectedLifecycleStatus, selectedSirket?.id])
 
   useRegisterActionGuideContext({
     currentPage: 'companies',
@@ -1581,7 +1595,7 @@ export default function SirketlerPage() {
         }]
       : []
 
-    return [
+    const groups: FormOperationActionGroup[] = [
       ...(lifecycleActions.length ? [{
         key: 'lifecycle',
         progress: lifecycleProgress,
@@ -1596,6 +1610,7 @@ export default function SirketlerPage() {
         actions: basicUpdateActions,
       }] : []),
     ]
+    return applyVisibilityToOperationGroups(groups, operationVisibilityContext)
   }
 
   async function openCompanyFromNotification(companyId: string) {
@@ -1801,6 +1816,9 @@ export default function SirketlerPage() {
         <div className="mt-6 space-y-4">
           {pageState === 'create' && (
             <DraftCreateNotice message="Bu işlem şirket kartı taslağı oluşturur. Şirketin resmi açılışı Şirket Açılışı sihirbazı ile tamamlanır." />
+          )}
+          {pageState !== 'create' && selectedSirket?.id && (
+            <RecordPendingActionsPanel entityType="company" entityId={selectedSirket.id} title="Bu şirket için bekleyen işler" />
           )}
           <EntityForm
             mode={formMode}

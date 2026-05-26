@@ -18,6 +18,7 @@ import { listUserEffectivePermissions } from '@/lib/security/serverPermissions'
 import { toOnboardingPreferences } from '@/lib/user-preferences/onboardingPreferences'
 import { resolveTenantContext } from '@/lib/tenancy/server'
 import { getTenantReadiness } from '@/lib/setup/tenantReadinessService'
+import { getDefaultFeatureFlagMap } from '@/lib/features/featureFlags'
 
 export const runtime = 'nodejs'
 
@@ -76,6 +77,7 @@ export async function GET(request: NextRequest) {
         userState,
         onboardingPreferences: toOnboardingPreferences(userState.uiPreferences),
         modules: sessionModules,
+        featureFlags: getDefaultFeatureFlagMap(),
         permissions: {
           effectivePermissions,
           permissionFallbacks,

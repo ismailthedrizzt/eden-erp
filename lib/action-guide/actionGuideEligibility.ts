@@ -1,6 +1,7 @@
 import { hasAnyPermission } from '@/lib/security/permissionRegistry'
 import { evaluateActionEligibility as evaluatePolicyActionEligibility } from '@/lib/security/actionEligibility'
 import type { AccessContext } from '@/lib/security/accessContext'
+import { resolveActionRuntimeAvailability } from '@/lib/visibility/actionVisibility'
 import type {
   ActionGuideAction,
   ActionGuideContext,
@@ -15,6 +16,24 @@ export async function evaluateGuideActionEligibility(
 ): Promise<GuideActionEligibilityResult> {
   const blockingReasons: string[] = []
   const warnings: string[] = []
+  const runtimeDecision = resolveActionRuntimeAvailability(action.key, {
+    currentPage: context.currentPage || context.route || undefined,
+    actionKey: action.key,
+    moduleKey: action.moduleKey,
+    recordType: action.requiredRecordType || context.selectedRecordType || undefined,
+    recordId: context.selectedRecordId || undefined,
+    recordStatus: context.selectedRecordStatus || context.record?.record_status || context.record?.status,
+    companyId: context.companyId || context.activeCompanyId || undefined,
+    branchId: context.branchId || context.activeBranchId || undefined,
+    permissions: context.permissions || context.userPermissions || [],
+    modules: modulesFromGuideContext(context),
+    featureFlags: context.context?.featureFlags,
+  })
+  if (!runtimeDecision.enabled && runtimeDecision.reason) {
+    blockingReasons.push(runtimeDecision.reason)
+  }
+  if (runtimeDecision.warnings?.length) warnings.push(...runtimeDecision.warnings)
+
   const requiredModules = action.requiredModules?.length ? action.requiredModules : [action.moduleKey]
   const moduleCheck = checkRequiredModules(requiredModules, context)
   blockingReasons.push(...moduleCheck.blockingReasons)
@@ -28,6 +47,11 @@ export async function evaluateGuideActionEligibility(
 
   const recordReasons = checkRecordRequirements(action, context)
   blockingReasons.push(...recordReasons)
+  if (context.integritySummary) {
+    const integrity = context.integritySummary as Record<string, any>
+    blockingReasons.push(...((integrity.blockingReasons || integrity.blocking_reasons || []) as string[]))
+    warnings.push(...((integrity.warnings || []) as string[]))
+  }
 
   if (action.key === 'capital_increase') {
     if (!isModuleAvailable('partners', context)) {
@@ -100,6 +124,27 @@ function isModuleAvailable(moduleKey: string, context: ActionGuideContext) {
   if (status) return status === 'available'
   if (context.availableModules) return context.availableModules.includes(moduleKey)
   return true
+}
+
+function modulesFromGuideContext(context: ActionGuideContext) {
+  if (context.moduleStatuses) {
+    return Object.fromEntries(Object.entries(context.moduleStatuses).map(([key, status]) => [
+      key,
+      {
+        key,
+        status,
+        enabled: status !== 'disabled',
+        licensed: status !== 'unlicensed',
+        setupComplete: status !== 'setup_required',
+        blockingReasons: context.moduleBlockingReasons?.[key] || [],
+        warnings: context.moduleWarnings?.[key] || [],
+      },
+    ]))
+  }
+  if (context.availableModules) {
+    return Object.fromEntries(context.availableModules.map(key => [key, { key, status: 'available', enabled: true }]))
+  }
+  return undefined
 }
 
 function checkRecordRequirements(action: ActionGuideDefinition, context: ActionGuideContext) {

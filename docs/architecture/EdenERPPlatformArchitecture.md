@@ -79,6 +79,14 @@ Pilot surecler `company_branch_opening_process` ve `company_branch_closing_proce
 
 Pending Actions altyapisi `process_tasks` kayitlarini okuyabilecek hale gelir. Boylece surec gorevleri mevcut bildirim alanina asamali olarak eklenebilir.
 
+## Action Center ve Bekleyen Isler
+
+Action Center, process task, approval, operation request, outbox ve projection uyarilarini tek kullanici is listesine cevirir. Kullanici teknik kaynak adlari yerine "Tamamlanacak gorev var", "Onay bekleyen islem var", "Tamamlanamayan islem var" ve "Sistem guncellemesi bekliyor" gibi is diliyle mesajlar gorur.
+
+`/api/action-center` unified listeyi, `/api/action-center/summary` dashboard ve header ozetini, `/api/action-center/by-record` ise sirket/sube detayindaki kayit bazli bekleyen isleri dondurur. Eski `/api/notifications/pending-actions` endpoint'i geriye uyumlu adaptor olarak kalir.
+
+Action Center tenant ve company scope'a uyar. Outbox/projection gibi sistem uyarilari sadece ilgili sistem veya ayar yetkisi olan kullanicilara gosterilir. Missing process/outbox/projection altyapisi kullanici akisini bozmaz; kaynak bos veya uyarili kabul edilir.
+
 ## Event ve Outbox
 
 Event Contract Registry `lib/events` altinda event sozlesmelerini merkezi hale getirir. `company.branch_opened`, `company.branch_closed`, `ownership.transaction_completed`, `representative.authority_updated` ve `process.task_created` gibi eventler projection, notification, audit ve AI context etkilerini contract uzerinden tasir.
@@ -130,6 +138,22 @@ Guided Tour ve Contextual Help, kullaniciya teknik mimariyi anlatmak yerine bulu
 Genel tur ve sayfa mini turlari kullanici calisma alani tercihleri icinde saklanir. Cookie'ye guvenilmez; backend user state tamamlanan turu, kapatilan sayfa turlarini ve kapatilan operasyon ipuclarini tutar.
 
 EntityForm kilitli alanlari sessizce kapatmaz. Yardim ikonu alani neden degistiremedigini, hangi islemle degisecegini, varsa yetki/modul/kayit durumu engelini ve AI Islem Rehberi baglantisini gosterir.
+
+## Modular Navigation ve Runtime Visibility
+
+Navigation Registry, menu itemlarini modul, route, permission ve feature flag bilgisiyle tanimlar. Mevcut Sidebar bu registry'yi hardcoded menuye uyum katmani olarak kullanir; boylece route davranisi bozulmadan merkezi navigasyona gecilir.
+
+Runtime Visibility Resolver modul aktifligi, lisans, kurulum, bagimlilik, feature flag, permission ve kayit durumu kararlarini tek `VisibilityDecision` altinda toplar. Sidebar, operation button'lari, field helper'lari ve AI Islem Rehberi ayni disabled reason ve yonlendirme mantigini kullanmaya baslar.
+
+Modul kapali, lisanssiz veya kurulumu eksik oldugunda kullanici teknik hata gormez. Menu veya aksiyon disabled kalir; gerekli durumda kurulum ekranina veya modul lisanslari sayfasina yonlendirilir.
+
+## Data Integrity Guard
+
+Data Integrity Guard, kritik operasyonlardan once verinin guvenli ve tutarli olup olmadigini kontrol eder. Policy kullanici/yetki kararini, Readiness modul/altyapi hazirligini, Integrity ise veri etkisini ve cross-domain tutarliligi degerlendirir.
+
+Ilk uygulamada Sube Acilisi ve Sube Kapanisi orchestratorlari mutation oncesinde integrity check calistirir. Blocking sonuc varsa islem baslatilmaz; warning sonuc varsa islem devam edebilir ve uyarilar operation sonucuna, audit metadata'ya ve outbox payload'ina eklenir.
+
+Integrity check sonucunda kullaniciya teknik tablo/view hatasi gosterilmez. "Bu sube icin aktif temsilci yetkileri var", "Ayni adla aktif sube bulunuyor" veya "Guncel ortaklik dagilimi gerekli" gibi yapilacak is odakli mesajlar doner. Action Guide ve Action Center bu summary formatini kullanabilecek sekilde hazirlanmistir.
 
 ## Sonraki Fazlar
 

@@ -1,12 +1,16 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { useModuleLicense } from '@/hooks/useModuleLicense'
 import { useModules } from '@/lib/security/moduleStore'
+import { usePermissions } from '@/lib/security/permissionStore'
+import { findNavigationItemByPath } from '@/lib/navigation/navigationRegistry'
+import { resolveMenuItemVisibility } from '@/lib/visibility/runtimeVisibilityResolver'
+import type { RuntimeVisibilityContext, VisibilityDecision } from '@/lib/visibility/visibility.types'
 import {
   formatVersionBadge,
   getMaturityBadgeClass,
@@ -226,15 +230,12 @@ type NavChildItem = NonNullable<NavItem['children']>[number]
 
 function resolveSidebarContractModuleKey(item: NavItem | NavChildItem, parent?: NavItem) {
   return item.contractModuleKey
+    || findNavigationItemByPath(item.href || '')?.moduleKey
     || SIDEBAR_CONTRACT_MODULE_BY_HREF[item.href || '']
     || (item.moduleKey ? SIDEBAR_CONTRACT_MODULE_BY_LEGACY_KEY[item.moduleKey] : null)
     || parent?.contractModuleKey
     || (parent?.moduleKey ? SIDEBAR_CONTRACT_MODULE_BY_LEGACY_KEY[parent.moduleKey] : null)
     || null
-}
-
-function isHiddenRuntimeStatus(status: string) {
-  return status === 'disabled' || status === 'unlicensed'
 }
 
 function isBlockedRuntimeStatus(status: string) {
@@ -274,6 +275,49 @@ function getVersionTitle(label: string, info?: SidebarVersionInfo) {
   ].filter(Boolean).join(' · ')
 }
 
+function SidebarVisibilityBadge({ decision }: { decision: VisibilityDecision }) {
+  if (decision.status === 'available') return null
+  const badgeLabel = decision.status === 'setup_required'
+    ? 'Kurulum'
+    : decision.status === 'unlicensed'
+      ? 'Lisans'
+      : decision.status === 'dependency_missing'
+        ? 'Gerekli'
+        : decision.status === 'permission_denied'
+          ? 'Yetki'
+          : 'Kapali'
+  return (
+    <span
+      title={decision.reason}
+      className="inline-flex shrink-0 items-center gap-1 rounded-full border border-amber-300/40 bg-amber-400/10 px-1.5 py-0.5 text-[9px] font-semibold text-amber-100"
+    >
+      <AlertCircle size={10} />
+      {badgeLabel}
+    </span>
+  )
+}
+
+function navItemToVisibilityInput(
+  item: NavItem | NavChildItem,
+  moduleKey: string | null,
+  parent?: NavItem
+) {
+  const registryItem = item.href ? findNavigationItemByPath(item.href) : null
+  return {
+    key: 'id' in item ? item.id : item.href || item.label,
+    label: item.label,
+    path: item.href,
+    moduleKey: moduleKey || registryItem?.moduleKey || parent?.contractModuleKey,
+    permission: registryItem?.permission,
+    fallbackPermission: registryItem?.fallbackPermission,
+    featureFlag: registryItem?.featureFlag,
+  }
+}
+
+function titleWithDecision(title: string, decision: VisibilityDecision) {
+  return decision.reason ? `${title} - ${decision.reason}` : title
+}
+
 interface SidebarProps {
   collapsed?: boolean
   mobileOpen?: boolean
@@ -285,7 +329,13 @@ export default function Sidebar({ collapsed = false, mobileOpen = false, onMobil
   const pathname = usePathname()
   const { isModuleActive, isSubmoduleActive } = useModuleLicense()
   const moduleRuntime = useModules()
+  const permissionRuntime = usePermissions()
   const [openMods, setOpenMods] = useState<string[]>([])
+  const visibilityContext = useMemo<RuntimeVisibilityContext>(() => ({
+    currentPage: pathname,
+    permissions: Array.from(permissionRuntime.permissions),
+    modules: moduleRuntime.runtimeModules,
+  }), [moduleRuntime.runtimeModules, pathname, permissionRuntime.permissions])
 
   useEffect(() => {
     const activeModule = NAV.find(item => item.children?.some(child => pathname.startsWith(child.href)))?.id
@@ -316,33 +366,36 @@ export default function Sidebar({ collapsed = false, mobileOpen = false, onMobil
     const itemTitle = getVersionTitle(item.label, moduleVersionInfo)
     const contractModuleKey = resolveSidebarContractModuleKey(item)
     const runtimeStatus = contractModuleKey ? moduleRuntime.getRuntimeStatus(contractModuleKey) : 'available'
-    const runtimeRedirect = runtimeRedirectFor(runtimeStatus)
+    const visibilityDecision = resolveMenuItemVisibility(
+      navItemToVisibilityInput(item, contractModuleKey),
+      { ...visibilityContext, moduleKey: contractModuleKey || undefined }
+    )
+    const legacyModuleAvailable = !item.moduleKey || isModuleActive(item.moduleKey)
+    const runtimeRedirect = visibilityDecision.setupAction?.targetPage || runtimeRedirectFor(runtimeStatus)
+    const isItemDisabled = item.disabled || !legacyModuleAvailable || !visibilityDecision.enabled
 
-    // Check if module is active (in production, hide if inactive)
-    const isModuleAvailable = (!item.moduleKey || isModuleActive(item.moduleKey)) && !isHiddenRuntimeStatus(runtimeStatus)
-
-    // In production, completely hide inactive modules
-    const isProd = process.env.NODE_ENV === 'production'
-    if (isProd && !isModuleAvailable) return null
+    if (!visibilityDecision.visible) return null
 
     return (
       <div key={item.id} data-tour-id={item.id === 'sirket' ? 'sidebar-pages' : undefined}>
         {/* Main nav item */}
         {item.href ? (
           <Link href={runtimeRedirect || item.href}
-                title={collapsed && !mobileOpen ? itemTitle : undefined}
-                onClick={() => {
+                title={collapsed && !mobileOpen ? titleWithDecision(itemTitle, visibilityDecision) : visibilityDecision.reason}
+                onClick={e => {
+                  if (isItemDisabled && !runtimeRedirect) e.preventDefault()
                   if (collapsed && !mobileOpen) onExpand?.()
                 }}
-                className={cn('ni', isActive && 'active', isBlockedRuntimeStatus(runtimeStatus) && 'opacity-60')}>
+                className={cn('ni', isActive && 'active', isItemDisabled && 'opacity-60')}>
             <span className={cn('flex-shrink-0 opacity-60', isActive && 'opacity-90')}>{item.icon}</span>
             {!collapsed && <span className="flex-1">{item.label}</span>}
+            {!collapsed && <SidebarVisibilityBadge decision={visibilityDecision} />}
           </Link>
         ) : (
           <button
             onClick={() => toggleMod(item.id)}
-            title={collapsed && !mobileOpen ? itemTitle : undefined}
-            className={cn('ni', (isActive || isOpen) && 'open')}
+            title={collapsed && !mobileOpen ? titleWithDecision(itemTitle, visibilityDecision) : visibilityDecision.reason}
+            className={cn('ni', (isActive || isOpen) && 'open', isItemDisabled && 'opacity-70')}
           >
             <span className={cn('flex-shrink-0 opacity-60', (isActive || isOpen) && 'opacity-90')}>
               {item.icon}
@@ -350,6 +403,7 @@ export default function Sidebar({ collapsed = false, mobileOpen = false, onMobil
             {!collapsed && (
               <>
                 <span className="min-w-0 flex-1 truncate text-left">{item.label}</span>
+                <SidebarVisibilityBadge decision={visibilityDecision} />
                 {moduleVersionInfo && <SidebarVersionBadge info={moduleVersionInfo} />}
                 <ChevronRight
                   size={12}
@@ -372,26 +426,28 @@ export default function Sidebar({ collapsed = false, mobileOpen = false, onMobil
                 isSubmoduleActive(child.moduleKey, child.submoduleKey)
               const childContractModuleKey = resolveSidebarContractModuleKey(child, item)
               const childRuntimeStatus = childContractModuleKey ? moduleRuntime.getRuntimeStatus(childContractModuleKey) : runtimeStatus
-              const childRuntimeRedirect = runtimeRedirectFor(childRuntimeStatus)
+              const childDecision = resolveMenuItemVisibility(
+                navItemToVisibilityInput(child, childContractModuleKey, item),
+                { ...visibilityContext, moduleKey: childContractModuleKey || contractModuleKey || undefined }
+              )
+              const childRuntimeRedirect = childDecision.setupAction?.targetPage || runtimeRedirectFor(childRuntimeStatus)
               const pageVersionInfo = child.pageId
                 ? getPageVersionInfo(child.moduleKey || item.moduleKey, child.pageId)
                 : getPageVersionInfoByHref(child.moduleKey || item.moduleKey, child.href)
               const childTitle = getVersionTitle(child.label, pageVersionInfo)
 
-              // In production, completely hide inactive submodules
-              if (isProd && (!isSubmoduleAvailable || isHiddenRuntimeStatus(childRuntimeStatus))) return null
+              if (!childDecision.visible) return null
 
-              // In dev, show but disable if inactive
               const isDisabled = child.disabled
-                || (!isSubmoduleAvailable && !isProd)
-                || (!isProd && isHiddenRuntimeStatus(childRuntimeStatus))
+                || !isSubmoduleAvailable
+                || !childDecision.enabled
                 || isBlockedRuntimeStatus(childRuntimeStatus)
 
               return (
                 <Link
                   key={child.href}
                   href={childRuntimeRedirect || (isDisabled ? '#' : child.href)}
-                  title={childTitle}
+                  title={titleWithDecision(childTitle, childDecision)}
                   onClick={e => isDisabled && !childRuntimeRedirect && e.preventDefault()}
                   className={cn(
                     'sni',
@@ -401,6 +457,7 @@ export default function Sidebar({ collapsed = false, mobileOpen = false, onMobil
                 >
                   <span className="w-1.5 h-1.5 rounded-full bg-current opacity-50 flex-shrink-0" />
                   <span className="min-w-0 flex-1 truncate">{child.label}</span>
+                  <SidebarVisibilityBadge decision={childDecision} />
                   {pageVersionInfo && <SidebarVersionBadge info={pageVersionInfo} compact />}
                 </Link>
               )

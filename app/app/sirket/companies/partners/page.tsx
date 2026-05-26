@@ -32,6 +32,9 @@ import { invalidateEntityDetailCache, readEntityDetailCache, writeEntityDetailCa
 import { companyService } from '@/lib/services/companyService'
 import { buildOperationToast } from '@/lib/operations/operationClient'
 import { ownershipTransactionsService } from '@/lib/modules/ownership-transactions/ownershipTransactions.service'
+import { useModules } from '@/lib/security/moduleStore'
+import { usePermissions } from '@/lib/security/permissionStore'
+import { applyVisibilityToOperationGroups } from '@/lib/visibility/actionVisibility'
 import {
   INITIAL_PARTNERSHIP_ENTRY_TYPE,
   getOwnershipTransactionTypeLabel,
@@ -458,6 +461,18 @@ export default function OrtaklarPage() {
   const includePassive = statusFilters.includes('passive')
   const selectedRecordStatus = getPartnerRecordStatus(selectedPartner)
   const isSelectedPassive = selectedRecordStatus === 'passive'
+  const modules = useModules()
+  const permissions = usePermissions()
+  const operationVisibilityContext = useMemo(() => ({
+    currentPage: 'partners',
+    moduleKey: 'partners',
+    recordType: 'partner',
+    recordId: selectedPartner?.id,
+    recordStatus: selectedPartner ? selectedRecordStatus : undefined,
+    companyId: selectedPartner?.company_id,
+    permissions: Array.from(permissions.permissions),
+    modules: modules.runtimeModules,
+  }), [modules.runtimeModules, permissions.permissions, selectedPartner, selectedRecordStatus])
   useRegisterActionGuideContext({
     currentPage: 'partners',
     selectedRecordId: selectedPartner?.id || null,
@@ -987,7 +1002,7 @@ export default function OrtaklarPage() {
         }]
       : []
 
-    return [
+    const groups: FormOperationActionGroup[] = [
       {
         key: 'lifecycle',
         progress: lifecycleProgress,
@@ -1002,6 +1017,7 @@ export default function OrtaklarPage() {
         actions: basicUpdateActions,
       }] : []),
     ]
+    return applyVisibilityToOperationGroups(groups, operationVisibilityContext)
   }
 
   const bannerConfig = pageState === 'list'

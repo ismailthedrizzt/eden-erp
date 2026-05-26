@@ -10,6 +10,8 @@ import { markBranchClosingPartialFailure } from '@/lib/operations/transaction-bo
 import { BRANCH_PERMISSIONS } from '@/lib/modules/companies/branchPermissions'
 import { AuditLogService } from '@/lib/audit/auditLogService'
 import { buildAuditContextFromRequest } from '@/lib/audit/auditContext'
+import { runIntegrityForOperation } from '@/lib/integrity/integrityChecker'
+import { integrityWarningsForMetadata } from '@/lib/integrity/integrityGuards'
 import {
   OFFICIAL_BRANCH_SELECT,
   OFFICIAL_CHANGE_EVENT_TYPES,
@@ -126,6 +128,40 @@ export async function runCompanyBranchClosingOrchestrator({
   }).catch(() => null)
 
   try {
+    const integrity = await runIntegrityForOperation('branch_closing', {
+      supabase,
+      tenantContext: access.tenantContext,
+      userId: access.userId || null,
+      companyId,
+      branchId: input.branch_id,
+      operationKey: 'branch_closing',
+      entityType: 'company_branch',
+      entityId: input.branch_id,
+      payload: input,
+    })
+    if (!integrity.ok) {
+      await audit.recordOperationFail({
+        context: auditContext,
+        actionKey: 'branch_closing',
+        summary: 'Sube Kapanisi veri tutarliligi nedeniyle baslatilamadi.',
+        reason: integrity.blockingReasons[0] || 'Veri tutarliligi kontrolu islemi engelledi.',
+        metadata: { integrity: integrityWarningsForMetadata(integrity) },
+      }).catch(() => null)
+      return failOfficialChangeOperation({
+        service: operationService,
+        operation,
+        message: integrity.blockingReasons[0] || 'Bu islem veri tutarliligi nedeniyle su anda baslatilamaz.',
+        code: 'DATA_INTEGRITY_BLOCKED',
+        status: 409,
+        details: {
+          blocking_reasons: integrity.blockingReasons,
+          warnings: integrity.warnings,
+          suggested_actions: integrity.suggestedActions,
+          results: integrity.results,
+        },
+      })
+    }
+
     const boundary = await executeWithTransactionBoundary<BranchClosingMutationResult>({
       supabase,
       key: 'company_branch_closing',
@@ -189,6 +225,7 @@ export async function runCompanyBranchClosingOrchestrator({
     }
 
     const result = boundary.data
+    const warnings = [...(result.warnings || []), ...integrity.warnings]
     await enqueueOfficialChangeOutbox({
       supabase,
       tenantContext: access.tenantContext,
@@ -204,6 +241,7 @@ export async function runCompanyBranchClosingOrchestrator({
         organization_unit_action: input.organization_unit_action,
         facility_action: input.facility_action,
         transaction_boundary: boundary.used,
+        integrity_warnings: integrity.warnings,
       },
     })
 
@@ -219,6 +257,7 @@ export async function runCompanyBranchClosingOrchestrator({
         organization_unit_action: input.organization_unit_action,
         facility_action: input.facility_action,
         transaction_boundary: boundary.used,
+        integrity: integrityWarningsForMetadata(integrity),
       },
     }).catch(() => null)
 
@@ -232,7 +271,7 @@ export async function runCompanyBranchClosingOrchestrator({
         organization_unit: result.organization_unit,
         facility: result.facility,
       },
-      warnings: result.warnings,
+      warnings,
     })
   } catch (error: any) {
     await audit.recordOperationFail({

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Check, Home, Settings, SlidersHorizontal } from 'lucide-react'
 import { DashboardGrid } from '@/components/dashboard/DashboardGrid'
+import { ActionCenterSummaryCards } from '@/components/action-center/ActionCenterSummaryCards'
 import { formControlClass } from '@/components/ui/formControlStyles'
 import type { AnyDashboardWidgetConfig } from '@/components/dashboard/dashboard.types'
 import { PageBanner } from '@/components/ui/PageBanner'
@@ -253,6 +254,8 @@ export default function AnaSayfa() {
         addButtonText="Ekle"
         addButtonTourId="quick-actions"
       />
+
+      <ActionCenterSummaryCards />
 
       <div className="mt-6">
         {selectedWidgets.length > 0 ? (

@@ -73,6 +73,15 @@ export const systemTourSteps: TourStep[] = [
     path: '/app/sirket/companies?systemTour=lifecycle',
   },
   {
+    id: 'action-center',
+    target: "[data-tour-id='action-center-bell']",
+    fallbackTarget: "[data-tour-id='app-header']",
+    title: 'Is merkezi',
+    description: 'Bekleyen gorevler, onaylar ve tamamlanamayan islemler burada gorunur.',
+    placement: 'bottom',
+    path: '/app',
+  },
+  {
     id: 'setup-readiness',
     target: "[data-tour-id='setup-readiness']",
     fallbackTarget: "[data-tour-id='page-banner']",

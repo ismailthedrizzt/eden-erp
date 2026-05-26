@@ -3,12 +3,15 @@ import 'server-only'
 import type { NextRequest } from 'next/server'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { applyTenantQueryScope, resolveTenantContext } from '@/lib/tenancy/server'
+import { fetchScopedCompanyIds } from '@/lib/tenancy/companyScopes'
 import { listUserEffectivePermissions } from '@/lib/security/serverPermissions'
 import {
   listModuleRuntimeStatuses,
   loadModuleFeatureContext,
 } from '@/lib/modules/moduleFeatureResolver'
 import { getTenantReadiness } from '@/lib/setup/tenantReadinessService'
+import { getActionCenterSummary } from '@/lib/action-center/actionCenterService'
+import { canSeeSystemActionItems } from '@/lib/action-center/actionCenterGuards'
 import type { ActionGuideContext, ActionGuideRequest } from './actionGuide.types'
 
 type BuildActionGuideContextArgs = {
@@ -39,6 +42,7 @@ export async function buildActionGuideContext({
     tenantId,
     workspaceId: tenantId,
   }).catch(() => null)
+  const actionCenterSummary = await buildOptionalActionCenterSummary(supabase, tenantId, userId, permissions)
   const moduleStatusMap: Record<string, string> = Object.fromEntries(moduleStatuses.map(item => [item.moduleKey, item.status]))
   const moduleBlockingReasons = Object.fromEntries(moduleStatuses.map(item => [item.moduleKey, item.blocking_reasons]))
   const moduleWarnings = Object.fromEntries(moduleStatuses.map(item => [item.moduleKey, item.warnings]))
@@ -68,7 +72,11 @@ export async function buildActionGuideContext({
     moduleBlockingReasons,
     moduleWarnings,
     availableModules: Object.entries(moduleStatusMap).filter(([, status]) => status === 'available').map(([moduleKey]) => moduleKey),
-    context: rawContext,
+    actionCenterSummary,
+    context: {
+      ...rawContext,
+      actionCenterSummary,
+    },
   }
 
   const record = await hydrateSelectedRecord(supabase, baseContext)
@@ -80,6 +88,27 @@ export async function buildActionGuideContext({
   }
 
   return baseContext
+}
+
+async function buildOptionalActionCenterSummary(
+  supabase: SupabaseClient,
+  tenantId: string,
+  userId: string,
+  permissions: string[]
+) {
+  try {
+    const scopedCompanyIds = await fetchScopedCompanyIds(supabase as any, tenantId).catch(() => [])
+    return await getActionCenterSummary({
+      supabase,
+      tenantId,
+      userId,
+      permissions,
+      scopedCompanyIds,
+      isSystemUser: canSeeSystemActionItems({ permissions, isSystemUser: false }),
+    })
+  } catch {
+    return null
+  }
 }
 
 export function getAccessContextFromSessionBootstrap(context: ActionGuideContext) {

@@ -29,6 +29,9 @@ import { createProgressiveFormLoadStages } from '@/lib/forms/progressiveFormLoad
 import { invalidateEntityDetailCache, readEntityDetailCache, writeEntityDetailCache } from '@/lib/forms/entityDetailCache'
 import { companyService } from '@/lib/services/companyService'
 import { getControlledFieldNames } from '@/lib/field-controls/fieldControlRegistry'
+import { useModules } from '@/lib/security/moduleStore'
+import { usePermissions } from '@/lib/security/permissionStore'
+import { applyVisibilityToOperationGroups } from '@/lib/visibility/actionVisibility'
 import type { ListMeta } from '@/lib/api/listEndpoint'
 
 type PageState = 'list' | 'create' | 'view' | 'edit'
@@ -494,6 +497,19 @@ export default function TemsilcilerPage() {
 
   const isSelectedPassive = isSoftDeletedRecord(selectedRepresentative)
   const selectedRecordStatus = selectedRepresentative ? getRepresentativeRecordStatus(selectedRepresentative) : null
+  const modules = useModules()
+  const permissions = usePermissions()
+  const operationVisibilityContext = useMemo(() => ({
+    currentPage: 'representatives',
+    moduleKey: 'representatives',
+    recordType: 'representative',
+    recordId: selectedRepresentative?.id,
+    recordStatus: selectedRecordStatus || undefined,
+    companyId: selectedRepresentative?.company_id || companyFilterId || undefined,
+    branchId: selectedRepresentative?.branch_id || branchFilterId || undefined,
+    permissions: Array.from(permissions.permissions),
+    modules: modules.runtimeModules,
+  }), [branchFilterId, companyFilterId, modules.runtimeModules, permissions.permissions, selectedRecordStatus, selectedRepresentative])
   useRegisterActionGuideContext({
     currentPage: 'representatives',
     selectedRecordId: selectedRepresentative?.id || null,
@@ -869,7 +885,7 @@ export default function TemsilcilerPage() {
         }]
       : []
 
-    return [
+    const groups: FormOperationActionGroup[] = [
       ...(lifecycleActions.length ? [{
         key: 'lifecycle',
         title: 'Yaşam Döngüsü',
@@ -890,6 +906,7 @@ export default function TemsilcilerPage() {
         actions: cardActions,
       }] : []),
     ]
+    return applyVisibilityToOperationGroups(groups, operationVisibilityContext)
   }
 
   const bannerConfig = pageState === 'list'

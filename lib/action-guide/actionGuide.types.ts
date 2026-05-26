@@ -110,6 +110,8 @@ export interface ActionGuideContext {
   moduleStatuses?: Record<string, string>
   moduleBlockingReasons?: Record<string, string[]>
   moduleWarnings?: Record<string, string[]>
+  actionCenterSummary?: Record<string, any> | null
+  integritySummary?: Record<string, any> | null
   record?: Record<string, any> | null
 }
 

@@ -39,6 +39,7 @@ import { isDraftRecord, isSoftDeletedRecord } from '@/lib/forms/entityState'
 import { ModuleDependencyNotice, type EntityAccessState, type ModuleDependency } from '@/lib/access/entityAccess'
 import { useModules } from '@/lib/security/moduleStore'
 import { usePermissions } from '@/lib/security/permissionStore'
+import { resolveActionRuntimeAvailability } from '@/lib/visibility/actionVisibility'
 
 /** Historical value entry */
 export interface HistoryEntry {
@@ -225,6 +226,7 @@ export interface FormOperationAction {
   onClick: () => void
   hidden?: boolean
   disabled?: boolean
+  disabledReason?: string
   tone?: FormOperationActionTone
   dataTourId?: string
   state?: FormOperationActionState
@@ -2752,7 +2754,7 @@ function CompactOperationControl({
       <button
         type="button"
         data-tour-id={group.dataTourId || primaryAction.dataTourId}
-        title={group.description || title}
+        title={primaryAction.disabledReason || group.description || title}
         disabled={primaryAction.disabled}
         onClick={() => {
           if (primaryAction.disabled) return
@@ -2874,11 +2876,12 @@ function OperationMenuActionButton({
     : action.icon
 
   return (
-    <button
-      type="button"
-      role="menuitem"
-      data-tour-id={action.dataTourId}
-      disabled={disabled}
+      <button
+        type="button"
+        role="menuitem"
+        data-tour-id={action.dataTourId}
+        title={action.disabledReason || action.label}
+        disabled={disabled}
       onClick={() => {
         if (disabled) return
         onRun()
@@ -2889,7 +2892,14 @@ function OperationMenuActionButton({
       )}
     >
       {icon}
-      <span className={cn('min-w-0', truncateLabel ? 'truncate' : 'whitespace-normal')}>{action.label}</span>
+      <span className={cn('min-w-0 flex-1', truncateLabel ? 'truncate' : 'whitespace-normal')}>
+        {action.label}
+        {disabled && action.disabledReason ? (
+          <span className="block truncate text-[11px] font-normal text-gray-400 dark:text-gray-500">
+            {action.disabledReason}
+          </span>
+        ) : null}
+      </span>
     </button>
   )
 }
@@ -3039,13 +3049,22 @@ function getFieldOperationEligibility(
   permissions: ReturnType<typeof usePermissions>,
   recordStatus?: string | null
 ) {
+  const runtimeDecision = control.operationKey
+    ? resolveActionRuntimeAvailability(control.operationKey, {
+      modules: modules.runtimeModules,
+      permissions: Array.from(permissions.permissions),
+      recordStatus: recordStatus || undefined,
+    })
+    : null
   const missingRequiredModule = (control.requiredModules || []).find(moduleKey => !isFormModuleAvailable(modules, moduleKey))
   const optionalWarnings = (control.optionalModules || [])
     .filter(moduleKey => !isFormModuleAvailable(modules, moduleKey))
     .map(moduleKey => getOptionalModuleWarning(moduleKey, control.operationKey))
   const hasPermission = hasFieldOperationPermission(control, permissions)
   const statusReason = getFieldOperationStatusReason(control, recordStatus)
-  const disabledReason = missingRequiredModule
+  const disabledReason = runtimeDecision && !runtimeDecision.enabled && runtimeDecision.reason
+    ? runtimeDecision.reason
+    : missingRequiredModule
     ? getMissingModuleReason(missingRequiredModule, control.operationKey)
     : !hasPermission
       ? 'Bu islem icin yetkiniz bulunmuyor.'
@@ -3054,7 +3073,7 @@ function getFieldOperationEligibility(
   return {
     canStart: !disabledReason,
     disabledReason,
-    warnings: optionalWarnings,
+    warnings: [...(runtimeDecision?.warnings || []), ...optionalWarnings],
   }
 }
 
