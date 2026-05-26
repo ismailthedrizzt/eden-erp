@@ -8,12 +8,16 @@ import {
   orchestratorError,
   orchestratorResultToNextResponse,
 } from '@/lib/operations/orchestrators/orchestratorResponse'
+import { requireModuleAvailable } from '@/lib/modules/moduleGuards'
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ company_id: string }> }
 ) {
   const { company_id: companyId } = await params
+  const moduleGuard = await requireModuleAvailable(request, 'branches')
+  if (moduleGuard) return moduleGuard
+
   const rawBody = await request.json().catch(() => ({}))
   const parsed = CompanyBranchClosingSchema.safeParse(stripOperationControlFields(rawBody))
 

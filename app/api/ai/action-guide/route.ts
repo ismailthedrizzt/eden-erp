@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { resolveActionGuide } from '@/lib/action-guide/intentMatcher'
 import { getAuthenticatedWorkspaceContext } from '@/lib/user-state/server'
+import {
+  listModuleRuntimeStatuses,
+  loadModuleFeatureContext,
+} from '@/lib/modules/moduleFeatureResolver'
 
 export const runtime = 'nodejs'
 
@@ -29,15 +33,26 @@ export async function POST(request: NextRequest) {
     }, { status: 400 })
   }
 
-  const result = resolveActionGuide(parsed.data.query, {
-    ...(parsed.data.context as any),
-    currentPage: parsed.data.currentPage ?? (parsed.data.context as any).currentPage,
-    selectedRecordType: parsed.data.selectedRecordType ?? (parsed.data.context as any).selectedRecordType,
-    selectedRecordId: parsed.data.selectedRecordId ?? (parsed.data.context as any).selectedRecordId,
-    selectedRecordStatus: parsed.data.selectedRecordStatus ?? (parsed.data.context as any).selectedRecordStatus,
-    companyId: parsed.data.companyId ?? (parsed.data.context as any).companyId,
-    branchId: parsed.data.branchId ?? (parsed.data.context as any).branchId,
+  const requestedContext = parsed.data.context as Record<string, any>
+  const moduleFeatureContext = await loadModuleFeatureContext(context.supabase, {
     tenantId: context.workspaceId,
+    userPermissions: Array.isArray(requestedContext.userPermissions) ? requestedContext.userPermissions : undefined,
+  }).catch(() => ({ moduleLicenses: [] }))
+  const moduleStatuses = listModuleRuntimeStatuses(moduleFeatureContext)
+
+  const result = resolveActionGuide(parsed.data.query, {
+    ...requestedContext,
+    currentPage: parsed.data.currentPage ?? requestedContext.currentPage,
+    selectedRecordType: parsed.data.selectedRecordType ?? requestedContext.selectedRecordType,
+    selectedRecordId: parsed.data.selectedRecordId ?? requestedContext.selectedRecordId,
+    selectedRecordStatus: parsed.data.selectedRecordStatus ?? requestedContext.selectedRecordStatus,
+    companyId: parsed.data.companyId ?? requestedContext.companyId,
+    branchId: parsed.data.branchId ?? requestedContext.branchId,
+    tenantId: context.workspaceId,
+    availableModules: moduleStatuses.filter(item => item.status === 'available').map(item => item.moduleKey),
+    moduleStatuses: Object.fromEntries(moduleStatuses.map(item => [item.moduleKey, item.status])),
+    moduleBlockingReasons: Object.fromEntries(moduleStatuses.map(item => [item.moduleKey, item.blocking_reasons])),
+    moduleWarnings: Object.fromEntries(moduleStatuses.map(item => [item.moduleKey, item.warnings])),
   })
 
   return NextResponse.json(result, { headers: { 'Cache-Control': 'no-store' } })

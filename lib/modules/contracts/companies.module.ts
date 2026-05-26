@@ -1,0 +1,61 @@
+import { PERMISSIONS } from '@/packages/shared/src'
+import type { ModuleContract } from '../moduleContract.types'
+
+export const companiesModule: ModuleContract = {
+  key: 'companies',
+  name: 'Sirketlerimiz',
+  description: 'Sirket kartlari, resmi acilis/kapanis ve ticaret sicil degisiklikleri.',
+  domain: 'company',
+  category: 'sirket',
+  version: '2026-05-26.1',
+  status: 'active',
+  defaultEnabled: true,
+  licenseRequired: false,
+  setupRequired: true,
+  dependencies: [],
+  entities: [
+    { key: 'company', tableName: 'companies', displayName: 'Sirket', lifecycle: true, draftSupported: true, hardDeleteDraftOnly: true },
+  ],
+  routes: [
+    { path: '/app/sirket/companies', type: 'page', permission: PERMISSIONS.companies.view },
+    { path: '/api/companies', type: 'api', permission: PERMISSIONS.companies.view },
+    { path: '/api/companies/[company_id]', type: 'api', permission: PERMISSIONS.companies.view },
+  ],
+  menus: [
+    { label: 'Sirketlerimiz', path: '/app/sirket/companies', icon: 'Building2', order: 10, parent: 'sirket', permission: PERMISSIONS.companies.view },
+  ],
+  permissions: [
+    { key: PERMISSIONS.companies.view, label: 'Sirketleri goruntuleme' },
+    { key: PERMISSIONS.companies.edit, label: 'Sirketleri duzenleme' },
+    { key: PERMISSIONS.companies.openingStart, label: 'Sirket acilisi baslatma', fallback: [PERMISSIONS.companies.edit] },
+    { key: PERMISSIONS.companies.liquidationStart, label: 'Sirket tasfiyesi baslatma', fallback: [PERMISSIONS.companies.edit] },
+    { key: PERMISSIONS.companies.deregistrationStart, label: 'Sirket terkini baslatma', fallback: [PERMISSIONS.companies.edit] },
+  ],
+  actions: [
+    { key: 'create_company_draft', label: 'Sirket taslagi olustur', actionType: 'create_draft', targetPage: '/app/sirket/companies', permission: PERMISSIONS.companies.insert },
+    { key: 'company_opening', label: 'Sirket acilisi', actionType: 'open_wizard', targetPage: '/app/sirket/companies', wizardKey: 'company_opening', permission: PERMISSIONS.companies.openingStart, fallbackPermission: PERMISSIONS.companies.edit, requiredRecordType: 'company', requiredRecordStatus: ['draft'] },
+    { key: 'company_liquidation', label: 'Sirket tasfiyesi', actionType: 'open_wizard', targetPage: '/app/sirket/companies', wizardKey: 'company_liquidation', permission: PERMISSIONS.companies.liquidationStart, fallbackPermission: PERMISSIONS.companies.edit, requiredRecordType: 'company', requiredRecordStatus: ['active'] },
+    { key: 'company_deregistration', label: 'Sirket terkini', actionType: 'open_wizard', targetPage: '/app/sirket/companies', wizardKey: 'company_deregistration', permission: PERMISSIONS.companies.deregistrationStart, fallbackPermission: PERMISSIONS.companies.edit, requiredRecordType: 'company' },
+    { key: 'capital_increase', label: 'Sermaye artirimi', actionType: 'open_wizard', targetPage: '/app/sirket/companies', wizardKey: 'capital_increase', permission: PERMISSIONS.companies.edit, requiredRecordType: 'company', requiredRecordStatus: ['active'] },
+    { key: 'capital_decrease', label: 'Sermaye azaltimi', actionType: 'open_wizard', targetPage: '/app/sirket/companies', wizardKey: 'capital_decrease', permission: PERMISSIONS.companies.edit, requiredRecordType: 'company', requiredRecordStatus: ['active'] },
+    { key: 'title_change', label: 'Unvan degisikligi', actionType: 'open_wizard', targetPage: '/app/sirket/companies', wizardKey: 'title_change', permission: PERMISSIONS.companies.edit, requiredRecordType: 'company', requiredRecordStatus: ['active'] },
+    { key: 'address_change', label: 'Adres degisikligi', actionType: 'open_wizard', targetPage: '/app/sirket/companies', wizardKey: 'address_change', permission: PERMISSIONS.companies.edit, requiredRecordType: 'company', requiredRecordStatus: ['active'] },
+    { key: 'public_registration_update', label: 'Kamu/tescil bilgisi guncelleme', actionType: 'open_wizard', targetPage: '/app/sirket/companies', wizardKey: 'public_registration_update', permission: PERMISSIONS.companies.edit, requiredRecordType: 'company', requiredRecordStatus: ['active'] },
+    { key: 'nace_change', label: 'NACE degisikligi', actionType: 'open_wizard', targetPage: '/app/sirket/companies', wizardKey: 'nace_change', permission: PERMISSIONS.companies.edit, requiredRecordType: 'company', requiredRecordStatus: ['active'] },
+    { key: 'activity_subject_change', label: 'Faaliyet konusu degisikligi', actionType: 'open_wizard', targetPage: '/app/sirket/companies', wizardKey: 'activity_subject_change', permission: PERMISSIONS.companies.edit, requiredRecordType: 'company', requiredRecordStatus: ['active'] },
+  ],
+  projections: [
+    { key: 'company_list', projectionKey: 'companyList', required: true },
+    { key: 'company_detail', projectionKey: 'companyDetail', required: true },
+    { key: 'branch_summary', projectionKey: 'branchSummary', required: false },
+  ],
+  events: [
+    { eventType: 'company.created', version: '1', aggregateType: 'company' },
+    { eventType: 'company.updated', version: '1', aggregateType: 'company' },
+    { eventType: 'company.opened', version: '1', aggregateType: 'company' },
+    { eventType: 'company.liquidation_started', version: '1', aggregateType: 'company' },
+    { eventType: 'company.deregistered', version: '1', aggregateType: 'company' },
+    { eventType: 'company.capital_increased', version: '1', aggregateType: 'company' },
+    { eventType: 'company.nace_changed', version: '1', aggregateType: 'company' },
+  ],
+}

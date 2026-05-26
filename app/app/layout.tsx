@@ -9,7 +9,7 @@ import { Building2, Check, ChevronDown, Loader2, Menu, Moon, Star, Sun } from 'l
 import { cn } from '@/lib/utils'
 import { ModuleLicenseProvider } from '@/hooks/useModuleLicense'
 import { PermissionProvider } from '@/lib/security/permissionStore'
-import { ModuleProvider } from '@/lib/security/moduleStore'
+import { ModuleProvider, type ClientModuleRuntime } from '@/lib/security/moduleStore'
 import { GuidedSystemTour } from '@/components/onboarding/GuidedSystemTour'
 import { ActionGuideProvider } from '@/components/ai/ActionGuideContext'
 import { ActionGuideSearch } from '@/components/ai/ActionGuideSearch'
@@ -104,6 +104,7 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
   const [workspaceLogo, setWorkspaceLogo] = useState<ThemedLogoSource>({})
   const [workspaceLogoFailed, setWorkspaceLogoFailed] = useState(false)
   const [workspaceOptions, setWorkspaceOptions] = useState<TenantWorkspaceOption[]>([])
+  const [bootstrapModules, setBootstrapModules] = useState<ClientModuleRuntime[]>([])
   const [sessionBootstrapLoading, setSessionBootstrapLoading] = useState(true)
   const [workspaceOptionsLoading, setWorkspaceOptionsLoading] = useState(true)
   const [workspaceMenuOpen, setWorkspaceMenuOpen] = useState(false)
@@ -147,6 +148,7 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
         setWorkspaceName(payload.workspace?.name || 'Çalışma Alanı')
         setWorkspaceLogo(payload.workspace || {})
         setWorkspaceLogoFailed(false)
+        setBootstrapModules((payload.modules || []) as ClientModuleRuntime[])
         if (payload.workspace?.id) setStoredTenantId(payload.workspace.id)
         cacheUiPreferences(payload.userState.uiPreferences)
         setDark(applyThemePreference(payload.userState.uiPreferences.theme))
@@ -329,7 +331,7 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
 
   return (
     <ModuleLicenseProvider>
-      <ModuleProvider>
+      <ModuleProvider initialModules={bootstrapModules}>
         <PermissionProvider>
           <ActionGuideProvider>
           <div className={cn('flex h-screen overflow-hidden', dark && 'dark')}>

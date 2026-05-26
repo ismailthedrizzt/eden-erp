@@ -7,6 +7,7 @@ import { isMissingInfrastructureError } from '@/lib/operations/operationRequestS
 import { BRANCH_PERMISSIONS, requireBranchPermission } from '@/lib/modules/companies/branchPermissions'
 import { COMPANY_BRANCH_SELECT } from '@/lib/modules/companies/companyBranchSelect'
 import { resolveBaseUpdatedAt, resolveBaseVersion } from '@/lib/operations/idempotency'
+import { requireModuleAvailable } from '@/lib/modules/moduleGuards'
 
 const emptyStringToUndefined = (value: unknown) => value === '' ? undefined : value
 const optionalUuid = z.preprocess(emptyStringToUndefined, z.string().uuid().optional().nullable())
@@ -52,6 +53,9 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params
+  const moduleGuard = await requireModuleAvailable(request, 'branches')
+  if (moduleGuard) return moduleGuard
+
   const supabase = createServiceClient()
   const permission = await requireBranchPermission(request, supabase, BRANCH_PERMISSIONS.view, 'companies.view')
   if (permission instanceof NextResponse) return permission
@@ -68,6 +72,9 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params
+  const moduleGuard = await requireModuleAvailable(request, 'branches')
+  if (moduleGuard) return moduleGuard
+
   const supabase = createServiceClient()
   const permission = await requireBranchPermission(request, supabase, BRANCH_PERMISSIONS.edit, 'companies.edit')
   if (permission instanceof NextResponse) return permission
@@ -123,7 +130,10 @@ export async function PATCH(
   return NextResponse.json({ data: await hydrateBranch(supabase, data as Record<string, any>, tenantContext) })
 }
 
-export async function DELETE() {
+export async function DELETE(request: NextRequest) {
+  const moduleGuard = await requireModuleAvailable(request, 'branches')
+  if (moduleGuard) return moduleGuard
+
   return NextResponse.json({
     error: 'Şube hard delete ile silinemez. Kapatma için Şube Kapanışı resmi işlem wizardını kullanın.',
     code: 'USE_BRANCH_CLOSING_WIZARD',

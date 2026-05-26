@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { useModuleLicense } from '@/hooks/useModuleLicense'
+import { useModules } from '@/lib/security/moduleStore'
 import {
   formatVersionBadge,
   getMaturityBadgeClass,
@@ -29,12 +30,14 @@ interface NavItem {
   href?: string
   disabled?: boolean
   moduleKey?: string
+  contractModuleKey?: string
   children?: {
     label: string
     href: string
     pageId?: string
     disabled?: boolean
     moduleKey?: string
+    contractModuleKey?: string
     submoduleKey?: string
   }[]
 }
@@ -51,6 +54,7 @@ const NAV: NavItem[] = [
     label: 'Şirket Yönetimi',
     icon: <Building2 size={16} />,
     moduleKey: 'sirket',
+    contractModuleKey: 'companies',
     children: [
       { label: 'Şirketlerimiz', href: '/app/sirket/companies', moduleKey: 'sirket', submoduleKey: 'companies' },
       { label: 'Şubelerimiz', href: '/app/sirket/companies/branches', moduleKey: 'sirket', submoduleKey: 'branches' },
@@ -192,6 +196,57 @@ const NAV: NavItem[] = [
   },
 ]
 
+const SIDEBAR_CONTRACT_MODULE_BY_HREF: Record<string, string> = {
+  '/app/sirket/companies': 'companies',
+  '/app/sirket/companies/branches': 'branches',
+  '/app/sirket/companies/partners': 'partners',
+  '/app/sirket/companies/representatives': 'representatives',
+  '/app/sirket/teskilat': 'organization',
+  '/app/sirket/tesisler': 'facilities',
+  '/app/ik': 'hr',
+  '/app/ik/employees': 'hr',
+  '/app/ik/personel': 'hr',
+  '/app/muhasebe': 'accounting',
+  '/app/urun-ve-hizmetler': 'product_services',
+  '/app/satis-sonrasi': 'after_sales',
+  '/app/gorev-ve-proje-yonetimi': 'project_management',
+  '/app/sistem/module-licenses': 'settings',
+}
+
+const SIDEBAR_CONTRACT_MODULE_BY_LEGACY_KEY: Record<string, string> = {
+  ik: 'hr',
+  muhasebe: 'accounting',
+  product_services: 'product_services',
+  after_sales: 'after_sales',
+  project_management: 'project_management',
+  sistem: 'settings',
+}
+
+type NavChildItem = NonNullable<NavItem['children']>[number]
+
+function resolveSidebarContractModuleKey(item: NavItem | NavChildItem, parent?: NavItem) {
+  return item.contractModuleKey
+    || SIDEBAR_CONTRACT_MODULE_BY_HREF[item.href || '']
+    || (item.moduleKey ? SIDEBAR_CONTRACT_MODULE_BY_LEGACY_KEY[item.moduleKey] : null)
+    || parent?.contractModuleKey
+    || (parent?.moduleKey ? SIDEBAR_CONTRACT_MODULE_BY_LEGACY_KEY[parent.moduleKey] : null)
+    || null
+}
+
+function isHiddenRuntimeStatus(status: string) {
+  return status === 'disabled' || status === 'unlicensed'
+}
+
+function isBlockedRuntimeStatus(status: string) {
+  return status === 'setup_required' || status === 'dependency_missing'
+}
+
+function runtimeRedirectFor(status: string) {
+  if (status === 'setup_required') return '/app/sistem/kurulum'
+  if (status === 'unlicensed') return '/app/sistem/module-licenses'
+  return null
+}
+
 type SidebarVersionInfo = ModuleVersionInfo | PageVersionInfo
 
 function SidebarVersionBadge({ info, compact = false }: { info: SidebarVersionInfo; compact?: boolean }) {
@@ -229,6 +284,7 @@ interface SidebarProps {
 export default function Sidebar({ collapsed = false, mobileOpen = false, onMobileClose, onExpand }: SidebarProps) {
   const pathname = usePathname()
   const { isModuleActive, isSubmoduleActive } = useModuleLicense()
+  const moduleRuntime = useModules()
   const [openMods, setOpenMods] = useState<string[]>([])
 
   useEffect(() => {
@@ -258,9 +314,12 @@ export default function Sidebar({ collapsed = false, mobileOpen = false, onMobil
     const hasChildren = !!item.children?.length
     const moduleVersionInfo = getModuleVersionInfo(item.moduleKey)
     const itemTitle = getVersionTitle(item.label, moduleVersionInfo)
+    const contractModuleKey = resolveSidebarContractModuleKey(item)
+    const runtimeStatus = contractModuleKey ? moduleRuntime.getRuntimeStatus(contractModuleKey) : 'available'
+    const runtimeRedirect = runtimeRedirectFor(runtimeStatus)
 
     // Check if module is active (in production, hide if inactive)
-    const isModuleAvailable = !item.moduleKey || isModuleActive(item.moduleKey)
+    const isModuleAvailable = (!item.moduleKey || isModuleActive(item.moduleKey)) && !isHiddenRuntimeStatus(runtimeStatus)
 
     // In production, completely hide inactive modules
     const isProd = process.env.NODE_ENV === 'production'
@@ -270,12 +329,12 @@ export default function Sidebar({ collapsed = false, mobileOpen = false, onMobil
       <div key={item.id} data-tour-id={item.id === 'sirket' ? 'sidebar-pages' : undefined}>
         {/* Main nav item */}
         {item.href ? (
-          <Link href={item.href}
+          <Link href={runtimeRedirect || item.href}
                 title={collapsed && !mobileOpen ? itemTitle : undefined}
                 onClick={() => {
                   if (collapsed && !mobileOpen) onExpand?.()
                 }}
-                className={cn('ni', isActive && 'active')}>
+                className={cn('ni', isActive && 'active', isBlockedRuntimeStatus(runtimeStatus) && 'opacity-60')}>
             <span className={cn('flex-shrink-0 opacity-60', isActive && 'opacity-90')}>{item.icon}</span>
             {!collapsed && <span className="flex-1">{item.label}</span>}
           </Link>
@@ -311,23 +370,29 @@ export default function Sidebar({ collapsed = false, mobileOpen = false, onMobil
               // Check if submodule is active
               const isSubmoduleAvailable = !child.moduleKey || !child.submoduleKey ||
                 isSubmoduleActive(child.moduleKey, child.submoduleKey)
+              const childContractModuleKey = resolveSidebarContractModuleKey(child, item)
+              const childRuntimeStatus = childContractModuleKey ? moduleRuntime.getRuntimeStatus(childContractModuleKey) : runtimeStatus
+              const childRuntimeRedirect = runtimeRedirectFor(childRuntimeStatus)
               const pageVersionInfo = child.pageId
                 ? getPageVersionInfo(child.moduleKey || item.moduleKey, child.pageId)
                 : getPageVersionInfoByHref(child.moduleKey || item.moduleKey, child.href)
               const childTitle = getVersionTitle(child.label, pageVersionInfo)
 
               // In production, completely hide inactive submodules
-              if (isProd && !isSubmoduleAvailable) return null
+              if (isProd && (!isSubmoduleAvailable || isHiddenRuntimeStatus(childRuntimeStatus))) return null
 
               // In dev, show but disable if inactive
-              const isDisabled = child.disabled || (!isSubmoduleAvailable && !isProd)
+              const isDisabled = child.disabled
+                || (!isSubmoduleAvailable && !isProd)
+                || (!isProd && isHiddenRuntimeStatus(childRuntimeStatus))
+                || isBlockedRuntimeStatus(childRuntimeStatus)
 
               return (
                 <Link
                   key={child.href}
-                  href={isDisabled ? '#' : child.href}
+                  href={childRuntimeRedirect || (isDisabled ? '#' : child.href)}
                   title={childTitle}
-                  onClick={e => isDisabled && e.preventDefault()}
+                  onClick={e => isDisabled && !childRuntimeRedirect && e.preventDefault()}
                   className={cn(
                     'sni',
                     pathname === child.href && 'active',

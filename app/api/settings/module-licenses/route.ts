@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
+import { listModuleContracts, getModuleContract } from '@/lib/modules/moduleRegistry'
 
 const MODULE_LICENSE_SELECT = 'id,module_key,module_name,is_active,environment,created_at,updated_at'
 const SUBMODULE_LICENSE_SELECT = 'id,module_key,submodule_key,submodule_name,is_active,environment,created_at,updated_at'
@@ -17,7 +18,7 @@ export async function GET() {
   if (submodulesRes.error) return NextResponse.json({ error: submodulesRes.error.message }, { status: 500 })
 
   return NextResponse.json({
-    modules: modulesRes.data,
+    modules: mergeContractModules(modulesRes.data || []),
     submodules: submodulesRes.data
   })
 }
@@ -29,15 +30,17 @@ export async function PATCH(request: Request) {
 
   if (body.type === 'module') {
     const { key, is_active, environment } = body
+    const contract = getModuleContract(key)
     const updates = {
+      module_key: key,
+      module_name: contract?.name || key,
       ...(typeof is_active === 'boolean' ? { is_active } : {}),
       ...(environment ? { environment } : {}),
       updated_at: new Date().toISOString(),
     }
     const { error } = await supabase
       .from('module_licenses')
-      .update(updates)
-      .eq('module_key', key)
+      .upsert(updates, { onConflict: 'module_key' })
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
@@ -70,4 +73,22 @@ export async function PATCH(request: Request) {
   }
 
   return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
+}
+
+function mergeContractModules(rows: Record<string, any>[]) {
+  const byKey = new Map(rows.map(row => [row.module_key, row]))
+  for (const contract of listModuleContracts()) {
+    if (byKey.has(contract.key)) continue
+    byKey.set(contract.key, {
+      id: `contract:${contract.key}`,
+      module_key: contract.key,
+      module_name: contract.name,
+      is_active: contract.defaultEnabled,
+      environment: 'all',
+      created_at: null,
+      updated_at: null,
+      contract_only: true,
+    })
+  }
+  return Array.from(byKey.values())
 }

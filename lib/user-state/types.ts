@@ -58,4 +58,16 @@ export interface BootstrapUserState {
 export interface SessionBootstrapResponse {
   workspace: BootstrapWorkspace
   userState: BootstrapUserState
+  modules?: Array<{
+    key: string
+    name: string
+    enabled: boolean
+    licensed: boolean
+    setupComplete: boolean
+    status: 'available' | 'disabled' | 'unlicensed' | 'setup_required' | 'dependency_missing'
+    permissions: string[]
+    actions: Array<Record<string, unknown>>
+    routes: Array<Record<string, unknown>>
+    warnings: string[]
+  }>
 }

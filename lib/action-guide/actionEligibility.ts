@@ -1,18 +1,44 @@
 import { hasAnyPermission } from '@/lib/security/permissionRegistry'
+import { findActionContract } from '@/lib/modules/moduleRegistry'
 import type { ActionGuideContext, ActionRegistryItem } from './actionGuide.types'
 
 export function evaluateActionEligibility(action: ActionRegistryItem, context: ActionGuideContext) {
   const permissionKeys = [action.permission, action.fallback_permission].filter(Boolean) as string[]
   const hasPermission = permissionKeys.length ? hasAnyPermission(context.userPermissions, permissionKeys) : true
   const recordCheck = checkRecord(action, context)
+  const moduleCheck = checkModule(action, context)
   const blocking_reasons = [
+    ...moduleCheck.reasons,
     ...(hasPermission ? [] : ['Bu islemi baslatmak icin gerekli yetkiniz gorunmuyor.']),
     ...recordCheck.reasons,
   ]
   return {
-    can_start_now: hasPermission && recordCheck.ok,
+    can_start_now: hasPermission && recordCheck.ok && moduleCheck.ok,
     blocking_reasons,
   }
+}
+
+function checkModule(action: ActionRegistryItem, context: ActionGuideContext) {
+  const contractMatch = findActionContract(action.key)
+  if (!contractMatch) return { ok: true, reasons: [] as string[] }
+
+  const moduleKey = contractMatch.module.key
+  const status = context.moduleStatuses?.[moduleKey]
+  if (!status || status === 'available') return { ok: true, reasons: [] as string[] }
+
+  const reasons = context.moduleBlockingReasons?.[moduleKey]
+  if (reasons?.length) return { ok: false, reasons }
+
+  if (status === 'setup_required') {
+    return { ok: false, reasons: [`${contractMatch.module.name} modulu icin once kurulum tamamlanmalidir.`] }
+  }
+  if (status === 'dependency_missing') {
+    return { ok: false, reasons: [`${contractMatch.module.name} modulu icin bagimli moduller tamamlanmalidir.`] }
+  }
+  if (status === 'unlicensed') {
+    return { ok: false, reasons: [`${contractMatch.module.name} modulu icin lisans aktif degil.`] }
+  }
+  return { ok: false, reasons: [`${contractMatch.module.name} modulu bu calisma alaninda aktif degil.`] }
 }
 
 function checkRecord(action: ActionRegistryItem, context: ActionGuideContext) {

@@ -64,6 +64,9 @@ export type ActionGuideContext = {
   route?: string | null
   queryParams?: Record<string, string>
   availableModules?: string[]
+  moduleStatuses?: Record<string, string>
+  moduleBlockingReasons?: Record<string, string[]>
+  moduleWarnings?: Record<string, string[]>
 }
 
 export type ActionRegistryItem = {

@@ -8,6 +8,10 @@ import {
   mapUserStateForResponse,
   SYSTEM_TOUR_VERSION,
 } from '@/lib/user-state/server'
+import {
+  buildSessionModules,
+  loadModuleFeatureContext,
+} from '@/lib/modules/moduleFeatureResolver'
 
 export const runtime = 'nodejs'
 
@@ -18,7 +22,7 @@ export async function GET(request: NextRequest) {
   const { supabase, userId, workspaceId } = context
 
   try {
-    const [bootstrapResult, workspace] = await Promise.all([
+    const [bootstrapResult, workspace, moduleContext] = await Promise.all([
       supabase.rpc('bootstrap_user_workspace_state', {
         p_user_id: userId,
         p_workspace_id: workspaceId,
@@ -28,6 +32,7 @@ export async function GET(request: NextRequest) {
         p_user_agent: getUserAgent(request),
       }),
       fetchWorkspaceSummary(supabase, workspaceId),
+      loadModuleFeatureContext(supabase, { tenantId: workspaceId }).catch(() => ({ moduleLicenses: [] })),
     ])
 
     if (bootstrapResult.error) {
@@ -51,6 +56,7 @@ export async function GET(request: NextRequest) {
       {
         workspace,
         userState: mapUserStateForResponse(state, Boolean(row?.is_first_login)),
+        modules: buildSessionModules(moduleContext),
       },
       { headers: { 'Cache-Control': 'no-store' } }
     )

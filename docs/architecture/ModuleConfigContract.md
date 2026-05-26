@@ -52,3 +52,19 @@ types/module-config.ts
 ```
 
 Yeni modul eklerken once ilgili modul config'i olusturulacak, sonra liste ve form sayfasi bu config'i okuyacak. Boylece standart sayfa davranisi korunurken tablo/iliski farklari config seviyesinde cozulecek.
+
+## Module Registry ile Iliski
+
+`ModuleConfig`, bir entity ekraninin liste/form davranisini tanimlar. `ModuleContract` ise daha ust seviyede modulun platforma ne getirdigini tanimlar:
+
+- entity ve lifecycle sozlesmesi
+- page/api route sozlesmesi
+- menu sozlesmesi
+- permission ve fallback permission sozlesmesi
+- action/wizard sozlesmesi
+- projection ve event sozlesmesi
+- module dependency sozlesmesi
+
+Bu ayrim korunur. `ModuleConfig` SmartDataTable/EntityForm detaylarini tasirken, `ModuleRegistry` modulun lisans, kurulum, dependency, permission, projection ve action guide baglantilarina kaynak olur.
+
+Runtime durum `ModuleFeatureResolver` ile cozulur. Bir modul kapali, lisanssiz veya kurulumu eksikse API guard ve UI teknik hata yerine is diliyle aciklama gosterir.

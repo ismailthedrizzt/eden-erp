@@ -4,10 +4,14 @@ import { listMeta, parseListQuery } from '@/lib/api/listEndpoint'
 import { resolveTenantContext } from '@/lib/tenancy/server'
 import { fetchScopedCompanyIds, getTenantCompanyScope } from '@/lib/tenancy/companyScopes'
 import { BRANCH_PERMISSIONS, requireBranchPermission } from '@/lib/modules/companies/branchPermissions'
+import { requireModuleAvailable } from '@/lib/modules/moduleGuards'
 import { listProjectionRecordsV2, projectionMeta } from '@/lib/read-models/projectionQuery.server'
 import { branchListProjection } from '@/lib/read-models/projections/branchList.projection'
 
 export async function GET(request: NextRequest) {
+  const moduleGuard = await requireModuleAvailable(request, 'branches')
+  if (moduleGuard) return moduleGuard
+
   const supabase = createServiceClient()
   const permission = await requireBranchPermission(request, supabase, BRANCH_PERMISSIONS.view, 'companies.view')
   if (permission instanceof NextResponse) return permission
@@ -57,7 +61,10 @@ export async function GET(request: NextRequest) {
   }
 }
 
-export async function POST() {
+export async function POST(request: NextRequest) {
+  const moduleGuard = await requireModuleAvailable(request, 'branches')
+  if (moduleGuard) return moduleGuard
+
   return NextResponse.json({
     error: 'Sube serbest kayit olarak olusturulamaz. Sube Acilisi resmi islem wizardini kullanin.',
     code: 'USE_BRANCH_OPENING_WIZARD',

@@ -1,11 +1,13 @@
 import { actionRegistry } from './actionRegistry'
 import { evaluateActionEligibility, normalizeStatus } from './actionEligibility'
+import { findActionContract } from '@/lib/modules/moduleRegistry'
 import type { ActionGuideAction, ActionGuideContext, ActionGuideResult, ActionRegistryItem } from './actionGuide.types'
 
 const DEFAULT_ACTION = actionRegistry.find(action => action.key === 'branch_opening') || actionRegistry[0]
 
 export function resolveActionGuide(query: string, context: ActionGuideContext = {}): ActionGuideResult {
-  const definition = matchAction(query) || DEFAULT_ACTION
+  const candidates = filterActionsByModule(actionRegistry, context)
+  const definition = matchAction(query, candidates) || candidates[0] || DEFAULT_ACTION
   const eligibility = evaluateActionEligibility(definition, context)
   const suggested_actions = buildSuggestedActions(definition, context, eligibility.can_start_now, eligibility.blocking_reasons)
 
@@ -73,12 +75,27 @@ function buildSuggestedActions(
   return actions
 }
 
-function matchAction(query: string) {
+function matchAction(query: string, candidates: ActionRegistryItem[] = actionRegistry) {
   const normalized = normalizeText(query)
   if (!normalized) return null
-  return actionRegistry
+  return candidates
     .map(action => ({ action, score: scoreAction(query, action) }))
     .sort((left, right) => right.score - left.score)[0]?.action || null
+}
+
+function filterActionsByModule(actions: ActionRegistryItem[], context: ActionGuideContext) {
+  if (!context.availableModules && !context.moduleStatuses) return actions
+
+  return actions.filter(action => {
+    const contractMatch = findActionContract(action.key)
+    if (!contractMatch) return true
+
+    const moduleKey = contractMatch.module.key
+    const runtimeStatus = context.moduleStatuses?.[moduleKey]
+    if (runtimeStatus === 'disabled' || runtimeStatus === 'unlicensed') return false
+    if (runtimeStatus === 'setup_required' || runtimeStatus === 'dependency_missing') return true
+    return context.availableModules?.includes(moduleKey) ?? true
+  })
 }
 
 function scoreAction(query: string, definition: ActionRegistryItem) {
