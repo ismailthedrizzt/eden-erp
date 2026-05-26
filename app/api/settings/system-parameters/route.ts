@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
       descriptionOverride: values.get(definition.key)?.description || null,
       updatedAt: values.get(definition.key)?.updated_at || null,
     })),
-    warning: error && isMissingTableError(error) ? 'system_parameters tablosu bulunamadı; varsayılan değerler gösteriliyor.' : undefined,
+    warning: error && isMissingTableError(error) ? 'Sistem parametreleri hazir degil; varsayilan degerler gosteriliyor.' : undefined,
   })
 }
 

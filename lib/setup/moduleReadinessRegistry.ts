@@ -87,6 +87,13 @@ export const moduleReadinessDefinitions: ModuleReadinessDefinition[] = [
       setupStep('outbox.check', 'Sistem olaylarini kontrol et', 'Islem sonrasi bildirim ve yenilemeler icin olay kayitlari hazir olmalidir.', 'check'),
     ],
   },
+  {
+    moduleKey: 'actionCenter',
+    optionalDependencies: ['process', 'outbox', 'audit'],
+    setupSteps: [
+      setupStep('actionCenter.check', 'Bekleyen is kaynaklarini kontrol et', 'Gorev, onay ve sistem uyarilarinin tek merkezden gorunmesi icin bagli kaynaklar hazir olmalidir.', 'check'),
+    ],
+  },
 ]
 
 const readinessByModule = new Map(moduleReadinessDefinitions.map(definition => [definition.moduleKey, definition]))

@@ -3,7 +3,6 @@ import 'server-only'
 import type { NextRequest } from 'next/server'
 import { z } from 'zod'
 import { createServiceClient } from '@/lib/supabase/server'
-import { applyTenantQueryScope } from '@/lib/tenancy/server'
 import { resolveBaseUpdatedAt, resolveBaseVersion, resolveClientRequestId } from '@/lib/operations/idempotency'
 import { executeWithTransactionBoundary } from '@/lib/operations/transactionBoundary'
 import { markBranchClosingPartialFailure } from '@/lib/operations/transaction-boundary/compensation'
@@ -12,13 +11,23 @@ import { AuditLogService } from '@/lib/audit/auditLogService'
 import { buildAuditContextFromRequest } from '@/lib/audit/auditContext'
 import { runIntegrityForOperation } from '@/lib/integrity/integrityChecker'
 import { integrityWarningsForMetadata } from '@/lib/integrity/integrityGuards'
+import { unwrapDomainResult } from '@/lib/domains/domainServiceResponse'
+import { closeBranch } from '@/lib/domains/branches/branch.service'
 import {
-  OFFICIAL_BRANCH_SELECT,
+  keepOrganizationUnitOpenAfterBranchClosing,
+  reassignOrganizationUnit,
+  setOrganizationUnitPassive,
+} from '@/lib/domains/organization/organization.service'
+import {
+  keepFacilityOpenAfterBranchClosing,
+  markFacilityReusable,
+  setFacilityPassive,
+} from '@/lib/domains/facilities/facility.service'
+import {
   OFFICIAL_CHANGE_EVENT_TYPES,
   OFFICIAL_CHANGE_OPERATION_TYPES,
   OfficialDocumentMetaSchema,
   OfficialDocumentSchema,
-  assertValidOrganizationUnitReassignTarget,
   buildBranchClosingPrecheck,
   emptyToNull,
   ensureOfficialChangeAccess,
@@ -26,9 +35,6 @@ import {
   insertOfficialLifecycleEvent,
   isActiveBranch,
   normalizeDocuments,
-  normalizeOptionalString,
-  updateFacilityForBranchClosing,
-  updateOrganizationUnitForBranchClosing,
   validateOfficialDates,
 } from '@/app/api/companies/[company_id]/official-changes/_shared'
 import {
@@ -346,83 +352,45 @@ async function performBranchClosingApplicationFlow({
   })
   if (!dateValidation.ok) throw validationError(dateValidation.message, dateValidation.code, 400)
 
-  if (input.organization_unit_action === 'reassign' && branch.organization_unit_id) {
-    const reassignValidation = await assertValidOrganizationUnitReassignTarget({
-      supabase,
-      companyId,
-      unitId: branch.organization_unit_id,
-      targetUnitId: input.target_organization_unit_id || null,
-      tenantContext,
-    })
-    if (!reassignValidation.ok) {
-      throw validationError(
-        reassignValidation.error,
-        reassignValidation.code,
-        reassignValidation.status,
-        reassignValidation.details
-      )
-    }
-  }
-
   const documents = normalizeDocuments(input.document_files, input.document_meta)
-  const previousDocumentFiles = Array.isArray(branch.document_files) ? branch.document_files : []
-  const now = new Date().toISOString()
-  const updatePayload = {
-    status: 'closed',
-    record_status: 'closed',
+  const closingResult = unwrapDomainResult(await closeBranch({ supabase, tenantContext, userId, companyId, operationId }, branch.id, {
+    closing_reason: input.closing_reason,
     closing_decision_date: emptyToNull(input.closing_decision_date),
     closing_registration_date: emptyToNull(input.closing_registration_date),
     trade_registry_gazette_date: emptyToNull(input.trade_registry_gazette_date),
-    trade_registry_gazette_number: normalizeOptionalString(input.trade_registry_gazette_number),
-    end_date: emptyToNull(input.closing_registration_date || input.closing_decision_date),
-    document_files: [...previousDocumentFiles, ...documents.map(document => ({ ...document, closing_document: true }))],
-    metadata_json: {
-      ...(branch.metadata_json || {}),
-      closing_reason: input.closing_reason,
-      sgk_closing_notification: input.sgk_closing_notification,
-      tax_office_notification: input.tax_office_notification,
-      organization_unit_action: input.organization_unit_action,
-      target_organization_unit_id: input.target_organization_unit_id || null,
-      facility_action: input.facility_action,
-      closed_operation_id: operationId || null,
-    },
-    notes: normalizeOptionalString(input.notes) || branch.notes || null,
-    updated_by: userId || null,
-    updated_at: now,
-    version: Number(branch.version || 1) + 1,
-  }
+    trade_registry_gazette_number: input.trade_registry_gazette_number,
+    sgk_closing_notification: input.sgk_closing_notification,
+    tax_office_notification: input.tax_office_notification,
+    organization_unit_action: input.organization_unit_action,
+    target_organization_unit_id: input.target_organization_unit_id || null,
+    facility_action: input.facility_action,
+    notes: input.notes || null,
+    document_files: documents,
+    baseVersion,
+    baseUpdatedAt,
+  }))
 
-  let updateQuery = supabase.from('company_branches').update(updatePayload).eq('id', branch.id)
-  updateQuery = applyTenantQueryScope(updateQuery, 'company_branches', tenantContext)
-  const { data: updatedBranch, error: updateError } = await updateQuery.select(OFFICIAL_BRANCH_SELECT).single()
-  if (updateError) throw updateError
+  const endDate = input.closing_registration_date || input.closing_decision_date
+  const organizationUnit = branch.organization_unit_id
+    ? input.organization_unit_action === 'deactivate'
+      ? unwrapDomainResult(await setOrganizationUnitPassive({ supabase, tenantContext, userId, companyId, operationId }, branch.organization_unit_id, { endDate }))
+      : input.organization_unit_action === 'reassign'
+        ? unwrapDomainResult(await reassignOrganizationUnit({ supabase, tenantContext, userId, companyId, operationId }, branch.organization_unit_id, input.target_organization_unit_id || null, { companyId, endDate })).unit
+        : unwrapDomainResult(await keepOrganizationUnitOpenAfterBranchClosing({ supabase, tenantContext, userId, companyId, operationId }, branch.organization_unit_id, { endDate }))
+    : null
 
-  const organizationUnitResult = await updateOrganizationUnitForBranchClosing({
-    supabase,
-    companyId,
-    unitId: branch.organization_unit_id,
-    action: input.organization_unit_action,
-    targetUnitId: input.target_organization_unit_id || null,
-    tenantContext,
-    endDate: input.closing_registration_date || input.closing_decision_date,
-  })
-  if (!organizationUnitResult.ok) {
-    throw validationError(organizationUnitResult.error, organizationUnitResult.code, organizationUnitResult.status, organizationUnitResult.details)
-  }
+  const facility = branch.facility_id
+    ? input.facility_action === 'deactivate'
+      ? unwrapDomainResult(await setFacilityPassive({ supabase, tenantContext, userId, companyId, operationId }, branch.facility_id, { endDate }))
+      : input.facility_action === 'reuse'
+        ? unwrapDomainResult(await markFacilityReusable({ supabase, tenantContext, userId, companyId, operationId }, branch.facility_id, { endDate }))
+        : unwrapDomainResult(await keepFacilityOpenAfterBranchClosing({ supabase, tenantContext, userId, companyId, operationId }, branch.facility_id, { endDate }))
+    : null
 
-  const facility = await updateFacilityForBranchClosing({
-    supabase,
-    facilityId: branch.facility_id,
-    action: input.facility_action,
-    tenantContext,
-    endDate: input.closing_registration_date || input.closing_decision_date,
-    userId,
-  })
-
-  const changedFields = Object.keys(updatePayload)
-  const oldValues = Object.fromEntries(changedFields.map(field => [field, branch[field] ?? null]))
-  const updated = updatedBranch as Record<string, any>
-  const newValues = Object.fromEntries(changedFields.map(field => [field, updated[field] ?? null]))
+  const changedFields = closingResult.changedFields
+  const oldValues = closingResult.oldValues
+  const updated = closingResult.branch
+  const newValues = closingResult.newValues
   const warnings = [...(precheck.warnings || []), ...dateValidation.warnings]
   const transaction = await insertOfficialChangeTransaction({
     supabase,
@@ -458,7 +426,7 @@ async function performBranchClosingApplicationFlow({
     company: precheck.current,
     transaction,
     branch: updated,
-    organization_unit: organizationUnitResult.unit,
+    organization_unit: organizationUnit,
     facility,
     warnings,
   }

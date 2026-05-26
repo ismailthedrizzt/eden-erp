@@ -137,7 +137,7 @@ export async function fetchBranchListProjection({
 
   const { data, error, count } = await query
   if (error) {
-    if (isMissingInfrastructureError(error)) return { rows: [], count: 0, warning: 'company_branches tablosu henuz uygulanmamis.' }
+    if (isMissingInfrastructureError(error)) return { rows: [], count: 0, warning: 'Subeler kayit alanlari hazir degil. Subeler modulunun kurulumunu tamamlayin.' }
     throw error
   }
 

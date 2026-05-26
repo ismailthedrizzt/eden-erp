@@ -22,7 +22,8 @@ export const actionGuideDefinitions: ActionGuideDefinition[] = [
     intentExamples: ['sirket ekle', 'yeni sirket olustur', 'sirket karti ac', 'firma ekle'],
     keywords: ['sirket', 'firma', 'ekle', 'taslak', 'yeni'],
     requiredModules: ['companies'],
-    requiredPermissions: [permissionRegistry.companies.edit],
+    requiredPermissions: [permissionRegistry.companies.insert],
+    fallbackPermissions: [permissionRegistry.companies.edit],
     steps: [
       'Sirketlerimiz sayfasina gidin.',
       '+ Ekle ile sirket karti taslagi olusturun.',
@@ -312,6 +313,7 @@ function representativeAction(
   keywords: string[],
   rest: Partial<ActionGuideDefinition> = {}
 ) {
+  const requiredPermission = representativePermissionForAction(key)
   return defineAction({
     key,
     label,
@@ -323,7 +325,7 @@ function representativeAction(
     wizardKey: key,
     requiredRecordType: 'representative',
     requiredModules: ['companies', 'representatives'],
-    requiredPermissions: [permissionRegistry.representatives.authorityStart],
+    requiredPermissions: [requiredPermission],
     fallbackPermissions: [permissionRegistry.representatives.edit],
     intentExamples,
     keywords,
@@ -335,6 +337,13 @@ function representativeAction(
     helpText: 'Temsilci karti cogaltilmaz; yetki farklari authority scope islemlerinde tutulur.',
     ...rest,
   })
+}
+
+function representativePermissionForAction(key: string) {
+  if (key === 'representative_start') return permissionRegistry.representatives.authorityStart
+  if (key === 'representative_suspend') return permissionRegistry.representatives.authoritySuspend
+  if (key === 'representative_terminate') return permissionRegistry.representatives.authorityTerminate
+  return permissionRegistry.representatives.authorityUpdate
 }
 
 function orgAction(key: string, label: string, description: string, intentExamples: string[], keywords: string[]) {

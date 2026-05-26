@@ -8,7 +8,11 @@ export function isMissingTableError(error: any) {
 }
 
 export function missingTableResponse(table: string) {
-  return NextResponse.json({ data: [], warning: `${table} tablosu bulunamadı. İlgili migration uygulanmalı.` })
+  return NextResponse.json({
+    data: [],
+    warning: 'Banka kayit alanlari hazir degil. Muhasebe modulu kurulumunu tamamlayin.',
+    details: { source: table },
+  })
 }
 
 export function cleanPayload(payload: Record<string, any>) {

@@ -43,7 +43,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({
         data: [],
         meta: listMeta(listQuery, 0),
-        warning: 'Surec motoru tablolari henuz uygulanmamis.',
+        warning: 'Surec motoru altyapisi henuz hazir degil.',
       }, { headers: { 'Cache-Control': 'no-store' } })
     }
     return NextResponse.json({ error: error.message, code: error.code || 'PROCESSES_FETCH_FAILED' }, { status: 500 })

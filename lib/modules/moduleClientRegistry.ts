@@ -7,6 +7,7 @@ import { facilitiesModule } from './contracts/facilities.module'
 import { hrModule } from './contracts/hr.module'
 import { organizationModule } from './contracts/organization.module'
 import { partnersModule } from './contracts/partners.module'
+import { actionCenterModule, auditModule, outboxModule, processModule } from './contracts/platform.module'
 import { productServicesModule } from './contracts/productServices.module'
 import { projectManagementModule } from './contracts/projectManagement.module'
 import { representativesModule } from './contracts/representatives.module'
@@ -24,6 +25,10 @@ export const clientModuleContracts = [
   projectManagementModule,
   productServicesModule,
   afterSalesModule,
+  processModule,
+  auditModule,
+  outboxModule,
+  actionCenterModule,
   settingsModule,
 ] satisfies ModuleContract[]
 

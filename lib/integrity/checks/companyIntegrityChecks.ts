@@ -19,7 +19,7 @@ export const companyIntegrityChecks = [
     return integrityCheckOk('company_active_for_official_operation')
   }),
 
-  check('company_not_deregistered', ['title_change', 'address_change', 'public_registration_update', 'nace_change', 'activity_subject_change', 'capital_increase', 'liquidation', 'deregistration'], 'blocking', async context => {
+  check('company_not_deregistered', ['title_change', 'address_change', 'public_registration_update', 'nace_change', 'activity_subject_change', 'capital_increase', 'company_liquidation', 'company_deregistration'], 'blocking', async context => {
     const companyId = context.companyId || context.entityId || context.payload?.company_id
     if (!companyId) return integrityCheckOk('company_not_deregistered')
     const company = await maybeSingleScoped(context.supabase, context.tenantContext, 'companies', 'id,trade_name,record_status,company_status,status,is_deleted', { id: companyId })
@@ -50,7 +50,7 @@ export const companyIntegrityChecks = [
     return integrityCheckOk('company_has_valid_current_ownership')
   }),
 
-  check('company_has_valid_branch_summary', ['liquidation', 'deregistration'], 'warning', async context => {
+  check('company_has_valid_branch_summary', ['company_liquidation', 'company_deregistration'], 'warning', async context => {
     const companyId = context.companyId || context.entityId || context.payload?.company_id
     if (!companyId) return integrityCheckOk('company_has_valid_branch_summary')
     const branches = await listScoped(context.supabase, context.tenantContext, 'company_branches', 'id,branch_name,status,record_status,is_deleted', { company_id: companyId }, { limit: 50 })

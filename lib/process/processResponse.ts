@@ -11,7 +11,7 @@ export function processFailure(error: string, code = 'PROCESS_FAILED', status = 
 
 export function processMissingInfrastructure(details?: any) {
   return processFailure(
-    'Surec motoru altyapisi bu calisma alaninda henuz uygulanmamis.',
+    'Surec motoru altyapisi bu calisma alaninda henuz hazir degil.',
     'PROCESS_INFRASTRUCTURE_MISSING',
     501,
     details

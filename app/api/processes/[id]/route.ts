@@ -29,7 +29,7 @@ export async function GET(
     }, { headers: { 'Cache-Control': 'no-store' } })
   } catch (error: any) {
     if (isMissingInfrastructureError(error)) {
-      return NextResponse.json({ error: 'Surec motoru altyapisi bu calisma alaninda henuz uygulanmamis.', code: 'PROCESS_INFRASTRUCTURE_MISSING' }, { status: 501 })
+      return NextResponse.json({ error: 'Surec motoru altyapisi bu calisma alaninda henuz hazir degil.', code: 'PROCESS_INFRASTRUCTURE_MISSING' }, { status: 501 })
     }
     return NextResponse.json({ error: error.message, code: error.code || 'PROCESS_FETCH_FAILED' }, { status: 500 })
   }

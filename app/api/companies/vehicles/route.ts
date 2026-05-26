@@ -77,7 +77,7 @@ export async function GET(request: NextRequest) {
         vehicles: [],
         employees: employees.data || [],
         companies: companies || [],
-        warning: 'company_vehicles tablosu bulunamadı. supabase/migrations/20240519_company_vehicles.sql uygulanmalı.',
+        warning: 'Arac kayit alanlari hazir degil. Sirket araclari kurulumunu tamamlayin.',
       })
     }
 

@@ -12,6 +12,17 @@ import { requirePermission } from '@/lib/security/serverPermissions'
 import { requireBranchPermission } from '@/lib/modules/companies/branchPermissions'
 import { buildFieldHistory } from '@/lib/crud/safeCrudService'
 import { isMissingInfrastructureError } from '@/lib/operations/operationRequestService'
+import { unwrapDomainResult } from '@/lib/domains/domainServiceResponse'
+import {
+  getBranchesForCompany as domainGetBranchesForCompany,
+  isActiveBranch as domainIsActiveBranch,
+} from '@/lib/domains/branches/branch.service'
+import {
+  listOrganizationUnitsForCompany as domainListOrganizationUnitsForCompany,
+} from '@/lib/domains/organization/organization.service'
+import {
+  listFacilitiesForCompany as domainListFacilitiesForCompany,
+} from '@/lib/domains/facilities/facility.service'
 
 type SupabaseClient = ReturnType<typeof createServiceClient>
 
@@ -330,6 +341,7 @@ export async function buildOfficialChangePrecheck(
 }
 
 export function getCompanyLifecycle(company: Record<string, any>) {
+  // TODO(domain-service-migration): Deprecated wrapper; use Company Domain Service lifecycle helper in new code.
   if (company.is_deleted === true) return 'deregistered'
   const values = [company.record_status, company.company_status]
     .map(value => String(value || '').trim().toLocaleLowerCase('tr-TR'))
@@ -916,7 +928,7 @@ export async function resolveOfficialNaceRows(
       .eq('is_active', true)
     if (error) {
       if (isMissingInfrastructureError(error)) {
-        return { ok: false as const, code: 'NACE_REFERENCE_MISSING', message: 'NACE referans tablosu bulunamadı.' }
+        return { ok: false as const, code: 'NACE_REFERENCE_MISSING', message: 'NACE referans kayitlari hazir degil.' }
       }
       return { ok: false as const, code: error.code || 'NACE_REFERENCE_FAILED', message: error.message }
     }
@@ -931,7 +943,7 @@ export async function resolveOfficialNaceRows(
       .eq('is_active', true)
     if (error) {
       if (isMissingInfrastructureError(error)) {
-        return { ok: false as const, code: 'NACE_REFERENCE_MISSING', message: 'NACE referans tablosu bulunamadı.' }
+        return { ok: false as const, code: 'NACE_REFERENCE_MISSING', message: 'NACE referans kayitlari hazir degil.' }
       }
       return { ok: false as const, code: error.code || 'NACE_REFERENCE_FAILED', message: error.message }
     }
@@ -1084,7 +1096,7 @@ export async function syncOfficialNaceCodes({
       .upsert(sgkPayload, { onConflict: 'company_id' })
     if (error) {
       if (isMissingInfrastructureError(error)) {
-        warnings.push('SGK tehlike sınıfı tablosu bulunamadığı için sadece işlem uyarısı oluşturuldu.')
+        warnings.push('SGK tehlike sinifi kayitlari hazir olmadigi icin sadece islem uyarisi olusturuldu.')
       } else {
         throw error
       }
@@ -1106,19 +1118,10 @@ export async function loadCompanyBranches(
   tenantContext: TenantContext,
   options: { includeDeleted?: boolean } = {}
 ) {
-  let query = supabase
-    .from('company_branches')
-    .select(OFFICIAL_BRANCH_SELECT)
-    .eq('company_id', companyId)
-    .order('branch_name', { ascending: true })
-  if (!options.includeDeleted) query = query.eq('is_deleted', false)
-  query = applyTenantQueryScope(query, 'company_branches', tenantContext)
-  const { data, error } = await query
-  if (error) {
-    if (isMissingInfrastructureError(error)) return []
-    throw error
-  }
-  return (data || []) as Record<string, any>[]
+  // TODO(domain-service-migration): Deprecated wrapper; use Branch Domain Service directly in new code.
+  const result = await domainGetBranchesForCompany({ supabase, tenantContext }, companyId)
+  const rows = unwrapDomainResult(result)
+  return options.includeDeleted ? rows : rows.filter(row => row.is_deleted !== true)
 }
 
 export async function loadCompanyOrganizationUnits(
@@ -1126,19 +1129,8 @@ export async function loadCompanyOrganizationUnits(
   companyId: string,
   tenantContext: TenantContext
 ) {
-  let query = supabase
-    .from('organization_units')
-    .select(OFFICIAL_ORGANIZATION_UNIT_SELECT)
-    .eq('company_id', companyId)
-    .eq('is_deleted', false)
-    .order('name', { ascending: true })
-  query = applyTenantQueryScope(query, 'organization_units', tenantContext)
-  const { data, error } = await query
-  if (error) {
-    if (isMissingInfrastructureError(error)) return []
-    throw error
-  }
-  return (data || []) as Record<string, any>[]
+  // TODO(domain-service-migration): Deprecated wrapper; use Organization Domain Service directly in new code.
+  return unwrapDomainResult(await domainListOrganizationUnitsForCompany({ supabase, tenantContext }, companyId))
 }
 
 export async function loadCompanyFacilities(
@@ -1146,19 +1138,8 @@ export async function loadCompanyFacilities(
   companyId: string,
   tenantContext: TenantContext
 ) {
-  let query = supabase
-    .from('company_facilities')
-    .select(OFFICIAL_FACILITY_SELECT)
-    .eq('company_id', companyId)
-    .eq('is_deleted', false)
-    .order('facility_name', { ascending: true })
-  query = applyTenantQueryScope(query, 'company_facilities', tenantContext)
-  const { data, error } = await query
-  if (error) {
-    if (isMissingInfrastructureError(error)) return []
-    throw error
-  }
-  return (data || []) as Record<string, any>[]
+  // TODO(domain-service-migration): Deprecated wrapper; use Facility Domain Service directly in new code.
+  return unwrapDomainResult(await domainListFacilitiesForCompany({ supabase, tenantContext }, companyId))
 }
 
 export async function loadCompanyFacilityById(
@@ -1182,10 +1163,8 @@ export async function loadCompanyFacilityById(
 }
 
 export function isActiveBranch(branch: Record<string, any>) {
-  const values = [branch.record_status, branch.status]
-    .map(value => String(value || '').trim().toLocaleLowerCase('tr-TR'))
-    .filter(Boolean)
-  return !branch.is_deleted && values.some(value => value === 'active' || value === 'aktif')
+  // TODO(domain-service-migration): Deprecated wrapper; use Branch Domain Service helper directly in new code.
+  return domainIsActiveBranch(branch)
 }
 
 export async function createBranchOrganizationUnit({

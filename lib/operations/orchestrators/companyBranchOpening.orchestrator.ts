@@ -3,7 +3,6 @@ import 'server-only'
 import type { NextRequest } from 'next/server'
 import { z } from 'zod'
 import { createServiceClient } from '@/lib/supabase/server'
-import { withTenantInsertScopeForTable } from '@/lib/tenancy/server'
 import { resolveBaseUpdatedAt, resolveBaseVersion, resolveClientRequestId } from '@/lib/operations/idempotency'
 import { executeWithTransactionBoundary } from '@/lib/operations/transactionBoundary'
 import { markBranchOpeningPartialFailure } from '@/lib/operations/transaction-boundary/compensation'
@@ -12,16 +11,16 @@ import { AuditLogService } from '@/lib/audit/auditLogService'
 import { buildAuditContextFromRequest } from '@/lib/audit/auditContext'
 import { runIntegrityForOperation } from '@/lib/integrity/integrityChecker'
 import { integrityWarningsForMetadata } from '@/lib/integrity/integrityGuards'
+import { unwrapDomainResult } from '@/lib/domains/domainServiceResponse'
+import { createBranch } from '@/lib/domains/branches/branch.service'
+import { createBranchOrganizationUnit } from '@/lib/domains/organization/organization.service'
+import { createFacilityForBranch, linkFacilityToBranch } from '@/lib/domains/facilities/facility.service'
 import {
-  OFFICIAL_BRANCH_SELECT,
   OFFICIAL_CHANGE_EVENT_TYPES,
   OFFICIAL_CHANGE_OPERATION_TYPES,
   OfficialDocumentMetaSchema,
   OfficialDocumentSchema,
-  attachFacilityToBranch,
   buildBranchOpeningPrecheck,
-  createBranchFacility,
-  createBranchOrganizationUnit,
   emptyToNull,
   ensureOfficialChangeAccess,
   insertOfficialChangeTransaction,
@@ -359,24 +358,32 @@ async function performBranchOpeningApplicationFlow({
   if (!dateValidation.ok) throw validationError(dateValidation.message, dateValidation.code)
 
   const organizationUnit = input.create_organization_unit
-    ? await createBranchOrganizationUnit({
+    ? unwrapDomainResult(await createBranchOrganizationUnit({
       supabase,
-      companyId,
       tenantContext,
+      userId,
+      companyId,
+      operationId,
+    }, {
+      companyId,
       branchName: normalizeOptionalString(input.organization_unit_name) || branchName,
       branchShortName: input.branch_short_name || null,
       parentUnitId: input.parent_organization_unit_id || null,
       startDate: input.opening_registration_date || input.opening_decision_date,
       locationName: [district, city].filter(Boolean).join(', ') || null,
       notes: input.notes || null,
-    })
+    }))
     : null
 
   const facility = input.create_facility
-    ? await createBranchFacility({
+    ? unwrapDomainResult(await createFacilityForBranch({
       supabase,
-      companyId,
       tenantContext,
+      userId,
+      companyId,
+      operationId,
+    }, {
+      companyId,
       branchName,
       facilityName: input.facility_name || null,
       branchType: input.branch_type,
@@ -390,18 +397,16 @@ async function performBranchOpeningApplicationFlow({
       email: input.email || null,
       startDate: input.opening_registration_date || input.opening_decision_date,
       notes: input.notes || null,
-      userId,
-    })
+    }))
     : null
 
   if (input.create_facility && !facility) {
-    throw Object.assign(new Error('Tesis/lokasyon kaydi olusturulamadi. Facility altyapisi uygulanmis olmalidir.'), {
+    throw Object.assign(new Error('Tesis/lokasyon kaydi olusturulamadi. Tesis/Lokasyon altyapisi hazir olmalidir.'), {
       code: 'FACILITY_CREATE_FAILED',
     })
   }
 
-  const now = new Date().toISOString()
-  const branchPayload = withTenantInsertScopeForTable({
+  const branchPayload = {
     company_id: companyId,
     organization_unit_id: organizationUnit?.id || null,
     facility_id: facility?.id || null,
@@ -437,27 +442,14 @@ async function performBranchOpeningApplicationFlow({
       facility_name: facility?.facility_name || normalizeOptionalString(input.facility_name),
       facility_not_created: !input.create_facility,
     },
-    created_by: userId || null,
-    updated_by: userId || null,
-    created_at: now,
-    updated_at: now,
-    version: 1,
-    is_deleted: false,
-  }, 'company_branches', tenantContext)
-
-  const { data: branch, error: branchError } = await supabase
-    .from('company_branches')
-    .insert(branchPayload)
-    .select(OFFICIAL_BRANCH_SELECT)
-    .single()
-  if (branchError) throw branchError
-
-  const createdBranch = branch as Record<string, any>
+  }
+  const branchResult = unwrapDomainResult(await createBranch({ supabase, tenantContext, userId, companyId, operationId }, branchPayload))
+  const createdBranch = branchResult.branch
   const linkedFacility = facility
-    ? await attachFacilityToBranch({ supabase, facilityId: facility.id, branchId: createdBranch.id, tenantContext, userId })
+    ? unwrapDomainResult(await linkFacilityToBranch({ supabase, tenantContext, userId, companyId, operationId }, facility.id, createdBranch.id))
     : null
 
-  const changedFields = Object.keys(branchPayload).filter(field => !['tenant_id', 'created_at', 'updated_at', 'created_by', 'updated_by', 'version', 'is_deleted'].includes(field))
+  const changedFields = branchResult.changedFields
   const transaction = await insertOfficialChangeTransaction({
     supabase,
     companyId,

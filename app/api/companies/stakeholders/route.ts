@@ -83,7 +83,7 @@ export async function GET(request: NextRequest) {
   const { data, error } = await query
   if (error) {
     if (error.message.includes("Could not find the table")) {
-      return NextResponse.json({ data: [], warning: 'stakeholders tablosu bulunamadı. Migration uygulanmalı.' })
+      return NextResponse.json({ data: [], warning: 'Paydas kayit alanlari hazir degil. Kurulum tamamlandiktan sonra tekrar deneyin.' })
     }
     return NextResponse.json({ error: error.message, code: error.code || 'FETCH_FAILED' }, { status: 500 })
   }

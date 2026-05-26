@@ -24,7 +24,7 @@ export async function POST(
     )
     return NextResponse.json({ data: task })
   } catch (error: any) {
-    if (isMissingInfrastructureError(error)) return NextResponse.json({ error: 'Surec gorevleri altyapisi henuz uygulanmamis.', code: 'PROCESS_INFRASTRUCTURE_MISSING' }, { status: 501 })
+    if (isMissingInfrastructureError(error)) return NextResponse.json({ error: 'Surec gorevleri altyapisi henuz hazir degil.', code: 'PROCESS_INFRASTRUCTURE_MISSING' }, { status: 501 })
     return NextResponse.json({ error: error.message, code: error.code || 'TASK_ASSIGN_FAILED' }, { status: 500 })
   }
 }

@@ -20,19 +20,19 @@ export const facilitiesModule: ModuleContract = {
     { key: 'facility_location', tableName: 'company_facilities', displayName: 'Tesis/Lokasyon', lifecycle: true, draftSupported: true },
   ],
   routes: [
-    { path: '/app/sirket/tesisler', type: 'page', permission: PERMISSIONS.companies.view },
+    { path: '/app/sirket/tesisler', type: 'page', permission: 'facilities.view', fallbackPermission: PERMISSIONS.companies.view },
   ],
   menus: [
-    { label: 'Tesislerimiz', path: '/app/sirket/tesisler', icon: 'Factory', order: 80, parent: 'sirket', permission: PERMISSIONS.companies.view },
+    { label: 'Tesislerimiz', path: '/app/sirket/tesisler', icon: 'Factory', order: 80, parent: 'sirket', permission: 'facilities.view' },
   ],
   permissions: [
     { key: 'facilities.view', label: 'Tesis/lokasyon goruntuleme', fallback: [PERMISSIONS.companies.view] },
     { key: 'facilities.edit', label: 'Tesis/lokasyon duzenleme', fallback: [PERMISSIONS.companies.edit] },
   ],
   actions: [
-    { key: 'create_facility', label: 'Tesis/lokasyon olustur', actionType: 'operation', targetPage: '/app/sirket/tesisler', permission: PERMISSIONS.companies.edit },
-    { key: 'link_facility_to_branch', label: 'Tesisi subeye bagla', actionType: 'operation', targetPage: '/app/sirket/tesisler', permission: PERMISSIONS.companies.edit },
-    { key: 'deactivate_facility', label: 'Tesis/lokasyon pasife al', actionType: 'operation', targetPage: '/app/sirket/tesisler', permission: PERMISSIONS.companies.edit },
+    { key: 'create_facility', label: 'Tesis/lokasyon olustur', actionType: 'operation', targetPage: '/app/sirket/tesisler', permission: 'facilities.edit', fallbackPermission: PERMISSIONS.companies.edit },
+    { key: 'link_facility_to_branch', label: 'Tesisi subeye bagla', actionType: 'operation', targetPage: '/app/sirket/tesisler', permission: 'facilities.edit', fallbackPermission: PERMISSIONS.companies.edit },
+    { key: 'deactivate_facility', label: 'Tesis/lokasyon pasife al', actionType: 'operation', targetPage: '/app/sirket/tesisler', permission: 'facilities.edit', fallbackPermission: PERMISSIONS.companies.edit },
   ],
   projections: [],
   events: [

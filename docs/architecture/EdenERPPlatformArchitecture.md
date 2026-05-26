@@ -2,6 +2,65 @@
 
 Eden ERP, modul sozlesmeleri, projection read model'lari ve operation orchestrator'lari uzerinden asamali olarak modular ERP platformuna donusur.
 
+## Ana Referans
+
+Bu dokuman platform mimarisinin ana referansidir. Detay sozlesmeler asagidaki dokumanlarda tutulur:
+
+- [Module Registry](./ModuleRegistry.md)
+- [Permission / Policy Engine](./PermissionPolicyEngine.md)
+- [Field Control Registry](./FieldControlRegistry.md)
+- [Process Engine](./ProcessEngine.md)
+- [Event Contracts](./EventContracts.md)
+- [Outbox Dispatcher](./OutboxDispatcher.md)
+- [Audit Log and Compliance Trace](./AuditLogAndComplianceTrace.md)
+- [Transaction Boundary](./TransactionBoundary.md)
+- [Action Guide Registry](./ActionGuideRegistry.md)
+- [Guided Tour and Help](./GuidedTourAndHelp.md)
+- [Module Readiness and Setup](./ModuleReadinessAndSetup.md)
+- [Runtime Feature Visibility](./RuntimeFeatureVisibility.md)
+- [Modular Navigation](./ModularNavigation.md)
+- [Action Center and Pending Work](./ActionCenterAndPendingWork.md)
+- [Data Integrity Guards](./DataIntegrityGuards.md)
+- [Cross Domain Consistency](./CrossDomainConsistency.md)
+- [Domain Boundaries](./DomainBoundaries.md)
+- [Domain Service Layer](./DomainServiceLayer.md)
+- [Technical Debt and Migration Plan](./TechnicalDebtAndMigrationPlan.md)
+- [Platform Migration Final Report](./PlatformMigrationFinalReport.md)
+
+## Platform Akisi
+
+```mermaid
+flowchart LR
+  UI["UI Layer"]
+  Help["Action Guide / Tour / Field Helper"]
+  API["API Route"]
+  Process["Process Engine"]
+  Orchestrator["Operation Orchestrator"]
+  Policy["Policy / Readiness / Integrity"]
+  Domain["Domain Service Layer"]
+  Boundary["Transaction Boundary / RPC Fallback"]
+  DB["Database"]
+  Outbox["Outbox"]
+  Projection["Projection / Read Model"]
+  Audit["Audit"]
+
+  UI --> Help
+  UI --> API
+  Help --> API
+  API --> Process
+  API --> Orchestrator
+  Process --> Orchestrator
+  Orchestrator --> Policy
+  Policy --> Domain
+  Orchestrator --> Boundary
+  Boundary --> Domain
+  Domain --> DB
+  Boundary --> Outbox
+  Boundary --> Audit
+  Outbox --> Projection
+  Projection --> UI
+```
+
 ## Sorumluluk Ayrimi
 
 - Module Registry: Modulun sistemde ne getirdigini tanimlar. Entity, route, menu, permission, action, projection ve event sozlesmesi statiktir.
@@ -23,10 +82,21 @@ Eden ERP, modul sozlesmeleri, projection read model'lari ve operation orchestrat
 - Projection Registry: Liste, detay ve ozet ekranlari icin read model sozlesmesini saglar.
 - Field Control Registry: Alanlarin normal form edit, taslak edit, resmi operation, sistem/projection veya iliski endpointi ile mi degisecegini tanimlar.
 - Action Guide Registry: Kullanici niyetini dogru modul/action/route/wizard yoluna baglar; yeni islem uydurmaz.
+- Domain Boundary Registry: Entity, tablo ve operation sahipligini bounded context bazinda tanimlar; cross-domain yazma kurallarinin sonraki domain service refactor'unda tek sozlesmeden okunmasini saglar.
+- Platform Consistency Check: Registry referanslari, module/action/permission/projection/event eslesmeleri ve platform modul sozlesmelerini dev/test ortaminda kontrol eder.
 
 ## Mevcut Akis
 
 Frontend dogrudan Supabase cagirmadan service ve API katmanina gider. API tenant scope, permission check, concurrency ve idempotency kurallarini korur. Kritik resmi islemler operation/wizard akisi ve orchestrator katmaniyla calisir.
+
+## Core Principles
+
+- Kullaniciya teknik platform dili degil, is odakli yol gosterilir.
+- `+ Ekle` standart sayfalarda taslak kayit olusturur; resmi sonuc doguran degisiklikler wizard/operation ile tamamlanir.
+- Frontend dogrudan Supabase veya RPC cagirmadan API/adaptor katmanini kullanir.
+- Permission/Policy kullanici yetkisini; Readiness modul hazirligini; Integrity veri tutarliligini; Visibility UI gorunurlugunu belirler.
+- Process Engine surec adimlarini yonetir; Operation Orchestrator mutation akisini koordine eder; Domain Service domain veri islemini uygular.
+- Outbox external side effect yapmaz; event kaydeder. Audit history/transaction yerine gecmez; denetim izini tamamlar.
 
 ## Registry Iliskisi
 
@@ -36,6 +106,30 @@ Module Registry, Projection Registry ve Action Guide arasinda ortak sozlesme kay
 - Module contract projection key'leri read model sozlesmesiyle eslenir.
 - Module contract route/menu bilgileri ileride Sidebar ve navigation uretiminde kullanilir.
 - Module contract event bilgisi ileride Outbox Dispatcher ve projection refresh surecleriyle baglanabilir.
+- `lib/platform/platformConsistencyCheck.ts` Action Guide, Field Control, Module Registry, Event Contract Registry, Process Registry, Integrity Registry, Navigation Registry, Feature Flags ve Readiness Registry referanslarini tek raporda toplar. Critical sorun build'e zorunlu bagli degildir ancak release oncesi kontrol noktasi olarak calistirilabilir.
+
+## Domain Boundaries
+
+Domain Boundaries, Eden ERP'de sirket, ortaklik, temsil yetkisi, sube, organizasyon, tesis/lokasyon, muhasebe, IK, proje, dokuman, surec, audit, setup ve AI rehber kavramlarinin birbirine karismadan buyumesini saglar.
+
+Ana kural: Eden ERP'de entity sahipligi domain bazinda belirlenir. Baska domain'in sahip oldugu veri dogrudan guncellenmez; domain service, operation orchestrator veya event/projection yoluyla etkilesim kurulur.
+
+`lib/domains/domainOwnershipRegistry.ts` entity, tablo ve operation ownership bilgisini tutar. `lib/domains/domainBoundaryGuard.ts` cross-domain yazma denemeleri icin allowed path kararini hazirlar. Bu helperlar henuz buyuk refactor yapmadan sonraki Domain Service Layer fazi icin sozlesme noktasi olusturur.
+
+Domain Service Layer, bu boundary sozlesmesini kod seviyesinde uygulamaya baslar. Route request/response adaptoru olarak kalir; Operation Orchestrator akisi yonetir; Domain Service ise domain'e ait query, mutation ve is kurali davranisini standart `DomainServiceResult` ile dondurur. Branch, Organization, Facility, Representative Authority, Ownership ve Company domain servisleri ilk gercek fonksiyonlarla hazirlanmistir.
+
+Sube Acilisi fallback akisi artik Organization Domain Service ile organization unit, Facility Domain Service ile facility ve Branch Domain Service ile branch kaydi olusturur. Sube Kapanisi fallback akisi organization/facility aksiyonlarini ilgili domain service uzerinden uygular ve branch close mutation'ini Branch Domain Service'e verir.
+
+Kritik kavram ayrimlari:
+
+- Sirket tuzel kisiliktir; sube bagli alt resmi/operasyonel birimdir.
+- Sube resmi kayittir; tesis/lokasyon fiziksel yerdir.
+- Sube organizasyon birimi degildir; organization unit hiyerarsi ve kadro yapisidir.
+- Ortak pay, oy, kar ve sermaye hakkidir; temsilci sirket adina islem yapma yetkisidir.
+- Temsilci karti kisi/kurum + sirket roludur; temsil yetkisi scope, limit ve yetki turu ile ayri transaction'dir.
+- Sermaye artirimi hukuki/ortaklik islemidir; muhasebe tahsilati odeme ve mutabakat katmanidir.
+- Wizard veri toplar, Process adim/gorev/onay yonetir, Operation Orchestrator mutation yapar.
+- History kullaniciya is gecmisi gosterir; Audit teknik-denetim izidir.
 
 ## Runtime Karar
 
@@ -154,6 +248,22 @@ Data Integrity Guard, kritik operasyonlardan once verinin guvenli ve tutarli olu
 Ilk uygulamada Sube Acilisi ve Sube Kapanisi orchestratorlari mutation oncesinde integrity check calistirir. Blocking sonuc varsa islem baslatilmaz; warning sonuc varsa islem devam edebilir ve uyarilar operation sonucuna, audit metadata'ya ve outbox payload'ina eklenir.
 
 Integrity check sonucunda kullaniciya teknik tablo/view hatasi gosterilmez. "Bu sube icin aktif temsilci yetkileri var", "Ayni adla aktif sube bulunuyor" veya "Guncel ortaklik dagilimi gerekli" gibi yapilacak is odakli mesajlar doner. Action Guide ve Action Center bu summary formatini kullanabilecek sekilde hazirlanmistir.
+
+## Page Architecture Standards
+
+Liste sayfalari server pagination/search/sort contract'ini bozmadan calisir. Detay formlari serbest kart alanlari ile operation-controlled resmi alanlari ayirir. Sirket, ortak, temsilci ve sube sayfalarinda taslak kart olusturma ile resmi/lifecycle islem baslatma ayrimi korunur.
+
+Sayfa icindeki action button'lari local kosullari azaltarak Runtime Visibility, Action Eligibility, Field Control ve Policy sonucuna yaklasmalidir. Modul kapali, lisanssiz veya kurulumu eksikse sayfa teknik hata yerine ModuleUnavailable/SetupRequired state'i gosterir.
+
+## API Response Standards
+
+Basarili API cevaplari `data`, opsiyonel `meta`, `projection`, `operation_id`, `operation_status`, `process_instance_id`, `warnings` ve `message` alanlariyla doner. Hata cevaplari `error`, `code`, opsiyonel `details`, `operation_id`, `operation_status`, `process_instance_id` ve `message` alanlarini kullanir.
+
+Domain Service `DomainServiceResult`, Orchestrator `OperationOrchestratorResult`, Policy `PolicyDecision`, Integrity `IntegritySummary` ve Action Guide `ActionGuideResponse` formatlari kendi katmanlarinda kalir; route dosyalari bunlari NextResponse'a cevirir. Ana `error/message` is diliyle, teknik detaylar `details` altinda kalir.
+
+## Known Technical Debt
+
+Kalan isler [Technical Debt and Migration Plan](./TechnicalDebtAndMigrationPlan.md) icinde P1/P2/P3 oncelikleriyle izlenir. Final durum, etkiler ve regresyon sonucu [Platform Migration Final Report](./PlatformMigrationFinalReport.md) dokumaninda ozetlenir.
 
 ## Sonraki Fazlar
 

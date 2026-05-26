@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({
         data: [],
         accountOptions: [],
-        warning: 'Banka hesap/kart tabloları bulunamadı. İlgili migration uygulanmalı.',
+        warning: 'Banka hesap/kart kayit alanlari hazir degil. Muhasebe modulu kurulumunu tamamlayin.',
       })
     }
 

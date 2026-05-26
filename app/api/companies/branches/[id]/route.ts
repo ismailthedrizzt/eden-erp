@@ -8,6 +8,7 @@ import { COMPANY_BRANCH_SELECT } from '@/lib/modules/companies/companyBranchSele
 import { resolveBaseUpdatedAt, resolveBaseVersion } from '@/lib/operations/idempotency'
 import { requireBranchPolicy } from '@/lib/security/policies/branchPolicies'
 import { fieldControlViolationResponse, getOperationControlledPatchViolation } from '@/lib/field-controls/fieldControlGuards'
+import { getBranchById, updateBranchCard } from '@/lib/domains/branches/branch.service'
 
 const emptyStringToUndefined = (value: unknown) => value === '' ? undefined : value
 const optionalUuid = z.preprocess(emptyStringToUndefined, z.string().uuid().optional().nullable())
@@ -29,7 +30,7 @@ export async function GET(
   const policy = await requireBranchPolicy({ request, supabase, actionKey: 'branch.view', branchId: id })
   if (policy instanceof Response) return policy
   const tenantContext = resolveTenantContext(request)
-  const branch = await loadBranch(supabase, id, tenantContext)
+  const branch = (await getBranchById({ supabase, tenantContext }, id)).data as Record<string, any> | undefined
   if (!branch) return NextResponse.json({ error: 'Şube kaydı bulunamadı.', code: 'BRANCH_NOT_FOUND' }, { status: 404 })
   const companyScope = await getTenantCompanyScope(supabase, tenantContext.tenantId, branch.company_id)
   if (!companyScope) return NextResponse.json({ error: 'Şube bağlı şirket scope dışında.', code: 'COMPANY_SCOPE_NOT_FOUND' }, { status: 404 })
@@ -48,7 +49,7 @@ export async function PATCH(
   const rawBody = await request.json().catch(() => ({}))
   const baseVersion = resolveBaseVersion(rawBody)
   const baseUpdatedAt = resolveBaseUpdatedAt(rawBody)
-  const current = await loadBranch(supabase, id, tenantContext)
+  const current = (await getBranchById({ supabase, tenantContext }, id)).data as Record<string, any> | undefined
   if (!current) return NextResponse.json({ error: 'Şube kaydı bulunamadı.', code: 'BRANCH_NOT_FOUND' }, { status: 404 })
   const operationViolation = getOperationControlledPatchViolation('company_branch', rawBody, current)
   if (operationViolation) return fieldControlViolationResponse(operationViolation)
@@ -80,13 +81,9 @@ export async function PATCH(
   const parsed = BranchCardUpdateSchema.safeParse(rawBody)
   if (!parsed.success) return NextResponse.json({ error: 'Şube kart güncelleme verileri geçerli değil.', code: 'VALIDATION_FAILED', details: { validation: parsed.error.flatten() }, message: 'İşlem tamamlanamadı' }, { status: 400 })
   const patch = normalizePatch(parsed.data)
-  const changedFields = Object.keys(patch).filter(field => String(patch[field] ?? '') !== String(current[field] ?? ''))
-  if (!changedFields.length) return NextResponse.json({ data: await hydrateBranch(supabase, current, tenantContext) })
-  let updateQuery = supabase.from('company_branches').update({ ...patch, updated_at: new Date().toISOString(), updated_by: policy.context.userId || null, version: Number(current.version || 1) + 1 }).eq('id', id)
-  updateQuery = applyTenantQueryScope(updateQuery, 'company_branches', tenantContext)
-  const { data, error } = await updateQuery.select(COMPANY_BRANCH_SELECT).single()
-  if (error) return NextResponse.json({ error: error.message, code: error.code || 'BRANCH_CARD_UPDATE_FAILED' }, { status: 500 })
-  return NextResponse.json({ data: await hydrateBranch(supabase, data as Record<string, any>, tenantContext) })
+  const updateResult = await updateBranchCard({ supabase, tenantContext, userId: policy.context.userId || null }, id, { ...patch, baseVersion, baseUpdatedAt })
+  if (!updateResult.ok) return NextResponse.json({ error: updateResult.error, code: updateResult.code, details: updateResult.details, message: 'Islem tamamlanamadi' }, { status: updateResult.status || 500 })
+  return NextResponse.json({ data: await hydrateBranch(supabase, updateResult.data?.branch || current, tenantContext) })
 }
 
 export async function DELETE(

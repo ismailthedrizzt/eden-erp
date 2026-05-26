@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ data: result.rows, meta: listMeta(listQuery, result.count) }, { headers: { 'Cache-Control': 'no-store' } })
   } catch (error: any) {
     if (isMissingInfrastructureError(error)) {
-      return NextResponse.json({ data: [], meta: listMeta(listQuery, 0), warning: 'Surec onaylari altyapisi henuz uygulanmamis.' })
+      return NextResponse.json({ data: [], meta: listMeta(listQuery, 0), warning: 'Surec onaylari altyapisi henuz hazir degil.' })
     }
     return NextResponse.json({ error: error.message, code: error.code || 'APPROVALS_FETCH_FAILED' }, { status: 500 })
   }
@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
     })
     return NextResponse.json({ data: approval }, { status: 201 })
   } catch (error: any) {
-    if (isMissingInfrastructureError(error)) return NextResponse.json({ error: 'Surec onaylari altyapisi henuz uygulanmamis.', code: 'PROCESS_INFRASTRUCTURE_MISSING' }, { status: 501 })
+    if (isMissingInfrastructureError(error)) return NextResponse.json({ error: 'Surec onaylari altyapisi henuz hazir degil.', code: 'PROCESS_INFRASTRUCTURE_MISSING' }, { status: 501 })
     return NextResponse.json({ error: error.message, code: error.code || 'APPROVAL_CREATE_FAILED' }, { status: 500 })
   }
 }

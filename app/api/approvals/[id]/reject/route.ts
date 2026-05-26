@@ -42,7 +42,7 @@ export async function POST(
     }
     return NextResponse.json({ data: approval })
   } catch (error: any) {
-    if (isMissingInfrastructureError(error)) return NextResponse.json({ error: 'Surec onaylari altyapisi henuz uygulanmamis.', code: 'PROCESS_INFRASTRUCTURE_MISSING' }, { status: 501 })
+    if (isMissingInfrastructureError(error)) return NextResponse.json({ error: 'Surec onaylari altyapisi henuz hazir degil.', code: 'PROCESS_INFRASTRUCTURE_MISSING' }, { status: 501 })
     return NextResponse.json({ error: error.message, code: error.code || 'APPROVAL_REJECT_FAILED' }, { status: 500 })
   }
 }

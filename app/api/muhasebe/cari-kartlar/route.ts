@@ -76,7 +76,7 @@ export async function GET(request: NextRequest) {
 
   const { data, error } = await query
   if (error) {
-    if (error.message.includes('v_account_cards')) return NextResponse.json({ data: [], warning: 'Muhasebe migration uygulanmalı.' })
+    if (error.message.includes('v_account_cards')) return NextResponse.json({ data: [], warning: 'Muhasebe modulu kurulumu tamamlanmali.' })
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 

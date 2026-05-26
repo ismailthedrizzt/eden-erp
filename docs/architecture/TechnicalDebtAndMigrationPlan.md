@@ -1,0 +1,37 @@
+# Technical Debt and Migration Plan
+
+Bu dokuman Eden ERP platform mimarisine geciste bilerek korunan wrapper, fallback ve kademeli refactor borclarini gorunur tutar. Amac eski davranisi bozmadan Domain Service, Process, Transaction Boundary, Outbox, Audit, Readiness, Visibility ve Action Center katmanlarina guvenli gecisi surdurmektir.
+
+Her kalem su alanlarla izlenir: `area`, `file/module`, `current_state`, `target_state`, `priority`, `suggested_followup_prompt`.
+
+## P1
+
+| area | file/module | current_state | target_state | priority | suggested_followup_prompt |
+| --- | --- | --- | --- | --- | --- |
+| Build/typecheck hygiene | Platform geneli | Final kontrolde typecheck/build temiz tutulmali; yeni fazlarda PWA generated file churn ve import sinirlari tekrar kirilabilir. | Her mimari faz sonunda typecheck/build/platform consistency otomatik calissin. | P1 | "Eden ERP icin platform:check script'i ekle, typecheck/build/platform consistency ve git diff --check'i tek komutta kos." |
+| Field control backend enforcement | `app/api/companies/*`, `components/ui/EntityForm.tsx`, `lib/field-controls/*` | Locked field helper UI'da gorunuyor; tum PATCH route'larinin ayni backend guard'i kullandigi adim adim dogrulanmali. | Operation-controlled alanlar backend'de tek canonical guard ile reddedilmeli. | P1 | "Tum company/partner/representative/branch PATCH route'larini Field Control Guard ile standardize et." |
+| Critical transaction atomicity | `lib/operations/orchestrators/*`, `lib/operations/transaction-boundary/*` | Branch opening/closing transaction boundary kullanmaya basladi; capital/ownership/representative operasyonlari kademeli. | Kritik mutation zincirleri Transaction Boundary + RPC fallback contract ile atomic hale gelsin. | P1 | "Sermaye Artirimi ve Representative Authority icin Transaction Boundary fallback/RPC contract entegrasyonunu tamamla." |
+| Scope/security coverage | `app/api/companies/*`, `app/api/audit/*`, `app/api/action-center/*` | Tenant/company/branch scope helperlari yayginlasti; eski route'larda tekrar eden kontrol var. | Route seviyesinde scope guard ve response standardi tek helper uzerinden kullanilsin. | P1 | "Company, branch, partner, representative API route'larinda scope guard standardizasyonu yap ve regression test checklist'i ekle." |
+| Module readiness crash prevention | `lib/setup/*`, `lib/modules/moduleGuards.ts`, module API routes | Missing infrastructure durumlari readiness diline cevrildi; tum yeni moduller ayni contract ile eklenmeli. | Module guard her route/action oncesinde disabled/unlicensed/setup_required/dependency_missing durumunu is diliyle donsun. | P1 | "Module guard'i company/branch/representative/process/audit route'larina ortak adaptor olarak uygula." |
+
+## P2
+
+| area | file/module | current_state | target_state | priority | suggested_followup_prompt |
+| --- | --- | --- | --- | --- | --- |
+| Domain service migration | `app/api/companies/[company_id]/official-changes/_shared.ts`, `lib/domains/*` | Eski shared helperlar geriye uyumluluk wrapper'i olarak duruyor; yeni Branch/Organization/Facility servisleri canonical kaynak olmaya basladi. | Route/orchestrator icindeki domain-specific query/mutation kodlari domain service'e tasinsin. | P2 | "Official changes _shared helperlarini domain service wrapper'larina indir ve yeni importlari lib/domains/* altina tasiyarak refactor et." |
+| RPC migration | `supabase/migrations/*operation_rpc*`, `lib/operations/transaction-boundary/*` | RPC contract ve fallback hazir; PL/pgSQL implementasyonlar MVP seviyesinde veya planli. | Branch, capital, ownership ve representative mutationlari DB transaction fonksiyonlariyla atomic calissin. | P2 | "TransactionBoundary RPC fonksiyonlarini gercek PL/pgSQL implementasyonla doldur ve fallback ile sonuclari karsilastiran test ekle." |
+| Projection optimization | `lib/read-models/projections/*`, Supabase views | Bazi projection'lar view yoksa query fallback ile calisiyor. | Yuksek trafikli listeler indexed DB view/projection ile optimize edilsin. | P2 | "Company, branch, ownership ve representative list projection fallback'lerini view/index optimizasyonuna tasiyarak performans olc." |
+| Process UI integration | `app/api/processes/*`, `app/api/tasks/*`, UI process pages | Process/task/approval endpointleri ve Action Center kaynaklari hazir; tam workflow UI sinirli. | Surec detay, task tamamlama ve approval karar ekranlari kullanici scope'una gore tamamlanmis olsun. | P2 | "Process Center UI'ini task/approval/detail akislariyla genislet ve Action Center action buttonlarini bu ekranlara bagla." |
+| Audit coverage | `lib/audit/*`, API route groups | Merkezi audit service hazir; tum belge, permission deny ve official change route'lari ayni coverage'a sahip degil. | Kritik API attempt, permission/policy deny, document upload/delete ve operation complete/fail kapsami standart olsun. | P2 | "Audit coverage matrix olustur ve eksik route gruplarina recordAudit wrapper'i ekle." |
+| Action Guide intelligence | `lib/action-guide/*`, `components/ai/*` | Deterministic registry tabanli matcher ve eligibility MVP calisiyor. | Dusuk confidence durumunda LLM sadece registry actionlari arasindan secim yapsin. | P2 | "Action Guide icin registry-constrained LLM intent refinement ekle ve schema validation ile halusinasyonu engelle." |
+| Integrity to Action Center bridge | `lib/integrity/*`, `lib/action-center/*` | Integrity precheck sonuclari action guide/orchestrator tarafindan kullanilabilir; surekli tarama yok. | Blocking/warning integrity sonuclari ilgili kayit ve kullanici scope'unda Action Center item'i olabilsin. | P2 | "Operation precheck integrity warnings icin Action Center adapter'i ekle ve branch closing representative impact'i item'a cevir." |
+
+## P3
+
+| area | file/module | current_state | target_state | priority | suggested_followup_prompt |
+| --- | --- | --- | --- | --- | --- |
+| UI polish | `components/onboarding/*`, `components/action-center/*`, `components/modules/*` | Guided Tour, Action Center ve ModuleUnavailable MVP olarak hazir. | Mobil, keyboard focus, reduced motion ve empty state polish tamamlanmali. | P3 | "Guided Tour ve Action Center icin responsive/focus/reduced-motion UI polish turu uygula." |
+| Admin audit UI | `app/app/sistem/audit/page.tsx`, `components/audit/*` | Audit sayfasi placeholder/MVP seviyesinde. | Filtrelenebilir timeline, old/new masked value detail ve export yetkileri eklensin. | P3 | "Audit admin UI'ini filtreli timeline ve masked diff detaylariyla genislet." |
+| Advanced process designer | `lib/process/*`, process docs | Process registry kod tabanli tanimlarla calisiyor. | Yetkili kullanicilar icin process designer veya admin editor hazirlansin. | P3 | "Process definition editor MVP'si tasarla; registry export/import ve validation ekle." |
+| Module marketplace polish | `app/app/sistem/module-licenses/page.tsx`, `app/app/sistem/kurulum/page.tsx` | License/readiness ve setup ekranlari ayrik MVP'ler olarak calisiyor. | Modul lisansi, kurulum adimi ve feature flag gorunumleri tek rehberli kurulum deneyimine baglansin. | P3 | "Module license, readiness ve setup action ekranlarini tek moduler kurulum deneyimi olarak birlestir." |
+| Platform consistency automation | `lib/platform/platformConsistencyCheck.ts` | Dev helper critical/warning raporu uretiyor; package script'e bagli degil. | CI/release oncesi critical inconsistency otomatik fail etsin. | P3 | "npm run platform:check script'i ekle ve platform consistency helper'ini CI uyumlu JSON/text output ile calistir." |

@@ -84,7 +84,7 @@ export const productVersionManifest: ProductVersionManifest = {
       version: '0.6.0',
       maturity: 'alpha',
       requiredForSmallBusiness: true,
-      notes: 'Şirketlerimiz, Ortaklarımız ve Temsilcilerimiz sayfalarında lifecycle, operation request, optimistic locking, outbox ve current view mimarisi uygulanmaya başladı. Şirketlerimiz ve Ortaklarımız beta seviyesine yaklaşırken Temsilcilerimiz manuel test için alpha seviyesine getirildi.',
+      notes: 'Sirketlerimiz, Ortaklarimiz ve Temsilcilerimiz sayfalarinda taslak, resmi islem, guvenli kayit guncelleme ve guncel ozet mimarisi uygulanmaya basladi. Sirketlerimiz ve Ortaklarimiz beta seviyesine yaklasirken Temsilcilerimiz manuel test icin alpha seviyesine getirildi.',
       pages: {
         overview: {
           id: 'overview',
@@ -102,7 +102,7 @@ export const productVersionManifest: ProductVersionManifest = {
           version: '0.9.0',
           maturity: 'beta',
           requiredForSmallBusiness: true,
-          notes: 'Şirket kartı, phased detail loading, lifecycle aksiyonları, company opening/liquidation/deregistration akışı, sermaye artırımı, optimistic locking, operation request ve outbox altyapısı ile manuel test seviyesine getirildi.',
+          notes: 'Sirket karti, asamali detay yukleme, yasam dongusu aksiyonlari, sirket acilisi/tasfiye/terkin akisi, sermaye artirimi ve guvenli islem altyapisi ile manuel test seviyesine getirildi.',
         },
         branches: {
           id: 'branches',
@@ -122,7 +122,7 @@ export const productVersionManifest: ProductVersionManifest = {
           version: '0.7.0',
           maturity: 'beta',
           requiredForSmallBusiness: true,
-          notes: 'Ortak kartı taslak olarak açılır; İlk Ortaklık Girişi, Pay Devri, Kısmi Pay Devri, Ortaklıktan Çıkış, Oy/Kâr Payı Değişikliği ve diğer ownership işlemleri transaction tabanlı yürütülür. Güncel ortaklık v_current_ownership üzerinden hesaplanır. Operation request, outbox event, optimistic locking ve current ownership view doğrulanmıştır.',
+          notes: 'Ortak karti taslak olarak acilir; Ilk Ortaklik Girisi, Pay Devri, Kismi Pay Devri, Ortakliktan Cikis, Oy/Kar Payi Degisikligi ve diger ortaklik islemleri resmi islem akisiyle yurutulur. Guncel ortaklik dagilimi guvenli ozet uzerinden hesaplanir.',
         },
         representatives: {
           id: 'representatives',

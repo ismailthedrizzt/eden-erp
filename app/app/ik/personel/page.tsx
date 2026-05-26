@@ -657,7 +657,7 @@ export default function PersonelYonetimPage() {
 
     if ((code === '23502' || code === 'DB_ERROR') && notNullColumn && OPTIONAL_EMPLOYEE_FIELDS.has(notNullColumn)) {
       const label = getFieldLabel(notNullColumn)
-      const message = `${label} alanı veritabanında zorunlu görünüyor; migration uygulanınca opsiyonel olacak. [${code}]`
+      const message = `${label} alani icin calisma alani kurulumu tamamlanmamis gorunuyor. Kurulum tamamlandiktan sonra tekrar deneyin. [${code}]`
       const error = new Error(message) as SaveError
       error.fieldErrors = { [notNullColumn]: `${label} opsiyonel olmalıdır` }
       error.toast = { type: 'error', title: 'Kayıt Başarısız', message }

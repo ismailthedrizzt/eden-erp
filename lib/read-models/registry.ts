@@ -3,6 +3,8 @@ import { branchListProjection } from './projections/branchList.projection'
 import { branchSummaryProjection } from './projections/branchSummary.projection'
 import { companyDetailProjection } from './projections/companyDetail.projection'
 import { companyListProjection } from './projections/companyList.projection'
+import { currentOwnershipProjection } from './projections/currentOwnership.projection'
+import { currentRepresentativeAuthoritiesProjection } from './projections/currentRepresentativeAuthorities.projection'
 import { partnerListProjection } from './projections/partnerList.projection'
 import { pendingActionsProjection } from './projections/pendingActions.projection'
 import { representativeListProjection } from './projections/representativeList.projection'
@@ -16,7 +18,9 @@ export const projectionRegistry = {
   branchList: branchListProjection,
   branchSummary: branchSummaryProjection,
   partnerList: partnerListProjection,
+  currentOwnership: currentOwnershipProjection,
   representativeList: representativeListProjection,
+  currentRepresentativeAuthorities: currentRepresentativeAuthoritiesProjection,
   stakeholderList: stakeholderListProjection,
   pendingActions: pendingActionsProjection,
 } satisfies Record<string, ProjectionDefinition>

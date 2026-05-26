@@ -59,7 +59,7 @@ export const navigationItems = [
     permission: 'settings.modules.manage',
     fallbackPermission: 'settings.view',
   }),
-  item('audit', 'Denetim Izi', '/app/sistem/audit', 'list', 'settings', 930, {
+  item('audit', 'Denetim Izi', '/app/sistem/audit', 'list', 'audit', 930, {
     parentKey: 'settings',
     permission: 'audit.view',
     fallbackPermission: 'settings.view',

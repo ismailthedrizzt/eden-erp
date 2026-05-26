@@ -23,7 +23,7 @@ export async function POST(
     const updated = await service.addComment(task, String(body.note || body.comment || ''), access.userId || null)
     return NextResponse.json({ data: updated })
   } catch (error: any) {
-    if (isMissingInfrastructureError(error)) return NextResponse.json({ error: 'Surec gorevleri altyapisi henuz uygulanmamis.', code: 'PROCESS_INFRASTRUCTURE_MISSING' }, { status: 501 })
+    if (isMissingInfrastructureError(error)) return NextResponse.json({ error: 'Surec gorevleri altyapisi henuz hazir degil.', code: 'PROCESS_INFRASTRUCTURE_MISSING' }, { status: 501 })
     return NextResponse.json({ error: error.message, code: error.code || 'TASK_COMMENT_FAILED' }, { status: 500 })
   }
 }

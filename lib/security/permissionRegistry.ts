@@ -16,6 +16,7 @@ export interface PermissionContract {
 export const permissionRegistry = {
   companies: {
     view: PERMISSIONS.companies.view,
+    insert: PERMISSIONS.companies.insert,
     edit: PERMISSIONS.companies.edit,
     openingStart: PERMISSIONS.companies.openingStart,
     liquidationStart: PERMISSIONS.companies.liquidationStart,
@@ -100,6 +101,7 @@ const permissionAliases: Record<string, string> = {
 
 export const permissionContracts = [
   contract(permissionRegistry.companies.view, 'Sirketleri goruntuleme', 'companies', 'view'),
+  contract(permissionRegistry.companies.insert, 'Sirket taslagi olusturma', 'companies', 'edit', [permissionRegistry.companies.edit]),
   contract(permissionRegistry.companies.edit, 'Sirketleri duzenleme', 'companies', 'edit'),
   contract(permissionRegistry.companies.openingStart, 'Sirket acilisi baslatma', 'companies', 'operation', [permissionRegistry.companies.edit]),
   contract(permissionRegistry.companies.liquidationStart, 'Sirket tasfiyesi baslatma', 'companies', 'operation', [permissionRegistry.companies.edit]),

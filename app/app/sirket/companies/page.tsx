@@ -2669,8 +2669,8 @@ function RelatedSectionNotice({ data, sections }: { data?: Record<string, any>; 
       if (status === 'module_closed' && SILENT_MODULE_CLOSED_RELATED_SECTIONS.has(section)) return null
       const label = RELATED_SECTION_LABELS[section] || section
       return errors[section] || (status === 'module_closed'
-        ? `${label} modülü kapalı veya migration eksik.`
-        : `${label} yüklenemedi.`)
+        ? `${label} modulu hazir degil veya kurulumu tamamlanmamis.`
+        : `${label} yuklenemedi.`)
     })
     .filter(Boolean) as string[]
 

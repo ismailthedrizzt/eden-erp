@@ -591,7 +591,7 @@ async function syncOpeningNaceCodes(
 
   if (naceError) {
     if (isMissingTableError(naceError)) {
-      return NextResponse.json({ error: 'NACE referans tablosu bulunamadı.', code: 'NACE_REFERENCE_MISSING' }, { status: 500 })
+      return NextResponse.json({ error: 'NACE referans kayitlari hazir degil.', code: 'NACE_REFERENCE_MISSING' }, { status: 500 })
     }
     return NextResponse.json({ error: naceError.message, code: naceError.code || 'NACE_REFERENCE_FAILED' }, { status: 500 })
   }
@@ -813,6 +813,6 @@ function normalizeLifecycleError(message: string) {
   if (message.includes('COMPANY_NOT_FOUND')) return 'Sirket bulunamadi.'
   if (message.includes('COMPANY_ALREADY_DEREGISTERED')) return 'Terkin edilmis sirketlerde yeni operasyon baslatilamaz.'
   if (message.includes('COMPANY_NOT_IN_LIQUIDATION')) return 'Terkin islemi icin sirketin tasfiye halinde olmasi gerekir.'
-  if (message.includes('function') && message.includes('does not exist')) return 'Sirket yasam dongusu migration fonksiyonlari uygulanmamis.'
+  if (message.includes('function') && message.includes('does not exist')) return 'Sirket yasam dongusu altyapisi henuz hazir degil.'
   return message
 }

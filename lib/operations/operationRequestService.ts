@@ -43,7 +43,7 @@ export class OperationRequestService {
     }
 
     if (isMissingInfrastructureError(error)) {
-      return { ok: false, missingInfrastructure: true, error: error?.message || 'Operation altyapısı henüz uygulanmamış.', code: error?.code }
+      return { ok: false, missingInfrastructure: true, error: error?.message || 'Islem altyapisi henuz hazir degil.', code: error?.code }
     }
 
     return { ok: false, error: error?.message || 'Operation kaydı oluşturulamadı.', code: error?.code }
@@ -115,4 +115,3 @@ export function isMissingInfrastructureError(error: { code?: string; message?: s
 function cryptoRandomFallback() {
   return `${Date.now()}-${Math.random().toString(36).slice(2)}`
 }
-

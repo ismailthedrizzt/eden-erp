@@ -406,7 +406,7 @@ async function ensureEmployeePersonLink(
 
   lookup = lookup ? applyTenantQueryScope(lookup, 'persons', tenantContext) : null
   const existing = lookup ? await lookup.maybeSingle() : { data: null, error: null }
-  if (isMissingTableError(existing.error, 'persons')) throw new Error('Ana kişiler tablosu bulunamadı; çalışan kaydı master bağlantısı olmadan oluşturulamaz.')
+  if (isMissingTableError(existing.error, 'persons')) throw new Error('Calisan ana kimlik kayit alanlari hazir degil; calisan kaydi master baglantisi olmadan olusturulamaz.')
   if (existing.error) throw new Error(existing.error.message)
   if (existing.data?.id) return { ...employee, person_id: existing.data.id }
 
@@ -432,7 +432,7 @@ async function ensureEmployeePersonLink(
     .select('id')
     .single()
 
-  if (isMissingTableError(error, 'persons')) throw new Error('Ana kişiler tablosu bulunamadı; çalışan kaydı master bağlantısı olmadan oluşturulamaz.')
+  if (isMissingTableError(error, 'persons')) throw new Error('Calisan ana kimlik kayit alanlari hazir degil; calisan kaydi master baglantisi olmadan olusturulamaz.')
   if (error) throw new Error(error.message)
   return created?.id ? { ...employee, person_id: created.id } : employee
 }

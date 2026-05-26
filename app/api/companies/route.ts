@@ -274,7 +274,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({
         data: [],
         meta: listMeta(effectiveListQuery, 0),
-        warning: 'companies tablosu bulunamadı. supabase/migrations/20260516_initial_schema.sql uygulanmalı.'
+        warning: 'Sirket kayit alanlari hazir degil. Kurulum ekranindan Sirketlerimiz modulunu tamamlayin.'
       })
     }
 

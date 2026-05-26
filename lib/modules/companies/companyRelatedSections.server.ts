@@ -45,7 +45,7 @@ export async function fetchCompanyRelatedSection<T = any>(
         data: options.fallback,
         status: 'module_closed',
         error,
-        message: `${options.label} modülü kapalı veya ilgili migration uygulanmamış.`,
+        message: `${options.label} modulu hazir degil veya kurulumu tamamlanmamis.`,
       }
     }
 

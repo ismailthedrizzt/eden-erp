@@ -19,7 +19,7 @@ export async function POST(
     const task = await new ProcessTaskService(supabase as any, tenantContext).completeTask(id, access.userId || null, body.result || body)
     return NextResponse.json({ data: task })
   } catch (error: any) {
-    if (isMissingInfrastructureError(error)) return NextResponse.json({ error: 'Surec gorevleri altyapisi henuz uygulanmamis.', code: 'PROCESS_INFRASTRUCTURE_MISSING' }, { status: 501 })
+    if (isMissingInfrastructureError(error)) return NextResponse.json({ error: 'Surec gorevleri altyapisi henuz hazir degil.', code: 'PROCESS_INFRASTRUCTURE_MISSING' }, { status: 501 })
     return NextResponse.json({ error: error.message, code: error.code || 'TASK_COMPLETE_FAILED' }, { status: 500 })
   }
 }
