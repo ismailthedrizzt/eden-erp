@@ -65,6 +65,7 @@ export const permissionRegistry = {
   settings: {
     view: 'settings.view',
     edit: 'settings.edit',
+    auditView: 'audit.view',
     modulesManage: 'settings.modules.manage',
     usersManage: 'settings.users.manage',
   },
@@ -92,6 +93,7 @@ const permissionAliases: Record<string, string> = {
   'organization.structureManage': permissionRegistry.organization.structureManage,
   'organization.positionManage': permissionRegistry.organization.positionManage,
   'facilities.linkBranch': permissionRegistry.facilities.linkBranch,
+  'settings.auditView': permissionRegistry.settings.auditView,
   'settings.modulesManage': permissionRegistry.settings.modulesManage,
   'settings.usersManage': permissionRegistry.settings.usersManage,
 }
@@ -141,6 +143,7 @@ export const permissionContracts = [
 
   contract(permissionRegistry.settings.view, 'Ayarlar goruntuleme', 'settings', 'view'),
   contract(permissionRegistry.settings.edit, 'Ayarlar duzenleme', 'settings', 'edit'),
+  contract(permissionRegistry.settings.auditView, 'Denetim izini goruntuleme', 'settings', 'admin', [permissionRegistry.settings.view]),
   contract(permissionRegistry.settings.modulesManage, 'Modul lisanslarini yonetme', 'settings', 'admin', [permissionRegistry.settings.edit]),
   contract(permissionRegistry.settings.usersManage, 'Kullanicilari yonetme', 'settings', 'admin', [permissionRegistry.settings.edit]),
 ] satisfies PermissionContract[]

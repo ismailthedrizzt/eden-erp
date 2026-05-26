@@ -1,45 +1,71 @@
 import 'server-only'
 
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { isMissingInfrastructureError } from '@/lib/operations/operationRequestService'
 import type { OperationBoundaryFallback } from '@/lib/operations/orchestrators/types'
+import { runTransactionBoundary } from './transaction-boundary/transactionBoundary'
 
 type TransactionBoundaryInput<TData> = {
   supabase: SupabaseClient
+  key?: string
   rpcName: string
   rpcPayload: Record<string, any>
   fallback: OperationBoundaryFallback<TData>
+  compensation?: (partialResult: any, error: unknown) => Promise<void>
   preferRpc?: boolean
+  allowFallback?: boolean
+  requireRpc?: boolean
 }
 
 export async function executeWithTransactionBoundary<TData>({
   supabase,
+  key,
   rpcName,
   rpcPayload,
   fallback,
+  compensation,
   preferRpc = process.env.EDEN_USE_OPERATION_RPC === 'true',
+  allowFallback = true,
+  requireRpc = false,
 }: TransactionBoundaryInput<TData>) {
-  if (!preferRpc) {
-    return { ok: true as const, data: await fallback(), used: 'application' as const }
-  }
+  const result = await runTransactionBoundary<TData>({
+    supabase,
+    key: key || inferBoundaryKey(rpcName),
+    rpcName,
+    payload: rpcPayload,
+    companyId: rpcPayload.company_id || null,
+    operationId: rpcPayload.operation_id || null,
+    processInstanceId: rpcPayload.process_instance_id || null,
+    fallback,
+    compensation,
+    options: { preferRpc, allowFallback, requireRpc },
+  })
 
-  const { data, error } = await supabase.rpc(rpcName, { payload: rpcPayload })
-  if (error) {
-    if (isMissingInfrastructureError(error)) {
-      return { ok: true as const, data: await fallback(), used: 'application' as const, rpc_missing: true }
-    }
+  if (result.ok) {
     return {
-      ok: false as const,
-      error: error.message || `${rpcName} RPC cagrisi tamamlanamadi.`,
-      code: error.code || 'RPC_TRANSACTION_FAILED',
-      status: 500,
-      details: error,
+      ok: true as const,
+      data: result.data as TData,
+      used: result.mode === 'rpc' ? 'rpc' as const : 'application' as const,
+      warnings: result.warnings,
+      details: result.details,
     }
   }
 
-  if (data && typeof data === 'object' && (data as any).ok === false && (data as any).code === 'RPC_NOT_IMPLEMENTED') {
-    return { ok: true as const, data: await fallback(), used: 'application' as const, rpc_not_implemented: true }
+  return {
+    ok: false as const,
+    error: result.error || 'Islem tamamlanamadi.',
+    code: result.code || 'TRANSACTION_BOUNDARY_FAILED',
+    status: result.status || 500,
+    details: result.details,
+    compensation_applied: result.compensation_applied,
+    partial: result.partial,
   }
+}
 
-  return { ok: true as const, data: data as TData, used: 'rpc' as const }
+function inferBoundaryKey(rpcName: string) {
+  if (rpcName === 'perform_company_branch_opening') return 'company_branch_opening'
+  if (rpcName === 'perform_company_branch_closing') return 'company_branch_closing'
+  if (rpcName === 'perform_capital_increase') return 'capital_increase'
+  if (rpcName === 'perform_representative_authority_transaction') return 'representative_authority_transaction'
+  if (rpcName === 'perform_ownership_transaction') return 'ownership_transaction'
+  return rpcName.replace(/^perform_/, '')
 }

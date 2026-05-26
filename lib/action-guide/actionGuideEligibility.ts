@@ -167,7 +167,34 @@ function buildSuggestedActions(
     })
   }
 
+  const setupTarget = setupActionForBlockedModule(action, context)
+  if (setupTarget) actions.push(setupTarget)
+
   return actions
+}
+
+function setupActionForBlockedModule(action: ActionGuideDefinition, context: ActionGuideContext): ActionGuideAction | null {
+  const requiredModules = action.requiredModules?.length ? action.requiredModules : [action.moduleKey]
+  const blockedModule = requiredModules.find(moduleKey => {
+    const status = context.moduleStatuses?.[moduleKey]
+    return status && status !== 'available' && status !== 'ready'
+  })
+  if (!blockedModule) return null
+  const status = context.moduleStatuses?.[blockedModule]
+  if (status === 'disabled' || status === 'unlicensed') {
+    return {
+      label: 'Modul ayarlarina git',
+      action_type: 'navigate',
+      target_page: '/app/sistem/module-licenses',
+      disabled: false,
+    }
+  }
+  return {
+    label: 'Kurulum ekranina git',
+    action_type: 'navigate',
+    target_page: `/app/sistem/kurulum?module=${encodeURIComponent(blockedModule)}`,
+    disabled: false,
+  }
 }
 
 async function evaluateViaPolicyEngine(action: ActionGuideDefinition, context: ActionGuideContext) {

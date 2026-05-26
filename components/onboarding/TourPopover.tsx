@@ -1,7 +1,7 @@
 'use client'
 
 import { ArrowLeft, ArrowRight, Check, Clock3, X } from 'lucide-react'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import type { TourPlacement, TourStep, TourTargetRect } from '@/lib/onboarding/types'
 import { cn } from '@/lib/utils'
 
@@ -40,6 +40,11 @@ export function TourPopover({
   const viewport = useViewportSize()
   const isMobile = viewport.width < 640
   const placement = resolvePlacement(step.placement || 'auto', rect, viewport)
+  const dialogRef = useRef<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    dialogRef.current?.focus()
+  }, [step.id])
 
   const style = useMemo(() => {
     if (isMobile) {
@@ -95,11 +100,13 @@ export function TourPopover({
 
   return (
     <div
+      ref={dialogRef}
       className={cn(
         'fixed z-[100] overflow-hidden rounded-xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-950',
         isMobile && 'rounded-b-none'
       )}
       style={style}
+      tabIndex={-1}
       role="dialog"
       aria-modal="true"
       aria-labelledby="system-tour-title"

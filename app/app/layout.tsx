@@ -212,7 +212,7 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
   const workspacesLoading = sessionBootstrapLoading || workspaceOptionsLoading
 
   useEffect(() => {
-    if (!workspacesLoading && tourShouldOpen && !tourClosedThisSession && pathname === '/app') {
+    if (!workspacesLoading && tourShouldOpen && !tourClosedThisSession && pathname.startsWith('/app')) {
       setTourOpen(true)
     }
   }, [pathname, tourClosedThisSession, tourShouldOpen, workspacesLoading])

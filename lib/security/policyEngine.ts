@@ -2,6 +2,8 @@ import 'server-only'
 
 import { NextResponse } from 'next/server'
 import { findActionContract } from '@/lib/modules/moduleRegistry'
+import { createServiceClient } from '@/lib/supabase/server'
+import { AuditLogService } from '@/lib/audit/auditLogService'
 import { expandPermissionFallbacks } from './permissionRegistry'
 import { hasAnyPermission } from './serverPermissions'
 import type { AccessContext } from './accessContext'
@@ -127,6 +129,28 @@ export function policyToResponse(decision: PolicyDecision, status = 403) {
 
 export async function assertPolicy(input: PolicyInput) {
   const decision = await evaluatePolicy(input)
+  if (!decision.allowed) {
+    await new AuditLogService(createServiceClient()).recordPolicyDenied({
+      context: {
+        tenantId: input.context.tenantId,
+        companyId: input.context.companyId || null,
+        branchId: input.context.branchId || null,
+        moduleKey: input.moduleKey || input.context.moduleKey || null,
+        entityType: input.resourceType || input.context.recordType || null,
+        entityId: input.resourceId || input.context.recordId || null,
+        userId: input.context.userId || null,
+        policyKey: decision.code,
+      },
+      actionKey: input.actionKey,
+      summary: 'Islem is kurali nedeniyle reddedildi.',
+      reason: decision.reasons.join(' '),
+      metadata: {
+        warnings: decision.warnings,
+        required_permissions: decision.requiredPermissions,
+        checked_permissions: decision.checkedPermissions,
+      },
+    }).catch(() => null)
+  }
   return decision.allowed ? null : policyToResponse(decision, policyStatus(decision))
 }
 

@@ -3,6 +3,7 @@ import { createServiceClient } from '@/lib/supabase/server'
 import { resolveTenantContext, tenantResponseHeaders } from '@/lib/tenancy/server'
 import { fetchTenantDatabaseBinding, resolveTenantDataBoundary } from '@/lib/tenancy/databaseRouting'
 import { requirePermission } from '@/lib/security/serverPermissions'
+import { getTenantReadiness } from '@/lib/setup/tenantReadinessService'
 
 export const runtime = 'nodejs'
 
@@ -36,9 +37,10 @@ export async function GET(request: NextRequest) {
     ? resolvedContext
     : { ...resolvedContext, tenantId, workspaceId: tenantId }
 
-  const [workspace, binding] = await Promise.all([
+  const [workspace, binding, readiness] = await Promise.all([
     fetchWorkspace(supabase, tenantId),
     fetchTenantDatabaseBinding(supabase, tenantId),
+    getTenantReadiness(supabase as any, context).catch(() => null),
   ])
   const databaseBoundary = resolveTenantDataBoundary(tenantId, binding)
 
@@ -51,6 +53,11 @@ export async function GET(request: NextRequest) {
         database_boundary: databaseBoundary,
         routing_ready: databaseBoundary.routable,
         foundation_ready: Boolean(workspace && binding),
+        setup: readiness ? {
+          ready: readiness.ready,
+          blockingModules: readiness.blockingModules,
+          warningModules: readiness.warningModules,
+        } : null,
       },
     },
     { headers: tenantResponseHeaders(context) }

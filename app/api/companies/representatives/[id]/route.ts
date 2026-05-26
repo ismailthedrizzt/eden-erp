@@ -29,6 +29,7 @@ const AUTHORITY_TRANSACTION_TYPES = new Set([
   'Düzeltme Kaydı',
   'Ters Kayıt',
 ])
+const REPRESENTATIVE_SCOPE_FIELDS = new Set(['scope_type', 'branch_id', 'organization_unit_id', 'facility_id', 'scope_label', 'scope_notes'])
 
 function buildHistory(current: Record<string, any>, updates: Record<string, any>) {
   const existingHistory = Array.isArray(current.history) ? current.history : []
@@ -95,6 +96,23 @@ export async function PATCH(
   const baseVersion = resolveBaseVersion(rawBody)
   const baseUpdatedAt = resolveBaseUpdatedAt(rawBody)
   const rawPatch = stripOperationControlFields(rawBody)
+  if (!isAuthorityTransaction) {
+    const blockedScopeFields = Object.keys(rawPatch).filter(field => REPRESENTATIVE_SCOPE_FIELDS.has(field))
+    if (blockedScopeFields.length) {
+      return NextResponse.json({
+        error: 'Yetki kapsami temsilci kartindan dogrudan degistirilemez. Yetki Kapsami Degisikligi islemiyle guncellenir.',
+        code: 'OPERATION_CONTROLLED_FIELDS',
+        details: {
+          fields: blockedScopeFields.map(field => ({
+            field,
+            label: representativeScopeFieldLabel(field),
+            operation: 'Yetki Kapsami Degisikligi',
+            wizardKey: 'representative_authority_scope_change',
+          })),
+        },
+      }, { status: 409 })
+    }
+  }
   const body = isAuthorityTransaction
     ? rawPatch
     : stripRepresentativeOperationControlledFields(rawPatch)
@@ -481,6 +499,27 @@ async function applyAuthorityTransaction({
     }
   }
 
+  await new OutboxEventService(supabase as any).enqueue({
+    tenantId: tenantContext.tenantId,
+    companyId: current.company_id || null,
+    moduleKey: 'representatives',
+    eventType: representativeAuthorityEventType(transactionType),
+    aggregateType: 'representative_authority_transaction',
+    aggregateId: operationResult.transaction_id || representativeId,
+    operationId: operationResult.operation_id || null,
+    payload: {
+      representative_id: representativeId,
+      company_id: current.company_id || null,
+      scope_type: transactionPayload.scope.scope_type,
+      branch_id: transactionPayload.scope.branch_id,
+      organization_unit_id: transactionPayload.scope.organization_unit_id,
+      facility_id: transactionPayload.scope.facility_id,
+      authority_types: transactionPayload.authority_types,
+      transaction_id: operationResult.transaction_id || null,
+      transaction_type: transactionType,
+    },
+  }).catch(() => null)
+
   const refreshed = await safeReadRecord({
     supabase,
     request,
@@ -500,6 +539,24 @@ async function applyAuthorityTransaction({
       operation_status: operationResult.operation_status || 'completed',
     }
     : refreshed
+}
+
+function representativeScopeFieldLabel(field: string) {
+  if (field === 'scope_type') return 'Yetki kapsami'
+  if (field === 'branch_id') return 'Sube kapsami'
+  if (field === 'organization_unit_id') return 'Organizasyon birimi kapsami'
+  if (field === 'facility_id') return 'Tesis/lokasyon kapsami'
+  if (field === 'scope_label') return 'Kapsam etiketi'
+  if (field === 'scope_notes') return 'Kapsam aciklamasi'
+  return field
+}
+
+function representativeAuthorityEventType(transactionType: string) {
+  const normalized = transactionType.toLocaleLowerCase('tr-TR')
+  if (normalized.includes('latma')) return 'representative.authority_started'
+  if (normalized.includes('ask')) return 'representative.authority_suspended'
+  if (normalized.includes('son') || normalized.includes('ters')) return 'representative.authority_terminated'
+  return 'representative.authority_updated'
 }
 
 function normalizeMainRecordStatus(value: unknown) {

@@ -37,6 +37,7 @@ const TENANT_SCOPED_TABLES = new Set([
   'operation_requests',
   'outbox_events',
   'outbox_event_handler_runs',
+  'audit_logs',
   'process_instances',
   'process_tasks',
   'process_approvals',

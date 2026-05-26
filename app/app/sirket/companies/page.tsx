@@ -26,6 +26,7 @@ import {
 } from '@/components/ui/SmartDataTable'
 import { Toast } from '@/components/ui/Toast'
 import { DraftCreateNotice } from '@/components/ui/DraftCreateNotice'
+import { SmartEmptyState } from '@/components/ui/SmartEmptyState'
 import { PageContextTour } from '@/components/onboarding/PageContextTour'
 import { pageTourSteps } from '@/components/onboarding/tourSteps'
 import { useRegisterActionGuideContext } from '@/components/ai/ActionGuideContext'
@@ -1786,7 +1787,12 @@ export default function SirketlerPage() {
             quickLookDefaultOpen={false}
             forceQuickLookClosed={searchParams.has('systemTour')}
             storageKey="companies-table"
-            emptyText="Henüz şirket taslağı yok. + Ekle ile şirket kartı taslağı oluşturabilir, ardından Şirket Açılışı işlemiyle aktif hale getirebilirsiniz."
+            emptyText={
+              <SmartEmptyState
+                title="Henüz şirket taslağı yok"
+                message="+ Ekle ile şirket kartı taslağı oluşturabilir, ardından Şirket Açılışı işlemiyle aktif hale getirebilirsiniz."
+              />
+            }
           />
         </div>
       )}

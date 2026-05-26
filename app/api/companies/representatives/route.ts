@@ -74,6 +74,7 @@ export async function GET(request: NextRequest) {
   const facilityId = searchParams.get('facility_id')
   const scopeType = searchParams.get('scope_type')
   const includeCompanyWide = searchParams.get('include_company_wide') === 'true'
+    || searchParams.get('include_company_wide_for_branch') === 'true'
   const status = searchParams.get('status')
   const statuses = (searchParams.get('statuses') || '')
     .split(',')
@@ -87,10 +88,45 @@ export async function GET(request: NextRequest) {
   const includePassive = listQuery.includePassive
 
   let authorityFilteredIds: string[] | null = null
+  const preferredAuthorityByRepresentative = new Map<string, Record<string, any>>()
   const includeAuthorityDraft = normalizedAuthorityStatuses.includes('draft')
   const authorityViewStatuses = normalizedAuthorityStatuses.filter(statusValue => statusValue !== 'draft')
   const hasAuthorityScopeFilter = !!(branchId || organizationUnitId || facilityId || scopeType)
-  if (authorityViewStatuses.length || hasAuthorityScopeFilter) {
+  if (hasAuthorityScopeFilter) {
+    let transactionFilterQuery = supabase
+      .from('company_representative_authority_transactions')
+      .select('id,representative_id,company_id,authority_effect_status,authority_record_status,authority_types,signature_type,transaction_limit,payment_approval_limit,purchase_approval_limit,bank_transaction_limit,contract_signature_limit,currency,limits,scope,scope_type,branch_id,organization_unit_id,facility_id,scope_label,scope_notes,requires_joint_signature,can_approve_alone,effective_date,end_date,transaction_type,created_at')
+      .eq('is_deleted', false)
+      .eq('approval_status', 'approved')
+      .eq('workflow_status', 'approved')
+      .order('effective_date', { ascending: false })
+      .order('created_at', { ascending: false })
+    transactionFilterQuery = applyTenantQueryScope(transactionFilterQuery, 'company_representative_authority_transactions', tenantContext)
+    if (companyId) transactionFilterQuery = transactionFilterQuery.eq('company_id', companyId)
+    if (authorityViewStatuses.length) transactionFilterQuery = transactionFilterQuery.in('authority_record_status', authorityViewStatuses)
+    const { data: transactionMatches, error: transactionFilterError } = await transactionFilterQuery
+    if (transactionFilterError) {
+      if (isMissingTableError(transactionFilterError)) {
+        authorityFilteredIds = []
+      } else {
+        return NextResponse.json({ error: transactionFilterError.message, code: transactionFilterError.code || 'AUTHORITY_FILTER_FAILED' }, { status: 500 })
+      }
+    } else {
+      const matchedRows = (transactionMatches || [])
+        .filter(row => authorityRowMatchesScope(row as Record<string, any>, { branchId, organizationUnitId, facilityId, scopeType, includeCompanyWide }))
+      authorityFilteredIds = Array.from(new Set(matchedRows.map(row => row.representative_id).filter(Boolean)))
+      for (const row of matchedRows as Record<string, any>[]) {
+        if (!row.representative_id || preferredAuthorityByRepresentative.has(row.representative_id)) continue
+        preferredAuthorityByRepresentative.set(row.representative_id, {
+          ...row,
+          authority_status: row.authority_record_status || row.authority_effect_status || null,
+          authority_status_label: representativeAuthorityStatusLabel(row.authority_record_status || row.authority_effect_status),
+          last_transaction_id: row.id,
+          last_transaction_type: row.transaction_type,
+        })
+      }
+    }
+  } else if (authorityViewStatuses.length) {
     let authorityFilterQuery = supabase
       .from('v_current_representative_authorities')
       .select('representative_id,company_id,authority_record_status,scope')
@@ -160,7 +196,7 @@ export async function GET(request: NextRequest) {
 
   const rows = await hydrateRepresentativeProjectionScopes(
     supabase,
-    await mergeCurrentRepresentativeAuthorities(supabase, data || [], tenantContext),
+    await mergeCurrentRepresentativeAuthorities(supabase, data || [], tenantContext, preferredAuthorityByRepresentative),
     tenantContext
   )
   return NextResponse.json({
@@ -302,6 +338,15 @@ function normalizeRepresentativeAuthorityStatusFilters(values: string[]) {
   return values.filter(value => allowed.has(value))
 }
 
+function representativeAuthorityStatusLabel(value: unknown) {
+  const status = String(value || '').toLocaleLowerCase('tr-TR')
+  if (status === 'suspended') return 'Askida'
+  if (status === 'terminated') return 'Sonlandirilmis'
+  if (status === 'expired') return 'Suresi dolmus'
+  if (status === 'active') return 'Yetkili'
+  return 'Taslak'
+}
+
 function authorityRowMatchesScope(
   row: Record<string, any>,
   filters: {
@@ -313,18 +358,21 @@ function authorityRowMatchesScope(
   }
 ) {
   const scope = row.scope && typeof row.scope === 'object' ? row.scope : {}
-  const currentScopeType = String(scope.scope_type || 'company_wide')
+  const currentScopeType = String(row.scope_type || scope.scope_type || 'company_wide')
+  const currentBranchId = row.branch_id || scope.branch_id || null
+  const currentOrganizationUnitId = row.organization_unit_id || scope.organization_unit_id || null
+  const currentFacilityId = row.facility_id || scope.facility_id || null
   if (filters.scopeType && currentScopeType !== filters.scopeType) return false
   if (filters.branchId) {
-    return (currentScopeType === 'branch' && scope.branch_id === filters.branchId)
+    return (currentScopeType === 'branch' && currentBranchId === filters.branchId)
       || (!!filters.includeCompanyWide && currentScopeType === 'company_wide')
   }
   if (filters.organizationUnitId) {
-    return (currentScopeType === 'organization_unit' && scope.organization_unit_id === filters.organizationUnitId)
+    return (currentScopeType === 'organization_unit' && currentOrganizationUnitId === filters.organizationUnitId)
       || (!!filters.includeCompanyWide && currentScopeType === 'company_wide')
   }
   if (filters.facilityId) {
-    return (currentScopeType === 'facility' && scope.facility_id === filters.facilityId)
+    return (currentScopeType === 'facility' && currentFacilityId === filters.facilityId)
       || (!!filters.includeCompanyWide && currentScopeType === 'company_wide')
   }
   return true
@@ -477,7 +525,8 @@ async function findExistingCompanyRepresentative(
 async function mergeCurrentRepresentativeAuthorities(
   supabase: ReturnType<typeof createServiceClient>,
   rows: Record<string, any>[],
-  tenantContext: TenantContext
+  tenantContext: TenantContext,
+  preferredAuthorityByRepresentative: Map<string, Record<string, any>> = new Map()
 ) {
   if (!rows.length) return rows
   const representativeIds = rows.map(row => row.id)
@@ -511,21 +560,22 @@ async function mergeCurrentRepresentativeAuthorities(
     }
   }
   return rows.map(row => {
-    const current = currentByRepresentative[row.id] as Record<string, any> | undefined
+    const current = preferredAuthorityByRepresentative.get(row.id) || currentByRepresentative[row.id] as Record<string, any> | undefined
     const lastTransaction = lastTransactionByRepresentative[row.id]
     if (!current) return normalizeRepresentativeProjectionScope({ ...row, last_authority_transaction: lastTransaction || null })
+    const authorityStatus = current.authority_status || current.authority_record_status || current.authority_effect_status || null
     return normalizeRepresentativeProjectionScope({
       ...row,
       current_authority: current,
-      scope_type: current.scope?.scope_type || 'company_wide',
-      branch_id: current.scope?.branch_id || null,
-      organization_unit_id: current.scope?.organization_unit_id || null,
-      facility_id: current.scope?.facility_id || null,
-      scope_label: current.scope?.scope_label || '',
-      scope_notes: current.scope?.scope_notes || '',
+      scope_type: current.scope_type || current.scope?.scope_type || 'company_wide',
+      branch_id: current.branch_id || current.scope?.branch_id || null,
+      organization_unit_id: current.organization_unit_id || current.scope?.organization_unit_id || null,
+      facility_id: current.facility_id || current.scope?.facility_id || null,
+      scope_label: current.scope_label || current.scope?.scope_label || '',
+      scope_notes: current.scope_notes || current.scope?.scope_notes || '',
       last_authority_transaction: lastTransaction || null,
-      authority_status: current.authority_status || null,
-      authority_record_status: current.authority_record_status || null,
+      authority_status: authorityStatus,
+      authority_record_status: current.authority_record_status || current.authority_effect_status || null,
       authority_start_date: current.effective_date || null,
       authority_end_date: current.end_date || null,
       authority_types: current.authority_types || row.authority_types,

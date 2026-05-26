@@ -4,6 +4,7 @@ import { randomUUID } from 'crypto'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { getEventContract } from '@/lib/events/eventRegistry'
 import { isMissingInfrastructureError } from '@/lib/operations/operationRequestService'
+import { AuditLogService } from '@/lib/audit/auditLogService'
 import { getHandlersForEvent } from './handlers/handlerRegistry'
 import type { EventHandler } from './handlers/types'
 import { OutboxEventService, type OutboxEventRecord } from './outboxEventService'
@@ -63,6 +64,7 @@ export async function dispatchPendingEvents(
 
       if (dispatchResult === 'skipped') {
         await service.markSkipped(lockedEvent.id, 'Event contract bulunamadigi icin islenmedi.')
+        await recordOutboxAudit(supabase, lockedEvent, 'skipped', 'Event contract bulunamadigi icin islenmedi.')
         result.skipped += 1
       } else {
         await service.markCompleted(lockedEvent.id)
@@ -71,6 +73,7 @@ export async function dispatchPendingEvents(
     } catch (error: any) {
       const retryable = error?.retryable !== false
       const failed = await service.markFailed(lockedEvent.id, error, retryable)
+      await recordOutboxAudit(supabase, lockedEvent, 'failed', error?.message || 'Outbox event islenemedi.')
       if (failed?.status === 'pending') result.retried += 1
       else result.failed += 1
       result.errors.push({ id: lockedEvent.id, error: error?.message || 'Outbox event islenemedi.' })
@@ -79,6 +82,37 @@ export async function dispatchPendingEvents(
 
   result.durationMs = Date.now() - startedAt
   return result
+}
+
+async function recordOutboxAudit(
+  supabase: SupabaseClient,
+  event: OutboxEventRecord,
+  status: 'failed' | 'skipped',
+  reason: string
+) {
+  await new AuditLogService(supabase).recordAudit({
+    context: {
+      tenantId: event.tenant_id,
+      companyId: event.company_id || null,
+      moduleKey: event.module_key || null,
+      entityType: event.aggregate_type,
+      entityId: String(event.aggregate_id),
+      operationId: event.operation_id || null,
+      processInstanceId: event.process_instance_id || null,
+      outboxEventId: event.id,
+    },
+    actionType: 'system_event',
+    actionKey: `outbox_${status}`,
+    resultStatus: status === 'failed' ? 'failed' : 'denied',
+    severity: status === 'failed' ? 'error' : 'warning',
+    reason,
+    summary: status === 'failed' ? 'Outbox olayi islenemedi.' : 'Outbox olayi atlandi.',
+    metadata: {
+      event_type: event.event_type,
+      retry_count: event.retry_count,
+      status,
+    },
+  }).catch(() => null)
 }
 
 export async function dispatchEvent(

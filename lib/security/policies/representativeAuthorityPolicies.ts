@@ -38,7 +38,18 @@ export async function validateRepresentativeAuthorityScopePolicy({
   if (!['company_wide', 'branch', 'organization_unit', 'facility'].includes(scopeType)) {
     return failure(400, 'INVALID_AUTHORITY_SCOPE_TYPE', 'Yetki kapsami gecerli degil.')
   }
-  if (scopeType === 'company_wide') return null
+  if (scopeType === 'company_wide') {
+    if (scope.branch_id || scope.organization_unit_id || scope.facility_id) {
+      return failure(400, 'AUTHORITY_SCOPE_COMPANY_WIDE_ONLY', 'Sirket geneli yetkide sube, organizasyon birimi veya tesis/lokasyon secilmemelidir.', {
+        fieldErrors: {
+          branch_id: 'Sirket geneli yetkide sube secilmez.',
+          organization_unit_id: 'Sirket geneli yetkide organizasyon birimi secilmez.',
+          facility_id: 'Sirket geneli yetkide tesis/lokasyon secilmez.',
+        },
+      })
+    }
+    return null
+  }
 
   if (scopeType === 'branch') {
     if (!scope.branch_id) return fieldFailure('AUTHORITY_BRANCH_REQUIRED', 'Sube kapsami icin sube secilmelidir.', 'branch_id', 'Sube secimi zorunludur.')
@@ -62,6 +73,16 @@ export async function validateRepresentativeAuthorityScopePolicy({
   }
 
   return null
+}
+
+export const validateRepresentativeAuthorityScope = validateRepresentativeAuthorityScopePolicy
+
+export async function canStartRepresentativeAuthorityForScope(input: Parameters<typeof validateRepresentativeAuthorityScopePolicy>[0]) {
+  return validateRepresentativeAuthorityScopePolicy(input)
+}
+
+export async function canChangeRepresentativeAuthorityScope(input: Parameters<typeof validateRepresentativeAuthorityScopePolicy>[0]) {
+  return validateRepresentativeAuthorityScopePolicy(input)
 }
 
 export function assertSingleRepresentativeCardPolicy(input: {

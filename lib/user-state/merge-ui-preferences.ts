@@ -18,6 +18,8 @@ const ALLOWED_TOP_LEVEL_KEYS = new Set([
   'dismissedOperationHints',
   'preferredHelpMode',
   'lastTourVersion',
+  'actionGuideDismissed',
+  'lockedFieldHintsDismissed',
 ])
 
 function isPlainRecord(value: unknown): value is Record<string, unknown> {
@@ -161,6 +163,12 @@ export function normalizeUiPreferencesPatch(value: unknown): Partial<UserUiPrefe
       case 'lastTourVersion':
         patch.lastTourVersion = rawValue === null ? null : shortText(rawValue, '', 32)
         break
+      case 'actionGuideDismissed':
+        if (typeof rawValue === 'boolean') patch.actionGuideDismissed = rawValue
+        break
+      case 'lockedFieldHintsDismissed':
+        patch.lockedFieldHintsDismissed = sanitizeStringList(rawValue, 200)
+        break
     }
   }
 
@@ -190,6 +198,9 @@ export function mergeUiPreferences(
     dismissedOperationHints: Array.isArray(base?.dismissedOperationHints)
       ? base.dismissedOperationHints
       : DEFAULT_UI_PREFERENCES.dismissedOperationHints,
+    lockedFieldHintsDismissed: Array.isArray(base?.lockedFieldHintsDismissed)
+      ? base.lockedFieldHintsDismissed
+      : DEFAULT_UI_PREFERENCES.lockedFieldHintsDismissed,
   }
   const normalizedPatch = normalizeUiPreferencesPatch(patch)
 
@@ -204,5 +215,6 @@ export function mergeUiPreferences(
     completedTourSteps: normalizedPatch.completedTourSteps || normalizedBase.completedTourSteps,
     dismissedPageTours: normalizedPatch.dismissedPageTours || normalizedBase.dismissedPageTours,
     dismissedOperationHints: normalizedPatch.dismissedOperationHints || normalizedBase.dismissedOperationHints,
+    lockedFieldHintsDismissed: normalizedPatch.lockedFieldHintsDismissed || normalizedBase.lockedFieldHintsDismissed,
   }
 }

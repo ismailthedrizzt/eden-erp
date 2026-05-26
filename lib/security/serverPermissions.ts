@@ -3,6 +3,8 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { APP_SESSION_COOKIE_NAME, verifyAppSessionToken } from '@/lib/auth/appSession'
 import { DEFAULT_TENANT_ID } from '@/lib/tenancy/constants'
 import { resolveTenantContext } from '@/lib/tenancy/server'
+import { AuditLogService } from '@/lib/audit/auditLogService'
+import { extractRequestAuditMetadata } from '@/lib/audit/auditContext'
 import {
   expandPermissionFallbacks,
   hasAnyPermission as registryHasAnyPermission,
@@ -95,6 +97,22 @@ export async function requireAnyPermission(
   }
 
   if (lastForbidden || checkedPermissions.length) {
+    const tenantContext = resolveTenantContext(request)
+    await new AuditLogService(supabase).recordPermissionDenied({
+      context: {
+        tenantId: tenantContext.tenantId,
+        permissionKey: checkedPermissions[0] || requiredPermissions[0] || null,
+        ...extractRequestAuditMetadata(request),
+      },
+      actionKey: 'permission_check',
+      summary: 'Yetki kontrolu reddedildi.',
+      reason: 'Kullanici gerekli yetkilerden birine sahip degil.',
+      metadata: {
+        required_permissions: requiredPermissions,
+        checked_permissions: checkedPermissions,
+      },
+    }).catch(() => null)
+
     return NextResponse.json({
       error: 'Bu islemi yapmak icin gerekli yetkiniz bulunmuyor.',
       code: 'PERMISSION_DENIED',

@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/SmartDataTable'
 import { Toast } from '@/components/ui/Toast'
 import { DraftCreateNotice } from '@/components/ui/DraftCreateNotice'
+import { SmartEmptyState } from '@/components/ui/SmartEmptyState'
 import { PageContextTour } from '@/components/onboarding/PageContextTour'
 import { pageTourSteps } from '@/components/onboarding/tourSteps'
 import { useRegisterActionGuideContext } from '@/components/ai/ActionGuideContext'
@@ -1054,7 +1055,12 @@ export default function OrtaklarPage() {
             widgets={widgets}
             defaultView="list"
             storageKey="companies-partners-table"
-            emptyText="Henüz ortak kaydı yok. + Ekle ile ortak kartı taslağı oluşturabilir, ardından İlk Ortaklık Girişi işlemiyle ortaklık haklarını tanımlayabilirsiniz."
+            emptyText={
+              <SmartEmptyState
+                title="Henüz ortak kaydı yok"
+                message="+ Ekle ile ortak kartı taslağı oluşturabilir, ardından İlk Ortaklık Girişi işlemiyle ortaklık haklarını tanımlayabilirsiniz."
+              />
+            }
             onRowClick={handleRowClick}
             onRefresh={() => loadData(true)}
             defaultPageSize={listQuery.pageSize}

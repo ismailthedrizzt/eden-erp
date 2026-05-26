@@ -7,6 +7,7 @@ import {
   getUserAgent,
   safeInsertSystemEvent,
 } from '@/lib/user-state/server'
+import { toOnboardingPreferences } from '@/lib/user-preferences/onboardingPreferences'
 
 export const runtime = 'nodejs'
 
@@ -26,8 +27,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: error.message, code: 'USER_PREFERENCES_READ_FAILED' }, { status: 500 })
   }
 
+  const uiPreferences = mergeUiPreferences(DEFAULT_UI_PREFERENCES, data?.ui_preferences)
+
   return NextResponse.json({
-    uiPreferences: mergeUiPreferences(DEFAULT_UI_PREFERENCES, data?.ui_preferences),
+    uiPreferences,
+    onboardingPreferences: toOnboardingPreferences(uiPreferences),
   }, { headers: { 'Cache-Control': 'no-store' } })
 }
 
@@ -62,5 +66,8 @@ export async function PATCH(request: NextRequest) {
     userAgent: getUserAgent(request),
   })
 
-  return NextResponse.json({ uiPreferences }, { headers: { 'Cache-Control': 'no-store' } })
+  return NextResponse.json({
+    uiPreferences,
+    onboardingPreferences: toOnboardingPreferences(uiPreferences),
+  }, { headers: { 'Cache-Control': 'no-store' } })
 }

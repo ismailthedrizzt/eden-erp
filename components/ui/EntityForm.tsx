@@ -2979,6 +2979,26 @@ function FieldOperationLockIndicator({ control, recordStatus }: { control: FormF
               ))}
             </div>
           ) : null}
+          {actions.length ? (
+            <button
+              type="button"
+              onMouseDown={event => event.preventDefault()}
+              onClick={() => {
+                const action = actions[0]
+                window.dispatchEvent(new CustomEvent('eden:open-action-guide', {
+                  detail: {
+                    query: `${action.operationLabel} nasıl yapılır?`,
+                    actionKey: action.operationKey,
+                    wizardKey: action.wizardKey,
+                  },
+                }))
+                setShowTooltip(false)
+              }}
+              className="mt-3 text-[11px] font-semibold text-amber-800 underline-offset-2 hover:underline dark:text-amber-100"
+            >
+              Bu işlem nasıl yapılır?
+            </button>
+          ) : null}
         </div>
       )}
     </div>

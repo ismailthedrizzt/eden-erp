@@ -20,12 +20,14 @@ type RelationListOptions = ApiClientOptions & Partial<Pick<ListQuery, 'page' | '
   facilityId?: string
   scopeType?: string
   includeCompanyWide?: boolean
+  includeCompanyWideForBranch?: boolean
 }
 type CompanyListOptions = ApiClientOptions & Partial<Pick<ListQuery, 'page' | 'pageSize' | 'search' | 'sort' | 'direction'>> & { includePassive?: boolean; statuses?: string[] }
 
 function relationListOptions(options: RelationListOptions = {}) {
-  const { includePassive, companyId, statuses, authorityStatuses, authority_statuses, branchId, organizationUnitId, facilityId, scopeType, includeCompanyWide, ...clientOptions } = options
+  const { includePassive, companyId, statuses, authorityStatuses, authority_statuses, branchId, organizationUnitId, facilityId, scopeType, includeCompanyWide, includeCompanyWideForBranch, ...clientOptions } = options
   const representativeAuthorityStatuses = authorityStatuses || authority_statuses
+  const shouldIncludeCompanyWide = includeCompanyWide || includeCompanyWideForBranch
   return {
     ...clientOptions,
     skipAuth: clientOptions.skipAuth ?? true,
@@ -39,7 +41,7 @@ function relationListOptions(options: RelationListOptions = {}) {
       ...(organizationUnitId ? { organization_unit_id: organizationUnitId } : {}),
       ...(facilityId ? { facility_id: facilityId } : {}),
       ...(scopeType ? { scope_type: scopeType } : {}),
-      ...(includeCompanyWide ? { include_company_wide: 'true' } : {}),
+      ...(shouldIncludeCompanyWide ? { include_company_wide: 'true', include_company_wide_for_branch: 'true' } : {}),
       page: clientOptions.query?.page ?? options.page,
       pageSize: clientOptions.query?.pageSize ?? options.pageSize,
       search: clientOptions.query?.search ?? options.search,

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import type { Dispatch, SetStateAction } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { BadgeCheck, ListChecks } from 'lucide-react'
 import { EntityForm, FormField, FormMode, FormOperationActionGroup, FormTab } from '@/components/ui/EntityForm'
 import { PageBanner } from '@/components/ui/PageBanner'
@@ -18,6 +19,7 @@ import {
 } from '@/components/ui/SmartDataTable'
 import { Toast } from '@/components/ui/Toast'
 import { DraftCreateNotice } from '@/components/ui/DraftCreateNotice'
+import { SmartEmptyState } from '@/components/ui/SmartEmptyState'
 import { PageContextTour } from '@/components/onboarding/PageContextTour'
 import { pageTourSteps } from '@/components/onboarding/tourSteps'
 import { useRegisterActionGuideContext } from '@/components/ai/ActionGuideContext'
@@ -34,6 +36,7 @@ type ToastState = { type: 'success' | 'error' | 'warning'; title?: string; messa
 type SaveError = Error & { toast?: ToastState; fieldErrors?: Record<string, string>; code?: string }
 type Option = { value: string; label: string }
 type RepresentativeAuthorityStatusFilterValue = 'draft' | 'active' | 'suspended' | 'expired' | 'terminated'
+type RepresentativeAuthorityScopeFilterValue = '' | 'company_wide' | 'branch' | 'organization_unit' | 'facility'
 
 const REPRESENTATIVE_RECORD_STATUS_FILTER_OPTIONS: TableStatusFilterOption[] = [
   { value: 'draft', label: 'Taslak Kart', tone: 'draft' },
@@ -447,6 +450,7 @@ const tabs: FormTab[] = [
 ]
 
 export default function TemsilcilerPage() {
+  const searchParams = useSearchParams()
   const [pageState, setPageState] = useState<PageState>('list')
   const [representatives, setRepresentatives] = useState<RepresentativeRow[]>([])
   const [companies, setCompanies] = useState<Option[]>([])
@@ -466,12 +470,27 @@ export default function TemsilcilerPage() {
   const [authorityStatusFilters, setAuthorityStatusFilters] = useState<RepresentativeAuthorityStatusFilterValue[]>(DEFAULT_REPRESENTATIVE_AUTHORITY_STATUS_FILTERS)
   const [companyFilterId, setCompanyFilterId] = useState('')
   const [branchFilterId, setBranchFilterId] = useState('')
+  const [scopeTypeFilter, setScopeTypeFilter] = useState<RepresentativeAuthorityScopeFilterValue>('')
   const [includeCompanyWide, setIncludeCompanyWide] = useState(true)
   const [listQuery, setListQuery] = useState({ page: 1, pageSize: 50, search: '', sort: 'created_at', direction: 'desc' as 'asc' | 'desc' })
   const [listMeta, setListMeta] = useState<ListMeta>({ page: 1, pageSize: 50, total: 0, totalPages: 1 })
   const [toast, setToast] = useState<ToastState | null>(null)
   const [authorityWizardOpen, setAuthorityWizardOpen] = useState(false)
   const [authorityWizardType, setAuthorityWizardType] = useState<RepresentativeAuthorityTransactionType>('Temsilcilik Başlatma')
+
+  useEffect(() => {
+    const companyId = searchParams.get('company_id') || ''
+    const branchId = searchParams.get('branch_id') || ''
+    const scopeType = searchParams.get('scope_type') || ''
+    if (companyId) setCompanyFilterId(companyId)
+    if (branchId) {
+      setBranchFilterId(branchId)
+      setIncludeCompanyWide(searchParams.get('include_company_wide_for_branch') !== 'false')
+    }
+    if (['company_wide', 'branch', 'organization_unit', 'facility'].includes(scopeType)) {
+      setScopeTypeFilter(scopeType as RepresentativeAuthorityScopeFilterValue)
+    }
+  }, [searchParams])
 
   const isSelectedPassive = isSoftDeletedRecord(selectedRepresentative)
   const selectedRecordStatus = selectedRepresentative ? getRepresentativeRecordStatus(selectedRepresentative) : null
@@ -506,6 +525,7 @@ export default function TemsilcilerPage() {
       const representativePayload = await companyService.representativesList({
         companyId: companyFilterId || undefined,
         branchId: branchFilterId || undefined,
+        scopeType: scopeTypeFilter || undefined,
         includeCompanyWide: !!branchFilterId && includeCompanyWide,
         statuses: statusFilters,
         authorityStatuses: shouldFilterAuthorityStatuses ? authorityStatusFilters : undefined,
@@ -525,7 +545,7 @@ export default function TemsilcilerPage() {
   }
   useEffect(() => {
     loadData()
-  }, [statusFilters, authorityStatusFilters, companyFilterId, branchFilterId, includeCompanyWide, listQuery])
+  }, [statusFilters, authorityStatusFilters, companyFilterId, branchFilterId, scopeTypeFilter, includeCompanyWide, listQuery])
 
   const loadCompanyOptions = async (force = false) => {
     if (companiesLoaded && !force) return
@@ -931,6 +951,16 @@ export default function TemsilcilerPage() {
                 {visibleBranchOptions.map(branch => <option key={branch.id} value={branch.id}>{branch.branch_name || branch.branch_short_name || branch.id}</option>)}
               </select>
             </label>
+            <label className="min-w-[220px] text-sm font-medium text-gray-700 dark:text-gray-200">
+              Kapsam Turu
+              <select value={scopeTypeFilter} onChange={event => { setScopeTypeFilter(event.target.value as RepresentativeAuthorityScopeFilterValue); setListQuery(prev => ({ ...prev, page: 1 })) }} className="mt-1 block w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900">
+                <option value="">Tum kapsamlar</option>
+                <option value="company_wide">Sirket geneli</option>
+                <option value="branch">Sube</option>
+                <option value="organization_unit">Organizasyon birimi</option>
+                <option value="facility">Tesis/Lokasyon</option>
+              </select>
+            </label>
             <label className="mb-2 flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-200">
               <input type="checkbox" checked={includeCompanyWide} onChange={event => { setIncludeCompanyWide(event.target.checked); setListQuery(prev => ({ ...prev, page: 1 })) }} className="h-4 w-4 rounded border-gray-300" />
               Şirket geneli yetkileri de göster
@@ -950,7 +980,12 @@ export default function TemsilcilerPage() {
             widgets={widgets}
             defaultView="list"
             storageKey="companies-representatives-table"
-            emptyText="Henüz temsilci kaydı yok. + Ekle ile temsilci kartı taslağı oluşturabilir, ardından Temsilcilik Başlatma işlemiyle yetki verebilirsiniz."
+            emptyText={
+              <SmartEmptyState
+                title="Henüz temsilci kaydı yok"
+                message="+ Ekle ile temsilci kartı taslağı oluşturabilir, ardından Temsilcilik Başlatma işlemiyle yetki verebilirsiniz."
+              />
+            }
             onRowClick={handleRowClick}
             onRefresh={() => loadData(true)}
             defaultPageSize={listQuery.pageSize}
@@ -1157,6 +1192,7 @@ function RepresentativeAuthorityWizard({
     }
     await onSubmit({
       ...form,
+      ...normalizeRepresentativeAuthorityScopePayload(form),
       notes: isEndOperation ? [form.termination_reason, form.notes].filter(Boolean).join(' - ') : form.notes,
       transaction_limit: form.transaction_limit === '' ? null : Number(form.transaction_limit),
       payment_approval_limit: form.payment_approval_limit === '' ? null : Number(form.payment_approval_limit),
@@ -1191,6 +1227,18 @@ function RepresentativeAuthorityWizard({
     />
   )
 
+}
+
+function normalizeRepresentativeAuthorityScopePayload(form: Record<string, any>) {
+  const scopeType = form.scope_type || 'company_wide'
+  return {
+    scope_type: scopeType,
+    branch_id: scopeType === 'branch' ? form.branch_id || null : null,
+    organization_unit_id: scopeType === 'organization_unit' ? form.organization_unit_id || null : null,
+    facility_id: scopeType === 'facility' ? form.facility_id || null : null,
+    scope_label: form.scope_label || '',
+    scope_notes: form.scope_notes || '',
+  }
 }
 
 function buildRepresentativeAuthorityWizardSteps({

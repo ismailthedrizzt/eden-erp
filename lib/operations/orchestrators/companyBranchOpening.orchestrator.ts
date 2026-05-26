@@ -6,7 +6,10 @@ import { createServiceClient } from '@/lib/supabase/server'
 import { withTenantInsertScopeForTable } from '@/lib/tenancy/server'
 import { resolveBaseUpdatedAt, resolveBaseVersion, resolveClientRequestId } from '@/lib/operations/idempotency'
 import { executeWithTransactionBoundary } from '@/lib/operations/transactionBoundary'
+import { markBranchOpeningPartialFailure } from '@/lib/operations/transaction-boundary/compensation'
 import { BRANCH_PERMISSIONS } from '@/lib/modules/companies/branchPermissions'
+import { AuditLogService } from '@/lib/audit/auditLogService'
+import { buildAuditContextFromRequest } from '@/lib/audit/auditContext'
 import {
   OFFICIAL_BRANCH_SELECT,
   OFFICIAL_CHANGE_EVENT_TYPES,
@@ -120,12 +123,49 @@ export async function runCompanyBranchOpeningOrchestrator({
 
   const operation = operationCreate.operation
   const operationService = operationCreate.service
+  const audit = new AuditLogService(supabase, access.tenantContext)
+  const auditContext = buildAuditContextFromRequest(request, access.tenantContext, {
+    companyId,
+    moduleKey: 'branches',
+    entityType: 'company_branch',
+    operationId: operation?.id || null,
+    userId: access.userId || null,
+  })
+  await audit.recordOperationStart({
+    context: auditContext,
+    actionKey: 'branch_opening',
+    summary: 'Sube Acilisi islemi baslatildi.',
+    newValues: { branch_name: input.branch_name, branch_type: input.branch_type },
+  }).catch(() => null)
 
   try {
     const boundary = await executeWithTransactionBoundary<BranchOpeningMutationResult>({
       supabase,
+      key: 'company_branch_opening',
       rpcName: 'perform_company_branch_opening',
-      rpcPayload: { company_id: companyId, payload: input, operation_id: operation?.id || null },
+      rpcPayload: {
+        tenant_id: access.tenantContext.tenantId,
+        company_id: companyId,
+        user_id: access.userId || null,
+        operation_id: operation?.id || null,
+        process_instance_id: rawBody.process_instance_id || null,
+        branch_payload: input,
+        organization_unit_payload: {
+          create_organization_unit: input.create_organization_unit,
+          organization_unit_name: input.organization_unit_name || input.branch_name,
+          parent_organization_unit_id: input.parent_organization_unit_id || null,
+        },
+        facility_payload: {
+          create_facility: input.create_facility,
+          facility_name: input.facility_name || input.branch_name,
+        },
+        transaction_payload: { transaction_type: 'branch_opening' },
+        lifecycle_event_payload: { event_type: 'company_branch_opening_completed' },
+        outbox_payload: { event_type: OFFICIAL_CHANGE_EVENT_TYPES.branch_opening },
+        base_version: resolveBaseVersion(rawBody),
+        base_updated_at: resolveBaseUpdatedAt(rawBody),
+        payload: input,
+      },
       fallback: () => performBranchOpeningApplicationFlow({
         supabase,
         companyId,
@@ -134,9 +174,24 @@ export async function runCompanyBranchOpeningOrchestrator({
         userId: access.userId || null,
         operationId: operation?.id || null,
       }),
+      compensation: async (partialResult, error) => {
+        await markBranchOpeningPartialFailure({
+          supabase,
+          tenantContext: access.tenantContext,
+          branchId: partialResult?.branch?.id || partialResult?.branch_id || null,
+          reason: error instanceof Error ? error.message : 'Sube acilisi tamamlanamadi.',
+        })
+      },
     })
 
     if (!boundary.ok) {
+      await audit.recordOperationFail({
+        context: auditContext,
+        actionKey: 'branch_opening',
+        summary: 'Sube Acilisi islemi tamamlanamadi.',
+        reason: boundary.error,
+        metadata: { code: boundary.code, details: boundary.details },
+      }).catch(() => null)
       return failOfficialChangeOperation({
         service: operationService,
         operation,
@@ -166,6 +221,25 @@ export async function runCompanyBranchOpeningOrchestrator({
       },
     })
 
+    await audit.recordOperationComplete({
+      context: {
+        ...auditContext,
+        entityId: result.branch.id,
+        branchId: result.branch.id,
+      },
+      actionKey: 'branch_opening',
+      summary: `${result.branch.branch_name || input.branch_name} acildi.`,
+      oldValues: {},
+      newValues: result.branch,
+      changedFields: Object.keys(result.branch || {}),
+      metadata: {
+        transaction_id: result.transaction.id,
+        organization_unit_id: result.organization_unit?.id || null,
+        facility_id: result.facility?.id || null,
+        transaction_boundary: boundary.used,
+      },
+    }).catch(() => null)
+
     return completeOfficialChangeOperation({
       service: operationService,
       operation,
@@ -179,6 +253,13 @@ export async function runCompanyBranchOpeningOrchestrator({
       warnings: result.warnings,
     })
   } catch (error: any) {
+    await audit.recordOperationFail({
+      context: auditContext,
+      actionKey: 'branch_opening',
+      summary: 'Sube Acilisi islemi tamamlanamadi.',
+      reason: error?.message || 'Sube acilisi tamamlanamadi.',
+      metadata: { code: error?.code, details: error?.details },
+    }).catch(() => null)
     return failOfficialChangeOperation({
       service: operationService,
       operation,

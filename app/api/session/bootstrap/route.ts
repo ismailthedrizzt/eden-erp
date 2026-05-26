@@ -15,6 +15,9 @@ import {
 } from '@/lib/modules/moduleFeatureResolver'
 import { permissionFallbacks } from '@/lib/security/permissionRegistry'
 import { listUserEffectivePermissions } from '@/lib/security/serverPermissions'
+import { toOnboardingPreferences } from '@/lib/user-preferences/onboardingPreferences'
+import { resolveTenantContext } from '@/lib/tenancy/server'
+import { getTenantReadiness } from '@/lib/setup/tenantReadinessService'
 
 export const runtime = 'nodejs'
 
@@ -25,7 +28,8 @@ export async function GET(request: NextRequest) {
   const { supabase, userId, workspaceId } = context
 
   try {
-    const [bootstrapResult, workspace, moduleContext, permissionContext] = await Promise.all([
+    const tenantContext = { ...resolveTenantContext(request), tenantId: workspaceId, workspaceId }
+    const [bootstrapResult, workspace, moduleContext, permissionContext, readiness] = await Promise.all([
       supabase.rpc('bootstrap_user_workspace_state', {
         p_user_id: userId,
         p_workspace_id: workspaceId,
@@ -37,6 +41,7 @@ export async function GET(request: NextRequest) {
       fetchWorkspaceSummary(supabase, workspaceId),
       loadModuleFeatureContext(supabase, { tenantId: workspaceId }).catch(() => ({ moduleLicenses: [] })),
       listUserEffectivePermissions(request, supabase).catch(() => ({ permissions: [] })),
+      getTenantReadiness(supabase as any, tenantContext).catch(() => null),
     ])
 
     if (bootstrapResult.error) {
@@ -59,14 +64,17 @@ export async function GET(request: NextRequest) {
     const policyModuleContext = {
       ...moduleContext,
       userPermissions: effectivePermissions,
+      setupIncompleteModules: readiness?.modules.filter(module => !module.ready).map(module => module.moduleKey) || [],
     }
     const sessionModules = buildSessionModules(policyModuleContext)
     const availableActions = listAvailableActions(policyModuleContext)
+    const userState = mapUserStateForResponse(state, Boolean(row?.is_first_login))
 
     return NextResponse.json(
       {
         workspace,
-        userState: mapUserStateForResponse(state, Boolean(row?.is_first_login)),
+        userState,
+        onboardingPreferences: toOnboardingPreferences(userState.uiPreferences),
         modules: sessionModules,
         permissions: {
           effectivePermissions,
@@ -80,6 +88,23 @@ export async function GET(request: NextRequest) {
             canStart: item.can_start_now,
             warnings: item.warnings,
           })),
+        },
+        setup: readiness ? {
+          tenantReady: readiness.ready,
+          blockingModules: readiness.blockingModules,
+          warningModules: readiness.warningModules,
+          moduleReadiness: readiness.modules.map(module => ({
+            moduleKey: module.moduleKey,
+            ready: module.ready,
+            status: module.status,
+            blockingReasons: module.blockingReasons,
+            warnings: module.warnings,
+          })),
+        } : {
+          tenantReady: true,
+          blockingModules: [],
+          warningModules: [],
+          moduleReadiness: [],
         },
       },
       { headers: { 'Cache-Control': 'no-store' } }

@@ -70,8 +70,21 @@ export function ActionGuideSearch({ onStartSystemTour }: ActionGuideSearchProps)
   }, [currentRoute, pageContext, pathname, permissions.permissions])
 
   useEffect(() => {
-    const onOpenGuide = () => {
+    const onOpenGuide = (event: Event) => {
+      const detail = (event as CustomEvent<{ query?: string; actionKey?: string; wizardKey?: string }>).detail
+      const nextQuery = detail?.query?.trim()
       setOpen(true)
+      if (nextQuery) {
+        setQuery(nextQuery)
+        void requestGuide(nextQuery)
+        return
+      }
+      if (detail?.actionKey) {
+        const actionQuery = detail.actionKey.replace(/_/g, ' ')
+        setQuery(actionQuery)
+        void requestGuide(actionQuery)
+        return
+      }
       if (!result && !query.trim()) void requestGuide('')
     }
     window.addEventListener('eden:open-action-guide', onOpenGuide)

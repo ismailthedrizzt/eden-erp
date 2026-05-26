@@ -8,9 +8,14 @@ import { requireModuleAvailable } from '@/lib/modules/moduleGuards'
 import { listProjectionRecordsV2, projectionMeta } from '@/lib/read-models/projectionQuery.server'
 import { branchListProjection } from '@/lib/read-models/projections/branchList.projection'
 import { requireBranchPolicy } from '@/lib/security/policies/branchPolicies'
+import { mapInfrastructureErrorToSetupStatus } from '@/lib/setup/infrastructureErrorMapper'
+import { getSetupActionsForModule } from '@/lib/setup/setupActionResolver'
+import { getModuleReadiness } from '@/lib/setup/tenantReadinessService'
 
 export async function GET(request: NextRequest) {
   const supabase = createServiceClient()
+  const moduleGuard = await requireModuleAvailable(request, 'branches')
+  if (moduleGuard) return moduleGuard
   const policy = await requireBranchPolicy({ request, supabase, actionKey: 'branch.view' })
   if (policy instanceof Response) return policy
 
@@ -55,6 +60,20 @@ export async function GET(request: NextRequest) {
       ...(projection.warning ? { warning: projection.warning } : {}),
     })
   } catch (error: any) {
+    const mapped = mapInfrastructureErrorToSetupStatus(error, 'branches')
+    if (mapped.isInfrastructureError) {
+      const readiness = await getModuleReadiness(supabase as any, tenantContext, 'branches').catch(() => null)
+      return NextResponse.json({
+        error: mapped.userMessage,
+        code: mapped.code,
+        details: readiness ? {
+          moduleKey: 'branches',
+          status: readiness.status,
+          blockingReasons: readiness.blockingReasons,
+          setupActions: getSetupActionsForModule('branches', readiness),
+        } : undefined,
+      }, { status: 503 })
+    }
     return NextResponse.json({ error: error.message, code: error.code || 'BRANCHES_FETCH_FAILED' }, { status: 500 })
   }
 }

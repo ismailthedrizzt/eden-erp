@@ -115,7 +115,7 @@ interface SmartDataTableProps<T extends { id: string }> {
   onRowClick?: (row: T) => void
   onRefresh?: () => void
   loading?: boolean
-  emptyText?: string
+  emptyText?: React.ReactNode
   storageKey?: string // For persisting user preferences
   widgets?: WidgetDef[]
   dashboardWidgets?: AnyDashboardWidgetConfig[]

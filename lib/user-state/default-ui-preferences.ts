@@ -17,4 +17,6 @@ export const DEFAULT_UI_PREFERENCES: UserUiPreferences = {
   dismissedOperationHints: [],
   preferredHelpMode: 'both',
   lastTourVersion: null,
+  actionGuideDismissed: false,
+  lockedFieldHintsDismissed: [],
 }

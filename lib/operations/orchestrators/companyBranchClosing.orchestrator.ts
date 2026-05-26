@@ -6,7 +6,10 @@ import { createServiceClient } from '@/lib/supabase/server'
 import { applyTenantQueryScope } from '@/lib/tenancy/server'
 import { resolveBaseUpdatedAt, resolveBaseVersion, resolveClientRequestId } from '@/lib/operations/idempotency'
 import { executeWithTransactionBoundary } from '@/lib/operations/transactionBoundary'
+import { markBranchClosingPartialFailure } from '@/lib/operations/transaction-boundary/compensation'
 import { BRANCH_PERMISSIONS } from '@/lib/modules/companies/branchPermissions'
+import { AuditLogService } from '@/lib/audit/auditLogService'
+import { buildAuditContextFromRequest } from '@/lib/audit/auditContext'
 import {
   OFFICIAL_BRANCH_SELECT,
   OFFICIAL_CHANGE_EVENT_TYPES,
@@ -100,12 +103,53 @@ export async function runCompanyBranchClosingOrchestrator({
 
   const operation = operationCreate.operation
   const operationService = operationCreate.service
+  const audit = new AuditLogService(supabase, access.tenantContext)
+  const auditContext = buildAuditContextFromRequest(request, access.tenantContext, {
+    companyId,
+    branchId: input.branch_id,
+    moduleKey: 'branches',
+    entityType: 'company_branch',
+    entityId: input.branch_id,
+    operationId: operation?.id || null,
+    userId: access.userId || null,
+  })
+  await audit.recordOperationStart({
+    context: auditContext,
+    actionKey: 'branch_closing',
+    summary: 'Sube Kapanisi islemi baslatildi.',
+    newValues: {
+      branch_id: input.branch_id,
+      closing_reason: input.closing_reason,
+      organization_unit_action: input.organization_unit_action,
+      facility_action: input.facility_action,
+    },
+  }).catch(() => null)
 
   try {
     const boundary = await executeWithTransactionBoundary<BranchClosingMutationResult>({
       supabase,
+      key: 'company_branch_closing',
       rpcName: 'perform_company_branch_closing',
-      rpcPayload: { company_id: companyId, branch_id: input.branch_id, payload: input, operation_id: operation?.id || null },
+      rpcPayload: {
+        tenant_id: access.tenantContext.tenantId,
+        company_id: companyId,
+        branch_id: input.branch_id,
+        user_id: access.userId || null,
+        operation_id: operation?.id || null,
+        process_instance_id: rawBody.process_instance_id || null,
+        branch_update_payload: input,
+        organization_unit_action_payload: {
+          action: input.organization_unit_action,
+          target_organization_unit_id: input.target_organization_unit_id || null,
+        },
+        facility_action_payload: { action: input.facility_action },
+        transaction_payload: { transaction_type: 'branch_closing' },
+        lifecycle_event_payload: { event_type: 'company_branch_closing_completed' },
+        outbox_payload: { event_type: OFFICIAL_CHANGE_EVENT_TYPES.branch_closing },
+        base_version: baseVersion,
+        base_updated_at: baseUpdatedAt,
+        payload: input,
+      },
       fallback: () => performBranchClosingApplicationFlow({
         supabase,
         companyId,
@@ -116,9 +160,24 @@ export async function runCompanyBranchClosingOrchestrator({
         baseVersion,
         baseUpdatedAt,
       }),
+      compensation: async (_partialResult, error) => {
+        await markBranchClosingPartialFailure({
+          supabase,
+          tenantContext: access.tenantContext,
+          branchId: input.branch_id,
+          reason: error instanceof Error ? error.message : 'Sube kapanisi tamamlanamadi.',
+        })
+      },
     })
 
     if (!boundary.ok) {
+      await audit.recordOperationFail({
+        context: auditContext,
+        actionKey: 'branch_closing',
+        summary: 'Sube Kapanisi islemi tamamlanamadi.',
+        reason: boundary.error,
+        metadata: { code: boundary.code, details: boundary.details },
+      }).catch(() => null)
       return failOfficialChangeOperation({
         service: operationService,
         operation,
@@ -148,6 +207,21 @@ export async function runCompanyBranchClosingOrchestrator({
       },
     })
 
+    await audit.recordOperationComplete({
+      context: auditContext,
+      actionKey: 'branch_closing',
+      summary: `${result.branch.branch_name || 'Sube'} kapatildi.`,
+      oldValues: result.transaction.old_values || result.transaction.old_values_json || null,
+      newValues: result.transaction.new_values || result.transaction.new_values_json || result.branch,
+      changedFields: result.transaction.changed_fields || [],
+      metadata: {
+        transaction_id: result.transaction.id,
+        organization_unit_action: input.organization_unit_action,
+        facility_action: input.facility_action,
+        transaction_boundary: boundary.used,
+      },
+    }).catch(() => null)
+
     return completeOfficialChangeOperation({
       service: operationService,
       operation,
@@ -161,6 +235,13 @@ export async function runCompanyBranchClosingOrchestrator({
       warnings: result.warnings,
     })
   } catch (error: any) {
+    await audit.recordOperationFail({
+      context: auditContext,
+      actionKey: 'branch_closing',
+      summary: 'Sube Kapanisi islemi tamamlanamadi.',
+      reason: error?.message || 'Sube kapanisi tamamlanamadi.',
+      metadata: { code: error?.code, details: error?.details },
+    }).catch(() => null)
     return failOfficialChangeOperation({
       service: operationService,
       operation,

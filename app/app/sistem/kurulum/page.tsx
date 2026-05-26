@@ -20,6 +20,7 @@ import PageBanner from '@/components/ui/PageBanner'
 import Modal from '@/components/ui/Modal'
 import { Toast, type ToastType } from '@/components/ui/Toast'
 import { formControlClass, type FormControlState } from '@/components/ui/formControlStyles'
+import { TenantReadinessPanel } from '@/components/setup/TenantReadinessPanel'
 import { apiClient } from '@/lib/api/apiClient'
 import { setStoredTenantId } from '@/lib/tenancy/client'
 import { cn } from '@/lib/utils'
@@ -165,12 +166,35 @@ const SETUP_DETAIL_ITEMS = [
   'Güvenlik kontrolleri tamamlandı',
 ]
 
+const READINESS_PROGRESS_STEPS: Array<{ key: SetupProgressKey; label: string; description: string }> = [
+  { key: 'core', label: 'Calisma alaniniz hazirlaniyor...', description: 'Kurulum baslatildi. Birazdan sirketiniz icin ozel calisma alani hazirlanacak.' },
+  { key: 'workspace', label: 'Sirket kayit alanlari kontrol ediliyor...', description: 'Sirket kartlari ve ilk kayit akisi gozden geciriliyor.' },
+  { key: 'vault', label: 'Gizlilik ve erisim sinirlari hazirlaniyor...', description: 'Kullanicilarin dogru kayitlara erismesi icin temel kontroller ayarlaniyor.' },
+  { key: 'tables', label: 'Sube ve organizasyon baglantilari hazirlaniyor...', description: 'Sube, organizasyon ve lokasyon baglantilari uygun sekilde kontrol ediliyor.' },
+  { key: 'firstRecords', label: 'Baslangic ayarlari tamamlaniyor...', description: 'Varsayilan para birimi, dil ve ilk sirket bilgileri hazirlaniyor.' },
+  { key: 'permissions', label: 'Yetki ve islem yollari kontrol ediliyor...', description: 'Kimin hangi islemi baslatabilecegi sade kurallarla hazirlaniyor.' },
+  { key: 'security', label: 'Guvenli calisma kontrolleri yapiliyor...', description: 'Calisma alani sinirlari ve moduller arasi baglantilar kontrol ediliyor.' },
+  { key: 'companyIdentity', label: 'Sirket kimligi hazirlaniyor...', description: 'Sirket profiliniz ve temel calisma ayarlariniz duzenleniyor.' },
+  { key: 'engine', label: 'Moduller hazirlik kontrolunden geciyor...', description: 'Aktif moduller kullanima hazir mi diye kontrol ediliyor.' },
+  { key: 'ready', label: 'Hazir oldugunuzda baslayabilirsiniz.', description: 'Ilk kurulum basariyla tamamlandi.' },
+]
+
+const READINESS_DETAIL_ITEMS = [
+  'Calisma alani hazirlandi',
+  'Sirket kayitlari kontrol edildi',
+  'Sube ve organizasyon baglantilari gozden gecirildi',
+  'Kullanici rolleri hazirlandi',
+  'Yetki kurallari ayarlandi',
+  'Baslangic ayarlari eklendi',
+  'Guvenli calisma kontrolleri tamamlandi',
+]
+
 function initialSetupProgress() {
-  return SETUP_PROGRESS_STEPS.map(step => ({ ...step, status: 'pending' as SetupProgressStatus }))
+  return READINESS_PROGRESS_STEPS.map(step => ({ ...step, status: 'pending' as SetupProgressStatus }))
 }
 
 function progressStepsForIndex(activeIndex: number) {
-  return SETUP_PROGRESS_STEPS.map((step, index) => ({
+  return READINESS_PROGRESS_STEPS.map((step, index) => ({
     ...step,
     status: index < activeIndex
       ? 'done' as const
@@ -330,6 +354,8 @@ function SetupWizardContent() {
           İlk Kurulum
         </button>
       </div>
+
+      <TenantReadinessPanel />
 
       <section className="mt-6 rounded-lg border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-700 dark:bg-eden-navy-2">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -598,7 +624,7 @@ function SetupWizardModal({
   function startProgressAnimation() {
     clearProgressTimers()
     setProgressSteps(progressStepsForIndex(0))
-    progressTimers.current = SETUP_PROGRESS_STEPS
+    progressTimers.current = READINESS_PROGRESS_STEPS
       .slice(1, -1)
       .map((_, index) => window.setTimeout(() => {
         setProgressSteps(progressStepsForIndex(index + 1))
@@ -1226,8 +1252,8 @@ function SetupProgressModal({
     ? SETUP_MODULE_CARDS.length
     : Math.min(SETUP_MODULE_CARDS.length - 1, Math.floor((progressPercent / 100) * SETUP_MODULE_CARDS.length))
   const completedDetailCount = done
-    ? SETUP_DETAIL_ITEMS.length
-    : Math.min(SETUP_DETAIL_ITEMS.length, Math.floor((progressPercent / 100) * SETUP_DETAIL_ITEMS.length))
+    ? READINESS_DETAIL_ITEMS.length
+    : Math.min(READINESS_DETAIL_ITEMS.length, Math.floor((progressPercent / 100) * READINESS_DETAIL_ITEMS.length))
 
   useEffect(() => {
     if (open) setDetailsOpen(false)
@@ -1326,7 +1352,7 @@ function SetupProgressModal({
           </button>
           {detailsOpen && (
             <div className="grid gap-2 border-t border-gray-200 px-4 py-3 dark:border-gray-700 sm:grid-cols-2">
-              {SETUP_DETAIL_ITEMS.map((item, index) => {
+              {READINESS_DETAIL_ITEMS.map((item, index) => {
                 const itemDone = index < completedDetailCount
                 return (
                   <div key={item} className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-200">

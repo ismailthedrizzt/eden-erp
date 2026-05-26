@@ -18,6 +18,8 @@ export interface UserUiPreferences {
   dismissedOperationHints: string[]
   preferredHelpMode: 'tour' | 'guide' | 'both'
   lastTourVersion: string | null
+  actionGuideDismissed: boolean
+  lockedFieldHintsDismissed: string[]
 }
 
 export type UserUiPreferencesPatch = Partial<{
@@ -37,6 +39,8 @@ export type UserUiPreferencesPatch = Partial<{
   dismissedOperationHints: unknown
   preferredHelpMode: unknown
   lastTourVersion: unknown
+  actionGuideDismissed: unknown
+  lockedFieldHintsDismissed: unknown
 }>
 
 export interface BootstrapWorkspace {
@@ -58,6 +62,16 @@ export interface BootstrapUserState {
 export interface SessionBootstrapResponse {
   workspace: BootstrapWorkspace
   userState: BootstrapUserState
+  onboardingPreferences?: {
+    hasSeenGlobalTour: boolean
+    completedTourSteps: string[]
+    dismissedPageTours: string[]
+    dismissedOperationHints: string[]
+    preferredHelpMode: 'tour' | 'guide' | 'both'
+    lastTourVersion: string | null
+    actionGuideDismissed: boolean
+    lockedFieldHintsDismissed: string[]
+  }
   modules?: Array<{
     key: string
     name: string

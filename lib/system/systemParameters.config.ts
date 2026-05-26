@@ -49,6 +49,18 @@ export const systemParameterDefinitions: SystemParameterDefinition[] = [
     options: ['TRY', 'USD', 'EUR', 'GBP'],
   },
   {
+    key: 'company.default_language',
+    label: 'Varsayilan dil',
+    description: 'Yeni sirket kayitlari icin onerilen varsayilan calisma dilidir.',
+    moduleKey: 'sirket',
+    moduleLabel: 'Sirket Yonetimi',
+    pageKey: 'companies',
+    pageLabel: 'Sirketler',
+    type: 'enum',
+    defaultValue: 'tr',
+    options: ['tr', 'en'],
+  },
+  {
     key: 'accounting.default_currency',
     label: 'Muhasebe varsayılan para birimi',
     moduleKey: 'muhasebe',

@@ -8,6 +8,7 @@ import {
   listModuleRuntimeStatuses,
   loadModuleFeatureContext,
 } from '@/lib/modules/moduleFeatureResolver'
+import { getTenantReadiness } from '@/lib/setup/tenantReadinessService'
 import type { ActionGuideContext, ActionGuideRequest } from './actionGuide.types'
 
 type BuildActionGuideContextArgs = {
@@ -33,6 +34,21 @@ export async function buildActionGuideContext({
     userPermissions: permissions,
   }).catch(() => ({ moduleLicenses: [], userPermissions: permissions }))
   const moduleStatuses = listModuleRuntimeStatuses(moduleFeatureContext)
+  const readiness = await getTenantReadiness(supabase as any, {
+    ...resolveTenantContext(request),
+    tenantId,
+    workspaceId: tenantId,
+  }).catch(() => null)
+  const moduleStatusMap: Record<string, string> = Object.fromEntries(moduleStatuses.map(item => [item.moduleKey, item.status]))
+  const moduleBlockingReasons = Object.fromEntries(moduleStatuses.map(item => [item.moduleKey, item.blocking_reasons]))
+  const moduleWarnings = Object.fromEntries(moduleStatuses.map(item => [item.moduleKey, item.warnings]))
+  if (readiness) {
+    for (const readinessModule of readiness.modules) {
+      if (!readinessModule.ready) moduleStatusMap[readinessModule.moduleKey] = readinessModule.status
+      if (readinessModule.blockingReasons.length) moduleBlockingReasons[readinessModule.moduleKey] = readinessModule.blockingReasons
+      if (readinessModule.warnings.length) moduleWarnings[readinessModule.moduleKey] = unique([...(moduleWarnings[readinessModule.moduleKey] || []), ...readinessModule.warnings])
+    }
+  }
   const baseContext: ActionGuideContext = {
     ...rawContext,
     userId,
@@ -48,10 +64,10 @@ export async function buildActionGuideContext({
     organizationUnitId: input.organizationUnitId ?? rawContext.organizationUnitId ?? null,
     facilityId: input.facilityId ?? rawContext.facilityId ?? null,
     route: rawContext.route ?? input.currentPage ?? null,
-    moduleStatuses: Object.fromEntries(moduleStatuses.map(item => [item.moduleKey, item.status])),
-    moduleBlockingReasons: Object.fromEntries(moduleStatuses.map(item => [item.moduleKey, item.blocking_reasons])),
-    moduleWarnings: Object.fromEntries(moduleStatuses.map(item => [item.moduleKey, item.warnings])),
-    availableModules: moduleStatuses.filter(item => item.status === 'available').map(item => item.moduleKey),
+    moduleStatuses: moduleStatusMap,
+    moduleBlockingReasons,
+    moduleWarnings,
+    availableModules: Object.entries(moduleStatusMap).filter(([, status]) => status === 'available').map(([moduleKey]) => moduleKey),
     context: rawContext,
   }
 
@@ -104,4 +120,8 @@ function recordSelect(recordType: string) {
   if (recordType === 'partner') return 'id,tenant_id,company_id,record_status,status'
   if (recordType === 'representative') return 'id,tenant_id,company_id,record_status,status'
   return 'id,tenant_id,record_status,status'
+}
+
+function unique(values: string[]) {
+  return Array.from(new Set(values.filter(Boolean)))
 }
