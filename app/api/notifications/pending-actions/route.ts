@@ -22,9 +22,29 @@ export async function GET(request: NextRequest) {
   if (context instanceof NextResponse) return context
 
   const { supabase, userId, workspaceId } = context
+  const processTasks = await fetchPendingProcessTasks(supabase, workspaceId, userId)
+  if (processTasks.error) {
+    return NextResponse.json({ error: processTasks.error.message, code: processTasks.error.code || 'PENDING_PROCESS_TASKS_FAILED' }, { status: 500 })
+  }
+  const processTaskItems = (processTasks.data || []).map((task: any) => ({
+    id: `process-task-${task.id}`,
+    type: 'process_task',
+    title: task.title || 'Surec gorevi',
+    subtitle: task.description || processTaskSubtitle(task),
+    statusLabel: processTaskStatusLabel(task.status),
+    href: task.process_instance_id ? `/app/surecler/${task.process_instance_id}` : '/app/surecler',
+    severity: task.status === 'overdue' ? 'warning' : 'info',
+    createdAt: task.due_at || task.updated_at || task.created_at,
+  } satisfies PendingActionItem))
+
   const isAdmin = await isTenantRegistrationAdmin(supabase, userId, workspaceId)
   if (!isAdmin) {
-    return NextResponse.json({ data: { count: 0, items: [] } }, { headers: { 'Cache-Control': 'no-store' } })
+    return NextResponse.json({
+      data: {
+        count: processTaskItems.length,
+        items: processTaskItems.slice(0, 30),
+      },
+    }, { headers: { 'Cache-Control': 'no-store' } })
   }
 
   await ensureUserRegistrationRequestSchema()
@@ -51,6 +71,7 @@ export async function GET(request: NextRequest) {
   if (error) return NextResponse.json({ error: error.message, code: error.code || 'PENDING_NOTIFICATIONS_FAILED' }, { status: 500 })
 
   const items: PendingActionItem[] = [
+    ...processTaskItems,
     ...(companies.data || []).map((company: any) => {
       const status = company.record_status || company.company_status
       const isLiquidation = status === 'liquidation'
@@ -116,6 +137,31 @@ export async function GET(request: NextRequest) {
       items: items.slice(0, 30),
     },
   })
+}
+
+async function fetchPendingProcessTasks(supabase: ReturnType<typeof createServiceClient>, workspaceId: string, userId: string | null) {
+  let query = supabase
+    .from('process_tasks')
+    .select('id,process_instance_id,module_key,entity_type,entity_id,step_key,title,description,status,assigned_to,assigned_role,assigned_permission,due_at,updated_at,created_at,is_deleted')
+    .in('status', ['open', 'in_progress', 'overdue'])
+    .eq('is_deleted', false)
+    .eq('tenant_id', workspaceId)
+    .limit(25)
+  if (userId) query = query.or(`assigned_to.is.null,assigned_to.eq.${userId}`)
+  const result = await query
+  if (result.error && isMissingSourceError(result.error)) return { data: [], error: null }
+  return result
+}
+
+function processTaskSubtitle(task: any) {
+  if (task.module_key === 'branches') return 'Sube sureci icin gorev bekliyor'
+  return 'Surec adimi icin gorev bekliyor'
+}
+
+function processTaskStatusLabel(status: string) {
+  if (status === 'in_progress') return 'Devam Ediyor'
+  if (status === 'overdue') return 'Gecikmis'
+  return 'Acik Gorev'
 }
 
 async function safeList(

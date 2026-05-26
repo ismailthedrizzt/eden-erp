@@ -1,0 +1,90 @@
+import { PERMISSIONS } from '@/packages/shared/src'
+import type { ProcessDefinition } from '../process.types'
+
+export const processDefinitionPlaceholders: ProcessDefinition[] = [
+  {
+    key: 'company_opening_process',
+    version: '1.0.0',
+    moduleKey: 'companies',
+    name: 'Sirket Acilisi Sureci',
+    entityType: 'company',
+    operationKey: 'company_opening',
+    startPermission: PERMISSIONS.companies.openingStart,
+    fallbackPermission: PERMISSIONS.companies.edit,
+    requiredModules: ['companies'],
+    steps: [
+      { key: 'draft_request', name: 'Sirket acilisi taslagi', type: 'form', required: true, order: 10, nextOnComplete: 'execute_operation' },
+      { key: 'execute_operation', name: 'Sirket acilisini uygula', type: 'operation', required: true, order: 20, operationKey: 'company_opening', nextOnComplete: 'completed' },
+      { key: 'completed', name: 'Surec tamamlandi', type: 'system', required: true, order: 30 },
+    ],
+    transitions: [
+      { from: 'draft_request', to: 'execute_operation', action: 'complete', label: 'Taslagi tamamla' },
+      { from: 'execute_operation', to: 'completed', action: 'complete', label: 'Operasyonu tamamla' },
+    ],
+  },
+  {
+    key: 'capital_increase_process',
+    version: '1.0.0',
+    moduleKey: 'companies',
+    name: 'Sermaye Artirimi Sureci',
+    entityType: 'company',
+    operationKey: 'capital_increase',
+    startPermission: PERMISSIONS.companies.edit,
+    requiredModules: ['companies', 'partners'],
+    steps: [
+      { key: 'draft_request', name: 'Sermaye artirimi taslagi', type: 'form', required: true, order: 10, nextOnComplete: 'approval' },
+      { key: 'approval', name: 'Sermaye artirimi onayi', type: 'approval', required: false, order: 20, nextOnComplete: 'execute_operation' },
+      { key: 'execute_operation', name: 'Sermaye artirimini uygula', type: 'operation', required: true, order: 30, operationKey: 'capital_increase', nextOnComplete: 'completed' },
+      { key: 'completed', name: 'Surec tamamlandi', type: 'system', required: true, order: 40 },
+    ],
+    transitions: [
+      { from: 'draft_request', to: 'approval', action: 'complete', label: 'Taslagi tamamla' },
+      { from: 'approval', to: 'execute_operation', action: 'approve', label: 'Onayla' },
+      { from: 'execute_operation', to: 'completed', action: 'complete', label: 'Operasyonu tamamla' },
+    ],
+  },
+  {
+    key: 'representative_authority_process',
+    version: '1.0.0',
+    moduleKey: 'representatives',
+    name: 'Temsil Yetkisi Sureci',
+    entityType: 'company_representative',
+    operationKey: 'representative_authority',
+    startPermission: 'representatives.authority.start',
+    fallbackPermission: 'representatives.edit',
+    requiredModules: ['companies', 'representatives'],
+    steps: [
+      { key: 'draft_request', name: 'Yetki taslagi', type: 'form', required: true, order: 10, nextOnComplete: 'approval' },
+      { key: 'approval', name: 'Yetki onayi', type: 'approval', required: false, order: 20, nextOnComplete: 'execute_operation' },
+      { key: 'execute_operation', name: 'Yetki islemini uygula', type: 'operation', required: true, order: 30, operationKey: 'representative_authority', nextOnComplete: 'completed' },
+      { key: 'completed', name: 'Surec tamamlandi', type: 'system', required: true, order: 40 },
+    ],
+    transitions: [
+      { from: 'draft_request', to: 'approval', action: 'complete', label: 'Taslagi tamamla' },
+      { from: 'approval', to: 'execute_operation', action: 'approve', label: 'Onayla' },
+      { from: 'execute_operation', to: 'completed', action: 'complete', label: 'Operasyonu tamamla' },
+    ],
+  },
+  {
+    key: 'ownership_transaction_process',
+    version: '1.0.0',
+    moduleKey: 'partners',
+    name: 'Ortaklik Islemi Sureci',
+    entityType: 'company_partner',
+    operationKey: 'ownership_transaction',
+    startPermission: 'partners.ownership.start',
+    fallbackPermission: 'partners.edit',
+    requiredModules: ['companies', 'partners'],
+    steps: [
+      { key: 'draft_request', name: 'Ortaklik islemi taslagi', type: 'form', required: true, order: 10, nextOnComplete: 'approval' },
+      { key: 'approval', name: 'Ortaklik islemi onayi', type: 'approval', required: false, order: 20, nextOnComplete: 'execute_operation' },
+      { key: 'execute_operation', name: 'Ortaklik islemini uygula', type: 'operation', required: true, order: 30, operationKey: 'ownership_transaction', nextOnComplete: 'completed' },
+      { key: 'completed', name: 'Surec tamamlandi', type: 'system', required: true, order: 40 },
+    ],
+    transitions: [
+      { from: 'draft_request', to: 'approval', action: 'complete', label: 'Taslagi tamamla' },
+      { from: 'approval', to: 'execute_operation', action: 'approve', label: 'Onayla' },
+      { from: 'execute_operation', to: 'completed', action: 'complete', label: 'Operasyonu tamamla' },
+    ],
+  },
+]

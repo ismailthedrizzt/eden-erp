@@ -1,58 +1,376 @@
-import { PERMISSIONS } from '@/packages/shared/src'
-import type { ActionRegistryItem } from './actionGuide.types'
+import { permissionRegistry } from '@/lib/security/permissionRegistry'
+import type { ActionGuideDefinition } from './actionGuide.types'
 
-export const actionRegistry: ActionRegistryItem[] = [
-  action('create_company_draft', 'Sirket Taslagi Olusturma', '+ Ekle sirket karti taslagi olusturur. Resmi acilis ayrica Sirket Acilisi sihirbaziyla tamamlanir.', '/app/sirket/companies', ['yeni sirket', 'sirket ekle', 'firma ekle'], ['Sirketlerimiz sayfasina gidin.', '+ Ekle ile sirket karti taslagi olusturun.', 'Resmi acilis icin Sirket Acilisi sihirbazini baslatin.'], { permission: PERMISSIONS.companies.insert, create_action: true }),
-  action('company_opening', 'Sirket Acilisi', 'Taslak sirket Sirket Acilisi sihirbaziyla aktif hale gelir.', '/app/sirket/companies', ['sirket acilisi', 'taslak sirket aktif', 'kurulus'], ['Sirketlerimiz sayfasinda taslak sirketi acin.', 'Yasam Donemi > Sirket Acilisi islemini baslatin.', 'Sihirbazdaki bilgileri onaylayin.'], { required_record_type: 'company', required_record_status: ['draft'], permission: PERMISSIONS.companies.openingStart, wizard_key: 'company_opening' }),
-  action('company_liquidation', 'Sirket Tasfiyesi', 'Aktif sirketin tasfiye sureci Yasam Donemi islemlerinden baslatilir.', '/app/sirket/companies', ['tasfiye', 'sirket tasfiyesi'], ['Sirketlerimiz sayfasinda aktif sirketi acin.', 'Yasam Donemi > Tasfiye islemini baslatin.', 'Karar ve surec bilgilerini onaylayin.'], { required_record_type: 'company', required_record_status: ['active'], permission: PERMISSIONS.companies.liquidationStart, wizard_key: 'company_liquidation' }),
-  action('company_deregistration', 'Sirket Terkini', 'Terkin, karttan silme degil resmi kapanis sihirbazidir.', '/app/sirket/companies', ['terkin', 'sirket kapatma', 'sirket kapanisi'], ['Sirketlerimiz sayfasinda ilgili sirketi acin.', 'Yasam Donemi > Terkin islemini baslatin.', 'Resmi kapanis bilgilerini onaylayin.'], { required_record_type: 'company', permission: PERMISSIONS.companies.deregistrationStart, wizard_key: 'company_deregistration' }),
-  action('capital_increase', 'Sermaye Artirimi', 'Sermaye artisi aktif sirket kartindan resmi islem sihirbaziyla yapilir.', '/app/sirket/companies', ['sermaye artir', 'sermaye artirimi'], ['Sirketlerimiz sayfasina gidin.', 'Aktif sirketi acin.', 'Resmi Degisiklikler > Sermaye Artirimi islemini baslatin.'], { required_record_type: 'company', required_record_status: ['active'], permission: 'companies.edit', wizard_key: 'capital_increase' }),
-  action('capital_decrease', 'Sermaye Azaltimi', 'Sermaye azaltimi aktif sirket kartindan resmi islem sihirbaziyla yapilir.', '/app/sirket/companies', ['sermaye azalt', 'sermaye azaltimi'], ['Sirketlerimiz sayfasina gidin.', 'Aktif sirketi acin.', 'Resmi Degisiklikler > Sermaye Azaltimi islemini baslatin.'], { required_record_type: 'company', required_record_status: ['active'], permission: 'companies.edit', wizard_key: 'capital_decrease' }),
-  action('title_change', 'Unvan Degisikligi', 'Aktif sirket unvani formdan degil Unvan Degisikligi sihirbaziyla degistirilir.', '/app/sirket/companies', ['unvan degistir', 'ticari unvan', 'sirket adi degistir'], ['Sirketlerimiz sayfasina gidin.', 'Aktif sirketi acin.', 'Resmi Degisiklikler > Unvan Degisikligi islemini baslatin.'], { required_record_type: 'company', required_record_status: ['active'], permission: 'companies.edit', wizard_key: 'title_change' }),
-  action('address_change', 'Adres Degisikligi', 'Aktif sirket adresi formdan degil Adres Degisikligi sihirbaziyla degistirilir.', '/app/sirket/companies', ['adres degistir', 'sirket adresi', 'adres guncelle'], ['Sirketlerimiz sayfasina gidin.', 'Aktif sirketi acin.', 'Resmi Degisiklikler > Adres Degisikligi islemini baslatin.'], { required_record_type: 'company', required_record_status: ['active'], permission: 'companies.edit', wizard_key: 'address_change' }),
-  action('public_registration_update', 'Kamu / Tescil Bilgisi Guncelleme', 'Vergi dairesi, sicil ve kamu referans bilgileri resmi guncelleme sihirbaziyla degistirilir.', '/app/sirket/companies', ['tescil', 'kamu bilgi', 'vergi dairesi', 'mersis', 'sgk sicil'], ['Sirketlerimiz sayfasina gidin.', 'Aktif sirketi acin.', 'Resmi Degisiklikler > Kamu / Tescil Bilgisi Guncelleme islemini baslatin.'], { required_record_type: 'company', required_record_status: ['active'], permission: 'companies.edit', wizard_key: 'public_registration_update' }),
-  action('nace_change', 'NACE / Faaliyet Kodu Guncelleme', 'Sadece faaliyet kodu veya kamu kaydi guncellenecekse NACE sihirbazi kullanilir.', '/app/sirket/companies', ['nace', 'faaliyet kodu', 'sgk tehlike', 'risk sinifi'], ['Sirketlerimiz sayfasina gidin.', 'Aktif sirketi acin.', 'Resmi Degisiklikler > NACE / Faaliyet Kodu Guncelleme islemini baslatin.'], { required_record_type: 'company', required_record_status: ['active'], permission: 'companies.edit', wizard_key: 'nace_change' }),
-  action('activity_subject_change', 'Faaliyet Konusu Degisikligi', 'Sirketin esas faaliyet alani degisiyorsa Faaliyet Konusu Degisikligi sihirbazi kullanilir.', '/app/sirket/companies', ['faaliyet konusu', 'esas sozlesme', 'ana faaliyet'], ['Sirketlerimiz sayfasina gidin.', 'Aktif sirketi acin.', 'Resmi Degisiklikler > Faaliyet Konusu Degisikligi islemini baslatin.'], { required_record_type: 'company', required_record_status: ['active'], permission: 'companies.edit', wizard_key: 'activity_subject_change' }),
-  action('create_partner_draft', 'Ortak Karti Taslagi', '+ Ekle ortak karti taslagi olusturur. Ortaklik haklari ortaklik islemleriyle tanimlanir.', '/app/sirket/companies/partners', ['yeni ortak', 'ortak ekle', 'ortak taslagi'], ['Ortaklarimiz sayfasina gidin.', '+ Ekle ile ortak karti taslagi olusturun.', 'Pay ve hak bilgileri icin Ilk Ortaklik Girisi islemini kullanin.'], { permission: 'partners.edit', create_action: true }),
-  action('initial_partnership_entry', 'Ilk Ortaklik Girisi', 'Pay orani, oy hakki, kar payi ve sermaye iliskisi ortaklik islemiyle olusturulur.', '/app/sirket/companies/partners', ['ilk ortaklik', 'pay orani', 'oy hakki', 'kar payi'], ['Ortaklarimiz sayfasinda ortak kartini acin.', 'Ilk Ortaklik Girisi islemini baslatin.', 'Pay, oy hakki ve sermaye bilgilerini onaylayin.'], { required_record_type: 'partner', permission: 'partners.edit', wizard_key: 'initial_partnership_entry' }),
-  action('share_transfer', 'Pay Devri', 'Pay devri ortak karti editinden degil ortaklik islemiyle yapilir.', '/app/sirket/companies/partners', ['pay devri', 'hisse devri', 'ortak pay aktar'], ['Ortaklarimiz sayfasina gidin.', 'Ilgili ortak kaydini acin.', 'Pay Devri islemini baslatin.'], { required_record_type: 'partner', permission: 'partners.edit', wizard_key: 'share_transfer' }),
-  action('ownership_exit', 'Ortakliktan Cikis', 'Aktif ortak dogrudan silinmez; ortakliktan cikis resmi ortaklik islemiyle yapilir.', '/app/sirket/companies/partners', ['ortakliktan cikis', 'ortak cikisi', 'ortak sil'], ['Ortaklarimiz sayfasinda ortak kaydini acin.', 'Ortakliktan Cikis islemini baslatin.', 'Etki ve pay bilgilerini onaylayin.'], { required_record_type: 'partner', permission: 'partners.edit', wizard_key: 'ownership_exit' }),
-  action('partner_rights_change', 'Ortaklik Haklari Degisikligi', 'Oy hakki, kar payi ve benzeri haklar karttan degil ortaklik islemiyle degistirilir.', '/app/sirket/companies/partners', ['ortak hak', 'oy hakki degistir', 'kar payi degistir'], ['Ortaklarimiz sayfasinda ortak kaydini acin.', 'Ortaklik haklari islemini baslatin.', 'Yeni haklari onaylayin.'], { required_record_type: 'partner', permission: 'partners.edit', wizard_key: 'partner_rights_change' }),
-  action('ownership_correction', 'Ortaklik Duzeltme Kaydi', 'Gecmis ortaklik bilgisinde duzeltme gerekiyorsa duzeltme islemi kullanilir.', '/app/sirket/companies/partners', ['ortaklik duzeltme', 'hisse duzeltme', 'pay duzeltme'], ['Ortaklarimiz sayfasinda ilgili kaydi acin.', 'Duzeltme islemini baslatin.', 'Eski ve yeni degerleri onaylayin.'], { required_record_type: 'partner', permission: 'partners.edit', wizard_key: 'ownership_correction' }),
-  action('create_representative_draft', 'Temsilci Karti Taslagi', '+ Ekle temsilci karti taslagi olusturur. Yetki ve limitler temsil islemleriyle verilir.', '/app/sirket/companies/representatives', ['yeni temsilci', 'temsilci ekle', 'yetkili ekle'], ['Temsilcilerimiz sayfasina gidin.', '+ Ekle ile temsilci karti taslagi olusturun.', 'Yetki vermek icin Temsilcilik Baslatma islemini kullanin.'], { permission: 'representatives.insert', create_action: true }),
-  action('representative_start', 'Temsilcilik Baslatma', 'Banka, SGK, GIB, imza, limit ve kapsam yetkileri temsilcilik islemiyle verilir.', '/app/sirket/companies/representatives', ['temsilci yetki', 'banka yetkisi', 'imza yetkisi', 'temsilcilik baslat'], ['Temsilcilerimiz sayfasinda temsilci kartini acin.', 'Temsilcilik Baslatma islemini baslatin.', 'Yetki turu, limit ve kapsami secin.'], { required_record_type: 'representative', permission: 'representatives.edit', wizard_key: 'representative_start' }),
-  action('representative_authority_renewal', 'Temsil Yetkisi Yenileme', 'Suresi dolan temsil yetkisi yetki islemiyle guncellenir.', '/app/sirket/companies/representatives', ['yetki yenile', 'temsil yenileme', 'imza yetkisi yenile'], ['Temsilcilerimiz sayfasinda temsilci kartini acin.', 'Yetki Yenileme islemini baslatin.', 'Yeni tarih ve belge bilgilerini onaylayin.'], { required_record_type: 'representative', permission: 'representatives.edit', wizard_key: 'representative_authority_renewal' }),
-  action('representative_authority_scope_change', 'Yetki Kapsami Degisikligi', 'Temsil yetkisi sirket geneli, sube, organizasyon birimi veya tesis/lokasyon bazinda sinirlandirilabilir.', '/app/sirket/companies/representatives', ['yetki kapsami', 'sube bazli yetki', 'tesis yetkisi'], ['Temsilcilerimiz sayfasinda temsilci kartini acin.', 'Yetki Kapsami Degisikligi islemini baslatin.', 'Kapsam turunu ve ilgili sube/birim/lokasyonu secin.'], { required_record_type: 'representative', permission: 'representatives.edit', wizard_key: 'representative_authority_scope_change' }),
-  action('representative_limit_change', 'Temsil Yetki Limiti Degisikligi', 'Banka, satinalma veya onay limitleri limit degisikligi islemiyle guncellenir.', '/app/sirket/companies/representatives', ['limit degistir', 'banka limiti', 'yetki limiti'], ['Temsilcilerimiz sayfasinda temsilci kartini acin.', 'Limit Degisikligi islemini baslatin.', 'Yeni limitleri onaylayin.'], { required_record_type: 'representative', permission: 'representatives.edit', wizard_key: 'representative_limit_change' }),
-  action('representative_suspend', 'Temsil Yetkisini Askiya Alma', 'Gecici durdurma temsilci kartini cogaltmadan yetki islemiyle yapilir.', '/app/sirket/companies/representatives', ['yetki aski', 'askiya al', 'temsilciyi durdur'], ['Temsilcilerimiz sayfasinda temsilci kartini acin.', 'Askiya Alma islemini baslatin.', 'Gerekce ve tarih bilgisini onaylayin.'], { required_record_type: 'representative', permission: 'representatives.edit', wizard_key: 'representative_suspend' }),
-  action('representative_terminate', 'Temsil Yetkisini Sonlandirma', 'Temsil yetkisi sona erdiginde kart silinmez; yetki sonlandirma islemi yapilir.', '/app/sirket/companies/representatives', ['temsilci sonlandir', 'yetki sonlandir', 'imza yetkisi bitir'], ['Temsilcilerimiz sayfasinda temsilci kartini acin.', 'Sonlandirma islemini baslatin.', 'Sona erme tarihini ve belgeleri onaylayin.'], { required_record_type: 'representative', permission: 'representatives.edit', wizard_key: 'representative_terminate' }),
-  action('branch_opening', 'Sube Acilisi', 'Sube acilisi aktif sirket kartindan baslatilir.', '/app/sirket/companies', ['sube ac', 'sube acilisi', 'yeni sube', 'ofis ac'], ['Sirketlerimiz sayfasina gidin.', 'Aktif sirketi acin.', 'Resmi Degisiklikler > Sube Acilisi islemini baslatin.'], { required_record_type: 'company', required_record_status: ['active'], permission: PERMISSIONS.branches.openingStart, fallback_permission: PERMISSIONS.companies.edit, wizard_key: 'branch_opening' }),
-  action('branch_closing', 'Sube Kapanisi', 'Sube kapanisi aktif sube uzerinden resmi islem olarak yapilir.', '/app/sirket/companies/branches', ['sube kapat', 'sube kapanisi', 'ofis kapat'], ['Subelerimiz sayfasina gidin veya sirket detayini acin.', 'Kapatilacak aktif subeyi secin.', 'Sube Kapanisi islemini baslatin.'], { required_record_type: 'branch', required_record_status: ['active'], permission: PERMISSIONS.branches.closingStart, fallback_permission: PERMISSIONS.companies.edit, wizard_key: 'branch_closing' }),
-  action('branch_document_update', 'Sube Belgelerini Guncelleme', 'Sube belgeleri kart editinden degil ayri belge guncelleme islemiyle eklenir.', '/app/sirket/companies/branches', ['sube belge', 'sube belgeleri', 'sube evrak'], ['Subelerimiz sayfasina gidin.', 'Ilgili subeyi acin.', 'Sube Belgelerini Guncelle islemini baslatin.'], { required_record_type: 'branch', permission: PERMISSIONS.branches.documentsUpdate, fallback_permission: PERMISSIONS.companies.edit, wizard_key: 'branch_document_update' }),
-  action('branch_view', 'Sube Goruntuleme', 'Acilmis subeler Subelerimiz sayfasinda bagli sirket alt kaydi olarak izlenir.', '/app/sirket/companies/branches', ['subeleri gor', 'sube listesi', 'sube detayi'], ['Subelerimiz sayfasina gidin.', 'Bagli sirket filtresini kullanin.', 'Sube satirina tiklayarak detayini acin.'], { permission: PERMISSIONS.branches.view, fallback_permission: PERMISSIONS.companies.view }),
-  action('branch_location_link', 'Sube Lokasyon Baglantisi', 'Subenin fiziksel yer bilgisi Tesisler/Lokasyonlar baglantisiyla izlenir.', '/app/sirket/companies/branches', ['sube lokasyon', 'sube tesis', 'lokasyon bagla'], ['Subelerimiz sayfasinda subeyi acin.', 'Adres / Lokasyon sekmesini kontrol edin.', 'Fiziksel detaylari Tesisler/Lokasyonlar sayfasinda yonetin.'], { required_record_type: 'branch', permission: PERMISSIONS.branches.view, fallback_permission: PERMISSIONS.companies.view }),
-  action('branch_organization_link', 'Sube Organizasyon Baglantisi', 'Subenin kadro ve hiyerarsi karsiligi Teskilat/Kadro baglantisiyla izlenir.', '/app/sirket/companies/branches', ['sube organizasyon', 'sube kadro', 'organizasyon bagla'], ['Subelerimiz sayfasinda subeyi acin.', 'Organizasyon Baglantisi sekmesini kontrol edin.', 'Kadro ve pozisyonlari Teskilat/Kadro sayfasinda yonetin.'], { required_record_type: 'branch', permission: PERMISSIONS.branches.view, fallback_permission: PERMISSIONS.companies.view }),
-  action('create_organization_unit', 'Organizasyon Birimi Olusturma', 'Organizasyon birimleri Teskilat/Kadro sayfasindan yonetilir.', '/app/sirket/teskilat', ['organizasyon birimi olustur', 'birim ac', 'departman ac'], ['Teskilat/Kadro sayfasina gidin.', 'Yeni birim akisina baslayin.', 'Bagli sirket ve ust birim bilgisini secin.'], { permission: 'organization.edit' }),
-  action('assign_staff_to_unit', 'Personeli Birime Baglama', 'Sube ic personel ve kadro atamalari Teskilat/Kadrodan yapilir.', '/app/sirket/teskilat', ['personel ata', 'calisani birime bagla', 'sube personeli'], ['Teskilat/Kadro sayfasina gidin.', 'Ilgili organizasyon birimini acin.', 'Personel veya kadro atama islemini burada yapin.'], { permission: 'organization.edit' }),
-  action('manage_positions', 'Kadro / Pozisyon Yonetimi', 'Sube ic kadro ve personel isleri Teskilat/Kadro sayfasindan yonetilir.', '/app/sirket/teskilat', ['kadro', 'pozisyon', 'teskilat'], ['Teskilat/Kadro sayfasina gidin.', 'Ilgili organizasyon birimini acin.', 'Pozisyon ve kadro bilgilerini yonetin.'], { permission: 'organization.view' }),
-  action('branch_staff_management', 'Sube Kadro Yonetimi', 'Sube kadrosu sube kartinda degil Teskilat/Kadro sayfasinda yonetilir.', '/app/sirket/teskilat', ['sube kadro yonet', 'sube personel yonet'], ['Teskilat/Kadro sayfasina gidin.', 'Subeye bagli organizasyon birimini bulun.', 'Pozisyon ve personel atamalarini orada yonetin.'], { permission: 'organization.view' }),
-  action('create_facility', 'Tesis / Lokasyon Yonetimi', 'Fiziksel lokasyon ve tesis detaylari Tesisler/Lokasyonlar sayfasindan yonetilir.', '/app/sirket/tesisler', ['tesis', 'lokasyon', 'depo', 'fiziksel yer'], ['Tesisler/Lokasyonlar sayfasina gidin.', 'Lokasyon kaydini acin veya olusturun.', 'Sube baglantisini ilgili islemle kurun.'], { permission: PERMISSIONS.companies.view }),
-  action('link_facility_to_branch', 'Tesis / Lokasyon Subeye Baglama', 'Sube ile fiziksel lokasyon baglantisi sube acilisi veya lokasyon yonetimiyle kurulur.', '/app/sirket/tesisler', ['tesisi subeye bagla', 'lokasyonu subeye bagla'], ['Tesisler/Lokasyonlar sayfasina gidin.', 'Ilgili lokasyon kaydini acin.', 'Bagli sube veya sirket bilgisini kontrol edin.'], { permission: PERMISSIONS.companies.edit }),
-  action('deactivate_facility', 'Tesis / Lokasyon Pasife Alma', 'Sube kapanisinda lokasyon acik birakilabilir veya pasife alinabilir.', '/app/sirket/tesisler', ['tesis pasife al', 'lokasyon kapat', 'depo kapat'], ['Sube kapanisi varsa sihirbazda lokasyon aksiyonunu secin.', 'Bagimsiz lokasyon yonetimi icin Tesisler/Lokasyonlar sayfasina gidin.', 'Lokasyonun durumunu kontrol edin.'], { permission: PERMISSIONS.companies.edit }),
+const PAGES = {
+  companies: '/app/sirket/companies',
+  partners: '/app/sirket/companies/partners',
+  representatives: '/app/sirket/companies/representatives',
+  branches: '/app/sirket/companies/branches',
+  organization: '/app/sirket/teskilat',
+  facilities: '/app/sirket/tesisler',
+} as const
+
+export const actionGuideDefinitions: ActionGuideDefinition[] = [
+  defineAction({
+    key: 'create_company_draft',
+    label: 'Sirket Taslagi Olustur',
+    description: '+ Ekle sirket karti taslagi olusturur; resmi acilis ayri sihirbazla tamamlanir.',
+    moduleKey: 'companies',
+    domain: 'company',
+    actionType: 'create_draft',
+    targetPage: PAGES.companies,
+    intentExamples: ['sirket ekle', 'yeni sirket olustur', 'sirket karti ac', 'firma ekle'],
+    keywords: ['sirket', 'firma', 'ekle', 'taslak', 'yeni'],
+    requiredModules: ['companies'],
+    requiredPermissions: [permissionRegistry.companies.edit],
+    steps: [
+      'Sirketlerimiz sayfasina gidin.',
+      '+ Ekle ile sirket karti taslagi olusturun.',
+      'Sirket resmi acilisi icin Sirket Acilisi sihirbazini tamamlayin.',
+    ],
+    helpText: 'Yeni sirket once taslak kart olarak acilir; resmi status degisimi wizard onayi ile olur.',
+  }),
+  defineAction({
+    key: 'company_opening',
+    label: 'Sirket Acilisi',
+    description: 'Taslak sirket, Sirket Acilisi sihirbaziyla aktif hale gelir.',
+    moduleKey: 'companies',
+    domain: 'company',
+    actionType: 'open_wizard',
+    targetPage: PAGES.companies,
+    wizardKey: 'company_opening',
+    requiredRecordType: 'company',
+    requiredRecordStatuses: ['draft'],
+    requiredModules: ['companies'],
+    requiredPermissions: [permissionRegistry.companies.openingStart],
+    fallbackPermissions: [permissionRegistry.companies.edit],
+    intentExamples: ['sirket acilisi', 'taslak sirketi ac', 'sirketi aktif yap', 'kurulus islemi'],
+    keywords: ['sirket', 'acilis', 'kurulus', 'aktif', 'taslak'],
+    steps: [
+      'Sirketlerimiz sayfasinda taslak sirketi acin.',
+      'Yasam Donemi alanindan Sirket Acilisi sihirbazini baslatin.',
+      'Tescil ve kurulus bilgilerini onaylayin.',
+    ],
+    helpText: 'Sirket acilisi yalnizca taslak sirketlerde baslatilir.',
+  }),
+  companyOfficialAction('capital_increase', 'Sermaye Artirimi', 'Sermaye artisi aktif sirket kartindan resmi islem sihirbaziyla yapilir.', 'capital_increase', ['sermaye artirimi', 'sermaye artir', 'sermaye yukseltecegim', 'capital increase'], ['sermaye', 'artirim', 'artir', 'pay', 'ortak'], {
+    requiredModules: ['companies', 'partners'],
+    requiredPermissions: [permissionRegistry.companies.capitalIncreaseStart],
+    fallbackPermissions: [permissionRegistry.companies.edit],
+    relatedFields: [{ entityType: 'company', field: 'committed_capital_amount' }, { entityType: 'company', field: 'paid_capital_amount' }],
+    helpText: 'Sermaye Artirimi ortak bazli pay ve sermaye dagilimi gerektirir; Ortaklarimiz modulu ve guncel ortaklik dagilimi aktif olmalidir.',
+  }),
+  companyOfficialAction('capital_decrease', 'Sermaye Azaltimi', 'Sermaye azaltimi aktif sirket kartindan resmi islem sihirbaziyla yapilir.', 'capital_decrease', ['sermaye azaltimi', 'sermaye azalt', 'capital decrease'], ['sermaye', 'azaltim', 'azalt', 'pay'], {
+    requiredModules: ['companies', 'partners'],
+    requiredPermissions: [permissionRegistry.companies.capitalDecreaseStart],
+    fallbackPermissions: [permissionRegistry.companies.edit],
+    relatedFields: [{ entityType: 'company', field: 'committed_capital_amount' }],
+  }),
+  companyOfficialAction('title_change', 'Unvan Degisikligi', 'Aktif sirket unvani karttan degil Unvan Degisikligi sihirbaziyla degistirilir.', 'title_change', ['unvan degisikligi', 'unvan degistir', 'sirket adi degistir', 'ticari unvan'], ['unvan', 'ticari', 'isim', 'ad', 'degistir'], {
+    relatedFields: [{ entityType: 'company', field: 'trade_name' }, { entityType: 'company', field: 'short_name' }],
+  }),
+  companyOfficialAction('address_change', 'Adres Degisikligi', 'Aktif sirket adresi resmi islem kontrolludur; Adres Degisikligi sihirbazi kullanilir.', 'address_change', ['adres degisikligi', 'adres degistirecegim', 'sirket adresini degistir', 'adres guncelle'], ['adres', 'il', 'ilce', 'posta', 'degistir'], {
+    relatedFields: [{ entityType: 'company', field: 'address' }, { entityType: 'company', field: 'city' }, { entityType: 'company', field: 'district' }],
+  }),
+  companyOfficialAction('public_registration_update', 'Kamu / Tescil Bilgisi Guncelleme', 'Vergi, sicil, MERSIS ve kamu bilgileri resmi guncelleme sihirbaziyla degisir.', 'public_registration_update', ['tescil bilgisi', 'vergi dairesi degistir', 'mersis guncelle', 'sgk sicil'], ['tescil', 'vergi', 'mersis', 'sgk', 'sicil', 'kamu']),
+  companyOfficialAction('nace_change', 'NACE / Faaliyet Kodu Guncelleme', 'NACE kodu ve faaliyet kodu degisiklikleri NACE sihirbaziyla yapilir.', 'nace_change', ['nace kodu', 'faaliyet kodu', 'risk sinifi', 'tehlike sinifi'], ['nace', 'faaliyet', 'kod', 'risk', 'tehlike'], {
+    relatedFields: [{ entityType: 'company', field: 'nace_codes' }, { entityType: 'company', field: 'risk_class' }],
+  }),
+  companyOfficialAction('activity_subject_change', 'Faaliyet Konusu Degisikligi', 'Sirketin faaliyet konusu resmi degisiklik sihirbaziyla guncellenir.', 'activity_subject_change', ['faaliyet konusu', 'esas sozlesme konusu', 'ana faaliyet degisikligi'], ['faaliyet', 'konu', 'esas', 'sozlesme'], {
+    relatedFields: [{ entityType: 'company', field: 'activity_subject' }],
+  }),
+  defineAction({
+    key: 'create_partner_draft',
+    label: 'Ortak Karti Taslagi',
+    description: '+ Ekle ortak karti taslagi olusturur; pay ve haklar ortaklik islemleriyle tanimlanir.',
+    moduleKey: 'partners',
+    domain: 'ownership',
+    actionType: 'create_draft',
+    targetPage: PAGES.partners,
+    requiredModules: ['companies', 'partners'],
+    requiredPermissions: [permissionRegistry.partners.edit],
+    intentExamples: ['yeni ortak ekle', 'ortak ekle', 'ortak karti ac', 'hissedar ekle'],
+    keywords: ['ortak', 'hissedar', 'paydas', 'ekle', 'taslak'],
+    steps: [
+      'Ortaklarimiz sayfasina gidin.',
+      '+ Ekle ile ortak karti taslagi olusturun.',
+      'Pay ve hak bilgileri icin Ilk Ortaklik Girisi islemini kullanin.',
+    ],
+    helpText: 'Ortak karti kisi/kurum bilgisini tutar; pay dagilimi transaction ile olusur.',
+  }),
+  partnerAction('initial_partnership_entry', 'Ilk Ortaklik Girisi', 'Pay orani, oy hakki ve sermaye iliskisi ortaklik islemiyle olusturulur.', ['ilk ortaklik girisi', 'pay orani ver', 'ortaga hisse tanimla'], ['ilk', 'ortaklik', 'pay', 'hisse', 'oran']),
+  partnerAction('share_transfer', 'Pay Devri', 'Pay devri kart editinden degil ortaklik islemiyle yapilir.', ['pay devri', 'hisse devri', 'ortak pay aktar'], ['pay', 'hisse', 'devir', 'aktar']),
+  partnerAction('ownership_exit', 'Ortakliktan Cikis', 'Aktif ortak dogrudan silinmez; ortakliktan cikis resmi islemle yapilir.', ['ortakliktan cikis', 'ortak cikisi', 'ortak sil'], ['ortak', 'cikis', 'sil', 'ayril']),
+  partnerAction('ownership_correction', 'Ortaklik Duzeltme Kaydi', 'Gecmis ortaklik bilgisinde duzeltme gerekiyorsa duzeltme islemi kullanilir.', ['ortaklik duzeltme', 'hisse duzeltme', 'pay duzeltme'], ['ortaklik', 'hisse', 'pay', 'duzeltme']),
+  defineAction({
+    key: 'create_representative_draft',
+    label: 'Temsilci Karti Taslagi',
+    description: '+ Ekle temsilci karti taslagi olusturur; yetki ve limitler temsil islemleriyle verilir.',
+    moduleKey: 'representatives',
+    domain: 'representative',
+    actionType: 'create_draft',
+    targetPage: PAGES.representatives,
+    requiredModules: ['companies', 'representatives'],
+    requiredPermissions: [permissionRegistry.representatives.insert],
+    fallbackPermissions: [permissionRegistry.representatives.edit],
+    intentExamples: ['yeni temsilci', 'temsilci ekle', 'yetkili ekle'],
+    keywords: ['temsilci', 'yetkili', 'ekle', 'taslak'],
+    steps: [
+      'Temsilcilerimiz sayfasina gidin.',
+      '+ Ekle ile temsilci karti taslagi olusturun.',
+      'Yetki vermek icin Temsilcilik Baslatma islemini kullanin.',
+    ],
+    helpText: 'Temsilci karti tekil kalir; yetki farklari current authority/scope islemlerinde tutulur.',
+  }),
+  representativeAction('representative_start', 'Temsilcilik Baslatma', 'Banka, SGK, GIB, imza, limit ve kapsam yetkileri temsilcilik islemiyle verilir.', ['temsilciye yetki ver', 'banka yetkisi ver', 'imza yetkisi ver', 'temsilcilik baslat'], ['temsilci', 'yetki', 'banka', 'imza', 'baslat']),
+  representativeAction('representative_authority_renewal', 'Temsil Yetkisi Yenileme', 'Suresi dolan temsil yetkisi yetki islemiyle guncellenir.', ['yetki yenile', 'temsil yenileme', 'imza yetkisi yenile'], ['yetki', 'yenile', 'sure']),
+  representativeAction('representative_authority_scope_change', 'Yetki Kapsami Degisikligi', 'Temsil yetkisi sirket geneli, sube, organizasyon veya tesis bazinda sinirlandirilabilir.', ['yetki kapsami', 'sube bazli yetki', 'tesis yetkisi', 'temsilci yetkisini degistir'], ['yetki', 'kapsam', 'sube', 'tesis', 'organizasyon'], {
+    relatedFields: [{ entityType: 'company_representative', field: 'authority_types' }, { entityType: 'company_representative', field: 'scope_type' }],
+  }),
+  representativeAction('representative_limit_change', 'Temsil Yetki Limiti Degisikligi', 'Banka, satin alma veya onay limitleri limit degisikligi islemiyle guncellenir.', ['limit degistir', 'banka limiti', 'yetki limiti'], ['limit', 'banka', 'onay', 'satin']),
+  representativeAction('representative_suspend', 'Temsil Yetkisini Askiya Alma', 'Gecici durdurma temsilci kartini cogaltmadan yetki islemiyle yapilir.', ['yetki askiya al', 'temsilciyi durdur', 'askiya al'], ['aski', 'durdur', 'pasif']),
+  representativeAction('representative_terminate', 'Temsil Yetkisini Sonlandirma', 'Temsil yetkisi sona erdiginde kart silinmez; yetki sonlandirma islemi yapilir.', ['temsilciyi sonlandir', 'yetki sonlandir', 'imza yetkisi bitir'], ['sonlandir', 'bitir', 'kapat', 'yetki']),
+  defineAction({
+    key: 'branch_opening',
+    label: 'Sube Acilisi',
+    description: 'Sube acilisi aktif sirket kartindan baslatilan resmi islemdir.',
+    moduleKey: 'branches',
+    domain: 'branch',
+    actionType: 'open_wizard',
+    targetPage: PAGES.companies,
+    wizardKey: 'branch_opening',
+    requiredRecordType: 'company',
+    requiredRecordStatuses: ['active'],
+    requiredModules: ['companies', 'branches'],
+    optionalModules: ['organization', 'facilities'],
+    requiredPermissions: [permissionRegistry.branches.openingStart],
+    fallbackPermissions: [permissionRegistry.companies.edit],
+    intentExamples: ['sube acmak istiyorum', 'yeni sube', 'sube acilisi', 'ofis ac'],
+    keywords: ['sube', 'ofis', 'acilis', 'ac', 'yeni'],
+    relatedFields: [{ entityType: 'company', field: 'branches' }],
+    steps: [
+      'Sirketlerimiz sayfasinda aktif sirketi acin.',
+      'Resmi Degisiklikler bolumunden Sube Acilisi sihirbazini baslatin.',
+      'Sube kimligi, adres, tescil ve organizasyon/lokasyon bilgilerini girin.',
+      'Ozet ekraninda onaylayin.',
+    ],
+    helpText: 'Sube serbest POST ile olusmaz; resmi Sube Acilisi sihirbazi kullanilir.',
+  }),
+  defineAction({
+    key: 'branch_closing',
+    label: 'Sube Kapanisi',
+    description: 'Sube kapanisi aktif sube uzerinden resmi islem olarak yapilir.',
+    moduleKey: 'branches',
+    domain: 'branch',
+    actionType: 'open_wizard',
+    targetPage: PAGES.branches,
+    wizardKey: 'branch_closing',
+    requiredRecordType: 'branch',
+    requiredRecordStatuses: ['active'],
+    requiredModules: ['companies', 'branches'],
+    requiredPermissions: [permissionRegistry.branches.closingStart],
+    fallbackPermissions: [permissionRegistry.companies.edit],
+    intentExamples: ['sube kapatacagim', 'sube kapanisi', 'ofis kapat', 'subeyi kapat'],
+    keywords: ['sube', 'ofis', 'kapat', 'kapanis', 'terk'],
+    steps: [
+      'Subelerimiz sayfasina gidin veya sirket detayindan subeyi acin.',
+      'Kapatilacak aktif subeyi secin.',
+      'Sube Kapanisi sihirbazinda etki analizini ve aksiyonlari onaylayin.',
+    ],
+    helpText: 'Sube kapanisi organizasyon birimi ve lokasyon aksiyonlarini da yonetir.',
+  }),
+  defineAction({
+    key: 'branch_document_update',
+    label: 'Sube Belgelerini Guncelle',
+    description: 'Sube belgeleri normal kart guncellemesiyle degil resmi belge guncelleme islemiyle yonetilir.',
+    moduleKey: 'branches',
+    domain: 'branch',
+    actionType: 'open_wizard',
+    targetPage: PAGES.branches,
+    wizardKey: 'branch_document_update',
+    requiredRecordType: 'branch',
+    requiredModules: ['branches'],
+    requiredPermissions: [permissionRegistry.branches.documentsUpdate],
+    fallbackPermissions: [permissionRegistry.companies.edit],
+    intentExamples: ['sube belgeleri', 'sube evrak guncelle', 'sube belge yukle'],
+    keywords: ['sube', 'belge', 'evrak', 'dokuman', 'guncelle'],
+    relatedFields: [{ entityType: 'company_branch', field: 'document_files' }],
+    steps: [
+      'Subelerimiz sayfasinda ilgili subeyi acin.',
+      'Sube Belgeleri Guncelleme islemini baslatin.',
+      'Belgeleri ekleyip ozet ekraninda onaylayin.',
+    ],
+    helpText: 'Sube belgeleri resmi islem kapsaminda yonetilir.',
+  }),
+  defineAction({
+    key: 'branch_view',
+    label: 'Subeleri Goruntule',
+    description: 'Acilmis subeler Subelerimiz sayfasinda bagli sirket alt kaydi olarak izlenir.',
+    moduleKey: 'branches',
+    domain: 'branch',
+    actionType: 'view',
+    targetPage: PAGES.branches,
+    requiredModules: ['branches'],
+    requiredPermissions: [permissionRegistry.branches.view],
+    fallbackPermissions: [permissionRegistry.companies.view],
+    intentExamples: ['subeleri gor', 'sube listesi', 'sube detayi'],
+    keywords: ['sube', 'liste', 'gor', 'detay'],
+    steps: ['Subelerimiz sayfasina gidin.', 'Bagli sirket filtresini kullanin.', 'Sube satirina tiklayarak detayi acin.'],
+    helpText: 'Sube listesi projection/read model uzerinden beslenir.',
+  }),
+  orgAction('create_organization_unit', 'Organizasyon Birimi Olustur', 'Organizasyon birimleri Teskilat/Kadro sayfasindan yonetilir.', ['organizasyon birimi olustur', 'birim ac', 'departman ac'], ['organizasyon', 'birim', 'departman', 'teskilat']),
+  orgAction('manage_positions', 'Kadro / Pozisyon Yonetimi', 'Kadro ve pozisyonlar Teskilat/Kadro sayfasindan yonetilir.', ['kadro yonet', 'pozisyon ac', 'pozisyon yonet'], ['kadro', 'pozisyon', 'teskilat']),
+  orgAction('assign_staff_to_unit', 'Personeli Birime Bagla', 'Personel ve kadro atamalari organizasyon birimi uzerinden yapilir.', ['personel ata', 'calisani birime bagla', 'sube personeli'], ['personel', 'calisan', 'ata', 'birim']),
+  facilityAction('create_facility', 'Tesis / Lokasyon Olustur', 'Fiziksel lokasyon ve tesis detaylari Tesisler/Lokasyonlar sayfasindan yonetilir.', ['tesis olustur', 'lokasyon ekle', 'depo ekle'], ['tesis', 'lokasyon', 'depo', 'ekle']),
+  facilityAction('link_facility_to_branch', 'Tesisi Subeye Bagla', 'Sube ile fiziksel lokasyon baglantisi sube acilisi veya tesis yonetimiyle kurulur.', ['tesisi subeye bagla', 'lokasyonu subeye bagla'], ['tesis', 'lokasyon', 'sube', 'bagla']),
+  facilityAction('deactivate_facility', 'Tesis / Lokasyon Pasife Al', 'Sube kapanisinda lokasyon acik birakilabilir veya pasife alinabilir.', ['tesis pasife al', 'lokasyon kapat', 'depo kapat'], ['tesis', 'lokasyon', 'kapat', 'pasif']),
 ]
 
-function action(
-  key: ActionRegistryItem['key'],
-  label: string,
-  description: string,
-  target_page: string,
-  intent_examples: string[],
-  steps: string[],
-  rest: Partial<ActionRegistryItem> = {}
-): ActionRegistryItem {
-  return { key, label, description, target_page, intent_examples, steps, ...rest }
+export const actionRegistry = actionGuideDefinitions
+
+export function listActionDefinitions() {
+  return [...actionGuideDefinitions]
 }
 
 export function getActionDefinition(key: string) {
-  return actionRegistry.find(item => item.key === key) || null
+  return actionGuideDefinitions.find(item => item.key === key) || null
+}
+
+function defineAction(action: ActionGuideDefinition): ActionGuideDefinition {
+  return action
+}
+
+function companyOfficialAction(
+  key: string,
+  label: string,
+  description: string,
+  wizardKey: string,
+  intentExamples: string[],
+  keywords: string[],
+  rest: Partial<ActionGuideDefinition> = {}
+) {
+  return defineAction({
+    key,
+    label,
+    description,
+    moduleKey: 'companies',
+    domain: 'company',
+    actionType: 'open_wizard',
+    targetPage: PAGES.companies,
+    wizardKey,
+    requiredRecordType: 'company',
+    requiredRecordStatuses: ['active'],
+    requiredModules: ['companies'],
+    requiredPermissions: rest.requiredPermissions || [permissionRegistry.companies.officialChangeStart],
+    fallbackPermissions: rest.fallbackPermissions || [permissionRegistry.companies.edit],
+    intentExamples,
+    keywords,
+    steps: [
+      'Sirketlerimiz sayfasina gidin.',
+      'Aktif sirketi acin.',
+      `${label} sihirbazini baslatin.`,
+      'Ozet ekraninda onaylayin.',
+    ],
+    helpText: rest.helpText || `${label} aktif sirketlerde resmi islem sihirbazi ile baslatilir.`,
+    ...rest,
+  })
+}
+
+function partnerAction(key: string, label: string, description: string, intentExamples: string[], keywords: string[]) {
+  return defineAction({
+    key,
+    label,
+    description,
+    moduleKey: 'partners',
+    domain: 'ownership',
+    actionType: 'open_wizard',
+    targetPage: PAGES.partners,
+    wizardKey: key,
+    requiredRecordType: 'partner',
+    requiredModules: ['companies', 'partners'],
+    requiredPermissions: [permissionRegistry.partners.ownershipStart],
+    fallbackPermissions: [permissionRegistry.partners.edit],
+    intentExamples,
+    keywords,
+    relatedFields: key === 'initial_partnership_entry' || key === 'share_transfer'
+      ? [{ entityType: 'company_partner', field: 'share_ratio' }]
+      : undefined,
+    steps: [
+      'Ortaklarimiz sayfasinda ilgili ortak kartini acin.',
+      `${label} islemini baslatin.`,
+      'Pay, hak ve sermaye bilgilerini ozet ekraninda onaylayin.',
+    ],
+    helpText: 'Ortaklik haklari normal kart PATCH ile degil ownership transaction ile degisir.',
+  })
+}
+
+function representativeAction(
+  key: string,
+  label: string,
+  description: string,
+  intentExamples: string[],
+  keywords: string[],
+  rest: Partial<ActionGuideDefinition> = {}
+) {
+  return defineAction({
+    key,
+    label,
+    description,
+    moduleKey: 'representatives',
+    domain: 'representative',
+    actionType: 'open_wizard',
+    targetPage: PAGES.representatives,
+    wizardKey: key,
+    requiredRecordType: 'representative',
+    requiredModules: ['companies', 'representatives'],
+    requiredPermissions: [permissionRegistry.representatives.authorityStart],
+    fallbackPermissions: [permissionRegistry.representatives.edit],
+    intentExamples,
+    keywords,
+    steps: [
+      'Temsilcilerimiz sayfasinda temsilci kartini acin.',
+      `${label} islemini baslatin.`,
+      'Yetki turu, limit, kapsam ve belge bilgilerini onaylayin.',
+    ],
+    helpText: 'Temsilci karti cogaltilmaz; yetki farklari authority scope islemlerinde tutulur.',
+    ...rest,
+  })
+}
+
+function orgAction(key: string, label: string, description: string, intentExamples: string[], keywords: string[]) {
+  return defineAction({
+    key,
+    label,
+    description,
+    moduleKey: 'organization',
+    domain: 'organization',
+    actionType: 'navigate',
+    targetPage: PAGES.organization,
+    requiredModules: ['organization'],
+    requiredPermissions: [permissionRegistry.organization.edit],
+    fallbackPermissions: [permissionRegistry.companies.edit],
+    intentExamples,
+    keywords,
+    steps: ['Teskilat/Kadro sayfasina gidin.', `${label} akisina baslayin.`, 'Bagli sirket ve birim bilgilerini kontrol edin.'],
+    helpText: 'Organizasyon ve kadro islemleri Teskilat/Kadro modulu uzerinden yonetilir.',
+  })
+}
+
+function facilityAction(key: string, label: string, description: string, intentExamples: string[], keywords: string[]) {
+  return defineAction({
+    key,
+    label,
+    description,
+    moduleKey: 'facilities',
+    domain: 'facility',
+    actionType: 'navigate',
+    targetPage: PAGES.facilities,
+    requiredModules: ['facilities'],
+    requiredPermissions: [permissionRegistry.facilities.edit],
+    fallbackPermissions: [permissionRegistry.companies.edit],
+    intentExamples,
+    keywords,
+    steps: ['Tesisler/Lokasyonlar sayfasina gidin.', `${label} akisina baslayin.`, 'Bagli sirket/sube bilgisini kontrol edin.'],
+    helpText: 'Fiziksel lokasyon kayitlari tesis/lokasyon modulu uzerinden yonetilir.',
+  })
 }

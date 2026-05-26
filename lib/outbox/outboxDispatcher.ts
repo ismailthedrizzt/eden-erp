@@ -1,135 +1,213 @@
 import 'server-only'
 
+import { randomUUID } from 'crypto'
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { getEventContract } from '@/lib/events/eventRegistry'
 import { isMissingInfrastructureError } from '@/lib/operations/operationRequestService'
+import { getHandlersForEvent } from './handlers/handlerRegistry'
+import type { EventHandler } from './handlers/types'
+import { OutboxEventService, type OutboxEventRecord } from './outboxEventService'
 
-type DispatchOptions = {
+export interface DispatchPendingEventsOptions {
+  batchSize?: number
   limit?: number
+  maxRuntimeMs?: number
+  lockTtlSeconds?: number
+  handlerFilter?: string[]
   lockedBy?: string
 }
 
-type DispatchResult = {
+export interface DispatchPendingEventsResult {
   processed: number
   completed: number
   failed: number
+  retried: number
+  skipped: number
+  durationMs: number
   errors: Array<{ id: string; error: string }>
 }
 
-const EVENT_HANDLERS: Record<string, (event: Record<string, any>) => Promise<Record<string, any>>> = {
-  'company.branch_opened': projectionInvalidationHandler(['branchList', 'companyDetail']),
-  'company.branch_closed': projectionInvalidationHandler(['branchList', 'companyDetail']),
-  'company.nace_changed': projectionInvalidationHandler(['companyDetail', 'companyList']),
-  'representative.authority.updated': projectionInvalidationHandler(['representativeList']),
-  'ownership.transaction.completed': projectionInvalidationHandler(['partnerList', 'companyDetail']),
+export async function dispatchPendingEvents(
+  supabase: SupabaseClient,
+  options: DispatchPendingEventsOptions = {}
+): Promise<DispatchPendingEventsResult> {
+  const startedAt = Date.now()
+  const maxRuntimeMs = Math.max(1000, options.maxRuntimeMs || 25000)
+  const lockId = options.lockedBy || createLockId()
+  const service = new OutboxEventService(supabase)
+  const result: DispatchPendingEventsResult = {
+    processed: 0,
+    completed: 0,
+    failed: 0,
+    retried: 0,
+    skipped: 0,
+    durationMs: 0,
+    errors: [],
+  }
+
+  await releaseStaleEventLocks(supabase, { lockTtlSeconds: options.lockTtlSeconds })
+  const events = await service.fetchPendingBatch({ batchSize: options.batchSize || options.limit || 25 })
+
+  for (const event of events) {
+    if (Date.now() - startedAt > maxRuntimeMs) break
+    result.processed += 1
+
+    const lockedEvent = await service.markProcessing(event.id, lockId)
+    if (!lockedEvent) continue
+
+    try {
+      const dispatchResult = await dispatchEvent(supabase, lockedEvent, {
+        lockId,
+        handlerFilter: options.handlerFilter,
+      })
+
+      if (dispatchResult === 'skipped') {
+        await service.markSkipped(lockedEvent.id, 'Event contract bulunamadigi icin islenmedi.')
+        result.skipped += 1
+      } else {
+        await service.markCompleted(lockedEvent.id)
+        result.completed += 1
+      }
+    } catch (error: any) {
+      const retryable = error?.retryable !== false
+      const failed = await service.markFailed(lockedEvent.id, error, retryable)
+      if (failed?.status === 'pending') result.retried += 1
+      else result.failed += 1
+      result.errors.push({ id: lockedEvent.id, error: error?.message || 'Outbox event islenemedi.' })
+    }
+  }
+
+  result.durationMs = Date.now() - startedAt
+  return result
+}
+
+export async function dispatchEvent(
+  supabase: SupabaseClient,
+  event: OutboxEventRecord,
+  options: { lockId?: string; handlerFilter?: string[] } = {}
+) {
+  const contract = getEventContract(event.event_type)
+  if (!contract) return 'skipped' as const
+
+  const handlers = resolveEventHandlers(event)
+    .filter(handler => !options.handlerFilter?.length || options.handlerFilter.includes(handler.key))
+
+  for (const handler of handlers) {
+    await handleEventWithRetry(supabase, event, handler, {
+      contract,
+      lockId: options.lockId || createLockId(),
+    })
+  }
+
+  return 'completed' as const
+}
+
+export function resolveEventHandlers(event: OutboxEventRecord) {
+  return getHandlersForEvent(event)
+}
+
+export async function handleEventWithRetry(
+  supabase: SupabaseClient,
+  event: OutboxEventRecord,
+  handler: EventHandler,
+  context: { contract: NonNullable<ReturnType<typeof getEventContract>>; lockId: string }
+) {
+  const alreadyCompleted = await isHandlerCompleted(supabase, event.id, handler.key)
+  if (alreadyCompleted) return
+
+  await markHandlerRunStarted(supabase, event, handler.key)
+  try {
+    await handler.handle(event, {
+      supabase,
+      contract: context.contract,
+      lockId: context.lockId,
+    })
+    await markHandlerRunCompleted(supabase, event.id, handler.key)
+  } catch (error: any) {
+    await markHandlerRunFailed(supabase, event.id, handler.key, error?.message || 'Handler islenemedi.')
+    const wrappedError = error instanceof Error ? error : new Error(String(error || 'Handler islenemedi.'))
+    ;(wrappedError as Error & { retryable?: boolean }).retryable = handler.retryable
+    throw wrappedError
+  }
+}
+
+export async function releaseStaleEventLocks(
+  supabase: SupabaseClient,
+  options: { lockTtlSeconds?: number } = {}
+) {
+  return new OutboxEventService(supabase).releaseStaleLocks(options)
+}
+
+export function createLockId() {
+  return `outbox-dispatcher-${randomUUID()}`
 }
 
 export async function dispatchOutboxEvents(
   supabase: SupabaseClient,
-  options: DispatchOptions = {}
-): Promise<DispatchResult> {
-  const limit = options.limit || 25
-  const lockedBy = options.lockedBy || `outbox-dispatcher-${Date.now()}`
-  const result: DispatchResult = { processed: 0, completed: 0, failed: 0, errors: [] }
-
-  const { data: events, error } = await supabase
-    .from('outbox_events')
-    .select('*')
-    .eq('status', 'pending')
-    .order('created_at', { ascending: true })
-    .limit(limit)
-
-  if (error) {
-    if (isMissingInfrastructureError(error)) return result
-    throw error
-  }
-
-  for (const event of events || []) {
-    result.processed += 1
-    const locked = await lockOutboxEvent(supabase, event.id, lockedBy)
-    if (!locked) continue
-
-    try {
-      const handler = EVENT_HANDLERS[event.event_type] || placeholderHandler
-      const handlerResult = await handler(event)
-      await markOutboxCompleted(supabase, event.id, handlerResult)
-      result.completed += 1
-    } catch (handlerError: any) {
-      const message = handlerError?.message || 'Outbox event islenemedi.'
-      await markOutboxFailed(supabase, event, message)
-      result.failed += 1
-      result.errors.push({ id: event.id, error: message })
-    }
-  }
-
-  return result
+  options: DispatchPendingEventsOptions = {}
+) {
+  return dispatchPendingEvents(supabase, options)
 }
 
-async function lockOutboxEvent(supabase: SupabaseClient, id: string, lockedBy: string) {
+async function isHandlerCompleted(supabase: SupabaseClient, eventId: string, handlerKey: string) {
   const { data, error } = await supabase
-    .from('outbox_events')
-    .update({
-      status: 'processing',
-      locked_at: new Date().toISOString(),
-      locked_by: lockedBy,
-    })
-    .eq('id', id)
-    .eq('status', 'pending')
-    .select('id')
+    .from('outbox_event_handler_runs')
+    .select('id,status')
+    .eq('event_id', eventId)
+    .eq('handler_key', handlerKey)
+    .eq('status', 'completed')
     .maybeSingle()
+
   if (error) {
-    if (isMissingInfrastructureError(error)) return null
+    if (isMissingInfrastructureError(error)) return false
     throw error
   }
-  return data
+  return !!data
 }
 
-async function markOutboxCompleted(supabase: SupabaseClient, id: string, handlerResult: Record<string, any>) {
+async function markHandlerRunStarted(supabase: SupabaseClient, event: OutboxEventRecord, handlerKey: string) {
   const now = new Date().toISOString()
   const { error } = await supabase
-    .from('outbox_events')
+    .from('outbox_event_handler_runs')
+    .upsert({
+      tenant_id: event.tenant_id,
+      event_id: event.id,
+      handler_key: handlerKey,
+      status: 'processing',
+      error: null,
+      started_at: now,
+      updated_at: now,
+    }, { onConflict: 'event_id,handler_key' })
+
+  if (error && !isMissingInfrastructureError(error)) throw error
+}
+
+async function markHandlerRunCompleted(supabase: SupabaseClient, eventId: string, handlerKey: string) {
+  const now = new Date().toISOString()
+  const { error } = await supabase
+    .from('outbox_event_handler_runs')
     .update({
       status: 'completed',
-      processed_at: now,
-      published_at: now,
-      error_json: null,
-      last_error: null,
-      payload_json: handlerResult.payload_json,
+      error: null,
+      completed_at: now,
+      updated_at: now,
     })
-    .eq('id', id)
-  if (error) throw error
+    .eq('event_id', eventId)
+    .eq('handler_key', handlerKey)
+
+  if (error && !isMissingInfrastructureError(error)) throw error
 }
 
-async function markOutboxFailed(supabase: SupabaseClient, event: Record<string, any>, message: string) {
-  const retryCount = Number(event.retry_count || 0) + 1
+async function markHandlerRunFailed(supabase: SupabaseClient, eventId: string, handlerKey: string, message: string) {
   const { error } = await supabase
-    .from('outbox_events')
+    .from('outbox_event_handler_runs')
     .update({
-      status: retryCount >= 5 ? 'failed' : 'pending',
-      retry_count: retryCount,
-      last_error: message,
-      error_json: { message },
+      status: 'failed',
+      error: message,
+      updated_at: new Date().toISOString(),
     })
-    .eq('id', event.id)
-  if (error) throw error
-}
+    .eq('event_id', eventId)
+    .eq('handler_key', handlerKey)
 
-function projectionInvalidationHandler(projections: string[]) {
-  return async (event: Record<string, any>) => ({
-    payload_json: {
-      ...(event.payload_json || {}),
-      handled_by: 'projection_invalidation',
-      invalidated_projections: projections,
-      handled_at: new Date().toISOString(),
-    },
-  })
-}
-
-async function placeholderHandler(event: Record<string, any>) {
-  return {
-    payload_json: {
-      ...(event.payload_json || {}),
-      handled_by: 'placeholder',
-      handled_at: new Date().toISOString(),
-    },
-  }
+  if (error && !isMissingInfrastructureError(error)) throw error
 }

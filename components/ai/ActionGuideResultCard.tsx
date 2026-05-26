@@ -1,6 +1,6 @@
 'use client'
 
-import { ArrowRight, CheckCircle2, Info } from 'lucide-react'
+import { ArrowRight, CheckCircle2, Info, ShieldAlert } from 'lucide-react'
 import type { ActionGuideResult } from '@/lib/ai/actionGuide'
 import { ActionGuideCommandButton } from './ActionGuideCommandButton'
 
@@ -22,6 +22,12 @@ export function ActionGuideResultCard({ result, onActionExecuted }: ActionGuideR
             <span className="rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-500 dark:bg-gray-900 dark:text-gray-400">
               %{Math.round(result.confidence * 100)}
             </span>
+            <span className={result.can_start_now
+              ? 'rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-200'
+              : 'rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-700 dark:bg-amber-950/40 dark:text-amber-200'}
+            >
+              {result.can_start_now ? 'Baslatilabilir' : 'Kosul gerekiyor'}
+            </span>
           </div>
           <p className="mt-1 text-sm leading-5 text-gray-600 dark:text-gray-300">{result.explanation}</p>
         </div>
@@ -39,8 +45,14 @@ export function ActionGuideResultCard({ result, onActionExecuted }: ActionGuideR
       </ol>
 
       {!!result.blocking_reasons.length && (
-        <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-100">
-          {result.blocking_reasons[0]}
+        <div className="mt-4 space-y-1 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-100">
+          {result.blocking_reasons.map(reason => <div key={reason}>{reason}</div>)}
+        </div>
+      )}
+
+      {!!result.warnings.length && (
+        <div className="mt-3 space-y-1 rounded-lg border border-sky-200 bg-sky-50 px-3 py-2 text-sm text-sky-800 dark:border-sky-900/60 dark:bg-sky-950/30 dark:text-sky-100">
+          {result.warnings.map(warning => <div key={warning}>{warning}</div>)}
         </div>
       )}
 
@@ -50,9 +62,16 @@ export function ActionGuideResultCard({ result, onActionExecuted }: ActionGuideR
         ))}
       </div>
 
+      {!!result.matched_actions?.length && (
+        <div className="mt-4 rounded-lg border border-gray-100 bg-gray-50 px-3 py-2 text-xs text-gray-500 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
+          Alternatifler: {result.matched_actions.slice(1, 4).map(action => `${action.label} (%${Math.round(action.confidence * 100)})`).join(', ') || 'yok'}
+        </div>
+      )}
+
       <div className="mt-3 flex items-center gap-1 text-[11px] text-gray-400 dark:text-gray-500">
+        <ShieldAlert size={12} />
+        Rehber veri degistirmez; veri degistiren adimlar sihirbazda sizin onayinizla tamamlanir.
         <ArrowRight size={12} />
-        Rehber veri değiştirmez; işlem sihirbazında siz onay vermeden kayıt güncellenmez.
       </div>
     </div>
   )

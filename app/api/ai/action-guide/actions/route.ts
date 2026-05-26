@@ -5,11 +5,13 @@ import { getAuthenticatedWorkspaceContext } from '@/lib/user-state/server'
 export const runtime = 'nodejs'
 
 const ActionCommandSchema = z.object({
-  action_type: z.enum(['navigate', 'open_wizard', 'open_record', 'start_create', 'focus_record']),
+  action_type: z.enum(['navigate', 'open_wizard', 'open_record', 'show_help', 'start_create', 'focus_record']),
   target_page: z.string().optional().nullable(),
   wizard_key: z.string().optional().nullable(),
   record_id: z.string().optional().nullable(),
   record_type: z.string().optional().nullable(),
+  disabled: z.boolean().optional(),
+  disabled_reason: z.string().optional().nullable(),
 })
 
 export async function POST(request: NextRequest) {
