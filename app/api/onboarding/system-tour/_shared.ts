@@ -8,6 +8,8 @@ import {
   safeInsertSystemEvent,
   SYSTEM_TOUR_VERSION,
 } from '@/lib/user-state/server'
+import { mergeUiPreferences } from '@/lib/user-state/merge-ui-preferences'
+import { DEFAULT_UI_PREFERENCES } from '@/lib/user-state/default-ui-preferences'
 
 type TourAction = 'start' | 'step' | 'complete' | 'skip' | 'postpone'
 
@@ -88,6 +90,12 @@ export async function handleSystemTourAction(request: NextRequest, action: TourA
         .eq('workspace_id', workspaceId)
 
       if (error) throw new Error(error.message)
+      if (stepId) {
+        await mergeTourPreferencePatch(supabase, userId, workspaceId, current => ({
+          completedTourSteps: Array.from(new Set([...(current.completedTourSteps || []), stepId])),
+          lastTourVersion: SYSTEM_TOUR_VERSION,
+        }))
+      }
 
       await safeInsertSystemEvent(supabase, {
         workspaceId,
@@ -111,6 +119,11 @@ export async function handleSystemTourAction(request: NextRequest, action: TourA
         .eq('workspace_id', workspaceId)
 
       if (error) throw new Error(error.message)
+      await mergeTourPreferencePatch(supabase, userId, workspaceId, current => ({
+        hasSeenGlobalTour: true,
+        completedTourSteps: stepId ? Array.from(new Set([...(current.completedTourSteps || []), stepId])) : current.completedTourSteps,
+        lastTourVersion: SYSTEM_TOUR_VERSION,
+      }))
 
       await safeInsertSystemEvent(supabase, {
         workspaceId,
@@ -135,6 +148,10 @@ export async function handleSystemTourAction(request: NextRequest, action: TourA
         .eq('workspace_id', workspaceId)
 
       if (error) throw new Error(error.message)
+      await mergeTourPreferencePatch(supabase, userId, workspaceId, current => ({
+        hasSeenGlobalTour: true,
+        lastTourVersion: SYSTEM_TOUR_VERSION,
+      }))
 
       await safeInsertSystemEvent(supabase, {
         workspaceId,
@@ -178,4 +195,28 @@ export async function handleSystemTourAction(request: NextRequest, action: TourA
       { status: 500, headers: { 'Cache-Control': 'no-store' } }
     )
   }
+}
+
+async function mergeTourPreferencePatch(
+  supabase: ReturnType<typeof import('@/lib/supabase/server').createServiceClient>,
+  userId: string,
+  workspaceId: string,
+  buildPatch: (current: ReturnType<typeof mergeUiPreferences>) => Record<string, unknown>
+) {
+  const currentResult = await supabase
+    .from('user_workspace_state')
+    .select('ui_preferences')
+    .eq('user_id', userId)
+    .eq('workspace_id', workspaceId)
+    .maybeSingle()
+
+  const current = mergeUiPreferences(DEFAULT_UI_PREFERENCES, currentResult.data?.ui_preferences)
+  const patch = buildPatch(current)
+  const merged = mergeUiPreferences(current, patch)
+
+  await supabase
+    .from('user_workspace_state')
+    .update({ ui_preferences: merged })
+    .eq('user_id', userId)
+    .eq('workspace_id', workspaceId)
 }

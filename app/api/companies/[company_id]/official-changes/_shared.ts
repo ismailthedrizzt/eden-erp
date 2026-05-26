@@ -9,6 +9,7 @@ import {
 } from '@/lib/tenancy/server'
 import { getTenantCompanyScope, isWritableCompanyScope } from '@/lib/tenancy/companyScopes'
 import { requirePermission } from '@/lib/security/serverPermissions'
+import { requireBranchPermission } from '@/lib/modules/companies/branchPermissions'
 import { buildFieldHistory } from '@/lib/crud/safeCrudService'
 import { isMissingInfrastructureError } from '@/lib/operations/operationRequestService'
 
@@ -20,6 +21,7 @@ export type OfficialChangeType =
   | 'public_registration_update'
   | 'branch_opening'
   | 'branch_closing'
+  | 'branch_document_update'
   | 'nace_change'
   | 'activity_subject_change'
 
@@ -29,6 +31,7 @@ export const OFFICIAL_CHANGE_OPERATION_TYPES: Record<OfficialChangeType, string>
   public_registration_update: 'company.public_registration_update',
   branch_opening: 'company.branch_opening',
   branch_closing: 'company.branch_closing',
+  branch_document_update: 'company.branch_document_update',
   nace_change: 'company.nace_change',
   activity_subject_change: 'company.activity_subject_change',
 }
@@ -39,6 +42,7 @@ export const OFFICIAL_CHANGE_EVENT_TYPES: Record<OfficialChangeType, string> = {
   public_registration_update: 'company.public_registration_updated',
   branch_opening: 'company.branch_opened',
   branch_closing: 'company.branch_closed',
+  branch_document_update: 'company.branch_documents_updated',
   nace_change: 'company.nace_changed',
   activity_subject_change: 'company.activity_subject_changed',
 }
@@ -240,9 +244,12 @@ export async function ensureOfficialChangeAccess(
   request: NextRequest,
   supabase: SupabaseClient,
   companyId: string,
-  permissionKey = 'companies.view'
+  permissionKey = 'companies.view',
+  fallbackPermissionKey?: string
 ) {
-  const permission = await requirePermission(request, supabase, permissionKey)
+  const permission = fallbackPermissionKey
+    ? await requireBranchPermission(request, supabase, permissionKey, fallbackPermissionKey)
+    : await requirePermission(request, supabase, permissionKey)
   if (permission instanceof NextResponse) return { response: permission }
 
   const tenantContext = resolveTenantContext(request)
@@ -362,6 +369,7 @@ export function officialChangeLabel(changeType: OfficialChangeType) {
   if (changeType === 'public_registration_update') return 'Kamu / tescil bilgisi güncelleme'
   if (changeType === 'branch_opening') return 'Şube açılışı'
   if (changeType === 'branch_closing') return 'Şube kapanışı'
+  if (changeType === 'branch_document_update') return 'Şube belgeleri güncelleme'
   if (changeType === 'nace_change') return 'NACE / faaliyet kodu güncelleme'
   return 'Faaliyet konusu değişikliği'
 }
@@ -740,6 +748,7 @@ export const OFFICIAL_BRANCH_SELECT = [
 ].join(',')
 
 export const OFFICIAL_ORGANIZATION_UNIT_SELECT = 'id,company_id,parent_unit_id,unit_type_id,name,type,short_name,code,location_name,status,start_date,end_date,active,is_deleted'
+export const OFFICIAL_FACILITY_SELECT = 'id,tenant_id,company_id,branch_id,facility_name,facility_type,country,city,district,neighborhood,address,postal_code,phone,email,status,record_status,start_date,end_date,notes,metadata_json,created_at,updated_at,version,is_deleted'
 
 export async function buildBranchOpeningPrecheck(
   supabase: SupabaseClient,
@@ -748,9 +757,10 @@ export async function buildBranchOpeningPrecheck(
   input: { branchName?: string | null; address?: string | null } = {}
 ) {
   const base = await buildOfficialChangePrecheck(supabase, companyId, tenantContext, 'branch_opening')
-  const [branches, organizationUnits] = await Promise.all([
+  const [branches, organizationUnits, facilities] = await Promise.all([
     loadCompanyBranches(supabase, companyId, tenantContext),
     loadCompanyOrganizationUnits(supabase, companyId, tenantContext),
+    loadCompanyFacilities(supabase, companyId, tenantContext),
   ])
   const warnings = [...(base.warnings || [])]
   const branchName = normalizeRequiredString(input.branchName)
@@ -767,7 +777,7 @@ export async function buildBranchOpeningPrecheck(
     warnings,
     branches,
     organization_units: organizationUnits,
-    facilities: [],
+    facilities,
   }
 }
 
@@ -778,9 +788,10 @@ export async function buildBranchClosingPrecheck(
   selectedBranchId?: string | null
 ) {
   const base = await buildOfficialChangePrecheck(supabase, companyId, tenantContext, 'branch_closing')
-  const [branches, organizationUnits] = await Promise.all([
+  const [branches, organizationUnits, facilities] = await Promise.all([
     loadCompanyBranches(supabase, companyId, tenantContext),
     loadCompanyOrganizationUnits(supabase, companyId, tenantContext),
+    loadCompanyFacilities(supabase, companyId, tenantContext),
   ])
   const activeBranches = branches.filter(isActiveBranch)
   const selectedBranch = selectedBranchId
@@ -816,7 +827,7 @@ export async function buildBranchClosingPrecheck(
     blocking_reasons: blockingReasons,
     branches,
     organization_units: organizationUnits,
-    facilities: [],
+    facilities,
     selected_branch: selectedBranch,
     impact,
   }
@@ -1130,6 +1141,46 @@ export async function loadCompanyOrganizationUnits(
   return (data || []) as Record<string, any>[]
 }
 
+export async function loadCompanyFacilities(
+  supabase: SupabaseClient,
+  companyId: string,
+  tenantContext: TenantContext
+) {
+  let query = supabase
+    .from('company_facilities')
+    .select(OFFICIAL_FACILITY_SELECT)
+    .eq('company_id', companyId)
+    .eq('is_deleted', false)
+    .order('facility_name', { ascending: true })
+  query = applyTenantQueryScope(query, 'company_facilities', tenantContext)
+  const { data, error } = await query
+  if (error) {
+    if (isMissingInfrastructureError(error)) return []
+    throw error
+  }
+  return (data || []) as Record<string, any>[]
+}
+
+export async function loadCompanyFacilityById(
+  supabase: SupabaseClient,
+  facilityId: string | null | undefined,
+  tenantContext: TenantContext
+) {
+  if (!facilityId) return null
+  let query = supabase
+    .from('company_facilities')
+    .select(OFFICIAL_FACILITY_SELECT)
+    .eq('id', facilityId)
+    .eq('is_deleted', false)
+  query = applyTenantQueryScope(query, 'company_facilities', tenantContext)
+  const { data, error } = await query.maybeSingle()
+  if (error) {
+    if (isMissingInfrastructureError(error)) return null
+    throw error
+  }
+  return (data || null) as Record<string, any> | null
+}
+
 export function isActiveBranch(branch: Record<string, any>) {
   const values = [branch.record_status, branch.status]
     .map(value => String(value || '').trim().toLocaleLowerCase('tr-TR'))
@@ -1196,6 +1247,116 @@ export async function createBranchOrganizationUnit({
   return data as Record<string, any>
 }
 
+export async function createBranchFacility({
+  supabase,
+  companyId,
+  tenantContext,
+  branchName,
+  facilityName,
+  branchType,
+  country,
+  city,
+  district,
+  neighborhood,
+  address,
+  postalCode,
+  phone,
+  email,
+  startDate,
+  notes,
+  userId,
+}: {
+  supabase: SupabaseClient
+  companyId: string
+  tenantContext: TenantContext
+  branchName: string
+  facilityName?: string | null
+  branchType?: string | null
+  country?: string | null
+  city?: string | null
+  district?: string | null
+  neighborhood?: string | null
+  address?: string | null
+  postalCode?: string | null
+  phone?: string | null
+  email?: string | null
+  startDate?: string | null
+  notes?: string | null
+  userId?: string | null
+}) {
+  const now = new Date().toISOString()
+  const row = withTenantInsertScopeForTable({
+    company_id: companyId,
+    branch_id: null,
+    facility_name: normalizeOptionalString(facilityName) || branchName,
+    facility_type: branchType === 'warehouse_facility' ? 'warehouse_facility' : 'branch_location',
+    country: normalizeOptionalString(country),
+    city: normalizeOptionalString(city),
+    district: normalizeOptionalString(district),
+    neighborhood: normalizeOptionalString(neighborhood),
+    address: normalizeOptionalString(address),
+    postal_code: normalizeOptionalString(postalCode),
+    phone: normalizeOptionalString(phone),
+    email: normalizeOptionalString(email),
+    status: 'active',
+    record_status: 'active',
+    start_date: emptyToNull(startDate),
+    notes: notes || null,
+    metadata_json: {
+      source: 'branch_opening',
+      source_branch_name: branchName,
+    },
+    created_by: userId || null,
+    updated_by: userId || null,
+    created_at: now,
+    updated_at: now,
+    version: 1,
+    is_deleted: false,
+  }, 'company_facilities', tenantContext)
+
+  const { data, error } = await supabase
+    .from('company_facilities')
+    .insert(row)
+    .select(OFFICIAL_FACILITY_SELECT)
+    .single()
+  if (error) {
+    if (isMissingInfrastructureError(error)) return null
+    throw error
+  }
+  return data as Record<string, any>
+}
+
+export async function attachFacilityToBranch({
+  supabase,
+  facilityId,
+  branchId,
+  tenantContext,
+  userId,
+}: {
+  supabase: SupabaseClient
+  facilityId?: string | null
+  branchId?: string | null
+  tenantContext: TenantContext
+  userId?: string | null
+}) {
+  if (!facilityId || !branchId) return null
+  let query = supabase
+    .from('company_facilities')
+    .update({
+      branch_id: branchId,
+      updated_by: userId || null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', facilityId)
+  query = applyTenantQueryScope(query, 'company_facilities', tenantContext)
+  const { data, error } = await query.select(OFFICIAL_FACILITY_SELECT).single()
+  if (error) {
+    if (isMissingInfrastructureError(error)) return null
+    throw error
+  }
+  return data as Record<string, any>
+}
+
 export async function setOrganizationUnitPassive({
   supabase,
   unitId,
@@ -1217,8 +1378,236 @@ export async function setOrganizationUnitPassive({
     })
     .eq('id', unitId)
   query = applyTenantQueryScope(query, 'organization_units', tenantContext)
-  const { error } = await query
+  const { data, error } = await query.select(OFFICIAL_ORGANIZATION_UNIT_SELECT).single()
   if (error && !isMissingInfrastructureError(error)) throw error
+  return (data || null) as Record<string, any> | null
+}
+
+export async function updateOrganizationUnitForBranchClosing({
+  supabase,
+  companyId,
+  unitId,
+  action,
+  targetUnitId,
+  tenantContext,
+  endDate,
+}: {
+  supabase: SupabaseClient
+  companyId: string
+  unitId?: string | null
+  action: 'deactivate' | 'reassign' | 'keep_open'
+  targetUnitId?: string | null
+  tenantContext: TenantContext
+  endDate?: string | null
+}) {
+  if (!unitId) return { ok: true as const, unit: null as Record<string, any> | null }
+  if (action === 'deactivate') {
+    const unit = await setOrganizationUnitPassive({ supabase, unitId, tenantContext, endDate })
+    return { ok: true as const, unit }
+  }
+  if (action === 'keep_open') {
+    const unit = await appendOrganizationUnitHistory({
+      supabase,
+      unitId,
+      tenantContext,
+      event: 'branch_closed_unit_kept_open',
+      payload: { end_date: endDate || null },
+    })
+    return { ok: true as const, unit }
+  }
+
+  const validation = await validateOrganizationUnitReassignTarget({
+    supabase,
+    companyId,
+    unitId,
+    targetUnitId,
+    tenantContext,
+  })
+  if (!validation.ok) return validation
+
+  let query = supabase
+    .from('organization_units')
+    .update({
+      parent_unit_id: targetUnitId,
+      history: appendHistoryEntry(validation.unit?.history, 'branch_closed_unit_reassigned', {
+        previous_parent_unit_id: validation.unit?.parent_unit_id || null,
+        target_organization_unit_id: targetUnitId,
+        end_date: endDate || null,
+      }),
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', unitId)
+  query = applyTenantQueryScope(query, 'organization_units', tenantContext)
+  const { data, error } = await query.select(OFFICIAL_ORGANIZATION_UNIT_SELECT).single()
+  if (error) {
+    if (isMissingInfrastructureError(error)) return { ok: true as const, unit: null }
+    throw error
+  }
+  return { ok: true as const, unit: data as Record<string, any> }
+}
+
+export async function updateFacilityForBranchClosing({
+  supabase,
+  facilityId,
+  action,
+  tenantContext,
+  endDate,
+  userId,
+}: {
+  supabase: SupabaseClient
+  facilityId?: string | null
+  action: 'deactivate' | 'keep_open' | 'reuse'
+  tenantContext: TenantContext
+  endDate?: string | null
+  userId?: string | null
+}) {
+  if (!facilityId) return null
+  const facility = await loadCompanyFacilityById(supabase, facilityId, tenantContext)
+  if (!facility) return null
+
+  const now = new Date().toISOString()
+  const updatePayload = action === 'deactivate'
+    ? {
+      status: 'closed',
+      record_status: 'passive',
+      end_date: emptyToNull(endDate),
+      metadata_json: {
+        ...(facility.metadata_json || {}),
+        branch_closing_action: 'deactivate',
+        branch_closed_facility_deactivated_at: now,
+      },
+    }
+    : {
+      status: action === 'reuse' ? 'reusable' : (facility.status || 'active'),
+      record_status: facility.record_status || 'active',
+      metadata_json: {
+        ...(facility.metadata_json || {}),
+        branch_closing_action: action,
+        branch_closed_facility_kept_open_at: now,
+        reusable_after_branch_closing: action === 'reuse',
+      },
+    }
+
+  let query = supabase
+    .from('company_facilities')
+    .update({
+      ...updatePayload,
+      updated_by: userId || null,
+      updated_at: now,
+      version: Number(facility.version || 1) + 1,
+    })
+    .eq('id', facilityId)
+  query = applyTenantQueryScope(query, 'company_facilities', tenantContext)
+  const { data, error } = await query.select(OFFICIAL_FACILITY_SELECT).single()
+  if (error) {
+    if (isMissingInfrastructureError(error)) return null
+    throw error
+  }
+  return data as Record<string, any>
+}
+
+async function appendOrganizationUnitHistory({
+  supabase,
+  unitId,
+  tenantContext,
+  event,
+  payload,
+}: {
+  supabase: SupabaseClient
+  unitId: string
+  tenantContext: TenantContext
+  event: string
+  payload: Record<string, any>
+}) {
+  let currentQuery = supabase
+    .from('organization_units')
+    .select(`${OFFICIAL_ORGANIZATION_UNIT_SELECT},history`)
+    .eq('id', unitId)
+  currentQuery = applyTenantQueryScope(currentQuery, 'organization_units', tenantContext)
+  const { data: current, error: currentError } = await currentQuery.maybeSingle()
+  if (currentError) {
+    if (isMissingInfrastructureError(currentError)) return null
+    throw currentError
+  }
+  if (!current) return null
+
+  let updateQuery = supabase
+    .from('organization_units')
+    .update({
+      history: appendHistoryEntry((current as Record<string, any>).history, event, payload),
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', unitId)
+  updateQuery = applyTenantQueryScope(updateQuery, 'organization_units', tenantContext)
+  const { data, error } = await updateQuery.select(OFFICIAL_ORGANIZATION_UNIT_SELECT).single()
+  if (error) {
+    if (isMissingInfrastructureError(error)) return null
+    throw error
+  }
+  return data as Record<string, any>
+}
+
+async function validateOrganizationUnitReassignTarget({
+  supabase,
+  companyId,
+  unitId,
+  targetUnitId,
+  tenantContext,
+}: {
+  supabase: SupabaseClient
+  companyId: string
+  unitId: string
+  targetUnitId?: string | null
+  tenantContext: TenantContext
+}) {
+  if (!targetUnitId) {
+    return { ok: false as const, status: 400, code: 'TARGET_ORGANIZATION_UNIT_REQUIRED', error: 'Organizasyon birimi başka birime bağlanacaksa hedef birim seçilmelidir.', details: { fieldErrors: { target_organization_unit_id: 'Hedef birim zorunludur.' } } }
+  }
+  if (targetUnitId === unitId) {
+    return { ok: false as const, status: 400, code: 'TARGET_ORGANIZATION_UNIT_SELF', error: 'Organizasyon birimi kendisine bağlanamaz.', details: { fieldErrors: { target_organization_unit_id: 'Kendi birimi seçilemez.' } } }
+  }
+
+  const units = await loadCompanyOrganizationUnits(supabase, companyId, tenantContext)
+  const unit = units.find(row => row.id === unitId) || null
+  const target = units.find(row => row.id === targetUnitId) || null
+  if (!unit) {
+    return { ok: false as const, status: 404, code: 'ORGANIZATION_UNIT_NOT_FOUND', error: 'Şubeye bağlı organizasyon birimi bulunamadı.' }
+  }
+  if (!target) {
+    return { ok: false as const, status: 400, code: 'TARGET_ORGANIZATION_UNIT_NOT_IN_COMPANY', error: 'Hedef organizasyon birimi aynı şirket altında bulunmalıdır.', details: { fieldErrors: { target_organization_unit_id: 'Aynı şirketten hedef birim seçin.' } } }
+  }
+  const targetStatus = String(target.status || '').toLocaleLowerCase('tr-TR')
+  if (target.is_deleted || target.active === false || ['passive', 'pasif', 'closed', 'kapalı'].includes(targetStatus)) {
+    return { ok: false as const, status: 400, code: 'TARGET_ORGANIZATION_UNIT_INACTIVE', error: 'Kapalı veya pasif organizasyon birimine yeniden bağlama yapılamaz.', details: { fieldErrors: { target_organization_unit_id: 'Aktif hedef birim seçin.' } } }
+  }
+  if (wouldCreateOrganizationCycle(units, unitId, targetUnitId)) {
+    return { ok: false as const, status: 400, code: 'ORGANIZATION_UNIT_CYCLE', error: 'Bu yeniden bağlama organizasyon ağacında döngü oluşturur.', details: { fieldErrors: { target_organization_unit_id: 'Alt birime bağlanamaz.' } } }
+  }
+  return { ok: true as const, unit, target }
+}
+
+function wouldCreateOrganizationCycle(units: Record<string, any>[], unitId: string, targetUnitId: string) {
+  const byId = new Map(units.map(unit => [unit.id, unit]))
+  let cursor = byId.get(targetUnitId)
+  const seen = new Set<string>()
+  while (cursor?.id && !seen.has(cursor.id)) {
+    if (cursor.id === unitId) return true
+    seen.add(cursor.id)
+    cursor = cursor.parent_unit_id ? byId.get(cursor.parent_unit_id) : undefined
+  }
+  return false
+}
+
+function appendHistoryEntry(history: unknown, event: string, payload: Record<string, any>) {
+  const rows = Array.isArray(history) ? history : []
+  return [
+    ...rows,
+    {
+      event,
+      payload,
+      changed_at: new Date().toISOString(),
+    },
+  ]
 }
 
 async function buildBranchImpact(
@@ -1227,59 +1616,150 @@ async function buildBranchImpact(
   tenantContext: TenantContext
 ) {
   const unitId = branch.organization_unit_id
-  if (!unitId) {
-    return {
-      organization_unit_id: null,
-      position_count: 0,
-      employee_count: 0,
-      open_relation_count: 0,
-      warnings: [],
-    }
-  }
+  const facilityId = branch.facility_id
+  const warnings: string[] = []
+  const positions = unitId ? await safeListRows({
+    supabase,
+    tenantContext,
+    tableName: 'positions',
+    select: 'id,title,status,active_count,is_deleted',
+    label: 'Kadro',
+    applyFilter: query => query.eq('unit_id', unitId).eq('is_deleted', false),
+    warnings,
+  }) : []
+  const positionIds = positions.map((position: any) => position.id).filter(Boolean)
 
-  let positionsQuery = supabase
-    .from('positions')
-    .select('id,title,status,active_count,is_deleted')
-    .eq('unit_id', unitId)
-    .eq('is_deleted', false)
-  positionsQuery = applyTenantQueryScope(positionsQuery, 'positions', tenantContext)
-  const { data: positions, error: positionError } = await positionsQuery
-  if (positionError && !isMissingInfrastructureError(positionError)) throw positionError
-  const positionIds = (positions || []).map((position: any) => position.id).filter(Boolean)
-
-  const [employeesByUnit, employeesByPosition] = await Promise.all([
-    safeEmployeeCount(supabase, tenantContext, query => query.eq('unit_id', unitId)),
+  const [employeesByUnit, employeesByPosition, openTaskCount, openProjectCount, openInventoryLocationCount, openServiceRecordCount] = await Promise.all([
+    unitId ? safeEmployeeCount(supabase, tenantContext, query => query.eq('unit_id', unitId), warnings, 'Personel') : Promise.resolve(0),
     positionIds.length
-      ? safeEmployeeCount(supabase, tenantContext, query => query.in('position_id', positionIds))
+      ? safeEmployeeCount(supabase, tenantContext, query => query.in('position_id', positionIds), warnings, 'Pozisyon personeli')
       : Promise.resolve(0),
+    safeCountRows({
+      supabase,
+      tenantContext,
+      tableName: 'project_management_tasks',
+      label: 'Açık görev',
+      applyFilter: query => query
+        .eq('company_id', branch.company_id)
+        .in('status', ['yeni', 'yapilacak', 'devam_ediyor', 'beklemede', 'incelemede'])
+        .eq('record_status', 'active')
+        .is('deleted_at', null)
+        .or(`related_entity_id.eq.${branch.id}${unitId ? `,related_entity_id.eq.${unitId}` : ''}${facilityId ? `,related_entity_id.eq.${facilityId}` : ''}`),
+      warnings,
+    }),
+    Promise.resolve(unsupportedRelationCount(warnings, 'Açık proje', 'Şube/facility proje ilişkisi henüz modellenmedi.')),
+    safeCountRows({
+      supabase,
+      tenantContext,
+      tableName: 'inventory_locations',
+      label: 'Depo/stok lokasyonu',
+      applyFilter: query => (facilityId ? query.eq('facility_id', facilityId) : query.eq('branch_id', branch.id)).eq('record_status', 'active'),
+      warnings,
+    }),
+    Promise.resolve(unsupportedRelationCount(warnings, 'Aktif servis/saha kaydı', 'Şube/facility servis ilişkisi henüz modellenmedi.')),
   ])
 
+  const activePositionCount = positions.filter((position: any) =>
+    !['closed', 'kapalı', 'pasif', 'passive'].includes(String(position.status || '').toLocaleLowerCase('tr-TR'))
+  ).length
+  const employeeCount = Math.max(employeesByUnit, employeesByPosition)
+  const openRelationCount = activePositionCount + employeeCount + openTaskCount + openProjectCount + openInventoryLocationCount + openServiceRecordCount
+
   return {
-    organization_unit_id: unitId,
-    position_count: (positions || []).length,
-    active_position_count: (positions || []).filter((position: any) => !['closed', 'kapalı', 'pasif'].includes(String(position.status || '').toLocaleLowerCase('tr-TR'))).length,
-    employee_count: Math.max(employeesByUnit, employeesByPosition),
-    open_relation_count: 0,
-    warnings: [],
+    organization_unit_id: unitId || null,
+    facility_id: facilityId || null,
+    position_count: positions.length,
+    active_position_count: activePositionCount,
+    employee_count: employeeCount,
+    open_task_count: openTaskCount,
+    open_project_count: openProjectCount,
+    open_inventory_location_count: openInventoryLocationCount,
+    open_service_record_count: openServiceRecordCount,
+    open_relation_count: openRelationCount,
+    warnings,
   }
+}
+
+function unsupportedRelationCount(warnings: string[], label: string, reason: string) {
+  warnings.push(`${label} sayısı 0 kabul edildi. ${reason}`)
+  return 0
 }
 
 async function safeEmployeeCount(
   supabase: SupabaseClient,
   tenantContext: TenantContext,
-  applyFilter: (query: any) => any
+  applyFilter: (query: any) => any,
+  warnings: string[] = [],
+  label = 'Personel'
 ) {
-  let query = supabase
-    .from('employees')
-    .select('id', { count: 'exact', head: true })
-  query = applyTenantQueryScope(query, 'employees', tenantContext)
+  return safeCountRows({
+    supabase,
+    tenantContext,
+    tableName: 'employees',
+    label,
+    applyFilter: query => applyFilter(query).eq('is_deleted', false),
+    warnings,
+  })
+}
+
+async function safeCountRows({
+  supabase,
+  tenantContext,
+  tableName,
+  label,
+  applyFilter,
+  warnings,
+}: {
+  supabase: SupabaseClient
+  tenantContext: TenantContext
+  tableName: string
+  label: string
+  applyFilter: (query: any) => any
+  warnings: string[]
+}) {
+  let query = supabase.from(tableName).select('id', { count: 'exact', head: true })
+  query = applyTenantQueryScope(query, tableName, tenantContext)
   query = applyFilter(query)
   const { count, error } = await query
   if (error) {
-    if (isMissingInfrastructureError(error)) return 0
+    if (isMissingInfrastructureError(error)) {
+      warnings.push(`${label} altyapısı veya ilişkisi henüz tanımlı olmadığı için sayı 0 kabul edildi.`)
+      return 0
+    }
     throw error
   }
   return count || 0
+}
+
+async function safeListRows({
+  supabase,
+  tenantContext,
+  tableName,
+  select,
+  label,
+  applyFilter,
+  warnings,
+}: {
+  supabase: SupabaseClient
+  tenantContext: TenantContext
+  tableName: string
+  select: string
+  label: string
+  applyFilter: (query: any) => any
+  warnings: string[]
+}) {
+  let query = supabase.from(tableName).select(select)
+  query = applyTenantQueryScope(query, tableName, tenantContext)
+  query = applyFilter(query)
+  const { data, error } = await query
+  if (error) {
+    if (isMissingInfrastructureError(error)) {
+      warnings.push(`${label} altyapısı veya ilişkisi henüz tanımlı olmadığı için sayı 0 kabul edildi.`)
+      return []
+    }
+    throw error
+  }
+  return data || []
 }
 
 async function loadCompanyRootUnitId(
@@ -1321,6 +1801,7 @@ async function nextOfficialChangeNo(supabase: SupabaseClient, transactionType: O
     public_registration_update: 'KT',
     branch_opening: 'SA',
     branch_closing: 'SK',
+    branch_document_update: 'SB',
     nace_change: 'NC',
     activity_subject_change: 'FK',
   }

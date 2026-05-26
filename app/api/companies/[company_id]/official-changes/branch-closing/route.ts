@@ -5,6 +5,7 @@ import { applyTenantQueryScope } from '@/lib/tenancy/server'
 import { OperationRequestService } from '@/lib/operations/operationRequestService'
 import { resolveBaseUpdatedAt, resolveBaseVersion, resolveClientRequestId, stripOperationControlFields } from '@/lib/operations/idempotency'
 import { OutboxEventService } from '@/lib/outbox/outboxEventService'
+import { BRANCH_PERMISSIONS } from '@/lib/modules/companies/branchPermissions'
 import {
   OFFICIAL_BRANCH_SELECT,
   OFFICIAL_CHANGE_EVENT_TYPES,
@@ -22,7 +23,8 @@ import {
   normalizeOptionalString,
   officialChangeError,
   officialChangeSuccess,
-  setOrganizationUnitPassive,
+  updateFacilityForBranchClosing,
+  updateOrganizationUnitForBranchClosing,
   validateOfficialDates,
 } from '../_shared'
 
@@ -52,13 +54,13 @@ export async function POST(
 ) {
   const { company_id: companyId } = await params
   const supabase = createServiceClient()
-  const access = await ensureOfficialChangeAccess(request, supabase, companyId, 'companies.edit')
+  const access = await ensureOfficialChangeAccess(request, supabase, companyId, BRANCH_PERMISSIONS.closingStart, 'companies.edit')
   if (access.response) return access.response
 
   const rawBody = await request.json().catch(() => ({}))
   const clientRequestId = resolveClientRequestId(request, rawBody)
-  const baseVersion = resolveBaseVersion(rawBody)
-  const baseUpdatedAt = resolveBaseUpdatedAt(rawBody)
+  const baseVersion = resolveBaseVersion(rawBody) ?? (rawBody.base_branch_version === undefined ? null : Number(rawBody.base_branch_version))
+  const baseUpdatedAt = resolveBaseUpdatedAt(rawBody) ?? (rawBody.base_branch_updated_at ? String(rawBody.base_branch_updated_at) : null)
   const parsed = BranchClosingSchema.safeParse(stripOperationControlFields(rawBody))
   if (!parsed.success) return officialChangeError('Şube kapanışı verileri geçerli değil.', 'VALIDATION_FAILED', 400, { validation: parsed.error.flatten() })
   const input = parsed.data
@@ -92,6 +94,8 @@ export async function POST(
     if (!branch) return fail('Kapatılacak şube bulunamadı.', 'BRANCH_NOT_FOUND', 404)
     if (!isActiveBranch(branch)) return fail('Kapalı veya pasif şube tekrar kapatılamaz.', 'BRANCH_ALREADY_CLOSED', 409)
     if (input.organization_unit_action === 'reassign' && !input.target_organization_unit_id) return fail('Organizasyon birimi başka birime bağlanacaksa hedef birim seçilmelidir.', 'TARGET_ORGANIZATION_UNIT_REQUIRED', 400)
+    if (baseVersion !== null && Number(branch.version || 0) !== Number(baseVersion)) return fail('Şube kaydı bu işlem hazırlanırken değişmiş. Lütfen kaydı yenileyip tekrar deneyin.', 'VERSION_CONFLICT', 409, { current_version: branch.version, base_version: baseVersion })
+    if (baseUpdatedAt && branch.updated_at && new Date(branch.updated_at).getTime() !== new Date(baseUpdatedAt).getTime()) return fail('Şube kaydı bu işlem hazırlanırken değişmiş. Lütfen kaydı yenileyip tekrar deneyin.', 'VERSION_CONFLICT', 409, { current_updated_at: branch.updated_at, base_updated_at: baseUpdatedAt })
     const dateValidation = validateOfficialDates({ decisionDate: input.closing_decision_date, registrationDate: input.closing_registration_date, tradeRegistryGazetteDate: input.trade_registry_gazette_date })
     if (!dateValidation.ok) return fail(dateValidation.message, dateValidation.code, 400)
 
@@ -126,9 +130,24 @@ export async function POST(
     updateQuery = applyTenantQueryScope(updateQuery, 'company_branches', access.tenantContext)
     const { data: updatedBranch, error: updateError } = await updateQuery.select(OFFICIAL_BRANCH_SELECT).single()
     if (updateError) throw updateError
-    if (input.organization_unit_action === 'deactivate' && branch.organization_unit_id) {
-      await setOrganizationUnitPassive({ supabase, unitId: branch.organization_unit_id, tenantContext: access.tenantContext, endDate: input.closing_registration_date || input.closing_decision_date })
-    }
+    const organizationUnitResult = await updateOrganizationUnitForBranchClosing({
+      supabase,
+      companyId,
+      unitId: branch.organization_unit_id,
+      action: input.organization_unit_action,
+      targetUnitId: input.target_organization_unit_id || null,
+      tenantContext: access.tenantContext,
+      endDate: input.closing_registration_date || input.closing_decision_date,
+    })
+    if (!organizationUnitResult.ok) return fail(organizationUnitResult.error, organizationUnitResult.code, organizationUnitResult.status, organizationUnitResult.details)
+    const facility = await updateFacilityForBranchClosing({
+      supabase,
+      facilityId: branch.facility_id,
+      action: input.facility_action,
+      tenantContext: access.tenantContext,
+      endDate: input.closing_registration_date || input.closing_decision_date,
+      userId: access.userId || null,
+    })
     const changedFields = Object.keys(updatePayload)
     const oldValues = Object.fromEntries(changedFields.map(field => [field, branch[field] ?? null]))
     const updated = updatedBranch as Record<string, any>
@@ -154,7 +173,7 @@ export async function POST(
       warnings: [...(precheck.warnings || []), ...dateValidation.warnings],
     })
     await insertOfficialLifecycleEvent({ supabase, companyId, tenantContext: access.tenantContext, userId: access.userId, transaction, eventType: 'company_branch_closing_completed', eventDate: input.closing_registration_date || input.closing_decision_date })
-    const result = { company: precheck.current, transaction, branch: updated, organization_unit: input.organization_unit_action === 'deactivate' ? { id: branch.organization_unit_id, status: 'Pasif' } : null, facility: null }
+    const result = { company: precheck.current, transaction, branch: updated, organization_unit: organizationUnitResult.unit, facility }
     if (operation) {
       await operationService.markCompleted(operation.id, result, [...(precheck.warnings || []), ...dateValidation.warnings])
       await new OutboxEventService(supabase as any).enqueue({

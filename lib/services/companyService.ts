@@ -15,11 +15,16 @@ type RelationListOptions = ApiClientOptions & Partial<Pick<ListQuery, 'page' | '
   statuses?: string[]
   authorityStatuses?: string[]
   authority_statuses?: string[]
+  branchId?: string
+  organizationUnitId?: string
+  facilityId?: string
+  scopeType?: string
+  includeCompanyWide?: boolean
 }
 type CompanyListOptions = ApiClientOptions & Partial<Pick<ListQuery, 'page' | 'pageSize' | 'search' | 'sort' | 'direction'>> & { includePassive?: boolean; statuses?: string[] }
 
 function relationListOptions(options: RelationListOptions = {}) {
-  const { includePassive, companyId, statuses, authorityStatuses, authority_statuses, ...clientOptions } = options
+  const { includePassive, companyId, statuses, authorityStatuses, authority_statuses, branchId, organizationUnitId, facilityId, scopeType, includeCompanyWide, ...clientOptions } = options
   const representativeAuthorityStatuses = authorityStatuses || authority_statuses
   return {
     ...clientOptions,
@@ -30,6 +35,11 @@ function relationListOptions(options: RelationListOptions = {}) {
       ...(includePassive ? { include_passive: 'true' } : {}),
       ...(statuses?.length ? { statuses: statuses.join(',') } : {}),
       ...(representativeAuthorityStatuses?.length ? { authority_statuses: representativeAuthorityStatuses.join(',') } : {}),
+      ...(branchId ? { branch_id: branchId } : {}),
+      ...(organizationUnitId ? { organization_unit_id: organizationUnitId } : {}),
+      ...(facilityId ? { facility_id: facilityId } : {}),
+      ...(scopeType ? { scope_type: scopeType } : {}),
+      ...(includeCompanyWide ? { include_company_wide: 'true' } : {}),
       page: clientOptions.query?.page ?? options.page,
       pageSize: clientOptions.query?.pageSize ?? options.pageSize,
       search: clientOptions.query?.search ?? options.search,
@@ -130,6 +140,9 @@ export const companyService = {
   },
   updateBranch(id: string, payload: Record<string, any>) {
     return updateEntityRecord<any>({ collectionPath: '/api/companies/branches' }, id, payload)
+  },
+  updateBranchDocuments(id: string, payload: Record<string, any>) {
+    return apiClient.post<{ data: any; operation_id?: string; operation_status?: string; message?: string }>(`/api/companies/branches/${id}/documents`, payload)
   },
   branchOpeningPrecheck(companyId: string, params: { branchName?: string; address?: string } = {}) {
     return apiClient.get<{ data: any }>(`/api/companies/${companyId}/official-changes/branch-opening/precheck`, {

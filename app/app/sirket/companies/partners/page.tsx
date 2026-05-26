@@ -16,6 +16,10 @@ import {
   type RecordStatusFilterValue,
 } from '@/components/ui/SmartDataTable'
 import { Toast } from '@/components/ui/Toast'
+import { DraftCreateNotice } from '@/components/ui/DraftCreateNotice'
+import { PageContextTour } from '@/components/onboarding/PageContextTour'
+import { pageTourSteps } from '@/components/onboarding/tourSteps'
+import { useRegisterActionGuideContext } from '@/components/ai/ActionGuideContext'
 import { formControlClass } from '@/components/ui/formControlStyles'
 import { cn } from '@/lib/utils'
 import { normalizeCountryId } from '@/lib/reference/country-nationalities'
@@ -453,6 +457,13 @@ export default function OrtaklarPage() {
   const includePassive = statusFilters.includes('passive')
   const selectedRecordStatus = getPartnerRecordStatus(selectedPartner)
   const isSelectedPassive = selectedRecordStatus === 'passive'
+  useRegisterActionGuideContext({
+    currentPage: 'partners',
+    selectedRecordId: selectedPartner?.id || null,
+    selectedRecordType: selectedPartner?.id ? 'partner' : null,
+    selectedRecordStatus: selectedPartner ? selectedRecordStatus : null,
+    activeCompanyId: selectedPartner?.company_id || null,
+  })
   const formMode: FormMode = pageState === 'create' ? 'create' : isSelectedPassive ? 'passive' : pageState === 'edit' ? 'edit' : 'view'
   const formLoadStages = createProgressiveFormLoadStages({
     mode: formMode,
@@ -892,6 +903,28 @@ export default function OrtaklarPage() {
     handleOwnershipActionClick(transactionType as OwnershipTransactionType)
   }
 
+  useEffect(() => {
+    const onGuideCommand = (event: Event) => {
+      const detail = (event as CustomEvent<{ action_type?: string; wizard_key?: string }>).detail
+      if (!detail) return
+      if (detail.action_type === 'start_create') {
+        setSelectedPartner(null)
+        setPageState('create')
+        if (!companies.length) loadRelationContext(false).catch(() => undefined)
+        return
+      }
+      if (detail.action_type !== 'open_wizard' || !selectedPartner?.id) return
+      if (detail.wizard_key === 'initial_partnership_entry') openOwnershipWizard(selectedPartner, INITIAL_PARTNERSHIP_ENTRY_TYPE)
+      if (detail.wizard_key === 'share_transfer') openOwnershipWizard(selectedPartner, 'Pay Devri' as OwnershipTransactionType)
+      if (detail.wizard_key === 'ownership_exit') openOwnershipWizard(selectedPartner, 'Ortaklıktan Çıkış' as OwnershipTransactionType)
+      if (detail.wizard_key === 'partner_rights_change') openOwnershipWizard(selectedPartner, 'Oy Hakkı Değişikliği' as OwnershipTransactionType)
+      if (detail.wizard_key === 'ownership_correction') openOwnershipWizard(selectedPartner, 'Düzeltme Kaydı' as OwnershipTransactionType)
+    }
+
+    window.addEventListener('eden:action-guide-command', onGuideCommand)
+    return () => window.removeEventListener('eden:action-guide-command', onGuideCommand)
+  })
+
   const handleCreateOwnershipTransaction = async (partner: Record<string, any>, payload: Record<string, any>) => {
     if (!partner?.id) return
     setSaving(true)
@@ -999,10 +1032,11 @@ export default function OrtaklarPage() {
         subtitle={bannerConfig.subtitle}
         icon={<Users size={24} />}
         {...(bannerConfig.mode === 'list'
-          ? { onAddClick: (bannerConfig as any).onAddClick, addButtonText: (bannerConfig as any).addButtonText }
+          ? { onAddClick: (bannerConfig as any).onAddClick, addButtonText: (bannerConfig as any).addButtonText, addButtonTourId: 'quick-actions' }
           : { onBackClick: (bannerConfig as any).onBackClick }
         )}
       />
+      <PageContextTour tourKey="partners" steps={pageTourSteps.partners} enabled={pageState === 'list' || pageState === 'view'} />
 
       {toast && <Toast type={toast.type} title={toast.title} message={toast.message} onClose={() => setToast(null)} />}
 
@@ -1020,7 +1054,7 @@ export default function OrtaklarPage() {
             widgets={widgets}
             defaultView="list"
             storageKey="companies-partners-table"
-            emptyText="Ortak kaydı bulunamadı"
+            emptyText="Henüz ortak kaydı yok. + Ekle ile ortak kartı taslağı oluşturabilir, ardından İlk Ortaklık Girişi işlemiyle ortaklık haklarını tanımlayabilirsiniz."
             onRowClick={handleRowClick}
             onRefresh={() => loadData(true)}
             defaultPageSize={listQuery.pageSize}
@@ -1045,7 +1079,10 @@ export default function OrtaklarPage() {
       )}
 
       {pageState !== 'list' && (
-        <div className="mt-6">
+        <div className="mt-6 space-y-4">
+          {pageState === 'create' && (
+            <DraftCreateNotice message="Bu işlem ortak kartı taslağı oluşturur. Ortaklık hakları, pay oranı, oy hakkı, kar payı ve sermaye bilgileri İlk Ortaklık Girişi veya ilgili ortaklık işlemleriyle oluşturulur." />
+          )}
           <EntityForm
             mode={formMode}
             entityName="Ortaklarımız"

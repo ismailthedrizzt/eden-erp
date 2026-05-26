@@ -48,6 +48,12 @@ const REPRESENTATIVE_AUTHORITY_CONTROLLED_FIELDS = new Set([
   'can_submit_hiring_notice',
   'can_submit_termination_notice',
   'official_correspondence_authority',
+  'scope_type',
+  'branch_id',
+  'organization_unit_id',
+  'facility_id',
+  'scope_label',
+  'scope_notes',
   'authority_documents',
   'authority_status',
   'authority_record_status',
@@ -110,6 +116,11 @@ export async function GET(request: NextRequest) {
   }
   const sortColumn = sortMap[listQuery.sort || ''] || 'created_at'
   const companyId = searchParams.get('company_id')
+  const branchId = searchParams.get('branch_id')
+  const organizationUnitId = searchParams.get('organization_unit_id')
+  const facilityId = searchParams.get('facility_id')
+  const scopeType = searchParams.get('scope_type')
+  const includeCompanyWide = searchParams.get('include_company_wide') === 'true'
   const status = searchParams.get('status')
   const statuses = (searchParams.get('statuses') || '')
     .split(',')
@@ -125,13 +136,14 @@ export async function GET(request: NextRequest) {
   let authorityFilteredIds: string[] | null = null
   const includeAuthorityDraft = normalizedAuthorityStatuses.includes('draft')
   const authorityViewStatuses = normalizedAuthorityStatuses.filter(statusValue => statusValue !== 'draft')
-  if (authorityViewStatuses.length) {
+  const hasAuthorityScopeFilter = !!(branchId || organizationUnitId || facilityId || scopeType)
+  if (authorityViewStatuses.length || hasAuthorityScopeFilter) {
     let authorityFilterQuery = supabase
       .from('v_current_representative_authorities')
-      .select('representative_id')
-      .in('authority_record_status', authorityViewStatuses)
+      .select('representative_id,company_id,authority_record_status,scope')
     authorityFilterQuery = applyTenantQueryScope(authorityFilterQuery, 'v_current_representative_authorities', tenantContext)
     if (companyId) authorityFilterQuery = authorityFilterQuery.eq('company_id', companyId)
+    if (authorityViewStatuses.length) authorityFilterQuery = authorityFilterQuery.in('authority_record_status', authorityViewStatuses)
     const { data: authorityMatches, error: authorityFilterError } = await authorityFilterQuery
     if (authorityFilterError) {
       if (isMissingTableError(authorityFilterError)) {
@@ -140,7 +152,10 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: authorityFilterError.message, code: authorityFilterError.code || 'AUTHORITY_FILTER_FAILED' }, { status: 500 })
       }
     } else {
-      authorityFilteredIds = Array.from(new Set((authorityMatches || []).map(row => row.representative_id).filter(Boolean)))
+      authorityFilteredIds = Array.from(new Set((authorityMatches || [])
+        .filter(row => authorityRowMatchesScope(row as Record<string, any>, { branchId, organizationUnitId, facilityId, scopeType, includeCompanyWide }))
+        .map(row => row.representative_id)
+        .filter(Boolean)))
     }
   } else if (normalizedAuthorityStatuses.length) {
     authorityFilteredIds = []
@@ -158,10 +173,10 @@ export async function GET(request: NextRequest) {
     if (!scope) return NextResponse.json({ error: 'Şirket bulunamadı', code: 'COMPANY_NOT_FOUND' }, { status: 404 })
     query = query.eq('company_id', companyId)
   }
-  if (normalizedAuthorityStatuses.length) {
-    if (includeAuthorityDraft && authorityFilteredIds?.length) {
+  if (normalizedAuthorityStatuses.length || hasAuthorityScopeFilter) {
+    if (includeAuthorityDraft && !hasAuthorityScopeFilter && authorityFilteredIds?.length) {
       query = query.or(`id.in.(${authorityFilteredIds.join(',')}),record_status.eq.draft`)
-    } else if (includeAuthorityDraft) {
+    } else if (includeAuthorityDraft && !hasAuthorityScopeFilter) {
       query = query.eq('record_status', 'draft')
     } else if (authorityFilteredIds?.length) {
       query = query.in('id', authorityFilteredIds)
@@ -320,6 +335,34 @@ function normalizeRepresentativeMainStatusFilters(values: string[]) {
 function normalizeRepresentativeAuthorityStatusFilters(values: string[]) {
   const allowed = new Set(['draft', 'active', 'suspended', 'expired', 'terminated'])
   return values.filter(value => allowed.has(value))
+}
+
+function authorityRowMatchesScope(
+  row: Record<string, any>,
+  filters: {
+    branchId?: string | null
+    organizationUnitId?: string | null
+    facilityId?: string | null
+    scopeType?: string | null
+    includeCompanyWide?: boolean
+  }
+) {
+  const scope = row.scope && typeof row.scope === 'object' ? row.scope : {}
+  const currentScopeType = String(scope.scope_type || 'company_wide')
+  if (filters.scopeType && currentScopeType !== filters.scopeType) return false
+  if (filters.branchId) {
+    return (currentScopeType === 'branch' && scope.branch_id === filters.branchId)
+      || (!!filters.includeCompanyWide && currentScopeType === 'company_wide')
+  }
+  if (filters.organizationUnitId) {
+    return (currentScopeType === 'organization_unit' && scope.organization_unit_id === filters.organizationUnitId)
+      || (!!filters.includeCompanyWide && currentScopeType === 'company_wide')
+  }
+  if (filters.facilityId) {
+    return (currentScopeType === 'facility' && scope.facility_id === filters.facilityId)
+      || (!!filters.includeCompanyWide && currentScopeType === 'company_wide')
+  }
+  return true
 }
 
 function mapRepresentativeCardForDb(representative: Record<string, any>) {
@@ -509,6 +552,12 @@ async function mergeCurrentRepresentativeAuthorities(
     return {
       ...row,
       current_authority: current,
+      scope_type: current.scope?.scope_type || 'company_wide',
+      branch_id: current.scope?.branch_id || null,
+      organization_unit_id: current.scope?.organization_unit_id || null,
+      facility_id: current.scope?.facility_id || null,
+      scope_label: current.scope?.scope_label || '',
+      scope_notes: current.scope?.scope_notes || '',
       last_authority_transaction: lastTransaction || null,
       authority_status: current.authority_status || null,
       authority_record_status: current.authority_record_status || null,

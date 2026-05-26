@@ -3,9 +3,10 @@ import { z } from 'zod'
 import { createServiceClient } from '@/lib/supabase/server'
 import { applyTenantQueryScope, resolveTenantContext } from '@/lib/tenancy/server'
 import { getTenantCompanyScope, isWritableCompanyScope } from '@/lib/tenancy/companyScopes'
-import { requirePermission } from '@/lib/security/serverPermissions'
 import { isMissingInfrastructureError } from '@/lib/operations/operationRequestService'
-import { COMPANY_BRANCH_SELECT } from '../route'
+import { BRANCH_PERMISSIONS, requireBranchPermission } from '@/lib/modules/companies/branchPermissions'
+import { COMPANY_BRANCH_SELECT } from '@/lib/modules/companies/companyBranchSelect'
+import { resolveBaseUpdatedAt, resolveBaseVersion } from '@/lib/operations/idempotency'
 
 const emptyStringToUndefined = (value: unknown) => value === '' ? undefined : value
 const optionalUuid = z.preprocess(emptyStringToUndefined, z.string().uuid().optional().nullable())
@@ -52,7 +53,7 @@ export async function GET(
 ) {
   const { id } = await params
   const supabase = createServiceClient()
-  const permission = await requirePermission(request, supabase, 'companies.view')
+  const permission = await requireBranchPermission(request, supabase, BRANCH_PERMISSIONS.view, 'companies.view')
   if (permission instanceof NextResponse) return permission
   const tenantContext = resolveTenantContext(request)
   const branch = await loadBranch(supabase, id, tenantContext)
@@ -68,10 +69,12 @@ export async function PATCH(
 ) {
   const { id } = await params
   const supabase = createServiceClient()
-  const permission = await requirePermission(request, supabase, 'companies.edit')
+  const permission = await requireBranchPermission(request, supabase, BRANCH_PERMISSIONS.edit, 'companies.edit')
   if (permission instanceof NextResponse) return permission
   const tenantContext = resolveTenantContext(request)
   const rawBody = await request.json().catch(() => ({}))
+  const baseVersion = resolveBaseVersion(rawBody)
+  const baseUpdatedAt = resolveBaseUpdatedAt(rawBody)
   const forbiddenFields = Object.keys(rawBody).filter(key => OFFICIAL_BRANCH_FIELDS.has(key))
   if (forbiddenFields.length) {
     return NextResponse.json({
@@ -86,6 +89,22 @@ export async function PATCH(
   const companyScope = await getTenantCompanyScope(supabase, tenantContext.tenantId, current.company_id)
   if (!companyScope) return NextResponse.json({ error: 'Şube bağlı şirket scope dışında.', code: 'COMPANY_SCOPE_NOT_FOUND' }, { status: 404 })
   if (!isWritableCompanyScope(companyScope)) return NextResponse.json({ error: 'Bu şirketin şubeleri için yalnızca görüntüleme yetkiniz var.', code: 'COMPANY_SCOPE_READONLY' }, { status: 403 })
+  if (baseVersion !== null && Number(current.version || 0) !== Number(baseVersion)) {
+    return NextResponse.json({
+      error: 'Şube kaydı bu işlem hazırlanırken değişmiş. Lütfen kaydı yenileyip tekrar deneyin.',
+      code: 'VERSION_CONFLICT',
+      details: { current_version: current.version, base_version: baseVersion },
+      message: 'İşlem tamamlanamadı',
+    }, { status: 409 })
+  }
+  if (baseUpdatedAt && current.updated_at && new Date(current.updated_at).getTime() !== new Date(baseUpdatedAt).getTime()) {
+    return NextResponse.json({
+      error: 'Şube kaydı bu işlem hazırlanırken değişmiş. Lütfen kaydı yenileyip tekrar deneyin.',
+      code: 'VERSION_CONFLICT',
+      details: { current_updated_at: current.updated_at, base_updated_at: baseUpdatedAt },
+      message: 'İşlem tamamlanamadı',
+    }, { status: 409 })
+  }
   const parsed = BranchCardUpdateSchema.safeParse(rawBody)
   if (!parsed.success) return NextResponse.json({ error: 'Şube kart güncelleme verileri geçerli değil.', code: 'VALIDATION_FAILED', details: { validation: parsed.error.flatten() }, message: 'İşlem tamamlanamadı' }, { status: 400 })
   const patch = normalizePatch(parsed.data)
@@ -126,9 +145,10 @@ async function hydrateBranch(
   branch: Record<string, any>,
   tenantContext: ReturnType<typeof resolveTenantContext>
 ) {
-  const [company, organizationUnit] = await Promise.all([
+  const [company, organizationUnit, facility] = await Promise.all([
     loadRef(supabase, 'companies', 'id,trade_name,short_name', branch.company_id, tenantContext),
     branch.organization_unit_id ? loadRef(supabase, 'organization_units', 'id,name,short_name,type,status', branch.organization_unit_id, tenantContext) : null,
+    branch.facility_id ? loadRef(supabase, 'company_facilities', 'id,facility_name,status,record_status', branch.facility_id, tenantContext) : null,
   ])
   return {
     ...branch,
@@ -136,14 +156,15 @@ async function hydrateBranch(
     company_name: company?.trade_name || company?.short_name || '',
     organization_unit: organizationUnit,
     organization_unit_name: organizationUnit?.name || '',
-    facility_name: branch.metadata_json?.facility_name || '',
+    facility,
+    facility_name: facility?.facility_name || branch.metadata_json?.facility_name || '',
     address_summary: [branch.district, branch.city].filter(Boolean).join(', '),
   }
 }
 
 async function loadRef(
   supabase: ReturnType<typeof createServiceClient>,
-  tableName: 'companies' | 'organization_units',
+  tableName: 'companies' | 'organization_units' | 'company_facilities',
   select: string,
   id: string,
   tenantContext: ReturnType<typeof resolveTenantContext>

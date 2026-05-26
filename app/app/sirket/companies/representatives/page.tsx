@@ -17,6 +17,10 @@ import {
   type TableStatusFilterOption,
 } from '@/components/ui/SmartDataTable'
 import { Toast } from '@/components/ui/Toast'
+import { DraftCreateNotice } from '@/components/ui/DraftCreateNotice'
+import { PageContextTour } from '@/components/onboarding/PageContextTour'
+import { pageTourSteps } from '@/components/onboarding/tourSteps'
+import { useRegisterActionGuideContext } from '@/components/ai/ActionGuideContext'
 import { normalizeCountryId } from '@/lib/reference/country-nationalities'
 import { isSoftDeletedRecord } from '@/lib/forms/entityState'
 import { createProgressiveFormLoadStages } from '@/lib/forms/progressiveFormLoading'
@@ -90,6 +94,12 @@ interface RepresentativeRow {
   authority_documents?: Array<Record<string, any>>
   representative_profile?: Record<string, any>
   current_authority?: Record<string, any>
+  scope_type?: string
+  branch_id?: string | null
+  organization_unit_id?: string | null
+  facility_id?: string | null
+  scope_label?: string
+  scope_notes?: string
   authority_transaction_history?: Array<Record<string, any>>
   version?: number
   updated_at?: string
@@ -183,6 +193,12 @@ const REPRESENTATIVE_OPERATION_CONTROLLED_FIELDS = new Set([
   'can_submit_hiring_notice',
   'can_submit_termination_notice',
   'official_correspondence_authority',
+  'scope_type',
+  'branch_id',
+  'organization_unit_id',
+  'facility_id',
+  'scope_label',
+  'scope_notes',
   'current_authority',
   'authority_transaction_history',
 ])
@@ -204,6 +220,15 @@ function toAuthorityLabel(value: string) {
   return AUTHORITY_LABEL_BY_VALUE[value] || value
 }
 
+function uniqueOptions(options: Array<{ value: string; label: string }>) {
+  const seen = new Set<string>()
+  return options.filter(option => {
+    if (!option.value || seen.has(option.value)) return false
+    seen.add(option.value)
+    return true
+  })
+}
+
 function getRepresentativePrimaryAuthority(representative: Record<string, any>) {
   const currentAuthority = representative.current_authority || {}
   const candidates = [
@@ -219,6 +244,27 @@ function getRepresentativePrimaryAuthority(representative: Record<string, any>) 
   return candidates.map(value => String(value || '').trim()).find(Boolean)
 }
 
+function getRepresentativeScope(representative: Record<string, any>) {
+  const scope = representative.current_authority?.scope || {}
+  return {
+    scope_type: representative.scope_type || scope.scope_type || 'company_wide',
+    branch_id: representative.branch_id || scope.branch_id || null,
+    organization_unit_id: representative.organization_unit_id || scope.organization_unit_id || null,
+    facility_id: representative.facility_id || scope.facility_id || null,
+    scope_label: representative.scope_label || scope.scope_label || '',
+    scope_notes: representative.scope_notes || scope.scope_notes || '',
+  }
+}
+
+function getRepresentativeScopeLabel(representative: Record<string, any>) {
+  const scope = getRepresentativeScope(representative)
+  if (scope.scope_label) return scope.scope_label
+  if (scope.scope_type === 'branch') return 'Belirli şube'
+  if (scope.scope_type === 'organization_unit') return 'Belirli organizasyon birimi'
+  if (scope.scope_type === 'facility') return 'Belirli tesis/lokasyon'
+  return 'Şirket geneli'
+}
+
 const columns: ColumnDef[] = [
   { key: 'record_status', label: 'Durum', type: 'enum', width: 44, minWidth: 44, maxWidth: 44, fixedWidth: true, sortable: false, hideHeaderLabel: true, category: 'Durum', order: -10, render: (_value, row) => <RepresentativeStatusDot status={getRepresentativeRecordLifecycleStatus(row)} /> },
   { key: 'display_name', label: 'Ad Soyad / Ünvan', type: 'text', width: 260, minWidth: 180, sortable: true, category: 'Kimlik', required: true, render: (value, row) => <RepresentativeNameCell value={value} row={row} /> },
@@ -229,6 +275,10 @@ const columns: ColumnDef[] = [
   { key: 'primary_authority_type', label: 'Ana Yetki Tipi', type: 'enum', width: 180, category: 'Yetki', required: true },
   { key: 'signature_type_label', label: 'İmza Türü', type: 'enum', width: 130, category: 'Yetki' },
   { key: 'authority_status_label', label: 'Yetki Durumu', type: 'enum', width: 130, sortable: true, category: 'Yetki', required: true },
+  { key: 'scope_label', label: 'Yetki Kapsamı', type: 'enum', width: 170, category: 'Yetki' },
+  { key: 'branch_name', label: 'Şube', type: 'text', width: 180, category: 'Kapsam' },
+  { key: 'organization_unit_name', label: 'Organizasyon Birimi', type: 'text', width: 190, category: 'Kapsam' },
+  { key: 'facility_name', label: 'Tesis/Lokasyon', type: 'text', width: 180, category: 'Kapsam' },
   { key: 'authority_start_date', label: 'Yürürlük Başlangıcı', type: 'date', width: 140, category: 'Tarih' },
   { key: 'authority_end_date', label: 'Yürürlük Bitişi', type: 'date', width: 130, category: 'Tarih' },
   { key: 'limit_summary', label: 'Limit Özeti', type: 'text', width: 170, category: 'Yetki' },
@@ -445,6 +495,7 @@ export default function TemsilcilerPage() {
   const [pageState, setPageState] = useState<PageState>('list')
   const [representatives, setRepresentatives] = useState<RepresentativeRow[]>([])
   const [companies, setCompanies] = useState<Option[]>([])
+  const [branches, setBranches] = useState<Record<string, any>[]>([])
   const [companiesLoaded, setCompaniesLoaded] = useState(false)
   const [selectedRepresentative, setSelectedRepresentative] = useState<Record<string, any> | null>(null)
   const [loading, setLoading] = useState(true)
@@ -458,6 +509,9 @@ export default function TemsilcilerPage() {
   const [deleting, setDeleting] = useState(false)
   const [statusFilters, setStatusFilters] = useState<RecordStatusFilterValue[]>(DEFAULT_RECORD_STATUS_FILTERS)
   const [authorityStatusFilters, setAuthorityStatusFilters] = useState<RepresentativeAuthorityStatusFilterValue[]>(DEFAULT_REPRESENTATIVE_AUTHORITY_STATUS_FILTERS)
+  const [companyFilterId, setCompanyFilterId] = useState('')
+  const [branchFilterId, setBranchFilterId] = useState('')
+  const [includeCompanyWide, setIncludeCompanyWide] = useState(true)
   const [listQuery, setListQuery] = useState({ page: 1, pageSize: 50, search: '', sort: 'created_at', direction: 'desc' as 'asc' | 'desc' })
   const [listMeta, setListMeta] = useState<ListMeta>({ page: 1, pageSize: 50, total: 0, totalPages: 1 })
   const [toast, setToast] = useState<ToastState | null>(null)
@@ -465,6 +519,15 @@ export default function TemsilcilerPage() {
   const [authorityWizardType, setAuthorityWizardType] = useState<RepresentativeAuthorityTransactionType>('Temsilcilik Başlatma')
 
   const isSelectedPassive = isSoftDeletedRecord(selectedRepresentative)
+  const selectedRecordStatus = selectedRepresentative ? getRepresentativeRecordStatus(selectedRepresentative) : null
+  useRegisterActionGuideContext({
+    currentPage: 'representatives',
+    selectedRecordId: selectedRepresentative?.id || null,
+    selectedRecordType: selectedRepresentative?.id ? 'representative' : null,
+    selectedRecordStatus,
+    activeCompanyId: selectedRepresentative?.company_id || companyFilterId || null,
+    activeBranchId: branchFilterId || selectedRepresentative?.branch_id || null,
+  })
   const formMode: FormMode = pageState === 'create' ? 'create' : isSelectedPassive ? 'passive' : pageState === 'edit' ? 'edit' : 'view'
   const formLoadStages = createProgressiveFormLoadStages({
     mode: formMode,
@@ -486,6 +549,9 @@ export default function TemsilcilerPage() {
       const shouldFilterAuthorityStatuses =
         authorityStatusFilters.length < REPRESENTATIVE_AUTHORITY_STATUS_FILTER_OPTIONS.length
       const representativePayload = await companyService.representativesList({
+        companyId: companyFilterId || undefined,
+        branchId: branchFilterId || undefined,
+        includeCompanyWide: !!branchFilterId && includeCompanyWide,
         statuses: statusFilters,
         authorityStatuses: shouldFilterAuthorityStatuses ? authorityStatusFilters : undefined,
         includePassive: statusFilters.includes('passive'),
@@ -504,7 +570,7 @@ export default function TemsilcilerPage() {
   }
   useEffect(() => {
     loadData()
-  }, [statusFilters, authorityStatusFilters, listQuery])
+  }, [statusFilters, authorityStatusFilters, companyFilterId, branchFilterId, includeCompanyWide, listQuery])
 
   const loadCompanyOptions = async (force = false) => {
     if (companiesLoaded && !force) return
@@ -516,6 +582,8 @@ export default function TemsilcilerPage() {
       value: company.id,
       label: company.trade_name || company.short_name,
     })) : [])
+    const branchPayload = await companyService.branchesList({ useCache: !force, statuses: ['active', 'passive', 'closed'], pageSize: 200 })
+    setBranches(Array.isArray(branchPayload.data) ? branchPayload.data : [])
     setCompaniesLoaded(true)
     } catch (error) {
       setCompanyOptionsError(true)
@@ -533,6 +601,10 @@ export default function TemsilcilerPage() {
   }, [pageState])
 
   const companyNameById = useMemo(() => Object.fromEntries(companies.map(company => [company.value, company.label])), [companies])
+  const visibleBranchOptions = useMemo(() => branches.filter(branch => !companyFilterId || branch.company_id === companyFilterId), [branches, companyFilterId])
+  const branchById = useMemo(() => Object.fromEntries(branches.map(branch => [branch.id, branch])), [branches])
+  const organizationUnitById = useMemo(() => Object.fromEntries(branches.filter(branch => branch.organization_unit_id).map(branch => [branch.organization_unit_id, { id: branch.organization_unit_id, name: branch.organization_unit_name }])), [branches])
+  const facilityById = useMemo(() => Object.fromEntries(branches.filter(branch => branch.facility_id).map(branch => [branch.facility_id, { id: branch.facility_id, name: branch.facility_name }])), [branches])
   const tableData = useMemo(() => representatives.map(representative => ({
     ...representative,
     display_name: representative.display_name || representative.full_name || '',
@@ -546,13 +618,17 @@ export default function TemsilcilerPage() {
     authority_status: getRepresentativeAuthorityStatus(representative),
     authority_record_status: representative.current_authority?.authority_record_status || representative.authority_record_status || '',
     authority_status_label: getRepresentativeAuthorityStatusLabel(getRepresentativeAuthorityStatus(representative), representative.current_authority?.authority_status || representative.authority_status),
+    scope_label: getRepresentativeScopeLabel(representative),
+    branch_name: branchById[getRepresentativeScope(representative).branch_id || '']?.branch_name || '',
+    organization_unit_name: organizationUnitById[getRepresentativeScope(representative).organization_unit_id || '']?.name || '',
+    facility_name: facilityById[getRepresentativeScope(representative).facility_id || '']?.name || '',
     authority_start_date: representative.current_authority?.effective_date || representative.authority_start_date || representative.start_date || '',
     authority_end_date: representative.current_authority?.end_date || representative.authority_end_date || representative.end_date || '',
     last_operation_label: getRepresentativeLastOperationLabel(representative),
     authority_limit: representative.current_authority?.transaction_limit ?? representative.transaction_limit,
     limit_summary: getRepresentativeLimitSummary(representative),
     warnings_summary: getRepresentativeWarningsSummary(representative),
-  })), [companyNameById, representatives])
+  })), [branchById, companyNameById, facilityById, organizationUnitById, representatives])
 
   const widgets: WidgetDef<any>[] = useMemo(() => [
     { key: 'total', label: 'Toplam Temsilci', render: () => tableData.length },
@@ -707,6 +783,29 @@ export default function TemsilcilerPage() {
     setAuthorityWizardOpen(true)
   }
 
+  useEffect(() => {
+    const onGuideCommand = (event: Event) => {
+      const detail = (event as CustomEvent<{ action_type?: string; wizard_key?: string }>).detail
+      if (!detail) return
+      if (detail.action_type === 'start_create') {
+        setSelectedRepresentative(null)
+        setPageState('create')
+        if (!companies.length) loadCompanyOptions().catch(() => setCompanies([]))
+        return
+      }
+      if (detail.action_type !== 'open_wizard' || !selectedRepresentative?.id) return
+      if (detail.wizard_key === 'representative_start') openAuthorityWizard('Temsilcilik Başlatma')
+      if (detail.wizard_key === 'representative_authority_renewal') openAuthorityWizard('Yetki Yenileme')
+      if (detail.wizard_key === 'representative_authority_scope_change') openAuthorityWizard('Yetki Kapsamı Değişikliği')
+      if (detail.wizard_key === 'representative_limit_change') openAuthorityWizard('Limit Değişikliği')
+      if (detail.wizard_key === 'representative_suspend') openAuthorityWizard('Askıya Alma')
+      if (detail.wizard_key === 'representative_terminate') openAuthorityWizard('Sonlandırma')
+    }
+
+    window.addEventListener('eden:action-guide-command', onGuideCommand)
+    return () => window.removeEventListener('eden:action-guide-command', onGuideCommand)
+  })
+
   const handleAuthorityWizardSubmit = async (payload: Record<string, any>) => {
     if (!selectedRepresentative?.id) return
     setSaving(true)
@@ -828,7 +927,7 @@ export default function TemsilcilerPage() {
           setPageState('create')
           if (!companies.length) loadCompanyOptions().catch(() => setCompanies([]))
         },
-        addButtonText: 'Yeni Temsilci',
+        addButtonText: 'Ekle',
       }
     : {
         mode: 'form' as const,
@@ -847,10 +946,11 @@ export default function TemsilcilerPage() {
         subtitle={bannerConfig.subtitle}
         icon={<BadgeCheck size={24} />}
         {...(bannerConfig.mode === 'list'
-          ? { onAddClick: (bannerConfig as any).onAddClick, addButtonText: (bannerConfig as any).addButtonText }
+          ? { onAddClick: (bannerConfig as any).onAddClick, addButtonText: (bannerConfig as any).addButtonText, addButtonTourId: 'quick-actions' }
           : { onBackClick: (bannerConfig as any).onBackClick }
         )}
       />
+      <PageContextTour tourKey="representatives" steps={pageTourSteps.representatives} enabled={pageState === 'list' || pageState === 'view'} />
 
       {toast && <Toast type={toast.type} title={toast.title} message={toast.message} onClose={() => setToast(null)} />}
 
@@ -861,6 +961,26 @@ export default function TemsilcilerPage() {
               <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
             </div>
           )}
+          <div data-tour-id="representative-scope-filters" className="flex flex-wrap items-end gap-3 rounded-lg border border-gray-200 bg-white px-4 py-3 shadow-sm dark:border-gray-800 dark:bg-gray-950">
+            <label className="min-w-[240px] text-sm font-medium text-gray-700 dark:text-gray-200">
+              Bağlı Şirket
+              <select value={companyFilterId} onChange={event => { setCompanyFilterId(event.target.value); setBranchFilterId(''); setListQuery(prev => ({ ...prev, page: 1 })) }} className="mt-1 block w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900">
+                <option value="">Tüm şirketler</option>
+                {companies.map(company => <option key={company.value} value={company.value}>{company.label}</option>)}
+              </select>
+            </label>
+            <label className="min-w-[240px] text-sm font-medium text-gray-700 dark:text-gray-200">
+              Şube
+              <select value={branchFilterId} onChange={event => { setBranchFilterId(event.target.value); setListQuery(prev => ({ ...prev, page: 1 })) }} className="mt-1 block w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900">
+                <option value="">Tüm şubeler</option>
+                {visibleBranchOptions.map(branch => <option key={branch.id} value={branch.id}>{branch.branch_name || branch.branch_short_name || branch.id}</option>)}
+              </select>
+            </label>
+            <label className="mb-2 flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-200">
+              <input type="checkbox" checked={includeCompanyWide} onChange={event => { setIncludeCompanyWide(event.target.checked); setListQuery(prev => ({ ...prev, page: 1 })) }} className="h-4 w-4 rounded border-gray-300" />
+              Şirket geneli yetkileri de göster
+            </label>
+          </div>
           <RepresentativeAuthorityStatusFilterBar
             activeValues={authorityStatusFilters}
             onChange={(next) => {
@@ -875,7 +995,7 @@ export default function TemsilcilerPage() {
             widgets={widgets}
             defaultView="list"
             storageKey="companies-representatives-table"
-            emptyText="Temsilci kaydı bulunamadı"
+            emptyText="Henüz temsilci kaydı yok. + Ekle ile temsilci kartı taslağı oluşturabilir, ardından Temsilcilik Başlatma işlemiyle yetki verebilirsiniz."
             onRowClick={handleRowClick}
             onRefresh={() => loadData(true)}
             defaultPageSize={listQuery.pageSize}
@@ -901,7 +1021,10 @@ export default function TemsilcilerPage() {
       )}
 
       {pageState !== 'list' && (
-        <div className="mt-6">
+        <div className="mt-6 space-y-4">
+          {pageState === 'create' && (
+            <DraftCreateNotice message="Bu işlem temsilci kartı taslağı oluşturur. Yetki, limit, imza türü ve kapsam bilgileri Temsilcilik Başlatma veya ilgili yetki işlemleriyle oluşturulur." />
+          )}
           <EntityForm
             mode={formMode}
             entityName="Temsilcilerimiz"
@@ -976,6 +1099,7 @@ export default function TemsilcilerPage() {
         <RepresentativeAuthorityWizard
           representative={selectedRepresentative}
           companies={companies}
+          branches={branches}
           transactionType={authorityWizardType}
           saving={saving}
           onClose={() => setAuthorityWizardOpen(false)}
@@ -989,6 +1113,7 @@ export default function TemsilcilerPage() {
 function RepresentativeAuthorityWizard({
   representative,
   companies,
+  branches,
   transactionType,
   saving,
   onClose,
@@ -996,12 +1121,14 @@ function RepresentativeAuthorityWizard({
 }: {
   representative: Record<string, any>
   companies: Option[]
+  branches: Record<string, any>[]
   transactionType: RepresentativeAuthorityTransactionType
   saving: boolean
   onClose: () => void
   onSubmit: (payload: Record<string, any>) => Promise<void>
 }) {
   const current = representative.current_authority || {}
+  const currentScope = getRepresentativeScope(representative)
   const isTermination = isRepresentativeTerminationTransaction(transactionType)
   const isEndOperation = transactionType === 'Sonlandırma'
   const isSuspension = transactionType === 'Askıya Alma'
@@ -1032,6 +1159,12 @@ function RepresentativeAuthorityWizard({
     can_submit_hiring_notice: !!(current.scope?.can_submit_hiring_notice ?? representative.can_submit_hiring_notice),
     can_submit_termination_notice: !!(current.scope?.can_submit_termination_notice ?? representative.can_submit_termination_notice),
     official_correspondence_authority: !!(current.scope?.official_correspondence_authority ?? representative.official_correspondence_authority),
+    scope_type: currentScope.scope_type,
+    branch_id: currentScope.branch_id || '',
+    organization_unit_id: currentScope.organization_unit_id || '',
+    facility_id: currentScope.facility_id || '',
+    scope_label: currentScope.scope_label || '',
+    scope_notes: currentScope.scope_notes || '',
     termination_reason: '',
     notes: '',
   })
@@ -1040,11 +1173,12 @@ function RepresentativeAuthorityWizard({
   const steps = useMemo<RecordLifecycleWizardStep[]>(() => buildRepresentativeAuthorityWizardSteps({
     representative,
     companyLabel: selectedCompany?.label || '',
+    branches,
     form,
     transactionType,
     isTermination,
     isEndOperation,
-  }), [form, isEndOperation, isTermination, representative, selectedCompany?.label, transactionType])
+  }), [branches, form, isEndOperation, isTermination, representative, selectedCompany?.label, transactionType])
 
   const complete = async () => {
     setLocalError(null)
@@ -1057,6 +1191,9 @@ function RepresentativeAuthorityWizard({
     if (!form.effective_date) return setLocalError('Yürürlük tarihi zorunludur.')
     if (!isTermination && form.authority_types.length === 0) return setLocalError('En az bir yetki tipi seçilmelidir.')
     if (!isTermination && form.authority_types.includes('signature_authority') && !form.signature_type) return setLocalError('İmza yetkisi için imza türü zorunludur.')
+    if (!isTermination && form.scope_type === 'branch' && !form.branch_id) return setLocalError('Şube kapsamı için şube seçilmelidir.')
+    if (!isTermination && form.scope_type === 'organization_unit' && !form.organization_unit_id) return setLocalError('Organizasyon birimi kapsamı için birim seçilmelidir.')
+    if (!isTermination && form.scope_type === 'facility' && !form.facility_id) return setLocalError('Tesis/lokasyon kapsamı için tesis seçilmelidir.')
     if (isActivation && collectRepresentativeAuthorityWizardDocuments(form, representative).length === 0) return setLocalError('Aktivasyon için en az bir yetki belgesi eklenmelidir.')
     if (isEndOperation && !form.termination_reason) return setLocalError('Sonlandırma nedeni zorunludur.')
     if (isEndOperation && (!form.authority_document || typeof form.authority_document !== 'object')) return setLocalError('Sonlandırma için işlem belgesi eklenmelidir.')
@@ -1104,6 +1241,7 @@ function RepresentativeAuthorityWizard({
 function buildRepresentativeAuthorityWizardSteps({
   representative,
   companyLabel,
+  branches,
   form,
   transactionType,
   isTermination,
@@ -1111,11 +1249,22 @@ function buildRepresentativeAuthorityWizardSteps({
 }: {
   representative: Record<string, any>
   companyLabel: string
+  branches: Record<string, any>[]
   form: Record<string, any>
   transactionType: RepresentativeAuthorityTransactionType
   isTermination: boolean
   isEndOperation: boolean
 }): RecordLifecycleWizardStep[] {
+  const companyBranches = branches.filter(branch => !form.company_id || branch.company_id === form.company_id)
+  const branchOptions = companyBranches
+    .filter(branch => String(branch.record_status || branch.status || 'active').toLocaleLowerCase('tr-TR') === 'active')
+    .map(branch => ({ value: branch.id, label: branch.branch_name || branch.branch_short_name || branch.id }))
+  const organizationUnitOptions = uniqueOptions(companyBranches
+    .filter(branch => branch.organization_unit_id)
+    .map(branch => ({ value: branch.organization_unit_id, label: branch.organization_unit_name || branch.organization_unit_id })))
+  const facilityOptions = uniqueOptions(companyBranches
+    .filter(branch => branch.facility_id)
+    .map(branch => ({ value: branch.facility_id, label: branch.facility_name || branch.facility_id })))
   const steps: RecordLifecycleWizardStep[] = [
     {
       id: 'representative-authority-context',
@@ -1194,6 +1343,23 @@ function buildRepresentativeAuthorityWizardSteps({
             { name: 'purchase_approval_limit', label: 'Satınalma Onay Limiti', type: 'number' },
             { name: 'bank_transaction_limit', label: 'Banka İşlem Limiti', type: 'number' },
             { name: 'contract_signature_limit', label: 'Sözleşme İmza Limiti', type: 'number' },
+          ],
+        },
+        {
+          id: 'representative-authority-location-scope',
+          title: 'Yetki kapsamı hedefi',
+          fields: [
+            { name: 'scope_type', label: 'Kapsam Türü', type: 'select', options: [
+              { value: 'company_wide', label: 'Şirket geneli' },
+              { value: 'branch', label: 'Belirli şube' },
+              { value: 'organization_unit', label: 'Belirli organizasyon birimi' },
+              { value: 'facility', label: 'Belirli tesis/lokasyon' },
+            ] },
+            { name: 'branch_id', label: 'Şube', type: 'select', options: branchOptions, visibleWhen: { field: 'scope_type', operator: 'equals', value: 'branch' }, required: form.scope_type === 'branch' },
+            { name: 'organization_unit_id', label: 'Organizasyon Birimi', type: 'select', options: organizationUnitOptions, visibleWhen: { field: 'scope_type', operator: 'equals', value: 'organization_unit' }, required: form.scope_type === 'organization_unit' },
+            { name: 'facility_id', label: 'Tesis/Lokasyon', type: 'select', options: facilityOptions, visibleWhen: { field: 'scope_type', operator: 'equals', value: 'facility' }, required: form.scope_type === 'facility' },
+            { name: 'scope_label', label: 'Kapsam Etiketi', type: 'text' },
+            { name: 'scope_notes', label: 'Kapsam Açıklaması', type: 'textarea', colSpan: 3 },
           ],
         },
         {
@@ -1321,6 +1487,7 @@ function RepresentativeAuthorityPreviewStep({
           </div>
           <div className="mt-4 grid gap-3 md:grid-cols-3">
             <SummaryMetric label="İmza Türü" value={form.signature_type || '-'} />
+            <SummaryMetric label="Kapsam" value={scopeTypeLabel(form.scope_type)} />
             <SummaryMetric label="Para Birimi" value={form.currency || 'TRY'} />
             <SummaryMetric label="Genel Limit" value={form.transaction_limit || '-'} />
             <SummaryMetric label="Ödeme Onay Limiti" value={form.payment_approval_limit || '-'} />
@@ -1355,6 +1522,13 @@ function SummaryMetric({ label, value }: { label: string; value: unknown }) {
       <div className="mt-1 min-h-5 text-sm font-semibold text-gray-900 dark:text-white">{String(value || '-')}</div>
     </div>
   )
+}
+
+function scopeTypeLabel(value: unknown) {
+  if (value === 'branch') return 'Belirli şube'
+  if (value === 'organization_unit') return 'Belirli organizasyon birimi'
+  if (value === 'facility') return 'Belirli tesis/lokasyon'
+  return 'Şirket geneli'
 }
 
 function RepresentativeAuthorityStatusFilterBar({
@@ -1608,6 +1782,12 @@ function normalizeRepresentativeForForm(representative: RepresentativeRow) {
     can_submit_hiring_notice: currentAuthority.scope?.can_submit_hiring_notice ?? (representative as any).can_submit_hiring_notice ?? false,
     can_submit_termination_notice: currentAuthority.scope?.can_submit_termination_notice ?? (representative as any).can_submit_termination_notice ?? false,
     official_correspondence_authority: currentAuthority.scope?.official_correspondence_authority ?? (representative as any).official_correspondence_authority ?? false,
+    scope_type: currentAuthority.scope?.scope_type ?? representative.scope_type ?? 'company_wide',
+    branch_id: currentAuthority.scope?.branch_id ?? representative.branch_id ?? '',
+    organization_unit_id: currentAuthority.scope?.organization_unit_id ?? representative.organization_unit_id ?? '',
+    facility_id: currentAuthority.scope?.facility_id ?? representative.facility_id ?? '',
+    scope_label: currentAuthority.scope?.scope_label ?? representative.scope_label ?? '',
+    scope_notes: currentAuthority.scope?.scope_notes ?? representative.scope_notes ?? '',
     authority_limit: profile.authority_limit ?? currentAuthority.transaction_limit ?? representative.transaction_limit ?? '',
     currency: currentAuthority.currency || profile.currency || representative.currency || 'TRY',
     photo_logo: representative.photo_logo || [],

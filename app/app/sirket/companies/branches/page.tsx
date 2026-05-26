@@ -8,6 +8,11 @@ import { EntityForm, type FormField, type FormMode, type FormOperationAction, ty
 import { PageBanner } from '@/components/ui/PageBanner'
 import { SmartDataTable, type ColumnDef, type SortConfig, type TableStatusFilterOption, type WidgetDef } from '@/components/ui/SmartDataTable'
 import { Toast } from '@/components/ui/Toast'
+import { DocumentSlotUploader, type DocumentSlot, type SlotDocument } from '@/components/ui/DocumentSlotUploader'
+import { PageContextTour } from '@/components/onboarding/PageContextTour'
+import { OperationHint } from '@/components/onboarding/OperationHint'
+import { pageTourSteps } from '@/components/onboarding/tourSteps'
+import { useRegisterActionGuideContext } from '@/components/ai/ActionGuideContext'
 import { CompanyBranchOpeningWizard, type BranchOpeningPrecheckContext, type BranchOpeningSubmitPayload } from '@/components/ui/CompanyBranchOpeningWizard'
 import { CompanyBranchClosingWizard, type BranchClosingPrecheckContext, type BranchClosingSubmitPayload } from '@/components/ui/CompanyBranchClosingWizard'
 import { formControlClass } from '@/components/ui/formControlStyles'
@@ -58,9 +63,19 @@ export default function CompanyBranchesPage() {
   const [pickerCompanyId, setPickerCompanyId] = useState(initialCompanyId)
   const [branchOpeningWizard, setBranchOpeningWizard] = useState<{ companyId: string; companyName: string; context: BranchOpeningPrecheckContext } | null>(null)
   const [branchClosingWizard, setBranchClosingWizard] = useState<{ companyId: string; companyName: string; context: BranchClosingPrecheckContext } | null>(null)
+  const [branchDocumentWizard, setBranchDocumentWizard] = useState<BranchRow | null>(null)
   const [wizardSaving, setWizardSaving] = useState(false)
   const formMode: FormMode = pageState === 'edit' && selectedBranch?.record_status !== 'closed' ? 'edit' : selectedBranch?.record_status === 'closed' ? 'passive' : 'view'
   const formLoadStages = createProgressiveFormLoadStages({ mode: formMode, hasSnapshot: !!selectedBranch, detailReady: !!selectedBranch && !detailLoading, referencesReady: companies.length > 0 })
+
+  useRegisterActionGuideContext({
+    currentPage: 'branches',
+    selectedRecordId: selectedBranch?.id || null,
+    selectedRecordType: selectedBranch?.id ? 'branch' : null,
+    selectedRecordStatus: selectedBranch ? String(selectedBranch.record_status || selectedBranch.status || '') : null,
+    activeCompanyId: selectedBranch?.company_id || companyFilterId || pickerCompanyId || null,
+    activeBranchId: selectedBranch?.id || null,
+  })
 
   const loadCompanies = useCallback(async (force = false) => {
     try {
@@ -88,7 +103,7 @@ export default function CompanyBranchesPage() {
   useEffect(() => { loadCompanies() }, [loadCompanies])
   useEffect(() => { loadData() }, [loadData])
 
-  async function openBranch(row: BranchRow) {
+  const openBranch = useCallback(async (row: BranchRow) => {
     setDetailLoading(true)
     try {
       const result = await companyService.branchDetail(row.id)
@@ -99,7 +114,7 @@ export default function CompanyBranchesPage() {
     } finally {
       setDetailLoading(false)
     }
-  }
+  }, [])
 
   async function handleSave(payload: Record<string, any>) {
     if (!selectedBranch?.id) return
@@ -148,7 +163,7 @@ export default function CompanyBranchesPage() {
     }
   }
 
-  async function openBranchClosing(branch?: BranchRow | null) {
+  const openBranchClosing = useCallback(async (branch?: BranchRow | null) => {
     const current = branch || selectedBranch
     if (!current?.company_id) return
     setWizardSaving(true)
@@ -160,7 +175,7 @@ export default function CompanyBranchesPage() {
     } finally {
       setWizardSaving(false)
     }
-  }
+  }, [selectedBranch])
 
   async function completeBranchOpening(payload: BranchOpeningSubmitPayload) {
     if (!branchOpeningWizard) return
@@ -199,6 +214,48 @@ export default function CompanyBranchesPage() {
     }
   }
 
+  async function completeBranchDocumentUpdate(payload: { document_files: SlotDocument[]; document_meta: Record<string, { document_date?: string | null; description?: string | null }>; notes?: string | null; client_request_id: string }) {
+    if (!branchDocumentWizard?.id) return
+    setWizardSaving(true)
+    try {
+      const result = await companyService.updateBranchDocuments(branchDocumentWizard.id, {
+        ...payload,
+        base_version: branchDocumentWizard.version || null,
+        base_updated_at: branchDocumentWizard.updated_at || null,
+      })
+      setBranchDocumentWizard(null)
+      setToast(buildOperationToast(result, { title: 'Şube Belgeleri Güncellendi', message: 'Şube belge işlemi tamamlandı.' }))
+      await loadData(true)
+      if (selectedBranch?.id === result.data?.branch?.id) setSelectedBranch(result.data.branch)
+    } catch (error: any) {
+      setToast({ type: 'error', title: 'Belge Güncelleme Tamamlanamadı', message: error?.message || 'Şube belgeleri güncellenemedi.' })
+      throw error
+    } finally {
+      setWizardSaving(false)
+    }
+  }
+
+  useEffect(() => {
+    const onGuideCommand = (event: Event) => {
+      const detail = (event as CustomEvent<{ action_type?: string; wizard_key?: string }>).detail
+      if (!detail) return
+      if (detail.action_type === 'start_create' || detail.wizard_key === 'branch_opening') {
+        if (selectedBranch?.company_id) {
+          void openBranchOpening(selectedBranch.company_id)
+        } else {
+          setCompanyPickerOpen(true)
+        }
+        return
+      }
+      if (detail.action_type !== 'open_wizard') return
+      if (detail.wizard_key === 'branch_closing') void openBranchClosing(selectedBranch)
+      if (detail.wizard_key === 'branch_document_update' && selectedBranch) setBranchDocumentWizard(selectedBranch)
+    }
+
+    window.addEventListener('eden:action-guide-command', onGuideCommand)
+    return () => window.removeEventListener('eden:action-guide-command', onGuideCommand)
+  })
+
   const columns: ColumnDef[] = useMemo(() => [
     { key: 'record_status', label: 'Durum', type: 'badge', width: 110, render: (_, row) => <StatusBadge status={row.record_status || row.status} /> },
     { key: 'branch_name', label: 'Şube Adı', type: 'text', width: 220 },
@@ -221,7 +278,7 @@ export default function CompanyBranchesPage() {
     { key: 'facility_name', label: 'Bağlı Lokasyon/Tesis', type: 'text', width: 180 },
     { key: 'last_operation', label: 'Son İşlem', type: 'text', width: 150, render: value => operationLabel(value) },
     { key: 'actions', label: 'İşlemler', type: 'actions', width: 170, render: (_, row) => <RowActions branch={row} onView={() => openBranch(row)} onCloseBranch={() => openBranchClosing(row)} /> },
-  ], [])
+  ], [openBranch, openBranchClosing])
 
   const widgets: WidgetDef<BranchRow>[] = useMemo(() => [
     { key: 'total', label: 'Toplam Şube', render: () => branches.length },
@@ -273,6 +330,7 @@ export default function CompanyBranchesPage() {
       { name: 'staff_summary', label: 'Personel / Kadro Özeti', type: 'custom', colSpan: 3, render: () => <ReadOnlyNotice text="Şube iç kadro, pozisyon, personel ve hiyerarşi Teşkilat/Kadro modülünden yönetilir." /> },
     ] },
     { id: 'documents', label: 'Belgeler', fields: [{ name: 'branch_documents', label: 'Belgeler', type: 'custom', colSpan: 3, render: ({ data }) => <BranchDocumentsPanel documents={(data.document_files || []) as Record<string, any>[]} /> }] },
+    { id: 'representatives', label: 'Temsilciler / Yetkililer', fields: [{ name: 'branch_representatives', label: 'Temsilciler / Yetkililer', type: 'custom', colSpan: 3, render: ({ data }) => <BranchRepresentativesSummary branch={data as BranchRow} /> }] },
     { id: 'history', label: 'Geçmiş', fields: [{ name: 'branch_history', label: 'Geçmiş', type: 'custom', colSpan: 3, render: ({ data }) => <BranchHistoryPanel branch={data as BranchRow} /> }] },
   ], [])
 
@@ -283,10 +341,11 @@ export default function CompanyBranchesPage() {
   const operationActions = (): FormOperationActionGroup[] => {
     if (!selectedBranch?.id) return []
     const closingAction: FormOperationAction = { key: 'branch_closing', label: 'Şube Kapanışı', icon: <XCircle size={16} />, onClick: () => openBranchClosing(selectedBranch), disabled: !isActiveBranch(selectedBranch), tone: 'danger' }
+    const documentsAction: FormOperationAction = { key: 'branch_documents_update', label: 'Şube Belgelerini Güncelle', icon: <FileText size={16} />, onClick: () => setBranchDocumentWizard(selectedBranch), tone: 'neutral' }
     const editAction: FormOperationAction = pageState === 'view' && selectedBranch.record_status !== 'closed'
       ? { key: 'edit', label: 'Kart Bilgilerini Güncelle', icon: <PencilLine size={16} />, onClick: () => setPageState('edit'), tone: 'neutral' }
       : { key: 'view', label: 'Görüntüle', icon: <FileText size={16} />, onClick: () => setPageState('view'), hidden: pageState !== 'edit' }
-    return [{ key: 'official_updates', actions: [closingAction] }, { key: 'basic_update', actions: [editAction] }]
+    return [{ key: 'official_updates', actions: [closingAction, documentsAction] }, { key: 'basic_update', actions: [editAction] }]
   }
   const selectedCompanyLabel = companies.find(company => company.value === pickerCompanyId)?.label || ''
 
@@ -298,26 +357,106 @@ export default function CompanyBranchesPage() {
         title={pageState === 'list' ? 'Şubelerimiz' : selectedBranch?.branch_name || 'Şube Detayı'}
         subtitle={pageState === 'list' ? 'Şirketlere bağlı resmi şube, ofis ve operasyon noktalarını yönetin.' : selectedBranch?.company_name || 'Bağlı şirket alt resmi/operasyonel birimi'}
         icon={<GitBranch size={24} />}
-        {...(pageState === 'list' ? { onAddClick: () => setCompanyPickerOpen(true), addButtonText: 'Yeni Şube Aç' } : { onBackClick: () => setPageState('list') })}
+        {...(pageState === 'list' ? { onAddClick: () => setCompanyPickerOpen(true), addButtonText: 'Yeni Şube Aç', addButtonTourId: 'quick-actions' } : { onBackClick: () => setPageState('list') })}
       />
+      <PageContextTour tourKey="branches" steps={pageTourSteps.branches} enabled={pageState === 'list' || pageState === 'view'} />
       {toast && <Toast type={toast.type} title={toast.title} message={toast.message} onClose={() => setToast(null)} />}
       {pageState === 'list' && <div className="mt-6 space-y-4">
+        <OperationHint id="branches-no-free-create" message="Şubeler serbest kayıt olarak oluşturulmaz. Şube açılışı, aktif şirket kartından Şube Açılışı resmi işlem sihirbazı ile yapılır." />
         <div className="flex flex-wrap items-center gap-3 rounded-lg border border-gray-200 bg-white p-3 dark:border-gray-800 dark:bg-gray-950">
           <label className="min-w-[260px] text-sm font-medium text-gray-700 dark:text-gray-200">Bağlı Şirket Filtresi<select value={companyFilterId} onChange={event => { setCompanyFilterId(event.target.value); setListQuery(prev => ({ ...prev, page: 1 })) }} className={formControlClass({ className: 'mt-1' })}><option value="">Tüm şirketler</option>{companies.map(company => <option key={company.value} value={company.value}>{company.label}</option>)}</select></label>
           <button type="button" onClick={() => loadData(true)} className="mt-6 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-900">Yenile</button>
         </div>
-        <SmartDataTable columns={columns} data={branches} loading={loading} widgets={widgets} defaultView="list" storageKey="companies-branches-table" emptyText="Şube kaydı bulunamadı" onRowClick={openBranch} onRefresh={() => loadData(true)} defaultPageSize={listQuery.pageSize} pagination={{ mode: 'server', page: listMeta.page, pageSize: listMeta.pageSize, total: listMeta.total, onPageChange: page => setListQuery(prev => ({ ...prev, page })), onPageSizeChange: pageSize => setListQuery(prev => ({ ...prev, page: 1, pageSize })), onSearchChange: search => setListQuery(prev => ({ ...prev, page: 1, search })), onSortChange: handleListSortChange }} activeStatusFilters={statusFilters} statusFilterOptions={BRANCH_STATUS_FILTER_OPTIONS} onStatusFiltersChange={(next) => { setStatusFilters(next.length ? next : ['active']); setListQuery(prev => ({ ...prev, page: 1 })) }} />
+        <SmartDataTable columns={columns} data={branches} loading={loading} widgets={widgets} defaultView="list" storageKey="companies-branches-table" emptyText="Henüz şube kaydı yok. Şube açmak için aktif bir şirket kartından Resmi Değişiklikler > Şube Açılışı işlemini başlatın." onRowClick={openBranch} onRefresh={() => loadData(true)} defaultPageSize={listQuery.pageSize} pagination={{ mode: 'server', page: listMeta.page, pageSize: listMeta.pageSize, total: listMeta.total, onPageChange: page => setListQuery(prev => ({ ...prev, page })), onPageSizeChange: pageSize => setListQuery(prev => ({ ...prev, page: 1, pageSize })), onSearchChange: search => setListQuery(prev => ({ ...prev, page: 1, search })), onSortChange: handleListSortChange }} activeStatusFilters={statusFilters} statusFilterOptions={BRANCH_STATUS_FILTER_OPTIONS} onStatusFiltersChange={(next) => { setStatusFilters(next.length ? next : ['active']); setListQuery(prev => ({ ...prev, page: 1 })) }} />
       </div>}
       {pageState !== 'list' && selectedBranch && <div className="mt-6"><EntityForm mode={formMode} entityName="Şubelerimiz" entityNameSingular="Şube" heroFields={branchHeroFields} tabs={tabs} data={selectedBranch} saving={saving} loading={detailLoading} error={formError} externalFieldErrors={fieldErrors} loadStages={formLoadStages} showHeroHeader={false} onSave={handleSave} onCancel={() => setPageState('list')} onModeChange={(mode) => setPageState(mode === 'edit' ? 'edit' : 'view')} operationActions={operationActions()} onValidationError={(fields) => setToast({ type: 'warning', title: 'Alanları Kontrol Et', message: fields.join(', ') })} /></div>}
       {companyPickerOpen && <div className="fixed inset-0 z-[75] flex items-center justify-center bg-black/45 px-4"><div className="w-full max-w-lg rounded-lg border border-gray-200 bg-white p-5 shadow-2xl dark:border-gray-800 dark:bg-gray-950"><h2 className="text-lg font-semibold text-gray-900 dark:text-white">Yeni Şube Aç</h2><p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Şube açılışı için bağlı aktif şirketi seçin.</p><label className="mt-5 block text-sm font-medium text-gray-700 dark:text-gray-200">Bağlı Şirket<select value={pickerCompanyId} onChange={event => setPickerCompanyId(event.target.value)} className={formControlClass({ className: 'mt-1' })}><option value="">Şirket seçin</option>{companies.map(company => <option key={company.value} value={company.value}>{company.label}</option>)}</select></label>{selectedCompanyLabel ? <div className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-200">{selectedCompanyLabel} için resmi şube açılışı başlatılacak.</div> : null}<div className="mt-5 flex justify-end gap-2"><button type="button" onClick={() => setCompanyPickerOpen(false)} className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-900">Vazgeç</button><button type="button" onClick={() => openBranchOpening(pickerCompanyId)} disabled={!pickerCompanyId || wizardSaving} className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-wait disabled:opacity-60">Wizardı Aç</button></div></div></div>}
       {branchOpeningWizard && <CompanyBranchOpeningWizard companyName={branchOpeningWizard.companyName} context={branchOpeningWizard.context} saving={wizardSaving} onClose={() => !wizardSaving && setBranchOpeningWizard(null)} onComplete={completeBranchOpening} />}
       {branchClosingWizard && <CompanyBranchClosingWizard companyId={branchClosingWizard.companyId} companyName={branchClosingWizard.companyName} context={branchClosingWizard.context} saving={wizardSaving} onClose={() => !wizardSaving && setBranchClosingWizard(null)} onComplete={completeBranchClosing} />}
+      {branchDocumentWizard && <BranchDocumentUpdateModal branch={branchDocumentWizard} saving={wizardSaving} onClose={() => !wizardSaving && setBranchDocumentWizard(null)} onComplete={completeBranchDocumentUpdate} />}
     </div>
   )
 }
 
 function RowActions({ branch, onView, onCloseBranch }: { branch: BranchRow; onView: () => void; onCloseBranch: () => void }) {
   return <div className="flex items-center gap-2"><button type="button" onClick={(event) => { event.stopPropagation(); onView() }} className="rounded-lg border border-gray-200 px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-900">Görüntüle</button><button type="button" disabled={!isActiveBranch(branch)} onClick={(event) => { event.stopPropagation(); onCloseBranch() }} className="rounded-lg border border-red-200 px-2 py-1 text-xs font-medium text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-900 dark:text-red-200 dark:hover:bg-red-950/30">Kapanış</button></div>
+}
+
+const branchDocumentSlots: DocumentSlot[] = [
+  { id: 'opening_documents_addendum', title: 'Açılış Belgeleri Ekleri' },
+  { id: 'closing_documents_addendum', title: 'Kapanış Belgeleri Ekleri' },
+  { id: 'lease_deed_usage_document', title: 'Kira / Tapu / Kullanım Belgesi' },
+  { id: 'tax_sgk_documents', title: 'Vergi / SGK Belgeleri' },
+  { id: 'other_documents', title: 'Diğer Belgeler' },
+]
+
+function BranchDocumentUpdateModal({
+  branch,
+  saving,
+  onClose,
+  onComplete,
+}: {
+  branch: BranchRow
+  saving: boolean
+  onClose: () => void
+  onComplete: (payload: { document_files: SlotDocument[]; document_meta: Record<string, { document_date?: string | null; description?: string | null }>; notes?: string | null; client_request_id: string }) => Promise<void>
+}) {
+  const [documents, setDocuments] = useState<SlotDocument[]>([])
+  const [documentMeta, setDocumentMeta] = useState<Record<string, { document_date?: string | null; description?: string | null }>>({})
+  const [notes, setNotes] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const [clientRequestId] = useState(() => `company-branch-document-update:${typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : Date.now()}`)
+  const activeDocumentCount = documents.filter(document => String(document.status || 'active') !== 'deleted' && !document.isDeleted).length
+
+  const submit = async () => {
+    if (!activeDocumentCount) return setError('Eklenecek en az bir belge seçilmelidir.')
+    setError(null)
+    try {
+      await onComplete({ document_files: documents, document_meta: documentMeta, notes, client_request_id: clientRequestId })
+    } catch (caught: any) {
+      setError(caught?.message || 'Şube belgeleri güncellenemedi.')
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/45 px-4 py-6">
+      <div className="flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow-2xl dark:border-gray-800 dark:bg-gray-950">
+        <div className="flex items-start justify-between gap-4 border-b border-gray-100 px-5 py-4 dark:border-gray-800">
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Şube Belgelerini Güncelle</h2>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{branch.branch_name || 'Şube'} belgeleri resmi işlem geçmişiyle güncellenir.</p>
+          </div>
+          <button type="button" onClick={onClose} disabled={saving} className="rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-wait disabled:opacity-60 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-900">Kapat</button>
+        </div>
+        <div className="min-h-0 flex-1 overflow-auto px-5 py-5">
+          <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-800 dark:border-blue-900/60 dark:bg-blue-950/30 dark:text-blue-100">
+            Açılış ve kapanış belgeleri silinmez; eklenen belgeler yeni işlem kaydı olarak belge geçmişine bağlanır.
+          </div>
+          <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
+            <DocumentSlotUploader slots={branchDocumentSlots} documents={documents} onChange={setDocuments} allowExtraSlots mode="update" defaultTab="upload" />
+            <div className="space-y-3">
+              {branchDocumentSlots.map(slot => (
+                <div key={slot.id} className="rounded-lg border border-gray-200 p-3 dark:border-gray-800">
+                  <div className="text-sm font-semibold text-gray-900 dark:text-white">{slot.title}</div>
+                  <label className="mt-2 block text-xs font-medium text-gray-600 dark:text-gray-300">Belge Tarihi<input type="date" value={documentMeta[slot.id]?.document_date || ''} onChange={event => setDocumentMeta({ ...documentMeta, [slot.id]: { ...documentMeta[slot.id], document_date: event.target.value } })} className={formControlClass({ size: 'sm', className: 'mt-1' })} /></label>
+                  <label className="mt-2 block text-xs font-medium text-gray-600 dark:text-gray-300">Açıklama<input value={documentMeta[slot.id]?.description || ''} onChange={event => setDocumentMeta({ ...documentMeta, [slot.id]: { ...documentMeta[slot.id], description: event.target.value } })} className={formControlClass({ size: 'sm', className: 'mt-1' })} /></label>
+                </div>
+              ))}
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">İşlem Notu<textarea value={notes} onChange={event => setNotes(event.target.value)} rows={3} className={formControlClass({ className: 'mt-1' })} /></label>
+            </div>
+          </div>
+        </div>
+        {error ? <div className="border-t border-red-100 bg-red-50 px-5 py-3 text-sm text-red-700 dark:border-red-900/60 dark:bg-red-950/30 dark:text-red-200">{error}</div> : null}
+        <div className="flex items-center justify-between gap-3 border-t border-gray-100 px-5 py-4 dark:border-gray-800">
+          <div className="text-xs text-gray-500 dark:text-gray-400">Yeni belge: <span className="font-semibold text-gray-900 dark:text-white">{activeDocumentCount}</span></div>
+          <div className="flex items-center gap-2">
+            <button type="button" onClick={onClose} disabled={saving} className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-wait disabled:opacity-60 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-900">Vazgeç</button>
+            <button type="button" onClick={submit} disabled={saving} className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-wait disabled:opacity-60">İşlemi Tamamla</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
 }
 function BranchLinks({ branch }: { branch: BranchRow }) {
   return <div className="grid gap-3 md:grid-cols-2"><Link href="/app/sirket/teskilat" className="inline-flex items-center justify-between rounded-lg border border-gray-200 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-800 dark:text-gray-200 dark:hover:bg-gray-900">Teşkilat/Kadro sayfasına git <ExternalLink size={15} /></Link><Link href="/app/sirket/tesisler" className="inline-flex items-center justify-between rounded-lg border border-gray-200 px-4 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-800 dark:text-gray-200 dark:hover:bg-gray-900">Tesisler/Lokasyonlar sayfasına git <ExternalLink size={15} /></Link><ReadOnlyNotice text={`Organizasyon birimi: ${branch.organization_unit_name || '-'}`} /><ReadOnlyNotice text={`Lokasyon/Tesis: ${branch.facility_name || 'Şube adresinde tutuluyor'}`} /></div>
@@ -326,6 +465,53 @@ function BranchDocumentsPanel({ documents }: { documents: Record<string, any>[] 
   const activeDocuments = documents.filter(document => String(document.status || 'active') !== 'deleted')
   if (!activeDocuments.length) return <ReadOnlyNotice text="Bu şube kaydına bağlı belge bulunmuyor." />
   return <div className="grid gap-2 md:grid-cols-2">{activeDocuments.map((document, index) => <div key={`${document.slotId || document.name}-${index}`} className="rounded-lg border border-gray-200 p-3 text-sm dark:border-gray-800"><div className="font-semibold text-gray-900 dark:text-white">{document.name || document.slotId || 'Belge'}</div><div className="mt-1 text-xs text-gray-500 dark:text-gray-400">{document.slotId || '-'} {document.closing_document ? 'Kapanış belgesi' : 'Açılış belgesi'}</div></div>)}</div>
+}
+function BranchRepresentativesSummary({ branch }: { branch: BranchRow }) {
+  const [rows, setRows] = useState<Record<string, any>[]>([])
+  const [loading, setLoading] = useState(false)
+
+  useEffect(() => {
+    if (!branch?.id || !branch.company_id) return
+    let cancelled = false
+    setLoading(true)
+    companyService.representativesList({
+      companyId: branch.company_id,
+      branchId: branch.id,
+      includeCompanyWide: true,
+      authorityStatuses: ['active', 'suspended', 'expired', 'terminated'],
+      pageSize: 50,
+      useCache: false,
+    }).then(result => {
+      if (!cancelled) setRows(result.data || [])
+    }).catch(() => {
+      if (!cancelled) setRows([])
+    }).finally(() => {
+      if (!cancelled) setLoading(false)
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [branch?.company_id, branch?.id])
+
+  if (loading) return <ReadOnlyNotice text="Temsilci yetki kapsamı yükleniyor." />
+  if (!rows.length) return <ReadOnlyNotice text="Bu şube kapsamında aktif veya şirket geneli temsilci yetkisi bulunmuyor. Temsil yetkileri Temsilcilerimiz sayfasındaki yetki wizardlarıyla yönetilir." />
+  return (
+    <div className="space-y-3">
+      <div className="grid gap-3 md:grid-cols-3">
+        <MetricCard label="Bu şube kapsamı" value={String(rows.filter(row => row.scope_type === 'branch').length)} />
+        <MetricCard label="Şirket geneli" value={String(rows.filter(row => (row.scope_type || row.current_authority?.scope?.scope_type || 'company_wide') === 'company_wide').length)} />
+        <MetricCard label="Askıda / Sona ermiş" value={String(rows.filter(row => ['suspended', 'terminated', 'expired'].includes(String(row.authority_record_status || row.current_authority?.authority_record_status || ''))).length)} />
+      </div>
+      <div className="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-800">
+        <table className="min-w-full divide-y divide-gray-200 text-sm dark:divide-gray-800">
+          <thead className="bg-gray-50 text-left text-xs font-semibold uppercase text-gray-500 dark:bg-gray-900 dark:text-gray-400"><tr><th className="px-3 py-2">Temsilci</th><th className="px-3 py-2">Kapsam</th><th className="px-3 py-2">Yetki</th><th className="px-3 py-2">Durum</th></tr></thead>
+          <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+            {rows.map(row => <tr key={row.id}><td className="px-3 py-2 font-medium text-gray-900 dark:text-white">{row.display_name || row.full_name || '-'}</td><td className="px-3 py-2 text-gray-600 dark:text-gray-300">{row.scope_label || scopeTypeText(row.scope_type || row.current_authority?.scope?.scope_type)}</td><td className="px-3 py-2 text-gray-600 dark:text-gray-300">{(row.authority_types || row.current_authority?.authority_types || []).join(', ') || '-'}</td><td className="px-3 py-2 text-gray-600 dark:text-gray-300">{row.authority_record_status || row.current_authority?.authority_record_status || '-'}</td></tr>)}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
 }
 function BranchHistoryPanel({ branch }: { branch: BranchRow }) {
   return <div className="space-y-3"><div className="grid gap-3 md:grid-cols-3"><MetricCard label="Şube Açılış İşlemi" value={branch.opening_registration_date || branch.opening_decision_date || '-'} /><MetricCard label="Şube Kapanış İşlemi" value={branch.closing_registration_date || branch.closing_decision_date || '-'} /><MetricCard label="Son İşlem" value={operationLabel(branch.last_operation)} /></div><pre className="max-h-72 overflow-auto rounded-lg border border-gray-200 bg-gray-50 p-3 text-xs text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200">{JSON.stringify(branch.metadata_json || {}, null, 2)}</pre></div>
@@ -340,5 +526,6 @@ function StatusBadge({ status }: { status?: string }) {
 }
 function branchTypeOptions() { return [{ value: 'official_branch', label: 'Resmi şube' }, { value: 'liaison_office', label: 'İrtibat ofisi' }, { value: 'operation_point', label: 'Operasyon noktası' }, { value: 'warehouse_facility', label: 'Depo / tesis' }] }
 function branchTypeLabel(value: unknown) { if (value === 'liaison_office') return 'İrtibat ofisi'; if (value === 'operation_point') return 'Operasyon noktası'; if (value === 'warehouse_facility') return 'Depo / tesis'; return 'Resmi şube' }
+function scopeTypeText(value: unknown) { if (value === 'branch') return 'Belirli şube'; if (value === 'organization_unit') return 'Belirli organizasyon birimi'; if (value === 'facility') return 'Belirli tesis/lokasyon'; return 'Şirket geneli' }
 function operationLabel(value: unknown) { if (value === 'branch_opening') return 'Şube Açılışı'; if (value === 'branch_closing') return 'Şube Kapanışı'; return value ? String(value) : '-' }
 function isActiveBranch(branch: BranchRow) { const values = [branch.record_status, branch.status].map(value => String(value || '').toLocaleLowerCase('tr-TR')); return !branch.is_deleted && values.some(value => value === 'active' || value === 'aktif') }

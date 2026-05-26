@@ -12,6 +12,12 @@ const ALLOWED_TOP_LEVEL_KEYS = new Set([
   'defaultLandingPage',
   'tablePreferences',
   'dismissedHints',
+  'hasSeenGlobalTour',
+  'completedTourSteps',
+  'dismissedPageTours',
+  'dismissedOperationHints',
+  'preferredHelpMode',
+  'lastTourVersion',
 ])
 
 function isPlainRecord(value: unknown): value is Record<string, unknown> {
@@ -89,6 +95,15 @@ function sanitizeTablePreferences(value: unknown): Record<string, unknown> {
   return isPlainRecord(sanitized) ? deepMergeRecords({}, sanitized) : {}
 }
 
+function sanitizeStringList(value: unknown, maxItems = 200) {
+  if (!Array.isArray(value)) return []
+  return value
+    .filter((item): item is string => typeof item === 'string')
+    .map(item => item.trim())
+    .filter(Boolean)
+    .slice(0, maxItems)
+}
+
 export function normalizeUiPreferencesPatch(value: unknown): Partial<UserUiPreferences> {
   if (!isPlainRecord(value)) return {}
 
@@ -126,13 +141,25 @@ export function normalizeUiPreferencesPatch(value: unknown): Partial<UserUiPrefe
         patch.tablePreferences = sanitizeTablePreferences(rawValue)
         break
       case 'dismissedHints':
-        if (Array.isArray(rawValue)) {
-          patch.dismissedHints = rawValue
-            .filter((item): item is string => typeof item === 'string')
-            .map(item => item.trim())
-            .filter(Boolean)
-            .slice(0, 100)
-        }
+        patch.dismissedHints = sanitizeStringList(rawValue, 100)
+        break
+      case 'hasSeenGlobalTour':
+        if (typeof rawValue === 'boolean') patch.hasSeenGlobalTour = rawValue
+        break
+      case 'completedTourSteps':
+        patch.completedTourSteps = sanitizeStringList(rawValue, 300)
+        break
+      case 'dismissedPageTours':
+        patch.dismissedPageTours = sanitizeStringList(rawValue, 100)
+        break
+      case 'dismissedOperationHints':
+        patch.dismissedOperationHints = sanitizeStringList(rawValue, 100)
+        break
+      case 'preferredHelpMode':
+        if (rawValue === 'tour' || rawValue === 'guide' || rawValue === 'both') patch.preferredHelpMode = rawValue
+        break
+      case 'lastTourVersion':
+        patch.lastTourVersion = rawValue === null ? null : shortText(rawValue, '', 32)
         break
     }
   }
@@ -154,6 +181,15 @@ export function mergeUiPreferences(
     dismissedHints: Array.isArray(base?.dismissedHints)
       ? base.dismissedHints
       : DEFAULT_UI_PREFERENCES.dismissedHints,
+    completedTourSteps: Array.isArray(base?.completedTourSteps)
+      ? base.completedTourSteps
+      : DEFAULT_UI_PREFERENCES.completedTourSteps,
+    dismissedPageTours: Array.isArray(base?.dismissedPageTours)
+      ? base.dismissedPageTours
+      : DEFAULT_UI_PREFERENCES.dismissedPageTours,
+    dismissedOperationHints: Array.isArray(base?.dismissedOperationHints)
+      ? base.dismissedOperationHints
+      : DEFAULT_UI_PREFERENCES.dismissedOperationHints,
   }
   const normalizedPatch = normalizeUiPreferencesPatch(patch)
 
@@ -165,5 +201,8 @@ export function mergeUiPreferences(
       normalizedPatch.tablePreferences || {}
     ),
     dismissedHints: normalizedPatch.dismissedHints || normalizedBase.dismissedHints,
+    completedTourSteps: normalizedPatch.completedTourSteps || normalizedBase.completedTourSteps,
+    dismissedPageTours: normalizedPatch.dismissedPageTours || normalizedBase.dismissedPageTours,
+    dismissedOperationHints: normalizedPatch.dismissedOperationHints || normalizedBase.dismissedOperationHints,
   }
 }

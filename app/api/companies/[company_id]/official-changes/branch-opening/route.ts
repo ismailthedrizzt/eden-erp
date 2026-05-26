@@ -5,6 +5,7 @@ import { withTenantInsertScopeForTable } from '@/lib/tenancy/server'
 import { OperationRequestService } from '@/lib/operations/operationRequestService'
 import { resolveBaseUpdatedAt, resolveBaseVersion, resolveClientRequestId, stripOperationControlFields } from '@/lib/operations/idempotency'
 import { OutboxEventService } from '@/lib/outbox/outboxEventService'
+import { BRANCH_PERMISSIONS } from '@/lib/modules/companies/branchPermissions'
 import {
   OFFICIAL_BRANCH_SELECT,
   OFFICIAL_CHANGE_EVENT_TYPES,
@@ -12,6 +13,8 @@ import {
   OfficialDocumentMetaSchema,
   OfficialDocumentSchema,
   buildBranchOpeningPrecheck,
+  attachFacilityToBranch,
+  createBranchFacility,
   createBranchOrganizationUnit,
   duplicateOfficialChangeResponse,
   emptyToNull,
@@ -70,7 +73,7 @@ export async function POST(
 ) {
   const { company_id: companyId } = await params
   const supabase = createServiceClient()
-  const access = await ensureOfficialChangeAccess(request, supabase, companyId, 'companies.edit')
+  const access = await ensureOfficialChangeAccess(request, supabase, companyId, BRANCH_PERMISSIONS.openingStart, 'companies.edit')
   if (access.response) return access.response
 
   const rawBody = await request.json().catch(() => ({}))
@@ -140,11 +143,33 @@ export async function POST(
       })
       : null
 
+    const facility = input.create_facility
+      ? await createBranchFacility({
+        supabase,
+        companyId,
+        tenantContext: access.tenantContext,
+        branchName,
+        facilityName: input.facility_name || null,
+        branchType: input.branch_type,
+        country,
+        city: city || null,
+        district: district || null,
+        neighborhood: input.neighborhood || null,
+        address,
+        postalCode: input.postal_code || null,
+        phone: input.phone || null,
+        email: input.email || null,
+        startDate: input.opening_registration_date || input.opening_decision_date,
+        notes: input.notes || null,
+        userId: access.userId || null,
+      })
+      : null
+
     const now = new Date().toISOString()
     const branchPayload = withTenantInsertScopeForTable({
       company_id: companyId,
       organization_unit_id: organizationUnit?.id || null,
-      facility_id: null,
+      facility_id: facility?.id || null,
       branch_name: branchName,
       branch_short_name: normalizeOptionalString(input.branch_short_name),
       branch_type: input.branch_type,
@@ -174,7 +199,8 @@ export async function POST(
       metadata_json: {
         operation_type: OFFICIAL_CHANGE_OPERATION_TYPES.branch_opening,
         facility_requested: !!input.create_facility,
-        facility_name: normalizeOptionalString(input.facility_name),
+        facility_name: facility?.facility_name || normalizeOptionalString(input.facility_name),
+        facility_not_created: !input.create_facility,
       },
       created_by: access.userId || null,
       updated_by: access.userId || null,
@@ -187,6 +213,15 @@ export async function POST(
     const { data: branch, error: branchError } = await supabase.from('company_branches').insert(branchPayload).select(OFFICIAL_BRANCH_SELECT).single()
     if (branchError) throw branchError
     const createdBranch = branch as Record<string, any>
+    const linkedFacility = facility
+      ? await attachFacilityToBranch({
+        supabase,
+        facilityId: facility.id,
+        branchId: createdBranch.id,
+        tenantContext: access.tenantContext,
+        userId: access.userId || null,
+      })
+      : null
     const changedFields = Object.keys(branchPayload).filter(field => !['tenant_id', 'created_at', 'updated_at', 'created_by', 'updated_by', 'version', 'is_deleted'].includes(field))
     const transaction = await insertOfficialChangeTransaction({
       supabase,
@@ -209,7 +244,7 @@ export async function POST(
       warnings: dateValidation.warnings,
     })
     await insertOfficialLifecycleEvent({ supabase, companyId, tenantContext: access.tenantContext, userId: access.userId, transaction, eventType: 'company_branch_opening_completed', eventDate: input.opening_registration_date || input.opening_decision_date })
-    const result = { company: precheck.current, transaction, branch: createdBranch, organization_unit: organizationUnit, facility: null }
+    const result = { company: precheck.current, transaction, branch: createdBranch, organization_unit: organizationUnit, facility: linkedFacility || facility }
     if (operation) {
       await operationService.markCompleted(operation.id, result, dateValidation.warnings)
       await new OutboxEventService(supabase as any).enqueue({
@@ -220,7 +255,7 @@ export async function POST(
         aggregateType: 'company_branch',
         aggregateId: createdBranch.id,
         operationId: operation.id,
-        payload: { company_id: companyId, branch_id: createdBranch.id, transaction_id: transaction.id, organization_unit_id: organizationUnit?.id || null },
+        payload: { company_id: companyId, branch_id: createdBranch.id, transaction_id: transaction.id, organization_unit_id: organizationUnit?.id || null, facility_id: (linkedFacility || facility)?.id || null },
       }).catch(() => null)
     }
     return officialChangeSuccess(result, operation ? { id: operation.id, operation_status: 'completed' } : null)

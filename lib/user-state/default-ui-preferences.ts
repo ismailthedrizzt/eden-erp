@@ -11,4 +11,10 @@ export const DEFAULT_UI_PREFERENCES: UserUiPreferences = {
   defaultLandingPage: '/dashboard',
   tablePreferences: {},
   dismissedHints: [],
+  hasSeenGlobalTour: false,
+  completedTourSteps: [],
+  dismissedPageTours: [],
+  dismissedOperationHints: [],
+  preferredHelpMode: 'both',
+  lastTourVersion: null,
 }

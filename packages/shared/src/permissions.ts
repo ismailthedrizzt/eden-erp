@@ -39,6 +39,13 @@ export const PERMISSIONS = {
     deregistrationComplete: 'companies.deregistration.complete',
     lifecycleView: 'companies.lifecycle.view',
   },
+  branches: {
+    view: 'branches.view',
+    edit: 'branches.edit',
+    openingStart: 'branches.opening.start',
+    closingStart: 'branches.closing.start',
+    documentsUpdate: 'branches.documents.update',
+  },
   employees: {
     view: 'employees.view',
     insert: 'employees.insert',

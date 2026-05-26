@@ -22,6 +22,7 @@ export type BranchClosingPrecheckContext = {
   organization_units?: Record<string, any>[]
   selected_branch?: Record<string, any> | null
   impact?: Record<string, any> | null
+  facilities?: Record<string, any>[]
 }
 
 export type BranchClosingSubmitPayload = Record<string, any> & {
@@ -82,6 +83,7 @@ export function CompanyBranchClosingWizard({
   const activeBranches = branches.filter(isActiveBranch)
   const selectedBranch = branches.find(branch => branch.id === draft.branch_id) || precheck.selected_branch || null
   const impact = precheck.selected_branch?.id === draft.branch_id ? precheck.impact : null
+  const impactRelationCount = Number(impact?.open_relation_count || 0)
   const blockingReasons = precheck.blocking_reasons || (!precheck.ok && precheck.message ? [precheck.message] : [])
   const activeDocumentCount = documents.filter(isActiveDocument).length
   const organizationUnitOptions = (precheck.organization_units || []).filter(unit => unit.id !== selectedBranch?.organization_unit_id).map(unit => ({ value: unit.id, label: unit.name || unit.short_name || unit.id }))
@@ -123,6 +125,8 @@ export function CompanyBranchClosingWizard({
     if (targetStep >= 3 && !trimmed(draft.closing_reason)) return 'Kapanış nedeni zorunludur.'
     if (targetStep >= 3 && !draft.closing_decision_date) return 'Karar tarihi zorunludur.'
     if (targetStep >= 3 && draft.closing_registration_date && new Date(draft.closing_registration_date) < new Date(draft.closing_decision_date)) return 'Kapanış tarihi karar tarihinden önce olamaz.'
+    if (targetStep >= 2 && impactRelationCount > 0 && !draft.organization_unit_action) return 'Etki analizi için organizasyon birimi aksiyonu seçilmelidir.'
+    if (targetStep >= 2 && impactRelationCount > 0 && !draft.facility_action) return 'Etki analizi için lokasyon/tesis aksiyonu seçilmelidir.'
     if (targetStep >= 3 && draft.organization_unit_action === 'reassign' && !draft.target_organization_unit_id) return 'Organizasyon birimi başka birime bağlanacaksa hedef birim seçilmelidir.'
     return null
   }
@@ -166,8 +170,18 @@ export function CompanyBranchClosingWizard({
           </div>}
           {step === 2 && <div className="space-y-5">
             {impactLoading ? <div className="rounded-lg border border-gray-200 p-4 text-sm text-gray-600 dark:border-gray-800 dark:text-gray-300">Etki analizi yenileniyor...</div> : null}
-            <div className="grid gap-3 md:grid-cols-4"><Metric label="Organizasyon Birimi" value={selectedBranch?.organization_unit_id ? 'Bağlı' : 'Yok'} /><Metric label="Kadro" value={String(impact?.position_count || 0)} /><Metric label="Personel" value={String(impact?.employee_count || 0)} /><Metric label="Açık İlişki" value={String(impact?.open_relation_count || 0)} /></div>
-            {(impact?.employee_count || 0) > 0 || (impact?.position_count || 0) > 0 ? <MessageList title="Etki analizi uyarısı" tone="amber" messages={['Şubeye bağlı kadro veya personel görünüyor. Personel/kadro yönetimi Teşkilat/Kadro ekranında takip edilmelidir.']} /> : null}
+            <div className="grid gap-3 md:grid-cols-4">
+              <Metric label="Organizasyon Birimi" value={selectedBranch?.organization_unit_id ? 'Bağlı' : 'Yok'} />
+              <Metric label="Lokasyon/Tesis" value={selectedBranch?.facility_id ? 'Bağlı' : 'Yok'} />
+              <Metric label="Aktif Kadro" value={String(impact?.active_position_count ?? impact?.position_count ?? 0)} />
+              <Metric label="Personel" value={String(impact?.employee_count || 0)} />
+              <Metric label="Açık Görev" value={String(impact?.open_task_count || 0)} />
+              <Metric label="Açık Proje" value={String(impact?.open_project_count || 0)} />
+              <Metric label="Depo/Stok Lokasyonu" value={String(impact?.open_inventory_location_count || 0)} />
+              <Metric label="Servis/Saha Kaydı" value={String(impact?.open_service_record_count || 0)} />
+            </div>
+            {impactRelationCount > 0 ? <MessageList title="Etki analizi uyarısı" tone="amber" messages={['Şubeye bağlı aktif ilişki görünüyor. Kapanış tamamlanmadan organizasyon birimi ve lokasyon/tesis için aksiyon seçilmelidir.']} /> : null}
+            {Array.isArray(impact?.warnings) && impact.warnings.length ? <MessageList title="Altyapı Notları" tone="amber" messages={impact.warnings} /> : null}
             <div className="grid gap-4 md:grid-cols-2">
               <SelectField label="Bağlı organizasyon birimi ne olacak?" value={draft.organization_unit_action} onChange={value => setField('organization_unit_action', value)} options={[['deactivate', 'Pasife al'], ['reassign', 'Başka birime bağla'], ['keep_open', 'Sadece şube kaydını kapat, birimi açık bırak']]} />
               <SelectField label="Hedef organizasyon birimi" value={draft.target_organization_unit_id} onChange={value => setField('target_organization_unit_id', value)} disabled={draft.organization_unit_action !== 'reassign'} options={[['', 'Hedef birim seçin'], ...organizationUnitOptions.map(option => [option.value, option.label] as [string, string])]} error={fieldErrors.target_organization_unit_id} />

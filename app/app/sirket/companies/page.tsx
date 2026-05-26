@@ -25,6 +25,10 @@ import {
   type RecordStatusFilterValue,
 } from '@/components/ui/SmartDataTable'
 import { Toast } from '@/components/ui/Toast'
+import { DraftCreateNotice } from '@/components/ui/DraftCreateNotice'
+import { PageContextTour } from '@/components/onboarding/PageContextTour'
+import { pageTourSteps } from '@/components/onboarding/tourSteps'
+import { useRegisterActionGuideContext } from '@/components/ai/ActionGuideContext'
 import type { AnyDashboardWidgetConfig } from '@/components/dashboard/dashboard.types'
 import { CompanyNaceCodesSection } from '@/components/modules/sirket/CompanyPublicTab'
 import { cn, formatPhoneInput, normalizeEmailInput } from '@/lib/utils'
@@ -720,6 +724,14 @@ export default function SirketlerPage() {
     ? (selectedSirket as any).hero_documents.length
     : 0
 
+  useRegisterActionGuideContext({
+    currentPage: 'companies',
+    selectedRecordId: selectedSirket?.id || null,
+    selectedRecordType: selectedSirket?.id ? 'company' : null,
+    selectedRecordStatus: selectedSirket ? selectedLifecycleStatus : null,
+    activeCompanyId: selectedSirket?.id || null,
+  })
+
   useEffect(() => {
     if (pageState === 'list' || pageState === 'create') return
     if (!selectedSirket?.id || detailLoading || detailSections.mediaLoading) return
@@ -776,6 +788,33 @@ export default function SirketlerPage() {
     notificationCompanyOpenRef.current = notificationCompanyId
     void openCompanyFromNotification(notificationCompanyId)
   }, [loading, pageState, searchParams, tableData])
+
+  useEffect(() => {
+    const onGuideCommand = (event: Event) => {
+      const detail = (event as CustomEvent<{ action_type?: string; wizard_key?: string }>).detail
+      if (!detail) return
+      if (detail.action_type === 'start_create') {
+        handleAddClick()
+        return
+      }
+      if (detail.action_type !== 'open_wizard' || pageState === 'list') return
+      if (detail.wizard_key === 'company_opening') void openLifecycleWizard('opening')
+      if (detail.wizard_key === 'company_liquidation') void openLifecycleWizard('liquidation')
+      if (detail.wizard_key === 'company_deregistration') void openLifecycleWizard('deregistration')
+      if (detail.wizard_key === 'capital_increase') void openCapitalIncreaseWizard()
+      if (detail.wizard_key === 'capital_decrease') void openCapitalDecreaseWizard()
+      if (detail.wizard_key === 'title_change') void openOfficialChangeWizard('title_change')
+      if (detail.wizard_key === 'address_change') void openOfficialChangeWizard('address_change')
+      if (detail.wizard_key === 'public_registration_update') void openOfficialChangeWizard('public_registration_update')
+      if (detail.wizard_key === 'nace_change') void openNaceChangeWizard()
+      if (detail.wizard_key === 'activity_subject_change') void openActivitySubjectChangeWizard()
+      if (detail.wizard_key === 'branch_opening') void openBranchOpeningWizard()
+      if (detail.wizard_key === 'branch_closing') void openBranchClosingWizard()
+    }
+
+    window.addEventListener('eden:action-guide-command', onGuideCommand)
+    return () => window.removeEventListener('eden:action-guide-command', onGuideCommand)
+  })
 
   if (!formAccess.canView) {
     return (
@@ -1723,10 +1762,11 @@ export default function SirketlerPage() {
         subtitle={bannerConfig.subtitle}
         icon={<Building2 size={24} />}
         {...(bannerConfig.mode === 'list'
-          ? { onAddClick: (bannerConfig as any).onAddClick, addButtonText: (bannerConfig as any).addButtonText }
+          ? { onAddClick: (bannerConfig as any).onAddClick, addButtonText: (bannerConfig as any).addButtonText, addButtonTourId: 'quick-actions' }
           : { onBackClick: (bannerConfig as any).onBackClick }
         )}
       />
+      <PageContextTour tourKey="companies" steps={pageTourSteps.companies} enabled={pageState === 'list' || pageState === 'view'} />
 
       {toast && (
         <Toast
@@ -1783,13 +1823,16 @@ export default function SirketlerPage() {
             quickLookDefaultOpen={false}
             forceQuickLookClosed={searchParams.has('systemTour')}
             storageKey="companies-table"
-            emptyText="Şirket kaydı bulunamadı"
+            emptyText="Henüz şirket taslağı yok. + Ekle ile şirket kartı taslağı oluşturabilir, ardından Şirket Açılışı işlemiyle aktif hale getirebilirsiniz."
           />
         </div>
       )}
 
       {pageState !== 'list' && (
         <div className="mt-6 space-y-4">
+          {pageState === 'create' && (
+            <DraftCreateNotice message="Bu işlem şirket kartı taslağı oluşturur. Şirketin resmi açılışı Şirket Açılışı sihirbazı ile tamamlanır." />
+          )}
           <EntityForm
             mode={formMode}
             entityName="Şirketler"
@@ -1906,6 +1949,7 @@ export default function SirketlerPage() {
                     render: ({ data }) => (
                       <CompanyBranchesSummary
                         companyId={selectedSirket?.id || (data as any)?.id}
+                        company={(data as any) || selectedSirket}
                         onOpenBranchOpening={openBranchOpeningWizard}
                         onOpenBranchClosing={openBranchClosingWizard}
                       />
@@ -2101,18 +2145,22 @@ function CompanyNaceActivitySummary({ data }: { data?: Partial<Sirket> | null })
 
 function CompanyBranchesSummary({
   companyId,
+  company,
   onOpenBranchOpening,
   onOpenBranchClosing,
 }: {
   companyId?: string
+  company?: Record<string, any> | null
   onOpenBranchOpening: () => void
   onOpenBranchClosing: () => void
 }) {
-  const [branches, setBranches] = useState<Array<Record<string, any>>>([])
+  const initialBranches = useMemo(() => Array.isArray(company?.branches) ? company.branches : [], [company?.branches])
+  const initialSummary = useMemo(() => company?.branch_summary || null, [company?.branch_summary])
+  const [branches, setBranches] = useState<Array<Record<string, any>>>(initialBranches)
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    if (!companyId) return
+    if (!companyId || initialBranches.length || initialSummary) return
     let cancelled = false
     setLoading(true)
     companyService.branchesList({
@@ -2130,7 +2178,11 @@ function CompanyBranchesSummary({
     return () => {
       cancelled = true
     }
-  }, [companyId])
+  }, [companyId, initialBranches.length, initialSummary])
+
+  useEffect(() => {
+    if (initialBranches.length) setBranches(initialBranches)
+  }, [initialBranches])
 
   const activeBranches = branches.filter(isActiveCompanyBranch)
   const officialBranches = activeBranches.filter(branch => branch.is_official_branch)
@@ -2143,11 +2195,11 @@ function CompanyBranchesSummary({
   return (
     <div className="space-y-4">
       <div className="grid gap-3 md:grid-cols-5">
-        <SummaryMetric label="Aktif Şube" value={loading ? '...' : String(activeBranches.length)} />
-        <SummaryMetric label="Resmi Şube" value={loading ? '...' : String(officialBranches.length)} />
-        <SummaryMetric label="Ofis / Operasyon" value={loading ? '...' : String(operationPoints.length)} />
-        <SummaryMetric label="Kapanmış Şube" value={loading ? '...' : String(closedBranches.length)} />
-        <SummaryMetric label="Son Açılan" value={lastOpened?.branch_name || '-'} />
+        <SummaryMetric label="Aktif Şube" value={loading ? '...' : String(initialSummary?.active_branch_count ?? activeBranches.length)} />
+        <SummaryMetric label="Resmi Şube" value={loading ? '...' : String(initialSummary?.official_branch_count ?? officialBranches.length)} />
+        <SummaryMetric label="Ofis / Operasyon" value={loading ? '...' : String(initialSummary?.operation_point_count ?? operationPoints.length)} />
+        <SummaryMetric label="Kapanmış Şube" value={loading ? '...' : String(initialSummary?.closed_branch_count ?? closedBranches.length)} />
+        <SummaryMetric label="Son Açılan" value={initialSummary?.last_opened_branch?.branch_name || lastOpened?.branch_name || '-'} />
       </div>
       <div className="flex flex-wrap items-center gap-2">
         <button type="button" onClick={onOpenBranchOpening} className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700">

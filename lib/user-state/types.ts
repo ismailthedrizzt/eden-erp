@@ -12,6 +12,12 @@ export interface UserUiPreferences {
   defaultLandingPage: string
   tablePreferences: Record<string, unknown>
   dismissedHints: string[]
+  hasSeenGlobalTour: boolean
+  completedTourSteps: string[]
+  dismissedPageTours: string[]
+  dismissedOperationHints: string[]
+  preferredHelpMode: 'tour' | 'guide' | 'both'
+  lastTourVersion: string | null
 }
 
 export type UserUiPreferencesPatch = Partial<{
@@ -25,6 +31,12 @@ export type UserUiPreferencesPatch = Partial<{
   defaultLandingPage: unknown
   tablePreferences: unknown
   dismissedHints: unknown
+  hasSeenGlobalTour: unknown
+  completedTourSteps: unknown
+  dismissedPageTours: unknown
+  dismissedOperationHints: unknown
+  preferredHelpMode: unknown
+  lastTourVersion: unknown
 }>
 
 export interface BootstrapWorkspace {

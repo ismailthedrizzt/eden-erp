@@ -11,6 +11,8 @@ import { ModuleLicenseProvider } from '@/hooks/useModuleLicense'
 import { PermissionProvider } from '@/lib/security/permissionStore'
 import { ModuleProvider } from '@/lib/security/moduleStore'
 import { GuidedSystemTour } from '@/components/onboarding/GuidedSystemTour'
+import { ActionGuideProvider } from '@/components/ai/ActionGuideContext'
+import { ActionGuideSearch } from '@/components/ai/ActionGuideSearch'
 import { cacheUiPreferences, readCachedUiPreferences, syncUiPreferencesPatch } from '@/lib/user-state/client'
 import { setStoredTenantId, tenantRequestHeaders } from '@/lib/tenancy/client'
 import type { SessionBootstrapResponse, UiThemePreference } from '@/lib/user-state/types'
@@ -60,6 +62,7 @@ const BREADCRUMBS: Record<string, string> = {
   '/app/sirket/companies': 'Şirket Yönetimi › Şirketlerimiz',
   '/app/sirket/companies/partners': 'Şirket Yönetimi › Ortaklarımız',
   '/app/sirket/companies/representatives': 'Şirket Yönetimi › Temsilcilerimiz',
+  '/app/sirket/companies/branches': 'Şirket Yönetimi › Şubelerimiz',
   '/app/sirket/companies/stakeholders': 'Şirket Yönetimi › Paydaşlarımız',
 }
 
@@ -328,6 +331,7 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
     <ModuleLicenseProvider>
       <ModuleProvider>
         <PermissionProvider>
+          <ActionGuideProvider>
           <div className={cn('flex h-screen overflow-hidden', dark && 'dark')}>
             {/* Desktop Sidebar */}
             <div className="hidden lg:block">
@@ -364,7 +368,7 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
             className="h-14 bg-white dark:bg-eden-navy-2 border-b border-gray-200 dark:border-eden-navy
                              px-3 sm:px-5 flex items-center justify-between flex-shrink-0 z-10">
           
-            <div className="flex items-center gap-3">
+            <div className="flex min-w-0 items-center gap-3">
               {/* Mobile Menu Button */}
               <button
                 onClick={() => setMobileMenuOpen(true)}
@@ -488,6 +492,14 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
                 </div>
               )}
             </div>
+            <ActionGuideSearch
+              onStartSystemTour={() => {
+                setTourInitialStep(null)
+                setTourClosedThisSession(false)
+                setTourShouldOpen(true)
+                setTourOpen(true)
+              }}
+            />
             <div className="flex items-center gap-3">
               <PendingActionsBell />
               <div data-tour-id="user-settings" className="flex items-center gap-3">
@@ -529,6 +541,7 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
               }}
             />
           </div>
+          </ActionGuideProvider>
         </PermissionProvider>
       </ModuleProvider>
     </ModuleLicenseProvider>

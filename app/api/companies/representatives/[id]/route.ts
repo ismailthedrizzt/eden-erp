@@ -55,6 +55,12 @@ const REPRESENTATIVE_OPERATION_CONTROLLED_FIELDS = new Set([
   'can_submit_hiring_notice',
   'can_submit_termination_notice',
   'official_correspondence_authority',
+  'scope_type',
+  'branch_id',
+  'organization_unit_id',
+  'facility_id',
+  'scope_label',
+  'scope_notes',
   'current_authority',
   'authority_transaction_history',
 ])
@@ -488,6 +494,10 @@ async function applyAuthorityTransaction({
     terminationReason: body.termination_reason || body.notes,
   })
   if (precheck) return precheck
+  if (!isRepresentativeTerminationTransaction(transactionType)) {
+    const scopeValidation = await validateRepresentativeAuthorityScope(supabase, current.company_id, body, currentAuthority, tenantContext)
+    if (scopeValidation) return scopeValidation
+  }
   const transactionPayload = mapRepresentativeAuthorityTransactionForDb(body, current, currentAuthority, transactionType)
   const { data: rpcResult, error: rpcError } = await supabase.rpc('perform_representative_authority_transaction', {
     p_representative_id: representativeId,
@@ -583,6 +593,10 @@ function validateRepresentativeLifecycleTransition(transactionType: string, reco
   return null
 }
 
+function isRepresentativeTerminationTransaction(transactionType: string) {
+  return ['Askıya Alma', 'Sonlandırma', 'Ters Kayıt'].includes(transactionType)
+}
+
 function validateRepresentativeAuthorityTransactionPayload(
   transactionType: string,
   input: {
@@ -669,6 +683,65 @@ function mapRepresentativeCardForDb(representative: Record<string, any>, current
   }
 }
 
+async function validateRepresentativeAuthorityScope(
+  supabase: ReturnType<typeof createServiceClient>,
+  companyId: string | null | undefined,
+  body: Record<string, any>,
+  currentAuthority: Record<string, any> | null,
+  tenantContext: ReturnType<typeof resolveTenantContext>
+) {
+  if (!companyId) return { ok: false as const, status: 400, code: 'COMPANY_REQUIRED', error: 'Temsil yetkisi için bağlı şirket zorunludur.' }
+  const scope = buildRepresentativeAuthorityScope(body, currentAuthority)
+  const scopeType = String(scope.scope_type || 'company_wide')
+  if (!['company_wide', 'branch', 'organization_unit', 'facility'].includes(scopeType)) {
+    return { ok: false as const, status: 400, code: 'INVALID_AUTHORITY_SCOPE_TYPE', error: 'Yetki kapsamı geçerli değil.' }
+  }
+  if (scopeType === 'company_wide') return null
+  if (scopeType === 'branch') {
+    if (!scope.branch_id) return { ok: false as const, status: 400, code: 'AUTHORITY_BRANCH_REQUIRED', error: 'Şube kapsamı için şube seçilmelidir.', details: { fieldErrors: { branch_id: 'Şube seçimi zorunludur.' } } }
+    const branch = await loadScopedAuthorityReference(supabase, 'company_branches', 'id,company_id,status,record_status,is_deleted', scope.branch_id, tenantContext)
+    if (!branch || branch.company_id !== companyId) return { ok: false as const, status: 400, code: 'AUTHORITY_BRANCH_INVALID', error: 'Seçilen şube bu şirkete bağlı değildir.', details: { fieldErrors: { branch_id: 'Aynı şirketten aktif şube seçin.' } } }
+    if (!isActiveAuthorityReference(branch)) return { ok: false as const, status: 400, code: 'AUTHORITY_BRANCH_INACTIVE', error: 'Kapalı veya pasif şubeye yeni aktif temsil yetkisi verilemez.', details: { fieldErrors: { branch_id: 'Aktif şube seçin.' } } }
+  }
+  if (scopeType === 'organization_unit') {
+    if (!scope.organization_unit_id) return { ok: false as const, status: 400, code: 'AUTHORITY_ORGANIZATION_UNIT_REQUIRED', error: 'Organizasyon birimi kapsamı için birim seçilmelidir.', details: { fieldErrors: { organization_unit_id: 'Organizasyon birimi zorunludur.' } } }
+    const unit = await loadScopedAuthorityReference(supabase, 'organization_units', 'id,company_id,status,active,is_deleted', scope.organization_unit_id, tenantContext)
+    if (!unit || unit.company_id !== companyId) return { ok: false as const, status: 400, code: 'AUTHORITY_ORGANIZATION_UNIT_INVALID', error: 'Seçilen organizasyon birimi bu şirkete bağlı değildir.', details: { fieldErrors: { organization_unit_id: 'Aynı şirketten aktif birim seçin.' } } }
+    if (!isActiveAuthorityReference(unit)) return { ok: false as const, status: 400, code: 'AUTHORITY_ORGANIZATION_UNIT_INACTIVE', error: 'Kapalı veya pasif organizasyon birimi için yeni aktif temsil yetkisi verilemez.', details: { fieldErrors: { organization_unit_id: 'Aktif birim seçin.' } } }
+  }
+  if (scopeType === 'facility') {
+    if (!scope.facility_id) return { ok: false as const, status: 400, code: 'AUTHORITY_FACILITY_REQUIRED', error: 'Tesis/lokasyon kapsamı için tesis seçilmelidir.', details: { fieldErrors: { facility_id: 'Tesis/lokasyon zorunludur.' } } }
+    const facility = await loadScopedAuthorityReference(supabase, 'company_facilities', 'id,company_id,status,record_status,is_deleted', scope.facility_id, tenantContext)
+    if (!facility || facility.company_id !== companyId) return { ok: false as const, status: 400, code: 'AUTHORITY_FACILITY_INVALID', error: 'Seçilen tesis/lokasyon bu şirkete bağlı değildir.', details: { fieldErrors: { facility_id: 'Aynı şirketten aktif tesis seçin.' } } }
+    if (!isActiveAuthorityReference(facility)) return { ok: false as const, status: 400, code: 'AUTHORITY_FACILITY_INACTIVE', error: 'Kapalı veya pasif tesis/lokasyon için yeni aktif temsil yetkisi verilemez.', details: { fieldErrors: { facility_id: 'Aktif tesis/lokasyon seçin.' } } }
+  }
+  return null
+}
+
+async function loadScopedAuthorityReference(
+  supabase: ReturnType<typeof createServiceClient>,
+  tableName: 'company_branches' | 'organization_units' | 'company_facilities',
+  select: string,
+  id: string,
+  tenantContext: ReturnType<typeof resolveTenantContext>
+) {
+  let query = supabase.from(tableName).select(select).eq('id', id)
+  query = applyTenantQueryScope(query, tableName, tenantContext)
+  const { data, error } = await query.maybeSingle()
+  if (error) {
+    if (isMissingTableError(error)) return null
+    throw error
+  }
+  return data as Record<string, any> | null
+}
+
+function isActiveAuthorityReference(row: Record<string, any>) {
+  const values = [row.record_status, row.status].map(value => String(value || '').toLocaleLowerCase('tr-TR'))
+  return row.is_deleted !== true
+    && row.active !== false
+    && !values.some(value => ['passive', 'pasif', 'closed', 'kapalı', 'kapali'].includes(value))
+}
+
 function mapRepresentativeAuthorityTransactionForDb(
   body: Record<string, any>,
   current: Record<string, any>,
@@ -690,17 +763,7 @@ function mapRepresentativeAuthorityTransactionForDb(
     bank_transaction_limit: toNullableNumber(body.bank_transaction_limit ?? currentAuthority?.bank_transaction_limit),
     contract_signature_limit: toNullableNumber(body.contract_signature_limit ?? currentAuthority?.contract_signature_limit),
   }
-  const scope = {
-    bank_authority_level: body.bank_authority_level ?? currentAuthority?.scope?.bank_authority_level ?? null,
-    department_scope: body.department_scope ?? currentAuthority?.scope?.department_scope ?? null,
-    gib_permissions: body.gib_permissions ?? currentAuthority?.scope?.gib_permissions ?? null,
-    can_submit_declaration: !!(body.can_submit_declaration ?? currentAuthority?.scope?.can_submit_declaration),
-    can_process_e_invoice: !!(body.can_process_e_invoice ?? currentAuthority?.scope?.can_process_e_invoice),
-    sgk_permissions: body.sgk_permissions ?? currentAuthority?.scope?.sgk_permissions ?? null,
-    can_submit_hiring_notice: !!(body.can_submit_hiring_notice ?? currentAuthority?.scope?.can_submit_hiring_notice),
-    can_submit_termination_notice: !!(body.can_submit_termination_notice ?? currentAuthority?.scope?.can_submit_termination_notice),
-    official_correspondence_authority: !!(body.official_correspondence_authority ?? currentAuthority?.scope?.official_correspondence_authority),
-  }
+  const scope = buildRepresentativeAuthorityScope(body, currentAuthority)
 
   return {
     transaction_type: transactionType,
@@ -721,6 +784,38 @@ function mapRepresentativeAuthorityTransactionForDb(
     correction_transaction_id: body.correction_transaction_id || null,
     authority_effect_status: getAuthorityEffectStatusForTransaction(transactionType, body),
     new_values: body.new_values || body,
+  }
+}
+
+function buildRepresentativeAuthorityScope(
+  body: Record<string, any>,
+  currentAuthority: Record<string, any> | null
+) {
+  const currentScope = currentAuthority?.scope && typeof currentAuthority.scope === 'object' ? currentAuthority.scope : {}
+  const explicitScope = body.scope && typeof body.scope === 'object' ? body.scope : {}
+  const scopeType = String(body.scope_type || explicitScope.scope_type || currentScope.scope_type || 'company_wide')
+  const locationScope = scopeType === 'company_wide'
+    ? { branch_id: null, organization_unit_id: null, facility_id: null }
+    : {
+      branch_id: body.branch_id ?? explicitScope.branch_id ?? currentScope.branch_id ?? null,
+      organization_unit_id: body.organization_unit_id ?? explicitScope.organization_unit_id ?? currentScope.organization_unit_id ?? null,
+      facility_id: body.facility_id ?? explicitScope.facility_id ?? currentScope.facility_id ?? null,
+    }
+
+  return {
+    scope_type: scopeType,
+    ...locationScope,
+    scope_label: body.scope_label ?? explicitScope.scope_label ?? currentScope.scope_label ?? '',
+    scope_notes: body.scope_notes ?? explicitScope.scope_notes ?? currentScope.scope_notes ?? '',
+    bank_authority_level: body.bank_authority_level ?? currentAuthority?.scope?.bank_authority_level ?? null,
+    department_scope: body.department_scope ?? currentAuthority?.scope?.department_scope ?? null,
+    gib_permissions: body.gib_permissions ?? currentAuthority?.scope?.gib_permissions ?? null,
+    can_submit_declaration: !!(body.can_submit_declaration ?? currentAuthority?.scope?.can_submit_declaration),
+    can_process_e_invoice: !!(body.can_process_e_invoice ?? currentAuthority?.scope?.can_process_e_invoice),
+    sgk_permissions: body.sgk_permissions ?? currentAuthority?.scope?.sgk_permissions ?? null,
+    can_submit_hiring_notice: !!(body.can_submit_hiring_notice ?? currentAuthority?.scope?.can_submit_hiring_notice),
+    can_submit_termination_notice: !!(body.can_submit_termination_notice ?? currentAuthority?.scope?.can_submit_termination_notice),
+    official_correspondence_authority: !!(body.official_correspondence_authority ?? currentAuthority?.scope?.official_correspondence_authority),
   }
 }
 
@@ -786,6 +881,12 @@ async function hydrateRepresentativeDetail(
     currency: currentAuthority.currency || representative.currency,
     requires_joint_signature: currentAuthority.requires_joint_signature ?? representative.requires_joint_signature,
     can_approve_alone: currentAuthority.can_approve_alone ?? representative.can_approve_alone,
+    scope_type: currentAuthority.scope?.scope_type || 'company_wide',
+    branch_id: currentAuthority.scope?.branch_id || null,
+    organization_unit_id: currentAuthority.scope?.organization_unit_id || null,
+    facility_id: currentAuthority.scope?.facility_id || null,
+    scope_label: currentAuthority.scope?.scope_label || '',
+    scope_notes: currentAuthority.scope?.scope_notes || '',
     authority_transaction_history: transactionHistory,
   } : {
     ...representative,

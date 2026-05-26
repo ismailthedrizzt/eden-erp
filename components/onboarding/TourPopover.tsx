@@ -179,7 +179,7 @@ export function TourPopover({
             onClick={onSkip}
             className="text-left text-xs font-medium text-gray-500 transition hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
           >
-            Tanıtımı Atla
+            Tekrar gösterme
           </button>
           <button
             type="button"
@@ -187,7 +187,7 @@ export function TourPopover({
             className="inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 transition hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100"
           >
             <Clock3 size={13} />
-            Daha Sonra Göster
+            Atla
           </button>
         </div>
       </div>

@@ -10,7 +10,7 @@ import { resolveTenantContext } from '@/lib/tenancy/server'
 import { DEFAULT_UI_PREFERENCES } from './default-ui-preferences'
 import { mergeUiPreferences } from './merge-ui-preferences'
 
-export const SYSTEM_TOUR_VERSION = 'v1'
+export const SYSTEM_TOUR_VERSION = 'v2'
 
 const LOGIN_BYPASS_ENABLED = process.env.EDEN_LOGIN_DISABLED === 'true'
 const DEV_USER_ID = '00000000-0000-0000-0000-000000000001'
@@ -235,13 +235,18 @@ export function mapUserStateForResponse(state: Record<string, any>, isFirstLogin
   const introVersion = state.intro_version || SYSTEM_TOUR_VERSION
   const introCompleted = Boolean(state.intro_completed_at)
   const shouldShowSystemTour = !introCompleted || introVersion !== SYSTEM_TOUR_VERSION
+  const uiPreferences = mergeUiPreferences(DEFAULT_UI_PREFERENCES, state.ui_preferences)
 
   return {
     isFirstLogin,
     shouldShowSystemTour,
     introVersion,
     introCurrentStep: state.intro_current_step || null,
-    uiPreferences: mergeUiPreferences(DEFAULT_UI_PREFERENCES, state.ui_preferences),
+    uiPreferences: {
+      ...uiPreferences,
+      hasSeenGlobalTour: uiPreferences.hasSeenGlobalTour || introCompleted,
+      lastTourVersion: uiPreferences.lastTourVersion || introVersion,
+    },
   }
 }
 

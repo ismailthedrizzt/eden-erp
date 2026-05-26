@@ -32,6 +32,7 @@ import { duplicateOperationJsonResponse } from '@/lib/operations/apiResponse'
 import { OutboxEventService } from '@/lib/outbox/outboxEventService'
 
 const COMPANY_NACE_SELECT = 'id,company_id,nace_code_id,is_primary,status,start_date,end_date,notes,is_deleted,created_at,updated_at,version,nace_code:nace_codes(id,nace_code,description,hazard_class,source_name,source_url,source_reference,valid_from,valid_to,is_active,last_checked_at)'
+const COMPANY_BRANCH_DETAIL_SELECT = 'id,company_id,organization_unit_id,facility_id,branch_name,branch_short_name,branch_type,is_official_branch,country,city,district,neighborhood,address,postal_code,phone,email,trade_registry_number,trade_registry_office,tax_office,sgk_workplace_registry_no,opening_registration_date,closing_registration_date,status,record_status,start_date,end_date,metadata_json,updated_at,created_at,version,is_deleted'
 
 const emptyStringToUndefined = (value: unknown) => value === '' ? undefined : value
 const optionalUuid = z.preprocess(emptyStringToUndefined, z.string().uuid().optional().nullable())
@@ -363,6 +364,17 @@ export async function GET(
       select: COMPANY_NACE_SELECT,
       query: query => query.eq('company_id', id).eq('is_deleted', false).order('is_primary', { ascending: false }).order('created_at', { ascending: false }),
     }),
+    fetchCompanyRelatedSection({
+      supabase,
+      table: 'company_branches',
+      key: 'branches',
+      label: 'Şubeler',
+      companyId: id,
+      tenantContext,
+      fallback: [] as Record<string, any>[],
+      select: COMPANY_BRANCH_DETAIL_SELECT,
+      query: query => query.eq('company_id', id).eq('is_deleted', false).order('opening_registration_date', { ascending: false }).order('created_at', { ascending: false }),
+    }),
   ])
 
   const relatedByKey = Object.fromEntries(relatedSections.map(result => [result.key, result]))
@@ -382,6 +394,7 @@ export async function GET(
   const deregistrationDetails = relatedByKey.deregistration_details
   const lifecycleEvents = relatedByKey.lifecycle_events
   const companyNaceCodes = relatedByKey.company_nace_codes
+  const branchSection = relatedByKey.branches
 
   const currentOwnershipRows = Array.isArray(currentOwnership.data) ? currentOwnership.data : []
   const partnerRows = Array.isArray(partners.data) ? partners.data : []
@@ -401,6 +414,12 @@ export async function GET(
       profit_ratio: partner.profit_ratio ?? ownership.current_profit_ratio,
     }
   })
+  const branchRows = await hydrateCompanyBranchesForDetail(
+    supabase,
+    Array.isArray(branchSection.data) ? branchSection.data : [],
+    tenantContext
+  )
+  const branchSummary = buildCompanyBranchSummary(branchRows)
 
   const data = {
     ...(company as Record<string, any>),
@@ -415,6 +434,8 @@ export async function GET(
     public_licenses: publicLicenses.data || [],
     public_channels: publicChannels.data || {},
     company_nace_codes: companyNaceCodes.data || [],
+    branches: branchRows,
+    branch_summary: branchSummary,
     opening_details: openingDetails.data || null,
     liquidation_details: liquidationDetails.data || null,
     deregistration_details: deregistrationDetails.data || null,
@@ -433,6 +454,87 @@ export async function GET(
     { data: hydrated },
     { headers: { 'Cache-Control': 'no-store, max-age=0' } }
   )
+}
+
+async function hydrateCompanyBranchesForDetail(
+  supabase: ReturnType<typeof createServiceClient>,
+  rows: Record<string, any>[],
+  tenantContext: ReturnType<typeof resolveTenantContext>
+) {
+  if (!rows.length) return []
+  const unitIds = uniqueIds(rows.map(row => row.organization_unit_id))
+  const facilityIds = uniqueIds(rows.map(row => row.facility_id))
+  let unitQuery = unitIds.length
+    ? supabase.from('organization_units').select('id,name,short_name,type,status').in('id', unitIds)
+    : null
+  if (unitQuery) unitQuery = applyTenantQueryScope(unitQuery, 'organization_units', tenantContext)
+  let facilityQuery = facilityIds.length
+    ? supabase.from('company_facilities').select('id,facility_name,status,record_status').in('id', facilityIds)
+    : null
+  if (facilityQuery) facilityQuery = applyTenantQueryScope(facilityQuery, 'company_facilities', tenantContext)
+  const [units, facilities] = await Promise.all([
+    unitQuery || Promise.resolve({ data: [], error: null }),
+    facilityQuery || Promise.resolve({ data: [], error: null }),
+  ])
+  const unitById = new Map((units.data || []).map((unit: any) => [unit.id, unit]))
+  const facilityById = new Map((facilities.data || []).map((facility: any) => [facility.id, facility]))
+
+  return rows.map(row => {
+    const unit = row.organization_unit_id ? unitById.get(row.organization_unit_id) : null
+    const facility = row.facility_id ? facilityById.get(row.facility_id) : null
+    return {
+      id: row.id,
+      branch_name: row.branch_name,
+      branch_short_name: row.branch_short_name,
+      branch_type: row.branch_type,
+      is_official_branch: row.is_official_branch,
+      record_status: row.record_status,
+      status: row.status,
+      city: row.city,
+      district: row.district,
+      address_summary: [row.district, row.city].filter(Boolean).join(', ') || row.address || '',
+      opening_registration_date: row.opening_registration_date,
+      closing_registration_date: row.closing_registration_date,
+      organization_unit_id: row.organization_unit_id,
+      organization_unit_name: unit?.name || '',
+      facility_id: row.facility_id,
+      facility_name: facility?.facility_name || row.metadata_json?.facility_name || '',
+      created_at: row.created_at,
+      updated_at: row.updated_at,
+    }
+  })
+}
+
+function buildCompanyBranchSummary(rows: Record<string, any>[]) {
+  const activeRows = rows.filter(isActiveBranchSummaryRow)
+  const closedRows = rows.filter(row => String(row.record_status || row.status).toLocaleLowerCase('tr-TR') === 'closed')
+  const officialRows = activeRows.filter(row => row.is_official_branch)
+  const operationPointRows = activeRows.filter(row => ['liaison_office', 'operation_point'].includes(String(row.branch_type || '')))
+  const byOpeningDate = [...rows]
+    .filter(row => row.opening_registration_date || row.created_at)
+    .sort((left, right) => String(right.opening_registration_date || right.created_at || '').localeCompare(String(left.opening_registration_date || left.created_at || '')))
+  const byClosingDate = [...closedRows]
+    .filter(row => row.closing_registration_date || row.updated_at)
+    .sort((left, right) => String(right.closing_registration_date || right.updated_at || '').localeCompare(String(left.closing_registration_date || left.updated_at || '')))
+
+  return {
+    total_branch_count: rows.length,
+    active_branch_count: activeRows.length,
+    official_branch_count: officialRows.length,
+    operation_point_count: operationPointRows.length,
+    closed_branch_count: closedRows.length,
+    last_opened_branch: byOpeningDate[0] || null,
+    last_closed_branch: byClosingDate[0] || null,
+  }
+}
+
+function isActiveBranchSummaryRow(row: Record<string, any>) {
+  const values = [row.record_status, row.status].map(value => String(value || '').toLocaleLowerCase('tr-TR'))
+  return !row.is_deleted && values.some(value => value === 'active' || value === 'aktif')
+}
+
+function uniqueIds(values: Array<string | null | undefined>) {
+  return Array.from(new Set(values.filter((value): value is string => typeof value === 'string' && value.length > 0)))
 }
 
 export async function PATCH(
