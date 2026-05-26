@@ -10,8 +10,11 @@ import {
 } from '@/lib/user-state/server'
 import {
   buildSessionModules,
+  listAvailableActions,
   loadModuleFeatureContext,
 } from '@/lib/modules/moduleFeatureResolver'
+import { permissionFallbacks } from '@/lib/security/permissionRegistry'
+import { listUserEffectivePermissions } from '@/lib/security/serverPermissions'
 
 export const runtime = 'nodejs'
 
@@ -22,7 +25,7 @@ export async function GET(request: NextRequest) {
   const { supabase, userId, workspaceId } = context
 
   try {
-    const [bootstrapResult, workspace, moduleContext] = await Promise.all([
+    const [bootstrapResult, workspace, moduleContext, permissionContext] = await Promise.all([
       supabase.rpc('bootstrap_user_workspace_state', {
         p_user_id: userId,
         p_workspace_id: workspaceId,
@@ -33,6 +36,7 @@ export async function GET(request: NextRequest) {
       }),
       fetchWorkspaceSummary(supabase, workspaceId),
       loadModuleFeatureContext(supabase, { tenantId: workspaceId }).catch(() => ({ moduleLicenses: [] })),
+      listUserEffectivePermissions(request, supabase).catch(() => ({ permissions: [] })),
     ])
 
     if (bootstrapResult.error) {
@@ -51,12 +55,32 @@ export async function GET(request: NextRequest) {
         { status: 500, headers: { 'Cache-Control': 'no-store' } }
       )
     }
+    const effectivePermissions = permissionContext instanceof NextResponse ? [] : permissionContext.permissions || []
+    const policyModuleContext = {
+      ...moduleContext,
+      userPermissions: effectivePermissions,
+    }
+    const sessionModules = buildSessionModules(policyModuleContext)
+    const availableActions = listAvailableActions(policyModuleContext)
 
     return NextResponse.json(
       {
         workspace,
         userState: mapUserStateForResponse(state, Boolean(row?.is_first_login)),
-        modules: buildSessionModules(moduleContext),
+        modules: sessionModules,
+        permissions: {
+          effectivePermissions,
+          permissionFallbacks,
+        },
+        policy: {
+          availableModules: sessionModules.filter(module => module.status === 'available').map(module => module.key),
+          availableActions: availableActions.map(item => ({
+            moduleKey: item.moduleKey,
+            actionKey: item.action.key,
+            canStart: item.can_start_now,
+            warnings: item.warnings,
+          })),
+        },
       },
       { headers: { 'Cache-Control': 'no-store' } }
     )

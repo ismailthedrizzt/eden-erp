@@ -70,4 +70,18 @@ export interface SessionBootstrapResponse {
     routes: Array<Record<string, unknown>>
     warnings: string[]
   }>
+  permissions?: {
+    effectivePermissions: string[]
+    permissionFallbacks: Record<string, string[]>
+  }
+  policy?: {
+    availableModules: string[]
+    availableActions: Array<{
+      moduleKey: string
+      actionKey: string
+      canStart: boolean
+      warnings: string[]
+    }>
+    deniedActions?: Array<Record<string, unknown>>
+  }
 }

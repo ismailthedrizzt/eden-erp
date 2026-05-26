@@ -54,6 +54,8 @@ import { usePermissions } from '@/lib/security/permissionStore'
 import { PERMISSIONS } from '@/packages/shared/src'
 import { companyService } from '@/lib/services/companyService'
 import { buildOperationToast } from '@/lib/operations/operationClient'
+import { applyFieldControlsToFields, applyFieldControlsToTabs } from '@/lib/field-controls/fieldControlResolver'
+import { getControlledFieldNames, listFieldControls } from '@/lib/field-controls/fieldControlRegistry'
 import type { CompanyLifecycleStatus, Sirket } from '@/types/sirket'
 
 type PageState = 'list' | 'create' | 'view' | 'edit'
@@ -411,60 +413,12 @@ const tabs: FormTab[] = [
 
 const getFieldLabel = (field: string) => FIELD_LABELS[field] || field
 const formatFieldList = (fields: string[]) => fields.map(getFieldLabel).join(', ')
-const OPERATION_CONTROLLED_FORM_FIELDS = new Set([
-  'trade_name',
-  'short_name',
-  'tax_number',
-  'tax_office',
-  'mersis_number',
-  'trade_registry_number',
-  'foundation_date',
-  'company_type',
-  'country',
-  'city',
-  'district',
-  'address',
-  'postal_code',
-  'committed_capital_amount',
-  'paid_capital_amount',
-  'electronic_notification_address',
-  'trade_registry_office',
-  'e_invoice_taxpayer',
-  'e_archive_taxpayer',
-  'e_waybill_taxpayer',
-  'sgk_workplace_registry_no',
-  'sgk_province',
-  'sgk_branch',
-  'risk_class',
-  'nace_codes',
-  'activity_subject',
-])
-const DRAFT_EDITABLE_OPERATION_FORM_FIELDS = new Set([
-  'trade_name',
-  'short_name',
-  'tax_number',
-  'tax_office',
-  'mersis_number',
-  'trade_registry_number',
-  'foundation_date',
-  'company_type',
-  'country',
-  'city',
-  'district',
-  'address',
-  'postal_code',
-  'electronic_notification_address',
-  'trade_registry_office',
-  'e_invoice_taxpayer',
-  'e_archive_taxpayer',
-  'e_waybill_taxpayer',
-  'sgk_workplace_registry_no',
-  'sgk_province',
-  'sgk_branch',
-  'risk_class',
-  'nace_codes',
-  'activity_subject',
-])
+const OPERATION_CONTROLLED_FORM_FIELDS = new Set(getControlledFieldNames('company'))
+const DRAFT_EDITABLE_OPERATION_FORM_FIELDS = new Set(
+  listFieldControls('company')
+    .filter(field => field.controlType === 'operation_controlled' && field.allowDraftEdit)
+    .map(field => field.field)
+)
 
 function buildCompanySaveToast(result: Record<string, any>, mode: FormMode): ToastState {
   const operationToast = buildOperationToast(result, {
@@ -720,6 +674,15 @@ export default function SirketlerPage() {
     referencesLoading: false,
     referencesReady: pageState !== 'list',
   })
+  const fieldControlMode = pageState === 'create'
+    ? 'create'
+    : selectedLifecycleStatus === 'draft'
+      ? 'draft_edit'
+      : formMode === 'edit'
+        ? 'active_edit'
+        : 'view'
+  const controlledHeroFields = applyFieldControlsToFields('company', configuredHeroFields, pageState === 'create' ? 'draft' : selectedLifecycleStatus, fieldControlMode)
+  const controlledTabs = applyFieldControlsToTabs('company', configuredTabs, pageState === 'create' ? 'draft' : selectedLifecycleStatus, fieldControlMode)
   const selectedHeroDocumentCount = Array.isArray((selectedSirket as any)?.hero_documents)
     ? (selectedSirket as any).hero_documents.length
     : 0
@@ -1847,8 +1810,8 @@ export default function SirketlerPage() {
               roleTable: 'companies',
               roleDuplicateCheck: 'organization_id + active',
             }}
-            heroFields={configuredHeroFields.map(withFieldHistory)}
-            tabs={configuredTabs.map(tab => ({
+            heroFields={controlledHeroFields.map(withFieldHistory)}
+            tabs={controlledTabs.map(tab => ({
               ...tab,
               fields: tab.fields.map(field => {
                 const nextField = withFieldHistory(field)

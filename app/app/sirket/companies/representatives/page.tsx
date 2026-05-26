@@ -26,6 +26,7 @@ import { isSoftDeletedRecord } from '@/lib/forms/entityState'
 import { createProgressiveFormLoadStages } from '@/lib/forms/progressiveFormLoading'
 import { invalidateEntityDetailCache, readEntityDetailCache, writeEntityDetailCache } from '@/lib/forms/entityDetailCache'
 import { companyService } from '@/lib/services/companyService'
+import { getControlledFieldNames } from '@/lib/field-controls/fieldControlRegistry'
 import type { ListMeta } from '@/lib/api/listEndpoint'
 
 type PageState = 'list' | 'create' | 'view' | 'edit'
@@ -155,53 +156,7 @@ const REPRESENTATIVE_AUTHORITY_CONTROL = {
   operations: ['Yetki Yenileme', 'Yetki Kapsamı Değişikliği', 'Limit Değişikliği', 'Düzeltme Kaydı', 'Ters Kayıt'],
 }
 
-const REPRESENTATIVE_OPERATION_CONTROLLED_FIELDS = new Set([
-  'status',
-  'record_status',
-  'authority_status',
-  'authority_record_status',
-  'authority_effect_status',
-  'transaction_status',
-  'approval_status',
-  'workflow_status',
-  'start_date',
-  'end_date',
-  'primary_authority_type',
-  'authority_type',
-  'authority_types',
-  'job_title',
-  'signature_type',
-  'authority_limit',
-  'transaction_limit',
-  'payment_approval_limit',
-  'purchase_approval_limit',
-  'bank_transaction_limit',
-  'contract_signature_limit',
-  'currency',
-  'bank_currency',
-  'limit_currency',
-  'limit_start_date',
-  'limit_end_date',
-  'requires_joint_signature',
-  'can_approve_alone',
-  'bank_authority_level',
-  'department_scope',
-  'gib_permissions',
-  'can_submit_declaration',
-  'can_process_e_invoice',
-  'sgk_permissions',
-  'can_submit_hiring_notice',
-  'can_submit_termination_notice',
-  'official_correspondence_authority',
-  'scope_type',
-  'branch_id',
-  'organization_unit_id',
-  'facility_id',
-  'scope_label',
-  'scope_notes',
-  'current_authority',
-  'authority_transaction_history',
-])
+const REPRESENTATIVE_OPERATION_CONTROLLED_FIELDS = new Set(getControlledFieldNames('company_representative'))
 
 const REPRESENTATIVE_CREATE_HIDDEN_HERO_FIELDS = new Set([
   'start_date',

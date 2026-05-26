@@ -8,16 +8,14 @@ import {
   orchestratorError,
   orchestratorResultToNextResponse,
 } from '@/lib/operations/orchestrators/orchestratorResponse'
-import { requireModuleAvailable } from '@/lib/modules/moduleGuards'
+import { createServiceClient } from '@/lib/supabase/server'
+import { requireBranchPolicy } from '@/lib/security/policies/branchPolicies'
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ company_id: string }> }
 ) {
   const { company_id: companyId } = await params
-  const moduleGuard = await requireModuleAvailable(request, 'branches')
-  if (moduleGuard) return moduleGuard
-
   const rawBody = await request.json().catch(() => ({}))
   const parsed = CompanyBranchOpeningSchema.safeParse(stripOperationControlFields(rawBody))
 
@@ -29,6 +27,10 @@ export async function POST(
       { validation: parsed.error.flatten() }
     ))
   }
+
+  const supabase = createServiceClient()
+  const policy = await requireBranchPolicy({ request, supabase, actionKey: 'branch.openingStart', companyId })
+  if (policy instanceof Response) return policy
 
   const result = await runCompanyBranchOpeningOrchestrator({
     request,

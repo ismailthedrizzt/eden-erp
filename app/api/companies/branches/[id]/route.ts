@@ -4,10 +4,10 @@ import { createServiceClient } from '@/lib/supabase/server'
 import { applyTenantQueryScope, resolveTenantContext } from '@/lib/tenancy/server'
 import { getTenantCompanyScope, isWritableCompanyScope } from '@/lib/tenancy/companyScopes'
 import { isMissingInfrastructureError } from '@/lib/operations/operationRequestService'
-import { BRANCH_PERMISSIONS, requireBranchPermission } from '@/lib/modules/companies/branchPermissions'
 import { COMPANY_BRANCH_SELECT } from '@/lib/modules/companies/companyBranchSelect'
 import { resolveBaseUpdatedAt, resolveBaseVersion } from '@/lib/operations/idempotency'
-import { requireModuleAvailable } from '@/lib/modules/moduleGuards'
+import { requireBranchPolicy } from '@/lib/security/policies/branchPolicies'
+import { fieldControlViolationResponse, getOperationControlledPatchViolation } from '@/lib/field-controls/fieldControlGuards'
 
 const emptyStringToUndefined = (value: unknown) => value === '' ? undefined : value
 const optionalUuid = z.preprocess(emptyStringToUndefined, z.string().uuid().optional().nullable())
@@ -20,45 +20,14 @@ const BranchCardUpdateSchema = z.object({
   facility_id: optionalUuid,
   notes: z.string().optional().nullable(),
 })
-const OFFICIAL_BRANCH_FIELDS = new Set([
-  'company_id',
-  'branch_name',
-  'branch_type',
-  'is_official_branch',
-  'country',
-  'city',
-  'district',
-  'neighborhood',
-  'address',
-  'postal_code',
-  'trade_registry_number',
-  'trade_registry_office',
-  'tax_office',
-  'sgk_workplace_registry_no',
-  'opening_decision_date',
-  'opening_registration_date',
-  'closing_decision_date',
-  'closing_registration_date',
-  'trade_registry_gazette_date',
-  'trade_registry_gazette_number',
-  'status',
-  'record_status',
-  'start_date',
-  'end_date',
-  'document_files',
-])
-
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params
-  const moduleGuard = await requireModuleAvailable(request, 'branches')
-  if (moduleGuard) return moduleGuard
-
   const supabase = createServiceClient()
-  const permission = await requireBranchPermission(request, supabase, BRANCH_PERMISSIONS.view, 'companies.view')
-  if (permission instanceof NextResponse) return permission
+  const policy = await requireBranchPolicy({ request, supabase, actionKey: 'branch.view', branchId: id })
+  if (policy instanceof Response) return policy
   const tenantContext = resolveTenantContext(request)
   const branch = await loadBranch(supabase, id, tenantContext)
   if (!branch) return NextResponse.json({ error: 'Şube kaydı bulunamadı.', code: 'BRANCH_NOT_FOUND' }, { status: 404 })
@@ -72,27 +41,17 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params
-  const moduleGuard = await requireModuleAvailable(request, 'branches')
-  if (moduleGuard) return moduleGuard
-
   const supabase = createServiceClient()
-  const permission = await requireBranchPermission(request, supabase, BRANCH_PERMISSIONS.edit, 'companies.edit')
-  if (permission instanceof NextResponse) return permission
+  const policy = await requireBranchPolicy({ request, supabase, actionKey: 'branch.edit', branchId: id })
+  if (policy instanceof Response) return policy
   const tenantContext = resolveTenantContext(request)
   const rawBody = await request.json().catch(() => ({}))
   const baseVersion = resolveBaseVersion(rawBody)
   const baseUpdatedAt = resolveBaseUpdatedAt(rawBody)
-  const forbiddenFields = Object.keys(rawBody).filter(key => OFFICIAL_BRANCH_FIELDS.has(key))
-  if (forbiddenFields.length) {
-    return NextResponse.json({
-      error: 'Resmi şube alanları normal kart güncellemesiyle değiştirilemez. Şube resmi işlem wizardını kullanın.',
-      code: 'BRANCH_OFFICIAL_FIELDS_LOCKED',
-      details: { fields: forbiddenFields },
-      message: 'İşlem tamamlanamadı',
-    }, { status: 409 })
-  }
   const current = await loadBranch(supabase, id, tenantContext)
   if (!current) return NextResponse.json({ error: 'Şube kaydı bulunamadı.', code: 'BRANCH_NOT_FOUND' }, { status: 404 })
+  const operationViolation = getOperationControlledPatchViolation('company_branch', rawBody, current)
+  if (operationViolation) return fieldControlViolationResponse(operationViolation)
   const companyScope = await getTenantCompanyScope(supabase, tenantContext.tenantId, current.company_id)
   if (!companyScope) return NextResponse.json({ error: 'Şube bağlı şirket scope dışında.', code: 'COMPANY_SCOPE_NOT_FOUND' }, { status: 404 })
   if (!isWritableCompanyScope(companyScope)) return NextResponse.json({ error: 'Bu şirketin şubeleri için yalnızca görüntüleme yetkiniz var.', code: 'COMPANY_SCOPE_READONLY' }, { status: 403 })
@@ -123,16 +82,21 @@ export async function PATCH(
   const patch = normalizePatch(parsed.data)
   const changedFields = Object.keys(patch).filter(field => String(patch[field] ?? '') !== String(current[field] ?? ''))
   if (!changedFields.length) return NextResponse.json({ data: await hydrateBranch(supabase, current, tenantContext) })
-  let updateQuery = supabase.from('company_branches').update({ ...patch, updated_at: new Date().toISOString(), updated_by: permission.userId || null, version: Number(current.version || 1) + 1 }).eq('id', id)
+  let updateQuery = supabase.from('company_branches').update({ ...patch, updated_at: new Date().toISOString(), updated_by: policy.context.userId || null, version: Number(current.version || 1) + 1 }).eq('id', id)
   updateQuery = applyTenantQueryScope(updateQuery, 'company_branches', tenantContext)
   const { data, error } = await updateQuery.select(COMPANY_BRANCH_SELECT).single()
   if (error) return NextResponse.json({ error: error.message, code: error.code || 'BRANCH_CARD_UPDATE_FAILED' }, { status: 500 })
   return NextResponse.json({ data: await hydrateBranch(supabase, data as Record<string, any>, tenantContext) })
 }
 
-export async function DELETE(request: NextRequest) {
-  const moduleGuard = await requireModuleAvailable(request, 'branches')
-  if (moduleGuard) return moduleGuard
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params
+  const supabase = createServiceClient()
+  const policy = await requireBranchPolicy({ request, supabase, actionKey: 'branch.edit', branchId: id })
+  if (policy instanceof Response) return policy
 
   return NextResponse.json({
     error: 'Şube hard delete ile silinemez. Kapatma için Şube Kapanışı resmi işlem wizardını kullanın.',

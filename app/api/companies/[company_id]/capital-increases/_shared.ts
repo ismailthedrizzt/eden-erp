@@ -4,6 +4,7 @@ import { applyTenantQueryScope, resolveTenantContext, type TenantContext, withTe
 import { getTenantCompanyScope, isWritableCompanyScope } from '@/lib/tenancy/companyScopes'
 import { requirePermission } from '@/lib/security/serverPermissions'
 import { isMissingTenantColumnError } from '@/lib/modules/companies/companyErrors'
+import { getModuleRuntimeStatus, loadModuleFeatureContext } from '@/lib/modules/moduleFeatureResolver'
 
 type SupabaseClient = ReturnType<typeof createServiceClient>
 
@@ -94,6 +95,8 @@ export type CapitalIncreasePrecheck = {
   active_partners: CapitalPartnerSnapshot[]
   draft_partners: CapitalPartnerSnapshot[]
   current_ownership_distribution: CapitalPartnerSnapshot[]
+  dependency_code?: string
+  dependency_details?: Record<string, unknown>
 }
 
 export function numberValue(value: unknown) {
@@ -196,16 +199,55 @@ export async function buildCapitalIncreasePrecheck(
   const lifecycle = getCompanyLifecycle(company as Record<string, any>)
   const blockingReasons: string[] = []
   const warnings: string[] = []
+  let dependencyCode: string | undefined
+  let dependencyDetails: Record<string, unknown> | undefined
 
   if (lifecycle !== 'active') {
     blockingReasons.push('Sermaye artırımı yalnızca aktif şirketlerde başlatılabilir. Taslak, tasfiye halinde veya terkin edilmiş şirketlerde bu işlem kullanılamaz.')
   }
 
-  const partnerSnapshots = await loadPartnerSnapshots(supabase, companyId, tenantContext, currentCapital)
+  const moduleContext = await loadModuleFeatureContext(supabase as any, { tenantId: tenantContext.tenantId }).catch(() => ({ moduleLicenses: [] }))
+  const partnersModuleStatus = getModuleRuntimeStatus('partners', moduleContext)
+  if (partnersModuleStatus.status !== 'available') {
+    dependencyCode = 'MODULE_DEPENDENCY_MISSING'
+    dependencyDetails = {
+      required_modules: ['partners'],
+      missing_modules: ['partners'],
+      module_status: partnersModuleStatus.status,
+      blocking_reasons: partnersModuleStatus.blocking_reasons,
+    }
+    blockingReasons.push('Sermaye Artirimi icin Ortaklarimiz modulu ve guncel ortaklik dagilimi gereklidir.')
+  }
+
+  const partnerSnapshots = partnersModuleStatus.status === 'available'
+    ? await loadPartnerSnapshots(supabase, companyId, tenantContext, currentCapital).catch(error => {
+      dependencyCode = 'MODULE_DEPENDENCY_MISSING'
+      dependencyDetails = {
+        required_modules: ['partners'],
+        missing_modules: ['partners'],
+        reason: error?.message || 'Ortak kayitlari okunamadi.',
+      }
+      blockingReasons.push('Sermaye Artirimi icin aktif ortak kayitlari okunabilmelidir.')
+      return [] as CapitalPartnerSnapshot[]
+    })
+    : []
   const activePartners = partnerSnapshots.filter(isActivePartner)
   const draftPartners = partnerSnapshots.filter(isDraftPartner)
-  const ownershipDistribution = await loadCurrentOwnershipDistribution(supabase, companyId, tenantContext, activePartners)
-  const sourceRows = ownershipDistribution.length ? ownershipDistribution : activePartners
+  const ownershipDistribution = partnersModuleStatus.status === 'available'
+    ? await loadCurrentOwnershipDistribution(supabase, companyId, tenantContext, activePartners)
+    : { rows: [] as CapitalPartnerSnapshot[], error: null as string | null }
+  if (ownershipDistribution.error) {
+    dependencyCode = 'MODULE_DEPENDENCY_MISSING'
+    dependencyDetails = {
+      required_modules: ['partners'],
+      missing_modules: [],
+      required_projection: 'currentOwnership',
+      source: 'v_current_ownership',
+      reason: ownershipDistribution.error,
+    }
+    blockingReasons.push('Sermaye Artirimi icin guncel ortaklik dagilimi okunabilmelidir.')
+  }
+  const sourceRows = ownershipDistribution.rows
 
   const totalShare = roundRatio(sourceRows.reduce((sum, partner) => sum + partner.share_ratio, 0))
   const hasFullShareDistribution = Math.abs(totalShare - 100) <= 0.01
@@ -216,10 +258,27 @@ export async function buildCapitalIncreasePrecheck(
   const unpaidCapital = roundMoney(Math.max(0, committedForDebtCheck - paidForDebtCheck))
 
   if (!sourceRows.length) {
+    dependencyCode = dependencyCode || 'MODULE_DEPENDENCY_MISSING'
+    dependencyDetails = dependencyDetails || {
+      required_modules: ['partners'],
+      missing_modules: partnersModuleStatus.status === 'available' ? [] : ['partners'],
+      required_projection: 'currentOwnership',
+      source: 'v_current_ownership',
+      reason: 'NO_ACTIVE_CURRENT_OWNERSHIP',
+    }
     blockingReasons.push('Sermaye dağıtımı yapılacak aktif ortak bulunamadı. Önce ortaklık kayıtları oluşturulmalıdır.')
   }
   if (!hasFullShareDistribution) {
-    warnings.push(`Mevcut pay dağılımı %100 değil. Güncel toplam: %${totalShare.toLocaleString('tr-TR', { maximumFractionDigits: 4 })}.`)
+    dependencyCode = dependencyCode || 'MODULE_DEPENDENCY_MISSING'
+    dependencyDetails = dependencyDetails || {
+      required_modules: ['partners'],
+      missing_modules: [],
+      required_projection: 'currentOwnership',
+      source: 'v_current_ownership',
+      reason: 'CURRENT_OWNERSHIP_DISTRIBUTION_INVALID',
+      total_share_ratio: totalShare,
+    }
+    blockingReasons.push(`Mevcut pay dağılımı %100 değil. Güncel toplam: %${totalShare.toLocaleString('tr-TR', { maximumFractionDigits: 4 })}.`)
   }
   if (unpaidCapital > 0.01) {
     warnings.push(`Mevcut sermaye taahhütlerinde ${unpaidCapital.toLocaleString('tr-TR', { style: 'currency', currency: 'TRY' })} ödenmemiş tutar bulunuyor.`)
@@ -242,6 +301,8 @@ export async function buildCapitalIncreasePrecheck(
     active_partners: sourceRows,
     draft_partners: draftPartners,
     current_ownership_distribution: sourceRows,
+    dependency_code: dependencyCode,
+    dependency_details: dependencyDetails,
   }
 }
 
@@ -267,17 +328,17 @@ async function loadCurrentOwnershipDistribution(
   companyId: string,
   tenantContext: TenantContext,
   fallbackPartners: CapitalPartnerSnapshot[]
-) {
+): Promise<{ rows: CapitalPartnerSnapshot[]; error: string | null }> {
   let ownershipQuery = supabase
     .from('v_current_ownership')
     .select('partner_id,display_name,current_share_ratio,current_voting_ratio,current_profit_ratio,current_capital_amount,current_share_units,committed_capital_amount,paid_capital_amount,warnings')
     .eq('company_id', companyId)
   ownershipQuery = applyTenantQueryScope(ownershipQuery, 'v_current_ownership', tenantContext)
   const { data: ownershipRows, error } = await ownershipQuery
-  if (error) return []
+  if (error) return { rows: [], error: error.message || 'Guncel ortaklik dagilimi okunamadi.' }
   const partnerMap = new Map(fallbackPartners.map(partner => [partner.id, partner]))
 
-  return (ownershipRows || [])
+  const rows = (ownershipRows || [])
     .filter((row: Record<string, any>) => numberValue(row.current_share_ratio) > 0 || numberValue(row.current_capital_amount) > 0)
     .map((row: Record<string, any>) => {
       const partner = partnerMap.get(String(row.partner_id))
@@ -295,6 +356,7 @@ async function loadCurrentOwnershipDistribution(
         paid_capital_amount: numberValue(row.paid_capital_amount),
       } satisfies CapitalPartnerSnapshot
     })
+  return { rows, error: null }
 }
 
 export function normalizePartnerSnapshot(partner: Record<string, any>, companyCapital: number): CapitalPartnerSnapshot {

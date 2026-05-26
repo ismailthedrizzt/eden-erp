@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { hydrateMasterContact, stripMasterDataForRoleProfile, syncMasterContact } from '@/lib/identity/masterContact'
 import { EntityBankAccountsService } from '@/lib/modules/entity-bank-accounts/entityBankAccounts.service'
-import { requirePermission } from '@/lib/security/serverPermissions'
+import { requireAnyPermission } from '@/lib/security/serverPermissions'
 import { applyTenantQueryScope, resolveTenantContext } from '@/lib/tenancy/server'
 import { getTenantCompanyScope, isWritableCompanyScope } from '@/lib/tenancy/companyScopes'
 import { diffRecord, safeCrudResponse, safeReadRecord, safeUpdateRecord } from '@/lib/crud/safeCrudService'
@@ -12,58 +12,12 @@ import { resolveBaseUpdatedAt, resolveBaseVersion, resolveClientRequestId, strip
 import { operationStatusMessage } from '@/lib/operations/operationStatus'
 import { OutboxEventService } from '@/lib/outbox/outboxEventService'
 import { isMissingTableError } from '@/lib/modules/companies/companyErrors'
+import { validateRepresentativeAuthorityScopePolicy } from '@/lib/security/policies/representativeAuthorityPolicies'
+import { stripOperationControlledFields as stripFieldControlFields } from '@/lib/field-controls/fieldControlGuards'
 
 const REPRESENTATIVE_DETAIL_SELECT = 'id,company_id,person_id,organization_id,person_kind,source_type,source_id,display_name,full_name,phone,email,authority_types,job_title,authority_type,status,record_status,start_date,end_date,signature_type,transaction_limit,payment_approval_limit,purchase_approval_limit,bank_transaction_limit,contract_signature_limit,currency,requires_joint_signature,can_approve_alone,bank_authority_level,department_scope,gib_permissions,can_submit_declaration,can_process_e_invoice,sgk_permissions,can_submit_hiring_notice,can_submit_termination_notice,official_correspondence_authority,is_deleted,history,photo_logo,authority_documents,representative_profile,notes,created_at,updated_at,version'
 const CURRENT_AUTHORITY_SELECT = 'representative_id,company_id,tenant_id,authority_status,authority_record_status,authority_status_label,authority_types,signature_type,transaction_limit,payment_approval_limit,purchase_approval_limit,bank_transaction_limit,contract_signature_limit,currency,limits,scope,requires_joint_signature,can_approve_alone,effective_date,end_date,warnings,last_transaction_id,last_transaction_type,display_name,person_id,organization_id'
 const AUTHORITY_TRANSACTION_SELECT = 'id,company_id,representative_id,person_id,organization_id,transaction_no,transaction_type,transaction_status,authority_effect_status,authority_record_status,authority_types,signature_type,transaction_limit,payment_approval_limit,purchase_approval_limit,bank_transaction_limit,contract_signature_limit,currency,limits,scope,requires_joint_signature,can_approve_alone,document_files,effective_date,end_date,approval_status,workflow_status,notes,warnings,reversal_transaction_id,new_values,created_at,updated_at,version'
-
-const REPRESENTATIVE_OPERATION_CONTROLLED_FIELDS = new Set([
-  'status',
-  'record_status',
-  'authority_status',
-  'authority_record_status',
-  'authority_effect_status',
-  'transaction_status',
-  'approval_status',
-  'workflow_status',
-  'start_date',
-  'end_date',
-  'primary_authority_type',
-  'authority_type',
-  'authority_types',
-  'job_title',
-  'signature_type',
-  'authority_limit',
-  'transaction_limit',
-  'payment_approval_limit',
-  'purchase_approval_limit',
-  'bank_transaction_limit',
-  'contract_signature_limit',
-  'currency',
-  'bank_currency',
-  'limit_currency',
-  'limit_start_date',
-  'limit_end_date',
-  'requires_joint_signature',
-  'can_approve_alone',
-  'bank_authority_level',
-  'department_scope',
-  'gib_permissions',
-  'can_submit_declaration',
-  'can_process_e_invoice',
-  'sgk_permissions',
-  'can_submit_hiring_notice',
-  'can_submit_termination_notice',
-  'official_correspondence_authority',
-  'scope_type',
-  'branch_id',
-  'organization_unit_id',
-  'facility_id',
-  'scope_label',
-  'scope_notes',
-  'current_authority',
-  'authority_transaction_history',
-])
 
 const AUTHORITY_TRANSACTION_TYPES = new Set([
   'Temsilcilik Başlatma',
@@ -96,11 +50,7 @@ function buildHistory(current: Record<string, any>, updates: Record<string, any>
 }
 
 function stripRepresentativeOperationControlledFields(body: Record<string, any>) {
-  const next = { ...body }
-  REPRESENTATIVE_OPERATION_CONTROLLED_FIELDS.forEach(field => {
-    delete next[field]
-  })
-  return next
+  return stripFieldControlFields('company_representative', body)
 }
 
 export async function GET(
@@ -116,7 +66,7 @@ export async function GET(
     request,
     tableName: 'company_representatives',
     recordId: id,
-    permissionKey: 'representatives.view',
+    permissionKey: ['representatives.view', 'companies.view'],
     select: REPRESENTATIVE_DETAIL_SELECT,
     afterRead: async ({ record }) => hydrateRepresentativeDetail(supabase, record, tenantContext),
   })
@@ -149,7 +99,7 @@ export async function PATCH(
     ? rawPatch
     : stripRepresentativeOperationControlledFields(rawPatch)
 
-  const permission = await requirePermission(request, supabase, 'representatives.edit')
+  const permission = await requireAnyPermission(request, supabase, ['representatives.edit', 'companies.edit'])
   if (permission instanceof NextResponse) return permission
 
   const operationService = new OperationRequestService(supabase as any)
@@ -274,7 +224,7 @@ export async function DELETE(
 ) {
   const { id } = await params
   const supabase = createServiceClient()
-  const permission = await requirePermission(request, supabase, 'representatives.delete')
+  const permission = await requireAnyPermission(request, supabase, ['representatives.delete', 'representatives.edit'])
   if (permission instanceof NextResponse) return permission
   const tenantContext = resolveTenantContext(request)
   const rawBody = await request.json().catch(() => ({}))
@@ -495,7 +445,12 @@ async function applyAuthorityTransaction({
   })
   if (precheck) return precheck
   if (!isRepresentativeTerminationTransaction(transactionType)) {
-    const scopeValidation = await validateRepresentativeAuthorityScope(supabase, current.company_id, body, currentAuthority, tenantContext)
+    const scopeValidation = await validateRepresentativeAuthorityScopePolicy({
+      supabase,
+      tenantContext,
+      companyId: current.company_id,
+      scope: buildRepresentativeAuthorityScope(body, currentAuthority),
+    })
     if (scopeValidation) return scopeValidation
   }
   const transactionPayload = mapRepresentativeAuthorityTransactionForDb(body, current, currentAuthority, transactionType)

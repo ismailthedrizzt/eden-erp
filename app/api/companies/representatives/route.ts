@@ -5,7 +5,7 @@ import { hydrateMasterContact, stripMasterDataForRoleProfile, syncMasterContact 
 import { normalizeCountryId } from '@/lib/reference/country-nationalities'
 import { EntityBankAccountsService } from '@/lib/modules/entity-bank-accounts/entityBankAccounts.service'
 import { listMeta, listRange, parseListQuery } from '@/lib/api/listEndpoint'
-import { requirePermission } from '@/lib/security/serverPermissions'
+import { requireAnyPermission } from '@/lib/security/serverPermissions'
 import { applyTenantQueryScope, resolveTenantContext, type TenantContext, withTenantInsertScopeForTable } from '@/lib/tenancy/server'
 import { findGlobalOrganizationByIdentity, getTenantCompanyScope, isWritableCompanyScope, normalizeLegalCountry, normalizeLegalTaxNumber } from '@/lib/tenancy/companyScopes'
 import { OperationRequestService } from '@/lib/operations/operationRequestService'
@@ -19,54 +19,10 @@ import {
   normalizeRepresentativeProjectionScope,
   representativeListProjection,
 } from '@/lib/read-models/projections/representativeList.projection'
+import { stripOperationControlledFields as stripFieldControlFields } from '@/lib/field-controls/fieldControlGuards'
 
 const REPRESENTATIVE_LIST_SELECT = 'id,company_id,person_id,organization_id,person_kind,source_type,source_id,display_name,full_name,authority_types,job_title,authority_type,status,record_status,start_date,end_date,signature_type,transaction_limit,payment_approval_limit,purchase_approval_limit,bank_transaction_limit,contract_signature_limit,currency,requires_joint_signature,can_approve_alone,representative_profile,is_deleted,created_at,updated_at,version'
 const CURRENT_AUTHORITY_SELECT = 'representative_id,company_id,tenant_id,authority_status,authority_record_status,authority_status_label,authority_types,signature_type,transaction_limit,payment_approval_limit,purchase_approval_limit,bank_transaction_limit,contract_signature_limit,currency,limits,scope,requires_joint_signature,can_approve_alone,effective_date,end_date,warnings,last_transaction_id,last_transaction_type,display_name,person_id,organization_id'
-
-const REPRESENTATIVE_AUTHORITY_CONTROLLED_FIELDS = new Set([
-  'start_date',
-  'end_date',
-  'primary_authority_type',
-  'authority_type',
-  'authority_types',
-  'job_title',
-  'signature_type',
-  'authority_limit',
-  'transaction_limit',
-  'payment_approval_limit',
-  'purchase_approval_limit',
-  'bank_transaction_limit',
-  'contract_signature_limit',
-  'currency',
-  'bank_currency',
-  'limit_currency',
-  'limit_start_date',
-  'limit_end_date',
-  'requires_joint_signature',
-  'can_approve_alone',
-  'bank_authority_level',
-  'department_scope',
-  'gib_permissions',
-  'can_submit_declaration',
-  'can_process_e_invoice',
-  'sgk_permissions',
-  'can_submit_hiring_notice',
-  'can_submit_termination_notice',
-  'official_correspondence_authority',
-  'scope_type',
-  'branch_id',
-  'organization_unit_id',
-  'facility_id',
-  'scope_label',
-  'scope_notes',
-  'authority_documents',
-  'authority_status',
-  'authority_record_status',
-  'authority_effect_status',
-  'transaction_status',
-  'approval_status',
-  'workflow_status',
-])
 
 const RepresentativeSchema = z.object({
   company_id: z.string().uuid(),
@@ -91,20 +47,12 @@ function omitNullishValues(value: Record<string, any>) {
 }
 
 function stripRepresentativeCreateLifecycleFields(body: Record<string, any>) {
-  const next = { ...body }
-  delete next.status
-  delete next.record_status
-  delete next.current_authority
-  delete next.authority_transaction_history
-  REPRESENTATIVE_AUTHORITY_CONTROLLED_FIELDS.forEach(field => {
-    delete next[field]
-  })
-  return next
+  return stripFieldControlFields('company_representative', body)
 }
 
 export async function GET(request: NextRequest) {
   const supabase = createServiceClient()
-  const permission = await requirePermission(request, supabase, 'representatives.view')
+  const permission = await requireAnyPermission(request, supabase, ['representatives.view', 'companies.view'])
   if (permission instanceof NextResponse) return permission
   const tenantContext = resolveTenantContext(request)
   const { searchParams } = new URL(request.url)
@@ -224,7 +172,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   const supabase = createServiceClient()
-  const permission = await requirePermission(request, supabase, 'representatives.insert')
+  const permission = await requireAnyPermission(request, supabase, ['representatives.insert', 'representatives.edit'])
   if (permission instanceof NextResponse) return permission
   const tenantContext = resolveTenantContext(request)
   const rawBody = await request.json()

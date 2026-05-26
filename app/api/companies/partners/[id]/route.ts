@@ -16,45 +16,11 @@ import { resolveBaseUpdatedAt, resolveBaseVersion, resolveClientRequestId, strip
 import { operationStatusMessage } from '@/lib/operations/operationStatus'
 import { duplicateOperationJsonResponse } from '@/lib/operations/apiResponse'
 import { OutboxEventService } from '@/lib/outbox/outboxEventService'
+import { stripOperationControlledFields as stripFieldControlFields } from '@/lib/field-controls/fieldControlGuards'
 
 const PARTNER_DETAIL_SELECT = 'id,company_id,person_id,organization_id,owner_kind,partner_type,display_name,partner_name,identity_number,identity_tax_number,share_ratio,voting_ratio,profit_ratio,source_type,source_id,share_units,nominal_value,capital_amount,share_class,has_representation_right,signature_authority,has_control_right,control_type,has_board_nomination_right,has_veto_right,has_privileged_share,beneficial_owner,is_beneficial_owner,beneficial_ratio,is_ultimate_controller,start_date,end_date,status,record_status,history,photo_logo,partner_documents,partner_profile,notes,created_at,updated_at,version'
 const PARTNER_SECTION_BASE_SELECT = 'id,company_id,person_id,organization_id,source_id,display_name,partner_name,version,updated_at'
 const REPRESENTATIVE_CURRENT_AUTHORITY_SELECT = 'representative_id,company_id,tenant_id,authority_status,authority_record_status,authority_status_label,authority_types,signature_type,transaction_limit,payment_approval_limit,purchase_approval_limit,bank_transaction_limit,contract_signature_limit,currency,limits,scope,requires_joint_signature,can_approve_alone,effective_date,end_date,warnings,last_transaction_id,last_transaction_type'
-const PARTNER_OPERATION_CONTROLLED_FIELDS = new Set([
-  'share_ratio',
-  'voting_ratio',
-  'profit_ratio',
-  'share_units',
-  'nominal_value',
-  'capital_amount',
-  'committed_capital_amount',
-  'share_class',
-  'has_privileged_share',
-  'has_privilege',
-  'has_control_right',
-  'control_type',
-  'has_board_nomination_right',
-  'has_veto_right',
-  'beneficial_owner',
-  'is_beneficial_owner',
-  'beneficial_ratio',
-  'is_ultimate_controller',
-  'current_ownership',
-  'current_share_ratio',
-  'current_voting_ratio',
-  'current_profit_ratio',
-  'current_capital_amount',
-  'current_share_units',
-  'start_date',
-  'end_date',
-  'status',
-  'record_status',
-  'approval_status',
-  'workflow_status',
-  'transaction_status',
-  'ownership_action',
-  'ownership_transaction_history',
-])
 
 function buildFieldHistory(current: Record<string, any>, updates: Record<string, any>) {
   const existingHistory = Array.isArray(current.history) ? current.history : []
@@ -78,11 +44,7 @@ function buildFieldHistory(current: Record<string, any>, updates: Record<string,
 }
 
 function stripPartnerOperationControlledFields(body: Record<string, any>) {
-  const next = { ...body }
-  PARTNER_OPERATION_CONTROLLED_FIELDS.forEach(field => {
-    delete next[field]
-  })
-  return next
+  return stripFieldControlFields('company_partner', body)
 }
 
 export async function GET(

@@ -37,6 +37,8 @@ import type { IdentityGateConfig, IdentityGateResolveResult } from '@/lib/identi
 import { COUNTRY_OPTIONS, normalizeCountryId } from '@/lib/reference/country-nationalities'
 import { isDraftRecord, isSoftDeletedRecord } from '@/lib/forms/entityState'
 import { ModuleDependencyNotice, type EntityAccessState, type ModuleDependency } from '@/lib/access/entityAccess'
+import { useModules } from '@/lib/security/moduleStore'
+import { usePermissions } from '@/lib/security/permissionStore'
 
 /** Historical value entry */
 export interface HistoryEntry {
@@ -90,6 +92,11 @@ export interface FormField {
   automation?: FieldAutomationConfig
   /** Locks manual edits when this field is governed by a lifecycle or registration operation. */
   controlledByOperation?: FormFieldOperationControl
+  /** Registry-sourced field control metadata for future policy/action guide integrations. */
+  fieldControl?: unknown
+  helpText?: string
+  lockReason?: string
+  suggestedOperation?: unknown
   /** Hide the field label when the rendered control already provides its own structure. */
   hideLabel?: boolean
   /** Custom render function */
@@ -112,6 +119,23 @@ export interface FormFieldOperationControl {
   message?: string
   lockInModes?: FormMode[]
   allowDraftEdit?: boolean
+  operationKey?: string
+  wizardKey?: string
+  targetPage?: string
+  requiredModules?: string[]
+  optionalModules?: string[]
+  requiredPermissions?: string[]
+  fallbackPermissions?: string[]
+  requiredRecordStatuses?: string[]
+  blockedRecordStatuses?: string[]
+  lockExplanation?: string
+  helperText?: string
+  suggestedOperations?: Array<{
+    operationKey: string
+    operationLabel: string
+    wizardKey?: string
+    targetPage?: string
+  }>
 }
 
 export interface FieldAutomationConfig {
@@ -2894,27 +2918,67 @@ function getOperationActionToneClass(tone: FormOperationActionTone = 'primary') 
   }
 }
 
-function FieldOperationLockIndicator({ control }: { control: FormFieldOperationControl }) {
+function FieldOperationLockIndicator({ control, recordStatus }: { control: FormFieldOperationControl; recordStatus?: string | null }) {
   const [showTooltip, setShowTooltip] = useState(false)
+  const modules = useModules()
+  const permissions = usePermissions()
   const message = getFieldOperationLockMessage(control)
+  const actions = getFieldOperationActions(control)
+  const eligibility = getFieldOperationEligibility(control, modules, permissions, recordStatus)
 
   return (
-    <div className="relative inline-flex">
+    <div
+      className="relative inline-flex"
+      onMouseEnter={() => setShowTooltip(true)}
+      onMouseLeave={() => setShowTooltip(false)}
+    >
       <button
         type="button"
         aria-label="Alan işlem bilgisi"
         title={message}
         onFocus={() => setShowTooltip(true)}
         onBlur={() => setShowTooltip(false)}
-        onMouseEnter={() => setShowTooltip(true)}
-        onMouseLeave={() => setShowTooltip(false)}
+        onClick={() => setShowTooltip(previous => !previous)}
         className="inline-grid h-5 w-5 place-items-center rounded-full text-amber-600 transition-colors hover:bg-amber-50 hover:text-amber-700 dark:text-amber-300 dark:hover:bg-amber-950/30"
       >
         <Info size={14} />
       </button>
       {showTooltip && (
-        <div className="absolute left-1/2 top-full z-50 mt-1 w-72 -translate-x-1/2 rounded-lg border border-amber-200 bg-white p-3 text-xs leading-5 text-gray-700 shadow-lg dark:border-amber-900/60 dark:bg-gray-950 dark:text-gray-200">
-          {message}
+        <div className="absolute left-1/2 top-full z-50 mt-1 w-80 -translate-x-1/2 rounded-lg border border-amber-200 bg-white p-3 text-xs leading-5 text-gray-700 shadow-lg dark:border-amber-900/60 dark:bg-gray-950 dark:text-gray-200">
+          <p>{message}</p>
+          {control.helperText && control.helperText !== message && (
+            <p className="mt-2 text-gray-500 dark:text-gray-400">{control.helperText}</p>
+          )}
+          {eligibility.disabledReason && (
+            <p className="mt-2 rounded-md border border-amber-200 bg-amber-50 px-2 py-1 text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-200">
+              {eligibility.disabledReason}
+            </p>
+          )}
+          {eligibility.warnings.length ? (
+            <div className="mt-2 space-y-1 text-amber-700 dark:text-amber-200">
+              {eligibility.warnings.map((warning, index) => <p key={`${warning}-${index}`}>{warning}</p>)}
+            </div>
+          ) : null}
+          {actions.length ? (
+            <div className="mt-3 flex flex-wrap gap-2">
+              {actions.map(action => (
+                <button
+                  key={action.operationKey}
+                  type="button"
+                  disabled={!eligibility.canStart}
+                  onMouseDown={event => event.preventDefault()}
+                  onClick={() => {
+                    if (!eligibility.canStart) return
+                    startSuggestedFieldOperation(action)
+                    setShowTooltip(false)
+                  }}
+                  className="rounded-md border border-amber-300 px-2.5 py-1 text-[11px] font-semibold text-amber-800 transition hover:bg-amber-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-amber-800 dark:text-amber-100 dark:hover:bg-amber-950/40"
+                >
+                  {action.operationLabel}
+                </button>
+              ))}
+            </div>
+          ) : null}
         </div>
       )}
     </div>
@@ -2922,6 +2986,7 @@ function FieldOperationLockIndicator({ control }: { control: FormFieldOperationC
 }
 
 function getFieldOperationLockMessage(control: FormFieldOperationControl) {
+  if (control.lockExplanation) return control.lockExplanation
   if (control.message) return control.message
 
   const categoryLabel = control.category === 'lifecycle'
@@ -2933,6 +2998,114 @@ function getFieldOperationLockMessage(control: FormFieldOperationControl) {
   const operationText = operations.length ? ` İşlemler: ${operations.join(', ')}.` : ''
 
   return `Bu alan ${categoryLabel} değiştirilebilir.${operationText}`
+}
+
+function getFieldOperationActions(control: FormFieldOperationControl) {
+  if (control.suggestedOperations?.length) return control.suggestedOperations
+  if (control.operationKey === 'system_update') return []
+  if (!control.wizardKey && !control.targetPage) return []
+  if (!control.operationKey && !control.wizardKey) return []
+  return [{
+    operationKey: control.operationKey || control.wizardKey || 'field_operation',
+    operationLabel: control.operations?.[0] || 'Ilgili Sihirbazi Ac',
+    wizardKey: control.wizardKey,
+    targetPage: control.targetPage,
+  }]
+}
+
+function getFieldOperationEligibility(
+  control: FormFieldOperationControl,
+  modules: ReturnType<typeof useModules>,
+  permissions: ReturnType<typeof usePermissions>,
+  recordStatus?: string | null
+) {
+  const missingRequiredModule = (control.requiredModules || []).find(moduleKey => !isFormModuleAvailable(modules, moduleKey))
+  const optionalWarnings = (control.optionalModules || [])
+    .filter(moduleKey => !isFormModuleAvailable(modules, moduleKey))
+    .map(moduleKey => getOptionalModuleWarning(moduleKey, control.operationKey))
+  const hasPermission = hasFieldOperationPermission(control, permissions)
+  const statusReason = getFieldOperationStatusReason(control, recordStatus)
+  const disabledReason = missingRequiredModule
+    ? getMissingModuleReason(missingRequiredModule, control.operationKey)
+    : !hasPermission
+      ? 'Bu islem icin yetkiniz bulunmuyor.'
+      : statusReason
+
+  return {
+    canStart: !disabledReason,
+    disabledReason,
+    warnings: optionalWarnings,
+  }
+}
+
+function isFormModuleAvailable(modules: ReturnType<typeof useModules>, moduleKey: string) {
+  const status = String(modules.getRuntimeStatus(moduleKey))
+  return status === 'available' || status === 'enabled' || status === 'beta'
+}
+
+function hasFieldOperationPermission(control: FormFieldOperationControl, permissions: ReturnType<typeof usePermissions>) {
+  const keys = [...(control.requiredPermissions || []), ...(control.fallbackPermissions || [])]
+  if (!keys.length) return true
+  return keys.some(key => permissions.can(key))
+}
+
+function getFieldOperationStatusReason(control: FormFieldOperationControl, recordStatus?: string | null) {
+  const status = normalizeOperationStatus(recordStatus)
+  const required = (control.requiredRecordStatuses || []).map(normalizeOperationStatus).filter(Boolean)
+  const blocked = (control.blockedRecordStatuses || []).map(normalizeOperationStatus).filter(Boolean)
+  if (blocked.length && blocked.includes(status)) return 'Bu kayit durumunda bu islem baslatilamaz.'
+  if (!required.length || required.includes(status)) return null
+  if (required.includes('active')) return 'Bu islem yalnizca aktif kayitlarda yapilabilir.'
+  if (required.includes('draft')) return 'Bu islem yalnizca taslak kayitlarda yapilabilir.'
+  return `Bu islem ${required.join(' veya ')} kayitlarda yapilabilir.`
+}
+
+function normalizeOperationStatus(value: unknown) {
+  const status = String(value || '').trim().toLocaleLowerCase('tr-TR')
+  if (['active', 'aktif', 'opened'].includes(status)) return 'active'
+  if (['draft', 'taslak'].includes(status)) return 'draft'
+  if (['passive', 'pasif'].includes(status)) return 'passive'
+  if (['closed', 'kapali', 'kapalı', 'deregistered', 'terkin'].includes(status)) return 'closed'
+  if (['liquidation', 'tasfiye'].includes(status)) return 'liquidation'
+  return status
+}
+
+function getMissingModuleReason(moduleKey: string, operationKey?: string) {
+  if (operationKey === 'capital_increase' || operationKey === 'capital_decrease') {
+    return 'Sermaye Artirimi ortak bazli pay ve sermaye dagilimi gerektirir. Bu islem icin Ortaklarimiz modulu ve guncel ortaklik dagilimi aktif olmalidir.'
+  }
+  if (operationKey === 'branch_opening' && moduleKey === 'branches') return 'Bu islem icin Subelerimiz modulu aktif olmalidir.'
+  if (operationKey === 'branch_document_update') return 'Sube belgeleri resmi islem kapsaminda yonetilir. Bu islem icin Subelerimiz ve belge yukleme altyapisi aktif olmalidir.'
+  if (moduleKey === 'branches') return 'Sube bazli yetki verebilmek icin Subelerimiz modulu aktif olmalidir.'
+  if (moduleKey === 'partners') return 'Bu islem icin Ortaklarimiz modulu aktif olmalidir.'
+  if (moduleKey === 'facilities') return 'Bu islem icin Tesisler/Lokasyonlar modulu aktif olmalidir.'
+  if (moduleKey === 'organization') return 'Bu islem icin Teskilat/Kadro modulu aktif olmalidir.'
+  return `Bu islem icin ${moduleKey} modulu aktif olmalidir.`
+}
+
+function getOptionalModuleWarning(moduleKey: string, operationKey?: string) {
+  if (operationKey === 'branch_opening' && moduleKey === 'facilities') {
+    return 'Sube acilisi yapilabilir; ancak Tesisler/Lokasyonlar modulu aktif olmadigi icin fiziksel lokasyon kaydi otomatik olusturulamayacak.'
+  }
+  if (operationKey === 'branch_opening' && moduleKey === 'organization') {
+    return 'Sube acilisi yapilabilir; ancak Teskilat/Kadro modulu aktif olmadigi icin organizasyon birimi otomatik olusturulamayacak.'
+  }
+  return `${moduleKey} modulu aktif olmadigi icin ilgili otomasyon atlanabilir.`
+}
+
+function startSuggestedFieldOperation(action: { operationKey: string; operationLabel: string; wizardKey?: string; targetPage?: string }) {
+  const currentPath = typeof window !== 'undefined' ? window.location.pathname : ''
+  if (action.targetPage && currentPath && !currentPath.startsWith(action.targetPage)) {
+    window.location.href = action.targetPage
+    return
+  }
+  window.dispatchEvent(new CustomEvent('eden:action-guide-command', {
+    detail: {
+      action_type: 'open_wizard',
+      action_key: action.operationKey,
+      wizard_key: action.wizardKey || action.operationKey,
+    },
+  }))
 }
 
 export function EntityForm({
@@ -4048,7 +4221,7 @@ export function EntityForm({
               <FieldHistoryIndicator history={field.history} />
             )}
             {fieldOperationControl && (
-              <FieldOperationLockIndicator control={fieldOperationControl} />
+              <FieldOperationLockIndicator control={fieldOperationControl} recordStatus={String(effectiveStatusData.record_status || effectiveStatusData.company_status || effectiveStatusData.status || '')} />
             )}
             {automationState && (
               <AutomationBadge

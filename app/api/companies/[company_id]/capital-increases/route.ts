@@ -127,10 +127,13 @@ export async function POST(
   try {
     const precheck = await buildCapitalIncreasePrecheck(supabase, companyId, access.tenantContext)
     if (!precheck.ok) {
-      return fail(precheck.message || 'Sermaye artırımı ön kontrolü başarısız.', 'CAPITAL_INCREASE_PRECHECK_FAILED', 400, {
+      const code = precheck.dependency_code || 'CAPITAL_INCREASE_PRECHECK_FAILED'
+      const details = {
+        ...(precheck.dependency_details || {}),
         reasons: precheck.blocking_reasons,
         warnings: precheck.warnings,
-      })
+      }
+      return fail(precheck.message || 'Sermaye artırımı ön kontrolü başarısız.', code, precheck.dependency_code ? 409 : 400, details)
     }
 
     let companyQuery = supabase

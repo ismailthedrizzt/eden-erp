@@ -18,38 +18,10 @@ import { resolveClientRequestId, stripOperationControlFields } from '@/lib/opera
 import { operationStatusMessage } from '@/lib/operations/operationStatus'
 import { duplicateOperationJsonResponse } from '@/lib/operations/apiResponse'
 import { OutboxEventService } from '@/lib/outbox/outboxEventService'
+import { stripOperationControlledFields as stripFieldControlFields } from '@/lib/field-controls/fieldControlGuards'
 
 type PartnerStatusFilter = 'draft' | 'active' | 'passive'
 const PARTNER_STATUS_FILTERS = new Set<PartnerStatusFilter>(['draft', 'active', 'passive'])
-const PARTNER_CREATE_OPERATION_CONTROLLED_FIELDS = new Set([
-  'share_ratio',
-  'voting_ratio',
-  'profit_ratio',
-  'share_units',
-  'nominal_value',
-  'capital_amount',
-  'committed_capital_amount',
-  'share_class',
-  'has_privileged_share',
-  'has_privilege',
-  'has_control_right',
-  'control_type',
-  'has_board_nomination_right',
-  'has_veto_right',
-  'beneficial_owner',
-  'is_beneficial_owner',
-  'beneficial_ratio',
-  'is_ultimate_controller',
-  'start_date',
-  'end_date',
-  'status',
-  'record_status',
-  'approval_status',
-  'workflow_status',
-  'transaction_status',
-  'current_ownership',
-  'ownership_transaction_history',
-])
 
 const partnerKindSchema = z.preprocess(
   value => value === 'company' || value === 'sirket' || value === 'şirket' ? 'organization' : value,
@@ -149,11 +121,7 @@ function omitNullishValues(value: Record<string, any>) {
 }
 
 function stripPartnerCreateOperationControlledFields(body: Record<string, any>) {
-  const next = { ...body }
-  PARTNER_CREATE_OPERATION_CONTROLLED_FIELDS.forEach(field => {
-    delete next[field]
-  })
-  return next
+  return stripFieldControlFields('company_partner', body)
 }
 
 function normalizePartnerStatusFilters(statuses?: string[]) {
