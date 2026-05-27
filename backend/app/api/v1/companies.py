@@ -29,7 +29,7 @@ from app.domains.company.schemas import (
     TitleChangeRequest,
 )
 from app.domains.company.service import get_company_by_id
-from app.domains.ownership.service import get_current_ownership_for_company
+from app.domains.ownership.current import get_current_ownership_for_company
 from app.schemas.common import ApiSuccess, OperationResponse
 from app.schemas.placeholder import PlaceholderResponse
 

@@ -1,10 +1,19 @@
+// BACKEND_MIGRATION_STATUS: keep_bff_proxy_with_legacy_fallback
+// TARGET_BACKEND_MODULE: action-center
+// TARGET_FASTAPI_ENDPOINT: /api/v1/action-center/counts
+// NOTES: Action Center counts belong in Python; TS remains fallback only.
+
 import { NextRequest, NextResponse } from 'next/server'
+import { proxyToFastApi } from '@/lib/backend/fastApiProxy'
 import { buildActionCenterContext } from '@/lib/action-center/actionCenterResolver'
 import { getActionCenterCounts } from '@/lib/action-center/actionCenterService'
 
 export const runtime = 'nodejs'
 
 export async function GET(request: NextRequest) {
+  const fastApiResponse = await proxyToFastApi(request, '/api/v1/action-center/counts')
+  if (fastApiResponse) return fastApiResponse
+
   const context = await buildActionCenterContext(request)
   if (context instanceof NextResponse) return context
 

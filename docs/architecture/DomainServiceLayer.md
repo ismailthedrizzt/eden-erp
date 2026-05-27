@@ -122,8 +122,16 @@ Ilk gercek fonksiyonlar:
 - `getPartnerById`
 - `listPartnersForCompany`
 - `buildOwnershipSnapshot`
+- `performOwnershipTransaction`
+- `initialPartnershipEntry`
+- `shareTransfer`
+- `ownershipExit`
+- `correctionEntry`
+- `reversalEntry`
 
 Sermaye Artirimi ve ownership integrity kontrolleri guncel ortaklik dagilimini bu service uzerinden okuyabilir.
+
+FastAPI migration fazinda Ownership Domain Service Python tarafinda `POST /api/v1/ownership/transactions` endpointiyle transaction kaydi, partner card status update, current ownership read/fallback, outbox ve audit best-effort davranisini uygulamaya baslamistir. Partner card update ownership hak alanlarini reddeder; pay/oy/kar/sermaye haklari sadece ownership transaction ile degisir.
 
 ### Company Domain Service
 
@@ -146,6 +154,7 @@ Orchestrator cross-domain mutation yapacaksa dogrudan tablo update etmez:
 - Sube kapanisi: Organization aksiyonu, Facility aksiyonu, Branch close mutation.
 - Temsilci scope: Representative Authority Service, Branch/Organization/Facility assert helperlari.
 - Sermaye artirimi: Ownership current-state helperlari.
+- Ortaklik islemleri: Partner karti sadece kart/profil alanlarini gunceller; ownership rights mutation Ownership Domain Service ve transaction endpointinden gecer.
 
 ## Hata Standardi
 

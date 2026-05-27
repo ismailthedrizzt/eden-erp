@@ -23,6 +23,11 @@ class Settings(BaseSettings):
     supabase_service_role_key: str | None = Field(default=None, alias="SUPABASE_SERVICE_ROLE_KEY")
     supabase_jwt_secret: str | None = Field(default=None, alias="SUPABASE_JWT_SECRET")
     cors_origins_raw: str = Field(default="http://localhost:3000", alias="CORS_ORIGINS")
+    internal_backend_token: str | None = Field(default=None, alias="INTERNAL_BACKEND_TOKEN")
+    cron_secret: str | None = Field(default=None, alias="CRON_SECRET")
+    outbox_batch_size: int = Field(default=25, alias="OUTBOX_BATCH_SIZE")
+    outbox_poll_interval_seconds: float = Field(default=5.0, alias="OUTBOX_POLL_INTERVAL_SECONDS")
+    worker_id: str = Field(default="eden-worker-local", alias="WORKER_ID")
 
     @property
     def cors_origins(self) -> list[str]:

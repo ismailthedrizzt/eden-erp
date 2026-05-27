@@ -91,7 +91,7 @@ Ownership, sermaye ve pay etkilerini uretir; Company bu sonucu sirket detay proj
 
 ### Amac
 
-Ortak kartlarini, ortaklik islem tarihcesini ve guncel ortaklik dagilimini yonetir.
+Ortak kartlarini, ortaklik islem tarihcesini ve guncel ortaklik dagilimini yonetir. Ortak karti ile ortaklik haklari ayri kavramlardir; pay/oy/kar/sermaye haklari normal kart PATCH ile degil ownership transaction ile olusur veya degisir.
 
 ### Sahip Oldugu Entity'ler
 
@@ -112,7 +112,13 @@ Ortak kartlarini, ortaklik islem tarihcesini ve guncel ortaklik dagilimini yonet
 - `initial_partnership_entry`
 - `share_transfer`
 - `ownership_exit`
+- `share_ratio_change`
+- `voting_ratio_change`
+- `profit_ratio_change`
+- `privilege_change`
+- `control_right_change`
 - `ownership_correction`
+- `reversal_entry`
 - `capital_increase_ownership_impact`
 
 ### Dinledigi Eventler
@@ -139,11 +145,13 @@ Company sermaye operasyonunu baslatabilir, ancak pay dagilimi ve ortaklik etkisi
 
 - Accounting Domain'in `share_ratio` guncellemesi.
 - Company PATCH ile ortaklik cikisi yapmak.
+- Partner kart PATCH ile pay, oy, kar payi veya sermaye tutari degistirmek.
 
 ### Dogru Kullanim Ornekleri
 
 - Pay devri ownership transaction ile kaydedilir.
 - Sermaye artirimi ownership impact adimi guncel pay dagilimini kullanir.
+- Ilk Ortaklik Girisi taslak partner kartini aktif ortak haline getirir; kart bilgisi ve ortaklik hakki ayni form PATCH'inde karistirilmaz.
 
 ## Representative Authority Domain
 

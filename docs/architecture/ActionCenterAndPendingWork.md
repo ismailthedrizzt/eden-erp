@@ -44,6 +44,15 @@ Ana fonksiyonlar:
 - `GET /api/action-center/summary`
 - `GET /api/action-center/by-record`
 
+FastAPI migration sonrasi minimal canonical read adapter:
+
+- `GET /api/v1/action-center`
+- `GET /api/v1/action-center/counts`
+- `GET /api/v1/action-center/summary`
+- `GET /api/v1/action-center/by-record`
+
+Bu ilk Python adapter process task ve process approval kaynaklarini okur. Operation failed/stuck ve outbox warning kaynaklari sonraki handler/read-model fazinda eklenecektir.
+
 Eski `GET /api/notifications/pending-actions` endpoint'i uyumluluk icin korunur ve Action Center sonucunu eski response sekline cevirir.
 
 ## Scope ve Yetki

@@ -65,6 +65,14 @@ Sermaye Artirimi FastAPI Company Capital ve Ownership servislerine tasindi. Curr
 
 Temsilci yetki islemleri FastAPI Representative Authority servislerine tasinmaya basladi. `POST /api/v1/representatives/{representative_id}/authority-transactions` endpointi scope validation, kart/yetki ayrimi, normal PATCH authority guard, outbox/audit best-effort ve current authority fallback okuma davranisini uygular. Next.js representative PATCH route'u `authority_action` icin FastAPI proxy dener; `FASTAPI_BASE_URL` yoksa gecici TS fallback migration bridge olarak kalir. Detaylar [Representative Authority FastAPI Migration](./RepresentativeAuthorityFastAPIMigration.md) dokumanindadir.
 
+## 7.6 Ownership Transactions FastAPI Migration Addendum
+
+Ortaklik transaction islemleri FastAPI Ownership ve Partner servislerine tasinmaya basladi. `POST /api/v1/ownership/transactions` endpointi Ilk Ortaklik Girisi, Pay Devri, Ortakliktan Cikis, hak degisikligi, Duzeltme Kaydi ve Ters Kayit icin canonical Python validation/transaction davranisini kurar. Partner PATCH ownership alanlarini reddeder; current ownership once read modelden, gerekirse transaction aggregation fallback'inden okunur. Next.js ownership transaction route'u `FASTAPI_BASE_URL` varsa FastAPI proxy dener; `[id]/**` workflow fallbackleri sonraki migration borcudur. Detaylar [Ownership Transactions FastAPI Migration](./OwnershipTransactionsFastAPIMigration.md) dokumanindadir.
+
+## 7.7 Process / Outbox / Audit FastAPI Migration Addendum
+
+Process instance/task/approval, Audit read/write/masking, Outbox dispatcher ve Action Center minimal read adapter Python backend tarafinda MVP olarak kuruldu. Canonical endpointler `/api/v1/processes`, `/api/v1/tasks`, `/api/v1/approvals`, `/api/v1/audit`, `/api/v1/action-center` ve `/api/v1/system/outbox/dispatch` altindadir. Next.js route'lari `FASTAPI_BASE_URL` varsa proxy eder; yoksa migration bridge TS fallback calisir. Outbox worker `python -m app.workers.outbox_worker --once` komutuyla batch isleyebilir. Detaylar [Process / Outbox / Audit FastAPI Migration](./ProcessOutboxAuditFastAPIMigration.md) dokumanindadir.
+
 ## 8. Build / Typecheck Sonucu
 
 Final pass sirasinda asagidaki kontroller calistirildi:

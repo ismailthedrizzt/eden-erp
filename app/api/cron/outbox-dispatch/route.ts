@@ -1,15 +1,21 @@
-// BACKEND_MIGRATION_STATUS: migrate_to_fastapi
+// BACKEND_MIGRATION_STATUS: keep_bff_proxy_with_legacy_fallback
 // TARGET_BACKEND_MODULE: outbox
-// TARGET_FASTAPI_ENDPOINT: python-worker:outbox-dispatch
-// NOTES: Outbox dispatcher belongs in Python worker infrastructure; cron endpoint is a temporary trigger.
+// TARGET_FASTAPI_ENDPOINT: /api/v1/system/outbox/dispatch
+// NOTES: Outbox dispatcher belongs in Python worker infrastructure; TS dispatcher is fallback only.
 
 import { NextRequest, NextResponse } from 'next/server'
+import { proxyToFastApi } from '@/lib/backend/fastApiProxy'
 import { createServiceClient } from '@/lib/supabase/server'
 import { dispatchPendingEvents } from '@/lib/outbox/outboxDispatcher'
 
 export const runtime = 'nodejs'
 
 export async function POST(request: NextRequest) {
+  const fastApiResponse = await proxyToFastApi(request, '/api/v1/system/outbox/dispatch', {
+    method: 'POST',
+  })
+  if (fastApiResponse) return fastApiResponse
+
   const secret = process.env.CRON_SECRET
   const provided = request.headers.get('authorization')?.replace(/^Bearer\s+/i, '')
     || request.nextUrl.searchParams.get('secret')

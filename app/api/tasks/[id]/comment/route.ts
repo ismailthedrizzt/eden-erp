@@ -1,3 +1,8 @@
+// BACKEND_MIGRATION_STATUS: keep_bff_proxy_with_legacy_fallback
+// TARGET_BACKEND_MODULE: process
+// TARGET_FASTAPI_ENDPOINT: /api/v1/tasks/{task_id}/comments
+// NOTES: Task comments remain TS fallback until the Python process comment endpoint is added.
+
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { resolveTenantContext } from '@/lib/tenancy/server'

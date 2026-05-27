@@ -149,7 +149,7 @@ Generated from `app/api/**/route.ts`. The classification is intentionally conser
 | `/api/ownership-transactions/[id]/reverse` | `app/api/ownership-transactions/[id]/reverse/route.ts` | ERP domain route | yes | yes | yes | yes | `migrate_to_fastapi` | `/api/v1/ownership-transactions/{transaction_id}/reverse` | P0 | move business logic to FastAPI |
 | `/api/ownership-transactions/[id]` | `app/api/ownership-transactions/[id]/route.ts` | ERP domain route | yes | yes | no | yes | `migrate_to_fastapi` | `/api/v1/ownership-transactions/{transaction_id}` | P0 | move business logic to FastAPI |
 | `/api/ownership-transactions/[id]/send-approval` | `app/api/ownership-transactions/[id]/send-approval/route.ts` | ERP domain route | yes | yes | yes | yes | `migrate_to_fastapi` | `/api/v1/ownership-transactions/{transaction_id}/send-approval` | P0 | move business logic to FastAPI |
-| `/api/ownership-transactions` | `app/api/ownership-transactions/route.ts` | ERP domain route | yes | no | no | yes | `migrate_to_fastapi` | `/api/v1/ownership-transactions` | P0 | move business logic to FastAPI |
+| `/api/ownership-transactions` | `app/api/ownership-transactions/route.ts` | ERP domain route | yes | yes for POST fallback | no | yes | `keep_bff_proxy_with_legacy_fallback` | `/api/v1/ownership/transactions` | P0 | POST proxies to FastAPI when configured; GET/list and TS fallback remain migration bridge |
 | `/api/processes/[id]/cancel` | `app/api/processes/[id]/cancel/route.ts` | platform backend route | yes | no | no | yes | `migrate_to_fastapi` | `/api/v1/processes/{id}/cancel` | P1 | move business logic to FastAPI |
 | `/api/processes/[id]` | `app/api/processes/[id]/route.ts` | platform backend route | yes | no | no | yes | `migrate_to_fastapi` | `/api/v1/processes/{id}` | P1 | move business logic to FastAPI |
 | `/api/processes/[id]/start` | `app/api/processes/[id]/start/route.ts` | platform backend route | yes | no | no | yes | `migrate_to_fastapi` | `/api/v1/processes/{id}/start` | P1 | move business logic to FastAPI |
@@ -198,3 +198,22 @@ Generated from `app/api/**/route.ts`. The classification is intentionally conser
 - Files without explicit migration header: 145
 
 The missing-header count is tracked by `npm run migration:status`. P0 routes should be marked first; broader app/api coverage can follow as routes are converted into FastAPI proxies.
+## Step 8 Update - Process / Outbox / Audit
+
+| route path | file path | target status | target FastAPI endpoint | cleanup action |
+| --- | --- | --- | --- | --- |
+| `/api/processes` | `app/api/processes/route.ts` | `keep_bff_proxy_with_legacy_fallback` | `/api/v1/processes` | Remove TS Process Engine fallback after Python endpoint staging validation. |
+| `/api/processes/[id]` | `app/api/processes/[id]/route.ts` | `keep_bff_proxy_with_legacy_fallback` | `/api/v1/processes/{process_id}` | Keep as proxy/adaptor only. |
+| `/api/processes/[id]/start` | `app/api/processes/[id]/start/route.ts` | `keep_bff_proxy_with_legacy_fallback` | `/api/v1/processes` | Definition-key adapter remains until generated client replaces it. |
+| `/api/processes/[id]/cancel` | `app/api/processes/[id]/cancel/route.ts` | `keep_bff_proxy_with_legacy_fallback` | `/api/v1/processes/{process_id}/cancel` | Remove TS fallback after validation. |
+| `/api/processes/[id]/steps/[step_id]/complete` | `app/api/processes/[id]/steps/[step_id]/complete/route.ts` | `keep_bff_proxy_with_legacy_fallback` | `/api/v1/processes/{process_id}/steps/{step_key}/complete` | Remove TS fallback after validation. |
+| `/api/tasks` | `app/api/tasks/route.ts` | `keep_bff_proxy_with_legacy_fallback` | `/api/v1/tasks` | Remove TS task service fallback after validation. |
+| `/api/tasks/[id]` | `app/api/tasks/[id]/route.ts` | `keep_bff_proxy_with_legacy_fallback` | `/api/v1/tasks/{task_id}` | Keep as proxy/adaptor only. |
+| `/api/tasks/[id]/assign` | `app/api/tasks/[id]/assign/route.ts` | `keep_bff_proxy_with_legacy_fallback` | `/api/v1/tasks/{task_id}/assign` | Remove TS fallback after validation. |
+| `/api/tasks/[id]/complete` | `app/api/tasks/[id]/complete/route.ts` | `keep_bff_proxy_with_legacy_fallback` | `/api/v1/tasks/{task_id}/complete` | Remove TS fallback after validation. |
+| `/api/approvals` | `app/api/approvals/route.ts` | `keep_bff_proxy_with_legacy_fallback` | `/api/v1/approvals` | Remove TS approval fallback after validation. |
+| `/api/approvals/[id]/approve` | `app/api/approvals/[id]/approve/route.ts` | `keep_bff_proxy_with_legacy_fallback` | `/api/v1/approvals/{approval_id}/approve` | Remove TS fallback after validation. |
+| `/api/approvals/[id]/reject` | `app/api/approvals/[id]/reject/route.ts` | `keep_bff_proxy_with_legacy_fallback` | `/api/v1/approvals/{approval_id}/reject` | Remove TS fallback after validation. |
+| `/api/audit/**` | `app/api/audit/**` | `keep_bff_proxy_with_legacy_fallback` | `/api/v1/audit/**` | Remove TS audit read fallback after Python permission/scope hardening. |
+| `/api/action-center/**` | `app/api/action-center/**` | `keep_bff_proxy_with_legacy_fallback` | `/api/v1/action-center/**` | Expand Python sources, then remove TS resolver fallback. |
+| `/api/cron/outbox-dispatch` | `app/api/cron/outbox-dispatch/route.ts` | `keep_bff_proxy_with_legacy_fallback` | `/api/v1/system/outbox/dispatch` | Remove TS dispatcher after Python worker deployment. |

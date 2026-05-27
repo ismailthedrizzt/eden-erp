@@ -1,9 +1,10 @@
-// BACKEND_MIGRATION_STATUS: migrate_to_fastapi
+// BACKEND_MIGRATION_STATUS: keep_bff_proxy_with_legacy_fallback
 // TARGET_BACKEND_MODULE: ownership
-// TARGET_FASTAPI_ENDPOINT: /api/v1/ownership-transactions
-// NOTES: Ownership transaction core behavior should move to Python Ownership Domain.
+// TARGET_FASTAPI_ENDPOINT: /api/v1/ownership/transactions
+// NOTES: Proxies transaction creation to FastAPI when configured; legacy TS fallback is temporary migration bridge.
 
 import { NextRequest, NextResponse } from 'next/server'
+import { isFastApiEnabled, proxyToFastApi } from '@/lib/backend/fastApiProxy'
 import { createServiceClient } from '@/lib/supabase/server'
 import { z } from 'zod'
 import { OWNERSHIP_TRANSACTION_SELECT, nextTransactionNo, validateDraft } from './_shared'
@@ -108,6 +109,12 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  if (isFastApiEnabled()) {
+    const proxied = await proxyToFastApi(request, '/api/v1/ownership/transactions')
+    if (proxied) return proxied
+  }
+  console.warn('FastAPI backend not configured; using legacy TS fallback for ownership transaction.')
+
   const supabase = createServiceClient()
   const permission = await requirePermission(request, supabase, 'ownership_transactions.edit')
   if (permission instanceof NextResponse) return permission

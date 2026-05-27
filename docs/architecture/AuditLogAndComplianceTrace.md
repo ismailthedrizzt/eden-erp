@@ -58,6 +58,16 @@ Audit read API'leri read-only calisir:
 - `GET /api/audit/by-operation`
 - `GET /api/audit/by-process`
 
+FastAPI migration sonrasi canonical endpointler:
+
+- `GET /api/v1/audit`
+- `GET /api/v1/audit/{audit_id}`
+- `GET /api/v1/audit/by-record`
+- `GET /api/v1/audit/by-operation`
+- `GET /api/v1/audit/by-process`
+
+Next.js audit route'lari `FASTAPI_BASE_URL` varsa Python Audit Service'e proxy eder. TS audit service gecici fallback'tir.
+
 Erisim `audit.view`, `settings.view` veya `settings.edit` yetkileriyle sinirlanir. Tenant scope her sorguda korunur.
 
 ## UI Hazirligi

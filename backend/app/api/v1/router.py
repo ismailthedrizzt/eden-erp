@@ -1,13 +1,19 @@
 from fastapi import APIRouter
 
 from app.api.v1 import (
+    action_center,
+    approvals,
+    audit,
     branches,
     companies,
     company_branches,
     health,
     ownership,
     partners,
+    processes,
     representatives,
+    system,
+    tasks,
 )
 
 api_router = APIRouter()
@@ -20,3 +26,9 @@ api_router.include_router(ownership.router, prefix="/ownership", tags=["ownershi
 api_router.include_router(
     representatives.router, prefix="/representatives", tags=["representatives"]
 )
+api_router.include_router(processes.router, prefix="/processes", tags=["processes"])
+api_router.include_router(tasks.router, prefix="/tasks", tags=["tasks"])
+api_router.include_router(approvals.router, prefix="/approvals", tags=["approvals"])
+api_router.include_router(audit.router, prefix="/audit", tags=["audit"])
+api_router.include_router(action_center.router, prefix="/action-center", tags=["action center"])
+api_router.include_router(system.router, prefix="/system", tags=["system"])

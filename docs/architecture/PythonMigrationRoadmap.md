@@ -28,20 +28,25 @@ Bu roadmap FastAPI core backend gecisi icin ilk tasima sirasini belirler.
    - Implemented: `POST /api/v1/representatives/{representative_id}/authority-transactions`, current-authority endpointi, scope validation service ve Next PATCH BFF proxy.
    - Follow-up: representative list/detail projection optimizasyonu, Python permission/JWT hardening ve TS legacy fallback removal.
 
-5. **Ownership transactions**
+5. **Ownership transactions** - in progress / FastAPI transaction endpoint landed
    - Target: `backend/app/domains/ownership`
    - Reason: Pay/oy/kar/sermaye haklari main partner card editinden ayrilmalidir.
+   - Implemented: `POST /api/v1/ownership/transactions`, current ownership service, partner PATCH ownership-field guard ve Next ownership transaction BFF proxy.
+   - Follow-up: `app/api/ownership-transactions/[id]/**` approve/reject/reverse fallbacklerini FastAPI'ye tasi, partner list/detail projectionlarini proxy yap ve DB integration testleri ekle.
 
 ## P1
 
-6. **Process Engine**
+6. **Process Engine** - in progress / FastAPI MVP landed
    - Process instance/task/approval/event engine Python'a tasinir.
+   - Implemented: `/api/v1/processes`, `/api/v1/tasks`, `/api/v1/approvals` endpointleri, Python process registry ve Next BFF proxy.
 
-7. **Outbox Dispatcher**
+7. **Outbox Dispatcher** - in progress / Python worker MVP landed
    - Dispatcher ve handler runner Python worker olur.
+   - Implemented: `backend/app/domains/outbox`, `python -m app.workers.outbox_worker --once`, `/api/v1/system/outbox/dispatch` ve Next cron proxy.
 
-8. **Audit Log**
+8. **Audit Log** - in progress / FastAPI read/write MVP landed
    - Audit write/read service Python'a tasinir.
+   - Implemented: `/api/v1/audit`, by-record/by-operation/by-process endpointleri ve Python masking service.
 
 9. **Policy Engine**
    - Permission, scope, record status ve module readiness enforcement Python'a tasinir.
@@ -54,8 +59,9 @@ Bu roadmap FastAPI core backend gecisi icin ilk tasima sirasini belirler.
 11. **Setup Readiness**
     - Module readiness Python startup/request guard olarak uygulanir.
 
-12. **Action Center**
+12. **Action Center** - initial FastAPI read adapter landed
     - Unified pending work source Python API ve projection service'e tasinir.
+    - Implemented: `/api/v1/action-center`, counts, summary ve by-record minimal process task/approval adapter.
 
 13. **Projection services**
     - Read model query helpers Python'a veya DB view contract'a tasinir.

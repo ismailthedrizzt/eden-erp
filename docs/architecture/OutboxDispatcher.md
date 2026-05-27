@@ -63,6 +63,20 @@ Endpoint:
 
 - `GET/POST /api/cron/outbox-dispatch`
 
+FastAPI migration sonrasi canonical system endpoint:
+
+- `POST /api/v1/system/outbox/dispatch`
+
+Next cron route'u `FASTAPI_BASE_URL` varsa bu endpoint'e proxy eder; yoksa gecici TS dispatcher fallback'i kullanir.
+
+Python worker:
+
+```bash
+cd backend
+python -m app.workers.outbox_worker --once
+python -m app.workers.outbox_worker
+```
+
 Guvende kalmasi icin `CRON_SECRET` zorunludur. Secret `Authorization: Bearer ...` header'i veya `?secret=` query parametresi ile verilebilir. Secret yoksa veya hataliysa endpoint `401` doner.
 
 Response:

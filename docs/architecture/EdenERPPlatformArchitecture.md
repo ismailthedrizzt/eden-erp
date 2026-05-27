@@ -34,6 +34,8 @@ Bu dokuman platform mimarisinin ana referansidir. Detay sozlesmeler asagidaki do
 - [Company Official Changes FastAPI Migration](./CompanyOfficialChangesFastAPIMigration.md)
 - [Capital / Ownership FastAPI Migration](./CapitalOwnershipFastAPIMigration.md)
 - [Representative Authority FastAPI Migration](./RepresentativeAuthorityFastAPIMigration.md)
+- [Ownership Transactions FastAPI Migration](./OwnershipTransactionsFastAPIMigration.md)
+- [Process / Outbox / Audit FastAPI Migration](./ProcessOutboxAuditFastAPIMigration.md)
 - [OpenAPI Contract Strategy](./OpenAPIContractStrategy.md)
 - [Scaling Architecture](./ScalingArchitecture.md)
 - [Next Cleanup Plan](./NextCleanupPlan.md)
@@ -146,6 +148,7 @@ Kritik kavram ayrimlari:
 - Sube resmi kayittir; tesis/lokasyon fiziksel yerdir.
 - Sube organizasyon birimi degildir; organization unit hiyerarsi ve kadro yapisidir.
 - Ortak pay, oy, kar ve sermaye hakkidir; temsilci sirket adina islem yapma yetkisidir.
+- Ortak karti kisi/kurum + sirket iliskisidir; pay/oy/kar/sermaye haklari ownership transaction ile dogar ve normal kart PATCH ile degismez.
 - Temsilci karti kisi/kurum + sirket roludur; temsil yetkisi scope, limit ve yetki turu ile ayri transaction'dir.
 - Sermaye artirimi hukuki/ortaklik islemidir; muhasebe tahsilati odeme ve mutabakat katmanidir.
 - Wizard veri toplar, Process adim/gorev/onay yonetir, Operation Orchestrator mutation yapar.

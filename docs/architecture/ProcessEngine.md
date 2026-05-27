@@ -35,6 +35,8 @@ Tum tablolar `tenant_id` tasir ve tenant scope helper'lari tarafindan filtrelene
 
 Process definitions `lib/process/processRegistry.ts` uzerinden okunur.
 
+FastAPI migration sonrasi canonical Python registry `backend/app/domains/process/definitions.py` altinda baslamistir. TypeScript registry UI ve migration fallback icin gecici olarak tutulur.
+
 Pilot surecler:
 
 - `company_branch_opening_process`
@@ -78,6 +80,25 @@ Adimlar:
 - `GET /api/processes/:id`
 - `POST /api/processes/:id/start`
 - `POST /api/processes/:id/steps/:step_id/complete`
+
+## FastAPI Canonical MVP
+
+Yeni canonical endpointler:
+
+- `GET/POST /api/v1/processes`
+- `GET /api/v1/processes/{process_id}`
+- `POST /api/v1/processes/{process_id}/start`
+- `POST /api/v1/processes/{process_id}/steps/{step_key}/complete`
+- `POST /api/v1/processes/{process_id}/cancel`
+- `GET/POST /api/v1/tasks`
+- `GET /api/v1/tasks/{task_id}`
+- `POST /api/v1/tasks/{task_id}/assign`
+- `POST /api/v1/tasks/{task_id}/complete`
+- `GET/POST /api/v1/approvals`
+- `POST /api/v1/approvals/{approval_id}/approve`
+- `POST /api/v1/approvals/{approval_id}/reject`
+
+Next.js route'lari `FASTAPI_BASE_URL` varsa bu endpointlere proxy eder; yoksa `keep_bff_proxy_with_legacy_fallback` olarak TS fallback calisir.
 - `POST /api/processes/:id/cancel`
 - `GET /api/tasks`
 - `GET /api/tasks/:id`

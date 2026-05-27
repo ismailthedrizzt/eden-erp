@@ -1,9 +1,10 @@
-// BACKEND_MIGRATION_STATUS: migrate_to_fastapi
+// BACKEND_MIGRATION_STATUS: keep_bff_proxy_with_legacy_fallback
 // TARGET_BACKEND_MODULE: process
 // TARGET_FASTAPI_ENDPOINT: /api/v1/processes
-// NOTES: Process Engine core should move to Python; Next route becomes BFF/proxy.
+// NOTES: Process Engine core belongs in Python; TS route remains a temporary fallback.
 
 import { NextRequest, NextResponse } from 'next/server'
+import { proxyToFastApi } from '@/lib/backend/fastApiProxy'
 import { createServiceClient } from '@/lib/supabase/server'
 import { listMeta, listRange, parseListQuery } from '@/lib/api/listEndpoint'
 import { resolveTenantContext } from '@/lib/tenancy/server'
@@ -16,6 +17,9 @@ import { processToNextResponse, processErrorResponse } from '@/lib/process/proce
 import { isMissingInfrastructureError } from '@/lib/operations/operationRequestService'
 
 export async function GET(request: NextRequest) {
+  const fastApiResponse = await proxyToFastApi(request, '/api/v1/processes')
+  if (fastApiResponse) return fastApiResponse
+
   const supabase = createServiceClient()
   const permission = await requireAnyPermission(request, supabase, [
     'companies.view',
@@ -56,6 +60,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const fastApiResponse = await proxyToFastApi(request, '/api/v1/processes')
+  if (fastApiResponse) return fastApiResponse
+
   const supabase = createServiceClient()
   const body = await request.json().catch(() => ({}))
   const processKey = String(body.process_key || body.processKey || '')

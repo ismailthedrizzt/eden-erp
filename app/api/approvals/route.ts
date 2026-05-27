@@ -1,4 +1,10 @@
+// BACKEND_MIGRATION_STATUS: keep_bff_proxy_with_legacy_fallback
+// TARGET_BACKEND_MODULE: process
+// TARGET_FASTAPI_ENDPOINT: /api/v1/approvals
+// NOTES: Process approval core belongs in Python; TS route remains a temporary fallback.
+
 import { NextRequest, NextResponse } from 'next/server'
+import { proxyToFastApi } from '@/lib/backend/fastApiProxy'
 import { createServiceClient } from '@/lib/supabase/server'
 import { listMeta, listRange, parseListQuery } from '@/lib/api/listEndpoint'
 import { resolveTenantContext } from '@/lib/tenancy/server'
@@ -9,6 +15,9 @@ import { getProcessDefinition } from '@/lib/process/processRegistry'
 import { isMissingInfrastructureError } from '@/lib/operations/operationRequestService'
 
 export async function GET(request: NextRequest) {
+  const fastApiResponse = await proxyToFastApi(request, '/api/v1/approvals')
+  if (fastApiResponse) return fastApiResponse
+
   const supabase = createServiceClient()
   const access = await requireAnyPermission(request, supabase, ['companies.view', 'branches.view', 'partners.view', 'representatives.view'])
   if (access instanceof Response) return access
@@ -32,6 +41,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const fastApiResponse = await proxyToFastApi(request, '/api/v1/approvals')
+  if (fastApiResponse) return fastApiResponse
+
   const supabase = createServiceClient()
   const access = await requireAnyPermission(request, supabase, ['companies.edit', 'branches.opening.start', 'branches.closing.start'])
   if (access instanceof Response) return access
