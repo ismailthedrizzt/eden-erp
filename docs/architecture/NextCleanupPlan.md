@@ -26,6 +26,8 @@ Bu plan Next.js tarafinda kalacak, silinecek, proxy olacak ve FastAPI'ye tasinac
 | --- | --- |
 | `app/api/companies/[company_id]/official-changes/**` | `/api/v1/companies/{company_id}/official-changes/*` |
 | `app/api/companies/[company_id]/capital-increases/**` | `/api/v1/companies/{company_id}/capital-increases` |
+| `app/api/companies/[company_id]/current-ownership/route.ts` | `/api/v1/companies/{company_id}/current-ownership` |
+| `app/api/companies/current-ownership/route.ts` | `/api/v1/ownership/current` for single-company reads; batch proxy remains a follow-up. |
 | `app/api/companies/branches/**` | `/api/v1/branches` |
 | `app/api/companies/representatives/**` | `/api/v1/representatives` |
 | `app/api/ownership-transactions/**` | `/api/v1/ownership-transactions` |
@@ -71,6 +73,7 @@ Bu plan Next.js tarafinda kalacak, silinecek, proxy olacak ve FastAPI'ye tasinac
 | `app/api/companies/[company_id]/official-changes/public-registration-update/**` | FastAPI proxy is active when `FASTAPI_BASE_URL` is configured; TS fallback keeps local frontend usable during migration. | Remove TS fallback after FastAPI public registration update is validated against staging DB. |
 | `app/api/companies/[company_id]/official-changes/nace-change/**` | FastAPI proxy is active when `FASTAPI_BASE_URL` is configured; TS fallback keeps local frontend usable during migration. | Remove TS fallback after FastAPI NACE update is validated against staging DB. |
 | `app/api/companies/[company_id]/official-changes/activity-subject-change/**` | FastAPI proxy is active when `FASTAPI_BASE_URL` is configured; TS fallback keeps local frontend usable during migration. | Remove TS fallback after FastAPI activity subject change is validated against staging DB. |
+| `app/api/companies/representatives/[id]/route.ts` authority transaction branch | FastAPI proxy is active when `FASTAPI_BASE_URL` is configured for `authority_action`; card update remains a temporary TS fallback. | Remove authority transaction fallback after FastAPI representative authority endpoint is validated against staging DB. |
 
 ## official-changes/_shared.ts split plan
 

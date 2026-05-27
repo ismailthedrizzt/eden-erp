@@ -9,6 +9,7 @@ type ProxyOptions = {
   userId?: string | null
   companyScope?: string | null
   timeoutMs?: number
+  bodyText?: string
 }
 
 function backendBaseUrl() {
@@ -52,7 +53,9 @@ export async function proxyToFastApi(
   const timeout = setTimeout(() => controller.abort(), options.timeoutMs || 15000)
 
   try {
-    const body = method === 'GET' || method === 'HEAD' ? undefined : await request.text()
+    const body = method === 'GET' || method === 'HEAD'
+      ? undefined
+      : options.bodyText ?? await request.text()
     const response = await fetch(targetUrl, {
       method,
       headers: buildBackendHeaders(request, options),

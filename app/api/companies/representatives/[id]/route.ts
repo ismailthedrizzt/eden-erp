@@ -1,7 +1,7 @@
-// BACKEND_MIGRATION_STATUS: migrate_to_fastapi
+// BACKEND_MIGRATION_STATUS: keep_bff_proxy_with_legacy_fallback
 // TARGET_BACKEND_MODULE: representatives
-// TARGET_FASTAPI_ENDPOINT: /api/v1/representatives/{representative_id}
-// NOTES: Authority transaction and scope behavior should move to Python Representative Authority Domain.
+// TARGET_FASTAPI_ENDPOINT: /api/v1/representatives/{representative_id}/authority-transactions
+// NOTES: Authority transactions proxy to FastAPI when configured; card updates keep a temporary TS fallback.
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
@@ -19,6 +19,7 @@ import { OutboxEventService } from '@/lib/outbox/outboxEventService'
 import { isMissingTableError } from '@/lib/modules/companies/companyErrors'
 import { validateRepresentativeAuthorityScopePolicy } from '@/lib/security/policies/representativeAuthorityPolicies'
 import { stripOperationControlledFields as stripFieldControlFields } from '@/lib/field-controls/fieldControlGuards'
+import { isFastApiEnabled, proxyToFastApi } from '@/lib/backend/fastApiProxy'
 
 const REPRESENTATIVE_DETAIL_SELECT = 'id,company_id,person_id,organization_id,person_kind,source_type,source_id,display_name,full_name,phone,email,authority_types,job_title,authority_type,status,record_status,start_date,end_date,signature_type,transaction_limit,payment_approval_limit,purchase_approval_limit,bank_transaction_limit,contract_signature_limit,currency,requires_joint_signature,can_approve_alone,bank_authority_level,department_scope,gib_permissions,can_submit_declaration,can_process_e_invoice,sgk_permissions,can_submit_hiring_notice,can_submit_termination_notice,official_correspondence_authority,is_deleted,history,photo_logo,authority_documents,representative_profile,notes,created_at,updated_at,version'
 const CURRENT_AUTHORITY_SELECT = 'representative_id,company_id,tenant_id,authority_status,authority_record_status,authority_status_label,authority_types,signature_type,transaction_limit,payment_approval_limit,purchase_approval_limit,bank_transaction_limit,contract_signature_limit,currency,limits,scope,requires_joint_signature,can_approve_alone,effective_date,end_date,warnings,last_transaction_id,last_transaction_type,display_name,person_id,organization_id'
@@ -95,7 +96,8 @@ export async function PATCH(
   const { id } = await params
   const supabase = createServiceClient()
   const tenantContext = resolveTenantContext(request)
-  const rawBody = await request.json()
+  const rawText = await request.text()
+  const rawBody = rawText ? JSON.parse(rawText) : {}
   const isAuthorityTransaction = !!rawBody.authority_action || AUTHORITY_TRANSACTION_TYPES.has(String(rawBody.transaction_type || ''))
   const clientRequestId = resolveClientRequestId(request, rawBody)
   const baseVersion = resolveBaseVersion(rawBody)
@@ -124,6 +126,19 @@ export async function PATCH(
 
   const permission = await requireAnyPermission(request, supabase, ['representatives.edit', 'companies.edit'])
   if (permission instanceof NextResponse) return permission
+
+  if (isAuthorityTransaction && isFastApiEnabled()) {
+    const fastApiResponse = await proxyToFastApi(
+      request,
+      `/api/v1/representatives/${encodeURIComponent(id)}/authority-transactions`,
+      {
+        method: 'POST',
+        userId: permission.userId,
+        bodyText: rawText,
+      }
+    )
+    if (fastApiResponse) return fastApiResponse
+  }
 
   const operationService = new OperationRequestService(supabase as any)
   let operation = null

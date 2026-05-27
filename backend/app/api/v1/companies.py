@@ -6,6 +6,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_session
 from app.core.errors import DomainError, domain_error_to_http
 from app.core.security import RequestContext, get_request_context, require_tenant
+from app.domains.company.capital import (
+    build_capital_increase_precheck_for_request,
+    complete_capital_increase_for_request,
+)
+from app.domains.company.capital_schemas import CapitalIncreaseRequest
 from app.domains.company.operations import (
     build_activity_subject_change_precheck,
     build_company_official_change_precheck,
@@ -23,6 +28,8 @@ from app.domains.company.schemas import (
     PublicRegistrationUpdateRequest,
     TitleChangeRequest,
 )
+from app.domains.company.service import get_company_by_id
+from app.domains.ownership.service import get_current_ownership_for_company
 from app.schemas.common import ApiSuccess, OperationResponse
 from app.schemas.placeholder import PlaceholderResponse
 
@@ -39,6 +46,66 @@ async def list_companies() -> PlaceholderResponse:
         module="companies",
         message="Company endpoints will migrate from Next.js BFF routes to FastAPI.",
     )
+
+
+@router.get(
+    "/{company_id}/capital-increases/precheck",
+    response_model=ApiSuccess[dict[str, Any]],
+)
+async def capital_increase_precheck(
+    company_id: str,
+    session: SessionDep,
+    context: RequestContextDep,
+) -> ApiSuccess[dict[str, Any]]:
+    tenant_id = require_tenant(context)
+    try:
+        data = await build_capital_increase_precheck_for_request(
+            session=session,
+            tenant_id=tenant_id,
+            user_id=context.user_id,
+            company_id=company_id,
+        )
+        return ApiSuccess(data=data, warnings=data.get("warnings", []), message=data.get("message"))
+    except DomainError as error:
+        raise domain_error_to_http(error) from error
+
+
+@router.post("/{company_id}/capital-increases", response_model=OperationResponse)
+async def capital_increase(
+    company_id: str,
+    request: CapitalIncreaseRequest,
+    session: SessionDep,
+    context: RequestContextDep,
+) -> OperationResponse:
+    tenant_id = require_tenant(context)
+    try:
+        result = await complete_capital_increase_for_request(
+            session=session,
+            tenant_id=tenant_id,
+            user_id=context.user_id,
+            company_id=company_id,
+            request=request,
+        )
+        return OperationResponse(**result)
+    except DomainError as error:
+        raise domain_error_to_http(error) from error
+
+
+@router.get("/{company_id}/current-ownership", response_model=ApiSuccess[list[dict[str, Any]]])
+async def current_ownership_for_company(
+    company_id: str,
+    session: SessionDep,
+    context: RequestContextDep,
+) -> ApiSuccess[list[dict[str, Any]]]:
+    tenant_id = require_tenant(context)
+    try:
+        company = await get_company_by_id(session, tenant_id, company_id)
+        if not company:
+            raise DomainError("Sirket kaydi bulunamadi.", "COMPANY_NOT_FOUND", 404)
+        rows = await get_current_ownership_for_company(session, tenant_id, company_id)
+        return ApiSuccess(data=[row.model_dump(mode="json") for row in rows])
+    except DomainError as error:
+        raise domain_error_to_http(error) from error
 
 
 @router.get(

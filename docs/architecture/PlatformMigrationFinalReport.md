@@ -57,6 +57,14 @@ Sube Acilisi ve Sube Kapanisi FastAPI tarafinda ilk gercek core backend pilotu o
 
 Unvan, adres, kamu/tescil, NACE ve faaliyet konusu degisikligi FastAPI Company Domain Service tarafinda canonical operation olarak uygulandi. Next.js official-change route'lari `FASTAPI_BASE_URL` varsa FastAPI endpointlerine proxy eder; yoksa gecici TS fallback yalnizca migration bridge olarak kalir. NACE guncelleme ile faaliyet konusu degisikligi ayrimi Python backend'de de enforce edilir. Detaylar [Company Official Changes FastAPI Migration](./CompanyOfficialChangesFastAPIMigration.md) dokumanindadir.
 
+## 7.4 Capital / Ownership FastAPI Migration Addendum
+
+Sermaye Artirimi FastAPI Company Capital ve Ownership servislerine tasindi. Current ownership okunamazsa, aktif ortak yoksa veya pay dagilimi %100 degilse backend blocking is diliyle cevap verir. Next.js capital route'lari `FASTAPI_BASE_URL` varsa FastAPI endpointlerine proxy eder; yoksa gecici TS fallback yalnizca migration bridge olarak kalir. Detaylar [Capital / Ownership FastAPI Migration](./CapitalOwnershipFastAPIMigration.md) dokumanindadir.
+
+## 7.5 Representative Authority FastAPI Migration Addendum
+
+Temsilci yetki islemleri FastAPI Representative Authority servislerine tasinmaya basladi. `POST /api/v1/representatives/{representative_id}/authority-transactions` endpointi scope validation, kart/yetki ayrimi, normal PATCH authority guard, outbox/audit best-effort ve current authority fallback okuma davranisini uygular. Next.js representative PATCH route'u `authority_action` icin FastAPI proxy dener; `FASTAPI_BASE_URL` yoksa gecici TS fallback migration bridge olarak kalir. Detaylar [Representative Authority FastAPI Migration](./RepresentativeAuthorityFastAPIMigration.md) dokumanindadir.
+
 ## 8. Build / Typecheck Sonucu
 
 Final pass sirasinda asagidaki kontroller calistirildi:

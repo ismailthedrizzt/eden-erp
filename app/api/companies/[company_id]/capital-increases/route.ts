@@ -1,10 +1,11 @@
-// BACKEND_MIGRATION_STATUS: migrate_to_fastapi
+// BACKEND_MIGRATION_STATUS: keep_bff_proxy_with_legacy_fallback
 // TARGET_BACKEND_MODULE: ownership
 // TARGET_FASTAPI_ENDPOINT: /api/v1/companies/{company_id}/capital-increases
-// NOTES: Capital increase mutation chain belongs in Python Company/Ownership domains.
+// NOTES: Proxies to FastAPI when configured; legacy TS fallback is temporary migration bridge.
 
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
+import { isFastApiEnabled, proxyToFastApi } from '@/lib/backend/fastApiProxy'
 import { createServiceClient } from '@/lib/supabase/server'
 import { applyTenantQueryScope, withTenantInsertScopeForTable } from '@/lib/tenancy/server'
 import { OperationRequestService } from '@/lib/operations/operationRequestService'
@@ -84,6 +85,12 @@ export async function POST(
   { params }: { params: Promise<{ company_id: string }> }
 ) {
   const { company_id: companyId } = await params
+  if (isFastApiEnabled()) {
+    const proxied = await proxyToFastApi(request, `/api/v1/companies/${companyId}/capital-increases`)
+    if (proxied) return proxied
+  }
+  console.warn('FastAPI backend not configured; using legacy TS fallback for capital increase.')
+
   const supabase = createServiceClient()
   const access = await ensureCapitalIncreaseAccess(request, supabase, companyId, 'companies.edit')
   if (access.response) return access.response

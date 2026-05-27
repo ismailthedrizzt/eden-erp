@@ -28,14 +28,14 @@ Temsilci kartina kalici `branch_id` veya benzeri scope alanlari eklenmez. Liste/
 
 ## Validasyon
 
-`validateRepresentativeAuthorityScopePolicy` su kurallari uygular:
+TypeScript gecis katmaninda `validateRepresentativeAuthorityScopePolicy`, FastAPI core backend'de `backend/app/domains/representatives/scope.py` ayni kurallari uygular:
 
 - `company_wide` icin sube, organizasyon birimi ve tesis/lokasyon secilmez.
 - `branch` icin aktif ve ayni sirkete bagli sube zorunludur.
 - `organization_unit` icin aktif ve ayni sirkete bagli organizasyon birimi zorunludur.
 - `facility` icin aktif ve ayni sirkete bagli tesis/lokasyon zorunludur.
 
-Normal temsilci PATCH istekleri scope alanlarini reddeder. Scope degisikligi yalnizca temsil yetkisi islemleriyle yapilir.
+Normal temsilci PATCH istekleri scope ve authority alanlarini reddeder. Scope degisikligi yalnizca temsil yetkisi islemleriyle yapilir.
 
 ## Read Model
 

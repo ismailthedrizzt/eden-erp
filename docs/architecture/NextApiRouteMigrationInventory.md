@@ -56,9 +56,9 @@ Generated from `app/api/**/route.ts`. The classification is intentionally conser
 | `/api/auth/tenant-status` | `app/api/auth/tenant-status/route.ts` | UI/auth/upload adapter | yes | no | no | no | `keep_ui_adapter` | `/api/v1/auth/tenant-status` | P2 | keep as UI adapter; no domain mutation |
 | `/api/companies/[company_id]/capital-decreases/precheck` | `app/api/companies/[company_id]/capital-decreases/precheck/route.ts` | ERP domain route | yes | no | no | no | `migrate_to_fastapi` | `/api/v1/companies/{company_id}/capital-decreases/precheck` | P0 | move business logic to FastAPI |
 | `/api/companies/[company_id]/capital-decreases` | `app/api/companies/[company_id]/capital-decreases/route.ts` | ERP domain route | yes | no | no | no | `migrate_to_fastapi` | `/api/v1/companies/{company_id}/capital-decreases` | P0 | move business logic to FastAPI |
-| `/api/companies/[company_id]/capital-increases/precheck` | `app/api/companies/[company_id]/capital-increases/precheck/route.ts` | ERP domain route | yes | no | no | no | `migrate_to_fastapi` | `/api/v1/companies/{company_id}/capital-increases/precheck` | P0 | move business logic to FastAPI |
-| `/api/companies/[company_id]/capital-increases` | `app/api/companies/[company_id]/capital-increases/route.ts` | ERP domain route | yes | yes | no | yes | `migrate_to_fastapi` | `/api/v1/companies/{company_id}/capital-increases` | P0 | move business logic to FastAPI |
-| `/api/companies/[company_id]/current-ownership` | `app/api/companies/[company_id]/current-ownership/route.ts` | ERP domain route | yes | no | no | no | `migrate_to_fastapi_then_proxy` | `/api/v1/companies/{company_id}/current-ownership` | P1 | move business logic to FastAPI, then proxy |
+| `/api/companies/[company_id]/capital-increases/precheck` | `app/api/companies/[company_id]/capital-increases/precheck/route.ts` | ERP domain route | yes | no | no | no | `keep_bff_proxy_with_legacy_fallback` | `/api/v1/companies/{company_id}/capital-increases/precheck` | P0 | review |
+| `/api/companies/[company_id]/capital-increases` | `app/api/companies/[company_id]/capital-increases/route.ts` | ERP domain route | yes | yes | no | yes | `keep_bff_proxy_with_legacy_fallback` | `/api/v1/companies/{company_id}/capital-increases` | P0 | review |
+| `/api/companies/[company_id]/current-ownership` | `app/api/companies/[company_id]/current-ownership/route.ts` | ERP domain route | yes | no | no | no | `keep_bff_proxy_with_legacy_fallback` | `/api/v1/companies/{company_id}/current-ownership` | P1 | review |
 | `/api/companies/[company_id]/deregistration-wizard/complete` | `app/api/companies/[company_id]/deregistration-wizard/complete/route.ts` | ERP domain route | no | no | no | no | `migrate_to_fastapi_then_proxy` | `/api/v1/companies/{company_id}/deregistration-wizard/complete` | P1 | move business logic to FastAPI, then proxy |
 | `/api/companies/[company_id]/deregistration-wizard/context` | `app/api/companies/[company_id]/deregistration-wizard/context/route.ts` | ERP domain route | no | no | no | no | `migrate_to_fastapi_then_proxy` | `/api/v1/companies/{company_id}/deregistration-wizard/context` | P1 | move business logic to FastAPI, then proxy |
 | `/api/companies/[company_id]/lifecycle-events` | `app/api/companies/[company_id]/lifecycle-events/route.ts` | ERP domain route | no | no | no | no | `migrate_to_fastapi_then_proxy` | `/api/v1/companies/{company_id}/lifecycle-events` | P1 | move business logic to FastAPI, then proxy |
@@ -89,10 +89,10 @@ Generated from `app/api/**/route.ts`. The classification is intentionally conser
 | `/api/companies/branches/[id]/documents` | `app/api/companies/branches/[id]/documents/route.ts` | ERP domain route | yes | yes | no | yes | `migrate_to_fastapi` | `/api/v1/branches/{branch_id}/documents` | P0 | move business logic to FastAPI |
 | `/api/companies/branches/[id]` | `app/api/companies/branches/[id]/route.ts` | ERP domain route | yes | no | no | yes | `migrate_to_fastapi` | `/api/v1/branches/{branch_id}` | P0 | move business logic to FastAPI |
 | `/api/companies/branches` | `app/api/companies/branches/route.ts` | ERP domain route | yes | no | no | yes | `migrate_to_fastapi` | `/api/v1/branches` | P0 | move business logic to FastAPI |
-| `/api/companies/current-ownership` | `app/api/companies/current-ownership/route.ts` | ERP domain route | yes | no | no | no | `migrate_to_fastapi_then_proxy` | `/api/v1/companies/current-ownership` | P1 | move business logic to FastAPI, then proxy |
+| `/api/companies/current-ownership` | `app/api/companies/current-ownership/route.ts` | ERP domain route | yes | no | no | no | `keep_bff_proxy_with_legacy_fallback` | `/api/v1/ownership/current` | P1 | review |
 | `/api/companies/partners/[id]` | `app/api/companies/partners/[id]/route.ts` | ERP domain route | yes | yes | no | yes | `migrate_to_fastapi_then_proxy` | `/api/v1/partners/{partner_id}` | P1 | move business logic to FastAPI, then proxy |
 | `/api/companies/partners` | `app/api/companies/partners/route.ts` | ERP domain route | yes | yes | no | yes | `migrate_to_fastapi_then_proxy` | `/api/v1/partners` | P1 | move business logic to FastAPI, then proxy |
-| `/api/companies/representatives/[id]` | `app/api/companies/representatives/[id]/route.ts` | ERP domain route | yes | yes | no | yes | `migrate_to_fastapi` | `/api/v1/representatives/{representative_id}` | P0 | move business logic to FastAPI |
+| `/api/companies/representatives/[id]` | `app/api/companies/representatives/[id]/route.ts` | ERP domain route | yes | yes | no | yes | `keep_bff_proxy_with_legacy_fallback` | `/api/v1/representatives/{representative_id}/authority-transactions` | P0 | review |
 | `/api/companies/representatives` | `app/api/companies/representatives/route.ts` | ERP domain route | yes | yes | no | yes | `migrate_to_fastapi` | `/api/v1/representatives` | P0 | move business logic to FastAPI |
 | `/api/companies` | `app/api/companies/route.ts` | ERP domain route | yes | no | no | yes | `migrate_to_fastapi_then_proxy` | `/api/v1/companies` | P1 | move business logic to FastAPI, then proxy |
 | `/api/companies/stakeholders/[id]` | `app/api/companies/stakeholders/[id]/route.ts` | ERP domain route | yes | yes | no | yes | `migrate_to_fastapi_then_proxy` | `/api/v1/companies/stakeholders/{id}` | P1 | move business logic to FastAPI, then proxy |
@@ -194,7 +194,7 @@ Generated from `app/api/**/route.ts`. The classification is intentionally conser
 ## Header Coverage
 
 - Route files: 186
-- Files with explicit migration header: 39
-- Files without explicit migration header: 147
+- Files with explicit migration header: 41
+- Files without explicit migration header: 145
 
 The missing-header count is tracked by `npm run migration:status`. P0 routes should be marked first; broader app/api coverage can follow as routes are converted into FastAPI proxies.

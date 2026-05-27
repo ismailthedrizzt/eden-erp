@@ -16,13 +16,17 @@ Bu roadmap FastAPI core backend gecisi icin ilk tasima sirasini belirler.
    - Implemented: `POST /api/v1/companies/{company_id}/official-changes/title-change`, `address-change`, `public-registration-update`, `nace-change`, `activity-subject-change` ve ilgili precheck endpointleri.
    - Follow-up: TS legacy fallback'i kaldir, public table sync integration testlerini ve Python company PATCH guard'ini ekle.
 
-3. **Capital increase**
+3. **Capital increase** - in progress / FastAPI implementation landed
    - Target: `backend/app/domains/company`, `ownership`
    - Reason: Sirket sermayesi, ownership dagilimi ve lifecycle event zinciri atomic olmali.
+   - Implemented: `POST /api/v1/companies/{company_id}/capital-increases`, precheck endpointi, current ownership endpointleri ve Next BFF proxy.
+   - Follow-up: TS legacy fallback'i kaldir, DB integration testleri ve OpenAPI-generated client ekle.
 
-4. **Representative authority transactions**
+4. **Representative authority transactions** - in progress / FastAPI authority transaction endpoint landed
    - Target: `backend/app/domains/representatives`
    - Reason: Scope, limit, authority status ve branch/facility/organization iliskileri core domain kuralidir.
+   - Implemented: `POST /api/v1/representatives/{representative_id}/authority-transactions`, current-authority endpointi, scope validation service ve Next PATCH BFF proxy.
+   - Follow-up: representative list/detail projection optimizasyonu, Python permission/JWT hardening ve TS legacy fallback removal.
 
 5. **Ownership transactions**
    - Target: `backend/app/domains/ownership`

@@ -32,6 +32,8 @@ Bu dokuman platform mimarisinin ana referansidir. Detay sozlesmeler asagidaki do
 - [Python Migration Roadmap](./PythonMigrationRoadmap.md)
 - [Branch FastAPI Migration](./BranchFastAPIMigration.md)
 - [Company Official Changes FastAPI Migration](./CompanyOfficialChangesFastAPIMigration.md)
+- [Capital / Ownership FastAPI Migration](./CapitalOwnershipFastAPIMigration.md)
+- [Representative Authority FastAPI Migration](./RepresentativeAuthorityFastAPIMigration.md)
 - [OpenAPI Contract Strategy](./OpenAPIContractStrategy.md)
 - [Scaling Architecture](./ScalingArchitecture.md)
 - [Next Cleanup Plan](./NextCleanupPlan.md)

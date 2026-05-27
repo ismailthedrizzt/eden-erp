@@ -10,6 +10,7 @@ Bu dokuman Eden ERP'nin ciddi olcek hedefi icin hedef runtime mimarisini tanimla
 - Background workers outbox, process, projection, audit ve notification islerini yurutur.
 - Read-heavy listeler projection/read model ile servis edilir.
 - Critical operations SQLAlchemy transaction, DB transaction/RPC veya stored procedure ile atomic yapilir.
+- Capital increase and ownership updates run through one FastAPI transaction boundary so company capital, partner distribution, ownership transactions, lifecycle, audit and outbox stay consistent.
 - Multi-tenant isolation `tenant_id`, RLS ve app policy ile korunur.
 - Feature/module readiness startup ve request guardlarda kontrol edilir.
 - Observability/logging/metrics zorunlu platform katmani olmalidir.

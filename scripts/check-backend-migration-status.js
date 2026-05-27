@@ -15,11 +15,28 @@ const statusValues = new Set([
   'generated_do_not_edit',
 ])
 
+const skippedDirs = new Set([
+  '.git',
+  '.next',
+  '.mypy_cache',
+  '.pytest_cache',
+  '.ruff_cache',
+  'node_modules',
+  '__pycache__',
+])
+
 function walk(dir, predicate, acc = []) {
   if (!fs.existsSync(dir)) return acc
-  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+  let entries = []
+  try {
+    entries = fs.readdirSync(dir, { withFileTypes: true })
+  } catch (error) {
+    if (error && (error.code === 'EACCES' || error.code === 'EPERM')) return acc
+    throw error
+  }
+  for (const entry of entries) {
     const full = path.join(dir, entry.name)
-    if (entry.isDirectory()) walk(full, predicate, acc)
+    if (entry.isDirectory() && !skippedDirs.has(entry.name)) walk(full, predicate, acc)
     else if (predicate(full)) acc.push(full)
   }
   return acc
