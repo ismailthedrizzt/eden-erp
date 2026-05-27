@@ -53,6 +53,10 @@ Kalan borclar [Technical Debt and Migration Plan](./TechnicalDebtAndMigrationPla
 
 Sube Acilisi ve Sube Kapanisi FastAPI tarafinda ilk gercek core backend pilotu olarak uygulandi. Canonical endpointler `POST /api/v1/companies/{company_id}/branch-openings`, `POST /api/v1/companies/{company_id}/branch-closings` ve ilgili precheck endpointleridir. Next.js official-change route'lari `FASTAPI_BASE_URL` varsa proxy eder; yoksa `keep_bff_proxy_with_legacy_fallback` statulu gecici TS fallback calisir. Detaylar [Branch FastAPI Migration](./BranchFastAPIMigration.md) dokumanindadir.
 
+## 7.3 Company Official Changes FastAPI Migration Addendum
+
+Unvan, adres, kamu/tescil, NACE ve faaliyet konusu degisikligi FastAPI Company Domain Service tarafinda canonical operation olarak uygulandi. Next.js official-change route'lari `FASTAPI_BASE_URL` varsa FastAPI endpointlerine proxy eder; yoksa gecici TS fallback yalnizca migration bridge olarak kalir. NACE guncelleme ile faaliyet konusu degisikligi ayrimi Python backend'de de enforce edilir. Detaylar [Company Official Changes FastAPI Migration](./CompanyOfficialChangesFastAPIMigration.md) dokumanindadir.
+
 ## 8. Build / Typecheck Sonucu
 
 Final pass sirasinda asagidaki kontroller calistirildi:

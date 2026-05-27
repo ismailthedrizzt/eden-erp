@@ -260,7 +260,9 @@ def build_facility_display_label(facility: dict[str, Any] | None) -> str:
 
 def assert_facility_belongs_to_company(facility: dict[str, Any], company_id: str) -> None:
     if str(facility.get("company_id")) != company_id:
-        raise DomainError("Seçilen tesis/lokasyon bu şirkete bağlı değil.", "FACILITY_COMPANY_MISMATCH", 409)
+        raise DomainError(
+            "Seçilen tesis/lokasyon bu şirkete bağlı değil.", "FACILITY_COMPANY_MISMATCH", 409
+        )
 
 
 def assert_facility_active(facility: dict[str, Any]) -> None:

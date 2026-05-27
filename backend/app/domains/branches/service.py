@@ -10,7 +10,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.errors import DomainError
 
-
 ACTIVE_VALUES = {"active", "aktif", "opened", "open"}
 CLOSED_VALUES = {"closed", "passive", "pasif", "deregistered", "deleted"}
 
@@ -163,7 +162,8 @@ async def create_branch(
               :id, :tenant_id, :company_id, :organization_unit_id, :facility_id,
               :branch_name, :branch_short_name, :branch_type, :is_official_branch,
               :country, :city, :district, :neighborhood, :address, :postal_code, :phone, :email,
-              :trade_registry_number, :trade_registry_office, :tax_office, :sgk_workplace_registry_no,
+              :trade_registry_number, :trade_registry_office, :tax_office,
+              :sgk_workplace_registry_no,
               :opening_decision_date, :opening_registration_date, :trade_registry_gazette_date,
               :trade_registry_gazette_number, :responsible_person_id, 'active', 'active',
               :start_date, :notes, cast(:document_files as jsonb), cast(:metadata_json as jsonb),
@@ -223,7 +223,10 @@ async def close_branch(
     base_version = payload.get("base_version")
     if base_version is not None and int(branch.get("version") or 0) != int(base_version):
         raise DomainError(
-            message="Şube kaydı bu işlem hazırlanırken değişmiş. Lütfen kaydı yenileyip tekrar deneyin.",
+            message=(
+                "Şube kaydı bu işlem hazırlanırken değişmiş. "
+                "Lütfen kaydı yenileyip tekrar deneyin."
+            ),
             code="VERSION_CONFLICT",
             status_code=status.HTTP_409_CONFLICT,
             details={"current_version": branch.get("version"), "base_version": base_version},
@@ -299,10 +302,16 @@ async def get_branch_summary_for_company(
 ) -> dict[str, Any]:
     branches = await list_branches_for_company(session, tenant_id, company_id)
     active = [branch for branch in branches if is_branch_active(branch)]
-    closed = [branch for branch in branches if str(branch.get("record_status") or "").lower() in CLOSED_VALUES]
+    closed = [
+        branch
+        for branch in branches
+        if str(branch.get("record_status") or "").lower() in CLOSED_VALUES
+    ]
     official = [branch for branch in branches if branch.get("is_official_branch")]
     operation_points = [
-        branch for branch in branches if branch.get("branch_type") in {"operation_point", "warehouse_facility"}
+        branch
+        for branch in branches
+        if branch.get("branch_type") in {"operation_point", "warehouse_facility"}
     ]
     return {
         "total_branch_count": len(branches),

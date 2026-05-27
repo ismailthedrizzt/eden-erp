@@ -11,11 +11,13 @@ from app.domains.branches.schemas import BranchClosingRequest, BranchOpeningRequ
 from app.domains.branches.service import (
     assert_branch_active,
     assert_branch_belongs_to_company,
-    close_branch as close_branch_record,
     create_branch,
     find_active_branch_by_name,
     get_branch_by_id,
     list_branches_for_company,
+)
+from app.domains.branches.service import (
+    close_branch as close_branch_record,
 )
 from app.domains.company.official_changes import (
     insert_company_lifecycle_event,
@@ -71,7 +73,9 @@ async def build_branch_opening_precheck(
         duplicate = await find_active_branch_by_name(session, tenant_id, company_id, branch_name)
     if duplicate:
         blocking_reasons.append("Aynı şirket altında aynı isimle aktif şube bulunuyor.")
-    if address and any(str(branch.get("address") or "").lower() == address.lower() for branch in branches):
+    if address and any(
+        str(branch.get("address") or "").lower() == address.lower() for branch in branches
+    ):
         warnings.append("Aynı adreste kayıtlı bir şube bulunuyor; bilgileri kontrol edin.")
 
     ok = not blocking_reasons
@@ -144,7 +148,9 @@ async def open_branch(
     request: BranchOpeningRequest,
 ) -> dict[str, Any]:
     if request.company_id and request.company_id != company_id:
-        raise DomainError("Şube açılışı bağlı şirketi endpoint şirketiyle uyuşmuyor.", "COMPANY_ID_MISMATCH")
+        raise DomainError(
+            "Şube açılışı bağlı şirketi endpoint şirketiyle uyuşmuyor.", "COMPANY_ID_MISMATCH"
+        )
 
     context = _context(tenant_id, user_id, company_id)
     warnings: list[str] = []
@@ -189,7 +195,10 @@ async def open_branch(
                     precheck["message"],
                     "BRANCH_OPENING_PRECHECK_FAILED",
                     status.HTTP_409_CONFLICT,
-                    {"blocking_reasons": precheck["blocking_reasons"], "warnings": precheck["warnings"]},
+                    {
+                        "blocking_reasons": precheck["blocking_reasons"],
+                        "warnings": precheck["warnings"],
+                    },
                 )
             warnings.extend(precheck["warnings"])
 
@@ -241,7 +250,9 @@ async def open_branch(
                 {
                     **request.model_dump(mode="json"),
                     "company_id": company_id,
-                    "organization_unit_id": organization_unit.get("id") if organization_unit else None,
+                    "organization_unit_id": organization_unit.get("id")
+                    if organization_unit
+                    else None,
                     "facility_id": facility.get("id") if facility else None,
                     "start_date": start_date,
                     "metadata_json": {
@@ -252,7 +263,9 @@ async def open_branch(
                 },
             )
             if facility:
-                facility = await link_facility_to_branch(session, context, str(facility["id"]), str(branch["id"]))
+                facility = await link_facility_to_branch(
+                    session, context, str(facility["id"]), str(branch["id"])
+                )
 
             transaction = await insert_official_change_transaction(
                 session,
@@ -287,7 +300,11 @@ async def open_branch(
                 event_type="company.branch_opened",
                 aggregate_type="company_branch",
                 aggregate_id=str(branch["id"]),
-                payload={"company_id": company_id, "branch_id": branch["id"], "transaction_id": transaction["id"]},
+                payload={
+                    "company_id": company_id,
+                    "branch_id": branch["id"],
+                    "transaction_id": transaction["id"],
+                },
             )
             data = {
                 "company": company,
@@ -343,7 +360,9 @@ async def close_branch(
             assert_company_active(company)
             branch = await get_branch_by_id(session, tenant_id, request.branch_id)
             if not branch:
-                raise DomainError("Şube kaydı bulunamadı.", "BRANCH_NOT_FOUND", status.HTTP_404_NOT_FOUND)
+                raise DomainError(
+                    "Şube kaydı bulunamadı.", "BRANCH_NOT_FOUND", status.HTTP_404_NOT_FOUND
+                )
             assert_branch_belongs_to_company(branch, company_id)
             assert_branch_active(branch)
 
@@ -385,7 +404,10 @@ async def close_branch(
                     precheck["message"],
                     "BRANCH_CLOSING_PRECHECK_FAILED",
                     status.HTTP_409_CONFLICT,
-                    {"blocking_reasons": precheck["blocking_reasons"], "warnings": precheck["warnings"]},
+                    {
+                        "blocking_reasons": precheck["blocking_reasons"],
+                        "warnings": precheck["warnings"],
+                    },
                 )
             warnings.extend(precheck["warnings"])
 
@@ -394,8 +416,13 @@ async def close_branch(
             if branch.get("organization_unit_id"):
                 unit_id = str(branch["organization_unit_id"])
                 if request.organization_unit_action == "deactivate":
-                    organization_unit = await set_organization_unit_passive(session, context, unit_id, end_date)
-                elif request.organization_unit_action == "reassign" and request.target_organization_unit_id:
+                    organization_unit = await set_organization_unit_passive(
+                        session, context, unit_id, end_date
+                    )
+                elif (
+                    request.organization_unit_action == "reassign"
+                    and request.target_organization_unit_id
+                ):
                     organization_unit = await reassign_organization_unit(
                         session,
                         context,

@@ -1,10 +1,11 @@
-// BACKEND_MIGRATION_STATUS: migrate_to_fastapi
+// BACKEND_MIGRATION_STATUS: keep_bff_proxy_with_legacy_fallback
 // TARGET_BACKEND_MODULE: company
 // TARGET_FASTAPI_ENDPOINT: /api/v1/companies/{company_id}/official-changes/activity-subject-change
-// NOTES: Contains official change business logic; Next.js route should become BFF/proxy after Python migration.
+// NOTES: Proxies to FastAPI when configured; legacy TS fallback is temporary migration bridge.
 
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
+import { isFastApiEnabled, proxyToFastApi } from '@/lib/backend/fastApiProxy'
 import { createServiceClient } from '@/lib/supabase/server'
 import { OperationRequestService } from '@/lib/operations/operationRequestService'
 import { resolveBaseUpdatedAt, resolveBaseVersion, resolveClientRequestId, stripOperationControlFields } from '@/lib/operations/idempotency'
@@ -66,6 +67,12 @@ export async function POST(
   { params }: { params: Promise<{ company_id: string }> }
 ) {
   const { company_id: companyId } = await params
+  if (isFastApiEnabled()) {
+    const proxied = await proxyToFastApi(request, `/api/v1/companies/${companyId}/official-changes/activity-subject-change`)
+    if (proxied) return proxied
+  }
+  console.warn('FastAPI backend not configured; using legacy TS fallback for activity subject change.')
+
   const supabase = createServiceClient()
   const access = await ensureOfficialChangeAccess(request, supabase, companyId, 'companies.edit')
   if (access.response) return access.response

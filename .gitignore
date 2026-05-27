@@ -40,6 +40,12 @@ dev-server*.err.log
 *.tsbuildinfo
 next-env.d.ts
 
+# Python
+__pycache__/
+.pytest_cache/
+*.py[cod]
+*.egg-info/
+
 # OS
 .DS_Store
 Thumbs.db

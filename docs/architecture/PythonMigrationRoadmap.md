@@ -10,9 +10,11 @@ Bu roadmap FastAPI core backend gecisi icin ilk tasima sirasini belirler.
    - Implemented: `POST /api/v1/companies/{company_id}/branch-openings`, `POST /api/v1/companies/{company_id}/branch-closings`, precheck endpointleri ve Next BFF proxy.
    - Follow-up: TS legacy fallback'i kaldir, JWT/scope hardening ve DB integration testlerini ekle.
 
-2. **Company official changes**
+2. **Company official changes** - in progress / FastAPI implementation landed for title, address, public registration, NACE and activity subject
    - Target: `backend/app/domains/company`
    - Reason: Unvan, adres, kamu/tescil, NACE ve faaliyet konusu degisiklikleri resmi alanlari kontrol eder.
+   - Implemented: `POST /api/v1/companies/{company_id}/official-changes/title-change`, `address-change`, `public-registration-update`, `nace-change`, `activity-subject-change` ve ilgili precheck endpointleri.
+   - Follow-up: TS legacy fallback'i kaldir, public table sync integration testlerini ve Python company PATCH guard'ini ekle.
 
 3. **Capital increase**
    - Target: `backend/app/domains/company`, `ownership`

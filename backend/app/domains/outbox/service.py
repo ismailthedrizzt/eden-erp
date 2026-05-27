@@ -34,7 +34,7 @@ async def enqueue_outbox_event_best_effort(
                   aggregate_id, operation_id, payload_json, status
                 )
                 values (
-                  :id, :tenant_id, :company_id, 'branches', :event_type, :aggregate_type,
+                  :id, :tenant_id, :company_id, :module_key, :event_type, :aggregate_type,
                   :aggregate_id, :operation_id, cast(:payload_json as jsonb), 'pending'
                 )
                 """
@@ -43,6 +43,7 @@ async def enqueue_outbox_event_best_effort(
                 "id": event_id,
                 "tenant_id": context["tenant_id"],
                 "company_id": context.get("company_id"),
+                "module_key": context.get("module_key", "branches"),
                 "event_type": event_type,
                 "aggregate_type": aggregate_type,
                 "aggregate_id": aggregate_id,

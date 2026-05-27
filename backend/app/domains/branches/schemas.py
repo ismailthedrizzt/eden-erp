@@ -5,7 +5,6 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-
 BranchType = Literal["official_branch", "liaison_office", "operation_point", "warehouse_facility"]
 OrganizationUnitAction = Literal["deactivate", "reassign", "keep_open"]
 FacilityAction = Literal["deactivate", "keep_open", "reuse"]
@@ -91,7 +90,9 @@ class BranchOpeningRequest(BaseModel):
             if not self.opening_decision_date or not self.opening_registration_date:
                 raise ValueError("Resmi şube açılışı için karar ve tescil tarihi zorunludur.")
             if not self.document_files:
-                raise ValueError("Resmi şube açılışı için en az bir karar/tescil belgesi eklenmelidir.")
+                raise ValueError(
+                    "Resmi şube açılışı için en az bir karar/tescil belgesi eklenmelidir."
+                )
 
         _ensure_date_order(
             decision_date=self.opening_decision_date,
@@ -133,7 +134,9 @@ class BranchClosingRequest(BaseModel):
         if self.organization_unit_action == "reassign" and not _blank_to_none(
             self.target_organization_unit_id
         ):
-            raise ValueError("Organizasyon birimi başka birime bağlanacaksa hedef birim seçilmelidir.")
+            raise ValueError(
+                "Organizasyon birimi başka birime bağlanacaksa hedef birim seçilmelidir."
+            )
 
         _ensure_date_order(
             decision_date=self.closing_decision_date,

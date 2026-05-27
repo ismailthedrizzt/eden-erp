@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Annotated
+
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -16,14 +18,19 @@ from app.schemas.common import ApiSuccess, OperationResponse, PrecheckResponse
 
 router = APIRouter()
 
+RequestContextDep = Annotated[RequestContext, Depends(get_request_context)]
+SessionDep = Annotated[AsyncSession, Depends(get_session)]
 
-@router.get("/companies/{company_id}/branch-openings/precheck", response_model=ApiSuccess[PrecheckResponse])
+
+@router.get(
+    "/companies/{company_id}/branch-openings/precheck", response_model=ApiSuccess[PrecheckResponse]
+)
 async def branch_opening_precheck(
     company_id: str,
+    context: RequestContextDep,
+    session: SessionDep,
     branch_name: str | None = Query(default=None),
     address: str | None = Query(default=None),
-    context: RequestContext = Depends(get_request_context),
-    session: AsyncSession = Depends(get_session),
 ) -> ApiSuccess[PrecheckResponse]:
     tenant_id = require_tenant(context)
     precheck = await build_branch_opening_precheck(
@@ -40,8 +47,8 @@ async def branch_opening_precheck(
 async def complete_branch_opening(
     company_id: str,
     payload: BranchOpeningRequest,
-    context: RequestContext = Depends(get_request_context),
-    session: AsyncSession = Depends(get_session),
+    context: RequestContextDep,
+    session: SessionDep,
 ) -> OperationResponse:
     tenant_id = require_tenant(context)
     result = await open_branch(
@@ -54,12 +61,14 @@ async def complete_branch_opening(
     return OperationResponse(**result)
 
 
-@router.get("/companies/{company_id}/branch-closings/precheck", response_model=ApiSuccess[PrecheckResponse])
+@router.get(
+    "/companies/{company_id}/branch-closings/precheck", response_model=ApiSuccess[PrecheckResponse]
+)
 async def branch_closing_precheck(
     company_id: str,
+    context: RequestContextDep,
+    session: SessionDep,
     branch_id: str | None = Query(default=None),
-    context: RequestContext = Depends(get_request_context),
-    session: AsyncSession = Depends(get_session),
 ) -> ApiSuccess[PrecheckResponse]:
     tenant_id = require_tenant(context)
     precheck = await build_branch_closing_precheck(
@@ -75,8 +84,8 @@ async def branch_closing_precheck(
 async def complete_branch_closing(
     company_id: str,
     payload: BranchClosingRequest,
-    context: RequestContext = Depends(get_request_context),
-    session: AsyncSession = Depends(get_session),
+    context: RequestContextDep,
+    session: SessionDep,
 ) -> OperationResponse:
     tenant_id = require_tenant(context)
     result = await close_branch(

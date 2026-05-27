@@ -42,7 +42,7 @@ async def record_audit_best_effort(
                   changed_fields, summary, result_status, severity, metadata_json
                 )
                 values (
-                  :id, :tenant_id, :company_id, :branch_id, 'branches', :entity_type, :entity_id,
+                  :id, :tenant_id, :company_id, :branch_id, :module_key, :entity_type, :entity_id,
                   :action_type, :action_key, :operation_id, :user_id,
                   cast(:old_values as jsonb), cast(:new_values as jsonb), :changed_fields,
                   :summary, :result_status, :severity, cast(:metadata_json as jsonb)
@@ -54,6 +54,7 @@ async def record_audit_best_effort(
                 "tenant_id": context["tenant_id"],
                 "company_id": context.get("company_id"),
                 "branch_id": branch_id,
+                "module_key": context.get("module_key", "branches"),
                 "entity_type": entity_type,
                 "entity_id": entity_id,
                 "action_type": action_type,

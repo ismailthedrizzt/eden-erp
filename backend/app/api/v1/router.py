@@ -8,4 +8,6 @@ api_router.include_router(companies.router, prefix="/companies", tags=["companie
 api_router.include_router(company_branches.router, tags=["company branch operations"])
 api_router.include_router(branches.router, prefix="/branches", tags=["branches"])
 api_router.include_router(partners.router, prefix="/partners", tags=["partners"])
-api_router.include_router(representatives.router, prefix="/representatives", tags=["representatives"])
+api_router.include_router(
+    representatives.router, prefix="/representatives", tags=["representatives"]
+)

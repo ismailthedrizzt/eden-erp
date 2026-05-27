@@ -1,13 +1,11 @@
 from __future__ import annotations
 
-from typing import Any, Generic, TypeVar
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict
 
-T = TypeVar("T")
 
-
-class ApiSuccess(BaseModel, Generic[T]):
+class ApiSuccess[T](BaseModel):
     data: T
     meta: dict[str, Any] | None = None
     operation_id: str | None = None

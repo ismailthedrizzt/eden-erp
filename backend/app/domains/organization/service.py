@@ -97,7 +97,9 @@ async def _get_or_create_branch_unit_type(session: AsyncSession) -> str:
     await session.execute(
         text(
             """
-            insert into public.organization_unit_types (id, name, slug, color, icon, sort_order, is_active)
+            insert into public.organization_unit_types (
+              id, name, slug, color, icon, sort_order, is_active
+            )
             values (:id, 'Şube', 'branch', '#2563eb', 'building-2', 30, true)
             on conflict (slug) do update set updated_at = now()
             returning id
@@ -124,7 +126,9 @@ async def create_branch_organization_unit(
     if parent_unit_id:
         parent = await get_unit_by_id(session, tenant_id, parent_unit_id)
         if not parent:
-            raise DomainError("Hedef organizasyon birimi bulunamadı.", "ORGANIZATION_UNIT_NOT_FOUND", 404)
+            raise DomainError(
+                "Hedef organizasyon birimi bulunamadı.", "ORGANIZATION_UNIT_NOT_FOUND", 404
+            )
         assert_unit_belongs_to_company(parent, company_id)
         assert_unit_active(parent)
 
@@ -208,7 +212,9 @@ async def would_create_cycle(
             return True
         seen.add(current_id)
         parent = await get_unit_by_id(session, tenant_id, current_id)
-        current_id = str(parent["parent_unit_id"]) if parent and parent.get("parent_unit_id") else None
+        current_id = (
+            str(parent["parent_unit_id"]) if parent and parent.get("parent_unit_id") else None
+        )
     return False
 
 
@@ -290,9 +296,13 @@ async def keep_organization_unit_open_after_branch_closing(
 
 def assert_unit_belongs_to_company(unit: dict[str, Any], company_id: str) -> None:
     if str(unit.get("company_id")) != company_id:
-        raise DomainError("Seçilen organizasyon birimi bu şirkete bağlı değil.", "UNIT_COMPANY_MISMATCH", 409)
+        raise DomainError(
+            "Seçilen organizasyon birimi bu şirkete bağlı değil.", "UNIT_COMPANY_MISMATCH", 409
+        )
 
 
 def assert_unit_active(unit: dict[str, Any]) -> None:
     if not is_unit_active(unit):
-        raise DomainError("Kapalı veya pasif organizasyon birimi seçilemez.", "UNIT_NOT_ACTIVE", 409)
+        raise DomainError(
+            "Kapalı veya pasif organizasyon birimi seçilemez.", "UNIT_NOT_ACTIVE", 409
+        )

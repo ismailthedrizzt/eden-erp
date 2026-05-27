@@ -30,7 +30,9 @@ def domain_error_to_http(error: DomainError) -> HTTPException:
     )
 
 
-def map_database_error(error: Exception, *, fallback_code: str, fallback_message: str) -> DomainError:
+def map_database_error(
+    error: Exception, *, fallback_code: str, fallback_message: str
+) -> DomainError:
     if isinstance(error, DomainError):
         return error
 

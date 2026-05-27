@@ -1,22 +1,25 @@
-from typing import Any
+from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.security import RequestContext, get_request_context, require_tenant
 from app.core.database import get_session
+from app.core.security import RequestContext, get_request_context, require_tenant
 from app.domains.branches.service import get_branch_by_id, list_branches
 from app.schemas.common import ApiSuccess
 
 router = APIRouter()
 
+RequestContextDep = Annotated[RequestContext, Depends(get_request_context)]
+SessionDep = Annotated[AsyncSession, Depends(get_session)]
+
 
 @router.get("")
 async def list_branch_records(
+    context: RequestContextDep,
+    session: SessionDep,
     company_id: str | None = Query(default=None),
-    context: RequestContext = Depends(get_request_context),
-    session: AsyncSession = Depends(get_session),
 ) -> ApiSuccess[list[dict[str, Any]]]:
     tenant_id = require_tenant(context)
     rows = await list_branches(session, tenant_id, company_id=company_id)
@@ -26,8 +29,8 @@ async def list_branch_records(
 @router.get("/{branch_id}")
 async def get_branch_record(
     branch_id: str,
-    context: RequestContext = Depends(get_request_context),
-    session: AsyncSession = Depends(get_session),
+    context: RequestContextDep,
+    session: SessionDep,
 ) -> ApiSuccess[dict[str, Any]]:
     tenant_id = require_tenant(context)
     branch = await get_branch_by_id(session, tenant_id, branch_id)
@@ -42,8 +45,8 @@ async def get_branch_record(
 async def patch_branch_record(
     branch_id: str,
     payload: dict[str, Any],
-    context: RequestContext = Depends(get_request_context),
-    session: AsyncSession = Depends(get_session),
+    context: RequestContextDep,
+    session: SessionDep,
 ) -> ApiSuccess[dict[str, Any]]:
     tenant_id = require_tenant(context)
     allowed = {key: payload.get(key) for key in ["phone", "email", "notes"] if key in payload}
@@ -60,7 +63,10 @@ async def patch_branch_record(
         text(
             f"""
             update public.company_branches
-            set {assignments}, updated_at = now(), updated_by = :user_id, version = coalesce(version, 0) + 1
+            set {assignments},
+                updated_at = now(),
+                updated_by = :user_id,
+                version = coalesce(version, 0) + 1
             where tenant_id = :tenant_id
               and id = :branch_id
               and coalesce(is_deleted, false) = false

@@ -1,10 +1,12 @@
+from typing import Any
+
 import pytest
 from pydantic import ValidationError
 
 from app.domains.branches.schemas import BranchClosingRequest
 
 
-def valid_branch_closing_payload() -> dict[str, object]:
+def valid_branch_closing_payload() -> dict[str, Any]:
     return {
         "branch_id": "11111111-1111-4111-8111-111111111111",
         "closing_reason": "Operasyonel kapanış",

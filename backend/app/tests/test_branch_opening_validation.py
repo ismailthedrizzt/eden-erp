@@ -1,10 +1,12 @@
+from typing import Any
+
 import pytest
 from pydantic import ValidationError
 
 from app.domains.branches.schemas import BranchOpeningRequest
 
 
-def valid_branch_opening_payload() -> dict[str, object]:
+def valid_branch_opening_payload() -> dict[str, Any]:
     return {
         "branch_name": "Istanbul Sube",
         "branch_type": "official_branch",

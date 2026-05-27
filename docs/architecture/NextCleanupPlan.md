@@ -66,6 +66,11 @@ Bu plan Next.js tarafinda kalacak, silinecek, proxy olacak ve FastAPI'ye tasinac
 | --- | --- | --- |
 | `app/api/companies/[company_id]/official-changes/branch-opening/**` | FastAPI proxy is active when `FASTAPI_BASE_URL` is configured; TS fallback keeps local frontend usable during migration. | Remove TS fallback after FastAPI branch opening is validated against staging DB. |
 | `app/api/companies/[company_id]/official-changes/branch-closing/**` | FastAPI proxy is active when `FASTAPI_BASE_URL` is configured; TS fallback keeps local frontend usable during migration. | Remove TS fallback after FastAPI branch closing is validated against staging DB. |
+| `app/api/companies/[company_id]/official-changes/title-change/**` | FastAPI proxy is active when `FASTAPI_BASE_URL` is configured; TS fallback keeps local frontend usable during migration. | Remove TS fallback after FastAPI title change is validated against staging DB. |
+| `app/api/companies/[company_id]/official-changes/address-change/**` | FastAPI proxy is active when `FASTAPI_BASE_URL` is configured; TS fallback keeps local frontend usable during migration. | Remove TS fallback after FastAPI address change is validated against staging DB. |
+| `app/api/companies/[company_id]/official-changes/public-registration-update/**` | FastAPI proxy is active when `FASTAPI_BASE_URL` is configured; TS fallback keeps local frontend usable during migration. | Remove TS fallback after FastAPI public registration update is validated against staging DB. |
+| `app/api/companies/[company_id]/official-changes/nace-change/**` | FastAPI proxy is active when `FASTAPI_BASE_URL` is configured; TS fallback keeps local frontend usable during migration. | Remove TS fallback after FastAPI NACE update is validated against staging DB. |
+| `app/api/companies/[company_id]/official-changes/activity-subject-change/**` | FastAPI proxy is active when `FASTAPI_BASE_URL` is configured; TS fallback keeps local frontend usable during migration. | Remove TS fallback after FastAPI activity subject change is validated against staging DB. |
 
 ## official-changes/_shared.ts split plan
 
