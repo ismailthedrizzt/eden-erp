@@ -47,8 +47,21 @@ from app.domains.outbox.service import enqueue_outbox_event_best_effort
 from app.policies.operation_guards import guard_operation
 
 
-def _context(tenant_id: str, user_id: str | None, company_id: str) -> dict[str, Any]:
-    return {"tenant_id": tenant_id, "user_id": user_id, "company_id": company_id}
+def _context(
+    tenant_id: str,
+    user_id: str | None,
+    company_id: str,
+    *,
+    permissions: list[str] | None = None,
+    company_scope: list[str] | None = None,
+) -> dict[str, Any]:
+    return {
+        "tenant_id": tenant_id,
+        "user_id": user_id,
+        "company_id": company_id,
+        "permissions": permissions,
+        "company_scope": company_scope,
+    }
 
 
 async def build_branch_opening_precheck(
@@ -147,13 +160,21 @@ async def open_branch(
     user_id: str | None,
     company_id: str,
     request: BranchOpeningRequest,
+    permissions: list[str] | None = None,
+    company_scope: list[str] | None = None,
 ) -> dict[str, Any]:
     if request.company_id and request.company_id != company_id:
         raise DomainError(
             "Şube açılışı bağlı şirketi endpoint şirketiyle uyuşmuyor.", "COMPANY_ID_MISMATCH"
         )
 
-    context = _context(tenant_id, user_id, company_id)
+    context = _context(
+        tenant_id,
+        user_id,
+        company_id,
+        permissions=permissions,
+        company_scope=company_scope,
+    )
     warnings: list[str] = []
     try:
         async with session.begin():
@@ -366,10 +387,18 @@ async def close_branch(
     user_id: str | None,
     company_id: str,
     request: BranchClosingRequest,
+    permissions: list[str] | None = None,
+    company_scope: list[str] | None = None,
 ) -> dict[str, Any]:
     if not request.branch_id:
         raise DomainError("Kapatılacak şube seçilmelidir.", "BRANCH_REQUIRED")
-    context = _context(tenant_id, user_id, company_id)
+    context = _context(
+        tenant_id,
+        user_id,
+        company_id,
+        permissions=permissions,
+        company_scope=company_scope,
+    )
     warnings: list[str] = []
     try:
         async with session.begin():

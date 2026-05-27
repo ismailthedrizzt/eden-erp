@@ -8,6 +8,8 @@ from uuid import uuid4
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.logging import bind_log_context, log_info
+from app.core.metrics import increment_counter
 from app.core.serialization import row_to_dict
 from app.domains.operations.service import table_exists
 from app.domains.outbox.service import enqueue_outbox_event_best_effort
@@ -60,6 +62,18 @@ async def emit_process_event(
         },
     )
     row = row_to_dict(result.mappings().one())
+    bind_log_context(process_instance_id=process_instance_id)
+    increment_counter(f"process_{event_type}_count")
+    log_info(
+        "Process event emitted.",
+        logger_name="eden.process",
+        process_instance_id=process_instance_id,
+        module_key=module_key,
+        event_type=event_type,
+        step_key=step_key,
+        old_status=old_status,
+        new_status=new_status,
+    )
     await enqueue_outbox_event_best_effort(
         session,
         {

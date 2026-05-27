@@ -12,8 +12,10 @@ Bu dokuman Eden ERP'nin ciddi olcek hedefi icin hedef runtime mimarisini tanimla
 - Critical operations SQLAlchemy transaction, DB transaction/RPC veya stored procedure ile atomic yapilir.
 - Capital increase and ownership updates run through one FastAPI transaction boundary so company capital, partner distribution, ownership transactions, lifecycle, audit and outbox stay consistent.
 - Multi-tenant isolation `tenant_id`, RLS ve app policy ile korunur.
+- FastAPI validates Supabase JWTs and resolves tenant/user/company scope server-side; Next BFF proxy headers are hints, not the production security boundary.
 - Feature/module readiness startup ve request guardlarda kontrol edilir.
 - Observability/logging/metrics zorunlu platform katmani olmalidir.
+- Request/correlation ID, structured JSON logs, metrics snapshots, slow query warnings and worker logs are standard FastAPI runtime signals.
 
 ## Scale Target
 
@@ -95,3 +97,5 @@ Required follow-up:
 - outbox retry metrics
 - projection lag metrics
 - audit write failure alerts
+
+Step 16 implements the first observability foundation: request/correlation middleware, structured logging context, in-memory metrics, slow query hooks, system metrics/deep health endpoints and Next BFF correlation propagation. Central log/metric storage remains a deployment follow-up.

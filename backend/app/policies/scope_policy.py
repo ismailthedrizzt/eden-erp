@@ -5,6 +5,7 @@ from typing import Any
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.config import get_settings
 from app.core.errors import DomainError
 from app.policies.schemas import AccessContext
 
@@ -34,7 +35,8 @@ def _company_scope_allowed(context: AccessContext, company_id: str | None) -> bo
     if not company_id:
         return False
     if not context.company_scope:
-        return True
+        settings = get_settings()
+        return not settings.effective_auth_required and settings.is_development
     return company_id in context.company_scope
 
 

@@ -39,12 +39,17 @@ def _context(
     tenant_id: str,
     user_id: str | None,
     company_id: str | None = None,
+    *,
+    permissions: list[str] | None = None,
+    company_scope: list[str] | None = None,
 ) -> dict[str, Any]:
     return {
         "tenant_id": tenant_id,
         "user_id": user_id,
         "company_id": company_id,
         "module_key": "representatives",
+        "permissions": permissions,
+        "company_scope": company_scope,
     }
 
 
@@ -634,10 +639,12 @@ async def perform_authority_transaction_for_request(
     user_id: str | None,
     representative_id: str,
     request: RepresentativeAuthorityTransactionRequest,
+    permissions: list[str] | None = None,
+    company_scope: list[str] | None = None,
 ) -> dict[str, Any]:
     return await perform_authority_transaction(
         session,
-        _context(tenant_id, user_id),
+        _context(tenant_id, user_id, permissions=permissions, company_scope=company_scope),
         representative_id,
         request,
     )

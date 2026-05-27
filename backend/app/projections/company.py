@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import time
 from typing import Any
 
 from sqlalchemy import text
@@ -11,7 +12,7 @@ from app.domains.company.service import get_company_by_id, get_company_context
 from app.domains.operations.service import table_exists
 from app.projections.branch import get_branch_summary_for_company
 from app.projections.current_ownership import current_ownership_projection
-from app.projections.query import order_clause
+from app.projections.query import observe_projection_query, order_clause
 from app.projections.registry import get_projection_definition
 from app.projections.types import ProjectionDefinition, ProjectionQueryInput, ProjectionQueryResult
 from app.schemas.pagination import build_list_meta
@@ -28,6 +29,7 @@ async def list_company_projection(
     session: AsyncSession,
     query: ProjectionQueryInput,
 ) -> ProjectionQueryResult:
+    started = time.perf_counter()
     definition = _definition("companyList")
     if not await table_exists(session, "public.companies"):
         raise DomainError(
@@ -76,6 +78,12 @@ async def list_company_projection(
         {**params, "limit": meta.pageSize, "offset": (meta.page - 1) * meta.pageSize},
     )
     rows = [dict(row) for row in result.mappings().all()]
+    observe_projection_query(
+        definition,
+        query,
+        duration_ms=(time.perf_counter() - started) * 1000,
+        row_count=len(rows),
+    )
     return ProjectionQueryResult(
         data=rows,
         meta=meta,

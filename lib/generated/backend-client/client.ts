@@ -48,6 +48,8 @@ export type BackendApiErrorBody = {
   code?: string
   message?: string
   details?: unknown
+  request_id?: string | null
+  correlation_id?: string | null
   operation_id?: string | null
   operation_status?: string | null
 }
@@ -56,13 +58,24 @@ export class BackendApiError extends Error {
   code: string
   status: number
   details: unknown
+  requestId?: string | null
+  correlationId?: string | null
 
-  constructor(message: string, code: string, status: number, details?: unknown) {
+  constructor(
+    message: string,
+    code: string,
+    status: number,
+    details?: unknown,
+    requestId?: string | null,
+    correlationId?: string | null,
+  ) {
     super(message)
     this.name = 'BackendApiError'
     this.code = code
     this.status = status
     this.details = details
+    this.requestId = requestId
+    this.correlationId = correlationId
   }
 }
 
@@ -73,6 +86,8 @@ export function normalizeBackendApiError(payload: unknown, status: number) {
     body.code || 'BACKEND_REQUEST_FAILED',
     status,
     body.details,
+    body.request_id,
+    body.correlation_id,
   )
 }
 

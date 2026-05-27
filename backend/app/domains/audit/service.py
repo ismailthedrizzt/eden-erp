@@ -2,12 +2,15 @@ from __future__ import annotations
 
 import json
 import logging
+import time
 from typing import Any
 from uuid import uuid4
 
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.logging import log_info, log_warning
+from app.core.metrics import increment_counter, observe_duration
 from app.core.serialization import row_to_dict, rows_to_dicts
 from app.domains.audit.diff import changed_fields as detect_changed_fields
 from app.domains.audit.masking import mask_sensitive_data
@@ -39,6 +42,7 @@ async def record_audit(
     new_values: dict[str, Any] | None = None,
     metadata: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
+    started = time.perf_counter()
     if not await table_exists(session, "public.audit_logs"):
         raise RuntimeError("Audit infrastructure is not available.")
     audit_id = str(uuid4())
@@ -93,7 +97,19 @@ async def record_audit(
             ),
         },
     )
-    return row_to_dict(result.mappings().one()) or {}
+    row = row_to_dict(result.mappings().one()) or {}
+    observe_duration("audit_query_duration_ms", (time.perf_counter() - started) * 1000)
+    increment_counter("audit_recorded_count")
+    log_info(
+        "Audit record inserted.",
+        logger_name="eden.audit",
+        module_key=module_key or context.get("module_key"),
+        action_key=action_key,
+        entity_type=entity_type,
+        result_status=result_status,
+        severity=severity,
+    )
+    return row
 
 
 async def record_audit_best_effort(
@@ -130,6 +146,15 @@ async def record_audit_best_effort(
         )
         return str(row["id"])
     except Exception as error:  # pragma: no cover - best-effort safety net
+        increment_counter("audit_write_failed_count")
+        log_warning(
+            "Audit insert skipped.",
+            logger_name="eden.audit",
+            exception_type=error.__class__.__name__,
+            action_key=action_key,
+            entity_type=entity_type,
+            result_status="failed",
+        )
         logger.warning("Audit insert skipped: %s", error)
         return None
 

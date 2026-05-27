@@ -8,6 +8,9 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.errors import DomainError
+from app.policies.field_control import reject_operation_controlled_patch
+
+FACILITY_CARD_FIELDS = {"facility_name", "name", "phone", "email", "notes", "metadata_json"}
 
 
 def is_facility_active(facility: dict[str, Any] | None) -> bool:
@@ -61,6 +64,179 @@ async def list_facilities_for_company(
         {"tenant_id": tenant_id, "company_id": company_id},
     )
     return [dict(row) for row in result.mappings().all()]
+
+
+async def list_facilities(
+    session: AsyncSession,
+    context: dict[str, Any],
+    query: dict[str, Any] | None = None,
+) -> list[dict[str, Any]]:
+    filters = query or {}
+    where = ["f.tenant_id = :tenant_id", "coalesce(f.is_deleted, false) = false"]
+    params: dict[str, Any] = {"tenant_id": context["tenant_id"]}
+    if filters.get("company_id"):
+        where.append("f.company_id = :company_id")
+        params["company_id"] = filters["company_id"]
+    if filters.get("branch_id"):
+        where.append("f.branch_id = :branch_id")
+        params["branch_id"] = filters["branch_id"]
+    if filters.get("search"):
+        where.append(
+            "(f.facility_name ilike :search or f.city ilike :search or f.address ilike :search)"
+        )
+        params["search"] = f"%{filters['search']}%"
+    result = await session.execute(
+        text(
+            f"""
+            select f.*, c.trade_name as company_name, b.branch_name as branch_name
+            from public.company_facilities f
+            left join public.companies c on c.id = f.company_id and c.tenant_id = f.tenant_id
+            left join public.company_branches b on b.id = f.branch_id and b.tenant_id = f.tenant_id
+            where {" and ".join(where)}
+            order by f.updated_at desc, f.created_at desc
+            limit :limit
+            """
+        ),
+        {**params, "limit": int(filters.get("limit") or 200)},
+    )
+    return [dict(row) for row in result.mappings().all()]
+
+
+async def get_facility_active_relations_summary(
+    session: AsyncSession,
+    context: dict[str, Any],
+    facility_id: str,
+) -> dict[str, Any]:
+    result = await session.execute(
+        text(
+            """
+            select count(*) filter (
+                     where lower(coalesce(record_status, status, '')) in ('active', 'aktif')
+                   ) as active_branch_count,
+                   count(*) as related_branch_count
+            from public.company_branches
+            where tenant_id = :tenant_id
+              and facility_id = :facility_id
+              and coalesce(is_deleted, false) = false
+            """
+        ),
+        {"tenant_id": context["tenant_id"], "facility_id": facility_id},
+    )
+    row = result.mappings().one()
+    return {
+        "active_branch_count": int(row["active_branch_count"] or 0),
+        "related_branch_count": int(row["related_branch_count"] or 0),
+    }
+
+
+async def get_facility_detail(
+    session: AsyncSession,
+    context: dict[str, Any],
+    facility_id: str,
+) -> dict[str, Any]:
+    facility = await get_facility_by_id(session, context["tenant_id"], facility_id)
+    if not facility:
+        raise DomainError("Tesis/lokasyon kaydi bulunamadi.", "FACILITY_NOT_FOUND", 404)
+    company_result = await session.execute(
+        text(
+            """
+            select id, trade_name, short_name, record_status, company_status
+            from public.companies
+            where tenant_id = :tenant_id
+              and id = :company_id
+              and coalesce(is_deleted, false) = false
+            limit 1
+            """
+        ),
+        {"tenant_id": context["tenant_id"], "company_id": facility.get("company_id")},
+    )
+    branch_result = await session.execute(
+        text(
+            """
+            select id, branch_name, branch_short_name, record_status, status
+            from public.company_branches
+            where tenant_id = :tenant_id
+              and facility_id = :facility_id
+              and coalesce(is_deleted, false) = false
+            order by updated_at desc
+            limit 20
+            """
+        ),
+        {"tenant_id": context["tenant_id"], "facility_id": facility_id},
+    )
+    related_branches = [dict(row) for row in branch_result.mappings().all()]
+    company_row = company_result.mappings().one_or_none()
+    return {
+        "facility": facility,
+        "company": dict(company_row) if company_row else None,
+        "branch": related_branches[0] if related_branches else None,
+        "related_branches": related_branches,
+        "active_relations_summary": await get_facility_active_relations_summary(
+            session, context, facility_id
+        ),
+        "warnings": [],
+    }
+
+
+def reject_operation_controlled_facility_patch(payload: dict[str, Any]) -> None:
+    reject_operation_controlled_patch("facility", payload)
+
+
+async def update_facility_card(
+    session: AsyncSession,
+    context: dict[str, Any],
+    facility_id: str,
+    payload: dict[str, Any],
+) -> dict[str, Any]:
+    reject_operation_controlled_facility_patch(payload)
+    facility = await get_facility_by_id(session, context["tenant_id"], facility_id)
+    if not facility:
+        raise DomainError("Tesis/lokasyon kaydi bulunamadi.", "FACILITY_NOT_FOUND", 404)
+    base_version = payload.get("base_version")
+    if base_version is not None and int(facility.get("version") or 0) != int(base_version):
+        raise DomainError("Tesis/lokasyon kaydi guncellenmis.", "VERSION_CONFLICT", 409)
+    patch = {key: value for key, value in payload.items() if key in FACILITY_CARD_FIELDS}
+    if "name" in patch and "facility_name" not in patch:
+        patch["facility_name"] = patch.pop("name")
+    if not patch:
+        raise DomainError(
+            "Guncellenecek tesis/lokasyon kart alani bulunamadi.", "NO_CHANGED_FIELDS", 400
+        )
+    assignments: list[str] = []
+    params: dict[str, Any] = {
+        "tenant_id": context["tenant_id"],
+        "facility_id": facility_id,
+        "user_id": context.get("user_id"),
+    }
+    for field, value in patch.items():
+        if field == "metadata_json":
+            metadata = dict(facility.get("metadata_json") or {})
+            metadata.update(value or {})
+            assignments.append("metadata_json = cast(:metadata_json as jsonb)")
+            params["metadata_json"] = json.dumps(metadata, ensure_ascii=False, default=str)
+        else:
+            assignments.append(f"{field} = :{field}")
+            params[field] = value
+    result = await session.execute(
+        text(
+            f"""
+            update public.company_facilities
+            set {", ".join(assignments)},
+                updated_by = :user_id,
+                updated_at = now(),
+                version = coalesce(version, 0) + 1
+            where tenant_id = :tenant_id
+              and id = :facility_id
+              and coalesce(is_deleted, false) = false
+            returning *
+            """
+        ),
+        params,
+    )
+    row = result.mappings().one_or_none()
+    if not row:
+        raise DomainError("Tesis/lokasyon kaydi bulunamadi.", "FACILITY_NOT_FOUND", 404)
+    return await get_facility_detail(session, context, facility_id)
 
 
 async def create_facility_for_branch(
@@ -250,6 +426,19 @@ async def _update_facility_after_branch_closing(
         },
     )
     return dict(result.mappings().one())
+
+
+async def validate_facility_same_company(
+    session: AsyncSession,
+    facility_id: str,
+    company_id: str,
+    tenant_id: str,
+) -> dict[str, Any]:
+    facility = await get_facility_by_id(session, tenant_id, facility_id)
+    if not facility:
+        raise DomainError("Tesis/lokasyon kaydi bulunamadi.", "FACILITY_NOT_FOUND", 404)
+    assert_facility_belongs_to_company(facility, company_id)
+    return facility
 
 
 def build_facility_display_label(facility: dict[str, Any] | None) -> str:

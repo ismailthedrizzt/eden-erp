@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_session
 from app.core.errors import DomainError, domain_error_to_http
-from app.core.security import RequestContext, get_request_context, require_tenant
+from app.core.security import RequestContext, require_access_context, require_tenant
 from app.domains.representatives.authority import perform_authority_transaction_for_request
 from app.domains.representatives.schemas import (
     RepresentativeAuthorityTransactionRequest,
@@ -27,14 +27,24 @@ from app.projections.query import projection_query_from_params
 from app.projections.representative import list_representative_projection
 from app.schemas.common import ApiSuccess, OperationResponse
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(require_access_context)])
 
-RequestContextDep = Annotated[RequestContext, Depends(get_request_context)]
+RequestContextDep = Annotated[RequestContext, Depends(require_access_context)]
 SessionDep = Annotated[AsyncSession, Depends(get_session)]
 
 
-def _context(tenant_id: str, user_id: str | None) -> dict[str, Any]:
-    return {"tenant_id": tenant_id, "user_id": user_id, "module_key": "representatives"}
+def _context(
+    tenant_id: str,
+    user_id: str | None,
+    context: RequestContext | None = None,
+) -> dict[str, Any]:
+    return {
+        "tenant_id": tenant_id,
+        "user_id": user_id,
+        "module_key": "representatives",
+        "permissions": context.permissions if context else None,
+        "company_scope": context.company_scope_ids if context else None,
+    }
 
 
 @router.get("/authorities", response_model=ApiSuccess[list[dict[str, Any]]])
@@ -49,7 +59,7 @@ async def list_representative_authorities(
     include_company_wide: bool = Query(default=False),
 ) -> ApiSuccess[list[dict[str, Any]]]:
     tenant_id = require_tenant(context)
-    ctx = _context(tenant_id, context.user_id)
+    ctx = _context(tenant_id, context.user_id, context)
     try:
         if branch_id and not company_id:
             rows = await list_authorities_for_branch(
@@ -140,7 +150,7 @@ async def create_representative_record(
         async with session.begin():
             row = await create_representative_draft(
                 session,
-                _context(tenant_id, context.user_id),
+                _context(tenant_id, context.user_id, context),
                 payload.model_dump(exclude_none=True),
             )
         return ApiSuccess(data=row, message="Temsilci karti taslak olarak olusturuldu.")
@@ -160,7 +170,7 @@ async def get_representative_record(
         if not row:
             raise DomainError("Temsilci kaydi bulunamadi.", "REPRESENTATIVE_NOT_FOUND", 404)
         current_authority = await get_current_authority(
-            session, _context(tenant_id, context.user_id), representative_id
+            session, _context(tenant_id, context.user_id, context), representative_id
         )
         return ApiSuccess(
             data={**row, "current_authority": current_authority},
@@ -182,7 +192,7 @@ async def patch_representative_record(
         async with session.begin():
             row = await update_representative_card(
                 session,
-                _context(tenant_id, context.user_id),
+                _context(tenant_id, context.user_id, context),
                 representative_id,
                 payload.model_dump(exclude_unset=True),
             )
@@ -202,7 +212,7 @@ async def delete_representative_record(
         async with session.begin():
             result = await delete_representative_draft(
                 session,
-                _context(tenant_id, context.user_id),
+                _context(tenant_id, context.user_id, context),
                 representative_id,
             )
         return ApiSuccess(data=result, message=result.get("message"))
@@ -225,6 +235,8 @@ async def representative_authority_transaction(
             user_id=context.user_id,
             representative_id=representative_id,
             request=request,
+            permissions=context.permissions,
+            company_scope=context.company_scope_ids,
         )
         return OperationResponse(**result)
     except DomainError as error:
@@ -242,7 +254,7 @@ async def representative_current_authority(
     tenant_id = require_tenant(context)
     try:
         row = await get_current_authority(
-            session, _context(tenant_id, context.user_id), representative_id
+            session, _context(tenant_id, context.user_id, context), representative_id
         )
         return ApiSuccess(data=row, message="Guncel temsil yetkisi getirildi.")
     except DomainError as error:

@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_session
 from app.core.errors import DomainError, domain_error_to_http
-from app.core.security import RequestContext, get_request_context, require_tenant
+from app.core.security import RequestContext, require_access_context, require_tenant
 from app.domains.company.capital import (
     build_capital_increase_precheck_for_request,
     complete_capital_increase_for_request,
@@ -41,9 +41,9 @@ from app.projections.current_ownership import current_ownership_projection
 from app.projections.query import projection_query_from_params
 from app.schemas.common import ApiSuccess, OperationResponse
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(require_access_context)])
 
-RequestContextDep = Annotated[RequestContext, Depends(get_request_context)]
+RequestContextDep = Annotated[RequestContext, Depends(require_access_context)]
 SessionDep = Annotated[AsyncSession, Depends(get_session)]
 
 
@@ -96,7 +96,13 @@ async def create_company_card(
         async with session.begin():
             company = await create_company_draft(
                 session,
-                {"tenant_id": tenant_id, "user_id": context.user_id, "module_key": "companies"},
+                {
+                    "tenant_id": tenant_id,
+                    "user_id": context.user_id,
+                    "module_key": "companies",
+                    "permissions": context.permissions,
+                    "company_scope": context.company_scope_ids,
+                },
                 request.model_dump(exclude_none=True),
             )
         return ApiSuccess(data=company, message="Sirket karti taslak olarak olusturuldu.")
@@ -138,7 +144,13 @@ async def patch_company_card(
         async with session.begin():
             company = await update_company_card(
                 session,
-                {"tenant_id": tenant_id, "user_id": context.user_id, "module_key": "companies"},
+                {
+                    "tenant_id": tenant_id,
+                    "user_id": context.user_id,
+                    "module_key": "companies",
+                    "permissions": context.permissions,
+                    "company_scope": context.company_scope_ids,
+                },
                 company_id,
                 request.model_dump(exclude_unset=True),
             )
@@ -158,7 +170,13 @@ async def delete_company_card(
         async with session.begin():
             result = await delete_company_draft(
                 session,
-                {"tenant_id": tenant_id, "user_id": context.user_id, "module_key": "companies"},
+                {
+                    "tenant_id": tenant_id,
+                    "user_id": context.user_id,
+                    "module_key": "companies",
+                    "permissions": context.permissions,
+                    "company_scope": context.company_scope_ids,
+                },
                 company_id,
             )
         return ApiSuccess(data=result, message=result.get("message"))
@@ -203,6 +221,8 @@ async def capital_increase(
             user_id=context.user_id,
             company_id=company_id,
             request=request,
+            permissions=context.permissions,
+            company_scope=context.company_scope_ids,
         )
         return OperationResponse(**result)
     except DomainError as error:

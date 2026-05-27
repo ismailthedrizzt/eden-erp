@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import time
 from typing import Any
 
 from sqlalchemy import text
@@ -8,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.errors import DomainError
 from app.domains.operations.service import table_exists
 from app.projections.hydration import display_name_from_partner
-from app.projections.query import order_clause
+from app.projections.query import observe_projection_query, order_clause
 from app.projections.registry import get_projection_definition
 from app.projections.types import ProjectionDefinition, ProjectionQueryInput, ProjectionQueryResult
 from app.schemas.pagination import build_list_meta
@@ -18,6 +19,7 @@ async def list_partner_projection(
     session: AsyncSession,
     query: ProjectionQueryInput,
 ) -> ProjectionQueryResult:
+    started = time.perf_counter()
     definition = _definition("partnerList")
     if not await table_exists(session, "public.company_partners"):
         raise DomainError(
@@ -47,10 +49,19 @@ async def list_partner_projection(
     )
     rows = [dict(row) for row in result.mappings().all()]
     warnings = await _hydrate_current_ownership(session, query.tenant_id, rows)
+    normalized_rows = [_normalize_partner_row(row) for row in rows]
+    fallback_used = bool(warnings)
+    observe_projection_query(
+        definition,
+        query,
+        duration_ms=(time.perf_counter() - started) * 1000,
+        row_count=len(normalized_rows),
+        fallback_used=fallback_used,
+    )
     return ProjectionQueryResult(
-        data=[_normalize_partner_row(row) for row in rows],
+        data=normalized_rows,
         meta=meta,
-        projection=definition.meta(fallback_used=bool(warnings)),
+        projection=definition.meta(fallback_used=fallback_used),
         warnings=warnings,
     )
 

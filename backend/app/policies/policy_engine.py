@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from fastapi import HTTPException, status
 
+from app.core.config import get_settings
 from app.policies.permissions import resolve_permission_with_fallback
 from app.policies.schemas import AccessContext, PolicyDecision, PolicyInput
 
@@ -58,6 +59,10 @@ def _scope_denied(context: AccessContext, resource: dict[str, object] | None) ->
     if not resource:
         return None
     company_id = resource.get("company_id")
+    if company_id and not context.company_scope:
+        settings = get_settings()
+        if settings.effective_auth_required or not settings.is_development:
+            return "Bu kayit erisim kapsaminiz disinda."
     if context.company_scope and company_id and str(company_id) not in context.company_scope:
         return "Bu kayit erisim kapsaminiz disinda."
     branch_id = resource.get("branch_id")

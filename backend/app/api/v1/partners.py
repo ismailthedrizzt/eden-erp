@@ -7,7 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_session
 from app.core.errors import DomainError, domain_error_to_http
-from app.core.security import RequestContext, get_request_context, require_tenant
+from app.core.security import RequestContext, require_access_context, require_tenant
 from app.domains.partners.schemas import PartnerCardUpdateRequest, PartnerCreateDraftRequest
 from app.domains.partners.service import (
     create_partner_draft,
@@ -22,8 +22,8 @@ from app.projections.partner import list_partner_projection
 from app.projections.query import projection_query_from_params
 from app.schemas.common import ApiSuccess
 
-router = APIRouter()
-RequestContextDep = Annotated[RequestContext, Depends(get_request_context)]
+router = APIRouter(dependencies=[Depends(require_access_context)])
+RequestContextDep = Annotated[RequestContext, Depends(require_access_context)]
 SessionDep = Annotated[AsyncSession, Depends(get_session)]
 
 
@@ -80,6 +80,8 @@ async def create_partner_card(
         "tenant_id": tenant_id,
         "user_id": context.user_id,
         "module_key": "ownership",
+        "permissions": context.permissions,
+        "company_scope": context.company_scope_ids,
     }
     try:
         async with session.begin():
@@ -135,6 +137,8 @@ async def update_partner_card(
         "tenant_id": tenant_id,
         "user_id": context.user_id,
         "module_key": "ownership",
+        "permissions": context.permissions,
+        "company_scope": context.company_scope_ids,
     }
     try:
         async with session.begin():
@@ -160,6 +164,8 @@ async def delete_partner_card(
         "tenant_id": tenant_id,
         "user_id": context.user_id,
         "module_key": "ownership",
+        "permissions": context.permissions,
+        "company_scope": context.company_scope_ids,
     }
     try:
         async with session.begin():

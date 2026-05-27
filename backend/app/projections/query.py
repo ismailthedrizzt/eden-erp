@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from typing import Any, Literal
 
+from app.core.logging import log_info
+from app.core.metrics import record_projection
 from app.projections.types import ProjectionDefinition, ProjectionQueryInput
 from app.schemas.pagination import ListMeta, build_list_meta
 
@@ -87,3 +89,24 @@ def order_clause(definition: ProjectionDefinition, query: ProjectionQueryInput) 
     field = safe_sort_field(definition, query.sort) or "created_at"
     direction = "desc" if query.direction == "desc" else "asc"
     return f"{field} {direction}"
+
+
+def observe_projection_query(
+    definition: ProjectionDefinition,
+    query: ProjectionQueryInput,
+    *,
+    duration_ms: float,
+    row_count: int,
+    fallback_used: bool = False,
+) -> None:
+    record_projection(definition.key, duration_ms=duration_ms, fallback_used=fallback_used)
+    log_info(
+        "Projection query completed.",
+        logger_name="eden.projection",
+        module_key=definition.key,
+        duration_ms=round(duration_ms, 2),
+        row_count=row_count,
+        page=query.page,
+        page_size=query.page_size,
+        fallback_used=fallback_used,
+    )

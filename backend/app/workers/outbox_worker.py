@@ -6,6 +6,7 @@ import logging
 
 from app.core.config import get_settings
 from app.core.database import get_session_factory
+from app.core.logging import configure_logging, log_info
 from app.domains.outbox.service import dispatch_pending_events, release_stale_locks
 
 logger = logging.getLogger(__name__)
@@ -13,6 +14,12 @@ logger = logging.getLogger(__name__)
 
 async def run_once() -> dict[str, int | list[str]]:
     settings = get_settings()
+    log_info(
+        "Outbox worker batch starting.",
+        logger_name="eden.worker",
+        worker_id=settings.worker_id,
+        batch_size=settings.outbox_batch_size,
+    )
     async with get_session_factory()() as session:
         async with session.begin():
             await release_stale_locks(session)
@@ -22,6 +29,12 @@ async def run_once() -> dict[str, int | list[str]]:
                 locked_by=settings.worker_id,
             )
     logger.info("Outbox dispatch summary: %s", result)
+    log_info(
+        "Outbox worker batch completed.",
+        logger_name="eden.worker",
+        worker_id=settings.worker_id,
+        result=result,
+    )
     return result
 
 
@@ -36,7 +49,15 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Eden ERP outbox worker")
     parser.add_argument("--once", action="store_true", help="Process one batch and exit.")
     args = parser.parse_args()
-    logging.basicConfig(level=get_settings().log_level)
+    settings = get_settings()
+    configure_logging(settings)
+    log_info(
+        "Outbox worker starting.",
+        logger_name="eden.worker",
+        worker_id=settings.worker_id,
+        batch_size=settings.outbox_batch_size,
+        poll_interval=settings.outbox_poll_interval_seconds,
+    )
     if args.once:
         asyncio.run(run_once())
     else:

@@ -67,7 +67,8 @@ lib/security/serverPermissions.ts
 Kaynak dosya:
 
 ```txt
-lib/security/accessContext.ts
+backend/app/policies/access_context.py
+backend/app/core/security.py
 ```
 
 Access Context, Policy Engine'e daginik parametreler yerine tek model verir:
@@ -89,6 +90,8 @@ Access Context, Policy Engine'e daginik parametreler yerine tek model verir:
   moduleStatus
 }
 ```
+
+FastAPI tarafinda Step 15 ile access context artik sadece proxy headerlarindan kurulmaz. Supabase JWT `sub` degeri user identity kaynagidir; `tenant_memberships` aktif uyelik kontrolu tenant'i dogrular; `user_roles` / `role_permissions` / `permissions` effective permission setini uretir. `X-Tenant-Id`, `X-User-Permissions` ve `X-Company-Scope` headerlari production'da sadece dogrulanmis JWT ve gerekiyorsa trusted proxy secret ile yardimci hint olarak kullanilir.
 
 ## Policy Engine
 
@@ -127,7 +130,7 @@ Karar formati:
 Kaynak dosya:
 
 ```txt
-lib/security/scopePolicy.ts
+backend/app/policies/scope_policy.py
 ```
 
 Bu katman asagidaki kontrolleri merkezilestirir:
@@ -139,6 +142,8 @@ Bu katman asagidaki kontrolleri merkezilestirir:
 - `assertSameCompanyScope`
 
 Branch, organization unit ve facility icin tenant/company baglantisi merkezi kontrol edilir. Kapali/pasif alt kapsamlar yeni operasyonlar icin engellenir.
+
+Company scope `tenant_company_scopes` tablosundan yuklenir. Production ortaminda scope bilgisi yoksa default deny uygulanir; local development'ta auth relax modunda gecici allow-all fallback kullanilabilir.
 
 ## Branch Policy
 

@@ -1,6 +1,8 @@
+import time
 from collections.abc import AsyncIterator
+from typing import Any
 
-from sqlalchemy import text
+from sqlalchemy import event, text
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
     AsyncSession,
@@ -9,9 +11,12 @@ from sqlalchemy.ext.asyncio import (
 )
 
 from app.core.config import get_settings
+from app.core.logging import log_warning
+from app.core.metrics import observe_duration
 
 _engine: AsyncEngine | None = None
 _session_factory: async_sessionmaker[AsyncSession] | None = None
+_listeners_attached = False
 
 
 class DatabaseConfigurationError(RuntimeError):
@@ -25,7 +30,51 @@ def get_engine() -> AsyncEngine:
         raise DatabaseConfigurationError("DATABASE_URL or SUPABASE_DB_URL is required.")
     if _engine is None:
         _engine = create_async_engine(settings.database_url, pool_pre_ping=True)
+        _attach_query_timing_listeners(_engine)
     return _engine
+
+
+def _attach_query_timing_listeners(engine: AsyncEngine) -> None:
+    global _listeners_attached
+    if _listeners_attached:
+        return
+    _listeners_attached = True
+
+    @event.listens_for(engine.sync_engine, "before_cursor_execute")
+    def before_cursor_execute(
+        conn: Any,
+        _cursor: Any,
+        _statement: str,
+        _parameters: Any,
+        _context: Any,
+        _executemany: bool,
+    ) -> None:
+        conn.info.setdefault("eden_query_start_time", []).append(time.perf_counter())
+
+    @event.listens_for(engine.sync_engine, "after_cursor_execute")
+    def after_cursor_execute(
+        conn: Any,
+        _cursor: Any,
+        statement: str,
+        _parameters: Any,
+        _context: Any,
+        _executemany: bool,
+    ) -> None:
+        starts = conn.info.get("eden_query_start_time") or []
+        if not starts:
+            return
+        started = starts.pop(-1)
+        duration_ms = (time.perf_counter() - started) * 1000
+        observe_duration("db_query_duration_ms", duration_ms)
+        threshold = get_settings().db_slow_query_ms
+        if duration_ms >= threshold:
+            log_warning(
+                "Slow database query detected.",
+                logger_name="eden.database",
+                duration_ms=round(duration_ms, 2),
+                error_code="DB_SLOW_QUERY",
+                details={"statement": statement[:240]},
+            )
 
 
 def get_session_factory() -> async_sessionmaker[AsyncSession]:

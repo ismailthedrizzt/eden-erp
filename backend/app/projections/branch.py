@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import time
 from typing import Any
 
 from pydantic import BaseModel, Field
@@ -9,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.errors import DomainError
 from app.domains.operations.service import table_exists
 from app.projections.fallback import address_summary, branch_summary_from_rows, zero_branch_summary
-from app.projections.query import order_clause
+from app.projections.query import observe_projection_query, order_clause
 from app.projections.registry import get_projection_definition
 from app.projections.types import ProjectionDefinition, ProjectionQueryInput, ProjectionQueryResult
 from app.schemas.pagination import build_list_meta
@@ -24,6 +25,7 @@ async def list_branch_projection(
     session: AsyncSession,
     query: ProjectionQueryInput,
 ) -> ProjectionQueryResult:
+    started = time.perf_counter()
     definition = _definition("branchList")
     if not await table_exists(session, "public.company_branches"):
         raise DomainError(
@@ -85,10 +87,18 @@ async def list_branch_projection(
         {**params, "limit": meta.pageSize, "offset": (meta.page - 1) * meta.pageSize},
     )
     rows = [_normalize_branch_row(dict(row)) for row in result.mappings().all()]
+    fallback_used = bool(warnings)
+    observe_projection_query(
+        definition,
+        query,
+        duration_ms=(time.perf_counter() - started) * 1000,
+        row_count=len(rows),
+        fallback_used=fallback_used,
+    )
     return ProjectionQueryResult(
         data=rows,
         meta=meta,
-        projection=definition.meta(fallback_used=bool(warnings)),
+        projection=definition.meta(fallback_used=fallback_used),
         warnings=warnings,
     )
 

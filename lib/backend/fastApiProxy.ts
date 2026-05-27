@@ -1,6 +1,7 @@
 import 'server-only'
 
 import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@/lib/supabase/server'
 import { resolveTenantContext } from '@/lib/tenancy/server'
 
 type FastApiQuery = URLSearchParams | Record<string, string | number | boolean | null | undefined>
@@ -13,6 +14,9 @@ type ProxyOptions = {
   timeoutMs?: number
   bodyText?: string
   query?: FastApiQuery
+  internal?: boolean
+  requestId?: string
+  correlationId?: string
 }
 
 function backendBaseUrl() {
@@ -39,9 +43,21 @@ export function buildFastApiUrl(path: string, query?: FastApiQuery) {
   return targetUrl
 }
 
-export function buildBackendHeaders(request: NextRequest, options: ProxyOptions = {}) {
+async function getSupabaseAccessToken() {
+  try {
+    const supabase = await createClient()
+    const { data } = await supabase.auth.getSession()
+    return data.session?.access_token || null
+  } catch {
+    return null
+  }
+}
+
+export async function buildBackendHeaders(request: NextRequest, options: ProxyOptions = {}) {
   const tenantContext = resolveTenantContext(request)
   const headers = new Headers()
+  const requestId = options.requestId || request.headers.get('x-request-id') || crypto.randomUUID()
+  const correlationId = options.correlationId || request.headers.get('x-correlation-id') || requestId
   headers.set('accept', request.headers.get('accept') || 'application/json')
   headers.set('content-type', request.headers.get('content-type') || 'application/json')
   headers.set('x-tenant-id', options.tenantId || tenantContext.tenantId)
@@ -62,9 +78,28 @@ export function buildBackendHeaders(request: NextRequest, options: ProxyOptions 
   if (request.headers.get('x-branch-scope')) {
     headers.set('x-branch-scope', request.headers.get('x-branch-scope') || '')
   }
-  if (request.headers.get('x-request-id')) headers.set('x-request-id', request.headers.get('x-request-id') || '')
-  if (process.env.INTERNAL_BACKEND_TOKEN) {
+  headers.set('x-request-id', requestId)
+  headers.set('x-correlation-id', correlationId)
+  headers.set('x-forwarded-user-agent', request.headers.get('user-agent') || '')
+  const forwardedFor = request.headers.get('x-forwarded-for')
+    || request.headers.get('x-real-ip')
+    || (request as { ip?: string }).ip
+    || ''
+  if (forwardedFor) headers.set('x-forwarded-for', forwardedFor)
+
+  const incomingAuthorization = request.headers.get('authorization')
+  const accessToken = incomingAuthorization?.toLowerCase().startsWith('bearer ')
+    ? incomingAuthorization.replace(/^Bearer\s+/i, '')
+    : await getSupabaseAccessToken()
+
+  if (options.internal && process.env.INTERNAL_BACKEND_TOKEN) {
     headers.set('authorization', `Bearer ${process.env.INTERNAL_BACKEND_TOKEN}`)
+  } else if (accessToken) {
+    headers.set('authorization', `Bearer ${accessToken}`)
+  }
+
+  if (process.env.TRUSTED_PROXY_SECRET) {
+    headers.set('x-proxy-secret', process.env.TRUSTED_PROXY_SECRET)
   }
   return headers
 }
@@ -80,12 +115,14 @@ export function fastApiUnavailableResponse(status = 503) {
   )
 }
 
-export function normalizeFastApiProxyError(error: unknown) {
+export function normalizeFastApiProxyError(error: unknown, requestId?: string, correlationId?: string) {
   const reason = error instanceof Error ? error.message : String(error)
   return {
     error: 'Backend servisine ulasilamadi. Lutfen tekrar deneyin.',
     code: 'FASTAPI_BACKEND_UNREACHABLE',
     message: 'Backend servisine ulasilamadi. Lutfen tekrar deneyin.',
+    request_id: requestId,
+    correlation_id: correlationId,
     details: process.env.NODE_ENV === 'development' ? { reason } : undefined,
   }
 }
@@ -98,6 +135,8 @@ export async function proxyToFastApi(
   const targetUrl = buildFastApiUrl(targetPath, options.query || request.nextUrl.searchParams)
   if (!targetUrl) return null
 
+  const requestId = options.requestId || request.headers.get('x-request-id') || crypto.randomUUID()
+  const correlationId = options.correlationId || request.headers.get('x-correlation-id') || requestId
   const method = options.method || request.method
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), options.timeoutMs || 15000)
@@ -108,7 +147,7 @@ export async function proxyToFastApi(
       : options.bodyText ?? await request.text()
     const response = await fetch(targetUrl, {
       method,
-      headers: buildBackendHeaders(request, options),
+      headers: await buildBackendHeaders(request, { ...options, requestId, correlationId }),
       body,
       cache: 'no-store',
       signal: controller.signal,
@@ -120,10 +159,21 @@ export async function proxyToFastApi(
       headers: {
         'content-type': contentType,
         'cache-control': 'no-store, max-age=0',
+        'x-request-id': response.headers.get('x-request-id') || requestId,
+        'x-correlation-id': response.headers.get('x-correlation-id') || correlationId,
       },
     })
   } catch (error) {
-    return NextResponse.json(normalizeFastApiProxyError(error), { status: 503 })
+    return NextResponse.json(
+      normalizeFastApiProxyError(error, requestId, correlationId),
+      {
+        status: 503,
+        headers: {
+          'x-request-id': requestId,
+          'x-correlation-id': correlationId,
+        },
+      }
+    )
   } finally {
     clearTimeout(timeout)
   }

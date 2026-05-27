@@ -69,6 +69,17 @@ Bu roadmap FastAPI core backend gecisi icin ilk tasima sirasini belirler.
    - Rule: card CRUD cannot mutate official, ownership or authority fields; those remain operation/wizard endpoints.
    - Follow-up: identity sync hardening, document storage adapter migration and legacy TS fallback removal.
 
+13. **Python Auth / JWT / Tenant Context Hardening** - in progress / security boundary landed
+   - Target: `backend/app/core/security.py`, `backend/app/policies/access_context.py`, `scope_policy.py`, `lib/backend/fastApiProxy.ts`.
+   - Implemented: Supabase JWT HS256 verification, tenant membership resolution, DB-backed permission loading, company scope loading, internal token guard and Next proxy token forwarding.
+   - Rule: production FastAPI does not trust `X-User-Id` or permissions headers without JWT and validated tenant context.
+   - Follow-up: JWKS crypto runtime dependency, auth denial audit events and e2e Supabase session tests.
+
+14. **Observability / Logging / Metrics** - in progress / foundation landed
+   - Target: `backend/app/core/{logging,middleware,metrics,sanitization,error_tracking}.py`, `database.py`, system endpoints and Next proxy headers.
+   - Implemented: request/correlation ID middleware, structured log context, normalized error responses with IDs, in-memory metrics, DB slow query hooks, system metrics/deep health endpoints and operation/outbox/audit/projection log points.
+   - Follow-up: OpenTelemetry, Sentry production integration, Prometheus/Grafana deployment and cross-runtime trace dashboards.
+
 11. **Setup Readiness**
     - Module readiness Python startup/request guard olarak uygulanir.
     - Implemented: `/api/v1/setup/readiness` ve module readiness endpointleri eklendi.

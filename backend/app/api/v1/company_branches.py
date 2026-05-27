@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_session
-from app.core.security import RequestContext, get_request_context, require_tenant
+from app.core.security import RequestContext, require_access_context, require_tenant
 from app.domains.branches.operations import (
     build_branch_closing_precheck,
     build_branch_opening_precheck,
@@ -16,9 +16,9 @@ from app.domains.branches.operations import (
 from app.domains.branches.schemas import BranchClosingRequest, BranchOpeningRequest
 from app.schemas.common import ApiSuccess, OperationResponse, PrecheckResponse
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(require_access_context)])
 
-RequestContextDep = Annotated[RequestContext, Depends(get_request_context)]
+RequestContextDep = Annotated[RequestContext, Depends(require_access_context)]
 SessionDep = Annotated[AsyncSession, Depends(get_session)]
 
 
@@ -57,6 +57,8 @@ async def complete_branch_opening(
         user_id=context.user_id,
         company_id=company_id,
         request=payload,
+        permissions=context.permissions,
+        company_scope=context.company_scope_ids,
     )
     return OperationResponse(**result)
 
@@ -94,5 +96,7 @@ async def complete_branch_closing(
         user_id=context.user_id,
         company_id=company_id,
         request=payload,
+        permissions=context.permissions,
+        company_scope=context.company_scope_ids,
     )
     return OperationResponse(**result)

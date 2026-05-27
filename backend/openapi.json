@@ -115,54 +115,6 @@
               ],
               "title": "Statuses"
             }
-          },
-          {
-            "name": "x-tenant-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Tenant-Id"
-            }
-          },
-          {
-            "name": "x-user-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-User-Id"
-            }
-          },
-          {
-            "name": "x-company-scope",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Company-Scope"
-            }
           }
         ],
         "responses": {
@@ -194,56 +146,6 @@
         ],
         "summary": "Create Company Card",
         "operationId": "create_company_card_api_v1_companies_post",
-        "parameters": [
-          {
-            "name": "x-tenant-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Tenant-Id"
-            }
-          },
-          {
-            "name": "x-user-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-User-Id"
-            }
-          },
-          {
-            "name": "x-company-scope",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Company-Scope"
-            }
-          }
-        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -294,54 +196,6 @@
               "type": "string",
               "title": "Company Id"
             }
-          },
-          {
-            "name": "x-tenant-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Tenant-Id"
-            }
-          },
-          {
-            "name": "x-user-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-User-Id"
-            }
-          },
-          {
-            "name": "x-company-scope",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Company-Scope"
-            }
           }
         ],
         "responses": {
@@ -381,54 +235,6 @@
             "schema": {
               "type": "string",
               "title": "Company Id"
-            }
-          },
-          {
-            "name": "x-tenant-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Tenant-Id"
-            }
-          },
-          {
-            "name": "x-user-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-User-Id"
-            }
-          },
-          {
-            "name": "x-company-scope",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Company-Scope"
             }
           }
         ],
@@ -480,54 +286,6 @@
               "type": "string",
               "title": "Company Id"
             }
-          },
-          {
-            "name": "x-tenant-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Tenant-Id"
-            }
-          },
-          {
-            "name": "x-user-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-User-Id"
-            }
-          },
-          {
-            "name": "x-company-scope",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Company-Scope"
-            }
           }
         ],
         "responses": {
@@ -570,54 +328,6 @@
               "type": "string",
               "title": "Company Id"
             }
-          },
-          {
-            "name": "x-tenant-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Tenant-Id"
-            }
-          },
-          {
-            "name": "x-user-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-User-Id"
-            }
-          },
-          {
-            "name": "x-company-scope",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Company-Scope"
-            }
           }
         ],
         "responses": {
@@ -659,54 +369,6 @@
             "schema": {
               "type": "string",
               "title": "Company Id"
-            }
-          },
-          {
-            "name": "x-tenant-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Tenant-Id"
-            }
-          },
-          {
-            "name": "x-user-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-User-Id"
-            }
-          },
-          {
-            "name": "x-company-scope",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Company-Scope"
             }
           }
         ],
@@ -760,54 +422,6 @@
               "type": "string",
               "title": "Company Id"
             }
-          },
-          {
-            "name": "x-tenant-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Tenant-Id"
-            }
-          },
-          {
-            "name": "x-user-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-User-Id"
-            }
-          },
-          {
-            "name": "x-company-scope",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Company-Scope"
-            }
           }
         ],
         "responses": {
@@ -850,54 +464,6 @@
               "type": "string",
               "title": "Company Id"
             }
-          },
-          {
-            "name": "x-tenant-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Tenant-Id"
-            }
-          },
-          {
-            "name": "x-user-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-User-Id"
-            }
-          },
-          {
-            "name": "x-company-scope",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Company-Scope"
-            }
           }
         ],
         "responses": {
@@ -939,54 +505,6 @@
             "schema": {
               "type": "string",
               "title": "Company Id"
-            }
-          },
-          {
-            "name": "x-tenant-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Tenant-Id"
-            }
-          },
-          {
-            "name": "x-user-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-User-Id"
-            }
-          },
-          {
-            "name": "x-company-scope",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Company-Scope"
             }
           }
         ],
@@ -1040,54 +558,6 @@
               "type": "string",
               "title": "Company Id"
             }
-          },
-          {
-            "name": "x-tenant-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Tenant-Id"
-            }
-          },
-          {
-            "name": "x-user-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-User-Id"
-            }
-          },
-          {
-            "name": "x-company-scope",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Company-Scope"
-            }
           }
         ],
         "responses": {
@@ -1129,54 +599,6 @@
             "schema": {
               "type": "string",
               "title": "Company Id"
-            }
-          },
-          {
-            "name": "x-tenant-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Tenant-Id"
-            }
-          },
-          {
-            "name": "x-user-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-User-Id"
-            }
-          },
-          {
-            "name": "x-company-scope",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Company-Scope"
             }
           }
         ],
@@ -1230,54 +652,6 @@
               "type": "string",
               "title": "Company Id"
             }
-          },
-          {
-            "name": "x-tenant-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Tenant-Id"
-            }
-          },
-          {
-            "name": "x-user-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-User-Id"
-            }
-          },
-          {
-            "name": "x-company-scope",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Company-Scope"
-            }
           }
         ],
         "responses": {
@@ -1319,54 +693,6 @@
             "schema": {
               "type": "string",
               "title": "Company Id"
-            }
-          },
-          {
-            "name": "x-tenant-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Tenant-Id"
-            }
-          },
-          {
-            "name": "x-user-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-User-Id"
-            }
-          },
-          {
-            "name": "x-company-scope",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Company-Scope"
             }
           }
         ],
@@ -1420,54 +746,6 @@
               "type": "string",
               "title": "Company Id"
             }
-          },
-          {
-            "name": "x-tenant-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Tenant-Id"
-            }
-          },
-          {
-            "name": "x-user-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-User-Id"
-            }
-          },
-          {
-            "name": "x-company-scope",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Company-Scope"
-            }
           }
         ],
         "responses": {
@@ -1509,54 +787,6 @@
             "schema": {
               "type": "string",
               "title": "Company Id"
-            }
-          },
-          {
-            "name": "x-tenant-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Tenant-Id"
-            }
-          },
-          {
-            "name": "x-user-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-User-Id"
-            }
-          },
-          {
-            "name": "x-company-scope",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Company-Scope"
             }
           }
         ],
@@ -1610,54 +840,6 @@
               "type": "string",
               "title": "Company Id"
             }
-          },
-          {
-            "name": "x-tenant-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Tenant-Id"
-            }
-          },
-          {
-            "name": "x-user-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-User-Id"
-            }
-          },
-          {
-            "name": "x-company-scope",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Company-Scope"
-            }
           }
         ],
         "responses": {
@@ -1699,54 +881,6 @@
             "schema": {
               "type": "string",
               "title": "Company Id"
-            }
-          },
-          {
-            "name": "x-tenant-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Tenant-Id"
-            }
-          },
-          {
-            "name": "x-user-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-User-Id"
-            }
-          },
-          {
-            "name": "x-company-scope",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Company-Scope"
             }
           }
         ],
@@ -1832,54 +966,6 @@
               ],
               "title": "Address"
             }
-          },
-          {
-            "name": "x-tenant-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Tenant-Id"
-            }
-          },
-          {
-            "name": "x-user-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-User-Id"
-            }
-          },
-          {
-            "name": "x-company-scope",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Company-Scope"
-            }
           }
         ],
         "responses": {
@@ -1921,54 +1007,6 @@
             "schema": {
               "type": "string",
               "title": "Company Id"
-            }
-          },
-          {
-            "name": "x-tenant-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Tenant-Id"
-            }
-          },
-          {
-            "name": "x-user-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-User-Id"
-            }
-          },
-          {
-            "name": "x-company-scope",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Company-Scope"
             }
           }
         ],
@@ -2038,54 +1076,6 @@
               ],
               "title": "Branch Id"
             }
-          },
-          {
-            "name": "x-tenant-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Tenant-Id"
-            }
-          },
-          {
-            "name": "x-user-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-User-Id"
-            }
-          },
-          {
-            "name": "x-company-scope",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Company-Scope"
-            }
           }
         ],
         "responses": {
@@ -2127,54 +1117,6 @@
             "schema": {
               "type": "string",
               "title": "Company Id"
-            }
-          },
-          {
-            "name": "x-tenant-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Tenant-Id"
-            }
-          },
-          {
-            "name": "x-user-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-User-Id"
-            }
-          },
-          {
-            "name": "x-company-scope",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Company-Scope"
             }
           }
         ],
@@ -2364,54 +1306,6 @@
               ],
               "title": "Is Official Branch"
             }
-          },
-          {
-            "name": "x-tenant-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Tenant-Id"
-            }
-          },
-          {
-            "name": "x-user-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-User-Id"
-            }
-          },
-          {
-            "name": "x-company-scope",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Company-Scope"
-            }
           }
         ],
         "responses": {
@@ -2454,54 +1348,6 @@
               "type": "string",
               "title": "Branch Id"
             }
-          },
-          {
-            "name": "x-tenant-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Tenant-Id"
-            }
-          },
-          {
-            "name": "x-user-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-User-Id"
-            }
-          },
-          {
-            "name": "x-company-scope",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Company-Scope"
-            }
           }
         ],
         "responses": {
@@ -2541,54 +1387,6 @@
             "schema": {
               "type": "string",
               "title": "Branch Id"
-            }
-          },
-          {
-            "name": "x-tenant-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Tenant-Id"
-            }
-          },
-          {
-            "name": "x-user-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-User-Id"
-            }
-          },
-          {
-            "name": "x-company-scope",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Company-Scope"
             }
           }
         ],
@@ -2748,54 +1546,6 @@
               ],
               "title": "Owner Kind"
             }
-          },
-          {
-            "name": "x-tenant-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Tenant-Id"
-            }
-          },
-          {
-            "name": "x-user-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-User-Id"
-            }
-          },
-          {
-            "name": "x-company-scope",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Company-Scope"
-            }
           }
         ],
         "responses": {
@@ -2827,56 +1577,6 @@
         ],
         "summary": "Create Partner Card",
         "operationId": "create_partner_card_api_v1_partners_post",
-        "parameters": [
-          {
-            "name": "x-tenant-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Tenant-Id"
-            }
-          },
-          {
-            "name": "x-user-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-User-Id"
-            }
-          },
-          {
-            "name": "x-company-scope",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Company-Scope"
-            }
-          }
-        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -2927,54 +1627,6 @@
               "type": "string",
               "title": "Partner Id"
             }
-          },
-          {
-            "name": "x-tenant-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Tenant-Id"
-            }
-          },
-          {
-            "name": "x-user-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-User-Id"
-            }
-          },
-          {
-            "name": "x-company-scope",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Company-Scope"
-            }
           }
         ],
         "responses": {
@@ -3014,54 +1666,6 @@
             "schema": {
               "type": "string",
               "title": "Partner Id"
-            }
-          },
-          {
-            "name": "x-tenant-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Tenant-Id"
-            }
-          },
-          {
-            "name": "x-user-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-User-Id"
-            }
-          },
-          {
-            "name": "x-company-scope",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Company-Scope"
             }
           }
         ],
@@ -3113,54 +1717,6 @@
               "type": "string",
               "title": "Partner Id"
             }
-          },
-          {
-            "name": "x-tenant-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Tenant-Id"
-            }
-          },
-          {
-            "name": "x-user-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-User-Id"
-            }
-          },
-          {
-            "name": "x-company-scope",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Company-Scope"
-            }
           }
         ],
         "responses": {
@@ -3202,54 +1758,6 @@
             "schema": {
               "type": "string",
               "title": "Company Id"
-            }
-          },
-          {
-            "name": "x-tenant-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Tenant-Id"
-            }
-          },
-          {
-            "name": "x-user-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-User-Id"
-            }
-          },
-          {
-            "name": "x-company-scope",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Company-Scope"
             }
           }
         ],
@@ -3293,54 +1801,6 @@
               "type": "string",
               "title": "Company Id"
             }
-          },
-          {
-            "name": "x-tenant-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Tenant-Id"
-            }
-          },
-          {
-            "name": "x-user-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-User-Id"
-            }
-          },
-          {
-            "name": "x-company-scope",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Company-Scope"
-            }
           }
         ],
         "responses": {
@@ -3374,65 +1834,15 @@
         ],
         "summary": "Create Ownership Transaction",
         "operationId": "create_ownership_transaction_api_v1_ownership_transactions_post",
-        "parameters": [
-          {
-            "name": "x-tenant-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Tenant-Id"
-            }
-          },
-          {
-            "name": "x-user-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-User-Id"
-            }
-          },
-          {
-            "name": "x-company-scope",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Company-Scope"
-            }
-          }
-        ],
         "requestBody": {
-          "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/OwnershipTransactionRequest"
               }
             }
-          }
+          },
+          "required": true
         },
         "responses": {
           "200": {
@@ -3465,67 +1875,17 @@
         ],
         "summary": "Initial Partnership Entry",
         "operationId": "initial_partnership_entry_api_v1_ownership_initial_partnership_entry_post",
-        "parameters": [
-          {
-            "name": "x-tenant-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Tenant-Id"
-            }
-          },
-          {
-            "name": "x-user-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-User-Id"
-            }
-          },
-          {
-            "name": "x-company-scope",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Company-Scope"
-            }
-          }
-        ],
         "requestBody": {
-          "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
                 "additionalProperties": true,
+                "type": "object",
                 "title": "Payload"
               }
             }
-          }
+          },
+          "required": true
         },
         "responses": {
           "200": {
@@ -3558,67 +1918,17 @@
         ],
         "summary": "Share Transfer",
         "operationId": "share_transfer_api_v1_ownership_share_transfer_post",
-        "parameters": [
-          {
-            "name": "x-tenant-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Tenant-Id"
-            }
-          },
-          {
-            "name": "x-user-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-User-Id"
-            }
-          },
-          {
-            "name": "x-company-scope",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Company-Scope"
-            }
-          }
-        ],
         "requestBody": {
-          "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
                 "additionalProperties": true,
+                "type": "object",
                 "title": "Payload"
               }
             }
-          }
+          },
+          "required": true
         },
         "responses": {
           "200": {
@@ -3651,67 +1961,17 @@
         ],
         "summary": "Ownership Exit",
         "operationId": "ownership_exit_api_v1_ownership_ownership_exit_post",
-        "parameters": [
-          {
-            "name": "x-tenant-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Tenant-Id"
-            }
-          },
-          {
-            "name": "x-user-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-User-Id"
-            }
-          },
-          {
-            "name": "x-company-scope",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Company-Scope"
-            }
-          }
-        ],
         "requestBody": {
-          "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
                 "additionalProperties": true,
+                "type": "object",
                 "title": "Payload"
               }
             }
-          }
+          },
+          "required": true
         },
         "responses": {
           "200": {
@@ -3744,67 +2004,17 @@
         ],
         "summary": "Correction Entry",
         "operationId": "correction_entry_api_v1_ownership_correction_post",
-        "parameters": [
-          {
-            "name": "x-tenant-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Tenant-Id"
-            }
-          },
-          {
-            "name": "x-user-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-User-Id"
-            }
-          },
-          {
-            "name": "x-company-scope",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Company-Scope"
-            }
-          }
-        ],
         "requestBody": {
-          "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
                 "additionalProperties": true,
+                "type": "object",
                 "title": "Payload"
               }
             }
-          }
+          },
+          "required": true
         },
         "responses": {
           "200": {
@@ -3837,67 +2047,17 @@
         ],
         "summary": "Reversal Entry",
         "operationId": "reversal_entry_api_v1_ownership_reversal_post",
-        "parameters": [
-          {
-            "name": "x-tenant-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Tenant-Id"
-            }
-          },
-          {
-            "name": "x-user-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-User-Id"
-            }
-          },
-          {
-            "name": "x-company-scope",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Company-Scope"
-            }
-          }
-        ],
         "requestBody": {
-          "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
                 "additionalProperties": true,
+                "type": "object",
                 "title": "Payload"
               }
             }
-          }
+          },
+          "required": true
         },
         "responses": {
           "200": {
@@ -4057,54 +2217,6 @@
               ],
               "title": "Statuses"
             }
-          },
-          {
-            "name": "x-tenant-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Tenant-Id"
-            }
-          },
-          {
-            "name": "x-user-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-User-Id"
-            }
-          },
-          {
-            "name": "x-company-scope",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Company-Scope"
-            }
           }
         ],
         "responses": {
@@ -4227,54 +2339,6 @@
               "type": "boolean",
               "default": false,
               "title": "Include Company Wide"
-            }
-          },
-          {
-            "name": "x-tenant-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Tenant-Id"
-            }
-          },
-          {
-            "name": "x-user-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-User-Id"
-            }
-          },
-          {
-            "name": "x-company-scope",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Company-Scope"
             }
           }
         ],
@@ -4496,54 +2560,6 @@
               "default": false,
               "title": "Include Company Wide For Branch"
             }
-          },
-          {
-            "name": "x-tenant-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Tenant-Id"
-            }
-          },
-          {
-            "name": "x-user-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-User-Id"
-            }
-          },
-          {
-            "name": "x-company-scope",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Company-Scope"
-            }
           }
         ],
         "responses": {
@@ -4575,56 +2591,6 @@
         ],
         "summary": "Create Representative Record",
         "operationId": "create_representative_record_api_v1_representatives_post",
-        "parameters": [
-          {
-            "name": "x-tenant-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Tenant-Id"
-            }
-          },
-          {
-            "name": "x-user-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-User-Id"
-            }
-          },
-          {
-            "name": "x-company-scope",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Company-Scope"
-            }
-          }
-        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -4675,54 +2641,6 @@
               "type": "string",
               "title": "Representative Id"
             }
-          },
-          {
-            "name": "x-tenant-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Tenant-Id"
-            }
-          },
-          {
-            "name": "x-user-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-User-Id"
-            }
-          },
-          {
-            "name": "x-company-scope",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Company-Scope"
-            }
           }
         ],
         "responses": {
@@ -4762,54 +2680,6 @@
             "schema": {
               "type": "string",
               "title": "Representative Id"
-            }
-          },
-          {
-            "name": "x-tenant-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Tenant-Id"
-            }
-          },
-          {
-            "name": "x-user-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-User-Id"
-            }
-          },
-          {
-            "name": "x-company-scope",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Company-Scope"
             }
           }
         ],
@@ -4861,54 +2731,6 @@
               "type": "string",
               "title": "Representative Id"
             }
-          },
-          {
-            "name": "x-tenant-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Tenant-Id"
-            }
-          },
-          {
-            "name": "x-user-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-User-Id"
-            }
-          },
-          {
-            "name": "x-company-scope",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Company-Scope"
-            }
           }
         ],
         "responses": {
@@ -4950,54 +2772,6 @@
             "schema": {
               "type": "string",
               "title": "Representative Id"
-            }
-          },
-          {
-            "name": "x-tenant-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Tenant-Id"
-            }
-          },
-          {
-            "name": "x-user-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-User-Id"
-            }
-          },
-          {
-            "name": "x-company-scope",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Company-Scope"
             }
           }
         ],
@@ -5050,54 +2824,6 @@
             "schema": {
               "type": "string",
               "title": "Representative Id"
-            }
-          },
-          {
-            "name": "x-tenant-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Tenant-Id"
-            }
-          },
-          {
-            "name": "x-user-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-User-Id"
-            }
-          },
-          {
-            "name": "x-company-scope",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Company-Scope"
             }
           }
         ],
@@ -5187,54 +2913,6 @@
               "default": 50,
               "title": "Pagesize"
             }
-          },
-          {
-            "name": "x-tenant-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Tenant-Id"
-            }
-          },
-          {
-            "name": "x-user-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-User-Id"
-            }
-          },
-          {
-            "name": "x-company-scope",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Company-Scope"
-            }
           }
         ],
         "responses": {
@@ -5266,56 +2944,6 @@
         ],
         "summary": "Create Process Record",
         "operationId": "create_process_record_api_v1_processes_post",
-        "parameters": [
-          {
-            "name": "x-tenant-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Tenant-Id"
-            }
-          },
-          {
-            "name": "x-user-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-User-Id"
-            }
-          },
-          {
-            "name": "x-company-scope",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Company-Scope"
-            }
-          }
-        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -5366,54 +2994,6 @@
               "type": "string",
               "title": "Process Id"
             }
-          },
-          {
-            "name": "x-tenant-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Tenant-Id"
-            }
-          },
-          {
-            "name": "x-user-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-User-Id"
-            }
-          },
-          {
-            "name": "x-company-scope",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Company-Scope"
-            }
           }
         ],
         "responses": {
@@ -5455,54 +3035,6 @@
             "schema": {
               "type": "string",
               "title": "Process Id"
-            }
-          },
-          {
-            "name": "x-tenant-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Tenant-Id"
-            }
-          },
-          {
-            "name": "x-user-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-User-Id"
-            }
-          },
-          {
-            "name": "x-company-scope",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Company-Scope"
             }
           }
         ],
@@ -5555,54 +3087,6 @@
               "type": "string",
               "title": "Step Key"
             }
-          },
-          {
-            "name": "x-tenant-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Tenant-Id"
-            }
-          },
-          {
-            "name": "x-user-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-User-Id"
-            }
-          },
-          {
-            "name": "x-company-scope",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Company-Scope"
-            }
           }
         ],
         "requestBody": {
@@ -5654,54 +3138,6 @@
             "schema": {
               "type": "string",
               "title": "Process Id"
-            }
-          },
-          {
-            "name": "x-tenant-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Tenant-Id"
-            }
-          },
-          {
-            "name": "x-user-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-User-Id"
-            }
-          },
-          {
-            "name": "x-company-scope",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Company-Scope"
             }
           }
         ],
@@ -5785,54 +3221,6 @@
               "default": 50,
               "title": "Pagesize"
             }
-          },
-          {
-            "name": "x-tenant-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Tenant-Id"
-            }
-          },
-          {
-            "name": "x-user-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-User-Id"
-            }
-          },
-          {
-            "name": "x-company-scope",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Company-Scope"
-            }
           }
         ],
         "responses": {
@@ -5864,56 +3252,6 @@
         ],
         "summary": "Create Task Record",
         "operationId": "create_task_record_api_v1_tasks_post",
-        "parameters": [
-          {
-            "name": "x-tenant-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Tenant-Id"
-            }
-          },
-          {
-            "name": "x-user-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-User-Id"
-            }
-          },
-          {
-            "name": "x-company-scope",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Company-Scope"
-            }
-          }
-        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -5964,54 +3302,6 @@
               "type": "string",
               "title": "Task Id"
             }
-          },
-          {
-            "name": "x-tenant-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Tenant-Id"
-            }
-          },
-          {
-            "name": "x-user-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-User-Id"
-            }
-          },
-          {
-            "name": "x-company-scope",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Company-Scope"
-            }
           }
         ],
         "responses": {
@@ -6053,54 +3343,6 @@
             "schema": {
               "type": "string",
               "title": "Task Id"
-            }
-          },
-          {
-            "name": "x-tenant-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Tenant-Id"
-            }
-          },
-          {
-            "name": "x-user-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-User-Id"
-            }
-          },
-          {
-            "name": "x-company-scope",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Company-Scope"
             }
           }
         ],
@@ -6153,54 +3395,6 @@
             "schema": {
               "type": "string",
               "title": "Task Id"
-            }
-          },
-          {
-            "name": "x-tenant-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Tenant-Id"
-            }
-          },
-          {
-            "name": "x-user-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-User-Id"
-            }
-          },
-          {
-            "name": "x-company-scope",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Company-Scope"
             }
           }
         ],
@@ -6278,54 +3472,6 @@
               "default": 50,
               "title": "Pagesize"
             }
-          },
-          {
-            "name": "x-tenant-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Tenant-Id"
-            }
-          },
-          {
-            "name": "x-user-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-User-Id"
-            }
-          },
-          {
-            "name": "x-company-scope",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Company-Scope"
-            }
           }
         ],
         "responses": {
@@ -6357,56 +3503,6 @@
         ],
         "summary": "Create Approval Record",
         "operationId": "create_approval_record_api_v1_approvals_post",
-        "parameters": [
-          {
-            "name": "x-tenant-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Tenant-Id"
-            }
-          },
-          {
-            "name": "x-user-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-User-Id"
-            }
-          },
-          {
-            "name": "x-company-scope",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Company-Scope"
-            }
-          }
-        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -6456,54 +3552,6 @@
             "schema": {
               "type": "string",
               "title": "Approval Id"
-            }
-          },
-          {
-            "name": "x-tenant-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Tenant-Id"
-            }
-          },
-          {
-            "name": "x-user-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-User-Id"
-            }
-          },
-          {
-            "name": "x-company-scope",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Company-Scope"
             }
           }
         ],
@@ -6556,54 +3604,6 @@
             "schema": {
               "type": "string",
               "title": "Approval Id"
-            }
-          },
-          {
-            "name": "x-tenant-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Tenant-Id"
-            }
-          },
-          {
-            "name": "x-user-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-User-Id"
-            }
-          },
-          {
-            "name": "x-company-scope",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Company-Scope"
             }
           }
         ],
@@ -6815,54 +3815,6 @@
               "default": 50,
               "title": "Pagesize"
             }
-          },
-          {
-            "name": "x-tenant-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Tenant-Id"
-            }
-          },
-          {
-            "name": "x-user-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-User-Id"
-            }
-          },
-          {
-            "name": "x-company-scope",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Company-Scope"
-            }
           }
         ],
         "responses": {
@@ -6914,54 +3866,6 @@
               "type": "string",
               "title": "Entity Id"
             }
-          },
-          {
-            "name": "x-tenant-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Tenant-Id"
-            }
-          },
-          {
-            "name": "x-user-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-User-Id"
-            }
-          },
-          {
-            "name": "x-company-scope",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Company-Scope"
-            }
           }
         ],
         "responses": {
@@ -7003,54 +3907,6 @@
             "schema": {
               "type": "string",
               "title": "Operation Id"
-            }
-          },
-          {
-            "name": "x-tenant-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Tenant-Id"
-            }
-          },
-          {
-            "name": "x-user-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-User-Id"
-            }
-          },
-          {
-            "name": "x-company-scope",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Company-Scope"
             }
           }
         ],
@@ -7094,54 +3950,6 @@
               "type": "string",
               "title": "Process Instance Id"
             }
-          },
-          {
-            "name": "x-tenant-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Tenant-Id"
-            }
-          },
-          {
-            "name": "x-user-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-User-Id"
-            }
-          },
-          {
-            "name": "x-company-scope",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Company-Scope"
-            }
           }
         ],
         "responses": {
@@ -7183,54 +3991,6 @@
             "schema": {
               "type": "string",
               "title": "Audit Id"
-            }
-          },
-          {
-            "name": "x-tenant-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Tenant-Id"
-            }
-          },
-          {
-            "name": "x-user-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-User-Id"
-            }
-          },
-          {
-            "name": "x-company-scope",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Company-Scope"
             }
           }
         ],
@@ -7277,54 +4037,6 @@
               "default": 50,
               "title": "Limit"
             }
-          },
-          {
-            "name": "x-tenant-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Tenant-Id"
-            }
-          },
-          {
-            "name": "x-user-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-User-Id"
-            }
-          },
-          {
-            "name": "x-company-scope",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Company-Scope"
-            }
           }
         ],
         "responses": {
@@ -7358,56 +4070,6 @@
         ],
         "summary": "Counts",
         "operationId": "counts_api_v1_action_center_counts_get",
-        "parameters": [
-          {
-            "name": "x-tenant-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Tenant-Id"
-            }
-          },
-          {
-            "name": "x-user-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-User-Id"
-            }
-          },
-          {
-            "name": "x-company-scope",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Company-Scope"
-            }
-          }
-        ],
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -7415,16 +4077,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiSuccess_dict_str__int__"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
             }
@@ -7439,56 +4091,6 @@
         ],
         "summary": "Summary",
         "operationId": "summary_api_v1_action_center_summary_get",
-        "parameters": [
-          {
-            "name": "x-tenant-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Tenant-Id"
-            }
-          },
-          {
-            "name": "x-user-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-User-Id"
-            }
-          },
-          {
-            "name": "x-company-scope",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Company-Scope"
-            }
-          }
-        ],
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -7496,16 +4098,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiSuccess_dict_str__Any__"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
                 }
               }
             }
@@ -7537,54 +4129,6 @@
             "schema": {
               "type": "string",
               "title": "Entity Id"
-            }
-          },
-          {
-            "name": "x-tenant-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Tenant-Id"
-            }
-          },
-          {
-            "name": "x-user-id",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-User-Id"
-            }
-          },
-          {
-            "name": "x-company-scope",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "X-Company-Scope"
             }
           }
         ],
@@ -7944,22 +4488,6 @@
               ],
               "title": "Limit"
             }
-          },
-          {
-            "name": "authorization",
-            "in": "header",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Authorization"
-            }
           }
         ],
         "responses": {
@@ -7993,6 +4521,52 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/system/metrics": {
+      "get": {
+        "tags": [
+          "system"
+        ],
+        "summary": "Metrics",
+        "operationId": "metrics_api_v1_system_metrics_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Metrics Api V1 System Metrics Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/system/health/deep": {
+      "get": {
+        "tags": [
+          "system"
+        ],
+        "summary": "Deep Health",
+        "operationId": "deep_health_api_v1_system_health_deep_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Deep Health Api V1 System Health Deep Get"
                 }
               }
             }

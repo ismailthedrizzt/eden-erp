@@ -2,19 +2,31 @@
 
 import { createClient } from '@/lib/supabase/client'
 import { getPublicApiBaseUrl } from '@/lib/api/publicApiBaseUrl'
+import { normalizeBackendError } from '@/lib/backend/backendErrors'
 import { tenantRequestHeaders } from '@/lib/tenancy/client'
 
 export class ApiError extends Error {
   status: number
   code?: string
   details?: unknown
+  requestId?: string | null
+  correlationId?: string | null
 
-  constructor(message: string, status: number, code?: string, details?: unknown) {
+  constructor(
+    message: string,
+    status: number,
+    code?: string,
+    details?: unknown,
+    requestId?: string | null,
+    correlationId?: string | null,
+  ) {
     super(message)
     this.name = 'ApiError'
     this.status = status
     this.code = code
     this.details = details
+    this.requestId = requestId
+    this.correlationId = correlationId
   }
 }
 
@@ -86,13 +98,21 @@ async function request<T>(path: string, options: ApiClientOptions = {}): Promise
     if (!response.ok) {
       const body = await response.json().catch(() => ({}))
       const detail = body.detail || body
+      const backendError = normalizeBackendError(detail, response.status)
       const serverMessage = detail?.message || body.error
       const message =
         serverMessage ||
         (response.status === 409
           ? 'Bu kayit baska bir kullanici tarafindan guncellendi. Lutfen kaydi yenileyin.'
           : response.statusText)
-      throw new ApiError(message, response.status, detail?.code || body.code, detail)
+      throw new ApiError(
+        message,
+        response.status,
+        detail?.code || body.code || backendError.code,
+        detail,
+        detail?.request_id || backendError.requestId,
+        detail?.correlation_id || backendError.correlationId,
+      )
     }
 
     if (response.status === 204) return undefined as T

@@ -8,6 +8,8 @@ from uuid import uuid4
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.logging import log_info, log_warning
+from app.core.metrics import increment_counter
 from app.core.serialization import row_to_dict, rows_to_dicts
 from app.domains.operations.service import table_exists
 
@@ -65,7 +67,17 @@ async def enqueue_event(
             "metadata_json": json.dumps(metadata or {}, ensure_ascii=False, default=str),
         },
     )
-    return row_to_dict(result.mappings().one()) or {}
+    row = row_to_dict(result.mappings().one()) or {}
+    increment_counter("outbox_pending_count")
+    log_info(
+        "Outbox event enqueued.",
+        logger_name="eden.outbox",
+        outbox_event_id=str(row.get("id")),
+        event_type=event_type,
+        aggregate_type=aggregate_type,
+        module_key=context.get("module_key", "platform"),
+    )
+    return row
 
 
 async def enqueue_many(
@@ -109,6 +121,14 @@ async def enqueue_outbox_event_best_effort(
         )
         return str(row["id"])
     except Exception as error:  # pragma: no cover - best-effort safety net
+        increment_counter("outbox_enqueue_failed_count")
+        log_warning(
+            "Outbox enqueue skipped.",
+            logger_name="eden.outbox",
+            exception_type=error.__class__.__name__,
+            event_type=event_type,
+            aggregate_type=aggregate_type,
+        )
         logger.warning("Outbox enqueue skipped: %s", error)
         return None
 

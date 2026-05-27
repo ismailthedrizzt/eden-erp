@@ -7,16 +7,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_session
 from app.core.errors import DomainError, domain_error_to_http
-from app.core.security import RequestContext, get_request_context, require_tenant
+from app.core.security import RequestContext, require_access_context, require_tenant
 from app.domains.company.service import get_company_by_id
 from app.domains.ownership.current import get_current_ownership_for_company
 from app.domains.ownership.schemas import OwnershipTransactionRequest
 from app.domains.ownership.transactions import perform_ownership_transaction
 from app.schemas.common import ApiSuccess
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(require_access_context)])
 
-RequestContextDep = Annotated[RequestContext, Depends(get_request_context)]
+RequestContextDep = Annotated[RequestContext, Depends(require_access_context)]
 SessionDep = Annotated[AsyncSession, Depends(get_session)]
 
 
@@ -51,6 +51,8 @@ async def create_ownership_transaction(
         "user_id": context.user_id,
         "company_id": request.company_id,
         "module_key": "ownership",
+        "permissions": context.permissions,
+        "company_scope": context.company_scope_ids,
     }
     try:
         result = await perform_ownership_transaction(session, service_context, request)

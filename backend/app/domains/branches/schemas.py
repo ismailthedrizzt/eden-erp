@@ -10,6 +10,33 @@ OrganizationUnitAction = Literal["deactivate", "reassign", "keep_open"]
 FacilityAction = Literal["deactivate", "keep_open", "reuse"]
 
 
+class BranchCardUpdateRequest(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+    branch_short_name: str | None = None
+    phone: str | None = None
+    email: str | None = None
+    responsible_person_id: str | None = None
+    organization_unit_id: str | None = None
+    facility_id: str | None = None
+    notes: str | None = None
+    metadata_json: dict[str, Any] | None = None
+    base_version: int | None = None
+    base_updated_at: str | None = None
+
+
+class BranchDetailResponse(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+    branch: dict[str, Any]
+    company: dict[str, Any] | None = None
+    organization_unit: dict[str, Any] | None = None
+    facility: dict[str, Any] | None = None
+    representative_authorities_summary: dict[str, Any] = Field(default_factory=dict)
+    official_change_history: list[dict[str, Any]] = Field(default_factory=list)
+    warnings: list[str] = Field(default_factory=list)
+
+
 def _blank_to_none(value: str | None) -> str | None:
     if value is None:
         return None

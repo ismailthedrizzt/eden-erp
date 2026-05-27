@@ -9,6 +9,9 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.errors import DomainError
+from app.policies.field_control import reject_operation_controlled_patch
+
+ORGANIZATION_UNIT_CARD_FIELDS = {"name", "parent_unit_id", "notes", "metadata_json"}
 
 
 def is_unit_active(unit: dict[str, Any] | None) -> bool:
@@ -57,6 +60,43 @@ async def list_units_for_company(
             """
         ),
         {"tenant_id": tenant_id, "company_id": company_id},
+    )
+    return [dict(row) for row in result.mappings().all()]
+
+
+async def list_organization_units(
+    session: AsyncSession,
+    context: dict[str, Any],
+    query: dict[str, Any] | None = None,
+) -> list[dict[str, Any]]:
+    filters = query or {}
+    where = ["coalesce(ou.is_deleted, false) = false"]
+    params: dict[str, Any] = {}
+    if filters.get("tenant_id") or context.get("tenant_id"):
+        where.append("ou.tenant_id = :tenant_id")
+        params["tenant_id"] = filters.get("tenant_id") or context.get("tenant_id")
+    if filters.get("company_id"):
+        where.append("ou.company_id = :company_id")
+        params["company_id"] = filters["company_id"]
+    if filters.get("search"):
+        where.append(
+            "(ou.name ilike :search or ou.short_name ilike :search or ou.code ilike :search)"
+        )
+        params["search"] = f"%{filters['search']}%"
+    result = await session.execute(
+        text(
+            f"""
+            select ou.*, c.trade_name as company_name, b.branch_name as branch_name
+            from public.organization_units ou
+            left join public.companies c on c.id = ou.company_id
+            left join public.company_branches b on b.organization_unit_id = ou.id
+              and coalesce(b.is_deleted, false) = false
+            where {" and ".join(where)}
+            order by ou.sort_order asc, ou.name asc
+            limit :limit
+            """
+        ),
+        {**params, "limit": int(filters.get("limit") or 200)},
     )
     return [dict(row) for row in result.mappings().all()]
 
@@ -292,6 +332,241 @@ async def keep_organization_unit_open_after_branch_closing(
         },
     )
     return dict(result.mappings().one())
+
+
+async def get_unit_dependents_summary(
+    session: AsyncSession,
+    context: dict[str, Any],
+    unit_id: str,
+) -> dict[str, Any]:
+    child_result = await session.execute(
+        text(
+            """
+            select count(*) as count
+            from public.organization_units
+            where tenant_id = :tenant_id
+              and parent_unit_id = :unit_id
+              and coalesce(is_deleted, false) = false
+            """
+        ),
+        {"tenant_id": context["tenant_id"], "unit_id": unit_id},
+    )
+    position_result = await session.execute(
+        text(
+            """
+            select count(*) as count
+            from public.positions
+            where unit_id = :unit_id
+              and coalesce(is_deleted, false) = false
+            """
+        ),
+        {"unit_id": unit_id},
+    )
+    return {
+        "child_unit_count": int(child_result.mappings().one()["count"] or 0),
+        "position_count": int(position_result.mappings().one()["count"] or 0),
+    }
+
+
+async def get_organization_unit_detail(
+    session: AsyncSession,
+    context: dict[str, Any],
+    unit_id: str,
+) -> dict[str, Any]:
+    unit = await get_unit_by_id(session, context["tenant_id"], unit_id)
+    if not unit:
+        raise DomainError("Organizasyon birimi bulunamadi.", "ORGANIZATION_UNIT_NOT_FOUND", 404)
+    company_result = await session.execute(
+        text(
+            """
+            select id, trade_name, short_name, record_status, company_status
+            from public.companies
+            where tenant_id = :tenant_id
+              and id = :company_id
+              and coalesce(is_deleted, false) = false
+            limit 1
+            """
+        ),
+        {"tenant_id": context["tenant_id"], "company_id": unit.get("company_id")},
+    )
+    children = await session.execute(
+        text(
+            """
+            select id, name, type, status, active
+            from public.organization_units
+            where tenant_id = :tenant_id
+              and parent_unit_id = :unit_id
+              and coalesce(is_deleted, false) = false
+            order by sort_order asc, name asc
+            """
+        ),
+        {"tenant_id": context["tenant_id"], "unit_id": unit_id},
+    )
+    branch = await session.execute(
+        text(
+            """
+            select id, branch_name, branch_short_name, record_status, status
+            from public.company_branches
+            where tenant_id = :tenant_id
+              and organization_unit_id = :unit_id
+              and coalesce(is_deleted, false) = false
+            order by updated_at desc
+            limit 1
+            """
+        ),
+        {"tenant_id": context["tenant_id"], "unit_id": unit_id},
+    )
+    parent = (
+        await get_unit_by_id(session, context["tenant_id"], str(unit["parent_unit_id"]))
+        if unit.get("parent_unit_id")
+        else None
+    )
+    company_row = company_result.mappings().one_or_none()
+    branch_row = branch.mappings().one_or_none()
+    dependents = await get_unit_dependents_summary(session, context, unit_id)
+    return {
+        "unit": unit,
+        "company": dict(company_row) if company_row else None,
+        "parent_unit": parent,
+        "child_units": [dict(row) for row in children.mappings().all()],
+        "related_branch": dict(branch_row) if branch_row else None,
+        "positions_summary": {"position_count": dependents["position_count"]},
+        "employees_summary": {},
+        "warnings": [],
+    }
+
+
+def reject_operation_controlled_organization_unit_patch(payload: dict[str, Any]) -> None:
+    reject_operation_controlled_patch("organization_unit", payload)
+
+
+async def validate_parent_unit(
+    session: AsyncSession,
+    context: dict[str, Any],
+    company_id: str,
+    unit_id: str,
+    parent_unit_id: str | None,
+) -> None:
+    if not parent_unit_id:
+        return
+    if parent_unit_id == unit_id:
+        raise DomainError(
+            "Organizasyon birimi kendi altina baglanamaz.",
+            "ORGANIZATION_UNIT_CYCLE",
+            status.HTTP_409_CONFLICT,
+        )
+    parent = await get_unit_by_id(session, context["tenant_id"], parent_unit_id)
+    if not parent:
+        raise DomainError(
+            "Hedef organizasyon birimi bulunamadi.", "ORGANIZATION_UNIT_NOT_FOUND", 404
+        )
+    assert_unit_belongs_to_company(parent, company_id)
+    assert_unit_active(parent)
+    if await would_create_cycle(session, context["tenant_id"], unit_id, parent_unit_id):
+        raise DomainError(
+            "Organizasyon baglantisi dongu olusturamaz.",
+            "ORGANIZATION_UNIT_CYCLE",
+            status.HTTP_409_CONFLICT,
+        )
+
+
+async def update_organization_unit_card(
+    session: AsyncSession,
+    context: dict[str, Any],
+    unit_id: str,
+    payload: dict[str, Any],
+) -> dict[str, Any]:
+    reject_operation_controlled_organization_unit_patch(payload)
+    unit = await get_unit_by_id(session, context["tenant_id"], unit_id)
+    if not unit:
+        raise DomainError("Organizasyon birimi bulunamadi.", "ORGANIZATION_UNIT_NOT_FOUND", 404)
+    patch = {key: value for key, value in payload.items() if key in ORGANIZATION_UNIT_CARD_FIELDS}
+    if not patch:
+        raise DomainError(
+            "Guncellenecek organizasyon birimi alani bulunamadi.", "NO_CHANGED_FIELDS", 400
+        )
+    await validate_parent_unit(
+        session,
+        context,
+        str(unit.get("company_id")),
+        unit_id,
+        patch.get("parent_unit_id"),
+    )
+    history = list(unit.get("history") or [])
+    if "metadata_json" in patch:
+        history.append(
+            {"event": "card_metadata_updated", "metadata_json": patch.pop("metadata_json")}
+        )
+    assignments: list[str] = []
+    params: dict[str, Any] = {"tenant_id": context["tenant_id"], "unit_id": unit_id}
+    for field, value in patch.items():
+        assignments.append(f"{field} = :{field}")
+        params[field] = value
+    assignments.append("history = cast(:history as jsonb)")
+    params["history"] = json.dumps(history, ensure_ascii=False, default=str)
+    result = await session.execute(
+        text(
+            f"""
+            update public.organization_units
+            set {", ".join(assignments)},
+                updated_at = now()
+            where tenant_id = :tenant_id
+              and id = :unit_id
+              and coalesce(is_deleted, false) = false
+            returning *
+            """
+        ),
+        params,
+    )
+    row = result.mappings().one_or_none()
+    if not row:
+        raise DomainError("Organizasyon birimi bulunamadi.", "ORGANIZATION_UNIT_NOT_FOUND", 404)
+    return await get_organization_unit_detail(session, context, unit_id)
+
+
+async def link_unit_to_branch(
+    session: AsyncSession,
+    context: dict[str, Any],
+    unit_id: str,
+    branch_id: str,
+) -> dict[str, Any]:
+    unit = await get_unit_by_id(session, context["tenant_id"], unit_id)
+    if not unit:
+        raise DomainError("Organizasyon birimi bulunamadi.", "ORGANIZATION_UNIT_NOT_FOUND", 404)
+    result = await session.execute(
+        text(
+            """
+            update public.company_branches
+            set organization_unit_id = :unit_id,
+                updated_at = now(),
+                updated_by = :user_id
+            where tenant_id = :tenant_id
+              and id = :branch_id
+              and company_id = :company_id
+              and coalesce(is_deleted, false) = false
+            returning *
+            """
+        ),
+        {
+            "tenant_id": context["tenant_id"],
+            "unit_id": unit_id,
+            "branch_id": branch_id,
+            "company_id": unit.get("company_id"),
+            "user_id": context.get("user_id"),
+        },
+    )
+    row = result.mappings().one_or_none()
+    if not row:
+        raise DomainError("Sube kaydi bulunamadi.", "BRANCH_NOT_FOUND", 404)
+    return dict(row)
+
+
+async def create_organization_unit(
+    session: AsyncSession,
+    context: dict[str, Any],
+    payload: dict[str, Any],
+) -> dict[str, Any]:
+    return await create_branch_organization_unit(session, context, payload)
 
 
 def assert_unit_belongs_to_company(unit: dict[str, Any], company_id: str) -> None:

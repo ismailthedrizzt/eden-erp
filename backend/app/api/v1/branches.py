@@ -7,14 +7,14 @@ from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_session
-from app.core.security import RequestContext, get_request_context, require_tenant
+from app.core.security import RequestContext, require_access_context, require_tenant
 from app.projections.branch import get_branch_projection, list_branch_projection
 from app.projections.query import projection_query_from_params
 from app.schemas.common import ApiSuccess
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(require_access_context)])
 
-RequestContextDep = Annotated[RequestContext, Depends(get_request_context)]
+RequestContextDep = Annotated[RequestContext, Depends(require_access_context)]
 SessionDep = Annotated[AsyncSession, Depends(get_session)]
 
 

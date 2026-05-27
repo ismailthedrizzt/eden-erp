@@ -1176,6 +1176,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/system/metrics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Metrics */
+        get: operations["metrics_api_v1_system_metrics_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/system/health/deep": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Deep Health */
+        get: operations["deep_health_api_v1_system_health_deep_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/health": {
         parameters: {
             query?: never;
@@ -2709,11 +2743,7 @@ export interface operations {
                 direction?: string;
                 statuses?: string | null;
             };
-            header?: {
-                "x-tenant-id"?: string | null;
-                "x-user-id"?: string | null;
-                "x-company-scope"?: string | null;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };
@@ -2742,11 +2772,7 @@ export interface operations {
     create_company_card_api_v1_companies_post: {
         parameters: {
             query?: never;
-            header?: {
-                "x-tenant-id"?: string | null;
-                "x-user-id"?: string | null;
-                "x-company-scope"?: string | null;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };
@@ -2779,11 +2805,7 @@ export interface operations {
     company_detail_api_v1_companies__company_id__get: {
         parameters: {
             query?: never;
-            header?: {
-                "x-tenant-id"?: string | null;
-                "x-user-id"?: string | null;
-                "x-company-scope"?: string | null;
-            };
+            header?: never;
             path: {
                 company_id: string;
             };
@@ -2814,11 +2836,7 @@ export interface operations {
     delete_company_card_api_v1_companies__company_id__delete: {
         parameters: {
             query?: never;
-            header?: {
-                "x-tenant-id"?: string | null;
-                "x-user-id"?: string | null;
-                "x-company-scope"?: string | null;
-            };
+            header?: never;
             path: {
                 company_id: string;
             };
@@ -2849,11 +2867,7 @@ export interface operations {
     patch_company_card_api_v1_companies__company_id__patch: {
         parameters: {
             query?: never;
-            header?: {
-                "x-tenant-id"?: string | null;
-                "x-user-id"?: string | null;
-                "x-company-scope"?: string | null;
-            };
+            header?: never;
             path: {
                 company_id: string;
             };
@@ -2888,11 +2902,7 @@ export interface operations {
     capital_increase_precheck_api_v1_companies__company_id__capital_increases_precheck_get: {
         parameters: {
             query?: never;
-            header?: {
-                "x-tenant-id"?: string | null;
-                "x-user-id"?: string | null;
-                "x-company-scope"?: string | null;
-            };
+            header?: never;
             path: {
                 company_id: string;
             };
@@ -2923,11 +2933,7 @@ export interface operations {
     capital_increase_api_v1_companies__company_id__capital_increases_post: {
         parameters: {
             query?: never;
-            header?: {
-                "x-tenant-id"?: string | null;
-                "x-user-id"?: string | null;
-                "x-company-scope"?: string | null;
-            };
+            header?: never;
             path: {
                 company_id: string;
             };
@@ -2962,11 +2968,7 @@ export interface operations {
     current_ownership_for_company_api_v1_companies__company_id__current_ownership_get: {
         parameters: {
             query?: never;
-            header?: {
-                "x-tenant-id"?: string | null;
-                "x-user-id"?: string | null;
-                "x-company-scope"?: string | null;
-            };
+            header?: never;
             path: {
                 company_id: string;
             };
@@ -2997,11 +2999,7 @@ export interface operations {
     title_change_precheck_api_v1_companies__company_id__official_changes_title_change_precheck_get: {
         parameters: {
             query?: never;
-            header?: {
-                "x-tenant-id"?: string | null;
-                "x-user-id"?: string | null;
-                "x-company-scope"?: string | null;
-            };
+            header?: never;
             path: {
                 company_id: string;
             };
@@ -3032,11 +3030,7 @@ export interface operations {
     title_change_api_v1_companies__company_id__official_changes_title_change_post: {
         parameters: {
             query?: never;
-            header?: {
-                "x-tenant-id"?: string | null;
-                "x-user-id"?: string | null;
-                "x-company-scope"?: string | null;
-            };
+            header?: never;
             path: {
                 company_id: string;
             };
@@ -3071,11 +3065,7 @@ export interface operations {
     address_change_precheck_api_v1_companies__company_id__official_changes_address_change_precheck_get: {
         parameters: {
             query?: never;
-            header?: {
-                "x-tenant-id"?: string | null;
-                "x-user-id"?: string | null;
-                "x-company-scope"?: string | null;
-            };
+            header?: never;
             path: {
                 company_id: string;
             };
@@ -3106,11 +3096,7 @@ export interface operations {
     address_change_api_v1_companies__company_id__official_changes_address_change_post: {
         parameters: {
             query?: never;
-            header?: {
-                "x-tenant-id"?: string | null;
-                "x-user-id"?: string | null;
-                "x-company-scope"?: string | null;
-            };
+            header?: never;
             path: {
                 company_id: string;
             };
@@ -3145,11 +3131,7 @@ export interface operations {
     public_registration_update_precheck_api_v1_companies__company_id__official_changes_public_registration_update_precheck_get: {
         parameters: {
             query?: never;
-            header?: {
-                "x-tenant-id"?: string | null;
-                "x-user-id"?: string | null;
-                "x-company-scope"?: string | null;
-            };
+            header?: never;
             path: {
                 company_id: string;
             };
@@ -3180,11 +3162,7 @@ export interface operations {
     public_registration_update_api_v1_companies__company_id__official_changes_public_registration_update_post: {
         parameters: {
             query?: never;
-            header?: {
-                "x-tenant-id"?: string | null;
-                "x-user-id"?: string | null;
-                "x-company-scope"?: string | null;
-            };
+            header?: never;
             path: {
                 company_id: string;
             };
@@ -3219,11 +3197,7 @@ export interface operations {
     nace_change_precheck_api_v1_companies__company_id__official_changes_nace_change_precheck_get: {
         parameters: {
             query?: never;
-            header?: {
-                "x-tenant-id"?: string | null;
-                "x-user-id"?: string | null;
-                "x-company-scope"?: string | null;
-            };
+            header?: never;
             path: {
                 company_id: string;
             };
@@ -3254,11 +3228,7 @@ export interface operations {
     nace_change_api_v1_companies__company_id__official_changes_nace_change_post: {
         parameters: {
             query?: never;
-            header?: {
-                "x-tenant-id"?: string | null;
-                "x-user-id"?: string | null;
-                "x-company-scope"?: string | null;
-            };
+            header?: never;
             path: {
                 company_id: string;
             };
@@ -3293,11 +3263,7 @@ export interface operations {
     activity_subject_change_precheck_api_v1_companies__company_id__official_changes_activity_subject_change_precheck_get: {
         parameters: {
             query?: never;
-            header?: {
-                "x-tenant-id"?: string | null;
-                "x-user-id"?: string | null;
-                "x-company-scope"?: string | null;
-            };
+            header?: never;
             path: {
                 company_id: string;
             };
@@ -3328,11 +3294,7 @@ export interface operations {
     activity_subject_change_api_v1_companies__company_id__official_changes_activity_subject_change_post: {
         parameters: {
             query?: never;
-            header?: {
-                "x-tenant-id"?: string | null;
-                "x-user-id"?: string | null;
-                "x-company-scope"?: string | null;
-            };
+            header?: never;
             path: {
                 company_id: string;
             };
@@ -3370,11 +3332,7 @@ export interface operations {
                 branch_name?: string | null;
                 address?: string | null;
             };
-            header?: {
-                "x-tenant-id"?: string | null;
-                "x-user-id"?: string | null;
-                "x-company-scope"?: string | null;
-            };
+            header?: never;
             path: {
                 company_id: string;
             };
@@ -3405,11 +3363,7 @@ export interface operations {
     complete_branch_opening_api_v1_companies__company_id__branch_openings_post: {
         parameters: {
             query?: never;
-            header?: {
-                "x-tenant-id"?: string | null;
-                "x-user-id"?: string | null;
-                "x-company-scope"?: string | null;
-            };
+            header?: never;
             path: {
                 company_id: string;
             };
@@ -3446,11 +3400,7 @@ export interface operations {
             query?: {
                 branch_id?: string | null;
             };
-            header?: {
-                "x-tenant-id"?: string | null;
-                "x-user-id"?: string | null;
-                "x-company-scope"?: string | null;
-            };
+            header?: never;
             path: {
                 company_id: string;
             };
@@ -3481,11 +3431,7 @@ export interface operations {
     complete_branch_closing_api_v1_companies__company_id__branch_closings_post: {
         parameters: {
             query?: never;
-            header?: {
-                "x-tenant-id"?: string | null;
-                "x-user-id"?: string | null;
-                "x-company-scope"?: string | null;
-            };
+            header?: never;
             path: {
                 company_id: string;
             };
@@ -3531,11 +3477,7 @@ export interface operations {
                 city?: string | null;
                 is_official_branch?: boolean | null;
             };
-            header?: {
-                "x-tenant-id"?: string | null;
-                "x-user-id"?: string | null;
-                "x-company-scope"?: string | null;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };
@@ -3564,11 +3506,7 @@ export interface operations {
     get_branch_record_api_v1_branches__branch_id__get: {
         parameters: {
             query?: never;
-            header?: {
-                "x-tenant-id"?: string | null;
-                "x-user-id"?: string | null;
-                "x-company-scope"?: string | null;
-            };
+            header?: never;
             path: {
                 branch_id: string;
             };
@@ -3599,11 +3537,7 @@ export interface operations {
     patch_branch_record_api_v1_branches__branch_id__patch: {
         parameters: {
             query?: never;
-            header?: {
-                "x-tenant-id"?: string | null;
-                "x-user-id"?: string | null;
-                "x-company-scope"?: string | null;
-            };
+            header?: never;
             path: {
                 branch_id: string;
             };
@@ -3649,11 +3583,7 @@ export interface operations {
                 statuses?: string | null;
                 owner_kind?: string | null;
             };
-            header?: {
-                "x-tenant-id"?: string | null;
-                "x-user-id"?: string | null;
-                "x-company-scope"?: string | null;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };
@@ -3682,11 +3612,7 @@ export interface operations {
     create_partner_card_api_v1_partners_post: {
         parameters: {
             query?: never;
-            header?: {
-                "x-tenant-id"?: string | null;
-                "x-user-id"?: string | null;
-                "x-company-scope"?: string | null;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };
@@ -3719,11 +3645,7 @@ export interface operations {
     get_partner_api_v1_partners__partner_id__get: {
         parameters: {
             query?: never;
-            header?: {
-                "x-tenant-id"?: string | null;
-                "x-user-id"?: string | null;
-                "x-company-scope"?: string | null;
-            };
+            header?: never;
             path: {
                 partner_id: string;
             };
@@ -3754,11 +3676,7 @@ export interface operations {
     delete_partner_card_api_v1_partners__partner_id__delete: {
         parameters: {
             query?: never;
-            header?: {
-                "x-tenant-id"?: string | null;
-                "x-user-id"?: string | null;
-                "x-company-scope"?: string | null;
-            };
+            header?: never;
             path: {
                 partner_id: string;
             };
@@ -3789,11 +3707,7 @@ export interface operations {
     update_partner_card_api_v1_partners__partner_id__patch: {
         parameters: {
             query?: never;
-            header?: {
-                "x-tenant-id"?: string | null;
-                "x-user-id"?: string | null;
-                "x-company-scope"?: string | null;
-            };
+            header?: never;
             path: {
                 partner_id: string;
             };
@@ -3828,11 +3742,7 @@ export interface operations {
     get_company_partners_api_v1_partners_by_company__company_id__get: {
         parameters: {
             query?: never;
-            header?: {
-                "x-tenant-id"?: string | null;
-                "x-user-id"?: string | null;
-                "x-company-scope"?: string | null;
-            };
+            header?: never;
             path: {
                 company_id: string;
             };
@@ -3865,11 +3775,7 @@ export interface operations {
             query: {
                 company_id: string;
             };
-            header?: {
-                "x-tenant-id"?: string | null;
-                "x-user-id"?: string | null;
-                "x-company-scope"?: string | null;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };
@@ -3898,11 +3804,7 @@ export interface operations {
     create_ownership_transaction_api_v1_ownership_transactions_post: {
         parameters: {
             query?: never;
-            header?: {
-                "x-tenant-id"?: string | null;
-                "x-user-id"?: string | null;
-                "x-company-scope"?: string | null;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };
@@ -3935,11 +3837,7 @@ export interface operations {
     initial_partnership_entry_api_v1_ownership_initial_partnership_entry_post: {
         parameters: {
             query?: never;
-            header?: {
-                "x-tenant-id"?: string | null;
-                "x-user-id"?: string | null;
-                "x-company-scope"?: string | null;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };
@@ -3974,11 +3872,7 @@ export interface operations {
     share_transfer_api_v1_ownership_share_transfer_post: {
         parameters: {
             query?: never;
-            header?: {
-                "x-tenant-id"?: string | null;
-                "x-user-id"?: string | null;
-                "x-company-scope"?: string | null;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };
@@ -4013,11 +3907,7 @@ export interface operations {
     ownership_exit_api_v1_ownership_ownership_exit_post: {
         parameters: {
             query?: never;
-            header?: {
-                "x-tenant-id"?: string | null;
-                "x-user-id"?: string | null;
-                "x-company-scope"?: string | null;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };
@@ -4052,11 +3942,7 @@ export interface operations {
     correction_entry_api_v1_ownership_correction_post: {
         parameters: {
             query?: never;
-            header?: {
-                "x-tenant-id"?: string | null;
-                "x-user-id"?: string | null;
-                "x-company-scope"?: string | null;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };
@@ -4091,11 +3977,7 @@ export interface operations {
     reversal_entry_api_v1_ownership_reversal_post: {
         parameters: {
             query?: never;
-            header?: {
-                "x-tenant-id"?: string | null;
-                "x-user-id"?: string | null;
-                "x-company-scope"?: string | null;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };
@@ -4158,11 +4040,7 @@ export interface operations {
                 direction?: string;
                 statuses?: string | null;
             };
-            header?: {
-                "x-tenant-id"?: string | null;
-                "x-user-id"?: string | null;
-                "x-company-scope"?: string | null;
-            };
+            header?: never;
             path: {
                 projection_key: string;
             };
@@ -4200,11 +4078,7 @@ export interface operations {
                 scope_type?: string | null;
                 include_company_wide?: boolean;
             };
-            header?: {
-                "x-tenant-id"?: string | null;
-                "x-user-id"?: string | null;
-                "x-company-scope"?: string | null;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };
@@ -4247,11 +4121,7 @@ export interface operations {
                 facility_id?: string | null;
                 include_company_wide_for_branch?: boolean;
             };
-            header?: {
-                "x-tenant-id"?: string | null;
-                "x-user-id"?: string | null;
-                "x-company-scope"?: string | null;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };
@@ -4280,11 +4150,7 @@ export interface operations {
     create_representative_record_api_v1_representatives_post: {
         parameters: {
             query?: never;
-            header?: {
-                "x-tenant-id"?: string | null;
-                "x-user-id"?: string | null;
-                "x-company-scope"?: string | null;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };
@@ -4317,11 +4183,7 @@ export interface operations {
     get_representative_record_api_v1_representatives__representative_id__get: {
         parameters: {
             query?: never;
-            header?: {
-                "x-tenant-id"?: string | null;
-                "x-user-id"?: string | null;
-                "x-company-scope"?: string | null;
-            };
+            header?: never;
             path: {
                 representative_id: string;
             };
@@ -4352,11 +4214,7 @@ export interface operations {
     delete_representative_record_api_v1_representatives__representative_id__delete: {
         parameters: {
             query?: never;
-            header?: {
-                "x-tenant-id"?: string | null;
-                "x-user-id"?: string | null;
-                "x-company-scope"?: string | null;
-            };
+            header?: never;
             path: {
                 representative_id: string;
             };
@@ -4387,11 +4245,7 @@ export interface operations {
     patch_representative_record_api_v1_representatives__representative_id__patch: {
         parameters: {
             query?: never;
-            header?: {
-                "x-tenant-id"?: string | null;
-                "x-user-id"?: string | null;
-                "x-company-scope"?: string | null;
-            };
+            header?: never;
             path: {
                 representative_id: string;
             };
@@ -4426,11 +4280,7 @@ export interface operations {
     representative_authority_transaction_api_v1_representatives__representative_id__authority_transactions_post: {
         parameters: {
             query?: never;
-            header?: {
-                "x-tenant-id"?: string | null;
-                "x-user-id"?: string | null;
-                "x-company-scope"?: string | null;
-            };
+            header?: never;
             path: {
                 representative_id: string;
             };
@@ -4465,11 +4315,7 @@ export interface operations {
     representative_current_authority_api_v1_representatives__representative_id__current_authority_get: {
         parameters: {
             query?: never;
-            header?: {
-                "x-tenant-id"?: string | null;
-                "x-user-id"?: string | null;
-                "x-company-scope"?: string | null;
-            };
+            header?: never;
             path: {
                 representative_id: string;
             };
@@ -4505,11 +4351,7 @@ export interface operations {
                 page?: number;
                 pageSize?: number;
             };
-            header?: {
-                "x-tenant-id"?: string | null;
-                "x-user-id"?: string | null;
-                "x-company-scope"?: string | null;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };
@@ -4538,11 +4380,7 @@ export interface operations {
     create_process_record_api_v1_processes_post: {
         parameters: {
             query?: never;
-            header?: {
-                "x-tenant-id"?: string | null;
-                "x-user-id"?: string | null;
-                "x-company-scope"?: string | null;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };
@@ -4575,11 +4413,7 @@ export interface operations {
     get_process_record_api_v1_processes__process_id__get: {
         parameters: {
             query?: never;
-            header?: {
-                "x-tenant-id"?: string | null;
-                "x-user-id"?: string | null;
-                "x-company-scope"?: string | null;
-            };
+            header?: never;
             path: {
                 process_id: string;
             };
@@ -4610,11 +4444,7 @@ export interface operations {
     start_existing_process_api_v1_processes__process_id__start_post: {
         parameters: {
             query?: never;
-            header?: {
-                "x-tenant-id"?: string | null;
-                "x-user-id"?: string | null;
-                "x-company-scope"?: string | null;
-            };
+            header?: never;
             path: {
                 process_id: string;
             };
@@ -4645,11 +4475,7 @@ export interface operations {
     complete_process_step_api_v1_processes__process_id__steps__step_key__complete_post: {
         parameters: {
             query?: never;
-            header?: {
-                "x-tenant-id"?: string | null;
-                "x-user-id"?: string | null;
-                "x-company-scope"?: string | null;
-            };
+            header?: never;
             path: {
                 process_id: string;
                 step_key: string;
@@ -4685,11 +4511,7 @@ export interface operations {
     cancel_process_record_api_v1_processes__process_id__cancel_post: {
         parameters: {
             query?: never;
-            header?: {
-                "x-tenant-id"?: string | null;
-                "x-user-id"?: string | null;
-                "x-company-scope"?: string | null;
-            };
+            header?: never;
             path: {
                 process_id: string;
             };
@@ -4728,11 +4550,7 @@ export interface operations {
                 page?: number;
                 pageSize?: number;
             };
-            header?: {
-                "x-tenant-id"?: string | null;
-                "x-user-id"?: string | null;
-                "x-company-scope"?: string | null;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };
@@ -4761,11 +4579,7 @@ export interface operations {
     create_task_record_api_v1_tasks_post: {
         parameters: {
             query?: never;
-            header?: {
-                "x-tenant-id"?: string | null;
-                "x-user-id"?: string | null;
-                "x-company-scope"?: string | null;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };
@@ -4798,11 +4612,7 @@ export interface operations {
     get_task_record_api_v1_tasks__task_id__get: {
         parameters: {
             query?: never;
-            header?: {
-                "x-tenant-id"?: string | null;
-                "x-user-id"?: string | null;
-                "x-company-scope"?: string | null;
-            };
+            header?: never;
             path: {
                 task_id: string;
             };
@@ -4833,11 +4643,7 @@ export interface operations {
     complete_task_record_api_v1_tasks__task_id__complete_post: {
         parameters: {
             query?: never;
-            header?: {
-                "x-tenant-id"?: string | null;
-                "x-user-id"?: string | null;
-                "x-company-scope"?: string | null;
-            };
+            header?: never;
             path: {
                 task_id: string;
             };
@@ -4872,11 +4678,7 @@ export interface operations {
     assign_task_record_api_v1_tasks__task_id__assign_post: {
         parameters: {
             query?: never;
-            header?: {
-                "x-tenant-id"?: string | null;
-                "x-user-id"?: string | null;
-                "x-company-scope"?: string | null;
-            };
+            header?: never;
             path: {
                 task_id: string;
             };
@@ -4915,11 +4717,7 @@ export interface operations {
                 page?: number;
                 pageSize?: number;
             };
-            header?: {
-                "x-tenant-id"?: string | null;
-                "x-user-id"?: string | null;
-                "x-company-scope"?: string | null;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };
@@ -4948,11 +4746,7 @@ export interface operations {
     create_approval_record_api_v1_approvals_post: {
         parameters: {
             query?: never;
-            header?: {
-                "x-tenant-id"?: string | null;
-                "x-user-id"?: string | null;
-                "x-company-scope"?: string | null;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };
@@ -4985,11 +4779,7 @@ export interface operations {
     approve_record_api_v1_approvals__approval_id__approve_post: {
         parameters: {
             query?: never;
-            header?: {
-                "x-tenant-id"?: string | null;
-                "x-user-id"?: string | null;
-                "x-company-scope"?: string | null;
-            };
+            header?: never;
             path: {
                 approval_id: string;
             };
@@ -5024,11 +4814,7 @@ export interface operations {
     reject_record_api_v1_approvals__approval_id__reject_post: {
         parameters: {
             query?: never;
-            header?: {
-                "x-tenant-id"?: string | null;
-                "x-user-id"?: string | null;
-                "x-company-scope"?: string | null;
-            };
+            header?: never;
             path: {
                 approval_id: string;
             };
@@ -5075,11 +4861,7 @@ export interface operations {
                 page?: number;
                 pageSize?: number;
             };
-            header?: {
-                "x-tenant-id"?: string | null;
-                "x-user-id"?: string | null;
-                "x-company-scope"?: string | null;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };
@@ -5111,11 +4893,7 @@ export interface operations {
                 entity_type: string;
                 entity_id: string;
             };
-            header?: {
-                "x-tenant-id"?: string | null;
-                "x-user-id"?: string | null;
-                "x-company-scope"?: string | null;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };
@@ -5146,11 +4924,7 @@ export interface operations {
             query: {
                 operation_id: string;
             };
-            header?: {
-                "x-tenant-id"?: string | null;
-                "x-user-id"?: string | null;
-                "x-company-scope"?: string | null;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };
@@ -5181,11 +4955,7 @@ export interface operations {
             query: {
                 process_instance_id: string;
             };
-            header?: {
-                "x-tenant-id"?: string | null;
-                "x-user-id"?: string | null;
-                "x-company-scope"?: string | null;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };
@@ -5214,11 +4984,7 @@ export interface operations {
     get_audit_record_api_v1_audit__audit_id__get: {
         parameters: {
             query?: never;
-            header?: {
-                "x-tenant-id"?: string | null;
-                "x-user-id"?: string | null;
-                "x-company-scope"?: string | null;
-            };
+            header?: never;
             path: {
                 audit_id: string;
             };
@@ -5251,11 +5017,7 @@ export interface operations {
             query?: {
                 limit?: number;
             };
-            header?: {
-                "x-tenant-id"?: string | null;
-                "x-user-id"?: string | null;
-                "x-company-scope"?: string | null;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };
@@ -5284,11 +5046,7 @@ export interface operations {
     counts_api_v1_action_center_counts_get: {
         parameters: {
             query?: never;
-            header?: {
-                "x-tenant-id"?: string | null;
-                "x-user-id"?: string | null;
-                "x-company-scope"?: string | null;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };
@@ -5303,25 +5061,12 @@ export interface operations {
                     "application/json": components["schemas"]["ApiSuccess_dict_str__int__"];
                 };
             };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
         };
     };
     summary_api_v1_action_center_summary_get: {
         parameters: {
             query?: never;
-            header?: {
-                "x-tenant-id"?: string | null;
-                "x-user-id"?: string | null;
-                "x-company-scope"?: string | null;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };
@@ -5336,15 +5081,6 @@ export interface operations {
                     "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
                 };
             };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
         };
     };
     by_record_api_v1_action_center_by_record_get: {
@@ -5353,11 +5089,7 @@ export interface operations {
                 entity_type: string;
                 entity_id: string;
             };
-            header?: {
-                "x-tenant-id"?: string | null;
-                "x-user-id"?: string | null;
-                "x-company-scope"?: string | null;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };
@@ -5621,9 +5353,7 @@ export interface operations {
                 secret?: string | null;
                 limit?: number | null;
             };
-            header?: {
-                authorization?: string | null;
-            };
+            header?: never;
             path?: never;
             cookie?: never;
         };
@@ -5647,6 +5377,50 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    metrics_api_v1_system_metrics_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    deep_health_api_v1_system_health_deep_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
         };

@@ -53,12 +53,21 @@ from app.domains.ownership.transactions import (
 from app.policies.operation_guards import guard_operation
 
 
-def _context(tenant_id: str, user_id: str | None, company_id: str) -> dict[str, Any]:
+def _context(
+    tenant_id: str,
+    user_id: str | None,
+    company_id: str,
+    *,
+    permissions: list[str] | None = None,
+    company_scope: list[str] | None = None,
+) -> dict[str, Any]:
     return {
         "tenant_id": tenant_id,
         "user_id": user_id,
         "company_id": company_id,
         "module_key": "companies",
+        "permissions": permissions,
+        "company_scope": company_scope,
     }
 
 
@@ -705,10 +714,18 @@ async def complete_capital_increase_for_request(
     user_id: str | None,
     company_id: str,
     request: CapitalIncreaseRequest,
+    permissions: list[str] | None = None,
+    company_scope: list[str] | None = None,
 ) -> dict[str, Any]:
     return await complete_capital_increase(
         session,
-        _context(tenant_id, user_id, company_id),
+        _context(
+            tenant_id,
+            user_id,
+            company_id,
+            permissions=permissions,
+            company_scope=company_scope,
+        ),
         company_id,
         request,
     )

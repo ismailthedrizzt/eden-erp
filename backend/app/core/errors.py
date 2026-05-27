@@ -8,32 +8,93 @@ from sqlalchemy.exc import DBAPIError, ProgrammingError
 
 
 @dataclass(slots=True)
-class DomainError(Exception):
+class EdenError(Exception):
     message: str
     code: str
     status_code: int = status.HTTP_400_BAD_REQUEST
     details: dict[str, Any] | None = None
+    severity: str = "error"
+    user_safe: bool = True
 
     def __str__(self) -> str:
         return self.message
 
 
-def domain_error_to_http(error: DomainError) -> HTTPException:
+class DomainError(EdenError):
+    pass
+
+
+class ValidationError(EdenError):
+    pass
+
+
+class AuthError(EdenError):
+    pass
+
+
+class PermissionDeniedError(EdenError):
+    pass
+
+
+class ScopeDeniedError(EdenError):
+    pass
+
+
+class ModuleSetupRequiredError(EdenError):
+    pass
+
+
+class IntegrityBlockingError(EdenError):
+    pass
+
+
+class OperationFailedError(EdenError):
+    pass
+
+
+class ResourceNotFoundError(EdenError):
+    pass
+
+
+class VersionConflictError(EdenError):
+    pass
+
+
+class InfrastructureMissingError(EdenError):
+    pass
+
+
+class BackendDependencyError(EdenError):
+    pass
+
+
+def eden_error_response(
+    error: EdenError,
+    *,
+    request_id: str | None = None,
+    correlation_id: str | None = None,
+) -> dict[str, Any]:
+    return {
+        "error": error.message,
+        "code": error.code,
+        "message": error.message,
+        "details": error.details or {},
+        "request_id": request_id,
+        "correlation_id": correlation_id,
+    }
+
+
+def domain_error_to_http(error: EdenError) -> HTTPException:
     return HTTPException(
         status_code=error.status_code,
-        detail={
-            "error": error.message,
-            "code": error.code,
-            "details": error.details or {},
-            "message": error.message,
-        },
+        detail=eden_error_response(error),
     )
 
 
 def map_database_error(
     error: Exception, *, fallback_code: str, fallback_message: str
-) -> DomainError:
-    if isinstance(error, DomainError):
+) -> EdenError:
+    if isinstance(error, EdenError):
         return error
 
     details: dict[str, Any] = {}

@@ -1,11 +1,15 @@
 from __future__ import annotations
 
 import json
+import time
 from typing import Any
 from uuid import uuid4
 
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.core.logging import bind_log_context, log_info, log_warning
+from app.core.metrics import record_operation
 
 
 async def table_exists(session: AsyncSession, table_name: str) -> bool:
@@ -27,7 +31,25 @@ async def create_or_get_operation_request(
     entity_id: str,
     module_key: str = "branches",
 ) -> tuple[dict[str, Any] | None, list[str]]:
+    started = time.perf_counter()
+    log_info(
+        "Operation request started.",
+        logger_name="eden.operation",
+        tenant_id=context.get("tenant_id"),
+        user_id=context.get("user_id"),
+        company_id=context.get("company_id"),
+        module_key=module_key,
+        action_key=operation_type,
+    )
     if not await table_exists(session, "public.operation_requests"):
+        log_warning(
+            "Operation infrastructure missing.",
+            logger_name="eden.operation",
+            tenant_id=context.get("tenant_id"),
+            company_id=context.get("company_id"),
+            action_key=operation_type,
+            error_code="OPERATION_INFRASTRUCTURE_MISSING",
+        )
         return None, [
             "İşlem takip altyapısı hazır olmadığı için işlem yalnızca ana kayıt üzerinden "
             "yürütüldü."
@@ -50,6 +72,14 @@ async def create_or_get_operation_request(
     if duplicate_row:
         duplicate_operation = dict(duplicate_row)
         duplicate_operation["_is_duplicate"] = True
+        bind_log_context(operation_id=str(duplicate_operation.get("id")))
+        record_operation(operation_type, "duplicate", (time.perf_counter() - started) * 1000)
+        log_info(
+            "Duplicate operation request returned.",
+            logger_name="eden.operation",
+            operation_id=str(duplicate_operation.get("id")),
+            action_key=operation_type,
+        )
         return duplicate_operation, []
 
     operation_id = str(uuid4())
@@ -86,6 +116,14 @@ async def create_or_get_operation_request(
     )
     operation = dict(result.mappings().one())
     operation["_is_duplicate"] = False
+    bind_log_context(operation_id=str(operation.get("id")))
+    record_operation(operation_type, "processing", (time.perf_counter() - started) * 1000)
+    log_info(
+        "Operation request created.",
+        logger_name="eden.operation",
+        operation_id=str(operation.get("id")),
+        action_key=operation_type,
+    )
     return operation, []
 
 
@@ -97,6 +135,13 @@ async def mark_operation_completed(
 ) -> None:
     if not operation or not operation.get("id"):
         return
+    log_info(
+        "Operation completed.",
+        logger_name="eden.operation",
+        operation_id=str(operation["id"]),
+        warnings_count=len(warnings),
+    )
+    record_operation(str(operation.get("operation_type") or "unknown"), "completed")
     await session.execute(
         text(
             """
@@ -126,6 +171,13 @@ async def mark_operation_failed(
 ) -> None:
     if not operation or not operation.get("id"):
         return
+    log_warning(
+        "Operation failed.",
+        logger_name="eden.operation",
+        operation_id=str(operation["id"]),
+        error_code=code,
+    )
+    record_operation(str(operation.get("operation_type") or "unknown"), "failed")
     await session.execute(
         text(
             """

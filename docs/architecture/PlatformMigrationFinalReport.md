@@ -129,6 +129,28 @@ dondurur. Next CRUD route'lari `FASTAPI_BASE_URL` varsa proxy eder, yoksa
 legacy fallback yalnizca migration bridge olarak kalir. Detaylar
 [Card CRUD FastAPI Migration](./CardCrudFastAPIMigration.md) dokumanindadir.
 
+## 7.13 Python Auth / Tenant Security Addendum
+
+FastAPI backend kendi guvenlik sinirini kurmaya basladi. `backend/app/core/security.py`
+Supabase JWT dogrulama, user context, internal token guard ve production
+security config kontrolunu saglar. `backend/app/policies/access_context.py`
+tenant membership, permission loading ve company scope cozumunu Python tarafinda
+canonical hale getirir. Next BFF proxy artik normal kullanici cagrisinda
+`INTERNAL_BACKEND_TOKEN` tasimaz; varsa Supabase access token'i
+`Authorization: Bearer ...` olarak iletir ve proxy secret'i ayri header'da
+tutar. Detaylar [Python Auth / Tenant Security](./PythonAuthTenantSecurity.md)
+dokumanindadir.
+
+## 7.14 Observability / Logging / Metrics Addendum
+
+FastAPI backend icin structured logging, request/correlation ID middleware,
+normalized error responses, in-memory metrics, DB slow query hooks, system
+metrics/deep health endpointleri ve operation/outbox/audit/projection log
+noktalari kuruldu. Next BFF proxy `X-Request-Id` ve `X-Correlation-Id`
+aktarimini standartlastirdi ve FastAPI response headerlarini frontend'e geri
+tasir. Detaylar [Observability / Logging / Metrics](./ObservabilityLoggingMetrics.md)
+dokumanindadir.
+
 ## 8. Build / Typecheck Sonucu
 
 Final pass sirasinda asagidaki kontroller calistirildi:

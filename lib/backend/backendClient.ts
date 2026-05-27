@@ -15,3 +15,9 @@ export {
   type BackendOperationResponse,
   type BackendPaths,
 } from '@/lib/generated/backend-client'
+
+export {
+  BackendRequestError,
+  normalizeBackendError,
+  type BackendErrorBody,
+} from '@/lib/backend/backendErrors'

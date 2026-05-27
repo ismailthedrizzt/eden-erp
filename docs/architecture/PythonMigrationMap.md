@@ -14,6 +14,7 @@ Bu dokuman TypeScript backend logic'inin FastAPI/Python core backend'e nasil ayr
 | `lib/integrity/*` | `backend/app/policies` veya `backend/app/domains/*/integrity.py` | Cross-domain consistency Python precheck katmanina tasinir. |
 | `lib/security/policyEngine.ts` | `backend/app/policies` | Permission, scope ve record-status karar kaynagi Python olur. |
 | `lib/security/scopePolicy.ts` | `backend/app/policies/scope.py` | Tenant/company/branch/facility scope enforcement Python'a tasinir. |
+| `lib/security/serverPermissions.ts`, `lib/tenancy/server.ts` | `backend/app/core/security.py`, `backend/app/policies/access_context.py` | Supabase JWT, tenant membership, permission loading ve company scope karar kaynagi Python olur. |
 | `lib/domains/*` | `backend/app/domains/*` | TS domain service prototipleri Python domain service'lere donusur. |
 | `lib/setup/moduleReadinessChecker.ts` | `backend/app/services/readiness.py` | Module readiness Python request/startup guard olarak calisir. |
 | `lib/read-models/*.server.ts`, projection query helpers | `backend/app/projections` | Projection/read model service veya DB view contract Python'a tasinir. |
@@ -32,6 +33,8 @@ Bu dokuman TypeScript backend logic'inin FastAPI/Python core backend'e nasil ayr
 | Process | `lib/process/**`, `app/api/processes/**`, `app/api/tasks/**`, `app/api/approvals/**` | `backend/app/domains/process/`, `backend/app/api/v1/{processes,tasks,approvals}.py` | P1 | operation endpoints, audit | task/approval state divergence | `/api/v1/processes`, `/api/v1/tasks`, `/api/v1/approvals` implemented as MVP |
 | Outbox | `lib/outbox/**`, `app/api/cron/outbox-dispatch/route.ts` | `backend/app/domains/outbox/`, `backend/app/workers/` | P1 | event registry, audit | duplicate or lost event dispatch | `/api/v1/system/outbox/dispatch` and `python -m app.workers.outbox_worker --once` implemented |
 | Audit | `lib/audit/**`, `app/api/audit/**` | `backend/app/domains/audit/`, `backend/app/api/v1/audit.py` | P1 | masking, tenant scope, permission | missing compliance trace | `/api/v1/audit` implemented with masking/list/detail MVP |
+| Auth / Tenant Security | `lib/backend/fastApiProxy.ts`, `lib/security/serverPermissions.ts`, `lib/tenancy/**` | `backend/app/core/security.py`, `backend/app/policies/access_context.py`, `scope_policy.py` | P0 | Supabase Auth, tenant membership, permissions | header spoofing / cross-tenant access | Supabase JWT verification, tenant context, permission and scope loading landed |
+| Observability | `middleware.ts`, proxy headers, ad-hoc logs | `backend/app/core/{logging,middleware,metrics,sanitization,error_tracking}.py`, system endpoints | P0/P1 | FastAPI, workers, Next BFF | untraceable production failures | Request/correlation IDs, structured logs, metrics, slow query hooks and error normalization landed |
 
 ## B. TypeScript'te Kalacak
 

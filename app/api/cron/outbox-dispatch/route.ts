@@ -13,6 +13,7 @@ export const runtime = 'nodejs'
 export async function POST(request: NextRequest) {
   const fastApiResponse = await proxyToFastApi(request, '/api/v1/system/outbox/dispatch', {
     method: 'POST',
+    internal: true,
   })
   if (fastApiResponse) return fastApiResponse
 

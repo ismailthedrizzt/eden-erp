@@ -36,10 +36,38 @@ SUPABASE_DB_URL=postgresql+asyncpg://...
 APP_ENV=local
 LOG_LEVEL=INFO
 CORS_ORIGINS=http://localhost:3000
+SUPABASE_URL=https://...
+SUPABASE_JWT_SECRET=...
+SUPABASE_JWKS_URL=https://.../auth/v1/.well-known/jwks.json
+AUTH_REQUIRED=false
+ALLOW_TRUSTED_PROXY_HEADERS=true
+TRUSTED_PROXY_SECRET=local-proxy-secret
+INTERNAL_BACKEND_TOKEN=local-internal-secret
+LOG_FORMAT=json
+DB_SLOW_QUERY_MS=750
+ERROR_TRACKING_ENABLED=false
+SENTRY_DSN=
 ```
 
 The app imports without a database URL. Endpoints that need the database return a controlled
 `BACKEND_DATABASE_NOT_CONFIGURED` response until `DATABASE_URL` or `SUPABASE_DB_URL` is set.
+
+Auth hardening:
+
+- Production/staging require Supabase JWT validation.
+- Local development can relax auth with `AUTH_REQUIRED=false`.
+- Next BFF should forward the Supabase access token as `Authorization: Bearer ...`.
+- Internal worker/cron endpoints use `INTERNAL_BACKEND_TOKEN` or `CRON_SECRET`, not a user JWT.
+- Trusted proxy headers are hints only; production requires validated JWT user and tenant membership.
+
+## Observability
+
+- Every request gets `X-Request-Id` and `X-Correlation-Id` response headers.
+- Structured logs include request, tenant, user, company, operation and process context when available.
+- Sensitive values such as token, secret, password, signed URL, identity number, tax number, phone and email are masked before logging.
+- `GET /api/v1/system/metrics` returns the in-memory metrics snapshot.
+- `GET /api/v1/system/health/deep` runs an internal deep health check.
+- Production should protect system endpoints with `INTERNAL_BACKEND_TOKEN`.
 
 ## Commands
 
