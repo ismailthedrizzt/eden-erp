@@ -1,0 +1,138 @@
+# Productization Readiness Report
+
+## 1. Executive Summary
+
+Gate result: **READY_WITH_P1_DEBT**
+
+Eden ERP has crossed the architecture gate for moving from migration foundation into product hardening. The core direction is now consistent:
+
+- Next.js is frontend/BFF/proxy/UI adapter.
+- FastAPI is canonical core backend.
+- Python worker is the target for outbox/background work.
+- Supabase/PostgreSQL remains data/auth/storage platform.
+- OpenAPI is backend contract source of truth.
+
+No P0 productization blocker was found in the final verification pass. The main remaining risk is P1: temporary TS fallbacks still exist for several migrated route groups until staging verification and frontend E2E smoke flows remove them.
+
+## 2. Architecture Status
+
+| layer | status | notes |
+| --- | --- | --- |
+| Next frontend/BFF | partial/ready with debt | Frontend builds. Next routes are inventoried and classified. Proxy-only violations are checked. Temporary fallbacks remain as P1 debt. |
+| FastAPI backend | ready with P1 hardening | Domain endpoints exist for core company, branch, partner, representative, ownership, process, audit, outbox, policy, integrity, readiness and projection areas. |
+| Python worker | partial | Outbox worker command and system dispatch endpoint exist; production supervision and alerting remain P1/P2. |
+| DB/Supabase | partial | Index plan, safe migration and pooling config exist. Staging EXPLAIN and production rollout remain P1. |
+| OpenAPI contract | ready | Schema export and generated TS type drift checks work. Manual DTO bridge cleanup remains P1/P2. |
+| Domain services | partial/ready with debt | Core modules have Python services; accounting/HR and deeper organization/facility flows remain migrate-later. |
+
+## 3. Module Readiness
+
+| module | readiness | notes |
+| --- | --- | --- |
+| Companies | ready with P1 debt | List/detail/card CRUD and official changes are Python-backed; TS fallbacks remain until staging verification. |
+| Partners / Ownership | partial | Partner card CRUD and ownership transaction creation are Python-backed. Ownership workflow detail/approve/reject/cancel/reverse routes remain P1. |
+| Representatives | ready with P1 debt | Card CRUD and authority transaction endpoint exist. Current authority reads exist; UI proxy/fallback cleanup remains. |
+| Branches | partial | Opening/closing, list/detail/PATCH are Python-backed. Step 14 staging validation and fallback removal remain P1. |
+| Organization | partial | Organization/facility detail work is not fully productized; Step 14 remains deeper follow-up. |
+| Facilities | partial | Facility/location domain coverage is planned and partially represented in branch hydration; full endpoints are Step 14/P1-P2. |
+| Process | partial | Python process/task/approval MVP exists. TS fallback and UI hardening remain P1. |
+| Audit | partial | Python audit read/masking MVP exists. Admin UI and fallback removal remain P1/P2. |
+| Outbox | partial | Python domain/worker exists. Production worker deployment and backlog alerts remain P1. |
+| Action Center | partial | Python MVP exists. Full source coverage and UI hardening remain P1/P2. |
+| Setup / Readiness | ready with P1 debt | Python readiness endpoints exist; DB-backed module settings hardening remains P1. |
+| Action Guide | partial | Canonical eligibility is Python; intent resolver remains TS P2. |
+
+## 4. Security Status
+
+| area | status | notes |
+| --- | --- | --- |
+| Auth | ready with hardening debt | Supabase JWT verification infrastructure exists. JWKS rotation/runtime hardening remains P1. |
+| Tenant context | ready with hardening debt | Tenant membership and context resolution exist; final membership schema alignment remains P1. |
+| Permission loading | partial | DB-backed loader/fallback exists; production role/permission data hardening remains P1. |
+| Scope | partial/ready | Company scope and branch-derived scope checks exist; organization/facility scope completeness remains P1/P2. |
+| Internal endpoints | ready with config dependency | Internal token guard exists for system endpoints. Production env must configure secrets. |
+| Secret exposure | ready | `env:safety` and boundary checks guard public secret exposure. |
+
+P0 security blockers: none found in code/docs verification.
+
+## 5. Performance Status
+
+| area | status | notes |
+| --- | --- | --- |
+| DB pooling | ready | SQLAlchemy pool config and docs exist. |
+| Slow request/query logging | ready | Request timing and DB slow query hooks exist. |
+| Metrics/health | ready | Metrics, deep health and performance smoke endpoints exist. |
+| Index plan | partial | Safe index migration and index plan exist; staging EXPLAIN remains P1. |
+| Load testing | partial | Load test scenarios exist; staging integration remains P2. |
+| Projections | ready with debt | Performance budgets and max page size exist; DB view/index optimization remains P1/P2. |
+| Worker | partial | Batch/lock/retry config exists; production deployment and alerting remain P1. |
+| Retention | planned | Data retention and volume plan exists; archive jobs remain P2. |
+
+## 6. Remaining P0 / P1 / P2
+
+### P0 Productization Blockers
+
+None identified in the final gate.
+
+### P1 Must Fix Before First Customer
+
+| item | current state | target state | removal condition |
+| --- | --- | --- | --- |
+| Temporary TS fallbacks | 74 fallback routes reported by `migration:status`; 56 route fallback warnings from `boundaries:check`. | Migrated route groups become `proxy_to_fastapi`. | FastAPI staging verification + frontend E2E smoke pass. |
+| Ownership workflow subroutes | `[id]/**` approve/reject/cancel/reverse/history/impact remain TS/deprecated wrappers. | Python endpoint or replacement operation flow. | Python tests + staging ownership workflow smoke pass. |
+| Process/audit/action-center fallbacks | Python MVP exists; TS fallback remains. | Next routes proxy-only. | Admin/process/action-center staging smoke pass. |
+| Auth/tenant production hardening | JWT/tenant/permission infrastructure exists. | Final membership schema, JWKS support and denial audit. | Production-like auth integration test pass. |
+| Staging DB performance verification | Index plan exists. | EXPLAIN and load smoke recorded. | Staging query plan and p95 budget pass. |
+| Worker deployment | Worker command exists. | Supervised worker with metrics/alerts. | Deployment health, backlog and retry alerts pass. |
+
+### P2 After Pilot
+
+- Full Action Guide Python intent resolver.
+- Generated OpenAPI client adoption across all frontend services.
+- Accounting and HR FastAPI domain migrations.
+- Organization/facility full product flows.
+- Audit admin UI and exports.
+- Redis/cache introduction if measurements justify it.
+- OpenTelemetry/Sentry/Grafana production integration.
+
+## 7. Recommended Next Productization Sequence
+
+1. Companies page product hardening.
+2. Partners/Ownership product hardening.
+3. Representatives authority product hardening.
+4. Branches product hardening.
+5. Organization/Facilities integration.
+6. Process/Action Center UI hardening.
+7. Audit/admin UI.
+8. Accounting foundation.
+9. HR foundation.
+10. Project/task module.
+
+## 8. Decision
+
+Eden ERP can move into productization/hardening with explicit P1 debt. The first customer/pilot gate should require:
+
+- all P0 migrated route groups verified with `FASTAPI_BASE_URL` in staging,
+- temporary TS fallbacks removed or explicitly disabled for production,
+- production auth/JWT/tenant membership configuration verified,
+- worker deployment running with backlog monitoring,
+- staging smoke tests and basic load tests passing,
+- DB index rollout reviewed.
+
+Until those are complete, the correct label is **READY_WITH_P1_DEBT**, not full production ready.
+
+## 9. Verification Snapshot
+
+Expected final commands:
+
+- `npm run openapi:drift`
+- `npm run typecheck`
+- `npm run migration:status`
+- `npm run boundaries:check`
+- `npm run proxy:coverage`
+- `npm run ts-backend:inventory`
+- `npm run build`
+- `cd backend && python -m ruff check .`
+- `cd backend && python -m mypy app`
+- `cd backend && python -m pytest`
+- `git diff --check`

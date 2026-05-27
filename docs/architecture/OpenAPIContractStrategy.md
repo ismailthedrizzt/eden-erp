@@ -53,11 +53,16 @@ Yapmayacaklari:
 5. Existing manual service wrappers generated endpoint type'larini kullanarak kademeli olarak generated client'a delege eder.
 6. Manual wrapperlar sadece UI-specific normalization ve Next BFF compatibility icin kalir.
 
+Step 19 rule: service wrappers and Next BFF routes must not introduce new
+manual backend DTOs when the FastAPI OpenAPI contract already exposes the
+shape. Temporary manual bridge types must be documented as migration bridges
+and removed after generated client adoption.
+
 Client generation ayrintilari [OpenAPI Client Generation](./OpenAPIClientGeneration.md)
 dokumaninda tutulur. Mevcut hedef `lib/generated/backend-client/types.ts`
 dosyasidir ve `npm run openapi:refresh` ile guncellenir.
 
-CI `npm run openapi:refresh` calistirir ve `backend/openapi.json` ile
+CI `npm run openapi:drift` calistirir ve `backend/openapi.json` ile
 `lib/generated/backend-client/types.ts` drift olusturursa OpenAPI job fail eder.
 Generated files elle duzenlenmez.
 

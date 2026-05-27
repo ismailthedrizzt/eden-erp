@@ -21,6 +21,7 @@ jobs:
       - run: npm run env:safety
       - run: npm run typecheck
       - run: npm run migration:status
+      - run: npm run boundaries:check
       - run: npm run smoke:test:dry
       - run: npm run build
       - run: git diff --check
@@ -61,9 +62,7 @@ jobs:
       - run: python -m pip install --upgrade pip
       - run: pip install -e ".[dev]"
         working-directory: backend
-      - run: npm run openapi:refresh
-      - name: Check generated OpenAPI drift
-        run: git diff --exit-code backend/openapi.json lib/generated/backend-client/types.ts
+      - run: npm run openapi:drift
 
   docker:
     name: Docker Build

@@ -92,7 +92,7 @@ Generated from `app/api/**/route.ts`. The classification is intentionally conser
 | `/api/companies/current-ownership` | `app/api/companies/current-ownership/route.ts` | ERP domain route | yes | no | no | no | `proxy_to_fastapi_with_legacy_fallback` | `/api/v1/companies/{company_id}/current-ownership` | P1 | proxy to FastAPI; remove TS fallback after validation |
 | `/api/companies/partners/[id]` | `app/api/companies/partners/[id]/route.ts` | ERP domain route | yes | yes | no | yes | `proxy_to_fastapi_with_legacy_fallback` | `/api/v1/partners/{partner_id}` | P1 | proxy to FastAPI; remove TS fallback after validation |
 | `/api/companies/partners` | `app/api/companies/partners/route.ts` | ERP domain route | yes | yes | no | yes | `proxy_to_fastapi_with_legacy_fallback` | `/api/v1/partners` | P1 | proxy to FastAPI; remove TS fallback after validation |
-| `/api/companies/representatives/[id]` | `app/api/companies/representatives/[id]/route.ts` | ERP domain route | yes | yes | no | yes | `proxy_to_fastapi_with_legacy_fallback` | `/api/v1/representatives/{representative_id}` and `/api/v1/representatives/{representative_id}/authority-transactions` | P0 | proxy to FastAPI for card CRUD and authority action; remove TS fallback after validation |
+| `/api/companies/representatives/[id]` | `app/api/companies/representatives/[id]/route.ts` | ERP domain route | yes | yes | no | yes | `proxy_to_fastapi_with_legacy_fallback` | `/api/v1/representatives/{representative_id}` | P0 | proxy to FastAPI; remove TS fallback after validation |
 | `/api/companies/representatives` | `app/api/companies/representatives/route.ts` | ERP domain route | yes | yes | no | yes | `proxy_to_fastapi_with_legacy_fallback` | `/api/v1/representatives` | P0 | proxy to FastAPI; remove TS fallback after validation |
 | `/api/companies` | `app/api/companies/route.ts` | ERP domain route | yes | no | no | yes | `proxy_to_fastapi_with_legacy_fallback` | `/api/v1/companies` | P1 | proxy to FastAPI; remove TS fallback after validation |
 | `/api/companies/stakeholders/[id]` | `app/api/companies/stakeholders/[id]/route.ts` | ERP domain route | yes | yes | no | yes | `proxy_to_fastapi_with_legacy_fallback` | `/api/v1/companies/stakeholders/{id}` | P1 | proxy to FastAPI; remove TS fallback after validation |
@@ -198,7 +198,7 @@ Generated from `app/api/**/route.ts`. The classification is intentionally conser
 ## Header Coverage
 
 - Route files: 190
-- Files with explicit migration header: 71
-- Files without explicit migration header: 119
+- Files with explicit migration header: 72
+- Files without explicit migration header: 118
 
 The missing-header count is tracked by `npm run migration:status`. P0 routes should be marked first; broader app/api coverage can follow as routes are converted into FastAPI proxies.

@@ -117,19 +117,39 @@ New Next API route files must include one of the migration status comments:
 
 - `proxy_to_fastapi`
 - `proxy_to_fastapi_with_legacy_fallback`
+- `proxy_to_fastapi_with_temporary_fallback`
 - `keep_bff_proxy`
 - `keep_bff_proxy_with_legacy_fallback`
 - `keep_ui_adapter`
 - `keep_session_bootstrap`
 - `keep_upload_adapter`
+- `keep_temporary_fallback`
 - `migrate_to_fastapi_then_proxy`
 - `migrate_to_fastapi`
 - `delete_obsolete`
 - `deprecated_wrapper`
 - `contract_endpoint`
 - `contract_shared`
+- `keep_shared_contract`
+- `keep_generated`
 - `generated_do_not_edit`
 
 New business mutation logic should not be added to Next API routes.
 
-Use `npm run migration:status` to report route header coverage and client-side backend access risks. Use `npm run migration:inventory` to regenerate [Next API Route Migration Inventory](./NextApiRouteMigrationInventory.md).
+Use `npm run migration:status` to report route header coverage, proxy-only violations, temporary fallback counts and client-side backend access risks. Use `npm run migration:inventory` to regenerate [Next API Route Migration Inventory](./NextApiRouteMigrationInventory.md). Use `npm run boundaries:check` to catch proxy-only and client/server import boundary regressions. Use `npm run ts-backend:inventory` to regenerate [Remaining TS Backend Inventory](./RemainingTsBackendInventory.md).
+
+## Step 19 Final Consolidation
+
+P1 fallback removal queue:
+
+| fallback group | removal condition | owner | risk |
+| --- | --- | --- | --- |
+| company official changes | FastAPI official-change endpoints verified in staging and wizard smoke tests pass | backend/platform | operation history and official field integrity |
+| branch opening/closing | FastAPI branch operation endpoints verified with staging data | backend/platform | branch/facility/org consistency |
+| company/partner/representative card CRUD | FastAPI card endpoints pass EntityForm create/PATCH/delete smoke tests | backend/frontend | form contract drift |
+| ownership transaction workflow subroutes | Python detail/approval/reject/cancel/reverse endpoints or replacement operation endpoints land | backend/platform | current ownership drift |
+| process/tasks/approvals | Python process/task/approval endpoints verified with Action Center flows | platform | task and approval state divergence |
+| audit/action-center/setup readiness | Python endpoints verified in staging and admin screens smoke tested | platform | missing compliance/setup signals |
+| cron outbox dispatch | Python worker deployed and monitored | platform/ops | duplicate or missed events |
+
+No new TS fallback behavior should be added to these groups. A new requirement means adding or extending the FastAPI endpoint first.

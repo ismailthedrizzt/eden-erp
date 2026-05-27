@@ -91,6 +91,9 @@ Deployment readiness helpers:
 
 ```bash
 npm run env:safety
+npm run migration:status
+npm run boundaries:check
+npm run ts-backend:inventory
 npm run smoke:test:dry
 docker compose config
 ```
@@ -114,6 +117,8 @@ Local container files:
 
 Environment, CI/CD, rollback and smoke-test strategy are documented in `docs/architecture`.
 
+Core ERP backend behavior belongs in FastAPI/Python. New Next.js API route code must stay in BFF/proxy, UI adapter, upload adapter or session/bootstrap boundaries.
+
 ## Migration Strategy
 
 1. FastAPI scaffold ve OpenAPI sozlesmesi source of truth olarak kurulacak.
@@ -123,6 +128,11 @@ Environment, CI/CD, rollback and smoke-test strategy are documented in `docs/arc
 5. TypeScript tarafinda yalnizca UI, frontend stores, API client wrapper'lari ve shared/generated contract tipleri kalacak.
 
 Detayli haritalar:
+
+- `docs/architecture/ProductizationReadinessReport.md`
+- `docs/architecture/FastAPIEndpointCoverageMatrix.md`
+- `docs/architecture/NextProxyCoverageMatrix.md`
+- `docs/architecture/RemainingTsBackendInventory.md`
 
 - [Codebase Inventory](./docs/architecture/CodebaseInventory.md)
 - [Python Backend Migration](./docs/architecture/PythonBackendMigration.md)

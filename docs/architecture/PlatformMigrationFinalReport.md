@@ -172,6 +172,29 @@ dosyalari, smoke-test ve env-safety scriptleri eklendi. Detaylar
 [Deployment Topology](./DeploymentTopology.md) ve
 [Release Readiness Checklist](./ReleaseReadinessChecklist.md) dokumanlarindadir.
 
+## 7.17 Python Migration Final Consolidation Addendum
+
+Step 19 ile Next.js API route'larinin kalici backend davranisi kapatildi:
+FastAPI core backend canonical kabul edilir, Next.js ise frontend/BFF/proxy/UI
+adapter katmanidir. `scripts/check-backend-migration-status.js` proxy-only
+ihlallerini ve temporary fallback sayilarini raporlar; `scripts/check-import-
+boundaries.js` client/server ve proxy-only import sinirlarini kontrol eder.
+`RemainingTsBackendInventory.md` kalan TS backend yuzeyini dosya bazinda
+siniflandirir; `TsBackendRemovalReport.md` P1 fallback removal sirasini
+belgeler.
+
+## 7.18 Productization Readiness Gate Addendum
+
+Final verification gate sonucu **READY_WITH_P1_DEBT** olarak belirlendi. P0
+productization blocker bulunmadi; ancak migrated route gruplarinda temporary TS
+fallbackler, ownership workflow subroute'lari, production auth/tenant E2E,
+staging DB performance verification ve worker deployment P1 must-fix olarak
+kalir. Endpoint/proxy coverage ve gate karari
+[FastAPI Endpoint Coverage Matrix](./FastAPIEndpointCoverageMatrix.md),
+[Next Proxy Coverage Matrix](./NextProxyCoverageMatrix.md) ve
+[Productization Readiness Report](./ProductizationReadinessReport.md)
+dokumanlarinda tutulur.
+
 ## 8. Build / Typecheck Sonucu
 
 Final pass sirasinda asagidaki kontroller calistirildi:

@@ -35,6 +35,7 @@ Bu dokuman TypeScript backend logic'inin FastAPI/Python core backend'e nasil ayr
 | Audit | `lib/audit/**`, `app/api/audit/**` | `backend/app/domains/audit/`, `backend/app/api/v1/audit.py` | P1 | masking, tenant scope, permission | missing compliance trace | `/api/v1/audit` implemented with masking/list/detail MVP |
 | Auth / Tenant Security | `lib/backend/fastApiProxy.ts`, `lib/security/serverPermissions.ts`, `lib/tenancy/**` | `backend/app/core/security.py`, `backend/app/policies/access_context.py`, `scope_policy.py` | P0 | Supabase Auth, tenant membership, permissions | header spoofing / cross-tenant access | Supabase JWT verification, tenant context, permission and scope loading landed |
 | Observability | `middleware.ts`, proxy headers, ad-hoc logs | `backend/app/core/{logging,middleware,metrics,sanitization,error_tracking}.py`, system endpoints | P0/P1 | FastAPI, workers, Next BFF | untraceable production failures | Request/correlation IDs, structured logs, metrics, slow query hooks and error normalization landed |
+| TS backend removal | `app/api/**`, `lib/{operations,process,outbox,audit,integrity,setup,read-models,domains,security}` | FastAPI domain/API/worker services plus generated OpenAPI contracts | P1 | all migrated modules | duplicate backend logic and unclear ownership | `RemainingTsBackendInventory.md`, `TsBackendRemovalReport.md`, `boundaries:check` and hardened `migration:status` landed |
 
 ## B. TypeScript'te Kalacak
 
@@ -108,18 +109,26 @@ Allowed statuses:
 - `keep_bff_proxy_with_legacy_fallback`
 - `proxy_to_fastapi`
 - `proxy_to_fastapi_with_legacy_fallback`
+- `proxy_to_fastapi_with_temporary_fallback`
 - `keep_ui_adapter`
 - `keep_session_bootstrap`
 - `keep_upload_adapter`
+- `keep_temporary_fallback`
 - `migrate_to_fastapi`
 - `migrate_to_fastapi_then_proxy`
 - `delete_obsolete`
 - `deprecated_wrapper`
 - `contract_endpoint`
 - `contract_shared`
+- `keep_shared_contract`
+- `keep_generated`
 - `generated_do_not_edit`
 
 Step 11 itibariyla FastAPI endpointi olan Next route'lari icin tercih edilen
 status `proxy_to_fastapi` veya `proxy_to_fastapi_with_legacy_fallback` oldu.
 `migrate_to_fastapi` TS backend core dosyalari ve henuz proxy'ye inmemis
 backend logic icin kullanilir.
+
+Step 19 itibariyla `npm run boundaries:check` proxy-only rotalarda TS
+backend/domain importlarini critical error olarak yakalar. `npm run
+ts-backend:inventory` kalan TS backend yuzeyini dosya bazinda listeler.

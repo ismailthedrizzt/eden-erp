@@ -69,16 +69,31 @@ Gecerli status degerleri:
 - `keep_bff_proxy`
 - `proxy_to_fastapi`
 - `proxy_to_fastapi_with_legacy_fallback`
+- `proxy_to_fastapi_with_temporary_fallback`
 - `keep_ui_adapter`
 - `keep_session_bootstrap`
 - `keep_upload_adapter`
+- `keep_temporary_fallback`
 - `migrate_to_fastapi`
 - `migrate_to_fastapi_then_proxy`
 - `delete_obsolete`
 - `deprecated_wrapper`
 - `contract_endpoint`
 - `contract_shared`
+- `keep_shared_contract`
+- `keep_generated`
 - `generated_do_not_edit`
+
+## Final Consolidation Rule
+
+Step 19 makes FastAPI the canonical core backend in code review terms as well as runtime architecture. New ERP domain behavior must be implemented under `backend/app/**`. Next.js API routes may only:
+
+- proxy to FastAPI,
+- adapt frontend/session/upload concerns,
+- keep explicitly documented temporary fallbacks,
+- expose shared/generated contracts.
+
+Use `npm run migration:status`, `npm run boundaries:check`, and `npm run ts-backend:inventory` before accepting new backend-facing TS changes.
 
 ## Ilgili Dokumanlar
 
@@ -89,3 +104,5 @@ Gecerli status degerleri:
 - [OpenAPI Contract Strategy](./OpenAPIContractStrategy.md)
 - [Scaling Architecture](./ScalingArchitecture.md)
 - [Next Cleanup Plan](./NextCleanupPlan.md)
+- [Remaining TS Backend Inventory](./RemainingTsBackendInventory.md)
+- [TS Backend Removal Report](./TsBackendRemovalReport.md)

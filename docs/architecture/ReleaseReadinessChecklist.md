@@ -3,8 +3,10 @@
 - `npm run typecheck` passed.
 - `npm run build` passed.
 - `npm run migration:status` has P0 missing headers = 0.
+- `npm run boundaries:check` has critical errors = 0.
+- `npm run proxy:coverage` and `npm run ts-backend:inventory` are current when architecture docs are part of the release.
 - `npm run env:safety` passed.
-- `npm run openapi:refresh` is up to date.
+- `npm run openapi:drift` is up to date.
 - `cd backend && python -m ruff check .` passed.
 - `cd backend && python -m mypy app` passed.
 - `cd backend && python -m pytest` passed.
@@ -13,7 +15,10 @@
 - `FASTAPI_BASE_URL` configured in Next.
 - `AUTH_REQUIRED=true` in FastAPI production.
 - JWT verification configured.
+- Trusted proxy headers are not the only production identity source.
+- Tenant membership and company/branch scope behavior verified with production-like auth.
 - `INTERNAL_BACKEND_TOKEN` configured in Next, FastAPI and worker.
+- Metrics, deep health and system endpoints protected by internal token or deployment allowlist.
 - Worker process running.
 - Outbox backlog acceptable.
 - Audit write/read OK.

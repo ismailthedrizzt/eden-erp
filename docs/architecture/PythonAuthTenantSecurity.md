@@ -78,3 +78,19 @@ Internal system endpoints such as `/api/v1/system/outbox/dispatch` use `INTERNAL
 - Supabase RLS and FastAPI app policy alignment needs an end-to-end audit.
 - Auth denial audit logging is prepared as a follow-up to avoid noisy eligibility checks.
 - E2E auth tests should cover real Supabase sessions through the Next BFF.
+
+## Productization Gate
+
+P0 blockers checked in Step 20:
+
+- production auth bypass: not allowed by config guardrails
+- tenant scope bypass: no known bypass; membership/scope integration still needs staging E2E
+- service role key client exposure: guarded by env/import checks
+- blind trust in proxy identity headers: production requires JWT and/or trusted proxy secret
+
+P1 before first customer:
+
+- run production-like Supabase JWT session E2E through Next BFF to FastAPI
+- finalize tenant membership schema and seed role/permission data
+- add auth/policy denial audit events for real API attempts
+- validate branch/facility/organization scope with seeded staging data

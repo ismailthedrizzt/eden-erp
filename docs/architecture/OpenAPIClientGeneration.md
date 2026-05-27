@@ -68,12 +68,15 @@ olarak yapilacaktir.
 Detayli adoption durumu [Generated OpenAPI Client Adoption](./GeneratedOpenAPIClientAdoption.md)
 dokumanindadir.
 
-## CI Follow-up
+## CI / Boundary Status
 
-OpenAPI refresh henuz CI'da zorunlu degildir. P2 takip maddesi olarak:
+CI artik `npm run openapi:drift` calistirir ve `backend/openapi.json` ile
+`lib/generated/backend-client/types.ts` drift'ini kontrol eder. Step 19 ile
+`npm run boundaries:check` ve `npm run ts-backend:inventory` da frontend
+service sinirini gorunur hale getirir.
 
-- FastAPI schema export
-- generated type diff kontrolu
-- breaking change raporu
+P1 takip:
 
-CI pipeline'ina eklenecektir.
+- manual DTO bridge tiplerini generated OpenAPI types ile degistir,
+- `companyService` ve diger servislerde backend validation tekrarlarini kaldir,
+- FastAPI endpointleri staging'de dogrulandikca Next BFF fallbacklerini sil.

@@ -27,6 +27,21 @@ flowchart LR
 
 Browser to FastAPI direct access is a future option only after CORS/JWT strategy is explicitly approved.
 
+## Backend Ownership Rule
+
+FastAPI is the deployment unit for core ERP backend behavior. Next.js API
+routes deployed with the web app are compatibility BFF endpoints only. They may
+forward auth/session context, handle upload/session/bootstrap concerns, and keep
+documented temporary fallbacks during migration. They must not become the
+permanent home for operation orchestration, process, audit, outbox, policy,
+readiness, integrity or projection runtime logic.
+
+Release checks should include:
+
+- `npm run migration:status`
+- `npm run boundaries:check`
+- `npm run ts-backend:inventory` when architecture inventory needs refresh
+
 ## Platform Options
 
 - Vercel for Next.js plus external FastAPI/worker containers.

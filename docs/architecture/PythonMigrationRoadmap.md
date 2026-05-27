@@ -85,6 +85,11 @@ Bu roadmap FastAPI core backend gecisi icin ilk tasima sirasini belirler.
    - Implemented: Next/FastAPI/worker topology docs, CI jobs, Docker/compose skeleton, env examples, smoke-test and env-safety scripts.
    - Follow-up: provider-specific deploy hooks, production secret manager wiring and staging smoke/load automation.
 
+16. **Python Migration Final Consolidation / TS Backend Removal** - in progress / boundary enforcement landed
+   - Target: `scripts/check-backend-migration-status.js`, `scripts/check-import-boundaries.js`, `RemainingTsBackendInventory.md` and `TsBackendRemovalReport.md`.
+   - Implemented: proxy-only boundary checks, generated TS backend inventory, CI import-boundary check and final rule that new domain logic belongs in FastAPI/Python.
+   - Follow-up: remove P1 temporary TS fallbacks after FastAPI staging verification and convert migrated routes to `proxy_to_fastapi`.
+
 11. **Setup Readiness**
     - Module readiness Python startup/request guard olarak uygulanir.
     - Implemented: `/api/v1/setup/readiness` ve module readiness endpointleri eklendi.

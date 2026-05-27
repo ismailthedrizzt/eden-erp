@@ -33,6 +33,7 @@ This is a newly designed platform, not a legacy system that must preserve obsole
 - **Runtime**: Next.js API routes during migration
 - **Role**: proxy/adaptor, UI-specific endpoint, and frontend compatibility bridge
 - **Rule**: permanent domain mutation, process engine, policy engine, outbox dispatcher, audit core logic and transaction boundary logic must not remain here long-term
+- **Hard rule**: Do not add new domain/business logic to Next.js API routes. New core backend logic must be implemented in FastAPI/Python. Next routes may only proxy, adapt frontend/session/upload concerns, or keep explicitly documented temporary fallbacks.
 
 ### Core Backend
 - **Framework**: FastAPI / Python
@@ -78,10 +79,18 @@ Allowed statuses:
 keep_frontend
 keep_bff_proxy
 keep_ui_adapter
+proxy_to_fastapi
+proxy_to_fastapi_with_legacy_fallback
+proxy_to_fastapi_with_temporary_fallback
+keep_session_bootstrap
+keep_upload_adapter
+keep_temporary_fallback
 migrate_to_fastapi
 migrate_to_fastapi_then_proxy
 delete_obsolete
 contract_shared
+keep_shared_contract
+keep_generated
 generated_do_not_edit
 deprecated_wrapper
 ```
