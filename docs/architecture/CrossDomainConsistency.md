@@ -42,3 +42,11 @@ Cross-domain consistency, Eden ERP'de sirket, sube, ortak, temsilci, organizasyo
 ## Eksik Altyapi
 
 Eksik tablo, view veya kurulum hatasi kullaniciya teknik detay olarak gosterilmez. Gerekirse "kurulum durumunu kontrol et" gibi setup action onerilir.
+
+## FastAPI Guard Katmani
+
+Cross-domain consistency artik Python guard akisiyle de temsil edilir:
+readiness, policy ve integrity sirasi mutation oncesinde calisir. Branch,
+capital, representative authority ve ownership transaction operasyonlari bu
+guardlari kullanmaya basladi. Detaylar:
+[Policy / Integrity / Readiness FastAPI Migration](./PolicyIntegrityReadinessFastAPIMigration.md).

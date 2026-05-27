@@ -20,6 +20,9 @@
     "backend:lint": "cd backend && ruff check .",
     "backend:typecheck": "cd backend && mypy app",
     "backend:format": "cd backend && ruff format .",
+    "openapi:export": "cd backend && python scripts/export_openapi.py",
+    "openapi:generate": "openapi-typescript backend/openapi.json -o lib/generated/backend-client/types.ts && node scripts/mark-generated-openapi-client.js",
+    "openapi:refresh": "npm run openapi:export && npm run openapi:generate",
     "migration:status": "node scripts/check-backend-migration-status.js",
     "migration:inventory": "node scripts/check-backend-migration-status.js write-inventory",
     "check:all": "npm run typecheck && npm run build && node -e \"console.log('Backend checks: run npm run backend:lint && npm run backend:typecheck && npm run backend:test after installing backend dependencies')\"",
@@ -78,6 +81,7 @@
     "autoprefixer": "^10.4.19",
     "eslint": "9.39.4",
     "eslint-config-next": "15.5.15",
+    "openapi-typescript": "^7.13.0",
     "postcss": "^8.4.38",
     "tailwindcss": "^3.4.4",
     "typescript": "^5.4.5"

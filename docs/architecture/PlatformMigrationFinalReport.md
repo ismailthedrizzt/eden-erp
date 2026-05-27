@@ -73,6 +73,29 @@ Ortaklik transaction islemleri FastAPI Ownership ve Partner servislerine tasinma
 
 Process instance/task/approval, Audit read/write/masking, Outbox dispatcher ve Action Center minimal read adapter Python backend tarafinda MVP olarak kuruldu. Canonical endpointler `/api/v1/processes`, `/api/v1/tasks`, `/api/v1/approvals`, `/api/v1/audit`, `/api/v1/action-center` ve `/api/v1/system/outbox/dispatch` altindadir. Next.js route'lari `FASTAPI_BASE_URL` varsa proxy eder; yoksa migration bridge TS fallback calisir. Outbox worker `python -m app.workers.outbox_worker --once` komutuyla batch isleyebilir. Detaylar [Process / Outbox / Audit FastAPI Migration](./ProcessOutboxAuditFastAPIMigration.md) dokumanindadir.
 
+## 7.8 Policy / Integrity / Readiness FastAPI Migration Addendum
+
+Permission registry, policy engine, scope policy, module readiness, integrity checker
+ve action eligibility Python backend tarafinda canonical MVP olarak kuruldu.
+`/api/v1/setup/readiness`, `/api/v1/policy/*`, `/api/v1/integrity/*` ve
+`/api/v1/action-eligibility/evaluate` endpointleri eklendi. Branch, capital,
+representative authority ve ownership transaction operasyonlari mutation oncesi
+readiness/policy/integrity guard akisini kullanmaya basladi. Detaylar
+[Policy / Integrity / Readiness FastAPI Migration](./PolicyIntegrityReadinessFastAPIMigration.md)
+dokumanindadir.
+
+## 7.9 Projection / Read Model FastAPI Migration Addendum
+
+Company, branch, partner, representative ve current ownership read modelleri
+Python projection katmanina tasinmaya basladi. `/api/v1/companies`,
+`/api/v1/branches`, `/api/v1/partners`, `/api/v1/representatives` ve
+`/api/v1/projections/{projection_key}` endpointleri pagination/search/sort/status
+contract'ini uretir. Next.js list/detail route'lari `FASTAPI_BASE_URL` varsa proxy
+eder. OpenAPI client generation icin `openapi:export`, `openapi:generate` ve
+`openapi:refresh` scriptleri eklendi. Detaylar
+[Projection / Read Model FastAPI Migration](./ProjectionReadModelFastAPIMigration.md)
+ve [OpenAPI Client Generation](./OpenAPIClientGeneration.md) dokumanlarindadir.
+
 ## 8. Build / Typecheck Sonucu
 
 Final pass sirasinda asagidaki kontroller calistirildi:

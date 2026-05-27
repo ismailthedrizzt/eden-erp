@@ -50,14 +50,17 @@ Bu roadmap FastAPI core backend gecisi icin ilk tasima sirasini belirler.
 
 9. **Policy Engine**
    - Permission, scope, record status ve module readiness enforcement Python'a tasinir.
+   - Implemented: Python permission registry, policy engine, scope policy ve `/api/v1/policy/*` endpointleri eklendi.
 
 10. **Integrity Checks**
    - Cross-domain blocking/warning precheck katmani Python'a tasinir.
+   - Implemented: Python integrity registry/checker ve `/api/v1/integrity/*` endpointleri eklendi; branch/capital/representative/ownership operasyonlari guard kullanmaya basladi.
 
 ## P2
 
 11. **Setup Readiness**
     - Module readiness Python startup/request guard olarak uygulanir.
+    - Implemented: `/api/v1/setup/readiness` ve module readiness endpointleri eklendi.
 
 12. **Action Center** - initial FastAPI read adapter landed
     - Unified pending work source Python API ve projection service'e tasinir.
@@ -65,9 +68,11 @@ Bu roadmap FastAPI core backend gecisi icin ilk tasima sirasini belirler.
 
 13. **Projection services**
     - Read model query helpers Python'a veya DB view contract'a tasinir.
+    - Implemented: company, branch, partner, representative ve current ownership projection endpointleri Python'a tasinmaya basladi.
 
 14. **Action Guide backend resolver**
     - Deterministic resolver ve eligibility Python'a tasinir; Next UI sadece client olur.
+    - Implemented: Python action eligibility service ve `/api/v1/action-eligibility/evaluate` endpointi eklendi; tam intent resolver P2 olarak kalir.
 
 ## Migration Rule
 

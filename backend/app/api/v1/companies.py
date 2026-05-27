@@ -1,6 +1,6 @@
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_session
@@ -29,9 +29,10 @@ from app.domains.company.schemas import (
     TitleChangeRequest,
 )
 from app.domains.company.service import get_company_by_id
-from app.domains.ownership.current import get_current_ownership_for_company
+from app.projections.company import build_company_detail_read_model, list_company_projection
+from app.projections.current_ownership import current_ownership_projection
+from app.projections.query import projection_query_from_params
 from app.schemas.common import ApiSuccess, OperationResponse
-from app.schemas.placeholder import PlaceholderResponse
 
 router = APIRouter()
 
@@ -39,13 +40,64 @@ RequestContextDep = Annotated[RequestContext, Depends(get_request_context)]
 SessionDep = Annotated[AsyncSession, Depends(get_session)]
 
 
-@router.get("", response_model=PlaceholderResponse)
-async def list_companies() -> PlaceholderResponse:
-    return PlaceholderResponse(
-        status="planned",
-        module="companies",
-        message="Company endpoints will migrate from Next.js BFF routes to FastAPI.",
-    )
+@router.get("", response_model=ApiSuccess[dict[str, Any]])
+async def list_companies(
+    session: SessionDep,
+    context: RequestContextDep,
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=50, alias="pageSize", ge=1, le=200),
+    search: str | None = Query(default=None),
+    sort: str | None = Query(default=None),
+    direction: str = Query(default="asc"),
+    statuses: str | None = Query(default=None),
+) -> ApiSuccess[dict[str, Any]]:
+    tenant_id = require_tenant(context)
+    try:
+        result = await list_company_projection(
+            session,
+            projection_query_from_params(
+                tenant_id=tenant_id,
+                page=page,
+                page_size=page_size,
+                search=search,
+                sort=sort,
+                direction=direction,
+                statuses=statuses,
+            ),
+        )
+        return ApiSuccess(
+            data={
+                "data": result.data,
+                "meta": result.meta.model_dump(),
+                "projection": result.projection.model_dump(),
+            },
+            warnings=result.warnings,
+            message="Sirketler listelendi.",
+        )
+    except DomainError as error:
+        raise domain_error_to_http(error) from error
+
+
+@router.get("/{company_id}", response_model=ApiSuccess[dict[str, Any]])
+async def company_detail(
+    company_id: str,
+    session: SessionDep,
+    context: RequestContextDep,
+) -> ApiSuccess[dict[str, Any]]:
+    tenant_id = require_tenant(context)
+    try:
+        data = await build_company_detail_read_model(
+            session,
+            tenant_id=tenant_id,
+            company_id=company_id,
+        )
+        return ApiSuccess(
+            data=data,
+            warnings=data.get("warnings", []),
+            message="Sirket detayi getirildi.",
+        )
+    except DomainError as error:
+        raise domain_error_to_http(error) from error
 
 
 @router.get(
@@ -102,8 +154,8 @@ async def current_ownership_for_company(
         company = await get_company_by_id(session, tenant_id, company_id)
         if not company:
             raise DomainError("Sirket kaydi bulunamadi.", "COMPANY_NOT_FOUND", 404)
-        rows = await get_current_ownership_for_company(session, tenant_id, company_id)
-        return ApiSuccess(data=[row.model_dump(mode="json") for row in rows])
+        projection = await current_ownership_projection(session, tenant_id, company_id)
+        return ApiSuccess(data=projection.data, warnings=projection.warnings)
     except DomainError as error:
         raise domain_error_to_http(error) from error
 

@@ -59,3 +59,11 @@ Kullanici arayuzunde teknik tablo, SQL, RPC veya migration ifadeleri gosterilmez
 ## Kullanici Dili
 
 Kullaniciya "tenant" yerine "calisma alani", "table/view missing" yerine "modul kurulumu tamamlanmamis", "dependency missing" yerine "bu islem icin gerekli modul aktif degil", "setup required" yerine "kurulum gerekli" denir.
+
+## FastAPI Canonical Layer
+
+Module readiness registry ve checker Python backend'e tasinmaya basladi:
+`backend/app/setup/readiness_registry.py` ve `readiness_checker.py` canonical
+MVP'dir. Next.js `/api/setup/readiness/**` route'lari `FASTAPI_BASE_URL`
+varsa `/api/v1/setup/readiness/**` endpointlerine proxy eder; TS fallback yalniz
+migration bridge olarak kalir.

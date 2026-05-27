@@ -27,7 +27,22 @@ export function buildBackendHeaders(request: NextRequest, options: ProxyOptions 
   headers.set('content-type', request.headers.get('content-type') || 'application/json')
   headers.set('x-tenant-id', options.tenantId || tenantContext.tenantId)
   headers.set('x-user-id', options.userId || request.headers.get('x-user-id') || '')
+  if (request.headers.get('x-user-permissions')) {
+    headers.set('x-user-permissions', request.headers.get('x-user-permissions') || '')
+  }
+  if (request.headers.get('x-company-id')) {
+    headers.set('x-company-id', request.headers.get('x-company-id') || '')
+  }
+  if (request.headers.get('x-branch-id')) {
+    headers.set('x-branch-id', request.headers.get('x-branch-id') || '')
+  }
   if (options.companyScope) headers.set('x-company-scope', options.companyScope)
+  if (!options.companyScope && request.headers.get('x-company-scope')) {
+    headers.set('x-company-scope', request.headers.get('x-company-scope') || '')
+  }
+  if (request.headers.get('x-branch-scope')) {
+    headers.set('x-branch-scope', request.headers.get('x-branch-scope') || '')
+  }
   if (request.headers.get('x-request-id')) headers.set('x-request-id', request.headers.get('x-request-id') || '')
   if (process.env.INTERNAL_BACKEND_TOKEN) {
     headers.set('authorization', `Bearer ${process.env.INTERNAL_BACKEND_TOKEN}`)

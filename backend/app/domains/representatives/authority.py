@@ -32,6 +32,7 @@ from app.domains.representatives.service import (
     get_representative_by_id,
     representative_card_status,
 )
+from app.policies.operation_guards import guard_operation
 
 
 def _context(
@@ -76,6 +77,17 @@ def _operation_type(transaction_type: str) -> str:
         "Düzeltme Kaydı": "representative.authority_correction",
         "Ters Kayıt": "representative.authority_reverse",
     }.get(transaction_type, "representative.authority_transaction")
+
+
+def _required_permission(transaction_type: str) -> str:
+    operation_type = _operation_type(transaction_type)
+    if operation_type.endswith("authority_start"):
+        return "representatives.authorityStart"
+    if operation_type.endswith("authority_suspend"):
+        return "representatives.authoritySuspend"
+    if operation_type.endswith("authority_terminate"):
+        return "representatives.authorityTerminate"
+    return "representatives.authorityUpdate"
 
 
 def _request_has_explicit_scope(request: RepresentativeAuthorityTransactionRequest) -> bool:
@@ -422,6 +434,21 @@ async def perform_authority_transaction(
             if not representative:
                 raise DomainError("Temsilci kaydi bulunamadi.", "REPRESENTATIVE_NOT_FOUND", 404)
             context["company_id"] = str(representative["company_id"])
+            warnings.extend(
+                await guard_operation(
+                    session,
+                    context,
+                    operation_key=_operation_type(request.transaction_type),
+                    module_key="representatives",
+                    required_permissions=[_required_permission(request.transaction_type)],
+                    readiness_modules=["companies", "representatives"],
+                    integrity_operation_key="representative_authority",
+                    resource={
+                        "company_id": str(representative["company_id"]),
+                        "representative_id": representative_id,
+                    },
+                )
+            )
             operation, operation_warnings = await create_or_get_operation_request(
                 session,
                 context,

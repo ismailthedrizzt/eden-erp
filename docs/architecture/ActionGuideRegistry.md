@@ -59,3 +59,10 @@ Sermaye Artirimi gibi bagimli islemler icin Ortaklarimiz modulu ve guncel ortakl
 Bos query sik kullanilan actionlari dondurur. Dolu query en iyi intent'i, alternatif eslesmeleri, adimlari, engel sebeplerini, uyarilari ve komut butonlarini dondurur.
 
 Rehber endpoint'i veri degistirmez. `POST /api/ai/action-guide/actions` da sadece yonlendirme komutunun guvenli oldugunu bildirir; mutation yapmaz.
+
+## FastAPI Eligibility
+
+Action Guide intent matching TS tarafinda migration bridge olarak kalabilir; ancak
+canonical action eligibility Python tarafinda `backend/app/policies/action_eligibility.py`
+ve `/api/v1/policy/action-eligibility` endpointiyle uretilebilir hale geldi.
+Tam resolver migration sonraki fazda tamamlanacaktir.

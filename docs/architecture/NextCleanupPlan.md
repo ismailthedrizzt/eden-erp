@@ -79,6 +79,13 @@ Bu plan Next.js tarafinda kalacak, silinecek, proxy olacak ve FastAPI'ye tasinac
 | `app/api/audit/**` | FastAPI proxy is active when `FASTAPI_BASE_URL` is configured; TS audit read service remains fallback. | Remove TS fallback after Python audit permission/scope hardening and admin UI smoke tests. |
 | `app/api/action-center/**` | FastAPI proxy is active when `FASTAPI_BASE_URL` is configured; TS resolver remains fallback. | Remove TS fallback after Python Action Center source coverage includes operations/outbox warnings. |
 | `app/api/cron/outbox-dispatch/route.ts` | FastAPI proxy is active when `FASTAPI_BASE_URL` is configured; TS dispatcher remains fallback. | Remove TS dispatcher after Python worker deployment is live. |
+| `app/api/setup/readiness/**` | FastAPI proxy is active when `FASTAPI_BASE_URL` is configured; TS readiness fallback remains a migration bridge. | Remove TS readiness fallback after Python readiness is validated against staging DB. |
+| `app/api/policy/**` | FastAPI-only BFF proxy endpoints; no TS policy fallback should be added. | Keep as thin proxy until frontend can call generated backend client. |
+| `app/api/integrity/**` | FastAPI-only BFF proxy endpoints; no TS integrity fallback should be added. | Keep as thin proxy until frontend can call generated backend client. |
+| `app/api/companies` and `app/api/companies/[company_id]` GET | FastAPI proxy is active when `FASTAPI_BASE_URL` is configured; TS read fallback remains for local migration. | Remove TS read model fallback after Python projection endpoints are validated. |
+| `app/api/companies/branches/**` GET | FastAPI proxy is active for branch list/detail reads; PATCH/DELETE remain guarded BFF migration bridge. | Remove branch read fallback after projection smoke tests. |
+| `app/api/companies/partners` GET | FastAPI proxy is active for partner list projection. | Remove partner list fallback after current ownership projection view is verified. |
+| `app/api/companies/representatives` GET | FastAPI proxy is active for representative list projection. | Remove representative list fallback after current authority view scope fields are complete. |
 
 ## official-changes/_shared.ts split plan
 

@@ -14,6 +14,7 @@ import { resolveBaseUpdatedAt, resolveBaseVersion } from '@/lib/operations/idemp
 import { requireBranchPolicy } from '@/lib/security/policies/branchPolicies'
 import { fieldControlViolationResponse, getOperationControlledPatchViolation } from '@/lib/field-controls/fieldControlGuards'
 import { getBranchById, updateBranchCard } from '@/lib/domains/branches/branch.service'
+import { proxyToFastApi } from '@/lib/backend/fastApiProxy'
 
 const emptyStringToUndefined = (value: unknown) => value === '' ? undefined : value
 const optionalUuid = z.preprocess(emptyStringToUndefined, z.string().uuid().optional().nullable())
@@ -31,6 +32,9 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params
+  const fastApiResponse = await proxyToFastApi(request, `/api/v1/branches/${id}`)
+  if (fastApiResponse) return fastApiResponse
+
   const supabase = createServiceClient()
   const policy = await requireBranchPolicy({ request, supabase, actionKey: 'branch.view', branchId: id })
   if (policy instanceof Response) return policy

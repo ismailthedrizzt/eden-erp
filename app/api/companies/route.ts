@@ -24,6 +24,7 @@ import { OperationRequestService } from '@/lib/operations/operationRequestServic
 import { resolveBaseUpdatedAt, resolveBaseVersion, resolveClientRequestId, stripOperationControlFields } from '@/lib/operations/idempotency'
 import { operationStatusMessage } from '@/lib/operations/operationStatus'
 import { OutboxEventService } from '@/lib/outbox/outboxEventService'
+import { proxyToFastApi } from '@/lib/backend/fastApiProxy'
 
 const emptyStringToUndefined = (value: unknown) => value === '' ? undefined : value
 const optionalUuid = z.preprocess(emptyStringToUndefined, z.string().uuid().optional().nullable())
@@ -193,6 +194,9 @@ async function hydrateCompanyLogoUrls(
 }
 
 export async function GET(request: NextRequest) {
+  const fastApiResponse = await proxyToFastApi(request, '/api/v1/companies')
+  if (fastApiResponse) return fastApiResponse
+
   const cacheKey = serverListCacheKey(request, 'companies:list')
   const cached = getServerResponseCache<Record<string, unknown>>(cacheKey)
   if (cached) return NextResponse.json(cached)

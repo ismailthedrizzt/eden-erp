@@ -56,6 +56,27 @@ Bu dokuman TypeScript backend logic'inin FastAPI/Python core backend'e nasil ayr
 | DTO schemas | FastAPI OpenAPI / Pydantic v2 |
 | enum definitions | Python enum + OpenAPI generated TS |
 
+## Policy / Integrity / Readiness Python Targets
+
+| current TS path | target Python path | status |
+| --- | --- | --- |
+| `lib/security/permissionRegistry.ts` | `backend/app/policies/permissions.py` | Python registry landed; generated TS contract planned |
+| `lib/security/policyEngine.ts` | `backend/app/policies/policy_engine.py` | Python policy decision MVP landed |
+| `lib/security/scopePolicy.ts` | `backend/app/policies/scope_policy.py` | Python scope policy MVP landed |
+| `lib/setup/*` | `backend/app/setup/*` | Python readiness checker and endpoints landed |
+| `lib/integrity/*` | `backend/app/integrity/*` | Python operation integrity checker landed |
+| `lib/security/actionEligibility.ts` | `backend/app/policies/action_eligibility.py` | Python action eligibility MVP landed |
+
+## Projection / Read Model Python Targets
+
+| current TS path | target Python path | status |
+| --- | --- | --- |
+| `lib/read-models/projections/company*` | `backend/app/projections/company.py` | Company list/detail MVP landed |
+| `lib/read-models/projections/branch*` | `backend/app/projections/branch.py` | Branch list/detail/summary MVP landed |
+| `lib/read-models/projections/partner*` | `backend/app/projections/partner.py` | Partner list + current ownership hydrate MVP landed |
+| `lib/read-models/projections/representative*` | `backend/app/projections/representative.py` | Representative list + authority status hydrate MVP landed |
+| `lib/read-models/projections/currentOwnership*` | `backend/app/projections/current_ownership.py` | Current ownership projection wrapper landed |
+
 ## D. Silinecek / Sadelestirilecek
 
 | pattern | action |

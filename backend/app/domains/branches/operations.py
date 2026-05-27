@@ -44,6 +44,7 @@ from app.domains.organization.service import (
     set_organization_unit_passive,
 )
 from app.domains.outbox.service import enqueue_outbox_event_best_effort
+from app.policies.operation_guards import guard_operation
 
 
 def _context(tenant_id: str, user_id: str | None, company_id: str) -> dict[str, Any]:
@@ -158,6 +159,22 @@ async def open_branch(
         async with session.begin():
             company = await get_company_by_id(session, tenant_id, company_id)
             assert_company_active(company)
+            warnings.extend(
+                await guard_operation(
+                    session,
+                    context,
+                    operation_key="branch_opening",
+                    module_key="branches",
+                    required_permissions=["branches.openingStart"],
+                    readiness_modules=["companies", "branches"],
+                    integrity_operation_key="branch_opening",
+                    resource={
+                        "company_id": company_id,
+                        "company": company,
+                        "branch_name": request.branch_name,
+                    },
+                )
+            )
             operation, operation_warnings = await create_or_get_operation_request(
                 session,
                 context,
@@ -365,6 +382,24 @@ async def close_branch(
                 )
             assert_branch_belongs_to_company(branch, company_id)
             assert_branch_active(branch)
+            context["branch_id"] = request.branch_id
+            warnings.extend(
+                await guard_operation(
+                    session,
+                    context,
+                    operation_key="branch_closing",
+                    module_key="branches",
+                    required_permissions=["branches.closingStart"],
+                    readiness_modules=["companies", "branches"],
+                    integrity_operation_key="branch_closing",
+                    resource={
+                        "company_id": company_id,
+                        "branch_id": request.branch_id,
+                        "company": company,
+                        "branch": branch,
+                    },
+                )
+            )
 
             operation, operation_warnings = await create_or_get_operation_request(
                 session,

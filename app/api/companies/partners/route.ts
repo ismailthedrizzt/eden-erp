@@ -19,6 +19,7 @@ import { operationStatusMessage } from '@/lib/operations/operationStatus'
 import { duplicateOperationJsonResponse } from '@/lib/operations/apiResponse'
 import { OutboxEventService } from '@/lib/outbox/outboxEventService'
 import { stripOperationControlledFields as stripFieldControlFields } from '@/lib/field-controls/fieldControlGuards'
+import { proxyToFastApi } from '@/lib/backend/fastApiProxy'
 
 type PartnerStatusFilter = 'draft' | 'active' | 'passive'
 const PARTNER_STATUS_FILTERS = new Set<PartnerStatusFilter>(['draft', 'active', 'passive'])
@@ -206,6 +207,9 @@ function isCompanyActiveForPartnerCreate(company: Record<string, any>) {
 }
 
 export async function GET(request: NextRequest) {
+  const fastApiResponse = await proxyToFastApi(request, '/api/v1/partners')
+  if (fastApiResponse) return fastApiResponse
+
   const supabase = createServiceClient()
   const { searchParams } = new URL(request.url)
   const listQuery = parseListQuery(searchParams, { pageSize: 50, sort: 'created_at', direction: 'desc' })

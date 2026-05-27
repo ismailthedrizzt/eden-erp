@@ -39,6 +39,7 @@ from app.domains.partners.service import (
     is_partner_active,
     set_partner_passive,
 )
+from app.policies.operation_guards import guard_operation
 
 TRANSACTION_TYPE_LABELS = {
     "initial_partnership_entry": "initial_partnership_entry",
@@ -62,6 +63,14 @@ RIGHTS_CHANGE_TYPES = {
     "privilege_change",
     "control_right_change",
 }
+
+
+def _required_permission(transaction_type: str) -> str:
+    if transaction_type == "reversal_entry":
+        return "partners.ownershipReverse"
+    if transaction_type in RIGHTS_CHANGE_TYPES or transaction_type == "correction_entry":
+        return "partners.ownershipUpdate"
+    return "partners.ownershipStart"
 
 
 async def insert_ownership_transaction(
@@ -804,6 +813,20 @@ async def _prepare_transaction(
     partner = await get_partner_by_id(session, context["tenant_id"], partner_id)
     assert_partner_belongs_to_company(partner, request.company_id)
     assert partner is not None
+    guard_warnings = await guard_operation(
+        session,
+        context,
+        operation_key=f"ownership.{request.transaction_type}",
+        module_key="partners",
+        required_permissions=[_required_permission(request.transaction_type)],
+        readiness_modules=["companies", "partners"],
+        integrity_operation_key="ownership_transaction",
+        resource={
+            "company_id": request.company_id,
+            "partner_id": partner_id,
+            "transaction_type": request.transaction_type,
+        },
+    )
     operation, operation_warnings = await create_or_get_operation_request(
         session,
         context,
@@ -829,7 +852,11 @@ async def _prepare_transaction(
         context["tenant_id"],
         request.company_id,
     )
-    warnings = [*operation_warnings, *validate_current_ownership_distribution(current_rows)]
+    warnings = [
+        *guard_warnings,
+        *operation_warnings,
+        *validate_current_ownership_distribution(current_rows),
+    ]
     return company, partner, current_rows, operation, warnings
 
 

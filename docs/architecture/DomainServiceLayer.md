@@ -176,3 +176,8 @@ Route ve orchestrator bu sonucu kullaniciya uygun is diline cevirebilir. Domain 
 Bu faz buyuk route tasima fazi degildir. En riskli cross-domain akislarda servis katmani kullanilmaya baslanir; kalan eski helperlar yalnizca canli migration bridge olarak acik status ile kalabilir.
 
 Eski wrapper'lar yeni kod icin canonical kaynak degildir. Yeni route/orchestrator kodu once ilgili domain service'i kullanmali; obsolete wrapper'lar korunmaz, ya Python migration hedefiyle `deprecated_wrapper` olarak planlanir ya da silinir. Kalan migration borclari [Technical Debt and Migration Plan](./TechnicalDebtAndMigrationPlan.md) ve [Legacy Obsolete Code Audit](./LegacyObsoleteCodeAudit.md) dokumanlarinda izlenir.
+
+Projection/read model query'leri de domain mutation servislerinden ayridir. Python
+projection katmani liste/detay okumalari icin canonical backend read API rolunu
+ustlenir; detaylar [Projection / Read Model FastAPI Migration](./ProjectionReadModelFastAPIMigration.md)
+dokumanindadir.

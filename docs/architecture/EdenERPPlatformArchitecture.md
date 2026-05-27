@@ -286,6 +286,13 @@ Domain Service `DomainServiceResult`, Orchestrator `OperationOrchestratorResult`
 
 FastAPI OpenAPI contract'i backend API source of truth olacaktir. TypeScript DTO ve API client'lar OpenAPI'den uretilmeli veya generated client'a delege etmelidir. Next.js API route'lari FastAPI endpointleri hazir oldukca proxy/adaptor rolune indirilecektir.
 
+## Policy / Integrity / Readiness FastAPI Layer
+
+Permission registry, scope policy, module readiness, operation integrity ve action
+eligibility kararlarinin Python canonical MVP'si eklendi. Bu katman frontend
+visibility yerine backend-side enforce edilen guard kaynagi olarak kullanilir.
+Detaylar: [Policy / Integrity / Readiness FastAPI Migration](./PolicyIntegrityReadinessFastAPIMigration.md).
+
 ## Known Technical Debt
 
 Kalan isler [Technical Debt and Migration Plan](./TechnicalDebtAndMigrationPlan.md) icinde P1/P2/P3 oncelikleriyle izlenir. Final durum, etkiler ve regresyon sonucu [Platform Migration Final Report](./PlatformMigrationFinalReport.md) dokumaninda ozetlenir.

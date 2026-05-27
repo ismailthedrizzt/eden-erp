@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_session
@@ -13,21 +13,55 @@ from app.domains.partners.service import (
     list_partners_for_company,
     update_partner_card_only,
 )
+from app.projections.partner import list_partner_projection
+from app.projections.query import projection_query_from_params
 from app.schemas.common import ApiSuccess
-from app.schemas.placeholder import PlaceholderResponse
 
 router = APIRouter()
 RequestContextDep = Annotated[RequestContext, Depends(get_request_context)]
 SessionDep = Annotated[AsyncSession, Depends(get_session)]
 
 
-@router.get("", response_model=PlaceholderResponse)
-async def list_partners() -> PlaceholderResponse:
-    return PlaceholderResponse(
-        status="planned",
-        module="partners",
-        message="Ownership and partner endpoints will migrate after critical operations.",
-    )
+@router.get("", response_model=ApiSuccess[dict[str, Any]])
+async def list_partners(
+    session: SessionDep,
+    context: RequestContextDep,
+    company_id: str | None = Query(default=None),
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=50, alias="pageSize", ge=1, le=200),
+    search: str | None = Query(default=None),
+    sort: str | None = Query(default=None),
+    direction: str = Query(default="asc"),
+    statuses: str | None = Query(default=None),
+    owner_kind: str | None = Query(default=None),
+) -> ApiSuccess[dict[str, Any]]:
+    tenant_id = require_tenant(context)
+    try:
+        result = await list_partner_projection(
+            session,
+            projection_query_from_params(
+                tenant_id=tenant_id,
+                company_id=company_id,
+                page=page,
+                page_size=page_size,
+                search=search,
+                sort=sort,
+                direction=direction,
+                statuses=statuses,
+                filters={"owner_kind": owner_kind},
+            ),
+        )
+        return ApiSuccess(
+            data={
+                "data": result.data,
+                "meta": result.meta.model_dump(),
+                "projection": result.projection.model_dump(),
+            },
+            warnings=result.warnings,
+            message="Ortaklar listelendi.",
+        )
+    except DomainError as error:
+        raise domain_error_to_http(error) from error
 
 
 @router.get("/{partner_id}", response_model=ApiSuccess[dict[str, Any]])

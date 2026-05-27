@@ -50,6 +50,7 @@ from app.domains.ownership.service import (
 from app.domains.ownership.transactions import (
     insert_capital_increase_ownership_transactions,
 )
+from app.policies.operation_guards import guard_operation
 
 
 def _context(tenant_id: str, user_id: str | None, company_id: str) -> dict[str, Any]:
@@ -486,6 +487,18 @@ async def complete_capital_increase(
                 raise DomainError(
                     "Sirket kaydi bulunamadi.", "COMPANY_NOT_FOUND", status.HTTP_404_NOT_FOUND
                 )
+            warnings.extend(
+                await guard_operation(
+                    session,
+                    context,
+                    operation_key="capital_increase",
+                    module_key="partners",
+                    required_permissions=["companies.capitalIncreaseStart"],
+                    readiness_modules=["companies", "partners"],
+                    integrity_operation_key="capital_increase",
+                    resource={"company_id": company_id, "company": company},
+                )
+            )
             detect_company_version_conflict(company, request.base_version, request.base_updated_at)
             operation, operation_warnings = await create_or_get_operation_request(
                 session,

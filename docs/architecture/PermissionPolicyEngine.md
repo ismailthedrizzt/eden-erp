@@ -185,3 +185,10 @@ Branch, unit ve facility scope secimlerinde kaydin ayni sirket altinda ve aktif 
 - `policy.availableActions`
 
 Bu alanlar UI ve AI Action Guide tarafinda asamali olarak kullanilabilir.
+
+## FastAPI Canonical Layer
+
+Python/FastAPI tarafinda `backend/app/policies/permissions.py`,
+`policy_engine.py`, `scope_policy.py` ve `action_eligibility.py` eklendi.
+Next.js policy/action eligibility route'lari FastAPI proxy/BFF rolundedir.
+Detaylar: [Policy / Integrity / Readiness FastAPI Migration](./PolicyIntegrityReadinessFastAPIMigration.md).

@@ -42,3 +42,11 @@ Teknik hata yerine yapilacak is gosterilir:
 ## Action Guide ve Action Center
 
 Integrity summary, AI Islem Rehberi tarafindan blocking/warning aciklamasi olarak kullanilabilecek formattadir. Action Center icin `integrity_warning` source type hazirlanmistir; operasyon precheck veya surec impact adimlari bu sonuclari kullanici is listesine donusturebilir.
+
+## FastAPI Canonical Layer
+
+Python tarafinda `backend/app/integrity/registry.py`, `checker.py` ve
+`checks/*` dosyalari eklendi. Branch, capital, representative authority ve
+ownership transaction operasyonlari mutation oncesinde Python guard akisini
+kullanmaya basladi. Detaylar:
+[Policy / Integrity / Readiness FastAPI Migration](./PolicyIntegrityReadinessFastAPIMigration.md).

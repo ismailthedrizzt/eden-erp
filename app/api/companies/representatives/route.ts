@@ -25,6 +25,7 @@ import {
   representativeListProjection,
 } from '@/lib/read-models/projections/representativeList.projection'
 import { stripOperationControlledFields as stripFieldControlFields } from '@/lib/field-controls/fieldControlGuards'
+import { proxyToFastApi } from '@/lib/backend/fastApiProxy'
 
 const REPRESENTATIVE_LIST_SELECT = 'id,company_id,person_id,organization_id,person_kind,source_type,source_id,display_name,full_name,authority_types,job_title,authority_type,status,record_status,start_date,end_date,signature_type,transaction_limit,payment_approval_limit,purchase_approval_limit,bank_transaction_limit,contract_signature_limit,currency,requires_joint_signature,can_approve_alone,representative_profile,is_deleted,created_at,updated_at,version'
 const CURRENT_AUTHORITY_SELECT = 'representative_id,company_id,tenant_id,authority_status,authority_record_status,authority_status_label,authority_types,signature_type,transaction_limit,payment_approval_limit,purchase_approval_limit,bank_transaction_limit,contract_signature_limit,currency,limits,scope,requires_joint_signature,can_approve_alone,effective_date,end_date,warnings,last_transaction_id,last_transaction_type,display_name,person_id,organization_id'
@@ -56,6 +57,9 @@ function stripRepresentativeCreateLifecycleFields(body: Record<string, any>) {
 }
 
 export async function GET(request: NextRequest) {
+  const fastApiResponse = await proxyToFastApi(request, '/api/v1/representatives')
+  if (fastApiResponse) return fastApiResponse
+
   const supabase = createServiceClient()
   const permission = await requireAnyPermission(request, supabase, ['representatives.view', 'companies.view'])
   if (permission instanceof NextResponse) return permission

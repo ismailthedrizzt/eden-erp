@@ -52,6 +52,10 @@ Yapmayacaklari:
 4. Existing manual service wrappers generated client'a delege eder.
 5. Manual wrapperlar sadece UI-specific normalization icin kalir.
 
+Client generation ayrintilari [OpenAPI Client Generation](./OpenAPIClientGeneration.md)
+dokumaninda tutulur. Mevcut hedef `lib/generated/backend-client/types.ts`
+dosyasidir ve `npm run openapi:refresh` ile guncellenir.
+
 ## Versioning
 
 - `/api/v1` ilk public backend namespace.

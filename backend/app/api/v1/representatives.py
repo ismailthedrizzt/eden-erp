@@ -21,10 +21,11 @@ from app.domains.representatives.service import (
     get_representative_by_id,
     list_authorities_for_branch,
     list_authorities_for_company,
-    list_representatives,
     representative_card_status,
     update_representative_card,
 )
+from app.projections.query import projection_query_from_params
+from app.projections.representative import list_representative_projection
 from app.schemas.common import ApiSuccess, OperationResponse
 
 router = APIRouter()
@@ -81,12 +82,54 @@ async def list_representative_records(
     session: SessionDep,
     context: RequestContextDep,
     company_id: str | None = Query(default=None),
-) -> ApiSuccess[list[dict[str, Any]]]:
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=50, alias="pageSize", ge=1, le=200),
+    search: str | None = Query(default=None),
+    sort: str | None = Query(default=None),
+    direction: str = Query(default="asc"),
+    statuses: str | None = Query(default=None),
+    authority_statuses: str | None = Query(default=None),
+    branch_id: str | None = Query(default=None),
+    scope_type: str | None = Query(default=None),
+    organization_unit_id: str | None = Query(default=None),
+    facility_id: str | None = Query(default=None),
+    include_company_wide_for_branch: bool = Query(default=False),
+) -> ApiSuccess[dict[str, Any]]:
     tenant_id = require_tenant(context)
-    rows = await list_representatives(
-        session, _context(tenant_id, context.user_id), {"company_id": company_id}
+    result = await list_representative_projection(
+        session,
+        projection_query_from_params(
+            tenant_id=tenant_id,
+            company_id=company_id,
+            page=page,
+            page_size=page_size,
+            search=search,
+            sort=sort,
+            direction=direction,
+            statuses=statuses,
+            filters={
+                "authority_statuses": [
+                    item.strip()
+                    for item in (authority_statuses or "").split(",")
+                    if item.strip()
+                ],
+                "branch_id": branch_id,
+                "scope_type": scope_type,
+                "organization_unit_id": organization_unit_id,
+                "facility_id": facility_id,
+                "include_company_wide_for_branch": include_company_wide_for_branch,
+            },
+        ),
     )
-    return ApiSuccess(data=rows, meta={"count": len(rows)}, message="Temsilciler listelendi.")
+    return ApiSuccess(
+        data={
+            "data": result.data,
+            "meta": result.meta.model_dump(),
+            "projection": result.projection.model_dump(),
+        },
+        warnings=result.warnings,
+        message="Temsilciler listelendi.",
+    )
 
 
 @router.post("", response_model=ApiSuccess[dict[str, Any]])

@@ -1,1 +1,1 @@
-"""Policy engine package."""
+"""Policy, permission, scope and action eligibility services."""

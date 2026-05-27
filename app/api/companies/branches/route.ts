@@ -16,8 +16,12 @@ import { requireBranchPolicy } from '@/lib/security/policies/branchPolicies'
 import { mapInfrastructureErrorToSetupStatus } from '@/lib/setup/infrastructureErrorMapper'
 import { getSetupActionsForModule } from '@/lib/setup/setupActionResolver'
 import { getModuleReadiness } from '@/lib/setup/tenantReadinessService'
+import { proxyToFastApi } from '@/lib/backend/fastApiProxy'
 
 export async function GET(request: NextRequest) {
+  const fastApiResponse = await proxyToFastApi(request, '/api/v1/branches')
+  if (fastApiResponse) return fastApiResponse
+
   const supabase = createServiceClient()
   const moduleGuard = await requireModuleAvailable(request, 'branches')
   if (moduleGuard) return moduleGuard
