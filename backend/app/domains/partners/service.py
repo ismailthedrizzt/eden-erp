@@ -484,7 +484,11 @@ async def delete_partner_draft(
         ),
         {"tenant_id": context["tenant_id"], "partner_id": partner_id},
     )
-    return {"id": partner_id, "hardDeleted": True, "message": "Taslak ortak karti silindi."}
+    return {
+        "id": partner_id,
+        "hardDeleted": True,
+        "message": "Ortak karti taslagi kalici olarak silindi.",
+    }
 
 
 async def _update_partner_status(

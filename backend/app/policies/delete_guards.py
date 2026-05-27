@@ -116,8 +116,8 @@ async def can_hard_delete_company_draft(
 ) -> None:
     if not _is_draft(company, "record_status", "company_status"):
         raise DomainError(
-            "Aktif veya resmi surece girmis sirket dogrudan silinemez. "
-            "Terkin/Tasfiye islemini kullanin.",
+            "Aktif veya resmi islem gecmisi olan sirket dogrudan silinemez. "
+            "Tasfiye veya Terkin islemi kullanilmalidir.",
             "COMPANY_DELETE_REQUIRES_OFFICIAL_OPERATION",
             409,
         )
@@ -137,8 +137,8 @@ async def can_hard_delete_partner_draft(
 ) -> None:
     if not _is_draft(partner, "record_status", "status"):
         raise DomainError(
-            "Aktif veya islem gecmisi olan ortak dogrudan silinemez. "
-            "Ortakliktan Cikis/Pay Devri islemini kullanin.",
+            "Ortaklik hakki veya islem gecmisi olan kayit dogrudan silinemez. "
+            "Pay Devri veya Ortakliktan Cikis islemini kullanin.",
             "PARTNER_DELETE_REQUIRES_OWNERSHIP_EXIT",
             409,
         )

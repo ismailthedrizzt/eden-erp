@@ -1025,10 +1025,10 @@ export default function SirketlerPage() {
       await yenile()
       setPageState('list')
     } catch (error: any) {
-      if (error?.code === 'USE_DEREGISTRATION_WIZARD') {
-        const message = 'Aktif veya lifecycle’a girmiş şirket doğrudan silinemez. Kapanış işlemi için Terkin Wizardı kullanılmalıdır.'
+      if (error?.code === 'USE_DEREGISTRATION_WIZARD' || error?.code === 'COMPANY_DELETE_REQUIRES_OFFICIAL_OPERATION') {
+        const message = 'Aktif veya resmi işlem geçmişi olan şirket doğrudan silinemez. Tasfiye veya Terkin işlemi kullanılmalıdır.'
         setFormError(message)
-        setToast({ type: 'warning', title: 'Terkin Wizardı Gerekli', message })
+        setToast({ type: 'warning', title: 'Resmi İşlem Gerekli', message })
         return
       }
       setFormError(error.message)
@@ -1478,6 +1478,7 @@ export default function SirketlerPage() {
     const openingCompleted = isCompletedLifecycleAction('opening')
     const liquidationCompleted = isCompletedLifecycleAction('liquidation')
     const deregistrationCompleted = isCompletedLifecycleAction('deregistration')
+    const activeCompanyRequiredReason = getActiveCompanyRequiredReason(status)
     const liquidationLabel = liquidationCompleted
       ? 'Tasfiye Bilgilerini Görüntüle'
       : status === 'liquidation'
@@ -1493,6 +1494,9 @@ export default function SirketlerPage() {
         icon: <PlayCircle size={16} />,
         onClick: () => openLifecycleWizard('opening', { readOnly: openingCompleted }),
         disabled: !openingCompleted && !canStartOpening,
+        disabledReason: !openingCompleted && !canStartOpening
+          ? (status !== 'draft' ? 'Şirket açılışı yalnızca taslak şirketlerde başlatılır.' : 'Şirket açılışı başlatma yetkiniz bulunmuyor.')
+          : undefined,
         dataTourId: 'record-operation-company-opening',
       },
       {
@@ -1501,6 +1505,9 @@ export default function SirketlerPage() {
         icon: <ShieldAlert size={16} />,
         onClick: () => openLifecycleWizard('liquidation', { readOnly: liquidationCompleted }),
         disabled: !liquidationCompleted && !(canStartLiquidation || canUpdateLiquidation),
+        disabledReason: !liquidationCompleted && !(canStartLiquidation || canUpdateLiquidation)
+          ? (status !== 'active' && status !== 'liquidation' ? 'Tasfiye işlemi aktif şirketlerde başlatılır.' : 'Tasfiye işlemi için yetkiniz bulunmuyor.')
+          : undefined,
       },
       {
         key: 'deregistration',
@@ -1508,6 +1515,9 @@ export default function SirketlerPage() {
         icon: <Archive size={16} />,
         onClick: () => openLifecycleWizard('deregistration', { readOnly: deregistrationCompleted }),
         disabled: !deregistrationCompleted && !canStartDeregistration,
+        disabledReason: !deregistrationCompleted && !canStartDeregistration
+          ? (status !== 'liquidation' ? 'Terkin işlemi tasfiye aşamasındaki şirketlerde başlatılır.' : 'Terkin işlemi için yetkiniz bulunmuyor.')
+          : undefined,
       },
     ]
 
@@ -1519,6 +1529,7 @@ export default function SirketlerPage() {
         icon: <TrendingUp size={16} />,
         onClick: openCapitalIncreaseWizard,
         disabled: status !== 'active',
+        disabledReason: status !== 'active' ? activeCompanyRequiredReason : undefined,
       },
       {
         key: 'capital_decrease',
@@ -1526,6 +1537,7 @@ export default function SirketlerPage() {
         icon: <TrendingDown size={16} />,
         onClick: openCapitalDecreaseWizard,
         disabled: status !== 'active',
+        disabledReason: status !== 'active' ? activeCompanyRequiredReason : 'Sermaye azaltımı bu fazda ön kontrol/hazırlık seviyesindedir.',
         tone: 'neutral' as const,
       },
       {
@@ -1534,6 +1546,7 @@ export default function SirketlerPage() {
         icon: <FileText size={16} />,
         onClick: () => openOfficialChangeWizard('title_change'),
         disabled: status !== 'active',
+        disabledReason: status !== 'active' ? activeCompanyRequiredReason : undefined,
         tone: 'neutral' as const,
       },
       {
@@ -1542,6 +1555,7 @@ export default function SirketlerPage() {
         icon: <Building2 size={16} />,
         onClick: () => openOfficialChangeWizard('address_change'),
         disabled: status !== 'active',
+        disabledReason: status !== 'active' ? activeCompanyRequiredReason : undefined,
         tone: 'neutral' as const,
       },
       {
@@ -1550,6 +1564,7 @@ export default function SirketlerPage() {
         icon: <Landmark size={16} />,
         onClick: () => openOfficialChangeWizard('public_registration_update'),
         disabled: status !== 'active',
+        disabledReason: status !== 'active' ? activeCompanyRequiredReason : undefined,
         tone: 'neutral' as const,
       },
       {
@@ -1558,6 +1573,7 @@ export default function SirketlerPage() {
         icon: <FileText size={16} />,
         onClick: openNaceChangeWizard,
         disabled: status !== 'active',
+        disabledReason: status !== 'active' ? activeCompanyRequiredReason : undefined,
         tone: 'neutral' as const,
       },
       {
@@ -1566,6 +1582,7 @@ export default function SirketlerPage() {
         icon: <BriefcaseBusiness size={16} />,
         onClick: () => openActivitySubjectChangeWizard(),
         disabled: status !== 'active',
+        disabledReason: status !== 'active' ? activeCompanyRequiredReason : undefined,
         tone: 'neutral' as const,
       },
       {
@@ -1574,6 +1591,7 @@ export default function SirketlerPage() {
         icon: <GitBranch size={16} />,
         onClick: openBranchOpeningWizard,
         disabled: status !== 'active',
+        disabledReason: status !== 'active' ? activeCompanyRequiredReason : undefined,
         tone: 'neutral' as const,
       },
       {
@@ -1582,6 +1600,7 @@ export default function SirketlerPage() {
         icon: <XCircle size={16} />,
         onClick: openBranchClosingWizard,
         disabled: status !== 'active',
+        disabledReason: status !== 'active' ? activeCompanyRequiredReason : undefined,
         tone: 'neutral' as const,
       },
     ] : []
@@ -1648,6 +1667,30 @@ export default function SirketlerPage() {
       ? validationDetails.fieldErrors as Record<string, unknown>
       : {}
     const fields = Object.keys(zodFieldErrors)
+
+    if (code === 'OPERATION_CONTROLLED_FIELDS') {
+      const controlledFields = Array.isArray(validationDetails.fields)
+        ? validationDetails.fields
+        : []
+      const controlledFieldErrors = Object.fromEntries(
+        controlledFields
+          .map((item: any) => {
+            const field = String(item?.field || '').trim()
+            if (!field) return null
+            const operation = item?.operation || 'ilgili resmi işlem sihirbazı'
+            return [field, `${getFieldLabel(field)} ${operation} ile değiştirilebilir.`]
+          })
+          .filter((item): item is [string, string] => Array.isArray(item))
+      )
+      const fieldList = Object.keys(controlledFieldErrors)
+      const message = fieldList.length
+        ? `Bu alanlar resmi işlem kontrollüdür: ${formatFieldList(fieldList)}.`
+        : 'Bu alanlar resmi işlem kontrollüdür. İlgili sihirbazı kullanın.'
+      const saveError = new Error(message) as SaveError
+      saveError.fieldErrors = controlledFieldErrors
+      saveError.toast = { type: 'warning', title: 'Resmi İşlem Gerekli', message }
+      return saveError
+    }
 
     if (code === 'VALIDATION_FAILED' && fields.length > 0) {
       const fieldList = formatFieldList(fields)
@@ -1819,6 +1862,16 @@ export default function SirketlerPage() {
           )}
           {pageState !== 'create' && selectedSirket?.id && (
             <RecordPendingActionsPanel entityType="company" entityId={selectedSirket.id} title="Bu şirket için bekleyen işler" />
+          )}
+          {pageState !== 'create' && selectedSirket && (
+            <CompanyProductReadinessPanel
+              company={selectedSirket}
+              onOpenCompanyOpening={() => openLifecycleWizard('opening')}
+              onOpenAddressChange={() => openOfficialChangeWizard('address_change')}
+              onOpenCapitalIncrease={openCapitalIncreaseWizard}
+              onOpenBranchOpening={openBranchOpeningWizard}
+              onOpenDeregistration={() => openLifecycleWizard('deregistration')}
+            />
           )}
           <EntityForm
             mode={formMode}
@@ -2106,6 +2159,192 @@ export default function SirketlerPage() {
   )
 }
 
+function CompanyProductReadinessPanel({
+  company,
+  onOpenCompanyOpening,
+  onOpenAddressChange,
+  onOpenCapitalIncrease,
+  onOpenBranchOpening,
+  onOpenDeregistration,
+}: {
+  company: Sirket
+  onOpenCompanyOpening: () => void
+  onOpenAddressChange: () => void
+  onOpenCapitalIncrease: () => void
+  onOpenBranchOpening: () => void
+  onOpenDeregistration: () => void
+}) {
+  const status = getCompanyLifecycleStatus(company)
+  const committedCapital = getCommittedCapitalAmount(company)
+  const paidCapital = getPaidCapitalAmount(company)
+  const ownership = getOwnershipReadiness(company)
+  const representativeCount = getActiveRepresentativeCount(company)
+  const branchSummary = getBranchReadiness(company)
+  const publicRegistration = getPublicRegistrationReadiness(company)
+  const missingDocuments = getMissingCompanyProfileDocuments(company)
+  const activeRequiredReason = getActiveCompanyRequiredReason(status)
+  const actionItems = status === 'draft'
+    ? [{
+        label: 'Şirket Açılışı',
+        onClick: onOpenCompanyOpening,
+        disabled: false,
+        title: 'Taslak şirketi resmi açılış wizardı ile aktif hale getirin.',
+      }]
+    : status === 'active'
+      ? [
+          {
+            label: 'Adres Değişikliği',
+            onClick: onOpenAddressChange,
+            disabled: false,
+            title: 'Aktif şirket adresi resmi işlemle değiştirilir.',
+          },
+          {
+            label: 'Sermaye Artırımı',
+            onClick: onOpenCapitalIncrease,
+            disabled: false,
+            title: 'Güncel ortaklık dağılımı hazırsa sermaye artırımı başlatın.',
+          },
+          {
+            label: 'Şube Açılışı',
+            onClick: onOpenBranchOpening,
+            disabled: false,
+            title: 'Aktif şirkete bağlı resmi şube açılışı başlatın.',
+          },
+        ]
+      : status === 'liquidation'
+        ? [{
+            label: 'Terkin',
+            onClick: onOpenDeregistration,
+            disabled: false,
+            title: 'Tasfiye aşaması tamamlanınca terkin ön kontrolünü başlatın.',
+          }]
+        : []
+
+  const warnings = [
+    status === 'draft' ? 'Taslak şirket resmi açılış tamamlanana kadar aktif şirket sayılmaz.' : null,
+    status === 'liquidation' ? 'Tasfiye aşamasında yeni resmi değişiklik yerine tasfiye/terkin akışı izlenir.' : null,
+    status === 'deregistered' ? 'Terkin edilmiş şirket read-only geçmiş ve denetim görünümünde tutulur.' : null,
+    status === 'active' && ownership.totalRatio !== null && !ownership.isComplete ? 'Ortaklık dağılımı %100 görünmüyor; sermaye işlemi öncesi Ortaklarımız modülünü kontrol edin.' : null,
+    status === 'active' && representativeCount === 0 ? 'Aktif temsilci/yetki özeti boş; Temsilcilerimiz modülünde yetkili tanımlayın.' : null,
+    status === 'active' && !publicRegistration.isComplete ? 'Kamu/tescil alanları eksik; Kamu / Tescil Bilgisi Güncelleme wizardı ile tamamlayın.' : null,
+    status === 'active' && missingDocuments.length ? `Eksik belge: ${missingDocuments.join(', ')}.` : null,
+  ].filter(Boolean) as string[]
+
+  return (
+    <section data-tour-id="companies-product-readiness" className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-950">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+        <div>
+          <h2 className="text-sm font-semibold text-gray-900 dark:text-white">Ürün Hazırlık Özeti</h2>
+          <p className="mt-1 max-w-3xl text-sm text-gray-500 dark:text-gray-400">
+            Bu bölüm şirket kartının gerçek kullanım durumunu gösterir: lifecycle, resmi açılış, sermaye, ortaklık, temsilci, şube ve kamu/tescil eksikleri.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {actionItems.map(action => (
+            <button
+              key={action.label}
+              type="button"
+              onClick={action.onClick}
+              disabled={action.disabled}
+              title={action.disabled ? activeRequiredReason : action.title}
+              className="inline-flex items-center justify-center rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-900"
+            >
+              {action.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+        <ReadinessMetric label="Lifecycle" value={getCompanyLifecycleLabel(status)} state={status === 'active' ? 'ok' : status === 'draft' ? 'warning' : 'blocked'} />
+        <ReadinessMetric label="Resmi Açılış" value={status === 'draft' ? 'Bekliyor' : 'Tamamlandı'} state={status === 'draft' ? 'warning' : 'ok'} />
+        <ReadinessMetric label="Sermaye" value={committedCapital > 0 ? `${formatCurrencyAmount(paidCapital)} / ${formatCurrencyAmount(committedCapital)}` : 'Eksik'} state={committedCapital > 0 ? 'ok' : 'warning'} />
+        <ReadinessMetric label="Ortaklık" value={ownership.label} state={ownership.isComplete ? 'ok' : 'warning'} />
+        <ReadinessMetric label="Temsilci / Yetki" value={representativeCount ? `${representativeCount} aktif temsilci` : 'Aktif temsilci yok'} state={representativeCount ? 'ok' : 'warning'} />
+        <ReadinessMetric label="Şube / Lokasyon" value={branchSummary.label} state={branchSummary.activeCount > 0 ? 'ok' : 'neutral'} />
+        <ReadinessMetric label="Kamu / Tescil" value={publicRegistration.label} state={publicRegistration.isComplete ? 'ok' : 'warning'} />
+        <ReadinessMetric label="Belgeler" value={missingDocuments.length ? `${missingDocuments.length} eksik` : 'Temel belgeler tamam'} state={missingDocuments.length ? 'warning' : 'ok'} />
+      </div>
+
+      {warnings.length > 0 && (
+        <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-200">
+          <div className="flex gap-2">
+            <AlertTriangle size={16} className="mt-0.5 flex-shrink-0" />
+            <div className="space-y-1">
+              {warnings.map(warning => <div key={warning}>{warning}</div>)}
+            </div>
+          </div>
+        </div>
+      )}
+    </section>
+  )
+}
+
+function ReadinessMetric({ label, value, state }: { label: string; value: string; state: 'ok' | 'warning' | 'blocked' | 'neutral' }) {
+  const stateClass = state === 'ok'
+    ? 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-200'
+    : state === 'warning'
+      ? 'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-200'
+      : state === 'blocked'
+        ? 'border-gray-300 bg-gray-100 text-gray-700 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-200'
+        : 'border-blue-200 bg-blue-50 text-blue-800 dark:border-blue-900/60 dark:bg-blue-950/30 dark:text-blue-200'
+
+  return (
+    <div className={`rounded-lg border px-4 py-3 ${stateClass}`}>
+      <div className="text-xs font-medium opacity-80">{label}</div>
+      <div className="mt-1 break-words text-sm font-semibold">{value || '-'}</div>
+    </div>
+  )
+}
+
+function getOwnershipReadiness(company?: Partial<Sirket> | null) {
+  const rows = getCompanyOwnershipRows(company)
+  if (!rows.length) return { label: 'Ortaklık özeti yok', totalRatio: null, isComplete: false }
+  const totalRatio = rows.reduce((total, row) => total + toNumber(row.current_share_ratio ?? row.share_ratio), 0)
+  const rounded = Math.round(totalRatio * 100) / 100
+  return {
+    label: `%${rounded.toLocaleString('tr-TR', { maximumFractionDigits: 2 })}`,
+    totalRatio: rounded,
+    isComplete: Math.abs(rounded - 100) <= 0.01,
+  }
+}
+
+function getCompanyOwnershipRows(company?: Partial<Sirket> | null) {
+  const currentOwnership = (company as any)?.current_ownership
+  if (Array.isArray(currentOwnership) && currentOwnership.length) return currentOwnership
+  const partners = (company as any)?.partners
+  return Array.isArray(partners) ? partners : []
+}
+
+function getActiveRepresentativeCount(company?: Partial<Sirket> | null) {
+  const rows = Array.isArray((company as any)?.representatives) ? (company as any).representatives : []
+  return rows.filter((row: any) => {
+    if (row?.is_deleted) return false
+    const status = String(row.authority_status || row.status || 'active').toLocaleLowerCase('tr-TR')
+    return ['active', 'aktif', 'current'].includes(status)
+  }).length
+}
+
+function getBranchReadiness(company?: Partial<Sirket> | null) {
+  const summary = (company as any)?.branch_summary || {}
+  const activeCount = Number(summary.active_branch_count ?? summary.active_count ?? NaN)
+  if (Number.isFinite(activeCount)) {
+    return { activeCount, label: activeCount > 0 ? `${activeCount} aktif şube` : 'Aktif şube yok' }
+  }
+  const rows = Array.isArray((company as any)?.branches) ? (company as any).branches : []
+  const activeRows = rows.filter(isActiveCompanyBranch)
+  return { activeCount: activeRows.length, label: activeRows.length ? `${activeRows.length} aktif şube` : 'Aktif şube yok' }
+}
+
+function getPublicRegistrationReadiness(company?: Partial<Sirket> | null) {
+  const requiredFields = ['tax_number', 'tax_office', 'trade_registry_number', 'trade_registry_office', 'mersis_number']
+  const completed = requiredFields.filter(field => String((company as any)?.[field] || '').trim()).length
+  return {
+    isComplete: completed >= 4,
+    label: `${completed}/${requiredFields.length} temel alan`,
+  }
+}
+
 function CompanyNaceActivitySummary({ data }: { data?: Partial<Sirket> | null }) {
   const rows = Array.isArray((data as any)?.company_nace_codes) ? (data as any).company_nace_codes : []
   const activeRows = rows.filter((row: any) => !row?.is_deleted && String(row?.status || 'active').toLocaleLowerCase('tr-TR') !== 'passive')
@@ -2305,6 +2544,13 @@ function getCompanyLifecycleLabel(status: CompanyLifecycleStatus) {
   if (status === 'liquidation') return 'Tasfiye Halinde'
   if (status === 'unknown') return 'Bilinmeyen'
   return 'Terkin Edildi / Kapanmış'
+}
+
+function getActiveCompanyRequiredReason(status: CompanyLifecycleStatus) {
+  if (status === 'draft') return 'Bu işlem için önce Şirket Açılışı tamamlanmalı ve şirket aktif olmalıdır.'
+  if (status === 'liquidation') return 'Tasfiye aşamasındaki şirketlerde yeni resmi değişiklik başlatılamaz.'
+  if (status === 'deregistered') return 'Terkin edilmiş şirketlerde yalnızca geçmiş ve denetim bilgileri görüntülenir.'
+  return 'Bu işlem yalnızca aktif şirketlerde başlatılır.'
 }
 
 function getCompanyLifecycleBadgeClass(status: CompanyLifecycleStatus) {

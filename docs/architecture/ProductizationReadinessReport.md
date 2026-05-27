@@ -30,7 +30,7 @@ No P0 productization blocker was found in the final verification pass. The main 
 | module | readiness | notes |
 | --- | --- | --- |
 | Companies | ready with P1 debt | List/detail/card CRUD and official changes are Python-backed; TS fallbacks remain until staging verification. |
-| Partners / Ownership | partial | Partner card CRUD and ownership transaction creation are Python-backed. Ownership workflow detail/approve/reject/cancel/reverse routes remain P1. |
+| Partners / Ownership | partial/product hardening started | Partner card CRUD and ownership transaction creation are Python-backed. UI now surfaces card-vs-rights, current ownership and correct ownership actions. Workflow detail/approve/reject/cancel/reverse routes remain P1. |
 | Representatives | ready with P1 debt | Card CRUD and authority transaction endpoint exist. Current authority reads exist; UI proxy/fallback cleanup remains. |
 | Branches | partial | Opening/closing, list/detail/PATCH are Python-backed. Step 14 staging validation and fallback removal remain P1. |
 | Organization | partial | Organization/facility detail work is not fully productized; Step 14 remains deeper follow-up. |
@@ -97,8 +97,8 @@ None identified in the final gate.
 
 ## 7. Recommended Next Productization Sequence
 
-1. Companies page product hardening.
-2. Partners/Ownership product hardening.
+1. Companies page product hardening. **Started:** product readiness panel, field-control UX, real-data scenarios and E2E checklist are now documented for `Sirketlerimiz`.
+2. Partners/Ownership product hardening. **Started:** partner detail now separates card status from current ownership, shows share/vote/profit/capital/privilege/control signals and routes users to Initial Partnership Entry, Share Transfer, Ownership Exit or Rights Change instead of card PATCH.
 3. Representatives authority product hardening.
 4. Branches product hardening.
 5. Organization/Facilities integration.

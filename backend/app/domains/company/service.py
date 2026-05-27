@@ -339,7 +339,7 @@ async def delete_company_draft(
     return {
         "id": company_id,
         "hardDeleted": True,
-        "message": "Taslak sirket karti silindi.",
+        "message": "Sirket taslak kaydi kalici olarak silindi.",
     }
 
 

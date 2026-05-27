@@ -101,6 +101,9 @@ interface PartnerRow {
   current_profit_ratio?: number
   current_capital_amount?: number
   current_share_units?: number
+  ownership_flags?: string[] | string
+  last_ownership_transaction?: string
+  ownership_warnings?: string[]
   representative_authority_count?: number
   representative_authorities?: RepresentativeAuthorityRow[]
   ownership_transaction_history?: OwnershipTransactionHistoryRow[]
@@ -246,6 +249,10 @@ const columns: ColumnDef[] = [
   { key: 'current_voting_ratio', label: 'Oy %', type: 'number', width: 100, category: 'Hesaplanan' },
   { key: 'current_profit_ratio', label: 'Kar Payı %', type: 'number', width: 120, category: 'Hesaplanan' },
   { key: 'current_capital_amount', label: 'Sermaye', type: 'number', width: 130, category: 'Hesaplanan' },
+  { key: 'current_share_units', label: 'Pay Adedi', type: 'number', width: 120, category: 'Hesaplanan' },
+  { key: 'ownership_flags', label: 'İmtiyaz / Kontrol', type: 'enum', width: 150, category: 'Haklar', render: value => <OwnershipFlagsCell value={value} /> },
+  { key: 'last_ownership_transaction', label: 'Son İşlem', type: 'text', width: 160, category: 'Geçmiş' },
+  { key: 'ownership_warnings', label: 'Uyarılar', type: 'enum', width: 130, category: 'Uyarılar', render: value => <OwnershipWarningsCell value={value} /> },
   { key: 'start_date', label: 'Başlangıç', type: 'date', width: 120, category: 'Dönem' },
   { key: 'end_date', label: 'Bitiş', type: 'date', width: 120, category: 'Dönem' },
 ]
@@ -590,6 +597,9 @@ export default function OrtaklarPage() {
     const currentOwnership = partner.current_ownership || projectionOwnership || currentOwnershipByCompanyPartnerKey[ownershipKey(partner.company_id, partner.id)]
     const representativeAuthorities = representativeAuthoritiesForPartner(partner)
     const partnerType = normalizePartnerType(partner.owner_kind || partner.partner_type)
+    const transactionHistory = Array.isArray(partner.ownership_transaction_history) ? partner.ownership_transaction_history : []
+    const lastOwnershipTransaction = transactionHistory[0]
+    const enrichedPartner = { ...partner, current_ownership: currentOwnership || null }
     return ({
     ...partner,
     display_name: partner.display_name || partner.partner_name || '',
@@ -601,17 +611,30 @@ export default function OrtaklarPage() {
     current_voting_ratio: currentOwnership?.current_voting_ratio ?? partner.current_voting_ratio ?? 0,
     current_profit_ratio: currentOwnership?.current_profit_ratio ?? partner.current_profit_ratio ?? 0,
     current_capital_amount: currentOwnership?.current_capital_amount ?? partner.current_capital_amount ?? 0,
+    current_share_units: currentOwnership?.current_share_units ?? partner.current_share_units ?? 0,
+    ownership_flags: getPartnerOwnershipFlags(enrichedPartner),
+    last_ownership_transaction: lastOwnershipTransaction?.transaction_type || partner.last_ownership_transaction || '-',
+    ownership_warnings: buildPartnerOwnershipWarnings(enrichedPartner, transactionHistory),
     representative_authorities: representativeAuthorities,
   })
   }), [companyNameById, currentOwnershipByCompanyPartnerKey, partners, representativeAuthoritiesForPartner])
 
   const activePartners = useMemo(() => tableData.filter(partner => getPartnerRecordStatus(partner) === 'active'), [tableData])
+  const draftPartners = useMemo(() => tableData.filter(partner => getPartnerRecordStatus(partner) === 'draft'), [tableData])
+  const ownershipWarningCount = useMemo(() => tableData.filter(partner => Array.isArray(partner.ownership_warnings) && partner.ownership_warnings.length > 0).length, [tableData])
+  const visibleShareTotal = useMemo(() => roundRatio(tableData.reduce((sum, partner) => sum + Number(partner.current_share_ratio || 0), 0)), [tableData])
+  const privilegedOrControlCount = useMemo(() => tableData.filter(partner => {
+    const flags = Array.isArray(partner.ownership_flags) ? partner.ownership_flags : []
+    return flags.length > 0
+  }).length, [tableData])
   const widgets: WidgetDef<any>[] = useMemo(() => [
     { key: 'total', label: 'Toplam Ortak', render: () => tableData.length },
     { key: 'active', label: 'Aktif Ortak', render: () => activePartners.length },
-    { key: 'real', label: 'Gerçek Kişi', render: () => activePartners.filter(partner => partner.partner_type_label === 'Gerçek Kişi').length },
-    { key: 'legal', label: 'Tüzel Kişi', render: () => activePartners.filter(partner => partner.partner_type_label === 'Tüzel Kişi').length },
-  ], [activePartners, tableData])
+    { key: 'draft', label: 'Taslak Kart', render: () => draftPartners.length },
+    { key: 'visible_share', label: 'Görünen Pay', render: () => formatPercent(visibleShareTotal) },
+    { key: 'control', label: 'İmtiyaz / Kontrol', render: () => privilegedOrControlCount },
+    { key: 'warnings', label: 'Uyarı', render: () => ownershipWarningCount },
+  ], [activePartners, draftPartners, ownershipWarningCount, privilegedOrControlCount, tableData, visibleShareTotal])
 
   const handleListSortChange = (sorts: SortConfig[]) => {
     const sort = sorts[0]
@@ -675,6 +698,9 @@ export default function OrtaklarPage() {
     setPageState('view')
     setFormError(null)
     setFieldErrors({})
+    if (row.company_id) {
+      void loadOwnershipContext(false, [row.company_id]).catch(() => undefined)
+    }
     if (cached) {
       setDetailLoading(false)
       return
@@ -786,10 +812,11 @@ export default function OrtaklarPage() {
       else invalidateEntityDetailCache('company-partners', selectedPartner?.id)
       setPageState(mode === 'create' && normalized ? 'view' : 'list')
     } catch (err: any) {
-      setFormError(err.message)
-      setFieldErrors(err.fieldErrors || {})
-      setToast(err.toast || { type: 'error', title: 'Kayıt Başarısız', message: err.message })
-      throw err
+      const normalizedError = normalizePartnerSaveError(err)
+      setFormError(normalizedError.message)
+      setFieldErrors(normalizedError.fieldErrors || {})
+      setToast(normalizedError.toast || { type: 'error', title: 'Kayıt Başarısız', message: normalizedError.message })
+      throw normalizedError
     } finally {
       setSaving(false)
     }
@@ -801,12 +828,12 @@ export default function OrtaklarPage() {
     try {
       await companyService.deletePartner(selectedPartner.id)
       invalidateEntityDetailCache('company-partners', selectedPartner.id)
-      setToast({ type: 'success', title: 'Kayıt Başarılı', message: 'Ortak taslak kaydı kalıcı olarak silindi.' })
+      setToast({ type: 'success', title: 'Kayıt Başarılı', message: 'Ortak kartı taslağı kalıcı olarak silindi.' })
       await loadData(true)
       setPageState('list')
     } catch (err: any) {
       if (err?.code === 'PARTNER_DELETE_REQUIRES_OWNERSHIP_EXIT') {
-        const message = 'Aktif veya işlem geçmişi olan ortak doğrudan silinemez. Ortaklıktan çıkış / pay devri işlemi kullanılmalıdır.'
+        const message = 'Ortaklık hakkı veya işlem geçmişi olan kayıt doğrudan silinemez. Pay Devri veya Ortaklıktan Çıkış işlemini kullanın.'
         setToast({ type: 'warning', title: 'Ortaklık İşlemi Gerekli', message })
         return
       }
@@ -985,6 +1012,9 @@ export default function OrtaklarPage() {
         handleOwnershipActionClick(INITIAL_PARTNERSHIP_ENTRY_TYPE)
       },
       disabled: !initialPartnershipCompleted && recordStatus !== 'draft',
+      disabledReason: !initialPartnershipCompleted && recordStatus !== 'draft'
+        ? 'İlk Ortaklık Girişi yalnızca taslak ortak kartı üzerinde başlatılır.'
+        : undefined,
     }]
     const officialUpdateActions: FormOperationAction[] = recordStatus === 'active'
       ? transactionTypes.filter(type => !isInitialPartnershipEntryType(type)).map(transactionType => ({
@@ -1104,6 +1134,14 @@ export default function OrtaklarPage() {
         <div className="mt-6 space-y-4">
           {pageState === 'create' && (
             <DraftCreateNotice message="Bu işlem ortak kartı taslağı oluşturur. Ortaklık hakları, pay oranı, oy hakkı, kar payı ve sermaye bilgileri İlk Ortaklık Girişi veya ilgili ortaklık işlemleriyle oluşturulur." />
+          )}
+          {pageState !== 'create' && selectedPartner && (
+            <PartnerOwnershipReadinessPanel
+              partner={selectedPartner}
+              companyPartners={tableData}
+              ownershipRows={currentOwnershipRows}
+              onAction={handleOwnershipActionClick}
+            />
           )}
           <EntityForm
             mode={formMode}
@@ -2527,6 +2565,171 @@ function CurrentOwnershipPanel({ value, section }: { value?: CurrentOwnershipRow
   )
 }
 
+function PartnerOwnershipReadinessPanel({
+  partner,
+  companyPartners,
+  ownershipRows,
+  onAction,
+}: {
+  partner: Record<string, any>
+  companyPartners: Record<string, any>[]
+  ownershipRows: CurrentOwnershipRow[]
+  onAction: (transactionType?: OwnershipTransactionType) => void
+}) {
+  const recordStatus = getPartnerRecordStatus(partner)
+  const currentOwnership = resolvePartnerCurrentOwnership(partner, ownershipRows, companyPartners)
+  const companyOwnershipRows = getCompanyCurrentOwnershipRows(partner.company_id, companyPartners, ownershipRows)
+  const totals = calculateCompanyOwnershipTotals(companyOwnershipRows)
+  const transactions = Array.isArray(partner.ownership_transaction_history)
+    ? partner.ownership_transaction_history as OwnershipTransactionHistoryRow[]
+    : []
+  const lastTransaction = transactions[0]
+  const hasRights = hasCurrentOwnershipRights(currentOwnership)
+  const flags = getPartnerOwnershipFlags({ ...partner, current_ownership: currentOwnership })
+  const totalShareKnown = companyOwnershipRows.length > 0
+  const warnings = [
+    ...buildPartnerOwnershipWarnings({ ...partner, current_ownership: currentOwnership }, transactions),
+    ...buildCompanyOwnershipDistributionWarnings(totals, totalShareKnown),
+  ]
+  const totalShareComplete = totalShareKnown && Math.abs(totals.share - 100) < 0.01
+  const currency = partner.currency || partner.default_currency || 'TRY'
+
+  return (
+    <section
+      id="partners-ownership-readiness"
+      data-tour-id="partners-ownership-readiness"
+      className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-950"
+    >
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <div className="flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-white">
+            <ListChecks size={17} />
+            Ortaklık ürün özeti
+          </div>
+          <p className="mt-1 max-w-3xl text-sm text-gray-600 dark:text-gray-400">
+            Bu bölüm kart bilgisi ile pay, oy, kar payı, sermaye ve kontrol haklarını ayırır. Hak değerleri current ownership read modelinden ve onaylı ownership transaction geçmişinden okunur.
+          </p>
+        </div>
+        <span className={cn(
+          'rounded-full px-2.5 py-1 text-xs font-semibold',
+          recordStatus === 'draft' && 'bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-200',
+          recordStatus === 'active' && 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-200',
+          recordStatus === 'passive' && 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
+        )}>
+          {getPartnerStatusLabel(recordStatus)}
+        </span>
+      </div>
+
+      <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <PartnerReadinessMetric label="Ortaklık hakkı" value={hasRights ? 'Var' : recordStatus === 'draft' ? 'Taslak, hak yok' : 'Okunamadı'} tone={hasRights ? 'success' : recordStatus === 'draft' ? 'warning' : 'danger'} />
+        <PartnerReadinessMetric label="Pay / Oy / Kar" value={`${formatPercent(Number(currentOwnership?.current_share_ratio || 0))} / ${formatPercent(Number(currentOwnership?.current_voting_ratio || 0))} / ${formatPercent(Number(currentOwnership?.current_profit_ratio || 0))}`} />
+        <PartnerReadinessMetric label="Sermaye / Pay adedi" value={`${formatCurrency(Number(currentOwnership?.current_capital_amount || 0), currency)} / ${formatNumber(Number(currentOwnership?.current_share_units || 0))}`} />
+        <PartnerReadinessMetric label="Şirket toplam payı" value={totalShareKnown ? formatPercent(totals.share) : 'Read model yok'} tone={totalShareComplete ? 'success' : 'warning'} />
+        <PartnerReadinessMetric label="Aktif ortak sayısı" value={String(companyOwnershipRows.filter(row => Number(row.current_share_ratio || 0) > 0).length)} />
+        <PartnerReadinessMetric label="İmtiyaz / kontrol" value={flags.length ? flags.join(', ') : 'Yok'} tone={flags.length ? 'warning' : 'neutral'} />
+        <PartnerReadinessMetric label="Son işlem" value={lastTransaction?.transaction_type || partner.last_ownership_transaction || '-'} />
+        <PartnerReadinessMetric label="Silme davranışı" value={recordStatus === 'draft' && !transactions.length ? 'Güvenli taslak delete mümkün' : 'Pay devri / çıkış gerekir'} tone={recordStatus === 'draft' && !transactions.length ? 'success' : 'warning'} />
+      </div>
+
+      <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto]">
+        <div className="space-y-2">
+          {warnings.length ? warnings.map(warning => (
+            <div key={warning} className="flex gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-200">
+              <AlertCircle size={16} className="mt-0.5 shrink-0" />
+              <span>{warning}</span>
+            </div>
+          )) : (
+            <div className="flex gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-200">
+              <CheckCircle2 size={16} className="mt-0.5 shrink-0" />
+              <span>Current ownership bilgisi okunabiliyor ve kritik uyarı görünmüyor.</span>
+            </div>
+          )}
+        </div>
+
+        <div className="flex flex-wrap items-start gap-2 lg:justify-end">
+          {recordStatus === 'draft' && (
+            <button type="button" onClick={() => onAction(INITIAL_PARTNERSHIP_ENTRY_TYPE)} className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700">
+              İlk Ortaklık Girişi
+            </button>
+          )}
+          {recordStatus === 'active' && (
+            <>
+              <button type="button" onClick={() => onAction('Pay Devri' as OwnershipTransactionType)} className="rounded-md border border-gray-300 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-900">
+                Pay Devri
+              </button>
+              <button type="button" onClick={() => onAction('Ortaklıktan Çıkış' as OwnershipTransactionType)} className="rounded-md border border-gray-300 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-900">
+                Ortaklıktan Çıkış
+              </button>
+              <button type="button" onClick={() => onAction('Oy Hakkı Değişikliği' as OwnershipTransactionType)} className="rounded-md border border-gray-300 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-900">
+                Hak Değişikliği
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+function PartnerReadinessMetric({
+  label,
+  value,
+  tone = 'neutral',
+}: {
+  label: string
+  value: string
+  tone?: 'neutral' | 'success' | 'warning' | 'danger'
+}) {
+  return (
+    <div className={cn(
+      'min-w-0 rounded-lg border p-3',
+      tone === 'neutral' && 'border-gray-200 bg-gray-50 dark:border-gray-800 dark:bg-gray-900/50',
+      tone === 'success' && 'border-emerald-200 bg-emerald-50 dark:border-emerald-900/60 dark:bg-emerald-950/30',
+      tone === 'warning' && 'border-amber-200 bg-amber-50 dark:border-amber-900/60 dark:bg-amber-950/30',
+      tone === 'danger' && 'border-red-200 bg-red-50 dark:border-red-900/60 dark:bg-red-950/30',
+    )}>
+      <div className="text-xs font-medium text-gray-500 dark:text-gray-400">{label}</div>
+      <div className="mt-1 truncate text-sm font-semibold text-gray-900 dark:text-white" title={value}>{value}</div>
+    </div>
+  )
+}
+
+function OwnershipFlagsCell({ value }: { value: unknown }) {
+  const flags = Array.isArray(value)
+    ? value.map(item => String(item || '').trim()).filter(Boolean)
+    : String(value || '').split(',').map(item => item.trim()).filter(Boolean)
+
+  if (!flags.length) {
+    return <span className="text-xs text-gray-400">Yok</span>
+  }
+
+  return (
+    <div className="flex flex-wrap gap-1">
+      {flags.slice(0, 3).map(flag => (
+        <span key={flag} className="rounded-full bg-purple-50 px-2 py-0.5 text-xs font-medium text-purple-700 dark:bg-purple-950/40 dark:text-purple-200">
+          {flag}
+        </span>
+      ))}
+      {flags.length > 3 && <span className="text-xs text-gray-500">+{flags.length - 3}</span>}
+    </div>
+  )
+}
+
+function OwnershipWarningsCell({ value }: { value: unknown }) {
+  const warnings = Array.isArray(value)
+    ? value.map(item => String(item || '').trim()).filter(Boolean)
+    : String(value || '').split('|').map(item => item.trim()).filter(Boolean)
+
+  if (!warnings.length) return <span className="text-xs text-gray-400">-</span>
+
+  return (
+    <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700 dark:bg-amber-950/40 dark:text-amber-200">
+      <AlertCircle size={12} />
+      {warnings.length}
+    </span>
+  )
+}
+
 function RepresentativeAuthoritiesPanel({ value }: { value: RepresentativeAuthorityRow[] }) {
   if (!value.length) {
     return (
@@ -2700,6 +2903,129 @@ function hasProjectionOwnership(partner: PartnerRow) {
     || partner.current_profit_ratio !== undefined
     || partner.current_capital_amount !== undefined
     || partner.current_share_units !== undefined
+}
+
+function toCurrentOwnershipRow(partner?: Record<string, any> | null): CurrentOwnershipRow | null {
+  if (!partner) return null
+  if (partner.current_ownership && typeof partner.current_ownership === 'object') {
+    return partner.current_ownership as CurrentOwnershipRow
+  }
+
+  const hasCurrentValues = partner.current_share_ratio !== undefined
+    || partner.current_voting_ratio !== undefined
+    || partner.current_profit_ratio !== undefined
+    || partner.current_capital_amount !== undefined
+    || partner.current_share_units !== undefined
+
+  if (!hasCurrentValues) return null
+
+  return {
+    company_id: String(partner.company_id || ''),
+    partner_id: String(partner.id || partner.partner_id || ''),
+    current_share_ratio: Number(partner.current_share_ratio || 0),
+    current_voting_ratio: Number(partner.current_voting_ratio || 0),
+    current_profit_ratio: Number(partner.current_profit_ratio || 0),
+    current_capital_amount: Number(partner.current_capital_amount || 0),
+    current_share_units: Number(partner.current_share_units || 0),
+    has_control_right: !!partner.has_control_right,
+    control_type: partner.control_type,
+    has_veto_right: !!partner.has_veto_right,
+    has_board_nomination_right: !!partner.has_board_nomination_right,
+    has_privileged_share: !!(partner.has_privileged_share || partner.has_privilege),
+    is_beneficial_owner: !!(partner.is_beneficial_owner || partner.beneficial_owner),
+    beneficial_ratio: Number(partner.beneficial_ratio || 0),
+  }
+}
+
+function resolvePartnerCurrentOwnership(
+  partner: Record<string, any>,
+  ownershipRows: CurrentOwnershipRow[],
+  companyPartners: Record<string, any>[],
+) {
+  return toCurrentOwnershipRow(partner)
+    || ownershipRows.find(row => row.company_id === partner.company_id && row.partner_id === partner.id)
+    || toCurrentOwnershipRow(companyPartners.find(row => row.id === partner.id))
+}
+
+function getCompanyCurrentOwnershipRows(
+  companyId: unknown,
+  companyPartners: Record<string, any>[],
+  ownershipRows: CurrentOwnershipRow[],
+) {
+  const normalizedCompanyId = String(companyId || '')
+  if (!normalizedCompanyId) return []
+  const directRows = ownershipRows.filter(row => row.company_id === normalizedCompanyId)
+  if (directRows.length) return directRows
+
+  return companyPartners
+    .filter(row => String(row.company_id || '') === normalizedCompanyId)
+    .map(toCurrentOwnershipRow)
+    .filter((row): row is CurrentOwnershipRow => !!row)
+}
+
+function calculateCompanyOwnershipTotals(rows: CurrentOwnershipRow[]) {
+  return rows.reduce((acc, row) => ({
+    share: roundRatio(acc.share + Number(row.current_share_ratio || 0)),
+    voting: roundRatio(acc.voting + Number(row.current_voting_ratio || 0)),
+    profit: roundRatio(acc.profit + Number(row.current_profit_ratio || 0)),
+    capital: roundMoney(acc.capital + Number(row.current_capital_amount || 0)),
+  }), { share: 0, voting: 0, profit: 0, capital: 0 })
+}
+
+function hasCurrentOwnershipRights(row?: CurrentOwnershipRow | null) {
+  return !!row && (
+    Number(row.current_share_ratio || 0) > 0
+    || Number(row.current_voting_ratio || 0) > 0
+    || Number(row.current_profit_ratio || 0) > 0
+    || Number(row.current_capital_amount || 0) > 0
+    || Number(row.current_share_units || 0) > 0
+  )
+}
+
+function getPartnerOwnershipFlags(partner?: Record<string, any> | null) {
+  const currentOwnership = toCurrentOwnershipRow(partner)
+  const flags: string[] = []
+  if (currentOwnership?.has_privileged_share || partner?.has_privileged_share || partner?.has_privilege) flags.push('İmtiyaz')
+  if (currentOwnership?.has_control_right || partner?.has_control_right) flags.push('Kontrol')
+  if (currentOwnership?.has_veto_right || partner?.has_veto_right) flags.push('Veto')
+  if (currentOwnership?.has_board_nomination_right || partner?.has_board_nomination_right) flags.push('YK aday')
+  if (currentOwnership?.is_beneficial_owner || partner?.is_beneficial_owner || partner?.beneficial_owner) flags.push('Faydalanıcı')
+  return flags
+}
+
+function buildPartnerOwnershipWarnings(partner?: Record<string, any> | null, transactions: OwnershipTransactionHistoryRow[] = []) {
+  const warnings = new Set<string>()
+  const recordStatus = getPartnerRecordStatus(partner)
+  const currentOwnership = toCurrentOwnershipRow(partner)
+  normalizeSummaryWarnings(currentOwnership?.warnings).forEach(warning => warnings.add(warning))
+
+  if (recordStatus === 'draft') {
+    warnings.add('Taslak ortak kartı pay, oy, kar payı veya sermaye hakkı doğurmaz; İlk Ortaklık Girişi gerekir.')
+  }
+  if (recordStatus === 'active' && !hasCurrentOwnershipRights(currentOwnership)) {
+    warnings.add('Aktif kayıt için current ownership read modeli boş görünüyor; ownership projection veya işlem geçmişi kontrol edilmeli.')
+  }
+  if (recordStatus === 'passive' && hasCurrentOwnershipRights(currentOwnership)) {
+    warnings.add('Pasif ortak üzerinde hala current ownership hakkı görünüyor; çıkış işlemi etkisi kontrol edilmeli.')
+  }
+  if (hasCurrentOwnershipRights(currentOwnership) && transactions.length === 0) {
+    warnings.add('Hak değerleri var ancak işlem geçmişi henüz yüklenmedi; Geçmiş sekmesinde transaction kaydı kontrol edin.')
+  }
+
+  return Array.from(warnings)
+}
+
+function buildCompanyOwnershipDistributionWarnings(
+  totals: { share: number; voting: number; profit: number; capital: number },
+  hasRows: boolean,
+) {
+  if (!hasRows) return ['Şirket current ownership toplamları okunamadı; pay devri/çıkış ve sermaye işlemleri precheck aşamasında blocking döndürebilir.']
+
+  const warnings: string[] = []
+  if (Math.abs(totals.share - 100) >= 0.01) warnings.push(`Şirket toplam payı ${formatPercent(totals.share)} görünüyor; %100 değilse bazı ownership işlemleri blocking olabilir.`)
+  if (totals.voting > 0 && Math.abs(totals.voting - 100) >= 0.01) warnings.push(`Şirket toplam oy hakkı ${formatPercent(totals.voting)} görünüyor; oy hakkı dağılımı kontrol edilmeli.`)
+  if (totals.profit > 0 && Math.abs(totals.profit - 100) >= 0.01) warnings.push(`Şirket toplam kar payı ${formatPercent(totals.profit)} görünüyor; kar payı dağılımı kontrol edilmeli.`)
+  return warnings
 }
 
 function getPartnerRecordStatus(partner?: Record<string, any> | null): RecordStatusFilterValue {
@@ -2906,6 +3232,26 @@ function buildEntityFieldHistory(history: any[]) {
     ]
     return acc
   }, {})
+}
+
+function normalizePartnerSaveError(err: any): SaveError {
+  if (err?.code === 'OPERATION_CONTROLLED_FIELDS') {
+    const controlledFields = Array.isArray(err.details?.fields)
+      ? err.details.fields
+          .map((field: any) => FIELD_LABELS[field.field] || field.label || field.field)
+          .filter(Boolean)
+      : []
+    const fieldList = controlledFields.length ? ` (${controlledFields.join(', ')})` : ''
+    const error = new Error(`Ortaklık hak alanları kart güncellemesiyle değiştirilemez${fieldList}. İlk Ortaklık Girişi, Pay Devri, Ortaklıktan Çıkış veya Düzeltme Kaydı işlemini kullanın.`) as SaveError
+    error.toast = {
+      type: 'warning',
+      title: 'Ortaklık İşlemi Gerekli',
+      message: error.message,
+    }
+    return error
+  }
+
+  return err
 }
 
 async function createSaveError(response: Response, fallback: string): Promise<SaveError> {

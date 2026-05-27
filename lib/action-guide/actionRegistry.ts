@@ -14,7 +14,7 @@ export const actionGuideDefinitions: ActionGuideDefinition[] = [
   defineAction({
     key: 'create_company_draft',
     label: 'Sirket Taslagi Olustur',
-    description: '+ Ekle sirket karti taslagi olusturur; resmi acilis ayri sihirbazla tamamlanir.',
+    description: '+ Ekle sirket karti taslagi olusturur; resmi acilis ayri Sirket Acilisi sihirbaziyla tamamlanir.',
     moduleKey: 'companies',
     domain: 'company',
     actionType: 'create_draft',
@@ -29,7 +29,7 @@ export const actionGuideDefinitions: ActionGuideDefinition[] = [
       '+ Ekle ile sirket karti taslagi olusturun.',
       'Sirket resmi acilisi icin Sirket Acilisi sihirbazini tamamlayin.',
     ],
-    helpText: 'Yeni sirket once taslak kart olarak acilir; resmi status degisimi wizard onayi ile olur.',
+    helpText: 'Yeni sirket once taslak kart olarak acilir. Taslak sirket aktif sayilmaz; sermaye, sube, unvan/adres degisikligi gibi islemler icin Sirket Acilisi tamamlanmalidir.',
   }),
   defineAction({
     key: 'company_opening',
@@ -59,7 +59,7 @@ export const actionGuideDefinitions: ActionGuideDefinition[] = [
     requiredPermissions: [permissionRegistry.companies.capitalIncreaseStart],
     fallbackPermissions: [permissionRegistry.companies.edit],
     relatedFields: [{ entityType: 'company', field: 'committed_capital_amount' }, { entityType: 'company', field: 'paid_capital_amount' }],
-    helpText: 'Sermaye Artirimi ortak bazli pay ve sermaye dagilimi gerektirir; Ortaklarimiz modulu ve guncel ortaklik dagilimi aktif olmalidir.',
+    helpText: 'Sermaye Artirimi icin aktif sirket, Ortaklarimiz modulu, aktif ortaklar ve %100 guncel ortaklik dagilimi gerekir.',
   }),
   companyOfficialAction('capital_decrease', 'Sermaye Azaltimi', 'Sermaye azaltimi aktif sirket kartindan resmi islem sihirbaziyla yapilir.', 'capital_decrease', ['sermaye azaltimi', 'sermaye azalt', 'capital decrease'], ['sermaye', 'azaltim', 'azalt', 'pay'], {
     requiredModules: ['companies', 'partners'],
@@ -74,7 +74,7 @@ export const actionGuideDefinitions: ActionGuideDefinition[] = [
     relatedFields: [{ entityType: 'company', field: 'address' }, { entityType: 'company', field: 'city' }, { entityType: 'company', field: 'district' }],
   }),
   companyOfficialAction('public_registration_update', 'Kamu / Tescil Bilgisi Guncelleme', 'Vergi, sicil, MERSIS ve kamu bilgileri resmi guncelleme sihirbaziyla degisir.', 'public_registration_update', ['tescil bilgisi', 'vergi dairesi degistir', 'mersis guncelle', 'sgk sicil'], ['tescil', 'vergi', 'mersis', 'sgk', 'sicil', 'kamu']),
-  companyOfficialAction('nace_change', 'NACE / Faaliyet Kodu Guncelleme', 'NACE kodu ve faaliyet kodu degisiklikleri NACE sihirbaziyla yapilir.', 'nace_change', ['nace kodu', 'faaliyet kodu', 'risk sinifi', 'tehlike sinifi'], ['nace', 'faaliyet', 'kod', 'risk', 'tehlike'], {
+  companyOfficialAction('nace_change', 'NACE / Faaliyet Kodu Guncelleme', 'NACE kodu ve faaliyet kodu degisiklikleri NACE sihirbaziyla yapilir; faaliyet konusu degisiyorsa Faaliyet Konusu Degisikligi onerilir.', 'nace_change', ['nace kodu', 'faaliyet kodu', 'risk sinifi', 'tehlike sinifi', 'nace degistirmek istiyorum'], ['nace', 'faaliyet', 'kod', 'risk', 'tehlike'], {
     relatedFields: [{ entityType: 'company', field: 'nace_codes' }, { entityType: 'company', field: 'risk_class' }],
   }),
   companyOfficialAction('activity_subject_change', 'Faaliyet Konusu Degisikligi', 'Sirketin faaliyet konusu resmi degisiklik sihirbaziyla guncellenir.', 'activity_subject_change', ['faaliyet konusu', 'esas sozlesme konusu', 'ana faaliyet degisikligi'], ['faaliyet', 'konu', 'esas', 'sozlesme'], {
@@ -99,10 +99,28 @@ export const actionGuideDefinitions: ActionGuideDefinition[] = [
     ],
     helpText: 'Ortak karti kisi/kurum bilgisini tutar; pay dagilimi transaction ile olusur.',
   }),
-  partnerAction('initial_partnership_entry', 'Ilk Ortaklik Girisi', 'Pay orani, oy hakki ve sermaye iliskisi ortaklik islemiyle olusturulur.', ['ilk ortaklik girisi', 'pay orani ver', 'ortaga hisse tanimla'], ['ilk', 'ortaklik', 'pay', 'hisse', 'oran']),
-  partnerAction('share_transfer', 'Pay Devri', 'Pay devri kart editinden degil ortaklik islemiyle yapilir.', ['pay devri', 'hisse devri', 'ortak pay aktar'], ['pay', 'hisse', 'devir', 'aktar']),
-  partnerAction('ownership_exit', 'Ortakliktan Cikis', 'Aktif ortak dogrudan silinmez; ortakliktan cikis resmi islemle yapilir.', ['ortakliktan cikis', 'ortak cikisi', 'ortak sil'], ['ortak', 'cikis', 'sil', 'ayril']),
-  partnerAction('ownership_correction', 'Ortaklik Duzeltme Kaydi', 'Gecmis ortaklik bilgisinde duzeltme gerekiyorsa duzeltme islemi kullanilir.', ['ortaklik duzeltme', 'hisse duzeltme', 'pay duzeltme'], ['ortaklik', 'hisse', 'pay', 'duzeltme']),
+  partnerAction('initial_partnership_entry', 'Ilk Ortaklik Girisi', 'Taslak ortak kartina ilk pay, oy, kar payi ve sermaye haklari bu islemle verilir.', ['ilk ortaklik girisi', 'pay orani ver', 'ortaga hisse tanimla', 'yeni ortaga pay ver'], ['ilk', 'ortaklik', 'pay', 'hisse', 'oran'], {
+    helpText: 'Taslak ortak karti tek basina ortaklik hakki dogurmaz. Ilk Ortaklik Girisi, current ownership read modelini olusturan resmi ownership transaction baslangicidir.',
+    relatedFields: [{ entityType: 'company_partner', field: 'share_ratio' }, { entityType: 'company_partner', field: 'capital_amount' }],
+  }),
+  partnerAction('share_transfer', 'Pay Devri', 'Pay devri kart editinden degil, devreden/devralan etkisini hesaplayan ownership transaction ile yapilir.', ['pay devri', 'hisse devri', 'ortak pay aktar', 'pay oranini degistir'], ['pay', 'hisse', 'devir', 'aktar'], {
+    helpText: 'Pay Devri, devreden ortagin mevcut payini dusurur, devralani artirir ve toplam pay dagiliminin %100 kalmasini kontrol eder.',
+    relatedFields: [{ entityType: 'company_partner', field: 'share_ratio' }],
+  }),
+  partnerAction('ownership_exit', 'Ortakliktan Cikis', 'Aktif ortak dogrudan silinmez; paylarin akibeti belirlenerek ortakliktan cikis islemi yapilir.', ['ortakliktan cikis', 'ortak cikisi', 'ortak sil', 'tek ortak cikabilir mi'], ['ortak', 'cikis', 'sil', 'ayril'], {
+    helpText: 'Ortakliktan Cikis, tek ortakli sirketi sahipsiz birakmaz; pay devri veya yeni ortak plani olmadan cikis blocking olabilir.',
+  }),
+  partnerAction('partner_rights_change', 'Hak / Imtiyaz Degisikligi', 'Oy hakki, kar payi, imtiyaz ve kontrol haklari karttan degil ownership transaction ile degisir.', ['oy hakki degistir', 'kar payi degistir', 'imtiyaz tanimla', 'kontrol hakki ver'], ['oy', 'kar', 'imtiyaz', 'kontrol', 'veto'], {
+    relatedFields: [
+      { entityType: 'company_partner', field: 'voting_ratio' },
+      { entityType: 'company_partner', field: 'profit_ratio' },
+      { entityType: 'company_partner', field: 'has_control_right' },
+    ],
+    helpText: 'Hak degisikligi eski deger/yeni deger etkisini transaction gecmisine yazar; kart PATCH bu alanlari degistiremez.',
+  }),
+  partnerAction('ownership_correction', 'Ortaklik Duzeltme Kaydi', 'Gecmis ortaklik bilgisinde duzeltme veya ters kayit gerekiyorsa yetkili duzeltme islemi kullanilir.', ['ortaklik duzeltme', 'hisse duzeltme', 'pay duzeltme', 'ters kayit'], ['ortaklik', 'hisse', 'pay', 'duzeltme', 'ters'], {
+    helpText: 'Duzeltme/Ters Kayit onceki transaction etkisini aciklar ve current ownership valid kalmiyorsa blocking uretir.',
+  }),
   defineAction({
     key: 'create_representative_draft',
     label: 'Temsilci Karti Taslagi',
@@ -277,7 +295,14 @@ function companyOfficialAction(
   })
 }
 
-function partnerAction(key: string, label: string, description: string, intentExamples: string[], keywords: string[]) {
+function partnerAction(
+  key: string,
+  label: string,
+  description: string,
+  intentExamples: string[],
+  keywords: string[],
+  rest: Partial<ActionGuideDefinition> = {},
+) {
   return defineAction({
     key,
     label,
@@ -293,15 +318,16 @@ function partnerAction(key: string, label: string, description: string, intentEx
     fallbackPermissions: [permissionRegistry.partners.edit],
     intentExamples,
     keywords,
-    relatedFields: key === 'initial_partnership_entry' || key === 'share_transfer'
+    relatedFields: rest.relatedFields || (key === 'initial_partnership_entry' || key === 'share_transfer'
       ? [{ entityType: 'company_partner', field: 'share_ratio' }]
-      : undefined,
-    steps: [
+      : undefined),
+    steps: rest.steps || [
       'Ortaklarimiz sayfasinda ilgili ortak kartini acin.',
       `${label} islemini baslatin.`,
       'Pay, hak ve sermaye bilgilerini ozet ekraninda onaylayin.',
     ],
-    helpText: 'Ortaklik haklari normal kart PATCH ile degil ownership transaction ile degisir.',
+    helpText: rest.helpText || 'Ortaklik haklari normal kart PATCH ile degil ownership transaction ile degisir.',
+    ...rest,
   })
 }
 

@@ -195,6 +195,29 @@ kalir. Endpoint/proxy coverage ve gate karari
 [Productization Readiness Report](./ProductizationReadinessReport.md)
 dokumanlarinda tutulur.
 
+## 7.19 Companies Product Hardening Addendum
+
+The first productization lane for `Sirketlerimiz` is now started:
+
+- company detail shows a product readiness panel for lifecycle, opening, capital, ownership, representative, branch, public/registration and document state;
+- active company official fields still route through field-control helpers and FastAPI `OPERATION_CONTROLLED_FIELDS`;
+- Action Guide and guided tour copy now explain that `+ Ekle` is draft creation and official changes require wizards;
+- product docs were added under `docs/product/companies/` for scope, real-data scenarios, E2E checklist and known gaps.
+
+Remaining P1: run staging E2E with `FASTAPI_BASE_URL`, remove company route temporary fallbacks, and complete lifecycle deep FastAPI coverage for opening/liquidation/deregistration context routes.
+
+## 7.20 Partners / Ownership Product Hardening Addendum
+
+The second productization lane for `Ortaklarimiz` is now started:
+
+- partner detail shows an ownership product summary panel for card status, current ownership, share/vote/profit/capital, company total share signal, privilege/control flags, delete behavior and next ownership actions;
+- partner list now exposes share units, privilege/control flags, last ownership transaction and warning count alongside current ownership values;
+- field-control and Action Guide copy now make the card-vs-ownership-rights boundary explicit;
+- draft delete/blocking messages use business language aligned with FastAPI draft delete guards;
+- product docs were added under `docs/product/partners/` for scope, real-data scenarios, E2E checklist and known gaps.
+
+Remaining P1: verify partner/ownership flows in staging with `FASTAPI_BASE_URL`, migrate or replace ownership workflow subroutes (`approve/reject/cancel/reverse/history/impact`) in Python, and remove temporary Next fallbacks after E2E passes.
+
 ## 8. Build / Typecheck Sonucu
 
 Final pass sirasinda asagidaki kontroller calistirildi:

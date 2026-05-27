@@ -12,6 +12,14 @@ Generated from `app/api/**/route.ts` by `npm run proxy:coverage`. Status values 
 - migrate_to_fastapi: 85
 - proxy_to_fastapi_with_temporary_fallback: 74
 
+Product hardening note:
+
+- Company UX hardening did not add domain/business logic to Next API routes.
+- Company route fallbacks remain visible P1 debt until staging E2E confirms FastAPI behavior for draft create, active card update, official changes, capital increase and branch opening/closing.
+- `Sirketlerimiz` frontend now surfaces product readiness and field-control guidance while continuing to call existing BFF/proxy routes.
+- Partner/Ownership product hardening also stays in the frontend/service layer: no new Next route business logic was added, and `Ortaklarimiz` continues to call existing BFF/proxy routes for partner CRUD, current ownership and ownership transaction creation.
+- Ownership transaction subroutes under `/api/ownership-transactions/[id]/**` remain deprecated wrappers/P1 productization debt until Python workflow endpoints or a replacement flow are verified.
+
 ## Matrix
 
 | route path | status | target FastAPI endpoint | business logic present? | domain/orchestrator import? | removal condition | priority |

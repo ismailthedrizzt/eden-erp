@@ -12,6 +12,12 @@ Legend:
 
 ## Company
 
+Product hardening note:
+
+- `Sirketlerimiz` detail now has a product readiness panel fed by the existing company detail/read model: lifecycle, opening, capital, ownership, representative, branch, public/registration and document signals are visible in one place.
+- Active-card `PATCH` remains card-safe only; official fields continue to be blocked with `OPERATION_CONTROLLED_FIELDS`.
+- Official operations remain FastAPI canonical while Next BFF temporary fallbacks stay P1 staging-removal debt.
+
 | domain | endpoint | method | FastAPI implemented? | Next proxy implemented? | frontend service mapped? | OpenAPI schema generated? | auth/tenant guard? | policy/readiness/integrity guard? | tests? | status | notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Company | `/api/v1/companies` | GET | yes | yes, temporary fallback | partial | yes | yes | policy/scope partial | yes | partial | Projection list endpoint is FastAPI-backed; TS read fallback remains P1 removal. |
@@ -42,6 +48,13 @@ Legend:
 | Branch operation | `/api/v1/companies/{company_id}/branch-closings` | POST | yes | yes, temporary fallback | partial | yes | yes | policy/readiness/integrity yes | yes | partial | Closing operation remains wizard endpoint. |
 
 ## Partners / Ownership
+
+Product hardening note:
+
+- `Ortaklarimiz` now surfaces the card-vs-rights distinction in the product UI: partner detail shows card status, current ownership, company total share signal, privilege/control flags, delete behavior and correct ownership actions in one panel.
+- Partner list columns include current share/vote/profit/capital, share units, privilege/control, last transaction and ownership warnings from the read model or available projection rows.
+- FastAPI partner card PATCH remains card-safe only; share/vote/profit/capital/privilege/control fields continue to be blocked with `OPERATION_CONTROLLED_FIELDS`.
+- Ownership workflow subroutes for approve/reject/cancel/reverse/history/impact remain P1 coverage debt until Python replacements or a consolidated workflow are verified.
 
 | domain | endpoint | method | FastAPI implemented? | Next proxy implemented? | frontend service mapped? | OpenAPI schema generated? | auth/tenant guard? | policy/readiness/integrity guard? | tests? | status | notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
