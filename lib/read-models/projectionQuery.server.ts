@@ -1,6 +1,6 @@
 // BACKEND_MIGRATION_STATUS: migrate_to_fastapi
 // TARGET_BACKEND_MODULE: projections
-// TARGET_ENDPOINT: /api/v1/projections
+// TARGET_FASTAPI_ENDPOINT: /api/v1/projections
 // NOTES: Server projection query helpers should move to Python projection/read model services.
 
 import 'server-only'

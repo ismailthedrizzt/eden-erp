@@ -1,6 +1,6 @@
 // BACKEND_MIGRATION_STATUS: migrate_to_fastapi
 // TARGET_BACKEND_MODULE: policy
-// TARGET_ENDPOINT: /api/v1/policies/evaluate
+// TARGET_FASTAPI_ENDPOINT: /api/v1/policies/evaluate
 // NOTES: Backend authorization source of truth should move to Python Policy Engine.
 
 import 'server-only'

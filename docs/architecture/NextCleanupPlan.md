@@ -14,7 +14,9 @@ Bu plan Next.js tarafinda kalacak, silinecek, proxy olacak ve FastAPI'ye tasinac
 
 | path/pattern | reason | target |
 | --- | --- | --- |
-| `app/api/companies/[company_id]/official-changes/_shared.ts` | Eski importlari topluyor. | Domain/FastAPI proxy sonrasinda silinecek. |
+| `app/api/companies/[company_id]/official-changes/_shared.ts` | Company/branch/org/facility/NACE/document/date/response helperlarini gecis icin topluyor. | Domain/FastAPI proxy sonrasinda silinecek; yeni business logic eklenmeyecek. |
+| `app/api/companies/[company_id]/capital-increases/_shared.ts` | Capital operation validation ve payload helperlari route ailesini ayakta tutuyor. | Python capital/ownership services cikinca silinecek. |
+| `app/api/ownership-transactions/_shared.ts` | Ownership validation/mapping helperlari route ailesini ayakta tutuyor. | Python Ownership Domain Service cikinca silinecek. |
 | `lib/read-models/registry.ts` legacy projection key map | UI gecisi icin alias sagliyor. | Canonical projection key kullanimi tamamlaninca sil. |
 | `lib/tenancy/databaseRouting.ts` legacy fallback query | Workspace routing gecis katmani. | Python tenancy service ve tek binding contract. |
 
@@ -31,6 +33,15 @@ Bu plan Next.js tarafinda kalacak, silinecek, proxy olacak ve FastAPI'ye tasinac
 | `app/api/audit/**` | `/api/v1/audit` |
 | `app/api/cron/outbox-dispatch` | Python worker scheduler |
 | `lib/operations/**`, `lib/process/**`, `lib/outbox/**`, `lib/audit/**`, `lib/integrity/**`, `lib/domains/**` | `backend/app/**` |
+
+## keep_ui_adapter
+
+| path/pattern | reason |
+| --- | --- |
+| `app/api/uploads/**` | UI upload/signed-url adapter; domain document rules still move to Python. |
+| `app/api/session/bootstrap` | BFF aggregation can remain while proxying Python readiness/permission/module data. |
+| `app/api/auth/**` | UI/auth adapter; no ERP domain mutation should live here. |
+| `app/api/onboarding/**`, `app/api/user/preferences` | UI state adapter until user preference service moves. |
 
 ## keep_frontend
 
@@ -49,13 +60,40 @@ Bu plan Next.js tarafinda kalacak, silinecek, proxy olacak ve FastAPI'ye tasinac
 | `app/api/ai/action-guide/**` | UI-specific AI guide adapter can remain until resolver moves. |
 | `app/api/session/bootstrap` | BFF aggregation endpoint can stay if it proxies Python readiness/permissions/modules. |
 
+## keep_bff_proxy_with_legacy_fallback
+
+| path/pattern | reason | removal trigger |
+| --- | --- | --- |
+| `app/api/companies/[company_id]/official-changes/branch-opening/**` | FastAPI proxy is active when `FASTAPI_BASE_URL` is configured; TS fallback keeps local frontend usable during migration. | Remove TS fallback after FastAPI branch opening is validated against staging DB. |
+| `app/api/companies/[company_id]/official-changes/branch-closing/**` | FastAPI proxy is active when `FASTAPI_BASE_URL` is configured; TS fallback keeps local frontend usable during migration. | Remove TS fallback after FastAPI branch closing is validated against staging DB. |
+
+## official-changes/_shared.ts split plan
+
+| helper class | target |
+| --- | --- |
+| company lifecycle/context | `backend/app/domains/company/` |
+| branch loading/precheck/status | `backend/app/domains/branches/` |
+| organization unit create/passive/reassign | `backend/app/domains/organization/` |
+| facility create/passive/reuse | `backend/app/domains/facilities/` |
+| official transaction/history/outbox/audit assembly | Python operation service + transaction boundary |
+| document normalization | Python DTO mapper / document domain |
+| date validation | Python operation precheck validator |
+| response formatting | thin Next BFF adapter only |
+
 ## Enforcement
 
 New Next API route files must include one of the migration status comments:
 
 - `keep_bff_proxy`
+- `keep_bff_proxy_with_legacy_fallback`
+- `keep_ui_adapter`
+- `migrate_to_fastapi_then_proxy`
 - `migrate_to_fastapi`
 - `delete_obsolete`
 - `deprecated_wrapper`
+- `contract_shared`
+- `generated_do_not_edit`
 
 New business mutation logic should not be added to Next API routes.
+
+Use `npm run migration:status` to report route header coverage and client-side backend access risks. Use `npm run migration:inventory` to regenerate [Next API Route Migration Inventory](./NextApiRouteMigrationInventory.md).

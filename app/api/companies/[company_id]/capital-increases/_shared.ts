@@ -1,3 +1,8 @@
+// BACKEND_MIGRATION_STATUS: deprecated_wrapper
+// TARGET_BACKEND_MODULE: capital
+// TARGET_FASTAPI_ENDPOINT: /api/v1/companies/{company_id}/capital-increases
+// NOTES: Capital increase shared helpers contain validation/document/business logic; move to Python company capital and ownership services.
+
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { applyTenantQueryScope, resolveTenantContext, type TenantContext, withTenantInsertScopeForTable } from '@/lib/tenancy/server'

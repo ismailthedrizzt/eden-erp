@@ -49,6 +49,10 @@ Kalan borclar [Technical Debt and Migration Plan](./TechnicalDebtAndMigrationPla
 
 2026-05-27 itibariyla hedef mimari netlestirildi: Next.js kalici core backend degildir; frontend ve gecis donemi BFF/adaptor katmanidir. Core ERP backend FastAPI/Python tarafina tasinacaktir. Supabase backend olarak degil, PostgreSQL/Auth/Storage platformu olarak konumlandirilir.
 
+## 7.2 Branch FastAPI Migration Addendum
+
+Sube Acilisi ve Sube Kapanisi FastAPI tarafinda ilk gercek core backend pilotu olarak uygulandi. Canonical endpointler `POST /api/v1/companies/{company_id}/branch-openings`, `POST /api/v1/companies/{company_id}/branch-closings` ve ilgili precheck endpointleridir. Next.js official-change route'lari `FASTAPI_BASE_URL` varsa proxy eder; yoksa `keep_bff_proxy_with_legacy_fallback` statulu gecici TS fallback calisir. Detaylar [Branch FastAPI Migration](./BranchFastAPIMigration.md) dokumanindadir.
+
 ## 8. Build / Typecheck Sonucu
 
 Final pass sirasinda asagidaki kontroller calistirildi:

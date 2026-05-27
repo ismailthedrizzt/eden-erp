@@ -1,3 +1,8 @@
+// BACKEND_MIGRATION_STATUS: migrate_to_fastapi
+// TARGET_BACKEND_MODULE: ownership
+// TARGET_FASTAPI_ENDPOINT: /api/v1/ownership-transactions/{transaction_id}/impact
+// NOTES: Contains ownership impact logic; move to Python Ownership Domain Service.
+
 import { NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { OWNERSHIP_TRANSACTION_SELECT } from '../../_shared'

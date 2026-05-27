@@ -1,6 +1,6 @@
 // BACKEND_MIGRATION_STATUS: migrate_to_fastapi
 // TARGET_BACKEND_MODULE: outbox
-// TARGET_ENDPOINT: /api/v1/events/outbox
+// TARGET_FASTAPI_ENDPOINT: /api/v1/events/outbox
 // NOTES: Outbox event production should move behind Python operation services.
 
 import 'server-only'

@@ -29,6 +29,11 @@ Eden ERP yeni tasarlanan bir sistemdir. Bu nedenle eski, duplicate, kullanilmaya
 | `app/layout.tsx` `legacyTheme` localStorage fallback | Eski theme anahtari okunuyor. | Yeni user preferences modeli varken uzun vadeli legacy key gerekmez. | `deprecate`: bir release sonra legacy key okumasini kaldir. | P2 |
 | `docs/architecture/*` eski "compatibility/backward" ifadeleri | Bazi dokumanlarda eski davranisi koruma dili var. | Yeni karar obsolete davranisin korunmayacagini soyluyor. | `replace`: dokuman dilini migration bridge/deprecation planina cevir. | P1 |
 | `docs/AI_COLLABORATION_GUIDE.md` eski shadcn/Tailwind/Supabase backend ifadeleri | Package ve hedef mimariyle celiski. | AI oturumlarinda yanlis mimari karar uretir. | `replace`: bu fazda guncellendi. | P0 |
+| `app/api/companies/[company_id]/official-changes/*` precheck ve operation route'lari | Resmi degisiklik precheck/mutation kararlari Next route icinde dagiliyor. | FastAPI Company Domain ve Operation Service source of truth olmali. | `migrate_to_python`: P0 header eklendi; endpointler Python'a tasininca route proxy olur. | P0 |
+| `app/api/companies/[company_id]/capital-decreases/**` | Sermaye operasyon ailesinin precheck ve route davranisi TS route'ta. | Capital domain Python'a tasinacak; TS route kalici backend olamaz. | `migrate_to_python`: capital endpointleri Python'a tasininca proxy yap. | P1 |
+| `app/api/companies/branches/[id]/documents/route.ts` | Sube belge guncelleme route'u branch/document business rule tasiyor. | Branch ve Document Domain Python'da ayrismali. | `migrate_to_python`: branch document endpointini Python'a tasi. | P1 |
+| `app/api/companies/representatives/route.ts` | Temsilci list/create logic route icinde. | Representative Domain Service Python source of truth olmali. | `migrate_to_python`: route sonra proxy/adaptor olur. | P1 |
+| Client component Supabase/server import riski | `npm run migration:status` client backend-risk taramasi 0 dosya raporladi. | Frontend dogrudan DB business query yapmamali. | `monitor`: script P1 guard olarak tutulacak. | P1 |
 
 ## Duplicate Helper Watchlist
 
@@ -43,6 +48,29 @@ Eden ERP yeni tasarlanan bir sistemdir. Bu nedenle eski, duplicate, kullanilmaya
 | module guard helpers | Module Guard + Readiness | merge |
 | field patch violation helpers | Field Control Guard | merge |
 | branch/facility/organization scope helpers | Scope Policy + Domain Service | migrate |
+| response normalizers | API response adapter / FastAPI exception mapper | merge |
+
+## Official Change Shared Helper Classification
+
+`app/api/companies/[company_id]/official-changes/_shared.ts` gecis dosyasidir ve `deprecated_wrapper` olarak isaretlidir. Bu dosyada yeni business logic buyutulmeyecek.
+
+| helper group | target |
+| --- | --- |
+| company lifecycle helpers | `backend/app/domains/company/` |
+| branch helpers | `backend/app/domains/branches/` |
+| organization helpers | `backend/app/domains/organization/` |
+| facility helpers | `backend/app/domains/facilities/` |
+| NACE/public registration helpers | `backend/app/domains/company/` |
+| transaction/history insert helpers | Python operation service + audit/outbox services |
+| document helpers | Python document/branch DTO mapper |
+| date validation helpers | Python operation precheck validators |
+| response helpers | temporary Next BFF adapter only |
+
+## Route Alias Scan
+
+Canonical paths are `/app/app/sirket/companies`, `/app/app/sirket/companies/partners`, `/app/app/sirket/companies/representatives`, `/app/app/sirket/companies/branches`, `/api/companies`, `/api/companies/partners`, `/api/companies/representatives` and `/api/companies/branches`.
+
+`scripts/check-performance-contracts.js` already asserts that `app/api/sirketler` and `app/app/sirket/sirketler` must not exist. No active legacy Turkish route directory was found in this pass; remaining Turkish table/model names are database naming debt and are tracked separately from route aliases.
 
 ## Non-Negotiable Cleanup Rule
 

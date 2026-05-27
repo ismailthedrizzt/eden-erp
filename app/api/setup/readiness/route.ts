@@ -1,6 +1,6 @@
 // BACKEND_MIGRATION_STATUS: migrate_to_fastapi
 // TARGET_BACKEND_MODULE: setup
-// TARGET_ENDPOINT: /api/v1/setup/readiness
+// TARGET_FASTAPI_ENDPOINT: /api/v1/setup/readiness
 // NOTES: Readiness core should move to Python; Next route remains setup UI proxy.
 
 import { NextRequest, NextResponse } from 'next/server'

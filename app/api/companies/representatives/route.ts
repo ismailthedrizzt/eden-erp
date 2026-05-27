@@ -1,3 +1,8 @@
+// BACKEND_MIGRATION_STATUS: migrate_to_fastapi
+// TARGET_BACKEND_MODULE: representatives
+// TARGET_FASTAPI_ENDPOINT: /api/v1/representatives
+// NOTES: Contains representative list/create logic; move to Python Representative Domain Service.
+
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { z } from 'zod'

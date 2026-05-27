@@ -1,3 +1,8 @@
+// BACKEND_MIGRATION_STATUS: migrate_to_fastapi
+// TARGET_BACKEND_MODULE: capital
+// TARGET_FASTAPI_ENDPOINT: /api/v1/companies/{company_id}/capital-decreases/precheck
+// NOTES: Contains capital decrease precheck logic; move to Python company capital service.
+
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { buildCapitalDecreasePrecheck, capitalDecreaseError, ensureCapitalDecreaseAccess } from '../_shared'

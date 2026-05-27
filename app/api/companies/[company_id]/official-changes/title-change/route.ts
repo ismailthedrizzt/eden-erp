@@ -1,3 +1,8 @@
+// BACKEND_MIGRATION_STATUS: migrate_to_fastapi
+// TARGET_BACKEND_MODULE: company
+// TARGET_FASTAPI_ENDPOINT: /api/v1/companies/{company_id}/official-changes/title-change
+// NOTES: Contains title change business logic; move to Python Company Domain Service.
+
 import { NextRequest } from 'next/server'
 import { z } from 'zod'
 import { createServiceClient } from '@/lib/supabase/server'

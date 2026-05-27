@@ -1,6 +1,6 @@
 // BACKEND_MIGRATION_STATUS: migrate_to_fastapi
 // TARGET_BACKEND_MODULE: branches
-// TARGET_ENDPOINT: /api/v1/branches
+// TARGET_FASTAPI_ENDPOINT: /api/v1/branches
 // NOTES: Branch list is a transition BFF endpoint; direct branch creation must remain blocked.
 
 import { NextRequest, NextResponse } from 'next/server'

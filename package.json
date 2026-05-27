@@ -20,6 +20,8 @@
     "backend:lint": "cd backend && ruff check .",
     "backend:typecheck": "cd backend && mypy app",
     "backend:format": "cd backend && ruff format .",
+    "migration:status": "node scripts/check-backend-migration-status.js",
+    "migration:inventory": "node scripts/check-backend-migration-status.js write-inventory",
     "check:all": "npm run typecheck && npm run build && node -e \"console.log('Backend checks: run npm run backend:lint && npm run backend:typecheck && npm run backend:test after installing backend dependencies')\"",
     "encoding:guard": "node scripts/check-source-encoding.js",
     "security:guard": "node scripts/check-security-reference-contracts.js",

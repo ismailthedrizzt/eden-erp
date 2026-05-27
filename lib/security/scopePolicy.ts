@@ -1,6 +1,6 @@
 // BACKEND_MIGRATION_STATUS: migrate_to_fastapi
 // TARGET_BACKEND_MODULE: policy
-// TARGET_ENDPOINT: /api/v1/policies/scope
+// TARGET_FASTAPI_ENDPOINT: /api/v1/policies/scope
 // NOTES: Scope enforcement should move to Python; TS may remain UI preview/client helper only.
 
 import 'server-only'

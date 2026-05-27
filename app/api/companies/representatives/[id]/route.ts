@@ -1,6 +1,6 @@
 // BACKEND_MIGRATION_STATUS: migrate_to_fastapi
 // TARGET_BACKEND_MODULE: representatives
-// TARGET_ENDPOINT: /api/v1/representatives/{representative_id}
+// TARGET_FASTAPI_ENDPOINT: /api/v1/representatives/{representative_id}
 // NOTES: Authority transaction and scope behavior should move to Python Representative Authority Domain.
 
 import { NextRequest, NextResponse } from 'next/server'

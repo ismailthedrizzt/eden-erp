@@ -1,6 +1,6 @@
 // BACKEND_MIGRATION_STATUS: migrate_to_fastapi
 // TARGET_BACKEND_MODULE: process
-// TARGET_ENDPOINT: /api/v1/processes
+// TARGET_FASTAPI_ENDPOINT: /api/v1/processes
 // NOTES: Process Engine core should move to Python Process Domain.
 
 import 'server-only'

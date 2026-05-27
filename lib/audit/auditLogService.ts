@@ -1,6 +1,6 @@
 // BACKEND_MIGRATION_STATUS: migrate_to_fastapi
 // TARGET_BACKEND_MODULE: audit
-// TARGET_ENDPOINT: /api/v1/audit
+// TARGET_FASTAPI_ENDPOINT: /api/v1/audit
 // NOTES: Audit core write/read service should move to Python Audit Domain.
 
 import 'server-only'

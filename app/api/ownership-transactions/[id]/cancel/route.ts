@@ -1,3 +1,8 @@
+// BACKEND_MIGRATION_STATUS: migrate_to_fastapi
+// TARGET_BACKEND_MODULE: ownership
+// TARGET_FASTAPI_ENDPOINT: /api/v1/ownership-transactions/{transaction_id}/cancel
+// NOTES: Contains ownership transaction cancellation logic; Next.js route should become BFF/proxy after Python migration.
+
 import { NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { OWNERSHIP_TRANSACTION_SELECT } from '../../_shared'

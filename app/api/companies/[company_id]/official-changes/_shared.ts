@@ -1,6 +1,6 @@
 // BACKEND_MIGRATION_STATUS: deprecated_wrapper
 // TARGET_BACKEND_MODULE: company
-// TARGET_ENDPOINT: /api/v1/companies/{company_id}/official-changes
+// TARGET_FASTAPI_ENDPOINT: /api/v1/companies/{company_id}/official-changes
 // NOTES: Large TS shared helper file; migrate canonical logic to FastAPI domain services and remove obsolete wrappers.
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -346,7 +346,7 @@ export async function buildOfficialChangePrecheck(
 }
 
 export function getCompanyLifecycle(company: Record<string, any>) {
-  // TODO(domain-service-migration): Deprecated wrapper; use Company Domain Service lifecycle helper in new code.
+  // DEPRECATED_WRAPPER: use Company Domain Service lifecycle helper in new code.
   if (company.is_deleted === true) return 'deregistered'
   const values = [company.record_status, company.company_status]
     .map(value => String(value || '').trim().toLocaleLowerCase('tr-TR'))
@@ -395,6 +395,7 @@ export function normalizeDocuments(
   documents: Array<Record<string, any>>,
   meta: Record<string, { document_date?: string | null; description?: string | null }> = {}
 ) {
+  // DEPRECATED_WRAPPER: move document normalization to Python DTO/document mapper.
   return (documents || [])
     .filter(document => document && String(document.status || 'active') !== 'deleted')
     .map(document => {
@@ -667,6 +668,7 @@ export function hydrateOfficialCompanyResponse(
 }
 
 export function changedFieldsForPatch(current: Record<string, any>, patch: Record<string, any>) {
+  // DEPRECATED_WRAPPER: move official change diffing to Python operation DTO mapper.
   return Object.keys(patch).filter(field => {
     if (patch[field] === undefined) return false
     return !sameOfficialValue(patch[field], current[field])
@@ -701,6 +703,7 @@ export function validateOfficialDates(input: {
   registrationDate?: string | null
   tradeRegistryGazetteDate?: string | null
 }) {
+  // DEPRECATED_WRAPPER: move official date validation to Python operation precheck validators.
   const warnings: string[] = []
   const decisionTime = dateTime(input.decisionDate)
   const registrationTime = dateTime(input.registrationDate)
@@ -1168,7 +1171,7 @@ export async function loadCompanyFacilityById(
 }
 
 export function isActiveBranch(branch: Record<string, any>) {
-  // TODO(domain-service-migration): Deprecated wrapper; use Branch Domain Service helper directly in new code.
+  // DEPRECATED_WRAPPER: use Branch Domain Service helper directly in new code.
   return domainIsActiveBranch(branch)
 }
 

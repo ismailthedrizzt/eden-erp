@@ -63,12 +63,12 @@ Supabase is not the core backend. It is the database/auth/storage platform. Core
 
 ## Backend Migration Rule
 
-TypeScript API routes are temporary BFF / migration bridge code unless explicitly marked `keep_bff_proxy` or `keep_frontend`. Backend files that contain business logic should carry a migration status comment:
+TypeScript API routes are temporary BFF / migration bridge code unless explicitly marked `keep_bff_proxy`, `keep_ui_adapter` or `keep_frontend`. Backend files that contain business logic should carry a migration status comment:
 
 ```ts
 // BACKEND_MIGRATION_STATUS: migrate_to_fastapi
 // TARGET_BACKEND_MODULE: branches
-// TARGET_ENDPOINT: /api/v1/branches
+// TARGET_FASTAPI_ENDPOINT: /api/v1/branches
 // NOTES: Contains domain mutation logic; should move to Python Branch Domain Service.
 ```
 
@@ -77,7 +77,9 @@ Allowed statuses:
 ```text
 keep_frontend
 keep_bff_proxy
+keep_ui_adapter
 migrate_to_fastapi
+migrate_to_fastapi_then_proxy
 delete_obsolete
 contract_shared
 generated_do_not_edit

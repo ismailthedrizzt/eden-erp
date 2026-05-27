@@ -1,6 +1,6 @@
 // BACKEND_MIGRATION_STATUS: migrate_to_fastapi
 // TARGET_BACKEND_MODULE: branches
-// TARGET_ENDPOINT: /api/v1/branches/{branch_id}
+// TARGET_FASTAPI_ENDPOINT: /api/v1/branches/{branch_id}
 // NOTES: Branch card read/update should become a FastAPI proxy; official fields stay operation-controlled.
 
 import { NextRequest, NextResponse } from 'next/server'

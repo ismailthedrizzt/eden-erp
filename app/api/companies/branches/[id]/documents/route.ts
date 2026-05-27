@@ -1,3 +1,8 @@
+// BACKEND_MIGRATION_STATUS: migrate_to_fastapi
+// TARGET_BACKEND_MODULE: branches
+// TARGET_FASTAPI_ENDPOINT: /api/v1/branches/{branch_id}/documents
+// NOTES: Contains branch document update logic; move to Python Branch/Document Domain Services.
+
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { createServiceClient } from '@/lib/supabase/server'

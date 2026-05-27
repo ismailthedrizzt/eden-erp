@@ -4,9 +4,11 @@ Bu roadmap FastAPI core backend gecisi icin ilk tasima sirasini belirler.
 
 ## P0
 
-1. **Branch opening/closing**
+1. **Branch opening/closing** - in progress / first FastAPI implementation landed
    - Target: `backend/app/domains/branches`, `organization`, `facilities`
    - Reason: En yeni cross-domain mutation zinciri ve transaction boundary pilotu.
+   - Implemented: `POST /api/v1/companies/{company_id}/branch-openings`, `POST /api/v1/companies/{company_id}/branch-closings`, precheck endpointleri ve Next BFF proxy.
+   - Follow-up: TS legacy fallback'i kaldir, JWT/scope hardening ve DB integration testlerini ekle.
 
 2. **Company official changes**
    - Target: `backend/app/domains/company`

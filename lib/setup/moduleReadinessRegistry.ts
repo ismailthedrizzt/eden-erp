@@ -1,6 +1,6 @@
 // BACKEND_MIGRATION_STATUS: contract_shared
 // TARGET_BACKEND_MODULE: setup
-// TARGET_ENDPOINT: /api/v1/setup/readiness
+// TARGET_FASTAPI_ENDPOINT: /api/v1/setup/readiness
 // NOTES: Readiness definitions should become shared/generated contracts after Python migration.
 
 import type { ModuleReadinessDefinition, SetupStepType } from './setup.types'

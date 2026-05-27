@@ -1,6 +1,6 @@
 // BACKEND_MIGRATION_STATUS: migrate_to_fastapi
 // TARGET_BACKEND_MODULE: integrity
-// TARGET_ENDPOINT: /api/v1/integrity/checks
+// TARGET_FASTAPI_ENDPOINT: /api/v1/integrity/checks
 // NOTES: Data integrity checks should move to Python precheck services.
 
 import 'server-only'

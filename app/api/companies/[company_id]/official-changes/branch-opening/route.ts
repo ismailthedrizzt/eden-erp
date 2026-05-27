@@ -1,9 +1,10 @@
-// BACKEND_MIGRATION_STATUS: migrate_to_fastapi
+// BACKEND_MIGRATION_STATUS: keep_bff_proxy_with_legacy_fallback
 // TARGET_BACKEND_MODULE: branches
-// TARGET_ENDPOINT: /api/v1/companies/{company_id}/official-changes/branch-opening
-// NOTES: Contains critical cross-domain operation flow; first Python migration target.
+// TARGET_FASTAPI_ENDPOINT: /api/v1/companies/{company_id}/branch-openings
+// NOTES: Proxies to FastAPI when FASTAPI_BASE_URL is configured; TS fallback is temporary migration bridge.
 
 import { NextRequest } from 'next/server'
+import { isFastApiEnabled, proxyToFastApi } from '@/lib/backend/fastApiProxy'
 import { stripOperationControlFields } from '@/lib/operations/idempotency'
 import {
   CompanyBranchOpeningSchema,
@@ -21,6 +22,12 @@ export async function POST(
   { params }: { params: Promise<{ company_id: string }> }
 ) {
   const { company_id: companyId } = await params
+  if (isFastApiEnabled()) {
+    const proxied = await proxyToFastApi(request, `/api/v1/companies/${companyId}/branch-openings`)
+    if (proxied) return proxied
+  }
+  console.warn('FastAPI backend not configured; using legacy TS fallback for branch opening.')
+
   const rawBody = await request.json().catch(() => ({}))
   const parsed = CompanyBranchOpeningSchema.safeParse(stripOperationControlFields(rawBody))
 

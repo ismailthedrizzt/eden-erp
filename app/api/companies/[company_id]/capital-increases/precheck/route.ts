@@ -1,3 +1,8 @@
+// BACKEND_MIGRATION_STATUS: migrate_to_fastapi
+// TARGET_BACKEND_MODULE: capital
+// TARGET_FASTAPI_ENDPOINT: /api/v1/companies/{company_id}/capital-increases/precheck
+// NOTES: Contains capital increase precheck logic; Next.js route should become BFF/proxy after Python migration.
+
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { buildCapitalIncreasePrecheck, capitalIncreaseError, ensureCapitalIncreaseAccess } from '../_shared'

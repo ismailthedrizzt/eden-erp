@@ -1,9 +1,10 @@
-// BACKEND_MIGRATION_STATUS: migrate_to_fastapi
+// BACKEND_MIGRATION_STATUS: keep_bff_proxy_with_legacy_fallback
 // TARGET_BACKEND_MODULE: branches
-// TARGET_ENDPOINT: /api/v1/companies/{company_id}/official-changes/branch-closing
-// NOTES: Contains critical branch closing impact flow; first Python migration target.
+// TARGET_FASTAPI_ENDPOINT: /api/v1/companies/{company_id}/branch-closings
+// NOTES: Proxies to FastAPI when FASTAPI_BASE_URL is configured; TS fallback is temporary migration bridge.
 
 import { NextRequest } from 'next/server'
+import { isFastApiEnabled, proxyToFastApi } from '@/lib/backend/fastApiProxy'
 import { stripOperationControlFields } from '@/lib/operations/idempotency'
 import {
   CompanyBranchClosingSchema,
@@ -21,6 +22,12 @@ export async function POST(
   { params }: { params: Promise<{ company_id: string }> }
 ) {
   const { company_id: companyId } = await params
+  if (isFastApiEnabled()) {
+    const proxied = await proxyToFastApi(request, `/api/v1/companies/${companyId}/branch-closings`)
+    if (proxied) return proxied
+  }
+  console.warn('FastAPI backend not configured; using legacy TS fallback for branch closing.')
+
   const rawBody = await request.json().catch(() => ({}))
   const parsed = CompanyBranchClosingSchema.safeParse(stripOperationControlFields(rawBody))
 

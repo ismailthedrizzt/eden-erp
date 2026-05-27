@@ -98,8 +98,12 @@ Python komutlari icin once `backend` dependencies kurulmalidir. `npm run check:a
 Detayli haritalar:
 
 - [Codebase Inventory](./docs/architecture/CodebaseInventory.md)
+- [Python Backend Migration](./docs/architecture/PythonBackendMigration.md)
+- [Next API Route Migration Inventory](./docs/architecture/NextApiRouteMigrationInventory.md)
 - [Python Migration Map](./docs/architecture/PythonMigrationMap.md)
 - [Python Migration Roadmap](./docs/architecture/PythonMigrationRoadmap.md)
+- [OpenAPI Contract Strategy](./docs/architecture/OpenAPIContractStrategy.md)
+- [Scaling Architecture](./docs/architecture/ScalingArchitecture.md)
 - [Next Cleanup Plan](./docs/architecture/NextCleanupPlan.md)
 
 ## Visual Studio
