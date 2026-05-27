@@ -1,0 +1,60 @@
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.next
+    environment:
+      NEXT_PUBLIC_ENVIRONMENT: local
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
+      NEXT_PUBLIC_APP_NAME: Eden ERP
+      NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL:-}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY:-}
+      FASTAPI_BASE_URL: http://api:8000
+      INTERNAL_BACKEND_TOKEN: ${INTERNAL_BACKEND_TOKEN:-local-internal-token}
+      TRUSTED_PROXY_SECRET: ${TRUSTED_PROXY_SECRET:-local-proxy-secret}
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    environment:
+      APP_ENV: local
+      DATABASE_URL: ${DATABASE_URL:-}
+      SUPABASE_URL: ${SUPABASE_URL:-}
+      SUPABASE_JWT_SECRET: ${SUPABASE_JWT_SECRET:-}
+      SUPABASE_JWKS_URL: ${SUPABASE_JWKS_URL:-}
+      AUTH_REQUIRED: "false"
+      ALLOW_TRUSTED_PROXY_HEADERS: "true"
+      TRUSTED_PROXY_SECRET: ${TRUSTED_PROXY_SECRET:-local-proxy-secret}
+      INTERNAL_BACKEND_TOKEN: ${INTERNAL_BACKEND_TOKEN:-local-internal-token}
+      CORS_ALLOWED_ORIGINS: http://localhost:3000
+      LOG_LEVEL: INFO
+      LOG_FORMAT: json
+      DB_POOL_SIZE: 5
+      DB_MAX_OVERFLOW: 10
+      OUTBOX_BATCH_SIZE: 25
+      WORKER_ID: eden-api-local
+    ports:
+      - "8000:8000"
+
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    command: ["python", "-m", "app.workers.outbox_worker"]
+    environment:
+      APP_ENV: local
+      DATABASE_URL: ${DATABASE_URL:-}
+      INTERNAL_BACKEND_TOKEN: ${INTERNAL_BACKEND_TOKEN:-local-internal-token}
+      LOG_LEVEL: INFO
+      LOG_FORMAT: json
+      OUTBOX_BATCH_SIZE: 25
+      OUTBOX_POLL_INTERVAL_SECONDS: 5
+      OUTBOX_LOCK_TTL_SECONDS: 300
+      WORKER_ID: eden-worker-local
+    depends_on:
+      - api

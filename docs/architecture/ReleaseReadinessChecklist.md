@@ -1,0 +1,22 @@
+# Release Readiness Checklist
+
+- `npm run typecheck` passed.
+- `npm run build` passed.
+- `npm run migration:status` has P0 missing headers = 0.
+- `npm run env:safety` passed.
+- `npm run openapi:refresh` is up to date.
+- `cd backend && python -m ruff check .` passed.
+- `cd backend && python -m mypy app` passed.
+- `cd backend && python -m pytest` passed.
+- DB migrations reviewed.
+- Production env vars configured.
+- `FASTAPI_BASE_URL` configured in Next.
+- `AUTH_REQUIRED=true` in FastAPI production.
+- JWT verification configured.
+- `INTERNAL_BACKEND_TOKEN` configured in Next, FastAPI and worker.
+- Worker process running.
+- Outbox backlog acceptable.
+- Audit write/read OK.
+- `/health`, `/api/v1/health` and deep health OK.
+- Smoke tests passed.
+- Rollback plan prepared.

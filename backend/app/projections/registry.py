@@ -44,6 +44,10 @@ PROJECTIONS: dict[str, ProjectionDefinition] = {
             "company_status",
         ],
         status_field="record_status",
+        performance_budget_ms=500,
+        default_page_size=50,
+        max_page_size=100,
+        requires_index_hint="companies(tenant_id, is_deleted, record_status, updated_at)",
     ),
     "companyDetail": ProjectionDefinition(
         key="companyDetail",
@@ -53,6 +57,7 @@ PROJECTIONS: dict[str, ProjectionDefinition] = {
         source_type="table",
         source_tables=["companies"],
         company_scoped=True,
+        performance_budget_ms=700,
     ),
     "branchList": ProjectionDefinition(
         key="branchList",
@@ -75,6 +80,10 @@ PROJECTIONS: dict[str, ProjectionDefinition] = {
         status_field="record_status",
         company_scoped=True,
         fallback_strategy="company_branches_table",
+        performance_budget_ms=500,
+        default_page_size=50,
+        max_page_size=100,
+        requires_index_hint="company_branches(tenant_id, company_id, record_status, updated_at)",
     ),
     "branchSummary": ProjectionDefinition(
         key="branchSummary",
@@ -84,6 +93,8 @@ PROJECTIONS: dict[str, ProjectionDefinition] = {
         source_type="table",
         source_tables=["company_branches"],
         company_scoped=True,
+        performance_budget_ms=500,
+        max_page_size=100,
     ),
     "partnerList": ProjectionDefinition(
         key="partnerList",
@@ -97,6 +108,10 @@ PROJECTIONS: dict[str, ProjectionDefinition] = {
         status_field="record_status",
         company_scoped=True,
         fallback_strategy="hydrate_current_ownership_if_available",
+        performance_budget_ms=500,
+        default_page_size=50,
+        max_page_size=100,
+        requires_index_hint="company_partners(tenant_id, company_id, record_status, updated_at)",
     ),
     "representativeList": ProjectionDefinition(
         key="representativeList",
@@ -110,6 +125,12 @@ PROJECTIONS: dict[str, ProjectionDefinition] = {
         status_field="record_status",
         company_scoped=True,
         fallback_strategy="hydrate_current_authority_if_available",
+        performance_budget_ms=500,
+        default_page_size=50,
+        max_page_size=100,
+        requires_index_hint=(
+            "company_representatives(tenant_id, company_id, record_status, updated_at)"
+        ),
     ),
     "currentOwnership": ProjectionDefinition(
         key="currentOwnership",
@@ -120,6 +141,9 @@ PROJECTIONS: dict[str, ProjectionDefinition] = {
         source_tables=["company_partners", "ownership_transactions"],
         company_scoped=True,
         fallback_strategy="ownership_transaction_aggregation",
+        performance_budget_ms=500,
+        max_page_size=100,
+        requires_index_hint="ownership_transactions(tenant_id, company_id, effective_date)",
     ),
     "currentRepresentativeAuthorities": ProjectionDefinition(
         key="currentRepresentativeAuthorities",
@@ -130,6 +154,11 @@ PROJECTIONS: dict[str, ProjectionDefinition] = {
         source_tables=["company_representatives", "representative_authority_transactions"],
         company_scoped=True,
         fallback_strategy="representative_authority_transactions_latest",
+        performance_budget_ms=500,
+        max_page_size=100,
+        requires_index_hint=(
+            "representative_authority_transactions(tenant_id, company_id, effective_date)"
+        ),
     ),
 }
 

@@ -45,3 +45,10 @@ def test_request_id_middleware_preserves_incoming_headers() -> None:
 
     assert response.headers["x-request-id"] == "req-in"
     assert response.headers["x-correlation-id"] == "corr-in"
+
+
+def test_request_timing_middleware_sets_duration_header() -> None:
+    response = TestClient(create_app()).get("/health")
+
+    assert response.status_code == 200
+    assert float(response.headers["x-response-time-ms"]) >= 0

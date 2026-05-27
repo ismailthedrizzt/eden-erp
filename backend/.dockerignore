@@ -1,0 +1,9 @@
+.mypy_cache
+.pytest_cache
+.ruff_cache
+.env
+.env.*
+!.env.example
+__pycache__
+*.pyc
+openapi.json

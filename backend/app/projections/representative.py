@@ -9,7 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.errors import DomainError
 from app.domains.operations.service import table_exists
 from app.projections.hydration import display_name_from_representative
-from app.projections.query import observe_projection_query, order_clause
+from app.projections.query import enforce_projection_budget, observe_projection_query, order_clause
 from app.projections.registry import get_projection_definition
 from app.projections.types import ProjectionDefinition, ProjectionQueryInput, ProjectionQueryResult
 from app.schemas.pagination import build_list_meta
@@ -21,6 +21,7 @@ async def list_representative_projection(
 ) -> ProjectionQueryResult:
     started = time.perf_counter()
     definition = _definition("representativeList")
+    query = enforce_projection_budget(definition, query)
     if not await table_exists(session, "public.company_representatives"):
         raise DomainError(
             "Bu modulun kurulumu tamamlanmamis.",

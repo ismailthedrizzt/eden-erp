@@ -7,7 +7,8 @@ from uuid import uuid4
 from starlette.datastructures import MutableHeaders
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
-from app.core.logging import bind_log_context, clear_log_context, log_info, log_warning
+from app.core.config import get_settings
+from app.core.logging import bind_log_context, clear_log_context, log_error, log_info, log_warning
 from app.core.metrics import record_request
 
 
@@ -60,11 +61,16 @@ class RequestLoggingMiddleware:
 
         started = time.perf_counter()
         status_code = 500
+        settings = get_settings()
 
         async def send_with_status(message: Message) -> None:
             nonlocal status_code
             if message["type"] == "http.response.start":
                 status_code = int(message["status"])
+                if settings.expose_response_time_header:
+                    response_headers = MutableHeaders(scope=message)
+                    elapsed_ms = round((time.perf_counter() - started) * 1000, 2)
+                    response_headers["x-response-time-ms"] = str(elapsed_ms)
             await send(message)
 
         try:
@@ -72,10 +78,19 @@ class RequestLoggingMiddleware:
         finally:
             duration_ms = round((time.perf_counter() - started) * 1000, 2)
             record_request(status_code, duration_ms)
-            log = log_warning if status_code >= 500 else log_info
+            if duration_ms >= settings.api_very_slow_request_ms:
+                log = log_error
+                error_code: str | None = "API_VERY_SLOW_REQUEST"
+            elif duration_ms >= settings.api_slow_request_ms:
+                log = log_warning
+                error_code = "API_SLOW_REQUEST"
+            else:
+                log = log_warning if status_code >= 500 else log_info
+                error_code = "HTTP_REQUEST_FAILED" if status_code >= 500 else None
             path = str(scope.get("path") or "")
             if path.endswith("/health"):
                 log = log_info
+                error_code = None
             log(
                 "HTTP request completed.",
                 logger_name="eden.request",
@@ -83,6 +98,7 @@ class RequestLoggingMiddleware:
                 endpoint=path,
                 status_code=status_code,
                 duration_ms=duration_ms,
+                error_code=error_code,
             )
 
 

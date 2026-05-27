@@ -1,5 +1,10 @@
 import 'server-only'
 
+// Deployment contract:
+// - FASTAPI_BASE_URL must be set in production Next.js environments.
+// - INTERNAL_BACKEND_TOKEN and TRUSTED_PROXY_SECRET are server-only secrets.
+// - Never expose these values through NEXT_PUBLIC_*.
+
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { resolveTenantContext } from '@/lib/tenancy/server'

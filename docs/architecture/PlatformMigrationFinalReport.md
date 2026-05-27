@@ -151,6 +151,27 @@ aktarimini standartlastirdi ve FastAPI response headerlarini frontend'e geri
 tasir. Detaylar [Observability / Logging / Metrics](./ObservabilityLoggingMetrics.md)
 dokumanindadir.
 
+## 7.15 Performance / Load / DB Indexing Addendum
+
+FastAPI backend icin DB pool config, statement timeout hazirligi, slow request
+thresholdlari, `X-Response-Time-Ms`, projection performance budgetlari ve
+SmartDataTable page size clamp eklendi. Platform load-test senaryolari
+`scripts/load-test.js` icinde genisletildi; guvenli index migration hazirligi
+`supabase/migrations/20260528_performance_indexes.sql` dosyasindadir. Detaylar
+[Performance Targets](./PerformanceTargets.md), [Database Index Plan](./DatabaseIndexPlan.md)
+ve [Performance Migration Plan](./PerformanceMigrationPlan.md) dokumanlarindadir.
+
+## 7.16 Deployment / CI-CD / Environment Strategy Addendum
+
+Eden ERP deployment modeli Next.js web/BFF, FastAPI API, Python worker ve
+Supabase/PostgreSQL bilesenleri olarak ayrildi. `.github/workflows/ci.yml`
+frontend, backend, OpenAPI drift ve Docker build kontrollerini tanimlar.
+`Dockerfile.next`, `backend/Dockerfile`, `docker-compose.yml`, env example
+dosyalari, smoke-test ve env-safety scriptleri eklendi. Detaylar
+[Environment Strategy](./EnvironmentStrategy.md), [CI/CD Strategy](./CICDStrategy.md),
+[Deployment Topology](./DeploymentTopology.md) ve
+[Release Readiness Checklist](./ReleaseReadinessChecklist.md) dokumanlarindadir.
+
 ## 8. Build / Typecheck Sonucu
 
 Final pass sirasinda asagidaki kontroller calistirildi:

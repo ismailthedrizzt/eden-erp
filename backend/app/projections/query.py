@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Literal
 
-from app.core.logging import log_info
+from app.core.logging import log_info, log_warning
 from app.core.metrics import record_projection
 from app.projections.types import ProjectionDefinition, ProjectionQueryInput
 from app.schemas.pagination import ListMeta, build_list_meta
@@ -27,13 +27,23 @@ def projection_query_from_params(
         company_id=company_id,
         branch_id=branch_id,
         page=page,
-        page_size=page_size,
+        page_size=max(page_size, 1),
         search=search,
         sort=sort,
         direction=safe_direction,
         statuses=[item.strip() for item in (statuses or "").split(",") if item.strip()],
         filters=filters or {},
     )
+
+
+def enforce_projection_budget(
+    definition: ProjectionDefinition,
+    query: ProjectionQueryInput,
+) -> ProjectionQueryInput:
+    safe_page = max(query.page, 1)
+    requested_page_size = query.page_size or definition.default_page_size
+    safe_page_size = min(max(requested_page_size, 1), definition.max_page_size)
+    return query.model_copy(update={"page": safe_page, "page_size": safe_page_size})
 
 
 def apply_in_memory_filters(
@@ -100,6 +110,18 @@ def observe_projection_query(
     fallback_used: bool = False,
 ) -> None:
     record_projection(definition.key, duration_ms=duration_ms, fallback_used=fallback_used)
+    if duration_ms > definition.performance_budget_ms:
+        log_warning(
+            "Projection exceeded performance budget.",
+            logger_name="eden.projection",
+            module_key=definition.key,
+            duration_ms=round(duration_ms, 2),
+            performance_budget_ms=definition.performance_budget_ms,
+            row_count=row_count,
+            page=query.page,
+            page_size=query.page_size,
+            fallback_used=fallback_used,
+        )
     log_info(
         "Projection query completed.",
         logger_name="eden.projection",

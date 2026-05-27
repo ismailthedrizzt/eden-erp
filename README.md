@@ -87,6 +87,33 @@ npm run backend:test
 
 Python komutlari icin once `backend` dependencies kurulmalidir. `npm run check:all` bugun Next.js kontrollerini calistirir ve backend kontrolleri icin kurulum notu verir; Python CI adimi ayrica etkinlestirilecektir.
 
+Deployment readiness helpers:
+
+```bash
+npm run env:safety
+npm run smoke:test:dry
+docker compose config
+```
+
+CI workflow `.github/workflows/ci.yml` frontend, backend, OpenAPI drift and Docker build checks for the Next + FastAPI + worker topology.
+
+## Deployment Model
+
+Target deployment is no longer a single Next.js app:
+
+- Next.js web/BFF container or Vercel deployment.
+- FastAPI core backend container.
+- Python worker container/process for outbox and background work.
+- Supabase/PostgreSQL for DB/Auth/Storage.
+
+Local container files:
+
+- `Dockerfile.next`
+- `backend/Dockerfile`
+- `docker-compose.yml`
+
+Environment, CI/CD, rollback and smoke-test strategy are documented in `docs/architecture`.
+
 ## Migration Strategy
 
 1. FastAPI scaffold ve OpenAPI sozlesmesi source of truth olarak kurulacak.

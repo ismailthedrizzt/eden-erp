@@ -34,6 +34,22 @@ eder; yoksa legacy TS fallback migration bridge olarak kalir.
 - Representative `record_status` ve `authority_status` ayri alanlar olarak kalir.
 - Partner ownership haklari current ownership hydrate ile gelir; partner karti statusu
   main kayittan okunur.
+- Projection definitions carry `performance_budget_ms`, `default_page_size` and
+  `max_page_size`; high-volume lists clamp page size to 100.
+- Unknown sort fields fall back to the projection default sort field.
+- Unbounded list queries are not allowed for ERP read models.
+
+## Performance Budget
+
+Initial budgets:
+
+- companyList: 500 ms, max page size 100
+- branchList: 500 ms, max page size 100
+- partnerList: 500 ms, max page size 100
+- representativeList: 500 ms, max page size 100
+- currentOwnership/currentRepresentativeAuthorities: 500 ms
+
+Index and EXPLAIN follow-up lives in [Database Index Plan](./DatabaseIndexPlan.md).
 
 ## Fallback Warnings
 

@@ -12,7 +12,7 @@ from app.domains.company.service import get_company_by_id, get_company_context
 from app.domains.operations.service import table_exists
 from app.projections.branch import get_branch_summary_for_company
 from app.projections.current_ownership import current_ownership_projection
-from app.projections.query import observe_projection_query, order_clause
+from app.projections.query import enforce_projection_budget, observe_projection_query, order_clause
 from app.projections.registry import get_projection_definition
 from app.projections.types import ProjectionDefinition, ProjectionQueryInput, ProjectionQueryResult
 from app.schemas.pagination import build_list_meta
@@ -31,6 +31,7 @@ async def list_company_projection(
 ) -> ProjectionQueryResult:
     started = time.perf_counter()
     definition = _definition("companyList")
+    query = enforce_projection_budget(definition, query)
     if not await table_exists(session, "public.companies"):
         raise DomainError(
             "Bu modulun kurulumu tamamlanmamis.",

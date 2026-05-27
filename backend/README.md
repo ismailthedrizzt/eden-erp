@@ -45,6 +45,18 @@ TRUSTED_PROXY_SECRET=local-proxy-secret
 INTERNAL_BACKEND_TOKEN=local-internal-secret
 LOG_FORMAT=json
 DB_SLOW_QUERY_MS=750
+DB_POOL_SIZE=5
+DB_MAX_OVERFLOW=10
+DB_POOL_TIMEOUT=30
+DB_POOL_RECYCLE=1800
+DB_STATEMENT_TIMEOUT_MS=1500
+USE_SUPABASE_POOLER=false
+API_SLOW_REQUEST_MS=1000
+API_VERY_SLOW_REQUEST_MS=3000
+EXPOSE_RESPONSE_TIME_HEADER=true
+OUTBOX_MAX_RUNTIME_MS=25000
+OUTBOX_LOCK_TTL_SECONDS=300
+OUTBOX_MAX_RETRIES=5
 ERROR_TRACKING_ENABLED=false
 SENTRY_DSN=
 ```
@@ -67,7 +79,40 @@ Auth hardening:
 - Sensitive values such as token, secret, password, signed URL, identity number, tax number, phone and email are masked before logging.
 - `GET /api/v1/system/metrics` returns the in-memory metrics snapshot.
 - `GET /api/v1/system/health/deep` runs an internal deep health check.
+- `GET /api/v1/system/performance/smoke` runs an internal DB/platform timing smoke.
 - Production should protect system endpoints with `INTERNAL_BACKEND_TOKEN`.
+
+## Performance
+
+- SQLAlchemy async pool settings are controlled by `DB_POOL_SIZE`, `DB_MAX_OVERFLOW`,
+  `DB_POOL_TIMEOUT` and `DB_POOL_RECYCLE`.
+- `DB_STATEMENT_TIMEOUT_MS` is applied for asyncpg connections when configured.
+- `DB_SLOW_QUERY_MS`, `API_SLOW_REQUEST_MS` and `API_VERY_SLOW_REQUEST_MS`
+  produce structured performance warnings.
+- `backend/scripts/explain_queries.py` prepares EXPLAIN checks for critical read paths.
+- `npm run load:test:scenarios` lists frontend/BFF load-test scenarios.
+
+## Deployment
+
+Container image:
+
+```bash
+docker build -f backend/Dockerfile backend
+```
+
+Production API command:
+
+```bash
+uvicorn app.main:app --host 0.0.0.0 --port 8000
+```
+
+Worker command:
+
+```bash
+python -m app.workers.outbox_worker
+```
+
+`python -m app.workers.outbox_worker --once` can be used for controlled cron-style runs. API and worker deployments should use separate DB pool budgets.
 
 ## Commands
 

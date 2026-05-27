@@ -57,6 +57,10 @@ Client generation ayrintilari [OpenAPI Client Generation](./OpenAPIClientGenerat
 dokumaninda tutulur. Mevcut hedef `lib/generated/backend-client/types.ts`
 dosyasidir ve `npm run openapi:refresh` ile guncellenir.
 
+CI `npm run openapi:refresh` calistirir ve `backend/openapi.json` ile
+`lib/generated/backend-client/types.ts` drift olusturursa OpenAPI job fail eder.
+Generated files elle duzenlenmez.
+
 Step 12 itibariyla ilk adoption basladi: `companyService` public method
 imzalari korunurken Company, Branch, Capital, Ownership ve Representative
 Authority endpoint aileleri generated OpenAPI `paths` type'lari ile

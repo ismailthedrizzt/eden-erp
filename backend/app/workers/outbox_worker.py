@@ -19,10 +19,13 @@ async def run_once() -> dict[str, int | list[str]]:
         logger_name="eden.worker",
         worker_id=settings.worker_id,
         batch_size=settings.outbox_batch_size,
+        max_runtime_ms=settings.outbox_max_runtime_ms,
+        lock_ttl_seconds=settings.outbox_lock_ttl_seconds,
+        max_retries=settings.outbox_max_retries,
     )
     async with get_session_factory()() as session:
         async with session.begin():
-            await release_stale_locks(session)
+            await release_stale_locks(session, lock_ttl_seconds=settings.outbox_lock_ttl_seconds)
             result = await dispatch_pending_events(
                 session,
                 batch_size=settings.outbox_batch_size,
@@ -57,6 +60,9 @@ def main() -> None:
         worker_id=settings.worker_id,
         batch_size=settings.outbox_batch_size,
         poll_interval=settings.outbox_poll_interval_seconds,
+        max_runtime_ms=settings.outbox_max_runtime_ms,
+        lock_ttl_seconds=settings.outbox_lock_ttl_seconds,
+        max_retries=settings.outbox_max_retries,
     )
     if args.once:
         asyncio.run(run_once())

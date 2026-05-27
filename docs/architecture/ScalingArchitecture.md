@@ -16,6 +16,9 @@ Bu dokuman Eden ERP'nin ciddi olcek hedefi icin hedef runtime mimarisini tanimla
 - Feature/module readiness startup ve request guardlarda kontrol edilir.
 - Observability/logging/metrics zorunlu platform katmani olmalidir.
 - Request/correlation ID, structured JSON logs, metrics snapshots, slow query warnings and worker logs are standard FastAPI runtime signals.
+- FastAPI owns PostgreSQL connection pooling; Next.js API routes should not create a second permanent DB access layer.
+- Performance budgets, load-test scenarios and DB index plans are maintained as first-class architecture contracts.
+- Deployment is split into web, API and worker runtimes; see [Deployment Topology](./DeploymentTopology.md).
 
 ## Scale Target
 
@@ -51,6 +54,21 @@ flowchart LR
 ## Data Access
 
 FastAPI owns core data access. Next.js should not hold permanent domain query/mutation logic. Projection/read model endpoints should favor indexed views or materialized read tables for high-volume screens.
+
+## Database Pooling
+
+FastAPI runs as a persistent backend process, so SQLAlchemy async engine pooling is configured with:
+
+- `DB_POOL_SIZE`
+- `DB_MAX_OVERFLOW`
+- `DB_POOL_TIMEOUT`
+- `DB_POOL_RECYCLE`
+- `DB_STATEMENT_TIMEOUT_MS`
+- `USE_SUPABASE_POOLER`
+
+Supabase/PgBouncer pooler usage is recommended for production. API processes and worker processes consume separate connection pools, so worker count must be sized together with API replicas. Serverless Next.js routes should continue to act as BFF/proxy and must not become a parallel persistent database client layer.
+
+Internal deep health exposes the configured pool summary. Query timing and slow-query warnings use `DB_SLOW_QUERY_MS`.
 
 ## Background Work
 

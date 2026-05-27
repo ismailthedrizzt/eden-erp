@@ -4574,6 +4574,29 @@
         }
       }
     },
+    "/api/v1/system/performance/smoke": {
+      "get": {
+        "tags": [
+          "system"
+        ],
+        "summary": "Performance Smoke",
+        "operationId": "performance_smoke_api_v1_system_performance_smoke_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Performance Smoke Api V1 System Performance Smoke Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/health": {
       "get": {
         "tags": [

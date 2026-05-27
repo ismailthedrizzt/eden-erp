@@ -23,6 +23,11 @@ class ProjectionDefinition(BaseModel):
     tenant_scoped: bool = True
     company_scoped: bool = False
     fallback_strategy: str | None = None
+    performance_budget_ms: int = 500
+    default_page_size: int = 50
+    max_page_size: int = 100
+    allow_unbounded_query: bool = False
+    requires_index_hint: str | None = None
 
     def meta(self, *, fallback_used: bool = False) -> ProjectionMeta:
         return ProjectionMeta(

@@ -80,6 +80,11 @@ Bu roadmap FastAPI core backend gecisi icin ilk tasima sirasini belirler.
    - Implemented: request/correlation ID middleware, structured log context, normalized error responses with IDs, in-memory metrics, DB slow query hooks, system metrics/deep health endpoints and operation/outbox/audit/projection log points.
    - Follow-up: OpenTelemetry, Sentry production integration, Prometheus/Grafana deployment and cross-runtime trace dashboards.
 
+15. **Deployment / CI-CD / Environment Strategy** - in progress / platform deployment contract landed
+   - Target: `.github/workflows/ci.yml`, Dockerfiles, env examples and deployment docs.
+   - Implemented: Next/FastAPI/worker topology docs, CI jobs, Docker/compose skeleton, env examples, smoke-test and env-safety scripts.
+   - Follow-up: provider-specific deploy hooks, production secret manager wiring and staging smoke/load automation.
+
 11. **Setup Readiness**
     - Module readiness Python startup/request guard olarak uygulanir.
     - Implemented: `/api/v1/setup/readiness` ve module readiness endpointleri eklendi.

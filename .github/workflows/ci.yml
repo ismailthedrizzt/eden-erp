@@ -1,0 +1,78 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  frontend:
+    name: Frontend / Next.js
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm run encoding:guard
+      - run: npm run env:safety
+      - run: npm run typecheck
+      - run: npm run migration:status
+      - run: npm run smoke:test:dry
+      - run: npm run build
+      - run: git diff --check
+
+  backend:
+    name: Backend / FastAPI
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: python -m pip install --upgrade pip
+      - run: pip install -e ".[dev]"
+        working-directory: backend
+      - run: python -m ruff check .
+        working-directory: backend
+      - run: python -m mypy app
+        working-directory: backend
+      - run: python -m pytest
+        working-directory: backend
+
+  openapi:
+    name: OpenAPI Drift
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: npm ci
+      - run: python -m pip install --upgrade pip
+      - run: pip install -e ".[dev]"
+        working-directory: backend
+      - run: npm run openapi:refresh
+      - name: Check generated OpenAPI drift
+        run: git diff --exit-code backend/openapi.json lib/generated/backend-client/types.ts
+
+  docker:
+    name: Docker Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate compose file
+        run: docker compose config
+      - name: Build FastAPI image
+        run: docker build -f backend/Dockerfile backend
+      - name: Build Next image
+        run: docker build -f Dockerfile.next .

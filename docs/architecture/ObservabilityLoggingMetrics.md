@@ -92,6 +92,22 @@ Request logging does not write full payloads.
 
 SQLAlchemy event listeners record `db_query_duration_ms`. Queries slower than `DB_SLOW_QUERY_MS` log a structured warning with truncated statement text. Production dashboards should use this signal with PostgreSQL/Supabase query logs.
 
+## Slow Request Budgets
+
+Request timing middleware uses:
+
+- `API_SLOW_REQUEST_MS` for warning logs.
+- `API_VERY_SLOW_REQUEST_MS` for error-level very slow request logs.
+- `X-Response-Time-Ms` response header when `EXPOSE_RESPONSE_TIME_HEADER=true`.
+
+The request/correlation IDs in these logs are the primary support handle for slow endpoint investigation.
+
+## Deployment Checks
+
+Release smoke tests should include `/health`, `/api/v1/health`, deep health and
+the internal performance smoke endpoint. Metrics and deep health must remain
+protected by `INTERNAL_BACKEND_TOKEN` in production.
+
 ## Operation, Process, Outbox, Audit And Projection Logs
 
 - Operations log start, duplicate, created, completed and failed states.

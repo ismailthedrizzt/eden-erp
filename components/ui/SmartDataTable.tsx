@@ -33,6 +33,12 @@ import { getCachedTablePreference, syncUiPreferencesPatch, updateCachedUiPrefere
 // Column Definition Types
 type ColumnType = 'text' | 'number' | 'date' | 'enum' | 'boolean' | 'image' | 'badge' | 'avatar' | 'actions'
 
+const MAX_TABLE_PAGE_SIZE = 100
+
+function clampTablePageSize(value: number) {
+  return Math.min(Math.max(Number.isFinite(value) ? value : 10, 1), MAX_TABLE_PAGE_SIZE)
+}
+
 export interface ColumnDef {
   key: string
   label: string
@@ -390,6 +396,9 @@ export function SmartDataTable<T extends { id: string }>({
     : includePassive
       ? ['active', 'passive']
       : ['active']
+  const resolvedPageSizeOptions = pageSizeOptions
+    .map(option => clampTablePageSize(option))
+    .filter((option, index, options) => options.indexOf(option) === index)
   const lockedStatusFilters = customStatusFiltersEnabled ? [] : ['active']
   const handleStatusFiltersChange = (values: string[]) => {
     if (customStatusFiltersEnabled) {
@@ -404,7 +413,7 @@ export function SmartDataTable<T extends { id: string }>({
   const [preferencesLoaded, setPreferencesLoaded] = useState(false)
   const [viewMode, setViewMode] = useState<'list' | 'card'>(defaultView)
   
-  const [pageSize, setPageSize] = useState(defaultPageSize)
+  const [pageSize, setPageSize] = useState(() => clampTablePageSize(defaultPageSize))
 
   const [columnConfig, setColumnConfig] = useState<ColumnDef[]>(() => mergeColumnConfig(initialColumns))
 
@@ -462,7 +471,7 @@ export function SmartDataTable<T extends { id: string }>({
     const parsedPageSize = typeof cachedTablePreference?.pageSize === 'number'
       ? cachedTablePreference.pageSize
       : savedPageSize ? parseInt(savedPageSize, 10) : defaultPageSize
-    setPageSize(Number.isFinite(parsedPageSize) ? parsedPageSize : defaultPageSize)
+    setPageSize(clampTablePageSize(Number.isFinite(parsedPageSize) ? parsedPageSize : defaultPageSize))
 
     const savedColumns = localStorage.getItem(`${storageKey}-columns`)
     if (Array.isArray(cachedTablePreference?.columns)) {
@@ -638,7 +647,7 @@ export function SmartDataTable<T extends { id: string }>({
 
   // Pagination
   const activePage = isServerPaginated ? pagination.page : currentPage
-  const activePageSize = isServerPaginated ? pagination.pageSize : pageSize
+  const activePageSize = isServerPaginated ? clampTablePageSize(pagination.pageSize) : pageSize
   const totalRows = isServerPaginated ? pagination.total : filteredData.length
   const totalPages = Math.max(1, Math.ceil(totalRows / activePageSize))
   const paginatedData = useMemo(() => {
@@ -859,11 +868,12 @@ export function SmartDataTable<T extends { id: string }>({
   }, [isServerPaginated, pagination, totalPages])
 
   const handlePageSizeChange = useCallback((nextPageSize: number) => {
+    const safePageSize = clampTablePageSize(nextPageSize)
     if (isServerPaginated) {
-      pagination.onPageSizeChange?.(nextPageSize)
+      pagination.onPageSizeChange?.(safePageSize)
       pagination.onPageChange(1)
     } else {
-      setPageSize(nextPageSize)
+      setPageSize(safePageSize)
       setCurrentPage(1)
     }
   }, [isServerPaginated, pagination])
@@ -1927,7 +1937,7 @@ export function SmartDataTable<T extends { id: string }>({
               }}
               className="border border-gray-300 dark:border-gray-600 rounded-lg px-2 py-1 text-sm bg-white dark:bg-gray-900 text-gray-900 dark:text-white"
             >
-              {pageSizeOptions.map(opt => (
+              {resolvedPageSizeOptions.map(opt => (
                 <option key={opt} value={opt}>{opt}</option>
               ))}
             </select>
