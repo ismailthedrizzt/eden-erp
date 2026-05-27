@@ -1,3 +1,8 @@
+// BACKEND_MIGRATION_STATUS: migrate_to_fastapi
+// TARGET_BACKEND_MODULE: branches
+// TARGET_ENDPOINT: /api/v1/companies/{company_id}/official-changes/branch-opening
+// NOTES: TS orchestrator is a migration source; move canonical operation flow to Python.
+
 import 'server-only'
 
 import type { NextRequest } from 'next/server'

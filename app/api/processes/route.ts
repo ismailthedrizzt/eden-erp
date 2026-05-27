@@ -1,3 +1,8 @@
+// BACKEND_MIGRATION_STATUS: migrate_to_fastapi
+// TARGET_BACKEND_MODULE: process
+// TARGET_ENDPOINT: /api/v1/processes
+// NOTES: Process Engine core should move to Python; Next route becomes BFF/proxy.
+
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { listMeta, listRange, parseListQuery } from '@/lib/api/listEndpoint'

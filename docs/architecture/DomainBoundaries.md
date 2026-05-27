@@ -909,15 +909,15 @@ Dogru kullanim ornekleri:
 
 ## Refactor Hazirligi
 
-Bu fazda mevcut route ve service kodlari tasinmaz. `lib/domains/*` klasorleri Domain Service Layer icin hedef adresleri olusturur. Yeni migration veya refactor fazinda is mantigi, mevcut API route'larindan domain service'lere asamali olarak tasinacaktir.
+Bu fazda mevcut route ve service kodlari topluca tasinmaz. `lib/domains/*` klasorleri TypeScript gecis prototipi ve Python Domain Service Layer icin sozlesme adresleridir. Yeni migration fazinda is mantigi, mevcut API route'larindan FastAPI/Python domain service'lere asamali olarak tasinacaktir.
 
 Faz 18 ile Domain Service Layer ilk standart fonksiyonlara kavusur. Branch, Organization, Facility, Representative Authority, Ownership ve Company servisleri `DomainServiceContext` ve `DomainServiceResult` sozlesmesini kullanir. Route dosyalari NextResponse uretmeye devam eder; domain service'ler NextResponse dondurmez.
 
 Ilk uygulama kurali:
 
 - Branch opening/closing orchestrator cross-domain mutationlari ilgili domain service'e delege eder.
-- `_shared.ts` compatibility exportlari eski importlari kirmadan domain service query wrapper'lari olarak kalabilir.
-- Kalan route ve helper tasimalari sonraki Domain Service Layer migration fazlarinda parca parca yapilir.
+- `_shared.ts` exportlari sadece canli gecis koprusu ise `deprecated_wrapper` olarak kalabilir; obsolete eski davranis korunmaz.
+- Kalan route ve helper tasimalari FastAPI migration fazlarinda parca parca yapilir.
 
 Boundary guard helper'lari su amacla hazirdir:
 

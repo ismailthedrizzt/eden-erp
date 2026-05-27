@@ -1,3 +1,8 @@
+// BACKEND_MIGRATION_STATUS: migrate_to_fastapi
+// TARGET_BACKEND_MODULE: operations
+// TARGET_ENDPOINT: backend transaction unit-of-work
+// NOTES: Transaction boundary semantics should move to Python SQLAlchemy/DB transaction layer.
+
 import { callOperationRpc } from './rpcClient'
 import { getRpcContract, shouldUseRpc } from './rpcRegistry'
 import { applyCompensation } from './compensation'

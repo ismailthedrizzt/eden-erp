@@ -1,3 +1,8 @@
+// BACKEND_MIGRATION_STATUS: migrate_to_fastapi
+// TARGET_BACKEND_MODULE: outbox
+// TARGET_ENDPOINT: python-worker:outbox-dispatch
+// NOTES: Dispatcher should move to Python background worker infrastructure.
+
 import 'server-only'
 
 import { randomUUID } from 'crypto'

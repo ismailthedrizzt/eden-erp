@@ -1,3 +1,8 @@
+// BACKEND_MIGRATION_STATUS: migrate_to_fastapi
+// TARGET_BACKEND_MODULE: action-center
+// TARGET_ENDPOINT: /api/v1/action-center
+// NOTES: Unified pending work resolver should move to Python after process/outbox/audit migration.
+
 import { NextRequest, NextResponse } from 'next/server'
 import { buildActionCenterContext, parseActionCenterQuery } from '@/lib/action-center/actionCenterResolver'
 import { listActionCenterItems } from '@/lib/action-center/actionCenterService'

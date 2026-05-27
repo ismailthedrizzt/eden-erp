@@ -1,3 +1,8 @@
+// BACKEND_MIGRATION_STATUS: migrate_to_fastapi
+// TARGET_BACKEND_MODULE: outbox
+// TARGET_ENDPOINT: python-worker:outbox-dispatch
+// NOTES: Outbox dispatcher belongs in Python worker infrastructure; cron endpoint is a temporary trigger.
+
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { dispatchPendingEvents } from '@/lib/outbox/outboxDispatcher'

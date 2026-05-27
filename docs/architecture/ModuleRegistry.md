@@ -80,9 +80,9 @@ Ilk entegrasyon branch list/card ve branch opening/closing resmi islem route'lar
 
 ## Session ve UI
 
-`/api/session/bootstrap` response'una `modules` alani eklendi. Client `ModuleProvider` bu veriyi legacy `moduleStore` davranisini bozmadan runtime module bilgisine donusturur.
+`/api/session/bootstrap` response'una `modules` alani eklendi. Client `ModuleProvider` bu veriyi runtime module bilgisine donusturur; eski store davranisi yalnizca migration bridge olarak kalabilir.
 
-Sidebar simdilik compatibility mapping kullanir. Menu item'lari `moduleKey` ile contract module key'e eslenebilir; ileride menu tamamen `ModuleContract.menus` alanindan uretilebilir.
+Sidebar simdilik module key mapping kullanir. Menu item'lari `moduleKey` ile contract module key'e eslenebilir; ileride menu tamamen `ModuleContract.menus` alanindan uretilebilir. Obsolete menu aliases import kalmadiginda silinmelidir.
 
 ## Action Guide Hazirligi
 

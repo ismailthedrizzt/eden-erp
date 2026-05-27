@@ -1,3 +1,8 @@
+// BACKEND_MIGRATION_STATUS: migrate_to_fastapi
+// TARGET_BACKEND_MODULE: setup
+// TARGET_ENDPOINT: /api/v1/setup/readiness
+// NOTES: Readiness checks should move to Python startup/request guard services.
+
 import 'server-only'
 
 import type { SupabaseClient } from '@supabase/supabase-js'

@@ -1,3 +1,8 @@
+// BACKEND_MIGRATION_STATUS: migrate_to_fastapi
+// TARGET_BACKEND_MODULE: domains
+// TARGET_ENDPOINT: backend/app/domains
+// NOTES: TypeScript domain services are transition prototypes for the Python Domain Service Layer.
+
 export * from './domainBoundaryGuard'
 export * from './domainService.types'
 export * from './domainServiceContext'

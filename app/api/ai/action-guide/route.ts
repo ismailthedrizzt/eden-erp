@@ -1,3 +1,8 @@
+// BACKEND_MIGRATION_STATUS: keep_bff_proxy
+// TARGET_BACKEND_MODULE: action-guide
+// TARGET_ENDPOINT: /api/v1/action-guide
+// NOTES: UI-specific BFF may remain, but deterministic resolver can later move to Python.
+
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { buildActionGuideContext } from '@/lib/action-guide/actionGuideContext'

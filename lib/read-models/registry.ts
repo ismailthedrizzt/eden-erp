@@ -1,3 +1,8 @@
+// BACKEND_MIGRATION_STATUS: contract_shared
+// TARGET_BACKEND_MODULE: projections
+// TARGET_ENDPOINT: /api/v1/projections
+// NOTES: Projection keys are shared contracts; query execution should move to Python/read-model services.
+
 import type { ProjectionDefinition } from './projection.types'
 import { branchListProjection } from './projections/branchList.projection'
 import { branchSummaryProjection } from './projections/branchSummary.projection'

@@ -32,18 +32,22 @@ Kalan borclar [Technical Debt and Migration Plan](./TechnicalDebtAndMigrationPla
 
 ## 6. Riskler
 
-- Bazi eski route'lar halen backward-compatible wrapper ve lokal guard kullanir.
+- Bazi eski route'lar halen migration bridge wrapper ve lokal guard kullanir; obsolete davranis kalici olarak korunmaz.
 - Canli veritabani semasi tenant/readiness durumuna gore farkli davranabilir.
 - Process, Audit ve Action Center UI'lari MVP seviyesindedir; ileri admin ekranlari takip fazi gerektirir.
 - PWA build ciktilari build sonrasi generated file churn uretebilir; final kontrolde temizlenmelidir.
 
 ## 7. Onerilen Sonraki Gelistirme Sirasi
 
-1. P1 field-control/backend route enforcement standardizasyonu.
-2. Capital Increase ve Representative Authority icin Transaction Boundary/RPC implementasyonu.
-3. Official changes shared helperlarini Domain Service Layer'a kademeli tasima.
-4. Process Center ve Action Center UI'larini kullanici gorev/onay akislariyla tamamlama.
-5. Audit coverage matrix ve admin audit timeline ekranini genisletme.
+1. FastAPI core backend scaffold'unu production deployment ve OpenAPI generation surecine baglama.
+2. Branch Opening/Closing FastAPI endpointlerini ve Python transaction boundary'yi uygulama.
+3. Company official changes, Capital Increase, Representative Authority ve Ownership Transactions route'larini Next proxy + FastAPI core pattern'ine tasima.
+4. Process, Outbox, Audit, Policy ve Integrity katmanlarini Python servis/worker tarafina alma.
+5. Field-control/backend route enforcement standardizasyonunu FastAPI policy ve DTO contract'lariyla birlestirme.
+
+## 7.1 FastAPI Alignment Addendum
+
+2026-05-27 itibariyla hedef mimari netlestirildi: Next.js kalici core backend degildir; frontend ve gecis donemi BFF/adaptor katmanidir. Core ERP backend FastAPI/Python tarafina tasinacaktir. Supabase backend olarak degil, PostgreSQL/Auth/Storage platformu olarak konumlandirilir.
 
 ## 8. Build / Typecheck Sonucu
 

@@ -1,0 +1,1 @@
+"""Outbox/event dispatch domain."""

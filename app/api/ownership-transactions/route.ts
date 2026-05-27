@@ -1,3 +1,8 @@
+// BACKEND_MIGRATION_STATUS: migrate_to_fastapi
+// TARGET_BACKEND_MODULE: ownership
+// TARGET_ENDPOINT: /api/v1/ownership-transactions
+// NOTES: Ownership transaction core behavior should move to Python Ownership Domain.
+
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { z } from 'zod'

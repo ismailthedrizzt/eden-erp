@@ -8,6 +8,8 @@ This document ensures consistent, coherent development across all AI-assisted se
 
 **Eden ERP** is a comprehensive enterprise resource planning system designed for Turkish companies, supporting multi-company, multi-module operations with workflow approval processes.
 
+This is a newly designed platform, not a legacy system that must preserve obsolete behavior. Do not keep contradictory, duplicate, unused or architecture-breaking code only for "backward compatibility". Compatibility is allowed only for live migration bridges that are explicitly aligned with the target architecture.
+
 ### Core Characteristics
 - **Multi-tenant**: Supports multiple companies in single instance
 - **Modular**: Module-based licensing and activation
@@ -16,22 +18,37 @@ This document ensures consistent, coherent development across all AI-assisted se
 - **PWA-enabled**: Progressive Web App capabilities
 - **Dark mode support**: Full dark/light theme implementation
 
-## Tech Stack (Immutable)
+## Tech Stack (Target Architecture)
 
 ### Frontend
 - **Framework**: Next.js 15 (App Router)
 - **Language**: TypeScript (strict mode)
-- **Styling**: TailwindCSS 4 + custom Eden theme colors
-- **UI Components**: shadcn/ui (primary), custom components (secondary)
+- **Styling**: Tailwind CSS 3.4 + custom Eden theme colors
+- **UI Components**: Eden custom components and shadcn-style composition patterns where already present
 - **Icons**: Lucide React
 - **State Management**: React hooks (useState, useReducer) + Context for global state
-- **Data Fetching**: Custom hooks (SWR pattern) + Supabase client
+- **Data Fetching**: API client wrappers and BFF calls; frontend must not call Supabase service-role or core business data access directly
 
-### Backend
-- **Database**: Supabase (PostgreSQL)
-- **Auth**: Supabase Auth
-- **Storage**: Supabase Storage
-- **Realtime**: Supabase Realtime (for notifications)
+### BFF / Adapter
+- **Runtime**: Next.js API routes during migration
+- **Role**: proxy/adaptor, UI-specific endpoint, and frontend compatibility bridge
+- **Rule**: permanent domain mutation, process engine, policy engine, outbox dispatcher, audit core logic and transaction boundary logic must not remain here long-term
+
+### Core Backend
+- **Framework**: FastAPI / Python
+- **Validation**: Pydantic v2
+- **Data Access**: SQLAlchemy 2 or SQLModel
+- **Migrations**: Alembic
+- **Database**: PostgreSQL / Supabase
+- **Workers**: Python background workers for outbox, process, projection, audit and notification jobs
+
+### Database / Auth / Storage
+- **Database platform**: Supabase/PostgreSQL
+- **Auth**: Supabase Auth may be used
+- **Storage**: Supabase Storage may be used
+- **Realtime**: Supabase Realtime may be used for notifications
+
+Supabase is not the core backend. It is the database/auth/storage platform. Core ERP business behavior belongs in FastAPI/Python.
 
 ### Key Dependencies (Locked Versions)
 ```json
@@ -39,10 +56,41 @@ This document ensures consistent, coherent development across all AI-assisted se
   "next": "^15.0.0",
   "react": "^19.0.0",
   "typescript": "^5.0.0",
-  "tailwindcss": "^4.0.0",
+  "tailwindcss": "^3.4.0",
   "lucide-react": "latest"
 }
 ```
+
+## Backend Migration Rule
+
+TypeScript API routes are temporary BFF / migration bridge code unless explicitly marked `keep_bff_proxy` or `keep_frontend`. Backend files that contain business logic should carry a migration status comment:
+
+```ts
+// BACKEND_MIGRATION_STATUS: migrate_to_fastapi
+// TARGET_BACKEND_MODULE: branches
+// TARGET_ENDPOINT: /api/v1/branches
+// NOTES: Contains domain mutation logic; should move to Python Branch Domain Service.
+```
+
+Allowed statuses:
+
+```text
+keep_frontend
+keep_bff_proxy
+migrate_to_fastapi
+delete_obsolete
+contract_shared
+generated_do_not_edit
+deprecated_wrapper
+```
+
+Next.js API routes may act as:
+
+1. BFF / proxy
+2. UI-specific adapter
+3. frontend-only helper endpoint
+
+They must not remain the permanent home for domain mutation, operation orchestration, process engine, policy engine core, transaction boundary, outbox dispatch, audit core write logic or cross-domain business rules.
 
 ## Company-Related Lifecycle, Operation and Payload Architecture
 
@@ -718,9 +766,9 @@ eden-navy-2: '#1e293b'         // Dark card
 #### Component Classes
 - Cards: `card`, `card-hdr`, `card-title`
 - Tables: `data-table`
-- Forms: FormField + Label from shadcn/ui
-- Buttons: shadcn/ui Button component
-- Inputs: shadcn/ui Input component
+- Forms: existing Eden form primitives and shadcn-style composition where already available
+- Buttons: existing Eden button/action primitives
+- Inputs: existing Eden input/form primitives
 
 #### Dark Mode
 - All components MUST support dark mode
@@ -803,7 +851,7 @@ Examples of conflicts:
 | User Request | Conflict | AI Response |
 |--------------|----------|-------------|
 | "Use Redux for state" | Project uses React hooks + Context | "This project uses React hooks and Context for state management. Redux would add unnecessary complexity. I can implement with Context instead, or if you specifically need Redux, we should update the architecture guide first." |
-| "Add Material-UI components" | Project uses shadcn/ui + Tailwind | "The project uses shadcn/ui as the component library. Adding Material-UI would create visual inconsistency and bundle bloat. I can create the component using shadcn/ui patterns instead." |
+| "Add Material-UI components" | Project uses Eden custom components and Tailwind | "Adding Material-UI would create visual inconsistency and bundle bloat. I can create the component using the existing Eden/Tailwind component patterns instead." |
 | "Use JavaScript instead of TypeScript" | Project is TypeScript-only | "The project requires TypeScript in strict mode. Using JavaScript would break type safety and CI/CD checks. I can write the code in TypeScript with proper types." |
 | "Create API routes for CRUD" | Project uses Supabase direct queries | "The project uses Supabase client for database operations directly from components (via hooks). Adding API routes would be an extra layer. However, if you need server-side logic (workflows, validations), we can add specific API routes. Which operations need server-side handling?" |
 | "Skip dark mode support" | All components must support dark mode | "Dark mode is a project requirement. All UI components must support it. I'll implement with proper `dark:` prefixes. If you want to discuss removing dark mode globally, that's an architecture decision needing documentation update." |
@@ -827,7 +875,7 @@ Examples of conflicts:
    - Use `EntityForm` for create/edit/view forms
 
 3. Follow styling hierarchy:
-   - shadcn/ui components (primary)
+   - Eden custom components and existing shadcn-style primitives
    - Custom Eden theme (secondary)
    - Tailwind utilities (tertiary)
 
@@ -929,7 +977,7 @@ When implementing workflow features (see `docs/architecture/WorkflowEngine.md`):
 - Skip TypeScript types
 - Skip dark mode support
 - Use `any` type without @ts-ignore and justification
-- Create new component libraries (use shadcn/ui)
+- Create new component libraries (use existing Eden/Tailwind component patterns)
 - Add unnecessary dependencies
 - Break existing patterns without warning
 

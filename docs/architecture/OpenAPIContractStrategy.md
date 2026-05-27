@@ -1,0 +1,59 @@
+# OpenAPI Contract Strategy
+
+FastAPI OpenAPI dokumani Eden ERP backend API sozlesmesinin source of truth'u olacaktir.
+
+## Principles
+
+1. Python FastAPI OpenAPI source of truth olacak.
+2. Frontend TypeScript client OpenAPI'den uretilecek veya elle yazilmis wrapperlar kademeli kaldirilacak.
+3. Next.js API routes migration surecinde frontend uyumlulugu icin proxy kalabilir; business logic Python'a tasinir.
+4. Contract types iki tarafta elle cogaltilmayacak.
+5. DTO alan adlari frontend/backend arasinda acikca belgelenecek.
+
+## Tooling Options
+
+- `openapi-typescript`
+- `orval`
+- custom lightweight client generator
+
+Ilk tercih: FastAPI `/openapi.json` uzerinden TypeScript DTO ve fetch client uretmek. UI-specific response adapter gerekiyorsa Next BFF route'u generated client'i kullanir.
+
+## Naming Rules
+
+- API DTO field names English canonical snake_case veya documented JSON alias ile gelir.
+- Turkish sadece user-facing label, helper text, legal names ve dokuman basliklarinda kullanilir.
+- Eski payload aliases kabul edilmeyecek; gerekiyorsa explicit mapper/deprecation planina yazilir.
+- `tenant` kelimesi kullanici mesajinda "calisma alani" olarak ifade edilir; API contract'ta internal field olarak kalabilir.
+
+## Next.js Route Roles
+
+Next.js API route'lari yalnizca su rollerden birine sahip olabilir:
+
+1. BFF / proxy
+2. UI-specific adapter
+3. frontend-only helper endpoint
+
+Yapmayacaklari:
+
+- domain mutation
+- process engine
+- policy engine core
+- operation orchestration
+- transaction boundary
+- outbox dispatch
+- audit core write logic
+- cross-domain business rule
+
+## Client Generation Plan
+
+1. FastAPI schemas Pydantic v2 ile tanimlanir.
+2. `/openapi.json` CI artifact olarak uretilir.
+3. TypeScript client `lib/api/generated` altina uretilir.
+4. Existing manual service wrappers generated client'a delege eder.
+5. Manual wrapperlar sadece UI-specific normalization icin kalir.
+
+## Versioning
+
+- `/api/v1` ilk public backend namespace.
+- Breaking DTO degisikligi `/api/v2` veya explicit migration window gerektirir.
+- Internal BFF route'lari FastAPI versiyonunu saklayabilir ancak source of truth OpenAPI olur.

@@ -33,7 +33,7 @@ UI tarafinda sadece butonun disabled gorunmesi audit uretmez. Audit, kullanicini
 - `old_values`, `new_values`, `changed_fields`
 - `summary`, `reason`, `result_status`, `severity`
 
-Eski `instance_id/module_code/resource/record_id/action/before_json/after_json` alanlari geriye uyumluluk icin korunur.
+Eski `instance_id/module_code/resource/record_id/action/before_json/after_json` alanlari kalici uyumluluk hedefi degildir; canli veri tasinana kadar acik deprecation planiyla okunabilir kalir.
 
 ## Hassas Veri Maskeleme
 

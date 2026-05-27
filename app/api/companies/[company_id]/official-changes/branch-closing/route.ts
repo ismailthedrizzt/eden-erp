@@ -1,3 +1,8 @@
+// BACKEND_MIGRATION_STATUS: migrate_to_fastapi
+// TARGET_BACKEND_MODULE: branches
+// TARGET_ENDPOINT: /api/v1/companies/{company_id}/official-changes/branch-closing
+// NOTES: Contains critical branch closing impact flow; first Python migration target.
+
 import { NextRequest } from 'next/server'
 import { stripOperationControlFields } from '@/lib/operations/idempotency'
 import {

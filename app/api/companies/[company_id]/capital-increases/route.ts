@@ -1,3 +1,8 @@
+// BACKEND_MIGRATION_STATUS: migrate_to_fastapi
+// TARGET_BACKEND_MODULE: ownership
+// TARGET_ENDPOINT: /api/v1/companies/{company_id}/capital-increases
+// NOTES: Capital increase mutation chain belongs in Python Company/Ownership domains.
+
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { createServiceClient } from '@/lib/supabase/server'

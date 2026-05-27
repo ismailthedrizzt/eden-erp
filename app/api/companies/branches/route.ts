@@ -1,3 +1,8 @@
+// BACKEND_MIGRATION_STATUS: migrate_to_fastapi
+// TARGET_BACKEND_MODULE: branches
+// TARGET_ENDPOINT: /api/v1/branches
+// NOTES: Branch list is a transition BFF endpoint; direct branch creation must remain blocked.
+
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { listMeta, parseListQuery } from '@/lib/api/listEndpoint'

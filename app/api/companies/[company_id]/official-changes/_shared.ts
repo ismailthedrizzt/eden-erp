@@ -1,3 +1,8 @@
+// BACKEND_MIGRATION_STATUS: deprecated_wrapper
+// TARGET_BACKEND_MODULE: company
+// TARGET_ENDPOINT: /api/v1/companies/{company_id}/official-changes
+// NOTES: Large TS shared helper file; migrate canonical logic to FastAPI domain services and remove obsolete wrappers.
+
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { createServiceClient } from '@/lib/supabase/server'

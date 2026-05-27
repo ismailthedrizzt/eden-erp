@@ -1,6 +1,6 @@
 # Eden ERP Platform Architecture
 
-Eden ERP, modul sozlesmeleri, projection read model'lari ve operation orchestrator'lari uzerinden asamali olarak modular ERP platformuna donusur.
+Eden ERP, Next.js frontend/BFF ve FastAPI/Python core backend ayrimina ilerleyen moduler ERP platformudur. Supabase/PostgreSQL veri, auth ve storage platformu olarak kalabilir; kalici business logic Next.js API route'larinda tutulmaz.
 
 ## Ana Referans
 
@@ -24,6 +24,13 @@ Bu dokuman platform mimarisinin ana referansidir. Detay sozlesmeler asagidaki do
 - [Cross Domain Consistency](./CrossDomainConsistency.md)
 - [Domain Boundaries](./DomainBoundaries.md)
 - [Domain Service Layer](./DomainServiceLayer.md)
+- [Codebase Inventory](./CodebaseInventory.md)
+- [Legacy / Obsolete Code Audit](./LegacyObsoleteCodeAudit.md)
+- [Python Migration Map](./PythonMigrationMap.md)
+- [Python Migration Roadmap](./PythonMigrationRoadmap.md)
+- [OpenAPI Contract Strategy](./OpenAPIContractStrategy.md)
+- [Scaling Architecture](./ScalingArchitecture.md)
+- [Next Cleanup Plan](./NextCleanupPlan.md)
 - [Technical Debt and Migration Plan](./TechnicalDebtAndMigrationPlan.md)
 - [Platform Migration Final Report](./PlatformMigrationFinalReport.md)
 
@@ -33,7 +40,8 @@ Bu dokuman platform mimarisinin ana referansidir. Detay sozlesmeler asagidaki do
 flowchart LR
   UI["UI Layer"]
   Help["Action Guide / Tour / Field Helper"]
-  API["API Route"]
+  API["Next.js BFF / API Route"]
+  FastAPI["FastAPI Core Backend"]
   Process["Process Engine"]
   Orchestrator["Operation Orchestrator"]
   Policy["Policy / Readiness / Integrity"]
@@ -47,8 +55,9 @@ flowchart LR
   UI --> Help
   UI --> API
   Help --> API
-  API --> Process
-  API --> Orchestrator
+  API --> FastAPI
+  FastAPI --> Process
+  FastAPI --> Orchestrator
   Process --> Orchestrator
   Orchestrator --> Policy
   Policy --> Domain
@@ -84,10 +93,12 @@ flowchart LR
 - Action Guide Registry: Kullanici niyetini dogru modul/action/route/wizard yoluna baglar; yeni islem uydurmaz.
 - Domain Boundary Registry: Entity, tablo ve operation sahipligini bounded context bazinda tanimlar; cross-domain yazma kurallarinin sonraki domain service refactor'unda tek sozlesmeden okunmasini saglar.
 - Platform Consistency Check: Registry referanslari, module/action/permission/projection/event eslesmeleri ve platform modul sozlesmelerini dev/test ortaminda kontrol eder.
+- FastAPI Core Backend: Domain service, operation orchestration, process engine, policy, integrity, audit, outbox ve transaction boundary icin hedef kalici backend katmanidir.
+- Next.js BFF: Gecis surecinde proxy/adaptor ve UI-specific endpoint olarak kalir; kalici business logic burada tutulmaz.
 
 ## Mevcut Akis
 
-Frontend dogrudan Supabase cagirmadan service ve API katmanina gider. API tenant scope, permission check, concurrency ve idempotency kurallarini korur. Kritik resmi islemler operation/wizard akisi ve orchestrator katmaniyla calisir.
+Frontend dogrudan Supabase cagirmadan Next.js BFF veya FastAPI client katmanina gider. Gecis surecinde Next.js API route'lari request/response adaptorudur; kalici hedef FastAPI core backend'dir. Kritik resmi islemler operation/wizard akisi, FastAPI operation services ve transaction boundary ile calisir.
 
 ## Core Principles
 
@@ -97,6 +108,7 @@ Frontend dogrudan Supabase cagirmadan service ve API katmanina gider. API tenant
 - Permission/Policy kullanici yetkisini; Readiness modul hazirligini; Integrity veri tutarliligini; Visibility UI gorunurlugunu belirler.
 - Process Engine surec adimlarini yonetir; Operation Orchestrator mutation akisini koordine eder; Domain Service domain veri islemini uygular.
 - Outbox external side effect yapmaz; event kaydeder. Audit history/transaction yerine gecmez; denetim izini tamamlar.
+- Obsolete davranis "backward compatibility" gerekcesiyle korunmaz. Eski davranis sadece canli gecis koprusu olarak `keep_bff_proxy` veya `deprecated_wrapper` status'u ile planli sureyle kalabilir.
 
 ## Registry Iliskisi
 
@@ -119,6 +131,8 @@ Ana kural: Eden ERP'de entity sahipligi domain bazinda belirlenir. Baska domain'
 Domain Service Layer, bu boundary sozlesmesini kod seviyesinde uygulamaya baslar. Route request/response adaptoru olarak kalir; Operation Orchestrator akisi yonetir; Domain Service ise domain'e ait query, mutation ve is kurali davranisini standart `DomainServiceResult` ile dondurur. Branch, Organization, Facility, Representative Authority, Ownership ve Company domain servisleri ilk gercek fonksiyonlarla hazirlanmistir.
 
 Sube Acilisi fallback akisi artik Organization Domain Service ile organization unit, Facility Domain Service ile facility ve Branch Domain Service ile branch kaydi olusturur. Sube Kapanisi fallback akisi organization/facility aksiyonlarini ilgili domain service uzerinden uygular ve branch close mutation'ini Branch Domain Service'e verir.
+
+Bu TypeScript domain service katmani kalici hedef degildir; Python migration icin sozlesme ve davranis hazirligi olarak kabul edilir. Nihai uygulama `backend/app/domains/**` altindaki FastAPI/Python servislerine tasinacaktir.
 
 Kritik kavram ayrimlari:
 
@@ -193,7 +207,7 @@ Cron endpoint `CRON_SECRET` olmadan calismaz. Projection/cache altyapisi eksikse
 
 Audit Log mevcut history, transaction ve lifecycle event tablolarinin yerine gecmez. History kullaniciya gosterilen is gecmisidir; transaction resmi/operasyonel islem kaydidir; lifecycle event kayit durum gecisidir; outbox event sistem ici olay yayini icindir. Audit Log ise kullanici, zaman, kapsam, yetki, islem, surec ve sonuc izini teknik-denetim katmani olarak tutar.
 
-Audit altyapisi `audit_logs` tablosunu tenant scope ile genisletir. Eski `instance_id/module_code/resource/action` alanlari geriye uyumluluk icin korunur; yeni `tenant_id`, `module_key`, `entity_type`, `action_type`, `operation_id`, `process_instance_id`, `old_values`, `new_values`, `changed_fields`, `result_status` ve `severity` alanlari standart denetim sozlesmesini saglar.
+Audit altyapisi `audit_logs` tablosunu tenant scope ile genisletir. Eski `instance_id/module_code/resource/action` alanlari kalici uyumluluk hedefi degildir; canli veri tasinana kadar acik deprecation planiyla okunabilir kalir. Yeni `tenant_id`, `module_key`, `entity_type`, `action_type`, `operation_id`, `process_instance_id`, `old_values`, `new_values`, `changed_fields`, `result_status` ve `severity` alanlari standart denetim sozlesmesini saglar.
 
 Hassas veriler audit'e raw yazilmaz. Sifre, token, secret, credential ve signed URL tamamen maskelenir; IBAN, hesap no, kimlik/vergi/pasaport numarasi, telefon ve e-posta kismi maskelenir. Audit insert cogu akista best effort calisir; yazim hatasi kullanici islemini kirmadan sistem loguna duser.
 
@@ -260,6 +274,8 @@ Sayfa icindeki action button'lari local kosullari azaltarak Runtime Visibility, 
 Basarili API cevaplari `data`, opsiyonel `meta`, `projection`, `operation_id`, `operation_status`, `process_instance_id`, `warnings` ve `message` alanlariyla doner. Hata cevaplari `error`, `code`, opsiyonel `details`, `operation_id`, `operation_status`, `process_instance_id` ve `message` alanlarini kullanir.
 
 Domain Service `DomainServiceResult`, Orchestrator `OperationOrchestratorResult`, Policy `PolicyDecision`, Integrity `IntegritySummary` ve Action Guide `ActionGuideResponse` formatlari kendi katmanlarinda kalir; route dosyalari bunlari NextResponse'a cevirir. Ana `error/message` is diliyle, teknik detaylar `details` altinda kalir.
+
+FastAPI OpenAPI contract'i backend API source of truth olacaktir. TypeScript DTO ve API client'lar OpenAPI'den uretilmeli veya generated client'a delege etmelidir. Next.js API route'lari FastAPI endpointleri hazir oldukca proxy/adaptor rolune indirilecektir.
 
 ## Known Technical Debt
 
