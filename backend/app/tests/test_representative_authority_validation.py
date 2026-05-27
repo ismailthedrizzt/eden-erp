@@ -70,4 +70,4 @@ def test_card_update_rejects_authority_fields() -> None:
 
     assert exc.value.code == "OPERATION_CONTROLLED_FIELDS"
     assert exc.value.details is not None
-    assert "authority_types" in exc.value.details["fields"]
+    assert any(field["field"] == "authority_types" for field in exc.value.details["fields"])

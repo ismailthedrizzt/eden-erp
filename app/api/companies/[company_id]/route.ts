@@ -1,3 +1,8 @@
+// BACKEND_MIGRATION_STATUS: proxy_to_fastapi_with_legacy_fallback
+// TARGET_BACKEND_MODULE: companies
+// TARGET_FASTAPI_ENDPOINT: /api/v1/companies/{company_id}
+// LEGACY_FALLBACK_REMOVE_AFTER: Python company detail projection and section adapters are verified with staging data.
+
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { z } from 'zod'
@@ -542,6 +547,9 @@ export async function PATCH(
   { params }: { params: Promise<{ company_id: string }> }
 ) {
   const { company_id: id } = await params
+  const fastApiResponse = await proxyToFastApi(request, `/api/v1/companies/${id}`)
+  if (fastApiResponse) return fastApiResponse
+
   const supabase = createServiceClient()
   const tenantContext = resolveTenantContext(request)
   const companyScope = await getTenantCompanyScope(supabase, tenantContext.tenantId, id)
@@ -739,6 +747,9 @@ export async function DELETE(
   { params }: { params: Promise<{ company_id: string }> }
 ) {
   const { company_id: id } = await params
+  const fastApiResponse = await proxyToFastApi(request, `/api/v1/companies/${id}`)
+  if (fastApiResponse) return fastApiResponse
+
   const supabase = createServiceClient()
 
   const draftDelete = await safeHardDeleteDraftRecord({

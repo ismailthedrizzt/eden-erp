@@ -52,6 +52,67 @@ class CompanyOfficialChangePrecheckResponse(BaseModel):
     public_channels: dict[str, Any] | None = None
 
 
+class CompanyCreateDraftRequest(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+    trade_name: str
+    short_name: str | None = None
+    tax_number: str | None = None
+    tax_office: str | None = None
+    company_type: str | None = None
+    country: str | None = "Turkiye"
+    city: str | None = None
+    district: str | None = None
+    address: str | None = None
+    postal_code: str | None = None
+    phone: str | None = None
+    email: str | None = None
+    website: str | None = None
+    logo_url: str | None = None
+    hero_images: list[dict[str, Any]] = Field(default_factory=list)
+    hero_documents: list[dict[str, Any]] = Field(default_factory=list)
+    contact_points: list[dict[str, Any]] = Field(default_factory=list)
+    notes: str | None = None
+    client_request_id: str | None = None
+
+
+class CompanyCardUpdateRequest(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+    trade_name: str | None = None
+    short_name: str | None = None
+    tax_number: str | None = None
+    tax_office: str | None = None
+    company_type: str | None = None
+    country: str | None = None
+    city: str | None = None
+    district: str | None = None
+    address: str | None = None
+    postal_code: str | None = None
+    phone: str | None = None
+    email: str | None = None
+    website: str | None = None
+    logo_url: str | None = None
+    hero_images: list[dict[str, Any]] | None = None
+    hero_documents: list[dict[str, Any]] | None = None
+    contact_points: list[dict[str, Any]] | None = None
+    default_currency: str | None = None
+    default_language: str | None = None
+    time_zone: str | None = None
+    fiscal_year_start: int | None = None
+    notes: str | None = None
+    metadata_json: dict[str, Any] | None = None
+    base_version: int | None = None
+    base_updated_at: str | None = None
+
+
+class CompanyCardResponse(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+    company: dict[str, Any]
+    warnings: list[str] = Field(default_factory=list)
+
+
 class CompanyOfficialChangeBaseRequest(BaseModel):
     model_config = ConfigDict(extra="allow")
 

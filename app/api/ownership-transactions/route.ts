@@ -1,4 +1,4 @@
-// BACKEND_MIGRATION_STATUS: keep_bff_proxy_with_legacy_fallback
+// BACKEND_MIGRATION_STATUS: proxy_to_fastapi_with_legacy_fallback
 // TARGET_BACKEND_MODULE: ownership
 // TARGET_FASTAPI_ENDPOINT: /api/v1/ownership/transactions
 // NOTES: Proxies transaction creation to FastAPI when configured; legacy TS fallback is temporary migration bridge.

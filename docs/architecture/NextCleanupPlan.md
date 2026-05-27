@@ -62,7 +62,7 @@ Bu plan Next.js tarafinda kalacak, silinecek, proxy olacak ve FastAPI'ye tasinac
 | `app/api/ai/action-guide/**` | UI-specific AI guide adapter can remain until resolver moves. |
 | `app/api/session/bootstrap` | BFF aggregation endpoint can stay if it proxies Python readiness/permissions/modules. |
 
-## keep_bff_proxy_with_legacy_fallback
+## proxy_to_fastapi_with_legacy_fallback
 
 | path/pattern | reason | removal trigger |
 | --- | --- | --- |
@@ -86,6 +86,17 @@ Bu plan Next.js tarafinda kalacak, silinecek, proxy olacak ve FastAPI'ye tasinac
 | `app/api/companies/branches/**` GET | FastAPI proxy is active for branch list/detail reads; PATCH/DELETE remain guarded BFF migration bridge. | Remove branch read fallback after projection smoke tests. |
 | `app/api/companies/partners` GET | FastAPI proxy is active for partner list projection. | Remove partner list fallback after current ownership projection view is verified. |
 | `app/api/companies/representatives` GET | FastAPI proxy is active for representative list projection. | Remove representative list fallback after current authority view scope fields are complete. |
+| `app/api/companies` POST and `app/api/companies/[company_id]` PATCH/DELETE | FastAPI proxy is active for company card draft create, card PATCH and safe draft DELETE. | Remove TS card CRUD fallback after FastAPI card endpoints are verified with staging data. |
+| `app/api/companies/partners` POST and `app/api/companies/partners/[id]` GET/PATCH/DELETE | FastAPI proxy is active for partner card CRUD. | Remove TS partner card fallback after ownership transaction flows and partner detail UI are verified. |
+| `app/api/companies/representatives` POST and `app/api/companies/representatives/[id]` GET/PATCH/DELETE | FastAPI proxy is active for representative card CRUD; authority actions route to the authority transaction endpoint. | Remove TS representative card fallback after authority wizard and card edit smoke tests pass. |
+
+## proxy_to_fastapi
+
+| path/pattern | reason |
+| --- | --- |
+| `app/api/policy/**` | Thin BFF proxy for canonical Python policy decisions; no TS policy fallback should be added. |
+| `app/api/integrity/**` | Thin BFF proxy for canonical Python integrity decisions; no TS integrity fallback should be added. |
+| Future generated-client server adapters | May call FastAPI directly when session/context is already trusted server-side. |
 
 ## official-changes/_shared.ts split plan
 
@@ -104,13 +115,18 @@ Bu plan Next.js tarafinda kalacak, silinecek, proxy olacak ve FastAPI'ye tasinac
 
 New Next API route files must include one of the migration status comments:
 
+- `proxy_to_fastapi`
+- `proxy_to_fastapi_with_legacy_fallback`
 - `keep_bff_proxy`
 - `keep_bff_proxy_with_legacy_fallback`
 - `keep_ui_adapter`
+- `keep_session_bootstrap`
+- `keep_upload_adapter`
 - `migrate_to_fastapi_then_proxy`
 - `migrate_to_fastapi`
 - `delete_obsolete`
 - `deprecated_wrapper`
+- `contract_endpoint`
 - `contract_shared`
 - `generated_do_not_edit`
 

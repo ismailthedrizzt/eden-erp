@@ -10,12 +10,31 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.errors import DomainError
 from app.domains.operations.service import table_exists
-from app.domains.representatives.schemas import AUTHORITY_CONTROLLED_FIELDS
+from app.policies.delete_guards import can_hard_delete_representative_draft
+from app.policies.field_control import reject_operation_controlled_patch, strip_system_fields
 
 ACTIVE_CARD_STATUSES = {"active", "aktif"}
 DRAFT_CARD_STATUSES = {"draft", "taslak", ""}
 PASSIVE_CARD_STATUSES = {"passive", "pasif"}
 ACTIVE_AUTHORITY_STATUSES = {"active", "aktif"}
+REPRESENTATIVE_PROFILE_FIELDS = {
+    "first_name",
+    "last_name",
+    "trade_name",
+    "short_name",
+    "identity_number",
+    "national_id",
+    "passport_no",
+    "nationality",
+    "tax_number",
+    "address",
+    "city",
+    "district",
+    "country",
+    "contact_points",
+    "entity_bank_accounts",
+}
+REPRESENTATIVE_JSON_FIELDS = {"photo_logo", "authority_documents", "representative_profile"}
 SUSPENDED_AUTHORITY_STATUSES = {"suspended", "askida", "askıya alma"}
 
 
@@ -40,15 +59,35 @@ def authority_status(authority: dict[str, Any] | None) -> str:
 
 
 def guard_representative_card_patch(payload: dict[str, Any]) -> None:
-    blocked = sorted(field for field in payload if field in AUTHORITY_CONTROLLED_FIELDS)
-    if blocked:
-        raise DomainError(
-            "Temsil yetkisi alanlari kart guncellemesiyle degistirilemez. "
-            "Ilgili temsil yetkisi islemini kullanin.",
-            "OPERATION_CONTROLLED_FIELDS",
-            status.HTTP_409_CONFLICT,
-            {"fields": blocked},
-        )
+    reject_operation_controlled_patch("company_representative", payload)
+
+
+def reject_operation_controlled_representative_patch(payload: dict[str, Any]) -> None:
+    guard_representative_card_patch(payload)
+
+
+def _representative_display_name(payload: dict[str, Any]) -> str:
+    if payload.get("display_name"):
+        return str(payload["display_name"])
+    if payload.get("full_name"):
+        return str(payload["full_name"])
+    if payload.get("trade_name"):
+        return str(payload["trade_name"])
+    full_name = " ".join(
+        part for part in [payload.get("first_name"), payload.get("last_name")] if part
+    ).strip()
+    return full_name or "Temsilci"
+
+
+def _merge_representative_profile(
+    current_profile: Any,
+    payload: dict[str, Any],
+) -> dict[str, Any]:
+    profile = dict(current_profile or {}) if isinstance(current_profile, dict) else {}
+    for field in REPRESENTATIVE_PROFILE_FIELDS:
+        if field in payload and payload[field] is not None:
+            profile[field] = payload[field]
+    return profile
 
 
 async def get_representative_by_id(
@@ -195,6 +234,8 @@ async def create_representative_card(
     context: dict[str, Any],
     payload: dict[str, Any],
 ) -> dict[str, Any]:
+    payload = strip_system_fields(payload)
+    guard_representative_card_patch(payload)
     await assert_unique_representative_card(
         session,
         context,
@@ -203,20 +244,30 @@ async def create_representative_card(
         payload.get("organization_id"),
     )
     representative_id = str(uuid4())
+    display_name = _representative_display_name(payload)
+    full_name = payload.get("full_name") or display_name
+    representative_profile = _merge_representative_profile(
+        payload.get("representative_profile"), payload
+    )
+    authority_documents = (
+        payload.get("authority_documents") or payload.get("representative_documents") or []
+    )
     result = await session.execute(
         text(
             """
             insert into public.company_representatives (
               id, tenant_id, company_id, person_id, organization_id, person_kind,
+              source_type, source_id,
               display_name, full_name, phone, email, notes, status, record_status,
-              representative_profile, photo_logo, created_at, updated_at, version,
-              is_deleted
+              representative_profile, photo_logo, authority_documents, created_at,
+              updated_at, version, is_deleted
             )
             values (
               :id, :tenant_id, :company_id, :person_id, :organization_id, :person_kind,
+              :source_type, :source_id,
               :display_name, :full_name, :phone, :email, :notes, 'Taslak', 'draft',
               cast(:representative_profile as jsonb), cast(:photo_logo as jsonb),
-              now(), now(), 1, false
+              cast(:authority_documents as jsonb), now(), now(), 1, false
             )
             returning *
             """
@@ -227,19 +278,34 @@ async def create_representative_card(
             "company_id": payload["company_id"],
             "person_id": payload.get("person_id"),
             "organization_id": payload.get("organization_id"),
-            "person_kind": payload.get("person_kind") or "person",
-            "display_name": payload.get("display_name") or payload.get("full_name") or "Temsilci",
-            "full_name": payload.get("full_name") or payload.get("display_name") or "Temsilci",
+            "person_kind": payload.get("person_kind")
+            or payload.get("person_or_entity_type")
+            or "person",
+            "source_type": payload.get("source_type"),
+            "source_id": payload.get("source_id"),
+            "display_name": display_name,
+            "full_name": full_name,
             "phone": payload.get("phone"),
             "email": payload.get("email"),
             "notes": payload.get("notes"),
             "representative_profile": json.dumps(
-                payload.get("representative_profile") or {}, ensure_ascii=False, default=str
+                representative_profile, ensure_ascii=False, default=str
             ),
-            "photo_logo": json.dumps(payload.get("photo_logo") or [], ensure_ascii=False),
+            "photo_logo": json.dumps(
+                payload.get("photo_logo") or [], ensure_ascii=False, default=str
+            ),
+            "authority_documents": json.dumps(authority_documents, ensure_ascii=False, default=str),
         },
     )
     return dict(result.mappings().one())
+
+
+async def create_representative_draft(
+    session: AsyncSession,
+    context: dict[str, Any],
+    payload: dict[str, Any],
+) -> dict[str, Any]:
+    return await create_representative_card(session, context, payload)
 
 
 async def update_representative_card(
@@ -248,6 +314,7 @@ async def update_representative_card(
     representative_id: str,
     payload: dict[str, Any],
 ) -> dict[str, Any]:
+    payload = strip_system_fields(payload)
     guard_representative_card_patch(payload)
     representative = await get_representative_by_id(
         session, context["tenant_id"], representative_id
@@ -269,34 +336,50 @@ async def update_representative_card(
             "phone",
             "email",
             "notes",
-            "job_title",
             "photo_logo",
+            "authority_documents",
             "representative_profile",
         ]
         if key in payload
     }
+    if "representative_documents" in payload and "authority_documents" not in allowed:
+        allowed["authority_documents"] = payload["representative_documents"]
+    if any(field in payload for field in {"first_name", "last_name", "trade_name", "display_name"}):
+        allowed["display_name"] = payload.get("display_name") or _representative_display_name(
+            {**representative, **payload}
+        )
+    if any(field in payload for field in {"first_name", "last_name", "trade_name", "full_name"}):
+        allowed["full_name"] = (
+            payload.get("full_name")
+            or allowed.get("display_name")
+            or _representative_display_name({**representative, **payload})
+        )
+    next_profile = _merge_representative_profile(
+        representative.get("representative_profile"), payload
+    )
+    if next_profile != (representative.get("representative_profile") or {}):
+        allowed["representative_profile"] = next_profile
     if not allowed:
         raise DomainError("Guncellenecek kart alani bulunamadi.", "NO_CHANGED_FIELDS", 400)
     assignments: list[str] = []
     params: dict[str, Any] = {
         "tenant_id": context["tenant_id"],
         "representative_id": representative_id,
-        "user_id": context.get("user_id"),
     }
     for key, value in allowed.items():
-        assignments.append(f"{key} = :{key}")
-        params[key] = (
-            json.dumps(value, ensure_ascii=False, default=str)
-            if isinstance(value, (dict, list))
-            else value
-        )
+        if key in REPRESENTATIVE_JSON_FIELDS:
+            assignments.append(f"{key} = cast(:{key} as jsonb)")
+            default_json: list[Any] | dict[str, Any] = [] if key != "representative_profile" else {}
+            params[key] = json.dumps(value or default_json, ensure_ascii=False, default=str)
+        else:
+            assignments.append(f"{key} = :{key}")
+            params[key] = value
     result = await session.execute(
         text(
             f"""
             update public.company_representatives
             set {", ".join(assignments)},
                 updated_at = now(),
-                updated_by = :user_id,
                 version = coalesce(version, 0) + 1
             where tenant_id = :tenant_id
               and id = :representative_id
@@ -310,6 +393,48 @@ async def update_representative_card(
     if not row:
         raise DomainError("Temsilci kaydi bulunamadi.", "REPRESENTATIVE_NOT_FOUND", 404)
     return dict(row)
+
+
+async def assert_representative_can_be_hard_deleted(
+    session: AsyncSession,
+    context: dict[str, Any],
+    representative_id: str,
+) -> dict[str, Any]:
+    representative = await get_representative_by_id(
+        session, context["tenant_id"], representative_id
+    )
+    if not representative:
+        raise DomainError("Temsilci kaydi bulunamadi.", "REPRESENTATIVE_NOT_FOUND", 404)
+    await can_hard_delete_representative_draft(
+        session,
+        representative,
+        tenant_id=context["tenant_id"],
+    )
+    return representative
+
+
+async def delete_representative_draft(
+    session: AsyncSession,
+    context: dict[str, Any],
+    representative_id: str,
+) -> dict[str, Any]:
+    await assert_representative_can_be_hard_deleted(session, context, representative_id)
+    await session.execute(
+        text(
+            """
+            delete from public.company_representatives
+            where tenant_id = :tenant_id
+              and id = :representative_id
+              and coalesce(is_deleted, false) = false
+            """
+        ),
+        {"tenant_id": context["tenant_id"], "representative_id": representative_id},
+    )
+    return {
+        "id": representative_id,
+        "hardDeleted": True,
+        "message": "Taslak temsilci karti silindi.",
+    }
 
 
 def _scope_from_row(row: dict[str, Any]) -> dict[str, Any]:

@@ -1,4 +1,4 @@
-// BACKEND_MIGRATION_STATUS: keep_bff_proxy_with_legacy_fallback
+// BACKEND_MIGRATION_STATUS: proxy_to_fastapi_with_legacy_fallback
 // TARGET_BACKEND_MODULE: action-center
 // TARGET_FASTAPI_ENDPOINT: /api/v1/action-center/by-record
 // NOTES: Record pending work query belongs in Python; TS remains fallback only.

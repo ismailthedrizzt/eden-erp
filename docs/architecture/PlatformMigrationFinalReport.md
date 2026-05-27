@@ -51,7 +51,7 @@ Kalan borclar [Technical Debt and Migration Plan](./TechnicalDebtAndMigrationPla
 
 ## 7.2 Branch FastAPI Migration Addendum
 
-Sube Acilisi ve Sube Kapanisi FastAPI tarafinda ilk gercek core backend pilotu olarak uygulandi. Canonical endpointler `POST /api/v1/companies/{company_id}/branch-openings`, `POST /api/v1/companies/{company_id}/branch-closings` ve ilgili precheck endpointleridir. Next.js official-change route'lari `FASTAPI_BASE_URL` varsa proxy eder; yoksa `keep_bff_proxy_with_legacy_fallback` statulu gecici TS fallback calisir. Detaylar [Branch FastAPI Migration](./BranchFastAPIMigration.md) dokumanindadir.
+Sube Acilisi ve Sube Kapanisi FastAPI tarafinda ilk gercek core backend pilotu olarak uygulandi. Canonical endpointler `POST /api/v1/companies/{company_id}/branch-openings`, `POST /api/v1/companies/{company_id}/branch-closings` ve ilgili precheck endpointleridir. Next.js official-change route'lari `FASTAPI_BASE_URL` varsa proxy eder; yoksa `proxy_to_fastapi_with_legacy_fallback` statulu gecici TS fallback calisir. Detaylar [Branch FastAPI Migration](./BranchFastAPIMigration.md) dokumanindadir.
 
 ## 7.3 Company Official Changes FastAPI Migration Addendum
 
@@ -95,6 +95,39 @@ eder. OpenAPI client generation icin `openapi:export`, `openapi:generate` ve
 `openapi:refresh` scriptleri eklendi. Detaylar
 [Projection / Read Model FastAPI Migration](./ProjectionReadModelFastAPIMigration.md)
 ve [OpenAPI Client Generation](./OpenAPIClientGeneration.md) dokumanlarindadir.
+
+## 7.10 Next Proxy Consolidation Addendum
+
+Next.js API route migration status sozlugu `proxy_to_fastapi`,
+`proxy_to_fastapi_with_legacy_fallback`, `keep_ui_adapter`,
+`keep_session_bootstrap` ve `keep_upload_adapter` ayrimlariyla
+genisletildi. `lib/backend/fastApiProxy.ts` canonical BFF proxy helper olarak
+URL/query insasi, backend header aktarimi, JSON proxy, unavailable response ve
+proxy hata normalizasyonunu tek yerde toplar. Detaylar
+[Next Proxy Consolidation Report](./NextProxyConsolidationReport.md)
+dokumanindadir.
+
+## 7.11 Generated OpenAPI Client Adoption Addendum
+
+FastAPI OpenAPI contract source of truth olarak kalir. `types.ts` generated
+dosya olarak elle duzenlenmez; `client.ts` hand-written adapter olarak response
+envelope, operation/list envelope, error normalization ve unwrap helperlarini
+saglar. `companyService` Company, Branch, Capital, Ownership ve Representative
+Authority endpoint ailelerini generated `BackendPaths` ile tipleyerek manual DTO
+tekrarlarini azaltmaya baslamistir. Detaylar
+[Generated OpenAPI Client Adoption](./GeneratedOpenAPIClientAdoption.md)
+dokumanindadir.
+
+## 7.12 Card CRUD FastAPI Migration Addendum
+
+Company, Partner ve Representative kart CRUD islemleri FastAPI domain servislerine
+tasinmaya basladi. `/api/v1/companies`, `/api/v1/partners` ve
+`/api/v1/representatives` endpointleri draft create, card PATCH ve safe draft
+DELETE davranisini saglar. Official, ownership ve authority alanlari normal card
+PATCH ile degismez; shared Python field-control guard `OPERATION_CONTROLLED_FIELDS`
+dondurur. Next CRUD route'lari `FASTAPI_BASE_URL` varsa proxy eder, yoksa
+legacy fallback yalnizca migration bridge olarak kalir. Detaylar
+[Card CRUD FastAPI Migration](./CardCrudFastAPIMigration.md) dokumanindadir.
 
 ## 8. Build / Typecheck Sonucu
 

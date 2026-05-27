@@ -1,4 +1,4 @@
-// BACKEND_MIGRATION_STATUS: migrate_to_fastapi
+// BACKEND_MIGRATION_STATUS: deprecated_wrapper
 // TARGET_BACKEND_MODULE: ownership
 // TARGET_FASTAPI_ENDPOINT: /api/v1/ownership-transactions/{transaction_id}/impact
 // NOTES: Contains ownership impact logic; move to Python Ownership Domain Service.

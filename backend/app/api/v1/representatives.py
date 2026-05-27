@@ -3,25 +3,24 @@ from __future__ import annotations
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_session
 from app.core.errors import DomainError, domain_error_to_http
 from app.core.security import RequestContext, get_request_context, require_tenant
-from app.domains.operations.service import table_exists
 from app.domains.representatives.authority import perform_authority_transaction_for_request
 from app.domains.representatives.schemas import (
     RepresentativeAuthorityTransactionRequest,
     RepresentativeCardUpdateRequest,
+    RepresentativeCreateDraftRequest,
 )
 from app.domains.representatives.service import (
-    create_representative_card,
+    create_representative_draft,
+    delete_representative_draft,
     get_current_authority,
     get_representative_by_id,
     list_authorities_for_branch,
     list_authorities_for_company,
-    representative_card_status,
     update_representative_card,
 )
 from app.projections.query import projection_query_from_params
@@ -109,9 +108,7 @@ async def list_representative_records(
             statuses=statuses,
             filters={
                 "authority_statuses": [
-                    item.strip()
-                    for item in (authority_statuses or "").split(",")
-                    if item.strip()
+                    item.strip() for item in (authority_statuses or "").split(",") if item.strip()
                 ],
                 "branch_id": branch_id,
                 "scope_type": scope_type,
@@ -134,15 +131,17 @@ async def list_representative_records(
 
 @router.post("", response_model=ApiSuccess[dict[str, Any]])
 async def create_representative_record(
-    payload: dict[str, Any],
+    payload: RepresentativeCreateDraftRequest,
     session: SessionDep,
     context: RequestContextDep,
 ) -> ApiSuccess[dict[str, Any]]:
     tenant_id = require_tenant(context)
     try:
         async with session.begin():
-            row = await create_representative_card(
-                session, _context(tenant_id, context.user_id), payload
+            row = await create_representative_draft(
+                session,
+                _context(tenant_id, context.user_id),
+                payload.model_dump(exclude_none=True),
             )
         return ApiSuccess(data=row, message="Temsilci karti taslak olarak olusturuldu.")
     except DomainError as error:
@@ -185,7 +184,7 @@ async def patch_representative_record(
                 session,
                 _context(tenant_id, context.user_id),
                 representative_id,
-                payload.model_dump(exclude_none=True),
+                payload.model_dump(exclude_unset=True),
             )
         return ApiSuccess(data=row, message="Temsilci kart bilgileri guncellendi.")
     except DomainError as error:
@@ -201,48 +200,12 @@ async def delete_representative_record(
     tenant_id = require_tenant(context)
     try:
         async with session.begin():
-            representative = await get_representative_by_id(session, tenant_id, representative_id)
-            if not representative:
-                raise DomainError("Temsilci kaydi bulunamadi.", "REPRESENTATIVE_NOT_FOUND", 404)
-            if representative_card_status(representative) != "draft":
-                raise DomainError(
-                    "Aktif veya islem gecmisi olan temsilci dogrudan silinemez.",
-                    "REPRESENTATIVE_DELETE_REQUIRES_TERMINATION",
-                    409,
-                )
-            if await table_exists(session, "public.company_representative_authority_transactions"):
-                tx_count = await session.execute(
-                    text(
-                        """
-                        select count(*) as count
-                        from public.company_representative_authority_transactions
-                        where tenant_id = :tenant_id
-                          and representative_id = :representative_id
-                          and coalesce(is_deleted, false) = false
-                        """
-                    ),
-                    {"tenant_id": tenant_id, "representative_id": representative_id},
-                )
-                if int(tx_count.mappings().one()["count"] or 0) > 0:
-                    raise DomainError(
-                        "Islem gecmisi olan temsilci dogrudan silinemez.",
-                        "REPRESENTATIVE_DELETE_REQUIRES_TERMINATION",
-                        409,
-                    )
-            await session.execute(
-                text(
-                    """
-                    delete from public.company_representatives
-                    where tenant_id = :tenant_id
-                      and id = :representative_id
-                      and coalesce(is_deleted, false) = false
-                    """
-                ),
-                {"tenant_id": tenant_id, "representative_id": representative_id},
+            result = await delete_representative_draft(
+                session,
+                _context(tenant_id, context.user_id),
+                representative_id,
             )
-        return ApiSuccess(
-            data={"id": representative_id, "deleted": True}, message="Temsilci karti silindi."
-        )
+        return ApiSuccess(data=result, message=result.get("message"))
     except DomainError as error:
         raise domain_error_to_http(error) from error
 

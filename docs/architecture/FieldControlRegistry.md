@@ -20,6 +20,7 @@ Field Control Registry, Eden ERP'de bir alanin normal kart formundan mi, taslak 
 - `lib/field-controls/fieldControlMessages.ts`: Kullaniciya gosterilecek is dili mesajlarini uretir.
 - `lib/field-controls/fieldControlGuards.ts`: Backend PATCH guard ve strip helper'larini saglar.
 - `lib/field-controls/fieldActionEligibility.server.ts`: Backend/AI tarafinda alanin onerilen operation'larini Policy Engine `evaluateActionEligibility` sonucu ile esler.
+- `backend/app/policies/field_control.py`: FastAPI card PATCH guard icin canonical Python enforcement.
 
 ## Examples
 
@@ -77,7 +78,13 @@ Ornekler:
 - `company.committed_capital_amount`: "Sermaye bilgisi formdan dogrudan degistirilemez. Sermaye Artirimi veya Sermaye Azaltimi islemi kullanilmalidir."
 - `company_branch.document_files`: "Sube belgeleri normal kart guncellemesiyle degistirilemez. Sube Belgeleri Guncelleme islemi kullanilmalidir."
 
-Ilk entegrasyon:
+FastAPI Step 13 entegrasyonu:
+
+- `company`: aktif/lifecycle sirketlerde unvan, adres, kamu, NACE, faaliyet, sermaye ve status alanlari normal PATCH ile reddedilir; taslak sirketlerde sinirli kimlik/adres alani aciktir.
+- `company_partner`: ownership haklari ve current ownership alanlari normal partner card PATCH ile reddedilir.
+- `company_representative`: authority, limit, scope, status ve authority history alanlari normal representative card PATCH ile reddedilir.
+
+Ilk frontend entegrasyon:
 
 - Sirket form alanlari
 - Sube form alanlari

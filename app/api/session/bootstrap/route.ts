@@ -1,3 +1,8 @@
+// BACKEND_MIGRATION_STATUS: keep_session_bootstrap
+// TARGET_BACKEND_MODULE: session-bootstrap
+// TARGET_FASTAPI_ENDPOINT: n/a
+// NOTES: Session/UI bootstrap adapter may aggregate readiness and preferences, but must not own ERP domain mutation.
+
 import { NextRequest, NextResponse } from 'next/server'
 import { DEFAULT_UI_PREFERENCES } from '@/lib/user-state/default-ui-preferences'
 import {

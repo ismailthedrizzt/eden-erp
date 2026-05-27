@@ -6,11 +6,16 @@ const statusValues = new Set([
   'keep_frontend',
   'keep_bff_proxy',
   'keep_bff_proxy_with_legacy_fallback',
+  'proxy_to_fastapi',
+  'proxy_to_fastapi_with_legacy_fallback',
   'keep_ui_adapter',
+  'keep_session_bootstrap',
+  'keep_upload_adapter',
   'migrate_to_fastapi',
   'migrate_to_fastapi_then_proxy',
   'delete_obsolete',
   'deprecated_wrapper',
+  'contract_endpoint',
   'contract_shared',
   'generated_do_not_edit',
 ])
@@ -88,22 +93,22 @@ function classify(route, source) {
   let responsibility = 'request/response plus backend data access'
 
   if (/^\/api\/(auth|uploads|media|identity|session|user\/preferences|onboarding)/.test(route)) {
-    status = 'keep_ui_adapter'
+    status = /^\/api\/uploads/.test(route) ? 'keep_upload_adapter' : 'keep_ui_adapter'
     priority = 'P2'
     responsibility = 'UI/auth/upload adapter'
   }
   if (/^\/api\/ai\/action-guide/.test(route)) {
-    status = 'keep_bff_proxy'
+    status = 'proxy_to_fastapi_with_legacy_fallback'
     priority = 'P2'
     responsibility = 'AI guide UI adapter; backend resolver migrates later'
   }
   if (/^\/api\/(companies|ownership-transactions)/.test(route)) {
-    status = 'migrate_to_fastapi_then_proxy'
+    status = 'proxy_to_fastapi_with_legacy_fallback'
     priority = /official-changes|capital|branches|representatives|ownership-transactions/.test(route) ? 'P0' : 'P1'
     responsibility = 'ERP domain route'
   }
   if (/^\/api\/(processes|tasks|approvals|audit|action-center|setup|cron\/outbox-dispatch)/.test(route)) {
-    status = 'migrate_to_fastapi'
+    status = 'proxy_to_fastapi_with_legacy_fallback'
     priority = /^\/api\/cron\/outbox-dispatch/.test(route) ? 'P1' : 'P1'
     responsibility = 'platform backend route'
   }
@@ -163,8 +168,16 @@ function buildInventory() {
 
 function cleanupAction(status) {
   switch (status) {
+    case 'proxy_to_fastapi':
+      return 'keep as thin FastAPI proxy; no TS business logic'
+    case 'proxy_to_fastapi_with_legacy_fallback':
+      return 'proxy to FastAPI; remove TS fallback after validation'
     case 'keep_bff_proxy':
       return 'keep thin proxy; move resolver to FastAPI'
+    case 'keep_session_bootstrap':
+      return 'keep session/bootstrap adapter; no domain mutation'
+    case 'keep_upload_adapter':
+      return 'keep upload adapter; no domain mutation'
     case 'keep_ui_adapter':
       return 'keep as UI adapter; no domain mutation'
     case 'migrate_to_fastapi_then_proxy':

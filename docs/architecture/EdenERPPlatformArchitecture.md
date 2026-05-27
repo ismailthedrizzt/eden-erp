@@ -116,7 +116,7 @@ Frontend dogrudan Supabase cagirmadan Next.js BFF veya FastAPI client katmanina 
 - Permission/Policy kullanici yetkisini; Readiness modul hazirligini; Integrity veri tutarliligini; Visibility UI gorunurlugunu belirler.
 - Process Engine surec adimlarini yonetir; Operation Orchestrator mutation akisini koordine eder; Domain Service domain veri islemini uygular.
 - Outbox external side effect yapmaz; event kaydeder. Audit history/transaction yerine gecmez; denetim izini tamamlar.
-- Obsolete davranis "backward compatibility" gerekcesiyle korunmaz. Eski davranis sadece canli gecis koprusu olarak `keep_bff_proxy` veya `deprecated_wrapper` status'u ile planli sureyle kalabilir.
+- Obsolete davranis "backward compatibility" gerekcesiyle korunmaz. Eski davranis sadece canli gecis koprusu olarak `proxy_to_fastapi_with_legacy_fallback` veya `deprecated_wrapper` status'u ile planli sureyle kalabilir.
 
 ## Registry Iliskisi
 

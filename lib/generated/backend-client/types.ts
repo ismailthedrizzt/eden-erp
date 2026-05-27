@@ -34,7 +34,8 @@ export interface paths {
         /** List Companies */
         get: operations["list_companies_api_v1_companies_get"];
         put?: never;
-        post?: never;
+        /** Create Company Card */
+        post: operations["create_company_card_api_v1_companies_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -52,10 +53,12 @@ export interface paths {
         get: operations["company_detail_api_v1_companies__company_id__get"];
         put?: never;
         post?: never;
-        delete?: never;
+        /** Delete Company Card */
+        delete: operations["delete_company_card_api_v1_companies__company_id__delete"];
         options?: never;
         head?: never;
-        patch?: never;
+        /** Patch Company Card */
+        patch: operations["patch_company_card_api_v1_companies__company_id__patch"];
         trace?: never;
     };
     "/api/v1/companies/{company_id}/capital-increases/precheck": {
@@ -392,7 +395,8 @@ export interface paths {
         /** List Partners */
         get: operations["list_partners_api_v1_partners_get"];
         put?: never;
-        post?: never;
+        /** Create Partner Card */
+        post: operations["create_partner_card_api_v1_partners_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -410,7 +414,8 @@ export interface paths {
         get: operations["get_partner_api_v1_partners__partner_id__get"];
         put?: never;
         post?: never;
-        delete?: never;
+        /** Delete Partner Card */
+        delete: operations["delete_partner_card_api_v1_partners__partner_id__delete"];
         options?: never;
         head?: never;
         /** Update Partner Card */
@@ -1702,6 +1707,121 @@ export interface components {
         } & {
             [key: string]: unknown;
         };
+        /** CompanyCardUpdateRequest */
+        CompanyCardUpdateRequest: {
+            /** Trade Name */
+            trade_name?: string | null;
+            /** Short Name */
+            short_name?: string | null;
+            /** Tax Number */
+            tax_number?: string | null;
+            /** Tax Office */
+            tax_office?: string | null;
+            /** Company Type */
+            company_type?: string | null;
+            /** Country */
+            country?: string | null;
+            /** City */
+            city?: string | null;
+            /** District */
+            district?: string | null;
+            /** Address */
+            address?: string | null;
+            /** Postal Code */
+            postal_code?: string | null;
+            /** Phone */
+            phone?: string | null;
+            /** Email */
+            email?: string | null;
+            /** Website */
+            website?: string | null;
+            /** Logo Url */
+            logo_url?: string | null;
+            /** Hero Images */
+            hero_images?: {
+                [key: string]: unknown;
+            }[] | null;
+            /** Hero Documents */
+            hero_documents?: {
+                [key: string]: unknown;
+            }[] | null;
+            /** Contact Points */
+            contact_points?: {
+                [key: string]: unknown;
+            }[] | null;
+            /** Default Currency */
+            default_currency?: string | null;
+            /** Default Language */
+            default_language?: string | null;
+            /** Time Zone */
+            time_zone?: string | null;
+            /** Fiscal Year Start */
+            fiscal_year_start?: number | null;
+            /** Notes */
+            notes?: string | null;
+            /** Metadata Json */
+            metadata_json?: {
+                [key: string]: unknown;
+            } | null;
+            /** Base Version */
+            base_version?: number | null;
+            /** Base Updated At */
+            base_updated_at?: string | null;
+        } & {
+            [key: string]: unknown;
+        };
+        /** CompanyCreateDraftRequest */
+        CompanyCreateDraftRequest: {
+            /** Trade Name */
+            trade_name: string;
+            /** Short Name */
+            short_name?: string | null;
+            /** Tax Number */
+            tax_number?: string | null;
+            /** Tax Office */
+            tax_office?: string | null;
+            /** Company Type */
+            company_type?: string | null;
+            /**
+             * Country
+             * @default Turkiye
+             */
+            country: string | null;
+            /** City */
+            city?: string | null;
+            /** District */
+            district?: string | null;
+            /** Address */
+            address?: string | null;
+            /** Postal Code */
+            postal_code?: string | null;
+            /** Phone */
+            phone?: string | null;
+            /** Email */
+            email?: string | null;
+            /** Website */
+            website?: string | null;
+            /** Logo Url */
+            logo_url?: string | null;
+            /** Hero Images */
+            hero_images?: {
+                [key: string]: unknown;
+            }[];
+            /** Hero Documents */
+            hero_documents?: {
+                [key: string]: unknown;
+            }[];
+            /** Contact Points */
+            contact_points?: {
+                [key: string]: unknown;
+            }[];
+            /** Notes */
+            notes?: string | null;
+            /** Client Request Id */
+            client_request_id?: string | null;
+        } & {
+            [key: string]: unknown;
+        };
         /** CompleteStepRequest */
         CompleteStepRequest: {
             /** Payload Json */
@@ -1980,6 +2100,122 @@ export interface components {
         } & {
             [key: string]: unknown;
         };
+        /** PartnerCardUpdateRequest */
+        PartnerCardUpdateRequest: {
+            /** First Name */
+            first_name?: string | null;
+            /** Last Name */
+            last_name?: string | null;
+            /** Trade Name */
+            trade_name?: string | null;
+            /** Short Name */
+            short_name?: string | null;
+            /** Phone */
+            phone?: string | null;
+            /** Email */
+            email?: string | null;
+            /** Address */
+            address?: string | null;
+            /** City */
+            city?: string | null;
+            /** District */
+            district?: string | null;
+            /** Country */
+            country?: string | null;
+            /** Partner Documents */
+            partner_documents?: {
+                [key: string]: unknown;
+            }[] | null;
+            /** Photo Logo */
+            photo_logo?: {
+                [key: string]: unknown;
+            }[] | null;
+            /** Notes */
+            notes?: string | null;
+            /** Contact Points */
+            contact_points?: {
+                [key: string]: unknown;
+            }[] | null;
+            /** Entity Bank Accounts */
+            entity_bank_accounts?: {
+                [key: string]: unknown;
+            }[] | null;
+            /** Base Version */
+            base_version?: number | null;
+            /** Base Updated At */
+            base_updated_at?: string | null;
+        } & {
+            [key: string]: unknown;
+        };
+        /** PartnerCreateDraftRequest */
+        PartnerCreateDraftRequest: {
+            /** Company Id */
+            company_id: string;
+            /**
+             * Partner Type
+             * @default person
+             * @enum {string}
+             */
+            partner_type: "person" | "organization";
+            /** Owner Kind */
+            owner_kind?: ("person" | "organization") | null;
+            /** Person Id */
+            person_id?: string | null;
+            /** Organization Id */
+            organization_id?: string | null;
+            /** First Name */
+            first_name?: string | null;
+            /** Last Name */
+            last_name?: string | null;
+            /** Trade Name */
+            trade_name?: string | null;
+            /** Short Name */
+            short_name?: string | null;
+            /** Identity Number */
+            identity_number?: string | null;
+            /** National Id */
+            national_id?: string | null;
+            /** Passport No */
+            passport_no?: string | null;
+            /** Nationality */
+            nationality?: string | null;
+            /** Tax Number */
+            tax_number?: string | null;
+            /** Phone */
+            phone?: string | null;
+            /** Email */
+            email?: string | null;
+            /** Address */
+            address?: string | null;
+            /** City */
+            city?: string | null;
+            /** District */
+            district?: string | null;
+            /** Country */
+            country?: string | null;
+            /** Partner Documents */
+            partner_documents?: {
+                [key: string]: unknown;
+            }[];
+            /** Photo Logo */
+            photo_logo?: {
+                [key: string]: unknown;
+            }[];
+            /** Notes */
+            notes?: string | null;
+            /** Contact Points */
+            contact_points?: {
+                [key: string]: unknown;
+            }[];
+            /** Entity Bank Accounts */
+            entity_bank_accounts?: {
+                [key: string]: unknown;
+            }[];
+            /** Client Request Id */
+            client_request_id?: string | null;
+        } & {
+            [key: string]: unknown;
+        };
         /** PolicyEvaluateRequest */
         PolicyEvaluateRequest: {
             /** Action Key */
@@ -2213,6 +2449,14 @@ export interface components {
         };
         /** RepresentativeCardUpdateRequest */
         RepresentativeCardUpdateRequest: {
+            /** First Name */
+            first_name?: string | null;
+            /** Last Name */
+            last_name?: string | null;
+            /** Trade Name */
+            trade_name?: string | null;
+            /** Short Name */
+            short_name?: string | null;
             /** Display Name */
             display_name?: string | null;
             /** Full Name */
@@ -2221,22 +2465,121 @@ export interface components {
             phone?: string | null;
             /** Email */
             email?: string | null;
+            /** Address */
+            address?: string | null;
+            /** City */
+            city?: string | null;
+            /** District */
+            district?: string | null;
+            /** Country */
+            country?: string | null;
             /** Notes */
             notes?: string | null;
-            /** Job Title */
-            job_title?: string | null;
             /** Photo Logo */
             photo_logo?: {
+                [key: string]: unknown;
+            }[] | null;
+            /** Representative Documents */
+            representative_documents?: {
+                [key: string]: unknown;
+            }[] | null;
+            /** Authority Documents */
+            authority_documents?: {
                 [key: string]: unknown;
             }[] | null;
             /** Representative Profile */
             representative_profile?: {
                 [key: string]: unknown;
             } | null;
+            /** Contact Points */
+            contact_points?: {
+                [key: string]: unknown;
+            }[] | null;
+            /** Entity Bank Accounts */
+            entity_bank_accounts?: {
+                [key: string]: unknown;
+            }[] | null;
             /** Base Version */
             base_version?: number | null;
             /** Base Updated At */
             base_updated_at?: string | null;
+        } & {
+            [key: string]: unknown;
+        };
+        /** RepresentativeCreateDraftRequest */
+        RepresentativeCreateDraftRequest: {
+            /** Company Id */
+            company_id: string;
+            /**
+             * Person Kind
+             * @default person
+             * @enum {string}
+             */
+            person_kind: "person" | "organization";
+            /** Person Or Entity Type */
+            person_or_entity_type?: ("person" | "organization") | null;
+            /** Person Id */
+            person_id?: string | null;
+            /** Organization Id */
+            organization_id?: string | null;
+            /** First Name */
+            first_name?: string | null;
+            /** Last Name */
+            last_name?: string | null;
+            /** Trade Name */
+            trade_name?: string | null;
+            /** Short Name */
+            short_name?: string | null;
+            /** Display Name */
+            display_name?: string | null;
+            /** Full Name */
+            full_name?: string | null;
+            /** Identity Number */
+            identity_number?: string | null;
+            /** National Id */
+            national_id?: string | null;
+            /** Passport No */
+            passport_no?: string | null;
+            /** Nationality */
+            nationality?: string | null;
+            /** Tax Number */
+            tax_number?: string | null;
+            /** Source Type */
+            source_type?: string | null;
+            /** Source Id */
+            source_id?: string | null;
+            /** Phone */
+            phone?: string | null;
+            /** Email */
+            email?: string | null;
+            /** Address */
+            address?: string | null;
+            /** City */
+            city?: string | null;
+            /** District */
+            district?: string | null;
+            /** Country */
+            country?: string | null;
+            /** Representative Documents */
+            representative_documents?: {
+                [key: string]: unknown;
+            }[];
+            /** Photo Logo */
+            photo_logo?: {
+                [key: string]: unknown;
+            }[];
+            /** Notes */
+            notes?: string | null;
+            /** Contact Points */
+            contact_points?: {
+                [key: string]: unknown;
+            }[];
+            /** Entity Bank Accounts */
+            entity_bank_accounts?: {
+                [key: string]: unknown;
+            }[];
+            /** Client Request Id */
+            client_request_id?: string | null;
         } & {
             [key: string]: unknown;
         };
@@ -2396,6 +2739,43 @@ export interface operations {
             };
         };
     };
+    create_company_card_api_v1_companies_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-tenant-id"?: string | null;
+                "x-user-id"?: string | null;
+                "x-company-scope"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CompanyCreateDraftRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     company_detail_api_v1_companies__company_id__get: {
         parameters: {
             query?: never;
@@ -2410,6 +2790,80 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_company_card_api_v1_companies__company_id__delete: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-tenant-id"?: string | null;
+                "x-user-id"?: string | null;
+                "x-company-scope"?: string | null;
+            };
+            path: {
+                company_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    patch_company_card_api_v1_companies__company_id__patch: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-tenant-id"?: string | null;
+                "x-user-id"?: string | null;
+                "x-company-scope"?: string | null;
+            };
+            path: {
+                company_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CompanyCardUpdateRequest"];
+            };
+        };
         responses: {
             /** @description Successful Response */
             200: {
@@ -3225,7 +3679,79 @@ export interface operations {
             };
         };
     };
+    create_partner_card_api_v1_partners_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-tenant-id"?: string | null;
+                "x-user-id"?: string | null;
+                "x-company-scope"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PartnerCreateDraftRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_partner_api_v1_partners__partner_id__get: {
+        parameters: {
+            query?: never;
+            header?: {
+                "x-tenant-id"?: string | null;
+                "x-user-id"?: string | null;
+                "x-company-scope"?: string | null;
+            };
+            path: {
+                partner_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_partner_card_api_v1_partners__partner_id__delete: {
         parameters: {
             query?: never;
             header?: {
@@ -3275,9 +3801,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": {
-                    [key: string]: unknown;
-                };
+                "application/json": components["schemas"]["PartnerCardUpdateRequest"];
             };
         };
         responses: {
@@ -3766,9 +4290,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": {
-                    [key: string]: unknown;
-                };
+                "application/json": components["schemas"]["RepresentativeCreateDraftRequest"];
             };
         };
         responses: {

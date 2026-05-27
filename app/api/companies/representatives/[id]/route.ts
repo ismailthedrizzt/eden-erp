@@ -1,7 +1,8 @@
-// BACKEND_MIGRATION_STATUS: keep_bff_proxy_with_legacy_fallback
+// BACKEND_MIGRATION_STATUS: proxy_to_fastapi_with_legacy_fallback
 // TARGET_BACKEND_MODULE: representatives
-// TARGET_FASTAPI_ENDPOINT: /api/v1/representatives/{representative_id}/authority-transactions
-// NOTES: Authority transactions proxy to FastAPI when configured; card updates keep a temporary TS fallback.
+// TARGET_FASTAPI_ENDPOINT: /api/v1/representatives/{representative_id}
+// TARGET_FASTAPI_AUTHORITY_ENDPOINT: /api/v1/representatives/{representative_id}/authority-transactions
+// LEGACY_FALLBACK_REMOVE_AFTER: Python representative card and authority endpoints are verified with staging data.
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
@@ -65,6 +66,9 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params
+  const fastApiResponse = await proxyToFastApi(request, `/api/v1/representatives/${id}`)
+  if (fastApiResponse) return fastApiResponse
+
   const supabase = createServiceClient()
   const tenantContext = resolveTenantContext(request)
 
@@ -99,6 +103,20 @@ export async function PATCH(
   const rawText = await request.text()
   const rawBody = rawText ? JSON.parse(rawText) : {}
   const isAuthorityTransaction = !!rawBody.authority_action || AUTHORITY_TRANSACTION_TYPES.has(String(rawBody.transaction_type || ''))
+  if (isFastApiEnabled()) {
+    const fastApiResponse = await proxyToFastApi(
+      request,
+      isAuthorityTransaction
+        ? `/api/v1/representatives/${encodeURIComponent(id)}/authority-transactions`
+        : `/api/v1/representatives/${encodeURIComponent(id)}`,
+      {
+        method: isAuthorityTransaction ? 'POST' : 'PATCH',
+        bodyText: rawText,
+      }
+    )
+    if (fastApiResponse) return fastApiResponse
+  }
+
   const clientRequestId = resolveClientRequestId(request, rawBody)
   const baseVersion = resolveBaseVersion(rawBody)
   const baseUpdatedAt = resolveBaseUpdatedAt(rawBody)
@@ -261,6 +279,9 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params
+  const fastApiResponse = await proxyToFastApi(request, `/api/v1/representatives/${id}`)
+  if (fastApiResponse) return fastApiResponse
+
   const supabase = createServiceClient()
   const permission = await requireAnyPermission(request, supabase, ['representatives.delete', 'representatives.edit'])
   if (permission instanceof NextResponse) return permission

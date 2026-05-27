@@ -46,7 +46,7 @@ Asagidaki Next route'lari artik FastAPI proxy onceliklidir:
 - `app/api/companies/[company_id]/official-changes/branch-closing/route.ts`
 - `app/api/companies/[company_id]/official-changes/branch-closing/precheck/route.ts`
 
-`FASTAPI_BASE_URL` tanimliysa route FastAPI endpointine proxy eder. Tanimli degilse TS fallback calisir ve route `keep_bff_proxy_with_legacy_fallback` olarak isaretlidir. Bu fallback kalici backend degildir.
+`FASTAPI_BASE_URL` tanimliysa route FastAPI endpointine proxy eder. Tanimli degilse TS fallback calisir ve route `proxy_to_fastapi_with_legacy_fallback` olarak isaretlidir. Bu fallback kalici backend degildir.
 
 Proxy helper:
 

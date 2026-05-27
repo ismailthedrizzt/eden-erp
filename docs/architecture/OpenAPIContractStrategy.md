@@ -48,13 +48,20 @@ Yapmayacaklari:
 
 1. FastAPI schemas Pydantic v2 ile tanimlanir.
 2. `/openapi.json` CI artifact olarak uretilir.
-3. TypeScript client `lib/api/generated` altina uretilir.
-4. Existing manual service wrappers generated client'a delege eder.
-5. Manual wrapperlar sadece UI-specific normalization icin kalir.
+3. TypeScript contract types `lib/generated/backend-client/types.ts` altina uretilir.
+4. `lib/generated/backend-client/client.ts` hand-written adapter olarak response/error handling'i standartlastirir.
+5. Existing manual service wrappers generated endpoint type'larini kullanarak kademeli olarak generated client'a delege eder.
+6. Manual wrapperlar sadece UI-specific normalization ve Next BFF compatibility icin kalir.
 
 Client generation ayrintilari [OpenAPI Client Generation](./OpenAPIClientGeneration.md)
 dokumaninda tutulur. Mevcut hedef `lib/generated/backend-client/types.ts`
 dosyasidir ve `npm run openapi:refresh` ile guncellenir.
+
+Step 12 itibariyla ilk adoption basladi: `companyService` public method
+imzalari korunurken Company, Branch, Capital, Ownership ve Representative
+Authority endpoint aileleri generated OpenAPI `paths` type'lari ile
+isaretlendi. Detaylar [Generated OpenAPI Client Adoption](./GeneratedOpenAPIClientAdoption.md)
+dokumaninda tutulur.
 
 ## Versioning
 

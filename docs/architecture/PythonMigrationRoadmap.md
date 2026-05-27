@@ -58,6 +58,17 @@ Bu roadmap FastAPI core backend gecisi icin ilk tasima sirasini belirler.
 
 ## P2
 
+11. **Next proxy consolidation and OpenAPI client adoption** - in progress / migration bridge landed
+   - Next API routes now carry migration status headers and use `lib/backend/fastApiProxy.ts` for FastAPI-backed endpoint groups.
+   - Generated OpenAPI types live under `lib/generated/backend-client/types.ts`; `lib/generated/backend-client/client.ts` is the hand-written adapter.
+   - Follow-up: remove TS fallbacks after staging FastAPI validation and move service wrappers to generated contracts.
+
+12. **Company / Partner / Representative Card CRUD** - in progress / FastAPI card endpoints landed
+   - Target: `backend/app/domains/company`, `partners`, `representatives`, shared `policies/field_control.py` and `delete_guards.py`.
+   - Implemented: draft create, card PATCH and safe draft DELETE endpoints for company, partner and representative cards.
+   - Rule: card CRUD cannot mutate official, ownership or authority fields; those remain operation/wizard endpoints.
+   - Follow-up: identity sync hardening, document storage adapter migration and legacy TS fallback removal.
+
 11. **Setup Readiness**
     - Module readiness Python startup/request guard olarak uygulanir.
     - Implemented: `/api/v1/setup/readiness` ve module readiness endpointleri eklendi.
@@ -76,4 +87,9 @@ Bu roadmap FastAPI core backend gecisi icin ilk tasima sirasini belirler.
 
 ## Migration Rule
 
-Her hedef icin once FastAPI endpoint + OpenAPI contract eklenir, sonra Next route proxy/adaptor'a cevrilir, son olarak TS business logic silinir veya `deprecated_wrapper` olarak planli sureyle tutulur.
+Her hedef icin once FastAPI endpoint + OpenAPI contract eklenir, sonra Next route
+`proxy_to_fastapi` veya `proxy_to_fastapi_with_legacy_fallback` statulu
+proxy/adaptor'a cevrilir, son olarak TS business logic silinir veya
+`deprecated_wrapper` olarak planli sureyle tutulur. Step 11 ile P0/P1 route
+gruplarinin migration status sozlugu bu yeni proxy ayrimina gore
+standardize edilmistir.

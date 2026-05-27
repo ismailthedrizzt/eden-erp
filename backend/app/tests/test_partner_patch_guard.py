@@ -15,7 +15,8 @@ def test_partner_patch_rejects_share_ratio() -> None:
         reject_operation_controlled_partner_patch({"share_ratio": 10})
 
     assert exc.value.code == "OPERATION_CONTROLLED_FIELDS"
-    assert exc.value.details == {"fields": ["share_ratio"]}
+    assert exc.value.details is not None
+    assert exc.value.details["fields"][0]["field"] == "share_ratio"
 
 
 def test_partner_patch_rejects_current_ownership() -> None:

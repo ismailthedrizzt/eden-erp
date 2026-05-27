@@ -1,7 +1,7 @@
-// BACKEND_MIGRATION_STATUS: keep_bff_proxy
+// BACKEND_MIGRATION_STATUS: keep_ui_adapter
 // TARGET_BACKEND_MODULE: action-guide
 // TARGET_FASTAPI_ENDPOINT: /api/v1/action-guide
-// NOTES: UI-specific BFF may remain, but deterministic resolver can later move to Python.
+// NOTES: UI-specific BFF may remain; canonical action eligibility is provided by FastAPI policy endpoints.
 
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'

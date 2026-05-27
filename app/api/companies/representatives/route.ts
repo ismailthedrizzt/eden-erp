@@ -1,7 +1,8 @@
-// BACKEND_MIGRATION_STATUS: migrate_to_fastapi
+// BACKEND_MIGRATION_STATUS: proxy_to_fastapi_with_legacy_fallback
 // TARGET_BACKEND_MODULE: representatives
 // TARGET_FASTAPI_ENDPOINT: /api/v1/representatives
-// NOTES: Contains representative list/create logic; move to Python Representative Domain Service.
+// LEGACY_FALLBACK_REMOVE_AFTER: Python representative projection and card endpoints are verified with staging data.
+// NOTES: Representative list/create logic is a temporary BFF fallback; new authority logic belongs in FastAPI.
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
@@ -216,6 +217,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const fastApiResponse = await proxyToFastApi(request, '/api/v1/representatives')
+  if (fastApiResponse) return fastApiResponse
+
   const supabase = createServiceClient()
   const permission = await requireAnyPermission(request, supabase, ['representatives.insert', 'representatives.edit'])
   if (permission instanceof NextResponse) return permission

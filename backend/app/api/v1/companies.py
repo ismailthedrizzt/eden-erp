@@ -24,11 +24,18 @@ from app.domains.company.operations import (
 from app.domains.company.schemas import (
     ActivitySubjectChangeRequest,
     AddressChangeRequest,
+    CompanyCardUpdateRequest,
+    CompanyCreateDraftRequest,
     NaceChangeRequest,
     PublicRegistrationUpdateRequest,
     TitleChangeRequest,
 )
-from app.domains.company.service import get_company_by_id
+from app.domains.company.service import (
+    create_company_draft,
+    delete_company_draft,
+    get_company_by_id,
+    update_company_card,
+)
 from app.projections.company import build_company_detail_read_model, list_company_projection
 from app.projections.current_ownership import current_ownership_projection
 from app.projections.query import projection_query_from_params
@@ -78,6 +85,25 @@ async def list_companies(
         raise domain_error_to_http(error) from error
 
 
+@router.post("", response_model=ApiSuccess[dict[str, Any]])
+async def create_company_card(
+    request: CompanyCreateDraftRequest,
+    session: SessionDep,
+    context: RequestContextDep,
+) -> ApiSuccess[dict[str, Any]]:
+    tenant_id = require_tenant(context)
+    try:
+        async with session.begin():
+            company = await create_company_draft(
+                session,
+                {"tenant_id": tenant_id, "user_id": context.user_id, "module_key": "companies"},
+                request.model_dump(exclude_none=True),
+            )
+        return ApiSuccess(data=company, message="Sirket karti taslak olarak olusturuldu.")
+    except DomainError as error:
+        raise domain_error_to_http(error) from error
+
+
 @router.get("/{company_id}", response_model=ApiSuccess[dict[str, Any]])
 async def company_detail(
     company_id: str,
@@ -96,6 +122,46 @@ async def company_detail(
             warnings=data.get("warnings", []),
             message="Sirket detayi getirildi.",
         )
+    except DomainError as error:
+        raise domain_error_to_http(error) from error
+
+
+@router.patch("/{company_id}", response_model=ApiSuccess[dict[str, Any]])
+async def patch_company_card(
+    company_id: str,
+    request: CompanyCardUpdateRequest,
+    session: SessionDep,
+    context: RequestContextDep,
+) -> ApiSuccess[dict[str, Any]]:
+    tenant_id = require_tenant(context)
+    try:
+        async with session.begin():
+            company = await update_company_card(
+                session,
+                {"tenant_id": tenant_id, "user_id": context.user_id, "module_key": "companies"},
+                company_id,
+                request.model_dump(exclude_unset=True),
+            )
+        return ApiSuccess(data=company, message="Sirket karti guncellendi.")
+    except DomainError as error:
+        raise domain_error_to_http(error) from error
+
+
+@router.delete("/{company_id}", response_model=ApiSuccess[dict[str, Any]])
+async def delete_company_card(
+    company_id: str,
+    session: SessionDep,
+    context: RequestContextDep,
+) -> ApiSuccess[dict[str, Any]]:
+    tenant_id = require_tenant(context)
+    try:
+        async with session.begin():
+            result = await delete_company_draft(
+                session,
+                {"tenant_id": tenant_id, "user_id": context.user_id, "module_key": "companies"},
+                company_id,
+            )
+        return ApiSuccess(data=result, message=result.get("message"))
     except DomainError as error:
         raise domain_error_to_http(error) from error
 

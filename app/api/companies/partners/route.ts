@@ -1,3 +1,8 @@
+// BACKEND_MIGRATION_STATUS: proxy_to_fastapi_with_legacy_fallback
+// TARGET_BACKEND_MODULE: partners
+// TARGET_FASTAPI_ENDPOINT: /api/v1/partners
+// LEGACY_FALLBACK_REMOVE_AFTER: Python partner projection and partner card endpoints are verified with staging data.
+
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { z } from 'zod'
@@ -302,6 +307,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const fastApiResponse = await proxyToFastApi(request, '/api/v1/partners')
+  if (fastApiResponse) return fastApiResponse
+
   const supabase = createServiceClient()
   const permission = await requirePermission(request, supabase, 'partners.edit')
   if (permission instanceof NextResponse) return permission

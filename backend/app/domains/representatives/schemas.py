@@ -42,6 +42,7 @@ AUTHORITY_CONTROLLED_FIELDS: set[str] = {
     "primary_authority_type",
     "authority_type",
     "authority_types",
+    "job_title",
     "signature_type",
     "authority_limit",
     "transaction_limit",
@@ -204,13 +205,59 @@ class RepresentativeAuthorityTransactionResponse(BaseModel):
 class RepresentativeCardUpdateRequest(BaseModel):
     model_config = ConfigDict(extra="allow")
 
+    first_name: str | None = None
+    last_name: str | None = None
+    trade_name: str | None = None
+    short_name: str | None = None
     display_name: str | None = None
     full_name: str | None = None
     phone: str | None = None
     email: str | None = None
+    address: str | None = None
+    city: str | None = None
+    district: str | None = None
+    country: str | None = None
     notes: str | None = None
-    job_title: str | None = None
     photo_logo: list[dict[str, Any]] | None = None
+    representative_documents: list[dict[str, Any]] | None = None
+    authority_documents: list[dict[str, Any]] | None = None
     representative_profile: dict[str, Any] | None = None
+    contact_points: list[dict[str, Any]] | None = None
+    entity_bank_accounts: list[dict[str, Any]] | None = None
     base_version: int | None = None
     base_updated_at: str | None = None
+
+
+class RepresentativeCreateDraftRequest(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+    company_id: str
+    person_kind: Literal["person", "organization"] = "person"
+    person_or_entity_type: Literal["person", "organization"] | None = None
+    person_id: str | None = None
+    organization_id: str | None = None
+    first_name: str | None = None
+    last_name: str | None = None
+    trade_name: str | None = None
+    short_name: str | None = None
+    display_name: str | None = None
+    full_name: str | None = None
+    identity_number: str | None = None
+    national_id: str | None = None
+    passport_no: str | None = None
+    nationality: str | None = None
+    tax_number: str | None = None
+    source_type: str | None = None
+    source_id: str | None = None
+    phone: str | None = None
+    email: str | None = None
+    address: str | None = None
+    city: str | None = None
+    district: str | None = None
+    country: str | None = None
+    representative_documents: list[dict[str, Any]] = Field(default_factory=list)
+    photo_logo: list[dict[str, Any]] = Field(default_factory=list)
+    notes: str | None = None
+    contact_points: list[dict[str, Any]] = Field(default_factory=list)
+    entity_bank_accounts: list[dict[str, Any]] = Field(default_factory=list)
+    client_request_id: str | None = None

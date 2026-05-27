@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 from datetime import UTC, datetime
 from typing import Any
+from uuid import uuid4
 
 from fastapi import status
 from sqlalchemy import text
@@ -10,6 +11,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.errors import DomainError
 from app.domains.operations.service import table_exists
+from app.policies.delete_guards import can_hard_delete_company_draft
+from app.policies.field_control import reject_operation_controlled_patch, strip_system_fields
 
 COMPANY_ACTIVE_VALUES = {"active", "aktif", "opened", "open"}
 COMPANY_BLOCKED_VALUES = {
@@ -48,6 +51,33 @@ OFFICIAL_COMPANY_FIELDS = {
 }
 
 JSON_COMPANY_FIELDS = {"nace_codes"}
+COMPANY_CARD_FIELDS = {
+    "phone",
+    "email",
+    "website",
+    "logo_url",
+    "hero_images",
+    "hero_documents",
+    "default_currency",
+    "default_language",
+    "time_zone",
+    "fiscal_year_start",
+}
+COMPANY_DRAFT_CARD_FIELDS = {
+    "trade_name",
+    "short_name",
+    "tax_number",
+    "tax_office",
+    "company_type",
+    "country",
+    "city",
+    "district",
+    "address",
+    "postal_code",
+    "foundation_date",
+}
+JSON_COMPANY_CARD_FIELDS = {"hero_images", "hero_documents"}
+COMPANY_CARD_METADATA_FIELDS = {"contact_points", "notes", "metadata_json"}
 
 
 async def get_company_by_id(
@@ -70,6 +100,247 @@ async def get_company_by_id(
     )
     row = result.mappings().one_or_none()
     return dict(row) if row else None
+
+
+def is_company_draft(company: dict[str, Any] | None) -> bool:
+    return get_company_lifecycle(company) in {"draft", "taslak", ""}
+
+
+def reject_operation_controlled_company_patch(
+    payload: dict[str, Any],
+    current_company: dict[str, Any] | None,
+) -> None:
+    reject_operation_controlled_patch("company", payload, current_company)
+
+
+def normalize_company_card_patch(
+    request: dict[str, Any],
+    current_company: dict[str, Any],
+) -> dict[str, Any]:
+    request = strip_system_fields(request)
+    reject_operation_controlled_company_patch(request, current_company)
+    allowed_fields = set(COMPANY_CARD_FIELDS)
+    if is_company_draft(current_company):
+        allowed_fields.update(COMPANY_DRAFT_CARD_FIELDS)
+    return {
+        field: value
+        for field, value in request.items()
+        if field in allowed_fields and value is not None
+    }
+
+
+async def create_company_draft(
+    session: AsyncSession,
+    context: dict[str, Any],
+    request: dict[str, Any],
+) -> dict[str, Any]:
+    company_id = str(uuid4())
+    values = {
+        "id": company_id,
+        "tenant_id": context["tenant_id"],
+        "organization_id": request.get("organization_id"),
+        "trade_name": request.get("trade_name"),
+        "short_name": request.get("short_name"),
+        "tax_number": request.get("tax_number"),
+        "tax_office": request.get("tax_office"),
+        "company_type": request.get("company_type"),
+        "country": request.get("country") or "Turkiye",
+        "city": request.get("city"),
+        "district": request.get("district"),
+        "address": request.get("address"),
+        "postal_code": request.get("postal_code"),
+        "phone": request.get("phone"),
+        "email": request.get("email"),
+        "website": request.get("website"),
+        "logo_url": request.get("logo_url"),
+        "hero_images": json.dumps(
+            request.get("hero_images") or [], ensure_ascii=False, default=str
+        ),
+        "hero_documents": json.dumps(
+            request.get("hero_documents") or [], ensure_ascii=False, default=str
+        ),
+        "created_by": context.get("user_id"),
+        "updated_by": context.get("user_id"),
+    }
+    if not values["trade_name"]:
+        raise DomainError("Taslak sirket icin ticari unvan zorunludur.", "TRADE_NAME_REQUIRED", 400)
+
+    result = await session.execute(
+        text(
+            """
+            insert into public.companies (
+              id, tenant_id, organization_id, trade_name, short_name, tax_number,
+              tax_office, company_type, country, city, district, address, postal_code,
+              phone, email, website, logo_url, hero_images, hero_documents,
+              record_status, company_status, is_deleted, created_by, updated_by,
+              created_at, updated_at, version
+            )
+            values (
+              :id, :tenant_id, :organization_id, :trade_name, :short_name, :tax_number,
+              :tax_office, :company_type, :country, :city, :district, :address,
+              :postal_code, :phone, :email, :website, :logo_url,
+              cast(:hero_images as jsonb), cast(:hero_documents as jsonb),
+              'draft', 'draft', false, :created_by, :updated_by, now(), now(), 1
+            )
+            returning *
+            """
+        ),
+        values,
+    )
+    return dict(result.mappings().one())
+
+
+def _company_card_metadata(
+    current_company: dict[str, Any],
+    request: dict[str, Any],
+    user_id: str | None,
+) -> dict[str, Any] | None:
+    metadata_payload = {
+        field: request[field]
+        for field in COMPANY_CARD_METADATA_FIELDS
+        if field in request and request[field] is not None
+    }
+    if not metadata_payload:
+        return None
+
+    field_history = dict(current_company.get("field_history") or {})
+    current_metadata = field_history.get("card_metadata")
+    if not isinstance(current_metadata, dict):
+        current_metadata = {}
+    next_metadata = {
+        **current_metadata,
+        **metadata_payload,
+        "updated_at": datetime.now(UTC).isoformat(),
+        "updated_by": user_id,
+        "source": "fastapi_card_crud",
+    }
+    if current_metadata == next_metadata:
+        return None
+    field_history["card_metadata"] = next_metadata
+    return field_history
+
+
+async def hydrate_company_detail_for_card_response(
+    session: AsyncSession,
+    context: dict[str, Any],
+    company_id: str,
+) -> dict[str, Any]:
+    company = await get_company_by_id(session, context["tenant_id"], company_id)
+    if not company:
+        raise DomainError(
+            "Sirket kaydi bulunamadi.", "COMPANY_NOT_FOUND", status.HTTP_404_NOT_FOUND
+        )
+    return company
+
+
+async def update_company_card(
+    session: AsyncSession,
+    context: dict[str, Any],
+    company_id: str,
+    request: dict[str, Any],
+) -> dict[str, Any]:
+    company = await get_company_by_id(session, context["tenant_id"], company_id)
+    if not company:
+        raise DomainError(
+            "Sirket kaydi bulunamadi.", "COMPANY_NOT_FOUND", status.HTTP_404_NOT_FOUND
+        )
+
+    detect_company_version_conflict(
+        company,
+        request.get("base_version"),
+        request.get("base_updated_at"),
+    )
+    patch = normalize_company_card_patch(request, company)
+    changed_patch = {field: value for field, value in patch.items() if company.get(field) != value}
+    field_history = _company_card_metadata(company, request, context.get("user_id"))
+
+    if not changed_patch and field_history is None:
+        raise DomainError(
+            "Guncellenecek sirket kart alani bulunamadi.",
+            "NO_CHANGED_FIELDS",
+            status.HTTP_400_BAD_REQUEST,
+        )
+
+    assignments: list[str] = []
+    params: dict[str, Any] = {
+        "tenant_id": context["tenant_id"],
+        "company_id": company_id,
+        "updated_by": context.get("user_id"),
+    }
+    for field, value in changed_patch.items():
+        if field in JSON_COMPANY_CARD_FIELDS:
+            assignments.append(f"{field} = cast(:{field} as jsonb)")
+            params[field] = json.dumps(value or [], ensure_ascii=False, default=str)
+        else:
+            assignments.append(f"{field} = :{field}")
+            params[field] = value
+    if field_history is not None:
+        assignments.append("field_history = cast(:field_history as jsonb)")
+        params["field_history"] = json.dumps(field_history, ensure_ascii=False, default=str)
+    assignments.extend(
+        [
+            "updated_at = now()",
+            "updated_by = :updated_by",
+            "version = coalesce(version, 0) + 1",
+        ]
+    )
+    result = await session.execute(
+        text(
+            f"""
+            update public.companies
+            set {", ".join(assignments)}
+            where tenant_id = :tenant_id
+              and id = :company_id
+              and coalesce(is_deleted, false) = false
+            returning *
+            """
+        ),
+        params,
+    )
+    row = result.mappings().one_or_none()
+    if not row:
+        raise DomainError(
+            "Sirket kaydi guncellenemedi.", "COMPANY_UPDATE_FAILED", status.HTTP_409_CONFLICT
+        )
+    return dict(row)
+
+
+async def assert_company_can_be_hard_deleted(
+    session: AsyncSession,
+    context: dict[str, Any],
+    company_id: str,
+) -> dict[str, Any]:
+    company = await get_company_by_id(session, context["tenant_id"], company_id)
+    if not company:
+        raise DomainError(
+            "Sirket kaydi bulunamadi.", "COMPANY_NOT_FOUND", status.HTTP_404_NOT_FOUND
+        )
+    await can_hard_delete_company_draft(session, company, tenant_id=context["tenant_id"])
+    return company
+
+
+async def delete_company_draft(
+    session: AsyncSession,
+    context: dict[str, Any],
+    company_id: str,
+) -> dict[str, Any]:
+    await assert_company_can_be_hard_deleted(session, context, company_id)
+    await session.execute(
+        text(
+            """
+            delete from public.companies
+            where tenant_id = :tenant_id
+              and id = :company_id
+              and coalesce(is_deleted, false) = false
+            """
+        ),
+        {"tenant_id": context["tenant_id"], "company_id": company_id},
+    )
+    return {
+        "id": company_id,
+        "hardDeleted": True,
+        "message": "Taslak sirket karti silindi.",
+    }
 
 
 def get_company_lifecycle(company: dict[str, Any] | None) -> str:

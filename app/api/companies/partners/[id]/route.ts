@@ -1,3 +1,8 @@
+// BACKEND_MIGRATION_STATUS: proxy_to_fastapi_with_legacy_fallback
+// TARGET_BACKEND_MODULE: partners
+// TARGET_FASTAPI_ENDPOINT: /api/v1/partners/{partner_id}
+// LEGACY_FALLBACK_REMOVE_AFTER: Python partner card endpoints are verified with staging data.
+
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { hydrateMasterContact, stripMasterDataForRoleProfile, syncMasterContact } from '@/lib/identity/masterContact'
@@ -17,6 +22,7 @@ import { operationStatusMessage } from '@/lib/operations/operationStatus'
 import { duplicateOperationJsonResponse } from '@/lib/operations/apiResponse'
 import { OutboxEventService } from '@/lib/outbox/outboxEventService'
 import { stripOperationControlledFields as stripFieldControlFields } from '@/lib/field-controls/fieldControlGuards'
+import { proxyToFastApi } from '@/lib/backend/fastApiProxy'
 
 const PARTNER_DETAIL_SELECT = 'id,company_id,person_id,organization_id,owner_kind,partner_type,display_name,partner_name,identity_number,identity_tax_number,share_ratio,voting_ratio,profit_ratio,source_type,source_id,share_units,nominal_value,capital_amount,share_class,has_representation_right,signature_authority,has_control_right,control_type,has_board_nomination_right,has_veto_right,has_privileged_share,beneficial_owner,is_beneficial_owner,beneficial_ratio,is_ultimate_controller,start_date,end_date,status,record_status,history,photo_logo,partner_documents,partner_profile,notes,created_at,updated_at,version'
 const PARTNER_SECTION_BASE_SELECT = 'id,company_id,person_id,organization_id,source_id,display_name,partner_name,version,updated_at'
@@ -52,8 +58,13 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params
-  const supabase = createServiceClient()
   const section = request.nextUrl.searchParams.get('section')
+  if (!section) {
+    const fastApiResponse = await proxyToFastApi(request, `/api/v1/partners/${id}`)
+    if (fastApiResponse) return fastApiResponse
+  }
+
+  const supabase = createServiceClient()
 
   if (section === 'authorities' || section === 'relationsSummary') {
     const partnerResult = await safeReadRecord({
@@ -173,6 +184,9 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params
+  const fastApiResponse = await proxyToFastApi(request, `/api/v1/partners/${id}`)
+  if (fastApiResponse) return fastApiResponse
+
   const supabase = createServiceClient()
   const tenantContext = resolveTenantContext(request)
   const rawBody = await request.json()
@@ -324,6 +338,9 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params
+  const fastApiResponse = await proxyToFastApi(request, `/api/v1/partners/${id}`)
+  if (fastApiResponse) return fastApiResponse
+
   const supabase = createServiceClient()
   const tenantContext = resolveTenantContext(request)
 

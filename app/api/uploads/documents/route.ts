@@ -1,3 +1,8 @@
+// BACKEND_MIGRATION_STATUS: keep_upload_adapter
+// TARGET_BACKEND_MODULE: documents
+// TARGET_FASTAPI_ENDPOINT: n/a
+// NOTES: Upload adapter may stay in Next while document business policy moves to FastAPI.
+
 import { NextRequest, NextResponse } from 'next/server'
 
 import { createServiceClient } from '@/lib/supabase/server'

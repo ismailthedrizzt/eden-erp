@@ -28,6 +28,16 @@ duzenlenmez.
 adapter'i saglar. `lib/backend/backendClient.ts` bu client'i merkezi import noktasi
 olarak re-export eder.
 
+Adapter hand-written tutulur; `types.ts` generated contract dosyasidir. Adapter
+asagidaki ortak contractlari saglar:
+
+- `BackendApiSuccess<T>`
+- `BackendOperationResponse<T>`
+- `BackendListResponse<T>`
+- `BackendApiErrorBody`
+- `normalizeBackendApiError`
+- `unwrapBackendData`
+
 Frontend servis wrapper'lari kademeli olarak:
 
 1. Mevcut Next BFF route'unu cagirmaya devam eder.
@@ -49,6 +59,14 @@ Frontend servis wrapper'lari kademeli olarak:
 - Capital increase
 - Ownership transactions/current ownership
 - Representative authority transactions/list projection
+
+`lib/services/companyService.ts` bu aileleri `BackendPaths` uzerinden
+tipleyerek manual DTO tekrarlarini azaltmaya baslamistir. Public service method
+imzalari su asamada korunur; dogrudan generated client'a gecis P1 follow-up
+olarak yapilacaktir.
+
+Detayli adoption durumu [Generated OpenAPI Client Adoption](./GeneratedOpenAPIClientAdoption.md)
+dokumanindadir.
 
 ## CI Follow-up
 

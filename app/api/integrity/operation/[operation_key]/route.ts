@@ -1,4 +1,4 @@
-// BACKEND_MIGRATION_STATUS: keep_bff_proxy_with_legacy_fallback
+// BACKEND_MIGRATION_STATUS: proxy_to_fastapi_with_legacy_fallback
 // TARGET_BACKEND_MODULE: integrity
 // TARGET_FASTAPI_ENDPOINT: /api/v1/integrity/operation/{operation_key}
 // NOTES: Operation integrity checks are canonical in FastAPI; this route is BFF/proxy only.

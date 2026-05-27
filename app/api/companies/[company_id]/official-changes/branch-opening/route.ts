@@ -1,4 +1,4 @@
-// BACKEND_MIGRATION_STATUS: keep_bff_proxy_with_legacy_fallback
+// BACKEND_MIGRATION_STATUS: proxy_to_fastapi_with_legacy_fallback
 // TARGET_BACKEND_MODULE: branches
 // TARGET_FASTAPI_ENDPOINT: /api/v1/companies/{company_id}/branch-openings
 // NOTES: Proxies to FastAPI when FASTAPI_BASE_URL is configured; TS fallback is temporary migration bridge.

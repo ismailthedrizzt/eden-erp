@@ -1,4 +1,4 @@
-// BACKEND_MIGRATION_STATUS: keep_bff_proxy_with_legacy_fallback
+// BACKEND_MIGRATION_STATUS: proxy_to_fastapi_with_legacy_fallback
 // TARGET_BACKEND_MODULE: process
 // TARGET_FASTAPI_ENDPOINT: /api/v1/processes
 // NOTES: Process Engine core belongs in Python; TS route remains a temporary fallback.

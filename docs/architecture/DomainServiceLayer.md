@@ -111,6 +111,33 @@ Ilk gercek fonksiyonlar:
 
 Yetki scope'u temsilci kartinda degil authority transaction/current authority read modelinde tutulur.
 
+### Card CRUD Domain Services
+
+Step 13 ile Company, Partner ve Representative kart CRUD islemleri FastAPI domain service katmanina alindi.
+
+Company card service:
+
+- `create_company_draft`
+- `update_company_card`
+- `delete_company_draft`
+- `reject_operation_controlled_company_patch`
+
+Partner card service:
+
+- `create_partner_draft`
+- `update_partner_card`
+- `delete_partner_draft`
+- `reject_operation_controlled_partner_patch`
+
+Representative card service:
+
+- `create_representative_draft`
+- `update_representative_card`
+- `delete_representative_draft`
+- `reject_operation_controlled_representative_patch`
+
+Bu servislerde kart CRUD; official change, ownership transaction ve representative authority transaction endpointlerinden ayridir.
+
 ### Ownership Domain Service
 
 Ilk gercek fonksiyonlar:

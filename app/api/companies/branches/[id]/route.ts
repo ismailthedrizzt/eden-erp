@@ -1,7 +1,8 @@
-// BACKEND_MIGRATION_STATUS: migrate_to_fastapi
+// BACKEND_MIGRATION_STATUS: proxy_to_fastapi_with_legacy_fallback
 // TARGET_BACKEND_MODULE: branches
 // TARGET_FASTAPI_ENDPOINT: /api/v1/branches/{branch_id}
-// NOTES: Branch card read/update should become a FastAPI proxy; official fields stay operation-controlled.
+// LEGACY_FALLBACK_REMOVE_AFTER: Python branch detail/PATCH guards are verified with staging data.
+// NOTES: Branch card read/update is a transition BFF endpoint; official fields stay operation-controlled.
 
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'

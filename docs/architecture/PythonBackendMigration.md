@@ -1,6 +1,6 @@
 # Python Backend Migration
 
-Bu dokuman Eden ERP'nin Python/FastAPI core backend gecisinin ana giris belgesidir. Eden ERP yeni tasarlanan bir platformdur; eski davranislar kalici uyumluluk gerekcesiyle korunmaz. Yalnizca canli gecis kopruleri `keep_bff_proxy`, `deprecated_wrapper` veya ilgili migration status'u ile planli sureyle kalabilir.
+Bu dokuman Eden ERP'nin Python/FastAPI core backend gecisinin ana giris belgesidir. Eden ERP yeni tasarlanan bir platformdur; eski davranislar kalici uyumluluk gerekcesiyle korunmaz. Yalnizca canli gecis kopruleri `proxy_to_fastapi_with_legacy_fallback`, `deprecated_wrapper` veya ilgili migration status'u ile planli sureyle kalabilir.
 
 ## Hedef Mimari
 
@@ -57,23 +57,28 @@ Bu siralama [Python Migration Roadmap](./PythonMigrationRoadmap.md) dokumaninda 
 TS backend veya gecis koprusu dosyalari su header ile isaretlenir:
 
 ```ts
-// BACKEND_MIGRATION_STATUS: migrate_to_fastapi
+// BACKEND_MIGRATION_STATUS: proxy_to_fastapi_with_legacy_fallback
 // TARGET_BACKEND_MODULE: branches
 // TARGET_FASTAPI_ENDPOINT: /api/v1/branches
-// NOTES: Contains domain mutation logic; should move to Python Branch Domain Service.
+// NOTES: Proxies to FastAPI when configured; TS fallback is temporary migration bridge.
 ```
 
 Gecerli status degerleri:
 
 - `keep_frontend`
 - `keep_bff_proxy`
+- `proxy_to_fastapi`
+- `proxy_to_fastapi_with_legacy_fallback`
 - `keep_ui_adapter`
+- `keep_session_bootstrap`
+- `keep_upload_adapter`
 - `migrate_to_fastapi`
 - `migrate_to_fastapi_then_proxy`
 - `delete_obsolete`
+- `deprecated_wrapper`
+- `contract_endpoint`
 - `contract_shared`
 - `generated_do_not_edit`
-- `deprecated_wrapper`
 
 ## Ilgili Dokumanlar
 

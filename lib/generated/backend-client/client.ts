@@ -1,3 +1,6 @@
+// HAND_WRITTEN_ADAPTER
+// Generated contract types live in ./types.ts; keep this adapter small and reviewable.
+
 import type { paths } from './types'
 
 type BackendClientOptions = {
@@ -11,6 +14,44 @@ type BackendRequestOptions = RequestInit & {
 
 export type BackendPaths = paths
 
+export type BackendApiSuccess<T> = {
+  data: T
+  message?: string | null
+  warnings?: string[] | null
+}
+
+export type BackendOperationResponse<T> = BackendApiSuccess<T> & {
+  operation_id?: string | null
+  operation_status?: string | null
+}
+
+export type BackendListResponse<T> = {
+  data: T[]
+  meta?: {
+    page?: number
+    pageSize?: number
+    total?: number
+    totalPages?: number
+  }
+  projection?: {
+    key?: string
+    name?: string
+    version?: string
+    sourceName?: string | null
+    fallbackUsed?: boolean
+  } | null
+  warnings?: string[] | null
+}
+
+export type BackendApiErrorBody = {
+  error?: string
+  code?: string
+  message?: string
+  details?: unknown
+  operation_id?: string | null
+  operation_status?: string | null
+}
+
 export class BackendApiError extends Error {
   code: string
   status: number
@@ -23,6 +64,23 @@ export class BackendApiError extends Error {
     this.status = status
     this.details = details
   }
+}
+
+export function normalizeBackendApiError(payload: unknown, status: number) {
+  const body = payload && typeof payload === 'object' ? payload as BackendApiErrorBody : {}
+  return new BackendApiError(
+    body.message || body.error || 'Islem tamamlanamadi.',
+    body.code || 'BACKEND_REQUEST_FAILED',
+    status,
+    body.details,
+  )
+}
+
+export function unwrapBackendData<T>(payload: BackendApiSuccess<T> | T): T {
+  if (payload && typeof payload === 'object' && 'data' in payload) {
+    return (payload as BackendApiSuccess<T>).data
+  }
+  return payload as T
 }
 
 export function createBackendClient(options: BackendClientOptions = {}) {
@@ -45,12 +103,7 @@ export function createBackendClient(options: BackendClientOptions = {}) {
     })
     const payload = await response.json().catch(() => null)
     if (!response.ok) {
-      throw new BackendApiError(
-        payload?.message || payload?.error || 'Islem tamamlanamadi.',
-        payload?.code || 'BACKEND_REQUEST_FAILED',
-        response.status,
-        payload?.details,
-      )
+      throw normalizeBackendApiError(payload, response.status)
     }
     return payload as T
   }

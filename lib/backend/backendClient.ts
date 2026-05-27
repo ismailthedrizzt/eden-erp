@@ -7,5 +7,11 @@ export {
   BackendApiError,
   backendClient,
   createBackendClient,
+  normalizeBackendApiError,
+  unwrapBackendData,
+  type BackendApiErrorBody,
+  type BackendApiSuccess,
+  type BackendListResponse,
+  type BackendOperationResponse,
   type BackendPaths,
 } from '@/lib/generated/backend-client'

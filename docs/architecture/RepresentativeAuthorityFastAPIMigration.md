@@ -73,7 +73,7 @@ Askıya alma ve sonlandirma islemleri yeni scope gelmezse mevcut yetkinin scope'
 Migration status:
 
 ```ts
-// BACKEND_MIGRATION_STATUS: keep_bff_proxy_with_legacy_fallback
+// BACKEND_MIGRATION_STATUS: proxy_to_fastapi_with_legacy_fallback
 // TARGET_FASTAPI_ENDPOINT: /api/v1/representatives/{representative_id}/authority-transactions
 ```
 

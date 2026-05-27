@@ -3,6 +3,8 @@ import 'server-only'
 import { NextRequest, NextResponse } from 'next/server'
 import { resolveTenantContext } from '@/lib/tenancy/server'
 
+type FastApiQuery = URLSearchParams | Record<string, string | number | boolean | null | undefined>
+
 type ProxyOptions = {
   method?: string
   tenantId?: string | null
@@ -10,6 +12,7 @@ type ProxyOptions = {
   companyScope?: string | null
   timeoutMs?: number
   bodyText?: string
+  query?: FastApiQuery
 }
 
 function backendBaseUrl() {
@@ -18,6 +21,22 @@ function backendBaseUrl() {
 
 export function isFastApiEnabled() {
   return Boolean(backendBaseUrl())
+}
+
+export function buildFastApiUrl(path: string, query?: FastApiQuery) {
+  const baseUrl = backendBaseUrl()
+  if (!baseUrl) return null
+
+  const normalizedPath = path.startsWith('/') ? path : `/${path}`
+  const targetUrl = new URL(`${baseUrl}${normalizedPath}`)
+  if (query instanceof URLSearchParams) {
+    query.forEach((value, key) => targetUrl.searchParams.set(key, value))
+  } else if (query) {
+    Object.entries(query).forEach(([key, value]) => {
+      if (value !== null && value !== undefined) targetUrl.searchParams.set(key, String(value))
+    })
+  }
+  return targetUrl
 }
 
 export function buildBackendHeaders(request: NextRequest, options: ProxyOptions = {}) {
@@ -50,18 +69,34 @@ export function buildBackendHeaders(request: NextRequest, options: ProxyOptions 
   return headers
 }
 
+export function fastApiUnavailableResponse(status = 503) {
+  return NextResponse.json(
+    {
+      error: 'Backend servisi yapilandirilmamis veya ulasilamiyor. Lutfen tekrar deneyin.',
+      code: 'FASTAPI_BACKEND_NOT_CONFIGURED',
+      message: 'Backend servisi yapilandirilmamis veya ulasilamiyor. Lutfen tekrar deneyin.',
+    },
+    { status }
+  )
+}
+
+export function normalizeFastApiProxyError(error: unknown) {
+  const reason = error instanceof Error ? error.message : String(error)
+  return {
+    error: 'Backend servisine ulasilamadi. Lutfen tekrar deneyin.',
+    code: 'FASTAPI_BACKEND_UNREACHABLE',
+    message: 'Backend servisine ulasilamadi. Lutfen tekrar deneyin.',
+    details: process.env.NODE_ENV === 'development' ? { reason } : undefined,
+  }
+}
+
 export async function proxyToFastApi(
   request: NextRequest,
   targetPath: string,
   options: ProxyOptions = {}
 ) {
-  const baseUrl = backendBaseUrl()
-  if (!baseUrl) return null
-
-  const targetUrl = new URL(`${baseUrl}${targetPath}`)
-  request.nextUrl.searchParams.forEach((value, key) => {
-    targetUrl.searchParams.set(key, value)
-  })
+  const targetUrl = buildFastApiUrl(targetPath, options.query || request.nextUrl.searchParams)
+  if (!targetUrl) return null
 
   const method = options.method || request.method
   const controller = new AbortController()
@@ -87,17 +122,21 @@ export async function proxyToFastApi(
         'cache-control': 'no-store, max-age=0',
       },
     })
-  } catch (error: any) {
-    return NextResponse.json(
-      {
-        error: 'Backend servisine ulaşılamadı. Lütfen tekrar deneyin.',
-        code: 'FASTAPI_BACKEND_UNREACHABLE',
-        message: 'Backend servisine ulaşılamadı. Lütfen tekrar deneyin.',
-        details: process.env.NODE_ENV === 'development' ? { reason: error?.message } : undefined,
-      },
-      { status: 503 }
-    )
+  } catch (error) {
+    return NextResponse.json(normalizeFastApiProxyError(error), { status: 503 })
   } finally {
     clearTimeout(timeout)
   }
+}
+
+export async function proxyJsonToFastApi(
+  request: NextRequest,
+  targetPath: string,
+  json: unknown,
+  options: ProxyOptions = {}
+) {
+  return proxyToFastApi(request, targetPath, {
+    ...options,
+    bodyText: JSON.stringify(json),
+  })
 }

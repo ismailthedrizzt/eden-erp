@@ -1,4 +1,9 @@
 import { apiClient, ApiClientOptions } from '@/lib/api/apiClient'
+import type {
+  BackendListResponse,
+  BackendOperationResponse,
+  BackendPaths,
+} from '@/lib/backend/backendClient'
 import type { ListQuery, ListResponse } from '@/lib/api/listEndpoint'
 import type { Sirket, SirketDokuman, SirketLogo, SirketOrtak, SirketTemsilci } from '@/types/sirket'
 import {
@@ -8,6 +13,25 @@ import {
   readEntityRecord,
   updateEntityRecord,
 } from '@/lib/crud/entityCrudClient'
+
+// BACKEND_MIGRATION_STATUS: deprecated_wrapper
+// TARGET_BACKEND_MODULE: generated-client
+// TARGET_FASTAPI_ENDPOINT: /openapi.json
+// NOTES: Public service methods keep the frontend contract stable while endpoint DTOs move to generated OpenAPI types.
+
+export type CompanyServiceBackendContracts = {
+  companyList: BackendPaths['/api/v1/companies']['get']
+  companyDetail: BackendPaths['/api/v1/companies/{company_id}']['get']
+  branchList: BackendPaths['/api/v1/branches']['get']
+  branchDetail: BackendPaths['/api/v1/branches/{branch_id}']['get']
+  currentOwnership: BackendPaths['/api/v1/companies/{company_id}/current-ownership']['get']
+  capitalIncrease: BackendPaths['/api/v1/companies/{company_id}/capital-increases']['post']
+  ownershipTransaction: BackendPaths['/api/v1/ownership/transactions']['post']
+  representativeAuthority: BackendPaths['/api/v1/representatives/{representative_id}/authority-transactions']['post']
+}
+
+export type CompanyServiceListEnvelope<T> = BackendListResponse<T>
+export type CompanyServiceOperationEnvelope<T> = BackendOperationResponse<T>
 
 type RelationListOptions = ApiClientOptions & Partial<Pick<ListQuery, 'page' | 'pageSize' | 'search' | 'sort' | 'direction'>> & {
   includePassive?: boolean

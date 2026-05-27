@@ -1,4 +1,4 @@
-// BACKEND_MIGRATION_STATUS: keep_bff_proxy_with_legacy_fallback
+// BACKEND_MIGRATION_STATUS: proxy_to_fastapi_with_legacy_fallback
 // TARGET_BACKEND_MODULE: outbox
 // TARGET_FASTAPI_ENDPOINT: /api/v1/system/outbox/dispatch
 // NOTES: Outbox dispatcher belongs in Python worker infrastructure; TS dispatcher is fallback only.

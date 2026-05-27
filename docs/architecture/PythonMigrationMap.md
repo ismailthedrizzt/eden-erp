@@ -28,6 +28,7 @@ Bu dokuman TypeScript backend logic'inin FastAPI/Python core backend'e nasil ayr
 | Capital | `app/api/companies/[company_id]/capital-increases/**`, `app/api/companies/[company_id]/capital-decreases/**`, `lib/operations/orchestrators/capitalIncrease.orchestrator.ts` | `backend/app/domains/company/capital.py`, `backend/app/domains/ownership/` | P0/P1 | ownership current state, partners readiness, audit | ownership/capital mismatch | `/api/v1/companies/{company_id}/capital-increases` implemented for increase |
 | Representatives | `app/api/companies/representatives/**`, `lib/operations/orchestrators/representativeAuthority.orchestrator.ts`, `lib/domains/representatives/**` | `backend/app/domains/representatives/`, `backend/app/api/v1/representatives.py` | P0 | branch/org/facility scope policy | duplicated cards or invalid authority scope | `/api/v1/representatives/{representative_id}/authority-transactions` implemented for authority transaction migration |
 | Ownership | `app/api/ownership-transactions/**`, `app/api/companies/partners/**`, `lib/operations/orchestrators/ownershipTransaction.orchestrator.ts`, `lib/domains/ownership/**` | `backend/app/domains/ownership/`, `backend/app/domains/partners/`, `backend/app/api/v1/ownership.py`, `backend/app/api/v1/partners.py` | P0 | company, partners, process approvals | current ownership drift | `/api/v1/ownership/transactions` implemented for transaction creation; `[id]/**` approval/reversal routes remain follow-up |
+| Card CRUD | `app/api/companies`, `app/api/companies/[company_id]`, `app/api/companies/partners/**`, `app/api/companies/representatives/**` | `backend/app/api/v1/{companies,partners,representatives}.py`, `backend/app/domains/{company,partners,representatives}` | P1 | projections, field control, delete guards | card edit changing operation-controlled state | Draft create, card PATCH and safe draft DELETE implemented for company/partner/representative cards |
 | Process | `lib/process/**`, `app/api/processes/**`, `app/api/tasks/**`, `app/api/approvals/**` | `backend/app/domains/process/`, `backend/app/api/v1/{processes,tasks,approvals}.py` | P1 | operation endpoints, audit | task/approval state divergence | `/api/v1/processes`, `/api/v1/tasks`, `/api/v1/approvals` implemented as MVP |
 | Outbox | `lib/outbox/**`, `app/api/cron/outbox-dispatch/route.ts` | `backend/app/domains/outbox/`, `backend/app/workers/` | P1 | event registry, audit | duplicate or lost event dispatch | `/api/v1/system/outbox/dispatch` and `python -m app.workers.outbox_worker --once` implemented |
 | Audit | `lib/audit/**`, `app/api/audit/**` | `backend/app/domains/audit/`, `backend/app/api/v1/audit.py` | P1 | masking, tenant scope, permission | missing compliance trace | `/api/v1/audit` implemented with masking/list/detail MVP |
@@ -91,10 +92,10 @@ Bu dokuman TypeScript backend logic'inin FastAPI/Python core backend'e nasil ayr
 ## Migration Status Comment Standard
 
 ```ts
-// BACKEND_MIGRATION_STATUS: migrate_to_fastapi
+// BACKEND_MIGRATION_STATUS: proxy_to_fastapi_with_legacy_fallback
 // TARGET_BACKEND_MODULE: branches
 // TARGET_FASTAPI_ENDPOINT: /api/v1/branches
-// NOTES: Contains domain mutation logic; should move to Python Branch Domain Service.
+// NOTES: Proxies to FastAPI when configured; TS fallback is temporary migration bridge.
 ```
 
 Allowed statuses:
@@ -102,10 +103,20 @@ Allowed statuses:
 - `keep_frontend`
 - `keep_bff_proxy`
 - `keep_bff_proxy_with_legacy_fallback`
+- `proxy_to_fastapi`
+- `proxy_to_fastapi_with_legacy_fallback`
 - `keep_ui_adapter`
+- `keep_session_bootstrap`
+- `keep_upload_adapter`
 - `migrate_to_fastapi`
 - `migrate_to_fastapi_then_proxy`
 - `delete_obsolete`
+- `deprecated_wrapper`
+- `contract_endpoint`
 - `contract_shared`
 - `generated_do_not_edit`
-- `deprecated_wrapper`
+
+Step 11 itibariyla FastAPI endpointi olan Next route'lari icin tercih edilen
+status `proxy_to_fastapi` veya `proxy_to_fastapi_with_legacy_fallback` oldu.
+`migrate_to_fastapi` TS backend core dosyalari ve henuz proxy'ye inmemis
+backend logic icin kullanilir.

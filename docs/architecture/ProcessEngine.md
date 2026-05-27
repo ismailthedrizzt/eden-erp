@@ -98,7 +98,7 @@ Yeni canonical endpointler:
 - `POST /api/v1/approvals/{approval_id}/approve`
 - `POST /api/v1/approvals/{approval_id}/reject`
 
-Next.js route'lari `FASTAPI_BASE_URL` varsa bu endpointlere proxy eder; yoksa `keep_bff_proxy_with_legacy_fallback` olarak TS fallback calisir.
+Next.js route'lari `FASTAPI_BASE_URL` varsa bu endpointlere proxy eder; yoksa `proxy_to_fastapi_with_legacy_fallback` olarak TS fallback calisir.
 - `POST /api/processes/:id/cancel`
 - `GET /api/tasks`
 - `GET /api/tasks/:id`

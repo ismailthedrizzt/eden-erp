@@ -1,3 +1,8 @@
+// BACKEND_MIGRATION_STATUS: keep_upload_adapter
+// TARGET_BACKEND_MODULE: media
+// TARGET_FASTAPI_ENDPOINT: n/a
+// NOTES: Image variant adapter is UI/media infrastructure, not ERP domain backend logic.
+
 import { NextRequest, NextResponse } from 'next/server'
 import sharp from 'sharp'
 import { createServiceClient } from '@/lib/supabase/server'
