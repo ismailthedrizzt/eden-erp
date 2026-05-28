@@ -72,6 +72,16 @@ export const moduleReadinessDefinitions: ModuleReadinessDefinition[] = [
     ],
   },
   {
+    moduleKey: 'accounting',
+    requiredTables: ['accounting_cari_accounts', 'accounting_cari_transactions'],
+    optionalTables: ['accounting_transaction_attachments', 'accounting_reconciliation_links', 'bank_transactions', 'invoices'],
+    requiredDependencies: ['companies'],
+    setupSteps: [
+      setupStep('accounting.cariAccounts', 'Cari kart alanlarini kontrol et', 'Musteri, tedarikci, ortak ve diger cari iliskiler icin cari kart altyapisi hazir olmalidir.', 'check'),
+      setupStep('accounting.cariTransactions', 'Cari hareket alanlarini kontrol et', 'Odeme, tahsilat, gider, gelir ve sermaye mutabakati icin cari hareket altyapisi hazir olmalidir.', 'check'),
+    ],
+  },
+  {
     moduleKey: 'process',
     requiredTables: ['process_instances', 'process_tasks', 'process_approvals', 'process_events'],
     setupSteps: [

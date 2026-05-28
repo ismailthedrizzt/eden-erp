@@ -1,5 +1,10 @@
 export const ACCOUNTING_PERMISSIONS = {
   accountingView: 'accounting.view',
+  accountingEdit: 'accounting.edit',
+  transactionCreate: 'accounting.transactionCreate',
+  transactionApprove: 'accounting.transactionApprove',
+  reconcile: 'accounting.reconcile',
+  export: 'accounting.export',
   accountCardsView: 'account_cards.view',
   accountCardsViewMovements: 'account_cards.view_movements',
   accountCardsEditFinancialSettings: 'account_cards.edit_financial_settings',

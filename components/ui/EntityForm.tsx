@@ -2936,6 +2936,15 @@ function FieldOperationLockIndicator({ control, recordStatus }: { control: FormF
   const actions = getFieldOperationActions(control)
   const eligibility = getFieldOperationEligibility(control, modules, permissions, recordStatus)
 
+  useEffect(() => {
+    if (!showTooltip) return
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setShowTooltip(false)
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [showTooltip])
+
   return (
     <div
       className="relative inline-flex"
@@ -2954,7 +2963,17 @@ function FieldOperationLockIndicator({ control, recordStatus }: { control: FormF
         <Info size={14} />
       </button>
       {showTooltip && (
-        <div className="absolute left-1/2 top-full z-50 mt-1 w-80 -translate-x-1/2 rounded-lg border border-amber-200 bg-white p-3 text-xs leading-5 text-gray-700 shadow-lg dark:border-amber-900/60 dark:bg-gray-950 dark:text-gray-200">
+        <div
+          role="dialog"
+          aria-label="Kilitli alan yardimi"
+          className="absolute left-1/2 top-full z-50 mt-1 w-80 -translate-x-1/2 rounded-lg border border-amber-200 bg-white p-3 text-xs leading-5 text-gray-700 shadow-lg dark:border-amber-900/60 dark:bg-gray-950 dark:text-gray-200"
+        >
+          <div className="mb-1 flex items-center justify-between gap-2">
+            <div className="font-semibold text-gray-900 dark:text-gray-100">Bu alan neden kilitli?</div>
+            <span className={eligibility.canStart ? 'rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-200' : 'rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700 dark:bg-amber-950/40 dark:text-amber-200'}>
+              {eligibility.canStart ? 'Islem hazir' : 'Kosul gerekiyor'}
+            </span>
+          </div>
           <p>{message}</p>
           {control.helperText && control.helperText !== message && (
             <p className="mt-2 text-gray-500 dark:text-gray-400">{control.helperText}</p>

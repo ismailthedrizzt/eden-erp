@@ -52,6 +52,21 @@ READINESS_REGISTRY: dict[str, ModuleReadinessDefinition] = {
         required_dependencies=["companies"],
         setup_steps=["Create facilities/location tables."],
     ),
+    "accounting": ModuleReadinessDefinition(
+        module_key="accounting",
+        required_tables=["accounting_cari_accounts", "accounting_cari_transactions"],
+        optional_tables=[
+            "accounting_transaction_attachments",
+            "accounting_reconciliation_links",
+            "bank_transactions",
+            "invoices",
+        ],
+        required_dependencies=["companies"],
+        setup_steps=[
+            "Create cari account and cari transaction tables.",
+            "Configure accounting permissions and company scope.",
+        ],
+    ),
     "process": ModuleReadinessDefinition(
         module_key="process",
         required_tables=[

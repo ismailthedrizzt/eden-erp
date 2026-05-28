@@ -21,12 +21,14 @@ const THEME_TRANSITION_SUPPRESS_MS = 120
 
 const BREADCRUMBS: Record<string, string> = {
   '/app': 'Ana Sayfa',
+  '/app/yardim': 'Yardim Merkezi',
   '/app/ik': 'İnsan Kaynakları',
   '/app/ik/teskilat': 'İnsan Kaynakları › Teşkilat & Kadro',
   '/app/ik/employees': 'İnsan Kaynakları › Çalışanlarımız',
   '/app/ik/employees/ekle': 'İnsan Kaynakları › Çalışanlarımız › Çalışan Ekle',
   '/app/muhasebe': 'Muhasebe',
   '/app/muhasebe/cari-kartlar': 'Muhasebe › Cari Kartlar',
+  '/app/muhasebe/cari-hareketler': 'Muhasebe › Cari Hareketler',
   '/app/muhasebe/on-muhasebe-hareketleri': 'Muhasebe › Ön Muhasebe Hareketleri',
   '/app/muhasebe/dashboard': 'Muhasebe › Dashboard',
   '/app/muhasebe/islemler': 'Muhasebe › İşlemler',
@@ -319,9 +321,19 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
 
   if (isPublicSetupRoute) {
     return (
-      <div className={cn('min-h-screen overflow-y-auto bg-gray-50 p-5 dark:bg-[#09141e]', dark && 'dark')}>
-        {children}
-      </div>
+      <ActionGuideProvider>
+        <div className={cn('min-h-screen overflow-y-auto bg-gray-50 p-5 dark:bg-[#09141e]', dark && 'dark')}>
+          {children}
+        </div>
+        <GuidedSystemTour
+          open={!workspacesLoading && tourOpen}
+          initialStepId={tourInitialStep}
+          onOpenChange={(nextOpen) => {
+            setTourOpen(nextOpen)
+            if (!nextOpen) setTourClosedThisSession(true)
+          }}
+        />
+      </ActionGuideProvider>
     )
   }
 

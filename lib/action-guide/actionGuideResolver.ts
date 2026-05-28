@@ -10,6 +10,8 @@ import type {
   ActionGuideResponse,
 } from './actionGuide.types'
 
+const LOW_CONFIDENCE_THRESHOLD = 0.52
+
 export async function resolveActionGuide(
   input: ActionGuideRequest,
   context: ActionGuideContext = {}
@@ -34,6 +36,7 @@ export async function resolveActionGuide(
   const best = matches[0]
   const action = best ? getActionDefinition(best.actionKey) : null
   if (!action) return resolveFrequentActions(guideContext, query)
+  if (best.confidence < LOW_CONFIDENCE_THRESHOLD) return resolveLowConfidenceActions(matches, guideContext, query)
 
   const eligibility = await evaluateGuideActionEligibility(action, guideContext)
   return {
@@ -57,6 +60,58 @@ export async function resolveActionGuide(
         confidence: match.confidence,
       }
     }),
+  }
+}
+
+export async function resolveLowConfidenceActions(
+  matches: ReturnType<typeof matchActionIntent>,
+  context: ActionGuideContext = {},
+  query = ''
+): Promise<ActionGuideResponse> {
+  const candidates = matches
+    .map(match => ({ match, action: getActionDefinition(match.actionKey) }))
+    .filter((item): item is { match: typeof matches[number]; action: ActionGuideDefinition } => Boolean(item.action))
+    .slice(0, 4)
+
+  if (!candidates.length) return resolveFrequentActions(context, query)
+
+  const suggested = []
+  for (const { match, action } of candidates) {
+    const eligibility = await evaluateGuideActionEligibility(action, context)
+    const commandDisabled = action.wizardKey || action.actionType === 'create_draft'
+      ? !eligibility.canStart
+      : !eligibility.canView
+    suggested.push({
+      label: action.label,
+      action_type: action.wizardKey ? 'open_wizard' as const : action.actionType === 'create_draft' ? 'start_create' as const : 'navigate' as const,
+      target_page: action.targetPage,
+      wizard_key: action.wizardKey,
+      disabled: commandDisabled,
+      disabled_reason: eligibility.blockingReasons[0],
+      reason: match.reason,
+    })
+  }
+
+  return {
+    intent: 'low_confidence',
+    confidence: candidates[0]?.match.confidence || 0.3,
+    title: COMMON_ACTION_GUIDE_MESSAGES.lowConfidenceTitle,
+    explanation: COMMON_ACTION_GUIDE_MESSAGES.lowConfidenceExplanation,
+    steps: [
+      'Listelenen olasi islemlerden size uygun olani secin.',
+      'Emin degilseniz islemi biraz daha is diliyle yazin.',
+      'Rehber sadece tanimli actionlar arasindan onerir ve veri degistirmez.',
+    ],
+    target_page: '/app',
+    can_start_now: false,
+    blocking_reasons: [],
+    warnings: [],
+    suggested_actions: suggested,
+    matched_actions: candidates.map(({ match, action }) => ({
+      key: action.key,
+      label: action.label,
+      confidence: match.confidence,
+    })),
   }
 }
 

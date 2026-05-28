@@ -142,6 +142,18 @@ export function PageContextTour({
     }
   }, [activeIndex])
 
+  useEffect(() => {
+    if (!open) return
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        postpone()
+      }
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [open, postpone])
+
   if (!open || !activeStep) return null
 
   return (

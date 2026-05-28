@@ -366,26 +366,39 @@ Branch bir facility ile iliskilenebilir. Organization fiziksel lokasyon degil, h
 
 ### Amac
 
-Cari kartlar, cari hareketler, banka hareketleri, odeme/tahsilat, fatura/e-fatura/e-arsiv ve mutabakat kayitlarini yonetir.
+Cari kartlar, cari hareketler, borc/alacak, odeme/tahsilat, gider/gelir
+kayitlari, belge/fatura referanslari, banka/kasa/kart hareketi referanslari ve
+mutabakat kayitlarini yonetir.
 
 ### Sahip Oldugu Entity'ler
 
-- Cari kartlar
-- Cari hareketler
-- Banka hareketleri
-- Odeme/tahsilat
+- `accounting_cari_accounts`
+- `accounting_cari_transactions`
+- `accounting_transaction_attachments`
+- `accounting_reconciliation_links`
+- Banka/kasa/kart hareketi referanslari
+- Odeme/tahsilat ve gider/gelir kayitlari
 - Fatura/e-fatura/e-arsiv iliskileri
 
 ### Sahip Olmadigi Entity'ler
 
 - Ortaklik haklarinin hukuki olusumu
 - Sermaye artirimi kararinin kendisi
+- Sirket acilisi, tasfiye, terkin
+- Temsilci yetkisi
+- Sube acilisi/kapanisi
+- Personel lifecycle
+- Resmi tescil islemi
 
 ### Baslattigi Operasyonlar
 
 - `post_payment`
 - `post_collection`
 - `reconcile_capital_payment`
+- `create_cari_account`
+- `create_cari_transaction`
+- `cancel_transaction`
+- `reconcile_transaction`
 
 ### Dinledigi Eventler
 
@@ -400,15 +413,23 @@ Cari kartlar, cari hareketler, banka hareketleri, odeme/tahsilat, fatura/e-fatur
 
 ### Diger Domainlerle Iliskisi
 
-Sermaye artirimi ortaklik ve sirket domain'inde dogar; Accounting Domain sermaye odeme/tahsilat mutabakatini yonetir.
+Sermaye artirimi ortaklik ve sirket domain'inde dogar; Accounting Domain
+sermaye odeme/tahsilat mutabakatini yonetir.
+
+> Sermaye artırımı ortaklık/şirket domain’inde oluşur. Sermaye ödemesi veya
+> tahsilatı muhasebe domain’inde cari/banka hareketi olarak mutabakatlanır.
 
 ### Sinir Ihlali Ornekleri
 
 - Muhasebe hareketinden ortak pay oranini dogrudan degistirmek.
+- Cari hareketten temsilci yetkisi veya sirket lifecycle durumu uretmek.
+- Sube acilisi/kapanisini accounting kaydiyla tamamlamak.
 
 ### Dogru Kullanim Ornekleri
 
 - Sermaye artirimi tamamlandiktan sonra odeme mutabakati icin accounting action olusturmak.
+- Muhtelif Tedarikciler cari karti uzerinden tek seferlik kurulus gideri kaydetmek.
+- Banka hareketi veya fatura entegrasyonu geldiginde cari hareketle reconciliation link kurmak.
 
 ## HR Domain
 

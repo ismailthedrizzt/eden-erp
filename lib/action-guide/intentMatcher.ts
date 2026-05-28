@@ -14,8 +14,51 @@ const FIELD_LOCK_HINTS: Array<{ terms: string[]; actionKey: string; reason: stri
   { terms: ['sermaye', 'kapali', 'kilitli'], actionKey: 'capital_increase', reason: 'Sermaye alani resmi islem kontrollu.' },
   { terms: ['adres', 'kapali'], actionKey: 'address_change', reason: 'Adres alani resmi islem kontrollu.' },
   { terms: ['unvan', 'kapali'], actionKey: 'title_change', reason: 'Unvan alani resmi islem kontrollu.' },
+  { terms: ['pay', 'orani', 'degismiyor'], actionKey: 'share_transfer', reason: 'Pay orani karttan degil ortaklik islemiyle degisir.' },
+  { terms: ['pay', 'kilitli'], actionKey: 'share_transfer', reason: 'Pay alani ownership transaction kontrollu.' },
   { terms: ['yetki', 'degistiremiyorum'], actionKey: 'representative_authority_scope_change', reason: 'Temsil yetkisi karttan degil yetki islemiyle degisir.' },
   { terms: ['sube', 'belge', 'kapali'], actionKey: 'branch_document_update', reason: 'Sube belgeleri ayri resmi islemle guncellenir.' },
+]
+
+const CONTEXTUAL_HINTS: Array<{
+  terms: string[]
+  actionKey: string
+  reason: string
+  predicate?: (query: string, context: ActionGuideContext) => boolean
+}> = [
+  {
+    terms: ['sermaye', 'kapali'],
+    actionKey: 'explain_capital_increase_setup',
+    reason: 'Kurulum/readiness engeli sorgusu.',
+  },
+  {
+    terms: ['bekleyen'],
+    actionKey: 'view_pending_work',
+    reason: 'Bekleyen is ve gorev sorgusu.',
+  },
+  {
+    terms: ['kim', 'degistirdi'],
+    actionKey: 'audit_show_record_history',
+    reason: 'Kayit gecmisi ve audit sorgusu.',
+  },
+  {
+    terms: ['yetkili'],
+    actionKey: 'branch_view',
+    reason: 'Sube detayinda yetkili/temsilci ozeti sorgusu.',
+    predicate: (_query, context) => context.selectedRecordType === 'branch' || currentPageKey(context) === 'branches',
+  },
+  {
+    terms: ['banka', 'yetki'],
+    actionKey: 'representative_authority_scope_change',
+    reason: 'Mevcut temsil yetkisi icin yetki kapsam/limit degisikligi gerekir.',
+    predicate: (_query, context) => Boolean(context.context?.hasActiveAuthority || context.record?.current_authority),
+  },
+  {
+    terms: ['banka', 'yetki'],
+    actionKey: 'representative_start',
+    reason: 'Aktif temsil yetkisi yoksa once temsilcilik baslatilir.',
+    predicate: (_query, context) => !Boolean(context.context?.hasActiveAuthority || context.record?.current_authority),
+  },
 ]
 
 export function matchActionIntent(query: string, context: ActionGuideContext = {}): ActionIntentMatch[] {
@@ -42,6 +85,8 @@ export function matchActionIntent(query: string, context: ActionGuideContext = {
       })
     }
   }
+
+  applyContextualHints(matches, normalized, context)
 
   return dedupeMatches(matches)
     .sort((left, right) => right.confidence - left.confidence)
@@ -88,8 +133,10 @@ function scoreActionIntent(action: ActionGuideDefinition, normalizedQuery: strin
 
   const pageBoost = PAGE_MODULE_BOOST.find(item => (context.currentPage || context.route || '').includes(item.contains))
   if (pageBoost?.moduleKey === action.moduleKey) score += 0.08
+  if (currentPageKey(context) === action.domain || currentPageKey(context) === action.moduleKey) score += 0.08
   if (context.selectedRecordType && context.selectedRecordType === action.requiredRecordType) score += 0.06
   if (context.selectedRecordStatus && action.requiredRecordStatuses?.includes(normalizeRecordStatus(context.selectedRecordStatus))) score += 0.04
+  if (context.context?.fieldLock?.actionKey === action.key || context.context?.fieldLockActionKey === action.key) score += 0.24
 
   return {
     actionKey: action.key,
@@ -113,6 +160,25 @@ function matchFieldLockHint(normalizedQuery: string) {
   return FIELD_LOCK_HINTS.find(hint => hint.terms.every(term => normalizedQuery.includes(normalizeText(term)))) || null
 }
 
+function applyContextualHints(matches: ActionIntentMatch[], normalizedQuery: string, context: ActionGuideContext) {
+  for (const hint of CONTEXTUAL_HINTS) {
+    if (!hint.terms.every(term => normalizedQuery.includes(normalizeText(term)))) continue
+    if (hint.predicate && !hint.predicate(normalizedQuery, context)) continue
+    const existing = matches.find(match => match.actionKey === hint.actionKey)
+    if (existing) {
+      existing.confidence = Math.min(0.99, existing.confidence + 0.22)
+      existing.reason = hint.reason
+    } else {
+      matches.push({
+        actionKey: hint.actionKey,
+        confidence: 0.74,
+        matchedTerms: hint.terms,
+        reason: hint.reason,
+      })
+    }
+  }
+}
+
 function dedupeMatches(matches: ActionIntentMatch[]) {
   const byKey = new Map<string, ActionIntentMatch>()
   for (const match of matches) {
@@ -131,9 +197,20 @@ function normalizeRecordStatus(value: unknown) {
   return status
 }
 
+function currentPageKey(context: ActionGuideContext) {
+  return normalizeText(String(context.currentPage || context.route || ''))
+}
+
 function normalizeText(value: string) {
   return (value || '')
     .toLocaleLowerCase('tr-TR')
+    .replace(/ı/g, 'i')
+    .replace(/İ/g, 'i')
+    .replace(/ğ/g, 'g')
+    .replace(/ü/g, 'u')
+    .replace(/ş/g, 's')
+    .replace(/ö/g, 'o')
+    .replace(/ç/g, 'c')
     .replace(/ı/g, 'i')
     .replace(/İ/g, 'i')
     .replace(/ğ/g, 'g')

@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 
 from app.api.v1 import (
+    accounting,
     action_center,
     action_eligibility,
     approvals,
@@ -31,6 +32,7 @@ api_router.include_router(companies.router, prefix="/companies", tags=["companie
 api_router.include_router(company_branches.router, tags=["company branch operations"])
 api_router.include_router(branches.router, prefix="/branches", tags=["branches"])
 api_router.include_router(facilities.router, prefix="/facilities", tags=["facilities"])
+api_router.include_router(accounting.router, prefix="/accounting", tags=["accounting"])
 api_router.include_router(organization.router, prefix="/organization", tags=["organization"])
 api_router.include_router(partners.router, prefix="/partners", tags=["partners"])
 api_router.include_router(ownership.router, prefix="/ownership", tags=["ownership"])

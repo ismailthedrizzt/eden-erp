@@ -5,12 +5,14 @@ import { actionGuideExampleQueries } from '@/lib/action-guide/actionGuideExample
 
 interface ActionGuideEmptyStateProps {
   currentPageTourKey?: string | null
+  recentQueries?: string[]
   onPickExample?: (query: string) => void
   onStartSystemTour?: () => void
 }
 
 export function ActionGuideEmptyState({
   currentPageTourKey,
+  recentQueries = [],
   onPickExample,
   onStartSystemTour,
 }: ActionGuideEmptyStateProps) {
@@ -23,8 +25,25 @@ export function ActionGuideEmptyState({
       <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-800 dark:bg-gray-900">
         Ne yapmak istediginizi yazin; rehber sizi dogru sayfaya ve varsa dogru sihirbaza yonlendirir.
       </div>
+      {!!recentQueries.length && (
+        <div>
+          <div className="mb-2 text-[11px] font-semibold uppercase text-gray-400 dark:text-gray-500">Son aramalar</div>
+          <div className="flex flex-wrap gap-2">
+            {recentQueries.map(query => (
+              <button
+                key={query}
+                type="button"
+                onClick={() => onPickExample?.(query)}
+                className="rounded-full border border-gray-200 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-900"
+              >
+                {query}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
       <div className="grid gap-2">
-        {actionGuideExampleQueries.slice(0, 4).map(example => (
+        {actionGuideExampleQueries.filter(example => example !== 'Ne yapmak istiyorsunuz?').slice(0, 4).map(example => (
           <button
             key={example}
             type="button"

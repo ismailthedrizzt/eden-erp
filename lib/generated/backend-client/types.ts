@@ -457,6 +457,114 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/accounting/cari-accounts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Accounts */
+        get: operations["list_accounts_api_v1_accounting_cari_accounts_get"];
+        put?: never;
+        /** Create Account */
+        post: operations["create_account_api_v1_accounting_cari_accounts_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounting/cari-accounts/{account_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Account */
+        get: operations["get_account_api_v1_accounting_cari_accounts__account_id__get"];
+        put?: never;
+        post?: never;
+        /** Delete Account */
+        delete: operations["delete_account_api_v1_accounting_cari_accounts__account_id__delete"];
+        options?: never;
+        head?: never;
+        /** Update Account */
+        patch: operations["update_account_api_v1_accounting_cari_accounts__account_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/accounting/cari-accounts/{account_id}/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Account Summary */
+        get: operations["get_account_summary_api_v1_accounting_cari_accounts__account_id__summary_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounting/company/{company_id}/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Company Summary */
+        get: operations["get_company_summary_api_v1_accounting_company__company_id__summary_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounting/cari-transactions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Transactions */
+        get: operations["list_transactions_api_v1_accounting_cari_transactions_get"];
+        put?: never;
+        /** Create Transaction */
+        post: operations["create_transaction_api_v1_accounting_cari_transactions_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounting/cari-transactions/{transaction_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Transaction */
+        get: operations["get_transaction_api_v1_accounting_cari_transactions__transaction_id__get"];
+        put?: never;
+        post?: never;
+        /** Delete Transaction */
+        delete: operations["delete_transaction_api_v1_accounting_cari_transactions__transaction_id__delete"];
+        options?: never;
+        head?: never;
+        /** Update Transaction */
+        patch: operations["update_transaction_api_v1_accounting_cari_transactions__transaction_id__patch"];
+        trace?: never;
+    };
     "/api/v1/organization/units": {
         parameters: {
             query?: never;
@@ -2042,6 +2150,317 @@ export interface components {
             base_version?: number | null;
             /** Base Updated At */
             base_updated_at?: string | null;
+        } & {
+            [key: string]: unknown;
+        };
+        /** CariAccountCreateRequest */
+        CariAccountCreateRequest: {
+            /** Company Id */
+            company_id: string;
+            /** Account Code */
+            account_code?: string | null;
+            /** Account Name */
+            account_name: string;
+            /**
+             * Account Type
+             * @default other
+             * @enum {string}
+             */
+            account_type: "customer" | "supplier" | "customer_supplier" | "employee" | "partner" | "stakeholder" | "public_institution" | "bank" | "miscellaneous" | "related_company" | "other";
+            /**
+             * Cari Role
+             * @default other
+             * @enum {string}
+             */
+            cari_role: "customer" | "supplier" | "both" | "employee" | "partner" | "stakeholder" | "public_institution" | "bank" | "miscellaneous" | "related_company" | "other";
+            /** Linked Entity Type */
+            linked_entity_type?: ("company" | "person" | "organization" | "stakeholder" | "partner" | "representative" | "employee" | "bank" | "public_institution" | "miscellaneous" | "related_company" | "other") | null;
+            /** Linked Entity Id */
+            linked_entity_id?: string | null;
+            /** Tax Number */
+            tax_number?: string | null;
+            /** Tax Office */
+            tax_office?: string | null;
+            /** Identity Number */
+            identity_number?: string | null;
+            /**
+             * Country
+             * @default TR
+             */
+            country: string | null;
+            /** City */
+            city?: string | null;
+            /** District */
+            district?: string | null;
+            /** Address */
+            address?: string | null;
+            /** Phone */
+            phone?: string | null;
+            /** Email */
+            email?: string | null;
+            /** Iban */
+            iban?: string | null;
+            /** Bank Account References */
+            bank_account_references?: {
+                [key: string]: unknown;
+            }[];
+            /**
+             * Currency
+             * @default TRY
+             */
+            currency: string;
+            /**
+             * Opening Balance
+             * @default 0
+             */
+            opening_balance: number | string;
+            /** Risk Limit */
+            risk_limit?: number | string | null;
+            /** Payment Terms */
+            payment_terms?: string | null;
+            /**
+             * Record Status
+             * @default active
+             * @enum {string}
+             */
+            record_status: "active" | "passive" | "draft";
+            /** Notes */
+            notes?: string | null;
+            /** Metadata Json */
+            metadata_json?: {
+                [key: string]: unknown;
+            };
+        } & {
+            [key: string]: unknown;
+        };
+        /** CariAccountUpdateRequest */
+        CariAccountUpdateRequest: {
+            /** Account Code */
+            account_code?: string | null;
+            /** Account Name */
+            account_name?: string | null;
+            /** Account Type */
+            account_type?: ("customer" | "supplier" | "customer_supplier" | "employee" | "partner" | "stakeholder" | "public_institution" | "bank" | "miscellaneous" | "related_company" | "other") | null;
+            /** Cari Role */
+            cari_role?: ("customer" | "supplier" | "both" | "employee" | "partner" | "stakeholder" | "public_institution" | "bank" | "miscellaneous" | "related_company" | "other") | null;
+            /** Linked Entity Type */
+            linked_entity_type?: ("company" | "person" | "organization" | "stakeholder" | "partner" | "representative" | "employee" | "bank" | "public_institution" | "miscellaneous" | "related_company" | "other") | null;
+            /** Linked Entity Id */
+            linked_entity_id?: string | null;
+            /** Tax Number */
+            tax_number?: string | null;
+            /** Tax Office */
+            tax_office?: string | null;
+            /** Identity Number */
+            identity_number?: string | null;
+            /** Country */
+            country?: string | null;
+            /** City */
+            city?: string | null;
+            /** District */
+            district?: string | null;
+            /** Address */
+            address?: string | null;
+            /** Phone */
+            phone?: string | null;
+            /** Email */
+            email?: string | null;
+            /** Iban */
+            iban?: string | null;
+            /** Bank Account References */
+            bank_account_references?: {
+                [key: string]: unknown;
+            }[] | null;
+            /** Currency */
+            currency?: string | null;
+            /** Opening Balance */
+            opening_balance?: number | string | null;
+            /** Risk Limit */
+            risk_limit?: number | string | null;
+            /** Payment Terms */
+            payment_terms?: string | null;
+            /** Record Status */
+            record_status?: ("active" | "passive" | "draft") | null;
+            /** Notes */
+            notes?: string | null;
+            /** Metadata Json */
+            metadata_json?: {
+                [key: string]: unknown;
+            } | null;
+            /** Base Version */
+            base_version?: number | null;
+        } & {
+            [key: string]: unknown;
+        };
+        /** CariTransactionCreateRequest */
+        CariTransactionCreateRequest: {
+            /** Company Id */
+            company_id: string;
+            /** Account Id */
+            account_id: string;
+            /**
+             * Transaction Date
+             * Format: date
+             */
+            transaction_date: string;
+            /** Document Date */
+            document_date?: string | null;
+            /** Due Date */
+            due_date?: string | null;
+            /**
+             * Transaction Type
+             * @enum {string}
+             */
+            transaction_type: "expense" | "income" | "invoice" | "payment" | "collection" | "bank_transaction" | "card_transaction" | "cash_transaction" | "capital_payment" | "capital_collection" | "adjustment" | "opening_balance" | "transfer" | "refund" | "other";
+            /** Direction */
+            direction?: ("debit" | "credit") | null;
+            /** Debit */
+            debit?: number | string | null;
+            /** Credit */
+            credit?: number | string | null;
+            /** Amount */
+            amount?: number | string | null;
+            /**
+             * Currency
+             * @default TRY
+             */
+            currency: string;
+            /**
+             * Exchange Rate
+             * @default 1
+             */
+            exchange_rate: number | string;
+            /** Local Amount */
+            local_amount?: number | string | null;
+            /** Description */
+            description: string;
+            /**
+             * Document Status
+             * @default no_document
+             * @enum {string}
+             */
+            document_status: "no_document" | "document_needed" | "document_uploaded" | "e_invoice_pending" | "e_archive_pending" | "invoice_matched" | "rejected";
+            /** Document No */
+            document_no?: string | null;
+            /** Document Type */
+            document_type?: string | null;
+            /** Real Counterparty Name */
+            real_counterparty_name?: string | null;
+            /** Category */
+            category?: string | null;
+            /** Payment Method */
+            payment_method?: string | null;
+            /** Paid By Entity Type */
+            paid_by_entity_type?: ("company" | "person" | "organization" | "stakeholder" | "partner" | "representative" | "employee" | "bank" | "public_institution" | "miscellaneous" | "related_company" | "other") | null;
+            /** Paid By Entity Id */
+            paid_by_entity_id?: string | null;
+            /** Paid To Entity Type */
+            paid_to_entity_type?: ("company" | "person" | "organization" | "stakeholder" | "partner" | "representative" | "employee" | "bank" | "public_institution" | "miscellaneous" | "related_company" | "other") | null;
+            /** Paid To Entity Id */
+            paid_to_entity_id?: string | null;
+            /** Related Module */
+            related_module?: ("ownership" | "capital" | "company" | "partner" | "representative" | "branch" | "accounting") | null;
+            /** Related Entity Type */
+            related_entity_type?: string | null;
+            /** Related Entity Id */
+            related_entity_id?: string | null;
+            /**
+             * Reconciliation Status
+             * @default unmatched
+             * @enum {string}
+             */
+            reconciliation_status: "unmatched" | "matched" | "partially_matched" | "needs_review" | "ignored";
+            /** Matched Bank Transaction Id */
+            matched_bank_transaction_id?: string | null;
+            /** Matched Invoice Id */
+            matched_invoice_id?: string | null;
+            /** Attachment Files */
+            attachment_files?: {
+                [key: string]: unknown;
+            }[];
+            /**
+             * Status
+             * @default draft
+             * @enum {string}
+             */
+            status: "draft" | "confirmed" | "cancelled";
+            /** Metadata Json */
+            metadata_json?: {
+                [key: string]: unknown;
+            };
+        } & {
+            [key: string]: unknown;
+        };
+        /** CariTransactionUpdateRequest */
+        CariTransactionUpdateRequest: {
+            /** Transaction Date */
+            transaction_date?: string | null;
+            /** Document Date */
+            document_date?: string | null;
+            /** Due Date */
+            due_date?: string | null;
+            /** Transaction Type */
+            transaction_type?: ("expense" | "income" | "invoice" | "payment" | "collection" | "bank_transaction" | "card_transaction" | "cash_transaction" | "capital_payment" | "capital_collection" | "adjustment" | "opening_balance" | "transfer" | "refund" | "other") | null;
+            /** Direction */
+            direction?: ("debit" | "credit") | null;
+            /** Debit */
+            debit?: number | string | null;
+            /** Credit */
+            credit?: number | string | null;
+            /** Amount */
+            amount?: number | string | null;
+            /** Currency */
+            currency?: string | null;
+            /** Exchange Rate */
+            exchange_rate?: number | string | null;
+            /** Local Amount */
+            local_amount?: number | string | null;
+            /** Description */
+            description?: string | null;
+            /** Document Status */
+            document_status?: ("no_document" | "document_needed" | "document_uploaded" | "e_invoice_pending" | "e_archive_pending" | "invoice_matched" | "rejected") | null;
+            /** Document No */
+            document_no?: string | null;
+            /** Document Type */
+            document_type?: string | null;
+            /** Real Counterparty Name */
+            real_counterparty_name?: string | null;
+            /** Category */
+            category?: string | null;
+            /** Payment Method */
+            payment_method?: string | null;
+            /** Paid By Entity Type */
+            paid_by_entity_type?: ("company" | "person" | "organization" | "stakeholder" | "partner" | "representative" | "employee" | "bank" | "public_institution" | "miscellaneous" | "related_company" | "other") | null;
+            /** Paid By Entity Id */
+            paid_by_entity_id?: string | null;
+            /** Paid To Entity Type */
+            paid_to_entity_type?: ("company" | "person" | "organization" | "stakeholder" | "partner" | "representative" | "employee" | "bank" | "public_institution" | "miscellaneous" | "related_company" | "other") | null;
+            /** Paid To Entity Id */
+            paid_to_entity_id?: string | null;
+            /** Related Module */
+            related_module?: ("ownership" | "capital" | "company" | "partner" | "representative" | "branch" | "accounting") | null;
+            /** Related Entity Type */
+            related_entity_type?: string | null;
+            /** Related Entity Id */
+            related_entity_id?: string | null;
+            /** Reconciliation Status */
+            reconciliation_status?: ("unmatched" | "matched" | "partially_matched" | "needs_review" | "ignored") | null;
+            /** Matched Bank Transaction Id */
+            matched_bank_transaction_id?: string | null;
+            /** Matched Invoice Id */
+            matched_invoice_id?: string | null;
+            /** Attachment Files */
+            attachment_files?: {
+                [key: string]: unknown;
+            }[] | null;
+            /** Status */
+            status?: ("draft" | "confirmed" | "cancelled") | null;
+            /** Metadata Json */
+            metadata_json?: {
+                [key: string]: unknown;
+            } | null;
+            /** Base Version */
+            base_version?: number | null;
         } & {
             [key: string]: unknown;
         };
@@ -4255,6 +4674,414 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_accounts_api_v1_accounting_cari_accounts_get: {
+        parameters: {
+            query?: {
+                company_id?: string | null;
+                cari_role?: string | null;
+                record_status?: string | null;
+                balance_status?: string | null;
+                city?: string | null;
+                search?: string | null;
+                page?: number;
+                pageSize?: number;
+                sort?: string;
+                direction?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_account_api_v1_accounting_cari_accounts_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CariAccountCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_account_api_v1_accounting_cari_accounts__account_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                account_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_account_api_v1_accounting_cari_accounts__account_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                account_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_account_api_v1_accounting_cari_accounts__account_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                account_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CariAccountUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_account_summary_api_v1_accounting_cari_accounts__account_id__summary_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                account_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_company_summary_api_v1_accounting_company__company_id__summary_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                company_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_transactions_api_v1_accounting_cari_transactions_get: {
+        parameters: {
+            query?: {
+                company_id?: string | null;
+                account_id?: string | null;
+                transaction_type?: string | null;
+                direction?: string | null;
+                dateFrom?: string | null;
+                dateTo?: string | null;
+                document_status?: string | null;
+                payment_method?: string | null;
+                category?: string | null;
+                reconciliation_status?: string | null;
+                status?: string | null;
+                search?: string | null;
+                page?: number;
+                pageSize?: number;
+                sort?: string;
+                sortDirection?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_transaction_api_v1_accounting_cari_transactions_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CariTransactionCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_transaction_api_v1_accounting_cari_transactions__transaction_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                transaction_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_transaction_api_v1_accounting_cari_transactions__transaction_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                transaction_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_transaction_api_v1_accounting_cari_transactions__transaction_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                transaction_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CariTransactionUpdateRequest"];
+            };
+        };
         responses: {
             /** @description Successful Response */
             200: {

@@ -424,4 +424,27 @@ export const pageTourSteps: Record<string, TourStep[]> = {
       placement: 'top',
     },
   ],
+  setup: [
+    {
+      id: 'setup-banner',
+      target: "[data-tour-id='page-banner']",
+      title: 'Kurulum Merkezi',
+      description: 'Modul hazirlik, lisans ve bagimlilik durumlarini burada is diliyle gorursunuz.',
+      placement: 'bottom',
+    },
+    {
+      id: 'setup-readiness',
+      target: "[data-tour-id='setup-readiness']",
+      title: 'Hazirlik kartlari',
+      description: 'Eksik moduller, uyarilar ve onerilen kurulum adimlari burada listelenir.',
+      placement: 'bottom',
+    },
+    {
+      id: 'setup-actions',
+      target: "[data-tour-id='setup-readiness']",
+      title: 'Engel varsa sonraki adim',
+      description: 'Bir islem kapaliysa rehber ayni nedeni gosterir ve sizi ilgili kurulum veya modul ayarina yonlendirir.',
+      placement: 'top',
+    },
+  ],
 }

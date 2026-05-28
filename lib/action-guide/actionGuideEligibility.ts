@@ -170,28 +170,39 @@ function buildSuggestedActions(
   canStart: boolean,
   disabledReason?: string
 ): ActionGuideAction[] {
+  const actionTargetPage = withActionParams(action.targetPage, action, context)
   const actions: ActionGuideAction[] = [
     {
-      label: `${action.label} sayfasina git`,
+      label: pageActionLabel(action),
       action_type: 'navigate',
       target_page: action.targetPage,
     },
   ]
 
+  if (context.selectedRecordId && action.requiredRecordType && context.selectedRecordType === action.requiredRecordType) {
+    actions.push({
+      label: 'Kaydi Ac',
+      action_type: 'open_record',
+      target_page: actionTargetPage,
+      record_id: context.selectedRecordId,
+      record_type: action.requiredRecordType,
+    })
+  }
+
   if (action.actionType === 'create_draft') {
     actions.push({
-      label: '+ Ekle ile taslak olustur',
+      label: '+ Ekle ile Taslak Olustur',
       action_type: 'start_create',
-      target_page: withActionParams(action.targetPage, action, context),
+      target_page: actionTargetPage,
       disabled: !canStart,
       disabled_reason: canStart ? undefined : disabledReason,
       reason: canStart ? undefined : disabledReason,
     })
   } else if (action.wizardKey) {
     actions.push({
-      label: `${action.label} Sihirbazini Baslat`,
+      label: 'Sihirbazi Baslat',
       action_type: 'open_wizard',
-      target_page: withActionParams(action.targetPage, action, context),
+      target_page: actionTargetPage,
       wizard_key: action.wizardKey,
       record_id: context.selectedRecordId || context.companyId || context.branchId || null,
       record_type: action.requiredRecordType || null,
@@ -215,7 +226,20 @@ function buildSuggestedActions(
   const setupTarget = setupActionForBlockedModule(action, context)
   if (setupTarget) actions.push(setupTarget)
 
+  actions.push({
+    label: 'Bu Islem Hakkinda Bilgi Al',
+    action_type: 'show_help',
+    target_page: `/app/yardim?topic=${encodeURIComponent(action.key)}`,
+  })
+
   return actions
+}
+
+function pageActionLabel(action: ActionGuideDefinition) {
+  if (action.key === 'view_pending_work') return 'Bekleyen Gorevleri Goster'
+  if (action.targetPage === '/app/sistem/kurulum') return 'Kurulum Merkezine Git'
+  if (action.targetPage === '/app/sistem/module-licenses') return 'Modul Ayarlarina Git'
+  return 'Sayfaya Git'
 }
 
 function setupActionForBlockedModule(action: ActionGuideDefinition, context: ActionGuideContext): ActionGuideAction | null {
@@ -228,14 +252,14 @@ function setupActionForBlockedModule(action: ActionGuideDefinition, context: Act
   const status = context.moduleStatuses?.[blockedModule]
   if (status === 'disabled' || status === 'unlicensed') {
     return {
-      label: 'Modul ayarlarina git',
+      label: 'Modul Ayarlarina Git',
       action_type: 'navigate',
       target_page: '/app/sistem/module-licenses',
       disabled: false,
     }
   }
   return {
-    label: 'Kurulum ekranina git',
+    label: 'Kurulum Merkezine Git',
     action_type: 'navigate',
     target_page: `/app/sistem/kurulum?module=${encodeURIComponent(blockedModule)}`,
     disabled: false,

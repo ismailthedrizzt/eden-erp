@@ -4,13 +4,15 @@ Generated from `app/api/**/route.ts` by `npm run proxy:coverage`. Status values 
 
 ## Summary
 
-- Route files: 190
+- Route files: 203
 - deprecated_wrapper: 11
 - keep_session_bootstrap: 1
 - keep_ui_adapter: 16
 - keep_upload_adapter: 3
-- migrate_to_fastapi: 85
-- proxy_to_fastapi_with_temporary_fallback: 74
+- migrate_to_fastapi: 84
+- proxy_to_fastapi: 13
+- proxy_to_fastapi_with_legacy_fallback: 74
+- proxy_to_fastapi_with_temporary_fallback: 1
 
 Product hardening note:
 
@@ -23,11 +25,18 @@ Product hardening note:
 - Representative authority scope/limit/status flows remain P1 staging verification items before temporary fallback removal.
 - Branch product hardening stays in the frontend/service layer and FastAPI branch domain service: no new Next route business logic was added. `Subelerimiz` continues to call existing BFF/proxy routes for branch list/detail/card update, Branch Opening/Closing and branch document update.
 - Branch/facility/organization relation display depends on temporary branch route fallback until FastAPI branch detail hydration is verified with staging data; removal remains P1.
+- Accounting cari MVP adds proxy-only Next routes for Cari Kartlar, Cari Hareketler and summary endpoints. These routes require `FASTAPI_BASE_URL`; there is no legacy fallback for the new accounting foundation.
 
 ## Matrix
 
 | route path | status | target FastAPI endpoint | business logic present? | domain/orchestrator import? | removal condition | priority |
 | --- | --- | --- | --- | --- | --- | --- |
+| `/api/accounting/cari-accounts/[id]/summary` | `proxy_to_fastapi` | `/api/v1/accounting/cari-accounts/{id}/summary` | no | no | Keep as proxy-only BFF adapter. | P1 |
+| `/api/accounting/cari-accounts/[id]` | `proxy_to_fastapi` | `/api/v1/accounting/cari-accounts/{id}` | no | no | Keep as proxy-only BFF adapter. | P1 |
+| `/api/accounting/cari-accounts` | `proxy_to_fastapi` | `/api/v1/accounting/cari-accounts` | no | no | Keep as proxy-only BFF adapter. | P1 |
+| `/api/accounting/cari-transactions/[id]` | `proxy_to_fastapi` | `/api/v1/accounting/cari-transactions/{id}` | no | no | Keep as proxy-only BFF adapter. | P1 |
+| `/api/accounting/cari-transactions` | `proxy_to_fastapi` | `/api/v1/accounting/cari-transactions` | no | no | Keep as proxy-only BFF adapter. | P1 |
+| `/api/accounting/company/[companyId]/summary` | `proxy_to_fastapi` | `/api/v1/accounting/company/{companyId}/summary` | no | no | Keep as proxy-only BFF adapter. | P1 |
 | `/api/accounting/bank-accounts-cards/[id]/history` | `migrate_to_fastapi` | `/api/v1/accounting/bank-accounts-cards/{id}/history` | yes | no | Implement FastAPI equivalent, then convert route to proxy or remove. | P2 |
 | `/api/accounting/bank-accounts-cards/[id]/passivate` | `migrate_to_fastapi` | `/api/v1/accounting/bank-accounts-cards/{id}/passivate` | yes | yes | Implement FastAPI equivalent, then convert route to proxy or remove. | P2 |
 | `/api/accounting/bank-accounts-cards/[id]` | `migrate_to_fastapi` | `/api/v1/accounting/bank-accounts-cards/{id}` | yes | yes | Implement FastAPI equivalent, then convert route to proxy or remove. | P2 |
@@ -239,6 +248,16 @@ Audit Admin UI hardening keeps `/api/audit*` as FastAPI-first BFF routes and add
 ## Step 8 Product Integration Update
 
 Module Setup/Licensing hardening adds proxy-only `/api/modules*` and `/api/features*` routes for FastAPI module status and feature flag contracts. `/app/sistem/kurulum` now presents product readiness cards, while `/app/sistem/module-licenses` shows module activation, license language and feature flags. Existing `/api/settings/module-licenses` remains a TS migration bridge until DB-backed module settings move fully to FastAPI.
+
+## Step 9 Product Integration Update
+
+Action Guide + Guided Tour hardening stays in frontend/UI-adapter boundaries. No new ERP domain mutation logic was added to Next routes.
+
+- `/api/ai/action-guide` is still `keep_ui_adapter`: it resolves registry actions, context and presentation response, then relies on policy/readiness/visibility contracts for blocking reasons.
+- `/api/ai/action-guide/actions` remains mutation-free and only validates navigation commands.
+- `/api/user/preferences` continues to store tour, page tour, operation hint and field helper state in backend user workspace state.
+- `/api/onboarding/system-tour/*` remains a UI/session adapter for tour progress and audit events.
+- Action Guide UI now supports recent searches, low-confidence alternatives, help topic links and mobile modal behavior without creating new platform routes.
 
 ## Gate Rules
 

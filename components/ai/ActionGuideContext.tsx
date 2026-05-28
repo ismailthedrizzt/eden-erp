@@ -24,6 +24,11 @@ export function useActionGuideContext() {
 
 export function useRegisterActionGuideContext(context: ActionGuidePageContext) {
   const { setPageContext } = useActionGuideContext()
+  const contextSignature = JSON.stringify(context.context || {})
+  const registeredContext = useMemo(
+    () => JSON.parse(contextSignature) as ActionGuidePageContext['context'],
+    [contextSignature],
+  )
 
   useEffect(() => {
     setPageContext({
@@ -39,6 +44,11 @@ export function useRegisterActionGuideContext(context: ActionGuidePageContext) {
       activeBranchId: context.activeBranchId,
       route: context.route,
       availableModules: context.availableModules,
+      moduleStatuses: context.moduleStatuses,
+      moduleBlockingReasons: context.moduleBlockingReasons,
+      moduleWarnings: context.moduleWarnings,
+      actionCenterSummary: context.actionCenterSummary,
+      context: registeredContext,
     })
     return () => setPageContext({})
   }, [
@@ -55,5 +65,10 @@ export function useRegisterActionGuideContext(context: ActionGuidePageContext) {
     context.activeBranchId,
     context.route,
     context.availableModules,
+    context.moduleStatuses,
+    context.moduleBlockingReasons,
+    context.moduleWarnings,
+    context.actionCenterSummary,
+    registeredContext,
   ])
 }

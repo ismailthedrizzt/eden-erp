@@ -111,6 +111,29 @@ Product hardening note:
 | Representative authority | `/api/v1/representatives/authorities` | GET | yes | partial | partial | yes | yes | scope partial | partial | partial | Branch/company-wide scope reads are available. |
 | Representative authority | `/api/v1/branches/{branch_id}/representative-authorities` | GET | partial | partial | partial | yes | yes | branch scope partial | partial | partial | Branch detail authority summary should include branch-scoped and optional company-wide authorities; staging data verification remains P1. |
 
+## Accounting
+
+Product foundation note:
+
+- Accounting domain now owns cari cards, cari movements, payment/collection/expense relations, document status and reconciliation preparation.
+- Cari Kartlar and Cari Hareketler MVP endpoints are Python/FastAPI canonical. Next routes are proxy-only and do not contain domain mutation logic.
+- Sermaye artirimi ortaklik/sirket domain'inde olusur. Sermaye odemesi veya tahsilati muhasebe domain'inde cari/banka hareketi olarak mutabakatlanir.
+
+| domain | endpoint | method | FastAPI implemented? | Next proxy implemented? | frontend service mapped? | OpenAPI schema generated? | auth/tenant guard? | policy/readiness/integrity guard? | tests? | status | notes |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Accounting cari accounts | `/api/v1/accounting/cari-accounts` | GET | yes | yes, proxy-only | yes | yes | yes | permission/company scope/readiness | yes | partial | List filters cover company, role, status, balance status, city and search. |
+| Accounting cari accounts | `/api/v1/accounting/cari-accounts` | POST | yes | yes, proxy-only | yes | yes | yes | permission/company scope/readiness | yes | partial | Duplicate account code and linked master entity checks exist. |
+| Accounting cari accounts | `/api/v1/accounting/cari-accounts/{account_id}` | GET | yes | yes, proxy-only | yes | yes | yes | permission/tenant | yes | partial | Detail payload is used by the product detail drawer. |
+| Accounting cari accounts | `/api/v1/accounting/cari-accounts/{account_id}` | PATCH | yes | yes, proxy-only | yes | yes | yes | permission/company scope/version | yes | partial | Card-safe update only; movement balance is calculated by summary/refresh. |
+| Accounting cari accounts | `/api/v1/accounting/cari-accounts/{account_id}` | DELETE | yes | yes, proxy-only | yes | yes | yes | permission/company scope/delete guard | yes | partial | Soft delete is blocked when transactions exist. |
+| Accounting cari summary | `/api/v1/accounting/cari-accounts/{account_id}/summary` | GET | yes | yes, proxy-only | yes | yes | yes | permission/company scope/readiness | yes | partial | Returns debit, credit, balance, unmatched and overdue counts. |
+| Accounting company summary | `/api/v1/accounting/company/{company_id}/summary` | GET | yes | yes, proxy-only | yes | yes | yes | permission/company scope/readiness | yes | partial | Company-level accounting summary for dashboard/future panels. |
+| Accounting cari transactions | `/api/v1/accounting/cari-transactions` | GET | yes | yes, proxy-only | yes | yes | yes | permission/company scope/readiness | yes | partial | List filters cover account, type, direction, date, document, payment and reconciliation. |
+| Accounting cari transactions | `/api/v1/accounting/cari-transactions` | POST | yes | yes, proxy-only | yes | yes | yes | permission/company scope/readiness | yes | partial | Supports paid_by, paid_to, real counterparty, document and related module fields. |
+| Accounting cari transactions | `/api/v1/accounting/cari-transactions/{transaction_id}` | GET | yes | yes, proxy-only | yes | yes | yes | permission/tenant | yes | partial | Detail includes account labels and debit/credit projection. |
+| Accounting cari transactions | `/api/v1/accounting/cari-transactions/{transaction_id}` | PATCH | yes | yes, proxy-only | yes | yes | yes | permission/company scope/version | yes | partial | Confirmed transactions are immutable except cancellation. |
+| Accounting cari transactions | `/api/v1/accounting/cari-transactions/{transaction_id}` | DELETE | yes | yes, proxy-only | yes | yes | yes | permission/company scope/delete guard | yes | partial | Hard delete is limited to draft-safe records via soft delete flag. |
+
 ## Platform
 
 | domain | endpoint | method | FastAPI implemented? | Next proxy implemented? | frontend service mapped? | OpenAPI schema generated? | auth/tenant guard? | policy/readiness/integrity guard? | tests? | status | notes |
@@ -143,6 +166,16 @@ Product hardening note:
 | Projections | `/api/v1/projections` and `/api/v1/projections/{projection_key}` | GET | yes | optional | partial | yes | yes | scope partial | yes | partial | Generic projection endpoint exists for dev/admin style reads. |
 | Health | `/health`, `/api/v1/health` | GET | yes | n/a | n/a | yes | public/basic | n/a | yes | ready | Basic health endpoints exist. |
 | Metrics/deep health | `/api/v1/system/metrics`, `/api/v1/system/health/deep` | GET | yes | n/a | n/a | yes | internal token/config | n/a | yes | partial | Protected in production by internal token/config. |
+
+## Step 9 Product Integration Update
+
+Action Guide + Guided Tour hardening keeps the natural-language resolver as a thin Next UI adapter, but expands registry coverage and FastAPI canonical eligibility coverage for company lifecycle, official changes, capital, branch, ownership and representative authority actions. The user-facing Action Guide, operation hints and field helpers now show the same business-language module/status/permission/readiness reasons.
+
+- `POST /api/ai/action-guide` remains mutation-free and registry-constrained.
+- `POST /api/ai/action-guide/actions` remains a navigation command adapter and does not mutate ERP data.
+- `POST /api/v1/action-eligibility/evaluate` and `POST /api/v1/policy/action-eligibility` cover the hardening scenarios for capital, branch, partner ownership, representative authority and company lifecycle actions.
+- `GET/PATCH /api/user/preferences` and onboarding tour endpoints remain Next UI/session adapters backed by `user_workspace_state`; they are not ERP domain mutation endpoints.
+- P2 remains full FastAPI Action Guide resolver migration or registry-constrained LLM refinement.
 
 ## Gate Summary
 

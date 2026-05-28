@@ -523,6 +523,10 @@ export default function TemsilcilerPage() {
     selectedRecordStatus,
     activeCompanyId: selectedRepresentative?.company_id || companyFilterId || null,
     activeBranchId: branchFilterId || selectedRepresentative?.branch_id || null,
+    context: {
+      hasActiveAuthority: selectedRepresentative ? getRepresentativeAuthorityStatus(selectedRepresentative) === 'active' : false,
+      authorityStatus: selectedRepresentative ? getRepresentativeAuthorityStatus(selectedRepresentative) : null,
+    },
   })
   const formMode: FormMode = pageState === 'create' ? 'create' : isSelectedPassive ? 'passive' : pageState === 'edit' ? 'edit' : 'view'
   const formLoadStages = createProgressiveFormLoadStages({

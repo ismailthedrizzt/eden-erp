@@ -11,6 +11,7 @@ interface ActionGuidePanelProps {
   loading?: boolean
   error?: string | null
   currentPageTourKey?: string | null
+  recentQueries?: string[]
   onClose: () => void
   onStartSystemTour?: () => void
   onPickExample?: (query: string) => void
@@ -22,6 +23,7 @@ export function ActionGuidePanel({
   loading,
   error,
   currentPageTourKey,
+  recentQueries = [],
   onClose,
   onStartSystemTour,
   onPickExample,
@@ -29,7 +31,7 @@ export function ActionGuidePanel({
   if (!open) return null
 
   return (
-    <div className="absolute right-0 top-full z-50 mt-2 w-[min(92vw,460px)] overflow-hidden rounded-xl border border-gray-200 bg-white shadow-2xl dark:border-gray-800 dark:bg-gray-950">
+    <div className="fixed left-3 right-3 top-16 z-50 mt-2 max-h-[calc(100vh-5rem)] overflow-hidden rounded-xl border border-gray-200 bg-white shadow-2xl dark:border-gray-800 dark:bg-gray-950 md:absolute md:left-auto md:right-0 md:top-full md:w-[min(92vw,460px)]">
       <div className="flex items-start justify-between gap-3 border-b border-gray-100 px-4 py-3 dark:border-gray-800">
         <div>
           <div className="text-sm font-semibold text-gray-950 dark:text-white">AI Islem Rehberi</div>
@@ -47,6 +49,7 @@ export function ActionGuidePanel({
         {!loading && !error && !result && (
           <ActionGuideEmptyState
             currentPageTourKey={currentPageTourKey}
+            recentQueries={recentQueries}
             onPickExample={onPickExample}
             onStartSystemTour={onStartSystemTour}
           />

@@ -54,7 +54,7 @@ Eden ERP'de entity sahipligi domain bazinda belirlenir. Baska domain'in sahip ol
 - Branch Domain sirket subelerini sahiplenir; sube sirket, facility veya organization unit degildir.
 - Organization Domain hiyerarsi ve kadroyu sahiplenir.
 - Facility / Location Domain fiziksel lokasyonlari sahiplenir.
-- Accounting Domain sermaye odeme/tahsilat mutabakatini sahiplenir; sermaye artirimi kararini sahiplenmez.
+- Accounting Domain cari kart, cari hareket ve sermaye odeme/tahsilat mutabakatini sahiplenir; sermaye artirimi kararini sahiplenmez.
 - HR Domain calisan ve istihdam lifecycle'ini sahiplenir.
 - Project / Task Domain is gorevlerini sahiplenir; process task'lari sahiplenmez.
 - Process Domain adim, gorev ve onay yonetir; business mutation yapmaz.

@@ -14,6 +14,7 @@ export type OnboardingPreferences = Pick<
   | 'preferredHelpMode'
   | 'lastTourVersion'
   | 'actionGuideDismissed'
+  | 'dismissedFieldHelpers'
   | 'lockedFieldHintsDismissed'
 >
 
@@ -80,6 +81,7 @@ export async function resetTour(
     dismissedPageTours: [],
     dismissedOperationHints: [],
     actionGuideDismissed: false,
+    dismissedFieldHelpers: [],
     lockedFieldHintsDismissed: [],
     lastTourVersion: null,
   })
@@ -94,6 +96,7 @@ export function toOnboardingPreferences(preferences: UserUiPreferences): Onboard
     preferredHelpMode: preferences.preferredHelpMode,
     lastTourVersion: preferences.lastTourVersion,
     actionGuideDismissed: preferences.actionGuideDismissed,
+    dismissedFieldHelpers: preferences.dismissedFieldHelpers,
     lockedFieldHintsDismissed: preferences.lockedFieldHintsDismissed,
   }
 }

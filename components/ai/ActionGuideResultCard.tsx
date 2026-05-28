@@ -10,6 +10,8 @@ interface ActionGuideResultCardProps {
 }
 
 export function ActionGuideResultCard({ result, onActionExecuted }: ActionGuideResultCardProps) {
+  const isLowConfidence = result.intent === 'low_confidence' || result.confidence < 0.52
+
   return (
     <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-950">
       <div className="flex items-start gap-3">
@@ -24,9 +26,11 @@ export function ActionGuideResultCard({ result, onActionExecuted }: ActionGuideR
             </span>
             <span className={result.can_start_now
               ? 'rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-200'
-              : 'rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-700 dark:bg-amber-950/40 dark:text-amber-200'}
+              : isLowConfidence
+                ? 'rounded-full bg-sky-50 px-2 py-0.5 text-[11px] font-semibold text-sky-700 dark:bg-sky-950/40 dark:text-sky-200'
+                : 'rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-700 dark:bg-amber-950/40 dark:text-amber-200'}
             >
-              {result.can_start_now ? 'Baslatilabilir' : 'Kosul gerekiyor'}
+              {result.can_start_now ? 'Baslatilabilir' : isLowConfidence ? 'Alternatifler' : 'Kosul gerekiyor'}
             </span>
           </div>
           <p className="mt-1 text-sm leading-5 text-gray-600 dark:text-gray-300">{result.explanation}</p>

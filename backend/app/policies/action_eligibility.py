@@ -11,6 +11,69 @@ from app.policies.schemas import AccessContext, ActionEligibility, PolicyInput
 from app.setup.readiness_checker import check_module_readiness
 
 ACTION_DEFINITIONS: dict[str, dict[str, Any]] = {
+    "company_opening": {
+        "module_key": "companies",
+        "required_permissions": ["companies.openingStart"],
+        "readiness_modules": ["companies"],
+        "target_page": "/app/sirket/companies",
+        "wizard_key": "company_opening",
+        "required_record_status": ["draft", "taslak"],
+    },
+    "company_liquidation": {
+        "module_key": "companies",
+        "required_permissions": ["companies.liquidationStart"],
+        "readiness_modules": ["companies"],
+        "target_page": "/app/sirket/companies",
+        "wizard_key": "company_liquidation",
+        "required_record_status": ["active", "aktif", "opened", "open"],
+    },
+    "company_deregistration": {
+        "module_key": "companies",
+        "required_permissions": ["companies.deregistrationStart"],
+        "readiness_modules": ["companies"],
+        "target_page": "/app/sirket/companies",
+        "wizard_key": "company_deregistration",
+    },
+    "title_change": {
+        "module_key": "companies",
+        "required_permissions": ["companies.officialChangeStart"],
+        "readiness_modules": ["companies"],
+        "target_page": "/app/sirket/companies",
+        "wizard_key": "title_change",
+        "required_record_status": ["active", "aktif", "opened", "open"],
+    },
+    "address_change": {
+        "module_key": "companies",
+        "required_permissions": ["companies.officialChangeStart"],
+        "readiness_modules": ["companies"],
+        "target_page": "/app/sirket/companies",
+        "wizard_key": "address_change",
+        "required_record_status": ["active", "aktif", "opened", "open"],
+    },
+    "public_registration_update": {
+        "module_key": "companies",
+        "required_permissions": ["companies.officialChangeStart"],
+        "readiness_modules": ["companies"],
+        "target_page": "/app/sirket/companies",
+        "wizard_key": "public_registration_update",
+        "required_record_status": ["active", "aktif", "opened", "open"],
+    },
+    "nace_change": {
+        "module_key": "companies",
+        "required_permissions": ["companies.officialChangeStart"],
+        "readiness_modules": ["companies"],
+        "target_page": "/app/sirket/companies",
+        "wizard_key": "nace_change",
+        "required_record_status": ["active", "aktif", "opened", "open"],
+    },
+    "activity_subject_change": {
+        "module_key": "companies",
+        "required_permissions": ["companies.officialChangeStart"],
+        "readiness_modules": ["companies"],
+        "target_page": "/app/sirket/companies",
+        "wizard_key": "activity_subject_change",
+        "required_record_status": ["active", "aktif", "opened", "open"],
+    },
     "capital_increase": {
         "module_key": "partners",
         "required_permissions": ["companies.capitalIncreaseStart"],
@@ -21,6 +84,19 @@ ACTION_DEFINITIONS: dict[str, dict[str, Any]] = {
         "required_record_status": ["active", "aktif", "opened", "open"],
         "dependency_reason": (
             "Sermaye Artirimi icin Ortaklarimiz modulu ve guncel ortaklik "
+            "dagilimi gereklidir."
+        ),
+    },
+    "capital_decrease": {
+        "module_key": "partners",
+        "required_permissions": ["companies.capitalDecreaseStart"],
+        "readiness_modules": ["companies", "partners"],
+        "integrity_operation": "capital_decrease",
+        "target_page": "/app/sirket/companies",
+        "wizard_key": "capital_decrease",
+        "required_record_status": ["active", "aktif", "opened", "open"],
+        "dependency_reason": (
+            "Sermaye Azaltimi icin Ortaklarimiz modulu ve guncel ortaklik "
             "dagilimi gereklidir."
         ),
     },
@@ -42,14 +118,53 @@ ACTION_DEFINITIONS: dict[str, dict[str, Any]] = {
         "wizard_key": "branch_closing",
         "required_record_status": ["active", "aktif", "opened", "open"],
     },
+    "branch_document_update": {
+        "module_key": "branches",
+        "required_permissions": ["branches.documentsUpdate"],
+        "readiness_modules": ["branches"],
+        "target_page": "/app/sirket/companies/branches",
+        "wizard_key": "branch_document_update",
+    },
+    "representative_start": {
+        "module_key": "representatives",
+        "required_permissions": ["representatives.authorityStart"],
+        "readiness_modules": ["companies", "representatives"],
+        "integrity_operation": "representative_authority",
+        "target_page": "/app/sirket/companies/representatives",
+        "wizard_key": "representative_start",
+    },
     "representative_authority_scope_change": {
         "module_key": "representatives",
         "required_permissions": ["representatives.authorityUpdate"],
         "readiness_modules": ["companies", "representatives"],
         "integrity_operation": "representative_authority",
         "target_page": "/app/sirket/companies/representatives",
-        "wizard_key": "representative_authority",
+        "wizard_key": "representative_authority_scope_change",
         "feature_flag": "representatives.scopeAuthority",
+    },
+    "representative_limit_change": {
+        "module_key": "representatives",
+        "required_permissions": ["representatives.authorityUpdate"],
+        "readiness_modules": ["companies", "representatives"],
+        "integrity_operation": "representative_authority",
+        "target_page": "/app/sirket/companies/representatives",
+        "wizard_key": "representative_limit_change",
+    },
+    "representative_suspend": {
+        "module_key": "representatives",
+        "required_permissions": ["representatives.authoritySuspend"],
+        "readiness_modules": ["companies", "representatives"],
+        "integrity_operation": "representative_authority",
+        "target_page": "/app/sirket/companies/representatives",
+        "wizard_key": "representative_suspend",
+    },
+    "representative_terminate": {
+        "module_key": "representatives",
+        "required_permissions": ["representatives.authorityTerminate"],
+        "readiness_modules": ["companies", "representatives"],
+        "integrity_operation": "representative_authority",
+        "target_page": "/app/sirket/companies/representatives",
+        "wizard_key": "representative_terminate",
     },
     "initial_partnership_entry": {
         "module_key": "partners",
@@ -58,6 +173,38 @@ ACTION_DEFINITIONS: dict[str, dict[str, Any]] = {
         "integrity_operation": "ownership_transaction",
         "target_page": "/app/sirket/companies/partners",
         "wizard_key": "initial_partnership_entry",
+    },
+    "share_transfer": {
+        "module_key": "partners",
+        "required_permissions": ["partners.ownershipStart"],
+        "readiness_modules": ["companies", "partners"],
+        "integrity_operation": "ownership_transaction",
+        "target_page": "/app/sirket/companies/partners",
+        "wizard_key": "share_transfer",
+    },
+    "ownership_exit": {
+        "module_key": "partners",
+        "required_permissions": ["partners.ownershipStart"],
+        "readiness_modules": ["companies", "partners"],
+        "integrity_operation": "ownership_transaction",
+        "target_page": "/app/sirket/companies/partners",
+        "wizard_key": "ownership_exit",
+    },
+    "ownership_correction": {
+        "module_key": "partners",
+        "required_permissions": ["partners.ownershipStart"],
+        "readiness_modules": ["companies", "partners"],
+        "integrity_operation": "ownership_transaction",
+        "target_page": "/app/sirket/companies/partners",
+        "wizard_key": "ownership_correction",
+    },
+    "partner_rights_change": {
+        "module_key": "partners",
+        "required_permissions": ["partners.ownershipStart"],
+        "readiness_modules": ["companies", "partners"],
+        "integrity_operation": "ownership_transaction",
+        "target_page": "/app/sirket/companies/partners",
+        "wizard_key": "partner_rights_change",
     },
 }
 

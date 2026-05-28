@@ -251,7 +251,52 @@ export const actionGuideDefinitions: ActionGuideDefinition[] = [
     ],
     helpText: 'Sirket acilisi yalnizca taslak sirketlerde baslatilir.',
   }),
-  companyOfficialAction('capital_increase', 'Sermaye Artirimi', 'Sermaye artisi aktif sirket kartindan resmi islem sihirbaziyla yapilir.', 'capital_increase', ['sermaye artirimi', 'sermaye artir', 'sermaye yukseltecegim', 'capital increase'], ['sermaye', 'artirim', 'artir', 'pay', 'ortak'], {
+  defineAction({
+    key: 'company_liquidation',
+    label: 'Tasfiye Sureci',
+    description: 'Aktif sirket tasfiye surecine normal kart editinden degil Tasfiye sihirbaziyla alinir.',
+    moduleKey: 'companies',
+    domain: 'company',
+    actionType: 'open_wizard',
+    targetPage: PAGES.companies,
+    wizardKey: 'company_liquidation',
+    requiredRecordType: 'company',
+    requiredRecordStatuses: ['active'],
+    requiredModules: ['companies'],
+    requiredPermissions: [permissionRegistry.companies.liquidationStart],
+    fallbackPermissions: [permissionRegistry.companies.edit],
+    intentExamples: ['tasfiye', 'sirketi tasfiyeye al', 'tasfiye sureci baslat', 'sirket kapanisa girsin'],
+    keywords: ['tasfiye', 'kapanis', 'surec', 'sirket'],
+    steps: [
+      'Sirketlerimiz sayfasinda aktif sirketi acin.',
+      'Tasfiye sihirbazini baslatin.',
+      'Tasfiye karari, tarih ve etki ozetini onaylayin.',
+    ],
+    helpText: 'Tasfiye aktif sirketlerde baslatilir; taslak veya kapanmis kayitlarda baslatilamaz.',
+  }),
+  defineAction({
+    key: 'company_deregistration',
+    label: 'Terkin Islemi',
+    description: 'Sirketin resmi terkini kart silme degildir; Terkin sihirbazi ile yurutulur.',
+    moduleKey: 'companies',
+    domain: 'company',
+    actionType: 'open_wizard',
+    targetPage: PAGES.companies,
+    wizardKey: 'company_deregistration',
+    requiredRecordType: 'company',
+    requiredModules: ['companies'],
+    requiredPermissions: [permissionRegistry.companies.deregistrationStart],
+    fallbackPermissions: [permissionRegistry.companies.edit],
+    intentExamples: ['terkin', 'sirket terkini', 'sirketi kapat', 'resmi kapanis', 'sirketi sicilden sil'],
+    keywords: ['terkin', 'kapat', 'sil', 'resmi', 'sicil'],
+    steps: [
+      'Sirketlerimiz sayfasinda ilgili sirketi acin.',
+      'Terkin sihirbazini baslatin.',
+      'Son durum, kapanis tarihi ve bagli kayit etkilerini onaylayin.',
+    ],
+    helpText: 'Terkin resmi kapanis islemidir; sirket kartini silmekle ayni sey degildir.',
+  }),
+  companyOfficialAction('capital_increase', 'Sermaye Artirimi', 'Sermaye artisi aktif sirket kartindan resmi islem sihirbaziyla yapilir.', 'capital_increase', ['sermaye artirimi', 'sermaye artir', 'sermaye yukseltecegim', 'capital increase', 'sermaye artirimi neden kapali'], ['sermaye', 'artirim', 'artir', 'pay', 'ortak'], {
     requiredModules: ['companies', 'partners'],
     requiredPermissions: [permissionRegistry.companies.capitalIncreaseStart],
     fallbackPermissions: [permissionRegistry.companies.edit],
@@ -300,14 +345,14 @@ export const actionGuideDefinitions: ActionGuideDefinition[] = [
     helpText: 'Taslak ortak karti tek basina ortaklik hakki dogurmaz. Ilk Ortaklik Girisi, current ownership read modelini olusturan resmi ownership transaction baslangicidir.',
     relatedFields: [{ entityType: 'company_partner', field: 'share_ratio' }, { entityType: 'company_partner', field: 'capital_amount' }],
   }),
-  partnerAction('share_transfer', 'Pay Devri', 'Pay devri kart editinden degil, devreden/devralan etkisini hesaplayan ownership transaction ile yapilir.', ['pay devri', 'hisse devri', 'ortak pay aktar', 'pay oranini degistir'], ['pay', 'hisse', 'devir', 'aktar'], {
+  partnerAction('share_transfer', 'Pay Devri', 'Pay devri kart editinden degil, devreden/devralan etkisini hesaplayan ownership transaction ile yapilir.', ['pay devri', 'hisse devri', 'ortak pay aktar', 'pay oranini degistir', 'pay orani degisikligi', 'pay orani neden degismiyor'], ['pay', 'hisse', 'devir', 'aktar', 'oran'], {
     helpText: 'Pay Devri, devreden ortagin mevcut payini dusurur, devralani artirir ve toplam pay dagiliminin %100 kalmasini kontrol eder.',
     relatedFields: [{ entityType: 'company_partner', field: 'share_ratio' }],
   }),
   partnerAction('ownership_exit', 'Ortakliktan Cikis', 'Aktif ortak dogrudan silinmez; paylarin akibeti belirlenerek ortakliktan cikis islemi yapilir.', ['ortakliktan cikis', 'ortak cikisi', 'ortak sil', 'tek ortak cikabilir mi'], ['ortak', 'cikis', 'sil', 'ayril'], {
     helpText: 'Ortakliktan Cikis, tek ortakli sirketi sahipsiz birakmaz; pay devri veya yeni ortak plani olmadan cikis blocking olabilir.',
   }),
-  partnerAction('partner_rights_change', 'Hak / Imtiyaz Degisikligi', 'Oy hakki, kar payi, imtiyaz ve kontrol haklari karttan degil ownership transaction ile degisir.', ['oy hakki degistir', 'kar payi degistir', 'imtiyaz tanimla', 'kontrol hakki ver'], ['oy', 'kar', 'imtiyaz', 'kontrol', 'veto'], {
+  partnerAction('partner_rights_change', 'Hak / Imtiyaz Degisikligi', 'Oy hakki, kar payi, imtiyaz ve kontrol haklari karttan degil ownership transaction ile degisir.', ['oy hakki degistir', 'oy hakki degisikligi', 'kar payi degistir', 'kar payi degisikligi', 'imtiyaz tanimla', 'kontrol hakki ver'], ['oy', 'kar', 'imtiyaz', 'kontrol', 'veto'], {
     relatedFields: [
       { entityType: 'company_partner', field: 'voting_ratio' },
       { entityType: 'company_partner', field: 'profit_ratio' },
@@ -338,12 +383,12 @@ export const actionGuideDefinitions: ActionGuideDefinition[] = [
     ],
     helpText: 'Temsilci karti yetki dogurmaz; kart durumu ve authority status ayridir. Yetki current authority read modelinden okunur.',
   }),
-  representativeAction('representative_start', 'Temsilcilik Baslatma', 'Banka, SGK, GIB, imza, limit ve company_wide/sube/organizasyon/facility kapsami temsilcilik islemiyle verilir.', ['temsilciye yetki ver', 'banka yetkisi ver', 'imza yetkisi ver', 'temsilcilik baslat', 'sube bazli imza yetkisi'], ['temsilci', 'yetki', 'banka', 'imza', 'baslat', 'kapsam'], {
+  representativeAction('representative_start', 'Temsilcilik Baslatma', 'Banka, SGK, GIB, imza, limit ve company_wide/sube/organizasyon/facility kapsami temsilcilik islemiyle verilir.', ['temsilciye yetki ver', 'banka yetkisi ver', 'gib yetkisi ver', 'sgk yetkisi ver', 'imza yetkisi ver', 'temsilcilik baslat', 'sube bazli imza yetkisi'], ['temsilci', 'yetki', 'banka', 'gib', 'sgk', 'imza', 'baslat', 'kapsam'], {
     relatedFields: [{ entityType: 'company_representative', field: 'authority_types' }, { entityType: 'company_representative', field: 'scope_type' }, { entityType: 'company_representative', field: 'transaction_limit' }],
     helpText: 'Temsilcilik Baslatma taslak karti active karta ve active authority read modeline tasir; scope_type company_wide, branch, organization_unit veya facility olabilir.',
   }),
   representativeAction('representative_authority_renewal', 'Temsil Yetkisi Yenileme / Askidan Kaldirma', 'Suresi dolan veya askidaki temsil yetkisi yetki islemiyle guncellenir.', ['yetki yenile', 'temsil yenileme', 'imza yetkisi yenile', 'askidan kaldir'], ['yetki', 'yenile', 'sure', 'aski']),
-  representativeAction('representative_authority_scope_change', 'Yetki Kapsami Degisikligi', 'Temsil yetkisi sirket geneli, sube, organizasyon veya tesis bazinda sinirlandirilabilir.', ['yetki kapsami', 'sube bazli yetki', 'tesis yetkisi', 'temsilci yetkisini degistir'], ['yetki', 'kapsam', 'sube', 'tesis', 'organizasyon'], {
+  representativeAction('representative_authority_scope_change', 'Yetki Kapsami Degisikligi', 'Temsil yetkisi sirket geneli, sube, organizasyon veya tesis bazinda sinirlandirilabilir.', ['yetki kapsami', 'sube bazli yetki', 'organizasyon bazli yetki', 'tesis bazli yetki', 'gib yetkisini degistir', 'sgk yetkisini degistir', 'banka yetkisini degistir', 'temsilci yetkisini degistir'], ['yetki', 'kapsam', 'sube', 'tesis', 'organizasyon', 'gib', 'sgk', 'banka'], {
     relatedFields: [{ entityType: 'company_representative', field: 'authority_types' }, { entityType: 'company_representative', field: 'scope_type' }, { entityType: 'company_representative', field: 'branch_id' }, { entityType: 'company_representative', field: 'facility_id' }],
     helpText: 'Kapsam degisikligi kapali/pasif sube, organizasyon birimi veya facility icin yeni aktif yetki olusturmaz.',
   }),
@@ -433,19 +478,19 @@ export const actionGuideDefinitions: ActionGuideDefinition[] = [
     requiredModules: ['branches'],
     requiredPermissions: [permissionRegistry.branches.view],
     fallbackPermissions: [permissionRegistry.companies.view],
-    intentExamples: ['subeleri gor', 'sube listesi', 'sube detayi', 'subenin kadrosu nerede', 'subenin lokasyonu nerede', 'sube adresini neden degistiremiyorum'],
-    keywords: ['sube', 'liste', 'gor', 'detay', 'kadro', 'lokasyon', 'adres'],
+    intentExamples: ['subeleri gor', 'sube listesi', 'sube detayi', 'subenin yetkilileri kim', 'bu subenin yetkilileri kim', 'subenin kadrosu nerede', 'subenin lokasyonu nerede', 'sube adresini neden degistiremiyorum'],
+    keywords: ['sube', 'liste', 'gor', 'detay', 'kadro', 'lokasyon', 'adres', 'yetkili', 'temsilci'],
     steps: ['Subelerimiz sayfasina gidin.', 'Bagli sirket, tur, resmi sube ve il filtrelerini kullanin.', 'Sube satirina tiklayarak organizasyon, facility ve temsilci ozetlerini acin.'],
     helpText: 'Sube listesi projection/read model uzerinden beslenir. Sube kadrosu Teskilat/Kadro, fiziksel lokasyonu Tesisler/Lokasyonlar, temsil yetkisi Temsilcilerimiz uzerinden yonetilir.',
   }),
-  orgAction('create_organization_unit', 'Organizasyon Birimi Olustur', 'Organizasyon birimleri Teskilat/Kadro sayfasindan yonetilir; resmi sube acilisi burada yapilmaz.', ['organizasyon birimi olustur', 'birim ac', 'departman ac', 'departman nasil olusturulur', 'subenin kadrosunu nereden yonetirim'], ['organizasyon', 'birim', 'departman', 'teskilat']),
-  orgAction('manage_positions', 'Kadro / Pozisyon Yonetimi', 'Kadro ve pozisyonlar Teskilat/Kadro sayfasindan yonetilir; Sube detayindaki organizasyon baglantisi yalnizca yonlendirme ve ozet amaclidir.', ['kadro yonet', 'pozisyon ac', 'pozisyon yonet', 'subenin kadrosu nerede', 'pozisyon tanimla'], ['kadro', 'pozisyon', 'teskilat', 'sube']),
+  orgAction('create_organization_unit', 'Organizasyon Birimi Olustur', 'Organizasyon birimleri Teskilat/Kadro sayfasindan yonetilir; resmi sube acilisi burada yapilmaz.', ['organizasyon birimi olustur', 'birim ac', 'departman ac', 'departman olustur', 'departman nasil olusturulur', 'subenin kadrosunu nereden yonetirim'], ['organizasyon', 'birim', 'departman', 'teskilat']),
+  orgAction('manage_positions', 'Kadro / Pozisyon Yonetimi', 'Kadro ve pozisyonlar Teskilat/Kadro sayfasindan yonetilir; Sube detayindaki organizasyon baglantisi yalnizca yonlendirme ve ozet amaclidir.', ['kadro yonet', 'kadro ekle', 'pozisyon ekle', 'pozisyon ac', 'pozisyon yonet', 'organizasyon agaci', 'subenin kadrosu nerede', 'pozisyon tanimla'], ['kadro', 'pozisyon', 'teskilat', 'sube', 'agac']),
   orgAction('assign_staff_to_unit', 'Personeli Birime Bagla', 'Personel ve kadro atamalari organizasyon birimi uzerinden yapilir.', ['personel ata', 'calisani birime bagla', 'sube personeli'], ['personel', 'calisan', 'ata', 'birim']),
   orgAction('deactivate_organization_unit', 'Organizasyon Birimini Pasife Al', 'Birim pasife alinmadan once aktif alt birim, pozisyon, calisan ve temsil yetkisi etkisi kontrol edilir.', ['bu organizasyon birimini neden pasife alamiyorum', 'birim kapat', 'departman pasife al'], ['organizasyon', 'birim', 'pasif', 'kapat', 'etki']),
-  facilityAction('create_facility', 'Tesis / Lokasyon Olustur', 'Fiziksel lokasyon ve tesis detaylari Tesisler/Lokasyonlar sayfasindan yonetilir; tesis sube degildir.', ['tesis olustur', 'lokasyon ekle', 'depo ekle', 'tesis lokasyon nasil eklenir', 'bu tesis sube midir'], ['tesis', 'lokasyon', 'depo', 'ekle']),
+  facilityAction('create_facility', 'Tesis / Lokasyon Olustur', 'Fiziksel lokasyon ve tesis detaylari Tesisler/Lokasyonlar sayfasindan yonetilir; tesis sube degildir.', ['tesis olustur', 'tesis ekle', 'lokasyon ekle', 'depo ekle', 'tesis lokasyon nasil eklenir', 'bu tesis sube midir'], ['tesis', 'lokasyon', 'depo', 'ekle']),
   facilityAction('link_facility_to_branch', 'Tesisi Subeye Bagla', 'Sube ile fiziksel lokasyon baglantisi sube acilisi veya tesis yonetimiyle kurulur.', ['tesisi subeye bagla', 'lokasyonu subeye bagla', 'subenin lokasyonunu nereden yonetirim', 'sube kapaninca tesis ne olur'], ['tesis', 'lokasyon', 'sube', 'bagla']),
   facilityAction('facility_scope_authority', 'Lokasyon Kapsamli Yetki', 'Facility scope temsil yetkisi Temsilcilerimiz moduluyle verilir ve lokasyon detayinda read-only gorunur.', ['bu lokasyon icin yetkili kim', 'facility scope yetki nasil verilir', 'lokasyon yetkilisi'], ['tesis', 'lokasyon', 'yetki', 'temsilci', 'scope']),
-  facilityAction('deactivate_facility', 'Tesis / Lokasyon Pasife Al', 'Sube kapanisinda lokasyon acik birakilabilir, reusable yapilabilir veya pasife alinabilir; aktif baglantilar impact olarak gorunur.', ['tesis pasife al', 'lokasyon kapat', 'depo kapat', 'bu tesisi neden kapatamiyorum'], ['tesis', 'lokasyon', 'kapat', 'pasif']),
+  facilityAction('deactivate_facility', 'Tesis / Lokasyon Pasife Al', 'Sube kapanisinda lokasyon acik birakilabilir, reusable yapilabilir veya pasife alinabilir; aktif baglantilar impact olarak gorunur.', ['tesis pasife al', 'tesis kapat', 'lokasyon kapat', 'depo kapat', 'tesis tekrar kullanilabilir mi', 'bu tesisi neden kapatamiyorum'], ['tesis', 'lokasyon', 'kapat', 'pasif', 'reusable', 'kullanilabilir']),
 ]
 
 export const actionRegistry = actionGuideDefinitions

@@ -52,6 +52,7 @@ Kullanici arayuzunde teknik tablo, SQL, RPC veya migration ifadeleri gosterilmez
 - branches: Sube kayitlari, resmi degisiklik islem kayitlari ve branch list read modeli.
 - organization: Organizasyon birimleri ve tipleri.
 - facilities: Tesis/lokasyon kayitlari.
+- accounting: Cari kartlar, cari hareketler, belge/mutabakat hazirligi ve sermaye odeme/tahsilat mutabakati.
 - process: Surec, gorev, onay ve surec olay kayitlari.
 - audit: Denetim izi kayitlari.
 - outbox: Sistem olay kayitlari.
@@ -67,3 +68,23 @@ Module readiness registry ve checker Python backend'e tasinmaya basladi:
 MVP'dir. Next.js `/api/setup/readiness/**` route'lari `FASTAPI_BASE_URL`
 varsa `/api/v1/setup/readiness/**` endpointlerine proxy eder; TS fallback yalniz
 migration bridge olarak kalir.
+
+## Accounting Readiness
+
+Accounting module icin zorunlu altyapi:
+
+- `accounting_cari_accounts`
+- `accounting_cari_transactions`
+
+Opsiyonel altyapi:
+
+- `accounting_transaction_attachments`
+- `accounting_reconciliation_links`
+- `bank_transactions`
+- `invoices`
+- `e_invoice_integration`
+
+Bu altyapi eksikse Cari Kartlar ve Cari Hareketler teknik hata yerine
+"Muhasebe modulu kurulumu tamamlanmamis" diline yonlenir. Yeni cari MVP
+endpointleri FastAPI tarafinda readiness kontrolu yapar; Next route'lari sadece
+proxy adapter olarak kalir.

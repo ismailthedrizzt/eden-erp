@@ -91,3 +91,23 @@ Action Guide, `findActionContract` ile action'in hangi module ait oldugunu bulab
 ## Projection Hazirligi
 
 `ModuleContract.projections` alanlari Projection Registry key'leriyle uyumlu olacak sekilde tutulur. Eksik projection key build'i kirmadan warning uretir; boylece registry asamali genisletilebilir.
+
+## Accounting Contract Update
+
+Accounting module contract artik cari MVP temelini tasir:
+
+- Entities: `accounting_cari_account`, `accounting_cari_transaction`,
+  `accounting_reconciliation_link`, `accounting_transaction_attachment`
+- Permissions: `accounting.view`, `accounting.edit`,
+  `accounting.transactionCreate`, `accounting.transactionApprove`,
+  `accounting.reconcile`, `accounting.export`
+- Actions: `create_cari_account`, `create_cari_transaction`,
+  `reconcile_transaction`, `cancel_transaction`
+- Feature flags: `accounting.enabled`, `accounting.cariAccounts`,
+  `accounting.cariTransactions`, `accounting.bankReconciliation`,
+  `accounting.invoiceMatching`, `accounting.capitalReconciliation`
+- Navigation: `Muhasebe > Cari Kartlar` and `Muhasebe > Cari Hareketler`
+
+Accounting runtime karar vermez; cari kart/cari hareket readiness, permission ve
+company scope kontrolleri FastAPI Accounting domain servisleri tarafindan
+uygulanir. Next route'lari proxy-only adapter olarak kalir.
