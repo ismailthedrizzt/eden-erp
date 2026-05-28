@@ -12,11 +12,12 @@ import { ActionGuidePanel } from './ActionGuidePanel'
 
 interface ActionGuideSearchProps {
   onStartSystemTour?: () => void
+  compact?: boolean
 }
 
 const RECENT_QUERIES_STORAGE_KEY = 'eden.actionGuide.recentQueries'
 
-export function ActionGuideSearch({ onStartSystemTour }: ActionGuideSearchProps) {
+export function ActionGuideSearch({ onStartSystemTour, compact = false }: ActionGuideSearchProps) {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const permissions = usePermissions()
@@ -115,7 +116,7 @@ export function ActionGuideSearch({ onStartSystemTour }: ActionGuideSearchProps)
 
   useEffect(() => {
     const onShortcut = (event: KeyboardEvent) => {
-      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
+      if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key.toLowerCase() === 'k') {
         event.preventDefault()
         setOpen(true)
         if (!result && !query.trim()) void requestGuide('')
@@ -145,8 +146,8 @@ export function ActionGuideSearch({ onStartSystemTour }: ActionGuideSearchProps)
   }
 
   return (
-    <div data-tour-id="action-guide-search" className="relative min-w-0 flex-none md:min-w-[220px] md:max-w-[420px] md:flex-1">
-      <form onSubmit={submit} className="relative hidden md:block">
+    <div data-tour-id="action-guide-search" className={compact ? 'relative flex-none' : 'relative min-w-0 flex-none md:min-w-[220px] md:max-w-[420px] md:flex-1'}>
+      <form onSubmit={submit} className={compact ? 'hidden' : 'relative hidden md:block'}>
         <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
         <input
           value={query}
@@ -168,7 +169,7 @@ export function ActionGuideSearch({ onStartSystemTour }: ActionGuideSearchProps)
           setOpen(true)
           if (!result && !query.trim()) void requestGuide('')
         }}
-        className="flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-emerald-700 transition hover:bg-emerald-50 dark:border-gray-700 dark:bg-eden-navy dark:text-emerald-200 dark:hover:bg-emerald-950/40 md:hidden"
+        className={`${compact ? 'flex' : 'flex md:hidden'} h-9 w-9 items-center justify-center rounded-lg border border-gray-200 bg-white text-emerald-700 transition hover:bg-emerald-50 dark:border-gray-700 dark:bg-eden-navy dark:text-emerald-200 dark:hover:bg-emerald-950/40`}
         aria-label="AI islem rehberini ac"
       >
         <Sparkles size={16} />

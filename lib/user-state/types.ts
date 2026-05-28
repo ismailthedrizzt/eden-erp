@@ -13,11 +13,17 @@ export interface UserUiPreferences {
   tablePreferences: Record<string, unknown>
   dismissedHints: string[]
   hasSeenGlobalTour: boolean
+  hasSeenFirstRunWelcome: boolean
   completedTourSteps: string[]
+  completedPageTours: string[]
   dismissedPageTours: string[]
   dismissedOperationHints: string[]
   preferredHelpMode: 'tour' | 'guide' | 'both'
   lastTourVersion: string | null
+  lastOnboardingVersion: string | null
+  helpLevel: 'minimal' | 'guided' | 'detailed'
+  actionGuideIntroSeen: boolean
+  actionCenterIntroSeen: boolean
   actionGuideDismissed: boolean
   dismissedFieldHelpers: string[]
   lockedFieldHintsDismissed: string[]
@@ -35,11 +41,17 @@ export type UserUiPreferencesPatch = Partial<{
   tablePreferences: unknown
   dismissedHints: unknown
   hasSeenGlobalTour: unknown
+  hasSeenFirstRunWelcome: unknown
   completedTourSteps: unknown
+  completedPageTours: unknown
   dismissedPageTours: unknown
   dismissedOperationHints: unknown
   preferredHelpMode: unknown
   lastTourVersion: unknown
+  lastOnboardingVersion: unknown
+  helpLevel: unknown
+  actionGuideIntroSeen: unknown
+  actionCenterIntroSeen: unknown
   actionGuideDismissed: unknown
   dismissedFieldHelpers: unknown
   lockedFieldHintsDismissed: unknown
@@ -66,11 +78,18 @@ export interface SessionBootstrapResponse {
   userState: BootstrapUserState
   onboardingPreferences?: {
     hasSeenGlobalTour: boolean
+    hasSeenFirstRunWelcome: boolean
     completedTourSteps: string[]
+    completedPageTours: string[]
+    dismissedHints: string[]
     dismissedPageTours: string[]
     dismissedOperationHints: string[]
     preferredHelpMode: 'tour' | 'guide' | 'both'
     lastTourVersion: string | null
+    lastOnboardingVersion: string | null
+    helpLevel: 'minimal' | 'guided' | 'detailed'
+    actionGuideIntroSeen: boolean
+    actionCenterIntroSeen: boolean
     actionGuideDismissed: boolean
     dismissedFieldHelpers: string[]
     lockedFieldHintsDismissed: string[]

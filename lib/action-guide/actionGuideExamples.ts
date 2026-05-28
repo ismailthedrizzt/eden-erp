@@ -1,5 +1,7 @@
 export const actionGuideExampleQueries = [
   'Ne yapmak istiyorsunuz?',
+  'Nasil baslayacagim?',
+  'Ilk sirketi nasil eklerim?',
   'Sube acmak istiyorum',
   'Sermaye artirimi nasil yapilir?',
   'Temsilciye banka yetkisi verecegim',
@@ -10,6 +12,7 @@ export const actionGuideExampleQueries = [
 ]
 
 export const frequentActionKeys = [
+  'onboarding_start',
   'create_company_draft',
   'create_partner_draft',
   'create_representative_draft',

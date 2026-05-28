@@ -225,6 +225,40 @@ READINESS_REGISTRY: dict[str, ModuleReadinessDefinition] = {
             "Wire outbox event handlers, reminder worker and email worker.",
         ],
     ),
+    "onboarding": ModuleReadinessDefinition(
+        module_key="onboarding",
+        required_tables=[
+            "workspace_onboarding_state",
+            "user_workspace_state",
+        ],
+        optional_dependencies=["companies", "notifications", "actionCenter"],
+        setup_steps=[
+            "Create workspace onboarding state and user workspace preference tables.",
+            "Verify first-run welcome, setup checklist, guided tour and Action Guide state.",
+        ],
+    ),
+    "search": ModuleReadinessDefinition(
+        module_key="search",
+        required_tables=["user_recent_items"],
+        optional_dependencies=[
+            "companies",
+            "partners",
+            "representatives",
+            "branches",
+            "accounting",
+            "hr",
+            "project_management",
+            "after_sales",
+            "crm",
+            "documents",
+            "audit",
+            "reporting",
+        ],
+        setup_steps=[
+            "Create user recent items table.",
+            "Verify search providers, permission filtering, command palette and Action Guide action results.",
+        ],
+    ),
     "reporting": ModuleReadinessDefinition(
         module_key="reporting",
         required_tables=[],

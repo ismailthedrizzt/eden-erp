@@ -8,11 +8,18 @@ import type { UserUiPreferences } from '@/lib/user-state/types'
 export type OnboardingPreferences = Pick<
   UserUiPreferences,
   | 'hasSeenGlobalTour'
+  | 'hasSeenFirstRunWelcome'
   | 'completedTourSteps'
+  | 'completedPageTours'
+  | 'dismissedHints'
   | 'dismissedPageTours'
   | 'dismissedOperationHints'
   | 'preferredHelpMode'
   | 'lastTourVersion'
+  | 'lastOnboardingVersion'
+  | 'helpLevel'
+  | 'actionGuideIntroSeen'
+  | 'actionCenterIntroSeen'
   | 'actionGuideDismissed'
   | 'dismissedFieldHelpers'
   | 'lockedFieldHintsDismissed'
@@ -77,24 +84,38 @@ export async function resetTour(
 ) {
   return mergeOnboardingPatch(supabase, userId, tenantId, {
     hasSeenGlobalTour: false,
+    hasSeenFirstRunWelcome: false,
     completedTourSteps: [],
+    completedPageTours: [],
+    dismissedHints: [],
     dismissedPageTours: [],
     dismissedOperationHints: [],
+    actionGuideIntroSeen: false,
+    actionCenterIntroSeen: false,
     actionGuideDismissed: false,
     dismissedFieldHelpers: [],
     lockedFieldHintsDismissed: [],
     lastTourVersion: null,
+    lastOnboardingVersion: null,
+    helpLevel: 'guided',
   })
 }
 
 export function toOnboardingPreferences(preferences: UserUiPreferences): OnboardingPreferences {
   return {
     hasSeenGlobalTour: preferences.hasSeenGlobalTour,
+    hasSeenFirstRunWelcome: preferences.hasSeenFirstRunWelcome,
     completedTourSteps: preferences.completedTourSteps,
+    completedPageTours: preferences.completedPageTours,
+    dismissedHints: preferences.dismissedHints,
     dismissedPageTours: preferences.dismissedPageTours,
     dismissedOperationHints: preferences.dismissedOperationHints,
     preferredHelpMode: preferences.preferredHelpMode,
     lastTourVersion: preferences.lastTourVersion,
+    lastOnboardingVersion: preferences.lastOnboardingVersion,
+    helpLevel: preferences.helpLevel,
+    actionGuideIntroSeen: preferences.actionGuideIntroSeen,
+    actionCenterIntroSeen: preferences.actionCenterIntroSeen,
     actionGuideDismissed: preferences.actionGuideDismissed,
     dismissedFieldHelpers: preferences.dismissedFieldHelpers,
     lockedFieldHintsDismissed: preferences.lockedFieldHintsDismissed,

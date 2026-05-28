@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { BarChart3, Loader2, ShieldCheck } from 'lucide-react'
 import { DashboardFilters } from '@/components/dashboard/DashboardFilters'
+import { DashboardOnboardingEmptyState } from '@/components/onboarding/DashboardOnboardingEmptyState'
 import { ModuleSummarySection } from '@/components/dashboard/ModuleSummarySection'
 import { RiskWarningCard } from '@/components/dashboard/RiskWarningCard'
 import { StatusDistributionChart } from '@/components/dashboard/StatusDistributionChart'
@@ -18,6 +19,7 @@ import {
   type ReportingFilter,
   type ReportResult,
 } from '@/lib/services/reporting'
+import { onboardingService, type OnboardingOverview } from '@/lib/services/onboarding'
 
 export function ManagementDashboardPage() {
   const [dashboard, setDashboard] = useState<DashboardResponse | null>(null)
@@ -29,10 +31,12 @@ export function ManagementDashboardPage() {
   const [loading, setLoading] = useState(true)
   const [reportLoading, setReportLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [onboarding, setOnboarding] = useState<OnboardingOverview | null>(null)
 
   useEffect(() => {
     loadDashboard()
     loadReports()
+    loadOnboarding()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
@@ -58,6 +62,14 @@ export function ManagementDashboardPage() {
       if (!selectedReport && definitions[0]) setSelectedReport(definitions[0].report_key)
     } catch {
       setReports([])
+    }
+  }
+
+  async function loadOnboarding() {
+    try {
+      setOnboarding(await onboardingService.getWorkspace())
+    } catch {
+      setOnboarding(null)
     }
   }
 
@@ -96,6 +108,8 @@ export function ManagementDashboardPage() {
         </header>
 
         <DashboardFilters filters={filters} onChange={setFilters} onRefresh={loadDashboard} />
+
+        <DashboardOnboardingEmptyState overview={onboarding} />
 
         {error && (
           <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-300/20 dark:bg-red-500/10 dark:text-red-200">

@@ -162,6 +162,26 @@ export const moduleReadinessDefinitions: ModuleReadinessDefinition[] = [
     ],
   },
   {
+    moduleKey: 'onboarding',
+    requiredTables: ['workspace_onboarding_state', 'user_workspace_state'],
+    optionalDependencies: ['companies', 'notifications', 'actionCenter'],
+    setupSteps: [
+      setupStep('onboarding.workspaceState', 'Calisma alani onboarding durumunu kontrol et', 'Tenant-level onboarding state backendde tutulmalidir.', 'check'),
+      setupStep('onboarding.userState', 'Kullanici tur tercihlerini kontrol et', 'Ilk giris, tur ve yardim durumu user workspace preferences icinde tutulmalidir.', 'check'),
+      setupStep('onboarding.firstCompany', 'Ilk sirket yonlendirmesini kontrol et', 'Bos dashboard ilk sirket taslagi ve sirket acilisi akisina yonlendirmelidir.', 'check'),
+    ],
+  },
+  {
+    moduleKey: 'search',
+    requiredTables: ['user_recent_items'],
+    optionalDependencies: ['companies', 'partners', 'representatives', 'branches', 'accounting', 'hr', 'project_management', 'after_sales', 'crm', 'documents', 'audit', 'reporting'],
+    setupSteps: [
+      setupStep('search.recentItems', 'Son acilanlar tablosunu kontrol et', 'Command Palette son acilan kayitlari kullanici bazinda tutabilmelidir.', 'check'),
+      setupStep('search.providers', 'Search provider baglantilarini kontrol et', 'Aranabilir moduller permission ve scope kontrollu providerlar uzerinden sonuc vermelidir.', 'check'),
+      setupStep('search.commandPalette', 'Komut paleti deneyimini kontrol et', 'Ctrl/Cmd+K, gruplu sonuc, disabled reason ve hizli aksiyonlar calismalidir.', 'check'),
+    ],
+  },
+  {
     moduleKey: 'reporting',
     requiredDependencies: ['companies'],
     optionalDependencies: ['partners', 'representatives', 'branches', 'accounting', 'hr', 'project_management', 'after_sales', 'crm', 'audit', 'actionCenter'],

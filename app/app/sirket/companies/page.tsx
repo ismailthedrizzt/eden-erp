@@ -596,6 +596,7 @@ export default function SirketlerPage() {
   const [preferredFormTabId, setPreferredFormTabId] = useState<string | null>(null)
   const tourLifecycleOpenedRef = useRef(false)
   const notificationCompanyOpenRef = useRef<string | null>(null)
+  const firstRunActionOpenedRef = useRef<string | null>(null)
   const isDarkMode = useDarkModeFlag()
 
   const configuredHeroFields = [
@@ -755,6 +756,29 @@ export default function SirketlerPage() {
     setDetailSections(emptyDetailSectionState)
     setSelectedSirket(normalizeCompanyForForm(draftCompany as Sirket))
     setPageState('view')
+  }, [loading, pageState, searchParams, tableData])
+
+  useEffect(() => {
+    const action = searchParams.get('action')
+    if (!action || loading || pageState !== 'list' || firstRunActionOpenedRef.current === action) return
+
+    if (action === 'create') {
+      firstRunActionOpenedRef.current = action
+      handleAddClick()
+      return
+    }
+
+    if (action === 'opening') {
+      const draftCompany = tableData.find(row => getCompanyLifecycleStatus(row) === 'draft')
+      if (!draftCompany) return
+      firstRunActionOpenedRef.current = action
+      setFormError(null)
+      setFieldErrors({})
+      setDetailSections(emptyDetailSectionState)
+      setSelectedSirket(normalizeCompanyForForm(draftCompany as Sirket))
+      setPageState('view')
+      window.setTimeout(() => void openLifecycleWizard('opening'), 200)
+    }
   }, [loading, pageState, searchParams, tableData])
 
   useEffect(() => {

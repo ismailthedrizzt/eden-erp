@@ -24,7 +24,7 @@ import {
 import {
   Home, Users, Building2, CreditCard, Package, ShoppingCart,
   Settings, Factory, Wrench, ChevronRight, LogOut, Download,
-  BarChart2, List, AlertCircle, FolderOpen, Wallet, X, Headphones, Tags, ListChecks, Handshake, FileArchive, BellRing
+  BarChart2, List, AlertCircle, FolderOpen, Wallet, X, Headphones, Tags, ListChecks, Handshake, FileArchive, BellRing, Compass
 } from 'lucide-react'
 
 interface NavItem {
@@ -52,6 +52,12 @@ const NAV: NavItem[] = [
     label: 'Ana Sayfa',
     icon: <Home size={16} />,
     href: '/app',
+  },
+  {
+    id: 'onboarding',
+    label: 'Baslangic',
+    icon: <Compass size={16} />,
+    href: '/app/onboarding',
   },
   {
     id: 'reporting',
@@ -240,6 +246,7 @@ const SIDEBAR_CONTRACT_MODULE_BY_HREF: Record<string, string> = {
   '/app/sirket/companies/representatives': 'representatives',
   '/app/sirket/teskilat': 'organization',
   '/app/sirket/tesisler': 'facilities',
+  '/app/onboarding': 'settings',
   '/app/ik': 'hr',
   '/app/ik/calisanlar': 'hr',
   '/app/ik/employees': 'hr',

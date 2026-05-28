@@ -13,11 +13,17 @@ const ALLOWED_TOP_LEVEL_KEYS = new Set([
   'tablePreferences',
   'dismissedHints',
   'hasSeenGlobalTour',
+  'hasSeenFirstRunWelcome',
   'completedTourSteps',
+  'completedPageTours',
   'dismissedPageTours',
   'dismissedOperationHints',
   'preferredHelpMode',
   'lastTourVersion',
+  'lastOnboardingVersion',
+  'helpLevel',
+  'actionGuideIntroSeen',
+  'actionCenterIntroSeen',
   'actionGuideDismissed',
   'dismissedFieldHelpers',
   'lockedFieldHintsDismissed',
@@ -149,8 +155,14 @@ export function normalizeUiPreferencesPatch(value: unknown): Partial<UserUiPrefe
       case 'hasSeenGlobalTour':
         if (typeof rawValue === 'boolean') patch.hasSeenGlobalTour = rawValue
         break
+      case 'hasSeenFirstRunWelcome':
+        if (typeof rawValue === 'boolean') patch.hasSeenFirstRunWelcome = rawValue
+        break
       case 'completedTourSteps':
         patch.completedTourSteps = sanitizeStringList(rawValue, 300)
+        break
+      case 'completedPageTours':
+        patch.completedPageTours = sanitizeStringList(rawValue, 300)
         break
       case 'dismissedPageTours':
         patch.dismissedPageTours = sanitizeStringList(rawValue, 100)
@@ -163,6 +175,18 @@ export function normalizeUiPreferencesPatch(value: unknown): Partial<UserUiPrefe
         break
       case 'lastTourVersion':
         patch.lastTourVersion = rawValue === null ? null : shortText(rawValue, '', 32)
+        break
+      case 'lastOnboardingVersion':
+        patch.lastOnboardingVersion = rawValue === null ? null : shortText(rawValue, '', 32)
+        break
+      case 'helpLevel':
+        if (rawValue === 'minimal' || rawValue === 'guided' || rawValue === 'detailed') patch.helpLevel = rawValue
+        break
+      case 'actionGuideIntroSeen':
+        if (typeof rawValue === 'boolean') patch.actionGuideIntroSeen = rawValue
+        break
+      case 'actionCenterIntroSeen':
+        if (typeof rawValue === 'boolean') patch.actionCenterIntroSeen = rawValue
         break
       case 'actionGuideDismissed':
         if (typeof rawValue === 'boolean') patch.actionGuideDismissed = rawValue
@@ -196,6 +220,9 @@ export function mergeUiPreferences(
     completedTourSteps: Array.isArray(base?.completedTourSteps)
       ? base.completedTourSteps
       : DEFAULT_UI_PREFERENCES.completedTourSteps,
+    completedPageTours: Array.isArray(base?.completedPageTours)
+      ? base.completedPageTours
+      : DEFAULT_UI_PREFERENCES.completedPageTours,
     dismissedPageTours: Array.isArray(base?.dismissedPageTours)
       ? base.dismissedPageTours
       : DEFAULT_UI_PREFERENCES.dismissedPageTours,
@@ -220,6 +247,7 @@ export function mergeUiPreferences(
     ),
     dismissedHints: normalizedPatch.dismissedHints || normalizedBase.dismissedHints,
     completedTourSteps: normalizedPatch.completedTourSteps || normalizedBase.completedTourSteps,
+    completedPageTours: normalizedPatch.completedPageTours || normalizedBase.completedPageTours,
     dismissedPageTours: normalizedPatch.dismissedPageTours || normalizedBase.dismissedPageTours,
     dismissedOperationHints: normalizedPatch.dismissedOperationHints || normalizedBase.dismissedOperationHints,
     dismissedFieldHelpers: normalizedPatch.dismissedFieldHelpers || normalizedBase.dismissedFieldHelpers,

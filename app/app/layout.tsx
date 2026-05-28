@@ -13,8 +13,10 @@ import { ModuleLicenseProvider } from '@/hooks/useModuleLicense'
 import { PermissionProvider } from '@/lib/security/permissionStore'
 import { ModuleProvider, type ClientModuleRuntime } from '@/lib/security/moduleStore'
 import { GuidedSystemTour } from '@/components/onboarding/GuidedSystemTour'
+import { FirstRunExperience } from '@/components/onboarding/FirstRunExperience'
 import { ActionGuideProvider } from '@/components/ai/ActionGuideContext'
 import { ActionGuideSearch } from '@/components/ai/ActionGuideSearch'
+import { GlobalSearchInput } from '@/components/search/GlobalSearchInput'
 import { cacheUiPreferences, readCachedUiPreferences, syncUiPreferencesPatch } from '@/lib/user-state/client'
 import { setStoredTenantId, tenantRequestHeaders } from '@/lib/tenancy/client'
 import type { SessionBootstrapResponse, UiThemePreference } from '@/lib/user-state/types'
@@ -66,6 +68,7 @@ const BREADCRUMBS: Record<string, string> = {
   '/app/sistem/kullanici-talepleri': 'Sistem Yönetimi › Kullanıcı Kayıt Talepleri',
   '/app/sistem/e-postalar': 'Sistem Yönetimi › Sistem E-postaları',
   '/app/ayarlar/bildirimler': 'Bildirimler › Bildirim Ayarları',
+  '/app/onboarding': 'Baslangic Merkezi',
   '/app/sirket/companies': 'Şirket Yönetimi › Şirketlerimiz',
   '/app/sirket/companies/partners': 'Şirket Yönetimi › Ortaklarımız',
   '/app/sirket/companies/representatives': 'Şirket Yönetimi › Temsilcilerimiz',
@@ -409,7 +412,7 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
           <header
             data-tour-id="app-header"
             className="h-14 bg-white dark:bg-eden-navy-2 border-b border-gray-200 dark:border-eden-navy
-                             px-3 sm:px-5 flex items-center justify-between flex-shrink-0 z-10">
+                             px-3 sm:px-5 flex items-center justify-between gap-3 flex-shrink-0 z-10">
           
             <div className="flex min-w-0 items-center gap-3">
               {/* Mobile Menu Button */}
@@ -536,14 +539,18 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
                 </div>
               )}
             </div>
-            <ActionGuideSearch
-              onStartSystemTour={() => {
-                setTourInitialStep(null)
-                setTourClosedThisSession(false)
-                setTourShouldOpen(true)
-                setTourOpen(true)
-              }}
-            />
+            <div className="mx-1 flex min-w-0 flex-1 items-center justify-center gap-2">
+              <GlobalSearchInput />
+              <ActionGuideSearch
+                compact
+                onStartSystemTour={() => {
+                  setTourInitialStep(null)
+                  setTourClosedThisSession(false)
+                  setTourShouldOpen(true)
+                  setTourOpen(true)
+                }}
+              />
+            </div>
             <div className="flex items-center gap-2 sm:gap-3">
               <PendingActionsBell />
               <NotificationBell />
@@ -591,6 +598,14 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
               onOpenChange={(nextOpen) => {
                 setTourOpen(nextOpen)
                 if (!nextOpen) setTourClosedThisSession(true)
+              }}
+            />
+            <FirstRunExperience
+              onStartSystemTour={() => {
+                setTourInitialStep(null)
+                setTourClosedThisSession(false)
+                setTourShouldOpen(true)
+                setTourOpen(true)
               }}
             />
           </div>

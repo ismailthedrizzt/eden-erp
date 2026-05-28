@@ -29,6 +29,42 @@ FEATURE_FLAGS: list[FeatureFlagDefinition] = [
         description="Urun ekranlarinda kisa tanitim turlari gosterir.",
     ),
     FeatureFlagDefinition(
+        key="onboarding.enabled",
+        module_key="settings",
+        label="Ilk kurulum deneyimi",
+        description="Yeni calisma alaninda karsilama, checklist ve baslangic adimlarini etkinlestirir.",
+    ),
+    FeatureFlagDefinition(
+        key="onboarding.workspaceChecklist",
+        module_key="settings",
+        label="Calisma alani checklist",
+        description="Ilk sirket, modul hazirligi, tur ve Action Center adimlarini takip eder.",
+    ),
+    FeatureFlagDefinition(
+        key="onboarding.firstRunWelcome",
+        module_key="settings",
+        label="Ilk giris karsilamasi",
+        description="Kullaniciya ilk giriste sade baslangic mesajini gosterir.",
+    ),
+    FeatureFlagDefinition(
+        key="search.enabled",
+        module_key="settings",
+        label="Global arama",
+        description="Kayit, islem, rapor, belge ve ayarlari global arama ile bulur.",
+    ),
+    FeatureFlagDefinition(
+        key="search.commandPalette",
+        module_key="settings",
+        label="Komut paleti",
+        description="Ctrl/Cmd+K ile command palette deneyimini etkinlestirir.",
+    ),
+    FeatureFlagDefinition(
+        key="search.recentItems",
+        module_key="settings",
+        label="Son acilanlar",
+        description="Kullanici bazli son acilan kayit ve sik kullanilan arama ogelerini tutar.",
+    ),
+    FeatureFlagDefinition(
         key="processEngine.enabled",
         module_key="process",
         label="Surec Motoru",

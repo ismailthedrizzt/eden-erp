@@ -20,6 +20,7 @@ from app.api.v1 import (
     integrity,
     modules,
     notifications,
+    onboarding,
     organization,
     ownership,
     partners,
@@ -31,6 +32,7 @@ from app.api.v1 import (
     projects,
     reporting,
     representatives,
+    search,
     security,
     setup,
     system,
@@ -53,6 +55,8 @@ api_router.include_router(reporting.router, prefix="/reporting", tags=["reportin
 api_router.include_router(import_export.router, tags=["import export"])
 api_router.include_router(documents.router, tags=["documents"])
 api_router.include_router(notifications.router, tags=["notifications"])
+api_router.include_router(onboarding.router, tags=["onboarding"])
+api_router.include_router(search.router, tags=["search"])
 api_router.include_router(security.router, prefix="/security", tags=["security"])
 api_router.include_router(organization.router, prefix="/organization", tags=["organization"])
 api_router.include_router(partners.router, prefix="/partners", tags=["partners"])

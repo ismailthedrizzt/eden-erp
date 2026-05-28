@@ -81,6 +81,11 @@ MODULE_META: dict[str, dict[str, str]] = {
         "category": "Platform",
         "description": "Uygulama ici bildirim, hatirlatma ve e-posta kuyrugu altyapisi.",
     },
+    "search": {
+        "name": "Global Arama",
+        "category": "Platform",
+        "description": "Kayit, islem, belge, rapor ve ayarlara komut paletiyle hizli erisim.",
+    },
 }
 
 _MODULE_ACTIVATION_OVERRIDES: dict[str, dict[str, bool]] = {}

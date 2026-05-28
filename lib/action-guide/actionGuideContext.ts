@@ -43,6 +43,7 @@ export async function buildActionGuideContext({
     workspaceId: tenantId,
   }).catch(() => null)
   const actionCenterSummary = await buildOptionalActionCenterSummary(supabase, tenantId, userId, permissions)
+  const onboardingCompanySummary = await loadOnboardingCompanySummary(supabase, tenantId)
   const moduleStatusMap: Record<string, string> = Object.fromEntries(moduleStatuses.map(item => [item.moduleKey, item.status]))
   const moduleBlockingReasons = Object.fromEntries(moduleStatuses.map(item => [item.moduleKey, item.blocking_reasons]))
   const moduleWarnings = Object.fromEntries(moduleStatuses.map(item => [item.moduleKey, item.warnings]))
@@ -76,6 +77,7 @@ export async function buildActionGuideContext({
     context: {
       ...rawContext,
       actionCenterSummary,
+      onboardingCompanySummary,
     },
   }
 
@@ -88,6 +90,26 @@ export async function buildActionGuideContext({
   }
 
   return baseContext
+}
+
+async function loadOnboardingCompanySummary(supabase: SupabaseClient, tenantId: string) {
+  try {
+    const { data, error } = await supabase
+      .from('companies')
+      .select('id,record_status,company_status,is_deleted')
+      .eq('tenant_id', tenantId)
+      .limit(500)
+    if (error) return { total: 0, draft: 0, active: 0 }
+    const rows = Array.isArray(data) ? data : []
+    const visible = rows.filter(row => !row.is_deleted)
+    return {
+      total: visible.length,
+      draft: visible.filter(row => (row.record_status || row.company_status || 'draft') === 'draft').length,
+      active: visible.filter(row => (row.record_status || row.company_status || 'draft') === 'active').length,
+    }
+  } catch {
+    return { total: 0, draft: 0, active: 0 }
+  }
 }
 
 async function buildOptionalActionCenterSummary(

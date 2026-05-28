@@ -10140,6 +10140,791 @@
         }
       }
     },
+    "/api/v1/onboarding/workspace": {
+      "get": {
+        "tags": [
+          "onboarding"
+        ],
+        "summary": "Onboarding Workspace Get",
+        "operationId": "onboarding_workspace_get_api_v1_onboarding_workspace_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_dict_str__Any__"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "onboarding"
+        ],
+        "summary": "Onboarding Workspace Patch",
+        "operationId": "onboarding_workspace_patch_api_v1_onboarding_workspace_patch",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkspaceOnboardingPatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_dict_str__Any__"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/onboarding/workspace/complete-step": {
+      "post": {
+        "tags": [
+          "onboarding"
+        ],
+        "summary": "Onboarding Workspace Complete Step",
+        "operationId": "onboarding_workspace_complete_step_api_v1_onboarding_workspace_complete_step_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompleteWorkspaceStepRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_dict_str__Any__"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/onboarding/workspace/skip": {
+      "post": {
+        "tags": [
+          "onboarding"
+        ],
+        "summary": "Onboarding Workspace Skip",
+        "operationId": "onboarding_workspace_skip_api_v1_onboarding_workspace_skip_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_dict_str__Any__"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/onboarding/workspace/reset": {
+      "post": {
+        "tags": [
+          "onboarding"
+        ],
+        "summary": "Onboarding Workspace Reset",
+        "operationId": "onboarding_workspace_reset_api_v1_onboarding_workspace_reset_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_dict_str__Any__"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/onboarding/user": {
+      "get": {
+        "tags": [
+          "onboarding"
+        ],
+        "summary": "Onboarding User Get",
+        "operationId": "onboarding_user_get_api_v1_onboarding_user_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_dict_str__Any__"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "onboarding"
+        ],
+        "summary": "Onboarding User Patch",
+        "operationId": "onboarding_user_patch_api_v1_onboarding_user_patch",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserOnboardingPatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_dict_str__Any__"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/onboarding/user/complete-tour": {
+      "post": {
+        "tags": [
+          "onboarding"
+        ],
+        "summary": "Onboarding User Complete Tour",
+        "operationId": "onboarding_user_complete_tour_api_v1_onboarding_user_complete_tour_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CompleteTourRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_dict_str__Any__"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/onboarding/user/dismiss-hint": {
+      "post": {
+        "tags": [
+          "onboarding"
+        ],
+        "summary": "Onboarding User Dismiss Hint",
+        "operationId": "onboarding_user_dismiss_hint_api_v1_onboarding_user_dismiss_hint_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DismissHintRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_dict_str__Any__"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/onboarding/user/reset-help": {
+      "post": {
+        "tags": [
+          "onboarding"
+        ],
+        "summary": "Onboarding User Reset Help",
+        "operationId": "onboarding_user_reset_help_api_v1_onboarding_user_reset_help_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_dict_str__Any__"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/search": {
+      "get": {
+        "tags": [
+          "search"
+        ],
+        "summary": "Search Get",
+        "operationId": "search_get_api_v1_search_get",
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "Query"
+            }
+          },
+          {
+            "name": "current_page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Current Page"
+            }
+          },
+          {
+            "name": "module_filter",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Module Filter"
+            }
+          },
+          {
+            "name": "entity_types",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Entity Types"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 50,
+              "minimum": 1,
+              "default": 25,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "include_actions",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true,
+              "title": "Include Actions"
+            }
+          },
+          {
+            "name": "include_recent",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true,
+              "title": "Include Recent"
+            }
+          },
+          {
+            "name": "include_commands",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": true,
+              "title": "Include Commands"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_dict_str__Any__"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/search/query": {
+      "post": {
+        "tags": [
+          "search"
+        ],
+        "summary": "Search Query",
+        "operationId": "search_query_api_v1_search_query_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_dict_str__Any__"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/search/suggestions": {
+      "get": {
+        "tags": [
+          "search"
+        ],
+        "summary": "Search Suggestions",
+        "operationId": "search_suggestions_api_v1_search_suggestions_get",
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "Query"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 20,
+              "minimum": 1,
+              "default": 8,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_list_dict_str__Any___"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/search/recent": {
+      "get": {
+        "tags": [
+          "search"
+        ],
+        "summary": "Search Recent Get",
+        "operationId": "search_recent_get_api_v1_search_recent_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 20,
+              "minimum": 1,
+              "default": 8,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_list_dict_str__Any___"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "search"
+        ],
+        "summary": "Search Recent Post",
+        "operationId": "search_recent_post_api_v1_search_recent_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecentItemRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_dict_str__Any__"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/search/commands": {
+      "get": {
+        "tags": [
+          "search"
+        ],
+        "summary": "Search Commands",
+        "operationId": "search_commands_api_v1_search_commands_get",
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "",
+              "title": "Query"
+            }
+          },
+          {
+            "name": "current_page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Current Page"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 50,
+              "minimum": 1,
+              "default": 20,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_dict_str__Any__"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/search/command-palette": {
+      "post": {
+        "tags": [
+          "search"
+        ],
+        "summary": "Search Command Palette",
+        "operationId": "search_command_palette_api_v1_search_command_palette_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_dict_str__Any__"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/search/by-entity/{entity_type}/{entity_id}": {
+      "get": {
+        "tags": [
+          "search"
+        ],
+        "summary": "Search By Entity",
+        "operationId": "search_by_entity_api_v1_search_by_entity__entity_type___entity_id__get",
+        "parameters": [
+          {
+            "name": "entity_type",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Entity Type"
+            }
+          },
+          {
+            "name": "entity_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Entity Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_dict_str__Any__"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/security/users": {
       "get": {
         "tags": [
@@ -20135,6 +20920,53 @@
         "type": "object",
         "title": "CompleteTaskRequest"
       },
+      "CompleteTourRequest": {
+        "properties": {
+          "tour_key": {
+            "type": "string",
+            "title": "Tour Key",
+            "default": "global"
+          },
+          "version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Version"
+          }
+        },
+        "type": "object",
+        "title": "CompleteTourRequest"
+      },
+      "CompleteWorkspaceStepRequest": {
+        "properties": {
+          "step_key": {
+            "type": "string",
+            "enum": [
+              "welcome",
+              "workspace_profile",
+              "module_selection",
+              "readiness_check",
+              "first_company_draft",
+              "first_company_opening",
+              "guided_tour",
+              "action_guide_intro",
+              "action_center_intro",
+              "finish"
+            ],
+            "title": "Step Key"
+          }
+        },
+        "type": "object",
+        "required": [
+          "step_key"
+        ],
+        "title": "CompleteWorkspaceStepRequest"
+      },
       "CreateApprovalRequest": {
         "properties": {
           "process_instance_id": {
@@ -20477,6 +21309,19 @@
           "title"
         ],
         "title": "CreateTaskRequest"
+      },
+      "DismissHintRequest": {
+        "properties": {
+          "hint_key": {
+            "type": "string",
+            "title": "Hint Key"
+          }
+        },
+        "type": "object",
+        "required": [
+          "hint_key"
+        ],
+        "title": "DismissHintRequest"
       },
       "DocumentCreateRequest": {
         "properties": {
@@ -27573,6 +28418,39 @@
         "type": "object",
         "title": "PublicRegistrationUpdateRequest"
       },
+      "RecentItemRequest": {
+        "properties": {
+          "entity_type": {
+            "type": "string",
+            "title": "Entity Type"
+          },
+          "entity_id": {
+            "type": "string",
+            "title": "Entity Id"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "target_page": {
+            "type": "string",
+            "title": "Target Page"
+          },
+          "module_key": {
+            "type": "string",
+            "title": "Module Key"
+          }
+        },
+        "type": "object",
+        "required": [
+          "entity_type",
+          "entity_id",
+          "title",
+          "target_page",
+          "module_key"
+        ],
+        "title": "RecentItemRequest"
+      },
       "ReminderCreateRequest": {
         "properties": {
           "user_id": {
@@ -28918,6 +29796,90 @@
           "permission_keys"
         ],
         "title": "RolePermissionsPatch"
+      },
+      "SearchRequest": {
+        "properties": {
+          "query": {
+            "type": "string",
+            "title": "Query",
+            "default": ""
+          },
+          "current_page": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Page"
+          },
+          "selected_record_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selected Record Type"
+          },
+          "selected_record_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selected Record Id"
+          },
+          "module_filter": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Module Filter"
+          },
+          "entity_types": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Entity Types"
+          },
+          "limit": {
+            "type": "integer",
+            "maximum": 50.0,
+            "minimum": 1.0,
+            "title": "Limit",
+            "default": 25
+          },
+          "include_actions": {
+            "type": "boolean",
+            "title": "Include Actions",
+            "default": true
+          },
+          "include_recent": {
+            "type": "boolean",
+            "title": "Include Recent",
+            "default": true
+          },
+          "include_commands": {
+            "type": "boolean",
+            "title": "Include Commands",
+            "default": true
+          }
+        },
+        "type": "object",
+        "title": "SearchRequest"
       },
       "ServiceRecordCompleteRequest": {
         "properties": {
@@ -31309,6 +32271,141 @@
         "type": "object",
         "title": "TitleChangeRequest"
       },
+      "UserOnboardingPatch": {
+        "properties": {
+          "hasSeenGlobalTour": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hasseenglobaltour"
+          },
+          "hasSeenFirstRunWelcome": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Hasseenfirstrunwelcome"
+          },
+          "completedTourSteps": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completedtoursteps"
+          },
+          "completedPageTours": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completedpagetours"
+          },
+          "dismissedHints": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dismissedhints"
+          },
+          "preferredHelpMode": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "tour",
+                  "guide",
+                  "both"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preferredhelpmode"
+          },
+          "actionGuideIntroSeen": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actionguideintroseen"
+          },
+          "actionCenterIntroSeen": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actioncenterintroseen"
+          },
+          "lastOnboardingVersion": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lastonboardingversion"
+          },
+          "helpLevel": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "minimal",
+                  "guided",
+                  "detailed"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Helplevel"
+          }
+        },
+        "type": "object",
+        "title": "UserOnboardingPatch"
+      },
       "UserPatch": {
         "properties": {
           "display_name": {
@@ -31496,6 +32593,121 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "WorkspaceOnboardingPatch": {
+        "properties": {
+          "status": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "not_started",
+                  "in_progress",
+                  "completed",
+                  "skipped"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "current_step": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "welcome",
+                  "workspace_profile",
+                  "module_selection",
+                  "readiness_check",
+                  "first_company_draft",
+                  "first_company_opening",
+                  "guided_tour",
+                  "action_guide_intro",
+                  "action_center_intro",
+                  "finish"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Step"
+          },
+          "completed_steps": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed Steps"
+          },
+          "dismissed_steps": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dismissed Steps"
+          },
+          "recommended_steps": {
+            "anyOf": [
+              {
+                "items": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recommended Steps"
+          },
+          "workspace_profile": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Workspace Profile"
+          },
+          "selected_module_packages": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selected Module Packages"
+          }
+        },
+        "type": "object",
+        "title": "WorkspaceOnboardingPatch"
       }
     }
   }

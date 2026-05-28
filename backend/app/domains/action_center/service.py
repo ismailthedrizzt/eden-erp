@@ -6,7 +6,7 @@ from typing import Any
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.serialization import rows_to_dicts
+from app.core.serialization import row_to_dict, rows_to_dicts
 from app.domains.operations.service import table_exists
 
 DEFAULT_PAGE_SIZE = 50
@@ -291,6 +291,33 @@ async def list_action_center_items(
             _normalize_notification_item(row, str(context["tenant_id"]))
             for row in rows_to_dicts(list(notification_result.mappings().all()))
         )
+
+    has_onboarding_state = await table_exists(session, "public.workspace_onboarding_state")
+    if _can_see_system_items(context) and has_onboarding_state:
+        onboarding_result = await session.execute(
+            text(
+                """
+                select id, tenant_id, status, current_step, completed_steps,
+                       dismissed_steps, recommended_steps, updated_at, created_at
+                from public.workspace_onboarding_state
+                where tenant_id = :tenant_id
+                  and status in ('not_started', 'in_progress')
+                order by updated_at desc
+                limit 1
+                """
+            ),
+            {"tenant_id": context["tenant_id"]},
+        )
+        onboarding_row = row_to_dict(onboarding_result.mappings().first())
+        if onboarding_row:
+            company_summary = await _onboarding_company_summary(session, str(context["tenant_id"]))
+            items.extend(
+                _normalize_onboarding_items(
+                    onboarding_row,
+                    company_summary,
+                    str(context["tenant_id"]),
+                )
+            )
 
     if _can_see_system_items(context) and await table_exists(session, "public.outbox_events"):
         outbox_result = await session.execute(
@@ -719,6 +746,97 @@ def _normalize_notification_item(row: dict[str, Any], tenant_id: str) -> dict[st
     }
 
 
+def _normalize_onboarding_items(
+    row: dict[str, Any],
+    company_summary: dict[str, int],
+    tenant_id: str,
+) -> list[dict[str, Any]]:
+    created_at = row.get("updated_at") or row.get("created_at") or _now_iso()
+    if company_summary.get("total", 0) <= 0:
+        return [
+            _onboarding_item(
+                row,
+                tenant_id,
+                "first_company_draft",
+                "Ilk sirket taslagi olusturulmadi",
+                (
+                    "Eden ERP islemleri sirket karti uzerinden ilerler. "
+                    "Baslamak icin ilk sirket taslagini olusturun."
+                ),
+                "Sirket Taslagi Olustur",
+                "/app/sirket/companies?action=create",
+                created_at,
+            )
+        ]
+    if company_summary.get("active", 0) <= 0 and company_summary.get("draft", 0) > 0:
+        return [
+            _onboarding_item(
+                row,
+                tenant_id,
+                "first_company_opening",
+                "Ilk sirket acilisi tamamlanmadi",
+                (
+                    "Taslak sirket aktif islem yapilabilir sirket degildir. "
+                    "Sirket Acilisi sihirbazini tamamlayin."
+                ),
+                "Sirket Acilisina Git",
+                "/app/sirket/companies?action=opening",
+                created_at,
+            )
+        ]
+    if row.get("status") != "completed":
+        return [
+            _onboarding_item(
+                row,
+                tenant_id,
+                "finish",
+                "Calisma alani kurulumu tamamlanmadi",
+                "Temel tur, modul kontrolu ve baslangic adimlari henuz tamamlanmadi.",
+                "Kuruluma Devam Et",
+                "/app/onboarding",
+                created_at,
+            )
+        ]
+    return []
+
+
+def _onboarding_item(
+    row: dict[str, Any],
+    tenant_id: str,
+    action_key: str,
+    title: str,
+    description: str,
+    action_label: str,
+    target_page: str,
+    created_at: object,
+) -> dict[str, Any]:
+    return {
+        "id": f"onboarding:{action_key}",
+        "tenant_id": row.get("tenant_id") or tenant_id,
+        "module_key": "settings",
+        "source_type": "onboarding",
+        "source_id": str(row.get("id") or action_key),
+        "title": title,
+        "description": description,
+        "status": "waiting",
+        "severity": "warning",
+        "priority": "normal",
+        "action_key": action_key,
+        "entity_type": "workspace",
+        "entity_id": tenant_id,
+        "record_label": "Calisma alani kurulumu",
+        "created_at": created_at,
+        "target_page": target_page,
+        "suggested_actions": [
+            {
+                "label": action_label,
+                "action_type": "navigate",
+                "target_page": target_page,
+            }
+        ],
+    }
+
+
 def _normalize_outbox(row: dict[str, Any], tenant_id: str) -> dict[str, Any]:
     status = str(row.get("status") or "")
     return {
@@ -820,6 +938,7 @@ def _summary(items: list[dict[str, Any]]) -> dict[str, Any]:
             "projection",
             "integrity_warning",
             "module_readiness",
+            "onboarding",
             "system",
         } and item.get("status") != "completed":
             system_warning_count += 1
@@ -844,6 +963,32 @@ def _can_see_system_items(context: dict[str, Any]) -> bool:
         return True
     permissions = set(context.get("permissions") or [])
     return bool(permissions.intersection(SYSTEM_PERMISSIONS))
+
+
+async def _onboarding_company_summary(session: AsyncSession, tenant_id: str) -> dict[str, int]:
+    if not await table_exists(session, "public.companies"):
+        return {"total": 0, "draft": 0, "active": 0}
+    result = await session.execute(
+        text(
+            """
+            select
+              count(*) filter (where coalesce(is_deleted, false) = false) as total,
+              count(*) filter (
+                where coalesce(is_deleted, false) = false
+                  and coalesce(record_status, company_status, 'draft') = 'draft'
+              ) as draft,
+              count(*) filter (
+                where coalesce(is_deleted, false) = false
+                  and coalesce(record_status, company_status, 'draft') = 'active'
+              ) as active
+            from public.companies
+            where tenant_id = :tenant_id
+            """
+        ),
+        {"tenant_id": tenant_id},
+    )
+    row = row_to_dict(result.mappings().one()) or {}
+    return {key: int(row.get(key) or 0) for key in ["total", "draft", "active"]}
 
 
 def _same_entity_type(left: object, right: object) -> bool:

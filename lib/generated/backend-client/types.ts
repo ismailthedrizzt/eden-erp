@@ -2223,6 +2223,264 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/onboarding/workspace": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Onboarding Workspace Get */
+        get: operations["onboarding_workspace_get_api_v1_onboarding_workspace_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Onboarding Workspace Patch */
+        patch: operations["onboarding_workspace_patch_api_v1_onboarding_workspace_patch"];
+        trace?: never;
+    };
+    "/api/v1/onboarding/workspace/complete-step": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Onboarding Workspace Complete Step */
+        post: operations["onboarding_workspace_complete_step_api_v1_onboarding_workspace_complete_step_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/onboarding/workspace/skip": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Onboarding Workspace Skip */
+        post: operations["onboarding_workspace_skip_api_v1_onboarding_workspace_skip_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/onboarding/workspace/reset": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Onboarding Workspace Reset */
+        post: operations["onboarding_workspace_reset_api_v1_onboarding_workspace_reset_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/onboarding/user": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Onboarding User Get */
+        get: operations["onboarding_user_get_api_v1_onboarding_user_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Onboarding User Patch */
+        patch: operations["onboarding_user_patch_api_v1_onboarding_user_patch"];
+        trace?: never;
+    };
+    "/api/v1/onboarding/user/complete-tour": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Onboarding User Complete Tour */
+        post: operations["onboarding_user_complete_tour_api_v1_onboarding_user_complete_tour_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/onboarding/user/dismiss-hint": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Onboarding User Dismiss Hint */
+        post: operations["onboarding_user_dismiss_hint_api_v1_onboarding_user_dismiss_hint_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/onboarding/user/reset-help": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Onboarding User Reset Help */
+        post: operations["onboarding_user_reset_help_api_v1_onboarding_user_reset_help_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Search Get */
+        get: operations["search_get_api_v1_search_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/search/query": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Search Query */
+        post: operations["search_query_api_v1_search_query_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/search/suggestions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Search Suggestions */
+        get: operations["search_suggestions_api_v1_search_suggestions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/search/recent": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Search Recent Get */
+        get: operations["search_recent_get_api_v1_search_recent_get"];
+        put?: never;
+        /** Search Recent Post */
+        post: operations["search_recent_post_api_v1_search_recent_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/search/commands": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Search Commands */
+        get: operations["search_commands_api_v1_search_commands_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/search/command-palette": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Search Command Palette */
+        post: operations["search_command_palette_api_v1_search_command_palette_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/search/by-entity/{entity_type}/{entity_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Search By Entity */
+        get: operations["search_by_entity_api_v1_search_by_entity__entity_type___entity_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/security/users": {
         parameters: {
             query?: never;
@@ -4708,6 +4966,24 @@ export interface components {
                 [key: string]: unknown;
             };
         };
+        /** CompleteTourRequest */
+        CompleteTourRequest: {
+            /**
+             * Tour Key
+             * @default global
+             */
+            tour_key: string;
+            /** Version */
+            version?: string | null;
+        };
+        /** CompleteWorkspaceStepRequest */
+        CompleteWorkspaceStepRequest: {
+            /**
+             * Step Key
+             * @enum {string}
+             */
+            step_key: "welcome" | "workspace_profile" | "module_selection" | "readiness_check" | "first_company_draft" | "first_company_opening" | "guided_tour" | "action_guide_intro" | "action_center_intro" | "finish";
+        };
         /** CreateApprovalRequest */
         CreateApprovalRequest: {
             /** Process Instance Id */
@@ -4799,6 +5075,11 @@ export interface components {
             payload_json?: {
                 [key: string]: unknown;
             };
+        };
+        /** DismissHintRequest */
+        DismissHintRequest: {
+            /** Hint Key */
+            hint_key: string;
         };
         /** DocumentCreateRequest */
         DocumentCreateRequest: {
@@ -6584,6 +6865,19 @@ export interface components {
         } & {
             [key: string]: unknown;
         };
+        /** RecentItemRequest */
+        RecentItemRequest: {
+            /** Entity Type */
+            entity_type: string;
+            /** Entity Id */
+            entity_id: string;
+            /** Title */
+            title: string;
+            /** Target Page */
+            target_page: string;
+            /** Module Key */
+            module_key: string;
+        };
         /** ReminderCreateRequest */
         ReminderCreateRequest: {
             /** User Id */
@@ -6933,6 +7227,44 @@ export interface components {
             permission_keys: string[];
             /** Change Reason */
             change_reason?: string | null;
+        };
+        /** SearchRequest */
+        SearchRequest: {
+            /**
+             * Query
+             * @default
+             */
+            query: string;
+            /** Current Page */
+            current_page?: string | null;
+            /** Selected Record Type */
+            selected_record_type?: string | null;
+            /** Selected Record Id */
+            selected_record_id?: string | null;
+            /** Module Filter */
+            module_filter?: string | null;
+            /** Entity Types */
+            entity_types?: string[];
+            /**
+             * Limit
+             * @default 25
+             */
+            limit: number;
+            /**
+             * Include Actions
+             * @default true
+             */
+            include_actions: boolean;
+            /**
+             * Include Recent
+             * @default true
+             */
+            include_recent: boolean;
+            /**
+             * Include Commands
+             * @default true
+             */
+            include_commands: boolean;
         };
         /** ServiceRecordCompleteRequest */
         ServiceRecordCompleteRequest: {
@@ -7499,6 +7831,29 @@ export interface components {
         } & {
             [key: string]: unknown;
         };
+        /** UserOnboardingPatch */
+        UserOnboardingPatch: {
+            /** Hasseenglobaltour */
+            hasSeenGlobalTour?: boolean | null;
+            /** Hasseenfirstrunwelcome */
+            hasSeenFirstRunWelcome?: boolean | null;
+            /** Completedtoursteps */
+            completedTourSteps?: string[] | null;
+            /** Completedpagetours */
+            completedPageTours?: string[] | null;
+            /** Dismissedhints */
+            dismissedHints?: string[] | null;
+            /** Preferredhelpmode */
+            preferredHelpMode?: ("tour" | "guide" | "both") | null;
+            /** Actionguideintroseen */
+            actionGuideIntroSeen?: boolean | null;
+            /** Actioncenterintroseen */
+            actionCenterIntroSeen?: boolean | null;
+            /** Lastonboardingversion */
+            lastOnboardingVersion?: string | null;
+            /** Helplevel */
+            helpLevel?: ("minimal" | "guided" | "detailed") | null;
+        };
         /** UserPatch */
         UserPatch: {
             /** Display Name */
@@ -7546,6 +7901,27 @@ export interface components {
             input?: unknown;
             /** Context */
             ctx?: Record<string, never>;
+        };
+        /** WorkspaceOnboardingPatch */
+        WorkspaceOnboardingPatch: {
+            /** Status */
+            status?: ("not_started" | "in_progress" | "completed" | "skipped") | null;
+            /** Current Step */
+            current_step?: ("welcome" | "workspace_profile" | "module_selection" | "readiness_check" | "first_company_draft" | "first_company_opening" | "guided_tour" | "action_guide_intro" | "action_center_intro" | "finish") | null;
+            /** Completed Steps */
+            completed_steps?: string[] | null;
+            /** Dismissed Steps */
+            dismissed_steps?: string[] | null;
+            /** Recommended Steps */
+            recommended_steps?: {
+                [key: string]: unknown;
+            }[] | null;
+            /** Workspace Profile */
+            workspace_profile?: {
+                [key: string]: unknown;
+            } | null;
+            /** Selected Module Packages */
+            selected_module_packages?: string[] | null;
         };
     };
     responses: never;
@@ -13022,6 +13398,536 @@ export interface operations {
         responses: {
             /** @description Successful Response */
             201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    onboarding_workspace_get_api_v1_onboarding_workspace_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+        };
+    };
+    onboarding_workspace_patch_api_v1_onboarding_workspace_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WorkspaceOnboardingPatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    onboarding_workspace_complete_step_api_v1_onboarding_workspace_complete_step_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CompleteWorkspaceStepRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    onboarding_workspace_skip_api_v1_onboarding_workspace_skip_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+        };
+    };
+    onboarding_workspace_reset_api_v1_onboarding_workspace_reset_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+        };
+    };
+    onboarding_user_get_api_v1_onboarding_user_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+        };
+    };
+    onboarding_user_patch_api_v1_onboarding_user_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UserOnboardingPatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    onboarding_user_complete_tour_api_v1_onboarding_user_complete_tour_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CompleteTourRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    onboarding_user_dismiss_hint_api_v1_onboarding_user_dismiss_hint_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DismissHintRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    onboarding_user_reset_help_api_v1_onboarding_user_reset_help_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+        };
+    };
+    search_get_api_v1_search_get: {
+        parameters: {
+            query?: {
+                query?: string;
+                current_page?: string | null;
+                module_filter?: string | null;
+                entity_types?: string[] | null;
+                limit?: number;
+                include_actions?: boolean;
+                include_recent?: boolean;
+                include_commands?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    search_query_api_v1_search_query_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SearchRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    search_suggestions_api_v1_search_suggestions_get: {
+        parameters: {
+            query?: {
+                query?: string;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_list_dict_str__Any___"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    search_recent_get_api_v1_search_recent_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_list_dict_str__Any___"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    search_recent_post_api_v1_search_recent_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RecentItemRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    search_commands_api_v1_search_commands_get: {
+        parameters: {
+            query?: {
+                query?: string;
+                current_page?: string | null;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    search_command_palette_api_v1_search_command_palette_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SearchRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    search_by_entity_api_v1_search_by_entity__entity_type___entity_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                entity_type: string;
+                entity_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };

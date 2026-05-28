@@ -32,6 +32,9 @@ export async function resolveActionGuide(
 
   if (!query.trim()) return resolveFrequentActions(guideContext)
 
+  const onboardingAnswer = resolveOnboardingFirstRunQuestion(query, guideContext)
+  if (onboardingAnswer) return onboardingAnswer
+
   const matches = matchActionIntent(query, guideContext)
   const best = matches[0]
   const action = best ? getActionDefinition(best.actionKey) : null
@@ -60,6 +63,96 @@ export async function resolveActionGuide(
         confidence: match.confidence,
       }
     }),
+  }
+}
+
+function resolveOnboardingFirstRunQuestion(
+  query: string,
+  context: ActionGuideContext
+): ActionGuideResponse | null {
+  const normalized = query.toLocaleLowerCase('tr-TR')
+  const asksStart = ['nasil baslay', 'ilk olarak', 'ne yapmaliyim', 'calisma alanim hazir', 'ilk sirket'].some(term => normalized.includes(term))
+  const asksDraft = ['taslak nedir', 'neden taslak', '+ ekle'].some(term => normalized.includes(term))
+  if (!asksStart && !asksDraft) return null
+
+  const companySummary = context.context?.onboardingCompanySummary as { total?: number; draft?: number; active?: number } | undefined
+  const total = Number(companySummary?.total || 0)
+  const draft = Number(companySummary?.draft || 0)
+  const active = Number(companySummary?.active || 0)
+
+  if (asksDraft) {
+    return {
+      intent: 'explain_company_draft',
+      confidence: 0.92,
+      title: 'Sirket taslagi resmi acilis degildir',
+      explanation: '+ Ekle kaydi hazirlik icin taslak olarak olusturur. Resmi sonuc doguran acilis, sermaye, ortaklik, temsilci ve sube islemleri ayri sihirbazlarla tamamlanir.',
+      steps: ['Sirket taslagini olusturun.', 'Temel bilgileri tamamlayin.', 'Sirket Acilisi sihirbaziyla aktif hale getirin.'],
+      target_page: '/app/sirket/companies?action=create',
+      can_start_now: true,
+      blocking_reasons: [],
+      warnings: [],
+      suggested_actions: [
+        { label: 'Sirket Taslagi Olustur', action_type: 'navigate', target_page: '/app/sirket/companies?action=create' },
+        { label: 'Baslangic Merkezini Ac', action_type: 'navigate', target_page: '/app/onboarding' },
+      ],
+      matched_actions: [{ key: 'explain_company_draft', label: 'Sirket Taslagi Nedir?', confidence: 0.92 }],
+    }
+  }
+
+  if (active > 0) {
+    return {
+      intent: 'onboarding_active_company_next_steps',
+      confidence: 0.9,
+      title: 'Sirketiniz hazir, temel kayitlari derinlestirin',
+      explanation: 'Aktif sirket kaydi oldugu icin sira ortak, temsilci, sube, cari kart ve kullanici yetki adimlarinda.',
+      steps: ['Ortaklari ekleyin.', 'Temsilcileri ve subeleri tamamlayin.', 'Cari kartlari ve ekip yetkilerini hazirlayin.'],
+      target_page: '/app/onboarding',
+      can_start_now: true,
+      blocking_reasons: [],
+      warnings: [],
+      suggested_actions: [
+        { label: 'Ortaklari Ac', action_type: 'navigate', target_page: '/app/sirket/companies/partners' },
+        { label: 'Temsilcileri Ac', action_type: 'navigate', target_page: '/app/sirket/companies/representatives' },
+        { label: 'Baslangic Merkezini Ac', action_type: 'navigate', target_page: '/app/onboarding' },
+      ],
+      matched_actions: [{ key: 'onboarding_start', label: 'Nasil Baslayacagimi Goster', confidence: 0.9 }],
+    }
+  }
+
+  if (total > 0 && draft > 0) {
+    return {
+      intent: 'onboarding_complete_company_opening',
+      confidence: 0.9,
+      title: 'Siradaki adim sirket acilisini tamamlamak',
+      explanation: 'Taslak sirket aktif islem yapilabilir sirket degildir. Sirket Acilisi sihirbazini tamamlayarak devam edin.',
+      steps: ['Taslak sirketi acin.', 'Sirket Acilisi sihirbazini baslatin.', 'Belge ve tescil adimlarini tamamlayin.'],
+      target_page: '/app/sirket/companies?action=opening',
+      can_start_now: true,
+      blocking_reasons: [],
+      warnings: [],
+      suggested_actions: [
+        { label: 'Sirket Acilisina Git', action_type: 'navigate', target_page: '/app/sirket/companies?action=opening' },
+        { label: 'Baslangic Merkezini Ac', action_type: 'navigate', target_page: '/app/onboarding' },
+      ],
+      matched_actions: [{ key: 'company_opening', label: 'Sirket Acilisi', confidence: 0.9 }],
+    }
+  }
+
+  return {
+    intent: 'onboarding_first_company',
+    confidence: 0.92,
+    title: 'Ilk sirket taslagiyla baslayin',
+    explanation: 'Eden ERPde sirket, ortak, temsilci, sube ve muhasebe islemleri sirket karti uzerinden ilerler.',
+    steps: ['Baslangic Merkezini acin.', 'Ilk sirket taslagini olusturun.', 'Sirket Acilisi sihirbaziyla aktif hale getirin.'],
+    target_page: '/app/sirket/companies?action=create',
+    can_start_now: true,
+    blocking_reasons: [],
+    warnings: [],
+    suggested_actions: [
+      { label: 'Ilk Sirketi Olustur', action_type: 'navigate', target_page: '/app/sirket/companies?action=create' },
+      { label: 'Baslangic Merkezini Ac', action_type: 'navigate', target_page: '/app/onboarding' },
+    ],
+    matched_actions: [{ key: 'onboarding_start', label: 'Nasil Baslayacagimi Goster', confidence: 0.92 }],
   }
 }
 
