@@ -1,4 +1,4 @@
-export const PERMISSION_ACTIONS = ['view', 'insert', 'create', 'edit', 'delete', 'manage', 'approve', 'passivate', 'export', 'set_default', 'view_sensitive', 'verify', 'start', 'complete', 'update', 'manual_sgk'] as const
+export const PERMISSION_ACTIONS = ['view', 'insert', 'create', 'edit', 'delete', 'manage', 'approve', 'confirm', 'cancel', 'download', 'upload', 'reject', 'admin', 'passivate', 'export', 'set_default', 'view_sensitive', 'verify', 'start', 'complete', 'update', 'manual_sgk'] as const
 
 export type PermissionAction = typeof PERMISSION_ACTIONS[number]
 
@@ -12,6 +12,7 @@ export const MODULE_CODES = [
   'workflow',
   'inventory',
   'documents',
+  'notifications',
   'identity',
   'tenancy',
   'product_services',
@@ -19,6 +20,7 @@ export const MODULE_CODES = [
   'project_management',
   'reporting',
   'security',
+  'import_export',
 ] as const
 
 export type ModuleCode = typeof MODULE_CODES[number]
@@ -78,7 +80,22 @@ export const PERMISSIONS = {
     approve: 'workflow.approve',
   },
   documents: {
+    view: 'documents.view',
+    upload: 'documents.upload',
+    download: 'documents.download',
+    verify: 'documents.verify',
+    reject: 'documents.reject',
+    delete: 'documents.delete',
+    admin: 'documents.admin',
+    accessLogsView: 'documents.accessLogsView',
     export: 'documents.export',
+  },
+  notifications: {
+    view: 'notifications.view',
+    manage: 'notifications.manage',
+    admin: 'notifications.admin',
+    emailAdmin: 'email.admin',
+    remindersManage: 'reminders.manage',
   },
   identity: {
     view: 'identity.view',
@@ -164,6 +181,17 @@ export const PERMISSIONS = {
     policyTest: 'security.policyTest',
     legacyUsersManage: 'users.manage',
     legacyRolesManage: 'roles.manage',
+  },
+  importExport: {
+    importView: 'import.view',
+    importCreate: 'import.create',
+    importConfirm: 'import.confirm',
+    importCancel: 'import.cancel',
+    exportCreate: 'export.create',
+    exportDownload: 'export.download',
+    bulkCreate: 'bulk.create',
+    bulkConfirm: 'bulk.confirm',
+    bulkAdmin: 'bulk.admin',
   },
   projectManagement: {
     view: 'projects.view',

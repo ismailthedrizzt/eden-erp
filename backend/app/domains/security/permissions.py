@@ -31,6 +31,9 @@ MODULE_LABELS: dict[str, str] = {
     "crm": "CRM/Paydaslar",
     "reporting": "Raporlama",
     "audit": "Audit",
+    "importExport": "Data Import / Export",
+    "documents": "Belgeler",
+    "notifications": "Bildirimler",
     "settings": "Kurulum/Ayarlar",
     "security": "Kullanicilar/Roller/Yetkiler",
     "system": "Sistem",
@@ -54,6 +57,18 @@ RISKY_PERMISSION_KEYS = {
     "partners.ownershipReverse",
     "representatives.authorityTerminate",
     "accounting.export",
+    "import.confirm",
+    "export.download",
+    "bulk.confirm",
+    "bulk.admin",
+    "documents.download",
+    "documents.verify",
+    "documents.reject",
+    "documents.delete",
+    "documents.admin",
+    "documents.accessLogsView",
+    "notifications.admin",
+    "email.admin",
     "system.admin",
 }
 
@@ -66,6 +81,7 @@ CRITICAL_PERMISSION_KEYS = {
     "settings.modulesManage",
     "settings.modules.manage",
     "outbox.dispatch",
+    "email.admin",
 }
 
 

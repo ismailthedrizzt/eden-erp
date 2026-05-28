@@ -56,6 +56,15 @@ export const navigationItems = [
     fallbackPermission: 'stakeholders.view',
   }),
   item('projectManagement', 'Gorev ve Proje Yonetimi', '/app/gorev-ve-proje-yonetimi', 'list-checks', 'project_management', 400),
+  item('documents', 'Belgeler', '/app/belgeler', 'file-archive', 'documents', 500, {
+    permission: 'documents.view',
+    fallbackPermission: 'companies.view',
+    featureFlag: 'documents.enabled',
+  }),
+  item('notifications', 'Bildirimler', '/app/ayarlar/bildirimler', 'bell', 'notifications', 510, {
+    permission: 'notifications.view',
+    featureFlag: 'notifications.enabled',
+  }),
   item('settings', 'Sistem Yonetimi', '/app/sistem', 'settings', 'settings', 900),
   item('moduleLicenses', 'Modul Lisanslari', '/app/sistem/module-licenses', 'settings', 'settings', 910, {
     parentKey: 'settings',
@@ -87,6 +96,24 @@ export const navigationItems = [
     permission: 'audit.view',
     fallbackPermission: 'settings.view',
     featureFlag: 'auditLog.enabled',
+  }),
+  item('dataImport', 'Data Import', '/app/sistem/import', 'upload', 'importExport', 934, {
+    parentKey: 'settings',
+    permission: 'import.view',
+    fallbackPermission: 'settings.view',
+    featureFlag: 'dataImport.enabled',
+  }),
+  item('dataExport', 'Data Export / Bulk', '/app/sistem/export', 'download', 'importExport', 935, {
+    parentKey: 'settings',
+    permission: 'export.create',
+    fallbackPermission: 'settings.view',
+    featureFlag: 'dataExport.enabled',
+  }),
+  item('systemEmails', 'Sistem E-postalari', '/app/sistem/e-postalar', 'mail', 'notifications', 936, {
+    parentKey: 'settings',
+    permission: 'email.admin',
+    fallbackPermission: 'settings.view',
+    featureFlag: 'notifications.email',
   }),
   item('processes', 'Surecler', '/app/surecler', 'workflow', 'process', 940, {
     permission: 'settings.view',

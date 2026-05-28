@@ -24,7 +24,7 @@ import {
 import {
   Home, Users, Building2, CreditCard, Package, ShoppingCart,
   Settings, Factory, Wrench, ChevronRight, LogOut, Download,
-  BarChart2, List, AlertCircle, FolderOpen, Wallet, X, Headphones, Tags, ListChecks, Handshake
+  BarChart2, List, AlertCircle, FolderOpen, Wallet, X, Headphones, Tags, ListChecks, Handshake, FileArchive, BellRing
 } from 'lucide-react'
 
 interface NavItem {
@@ -154,6 +154,22 @@ const NAV: NavItem[] = [
     ],
   },
   {
+    id: 'documents',
+    label: 'Belgeler',
+    icon: <FileArchive size={16} />,
+    href: '/app/belgeler',
+    moduleKey: 'documents',
+    contractModuleKey: 'documents',
+  },
+  {
+    id: 'notifications',
+    label: 'Bildirimler',
+    icon: <BellRing size={16} />,
+    href: '/app/ayarlar/bildirimler',
+    moduleKey: 'notifications',
+    contractModuleKey: 'notifications',
+  },
+  {
     id: 'product_services',
     label: 'Ürün ve Hizmetler',
     icon: <Tags size={16} />,
@@ -206,6 +222,9 @@ const NAV: NavItem[] = [
       { label: 'Sistem Parametreleri', href: '/app/sistem/system-parameters' },
       { label: 'Entegrasyon Ayarları', href: '/app/sistem/entegrasyon-ayarlari', moduleKey: 'sistem', submoduleKey: 'entegrasyon-ayarlari' },
       { label: 'Kullanıcı Talepleri', href: '/app/sistem/kullanici-talepleri' },
+      { label: 'Data Import', href: '/app/sistem/import', moduleKey: 'sistem', contractModuleKey: 'importExport' },
+      { label: 'Data Export / Bulk', href: '/app/sistem/export', moduleKey: 'sistem', contractModuleKey: 'importExport' },
+      { label: 'Sistem E-postalari', href: '/app/sistem/e-postalar', moduleKey: 'sistem', contractModuleKey: 'notifications' },
       { label: 'Kullanıcılar', href: '/app/sistem/kullanicilar', disabled: true },
       { label: 'Roller & Yetkiler', href: '/app/sistem/roller', disabled: true },
       { label: 'Sistem Logları', href: '/app/sistem/loglar', disabled: true },
@@ -231,7 +250,12 @@ const SIDEBAR_CONTRACT_MODULE_BY_HREF: Record<string, string> = {
   '/app/urun-ve-hizmetler': 'product_services',
   '/app/satis-sonrasi': 'after_sales',
   '/app/gorev-ve-proje-yonetimi': 'project_management',
+  '/app/belgeler': 'documents',
+  '/app/ayarlar/bildirimler': 'notifications',
   '/app/sistem/module-licenses': 'settings',
+  '/app/sistem/import': 'importExport',
+  '/app/sistem/export': 'importExport',
+  '/app/sistem/e-postalar': 'notifications',
 }
 
 const SIDEBAR_CONTRACT_MODULE_BY_LEGACY_KEY: Record<string, string> = {
@@ -242,6 +266,8 @@ const SIDEBAR_CONTRACT_MODULE_BY_LEGACY_KEY: Record<string, string> = {
   product_services: 'product_services',
   after_sales: 'after_sales',
   project_management: 'project_management',
+  documents: 'documents',
+  notifications: 'notifications',
   sistem: 'settings',
 }
 

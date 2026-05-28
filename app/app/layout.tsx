@@ -6,6 +6,7 @@ import { usePathname, useSearchParams } from 'next/navigation'
 import Sidebar from '@/components/layout/Sidebar'
 import { PendingActionsBell } from '@/components/layout/PendingActionsBell'
 import { ProductVersionBadge } from '@/components/layout/ProductVersionBadge'
+import { NotificationBell } from '@/components/notifications/NotificationBell'
 import { Bell, Building2, Check, ChevronDown, Home, LayoutDashboard, ListChecks, Loader2, Menu, Moon, MoreHorizontal, Star, Sun } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ModuleLicenseProvider } from '@/hooks/useModuleLicense'
@@ -63,6 +64,8 @@ const BREADCRUMBS: Record<string, string> = {
   '/app/sistem/module-licenses': 'Sistem Yönetimi › Modül Lisansları',
   '/app/sistem/system-parameters': 'Sistem Yönetimi › Sistem Parametreleri',
   '/app/sistem/kullanici-talepleri': 'Sistem Yönetimi › Kullanıcı Kayıt Talepleri',
+  '/app/sistem/e-postalar': 'Sistem Yönetimi › Sistem E-postaları',
+  '/app/ayarlar/bildirimler': 'Bildirimler › Bildirim Ayarları',
   '/app/sirket/companies': 'Şirket Yönetimi › Şirketlerimiz',
   '/app/sirket/companies/partners': 'Şirket Yönetimi › Ortaklarımız',
   '/app/sirket/companies/representatives': 'Şirket Yönetimi › Temsilcilerimiz',
@@ -543,6 +546,7 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
             />
             <div className="flex items-center gap-2 sm:gap-3">
               <PendingActionsBell />
+              <NotificationBell />
               <div data-tour-id="user-settings" className="flex items-center gap-2 sm:gap-3">
               <button
                 onClick={toggleTheme}

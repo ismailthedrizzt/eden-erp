@@ -1,0 +1,73 @@
+import { PERMISSIONS } from '@/packages/shared/src'
+import type { ModuleContract } from '../moduleContract.types'
+
+export const documentsModule: ModuleContract = {
+  key: 'documents',
+  name: 'Belge Yonetimi',
+  description: 'Merkezi belge metadata, storage, requirement, versiyon ve audit altyapisi.',
+  domain: 'documents',
+  category: 'platform',
+  version: '2026-05-28.19',
+  status: 'active',
+  defaultEnabled: true,
+  licenseRequired: false,
+  setupRequired: true,
+  dependencies: [
+    { moduleKey: 'companies', required: true, reason: 'Belge scope ve kayit iliskileri sirket kapsamindan beslenir.' },
+    { moduleKey: 'audit', required: false, reason: 'Belge yukleme, indirme, preview, verify/reject islemleri auditlenir.' },
+    { moduleKey: 'actionCenter', required: false, reason: 'Eksik, reddedilen ve suresi yaklasan belgeler Is Merkezi uyarisi olabilir.' },
+  ],
+  entities: [
+    { key: 'document', tableName: 'documents', displayName: 'Belge' },
+    { key: 'document_relation', tableName: 'document_relations', displayName: 'Belge iliskisi' },
+    { key: 'document_requirement', tableName: 'document_requirements', displayName: 'Belge gereksinimi' },
+    { key: 'document_access_log', tableName: 'document_access_logs', displayName: 'Belge erisim logu' },
+  ],
+  routes: [
+    { path: '/app/belgeler', type: 'page', permission: PERMISSIONS.documents.view },
+    { path: '/api/documents', type: 'api', permission: PERMISSIONS.documents.view },
+    { path: '/api/documents/upload', type: 'api', permission: PERMISSIONS.documents.upload },
+    { path: '/api/documents/[id]/download-url', type: 'api', permission: PERMISSIONS.documents.download },
+    { path: '/api/documents/requirements', type: 'api', permission: PERMISSIONS.documents.view },
+  ],
+  menus: [
+    { label: 'Belge Yonetimi', path: '/app/belgeler', icon: 'FileArchive', order: 500, permission: PERMISSIONS.documents.view, featureFlag: 'documents.enabled' },
+  ],
+  permissions: [
+    { key: PERMISSIONS.documents.view, label: 'Belgeleri goruntule' },
+    { key: PERMISSIONS.documents.upload, label: 'Belge yukle' },
+    { key: PERMISSIONS.documents.download, label: 'Belge indir' },
+    { key: PERMISSIONS.documents.verify, label: 'Belge dogrula' },
+    { key: PERMISSIONS.documents.reject, label: 'Belge reddet' },
+    { key: PERMISSIONS.documents.delete, label: 'Belge sil' },
+    { key: PERMISSIONS.documents.admin, label: 'Belge admin' },
+    { key: PERMISSIONS.documents.accessLogsView, label: 'Belge erisim loglarini goruntule' },
+  ],
+  actions: [
+    { key: 'upload_document', label: 'Belge yukle', actionType: 'navigate', targetPage: '/app/belgeler', permission: PERMISSIONS.documents.upload, featureFlag: 'documents.enabled' },
+    { key: 'download_document', label: 'Belge indir', actionType: 'navigate', targetPage: '/app/belgeler', permission: PERMISSIONS.documents.download, featureFlag: 'documents.signedUrlDownload' },
+    { key: 'verify_document', label: 'Belge dogrula', actionType: 'navigate', targetPage: '/app/belgeler', permission: PERMISSIONS.documents.verify, featureFlag: 'documents.verification' },
+    { key: 'reject_document', label: 'Belge reddet', actionType: 'navigate', targetPage: '/app/belgeler', permission: PERMISSIONS.documents.reject, featureFlag: 'documents.verification' },
+    { key: 'replace_document', label: 'Belge yeni versiyon yukle', actionType: 'navigate', targetPage: '/app/belgeler', permission: PERMISSIONS.documents.upload, featureFlag: 'documents.versioning' },
+    { key: 'archive_document', label: 'Belge arsivle', actionType: 'navigate', targetPage: '/app/belgeler', permission: PERMISSIONS.documents.delete },
+    { key: 'view_document_access_logs', label: 'Belge erisim loglarini gor', actionType: 'navigate', targetPage: '/app/belgeler', permission: PERMISSIONS.documents.accessLogsView, featureFlag: 'documents.accessLogs' },
+  ],
+  projections: [],
+  events: [
+    { eventType: 'document.uploaded', version: '1', aggregateType: 'document' },
+    { eventType: 'document.verified', version: '1', aggregateType: 'document' },
+    { eventType: 'document.rejected', version: '1', aggregateType: 'document' },
+    { eventType: 'document.deleted', version: '1', aggregateType: 'document' },
+  ],
+  featureFlags: [
+    { key: 'documents.enabled', label: 'Belge yonetimi', defaultEnabled: true },
+    { key: 'documents.preview', label: 'Belge onizleme', defaultEnabled: true },
+    { key: 'documents.versioning', label: 'Belge versiyonlama', defaultEnabled: true },
+    { key: 'documents.verification', label: 'Belge dogrulama', defaultEnabled: true },
+    { key: 'documents.accessLogs', label: 'Belge erisim loglari', defaultEnabled: true },
+    { key: 'documents.mobileCameraUpload', label: 'Mobil kamera yukleme', defaultEnabled: true },
+    { key: 'documents.requirements', label: 'Belge gereksinimleri', defaultEnabled: true },
+    { key: 'documents.signedUrlDownload', label: 'Signed URL indirme', defaultEnabled: true },
+    { key: 'documents.expiryAlerts', label: 'Belge sure uyarilari', defaultEnabled: true },
+  ],
+}

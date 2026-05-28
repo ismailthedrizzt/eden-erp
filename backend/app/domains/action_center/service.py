@@ -158,6 +158,140 @@ async def list_action_center_items(
             ) >= STUCK_OPERATION_MINUTES:
                 items.append(_normalize_operation(row, str(context["tenant_id"])))
 
+    if await table_exists(session, "public.data_import_jobs"):
+        import_result = await session.execute(
+            text(
+                """
+                select id, tenant_id, company_id, module_key, entity_type, status,
+                       total_rows, valid_rows, invalid_rows, duplicate_rows, warning_rows,
+                       imported_rows, failed_rows, created_at, updated_at, completed_at
+                from public.data_import_jobs
+                where tenant_id = :tenant_id
+                  and status in (
+                    'validating',
+                    'validation_failed',
+                    'ready_to_import',
+                    'importing',
+                    'failed'
+                  )
+                order by updated_at desc
+                limit :limit
+                """
+            ),
+            {"tenant_id": context["tenant_id"], "limit": limit},
+        )
+        items.extend(
+            _normalize_data_job(row, str(context["tenant_id"]), "import")
+            for row in rows_to_dicts(list(import_result.mappings().all()))
+        )
+
+    if await table_exists(session, "public.data_export_jobs"):
+        export_result = await session.execute(
+            text(
+                """
+                select id, tenant_id, module_key, entity_type, status, row_count,
+                       created_at, completed_at
+                from public.data_export_jobs
+                where tenant_id = :tenant_id
+                  and status in ('completed','failed')
+                order by completed_at desc nulls last, created_at desc
+                limit :limit
+                """
+            ),
+            {"tenant_id": context["tenant_id"], "limit": limit},
+        )
+        items.extend(
+            _normalize_data_job(row, str(context["tenant_id"]), "export")
+            for row in rows_to_dicts(list(export_result.mappings().all()))
+        )
+
+    if await table_exists(session, "public.data_bulk_action_jobs"):
+        bulk_result = await session.execute(
+            text(
+                """
+                select id, tenant_id, module_key, entity_type, action_key, status,
+                       total_count, success_count, failed_count, skipped_count,
+                       created_at, completed_at
+                from public.data_bulk_action_jobs
+                where tenant_id = :tenant_id
+                  and status in (
+                    'validation_failed',
+                    'ready_to_confirm',
+                    'processing',
+                    'completed',
+                    'failed'
+                  )
+                order by created_at desc
+                limit :limit
+                """
+            ),
+            {"tenant_id": context["tenant_id"], "limit": limit},
+        )
+        items.extend(
+            _normalize_data_job(row, str(context["tenant_id"]), "bulk")
+            for row in rows_to_dicts(list(bulk_result.mappings().all()))
+        )
+
+    if await table_exists(session, "public.documents"):
+        document_result = await session.execute(
+            text(
+                """
+                select id, tenant_id, company_id, branch_id, owner_entity_type,
+                       owner_entity_id, document_type, title, status,
+                       verification_status, required, expiry_date, updated_at,
+                       created_at, rejected_reason
+                from public.documents
+                where tenant_id = :tenant_id
+                  and coalesce(is_deleted, false) = false
+                  and (
+                    status in ('rejected', 'expired')
+                    or verification_status in ('pending', 'rejected')
+                    or (
+                      expiry_date is not null
+                      and expiry_date <= current_date + interval '30 days'
+                    )
+                  )
+                order by coalesce(expiry_date, updated_at::date, created_at::date) asc
+                limit :limit
+                """
+            ),
+            {"tenant_id": context["tenant_id"], "limit": limit},
+        )
+        items.extend(
+            _normalize_document_item(row, str(context["tenant_id"]))
+            for row in rows_to_dicts(list(document_result.mappings().all()))
+        )
+
+    if await table_exists(session, "public.notifications") and context.get("user_id"):
+        notification_result = await session.execute(
+            text(
+                """
+                select id, tenant_id, user_id, company_id, branch_id, module_key,
+                       notification_type, title, message, severity, priority, status,
+                       action_required, action_key, action_label, target_page,
+                       related_entity_type, related_entity_id, related_record_label,
+                       process_instance_id, task_id, approval_id, operation_id,
+                       due_at, expires_at, created_at
+                from public.notifications
+                where tenant_id = :tenant_id
+                  and user_id = :user_id
+                  and status = 'unread'
+                  and action_required = true
+                order by coalesce(due_at, expires_at, created_at) asc
+                limit :limit
+                """
+            ),
+            {
+                "tenant_id": context["tenant_id"],
+                "user_id": context["user_id"],
+                "limit": limit,
+            },
+        )
+        items.extend(
+            _normalize_notification_item(row, str(context["tenant_id"]))
+            for row in rows_to_dicts(list(notification_result.mappings().all()))
+        )
+
     if _can_see_system_items(context) and await table_exists(session, "public.outbox_events"):
         outbox_result = await session.execute(
             text(
@@ -434,6 +568,157 @@ def _normalize_operation(row: dict[str, Any], tenant_id: str) -> dict[str, Any]:
     }
 
 
+def _normalize_data_job(row: dict[str, Any], tenant_id: str, source_type: str) -> dict[str, Any]:
+    status_value = str(row.get("status") or "")
+    failed = status_value in {"failed", "validation_failed"}
+    ready = status_value in {"ready_to_import", "ready_to_confirm", "completed"}
+    title_by_source = {
+        "import": "Import isi dikkat bekliyor" if failed or ready else "Import isi suruyor",
+        "export": (
+            "Export dosyasi hazir"
+            if status_value == "completed"
+            else "Export isi tamamlanamadi"
+        ),
+        "bulk": "Bulk action dikkat bekliyor" if failed or ready else "Bulk action suruyor",
+    }
+    description_by_source = {
+        "import": (
+            f"{row.get('entity_type')} import: {row.get('valid_rows') or 0} gecerli, "
+            f"{row.get('invalid_rows') or 0} hatali, "
+            f"{row.get('duplicate_rows') or 0} duplicate."
+        ),
+        "export": f"{row.get('entity_type')} export: {row.get('row_count') or 0} satir.",
+        "bulk": (
+            f"{row.get('action_key') or 'bulk action'}: "
+            f"{row.get('success_count') or 0} basarili, "
+            f"{row.get('failed_count') or 0} hatali."
+        ),
+    }
+    target_page = (
+        "/app/sistem/import" if source_type in {"import", "bulk"} else "/app/sistem/export"
+    )
+    return {
+        "id": f"data_{source_type}:{row.get('id')}",
+        "tenant_id": row.get("tenant_id") or tenant_id,
+        "company_id": row.get("company_id"),
+        "module_key": "importExport",
+        "source_type": f"data_{source_type}",
+        "source_id": str(row.get("id")),
+        "title": title_by_source.get(source_type, "Veri yonetimi isi"),
+        "description": description_by_source.get(source_type, "Veri yonetimi isi guncellendi."),
+        "status": "failed" if failed else "waiting" if ready else "in_progress",
+        "severity": "error" if failed else "warning" if ready else "info",
+        "priority": "high" if failed else "normal",
+        "action_key": row.get("action_key") or source_type,
+        "entity_type": row.get("entity_type"),
+        "entity_id": row.get("id"),
+        "record_label": f"{source_type}: {row.get('entity_type')}",
+        "created_at": row.get("created_at") or _now_iso(),
+        "updated_at": row.get("completed_at") or row.get("updated_at"),
+        "target_page": target_page,
+        "suggested_actions": [
+            {
+                "label": "Veri Yonetimini Ac",
+                "action_type": "navigate",
+                "target_page": target_page,
+            }
+        ],
+    }
+
+
+def _normalize_document_item(row: dict[str, Any], tenant_id: str) -> dict[str, Any]:
+    status_value = str(row.get("status") or "")
+    verification_status = str(row.get("verification_status") or "")
+    expired = status_value == "expired" or _is_past_due(row.get("expiry_date"))
+    rejected = status_value == "rejected" or verification_status == "rejected"
+    pending = verification_status == "pending"
+    if rejected:
+        title = "Reddedilen belge var"
+        severity = "warning"
+        description = (
+            row.get("rejected_reason")
+            or f"{row.get('title') or row.get('document_type')} reddedildi."
+        )
+    elif expired:
+        title = "Suresi dolan belge var"
+        severity = "warning"
+        description = (
+            f"{row.get('title') or row.get('document_type')} suresi doldu veya dolmak uzere."
+        )
+    elif pending:
+        title = "Dogrulama bekleyen belge var"
+        severity = "info"
+        description = f"{row.get('title') or row.get('document_type')} dogrulama bekliyor."
+    else:
+        title = "Belge uyarisi"
+        severity = "info"
+        description = f"{row.get('title') or row.get('document_type')} kontrol edilmeli."
+    return {
+        "id": f"document:{row.get('id')}",
+        "tenant_id": row.get("tenant_id") or tenant_id,
+        "company_id": row.get("company_id"),
+        "branch_id": row.get("branch_id"),
+        "module_key": "documents",
+        "source_type": "document",
+        "source_id": str(row.get("id")),
+        "title": title,
+        "description": description,
+        "status": "waiting",
+        "severity": severity,
+        "priority": "high" if rejected or expired else "normal",
+        "action_key": "document.review",
+        "entity_type": row.get("owner_entity_type"),
+        "entity_id": row.get("owner_entity_id"),
+        "record_label": _record_label(row.get("owner_entity_type"), row.get("owner_entity_id")),
+        "created_at": row.get("created_at") or _now_iso(),
+        "updated_at": row.get("updated_at"),
+        "target_page": "/app/belgeler",
+        "suggested_actions": [
+            {
+                "label": "Belgeyi Ac",
+                "action_type": "navigate",
+                "target_page": "/app/belgeler",
+            }
+        ],
+    }
+
+
+def _normalize_notification_item(row: dict[str, Any], tenant_id: str) -> dict[str, Any]:
+    return {
+        "id": f"notification:{row.get('id')}",
+        "tenant_id": row.get("tenant_id") or tenant_id,
+        "company_id": row.get("company_id"),
+        "branch_id": row.get("branch_id"),
+        "module_key": row.get("module_key") or "notifications",
+        "source_type": "notification",
+        "source_id": str(row.get("id")),
+        "title": row.get("title") or "Aksiyon gerektiren bildirim var",
+        "description": row.get("message") or "",
+        "status": "waiting",
+        "severity": row.get("severity") or "info",
+        "priority": row.get("priority") or "normal",
+        "action_key": row.get("action_key") or row.get("notification_type"),
+        "process_instance_id": row.get("process_instance_id"),
+        "task_id": row.get("task_id"),
+        "approval_id": row.get("approval_id"),
+        "operation_id": row.get("operation_id"),
+        "entity_type": row.get("related_entity_type"),
+        "entity_id": row.get("related_entity_id"),
+        "record_label": row.get("related_record_label")
+        or _record_label(row.get("related_entity_type"), row.get("related_entity_id")),
+        "due_at": row.get("due_at") or row.get("expires_at"),
+        "created_at": row.get("created_at") or _now_iso(),
+        "target_page": row.get("target_page") or "/app",
+        "suggested_actions": [
+            {
+                "label": row.get("action_label") or "Ac",
+                "action_type": "navigate",
+                "target_page": row.get("target_page") or "/app",
+            }
+        ],
+    }
+
+
 def _normalize_outbox(row: dict[str, Any], tenant_id: str) -> dict[str, Any]:
     status = str(row.get("status") or "")
     return {
@@ -614,6 +899,8 @@ def _module_label(module_key: object) -> str:
         "settings": "Sistem",
         "sirket": "Sirketlerimiz",
         "project_management": "Proje ve Gorevler",
+        "documents": "Belgeler",
+        "notifications": "Bildirimler",
     }
     return labels.get(str(module_key or ""), "Eden ERP")
 
@@ -686,6 +973,7 @@ def _record_label(entity_type: object, entity_id: object) -> str | None:
         "employee": "Calisan",
         "organization_unit": "Organizasyon Birimi",
         "facility": "Tesis/Lokasyon",
+        "document": "Belge",
     }
     return f"{labels.get(str(entity_type or ''), 'Kayit')}: {entity_id}"
 

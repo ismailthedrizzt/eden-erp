@@ -11,12 +11,15 @@ from app.api.v1 import (
     companies,
     company_branches,
     crm,
+    documents,
     facilities,
     features,
     health,
     hr,
+    import_export,
     integrity,
     modules,
+    notifications,
     organization,
     ownership,
     partners,
@@ -47,6 +50,9 @@ api_router.include_router(products.router, prefix="/products", tags=["products"]
 api_router.include_router(after_sales.router, prefix="/after-sales", tags=["after sales"])
 api_router.include_router(crm.router, prefix="/crm", tags=["crm"])
 api_router.include_router(reporting.router, prefix="/reporting", tags=["reporting"])
+api_router.include_router(import_export.router, tags=["import export"])
+api_router.include_router(documents.router, tags=["documents"])
+api_router.include_router(notifications.router, tags=["notifications"])
 api_router.include_router(security.router, prefix="/security", tags=["security"])
 api_router.include_router(organization.router, prefix="/organization", tags=["organization"])
 api_router.include_router(partners.router, prefix="/partners", tags=["partners"])

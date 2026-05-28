@@ -1,3 +1,4 @@
+# ruff: noqa: E501
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -100,6 +101,139 @@ FEATURE_FLAGS: list[FeatureFlagDefinition] = [
         label="Denetim raporu disa aktarimi",
         description="Denetim izi raporlarinin maskeli CSV/Excel ciktisini etkinlestirir.",
         risk="Disa aktarim yetkisi ve tarih araligi zorunlu olmalidir.",
+    ),
+    FeatureFlagDefinition(
+        key="dataImport.enabled",
+        module_key="importExport",
+        label="Data import",
+        description="Sablonlu dosya yukleme, mapping, validation ve onayli import akislarini etkinlestirir.",
+    ),
+    FeatureFlagDefinition(
+        key="dataImport.csv",
+        module_key="importExport",
+        label="CSV import",
+        description="CSV dosyalarindan import parse akislarini etkinlestirir.",
+    ),
+    FeatureFlagDefinition(
+        key="dataImport.xlsx",
+        module_key="importExport",
+        label="XLSX import",
+        description="XLSX dosyalarindan import parse akislarini etkinlestirir.",
+    ),
+    FeatureFlagDefinition(
+        key="dataExport.enabled",
+        module_key="importExport",
+        label="Data export",
+        description="Maskeli ve auditli CSV export job akislarini etkinlestirir.",
+    ),
+    FeatureFlagDefinition(
+        key="bulkOperations.enabled",
+        module_key="importExport",
+        label="Bulk operations",
+        description="Kontrollu bulk action dry-run ve confirm akislarini etkinlestirir.",
+    ),
+    FeatureFlagDefinition(
+        key="bulkOperations.confirmationRequired",
+        module_key="importExport",
+        label="Bulk onay zorunlulugu",
+        description="Bulk action icin dry-run sonrasi kullanici onayi gerektirir.",
+    ),
+    FeatureFlagDefinition(
+        key="documents.enabled",
+        module_key="documents",
+        label="Belge yonetimi",
+        description="Merkezi belge metadata, relation ve storage akislarini etkinlestirir.",
+    ),
+    FeatureFlagDefinition(
+        key="documents.preview",
+        module_key="documents",
+        label="Belge onizleme",
+        description="Belge onizleme icin kontrollu signed URL uretimini etkinlestirir.",
+    ),
+    FeatureFlagDefinition(
+        key="documents.versioning",
+        module_key="documents",
+        label="Belge versiyonlama",
+        description="Replace/new version akislarini etkinlestirir.",
+    ),
+    FeatureFlagDefinition(
+        key="documents.verification",
+        module_key="documents",
+        label="Belge dogrulama",
+        description="Belge verify/reject statulerini etkinlestirir.",
+    ),
+    FeatureFlagDefinition(
+        key="documents.accessLogs",
+        module_key="documents",
+        label="Belge erisim loglari",
+        description="Belge view/download/preview erisimlerini loglar.",
+    ),
+    FeatureFlagDefinition(
+        key="documents.mobileCameraUpload",
+        module_key="documents",
+        label="Mobil kamera yukleme",
+        description="Mobil cihazlarda fotograf cek/yukle inputunu etkinlestirir.",
+    ),
+    FeatureFlagDefinition(
+        key="documents.requirements",
+        module_key="documents",
+        label="Belge gereksinimleri",
+        description="Operation bazli required/optional belge slotlarini etkinlestirir.",
+    ),
+    FeatureFlagDefinition(
+        key="documents.signedUrlDownload",
+        module_key="documents",
+        label="Signed URL ile indirme",
+        description="Belge indirme/onizleme icin kisa omurlu signed URL uretir.",
+    ),
+    FeatureFlagDefinition(
+        key="documents.expiryAlerts",
+        module_key="documents",
+        label="Belge sure uyarilari",
+        description="Suresi dolan ve 30 gun icinde dolacak belgeleri Action Center'a tasir.",
+    ),
+    FeatureFlagDefinition(
+        key="notifications.enabled",
+        module_key="notifications",
+        label="Bildirimler",
+        description="Kullanici bildirimlerini etkinlestirir.",
+    ),
+    FeatureFlagDefinition(
+        key="notifications.inApp",
+        module_key="notifications",
+        label="Uygulama ici bildirim",
+        description="Header bildirim paneli ve okunmamis sayaci etkinlestirir.",
+    ),
+    FeatureFlagDefinition(
+        key="notifications.email",
+        module_key="notifications",
+        label="E-posta bildirimi",
+        description="Bildirimlerden e-posta kuyrugu olusturulmasini etkinlestirir.",
+    ),
+    FeatureFlagDefinition(
+        key="notifications.reminders",
+        module_key="notifications",
+        label="Hatirlatmalar",
+        description="Zamanlanmis reminder batch islerini etkinlestirir.",
+    ),
+    FeatureFlagDefinition(
+        key="notifications.digest",
+        module_key="notifications",
+        label="Bildirim ozeti",
+        description="Gunluk/haftalik digest tercihlerini etkinlestirir.",
+        default_enabled=False,
+    ),
+    FeatureFlagDefinition(
+        key="notifications.systemWarnings",
+        module_key="notifications",
+        label="Sistem uyarilari",
+        description="Sistem ve guvenlik uyarilarini ilgili yetkililere iletir.",
+    ),
+    FeatureFlagDefinition(
+        key="notifications.emailTemplates",
+        module_key="notifications",
+        label="E-posta sablonlari",
+        description="Baslangic e-posta sablonlarini ve degisken render altyapisini etkinlestirir.",
     ),
     FeatureFlagDefinition(
         key="process.approvals",

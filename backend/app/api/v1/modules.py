@@ -66,6 +66,21 @@ MODULE_META: dict[str, dict[str, str]] = {
         "category": "Platform",
         "description": "Arka plan olay kuyrugu ve retry altyapisi.",
     },
+    "importExport": {
+        "name": "Data Import / Export",
+        "category": "Platform",
+        "description": "Sablonlu import, maskeli export ve kontrollu bulk operation altyapisi.",
+    },
+    "documents": {
+        "name": "Belgeler",
+        "category": "Platform",
+        "description": "Merkezi belge metadata, storage, versiyon, requirement ve audit altyapisi.",
+    },
+    "notifications": {
+        "name": "Bildirimler",
+        "category": "Platform",
+        "description": "Uygulama ici bildirim, hatirlatma ve e-posta kuyrugu altyapisi.",
+    },
 }
 
 _MODULE_ACTIVATION_OVERRIDES: dict[str, dict[str, bool]] = {}

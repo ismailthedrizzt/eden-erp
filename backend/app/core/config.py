@@ -41,6 +41,23 @@ class Settings(BaseSettings):
     outbox_lock_ttl_seconds: int = Field(default=300, alias="OUTBOX_LOCK_TTL_SECONDS")
     outbox_max_retries: int = Field(default=5, alias="OUTBOX_MAX_RETRIES")
     outbox_poll_interval_seconds: float = Field(default=5.0, alias="OUTBOX_POLL_INTERVAL_SECONDS")
+    reminder_batch_size: int = Field(default=100, alias="REMINDER_BATCH_SIZE")
+    reminder_poll_interval_seconds: float = Field(
+        default=60.0,
+        alias="REMINDER_POLL_INTERVAL_SECONDS",
+    )
+    reminder_lookahead_minutes: int = Field(default=30, alias="REMINDER_LOOKAHEAD_MINUTES")
+    email_enabled: bool = Field(default=False, alias="EMAIL_ENABLED")
+    email_batch_size: int = Field(default=50, alias="EMAIL_BATCH_SIZE")
+    email_max_retries: int = Field(default=3, alias="EMAIL_MAX_RETRIES")
+    email_poll_interval_seconds: float = Field(default=15.0, alias="EMAIL_POLL_INTERVAL_SECONDS")
+    smtp_host: str | None = Field(default=None, alias="SMTP_HOST")
+    smtp_port: int = Field(default=587, alias="SMTP_PORT")
+    smtp_user: str | None = Field(default=None, alias="SMTP_USER")
+    smtp_password: str | None = Field(default=None, alias="SMTP_PASSWORD")
+    smtp_from_email: str | None = Field(default=None, alias="SMTP_FROM_EMAIL")
+    smtp_from_name: str = Field(default="Eden ERP", alias="SMTP_FROM_NAME")
+    smtp_tls: bool = Field(default=True, alias="SMTP_TLS")
     worker_id: str = Field(default="eden-worker-local", alias="WORKER_ID")
     log_format: str = Field(default="json", alias="LOG_FORMAT")
     metrics_enabled: bool = Field(default=True, alias="METRICS_ENABLED")

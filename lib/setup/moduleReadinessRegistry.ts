@@ -138,6 +138,30 @@ export const moduleReadinessDefinitions: ModuleReadinessDefinition[] = [
     ],
   },
   {
+    moduleKey: 'documents',
+    requiredTables: ['documents', 'document_relations'],
+    optionalTables: ['document_requirements', 'document_access_logs'],
+    requiredDependencies: ['companies'],
+    optionalDependencies: ['audit', 'actionCenter', 'importExport', 'hr', 'after_sales', 'project_management'],
+    setupSteps: [
+      setupStep('documents.tables', 'Belge tablolarini kontrol et', 'Merkezi document metadata ve relation tablolari hazir olmalidir.', 'check'),
+      setupStep('documents.storage', 'Storage ayarlarini kontrol et', 'Private bucket, tenant-scoped path ve signed URL uretimi hazir olmalidir.', 'configure', '/app/sistem/kurulum'),
+      setupStep('documents.loader', 'Document Loader baglantisini kontrol et', 'Modul belge slotlari canonical document service uzerinden calismalidir.', 'check'),
+    ],
+  },
+  {
+    moduleKey: 'notifications',
+    requiredTables: ['notifications', 'notification_preferences'],
+    optionalTables: ['reminders', 'email_messages', 'notification_templates'],
+    requiredDependencies: ['security'],
+    optionalDependencies: ['outbox', 'actionCenter', 'documents', 'project_management', 'after_sales'],
+    setupSteps: [
+      setupStep('notifications.tables', 'Bildirim tablolarini kontrol et', 'Notification, preference, reminder ve email queue tablolari hazir olmalidir.', 'check'),
+      setupStep('notifications.outbox', 'Outbox handler baglantisini kontrol et', 'Teknik eventler kullanici dilinde notification/action itema donusmelidir.', 'check'),
+      setupStep('notifications.smtp', 'E-posta ayarlarini kontrol et', 'EMAIL_ENABLED aciksa SMTP config ve email worker hazir olmalidir.', 'configure', '/app/sistem/e-postalar'),
+    ],
+  },
+  {
     moduleKey: 'reporting',
     requiredDependencies: ['companies'],
     optionalDependencies: ['partners', 'representatives', 'branches', 'accounting', 'hr', 'project_management', 'after_sales', 'crm', 'audit', 'actionCenter'],

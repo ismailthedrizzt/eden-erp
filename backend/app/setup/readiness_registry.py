@@ -1,3 +1,4 @@
+# ruff: noqa: E501
 from __future__ import annotations
 
 from app.setup.schemas import ModuleReadinessDefinition
@@ -151,6 +152,77 @@ READINESS_REGISTRY: dict[str, ModuleReadinessDefinition] = {
         setup_steps=[
             "Create master person, master organization, and CRM stakeholder tables.",
             "Configure CRM permissions, master lookup, cari integration, and task integration.",
+        ],
+    ),
+    "importExport": ModuleReadinessDefinition(
+        module_key="importExport",
+        required_tables=[
+            "data_import_jobs",
+            "data_import_job_rows",
+            "data_export_jobs",
+            "data_bulk_action_jobs",
+            "data_bulk_action_results",
+        ],
+        required_dependencies=["companies", "audit"],
+        optional_dependencies=[
+            "accounting",
+            "crm",
+            "product_services",
+            "hr",
+            "project_management",
+            "facilities",
+            "organization",
+            "partners",
+            "representatives",
+            "actionCenter",
+        ],
+        setup_steps=[
+            "Create import/export/bulk operation tables.",
+            "Verify storage, CSV/XLSX parsing, domain adapters, permissions, and Action Center hooks.",
+        ],
+    ),
+    "documents": ModuleReadinessDefinition(
+        module_key="documents",
+        required_tables=[
+            "documents",
+            "document_relations",
+        ],
+        optional_tables=[
+            "document_requirements",
+            "document_access_logs",
+        ],
+        required_dependencies=["companies"],
+        optional_dependencies=[
+            "audit",
+            "actionCenter",
+            "importExport",
+            "hr",
+            "after_sales",
+            "project_management",
+        ],
+        setup_steps=[
+            "Create central document metadata and relation tables.",
+            "Configure private storage bucket, signed URL policy, permissions, and access logs.",
+            "Connect module document loaders to the canonical documents API.",
+        ],
+    ),
+    "notifications": ModuleReadinessDefinition(
+        module_key="notifications",
+        required_tables=[
+            "notifications",
+            "notification_preferences",
+        ],
+        optional_tables=[
+            "reminders",
+            "email_messages",
+            "notification_templates",
+        ],
+        required_dependencies=["security"],
+        optional_dependencies=["outbox", "actionCenter", "audit", "documents"],
+        setup_steps=[
+            "Create notifications, preferences, reminders and email queue tables.",
+            "Configure SMTP settings only when email notifications are enabled.",
+            "Wire outbox event handlers, reminder worker and email worker.",
         ],
     ),
     "reporting": ModuleReadinessDefinition(

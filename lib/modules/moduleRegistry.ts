@@ -11,8 +11,11 @@ import { afterSalesModule } from './contracts/afterSales.module'
 import { branchesModule } from './contracts/branches.module'
 import { companiesModule } from './contracts/companies.module'
 import { crmModule } from './contracts/crm.module'
+import { documentsModule } from './contracts/documents.module'
 import { facilitiesModule } from './contracts/facilities.module'
 import { hrModule } from './contracts/hr.module'
+import { importExportModule } from './contracts/importExport.module'
+import { notificationsModule } from './contracts/notifications.module'
 import { organizationModule } from './contracts/organization.module'
 import { partnersModule } from './contracts/partners.module'
 import { actionCenterModule, auditModule, outboxModule, processModule } from './contracts/platform.module'
@@ -37,6 +40,9 @@ export const allModuleContracts = [
   productServicesModule,
   afterSalesModule,
   crmModule,
+  documentsModule,
+  importExportModule,
+  notificationsModule,
   reportingModule,
   securityModule,
   processModule,
