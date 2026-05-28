@@ -28,6 +28,10 @@ export type CompanyServiceBackendContracts = {
   capitalIncrease: BackendPaths['/api/v1/companies/{company_id}/capital-increases']['post']
   ownershipTransaction: BackendPaths['/api/v1/ownership/transactions']['post']
   representativeAuthority: BackendPaths['/api/v1/representatives/{representative_id}/authority-transactions']['post']
+  organizationUnitList: BackendPaths['/api/v1/organization/units']['get']
+  organizationUnitDetail: BackendPaths['/api/v1/organization/units/{unit_id}']['get']
+  facilityList: BackendPaths['/api/v1/facilities']['get']
+  facilityDetail: BackendPaths['/api/v1/facilities/{facility_id}']['get']
 }
 
 export type CompanyServiceListEnvelope<T> = BackendListResponse<T>

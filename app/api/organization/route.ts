@@ -1,11 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
+import { isFastApiEnabled, proxyJsonToFastApi, proxyToFastApi } from '@/lib/backend/fastApiProxy'
+
+// BACKEND_MIGRATION_STATUS: proxy_to_fastapi_with_temporary_fallback
+// CANONICAL_BACKEND: FastAPI
+// TARGET_FASTAPI_ENDPOINT: /api/v1/organization/units
+// NOTES: This route preserves the existing organization frontend contract while FastAPI owns canonical organization unit and position mutations.
 
 const UNIT_SELECT = 'id,company_id,parent_unit_id,unit_type_id,name,type,short_name,code,location_name,status,start_date,end_date,sort_order,notes,history,is_deleted'
 const POSITION_SELECT = 'id,unit_id,title,grade,reports_to_position_id,is_manager,norm_count,active_count,budget_code,budget_amount,work_type,status,employee_id,history,is_deleted'
 const UNIT_TYPE_SELECT = 'id,name,slug,color,icon,parent_type_id,sort_order,is_active'
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const fastApiResponse = await proxyToFastApi(request, '/api/v1/organization/units')
+  if (fastApiResponse) return fastApiResponse
+
   const supabase = createServiceClient()
 
   const [{ data: organization_units, error: unitError }, { data: positions, error: positionError }, { data: unitTypes, error: typeError }, employees] = await Promise.all([
@@ -28,6 +37,19 @@ export async function POST(request: NextRequest) {
   const supabase = createServiceClient()
   const body = await request.json()
 
+  if (isFastApiEnabled() && body.entity !== 'unit_type') {
+    if (body.entity === 'position') {
+      const unitId = body.unit_id || body.organization_unit_id
+      if (!unitId) return NextResponse.json({ error: 'Organizasyon birimi secilmelidir.', code: 'ORGANIZATION_UNIT_REQUIRED' }, { status: 400 })
+      const payload = omitKeys(body, ['entity'])
+      const fastApiResponse = await proxyJsonToFastApi(request, `/api/v1/organization/units/${unitId}/positions`, payload)
+      if (fastApiResponse) return fastApiResponse
+    }
+    const payload = omitKeys(body, ['entity', 'id'])
+    const fastApiResponse = await proxyJsonToFastApi(request, '/api/v1/organization/units', payload)
+    if (fastApiResponse) return fastApiResponse
+  }
+
   if (body.entity === 'position') return createPosition(supabase, body)
   if (body.entity === 'unit_type') return createUnitType(supabase, body)
   return createUnit(supabase, body)
@@ -37,9 +59,23 @@ export async function PATCH(request: NextRequest) {
   const supabase = createServiceClient()
   const body = await request.json()
 
+  if (isFastApiEnabled() && body.entity !== 'unit_type') {
+    if (body.entity === 'unit') {
+      const unitId = body.id
+      if (!unitId) return NextResponse.json({ error: 'id zorunlu', code: 'ID_REQUIRED' }, { status: 400 })
+      const payload = omitKeys(body, ['entity', 'id', 'company_id', 'unit_type_id', 'status', 'active', 'start_date', 'end_date'])
+      const fastApiResponse = await proxyJsonToFastApi(request, `/api/v1/organization/units/${unitId}`, payload, { method: 'PATCH' })
+      if (fastApiResponse) return fastApiResponse
+    }
+  }
+
   if (body.entity === 'position') return updatePosition(supabase, body)
   if (body.entity === 'unit_type') return updateUnitType(supabase, body)
   return updateUnit(supabase, body)
+}
+
+function omitKeys<T extends Record<string, any>>(value: T, keys: string[]) {
+  return Object.fromEntries(Object.entries(value).filter(([key]) => !keys.includes(key)))
 }
 
 export async function DELETE(request: NextRequest) {

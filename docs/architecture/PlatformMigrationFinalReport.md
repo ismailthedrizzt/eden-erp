@@ -239,9 +239,25 @@ The fourth productization lane for `Subelerimiz` is now started:
 - branch detail shows a product readiness panel for company relationship, organization unit link, facility/location link, active representative authority impact and branch closing/document actions;
 - FastAPI branch detail/PATCH/DELETE now uses the branch domain service so hydrated company, organization unit, facility and representative authority summary data can feed the current frontend contract;
 - field-control, Action Guide and guided tour copy now make the branch-vs-company-vs-facility-vs-organization distinction explicit;
+
+### Product hardening step 5 - Organization and facilities
+
+- FastAPI now includes canonical organization unit and facility/location endpoints for product integration: organization unit list/create/detail/PATCH, position list/create, scoped authority summaries and impact checks; facility list/create/detail/PATCH, scoped authority summaries and impact checks.
+- `Teşkilat/Kadro` now presents organization units as hierarchy/kadro records, not branches, with company/status/type/branch-link filters, readiness summary, hierarchy, branch relation and representative authority panels.
+- `Tesisler/Lokasyonlar` now presents physical locations as their own domain, not branches, with facility list/detail/create/update, branch/reusable indicators, facility-scope authority visibility and impact guidance.
+- Next `/api/facilities` routes are proxy-only. Next `/api/organization` is FastAPI-first with temporary fallback because unit type management still needs a Python endpoint.
 - product docs were added under `docs/product/branches/` for scope, real-data scenarios, E2E checklist and known gaps.
 
 Remaining P1: verify Branch Opening/Closing and branch detail hydration in staging with `FASTAPI_BASE_URL`, finalize representative authority impact warning/blocking policy and remove temporary Next fallbacks after E2E passes.
+
+### Product hardening step 6 - Process and Action Center
+
+- `/app/surecler` now presents process, task, approval and operation-warning queues as a real work center rather than a placeholder.
+- `/app/surecler/{id}` now exposes process summary, step timeline, task completion/comment actions, approval decisions, related record links and process history.
+- FastAPI Action Center now normalizes process tasks, approvals, failed/stuck operations and admin-visible outbox events into user-facing `UnifiedActionItem` records.
+- Next Action Center components now handle both FastAPI `ApiSuccess` envelopes and legacy fallback envelopes.
+
+Remaining P1: seed process/task/approval fixtures, run Playwright E2E, harden complex approval matrix and define retry-safe operation policy.
 
 ## 8. Build / Typecheck Sonucu
 

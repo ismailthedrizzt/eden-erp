@@ -1,9 +1,10 @@
 // BACKEND_MIGRATION_STATUS: proxy_to_fastapi_with_legacy_fallback
 // TARGET_BACKEND_MODULE: process
-// TARGET_FASTAPI_ENDPOINT: /api/v1/tasks/{task_id}/comments
-// NOTES: Task comments remain TS fallback until the Python process comment endpoint is added.
+// TARGET_FASTAPI_ENDPOINT: /api/v1/tasks/{task_id}/comment
+// NOTES: Task comments are canonical in Python; TS remains a migration fallback.
 
 import { NextRequest, NextResponse } from 'next/server'
+import { proxyToFastApi } from '@/lib/backend/fastApiProxy'
 import { createServiceClient } from '@/lib/supabase/server'
 import { resolveTenantContext } from '@/lib/tenancy/server'
 import { requireAnyPermission } from '@/lib/security/serverPermissions'
@@ -15,6 +16,9 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params
+  const fastApiResponse = await proxyToFastApi(request, `/api/v1/tasks/${id}/comment`)
+  if (fastApiResponse) return fastApiResponse
+
   const supabase = createServiceClient()
   const access = await requireAnyPermission(request, supabase, ['companies.edit', 'branches.opening.start', 'branches.closing.start'])
   if (access instanceof Response) return access

@@ -141,6 +141,27 @@ async def list_pending_approvals(
     return rows_to_dicts(list(result.mappings().all())), int(count.mappings().one()["count"] or 0)
 
 
+async def list_process_approvals(
+    session: AsyncSession,
+    context: dict[str, Any],
+    process_id: str,
+) -> list[dict[str, Any]]:
+    await _require_approval_table(session)
+    result = await session.execute(
+        text(
+            """
+            select *
+            from public.process_approvals
+            where tenant_id = :tenant_id
+              and process_instance_id = :process_id
+            order by requested_at asc, created_at asc
+            """
+        ),
+        {"tenant_id": context["tenant_id"], "process_id": process_id},
+    )
+    return rows_to_dicts(list(result.mappings().all()))
+
+
 async def _decide(
     session: AsyncSession,
     context: dict[str, Any],

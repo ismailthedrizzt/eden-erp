@@ -166,7 +166,11 @@ Product hardening note:
 | `/api/onboarding/system-tour/skip` | `keep_ui_adapter` | `/api/v1/onboarding/system-tour/skip` | no | no | Permanent adapter/shared contract; keep thin and do not add ERP domain mutation. | P2 |
 | `/api/onboarding/system-tour/start` | `keep_ui_adapter` | `/api/v1/onboarding/system-tour/start` | no | no | Permanent adapter/shared contract; keep thin and do not add ERP domain mutation. | P2 |
 | `/api/onboarding/system-tour/step` | `keep_ui_adapter` | `/api/v1/onboarding/system-tour/step` | no | no | Permanent adapter/shared contract; keep thin and do not add ERP domain mutation. | P2 |
-| `/api/organization` | `migrate_to_fastapi` | `/api/v1/organization` | yes | yes | Implement FastAPI equivalent, then convert route to proxy or remove. | P2 |
+| `/api/organization` | `proxy_to_fastapi_with_temporary_fallback` | `/api/v1/organization/units` | yes, fallback only | yes | Remove legacy Supabase fallback after FastAPI organization unit, position and unit type coverage is verified. | P1 |
+| `/api/facilities` | `proxy_to_fastapi` | `/api/v1/facilities` | no | no | Proxy-only facility/location BFF; lifecycle logic must stay in FastAPI. | P1 |
+| `/api/facilities/[id]` | `proxy_to_fastapi` | `/api/v1/facilities/{facility_id}` | no | no | Proxy-only detail/update BFF; facility deactivate operation remains future endpoint. | P1 |
+
+Step 5 update: `/api/organization` now attempts FastAPI first for unit list/create/update and position create while preserving the legacy Teşkilat/Kadro contract for unit types and local fallback. It remains P1/P2 cleanup debt until staging confirms the FastAPI organization endpoints and unit type management has a Python endpoint.
 | `/api/ownership-transactions/[id]/approve` | `deprecated_wrapper` | `/api/v1/ownership-transactions/{transaction_id}/approve` | yes | yes | Delete after canonical route or generated/shared contract has no imports. | P0 |
 | `/api/ownership-transactions/[id]/cancel` | `deprecated_wrapper` | `/api/v1/ownership-transactions/{transaction_id}/cancel` | yes | yes | Delete after canonical route or generated/shared contract has no imports. | P0 |
 | `/api/ownership-transactions/[id]/history` | `deprecated_wrapper` | `/api/v1/ownership-transactions/{transaction_id}/history` | yes | yes | Delete after canonical route or generated/shared contract has no imports. | P0 |
@@ -204,7 +208,7 @@ Product hardening note:
 | `/api/setup/readiness/[module_key]` | `proxy_to_fastapi_with_temporary_fallback` | `/api/v1/setup/readiness/{module_key}` | yes | yes | Remove TS fallback after FastAPI endpoint is verified in staging and frontend E2E/smoke passes. | P1 |
 | `/api/setup/readiness` | `proxy_to_fastapi_with_temporary_fallback` | `/api/v1/setup/readiness` | yes | yes | Remove TS fallback after FastAPI endpoint is verified in staging and frontend E2E/smoke passes. | P1 |
 | `/api/tasks/[id]/assign` | `proxy_to_fastapi_with_temporary_fallback` | `/api/v1/tasks/{task_id}/assign` | yes | yes | Remove TS fallback after FastAPI endpoint is verified in staging and frontend E2E/smoke passes. | P1 |
-| `/api/tasks/[id]/comment` | `proxy_to_fastapi_with_temporary_fallback` | `/api/v1/tasks/{task_id}/comments` | yes | yes | Remove TS fallback after FastAPI endpoint is verified in staging and frontend E2E/smoke passes. | P1 |
+| `/api/tasks/[id]/comment` | `proxy_to_fastapi_with_temporary_fallback` | `/api/v1/tasks/{task_id}/comment` | yes | yes | Remove TS fallback after FastAPI endpoint is verified in staging and frontend E2E/smoke passes. | P1 |
 | `/api/tasks/[id]/complete` | `proxy_to_fastapi_with_temporary_fallback` | `/api/v1/tasks/{task_id}/complete` | yes | yes | Remove TS fallback after FastAPI endpoint is verified in staging and frontend E2E/smoke passes. | P1 |
 | `/api/tasks/[id]` | `proxy_to_fastapi_with_temporary_fallback` | `/api/v1/tasks/{task_id}` | yes | yes | Remove TS fallback after FastAPI endpoint is verified in staging and frontend E2E/smoke passes. | P1 |
 | `/api/tasks` | `proxy_to_fastapi_with_temporary_fallback` | `/api/v1/tasks` | yes | yes | Remove TS fallback after FastAPI endpoint is verified in staging and frontend E2E/smoke passes. | P1 |
@@ -218,6 +222,10 @@ Product hardening note:
 | `/api/user-registration-requests/[id]/approve` | `migrate_to_fastapi` | `/api/v1/user-registration-requests/{id}/approve` | yes | no | Implement FastAPI equivalent, then convert route to proxy or remove. | P2 |
 | `/api/user-registration-requests` | `migrate_to_fastapi` | `/api/v1/user-registration-requests` | yes | no | Implement FastAPI equivalent, then convert route to proxy or remove. | P2 |
 | `/api/user/preferences` | `keep_ui_adapter` | `/api/v1/user/preferences` | yes | no | Permanent adapter/shared contract; keep thin and do not add ERP domain mutation. | P2 |
+
+## Step 6 Product Integration Update
+
+Process Center and Action Center hardening added real `/app/surecler` and `/app/surecler/{id}` experiences for process, task and approval work. `/api/action-center*` now supports FastAPI normalized action items with legacy fallback envelope compatibility. `/api/tasks/[id]/comment` targets `/api/v1/tasks/{task_id}/comment`; TS fallback remains only until staging/E2E verification removes P1 migration debt.
 
 ## Gate Rules
 

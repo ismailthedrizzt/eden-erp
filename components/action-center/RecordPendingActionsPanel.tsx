@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { AlertCircle } from 'lucide-react'
 import { tenantRequestHeaders } from '@/lib/tenancy/client'
+import { unwrapActionCenterListPayload } from '@/lib/action-center/actionCenterClient'
 import type { UnifiedActionItem } from '@/lib/action-center/actionCenter.types'
 import { ActionCenterList } from './ActionCenterList'
 
@@ -35,7 +36,7 @@ export function RecordPendingActionsPanel({ entityType, entityId, title = 'Bu ka
       .then(async response => {
         const payload = await response.json().catch(() => ({}))
         if (!response.ok) throw new Error(payload.error || 'Bekleyen isler alinamadi.')
-        setItems(Array.isArray(payload.data) ? payload.data : [])
+        setItems(unwrapActionCenterListPayload(payload).data)
       })
       .catch(fetchError => {
         if (controller.signal.aborted) return

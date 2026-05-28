@@ -119,7 +119,27 @@ Eden ERP can move into productization/hardening with explicit P1 debt. The first
 - staging smoke tests and basic load tests passing,
 - DB index rollout reviewed.
 
+## Step 5 Product Integration Update
+
+Teşkilat/Kadro and Tesisler/Lokasyonlar product hardening has started:
+
+- FastAPI now exposes organization unit list/create/detail/PATCH, position list/create, organization authority summary and organization impact endpoints.
+- FastAPI now exposes facility list/create/detail/PATCH, facility authority summary and facility impact endpoints.
+- Teşkilat/Kadro now surfaces the organization unit vs branch vs facility distinction, company/status/type/branch-link filters, hierarchy tabs, branch relation panel and organization-scope representative authority panel.
+- Tesisler/Lokasyonlar now surfaces the facility vs branch distinction, facility list/detail/create/update, branch/reusable badges, facility-scope authority panel and impact panel.
+- Remaining P1/P2: remove `/api/organization` legacy fallback after staging, add full deactivate lifecycle operations and validate organization/facility scoped authority fixtures.
+
 Until those are complete, the correct label is **READY_WITH_P1_DEBT**, not full production ready.
+
+## Step 6 Product Integration Update
+
+Process Center and Action Center product hardening has started:
+
+- `/app/surecler` now shows real process, task, approval, failed-operation and warning work queues instead of placeholder content.
+- `/app/surecler/{id}` now shows current step, tasks, approvals, process events, source record link and operation id context.
+- FastAPI Action Center now normalizes process tasks, approvals, failed/stuck operations and admin-visible outbox events into `UnifiedActionItem` output.
+- Task comments now have a canonical FastAPI endpoint at `/api/v1/tasks/{task_id}/comment` with Next fallback proxy support.
+- Remaining P1/P2: seeded E2E for process/task/approval data, advanced approval matrix, retry-safe operation policy and admin outbox retry UI.
 
 ## 9. Verification Snapshot
 

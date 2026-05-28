@@ -8,6 +8,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_session
 from app.core.errors import DomainError, domain_error_to_http
 from app.core.security import RequestContext, get_request_context, require_tenant
+from app.domains.process.approvals import list_process_approvals
+from app.domains.process.events import list_process_events
 from app.domains.process.schemas import (
     CancelProcessRequest,
     CompleteStepRequest,
@@ -87,7 +89,22 @@ async def get_process_record(
         if not row:
             raise DomainError("Surec kaydi bulunamadi.", "PROCESS_NOT_FOUND", 404)
         tasks = await list_process_tasks(session, _context(tenant_id, context.user_id), process_id)
-        return ApiSuccess(data={**row, "tasks": tasks})
+        try:
+            approvals = await list_process_approvals(
+                session,
+                _context(tenant_id, context.user_id),
+                process_id,
+            )
+        except DomainError as approval_error:
+            if approval_error.code != "APPROVAL_INFRASTRUCTURE_MISSING":
+                raise
+            approvals = []
+        events = await list_process_events(
+            session,
+            _context(tenant_id, context.user_id),
+            process_id,
+        )
+        return ApiSuccess(data={**row, "tasks": tasks, "approvals": approvals, "events": events})
     except DomainError as error:
         raise domain_error_to_http(error) from error
 

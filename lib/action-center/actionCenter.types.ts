@@ -7,6 +7,7 @@ export type ActionCenterSourceType =
   | 'outbox'
   | 'projection'
   | 'integrity_warning'
+  | 'module_readiness'
   | 'notification'
   | 'system'
 

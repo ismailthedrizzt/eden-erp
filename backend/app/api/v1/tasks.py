@@ -8,8 +8,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_session
 from app.core.errors import DomainError, domain_error_to_http
 from app.core.security import RequestContext, get_request_context, require_tenant
-from app.domains.process.schemas import AssignTaskRequest, CompleteTaskRequest, CreateTaskRequest
+from app.domains.process.schemas import (
+    AddTaskCommentRequest,
+    AssignTaskRequest,
+    CompleteTaskRequest,
+    CreateTaskRequest,
+)
 from app.domains.process.tasks import (
+    add_task_comment,
     assign_task,
     complete_task,
     create_task,
@@ -112,5 +118,26 @@ async def assign_task_record(
         async with session.begin():
             row = await assign_task(session, _context(tenant_id, context.user_id), task_id, request)
         return ApiSuccess(data=row, message="Gorev atamasi guncellendi.")
+    except DomainError as error:
+        raise domain_error_to_http(error) from error
+
+
+@router.post("/{task_id}/comment")
+async def comment_task_record(
+    task_id: str,
+    request: AddTaskCommentRequest,
+    session: SessionDep,
+    context: RequestContextDep,
+) -> ApiSuccess[dict[str, Any]]:
+    tenant_id = require_tenant(context)
+    try:
+        async with session.begin():
+            row = await add_task_comment(
+                session,
+                _context(tenant_id, context.user_id),
+                task_id,
+                request,
+            )
+        return ApiSuccess(data=row, message="Gorev yorumu eklendi.")
     except DomainError as error:
         raise domain_error_to_http(error) from error

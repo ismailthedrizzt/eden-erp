@@ -59,6 +59,13 @@ Product hardening note:
 | Organization | `/api/v1/organization/units` | GET | yes | partial | partial | yes | yes | company scope partial | partial | partial | Used by branch organization relation views. |
 | Organization | `/api/v1/organization/units/{unit_id}` | GET | yes | partial | partial | yes | yes | company scope partial | partial | partial | Hydrated detail exists for branch relation display. |
 
+Step 5 product integration update:
+
+- `POST /api/v1/organization/units`, `PATCH /api/v1/organization/units/{unit_id}`, `GET/POST /api/v1/organization/units/{unit_id}/positions`, `GET /api/v1/organization/units/{unit_id}/representative-authorities` and `GET /api/v1/organization/units/{unit_id}/impact` are now exposed in FastAPI for Teşkilat/Kadro product integration.
+- `POST /api/v1/facilities`, `PATCH /api/v1/facilities/{facility_id}`, `GET /api/v1/facilities/{facility_id}/representative-authorities` and `GET /api/v1/facilities/{facility_id}/impact` are now exposed in FastAPI for Tesisler/Lokasyonlar product integration.
+- Next `/api/organization` remains a compatibility bridge with FastAPI-first behavior. New `/api/facilities` routes are proxy-only.
+- Remaining P1: stage organization/facility authority fixtures, add deactivate lifecycle operations and remove the legacy organization fallback.
+
 ## Partners / Ownership
 
 Product hardening note:
@@ -114,12 +121,14 @@ Product hardening note:
 | Policy | `/api/v1/policy/action-eligibility` | POST | yes | yes | partial | yes | yes | policy/readiness/integrity | yes | ready | Action eligibility is Python canonical. |
 | Integrity | `/api/v1/integrity/check` | POST | yes | yes | partial | yes | yes | integrity canonical | yes | ready | Blocking/warning checks in Python. |
 | Integrity | `/api/v1/integrity/operation/{operation_key}` | POST | yes | yes | partial | yes | yes | integrity canonical | yes | ready | Operation-specific precheck endpoint exists. |
-| Process | `/api/v1/processes` | GET/POST | yes | yes, temporary fallback | partial | yes | yes | process policy partial | yes | partial | Process engine MVP in Python; TS fallback remains. |
-| Tasks | `/api/v1/tasks` | GET/POST | yes | yes, temporary fallback | partial | yes | yes | process policy partial | yes | partial | Task service MVP in Python. |
-| Approvals | `/api/v1/approvals` | GET/POST | yes | yes, temporary fallback | partial | yes | yes | process policy partial | yes | partial | Approval approve/reject endpoints exist. |
+| Process | `/api/v1/processes` | GET/POST | yes | yes, temporary fallback | partial | yes | yes | process policy partial | yes | partial | Process engine MVP in Python; Step 6 product UI consumes process list/detail. |
+| Process | `/api/v1/processes/{process_id}` | GET | yes | yes, temporary fallback | yes | yes | yes | process policy partial | yes | partial | Detail now returns tasks, approvals and events for Process Center. |
+| Tasks | `/api/v1/tasks` | GET/POST | yes | yes, temporary fallback | yes | yes | yes | process policy partial | yes | partial | Task service MVP in Python. |
+| Tasks | `/api/v1/tasks/{task_id}/complete`, `/assign`, `/comment` | POST | yes | yes, temporary fallback | yes | yes | yes | process policy partial | yes | partial | Task complete/assign/comment endpoints support Process Center actions. |
+| Approvals | `/api/v1/approvals` | GET/POST | yes | yes, temporary fallback | yes | yes | yes | process policy partial | yes | partial | Approval approve/reject endpoints exist. |
 | Audit | `/api/v1/audit` | GET | yes | yes, temporary fallback | partial | yes | yes | audit permission partial | yes | partial | Audit read/masking MVP exists; TS fallback P1. |
 | Outbox | `/api/v1/system/outbox/dispatch` | POST | yes | yes, temporary fallback | n/a | yes | internal token | n/a | yes | partial | Python worker command is canonical; Next cron fallback remains P1. |
-| Action Center | `/api/v1/action-center` | GET | yes | yes, temporary fallback | partial | yes | yes | source policy partial | yes | partial | Minimal process/task/approval source adapter exists. |
+| Action Center | `/api/v1/action-center`, `/counts`, `/summary`, `/by-record` | GET | yes | yes, temporary fallback | yes | yes | yes | source policy partial | yes | partial | Step 6 normalizes task/approval/operation/outbox sources into business-language UnifiedActionItem output. |
 | Action Guide | `/api/v1/action-eligibility/evaluate` | POST | yes | partial | partial | yes | yes | eligibility canonical | yes | partial | Eligibility is Python; full intent resolver remains TS P2. |
 | Projections | `/api/v1/projections` and `/api/v1/projections/{projection_key}` | GET | yes | optional | partial | yes | yes | scope partial | yes | partial | Generic projection endpoint exists for dev/admin style reads. |
 | Health | `/health`, `/api/v1/health` | GET | yes | n/a | n/a | yes | public/basic | n/a | yes | ready | Basic health endpoints exist. |

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import type { ReactNode } from 'react'
+import Link from 'next/link'
 import {
   AlertTriangle,
   BarChart3,
@@ -9,21 +10,30 @@ import {
   ChevronRight,
   Clock,
   Edit3,
+  ExternalLink,
   Eye,
+  GitBranch,
   History,
   Layers,
+  MapPin,
   Network,
   Plus,
+  ShieldCheck,
   Users,
   X,
 } from 'lucide-react'
 import { PageBanner } from '@/components/ui/PageBanner'
 import { EntityForm, FormField, FormMode, FormTab } from '@/components/ui/EntityForm'
 import { SmartDataTable, ColumnDef, WidgetDef } from '@/components/ui/SmartDataTable'
+import { PageContextTour } from '@/components/onboarding/PageContextTour'
+import { OperationHint } from '@/components/onboarding/OperationHint'
+import { pageTourSteps } from '@/components/onboarding/tourSteps'
+import { useRegisterActionGuideContext } from '@/components/ai/ActionGuideContext'
 import { cn } from '@/lib/utils'
 import { companyService } from '@/lib/services/companyService'
 import { organizationService } from '@/lib/services/organizationService'
 import { createProgressiveFormLoadStages } from '@/lib/forms/progressiveFormLoading'
+import { formControlClass } from '@/components/ui/formControlStyles'
 
 type PageState = 'list' | 'create-unit' | 'view-unit' | 'edit-unit' | 'create-position'
 type UnitStatus = 'Aktif' | 'Pasif' | 'Kapatıldı' | 'Birleştirildi' | 'Taşındı'
@@ -62,6 +72,15 @@ interface OrganizationUnit {
   filled_count?: number
   open_count?: number
   child_count?: number
+  type_label?: string
+  type_color?: string
+  company_name?: string
+  branch_id?: string
+  branch_name?: string
+  related_branch?: Record<string, any>
+  active?: boolean
+  metadata_json?: Record<string, any>
+  authority_scope_usage?: number
 }
 
 interface Position {
@@ -112,6 +131,10 @@ export default function TeskilatPage() {
   const [companiesLoading, setCompaniesLoading] = useState(false)
   const [companiesError, setCompaniesError] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
+  const [companyFilterId, setCompanyFilterId] = useState('')
+  const [statusFilter, setStatusFilter] = useState('active')
+  const [typeFilter, setTypeFilter] = useState('')
+  const [branchLinkFilter, setBranchLinkFilter] = useState('')
 
   const formMode: FormMode = pageState === 'create-unit' || pageState === 'create-position' ? 'create' : pageState === 'edit-unit' ? 'edit' : 'view'
   const formLoadStages = createProgressiveFormLoadStages({
@@ -121,6 +144,14 @@ export default function TeskilatPage() {
     referencesLoading: companiesLoading,
     referencesReady: companiesLoaded,
     referencesError: companiesError,
+  })
+
+  useRegisterActionGuideContext({
+    currentPage: 'organization',
+    selectedRecordId: selectedUnit?.id || null,
+    selectedRecordType: selectedUnit?.id ? 'organization_unit' : null,
+    selectedRecordStatus: selectedUnit ? String(selectedUnit.status || '') : null,
+    activeCompanyId: selectedUnit?.company_id || companyFilterId || null,
   })
 
   const loadData = async (force = false) => {
@@ -159,6 +190,11 @@ export default function TeskilatPage() {
   }
 
   useEffect(() => {
+    loadCompanyOptions().catch(error => setToast(error instanceof Error ? error.message : 'Sirket secenekleri yuklenemedi'))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  useEffect(() => {
     if (pageState !== 'list') {
       loadCompanyOptions().catch(error => setToast(error instanceof Error ? error.message : 'Şirket seçenekleri yüklenemedi'))
     }
@@ -177,10 +213,23 @@ export default function TeskilatPage() {
   const defaultCompanyId = companies[0]?.value || companyRootUnits[0]?.company_id || ''
   const defaultParentUnitId = companyRootUnits.find((unit) => unit.company_id === defaultCompanyId)?.id || ''
   const treeRows = useMemo(() => flattenTree(units, positions, openIds, ''), [units, positions, openIds])
+  const filteredTreeRows = useMemo(() => treeRows.filter((unit) => {
+    if (companyFilterId && unit.company_id !== companyFilterId) return false
+    if (statusFilter === 'active' && !isActiveUnit(unit)) return false
+    if (statusFilter === 'passive' && isActiveUnit(unit)) return false
+    if (typeFilter && String(unit.type_label || unit.type || unit.unit_type?.name || '') !== typeFilter) return false
+    if (branchLinkFilter === 'linked' && !isBranchLinkedUnit(unit)) return false
+    if (branchLinkFilter === 'missing' && isBranchLinkedUnit(unit)) return false
+    return true
+  }), [branchLinkFilter, companyFilterId, statusFilter, treeRows, typeFilter])
   const selectedPositions = useMemo(() => selectedUnit ? positions.filter((position) => position.unit_id === selectedUnit.id && !position.is_deleted) : [], [positions, selectedUnit])
   const overlayPositions = useMemo(() => positionOverlayUnit ? positions.filter((position) => position.unit_id === positionOverlayUnit.id && !position.is_deleted) : [], [positions, positionOverlayUnit])
+  const availableTypeFilters = useMemo(() => Array.from(new Set(treeRows.map(row => String(row.type_label || row.type || '')).filter(Boolean))).sort((a, b) => a.localeCompare(b, 'tr-TR')), [treeRows])
 
   const columns: ColumnDef[] = [
+    { key: 'company_name', label: 'Sirket', type: 'text', width: 190, render: (_, row) => getCompanyLabel(row, companies) },
+    { key: 'branch_name', label: 'Iliskili Sube', type: 'text', width: 170, render: (_, row) => <RelationBadge active={isBranchLinkedUnit(row)} label={getBranchLabel(row)} /> },
+    { key: 'authority_scope_usage', label: 'Yetki Kapsami', type: 'number', width: 130, render: (_, row) => <RelationBadge active={getAuthorityScopeUsage(row) > 0} label={getAuthorityScopeUsage(row) ? `${getAuthorityScopeUsage(row)} yetki` : 'Yok'} /> },
     { key: 'name', label: 'Birim Adı', type: 'text', width: 300, render: (_, row) => <TreeNameCell row={row} openIds={openIds} setOpenIds={setOpenIds} /> },
     { key: 'type_label', label: 'Tip', type: 'text', width: 150, render: (_, row) => <TypeBadge label={row.type_label} color={row.type_color} /> },
     { key: 'parent_name', label: 'Üst Birim', type: 'text', width: 180 },
@@ -193,6 +242,8 @@ export default function TeskilatPage() {
   ]
 
   const widgets: WidgetDef<any>[] = useMemo(() => [
+    { key: 'branch-linked', label: 'Sube Baglantili', render: () => units.filter(unit => !unit.is_deleted && isBranchLinkedUnit(unit)).length },
+    { key: 'authority-scoped', label: 'Yetki Kapsaminda', render: () => units.filter(unit => !unit.is_deleted && getAuthorityScopeUsage(unit) > 0).length },
     { key: 'unit-count', label: 'Aktif Birim', render: () => units.filter((unit) => !unit.is_deleted).length },
     { key: 'positions', label: 'Toplam Kadro', render: () => positions.filter((position) => !position.is_deleted).reduce((sum, position) => sum + numberValue(position.norm_count, 1), 0) },
     { key: 'filled', label: 'Dolu', render: () => positions.filter((position) => !position.is_deleted).reduce((sum, position) => sum + numberValue(position.active_count), 0) },
@@ -212,6 +263,15 @@ export default function TeskilatPage() {
   ]
 
   const tabs: FormTab[] = [
+    { id: 'hiyerarsi', label: 'Hiyerarsi', fields: [
+      { name: 'hierarchy_summary', label: 'Hiyerarsi', type: 'custom', colSpan: 3, render: () => <OrganizationHierarchyPanel unit={selectedUnit} units={units} /> },
+    ] },
+    { id: 'branch_relation', label: 'Iliskili Sube', fields: [
+      { name: 'branch_relation', label: 'Sube Baglantisi', type: 'custom', colSpan: 3, render: () => <OrganizationBranchRelationPanel unit={selectedUnit} /> },
+    ] },
+    { id: 'authorities', label: 'Temsilci Yetkileri', fields: [
+      { name: 'authority_scope', label: 'Yetki Kapsami', type: 'custom', colSpan: 3, render: () => <OrganizationAuthorityPanel unit={selectedUnit} /> },
+    ] },
     { id: 'kadro', label: 'Kadro', fields: [
       { name: 'positions', label: 'Kadrolar', type: 'custom', colSpan: 3, render: ({ readOnly }) => <PositionsTab unit={selectedUnit} positions={selectedPositions} readOnly={readOnly} openOverlay={() => selectedUnit && setPositionOverlayUnit(selectedUnit)} openCreate={() => openPositionCreate(selectedUnit)} /> },
     ] },
@@ -339,9 +399,11 @@ export default function TeskilatPage() {
         subtitle={pageState === 'list' ? 'İç organizasyon, birim hiyerarşisi ve norm kadro yönetimi' : pageIsPositionForm ? 'Seçili birime pozisyon tanımlayın' : 'Birim detaylarını yönetin'}
         icon={<Network size={24} />}
         onAddClick={openCreate}
-        addButtonText="Ekle"
+        addButtonText="Yeni Birim"
+        addButtonTourId="quick-actions"
         onBackClick={() => setPageState('list')}
       />
+      <PageContextTour tourKey="organization" steps={pageTourSteps.organization || []} enabled={pageState === 'list' || pageState === 'view-unit'} />
 
       {toast && (
         <div className="mb-4 flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
@@ -352,9 +414,25 @@ export default function TeskilatPage() {
 
       {pageState === 'list' && (
         <div className="space-y-5">
+          <OperationHint
+            id="organization-concept-boundary"
+            variant="info"
+            title="Organizasyon birimi sube degildir"
+            message="Sube resmi/operasyonel birimdir. Organizasyon birimi kadro ve hiyerarsiyi, tesis/lokasyon fiziksel yeri temsil eder."
+            actionLabel="Subelerimiz'e Git"
+            actionKey="branch_view"
+            onAction={() => { window.location.href = '/app/sirket/companies/branches' }}
+          />
+          <OrganizationProductContextPanel />
+          <div data-tour-id="organization-product-filters" className="grid gap-3 rounded-lg border border-gray-200 bg-white p-3 shadow-sm dark:border-gray-800 dark:bg-gray-950 md:grid-cols-4">
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-200">Sirket<select value={companyFilterId} onChange={event => setCompanyFilterId(event.target.value)} className={formControlClass({ className: 'mt-1' })}><option value="">Tum sirketler</option>{companies.map(company => <option key={company.value} value={company.value}>{company.label}</option>)}</select></label>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-200">Durum<select value={statusFilter} onChange={event => setStatusFilter(event.target.value)} className={formControlClass({ className: 'mt-1' })}><option value="all">Tum durumlar</option><option value="active">Aktif</option><option value="passive">Pasif / kapali</option></select></label>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-200">Birim tipi<select value={typeFilter} onChange={event => setTypeFilter(event.target.value)} className={formControlClass({ className: 'mt-1' })}><option value="">Tum tipler</option>{availableTypeFilters.map(type => <option key={type} value={type}>{type}</option>)}</select></label>
+            <label className="text-sm font-medium text-gray-700 dark:text-gray-200">Sube baglantisi<select value={branchLinkFilter} onChange={event => setBranchLinkFilter(event.target.value)} className={formControlClass({ className: 'mt-1' })}><option value="">Tum birimler</option><option value="linked">Sube baglantili</option><option value="missing">Sube baglantisi yok</option></select></label>
+          </div>
           <SmartDataTable
             columns={columns}
-            data={treeRows}
+            data={filteredTreeRows}
             widgets={widgets}
             loading={loading}
             defaultView="list"
@@ -367,6 +445,8 @@ export default function TeskilatPage() {
       )}
 
       {pageState !== 'list' && !pageIsPositionForm && (
+        <div className="space-y-4">
+        <OrganizationReadinessPanel unit={selectedUnit} positions={selectedPositions} />
         <EntityForm
           mode={formMode}
           entityName="Teşkilat"
@@ -381,6 +461,7 @@ export default function TeskilatPage() {
           onModeChange={(mode) => setPageState(mode === 'edit' ? 'edit-unit' : 'view-unit')}
           enableHistory
         />
+        </div>
       )}
 
       {pageIsPositionForm && (
@@ -403,6 +484,135 @@ export default function TeskilatPage() {
       )}
     </div>
   )
+}
+
+function OrganizationProductContextPanel() {
+  return (
+    <section data-tour-id="organization-product-context" className="grid gap-3 rounded-lg border border-blue-100 bg-blue-50/70 p-4 dark:border-blue-900/50 dark:bg-blue-950/20 md:grid-cols-3">
+      <ConceptCard icon={<Network size={18} />} title="Organizasyon Birimi" text="Kadro, pozisyon ve hiyerarsi burada yonetilir. Sube acilisi birim olusturabilir ama birim sube degildir." />
+      <ConceptCard icon={<GitBranch size={18} />} title="Sube Baglantisi" text="Resmi sube acilisi ve kapanisi Subelerimiz/Sirketlerimiz operasyonlarindan gelir; burada sadece hiyerarsi etkisi izlenir." />
+      <ConceptCard icon={<MapPin size={18} />} title="Tesis / Lokasyon" text="Fiziksel yer Tesisler/Lokasyonlar moduluyle yonetilir; kadro baglantisi organizasyon birimi uzerinden kalir." />
+    </section>
+  )
+}
+
+function ConceptCard({ icon, title, text }: { icon: ReactNode; title: string; text: string }) {
+  return (
+    <div className="rounded-lg border border-white/70 bg-white/80 p-3 shadow-sm dark:border-blue-900/50 dark:bg-gray-950/70">
+      <div className="flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-white">{icon}{title}</div>
+      <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">{text}</p>
+    </div>
+  )
+}
+
+function OrganizationReadinessPanel({ unit, positions }: { unit: OrganizationUnit | null; positions: Position[] }) {
+  if (!unit) return null
+  const norm = positions.reduce((sum, position) => sum + numberValue(position.norm_count, 1), 0)
+  const filled = positions.reduce((sum, position) => sum + numberValue(position.active_count), 0)
+  const authorityUsage = getAuthorityScopeUsage(unit)
+  const branchLinked = isBranchLinkedUnit(unit)
+  const warnings = [
+    !isActiveUnit(unit) ? 'Pasif veya kapali birimde yeni kadro/pozisyon acmadan once etki analizi yapin.' : '',
+    branchLinked && isClosedBranchRelation(unit) ? 'Iliskili sube kapali gorunuyor; birim acik kalacaksa HR/kadro etkisini kontrol edin.' : '',
+    authorityUsage > 0 ? 'Bu birim temsil yetkisi kapsami olarak kullaniliyor; pasife alma yetki etkisi dogurabilir.' : '',
+  ].filter(Boolean)
+  return (
+    <section data-tour-id="organization-product-readiness" className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-950">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="text-base font-semibold text-gray-900 dark:text-white">Organizasyon/kadro entegrasyon ozeti</h2>
+          <p className="mt-1 max-w-3xl text-sm text-gray-600 dark:text-gray-300">Bu panel birimin sirket, sube, kadro ve temsil yetkisi etkilerini tek bakista gosterir. Temsil yetkisi burada verilmez; Temsilcilerimiz modulunden yonetilir.</p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Link href="/app/sirket/companies/branches" className="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-900">Subelerimiz <ExternalLink size={15} /></Link>
+          <Link href={`/app/sirket/companies/representatives?organization_unit_id=${unit.id}`} className="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-900">Yetkileri Gor <ExternalLink size={15} /></Link>
+        </div>
+      </div>
+      <div className="mt-4 grid gap-3 md:grid-cols-4">
+        <ReadinessMetric icon={<Network size={17} />} label="Durum" value={unit.status || (unit.active === false ? 'Pasif' : 'Aktif')} tone={isActiveUnit(unit) ? 'success' : 'warning'} />
+        <ReadinessMetric icon={<GitBranch size={17} />} label="Sube baglantisi" value={branchLinked ? getBranchLabel(unit) : 'Yok'} tone={branchLinked ? 'success' : 'neutral'} />
+        <ReadinessMetric icon={<Users size={17} />} label="Kadro doluluk" value={`${filled}/${norm}`} tone={norm > filled ? 'warning' : 'success'} />
+        <ReadinessMetric icon={<ShieldCheck size={17} />} label="Yetki kapsami" value={authorityUsage ? `${authorityUsage} yetki` : 'Yok'} tone={authorityUsage ? 'warning' : 'neutral'} />
+      </div>
+      {warnings.length ? <ul className="mt-4 space-y-1 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/25 dark:text-amber-100">{warnings.map(item => <li key={item}>- {item}</li>)}</ul> : null}
+    </section>
+  )
+}
+
+function OrganizationHierarchyPanel({ unit, units }: { unit: OrganizationUnit | null; units: OrganizationUnit[] }) {
+  if (!unit) return <EmptyPanel message="Once birim secin." />
+  const children = units.filter(item => item.parent_unit_id === unit.id && !item.is_deleted)
+  const parent = units.find(item => item.id === unit.parent_unit_id)
+  return (
+    <div className="grid gap-3 md:grid-cols-3">
+      <MiniStat label="Ust birim" value={parent ? unitName(parent) : 'Kok birim'} />
+      <MiniStat label="Alt birim" value={children.length} />
+      <MiniStat label="Cycle guard" value="Aktif" tone="green" />
+      <div className="md:col-span-3 rounded-lg border border-gray-200 p-3 text-sm dark:border-gray-700">
+        {children.length ? children.map(child => <div key={child.id} className="flex items-center justify-between border-b border-gray-100 py-2 last:border-b-0 dark:border-gray-800"><span>{unitName(child)}</span><StatusPill value={child.status} /></div>) : <span className="text-gray-500">Alt birim yok.</span>}
+      </div>
+    </div>
+  )
+}
+
+function OrganizationBranchRelationPanel({ unit }: { unit: OrganizationUnit | null }) {
+  if (!unit) return <EmptyPanel message="Once birim secin." />
+  const branchLabel = getBranchLabel(unit)
+  if (!isBranchLinkedUnit(unit)) {
+    return <EmptyPanel message="Bu organizasyon birimi herhangi bir sube kaydina bagli degil. Bu normal bir departman/ekip olabilir." />
+  }
+  return (
+    <div className="rounded-lg border border-gray-200 p-4 text-sm dark:border-gray-700">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div><div className="font-semibold text-gray-900 dark:text-white">{branchLabel}</div><p className="mt-1 text-gray-500">Bu birim sube acilisi veya sube-organizasyon baglantisi ile iliskilendirildi.</p></div>
+        <Link href="/app/sirket/companies/branches" className="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 font-medium hover:bg-gray-50 dark:border-gray-700 dark:hover:bg-gray-900">Subeyi Ac <ExternalLink size={15} /></Link>
+      </div>
+    </div>
+  )
+}
+
+function OrganizationAuthorityPanel({ unit }: { unit: OrganizationUnit | null }) {
+  const [rows, setRows] = useState<any[]>([])
+  const [loading, setLoading] = useState(false)
+  useEffect(() => {
+    if (!unit?.id || !unit.company_id) {
+      setRows([])
+      return
+    }
+    setLoading(true)
+    companyService.representativesList({ companyId: unit.company_id, organizationUnitId: unit.id, scopeType: 'organization_unit', useCache: false })
+      .then(result => setRows(result.data || []))
+      .catch(() => setRows([]))
+      .finally(() => setLoading(false))
+  }, [unit?.company_id, unit?.id])
+  if (!unit) return <EmptyPanel message="Once birim secin." />
+  if (loading) return <EmptyPanel message="Temsil yetkileri yukleniyor..." />
+  if (!rows.length) return <EmptyPanel message="Bu birim kapsaminda aktif temsil yetkisi bulunmuyor." />
+  return (
+    <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700">
+      <table className="min-w-full divide-y divide-gray-200 text-sm dark:divide-gray-700">
+        <thead className="bg-gray-50 text-left text-xs font-medium uppercase text-gray-500 dark:bg-gray-800 dark:text-gray-400"><tr><th className="px-3 py-2">Temsilci</th><th className="px-3 py-2">Yetki</th><th className="px-3 py-2">Limit</th><th className="px-3 py-2">Durum</th></tr></thead>
+        <tbody className="divide-y divide-gray-100 dark:divide-gray-800">{rows.map(row => <tr key={row.id || row.representative_id}><td className="px-3 py-2 font-medium">{row.display_name || row.full_name || row.representative_name || '-'}</td><td className="px-3 py-2">{Array.isArray(row.authority_types) ? row.authority_types.join(', ') : row.primary_authority_type || '-'}</td><td className="px-3 py-2">{row.transaction_limit || row.authority_limit || 'Limitsiz'} {row.currency || ''}</td><td className="px-3 py-2"><StatusPill value={row.authority_status || row.status} /></td></tr>)}</tbody>
+      </table>
+    </div>
+  )
+}
+
+function EmptyPanel({ message }: { message: string }) {
+  return <div className="rounded-lg border border-dashed border-gray-300 p-6 text-sm text-gray-500 dark:border-gray-700">{message}</div>
+}
+
+function ReadinessMetric({ icon, label, value, tone }: { icon: ReactNode; label: string; value: ReactNode; tone: 'success' | 'warning' | 'neutral' }) {
+  const color = tone === 'success'
+    ? 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/25 dark:text-emerald-100'
+    : tone === 'warning'
+      ? 'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/25 dark:text-amber-100'
+      : 'border-gray-200 bg-gray-50 text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200'
+  return <div className={`rounded-lg border px-3 py-3 ${color}`}><div className="flex items-center gap-2 text-xs font-medium opacity-80">{icon}{label}</div><div className="mt-2 text-sm font-semibold">{value || '-'}</div></div>
+}
+
+function RelationBadge({ active, label }: { active: boolean; label: string }) {
+  return <span className={cn('inline-flex items-center rounded-full px-2 py-1 text-xs font-medium', active ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300' : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-300')}>{label || '-'}</span>
 }
 
 function TreeNameCell({ row, openIds, setOpenIds }: { row: OrganizationUnit; openIds: Set<string>; setOpenIds: (value: Set<string>) => void }) {
@@ -652,6 +862,34 @@ function unitName(unit?: OrganizationUnit | null) {
 
 function isCompanyUnit(unit: OrganizationUnit) {
   return unit.unit_type?.slug === 'company' || unit.unit_type?.name === 'Şirket' || unit.type === 'company'
+}
+
+function isActiveUnit(unit: OrganizationUnit) {
+  const value = String(unit.status || '').toLocaleLowerCase('tr-TR')
+  return unit.active !== false && !['pasif', 'passive', 'kapali', 'kapalı', 'closed', 'kapatildi', 'kapatıldı'].includes(value)
+}
+
+function isBranchLinkedUnit(unit: OrganizationUnit) {
+  return Boolean(unit.branch_id || unit.branch_name || unit.related_branch || unit.metadata_json?.branch_id || unit.type === 'branch' || unit.unit_type?.slug === 'branch')
+}
+
+function getBranchLabel(unit: OrganizationUnit) {
+  return unit.branch_name || unit.related_branch?.branch_name || unit.metadata_json?.branch_name || (isBranchLinkedUnit(unit) ? 'Bagli sube' : 'Yok')
+}
+
+function isClosedBranchRelation(unit: OrganizationUnit) {
+  const branch = unit.related_branch || {}
+  return ['closed', 'kapali', 'kapalı'].includes(String(branch.record_status || branch.status || '').toLocaleLowerCase('tr-TR'))
+}
+
+function getCompanyLabel(unit: OrganizationUnit, companies: Array<{ value: string; label: string }>) {
+  return unit.company_name || companies.find(company => company.value === unit.company_id)?.label || '-'
+}
+
+function getAuthorityScopeUsage(unit: OrganizationUnit) {
+  const raw = unit.authority_scope_usage ?? unit.metadata_json?.authority_scope_usage ?? unit.metadata_json?.active_authority_count ?? 0
+  const numeric = Number(raw)
+  return Number.isFinite(numeric) ? numeric : 0
 }
 
 function positionTitle(position: Position) {

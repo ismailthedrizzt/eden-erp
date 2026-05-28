@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Bell } from 'lucide-react'
 import { tenantRequestHeaders } from '@/lib/tenancy/client'
+import { normalizeActionCenterSummaryPayload, unwrapActionCenterListPayload } from '@/lib/action-center/actionCenterClient'
 import type { ActionCenterSummary, UnifiedActionItem } from '@/lib/action-center/actionCenter.types'
 import { ActionCenterPanel } from './ActionCenterPanel'
 
@@ -25,7 +26,7 @@ export function ActionCenterBell() {
       })
       const payload = await response.json().catch(() => ({}))
       if (!response.ok) throw new Error(payload.error || 'Is merkezi ozet bilgisi alinamadi.')
-      setSummary(payload.data || null)
+      setSummary(normalizeActionCenterSummaryPayload(payload))
     } catch {
       setSummary(null)
     }
@@ -41,8 +42,9 @@ export function ActionCenterBell() {
       })
       const payload = await response.json().catch(() => ({}))
       if (!response.ok) throw new Error(payload.error || 'Bekleyen isler alinamadi.')
-      setItems(Array.isArray(payload.data) ? payload.data : [])
-      setSummary(previous => payload.summary || previous)
+      const result = unwrapActionCenterListPayload(payload)
+      setItems(result.data)
+      setSummary(previous => result.summary || previous)
     } catch (fetchError: any) {
       setError(fetchError.message || 'Bekleyen isler alinamadi.')
     } finally {

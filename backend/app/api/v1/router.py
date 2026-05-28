@@ -8,8 +8,10 @@ from app.api.v1 import (
     branches,
     companies,
     company_branches,
+    facilities,
     health,
     integrity,
+    organization,
     ownership,
     partners,
     policy,
@@ -26,6 +28,8 @@ api_router.include_router(health.router, tags=["health"])
 api_router.include_router(companies.router, prefix="/companies", tags=["companies"])
 api_router.include_router(company_branches.router, tags=["company branch operations"])
 api_router.include_router(branches.router, prefix="/branches", tags=["branches"])
+api_router.include_router(facilities.router, prefix="/facilities", tags=["facilities"])
+api_router.include_router(organization.router, prefix="/organization", tags=["organization"])
 api_router.include_router(partners.router, prefix="/partners", tags=["partners"])
 api_router.include_router(ownership.router, prefix="/ownership", tags=["ownership"])
 api_router.include_router(projections.router, prefix="/projections", tags=["projections"])
