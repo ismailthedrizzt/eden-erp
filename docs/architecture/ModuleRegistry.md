@@ -157,3 +157,86 @@ Project Management module contract artik proje/gorev MVP temelini tasir:
 Process Engine gorevleri `process_task`, Project Management gorevleri
 `project_task` olarak ayridir. Action Center iki kaynagi birlikte gosterebilir,
 ancak module contract ve backend lifecycle ayridir.
+
+## Product Services Contract Update
+
+Product Services module contract artik urun/hizmet katalog MVP temelini tasir:
+
+- Entities: `product_catalog`
+- Permissions: `products.view`, `products.create`, `products.edit`,
+  `products.delete`
+- Actions: `create_product`, `update_product`
+- Feature flags: `productServices.enabled`, `productServices.catalog`
+- Navigation: `Urun ve Hizmetler > Urun/Hizmet Katalogu`
+
+Product Services runtime karar vermez; katalog readiness, permission,
+company scope ve servis verilebilirlik kontrolleri FastAPI Product domain
+servisleri tarafindan uygulanir. Next route'lari proxy-only adapter olarak kalir.
+
+## After-Sales Contract Update
+
+After-Sales module contract artik kurulu urun, servis talebi ve servis kaydi MVP
+temelini tasir:
+
+- Entities: `after_sales_installed_asset`, `after_sales_service_request`,
+  `after_sales_service_record`
+- Permissions: `afterSales.view`, `afterSales.edit`,
+  `afterSales.assetCreate`, `afterSales.requestCreate`,
+  `afterSales.requestAssign`, `afterSales.serviceRecordCreate`,
+  `afterSales.serviceComplete`, `afterSales.admin`
+- Actions: `create_installed_asset`, `create_service_request`,
+  `assign_service_request`, `create_service_record`,
+  `complete_service_record`, `create_followup_task`
+- Feature flags: `afterSales.enabled`, `afterSales.installedAssets`,
+  `afterSales.serviceRequests`, `afterSales.serviceRecords`,
+  `afterSales.maintenanceDue`, `afterSales.projectTaskIntegration`,
+  `afterSales.customerSignature`, `afterSales.servicePhotos`,
+  `afterSales.accountingIntegration`
+- Navigation: `Satis Sonrasi > Kurulu Urunler`, `Servis Talepleri`,
+  `Servis Kayitlari`, `Bakimi Gelenler`
+
+Project task servis talebinin yerine gecmez. After-Sales follow-up isi icin
+Project/Task domain'e bagli gorev olusturabilir; servis talebi ve servis kaydi
+lifecycle'i After-Sales domain'de kalir.
+
+## CRM Contract Update
+
+CRM / Paydaslar module contract artik master data ve stakeholder role MVP
+temelini tasir:
+
+- Entities: `master_person`, `master_organization`, `crm_stakeholder`,
+  `crm_interaction`
+- Permissions: `crm.view`, `crm.create`, `crm.edit`, `crm.delete`,
+  `crm.interactionsManage`, `crm.leadsManage`, `crm.createCariAccount`,
+  `crm.createTask`
+- Actions: `create_stakeholder`, `update_stakeholder`, `create_customer`,
+  `create_supplier`, `create_lead`, `create_interaction`,
+  `create_cari_from_stakeholder`, `create_followup_task`,
+  `link_existing_master_record`
+- Feature flags: `crm.enabled`, `crm.stakeholders`, `crm.masterDataLookup`,
+  `crm.interactions`, `crm.leads`, `crm.cariIntegration`,
+  `crm.taskIntegration`, `crm.afterSalesIntegration`
+- Navigation: `CRM / Paydaslar > Paydaslar`, `Musteriler`, `Tedarikciler`,
+  `Leadler`
+
+Master kayit kisi/kurum kimligini temsil eder; paydas rolu sirketle ticari
+veya operasyonel iliskiyi temsil eder; cari kart finansal iliskidir.
+Ortak, temsilci ve calisan rolleri ayri domain iliskileri olarak kalir.
+
+## Reporting Contract Update
+
+Reporting module contract artik yonetim dashboard ve raporlama MVP temelini
+tasir:
+
+- Entities: `report_definition`, `dashboard_kpi`, `report_export_request`
+- Permissions: `reporting.view`, `reporting.dashboardView`,
+  `reporting.export`, `reporting.admin`, `reporting.viewFinancial`,
+  `reporting.viewAuditSummary`, `reporting.viewHR`, `reporting.viewSystem`
+- Actions: `open_management_dashboard`, `query_report`, `export_report`
+- Feature flags: `reporting.enabled`, `reporting.dashboard`,
+  `reporting.exports`, `reporting.financialKpis`, `reporting.auditKpis`,
+  `reporting.hrKpis`, `reporting.systemKpis`
+- Navigation: `Yonetim Dashboard`
+
+Reporting read-only analiz katmanidir. Ham business mutation, resmi operation,
+task lifecycle veya accounting transaction yaratmaz.

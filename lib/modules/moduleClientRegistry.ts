@@ -3,6 +3,7 @@ import { accountingModule } from './contracts/accounting.module'
 import { afterSalesModule } from './contracts/afterSales.module'
 import { branchesModule } from './contracts/branches.module'
 import { companiesModule } from './contracts/companies.module'
+import { crmModule } from './contracts/crm.module'
 import { facilitiesModule } from './contracts/facilities.module'
 import { hrModule } from './contracts/hr.module'
 import { organizationModule } from './contracts/organization.module'
@@ -10,6 +11,7 @@ import { partnersModule } from './contracts/partners.module'
 import { actionCenterModule, auditModule, outboxModule, processModule } from './contracts/platform.module'
 import { productServicesModule } from './contracts/productServices.module'
 import { projectManagementModule } from './contracts/projectManagement.module'
+import { reportingModule } from './contracts/reporting.module'
 import { representativesModule } from './contracts/representatives.module'
 import { settingsModule } from './contracts/settings.module'
 
@@ -25,6 +27,8 @@ export const clientModuleContracts = [
   projectManagementModule,
   productServicesModule,
   afterSalesModule,
+  crmModule,
+  reportingModule,
   processModule,
   auditModule,
   outboxModule,

@@ -4,11 +4,13 @@ from app.api.v1 import (
     accounting,
     action_center,
     action_eligibility,
+    after_sales,
     approvals,
     audit,
     branches,
     companies,
     company_branches,
+    crm,
     facilities,
     features,
     health,
@@ -20,9 +22,11 @@ from app.api.v1 import (
     partners,
     policy,
     processes,
+    products,
     project_tasks,
     projections,
     projects,
+    reporting,
     representatives,
     setup,
     system,
@@ -38,6 +42,10 @@ api_router.include_router(facilities.router, prefix="/facilities", tags=["facili
 api_router.include_router(accounting.router, prefix="/accounting", tags=["accounting"])
 api_router.include_router(hr.router, prefix="/hr", tags=["hr"])
 api_router.include_router(projects.router, prefix="/projects", tags=["projects"])
+api_router.include_router(products.router, prefix="/products", tags=["products"])
+api_router.include_router(after_sales.router, prefix="/after-sales", tags=["after sales"])
+api_router.include_router(crm.router, prefix="/crm", tags=["crm"])
+api_router.include_router(reporting.router, prefix="/reporting", tags=["reporting"])
 api_router.include_router(organization.router, prefix="/organization", tags=["organization"])
 api_router.include_router(partners.router, prefix="/partners", tags=["partners"])
 api_router.include_router(ownership.router, prefix="/ownership", tags=["ownership"])

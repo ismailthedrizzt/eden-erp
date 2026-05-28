@@ -19,7 +19,7 @@ No P0 productization blocker was found in the final verification pass. The main 
 | layer | status | notes |
 | --- | --- | --- |
 | Next frontend/BFF | partial/ready with debt | Frontend builds. Next routes are inventoried and classified. Proxy-only violations are checked. Temporary fallbacks remain as P1 debt. |
-| FastAPI backend | ready with P1 hardening | Domain endpoints exist for core company, branch, partner, representative, ownership, accounting cari MVP, process, audit, outbox, policy, integrity, readiness and projection areas. |
+| FastAPI backend | ready with P1 hardening | Domain endpoints exist for core company, branch, partner, representative, ownership, accounting cari MVP, HR employee lifecycle, project/task MVP, product catalog, after-sales MVP, CRM/stakeholder master data MVP, reporting dashboard MVP, process, audit, outbox, policy, integrity, readiness and projection areas. |
 | Python worker | partial | Outbox worker command and system dispatch endpoint exist; production supervision and alerting remain P1/P2. |
 | DB/Supabase | partial | Index plan, safe migration and pooling config exist. Staging EXPLAIN and production rollout remain P1. |
 | OpenAPI contract | ready | Schema export and generated TS type drift checks work. Manual DTO bridge cleanup remains P1/P2. |
@@ -35,6 +35,10 @@ No P0 productization blocker was found in the final verification pass. The main 
 | Branches | partial/product hardening started | Opening/closing, list/detail/PATCH are Python-backed. UI now separates branch/company/facility/organization concepts, blocks free create, shows organization/facility/authority readiness and routes lifecycle changes to Branch Opening/Closing. Staging E2E and fallback removal remain P1. |
 | Accounting | partial/product foundation started | Cari Kartlar and Cari Hareketler CRUD/list/summary are Python-backed with proxy-only Next routes. Full yevmiye, e-fatura, bank API and automatic reconciliation remain P2. |
 | HR | partial/product foundation started | Calisanlar, istihdam lifecycle, SGK manuel takip, assignment change, employee documents and summary endpoints are Python-backed with proxy-only Next routes. Bordro, izin, puantaj and real SGK integration remain P2. |
+| Product Services | partial/product foundation started | Urun/Hizmet Katalogu MVP has FastAPI domain services, proxy-only Next routes, product UI, migration draft and real-data/E2E docs. Stok, uretim, fiyat listesi and full CRM remain P2. |
+| After-Sales | partial/product foundation started | Kurulu Urunler, Servis Talepleri, Servis Kayitlari and Bakimi Gelenler MVP have FastAPI services, proxy-only Next routes and Project/Task follow-up preparation. Customer portal, SLA, mobile field app and billing automation remain P2. |
+| CRM / Stakeholders | partial/master data foundation started | Master person/organization, stakeholder roles, customer/supplier/lead flows, cari-account creation and follow-up task integration now have FastAPI services, proxy-only Next routes, product UI, migration draft and real-data/E2E docs. Full sales pipeline, merge UI and portal remain P2. |
+| Reporting / Dashboards | partial/management overview started | Management dashboard, module KPI cards, report definitions, server-side report query and CSV export preparation now have FastAPI services, proxy-only Next routes, product UI and real-data/E2E docs. Full BI designer, scheduled reports and PDF/Excel exports remain P2. |
 | Organization | partial | Organization links are visible from branch detail; full Teşkilat/Kadro product hardening remains a later productization step. |
 | Facilities | partial | Facility/location links are visible from branch detail; full Tesisler/Lokasyonlar product hardening and multi-branch relation decision remain P1/P2. |
 | Process | partial | Python process/task/approval MVP exists. TS fallback and UI hardening remain P1. |
@@ -111,6 +115,20 @@ None identified in the final gate.
 10. Project/task module. **Started:** Projeler, Gorevler and Kanban MVP now have
     FastAPI domain services, proxy-only Next routes, Action Center `project_task`
     source mapping, migration draft and real-data/E2E docs.
+11. Product/service and after-sales foundation. **Started:** Urun/Hizmet
+    Katalogu, Kurulu Urunler, Servis Talepleri, Servis Kayitlari and Bakimi
+    Gelenler MVP now have FastAPI domain services, proxy-only Next routes,
+    Project/Task follow-up preparation, migration draft and real-data/E2E docs.
+12. CRM/stakeholder master data foundation. **Started:** Master kisi/kurum,
+    musteri/tedarikci/lead paydas rolleri, cari kart olusturma, follow-up task
+    ve related roles paneli FastAPI + proxy-only Next + MVP UI ile basladi.
+13. Reporting/dashboard management overview. **Started:** Yonetim Dashboard,
+    modul KPI kartlari, report definitions, server-side query ve CSV export
+    hazirligi FastAPI + proxy-only Next + MVP UI ile basladi.
+14. Mobile/responsive/PWA hardening. **Started:** mobile bottom nav, Action
+    Center/Action Guide sheet davranisi, SmartDataTable mobile card mode,
+    EntityForm sticky action bar, PWA manifest/cache guvenlik kararlari ve
+    mobile QA dokumanlari eklendi.
 
 ## 8. Decision
 

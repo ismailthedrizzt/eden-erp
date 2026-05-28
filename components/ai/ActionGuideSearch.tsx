@@ -180,9 +180,12 @@ export function ActionGuideSearch({ onStartSystemTour }: ActionGuideSearchProps)
         error={error}
         currentPageTourKey={pageContext.currentPage || null}
         recentQueries={recentQueries}
+        query={query}
         onClose={() => setOpen(false)}
         onStartSystemTour={onStartSystemTour}
         onPickExample={pickExample}
+        onQueryChange={setQuery}
+        onSubmitQuery={() => void submit()}
       />
     </div>
   )

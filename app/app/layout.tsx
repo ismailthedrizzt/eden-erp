@@ -1,11 +1,12 @@
 'use client'
 
 import { Suspense, useState, useEffect, useRef } from 'react'
+import Link from 'next/link'
 import { usePathname, useSearchParams } from 'next/navigation'
 import Sidebar from '@/components/layout/Sidebar'
 import { PendingActionsBell } from '@/components/layout/PendingActionsBell'
 import { ProductVersionBadge } from '@/components/layout/ProductVersionBadge'
-import { Building2, Check, ChevronDown, Loader2, Menu, Moon, Star, Sun } from 'lucide-react'
+import { Bell, Building2, Check, ChevronDown, Home, LayoutDashboard, ListChecks, Loader2, Menu, Moon, MoreHorizontal, Star, Sun } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ModuleLicenseProvider } from '@/hooks/useModuleLicense'
 import { PermissionProvider } from '@/lib/security/permissionStore'
@@ -118,9 +119,19 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
   const [tourShouldOpen, setTourShouldOpen] = useState(false)
   const [tourInitialStep, setTourInitialStep] = useState<string | null>(null)
   const [tourClosedThisSession, setTourClosedThisSession] = useState(false)
+  const [isOffline, setIsOffline] = useState(false)
   const workspaceMenuRef = useRef<HTMLDivElement | null>(null)
 
   useEffect(() => {
+    setIsOffline(typeof navigator !== 'undefined' ? !navigator.onLine : false)
+
+    function updateNetworkState() {
+      setIsOffline(!navigator.onLine)
+    }
+
+    window.addEventListener('online', updateNetworkState)
+    window.addEventListener('offline', updateNetworkState)
+
     const cachedPreferences = readCachedUiPreferences()
     setDark(applyThemePreference(cachedPreferences.theme))
     setCollapsed(Boolean(cachedPreferences.sidebarCollapsed))
@@ -196,8 +207,14 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
 
     return () => {
       cancelled = true
+      window.removeEventListener('online', updateNetworkState)
+      window.removeEventListener('offline', updateNetworkState)
     }
   }, [])
+
+  useEffect(() => {
+    setMobileMenuOpen(false)
+  }, [pathname])
 
   useEffect(() => {
     if (!workspaceMenuOpen) return
@@ -237,6 +254,14 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (tourOpen && collapsed) setCollapsed(false)
   }, [collapsed, tourOpen])
+
+  useEffect(() => {
+    if (searchParams.get('open') !== 'action-center') return
+    const timer = window.setTimeout(() => {
+      window.dispatchEvent(new CustomEvent('eden:open-action-center'))
+    }, 0)
+    return () => window.clearTimeout(timer)
+  }, [searchParams])
 
   function toggleTheme() {
     const nextTheme: UiThemePreference = dark ? 'light' : 'dark'
@@ -387,8 +412,9 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
               {/* Mobile Menu Button */}
               <button
                 onClick={() => setMobileMenuOpen(true)}
-                className="lg:hidden w-8 h-8 rounded-lg border border-gray-200 dark:border-gray-700 flex items-center justify-center
+                className="lg:hidden h-11 w-11 rounded-lg border border-gray-200 dark:border-gray-700 flex items-center justify-center
                            text-gray-500 hover:bg-gray-50 dark:hover:bg-eden-navy transition-colors"
+                aria-label="Mobil menuyu ac"
               >
                 <Menu size={18} />
               </button>
@@ -515,15 +541,16 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
                 setTourOpen(true)
               }}
             />
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
               <PendingActionsBell />
-              <div data-tour-id="user-settings" className="flex items-center gap-3">
+              <div data-tour-id="user-settings" className="flex items-center gap-2 sm:gap-3">
               <button
                 onClick={toggleTheme}
                 data-tour-id="theme-toggle"
-                className="w-8 h-8 rounded-lg border border-gray-200 dark:border-gray-700 flex items-center justify-center
+                className="h-11 w-11 rounded-lg border border-gray-200 dark:border-gray-700 flex items-center justify-center
                            text-gray-500 hover:bg-gray-50 dark:hover:bg-eden-navy transition-colors"
                 title="Tema"
+                aria-label="Tema degistir"
               >
                 {dark ? <Sun size={15} /> : <Moon size={15} />}
               </button>
@@ -533,7 +560,7 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
                                 text-[10px] font-bold text-white">
                   İİ
                 </div>
-                <div className="min-w-0">
+                <div className="hidden min-w-0 sm:block">
                   <div className="text-xs font-medium text-gray-700 dark:text-gray-200 truncate">İsmail ILGAR</div>
                   <div className="text-[10px] text-gray-500 dark:text-gray-400">Yönetici</div>
                 </div>
@@ -542,10 +569,17 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
             </div>
           </header>
 
+          {isOffline && (
+            <div role="status" className="border-b border-amber-200 bg-amber-50 px-4 py-2 text-xs font-medium text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-100">
+              Internet baglantisi yok. Kayit degistiren islemler icin baglanti gereklidir.
+            </div>
+          )}
+
           {/* Content */}
-          <main data-tour-id="page-template" className="flex-1 overflow-y-auto bg-gray-50 dark:bg-[#09141e] p-5">
+          <main data-tour-id="page-template" className="flex-1 overflow-y-auto bg-gray-50 p-3 pb-24 dark:bg-[#09141e] sm:p-5 sm:pb-5">
             {children}
           </main>
+          <MobileBottomNavigation pathname={pathname} onOpenMenu={() => setMobileMenuOpen(true)} />
             </div>
             <GuidedSystemTour
               open={!workspacesLoading && tourOpen}
@@ -560,6 +594,62 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
         </PermissionProvider>
       </ModuleProvider>
     </ModuleLicenseProvider>
+  )
+}
+
+function MobileBottomNavigation({ pathname, onOpenMenu }: { pathname: string; onOpenMenu: () => void }) {
+  const items = [
+    { label: 'Ana', href: '/app', icon: Home },
+    { label: 'Panel', href: '/app/dashboard', icon: LayoutDashboard },
+    { label: 'Sirket', href: '/app/sirket/companies', icon: Building2 },
+    { label: 'Gorev', href: '/app/gorev-ve-proje-yonetimi/gorevler', icon: ListChecks },
+  ]
+
+  return (
+    <nav
+      aria-label="Mobil ana gezinme"
+      className="fixed inset-x-0 bottom-0 z-30 border-t border-gray-200 bg-white/95 px-2 pb-[calc(env(safe-area-inset-bottom)+0.35rem)] pt-1.5 shadow-[0_-10px_30px_rgba(15,34,51,0.12)] backdrop-blur dark:border-gray-800 dark:bg-eden-navy-2/95 lg:hidden"
+    >
+      <div className="grid grid-cols-6 gap-1">
+        {items.map(item => {
+          const Icon = item.icon
+          const active = pathname === item.href || (item.href !== '/app' && pathname.startsWith(item.href))
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={cn(
+                'flex min-h-11 flex-col items-center justify-center gap-0.5 rounded-lg px-1 text-[10px] font-semibold transition-colors',
+                active
+                  ? 'bg-eden-blue/10 text-eden-blue dark:bg-eden-blue/25 dark:text-white'
+                  : 'text-gray-500 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-eden-navy'
+              )}
+            >
+              <Icon size={17} />
+              <span>{item.label}</span>
+            </Link>
+          )
+        })}
+        <button
+          type="button"
+          onClick={() => window.dispatchEvent(new CustomEvent('eden:open-action-center'))}
+          className="flex min-h-11 flex-col items-center justify-center gap-0.5 rounded-lg px-1 text-[10px] font-semibold text-gray-500 transition-colors hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-eden-navy"
+          aria-label="Is merkezini ac"
+        >
+          <Bell size={17} />
+          <span>Is</span>
+        </button>
+        <button
+          type="button"
+          onClick={onOpenMenu}
+          className="flex min-h-11 flex-col items-center justify-center gap-0.5 rounded-lg px-1 text-[10px] font-semibold text-gray-500 transition-colors hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-eden-navy"
+          aria-label="Daha fazla menu ac"
+        >
+          <MoreHorizontal size={17} />
+          <span>Daha</span>
+        </button>
+      </div>
+    </nav>
   )
 }
 

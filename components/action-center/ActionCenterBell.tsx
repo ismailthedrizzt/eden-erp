@@ -68,12 +68,18 @@ export function ActionCenterBell() {
     return () => document.removeEventListener('mousedown', onPointerDown)
   }, [open, refreshItems])
 
+  useEffect(() => {
+    const onOpenActionCenter = () => setOpen(true)
+    window.addEventListener('eden:open-action-center', onOpenActionCenter)
+    return () => window.removeEventListener('eden:open-action-center', onOpenActionCenter)
+  }, [])
+
   return (
     <div ref={containerRef} data-tour-id="action-center-bell" className="relative">
       <button
         type="button"
         onClick={() => setOpen(previous => !previous)}
-        className={`relative flex h-8 w-8 items-center justify-center rounded-lg border transition-colors ${hasUrgent ? 'border-red-200 text-red-600 hover:bg-red-50 dark:border-red-900 dark:text-red-300 dark:hover:bg-red-950/30' : 'border-gray-200 text-gray-500 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-eden-navy'}`}
+        className={`relative flex h-11 w-11 items-center justify-center rounded-lg border transition-colors sm:h-8 sm:w-8 ${hasUrgent ? 'border-red-200 text-red-600 hover:bg-red-50 dark:border-red-900 dark:text-red-300 dark:hover:bg-red-950/30' : 'border-gray-200 text-gray-500 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-eden-navy'}`}
         aria-label="Is merkezi"
       >
         <Bell size={15} />

@@ -35,26 +35,18 @@ const runtimeCaching = [
   },
   {
     urlPattern: ({ url, request }) =>
-      request.method === 'GET' &&
       url.origin === self.location.origin &&
-      url.pathname.startsWith('/api/') &&
-      !url.pathname.startsWith('/api/auth/'),
-    handler: 'NetworkFirst',
+      url.pathname.startsWith('/api/'),
+    handler: 'NetworkOnly',
     options: {
-      cacheName: 'eden-api-get',
-      networkTimeoutSeconds: 5,
-      expiration: { maxEntries: 48, maxAgeSeconds: 10 * 60 },
-      cacheableResponse: { statuses: [0, 200] },
+      cacheName: 'eden-api-network-only',
     },
   },
   {
     urlPattern: ({ request }) => request.mode === 'navigate',
-    handler: 'NetworkFirst',
+    handler: 'NetworkOnly',
     options: {
-      cacheName: 'eden-pages',
-      networkTimeoutSeconds: 5,
-      expiration: { maxEntries: 32, maxAgeSeconds: 24 * 60 * 60 },
-      cacheableResponse: { statuses: [0, 200] },
+      cacheName: 'eden-navigation-network-only',
     },
   },
 ]

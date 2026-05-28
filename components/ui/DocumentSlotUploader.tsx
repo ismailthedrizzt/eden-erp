@@ -227,6 +227,7 @@ function canInlinePreview(doc?: SlotDocument | null, url?: string) {
 }
 
 const DEFAULT_DOCUMENT_ACCEPTED_TYPES = [
+  'image/*',
   'application/pdf',
   'application/msword',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
@@ -237,6 +238,14 @@ const DEFAULT_DOCUMENT_ACCEPTED_TYPES = [
   'application/zip',
   'application/x-zip-compressed',
 ]
+
+function acceptsFileType(acceptedTypes: string[], fileType: string) {
+  return acceptedTypes.some(type => type === fileType || (type.endsWith('/*') && fileType.startsWith(type.slice(0, -1))))
+}
+
+function acceptsCameraCapture(acceptedTypes: string[]) {
+  return acceptedTypes.some(type => type === 'image/*' || type.startsWith('image/'))
+}
 
 function getDocumentUrl(doc?: SlotDocument | null) {
   if (!doc) return ''
@@ -576,8 +585,8 @@ export function DocumentSlotUploader({
 
     // Validate file type
     const acceptedTypes = targetSlot.acceptedTypes || DEFAULT_DOCUMENT_ACCEPTED_TYPES
-    if (!acceptedTypes.includes(file.type)) {
-      alert(`Invalid file type. Accepted: PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, ZIP`)
+    if (!acceptsFileType(acceptedTypes, file.type)) {
+      alert(`Invalid file type. Accepted: image, PDF, DOC, DOCX, XLS, XLSX, PPT, PPTX, ZIP`)
       return
     }
 
@@ -653,7 +662,7 @@ export function DocumentSlotUploader({
     if (!canMutate) return
     
     const file = e.dataTransfer.files[0]
-    if (file && currentAcceptedTypes.includes(file.type)) {
+    if (file && acceptsFileType(currentAcceptedTypes, file.type)) {
       handleFileSelect(file)
     } else {
       alert('Invalid file type. Please upload an accepted document type.')
@@ -1406,6 +1415,7 @@ export function DocumentSlotUploader({
         ref={fileInputRef}
         type="file"
         accept={currentAcceptedTypes.join(',')}
+        capture={acceptsCameraCapture(currentAcceptedTypes) ? 'environment' : undefined}
         disabled={!canMutate}
         className="hidden"
         onChange={(e) => {
@@ -1423,6 +1433,7 @@ export function DocumentSlotUploader({
         ref={replaceFileInputRef}
         type="file"
         accept={(displaySlots.find(slot => slot.id === replaceSlotId)?.acceptedTypes || DEFAULT_DOCUMENT_ACCEPTED_TYPES).join(',')}
+        capture={acceptsCameraCapture(displaySlots.find(slot => slot.id === replaceSlotId)?.acceptedTypes || DEFAULT_DOCUMENT_ACCEPTED_TYPES) ? 'environment' : undefined}
         disabled={!canMutate}
         className="hidden"
         onChange={(e) => {

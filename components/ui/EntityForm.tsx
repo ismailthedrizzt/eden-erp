@@ -2966,7 +2966,7 @@ function FieldOperationLockIndicator({ control, recordStatus }: { control: FormF
         <div
           role="dialog"
           aria-label="Kilitli alan yardimi"
-          className="absolute left-1/2 top-full z-50 mt-1 w-80 -translate-x-1/2 rounded-lg border border-amber-200 bg-white p-3 text-xs leading-5 text-gray-700 shadow-lg dark:border-amber-900/60 dark:bg-gray-950 dark:text-gray-200"
+          className="fixed inset-x-3 bottom-3 z-50 max-h-[70dvh] overflow-y-auto rounded-2xl border border-amber-200 bg-white p-4 text-xs leading-5 text-gray-700 shadow-2xl dark:border-amber-900/60 dark:bg-gray-950 dark:text-gray-200 sm:absolute sm:inset-x-auto sm:bottom-auto sm:left-1/2 sm:top-full sm:mt-1 sm:w-80 sm:-translate-x-1/2 sm:rounded-lg sm:p-3"
         >
           <div className="mb-1 flex items-center justify-between gap-2">
             <div className="font-semibold text-gray-900 dark:text-gray-100">Bu alan neden kilitli?</div>
@@ -3001,7 +3001,7 @@ function FieldOperationLockIndicator({ control, recordStatus }: { control: FormF
                     startSuggestedFieldOperation(action)
                     setShowTooltip(false)
                   }}
-                  className="rounded-md border border-amber-300 px-2.5 py-1 text-[11px] font-semibold text-amber-800 transition hover:bg-amber-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-amber-800 dark:text-amber-100 dark:hover:bg-amber-950/40"
+                  className="min-h-11 rounded-md border border-amber-300 px-3 py-2 text-[11px] font-semibold text-amber-800 transition hover:bg-amber-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-amber-800 dark:text-amber-100 dark:hover:bg-amber-950/40 sm:min-h-0 sm:px-2.5 sm:py-1"
                 >
                   {action.operationLabel}
                 </button>
@@ -3977,12 +3977,12 @@ export function EntityForm({
     const isRequired = isFieldRequired(field)
     const validationState = getFieldValidationState(field)
     const colSpanClass = field.colSpan === 3
-      ? 'col-span-2 lg:col-span-3'
+      ? 'col-span-1 sm:col-span-2 lg:col-span-3'
       : field.colSpan === 2
-        ? 'col-span-2 md:col-span-2'
+        ? 'col-span-1 sm:col-span-2'
         : field.compact
           ? 'col-span-1'
-          : 'col-span-2 md:col-span-1'
+          : 'col-span-1'
     const fieldOperationControl = !isCreate ? field.controlledByOperation : undefined
     const fieldDisabled = isReadOnly
       || !!field.readOnly
@@ -3993,7 +3993,7 @@ export function EntityForm({
 
     if (field.type === 'section') {
       return (
-        <div key={field.name} className={cn("border-t border-gray-200 pt-4 dark:border-gray-700", colSpanClass || 'md:col-span-2 lg:col-span-3')}>
+        <div key={field.name} className={cn("border-t border-gray-200 pt-4 dark:border-gray-700", colSpanClass || 'col-span-1 sm:col-span-2 lg:col-span-3')}>
           <h4 className="text-sm font-semibold text-gray-900 dark:text-white">{field.label}</h4>
         </div>
       )
@@ -4396,7 +4396,7 @@ export function EntityForm({
 
       {/* Hero Section - Two Column Layout */}
       <div className="border-b border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-900">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 p-6">
+        <div className="grid grid-cols-1 gap-5 p-4 sm:p-6 lg:grid-cols-4 lg:gap-6">
           
           {/* Left Panel - STANDARD FORM LAYOUT: Photo (expected) + CV (optional) */}
           <div data-tour-id="record-form-media" className="relative lg:col-span-1">
@@ -4462,7 +4462,7 @@ export function EntityForm({
             )}
 
             {/* Required Fields Grid */}
-            <div data-tour-id="record-form-fields" className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 flex-1">
+            <div data-tour-id="record-form-fields" className="grid grid-cols-1 gap-4 flex-1 sm:grid-cols-2 lg:grid-cols-3">
               {identityGate?.enabled && (
                 <MasterIdentityGate
                   config={identityGate}
@@ -4493,31 +4493,31 @@ export function EntityForm({
                 />
               )}
               {isIdentityGateLocked && fieldErrors.identity_gate && (
-                <div className="col-span-2 lg:col-span-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+                <div className="col-span-1 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200 sm:col-span-2 lg:col-span-3">
                   {fieldErrors.identity_gate}
                 </div>
               )}
               {roleHeroFields.length > 0 ? (
                 roleHeroCardTitle ? (
-                  <div className="col-span-2 lg:col-span-3 rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900">
+                  <div className="col-span-1 rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-gray-900 sm:col-span-2 lg:col-span-3">
                     <div className="mb-3 text-sm font-semibold text-gray-900 dark:text-white">{roleHeroCardTitle}</div>
-                    <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                       {roleHeroFields.map(field => renderField(field, enableHistory))}
                     </div>
                   </div>
                 ) : roleHeroFields.map(field => renderField(field, enableHistory))
               ) : showEmptyRoleHeroState ? (
-                <div className="col-span-2 lg:col-span-3 rounded-lg border border-dashed border-gray-200 bg-white/70 px-3 py-2 text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-900/50 dark:text-gray-400">
+                <div className="col-span-1 rounded-lg border border-dashed border-gray-200 bg-white/70 px-3 py-2 text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-900/50 dark:text-gray-400 sm:col-span-2 lg:col-span-3">
                   Bu formda hero alaninda manuel girilecek rol alani yok. Rol detaylari sekmelerde yonetilir.
                 </div>
               ) : null}
             </div>
 
             {/* Form Action Area */}
-            <div data-tour-id="record-form-command-area" className="mt-6 border-t border-gray-200 pt-4 dark:border-gray-700">
+            <div data-tour-id="record-form-command-area" className="sticky bottom-0 z-20 -mx-4 mt-6 border-t border-gray-200 bg-white/95 px-4 pt-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] backdrop-blur dark:border-gray-700 dark:bg-gray-900/95 sm:static sm:mx-0 sm:bg-transparent sm:px-0 sm:pb-0 sm:backdrop-blur-0">
               <FormOperationActions groups={normalizedOperationActions} mode={mode} variant="compact" />
 
-              <div className="mt-3 flex flex-wrap items-center justify-end gap-2">
+              <div className="mt-3 flex flex-wrap items-center justify-stretch gap-2 sm:justify-end">
                 <FormOperationActions groups={normalizedOperationActions} mode={mode} variant="legacy" />
 
                 {additionalActions}
@@ -4528,7 +4528,7 @@ export function EntityForm({
                     onClick={handleDelete}
                     disabled={deleting}
                     className={cn(
-                      "flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50",
+                      "flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 sm:flex-none",
                       canActivateRecord
                         ? "border-emerald-200 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-900/60 dark:text-emerald-300 dark:hover:bg-emerald-950/30"
                         : "border-red-200 text-red-700 hover:bg-red-50 dark:border-red-900/60 dark:text-red-300 dark:hover:bg-red-950/30"
@@ -4542,7 +4542,7 @@ export function EntityForm({
                   <button
                     data-tour-id="record-form-edit-button"
                     onClick={() => handleModeChange('edit')}
-                    className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium"
+                    className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 sm:flex-none"
                   >
                     <Edit3 size={16} />
                     Düzenle
@@ -4554,14 +4554,14 @@ export function EntityForm({
                   <>
                     <button
                       onClick={() => isCreate ? onCancel() : handleModeChange('view')}
-                      className="px-4 py-2 text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800 rounded-lg transition-colors text-sm font-medium"
+                      className="min-h-11 flex-1 rounded-lg px-4 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800 sm:flex-none"
                     >
                       İptal
                     </button>
                     <button
                       onClick={handleSave}
                       disabled={saving || isIdentityGateLocked || (isCreate && !effectiveCanCreate) || (isEdit && !effectiveCanEdit)}
-                      className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm font-medium disabled:opacity-50"
+                      className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-50 sm:flex-none"
                     >
                       {saving ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} />}
                       {isCreate ? 'Oluştur' : 'Güncelle'}
@@ -4581,7 +4581,7 @@ export function EntityForm({
 
       {formTabs.length > 0 && (
         <div className="border-b border-gray-200 dark:border-gray-700">
-          <div data-tour-id="record-form-tabs" className="flex flex-wrap gap-2 px-4 py-3">
+          <div data-tour-id="record-form-tabs" className="flex gap-2 overflow-x-auto px-4 py-3">
             {formTabs.map(tab => (
               <button
                 key={tab.id}
@@ -4589,7 +4589,7 @@ export function EntityForm({
                 disabled={isIdentityGateLocked}
                 onClick={() => handleActiveTabChange(tab.id)}
                 className={cn(
-                  "inline-flex max-w-full items-center gap-2 rounded-lg border px-3 py-2 text-left text-sm font-medium transition-colors",
+                  "inline-flex min-h-11 max-w-full shrink-0 items-center gap-2 rounded-lg border px-3 py-2 text-left text-sm font-medium transition-colors",
                   activeTab === tab.id
                     ? "border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900/60 dark:bg-blue-950/30 dark:text-blue-300"
                     : "border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50 hover:text-gray-900 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400 dark:hover:border-gray-700 dark:hover:text-gray-200",
@@ -4607,7 +4607,7 @@ export function EntityForm({
       )}
 
       {(formTabs.length > 0 || isIdentityGateLocked) && (
-        <div data-tour-id="record-form-tab-content" className="relative p-6">
+        <div data-tour-id="record-form-tab-content" className="relative p-4 sm:p-6">
           <SectionLoadIcon stage={detailsLoadStage} />
           {isIdentityGateLocked && (
             <div className="mb-4 rounded-lg border border-dashed border-gray-300 bg-gray-50 px-4 py-3 text-sm text-gray-600 dark:border-gray-700 dark:bg-gray-800/50 dark:text-gray-300">
@@ -4618,7 +4618,7 @@ export function EntityForm({
             <div
               key={tab.id}
               className={cn(
-                tab.id === DOCUMENTS_FORM_TAB_ID ? "block" : "grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4",
+                tab.id === DOCUMENTS_FORM_TAB_ID ? "block" : "grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3",
                 activeTab !== tab.id && "hidden"
               )}
             >

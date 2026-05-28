@@ -133,3 +133,93 @@ Bu altyapi eksikse Projeler, Gorevler ve Kanban ekranlari teknik tablo hatasi
 yerine "Proje/Gorev modulu kurulumu tamamlanmamis" diline yonlenir. Project
 task Action Center'a `source_type=project_task` ile baglanir; process task
 readiness ayridir.
+
+## Product Services Readiness
+
+Product Services module icin zorunlu altyapi:
+
+- `product_catalog`
+
+Opsiyonel altyapi ve bagimliliklar:
+
+- `companies`
+- `accounting`
+- `inventory`
+
+Bu altyapi eksikse Urun/Hizmet Katalogu teknik tablo hatasi yerine
+"Urun/Hizmet modulu kurulumu tamamlanmamis" diline yonlenir. Katalog
+servis verilebilirlik, seri no, garanti ve bakim varsayilanlarini saglar; satis,
+stok veya muhasebe hareketi uretmez.
+
+## After-Sales Readiness
+
+After-Sales module icin zorunlu altyapi:
+
+- `product_catalog`
+- `after_sales_installed_assets`
+- `after_sales_service_requests`
+- `after_sales_service_records`
+
+Opsiyonel altyapi ve bagimliliklar:
+
+- `project_management`
+- `hr`
+- `facilities`
+- `branches`
+- `accounting`
+
+Bu altyapi eksikse Kurulu Urunler, Servis Talepleri, Servis Kayitlari ve Bakimi
+Gelenler ekranlari teknik tablo hatasi yerine "Satis sonrasi modulu kurulumu
+tamamlanmamis" diline yonlenir. Project task entegrasyonu opsiyoneldir ve
+servis talebi lifecycle'inin yerine gecmez; Accounting entegrasyonu future
+fatura/cari mutabakati hazirligidir.
+
+## CRM Readiness
+
+CRM / Paydaslar module icin zorunlu altyapi:
+
+- `master_persons`
+- `master_organizations`
+- `crm_stakeholders`
+
+Opsiyonel altyapi ve bagimliliklar:
+
+- `crm_interactions`
+- `accounting`
+- `project_management`
+- `after_sales`
+- `hr`
+- `partners`
+- `representatives`
+
+Bu altyapi eksikse Paydaslar, master lookup, cari kart olusturma ve follow-up
+task aksiyonlari teknik tablo hatasi yerine "CRM backend servisi
+yapilandirilmamis" veya "CRM modulu kurulumu tamamlanmamis" diline yonlenir.
+Next route'lari proxy-only adapter olarak kalir; duplicate role ve company
+scope kararlarini FastAPI CRM domain servisleri verir.
+
+## Reporting Readiness
+
+Reporting module icin zorunlu tablo yoktur; dashboard enabled modullerin
+summary/projection kaynaklarini okur.
+
+Zorunlu bagimlilik:
+
+- `companies`
+
+Opsiyonel bagimliliklar:
+
+- `partners`
+- `representatives`
+- `branches`
+- `accounting`
+- `hr`
+- `project_management`
+- `after_sales`
+- `crm`
+- `audit`
+- `actionCenter`
+
+Bir modul kapali, yetkisiz veya projection kaynagi eksikse dashboard tamamen
+kirilmamalidir. Ilgili kart gizlenir/disabled olur veya warning dondurulur.
+Export icin tarih araligi, row limit ve `reporting.export` izni gerekir.

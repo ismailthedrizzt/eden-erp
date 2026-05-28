@@ -106,6 +106,48 @@ export const moduleReadinessDefinitions: ModuleReadinessDefinition[] = [
     ],
   },
   {
+    moduleKey: 'product_services',
+    requiredTables: ['product_catalog'],
+    requiredDependencies: ['companies'],
+    optionalDependencies: ['accounting', 'inventory'],
+    setupSteps: [
+      setupStep('productServices.catalog', 'Urun/Hizmet katalog alanlarini kontrol et', 'Servis verilebilir, garanti ve bakim alanlari katalogda hazir olmalidir.', 'check'),
+    ],
+  },
+  {
+    moduleKey: 'after_sales',
+    requiredTables: ['after_sales_installed_assets', 'after_sales_service_requests', 'after_sales_service_records'],
+    requiredDependencies: ['companies', 'product_services'],
+    optionalDependencies: ['accounting', 'project_management', 'hr', 'facilities', 'branches'],
+    setupSteps: [
+      setupStep('afterSales.assets', 'Kurulu urun alanlarini kontrol et', 'Musteri, lokasyon, seri no, garanti ve bakim alanlari hazir olmalidir.', 'check'),
+      setupStep('afterSales.requests', 'Servis talebi alanlarini kontrol et', 'Talep, oncelik, atama ve task baglantisi hazir olmalidir.', 'check'),
+      setupStep('afterSales.records', 'Servis kaydi alanlarini kontrol et', 'Mudahale, sonuc, fotograf, rapor ve takip gorevi alanlari hazir olmalidir.', 'check'),
+    ],
+  },
+  {
+    moduleKey: 'crm',
+    requiredTables: ['master_persons', 'master_organizations', 'crm_stakeholders'],
+    optionalTables: ['crm_interactions'],
+    requiredDependencies: ['companies'],
+    optionalDependencies: ['accounting', 'project_management', 'after_sales', 'hr', 'partners', 'representatives'],
+    setupSteps: [
+      setupStep('crm.masterData', 'Master kisi/kurum alanlarini kontrol et', 'Tekil master kisi ve kurum kayitlari hazir olmalidir.', 'check'),
+      setupStep('crm.stakeholders', 'Paydas rol alanlarini kontrol et', 'Musteri, tedarikci, lead ve paydas rolleri sirket scope icinde hazir olmalidir.', 'check'),
+      setupStep('crm.integrations', 'Cari ve takip baglantilarini kontrol et', 'Cari kart, servis ve proje gorev baglantilari icin entegrasyon alanlari hazir olmalidir.', 'check'),
+    ],
+  },
+  {
+    moduleKey: 'reporting',
+    requiredDependencies: ['companies'],
+    optionalDependencies: ['partners', 'representatives', 'branches', 'accounting', 'hr', 'project_management', 'after_sales', 'crm', 'audit', 'actionCenter'],
+    setupSteps: [
+      setupStep('reporting.dashboard', 'Dashboard kaynaklarini kontrol et', 'Yonetim dashboard modullerin summary ve projection kaynaklarini okur.', 'check'),
+      setupStep('reporting.permissions', 'Rapor yetkilerini kontrol et', 'Finansal, IK, audit ve sistem KPI kartlari role/permission bazli gorunmelidir.', 'check'),
+      setupStep('reporting.exports', 'Export politikasini kontrol et', 'CSV export hazirligi tarih araligi, row limit ve ek permission ister.', 'check'),
+    ],
+  },
+  {
     moduleKey: 'process',
     requiredTables: ['process_instances', 'process_tasks', 'process_approvals', 'process_events'],
     setupSteps: [

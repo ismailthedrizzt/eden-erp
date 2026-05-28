@@ -594,48 +594,127 @@ Project task kullanici/ekip isidir; process task sistem surec gorevidir.
 
 ### Amac
 
-Urun, hizmet, katalog, fiyatlama ve hizmet sozlesmesi temellerini yonetir.
+Satilabilir veya hizmet verilebilir urun/hizmet tanimini yonetir. Katalog,
+servis verilebilirlik, seri no gerekliligi, garanti suresi, bakim periyodu,
+teknik ozellikler ve dokuman referanslari bu domainde kalir.
 
 ### Sahip Oldugu Entity'ler
 
-- Products
-- Services
-- Product/service categories
-- Price list items
+- `product_catalog`
+- Urun/hizmet modeli
+- Seri numarasi gerekliligi
+- Garanti ve bakim varsayilanlari
+- Teknik ozellikler
+- Katalog dokumanlari
 
 ### Sahip Olmadigi Entity'ler
 
-- Accounting invoice posting
-- Project task execution
-- Branch lifecycle
+- Uretim recetesi / BOM detayi
+- Stok hareketi
+- Fatura / cari hareket
+- Musteri kurulum/envanter kaydi
+- Saha servis mudahalesi
 
 ### Baslattigi Operasyonlar
 
 - `create_product`
-- `create_service`
-- `update_price_list`
+- `update_product`
 
 ### Dinledigi Eventler
 
-- `accounting.reconciliation_completed`
+- `after_sales.asset_created`
+- `service.record_completed`
 
 ### Yayinladigi Eventler
 
-- `catalog.product_created`
-- `catalog.service_created`
-- `catalog.price_changed`
+- `product.created`
+- `product.updated`
 
 ### Diger Domainlerle Iliskisi
 
-Accounting faturalama icin katalog referansi okuyabilir; katalog accounting hareketi yazmaz.
+Accounting faturalama icin katalog referansi okuyabilir; katalog accounting
+hareketi yazmaz. After-Sales sadece `after_sales_enabled=true` ve
+`serviceable=true` katalog kayitlarini kurulu urun olarak secilebilir gosterir.
+
+> Urun katalogu satilabilir/hizmet verilebilir urunun tanimidir. Kurulu urun ise
+> belirli bir musteride, belirli lokasyonda, belirli seri numarasiyla izlenen
+> gercek varliktir.
 
 ### Sinir Ihlali Ornekleri
 
 - Product update ile invoice kaydi olusturmak.
+- Product catalog PATCH ile musteride kurulu urun veya servis talebi olusturmak.
 
 ### Dogru Kullanim Ornekleri
 
 - Fatura satiri product/service read modelini referans alir.
+- After-Sales kurulu urun olustururken katalogdaki seri no, garanti ve bakim
+  varsayilanlarini okur.
+
+## After-Sales Domain
+
+### Amac
+
+Musteride kurulu urunleri, servis taleplerini, servis kayitlarini, garanti
+durumunu, bakim tarihlerini, saha ziyaretlerini ve servis sonucunu yonetir.
+
+### Sahip Oldugu Entity'ler
+
+- `after_sales_installed_assets`
+- `after_sales_service_requests`
+- `after_sales_service_records`
+- Bakim due listesi
+- Servis fotograf/rapor/imza referanslari
+
+### Sahip Olmadigi Entity'ler
+
+- Muhasebe tahsilati veya fatura
+- Stok cikis hareketi
+- Uretim emri
+- Project task lifecycle ownership
+
+### Baslattigi Operasyonlar
+
+- `create_installed_asset`
+- `create_service_request`
+- `assign_service_request`
+- `create_service_record`
+- `complete_service_record`
+- `create_followup_task`
+
+### Dinledigi Eventler
+
+- `product.created`
+- `project.task_completed`
+- `accounting.invoice_matched`
+
+### Yayinladigi Eventler
+
+- `after_sales.asset_created`
+- `service.request_created`
+- `service.request_assigned`
+- `service.record_completed`
+- `service.followup_required`
+
+### Diger Domainlerle Iliskisi
+
+After-Sales Product/Service katalog kaydina, musteri cari kartina, tesis/lokasyon
+kaydina ve teknisyen kullanici/calisan kaydina referans verir. Project/Task
+entegrasyonu takip isi olusturmak icindir; servis talebinin status kaynagi
+After-Sales olarak kalir. Accounting entegrasyonu future fatura/cari hareket
+mutabakati icindir; bu fazda tahsilat veya fatura uretmez.
+
+### Sinir Ihlali Ornekleri
+
+- Servis kaydi tamamlaninca dogrudan fatura veya cari hareket olusturmak.
+- Follow-up project task tamamlaninca servis talebini otomatik kapatmak.
+- Kurulu urun kaydini stok hareketi olarak yorumlamak.
+
+### Dogru Kullanim Ornekleri
+
+- Servis talebinden `related_module=after_sales` project task olusturmak.
+- Servis kaydi tamamlaninca kurulu urunun `last_service_date` alanini guncellemek.
+- Garanti disi servis kaydini ileride billable accounting akisi icin isaretlemek.
 
 ## Document Domain
 
@@ -917,6 +996,103 @@ Action Guide yeni islem uydurmaz. Module Registry, Field Control Registry, Visib
 ### Dogru Kullanim Ornekleri
 
 - "Adres alanini neden degistiremiyorum?" sorusunu Field Control Registry'den `address_change` action'ina baglamak.
+
+## CRM / Stakeholder Master Data Domain
+
+### Amac
+
+Master kisi/kurum kaydini tekillestirmek ve musteri, tedarikci, lead, bayi,
+muhasebeci, kamu kurumu veya diger paydas rollerini bu master kayda baglamak.
+
+### Sahip Oldugu Entity'ler
+
+- `master_person`
+- `master_organization`
+- `crm_stakeholder`
+- `crm_interaction`
+
+### Sahip Olmadigi Entity'ler
+
+- Cari hareket veya finansal mutabakat.
+- Ortaklik hakki.
+- Temsil yetkisi.
+- Calisan istihdam lifecycle'i.
+- After-Sales servis kaydi lifecycle'i.
+
+### Baslattigi Operasyonlar
+
+- `create_stakeholder`
+- `create_customer`
+- `create_supplier`
+- `create_lead`
+- `create_interaction`
+- `create_cari_from_stakeholder`
+- `create_followup_task`
+
+### Diger Domainlerle Iliskisi
+
+Master kayit kimligi temsil eder. Stakeholder role sirketle iliskiyi temsil
+eder. Cari kart finansal iliskidir ve Accounting domain'e aittir. Project task
+follow-up isidir ve Project/Task domain'e aittir. After-Sales musteri kurulu
+urun ve servis kayitlarini stakeholder veya cari account uzerinden baglayabilir.
+
+### Sinir Ihlali Ornekleri
+
+- CRM kaydinin ortaklik payi, temsil yetkisi veya calisan istihdam durumu
+  olusturmasi.
+- Cari kart silindiginde master kisi/kurum kaydinin otomatik silinmesi.
+
+### Dogru Kullanim Ornekleri
+
+- Ayni VKN ile gelen kurum icin mevcut `master_organization` kaydini secip yeni
+  `crm_stakeholder` musteri rolu olusturmak.
+- Paydas detailinden Project/Task follow-up gorevi olusturmak.
+
+## Reporting / Dashboard Domain
+
+### Amac
+
+Read model, projection ve summary kaynaklarini yonetim KPI, chart dataset,
+rapor sonucu ve export hazirligi olarak sunmak.
+
+### Sahip Oldugu Entity'ler
+
+- `report_definition`
+- `dashboard_kpi`
+- `report_result`
+- `report_export_request`
+
+### Sahip Olmadigi Entity'ler
+
+- Business mutation.
+- Official operation.
+- Process approval.
+- Project task lifecycle.
+- Accounting transaction creation.
+- Audit log kaydinin kendisi.
+
+### Baslattigi Operasyonlar
+
+- `open_management_dashboard`
+- `query_report`
+- `export_report`
+
+### Diger Domainlerle Iliskisi
+
+Reporting yalnizca okur. Action Center, Audit, Accounting, HR, CRM,
+After-Sales ve Project/Task domainlerinden summary/projection verisi alir.
+Kullaniciya yalnizca permission ve scope icindeki ozetleri gosterir.
+
+### Sinir Ihlali Ornekleri
+
+- Dashboard kartinin muhasebe hareketi veya process approval yaratmasi.
+- Rapor sorgusunun ham tenant disi tablo verisini gostermesi.
+
+### Dogru Kullanim Ornekleri
+
+- `missing_documents_report` ile belge aranacak cari hareketleri listelemek.
+- `overdue_tasks_report` ile geciken project task'lari gostermek.
+- `permission_denied_report` ile admin audit ozetini gostermek.
 
 ## Kavram Ayrimlari
 

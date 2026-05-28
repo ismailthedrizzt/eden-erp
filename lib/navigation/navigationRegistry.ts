@@ -15,6 +15,10 @@ export interface NavigationItem {
 
 export const navigationItems = [
   item('dashboard', 'Ana Sayfa', '/app', 'home', undefined, 10, { exact: true }),
+  item('managementDashboard', 'Yonetim Dashboard', '/app/dashboard', 'bar-chart', 'reporting', 20, {
+    permission: 'reporting.dashboardView',
+    fallbackPermission: 'reporting.view',
+  }),
   item('sirket', 'Sirket Yonetimi', '/app/sirket', 'building', 'companies', 100),
   item('companies', 'Sirketlerimiz', '/app/sirket/companies', 'building', 'companies', 110, {
     parentKey: 'sirket',
@@ -47,6 +51,10 @@ export const navigationItems = [
   }),
   item('accounting', 'Muhasebe', '/app/muhasebe', 'credit-card', 'accounting', 200),
   item('hr', 'Insan Kaynaklari', '/app/ik', 'users', 'hr', 300),
+  item('crm', 'CRM / Paydaslar', '/app/crm/paydaslar', 'handshake', 'crm', 350, {
+    permission: 'crm.view',
+    fallbackPermission: 'stakeholders.view',
+  }),
   item('projectManagement', 'Gorev ve Proje Yonetimi', '/app/gorev-ve-proje-yonetimi', 'list-checks', 'project_management', 400),
   item('settings', 'Sistem Yonetimi', '/app/sistem', 'settings', 'settings', 900),
   item('moduleLicenses', 'Modul Lisanslari', '/app/sistem/module-licenses', 'settings', 'settings', 910, {

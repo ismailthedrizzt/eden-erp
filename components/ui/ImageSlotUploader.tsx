@@ -500,6 +500,7 @@ export function ImageSlotUploader({
         ref={fileInputRef}
         type="file"
         accept={currentSlot?.acceptedTypes?.join(',') || "image/*"}
+        capture="environment"
         disabled={!canMutate}
         className="hidden"
         onChange={(e) => {
