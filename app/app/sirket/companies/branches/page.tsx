@@ -1,9 +1,10 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import type { ReactNode } from 'react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
-import { ExternalLink, FileText, GitBranch, PencilLine, XCircle } from 'lucide-react'
+import { AlertCircle, Building2, ExternalLink, FileText, GitBranch, MapPin, PencilLine, Users, XCircle } from 'lucide-react'
 import { EntityForm, type FormField, type FormMode, type FormOperationAction, type FormOperationActionGroup, type FormTab } from '@/components/ui/EntityForm'
 import { PageBanner } from '@/components/ui/PageBanner'
 import { SmartDataTable, type ColumnDef, type SortConfig, type TableStatusFilterOption, type WidgetDef } from '@/components/ui/SmartDataTable'
@@ -65,6 +66,9 @@ export default function CompanyBranchesPage() {
   const [listMeta, setListMeta] = useState({ page: 1, pageSize: 50, total: 0, totalPages: 1 })
   const [statusFilters, setStatusFilters] = useState<string[]>(['active', 'passive', 'closed'])
   const [companyFilterId, setCompanyFilterId] = useState(initialCompanyId)
+  const [branchTypeFilter, setBranchTypeFilter] = useState('')
+  const [officialBranchFilter, setOfficialBranchFilter] = useState('')
+  const [cityFilter, setCityFilter] = useState('')
   const [companyPickerOpen, setCompanyPickerOpen] = useState(false)
   const [pickerCompanyId, setPickerCompanyId] = useState(initialCompanyId)
   const [branchOpeningWizard, setBranchOpeningWizard] = useState<{ companyId: string; companyName: string; context: BranchOpeningPrecheckContext } | null>(null)
@@ -109,7 +113,21 @@ export default function CompanyBranchesPage() {
     setLoading(true)
     try {
       if (force) companyService.invalidateRelations()
-      const result = await companyService.branchesList({ useCache: !force, companyId: companyFilterId || undefined, statuses: statusFilters, page: listQuery.page, pageSize: listQuery.pageSize, search: listQuery.search, sort: listQuery.sort, direction: listQuery.direction })
+      const result = await companyService.branchesList({
+        useCache: !force,
+        companyId: companyFilterId || undefined,
+        statuses: statusFilters,
+        page: listQuery.page,
+        pageSize: listQuery.pageSize,
+        search: listQuery.search,
+        sort: listQuery.sort,
+        direction: listQuery.direction,
+        query: {
+          ...(branchTypeFilter ? { branch_type: branchTypeFilter } : {}),
+          ...(cityFilter ? { city: cityFilter } : {}),
+          ...(officialBranchFilter ? { is_official_branch: officialBranchFilter } : {}),
+        },
+      })
       setBranches(result.data || [])
       setListMeta(result.meta || { page: listQuery.page, pageSize: listQuery.pageSize, total: 0, totalPages: 1 })
     } catch (error: any) {
@@ -117,7 +135,7 @@ export default function CompanyBranchesPage() {
     } finally {
       setLoading(false)
     }
-  }, [companyFilterId, listQuery.direction, listQuery.page, listQuery.pageSize, listQuery.search, listQuery.sort, statusFilters])
+  }, [branchTypeFilter, cityFilter, companyFilterId, listQuery.direction, listQuery.page, listQuery.pageSize, listQuery.search, listQuery.sort, officialBranchFilter, statusFilters])
 
   useEffect(() => { loadCompanies() }, [loadCompanies])
   useEffect(() => { loadData() }, [loadData])
@@ -195,6 +213,9 @@ export default function CompanyBranchesPage() {
       setWizardSaving(false)
     }
   }, [selectedBranch])
+
+  const tableRows = useMemo(() => branches.map(enrichBranchRowForProduct), [branches])
+  const cityOptions = useMemo(() => Array.from(new Set([...branches.map(row => String(row.city || '').trim()), cityFilter].filter(Boolean))).sort((a, b) => a.localeCompare(b, 'tr')), [branches, cityFilter])
 
   async function completeBranchOpening(payload: BranchOpeningSubmitPayload) {
     if (!branchOpeningWizard) return
@@ -295,17 +316,22 @@ export default function CompanyBranchesPage() {
     { key: 'sgk_workplace_registry_no', label: 'SGK İşyeri Sicil No', type: 'text', width: 170 },
     { key: 'organization_unit_name', label: 'Bağlı Organizasyon Birimi', type: 'text', width: 210 },
     { key: 'facility_name', label: 'Bağlı Lokasyon/Tesis', type: 'text', width: 180 },
+    { key: 'active_authority_count', label: 'Aktif Yetkili', type: 'number', width: 120 },
     { key: 'last_operation', label: 'Son İşlem', type: 'text', width: 150, render: value => operationLabel(value) },
+    { key: 'warnings_summary', label: 'Uyarılar', type: 'text', width: 240 },
     { key: 'actions', label: 'İşlemler', type: 'actions', width: 170, render: (_, row) => <RowActions branch={row} onView={() => openBranch(row)} onCloseBranch={() => openBranchClosing(row)} /> },
   ], [openBranch, openBranchClosing])
 
   const widgets: WidgetDef<BranchRow>[] = useMemo(() => [
-    { key: 'total', label: 'Toplam Şube', render: () => branches.length },
-    { key: 'active', label: 'Aktif Şube', render: () => branches.filter(isActiveBranch).length },
-    { key: 'official', label: 'Resmi Şube', render: () => branches.filter(row => row.is_official_branch && isActiveBranch(row)).length },
-    { key: 'operational', label: 'Ofis / Operasyon Noktası', render: () => branches.filter(row => ['liaison_office', 'operation_point'].includes(String(row.branch_type))).length },
-    { key: 'closed', label: 'Kapanmış Şube', render: () => branches.filter(row => row.record_status === 'closed' || row.status === 'closed').length },
-  ], [branches])
+    { key: 'total', label: 'Toplam Şube', render: () => tableRows.length },
+    { key: 'active', label: 'Aktif Şube', render: () => tableRows.filter(isActiveBranch).length },
+    { key: 'official', label: 'Resmi Şube', render: () => tableRows.filter(row => row.is_official_branch && isActiveBranch(row)).length },
+    { key: 'operational', label: 'Ofis / Operasyon Noktası', render: () => tableRows.filter(row => ['liaison_office', 'operation_point'].includes(String(row.branch_type))).length },
+    { key: 'closed', label: 'Kapanmış Şube', render: () => tableRows.filter(isClosedBranch).length },
+    { key: 'organization', label: 'Unit Bağlı', render: () => tableRows.filter(row => row.organization_unit_id || row.organization_unit_name).length },
+    { key: 'facility', label: 'Facility Bağlı', render: () => tableRows.filter(row => row.facility_id || row.facility_name).length },
+    { key: 'authority', label: 'Aktif Yetkili Var', render: () => tableRows.filter(row => Number(row.active_authority_count || 0) > 0).length },
+  ], [tableRows])
 
   const tabs: FormTab[] = useMemo(() => [
     { id: 'general', label: 'Genel Bilgiler', fields: [
@@ -408,15 +434,73 @@ export default function CompanyBranchesPage() {
           <label className="min-w-[260px] text-sm font-medium text-gray-700 dark:text-gray-200">Bağlı Şirket Filtresi<select value={companyFilterId} onChange={event => { setCompanyFilterId(event.target.value); setListQuery(prev => ({ ...prev, page: 1 })) }} className={formControlClass({ className: 'mt-1' })}><option value="">Tüm şirketler</option>{companies.map(company => <option key={company.value} value={company.value}>{company.label}</option>)}</select></label>
           <button type="button" onClick={() => loadData(true)} className="mt-6 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-900">Yenile</button>
         </div>
-        <SmartDataTable columns={columns} data={branches} loading={loading} widgets={widgets} defaultView="list" storageKey="companies-branches-table" emptyText={<SmartEmptyState title="Henüz şube kaydı yok" message="Şube açmak için aktif bir şirket kartından Resmi Değişiklikler > Şube Açılışı işlemini başlatın." actionLabel="Şirketlerimiz'e Git" onAction={() => { window.location.href = '/app/sirket/companies?action=branch_opening' }} />} onRowClick={openBranch} onRefresh={() => loadData(true)} defaultPageSize={listQuery.pageSize} pagination={{ mode: 'server', page: listMeta.page, pageSize: listMeta.pageSize, total: listMeta.total, onPageChange: page => setListQuery(prev => ({ ...prev, page })), onPageSizeChange: pageSize => setListQuery(prev => ({ ...prev, page: 1, pageSize })), onSearchChange: search => setListQuery(prev => ({ ...prev, page: 1, search })), onSortChange: handleListSortChange }} activeStatusFilters={statusFilters} statusFilterOptions={BRANCH_STATUS_FILTER_OPTIONS} onStatusFiltersChange={(next) => { setStatusFilters(next.length ? next : ['active']); setListQuery(prev => ({ ...prev, page: 1 })) }} />
+        <div data-tour-id="branches-product-filters" className="grid gap-3 rounded-lg border border-blue-100 bg-blue-50/70 p-3 dark:border-blue-900/50 dark:bg-blue-950/20 md:grid-cols-3">
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-200">Şube Türü<select value={branchTypeFilter} onChange={event => { setBranchTypeFilter(event.target.value); setListQuery(prev => ({ ...prev, page: 1 })) }} className={formControlClass({ className: 'mt-1' })}><option value="">Tüm türler</option>{branchTypeOptions().map(option => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-200">Resmi / Operasyonel<select value={officialBranchFilter} onChange={event => { setOfficialBranchFilter(event.target.value); setListQuery(prev => ({ ...prev, page: 1 })) }} className={formControlClass({ className: 'mt-1' })}><option value="">Tümü</option><option value="true">Resmi şube</option><option value="false">Operasyon noktası / ofis</option></select></label>
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-200">İl<select value={cityFilter} onChange={event => { setCityFilter(event.target.value); setListQuery(prev => ({ ...prev, page: 1 })) }} className={formControlClass({ className: 'mt-1' })}><option value="">Tüm iller</option>{cityOptions.map(city => <option key={city} value={city}>{city}</option>)}</select></label>
+        </div>
+        <SmartDataTable columns={columns} data={tableRows} loading={loading} widgets={widgets} defaultView="list" storageKey="companies-branches-table" emptyText={<SmartEmptyState title="Henüz şube kaydı yok" message="Şube açmak için aktif bir şirket kartından Resmi Değişiklikler > Şube Açılışı işlemini başlatın." actionLabel="Şirketlerimiz'e Git" onAction={() => { window.location.href = '/app/sirket/companies?action=branch_opening' }} />} onRowClick={openBranch} onRefresh={() => loadData(true)} defaultPageSize={listQuery.pageSize} pagination={{ mode: 'server', page: listMeta.page, pageSize: listMeta.pageSize, total: listMeta.total, onPageChange: page => setListQuery(prev => ({ ...prev, page })), onPageSizeChange: pageSize => setListQuery(prev => ({ ...prev, page: 1, pageSize })), onSearchChange: search => setListQuery(prev => ({ ...prev, page: 1, search })), onSortChange: handleListSortChange }} activeStatusFilters={statusFilters} statusFilterOptions={BRANCH_STATUS_FILTER_OPTIONS} onStatusFiltersChange={(next) => { setStatusFilters(next.length ? next : ['active']); setListQuery(prev => ({ ...prev, page: 1 })) }} />
       </div>}
-      {pageState !== 'list' && selectedBranch && <div className="mt-6"><RecordPendingActionsPanel entityType="branch" entityId={selectedBranch.id} title="Bu şube için bekleyen işler" /><EntityForm mode={formMode} entityName="Şubelerimiz" entityNameSingular="Şube" heroFields={controlledBranchHeroFields} tabs={controlledTabs} data={selectedBranch} saving={saving} loading={detailLoading} error={formError} externalFieldErrors={fieldErrors} loadStages={formLoadStages} showHeroHeader={false} onSave={handleSave} onCancel={() => setPageState('list')} onModeChange={(mode) => setPageState(mode === 'edit' ? 'edit' : 'view')} operationActions={operationActions()} onValidationError={(fields) => setToast({ type: 'warning', title: 'Alanları Kontrol Et', message: fields.join(', ') })} /></div>}
+      {pageState !== 'list' && selectedBranch && <div className="mt-6 space-y-4"><RecordPendingActionsPanel entityType="branch" entityId={selectedBranch.id} title="Bu şube için bekleyen işler" /><BranchProductReadinessPanel branch={selectedBranch} onOpenClosing={() => openBranchClosing(selectedBranch)} onOpenDocuments={() => setBranchDocumentWizard(selectedBranch)} /><EntityForm mode={formMode} entityName="Şubelerimiz" entityNameSingular="Şube" heroFields={controlledBranchHeroFields} tabs={controlledTabs} data={selectedBranch} saving={saving} loading={detailLoading} error={formError} externalFieldErrors={fieldErrors} loadStages={formLoadStages} showHeroHeader={false} onSave={handleSave} onCancel={() => setPageState('list')} onModeChange={(mode) => setPageState(mode === 'edit' ? 'edit' : 'view')} operationActions={operationActions()} onValidationError={(fields) => setToast({ type: 'warning', title: 'Alanları Kontrol Et', message: fields.join(', ') })} /></div>}
       {companyPickerOpen && <div className="fixed inset-0 z-[75] flex items-center justify-center bg-black/45 px-4"><div className="w-full max-w-lg rounded-lg border border-gray-200 bg-white p-5 shadow-2xl dark:border-gray-800 dark:bg-gray-950"><h2 className="text-lg font-semibold text-gray-900 dark:text-white">Yeni Şube Aç</h2><p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Şube açılışı için bağlı aktif şirketi seçin.</p><label className="mt-5 block text-sm font-medium text-gray-700 dark:text-gray-200">Bağlı Şirket<select value={pickerCompanyId} onChange={event => setPickerCompanyId(event.target.value)} className={formControlClass({ className: 'mt-1' })}><option value="">Şirket seçin</option>{companies.map(company => <option key={company.value} value={company.value}>{company.label}</option>)}</select></label>{selectedCompanyLabel ? <div className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-200">{selectedCompanyLabel} için resmi şube açılışı başlatılacak.</div> : null}<div className="mt-5 flex justify-end gap-2"><button type="button" onClick={() => setCompanyPickerOpen(false)} className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-900">Vazgeç</button><button type="button" onClick={() => openBranchOpening(pickerCompanyId)} disabled={!pickerCompanyId || wizardSaving} className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-wait disabled:opacity-60">Wizardı Aç</button></div></div></div>}
       {branchOpeningWizard && <CompanyBranchOpeningWizard companyName={branchOpeningWizard.companyName} context={branchOpeningWizard.context} saving={wizardSaving} onClose={() => !wizardSaving && setBranchOpeningWizard(null)} onComplete={completeBranchOpening} />}
       {branchClosingWizard && <CompanyBranchClosingWizard companyId={branchClosingWizard.companyId} companyName={branchClosingWizard.companyName} context={branchClosingWizard.context} saving={wizardSaving} onClose={() => !wizardSaving && setBranchClosingWizard(null)} onComplete={completeBranchClosing} />}
       {branchDocumentWizard && <BranchDocumentUpdateModal branch={branchDocumentWizard} saving={wizardSaving} onClose={() => !wizardSaving && setBranchDocumentWizard(null)} onComplete={completeBranchDocumentUpdate} />}
     </div>
   )
+}
+
+function BranchProductReadinessPanel({ branch, onOpenClosing, onOpenDocuments }: { branch: BranchRow; onOpenClosing: () => void; onOpenDocuments: () => void }) {
+  const warnings = getBranchWarnings(branch)
+  const activeAuthorityCount = getBranchActiveAuthorityCount(branch)
+  const closed = isClosedBranch(branch)
+  const organizationReady = Boolean(branch.organization_unit_id || branch.organization_unit_name)
+  const facilityReady = Boolean(branch.facility_id || branch.facility_name)
+
+  return (
+    <section data-tour-id="branches-product-readiness" className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-950">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h2 className="text-base font-semibold text-gray-900 dark:text-white">Şube ürün hazırlığı</h2>
+          <p className="mt-1 max-w-3xl text-sm text-gray-600 dark:text-gray-300">
+            Şube ayrı şirket değildir; resmi/operasyonel alt birimdir. Kadro Teşkilat/Kadro, fiziksel yer Tesisler/Lokasyonlar, yetki kapsamı Temsilcilerimiz modülünden yönetilir.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Link href="/app/sirket/teskilat" className="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-900">Teşkilat/Kadro <ExternalLink size={15} /></Link>
+          <Link href="/app/sirket/tesisler" className="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-900">Tesisler/Lokasyonlar <ExternalLink size={15} /></Link>
+        </div>
+      </div>
+      <div className="mt-4 grid gap-3 md:grid-cols-4">
+        <BranchReadinessMetric icon={<Building2 size={17} />} label="Bağlı şirket" value={branch.company_name || '-'} tone="neutral" />
+        <BranchReadinessMetric icon={<GitBranch size={17} />} label="Organizasyon birimi" value={organizationReady ? branch.organization_unit_name || 'Bağlı' : 'Eksik'} tone={organizationReady ? 'success' : 'warning'} />
+        <BranchReadinessMetric icon={<MapPin size={17} />} label="Tesis / lokasyon" value={facilityReady ? branch.facility_name || 'Bağlı' : 'Eksik'} tone={facilityReady ? 'success' : 'warning'} />
+        <BranchReadinessMetric icon={<Users size={17} />} label="Aktif yetkili" value={String(activeAuthorityCount)} tone={activeAuthorityCount ? 'warning' : 'neutral'} />
+      </div>
+      {warnings.length ? (
+        <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-900/60 dark:bg-amber-950/25">
+          <div className="flex items-center gap-2 text-sm font-semibold text-amber-800 dark:text-amber-100"><AlertCircle size={16} /> Kontrol edilmesi gerekenler</div>
+          <ul className="mt-2 space-y-1 text-sm text-amber-800 dark:text-amber-100">
+            {warnings.map(warning => <li key={warning}>• {warning}</li>)}
+          </ul>
+        </div>
+      ) : null}
+      <div className="mt-4 flex flex-wrap gap-2">
+        <button type="button" onClick={onOpenClosing} disabled={closed || !isActiveBranch(branch)} className="inline-flex items-center gap-2 rounded-lg border border-red-200 px-3 py-2 text-sm font-medium text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-red-900 dark:text-red-200 dark:hover:bg-red-950/30"><XCircle size={16} /> Şube Kapanışı</button>
+        <button type="button" onClick={onOpenDocuments} className="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-900"><FileText size={16} /> Belgeleri Güncelle</button>
+        <Link href={`/app/sirket/companies/representatives?branch_id=${branch.id}`} className="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-900">Temsilcileri Yönet <ExternalLink size={15} /></Link>
+      </div>
+    </section>
+  )
+}
+
+function BranchReadinessMetric({ icon, label, value, tone }: { icon: ReactNode; label: string; value: string; tone: 'success' | 'warning' | 'neutral' }) {
+  const color = tone === 'success'
+    ? 'border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/25 dark:text-emerald-100'
+    : tone === 'warning'
+      ? 'border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/25 dark:text-amber-100'
+      : 'border-gray-200 bg-gray-50 text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200'
+  return <div className={`rounded-lg border px-3 py-3 ${color}`}><div className="flex items-center gap-2 text-xs font-medium opacity-80">{icon}{label}</div><div className="mt-2 text-sm font-semibold">{value || '-'}</div></div>
 }
 
 function RowActions({ branch, onView, onCloseBranch }: { branch: BranchRow; onView: () => void; onCloseBranch: () => void }) {
@@ -576,4 +660,41 @@ function branchTypeLabel(value: unknown) { if (value === 'liaison_office') retur
 function scopeTypeText(value: unknown) { if (value === 'branch') return 'Belirli şube'; if (value === 'organization_unit') return 'Belirli organizasyon birimi'; if (value === 'facility') return 'Belirli tesis/lokasyon'; return 'Şirket geneli' }
 function operationLabel(value: unknown) { if (value === 'branch_opening') return 'Şube Açılışı'; if (value === 'branch_closing') return 'Şube Kapanışı'; return value ? String(value) : '-' }
 function formatAuthorityLimit(row: Record<string, any>) { const value = row.transaction_limit ?? row.current_authority?.transaction_limit; if (value === null || value === undefined || value === '') return '-'; return `${value} ${row.currency || row.current_authority?.currency || 'TRY'}` }
-function isActiveBranch(branch: BranchRow) { const values = [branch.record_status, branch.status].map(value => String(value || '').toLocaleLowerCase('tr-TR')); return !branch.is_deleted && values.some(value => value === 'active' || value === 'aktif') }
+function enrichBranchRowForProduct(row: BranchRow): BranchRow {
+  const warnings = getBranchWarnings(row)
+  return {
+    ...row,
+    active_authority_count: getBranchActiveAuthorityCount(row),
+    warnings_summary: warnings.length ? warnings.join(', ') : '-',
+  }
+}
+function getBranchActiveAuthorityCount(branch: BranchRow) {
+  const summary = branch.representative_authorities_summary || branch.metadata_json?.representative_authorities_summary || {}
+  const direct = summary.active_branch_scoped_count ?? summary.active_count ?? branch.active_authority_count
+  if (direct !== undefined && direct !== null && direct !== '') return Number(direct) || 0
+  const authorities = Array.isArray(summary.authorities) ? summary.authorities : Array.isArray(summary.data) ? summary.data : []
+  return authorities.filter((authority: Record<string, any>) => {
+    const status = String(authority.authority_status || authority.authority_record_status || authority.status || '').toLocaleLowerCase('tr-TR')
+    const scopeType = authority.scope_type || authority.scope?.scope_type
+    return status === 'active' && (!scopeType || scopeType === 'branch')
+  }).length
+}
+function getBranchWarnings(branch: BranchRow) {
+  const rawWarnings = branch.warnings || branch.metadata_json?.warnings || []
+  const warnings = Array.isArray(rawWarnings)
+    ? rawWarnings.map(warning => typeof warning === 'string' ? warning : warning?.message || warning?.warning || '').filter(Boolean)
+    : []
+  if (!branch.organization_unit_id && !branch.organization_unit_name) warnings.push('Bu şubenin organizasyon birimi bağlantısı eksik.')
+  if (!branch.facility_id && !branch.facility_name) warnings.push('Bu şubenin tesis/lokasyon bağlantısı eksik.')
+  if (getBranchActiveAuthorityCount(branch) > 0) warnings.push('Aktif şube kapsamlı temsil yetkileri kapanış etki analizinde kontrol edilmeli.')
+  if (isClosedBranch(branch)) warnings.push('Kapalı şube read-only izlenir; tekrar kapanış başlatılamaz.')
+  return Array.from(new Set(warnings))
+}
+function isClosedBranch(branch: BranchRow) {
+  const values = [branch.record_status, branch.status, branch.company_branch_status].map(value => String(value || '').toLocaleLowerCase('tr-TR'))
+  return branch.is_deleted || values.some(value => ['closed', 'kapalı', 'kapali', 'passive', 'pasif'].includes(value))
+}
+function isActiveBranch(branch: BranchRow) {
+  const values = [branch.record_status, branch.status].map(value => String(value || '').toLocaleLowerCase('tr-TR'))
+  return !isClosedBranch(branch) && values.some(value => value === 'active' || value === 'aktif')
+}

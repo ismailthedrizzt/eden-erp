@@ -3,12 +3,18 @@ from __future__ import annotations
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, Query
-from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_session
+from app.core.errors import DomainError
 from app.core.security import RequestContext, require_access_context, require_tenant
-from app.projections.branch import get_branch_projection, list_branch_projection
+from app.domains.branches.schemas import BranchCardUpdateRequest
+from app.domains.branches.service import (
+    delete_branch_draft_if_allowed,
+    get_branch_detail,
+    update_branch_card,
+)
+from app.projections.branch import list_branch_projection
 from app.projections.query import projection_query_from_params
 from app.schemas.common import ApiSuccess
 
@@ -63,60 +69,87 @@ async def list_branch_records(
     )
 
 
+@router.post("")
+async def create_branch_record() -> ApiSuccess[dict[str, Any]]:
+    raise DomainError(
+        "Sube serbest kayit olarak olusturulamaz. Sube Acilisi sihirbazini kullanin.",
+        "USE_BRANCH_OPENING_WIZARD",
+        409,
+    )
+
+
 @router.get("/{branch_id}")
 async def get_branch_record(
     branch_id: str,
     context: RequestContextDep,
     session: SessionDep,
 ) -> ApiSuccess[dict[str, Any]]:
-    tenant_id = require_tenant(context)
-    branch = await get_branch_projection(session, tenant_id, branch_id)
-    return ApiSuccess(data=branch, message="Sube kaydi getirildi.")
+    detail = await get_branch_detail(session, _context_map(context), branch_id)
+    return ApiSuccess(data=_flatten_branch_detail(detail), message="Sube kaydi getirildi.")
 
 
 @router.patch("/{branch_id}")
 async def patch_branch_record(
     branch_id: str,
-    payload: dict[str, Any],
+    payload: BranchCardUpdateRequest,
     context: RequestContextDep,
     session: SessionDep,
 ) -> ApiSuccess[dict[str, Any]]:
-    tenant_id = require_tenant(context)
-    allowed = {key: payload.get(key) for key in ["phone", "email", "notes"] if key in payload}
-    if not allowed:
-        from app.core.errors import DomainError
-
-        raise DomainError(
-            "Sube resmi alanlari yalnizca islem sihirbaziyla degistirilebilir.",
-            "BRANCH_PATCH_NO_ALLOWED_FIELDS",
-            400,
-        )
-    assignments = ", ".join(f"{key} = :{key}" for key in allowed)
-    result = await session.execute(
-        text(
-            f"""
-            update public.company_branches
-            set {assignments},
-                updated_at = now(),
-                updated_by = :user_id,
-                version = coalesce(version, 0) + 1
-            where tenant_id = :tenant_id
-              and id = :branch_id
-              and coalesce(is_deleted, false) = false
-            returning *
-            """
-        ),
-        {
-            **allowed,
-            "tenant_id": tenant_id,
-            "branch_id": branch_id,
-            "user_id": context.user_id,
-        },
+    detail = await update_branch_card(
+        session,
+        _context_map(context),
+        branch_id,
+        payload.model_dump(exclude_unset=True),
     )
-    row = result.mappings().one_or_none()
-    if not row:
-        from app.core.errors import DomainError
-
-        raise DomainError("Sube kaydi bulunamadi.", "BRANCH_NOT_FOUND", 404)
     await session.commit()
-    return ApiSuccess(data=dict(row), message="Sube kart bilgileri guncellendi.")
+    return ApiSuccess(
+        data=_flatten_branch_detail(detail),
+        message="Sube kart bilgileri guncellendi.",
+    )
+
+
+@router.delete("/{branch_id}")
+async def delete_branch_record(
+    branch_id: str,
+    context: RequestContextDep,
+    session: SessionDep,
+) -> ApiSuccess[dict[str, Any]]:
+    result = await delete_branch_draft_if_allowed(session, _context_map(context), branch_id)
+    await session.commit()
+    return ApiSuccess(data=result, message="Sube taslak kaydi silindi.")
+
+
+def _context_map(context: RequestContext) -> dict[str, Any]:
+    return {
+        "tenant_id": require_tenant(context),
+        "user_id": context.user_id,
+        "permissions": list(context.permissions),
+        "company_scope": context.company_scope,
+        "company_scope_ids": context.company_scope_ids,
+        "writable_company_scope_ids": context.writable_company_scope_ids,
+        "branch_scope_ids": context.branch_scope_ids,
+        "is_internal": context.is_internal,
+        "is_trusted_proxy": context.is_trusted_proxy,
+    }
+
+
+def _flatten_branch_detail(detail: dict[str, Any]) -> dict[str, Any]:
+    branch = dict(detail.get("branch") or {})
+    company = detail.get("company")
+    organization_unit = detail.get("organization_unit")
+    facility = detail.get("facility")
+    company_name = (company or {}).get("trade_name") or (company or {}).get("short_name") or ""
+    facility_name = (facility or {}).get("name") or (facility or {}).get("facility_name") or ""
+    authorities = detail.get("representative_authorities_summary") or {}
+    return {
+        **branch,
+        "company": company,
+        "company_name": company_name,
+        "organization_unit": organization_unit,
+        "organization_unit_name": (organization_unit or {}).get("name") or "",
+        "facility": facility,
+        "facility_name": facility_name,
+        "representative_authorities_summary": authorities,
+        "official_change_history": detail.get("official_change_history") or [],
+        "warnings": detail.get("warnings") or [],
+    }

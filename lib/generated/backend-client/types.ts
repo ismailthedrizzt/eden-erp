@@ -360,7 +360,8 @@ export interface paths {
         /** List Branch Records */
         get: operations["list_branch_records_api_v1_branches_get"];
         put?: never;
-        post?: never;
+        /** Create Branch Record */
+        post: operations["create_branch_record_api_v1_branches_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -378,7 +379,8 @@ export interface paths {
         get: operations["get_branch_record_api_v1_branches__branch_id__get"];
         put?: never;
         post?: never;
-        delete?: never;
+        /** Delete Branch Record */
+        delete: operations["delete_branch_record_api_v1_branches__branch_id__delete"];
         options?: never;
         head?: never;
         /** Patch Branch Record */
@@ -1508,6 +1510,33 @@ export interface components {
             assigned_role?: string | null;
             /** Assigned Permission */
             assigned_permission?: string | null;
+        };
+        /** BranchCardUpdateRequest */
+        BranchCardUpdateRequest: {
+            /** Branch Short Name */
+            branch_short_name?: string | null;
+            /** Phone */
+            phone?: string | null;
+            /** Email */
+            email?: string | null;
+            /** Responsible Person Id */
+            responsible_person_id?: string | null;
+            /** Organization Unit Id */
+            organization_unit_id?: string | null;
+            /** Facility Id */
+            facility_id?: string | null;
+            /** Notes */
+            notes?: string | null;
+            /** Metadata Json */
+            metadata_json?: {
+                [key: string]: unknown;
+            } | null;
+            /** Base Version */
+            base_version?: number | null;
+            /** Base Updated At */
+            base_updated_at?: string | null;
+        } & {
+            [key: string]: unknown;
         };
         /** BranchClosingRequest */
         BranchClosingRequest: {
@@ -3520,7 +3549,58 @@ export interface operations {
             };
         };
     };
+    create_branch_record_api_v1_branches_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+        };
+    };
     get_branch_record_api_v1_branches__branch_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                branch_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_branch_record_api_v1_branches__branch_id__delete: {
         parameters: {
             query?: never;
             header?: never;
@@ -3562,9 +3642,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": {
-                    [key: string]: unknown;
-                };
+                "application/json": components["schemas"]["BranchCardUpdateRequest"];
             };
         };
         responses: {

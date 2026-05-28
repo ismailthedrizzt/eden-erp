@@ -31,10 +31,10 @@ No P0 productization blocker was found in the final verification pass. The main 
 | --- | --- | --- |
 | Companies | ready with P1 debt | List/detail/card CRUD and official changes are Python-backed; TS fallbacks remain until staging verification. |
 | Partners / Ownership | partial/product hardening started | Partner card CRUD and ownership transaction creation are Python-backed. UI now surfaces card-vs-rights, current ownership and correct ownership actions. Workflow detail/approve/reject/cancel/reverse routes remain P1. |
-| Representatives | ready with P1 debt | Card CRUD and authority transaction endpoint exist. Current authority reads exist; UI proxy/fallback cleanup remains. |
-| Branches | partial | Opening/closing, list/detail/PATCH are Python-backed. Step 14 staging validation and fallback removal remain P1. |
-| Organization | partial | Organization/facility detail work is not fully productized; Step 14 remains deeper follow-up. |
-| Facilities | partial | Facility/location domain coverage is planned and partially represented in branch hydration; full endpoints are Step 14/P1-P2. |
+| Representatives | partial/product hardening started | Card CRUD and authority transaction endpoint exist. UI now surfaces card-vs-authority, current authority, scope/limit/signature state and correct authority actions. Scope E2E and fallback cleanup remain P1. |
+| Branches | partial/product hardening started | Opening/closing, list/detail/PATCH are Python-backed. UI now separates branch/company/facility/organization concepts, blocks free create, shows organization/facility/authority readiness and routes lifecycle changes to Branch Opening/Closing. Staging E2E and fallback removal remain P1. |
+| Organization | partial | Organization links are visible from branch detail; full Teşkilat/Kadro product hardening remains a later productization step. |
+| Facilities | partial | Facility/location links are visible from branch detail; full Tesisler/Lokasyonlar product hardening and multi-branch relation decision remain P1/P2. |
 | Process | partial | Python process/task/approval MVP exists. TS fallback and UI hardening remain P1. |
 | Audit | partial | Python audit read/masking MVP exists. Admin UI and fallback removal remain P1/P2. |
 | Outbox | partial | Python domain/worker exists. Production worker deployment and backlog alerts remain P1. |
@@ -99,8 +99,8 @@ None identified in the final gate.
 
 1. Companies page product hardening. **Started:** product readiness panel, field-control UX, real-data scenarios and E2E checklist are now documented for `Sirketlerimiz`.
 2. Partners/Ownership product hardening. **Started:** partner detail now separates card status from current ownership, shows share/vote/profit/capital/privilege/control signals and routes users to Initial Partnership Entry, Share Transfer, Ownership Exit or Rights Change instead of card PATCH.
-3. Representatives authority product hardening.
-4. Branches product hardening.
+3. Representatives authority product hardening. **Started:** representative detail now separates card status from authority status, shows current authority scope/limit/signature signals and routes users to Representation Start, Scope Change, Limit Change, Suspension/Renewal or Termination instead of card PATCH.
+4. Branches product hardening. **Started:** branch detail now separates branch/company/facility/organization concepts, shows organization/facility/representative authority readiness, blocks free create and routes opening/closing through operation wizards.
 5. Organization/Facilities integration.
 6. Process/Action Center UI hardening.
 7. Audit/admin UI.

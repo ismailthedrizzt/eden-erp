@@ -218,6 +218,31 @@ The second productization lane for `Ortaklarimiz` is now started:
 
 Remaining P1: verify partner/ownership flows in staging with `FASTAPI_BASE_URL`, migrate or replace ownership workflow subroutes (`approve/reject/cancel/reverse/history/impact`) in Python, and remove temporary Next fallbacks after E2E passes.
 
+## 7.21 Representatives / Authority Product Hardening Addendum
+
+The third productization lane for `Temsilcilerimiz` is now started:
+
+- representative detail shows an authority readiness panel for card status, authority status, scope target, signature rule, limits, delete behavior and current authority warnings;
+- representative list now exposes authority types, signature rule, scope target, currency, last authority transaction and warning signals alongside card lifecycle;
+- field-control, Action Guide and guided tour copy now make the representative-card-vs-authority boundary explicit;
+- draft delete/blocking messages use business language aligned with FastAPI draft delete guards;
+- product docs were added under `docs/product/representatives/` for scope, real-data scenarios, E2E checklist and known gaps.
+
+Remaining P1: verify representative authority flows in staging with `FASTAPI_BASE_URL`, harden branch/organization/facility scope fixtures and remove temporary Next fallbacks after E2E passes.
+
+## 7.22 Branches Product Hardening Addendum
+
+The fourth productization lane for `Subelerimiz` is now started:
+
+- branch list keeps free create blocked and adds product filters for company, branch type, official/operational mode and city;
+- branch widgets now show active, official, operational, closed, organization-linked, facility-linked and authority-bearing branch counts;
+- branch detail shows a product readiness panel for company relationship, organization unit link, facility/location link, active representative authority impact and branch closing/document actions;
+- FastAPI branch detail/PATCH/DELETE now uses the branch domain service so hydrated company, organization unit, facility and representative authority summary data can feed the current frontend contract;
+- field-control, Action Guide and guided tour copy now make the branch-vs-company-vs-facility-vs-organization distinction explicit;
+- product docs were added under `docs/product/branches/` for scope, real-data scenarios, E2E checklist and known gaps.
+
+Remaining P1: verify Branch Opening/Closing and branch detail hydration in staging with `FASTAPI_BASE_URL`, finalize representative authority impact warning/blocking policy and remove temporary Next fallbacks after E2E passes.
+
 ## 8. Build / Typecheck Sonucu
 
 Final pass sirasinda asagidaki kontroller calistirildi:

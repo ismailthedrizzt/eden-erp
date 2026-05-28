@@ -35,6 +35,13 @@ Product hardening note:
 
 ## Branches
 
+Product hardening note:
+
+- `Subelerimiz` now explicitly treats branch records as official/operational company sub-units, not companies, facilities or organization units.
+- The branch list includes product filters for company, branch type, official/operational mode and city, plus summary widgets for organization/facility links and active authority-bearing branches.
+- Branch detail now surfaces company, organization unit, facility/location and representative authority readiness in one panel, while routing lifecycle changes to Branch Opening/Closing operation wizards.
+- FastAPI branch detail/PATCH/DELETE now uses the branch domain service and returns hydrated card detail for the frontend contract; free branch POST remains forbidden with `USE_BRANCH_OPENING_WIZARD`.
+
 | domain | endpoint | method | FastAPI implemented? | Next proxy implemented? | frontend service mapped? | OpenAPI schema generated? | auth/tenant guard? | policy/readiness/integrity guard? | tests? | status | notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Branch | `/api/v1/branches` | GET | yes | yes, temporary fallback | partial | yes | yes | scope partial | yes | partial | Projection list endpoint is Python-backed. |
@@ -46,6 +53,11 @@ Product hardening note:
 | Branch operation | `/api/v1/companies/{company_id}/branch-openings` | POST | yes | yes, temporary fallback | partial | yes | yes | policy/readiness/integrity yes | yes | partial | Organization/facility/branch mutation transaction is Python-side. |
 | Branch operation | `/api/v1/companies/{company_id}/branch-closings/precheck` | GET | yes | yes, temporary fallback | partial | yes | yes | policy/readiness/integrity yes | yes | partial | Representative scope impact warning/blocking is Python-side. |
 | Branch operation | `/api/v1/companies/{company_id}/branch-closings` | POST | yes | yes, temporary fallback | partial | yes | yes | policy/readiness/integrity yes | yes | partial | Closing operation remains wizard endpoint. |
+| Branch authority summary | `/api/v1/branches/{branch_id}/representative-authorities` | GET | partial | partial | partial | yes | yes | branch scope partial | partial | partial | Branch detail can read branch-scoped and company-wide authority summaries; staging data verification remains P1. |
+| Facility | `/api/v1/facilities` | GET | yes | partial | partial | yes | yes | company scope partial | partial | partial | Used by branch/facility relation views; deeper facility product hardening is separate. |
+| Facility | `/api/v1/facilities/{facility_id}` | GET | yes | partial | partial | yes | yes | company scope partial | partial | partial | Hydrated detail exists for branch relation display. |
+| Organization | `/api/v1/organization/units` | GET | yes | partial | partial | yes | yes | company scope partial | partial | partial | Used by branch organization relation views. |
+| Organization | `/api/v1/organization/units/{unit_id}` | GET | yes | partial | partial | yes | yes | company scope partial | partial | partial | Hydrated detail exists for branch relation display. |
 
 ## Partners / Ownership
 
@@ -73,6 +85,13 @@ Product hardening note:
 
 ## Representatives
 
+Product hardening note:
+
+- `Temsilcilerimiz` now surfaces the card-vs-authority distinction in the product UI: representative detail shows card status, current authority status, scope target, signature rule, limits, delete behavior and correct next authority actions in one panel.
+- Representative list columns include authority types, authority status, scope target, signature rule, currency, limit summary, last transaction and warnings from the current authority/projection row when available.
+- FastAPI representative card PATCH remains card-safe only; authority/status/scope/limit fields continue to be blocked with `OPERATION_CONTROLLED_FIELDS`.
+- Authority operations remain transaction-based. Scope validation for company-wide/branch/organization/facility and closed-scope blocking need staging E2E with production-like fixtures before fallback removal.
+
 | domain | endpoint | method | FastAPI implemented? | Next proxy implemented? | frontend service mapped? | OpenAPI schema generated? | auth/tenant guard? | policy/readiness/integrity guard? | tests? | status | notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Representative | `/api/v1/representatives` | GET | yes | yes, temporary fallback | partial | yes | yes | scope partial | yes | partial | Projection separates `record_status` and `authority_status`. |
@@ -83,6 +102,7 @@ Product hardening note:
 | Representative authority | `/api/v1/representatives/{representative_id}/authority-transactions` | POST | yes | yes, temporary fallback | partial | yes | yes | policy/readiness/integrity yes | yes | partial | Authority action is separate from card PATCH. |
 | Representative authority | `/api/v1/representatives/{representative_id}/current-authority` | GET | yes | partial | partial | yes | yes | scope partial | partial | partial | Current authority read exists. |
 | Representative authority | `/api/v1/representatives/authorities` | GET | yes | partial | partial | yes | yes | scope partial | partial | partial | Branch/company-wide scope reads are available. |
+| Representative authority | `/api/v1/branches/{branch_id}/representative-authorities` | GET | partial | partial | partial | yes | yes | branch scope partial | partial | partial | Branch detail authority summary should include branch-scoped and optional company-wide authorities; staging data verification remains P1. |
 
 ## Platform
 

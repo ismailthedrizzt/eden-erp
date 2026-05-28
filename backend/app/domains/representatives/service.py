@@ -433,7 +433,7 @@ async def delete_representative_draft(
     return {
         "id": representative_id,
         "hardDeleted": True,
-        "message": "Taslak temsilci karti silindi.",
+        "message": "Temsilci karti taslagi kalici olarak silindi.",
     }
 
 

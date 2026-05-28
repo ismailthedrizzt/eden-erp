@@ -1330,6 +1330,25 @@
             }
           }
         }
+      },
+      "post": {
+        "tags": [
+          "branches"
+        ],
+        "summary": "Create Branch Record",
+        "operationId": "create_branch_record_api_v1_branches_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_dict_str__Any__"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/v1/branches/{branch_id}": {
@@ -1395,13 +1414,51 @@
           "content": {
             "application/json": {
               "schema": {
-                "type": "object",
-                "additionalProperties": true,
-                "title": "Payload"
+                "$ref": "#/components/schemas/BranchCardUpdateRequest"
               }
             }
           }
         },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_dict_str__Any__"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "branches"
+        ],
+        "summary": "Delete Branch Record",
+        "operationId": "delete_branch_record_api_v1_branches__branch_id__delete",
+        "parameters": [
+          {
+            "name": "branch_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Branch Id"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -5640,6 +5697,124 @@
         },
         "type": "object",
         "title": "AssignTaskRequest"
+      },
+      "BranchCardUpdateRequest": {
+        "properties": {
+          "branch_short_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Branch Short Name"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "responsible_person_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Responsible Person Id"
+          },
+          "organization_unit_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Organization Unit Id"
+          },
+          "facility_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Facility Id"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "metadata_json": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Metadata Json"
+          },
+          "base_version": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Base Version"
+          },
+          "base_updated_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Base Updated At"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "title": "BranchCardUpdateRequest"
       },
       "BranchClosingRequest": {
         "properties": {

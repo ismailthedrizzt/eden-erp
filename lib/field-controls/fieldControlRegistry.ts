@@ -33,6 +33,10 @@ const operations = {
   representativeTerminate: op('representative_terminate', 'Temsilcilik Sonlandirma', 'representative_terminate', TARGETS.representatives),
   representativeLimitChange: op('representative_limit_change', 'Limit Degisikligi', 'representative_limit_change', TARGETS.representatives),
   representativeScopeChange: op('representative_authority_scope_change', 'Yetki Kapsami Degisikligi', 'representative_authority_scope_change', TARGETS.representatives),
+  representativeSuspend: op('representative_suspend', 'Askiya Alma', 'representative_suspend', TARGETS.representatives),
+  representativeResume: op('representative_authority_renewal', 'Askidan Kaldirma / Yetki Yenileme', 'representative_authority_renewal', TARGETS.representatives),
+  representativeCorrection: op('representative_authority_correction', 'Duzeltme Kaydi', 'representative_authority_correction', TARGETS.representatives),
+  representativeReverse: op('representative_authority_reverse', 'Ters Kayit', 'representative_authority_reverse', TARGETS.representatives),
   branchOpening: op('branch_opening', 'Sube Acilisi', 'branch_opening', TARGETS.branches),
   branchClosing: op('branch_closing', 'Sube Kapanisi', 'branch_closing', TARGETS.branches),
   branchDocumentUpdate: op('branch_document_update', 'Sube Belge Guncelleme', 'branch_document_update', TARGETS.branches),
@@ -203,8 +207,16 @@ const representativeControls: FieldControlDefinition[] = [
     ['representative_profile', 'Temsilci profili'],
     ['entity_bank_accounts', 'Banka hesaplari'],
   ]),
-  controlled('company_representative', 'status', 'Durum', op('representative_lifecycle', 'Temsilci Lifecycle', 'representative_lifecycle', TARGETS.representatives), { allowDraftEdit: false }),
-  controlled('company_representative', 'record_status', 'Kayit durumu', op('representative_lifecycle', 'Temsilci Lifecycle', 'representative_lifecycle', TARGETS.representatives), { allowDraftEdit: false }),
+  controlled('company_representative', 'status', 'Durum', op('representative_lifecycle', 'Temsilci Lifecycle', 'representative_lifecycle', TARGETS.representatives), {
+    allowDraftEdit: false,
+    lockExplanation: 'Temsilci kart durumu yetki lifecycle islemlerinden ayri izlenir; aktif/askida/sonlandirilmis yetki statusu kart editinden degistirilemez.',
+    suggestedOperations: [operations.representativeStart, operations.representativeSuspend, operations.representativeTerminate],
+  }),
+  controlled('company_representative', 'record_status', 'Kayit durumu', op('representative_lifecycle', 'Temsilci Lifecycle', 'representative_lifecycle', TARGETS.representatives), {
+    allowDraftEdit: false,
+    lockExplanation: 'Temsilci kart lifecycle degeri kart formundan degistirilmez. Yetki baslatma veya sonlandirma sureci kullanilir.',
+    suggestedOperations: [operations.representativeStart, operations.representativeTerminate],
+  }),
   ...controlledFields('company_representative', [
     ['authority_status', 'Yetki durumu'],
     ['authority_record_status', 'Yetki kayit durumu'],
@@ -219,7 +231,14 @@ const representativeControls: FieldControlDefinition[] = [
   ], operations.representative, {
     allowDraftEdit: false,
     lockExplanation: 'Temsil yetkileri karttan dogrudan degistirilemez. Temsilcilik Baslatma veya Yetki Kapsami Degisikligi islemini kullanin.',
-    suggestedOperations: [operations.representativeStart, operations.representativeScopeChange],
+    suggestedOperations: [
+      operations.representativeStart,
+      operations.representativeScopeChange,
+      operations.representativeResume,
+      operations.representativeSuspend,
+      operations.representativeTerminate,
+      operations.representativeCorrection,
+    ],
   }),
   controlled('company_representative', 'start_date', 'Baslangic tarihi', operations.representativeStart, { allowDraftEdit: false }),
   controlled('company_representative', 'end_date', 'Bitis tarihi', operations.representativeTerminate, { allowDraftEdit: false }),
@@ -232,7 +251,11 @@ const representativeControls: FieldControlDefinition[] = [
     ['bank_transaction_limit', 'Banka islem limiti'],
     ['contract_signature_limit', 'Sozlesme imza limiti'],
     ['currency', 'Para birimi'],
-  ], operations.representativeLimitChange, { allowDraftEdit: false }),
+  ], operations.representativeLimitChange, {
+    allowDraftEdit: false,
+    lockExplanation: 'Yetki limitleri kart duzenleme ile degistirilemez. Limit Degisikligi islemini kullanin.',
+    suggestedOperations: [operations.representativeLimitChange, operations.representativeCorrection],
+  }),
   ...controlledFields('company_representative', [
     ['requires_joint_signature', 'Birlikte imza gerekir'],
     ['can_approve_alone', 'Tek basina onaylayabilir'],
@@ -256,7 +279,11 @@ const representativeControls: FieldControlDefinition[] = [
     ['can_submit_hiring_notice', 'Ise giris bildirgesi verebilir'],
     ['can_submit_termination_notice', 'Isten cikis bildirgesi verebilir'],
     ['official_correspondence_authority', 'Resmi yazisma yetkisi'],
-  ], operations.representativeScopeChange, { allowDraftEdit: false }),
+  ], operations.representativeScopeChange, {
+    allowDraftEdit: false,
+    lockExplanation: 'Yetki kapsami temsilci kartindan dogrudan degistirilemez. Yetki Kapsami Degisikligi islemiyle guncellenir.',
+    suggestedOperations: [operations.representativeScopeChange, operations.representativeCorrection],
+  }),
   system('company_representative', 'current_authority', 'Guncel yetki', operations.system),
   system('company_representative', 'authority_transaction_history', 'Yetki islem gecmisi', operations.system),
 ]
@@ -272,7 +299,11 @@ const branchControls: FieldControlDefinition[] = [
     ['notes', 'Notlar'],
   ]),
   controlled('company_branch', 'company_id', 'Bagli sirket', operations.branchOpening, { allowDraftEdit: false }),
-  controlled('company_branch', 'branch_name', 'Sube adi', operations.branchOpening, { allowDraftEdit: false }),
+  controlled('company_branch', 'branch_name', 'Sube adi', operations.branchOpening, {
+    allowDraftEdit: false,
+    lockExplanation: 'Sube adi Sube Acilisi islemiyle olusur. Resmi sube adi kart duzenleme ile degistirilemez.',
+    helperText: 'Yeni sube adi veya resmi sube kimligi icin Sube Acilisi ya da ileride Sube Resmi Bilgi Degisikligi islemi kullanilmalidir.',
+  }),
   controlled('company_branch', 'branch_type', 'Sube turu', operations.branchOpening, { allowDraftEdit: false }),
   controlled('company_branch', 'is_official_branch', 'Resmi sube mi', operations.branchOpening, { allowDraftEdit: false }),
   ...controlledFields('company_branch', [
@@ -282,7 +313,11 @@ const branchControls: FieldControlDefinition[] = [
     ['neighborhood', 'Mahalle / semt'],
     ['address', 'Adres'],
     ['postal_code', 'Posta kodu'],
-  ], operations.branchOpening, { allowDraftEdit: false, message: 'Bu adres alani Sube Acilisi ile belirlenir; ileride Sube Adres Degisikligi islemiyle yonetilecektir.' }),
+  ], operations.branchOpening, {
+    allowDraftEdit: false,
+    message: 'Sube adresi resmi islem kontrolludur. Sube adres degisikligi icin ayri islem kullanilmalidir.',
+    lockExplanation: 'Sube adresi Sube Acilisi isleminde belirlenir; kart duzenleme ile degistirilemez.',
+  }),
   ...controlledFields('company_branch', [
     ['trade_registry_number', 'Ticaret sicil no'],
     ['trade_registry_office', 'Ticaret sicil mudurlugu'],
@@ -301,7 +336,11 @@ const branchControls: FieldControlDefinition[] = [
     ['closing_decision_date', 'Kapanis karar tarihi'],
     ['closing_registration_date', 'Kapanis tescil tarihi'],
     ['end_date', 'Bitis tarihi'],
-  ], operations.branchClosing, { allowDraftEdit: false }),
+  ], operations.branchClosing, {
+    allowDraftEdit: false,
+    lockExplanation: 'Sube kapanis tarihi ve kapanis resmi bilgileri Sube Kapanisi islemiyle olusur.',
+    helperText: 'Aktif subeyi kapatmak icin etki analizli Sube Kapanisi sihirbazini kullanin.',
+  }),
   controlled('company_branch', 'status', 'Durum', op('branch_lifecycle', 'Sube Lifecycle', 'branch_lifecycle', TARGETS.branches), { allowDraftEdit: false }),
   controlled('company_branch', 'record_status', 'Kayit durumu', op('branch_lifecycle', 'Sube Lifecycle', 'branch_lifecycle', TARGETS.branches), { allowDraftEdit: false }),
   controlled('company_branch', 'document_files', 'Sube belgeleri', operations.branchDocumentUpdate, {

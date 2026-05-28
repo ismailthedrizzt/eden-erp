@@ -19,6 +19,10 @@ Product hardening note:
 - `Sirketlerimiz` frontend now surfaces product readiness and field-control guidance while continuing to call existing BFF/proxy routes.
 - Partner/Ownership product hardening also stays in the frontend/service layer: no new Next route business logic was added, and `Ortaklarimiz` continues to call existing BFF/proxy routes for partner CRUD, current ownership and ownership transaction creation.
 - Ownership transaction subroutes under `/api/ownership-transactions/[id]/**` remain deprecated wrappers/P1 productization debt until Python workflow endpoints or a replacement flow are verified.
+- Representative/Authority product hardening also stays in the frontend/service layer: no new Next route business logic was added, and `Temsilcilerimiz` continues to call existing BFF/proxy routes for representative CRUD, current authority reads and authority transaction creation.
+- Representative authority scope/limit/status flows remain P1 staging verification items before temporary fallback removal.
+- Branch product hardening stays in the frontend/service layer and FastAPI branch domain service: no new Next route business logic was added. `Subelerimiz` continues to call existing BFF/proxy routes for branch list/detail/card update, Branch Opening/Closing and branch document update.
+- Branch/facility/organization relation display depends on temporary branch route fallback until FastAPI branch detail hydration is verified with staging data; removal remains P1.
 
 ## Matrix
 

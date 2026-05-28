@@ -160,8 +160,8 @@ async def can_hard_delete_representative_draft(
 ) -> None:
     if not _is_draft(representative, "record_status", "status"):
         raise DomainError(
-            "Aktif veya islem gecmisi olan temsilci dogrudan silinemez. "
-            "Sonlandirma islemini kullanin.",
+            "Yetki veya islem gecmisi olan temsilci kaydi dogrudan silinemez. "
+            "Yetki Sonlandirma islemini kullanin.",
             "REPRESENTATIVE_DELETE_REQUIRES_TERMINATION",
             409,
         )
@@ -169,7 +169,8 @@ async def can_hard_delete_representative_draft(
         session, "company_representative", str(representative["id"]), tenant_id=tenant_id
     ):
         raise DomainError(
-            "Islem gecmisi olan temsilci dogrudan silinemez.",
+            "Yetki veya islem gecmisi olan temsilci kaydi dogrudan silinemez. "
+            "Yetki Sonlandirma islemini kullanin.",
             "REPRESENTATIVE_DELETE_HAS_AUTHORITY_HISTORY",
             409,
         )
