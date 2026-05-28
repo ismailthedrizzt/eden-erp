@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import type { ReactNode } from 'react'
-import { CreditCard, FileText, Landmark, WalletCards } from 'lucide-react'
+import { CreditCard, FileText, Landmark, ReceiptText, WalletCards } from 'lucide-react'
 import { PageBanner } from '@/components/ui/PageBanner'
 
 export default function MuhasebePage() {
@@ -9,7 +9,7 @@ export default function MuhasebePage() {
       <PageBanner
         mode="list"
         title="Muhasebe"
-        subtitle="Finansal ilişkiler, cari kartlar ve ön muhasebe hareketlerini yönetin."
+        subtitle="Finansal iliskiler, cari kartlar ve cari hareketleri yonetin."
         icon={<CreditCard size={24} />}
       />
 
@@ -18,25 +18,31 @@ export default function MuhasebePage() {
           href="/app/muhasebe/cari-kartlar"
           icon={<WalletCards size={22} />}
           title="Cari Kartlar"
-          description="Kişi ve kurumların finansal ilişkilerini, bakiyelerini ve hareketlerini görüntüleyin."
+          description="Musteri, tedarikci, ortak, paydas ve muhtelif cari iliskilerini tek karttan yonetin."
+        />
+        <ModuleLink
+          href="/app/muhasebe/cari-hareketler"
+          icon={<ReceiptText size={22} />}
+          title="Cari Hareketler"
+          description="Gider, tahsilat, odeme, belge durumu ve mutabakat hazirligini cari kartlarla birlikte izleyin."
         />
         <ModuleLink
           href="/app/muhasebe/on-muhasebe-hareketleri"
           icon={<FileText size={22} />}
-          title="Ön Muhasebe Hareketleri"
-          description="Harcama, ödeme, tahsilat ve cari hareketleri sade bir ekrandan yönetin."
+          title="On Muhasebe Hareketleri"
+          description="Eski on muhasebe hareketleri ekranini ve kademeli gecis kayitlarini goruntuleyin."
         />
         <ModuleLink
           href="/app/muhasebe/banka-hesaplari-ve-kartlari"
           icon={<Landmark size={22} />}
-          title="Banka Hesapları ve Kartları"
-          description="Banka bağlantılarını, hesapları, kartları ve entegrasyon ayarlarını yönetin."
+          title="Banka Hesaplari ve Kartlari"
+          description="Banka baglantilarini, hesaplari, kartlari ve entegrasyon ayarlarini yonetin."
         />
         <ModuleLink
           href="/app/muhasebe/hesap-ve-kart-hareketleri"
           icon={<CreditCard size={22} />}
           title="Hesap ve Kart Hareketleri"
-          description="Hesap ve kart hareketlerini görüntüleyin, filtreleyin ve ön muhasebe kayıtlarıyla eşleştirin."
+          description="Hesap ve kart hareketlerini goruntuleyin, filtreleyin ve on muhasebe kayitlariyla eslestirin."
         />
       </div>
     </div>

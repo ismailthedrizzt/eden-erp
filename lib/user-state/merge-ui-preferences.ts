@@ -19,6 +19,7 @@ const ALLOWED_TOP_LEVEL_KEYS = new Set([
   'preferredHelpMode',
   'lastTourVersion',
   'actionGuideDismissed',
+  'dismissedFieldHelpers',
   'lockedFieldHintsDismissed',
 ])
 
@@ -166,6 +167,9 @@ export function normalizeUiPreferencesPatch(value: unknown): Partial<UserUiPrefe
       case 'actionGuideDismissed':
         if (typeof rawValue === 'boolean') patch.actionGuideDismissed = rawValue
         break
+      case 'dismissedFieldHelpers':
+        patch.dismissedFieldHelpers = sanitizeStringList(rawValue, 200)
+        break
       case 'lockedFieldHintsDismissed':
         patch.lockedFieldHintsDismissed = sanitizeStringList(rawValue, 200)
         break
@@ -198,6 +202,9 @@ export function mergeUiPreferences(
     dismissedOperationHints: Array.isArray(base?.dismissedOperationHints)
       ? base.dismissedOperationHints
       : DEFAULT_UI_PREFERENCES.dismissedOperationHints,
+    dismissedFieldHelpers: Array.isArray(base?.dismissedFieldHelpers)
+      ? base.dismissedFieldHelpers
+      : DEFAULT_UI_PREFERENCES.dismissedFieldHelpers,
     lockedFieldHintsDismissed: Array.isArray(base?.lockedFieldHintsDismissed)
       ? base.lockedFieldHintsDismissed
       : DEFAULT_UI_PREFERENCES.lockedFieldHintsDismissed,
@@ -215,6 +222,7 @@ export function mergeUiPreferences(
     completedTourSteps: normalizedPatch.completedTourSteps || normalizedBase.completedTourSteps,
     dismissedPageTours: normalizedPatch.dismissedPageTours || normalizedBase.dismissedPageTours,
     dismissedOperationHints: normalizedPatch.dismissedOperationHints || normalizedBase.dismissedOperationHints,
+    dismissedFieldHelpers: normalizedPatch.dismissedFieldHelpers || normalizedBase.dismissedFieldHelpers,
     lockedFieldHintsDismissed: normalizedPatch.lockedFieldHintsDismissed || normalizedBase.lockedFieldHintsDismissed,
   }
 }

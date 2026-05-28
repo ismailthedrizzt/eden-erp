@@ -486,6 +486,10 @@ export default function OrtaklarPage() {
     selectedRecordType: selectedPartner?.id ? 'partner' : null,
     selectedRecordStatus: selectedPartner ? selectedRecordStatus : null,
     activeCompanyId: selectedPartner?.company_id || null,
+    context: {
+      currentOwnershipAvailable: Boolean(selectedPartner?.current_ownership || selectedPartner?.current_share_ratio !== undefined),
+      currentShareRatio: selectedPartner?.current_ownership?.current_share_ratio ?? selectedPartner?.current_share_ratio ?? null,
+    },
   })
   const formMode: FormMode = pageState === 'create' ? 'create' : isSelectedPassive ? 'passive' : pageState === 'edit' ? 'edit' : 'view'
   const formLoadStages = createProgressiveFormLoadStages({

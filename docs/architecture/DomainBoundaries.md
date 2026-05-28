@@ -366,26 +366,39 @@ Branch bir facility ile iliskilenebilir. Organization fiziksel lokasyon degil, h
 
 ### Amac
 
-Cari kartlar, cari hareketler, banka hareketleri, odeme/tahsilat, fatura/e-fatura/e-arsiv ve mutabakat kayitlarini yonetir.
+Cari kartlar, cari hareketler, borc/alacak, odeme/tahsilat, gider/gelir
+kayitlari, belge/fatura referanslari, banka/kasa/kart hareketi referanslari ve
+mutabakat kayitlarini yonetir.
 
 ### Sahip Oldugu Entity'ler
 
-- Cari kartlar
-- Cari hareketler
-- Banka hareketleri
-- Odeme/tahsilat
+- `accounting_cari_accounts`
+- `accounting_cari_transactions`
+- `accounting_transaction_attachments`
+- `accounting_reconciliation_links`
+- Banka/kasa/kart hareketi referanslari
+- Odeme/tahsilat ve gider/gelir kayitlari
 - Fatura/e-fatura/e-arsiv iliskileri
 
 ### Sahip Olmadigi Entity'ler
 
 - Ortaklik haklarinin hukuki olusumu
 - Sermaye artirimi kararinin kendisi
+- Sirket acilisi, tasfiye, terkin
+- Temsilci yetkisi
+- Sube acilisi/kapanisi
+- Personel lifecycle
+- Resmi tescil islemi
 
 ### Baslattigi Operasyonlar
 
 - `post_payment`
 - `post_collection`
 - `reconcile_capital_payment`
+- `create_cari_account`
+- `create_cari_transaction`
+- `cancel_transaction`
+- `reconcile_transaction`
 
 ### Dinledigi Eventler
 
@@ -400,157 +413,308 @@ Cari kartlar, cari hareketler, banka hareketleri, odeme/tahsilat, fatura/e-fatur
 
 ### Diger Domainlerle Iliskisi
 
-Sermaye artirimi ortaklik ve sirket domain'inde dogar; Accounting Domain sermaye odeme/tahsilat mutabakatini yonetir.
+Sermaye artirimi ortaklik ve sirket domain'inde dogar; Accounting Domain
+sermaye odeme/tahsilat mutabakatini yonetir.
+
+> Sermaye artırımı ortaklık/şirket domain’inde oluşur. Sermaye ödemesi veya
+> tahsilatı muhasebe domain’inde cari/banka hareketi olarak mutabakatlanır.
 
 ### Sinir Ihlali Ornekleri
 
 - Muhasebe hareketinden ortak pay oranini dogrudan degistirmek.
+- Cari hareketten temsilci yetkisi veya sirket lifecycle durumu uretmek.
+- Sube acilisi/kapanisini accounting kaydiyla tamamlamak.
 
 ### Dogru Kullanim Ornekleri
 
 - Sermaye artirimi tamamlandiktan sonra odeme mutabakati icin accounting action olusturmak.
+- Muhtelif Tedarikciler cari karti uzerinden tek seferlik kurulus gideri kaydetmek.
+- Banka hareketi veya fatura entegrasyonu geldiginde cari hareketle reconciliation link kurmak.
 
 ## HR Domain
 
 ### Amac
 
-Calisan, istihdam lifecycle'i, SGK istihdam bildirimleri ve calisan atamalarini yonetir.
+Calisan kartlarini, calisan ozluk bilgilerini, istihdam lifecycle'ini, ise giris,
+isten cikis, pozisyon/organizasyon atamasi, SGK giris/cikis hazirligi ve calisan
+belge dosyasini yonetir.
 
 ### Sahip Oldugu Entity'ler
 
-- `employees`
-- Employment lifecycle records
-- SGK employment notifications
-- Assignments
+- `hr_employees`
+- `hr_employment_records`
+- `hr_employment_transactions`
+- `hr_employee_documents`
+- Calisan ozluk bilgileri
+- Ise giris / isten cikis lifecycle kayitlari
+- SGK manuel takip ve belge referanslari
+- Sube, organizasyon birimi ve pozisyon atamasi baglantilari
 
 ### Sahip Olmadigi Entity'ler
 
-- Representative authority
-- Partner ownership
+- Sirket tuzel kisiligi
+- Sube acilisi/kapanisi
+- Organizasyon agacinin kendisi
+- Pozisyon/kadro taniminin ana ownership'i
+- Maas odeme/muhasebe hareketi
+- Bordro hesaplama
+- Temsilci yetkisi
+- Ortaklik hakki
 
 ### Baslattigi Operasyonlar
 
-- `create_employee`
+- `create_employee_draft`
 - `start_employment`
-- `end_employment`
-- `assign_employee`
+- `terminate_employment`
+- `change_assignment`
+- `mark_sgk_entry_completed`
+- `mark_sgk_exit_completed`
+- `manage_employee_documents`
 
 ### Dinledigi Eventler
 
 - `organization.unit_closed`
 - `facility.deactivated`
+- `company.branch_closed`
+- `representative.authority_updated`
 
 ### Yayinladigi Eventler
 
-- `hr.employee_created`
-- `hr.employment_started`
-- `hr.employment_ended`
+- `hr.employee.created`
+- `hr.employee.updated`
+- `hr.employment.started`
+- `hr.employment.terminated`
+- `hr.employment.assignment_changed`
+- `hr.employee_document.created`
 
 ### Diger Domainlerle Iliskisi
 
-Calisan bir temsilci veya ortak olabilir; bu kimlikler ayri domain iliskileridir.
+Calisan karti kisi/ozluk bilgisini tutar; aktif istihdam, pozisyon ve SGK durumu
+Ise Giris veya ilgili istihdam islemleriyle olusur. Organization domain
+organizasyon birimi ve pozisyon tanimlarini sahiplenir; HR sadece calisanin bu
+tanimlarla baglantisini tutar. Accounting domain ucret/odeme hareketlerini
+ileride mutabakatlar, HR bordro veya muhasebe kaydi uretmez.
+
+> Calisan olmak, temsilci olmak veya ortak olmak ayni sey degildir. Bir kisi
+> ayni anda calisan, ortak ve temsilci olabilir; ancak bu roller ayri domain
+> iliskileriyle yonetilir.
 
 ### Sinir Ihlali Ornekleri
 
 - HR atamasindan temsilci imza yetkisi vermek.
+- HR istihdam kaydindan ortaklik hakki, pay orani veya oy hakki uretmek.
+- Calisan kart PATCH'i ile pozisyon, SGK veya isten cikis durumunu keyfi degistirmek.
+- Maas odemesi veya cari hareketi HR domain tablosundan olusturmak.
 
 ### Dogru Kullanim Ornekleri
 
 - Organizasyon birimi kapanisinda aktif calisan etkisini integrity check ile gormek.
+- + Ekle ile taslak calisan karti olusturup Ise Giris wizard'i ile aktif istihdam baslatmak.
+- Pozisyon degisikligini istihdam transaction olarak kaydetmek.
+- SGK bildirimi dis sistem entegrasyonu yoksa manuel tamamlandi aksiyonu ile izlemek.
 
 ## Project / Task Domain
 
 ### Amac
 
-Projeler, is gorevleri, issue/work tracking ve ekip islerini yonetir.
+Projeler, gorev/issue kayitlari, status workflow, atama, oncelik, yorum, ek,
+etiket, related ERP kaydi ve Kanban MVP'sini yonetir.
 
 ### Sahip Oldugu Entity'ler
 
-- `projects`
+- `project_projects`
 - `project_tasks`
-- `issues`
+- `project_task_comments`
+- `project_task_attachments`
+- `project_task_history`
+- Project cards
+- Project task / issue records
+- Kanban status workflow
 
 ### Sahip Olmadigi Entity'ler
 
 - Process Engine internal tasks
 - Official operation lifecycle
+- HR employment lifecycle
+- Accounting transaction
+- Branch lifecycle
+- Representative authority
+- Ownership transaction
 
 ### Baslattigi Operasyonlar
 
 - `create_project`
-- `create_task`
-- `assign_task`
-- `close_task`
+- `update_project`
+- `complete_project`
+- `cancel_project`
+- `create_project_task`
+- `assign_project_task`
+- `transition_project_task`
+- `comment_project_task`
+- `attach_project_task`
 
 ### Dinledigi Eventler
 
 - `organization.unit_updated`
-- `hr.employee_created`
+- `hr.employee.created`
+- `company.branch_closed`
+- `process.instance_completed`
 
 ### Yayinladigi Eventler
 
 - `project.created`
-- `project.task_created`
-- `project.task_completed`
+- `task.created`
+- `task.updated`
+- `task.transitioned`
+- `task.assigned`
+- `task.commented`
+- `task.attachment_added`
 
 ### Diger Domainlerle Iliskisi
 
-Project task kullanici isidir; process task platform surec gorevidir. Action Center ikisini farkli kaynak olarak gosterebilir.
+Project task kullanici/ekip isidir; process task sistem surec gorevidir.
+
+> Process task sistem işleminin parçasıdır. Project task ise ekip iş takibidir.
+> Action Center ikisini kullanıcıya tek iş listesi olarak gösterebilir ama veri
+> modeli ve lifecycle ayrıdır.
 
 ### Sinir Ihlali Ornekleri
 
 - Project task tamamlaninca process approval status'u direkt degistirmek.
+- Project task ile HR ise giris/isten cikis lifecycle'i uretmek.
+- Project task ile muhasebe hareketi veya resmi sube/temsilci islemi tamamlamak.
 
 ### Dogru Kullanim Ornekleri
 
-- Surec sonucu proje gorevi gerekiyorsa event veya domain service ile olusturmak.
+- Sube detayindan related branch gorevi olusturmak.
+- Surec sonucu takip isi gerekiyorsa event veya domain service ile project task olusturmak.
+- Action Center'da `source_type=process_task` ve `source_type=project_task` kaynaklarini ayri etiketle gostermek.
 
 ## Product / Service Domain
 
 ### Amac
 
-Urun, hizmet, katalog, fiyatlama ve hizmet sozlesmesi temellerini yonetir.
+Satilabilir veya hizmet verilebilir urun/hizmet tanimini yonetir. Katalog,
+servis verilebilirlik, seri no gerekliligi, garanti suresi, bakim periyodu,
+teknik ozellikler ve dokuman referanslari bu domainde kalir.
 
 ### Sahip Oldugu Entity'ler
 
-- Products
-- Services
-- Product/service categories
-- Price list items
+- `product_catalog`
+- Urun/hizmet modeli
+- Seri numarasi gerekliligi
+- Garanti ve bakim varsayilanlari
+- Teknik ozellikler
+- Katalog dokumanlari
 
 ### Sahip Olmadigi Entity'ler
 
-- Accounting invoice posting
-- Project task execution
-- Branch lifecycle
+- Uretim recetesi / BOM detayi
+- Stok hareketi
+- Fatura / cari hareket
+- Musteri kurulum/envanter kaydi
+- Saha servis mudahalesi
 
 ### Baslattigi Operasyonlar
 
 - `create_product`
-- `create_service`
-- `update_price_list`
+- `update_product`
 
 ### Dinledigi Eventler
 
-- `accounting.reconciliation_completed`
+- `after_sales.asset_created`
+- `service.record_completed`
 
 ### Yayinladigi Eventler
 
-- `catalog.product_created`
-- `catalog.service_created`
-- `catalog.price_changed`
+- `product.created`
+- `product.updated`
 
 ### Diger Domainlerle Iliskisi
 
-Accounting faturalama icin katalog referansi okuyabilir; katalog accounting hareketi yazmaz.
+Accounting faturalama icin katalog referansi okuyabilir; katalog accounting
+hareketi yazmaz. After-Sales sadece `after_sales_enabled=true` ve
+`serviceable=true` katalog kayitlarini kurulu urun olarak secilebilir gosterir.
+
+> Urun katalogu satilabilir/hizmet verilebilir urunun tanimidir. Kurulu urun ise
+> belirli bir musteride, belirli lokasyonda, belirli seri numarasiyla izlenen
+> gercek varliktir.
 
 ### Sinir Ihlali Ornekleri
 
 - Product update ile invoice kaydi olusturmak.
+- Product catalog PATCH ile musteride kurulu urun veya servis talebi olusturmak.
 
 ### Dogru Kullanim Ornekleri
 
 - Fatura satiri product/service read modelini referans alir.
+- After-Sales kurulu urun olustururken katalogdaki seri no, garanti ve bakim
+  varsayilanlarini okur.
+
+## After-Sales Domain
+
+### Amac
+
+Musteride kurulu urunleri, servis taleplerini, servis kayitlarini, garanti
+durumunu, bakim tarihlerini, saha ziyaretlerini ve servis sonucunu yonetir.
+
+### Sahip Oldugu Entity'ler
+
+- `after_sales_installed_assets`
+- `after_sales_service_requests`
+- `after_sales_service_records`
+- Bakim due listesi
+- Servis fotograf/rapor/imza referanslari
+
+### Sahip Olmadigi Entity'ler
+
+- Muhasebe tahsilati veya fatura
+- Stok cikis hareketi
+- Uretim emri
+- Project task lifecycle ownership
+
+### Baslattigi Operasyonlar
+
+- `create_installed_asset`
+- `create_service_request`
+- `assign_service_request`
+- `create_service_record`
+- `complete_service_record`
+- `create_followup_task`
+
+### Dinledigi Eventler
+
+- `product.created`
+- `project.task_completed`
+- `accounting.invoice_matched`
+
+### Yayinladigi Eventler
+
+- `after_sales.asset_created`
+- `service.request_created`
+- `service.request_assigned`
+- `service.record_completed`
+- `service.followup_required`
+
+### Diger Domainlerle Iliskisi
+
+After-Sales Product/Service katalog kaydina, musteri cari kartina, tesis/lokasyon
+kaydina ve teknisyen kullanici/calisan kaydina referans verir. Project/Task
+entegrasyonu takip isi olusturmak icindir; servis talebinin status kaynagi
+After-Sales olarak kalir. Accounting entegrasyonu future fatura/cari hareket
+mutabakati icindir; bu fazda tahsilat veya fatura uretmez.
+
+### Sinir Ihlali Ornekleri
+
+- Servis kaydi tamamlaninca dogrudan fatura veya cari hareket olusturmak.
+- Follow-up project task tamamlaninca servis talebini otomatik kapatmak.
+- Kurulu urun kaydini stok hareketi olarak yorumlamak.
+
+### Dogru Kullanim Ornekleri
+
+- Servis talebinden `related_module=after_sales` project task olusturmak.
+- Servis kaydi tamamlaninca kurulu urunun `last_service_date` alanini guncellemek.
+- Garanti disi servis kaydini ileride billable accounting akisi icin isaretlemek.
 
 ## Document Domain
 
@@ -832,6 +996,103 @@ Action Guide yeni islem uydurmaz. Module Registry, Field Control Registry, Visib
 ### Dogru Kullanim Ornekleri
 
 - "Adres alanini neden degistiremiyorum?" sorusunu Field Control Registry'den `address_change` action'ina baglamak.
+
+## CRM / Stakeholder Master Data Domain
+
+### Amac
+
+Master kisi/kurum kaydini tekillestirmek ve musteri, tedarikci, lead, bayi,
+muhasebeci, kamu kurumu veya diger paydas rollerini bu master kayda baglamak.
+
+### Sahip Oldugu Entity'ler
+
+- `master_person`
+- `master_organization`
+- `crm_stakeholder`
+- `crm_interaction`
+
+### Sahip Olmadigi Entity'ler
+
+- Cari hareket veya finansal mutabakat.
+- Ortaklik hakki.
+- Temsil yetkisi.
+- Calisan istihdam lifecycle'i.
+- After-Sales servis kaydi lifecycle'i.
+
+### Baslattigi Operasyonlar
+
+- `create_stakeholder`
+- `create_customer`
+- `create_supplier`
+- `create_lead`
+- `create_interaction`
+- `create_cari_from_stakeholder`
+- `create_followup_task`
+
+### Diger Domainlerle Iliskisi
+
+Master kayit kimligi temsil eder. Stakeholder role sirketle iliskiyi temsil
+eder. Cari kart finansal iliskidir ve Accounting domain'e aittir. Project task
+follow-up isidir ve Project/Task domain'e aittir. After-Sales musteri kurulu
+urun ve servis kayitlarini stakeholder veya cari account uzerinden baglayabilir.
+
+### Sinir Ihlali Ornekleri
+
+- CRM kaydinin ortaklik payi, temsil yetkisi veya calisan istihdam durumu
+  olusturmasi.
+- Cari kart silindiginde master kisi/kurum kaydinin otomatik silinmesi.
+
+### Dogru Kullanim Ornekleri
+
+- Ayni VKN ile gelen kurum icin mevcut `master_organization` kaydini secip yeni
+  `crm_stakeholder` musteri rolu olusturmak.
+- Paydas detailinden Project/Task follow-up gorevi olusturmak.
+
+## Reporting / Dashboard Domain
+
+### Amac
+
+Read model, projection ve summary kaynaklarini yonetim KPI, chart dataset,
+rapor sonucu ve export hazirligi olarak sunmak.
+
+### Sahip Oldugu Entity'ler
+
+- `report_definition`
+- `dashboard_kpi`
+- `report_result`
+- `report_export_request`
+
+### Sahip Olmadigi Entity'ler
+
+- Business mutation.
+- Official operation.
+- Process approval.
+- Project task lifecycle.
+- Accounting transaction creation.
+- Audit log kaydinin kendisi.
+
+### Baslattigi Operasyonlar
+
+- `open_management_dashboard`
+- `query_report`
+- `export_report`
+
+### Diger Domainlerle Iliskisi
+
+Reporting yalnizca okur. Action Center, Audit, Accounting, HR, CRM,
+After-Sales ve Project/Task domainlerinden summary/projection verisi alir.
+Kullaniciya yalnizca permission ve scope icindeki ozetleri gosterir.
+
+### Sinir Ihlali Ornekleri
+
+- Dashboard kartinin muhasebe hareketi veya process approval yaratmasi.
+- Rapor sorgusunun ham tenant disi tablo verisini gostermesi.
+
+### Dogru Kullanim Ornekleri
+
+- `missing_documents_report` ile belge aranacak cari hareketleri listelemek.
+- `overdue_tasks_report` ile geciken project task'lari gostermek.
+- `permission_denied_report` ile admin audit ozetini gostermek.
 
 ## Kavram Ayrimlari
 

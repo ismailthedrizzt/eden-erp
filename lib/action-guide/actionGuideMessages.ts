@@ -5,6 +5,8 @@ export const COMMON_ACTION_GUIDE_MESSAGES = {
   dataSafe: 'Rehber veri degistirmez; veri degistiren adimlar ilgili sihirbazda sizin onayinizla tamamlanir.',
   emptyTitle: 'Ne yapmak istiyorsunuz?',
   emptyExplanation: 'Yapmak istediginiz isi yazin; Eden ERP sizi dogru sayfa ve sihirbaza yonlendirsin.',
+  lowConfidenceTitle: 'Birkac olasi islem buldum',
+  lowConfidenceExplanation: 'Yazdiginiz ifade icin tek bir islemden emin degilim. Asagidaki seceneklerden uygun olani acabilirsiniz.',
 }
 
 export function statusRequirementMessage(label: string, statuses: string[]) {
@@ -15,10 +17,12 @@ export function statusRequirementMessage(label: string, statuses: string[]) {
 
 export function moduleMissingMessage(moduleKey: string) {
   if (moduleKey === 'partners') {
-    return 'Bu islem icin Ortaklarimiz modulu ve guncel ortaklik dagilimi aktif olmalidir.'
+    return 'Bu islem icin Ortaklarimiz modulu aktif olmalidir.'
   }
   if (moduleKey === 'branches') return 'Bu islem icin Subelerimiz modulu aktif olmalidir.'
-  if (moduleKey === 'organization') return 'Organizasyon modulu aktif olmadigi icin ilgili birim/kadro adimi sinirli calisir.'
-  if (moduleKey === 'facilities') return 'Tesisler/Lokasyonlar modulu aktif olmadigi icin fiziksel lokasyon kaydi otomatik olusturulamayabilir.'
+  if (moduleKey === 'organization') return 'Sube bazli organizasyon/kadro adimi icin Teskilat/Kadro modulu aktif olmalidir.'
+  if (moduleKey === 'facilities') return 'Tesis/lokasyon bazli yetki veya otomatik lokasyon kaydi icin Tesisler/Lokasyonlar modulu aktif olmalidir.'
+  if (moduleKey === 'representatives') return 'Bu islem icin Temsilcilerimiz modulu aktif olmalidir.'
+  if (moduleKey === 'settings') return 'Bu islem icin Sistem ayarlari modulune erisim olmalidir.'
   return `${moduleKey} modulu aktif olmalidir.`
 }

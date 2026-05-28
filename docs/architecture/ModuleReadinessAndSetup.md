@@ -52,6 +52,9 @@ Kullanici arayuzunde teknik tablo, SQL, RPC veya migration ifadeleri gosterilmez
 - branches: Sube kayitlari, resmi degisiklik islem kayitlari ve branch list read modeli.
 - organization: Organizasyon birimleri ve tipleri.
 - facilities: Tesis/lokasyon kayitlari.
+- accounting: Cari kartlar, cari hareketler, belge/mutabakat hazirligi ve sermaye odeme/tahsilat mutabakati.
+- hr: Calisan kartlari, istihdam kayitlari, istihdam lifecycle transaction'lari ve ozluk belge referanslari.
+- project_management: Proje kartlari, proje gorevleri, yorum/ek referanslari ve Action Center project task kaynagi.
 - process: Surec, gorev, onay ve surec olay kayitlari.
 - audit: Denetim izi kayitlari.
 - outbox: Sistem olay kayitlari.
@@ -67,3 +70,156 @@ Module readiness registry ve checker Python backend'e tasinmaya basladi:
 MVP'dir. Next.js `/api/setup/readiness/**` route'lari `FASTAPI_BASE_URL`
 varsa `/api/v1/setup/readiness/**` endpointlerine proxy eder; TS fallback yalniz
 migration bridge olarak kalir.
+
+## Accounting Readiness
+
+Accounting module icin zorunlu altyapi:
+
+- `accounting_cari_accounts`
+- `accounting_cari_transactions`
+
+Opsiyonel altyapi:
+
+- `accounting_transaction_attachments`
+- `accounting_reconciliation_links`
+- `bank_transactions`
+- `invoices`
+- `e_invoice_integration`
+
+Bu altyapi eksikse Cari Kartlar ve Cari Hareketler teknik hata yerine
+"Muhasebe modulu kurulumu tamamlanmamis" diline yonlenir. Yeni cari MVP
+endpointleri FastAPI tarafinda readiness kontrolu yapar; Next route'lari sadece
+proxy adapter olarak kalir.
+
+## HR Readiness
+
+HR module icin zorunlu altyapi:
+
+- `hr_employees`
+- `hr_employment_records`
+- `hr_employment_transactions`
+
+Opsiyonel altyapi ve bagimliliklar:
+
+- `hr_employee_documents`
+- `organization`
+- `branches`
+- `facilities`
+- `accounting`
+
+Bu altyapi eksikse Calisanlar, Ise Giris, Isten Cikis ve SGK manuel takip
+akislarinda teknik tablo hatasi gosterilmez; kullanici "IK modulu kurulumu
+tamamlanmamis" diline yonlendirilir. Yeni HR endpointleri FastAPI tarafinda
+readiness kontrolu yapar; Next route'lari sadece proxy adapter olarak kalir.
+
+## Project Management Readiness
+
+Project Management module icin zorunlu altyapi:
+
+- `project_projects`
+- `project_tasks`
+
+Opsiyonel altyapi ve bagimliliklar:
+
+- `project_task_comments`
+- `project_task_attachments`
+- `project_task_history`
+- `hr`
+- `organization`
+- `branches`
+- `facilities`
+
+Bu altyapi eksikse Projeler, Gorevler ve Kanban ekranlari teknik tablo hatasi
+yerine "Proje/Gorev modulu kurulumu tamamlanmamis" diline yonlenir. Project
+task Action Center'a `source_type=project_task` ile baglanir; process task
+readiness ayridir.
+
+## Product Services Readiness
+
+Product Services module icin zorunlu altyapi:
+
+- `product_catalog`
+
+Opsiyonel altyapi ve bagimliliklar:
+
+- `companies`
+- `accounting`
+- `inventory`
+
+Bu altyapi eksikse Urun/Hizmet Katalogu teknik tablo hatasi yerine
+"Urun/Hizmet modulu kurulumu tamamlanmamis" diline yonlenir. Katalog
+servis verilebilirlik, seri no, garanti ve bakim varsayilanlarini saglar; satis,
+stok veya muhasebe hareketi uretmez.
+
+## After-Sales Readiness
+
+After-Sales module icin zorunlu altyapi:
+
+- `product_catalog`
+- `after_sales_installed_assets`
+- `after_sales_service_requests`
+- `after_sales_service_records`
+
+Opsiyonel altyapi ve bagimliliklar:
+
+- `project_management`
+- `hr`
+- `facilities`
+- `branches`
+- `accounting`
+
+Bu altyapi eksikse Kurulu Urunler, Servis Talepleri, Servis Kayitlari ve Bakimi
+Gelenler ekranlari teknik tablo hatasi yerine "Satis sonrasi modulu kurulumu
+tamamlanmamis" diline yonlenir. Project task entegrasyonu opsiyoneldir ve
+servis talebi lifecycle'inin yerine gecmez; Accounting entegrasyonu future
+fatura/cari mutabakati hazirligidir.
+
+## CRM Readiness
+
+CRM / Paydaslar module icin zorunlu altyapi:
+
+- `master_persons`
+- `master_organizations`
+- `crm_stakeholders`
+
+Opsiyonel altyapi ve bagimliliklar:
+
+- `crm_interactions`
+- `accounting`
+- `project_management`
+- `after_sales`
+- `hr`
+- `partners`
+- `representatives`
+
+Bu altyapi eksikse Paydaslar, master lookup, cari kart olusturma ve follow-up
+task aksiyonlari teknik tablo hatasi yerine "CRM backend servisi
+yapilandirilmamis" veya "CRM modulu kurulumu tamamlanmamis" diline yonlenir.
+Next route'lari proxy-only adapter olarak kalir; duplicate role ve company
+scope kararlarini FastAPI CRM domain servisleri verir.
+
+## Reporting Readiness
+
+Reporting module icin zorunlu tablo yoktur; dashboard enabled modullerin
+summary/projection kaynaklarini okur.
+
+Zorunlu bagimlilik:
+
+- `companies`
+
+Opsiyonel bagimliliklar:
+
+- `partners`
+- `representatives`
+- `branches`
+- `accounting`
+- `hr`
+- `project_management`
+- `after_sales`
+- `crm`
+- `audit`
+- `actionCenter`
+
+Bir modul kapali, yetkisiz veya projection kaynagi eksikse dashboard tamamen
+kirilmamalidir. Ilgili kart gizlenir/disabled olur veya warning dondurulur.
+Export icin tarih araligi, row limit ve `reporting.export` izni gerekir.

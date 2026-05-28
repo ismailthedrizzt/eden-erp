@@ -1,6 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import { BookOpen, ClipboardList, ExternalLink, FilePlus2, MapPin, PlayCircle } from 'lucide-react'
 import type { ActionGuideAction } from '@/lib/ai/actionGuide'
 import { tenantRequestHeaders } from '@/lib/tenancy/client'
 import { cn } from '@/lib/utils'
@@ -13,6 +14,7 @@ interface ActionGuideCommandButtonProps {
 export function ActionGuideCommandButton({ action, onExecuted }: ActionGuideCommandButtonProps) {
   const router = useRouter()
   const disabledReason = action.disabled_reason || action.reason
+  const Icon = iconForActionType(action.action_type)
 
   const execute = async () => {
     if (action.disabled) return
@@ -27,7 +29,11 @@ export function ActionGuideCommandButton({ action, onExecuted }: ActionGuideComm
     }).catch(() => undefined)
 
     if (action.action_type === 'show_help') {
-      window.dispatchEvent(new CustomEvent('eden:open-action-guide'))
+      if (action.target_page) {
+        router.push(action.target_page)
+      } else {
+        window.dispatchEvent(new CustomEvent('eden:open-action-guide'))
+      }
       onExecuted?.()
       return
     }
@@ -53,7 +59,17 @@ export function ActionGuideCommandButton({ action, onExecuted }: ActionGuideComm
           : 'border border-emerald-200 bg-emerald-50 text-emerald-800 hover:bg-emerald-100 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-100 dark:hover:bg-emerald-900/40'
       )}
     >
+      <Icon size={13} className="mr-1.5 shrink-0" />
       {action.label}
     </button>
   )
+}
+
+function iconForActionType(actionType: ActionGuideAction['action_type']) {
+  if (actionType === 'open_wizard') return PlayCircle
+  if (actionType === 'open_record' || actionType === 'focus_record') return MapPin
+  if (actionType === 'show_help') return BookOpen
+  if (actionType === 'start_create') return FilePlus2
+  if (actionType === 'navigate') return ExternalLink
+  return ClipboardList
 }

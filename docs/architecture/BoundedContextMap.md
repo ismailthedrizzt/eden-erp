@@ -33,7 +33,7 @@ Eden ERP'de entity sahipligi domain bazinda belirlenir. Baska domain'in sahip ol
 +-------+--------+     +-------+--------+     +--------------+---------------+
 | Accounting     |     | HR Domain     |     | Project / Task Domain        |
 | payments,      |     | employees,    |     | business work                |
-| reconciliation |     | assignments   |     |                              |
+| reconciliation |     | employment    |     |                              |
 +-------+--------+     +-------+--------+     +--------------+---------------+
         |                      |                             |
         +----------------------+-------------+---------------+
@@ -54,9 +54,9 @@ Eden ERP'de entity sahipligi domain bazinda belirlenir. Baska domain'in sahip ol
 - Branch Domain sirket subelerini sahiplenir; sube sirket, facility veya organization unit degildir.
 - Organization Domain hiyerarsi ve kadroyu sahiplenir.
 - Facility / Location Domain fiziksel lokasyonlari sahiplenir.
-- Accounting Domain sermaye odeme/tahsilat mutabakatini sahiplenir; sermaye artirimi kararini sahiplenmez.
-- HR Domain calisan ve istihdam lifecycle'ini sahiplenir.
-- Project / Task Domain is gorevlerini sahiplenir; process task'lari sahiplenmez.
+- Accounting Domain cari kart, cari hareket ve sermaye odeme/tahsilat mutabakatini sahiplenir; sermaye artirimi kararini sahiplenmez.
+- HR Domain calisan karti, istihdam lifecycle'i, SGK manuel takip ve ozluk belgelerini sahiplenir; temsilci veya ortak rollerini sahiplenmez.
+- Project / Task Domain proje karti, proje gorevi/issue, yorum, ek, related ERP kaydi ve Kanban is akisini sahiplenir; process task'lari sahiplenmez.
 - Process Domain adim, gorev ve onay yonetir; business mutation yapmaz.
 - Audit, Outbox, Projection, Integrity, Setup ve Action Guide platform domainleridir.
 
@@ -68,6 +68,10 @@ Eden ERP'de entity sahipligi domain bazinda belirlenir. Baska domain'in sahip ol
 | Branch Domain | Facility Domain | Domain Service veya Orchestrator |
 | Company Domain | Ownership Domain | Orchestrator + Domain Service |
 | Representative Domain | Branch/Organization/Facility | ScopePolicy + Integrity Check + Read Model |
+| HR Domain | Organization/Branch | Active reference validation + assignment transaction |
+| HR Domain | Accounting Domain | Future payroll/payment reconciliation only |
+| Project / Task Domain | Company/Branch/HR/Organization | Scoped reference validation + related entity link |
+| Project / Task Domain | Action Center | `source_type=project_task` normalized action item |
 | Ownership Domain | Accounting Domain | Outbox Event + Reconciliation Action |
 | Process Domain | Business Domain | Operation step -> Operation Orchestrator |
 | Outbox Domain | Projection/Notification/Audit/AI | Event Handler |

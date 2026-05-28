@@ -1,16 +1,20 @@
 from fastapi import APIRouter
 
 from app.api.v1 import (
+    accounting,
     action_center,
     action_eligibility,
+    after_sales,
     approvals,
     audit,
     branches,
     companies,
     company_branches,
+    crm,
     facilities,
     features,
     health,
+    hr,
     integrity,
     modules,
     organization,
@@ -18,8 +22,13 @@ from app.api.v1 import (
     partners,
     policy,
     processes,
+    products,
+    project_tasks,
     projections,
+    projects,
+    reporting,
     representatives,
+    security,
     setup,
     system,
     tasks,
@@ -31,6 +40,14 @@ api_router.include_router(companies.router, prefix="/companies", tags=["companie
 api_router.include_router(company_branches.router, tags=["company branch operations"])
 api_router.include_router(branches.router, prefix="/branches", tags=["branches"])
 api_router.include_router(facilities.router, prefix="/facilities", tags=["facilities"])
+api_router.include_router(accounting.router, prefix="/accounting", tags=["accounting"])
+api_router.include_router(hr.router, prefix="/hr", tags=["hr"])
+api_router.include_router(projects.router, prefix="/projects", tags=["projects"])
+api_router.include_router(products.router, prefix="/products", tags=["products"])
+api_router.include_router(after_sales.router, prefix="/after-sales", tags=["after sales"])
+api_router.include_router(crm.router, prefix="/crm", tags=["crm"])
+api_router.include_router(reporting.router, prefix="/reporting", tags=["reporting"])
+api_router.include_router(security.router, prefix="/security", tags=["security"])
 api_router.include_router(organization.router, prefix="/organization", tags=["organization"])
 api_router.include_router(partners.router, prefix="/partners", tags=["partners"])
 api_router.include_router(ownership.router, prefix="/ownership", tags=["ownership"])
@@ -39,6 +56,7 @@ api_router.include_router(
     representatives.router, prefix="/representatives", tags=["representatives"]
 )
 api_router.include_router(processes.router, prefix="/processes", tags=["processes"])
+api_router.include_router(project_tasks.router, prefix="/tasks", tags=["project tasks"])
 api_router.include_router(tasks.router, prefix="/tasks", tags=["tasks"])
 api_router.include_router(approvals.router, prefix="/approvals", tags=["approvals"])
 api_router.include_router(audit.router, prefix="/audit", tags=["audit"])

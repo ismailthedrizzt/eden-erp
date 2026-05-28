@@ -111,6 +111,176 @@ Product hardening note:
 | Representative authority | `/api/v1/representatives/authorities` | GET | yes | partial | partial | yes | yes | scope partial | partial | partial | Branch/company-wide scope reads are available. |
 | Representative authority | `/api/v1/branches/{branch_id}/representative-authorities` | GET | partial | partial | partial | yes | yes | branch scope partial | partial | partial | Branch detail authority summary should include branch-scoped and optional company-wide authorities; staging data verification remains P1. |
 
+## Accounting
+
+Product foundation note:
+
+- Accounting domain now owns cari cards, cari movements, payment/collection/expense relations, document status and reconciliation preparation.
+- Cari Kartlar and Cari Hareketler MVP endpoints are Python/FastAPI canonical. Next routes are proxy-only and do not contain domain mutation logic.
+- Sermaye artirimi ortaklik/sirket domain'inde olusur. Sermaye odemesi veya tahsilati muhasebe domain'inde cari/banka hareketi olarak mutabakatlanir.
+
+| domain | endpoint | method | FastAPI implemented? | Next proxy implemented? | frontend service mapped? | OpenAPI schema generated? | auth/tenant guard? | policy/readiness/integrity guard? | tests? | status | notes |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Accounting cari accounts | `/api/v1/accounting/cari-accounts` | GET | yes | yes, proxy-only | yes | yes | yes | permission/company scope/readiness | yes | partial | List filters cover company, role, status, balance status, city and search. |
+| Accounting cari accounts | `/api/v1/accounting/cari-accounts` | POST | yes | yes, proxy-only | yes | yes | yes | permission/company scope/readiness | yes | partial | Duplicate account code and linked master entity checks exist. |
+| Accounting cari accounts | `/api/v1/accounting/cari-accounts/{account_id}` | GET | yes | yes, proxy-only | yes | yes | yes | permission/tenant | yes | partial | Detail payload is used by the product detail drawer. |
+| Accounting cari accounts | `/api/v1/accounting/cari-accounts/{account_id}` | PATCH | yes | yes, proxy-only | yes | yes | yes | permission/company scope/version | yes | partial | Card-safe update only; movement balance is calculated by summary/refresh. |
+| Accounting cari accounts | `/api/v1/accounting/cari-accounts/{account_id}` | DELETE | yes | yes, proxy-only | yes | yes | yes | permission/company scope/delete guard | yes | partial | Soft delete is blocked when transactions exist. |
+| Accounting cari summary | `/api/v1/accounting/cari-accounts/{account_id}/summary` | GET | yes | yes, proxy-only | yes | yes | yes | permission/company scope/readiness | yes | partial | Returns debit, credit, balance, unmatched and overdue counts. |
+| Accounting company summary | `/api/v1/accounting/company/{company_id}/summary` | GET | yes | yes, proxy-only | yes | yes | yes | permission/company scope/readiness | yes | partial | Company-level accounting summary for dashboard/future panels. |
+| Accounting cari transactions | `/api/v1/accounting/cari-transactions` | GET | yes | yes, proxy-only | yes | yes | yes | permission/company scope/readiness | yes | partial | List filters cover account, type, direction, date, document, payment and reconciliation. |
+| Accounting cari transactions | `/api/v1/accounting/cari-transactions` | POST | yes | yes, proxy-only | yes | yes | yes | permission/company scope/readiness | yes | partial | Supports paid_by, paid_to, real counterparty, document and related module fields. |
+| Accounting cari transactions | `/api/v1/accounting/cari-transactions/{transaction_id}` | GET | yes | yes, proxy-only | yes | yes | yes | permission/tenant | yes | partial | Detail includes account labels and debit/credit projection. |
+| Accounting cari transactions | `/api/v1/accounting/cari-transactions/{transaction_id}` | PATCH | yes | yes, proxy-only | yes | yes | yes | permission/company scope/version | yes | partial | Confirmed transactions are immutable except cancellation. |
+| Accounting cari transactions | `/api/v1/accounting/cari-transactions/{transaction_id}` | DELETE | yes | yes, proxy-only | yes | yes | yes | permission/company scope/delete guard | yes | partial | Hard delete is limited to draft-safe records via soft delete flag. |
+
+## HR
+
+Product foundation note:
+
+- HR domain now owns calisan kartlari, istihdam kayitlari, lifecycle
+  transactions, SGK manuel takip and employee document references.
+- Calisan karti ile istihdam lifecycle ayridir. `+ Ekle` taslak calisan karti
+  olusturur; ise giris, pozisyon, SGK ve isten cikis operation olarak
+  kaydedilir.
+- Calisan olmak, temsilci olmak veya ortak olmak ayni sey degildir. Bir kisi
+  ayni anda calisan, ortak ve temsilci olabilir; ancak bu roller ayri domain
+  iliskileriyle yonetilir.
+
+| domain | endpoint | method | FastAPI implemented? | Next proxy implemented? | frontend service mapped? | OpenAPI schema generated? | auth/tenant guard? | policy/readiness/integrity guard? | tests? | status | notes |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| HR employees | `/api/v1/hr/employees` | GET | yes | yes, proxy-only | yes | pending drift check | yes | permission/company scope/readiness | yes | partial | List filters cover company, branch, unit, position, employment, SGK, gender, education and date range. |
+| HR employees | `/api/v1/hr/employees` | POST | yes | yes, proxy-only | yes | pending drift check | yes | permission/company scope/readiness | yes | partial | Creates draft employee card only; no employment is created. |
+| HR employees | `/api/v1/hr/employees/{employee_id}` | GET | yes | yes, proxy-only | yes | pending drift check | yes | permission/tenant | yes | partial | Detail hydrates current employment fields and document warning count. |
+| HR employees | `/api/v1/hr/employees/{employee_id}` | PATCH | yes | yes, proxy-only | yes | pending drift check | yes | permission/company scope/version | yes | partial | Employment, position, SGK and exit fields are operation-controlled. |
+| HR employees | `/api/v1/hr/employees/{employee_id}` | DELETE | yes | yes, proxy-only | yes | pending drift check | yes | permission/company scope/delete guard | yes | partial | Soft delete is limited to draft cards without employment records. |
+| HR employment | `/api/v1/hr/employees/{employee_id}/employment/start` | POST | yes | yes, proxy-only | yes | pending drift check | yes | permission/company scope/readiness | yes | partial | Draft employee becomes active with active employment record. |
+| HR employment | `/api/v1/hr/employees/{employee_id}/employment/terminate` | POST | yes | yes, proxy-only | yes | pending drift check | yes | permission/company scope/readiness | yes | partial | Active employee becomes passive and employment terminated. |
+| HR employment | `/api/v1/hr/employees/{employee_id}/employment/assignment-change` | POST | yes | yes, proxy-only | yes | pending drift check | yes | permission/company scope/readiness | yes | partial | Branch/unit/position assignment transaction is recorded. |
+| HR SGK | `/api/v1/hr/employees/{employee_id}/sgk/entry-completed` | POST | yes | yes, proxy-only | yes | pending drift check | yes | permission/company scope/readiness | yes | partial | Manual SGK entry completion for MVP. |
+| HR SGK | `/api/v1/hr/employees/{employee_id}/sgk/exit-completed` | POST | yes | yes, proxy-only | yes | pending drift check | yes | permission/company scope/readiness | yes | partial | Manual SGK exit completion for MVP. |
+| HR documents | `/api/v1/hr/employees/{employee_id}/documents` | GET/POST | yes | yes, proxy-only | yes | pending drift check | yes | permission/company scope/readiness | yes | partial | Employee document references support required/missing/expired status. |
+| HR documents | `/api/v1/hr/employees/{employee_id}/documents/{document_id}` | PATCH | yes | yes, proxy-only | yes | pending drift check | yes | permission/company scope/readiness | yes | partial | Updates document status, dates and file reference. |
+| HR summary | `/api/v1/hr/employees/summary`, `/api/v1/hr/company/{company_id}/summary` | GET | yes | yes, proxy-only | yes | pending drift check | yes | permission/company scope/readiness | yes | partial | Returns active/draft/terminated/SGK counts and distributions. |
+
+## Project / Task Management
+
+Product foundation note:
+
+- Project/Task domain owns project cards, project tasks/issues, status workflow,
+  assignment, comments, attachments, related ERP record links and Kanban MVP.
+- Process task sistem isleminin parcasidir. Project task ekip is takibidir.
+  Action Center ikisini kullaniciya tek is listesi olarak gosterebilir ama veri
+  modeli ve lifecycle ayridir.
+
+| domain | endpoint | method | FastAPI implemented? | Next proxy implemented? | frontend service mapped? | OpenAPI schema generated? | auth/tenant guard? | policy/readiness/integrity guard? | tests? | status | notes |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Projects | `/api/v1/projects` | GET | yes | yes, proxy-only | yes | pending drift check | yes | permission/company scope/readiness | yes | partial | List filters cover company, branch, unit, status, type, priority, manager and date range. |
+| Projects | `/api/v1/projects` | POST | yes | yes, proxy-only | yes | pending drift check | yes | permission/company scope/readiness | yes | partial | Creates company-scoped project card with unique project_key. |
+| Projects | `/api/v1/projects/{project_id}` | GET/PATCH/DELETE | yes | yes, proxy-only | yes | pending drift check | yes | permission/company scope/version/delete guard | yes | partial | Open-task guard blocks deleting projects with active work. |
+| Projects | `/api/v1/projects/{project_id}/summary`, `/api/v1/projects/summary` | GET | yes | yes, proxy-only | yes | pending drift check | yes | permission/company scope/readiness | yes | partial | Returns total/open/done/overdue tasks and dashboard totals. |
+| Project tasks | `/api/v1/tasks/project-tasks` | GET | yes | yes, proxy-only | yes | pending drift check | yes | permission/company scope/readiness | yes | partial | Separate from process engine `/api/v1/tasks` task list. |
+| Project tasks | `/api/v1/tasks/project-tasks` | POST | yes | yes, proxy-only | yes | pending drift check | yes | permission/company scope/readiness | yes | partial | Creates project or standalone task; closed projects reject new tasks. |
+| Project tasks | `/api/v1/tasks/project-tasks/{task_id}` | GET/PATCH/DELETE | yes | yes, proxy-only | yes | pending drift check | yes | permission/company scope/version | yes | partial | Done/cancelled tasks are final for normal edit. |
+| Project task workflow | `/api/v1/tasks/project-tasks/{task_id}/transition` | POST | yes | yes, proxy-only | yes | pending drift check | yes | permission/company scope/status policy | yes | partial | Supports Jira-like MVP transition matrix; blocked requires reason. |
+| Project task assignment | `/api/v1/tasks/project-tasks/{task_id}/assign` | POST | yes | yes, proxy-only | yes | pending drift check | yes | permission/company scope/employee scope | yes | partial | User and HR employee assignment fields are supported. |
+| Project task comments | `/api/v1/tasks/project-tasks/{task_id}/comments` | GET/POST | yes | yes, proxy-only | yes | pending drift check | yes | permission/company scope/readiness | partial | partial | Creates `task.commented` history entry. |
+| Project task attachments | `/api/v1/tasks/project-tasks/{task_id}/attachments` | GET/POST | yes | yes, proxy-only | yes | pending drift check | yes | permission/company scope/readiness | partial | partial | Stores file_ref metadata without signed URL logging. |
+| My project tasks | `/api/v1/tasks/my-project-tasks` | GET | yes | yes, proxy-only | yes | pending drift check | yes | permission/company scope/readiness | partial | partial | Feeds "Bana Atananlar" and Action Center-like user work views. |
+
+## Product / Service / After-Sales
+
+Product foundation note:
+
+- Product/Service domain owns the sellable/serviceable catalog definition: product model, serial requirement, warranty, maintenance rules, technical specs and documents.
+- After-Sales domain owns installed customer assets, service requests, service records, warranty state, maintenance due tracking and service outcomes.
+- Urun katalogu satilabilir/hizmet verilebilir urunun tanimidir. Kurulu urun ise belirli bir musteride, belirli lokasyonda, belirli seri numarasiyla izlenen gercek varliktir.
+- Project task servis talebinin yerine gecmez; follow-up work is linked as `related_module=after_sales` while service request/status remains in After-Sales.
+
+| domain | endpoint | method | FastAPI implemented? | Next proxy implemented? | frontend service mapped? | OpenAPI schema generated? | auth/tenant guard? | policy/readiness/integrity guard? | tests? | status | notes |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Product catalog | `/api/v1/products` | GET | yes | yes, proxy-only | yes | pending drift check | yes | permission/company scope/readiness | yes | partial | List filters cover type, category, brand, active, after-sales and maintenance flags. |
+| Product catalog | `/api/v1/products` | POST | yes | yes, proxy-only | yes | pending drift check | yes | permission/company scope/readiness | yes | partial | Creates serviceable product/service catalog records; product_code is generated when omitted. |
+| Product catalog | `/api/v1/products/{product_id}` | GET/PATCH/DELETE | yes | yes, proxy-only | yes | pending drift check | yes | permission/company scope/version/delete guard | yes | partial | Delete is blocked once installed assets reference the catalog item. |
+| Product summary | `/api/v1/products/summary` | GET | yes | yes, proxy-only | yes | pending drift check | yes | permission/readiness | yes | partial | Returns active, after-sales-enabled and maintenance-required catalog counts. |
+| Installed assets | `/api/v1/after-sales/assets` | GET/POST | yes | yes, proxy-only | yes | pending drift check | yes | permission/company scope/product readiness | yes | partial | Serial-required products enforce serial_no at asset creation. |
+| Installed assets | `/api/v1/after-sales/assets/{asset_id}` | GET/PATCH/DELETE | yes | yes, proxy-only | yes | pending drift check | yes | permission/company scope/version | yes | partial | Asset carries customer/account, location, warranty and maintenance fields. |
+| Asset service history | `/api/v1/after-sales/assets/{asset_id}/service-history` | GET | yes | yes, proxy-only | yes | pending drift check | yes | permission/tenant | partial | partial | Lists service records for installed asset detail tabs. |
+| Service requests | `/api/v1/after-sales/service-requests` | GET/POST | yes | yes, proxy-only | yes | pending drift check | yes | permission/company scope/readiness | yes | partial | Optional `create_project_task` creates a linked project task, not a replacement service request. |
+| Service requests | `/api/v1/after-sales/service-requests/{request_id}` | GET/PATCH | yes | yes, proxy-only | yes | pending drift check | yes | permission/company scope/version | yes | partial | Status, priority, customer, asset and task link are editable under After-Sales policy. |
+| Service request workflow | `/api/v1/after-sales/service-requests/{request_id}/assign`, `/close` | POST | yes | yes, proxy-only | yes | pending drift check | yes | permission/company scope/readiness | yes | partial | Assignment and close actions write After-Sales lifecycle state. |
+| Service records | `/api/v1/after-sales/service-records` | GET/POST | yes | yes, proxy-only | yes | pending drift check | yes | permission/company scope/readiness | yes | partial | Stores technician, service type, work performed, parts/photos/report placeholders and warranty coverage. |
+| Service records | `/api/v1/after-sales/service-records/{service_id}` | GET/PATCH | yes | yes, proxy-only | yes | pending drift check | yes | permission/company scope/version | yes | partial | Planned/in-progress records can be updated before completion. |
+| Service record completion | `/api/v1/after-sales/service-records/{service_id}/complete` | POST | yes | yes, proxy-only | yes | pending drift check | yes | permission/company scope/readiness | yes | partial | Completion updates installed asset last_service_date and optional next maintenance date. |
+| Maintenance due | `/api/v1/after-sales/maintenance-due` | GET | yes | yes, proxy-only | yes | pending drift check | yes | permission/readiness | yes | partial | Feeds Bakimi Gelenler page. |
+| After-sales summary | `/api/v1/after-sales/company/{company_id}/summary` | GET | yes | yes, proxy-only | yes | pending drift check | yes | permission/company scope/readiness | yes | partial | Company-level counts for assets, open requests, completed records and maintenance due. |
+
+## CRM / Stakeholders / Master Data
+
+Product foundation note:
+
+- Master kayit kisi/kurum kimligini temsil eder; musteri, tedarikci, lead ve paydas rolleri bu kayda baglanan iliski kayitlaridir.
+- Paydas kaydi finansal cari kart yerine gecmez; cari kart finansal iliski icindir.
+- Ortak, temsilci ve calisan rolleri ayri domain iliskileridir; ayni master kisi bu rollerin birden fazlasina sahip olabilir.
+
+| domain | endpoint | method | FastAPI implemented? | Next proxy implemented? | frontend service mapped? | OpenAPI schema generated? | auth/tenant guard? | policy/readiness/integrity guard? | tests? | status | notes |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| CRM master person | `/api/v1/crm/master/persons/search` | GET | yes | yes, proxy-only | yes | pending drift check | yes | crm.view + tenant | yes | partial | Lookup supports TCKN/passport/name/phone/email fallback warnings. |
+| CRM master person | `/api/v1/crm/master/persons` | POST | yes | yes, proxy-only | yes | pending drift check | yes | crm.create + tenant | yes | partial | Creates master person with full_name derivation and duplicate guard. |
+| CRM master organization | `/api/v1/crm/master/organizations/search` | GET | yes | yes, proxy-only | yes | pending drift check | yes | crm.view + tenant | yes | partial | Lookup supports VKN/trade_name/city search. |
+| CRM master organization | `/api/v1/crm/master/organizations` | POST | yes | yes, proxy-only | yes | pending drift check | yes | crm.create + tenant | yes | partial | Creates master organization with VKN uniqueness. |
+| CRM stakeholders | `/api/v1/crm/stakeholders` | GET/POST | yes | yes, proxy-only | yes | pending drift check | yes | crm.view/create + company scope | yes | partial | Master lookup first; stakeholder role duplicate is blocked per company. |
+| CRM stakeholder detail | `/api/v1/crm/stakeholders/{stakeholder_id}` | GET/PATCH/DELETE | yes | yes, proxy-only | yes | pending drift check | yes | crm.view/edit/delete + company scope/version | yes | partial | Soft delete archives the stakeholder role, not master identity. |
+| CRM interactions | `/api/v1/crm/stakeholders/{stakeholder_id}/interactions` | GET/POST | yes | yes, proxy-only | yes | pending drift check | yes | crm.view/interactionsManage | yes | partial | Timeline notes for calls, meetings, complaints, service contact and other events. |
+| CRM related records | `/api/v1/crm/stakeholders/{stakeholder_id}/related-records` | GET | yes | yes, proxy-only | yes | pending drift check | yes | crm.view + company scope | yes | partial | Shows partner, representative, employee, cari, service and task counts. |
+| CRM summary | `/api/v1/crm/stakeholders/{stakeholder_id}/summary` | GET | yes | yes, proxy-only | yes | pending drift check | yes | crm.view + company scope | yes | partial | Drives related roles and follow-up indicators in detail panel. |
+| CRM cari integration | `/api/v1/crm/stakeholders/{stakeholder_id}/create-cari-account` | POST | yes | yes, proxy-only | yes | pending drift check | yes | crm.createCariAccount + accounting policy | yes | partial | Creates Accounting cari account linked to stakeholder. |
+| CRM task integration | `/api/v1/crm/stakeholders/{stakeholder_id}/create-followup-task` | POST | yes | yes, proxy-only | yes | pending drift check | yes | crm.createTask + project policy | yes | partial | Creates Project/Task follow-up with related_module=crm. |
+
+## Reporting / Dashboards / Management Overview
+
+Product foundation note:
+
+- Reporting domain read-only analiz katmanidir; business mutation, official operation, task lifecycle veya accounting transaction yaratmaz.
+- Dashboard kartlari projection/read model/summary kaynaklari uzerinden hesaplanir ve permission/scope bazli gorunur.
+- Export disinda veri uretmez; export da ayri permission, tarih araligi ve row limit ister.
+
+| domain | endpoint | method | FastAPI implemented? | Next proxy implemented? | frontend service mapped? | OpenAPI schema generated? | auth/tenant guard? | policy/readiness/integrity guard? | tests? | status | notes |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Reporting dashboard | `/api/v1/reporting/dashboard` | GET | yes | yes, proxy-only | yes | pending drift check | yes | reporting.dashboardView + scope | yes | partial | Returns KPI cards, warning cards, chart datasets and permissions summary. |
+| Reporting summary | `/api/v1/reporting/dashboard/summary` | GET | yes | yes, proxy-only | yes | pending drift check | yes | reporting.dashboardView | yes | partial | Returns visible/warning/critical/hidden card counts. |
+| Reporting module dashboard | `/api/v1/reporting/dashboard/module/{module_key}` | GET | yes | yes, proxy-only | yes | pending drift check | yes | reporting.dashboardView + module permissions | yes | partial | Lazy-loadable module-specific dashboard section. |
+| Reporting KPIs | `/api/v1/reporting/kpis/{module_key}` | GET | yes | yes, proxy-only | yes | pending drift check | yes | reporting.dashboardView + module permissions | yes | partial | Covers company, ownership, representatives, branches, action-center, accounting, hr, projects, after-sales, crm and system. |
+| Reporting definitions | `/api/v1/reporting/reports` | GET | yes | yes, proxy-only | yes | pending drift check | yes | reporting.view | yes | partial | Lists permission-aware report definitions. |
+| Reporting definition | `/api/v1/reporting/reports/{report_key}` | GET | yes | yes, proxy-only | yes | pending drift check | yes | reporting.view + report permission | yes | partial | Returns report columns, filters and export readiness. |
+| Reporting query | `/api/v1/reporting/reports/{report_key}/query` | POST | yes | yes, proxy-only | yes | pending drift check | yes | reporting.view + report permission + pagination | yes | partial | Server-side filtered report result; no unbounded query. |
+| Reporting export | `/api/v1/reporting/reports/{report_key}/export` | POST | yes | yes, proxy-only | yes | pending drift check | yes | reporting.export + date range | yes | partial | CSV export preparation only; file generation future. |
+
+## Security / RBAC / Permission Matrix
+
+Product foundation note:
+
+- Security domain uygulama-level profil, rol, permission ve company/branch scope yonetimini tasir.
+- Supabase Auth kullanici kimligini dogrular; uygulama tabloları profil/rol/scope kontratini tutar.
+- Permission registry canonical listedir; DB role permission kaydi registry disi key kabul etmez.
+- Frontend visibility UX sinyalidir; backend permission/scope/policy enforcement'i degistirmez.
+
+| domain | endpoint | method | FastAPI implemented? | Next proxy implemented? | frontend service mapped? | OpenAPI schema generated? | auth/tenant guard? | policy/readiness/integrity guard? | tests? | status | notes |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Security users | `/api/v1/security/users` | GET | yes | yes, proxy-only | yes | pending drift check | yes | security.view | pending | partial | Lists application-level user profiles, roles and scope summaries; dev fallback shows current admin user. |
+| Security user detail | `/api/v1/security/users/{user_id}` | GET/PATCH | yes | yes, proxy-only | yes | pending drift check | yes | security.view/usersManage | pending | partial | Profile PATCH is application-level only, not Supabase Auth mutation. |
+| Security user roles | `/api/v1/security/users/{user_id}/roles` | GET/POST | yes | yes, proxy-only | yes | pending drift check | yes | security.view/usersManage | pending | partial | Assigns a role with optional scope mode/company/branch context. |
+| Security user role remove | `/api/v1/security/users/{user_id}/roles/{role_id}` | DELETE | yes | yes, proxy-only | yes | pending drift check | yes | security.usersManage | pending | partial | Removes role assignment by role id or assignment id. |
+| Security roles | `/api/v1/security/roles` | GET/POST | yes | yes, proxy-only | yes | pending drift check | yes | security.view/rolesManage | pending | partial | Returns DB roles plus default product roles when not seeded. |
+| Security role detail | `/api/v1/security/roles/{role_id}` | GET/PATCH/DELETE | yes | yes, proxy-only | yes | pending drift check | yes | security.view/rolesManage | pending | partial | System roles are locked from direct edit/delete. |
+| Security permissions | `/api/v1/security/permissions` | GET | yes | yes, proxy-only | yes | pending drift check | yes | security.view | pending | partial | Registry permissions grouped by module with risk/deprecated metadata. |
+| Security permission matrix | `/api/v1/security/permissions/matrix` | GET | yes | yes, proxy-only | yes | pending drift check | yes | security.view | pending | partial | Role x permission cells and registry mismatch warnings. |
+| Security role permissions | `/api/v1/security/roles/{role_id}/permissions` | PATCH | yes | yes, proxy-only | yes | pending drift check | yes | security.rolesManage | pending | partial | Rejects unknown permission keys; default in-memory roles are locked. |
+| Security scopes | `/api/v1/security/users/{user_id}/scopes` | GET/PATCH | yes | yes, proxy-only | yes | pending drift check | yes | security.view/scopesManage | pending | partial | Company and branch scope CRUD with view/edit/operate flags. |
+| Security policy test | `/api/v1/security/policy-test` | POST | yes | yes, proxy-only | yes | pending drift check | yes | security.policyTest | pending | partial | Admin diagnostic returns permission, scope, module and policy reasons. |
+| Security denials | `/api/v1/security/permission-denials` | GET | yes | yes, proxy-only | yes | pending drift check | yes | security.view | pending | partial | Reads recent permission/scope denials from audit when available. |
+| Security access summary | `/api/v1/security/access-summary` | GET | yes | yes, proxy-only | yes | pending drift check | yes | security.view | pending | partial | Returns user/role/risk/denial counts and setup warnings. |
+
 ## Platform
 
 | domain | endpoint | method | FastAPI implemented? | Next proxy implemented? | frontend service mapped? | OpenAPI schema generated? | auth/tenant guard? | policy/readiness/integrity guard? | tests? | status | notes |
@@ -143,6 +313,16 @@ Product hardening note:
 | Projections | `/api/v1/projections` and `/api/v1/projections/{projection_key}` | GET | yes | optional | partial | yes | yes | scope partial | yes | partial | Generic projection endpoint exists for dev/admin style reads. |
 | Health | `/health`, `/api/v1/health` | GET | yes | n/a | n/a | yes | public/basic | n/a | yes | ready | Basic health endpoints exist. |
 | Metrics/deep health | `/api/v1/system/metrics`, `/api/v1/system/health/deep` | GET | yes | n/a | n/a | yes | internal token/config | n/a | yes | partial | Protected in production by internal token/config. |
+
+## Step 9 Product Integration Update
+
+Action Guide + Guided Tour hardening keeps the natural-language resolver as a thin Next UI adapter, but expands registry coverage and FastAPI canonical eligibility coverage for company lifecycle, official changes, capital, branch, ownership and representative authority actions. The user-facing Action Guide, operation hints and field helpers now show the same business-language module/status/permission/readiness reasons.
+
+- `POST /api/ai/action-guide` remains mutation-free and registry-constrained.
+- `POST /api/ai/action-guide/actions` remains a navigation command adapter and does not mutate ERP data.
+- `POST /api/v1/action-eligibility/evaluate` and `POST /api/v1/policy/action-eligibility` cover the hardening scenarios for capital, branch, partner ownership, representative authority and company lifecycle actions.
+- `GET/PATCH /api/user/preferences` and onboarding tour endpoints remain Next UI/session adapters backed by `user_workspace_state`; they are not ERP domain mutation endpoints.
+- P2 remains full FastAPI Action Guide resolver migration or registry-constrained LLM refinement.
 
 ## Gate Summary
 

@@ -1,5 +1,5 @@
-import { ProjectManagementHomePage } from '@/components/modules/project-management/ProjectManagementHomePage'
+import { ProjectTaskHomeMvpPage } from '@/components/modules/project-management/ProjectTaskMvpPages'
 
 export default function GorevVeProjeYonetimiPage() {
-  return <ProjectManagementHomePage />
+  return <ProjectTaskHomeMvpPage />
 }

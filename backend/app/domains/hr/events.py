@@ -1,0 +1,12 @@
+"""Event type constants for HR lifecycle operations."""
+
+EMPLOYEE_CREATED = "hr.employee.created"
+EMPLOYEE_UPDATED = "hr.employee.updated"
+EMPLOYEE_DELETED = "hr.employee.deleted"
+EMPLOYMENT_STARTED = "hr.employment.started"
+EMPLOYMENT_TERMINATED = "hr.employment.terminated"
+EMPLOYMENT_ASSIGNMENT_CHANGED = "hr.employment.assignment_changed"
+SGK_ENTRY_COMPLETED = "hr.sgk.entry_completed"
+SGK_EXIT_COMPLETED = "hr.sgk.exit_completed"
+EMPLOYEE_DOCUMENT_CREATED = "hr.employee_document.created"
+EMPLOYEE_DOCUMENT_UPDATED = "hr.employee_document.updated"

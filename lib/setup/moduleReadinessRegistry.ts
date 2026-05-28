@@ -72,6 +72,94 @@ export const moduleReadinessDefinitions: ModuleReadinessDefinition[] = [
     ],
   },
   {
+    moduleKey: 'accounting',
+    requiredTables: ['accounting_cari_accounts', 'accounting_cari_transactions'],
+    optionalTables: ['accounting_transaction_attachments', 'accounting_reconciliation_links', 'bank_transactions', 'invoices'],
+    requiredDependencies: ['companies'],
+    setupSteps: [
+      setupStep('accounting.cariAccounts', 'Cari kart alanlarini kontrol et', 'Musteri, tedarikci, ortak ve diger cari iliskiler icin cari kart altyapisi hazir olmalidir.', 'check'),
+      setupStep('accounting.cariTransactions', 'Cari hareket alanlarini kontrol et', 'Odeme, tahsilat, gider, gelir ve sermaye mutabakati icin cari hareket altyapisi hazir olmalidir.', 'check'),
+    ],
+  },
+  {
+    moduleKey: 'hr',
+    requiredTables: ['hr_employees', 'hr_employment_records', 'hr_employment_transactions'],
+    optionalTables: ['hr_employee_documents'],
+    requiredDependencies: ['companies'],
+    optionalDependencies: ['organization', 'branches', 'facilities', 'accounting'],
+    setupSteps: [
+      setupStep('hr.employees', 'Calisan kart alanlarini kontrol et', 'Calisan kartlari ve ozluk bilgileri icin HR calisan altyapisi hazir olmalidir.', 'check'),
+      setupStep('hr.employment', 'Istihdam lifecycle alanlarini kontrol et', 'Ise giris, pozisyon degisikligi, SGK ve isten cikis icin istihdam kayitlari hazir olmalidir.', 'check'),
+      setupStep('hr.documents', 'Ozluk belge alanlarini kontrol et', 'Kimlik, sozlesme ve SGK belge referanslari icin belge altyapisi hazir olmalidir.', 'check'),
+    ],
+  },
+  {
+    moduleKey: 'project_management',
+    requiredTables: ['project_projects', 'project_tasks'],
+    optionalTables: ['project_task_comments', 'project_task_attachments', 'project_task_history', 'project_boards', 'project_sprints', 'hr_employees', 'organization_units'],
+    requiredDependencies: ['companies'],
+    optionalDependencies: ['hr', 'organization', 'branches', 'facilities'],
+    setupSteps: [
+      setupStep('projectManagement.projects', 'Proje alanlarini kontrol et', 'Sirket scope, proje anahtari, durum ve yonetici alanlari hazir olmalidir.', 'check'),
+      setupStep('projectManagement.tasks', 'Gorev alanlarini kontrol et', 'Issue key, durum akisi, atama ve related record alanlari hazir olmalidir.', 'check'),
+      setupStep('projectManagement.actionCenter', 'Action Center baglantisini kontrol et', 'Proje gorevleri Action Center icinde Proje Gorevi etiketiyle gorunmelidir.', 'check'),
+    ],
+  },
+  {
+    moduleKey: 'product_services',
+    requiredTables: ['product_catalog'],
+    requiredDependencies: ['companies'],
+    optionalDependencies: ['accounting', 'inventory'],
+    setupSteps: [
+      setupStep('productServices.catalog', 'Urun/Hizmet katalog alanlarini kontrol et', 'Servis verilebilir, garanti ve bakim alanlari katalogda hazir olmalidir.', 'check'),
+    ],
+  },
+  {
+    moduleKey: 'after_sales',
+    requiredTables: ['after_sales_installed_assets', 'after_sales_service_requests', 'after_sales_service_records'],
+    requiredDependencies: ['companies', 'product_services'],
+    optionalDependencies: ['accounting', 'project_management', 'hr', 'facilities', 'branches'],
+    setupSteps: [
+      setupStep('afterSales.assets', 'Kurulu urun alanlarini kontrol et', 'Musteri, lokasyon, seri no, garanti ve bakim alanlari hazir olmalidir.', 'check'),
+      setupStep('afterSales.requests', 'Servis talebi alanlarini kontrol et', 'Talep, oncelik, atama ve task baglantisi hazir olmalidir.', 'check'),
+      setupStep('afterSales.records', 'Servis kaydi alanlarini kontrol et', 'Mudahale, sonuc, fotograf, rapor ve takip gorevi alanlari hazir olmalidir.', 'check'),
+    ],
+  },
+  {
+    moduleKey: 'crm',
+    requiredTables: ['master_persons', 'master_organizations', 'crm_stakeholders'],
+    optionalTables: ['crm_interactions'],
+    requiredDependencies: ['companies'],
+    optionalDependencies: ['accounting', 'project_management', 'after_sales', 'hr', 'partners', 'representatives'],
+    setupSteps: [
+      setupStep('crm.masterData', 'Master kisi/kurum alanlarini kontrol et', 'Tekil master kisi ve kurum kayitlari hazir olmalidir.', 'check'),
+      setupStep('crm.stakeholders', 'Paydas rol alanlarini kontrol et', 'Musteri, tedarikci, lead ve paydas rolleri sirket scope icinde hazir olmalidir.', 'check'),
+      setupStep('crm.integrations', 'Cari ve takip baglantilarini kontrol et', 'Cari kart, servis ve proje gorev baglantilari icin entegrasyon alanlari hazir olmalidir.', 'check'),
+    ],
+  },
+  {
+    moduleKey: 'reporting',
+    requiredDependencies: ['companies'],
+    optionalDependencies: ['partners', 'representatives', 'branches', 'accounting', 'hr', 'project_management', 'after_sales', 'crm', 'audit', 'actionCenter'],
+    setupSteps: [
+      setupStep('reporting.dashboard', 'Dashboard kaynaklarini kontrol et', 'Yonetim dashboard modullerin summary ve projection kaynaklarini okur.', 'check'),
+      setupStep('reporting.permissions', 'Rapor yetkilerini kontrol et', 'Finansal, IK, audit ve sistem KPI kartlari role/permission bazli gorunmelidir.', 'check'),
+      setupStep('reporting.exports', 'Export politikasini kontrol et', 'CSV export hazirligi tarih araligi, row limit ve ek permission ister.', 'check'),
+    ],
+  },
+  {
+    moduleKey: 'security',
+    requiredTables: ['security_users_profile', 'security_roles', 'security_role_permissions', 'security_user_roles', 'security_user_company_scopes', 'security_user_branch_scopes'],
+    optionalTables: ['security_policy_test_logs', 'audit_logs'],
+    requiredDependencies: ['companies'],
+    optionalDependencies: ['branches', 'audit', 'reporting'],
+    setupSteps: [
+      setupStep('security.profiles', 'Kullanici profil alanlarini kontrol et', 'Supabase Auth kullanicilari uygulama-level profil ve tenant scope ile eslestirilmelidir.', 'check'),
+      setupStep('security.roles', 'Rol ve yetki matrisini kontrol et', 'Registry permission listesi disinda yetki kaydedilmemeli; kritik yetkiler uyarili olmalidir.', 'check'),
+      setupStep('security.scopes', 'Sirket/sube kapsamlarini kontrol et', 'Kullaniciya rol yaninda sirket ve sube erisim kapsami atanmalidir.', 'check'),
+    ],
+  },
+  {
     moduleKey: 'process',
     requiredTables: ['process_instances', 'process_tasks', 'process_approvals', 'process_events'],
     setupSteps: [

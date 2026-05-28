@@ -24,7 +24,7 @@ import {
 import {
   Home, Users, Building2, CreditCard, Package, ShoppingCart,
   Settings, Factory, Wrench, ChevronRight, LogOut, Download,
-  BarChart2, List, AlertCircle, FolderOpen, Wallet, X, Headphones, Tags, ListChecks
+  BarChart2, List, AlertCircle, FolderOpen, Wallet, X, Headphones, Tags, ListChecks, Handshake
 } from 'lucide-react'
 
 interface NavItem {
@@ -54,6 +54,13 @@ const NAV: NavItem[] = [
     href: '/app',
   },
   {
+    id: 'reporting',
+    label: 'Yönetim Dashboard',
+    icon: <BarChart2 size={16} />,
+    href: '/app/dashboard',
+    moduleKey: 'reporting',
+  },
+  {
     id: 'sirket',
     label: 'Şirket Yönetimi',
     icon: <Building2 size={16} />,
@@ -78,7 +85,7 @@ const NAV: NavItem[] = [
     icon: <Users size={16} />,
     moduleKey: 'ik',
     children: [
-      { label: 'Çalışanlarımız', href: '/app/ik/employees', moduleKey: 'ik', submoduleKey: 'employees' },
+      { label: 'Çalışanlarımız', href: '/app/ik/calisanlar', moduleKey: 'ik', submoduleKey: 'employees' },
       { label: 'İzin Yönetimi', href: '/app/ik/izin', disabled: true },
       { label: 'Performans', href: '/app/ik/performans', disabled: true },
     ],
@@ -135,18 +142,25 @@ const NAV: NavItem[] = [
     ],
   },
   {
+    id: 'crm',
+    label: 'CRM / Paydaşlar',
+    icon: <Handshake size={16} />,
+    moduleKey: 'crm',
+    children: [
+      { label: 'Paydaşlar', href: '/app/crm/paydaslar', moduleKey: 'crm', submoduleKey: 'paydaslar' },
+      { label: 'Müşteriler', href: '/app/crm/paydaslar?type=customer', moduleKey: 'crm', submoduleKey: 'musteriler' },
+      { label: 'Tedarikçiler', href: '/app/crm/paydaslar?type=supplier', moduleKey: 'crm', submoduleKey: 'tedarikciler' },
+      { label: 'Leadler', href: '/app/crm/paydaslar?type=lead', moduleKey: 'crm', submoduleKey: 'leadler' },
+    ],
+  },
+  {
     id: 'product_services',
     label: 'Ürün ve Hizmetler',
     icon: <Tags size={16} />,
     moduleKey: 'product_services',
     children: [
       { label: 'Genel Bakış', href: '/app/urun-ve-hizmetler', moduleKey: 'product_services' },
-      { label: 'Ürün Kartları', href: '/app/urun-ve-hizmetler/urun-kartlari', moduleKey: 'product_services', submoduleKey: 'urun-kartlari' },
-      { label: 'Hizmet Kartları', href: '/app/urun-ve-hizmetler/hizmet-kartlari', moduleKey: 'product_services', submoduleKey: 'hizmet-kartlari' },
-      { label: 'Lisans / Abonelik Ürünleri', href: '/app/urun-ve-hizmetler/lisans-abonelik-urunleri', moduleKey: 'product_services', submoduleKey: 'lisans-abonelik-urunleri' },
-      { label: 'Seri Numaralı Ürünler', href: '/app/urun-ve-hizmetler/seri-numarali-urunler', moduleKey: 'product_services', submoduleKey: 'seri-numarali-urunler' },
-      { label: 'Garanti Şablonları', href: '/app/urun-ve-hizmetler/garanti-sablonlari', moduleKey: 'product_services', submoduleKey: 'garanti-sablonlari' },
-      { label: 'Bakım Paketleri', href: '/app/urun-ve-hizmetler/bakim-paketleri', moduleKey: 'product_services', submoduleKey: 'bakim-paketleri' },
+      { label: 'Ürün/Hizmet Kataloğu', href: '/app/urun-ve-hizmetler/katalog', moduleKey: 'product_services', submoduleKey: 'katalog' },
     ],
   },
   {
@@ -167,11 +181,10 @@ const NAV: NavItem[] = [
     moduleKey: 'after_sales',
     children: [
       { label: 'Genel Bakış', href: '/app/satis-sonrasi', moduleKey: 'after_sales' },
-      { label: 'Garanti Takip', href: '/app/satis-sonrasi/garanti-takip', moduleKey: 'after_sales', submoduleKey: 'garanti-takip' },
-      { label: 'Lisans Takip', href: '/app/satis-sonrasi/lisans-takip', moduleKey: 'after_sales', submoduleKey: 'lisans-takip' },
-      { label: 'Servis ve Destek Kayıtları', href: '/app/satis-sonrasi/servis-destek-kayitlari', moduleKey: 'after_sales', submoduleKey: 'servis-destek-kayitlari' },
-      { label: 'Bakım ve Sözleşme Takip', href: '/app/satis-sonrasi/bakim-sozlesme-takip', moduleKey: 'after_sales', submoduleKey: 'bakim-sozlesme-takip' },
-      { label: 'Müşterideki Ürünler', href: '/app/satis-sonrasi/musterideki-urunler', moduleKey: 'after_sales', submoduleKey: 'musterideki-urunler' },
+      { label: 'Kurulu Ürünler', href: '/app/satis-sonrasi/kurulu-urunler', moduleKey: 'after_sales', submoduleKey: 'kurulu-urunler' },
+      { label: 'Servis Talepleri', href: '/app/satis-sonrasi/servis-talepleri', moduleKey: 'after_sales', submoduleKey: 'servis-talepleri' },
+      { label: 'Servis Kayıtları', href: '/app/satis-sonrasi/servis-kayitlari', moduleKey: 'after_sales', submoduleKey: 'servis-kayitlari' },
+      { label: 'Bakımı Gelenler', href: '/app/satis-sonrasi/bakimi-gelenler', moduleKey: 'after_sales', submoduleKey: 'bakimi-gelenler' },
     ],
   },
   {
@@ -202,14 +215,18 @@ const NAV: NavItem[] = [
 
 const SIDEBAR_CONTRACT_MODULE_BY_HREF: Record<string, string> = {
   '/app/sirket/companies': 'companies',
+  '/app/dashboard': 'reporting',
   '/app/sirket/companies/branches': 'branches',
   '/app/sirket/companies/partners': 'partners',
   '/app/sirket/companies/representatives': 'representatives',
   '/app/sirket/teskilat': 'organization',
   '/app/sirket/tesisler': 'facilities',
   '/app/ik': 'hr',
+  '/app/ik/calisanlar': 'hr',
   '/app/ik/employees': 'hr',
   '/app/ik/personel': 'hr',
+  '/app/crm/paydaslar': 'crm',
+  '/app/sirket/paydaslar': 'crm',
   '/app/muhasebe': 'accounting',
   '/app/urun-ve-hizmetler': 'product_services',
   '/app/satis-sonrasi': 'after_sales',
@@ -219,7 +236,9 @@ const SIDEBAR_CONTRACT_MODULE_BY_HREF: Record<string, string> = {
 
 const SIDEBAR_CONTRACT_MODULE_BY_LEGACY_KEY: Record<string, string> = {
   ik: 'hr',
+  reporting: 'reporting',
   muhasebe: 'accounting',
+  crm: 'crm',
   product_services: 'product_services',
   after_sales: 'after_sales',
   project_management: 'project_management',

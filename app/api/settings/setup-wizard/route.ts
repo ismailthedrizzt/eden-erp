@@ -5,6 +5,12 @@ import { SETUP_INTENT_COOKIE_NAME, verifySetupIntentToken } from '@/lib/auth/set
 import { normalizeLoginIdentifier } from '@/lib/auth/tenantUserLookup'
 import { ensureSetupDatabaseSchema } from '@/lib/db/setupSchema'
 import { ACCOUNTING_PERMISSIONS } from '@/lib/modules/accounting/shared/accounting.permissions'
+import { AFTER_SALES_PERMISSIONS } from '@/lib/modules/after-sales/afterSales.permissions'
+import { CRM_PERMISSIONS } from '@/lib/modules/crm/crm.permissions'
+import { HR_PERMISSIONS } from '@/lib/modules/hr/shared/hr.permissions'
+import { PRODUCT_SERVICES_PERMISSIONS } from '@/lib/modules/product-services/productServices.permissions'
+import { PROJECT_MANAGEMENT_PERMISSIONS } from '@/lib/modules/project-management/projectManagement.permissions'
+import { REPORTING_PERMISSIONS } from '@/lib/modules/reporting/reporting.permissions'
 import { createServiceClient } from '@/lib/supabase/server'
 import {
   findGlobalOrganizationByIdentity,
@@ -548,6 +554,12 @@ async function grantAllKnownPermissionsToRole(supabase: Supabase, roleId: string
   const knownPermissionKeys = Array.from(new Set([
     ...flattenPermissionKeys(PERMISSIONS),
     ...Object.values(ACCOUNTING_PERMISSIONS),
+    ...Object.values(AFTER_SALES_PERMISSIONS),
+    ...Object.values(CRM_PERMISSIONS),
+    ...Object.values(HR_PERMISSIONS),
+    ...Object.values(PRODUCT_SERVICES_PERMISSIONS),
+    ...Object.values(PROJECT_MANAGEMENT_PERMISSIONS),
+    ...Object.values(REPORTING_PERMISSIONS),
     'partners.view',
     'partners.insert',
     'partners.edit',

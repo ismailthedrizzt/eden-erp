@@ -4,25 +4,14 @@ Generated from `app/api/**/route.ts` by `npm run proxy:coverage`. Status values 
 
 ## Summary
 
-- Route files: 190
+- Route files: 259
 - deprecated_wrapper: 11
 - keep_session_bootstrap: 1
 - keep_ui_adapter: 16
 - keep_upload_adapter: 3
-- migrate_to_fastapi: 85
-- proxy_to_fastapi_with_temporary_fallback: 74
-
-Product hardening note:
-
-- Company UX hardening did not add domain/business logic to Next API routes.
-- Company route fallbacks remain visible P1 debt until staging E2E confirms FastAPI behavior for draft create, active card update, official changes, capital increase and branch opening/closing.
-- `Sirketlerimiz` frontend now surfaces product readiness and field-control guidance while continuing to call existing BFF/proxy routes.
-- Partner/Ownership product hardening also stays in the frontend/service layer: no new Next route business logic was added, and `Ortaklarimiz` continues to call existing BFF/proxy routes for partner CRUD, current ownership and ownership transaction creation.
-- Ownership transaction subroutes under `/api/ownership-transactions/[id]/**` remain deprecated wrappers/P1 productization debt until Python workflow endpoints or a replacement flow are verified.
-- Representative/Authority product hardening also stays in the frontend/service layer: no new Next route business logic was added, and `Temsilcilerimiz` continues to call existing BFF/proxy routes for representative CRUD, current authority reads and authority transaction creation.
-- Representative authority scope/limit/status flows remain P1 staging verification items before temporary fallback removal.
-- Branch product hardening stays in the frontend/service layer and FastAPI branch domain service: no new Next route business logic was added. `Subelerimiz` continues to call existing BFF/proxy routes for branch list/detail/card update, Branch Opening/Closing and branch document update.
-- Branch/facility/organization relation display depends on temporary branch route fallback until FastAPI branch detail hydration is verified with staging data; removal remains P1.
+- migrate_to_fastapi: 84
+- proxy_to_fastapi: 69
+- proxy_to_fastapi_with_temporary_fallback: 75
 
 ## Matrix
 
@@ -48,6 +37,12 @@ Product hardening note:
 | `/api/accounting/bank-connections/[id]/test` | `migrate_to_fastapi` | `/api/v1/accounting/bank-connections/{id}/test` | yes | yes | Implement FastAPI equivalent, then convert route to proxy or remove. | P2 |
 | `/api/accounting/bank-connections/automation-preview` | `migrate_to_fastapi` | `/api/v1/accounting/bank-connections/automation-preview` | yes | yes | Implement FastAPI equivalent, then convert route to proxy or remove. | P2 |
 | `/api/accounting/bank-connections` | `migrate_to_fastapi` | `/api/v1/accounting/bank-connections` | yes | yes | Implement FastAPI equivalent, then convert route to proxy or remove. | P2 |
+| `/api/accounting/cari-accounts/[id]` | `proxy_to_fastapi` | `/api/v1/accounting/cari-accounts/{id}` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/accounting/cari-accounts/[id]/summary` | `proxy_to_fastapi` | `/api/v1/accounting/cari-accounts/{id}/summary` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/accounting/cari-accounts` | `proxy_to_fastapi` | `/api/v1/accounting/cari-accounts` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/accounting/cari-transactions/[id]` | `proxy_to_fastapi` | `/api/v1/accounting/cari-transactions/{id}` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/accounting/cari-transactions` | `proxy_to_fastapi` | `/api/v1/accounting/cari-transactions` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/accounting/company/[companyId]/summary` | `proxy_to_fastapi` | `/api/v1/accounting/company/{companyId}/summary` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
 | `/api/accounting/financial-institution-movements/[id]/create-pre-accounting` | `migrate_to_fastapi` | `/api/v1/accounting/financial-institution-movements/{id}/create-pre-accounting` | yes | yes | Implement FastAPI equivalent, then convert route to proxy or remove. | P2 |
 | `/api/accounting/financial-institution-movements/[id]/history` | `migrate_to_fastapi` | `/api/v1/accounting/financial-institution-movements/{id}/history` | yes | yes | Implement FastAPI equivalent, then convert route to proxy or remove. | P2 |
 | `/api/accounting/financial-institution-movements/[id]/match` | `migrate_to_fastapi` | `/api/v1/accounting/financial-institution-movements/{id}/match` | yes | yes | Implement FastAPI equivalent, then convert route to proxy or remove. | P2 |
@@ -61,6 +56,18 @@ Product hardening note:
 | `/api/action-center/counts` | `proxy_to_fastapi_with_temporary_fallback` | `/api/v1/action-center/counts` | no | yes | Remove TS fallback after FastAPI endpoint is verified in staging and frontend E2E/smoke passes. | P1 |
 | `/api/action-center` | `proxy_to_fastapi_with_temporary_fallback` | `/api/v1/action-center` | no | yes | Remove TS fallback after FastAPI endpoint is verified in staging and frontend E2E/smoke passes. | P1 |
 | `/api/action-center/summary` | `proxy_to_fastapi_with_temporary_fallback` | `/api/v1/action-center/summary` | no | yes | Remove TS fallback after FastAPI endpoint is verified in staging and frontend E2E/smoke passes. | P1 |
+| `/api/after-sales/assets/[id]` | `proxy_to_fastapi` | `/api/v1/after-sales/assets/{asset_id}` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/after-sales/assets/[id]/service-history` | `proxy_to_fastapi` | `/api/v1/after-sales/assets/{asset_id}/service-history` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/after-sales/assets` | `proxy_to_fastapi` | `/api/v1/after-sales/assets` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/after-sales/company/[companyId]/summary` | `proxy_to_fastapi` | `/api/v1/after-sales/company/{company_id}/summary` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/after-sales/maintenance-due` | `proxy_to_fastapi` | `/api/v1/after-sales/maintenance-due` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/after-sales/service-records/[id]/complete` | `proxy_to_fastapi` | `/api/v1/after-sales/service-records/{service_id}/complete` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/after-sales/service-records/[id]` | `proxy_to_fastapi` | `/api/v1/after-sales/service-records/{service_id}` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/after-sales/service-records` | `proxy_to_fastapi` | `/api/v1/after-sales/service-records` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/after-sales/service-requests/[id]/assign` | `proxy_to_fastapi` | `/api/v1/after-sales/service-requests/{request_id}/assign` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/after-sales/service-requests/[id]/close` | `proxy_to_fastapi` | `/api/v1/after-sales/service-requests/{request_id}/close` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/after-sales/service-requests/[id]` | `proxy_to_fastapi` | `/api/v1/after-sales/service-requests/{request_id}` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/after-sales/service-requests` | `proxy_to_fastapi` | `/api/v1/after-sales/service-requests` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
 | `/api/ai/action-guide/actions` | `proxy_to_fastapi_with_temporary_fallback` | `/api/v1/action-guide/actions` | no | no | Remove TS fallback after FastAPI endpoint is verified in staging and frontend E2E/smoke passes. | P2 |
 | `/api/ai/action-guide` | `keep_ui_adapter` | `/api/v1/action-guide` | yes | yes | Permanent adapter/shared contract; keep thin and do not add ERP domain mutation. | P2 |
 | `/api/ai/cv-extract` | `migrate_to_fastapi` | `/api/v1/ai/cv-extract` | yes | yes | Implement FastAPI equivalent, then convert route to proxy or remove. | P2 |
@@ -122,6 +129,17 @@ Product hardening note:
 | `/api/companies/stakeholders/[id]` | `proxy_to_fastapi_with_temporary_fallback` | `/api/v1/companies/stakeholders/{id}` | yes | yes | Remove TS fallback after FastAPI endpoint is verified in staging and frontend E2E/smoke passes. | P1 |
 | `/api/companies/stakeholders` | `proxy_to_fastapi_with_temporary_fallback` | `/api/v1/companies/stakeholders` | yes | yes | Remove TS fallback after FastAPI endpoint is verified in staging and frontend E2E/smoke passes. | P1 |
 | `/api/companies/vehicles` | `proxy_to_fastapi_with_temporary_fallback` | `/api/v1/companies/vehicles` | yes | yes | Remove TS fallback after FastAPI endpoint is verified in staging and frontend E2E/smoke passes. | P1 |
+| `/api/crm/master/organizations` | `proxy_to_fastapi` | `/api/v1/crm/master/organizations` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/crm/master/organizations/search` | `proxy_to_fastapi` | `/api/v1/crm/master/organizations/search` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/crm/master/persons` | `proxy_to_fastapi` | `/api/v1/crm/master/persons` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/crm/master/persons/search` | `proxy_to_fastapi` | `/api/v1/crm/master/persons/search` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/crm/stakeholders/[id]/create-cari-account` | `proxy_to_fastapi` | `/api/v1/crm/stakeholders/{stakeholder_id}/create-cari-account` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/crm/stakeholders/[id]/create-followup-task` | `proxy_to_fastapi` | `/api/v1/crm/stakeholders/{stakeholder_id}/create-followup-task` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/crm/stakeholders/[id]/interactions` | `proxy_to_fastapi` | `/api/v1/crm/stakeholders/{stakeholder_id}/interactions` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/crm/stakeholders/[id]/related-records` | `proxy_to_fastapi` | `/api/v1/crm/stakeholders/{stakeholder_id}/related-records` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/crm/stakeholders/[id]` | `proxy_to_fastapi` | `/api/v1/crm/stakeholders/{stakeholder_id}` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/crm/stakeholders/[id]/summary` | `proxy_to_fastapi` | `/api/v1/crm/stakeholders/{stakeholder_id}/summary` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/crm/stakeholders` | `proxy_to_fastapi` | `/api/v1/crm/stakeholders` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
 | `/api/cron/document-thumbnails` | `migrate_to_fastapi` | `/api/v1/cron/document-thumbnails` | yes | no | Implement FastAPI equivalent, then convert route to proxy or remove. | P2 |
 | `/api/cron/outbox-dispatch` | `proxy_to_fastapi_with_temporary_fallback` | `/api/v1/system/outbox/dispatch` | yes | yes | Remove TS fallback after FastAPI endpoint is verified in staging and frontend E2E/smoke passes. | P1 |
 | `/api/cron/update-reference-data` | `migrate_to_fastapi` | `/api/v1/cron/update-reference-data` | yes | yes | Implement FastAPI equivalent, then convert route to proxy or remove. | P2 |
@@ -148,11 +166,29 @@ Product hardening note:
 | `/api/entity-bank-accounts/form-priority-mode` | `migrate_to_fastapi` | `/api/v1/entity-bank-accounts/form-priority-mode` | yes | yes | Implement FastAPI equivalent, then convert route to proxy or remove. | P2 |
 | `/api/entity-bank-accounts/parse-iban` | `migrate_to_fastapi` | `/api/v1/entity-bank-accounts/parse-iban` | yes | yes | Implement FastAPI equivalent, then convert route to proxy or remove. | P2 |
 | `/api/entity-bank-accounts/validate-swift` | `migrate_to_fastapi` | `/api/v1/entity-bank-accounts/validate-swift` | yes | yes | Implement FastAPI equivalent, then convert route to proxy or remove. | P2 |
+| `/api/facilities/[id]` | `proxy_to_fastapi` | `/api/v1/facilities/{facility_id}` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/facilities` | `proxy_to_fastapi` | `/api/v1/facilities` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/features/[feature_key]` | `proxy_to_fastapi` | `/api/v1/features/{feature_key}` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/features` | `proxy_to_fastapi` | `/api/v1/features` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/hr/company/[companyId]/summary` | `proxy_to_fastapi` | `/api/v1/hr/company/{companyId}/summary` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/hr/employees/[id]/documents/[documentId]` | `proxy_to_fastapi` | `/api/v1/hr/employees/{id}/documents/{documentId}` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/hr/employees/[id]/documents` | `proxy_to_fastapi` | `/api/v1/hr/employees/{id}/documents` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/hr/employees/[id]/employment/assignment-change` | `proxy_to_fastapi` | `/api/v1/hr/employees/{id}/employment/assignment-change` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/hr/employees/[id]/employment/start` | `proxy_to_fastapi` | `/api/v1/hr/employees/{id}/employment/start` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/hr/employees/[id]/employment/terminate` | `proxy_to_fastapi` | `/api/v1/hr/employees/{id}/employment/terminate` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/hr/employees/[id]` | `proxy_to_fastapi` | `/api/v1/hr/employees/{id}` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/hr/employees/[id]/sgk/entry-completed` | `proxy_to_fastapi` | `/api/v1/hr/employees/{id}/sgk/entry-completed` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/hr/employees/[id]/sgk/exit-completed` | `proxy_to_fastapi` | `/api/v1/hr/employees/{id}/sgk/exit-completed` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/hr/employees` | `proxy_to_fastapi` | `/api/v1/hr/employees` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/hr/employees/summary` | `proxy_to_fastapi` | `/api/v1/hr/employees/summary` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
 | `/api/identity/resolve` | `keep_ui_adapter` | `/api/v1/identity/resolve` | yes | yes | Permanent adapter/shared contract; keep thin and do not add ERP domain mutation. | P2 |
 | `/api/integrity/check` | `proxy_to_fastapi_with_temporary_fallback` | `/api/v1/integrity/check` | yes | no | Remove TS fallback after FastAPI endpoint is verified in staging and frontend E2E/smoke passes. | P2 |
 | `/api/integrity/operation/[operation_key]` | `proxy_to_fastapi_with_temporary_fallback` | `/api/v1/integrity/operation/{operation_key}` | yes | no | Remove TS fallback after FastAPI endpoint is verified in staging and frontend E2E/smoke passes. | P2 |
 | `/api/media/metadata` | `keep_ui_adapter` | `/api/v1/media/metadata` | yes | yes | Permanent adapter/shared contract; keep thin and do not add ERP domain mutation. | P2 |
 | `/api/media/open` | `keep_ui_adapter` | `/api/v1/media/open` | yes | yes | Permanent adapter/shared contract; keep thin and do not add ERP domain mutation. | P2 |
+| `/api/modules/[module_key]/activation` | `proxy_to_fastapi` | `/api/v1/modules/{module_key}/activation` | yes | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/modules/[module_key]` | `proxy_to_fastapi` | `/api/v1/modules/{module_key}` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/modules` | `proxy_to_fastapi` | `/api/v1/modules` | yes | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
 | `/api/muhasebe/cari-kartlar/resolve` | `migrate_to_fastapi` | `/api/v1/muhasebe/cari-kartlar/resolve` | yes | yes | Implement FastAPI equivalent, then convert route to proxy or remove. | P2 |
 | `/api/muhasebe/cari-kartlar` | `migrate_to_fastapi` | `/api/v1/muhasebe/cari-kartlar` | yes | yes | Implement FastAPI equivalent, then convert route to proxy or remove. | P2 |
 | `/api/muhasebe/islemler/[id]` | `migrate_to_fastapi` | `/api/v1/muhasebe/islemler/{id}` | yes | yes | Implement FastAPI equivalent, then convert route to proxy or remove. | P2 |
@@ -166,11 +202,7 @@ Product hardening note:
 | `/api/onboarding/system-tour/skip` | `keep_ui_adapter` | `/api/v1/onboarding/system-tour/skip` | no | no | Permanent adapter/shared contract; keep thin and do not add ERP domain mutation. | P2 |
 | `/api/onboarding/system-tour/start` | `keep_ui_adapter` | `/api/v1/onboarding/system-tour/start` | no | no | Permanent adapter/shared contract; keep thin and do not add ERP domain mutation. | P2 |
 | `/api/onboarding/system-tour/step` | `keep_ui_adapter` | `/api/v1/onboarding/system-tour/step` | no | no | Permanent adapter/shared contract; keep thin and do not add ERP domain mutation. | P2 |
-| `/api/organization` | `proxy_to_fastapi_with_temporary_fallback` | `/api/v1/organization/units` | yes, fallback only | yes | Remove legacy Supabase fallback after FastAPI organization unit, position and unit type coverage is verified. | P1 |
-| `/api/facilities` | `proxy_to_fastapi` | `/api/v1/facilities` | no | no | Proxy-only facility/location BFF; lifecycle logic must stay in FastAPI. | P1 |
-| `/api/facilities/[id]` | `proxy_to_fastapi` | `/api/v1/facilities/{facility_id}` | no | no | Proxy-only detail/update BFF; facility deactivate operation remains future endpoint. | P1 |
-
-Step 5 update: `/api/organization` now attempts FastAPI first for unit list/create/update and position create while preserving the legacy Teşkilat/Kadro contract for unit types and local fallback. It remains P1/P2 cleanup debt until staging confirms the FastAPI organization endpoints and unit type management has a Python endpoint.
+| `/api/organization` | `proxy_to_fastapi_with_temporary_fallback` | `/api/v1/organization/units` | yes | yes | Classify owner before adding behavior. | P2 |
 | `/api/ownership-transactions/[id]/approve` | `deprecated_wrapper` | `/api/v1/ownership-transactions/{transaction_id}/approve` | yes | yes | Delete after canonical route or generated/shared contract has no imports. | P0 |
 | `/api/ownership-transactions/[id]/cancel` | `deprecated_wrapper` | `/api/v1/ownership-transactions/{transaction_id}/cancel` | yes | yes | Delete after canonical route or generated/shared contract has no imports. | P0 |
 | `/api/ownership-transactions/[id]/history` | `deprecated_wrapper` | `/api/v1/ownership-transactions/{transaction_id}/history` | yes | yes | Delete after canonical route or generated/shared contract has no imports. | P0 |
@@ -187,6 +219,19 @@ Step 5 update: `/api/organization` now attempts FastAPI first for unit list/crea
 | `/api/processes/[id]/start` | `proxy_to_fastapi_with_temporary_fallback` | `/api/v1/processes` | yes | yes | Remove TS fallback after FastAPI endpoint is verified in staging and frontend E2E/smoke passes. | P1 |
 | `/api/processes/[id]/steps/[step_id]/complete` | `proxy_to_fastapi_with_temporary_fallback` | `/api/v1/processes/{process_id}/steps/{step_key}/complete` | yes | yes | Remove TS fallback after FastAPI endpoint is verified in staging and frontend E2E/smoke passes. | P1 |
 | `/api/processes` | `proxy_to_fastapi_with_temporary_fallback` | `/api/v1/processes` | yes | yes | Remove TS fallback after FastAPI endpoint is verified in staging and frontend E2E/smoke passes. | P1 |
+| `/api/products/[id]` | `proxy_to_fastapi` | `/api/v1/products/{product_id}` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/products` | `proxy_to_fastapi` | `/api/v1/products` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/products/summary` | `proxy_to_fastapi` | `/api/v1/products/summary` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/project-tasks/[id]/assign` | `proxy_to_fastapi` | `/api/v1/tasks/project-tasks/{id}/assign` | yes | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/project-tasks/[id]/attachments` | `proxy_to_fastapi` | `/api/v1/tasks/project-tasks/{id}/attachments` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/project-tasks/[id]/comments` | `proxy_to_fastapi` | `/api/v1/tasks/project-tasks/{id}/comments` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/project-tasks/[id]` | `proxy_to_fastapi` | `/api/v1/tasks/project-tasks/{id}` | yes | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/project-tasks/[id]/transition` | `proxy_to_fastapi` | `/api/v1/tasks/project-tasks/{id}/transition` | yes | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/project-tasks` | `proxy_to_fastapi` | `/api/v1/tasks/project-tasks` | yes | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/projects/[id]` | `proxy_to_fastapi` | `/api/v1/projects/{id}` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/projects/[id]/summary` | `proxy_to_fastapi` | `/api/v1/projects/{id}/summary` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/projects` | `proxy_to_fastapi` | `/api/v1/projects` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/projects/summary` | `proxy_to_fastapi` | `/api/v1/projects/summary` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
 | `/api/reference/nace-codes/import` | `migrate_to_fastapi` | `/api/v1/reference/nace-codes/import` | yes | yes | Implement FastAPI equivalent, then convert route to proxy or remove. | P2 |
 | `/api/reference/nace-codes` | `migrate_to_fastapi` | `/api/v1/reference/nace-codes` | yes | yes | Implement FastAPI equivalent, then convert route to proxy or remove. | P2 |
 | `/api/reference/nace-codes/update-from-source` | `migrate_to_fastapi` | `/api/v1/reference/nace-codes/update-from-source` | yes | yes | Implement FastAPI equivalent, then convert route to proxy or remove. | P2 |
@@ -195,6 +240,27 @@ Step 5 update: `/api/organization` now attempts FastAPI first for unit list/crea
 | `/api/reference/tax-offices` | `migrate_to_fastapi` | `/api/v1/reference/tax-offices` | yes | yes | Implement FastAPI equivalent, then convert route to proxy or remove. | P2 |
 | `/api/reference/trade-registry-offices` | `migrate_to_fastapi` | `/api/v1/reference/trade-registry-offices` | yes | yes | Implement FastAPI equivalent, then convert route to proxy or remove. | P2 |
 | `/api/reference/turkey-locations` | `migrate_to_fastapi` | `/api/v1/reference/turkey-locations` | yes | yes | Implement FastAPI equivalent, then convert route to proxy or remove. | P2 |
+| `/api/reporting/dashboard/module/[module]` | `proxy_to_fastapi` | `/api/v1/reporting/dashboard/module/{module_key}` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/reporting/dashboard` | `proxy_to_fastapi` | `/api/v1/reporting/dashboard` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/reporting/dashboard/summary` | `proxy_to_fastapi` | `/api/v1/reporting/dashboard/summary` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/reporting/kpis/[module]` | `proxy_to_fastapi` | `/api/v1/reporting/kpis/{module_key}` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/reporting/reports/[report_key]/export` | `proxy_to_fastapi` | `/api/v1/reporting/reports/{report_key}/export` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/reporting/reports/[report_key]/query` | `proxy_to_fastapi` | `/api/v1/reporting/reports/{report_key}/query` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/reporting/reports/[report_key]` | `proxy_to_fastapi` | `/api/v1/reporting/reports/{report_key}` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/reporting/reports` | `proxy_to_fastapi` | `/api/v1/reporting/reports` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/security/users` | `proxy_to_fastapi` | `/api/v1/security/users` | no | no | Security/RBAC proxy-only adapter; requires FASTAPI_BASE_URL. | P0 |
+| `/api/security/users/[id]` | `proxy_to_fastapi` | `/api/v1/security/users/{user_id}` | no | no | User profile detail/PATCH proxy; no legacy fallback. | P0 |
+| `/api/security/users/[id]/roles` | `proxy_to_fastapi` | `/api/v1/security/users/{user_id}/roles` | no | no | User role assign/list proxy; no legacy fallback. | P0 |
+| `/api/security/users/[id]/roles/[roleId]` | `proxy_to_fastapi` | `/api/v1/security/users/{user_id}/roles/{role_id}` | no | no | User role removal proxy; no legacy fallback. | P0 |
+| `/api/security/users/[id]/scopes` | `proxy_to_fastapi` | `/api/v1/security/users/{user_id}/scopes` | no | no | Company/branch scope proxy; no legacy fallback. | P0 |
+| `/api/security/roles` | `proxy_to_fastapi` | `/api/v1/security/roles` | no | no | Role list/create proxy; no legacy fallback. | P0 |
+| `/api/security/roles/[id]` | `proxy_to_fastapi` | `/api/v1/security/roles/{role_id}` | no | no | Role detail/PATCH/DELETE proxy; no legacy fallback. | P0 |
+| `/api/security/roles/[id]/permissions` | `proxy_to_fastapi` | `/api/v1/security/roles/{role_id}/permissions` | no | no | Role permission matrix save proxy; no legacy fallback. | P0 |
+| `/api/security/permissions` | `proxy_to_fastapi` | `/api/v1/security/permissions` | no | no | Registry permission groups proxy; no legacy fallback. | P0 |
+| `/api/security/permissions/matrix` | `proxy_to_fastapi` | `/api/v1/security/permissions/matrix` | no | no | Role x permission matrix proxy; no legacy fallback. | P0 |
+| `/api/security/policy-test` | `proxy_to_fastapi` | `/api/v1/security/policy-test` | no | no | Admin policy diagnostic proxy; no legacy fallback. | P0 |
+| `/api/security/permission-denials` | `proxy_to_fastapi` | `/api/v1/security/permission-denials` | no | no | Permission/scope denial report proxy; no legacy fallback. | P0 |
+| `/api/security/access-summary` | `proxy_to_fastapi` | `/api/v1/security/access-summary` | no | no | Security admin summary proxy; no legacy fallback. | P0 |
 | `/api/session/bootstrap` | `keep_session_bootstrap` | `n/a` | yes | yes | Permanent adapter/shared contract; keep thin and do not add ERP domain mutation. | P2 |
 | `/api/settings/integration-parameters/[id]/credential` | `migrate_to_fastapi` | `/api/v1/settings/integration-parameters/{id}/credential` | yes | yes | Implement FastAPI equivalent, then convert route to proxy or remove. | P2 |
 | `/api/settings/integration-parameters/[id]` | `migrate_to_fastapi` | `/api/v1/settings/integration-parameters/{id}` | yes | yes | Implement FastAPI equivalent, then convert route to proxy or remove. | P2 |
@@ -207,15 +273,11 @@ Step 5 update: `/api/organization` now attempts FastAPI first for unit list/crea
 | `/api/setup/actions` | `proxy_to_fastapi_with_temporary_fallback` | `/api/v1/setup/actions` | yes | yes | Remove TS fallback after FastAPI endpoint is verified in staging and frontend E2E/smoke passes. | P1 |
 | `/api/setup/readiness/[module_key]` | `proxy_to_fastapi_with_temporary_fallback` | `/api/v1/setup/readiness/{module_key}` | yes | yes | Remove TS fallback after FastAPI endpoint is verified in staging and frontend E2E/smoke passes. | P1 |
 | `/api/setup/readiness` | `proxy_to_fastapi_with_temporary_fallback` | `/api/v1/setup/readiness` | yes | yes | Remove TS fallback after FastAPI endpoint is verified in staging and frontend E2E/smoke passes. | P1 |
-| `/api/modules` | `proxy_to_fastapi` | `/api/v1/modules` | no | no | Keep as BFF proxy for module setup/license/readiness product UI. | ready |
-| `/api/modules/[module_key]` | `proxy_to_fastapi` | `/api/v1/modules/{module_key}` | no | no | Keep as BFF proxy for module detail. | ready |
-| `/api/modules/[module_key]/activation` | `proxy_to_fastapi` | `/api/v1/modules/{module_key}/activation` | no | no | Keep settings.modulesManage guard in FastAPI; persistence hardening P1. | P1 |
-| `/api/features` | `proxy_to_fastapi` | `/api/v1/features` | no | no | Keep as BFF proxy for feature flag registry. | ready |
-| `/api/features/[feature_key]` | `proxy_to_fastapi` | `/api/v1/features/{feature_key}` | no | no | PATCH proxies feature flag update; DB persistence P1. | P1 |
 | `/api/tasks/[id]/assign` | `proxy_to_fastapi_with_temporary_fallback` | `/api/v1/tasks/{task_id}/assign` | yes | yes | Remove TS fallback after FastAPI endpoint is verified in staging and frontend E2E/smoke passes. | P1 |
 | `/api/tasks/[id]/comment` | `proxy_to_fastapi_with_temporary_fallback` | `/api/v1/tasks/{task_id}/comment` | yes | yes | Remove TS fallback after FastAPI endpoint is verified in staging and frontend E2E/smoke passes. | P1 |
 | `/api/tasks/[id]/complete` | `proxy_to_fastapi_with_temporary_fallback` | `/api/v1/tasks/{task_id}/complete` | yes | yes | Remove TS fallback after FastAPI endpoint is verified in staging and frontend E2E/smoke passes. | P1 |
 | `/api/tasks/[id]` | `proxy_to_fastapi_with_temporary_fallback` | `/api/v1/tasks/{task_id}` | yes | yes | Remove TS fallback after FastAPI endpoint is verified in staging and frontend E2E/smoke passes. | P1 |
+| `/api/tasks/my-project-tasks` | `proxy_to_fastapi` | `/api/v1/tasks/my-project-tasks` | yes | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P1 |
 | `/api/tasks` | `proxy_to_fastapi_with_temporary_fallback` | `/api/v1/tasks` | yes | yes | Remove TS fallback after FastAPI endpoint is verified in staging and frontend E2E/smoke passes. | P1 |
 | `/api/tenants/current` | `migrate_to_fastapi` | `/api/v1/tenants/current` | yes | yes | Implement FastAPI equivalent, then convert route to proxy or remove. | P2 |
 | `/api/tenants/default` | `migrate_to_fastapi` | `/api/v1/tenants/default` | yes | yes | Implement FastAPI equivalent, then convert route to proxy or remove. | P2 |
@@ -227,18 +289,6 @@ Step 5 update: `/api/organization` now attempts FastAPI first for unit list/crea
 | `/api/user-registration-requests/[id]/approve` | `migrate_to_fastapi` | `/api/v1/user-registration-requests/{id}/approve` | yes | no | Implement FastAPI equivalent, then convert route to proxy or remove. | P2 |
 | `/api/user-registration-requests` | `migrate_to_fastapi` | `/api/v1/user-registration-requests` | yes | no | Implement FastAPI equivalent, then convert route to proxy or remove. | P2 |
 | `/api/user/preferences` | `keep_ui_adapter` | `/api/v1/user/preferences` | yes | no | Permanent adapter/shared contract; keep thin and do not add ERP domain mutation. | P2 |
-
-## Step 6 Product Integration Update
-
-Process Center and Action Center hardening added real `/app/surecler` and `/app/surecler/{id}` experiences for process, task and approval work. `/api/action-center*` now supports FastAPI normalized action items with legacy fallback envelope compatibility. `/api/tasks/[id]/comment` targets `/api/v1/tasks/{task_id}/comment`; TS fallback remains only until staging/E2E verification removes P1 migration debt.
-
-## Step 7 Product Integration Update
-
-Audit Admin UI hardening keeps `/api/audit*` as FastAPI-first BFF routes and adds a product screen at `/app/sistem/audit`. The UI consumes the proxy contract for filtered audit list, detail, by-record timeline and operation/process-linked views. Temporary TS fallback remains P1 only for local/dev continuity; no new audit domain mutation logic was added to Next routes.
-
-## Step 8 Product Integration Update
-
-Module Setup/Licensing hardening adds proxy-only `/api/modules*` and `/api/features*` routes for FastAPI module status and feature flag contracts. `/app/sistem/kurulum` now presents product readiness cards, while `/app/sistem/module-licenses` shows module activation, license language and feature flags. Existing `/api/settings/module-licenses` remains a TS migration bridge until DB-backed module settings move fully to FastAPI.
 
 ## Gate Rules
 

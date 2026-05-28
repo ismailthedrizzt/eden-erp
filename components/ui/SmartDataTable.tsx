@@ -434,6 +434,7 @@ export function SmartDataTable<T extends { id: string }>({
 
   // Screen Size Detection
   const [screenSize, setScreenSize] = useState<'sm' | 'md' | 'lg' | 'xl'>('lg')
+  const [isMobileViewport, setIsMobileViewport] = useState(false)
   const tableContainerRef = useRef<HTMLDivElement>(null)
   const [tableWidth, setTableWidth] = useState(0)
 
@@ -660,6 +661,7 @@ export function SmartDataTable<T extends { id: string }>({
   useEffect(() => {
     const handleResize = () => {
       const width = window.innerWidth
+      setIsMobileViewport(width < 640)
       if (width < 640) setScreenSize('sm')
       else if (width < 768) setScreenSize('md')
       else if (width < 1024) setScreenSize('lg')
@@ -670,6 +672,8 @@ export function SmartDataTable<T extends { id: string }>({
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
   }, [])
+
+  const effectiveViewMode = isMobileViewport ? 'card' : viewMode
 
   // Table width measurement
   useEffect(() => {
@@ -1466,14 +1470,16 @@ export function SmartDataTable<T extends { id: string }>({
           </button>
 
           {/* View Mode Toggle */}
-          <div className="flex items-center bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+          <div className="flex items-center bg-gray-100 dark:bg-gray-700 rounded-lg p-1" title={isMobileViewport ? 'Mobil ekranda kart gorunumu kullanilir.' : undefined}>
             <button
               onClick={() => setViewMode('list')}
+              disabled={isMobileViewport}
               className={cn(
                 "p-2 rounded-md transition-colors",
-                viewMode === 'list' 
+                effectiveViewMode === 'list'
                   ? "bg-white dark:bg-gray-600 shadow text-gray-900 dark:text-white" 
-                  : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                  : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white",
+                isMobileViewport && "cursor-not-allowed opacity-40"
               )}
               title="Liste görünümü"
             >
@@ -1483,7 +1489,7 @@ export function SmartDataTable<T extends { id: string }>({
               onClick={() => setViewMode('card')}
               className={cn(
                 "p-2 rounded-md transition-colors",
-                viewMode === 'card' 
+                effectiveViewMode === 'card'
                   ? "bg-white dark:bg-gray-600 shadow text-gray-900 dark:text-white" 
                   : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
               )}
@@ -1492,6 +1498,11 @@ export function SmartDataTable<T extends { id: string }>({
               <Grid3X3 size={18} />
             </button>
           </div>
+          {isMobileViewport && (
+            <span className="rounded-full bg-blue-50 px-2 py-1 text-[11px] font-semibold text-blue-700 dark:bg-blue-950/30 dark:text-blue-200">
+              Mobil kart
+            </span>
+          )}
 
           {/* Export */}
           <button
@@ -1689,7 +1700,7 @@ export function SmartDataTable<T extends { id: string }>({
 
       {/* Column Filter Panel */}
       {showFilterPanel && (
-        <div className="bg-gray-50 dark:bg-gray-800/50 border border-gray-200 dark:border-gray-700 rounded-lg p-4 space-y-3">
+        <div className="fixed inset-x-0 bottom-0 z-40 max-h-[82dvh] overflow-y-auto rounded-t-2xl border border-gray-200 bg-gray-50 p-4 shadow-2xl dark:border-gray-700 dark:bg-gray-900 sm:static sm:max-h-none sm:rounded-lg sm:bg-gray-50 sm:shadow-none dark:sm:bg-gray-800/50 space-y-3">
           <div className="flex items-center justify-between">
             <h3 className="font-medium text-gray-900 dark:text-white flex items-center gap-2">
               <Filter size={16} />
@@ -1697,9 +1708,16 @@ export function SmartDataTable<T extends { id: string }>({
             </h3>
             <button
               onClick={() => setFilters([])}
-              className="text-sm text-red-600 hover:text-red-700"
+              className="min-h-11 rounded-lg px-2 text-sm text-red-600 hover:bg-red-50 hover:text-red-700 sm:min-h-0 dark:hover:bg-red-950/30"
             >
               Tümünü Temizle
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowFilterPanel(false)}
+              className="min-h-11 rounded-lg px-2 text-sm font-medium text-gray-500 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800 sm:hidden"
+            >
+              Kapat
             </button>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
@@ -1730,14 +1748,29 @@ export function SmartDataTable<T extends { id: string }>({
 
       {/* Content */}
       {loading ? (
-        <div className="flex items-center justify-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
-        </div>
+        effectiveViewMode === 'card' ? (
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {[0, 1, 2].map(index => (
+              <div key={index} className="min-h-36 animate-pulse rounded-xl border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800">
+                <div className="h-4 w-2/3 rounded bg-gray-200 dark:bg-gray-700" />
+                <div className="mt-4 space-y-2">
+                  <div className="h-3 rounded bg-gray-100 dark:bg-gray-700" />
+                  <div className="h-3 w-5/6 rounded bg-gray-100 dark:bg-gray-700" />
+                  <div className="h-3 w-3/5 rounded bg-gray-100 dark:bg-gray-700" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+          </div>
+        )
       ) : filteredData.length === 0 ? (
         <div className="text-center py-12 text-gray-500 dark:text-gray-400">
           {emptyText}
         </div>
-      ) : viewMode === 'list' ? (
+      ) : effectiveViewMode === 'list' ? (
         /* List View */
         <div 
           ref={tableContainerRef}
@@ -1862,17 +1895,26 @@ export function SmartDataTable<T extends { id: string }>({
             const cardFieldPool = displayColumnConfig.filter(c => c.type !== 'image')
             const requiredCols = cardFieldPool.filter(c => c.required)
             const visibleCardCols = cardFieldPool.filter(c => c.visible)
-            const displayCols = (requiredCols.length > 0 ? requiredCols : visibleCardCols.length > 0 ? visibleCardCols : cardFieldPool).slice(0, 3)
+            const displayCols = (requiredCols.length > 0 ? requiredCols : visibleCardCols.length > 0 ? visibleCardCols : cardFieldPool).slice(0, isMobileViewport ? 5 : 3)
             
             return (
               <div
                 key={row.id}
                 onClick={() => onRowClick?.(row)}
-                className="relative min-h-44 cursor-pointer overflow-hidden rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800"
+                tabIndex={onRowClick ? 0 : undefined}
+                role={onRowClick ? 'button' : undefined}
+                onKeyDown={(event) => {
+                  if (!onRowClick) return
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault()
+                    onRowClick(row)
+                  }
+                }}
+                className="relative min-h-0 cursor-pointer overflow-hidden rounded-xl border border-gray-200 bg-white transition-shadow hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500/40 dark:border-gray-700 dark:bg-gray-800"
               >
-                <div className="flex min-h-44">
+                <div className="flex min-h-0 flex-col sm:min-h-44 sm:flex-row">
                   <div className={cn(
-                    'relative flex w-32 shrink-0 self-stretch overflow-hidden sm:w-36 xl:w-40',
+                    'relative flex h-28 w-full shrink-0 self-stretch overflow-hidden sm:h-auto sm:w-36 xl:w-40',
                     imageFit === 'contain'
                       ? 'bg-transparent'
                       : 'bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-900/30 dark:to-indigo-900/30'

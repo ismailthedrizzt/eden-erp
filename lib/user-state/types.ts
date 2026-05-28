@@ -19,6 +19,7 @@ export interface UserUiPreferences {
   preferredHelpMode: 'tour' | 'guide' | 'both'
   lastTourVersion: string | null
   actionGuideDismissed: boolean
+  dismissedFieldHelpers: string[]
   lockedFieldHintsDismissed: string[]
 }
 
@@ -40,6 +41,7 @@ export type UserUiPreferencesPatch = Partial<{
   preferredHelpMode: unknown
   lastTourVersion: unknown
   actionGuideDismissed: unknown
+  dismissedFieldHelpers: unknown
   lockedFieldHintsDismissed: unknown
 }>
 
@@ -70,6 +72,7 @@ export interface SessionBootstrapResponse {
     preferredHelpMode: 'tour' | 'guide' | 'both'
     lastTourVersion: string | null
     actionGuideDismissed: boolean
+    dismissedFieldHelpers: string[]
     lockedFieldHintsDismissed: string[]
   }
   modules?: Array<{

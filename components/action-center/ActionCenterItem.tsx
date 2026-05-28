@@ -1,6 +1,6 @@
 'use client'
 
-import { AlertCircle, CheckCircle2, Clock3, ExternalLink, ListTodo, ShieldCheck, Wrench } from 'lucide-react'
+import { AlertCircle, CheckCircle2, Clock3, ExternalLink, ListChecks, ListTodo, ShieldCheck, Wrench } from 'lucide-react'
 import type { UnifiedActionItem } from '@/lib/action-center/actionCenter.types'
 
 type ActionCenterItemProps = {
@@ -53,7 +53,7 @@ export function ActionCenterItem({ item, compact = false, onNavigate }: ActionCe
               <a
                 href={primaryAction.target_page}
                 onClick={onNavigate}
-                className="inline-flex items-center gap-1 rounded-md bg-eden-blue px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-eden-blue-dk"
+                className="inline-flex min-h-11 items-center gap-1 rounded-md bg-eden-blue px-3 py-2 text-xs font-semibold text-white hover:bg-eden-blue-dk sm:min-h-0 sm:px-2.5 sm:py-1.5"
               >
                 {primaryAction.label}
                 <ExternalLink size={12} />
@@ -64,7 +64,7 @@ export function ActionCenterItem({ item, compact = false, onNavigate }: ActionCe
                 type="button"
                 disabled
                 title={disabledAction.disabled_reason}
-                className="inline-flex items-center gap-1 rounded-md border border-gray-200 px-2.5 py-1.5 text-xs font-semibold text-gray-400 dark:border-gray-700 dark:text-gray-500"
+                className="inline-flex min-h-11 items-center gap-1 rounded-md border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-400 dark:border-gray-700 dark:text-gray-500 sm:min-h-0 sm:px-2.5 sm:py-1.5"
               >
                 {disabledAction.label}
               </button>
@@ -81,6 +81,7 @@ export function ActionCenterItem({ item, compact = false, onNavigate }: ActionCe
 
 function sourceIcon(item: UnifiedActionItem) {
   if (item.source_type === 'process_task') return <ListTodo size={16} />
+  if (item.source_type === 'project_task') return <ListChecks size={16} />
   if (item.source_type === 'approval') return <ShieldCheck size={16} />
   if (item.source_type === 'operation') return <Wrench size={16} />
   if (item.source_type === 'outbox' || item.source_type === 'projection' || item.source_type === 'integrity_warning' || item.source_type === 'system') return <AlertCircle size={16} />
@@ -90,7 +91,8 @@ function sourceIcon(item: UnifiedActionItem) {
 
 function sourceText(sourceType: UnifiedActionItem['source_type']) {
   const labels: Record<string, string> = {
-    process_task: 'Gorev',
+    process_task: 'Surec Gorevi',
+    project_task: 'Proje Gorevi',
     approval: 'Onay',
     operation: 'Tamamlanamayan islem',
     outbox: 'Sistem guncellemesi',
@@ -130,6 +132,7 @@ function moduleText(moduleKey?: string | null) {
     partners: 'Ortaklarimiz',
     representatives: 'Temsilcilerimiz',
     process: 'Surecler',
+    project_management: 'Proje ve Gorevler',
     system: 'Sistem',
     settings: 'Sistem',
     sirket: 'Sirketlerimiz',

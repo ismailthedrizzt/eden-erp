@@ -78,6 +78,38 @@ async def list_action_center_items(
     else:
         warnings.append("Gorev kaynagi hazir degil.")
 
+    if await table_exists(session, "public.project_tasks"):
+        project_task_result = await session.execute(
+            text(
+                """
+                select t.id, t.tenant_id, t.company_id, t.project_id, t.branch_id,
+                       t.organization_unit_id, t.facility_id, t.issue_key, t.title,
+                       t.description, t.status, t.priority, t.assignee_user_id,
+                       t.assignee_employee_id, t.due_date, t.related_module,
+                       t.related_entity_type, t.related_entity_id, t.updated_at,
+                       t.created_at, p.project_key, p.project_name
+                from public.project_tasks t
+                left join public.project_projects p
+                  on p.tenant_id = t.tenant_id and p.id = t.project_id
+                where t.tenant_id = :tenant_id
+                  and t.status in ('backlog','todo','in_progress','blocked','review')
+                  and (:user_id is null or t.assignee_user_id = :user_id)
+                  and coalesce(t.is_deleted, false) = false
+                order by coalesce(t.due_date, t.created_at::date) asc
+                limit :limit
+                """
+            ),
+            {
+                "tenant_id": context["tenant_id"],
+                "user_id": context.get("user_id"),
+                "limit": limit,
+            },
+        )
+        items.extend(
+            _normalize_project_task(row, str(context["tenant_id"]))
+            for row in rows_to_dicts(list(project_task_result.mappings().all()))
+        )
+
     if await table_exists(session, "public.process_approvals"):
         approval_result = await session.execute(
             text(
@@ -242,6 +274,60 @@ def _normalize_task(row: dict[str, Any], tenant_id: str) -> dict[str, Any]:
                 "label": "Gorevi Tamamla",
                 "action_type": "navigate",
                 "target_page": f"/app/surecler/{process_id}" if process_id else "/app/surecler",
+            },
+        ],
+    }
+
+
+def _normalize_project_task(row: dict[str, Any], tenant_id: str) -> dict[str, Any]:
+    overdue = _is_past_due(row.get("due_date"))
+    urgent = row.get("priority") in {"urgent", "highest"} or overdue
+    task_id = row.get("id")
+    entity_type = row.get("related_entity_type")
+    entity_id = row.get("related_entity_id")
+    return {
+        "id": f"project_task:{task_id}",
+        "tenant_id": row.get("tenant_id") or tenant_id,
+        "company_id": row.get("company_id"),
+        "branch_id": row.get("branch_id") or (
+            entity_id if _same_entity_type(entity_type, "branch") else None
+        ),
+        "module_key": "project_management",
+        "source_type": "project_task",
+        "source_id": str(task_id),
+        "title": row.get("title") or "Proje gorevi var",
+        "description": _project_task_description(row),
+        "status": "in_progress" if row.get("status") == "in_progress" else "open",
+        "severity": "warning" if urgent else "info",
+        "priority": "urgent" if row.get("priority") == "urgent" else "high" if urgent else "normal",
+        "task_id": task_id,
+        "project_id": row.get("project_id"),
+        "issue_key": row.get("issue_key"),
+        "entity_type": entity_type,
+        "entity_id": entity_id,
+        "record_label": _record_label(entity_type, entity_id),
+        "due_at": row.get("due_date"),
+        "created_at": row.get("created_at") or _now_iso(),
+        "updated_at": row.get("updated_at"),
+        "target_page": f"/app/gorev-ve-proje-yonetimi/gorevler?id={task_id}",
+        "suggested_actions": [
+            {
+                "label": "Gorevi Ac",
+                "action_type": "open_project_task",
+                "target_page": f"/app/gorev-ve-proje-yonetimi/gorevler?id={task_id}",
+                "task_id": task_id,
+            },
+            {
+                "label": "Durumu Guncelle",
+                "action_type": "transition_project_task",
+                "target_page": f"/app/gorev-ve-proje-yonetimi/gorevler?id={task_id}",
+                "task_id": task_id,
+            },
+            {
+                "label": "Yorum Ekle",
+                "action_type": "comment_project_task",
+                "target_page": f"/app/gorev-ve-proje-yonetimi/gorevler?id={task_id}",
+                "task_id": task_id,
             },
         ],
     }
@@ -440,6 +526,8 @@ def _summary(items: list[dict[str, Any]]) -> dict[str, Any]:
             approval_count += 1
         if item.get("source_type") == "process_task":
             task_count += 1
+        if item.get("source_type") == "project_task":
+            task_count += 1
         if item.get("source_type") == "operation" and item.get("status") == "failed":
             failed_operation_count += 1
         if item.get("source_type") in {
@@ -525,6 +613,7 @@ def _module_label(module_key: object) -> str:
         "system": "Sistem",
         "settings": "Sistem",
         "sirket": "Sirketlerimiz",
+        "project_management": "Proje ve Gorevler",
     }
     return labels.get(str(module_key or ""), "Eden ERP")
 
@@ -577,6 +666,8 @@ def _record_target_page(entity_type: object, entity_id: object, company_id: obje
             if record_id
             else "/app/sirket/companies/representatives"
         )
+    if entity == "employee":
+        return f"/app/ik/calisanlar?id={record_id}" if record_id else "/app/ik/calisanlar"
     return "/app"
 
 
@@ -592,5 +683,16 @@ def _record_label(entity_type: object, entity_id: object) -> str | None:
         "company_representative": "Temsilci",
         "representative": "Temsilci",
         "process_instance": "Surec",
+        "employee": "Calisan",
+        "organization_unit": "Organizasyon Birimi",
+        "facility": "Tesis/Lokasyon",
     }
     return f"{labels.get(str(entity_type or ''), 'Kayit')}: {entity_id}"
+
+
+def _project_task_description(row: dict[str, Any]) -> str:
+    project = row.get("project_name") or row.get("project_key") or "Bagimsiz gorev"
+    due = row.get("due_date")
+    if due:
+        return f"{project} - son tarih {due}"
+    return f"{project} icin proje gorevi."

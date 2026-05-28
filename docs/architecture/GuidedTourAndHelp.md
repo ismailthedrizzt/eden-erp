@@ -67,3 +67,11 @@ is dilinde gosterir.
 ## Action Guide Iliskisi
 
 Tur ve helper sistemi AI Islem Rehberi ile ayni action sozlesmesini kullanmaya hazirlanir. Rehber veri degistirmez; yalnizca kullaniciyi dogru sayfa, kayit veya sihirbaza yonlendirir.
+
+## Step 9 Product Hardening
+
+- Genel tur 10 adima tamamlandi: hos geldiniz, sol menu, liste, + Ekle, form detay, wizard, kilitli alan, Action Guide, Action Center ve Kurulum Merkezi.
+- Sayfa turlari Kurulum Merkezi dahil ana urun ekranlarini kapsar.
+- Page tour ve global tour ESC ile ertelenebilir; tamamlanan/dismissed state backend user preferences icinde saklanir.
+- Locked field helper popover baslatilabilirlik, disabled reason, warnings, action button ve yardim linkini birlikte gosterir.
+- Yardim Merkezi `/app/yardim` rehber topic linkleri, yardimi tekrar gosterme ve ipucu reset aksiyonlarini sunar.

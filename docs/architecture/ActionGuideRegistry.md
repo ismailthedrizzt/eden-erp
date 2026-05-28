@@ -38,6 +38,11 @@ Ornekler:
 - "adres degistirecegim" -> `address_change`
 - "temsilciye banka yetkisi ver" -> `representative_start`
 - "sermaye alani kapali" -> `capital_increase`
+- "pay orani neden degismiyor" -> `share_transfer`
+- "bu kaydi kim degistirdi" -> `audit_show_record_history`
+- "bekleyen islerimi goster" -> `view_pending_work`
+
+Dusuk confidence durumunda rehber tek action'i kesin karar gibi sunmaz; en yakin registry actionlarini alternatif olarak listeler.
 
 ## Eligibility
 
@@ -66,3 +71,10 @@ Action Guide intent matching TS tarafinda migration bridge olarak kalabilir; anc
 canonical action eligibility Python tarafinda `backend/app/policies/action_eligibility.py`
 ve `/api/v1/policy/action-eligibility` endpointiyle uretilebilir hale geldi.
 Tam resolver migration sonraki fazda tamamlanacaktir.
+
+## Step 9 Product Hardening
+
+- Registry kapsaminda tasfiye, terkin, branch document update, representative start/scope/limit/suspend/terminate ve ownership action intentleri genisletildi.
+- Context-aware matching aktif temsil yetkisi, secili kayit tipi/status ve field lock baglamindan skor boost alir.
+- Sonuc karti blocking reasons, warnings, help topic, setup/module actions ve alternatifleri birlikte gosterir.
+- Rehber, help center topic linki disinda veri degistiren hicbir komut uretmez.

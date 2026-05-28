@@ -71,6 +71,24 @@
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: #c8d4de; border-radius: 3px; }
   .dark ::-webkit-scrollbar-thumb { background: #2a4a6a; }
+
+  @media (max-width: 639px) {
+    button,
+    a,
+    input,
+    select,
+    textarea,
+    [role='button'] {
+      touch-action: manipulation;
+    }
+
+    button,
+    a[role='button'],
+    .ni,
+    .sni {
+      min-height: 44px;
+    }
+  }
 }
 
 @layer components {

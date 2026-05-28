@@ -12,6 +12,31 @@
   "orientation": "any",
   "categories": ["business", "productivity"],
   "lang": "tr-TR",
+  "dir": "ltr",
+  "prefer_related_applications": false,
+  "shortcuts": [
+    {
+      "name": "Yonetim Dashboard",
+      "short_name": "Dashboard",
+      "url": "/app/dashboard",
+      "description": "Yonetim KPI ve uyari panelini ac",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Is Merkezi",
+      "short_name": "Isler",
+      "url": "/app?open=action-center",
+      "description": "Bekleyen gorev ve onaylari ac",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Gorevler",
+      "short_name": "Gorevler",
+      "url": "/app/gorev-ve-proje-yonetimi/gorevler",
+      "description": "Proje gorevlerini ac",
+      "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" }]
+    }
+  ],
   "icons": [
     {
       "src": "/icons/icon-192.png",
