@@ -6,6 +6,7 @@ const STATUS_MESSAGES: Record<VisibilityStatus, string> = {
   unlicensed: 'Bu modul lisansinizda bulunmuyor.',
   setup_required: 'Bu modulun kurulumu tamamlanmamis.',
   dependency_missing: 'Bu islem icin gerekli modul aktif degil.',
+  feature_disabled: 'Bu ozellik su anda kapali.',
   permission_denied: 'Bu islem icin yetkiniz bulunmuyor.',
   record_status_blocked: 'Bu islem mevcut kayit durumunda baslatilamaz.',
   hidden: 'Bu ozellik su anda gosterilmiyor.',
@@ -20,6 +21,7 @@ export function moduleStatusMessage(status: VisibilityStatus, moduleName?: strin
   if (status === 'unlicensed') return `${moduleName || 'Bu modul'} lisansinizda bulunmuyor.`
   if (status === 'setup_required') return `${moduleName || 'Bu modul'} kurulumu tamamlanmamis.`
   if (status === 'dependency_missing') return `${moduleName || 'Bu islem'} icin gerekli modul aktif degil.`
+  if (status === 'feature_disabled') return `${moduleName || 'Bu ozellik'} su anda kapali.`
   return visibilityStatusMessage(status)
 }
 
@@ -33,6 +35,12 @@ export function setupActionForStatus(moduleKey: string, status: VisibilityStatus
   if (status === 'unlicensed' || status === 'disabled') {
     return {
       label: 'Modul Ayarlarina Git',
+      targetPage: '/app/sistem/module-licenses',
+    }
+  }
+  if (status === 'feature_disabled') {
+    return {
+      label: 'Ozellik Ayarlarina Git',
       targetPage: '/app/sistem/module-licenses',
     }
   }

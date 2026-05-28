@@ -62,9 +62,15 @@ class AuditQuery(BaseModel):
     branch_id: str | None = None
     module_key: str | None = None
     action_type: str | None = None
+    action_key: str | None = None
     user_id: str | None = None
+    result_status: str | None = None
+    severity: str | None = None
     operation_id: str | None = None
     process_instance_id: str | None = None
+    request_id: str | None = None
+    correlation_id: str | None = None
+    search: str | None = None
     date_from: str | None = None
     date_to: str | None = None
     limit: int = 50

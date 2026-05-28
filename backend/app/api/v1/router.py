@@ -9,8 +9,10 @@ from app.api.v1 import (
     companies,
     company_branches,
     facilities,
+    features,
     health,
     integrity,
+    modules,
     organization,
     ownership,
     partners,
@@ -42,6 +44,8 @@ api_router.include_router(approvals.router, prefix="/approvals", tags=["approval
 api_router.include_router(audit.router, prefix="/audit", tags=["audit"])
 api_router.include_router(action_center.router, prefix="/action-center", tags=["action center"])
 api_router.include_router(setup.router, prefix="/setup", tags=["setup"])
+api_router.include_router(modules.router, prefix="/modules", tags=["modules"])
+api_router.include_router(features.router, prefix="/features", tags=["features"])
 api_router.include_router(policy.router, prefix="/policy", tags=["policy"])
 api_router.include_router(integrity.router, prefix="/integrity", tags=["integrity"])
 api_router.include_router(

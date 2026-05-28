@@ -117,6 +117,12 @@ Product hardening note:
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | Setup/readiness | `/api/v1/setup/readiness` | GET | yes | yes, temporary fallback | partial | yes | yes | readiness canonical | yes | partial | Missing infra returns setup language, not technical DB errors. |
 | Setup/readiness | `/api/v1/setup/readiness/{module_key}` | GET | yes | yes, temporary fallback | partial | yes | yes | readiness canonical | yes | partial | Module readiness endpoint exists. |
+| Modules | `/api/v1/modules` | GET | yes | yes | partial | yes | yes | settings.view + readiness | partial | partial | Step 8 adds module status payload with license/readiness/setup/feature summary. |
+| Modules | `/api/v1/modules/{module_key}` | GET | yes | yes | partial | yes | yes | settings.view + readiness | partial | partial | Module detail combines product metadata, setup steps and feature flags. |
+| Modules | `/api/v1/modules/{module_key}/activation` | PATCH | yes | yes | partial | yes | yes | settings.modulesManage | partial | partial | MVP in-memory activation override; DB-backed tenant module settings remains P1. |
+| Feature flags | `/api/v1/features` | GET | yes | yes | partial | yes | yes | settings.view | partial | partial | Lists runtime feature flags with module, dependency and risk metadata. |
+| Feature flags | `/api/v1/features/{module_key}` | GET | yes | yes | partial | yes | yes | settings.view | partial | partial | Lists feature flags scoped to a module. |
+| Feature flags | `/api/v1/features/{feature_key}` | PATCH | yes | yes | partial | yes | yes | settings.modulesManage | yes | partial | MVP in-memory flag override; action eligibility enforces feature_disabled decisions. |
 | Policy | `/api/v1/policy/evaluate` | POST | yes | yes | partial | yes | yes | policy canonical | yes | ready | Canonical policy decision in Python. |
 | Policy | `/api/v1/policy/action-eligibility` | POST | yes | yes | partial | yes | yes | policy/readiness/integrity | yes | ready | Action eligibility is Python canonical. |
 | Integrity | `/api/v1/integrity/check` | POST | yes | yes | partial | yes | yes | integrity canonical | yes | ready | Blocking/warning checks in Python. |
@@ -126,7 +132,11 @@ Product hardening note:
 | Tasks | `/api/v1/tasks` | GET/POST | yes | yes, temporary fallback | yes | yes | yes | process policy partial | yes | partial | Task service MVP in Python. |
 | Tasks | `/api/v1/tasks/{task_id}/complete`, `/assign`, `/comment` | POST | yes | yes, temporary fallback | yes | yes | yes | process policy partial | yes | partial | Task complete/assign/comment endpoints support Process Center actions. |
 | Approvals | `/api/v1/approvals` | GET/POST | yes | yes, temporary fallback | yes | yes | yes | process policy partial | yes | partial | Approval approve/reject endpoints exist. |
-| Audit | `/api/v1/audit` | GET | yes | yes, temporary fallback | partial | yes | yes | audit permission partial | yes | partial | Audit read/masking MVP exists; TS fallback P1. |
+| Audit | `/api/v1/audit` | GET | yes | yes, temporary fallback | yes | yes | yes | audit.view permission, tenant scope, date/page guard | yes | partial | Audit Admin UI consumes filtered FastAPI list with default last-7-days and pageSize max 100; TS fallback P1. |
+| Audit | `/api/v1/audit/{audit_id}` | GET | yes | yes, temporary fallback | yes | yes | yes | audit.view permission | partial | partial | Detail drawer shows masked old/new values and operation/process/request links. |
+| Audit | `/api/v1/audit/by-record` | GET | yes | yes, temporary fallback | yes | yes | yes | audit.view permission | partial | partial | Reusable AuditTimeline fetches record-specific audit events. |
+| Audit | `/api/v1/audit/by-operation` | GET | yes | yes, temporary fallback | partial | yes | yes | audit.view permission | partial | partial | Operation-linked audit report path exists. |
+| Audit | `/api/v1/audit/by-process` | GET | yes | yes, temporary fallback | partial | yes | yes | audit.view permission | partial | partial | Process-linked audit report path exists. |
 | Outbox | `/api/v1/system/outbox/dispatch` | POST | yes | yes, temporary fallback | n/a | yes | internal token | n/a | yes | partial | Python worker command is canonical; Next cron fallback remains P1. |
 | Action Center | `/api/v1/action-center`, `/counts`, `/summary`, `/by-record` | GET | yes | yes, temporary fallback | yes | yes | yes | source policy partial | yes | partial | Step 6 normalizes task/approval/operation/outbox sources into business-language UnifiedActionItem output. |
 | Action Guide | `/api/v1/action-eligibility/evaluate` | POST | yes | partial | partial | yes | yes | eligibility canonical | yes | partial | Eligibility is Python; full intent resolver remains TS P2. |

@@ -369,13 +369,37 @@ async def list_audit_logs(
         "branch_id",
         "module_key",
         "action_type",
+        "action_key",
         "user_id",
+        "result_status",
+        "severity",
         "operation_id",
         "process_instance_id",
+        "request_id",
     ]:
         if query.get(key):
             filters.append(f"{key} = :{key}")
             params[key] = query[key]
+    if query.get("correlation_id"):
+        filters.append("metadata_json ->> 'correlation_id' = :correlation_id")
+        params["correlation_id"] = query["correlation_id"]
+    if query.get("search"):
+        filters.append(
+            """
+            (
+              summary ilike :search
+              or coalesce(reason, '') ilike :search
+              or coalesce(action_key, '') ilike :search
+              or coalesce(action_type, '') ilike :search
+              or coalesce(request_id, '') ilike :search
+              or coalesce(user_label, '') ilike :search
+              or coalesce(entity_id, '') ilike :search
+              or coalesce(metadata_json ->> 'record_label', '') ilike :search
+              or coalesce(metadata_json ->> 'correlation_id', '') ilike :search
+            )
+            """
+        )
+        params["search"] = f"%{query['search']}%"
     if query.get("date_from"):
         filters.append("created_at >= :date_from")
         params["date_from"] = query["date_from"]

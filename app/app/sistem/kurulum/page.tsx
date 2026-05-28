@@ -336,8 +336,8 @@ function SetupWizardContent() {
     <div>
       <PageBanner
         mode="list"
-        title="Kurulum Sihirbazı"
-        subtitle="İlk şirket ve ilk kullanıcı rolünü tek akışta oluşturun."
+        title="Kurulum Merkezi"
+        subtitle="Çalışma alanı hazırlığını, modül durumlarını ve eksik kurulum adımlarını tek ekrandan izleyin."
         icon={<Sparkles size={24} />}
         addButtonText="Sihirbazı Aç"
         customButtonIcon={<Sparkles size={16} />}

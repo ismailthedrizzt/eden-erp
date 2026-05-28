@@ -207,6 +207,11 @@ Step 5 update: `/api/organization` now attempts FastAPI first for unit list/crea
 | `/api/setup/actions` | `proxy_to_fastapi_with_temporary_fallback` | `/api/v1/setup/actions` | yes | yes | Remove TS fallback after FastAPI endpoint is verified in staging and frontend E2E/smoke passes. | P1 |
 | `/api/setup/readiness/[module_key]` | `proxy_to_fastapi_with_temporary_fallback` | `/api/v1/setup/readiness/{module_key}` | yes | yes | Remove TS fallback after FastAPI endpoint is verified in staging and frontend E2E/smoke passes. | P1 |
 | `/api/setup/readiness` | `proxy_to_fastapi_with_temporary_fallback` | `/api/v1/setup/readiness` | yes | yes | Remove TS fallback after FastAPI endpoint is verified in staging and frontend E2E/smoke passes. | P1 |
+| `/api/modules` | `proxy_to_fastapi` | `/api/v1/modules` | no | no | Keep as BFF proxy for module setup/license/readiness product UI. | ready |
+| `/api/modules/[module_key]` | `proxy_to_fastapi` | `/api/v1/modules/{module_key}` | no | no | Keep as BFF proxy for module detail. | ready |
+| `/api/modules/[module_key]/activation` | `proxy_to_fastapi` | `/api/v1/modules/{module_key}/activation` | no | no | Keep settings.modulesManage guard in FastAPI; persistence hardening P1. | P1 |
+| `/api/features` | `proxy_to_fastapi` | `/api/v1/features` | no | no | Keep as BFF proxy for feature flag registry. | ready |
+| `/api/features/[feature_key]` | `proxy_to_fastapi` | `/api/v1/features/{feature_key}` | no | no | PATCH proxies feature flag update; DB persistence P1. | P1 |
 | `/api/tasks/[id]/assign` | `proxy_to_fastapi_with_temporary_fallback` | `/api/v1/tasks/{task_id}/assign` | yes | yes | Remove TS fallback after FastAPI endpoint is verified in staging and frontend E2E/smoke passes. | P1 |
 | `/api/tasks/[id]/comment` | `proxy_to_fastapi_with_temporary_fallback` | `/api/v1/tasks/{task_id}/comment` | yes | yes | Remove TS fallback after FastAPI endpoint is verified in staging and frontend E2E/smoke passes. | P1 |
 | `/api/tasks/[id]/complete` | `proxy_to_fastapi_with_temporary_fallback` | `/api/v1/tasks/{task_id}/complete` | yes | yes | Remove TS fallback after FastAPI endpoint is verified in staging and frontend E2E/smoke passes. | P1 |
@@ -226,6 +231,14 @@ Step 5 update: `/api/organization` now attempts FastAPI first for unit list/crea
 ## Step 6 Product Integration Update
 
 Process Center and Action Center hardening added real `/app/surecler` and `/app/surecler/{id}` experiences for process, task and approval work. `/api/action-center*` now supports FastAPI normalized action items with legacy fallback envelope compatibility. `/api/tasks/[id]/comment` targets `/api/v1/tasks/{task_id}/comment`; TS fallback remains only until staging/E2E verification removes P1 migration debt.
+
+## Step 7 Product Integration Update
+
+Audit Admin UI hardening keeps `/api/audit*` as FastAPI-first BFF routes and adds a product screen at `/app/sistem/audit`. The UI consumes the proxy contract for filtered audit list, detail, by-record timeline and operation/process-linked views. Temporary TS fallback remains P1 only for local/dev continuity; no new audit domain mutation logic was added to Next routes.
+
+## Step 8 Product Integration Update
+
+Module Setup/Licensing hardening adds proxy-only `/api/modules*` and `/api/features*` routes for FastAPI module status and feature flag contracts. `/app/sistem/kurulum` now presents product readiness cards, while `/app/sistem/module-licenses` shows module activation, license language and feature flags. Existing `/api/settings/module-licenses` remains a TS migration bridge until DB-backed module settings move fully to FastAPI.
 
 ## Gate Rules
 

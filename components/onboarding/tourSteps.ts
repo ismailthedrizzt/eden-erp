@@ -394,4 +394,34 @@ export const pageTourSteps: Record<string, TourStep[]> = {
       placement: 'bottom',
     },
   ],
+  audit: [
+    {
+      id: 'audit-header',
+      target: "[data-tour-id='audit-header']",
+      title: 'Denetim izi',
+      description: 'Bu ekran teknik log degil; kim, ne zaman, hangi kayit uzerinde ne yapti sorusunu compliance diliyle cevaplar.',
+      placement: 'bottom',
+    },
+    {
+      id: 'audit-reports',
+      target: "[data-tour-id='audit-reports']",
+      title: 'Hazir rapor gorunumleri',
+      description: 'Kullanici islemleri, resmi islemler, yetki, ortaklik, engellenen islem ve sistem uyarisi raporlarini filtre presetleriyle baslatabilirsiniz.',
+      placement: 'bottom',
+    },
+    {
+      id: 'audit-filters',
+      target: "[data-tour-id='audit-filters']",
+      title: 'Yuksek hacimli audit filtreleri',
+      description: 'Audit listesi varsayilan son 7 gunu getirir; kullanici, modul, islem, kayit, request ve process filtreleriyle daraltilir.',
+      placement: 'bottom',
+    },
+    {
+      id: 'audit-list',
+      target: "[data-tour-id='audit-list']",
+      title: 'Maskeli detay',
+      description: 'Satira tiklayarak old/new degerleri, operation/process baglantilarini ve maskeli teknik detaylari inceleyebilirsiniz.',
+      placement: 'top',
+    },
+  ],
 }

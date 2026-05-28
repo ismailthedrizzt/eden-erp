@@ -1,23 +1,31 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
-import { AlertCircle, CheckCircle2, Loader2, RefreshCw } from 'lucide-react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { AlertCircle, CheckCircle2, Loader2, RefreshCw, ShieldCheck, Wrench } from 'lucide-react'
 import { apiClient } from '@/lib/api/apiClient'
+import { normalizeProductStatus, productStatusLabels } from '@/lib/modules/moduleProductCatalog'
 import { ModuleReadinessCard, type ModuleReadinessCardData } from './ModuleReadinessCard'
 
 type TenantReadinessResponse = {
-  data: {
+  data?: {
     ready: boolean
     blockingModules: string[]
     warningModules: string[]
-    modules: ModuleReadinessCardData[]
+    modules: ModuleReadinessCardData[] | Record<string, unknown>
   }
+}
+
+type NormalizedTenantReadiness = {
+  ready: boolean
+  blockingModules: string[]
+  warningModules: string[]
+  modules: ModuleReadinessCardData[]
 }
 
 const PRIMARY_MODULES = ['companies', 'partners', 'representatives', 'branches', 'organization', 'facilities']
 
 export function TenantReadinessPanel() {
-  const [data, setData] = useState<TenantReadinessResponse['data'] | null>(null)
+  const [data, setData] = useState<NormalizedTenantReadiness | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -25,7 +33,20 @@ export function TenantReadinessPanel() {
     if (!data?.modules) return []
     const primary = data.modules.filter(module => PRIMARY_MODULES.includes(module.moduleKey))
     const blocked = data.modules.filter(module => !module.ready && !PRIMARY_MODULES.includes(module.moduleKey))
-    return [...primary, ...blocked].slice(0, 9)
+    const others = data.modules.filter(module => module.ready && !PRIMARY_MODULES.includes(module.moduleKey))
+    return [...primary, ...blocked, ...others]
+  }, [data])
+
+  const summary = useMemo(() => {
+    const modules = data?.modules || []
+    return {
+      total: modules.length,
+      available: modules.filter(module => module.ready || normalizeProductStatus(module.status) === 'available').length,
+      setupRequired: modules.filter(module => normalizeProductStatus(module.status) === 'setup_required').length,
+      unlicensed: modules.filter(module => normalizeProductStatus(module.status) === 'unlicensed').length,
+      dependencyMissing: modules.filter(module => normalizeProductStatus(module.status) === 'dependency_missing').length,
+      critical: modules.filter(module => !module.ready).length,
+    }
   }, [data])
 
   async function load() {
@@ -33,7 +54,7 @@ export function TenantReadinessPanel() {
     setError(null)
     try {
       const response = await apiClient.get<TenantReadinessResponse>('/api/setup/readiness', { useCache: false })
-      setData(response.data)
+      setData(normalizeTenantReadiness(response))
     } catch {
       setError('Calisma alani hazirlik durumu su anda okunamadi.')
     } finally {
@@ -77,6 +98,17 @@ export function TenantReadinessPanel() {
         </div>
       )}
 
+      {!loading && data && (
+        <div className="mt-5 grid gap-3 md:grid-cols-3 xl:grid-cols-6">
+          <ReadinessStat icon={<ShieldCheck size={16} />} label="Toplam modul" value={summary.total} />
+          <ReadinessStat icon={<CheckCircle2 size={16} />} label="Kullanima hazir" value={summary.available} tone="success" />
+          <ReadinessStat icon={<Wrench size={16} />} label="Kurulum isteyen" value={summary.setupRequired} tone="warning" />
+          <ReadinessStat icon={<AlertCircle size={16} />} label="Lisanssiz" value={summary.unlicensed} tone="danger" />
+          <ReadinessStat icon={<AlertCircle size={16} />} label="Bagimlilik eksik" value={summary.dependencyMissing} tone="warning" />
+          <ReadinessStat icon={<AlertCircle size={16} />} label="Kritik engel" value={summary.critical} tone={summary.critical ? 'danger' : 'success'} />
+        </div>
+      )}
+
       {!loading && visibleModules.length > 0 && (
         <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
           {visibleModules.map(module => (
@@ -86,4 +118,89 @@ export function TenantReadinessPanel() {
       )}
     </section>
   )
+}
+
+function ReadinessStat({
+  icon,
+  label,
+  value,
+  tone = 'neutral',
+}: {
+  icon: ReactNode
+  label: string
+  value: number
+  tone?: 'neutral' | 'success' | 'warning' | 'danger'
+}) {
+  const toneClass = {
+    neutral: 'bg-white text-gray-700 dark:bg-eden-navy-2 dark:text-gray-200',
+    success: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-200',
+    warning: 'bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-200',
+    danger: 'bg-red-50 text-red-700 dark:bg-red-950/30 dark:text-red-200',
+  }[tone]
+  return (
+    <div className={`rounded-lg border border-gray-200 p-3 dark:border-gray-700 ${toneClass}`}>
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-xs font-semibold">{label}</span>
+        {icon}
+      </div>
+      <div className="mt-2 text-2xl font-bold">{value}</div>
+    </div>
+  )
+}
+
+function normalizeTenantReadiness(response: TenantReadinessResponse | any): NormalizedTenantReadiness {
+  const payload = response?.data || response || {}
+  const rawModules = payload.modules || {}
+  const modules = Array.isArray(rawModules)
+    ? rawModules.map(normalizeModule)
+    : Object.entries(rawModules).map(([key, value]) => normalizeModule({ module_key: key, ...(value as Record<string, unknown>) }))
+  const blockingModules = payload.blockingModules || payload.blocking_modules || modules.filter(module => !module.ready).map(module => module.moduleKey)
+  return {
+    ready: Boolean(payload.ready ?? payload.ok ?? blockingModules.length === 0),
+    blockingModules,
+    warningModules: payload.warningModules || payload.warning_modules || modules.filter(module => module.warnings.length > 0).map(module => module.moduleKey),
+    modules,
+  }
+}
+
+function normalizeModule(raw: any): ModuleReadinessCardData {
+  const moduleKey = raw.moduleKey || raw.module_key || raw.key || 'unknown'
+  const rawStatus = raw.status || raw.readiness_status || (raw.ok || raw.ready ? 'ready' : 'setup_required')
+  const status = normalizeProductStatus(rawStatus)
+  const ready = Boolean(raw.ready ?? raw.ok ?? status === 'available')
+  return {
+    moduleKey,
+    ready,
+    status,
+    blockingReasons: raw.blockingReasons || raw.blocking_reasons || (ready ? [] : [raw.message || productStatusLabels[status] || 'Kurulum kontrolu gerekli.']),
+    warnings: raw.warnings || [],
+    setupSteps: normalizeSetupSteps(moduleKey, raw.setupSteps || raw.setup_steps || [], ready),
+    setupActions: raw.setupActions || raw.setup_actions || [],
+    licenseStatus: raw.licenseStatus || raw.license_status,
+    dependencies: raw.dependencies || raw.missing_dependencies || [],
+    description: raw.description,
+  }
+}
+
+function normalizeSetupSteps(moduleKey: string, steps: any[], ready: boolean) {
+  if (!Array.isArray(steps)) return []
+  return steps.map((step, index) => {
+    if (typeof step === 'string') {
+      return {
+        key: `${moduleKey}.${index}`,
+        label: step,
+        description: step,
+        required: true,
+        status: ready ? 'completed' : 'missing',
+      }
+    }
+    return {
+      key: step.key || `${moduleKey}.${index}`,
+      label: step.label || step.name || 'Kurulum adimi',
+      description: step.description || step.label || 'Bu adim modul hazirligi icin gereklidir.',
+      required: step.required !== false,
+      status: step.status || (ready ? 'completed' : 'missing'),
+      action: step.action,
+    }
+  })
 }

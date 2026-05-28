@@ -73,6 +73,10 @@ Ortaklik transaction islemleri FastAPI Ownership ve Partner servislerine tasinma
 
 Process instance/task/approval, Audit read/write/masking, Outbox dispatcher ve Action Center minimal read adapter Python backend tarafinda MVP olarak kuruldu. Canonical endpointler `/api/v1/processes`, `/api/v1/tasks`, `/api/v1/approvals`, `/api/v1/audit`, `/api/v1/action-center` ve `/api/v1/system/outbox/dispatch` altindadir. Next.js route'lari `FASTAPI_BASE_URL` varsa proxy eder; yoksa migration bridge TS fallback calisir. Outbox worker `python -m app.workers.outbox_worker --once` komutuyla batch isleyebilir. Detaylar [Process / Outbox / Audit FastAPI Migration](./ProcessOutboxAuditFastAPIMigration.md) dokumanindadir.
 
+## Product Step 7 Audit Compliance Addendum
+
+Audit Admin UI `/app/sistem/audit` artik placeholder degil; filtrelenebilir denetim listesi, son 7 gun varsayilani, pageSize 100 limiti, compliance rapor presetleri, masked old/new detail drawer ve reusable kayit timeline bileseniyle urun deneyimine tasindi. FastAPI `/api/v1/audit` endpointi `audit.view` izni, search/result/severity/action/request/correlation filtreleri ve tenant scope ile sertlestirildi. Export, immutable audit storage, SIEM entegrasyonu ve tam DB-backed coverage testleri P1/P2 teknik borc olarak kalir.
+
 ## 7.8 Policy / Integrity / Readiness FastAPI Migration Addendum
 
 Permission registry, policy engine, scope policy, module readiness, integrity checker
@@ -258,6 +262,15 @@ Remaining P1: verify Branch Opening/Closing and branch detail hydration in stagi
 - Next Action Center components now handle both FastAPI `ApiSuccess` envelopes and legacy fallback envelopes.
 
 Remaining P1: seed process/task/approval fixtures, run Playwright E2E, harden complex approval matrix and define retry-safe operation policy.
+
+### Product hardening step 8 - Module setup, licensing and feature flags
+
+- `Kurulum Merkezi` now presents module readiness as product cards with summary counts, setup steps and business-language status reasons.
+- `Modul Lisanslari` now shows module activation, license language, submodules and feature flags in one detail panel.
+- FastAPI now exposes `/api/v1/modules` and `/api/v1/features`; action eligibility can block a disabled feature with `FEATURE_DISABLED`.
+- Next adds proxy-only `/api/modules*` and `/api/features*` routes for the new FastAPI contracts.
+
+Remaining P1: move tenant module settings and feature flag overrides to persistent FastAPI DB-backed storage, then convert `/api/settings/module-licenses` to proxy-only.
 
 ## 8. Build / Typecheck Sonucu
 

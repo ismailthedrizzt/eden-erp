@@ -29,7 +29,8 @@ This plan documents the first performance index set for high-volume Eden ERP tab
 - `process_instances`: `(tenant_id, status, created_at desc)`, company/entity indexes later.
 - `process_tasks`: `(tenant_id, status, due_at)`, assigned user indexes later.
 - `process_approvals`: `(tenant_id, status, requested_at)`, approver indexes later.
-- `audit_logs`: `(tenant_id, created_at desc)`, `(tenant_id, company_id, created_at desc)`, `(entity_type, entity_id, created_at desc)`.
+- `audit_logs`: `(tenant_id, created_at desc)`, `(tenant_id, company_id, created_at desc)`, `(entity_type, entity_id, created_at desc)`, `operation_id`, `process_instance_id`, `(user_id, created_at desc)`, `action_type`, `request_id`.
+  - Step 7 note: Audit Admin UI defaults to the last 7 days and caps page size at 100. Add `request_id` and optional expression index for `metadata_json ->> 'correlation_id'` before high-volume compliance rollout.
 
 ## Organization And Facility
 

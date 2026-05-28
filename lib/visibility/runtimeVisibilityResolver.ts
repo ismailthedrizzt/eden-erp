@@ -189,7 +189,10 @@ export function resolveFeatureVisibility(
   const enabled = isFeatureFlagEnabled(namespaced, context.featureFlags)
   return enabled
     ? availableDecision(namespaced)
-    : blockedDecision(namespaced, 'hidden', 'Bu ozellik su anda aktif degil.')
+    : {
+      ...blockedDecision(namespaced, 'feature_disabled', 'Bu ozellik calisma alaninizda su anda kapali.'),
+      setupAction: setupActionForStatus(moduleKey, 'feature_disabled'),
+    }
 }
 
 export function explainVisibilityDecision(decision: VisibilityDecision) {
@@ -293,7 +296,7 @@ function normalizeStatusValue(value: unknown): VisibilityStatus {
   const status = String(value || 'available')
   if (status === 'ready') return 'available'
   if (status === 'infrastructure_missing') return 'setup_required'
-  if (status === 'disabled' || status === 'unlicensed' || status === 'setup_required' || status === 'dependency_missing') {
+  if (status === 'disabled' || status === 'unlicensed' || status === 'setup_required' || status === 'dependency_missing' || status === 'feature_disabled') {
     return status
   }
   return 'available'

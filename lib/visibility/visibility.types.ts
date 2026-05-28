@@ -4,6 +4,7 @@ export type VisibilityStatus =
   | 'unlicensed'
   | 'setup_required'
   | 'dependency_missing'
+  | 'feature_disabled'
   | 'permission_denied'
   | 'record_status_blocked'
   | 'hidden'

@@ -36,10 +36,10 @@ No P0 productization blocker was found in the final verification pass. The main 
 | Organization | partial | Organization links are visible from branch detail; full Teşkilat/Kadro product hardening remains a later productization step. |
 | Facilities | partial | Facility/location links are visible from branch detail; full Tesisler/Lokasyonlar product hardening and multi-branch relation decision remain P1/P2. |
 | Process | partial | Python process/task/approval MVP exists. TS fallback and UI hardening remain P1. |
-| Audit | partial | Python audit read/masking MVP exists. Admin UI and fallback removal remain P1/P2. |
+| Audit | ready with P1 debt | Audit Admin UI, masked detail drawer, record timeline and compliance filter presets exist. Export, immutable storage and full coverage DB tests remain P1/P2. |
 | Outbox | partial | Python domain/worker exists. Production worker deployment and backlog alerts remain P1. |
 | Action Center | partial | Python MVP exists. Full source coverage and UI hardening remain P1/P2. |
-| Setup / Readiness | ready with P1 debt | Python readiness endpoints exist; DB-backed module settings hardening remains P1. |
+| Setup / Readiness / Licensing | ready with P1 debt | Python readiness endpoints exist; Step 8 adds Kurulum Merkezi product cards, module/feature FastAPI contracts, feature_disabled enforcement and ModuleUnavailableState defaults. DB-backed tenant module settings and feature flag persistence remain P1. |
 | Action Guide | partial | Canonical eligibility is Python; intent resolver remains TS P2. |
 
 ## 4. Security Status
@@ -91,7 +91,7 @@ None identified in the final gate.
 - Generated OpenAPI client adoption across all frontend services.
 - Accounting and HR FastAPI domain migrations.
 - Organization/facility full product flows.
-- Audit admin UI and exports.
+- Audit export permission/endpoint and full DB-backed audit coverage tests.
 - Redis/cache introduction if measurements justify it.
 - OpenTelemetry/Sentry/Grafana production integration.
 
@@ -103,7 +103,7 @@ None identified in the final gate.
 4. Branches product hardening. **Started:** branch detail now separates branch/company/facility/organization concepts, shows organization/facility/representative authority readiness, blocks free create and routes opening/closing through operation wizards.
 5. Organization/Facilities integration.
 6. Process/Action Center UI hardening.
-7. Audit/admin UI.
+7. Audit export, compliance report hardening and SIEM/archive planning.
 8. Accounting foundation.
 9. HR foundation.
 10. Project/task module.
