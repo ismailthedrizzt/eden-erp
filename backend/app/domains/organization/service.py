@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.errors import DomainError
 from app.policies.field_control import reject_operation_controlled_patch
 
-ORGANIZATION_UNIT_CARD_FIELDS = {"name", "parent_unit_id", "notes", "metadata_json"}
+ORGANIZATION_UNIT_CARD_FIELDS = {"name", "short_name", "parent_unit_id", "notes", "metadata_json"}
 
 
 def is_unit_active(unit: dict[str, Any] | None) -> bool:
@@ -97,6 +97,50 @@ async def list_organization_units(
             """
         ),
         {**params, "limit": int(filters.get("limit") or 200)},
+    )
+    return [dict(row) for row in result.mappings().all()]
+
+
+async def list_organization_unit_types(session: AsyncSession) -> list[dict[str, Any]]:
+    result = await session.execute(
+        text(
+            """
+            select id, name, slug, color, icon, parent_type_id, sort_order, is_active
+            from public.organization_unit_types
+            where coalesce(is_active, true) = true
+            order by sort_order asc, name asc
+            """
+        )
+    )
+    return [dict(row) for row in result.mappings().all()]
+
+
+async def list_positions_for_organization(
+    session: AsyncSession,
+    context: dict[str, Any],
+    query: dict[str, Any] | None = None,
+) -> list[dict[str, Any]]:
+    filters = query or {}
+    where = ["ou.tenant_id = :tenant_id", "coalesce(p.is_deleted, false) = false"]
+    params: dict[str, Any] = {"tenant_id": context["tenant_id"]}
+    if filters.get("unit_id"):
+        where.append("p.unit_id = :unit_id")
+        params["unit_id"] = filters["unit_id"]
+    if filters.get("company_id"):
+        where.append("ou.company_id = :company_id")
+        params["company_id"] = filters["company_id"]
+    result = await session.execute(
+        text(
+            f"""
+            select p.*, ou.company_id, ou.name as organization_unit_name
+            from public.positions p
+            join public.organization_units ou on ou.id = p.unit_id
+            where {" and ".join(where)}
+            order by p.updated_at desc, p.created_at desc
+            limit :limit
+            """
+        ),
+        {**params, "limit": int(filters.get("limit") or 300)},
     )
     return [dict(row) for row in result.mappings().all()]
 
@@ -524,6 +568,63 @@ async def update_organization_unit_card(
     return await get_organization_unit_detail(session, context, unit_id)
 
 
+async def create_position_for_unit(
+    session: AsyncSession,
+    context: dict[str, Any],
+    payload: dict[str, Any],
+) -> dict[str, Any]:
+    unit_id = str(payload.get("organization_unit_id") or payload.get("unit_id") or "")
+    title = str(payload.get("position_title") or payload.get("title") or "").strip()
+    if not unit_id:
+        raise DomainError("Organizasyon birimi secilmelidir.", "ORGANIZATION_UNIT_REQUIRED", 400)
+    if not title:
+        raise DomainError("Pozisyon unvani zorunludur.", "POSITION_TITLE_REQUIRED", 400)
+    unit = await get_unit_by_id(session, context["tenant_id"], unit_id)
+    if not unit:
+        raise DomainError("Organizasyon birimi bulunamadi.", "ORGANIZATION_UNIT_NOT_FOUND", 404)
+    assert_unit_active(unit)
+    if payload.get("company_id") and str(unit.get("company_id")) != str(payload["company_id"]):
+        raise DomainError(
+            "Pozisyonun sirketi organizasyon birimiyle uyusmuyor.",
+            "POSITION_COMPANY_MISMATCH",
+            status.HTTP_409_CONFLICT,
+        )
+    planned = int(payload.get("headcount_planned") or payload.get("norm_count") or 1)
+    actual = int(payload.get("headcount_actual") or payload.get("active_count") or 0)
+    if planned < 0 or actual < 0:
+        raise DomainError("Kadro adetleri negatif olamaz.", "POSITION_HEADCOUNT_INVALID", 400)
+    result = await session.execute(
+        text(
+            """
+            insert into public.positions (
+              id, tenant_id, unit_id, title, grade, is_manager, norm_count, active_count,
+              budget_code, work_type, status, notes, history, is_deleted, created_at, updated_at
+            )
+            values (
+              :id, :tenant_id, :unit_id, :title, :grade, :is_manager, :norm_count, :active_count,
+              :budget_code, :work_type, :status, :notes, '[]'::jsonb, false, now(), now()
+            )
+            returning *
+            """
+        ),
+        {
+            "id": str(uuid4()),
+            "tenant_id": context["tenant_id"],
+            "unit_id": unit_id,
+            "title": title,
+            "grade": payload.get("grade") or payload.get("position_type"),
+            "is_manager": bool(payload.get("is_manager") or False),
+            "norm_count": planned,
+            "active_count": actual,
+            "budget_code": payload.get("budget_code") or payload.get("position_code"),
+            "work_type": payload.get("employment_type") or payload.get("work_type"),
+            "status": payload.get("status") or "open",
+            "notes": payload.get("notes"),
+        },
+    )
+    return dict(result.mappings().one())
+
+
 async def link_unit_to_branch(
     session: AsyncSession,
     context: dict[str, Any],
@@ -566,7 +667,153 @@ async def create_organization_unit(
     context: dict[str, Any],
     payload: dict[str, Any],
 ) -> dict[str, Any]:
-    return await create_branch_organization_unit(session, context, payload)
+    tenant_id = context["tenant_id"]
+    company_id = str(payload.get("company_id") or "")
+    name = str(payload.get("name") or "").strip()
+    if not company_id:
+        raise DomainError("Bagli sirket secilmelidir.", "COMPANY_REQUIRED", 400)
+    if not name:
+        raise DomainError(
+            "Organizasyon birimi adi zorunludur.",
+            "ORGANIZATION_UNIT_NAME_REQUIRED",
+            400,
+        )
+    await _assert_company_exists(session, tenant_id, company_id)
+    parent_unit_id = payload.get("parent_unit_id") or None
+    if parent_unit_id:
+        parent = await get_unit_by_id(session, tenant_id, str(parent_unit_id))
+        if not parent:
+            raise DomainError(
+                "Hedef organizasyon birimi bulunamadi.", "ORGANIZATION_UNIT_NOT_FOUND", 404
+            )
+        assert_unit_belongs_to_company(parent, company_id)
+        assert_unit_active(parent)
+
+    duplicate = await session.execute(
+        text(
+            """
+            select id
+            from public.organization_units
+            where tenant_id = :tenant_id
+              and company_id = :company_id
+              and lower(name) = lower(:name)
+              and coalesce(parent_unit_id::text, '') = coalesce(:parent_unit_id, '')
+              and coalesce(active, true) = true
+              and coalesce(is_deleted, false) = false
+            limit 1
+            """
+        ),
+        {
+            "tenant_id": tenant_id,
+            "company_id": company_id,
+            "name": name,
+            "parent_unit_id": str(parent_unit_id) if parent_unit_id else None,
+        },
+    )
+    if duplicate.mappings().one_or_none():
+        raise DomainError(
+            "Ayni ust birim altinda ayni isimde aktif organizasyon birimi var.",
+            "ORGANIZATION_UNIT_DUPLICATE",
+            status.HTTP_409_CONFLICT,
+        )
+
+    related_branch_id = payload.get("related_branch_id") or payload.get("branch_id")
+    if related_branch_id:
+        await _assert_branch_belongs_to_company(
+            session,
+            tenant_id,
+            company_id,
+            str(related_branch_id),
+        )
+
+    unit_id = str(uuid4())
+    history = json.dumps(
+        [{"event": "organization_unit_created", "source": "organization_module"}],
+        ensure_ascii=False,
+    )
+    result = await session.execute(
+        text(
+            """
+            insert into public.organization_units (
+              id, tenant_id, company_id, parent_unit_id, unit_type_id, name, type, short_name,
+              status, start_date, notes, history, active, is_deleted, created_at, updated_at
+            )
+            values (
+              :id, :tenant_id, :company_id, :parent_unit_id, :unit_type_id, :name, :unit_type,
+              :short_name, 'active', :start_date, :notes, cast(:history as jsonb),
+              true, false, now(), now()
+            )
+            returning *
+            """
+        ),
+        {
+            "id": unit_id,
+            "tenant_id": tenant_id,
+            "company_id": company_id,
+            "parent_unit_id": parent_unit_id,
+            "unit_type_id": payload.get("unit_type_id") or None,
+            "unit_type": payload.get("unit_type") or payload.get("type") or "department",
+            "name": name,
+            "short_name": payload.get("short_name"),
+            "start_date": payload.get("start_date"),
+            "notes": payload.get("notes"),
+            "history": history,
+        },
+    )
+    row = dict(result.mappings().one())
+    if related_branch_id:
+        await link_unit_to_branch(session, context, unit_id, str(related_branch_id))
+    return row
+
+
+async def _assert_company_exists(session: AsyncSession, tenant_id: str, company_id: str) -> None:
+    result = await session.execute(
+        text(
+            """
+            select id
+            from public.companies
+            where tenant_id = :tenant_id
+              and id = :company_id
+              and coalesce(is_deleted, false) = false
+            limit 1
+            """
+        ),
+        {"tenant_id": tenant_id, "company_id": company_id},
+    )
+    if not result.mappings().one_or_none():
+        raise DomainError("Bagli sirket bulunamadi.", "COMPANY_NOT_FOUND", 404)
+
+
+async def _assert_branch_belongs_to_company(
+    session: AsyncSession,
+    tenant_id: str,
+    company_id: str,
+    branch_id: str,
+) -> None:
+    result = await session.execute(
+        text(
+            """
+            select id, record_status, status
+            from public.company_branches
+            where tenant_id = :tenant_id
+              and id = :branch_id
+              and company_id = :company_id
+              and coalesce(is_deleted, false) = false
+            limit 1
+            """
+        ),
+        {"tenant_id": tenant_id, "company_id": company_id, "branch_id": branch_id},
+    )
+    row = result.mappings().one_or_none()
+    if not row:
+        raise DomainError("Iliskili sube ayni sirket altinda bulunamadi.", "BRANCH_NOT_FOUND", 404)
+    status_value = str(row.get("record_status") or row.get("status") or "").lower()
+    if status_value in {"closed", "passive", "kapali"}:
+        raise DomainError(
+            "Kapali veya pasif sube yeni organizasyon baglantisi icin kullanilamaz.",
+            "BRANCH_NOT_ACTIVE",
+            status.HTTP_409_CONFLICT,
+        )
 
 
 def assert_unit_belongs_to_company(unit: dict[str, Any], company_id: str) -> None:

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import { AlertTriangle, CheckSquare, ClipboardCheck, ListTodo, Wrench } from 'lucide-react'
 import { tenantRequestHeaders } from '@/lib/tenancy/client'
+import { normalizeActionCenterSummaryPayload } from '@/lib/action-center/actionCenterClient'
 import type { ActionCenterSummary } from '@/lib/action-center/actionCenter.types'
 
 export function ActionCenterSummaryCards() {
@@ -14,7 +15,7 @@ export function ActionCenterSummaryCards() {
     fetch('/api/action-center/summary', { cache: 'no-store', headers: tenantRequestHeaders() })
       .then(response => response.json())
       .then(payload => {
-        if (!cancelled) setSummary(payload.data || null)
+        if (!cancelled) setSummary(normalizeActionCenterSummaryPayload(payload))
       })
       .catch(() => {
         if (!cancelled) setSummary(null)

@@ -36,10 +36,10 @@ No P0 productization blocker was found in the final verification pass. The main 
 | Organization | partial | Organization links are visible from branch detail; full Teşkilat/Kadro product hardening remains a later productization step. |
 | Facilities | partial | Facility/location links are visible from branch detail; full Tesisler/Lokasyonlar product hardening and multi-branch relation decision remain P1/P2. |
 | Process | partial | Python process/task/approval MVP exists. TS fallback and UI hardening remain P1. |
-| Audit | partial | Python audit read/masking MVP exists. Admin UI and fallback removal remain P1/P2. |
+| Audit | ready with P1 debt | Audit Admin UI, masked detail drawer, record timeline and compliance filter presets exist. Export, immutable storage and full coverage DB tests remain P1/P2. |
 | Outbox | partial | Python domain/worker exists. Production worker deployment and backlog alerts remain P1. |
 | Action Center | partial | Python MVP exists. Full source coverage and UI hardening remain P1/P2. |
-| Setup / Readiness | ready with P1 debt | Python readiness endpoints exist; DB-backed module settings hardening remains P1. |
+| Setup / Readiness / Licensing | ready with P1 debt | Python readiness endpoints exist; Step 8 adds Kurulum Merkezi product cards, module/feature FastAPI contracts, feature_disabled enforcement and ModuleUnavailableState defaults. DB-backed tenant module settings and feature flag persistence remain P1. |
 | Action Guide | partial | Canonical eligibility is Python; intent resolver remains TS P2. |
 
 ## 4. Security Status
@@ -91,7 +91,7 @@ None identified in the final gate.
 - Generated OpenAPI client adoption across all frontend services.
 - Accounting and HR FastAPI domain migrations.
 - Organization/facility full product flows.
-- Audit admin UI and exports.
+- Audit export permission/endpoint and full DB-backed audit coverage tests.
 - Redis/cache introduction if measurements justify it.
 - OpenTelemetry/Sentry/Grafana production integration.
 
@@ -103,7 +103,7 @@ None identified in the final gate.
 4. Branches product hardening. **Started:** branch detail now separates branch/company/facility/organization concepts, shows organization/facility/representative authority readiness, blocks free create and routes opening/closing through operation wizards.
 5. Organization/Facilities integration.
 6. Process/Action Center UI hardening.
-7. Audit/admin UI.
+7. Audit export, compliance report hardening and SIEM/archive planning.
 8. Accounting foundation.
 9. HR foundation.
 10. Project/task module.
@@ -119,7 +119,27 @@ Eden ERP can move into productization/hardening with explicit P1 debt. The first
 - staging smoke tests and basic load tests passing,
 - DB index rollout reviewed.
 
+## Step 5 Product Integration Update
+
+Teşkilat/Kadro and Tesisler/Lokasyonlar product hardening has started:
+
+- FastAPI now exposes organization unit list/create/detail/PATCH, position list/create, organization authority summary and organization impact endpoints.
+- FastAPI now exposes facility list/create/detail/PATCH, facility authority summary and facility impact endpoints.
+- Teşkilat/Kadro now surfaces the organization unit vs branch vs facility distinction, company/status/type/branch-link filters, hierarchy tabs, branch relation panel and organization-scope representative authority panel.
+- Tesisler/Lokasyonlar now surfaces the facility vs branch distinction, facility list/detail/create/update, branch/reusable badges, facility-scope authority panel and impact panel.
+- Remaining P1/P2: remove `/api/organization` legacy fallback after staging, add full deactivate lifecycle operations and validate organization/facility scoped authority fixtures.
+
 Until those are complete, the correct label is **READY_WITH_P1_DEBT**, not full production ready.
+
+## Step 6 Product Integration Update
+
+Process Center and Action Center product hardening has started:
+
+- `/app/surecler` now shows real process, task, approval, failed-operation and warning work queues instead of placeholder content.
+- `/app/surecler/{id}` now shows current step, tasks, approvals, process events, source record link and operation id context.
+- FastAPI Action Center now normalizes process tasks, approvals, failed/stuck operations and admin-visible outbox events into `UnifiedActionItem` output.
+- Task comments now have a canonical FastAPI endpoint at `/api/v1/tasks/{task_id}/comment` with Next fallback proxy support.
+- Remaining P1/P2: seeded E2E for process/task/approval data, advanced approval matrix, retry-safe operation policy and admin outbox retry UI.
 
 ## 9. Verification Snapshot
 

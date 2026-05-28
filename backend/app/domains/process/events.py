@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.logging import bind_log_context, log_info
 from app.core.metrics import increment_counter
-from app.core.serialization import row_to_dict
+from app.core.serialization import row_to_dict, rows_to_dicts
 from app.domains.operations.service import table_exists
 from app.domains.outbox.service import enqueue_outbox_event_best_effort
 
@@ -87,3 +87,25 @@ async def emit_process_event(
         payload=row or {},
     )
     return row
+
+
+async def list_process_events(
+    session: AsyncSession,
+    context: dict[str, Any],
+    process_id: str,
+) -> list[dict[str, Any]]:
+    if not await table_exists(session, "public.process_events"):
+        return []
+    result = await session.execute(
+        text(
+            """
+            select *
+            from public.process_events
+            where process_instance_id = :process_id
+              and tenant_id = :tenant_id
+            order by created_at asc
+            """
+        ),
+        {"process_id": process_id, "tenant_id": context["tenant_id"]},
+    )
+    return rows_to_dicts(list(result.mappings().all()))

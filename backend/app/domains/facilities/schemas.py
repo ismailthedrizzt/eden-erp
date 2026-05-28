@@ -18,6 +18,36 @@ class FacilityUpdateRequest(BaseModel):
     base_updated_at: str | None = None
 
 
+class FacilityCreateRequest(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+    company_id: str
+    name: str | None = None
+    facility_name: str | None = None
+    facility_type: str | None = None
+    related_branch_id: str | None = None
+    branch_id: str | None = None
+    country: str | None = None
+    city: str | None = None
+    district: str | None = None
+    neighborhood: str | None = None
+    address: str | None = None
+    postal_code: str | None = None
+    phone: str | None = None
+    email: str | None = None
+    start_date: str | None = None
+    notes: str | None = None
+    coordinates: dict[str, Any] | None = None
+
+
+class FacilityListResponse(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+    data: list[dict[str, Any]]
+    meta: dict[str, Any] = {}
+    projection: dict[str, Any] = {}
+
+
 class FacilityDetailResponse(BaseModel):
     model_config = ConfigDict(extra="allow")
 

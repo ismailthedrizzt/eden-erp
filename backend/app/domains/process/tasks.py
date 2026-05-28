@@ -11,7 +11,12 @@ from app.core.errors import DomainError
 from app.core.serialization import row_to_dict, rows_to_dicts
 from app.domains.operations.service import table_exists
 from app.domains.process.events import emit_process_event
-from app.domains.process.schemas import AssignTaskRequest, CompleteTaskRequest, CreateTaskRequest
+from app.domains.process.schemas import (
+    AddTaskCommentRequest,
+    AssignTaskRequest,
+    CompleteTaskRequest,
+    CreateTaskRequest,
+)
 
 
 def completed_task_patch(user_id: str | None, result_json: dict[str, Any]) -> dict[str, Any]:
@@ -236,6 +241,56 @@ async def complete_task(
         context,
         process_instance_id=str(task["process_instance_id"]),
         event_type="task_completed",
+        module_key=str(task["module_key"]),
+        company_id=task.get("company_id"),
+        step_key=task.get("step_key"),
+        payload={"task_id": task_id},
+    )
+    return row
+
+
+async def add_task_comment(
+    session: AsyncSession,
+    context: dict[str, Any],
+    task_id: str,
+    request: AddTaskCommentRequest,
+) -> dict[str, Any]:
+    task = await get_task(session, context, task_id)
+    if not task:
+        raise DomainError("Gorev kaydi bulunamadi.", "TASK_NOT_FOUND", 404)
+    comment = request.comment.strip()
+    if not comment:
+        raise DomainError("Yorum metni bos olamaz.", "TASK_COMMENT_REQUIRED", 400)
+    existing_payload = task.get("payload_json") or {}
+    comments = list(existing_payload.get("comments") or [])
+    comments.append(
+        {
+            "comment": comment,
+            "created_by": context.get("user_id"),
+        }
+    )
+    result = await session.execute(
+        text(
+            """
+            update public.process_tasks
+            set payload_json = coalesce(payload_json, '{}'::jsonb) || cast(:payload_json as jsonb),
+                updated_at = now()
+            where id = :task_id and tenant_id = :tenant_id
+            returning *
+            """
+        ),
+        {
+            "task_id": task_id,
+            "tenant_id": context["tenant_id"],
+            "payload_json": json.dumps({"comments": comments}, ensure_ascii=False, default=str),
+        },
+    )
+    row = row_to_dict(result.mappings().one()) or {}
+    await emit_process_event(
+        session,
+        context,
+        process_instance_id=str(task["process_instance_id"]),
+        event_type="task_commented",
         module_key=str(task["module_key"]),
         company_id=task.get("company_id"),
         step_key=task.get("step_key"),

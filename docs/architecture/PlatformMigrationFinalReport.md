@@ -73,6 +73,10 @@ Ortaklik transaction islemleri FastAPI Ownership ve Partner servislerine tasinma
 
 Process instance/task/approval, Audit read/write/masking, Outbox dispatcher ve Action Center minimal read adapter Python backend tarafinda MVP olarak kuruldu. Canonical endpointler `/api/v1/processes`, `/api/v1/tasks`, `/api/v1/approvals`, `/api/v1/audit`, `/api/v1/action-center` ve `/api/v1/system/outbox/dispatch` altindadir. Next.js route'lari `FASTAPI_BASE_URL` varsa proxy eder; yoksa migration bridge TS fallback calisir. Outbox worker `python -m app.workers.outbox_worker --once` komutuyla batch isleyebilir. Detaylar [Process / Outbox / Audit FastAPI Migration](./ProcessOutboxAuditFastAPIMigration.md) dokumanindadir.
 
+## Product Step 7 Audit Compliance Addendum
+
+Audit Admin UI `/app/sistem/audit` artik placeholder degil; filtrelenebilir denetim listesi, son 7 gun varsayilani, pageSize 100 limiti, compliance rapor presetleri, masked old/new detail drawer ve reusable kayit timeline bileseniyle urun deneyimine tasindi. FastAPI `/api/v1/audit` endpointi `audit.view` izni, search/result/severity/action/request/correlation filtreleri ve tenant scope ile sertlestirildi. Export, immutable audit storage, SIEM entegrasyonu ve tam DB-backed coverage testleri P1/P2 teknik borc olarak kalir.
+
 ## 7.8 Policy / Integrity / Readiness FastAPI Migration Addendum
 
 Permission registry, policy engine, scope policy, module readiness, integrity checker
@@ -239,9 +243,34 @@ The fourth productization lane for `Subelerimiz` is now started:
 - branch detail shows a product readiness panel for company relationship, organization unit link, facility/location link, active representative authority impact and branch closing/document actions;
 - FastAPI branch detail/PATCH/DELETE now uses the branch domain service so hydrated company, organization unit, facility and representative authority summary data can feed the current frontend contract;
 - field-control, Action Guide and guided tour copy now make the branch-vs-company-vs-facility-vs-organization distinction explicit;
+
+### Product hardening step 5 - Organization and facilities
+
+- FastAPI now includes canonical organization unit and facility/location endpoints for product integration: organization unit list/create/detail/PATCH, position list/create, scoped authority summaries and impact checks; facility list/create/detail/PATCH, scoped authority summaries and impact checks.
+- `Teşkilat/Kadro` now presents organization units as hierarchy/kadro records, not branches, with company/status/type/branch-link filters, readiness summary, hierarchy, branch relation and representative authority panels.
+- `Tesisler/Lokasyonlar` now presents physical locations as their own domain, not branches, with facility list/detail/create/update, branch/reusable indicators, facility-scope authority visibility and impact guidance.
+- Next `/api/facilities` routes are proxy-only. Next `/api/organization` is FastAPI-first with temporary fallback because unit type management still needs a Python endpoint.
 - product docs were added under `docs/product/branches/` for scope, real-data scenarios, E2E checklist and known gaps.
 
 Remaining P1: verify Branch Opening/Closing and branch detail hydration in staging with `FASTAPI_BASE_URL`, finalize representative authority impact warning/blocking policy and remove temporary Next fallbacks after E2E passes.
+
+### Product hardening step 6 - Process and Action Center
+
+- `/app/surecler` now presents process, task, approval and operation-warning queues as a real work center rather than a placeholder.
+- `/app/surecler/{id}` now exposes process summary, step timeline, task completion/comment actions, approval decisions, related record links and process history.
+- FastAPI Action Center now normalizes process tasks, approvals, failed/stuck operations and admin-visible outbox events into user-facing `UnifiedActionItem` records.
+- Next Action Center components now handle both FastAPI `ApiSuccess` envelopes and legacy fallback envelopes.
+
+Remaining P1: seed process/task/approval fixtures, run Playwright E2E, harden complex approval matrix and define retry-safe operation policy.
+
+### Product hardening step 8 - Module setup, licensing and feature flags
+
+- `Kurulum Merkezi` now presents module readiness as product cards with summary counts, setup steps and business-language status reasons.
+- `Modul Lisanslari` now shows module activation, license language, submodules and feature flags in one detail panel.
+- FastAPI now exposes `/api/v1/modules` and `/api/v1/features`; action eligibility can block a disabled feature with `FEATURE_DISABLED`.
+- Next adds proxy-only `/api/modules*` and `/api/features*` routes for the new FastAPI contracts.
+
+Remaining P1: move tenant module settings and feature flag overrides to persistent FastAPI DB-backed storage, then convert `/api/settings/module-licenses` to proxy-only.
 
 ## 8. Build / Typecheck Sonucu
 

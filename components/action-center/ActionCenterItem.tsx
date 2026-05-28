@@ -1,6 +1,6 @@
 'use client'
 
-import { AlertCircle, CheckCircle2, Clock3, ExternalLink, ShieldCheck, Wrench } from 'lucide-react'
+import { AlertCircle, CheckCircle2, Clock3, ExternalLink, ListTodo, ShieldCheck, Wrench } from 'lucide-react'
 import type { UnifiedActionItem } from '@/lib/action-center/actionCenter.types'
 
 type ActionCenterItemProps = {
@@ -35,8 +35,16 @@ export function ActionCenterItem({ item, compact = false, onNavigate }: ActionCe
           )}
           {!compact && (
             <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-gray-500 dark:text-gray-400">
+              <span>{sourceText(item.source_type)}</span>
               <span>{moduleText(item.module_key)}</span>
               {item.record_label && <span>{item.record_label}</span>}
+              {item.due_at && <span>Son tarih: {formatDate(item.due_at)}</span>}
+            </div>
+          )}
+          {compact && (
+            <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-gray-500 dark:text-gray-400">
+              <span>{sourceText(item.source_type)}</span>
+              <span>{moduleText(item.module_key)}</span>
               {item.due_at && <span>Son tarih: {formatDate(item.due_at)}</span>}
             </div>
           )}
@@ -72,11 +80,27 @@ export function ActionCenterItem({ item, compact = false, onNavigate }: ActionCe
 }
 
 function sourceIcon(item: UnifiedActionItem) {
+  if (item.source_type === 'process_task') return <ListTodo size={16} />
   if (item.source_type === 'approval') return <ShieldCheck size={16} />
   if (item.source_type === 'operation') return <Wrench size={16} />
   if (item.source_type === 'outbox' || item.source_type === 'projection' || item.source_type === 'integrity_warning' || item.source_type === 'system') return <AlertCircle size={16} />
   if (item.status === 'completed') return <CheckCircle2 size={16} />
   return <Clock3 size={16} />
+}
+
+function sourceText(sourceType: UnifiedActionItem['source_type']) {
+  const labels: Record<string, string> = {
+    process_task: 'Gorev',
+    approval: 'Onay',
+    operation: 'Tamamlanamayan islem',
+    outbox: 'Sistem guncellemesi',
+    projection: 'Liste uyarisi',
+    integrity_warning: 'Dikkat gerektiren durum',
+    module_readiness: 'Kurulum uyarisi',
+    notification: 'Bildirim',
+    system: 'Sistem uyarisi',
+  }
+  return labels[sourceType] || 'Is'
 }
 
 function iconClass(severity: UnifiedActionItem['severity']) {

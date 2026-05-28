@@ -22,6 +22,8 @@ import { formControlClass } from '@/components/ui/formControlStyles'
 import { ToggleSwitch } from '@/components/ui/ToggleSwitch'
 import { TriStateToggle } from '@/components/ui/TriStateToggle'
 import { useModuleLicense, ModuleLicense, SubmoduleLicense } from '@/hooks/useModuleLicense'
+import { type FeatureFlag, getDefaultFeatureFlagMap, listFeatureFlagsForModule } from '@/lib/features/featureFlags'
+import { licenseStatusLabels, moduleProductDescription, productStatusLabels } from '@/lib/modules/moduleProductCatalog'
 import { cn } from '@/lib/utils'
 
 type TriState = 'on' | 'off' | 'partial'
@@ -46,6 +48,7 @@ export default function ModuleLicensesPage() {
   const [query, setQuery] = useState('')
   const [busyKey, setBusyKey] = useState<string | null>(null)
   const [toast, setToast] = useState<string | null>(null)
+  const [featureFlagValues, setFeatureFlagValues] = useState<Record<string, boolean>>(() => getDefaultFeatureFlagMap())
 
   const submodulesByModule = useMemo(() => {
     return Object.values(submodules).reduce<Record<string, SubmoduleLicense[]>>((acc, submodule) => {
@@ -89,6 +92,7 @@ export default function ModuleLicensesPage() {
 
   const selectedModule = selectedModuleKey ? modules[selectedModuleKey] : rows[0]
   const selectedSubmodules = selectedModule ? submodulesByModule[selectedModule.module_key] || [] : []
+  const selectedFeatureFlags = selectedModule ? listFeatureFlagsForModule(selectedModule.module_key) : []
   const allCount = rows.length
   const activeCount = rows.filter((row) => row.state === 'on').length
   const partialCount = rows.filter((row) => row.state === 'partial').length
@@ -156,6 +160,23 @@ export default function ModuleLicensesPage() {
 
   async function handleTriState(moduleKey: string, state: TriState) {
     await setModuleEnabled(moduleKey, state !== 'on')
+  }
+
+  async function setFeatureFlag(featureKey: string, enabled: boolean) {
+    setFeatureFlagValues(current => ({ ...current, [featureKey]: enabled }))
+    try {
+      const response = await fetch(`/api/features/${encodeURIComponent(featureKey)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enabled }),
+      })
+      const result = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(result.error || result.message || 'Ozellik guncellenemedi')
+      const warning = Array.isArray(result.warnings) ? result.warnings[0] : null
+      setToast(warning || 'Ozellik gorunurlugu guncellendi.')
+    } catch (error) {
+      setToast(error instanceof Error ? error.message : 'Ozellik guncellenemedi. UI oturumunda yerel gorunum korundu.')
+    }
   }
 
   if (loading) {
@@ -253,6 +274,8 @@ export default function ModuleLicensesPage() {
         <LicenseDetailPanel
           module={selectedModule || null}
           submodules={selectedSubmodules}
+          featureFlags={selectedFeatureFlags}
+          featureFlagValues={featureFlagValues}
           busyKey={busyKey}
           onClose={() => setSelectedModuleKey(null)}
           onModuleToggle={setModuleEnabled}
@@ -260,6 +283,7 @@ export default function ModuleLicensesPage() {
           onModuleEnvironment={setModuleEnvironment}
           onSubmoduleToggle={setSubmoduleEnabled}
           onSubmoduleEnvironment={setSubmoduleEnvironment}
+          onFeatureToggle={setFeatureFlag}
         />
       </div>
     </div>
@@ -344,6 +368,8 @@ function SubmoduleStrip({ module, submodules, busyKey, onToggle, onConfigure }: 
 function LicenseDetailPanel({
   module,
   submodules,
+  featureFlags,
+  featureFlagValues,
   busyKey,
   onClose,
   onModuleToggle,
@@ -351,9 +377,12 @@ function LicenseDetailPanel({
   onModuleEnvironment,
   onSubmoduleToggle,
   onSubmoduleEnvironment,
+  onFeatureToggle,
 }: {
   module: ModuleLicense | ModuleRow | null
   submodules: SubmoduleLicense[]
+  featureFlags: FeatureFlag[]
+  featureFlagValues: Record<string, boolean>
   busyKey: string | null
   onClose: () => void
   onModuleToggle: (moduleKey: string, enabled: boolean) => void
@@ -361,6 +390,7 @@ function LicenseDetailPanel({
   onModuleEnvironment: (moduleKey: string, environment: Environment) => void
   onSubmoduleToggle: (moduleKey: string, submoduleKey: string, enabled: boolean) => void
   onSubmoduleEnvironment: (moduleKey: string, submoduleKey: string, environment: Environment) => void
+  onFeatureToggle: (featureKey: string, enabled: boolean) => void
 }) {
   if (!module) {
     return <div className="rounded-xl border border-dashed border-gray-300 bg-white p-6 text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-800">Detay için bir modül seçin.</div>
@@ -368,6 +398,8 @@ function LicenseDetailPanel({
 
   const state = getModuleState(module, submodules)
   const activeSubmodules = submodules.filter((item) => item.is_active).length
+  const productStatus = state === 'on' ? 'available' : state === 'partial' ? 'setup_required' : 'disabled'
+  const licenseStatus = (module as any).license_status || (module.is_active ? 'included' : 'not_included')
 
   return (
     <aside className="sticky top-4 h-fit rounded-xl border border-gray-200 bg-white dark:border-gray-700 dark:bg-gray-800">
@@ -389,8 +421,18 @@ function LicenseDetailPanel({
       <div className="space-y-4 p-4">
         <div className="grid grid-cols-3 gap-2">
           <DetailStat label="Durum" value={<StateBadge state={state} />} />
-          <DetailStat label="Alt Modül" value={submodules.length} />
-          <DetailStat label="Aktif" value={activeSubmodules} />
+          <DetailStat label="Lisans" value={licenseStatusLabels[licenseStatus] || licenseStatus} />
+          <DetailStat label="Özellik" value={featureFlags.length} />
+        </div>
+
+        <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-900/60">
+          <div className="text-sm font-semibold text-gray-900 dark:text-white">{productStatusLabels[productStatus]}</div>
+          <p className="mt-1 text-xs leading-5 text-gray-500 dark:text-gray-400">
+            {moduleProductDescription(module.module_key)}
+          </p>
+          <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+            {activeSubmodules}/{submodules.length || 1} alt modül aktif.
+          </div>
         </div>
 
         <div className="rounded-lg border border-gray-200 p-3 dark:border-gray-700">
@@ -439,6 +481,38 @@ function LicenseDetailPanel({
               </select>
             </div>
           ))}
+        </div>
+
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <h4 className="text-sm font-semibold text-gray-900 dark:text-white">Özellik Bayrakları</h4>
+            <span className="rounded-full bg-gray-100 px-2 py-1 text-xs text-gray-600 dark:bg-gray-900 dark:text-gray-300">{featureFlags.length}</span>
+          </div>
+          {featureFlags.length === 0 && (
+            <div className="rounded-lg border border-dashed border-gray-300 p-4 text-sm text-gray-500 dark:border-gray-700">
+              Bu modül için ayrı feature flag tanımlı değil.
+            </div>
+          )}
+          {featureFlags.map(flag => {
+            const enabled = featureFlagValues[flag.key] ?? flag.defaultEnabled
+            return (
+              <div key={flag.key} className="rounded-lg border border-gray-200 p-3 dark:border-gray-700">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="truncate text-sm font-medium text-gray-900 dark:text-white">{flag.label}</div>
+                    <div className="mt-1 text-xs leading-5 text-gray-500 dark:text-gray-400">{flag.description || flag.key}</div>
+                  </div>
+                  <ToggleSwitch checked={enabled} onChange={() => onFeatureToggle(flag.key, !enabled)} size="sm" />
+                </div>
+                {(flag.dependencies?.length || flag.risk) && (
+                  <div className="mt-2 rounded-md bg-amber-50 px-2 py-1.5 text-xs leading-5 text-amber-700 dark:bg-amber-950/30 dark:text-amber-200">
+                    {flag.dependencies?.length ? `Gerekli bağlantılar: ${flag.dependencies.join(', ')}. ` : ''}
+                    {flag.risk || ''}
+                  </div>
+                )}
+              </div>
+            )
+          })}
         </div>
 
         <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-900/60">

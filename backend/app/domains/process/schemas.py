@@ -152,6 +152,10 @@ class AssignTaskRequest(BaseModel):
     assigned_permission: str | None = None
 
 
+class AddTaskCommentRequest(BaseModel):
+    comment: str
+
+
 class CreateApprovalRequest(BaseModel):
     process_instance_id: str
     task_id: str | None = None

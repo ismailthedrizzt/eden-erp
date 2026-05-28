@@ -4,6 +4,7 @@ from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.features.registry import is_feature_enabled
 from app.integrity.checker import run_integrity_for_operation
 from app.policies.policy_engine import evaluate_policy
 from app.policies.schemas import AccessContext, ActionEligibility, PolicyInput
@@ -48,6 +49,7 @@ ACTION_DEFINITIONS: dict[str, dict[str, Any]] = {
         "integrity_operation": "representative_authority",
         "target_page": "/app/sirket/companies/representatives",
         "wizard_key": "representative_authority",
+        "feature_flag": "representatives.scopeAuthority",
     },
     "initial_partnership_entry": {
         "module_key": "partners",
@@ -79,6 +81,20 @@ async def evaluate_action_eligibility(
 
     warnings: list[str] = []
     resource_data = resource or {}
+    feature_key = definition.get("feature_flag")
+    if feature_key and not is_feature_enabled(context.tenant_id, str(feature_key)):
+        return ActionEligibility(
+            action_key=action_key,
+            can_view=True,
+            can_start=False,
+            disabled=True,
+            reason="Bu ozellik calisma alaninizda su anda kapali.",
+            target_page=definition.get("target_page"),
+            wizard_key=definition.get("wizard_key"),
+            required_record_status=list(definition.get("required_record_status", [])),
+            details={"code": "FEATURE_DISABLED", "feature_key": feature_key},
+        )
+
     for module_key in list(definition["readiness_modules"]):
         readiness = await check_module_readiness(session, context.tenant_id, module_key)
         if not readiness.ok:

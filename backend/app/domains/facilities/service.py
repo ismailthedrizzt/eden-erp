@@ -239,6 +239,68 @@ async def update_facility_card(
     return await get_facility_detail(session, context, facility_id)
 
 
+async def create_facility(
+    session: AsyncSession,
+    context: dict[str, Any],
+    payload: dict[str, Any],
+) -> dict[str, Any]:
+    tenant_id = context["tenant_id"]
+    company_id = str(payload.get("company_id") or "")
+    facility_name = str(payload.get("facility_name") or payload.get("name") or "").strip()
+    if not company_id:
+        raise DomainError("Bagli sirket secilmelidir.", "COMPANY_REQUIRED", 400)
+    if not facility_name:
+        raise DomainError("Tesis/lokasyon adi zorunludur.", "FACILITY_NAME_REQUIRED", 400)
+    await _assert_company_exists(session, tenant_id, company_id)
+    branch_id = payload.get("related_branch_id") or payload.get("branch_id")
+    if branch_id:
+        await _assert_branch_belongs_to_company(session, tenant_id, company_id, str(branch_id))
+    metadata = {
+        "source": "facility_module",
+        "coordinates": payload.get("coordinates"),
+    }
+    result = await session.execute(
+        text(
+            """
+            insert into public.company_facilities (
+              id, tenant_id, company_id, branch_id, facility_name, facility_type,
+              country, city, district, neighborhood, address, postal_code, phone, email,
+              status, record_status, start_date, notes, metadata_json,
+              created_by, updated_by, version, is_deleted
+            )
+            values (
+              :id, :tenant_id, :company_id, :branch_id, :facility_name, :facility_type,
+              :country, :city, :district, :neighborhood, :address, :postal_code, :phone, :email,
+              'active', 'active', :start_date, :notes, cast(:metadata_json as jsonb),
+              :user_id, :user_id, 1, false
+            )
+            returning *
+            """
+        ),
+        {
+            "id": str(uuid4()),
+            "tenant_id": tenant_id,
+            "company_id": company_id,
+            "branch_id": branch_id,
+            "facility_name": facility_name,
+            "facility_type": payload.get("facility_type") or "office",
+            "country": payload.get("country"),
+            "city": payload.get("city"),
+            "district": payload.get("district"),
+            "neighborhood": payload.get("neighborhood"),
+            "address": payload.get("address"),
+            "postal_code": payload.get("postal_code"),
+            "phone": payload.get("phone"),
+            "email": payload.get("email"),
+            "start_date": payload.get("start_date"),
+            "notes": payload.get("notes"),
+            "metadata_json": json.dumps(metadata, ensure_ascii=False, default=str),
+            "user_id": context.get("user_id"),
+        },
+    )
+    return dict(result.mappings().one())
+
+
 async def create_facility_for_branch(
     session: AsyncSession,
     context: dict[str, Any],
@@ -445,6 +507,56 @@ def build_facility_display_label(facility: dict[str, Any] | None) -> str:
     if not facility:
         return "Tesis/Lokasyon"
     return str(facility.get("facility_name") or "Tesis/Lokasyon")
+
+
+async def _assert_company_exists(session: AsyncSession, tenant_id: str, company_id: str) -> None:
+    result = await session.execute(
+        text(
+            """
+            select id
+            from public.companies
+            where tenant_id = :tenant_id
+              and id = :company_id
+              and coalesce(is_deleted, false) = false
+            limit 1
+            """
+        ),
+        {"tenant_id": tenant_id, "company_id": company_id},
+    )
+    if not result.mappings().one_or_none():
+        raise DomainError("Bagli sirket bulunamadi.", "COMPANY_NOT_FOUND", 404)
+
+
+async def _assert_branch_belongs_to_company(
+    session: AsyncSession,
+    tenant_id: str,
+    company_id: str,
+    branch_id: str,
+) -> None:
+    result = await session.execute(
+        text(
+            """
+            select id, record_status, status
+            from public.company_branches
+            where tenant_id = :tenant_id
+              and id = :branch_id
+              and company_id = :company_id
+              and coalesce(is_deleted, false) = false
+            limit 1
+            """
+        ),
+        {"tenant_id": tenant_id, "company_id": company_id, "branch_id": branch_id},
+    )
+    row = result.mappings().one_or_none()
+    if not row:
+        raise DomainError("Iliskili sube ayni sirket altinda bulunamadi.", "BRANCH_NOT_FOUND", 404)
+    status_value = str(row.get("record_status") or row.get("status") or "").lower()
+    if status_value in {"closed", "passive", "kapali"}:
+        raise DomainError(
+            "Kapali veya pasif sube yeni tesis/lokasyon baglantisi icin kullanilamaz.",
+            "BRANCH_NOT_ACTIVE",
+            409,
+        )
 
 
 def assert_facility_belongs_to_company(facility: dict[str, Any], company_id: str) -> None:
