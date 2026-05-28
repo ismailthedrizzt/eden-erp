@@ -1419,6 +1419,233 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/security/users": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Users Endpoint */
+        get: operations["users_endpoint_api_v1_security_users_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/security/users/{user_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** User Detail Endpoint */
+        get: operations["user_detail_endpoint_api_v1_security_users__user_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** User Patch Endpoint */
+        patch: operations["user_patch_endpoint_api_v1_security_users__user_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/security/users/{user_id}/roles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** User Roles Endpoint */
+        get: operations["user_roles_endpoint_api_v1_security_users__user_id__roles_get"];
+        put?: never;
+        /** User Role Assign Endpoint */
+        post: operations["user_role_assign_endpoint_api_v1_security_users__user_id__roles_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/security/users/{user_id}/roles/{role_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** User Role Remove Endpoint */
+        delete: operations["user_role_remove_endpoint_api_v1_security_users__user_id__roles__role_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/security/roles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Roles Endpoint */
+        get: operations["roles_endpoint_api_v1_security_roles_get"];
+        put?: never;
+        /** Role Create Endpoint */
+        post: operations["role_create_endpoint_api_v1_security_roles_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/security/roles/{role_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Role Detail Endpoint */
+        get: operations["role_detail_endpoint_api_v1_security_roles__role_id__get"];
+        put?: never;
+        post?: never;
+        /** Role Delete Endpoint */
+        delete: operations["role_delete_endpoint_api_v1_security_roles__role_id__delete"];
+        options?: never;
+        head?: never;
+        /** Role Patch Endpoint */
+        patch: operations["role_patch_endpoint_api_v1_security_roles__role_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/security/permissions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Permissions Endpoint */
+        get: operations["permissions_endpoint_api_v1_security_permissions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/security/permissions/matrix": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Permissions Matrix Endpoint */
+        get: operations["permissions_matrix_endpoint_api_v1_security_permissions_matrix_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/security/roles/{role_id}/permissions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Role Permissions Patch Endpoint */
+        patch: operations["role_permissions_patch_endpoint_api_v1_security_roles__role_id__permissions_patch"];
+        trace?: never;
+    };
+    "/api/v1/security/users/{user_id}/scopes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** User Scopes Endpoint */
+        get: operations["user_scopes_endpoint_api_v1_security_users__user_id__scopes_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** User Scopes Patch Endpoint */
+        patch: operations["user_scopes_patch_endpoint_api_v1_security_users__user_id__scopes_patch"];
+        trace?: never;
+    };
+    "/api/v1/security/policy-test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Policy Test Endpoint */
+        post: operations["policy_test_endpoint_api_v1_security_policy_test_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/security/permission-denials": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Permission Denials Endpoint */
+        get: operations["permission_denials_endpoint_api_v1_security_permission_denials_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/security/access-summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Access Summary Endpoint */
+        get: operations["access_summary_endpoint_api_v1_security_access_summary_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/organization/units": {
         parameters: {
             query?: never;
@@ -3054,6 +3281,32 @@ export interface components {
         } & {
             [key: string]: unknown;
         };
+        /** BranchScopeRecord */
+        BranchScopeRecord: {
+            /** Id */
+            id?: string | null;
+            /** Branch Id */
+            branch_id: string;
+            /** Branch Name */
+            branch_name?: string | null;
+            /** Company Id */
+            company_id?: string | null;
+            /**
+             * Can View
+             * @default true
+             */
+            can_view: boolean;
+            /**
+             * Can Edit
+             * @default false
+             */
+            can_edit: boolean;
+            /**
+             * Can Operate
+             * @default false
+             */
+            can_operate: boolean;
+        };
         /** CancelProcessRequest */
         CancelProcessRequest: {
             /** Reason */
@@ -3580,6 +3833,30 @@ export interface components {
             client_request_id?: string | null;
         } & {
             [key: string]: unknown;
+        };
+        /** CompanyScopeRecord */
+        CompanyScopeRecord: {
+            /** Id */
+            id?: string | null;
+            /** Company Id */
+            company_id: string;
+            /** Company Name */
+            company_name?: string | null;
+            /**
+             * Can View
+             * @default true
+             */
+            can_view: boolean;
+            /**
+             * Can Edit
+             * @default false
+             */
+            can_edit: boolean;
+            /**
+             * Can Operate
+             * @default false
+             */
+            can_operate: boolean;
         };
         /** CompleteStepRequest */
         CompleteStepRequest: {
@@ -4674,6 +4951,27 @@ export interface components {
             /** Blocked Record Status */
             blocked_record_status?: string[];
         };
+        /** PolicyTestRequest */
+        PolicyTestRequest: {
+            /** Tested User Id */
+            tested_user_id: string;
+            /** Action Key */
+            action_key?: string | null;
+            /** Module Key */
+            module_key?: string | null;
+            /** Permission Key */
+            permission_key?: string | null;
+            /** Company Id */
+            company_id?: string | null;
+            /** Branch Id */
+            branch_id?: string | null;
+            /** Record Type */
+            record_type?: string | null;
+            /** Record Id */
+            record_id?: string | null;
+            /** Record Status */
+            record_status?: string | null;
+        };
         /** PrecheckResponse */
         PrecheckResponse: {
             /** Ok */
@@ -5421,6 +5719,41 @@ export interface components {
         } & {
             [key: string]: unknown;
         };
+        /** RoleCreate */
+        RoleCreate: {
+            /** Role Key */
+            role_key: string;
+            /** Role Name */
+            role_name: string;
+            /** Description */
+            description?: string | null;
+            /**
+             * Risk Level
+             * @default medium
+             * @enum {string}
+             */
+            risk_level: "low" | "medium" | "high" | "critical";
+            /** Permissions */
+            permissions?: string[];
+        };
+        /** RolePatch */
+        RolePatch: {
+            /** Role Name */
+            role_name?: string | null;
+            /** Description */
+            description?: string | null;
+            /** Risk Level */
+            risk_level?: ("low" | "medium" | "high" | "critical") | null;
+            /** Status */
+            status?: string | null;
+        };
+        /** RolePermissionsPatch */
+        RolePermissionsPatch: {
+            /** Permission Keys */
+            permission_keys: string[];
+            /** Change Reason */
+            change_reason?: string | null;
+        };
         /** ServiceRecordCompleteRequest */
         ServiceRecordCompleteRequest: {
             /**
@@ -5985,6 +6318,41 @@ export interface components {
             new_trade_registry_number?: string | null;
         } & {
             [key: string]: unknown;
+        };
+        /** UserPatch */
+        UserPatch: {
+            /** Display Name */
+            display_name?: string | null;
+            /** Email */
+            email?: string | null;
+            /** Status */
+            status?: string | null;
+            /** Metadata Json */
+            metadata_json?: {
+                [key: string]: unknown;
+            } | null;
+        };
+        /** UserRoleMutation */
+        UserRoleMutation: {
+            /** Role Id */
+            role_id: string;
+            /** Company Id */
+            company_id?: string | null;
+            /** Branch Id */
+            branch_id?: string | null;
+            /** Scope Mode */
+            scope_mode?: ("all_companies" | "assigned_companies" | "assigned_branches" | "organization_unit_scope" | "own_tasks_only" | "read_only" | "custom") | null;
+            /** Reason */
+            reason?: string | null;
+        };
+        /** UserScopesPatch */
+        UserScopesPatch: {
+            /** Company Scopes */
+            company_scopes?: components["schemas"]["CompanyScopeRecord"][];
+            /** Branch Scopes */
+            branch_scopes?: components["schemas"]["BranchScopeRecord"][];
+            /** Change Reason */
+            change_reason?: string | null;
         };
         /** ValidationError */
         ValidationError: {
@@ -9852,6 +10220,554 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    users_endpoint_api_v1_security_users_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_list_dict_str__Any___"];
+                };
+            };
+        };
+    };
+    user_detail_endpoint_api_v1_security_users__user_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    user_patch_endpoint_api_v1_security_users__user_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UserPatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    user_roles_endpoint_api_v1_security_users__user_id__roles_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_list_dict_str__Any___"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    user_role_assign_endpoint_api_v1_security_users__user_id__roles_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UserRoleMutation"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    user_role_remove_endpoint_api_v1_security_users__user_id__roles__role_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: string;
+                role_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    roles_endpoint_api_v1_security_roles_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_list_dict_str__Any___"];
+                };
+            };
+        };
+    };
+    role_create_endpoint_api_v1_security_roles_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RoleCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    role_detail_endpoint_api_v1_security_roles__role_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                role_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    role_delete_endpoint_api_v1_security_roles__role_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                role_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    role_patch_endpoint_api_v1_security_roles__role_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                role_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RolePatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    permissions_endpoint_api_v1_security_permissions_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_list_dict_str__Any___"];
+                };
+            };
+        };
+    };
+    permissions_matrix_endpoint_api_v1_security_permissions_matrix_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+        };
+    };
+    role_permissions_patch_endpoint_api_v1_security_roles__role_id__permissions_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                role_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RolePermissionsPatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    user_scopes_endpoint_api_v1_security_users__user_id__scopes_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    user_scopes_patch_endpoint_api_v1_security_users__user_id__scopes_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UserScopesPatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    policy_test_endpoint_api_v1_security_policy_test_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PolicyTestRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    permission_denials_endpoint_api_v1_security_permission_denials_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_list_dict_str__Any___"];
+                };
+            };
+        };
+    };
+    access_summary_endpoint_api_v1_security_access_summary_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
                 };
             };
         };

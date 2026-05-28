@@ -187,6 +187,25 @@ READINESS_REGISTRY: dict[str, ModuleReadinessDefinition] = {
             "Verify projection/read-model sources for enabled modules.",
         ],
     ),
+    "security": ModuleReadinessDefinition(
+        module_key="security",
+        required_tables=[
+            "security_users_profile",
+            "security_roles",
+            "security_role_permissions",
+            "security_user_roles",
+            "security_user_company_scopes",
+            "security_user_branch_scopes",
+        ],
+        optional_tables=["security_policy_test_logs", "audit_logs"],
+        required_dependencies=["companies"],
+        optional_dependencies=["branches", "audit", "reporting"],
+        setup_steps=[
+            "Create security user profile, role, permission and scope tables.",
+            "Configure default roles and seed admin/user scope assignments.",
+            "Verify permission denied and scope denied audit reporting.",
+        ],
+    ),
     "process": ModuleReadinessDefinition(
         module_key="process",
         required_tables=[

@@ -256,6 +256,31 @@ Product foundation note:
 | Reporting query | `/api/v1/reporting/reports/{report_key}/query` | POST | yes | yes, proxy-only | yes | pending drift check | yes | reporting.view + report permission + pagination | yes | partial | Server-side filtered report result; no unbounded query. |
 | Reporting export | `/api/v1/reporting/reports/{report_key}/export` | POST | yes | yes, proxy-only | yes | pending drift check | yes | reporting.export + date range | yes | partial | CSV export preparation only; file generation future. |
 
+## Security / RBAC / Permission Matrix
+
+Product foundation note:
+
+- Security domain uygulama-level profil, rol, permission ve company/branch scope yonetimini tasir.
+- Supabase Auth kullanici kimligini dogrular; uygulama tabloları profil/rol/scope kontratini tutar.
+- Permission registry canonical listedir; DB role permission kaydi registry disi key kabul etmez.
+- Frontend visibility UX sinyalidir; backend permission/scope/policy enforcement'i degistirmez.
+
+| domain | endpoint | method | FastAPI implemented? | Next proxy implemented? | frontend service mapped? | OpenAPI schema generated? | auth/tenant guard? | policy/readiness/integrity guard? | tests? | status | notes |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Security users | `/api/v1/security/users` | GET | yes | yes, proxy-only | yes | pending drift check | yes | security.view | pending | partial | Lists application-level user profiles, roles and scope summaries; dev fallback shows current admin user. |
+| Security user detail | `/api/v1/security/users/{user_id}` | GET/PATCH | yes | yes, proxy-only | yes | pending drift check | yes | security.view/usersManage | pending | partial | Profile PATCH is application-level only, not Supabase Auth mutation. |
+| Security user roles | `/api/v1/security/users/{user_id}/roles` | GET/POST | yes | yes, proxy-only | yes | pending drift check | yes | security.view/usersManage | pending | partial | Assigns a role with optional scope mode/company/branch context. |
+| Security user role remove | `/api/v1/security/users/{user_id}/roles/{role_id}` | DELETE | yes | yes, proxy-only | yes | pending drift check | yes | security.usersManage | pending | partial | Removes role assignment by role id or assignment id. |
+| Security roles | `/api/v1/security/roles` | GET/POST | yes | yes, proxy-only | yes | pending drift check | yes | security.view/rolesManage | pending | partial | Returns DB roles plus default product roles when not seeded. |
+| Security role detail | `/api/v1/security/roles/{role_id}` | GET/PATCH/DELETE | yes | yes, proxy-only | yes | pending drift check | yes | security.view/rolesManage | pending | partial | System roles are locked from direct edit/delete. |
+| Security permissions | `/api/v1/security/permissions` | GET | yes | yes, proxy-only | yes | pending drift check | yes | security.view | pending | partial | Registry permissions grouped by module with risk/deprecated metadata. |
+| Security permission matrix | `/api/v1/security/permissions/matrix` | GET | yes | yes, proxy-only | yes | pending drift check | yes | security.view | pending | partial | Role x permission cells and registry mismatch warnings. |
+| Security role permissions | `/api/v1/security/roles/{role_id}/permissions` | PATCH | yes | yes, proxy-only | yes | pending drift check | yes | security.rolesManage | pending | partial | Rejects unknown permission keys; default in-memory roles are locked. |
+| Security scopes | `/api/v1/security/users/{user_id}/scopes` | GET/PATCH | yes | yes, proxy-only | yes | pending drift check | yes | security.view/scopesManage | pending | partial | Company and branch scope CRUD with view/edit/operate flags. |
+| Security policy test | `/api/v1/security/policy-test` | POST | yes | yes, proxy-only | yes | pending drift check | yes | security.policyTest | pending | partial | Admin diagnostic returns permission, scope, module and policy reasons. |
+| Security denials | `/api/v1/security/permission-denials` | GET | yes | yes, proxy-only | yes | pending drift check | yes | security.view | pending | partial | Reads recent permission/scope denials from audit when available. |
+| Security access summary | `/api/v1/security/access-summary` | GET | yes | yes, proxy-only | yes | pending drift check | yes | security.view | pending | partial | Returns user/role/risk/denial counts and setup warnings. |
+
 ## Platform
 
 | domain | endpoint | method | FastAPI implemented? | Next proxy implemented? | frontend service mapped? | OpenAPI schema generated? | auth/tenant guard? | policy/readiness/integrity guard? | tests? | status | notes |

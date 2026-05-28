@@ -18,6 +18,7 @@ export const MODULE_CODES = [
   'after_sales',
   'project_management',
   'reporting',
+  'security',
 ] as const
 
 export type ModuleCode = typeof MODULE_CODES[number]
@@ -154,6 +155,15 @@ export const PERMISSIONS = {
     viewAuditSummary: 'reporting.viewAuditSummary',
     viewHR: 'reporting.viewHR',
     viewSystem: 'reporting.viewSystem',
+  },
+  security: {
+    view: 'security.view',
+    usersManage: 'security.usersManage',
+    rolesManage: 'security.rolesManage',
+    scopesManage: 'security.scopesManage',
+    policyTest: 'security.policyTest',
+    legacyUsersManage: 'users.manage',
+    legacyRolesManage: 'roles.manage',
   },
   projectManagement: {
     view: 'projects.view',

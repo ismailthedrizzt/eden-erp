@@ -20,6 +20,7 @@ import { productServicesModule } from './contracts/productServices.module'
 import { projectManagementModule } from './contracts/projectManagement.module'
 import { reportingModule } from './contracts/reporting.module'
 import { representativesModule } from './contracts/representatives.module'
+import { securityModule } from './contracts/security.module'
 import { settingsModule } from './contracts/settings.module'
 import { getProjectionDefinition } from '@/lib/read-models/registry'
 
@@ -37,6 +38,7 @@ export const allModuleContracts = [
   afterSalesModule,
   crmModule,
   reportingModule,
+  securityModule,
   processModule,
   auditModule,
   outboxModule,

@@ -299,6 +299,7 @@ async def _build_request_context(
     session: AsyncSession,
 ) -> RequestContext:
     from app.policies.access_context import (  # local import avoids a policy/security cycle
+        load_branch_scope,
         load_company_scope,
         load_effective_permissions,
         resolve_tenant_id,
@@ -336,10 +337,12 @@ async def _build_request_context(
         company_scope_ids, writable_company_scope_ids = await load_company_scope(
             session, tenant_id, user_id
         )
+        branch_scope_ids = await load_branch_scope(session, tenant_id, user_id)
     else:
         permissions = []
         company_scope_ids = []
         writable_company_scope_ids = []
+        branch_scope_ids = []
 
     if trusted_proxy and not permissions:
         permissions = _split_header(x_user_permissions)
@@ -357,7 +360,7 @@ async def _build_request_context(
         permissions=permissions,
         company_scope_ids=company_scope_ids or None,
         writable_company_scope_ids=writable_company_scope_ids or None,
-        branch_scope_ids=_split_header(x_branch_scope) or None,
+        branch_scope_ids=branch_scope_ids or _split_header(x_branch_scope) or None,
         is_internal=is_internal_request(request),
         is_trusted_proxy=trusted_proxy,
         auth_claims=user.claims if user else {},

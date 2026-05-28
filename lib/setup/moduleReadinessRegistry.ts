@@ -148,6 +148,18 @@ export const moduleReadinessDefinitions: ModuleReadinessDefinition[] = [
     ],
   },
   {
+    moduleKey: 'security',
+    requiredTables: ['security_users_profile', 'security_roles', 'security_role_permissions', 'security_user_roles', 'security_user_company_scopes', 'security_user_branch_scopes'],
+    optionalTables: ['security_policy_test_logs', 'audit_logs'],
+    requiredDependencies: ['companies'],
+    optionalDependencies: ['branches', 'audit', 'reporting'],
+    setupSteps: [
+      setupStep('security.profiles', 'Kullanici profil alanlarini kontrol et', 'Supabase Auth kullanicilari uygulama-level profil ve tenant scope ile eslestirilmelidir.', 'check'),
+      setupStep('security.roles', 'Rol ve yetki matrisini kontrol et', 'Registry permission listesi disinda yetki kaydedilmemeli; kritik yetkiler uyarili olmalidir.', 'check'),
+      setupStep('security.scopes', 'Sirket/sube kapsamlarini kontrol et', 'Kullaniciya rol yaninda sirket ve sube erisim kapsami atanmalidir.', 'check'),
+    ],
+  },
+  {
     moduleKey: 'process',
     requiredTables: ['process_instances', 'process_tasks', 'process_approvals', 'process_events'],
     setupSteps: [

@@ -248,6 +248,19 @@ Generated from `app/api/**/route.ts` by `npm run proxy:coverage`. Status values 
 | `/api/reporting/reports/[report_key]/query` | `proxy_to_fastapi` | `/api/v1/reporting/reports/{report_key}/query` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
 | `/api/reporting/reports/[report_key]` | `proxy_to_fastapi` | `/api/v1/reporting/reports/{report_key}` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
 | `/api/reporting/reports` | `proxy_to_fastapi` | `/api/v1/reporting/reports` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/security/users` | `proxy_to_fastapi` | `/api/v1/security/users` | no | no | Security/RBAC proxy-only adapter; requires FASTAPI_BASE_URL. | P0 |
+| `/api/security/users/[id]` | `proxy_to_fastapi` | `/api/v1/security/users/{user_id}` | no | no | User profile detail/PATCH proxy; no legacy fallback. | P0 |
+| `/api/security/users/[id]/roles` | `proxy_to_fastapi` | `/api/v1/security/users/{user_id}/roles` | no | no | User role assign/list proxy; no legacy fallback. | P0 |
+| `/api/security/users/[id]/roles/[roleId]` | `proxy_to_fastapi` | `/api/v1/security/users/{user_id}/roles/{role_id}` | no | no | User role removal proxy; no legacy fallback. | P0 |
+| `/api/security/users/[id]/scopes` | `proxy_to_fastapi` | `/api/v1/security/users/{user_id}/scopes` | no | no | Company/branch scope proxy; no legacy fallback. | P0 |
+| `/api/security/roles` | `proxy_to_fastapi` | `/api/v1/security/roles` | no | no | Role list/create proxy; no legacy fallback. | P0 |
+| `/api/security/roles/[id]` | `proxy_to_fastapi` | `/api/v1/security/roles/{role_id}` | no | no | Role detail/PATCH/DELETE proxy; no legacy fallback. | P0 |
+| `/api/security/roles/[id]/permissions` | `proxy_to_fastapi` | `/api/v1/security/roles/{role_id}/permissions` | no | no | Role permission matrix save proxy; no legacy fallback. | P0 |
+| `/api/security/permissions` | `proxy_to_fastapi` | `/api/v1/security/permissions` | no | no | Registry permission groups proxy; no legacy fallback. | P0 |
+| `/api/security/permissions/matrix` | `proxy_to_fastapi` | `/api/v1/security/permissions/matrix` | no | no | Role x permission matrix proxy; no legacy fallback. | P0 |
+| `/api/security/policy-test` | `proxy_to_fastapi` | `/api/v1/security/policy-test` | no | no | Admin policy diagnostic proxy; no legacy fallback. | P0 |
+| `/api/security/permission-denials` | `proxy_to_fastapi` | `/api/v1/security/permission-denials` | no | no | Permission/scope denial report proxy; no legacy fallback. | P0 |
+| `/api/security/access-summary` | `proxy_to_fastapi` | `/api/v1/security/access-summary` | no | no | Security admin summary proxy; no legacy fallback. | P0 |
 | `/api/session/bootstrap` | `keep_session_bootstrap` | `n/a` | yes | yes | Permanent adapter/shared contract; keep thin and do not add ERP domain mutation. | P2 |
 | `/api/settings/integration-parameters/[id]/credential` | `migrate_to_fastapi` | `/api/v1/settings/integration-parameters/{id}/credential` | yes | yes | Implement FastAPI equivalent, then convert route to proxy or remove. | P2 |
 | `/api/settings/integration-parameters/[id]` | `migrate_to_fastapi` | `/api/v1/settings/integration-parameters/{id}` | yes | yes | Implement FastAPI equivalent, then convert route to proxy or remove. | P2 |

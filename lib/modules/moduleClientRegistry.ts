@@ -13,6 +13,7 @@ import { productServicesModule } from './contracts/productServices.module'
 import { projectManagementModule } from './contracts/projectManagement.module'
 import { reportingModule } from './contracts/reporting.module'
 import { representativesModule } from './contracts/representatives.module'
+import { securityModule } from './contracts/security.module'
 import { settingsModule } from './contracts/settings.module'
 
 export const clientModuleContracts = [
@@ -29,6 +30,7 @@ export const clientModuleContracts = [
   afterSalesModule,
   crmModule,
   reportingModule,
+  securityModule,
   processModule,
   auditModule,
   outboxModule,

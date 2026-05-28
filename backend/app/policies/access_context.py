@@ -149,6 +149,39 @@ async def load_user_roles(session: AsyncSession, tenant_id: str, user_id: str) -
             text(
                 """
                 select distinct r.role_key
+                from public.security_user_roles ur
+                join public.security_roles r on r.id = ur.role_id
+                left join public.security_users_profile p on p.id = ur.user_id
+                where ur.tenant_id = :tenant_id
+                  and r.status = 'active'
+                  and (
+                    ur.user_id::text = :user_id
+                    or p.auth_user_id::text = :user_id
+                  )
+                """
+            ),
+            {"user_id": user_id, "tenant_id": tenant_id},
+        )
+        security_roles = [
+            str(row["role_key"])
+            for row in result.mappings().all()
+            if row.get("role_key")
+        ]
+        if security_roles:
+            return security_roles
+    except (ProgrammingError, DBAPIError) as exc:
+        if not _is_missing_infra_error(exc):
+            raise DomainError(
+                "Kullanici rol altyapisi hazir degil.",
+                "PERMISSION_INFRA_MISSING",
+                status.HTTP_409_CONFLICT,
+            ) from exc
+
+    try:
+        result = await session.execute(
+            text(
+                """
+                select distinct r.role_key
                 from public.user_roles ur
                 join public.roles r on r.id = ur.role_id
                 where ur.user_id = :user_id
@@ -175,6 +208,40 @@ async def load_user_roles(session: AsyncSession, tenant_id: str, user_id: str) -
 
 
 async def load_user_permissions(session: AsyncSession, tenant_id: str, user_id: str) -> list[str]:
+    try:
+        result = await session.execute(
+            text(
+                """
+                select distinct rp.permission_key
+                from public.security_user_roles ur
+                join public.security_roles r on r.id = ur.role_id
+                join public.security_role_permissions rp on rp.role_id = r.id and rp.granted = true
+                left join public.security_users_profile p on p.id = ur.user_id
+                where ur.tenant_id = :tenant_id
+                  and r.status = 'active'
+                  and (
+                    ur.user_id::text = :user_id
+                    or p.auth_user_id::text = :user_id
+                  )
+                """
+            ),
+            {"user_id": user_id, "tenant_id": tenant_id},
+        )
+        security_permissions = [
+            str(row["permission_key"])
+            for row in result.mappings().all()
+            if row.get("permission_key")
+        ]
+        if security_permissions:
+            return security_permissions
+    except (ProgrammingError, DBAPIError) as exc:
+        if not _is_missing_infra_error(exc):
+            raise DomainError(
+                "Yetki altyapisi hazir degil.",
+                "PERMISSION_INFRA_MISSING",
+                status.HTTP_409_CONFLICT,
+            ) from exc
+
     try:
         result = await session.execute(
             text(
@@ -236,8 +303,42 @@ async def load_effective_permissions(
 async def load_company_scope(
     session: AsyncSession,
     tenant_id: str,
-    _user_id: str,
+    user_id: str,
 ) -> tuple[list[str], list[str]]:
+    try:
+        result = await session.execute(
+            text(
+                """
+                select s.company_id, s.can_edit, s.can_operate
+                from public.security_user_company_scopes s
+                left join public.security_users_profile p on p.id = s.user_id
+                where s.tenant_id = :tenant_id
+                  and s.can_view = true
+                  and (
+                    s.user_id::text = :user_id
+                    or p.auth_user_id::text = :user_id
+                  )
+                """
+            ),
+            {"tenant_id": tenant_id, "user_id": user_id},
+        )
+        company_ids: list[str] = []
+        writable_ids: list[str] = []
+        for row in result.mappings().all():
+            company_id = str(row["company_id"])
+            company_ids.append(company_id)
+            if bool(row.get("can_edit")) or bool(row.get("can_operate")):
+                writable_ids.append(company_id)
+        if company_ids:
+            return company_ids, writable_ids
+    except (ProgrammingError, DBAPIError) as exc:
+        if not _is_missing_infra_error(exc):
+            raise DomainError(
+                "Sirket erisim kapsami altyapisi hazir degil.",
+                "COMPANY_SCOPE_INFRA_MISSING",
+                status.HTTP_409_CONFLICT,
+            ) from exc
+
     try:
         result = await session.execute(
             text(
@@ -259,21 +360,47 @@ async def load_company_scope(
             status.HTTP_409_CONFLICT,
         ) from exc
 
-    company_ids: list[str] = []
-    writable_ids: list[str] = []
+    legacy_company_ids: list[str] = []
+    legacy_writable_ids: list[str] = []
     for row in result.mappings().all():
         company_id = str(row["company_id"])
-        company_ids.append(company_id)
+        legacy_company_ids.append(company_id)
         if str(row.get("scope_type") or "") != "readonly":
-            writable_ids.append(company_id)
-    return company_ids, writable_ids
+            legacy_writable_ids.append(company_id)
+    return legacy_company_ids, legacy_writable_ids
 
 
 async def load_branch_scope(
-    _session: AsyncSession,
-    _tenant_id: str,
-    _user_id: str,
+    session: AsyncSession,
+    tenant_id: str,
+    user_id: str,
 ) -> list[str]:
+    try:
+        result = await session.execute(
+            text(
+                """
+                select s.branch_id
+                from public.security_user_branch_scopes s
+                left join public.security_users_profile p on p.id = s.user_id
+                where s.tenant_id = :tenant_id
+                  and s.can_view = true
+                  and (
+                    s.user_id::text = :user_id
+                    or p.auth_user_id::text = :user_id
+                  )
+                """
+            ),
+            {"tenant_id": tenant_id, "user_id": user_id},
+        )
+        return [str(row["branch_id"]) for row in result.mappings().all() if row.get("branch_id")]
+    except (ProgrammingError, DBAPIError) as exc:
+        if _is_missing_infra_error(exc):
+            return []
+        raise DomainError(
+            "Sube erisim kapsami altyapisi hazir degil.",
+            "BRANCH_SCOPE_INFRA_MISSING",
+            status.HTTP_409_CONFLICT,
+        ) from exc
     return []
 
 

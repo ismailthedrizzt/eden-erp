@@ -129,6 +129,9 @@ None identified in the final gate.
     Center/Action Guide sheet davranisi, SmartDataTable mobile card mode,
     EntityForm sticky action bar, PWA manifest/cache guvenlik kararlari ve
     mobile QA dokumanlari eklendi.
+15. Security/RBAC hardening. **Started:** Kullanici, rol, permission matrix,
+    sirket/sube scope, policy test araci, Security FastAPI domain servisleri,
+    proxy-only Next route'lari ve urun/E2E dokumanlari eklendi.
 
 ## 8. Decision
 

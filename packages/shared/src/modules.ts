@@ -29,4 +29,5 @@ export const ERP_MODULES: Array<{ code: ModuleCode; label: string }> = [
   { code: 'after_sales', label: 'After Sales' },
   { code: 'project_management', label: 'Project Management' },
   { code: 'reporting', label: 'Reporting' },
+  { code: 'security', label: 'Security / RBAC' },
 ]

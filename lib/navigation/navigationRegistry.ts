@@ -59,12 +59,27 @@ export const navigationItems = [
   item('settings', 'Sistem Yonetimi', '/app/sistem', 'settings', 'settings', 900),
   item('moduleLicenses', 'Modul Lisanslari', '/app/sistem/module-licenses', 'settings', 'settings', 910, {
     parentKey: 'settings',
-    permission: 'settings.modules.manage',
+    permission: 'settings.modulesManage',
     fallbackPermission: 'settings.view',
   }),
   item('setup', 'Kurulum', '/app/sistem/kurulum', 'wrench', 'settings', 920, {
     parentKey: 'settings',
-    permission: 'settings.modules.manage',
+    permission: 'settings.modulesManage',
+    fallbackPermission: 'settings.view',
+  }),
+  item('securityUsers', 'Kullanicilar', '/app/sistem/kullanicilar', 'users', 'security', 931, {
+    parentKey: 'settings',
+    permission: 'security.view',
+    fallbackPermission: 'settings.view',
+  }),
+  item('securityRoles', 'Roller', '/app/sistem/roller', 'shield', 'security', 932, {
+    parentKey: 'settings',
+    permission: 'security.view',
+    fallbackPermission: 'settings.view',
+  }),
+  item('securityPermissions', 'Yetki Matrisi', '/app/sistem/yetkiler', 'list', 'security', 933, {
+    parentKey: 'settings',
+    permission: 'security.view',
     fallbackPermission: 'settings.view',
   }),
   item('audit', 'Denetim Izi', '/app/sistem/audit', 'list', 'audit', 930, {

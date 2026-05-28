@@ -28,6 +28,7 @@ from app.api.v1 import (
     projects,
     reporting,
     representatives,
+    security,
     setup,
     system,
     tasks,
@@ -46,6 +47,7 @@ api_router.include_router(products.router, prefix="/products", tags=["products"]
 api_router.include_router(after_sales.router, prefix="/after-sales", tags=["after sales"])
 api_router.include_router(crm.router, prefix="/crm", tags=["crm"])
 api_router.include_router(reporting.router, prefix="/reporting", tags=["reporting"])
+api_router.include_router(security.router, prefix="/security", tags=["security"])
 api_router.include_router(organization.router, prefix="/organization", tags=["organization"])
 api_router.include_router(partners.router, prefix="/partners", tags=["partners"])
 api_router.include_router(ownership.router, prefix="/ownership", tags=["ownership"])

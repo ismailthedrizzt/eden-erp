@@ -240,3 +240,25 @@ tasir:
 
 Reporting read-only analiz katmanidir. Ham business mutation, resmi operation,
 task lifecycle veya accounting transaction yaratmaz.
+
+## Security Contract Update
+
+Security/RBAC module contract artik kullanici, rol, permission matrix, scope ve
+policy test MVP temelini tasir:
+
+- Entities: `security_user_profile`, `security_role`,
+  `security_role_permission`, `security_user_role`,
+  `security_user_company_scope`, `security_user_branch_scope`
+- Permissions: `security.view`, `security.usersManage`,
+  `security.rolesManage`, `security.scopesManage`, `security.policyTest`
+- Actions: `manage_users`, `create_role`, `update_role`,
+  `assign_user_role`, `remove_user_role`, `update_user_scope`,
+  `update_role_permissions`, `run_policy_test`
+- Feature flags: `security.enabled`, `security.users`, `security.roles`,
+  `security.permissionMatrix`, `security.scopeManagement`,
+  `security.policyTest`
+- Navigation: `Sistem Yonetimi > Kullanicilar`, `Roller`, `Yetki Matrisi`
+
+Security contract visibility icin kullanilir; mutation enforcement FastAPI
+permission/scope/policy kontrollerinde kalir. DB role permissions yalnizca
+registry'de tanimli permission key'lerini kabul eder.
