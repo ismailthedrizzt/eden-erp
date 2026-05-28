@@ -1,6 +1,6 @@
 'use client'
 
-import { AlertCircle, CheckCircle2, Clock3, ExternalLink, ListTodo, ShieldCheck, Wrench } from 'lucide-react'
+import { AlertCircle, CheckCircle2, Clock3, ExternalLink, ListChecks, ListTodo, ShieldCheck, Wrench } from 'lucide-react'
 import type { UnifiedActionItem } from '@/lib/action-center/actionCenter.types'
 
 type ActionCenterItemProps = {
@@ -81,6 +81,7 @@ export function ActionCenterItem({ item, compact = false, onNavigate }: ActionCe
 
 function sourceIcon(item: UnifiedActionItem) {
   if (item.source_type === 'process_task') return <ListTodo size={16} />
+  if (item.source_type === 'project_task') return <ListChecks size={16} />
   if (item.source_type === 'approval') return <ShieldCheck size={16} />
   if (item.source_type === 'operation') return <Wrench size={16} />
   if (item.source_type === 'outbox' || item.source_type === 'projection' || item.source_type === 'integrity_warning' || item.source_type === 'system') return <AlertCircle size={16} />
@@ -90,7 +91,8 @@ function sourceIcon(item: UnifiedActionItem) {
 
 function sourceText(sourceType: UnifiedActionItem['source_type']) {
   const labels: Record<string, string> = {
-    process_task: 'Gorev',
+    process_task: 'Surec Gorevi',
+    project_task: 'Proje Gorevi',
     approval: 'Onay',
     operation: 'Tamamlanamayan islem',
     outbox: 'Sistem guncellemesi',
@@ -130,6 +132,7 @@ function moduleText(moduleKey?: string | null) {
     partners: 'Ortaklarimiz',
     representatives: 'Temsilcilerimiz',
     process: 'Surecler',
+    project_management: 'Proje ve Gorevler',
     system: 'Sistem',
     settings: 'Sistem',
     sirket: 'Sirketlerimiz',

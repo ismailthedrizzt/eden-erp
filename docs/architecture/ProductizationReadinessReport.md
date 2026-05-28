@@ -23,7 +23,7 @@ No P0 productization blocker was found in the final verification pass. The main 
 | Python worker | partial | Outbox worker command and system dispatch endpoint exist; production supervision and alerting remain P1/P2. |
 | DB/Supabase | partial | Index plan, safe migration and pooling config exist. Staging EXPLAIN and production rollout remain P1. |
 | OpenAPI contract | ready | Schema export and generated TS type drift checks work. Manual DTO bridge cleanup remains P1/P2. |
-| Domain services | partial/ready with debt | Core modules have Python services; accounting cari accounts/transactions now have Python MVP services. HR and deeper organization/facility flows remain migrate-later. |
+| Domain services | partial/ready with debt | Core modules have Python services; accounting cari accounts/transactions and HR employee/employment lifecycle now have Python MVP services. Deeper organization/facility flows remain P1/P2. |
 
 ## 3. Module Readiness
 
@@ -34,6 +34,7 @@ No P0 productization blocker was found in the final verification pass. The main 
 | Representatives | partial/product hardening started | Card CRUD and authority transaction endpoint exist. UI now surfaces card-vs-authority, current authority, scope/limit/signature state and correct authority actions. Scope E2E and fallback cleanup remain P1. |
 | Branches | partial/product hardening started | Opening/closing, list/detail/PATCH are Python-backed. UI now separates branch/company/facility/organization concepts, blocks free create, shows organization/facility/authority readiness and routes lifecycle changes to Branch Opening/Closing. Staging E2E and fallback removal remain P1. |
 | Accounting | partial/product foundation started | Cari Kartlar and Cari Hareketler CRUD/list/summary are Python-backed with proxy-only Next routes. Full yevmiye, e-fatura, bank API and automatic reconciliation remain P2. |
+| HR | partial/product foundation started | Calisanlar, istihdam lifecycle, SGK manuel takip, assignment change, employee documents and summary endpoints are Python-backed with proxy-only Next routes. Bordro, izin, puantaj and real SGK integration remain P2. |
 | Organization | partial | Organization links are visible from branch detail; full Teşkilat/Kadro product hardening remains a later productization step. |
 | Facilities | partial | Facility/location links are visible from branch detail; full Tesisler/Lokasyonlar product hardening and multi-branch relation decision remain P1/P2. |
 | Process | partial | Python process/task/approval MVP exists. TS fallback and UI hardening remain P1. |
@@ -90,7 +91,7 @@ None identified in the final gate.
 
 - Full Action Guide Python intent resolver.
 - Generated OpenAPI client adoption across all frontend services.
-- Full accounting package beyond cari MVP and HR FastAPI domain migrations.
+- Full accounting package beyond cari MVP and HR features beyond employee/employment lifecycle MVP.
 - Organization/facility full product flows.
 - Audit export permission/endpoint and full DB-backed audit coverage tests.
 - Redis/cache introduction if measurements justify it.
@@ -106,8 +107,10 @@ None identified in the final gate.
 6. Process/Action Center UI hardening.
 7. Audit export, compliance report hardening and SIEM/archive planning.
 8. Accounting foundation. **Started:** Cari Kartlar and Cari Hareketler MVP now have FastAPI domain services, proxy-only Next routes, product UI, migration draft and real-data/E2E docs.
-9. HR foundation.
-10. Project/task module.
+9. HR foundation. **Started:** Calisanlar and Istihdam Lifecycle MVP now have FastAPI domain services, proxy-only Next routes, product UI, migration draft and real-data/E2E docs.
+10. Project/task module. **Started:** Projeler, Gorevler and Kanban MVP now have
+    FastAPI domain services, proxy-only Next routes, Action Center `project_task`
+    source mapping, migration draft and real-data/E2E docs.
 
 ## 8. Decision
 

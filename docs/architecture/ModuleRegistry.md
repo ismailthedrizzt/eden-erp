@@ -111,3 +111,49 @@ Accounting module contract artik cari MVP temelini tasir:
 Accounting runtime karar vermez; cari kart/cari hareket readiness, permission ve
 company scope kontrolleri FastAPI Accounting domain servisleri tarafindan
 uygulanir. Next route'lari proxy-only adapter olarak kalir.
+
+## HR Contract Update
+
+HR module contract artik calisan ve istihdam lifecycle MVP temelini tasir:
+
+- Entities: `hr_employee`, `hr_employment_record`, `hr_employment_transaction`,
+  `hr_employee_document`
+- Permissions: `hr.view`, `hr.edit`, `hr.employeeCreate`,
+  `hr.employmentStart`, `hr.employmentTerminate`, `hr.assignmentChange`,
+  `hr.documentsManage`, `hr.sensitiveView`
+- Actions: `create_employee_draft`, `start_employment`,
+  `terminate_employment`, `change_assignment`, `mark_sgk_entry_completed`,
+  `mark_sgk_exit_completed`, `manage_employee_documents`
+- Feature flags: `hr.enabled`, `hr.employees`, `hr.employmentLifecycle`,
+  `hr.sgkManualTracking`, `hr.employeeDocuments`, `hr.positionAssignment`,
+  `hr.salaryBasicInfo`
+- Navigation: `IK > Calisanlar`; `Istihdam Islemleri`, `Ozluk Belgeleri` and
+  `SGK Islemleri` future menu items remain feature-flagged.
+
+HR runtime karar vermez; calisan karti, istihdam lifecycle, SGK ve belge
+readiness, permission ve company scope kontrolleri FastAPI HR domain servisleri
+tarafindan uygulanir. Next route'lari proxy-only adapter olarak kalir.
+
+## Project Management Contract Update
+
+Project Management module contract artik proje/gorev MVP temelini tasir:
+
+- Entities: `project_project`, `project_task`, `project_task_comment`,
+  `project_task_attachment`
+- Permissions: `projects.view`, `projects.edit`, `projects.create`,
+  `projects.delete`, `tasks.view`, `tasks.create`, `tasks.edit`,
+  `tasks.assign`, `tasks.transition`, `tasks.comment`,
+  `tasks.attachmentsManage`, `tasks.delete`, `projects.admin`
+- Actions: `create_project`, `update_project`, `complete_project`,
+  `cancel_project`, `create_project_task`, `assign_project_task`,
+  `transition_project_task`, `comment_project_task`, `attach_project_task`
+- Feature flags: `projectManagement.enabled`, `projectManagement.projects`,
+  `projectManagement.tasks`, `projectManagement.kanban`,
+  `projectManagement.comments`, `projectManagement.attachments`,
+  `projectManagement.timeTracking`, `projectManagement.sprints`
+- Navigation: `Proje ve Gorevler > Projeler`, `Gorevler`, `Bana Atananlar`
+  and `Kanban`
+
+Process Engine gorevleri `process_task`, Project Management gorevleri
+`project_task` olarak ayridir. Action Center iki kaynagi birlikte gosterebilir,
+ancak module contract ve backend lifecycle ayridir.

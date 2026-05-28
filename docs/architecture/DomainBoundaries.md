@@ -435,96 +435,160 @@ sermaye odeme/tahsilat mutabakatini yonetir.
 
 ### Amac
 
-Calisan, istihdam lifecycle'i, SGK istihdam bildirimleri ve calisan atamalarini yonetir.
+Calisan kartlarini, calisan ozluk bilgilerini, istihdam lifecycle'ini, ise giris,
+isten cikis, pozisyon/organizasyon atamasi, SGK giris/cikis hazirligi ve calisan
+belge dosyasini yonetir.
 
 ### Sahip Oldugu Entity'ler
 
-- `employees`
-- Employment lifecycle records
-- SGK employment notifications
-- Assignments
+- `hr_employees`
+- `hr_employment_records`
+- `hr_employment_transactions`
+- `hr_employee_documents`
+- Calisan ozluk bilgileri
+- Ise giris / isten cikis lifecycle kayitlari
+- SGK manuel takip ve belge referanslari
+- Sube, organizasyon birimi ve pozisyon atamasi baglantilari
 
 ### Sahip Olmadigi Entity'ler
 
-- Representative authority
-- Partner ownership
+- Sirket tuzel kisiligi
+- Sube acilisi/kapanisi
+- Organizasyon agacinin kendisi
+- Pozisyon/kadro taniminin ana ownership'i
+- Maas odeme/muhasebe hareketi
+- Bordro hesaplama
+- Temsilci yetkisi
+- Ortaklik hakki
 
 ### Baslattigi Operasyonlar
 
-- `create_employee`
+- `create_employee_draft`
 - `start_employment`
-- `end_employment`
-- `assign_employee`
+- `terminate_employment`
+- `change_assignment`
+- `mark_sgk_entry_completed`
+- `mark_sgk_exit_completed`
+- `manage_employee_documents`
 
 ### Dinledigi Eventler
 
 - `organization.unit_closed`
 - `facility.deactivated`
+- `company.branch_closed`
+- `representative.authority_updated`
 
 ### Yayinladigi Eventler
 
-- `hr.employee_created`
-- `hr.employment_started`
-- `hr.employment_ended`
+- `hr.employee.created`
+- `hr.employee.updated`
+- `hr.employment.started`
+- `hr.employment.terminated`
+- `hr.employment.assignment_changed`
+- `hr.employee_document.created`
 
 ### Diger Domainlerle Iliskisi
 
-Calisan bir temsilci veya ortak olabilir; bu kimlikler ayri domain iliskileridir.
+Calisan karti kisi/ozluk bilgisini tutar; aktif istihdam, pozisyon ve SGK durumu
+Ise Giris veya ilgili istihdam islemleriyle olusur. Organization domain
+organizasyon birimi ve pozisyon tanimlarini sahiplenir; HR sadece calisanin bu
+tanimlarla baglantisini tutar. Accounting domain ucret/odeme hareketlerini
+ileride mutabakatlar, HR bordro veya muhasebe kaydi uretmez.
+
+> Calisan olmak, temsilci olmak veya ortak olmak ayni sey degildir. Bir kisi
+> ayni anda calisan, ortak ve temsilci olabilir; ancak bu roller ayri domain
+> iliskileriyle yonetilir.
 
 ### Sinir Ihlali Ornekleri
 
 - HR atamasindan temsilci imza yetkisi vermek.
+- HR istihdam kaydindan ortaklik hakki, pay orani veya oy hakki uretmek.
+- Calisan kart PATCH'i ile pozisyon, SGK veya isten cikis durumunu keyfi degistirmek.
+- Maas odemesi veya cari hareketi HR domain tablosundan olusturmak.
 
 ### Dogru Kullanim Ornekleri
 
 - Organizasyon birimi kapanisinda aktif calisan etkisini integrity check ile gormek.
+- + Ekle ile taslak calisan karti olusturup Ise Giris wizard'i ile aktif istihdam baslatmak.
+- Pozisyon degisikligini istihdam transaction olarak kaydetmek.
+- SGK bildirimi dis sistem entegrasyonu yoksa manuel tamamlandi aksiyonu ile izlemek.
 
 ## Project / Task Domain
 
 ### Amac
 
-Projeler, is gorevleri, issue/work tracking ve ekip islerini yonetir.
+Projeler, gorev/issue kayitlari, status workflow, atama, oncelik, yorum, ek,
+etiket, related ERP kaydi ve Kanban MVP'sini yonetir.
 
 ### Sahip Oldugu Entity'ler
 
-- `projects`
+- `project_projects`
 - `project_tasks`
-- `issues`
+- `project_task_comments`
+- `project_task_attachments`
+- `project_task_history`
+- Project cards
+- Project task / issue records
+- Kanban status workflow
 
 ### Sahip Olmadigi Entity'ler
 
 - Process Engine internal tasks
 - Official operation lifecycle
+- HR employment lifecycle
+- Accounting transaction
+- Branch lifecycle
+- Representative authority
+- Ownership transaction
 
 ### Baslattigi Operasyonlar
 
 - `create_project`
-- `create_task`
-- `assign_task`
-- `close_task`
+- `update_project`
+- `complete_project`
+- `cancel_project`
+- `create_project_task`
+- `assign_project_task`
+- `transition_project_task`
+- `comment_project_task`
+- `attach_project_task`
 
 ### Dinledigi Eventler
 
 - `organization.unit_updated`
-- `hr.employee_created`
+- `hr.employee.created`
+- `company.branch_closed`
+- `process.instance_completed`
 
 ### Yayinladigi Eventler
 
 - `project.created`
-- `project.task_created`
-- `project.task_completed`
+- `task.created`
+- `task.updated`
+- `task.transitioned`
+- `task.assigned`
+- `task.commented`
+- `task.attachment_added`
 
 ### Diger Domainlerle Iliskisi
 
-Project task kullanici isidir; process task platform surec gorevidir. Action Center ikisini farkli kaynak olarak gosterebilir.
+Project task kullanici/ekip isidir; process task sistem surec gorevidir.
+
+> Process task sistem işleminin parçasıdır. Project task ise ekip iş takibidir.
+> Action Center ikisini kullanıcıya tek iş listesi olarak gösterebilir ama veri
+> modeli ve lifecycle ayrıdır.
 
 ### Sinir Ihlali Ornekleri
 
 - Project task tamamlaninca process approval status'u direkt degistirmek.
+- Project task ile HR ise giris/isten cikis lifecycle'i uretmek.
+- Project task ile muhasebe hareketi veya resmi sube/temsilci islemi tamamlamak.
 
 ### Dogru Kullanim Ornekleri
 
-- Surec sonucu proje gorevi gerekiyorsa event veya domain service ile olusturmak.
+- Sube detayindan related branch gorevi olusturmak.
+- Surec sonucu takip isi gerekiyorsa event veya domain service ile project task olusturmak.
+- Action Center'da `source_type=process_task` ve `source_type=project_task` kaynaklarini ayri etiketle gostermek.
 
 ## Product / Service Domain
 

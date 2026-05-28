@@ -204,11 +204,11 @@ export const allDomainOwnershipDefinitions: DomainOwnershipDefinition[] = [
   {
     domainKey: 'projects',
     label: 'Project / Task Domain',
-    ownsEntities: ['project', 'work_task', 'issue'],
-    ownsTables: ['projects', 'project_tasks', 'issues'],
-    ownsOperations: ['create_project', 'create_task', 'assign_task', 'close_task'],
-    publishesEvents: ['project.created', 'project.task_created', 'project.task_completed'],
-    consumesEvents: ['organization.unit_updated', 'hr.employee_created'],
+    ownsEntities: ['project_project', 'project_task', 'project_task_comment', 'project_task_attachment', 'issue'],
+    ownsTables: ['project_projects', 'project_tasks', 'project_task_comments', 'project_task_attachments', 'project_task_history'],
+    ownsOperations: ['create_project', 'update_project', 'complete_project', 'cancel_project', 'create_project_task', 'assign_project_task', 'transition_project_task', 'comment_project_task', 'attach_project_task'],
+    publishesEvents: ['project.created', 'task.created', 'task.updated', 'task.transitioned', 'task.assigned', 'task.commented', 'task.attachment_added'],
+    consumesEvents: ['organization.unit_updated', 'hr.employee.created', 'company.branch_closed'],
   },
   {
     domainKey: 'documents',

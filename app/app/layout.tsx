@@ -24,6 +24,7 @@ const BREADCRUMBS: Record<string, string> = {
   '/app/yardim': 'Yardim Merkezi',
   '/app/ik': 'İnsan Kaynakları',
   '/app/ik/teskilat': 'İnsan Kaynakları › Teşkilat & Kadro',
+  '/app/ik/calisanlar': 'İnsan Kaynakları › Çalışanlar',
   '/app/ik/employees': 'İnsan Kaynakları › Çalışanlarımız',
   '/app/ik/employees/ekle': 'İnsan Kaynakları › Çalışanlarımız › Çalışan Ekle',
   '/app/muhasebe': 'Muhasebe',

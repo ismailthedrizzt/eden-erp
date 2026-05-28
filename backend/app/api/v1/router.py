@@ -12,6 +12,7 @@ from app.api.v1 import (
     facilities,
     features,
     health,
+    hr,
     integrity,
     modules,
     organization,
@@ -19,7 +20,9 @@ from app.api.v1 import (
     partners,
     policy,
     processes,
+    project_tasks,
     projections,
+    projects,
     representatives,
     setup,
     system,
@@ -33,6 +36,8 @@ api_router.include_router(company_branches.router, tags=["company branch operati
 api_router.include_router(branches.router, prefix="/branches", tags=["branches"])
 api_router.include_router(facilities.router, prefix="/facilities", tags=["facilities"])
 api_router.include_router(accounting.router, prefix="/accounting", tags=["accounting"])
+api_router.include_router(hr.router, prefix="/hr", tags=["hr"])
+api_router.include_router(projects.router, prefix="/projects", tags=["projects"])
 api_router.include_router(organization.router, prefix="/organization", tags=["organization"])
 api_router.include_router(partners.router, prefix="/partners", tags=["partners"])
 api_router.include_router(ownership.router, prefix="/ownership", tags=["ownership"])
@@ -41,6 +46,7 @@ api_router.include_router(
     representatives.router, prefix="/representatives", tags=["representatives"]
 )
 api_router.include_router(processes.router, prefix="/processes", tags=["processes"])
+api_router.include_router(project_tasks.router, prefix="/tasks", tags=["project tasks"])
 api_router.include_router(tasks.router, prefix="/tasks", tags=["tasks"])
 api_router.include_router(approvals.router, prefix="/approvals", tags=["approvals"])
 api_router.include_router(audit.router, prefix="/audit", tags=["audit"])

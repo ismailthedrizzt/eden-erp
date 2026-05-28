@@ -53,6 +53,8 @@ Kullanici arayuzunde teknik tablo, SQL, RPC veya migration ifadeleri gosterilmez
 - organization: Organizasyon birimleri ve tipleri.
 - facilities: Tesis/lokasyon kayitlari.
 - accounting: Cari kartlar, cari hareketler, belge/mutabakat hazirligi ve sermaye odeme/tahsilat mutabakati.
+- hr: Calisan kartlari, istihdam kayitlari, istihdam lifecycle transaction'lari ve ozluk belge referanslari.
+- project_management: Proje kartlari, proje gorevleri, yorum/ek referanslari ve Action Center project task kaynagi.
 - process: Surec, gorev, onay ve surec olay kayitlari.
 - audit: Denetim izi kayitlari.
 - outbox: Sistem olay kayitlari.
@@ -88,3 +90,46 @@ Bu altyapi eksikse Cari Kartlar ve Cari Hareketler teknik hata yerine
 "Muhasebe modulu kurulumu tamamlanmamis" diline yonlenir. Yeni cari MVP
 endpointleri FastAPI tarafinda readiness kontrolu yapar; Next route'lari sadece
 proxy adapter olarak kalir.
+
+## HR Readiness
+
+HR module icin zorunlu altyapi:
+
+- `hr_employees`
+- `hr_employment_records`
+- `hr_employment_transactions`
+
+Opsiyonel altyapi ve bagimliliklar:
+
+- `hr_employee_documents`
+- `organization`
+- `branches`
+- `facilities`
+- `accounting`
+
+Bu altyapi eksikse Calisanlar, Ise Giris, Isten Cikis ve SGK manuel takip
+akislarinda teknik tablo hatasi gosterilmez; kullanici "IK modulu kurulumu
+tamamlanmamis" diline yonlendirilir. Yeni HR endpointleri FastAPI tarafinda
+readiness kontrolu yapar; Next route'lari sadece proxy adapter olarak kalir.
+
+## Project Management Readiness
+
+Project Management module icin zorunlu altyapi:
+
+- `project_projects`
+- `project_tasks`
+
+Opsiyonel altyapi ve bagimliliklar:
+
+- `project_task_comments`
+- `project_task_attachments`
+- `project_task_history`
+- `hr`
+- `organization`
+- `branches`
+- `facilities`
+
+Bu altyapi eksikse Projeler, Gorevler ve Kanban ekranlari teknik tablo hatasi
+yerine "Proje/Gorev modulu kurulumu tamamlanmamis" diline yonlenir. Project
+task Action Center'a `source_type=project_task` ile baglanir; process task
+readiness ayridir.

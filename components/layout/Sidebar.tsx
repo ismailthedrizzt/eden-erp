@@ -78,7 +78,7 @@ const NAV: NavItem[] = [
     icon: <Users size={16} />,
     moduleKey: 'ik',
     children: [
-      { label: 'Çalışanlarımız', href: '/app/ik/employees', moduleKey: 'ik', submoduleKey: 'employees' },
+      { label: 'Çalışanlarımız', href: '/app/ik/calisanlar', moduleKey: 'ik', submoduleKey: 'employees' },
       { label: 'İzin Yönetimi', href: '/app/ik/izin', disabled: true },
       { label: 'Performans', href: '/app/ik/performans', disabled: true },
     ],
@@ -208,6 +208,7 @@ const SIDEBAR_CONTRACT_MODULE_BY_HREF: Record<string, string> = {
   '/app/sirket/teskilat': 'organization',
   '/app/sirket/tesisler': 'facilities',
   '/app/ik': 'hr',
+  '/app/ik/calisanlar': 'hr',
   '/app/ik/employees': 'hr',
   '/app/ik/personel': 'hr',
   '/app/muhasebe': 'accounting',

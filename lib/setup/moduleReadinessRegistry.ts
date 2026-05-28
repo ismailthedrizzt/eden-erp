@@ -82,6 +82,30 @@ export const moduleReadinessDefinitions: ModuleReadinessDefinition[] = [
     ],
   },
   {
+    moduleKey: 'hr',
+    requiredTables: ['hr_employees', 'hr_employment_records', 'hr_employment_transactions'],
+    optionalTables: ['hr_employee_documents'],
+    requiredDependencies: ['companies'],
+    optionalDependencies: ['organization', 'branches', 'facilities', 'accounting'],
+    setupSteps: [
+      setupStep('hr.employees', 'Calisan kart alanlarini kontrol et', 'Calisan kartlari ve ozluk bilgileri icin HR calisan altyapisi hazir olmalidir.', 'check'),
+      setupStep('hr.employment', 'Istihdam lifecycle alanlarini kontrol et', 'Ise giris, pozisyon degisikligi, SGK ve isten cikis icin istihdam kayitlari hazir olmalidir.', 'check'),
+      setupStep('hr.documents', 'Ozluk belge alanlarini kontrol et', 'Kimlik, sozlesme ve SGK belge referanslari icin belge altyapisi hazir olmalidir.', 'check'),
+    ],
+  },
+  {
+    moduleKey: 'project_management',
+    requiredTables: ['project_projects', 'project_tasks'],
+    optionalTables: ['project_task_comments', 'project_task_attachments', 'project_task_history', 'project_boards', 'project_sprints', 'hr_employees', 'organization_units'],
+    requiredDependencies: ['companies'],
+    optionalDependencies: ['hr', 'organization', 'branches', 'facilities'],
+    setupSteps: [
+      setupStep('projectManagement.projects', 'Proje alanlarini kontrol et', 'Sirket scope, proje anahtari, durum ve yonetici alanlari hazir olmalidir.', 'check'),
+      setupStep('projectManagement.tasks', 'Gorev alanlarini kontrol et', 'Issue key, durum akisi, atama ve related record alanlari hazir olmalidir.', 'check'),
+      setupStep('projectManagement.actionCenter', 'Action Center baglantisini kontrol et', 'Proje gorevleri Action Center icinde Proje Gorevi etiketiyle gorunmelidir.', 'check'),
+    ],
+  },
+  {
     moduleKey: 'process',
     requiredTables: ['process_instances', 'process_tasks', 'process_approvals', 'process_events'],
     setupSteps: [

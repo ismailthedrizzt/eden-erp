@@ -67,6 +67,40 @@ READINESS_REGISTRY: dict[str, ModuleReadinessDefinition] = {
             "Configure accounting permissions and company scope.",
         ],
     ),
+    "hr": ModuleReadinessDefinition(
+        module_key="hr",
+        required_tables=[
+            "hr_employees",
+            "hr_employment_records",
+            "hr_employment_transactions",
+        ],
+        optional_tables=["hr_employee_documents"],
+        required_dependencies=["companies"],
+        optional_dependencies=["organization", "branches", "facilities", "accounting"],
+        setup_steps=[
+            "Create employee card, employment record, and employment transaction tables.",
+            "Configure HR permissions, company scope, and employee document storage.",
+        ],
+    ),
+    "project_management": ModuleReadinessDefinition(
+        module_key="project_management",
+        required_tables=["project_projects", "project_tasks"],
+        optional_tables=[
+            "project_task_comments",
+            "project_task_attachments",
+            "project_task_history",
+            "project_boards",
+            "project_sprints",
+            "hr_employees",
+            "organization_units",
+        ],
+        required_dependencies=["companies"],
+        optional_dependencies=["hr", "organization", "branches", "facilities"],
+        setup_steps=[
+            "Create project and project task tables.",
+            "Configure project/task permissions, company scope, and Action Center mapping.",
+        ],
+    ),
     "process": ModuleReadinessDefinition(
         module_key="process",
         required_tables=[

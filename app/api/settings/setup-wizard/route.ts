@@ -5,6 +5,8 @@ import { SETUP_INTENT_COOKIE_NAME, verifySetupIntentToken } from '@/lib/auth/set
 import { normalizeLoginIdentifier } from '@/lib/auth/tenantUserLookup'
 import { ensureSetupDatabaseSchema } from '@/lib/db/setupSchema'
 import { ACCOUNTING_PERMISSIONS } from '@/lib/modules/accounting/shared/accounting.permissions'
+import { HR_PERMISSIONS } from '@/lib/modules/hr/shared/hr.permissions'
+import { PROJECT_MANAGEMENT_PERMISSIONS } from '@/lib/modules/project-management/projectManagement.permissions'
 import { createServiceClient } from '@/lib/supabase/server'
 import {
   findGlobalOrganizationByIdentity,
@@ -548,6 +550,8 @@ async function grantAllKnownPermissionsToRole(supabase: Supabase, roleId: string
   const knownPermissionKeys = Array.from(new Set([
     ...flattenPermissionKeys(PERMISSIONS),
     ...Object.values(ACCOUNTING_PERMISSIONS),
+    ...Object.values(HR_PERMISSIONS),
+    ...Object.values(PROJECT_MANAGEMENT_PERMISSIONS),
     'partners.view',
     'partners.insert',
     'partners.edit',

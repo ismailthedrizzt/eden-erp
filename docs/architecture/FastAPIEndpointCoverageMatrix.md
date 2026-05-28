@@ -134,6 +134,60 @@ Product foundation note:
 | Accounting cari transactions | `/api/v1/accounting/cari-transactions/{transaction_id}` | PATCH | yes | yes, proxy-only | yes | yes | yes | permission/company scope/version | yes | partial | Confirmed transactions are immutable except cancellation. |
 | Accounting cari transactions | `/api/v1/accounting/cari-transactions/{transaction_id}` | DELETE | yes | yes, proxy-only | yes | yes | yes | permission/company scope/delete guard | yes | partial | Hard delete is limited to draft-safe records via soft delete flag. |
 
+## HR
+
+Product foundation note:
+
+- HR domain now owns calisan kartlari, istihdam kayitlari, lifecycle
+  transactions, SGK manuel takip and employee document references.
+- Calisan karti ile istihdam lifecycle ayridir. `+ Ekle` taslak calisan karti
+  olusturur; ise giris, pozisyon, SGK ve isten cikis operation olarak
+  kaydedilir.
+- Calisan olmak, temsilci olmak veya ortak olmak ayni sey degildir. Bir kisi
+  ayni anda calisan, ortak ve temsilci olabilir; ancak bu roller ayri domain
+  iliskileriyle yonetilir.
+
+| domain | endpoint | method | FastAPI implemented? | Next proxy implemented? | frontend service mapped? | OpenAPI schema generated? | auth/tenant guard? | policy/readiness/integrity guard? | tests? | status | notes |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| HR employees | `/api/v1/hr/employees` | GET | yes | yes, proxy-only | yes | pending drift check | yes | permission/company scope/readiness | yes | partial | List filters cover company, branch, unit, position, employment, SGK, gender, education and date range. |
+| HR employees | `/api/v1/hr/employees` | POST | yes | yes, proxy-only | yes | pending drift check | yes | permission/company scope/readiness | yes | partial | Creates draft employee card only; no employment is created. |
+| HR employees | `/api/v1/hr/employees/{employee_id}` | GET | yes | yes, proxy-only | yes | pending drift check | yes | permission/tenant | yes | partial | Detail hydrates current employment fields and document warning count. |
+| HR employees | `/api/v1/hr/employees/{employee_id}` | PATCH | yes | yes, proxy-only | yes | pending drift check | yes | permission/company scope/version | yes | partial | Employment, position, SGK and exit fields are operation-controlled. |
+| HR employees | `/api/v1/hr/employees/{employee_id}` | DELETE | yes | yes, proxy-only | yes | pending drift check | yes | permission/company scope/delete guard | yes | partial | Soft delete is limited to draft cards without employment records. |
+| HR employment | `/api/v1/hr/employees/{employee_id}/employment/start` | POST | yes | yes, proxy-only | yes | pending drift check | yes | permission/company scope/readiness | yes | partial | Draft employee becomes active with active employment record. |
+| HR employment | `/api/v1/hr/employees/{employee_id}/employment/terminate` | POST | yes | yes, proxy-only | yes | pending drift check | yes | permission/company scope/readiness | yes | partial | Active employee becomes passive and employment terminated. |
+| HR employment | `/api/v1/hr/employees/{employee_id}/employment/assignment-change` | POST | yes | yes, proxy-only | yes | pending drift check | yes | permission/company scope/readiness | yes | partial | Branch/unit/position assignment transaction is recorded. |
+| HR SGK | `/api/v1/hr/employees/{employee_id}/sgk/entry-completed` | POST | yes | yes, proxy-only | yes | pending drift check | yes | permission/company scope/readiness | yes | partial | Manual SGK entry completion for MVP. |
+| HR SGK | `/api/v1/hr/employees/{employee_id}/sgk/exit-completed` | POST | yes | yes, proxy-only | yes | pending drift check | yes | permission/company scope/readiness | yes | partial | Manual SGK exit completion for MVP. |
+| HR documents | `/api/v1/hr/employees/{employee_id}/documents` | GET/POST | yes | yes, proxy-only | yes | pending drift check | yes | permission/company scope/readiness | yes | partial | Employee document references support required/missing/expired status. |
+| HR documents | `/api/v1/hr/employees/{employee_id}/documents/{document_id}` | PATCH | yes | yes, proxy-only | yes | pending drift check | yes | permission/company scope/readiness | yes | partial | Updates document status, dates and file reference. |
+| HR summary | `/api/v1/hr/employees/summary`, `/api/v1/hr/company/{company_id}/summary` | GET | yes | yes, proxy-only | yes | pending drift check | yes | permission/company scope/readiness | yes | partial | Returns active/draft/terminated/SGK counts and distributions. |
+
+## Project / Task Management
+
+Product foundation note:
+
+- Project/Task domain owns project cards, project tasks/issues, status workflow,
+  assignment, comments, attachments, related ERP record links and Kanban MVP.
+- Process task sistem isleminin parcasidir. Project task ekip is takibidir.
+  Action Center ikisini kullaniciya tek is listesi olarak gosterebilir ama veri
+  modeli ve lifecycle ayridir.
+
+| domain | endpoint | method | FastAPI implemented? | Next proxy implemented? | frontend service mapped? | OpenAPI schema generated? | auth/tenant guard? | policy/readiness/integrity guard? | tests? | status | notes |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Projects | `/api/v1/projects` | GET | yes | yes, proxy-only | yes | pending drift check | yes | permission/company scope/readiness | yes | partial | List filters cover company, branch, unit, status, type, priority, manager and date range. |
+| Projects | `/api/v1/projects` | POST | yes | yes, proxy-only | yes | pending drift check | yes | permission/company scope/readiness | yes | partial | Creates company-scoped project card with unique project_key. |
+| Projects | `/api/v1/projects/{project_id}` | GET/PATCH/DELETE | yes | yes, proxy-only | yes | pending drift check | yes | permission/company scope/version/delete guard | yes | partial | Open-task guard blocks deleting projects with active work. |
+| Projects | `/api/v1/projects/{project_id}/summary`, `/api/v1/projects/summary` | GET | yes | yes, proxy-only | yes | pending drift check | yes | permission/company scope/readiness | yes | partial | Returns total/open/done/overdue tasks and dashboard totals. |
+| Project tasks | `/api/v1/tasks/project-tasks` | GET | yes | yes, proxy-only | yes | pending drift check | yes | permission/company scope/readiness | yes | partial | Separate from process engine `/api/v1/tasks` task list. |
+| Project tasks | `/api/v1/tasks/project-tasks` | POST | yes | yes, proxy-only | yes | pending drift check | yes | permission/company scope/readiness | yes | partial | Creates project or standalone task; closed projects reject new tasks. |
+| Project tasks | `/api/v1/tasks/project-tasks/{task_id}` | GET/PATCH/DELETE | yes | yes, proxy-only | yes | pending drift check | yes | permission/company scope/version | yes | partial | Done/cancelled tasks are final for normal edit. |
+| Project task workflow | `/api/v1/tasks/project-tasks/{task_id}/transition` | POST | yes | yes, proxy-only | yes | pending drift check | yes | permission/company scope/status policy | yes | partial | Supports Jira-like MVP transition matrix; blocked requires reason. |
+| Project task assignment | `/api/v1/tasks/project-tasks/{task_id}/assign` | POST | yes | yes, proxy-only | yes | pending drift check | yes | permission/company scope/employee scope | yes | partial | User and HR employee assignment fields are supported. |
+| Project task comments | `/api/v1/tasks/project-tasks/{task_id}/comments` | GET/POST | yes | yes, proxy-only | yes | pending drift check | yes | permission/company scope/readiness | partial | partial | Creates `task.commented` history entry. |
+| Project task attachments | `/api/v1/tasks/project-tasks/{task_id}/attachments` | GET/POST | yes | yes, proxy-only | yes | pending drift check | yes | permission/company scope/readiness | partial | partial | Stores file_ref metadata without signed URL logging. |
+| My project tasks | `/api/v1/tasks/my-project-tasks` | GET | yes | yes, proxy-only | yes | pending drift check | yes | permission/company scope/readiness | partial | partial | Feeds "Bana Atananlar" and Action Center-like user work views. |
+
 ## Platform
 
 | domain | endpoint | method | FastAPI implemented? | Next proxy implemented? | frontend service mapped? | OpenAPI schema generated? | auth/tenant guard? | policy/readiness/integrity guard? | tests? | status | notes |

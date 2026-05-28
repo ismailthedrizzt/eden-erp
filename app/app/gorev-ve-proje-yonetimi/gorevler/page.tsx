@@ -1,5 +1,5 @@
-import { ProjectManagementRecordsPage } from '@/components/modules/project-management/ProjectManagementRecordsPage'
+import { ProjectTasksMvpPage } from '@/components/modules/project-management/ProjectTaskMvpPages'
 
 export default function GorevlerPage() {
-  return <ProjectManagementRecordsPage areaKey="gorevler" />
+  return <ProjectTasksMvpPage />
 }

@@ -565,6 +565,268 @@ export interface paths {
         patch: operations["update_transaction_api_v1_accounting_cari_transactions__transaction_id__patch"];
         trace?: never;
     };
+    "/api/v1/hr/employees/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Employees Summary */
+        get: operations["employees_summary_api_v1_hr_employees_summary_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/hr/company/{company_id}/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Company Hr Summary */
+        get: operations["company_hr_summary_api_v1_hr_company__company_id__summary_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/hr/employees": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Employees List */
+        get: operations["employees_list_api_v1_hr_employees_get"];
+        put?: never;
+        /** Employees Create */
+        post: operations["employees_create_api_v1_hr_employees_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/hr/employees/{employee_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Employees Get */
+        get: operations["employees_get_api_v1_hr_employees__employee_id__get"];
+        put?: never;
+        post?: never;
+        /** Employees Delete */
+        delete: operations["employees_delete_api_v1_hr_employees__employee_id__delete"];
+        options?: never;
+        head?: never;
+        /** Employees Update */
+        patch: operations["employees_update_api_v1_hr_employees__employee_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/hr/employees/{employee_id}/employment/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Employment Start */
+        post: operations["employment_start_api_v1_hr_employees__employee_id__employment_start_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/hr/employees/{employee_id}/employment/terminate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Employment Terminate */
+        post: operations["employment_terminate_api_v1_hr_employees__employee_id__employment_terminate_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/hr/employees/{employee_id}/employment/assignment-change": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Employment Assignment Change */
+        post: operations["employment_assignment_change_api_v1_hr_employees__employee_id__employment_assignment_change_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/hr/employees/{employee_id}/sgk/entry-completed": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Sgk Entry Completed */
+        post: operations["sgk_entry_completed_api_v1_hr_employees__employee_id__sgk_entry_completed_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/hr/employees/{employee_id}/sgk/exit-completed": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Sgk Exit Completed */
+        post: operations["sgk_exit_completed_api_v1_hr_employees__employee_id__sgk_exit_completed_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/hr/employees/{employee_id}/documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Documents List */
+        get: operations["documents_list_api_v1_hr_employees__employee_id__documents_get"];
+        put?: never;
+        /** Documents Create */
+        post: operations["documents_create_api_v1_hr_employees__employee_id__documents_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/hr/employees/{employee_id}/documents/{document_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Documents Update */
+        patch: operations["documents_update_api_v1_hr_employees__employee_id__documents__document_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/projects/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Projects Summary */
+        get: operations["projects_summary_api_v1_projects_summary_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Projects List */
+        get: operations["projects_list_api_v1_projects_get"];
+        put?: never;
+        /** Projects Create */
+        post: operations["projects_create_api_v1_projects_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Projects Get */
+        get: operations["projects_get_api_v1_projects__project_id__get"];
+        put?: never;
+        post?: never;
+        /** Projects Delete */
+        delete: operations["projects_delete_api_v1_projects__project_id__delete"];
+        options?: never;
+        head?: never;
+        /** Projects Update */
+        patch: operations["projects_update_api_v1_projects__project_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/projects/{project_id}/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Project Summary */
+        get: operations["project_summary_api_v1_projects__project_id__summary_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/organization/units": {
         parameters: {
             query?: never;
@@ -1028,6 +1290,130 @@ export interface paths {
         put?: never;
         /** Cancel Process Record */
         post: operations["cancel_process_record_api_v1_processes__process_id__cancel_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tasks/my-project-tasks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** My Project Tasks */
+        get: operations["my_project_tasks_api_v1_tasks_my_project_tasks_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tasks/project-tasks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Project Tasks List */
+        get: operations["project_tasks_list_api_v1_tasks_project_tasks_get"];
+        put?: never;
+        /** Project Tasks Create */
+        post: operations["project_tasks_create_api_v1_tasks_project_tasks_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tasks/project-tasks/{task_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Project Tasks Get */
+        get: operations["project_tasks_get_api_v1_tasks_project_tasks__task_id__get"];
+        put?: never;
+        post?: never;
+        /** Project Tasks Delete */
+        delete: operations["project_tasks_delete_api_v1_tasks_project_tasks__task_id__delete"];
+        options?: never;
+        head?: never;
+        /** Project Tasks Update */
+        patch: operations["project_tasks_update_api_v1_tasks_project_tasks__task_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/tasks/project-tasks/{task_id}/transition": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Project Tasks Transition */
+        post: operations["project_tasks_transition_api_v1_tasks_project_tasks__task_id__transition_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tasks/project-tasks/{task_id}/assign": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Project Tasks Assign */
+        post: operations["project_tasks_assign_api_v1_tasks_project_tasks__task_id__assign_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tasks/project-tasks/{task_id}/comments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Project Task Comments List */
+        get: operations["project_task_comments_list_api_v1_tasks_project_tasks__task_id__comments_get"];
+        put?: never;
+        /** Project Task Comments Create */
+        post: operations["project_task_comments_create_api_v1_tasks_project_tasks__task_id__comments_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tasks/project-tasks/{task_id}/attachments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Project Task Attachments List */
+        get: operations["project_task_attachments_list_api_v1_tasks_project_tasks__task_id__attachments_get"];
+        put?: never;
+        /** Project Task Attachments Create */
+        post: operations["project_task_attachments_create_api_v1_tasks_project_tasks__task_id__attachments_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1877,6 +2263,30 @@ export interface components {
             /** Assigned Permission */
             assigned_permission?: string | null;
         };
+        /** AssignmentChangeRequest */
+        AssignmentChangeRequest: {
+            /**
+             * Effective Date
+             * Format: date
+             */
+            effective_date: string;
+            /** Branch Id */
+            branch_id?: string | null;
+            /** Organization Unit Id */
+            organization_unit_id?: string | null;
+            /** Position Id */
+            position_id?: string | null;
+            /** Job Title */
+            job_title?: string | null;
+            /** Reason */
+            reason?: string | null;
+            /** Document Files */
+            document_files?: {
+                [key: string]: unknown;
+            }[];
+        } & {
+            [key: string]: unknown;
+        };
         /** BranchCardUpdateRequest */
         BranchCardUpdateRequest: {
             /** Branch Short Name */
@@ -2651,6 +3061,251 @@ export interface components {
                 [key: string]: unknown;
             };
         };
+        /** EmployeeCreateRequest */
+        EmployeeCreateRequest: {
+            /** Company Id */
+            company_id: string;
+            /** Person Id */
+            person_id?: string | null;
+            /** Employee No */
+            employee_no?: string | null;
+            /** First Name */
+            first_name: string;
+            /** Last Name */
+            last_name: string;
+            /** Full Name */
+            full_name?: string | null;
+            /** Identity Number */
+            identity_number?: string | null;
+            /** Passport No */
+            passport_no?: string | null;
+            /**
+             * Nationality
+             * @default TR
+             */
+            nationality: string | null;
+            /** Birth Date */
+            birth_date?: string | null;
+            /** Gender */
+            gender?: ("male" | "female" | "other" | "unspecified") | null;
+            /** Marital Status */
+            marital_status?: string | null;
+            /** Education Level */
+            education_level?: string | null;
+            /** Phone */
+            phone?: string | null;
+            /** Email */
+            email?: string | null;
+            /** Address */
+            address?: string | null;
+            /** City */
+            city?: string | null;
+            /** District */
+            district?: string | null;
+            /**
+             * Country
+             * @default TR
+             */
+            country: string | null;
+            /** Emergency Contact */
+            emergency_contact?: {
+                [key: string]: unknown;
+            };
+            /** Photo Url */
+            photo_url?: string | null;
+            /** Notes */
+            notes?: string | null;
+            /**
+             * Record Status
+             * @default draft
+             * @enum {string}
+             */
+            record_status: "draft" | "active" | "passive";
+            /** Metadata Json */
+            metadata_json?: {
+                [key: string]: unknown;
+            };
+        } & {
+            [key: string]: unknown;
+        };
+        /** EmployeeDocumentCreateRequest */
+        EmployeeDocumentCreateRequest: {
+            /**
+             * Document Type
+             * @enum {string}
+             */
+            document_type: "identity" | "residence" | "diploma" | "health_report" | "criminal_record" | "contract" | "sgk_entry" | "sgk_exit" | "training_certificate" | "other";
+            /** File Ref */
+            file_ref: {
+                [key: string]: unknown;
+            };
+            /** Issue Date */
+            issue_date?: string | null;
+            /** Expiry Date */
+            expiry_date?: string | null;
+            /**
+             * Status
+             * @default uploaded
+             * @enum {string}
+             */
+            status: "missing" | "uploaded" | "expired" | "rejected" | "verified";
+            /**
+             * Required
+             * @default false
+             */
+            required: boolean;
+            /** Notes */
+            notes?: string | null;
+        };
+        /** EmployeeDocumentUpdateRequest */
+        EmployeeDocumentUpdateRequest: {
+            /** File Ref */
+            file_ref?: {
+                [key: string]: unknown;
+            } | null;
+            /** Issue Date */
+            issue_date?: string | null;
+            /** Expiry Date */
+            expiry_date?: string | null;
+            /** Status */
+            status?: ("missing" | "uploaded" | "expired" | "rejected" | "verified") | null;
+            /** Required */
+            required?: boolean | null;
+            /** Notes */
+            notes?: string | null;
+        };
+        /** EmployeeUpdateRequest */
+        EmployeeUpdateRequest: {
+            /** Person Id */
+            person_id?: string | null;
+            /** Employee No */
+            employee_no?: string | null;
+            /** First Name */
+            first_name?: string | null;
+            /** Last Name */
+            last_name?: string | null;
+            /** Full Name */
+            full_name?: string | null;
+            /** Identity Number */
+            identity_number?: string | null;
+            /** Passport No */
+            passport_no?: string | null;
+            /** Nationality */
+            nationality?: string | null;
+            /** Birth Date */
+            birth_date?: string | null;
+            /** Gender */
+            gender?: ("male" | "female" | "other" | "unspecified") | null;
+            /** Marital Status */
+            marital_status?: string | null;
+            /** Education Level */
+            education_level?: string | null;
+            /** Phone */
+            phone?: string | null;
+            /** Email */
+            email?: string | null;
+            /** Address */
+            address?: string | null;
+            /** City */
+            city?: string | null;
+            /** District */
+            district?: string | null;
+            /** Country */
+            country?: string | null;
+            /** Emergency Contact */
+            emergency_contact?: {
+                [key: string]: unknown;
+            } | null;
+            /** Photo Url */
+            photo_url?: string | null;
+            /** Notes */
+            notes?: string | null;
+            /** Record Status */
+            record_status?: ("draft" | "active" | "passive") | null;
+            /** Metadata Json */
+            metadata_json?: {
+                [key: string]: unknown;
+            } | null;
+            /** Base Version */
+            base_version?: number | null;
+        } & {
+            [key: string]: unknown;
+        };
+        /** EmploymentStartRequest */
+        EmploymentStartRequest: {
+            /** Company Id */
+            company_id: string;
+            /** Branch Id */
+            branch_id?: string | null;
+            /** Organization Unit Id */
+            organization_unit_id?: string | null;
+            /** Position Id */
+            position_id?: string | null;
+            /** Job Title */
+            job_title?: string | null;
+            /**
+             * Employment Type
+             * @enum {string}
+             */
+            employment_type: "full_time" | "part_time" | "contract" | "intern" | "temporary" | "consultant";
+            /**
+             * Start Date
+             * Format: date
+             */
+            start_date: string;
+            /** Trial Period End Date */
+            trial_period_end_date?: string | null;
+            /**
+             * Sgk Status
+             * @default pending
+             * @enum {string}
+             */
+            sgk_status: "not_required" | "pending" | "submitted" | "completed" | "failed";
+            /** Sgk Workplace Registry No */
+            sgk_workplace_registry_no?: string | null;
+            /** Work Location Type */
+            work_location_type?: ("office" | "remote" | "hybrid" | "field") | null;
+            /** Manager Employee Id */
+            manager_employee_id?: string | null;
+            /** Salary Type */
+            salary_type?: string | null;
+            /** Currency */
+            currency?: string | null;
+            /** Notes */
+            notes?: string | null;
+            /** Document Files */
+            document_files?: {
+                [key: string]: unknown;
+            }[];
+        } & {
+            [key: string]: unknown;
+        };
+        /** EmploymentTerminateRequest */
+        EmploymentTerminateRequest: {
+            /**
+             * End Date
+             * Format: date
+             */
+            end_date: string;
+            /** Termination Reason */
+            termination_reason: string;
+            /**
+             * Sgk Status
+             * @default pending
+             * @enum {string}
+             */
+            sgk_status: "not_required" | "pending" | "submitted" | "completed" | "failed";
+            /** Sgk Exit Reference No */
+            sgk_exit_reference_no?: string | null;
+            /** Notes */
+            notes?: string | null;
+            /** Document Files */
+            document_files?: {
+                [key: string]: unknown;
+            }[];
+        } & {
+            [key: string]: unknown;
+        };
         /** FacilityCreateRequest */
         FacilityCreateRequest: {
             /** Company Id */
@@ -3208,6 +3863,237 @@ export interface components {
         } & {
             [key: string]: unknown;
         };
+        /** ProjectCreateRequest */
+        ProjectCreateRequest: {
+            /** Company Id */
+            company_id: string;
+            /** Branch Id */
+            branch_id?: string | null;
+            /** Organization Unit Id */
+            organization_unit_id?: string | null;
+            /** Facility Id */
+            facility_id?: string | null;
+            /** Project Key */
+            project_key?: string | null;
+            /** Project Name */
+            project_name: string;
+            /**
+             * Project Type
+             * @default internal
+             * @enum {string}
+             */
+            project_type: "internal" | "customer" | "implementation" | "support" | "rnd" | "maintenance" | "other";
+            /** Description */
+            description?: string | null;
+            /** Project Owner Id */
+            project_owner_id?: string | null;
+            /** Project Manager Id */
+            project_manager_id?: string | null;
+            /** Start Date */
+            start_date?: string | null;
+            /** Target End Date */
+            target_end_date?: string | null;
+            /** Actual End Date */
+            actual_end_date?: string | null;
+            /**
+             * Status
+             * @default active
+             * @enum {string}
+             */
+            status: "draft" | "active" | "on_hold" | "completed" | "cancelled";
+            /**
+             * Priority
+             * @default medium
+             * @enum {string}
+             */
+            priority: "lowest" | "low" | "medium" | "high" | "highest" | "urgent";
+            /**
+             * Progress Percent
+             * @default 0
+             */
+            progress_percent: number | string;
+            /** Budget Amount */
+            budget_amount?: number | string | null;
+            /** Currency */
+            currency?: string | null;
+            /** Tags */
+            tags?: string[];
+            /** Metadata Json */
+            metadata_json?: {
+                [key: string]: unknown;
+            };
+        } & {
+            [key: string]: unknown;
+        };
+        /** ProjectTaskCreateRequest */
+        ProjectTaskCreateRequest: {
+            /** Company Id */
+            company_id: string;
+            /** Project Id */
+            project_id?: string | null;
+            /** Branch Id */
+            branch_id?: string | null;
+            /** Organization Unit Id */
+            organization_unit_id?: string | null;
+            /** Facility Id */
+            facility_id?: string | null;
+            /** Issue Key */
+            issue_key?: string | null;
+            /** Title */
+            title: string;
+            /** Description */
+            description?: string | null;
+            /**
+             * Issue Type
+             * @default task
+             * @enum {string}
+             */
+            issue_type: "task" | "bug" | "improvement" | "support" | "incident" | "research" | "documentation" | "checklist";
+            /**
+             * Status
+             * @default todo
+             * @enum {string}
+             */
+            status: "backlog" | "todo" | "in_progress" | "blocked" | "review" | "done" | "cancelled";
+            /**
+             * Priority
+             * @default medium
+             * @enum {string}
+             */
+            priority: "lowest" | "low" | "medium" | "high" | "highest" | "urgent";
+            /** Assignee User Id */
+            assignee_user_id?: string | null;
+            /** Assignee Employee Id */
+            assignee_employee_id?: string | null;
+            /** Reporter User Id */
+            reporter_user_id?: string | null;
+            /** Due Date */
+            due_date?: string | null;
+            /** Start Date */
+            start_date?: string | null;
+            /** Estimated Hours */
+            estimated_hours?: number | string | null;
+            /** Spent Hours */
+            spent_hours?: number | string | null;
+            /** Labels */
+            labels?: string[];
+            /** Related Module */
+            related_module?: string | null;
+            /** Related Entity Type */
+            related_entity_type?: string | null;
+            /** Related Entity Id */
+            related_entity_id?: string | null;
+            /** Parent Task Id */
+            parent_task_id?: string | null;
+            /** Metadata Json */
+            metadata_json?: {
+                [key: string]: unknown;
+            };
+        } & {
+            [key: string]: unknown;
+        };
+        /** ProjectTaskUpdateRequest */
+        ProjectTaskUpdateRequest: {
+            /** Project Id */
+            project_id?: string | null;
+            /** Branch Id */
+            branch_id?: string | null;
+            /** Organization Unit Id */
+            organization_unit_id?: string | null;
+            /** Facility Id */
+            facility_id?: string | null;
+            /** Issue Key */
+            issue_key?: string | null;
+            /** Title */
+            title?: string | null;
+            /** Description */
+            description?: string | null;
+            /** Issue Type */
+            issue_type?: ("task" | "bug" | "improvement" | "support" | "incident" | "research" | "documentation" | "checklist") | null;
+            /** Status */
+            status?: ("backlog" | "todo" | "in_progress" | "blocked" | "review" | "done" | "cancelled") | null;
+            /** Priority */
+            priority?: ("lowest" | "low" | "medium" | "high" | "highest" | "urgent") | null;
+            /** Assignee User Id */
+            assignee_user_id?: string | null;
+            /** Assignee Employee Id */
+            assignee_employee_id?: string | null;
+            /** Reporter User Id */
+            reporter_user_id?: string | null;
+            /** Due Date */
+            due_date?: string | null;
+            /** Start Date */
+            start_date?: string | null;
+            /** Estimated Hours */
+            estimated_hours?: number | string | null;
+            /** Spent Hours */
+            spent_hours?: number | string | null;
+            /** Labels */
+            labels?: string[] | null;
+            /** Related Module */
+            related_module?: string | null;
+            /** Related Entity Type */
+            related_entity_type?: string | null;
+            /** Related Entity Id */
+            related_entity_id?: string | null;
+            /** Parent Task Id */
+            parent_task_id?: string | null;
+            /** Metadata Json */
+            metadata_json?: {
+                [key: string]: unknown;
+            } | null;
+            /** Base Version */
+            base_version?: number | null;
+        } & {
+            [key: string]: unknown;
+        };
+        /** ProjectUpdateRequest */
+        ProjectUpdateRequest: {
+            /** Branch Id */
+            branch_id?: string | null;
+            /** Organization Unit Id */
+            organization_unit_id?: string | null;
+            /** Facility Id */
+            facility_id?: string | null;
+            /** Project Key */
+            project_key?: string | null;
+            /** Project Name */
+            project_name?: string | null;
+            /** Project Type */
+            project_type?: ("internal" | "customer" | "implementation" | "support" | "rnd" | "maintenance" | "other") | null;
+            /** Description */
+            description?: string | null;
+            /** Project Owner Id */
+            project_owner_id?: string | null;
+            /** Project Manager Id */
+            project_manager_id?: string | null;
+            /** Start Date */
+            start_date?: string | null;
+            /** Target End Date */
+            target_end_date?: string | null;
+            /** Actual End Date */
+            actual_end_date?: string | null;
+            /** Status */
+            status?: ("draft" | "active" | "on_hold" | "completed" | "cancelled") | null;
+            /** Priority */
+            priority?: ("lowest" | "low" | "medium" | "high" | "highest" | "urgent") | null;
+            /** Progress Percent */
+            progress_percent?: number | string | null;
+            /** Budget Amount */
+            budget_amount?: number | string | null;
+            /** Currency */
+            currency?: string | null;
+            /** Tags */
+            tags?: string[] | null;
+            /** Metadata Json */
+            metadata_json?: {
+                [key: string]: unknown;
+            } | null;
+            /** Base Version */
+            base_version?: number | null;
+        } & {
+            [key: string]: unknown;
+        };
         /** PublicRegistrationUpdateRequest */
         PublicRegistrationUpdateRequest: {
             /** Notes */
@@ -3497,6 +4383,22 @@ export interface components {
         } & {
             [key: string]: unknown;
         };
+        /** SgkCompletedRequest */
+        SgkCompletedRequest: {
+            /**
+             * Completed Date
+             * Format: date
+             */
+            completed_date: string;
+            /** Reference No */
+            reference_no?: string | null;
+            /** Document Files */
+            document_files?: {
+                [key: string]: unknown;
+            }[];
+            /** Notes */
+            notes?: string | null;
+        };
         /** StartProcessRequest */
         StartProcessRequest: {
             /** Module Key */
@@ -3522,6 +4424,41 @@ export interface components {
             payload_json?: {
                 [key: string]: unknown;
             };
+        };
+        /** TaskAssignRequest */
+        TaskAssignRequest: {
+            /** Assignee User Id */
+            assignee_user_id?: string | null;
+            /** Assignee Employee Id */
+            assignee_employee_id?: string | null;
+            /** Reason */
+            reason?: string | null;
+        };
+        /** TaskAttachmentCreateRequest */
+        TaskAttachmentCreateRequest: {
+            /** File Ref */
+            file_ref: {
+                [key: string]: unknown;
+            };
+            /** File Name */
+            file_name: string;
+            /** File Type */
+            file_type?: string | null;
+        };
+        /** TaskCommentCreateRequest */
+        TaskCommentCreateRequest: {
+            /** Body */
+            body: string;
+        };
+        /** TaskTransitionRequest */
+        TaskTransitionRequest: {
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "backlog" | "todo" | "in_progress" | "blocked" | "review" | "done" | "cancelled";
+            /** Reason */
+            reason?: string | null;
         };
         /** TitleChangeRequest */
         TitleChangeRequest: {
@@ -5103,6 +6040,736 @@ export interface operations {
             };
         };
     };
+    employees_summary_api_v1_hr_employees_summary_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+        };
+    };
+    company_hr_summary_api_v1_hr_company__company_id__summary_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                company_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    employees_list_api_v1_hr_employees_get: {
+        parameters: {
+            query?: {
+                company_id?: string | null;
+                branch_id?: string | null;
+                organization_unit_id?: string | null;
+                position_id?: string | null;
+                employment_status?: string | null;
+                employment_type?: string | null;
+                sgk_status?: string | null;
+                gender?: string | null;
+                education_level?: string | null;
+                record_status?: string | null;
+                startDateFrom?: string | null;
+                startDateTo?: string | null;
+                search?: string | null;
+                page?: number;
+                pageSize?: number;
+                sort?: string;
+                direction?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    employees_create_api_v1_hr_employees_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EmployeeCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    employees_get_api_v1_hr_employees__employee_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                employee_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    employees_delete_api_v1_hr_employees__employee_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                employee_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    employees_update_api_v1_hr_employees__employee_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                employee_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EmployeeUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    employment_start_api_v1_hr_employees__employee_id__employment_start_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                employee_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EmploymentStartRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    employment_terminate_api_v1_hr_employees__employee_id__employment_terminate_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                employee_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EmploymentTerminateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    employment_assignment_change_api_v1_hr_employees__employee_id__employment_assignment_change_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                employee_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AssignmentChangeRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    sgk_entry_completed_api_v1_hr_employees__employee_id__sgk_entry_completed_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                employee_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SgkCompletedRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    sgk_exit_completed_api_v1_hr_employees__employee_id__sgk_exit_completed_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                employee_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SgkCompletedRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    documents_list_api_v1_hr_employees__employee_id__documents_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                employee_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_list_dict_str__Any___"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    documents_create_api_v1_hr_employees__employee_id__documents_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                employee_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EmployeeDocumentCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    documents_update_api_v1_hr_employees__employee_id__documents__document_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                employee_id: string;
+                document_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EmployeeDocumentUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    projects_summary_api_v1_projects_summary_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+        };
+    };
+    projects_list_api_v1_projects_get: {
+        parameters: {
+            query?: {
+                company_id?: string | null;
+                branch_id?: string | null;
+                organization_unit_id?: string | null;
+                status?: string | null;
+                project_type?: string | null;
+                priority?: string | null;
+                manager_id?: string | null;
+                dateFrom?: string | null;
+                dateTo?: string | null;
+                search?: string | null;
+                page?: number;
+                pageSize?: number;
+                sort?: string;
+                direction?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    projects_create_api_v1_projects_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProjectCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    projects_get_api_v1_projects__project_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    projects_delete_api_v1_projects__project_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    projects_update_api_v1_projects__project_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProjectUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    project_summary_api_v1_projects__project_id__summary_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_units_api_v1_organization_units_get: {
         parameters: {
             query?: {
@@ -6317,6 +7984,424 @@ export interface operations {
         responses: {
             /** @description Successful Response */
             200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    my_project_tasks_api_v1_tasks_my_project_tasks_get: {
+        parameters: {
+            query?: {
+                company_id?: string | null;
+                project_id?: string | null;
+                page?: number;
+                pageSize?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    project_tasks_list_api_v1_tasks_project_tasks_get: {
+        parameters: {
+            query?: {
+                company_id?: string | null;
+                project_id?: string | null;
+                branch_id?: string | null;
+                organization_unit_id?: string | null;
+                facility_id?: string | null;
+                status?: string | null;
+                priority?: string | null;
+                issue_type?: string | null;
+                assignee_user_id?: string | null;
+                assignee_employee_id?: string | null;
+                related_module?: string | null;
+                related_entity_type?: string | null;
+                related_entity_id?: string | null;
+                dueFrom?: string | null;
+                dueTo?: string | null;
+                overdue?: boolean | null;
+                label?: string | null;
+                search?: string | null;
+                page?: number;
+                pageSize?: number;
+                sort?: string;
+                direction?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    project_tasks_create_api_v1_tasks_project_tasks_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProjectTaskCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    project_tasks_get_api_v1_tasks_project_tasks__task_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                task_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    project_tasks_delete_api_v1_tasks_project_tasks__task_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                task_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    project_tasks_update_api_v1_tasks_project_tasks__task_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                task_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProjectTaskUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    project_tasks_transition_api_v1_tasks_project_tasks__task_id__transition_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                task_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TaskTransitionRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    project_tasks_assign_api_v1_tasks_project_tasks__task_id__assign_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                task_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TaskAssignRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    project_task_comments_list_api_v1_tasks_project_tasks__task_id__comments_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                task_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_list_dict_str__Any___"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    project_task_comments_create_api_v1_tasks_project_tasks__task_id__comments_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                task_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TaskCommentCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    project_task_attachments_list_api_v1_tasks_project_tasks__task_id__attachments_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                task_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_list_dict_str__Any___"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    project_task_attachments_create_api_v1_tasks_project_tasks__task_id__attachments_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                task_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TaskAttachmentCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };

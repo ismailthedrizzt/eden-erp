@@ -2,6 +2,7 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 
 export type ActionCenterSourceType =
   | 'process_task'
+  | 'project_task'
   | 'approval'
   | 'operation'
   | 'outbox'
@@ -24,7 +25,7 @@ export type ActionCenterPriority = 'low' | 'normal' | 'high' | 'urgent'
 
 export type ActionCenterSuggestedAction = {
   label: string
-  action_type: 'navigate' | 'open_record' | 'open_process' | 'open_wizard' | 'retry' | 'dismiss'
+  action_type: 'navigate' | 'open_record' | 'open_process' | 'open_wizard' | 'open_project_task' | 'transition_project_task' | 'comment_project_task' | 'retry' | 'dismiss'
   target_page?: string
   record_id?: string
   process_instance_id?: string

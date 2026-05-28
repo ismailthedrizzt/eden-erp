@@ -19,7 +19,7 @@ export function buildActionCenterSummary(items: UnifiedActionItem[]): ActionCent
     if (!['completed', 'dismissed'].includes(item.status)) summary.total_open += 1
     if (item.priority === 'urgent' || item.severity === 'critical') summary.urgent_count += 1
     if (item.source_type === 'approval') summary.approval_count += 1
-    if (item.source_type === 'process_task') summary.task_count += 1
+    if (item.source_type === 'process_task' || item.source_type === 'project_task') summary.task_count += 1
     if (item.source_type === 'operation' && item.status === 'failed') summary.failed_operation_count += 1
     if (['outbox', 'projection', 'integrity_warning', 'system'].includes(item.source_type) && item.status !== 'completed') {
       summary.system_warning_count += 1

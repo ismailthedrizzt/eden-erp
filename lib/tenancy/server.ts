@@ -74,6 +74,11 @@ const TENANT_SCOPED_TABLES = new Set([
   'project_management_projects',
   'project_management_tasks',
   'project_management_time_entries',
+  'project_projects',
+  'project_tasks',
+  'project_task_comments',
+  'project_task_attachments',
+  'project_task_history',
   'user_registration_requests',
 ])
 
