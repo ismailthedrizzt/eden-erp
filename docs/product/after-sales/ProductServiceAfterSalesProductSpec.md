@@ -59,6 +59,8 @@ Accounting fatura/tahsilat/cari hareketleri sahiplenir. Project/Task servis isin
 
 Known gaps are tracked in [AfterSalesKnownGaps.md](./AfterSalesKnownGaps.md) and summarized in the final release gate risk list.
 
+Field service deepening is specified in [AfterSalesFieldServiceProductSpec.md](./AfterSalesFieldServiceProductSpec.md).
+
 
 ## Permissions
 

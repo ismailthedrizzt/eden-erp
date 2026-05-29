@@ -6,7 +6,7 @@ import json
 from collections.abc import Mapping
 from datetime import date, datetime
 from decimal import Decimal
-from typing import Any
+from typing import Any, cast
 
 from fastapi import status
 from sqlalchemy import text
@@ -20,6 +20,11 @@ AFTER_SALES_MODULE_KEY = "after_sales"
 ASSET_TABLE = "public.after_sales_installed_assets"
 REQUEST_TABLE = "public.after_sales_service_requests"
 RECORD_TABLE = "public.after_sales_service_records"
+MAINTENANCE_PLAN_TABLE = "public.after_sales_maintenance_plans"
+MAINTENANCE_DUE_TABLE = "public.after_sales_maintenance_due_items"
+FIELD_ASSIGNMENT_TABLE = "public.after_sales_field_assignments"
+CHECKLIST_TEMPLATE_TABLE = "public.after_sales_checklist_templates"
+CHECKLIST_RESULT_TABLE = "public.after_sales_service_checklist_results"
 
 AFTER_SALES_VIEW_PERMISSION = "afterSales.view"
 AFTER_SALES_EDIT_PERMISSION = "afterSales.edit"
@@ -63,6 +68,27 @@ async def ensure_after_sales_tables(session: AsyncSession, *, assets: bool = Fal
         raise DomainError("Servis talebi altyapisi hazir degil.", "AFTER_SALES_REQUESTS_TABLE_MISSING", status.HTTP_409_CONFLICT, {"module_key": AFTER_SALES_MODULE_KEY})
     if records and not await table_exists(session, RECORD_TABLE):
         raise DomainError("Servis kaydi altyapisi hazir degil.", "AFTER_SALES_RECORDS_TABLE_MISSING", status.HTTP_409_CONFLICT, {"module_key": AFTER_SALES_MODULE_KEY})
+
+
+async def ensure_after_sales_deepening_tables(
+    session: AsyncSession,
+    *,
+    maintenance_plans: bool = False,
+    maintenance_due: bool = False,
+    assignments: bool = False,
+    checklists: bool = False,
+) -> None:
+    if maintenance_plans and not await table_exists(session, MAINTENANCE_PLAN_TABLE):
+        raise DomainError("Bakim plani altyapisi hazir degil.", "AFTER_SALES_MAINTENANCE_PLANS_TABLE_MISSING", status.HTTP_409_CONFLICT, {"module_key": AFTER_SALES_MODULE_KEY})
+    if maintenance_due and not await table_exists(session, MAINTENANCE_DUE_TABLE):
+        raise DomainError("Bakim takvimi altyapisi hazir degil.", "AFTER_SALES_MAINTENANCE_DUE_TABLE_MISSING", status.HTTP_409_CONFLICT, {"module_key": AFTER_SALES_MODULE_KEY})
+    if assignments and not await table_exists(session, FIELD_ASSIGNMENT_TABLE):
+        raise DomainError("Saha servis gorevi altyapisi hazir degil.", "AFTER_SALES_ASSIGNMENTS_TABLE_MISSING", status.HTTP_409_CONFLICT, {"module_key": AFTER_SALES_MODULE_KEY})
+    if checklists and not (
+        await table_exists(session, CHECKLIST_TEMPLATE_TABLE)
+        and await table_exists(session, CHECKLIST_RESULT_TABLE)
+    ):
+        raise DomainError("Servis checklist altyapisi hazir degil.", "AFTER_SALES_CHECKLIST_TABLE_MISSING", status.HTTP_409_CONFLICT, {"module_key": AFTER_SALES_MODULE_KEY})
 
 
 def assert_company_scope(context: dict[str, Any], company_id: str, *, write: bool = False) -> None:
@@ -220,3 +246,60 @@ async def create_project_task_for_service(session: AsyncSession, context: dict[s
         },
     )
     return row_to_dict(inserted.mappings().one())
+
+
+async def create_notification_best_effort(
+    session: AsyncSession,
+    context: dict[str, Any],
+    *,
+    user_id: str | None,
+    company_id: str | None,
+    notification_type: str,
+    title: str,
+    message: str,
+    priority: str = "normal",
+    severity: str = "info",
+    action_key: str | None = None,
+    action_label: str | None = None,
+    target_page: str | None = None,
+    related_entity_type: str | None = None,
+    related_entity_id: str | None = None,
+    related_record_label: str | None = None,
+    due_at: datetime | None = None,
+) -> dict[str, Any] | None:
+    if not user_id or not await table_exists(session, "public.notifications"):
+        return None
+    try:
+        from app.domains.notifications.notifications import create_notification
+        from app.domains.notifications.schemas import (
+            NotificationCreateRequest,
+            NotificationPriority,
+            NotificationSeverity,
+        )
+
+        return await create_notification(
+            session,
+            context,
+            NotificationCreateRequest(
+                user_id=user_id,
+                company_id=company_id,
+                module_key="after_sales",
+                notification_type=notification_type,
+                title=title,
+                message=message,
+                severity=cast(NotificationSeverity, severity),
+                priority=cast(NotificationPriority, priority),
+                action_required=bool(action_key or target_page),
+                action_key=action_key,
+                action_label=action_label,
+                target_page=target_page,
+                related_entity_type=related_entity_type,
+                related_entity_id=related_entity_id,
+                related_record_label=related_record_label,
+                due_at=due_at,
+                metadata_json={"source": "after_sales"},
+            ),
+            queue_email=False,
+        )
+    except Exception:
+        return None

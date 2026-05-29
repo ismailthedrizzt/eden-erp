@@ -1536,6 +1536,42 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/after-sales/maintenance-plans": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Maintenance Plans List */
+        get: operations["maintenance_plans_list_api_v1_after_sales_maintenance_plans_get"];
+        put?: never;
+        /** Maintenance Plans Create */
+        post: operations["maintenance_plans_create_api_v1_after_sales_maintenance_plans_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/after-sales/maintenance-plans/{plan_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Maintenance Plans Get */
+        get: operations["maintenance_plans_get_api_v1_after_sales_maintenance_plans__plan_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Maintenance Plans Update */
+        patch: operations["maintenance_plans_update_api_v1_after_sales_maintenance_plans__plan_id__patch"];
+        trace?: never;
+    };
     "/api/v1/after-sales/maintenance-due": {
         parameters: {
             query?: never;
@@ -1547,6 +1583,40 @@ export interface paths {
         get: operations["after_sales_maintenance_due_api_v1_after_sales_maintenance_due_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/after-sales/maintenance-due/{due_id}/create-service-request": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Maintenance Due Create Service Request */
+        post: operations["maintenance_due_create_service_request_api_v1_after_sales_maintenance_due__due_id__create_service_request_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/after-sales/maintenance-due/{due_id}/skip": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Maintenance Due Skip */
+        post: operations["maintenance_due_skip_api_v1_after_sales_maintenance_due__due_id__skip_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1599,6 +1669,23 @@ export interface paths {
         };
         /** Assets Service History */
         get: operations["assets_service_history_api_v1_after_sales_assets__asset_id__service_history_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/after-sales/assets/{asset_id}/warranty-check": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Assets Warranty Check */
+        get: operations["assets_warranty_check_api_v1_after_sales_assets__asset_id__warranty_check_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -1660,6 +1747,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/after-sales/service-requests/{request_id}/assign-technician": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Service Requests Assign Technician */
+        post: operations["service_requests_assign_technician_api_v1_after_sales_service_requests__request_id__assign_technician_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/after-sales/service-requests/{request_id}/close": {
         parameters: {
             query?: never;
@@ -1671,6 +1775,109 @@ export interface paths {
         put?: never;
         /** Service Requests Close */
         post: operations["service_requests_close_api_v1_after_sales_service_requests__request_id__close_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/after-sales/field-assignments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Field Assignments List */
+        get: operations["field_assignments_list_api_v1_after_sales_field_assignments_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/after-sales/field-assignments/{assignment_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Field Assignments Get */
+        get: operations["field_assignments_get_api_v1_after_sales_field_assignments__assignment_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/after-sales/field-assignments/{assignment_id}/accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Field Assignments Accept */
+        post: operations["field_assignments_accept_api_v1_after_sales_field_assignments__assignment_id__accept_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/after-sales/field-assignments/{assignment_id}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Field Assignments Reject */
+        post: operations["field_assignments_reject_api_v1_after_sales_field_assignments__assignment_id__reject_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/after-sales/field-assignments/{assignment_id}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Field Assignments Status */
+        post: operations["field_assignments_status_api_v1_after_sales_field_assignments__assignment_id__status_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/after-sales/checklist-templates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Checklist Templates List */
+        get: operations["checklist_templates_list_api_v1_after_sales_checklist_templates_get"];
+        put?: never;
+        /** Checklist Templates Create */
+        post: operations["checklist_templates_create_api_v1_after_sales_checklist_templates_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1711,6 +1918,75 @@ export interface paths {
         head?: never;
         /** Service Records Update */
         patch: operations["service_records_update_api_v1_after_sales_service_records__service_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/after-sales/service-records/{service_id}/checklist": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Service Records Checklist Get */
+        get: operations["service_records_checklist_get_api_v1_after_sales_service_records__service_id__checklist_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Service Records Checklist Patch */
+        patch: operations["service_records_checklist_patch_api_v1_after_sales_service_records__service_id__checklist_patch"];
+        trace?: never;
+    };
+    "/api/v1/after-sales/service-records/{service_id}/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Service Records Start */
+        post: operations["service_records_start_api_v1_after_sales_service_records__service_id__start_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/after-sales/service-records/{service_id}/photos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Service Records Photos */
+        post: operations["service_records_photos_api_v1_after_sales_service_records__service_id__photos_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/after-sales/service-records/{service_id}/report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Service Records Report */
+        get: operations["service_records_report_api_v1_after_sales_service_records__service_id__report_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/after-sales/service-records/{service_id}/complete": {
@@ -6001,6 +6277,35 @@ export interface components {
         } & {
             [key: string]: unknown;
         };
+        /** ChecklistTemplateCreateRequest */
+        ChecklistTemplateCreateRequest: {
+            /** Company Id */
+            company_id?: string | null;
+            /** Product Id */
+            product_id?: string | null;
+            /**
+             * Service Type
+             * @default maintenance
+             */
+            service_type: ("installation" | "repair" | "maintenance" | "inspection" | "remote_support" | "training" | "replacement" | "other") | string;
+            /** Checklist Name */
+            checklist_name: string;
+            /** Items */
+            items?: {
+                [key: string]: unknown;
+            }[];
+            /**
+             * Active
+             * @default true
+             */
+            active: boolean;
+            /** Metadata Json */
+            metadata_json?: {
+                [key: string]: unknown;
+            };
+        } & {
+            [key: string]: unknown;
+        };
         /** CompanyCardUpdateRequest */
         CompanyCardUpdateRequest: {
             /** Trade Name */
@@ -7004,6 +7309,23 @@ export interface components {
             /** Enabled */
             enabled: boolean;
         };
+        /** FieldAssignmentRejectRequest */
+        FieldAssignmentRejectRequest: {
+            /** Rejection Reason */
+            rejection_reason: string;
+        };
+        /** FieldAssignmentStatusRequest */
+        FieldAssignmentStatusRequest: {
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "assigned" | "accepted" | "rejected" | "on_the_way" | "arrived" | "in_progress" | "completed" | "cancelled";
+            /** Service Record Id */
+            service_record_id?: string | null;
+            /** Notes */
+            notes?: string | null;
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -7243,6 +7565,119 @@ export interface components {
             attachments?: {
                 [key: string]: unknown;
             }[];
+        } & {
+            [key: string]: unknown;
+        };
+        /** MaintenanceDueCreateServiceRequest */
+        MaintenanceDueCreateServiceRequest: {
+            /** Assigned User Id */
+            assigned_user_id?: string | null;
+            /** Assigned Employee Id */
+            assigned_employee_id?: string | null;
+            /**
+             * Create Project Task
+             * @default true
+             */
+            create_project_task: boolean;
+            /** Notes */
+            notes?: string | null;
+        };
+        /** MaintenanceDueSkipRequest */
+        MaintenanceDueSkipRequest: {
+            /** Notes */
+            notes?: string | null;
+        };
+        /** MaintenancePlanCreateRequest */
+        MaintenancePlanCreateRequest: {
+            /** Company Id */
+            company_id?: string | null;
+            /** Product Id */
+            product_id?: string | null;
+            /** Installed Asset Id */
+            installed_asset_id?: string | null;
+            /** Plan Name */
+            plan_name: string;
+            /**
+             * Maintenance Type
+             * @default periodic
+             * @enum {string}
+             */
+            maintenance_type: "periodic" | "warranty" | "inspection" | "calibration" | "cleaning" | "software_update" | "safety_check" | "other";
+            /**
+             * Interval Type
+             * @default days
+             * @enum {string}
+             */
+            interval_type: "days" | "weeks" | "months" | "usage_hours" | "custom";
+            /**
+             * Interval Value
+             * @default 30
+             */
+            interval_value: number;
+            /** Checklist Template Id */
+            checklist_template_id?: string | null;
+            /**
+             * Active
+             * @default true
+             */
+            active: boolean;
+            /** Next Run Date */
+            next_run_date?: string | null;
+            /** Last Run Date */
+            last_run_date?: string | null;
+            /** Assigned Team Id */
+            assigned_team_id?: string | null;
+            /**
+             * Default Priority
+             * @default medium
+             * @enum {string}
+             */
+            default_priority: "low" | "medium" | "high" | "urgent";
+            /** Notes */
+            notes?: string | null;
+            /** Metadata Json */
+            metadata_json?: {
+                [key: string]: unknown;
+            };
+        } & {
+            [key: string]: unknown;
+        };
+        /** MaintenancePlanUpdateRequest */
+        MaintenancePlanUpdateRequest: {
+            /** Company Id */
+            company_id?: string | null;
+            /** Product Id */
+            product_id?: string | null;
+            /** Installed Asset Id */
+            installed_asset_id?: string | null;
+            /** Plan Name */
+            plan_name?: string | null;
+            /** Maintenance Type */
+            maintenance_type?: ("periodic" | "warranty" | "inspection" | "calibration" | "cleaning" | "software_update" | "safety_check" | "other") | null;
+            /** Interval Type */
+            interval_type?: ("days" | "weeks" | "months" | "usage_hours" | "custom") | null;
+            /** Interval Value */
+            interval_value?: number | null;
+            /** Checklist Template Id */
+            checklist_template_id?: string | null;
+            /** Active */
+            active?: boolean | null;
+            /** Next Run Date */
+            next_run_date?: string | null;
+            /** Last Run Date */
+            last_run_date?: string | null;
+            /** Assigned Team Id */
+            assigned_team_id?: string | null;
+            /** Default Priority */
+            default_priority?: ("low" | "medium" | "high" | "urgent") | null;
+            /** Notes */
+            notes?: string | null;
+            /** Metadata Json */
+            metadata_json?: {
+                [key: string]: unknown;
+            } | null;
+            /** Base Version */
+            base_version?: number | null;
         } & {
             [key: string]: unknown;
         };
@@ -8784,6 +9219,20 @@ export interface components {
              */
             include_commands: boolean;
         };
+        /** ServiceChecklistPatchRequest */
+        ServiceChecklistPatchRequest: {
+            /** Checklist Template Id */
+            checklist_template_id: string;
+            /** Results */
+            results?: {
+                [key: string]: unknown;
+            };
+            /**
+             * Completed
+             * @default false
+             */
+            completed: boolean;
+        };
         /** ServiceRecordCompleteRequest */
         ServiceRecordCompleteRequest: {
             /**
@@ -8892,6 +9341,20 @@ export interface components {
         } & {
             [key: string]: unknown;
         };
+        /** ServiceRecordPhotosRequest */
+        ServiceRecordPhotosRequest: {
+            /** Photos */
+            photos?: {
+                [key: string]: unknown;
+            }[];
+        };
+        /** ServiceRecordStartRequest */
+        ServiceRecordStartRequest: {
+            /** Start Time */
+            start_time?: string | null;
+            /** Notes */
+            notes?: string | null;
+        };
         /** ServiceRecordUpdateRequest */
         ServiceRecordUpdateRequest: {
             /** Service Request Id */
@@ -8969,6 +9432,24 @@ export interface components {
             /** Notes */
             notes?: string | null;
         };
+        /** ServiceRequestAssignTechnicianRequest */
+        ServiceRequestAssignTechnicianRequest: {
+            /** Technician User Id */
+            technician_user_id?: string | null;
+            /** Technician Employee Id */
+            technician_employee_id?: string | null;
+            /** Scheduled Start */
+            scheduled_start?: string | null;
+            /** Scheduled End */
+            scheduled_end?: string | null;
+            /**
+             * Create Project Task
+             * @default true
+             */
+            create_project_task: boolean;
+            /** Notes */
+            notes?: string | null;
+        };
         /** ServiceRequestCloseRequest */
         ServiceRequestCloseRequest: {
             /**
@@ -9011,7 +9492,7 @@ export interface components {
              * @default new
              * @enum {string}
              */
-            status: "new" | "triage" | "assigned" | "in_progress" | "waiting_customer" | "resolved" | "closed" | "cancelled";
+            status: "new" | "triage" | "assigned" | "scheduled" | "in_progress" | "waiting_customer" | "waiting_parts" | "resolved" | "closed" | "cancelled";
             /** Subject */
             subject: string;
             /** Description */
@@ -9034,6 +9515,24 @@ export interface components {
             assigned_user_id?: string | null;
             /** Assigned Employee Id */
             assigned_employee_id?: string | null;
+            /** Schedule Date */
+            schedule_date?: string | null;
+            /** Warranty Check Result */
+            warranty_check_result?: ("in_warranty" | "out_of_warranty" | "unknown" | "void") | null;
+            /** Estimated Duration Minutes */
+            estimated_duration_minutes?: number | null;
+            /** Required Skills */
+            required_skills?: string[];
+            /** Suggested Technician User Id */
+            suggested_technician_user_id?: string | null;
+            /** Suggested Technician Employee Id */
+            suggested_technician_employee_id?: string | null;
+            /** Required Parts Preview */
+            required_parts_preview?: {
+                [key: string]: unknown;
+            }[];
+            /** Customer Availability */
+            customer_availability?: string | null;
             /** Project Task Id */
             project_task_id?: string | null;
             /**
@@ -9071,7 +9570,7 @@ export interface components {
             /** Priority */
             priority?: ("low" | "medium" | "high" | "urgent") | null;
             /** Status */
-            status?: ("new" | "triage" | "assigned" | "in_progress" | "waiting_customer" | "resolved" | "closed" | "cancelled") | null;
+            status?: ("new" | "triage" | "assigned" | "scheduled" | "in_progress" | "waiting_customer" | "waiting_parts" | "resolved" | "closed" | "cancelled") | null;
             /** Subject */
             subject?: string | null;
             /** Description */
@@ -9092,6 +9591,24 @@ export interface components {
             assigned_user_id?: string | null;
             /** Assigned Employee Id */
             assigned_employee_id?: string | null;
+            /** Schedule Date */
+            schedule_date?: string | null;
+            /** Warranty Check Result */
+            warranty_check_result?: ("in_warranty" | "out_of_warranty" | "unknown" | "void") | null;
+            /** Estimated Duration Minutes */
+            estimated_duration_minutes?: number | null;
+            /** Required Skills */
+            required_skills?: string[] | null;
+            /** Suggested Technician User Id */
+            suggested_technician_user_id?: string | null;
+            /** Suggested Technician Employee Id */
+            suggested_technician_employee_id?: string | null;
+            /** Required Parts Preview */
+            required_parts_preview?: {
+                [key: string]: unknown;
+            }[] | null;
+            /** Customer Availability */
+            customer_availability?: string | null;
             /** Project Task Id */
             project_task_id?: string | null;
             /** Source */
@@ -13362,9 +13879,153 @@ export interface operations {
             };
         };
     };
+    maintenance_plans_list_api_v1_after_sales_maintenance_plans_get: {
+        parameters: {
+            query?: {
+                company_id?: string | null;
+                product_id?: string | null;
+                installed_asset_id?: string | null;
+                active?: boolean | null;
+                search?: string | null;
+                page?: number;
+                pageSize?: number;
+                sort?: string;
+                direction?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    maintenance_plans_create_api_v1_after_sales_maintenance_plans_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MaintenancePlanCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    maintenance_plans_get_api_v1_after_sales_maintenance_plans__plan_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                plan_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    maintenance_plans_update_api_v1_after_sales_maintenance_plans__plan_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                plan_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MaintenancePlanUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     after_sales_maintenance_due_api_v1_after_sales_maintenance_due_get: {
         parameters: {
             query?: {
+                company_id?: string | null;
+                maintenance_plan_id?: string | null;
+                installed_asset_id?: string | null;
+                status?: string | null;
+                assigned_user_id?: string | null;
+                dueFrom?: string | null;
                 until?: string | null;
                 limit?: number;
             };
@@ -13381,6 +14042,76 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ApiSuccess_list_dict_str__Any___"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    maintenance_due_create_service_request_api_v1_after_sales_maintenance_due__due_id__create_service_request_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                due_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MaintenanceDueCreateServiceRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    maintenance_due_skip_api_v1_after_sales_maintenance_due__due_id__skip_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                due_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MaintenanceDueSkipRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
                 };
             };
             /** @description Validation Error */
@@ -13597,6 +14328,39 @@ export interface operations {
             };
         };
     };
+    assets_warranty_check_api_v1_after_sales_assets__asset_id__warranty_check_get: {
+        parameters: {
+            query?: {
+                serviceDate?: string | null;
+            };
+            header?: never;
+            path: {
+                asset_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     service_requests_list_api_v1_after_sales_service_requests_get: {
         parameters: {
             query?: {
@@ -13777,6 +14541,41 @@ export interface operations {
             };
         };
     };
+    service_requests_assign_technician_api_v1_after_sales_service_requests__request_id__assign_technician_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                request_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ServiceRequestAssignTechnicianRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     service_requests_close_api_v1_after_sales_service_requests__request_id__close_post: {
         parameters: {
             query?: never;
@@ -13794,6 +14593,254 @@ export interface operations {
         responses: {
             /** @description Successful Response */
             200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    field_assignments_list_api_v1_after_sales_field_assignments_get: {
+        parameters: {
+            query?: {
+                company_id?: string | null;
+                service_request_id?: string | null;
+                service_record_id?: string | null;
+                installed_asset_id?: string | null;
+                technician_user_id?: string | null;
+                technician_employee_id?: string | null;
+                status?: string | null;
+                scheduledFrom?: string | null;
+                scheduledTo?: string | null;
+                mine?: boolean;
+                page?: number;
+                pageSize?: number;
+                sort?: string;
+                direction?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    field_assignments_get_api_v1_after_sales_field_assignments__assignment_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                assignment_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    field_assignments_accept_api_v1_after_sales_field_assignments__assignment_id__accept_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                assignment_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    field_assignments_reject_api_v1_after_sales_field_assignments__assignment_id__reject_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                assignment_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FieldAssignmentRejectRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    field_assignments_status_api_v1_after_sales_field_assignments__assignment_id__status_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                assignment_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FieldAssignmentStatusRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    checklist_templates_list_api_v1_after_sales_checklist_templates_get: {
+        parameters: {
+            query?: {
+                company_id?: string | null;
+                product_id?: string | null;
+                service_type?: string | null;
+                active?: boolean | null;
+                search?: string | null;
+                page?: number;
+                pageSize?: number;
+                sort?: string;
+                direction?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    checklist_templates_create_api_v1_after_sales_checklist_templates_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChecklistTemplateCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -13936,6 +14983,173 @@ export interface operations {
                 "application/json": components["schemas"]["ServiceRecordUpdateRequest"];
             };
         };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    service_records_checklist_get_api_v1_after_sales_service_records__service_id__checklist_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                service_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    service_records_checklist_patch_api_v1_after_sales_service_records__service_id__checklist_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                service_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ServiceChecklistPatchRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    service_records_start_api_v1_after_sales_service_records__service_id__start_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                service_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ServiceRecordStartRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    service_records_photos_api_v1_after_sales_service_records__service_id__photos_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                service_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ServiceRecordPhotosRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    service_records_report_api_v1_after_sales_service_records__service_id__report_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                service_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             /** @description Successful Response */
             200: {

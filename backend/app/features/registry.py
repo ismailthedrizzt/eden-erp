@@ -349,6 +349,61 @@ FEATURE_FLAGS: list[FeatureFlagDefinition] = [
         label="Surec gorevleri",
         description="Kullanicilara atanabilen surec gorevlerini etkinlestirir.",
     ),
+    FeatureFlagDefinition(
+        key="afterSales.maintenancePlanning",
+        module_key="after_sales",
+        label="Bakim planlama",
+        description="Periyodik bakim plani ve bakimi gelen kayitlari etkinlestirir.",
+    ),
+    FeatureFlagDefinition(
+        key="afterSales.fieldService",
+        module_key="after_sales",
+        label="Saha servis",
+        description="Teknisyen atama ve saha gorevi akisini etkinlestirir.",
+    ),
+    FeatureFlagDefinition(
+        key="afterSales.mobileServiceFlow",
+        module_key="after_sales",
+        label="Mobil servis akisi",
+        description="Teknisyen icin mobil uyumlu servis akis ekranini etkinlestirir.",
+    ),
+    FeatureFlagDefinition(
+        key="afterSales.serviceChecklist",
+        module_key="after_sales",
+        label="Servis checklist",
+        description="Servis checklist sablonlari ve sonuc kayitlarini etkinlestirir.",
+    ),
+    FeatureFlagDefinition(
+        key="afterSales.partsUsed",
+        module_key="after_sales",
+        label="Kullanilan parcalar",
+        description="Serviste kullanilan malzeme hazirlik verisini etkinlestirir.",
+    ),
+    FeatureFlagDefinition(
+        key="afterSales.customerSignature",
+        module_key="after_sales",
+        label="Musteri imzasi",
+        description="Servis raporu icin musteri imzasi placeholder alanini etkinlestirir.",
+        default_enabled=False,
+    ),
+    FeatureFlagDefinition(
+        key="afterSales.serviceReport",
+        module_key="after_sales",
+        label="Servis raporu",
+        description="Servis raporu onizleme verisini etkinlestirir.",
+    ),
+    FeatureFlagDefinition(
+        key="afterSales.warrantyCheck",
+        module_key="after_sales",
+        label="Garanti kontrolu",
+        description="Kurulu urun garanti kontrolunu servis akisina baglar.",
+    ),
+    FeatureFlagDefinition(
+        key="afterSales.technicianAssignment",
+        module_key="after_sales",
+        label="Teknisyen atama",
+        description="Teknisyen user/calisan atama akislarini etkinlestirir.",
+    ),
 ]
 
 _FEATURE_BY_KEY = {flag.key: flag for flag in FEATURE_FLAGS}

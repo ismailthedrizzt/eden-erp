@@ -678,10 +678,31 @@ async def after_sales_kpis(ctx: ReportingQueryContext) -> list[KpiCard]:
     )
     maintenance_due = await safe_scalar(
         ctx,
-        "public.after_sales_installed_assets",
-        f"select count(*) from public.after_sales_installed_assets where {' and '.join(asset_where)} and next_maintenance_date <= current_date + interval '30 days'",
+        "public.after_sales_maintenance_due_items",
+        f"select count(*) from public.after_sales_maintenance_due_items where {' and '.join(where)} and status in ('scheduled','due_soon','overdue') and due_date <= current_date + interval '30 days'",
         params,
-        label="Bakimi gelen urun",
+        label="Bakim takvimi",
+    )
+    assigned_jobs = await safe_scalar(
+        ctx,
+        "public.after_sales_field_assignments",
+        f"select count(*) from public.after_sales_field_assignments where {' and '.join(where)} and status in ('assigned','accepted','on_the_way','arrived','in_progress')",
+        params,
+        label="Saha gorevi",
+    )
+    overdue_jobs = await safe_scalar(
+        ctx,
+        "public.after_sales_field_assignments",
+        f"select count(*) from public.after_sales_field_assignments where {' and '.join(where)} and status in ('assigned','accepted','on_the_way','arrived','in_progress') and scheduled_start < now()",
+        params,
+        label="Geciken saha gorevi",
+    )
+    completed_this_month = await safe_scalar(
+        ctx,
+        "public.after_sales_service_records",
+        f"select count(*) from public.after_sales_service_records where {' and '.join(where)} and status = 'completed' and service_date >= date_trunc('month', current_date)::date",
+        params,
+        label="Aylik tamamlanan servis",
     )
     return [
         card(
@@ -733,6 +754,36 @@ async def after_sales_kpis(ctx: ReportingQueryContext) -> list[KpiCard]:
             description="30 gun icinde bakim isteyen kurulu urunler.",
             target_page="/app/satis-sonrasi/bakimi-gelenler",
             status_value=status_from_count(maintenance_due, critical_at=10),
+        ),
+        card(
+            key="afterSales.assignedFieldJobs",
+            title="Saha gorevleri",
+            value=assigned_jobs,
+            module_key="after_sales",
+            permission_visible=visible,
+            description="Atanmis ve acik saha servis gorevleri.",
+            target_page="/app/satis-sonrasi/saha-gorevleri",
+            status_value=status_from_count(assigned_jobs, warning_at=10, critical_at=30),
+        ),
+        card(
+            key="afterSales.overdueServices",
+            title="Geciken servis",
+            value=overdue_jobs,
+            module_key="after_sales",
+            permission_visible=visible,
+            description="Planlanan saati gecmis acik saha gorevleri.",
+            target_page="/app/satis-sonrasi/saha-gorevleri",
+            status_value=status_from_count(overdue_jobs, warning_at=1, critical_at=5),
+        ),
+        card(
+            key="afterSales.completedThisMonth",
+            title="Bu ay tamamlanan",
+            value=completed_this_month,
+            module_key="after_sales",
+            permission_visible=visible,
+            description="Bu ay tamamlanan servis kayitlari.",
+            target_page="/app/satis-sonrasi/servis-kayitlari",
+            status_value="normal",
         ),
     ]
 

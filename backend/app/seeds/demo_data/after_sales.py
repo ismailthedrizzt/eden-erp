@@ -71,3 +71,81 @@ SERVICE_RECORDS: list[dict[str, Any]] = [
     },
 ]
 
+MAINTENANCE_PLANS: list[dict[str, Any]] = [
+    {
+        "key": "planeguard_90_day_plan",
+        "company_key": "eden_tech",
+        "product_key": "planeguard",
+        "plan_name": "PlaneGuard 90 gunluk bakim",
+        "maintenance_type": "periodic",
+        "interval_type": "days",
+        "interval_value": 90,
+        "default_priority": "high",
+        "scenario_key": "maintenance_plan_periodic",
+    },
+]
+
+MAINTENANCE_DUE_ITEMS: list[dict[str, Any]] = [
+    {
+        "key": "planeguard_due_001",
+        "company_key": "eden_tech",
+        "plan_key": "planeguard_90_day_plan",
+        "asset_key": "planeguard_asset_001",
+        "status": "due_soon",
+        "scenario_key": "maintenance_due_soon",
+    },
+]
+
+FIELD_ASSIGNMENTS: list[dict[str, Any]] = [
+    {
+        "key": "planeguard_assignment_001",
+        "company_key": "eden_tech",
+        "request_key": "service_request_open",
+        "record_key": "service_record_completed",
+        "asset_key": "planeguard_asset_001",
+        "technician_user_key": "operations",
+        "status": "assigned",
+        "scenario_key": "field_assignment_assigned",
+    },
+]
+
+CHECKLIST_TEMPLATES: list[dict[str, Any]] = [
+    {
+        "key": "planeguard_maintenance_checklist",
+        "company_key": "eden_tech",
+        "product_key": "planeguard",
+        "service_type": "maintenance",
+        "checklist_name": "PlaneGuard bakim checklist",
+        "items": [
+            {
+                "key": "visual_check",
+                "label": "Gorsel kontrol",
+                "type": "checkbox",
+                "required": True,
+            },
+            {
+                "key": "calibration_note",
+                "label": "Kalibrasyon notu",
+                "type": "text",
+                "required": False,
+            },
+        ],
+        "scenario_key": "service_checklist_template",
+    },
+]
+
+SERVICE_CHECKLIST_RESULTS: list[dict[str, Any]] = [
+    {
+        "key": "planeguard_completed_checklist",
+        "record_key": "service_record_completed",
+        "template_key": "planeguard_maintenance_checklist",
+        "results": {
+            "visual_check": True,
+            "calibration_note": "Gateway kontrol edildi, firmware ve baglanti saglikli.",
+        },
+        "completed": True,
+        "missing_required_items": [],
+        "scenario_key": "service_checklist_completed",
+    },
+]
+

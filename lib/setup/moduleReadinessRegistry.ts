@@ -117,6 +117,7 @@ export const moduleReadinessDefinitions: ModuleReadinessDefinition[] = [
   {
     moduleKey: 'after_sales',
     requiredTables: ['after_sales_installed_assets', 'after_sales_service_requests', 'after_sales_service_records'],
+    optionalTables: ['after_sales_maintenance_plans', 'after_sales_maintenance_due_items', 'after_sales_field_assignments', 'after_sales_checklist_templates', 'after_sales_service_checklist_results'],
     requiredDependencies: ['companies', 'product_services'],
     optionalDependencies: ['accounting', 'project_management', 'hr', 'facilities', 'branches'],
     setupSteps: [

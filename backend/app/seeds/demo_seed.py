@@ -18,8 +18,13 @@ from app.core.config import get_settings
 from app.core.database import DatabaseConfigurationError, get_session_factory
 from app.seeds.demo_data.accounting import CARI_ACCOUNTS, CARI_TRANSACTIONS
 from app.seeds.demo_data.after_sales import (
+    CHECKLIST_TEMPLATES,
+    FIELD_ASSIGNMENTS,
     INSTALLED_ASSETS,
+    MAINTENANCE_DUE_ITEMS,
+    MAINTENANCE_PLANS,
     PRODUCTS,
+    SERVICE_CHECKLIST_RESULTS,
     SERVICE_RECORDS,
     SERVICE_REQUESTS,
 )
@@ -78,6 +83,11 @@ RESET_ORDER = [
     "duplicate_candidate_items",
     "duplicate_candidate_groups",
     "data_quality_scores",
+    "after_sales_service_checklist_results",
+    "after_sales_field_assignments",
+    "after_sales_maintenance_due_items",
+    "after_sales_maintenance_plans",
+    "after_sales_checklist_templates",
     "after_sales_service_records",
     "after_sales_service_requests",
     "after_sales_installed_assets",
@@ -829,6 +839,59 @@ def add_product_after_sales_records(records: list[SeedRecord], tenant_id: str) -
             "status": asset["status"],
             "metadata_json": demo_metadata(str(asset["scenario_key"])),
         })
+    for template in CHECKLIST_TEMPLATES:
+        key = str(template["key"])
+        add(records, "after_sales_checklist_templates", key, {
+            "id": id_for("after_sales_checklist_template", key),
+            "tenant_id": tenant_id,
+            "company_id": id_for("company", str(template["company_key"])),
+            "product_id": id_for("product", str(template["product_key"])),
+            "service_type": template["service_type"],
+            "checklist_name": template["checklist_name"],
+            "items": template["items"],
+            "active": True,
+            "metadata_json": demo_metadata(str(template["scenario_key"])),
+            "created_by": user_id("admin"),
+            "updated_by": user_id("admin"),
+        })
+    for plan in MAINTENANCE_PLANS:
+        key = str(plan["key"])
+        add(records, "after_sales_maintenance_plans", key, {
+            "id": id_for("after_sales_maintenance_plan", key),
+            "tenant_id": tenant_id,
+            "company_id": id_for("company", str(plan["company_key"])),
+            "product_id": id_for("product", str(plan["product_key"])),
+            "plan_name": plan["plan_name"],
+            "maintenance_type": plan["maintenance_type"],
+            "interval_type": plan["interval_type"],
+            "interval_value": plan["interval_value"],
+            "checklist_template_id": id_for(
+                "after_sales_checklist_template",
+                "planeguard_maintenance_checklist",
+            ),
+            "active": True,
+            "next_run_date": today(21),
+            "last_run_date": today(-69),
+            "default_priority": plan["default_priority"],
+            "metadata_json": demo_metadata(str(plan["scenario_key"])),
+            "created_by": user_id("admin"),
+            "updated_by": user_id("admin"),
+        })
+    for due in MAINTENANCE_DUE_ITEMS:
+        key = str(due["key"])
+        add(records, "after_sales_maintenance_due_items", key, {
+            "id": id_for("after_sales_maintenance_due_item", key),
+            "tenant_id": tenant_id,
+            "company_id": id_for("company", str(due["company_key"])),
+            "maintenance_plan_id": id_for("after_sales_maintenance_plan", str(due["plan_key"])),
+            "installed_asset_id": id_for("installed_asset", str(due["asset_key"])),
+            "due_date": today(21),
+            "status": due["status"],
+            "notes": "Demo bakim takvimi kaydi",
+            "metadata_json": demo_metadata(str(due["scenario_key"])),
+            "created_by": user_id("admin"),
+            "updated_by": user_id("admin"),
+        })
     for request in SERVICE_REQUESTS:
         key = str(request["key"])
         add(records, "after_sales_service_requests", key, {
@@ -871,6 +934,45 @@ def add_product_after_sales_records(records: list[SeedRecord], tenant_id: str) -
                 demo_metadata(str(record["scenario_key"]), file_name="service-photo-demo.jpg")
             ],
             "metadata_json": demo_metadata(str(record["scenario_key"])),
+        })
+    for assignment in FIELD_ASSIGNMENTS:
+        key = str(assignment["key"])
+        add(records, "after_sales_field_assignments", key, {
+            "id": id_for("after_sales_field_assignment", key),
+            "tenant_id": tenant_id,
+            "company_id": id_for("company", str(assignment["company_key"])),
+            "service_request_id": id_for("service_request", str(assignment["request_key"])),
+            "service_record_id": (
+                id_for("service_record", str(assignment["record_key"]))
+                if assignment.get("record_key")
+                else None
+            ),
+            "installed_asset_id": id_for("installed_asset", str(assignment["asset_key"])),
+            "technician_user_id": user_id(str(assignment["technician_user_key"])),
+            "assigned_by": user_id("admin"),
+            "assigned_at": utc_now(-1),
+            "scheduled_start": utc_now(1),
+            "scheduled_end": utc_now(1) + timedelta(hours=2),
+            "status": assignment["status"],
+            "notes": "Demo saha servis gorevi",
+            "metadata_json": demo_metadata(str(assignment["scenario_key"])),
+            "created_by": user_id("admin"),
+            "updated_by": user_id("admin"),
+        })
+    for result in SERVICE_CHECKLIST_RESULTS:
+        key = str(result["key"])
+        add(records, "after_sales_service_checklist_results", key, {
+            "id": id_for("after_sales_service_checklist_result", key),
+            "tenant_id": tenant_id,
+            "service_record_id": id_for("service_record", str(result["record_key"])),
+            "checklist_template_id": id_for(
+                "after_sales_checklist_template",
+                str(result["template_key"]),
+            ),
+            "results": result["results"],
+            "completed": result["completed"],
+            "missing_required_items": result["missing_required_items"],
+            "updated_by": user_id("operations"),
         })
 
 

@@ -248,6 +248,13 @@ async def complete_service_record(session: AsyncSession, context: dict[str, Any]
         )
         if task:
             completed["follow_up_task"] = task
+    from app.domains.after_sales.assignments import complete_assignments_for_service_record
+    from app.domains.after_sales.checklists import assert_service_checklist_complete
+    from app.domains.after_sales.maintenance import complete_due_for_service_record
+
+    await assert_service_checklist_complete(session, context, completed)
+    await complete_due_for_service_record(session, context, completed)
+    await complete_assignments_for_service_record(session, context, completed)
     return completed
 
 
@@ -257,17 +264,28 @@ async def after_sales_summary(session: AsyncSession, context: dict[str, Any], co
     company_filter_asset = "and (:company_id is null or owning_company_id = :company_id)"
     company_filter = "and (:company_id is null or company_id = :company_id)"
     assets = await session.execute(text(f"select count(*) as total from public.after_sales_installed_assets where tenant_id = :tenant_id and coalesce(is_deleted, false) = false {company_filter_asset}"), params)
-    requests = await session.execute(text(f"select count(*) filter (where status in ('new','triage','assigned','in_progress','waiting_customer')) as open_total, count(*) filter (where due_date < current_date and status in ('new','triage','assigned','in_progress','waiting_customer')) as overdue from public.after_sales_service_requests where tenant_id = :tenant_id and coalesce(is_deleted, false) = false {company_filter}"), params)
+    requests = await session.execute(text(f"select count(*) filter (where status in ('new','triage','assigned','scheduled','in_progress','waiting_customer','waiting_parts')) as open_total, count(*) filter (where due_date < current_date and status in ('new','triage','assigned','scheduled','in_progress','waiting_customer','waiting_parts')) as overdue from public.after_sales_service_requests where tenant_id = :tenant_id and coalesce(is_deleted, false) = false {company_filter}"), params)
     maintenance = await session.execute(text(f"select count(*) as total from public.after_sales_installed_assets where tenant_id = :tenant_id and coalesce(is_deleted, false) = false and maintenance_required = true and next_maintenance_date <= current_date {company_filter_asset}"), params)
-    services = await session.execute(text(f"select count(*) as total from public.after_sales_service_records where tenant_id = :tenant_id and coalesce(is_deleted, false) = false and status = 'completed' {company_filter}"), params)
+    services = await session.execute(text(f"select count(*) as total, count(*) filter (where service_date >= date_trunc('month', current_date)::date) as month_total, count(*) filter (where result = 'follow_up_required') as follow_up_total from public.after_sales_service_records where tenant_id = :tenant_id and coalesce(is_deleted, false) = false and status = 'completed' {company_filter}"), params)
     status_rows = await session.execute(text(f"select status, count(*) as total from public.after_sales_service_requests where tenant_id = :tenant_id and coalesce(is_deleted, false) = false {company_filter} group by status"), params)
+    assignment_row = {"assigned_total": 0, "overdue_total": 0}
+    from app.domains.operations.service import table_exists
+
+    if await table_exists(session, "public.after_sales_field_assignments"):
+        assignment_result = await session.execute(text(f"select count(*) filter (where status in ('assigned','accepted','on_the_way','arrived','in_progress')) as assigned_total, count(*) filter (where scheduled_start < now() and status in ('assigned','accepted','on_the_way','arrived','in_progress')) as overdue_total from public.after_sales_field_assignments where tenant_id = :tenant_id and coalesce(is_deleted, false) = false {company_filter}"), params)
+        assignment_row = row_to_dict(assignment_result.mappings().one())
     request_row = requests.mappings().one()
+    service_row = services.mappings().one()
     return AfterSalesSummary(
         installed_assets=int(assets.mappings().one()["total"] or 0),
         open_service_requests=int(request_row["open_total"] or 0),
         overdue_service_requests=int(request_row["overdue"] or 0),
         maintenance_due=int(maintenance.mappings().one()["total"] or 0),
-        completed_services=int(services.mappings().one()["total"] or 0),
+        completed_services=int(service_row["total"] or 0),
+        assigned_field_jobs=int(assignment_row.get("assigned_total") or 0),
+        overdue_field_jobs=int(assignment_row.get("overdue_total") or 0),
+        completed_services_this_month=int(service_row["month_total"] or 0),
+        follow_up_required_count=int(service_row["follow_up_total"] or 0),
         by_request_status={str(row["status"]): int(row["total"] or 0) for row in status_rows.mappings()},
     )
 

@@ -22,7 +22,7 @@ REQUEST_SORT_COLUMNS = {
     "updated_at": "updated_at",
     "created_at": "created_at",
 }
-OPEN_REQUEST_STATUSES = {"new", "triage", "assigned", "in_progress", "waiting_customer"}
+OPEN_REQUEST_STATUSES = {"new", "triage", "assigned", "scheduled", "in_progress", "waiting_customer", "waiting_parts"}
 
 
 async def list_service_requests(session: AsyncSession, context: dict[str, Any], query: ServiceRequestListQuery) -> ListResult:
@@ -94,7 +94,9 @@ async def create_service_request(session: AsyncSession, context: dict[str, Any],
     if product_id:
         await get_serviceable_product(session, context["tenant_id"], product_id)
     request_no = request.request_no or await next_request_no(session, context["tenant_id"])
-    status_value = "assigned" if (request.assigned_user_id or request.assigned_employee_id) and request.status == "new" else request.status
+    status_value = request.status
+    if request.status == "new" and (request.assigned_user_id or request.assigned_employee_id):
+        status_value = "scheduled" if request.schedule_date else "assigned"
     payload = request.model_dump(exclude={"request_no", "create_project_task"})
     payload["request_no"] = request_no
     payload["status"] = status_value
@@ -106,15 +108,19 @@ async def create_service_request(session: AsyncSession, context: dict[str, Any],
               tenant_id, company_id, customer_account_id, customer_name, installed_asset_id, product_id,
               request_no, request_type, priority, status, subject, description, reported_at,
               requested_date, due_date, contact_person, contact_phone, contact_email, location,
-              assigned_user_id, assigned_employee_id, project_task_id, source, document_files,
-              notes, metadata_json, created_by, updated_by
+              assigned_user_id, assigned_employee_id, schedule_date, warranty_check_result,
+              estimated_duration_minutes, required_skills, suggested_technician_user_id,
+              suggested_technician_employee_id, required_parts_preview, customer_availability,
+              project_task_id, source, document_files, notes, metadata_json, created_by, updated_by
             )
             values (
               :tenant_id, :company_id, :customer_account_id, :customer_name, :installed_asset_id, :product_id,
               :request_no, :request_type, :priority, :status, :subject, :description, coalesce(:reported_at, now()),
               :requested_date, :due_date, :contact_person, :contact_phone, :contact_email, :location,
-              :assigned_user_id, :assigned_employee_id, :project_task_id, :source, cast(:document_files as jsonb),
-              :notes, cast(:metadata_json as jsonb), :user_id, :user_id
+              :assigned_user_id, :assigned_employee_id, :schedule_date, :warranty_check_result,
+              :estimated_duration_minutes, cast(:required_skills as jsonb), :suggested_technician_user_id,
+              :suggested_technician_employee_id, cast(:required_parts_preview as jsonb), :customer_availability,
+              :project_task_id, :source, cast(:document_files as jsonb), :notes, cast(:metadata_json as jsonb), :user_id, :user_id
             )
             returning *
             """
@@ -123,6 +129,8 @@ async def create_service_request(session: AsyncSession, context: dict[str, Any],
             "tenant_id": context["tenant_id"],
             "user_id": context.get("user_id"),
             **payload,
+            "required_skills": json_list_dumps(payload.get("required_skills")),
+            "required_parts_preview": json_list_dumps(payload.get("required_parts_preview")),
             "document_files": json_list_dumps(payload.get("document_files")),
             "metadata_json": json_dumps(payload.get("metadata_json")),
         },
@@ -160,7 +168,7 @@ async def update_service_request(session: AsyncSession, context: dict[str, Any],
         await get_serviceable_product(session, context["tenant_id"], data["product_id"])
     if not data:
         return current
-    json_fields = {"document_files": json_list_dumps, "metadata_json": json_dumps}
+    json_fields = {"document_files": json_list_dumps, "metadata_json": json_dumps, "required_skills": json_list_dumps, "required_parts_preview": json_list_dumps}
     set_parts: list[str] = []
     params = {"tenant_id": context["tenant_id"], "request_id": request_id, "user_id": context.get("user_id")}
     for key, value in data.items():

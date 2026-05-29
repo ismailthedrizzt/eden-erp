@@ -2,10 +2,10 @@
 
 import { useEffect, useState, type ReactNode } from 'react'
 import Link from 'next/link'
-import { AlertTriangle, Headphones, PackageCheck, Plus, RefreshCw, Tags, Wrench } from 'lucide-react'
+import { AlertTriangle, CalendarClock, ClipboardCheck, Headphones, Navigation, PackageCheck, Plus, RefreshCw, Tags, Wrench } from 'lucide-react'
 import { PageBanner } from '@/components/ui/PageBanner'
 import { createProduct, getProductsSummary, listProducts, type ProductCatalogRecord, type ProductSummary } from '@/lib/services/product-services'
-import { afterSalesAssets, afterSalesRecords, afterSalesRequests, listMaintenanceDue, type InstalledAssetRecord, type ServiceRecordRecord, type ServiceRequestRecord } from '@/lib/services/after-sales'
+import { afterSalesAssets, afterSalesRecords, afterSalesRequests, listMaintenanceDue, type InstalledAssetRecord, type MaintenanceDueRecord, type ServiceRecordRecord, type ServiceRequestRecord } from '@/lib/services/after-sales'
 
 const defaultProductSummary: ProductSummary = { total_products: 0, active_products: 0, after_sales_enabled: 0, maintenance_required: 0, by_type: {} }
 
@@ -33,7 +33,10 @@ export function AfterSalesHomeMvpPage() {
         <NavTile href="/app/satis-sonrasi/kurulu-urunler" icon={<PackageCheck size={20} />} title="Kurulu Urunler" text="Musteri envanteri ve garanti takibi." />
         <NavTile href="/app/satis-sonrasi/servis-talepleri" icon={<Headphones size={20} />} title="Servis Talepleri" text="Ariza, bakim, kurulum ve destek talepleri." />
         <NavTile href="/app/satis-sonrasi/servis-kayitlari" icon={<Wrench size={20} />} title="Servis Kayitlari" text="Saha ziyareti, mudahale ve rapor." />
+        <NavTile href="/app/satis-sonrasi/bakim-planlari" icon={<CalendarClock size={20} />} title="Bakim Planlari" text="Periyodik bakim kurallari ve due item uretimi." />
         <NavTile href="/app/satis-sonrasi/bakimi-gelenler" icon={<AlertTriangle size={20} />} title="Bakimi Gelenler" text="Yaklasan veya gecmis bakim kayitlari." />
+        <NavTile href="/app/satis-sonrasi/saha-gorevleri" icon={<Navigation size={20} />} title="Saha Gorevleri" text="Teknisyen atama ve mobil servis akisi." />
+        <NavTile href="/app/satis-sonrasi/checklistler" icon={<ClipboardCheck size={20} />} title="Checklistler" text="Servis turu ve urun kontrol sablonlari." />
       </div>
       <InfoPanel>
         Project task servis talebinin yerine gecmez; takip isini Action Center icine tasir. Servis talebi ve servis kaydi kendi domain lifecycle ile kalir.
@@ -333,7 +336,7 @@ export function ServiceRecordsMvpPage() {
 }
 
 export function MaintenanceDueMvpPage() {
-  const [rows, setRows] = useState<InstalledAssetRecord[]>([])
+  const [rows, setRows] = useState<MaintenanceDueRecord[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 

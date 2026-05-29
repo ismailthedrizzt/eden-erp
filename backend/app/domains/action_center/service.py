@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from typing import Any
 
 from sqlalchemy import text
@@ -276,6 +276,126 @@ async def list_action_center_items(
         items.extend(
             _normalize_document_item(row, str(context["tenant_id"]))
             for row in rows_to_dicts(list(document_result.mappings().all()))
+        )
+
+    if _can_see_after_sales_items(context) and await table_exists(
+        session,
+        "public.after_sales_maintenance_due_items",
+    ):
+        maintenance_due_result = await session.execute(
+            text(
+                """
+                select d.id, d.tenant_id, d.company_id, d.installed_asset_id,
+                       d.maintenance_plan_id, d.due_date, d.status, d.created_at,
+                       d.updated_at, p.plan_name, a.customer_name, a.product_name,
+                       a.serial_no
+                from public.after_sales_maintenance_due_items d
+                join public.after_sales_maintenance_plans p
+                  on p.tenant_id = d.tenant_id and p.id = d.maintenance_plan_id
+                join public.after_sales_installed_assets a
+                  on a.tenant_id = d.tenant_id and a.id = d.installed_asset_id
+                where d.tenant_id = :tenant_id
+                  and coalesce(d.is_deleted, false) = false
+                  and d.status in ('scheduled','due_soon','overdue')
+                  and d.due_date <= current_date + interval '30 days'
+                order by d.due_date asc
+                limit :limit
+                """
+            ),
+            {"tenant_id": context["tenant_id"], "limit": limit},
+        )
+        items.extend(
+            _normalize_after_sales_maintenance_due(row, str(context["tenant_id"]))
+            for row in rows_to_dicts(list(maintenance_due_result.mappings().all()))
+        )
+
+    if _can_see_after_sales_items(context) and await table_exists(
+        session,
+        "public.after_sales_field_assignments",
+    ):
+        assignment_user_filter = (
+            ""
+            if _can_manage_after_sales_items(context)
+            else "and a.technician_user_id = :user_id"
+        )
+        assignment_result = await session.execute(
+            text(
+                f"""
+                select a.id, a.tenant_id, a.company_id, a.service_request_id,
+                       a.service_record_id, a.installed_asset_id, a.technician_user_id,
+                       a.technician_employee_id, a.scheduled_start, a.scheduled_end,
+                       a.status, a.created_at, a.updated_at, r.request_no, r.subject,
+                       r.customer_name, r.priority
+                from public.after_sales_field_assignments a
+                left join public.after_sales_service_requests r
+                  on r.tenant_id = a.tenant_id and r.id = a.service_request_id
+                where a.tenant_id = :tenant_id
+                  and coalesce(a.is_deleted, false) = false
+                  and a.status in ('assigned','accepted','on_the_way','arrived','in_progress')
+                  {assignment_user_filter}
+                order by coalesce(a.scheduled_start, a.created_at) asc
+                limit :limit
+                """
+            ),
+            {"tenant_id": context["tenant_id"], "user_id": context.get("user_id"), "limit": limit},
+        )
+        items.extend(
+            _normalize_after_sales_assignment(row, str(context["tenant_id"]))
+            for row in rows_to_dicts(list(assignment_result.mappings().all()))
+        )
+
+    if _can_see_after_sales_items(context) and await table_exists(
+        session,
+        "public.after_sales_service_requests",
+    ):
+        overdue_request_result = await session.execute(
+            text(
+                """
+                select id, tenant_id, company_id, request_no, subject, customer_name,
+                       priority, status, due_date, updated_at, created_at
+                from public.after_sales_service_requests
+                where tenant_id = :tenant_id
+                  and coalesce(is_deleted, false) = false
+                  and due_date < current_date
+                  and status in (
+                    'new', 'triage', 'assigned', 'scheduled', 'in_progress',
+                    'waiting_customer', 'waiting_parts'
+                  )
+                order by due_date asc
+                limit :limit
+                """
+            ),
+            {"tenant_id": context["tenant_id"], "limit": limit},
+        )
+        items.extend(
+            _normalize_after_sales_overdue_request(row, str(context["tenant_id"]))
+            for row in rows_to_dicts(list(overdue_request_result.mappings().all()))
+        )
+
+    if _can_see_after_sales_items(context) and await table_exists(
+        session,
+        "public.after_sales_installed_assets",
+    ):
+        warranty_result = await session.execute(
+            text(
+                """
+                select id, tenant_id, owning_company_id as company_id, customer_name,
+                       product_name, serial_no, warranty_end_date, updated_at, created_at
+                from public.after_sales_installed_assets
+                where tenant_id = :tenant_id
+                  and coalesce(is_deleted, false) = false
+                  and status = 'active'
+                  and warranty_end_date is not null
+                  and warranty_end_date between current_date and current_date + interval '30 days'
+                order by warranty_end_date asc
+                limit :limit
+                """
+            ),
+            {"tenant_id": context["tenant_id"], "limit": limit},
+        )
+        items.extend(
+            _normalize_after_sales_warranty(row, str(context["tenant_id"]))
+            for row in rows_to_dicts(list(warranty_result.mappings().all()))
         )
 
     accounting_scope_sql = ""
@@ -909,6 +1029,149 @@ def _normalize_notification_item(row: dict[str, Any], tenant_id: str) -> dict[st
     }
 
 
+def _normalize_after_sales_maintenance_due(row: dict[str, Any], tenant_id: str) -> dict[str, Any]:
+    overdue = row.get("status") == "overdue" or _is_past_due(row.get("due_date"))
+    title = "Bakim gecikti" if overdue else "Bakim zamani yaklasiyor"
+    label = row.get("product_name") or row.get("serial_no") or row.get("plan_name") or "Kurulu urun"
+    return {
+        "id": f"after_sales_maintenance_due:{row.get('id')}",
+        "tenant_id": row.get("tenant_id") or tenant_id,
+        "company_id": row.get("company_id"),
+        "module_key": "after_sales",
+        "source_type": "maintenance_due",
+        "source_id": str(row.get("id")),
+        "title": title,
+        "description": f"{row.get('customer_name') or 'Musteri'} icin {label} bakimi bekliyor.",
+        "status": "waiting",
+        "severity": "warning" if overdue else "info",
+        "priority": "urgent" if overdue else "high",
+        "action_key": "afterSales.maintenanceDue.open",
+        "entity_type": "maintenance_due",
+        "entity_id": row.get("id"),
+        "record_label": row.get("plan_name") or label,
+        "due_at": row.get("due_date"),
+        "created_at": row.get("created_at") or _now_iso(),
+        "updated_at": row.get("updated_at"),
+        "target_page": "/app/satis-sonrasi/bakimi-gelenler",
+        "suggested_actions": [
+            {
+                "label": "Bakimi Ac",
+                "action_type": "navigate",
+                "target_page": "/app/satis-sonrasi/bakimi-gelenler",
+            },
+            {
+                "label": "Servis Talebi Olustur",
+                "action_type": "navigate",
+                "target_page": "/app/satis-sonrasi/bakimi-gelenler",
+            },
+        ],
+    }
+
+
+def _normalize_after_sales_assignment(row: dict[str, Any], tenant_id: str) -> dict[str, Any]:
+    overdue = _is_past_due(row.get("scheduled_start"))
+    target_page = f"/app/satis-sonrasi/mobil-servis/{row.get('id')}"
+    subject = row.get("subject") or row.get("request_no") or "servis"
+    return {
+        "id": f"after_sales_field_assignment:{row.get('id')}",
+        "tenant_id": row.get("tenant_id") or tenant_id,
+        "company_id": row.get("company_id"),
+        "module_key": "after_sales",
+        "source_type": "field_assignment_assigned" if not overdue else "field_assignment_overdue",
+        "source_id": str(row.get("id")),
+        "title": "Geciken saha servis gorevi" if overdue else "Saha servis gorevi var",
+        "description": f"{row.get('customer_name') or 'Musteri'} - {subject}",
+        "status": "in_progress" if row.get("status") == "in_progress" else "open",
+        "severity": "warning" if overdue else "info",
+        "priority": "urgent" if overdue or row.get("priority") == "urgent" else "high",
+        "action_key": "afterSales.fieldAssignment.open",
+        "entity_type": "field_assignment",
+        "entity_id": row.get("id"),
+        "record_label": row.get("request_no"),
+        "due_at": row.get("scheduled_start"),
+        "created_at": row.get("created_at") or _now_iso(),
+        "updated_at": row.get("updated_at"),
+        "target_page": target_page,
+        "suggested_actions": [
+            {"label": "Gorevi Ac", "action_type": "navigate", "target_page": target_page},
+            {
+                "label": "Saha Gorevleri",
+                "action_type": "navigate",
+                "target_page": "/app/satis-sonrasi/saha-gorevleri",
+            },
+        ],
+    }
+
+
+def _normalize_after_sales_overdue_request(row: dict[str, Any], tenant_id: str) -> dict[str, Any]:
+    return {
+        "id": f"after_sales_service_request_overdue:{row.get('id')}",
+        "tenant_id": row.get("tenant_id") or tenant_id,
+        "company_id": row.get("company_id"),
+        "module_key": "after_sales",
+        "source_type": "service_request_overdue",
+        "source_id": str(row.get("id")),
+        "title": "Geciken servis talebi",
+        "description": (
+            f"{row.get('customer_name') or 'Musteri'} - "
+            f"{row.get('subject') or row.get('request_no')}"
+        ),
+        "status": "waiting",
+        "severity": "warning",
+        "priority": "urgent" if row.get("priority") == "urgent" else "high",
+        "action_key": "afterSales.serviceRequest.review",
+        "entity_type": "service_request",
+        "entity_id": row.get("id"),
+        "record_label": row.get("request_no"),
+        "due_at": row.get("due_date"),
+        "created_at": row.get("created_at") or _now_iso(),
+        "updated_at": row.get("updated_at"),
+        "target_page": "/app/satis-sonrasi/servis-talepleri",
+        "suggested_actions": [
+            {
+                "label": "Talebi Ac",
+                "action_type": "navigate",
+                "target_page": "/app/satis-sonrasi/servis-talepleri",
+            }
+        ],
+    }
+
+
+def _normalize_after_sales_warranty(row: dict[str, Any], tenant_id: str) -> dict[str, Any]:
+    label = row.get("product_name") or row.get("serial_no") or "Kurulu urun"
+    return {
+        "id": f"after_sales_warranty_expiring:{row.get('id')}",
+        "tenant_id": row.get("tenant_id") or tenant_id,
+        "company_id": row.get("company_id"),
+        "module_key": "after_sales",
+        "source_type": "warranty_expiring",
+        "source_id": str(row.get("id")),
+        "title": "Garanti suresi yaklasiyor",
+        "description": (
+            f"{row.get('customer_name') or 'Musteri'} icin "
+            f"{label} garanti bitisine yaklasiyor."
+        ),
+        "status": "waiting",
+        "severity": "info",
+        "priority": "normal",
+        "action_key": "afterSales.warranty.review",
+        "entity_type": "installed_asset",
+        "entity_id": row.get("id"),
+        "record_label": label,
+        "due_at": row.get("warranty_end_date"),
+        "created_at": row.get("created_at") or _now_iso(),
+        "updated_at": row.get("updated_at"),
+        "target_page": "/app/satis-sonrasi/kurulu-urunler",
+        "suggested_actions": [
+            {
+                "label": "Kurulu Urunu Ac",
+                "action_type": "navigate",
+                "target_page": "/app/satis-sonrasi/kurulu-urunler",
+            }
+        ],
+    }
+
+
 def _normalize_accounting_item(
     row: dict[str, Any], tenant_id: str, source_kind: str
 ) -> dict[str, Any]:
@@ -1299,6 +1562,42 @@ def _can_see_accounting_items(context: dict[str, Any]) -> bool:
     return bool(permissions.intersection(ACCOUNTING_PERMISSIONS))
 
 
+def _can_see_after_sales_items(context: dict[str, Any]) -> bool:
+    if context.get("is_internal"):
+        return True
+    permissions = set(context.get("permissions") or [])
+    return bool(
+        permissions.intersection(
+            {
+                "__eden_demo_allow_all__",
+                "afterSales.view",
+                "afterSales.maintenanceView",
+                "afterSales.fieldServiceView",
+                "afterSales.fieldServiceExecute",
+                "afterSales.admin",
+                "after_sales.view",
+            }
+        )
+    )
+
+
+def _can_manage_after_sales_items(context: dict[str, Any]) -> bool:
+    if context.get("is_internal"):
+        return True
+    permissions = set(context.get("permissions") or [])
+    return bool(
+        permissions.intersection(
+            {
+                "__eden_demo_allow_all__",
+                "afterSales.requestAssign",
+                "afterSales.fieldServiceAssign",
+                "afterSales.admin",
+                "after_sales.manage",
+            }
+        )
+    )
+
+
 async def _onboarding_company_summary(session: AsyncSession, tenant_id: str) -> dict[str, int]:
     if not await table_exists(session, "public.companies"):
         return {"total": 0, "draft": 0, "active": 0}
@@ -1352,6 +1651,8 @@ def _minutes_since(value: object) -> int:
 def _parse_datetime(value: object) -> datetime | None:
     if isinstance(value, datetime):
         return value if value.tzinfo else value.replace(tzinfo=UTC)
+    if isinstance(value, date):
+        return datetime.combine(value, datetime.min.time(), tzinfo=UTC)
     if not value:
         return None
     try:
@@ -1435,6 +1736,18 @@ def _record_target_page(entity_type: object, entity_id: object, company_id: obje
         )
     if entity == "employee":
         return f"/app/ik/calisanlar?id={record_id}" if record_id else "/app/ik/calisanlar"
+    if entity in {"service_request", "after_sales_service_request"}:
+        return "/app/satis-sonrasi/servis-talepleri"
+    if entity in {"service_record", "after_sales_service_record"}:
+        return "/app/satis-sonrasi/servis-kayitlari"
+    if entity in {"field_assignment", "after_sales_field_assignment"}:
+        return (
+            f"/app/satis-sonrasi/mobil-servis/{record_id}"
+            if record_id
+            else "/app/satis-sonrasi/saha-gorevleri"
+        )
+    if entity in {"maintenance_due", "after_sales_maintenance_due_item"}:
+        return "/app/satis-sonrasi/bakimi-gelenler"
     return "/app"
 
 
@@ -1460,6 +1773,10 @@ def _record_label(entity_type: object, entity_id: object) -> str | None:
         "stakeholder": "Paydas",
         "cari_account": "Cari Kart",
         "installed_asset": "Kurulu Urun",
+        "service_request": "Servis Talebi",
+        "service_record": "Servis Kaydi",
+        "field_assignment": "Saha Gorevi",
+        "maintenance_due": "Bakim Takvimi",
     }
     return f"{labels.get(str(entity_type or ''), 'Kayit')}: {entity_id}"
 

@@ -124,6 +124,13 @@ READINESS_REGISTRY: dict[str, ModuleReadinessDefinition] = {
             "after_sales_service_requests",
             "after_sales_service_records",
         ],
+        optional_tables=[
+            "after_sales_maintenance_plans",
+            "after_sales_maintenance_due_items",
+            "after_sales_field_assignments",
+            "after_sales_checklist_templates",
+            "after_sales_service_checklist_results",
+        ],
         required_dependencies=["companies", "product_services"],
         optional_dependencies=[
             "accounting",
@@ -134,6 +141,7 @@ READINESS_REGISTRY: dict[str, ModuleReadinessDefinition] = {
         ],
         setup_steps=[
             "Create installed asset, service request, and service record tables.",
+            "Create maintenance planning, field assignment, and checklist tables for field service deepening.",
             "Configure after-sales permissions, customer/cari links, and project task integration.",
         ],
     ),
