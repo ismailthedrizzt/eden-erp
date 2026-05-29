@@ -6,11 +6,13 @@ import type {
   ModuleProjectionContract,
   ModuleRouteContract,
 } from './moduleContract.types'
+import { adminConsoleModule } from './contracts/adminConsole.module'
 import { accountingModule } from './contracts/accounting.module'
 import { afterSalesModule } from './contracts/afterSales.module'
 import { branchesModule } from './contracts/branches.module'
 import { companiesModule } from './contracts/companies.module'
 import { crmModule } from './contracts/crm.module'
+import { dataQualityModule } from './contracts/dataQuality.module'
 import { documentsModule } from './contracts/documents.module'
 import { facilitiesModule } from './contracts/facilities.module'
 import { hrModule } from './contracts/hr.module'
@@ -42,7 +44,9 @@ export const allModuleContracts = [
   crmModule,
   documentsModule,
   importExportModule,
+  dataQualityModule,
   notificationsModule,
+  adminConsoleModule,
   reportingModule,
   securityModule,
   processModule,

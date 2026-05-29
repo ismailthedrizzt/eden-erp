@@ -98,6 +98,20 @@ export const permissionRegistry = {
     emailAdmin: PERMISSIONS.notifications.emailAdmin,
     remindersManage: PERMISSIONS.notifications.remindersManage,
   },
+  dataQuality: {
+    view: PERMISSIONS.dataQuality.view,
+    runChecks: PERMISSIONS.dataQuality.runChecks,
+    reviewDuplicates: PERMISSIONS.dataQuality.reviewDuplicates,
+    merge: PERMISSIONS.dataQuality.merge,
+    dismissFinding: PERMISSIONS.dataQuality.dismissFinding,
+    admin: PERMISSIONS.dataQuality.admin,
+  },
+  adminConsole: {
+    view: PERMISSIONS.adminConsole.view,
+    manage: PERMISSIONS.adminConsole.manage,
+    technical: PERMISSIONS.adminConsole.technical,
+    outboxAdmin: PERMISSIONS.adminConsole.outboxAdmin,
+  },
 } as const
 
 const permissionAliases: Record<string, string> = {
@@ -145,6 +159,16 @@ const permissionAliases: Record<string, string> = {
   'notifications.admin': permissionRegistry.notifications.admin,
   'email.admin': permissionRegistry.notifications.emailAdmin,
   'reminders.manage': permissionRegistry.notifications.remindersManage,
+  'dataQuality.view': permissionRegistry.dataQuality.view,
+  'dataQuality.runChecks': permissionRegistry.dataQuality.runChecks,
+  'dataQuality.reviewDuplicates': permissionRegistry.dataQuality.reviewDuplicates,
+  'dataQuality.merge': permissionRegistry.dataQuality.merge,
+  'dataQuality.dismissFinding': permissionRegistry.dataQuality.dismissFinding,
+  'dataQuality.admin': permissionRegistry.dataQuality.admin,
+  'adminConsole.view': permissionRegistry.adminConsole.view,
+  'adminConsole.manage': permissionRegistry.adminConsole.manage,
+  'adminConsole.technical': permissionRegistry.adminConsole.technical,
+  'adminConsole.outboxAdmin': permissionRegistry.adminConsole.outboxAdmin,
 }
 
 export const permissionContracts = [
@@ -220,6 +244,16 @@ export const permissionContracts = [
   contract(permissionRegistry.notifications.admin, 'Sistem bildirimlerini yonetme', 'notifications', 'admin', [permissionRegistry.settings.view]),
   contract(permissionRegistry.notifications.emailAdmin, 'Sistem e-posta kuyrugunu yonetme', 'notifications', 'admin', [permissionRegistry.notifications.admin]),
   contract(permissionRegistry.notifications.remindersManage, 'Hatirlatmalari yonetme', 'notifications', 'edit', [permissionRegistry.notifications.manage]),
+  contract(permissionRegistry.dataQuality.view, 'Veri kalitesi dashboard goruntuleme', 'dataQuality', 'view', [permissionRegistry.settings.view]),
+  contract(permissionRegistry.dataQuality.runChecks, 'Veri kalite kontrollerini calistirma', 'dataQuality', 'operation', [permissionRegistry.dataQuality.view]),
+  contract(permissionRegistry.dataQuality.reviewDuplicates, 'Duplicate adaylarini inceleme', 'dataQuality', 'operation', [permissionRegistry.dataQuality.view]),
+  contract(permissionRegistry.dataQuality.merge, 'Guvenli merge onaylama', 'dataQuality', 'approval', [permissionRegistry.dataQuality.reviewDuplicates]),
+  contract(permissionRegistry.dataQuality.dismissFinding, 'Veri kalite bulgusunu kapatma', 'dataQuality', 'edit', [permissionRegistry.dataQuality.reviewDuplicates]),
+  contract(permissionRegistry.dataQuality.admin, 'Veri kalitesi kurallarini yonetme', 'dataQuality', 'admin', [permissionRegistry.dataQuality.merge]),
+  contract(permissionRegistry.adminConsole.view, 'Admin Console goruntuleme', 'adminConsole', 'view', [permissionRegistry.settings.view]),
+  contract(permissionRegistry.adminConsole.manage, 'Admin Console ayar yonetimi', 'adminConsole', 'admin', [permissionRegistry.settings.edit]),
+  contract(permissionRegistry.adminConsole.technical, 'Teknik admin bilgileri', 'adminConsole', 'admin', ['system.admin']),
+  contract(permissionRegistry.adminConsole.outboxAdmin, 'Outbox admin islemleri', 'adminConsole', 'admin', ['outbox.dispatch']),
 ] satisfies PermissionContract[]
 
 const permissionByKey = new Map(permissionContracts.map(item => [item.key, item]))

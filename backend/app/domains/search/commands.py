@@ -30,6 +30,8 @@ STATIC_COMMANDS: list[dict[str, Any]] = [
     {"key": "create_task", "label": "Gorev olustur", "module_key": "project_management", "target_page": "/app/gorev-ve-proje-yonetimi/gorevler?action=create", "description": "Yeni gorev kaydi olustur.", "icon": "ListChecks"},
     {"key": "create_service_request", "label": "Servis talebi olustur", "module_key": "after_sales", "target_page": "/app/satis-sonrasi/servis-talepleri?action=create", "description": "Yeni servis talebi ac.", "icon": "Wrench"},
     {"key": "upload_document", "label": "Belge yukle", "module_key": "documents", "target_page": "/app/belgeler?action=upload", "description": "Merkezi belge yukleme ekranina git.", "icon": "FileUp"},
+    {"key": "open_data_quality", "label": "Veri kalitesini incele", "module_key": "dataQuality", "target_page": "/app/sistem/veri-kalitesi", "description": "Duplicate adaylari, kalite skorlari ve merge review ekranini ac.", "icon": "ShieldAlert"},
+    {"key": "open_admin_console", "label": "Admin Console ac", "module_key": "adminConsole", "target_page": "/app/sistem", "description": "Calisma alani, moduller, saglik, entegrasyon ve teknik ayarlari ac.", "icon": "Settings"},
     {"key": "open_setup", "label": "Kurulum merkezine git", "module_key": "settings", "target_page": "/app/sistem/kurulum", "description": "Modul hazirligi ve kurulum adimlarini ac.", "icon": "Settings"},
     {"key": "open_audit", "label": "Audit raporu ac", "module_key": "audit", "target_page": "/app/sistem/audit", "description": "Denetim izi kayitlarini incele.", "icon": "ShieldCheck"},
 ]

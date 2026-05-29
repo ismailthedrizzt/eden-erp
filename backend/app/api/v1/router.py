@@ -4,6 +4,7 @@ from app.api.v1 import (
     accounting,
     action_center,
     action_eligibility,
+    admin,
     after_sales,
     approvals,
     audit,
@@ -11,6 +12,7 @@ from app.api.v1 import (
     companies,
     company_branches,
     crm,
+    data_quality,
     documents,
     facilities,
     features,
@@ -41,6 +43,7 @@ from app.api.v1 import (
 
 api_router = APIRouter()
 api_router.include_router(health.router, tags=["health"])
+api_router.include_router(admin.router, prefix="/admin", tags=["admin"])
 api_router.include_router(companies.router, prefix="/companies", tags=["companies"])
 api_router.include_router(company_branches.router, tags=["company branch operations"])
 api_router.include_router(branches.router, prefix="/branches", tags=["branches"])
@@ -57,6 +60,7 @@ api_router.include_router(documents.router, tags=["documents"])
 api_router.include_router(notifications.router, tags=["notifications"])
 api_router.include_router(onboarding.router, tags=["onboarding"])
 api_router.include_router(search.router, tags=["search"])
+api_router.include_router(data_quality.router, tags=["data quality"])
 api_router.include_router(security.router, prefix="/security", tags=["security"])
 api_router.include_router(organization.router, prefix="/organization", tags=["organization"])
 api_router.include_router(partners.router, prefix="/partners", tags=["partners"])

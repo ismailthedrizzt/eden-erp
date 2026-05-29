@@ -851,6 +851,10 @@ class ModuleSettingsSearchProvider(BaseSearchProvider):
 
     async def search(self, session: AsyncSession, context: dict[str, Any], request: SearchRequest) -> list[SearchResult]:
         rows = [
+            ("admin_console", "Admin Console", "Calisma alani, moduller, ozellikler, saglik ve entegrasyon ayarlari.", "setting", "Settings", "/app/sistem", "adminConsole"),
+            ("workspace_settings", "Genel Ayarlar", "Dil, para birimi, zaman dilimi ve calisma alani profili.", "setting", "SlidersHorizontal", "/app/sistem/genel", "adminConsole"),
+            ("system_health", "Sistem Sagligi", "FastAPI, DB, storage, outbox, email ve worker durumunu izle.", "setting", "Activity", "/app/sistem/saglik", "adminConsole"),
+            ("admin_features", "Ozellik Ayarlari", "Feature flag ve riskli ozellik ayarlarini yonet.", "setting", "Flag", "/app/sistem/ozellikler", "adminConsole"),
             ("setup", "Kurulum Merkezi", "Modul hazirligi ve kurulum adimlari.", "setting", "Settings", "/app/sistem/kurulum", "settings"),
             ("module_licenses", "Modul Lisanslari", "Lisans ve runtime visibility ayarlari.", "setting", "BadgeCheck", "/app/sistem/module-licenses", "settings"),
             ("notification_settings", "Bildirim Ayarlari", "Kullanici bildirim tercihleri.", "setting", "Bell", "/app/ayarlar/bildirimler", "notifications"),

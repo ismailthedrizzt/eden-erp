@@ -10,6 +10,33 @@ Legend:
 - `missing`: endpoint is not implemented yet.
 - `productization_blocker`: must be fixed before production customer rollout.
 
+## Admin Console / System Settings
+
+Product hardening note:
+
+- Admin Console centralizes workspace settings, module activation/readiness, feature flag overrides, integrations, health and outbox admin views.
+- Next routes are proxy-only and return a controlled backend configuration error when `FASTAPI_BASE_URL` is missing.
+- Secret values, raw connection strings, signed URLs and SMTP passwords are not exposed in API payloads.
+
+| domain | endpoint | method | FastAPI implemented? | Next proxy implemented? | frontend service mapped? | OpenAPI schema generated? | auth/tenant guard? | policy/readiness/integrity guard? | tests? | status | notes |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Admin | `/api/v1/admin` | GET | yes | yes, proxy-only | yes | pending drift check | yes | adminConsole.view/settings fallback | partial | partial | Dashboard summary for workspace, modules, feature flags and outbox. |
+| Admin workspace | `/api/v1/admin/workspace-settings` | GET/PATCH | yes | yes, proxy-only | yes | pending drift check | yes | adminConsole.manage/settings.edit | partial | partial | Tenant-level workspace settings with audit. |
+| Admin modules | `/api/v1/admin/modules` | GET | yes | yes, proxy-only | yes | pending drift check | yes | adminConsole.manage/settings.modulesManage | partial | partial | Module activation, readiness, dependencies and feature counts. |
+| Admin module detail | `/api/v1/admin/modules/{module_key}` | GET | yes | yes, proxy-only | yes | pending drift check | yes | adminConsole.manage/settings.modulesManage | partial | partial | Per-module readiness and flags. |
+| Admin module activation | `/api/v1/admin/modules/{module_key}/activation` | PATCH | yes | yes, proxy-only | yes | pending drift check | yes | adminConsole.manage/settings.modulesManage | partial | partial | Stores tenant activation override and emits audit/outbox. |
+| Admin features | `/api/v1/admin/features` | GET | yes | yes, proxy-only | yes | pending drift check | yes | adminConsole.manage/settings.edit | partial | partial | Lists registry feature flags with tenant override state. |
+| Admin feature update | `/api/v1/admin/features/{feature_key}` | PATCH | yes | yes, proxy-only | yes | pending drift check | yes | adminConsole.manage/settings.edit | partial | partial | Writes `feature_flag_overrides`; risky toggles remain guarded. |
+| Admin health | `/api/v1/admin/health` | GET | yes | yes, proxy-only | yes | pending drift check | yes | adminConsole.view/settings.view | partial | partial | FastAPI/DB/storage/audit/outbox/email/readiness summary. |
+| Admin deep health | `/api/v1/admin/health/deep` | GET | yes | yes, proxy-only | yes | pending drift check | yes | adminConsole.technical/system.admin | partial | partial | Admin-only technical view without secrets. |
+| Admin integrations | `/api/v1/admin/integrations` | GET | yes | yes, proxy-only | yes | pending drift check | yes | adminConsole.manage/settings.edit | partial | partial | Supabase/Auth/Storage/FastAPI/DB/SMTP/outbox status cards. |
+| Admin integration test | `/api/v1/admin/integrations/{integration_key}/test` | POST | yes | yes, proxy-only | yes | pending drift check | yes | adminConsole.manage/settings.edit | partial | partial | Test result is sanitized and audit-ready. |
+| Admin outbox | `/api/v1/admin/outbox` | GET | yes | yes, proxy-only | yes | pending drift check | yes | adminConsole.outboxAdmin/outbox.dispatch | partial | partial | Shows backlog and recent failed events. |
+| Admin outbox retry | `/api/v1/admin/outbox/{event_id}/retry` | POST | yes | yes, proxy-only | yes | pending drift check | yes | adminConsole.outboxAdmin/outbox.dispatch | partial | partial | Resets failed event to pending and audits the action. |
+| Admin outbox dispatch | `/api/v1/admin/outbox/dispatch-once` | POST | yes | yes, proxy-only | yes | pending drift check | yes | adminConsole.outboxAdmin/outbox.dispatch | partial | partial | Runs bounded dispatch once. |
+| Admin settings | `/api/v1/admin/settings` | GET | yes | yes, proxy-only | yes | pending drift check | yes | adminConsole.view/settings.view | partial | partial | Generic admin settings map plus technical summary. |
+| Admin setting update | `/api/v1/admin/settings/{settings_key}` | PATCH | yes | yes, proxy-only | yes | pending drift check | yes | adminConsole.manage/settings.edit | partial | partial | Stores tenant-scoped settings JSON with audit/outbox. |
+
 ## Company
 
 Product hardening note:
@@ -280,6 +307,31 @@ Product foundation note:
 | Security policy test | `/api/v1/security/policy-test` | POST | yes | yes, proxy-only | yes | pending drift check | yes | security.policyTest | pending | partial | Admin diagnostic returns permission, scope, module and policy reasons. |
 | Security denials | `/api/v1/security/permission-denials` | GET | yes | yes, proxy-only | yes | pending drift check | yes | security.view | pending | partial | Reads recent permission/scope denials from audit when available. |
 | Security access summary | `/api/v1/security/access-summary` | GET | yes | yes, proxy-only | yes | pending drift check | yes | security.view | pending | partial | Returns user/role/risk/denial counts and setup warnings. |
+
+## Data Quality / Master Data Governance
+
+Product foundation note:
+
+- Data Quality duplicate, missing data, quality score and merge review orchestration layeridir; master/company/crm/accounting/hr/document CRUD ownership'i devralmaz.
+- Duplicate kayitlar sessiz merge edilmez; review queue, impact preview, permission check, source/target secimi ve audit/outbox sinyali ile ilerler.
+- Company, official transaction, ownership/authority history, confirmed accounting transaction and audit logs merge edilmez; link correction veya domain-specific cleanup onerilir.
+
+| domain | endpoint | method | FastAPI implemented? | Next proxy implemented? | frontend service mapped? | OpenAPI schema generated? | auth/tenant guard? | policy/readiness/integrity guard? | tests? | status | notes |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| Data quality summary | `/api/v1/data-quality/summary` | GET | yes | yes, proxy-only | yes | pending drift check | yes | dataQuality.view | pending | partial | Returns open findings, duplicate groups, score samples and merge operation summaries. |
+| Data quality entity score | `/api/v1/data-quality/by-entity/{entity_type}/{entity_id}` | GET | yes | yes, proxy-only | yes | pending drift check | yes | dataQuality.view | pending | partial | Returns score/findings/duplicate candidates for a single entity. |
+| Data quality check | `/api/v1/data-quality/check` | POST | yes | yes, proxy-only | yes | pending drift check | yes | dataQuality.runChecks | pending | partial | Runs bounded duplicate detection and quality scoring across supported entity samples. |
+| Data quality entity check | `/api/v1/data-quality/check/{entity_type}/{entity_id}` | POST | yes | yes, proxy-only | yes | pending drift check | yes | dataQuality.runChecks | pending | partial | Recalculates score and findings for one entity. |
+| Duplicate groups | `/api/v1/data-quality/duplicates` | GET | yes | yes, proxy-only | yes | pending drift check | yes | dataQuality.reviewDuplicates | pending | partial | Lists review queue groups with entity/status/severity filters. |
+| Duplicate group detail | `/api/v1/data-quality/duplicates/{group_id}` | GET | yes | yes, proxy-only | yes | pending drift check | yes | dataQuality.reviewDuplicates | pending | partial | Returns candidate records and match fields for comparison UI. |
+| Duplicate detection | `/api/v1/data-quality/duplicates/detect` | POST | yes | yes, proxy-only | yes | pending drift check | yes | dataQuality.runChecks | pending | partial | Persists duplicate candidates from exact/strong MVP rules; no automatic merge. |
+| Duplicate dismiss | `/api/v1/data-quality/duplicates/{group_id}/dismiss` | POST | yes | yes, proxy-only | yes | pending drift check | yes | dataQuality.dismissFinding | pending | partial | Marks group reviewed/dismissed with notes and emits an audit-friendly event. |
+| Duplicate false positive | `/api/v1/data-quality/duplicates/{group_id}/false-positive` | POST | yes | yes, proxy-only | yes | pending drift check | yes | dataQuality.dismissFinding | pending | partial | Marks group as false positive without deleting candidates. |
+| Merge preview | `/api/v1/data-quality/merge/preview` | POST | yes | yes, proxy-only | yes | pending drift check | yes | dataQuality.merge + entity policy | pending | partial | Shows field conflicts, relation impact, risks and blocked reasons before confirm. |
+| Merge confirm | `/api/v1/data-quality/merge/confirm` | POST | yes | yes, proxy-only | yes | pending drift check | yes | dataQuality.merge + entity policy | pending | partial | Applies safe merges for allowed master/document-style entities; archives sources and audits. |
+| Merge operation detail | `/api/v1/data-quality/merge/{merge_id}` | GET | yes | yes, proxy-only | yes | pending drift check | yes | dataQuality.merge | pending | partial | Returns merge operation result and relation impact rows. |
+| Data quality rules | `/api/v1/data-quality/rules` | GET | yes | yes, proxy-only | yes | pending drift check | yes | dataQuality.view | pending | partial | Lists seeded/default quality rules with tenant overrides. |
+| Data quality rule update | `/api/v1/data-quality/rules/{rule_key}` | PATCH | yes | yes, proxy-only | yes | pending drift check | yes | dataQuality.admin | pending | partial | Updates active/severity/description/config override for a rule. |
 
 ## Platform
 

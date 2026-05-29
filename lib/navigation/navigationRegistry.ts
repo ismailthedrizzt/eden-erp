@@ -68,7 +68,53 @@ export const navigationItems = [
     permission: 'notifications.view',
     featureFlag: 'notifications.enabled',
   }),
-  item('settings', 'Sistem Yonetimi', '/app/sistem', 'settings', 'settings', 900),
+  item('settings', 'Sistem Yonetimi', '/app/sistem', 'settings', 'adminConsole', 900, {
+    permission: 'adminConsole.view',
+    fallbackPermission: 'settings.view',
+    featureFlag: 'adminConsole.enabled',
+  }),
+  item('workspaceSettings', 'Genel Ayarlar', '/app/sistem/genel', 'sliders-horizontal', 'adminConsole', 901, {
+    parentKey: 'settings',
+    permission: 'adminConsole.manage',
+    fallbackPermission: 'settings.edit',
+    featureFlag: 'adminConsole.workspaceSettings',
+  }),
+  item('adminModules', 'Moduller', '/app/sistem/moduller', 'wrench', 'adminConsole', 902, {
+    parentKey: 'settings',
+    permission: 'adminConsole.manage',
+    fallbackPermission: 'settings.modulesManage',
+    featureFlag: 'adminConsole.enabled',
+  }),
+  item('adminFeatures', 'Ozellikler', '/app/sistem/ozellikler', 'flag', 'adminConsole', 903, {
+    parentKey: 'settings',
+    permission: 'adminConsole.manage',
+    fallbackPermission: 'settings.edit',
+    featureFlag: 'adminConsole.enabled',
+  }),
+  item('adminHealth', 'Sistem Sagligi', '/app/sistem/saglik', 'activity', 'adminConsole', 904, {
+    parentKey: 'settings',
+    permission: 'adminConsole.view',
+    fallbackPermission: 'settings.view',
+    featureFlag: 'adminConsole.healthDashboard',
+  }),
+  item('adminOutbox', 'Outbox', '/app/sistem/outbox', 'send', 'adminConsole', 905, {
+    parentKey: 'settings',
+    permission: 'adminConsole.outboxAdmin',
+    fallbackPermission: 'outbox.dispatch',
+    featureFlag: 'adminConsole.outboxAdmin',
+  }),
+  item('adminIntegrations', 'Entegrasyonlar', '/app/sistem/entegrasyonlar', 'database', 'adminConsole', 906, {
+    parentKey: 'settings',
+    permission: 'adminConsole.manage',
+    fallbackPermission: 'settings.edit',
+    featureFlag: 'adminConsole.enabled',
+  }),
+  item('adminTechnical', 'Teknik', '/app/sistem/teknik', 'key-round', 'adminConsole', 907, {
+    parentKey: 'settings',
+    permission: 'adminConsole.technical',
+    fallbackPermission: 'system.admin',
+    featureFlag: 'adminConsole.technicalPage',
+  }),
   item('moduleLicenses', 'Modul Lisanslari', '/app/sistem/module-licenses', 'settings', 'settings', 910, {
     parentKey: 'settings',
     permission: 'settings.modulesManage',
@@ -112,7 +158,13 @@ export const navigationItems = [
     fallbackPermission: 'settings.view',
     featureFlag: 'dataExport.enabled',
   }),
-  item('systemEmails', 'Sistem E-postalari', '/app/sistem/e-postalar', 'mail', 'notifications', 936, {
+  item('dataQuality', 'Veri Kalitesi', '/app/sistem/veri-kalitesi', 'shield-alert', 'dataQuality', 936, {
+    parentKey: 'settings',
+    permission: 'dataQuality.view',
+    fallbackPermission: 'settings.view',
+    featureFlag: 'dataQuality.enabled',
+  }),
+  item('systemEmails', 'Sistem E-postalari', '/app/sistem/e-postalar', 'mail', 'notifications', 937, {
     parentKey: 'settings',
     permission: 'email.admin',
     fallbackPermission: 'settings.view',

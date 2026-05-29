@@ -56,9 +56,15 @@ async def detect_existing_duplicate(
                 row_number=row_number,
                 field=None,
                 code="EXISTING_RECORD_DUPLICATE",
-                message="Benzer veya ayni ana kayit zaten mevcut.",
-                suggested_fix="Satiri atlayin veya tekil kayit ekranindan kontrollu guncelleyin.",
-                original_value={"existing_id": duplicate_id},
+                message="Data Quality duplicate kontrolu benzer veya ayni ana kaydin zaten mevcut oldugunu buldu.",
+                suggested_fix="Satiri atlayin, mevcut master kaydi kullanin veya Veri Kalitesi ekraninda duplicate incelemesi baslatin.",
+                original_value={
+                    "existing_id": duplicate_id,
+                    "data_quality": {
+                        "warning_type": "existing_record_duplicate",
+                        "recommended_action": "skip_duplicate_or_review_merge",
+                    },
+                },
             )
         ],
     )

@@ -19,6 +19,9 @@ SYSTEM_PERMISSIONS = {
     "settings.modulesManage",
     "settings.usersManage",
     "audit.view",
+    "dataQuality.view",
+    "dataQuality.reviewDuplicates",
+    "dataQuality.merge",
     "admin",
 }
 
@@ -290,6 +293,60 @@ async def list_action_center_items(
         items.extend(
             _normalize_notification_item(row, str(context["tenant_id"]))
             for row in rows_to_dicts(list(notification_result.mappings().all()))
+        )
+
+    if _can_see_data_quality_items(context) and await table_exists(
+        session,
+        "public.data_quality_findings",
+    ):
+        quality_result = await session.execute(
+            text(
+                """
+                select id, tenant_id, entity_type, entity_id, rule_key, severity,
+                       message, status, suggested_action, created_at, resolved_at
+                from public.data_quality_findings
+                where tenant_id = :tenant_id
+                  and status = 'open'
+                order by
+                  case severity when 'critical' then 1 when 'warning' then 2 else 3 end,
+                  created_at desc
+                limit :limit
+                """
+            ),
+            {"tenant_id": context["tenant_id"], "limit": limit},
+        )
+        items.extend(
+            _normalize_data_quality_item(row, str(context["tenant_id"]))
+            for row in rows_to_dicts(list(quality_result.mappings().all()))
+        )
+
+    if _can_see_data_quality_items(context) and await table_exists(
+        session,
+        "public.duplicate_candidate_groups",
+    ):
+        duplicate_result = await session.execute(
+            text(
+                """
+                select g.id, g.tenant_id, g.entity_type, g.match_score,
+                       g.match_reason, g.severity, g.status, g.suggested_master_id,
+                       g.created_at, count(i.id)::int as candidate_count
+                from public.duplicate_candidate_groups g
+                left join public.duplicate_candidate_items i
+                  on i.tenant_id = g.tenant_id and i.group_id = g.id
+                where g.tenant_id = :tenant_id
+                  and g.status = 'open'
+                group by g.id
+                order by
+                  case g.severity when 'exact' then 1 when 'strong' then 2 else 3 end,
+                  g.match_score desc
+                limit :limit
+                """
+            ),
+            {"tenant_id": context["tenant_id"], "limit": limit},
+        )
+        items.extend(
+            _normalize_duplicate_quality_item(row, str(context["tenant_id"]))
+            for row in rows_to_dicts(list(duplicate_result.mappings().all()))
         )
 
     has_onboarding_state = await table_exists(session, "public.workspace_onboarding_state")
@@ -746,6 +803,89 @@ def _normalize_notification_item(row: dict[str, Any], tenant_id: str) -> dict[st
     }
 
 
+def _normalize_data_quality_item(row: dict[str, Any], tenant_id: str) -> dict[str, Any]:
+    severity_value = row.get("severity")
+    if severity_value == "critical":
+        severity = "critical"
+    elif severity_value == "warning":
+        severity = "warning"
+    else:
+        severity = "info"
+    entity_type = row.get("entity_type")
+    entity_id = row.get("entity_id")
+    return {
+        "id": f"data_quality_finding:{row.get('id')}",
+        "tenant_id": row.get("tenant_id") or tenant_id,
+        "module_key": "dataQuality",
+        "source_type": "data_quality",
+        "source_id": str(row.get("id")),
+        "title": _data_quality_title(row),
+        "description": row.get("message") or "Veri kalitesi bulgusu incelenmeli.",
+        "status": "waiting",
+        "severity": severity,
+        "priority": "high" if severity == "critical" else "normal",
+        "action_key": row.get("rule_key") or "data_quality.review",
+        "entity_type": entity_type,
+        "entity_id": entity_id,
+        "record_label": _record_label(entity_type, entity_id),
+        "created_at": row.get("created_at") or _now_iso(),
+        "target_page": "/app/sistem/veri-kalitesi",
+        "suggested_actions": [
+            {
+                "label": "Incele",
+                "action_type": "navigate",
+                "target_page": "/app/sistem/veri-kalitesi",
+            },
+            {
+                "label": "Ilgili Kaydi Ac",
+                "action_type": "navigate",
+                "target_page": _record_target_page(entity_type, entity_id, None),
+            },
+        ],
+    }
+
+
+def _normalize_duplicate_quality_item(row: dict[str, Any], tenant_id: str) -> dict[str, Any]:
+    severity_value = str(row.get("severity") or "")
+    severity = "critical" if severity_value == "exact" else "warning"
+    entity_type = row.get("entity_type")
+    candidate_count = row.get("candidate_count") or 0
+    description = (
+        f"{entity_type} icin {candidate_count} kayit ayni olabilir. "
+        f"{row.get('match_reason') or ''}"
+    ).strip()
+    return {
+        "id": f"data_quality_duplicate:{row.get('id')}",
+        "tenant_id": row.get("tenant_id") or tenant_id,
+        "module_key": "dataQuality",
+        "source_type": "data_quality",
+        "source_id": str(row.get("id")),
+        "title": "Duplicate adaylari incelenmeli",
+        "description": description,
+        "status": "waiting",
+        "severity": severity,
+        "priority": "high" if severity_value in {"exact", "strong"} else "normal",
+        "action_key": "data_quality.duplicates.review",
+        "entity_type": entity_type,
+        "entity_id": row.get("suggested_master_id"),
+        "record_label": f"{entity_type}: duplicate grup",
+        "created_at": row.get("created_at") or _now_iso(),
+        "target_page": "/app/sistem/veri-kalitesi",
+        "suggested_actions": [
+            {
+                "label": "Merge Incele",
+                "action_type": "navigate",
+                "target_page": "/app/sistem/veri-kalitesi",
+            },
+            {
+                "label": "Yok Say",
+                "action_type": "navigate",
+                "target_page": "/app/sistem/veri-kalitesi",
+            },
+        ],
+    }
+
+
 def _normalize_onboarding_items(
     row: dict[str, Any],
     company_summary: dict[str, int],
@@ -939,6 +1079,7 @@ def _summary(items: list[dict[str, Any]]) -> dict[str, Any]:
             "integrity_warning",
             "module_readiness",
             "onboarding",
+            "data_quality",
             "system",
         } and item.get("status") != "completed":
             system_warning_count += 1
@@ -963,6 +1104,25 @@ def _can_see_system_items(context: dict[str, Any]) -> bool:
         return True
     permissions = set(context.get("permissions") or [])
     return bool(permissions.intersection(SYSTEM_PERMISSIONS))
+
+
+def _can_see_data_quality_items(context: dict[str, Any]) -> bool:
+    if context.get("is_internal"):
+        return True
+    permissions = set(context.get("permissions") or [])
+    return bool(
+        permissions.intersection(
+            {
+                "__eden_demo_allow_all__",
+                "system.admin",
+                "settings.view",
+                "dataQuality.view",
+                "dataQuality.reviewDuplicates",
+                "dataQuality.merge",
+                "dataQuality.admin",
+            }
+        )
+    )
 
 
 async def _onboarding_company_summary(session: AsyncSession, tenant_id: str) -> dict[str, int]:
@@ -1046,6 +1206,7 @@ def _module_label(module_key: object) -> str:
         "project_management": "Proje ve Gorevler",
         "documents": "Belgeler",
         "notifications": "Bildirimler",
+        "dataQuality": "Veri Kalitesi",
     }
     return labels.get(str(module_key or ""), "Eden ERP")
 
@@ -1119,8 +1280,25 @@ def _record_label(entity_type: object, entity_id: object) -> str | None:
         "organization_unit": "Organizasyon Birimi",
         "facility": "Tesis/Lokasyon",
         "document": "Belge",
+        "data_quality": "Veri Kalitesi",
+        "master_person": "Master Kisi",
+        "master_organization": "Master Kurum",
+        "stakeholder": "Paydas",
+        "cari_account": "Cari Kart",
+        "installed_asset": "Kurulu Urun",
     }
     return f"{labels.get(str(entity_type or ''), 'Kayit')}: {entity_id}"
+
+
+def _data_quality_title(row: dict[str, Any]) -> str:
+    rule_key = str(row.get("rule_key") or "")
+    if "duplicate" in rule_key:
+        return "Duplicate veri kalite uyarisi"
+    if "missing" in rule_key:
+        return "Eksik veri kalite uyarisi"
+    if "expired" in rule_key:
+        return "Suresi dolan belge uyarisi"
+    return "Veri kalitesi uyarisi"
 
 
 def _project_task_description(row: dict[str, Any]) -> str:

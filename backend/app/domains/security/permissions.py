@@ -34,6 +34,8 @@ MODULE_LABELS: dict[str, str] = {
     "importExport": "Data Import / Export",
     "documents": "Belgeler",
     "notifications": "Bildirimler",
+    "dataQuality": "Veri Kalitesi",
+    "adminConsole": "Admin Console",
     "settings": "Kurulum/Ayarlar",
     "security": "Kullanicilar/Roller/Yetkiler",
     "system": "Sistem",
@@ -69,6 +71,11 @@ RISKY_PERMISSION_KEYS = {
     "documents.accessLogsView",
     "notifications.admin",
     "email.admin",
+    "dataQuality.merge",
+    "dataQuality.admin",
+    "adminConsole.manage",
+    "adminConsole.outboxAdmin",
+    "adminConsole.technical",
     "system.admin",
 }
 
@@ -82,6 +89,10 @@ CRITICAL_PERMISSION_KEYS = {
     "settings.modules.manage",
     "outbox.dispatch",
     "email.admin",
+    "dataQuality.admin",
+    "adminConsole.manage",
+    "adminConsole.outboxAdmin",
+    "adminConsole.technical",
 }
 
 

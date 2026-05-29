@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_session
 from app.core.security import RequestContext, require_permission
+from app.domains.admin.module_admin import is_module_enabled, set_module_activation
 from app.features.registry import feature_flag_payload, list_feature_flags
 from app.setup.readiness_checker import check_module_readiness, check_tenant_readiness
 from app.setup.readiness_registry import list_readiness_definitions
@@ -86,10 +87,20 @@ MODULE_META: dict[str, dict[str, str]] = {
         "category": "Platform",
         "description": "Kayit, islem, belge, rapor ve ayarlara komut paletiyle hizli erisim.",
     },
+    "dataQuality": {
+        "name": "Veri Kalitesi",
+        "category": "Platform",
+        "description": (
+            "Duplicate detection, kalite skorlari, merge review ve master data "
+            "governance altyapisi."
+        ),
+    },
+    "adminConsole": {
+        "name": "Admin Console",
+        "category": "Platform",
+        "description": "Calisma alani, moduller, feature flags, saglik ve sistem ayarlari merkezi.",
+    },
 }
-
-_MODULE_ACTIVATION_OVERRIDES: dict[str, dict[str, bool]] = {}
-
 
 class ModuleActivationUpdateRequest(BaseModel):
     enabled: bool
@@ -157,7 +168,7 @@ async def patch_module_activation(
                 "message": "Modul bulunamadi.",
             },
         )
-    _MODULE_ACTIVATION_OVERRIDES.setdefault(tenant_id, {})[module_key] = payload.enabled
+    set_module_activation(tenant_id, module_key, payload.enabled)
     return {
         "data": {
             "module_key": module_key,
@@ -180,7 +191,7 @@ def _module_payload(
     tenant_id: str,
 ) -> dict[str, object]:
     meta = MODULE_META.get(module_key, {})
-    enabled = _MODULE_ACTIVATION_OVERRIDES.get(tenant_id, {}).get(module_key, True)
+    enabled = is_module_enabled(tenant_id, module_key, True)
     license_status = "included"
     status_value = _module_status(enabled, license_status, readiness)
     return {

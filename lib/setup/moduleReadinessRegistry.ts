@@ -182,6 +182,28 @@ export const moduleReadinessDefinitions: ModuleReadinessDefinition[] = [
     ],
   },
   {
+    moduleKey: 'dataQuality',
+    requiredTables: ['data_quality_rules', 'data_quality_scores', 'duplicate_candidate_groups', 'duplicate_candidate_items', 'merge_operations', 'merge_operation_relations', 'data_quality_findings'],
+    optionalDependencies: ['crm', 'accounting', 'hr', 'partners', 'representatives', 'after_sales', 'documents', 'importExport', 'actionCenter', 'audit'],
+    setupSteps: [
+      setupStep('dataQuality.tables', 'Veri kalitesi tablolarini kontrol et', 'Rule, score, duplicate queue, merge operation ve finding tablolari hazir olmalidir.', 'check'),
+      setupStep('dataQuality.detection', 'Duplicate detection baglantisini kontrol et', 'Master data, cari, calisan, asset ve belge duplicate adaylari review queueya dusmelidir.', 'check'),
+      setupStep('dataQuality.merge', 'Guvenli merge politikasini kontrol et', 'Merge preview, relation impact, onay ve audit guardlari calismalidir.', 'check'),
+    ],
+  },
+  {
+    moduleKey: 'adminConsole',
+    requiredTables: ['workspace_settings', 'admin_settings', 'feature_flag_overrides', 'integration_status_cache'],
+    optionalTables: ['worker_heartbeats'],
+    optionalDependencies: ['audit', 'outbox', 'notifications', 'documents', 'importExport', 'dataQuality'],
+    setupSteps: [
+      setupStep('adminConsole.workspaceSettings', 'Calisma alani ayarlarini kontrol et', 'Tenant dili, para birimi, zaman dilimi ve profil ayarlari merkezi tabloda tutulmalidir.', 'check'),
+      setupStep('adminConsole.features', 'Feature flag override tablosunu kontrol et', 'Riskli ozellik ac/kapat islemleri auditli ve tenant scoped olmalidir.', 'check'),
+      setupStep('adminConsole.health', 'Saglik ve entegrasyon kartlarini kontrol et', 'DB, storage, outbox, email ve worker durumlari admin dilinde ozetlenmelidir.', 'check'),
+      setupStep('adminConsole.navigation', 'Admin Console navigasyonunu kontrol et', 'Genel ayarlar, moduller, ozellikler, saglik, outbox ve teknik sayfalar permission-aware gorunmelidir.', 'check'),
+    ],
+  },
+  {
     moduleKey: 'reporting',
     requiredDependencies: ['companies'],
     optionalDependencies: ['partners', 'representatives', 'branches', 'accounting', 'hr', 'project_management', 'after_sales', 'crm', 'audit', 'actionCenter'],
