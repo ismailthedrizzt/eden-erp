@@ -87,6 +87,24 @@ ReconciliationStatus = Literal[
     "ignored",
 ]
 
+BankAccountType = Literal["checking", "deposit", "credit_card", "loan", "pos", "other"]
+BankIntegrationStatus = Literal["manual", "connected", "error", "disabled"]
+ImportSource = Literal["manual", "csv", "xlsx", "bank_api", "open_banking"]
+EDocumentKind = Literal["e_invoice", "e_archive", "paper_invoice", "receipt", "other"]
+EDocumentDirection = Literal["incoming", "outgoing"]
+EDocumentStatus = Literal[
+    "received",
+    "issued",
+    "accepted",
+    "rejected",
+    "cancelled",
+    "matched",
+    "needs_review",
+]
+MatchType = Literal["automatic", "manual", "partial"]
+MatchLinkStatus = Literal["active", "removed"]
+SuggestionStatus = Literal["open", "accepted", "rejected", "expired"]
+
 RelatedModule = Literal[
     "ownership",
     "capital",
@@ -319,6 +337,372 @@ class CariTransactionListQuery(BaseModel):
     page_size: int = 50
     sort: str = "transaction_date"
     direction_sort: str = "desc"
+
+
+class BankAccountCreateRequest(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+    company_id: str
+    bank_name: str = Field(min_length=1, max_length=180)
+    bank_code: str | None = Field(default=None, max_length=40)
+    branch_name: str | None = Field(default=None, max_length=180)
+    branch_code: str | None = Field(default=None, max_length=40)
+    account_name: str = Field(min_length=1, max_length=220)
+    account_no: str | None = Field(default=None, max_length=80)
+    iban: str | None = Field(default=None, max_length=64)
+    currency: str = Field(default="TRY", min_length=3, max_length=3)
+    account_type: BankAccountType = "checking"
+    is_active: bool = True
+    opening_balance: Decimal = Decimal("0")
+    current_balance: Decimal | None = None
+    integration_status: BankIntegrationStatus = "manual"
+    notes: str | None = None
+    metadata_json: dict[str, Any] = Field(default_factory=dict)
+
+    @field_validator("currency")
+    @classmethod
+    def normalize_currency(cls, value: str) -> str:
+        return value.upper()
+
+    @field_validator("iban")
+    @classmethod
+    def normalize_iban(cls, value: str | None) -> str | None:
+        return value.replace(" ", "").upper() if value else value
+
+    @model_validator(mode="after")
+    def default_current_balance(self) -> Self:
+        self.current_balance = (
+            self.current_balance if self.current_balance is not None else self.opening_balance
+        )
+        return self
+
+
+class BankAccountUpdateRequest(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+    bank_name: str | None = Field(default=None, min_length=1, max_length=180)
+    bank_code: str | None = Field(default=None, max_length=40)
+    branch_name: str | None = Field(default=None, max_length=180)
+    branch_code: str | None = Field(default=None, max_length=40)
+    account_name: str | None = Field(default=None, min_length=1, max_length=220)
+    account_no: str | None = Field(default=None, max_length=80)
+    iban: str | None = Field(default=None, max_length=64)
+    currency: str | None = Field(default=None, min_length=3, max_length=3)
+    account_type: BankAccountType | None = None
+    is_active: bool | None = None
+    opening_balance: Decimal | None = None
+    current_balance: Decimal | None = None
+    integration_status: BankIntegrationStatus | None = None
+    notes: str | None = None
+    metadata_json: dict[str, Any] | None = None
+    base_version: int | None = None
+
+    @field_validator("currency")
+    @classmethod
+    def normalize_currency(cls, value: str | None) -> str | None:
+        return value.upper() if value else value
+
+    @field_validator("iban")
+    @classmethod
+    def normalize_iban(cls, value: str | None) -> str | None:
+        return value.replace(" ", "").upper() if value else value
+
+
+class BankAccountListQuery(BaseModel):
+    company_id: str | None = None
+    account_type: str | None = None
+    is_active: bool | None = None
+    currency: str | None = None
+    integration_status: str | None = None
+    search: str | None = None
+    page: int = 1
+    page_size: int = 50
+    sort: str = "bank_name"
+    direction: str = "asc"
+
+
+class BankTransactionCreateRequest(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+    company_id: str
+    bank_account_id: str
+    transaction_date: date
+    value_date: date | None = None
+    description: str = Field(min_length=1)
+    counterparty_name: str | None = Field(default=None, max_length=300)
+    counterparty_iban: str | None = Field(default=None, max_length=64)
+    amount: Decimal = Field(gt=0)
+    direction: Direction
+    currency: str = Field(default="TRY", min_length=3, max_length=3)
+    local_amount: Decimal | None = None
+    balance_after: Decimal | None = None
+    bank_reference_no: str | None = Field(default=None, max_length=160)
+    raw_reference: str | None = None
+    transaction_code: str | None = Field(default=None, max_length=80)
+    imported_from: ImportSource = "manual"
+    import_job_id: str | None = None
+    reconciliation_status: ReconciliationStatus = "unmatched"
+    matched_cari_transaction_id: str | None = None
+    matched_invoice_id: str | None = None
+    confidence_score: Decimal | None = None
+    notes: str | None = None
+    metadata_json: dict[str, Any] = Field(default_factory=dict)
+
+    @field_validator("currency")
+    @classmethod
+    def normalize_currency(cls, value: str) -> str:
+        return value.upper()
+
+    @field_validator("counterparty_iban")
+    @classmethod
+    def normalize_iban(cls, value: str | None) -> str | None:
+        return value.replace(" ", "").upper() if value else value
+
+    @model_validator(mode="after")
+    def default_local_amount(self) -> Self:
+        self.local_amount = self.local_amount if self.local_amount is not None else self.amount
+        return self
+
+
+class BankTransactionUpdateRequest(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+    transaction_date: date | None = None
+    value_date: date | None = None
+    description: str | None = Field(default=None, min_length=1)
+    counterparty_name: str | None = Field(default=None, max_length=300)
+    counterparty_iban: str | None = Field(default=None, max_length=64)
+    amount: Decimal | None = Field(default=None, gt=0)
+    direction: Direction | None = None
+    currency: str | None = Field(default=None, min_length=3, max_length=3)
+    local_amount: Decimal | None = None
+    balance_after: Decimal | None = None
+    bank_reference_no: str | None = Field(default=None, max_length=160)
+    raw_reference: str | None = None
+    transaction_code: str | None = Field(default=None, max_length=80)
+    reconciliation_status: ReconciliationStatus | None = None
+    matched_cari_transaction_id: str | None = None
+    matched_invoice_id: str | None = None
+    confidence_score: Decimal | None = None
+    notes: str | None = None
+    metadata_json: dict[str, Any] | None = None
+    base_version: int | None = None
+
+    @field_validator("currency")
+    @classmethod
+    def normalize_currency(cls, value: str | None) -> str | None:
+        return value.upper() if value else value
+
+    @field_validator("counterparty_iban")
+    @classmethod
+    def normalize_iban(cls, value: str | None) -> str | None:
+        return value.replace(" ", "").upper() if value else value
+
+
+class BankTransactionListQuery(BaseModel):
+    company_id: str | None = None
+    bank_account_id: str | None = None
+    direction: str | None = None
+    reconciliation_status: str | None = None
+    imported_from: str | None = None
+    date_from: date | None = None
+    date_to: date | None = None
+    search: str | None = None
+    page: int = 1
+    page_size: int = 50
+    sort: str = "transaction_date"
+    direction_sort: str = "desc"
+
+
+class BankTransactionImportRequest(BaseModel):
+    bank_account_id: str
+    imported_from: ImportSource = "csv"
+    dry_run: bool = False
+    rows: list[BankTransactionCreateRequest] = Field(default_factory=list)
+
+
+class CardTransactionCreateRequest(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+    company_id: str
+    card_account_id: str
+    card_holder_entity_type: str | None = None
+    card_holder_entity_id: str | None = None
+    transaction_date: date
+    posting_date: date | None = None
+    merchant_name: str | None = Field(default=None, max_length=300)
+    description: str = Field(min_length=1)
+    amount: Decimal = Field(gt=0)
+    currency: str = Field(default="TRY", min_length=3, max_length=3)
+    installment_count: int | None = Field(default=None, ge=1)
+    installment_no: int | None = Field(default=None, ge=1)
+    category: str | None = Field(default=None, max_length=160)
+    document_status: DocumentStatus = "document_needed"
+    reconciliation_status: ReconciliationStatus = "unmatched"
+    matched_cari_transaction_id: str | None = None
+    matched_invoice_id: str | None = None
+    import_job_id: str | None = None
+    notes: str | None = None
+    metadata_json: dict[str, Any] = Field(default_factory=dict)
+
+    @field_validator("currency")
+    @classmethod
+    def normalize_currency(cls, value: str) -> str:
+        return value.upper()
+
+
+class EDocumentCreateRequest(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+    company_id: str
+    document_kind: EDocumentKind = "e_invoice"
+    direction: EDocumentDirection = "incoming"
+    invoice_uuid: str | None = Field(default=None, max_length=160)
+    invoice_no: str = Field(min_length=1, max_length=160)
+    issue_date: date
+    due_date: date | None = None
+    sender_tax_number: str | None = Field(default=None, max_length=32)
+    sender_name: str | None = Field(default=None, max_length=300)
+    receiver_tax_number: str | None = Field(default=None, max_length=32)
+    receiver_name: str | None = Field(default=None, max_length=300)
+    total_amount: Decimal = Field(ge=0)
+    tax_amount: Decimal = Field(default=Decimal("0"), ge=0)
+    payable_amount: Decimal | None = Field(default=None, ge=0)
+    currency: str = Field(default="TRY", min_length=3, max_length=3)
+    status: EDocumentStatus = "received"
+    gib_status: str | None = Field(default=None, max_length=120)
+    scenario_type: str | None = Field(default=None, max_length=120)
+    invoice_type: str | None = Field(default=None, max_length=120)
+    xml_document_id: str | None = None
+    pdf_document_id: str | None = None
+    related_cari_account_id: str | None = None
+    matched_cari_transaction_id: str | None = None
+    matched_bank_transaction_id: str | None = None
+    reconciliation_status: ReconciliationStatus = "unmatched"
+    import_job_id: str | None = None
+    raw_data: dict[str, Any] = Field(default_factory=dict)
+    notes: str | None = None
+    metadata_json: dict[str, Any] = Field(default_factory=dict)
+
+    @field_validator("currency")
+    @classmethod
+    def normalize_currency(cls, value: str) -> str:
+        return value.upper()
+
+    @model_validator(mode="after")
+    def default_payable_amount(self) -> Self:
+        self.payable_amount = (
+            self.payable_amount if self.payable_amount is not None else self.total_amount
+        )
+        return self
+
+
+class EDocumentUpdateRequest(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+    document_kind: EDocumentKind | None = None
+    direction: EDocumentDirection | None = None
+    invoice_uuid: str | None = Field(default=None, max_length=160)
+    invoice_no: str | None = Field(default=None, min_length=1, max_length=160)
+    issue_date: date | None = None
+    due_date: date | None = None
+    sender_tax_number: str | None = Field(default=None, max_length=32)
+    sender_name: str | None = Field(default=None, max_length=300)
+    receiver_tax_number: str | None = Field(default=None, max_length=32)
+    receiver_name: str | None = Field(default=None, max_length=300)
+    total_amount: Decimal | None = Field(default=None, ge=0)
+    tax_amount: Decimal | None = Field(default=None, ge=0)
+    payable_amount: Decimal | None = Field(default=None, ge=0)
+    currency: str | None = Field(default=None, min_length=3, max_length=3)
+    status: EDocumentStatus | None = None
+    gib_status: str | None = Field(default=None, max_length=120)
+    scenario_type: str | None = Field(default=None, max_length=120)
+    invoice_type: str | None = Field(default=None, max_length=120)
+    xml_document_id: str | None = None
+    pdf_document_id: str | None = None
+    related_cari_account_id: str | None = None
+    matched_cari_transaction_id: str | None = None
+    matched_bank_transaction_id: str | None = None
+    reconciliation_status: ReconciliationStatus | None = None
+    raw_data: dict[str, Any] | None = None
+    notes: str | None = None
+    metadata_json: dict[str, Any] | None = None
+    base_version: int | None = None
+
+    @field_validator("currency")
+    @classmethod
+    def normalize_currency(cls, value: str | None) -> str | None:
+        return value.upper() if value else value
+
+
+class EDocumentListQuery(BaseModel):
+    company_id: str | None = None
+    document_kind: str | None = None
+    direction: str | None = None
+    status: str | None = None
+    reconciliation_status: str | None = None
+    related_cari_account_id: str | None = None
+    date_from: date | None = None
+    date_to: date | None = None
+    search: str | None = None
+    page: int = 1
+    page_size: int = 50
+    sort: str = "issue_date"
+    direction_sort: str = "desc"
+
+
+class EDocumentImportRequest(BaseModel):
+    dry_run: bool = False
+    rows: list[EDocumentCreateRequest] = Field(default_factory=list)
+
+
+class ReconciliationSuggestionQuery(BaseModel):
+    company_id: str | None = None
+    source_type: str | None = None
+    target_type: str | None = None
+    min_confidence: Decimal = Field(default=Decimal("50"), ge=0, le=100)
+    page: int = 1
+    page_size: int = 50
+
+
+class ReconciliationMatchRequest(BaseModel):
+    company_id: str
+    source_type: str
+    source_id: str
+    target_type: str
+    target_id: str
+    match_type: MatchType = "manual"
+    confidence_score: Decimal | None = Field(default=None, ge=0, le=100)
+    amount_matched: Decimal | None = Field(default=None, gt=0)
+    currency: str = Field(default="TRY", min_length=3, max_length=3)
+    notes: str | None = None
+
+    @field_validator("currency")
+    @classmethod
+    def normalize_currency(cls, value: str) -> str:
+        return value.upper()
+
+
+class ReconciliationUnmatchRequest(BaseModel):
+    link_id: str | None = None
+    source_type: str | None = None
+    source_id: str | None = None
+    target_type: str | None = None
+    target_id: str | None = None
+    notes: str | None = None
+
+
+class CapitalPaymentMatchRequest(BaseModel):
+    related_bank_transaction_id: str | None = None
+    related_cari_transaction_id: str | None = None
+    paid_amount: Decimal = Field(gt=0)
+    currency: str = Field(default="TRY", min_length=3, max_length=3)
+    notes: str | None = None
+
+    @field_validator("currency")
+    @classmethod
+    def normalize_currency(cls, value: str) -> str:
+        return value.upper()
 
 
 class ListResult(BaseModel):

@@ -48,6 +48,11 @@ export type Direction = 'debit' | 'credit'
 export type DocumentStatus = 'no_document' | 'document_needed' | 'document_uploaded' | 'e_invoice_pending' | 'e_archive_pending' | 'invoice_matched' | 'rejected'
 export type ReconciliationStatus = 'unmatched' | 'matched' | 'partially_matched' | 'needs_review' | 'ignored'
 export type TransactionStatus = 'draft' | 'confirmed' | 'cancelled'
+export type BankAccountType = 'checking' | 'deposit' | 'credit_card' | 'loan' | 'pos' | 'other'
+export type BankIntegrationStatus = 'manual' | 'connected' | 'error' | 'disabled'
+export type EDocumentKind = 'e_invoice' | 'e_archive' | 'paper_invoice' | 'receipt' | 'other'
+export type EDocumentDirection = 'incoming' | 'outgoing'
+export type EDocumentStatus = 'received' | 'issued' | 'accepted' | 'rejected' | 'cancelled' | 'matched' | 'needs_review'
 
 export type CariAccount = {
   id: string
@@ -136,6 +141,128 @@ export type CompanyAccountingSummary = {
   last_transaction_date?: string | null
 }
 
+export type BankAccount = {
+  id: string
+  company_id: string
+  bank_name: string
+  bank_code?: string | null
+  branch_name?: string | null
+  branch_code?: string | null
+  account_name: string
+  account_no?: string | null
+  account_no_masked?: string | null
+  iban?: string | null
+  iban_masked?: string | null
+  currency: string
+  account_type: BankAccountType
+  is_active: boolean
+  opening_balance: number
+  current_balance: number
+  last_import_at?: string | null
+  integration_status: BankIntegrationStatus
+  notes?: string | null
+  version?: number
+}
+
+export type BankTransaction = {
+  id: string
+  company_id: string
+  bank_account_id: string
+  transaction_date: string
+  value_date?: string | null
+  description: string
+  counterparty_name?: string | null
+  counterparty_iban?: string | null
+  counterparty_iban_masked?: string | null
+  amount: number
+  direction: Direction
+  currency: string
+  local_amount?: number | null
+  balance_after?: number | null
+  bank_reference_no?: string | null
+  transaction_code?: string | null
+  imported_from: string
+  reconciliation_status: ReconciliationStatus
+  matched_cari_transaction_id?: string | null
+  matched_invoice_id?: string | null
+  confidence_score?: number | null
+  notes?: string | null
+  version?: number
+}
+
+export type CardTransaction = {
+  id: string
+  company_id: string
+  card_account_id: string
+  transaction_date: string
+  posting_date?: string | null
+  merchant_name?: string | null
+  description: string
+  amount: number
+  currency: string
+  installment_count?: number | null
+  installment_no?: number | null
+  category?: string | null
+  document_status: DocumentStatus
+  reconciliation_status: ReconciliationStatus
+}
+
+export type EDocument = {
+  id: string
+  company_id: string
+  document_kind: EDocumentKind
+  direction: EDocumentDirection
+  invoice_uuid?: string | null
+  invoice_no: string
+  issue_date: string
+  due_date?: string | null
+  sender_tax_number?: string | null
+  sender_name?: string | null
+  receiver_tax_number?: string | null
+  receiver_name?: string | null
+  total_amount: number
+  tax_amount: number
+  payable_amount: number
+  currency: string
+  status: EDocumentStatus
+  gib_status?: string | null
+  related_cari_account_id?: string | null
+  matched_cari_transaction_id?: string | null
+  matched_bank_transaction_id?: string | null
+  reconciliation_status: ReconciliationStatus
+  notes?: string | null
+  version?: number
+}
+
+export type ReconciliationSuggestion = {
+  id: string
+  source_type: string
+  source_id: string
+  target_type: string
+  target_id: string
+  company_id: string
+  confidence_score: number
+  reasons: Array<{ key: string; label: string; score: number }>
+  source: Record<string, unknown>
+  target: Record<string, unknown>
+  status: string
+}
+
+export type CapitalReconciliation = {
+  id: string
+  company_id: string
+  capital_transaction_id: string
+  partner_id: string
+  expected_amount: number
+  paid_amount: number
+  outstanding_amount: number
+  currency: string
+  reconciliation_status: ReconciliationStatus
+  related_cari_transaction_id?: string | null
+  related_bank_transaction_id?: string | null
+  notes?: string | null
+}
+
 export type CariAccountListQuery = {
   page?: number
   pageSize?: number
@@ -166,6 +293,21 @@ export type CariTransactionListQuery = {
   category?: string
   reconciliation_status?: string
   status?: string
+}
+
+export type AccountingDeepeningListQuery = {
+  page?: number
+  pageSize?: number
+  search?: string
+  sort?: string
+  sortDirection?: 'asc' | 'desc'
+  direction?: string
+  company_id?: string
+  reconciliation_status?: string
+  status?: string
+  dateFrom?: string
+  dateTo?: string
+  [key: string]: string | number | boolean | undefined
 }
 
 export function unwrapList<T>(response: ApiEnvelope<AccountingListResponse<T>> | AccountingListResponse<T>): AccountingListResponse<T> {

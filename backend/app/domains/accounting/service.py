@@ -16,6 +16,13 @@ from app.domains.operations.service import table_exists
 ACCOUNTING_MODULE_KEY = "accounting"
 ACCOUNT_TABLE = "public.accounting_cari_accounts"
 TRANSACTION_TABLE = "public.accounting_cari_transactions"
+BANK_ACCOUNT_TABLE = "public.accounting_bank_accounts"
+BANK_TRANSACTION_TABLE = "public.accounting_bank_transactions"
+CARD_TRANSACTION_TABLE = "public.accounting_card_transactions"
+E_DOCUMENT_TABLE = "public.accounting_e_documents"
+RECONCILIATION_LINK_TABLE = "public.accounting_reconciliation_links"
+MATCHING_SUGGESTION_TABLE = "public.accounting_matching_suggestions"
+CAPITAL_RECONCILIATION_TABLE = "public.accounting_capital_reconciliation"
 
 VIEW_PERMISSION = "accounting.view"
 EDIT_PERMISSION = "accounting.edit"
@@ -70,6 +77,30 @@ async def ensure_accounting_tables(session: AsyncSession, *, transactions: bool 
             "ACCOUNTING_CARI_TRANSACTIONS_MISSING",
             status.HTTP_409_CONFLICT,
             {"module_key": ACCOUNTING_MODULE_KEY},
+        )
+
+
+async def ensure_accounting_deepening_tables(
+    session: AsyncSession,
+    *tables: str,
+) -> None:
+    names = tables or (
+        BANK_ACCOUNT_TABLE,
+        BANK_TRANSACTION_TABLE,
+        E_DOCUMENT_TABLE,
+        RECONCILIATION_LINK_TABLE,
+    )
+    missing: list[str] = []
+    for table in names:
+        if not await table_exists(session, table):
+            missing.append(table.split(".")[-1])
+    if missing:
+        raise DomainError(
+            "Muhasebe banka/e-belge/mutabakat altyapisi hazir degil. "
+            "Kurulum Merkezi'nden Muhasebe derinlestirme migrasyonlarini tamamlayin.",
+            "ACCOUNTING_RECONCILIATION_TABLES_MISSING",
+            status.HTTP_409_CONFLICT,
+            {"module_key": ACCOUNTING_MODULE_KEY, "missing_tables": missing},
         )
 
 
@@ -145,3 +176,20 @@ def assert_version(current: Mapping[str, Any], base_version: int | None) -> None
             "VERSION_CONFLICT",
             status.HTTP_409_CONFLICT,
         )
+
+
+def mask_financial_identifier(value: Any, *, visible: int = 4) -> str | None:
+    if not value:
+        return None
+    text_value = str(value).replace(" ", "")
+    if len(text_value) <= visible:
+        return "*" * len(text_value)
+    return f"{'*' * max(0, len(text_value) - visible)}{text_value[-visible:]}"
+
+
+def row_to_financial_dict(row: Any) -> dict[str, Any]:
+    data = row_to_dict(row)
+    for key in ("iban", "account_no", "counterparty_iban"):
+        if data.get(key):
+            data[f"{key}_masked"] = mask_financial_identifier(data[key])
+    return data

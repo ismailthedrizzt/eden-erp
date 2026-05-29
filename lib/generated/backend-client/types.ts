@@ -801,6 +801,371 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/accounting/bank-accounts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Bank Account Records */
+        get: operations["list_bank_account_records_api_v1_accounting_bank_accounts_get"];
+        put?: never;
+        /** Create Bank Account Record */
+        post: operations["create_bank_account_record_api_v1_accounting_bank_accounts_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounting/bank-accounts/{account_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Bank Account Record */
+        get: operations["get_bank_account_record_api_v1_accounting_bank_accounts__account_id__get"];
+        put?: never;
+        post?: never;
+        /** Delete Bank Account Record */
+        delete: operations["delete_bank_account_record_api_v1_accounting_bank_accounts__account_id__delete"];
+        options?: never;
+        head?: never;
+        /** Update Bank Account Record */
+        patch: operations["update_bank_account_record_api_v1_accounting_bank_accounts__account_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/accounting/bank-transactions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Bank Transaction Records */
+        get: operations["list_bank_transaction_records_api_v1_accounting_bank_transactions_get"];
+        put?: never;
+        /** Create Bank Transaction Record */
+        post: operations["create_bank_transaction_record_api_v1_accounting_bank_transactions_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounting/bank-transactions/import": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Import Bank Transaction Records */
+        post: operations["import_bank_transaction_records_api_v1_accounting_bank_transactions_import_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounting/bank-transactions/{transaction_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Bank Transaction Record */
+        get: operations["get_bank_transaction_record_api_v1_accounting_bank_transactions__transaction_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update Bank Transaction Record */
+        patch: operations["update_bank_transaction_record_api_v1_accounting_bank_transactions__transaction_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/accounting/bank-transactions/{transaction_id}/match": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Match Bank Transaction Record */
+        post: operations["match_bank_transaction_record_api_v1_accounting_bank_transactions__transaction_id__match_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounting/bank-transactions/{transaction_id}/ignore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Ignore Bank Transaction Record */
+        post: operations["ignore_bank_transaction_record_api_v1_accounting_bank_transactions__transaction_id__ignore_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounting/card-transactions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Card Transaction Records */
+        get: operations["list_card_transaction_records_api_v1_accounting_card_transactions_get"];
+        put?: never;
+        /** Create Card Transaction Record */
+        post: operations["create_card_transaction_record_api_v1_accounting_card_transactions_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounting/e-documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List E Document Records */
+        get: operations["list_e_document_records_api_v1_accounting_e_documents_get"];
+        put?: never;
+        /** Create E Document Record */
+        post: operations["create_e_document_record_api_v1_accounting_e_documents_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounting/e-documents/import": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Import E Document Records */
+        post: operations["import_e_document_records_api_v1_accounting_e_documents_import_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounting/e-documents/{document_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get E Document Record */
+        get: operations["get_e_document_record_api_v1_accounting_e_documents__document_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update E Document Record */
+        patch: operations["update_e_document_record_api_v1_accounting_e_documents__document_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/accounting/e-documents/{document_id}/match": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Match E Document Record */
+        post: operations["match_e_document_record_api_v1_accounting_e_documents__document_id__match_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounting/e-documents/{document_id}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Reject E Document Record */
+        post: operations["reject_e_document_record_api_v1_accounting_e_documents__document_id__reject_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounting/reconciliation/suggestions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Reconciliation Suggestion Records */
+        get: operations["list_reconciliation_suggestion_records_api_v1_accounting_reconciliation_suggestions_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounting/reconciliation/match": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Match Reconciliation Record */
+        post: operations["match_reconciliation_record_api_v1_accounting_reconciliation_match_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounting/reconciliation/unmatch": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Unmatch Reconciliation Record */
+        post: operations["unmatch_reconciliation_record_api_v1_accounting_reconciliation_unmatch_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounting/reconciliation/unmatched": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Unmatched Reconciliation Records */
+        get: operations["list_unmatched_reconciliation_records_api_v1_accounting_reconciliation_unmatched_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounting/reconciliation/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Reconciliation Summary Record */
+        get: operations["get_reconciliation_summary_record_api_v1_accounting_reconciliation_summary_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounting/capital-reconciliation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Capital Reconciliation Records */
+        get: operations["list_capital_reconciliation_records_api_v1_accounting_capital_reconciliation_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounting/capital-reconciliation/{capital_transaction_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Capital Reconciliation Record */
+        get: operations["get_capital_reconciliation_record_api_v1_accounting_capital_reconciliation__capital_transaction_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounting/capital-reconciliation/{reconciliation_id}/match-payment": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Match Capital Reconciliation Payment */
+        post: operations["match_capital_reconciliation_payment_api_v1_accounting_capital_reconciliation__reconciliation_id__match_payment_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/accounting/cari-transactions": {
         parameters: {
             query?: never;
@@ -4688,6 +5053,236 @@ export interface components {
         } & {
             [key: string]: unknown;
         };
+        /** BankAccountCreateRequest */
+        BankAccountCreateRequest: {
+            /** Company Id */
+            company_id: string;
+            /** Bank Name */
+            bank_name: string;
+            /** Bank Code */
+            bank_code?: string | null;
+            /** Branch Name */
+            branch_name?: string | null;
+            /** Branch Code */
+            branch_code?: string | null;
+            /** Account Name */
+            account_name: string;
+            /** Account No */
+            account_no?: string | null;
+            /** Iban */
+            iban?: string | null;
+            /**
+             * Currency
+             * @default TRY
+             */
+            currency: string;
+            /**
+             * Account Type
+             * @default checking
+             * @enum {string}
+             */
+            account_type: "checking" | "deposit" | "credit_card" | "loan" | "pos" | "other";
+            /**
+             * Is Active
+             * @default true
+             */
+            is_active: boolean;
+            /**
+             * Opening Balance
+             * @default 0
+             */
+            opening_balance: number | string;
+            /** Current Balance */
+            current_balance?: number | string | null;
+            /**
+             * Integration Status
+             * @default manual
+             * @enum {string}
+             */
+            integration_status: "manual" | "connected" | "error" | "disabled";
+            /** Notes */
+            notes?: string | null;
+            /** Metadata Json */
+            metadata_json?: {
+                [key: string]: unknown;
+            };
+        } & {
+            [key: string]: unknown;
+        };
+        /** BankAccountUpdateRequest */
+        BankAccountUpdateRequest: {
+            /** Bank Name */
+            bank_name?: string | null;
+            /** Bank Code */
+            bank_code?: string | null;
+            /** Branch Name */
+            branch_name?: string | null;
+            /** Branch Code */
+            branch_code?: string | null;
+            /** Account Name */
+            account_name?: string | null;
+            /** Account No */
+            account_no?: string | null;
+            /** Iban */
+            iban?: string | null;
+            /** Currency */
+            currency?: string | null;
+            /** Account Type */
+            account_type?: ("checking" | "deposit" | "credit_card" | "loan" | "pos" | "other") | null;
+            /** Is Active */
+            is_active?: boolean | null;
+            /** Opening Balance */
+            opening_balance?: number | string | null;
+            /** Current Balance */
+            current_balance?: number | string | null;
+            /** Integration Status */
+            integration_status?: ("manual" | "connected" | "error" | "disabled") | null;
+            /** Notes */
+            notes?: string | null;
+            /** Metadata Json */
+            metadata_json?: {
+                [key: string]: unknown;
+            } | null;
+            /** Base Version */
+            base_version?: number | null;
+        } & {
+            [key: string]: unknown;
+        };
+        /** BankTransactionCreateRequest */
+        BankTransactionCreateRequest: {
+            /** Company Id */
+            company_id: string;
+            /** Bank Account Id */
+            bank_account_id: string;
+            /**
+             * Transaction Date
+             * Format: date
+             */
+            transaction_date: string;
+            /** Value Date */
+            value_date?: string | null;
+            /** Description */
+            description: string;
+            /** Counterparty Name */
+            counterparty_name?: string | null;
+            /** Counterparty Iban */
+            counterparty_iban?: string | null;
+            /** Amount */
+            amount: number | string;
+            /**
+             * Direction
+             * @enum {string}
+             */
+            direction: "debit" | "credit";
+            /**
+             * Currency
+             * @default TRY
+             */
+            currency: string;
+            /** Local Amount */
+            local_amount?: number | string | null;
+            /** Balance After */
+            balance_after?: number | string | null;
+            /** Bank Reference No */
+            bank_reference_no?: string | null;
+            /** Raw Reference */
+            raw_reference?: string | null;
+            /** Transaction Code */
+            transaction_code?: string | null;
+            /**
+             * Imported From
+             * @default manual
+             * @enum {string}
+             */
+            imported_from: "manual" | "csv" | "xlsx" | "bank_api" | "open_banking";
+            /** Import Job Id */
+            import_job_id?: string | null;
+            /**
+             * Reconciliation Status
+             * @default unmatched
+             * @enum {string}
+             */
+            reconciliation_status: "unmatched" | "matched" | "partially_matched" | "needs_review" | "ignored";
+            /** Matched Cari Transaction Id */
+            matched_cari_transaction_id?: string | null;
+            /** Matched Invoice Id */
+            matched_invoice_id?: string | null;
+            /** Confidence Score */
+            confidence_score?: number | string | null;
+            /** Notes */
+            notes?: string | null;
+            /** Metadata Json */
+            metadata_json?: {
+                [key: string]: unknown;
+            };
+        } & {
+            [key: string]: unknown;
+        };
+        /** BankTransactionImportRequest */
+        BankTransactionImportRequest: {
+            /** Bank Account Id */
+            bank_account_id: string;
+            /**
+             * Imported From
+             * @default csv
+             * @enum {string}
+             */
+            imported_from: "manual" | "csv" | "xlsx" | "bank_api" | "open_banking";
+            /**
+             * Dry Run
+             * @default false
+             */
+            dry_run: boolean;
+            /** Rows */
+            rows?: components["schemas"]["BankTransactionCreateRequest"][];
+        };
+        /** BankTransactionUpdateRequest */
+        BankTransactionUpdateRequest: {
+            /** Transaction Date */
+            transaction_date?: string | null;
+            /** Value Date */
+            value_date?: string | null;
+            /** Description */
+            description?: string | null;
+            /** Counterparty Name */
+            counterparty_name?: string | null;
+            /** Counterparty Iban */
+            counterparty_iban?: string | null;
+            /** Amount */
+            amount?: number | string | null;
+            /** Direction */
+            direction?: ("debit" | "credit") | null;
+            /** Currency */
+            currency?: string | null;
+            /** Local Amount */
+            local_amount?: number | string | null;
+            /** Balance After */
+            balance_after?: number | string | null;
+            /** Bank Reference No */
+            bank_reference_no?: string | null;
+            /** Raw Reference */
+            raw_reference?: string | null;
+            /** Transaction Code */
+            transaction_code?: string | null;
+            /** Reconciliation Status */
+            reconciliation_status?: ("unmatched" | "matched" | "partially_matched" | "needs_review" | "ignored") | null;
+            /** Matched Cari Transaction Id */
+            matched_cari_transaction_id?: string | null;
+            /** Matched Invoice Id */
+            matched_invoice_id?: string | null;
+            /** Confidence Score */
+            confidence_score?: number | string | null;
+            /** Notes */
+            notes?: string | null;
+            /** Metadata Json */
+            metadata_json?: {
+                [key: string]: unknown;
+            } | null;
+            /** Base Version */
+            base_version?: number | null;
+        } & {
+            [key: string]: unknown;
+        };
         /** BranchCardUpdateRequest */
         BranchCardUpdateRequest: {
             /** Branch Short Name */
@@ -5015,6 +5610,83 @@ export interface components {
             base_version?: number | null;
             /** Base Updated At */
             base_updated_at?: string | null;
+        } & {
+            [key: string]: unknown;
+        };
+        /** CapitalPaymentMatchRequest */
+        CapitalPaymentMatchRequest: {
+            /** Related Bank Transaction Id */
+            related_bank_transaction_id?: string | null;
+            /** Related Cari Transaction Id */
+            related_cari_transaction_id?: string | null;
+            /** Paid Amount */
+            paid_amount: number | string;
+            /**
+             * Currency
+             * @default TRY
+             */
+            currency: string;
+            /** Notes */
+            notes?: string | null;
+        };
+        /** CardTransactionCreateRequest */
+        CardTransactionCreateRequest: {
+            /** Company Id */
+            company_id: string;
+            /** Card Account Id */
+            card_account_id: string;
+            /** Card Holder Entity Type */
+            card_holder_entity_type?: string | null;
+            /** Card Holder Entity Id */
+            card_holder_entity_id?: string | null;
+            /**
+             * Transaction Date
+             * Format: date
+             */
+            transaction_date: string;
+            /** Posting Date */
+            posting_date?: string | null;
+            /** Merchant Name */
+            merchant_name?: string | null;
+            /** Description */
+            description: string;
+            /** Amount */
+            amount: number | string;
+            /**
+             * Currency
+             * @default TRY
+             */
+            currency: string;
+            /** Installment Count */
+            installment_count?: number | null;
+            /** Installment No */
+            installment_no?: number | null;
+            /** Category */
+            category?: string | null;
+            /**
+             * Document Status
+             * @default document_needed
+             * @enum {string}
+             */
+            document_status: "no_document" | "document_needed" | "document_uploaded" | "e_invoice_pending" | "e_archive_pending" | "invoice_matched" | "rejected";
+            /**
+             * Reconciliation Status
+             * @default unmatched
+             * @enum {string}
+             */
+            reconciliation_status: "unmatched" | "matched" | "partially_matched" | "needs_review" | "ignored";
+            /** Matched Cari Transaction Id */
+            matched_cari_transaction_id?: string | null;
+            /** Matched Invoice Id */
+            matched_invoice_id?: string | null;
+            /** Import Job Id */
+            import_job_id?: string | null;
+            /** Notes */
+            notes?: string | null;
+            /** Metadata Json */
+            metadata_json?: {
+                [key: string]: unknown;
+            };
         } & {
             [key: string]: unknown;
         };
@@ -5793,6 +6465,173 @@ export interface components {
         DuplicateGroupActionRequest: {
             /** Resolution Notes */
             resolution_notes?: string | null;
+        };
+        /** EDocumentCreateRequest */
+        EDocumentCreateRequest: {
+            /** Company Id */
+            company_id: string;
+            /**
+             * Document Kind
+             * @default e_invoice
+             * @enum {string}
+             */
+            document_kind: "e_invoice" | "e_archive" | "paper_invoice" | "receipt" | "other";
+            /**
+             * Direction
+             * @default incoming
+             * @enum {string}
+             */
+            direction: "incoming" | "outgoing";
+            /** Invoice Uuid */
+            invoice_uuid?: string | null;
+            /** Invoice No */
+            invoice_no: string;
+            /**
+             * Issue Date
+             * Format: date
+             */
+            issue_date: string;
+            /** Due Date */
+            due_date?: string | null;
+            /** Sender Tax Number */
+            sender_tax_number?: string | null;
+            /** Sender Name */
+            sender_name?: string | null;
+            /** Receiver Tax Number */
+            receiver_tax_number?: string | null;
+            /** Receiver Name */
+            receiver_name?: string | null;
+            /** Total Amount */
+            total_amount: number | string;
+            /**
+             * Tax Amount
+             * @default 0
+             */
+            tax_amount: number | string;
+            /** Payable Amount */
+            payable_amount?: number | string | null;
+            /**
+             * Currency
+             * @default TRY
+             */
+            currency: string;
+            /**
+             * Status
+             * @default received
+             * @enum {string}
+             */
+            status: "received" | "issued" | "accepted" | "rejected" | "cancelled" | "matched" | "needs_review";
+            /** Gib Status */
+            gib_status?: string | null;
+            /** Scenario Type */
+            scenario_type?: string | null;
+            /** Invoice Type */
+            invoice_type?: string | null;
+            /** Xml Document Id */
+            xml_document_id?: string | null;
+            /** Pdf Document Id */
+            pdf_document_id?: string | null;
+            /** Related Cari Account Id */
+            related_cari_account_id?: string | null;
+            /** Matched Cari Transaction Id */
+            matched_cari_transaction_id?: string | null;
+            /** Matched Bank Transaction Id */
+            matched_bank_transaction_id?: string | null;
+            /**
+             * Reconciliation Status
+             * @default unmatched
+             * @enum {string}
+             */
+            reconciliation_status: "unmatched" | "matched" | "partially_matched" | "needs_review" | "ignored";
+            /** Import Job Id */
+            import_job_id?: string | null;
+            /** Raw Data */
+            raw_data?: {
+                [key: string]: unknown;
+            };
+            /** Notes */
+            notes?: string | null;
+            /** Metadata Json */
+            metadata_json?: {
+                [key: string]: unknown;
+            };
+        } & {
+            [key: string]: unknown;
+        };
+        /** EDocumentImportRequest */
+        EDocumentImportRequest: {
+            /**
+             * Dry Run
+             * @default false
+             */
+            dry_run: boolean;
+            /** Rows */
+            rows?: components["schemas"]["EDocumentCreateRequest"][];
+        };
+        /** EDocumentUpdateRequest */
+        EDocumentUpdateRequest: {
+            /** Document Kind */
+            document_kind?: ("e_invoice" | "e_archive" | "paper_invoice" | "receipt" | "other") | null;
+            /** Direction */
+            direction?: ("incoming" | "outgoing") | null;
+            /** Invoice Uuid */
+            invoice_uuid?: string | null;
+            /** Invoice No */
+            invoice_no?: string | null;
+            /** Issue Date */
+            issue_date?: string | null;
+            /** Due Date */
+            due_date?: string | null;
+            /** Sender Tax Number */
+            sender_tax_number?: string | null;
+            /** Sender Name */
+            sender_name?: string | null;
+            /** Receiver Tax Number */
+            receiver_tax_number?: string | null;
+            /** Receiver Name */
+            receiver_name?: string | null;
+            /** Total Amount */
+            total_amount?: number | string | null;
+            /** Tax Amount */
+            tax_amount?: number | string | null;
+            /** Payable Amount */
+            payable_amount?: number | string | null;
+            /** Currency */
+            currency?: string | null;
+            /** Status */
+            status?: ("received" | "issued" | "accepted" | "rejected" | "cancelled" | "matched" | "needs_review") | null;
+            /** Gib Status */
+            gib_status?: string | null;
+            /** Scenario Type */
+            scenario_type?: string | null;
+            /** Invoice Type */
+            invoice_type?: string | null;
+            /** Xml Document Id */
+            xml_document_id?: string | null;
+            /** Pdf Document Id */
+            pdf_document_id?: string | null;
+            /** Related Cari Account Id */
+            related_cari_account_id?: string | null;
+            /** Matched Cari Transaction Id */
+            matched_cari_transaction_id?: string | null;
+            /** Matched Bank Transaction Id */
+            matched_bank_transaction_id?: string | null;
+            /** Reconciliation Status */
+            reconciliation_status?: ("unmatched" | "matched" | "partially_matched" | "needs_review" | "ignored") | null;
+            /** Raw Data */
+            raw_data?: {
+                [key: string]: unknown;
+            } | null;
+            /** Notes */
+            notes?: string | null;
+            /** Metadata Json */
+            metadata_json?: {
+                [key: string]: unknown;
+            } | null;
+            /** Base Version */
+            base_version?: number | null;
+        } & {
+            [key: string]: unknown;
         };
         /** EmailTestRequest */
         EmailTestRequest: {
@@ -7498,6 +8337,51 @@ export interface components {
             target_page: string;
             /** Module Key */
             module_key: string;
+        };
+        /** ReconciliationMatchRequest */
+        ReconciliationMatchRequest: {
+            /** Company Id */
+            company_id: string;
+            /** Source Type */
+            source_type: string;
+            /** Source Id */
+            source_id: string;
+            /** Target Type */
+            target_type: string;
+            /** Target Id */
+            target_id: string;
+            /**
+             * Match Type
+             * @default manual
+             * @enum {string}
+             */
+            match_type: "automatic" | "manual" | "partial";
+            /** Confidence Score */
+            confidence_score?: number | string | null;
+            /** Amount Matched */
+            amount_matched?: number | string | null;
+            /**
+             * Currency
+             * @default TRY
+             */
+            currency: string;
+            /** Notes */
+            notes?: string | null;
+        };
+        /** ReconciliationUnmatchRequest */
+        ReconciliationUnmatchRequest: {
+            /** Link Id */
+            link_id?: string | null;
+            /** Source Type */
+            source_type?: string | null;
+            /** Source Id */
+            source_id?: string | null;
+            /** Target Type */
+            target_type?: string | null;
+            /** Target Id */
+            target_id?: string | null;
+            /** Notes */
+            notes?: string | null;
         };
         /** ReminderCreateRequest */
         ReminderCreateRequest: {
@@ -10339,6 +11223,995 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_bank_account_records_api_v1_accounting_bank_accounts_get: {
+        parameters: {
+            query?: {
+                company_id?: string | null;
+                account_type?: string | null;
+                is_active?: boolean | null;
+                currency?: string | null;
+                integration_status?: string | null;
+                search?: string | null;
+                page?: number;
+                pageSize?: number;
+                sort?: string;
+                direction?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_bank_account_record_api_v1_accounting_bank_accounts_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BankAccountCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_bank_account_record_api_v1_accounting_bank_accounts__account_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                account_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_bank_account_record_api_v1_accounting_bank_accounts__account_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                account_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_bank_account_record_api_v1_accounting_bank_accounts__account_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                account_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BankAccountUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_bank_transaction_records_api_v1_accounting_bank_transactions_get: {
+        parameters: {
+            query?: {
+                company_id?: string | null;
+                bank_account_id?: string | null;
+                direction?: string | null;
+                reconciliation_status?: string | null;
+                imported_from?: string | null;
+                dateFrom?: string | null;
+                dateTo?: string | null;
+                search?: string | null;
+                page?: number;
+                pageSize?: number;
+                sort?: string;
+                sortDirection?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_bank_transaction_record_api_v1_accounting_bank_transactions_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BankTransactionCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    import_bank_transaction_records_api_v1_accounting_bank_transactions_import_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BankTransactionImportRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_bank_transaction_record_api_v1_accounting_bank_transactions__transaction_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                transaction_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_bank_transaction_record_api_v1_accounting_bank_transactions__transaction_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                transaction_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["BankTransactionUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    match_bank_transaction_record_api_v1_accounting_bank_transactions__transaction_id__match_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                transaction_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReconciliationMatchRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    ignore_bank_transaction_record_api_v1_accounting_bank_transactions__transaction_id__ignore_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                transaction_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_card_transaction_records_api_v1_accounting_card_transactions_get: {
+        parameters: {
+            query?: {
+                company_id?: string | null;
+                reconciliation_status?: string | null;
+                page?: number;
+                pageSize?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_card_transaction_record_api_v1_accounting_card_transactions_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CardTransactionCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_e_document_records_api_v1_accounting_e_documents_get: {
+        parameters: {
+            query?: {
+                company_id?: string | null;
+                document_kind?: string | null;
+                direction?: string | null;
+                status?: string | null;
+                reconciliation_status?: string | null;
+                related_cari_account_id?: string | null;
+                dateFrom?: string | null;
+                dateTo?: string | null;
+                search?: string | null;
+                page?: number;
+                pageSize?: number;
+                sort?: string;
+                sortDirection?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_e_document_record_api_v1_accounting_e_documents_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EDocumentCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    import_e_document_records_api_v1_accounting_e_documents_import_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EDocumentImportRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_e_document_record_api_v1_accounting_e_documents__document_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                document_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_e_document_record_api_v1_accounting_e_documents__document_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                document_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EDocumentUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    match_e_document_record_api_v1_accounting_e_documents__document_id__match_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                document_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReconciliationMatchRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reject_e_document_record_api_v1_accounting_e_documents__document_id__reject_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                document_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    [key: string]: unknown;
+                } | null;
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_reconciliation_suggestion_records_api_v1_accounting_reconciliation_suggestions_get: {
+        parameters: {
+            query?: {
+                company_id?: string | null;
+                source_type?: string | null;
+                target_type?: string | null;
+                minConfidence?: number;
+                page?: number;
+                pageSize?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    match_reconciliation_record_api_v1_accounting_reconciliation_match_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReconciliationMatchRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    unmatch_reconciliation_record_api_v1_accounting_reconciliation_unmatch_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReconciliationUnmatchRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_unmatched_reconciliation_records_api_v1_accounting_reconciliation_unmatched_get: {
+        parameters: {
+            query?: {
+                company_id?: string | null;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_reconciliation_summary_record_api_v1_accounting_reconciliation_summary_get: {
+        parameters: {
+            query?: {
+                company_id?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_capital_reconciliation_records_api_v1_accounting_capital_reconciliation_get: {
+        parameters: {
+            query?: {
+                company_id?: string | null;
+                status?: string | null;
+                page?: number;
+                pageSize?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_capital_reconciliation_record_api_v1_accounting_capital_reconciliation__capital_transaction_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                capital_transaction_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    match_capital_reconciliation_payment_api_v1_accounting_capital_reconciliation__reconciliation_id__match_payment_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                reconciliation_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CapitalPaymentMatchRequest"];
+            };
+        };
         responses: {
             /** @description Successful Response */
             200: {

@@ -145,6 +145,7 @@ Product foundation note:
 - Accounting domain now owns cari cards, cari movements, payment/collection/expense relations, document status and reconciliation preparation.
 - Cari Kartlar and Cari Hareketler MVP endpoints are Python/FastAPI canonical. Next routes are proxy-only and do not contain domain mutation logic.
 - Sermaye artirimi ortaklik/sirket domain'inde olusur. Sermaye odemesi veya tahsilati muhasebe domain'inde cari/banka hareketi olarak mutabakatlanir.
+- Deepening phase adds bank accounts, bank movements, card movements, e-document records, reconciliation suggestions and capital reconciliation as canonical FastAPI resources.
 
 | domain | endpoint | method | FastAPI implemented? | Next proxy implemented? | frontend service mapped? | OpenAPI schema generated? | auth/tenant guard? | policy/readiness/integrity guard? | tests? | status | notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -160,6 +161,25 @@ Product foundation note:
 | Accounting cari transactions | `/api/v1/accounting/cari-transactions/{transaction_id}` | GET | yes | yes, proxy-only | yes | yes | yes | permission/tenant | yes | partial | Detail includes account labels and debit/credit projection. |
 | Accounting cari transactions | `/api/v1/accounting/cari-transactions/{transaction_id}` | PATCH | yes | yes, proxy-only | yes | yes | yes | permission/company scope/version | yes | partial | Confirmed transactions are immutable except cancellation. |
 | Accounting cari transactions | `/api/v1/accounting/cari-transactions/{transaction_id}` | DELETE | yes | yes, proxy-only | yes | yes | yes | permission/company scope/delete guard | yes | partial | Hard delete is limited to draft-safe records via soft delete flag. |
+| Accounting bank accounts | `/api/v1/accounting/bank-accounts` | GET/POST | yes | yes, proxy-only | yes | yes | yes | permission/company scope/readiness | yes | pilot-ready | Bank account CRUD uses masked financial identifiers in response helpers. |
+| Accounting bank accounts | `/api/v1/accounting/bank-accounts/{account_id}` | GET/PATCH/DELETE | yes | yes, proxy-only | yes | yes | yes | permission/company scope/version | yes | pilot-ready | Soft delete/passivation preserves financial traceability. |
+| Accounting bank transactions | `/api/v1/accounting/bank-transactions` | GET/POST | yes | yes, proxy-only | yes | yes | yes | permission/company scope/readiness | yes | pilot-ready | Bank movements stay separate from cari movements until matched. |
+| Accounting bank transactions | `/api/v1/accounting/bank-transactions/import` | POST | yes | yes, proxy-only | yes | yes | yes | permission/company scope/duplicate guard | yes | pilot-ready | CSV/XLSX import adapter can dry-run and detect duplicate bank rows. |
+| Accounting bank transactions | `/api/v1/accounting/bank-transactions/{transaction_id}/match` | POST | yes | yes, proxy-only | yes | yes | yes | permission/company scope/match guard | yes | pilot-ready | Creates reconciliation link through Accounting domain service. |
+| Accounting bank transactions | `/api/v1/accounting/bank-transactions/{transaction_id}/ignore` | POST | yes | yes, proxy-only | yes | yes | yes | permission/company scope | yes | pilot-ready | Removes low-value bank row from reconciliation queue without deleting it. |
+| Accounting card transactions | `/api/v1/accounting/card-transactions` | GET/POST | yes | yes, proxy-only | yes | yes | yes | permission/company scope/readiness | yes | pilot-ready | Corporate card rows support document-needed tracking. |
+| Accounting e-documents | `/api/v1/accounting/e-documents` | GET/POST | yes | yes, proxy-only | yes | yes | yes | permission/company scope/readiness | yes | pilot-ready | e-Fatura/e-Arsiv records hold metadata and Document domain references. |
+| Accounting e-documents | `/api/v1/accounting/e-documents/import` | POST | yes | yes, proxy-only | yes | yes | yes | permission/company scope/duplicate guard | yes | pilot-ready | Import creates e-document records first; no direct cari posting. |
+| Accounting e-documents | `/api/v1/accounting/e-documents/{document_id}/match` | POST | yes | yes, proxy-only | yes | yes | yes | permission/company scope/match guard | yes | pilot-ready | Links e-document to cari/bank movement with match score. |
+| Accounting e-documents | `/api/v1/accounting/e-documents/{document_id}/reject` | POST | yes | yes, proxy-only | yes | yes | yes | permission/company scope/audit-ready | yes | pilot-ready | Rejected invoice moves into needs_review workflow. |
+| Accounting reconciliation | `/api/v1/accounting/reconciliation/suggestions` | GET | yes | yes, proxy-only | yes | yes | yes | permission/company scope/readiness | yes | pilot-ready | Suggests bank-cari and bank-e-document matches using scoring rules. |
+| Accounting reconciliation | `/api/v1/accounting/reconciliation/match` | POST | yes | yes, proxy-only | yes | yes | yes | permission/company scope/match guard | yes | pilot-ready | Manual/exact/partial match writes reconciliation link. |
+| Accounting reconciliation | `/api/v1/accounting/reconciliation/unmatch` | POST | yes | yes, proxy-only | yes | yes | yes | permission/company scope | yes | pilot-ready | Removes active reconciliation link and resets statuses. |
+| Accounting reconciliation | `/api/v1/accounting/reconciliation/unmatched` | GET | yes | yes, proxy-only | yes | yes | yes | permission/company scope | yes | pilot-ready | Returns unmatched bank/cari/e-document queues. |
+| Accounting reconciliation | `/api/v1/accounting/reconciliation/summary` | GET | yes | yes, proxy-only | yes | yes | yes | permission/company scope | yes | pilot-ready | Feeds Action Center and reporting warnings. |
+| Accounting capital reconciliation | `/api/v1/accounting/capital-reconciliation` | GET | yes | yes, proxy-only | yes | yes | yes | permission/company scope/readiness | yes | pilot-ready | Tracks expected/paid/outstanding partner capital payments. |
+| Accounting capital reconciliation | `/api/v1/accounting/capital-reconciliation/{capital_transaction_id}` | GET | yes | yes, proxy-only | yes | yes | yes | permission/company scope | yes | pilot-ready | Provides capital payment detail for ownership/capital flows. |
+| Accounting capital reconciliation | `/api/v1/accounting/capital-reconciliation/{reconciliation_id}/match-payment` | POST | yes | yes, proxy-only | yes | yes | yes | permission/company scope/match guard | yes | pilot-ready | Links bank/cari payment to expected capital amount without mutating ownership. |
 
 ## HR
 

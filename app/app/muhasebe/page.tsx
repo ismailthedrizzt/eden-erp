@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import type { ReactNode } from 'react'
-import { CreditCard, FileText, Landmark, ReceiptText, WalletCards } from 'lucide-react'
+import { ArrowLeftRight, CreditCard, FileText, Landmark, ReceiptText, Scale, WalletCards } from 'lucide-react'
 import { PageBanner } from '@/components/ui/PageBanner'
 
 export default function MuhasebePage() {
@@ -37,6 +37,36 @@ export default function MuhasebePage() {
           icon={<Landmark size={22} />}
           title="Banka Hesaplari ve Kartlari"
           description="Banka baglantilarini, hesaplari, kartlari ve entegrasyon ayarlarini yonetin."
+        />
+        <ModuleLink
+          href="/app/muhasebe/banka-hesaplari"
+          icon={<Landmark size={22} />}
+          title="Banka Hesaplari"
+          description="Sirket banka hesaplarini, maskeli IBAN bilgisini ve ekstre import durumunu izleyin."
+        />
+        <ModuleLink
+          href="/app/muhasebe/banka-hareketleri"
+          icon={<ArrowLeftRight size={22} />}
+          title="Banka Hareketleri"
+          description="CSV/XLSX ekstreden gelen banka hareketlerini cari ve e-belgelerle eslestirmeye hazirlayin."
+        />
+        <ModuleLink
+          href="/app/muhasebe/e-fatura-e-arsiv"
+          icon={<ReceiptText size={22} />}
+          title="e-Fatura / e-Arsiv"
+          description="e-Belge kayitlarini, belge durumunu, red/in_review akisini ve mutabakat durumunu yonetin."
+        />
+        <ModuleLink
+          href="/app/muhasebe/mutabakat"
+          icon={<FileText size={22} />}
+          title="Mutabakat"
+          description="Banka, cari ve e-belge eslestirme onerilerini inceleyin; manuel veya kismi eslesme yapin."
+        />
+        <ModuleLink
+          href="/app/muhasebe/sermaye-mutabakati"
+          icon={<Scale size={22} />}
+          title="Sermaye Mutabakati"
+          description="Sermaye artirimi sonrasi ortak odemelerini banka/cari hareketlerle iliskilendirin."
         />
         <ModuleLink
           href="/app/muhasebe/hesap-ve-kart-hareketleri"

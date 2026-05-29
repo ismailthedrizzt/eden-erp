@@ -4,13 +4,13 @@ Generated from `app/api/**/route.ts` by `npm run proxy:coverage`. Status values 
 
 ## Summary
 
-- Route files: 364
+- Route files: 384
 - deprecated_wrapper: 11
 - keep_session_bootstrap: 1
 - keep_ui_adapter: 24
 - keep_upload_adapter: 3
-- migrate_to_fastapi: 165
-- proxy_to_fastapi: 85
+- migrate_to_fastapi: 164
+- proxy_to_fastapi: 106
 - proxy_to_fastapi_with_temporary_fallback: 75
 
 ## Matrix
@@ -23,8 +23,9 @@ Generated from `app/api/**/route.ts` by `npm run proxy:coverage`. Status values 
 | `/api/accounting/bank-accounts-cards/[id]/set-default` | `migrate_to_fastapi` | `/api/v1/accounting/bank-accounts-cards/{id}/set-default` | yes | yes | Implement FastAPI equivalent, then convert route to proxy or remove. | P2 |
 | `/api/accounting/bank-accounts-cards` | `migrate_to_fastapi` | `/api/v1/accounting/bank-accounts-cards` | yes | yes | Implement FastAPI equivalent, then convert route to proxy or remove. | P2 |
 | `/api/accounting/bank-accounts/[accountId]/passivate` | `migrate_to_fastapi` | `/api/v1/accounting/bank-accounts/{accountId}/passivate` | yes | yes | Implement FastAPI equivalent, then convert route to proxy or remove. | P2 |
-| `/api/accounting/bank-accounts/[accountId]` | `migrate_to_fastapi` | `/api/v1/accounting/bank-accounts/{accountId}` | yes | yes | Implement FastAPI equivalent, then convert route to proxy or remove. | P2 |
+| `/api/accounting/bank-accounts/[accountId]` | `proxy_to_fastapi` | `/api/v1/accounting/bank-accounts/{accountId}` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
 | `/api/accounting/bank-accounts/[accountId]/sync` | `migrate_to_fastapi` | `/api/v1/accounting/bank-accounts/{accountId}/sync` | yes | yes | Implement FastAPI equivalent, then convert route to proxy or remove. | P2 |
+| `/api/accounting/bank-accounts` | `proxy_to_fastapi` | `/api/v1/accounting/bank-accounts` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
 | `/api/accounting/bank-card-transactions` | `migrate_to_fastapi` | `/api/v1/accounting/bank-card-transactions` | yes | yes | Implement FastAPI equivalent, then convert route to proxy or remove. | P2 |
 | `/api/accounting/bank-cards/[cardId]/passivate` | `migrate_to_fastapi` | `/api/v1/accounting/bank-cards/{cardId}/passivate` | yes | yes | Implement FastAPI equivalent, then convert route to proxy or remove. | P2 |
 | `/api/accounting/bank-cards/[cardId]` | `migrate_to_fastapi` | `/api/v1/accounting/bank-cards/{cardId}` | yes | yes | Implement FastAPI equivalent, then convert route to proxy or remove. | P2 |
@@ -37,12 +38,26 @@ Generated from `app/api/**/route.ts` by `npm run proxy:coverage`. Status values 
 | `/api/accounting/bank-connections/[id]/test` | `migrate_to_fastapi` | `/api/v1/accounting/bank-connections/{id}/test` | yes | yes | Implement FastAPI equivalent, then convert route to proxy or remove. | P2 |
 | `/api/accounting/bank-connections/automation-preview` | `migrate_to_fastapi` | `/api/v1/accounting/bank-connections/automation-preview` | yes | yes | Implement FastAPI equivalent, then convert route to proxy or remove. | P2 |
 | `/api/accounting/bank-connections` | `migrate_to_fastapi` | `/api/v1/accounting/bank-connections` | yes | yes | Implement FastAPI equivalent, then convert route to proxy or remove. | P2 |
+| `/api/accounting/bank-transactions/[id]/ignore` | `proxy_to_fastapi` | `/api/v1/accounting/bank-transactions/{id}/ignore` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/accounting/bank-transactions/[id]/match` | `proxy_to_fastapi` | `/api/v1/accounting/bank-transactions/{id}/match` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/accounting/bank-transactions/[id]` | `proxy_to_fastapi` | `/api/v1/accounting/bank-transactions/{id}` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/accounting/bank-transactions/import` | `proxy_to_fastapi` | `/api/v1/accounting/bank-transactions/import` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/accounting/bank-transactions` | `proxy_to_fastapi` | `/api/v1/accounting/bank-transactions` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/accounting/capital-reconciliation/[id]/match-payment` | `proxy_to_fastapi` | `/api/v1/accounting/capital-reconciliation/{id}/match-payment` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/accounting/capital-reconciliation/[id]` | `proxy_to_fastapi` | `/api/v1/accounting/capital-reconciliation/{id}` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/accounting/capital-reconciliation` | `proxy_to_fastapi` | `/api/v1/accounting/capital-reconciliation` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/accounting/card-transactions` | `proxy_to_fastapi` | `/api/v1/accounting/card-transactions` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
 | `/api/accounting/cari-accounts/[id]` | `proxy_to_fastapi` | `/api/v1/accounting/cari-accounts/{id}` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
 | `/api/accounting/cari-accounts/[id]/summary` | `proxy_to_fastapi` | `/api/v1/accounting/cari-accounts/{id}/summary` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
 | `/api/accounting/cari-accounts` | `proxy_to_fastapi` | `/api/v1/accounting/cari-accounts` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
 | `/api/accounting/cari-transactions/[id]` | `proxy_to_fastapi` | `/api/v1/accounting/cari-transactions/{id}` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
 | `/api/accounting/cari-transactions` | `proxy_to_fastapi` | `/api/v1/accounting/cari-transactions` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
 | `/api/accounting/company/[companyId]/summary` | `proxy_to_fastapi` | `/api/v1/accounting/company/{companyId}/summary` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/accounting/e-documents/[id]/match` | `proxy_to_fastapi` | `/api/v1/accounting/e-documents/{id}/match` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/accounting/e-documents/[id]/reject` | `proxy_to_fastapi` | `/api/v1/accounting/e-documents/{id}/reject` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/accounting/e-documents/[id]` | `proxy_to_fastapi` | `/api/v1/accounting/e-documents/{id}` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/accounting/e-documents/import` | `proxy_to_fastapi` | `/api/v1/accounting/e-documents/import` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/accounting/e-documents` | `proxy_to_fastapi` | `/api/v1/accounting/e-documents` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
 | `/api/accounting/financial-institution-movements/[id]/create-pre-accounting` | `migrate_to_fastapi` | `/api/v1/accounting/financial-institution-movements/{id}/create-pre-accounting` | yes | yes | Implement FastAPI equivalent, then convert route to proxy or remove. | P2 |
 | `/api/accounting/financial-institution-movements/[id]/history` | `migrate_to_fastapi` | `/api/v1/accounting/financial-institution-movements/{id}/history` | yes | yes | Implement FastAPI equivalent, then convert route to proxy or remove. | P2 |
 | `/api/accounting/financial-institution-movements/[id]/match` | `migrate_to_fastapi` | `/api/v1/accounting/financial-institution-movements/{id}/match` | yes | yes | Implement FastAPI equivalent, then convert route to proxy or remove. | P2 |
@@ -52,6 +67,11 @@ Generated from `app/api/**/route.ts` by `npm run proxy:coverage`. Status values 
 | `/api/accounting/financial-institution-movements/[id]/unmatch` | `migrate_to_fastapi` | `/api/v1/accounting/financial-institution-movements/{id}/unmatch` | yes | yes | Implement FastAPI equivalent, then convert route to proxy or remove. | P2 |
 | `/api/accounting/financial-institution-movements/manual` | `migrate_to_fastapi` | `/api/v1/accounting/financial-institution-movements/manual` | yes | yes | Implement FastAPI equivalent, then convert route to proxy or remove. | P2 |
 | `/api/accounting/financial-institution-movements` | `migrate_to_fastapi` | `/api/v1/accounting/financial-institution-movements` | yes | yes | Implement FastAPI equivalent, then convert route to proxy or remove. | P2 |
+| `/api/accounting/reconciliation/match` | `proxy_to_fastapi` | `/api/v1/accounting/reconciliation/match` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/accounting/reconciliation/suggestions` | `proxy_to_fastapi` | `/api/v1/accounting/reconciliation/suggestions` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/accounting/reconciliation/summary` | `proxy_to_fastapi` | `/api/v1/accounting/reconciliation/summary` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/accounting/reconciliation/unmatch` | `proxy_to_fastapi` | `/api/v1/accounting/reconciliation/unmatch` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/accounting/reconciliation/unmatched` | `proxy_to_fastapi` | `/api/v1/accounting/reconciliation/unmatched` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
 | `/api/action-center/by-record` | `proxy_to_fastapi_with_temporary_fallback` | `/api/v1/action-center/by-record` | no | yes | Remove TS fallback after FastAPI endpoint is verified in staging and frontend E2E/smoke passes. | P1 |
 | `/api/action-center/counts` | `proxy_to_fastapi_with_temporary_fallback` | `/api/v1/action-center/counts` | no | yes | Remove TS fallback after FastAPI endpoint is verified in staging and frontend E2E/smoke passes. | P1 |
 | `/api/action-center` | `proxy_to_fastapi_with_temporary_fallback` | `/api/v1/action-center` | no | yes | Remove TS fallback after FastAPI endpoint is verified in staging and frontend E2E/smoke passes. | P1 |

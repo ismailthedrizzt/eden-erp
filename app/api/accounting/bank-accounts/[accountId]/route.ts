@@ -1,18 +1,27 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { createServiceClient } from '@/lib/supabase/server'
-import { ACCOUNTING_PERMISSIONS } from '@/lib/modules/accounting/shared/accounting.permissions'
-import { requirePermission } from '@/lib/security/serverPermissions'
-import { normalizeAccountPayload } from '../../_banking'
-import { BANK_ACCOUNT_SELECT } from '../../bank-accounts-cards/_shared'
+// BACKEND_MIGRATION_STATUS: proxy_to_fastapi
+// CANONICAL_BACKEND: FastAPI
+// TARGET_FASTAPI_ENDPOINT: /api/v1/accounting/bank-accounts/{accountId}
+// NOTES: Accounting deepening route is proxy-only; no legacy fallback.
+
+import { NextRequest } from 'next/server'
+import { fastApiUnavailableResponse, proxyToFastApi } from '@/lib/backend/fastApiProxy'
+
+export const runtime = 'nodejs'
+
+export async function GET(request: NextRequest, { params }: { params: Promise<{ accountId: string }> }) {
+  const { accountId } = await params
+  const response = await proxyToFastApi(request, `/api/v1/accounting/bank-accounts/${accountId}`)
+  return response || fastApiUnavailableResponse()
+}
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ accountId: string }> }) {
   const { accountId } = await params
-  const supabase = createServiceClient()
-  const permission = await requirePermission(request, supabase, ACCOUNTING_PERMISSIONS.bankAccountsEdit)
-  if (permission instanceof NextResponse) return permission
+  const response = await proxyToFastApi(request, `/api/v1/accounting/bank-accounts/${accountId}`)
+  return response || fastApiUnavailableResponse()
+}
 
-  const payload = normalizeAccountPayload(await request.json())
-  const { data, error } = await supabase.from('bank_accounts').update({ ...payload, updated_at: new Date().toISOString(), updated_by: permission.userId }).eq('id', accountId).select(BANK_ACCOUNT_SELECT).single()
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json({ data })
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ accountId: string }> }) {
+  const { accountId } = await params
+  const response = await proxyToFastApi(request, `/api/v1/accounting/bank-accounts/${accountId}`)
+  return response || fastApiUnavailableResponse()
 }

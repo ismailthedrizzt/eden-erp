@@ -24,6 +24,17 @@ SYSTEM_PERMISSIONS = {
     "dataQuality.merge",
     "admin",
 }
+ACCOUNTING_PERMISSIONS = {
+    "__eden_demo_allow_all__",
+    "accounting.view",
+    "accounting.reconciliationView",
+    "accounting.reconciliationManage",
+    "accounting.bankTransactionsView",
+    "accounting.eDocumentsView",
+    "accounting.capitalReconciliationView",
+    "accounting.edit",
+    "system.admin",
+}
 
 
 def filter_record_items(
@@ -31,7 +42,7 @@ def filter_record_items(
     *,
     entity_type: str,
     entity_id: str,
-    ) -> list[dict[str, Any]]:
+) -> list[dict[str, Any]]:
     return [
         item
         for item in items
@@ -156,9 +167,11 @@ async def list_action_center_items(
             {"tenant_id": context["tenant_id"], "limit": limit},
         )
         for row in rows_to_dicts(list(operation_result.mappings().all())):
-            if row.get("operation_status") in {"failed", "requires_action"} or _minutes_since(
-                row.get("started_at") or row.get("created_at")
-            ) >= STUCK_OPERATION_MINUTES:
+            if (
+                row.get("operation_status") in {"failed", "requires_action"}
+                or _minutes_since(row.get("started_at") or row.get("created_at"))
+                >= STUCK_OPERATION_MINUTES
+            ):
                 items.append(_normalize_operation(row, str(context["tenant_id"])))
 
     if await table_exists(session, "public.data_import_jobs"):
@@ -263,6 +276,96 @@ async def list_action_center_items(
         items.extend(
             _normalize_document_item(row, str(context["tenant_id"]))
             for row in rows_to_dicts(list(document_result.mappings().all()))
+        )
+
+    accounting_scope_sql = ""
+    accounting_params: dict[str, Any] = {"tenant_id": context["tenant_id"], "limit": limit}
+    if context.get("company_scope_ids"):
+        accounting_scope_sql = (
+            " and company_id = any(cast(:accounting_company_scope_ids as uuid[]))"
+        )
+        accounting_params["accounting_company_scope_ids"] = context["company_scope_ids"]
+
+    if _can_see_accounting_items(context) and await table_exists(
+        session,
+        "public.accounting_bank_transactions",
+    ):
+        accounting_bank_result = await session.execute(
+            text(
+                f"""
+                select id, tenant_id, company_id, bank_account_id, transaction_date,
+                       description, counterparty_name, amount, currency, direction,
+                       reconciliation_status, updated_at, created_at
+                from public.accounting_bank_transactions
+                where tenant_id = :tenant_id
+                  and coalesce(is_deleted, false) = false
+                  and reconciliation_status in ('unmatched', 'needs_review')
+                  {accounting_scope_sql}
+                order by transaction_date desc, created_at desc
+                limit :limit
+                """
+            ),
+            accounting_params,
+        )
+        items.extend(
+            _normalize_accounting_item(row, str(context["tenant_id"]), "bank_transaction")
+            for row in rows_to_dicts(list(accounting_bank_result.mappings().all()))
+        )
+
+    if _can_see_accounting_items(context) and await table_exists(
+        session,
+        "public.accounting_e_documents",
+    ):
+        accounting_document_result = await session.execute(
+            text(
+                f"""
+                select id, tenant_id, company_id, invoice_no, issue_date,
+                       sender_name, receiver_name, payable_amount as amount,
+                       currency, status, reconciliation_status, updated_at, created_at
+                from public.accounting_e_documents
+                where tenant_id = :tenant_id
+                  and coalesce(is_deleted, false) = false
+                  and (
+                    reconciliation_status in ('unmatched', 'needs_review')
+                    or status = 'rejected'
+                  )
+                  {accounting_scope_sql}
+                order by issue_date desc, created_at desc
+                limit :limit
+                """
+            ),
+            accounting_params,
+        )
+        items.extend(
+            _normalize_accounting_item(row, str(context["tenant_id"]), "e_document")
+            for row in rows_to_dicts(list(accounting_document_result.mappings().all()))
+        )
+
+    if _can_see_accounting_items(context) and await table_exists(
+        session,
+        "public.accounting_capital_reconciliation",
+    ):
+        capital_result = await session.execute(
+            text(
+                f"""
+                select id, tenant_id, company_id, capital_transaction_id, partner_id,
+                       expected_amount, paid_amount, outstanding_amount as amount,
+                       currency, reconciliation_status, updated_at, created_at
+                from public.accounting_capital_reconciliation
+                where tenant_id = :tenant_id
+                  and coalesce(is_deleted, false) = false
+                  and reconciliation_status <> 'matched'
+                  and outstanding_amount > 0
+                  {accounting_scope_sql}
+                order by updated_at desc
+                limit :limit
+                """
+            ),
+            accounting_params,
+        )
+        items.extend(
+            _normalize_accounting_item(row, str(context["tenant_id"]), "capital_reconciliation")
+            for row in rows_to_dicts(list(capital_result.mappings().all()))
         )
 
     if await table_exists(session, "public.notifications") and context.get("user_id"):
@@ -394,9 +497,13 @@ async def list_action_center_items(
             {"tenant_id": context["tenant_id"], "limit": limit},
         )
         for row in rows_to_dicts(list(outbox_result.mappings().all())):
-            if row.get("status") in {"failed", "skipped"} or _minutes_since(
-                row.get("locked_at") or row.get("created_at") or row.get("occurred_at")
-            ) >= STALE_OUTBOX_MINUTES:
+            if (
+                row.get("status") in {"failed", "skipped"}
+                or _minutes_since(
+                    row.get("locked_at") or row.get("created_at") or row.get("occurred_at")
+                )
+                >= STALE_OUTBOX_MINUTES
+            ):
                 items.append(_normalize_outbox(row, str(context["tenant_id"])))
 
     filtered = _filter_items(items, query)
@@ -476,7 +583,9 @@ def _normalize_task(row: dict[str, Any], tenant_id: str) -> dict[str, Any]:
         "due_at": row.get("due_at"),
         "created_at": row.get("created_at") or _now_iso(),
         "updated_at": row.get("updated_at"),
-        "target_page": f"/app/surecler/{process_id}" if process_id else _record_target_page(
+        "target_page": f"/app/surecler/{process_id}"
+        if process_id
+        else _record_target_page(
             entity_type,
             entity_id,
             row.get("company_id"),
@@ -507,9 +616,8 @@ def _normalize_project_task(row: dict[str, Any], tenant_id: str) -> dict[str, An
         "id": f"project_task:{task_id}",
         "tenant_id": row.get("tenant_id") or tenant_id,
         "company_id": row.get("company_id"),
-        "branch_id": row.get("branch_id") or (
-            entity_id if _same_entity_type(entity_type, "branch") else None
-        ),
+        "branch_id": row.get("branch_id")
+        or (entity_id if _same_entity_type(entity_type, "branch") else None),
         "module_key": "project_management",
         "source_type": "project_task",
         "source_id": str(task_id),
@@ -659,9 +767,7 @@ def _normalize_data_job(row: dict[str, Any], tenant_id: str, source_type: str) -
     title_by_source = {
         "import": "Import isi dikkat bekliyor" if failed or ready else "Import isi suruyor",
         "export": (
-            "Export dosyasi hazir"
-            if status_value == "completed"
-            else "Export isi tamamlanamadi"
+            "Export dosyasi hazir" if status_value == "completed" else "Export isi tamamlanamadi"
         ),
         "bulk": "Bulk action dikkat bekliyor" if failed or ready else "Bulk action suruyor",
     }
@@ -803,6 +909,64 @@ def _normalize_notification_item(row: dict[str, Any], tenant_id: str) -> dict[st
     }
 
 
+def _normalize_accounting_item(
+    row: dict[str, Any], tenant_id: str, source_kind: str
+) -> dict[str, Any]:
+    if source_kind == "bank_transaction":
+        title = "Eslesmeyen banka hareketi var"
+        label = row.get("description") or row.get("counterparty_name") or "Banka hareketi"
+        description = f"{label} mutabakat bekliyor."
+        target_page = "/app/muhasebe/mutabakat"
+        action_key = "accounting.reconciliation.bank"
+    elif source_kind == "e_document":
+        rejected = row.get("status") == "rejected"
+        title = "Reddedilen e-belge var" if rejected else "Eslesmeyen e-belge var"
+        description = f"{row.get('invoice_no') or 'E-belge'} cari/banka hareketiyle eslestirilmeli."
+        target_page = "/app/muhasebe/e-fatura-e-arsiv"
+        action_key = "accounting.reconciliation.document"
+    else:
+        title = "Sermaye odeme mutabakati bekliyor"
+        label = row.get("capital_transaction_id") or "Sermaye islemi"
+        description = f"{label} icin odeme mutabakati tamamlanmadi."
+        target_page = "/app/muhasebe/sermaye-mutabakati"
+        action_key = "accounting.capital_reconciliation"
+    amount_label = ""
+    if row.get("amount") is not None:
+        amount_label = f" Tutar: {row.get('amount')} {row.get('currency') or ''}".strip()
+    return {
+        "id": f"accounting_{source_kind}:{row.get('id')}",
+        "tenant_id": row.get("tenant_id") or tenant_id,
+        "company_id": row.get("company_id"),
+        "module_key": "accounting",
+        "source_type": f"accounting_{source_kind}",
+        "source_id": str(row.get("id")),
+        "title": title,
+        "description": f"{description}{(' ' + amount_label) if amount_label else ''}",
+        "status": "waiting",
+        "severity": "warning",
+        "priority": "high"
+        if source_kind == "capital_reconciliation" or row.get("status") == "rejected"
+        else "normal",
+        "action_key": action_key,
+        "entity_type": f"accounting_{source_kind}",
+        "entity_id": row.get("id"),
+        "record_label": row.get("invoice_no")
+        or row.get("description")
+        or row.get("capital_transaction_id")
+        or str(row.get("id")),
+        "created_at": row.get("created_at") or _now_iso(),
+        "updated_at": row.get("updated_at"),
+        "target_page": target_page,
+        "suggested_actions": [
+            {
+                "label": "Incele",
+                "action_type": "navigate",
+                "target_page": target_page,
+            }
+        ],
+    }
+
+
 def _normalize_data_quality_item(row: dict[str, Any], tenant_id: str) -> dict[str, Any]:
     severity_value = row.get("severity")
     if severity_value == "critical":
@@ -851,8 +1015,7 @@ def _normalize_duplicate_quality_item(row: dict[str, Any], tenant_id: str) -> di
     entity_type = row.get("entity_type")
     candidate_count = row.get("candidate_count") or 0
     description = (
-        f"{entity_type} icin {candidate_count} kayit ayni olabilir. "
-        f"{row.get('match_reason') or ''}"
+        f"{entity_type} icin {candidate_count} kayit ayni olabilir. {row.get('match_reason') or ''}"
     ).strip()
     return {
         "id": f"data_quality_duplicate:{row.get('id')}",
@@ -1073,15 +1236,19 @@ def _summary(items: list[dict[str, Any]]) -> dict[str, Any]:
             task_count += 1
         if item.get("source_type") == "operation" and item.get("status") == "failed":
             failed_operation_count += 1
-        if item.get("source_type") in {
-            "outbox",
-            "projection",
-            "integrity_warning",
-            "module_readiness",
-            "onboarding",
-            "data_quality",
-            "system",
-        } and item.get("status") != "completed":
+        if (
+            item.get("source_type")
+            in {
+                "outbox",
+                "projection",
+                "integrity_warning",
+                "module_readiness",
+                "onboarding",
+                "data_quality",
+                "system",
+            }
+            and item.get("status") != "completed"
+        ):
             system_warning_count += 1
         module_key = str(item.get("module_key") or "system")
         severity = str(item.get("severity") or "info")
@@ -1123,6 +1290,13 @@ def _can_see_data_quality_items(context: dict[str, Any]) -> bool:
             }
         )
     )
+
+
+def _can_see_accounting_items(context: dict[str, Any]) -> bool:
+    if context.get("is_internal"):
+        return True
+    permissions = set(context.get("permissions") or [])
+    return bool(permissions.intersection(ACCOUNTING_PERMISSIONS))
 
 
 async def _onboarding_company_summary(session: AsyncSession, tenant_id: str) -> dict[str, int]:
