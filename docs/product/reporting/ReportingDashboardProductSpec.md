@@ -12,6 +12,9 @@ Ana ilke: Raporlama ham business mutation yapmaz. Rapor ekranlari projection,
 read model veya summary endpointlerinden okur; kullanici yalnizca yetkili
 oldugu sirket, sube, modul ve kayit ozetlerini gorur.
 
+Gelismis raporlama fazi icin bkz.
+[AdvancedReportingProductSpec.md](./AdvancedReportingProductSpec.md).
+
 ## Kapsam
 
 - Yonetim dashboard.

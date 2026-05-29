@@ -229,6 +229,11 @@ export const PERMISSIONS = {
     viewAuditSummary: 'reporting.viewAuditSummary',
     viewHR: 'reporting.viewHR',
     viewSystem: 'reporting.viewSystem',
+    savedViewsManage: 'reporting.savedViewsManage',
+    customReportsManage: 'reporting.customReportsManage',
+    scheduledReportsManage: 'reporting.scheduledReportsManage',
+    exportManage: 'reporting.exportManage',
+    dashboardCustomize: 'reporting.dashboardCustomize',
   },
   security: {
     view: 'security.view',

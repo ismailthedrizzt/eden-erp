@@ -740,6 +740,56 @@ async def list_action_center_items(
             for row in rows_to_dicts(list(capital_result.mappings().all()))
         )
 
+    if _can_see_reporting_items(context) and await table_exists(
+        session,
+        "public.reporting_scheduled_reports",
+    ):
+        scheduled_report_result = await session.execute(
+            text(
+                """
+                select id, tenant_id, report_key, schedule_name, status, next_run_at,
+                       last_run_at, last_result_status, last_error, updated_at, created_at
+                from public.reporting_scheduled_reports
+                where tenant_id = :tenant_id
+                  and (
+                    status = 'failed'
+                    or last_result_status in ('failed','skipped_recipients')
+                    or last_error is not null
+                  )
+                order by coalesce(last_run_at, updated_at, created_at) desc
+                limit :limit
+                """
+            ),
+            {"tenant_id": context["tenant_id"], "limit": limit},
+        )
+        items.extend(
+            _normalize_reporting_schedule(row, str(context["tenant_id"]))
+            for row in rows_to_dicts(list(scheduled_report_result.mappings().all()))
+        )
+
+    if _can_see_reporting_items(context) and await table_exists(
+        session,
+        "public.reporting_export_jobs",
+    ):
+        reporting_export_result = await session.execute(
+            text(
+                """
+                select id, tenant_id, report_key, requested_by, export_format, status,
+                       row_count, error_message, created_at, completed_at
+                from public.reporting_export_jobs
+                where tenant_id = :tenant_id
+                  and status in ('failed','expired')
+                order by coalesce(completed_at, created_at) desc
+                limit :limit
+                """
+            ),
+            {"tenant_id": context["tenant_id"], "limit": limit},
+        )
+        items.extend(
+            _normalize_reporting_export_job(row, str(context["tenant_id"]))
+            for row in rows_to_dicts(list(reporting_export_result.mappings().all()))
+        )
+
     if await table_exists(session, "public.notifications") and context.get("user_id"):
         notification_result = await session.execute(
             text(
@@ -1277,6 +1327,78 @@ def _normalize_notification_item(row: dict[str, Any], tenant_id: str) -> dict[st
                 "action_type": "navigate",
                 "target_page": row.get("target_page") or "/app",
             }
+        ],
+    }
+
+
+def _normalize_reporting_schedule(row: dict[str, Any], tenant_id: str) -> dict[str, Any]:
+    permission_issue = row.get("last_result_status") == "skipped_recipients"
+    return {
+        "id": f"reporting_scheduled_report:{row.get('id')}",
+        "tenant_id": row.get("tenant_id") or tenant_id,
+        "module_key": "reporting",
+        "source_type": "report_permission_issue" if permission_issue else "failed_scheduled_report",
+        "source_id": str(row.get("id")),
+        "title": (
+            "Rapor alici yetkisi kontrol edilmeli"
+            if permission_issue
+            else "Zamanlanmis rapor basarisiz"
+        ),
+        "description": row.get("last_error")
+        or f"{row.get('schedule_name') or row.get('report_key')} son calismada dikkat bekliyor.",
+        "status": "waiting",
+        "severity": "warning",
+        "priority": "high",
+        "action_key": "reporting.schedule.review",
+        "entity_type": "scheduled_report",
+        "entity_id": row.get("id"),
+        "record_label": row.get("schedule_name") or row.get("report_key"),
+        "due_at": row.get("next_run_at"),
+        "created_at": row.get("created_at") or _now_iso(),
+        "updated_at": row.get("updated_at") or row.get("last_run_at"),
+        "target_page": "/app/raporlama/zamanlanmis-raporlar",
+        "suggested_actions": [
+            {
+                "label": "Zamanlamayi Ac",
+                "action_type": "navigate",
+                "target_page": "/app/raporlama/zamanlanmis-raporlar",
+            },
+            {
+                "label": "Simdi Calistir",
+                "action_type": "navigate",
+                "target_page": "/app/raporlama/zamanlanmis-raporlar",
+            },
+        ],
+    }
+
+
+def _normalize_reporting_export_job(row: dict[str, Any], tenant_id: str) -> dict[str, Any]:
+    expired = row.get("status") == "expired"
+    return {
+        "id": f"reporting_export_job:{row.get('id')}",
+        "tenant_id": row.get("tenant_id") or tenant_id,
+        "module_key": "reporting",
+        "source_type": "report_export_failed",
+        "source_id": str(row.get("id")),
+        "title": "Export suresi doldu" if expired else "Rapor export tamamlanamadi",
+        "description": row.get("error_message")
+        or f"{row.get('report_key')} export job {row.get('status') or 'failed'} durumunda.",
+        "status": "waiting",
+        "severity": "warning",
+        "priority": "high",
+        "action_key": "reporting.export.review",
+        "entity_type": "report_export_job",
+        "entity_id": row.get("id"),
+        "record_label": row.get("report_key"),
+        "created_at": row.get("created_at") or _now_iso(),
+        "updated_at": row.get("completed_at"),
+        "target_page": "/app/raporlama/ozel-raporlar",
+        "suggested_actions": [
+            {
+                "label": "Exportlari Ac",
+                "action_type": "navigate",
+                "target_page": "/app/raporlama/ozel-raporlar",
+            },
         ],
     }
 
@@ -2013,6 +2135,9 @@ def _summary(items: list[dict[str, Any]]) -> dict[str, Any]:
                 "onboarding",
                 "data_quality",
                 "system",
+                "failed_scheduled_report",
+                "report_export_failed",
+                "report_permission_issue",
             }
             and item.get("status") != "completed"
         ):
@@ -2173,6 +2298,24 @@ def _can_manage_crm_items(context: dict[str, Any]) -> bool:
                 "crm.opportunitiesEdit",
                 "crm.followupManage",
                 "crm.pipelineManage",
+            }
+        )
+    )
+
+
+def _can_see_reporting_items(context: dict[str, Any]) -> bool:
+    if context.get("is_internal"):
+        return True
+    permissions = set(context.get("permissions") or [])
+    return bool(
+        permissions.intersection(
+            {
+                "__eden_demo_allow_all__",
+                "reporting.view",
+                "reporting.admin",
+                "reporting.scheduledReportsManage",
+                "reporting.exportManage",
+                "system.admin",
             }
         )
     )

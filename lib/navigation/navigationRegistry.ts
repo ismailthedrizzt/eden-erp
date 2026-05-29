@@ -22,6 +22,16 @@ export const navigationItems = [
     permission: 'reporting.dashboardView',
     fallbackPermission: 'reporting.view',
   }),
+  item('reportingCustomReports', 'Ozel Raporlar', '/app/raporlama/ozel-raporlar', 'file-spreadsheet', 'reporting', 21, {
+    parentKey: 'managementDashboard',
+    permission: 'reporting.customReportsManage',
+    featureFlag: 'reporting.customReports',
+  }),
+  item('reportingScheduledReports', 'Zamanlanmis Raporlar', '/app/raporlama/zamanlanmis-raporlar', 'calendar-clock', 'reporting', 22, {
+    parentKey: 'managementDashboard',
+    permission: 'reporting.scheduledReportsManage',
+    featureFlag: 'reporting.scheduledReports',
+  }),
   item('sirket', 'Sirket Yonetimi', '/app/sirket', 'building', 'companies', 100),
   item('companies', 'Sirketlerimiz', '/app/sirket/companies', 'building', 'companies', 110, {
     parentKey: 'sirket',

@@ -150,6 +150,42 @@ FEATURE_FLAGS: list[FeatureFlagDefinition] = [
         dependencies=["process", "audit"],
     ),
     FeatureFlagDefinition(
+        key="reporting.savedViews",
+        module_key="reporting",
+        label="Kayitli gorunumler",
+        description="Kullanici bazli ve paylasimli rapor filtre/kolon gorunumlerini etkinlestirir.",
+    ),
+    FeatureFlagDefinition(
+        key="reporting.customReports",
+        module_key="reporting",
+        label="Ozel raporlar",
+        description="Whitelist kaynaklardan ozel rapor tanimlari olusturmayi etkinlestirir.",
+    ),
+    FeatureFlagDefinition(
+        key="reporting.scheduledReports",
+        module_key="reporting",
+        label="Zamanlanmis raporlar",
+        description="Raporlarin gunluk/haftalik/aylik calismasini ve alicilara iletilmesini etkinlestirir.",
+    ),
+    FeatureFlagDefinition(
+        key="reporting.exportJobs",
+        module_key="reporting",
+        label="Export joblari",
+        description="Rapor export isteklerini auditli job olarak yonetir.",
+    ),
+    FeatureFlagDefinition(
+        key="reporting.dashboardPersonalization",
+        module_key="reporting",
+        label="Dashboard kisisellestirme",
+        description="Kullanici dashboard kart sirasi, gizleme ve pinned rapor tercihlerini etkinlestirir.",
+    ),
+    FeatureFlagDefinition(
+        key="reporting.crossModuleReports",
+        module_key="reporting",
+        label="Moduller arasi raporlar",
+        description="Sirket 360, operasyon risk, finansal belge eksikligi, servis ve HR hazirlik raporlarini etkinlestirir.",
+    ),
+    FeatureFlagDefinition(
         key="branches.facilityAutoCreate",
         module_key="branches",
         label="Sube acilisinda tesis/lokasyon olusturma",

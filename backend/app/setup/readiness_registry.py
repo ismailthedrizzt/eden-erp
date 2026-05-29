@@ -339,7 +339,14 @@ READINESS_REGISTRY: dict[str, ModuleReadinessDefinition] = {
     ),
     "reporting": ModuleReadinessDefinition(
         module_key="reporting",
-        required_tables=[],
+        required_tables=[
+            "reporting_saved_views",
+            "reporting_custom_reports",
+            "reporting_scheduled_reports",
+            "reporting_export_jobs",
+            "reporting_report_run_logs",
+            "reporting_dashboard_preferences",
+        ],
         optional_tables=[
             "companies",
             "company_partners",
@@ -352,6 +359,9 @@ READINESS_REGISTRY: dict[str, ModuleReadinessDefinition] = {
             "crm_stakeholders",
             "audit_logs",
             "outbox_events",
+            "notifications",
+            "email_messages",
+            "documents",
         ],
         required_dependencies=["companies"],
         optional_dependencies=[
@@ -365,10 +375,13 @@ READINESS_REGISTRY: dict[str, ModuleReadinessDefinition] = {
             "crm",
             "audit",
             "actionCenter",
+            "notifications",
+            "documents",
         ],
         setup_steps=[
-            "Enable reporting dashboard feature flags and verify module summary endpoints.",
+            "Enable advanced reporting feature flags and verify saved view, custom report, scheduled report and export tables.",
             "Verify projection/read-model sources for enabled modules.",
+            "Check export row limits, sensitive report permissions and scheduled recipient scope enforcement.",
         ],
     ),
     "security": ModuleReadinessDefinition(

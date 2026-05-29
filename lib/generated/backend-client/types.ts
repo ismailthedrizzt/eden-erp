@@ -3079,6 +3079,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/reporting/reports/catalog": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Reports Catalog Endpoint */
+        get: operations["reports_catalog_endpoint_api_v1_reporting_reports_catalog_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/reporting/reports/{report_key}": {
         parameters: {
             query?: never;
@@ -3128,6 +3145,270 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reporting/saved-views": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Saved Views List */
+        get: operations["saved_views_list_api_v1_reporting_saved_views_get"];
+        put?: never;
+        /** Saved Views Create */
+        post: operations["saved_views_create_api_v1_reporting_saved_views_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reporting/saved-views/{view_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Saved Views Get */
+        get: operations["saved_views_get_api_v1_reporting_saved_views__view_id__get"];
+        put?: never;
+        post?: never;
+        /** Saved Views Delete */
+        delete: operations["saved_views_delete_api_v1_reporting_saved_views__view_id__delete"];
+        options?: never;
+        head?: never;
+        /** Saved Views Update */
+        patch: operations["saved_views_update_api_v1_reporting_saved_views__view_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/reporting/saved-views/{view_id}/set-default": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Saved Views Set Default */
+        post: operations["saved_views_set_default_api_v1_reporting_saved_views__view_id__set_default_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reporting/saved-views/{view_id}/pin": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Saved Views Pin */
+        post: operations["saved_views_pin_api_v1_reporting_saved_views__view_id__pin_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reporting/custom-reports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Custom Reports List */
+        get: operations["custom_reports_list_api_v1_reporting_custom_reports_get"];
+        put?: never;
+        /** Custom Reports Create */
+        post: operations["custom_reports_create_api_v1_reporting_custom_reports_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reporting/custom-reports/{report_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Custom Reports Get */
+        get: operations["custom_reports_get_api_v1_reporting_custom_reports__report_id__get"];
+        put?: never;
+        post?: never;
+        /** Custom Reports Delete */
+        delete: operations["custom_reports_delete_api_v1_reporting_custom_reports__report_id__delete"];
+        options?: never;
+        head?: never;
+        /** Custom Reports Update */
+        patch: operations["custom_reports_update_api_v1_reporting_custom_reports__report_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/reporting/scheduled-reports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Scheduled Reports List */
+        get: operations["scheduled_reports_list_api_v1_reporting_scheduled_reports_get"];
+        put?: never;
+        /** Scheduled Reports Create */
+        post: operations["scheduled_reports_create_api_v1_reporting_scheduled_reports_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reporting/scheduled-reports/{schedule_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Scheduled Reports Get */
+        get: operations["scheduled_reports_get_api_v1_reporting_scheduled_reports__schedule_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Scheduled Reports Update */
+        patch: operations["scheduled_reports_update_api_v1_reporting_scheduled_reports__schedule_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/reporting/scheduled-reports/{schedule_id}/pause": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Scheduled Reports Pause */
+        post: operations["scheduled_reports_pause_api_v1_reporting_scheduled_reports__schedule_id__pause_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reporting/scheduled-reports/{schedule_id}/resume": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Scheduled Reports Resume */
+        post: operations["scheduled_reports_resume_api_v1_reporting_scheduled_reports__schedule_id__resume_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reporting/scheduled-reports/{schedule_id}/run-now": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Scheduled Reports Run Now */
+        post: operations["scheduled_reports_run_now_api_v1_reporting_scheduled_reports__schedule_id__run_now_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reporting/exports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Exports List */
+        get: operations["exports_list_api_v1_reporting_exports_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reporting/exports/{export_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Exports Get */
+        get: operations["exports_get_api_v1_reporting_exports__export_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reporting/exports/{export_id}/download-url": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Exports Download Url */
+        get: operations["exports_download_url_api_v1_reporting_exports__export_id__download_url_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reporting/dashboard/preferences": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Dashboard Preferences Get */
+        get: operations["dashboard_preferences_get_api_v1_reporting_dashboard_preferences_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Dashboard Preferences Update */
+        patch: operations["dashboard_preferences_update_api_v1_reporting_dashboard_preferences_patch"];
         trace?: never;
     };
     "/api/v1/import/templates": {
@@ -7457,6 +7738,125 @@ export interface components {
                 [key: string]: unknown;
             };
         };
+        /** CustomReportCreateRequest */
+        CustomReportCreateRequest: {
+            /** Report Key */
+            report_key: string;
+            /** Report Name */
+            report_name: string;
+            /** Description */
+            description?: string | null;
+            /** Module Key */
+            module_key: string;
+            /**
+             * Report Type
+             * @default table
+             * @enum {string}
+             */
+            report_type: "table" | "summary" | "chart" | "hybrid";
+            /**
+             * Source Type
+             * @enum {string}
+             */
+            source_type: "predefined_projection" | "predefined_report" | "saved_view";
+            /** Source Key */
+            source_key: string;
+            /** Allowed Filters Json */
+            allowed_filters_json?: {
+                [key: string]: unknown;
+            };
+            /** Default Filters Json */
+            default_filters_json?: {
+                [key: string]: unknown;
+            };
+            /** Columns Json */
+            columns_json?: {
+                [key: string]: unknown;
+            }[];
+            /** Default Sort Json */
+            default_sort_json?: {
+                [key: string]: unknown;
+            };
+            /** Chart Config Json */
+            chart_config_json?: {
+                [key: string]: unknown;
+            };
+            /** Required Permissions */
+            required_permissions?: string[];
+            /**
+             * Export Enabled
+             * @default false
+             */
+            export_enabled: boolean;
+            /**
+             * Schedule Enabled
+             * @default false
+             */
+            schedule_enabled: boolean;
+            /**
+             * Active
+             * @default true
+             */
+            active: boolean;
+        };
+        /** CustomReportUpdateRequest */
+        CustomReportUpdateRequest: {
+            /** Report Name */
+            report_name?: string | null;
+            /** Description */
+            description?: string | null;
+            /** Report Type */
+            report_type?: ("table" | "summary" | "chart" | "hybrid") | null;
+            /** Source Type */
+            source_type?: ("predefined_projection" | "predefined_report" | "saved_view") | null;
+            /** Source Key */
+            source_key?: string | null;
+            /** Allowed Filters Json */
+            allowed_filters_json?: {
+                [key: string]: unknown;
+            } | null;
+            /** Default Filters Json */
+            default_filters_json?: {
+                [key: string]: unknown;
+            } | null;
+            /** Columns Json */
+            columns_json?: {
+                [key: string]: unknown;
+            }[] | null;
+            /** Default Sort Json */
+            default_sort_json?: {
+                [key: string]: unknown;
+            } | null;
+            /** Chart Config Json */
+            chart_config_json?: {
+                [key: string]: unknown;
+            } | null;
+            /** Required Permissions */
+            required_permissions?: string[] | null;
+            /** Export Enabled */
+            export_enabled?: boolean | null;
+            /** Schedule Enabled */
+            schedule_enabled?: boolean | null;
+            /** Active */
+            active?: boolean | null;
+            /** Base Version */
+            base_version?: number | null;
+        };
+        /** DashboardPreferencesRequest */
+        DashboardPreferencesRequest: {
+            /** Layout Json */
+            layout_json?: {
+                [key: string]: unknown;
+            }[];
+            /** Hidden Widgets */
+            hidden_widgets?: string[];
+            /** Pinned Reports */
+            pinned_reports?: string[];
+            /** Default Filters */
+            default_filters?: {
+                [key: string]: unknown;
+            };
+        };
         /** DismissHintRequest */
         DismissHintRequest: {
             /** Hint Key */
@@ -8110,10 +8510,14 @@ export interface components {
             /**
              * Format
              * @default csv
-             * @constant
+             * @enum {string}
              */
-            format: "csv";
+            format: "csv" | "xlsx" | "pdf";
             filters?: components["schemas"]["ReportingFilter"];
+            /** Saved View Id */
+            saved_view_id?: string | null;
+            /** Columns */
+            columns?: string[];
         } & {
             [key: string]: unknown;
         };
@@ -10714,6 +11118,176 @@ export interface components {
             } | null;
             /** Description */
             description?: string | null;
+        };
+        /** SavedViewCreateRequest */
+        SavedViewCreateRequest: {
+            /** Module Key */
+            module_key: string;
+            /** Entity Type */
+            entity_type?: string | null;
+            /** Report Key */
+            report_key?: string | null;
+            /** View Name */
+            view_name: string;
+            /** Description */
+            description?: string | null;
+            /**
+             * Visibility
+             * @default private
+             * @enum {string}
+             */
+            visibility: "private" | "shared_with_role" | "shared_with_users" | "tenant_shared";
+            /** Filters Json */
+            filters_json?: {
+                [key: string]: unknown;
+            };
+            /** Columns Json */
+            columns_json?: {
+                [key: string]: unknown;
+            }[];
+            /** Sort Json */
+            sort_json?: {
+                [key: string]: unknown;
+            };
+            /** Group By Json */
+            group_by_json?: string[];
+            /** Chart Config Json */
+            chart_config_json?: {
+                [key: string]: unknown;
+            };
+            /**
+             * Default View
+             * @default false
+             */
+            default_view: boolean;
+            /**
+             * Pinned
+             * @default false
+             */
+            pinned: boolean;
+            /** Shared Role Ids */
+            shared_role_ids?: string[];
+            /** Shared User Ids */
+            shared_user_ids?: string[];
+        };
+        /** SavedViewPinRequest */
+        SavedViewPinRequest: {
+            /**
+             * Pinned
+             * @default true
+             */
+            pinned: boolean;
+        };
+        /** SavedViewUpdateRequest */
+        SavedViewUpdateRequest: {
+            /** View Name */
+            view_name?: string | null;
+            /** Description */
+            description?: string | null;
+            /** Visibility */
+            visibility?: ("private" | "shared_with_role" | "shared_with_users" | "tenant_shared") | null;
+            /** Filters Json */
+            filters_json?: {
+                [key: string]: unknown;
+            } | null;
+            /** Columns Json */
+            columns_json?: {
+                [key: string]: unknown;
+            }[] | null;
+            /** Sort Json */
+            sort_json?: {
+                [key: string]: unknown;
+            } | null;
+            /** Group By Json */
+            group_by_json?: string[] | null;
+            /** Chart Config Json */
+            chart_config_json?: {
+                [key: string]: unknown;
+            } | null;
+            /** Default View */
+            default_view?: boolean | null;
+            /** Pinned */
+            pinned?: boolean | null;
+            /** Shared Role Ids */
+            shared_role_ids?: string[] | null;
+            /** Shared User Ids */
+            shared_user_ids?: string[] | null;
+            /** Base Version */
+            base_version?: number | null;
+        };
+        /** ScheduledReportCreateRequest */
+        ScheduledReportCreateRequest: {
+            /** Report Key */
+            report_key: string;
+            /** Saved View Id */
+            saved_view_id?: string | null;
+            /** Schedule Name */
+            schedule_name: string;
+            /** Description */
+            description?: string | null;
+            /** Recipients Json */
+            recipients_json?: {
+                [key: string]: unknown;
+            }[];
+            /**
+             * Schedule Rule
+             * @default weekly
+             * @enum {string}
+             */
+            schedule_rule: "daily" | "weekly" | "monthly";
+            /**
+             * Timezone
+             * @default Europe/Istanbul
+             */
+            timezone: string;
+            /** Next Run At */
+            next_run_at?: string | null;
+            /**
+             * Export Format
+             * @default csv
+             * @enum {string}
+             */
+            export_format: "csv" | "xlsx" | "pdf";
+            /**
+             * Email Enabled
+             * @default true
+             */
+            email_enabled: boolean;
+            /** Email Subject Template */
+            email_subject_template?: string | null;
+            /** Email Body Template */
+            email_body_template?: string | null;
+        };
+        /** ScheduledReportUpdateRequest */
+        ScheduledReportUpdateRequest: {
+            /** Schedule Name */
+            schedule_name?: string | null;
+            /** Description */
+            description?: string | null;
+            /** Saved View Id */
+            saved_view_id?: string | null;
+            /** Recipients Json */
+            recipients_json?: {
+                [key: string]: unknown;
+            }[] | null;
+            /** Schedule Rule */
+            schedule_rule?: ("daily" | "weekly" | "monthly") | null;
+            /** Timezone */
+            timezone?: string | null;
+            /** Next Run At */
+            next_run_at?: string | null;
+            /** Status */
+            status?: ("active" | "paused" | "failed" | "disabled") | null;
+            /** Export Format */
+            export_format?: ("csv" | "xlsx" | "pdf") | null;
+            /** Email Enabled */
+            email_enabled?: boolean | null;
+            /** Email Subject Template */
+            email_subject_template?: string | null;
+            /** Email Body Template */
+            email_body_template?: string | null;
+            /** Base Version */
+            base_version?: number | null;
         };
         /** SearchRequest */
         SearchRequest: {
@@ -19562,6 +20136,26 @@ export interface operations {
             };
         };
     };
+    reports_catalog_endpoint_api_v1_reporting_reports_catalog_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_list_dict_str__Any___"];
+                };
+            };
+        };
+    };
     report_definition_endpoint_api_v1_reporting_reports__report_key__get: {
         parameters: {
             query?: never;
@@ -19640,6 +20234,782 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["ExportRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    saved_views_list_api_v1_reporting_saved_views_get: {
+        parameters: {
+            query?: {
+                module_key?: string | null;
+                entity_type?: string | null;
+                report_key?: string | null;
+                visibility?: string | null;
+                include_shared?: boolean;
+                page?: number;
+                pageSize?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    saved_views_create_api_v1_reporting_saved_views_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SavedViewCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    saved_views_get_api_v1_reporting_saved_views__view_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                view_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    saved_views_delete_api_v1_reporting_saved_views__view_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                view_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    saved_views_update_api_v1_reporting_saved_views__view_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                view_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SavedViewUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    saved_views_set_default_api_v1_reporting_saved_views__view_id__set_default_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                view_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    saved_views_pin_api_v1_reporting_saved_views__view_id__pin_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                view_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SavedViewPinRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    custom_reports_list_api_v1_reporting_custom_reports_get: {
+        parameters: {
+            query?: {
+                module_key?: string | null;
+                source_type?: string | null;
+                active?: boolean | null;
+                mine?: boolean;
+                page?: number;
+                pageSize?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    custom_reports_create_api_v1_reporting_custom_reports_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CustomReportCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    custom_reports_get_api_v1_reporting_custom_reports__report_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                report_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    custom_reports_delete_api_v1_reporting_custom_reports__report_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                report_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    custom_reports_update_api_v1_reporting_custom_reports__report_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                report_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CustomReportUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    scheduled_reports_list_api_v1_reporting_scheduled_reports_get: {
+        parameters: {
+            query?: {
+                status?: string | null;
+                report_key?: string | null;
+                owner_user_id?: string | null;
+                page?: number;
+                pageSize?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    scheduled_reports_create_api_v1_reporting_scheduled_reports_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ScheduledReportCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    scheduled_reports_get_api_v1_reporting_scheduled_reports__schedule_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                schedule_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    scheduled_reports_update_api_v1_reporting_scheduled_reports__schedule_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                schedule_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ScheduledReportUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    scheduled_reports_pause_api_v1_reporting_scheduled_reports__schedule_id__pause_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                schedule_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    scheduled_reports_resume_api_v1_reporting_scheduled_reports__schedule_id__resume_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                schedule_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    scheduled_reports_run_now_api_v1_reporting_scheduled_reports__schedule_id__run_now_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                schedule_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    exports_list_api_v1_reporting_exports_get: {
+        parameters: {
+            query?: {
+                status?: string | null;
+                report_key?: string | null;
+                requested_by?: string | null;
+                page?: number;
+                pageSize?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    exports_get_api_v1_reporting_exports__export_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                export_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    exports_download_url_api_v1_reporting_exports__export_id__download_url_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                export_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    dashboard_preferences_get_api_v1_reporting_dashboard_preferences_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+        };
+    };
+    dashboard_preferences_update_api_v1_reporting_dashboard_preferences_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DashboardPreferencesRequest"];
             };
         };
         responses: {

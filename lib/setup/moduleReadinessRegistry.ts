@@ -208,12 +208,16 @@ export const moduleReadinessDefinitions: ModuleReadinessDefinition[] = [
   },
   {
     moduleKey: 'reporting',
+    requiredTables: ['reporting_saved_views', 'reporting_custom_reports', 'reporting_scheduled_reports', 'reporting_export_jobs', 'reporting_report_run_logs', 'reporting_dashboard_preferences'],
+    optionalTables: ['companies', 'company_partners', 'company_representatives', 'accounting_cari_accounts', 'accounting_cari_transactions', 'hr_employees', 'project_tasks', 'after_sales_service_requests', 'crm_stakeholders', 'audit_logs', 'outbox_events', 'notifications', 'email_messages', 'documents'],
     requiredDependencies: ['companies'],
-    optionalDependencies: ['partners', 'representatives', 'branches', 'accounting', 'hr', 'project_management', 'after_sales', 'crm', 'audit', 'actionCenter'],
+    optionalDependencies: ['partners', 'representatives', 'branches', 'accounting', 'hr', 'project_management', 'after_sales', 'crm', 'audit', 'actionCenter', 'notifications', 'documents'],
     setupSteps: [
       setupStep('reporting.dashboard', 'Dashboard kaynaklarini kontrol et', 'Yonetim dashboard modullerin summary ve projection kaynaklarini okur.', 'check'),
+      setupStep('reporting.advancedTables', 'Gelismis raporlama tablolarini kontrol et', 'Saved view, custom report, scheduled report, export job ve run log tablolarinin hazir oldugunu dogrular.', 'check'),
       setupStep('reporting.permissions', 'Rapor yetkilerini kontrol et', 'Finansal, IK, audit ve sistem KPI kartlari role/permission bazli gorunmelidir.', 'check'),
-      setupStep('reporting.exports', 'Export politikasini kontrol et', 'CSV export hazirligi tarih araligi, row limit ve ek permission ister.', 'check'),
+      setupStep('reporting.exports', 'Export politikasini kontrol et', 'Export joblari row limit, masking ve ek permission ister.', 'check'),
+      setupStep('reporting.schedules', 'Zamanlanmis raporlari kontrol et', 'Scheduled report alicilari calisma aninda permission ve scope kontrolunden gecmelidir.', 'check'),
     ],
   },
   {

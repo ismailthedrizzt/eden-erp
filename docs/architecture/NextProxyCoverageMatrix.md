@@ -4,13 +4,13 @@ Generated from `app/api/**/route.ts` by `npm run proxy:coverage`. Status values 
 
 ## Summary
 
-- Route files: 426
+- Route files: 442
 - deprecated_wrapper: 11
 - keep_session_bootstrap: 1
 - keep_ui_adapter: 24
 - keep_upload_adapter: 3
 - migrate_to_fastapi: 164
-- proxy_to_fastapi: 148
+- proxy_to_fastapi: 164
 - proxy_to_fastapi_with_temporary_fallback: 75
 
 ## Matrix
@@ -384,14 +384,30 @@ Generated from `app/api/**/route.ts` by `npm run proxy:coverage`. Status values 
 | `/api/reminders/[id]/cancel` | `migrate_to_fastapi` | `/api/v1/reminders/{id}/cancel` | no | no | Implement FastAPI equivalent, then convert route to proxy or remove. | P2 |
 | `/api/reminders/[id]/dismiss` | `migrate_to_fastapi` | `/api/v1/reminders/{id}/dismiss` | no | no | Implement FastAPI equivalent, then convert route to proxy or remove. | P2 |
 | `/api/reminders` | `migrate_to_fastapi` | `/api/v1/reminders` | no | no | Implement FastAPI equivalent, then convert route to proxy or remove. | P2 |
+| `/api/reporting/custom-reports/[id]` | `proxy_to_fastapi` | `/api/v1/reporting/custom-reports/{report_id}` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/reporting/custom-reports` | `proxy_to_fastapi` | `/api/v1/reporting/custom-reports` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
 | `/api/reporting/dashboard/module/[module]` | `proxy_to_fastapi` | `/api/v1/reporting/dashboard/module/{module_key}` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/reporting/dashboard/preferences` | `proxy_to_fastapi` | `/api/v1/reporting/dashboard/preferences` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
 | `/api/reporting/dashboard` | `proxy_to_fastapi` | `/api/v1/reporting/dashboard` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
 | `/api/reporting/dashboard/summary` | `proxy_to_fastapi` | `/api/v1/reporting/dashboard/summary` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/reporting/exports/[id]/download-url` | `proxy_to_fastapi` | `/api/v1/reporting/exports/{export_id}/download-url` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/reporting/exports/[id]` | `proxy_to_fastapi` | `/api/v1/reporting/exports/{export_id}` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/reporting/exports` | `proxy_to_fastapi` | `/api/v1/reporting/exports` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
 | `/api/reporting/kpis/[module]` | `proxy_to_fastapi` | `/api/v1/reporting/kpis/{module_key}` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
 | `/api/reporting/reports/[report_key]/export` | `proxy_to_fastapi` | `/api/v1/reporting/reports/{report_key}/export` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
 | `/api/reporting/reports/[report_key]/query` | `proxy_to_fastapi` | `/api/v1/reporting/reports/{report_key}/query` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
 | `/api/reporting/reports/[report_key]` | `proxy_to_fastapi` | `/api/v1/reporting/reports/{report_key}` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/reporting/reports/catalog` | `proxy_to_fastapi` | `/api/v1/reporting/reports/catalog` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
 | `/api/reporting/reports` | `proxy_to_fastapi` | `/api/v1/reporting/reports` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/reporting/saved-views/[id]/pin` | `proxy_to_fastapi` | `/api/v1/reporting/saved-views/{view_id}/pin` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/reporting/saved-views/[id]` | `proxy_to_fastapi` | `/api/v1/reporting/saved-views/{view_id}` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/reporting/saved-views/[id]/set-default` | `proxy_to_fastapi` | `/api/v1/reporting/saved-views/{view_id}/set-default` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/reporting/saved-views` | `proxy_to_fastapi` | `/api/v1/reporting/saved-views` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/reporting/scheduled-reports/[id]/pause` | `proxy_to_fastapi` | `/api/v1/reporting/scheduled-reports/{schedule_id}/pause` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/reporting/scheduled-reports/[id]/resume` | `proxy_to_fastapi` | `/api/v1/reporting/scheduled-reports/{schedule_id}/resume` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/reporting/scheduled-reports/[id]` | `proxy_to_fastapi` | `/api/v1/reporting/scheduled-reports/{schedule_id}` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/reporting/scheduled-reports/[id]/run-now` | `proxy_to_fastapi` | `/api/v1/reporting/scheduled-reports/{schedule_id}/run-now` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/reporting/scheduled-reports` | `proxy_to_fastapi` | `/api/v1/reporting/scheduled-reports` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
 | `/api/search/by-entity/[entity_type]/[entity_id]` | `migrate_to_fastapi` | `/api/v1/search/by-entity/{entity_type}/{entity_id}` | no | no | Implement FastAPI equivalent, then convert route to proxy or remove. | P2 |
 | `/api/search/command-palette` | `migrate_to_fastapi` | `/api/v1/search/command-palette` | no | no | Implement FastAPI equivalent, then convert route to proxy or remove. | P2 |
 | `/api/search/commands` | `migrate_to_fastapi` | `/api/v1/search/commands` | no | no | Implement FastAPI equivalent, then convert route to proxy or remove. | P2 |
