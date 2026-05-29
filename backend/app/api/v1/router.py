@@ -6,8 +6,10 @@ from app.api.v1 import (
     action_eligibility,
     admin,
     after_sales,
+    ai_assistant,
     approvals,
     audit,
+    automation,
     branches,
     companies,
     company_branches,
@@ -27,6 +29,7 @@ from app.api.v1 import (
     ownership,
     partners,
     policy,
+    portal,
     processes,
     products,
     project_tasks,
@@ -44,6 +47,8 @@ from app.api.v1 import (
 api_router = APIRouter()
 api_router.include_router(health.router, tags=["health"])
 api_router.include_router(admin.router, prefix="/admin", tags=["admin"])
+api_router.include_router(ai_assistant.router, prefix="/ai", tags=["ai assistant"])
+api_router.include_router(automation.router, prefix="/automation", tags=["automation"])
 api_router.include_router(companies.router, prefix="/companies", tags=["companies"])
 api_router.include_router(company_branches.router, tags=["company branch operations"])
 api_router.include_router(branches.router, prefix="/branches", tags=["branches"])
@@ -53,6 +58,10 @@ api_router.include_router(hr.router, prefix="/hr", tags=["hr"])
 api_router.include_router(projects.router, prefix="/projects", tags=["projects"])
 api_router.include_router(products.router, prefix="/products", tags=["products"])
 api_router.include_router(after_sales.router, prefix="/after-sales", tags=["after sales"])
+api_router.include_router(portal.router, prefix="/portal", tags=["customer portal"])
+api_router.include_router(
+    portal.admin_router, prefix="/admin/portal", tags=["customer portal admin"]
+)
 api_router.include_router(crm.router, prefix="/crm", tags=["crm"])
 api_router.include_router(reporting.router, prefix="/reporting", tags=["reporting"])
 api_router.include_router(import_export.router, tags=["import export"])

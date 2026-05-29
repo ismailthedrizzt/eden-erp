@@ -145,6 +145,18 @@ export const navigationItems = [
     fallbackPermission: 'system.admin',
     featureFlag: 'adminConsole.technicalPage',
   }),
+  item('automationRules', 'Otomasyonlar', '/app/sistem/otomasyonlar', 'workflow', 'automation', 908, {
+    parentKey: 'settings',
+    permission: 'automation.view',
+    fallbackPermission: 'settings.view',
+    featureFlag: 'automation.enabled',
+  }),
+  item('aiCopilotSettings', 'AI Copilot', '/app/sistem/ai-copilot', 'sparkles', 'aiCopilot', 909, {
+    parentKey: 'settings',
+    permission: 'aiCopilot.manageSettings',
+    fallbackPermission: 'system.admin',
+    featureFlag: 'aiCopilot.enabled',
+  }),
   item('moduleLicenses', 'Modul Lisanslari', '/app/sistem/module-licenses', 'settings', 'settings', 910, {
     parentKey: 'settings',
     permission: 'settings.modulesManage',

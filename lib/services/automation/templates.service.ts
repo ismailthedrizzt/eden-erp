@@ -1,0 +1,1 @@
+export { automationRegistry } from './automationService'

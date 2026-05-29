@@ -1,10 +1,13 @@
 import type { ModuleActionContract, ModuleContract } from './moduleContract.types'
 import { adminConsoleModule } from './contracts/adminConsole.module'
 import { accountingModule } from './contracts/accounting.module'
+import { aiCopilotModule } from './contracts/aiCopilot.module'
+import { automationModule } from './contracts/automation.module'
 import { afterSalesModule } from './contracts/afterSales.module'
 import { branchesModule } from './contracts/branches.module'
 import { companiesModule } from './contracts/companies.module'
 import { crmModule } from './contracts/crm.module'
+import { customerPortalModule } from './contracts/customerPortal.module'
 import { dataQualityModule } from './contracts/dataQuality.module'
 import { documentsModule } from './contracts/documents.module'
 import { facilitiesModule } from './contracts/facilities.module'
@@ -40,6 +43,9 @@ export const clientModuleContracts = [
   notificationsModule,
   adminConsoleModule,
   reportingModule,
+  automationModule,
+  aiCopilotModule,
+  customerPortalModule,
   securityModule,
   processModule,
   auditModule,

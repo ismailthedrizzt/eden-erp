@@ -568,6 +568,1104 @@
         }
       }
     },
+    "/api/v1/ai/copilot/query": {
+      "post": {
+        "tags": [
+          "ai assistant"
+        ],
+        "summary": "Copilot Query",
+        "operationId": "copilot_query_api_v1_ai_copilot_query_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CopilotQueryRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_dict_str__Any__"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/copilot/context": {
+      "post": {
+        "tags": [
+          "ai assistant"
+        ],
+        "summary": "Copilot Context",
+        "operationId": "copilot_context_api_v1_ai_copilot_context_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CopilotContextRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_dict_str__Any__"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/copilot/action-preview": {
+      "post": {
+        "tags": [
+          "ai assistant"
+        ],
+        "summary": "Copilot Action Preview",
+        "operationId": "copilot_action_preview_api_v1_ai_copilot_action_preview_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ActionPreviewRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_dict_str__Any__"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/copilot/form-assist": {
+      "post": {
+        "tags": [
+          "ai assistant"
+        ],
+        "summary": "Copilot Form Assist",
+        "operationId": "copilot_form_assist_api_v1_ai_copilot_form_assist_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FormAssistRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_dict_str__Any__"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/copilot/document-summary": {
+      "post": {
+        "tags": [
+          "ai assistant"
+        ],
+        "summary": "Copilot Document Summary",
+        "operationId": "copilot_document_summary_api_v1_ai_copilot_document_summary_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DocumentIntelligenceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_dict_str__Any__"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/copilot/document-extract": {
+      "post": {
+        "tags": [
+          "ai assistant"
+        ],
+        "summary": "Copilot Document Extract",
+        "operationId": "copilot_document_extract_api_v1_ai_copilot_document_extract_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DocumentIntelligenceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_dict_str__Any__"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/copilot/suggestions": {
+      "get": {
+        "tags": [
+          "ai assistant"
+        ],
+        "summary": "Copilot Suggestions",
+        "operationId": "copilot_suggestions_api_v1_ai_copilot_suggestions_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_dict_str__Any__"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/copilot/history": {
+      "get": {
+        "tags": [
+          "ai assistant"
+        ],
+        "summary": "Copilot History",
+        "operationId": "copilot_history_api_v1_ai_copilot_history_get",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 25,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_list_dict_str__Any___"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/ai/copilot/feedback": {
+      "post": {
+        "tags": [
+          "ai assistant"
+        ],
+        "summary": "Copilot Feedback",
+        "operationId": "copilot_feedback_api_v1_ai_copilot_feedback_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CopilotFeedbackRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_dict_str__Any__"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/automation/rules": {
+      "get": {
+        "tags": [
+          "automation"
+        ],
+        "summary": "Rules List",
+        "operationId": "rules_list_api_v1_automation_rules_get",
+        "parameters": [
+          {
+            "name": "module_key",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Module Key"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "trigger_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Trigger Type"
+            }
+          },
+          {
+            "name": "failed_only",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Failed Only"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Pagesize"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_dict_str__Any__"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "automation"
+        ],
+        "summary": "Rules Create",
+        "operationId": "rules_create_api_v1_automation_rules_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AutomationRuleCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_dict_str__Any__"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/automation/rules/{rule_id}": {
+      "get": {
+        "tags": [
+          "automation"
+        ],
+        "summary": "Rules Get",
+        "operationId": "rules_get_api_v1_automation_rules__rule_id__get",
+        "parameters": [
+          {
+            "name": "rule_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Rule Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_dict_str__Any__"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "automation"
+        ],
+        "summary": "Rules Update",
+        "operationId": "rules_update_api_v1_automation_rules__rule_id__patch",
+        "parameters": [
+          {
+            "name": "rule_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Rule Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AutomationRuleUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_dict_str__Any__"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "automation"
+        ],
+        "summary": "Rules Delete",
+        "operationId": "rules_delete_api_v1_automation_rules__rule_id__delete",
+        "parameters": [
+          {
+            "name": "rule_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Rule Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_dict_str__Any__"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/automation/rules/{rule_id}/activate": {
+      "post": {
+        "tags": [
+          "automation"
+        ],
+        "summary": "Rules Activate",
+        "operationId": "rules_activate_api_v1_automation_rules__rule_id__activate_post",
+        "parameters": [
+          {
+            "name": "rule_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Rule Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_dict_str__Any__"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/automation/rules/{rule_id}/pause": {
+      "post": {
+        "tags": [
+          "automation"
+        ],
+        "summary": "Rules Pause",
+        "operationId": "rules_pause_api_v1_automation_rules__rule_id__pause_post",
+        "parameters": [
+          {
+            "name": "rule_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Rule Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_dict_str__Any__"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/automation/rules/{rule_id}/disable": {
+      "post": {
+        "tags": [
+          "automation"
+        ],
+        "summary": "Rules Disable",
+        "operationId": "rules_disable_api_v1_automation_rules__rule_id__disable_post",
+        "parameters": [
+          {
+            "name": "rule_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Rule Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_dict_str__Any__"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/automation/rules/{rule_id}/run-now": {
+      "post": {
+        "tags": [
+          "automation"
+        ],
+        "summary": "Rules Run Now",
+        "operationId": "rules_run_now_api_v1_automation_rules__rule_id__run_now_post",
+        "parameters": [
+          {
+            "name": "rule_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Rule Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AutomationRunNowRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_dict_str__Any__"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/automation/rules/{rule_id}/simulate": {
+      "post": {
+        "tags": [
+          "automation"
+        ],
+        "summary": "Rules Simulate",
+        "operationId": "rules_simulate_api_v1_automation_rules__rule_id__simulate_post",
+        "parameters": [
+          {
+            "name": "rule_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Rule Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AutomationSimulationRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_dict_str__Any__"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/automation/triggers": {
+      "get": {
+        "tags": [
+          "automation"
+        ],
+        "summary": "Triggers Registry",
+        "operationId": "triggers_registry_api_v1_automation_triggers_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_list_dict_str__Any___"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/automation/conditions": {
+      "get": {
+        "tags": [
+          "automation"
+        ],
+        "summary": "Conditions Registry",
+        "operationId": "conditions_registry_api_v1_automation_conditions_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_dict_str__Any__"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/automation/actions": {
+      "get": {
+        "tags": [
+          "automation"
+        ],
+        "summary": "Actions Registry",
+        "operationId": "actions_registry_api_v1_automation_actions_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_list_dict_str__Any___"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/automation/templates": {
+      "get": {
+        "tags": [
+          "automation"
+        ],
+        "summary": "Templates Registry",
+        "operationId": "templates_registry_api_v1_automation_templates_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_list_dict_str__Any___"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/automation/runs": {
+      "get": {
+        "tags": [
+          "automation"
+        ],
+        "summary": "Runs List",
+        "operationId": "runs_list_api_v1_automation_runs_get",
+        "parameters": [
+          {
+            "name": "rule_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Rule Id"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "trigger_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Trigger Type"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Pagesize"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_dict_str__Any__"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/automation/runs/{run_id}": {
+      "get": {
+        "tags": [
+          "automation"
+        ],
+        "summary": "Runs Get",
+        "operationId": "runs_get_api_v1_automation_runs__run_id__get",
+        "parameters": [
+          {
+            "name": "run_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Run Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_dict_str__Any__"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/companies": {
       "get": {
         "tags": [
@@ -12021,6 +13119,900 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/ServiceRecordCompleteRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_dict_str__Any__"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/portal/me": {
+      "get": {
+        "tags": [
+          "customer portal"
+        ],
+        "summary": "Portal Me",
+        "operationId": "portal_me_api_v1_portal_me_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_dict_str__Any__"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/portal/dashboard": {
+      "get": {
+        "tags": [
+          "customer portal"
+        ],
+        "summary": "Portal Dashboard Get",
+        "operationId": "portal_dashboard_get_api_v1_portal_dashboard_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_dict_str__Any__"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/portal/products": {
+      "get": {
+        "tags": [
+          "customer portal"
+        ],
+        "summary": "Portal Products List",
+        "operationId": "portal_products_list_api_v1_portal_products_get",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Pagesize"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_dict_str__Any__"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/portal/products/{asset_id}": {
+      "get": {
+        "tags": [
+          "customer portal"
+        ],
+        "summary": "Portal Products Get",
+        "operationId": "portal_products_get_api_v1_portal_products__asset_id__get",
+        "parameters": [
+          {
+            "name": "asset_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Asset Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_dict_str__Any__"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/portal/service-requests": {
+      "get": {
+        "tags": [
+          "customer portal"
+        ],
+        "summary": "Portal Service Requests List",
+        "operationId": "portal_service_requests_list_api_v1_portal_service_requests_get",
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Pagesize"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_dict_str__Any__"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "customer portal"
+        ],
+        "summary": "Portal Service Requests Create",
+        "operationId": "portal_service_requests_create_api_v1_portal_service_requests_post",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PortalServiceRequestCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_dict_str__Any__"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/portal/service-requests/{request_id}": {
+      "get": {
+        "tags": [
+          "customer portal"
+        ],
+        "summary": "Portal Service Requests Get",
+        "operationId": "portal_service_requests_get_api_v1_portal_service_requests__request_id__get",
+        "parameters": [
+          {
+            "name": "request_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Request Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_dict_str__Any__"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/portal/service-requests/{request_id}/comments": {
+      "post": {
+        "tags": [
+          "customer portal"
+        ],
+        "summary": "Portal Service Requests Comment",
+        "operationId": "portal_service_requests_comment_api_v1_portal_service_requests__request_id__comments_post",
+        "parameters": [
+          {
+            "name": "request_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Request Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PortalCommentRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_dict_str__Any__"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/portal/service-requests/{request_id}/attachments": {
+      "post": {
+        "tags": [
+          "customer portal"
+        ],
+        "summary": "Portal Service Requests Attachments",
+        "operationId": "portal_service_requests_attachments_api_v1_portal_service_requests__request_id__attachments_post",
+        "parameters": [
+          {
+            "name": "request_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Request Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PortalAttachmentRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_dict_str__Any__"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/portal/service-records": {
+      "get": {
+        "tags": [
+          "customer portal"
+        ],
+        "summary": "Portal Service Records List",
+        "operationId": "portal_service_records_list_api_v1_portal_service_records_get",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Pagesize"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_dict_str__Any__"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/portal/service-records/{service_id}": {
+      "get": {
+        "tags": [
+          "customer portal"
+        ],
+        "summary": "Portal Service Records Get",
+        "operationId": "portal_service_records_get_api_v1_portal_service_records__service_id__get",
+        "parameters": [
+          {
+            "name": "service_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Service Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_dict_str__Any__"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/portal/documents": {
+      "get": {
+        "tags": [
+          "customer portal"
+        ],
+        "summary": "Portal Documents List",
+        "operationId": "portal_documents_list_api_v1_portal_documents_get",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Pagesize"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_dict_str__Any__"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/portal/documents/upload": {
+      "post": {
+        "tags": [
+          "customer portal"
+        ],
+        "summary": "Portal Documents Upload",
+        "operationId": "portal_documents_upload_api_v1_portal_documents_upload_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PortalDocumentUploadRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_dict_str__Any__"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/portal/documents/{document_id}/download-url": {
+      "get": {
+        "tags": [
+          "customer portal"
+        ],
+        "summary": "Portal Documents Download Url",
+        "operationId": "portal_documents_download_url_api_v1_portal_documents__document_id__download_url_get",
+        "parameters": [
+          {
+            "name": "document_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Document Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_dict_str__Any__"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/portal/notifications": {
+      "get": {
+        "tags": [
+          "customer portal"
+        ],
+        "summary": "Portal Notifications List",
+        "operationId": "portal_notifications_list_api_v1_portal_notifications_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_list_dict_str__Any___"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/portal/notifications/{notification_id}/read": {
+      "post": {
+        "tags": [
+          "customer portal"
+        ],
+        "summary": "Portal Notifications Read",
+        "operationId": "portal_notifications_read_api_v1_portal_notifications__notification_id__read_post",
+        "parameters": [
+          {
+            "name": "notification_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Notification Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_dict_str__Any__"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/portal/invitations": {
+      "post": {
+        "tags": [
+          "customer portal admin"
+        ],
+        "summary": "Admin Portal Invitations Create",
+        "operationId": "admin_portal_invitations_create_api_v1_admin_portal_invitations_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PortalInvitationCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_dict_str__Any__"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/portal/users": {
+      "get": {
+        "tags": [
+          "customer portal admin"
+        ],
+        "summary": "Admin Portal Users List",
+        "operationId": "admin_portal_users_list_api_v1_admin_portal_users_get",
+        "parameters": [
+          {
+            "name": "stakeholder_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Stakeholder Id"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Search"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Pagesize"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_dict_str__Any__"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/portal/users/{portal_user_id}": {
+      "patch": {
+        "tags": [
+          "customer portal admin"
+        ],
+        "summary": "Admin Portal Users Update",
+        "operationId": "admin_portal_users_update_api_v1_admin_portal_users__portal_user_id__patch",
+        "parameters": [
+          {
+            "name": "portal_user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Portal User Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PortalUserUpdateRequest"
               }
             }
           }
@@ -26851,6 +28843,111 @@
         ],
         "title": "ActionEligibilityRequest"
       },
+      "ActionPreviewRequest": {
+        "properties": {
+          "current_page": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Page"
+          },
+          "module_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Module Key"
+          },
+          "selected_entity_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selected Entity Type"
+          },
+          "selected_entity_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selected Entity Id"
+          },
+          "selected_record_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selected Record Label"
+          },
+          "selected_record_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selected Record Status"
+          },
+          "include_audit": {
+            "type": "boolean",
+            "title": "Include Audit",
+            "default": false
+          },
+          "include_documents": {
+            "type": "boolean",
+            "title": "Include Documents",
+            "default": true
+          },
+          "include_action_center": {
+            "type": "boolean",
+            "title": "Include Action Center",
+            "default": true
+          },
+          "extra_context": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Extra Context"
+          },
+          "action_key": {
+            "type": "string",
+            "title": "Action Key"
+          },
+          "form_payload": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Form Payload"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "action_key"
+        ],
+        "title": "ActionPreviewRequest"
+      },
       "ActivitySubjectChangeRequest": {
         "properties": {
           "notes": {
@@ -28132,6 +30229,352 @@
         },
         "type": "object",
         "title": "AttendanceUpdateRequest"
+      },
+      "AutomationRuleCreateRequest": {
+        "properties": {
+          "rule_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rule Key"
+          },
+          "rule_name": {
+            "type": "string",
+            "title": "Rule Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "module_key": {
+            "type": "string",
+            "title": "Module Key"
+          },
+          "trigger_type": {
+            "type": "string",
+            "enum": [
+              "event",
+              "schedule",
+              "condition",
+              "manual"
+            ],
+            "title": "Trigger Type"
+          },
+          "trigger_config": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Trigger Config"
+          },
+          "condition_config": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Condition Config"
+          },
+          "action_config": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Action Config"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "active",
+              "paused",
+              "disabled",
+              "failed"
+            ],
+            "title": "Status",
+            "default": "draft"
+          },
+          "priority": {
+            "type": "string",
+            "title": "Priority",
+            "default": "normal"
+          },
+          "run_mode": {
+            "type": "string",
+            "enum": [
+              "sync_safe",
+              "async_worker"
+            ],
+            "title": "Run Mode",
+            "default": "async_worker"
+          },
+          "max_runs_per_day": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 1000.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Runs Per Day"
+          },
+          "cooldown_minutes": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 1440.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cooldown Minutes"
+          },
+          "next_run_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Run At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "rule_name",
+          "module_key",
+          "trigger_type"
+        ],
+        "title": "AutomationRuleCreateRequest"
+      },
+      "AutomationRuleUpdateRequest": {
+        "properties": {
+          "rule_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rule Name"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "module_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Module Key"
+          },
+          "trigger_type": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "event",
+                  "schedule",
+                  "condition",
+                  "manual"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trigger Type"
+          },
+          "trigger_config": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Trigger Config"
+          },
+          "condition_config": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Condition Config"
+          },
+          "action_config": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Action Config"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "draft",
+                  "active",
+                  "paused",
+                  "disabled",
+                  "failed"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "priority": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Priority"
+          },
+          "run_mode": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "sync_safe",
+                  "async_worker"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Run Mode"
+          },
+          "max_runs_per_day": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 1000.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Runs Per Day"
+          },
+          "cooldown_minutes": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 1440.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cooldown Minutes"
+          },
+          "next_run_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Run At"
+          },
+          "base_version": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Base Version"
+          }
+        },
+        "type": "object",
+        "title": "AutomationRuleUpdateRequest"
+      },
+      "AutomationRunNowRequest": {
+        "properties": {
+          "trigger_payload": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Trigger Payload"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "title": "AutomationRunNowRequest"
+      },
+      "AutomationSimulationRequest": {
+        "properties": {
+          "limit": {
+            "type": "integer",
+            "maximum": 100.0,
+            "minimum": 1.0,
+            "title": "Limit",
+            "default": 20
+          },
+          "trigger_payload": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Trigger Payload"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "title": "AutomationSimulationRequest"
       },
       "BankAccountCreateRequest": {
         "properties": {
@@ -32618,6 +35061,262 @@
         ],
         "title": "CompleteWorkspaceStepRequest"
       },
+      "CopilotContextRequest": {
+        "properties": {
+          "current_page": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Page"
+          },
+          "module_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Module Key"
+          },
+          "selected_entity_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selected Entity Type"
+          },
+          "selected_entity_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selected Entity Id"
+          },
+          "selected_record_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selected Record Label"
+          },
+          "selected_record_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selected Record Status"
+          },
+          "include_audit": {
+            "type": "boolean",
+            "title": "Include Audit",
+            "default": false
+          },
+          "include_documents": {
+            "type": "boolean",
+            "title": "Include Documents",
+            "default": true
+          },
+          "include_action_center": {
+            "type": "boolean",
+            "title": "Include Action Center",
+            "default": true
+          },
+          "extra_context": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Extra Context"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "title": "CopilotContextRequest"
+      },
+      "CopilotFeedbackRequest": {
+        "properties": {
+          "history_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "History Id"
+          },
+          "rating": {
+            "type": "string",
+            "enum": [
+              "positive",
+              "negative",
+              "neutral"
+            ],
+            "title": "Rating"
+          },
+          "comment": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Comment"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metadata"
+          }
+        },
+        "type": "object",
+        "required": [
+          "rating"
+        ],
+        "title": "CopilotFeedbackRequest"
+      },
+      "CopilotQueryRequest": {
+        "properties": {
+          "current_page": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Page"
+          },
+          "module_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Module Key"
+          },
+          "selected_entity_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selected Entity Type"
+          },
+          "selected_entity_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selected Entity Id"
+          },
+          "selected_record_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selected Record Label"
+          },
+          "selected_record_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selected Record Status"
+          },
+          "include_audit": {
+            "type": "boolean",
+            "title": "Include Audit",
+            "default": false
+          },
+          "include_documents": {
+            "type": "boolean",
+            "title": "Include Documents",
+            "default": true
+          },
+          "include_action_center": {
+            "type": "boolean",
+            "title": "Include Action Center",
+            "default": true
+          },
+          "extra_context": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Extra Context"
+          },
+          "query": {
+            "type": "string",
+            "title": "Query",
+            "default": ""
+          },
+          "mode": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "explain",
+                  "record_summary",
+                  "action_guidance",
+                  "form_assist",
+                  "document_intelligence",
+                  "insight",
+                  "admin_assist"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Mode"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "title": "CopilotQueryRequest"
+      },
       "CreateApprovalRequest": {
         "properties": {
           "process_instance_id": {
@@ -33525,6 +36224,143 @@
           "file_name"
         ],
         "title": "DocumentCreateRequest"
+      },
+      "DocumentIntelligenceRequest": {
+        "properties": {
+          "current_page": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Page"
+          },
+          "module_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Module Key"
+          },
+          "selected_entity_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selected Entity Type"
+          },
+          "selected_entity_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selected Entity Id"
+          },
+          "selected_record_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selected Record Label"
+          },
+          "selected_record_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selected Record Status"
+          },
+          "include_audit": {
+            "type": "boolean",
+            "title": "Include Audit",
+            "default": false
+          },
+          "include_documents": {
+            "type": "boolean",
+            "title": "Include Documents",
+            "default": true
+          },
+          "include_action_center": {
+            "type": "boolean",
+            "title": "Include Action Center",
+            "default": true
+          },
+          "extra_context": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Extra Context"
+          },
+          "document_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Id"
+          },
+          "document_text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Text"
+          },
+          "document_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Name"
+          },
+          "document_type_hint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Type Hint"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "title": "DocumentIntelligenceRequest"
       },
       "DocumentRejectRequest": {
         "properties": {
@@ -36215,6 +39051,122 @@
           "next_followup_date"
         ],
         "title": "FollowupSnoozeRequest"
+      },
+      "FormAssistRequest": {
+        "properties": {
+          "current_page": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Current Page"
+          },
+          "module_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Module Key"
+          },
+          "selected_entity_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selected Entity Type"
+          },
+          "selected_entity_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selected Entity Id"
+          },
+          "selected_record_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selected Record Label"
+          },
+          "selected_record_status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selected Record Status"
+          },
+          "include_audit": {
+            "type": "boolean",
+            "title": "Include Audit",
+            "default": false
+          },
+          "include_documents": {
+            "type": "boolean",
+            "title": "Include Documents",
+            "default": true
+          },
+          "include_action_center": {
+            "type": "boolean",
+            "title": "Include Action Center",
+            "default": true
+          },
+          "extra_context": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Extra Context"
+          },
+          "intent_text": {
+            "type": "string",
+            "title": "Intent Text"
+          },
+          "form_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Form Key"
+          },
+          "current_values": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Current Values"
+          }
+        },
+        "additionalProperties": true,
+        "type": "object",
+        "required": [
+          "intent_text"
+        ],
+        "title": "FormAssistRequest"
       },
       "HTTPValidationError": {
         "properties": {
@@ -42577,6 +45529,378 @@
           "tested_user_id"
         ],
         "title": "PolicyTestRequest"
+      },
+      "PortalAttachmentRequest": {
+        "properties": {
+          "attachments": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Attachments"
+          }
+        },
+        "type": "object",
+        "title": "PortalAttachmentRequest"
+      },
+      "PortalCommentRequest": {
+        "properties": {
+          "comment": {
+            "type": "string",
+            "maxLength": 4000,
+            "minLength": 1,
+            "title": "Comment"
+          },
+          "attachments": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Attachments"
+          }
+        },
+        "type": "object",
+        "required": [
+          "comment"
+        ],
+        "title": "PortalCommentRequest"
+      },
+      "PortalDocumentUploadRequest": {
+        "properties": {
+          "owner_entity_type": {
+            "type": "string",
+            "enum": [
+              "service_request",
+              "installed_asset",
+              "stakeholder"
+            ],
+            "title": "Owner Entity Type",
+            "default": "stakeholder"
+          },
+          "owner_entity_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Owner Entity Id"
+          },
+          "document_type": {
+            "type": "string",
+            "title": "Document Type",
+            "default": "customer_upload"
+          },
+          "title": {
+            "type": "string",
+            "maxLength": 240,
+            "minLength": 1,
+            "title": "Title"
+          },
+          "file_name": {
+            "type": "string",
+            "maxLength": 240,
+            "minLength": 1,
+            "title": "File Name"
+          },
+          "mime_type": {
+            "type": "string",
+            "title": "Mime Type",
+            "default": "application/octet-stream"
+          },
+          "file_size": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "File Size",
+            "default": 0
+          },
+          "storage_bucket": {
+            "type": "string",
+            "title": "Storage Bucket",
+            "default": "eden-documents"
+          },
+          "storage_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Storage Path"
+          },
+          "metadata_json": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Metadata Json"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "title",
+          "file_name"
+        ],
+        "title": "PortalDocumentUploadRequest"
+      },
+      "PortalInvitationCreateRequest": {
+        "properties": {
+          "stakeholder_id": {
+            "type": "string",
+            "title": "Stakeholder Id"
+          },
+          "email": {
+            "type": "string",
+            "maxLength": 320,
+            "minLength": 3,
+            "pattern": "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$",
+            "title": "Email"
+          },
+          "portal_role": {
+            "type": "string",
+            "enum": [
+              "customer_admin",
+              "customer_user",
+              "customer_viewer",
+              "service_contact"
+            ],
+            "title": "Portal Role",
+            "default": "customer_user"
+          },
+          "auth_user_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Auth User Id"
+          },
+          "expires_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expires At"
+          },
+          "access_scope_json": {
+            "additionalProperties": true,
+            "type": "object",
+            "title": "Access Scope Json"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "stakeholder_id",
+          "email"
+        ],
+        "title": "PortalInvitationCreateRequest"
+      },
+      "PortalServiceRequestCreateRequest": {
+        "properties": {
+          "installed_asset_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Installed Asset Id"
+          },
+          "request_type": {
+            "type": "string",
+            "enum": [
+              "fault",
+              "maintenance",
+              "installation",
+              "training",
+              "inspection",
+              "warranty",
+              "upgrade",
+              "other"
+            ],
+            "title": "Request Type",
+            "default": "fault"
+          },
+          "priority": {
+            "type": "string",
+            "enum": [
+              "low",
+              "medium",
+              "high",
+              "urgent"
+            ],
+            "title": "Priority",
+            "default": "medium"
+          },
+          "subject": {
+            "type": "string",
+            "maxLength": 300,
+            "minLength": 2,
+            "title": "Subject"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "contact_person": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contact Person"
+          },
+          "contact_phone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contact Phone"
+          },
+          "contact_email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Contact Email"
+          },
+          "requested_date": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Requested Date"
+          },
+          "customer_availability": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Customer Availability"
+          },
+          "attachments": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Attachments"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "subject"
+        ],
+        "title": "PortalServiceRequestCreateRequest"
+      },
+      "PortalUserUpdateRequest": {
+        "properties": {
+          "portal_role": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "customer_admin",
+                  "customer_user",
+                  "customer_viewer",
+                  "service_contact"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Portal Role"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "invited",
+                  "active",
+                  "suspended",
+                  "revoked"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          },
+          "access_scope_json": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Access Scope Json"
+          },
+          "preferences_json": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preferences Json"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "PortalUserUpdateRequest"
       },
       "PrecheckResponse": {
         "properties": {

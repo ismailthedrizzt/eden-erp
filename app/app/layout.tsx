@@ -17,6 +17,7 @@ import { GuidedSystemTour } from '@/components/onboarding/GuidedSystemTour'
 import { FirstRunExperience } from '@/components/onboarding/FirstRunExperience'
 import { ActionGuideProvider } from '@/components/ai/ActionGuideContext'
 import { ActionGuideSearch } from '@/components/ai/ActionGuideSearch'
+import { CopilotPanel } from '@/components/ai/CopilotPanel'
 import { GlobalSearchInput } from '@/components/search/GlobalSearchInput'
 import { cacheUiPreferences, readCachedUiPreferences, syncUiPreferencesPatch } from '@/lib/user-state/client'
 import { setStoredTenantId, tenantRequestHeaders } from '@/lib/tenancy/client'
@@ -77,6 +78,7 @@ const BREADCRUMBS: Record<string, string> = {
   '/app/sistem/outbox': 'Sistem Yonetimi > Outbox',
   '/app/sistem/entegrasyonlar': 'Sistem Yonetimi > Entegrasyonlar',
   '/app/sistem/teknik': 'Sistem Yonetimi > Teknik',
+  '/app/sistem/ai-copilot': 'Sistem Yonetimi > AI Copilot',
   '/app/onboarding': 'Baslangic Merkezi',
   '/app/sirket/companies': 'Şirket Yönetimi › Şirketlerimiz',
   '/app/sirket/companies/partners': 'Şirket Yönetimi › Ortaklarımız',
@@ -618,6 +620,7 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
                 setTourOpen(true)
               }}
             />
+            <CopilotPanel />
           </div>
           </ActionGuideProvider>
         </PermissionProvider>

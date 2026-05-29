@@ -6,6 +6,7 @@ import { normalizeLoginIdentifier } from '@/lib/auth/tenantUserLookup'
 import { ensureSetupDatabaseSchema } from '@/lib/db/setupSchema'
 import { ACCOUNTING_PERMISSIONS } from '@/lib/modules/accounting/shared/accounting.permissions'
 import { AFTER_SALES_PERMISSIONS } from '@/lib/modules/after-sales/afterSales.permissions'
+import { AUTOMATION_PERMISSIONS } from '@/lib/modules/automation/automation.permissions'
 import { CRM_PERMISSIONS } from '@/lib/modules/crm/crm.permissions'
 import { HR_PERMISSIONS } from '@/lib/modules/hr/shared/hr.permissions'
 import { PRODUCT_SERVICES_PERMISSIONS } from '@/lib/modules/product-services/productServices.permissions'
@@ -560,6 +561,7 @@ async function grantAllKnownPermissionsToRole(supabase: Supabase, roleId: string
     ...Object.values(PRODUCT_SERVICES_PERMISSIONS),
     ...Object.values(PROJECT_MANAGEMENT_PERMISSIONS),
     ...Object.values(REPORTING_PERMISSIONS),
+    ...Object.values(AUTOMATION_PERMISSIONS),
     'partners.view',
     'partners.insert',
     'partners.edit',

@@ -221,6 +221,41 @@ export const moduleReadinessDefinitions: ModuleReadinessDefinition[] = [
     ],
   },
   {
+    moduleKey: 'automation',
+    requiredTables: ['automation_rules', 'automation_rule_runs'],
+    optionalTables: ['automation_rule_templates', 'automation_action_results', 'outbox_events', 'notifications', 'reminders', 'email_messages', 'project_tasks', 'audit_logs'],
+    optionalDependencies: ['outbox', 'notifications', 'project_management', 'reporting', 'documents', 'crm', 'after_sales', 'hr', 'accounting', 'dataQuality', 'audit', 'actionCenter'],
+    setupSteps: [
+      setupStep('automation.tables', 'Otomasyon tablolarini kontrol et', 'Kural, run log, sablon ve action result tablolarinin hazir oldugunu dogrular.', 'check'),
+      setupStep('automation.registry', 'Registry guvenligini kontrol et', 'Trigger, condition field ve action template listeleri disinda islem kabul edilmemelidir.', 'check'),
+      setupStep('automation.worker', 'Worker ve outbox baglantisini kontrol et', 'Scheduled/event kurallari idempotent calismali ve cooldown uygulamalidir.', 'check'),
+      setupStep('automation.actions', 'Bildirim ve gorev aksiyonlarini kontrol et', 'Notification, reminder ve task aksiyonlari optional altyapi varsa best-effort uretilmelidir.', 'check'),
+    ],
+  },
+  {
+    moduleKey: 'aiCopilot',
+    requiredTables: ['ai_copilot_history'],
+    optionalTables: ['ai_copilot_feedback', 'ai_document_intelligence_results', 'documents', 'document_relations', 'audit_logs', 'action_center_items', 'data_quality_findings'],
+    optionalDependencies: ['documents', 'audit', 'actionCenter', 'dataQuality', 'reporting', 'automation', 'notifications'],
+    setupSteps: [
+      setupStep('aiCopilot.tables', 'AI Copilot tablolarini kontrol et', 'AI history, feedback ve belge zekasi sonuc tablolari hazir olmalidir.', 'check'),
+      setupStep('aiCopilot.provider', 'Provider/fallback durumunu kontrol et', 'AI provider yoksa deterministic local fallback calismalidir.', 'check'),
+      setupStep('aiCopilot.safety', 'Safety guard ve registry kontrolu', 'Registry disi action, raw secret, signed URL ve mutation onaysiz engellenmelidir.', 'check'),
+    ],
+  },
+  {
+    moduleKey: 'customerPortal',
+    requiredTables: ['portal_external_users', 'portal_invitations', 'portal_activity_logs', 'crm_stakeholders', 'after_sales_installed_assets', 'after_sales_service_requests'],
+    optionalTables: ['portal_shared_documents', 'after_sales_service_records', 'documents', 'document_relations', 'notifications', 'email_messages'],
+    requiredDependencies: ['crm', 'after_sales'],
+    optionalDependencies: ['documents', 'notifications', 'audit', 'security'],
+    setupSteps: [
+      setupStep('customerPortal.tables', 'Portal tablolarini kontrol et', 'External user, davet, paylasilan belge ve aktivite log tablolari hazir olmalidir.', 'check'),
+      setupStep('customerPortal.scope', 'Musteri scope kontrolunu dogrula', 'Portal kullanicisi sadece kendi kurulu urun, servis talebi, servis kaydi ve paylasilmis belgelerine erisebilir.', 'check'),
+      setupStep('customerPortal.auth', 'Portal auth ayrimini kontrol et', 'Portal dependency internal ERP permission modeliyle karismamali ve suspended kullaniciyi engellemelidir.', 'check'),
+    ],
+  },
+  {
     moduleKey: 'security',
     requiredTables: ['security_users_profile', 'security_roles', 'security_role_permissions', 'security_user_roles', 'security_user_company_scopes', 'security_user_branch_scopes'],
     optionalTables: ['security_policy_test_logs', 'audit_logs'],
