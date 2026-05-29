@@ -37,9 +37,9 @@ export function ProjectManagementKanbanPage() {
   const [priorityFilter, setPriorityFilter] = useState('')
   const [taskTypeFilter, setTaskTypeFilter] = useState('')
   const [tagFilter, setTagFilter] = useState('')
-  const canManage = permissions.can(PROJECT_MANAGEMENT_PERMISSIONS.manageAll)
-  const canMove = canManage || permissions.can(PROJECT_MANAGEMENT_PERMISSIONS.editTask) || permissions.can(PROJECT_MANAGEMENT_PERMISSIONS.manageBoards)
-  const canView = canManage || permissions.can(PROJECT_MANAGEMENT_PERMISSIONS.view)
+  const canManage = permissions.can(PROJECT_MANAGEMENT_PERMISSIONS.admin)
+  const canMove = canManage || permissions.can(PROJECT_MANAGEMENT_PERMISSIONS.tasksEdit) || permissions.can(PROJECT_MANAGEMENT_PERMISSIONS.tasksTransition)
+  const canView = canManage || permissions.can(PROJECT_MANAGEMENT_PERMISSIONS.projectsView)
   const moduleAvailable = isModuleActive(PROJECT_MANAGEMENT_MODULE_KEY) && isSubmoduleActive(PROJECT_MANAGEMENT_MODULE_KEY, 'kanban-board')
 
   const filteredTasks = useMemo(() => tasks
@@ -127,7 +127,7 @@ export function ProjectManagementKanbanPage() {
 
       {!canMove && (
         <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/20 dark:text-amber-200">
-          Durum değiştirmek için {PROJECT_MANAGEMENT_PERMISSIONS.editTask} veya {PROJECT_MANAGEMENT_PERMISSIONS.manageBoards} izni gerekir.
+          Durum değiştirmek için {PROJECT_MANAGEMENT_PERMISSIONS.tasksEdit} veya {PROJECT_MANAGEMENT_PERMISSIONS.tasksTransition} izni gerekir.
         </div>
       )}
 

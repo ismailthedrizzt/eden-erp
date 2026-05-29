@@ -46,6 +46,7 @@ Bu dokuman platform mimarisinin ana referansidir. Detay sozlesmeler asagidaki do
 - [Next Cleanup Plan](./NextCleanupPlan.md)
 - [Technical Debt and Migration Plan](./TechnicalDebtAndMigrationPlan.md)
 - [Platform Migration Final Report](./PlatformMigrationFinalReport.md)
+- [MVP Release Readiness Report](../release/MVPReleaseReadinessReport.md)
 
 ## Platform Akisi
 

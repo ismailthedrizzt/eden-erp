@@ -202,7 +202,7 @@ export function explainVisibilityDecision(decision: VisibilityDecision) {
 export function normalizeActionKey(actionKey: string) {
   const key = actionKey.replace(/-/g, '_')
   const lowered = key.toLocaleLowerCase('tr-TR')
-  const aliases: Record<string, string> = {
+  const actionKeyMap: Record<string, string> = {
     opening: 'company_opening',
     liquidation: 'company_liquidation',
     deregistration: 'company_deregistration',
@@ -214,7 +214,7 @@ export function normalizeActionKey(actionKey: string) {
     representative_suspend: 'representative_suspend',
     representative_terminate: 'representative_terminate',
   }
-  if (aliases[key]) return aliases[key]
+  if (actionKeyMap[key]) return actionKeyMap[key]
   if (lowered.startsWith('representative_')) {
     if (lowered.includes('limit')) return 'representative_limit_change'
     if (lowered.includes('kapsam') || lowered.includes('scope')) return 'representative_authority_scope_change'

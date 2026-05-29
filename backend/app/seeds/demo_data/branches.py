@@ -1,0 +1,55 @@
+from __future__ import annotations
+
+from typing import Any
+
+BRANCHES: list[dict[str, Any]] = [
+    {
+        "key": "ankara_branch",
+        "company_key": "eden_tech",
+        "unit_key": "ankara_branch_unit",
+        "facility_key": "ankara_branch_facility",
+        "branch_name": "Ankara Subesi",
+        "branch_short_name": "Ankara",
+        "branch_type": "official",
+        "is_official_branch": True,
+        "city": "Ankara",
+        "district": "Cankaya",
+        "address": "Cankaya Demo Plaza Kat: 5",
+        "status": "active",
+        "record_status": "active",
+        "scenario_key": "active_official_branch",
+    },
+    {
+        "key": "ostim_ops_point",
+        "company_key": "glasstech",
+        "unit_key": "ostim_ops_unit",
+        "facility_key": "ostim_depo",
+        "branch_name": "Ostim Operasyon Noktasi",
+        "branch_short_name": "Ostim",
+        "branch_type": "operation_point",
+        "is_official_branch": False,
+        "city": "Ankara",
+        "district": "Yenimahalle",
+        "address": "Ostim OSB Demo Depo",
+        "status": "active",
+        "record_status": "active",
+        "scenario_key": "operation_point",
+    },
+    {
+        "key": "old_ops_closed_branch",
+        "company_key": "old_ops",
+        "unit_key": None,
+        "facility_key": None,
+        "branch_name": "Eski Sube",
+        "branch_short_name": "Eski",
+        "branch_type": "official",
+        "is_official_branch": True,
+        "city": "Ankara",
+        "district": "Altindag",
+        "address": "Kapatilmis demo lokasyon",
+        "status": "closed",
+        "record_status": "closed",
+        "scenario_key": "closed_branch",
+    },
+]
+

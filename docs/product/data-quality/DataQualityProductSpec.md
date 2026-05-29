@@ -167,3 +167,7 @@ Merge icin ayrica entity-specific edit yetkisi gerekebilir.
 - Action Center data quality uyarilarini gosterebilir.
 - Next proxy ve frontend servis canonical FastAPI contract'a baglidir.
 
+
+## Known Gaps
+
+Known gaps are tracked in [DataQualityKnownGaps.md](./DataQualityKnownGaps.md) and summarized in the final release gate risk list.

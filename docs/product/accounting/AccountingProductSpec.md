@@ -199,3 +199,7 @@ Feature flags:
 - Belge ve mutabakat durumlari UI filtreleri ve API alanlariyla hazirdir.
 - Sermaye/ownership mutabakati icin `related_module` ve related entity alanlari hazirdir.
 - Next route'lari proxy-only kalir; business karar FastAPI/Python tarafindadir.
+
+## Known Gaps
+
+Known gaps are tracked in [AccountingKnownGaps.md](./AccountingKnownGaps.md) and summarized in the final release gate risk list.

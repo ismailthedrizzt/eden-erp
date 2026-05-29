@@ -42,9 +42,9 @@ export function ProjectManagementBacklogPage() {
   const [targetSprintId, setTargetSprintId] = useState(projectManagementSprintsMock.find(sprint => sprint.status === 'aktif')?.id || '')
   const [bulkStatus, setBulkStatus] = useState<ProjectManagementTaskStatus>('yapilacak')
   const [bulkAssignee, setBulkAssignee] = useState('')
-  const canManage = permissions.can(PROJECT_MANAGEMENT_PERMISSIONS.manageAll)
-  const canEdit = canManage || permissions.can(PROJECT_MANAGEMENT_PERMISSIONS.editTask) || permissions.can(PROJECT_MANAGEMENT_PERMISSIONS.assignTask)
-  const canView = canManage || permissions.can(PROJECT_MANAGEMENT_PERMISSIONS.view)
+  const canManage = permissions.can(PROJECT_MANAGEMENT_PERMISSIONS.admin)
+  const canEdit = canManage || permissions.can(PROJECT_MANAGEMENT_PERMISSIONS.tasksEdit) || permissions.can(PROJECT_MANAGEMENT_PERMISSIONS.tasksAssign)
+  const canView = canManage || permissions.can(PROJECT_MANAGEMENT_PERMISSIONS.projectsView)
   const moduleAvailable = isModuleActive(PROJECT_MANAGEMENT_MODULE_KEY) && isSubmoduleActive(PROJECT_MANAGEMENT_MODULE_KEY, 'backlog')
 
   const backlogTasks = useMemo(() => tasks

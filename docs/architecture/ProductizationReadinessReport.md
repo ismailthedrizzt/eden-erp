@@ -84,7 +84,7 @@ None identified in the final gate.
 
 | item | current state | target state | removal condition |
 | --- | --- | --- | --- |
-| Temporary TS fallbacks | 74 fallback routes reported by `migration:status`; 56 route fallback warnings from `boundaries:check`. | Migrated route groups become `proxy_to_fastapi`. | FastAPI staging verification + frontend E2E smoke pass. |
+| Temporary TS fallbacks | 75 fallback routes reported by `migration:status`; 57 route fallback warnings from `boundaries:check`. | Migrated route groups become `proxy_to_fastapi`. | FastAPI staging verification + frontend E2E smoke pass. |
 | Ownership workflow subroutes | `[id]/**` approve/reject/cancel/reverse/history/impact remain TS/deprecated wrappers. | Python endpoint or replacement operation flow. | Python tests + staging ownership workflow smoke pass. |
 | Process/audit/action-center fallbacks | Python MVP exists; TS fallback remains. | Next routes proxy-only. | Admin/process/action-center staging smoke pass. |
 | Auth/tenant production hardening | JWT/tenant/permission infrastructure exists. | Final membership schema, JWKS support and denial audit. | Production-like auth integration test pass. |
@@ -181,3 +181,17 @@ Expected final commands:
 - `cd backend && python -m mypy app`
 - `cd backend && python -m pytest`
 - `git diff --check`
+
+## Step 26 Final Gate Update
+
+Final MVP release gate sonucu: **READY_WITH_P1_DEBT**.
+
+2026-05-29 gate kosusunda:
+
+- `npm run typecheck`, `npm run lint`, `npm run build`, `npm run migration:status`, `npm run boundaries:check`, `npm run openapi:drift`, `npm run env:safety`, `npm run security:guard` ve `npm run perf:guard` calisti.
+- Backend `ruff`, `mypy` ve `pytest` temiz calisti; pytest sonucu 173 passed ve yalnizca local `.pytest_cache` permission warning verdi.
+- Demo seed dry-run 205 kayitlik deterministic pilot veri plani uretir.
+- Demo validate script lokal DB env olmadigi icin `not_configured` doner; staging/demo DB'de tekrar kosulmasi P1 release kosuludur.
+- Docker CLI bu lokal ortamda bulunmadigi icin Docker config/build gate'i kosulamadi; CI veya Docker bulunan makinede P1 olarak kosulmalidir.
+
+Detayli karar, modul tablosu, P0/P1/P2 riskler ve pilot kapsami icin [MVP Release Readiness Report](../release/MVPReleaseReadinessReport.md) dokumanina bakiniz.

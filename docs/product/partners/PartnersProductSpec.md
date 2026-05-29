@@ -184,3 +184,7 @@ Next.js routes remain BFF/proxy compatibility routes with temporary fallbacks un
 - Correction/reversal behavior is documented and routed through ownership operations.
 - Technical backend errors are normalized into business-language messages.
 - `npm run typecheck`, `npm run build`, backend lint/typecheck/tests pass.
+
+## Known Gaps
+
+Known gaps are tracked in [PartnerKnownGaps.md](./PartnerKnownGaps.md) and summarized in the final release gate risk list.

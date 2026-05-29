@@ -10,7 +10,7 @@ import { z } from 'zod'
 import { hydrateMasterContact, stripMasterDataForRoleProfile, syncMasterContact } from '@/lib/identity/masterContact'
 import { normalizeCountryId } from '@/lib/reference/country-nationalities'
 import { EntityBankAccountsService } from '@/lib/modules/entity-bank-accounts/entityBankAccounts.service'
-import { listMeta, listRange, parseListQuery } from '@/lib/api/listEndpoint'
+import { listMeta, listMetaFromRows, listRange, parseListQuery } from '@/lib/api/listEndpoint'
 import { requireAnyPermission } from '@/lib/security/serverPermissions'
 import { applyTenantQueryScope, resolveTenantContext, type TenantContext, withTenantInsertScopeForTable } from '@/lib/tenancy/server'
 import { findGlobalOrganizationByIdentity, getTenantCompanyScope, isWritableCompanyScope, normalizeLegalCountry, normalizeLegalTaxNumber } from '@/lib/tenancy/companyScopes'
@@ -162,7 +162,7 @@ export async function GET(request: NextRequest) {
 
   let query = supabase
     .from('company_representatives')
-    .select(REPRESENTATIVE_LIST_SELECT, { count: 'exact' })
+    .select(REPRESENTATIVE_LIST_SELECT)
     .order(sortColumn, { ascending: listQuery.direction !== 'desc' })
     .range(from, to)
 
@@ -201,7 +201,7 @@ export async function GET(request: NextRequest) {
   } else if (!includePassive) query = query.eq('is_deleted', false).neq('record_status', 'passive')
   if (listQuery.search) query = query.or(`display_name.ilike.%${listQuery.search}%,full_name.ilike.%${listQuery.search}%,job_title.ilike.%${listQuery.search}%`)
 
-  const { data, error, count } = await query
+  const { data, error } = await query
   if (error) return NextResponse.json({ error: error.message, code: error.code || 'FETCH_FAILED' }, { status: 500 })
 
   const rows = await hydrateRepresentativeProjectionScopes(
@@ -211,7 +211,7 @@ export async function GET(request: NextRequest) {
   )
   return NextResponse.json({
     data: rows,
-    meta: listMeta(listQuery, count || 0),
+    meta: listMetaFromRows(listQuery, rows.length),
     projection: projectionMeta(representativeListProjection, 'company_representatives'),
   })
 }

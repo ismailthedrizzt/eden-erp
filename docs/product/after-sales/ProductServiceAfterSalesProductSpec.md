@@ -54,3 +54,12 @@ Accounting fatura/tahsilat/cari hareketleri sahiplenir. Project/Task servis isin
 5. Servis kaydi olusturulur ve tamamlaninca kurulu urunun son servis tarihi guncellenir.
 6. Follow-up gerekli oldugunda Project/Task kaydi olusturma hazirligi vardir.
 7. OpenAPI, Next proxy ve frontend servis sozlesmeleri gunceldir.
+
+## Known Gaps
+
+Known gaps are tracked in [AfterSalesKnownGaps.md](./AfterSalesKnownGaps.md) and summarized in the final release gate risk list.
+
+
+## Permissions
+
+After-sales MVP uses module permissions for product catalog, installed assets, service requests, service records and service assignment. Sensitive customer/service history access remains scoped by tenant, company and role.

@@ -98,3 +98,7 @@ Feature flags:
 - Action result eligibility ve disabled reason Action Guide ile uyumludur.
 - Recent item yazma/okuma calisir.
 - Next proxy contract ve FastAPI endpointleri OpenAPI'ye yansir.
+
+## Known Gaps
+
+Known gaps are tracked in [SearchKnownGaps.md](./SearchKnownGaps.md) and summarized in the final release gate risk list.

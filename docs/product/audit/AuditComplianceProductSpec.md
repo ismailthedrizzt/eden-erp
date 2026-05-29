@@ -60,3 +60,7 @@ Denetim Izi ekrani teknik log okuyucusu degildir. Yetkili kullanicinin "kim, ne 
 - Permission/policy/scope denied audit entries are visible when written by real API attempts.
 - Operation/process relationships are visible from audit detail.
 - FastAPI and Next proxy coverage docs are up to date.
+
+## Known Gaps
+
+Known gaps are tracked in [AuditKnownGaps.md](./AuditKnownGaps.md) and summarized in the final release gate risk list.

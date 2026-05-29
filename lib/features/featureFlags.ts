@@ -45,6 +45,20 @@ export const featureFlags = [
     defaultEnabled: true,
   },
   {
+    key: 'pilot.demoMode',
+    moduleKey: 'settings',
+    label: 'Pilot demo modu',
+    description: 'NEXT_PUBLIC_DEMO_MODE ile demo ortami rozeti ve pilot guvenlik uyarilarini etkinlestirir.',
+    defaultEnabled: false,
+  },
+  {
+    key: 'pilot.demoSeed',
+    moduleKey: 'settings',
+    label: 'Pilot demo seed',
+    description: 'Demo tenant, rol, senaryo verisi ve validation script altyapisini pilot ortam icin hazirlar.',
+    defaultEnabled: false,
+  },
+  {
     key: 'search.enabled',
     moduleKey: 'settings',
     label: 'Global arama',

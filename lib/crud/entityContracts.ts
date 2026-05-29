@@ -29,7 +29,6 @@ export interface EntityFieldContract {
   targets: EntityFieldTarget[]
   requiredOn?: Array<'create' | 'update'>
   operations?: EntityCrudOperation[]
-  aliases?: string[]
   note?: string
 }
 
@@ -518,7 +517,7 @@ export function getEntityContract(key: EntityContractKey) {
 }
 
 export function getEntityFieldContract(contract: EntityContract, fieldName: string) {
-  return contract.fields[fieldName] || findAlias(contract, fieldName)
+  return contract.fields[fieldName]
 }
 
 export function splitEntityPayload(contract: EntityContract, payload: Record<string, unknown>): EntityPayloadBuckets {
@@ -612,10 +611,6 @@ function relationField(
 
 function virtualField(name: string, note?: string): EntityFieldContract {
   return field(name, [{ kind: 'virtual', note }], { note })
-}
-
-function findAlias(contract: EntityContract, fieldName: string) {
-  return Object.values(contract.fields).find(field => field.aliases?.includes(fieldName))
 }
 
 function targetApplies(target: EntityFieldTarget, payload: Record<string, unknown>) {

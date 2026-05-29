@@ -142,3 +142,7 @@ Dependencies:
 - Project task Action Center'da `project_task` olarak gorunur.
 - Process task ile project task ayrimi UI ve dokumanda nettir.
 - FastAPI ve Next proxy coverage gunceldir.
+
+## Known Gaps
+
+Known gaps are tracked in [ProjectTaskKnownGaps.md](./ProjectTaskKnownGaps.md) and summarized in the final release gate risk list.

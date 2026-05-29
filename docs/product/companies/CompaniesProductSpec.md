@@ -163,3 +163,7 @@ Next.js routes remain BFF/proxy compatibility routes.
 - Company detail shows readiness summary and pending actions.
 - Technical backend errors are normalized into business-language messages.
 - `npm run typecheck`, `npm run build`, backend lint/typecheck/tests pass.
+
+## Known Gaps
+
+Known gaps are tracked in [CompanyKnownGaps.md](./CompanyKnownGaps.md) and summarized in the final release gate risk list.

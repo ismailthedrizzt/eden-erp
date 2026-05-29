@@ -174,3 +174,7 @@ Email admin:
 - Permission, tenant/scope, privacy ve sensitive data kurallari uygulanir.
 - Action Center ayrimi korunur.
 - Product spec, real data scenarios ve E2E checklist vardir.
+
+## Known Gaps
+
+Known gaps are tracked in [NotificationKnownGaps.md](./NotificationKnownGaps.md) and summarized in the final release gate risk list.

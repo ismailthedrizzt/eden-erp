@@ -6,6 +6,22 @@ Her kalem su alanlarla izlenir: `area`, `file/module`, `current_state`, `target_
 
 ## P1
 
+### Step 26 Final Gate Risk Register
+
+Final gate sonucu: **READY_WITH_P1_DEBT**. P0 blocker bulunmadi; pilot kontrollu yapilabilir. Asagidaki riskler release kararinda acik kabul edilmelidir.
+
+| area | file/module | impact | likelihood | priority | suggested solution | release impact |
+| --- | --- | --- | --- | --- | --- | --- |
+| Temporary TS fallback removal | `app/api/**` | Next fallback behavior can diverge from canonical FastAPI behavior. | High | P1 | Verify route groups in staging with `FASTAPI_BASE_URL`, then remove `proxy_to_fastapi_with_legacy_fallback` routes. | Pilot allowed; unrestricted production waits. |
+| E2E coverage gap | `tests/e2e` | Critical browser/user-flow regressions may be missed. | Medium | P1 | Add pilot smoke suite for auth, company, action center, audit, documents, search and admin. | Manual smoke required before pilot. |
+| Worker deployment hardening | `backend/app/workers/**` | Outbox, reminder and email jobs can backlog without supervision. | Medium | P1 | Add supervised worker deployment, heartbeat, backlog alert and retry runbook. | Pilot allowed only with monitoring. |
+| Staging DB validation | Supabase/PostgreSQL | Local gate cannot prove DB-specific demo validity without `DATABASE_URL`. | Medium | P1 | Run `npm run demo:seed` and `npm run demo:validate` in staging/demo. | Required before live demo. |
+| Auth/tenant production config | `backend/app/core/security.py`, `backend/app/policies/**` | Wrong auth/env setup can cause access denial or isolation issues. | Medium | P1 | Run real Supabase JWT, membership and scope smoke across demo roles. | Required before live pilot. |
+| Docker/deployment verification | `Dockerfile.next`, `backend/Dockerfile`, `docker-compose.yml` | Container release path unverified in local gate because Docker CLI was unavailable. | Medium | P1 | Run `docker compose config` and frontend/backend Docker builds in CI or a Docker-enabled machine. | Required before container deploy. |
+| UI lint warnings | UI pages/components | Hook/image warnings can hide edge UI bugs and perf issues. | Medium | P1/P2 | Fix `react-hooks/exhaustive-deps` and `@next/next/no-img-element` warnings in prioritized screens. | Not pilot blocking. |
+
+P2 after pilot: advanced accounting, payroll/SGK/GIB integrations, OCR/e-signature, mobile offline queue, custom BI, advanced data quality merge rollback and semantic search.
+
 - **Organization/facility staging fixtures and fallback removal**
   - Current state: FastAPI organization/facility endpoints exist and UI product hardening has started. `/api/organization` still keeps a legacy fallback and unit type management remains TS-backed.
   - Target state: organization unit, position, facility and scoped authority fixtures verified in staging; `/api/organization` becomes proxy-only or route-specific BFF adapter.

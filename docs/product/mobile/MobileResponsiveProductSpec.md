@@ -88,3 +88,12 @@ Offline mutation bu fazda yoktur. Offline durumda uygulama shell/offline bilgi s
 - Belge/fotograf yukleme inputlari mobil kamera secimini destekler.
 - PWA manifest ve service worker build kirmaz.
 - API/auth/session/mutation cevaplari service worker cache'ine alinmaz.
+
+## Known Gaps
+
+Known gaps are tracked in [MobileKnownGaps.md](./MobileKnownGaps.md) and summarized in the final release gate risk list.
+
+
+## API Endpoints
+
+Mobile/responsive hardening does not introduce a separate mobile API. Mobile views consume the same Next BFF/FastAPI endpoints, permissions and scope checks as desktop.

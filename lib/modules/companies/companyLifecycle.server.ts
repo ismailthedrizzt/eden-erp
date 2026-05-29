@@ -152,7 +152,7 @@ export async function completeCompanyWizard(
   if (scopeError) return scopeError
 
   const parsedBody = await request.json().catch(() => ({}))
-  const requestBody = mode === 'opening' ? normalizeOpeningPayloadAliases(parsedBody) : parsedBody
+  const requestBody = parsedBody
   const openingNaceCodes = mode === 'opening' ? normalizeOpeningNaceCodes(requestBody?.nace_codes) : []
   const primaryNaceCode = openingNaceCodes.find(row => row.is_primary)
   const electronicNotificationAddress = String(requestBody?.electronic_notification_address || requestBody?.e_notification_address || '').trim()
@@ -532,29 +532,6 @@ function normalizeOptionalNumber(value: unknown) {
   if (value === undefined || value === null || value === '') return ''
   const numeric = Number(String(value).replace(',', '.'))
   return Number.isFinite(numeric) ? numeric : ''
-}
-
-function normalizeOpeningPayloadAliases(payload: Record<string, any>) {
-  const next = { ...(payload || {}) }
-  const aliases = [
-    ['trade_registry_no', 'trade_registry_number'],
-    ['mersis_no', 'mersis_number'],
-    ['tax_no', 'tax_number'],
-    ['sgk_workplace_no', 'sgk_workplace_registry_no'],
-  ]
-
-  aliases.forEach(([legacyField, canonicalField]) => {
-    if (!hasPayloadValue(next[canonicalField]) && hasPayloadValue(next[legacyField])) {
-      next[canonicalField] = next[legacyField]
-    }
-    delete next[legacyField]
-  })
-
-  return next
-}
-
-function hasPayloadValue(value: unknown) {
-  return value !== undefined && value !== null && value !== ''
 }
 
 function omitOpeningShareRatioFields(payload: Record<string, any>) {

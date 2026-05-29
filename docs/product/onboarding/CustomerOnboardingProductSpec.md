@@ -215,3 +215,7 @@ User onboarding state kullanicinin kendi yardim/tur tercihidir.
 - Action Guide onboarding sorularini yanitlar.
 - Action Center onboarding item gosterebilir.
 - Build/typecheck/test bozulmaz.
+
+## Known Gaps
+
+Known gaps are tracked in [OnboardingKnownGaps.md](./OnboardingKnownGaps.md) and summarized in the final release gate risk list.

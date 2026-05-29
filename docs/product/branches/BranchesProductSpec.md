@@ -155,3 +155,12 @@ Canonical FastAPI endpoints:
 - Branch Opening and Branch Closing remain operation/wizard endpoints.
 - Branch Closing shows organization/facility/authority impact.
 - Product docs, scenario docs and E2E checklist exist.
+
+## Known Gaps
+
+Known gaps are tracked in [BranchKnownGaps.md](./BranchKnownGaps.md) and summarized in the final release gate risk list.
+
+
+## Permissions
+
+Branch MVP actions require branch/company permissions plus scope checks. Opening and closing are operation-controlled and cannot be replaced by free branch create/update.

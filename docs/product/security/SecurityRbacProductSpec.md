@@ -175,3 +175,7 @@ Supabase Auth users dogrudan yonetilmeyebilir; bu tablolar uygulama-level profil
 - Runtime visibility permission ile uyumludur.
 - Permission/scope degisiklikleri auditlenmeye hazirdir.
 - FastAPI endpoint coverage ve Next proxy coverage gunceldir.
+
+## Known Gaps
+
+Known gaps are tracked in [SecurityKnownGaps.md](./SecurityKnownGaps.md) and summarized in the final release gate risk list.

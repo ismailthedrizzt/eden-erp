@@ -62,3 +62,12 @@ Başlangıç flag listesi:
 - `ModuleUnavailableState` status bazlı default mesaj ve aksiyon üretir.
 - FastAPI modules/features endpointleri OpenAPI contract içine girer.
 - Action Guide kurulum/lisans/feature sorularına cevap verir.
+
+## Known Gaps
+
+Known gaps are tracked in [ModuleSetupLicensingKnownGaps.md](./ModuleSetupLicensingKnownGaps.md) and summarized in the final release gate risk list.
+
+
+## Permissions
+
+Module setup, licensing and feature flag changes require setup/admin permissions. Risky feature changes are audited and should be limited to system/admin roles.

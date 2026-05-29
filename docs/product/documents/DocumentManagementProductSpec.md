@@ -224,3 +224,7 @@ Sensitive rule:
 - Next proxy contract FastAPI source of truth ile calisir.
 - Product spec, scenario ve E2E checklist vardir.
 
+
+## Known Gaps
+
+Known gaps are tracked in [DocumentKnownGaps.md](./DocumentKnownGaps.md) and summarized in the final release gate risk list.

@@ -23,8 +23,8 @@ import { usePermissions } from '@/lib/security/permissionStore'
 export function ProjectManagementReportsPage() {
   const permissions = usePermissions()
   const { isModuleActive, isSubmoduleActive } = useModuleLicense()
-  const canManage = permissions.can(PROJECT_MANAGEMENT_PERMISSIONS.manageAll)
-  const canView = canManage || permissions.can(PROJECT_MANAGEMENT_PERMISSIONS.viewReports) || permissions.can(PROJECT_MANAGEMENT_PERMISSIONS.view)
+  const canManage = permissions.can(PROJECT_MANAGEMENT_PERMISSIONS.admin)
+  const canView = canManage || permissions.can(PROJECT_MANAGEMENT_PERMISSIONS.projectsView) || permissions.can(PROJECT_MANAGEMENT_PERMISSIONS.projectsView)
   const moduleAvailable = isModuleActive(PROJECT_MANAGEMENT_MODULE_KEY) && isSubmoduleActive(PROJECT_MANAGEMENT_MODULE_KEY, 'raporlar')
   const openTasks = projectManagementTasksMock.filter(isTaskOpen)
   const overdueTasks = openTasks.filter(task => isTaskOverdue(task))

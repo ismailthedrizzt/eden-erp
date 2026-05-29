@@ -166,3 +166,7 @@ Next proxy routes use `/api/hr/**` and require `FASTAPI_BASE_URL`.
 6. Calisan belgeleri temel seviyede calisir.
 7. Summary widget tasarimi calisir.
 8. FastAPI endpoint coverage ve Next proxy contract gunceldir.
+
+## Known Gaps
+
+Known gaps are tracked in [HRKnownGaps.md](./HRKnownGaps.md) and summarized in the final release gate risk list.

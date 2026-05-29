@@ -220,3 +220,7 @@ Next.js routes remain BFF/proxy compatibility routes with temporary fallbacks un
 - Limit and signature validations are visible.
 - Suspend, resume/renew and terminate flows are visible and transaction-based.
 - Current authority read model feeds list/detail summaries.
+
+## Known Gaps
+
+Known gaps are tracked in [RepresentativeKnownGaps.md](./RepresentativeKnownGaps.md) and summarized in the final release gate risk list.

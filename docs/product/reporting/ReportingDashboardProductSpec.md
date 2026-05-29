@@ -186,3 +186,7 @@ hassas degerler future export worker fazinda maskelenir.
 9. Next proxy contract bozulmaz.
 10. Product spec ve E2E checklist vardir.
 11. Build/typecheck/test bozulmaz.
+
+## Known Gaps
+
+Known gaps are tracked in [ReportingKnownGaps.md](./ReportingKnownGaps.md) and summarized in the final release gate risk list.

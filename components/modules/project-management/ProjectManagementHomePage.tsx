@@ -49,7 +49,7 @@ const AREA_ICON = {
 export function ProjectManagementHomePage() {
   const permissions = usePermissions()
   const { isModuleActive } = useModuleLicense()
-  const canView = permissions.can(PROJECT_MANAGEMENT_PERMISSIONS.view) || permissions.can(PROJECT_MANAGEMENT_PERMISSIONS.manageAll)
+  const canView = permissions.can(PROJECT_MANAGEMENT_PERMISSIONS.projectsView) || permissions.can(PROJECT_MANAGEMENT_PERMISSIONS.admin)
   const moduleAvailable = isModuleActive(PROJECT_MANAGEMENT_MODULE_KEY)
   const summaries = getProjectManagementDashboardSummaries()
   const openTasks = projectManagementTasksMock.filter(isTaskOpen)
@@ -88,7 +88,7 @@ export function ProjectManagementHomePage() {
           icon={<ListChecks size={24} />}
         />
         <div className="rounded-lg border border-dashed border-gray-300 bg-white p-8 text-center text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-400">
-          Gerekli izin: {PROJECT_MANAGEMENT_PERMISSIONS.view}
+          Gerekli izin: {PROJECT_MANAGEMENT_PERMISSIONS.projectsView}
         </div>
       </div>
     )

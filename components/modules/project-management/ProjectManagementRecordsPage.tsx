@@ -75,11 +75,11 @@ export function ProjectManagementRecordsPage({ areaKey }: { areaKey: ProjectMana
   const [includePassive, setIncludePassive] = useState(false)
   const [toast, setToast] = useState<ToastState | null>(null)
 
-  const canManage = permissions.can(PROJECT_MANAGEMENT_PERMISSIONS.manageAll)
-  const canView = canManage || permissions.can(PROJECT_MANAGEMENT_PERMISSIONS.view)
-  const canCreate = canManage || permissions.can(PROJECT_MANAGEMENT_PERMISSIONS.createTask) || permissions.can(PROJECT_MANAGEMENT_PERMISSIONS.manageProjects)
-  const canEdit = canManage || permissions.can(PROJECT_MANAGEMENT_PERMISSIONS.editTask) || permissions.can(PROJECT_MANAGEMENT_PERMISSIONS.manageProjects)
-  const canDelete = canManage || permissions.can(PROJECT_MANAGEMENT_PERMISSIONS.deleteTask) || permissions.can(PROJECT_MANAGEMENT_PERMISSIONS.manageProjects)
+  const canManage = permissions.can(PROJECT_MANAGEMENT_PERMISSIONS.admin)
+  const canView = canManage || permissions.can(PROJECT_MANAGEMENT_PERMISSIONS.projectsView)
+  const canCreate = canManage || permissions.can(PROJECT_MANAGEMENT_PERMISSIONS.tasksCreate) || permissions.can(PROJECT_MANAGEMENT_PERMISSIONS.projectsEdit)
+  const canEdit = canManage || permissions.can(PROJECT_MANAGEMENT_PERMISSIONS.tasksEdit) || permissions.can(PROJECT_MANAGEMENT_PERMISSIONS.projectsEdit)
+  const canDelete = canManage || permissions.can(PROJECT_MANAGEMENT_PERMISSIONS.tasksDelete) || permissions.can(PROJECT_MANAGEMENT_PERMISSIONS.projectsEdit)
   const moduleAvailable = isModuleActive(PROJECT_MANAGEMENT_MODULE_KEY) && isSubmoduleActive(PROJECT_MANAGEMENT_MODULE_KEY, areaKey)
 
   const activeRows = rows.filter(row => !row.is_deleted && row.record_status !== 'passive')
@@ -409,7 +409,7 @@ function PermissionState({ title, icon }: { title: string; icon: ReactNode }) {
     <div>
       <PageBanner mode="list" title={title} subtitle="Bu sayfayı görüntülemek için yetki gerekiyor." icon={icon} />
       <div className="rounded-lg border border-dashed border-gray-300 bg-white p-8 text-center text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-400">
-        Gerekli izin: {PROJECT_MANAGEMENT_PERMISSIONS.view}
+        Gerekli izin: {PROJECT_MANAGEMENT_PERMISSIONS.projectsView}
       </div>
     </div>
   )

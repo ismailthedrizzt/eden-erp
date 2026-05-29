@@ -79,6 +79,12 @@ npm run build
 
 Python backend:
 
+Final release gate dokumanlari:
+
+- `docs/release/MVPReleaseReadinessReport.md`
+- `docs/release/Next30DayRoadmap.md`
+- `docs/release/FinalManualSmokeChecklist.md`
+
 ```bash
 npm run backend:lint
 npm run backend:typecheck

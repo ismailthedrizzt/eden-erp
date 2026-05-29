@@ -4,6 +4,7 @@ import { Suspense, useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { usePathname, useSearchParams } from 'next/navigation'
 import Sidebar from '@/components/layout/Sidebar'
+import { DemoModeBadge } from '@/components/layout/DemoModeBadge'
 import { PendingActionsBell } from '@/components/layout/PendingActionsBell'
 import { ProductVersionBadge } from '@/components/layout/ProductVersionBadge'
 import { NotificationBell } from '@/components/notifications/NotificationBell'
@@ -441,6 +442,7 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
                 <Menu size={15} />
               </button>
               <ProductVersionBadge className="hidden md:inline-flex" />
+              <DemoModeBadge />
               <div ref={workspaceMenuRef} data-tour-id="workspace-switcher" className="relative hidden sm:block">
                 <button
                   type="button"

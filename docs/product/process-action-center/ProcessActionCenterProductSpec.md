@@ -137,3 +137,7 @@ Source labels shown to users:
 - Task completion and approval decisions work through FastAPI/Next proxy.
 - Record pending actions panels read normalized Action Center items.
 - Technical outbox details are not leaked to normal users.
+
+## Known Gaps
+
+Known gaps are tracked in [ProcessActionCenterKnownGaps.md](./ProcessActionCenterKnownGaps.md) and summarized in the final release gate risk list.

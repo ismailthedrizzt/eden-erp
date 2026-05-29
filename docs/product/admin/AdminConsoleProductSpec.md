@@ -112,3 +112,7 @@ Admin Console, mevcut `settings.*`, `security.*`, `email.admin`, `documents.admi
 - Riskli degisiklikler audit/outbox hazirligina sahiptir.
 - Secrets maskelenir veya hic gosterilmez.
 - Next proxy route'lari FastAPI canonical endpointlerine gider ve legacy fallback icermez.
+
+## Known Gaps
+
+Known gaps are tracked in [AdminConsoleKnownGaps.md](./AdminConsoleKnownGaps.md) and summarized in the final release gate risk list.

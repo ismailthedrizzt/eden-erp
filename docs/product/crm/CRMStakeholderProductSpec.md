@@ -165,3 +165,7 @@ Optional:
 10. Next proxy contract bozulmaz.
 11. Product spec ve E2E checklist vardir.
 12. Build/typecheck/test bozulmaz.
+
+## Known Gaps
+
+Known gaps are tracked in [CRMKnownGaps.md](./CRMKnownGaps.md) and summarized in the final release gate risk list.

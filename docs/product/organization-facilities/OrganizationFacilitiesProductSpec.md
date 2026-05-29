@@ -65,3 +65,12 @@ FastAPI canonical endpointleri:
 - Şube/organization/facility ayrımı UI ve FastAPI sözleşmesinde nettir.
 - Organization/facility scoped authority panelleri read-only çalışır.
 - Coverage matrix ve E2E checklist günceldir.
+
+## Known Gaps
+
+Known gaps are tracked in [OrganizationFacilityKnownGaps.md](./OrganizationFacilityKnownGaps.md) and summarized in the final release gate risk list.
+
+
+## Purpose
+
+Purpose: make organization units, positions and facilities usable as first-class operational context for branches, representatives, HR, tasks and after-sales flows without confusing them with legal branch records.

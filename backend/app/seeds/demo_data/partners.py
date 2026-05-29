@@ -1,0 +1,91 @@
+from __future__ import annotations
+
+from typing import Any
+
+PARTNER_PERSONS: list[dict[str, Any]] = [
+    {
+        "key": "aylin_kaya",
+        "first_name": "Aylin",
+        "last_name": "Kaya",
+        "full_name": "Aylin Kaya",
+        "nationality": "TR",
+        "national_id": "10000000010",
+        "phone": "+90 532 000 10 10",
+        "email": "aylin.kaya@example.com",
+        "city": "Ankara",
+    },
+    {
+        "key": "mert_demir",
+        "first_name": "Mert",
+        "last_name": "Demir",
+        "full_name": "Mert Demir",
+        "nationality": "TR",
+        "national_id": "10000000020",
+        "phone": "+90 532 000 20 20",
+        "email": "mert.demir@example.com",
+        "city": "Ankara",
+    },
+    {
+        "key": "elif_sahin",
+        "first_name": "Elif",
+        "last_name": "Sahin",
+        "full_name": "Elif Sahin",
+        "nationality": "TR",
+        "national_id": "10000000030",
+        "phone": "+90 532 000 30 30",
+        "email": "elif.sahin@example.com",
+        "city": "Ankara",
+    },
+]
+
+PARTNERS: list[dict[str, Any]] = [
+    {
+        "key": "eden_partner_aylin",
+        "company_key": "eden_tech",
+        "person_key": "aylin_kaya",
+        "display_name": "Aylin Kaya",
+        "share_ratio": 60,
+        "voting_ratio": 60,
+        "profit_ratio": 60,
+        "capital_amount": 600000,
+        "record_status": "active",
+        "scenario_key": "current_ownership_complete",
+    },
+    {
+        "key": "eden_partner_mert",
+        "company_key": "eden_tech",
+        "person_key": "mert_demir",
+        "display_name": "Mert Demir",
+        "share_ratio": 40,
+        "voting_ratio": 40,
+        "profit_ratio": 40,
+        "capital_amount": 400000,
+        "record_status": "active",
+        "scenario_key": "current_ownership_complete",
+    },
+    {
+        "key": "glasstech_partner_elif",
+        "company_key": "glasstech",
+        "person_key": "elif_sahin",
+        "display_name": "Elif Sahin",
+        "share_ratio": 70,
+        "voting_ratio": 70,
+        "profit_ratio": 70,
+        "capital_amount": 700000,
+        "record_status": "active",
+        "scenario_key": "ownership_missing_counterparty",
+    },
+    {
+        "key": "quattro_partner_draft",
+        "company_key": "quattro",
+        "person_key": "mert_demir",
+        "display_name": "Mert Demir",
+        "share_ratio": None,
+        "voting_ratio": None,
+        "profit_ratio": None,
+        "capital_amount": None,
+        "record_status": "draft",
+        "scenario_key": "draft_partner_card",
+    },
+]
+

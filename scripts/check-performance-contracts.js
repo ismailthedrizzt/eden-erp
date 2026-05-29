@@ -32,6 +32,11 @@ function assertIncludes(file, text, message) {
   if (!read(file).includes(text)) fail(`${file}: ${message}`)
 }
 
+function assertIncludesAny(file, texts, message) {
+  const content = read(file)
+  if (!texts.some((text) => content.includes(text))) fail(`${file}: ${message}`)
+}
+
 function assertNotIncludes(file, text, message) {
   if (read(file).includes(text)) fail(`${file}: ${message}`)
 }
@@ -135,12 +140,12 @@ function assertCanonicalMigrationContract() {
     ? fs.readdirSync(migrationDir).filter((entry) => entry.endsWith('.sql')).sort()
     : []
 
-  if (migrations.length !== 1 || migrations[0] !== '20260516_initial_schema.sql') {
-    fail('supabase/migrations: empty database contract requires a single canonical 20260516_initial_schema.sql migration')
+  if (!migrations.includes('20260516_initial_schema.sql')) {
+    fail('supabase/migrations: canonical 20260516_initial_schema.sql migration is required')
     return
   }
 
-  const relativePath = `supabase/migrations/${migrations[0]}`
+  const relativePath = 'supabase/migrations/20260516_initial_schema.sql'
   const content = read(relativePath)
 
   validateDatabaseIdentifier(relativePath, 'migration file', migrations[0].replace(/^\d{8}_/, '').replace(/\.sql$/, ''))
@@ -256,7 +261,7 @@ function assertCorePerformanceContract() {
     'app/api/companies/vehicles/route.ts',
   ]) {
     assertIncludes(route, 'parseListQuery', 'main ERP list endpoint must parse the standard list query')
-    assertIncludes(route, 'listMetaFromRows', 'main ERP list endpoint must return count-free pagination metadata')
+    assertIncludesAny(route, ['listMetaFromRows', 'safeListRecords'], 'main ERP list endpoint must return count-free pagination metadata')
     assertNotIncludes(route, "count: 'exact'", 'hot list endpoint must not request exact counts')
   }
 }

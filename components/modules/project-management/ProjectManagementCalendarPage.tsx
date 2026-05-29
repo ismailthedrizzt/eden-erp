@@ -43,8 +43,8 @@ export function ProjectManagementCalendarPage() {
   const [projectFilter, setProjectFilter] = useState('')
   const [assigneeFilter, setAssigneeFilter] = useState('')
   const [priorityFilter, setPriorityFilter] = useState('')
-  const canManage = permissions.can(PROJECT_MANAGEMENT_PERMISSIONS.manageAll)
-  const canView = canManage || permissions.can(PROJECT_MANAGEMENT_PERMISSIONS.view)
+  const canManage = permissions.can(PROJECT_MANAGEMENT_PERMISSIONS.admin)
+  const canView = canManage || permissions.can(PROJECT_MANAGEMENT_PERMISSIONS.projectsView)
   const moduleAvailable = isModuleActive(PROJECT_MANAGEMENT_MODULE_KEY) && isSubmoduleActive(PROJECT_MANAGEMENT_MODULE_KEY, 'takvim')
   const events = getProjectManagementCalendarEvents()
   const projects = Array.from(new Set(events.map(event => event.project_name).filter(Boolean))) as string[]
