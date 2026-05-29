@@ -1,7 +1,7 @@
 # CRM Known Gaps
 
-- Full sales pipeline yok.
-- Opportunity management yok.
+> Lead/opportunity deepening sonrasi guncel bosluklar icin [CRMLeadOpportunityKnownGaps.md](./CRMLeadOpportunityKnownGaps.md) dosyasi esas alinmalidir.
+
 - WhatsApp/web lead ingestion yok.
 - Email sync yok.
 - Call logging automation yok.

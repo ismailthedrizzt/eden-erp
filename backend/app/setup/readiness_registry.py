@@ -164,8 +164,15 @@ READINESS_REGISTRY: dict[str, ModuleReadinessDefinition] = {
             "master_persons",
             "master_organizations",
             "crm_stakeholders",
+            "crm_leads",
+            "crm_opportunities",
+            "crm_pipelines",
         ],
-        optional_tables=["crm_interactions"],
+        optional_tables=[
+            "crm_interactions",
+            "crm_pipeline_stages",
+            "crm_followup_events",
+        ],
         required_dependencies=["companies"],
         optional_dependencies=[
             "accounting",
@@ -177,6 +184,7 @@ READINESS_REGISTRY: dict[str, ModuleReadinessDefinition] = {
         ],
         setup_steps=[
             "Create master person, master organization, and CRM stakeholder tables.",
+            "Create lead, opportunity, pipeline, stage and follow-up event tables for CRM deepening.",
             "Configure CRM permissions, master lookup, cari integration, and task integration.",
         ],
     ),

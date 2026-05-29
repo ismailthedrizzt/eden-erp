@@ -509,6 +509,147 @@ async def list_action_center_items(
             for row in rows_to_dicts(list(warranty_result.mappings().all()))
         )
 
+    crm_scope_sql = ""
+    crm_params: dict[str, Any] = {
+        "tenant_id": context["tenant_id"],
+        "user_id": context.get("user_id"),
+        "limit": limit,
+    }
+    if context.get("company_scope_ids"):
+        crm_scope_sql = "and company_id = any(cast(:crm_company_scope_ids as uuid[]))"
+        crm_params["crm_company_scope_ids"] = context["company_scope_ids"]
+
+    if _can_see_crm_items(context) and await table_exists(session, "public.crm_leads"):
+        owner_filter = (
+            "" if _can_manage_crm_items(context) else "and assigned_owner_user_id = :user_id"
+        )
+        lead_followup_result = await session.execute(
+            text(
+                f"""
+                select id, tenant_id, company_id, lead_name, lead_status,
+                       source, assigned_owner_user_id, next_followup_date,
+                       last_contacted_at, created_at, updated_at
+                from public.crm_leads
+                where tenant_id = :tenant_id
+                  and coalesce(is_deleted, false) = false
+                  and lead_status not in ('converted','lost','unqualified')
+                  and next_followup_date is not null
+                  and next_followup_date <= current_date
+                  {crm_scope_sql}
+                  {owner_filter}
+                order by next_followup_date asc
+                limit :limit
+                """
+            ),
+            crm_params,
+        )
+        items.extend(
+            _normalize_crm_followup(row, str(context["tenant_id"]), "lead")
+            for row in rows_to_dicts(list(lead_followup_result.mappings().all()))
+        )
+        untouched_result = await session.execute(
+            text(
+                f"""
+                select id, tenant_id, company_id, lead_name, lead_status,
+                       source, assigned_owner_user_id, next_followup_date,
+                       last_contacted_at, created_at, updated_at
+                from public.crm_leads
+                where tenant_id = :tenant_id
+                  and coalesce(is_deleted, false) = false
+                  and lead_status in ('new','contacted')
+                  and coalesce(last_contacted_at, created_at) < now() - interval '14 days'
+                  {crm_scope_sql}
+                  {owner_filter}
+                order by coalesce(last_contacted_at, created_at) asc
+                limit :limit
+                """
+            ),
+            crm_params,
+        )
+        items.extend(
+            _normalize_crm_untouched_lead(row, str(context["tenant_id"]))
+            for row in rows_to_dicts(list(untouched_result.mappings().all()))
+        )
+
+    if _can_see_crm_items(context) and await table_exists(session, "public.crm_opportunities"):
+        owner_filter = (
+            "" if _can_manage_crm_items(context) else "and assigned_owner_user_id = :user_id"
+        )
+        opportunity_followup_result = await session.execute(
+            text(
+                f"""
+                select id, tenant_id, company_id, opportunity_no, opportunity_name,
+                       status, assigned_owner_user_id, next_followup_date,
+                       expected_close_date, proposal_status, proposal_valid_until,
+                       created_at, updated_at
+                from public.crm_opportunities
+                where tenant_id = :tenant_id
+                  and coalesce(is_deleted, false) = false
+                  and status = 'open'
+                  and next_followup_date is not null
+                  and next_followup_date <= current_date
+                  {crm_scope_sql}
+                  {owner_filter}
+                order by next_followup_date asc
+                limit :limit
+                """
+            ),
+            crm_params,
+        )
+        items.extend(
+            _normalize_crm_followup(row, str(context["tenant_id"]), "opportunity")
+            for row in rows_to_dicts(list(opportunity_followup_result.mappings().all()))
+        )
+        expected_close_result = await session.execute(
+            text(
+                f"""
+                select id, tenant_id, company_id, opportunity_no, opportunity_name,
+                       status, assigned_owner_user_id, next_followup_date,
+                       expected_close_date, proposal_status, proposal_valid_until,
+                       created_at, updated_at
+                from public.crm_opportunities
+                where tenant_id = :tenant_id
+                  and coalesce(is_deleted, false) = false
+                  and status = 'open'
+                  and expected_close_date < current_date
+                  {crm_scope_sql}
+                  {owner_filter}
+                order by expected_close_date asc
+                limit :limit
+                """
+            ),
+            crm_params,
+        )
+        items.extend(
+            _normalize_crm_expected_close(row, str(context["tenant_id"]))
+            for row in rows_to_dicts(list(expected_close_result.mappings().all()))
+        )
+        proposal_result = await session.execute(
+            text(
+                f"""
+                select id, tenant_id, company_id, opportunity_no, opportunity_name,
+                       status, assigned_owner_user_id, next_followup_date,
+                       expected_close_date, proposal_status, proposal_valid_until,
+                       created_at, updated_at
+                from public.crm_opportunities
+                where tenant_id = :tenant_id
+                  and coalesce(is_deleted, false) = false
+                  and status = 'open'
+                  and proposal_status = 'sent'
+                  and proposal_valid_until between current_date and current_date + interval '7 days'
+                  {crm_scope_sql}
+                  {owner_filter}
+                order by proposal_valid_until asc
+                limit :limit
+                """
+            ),
+            crm_params,
+        )
+        items.extend(
+            _normalize_crm_proposal_expiring(row, str(context["tenant_id"]))
+            for row in rows_to_dicts(list(proposal_result.mappings().all()))
+        )
+
     accounting_scope_sql = ""
     accounting_params: dict[str, Any] = {"tenant_id": context["tenant_id"], "limit": limit}
     if context.get("company_scope_ids"):
@@ -1408,6 +1549,133 @@ def _normalize_after_sales_warranty(row: dict[str, Any], tenant_id: str) -> dict
     }
 
 
+def _normalize_crm_followup(
+    row: dict[str, Any], tenant_id: str, entity_type: str
+) -> dict[str, Any]:
+    overdue = _is_past_due(row.get("next_followup_date"))
+    title = "CRM takibi gecikti" if overdue else "CRM takibi geldi"
+    label = (
+        row.get("lead_name")
+        or row.get("opportunity_name")
+        or row.get("opportunity_no")
+        or "CRM kaydi"
+    )
+    target_page = "/app/crm/leadler" if entity_type == "lead" else "/app/crm/firsatlar"
+    return {
+        "id": f"crm_followup_{entity_type}:{row.get('id')}",
+        "tenant_id": row.get("tenant_id") or tenant_id,
+        "company_id": row.get("company_id"),
+        "module_key": "crm",
+        "source_type": "followup_overdue" if overdue else "followup_due",
+        "source_id": str(row.get("id")),
+        "title": title,
+        "description": f"{label} icin takip aksiyonu bekliyor.",
+        "status": "waiting",
+        "severity": "warning" if overdue else "info",
+        "priority": "urgent" if overdue else "high",
+        "action_key": "crm.followup.open",
+        "entity_type": entity_type,
+        "entity_id": row.get("id"),
+        "record_label": label,
+        "due_at": row.get("next_followup_date"),
+        "created_at": row.get("created_at") or _now_iso(),
+        "updated_at": row.get("updated_at"),
+        "target_page": target_page,
+        "suggested_actions": [
+            {"label": "Kaydi Ac", "action_type": "navigate", "target_page": target_page},
+            {
+                "label": "Takibi Tamamla",
+                "action_type": "navigate",
+                "target_page": "/app/crm/takipler",
+            },
+        ],
+    }
+
+
+def _normalize_crm_untouched_lead(row: dict[str, Any], tenant_id: str) -> dict[str, Any]:
+    label = row.get("lead_name") or "Lead"
+    return {
+        "id": f"crm_lead_untouched:{row.get('id')}",
+        "tenant_id": row.get("tenant_id") or tenant_id,
+        "company_id": row.get("company_id"),
+        "module_key": "crm",
+        "source_type": "lead_untouched",
+        "source_id": str(row.get("id")),
+        "title": "Lead uzun suredir temas bekliyor",
+        "description": f"{label} icin yeni temas veya kaybetme/qualify karari bekleniyor.",
+        "status": "waiting",
+        "severity": "warning",
+        "priority": "normal",
+        "action_key": "crm.lead.review",
+        "entity_type": "lead",
+        "entity_id": row.get("id"),
+        "record_label": label,
+        "due_at": row.get("next_followup_date") or row.get("created_at"),
+        "created_at": row.get("created_at") or _now_iso(),
+        "updated_at": row.get("updated_at"),
+        "target_page": "/app/crm/leadler",
+        "suggested_actions": [
+            {"label": "Lead'i Ac", "action_type": "navigate", "target_page": "/app/crm/leadler"},
+        ],
+    }
+
+
+def _normalize_crm_expected_close(row: dict[str, Any], tenant_id: str) -> dict[str, Any]:
+    label = row.get("opportunity_no") or row.get("opportunity_name") or "Firsat"
+    return {
+        "id": f"crm_opportunity_close_overdue:{row.get('id')}",
+        "tenant_id": row.get("tenant_id") or tenant_id,
+        "company_id": row.get("company_id"),
+        "module_key": "crm",
+        "source_type": "opportunity_expected_close_overdue",
+        "source_id": str(row.get("id")),
+        "title": "Firsat kapanis tarihi gecmis",
+        "description": f"{label} icin beklenen kapanis tarihi guncellenmeli.",
+        "status": "waiting",
+        "severity": "warning",
+        "priority": "high",
+        "action_key": "crm.opportunity.closeDate.review",
+        "entity_type": "opportunity",
+        "entity_id": row.get("id"),
+        "record_label": label,
+        "due_at": row.get("expected_close_date"),
+        "created_at": row.get("created_at") or _now_iso(),
+        "updated_at": row.get("updated_at"),
+        "target_page": "/app/crm/firsatlar",
+        "suggested_actions": [
+            {"label": "Firsati Ac", "action_type": "navigate", "target_page": "/app/crm/firsatlar"},
+        ],
+    }
+
+
+def _normalize_crm_proposal_expiring(row: dict[str, Any], tenant_id: str) -> dict[str, Any]:
+    label = row.get("opportunity_no") or row.get("opportunity_name") or "Teklif"
+    return {
+        "id": f"crm_proposal_expiring:{row.get('id')}",
+        "tenant_id": row.get("tenant_id") or tenant_id,
+        "company_id": row.get("company_id"),
+        "module_key": "crm",
+        "source_type": "proposal_validity_expiring",
+        "source_id": str(row.get("id")),
+        "title": "Teklif gecerliligi yaklasiyor",
+        "description": f"{label} teklif gecerlilik tarihi yaklasti.",
+        "status": "waiting",
+        "severity": "info",
+        "priority": "normal",
+        "action_key": "crm.proposal.review",
+        "entity_type": "opportunity",
+        "entity_id": row.get("id"),
+        "record_label": label,
+        "due_at": row.get("proposal_valid_until"),
+        "created_at": row.get("created_at") or _now_iso(),
+        "updated_at": row.get("updated_at"),
+        "target_page": "/app/crm/firsatlar",
+        "suggested_actions": [
+            {"label": "Teklifi Ac", "action_type": "navigate", "target_page": "/app/crm/firsatlar"},
+        ],
+    }
+
+
 def _normalize_accounting_item(
     row: dict[str, Any], tenant_id: str, source_kind: str
 ) -> dict[str, Any]:
@@ -1874,6 +2142,42 @@ def _can_manage_after_sales_items(context: dict[str, Any]) -> bool:
     )
 
 
+def _can_see_crm_items(context: dict[str, Any]) -> bool:
+    if context.get("is_internal"):
+        return True
+    permissions = set(context.get("permissions") or [])
+    return bool(
+        permissions.intersection(
+            {
+                "__eden_demo_allow_all__",
+                "crm.view",
+                "crm.leadsView",
+                "crm.opportunitiesView",
+                "crm.followupManage",
+                "crm.edit",
+            }
+        )
+    )
+
+
+def _can_manage_crm_items(context: dict[str, Any]) -> bool:
+    if context.get("is_internal"):
+        return True
+    permissions = set(context.get("permissions") or [])
+    return bool(
+        permissions.intersection(
+            {
+                "__eden_demo_allow_all__",
+                "crm.edit",
+                "crm.leadsEdit",
+                "crm.opportunitiesEdit",
+                "crm.followupManage",
+                "crm.pipelineManage",
+            }
+        )
+    )
+
+
 async def _onboarding_company_summary(session: AsyncSession, tenant_id: str) -> dict[str, int]:
     if not await table_exists(session, "public.companies"):
         return {"total": 0, "draft": 0, "active": 0}
@@ -2033,6 +2337,10 @@ def _record_target_page(entity_type: object, entity_id: object, company_id: obje
         )
     if entity in {"maintenance_due", "after_sales_maintenance_due_item"}:
         return "/app/satis-sonrasi/bakimi-gelenler"
+    if entity in {"lead", "crm_lead"}:
+        return "/app/crm/leadler"
+    if entity in {"opportunity", "crm_opportunity"}:
+        return "/app/crm/firsatlar"
     return "/app"
 
 
@@ -2067,6 +2375,10 @@ def _record_label(entity_type: object, entity_id: object) -> str | None:
         "service_record": "Servis Kaydi",
         "field_assignment": "Saha Gorevi",
         "maintenance_due": "Bakim Takvimi",
+        "lead": "Lead",
+        "crm_lead": "Lead",
+        "opportunity": "Firsat",
+        "crm_opportunity": "Firsat",
     }
     return f"{labels.get(str(entity_type or ''), 'Kayit')}: {entity_id}"
 

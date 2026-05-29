@@ -129,13 +129,14 @@ export const moduleReadinessDefinitions: ModuleReadinessDefinition[] = [
   },
   {
     moduleKey: 'crm',
-    requiredTables: ['master_persons', 'master_organizations', 'crm_stakeholders'],
-    optionalTables: ['crm_interactions'],
+    requiredTables: ['master_persons', 'master_organizations', 'crm_stakeholders', 'crm_leads', 'crm_opportunities', 'crm_pipelines'],
+    optionalTables: ['crm_interactions', 'crm_pipeline_stages', 'crm_followup_events'],
     requiredDependencies: ['companies'],
     optionalDependencies: ['accounting', 'project_management', 'after_sales', 'hr', 'partners', 'representatives'],
     setupSteps: [
       setupStep('crm.masterData', 'Master kisi/kurum alanlarini kontrol et', 'Tekil master kisi ve kurum kayitlari hazir olmalidir.', 'check'),
       setupStep('crm.stakeholders', 'Paydas rol alanlarini kontrol et', 'Musteri, tedarikci, lead ve paydas rolleri sirket scope icinde hazir olmalidir.', 'check'),
+      setupStep('crm.leadOpportunity', 'Lead ve firsat alanlarini kontrol et', 'Lead, firsat, pipeline ve takip tablolari satis takip omurgasi icin hazir olmalidir.', 'check'),
       setupStep('crm.integrations', 'Cari ve takip baglantilarini kontrol et', 'Cari kart, servis ve proje gorev baglantilari icin entegrasyon alanlari hazir olmalidir.', 'check'),
     ],
   },

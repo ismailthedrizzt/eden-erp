@@ -2629,6 +2629,371 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/crm/leads": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Leads List */
+        get: operations["leads_list_api_v1_crm_leads_get"];
+        put?: never;
+        /** Leads Create */
+        post: operations["leads_create_api_v1_crm_leads_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/crm/leads/{lead_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Leads Get */
+        get: operations["leads_get_api_v1_crm_leads__lead_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Leads Update */
+        patch: operations["leads_update_api_v1_crm_leads__lead_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/crm/leads/{lead_id}/qualify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Leads Qualify */
+        post: operations["leads_qualify_api_v1_crm_leads__lead_id__qualify_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/crm/leads/{lead_id}/convert": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Leads Convert */
+        post: operations["leads_convert_api_v1_crm_leads__lead_id__convert_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/crm/leads/{lead_id}/mark-lost": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Leads Mark Lost */
+        post: operations["leads_mark_lost_api_v1_crm_leads__lead_id__mark_lost_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/crm/opportunities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Opportunities List */
+        get: operations["opportunities_list_api_v1_crm_opportunities_get"];
+        put?: never;
+        /** Opportunities Create */
+        post: operations["opportunities_create_api_v1_crm_opportunities_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/crm/opportunities/{opportunity_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Opportunities Get */
+        get: operations["opportunities_get_api_v1_crm_opportunities__opportunity_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Opportunities Update */
+        patch: operations["opportunities_update_api_v1_crm_opportunities__opportunity_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/crm/opportunities/{opportunity_id}/stage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Opportunities Stage */
+        post: operations["opportunities_stage_api_v1_crm_opportunities__opportunity_id__stage_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/crm/opportunities/{opportunity_id}/mark-won": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Opportunities Won */
+        post: operations["opportunities_won_api_v1_crm_opportunities__opportunity_id__mark_won_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/crm/opportunities/{opportunity_id}/mark-lost": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Opportunities Lost */
+        post: operations["opportunities_lost_api_v1_crm_opportunities__opportunity_id__mark_lost_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/crm/opportunities/{opportunity_id}/create-followup-task": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Opportunities Followup Task */
+        post: operations["opportunities_followup_task_api_v1_crm_opportunities__opportunity_id__create_followup_task_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/crm/opportunities/{opportunity_id}/upload-proposal": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Opportunities Upload Proposal */
+        post: operations["opportunities_upload_proposal_api_v1_crm_opportunities__opportunity_id__upload_proposal_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/crm/pipelines": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Pipelines List */
+        get: operations["pipelines_list_api_v1_crm_pipelines_get"];
+        put?: never;
+        /** Pipelines Create */
+        post: operations["pipelines_create_api_v1_crm_pipelines_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/crm/pipelines/{pipeline_id}/stages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Pipelines Stages */
+        get: operations["pipelines_stages_api_v1_crm_pipelines__pipeline_id__stages_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/crm/pipeline-stages/{stage_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Pipeline Stages Update */
+        patch: operations["pipeline_stages_update_api_v1_crm_pipeline_stages__stage_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/crm/interactions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Interactions List */
+        get: operations["interactions_list_api_v1_crm_interactions_get"];
+        put?: never;
+        /** Interactions Create */
+        post: operations["interactions_create_api_v1_crm_interactions_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/crm/opportunities/{opportunity_id}/interactions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Opportunity Interactions List */
+        get: operations["opportunity_interactions_list_api_v1_crm_opportunities__opportunity_id__interactions_get"];
+        put?: never;
+        /** Opportunity Interactions Create */
+        post: operations["opportunity_interactions_create_api_v1_crm_opportunities__opportunity_id__interactions_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/crm/leads/{lead_id}/interactions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Lead Interactions List */
+        get: operations["lead_interactions_list_api_v1_crm_leads__lead_id__interactions_get"];
+        put?: never;
+        /** Lead Interactions Create */
+        post: operations["lead_interactions_create_api_v1_crm_leads__lead_id__interactions_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/crm/followups/due": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Followups Due */
+        get: operations["followups_due_api_v1_crm_followups_due_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/crm/followups/{entity_type}/{entity_id}/complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Followups Complete */
+        post: operations["followups_complete_api_v1_crm_followups__entity_type___entity_id__complete_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/crm/followups/{entity_type}/{entity_id}/snooze": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Followups Snooze */
+        post: operations["followups_snooze_api_v1_crm_followups__entity_type___entity_id__snooze_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/reporting/dashboard": {
         parameters: {
             query?: never;
@@ -7845,6 +8210,29 @@ export interface components {
             /** Notes */
             notes?: string | null;
         };
+        /** FollowupCompleteRequest */
+        FollowupCompleteRequest: {
+            /** Subject */
+            subject?: string | null;
+            /** Body */
+            body?: string | null;
+            /** Outcome */
+            outcome?: string | null;
+            /** Next Followup Date */
+            next_followup_date?: string | null;
+            /** Related Task Id */
+            related_task_id?: string | null;
+        };
+        /** FollowupSnoozeRequest */
+        FollowupSnoozeRequest: {
+            /**
+             * Next Followup Date
+             * Format: date
+             */
+            next_followup_date: string;
+            /** Notes */
+            notes?: string | null;
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -8064,26 +8452,226 @@ export interface components {
         };
         /** InteractionCreateRequest */
         InteractionCreateRequest: {
+            /** Stakeholder Id */
+            stakeholder_id?: string | null;
+            /** Lead Id */
+            lead_id?: string | null;
+            /** Opportunity Id */
+            opportunity_id?: string | null;
             /**
              * Interaction Type
              * @default note
              * @enum {string}
              */
-            interaction_type: "note" | "phone_call" | "email" | "meeting" | "visit" | "proposal_sent" | "complaint" | "service_contact" | "other";
+            interaction_type: "note" | "phone_call" | "email" | "meeting" | "video_call" | "visit" | "proposal_sent" | "proposal_reviewed" | "demo_done" | "negotiation" | "complaint" | "service_contact" | "followup_completed" | "other";
             /** Subject */
             subject: string;
             /** Body */
             body?: string | null;
             /** Interaction Date */
             interaction_date?: string | null;
+            /**
+             * Direction
+             * @default outbound
+             * @enum {string}
+             */
+            direction: "inbound" | "outbound" | "internal";
+            /** Contact Person */
+            contact_person?: string | null;
             /** Next Followup Date */
             next_followup_date?: string | null;
             /** Related Task Id */
             related_task_id?: string | null;
+            /** Related Document Id */
+            related_document_id?: string | null;
             /** Attachments */
             attachments?: {
                 [key: string]: unknown;
             }[];
+            /** Outcome */
+            outcome?: string | null;
+        } & {
+            [key: string]: unknown;
+        };
+        /** LeadConvertRequest */
+        LeadConvertRequest: {
+            /**
+             * Stakeholder Type
+             * @default customer
+             * @enum {string}
+             */
+            stakeholder_type: "customer" | "lead" | "other";
+            /**
+             * Relationship Status
+             * @default active
+             * @enum {string}
+             */
+            relationship_status: "draft" | "active" | "passive" | "blocked" | "archived";
+            /**
+             * Customer Status
+             * @default active_customer
+             * @enum {string}
+             */
+            customer_status: "lead" | "prospect" | "active_customer" | "inactive_customer";
+            /**
+             * Create Stakeholder
+             * @default true
+             */
+            create_stakeholder: boolean;
+            /**
+             * Create Opportunity
+             * @default true
+             */
+            create_opportunity: boolean;
+            /**
+             * Create Cari Account
+             * @default false
+             */
+            create_cari_account: boolean;
+            /** Opportunity Name */
+            opportunity_name?: string | null;
+            /** Notes */
+            notes?: string | null;
+        };
+        /** LeadCreateRequest */
+        LeadCreateRequest: {
+            /** Company Id */
+            company_id: string;
+            /** Stakeholder Id */
+            stakeholder_id?: string | null;
+            /** Master Entity Type */
+            master_entity_type?: ("person" | "organization") | null;
+            /** Master Entity Id */
+            master_entity_id?: string | null;
+            /** Lead Name */
+            lead_name: string;
+            /** Contact Name */
+            contact_name?: string | null;
+            /** Phone */
+            phone?: string | null;
+            /** Email */
+            email?: string | null;
+            /** Company Name */
+            company_name?: string | null;
+            /** Sector */
+            sector?: string | null;
+            /**
+             * Source
+             * @default manual
+             * @enum {string}
+             */
+            source: "manual" | "website" | "referral" | "event" | "exhibition" | "phone" | "email" | "social_media" | "partner" | "import" | "other";
+            /**
+             * Lead Status
+             * @default new
+             * @enum {string}
+             */
+            lead_status: "new" | "contacted" | "qualified" | "unqualified" | "converted" | "proposal" | "won" | "lost";
+            /** Qualification Score */
+            qualification_score?: number | string | null;
+            /** Interest Area */
+            interest_area?: string | null;
+            /** Product Interest */
+            product_interest?: string | null;
+            /** Estimated Value */
+            estimated_value?: number | string | null;
+            /**
+             * Currency
+             * @default TRY
+             */
+            currency: string | null;
+            /** Expected Close Date */
+            expected_close_date?: string | null;
+            /** Assigned Owner User Id */
+            assigned_owner_user_id?: string | null;
+            /** Next Followup Date */
+            next_followup_date?: string | null;
+            /** Lost Reason */
+            lost_reason?: string | null;
+            /** Notes */
+            notes?: string | null;
+            /** Tags */
+            tags?: string[];
+            /** Metadata Json */
+            metadata_json?: {
+                [key: string]: unknown;
+            };
+        } & {
+            [key: string]: unknown;
+        };
+        /** LeadMarkLostRequest */
+        LeadMarkLostRequest: {
+            /** Lost Reason */
+            lost_reason: string;
+            /** Notes */
+            notes?: string | null;
+        };
+        /** LeadQualifyRequest */
+        LeadQualifyRequest: {
+            /** Qualification Score */
+            qualification_score?: number | string | null;
+            /** Notes */
+            notes?: string | null;
+            /**
+             * Create Opportunity
+             * @default false
+             */
+            create_opportunity: boolean;
+        };
+        /** LeadUpdateRequest */
+        LeadUpdateRequest: {
+            /** Stakeholder Id */
+            stakeholder_id?: string | null;
+            /** Master Entity Type */
+            master_entity_type?: ("person" | "organization") | null;
+            /** Master Entity Id */
+            master_entity_id?: string | null;
+            /** Lead Name */
+            lead_name?: string | null;
+            /** Contact Name */
+            contact_name?: string | null;
+            /** Phone */
+            phone?: string | null;
+            /** Email */
+            email?: string | null;
+            /** Company Name */
+            company_name?: string | null;
+            /** Sector */
+            sector?: string | null;
+            /** Source */
+            source?: ("manual" | "website" | "referral" | "event" | "exhibition" | "phone" | "email" | "social_media" | "partner" | "import" | "other") | null;
+            /** Lead Status */
+            lead_status?: ("new" | "contacted" | "qualified" | "unqualified" | "converted" | "proposal" | "won" | "lost") | null;
+            /** Qualification Score */
+            qualification_score?: number | string | null;
+            /** Interest Area */
+            interest_area?: string | null;
+            /** Product Interest */
+            product_interest?: string | null;
+            /** Estimated Value */
+            estimated_value?: number | string | null;
+            /** Currency */
+            currency?: string | null;
+            /** Expected Close Date */
+            expected_close_date?: string | null;
+            /** Assigned Owner User Id */
+            assigned_owner_user_id?: string | null;
+            /** Next Followup Date */
+            next_followup_date?: string | null;
+            /** Last Contacted At */
+            last_contacted_at?: string | null;
+            /** Lost Reason */
+            lost_reason?: string | null;
+            /** Notes */
+            notes?: string | null;
+            /** Tags */
+            tags?: string[] | null;
+            /** Metadata Json */
+            metadata_json?: {
+                [key: string]: unknown;
+            } | null;
+            /** Base Version */
+            base_version?: number | null;
         } & {
             [key: string]: unknown;
         };
@@ -8650,6 +9238,204 @@ export interface components {
         } & {
             [key: string]: unknown;
         };
+        /** OpportunityCreateRequest */
+        OpportunityCreateRequest: {
+            /** Company Id */
+            company_id: string;
+            /** Stakeholder Id */
+            stakeholder_id?: string | null;
+            /** Lead Id */
+            lead_id?: string | null;
+            /** Opportunity No */
+            opportunity_no?: string | null;
+            /** Opportunity Name */
+            opportunity_name: string;
+            /** Customer Name */
+            customer_name: string;
+            /** Pipeline Id */
+            pipeline_id?: string | null;
+            /** Stage Id */
+            stage_id?: string | null;
+            /**
+             * Status
+             * @default open
+             * @enum {string}
+             */
+            status: "open" | "won" | "lost" | "cancelled";
+            /** Estimated Value */
+            estimated_value?: number | string | null;
+            /** Probability */
+            probability?: number | string | null;
+            /**
+             * Currency
+             * @default TRY
+             */
+            currency: string | null;
+            /** Expected Close Date */
+            expected_close_date?: string | null;
+            /** Assigned Owner User Id */
+            assigned_owner_user_id?: string | null;
+            /** Source */
+            source?: string | null;
+            /** Product Interest */
+            product_interest?: string | null;
+            /** Related Product Ids */
+            related_product_ids?: string[];
+            /** Related Service Ids */
+            related_service_ids?: string[];
+            /** Next Followup Date */
+            next_followup_date?: string | null;
+            /** Notes */
+            notes?: string | null;
+            /** Tags */
+            tags?: string[];
+            /** Metadata Json */
+            metadata_json?: {
+                [key: string]: unknown;
+            };
+        } & {
+            [key: string]: unknown;
+        };
+        /** OpportunityFollowupTaskRequest */
+        OpportunityFollowupTaskRequest: {
+            /** Title */
+            title?: string | null;
+            /** Description */
+            description?: string | null;
+            /**
+             * Priority
+             * @default medium
+             * @enum {string}
+             */
+            priority: "lowest" | "low" | "medium" | "high" | "highest" | "urgent";
+            /** Assignee User Id */
+            assignee_user_id?: string | null;
+            /** Due Date */
+            due_date?: string | null;
+        };
+        /** OpportunityLostRequest */
+        OpportunityLostRequest: {
+            /** Lost Reason */
+            lost_reason: string;
+            /** Competitor Name */
+            competitor_name?: string | null;
+            /** Future Followup Date */
+            future_followup_date?: string | null;
+        };
+        /** OpportunityProposalUploadRequest */
+        OpportunityProposalUploadRequest: {
+            /** Proposal Document Id */
+            proposal_document_id: string;
+            /**
+             * Proposal Status
+             * @default sent
+             * @enum {string}
+             */
+            proposal_status: "not_started" | "draft" | "sent" | "accepted" | "rejected";
+            /** Proposal Amount */
+            proposal_amount?: number | string | null;
+            /** Proposal Sent At */
+            proposal_sent_at?: string | null;
+            /** Proposal Valid Until */
+            proposal_valid_until?: string | null;
+        };
+        /** OpportunityStageChangeRequest */
+        OpportunityStageChangeRequest: {
+            /** Stage Id */
+            stage_id: string;
+            /** Reason */
+            reason?: string | null;
+            /** Next Followup Date */
+            next_followup_date?: string | null;
+            /** Expected Close Date */
+            expected_close_date?: string | null;
+            /** Probability */
+            probability?: number | string | null;
+        };
+        /** OpportunityUpdateRequest */
+        OpportunityUpdateRequest: {
+            /** Stakeholder Id */
+            stakeholder_id?: string | null;
+            /** Lead Id */
+            lead_id?: string | null;
+            /** Opportunity Name */
+            opportunity_name?: string | null;
+            /** Customer Name */
+            customer_name?: string | null;
+            /** Pipeline Id */
+            pipeline_id?: string | null;
+            /** Stage Id */
+            stage_id?: string | null;
+            /** Status */
+            status?: ("open" | "won" | "lost" | "cancelled") | null;
+            /** Estimated Value */
+            estimated_value?: number | string | null;
+            /** Probability */
+            probability?: number | string | null;
+            /** Currency */
+            currency?: string | null;
+            /** Expected Close Date */
+            expected_close_date?: string | null;
+            /** Actual Close Date */
+            actual_close_date?: string | null;
+            /** Assigned Owner User Id */
+            assigned_owner_user_id?: string | null;
+            /** Source */
+            source?: string | null;
+            /** Product Interest */
+            product_interest?: string | null;
+            /** Related Product Ids */
+            related_product_ids?: string[] | null;
+            /** Related Service Ids */
+            related_service_ids?: string[] | null;
+            /** Next Followup Date */
+            next_followup_date?: string | null;
+            /** Lost Reason */
+            lost_reason?: string | null;
+            /** Won Reason */
+            won_reason?: string | null;
+            /** Competitor Name */
+            competitor_name?: string | null;
+            /** Proposal Status */
+            proposal_status?: ("not_started" | "draft" | "sent" | "accepted" | "rejected") | null;
+            /** Proposal Document Id */
+            proposal_document_id?: string | null;
+            /** Proposal Amount */
+            proposal_amount?: number | string | null;
+            /** Proposal Sent At */
+            proposal_sent_at?: string | null;
+            /** Proposal Valid Until */
+            proposal_valid_until?: string | null;
+            /** Notes */
+            notes?: string | null;
+            /** Tags */
+            tags?: string[] | null;
+            /** Metadata Json */
+            metadata_json?: {
+                [key: string]: unknown;
+            } | null;
+            /** Base Version */
+            base_version?: number | null;
+        } & {
+            [key: string]: unknown;
+        };
+        /** OpportunityWinRequest */
+        OpportunityWinRequest: {
+            /** Actual Close Date */
+            actual_close_date?: string | null;
+            /** Won Reason */
+            won_reason?: string | null;
+            /**
+             * Activate Customer
+             * @default true
+             */
+            activate_customer: boolean;
+            /**
+             * Create Cari Account
+             * @default false
+             */
+            create_cari_account: boolean;
+        };
         /** OrganizationPositionCreateRequest */
         OrganizationPositionCreateRequest: {
             /** Company Id */
@@ -8933,6 +9719,42 @@ export interface components {
             client_request_id?: string | null;
         } & {
             [key: string]: unknown;
+        };
+        /** PipelineCreateRequest */
+        PipelineCreateRequest: {
+            /** Company Id */
+            company_id?: string | null;
+            /** Pipeline Name */
+            pipeline_name: string;
+            /**
+             * Active
+             * @default true
+             */
+            active: boolean;
+            /**
+             * Is Default
+             * @default false
+             */
+            is_default: boolean;
+            /** Stages */
+            stages?: {
+                [key: string]: unknown;
+            }[] | null;
+        };
+        /** PipelineStageUpdateRequest */
+        PipelineStageUpdateRequest: {
+            /** Stage Name */
+            stage_name?: string | null;
+            /** Order Index */
+            order_index?: number | null;
+            /** Probability */
+            probability?: number | string | null;
+            /** Stage Type */
+            stage_type?: ("open" | "won" | "lost") | null;
+            /** Requires Next Action */
+            requires_next_action?: boolean | null;
+            /** Active */
+            active?: boolean | null;
         };
         /** PolicyEvaluateRequest */
         PolicyEvaluateRequest: {
@@ -10402,7 +11224,7 @@ export interface components {
             /** Tags */
             tags?: string[];
             /** Lead Status */
-            lead_status?: ("new" | "contacted" | "qualified" | "proposal" | "won" | "lost") | null;
+            lead_status?: ("new" | "contacted" | "qualified" | "unqualified" | "converted" | "proposal" | "won" | "lost") | null;
             /** Lead Source */
             lead_source?: string | null;
             /** Potential Value */
@@ -10447,7 +11269,7 @@ export interface components {
             /** Tags */
             tags?: string[] | null;
             /** Lead Status */
-            lead_status?: ("new" | "contacted" | "qualified" | "proposal" | "won" | "lost") | null;
+            lead_status?: ("new" | "contacted" | "qualified" | "unqualified" | "converted" | "proposal" | "won" | "lost") | null;
             /** Lead Source */
             lead_source?: string | null;
             /** Potential Value */
@@ -17579,6 +18401,1011 @@ export interface operations {
         responses: {
             /** @description Successful Response */
             201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    leads_list_api_v1_crm_leads_get: {
+        parameters: {
+            query?: {
+                company_id?: string | null;
+                lead_status?: string | null;
+                source?: string | null;
+                assigned_owner_user_id?: string | null;
+                next_followup_before?: string | null;
+                tag?: string | null;
+                search?: string | null;
+                page?: number;
+                pageSize?: number;
+                sort?: string;
+                direction?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    leads_create_api_v1_crm_leads_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LeadCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    leads_get_api_v1_crm_leads__lead_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                lead_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    leads_update_api_v1_crm_leads__lead_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                lead_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LeadUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    leads_qualify_api_v1_crm_leads__lead_id__qualify_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                lead_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LeadQualifyRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    leads_convert_api_v1_crm_leads__lead_id__convert_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                lead_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LeadConvertRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    leads_mark_lost_api_v1_crm_leads__lead_id__mark_lost_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                lead_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LeadMarkLostRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    opportunities_list_api_v1_crm_opportunities_get: {
+        parameters: {
+            query?: {
+                company_id?: string | null;
+                stakeholder_id?: string | null;
+                lead_id?: string | null;
+                pipeline_id?: string | null;
+                stage_id?: string | null;
+                status?: string | null;
+                assigned_owner_user_id?: string | null;
+                expected_close_before?: string | null;
+                next_followup_before?: string | null;
+                tag?: string | null;
+                search?: string | null;
+                page?: number;
+                pageSize?: number;
+                sort?: string;
+                direction?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    opportunities_create_api_v1_crm_opportunities_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OpportunityCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    opportunities_get_api_v1_crm_opportunities__opportunity_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                opportunity_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    opportunities_update_api_v1_crm_opportunities__opportunity_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                opportunity_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OpportunityUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    opportunities_stage_api_v1_crm_opportunities__opportunity_id__stage_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                opportunity_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OpportunityStageChangeRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    opportunities_won_api_v1_crm_opportunities__opportunity_id__mark_won_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                opportunity_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OpportunityWinRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    opportunities_lost_api_v1_crm_opportunities__opportunity_id__mark_lost_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                opportunity_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OpportunityLostRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    opportunities_followup_task_api_v1_crm_opportunities__opportunity_id__create_followup_task_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                opportunity_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OpportunityFollowupTaskRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    opportunities_upload_proposal_api_v1_crm_opportunities__opportunity_id__upload_proposal_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                opportunity_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OpportunityProposalUploadRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    pipelines_list_api_v1_crm_pipelines_get: {
+        parameters: {
+            query?: {
+                company_id?: string | null;
+                include_inactive?: boolean;
+                page?: number;
+                pageSize?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    pipelines_create_api_v1_crm_pipelines_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PipelineCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    pipelines_stages_api_v1_crm_pipelines__pipeline_id__stages_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                pipeline_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_list_dict_str__Any___"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    pipeline_stages_update_api_v1_crm_pipeline_stages__stage_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                stage_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PipelineStageUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    interactions_list_api_v1_crm_interactions_get: {
+        parameters: {
+            query?: {
+                stakeholder_id?: string | null;
+                lead_id?: string | null;
+                opportunity_id?: string | null;
+                interaction_type?: string | null;
+                page?: number;
+                pageSize?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    interactions_create_api_v1_crm_interactions_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InteractionCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    opportunity_interactions_list_api_v1_crm_opportunities__opportunity_id__interactions_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                opportunity_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    opportunity_interactions_create_api_v1_crm_opportunities__opportunity_id__interactions_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                opportunity_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InteractionCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    lead_interactions_list_api_v1_crm_leads__lead_id__interactions_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                lead_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    lead_interactions_create_api_v1_crm_leads__lead_id__interactions_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                lead_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InteractionCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    followups_due_api_v1_crm_followups_due_get: {
+        parameters: {
+            query?: {
+                company_id?: string | null;
+                owner_user_id?: string | null;
+                entity_type?: string | null;
+                due_until?: string | null;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_list_dict_str__Any___"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    followups_complete_api_v1_crm_followups__entity_type___entity_id__complete_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                entity_type: string;
+                entity_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FollowupCompleteRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    followups_snooze_api_v1_crm_followups__entity_type___entity_id__snooze_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                entity_type: string;
+                entity_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FollowupSnoozeRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };

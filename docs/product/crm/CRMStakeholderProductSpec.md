@@ -1,5 +1,7 @@
 # CRM / Stakeholders / Customer-Supplier Master Data Product Spec
 
+> Deepening update: lead, opportunity, pipeline and follow-up automation scope is documented in [CRMLeadOpportunityProductSpec.md](./CRMLeadOpportunityProductSpec.md).
+
 ## Amac
 
 CRM/Paydaslar modulu ayni kisi veya kurumun farkli modullerde tekrar tekrar

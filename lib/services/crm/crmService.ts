@@ -86,14 +86,20 @@ export type CRMStakeholderRecord = {
 
 export type CRMInteractionRecord = {
   id: string
-  stakeholder_id: string
+  stakeholder_id?: string | null
+  lead_id?: string | null
+  opportunity_id?: string | null
   interaction_type: string
   subject: string
   body?: string | null
   interaction_date: string
+  direction?: string
+  contact_person?: string | null
   next_followup_date?: string | null
   related_task_id?: string | null
+  related_document_id?: string | null
   attachments?: Record<string, unknown>[]
+  outcome?: string | null
   created_by?: string | null
   created_at?: string
 }
@@ -115,6 +121,115 @@ export type CRMStakeholderSummary = {
   related_partner_count: number
   related_representative_count: number
   related_employee_count: number
+}
+
+export type CRMLeadRecord = {
+  id: string
+  company_id: string
+  stakeholder_id?: string | null
+  master_entity_type?: MasterEntityType | null
+  master_entity_id?: string | null
+  lead_name: string
+  contact_name?: string | null
+  phone?: string | null
+  email?: string | null
+  company_name?: string | null
+  sector?: string | null
+  source: string
+  lead_status: string
+  qualification_score?: number | string | null
+  interest_area?: string | null
+  product_interest?: string | null
+  estimated_value?: number | string | null
+  currency?: string | null
+  expected_close_date?: string | null
+  assigned_owner_user_id?: string | null
+  next_followup_date?: string | null
+  last_contacted_at?: string | null
+  lost_reason?: string | null
+  notes?: string | null
+  tags?: string[]
+  duplicate_warnings?: Array<Record<string, unknown>>
+  created_at?: string
+  updated_at?: string
+  version?: number
+}
+
+export type CRMPipelineRecord = {
+  id: string
+  company_id?: string | null
+  pipeline_name: string
+  active: boolean
+  is_default: boolean
+  stages?: CRMPipelineStageRecord[]
+}
+
+export type CRMPipelineStageRecord = {
+  id: string
+  pipeline_id: string
+  stage_key: string
+  stage_name: string
+  order_index: number
+  probability: number | string
+  stage_type: string
+  requires_next_action: boolean
+  active: boolean
+}
+
+export type CRMOpportunityRecord = {
+  id: string
+  company_id: string
+  stakeholder_id?: string | null
+  lead_id?: string | null
+  opportunity_no: string
+  opportunity_name: string
+  customer_name: string
+  pipeline_id: string
+  stage_id: string
+  pipeline_name?: string | null
+  stage_name?: string | null
+  stage_key?: string | null
+  stage_type?: string | null
+  status: string
+  estimated_value?: number | string | null
+  weighted_value?: number | string | null
+  probability?: number | string | null
+  currency?: string | null
+  expected_close_date?: string | null
+  actual_close_date?: string | null
+  assigned_owner_user_id?: string | null
+  source?: string | null
+  product_interest?: string | null
+  related_product_ids?: string[]
+  related_service_ids?: string[]
+  next_followup_date?: string | null
+  lost_reason?: string | null
+  won_reason?: string | null
+  competitor_name?: string | null
+  proposal_status?: string
+  proposal_document_id?: string | null
+  proposal_amount?: number | string | null
+  proposal_sent_at?: string | null
+  proposal_valid_until?: string | null
+  notes?: string | null
+  tags?: string[]
+  created_at?: string
+  updated_at?: string
+  version?: number
+}
+
+export type CRMFollowupRecord = {
+  entity_type: 'lead' | 'opportunity'
+  id: string
+  company_id: string
+  title: string
+  status: string
+  assigned_owner_user_id?: string | null
+  next_followup_date?: string | null
+  expected_close_date?: string | null
+  estimated_value?: number | string | null
+  currency?: string | null
+  followup_state: string
 }
 
 export type StakeholderCreateInput = {
@@ -205,6 +320,126 @@ export const crmInteractions = {
   },
   async create(stakeholderId: string, input: Partial<CRMInteractionRecord>) {
     const payload = await requestJson<ApiEnvelope<CRMInteractionRecord>>(`/api/crm/stakeholders/${stakeholderId}/interactions`, { method: 'POST', body: JSON.stringify(input) })
+    return payload.data
+  },
+}
+
+export const crmLeads = {
+  async list(query: Record<string, unknown> = {}) {
+    const payload = await requestJson<ApiEnvelope<ListResponse<CRMLeadRecord>>>(`/api/crm/leads${toQueryString(query)}`)
+    return unwrapList(payload)
+  },
+  async get(id: string) {
+    const payload = await requestJson<ApiEnvelope<CRMLeadRecord>>(`/api/crm/leads/${id}`)
+    return payload.data
+  },
+  async create(input: Partial<CRMLeadRecord>) {
+    const payload = await requestJson<ApiEnvelope<CRMLeadRecord>>('/api/crm/leads', { method: 'POST', body: JSON.stringify(input) })
+    return payload.data
+  },
+  async update(id: string, input: Partial<CRMLeadRecord> & { base_version?: number }) {
+    const payload = await requestJson<ApiEnvelope<CRMLeadRecord>>(`/api/crm/leads/${id}`, { method: 'PATCH', body: JSON.stringify(input) })
+    return payload.data
+  },
+  async qualify(id: string, input: Record<string, unknown> = {}) {
+    const payload = await requestJson<ApiEnvelope<CRMLeadRecord>>(`/api/crm/leads/${id}/qualify`, { method: 'POST', body: JSON.stringify(input) })
+    return payload.data
+  },
+  async convert(id: string, input: Record<string, unknown> = {}) {
+    const payload = await requestJson<ApiEnvelope<Record<string, unknown>>>(`/api/crm/leads/${id}/convert`, { method: 'POST', body: JSON.stringify(input) })
+    return payload.data
+  },
+  async markLost(id: string, lostReason: string) {
+    const payload = await requestJson<ApiEnvelope<CRMLeadRecord>>(`/api/crm/leads/${id}/mark-lost`, { method: 'POST', body: JSON.stringify({ lost_reason: lostReason }) })
+    return payload.data
+  },
+  async interactions(id: string) {
+    const payload = await requestJson<ApiEnvelope<ListResponse<CRMInteractionRecord>>>(`/api/crm/leads/${id}/interactions`)
+    return unwrapList(payload)
+  },
+  async addInteraction(id: string, input: Partial<CRMInteractionRecord>) {
+    const payload = await requestJson<ApiEnvelope<CRMInteractionRecord>>(`/api/crm/leads/${id}/interactions`, { method: 'POST', body: JSON.stringify(input) })
+    return payload.data
+  },
+}
+
+export const crmOpportunities = {
+  async list(query: Record<string, unknown> = {}) {
+    const payload = await requestJson<ApiEnvelope<ListResponse<CRMOpportunityRecord>>>(`/api/crm/opportunities${toQueryString(query)}`)
+    return unwrapList(payload)
+  },
+  async get(id: string) {
+    const payload = await requestJson<ApiEnvelope<CRMOpportunityRecord>>(`/api/crm/opportunities/${id}`)
+    return payload.data
+  },
+  async create(input: Partial<CRMOpportunityRecord>) {
+    const payload = await requestJson<ApiEnvelope<CRMOpportunityRecord>>('/api/crm/opportunities', { method: 'POST', body: JSON.stringify(input) })
+    return payload.data
+  },
+  async update(id: string, input: Partial<CRMOpportunityRecord> & { base_version?: number }) {
+    const payload = await requestJson<ApiEnvelope<CRMOpportunityRecord>>(`/api/crm/opportunities/${id}`, { method: 'PATCH', body: JSON.stringify(input) })
+    return payload.data
+  },
+  async changeStage(id: string, input: Record<string, unknown>) {
+    const payload = await requestJson<ApiEnvelope<CRMOpportunityRecord>>(`/api/crm/opportunities/${id}/stage`, { method: 'POST', body: JSON.stringify(input) })
+    return payload.data
+  },
+  async markWon(id: string, input: Record<string, unknown> = {}) {
+    const payload = await requestJson<ApiEnvelope<CRMOpportunityRecord>>(`/api/crm/opportunities/${id}/mark-won`, { method: 'POST', body: JSON.stringify(input) })
+    return payload.data
+  },
+  async markLost(id: string, input: { lost_reason: string; competitor_name?: string; future_followup_date?: string }) {
+    const payload = await requestJson<ApiEnvelope<CRMOpportunityRecord>>(`/api/crm/opportunities/${id}/mark-lost`, { method: 'POST', body: JSON.stringify(input) })
+    return payload.data
+  },
+  async createFollowupTask(id: string, input: Record<string, unknown> = {}) {
+    const payload = await requestJson<ApiEnvelope<Record<string, unknown>>>(`/api/crm/opportunities/${id}/create-followup-task`, { method: 'POST', body: JSON.stringify(input) })
+    return payload.data
+  },
+  async uploadProposal(id: string, input: Record<string, unknown>) {
+    const payload = await requestJson<ApiEnvelope<CRMOpportunityRecord>>(`/api/crm/opportunities/${id}/upload-proposal`, { method: 'POST', body: JSON.stringify(input) })
+    return payload.data
+  },
+  async interactions(id: string) {
+    const payload = await requestJson<ApiEnvelope<ListResponse<CRMInteractionRecord>>>(`/api/crm/opportunities/${id}/interactions`)
+    return unwrapList(payload)
+  },
+  async addInteraction(id: string, input: Partial<CRMInteractionRecord>) {
+    const payload = await requestJson<ApiEnvelope<CRMInteractionRecord>>(`/api/crm/opportunities/${id}/interactions`, { method: 'POST', body: JSON.stringify(input) })
+    return payload.data
+  },
+}
+
+export const crmPipelines = {
+  async list(query: Record<string, unknown> = {}) {
+    const payload = await requestJson<ApiEnvelope<ListResponse<CRMPipelineRecord>>>(`/api/crm/pipelines${toQueryString(query)}`)
+    return unwrapList(payload)
+  },
+  async create(input: Partial<CRMPipelineRecord> & { stages?: Array<Record<string, unknown>> }) {
+    const payload = await requestJson<ApiEnvelope<CRMPipelineRecord>>('/api/crm/pipelines', { method: 'POST', body: JSON.stringify(input) })
+    return payload.data
+  },
+  async stages(id: string) {
+    const payload = await requestJson<ApiEnvelope<CRMPipelineStageRecord[]>>(`/api/crm/pipelines/${id}/stages`)
+    return payload.data
+  },
+  async updateStage(id: string, input: Partial<CRMPipelineStageRecord>) {
+    const payload = await requestJson<ApiEnvelope<CRMPipelineStageRecord>>(`/api/crm/pipeline-stages/${id}`, { method: 'PATCH', body: JSON.stringify(input) })
+    return payload.data
+  },
+}
+
+export const crmFollowups = {
+  async due(query: Record<string, unknown> = {}) {
+    const payload = await requestJson<ApiEnvelope<CRMFollowupRecord[]>>(`/api/crm/followups/due${toQueryString(query)}`)
+    return payload.data
+  },
+  async complete(entityType: 'lead' | 'opportunity', entityId: string, input: Record<string, unknown> = {}) {
+    const payload = await requestJson<ApiEnvelope<Record<string, unknown>>>(`/api/crm/followups/${entityType}/${entityId}/complete`, { method: 'POST', body: JSON.stringify(input) })
+    return payload.data
+  },
+  async snooze(entityType: 'lead' | 'opportunity', entityId: string, input: { next_followup_date: string; notes?: string }) {
+    const payload = await requestJson<ApiEnvelope<Record<string, unknown>>>(`/api/crm/followups/${entityType}/${entityId}/snooze`, { method: 'POST', body: JSON.stringify(input) })
     return payload.data
   },
 }

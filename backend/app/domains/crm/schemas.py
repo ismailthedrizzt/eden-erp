@@ -27,18 +27,28 @@ StakeholderType = Literal[
 RelationshipStatus = Literal["draft", "active", "passive", "blocked", "archived"]
 CustomerStatus = Literal["lead", "prospect", "active_customer", "inactive_customer"]
 SupplierStatus = Literal["candidate", "active_supplier", "passive_supplier"]
-LeadStatus = Literal["new", "contacted", "qualified", "proposal", "won", "lost"]
+LeadStatus = Literal["new", "contacted", "qualified", "unqualified", "converted", "proposal", "won", "lost"]
 InteractionType = Literal[
     "note",
     "phone_call",
     "email",
     "meeting",
+    "video_call",
     "visit",
     "proposal_sent",
+    "proposal_reviewed",
+    "demo_done",
+    "negotiation",
     "complaint",
     "service_contact",
+    "followup_completed",
     "other",
 ]
+LeadSource = Literal["manual", "website", "referral", "event", "exhibition", "phone", "email", "social_media", "partner", "import", "other"]
+OpportunityStatus = Literal["open", "won", "lost", "cancelled"]
+StageType = Literal["open", "won", "lost"]
+ProposalStatus = Literal["not_started", "draft", "sent", "accepted", "rejected"]
+InteractionDirection = Literal["inbound", "outbound", "internal"]
 
 
 class ListResult(BaseModel):
@@ -201,13 +211,20 @@ class StakeholderUpdateRequest(BaseModel):
 class InteractionCreateRequest(BaseModel):
     model_config = ConfigDict(extra="allow")
 
+    stakeholder_id: str | None = None
+    lead_id: str | None = None
+    opportunity_id: str | None = None
     interaction_type: InteractionType = "note"
     subject: str = Field(min_length=1, max_length=300)
     body: str | None = None
     interaction_date: datetime | None = None
+    direction: InteractionDirection = "outbound"
+    contact_person: str | None = Field(default=None, max_length=240)
     next_followup_date: date | None = None
     related_task_id: str | None = None
+    related_document_id: str | None = None
     attachments: list[dict[str, Any]] = Field(default_factory=list)
+    outcome: str | None = None
 
 
 class CreateCariAccountFromStakeholderRequest(BaseModel):
@@ -243,3 +260,277 @@ class StakeholderSummary(BaseModel):
     related_partner_count: int = 0
     related_representative_count: int = 0
     related_employee_count: int = 0
+
+
+class LeadListQuery(BaseModel):
+    company_id: str | None = None
+    lead_status: str | None = None
+    source: str | None = None
+    assigned_owner_user_id: str | None = None
+    next_followup_before: date | None = None
+    tag: str | None = None
+    search: str | None = None
+    page: int = 1
+    page_size: int = 50
+    sort: str = "updated_at"
+    direction: str = "desc"
+
+
+class LeadCreateRequest(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+    company_id: str
+    stakeholder_id: str | None = None
+    master_entity_type: MasterEntityType | None = None
+    master_entity_id: str | None = None
+    lead_name: str = Field(min_length=1, max_length=300)
+    contact_name: str | None = Field(default=None, max_length=240)
+    phone: str | None = Field(default=None, max_length=80)
+    email: str | None = Field(default=None, max_length=254)
+    company_name: str | None = Field(default=None, max_length=300)
+    sector: str | None = Field(default=None, max_length=160)
+    source: LeadSource = "manual"
+    lead_status: LeadStatus = "new"
+    qualification_score: Decimal | None = Field(default=None, ge=0, le=100)
+    interest_area: str | None = Field(default=None, max_length=240)
+    product_interest: str | None = Field(default=None, max_length=300)
+    estimated_value: Decimal | None = Field(default=None, ge=0)
+    currency: str | None = Field(default="TRY", min_length=3, max_length=3)
+    expected_close_date: date | None = None
+    assigned_owner_user_id: str | None = None
+    next_followup_date: date | None = None
+    lost_reason: str | None = None
+    notes: str | None = None
+    tags: list[str] = Field(default_factory=list)
+    metadata_json: dict[str, Any] = Field(default_factory=dict)
+
+    @field_validator("currency")
+    @classmethod
+    def normalize_currency_optional(cls, value: str | None) -> str | None:
+        return value.upper() if value else value
+
+
+class LeadUpdateRequest(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+    stakeholder_id: str | None = None
+    master_entity_type: MasterEntityType | None = None
+    master_entity_id: str | None = None
+    lead_name: str | None = Field(default=None, min_length=1, max_length=300)
+    contact_name: str | None = Field(default=None, max_length=240)
+    phone: str | None = Field(default=None, max_length=80)
+    email: str | None = Field(default=None, max_length=254)
+    company_name: str | None = Field(default=None, max_length=300)
+    sector: str | None = Field(default=None, max_length=160)
+    source: LeadSource | None = None
+    lead_status: LeadStatus | None = None
+    qualification_score: Decimal | None = Field(default=None, ge=0, le=100)
+    interest_area: str | None = Field(default=None, max_length=240)
+    product_interest: str | None = Field(default=None, max_length=300)
+    estimated_value: Decimal | None = Field(default=None, ge=0)
+    currency: str | None = Field(default=None, min_length=3, max_length=3)
+    expected_close_date: date | None = None
+    assigned_owner_user_id: str | None = None
+    next_followup_date: date | None = None
+    last_contacted_at: datetime | None = None
+    lost_reason: str | None = None
+    notes: str | None = None
+    tags: list[str] | None = None
+    metadata_json: dict[str, Any] | None = None
+    base_version: int | None = None
+
+    @field_validator("currency")
+    @classmethod
+    def normalize_currency_optional(cls, value: str | None) -> str | None:
+        return value.upper() if value else value
+
+
+class LeadQualifyRequest(BaseModel):
+    qualification_score: Decimal | None = Field(default=None, ge=0, le=100)
+    notes: str | None = None
+    create_opportunity: bool = False
+
+
+class LeadMarkLostRequest(BaseModel):
+    lost_reason: str = Field(min_length=1, max_length=500)
+    notes: str | None = None
+
+
+class LeadConvertRequest(BaseModel):
+    stakeholder_type: Literal["customer", "lead", "other"] = "customer"
+    relationship_status: RelationshipStatus = "active"
+    customer_status: CustomerStatus = "active_customer"
+    create_stakeholder: bool = True
+    create_opportunity: bool = True
+    create_cari_account: bool = False
+    opportunity_name: str | None = Field(default=None, max_length=300)
+    notes: str | None = None
+
+
+class PipelineCreateRequest(BaseModel):
+    company_id: str | None = None
+    pipeline_name: str = Field(min_length=1, max_length=220)
+    active: bool = True
+    is_default: bool = False
+    stages: list[dict[str, Any]] | None = None
+
+
+class PipelineStageUpdateRequest(BaseModel):
+    stage_name: str | None = Field(default=None, min_length=1, max_length=180)
+    order_index: int | None = Field(default=None, ge=0)
+    probability: Decimal | None = Field(default=None, ge=0, le=100)
+    stage_type: StageType | None = None
+    requires_next_action: bool | None = None
+    active: bool | None = None
+
+
+class OpportunityListQuery(BaseModel):
+    company_id: str | None = None
+    stakeholder_id: str | None = None
+    lead_id: str | None = None
+    pipeline_id: str | None = None
+    stage_id: str | None = None
+    status: str | None = None
+    assigned_owner_user_id: str | None = None
+    expected_close_before: date | None = None
+    next_followup_before: date | None = None
+    tag: str | None = None
+    search: str | None = None
+    page: int = 1
+    page_size: int = 50
+    sort: str = "updated_at"
+    direction: str = "desc"
+
+
+class OpportunityCreateRequest(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+    company_id: str
+    stakeholder_id: str | None = None
+    lead_id: str | None = None
+    opportunity_no: str | None = Field(default=None, max_length=80)
+    opportunity_name: str = Field(min_length=1, max_length=300)
+    customer_name: str = Field(min_length=1, max_length=300)
+    pipeline_id: str | None = None
+    stage_id: str | None = None
+    status: OpportunityStatus = "open"
+    estimated_value: Decimal | None = Field(default=None, ge=0)
+    probability: Decimal | None = Field(default=None, ge=0, le=100)
+    currency: str | None = Field(default="TRY", min_length=3, max_length=3)
+    expected_close_date: date | None = None
+    assigned_owner_user_id: str | None = None
+    source: str | None = Field(default=None, max_length=120)
+    product_interest: str | None = Field(default=None, max_length=300)
+    related_product_ids: list[str] = Field(default_factory=list)
+    related_service_ids: list[str] = Field(default_factory=list)
+    next_followup_date: date | None = None
+    notes: str | None = None
+    tags: list[str] = Field(default_factory=list)
+    metadata_json: dict[str, Any] = Field(default_factory=dict)
+
+    @field_validator("currency")
+    @classmethod
+    def normalize_currency_optional(cls, value: str | None) -> str | None:
+        return value.upper() if value else value
+
+
+class OpportunityUpdateRequest(BaseModel):
+    model_config = ConfigDict(extra="allow")
+
+    stakeholder_id: str | None = None
+    lead_id: str | None = None
+    opportunity_name: str | None = Field(default=None, min_length=1, max_length=300)
+    customer_name: str | None = Field(default=None, min_length=1, max_length=300)
+    pipeline_id: str | None = None
+    stage_id: str | None = None
+    status: OpportunityStatus | None = None
+    estimated_value: Decimal | None = Field(default=None, ge=0)
+    probability: Decimal | None = Field(default=None, ge=0, le=100)
+    currency: str | None = Field(default=None, min_length=3, max_length=3)
+    expected_close_date: date | None = None
+    actual_close_date: date | None = None
+    assigned_owner_user_id: str | None = None
+    source: str | None = None
+    product_interest: str | None = None
+    related_product_ids: list[str] | None = None
+    related_service_ids: list[str] | None = None
+    next_followup_date: date | None = None
+    lost_reason: str | None = None
+    won_reason: str | None = None
+    competitor_name: str | None = None
+    proposal_status: ProposalStatus | None = None
+    proposal_document_id: str | None = None
+    proposal_amount: Decimal | None = Field(default=None, ge=0)
+    proposal_sent_at: datetime | None = None
+    proposal_valid_until: date | None = None
+    notes: str | None = None
+    tags: list[str] | None = None
+    metadata_json: dict[str, Any] | None = None
+    base_version: int | None = None
+
+
+class OpportunityStageChangeRequest(BaseModel):
+    stage_id: str
+    reason: str | None = None
+    next_followup_date: date | None = None
+    expected_close_date: date | None = None
+    probability: Decimal | None = Field(default=None, ge=0, le=100)
+
+
+class OpportunityWinRequest(BaseModel):
+    actual_close_date: date | None = None
+    won_reason: str | None = None
+    activate_customer: bool = True
+    create_cari_account: bool = False
+
+
+class OpportunityLostRequest(BaseModel):
+    lost_reason: str = Field(min_length=1, max_length=500)
+    competitor_name: str | None = Field(default=None, max_length=240)
+    future_followup_date: date | None = None
+
+
+class OpportunityFollowupTaskRequest(BaseModel):
+    title: str | None = Field(default=None, max_length=300)
+    description: str | None = None
+    priority: Literal["lowest", "low", "medium", "high", "highest", "urgent"] = "medium"
+    assignee_user_id: str | None = None
+    due_date: date | None = None
+
+
+class OpportunityProposalUploadRequest(BaseModel):
+    proposal_document_id: str
+    proposal_status: ProposalStatus = "sent"
+    proposal_amount: Decimal | None = Field(default=None, ge=0)
+    proposal_sent_at: datetime | None = None
+    proposal_valid_until: date | None = None
+
+
+class InteractionListQuery(BaseModel):
+    stakeholder_id: str | None = None
+    lead_id: str | None = None
+    opportunity_id: str | None = None
+    interaction_type: str | None = None
+    page: int = 1
+    page_size: int = 50
+
+
+class FollowupDueQuery(BaseModel):
+    company_id: str | None = None
+    owner_user_id: str | None = None
+    entity_type: Literal["lead", "opportunity"] | None = None
+    due_until: date | None = None
+    limit: int = 100
+
+
+class FollowupCompleteRequest(BaseModel):
+    subject: str | None = Field(default=None, max_length=300)
+    body: str | None = None
+    outcome: str | None = None
+    next_followup_date: date | None = None
+    related_task_id: str | None = None
+
+
+class FollowupSnoozeRequest(BaseModel):
+    next_followup_date: date
+    notes: str | None = None

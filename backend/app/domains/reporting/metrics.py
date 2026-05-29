@@ -894,8 +894,11 @@ async def after_sales_kpis(ctx: ReportingQueryContext) -> list[KpiCard]:
 
 
 async def crm_kpis(ctx: ReportingQueryContext) -> list[KpiCard]:
-    visible = can(ctx.request_context, "crm.view") or can(
-        ctx.request_context, "reporting.dashboardView"
+    visible = (
+        can(ctx.request_context, "crm.view")
+        or can(ctx.request_context, "crm.leadsView")
+        or can(ctx.request_context, "crm.opportunitiesView")
+        or can(ctx.request_context, "reporting.dashboardView")
     )
     where, params = base_where(ctx)
     active_customers = await safe_scalar(
@@ -932,6 +935,68 @@ async def crm_kpis(ctx: ReportingQueryContext) -> list[KpiCard]:
         f"select count(*) from public.crm_stakeholders where {' and '.join(where)} and stakeholder_type in ('customer','supplier','customer_supplier') and related_cari_account_id is null",
         params,
         label="Cari baglantisi olmayan paydas",
+    )
+    new_leads = await safe_scalar(
+        ctx,
+        "public.crm_leads",
+        f"select count(*) from public.crm_leads where {' and '.join(where)} and lead_status = 'new' and coalesce(is_deleted, false) = false",
+        params,
+        label="Yeni lead",
+    )
+    qualified_leads = await safe_scalar(
+        ctx,
+        "public.crm_leads",
+        f"select count(*) from public.crm_leads where {' and '.join(where)} and lead_status = 'qualified' and coalesce(is_deleted, false) = false",
+        params,
+        label="Qualified lead",
+    )
+    open_opportunities = await safe_scalar(
+        ctx,
+        "public.crm_opportunities",
+        f"select count(*) from public.crm_opportunities where {' and '.join(where)} and status = 'open' and coalesce(is_deleted, false) = false",
+        params,
+        label="Acik firsat",
+    )
+    pipeline_value = await safe_scalar(
+        ctx,
+        "public.crm_opportunities",
+        f"select coalesce(sum(estimated_value), 0) from public.crm_opportunities where {' and '.join(where)} and status = 'open' and coalesce(is_deleted, false) = false",
+        params,
+        label="Pipeline toplam",
+    )
+    weighted_pipeline = await safe_scalar(
+        ctx,
+        "public.crm_opportunities",
+        f"select coalesce(sum(weighted_value), 0) from public.crm_opportunities where {' and '.join(where)} and status = 'open' and coalesce(is_deleted, false) = false",
+        params,
+        label="Agirlikli pipeline",
+    )
+    overdue_followups = await safe_scalar(
+        ctx,
+        "public.crm_leads",
+        f"select count(*) from public.crm_leads where {' and '.join(where)} and next_followup_date < current_date and lead_status not in ('converted','lost','unqualified') and coalesce(is_deleted, false) = false",
+        params,
+        label="Geciken lead takibi",
+    ) + await safe_scalar(
+        ctx,
+        "public.crm_opportunities",
+        f"select count(*) from public.crm_opportunities where {' and '.join(where)} and next_followup_date < current_date and status = 'open' and coalesce(is_deleted, false) = false",
+        params,
+        label="Geciken firsat takibi",
+    )
+    proposals_sent = await safe_scalar(
+        ctx,
+        "public.crm_opportunities",
+        f"select count(*) from public.crm_opportunities where {' and '.join(where)} and proposal_status = 'sent' and coalesce(is_deleted, false) = false",
+        params,
+        label="Gonderilen teklifler",
+    )
+    expected_close_this_month = await safe_scalar(
+        ctx,
+        "public.crm_opportunities",
+        f"select count(*) from public.crm_opportunities where {' and '.join(where)} and status = 'open' and expected_close_date between date_trunc('month', current_date)::date and (date_trunc('month', current_date) + interval '1 month - 1 day')::date and coalesce(is_deleted, false) = false",
+        params,
+        label="Bu ay kapanacak firsat",
     )
     return [
         card(
@@ -983,6 +1048,86 @@ async def crm_kpis(ctx: ReportingQueryContext) -> list[KpiCard]:
             description="Musteri/tedarikci olup cari karta baglanmamis paydaslar.",
             target_page="/app/crm/paydaslar",
             status_value=status_from_count(without_cari, critical_at=10),
+        ),
+        card(
+            key="crm.newLeads",
+            title="Yeni lead",
+            value=new_leads,
+            module_key="crm",
+            permission_visible=visible,
+            description="Yeni durumda bekleyen lead kayitlari.",
+            target_page="/app/crm/leadler",
+            status_value=status_from_count(new_leads, warning_at=20),
+        ),
+        card(
+            key="crm.qualifiedLeads",
+            title="Qualified lead",
+            value=qualified_leads,
+            module_key="crm",
+            permission_visible=visible,
+            description="Firsata donusmeye hazir leadler.",
+            target_page="/app/crm/leadler",
+            status_value="normal",
+        ),
+        card(
+            key="crm.openOpportunities",
+            title="Acik firsat",
+            value=open_opportunities,
+            module_key="crm",
+            permission_visible=visible,
+            description="Pipeline icindeki acik satis firsatlari.",
+            target_page="/app/crm/firsatlar",
+            status_value=status_from_count(open_opportunities, warning_at=20),
+        ),
+        card(
+            key="crm.pipelineValue",
+            title="Pipeline tutari",
+            value=pipeline_value,
+            module_key="crm",
+            permission_visible=visible,
+            description="Acik firsatlarin toplam potansiyel degeri.",
+            target_page="/app/crm/pipeline",
+            status_value="info",
+        ),
+        card(
+            key="crm.weightedPipelineValue",
+            title="Agirlikli pipeline",
+            value=weighted_pipeline,
+            module_key="crm",
+            permission_visible=visible,
+            description="Olasilik ile agirliklandirilmis pipeline degeri.",
+            target_page="/app/crm/pipeline",
+            status_value="info",
+        ),
+        card(
+            key="crm.overdueFollowups",
+            title="Geciken takip",
+            value=overdue_followups,
+            module_key="crm",
+            permission_visible=visible,
+            description="Takip tarihi gecmis lead ve firsatlar.",
+            target_page="/app/crm/takipler",
+            status_value=status_from_count(overdue_followups, warning_at=1, critical_at=10),
+        ),
+        card(
+            key="crm.proposalsSent",
+            title="Gonderilen teklif",
+            value=proposals_sent,
+            module_key="crm",
+            permission_visible=visible,
+            description="Teklif gonderildi durumundaki firsatlar.",
+            target_page="/app/crm/firsatlar",
+            status_value="normal",
+        ),
+        card(
+            key="crm.expectedCloseThisMonth",
+            title="Bu ay kapanis",
+            value=expected_close_this_month,
+            module_key="crm",
+            permission_visible=visible,
+            description="Bu ay kapanmasi beklenen acik firsatlar.",
+            target_page="/app/crm/firsatlar",
+            status_value="info",
         ),
     ]
 

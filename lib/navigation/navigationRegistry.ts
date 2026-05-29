@@ -58,6 +58,26 @@ export const navigationItems = [
     permission: 'crm.view',
     fallbackPermission: 'stakeholders.view',
   }),
+  item('crmLeads', 'Leadler', '/app/crm/leadler', 'user-plus', 'crm', 351, {
+    parentKey: 'crm',
+    permission: 'crm.leadsView',
+    featureFlag: 'crm.leads',
+  }),
+  item('crmOpportunities', 'Firsatlar', '/app/crm/firsatlar', 'chart-line', 'crm', 352, {
+    parentKey: 'crm',
+    permission: 'crm.opportunitiesView',
+    featureFlag: 'crm.opportunities',
+  }),
+  item('crmPipeline', 'Pipeline', '/app/crm/pipeline', 'kanban', 'crm', 353, {
+    parentKey: 'crm',
+    permission: 'crm.opportunitiesView',
+    featureFlag: 'crm.pipeline',
+  }),
+  item('crmFollowups', 'Takipler', '/app/crm/takipler', 'calendar-clock', 'crm', 354, {
+    parentKey: 'crm',
+    permission: 'crm.followupManage',
+    featureFlag: 'crm.followups',
+  }),
   item('projectManagement', 'Gorev ve Proje Yonetimi', '/app/gorev-ve-proje-yonetimi', 'list-checks', 'project_management', 400),
   item('documents', 'Belgeler', '/app/belgeler', 'file-archive', 'documents', 500, {
     permission: 'documents.view',

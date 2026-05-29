@@ -4,13 +4,13 @@ Generated from `app/api/**/route.ts` by `npm run proxy:coverage`. Status values 
 
 ## Summary
 
-- Route files: 425
+- Route files: 426
 - deprecated_wrapper: 11
 - keep_session_bootstrap: 1
 - keep_ui_adapter: 24
 - keep_upload_adapter: 3
 - migrate_to_fastapi: 164
-- proxy_to_fastapi: 147
+- proxy_to_fastapi: 148
 - proxy_to_fastapi_with_temporary_fallback: 75
 
 ## Matrix
@@ -185,6 +185,7 @@ Generated from `app/api/**/route.ts` by `npm run proxy:coverage`. Status values 
 | `/api/companies/stakeholders/[id]` | `proxy_to_fastapi_with_temporary_fallback` | `/api/v1/companies/stakeholders/{id}` | yes | yes | Remove TS fallback after FastAPI endpoint is verified in staging and frontend E2E/smoke passes. | P1 |
 | `/api/companies/stakeholders` | `proxy_to_fastapi_with_temporary_fallback` | `/api/v1/companies/stakeholders` | yes | yes | Remove TS fallback after FastAPI endpoint is verified in staging and frontend E2E/smoke passes. | P1 |
 | `/api/companies/vehicles` | `proxy_to_fastapi_with_temporary_fallback` | `/api/v1/companies/vehicles` | yes | yes | Remove TS fallback after FastAPI endpoint is verified in staging and frontend E2E/smoke passes. | P1 |
+| `/api/crm/[...path]` | `proxy_to_fastapi` | `/api/v1/crm/{path}` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
 | `/api/crm/master/organizations` | `proxy_to_fastapi` | `/api/v1/crm/master/organizations` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
 | `/api/crm/master/organizations/search` | `proxy_to_fastapi` | `/api/v1/crm/master/organizations/search` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
 | `/api/crm/master/persons` | `proxy_to_fastapi` | `/api/v1/crm/master/persons` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
