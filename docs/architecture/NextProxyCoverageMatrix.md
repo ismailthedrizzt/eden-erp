@@ -4,13 +4,13 @@ Generated from `app/api/**/route.ts` by `npm run proxy:coverage`. Status values 
 
 ## Summary
 
-- Route files: 384
+- Route files: 425
 - deprecated_wrapper: 11
 - keep_session_bootstrap: 1
 - keep_ui_adapter: 24
 - keep_upload_adapter: 3
 - migrate_to_fastapi: 164
-- proxy_to_fastapi: 106
+- proxy_to_fastapi: 147
 - proxy_to_fastapi_with_temporary_fallback: 75
 
 ## Matrix
@@ -94,12 +94,28 @@ Generated from `app/api/**/route.ts` by `npm run proxy:coverage`. Status values 
 | `/api/admin/workspace-settings` | `proxy_to_fastapi` | `/api/v1/admin/workspace-settings` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
 | `/api/after-sales/assets/[id]` | `proxy_to_fastapi` | `/api/v1/after-sales/assets/{asset_id}` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
 | `/api/after-sales/assets/[id]/service-history` | `proxy_to_fastapi` | `/api/v1/after-sales/assets/{asset_id}/service-history` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/after-sales/assets/[id]/warranty-check` | `proxy_to_fastapi` | `/api/v1/after-sales/assets/{id}/warranty-check` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
 | `/api/after-sales/assets` | `proxy_to_fastapi` | `/api/v1/after-sales/assets` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/after-sales/checklist-templates` | `proxy_to_fastapi` | `/api/v1/after-sales/checklist-templates` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
 | `/api/after-sales/company/[companyId]/summary` | `proxy_to_fastapi` | `/api/v1/after-sales/company/{company_id}/summary` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/after-sales/field-assignments/[id]/accept` | `proxy_to_fastapi` | `/api/v1/after-sales/field-assignments/{id}/accept` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/after-sales/field-assignments/[id]/reject` | `proxy_to_fastapi` | `/api/v1/after-sales/field-assignments/{id}/reject` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/after-sales/field-assignments/[id]` | `proxy_to_fastapi` | `/api/v1/after-sales/field-assignments/{id}` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/after-sales/field-assignments/[id]/status` | `proxy_to_fastapi` | `/api/v1/after-sales/field-assignments/{id}/status` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/after-sales/field-assignments` | `proxy_to_fastapi` | `/api/v1/after-sales/field-assignments` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/after-sales/maintenance-due/[id]/create-service-request` | `proxy_to_fastapi` | `/api/v1/after-sales/maintenance-due/{id}/create-service-request` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/after-sales/maintenance-due/[id]/skip` | `proxy_to_fastapi` | `/api/v1/after-sales/maintenance-due/{id}/skip` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
 | `/api/after-sales/maintenance-due` | `proxy_to_fastapi` | `/api/v1/after-sales/maintenance-due` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/after-sales/maintenance-plans/[id]` | `proxy_to_fastapi` | `/api/v1/after-sales/maintenance-plans/{plan_id}` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/after-sales/maintenance-plans` | `proxy_to_fastapi` | `/api/v1/after-sales/maintenance-plans` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/after-sales/service-records/[id]/checklist` | `proxy_to_fastapi` | `/api/v1/after-sales/service-records/{id}/checklist` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
 | `/api/after-sales/service-records/[id]/complete` | `proxy_to_fastapi` | `/api/v1/after-sales/service-records/{service_id}/complete` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/after-sales/service-records/[id]/photos` | `proxy_to_fastapi` | `/api/v1/after-sales/service-records/{id}/photos` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/after-sales/service-records/[id]/report` | `proxy_to_fastapi` | `/api/v1/after-sales/service-records/{id}/report` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
 | `/api/after-sales/service-records/[id]` | `proxy_to_fastapi` | `/api/v1/after-sales/service-records/{service_id}` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/after-sales/service-records/[id]/start` | `proxy_to_fastapi` | `/api/v1/after-sales/service-records/{id}/start` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
 | `/api/after-sales/service-records` | `proxy_to_fastapi` | `/api/v1/after-sales/service-records` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/after-sales/service-requests/[id]/assign-technician` | `proxy_to_fastapi` | `/api/v1/after-sales/service-requests/{id}/assign-technician` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
 | `/api/after-sales/service-requests/[id]/assign` | `proxy_to_fastapi` | `/api/v1/after-sales/service-requests/{request_id}/assign` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
 | `/api/after-sales/service-requests/[id]/close` | `proxy_to_fastapi` | `/api/v1/after-sales/service-requests/{request_id}/close` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
 | `/api/after-sales/service-requests/[id]` | `proxy_to_fastapi` | `/api/v1/after-sales/service-requests/{request_id}` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
@@ -242,17 +258,42 @@ Generated from `app/api/**/route.ts` by `npm run proxy:coverage`. Status values 
 | `/api/facilities` | `proxy_to_fastapi` | `/api/v1/facilities` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
 | `/api/features/[feature_key]` | `proxy_to_fastapi` | `/api/v1/features/{feature_key}` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
 | `/api/features` | `proxy_to_fastapi` | `/api/v1/features` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/hr/attendance/[id]` | `proxy_to_fastapi` | `/api/v1/hr/attendance/{id}` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/hr/attendance/import` | `proxy_to_fastapi` | `/api/v1/hr/attendance/import` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/hr/attendance` | `proxy_to_fastapi` | `/api/v1/hr/attendance` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
 | `/api/hr/company/[companyId]/summary` | `proxy_to_fastapi` | `/api/v1/hr/company/{companyId}/summary` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
 | `/api/hr/employees/[id]/documents/[documentId]` | `proxy_to_fastapi` | `/api/v1/hr/employees/{id}/documents/{documentId}` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
 | `/api/hr/employees/[id]/documents` | `proxy_to_fastapi` | `/api/v1/hr/employees/{id}/documents` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
 | `/api/hr/employees/[id]/employment/assignment-change` | `proxy_to_fastapi` | `/api/v1/hr/employees/{id}/employment/assignment-change` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
 | `/api/hr/employees/[id]/employment/start` | `proxy_to_fastapi` | `/api/v1/hr/employees/{id}/employment/start` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
 | `/api/hr/employees/[id]/employment/terminate` | `proxy_to_fastapi` | `/api/v1/hr/employees/{id}/employment/terminate` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/hr/employees/[id]/leave-balances/recalculate` | `proxy_to_fastapi` | `/api/v1/hr/employees/{id}/leave-balances/recalculate` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/hr/employees/[id]/leave-balances` | `proxy_to_fastapi` | `/api/v1/hr/employees/{id}/leave-balances` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
 | `/api/hr/employees/[id]` | `proxy_to_fastapi` | `/api/v1/hr/employees/{id}` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
 | `/api/hr/employees/[id]/sgk/entry-completed` | `proxy_to_fastapi` | `/api/v1/hr/employees/{id}/sgk/entry-completed` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
 | `/api/hr/employees/[id]/sgk/exit-completed` | `proxy_to_fastapi` | `/api/v1/hr/employees/{id}/sgk/exit-completed` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/hr/employees/[id]/work-schedule-assignment` | `proxy_to_fastapi` | `/api/v1/hr/employees/{id}/work-schedule-assignment` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
 | `/api/hr/employees` | `proxy_to_fastapi` | `/api/v1/hr/employees` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
 | `/api/hr/employees/summary` | `proxy_to_fastapi` | `/api/v1/hr/employees/summary` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/hr/leave-balances/[id]/adjust` | `proxy_to_fastapi` | `/api/v1/hr/leave-balances/{id}/adjust` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/hr/leave-requests/[id]/approve` | `proxy_to_fastapi` | `/api/v1/hr/leave-requests/{id}/approve` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/hr/leave-requests/[id]/cancel` | `proxy_to_fastapi` | `/api/v1/hr/leave-requests/{id}/cancel` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/hr/leave-requests/[id]/reject` | `proxy_to_fastapi` | `/api/v1/hr/leave-requests/{id}/reject` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/hr/leave-requests/[id]` | `proxy_to_fastapi` | `/api/v1/hr/leave-requests/{id}` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/hr/leave-requests/[id]/submit` | `proxy_to_fastapi` | `/api/v1/hr/leave-requests/{id}/submit` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/hr/leave-requests` | `proxy_to_fastapi` | `/api/v1/hr/leave-requests` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/hr/leave-types/[id]` | `proxy_to_fastapi` | `/api/v1/hr/leave-types/{id}` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/hr/leave-types` | `proxy_to_fastapi` | `/api/v1/hr/leave-types` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/hr/payroll-prep/[id]/mark-ready` | `proxy_to_fastapi` | `/api/v1/hr/payroll-prep/{id}/mark-ready` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/hr/payroll-prep/[id]` | `proxy_to_fastapi` | `/api/v1/hr/payroll-prep/{id}` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/hr/payroll-prep` | `proxy_to_fastapi` | `/api/v1/hr/payroll-prep` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/hr/timesheets/[id]/approve` | `proxy_to_fastapi` | `/api/v1/hr/timesheets/{id}/approve` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/hr/timesheets/[id]/calculate` | `proxy_to_fastapi` | `/api/v1/hr/timesheets/{id}/calculate` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/hr/timesheets/[id]/lock` | `proxy_to_fastapi` | `/api/v1/hr/timesheets/{id}/lock` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/hr/timesheets/[id]` | `proxy_to_fastapi` | `/api/v1/hr/timesheets/{id}` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/hr/timesheets` | `proxy_to_fastapi` | `/api/v1/hr/timesheets` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/hr/work-schedules/[id]` | `proxy_to_fastapi` | `/api/v1/hr/work-schedules/{id}` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/hr/work-schedules` | `proxy_to_fastapi` | `/api/v1/hr/work-schedules` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
 | `/api/identity/resolve` | `keep_ui_adapter` | `/api/v1/identity/resolve` | yes | yes | Permanent adapter/shared contract; keep thin and do not add ERP domain mutation. | P2 |
 | `/api/import/jobs/[id]/cancel` | `migrate_to_fastapi` | `/api/v1/import/jobs/{id}/cancel` | no | no | Implement FastAPI equivalent, then convert route to proxy or remove. | P2 |
 | `/api/import/jobs/[id]/confirm` | `migrate_to_fastapi` | `/api/v1/import/jobs/{id}/confirm` | no | no | Implement FastAPI equivalent, then convert route to proxy or remove. | P2 |

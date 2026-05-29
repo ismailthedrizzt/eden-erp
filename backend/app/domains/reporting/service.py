@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from decimal import Decimal
 from typing import Any
 
 from fastapi import status
@@ -30,15 +31,23 @@ def can(context: RequestContext, permission_key: str) -> bool:
     return has_permission(context, permission_key)
 
 
-def service_context(session: AsyncSession, request_context: RequestContext, tenant_id: str, filters: ReportingFilter) -> ReportingQueryContext:
-    return ReportingQueryContext(session=session, request_context=request_context, tenant_id=tenant_id, filters=filters)
+def service_context(
+    session: AsyncSession, request_context: RequestContext, tenant_id: str, filters: ReportingFilter
+) -> ReportingQueryContext:
+    return ReportingQueryContext(
+        session=session, request_context=request_context, tenant_id=tenant_id, filters=filters
+    )
 
 
 def assert_company_scope(context: RequestContext, company_id: str | None) -> None:
     if not company_id or not context.company_scope_ids:
         return
     if company_id not in {str(item) for item in context.company_scope_ids}:
-        raise DomainError("Bu sirket rapor erisim kapsaminiz disinda.", "REPORT_COMPANY_SCOPE_DENIED", status.HTTP_403_FORBIDDEN)
+        raise DomainError(
+            "Bu sirket rapor erisim kapsaminiz disinda.",
+            "REPORT_COMPANY_SCOPE_DENIED",
+            status.HTTP_403_FORBIDDEN,
+        )
 
 
 def base_where(ctx: ReportingQueryContext, alias: str = "") -> tuple[list[str], dict[str, Any]]:
@@ -66,7 +75,14 @@ def date_filter(ctx: ReportingQueryContext, column: str, params: dict[str, Any])
     return parts
 
 
-async def safe_scalar(ctx: ReportingQueryContext, table: str, sql: str, params: dict[str, Any] | None = None, *, label: str | None = None) -> int | float:
+async def safe_scalar(
+    ctx: ReportingQueryContext,
+    table: str,
+    sql: str,
+    params: dict[str, Any] | None = None,
+    *,
+    label: str | None = None,
+) -> int | float:
     if not await table_exists(ctx.session, table):
         if label:
             ctx.warnings.append(f"{label} verisi hazir degil.")
@@ -76,6 +92,8 @@ async def safe_scalar(ctx: ReportingQueryContext, table: str, sql: str, params: 
         value = result.scalar_one_or_none()
         if value is None:
             return 0
+        if isinstance(value, Decimal):
+            return float(value)
         if isinstance(value, float):
             return value
         return int(value)
@@ -86,7 +104,14 @@ async def safe_scalar(ctx: ReportingQueryContext, table: str, sql: str, params: 
         return 0
 
 
-async def safe_rows(ctx: ReportingQueryContext, table: str, sql: str, params: dict[str, Any] | None = None, *, label: str | None = None) -> list[dict[str, Any]]:
+async def safe_rows(
+    ctx: ReportingQueryContext,
+    table: str,
+    sql: str,
+    params: dict[str, Any] | None = None,
+    *,
+    label: str | None = None,
+) -> list[dict[str, Any]]:
     if not await table_exists(ctx.session, table):
         if label:
             ctx.warnings.append(f"{label} verisi hazir degil.")
@@ -126,7 +151,9 @@ def card(
     )
 
 
-def status_from_count(value: int | float, *, warning_at: int = 1, critical_at: int | None = None) -> str:
+def status_from_count(
+    value: int | float, *, warning_at: int = 1, critical_at: int | None = None
+) -> str:
     if critical_at is not None and value >= critical_at:
         return "critical"
     if value >= warning_at:

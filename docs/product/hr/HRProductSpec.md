@@ -16,8 +16,12 @@ bilgileri lifecycle operation olarak yonetilir.
 - Calisan belgeleri ve ozluk dosyasi
 - Calisan listesi, detay sekmeleri ve summary widget'lari
 
-Kapsam disi: bordro, izin/tatil, puantaj, performans, gercek SGK entegrasyonu,
-maas odeme ve muhasebe entegrasyonu.
+Izin, devam-devamsizlik, puantaj ve bordro hazirligi deepening kapsaminda
+[HRLeaveAttendanceProductSpec.md](./HRLeaveAttendanceProductSpec.md) altinda
+tanimlanir.
+
+Kapsam disi: tam bordro hesaplama, vergi/kesinti, e-bordro, gercek SGK
+entegrasyonu, maas odeme ve muhasebe entegrasyonu.
 
 ## Domain Siniri
 
@@ -170,3 +174,5 @@ Next proxy routes use `/api/hr/**` and require `FASTAPI_BASE_URL`.
 ## Known Gaps
 
 Known gaps are tracked in [HRKnownGaps.md](./HRKnownGaps.md) and summarized in the final release gate risk list.
+
+Leave, attendance, timesheet and payroll preparation deepening is specified in [HRLeaveAttendanceProductSpec.md](./HRLeaveAttendanceProductSpec.md).

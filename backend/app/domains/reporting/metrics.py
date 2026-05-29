@@ -492,6 +492,9 @@ async def accounting_kpis(ctx: ReportingQueryContext) -> list[KpiCard]:
 
 async def hr_kpis(ctx: ReportingQueryContext) -> list[KpiCard]:
     visible = can(ctx.request_context, "hr.view") or can(ctx.request_context, "reporting.viewHR")
+    leave_visible = visible or can(ctx.request_context, "hr.leaveView")
+    attendance_visible = visible or can(ctx.request_context, "hr.attendanceView")
+    timesheet_visible = visible or can(ctx.request_context, "hr.timesheetView")
     where, params = base_where(ctx)
     total = await safe_scalar(
         ctx,
@@ -520,6 +523,48 @@ async def hr_kpis(ctx: ReportingQueryContext) -> list[KpiCard]:
         f"select count(*) from public.hr_employment_records where {' and '.join(where)} and sgk_status = 'pending'",
         params,
         label="SGK bekleyen",
+    )
+    low_leave_balance = await safe_scalar(
+        ctx,
+        "public.hr_leave_balances",
+        f"select count(*) from public.hr_leave_balances where {' and '.join(where)} and coalesce(remaining_days, 0) <= 3 and status = 'active'",
+        params,
+        label="Dusuk izin bakiyesi",
+    )
+    pending_leave_requests = await safe_scalar(
+        ctx,
+        "public.hr_leave_requests",
+        f"select count(*) from public.hr_leave_requests where {' and '.join(where)} and status in ('submitted','pending_approval')",
+        params,
+        label="Onay bekleyen izin",
+    )
+    month_leave_requests = await safe_scalar(
+        ctx,
+        "public.hr_leave_requests",
+        f"select count(*) from public.hr_leave_requests where {' and '.join(where)} and status = 'approved' and start_date <= (date_trunc('month', current_date) + interval '1 month' - interval '1 day')::date and end_date >= date_trunc('month', current_date)::date",
+        params,
+        label="Bu ay izin",
+    )
+    attendance_issues = await safe_scalar(
+        ctx,
+        "public.hr_attendance_records",
+        f"select count(*) from public.hr_attendance_records where {' and '.join(where)} and status in ('absent','late','early_leave') and work_date >= date_trunc('month', current_date)::date",
+        params,
+        label="Devamsizlik",
+    )
+    overtime_hours = await safe_scalar(
+        ctx,
+        "public.hr_attendance_records",
+        f"select coalesce(sum(overtime_hours), 0) from public.hr_attendance_records where {' and '.join(where)} and work_date >= date_trunc('month', current_date)::date",
+        params,
+        label="Fazla mesai",
+    )
+    open_timesheets = await safe_scalar(
+        ctx,
+        "public.hr_timesheet_periods",
+        f"select count(*) from public.hr_timesheet_periods where {' and '.join(where)} and status in ('draft','calculating','ready_for_review')",
+        params,
+        label="Puantaj",
     )
     return [
         card(
@@ -561,6 +606,66 @@ async def hr_kpis(ctx: ReportingQueryContext) -> list[KpiCard]:
             description="Manuel SGK tamamlanmasi bekleyen kayitlar.",
             target_page="/app/ik/calisanlar",
             status_value=status_from_count(sgk_pending, critical_at=10),
+        ),
+        card(
+            key="hr.lowLeaveBalance",
+            title="Dusuk izin bakiyesi",
+            value=low_leave_balance,
+            module_key="hr",
+            permission_visible=leave_visible,
+            description="3 gun ve altinda kalan aktif izin bakiyeleri.",
+            target_page="/app/ik/izin-bakiyeleri",
+            status_value=status_from_count(low_leave_balance, critical_at=10),
+        ),
+        card(
+            key="hr.pendingLeaveRequests",
+            title="Onay bekleyen izin",
+            value=pending_leave_requests,
+            module_key="hr",
+            permission_visible=leave_visible,
+            description="Gonderilmis veya onay bekleyen izin talepleri.",
+            target_page="/app/ik/izinler",
+            status_value=status_from_count(pending_leave_requests, critical_at=10),
+        ),
+        card(
+            key="hr.monthLeaveRequests",
+            title="Bu ay izinli",
+            value=month_leave_requests,
+            module_key="hr",
+            permission_visible=leave_visible,
+            description="Bu ay icinde onayli izni olan calisan/talep sayisi.",
+            target_page="/app/ik/izinler",
+            status_value="info",
+        ),
+        card(
+            key="hr.attendanceIssues",
+            title="Devamsizlik kaydi",
+            value=attendance_issues,
+            module_key="hr",
+            permission_visible=attendance_visible,
+            description="Bu ay devamsizlik, gec kalma veya erken cikis kayitlari.",
+            target_page="/app/ik/devam-devamsizlik",
+            status_value=status_from_count(attendance_issues, critical_at=10),
+        ),
+        card(
+            key="hr.overtimeHours",
+            title="Fazla mesai saati",
+            value=overtime_hours,
+            module_key="hr",
+            permission_visible=attendance_visible,
+            description="Bu ay puantaja hazirlanan fazla mesai saatleri.",
+            target_page="/app/ik/devam-devamsizlik",
+            status_value=status_from_count(overtime_hours, warning_at=20, critical_at=80),
+        ),
+        card(
+            key="hr.openTimesheets",
+            title="Acik puantaj",
+            value=open_timesheets,
+            module_key="hr",
+            permission_visible=timesheet_visible,
+            description="Taslak, hesaplanan veya inceleme bekleyen puantaj donemleri.",
+            target_page="/app/ik/puantaj",
+            status_value=status_from_count(open_timesheets, warning_at=1, critical_at=3),
         ),
     ]
 

@@ -84,13 +84,14 @@ export const moduleReadinessDefinitions: ModuleReadinessDefinition[] = [
   {
     moduleKey: 'hr',
     requiredTables: ['hr_employees', 'hr_employment_records', 'hr_employment_transactions'],
-    optionalTables: ['hr_employee_documents'],
+    optionalTables: ['hr_employee_documents', 'hr_leave_types', 'hr_leave_balances', 'hr_leave_requests', 'hr_attendance_records', 'hr_work_schedules', 'hr_shifts', 'hr_employee_work_schedules', 'hr_timesheet_periods', 'hr_timesheet_rows', 'hr_payroll_preparation_rows'],
     requiredDependencies: ['companies'],
     optionalDependencies: ['organization', 'branches', 'facilities', 'accounting'],
     setupSteps: [
       setupStep('hr.employees', 'Calisan kart alanlarini kontrol et', 'Calisan kartlari ve ozluk bilgileri icin HR calisan altyapisi hazir olmalidir.', 'check'),
       setupStep('hr.employment', 'Istihdam lifecycle alanlarini kontrol et', 'Ise giris, pozisyon degisikligi, SGK ve isten cikis icin istihdam kayitlari hazir olmalidir.', 'check'),
       setupStep('hr.documents', 'Ozluk belge alanlarini kontrol et', 'Kimlik, sozlesme ve SGK belge referanslari icin belge altyapisi hazir olmalidir.', 'check'),
+      setupStep('hr.leaveAttendance', 'Izin ve puantaj alanlarini kontrol et', 'Izin, devam, calisma plani, puantaj ve bordro hazirlik tablolari hazir olmalidir.', 'check'),
     ],
   },
   {

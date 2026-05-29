@@ -9,6 +9,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_session
 from app.core.errors import DomainError, domain_error_to_http
 from app.core.security import RequestContext, has_permission, require_access_context, require_tenant
+from app.domains.hr.attendance import (
+    create_attendance_record,
+    import_attendance_records,
+    list_attendance_records,
+    update_attendance_record,
+)
 from app.domains.hr.documents import (
     create_employee_document,
     list_employee_documents,
@@ -29,8 +35,38 @@ from app.domains.hr.employment import (
     start_employment,
     terminate_employment,
 )
+from app.domains.hr.leave_balances import (
+    adjust_leave_balance,
+    list_employee_leave_balances,
+    recalculate_employee_leave_balances,
+)
+from app.domains.hr.leave_requests import (
+    approve_leave_request,
+    cancel_leave_request,
+    create_leave_request,
+    get_leave_request,
+    list_leave_requests,
+    reject_leave_request,
+    submit_leave_request,
+    update_leave_request,
+)
+from app.domains.hr.leave_types import (
+    create_leave_type,
+    get_leave_type,
+    list_leave_types,
+    update_leave_type,
+)
+from app.domains.hr.payroll_prep import (
+    get_payroll_prep_for_period,
+    list_payroll_prep_rows,
+    mark_payroll_prep_ready,
+)
 from app.domains.hr.schemas import (
     AssignmentChangeRequest,
+    AttendanceCreateRequest,
+    AttendanceImportRequest,
+    AttendanceListQuery,
+    AttendanceUpdateRequest,
     EmployeeCreateRequest,
     EmployeeDocumentCreateRequest,
     EmployeeDocumentUpdateRequest,
@@ -38,7 +74,37 @@ from app.domains.hr.schemas import (
     EmployeeUpdateRequest,
     EmploymentStartRequest,
     EmploymentTerminateRequest,
+    LeaveBalanceAdjustRequest,
+    LeaveCancelRequest,
+    LeaveRejectRequest,
+    LeaveRequestCreateRequest,
+    LeaveRequestListQuery,
+    LeaveRequestUpdateRequest,
+    LeaveTypeCreateRequest,
+    LeaveTypeListQuery,
+    LeaveTypeUpdateRequest,
+    PayrollPrepListQuery,
     SgkCompletedRequest,
+    TimesheetCreateRequest,
+    TimesheetListQuery,
+    WorkScheduleAssignmentRequest,
+    WorkScheduleCreateRequest,
+    WorkScheduleListQuery,
+    WorkScheduleUpdateRequest,
+)
+from app.domains.hr.timesheets import (
+    approve_timesheet_period,
+    calculate_timesheet_period,
+    create_timesheet_period,
+    get_timesheet_period,
+    list_timesheet_periods,
+    lock_timesheet_period,
+)
+from app.domains.hr.work_schedules import (
+    assign_work_schedule_to_employee,
+    create_work_schedule,
+    list_work_schedules,
+    update_work_schedule,
 )
 from app.schemas.common import ApiSuccess
 
@@ -47,6 +113,10 @@ RequestContextDep = Annotated[RequestContext, Depends(require_access_context)]
 SessionDep = Annotated[AsyncSession, Depends(get_session)]
 StartDateFromQuery = Annotated[date | None, Query(alias="startDateFrom")]
 StartDateToQuery = Annotated[date | None, Query(alias="startDateTo")]
+DateFromQuery = Annotated[date | None, Query(alias="dateFrom")]
+DateToQuery = Annotated[date | None, Query(alias="dateTo")]
+PeriodFromQuery = Annotated[date | None, Query(alias="periodFrom")]
+PeriodToQuery = Annotated[date | None, Query(alias="periodTo")]
 
 
 @router.get("/employees/summary", response_model=ApiSuccess[dict[str, Any]])
@@ -78,6 +148,761 @@ async def company_hr_summary(
             company_id,
         )
         return ApiSuccess(data=summary.model_dump())
+    except DomainError as error:
+        raise domain_error_to_http(error) from error
+
+
+@router.get("/leave-types", response_model=ApiSuccess[dict[str, Any]])
+async def leave_types_list(
+    session: SessionDep,
+    context: RequestContextDep,
+    company_id: str | None = Query(default=None),
+    category: str | None = Query(default=None),
+    active: bool | None = Query(default=None),
+    search: str | None = Query(default=None),
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=50, alias="pageSize", ge=1, le=200),
+    sort: str = Query(default="leave_type_name"),
+    direction: str = Query(default="asc"),
+) -> ApiSuccess[dict[str, Any]]:
+    ensure_permission(context, "hr.leaveView")
+    tenant_id = require_tenant(context)
+    try:
+        async with session.begin():
+            result = await list_leave_types(
+                session,
+                service_context(context, tenant_id),
+                LeaveTypeListQuery(
+                    company_id=company_id,
+                    category=category,
+                    active=active,
+                    search=search,
+                    page=page,
+                    page_size=page_size,
+                    sort=sort,
+                    direction=direction,
+                ),
+            )
+        return ApiSuccess(data={"data": result.data, "meta": result.meta})
+    except DomainError as error:
+        raise domain_error_to_http(error) from error
+
+
+@router.post("/leave-types", response_model=ApiSuccess[dict[str, Any]], status_code=201)
+async def leave_types_create(
+    request: LeaveTypeCreateRequest,
+    session: SessionDep,
+    context: RequestContextDep,
+) -> ApiSuccess[dict[str, Any]]:
+    ensure_permission(context, "hr.leaveAdmin")
+    tenant_id = require_tenant(context)
+    try:
+        async with session.begin():
+            row = await create_leave_type(session, service_context(context, tenant_id), request)
+        return ApiSuccess(data=row, message="Izin turu olusturuldu.")
+    except DomainError as error:
+        raise domain_error_to_http(error) from error
+
+
+@router.get("/leave-types/{leave_type_id}", response_model=ApiSuccess[dict[str, Any]])
+async def leave_types_get(
+    leave_type_id: str,
+    session: SessionDep,
+    context: RequestContextDep,
+) -> ApiSuccess[dict[str, Any]]:
+    ensure_permission(context, "hr.leaveView")
+    tenant_id = require_tenant(context)
+    try:
+        row = await get_leave_type(session, tenant_id, leave_type_id)
+        if not row:
+            raise DomainError("Izin turu bulunamadi.", "LEAVE_TYPE_NOT_FOUND", 404)
+        return ApiSuccess(data=row)
+    except DomainError as error:
+        raise domain_error_to_http(error) from error
+
+
+@router.patch("/leave-types/{leave_type_id}", response_model=ApiSuccess[dict[str, Any]])
+async def leave_types_update(
+    leave_type_id: str,
+    request: LeaveTypeUpdateRequest,
+    session: SessionDep,
+    context: RequestContextDep,
+) -> ApiSuccess[dict[str, Any]]:
+    ensure_permission(context, "hr.leaveAdmin")
+    tenant_id = require_tenant(context)
+    try:
+        async with session.begin():
+            row = await update_leave_type(
+                session,
+                service_context(context, tenant_id),
+                leave_type_id,
+                request,
+            )
+        return ApiSuccess(data=row, message="Izin turu guncellendi.")
+    except DomainError as error:
+        raise domain_error_to_http(error) from error
+
+
+@router.get(
+    "/employees/{employee_id}/leave-balances", response_model=ApiSuccess[list[dict[str, Any]]]
+)
+async def employee_leave_balances(
+    employee_id: str,
+    session: SessionDep,
+    context: RequestContextDep,
+    period_year: int | None = Query(default=None, alias="periodYear"),
+) -> ApiSuccess[list[dict[str, Any]]]:
+    ensure_permission(context, "hr.leaveView")
+    tenant_id = require_tenant(context)
+    try:
+        async with session.begin():
+            rows = await list_employee_leave_balances(
+                session,
+                service_context(context, tenant_id),
+                employee_id,
+                period_year=period_year,
+            )
+        return ApiSuccess(data=rows)
+    except DomainError as error:
+        raise domain_error_to_http(error) from error
+
+
+@router.post(
+    "/employees/{employee_id}/leave-balances/recalculate",
+    response_model=ApiSuccess[list[dict[str, Any]]],
+)
+async def employee_leave_balances_recalculate(
+    employee_id: str,
+    session: SessionDep,
+    context: RequestContextDep,
+    period_year: int | None = Query(default=None, alias="periodYear"),
+) -> ApiSuccess[list[dict[str, Any]]]:
+    ensure_permission(context, "hr.leaveAdmin")
+    tenant_id = require_tenant(context)
+    try:
+        async with session.begin():
+            rows = await recalculate_employee_leave_balances(
+                session,
+                service_context(context, tenant_id),
+                employee_id,
+                period_year=period_year,
+            )
+        return ApiSuccess(data=rows, message="Izin bakiyeleri yeniden hesaplandi.")
+    except DomainError as error:
+        raise domain_error_to_http(error) from error
+
+
+@router.patch("/leave-balances/{balance_id}/adjust", response_model=ApiSuccess[dict[str, Any]])
+async def leave_balances_adjust(
+    balance_id: str,
+    request: LeaveBalanceAdjustRequest,
+    session: SessionDep,
+    context: RequestContextDep,
+) -> ApiSuccess[dict[str, Any]]:
+    ensure_permission(context, "hr.leaveAdmin")
+    tenant_id = require_tenant(context)
+    try:
+        async with session.begin():
+            row = await adjust_leave_balance(
+                session,
+                service_context(context, tenant_id),
+                balance_id,
+                request,
+            )
+        return ApiSuccess(data=row, message="Izin bakiyesi guncellendi.")
+    except DomainError as error:
+        raise domain_error_to_http(error) from error
+
+
+@router.get("/leave-requests", response_model=ApiSuccess[dict[str, Any]])
+async def leave_requests_list(
+    session: SessionDep,
+    context: RequestContextDep,
+    company_id: str | None = Query(default=None),
+    employee_id: str | None = Query(default=None),
+    leave_type_id: str | None = Query(default=None),
+    status_value: str | None = Query(default=None, alias="status"),
+    approver_id: str | None = Query(default=None),
+    mine: bool = Query(default=False),
+    pending_approval: bool = Query(default=False, alias="pendingApproval"),
+    date_from: DateFromQuery = None,
+    date_to: DateToQuery = None,
+    search: str | None = Query(default=None),
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=50, alias="pageSize", ge=1, le=200),
+    sort: str = Query(default="created_at"),
+    direction: str = Query(default="desc"),
+) -> ApiSuccess[dict[str, Any]]:
+    ensure_permission(context, "hr.leaveView")
+    tenant_id = require_tenant(context)
+    try:
+        result = await list_leave_requests(
+            session,
+            service_context(context, tenant_id),
+            LeaveRequestListQuery(
+                company_id=company_id,
+                employee_id=employee_id,
+                leave_type_id=leave_type_id,
+                status=status_value,
+                approver_id=approver_id,
+                mine=mine,
+                pending_approval=pending_approval,
+                date_from=date_from,
+                date_to=date_to,
+                search=search,
+                page=page,
+                page_size=page_size,
+                sort=sort,
+                direction=direction,
+            ),
+        )
+        return ApiSuccess(data={"data": result.data, "meta": result.meta})
+    except DomainError as error:
+        raise domain_error_to_http(error) from error
+
+
+@router.post("/leave-requests", response_model=ApiSuccess[dict[str, Any]], status_code=201)
+async def leave_requests_create(
+    request: LeaveRequestCreateRequest,
+    session: SessionDep,
+    context: RequestContextDep,
+) -> ApiSuccess[dict[str, Any]]:
+    ensure_permission(context, "hr.leaveRequestCreate")
+    tenant_id = require_tenant(context)
+    try:
+        async with session.begin():
+            row = await create_leave_request(session, service_context(context, tenant_id), request)
+        return ApiSuccess(data=row, message="Izin talebi olusturuldu.")
+    except DomainError as error:
+        raise domain_error_to_http(error) from error
+
+
+@router.get("/leave-requests/{leave_request_id}", response_model=ApiSuccess[dict[str, Any]])
+async def leave_requests_get(
+    leave_request_id: str,
+    session: SessionDep,
+    context: RequestContextDep,
+) -> ApiSuccess[dict[str, Any]]:
+    ensure_permission(context, "hr.leaveView")
+    tenant_id = require_tenant(context)
+    try:
+        row = await get_leave_request(session, tenant_id, leave_request_id)
+        if not row:
+            raise DomainError("Izin talebi bulunamadi.", "LEAVE_REQUEST_NOT_FOUND", 404)
+        return ApiSuccess(data=row)
+    except DomainError as error:
+        raise domain_error_to_http(error) from error
+
+
+@router.patch("/leave-requests/{leave_request_id}", response_model=ApiSuccess[dict[str, Any]])
+async def leave_requests_update(
+    leave_request_id: str,
+    request: LeaveRequestUpdateRequest,
+    session: SessionDep,
+    context: RequestContextDep,
+) -> ApiSuccess[dict[str, Any]]:
+    ensure_permission(context, "hr.leaveRequestCreate")
+    tenant_id = require_tenant(context)
+    try:
+        async with session.begin():
+            row = await update_leave_request(
+                session,
+                service_context(context, tenant_id),
+                leave_request_id,
+                request,
+            )
+        return ApiSuccess(data=row, message="Izin talebi guncellendi.")
+    except DomainError as error:
+        raise domain_error_to_http(error) from error
+
+
+@router.post("/leave-requests/{leave_request_id}/submit", response_model=ApiSuccess[dict[str, Any]])
+async def leave_requests_submit(
+    leave_request_id: str,
+    session: SessionDep,
+    context: RequestContextDep,
+) -> ApiSuccess[dict[str, Any]]:
+    ensure_permission(context, "hr.leaveRequestCreate")
+    tenant_id = require_tenant(context)
+    try:
+        async with session.begin():
+            row = await submit_leave_request(
+                session,
+                service_context(context, tenant_id),
+                leave_request_id,
+            )
+        return ApiSuccess(data=row, message="Izin talebi gonderildi.")
+    except DomainError as error:
+        raise domain_error_to_http(error) from error
+
+
+@router.post(
+    "/leave-requests/{leave_request_id}/approve", response_model=ApiSuccess[dict[str, Any]]
+)
+async def leave_requests_approve(
+    leave_request_id: str,
+    session: SessionDep,
+    context: RequestContextDep,
+) -> ApiSuccess[dict[str, Any]]:
+    ensure_permission(context, "hr.leaveApprove")
+    tenant_id = require_tenant(context)
+    try:
+        async with session.begin():
+            row = await approve_leave_request(
+                session,
+                service_context(context, tenant_id),
+                leave_request_id,
+            )
+        return ApiSuccess(data=row, message="Izin talebi onaylandi.")
+    except DomainError as error:
+        raise domain_error_to_http(error) from error
+
+
+@router.post("/leave-requests/{leave_request_id}/reject", response_model=ApiSuccess[dict[str, Any]])
+async def leave_requests_reject(
+    leave_request_id: str,
+    request: LeaveRejectRequest,
+    session: SessionDep,
+    context: RequestContextDep,
+) -> ApiSuccess[dict[str, Any]]:
+    ensure_permission(context, "hr.leaveApprove")
+    tenant_id = require_tenant(context)
+    try:
+        async with session.begin():
+            row = await reject_leave_request(
+                session,
+                service_context(context, tenant_id),
+                leave_request_id,
+                request,
+            )
+        return ApiSuccess(data=row, message="Izin talebi reddedildi.")
+    except DomainError as error:
+        raise domain_error_to_http(error) from error
+
+
+@router.post("/leave-requests/{leave_request_id}/cancel", response_model=ApiSuccess[dict[str, Any]])
+async def leave_requests_cancel(
+    leave_request_id: str,
+    request: LeaveCancelRequest,
+    session: SessionDep,
+    context: RequestContextDep,
+) -> ApiSuccess[dict[str, Any]]:
+    ensure_permission(context, "hr.leaveRequestCreate")
+    tenant_id = require_tenant(context)
+    try:
+        async with session.begin():
+            row = await cancel_leave_request(
+                session,
+                service_context(context, tenant_id),
+                leave_request_id,
+                request,
+            )
+        return ApiSuccess(data=row, message="Izin talebi iptal edildi.")
+    except DomainError as error:
+        raise domain_error_to_http(error) from error
+
+
+@router.get("/attendance", response_model=ApiSuccess[dict[str, Any]])
+async def attendance_list(
+    session: SessionDep,
+    context: RequestContextDep,
+    company_id: str | None = Query(default=None),
+    employee_id: str | None = Query(default=None),
+    status_value: str | None = Query(default=None, alias="status"),
+    source: str | None = Query(default=None),
+    approved: bool | None = Query(default=None),
+    date_from: DateFromQuery = None,
+    date_to: DateToQuery = None,
+    search: str | None = Query(default=None),
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=50, alias="pageSize", ge=1, le=200),
+    sort: str = Query(default="work_date"),
+    direction: str = Query(default="desc"),
+) -> ApiSuccess[dict[str, Any]]:
+    ensure_permission(context, "hr.attendanceView")
+    tenant_id = require_tenant(context)
+    try:
+        result = await list_attendance_records(
+            session,
+            service_context(context, tenant_id),
+            AttendanceListQuery(
+                company_id=company_id,
+                employee_id=employee_id,
+                status=status_value,
+                source=source,
+                approved=approved,
+                date_from=date_from,
+                date_to=date_to,
+                search=search,
+                page=page,
+                page_size=page_size,
+                sort=sort,
+                direction=direction,
+            ),
+        )
+        return ApiSuccess(data={"data": result.data, "meta": result.meta})
+    except DomainError as error:
+        raise domain_error_to_http(error) from error
+
+
+@router.post("/attendance", response_model=ApiSuccess[dict[str, Any]], status_code=201)
+async def attendance_create(
+    request: AttendanceCreateRequest,
+    session: SessionDep,
+    context: RequestContextDep,
+) -> ApiSuccess[dict[str, Any]]:
+    ensure_permission(context, "hr.attendanceEdit")
+    tenant_id = require_tenant(context)
+    try:
+        async with session.begin():
+            row = await create_attendance_record(
+                session,
+                service_context(context, tenant_id),
+                request,
+            )
+        return ApiSuccess(data=row, message="Devam-devamsizlik kaydi olusturuldu.")
+    except DomainError as error:
+        raise domain_error_to_http(error) from error
+
+
+@router.patch("/attendance/{attendance_id}", response_model=ApiSuccess[dict[str, Any]])
+async def attendance_update(
+    attendance_id: str,
+    request: AttendanceUpdateRequest,
+    session: SessionDep,
+    context: RequestContextDep,
+) -> ApiSuccess[dict[str, Any]]:
+    ensure_permission(context, "hr.attendanceEdit")
+    tenant_id = require_tenant(context)
+    try:
+        async with session.begin():
+            row = await update_attendance_record(
+                session,
+                service_context(context, tenant_id),
+                attendance_id,
+                request,
+            )
+        return ApiSuccess(data=row, message="Devam-devamsizlik kaydi guncellendi.")
+    except DomainError as error:
+        raise domain_error_to_http(error) from error
+
+
+@router.post("/attendance/import", response_model=ApiSuccess[dict[str, Any]])
+async def attendance_import(
+    request: AttendanceImportRequest,
+    session: SessionDep,
+    context: RequestContextDep,
+) -> ApiSuccess[dict[str, Any]]:
+    ensure_permission(context, "hr.attendanceEdit")
+    tenant_id = require_tenant(context)
+    try:
+        async with session.begin():
+            row = await import_attendance_records(
+                session,
+                service_context(context, tenant_id),
+                request,
+            )
+        return ApiSuccess(data=row, message="Devam-devamsizlik import hazirlandi.")
+    except DomainError as error:
+        raise domain_error_to_http(error) from error
+
+
+@router.get("/work-schedules", response_model=ApiSuccess[dict[str, Any]])
+async def work_schedules_list(
+    session: SessionDep,
+    context: RequestContextDep,
+    company_id: str | None = Query(default=None),
+    active: bool | None = Query(default=None),
+    search: str | None = Query(default=None),
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=50, alias="pageSize", ge=1, le=200),
+    sort: str = Query(default="schedule_name"),
+    direction: str = Query(default="asc"),
+) -> ApiSuccess[dict[str, Any]]:
+    ensure_permission(context, "hr.attendanceView")
+    tenant_id = require_tenant(context)
+    try:
+        result = await list_work_schedules(
+            session,
+            service_context(context, tenant_id),
+            WorkScheduleListQuery(
+                company_id=company_id,
+                active=active,
+                search=search,
+                page=page,
+                page_size=page_size,
+                sort=sort,
+                direction=direction,
+            ),
+        )
+        return ApiSuccess(data={"data": result.data, "meta": result.meta})
+    except DomainError as error:
+        raise domain_error_to_http(error) from error
+
+
+@router.post("/work-schedules", response_model=ApiSuccess[dict[str, Any]], status_code=201)
+async def work_schedules_create(
+    request: WorkScheduleCreateRequest,
+    session: SessionDep,
+    context: RequestContextDep,
+) -> ApiSuccess[dict[str, Any]]:
+    ensure_permission(context, "hr.attendanceEdit")
+    tenant_id = require_tenant(context)
+    try:
+        async with session.begin():
+            row = await create_work_schedule(session, service_context(context, tenant_id), request)
+        return ApiSuccess(data=row, message="Calisma plani olusturuldu.")
+    except DomainError as error:
+        raise domain_error_to_http(error) from error
+
+
+@router.patch("/work-schedules/{schedule_id}", response_model=ApiSuccess[dict[str, Any]])
+async def work_schedules_update(
+    schedule_id: str,
+    request: WorkScheduleUpdateRequest,
+    session: SessionDep,
+    context: RequestContextDep,
+) -> ApiSuccess[dict[str, Any]]:
+    ensure_permission(context, "hr.attendanceEdit")
+    tenant_id = require_tenant(context)
+    try:
+        async with session.begin():
+            row = await update_work_schedule(
+                session,
+                service_context(context, tenant_id),
+                schedule_id,
+                request,
+            )
+        return ApiSuccess(data=row, message="Calisma plani guncellendi.")
+    except DomainError as error:
+        raise domain_error_to_http(error) from error
+
+
+@router.post(
+    "/employees/{employee_id}/work-schedule-assignment",
+    response_model=ApiSuccess[dict[str, Any]],
+)
+async def work_schedule_assignment_create(
+    employee_id: str,
+    request: WorkScheduleAssignmentRequest,
+    session: SessionDep,
+    context: RequestContextDep,
+) -> ApiSuccess[dict[str, Any]]:
+    ensure_permission(context, "hr.attendanceEdit")
+    tenant_id = require_tenant(context)
+    try:
+        async with session.begin():
+            row = await assign_work_schedule_to_employee(
+                session,
+                service_context(context, tenant_id),
+                employee_id,
+                request,
+            )
+        return ApiSuccess(data=row, message="Calisma plani calisana atandi.")
+    except DomainError as error:
+        raise domain_error_to_http(error) from error
+
+
+@router.get("/timesheets", response_model=ApiSuccess[dict[str, Any]])
+async def timesheets_list(
+    session: SessionDep,
+    context: RequestContextDep,
+    company_id: str | None = Query(default=None),
+    status_value: str | None = Query(default=None, alias="status"),
+    period_from: PeriodFromQuery = None,
+    period_to: PeriodToQuery = None,
+    search: str | None = Query(default=None),
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=50, alias="pageSize", ge=1, le=200),
+    sort: str = Query(default="period_start"),
+    direction: str = Query(default="desc"),
+) -> ApiSuccess[dict[str, Any]]:
+    ensure_permission(context, "hr.timesheetView")
+    tenant_id = require_tenant(context)
+    try:
+        result = await list_timesheet_periods(
+            session,
+            service_context(context, tenant_id),
+            TimesheetListQuery(
+                company_id=company_id,
+                status=status_value,
+                period_from=period_from,
+                period_to=period_to,
+                search=search,
+                page=page,
+                page_size=page_size,
+                sort=sort,
+                direction=direction,
+            ),
+        )
+        return ApiSuccess(data={"data": result.data, "meta": result.meta})
+    except DomainError as error:
+        raise domain_error_to_http(error) from error
+
+
+@router.post("/timesheets", response_model=ApiSuccess[dict[str, Any]], status_code=201)
+async def timesheets_create(
+    request: TimesheetCreateRequest,
+    session: SessionDep,
+    context: RequestContextDep,
+) -> ApiSuccess[dict[str, Any]]:
+    ensure_permission(context, "hr.timesheetManage")
+    tenant_id = require_tenant(context)
+    try:
+        async with session.begin():
+            row = await create_timesheet_period(
+                session, service_context(context, tenant_id), request
+            )
+        return ApiSuccess(data=row, message="Puantaj donemi olusturuldu.")
+    except DomainError as error:
+        raise domain_error_to_http(error) from error
+
+
+@router.get("/timesheets/{period_id}", response_model=ApiSuccess[dict[str, Any]])
+async def timesheets_get(
+    period_id: str,
+    session: SessionDep,
+    context: RequestContextDep,
+) -> ApiSuccess[dict[str, Any]]:
+    ensure_permission(context, "hr.timesheetView")
+    tenant_id = require_tenant(context)
+    try:
+        row = await get_timesheet_period(session, tenant_id, period_id)
+        if not row:
+            raise DomainError("Puantaj donemi bulunamadi.", "TIMESHEET_PERIOD_NOT_FOUND", 404)
+        return ApiSuccess(data=row)
+    except DomainError as error:
+        raise domain_error_to_http(error) from error
+
+
+@router.post("/timesheets/{period_id}/calculate", response_model=ApiSuccess[dict[str, Any]])
+async def timesheets_calculate(
+    period_id: str,
+    session: SessionDep,
+    context: RequestContextDep,
+) -> ApiSuccess[dict[str, Any]]:
+    ensure_permission(context, "hr.timesheetManage")
+    tenant_id = require_tenant(context)
+    try:
+        async with session.begin():
+            row = await calculate_timesheet_period(
+                session,
+                service_context(context, tenant_id),
+                period_id,
+            )
+        return ApiSuccess(data=row, message="Puantaj hesaplandi.")
+    except DomainError as error:
+        raise domain_error_to_http(error) from error
+
+
+@router.post("/timesheets/{period_id}/approve", response_model=ApiSuccess[dict[str, Any]])
+async def timesheets_approve(
+    period_id: str,
+    session: SessionDep,
+    context: RequestContextDep,
+) -> ApiSuccess[dict[str, Any]]:
+    ensure_permission(context, "hr.timesheetApprove")
+    tenant_id = require_tenant(context)
+    try:
+        async with session.begin():
+            row = await approve_timesheet_period(
+                session,
+                service_context(context, tenant_id),
+                period_id,
+            )
+        return ApiSuccess(data=row, message="Puantaj onaylandi.")
+    except DomainError as error:
+        raise domain_error_to_http(error) from error
+
+
+@router.post("/timesheets/{period_id}/lock", response_model=ApiSuccess[dict[str, Any]])
+async def timesheets_lock(
+    period_id: str,
+    session: SessionDep,
+    context: RequestContextDep,
+) -> ApiSuccess[dict[str, Any]]:
+    ensure_permission(context, "hr.timesheetApprove")
+    tenant_id = require_tenant(context)
+    try:
+        async with session.begin():
+            row = await lock_timesheet_period(
+                session,
+                service_context(context, tenant_id),
+                period_id,
+            )
+        return ApiSuccess(data=row, message="Puantaj kilitlendi.")
+    except DomainError as error:
+        raise domain_error_to_http(error) from error
+
+
+@router.get("/payroll-prep", response_model=ApiSuccess[dict[str, Any]])
+async def payroll_prep_list(
+    session: SessionDep,
+    context: RequestContextDep,
+    company_id: str | None = Query(default=None),
+    period_id: str | None = Query(default=None),
+    employee_id: str | None = Query(default=None),
+    payroll_status: str | None = Query(default=None),
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=50, alias="pageSize", ge=1, le=200),
+    sort: str = Query(default="updated_at"),
+    direction: str = Query(default="desc"),
+) -> ApiSuccess[dict[str, Any]]:
+    ensure_permission(context, "hr.payrollPrepView")
+    tenant_id = require_tenant(context)
+    try:
+        result = await list_payroll_prep_rows(
+            session,
+            service_context(context, tenant_id),
+            PayrollPrepListQuery(
+                company_id=company_id,
+                period_id=period_id,
+                employee_id=employee_id,
+                payroll_status=payroll_status,
+                page=page,
+                page_size=page_size,
+                sort=sort,
+                direction=direction,
+            ),
+        )
+        return ApiSuccess(data={"data": result.data, "meta": result.meta})
+    except DomainError as error:
+        raise domain_error_to_http(error) from error
+
+
+@router.get("/payroll-prep/{period_id}", response_model=ApiSuccess[dict[str, Any]])
+async def payroll_prep_period(
+    period_id: str,
+    session: SessionDep,
+    context: RequestContextDep,
+) -> ApiSuccess[dict[str, Any]]:
+    ensure_permission(context, "hr.payrollPrepView")
+    tenant_id = require_tenant(context)
+    try:
+        row = await get_payroll_prep_for_period(
+            session, service_context(context, tenant_id), period_id
+        )
+        return ApiSuccess(data=row)
+    except DomainError as error:
+        raise domain_error_to_http(error) from error
+
+
+@router.post("/payroll-prep/{period_id}/mark-ready", response_model=ApiSuccess[dict[str, Any]])
+async def payroll_prep_mark_ready(
+    period_id: str,
+    session: SessionDep,
+    context: RequestContextDep,
+) -> ApiSuccess[dict[str, Any]]:
+    ensure_permission(context, "hr.payrollPrepManage")
+    tenant_id = require_tenant(context)
+    try:
+        async with session.begin():
+            row = await mark_payroll_prep_ready(
+                session,
+                service_context(context, tenant_id),
+                period_id,
+            )
+        return ApiSuccess(data=row, message="Bordro hazirlik verisi hazir.")
     except DomainError as error:
         raise domain_error_to_http(error) from error
 

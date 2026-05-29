@@ -278,6 +278,119 @@ async def list_action_center_items(
             for row in rows_to_dicts(list(document_result.mappings().all()))
         )
 
+    hr_scope_sql = ""
+    hr_params: dict[str, Any] = {
+        "tenant_id": context["tenant_id"],
+        "user_id": context.get("user_id"),
+        "limit": limit,
+    }
+    if context.get("company_scope_ids"):
+        hr_scope_sql = "and company_id = any(cast(:hr_company_scope_ids as uuid[]))"
+        hr_params["hr_company_scope_ids"] = context["company_scope_ids"]
+
+    if _can_see_hr_items(context) and await table_exists(session, "public.hr_leave_requests"):
+        leave_user_filter = (
+            ""
+            if _can_manage_hr_items(context)
+            else "and (approver_id = :user_id or requested_by = :user_id)"
+        )
+        leave_result = await session.execute(
+            text(
+                f"""
+                select id, tenant_id, company_id, employee_id, request_no, start_date,
+                       end_date, total_days, status, approver_id, requested_by,
+                       created_at, updated_at
+                from public.hr_leave_requests
+                where tenant_id = :tenant_id
+                  and coalesce(is_deleted, false) = false
+                  and status = 'pending_approval'
+                  {hr_scope_sql}
+                  {leave_user_filter}
+                order by created_at asc
+                limit :limit
+                """
+            ),
+            hr_params,
+        )
+        items.extend(
+            _normalize_hr_leave_request(row, str(context["tenant_id"]))
+            for row in rows_to_dicts(list(leave_result.mappings().all()))
+        )
+
+    if _can_manage_hr_items(context) and await table_exists(
+        session,
+        "public.hr_timesheet_periods",
+    ):
+        timesheet_result = await session.execute(
+            text(
+                f"""
+                select id, tenant_id, company_id, period_key, period_start, period_end,
+                       status, employee_count, created_at, updated_at
+                from public.hr_timesheet_periods
+                where tenant_id = :tenant_id
+                  and coalesce(is_deleted, false) = false
+                  and status = 'ready_for_review'
+                  {hr_scope_sql}
+                order by period_end asc
+                limit :limit
+                """
+            ),
+            hr_params,
+        )
+        items.extend(
+            _normalize_hr_timesheet_review(row, str(context["tenant_id"]))
+            for row in rows_to_dicts(list(timesheet_result.mappings().all()))
+        )
+
+    if _can_see_hr_items(context) and await table_exists(session, "public.hr_attendance_records"):
+        attendance_result = await session.execute(
+            text(
+                f"""
+                select id, tenant_id, company_id, employee_id, work_date, status,
+                       overtime_hours, missing_hours, approved, notes, created_at, updated_at
+                from public.hr_attendance_records
+                where tenant_id = :tenant_id
+                  and coalesce(is_deleted, false) = false
+                  and (
+                    status in ('absent','late','early_leave')
+                    or overtime_hours > 0
+                    or missing_hours > 0
+                  )
+                  and approved = false
+                  {hr_scope_sql}
+                order by work_date desc
+                limit :limit
+                """
+            ),
+            hr_params,
+        )
+        items.extend(
+            _normalize_hr_attendance_issue(row, str(context["tenant_id"]))
+            for row in rows_to_dicts(list(attendance_result.mappings().all()))
+        )
+
+    if _can_see_hr_items(context) and await table_exists(session, "public.hr_employee_documents"):
+        hr_document_result = await session.execute(
+            text(
+                f"""
+                select id, tenant_id, company_id, employee_id, document_type, status,
+                       required, expiry_date, created_at, updated_at
+                from public.hr_employee_documents
+                where tenant_id = :tenant_id
+                  and required = true
+                  and status in ('missing','expired','rejected')
+                  {hr_scope_sql}
+                order by coalesce(expiry_date, updated_at::date, created_at::date) asc
+                limit :limit
+                """
+            ),
+            hr_params,
+        )
+        items.extend(
+            _normalize_hr_document_missing(row, str(context["tenant_id"]))
+            for row in rows_to_dicts(list(hr_document_result.mappings().all()))
+        )
+
     if _can_see_after_sales_items(context) and await table_exists(
         session,
         "public.after_sales_maintenance_due_items",
@@ -314,9 +427,7 @@ async def list_action_center_items(
         "public.after_sales_field_assignments",
     ):
         assignment_user_filter = (
-            ""
-            if _can_manage_after_sales_items(context)
-            else "and a.technician_user_id = :user_id"
+            "" if _can_manage_after_sales_items(context) else "and a.technician_user_id = :user_id"
         )
         assignment_result = await session.execute(
             text(
@@ -1029,6 +1140,132 @@ def _normalize_notification_item(row: dict[str, Any], tenant_id: str) -> dict[st
     }
 
 
+def _normalize_hr_leave_request(row: dict[str, Any], tenant_id: str) -> dict[str, Any]:
+    label = row.get("request_no") or "Izin talebi"
+    description = (
+        f"{label} {row.get('start_date')} - {row.get('end_date')} icin onay bekliyor."
+    )
+    return {
+        "id": f"hr_leave_request:{row.get('id')}",
+        "tenant_id": row.get("tenant_id") or tenant_id,
+        "company_id": row.get("company_id"),
+        "module_key": "hr",
+        "source_type": "leave_request",
+        "source_id": str(row.get("id")),
+        "title": "Izin talebi onay bekliyor",
+        "description": description,
+        "status": "waiting",
+        "severity": "warning",
+        "priority": "high",
+        "action_key": "hr.leave.approve",
+        "entity_type": "leave_request",
+        "entity_id": row.get("id"),
+        "record_label": label,
+        "due_at": row.get("start_date"),
+        "created_at": row.get("created_at") or _now_iso(),
+        "updated_at": row.get("updated_at"),
+        "target_page": "/app/ik/izinler",
+        "suggested_actions": [
+            {"label": "Izinleri Ac", "action_type": "navigate", "target_page": "/app/ik/izinler"},
+            {"label": "Onayla", "action_type": "navigate", "target_page": "/app/ik/izinler"},
+        ],
+    }
+
+
+def _normalize_hr_timesheet_review(row: dict[str, Any], tenant_id: str) -> dict[str, Any]:
+    label = row.get("period_key") or "Puantaj"
+    return {
+        "id": f"hr_timesheet_review:{row.get('id')}",
+        "tenant_id": row.get("tenant_id") or tenant_id,
+        "company_id": row.get("company_id"),
+        "module_key": "hr",
+        "source_type": "timesheet_review",
+        "source_id": str(row.get("id")),
+        "title": "Puantaj inceleme bekliyor",
+        "description": f"{label} donemi onay veya kilit icin hazir.",
+        "status": "waiting",
+        "severity": "info",
+        "priority": "high",
+        "action_key": "hr.timesheet.review",
+        "entity_type": "hr_timesheet_period",
+        "entity_id": row.get("id"),
+        "record_label": label,
+        "due_at": row.get("period_end"),
+        "created_at": row.get("created_at") or _now_iso(),
+        "updated_at": row.get("updated_at"),
+        "target_page": "/app/ik/puantaj",
+        "suggested_actions": [
+            {"label": "Puantaji Ac", "action_type": "navigate", "target_page": "/app/ik/puantaj"},
+        ],
+    }
+
+
+def _normalize_hr_attendance_issue(row: dict[str, Any], tenant_id: str) -> dict[str, Any]:
+    status_value = row.get("status") or "attendance"
+    return {
+        "id": f"hr_attendance_issue:{row.get('id')}",
+        "tenant_id": row.get("tenant_id") or tenant_id,
+        "company_id": row.get("company_id"),
+        "module_key": "hr",
+        "source_type": "attendance_issue",
+        "source_id": str(row.get("id")),
+        "title": "Devam kaydi inceleme bekliyor",
+        "description": f"{row.get('work_date')} tarihli {status_value} kaydi onay bekliyor.",
+        "status": "waiting",
+        "severity": "warning" if status_value == "absent" else "info",
+        "priority": "high" if status_value == "absent" else "normal",
+        "action_key": "hr.attendance.review",
+        "entity_type": "hr_attendance_record",
+        "entity_id": row.get("id"),
+        "record_label": str(row.get("work_date") or status_value),
+        "due_at": row.get("work_date"),
+        "created_at": row.get("created_at") or _now_iso(),
+        "updated_at": row.get("updated_at"),
+        "target_page": "/app/ik/devam-devamsizlik",
+        "suggested_actions": [
+            {
+                "label": "Devam Kayitlarini Ac",
+                "action_type": "navigate",
+                "target_page": "/app/ik/devam-devamsizlik",
+            }
+        ],
+    }
+
+
+def _normalize_hr_document_missing(row: dict[str, Any], tenant_id: str) -> dict[str, Any]:
+    description = (
+        f"{row.get('document_type') or 'Belge'} durumu {row.get('status') or 'eksik'}."
+    )
+    return {
+        "id": f"hr_document_missing:{row.get('id')}",
+        "tenant_id": row.get("tenant_id") or tenant_id,
+        "company_id": row.get("company_id"),
+        "module_key": "hr",
+        "source_type": "document_missing",
+        "source_id": str(row.get("id")),
+        "title": "Calisan belge eksigi var",
+        "description": description,
+        "status": "waiting",
+        "severity": "warning",
+        "priority": "high",
+        "action_key": "hr.document.complete",
+        "entity_type": "hr_employee_document",
+        "entity_id": row.get("id"),
+        "record_label": row.get("document_type"),
+        "due_at": row.get("expiry_date"),
+        "created_at": row.get("created_at") or _now_iso(),
+        "updated_at": row.get("updated_at"),
+        "target_page": "/app/ik/calisanlar",
+        "suggested_actions": [
+            {
+                "label": "Calisanlari Ac",
+                "action_type": "navigate",
+                "target_page": "/app/ik/calisanlar",
+            },
+        ],
+    }
+
+
 def _normalize_after_sales_maintenance_due(row: dict[str, Any], tenant_id: str) -> dict[str, Any]:
     overdue = row.get("status") == "overdue" or _is_past_due(row.get("due_date"))
     title = "Bakim gecikti" if overdue else "Bakim zamani yaklasiyor"
@@ -1148,8 +1385,7 @@ def _normalize_after_sales_warranty(row: dict[str, Any], tenant_id: str) -> dict
         "source_id": str(row.get("id")),
         "title": "Garanti suresi yaklasiyor",
         "description": (
-            f"{row.get('customer_name') or 'Musteri'} icin "
-            f"{label} garanti bitisine yaklasiyor."
+            f"{row.get('customer_name') or 'Musteri'} icin {label} garanti bitisine yaklasiyor."
         ),
         "status": "waiting",
         "severity": "info",
@@ -1562,6 +1798,46 @@ def _can_see_accounting_items(context: dict[str, Any]) -> bool:
     return bool(permissions.intersection(ACCOUNTING_PERMISSIONS))
 
 
+def _can_see_hr_items(context: dict[str, Any]) -> bool:
+    if context.get("is_internal"):
+        return True
+    permissions = set(context.get("permissions") or [])
+    return bool(
+        permissions.intersection(
+            {
+                "__eden_demo_allow_all__",
+                "hr.view",
+                "hr.leaveView",
+                "hr.leaveApprove",
+                "hr.attendanceView",
+                "hr.timesheetView",
+                "hr.payrollPrepView",
+                "hr.edit",
+            }
+        )
+    )
+
+
+def _can_manage_hr_items(context: dict[str, Any]) -> bool:
+    if context.get("is_internal"):
+        return True
+    permissions = set(context.get("permissions") or [])
+    return bool(
+        permissions.intersection(
+            {
+                "__eden_demo_allow_all__",
+                "hr.edit",
+                "hr.leaveApprove",
+                "hr.leaveAdmin",
+                "hr.attendanceEdit",
+                "hr.timesheetManage",
+                "hr.timesheetApprove",
+                "hr.payrollPrepManage",
+            }
+        )
+    )
+
+
 def _can_see_after_sales_items(context: dict[str, Any]) -> bool:
     if context.get("is_internal"):
         return True
@@ -1679,6 +1955,7 @@ def _module_label(module_key: object) -> str:
         "settings": "Sistem",
         "sirket": "Sirketlerimiz",
         "project_management": "Proje ve Gorevler",
+        "hr": "Insan Kaynaklari",
         "documents": "Belgeler",
         "notifications": "Bildirimler",
         "dataQuality": "Veri Kalitesi",
@@ -1736,6 +2013,14 @@ def _record_target_page(entity_type: object, entity_id: object, company_id: obje
         )
     if entity == "employee":
         return f"/app/ik/calisanlar?id={record_id}" if record_id else "/app/ik/calisanlar"
+    if entity in {"leave_request", "hr_leave_request"}:
+        return "/app/ik/izinler"
+    if entity in {"hr_attendance_record", "attendance_issue"}:
+        return "/app/ik/devam-devamsizlik"
+    if entity in {"hr_timesheet_period", "timesheet_review"}:
+        return "/app/ik/puantaj"
+    if entity in {"hr_employee_document", "document_missing"}:
+        return "/app/ik/calisanlar"
     if entity in {"service_request", "after_sales_service_request"}:
         return "/app/satis-sonrasi/servis-talepleri"
     if entity in {"service_record", "after_sales_service_record"}:
@@ -1764,6 +2049,11 @@ def _record_label(entity_type: object, entity_id: object) -> str | None:
         "representative": "Temsilci",
         "process_instance": "Surec",
         "employee": "Calisan",
+        "leave_request": "Izin Talebi",
+        "hr_leave_request": "Izin Talebi",
+        "hr_attendance_record": "Devam Kaydi",
+        "hr_timesheet_period": "Puantaj",
+        "hr_employee_document": "Calisan Belgesi",
         "organization_unit": "Organizasyon Birimi",
         "facility": "Tesis/Lokasyon",
         "document": "Belge",

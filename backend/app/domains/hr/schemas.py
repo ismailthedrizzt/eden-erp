@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime
 from typing import Any, Literal, Self
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -195,3 +195,293 @@ class EmployeeSummary(BaseModel):
     gender_distribution: dict[str, int] = Field(default_factory=dict)
     education_distribution: dict[str, int] = Field(default_factory=dict)
     employment_type_distribution: dict[str, int] = Field(default_factory=dict)
+
+
+LeaveCategory = Literal[
+    "annual",
+    "sick",
+    "unpaid",
+    "paid_excuse",
+    "maternity",
+    "paternity",
+    "marriage",
+    "bereavement",
+    "administrative",
+    "other",
+]
+LeaveRequestStatus = Literal[
+    "draft",
+    "submitted",
+    "pending_approval",
+    "approved",
+    "rejected",
+    "cancelled",
+]
+AttendanceStatus = Literal[
+    "present",
+    "absent",
+    "leave",
+    "sick_leave",
+    "holiday",
+    "weekend",
+    "remote",
+    "field",
+    "late",
+    "early_leave",
+    "overtime",
+]
+AttendanceSource = Literal["manual", "import", "device", "mobile", "system"]
+TimesheetStatus = Literal[
+    "draft", "calculating", "ready_for_review", "approved", "locked", "cancelled"
+]
+TimesheetRowStatus = Literal["draft", "reviewed", "approved", "locked"]
+PayrollPrepStatus = Literal["not_ready", "ready", "locked", "exported"]
+
+
+class LeaveTypeListQuery(BaseModel):
+    company_id: str | None = None
+    category: str | None = None
+    active: bool | None = None
+    search: str | None = None
+    page: int = 1
+    page_size: int = 50
+    sort: str = "leave_type_name"
+    direction: str = "asc"
+
+
+class LeaveTypeCreateRequest(BaseModel):
+    company_id: str | None = None
+    leave_type_key: str = Field(min_length=1, max_length=80)
+    leave_type_name: str = Field(min_length=1, max_length=160)
+    category: LeaveCategory = "other"
+    paid: bool = True
+    requires_document: bool = False
+    requires_approval: bool = True
+    affects_payroll: bool = True
+    affects_attendance: bool = True
+    default_days_per_year: float = Field(default=0, ge=0)
+    carry_over_allowed: bool = False
+    max_carry_over_days: float = Field(default=0, ge=0)
+    negative_balance_allowed: bool = False
+    active: bool = True
+    notes: str | None = None
+
+
+class LeaveTypeUpdateRequest(BaseModel):
+    company_id: str | None = None
+    leave_type_key: str | None = Field(default=None, min_length=1, max_length=80)
+    leave_type_name: str | None = Field(default=None, min_length=1, max_length=160)
+    category: LeaveCategory | None = None
+    paid: bool | None = None
+    requires_document: bool | None = None
+    requires_approval: bool | None = None
+    affects_payroll: bool | None = None
+    affects_attendance: bool | None = None
+    default_days_per_year: float | None = Field(default=None, ge=0)
+    carry_over_allowed: bool | None = None
+    max_carry_over_days: float | None = Field(default=None, ge=0)
+    negative_balance_allowed: bool | None = None
+    active: bool | None = None
+    notes: str | None = None
+    base_version: int | None = None
+
+
+class LeaveBalanceAdjustRequest(BaseModel):
+    entitled_days: float | None = None
+    carried_over_days: float | None = None
+    adjusted_days: float | None = None
+    adjustment_reason: str | None = None
+    status: str | None = None
+    metadata_json: dict[str, Any] | None = None
+    base_version: int | None = None
+
+
+class LeaveRequestListQuery(BaseModel):
+    company_id: str | None = None
+    employee_id: str | None = None
+    leave_type_id: str | None = None
+    status: str | None = None
+    approver_id: str | None = None
+    mine: bool = False
+    pending_approval: bool = False
+    date_from: date | None = None
+    date_to: date | None = None
+    search: str | None = None
+    page: int = 1
+    page_size: int = 50
+    sort: str = "created_at"
+    direction: str = "desc"
+
+
+class LeaveRequestCreateRequest(BaseModel):
+    employee_id: str
+    leave_type_id: str
+    start_date: date
+    end_date: date
+    start_half_day: bool | None = None
+    end_half_day: bool | None = None
+    total_days: float | None = Field(default=None, gt=0)
+    reason: str | None = None
+    status: LeaveRequestStatus = "draft"
+    approver_id: str | None = None
+    document_id: str | None = None
+    notes: str | None = None
+
+    @model_validator(mode="after")
+    def validate_dates(self) -> Self:
+        if self.start_date > self.end_date:
+            raise ValueError("start_date end_date oncesinde veya ayni gun olmalidir")
+        if self.total_days is None:
+            days = float((self.end_date - self.start_date).days + 1)
+            if self.start_half_day:
+                days -= 0.5
+            if self.end_half_day:
+                days -= 0.5
+            self.total_days = max(0.5, days)
+        return self
+
+
+class LeaveRequestUpdateRequest(BaseModel):
+    leave_type_id: str | None = None
+    start_date: date | None = None
+    end_date: date | None = None
+    start_half_day: bool | None = None
+    end_half_day: bool | None = None
+    total_days: float | None = Field(default=None, gt=0)
+    reason: str | None = None
+    approver_id: str | None = None
+    document_id: str | None = None
+    notes: str | None = None
+    base_version: int | None = None
+
+
+class LeaveRejectRequest(BaseModel):
+    rejection_reason: str = Field(min_length=1)
+
+
+class LeaveCancelRequest(BaseModel):
+    notes: str | None = None
+
+
+class AttendanceListQuery(BaseModel):
+    company_id: str | None = None
+    employee_id: str | None = None
+    status: str | None = None
+    source: str | None = None
+    approved: bool | None = None
+    date_from: date | None = None
+    date_to: date | None = None
+    search: str | None = None
+    page: int = 1
+    page_size: int = 50
+    sort: str = "work_date"
+    direction: str = "desc"
+
+
+class AttendanceCreateRequest(BaseModel):
+    employee_id: str
+    work_date: date
+    status: AttendanceStatus = "present"
+    check_in_time: datetime | None = None
+    check_out_time: datetime | None = None
+    planned_hours: float = Field(default=0, ge=0)
+    actual_hours: float = Field(default=0, ge=0)
+    overtime_hours: float | None = None
+    missing_hours: float | None = None
+    source: AttendanceSource = "manual"
+    related_leave_request_id: str | None = None
+    related_shift_id: str | None = None
+    notes: str | None = None
+    approved: bool = False
+
+
+class AttendanceUpdateRequest(BaseModel):
+    status: AttendanceStatus | None = None
+    check_in_time: datetime | None = None
+    check_out_time: datetime | None = None
+    planned_hours: float | None = Field(default=None, ge=0)
+    actual_hours: float | None = Field(default=None, ge=0)
+    overtime_hours: float | None = None
+    missing_hours: float | None = None
+    source: AttendanceSource | None = None
+    related_leave_request_id: str | None = None
+    related_shift_id: str | None = None
+    notes: str | None = None
+    approved: bool | None = None
+    approved_by: str | None = None
+    base_version: int | None = None
+
+
+class AttendanceImportRequest(BaseModel):
+    records: list[AttendanceCreateRequest] = Field(default_factory=list)
+
+
+class WorkScheduleListQuery(BaseModel):
+    company_id: str | None = None
+    active: bool | None = None
+    search: str | None = None
+    page: int = 1
+    page_size: int = 50
+    sort: str = "schedule_name"
+    direction: str = "asc"
+
+
+class WorkScheduleCreateRequest(BaseModel):
+    company_id: str
+    schedule_name: str = Field(min_length=1, max_length=160)
+    weekly_pattern: dict[str, Any] = Field(default_factory=dict)
+    daily_hours: float = Field(default=7.5, ge=0)
+    active: bool = True
+    notes: str | None = None
+
+
+class WorkScheduleUpdateRequest(BaseModel):
+    company_id: str | None = None
+    schedule_name: str | None = Field(default=None, min_length=1, max_length=160)
+    weekly_pattern: dict[str, Any] | None = None
+    daily_hours: float | None = Field(default=None, ge=0)
+    active: bool | None = None
+    notes: str | None = None
+    base_version: int | None = None
+
+
+class WorkScheduleAssignmentRequest(BaseModel):
+    work_schedule_id: str
+    effective_date: date
+    end_date: date | None = None
+
+
+class TimesheetListQuery(BaseModel):
+    company_id: str | None = None
+    status: str | None = None
+    period_from: date | None = None
+    period_to: date | None = None
+    search: str | None = None
+    page: int = 1
+    page_size: int = 50
+    sort: str = "period_start"
+    direction: str = "desc"
+
+
+class TimesheetCreateRequest(BaseModel):
+    company_id: str
+    period_key: str = Field(min_length=1, max_length=80)
+    period_start: date
+    period_end: date
+
+    @model_validator(mode="after")
+    def validate_period(self) -> Self:
+        if self.period_start > self.period_end:
+            raise ValueError("period_start period_end oncesinde veya ayni gun olmalidir")
+        return self
+
+
+class PayrollPrepListQuery(BaseModel):
+    company_id: str | None = None
+    period_id: str | None = None
+    employee_id: str | None = None
+    payroll_status: str | None = None
+    page: int = 1
+    page_size: int = 50
+    sort: str = "updated_at"
+    direction: str = "desc"

@@ -4,7 +4,7 @@ import json
 from collections.abc import Mapping
 from datetime import date, datetime
 from decimal import Decimal
-from typing import Any
+from typing import Any, cast
 
 from fastapi import status
 from sqlalchemy import text
@@ -18,6 +18,16 @@ EMPLOYEE_TABLE = "public.hr_employees"
 EMPLOYMENT_RECORD_TABLE = "public.hr_employment_records"
 EMPLOYMENT_TRANSACTION_TABLE = "public.hr_employment_transactions"
 DOCUMENT_TABLE = "public.hr_employee_documents"
+LEAVE_TYPE_TABLE = "public.hr_leave_types"
+LEAVE_BALANCE_TABLE = "public.hr_leave_balances"
+LEAVE_REQUEST_TABLE = "public.hr_leave_requests"
+ATTENDANCE_TABLE = "public.hr_attendance_records"
+WORK_SCHEDULE_TABLE = "public.hr_work_schedules"
+SHIFT_TABLE = "public.hr_shifts"
+EMPLOYEE_WORK_SCHEDULE_TABLE = "public.hr_employee_work_schedules"
+TIMESHEET_PERIOD_TABLE = "public.hr_timesheet_periods"
+TIMESHEET_ROW_TABLE = "public.hr_timesheet_rows"
+PAYROLL_PREP_TABLE = "public.hr_payroll_preparation_rows"
 
 VIEW_PERMISSION = "hr.view"
 EDIT_PERMISSION = "hr.edit"
@@ -27,6 +37,17 @@ EMPLOYMENT_TERMINATE_PERMISSION = "hr.employmentTerminate"
 ASSIGNMENT_CHANGE_PERMISSION = "hr.assignmentChange"
 DOCUMENTS_MANAGE_PERMISSION = "hr.documentsManage"
 SENSITIVE_VIEW_PERMISSION = "hr.sensitiveView"
+LEAVE_VIEW_PERMISSION = "hr.leaveView"
+LEAVE_REQUEST_CREATE_PERMISSION = "hr.leaveRequestCreate"
+LEAVE_APPROVE_PERMISSION = "hr.leaveApprove"
+LEAVE_ADMIN_PERMISSION = "hr.leaveAdmin"
+ATTENDANCE_VIEW_PERMISSION = "hr.attendanceView"
+ATTENDANCE_EDIT_PERMISSION = "hr.attendanceEdit"
+TIMESHEET_VIEW_PERMISSION = "hr.timesheetView"
+TIMESHEET_MANAGE_PERMISSION = "hr.timesheetManage"
+TIMESHEET_APPROVE_PERMISSION = "hr.timesheetApprove"
+PAYROLL_PREP_VIEW_PERMISSION = "hr.payrollPrepView"
+PAYROLL_PREP_MANAGE_PERMISSION = "hr.payrollPrepManage"
 
 CONTROLLED_EMPLOYEE_FIELDS = {
     "company_id",
@@ -107,6 +128,86 @@ async def ensure_hr_tables(
             status.HTTP_409_CONFLICT,
             {"module_key": HR_MODULE_KEY},
         )
+
+
+async def ensure_hr_deepening_tables(
+    session: AsyncSession,
+    *,
+    leave_types: bool = False,
+    leave_balances: bool = False,
+    leave_requests: bool = False,
+    attendance: bool = False,
+    work_schedules: bool = False,
+    shifts: bool = False,
+    employee_work_schedules: bool = False,
+    timesheets: bool = False,
+    payroll_prep: bool = False,
+) -> None:
+    checks = [
+        (
+            leave_types,
+            LEAVE_TYPE_TABLE,
+            "IK izin turu altyapisi hazir degil.",
+            "HR_LEAVE_TYPES_MISSING",
+        ),
+        (
+            leave_balances,
+            LEAVE_BALANCE_TABLE,
+            "IK izin bakiyesi altyapisi hazir degil.",
+            "HR_LEAVE_BALANCES_MISSING",
+        ),
+        (
+            leave_requests,
+            LEAVE_REQUEST_TABLE,
+            "IK izin talebi altyapisi hazir degil.",
+            "HR_LEAVE_REQUESTS_MISSING",
+        ),
+        (
+            attendance,
+            ATTENDANCE_TABLE,
+            "IK devam-devamsizlik altyapisi hazir degil.",
+            "HR_ATTENDANCE_MISSING",
+        ),
+        (
+            work_schedules,
+            WORK_SCHEDULE_TABLE,
+            "IK calisma plani altyapisi hazir degil.",
+            "HR_WORK_SCHEDULES_MISSING",
+        ),
+        (shifts, SHIFT_TABLE, "IK vardiya altyapisi hazir degil.", "HR_SHIFTS_MISSING"),
+        (
+            employee_work_schedules,
+            EMPLOYEE_WORK_SCHEDULE_TABLE,
+            "IK calisan calisma plani atama altyapisi hazir degil.",
+            "HR_EMPLOYEE_WORK_SCHEDULES_MISSING",
+        ),
+        (
+            timesheets,
+            TIMESHEET_PERIOD_TABLE,
+            "IK puantaj altyapisi hazir degil.",
+            "HR_TIMESHEET_PERIODS_MISSING",
+        ),
+        (
+            timesheets,
+            TIMESHEET_ROW_TABLE,
+            "IK puantaj satiri altyapisi hazir degil.",
+            "HR_TIMESHEET_ROWS_MISSING",
+        ),
+        (
+            payroll_prep,
+            PAYROLL_PREP_TABLE,
+            "IK bordro hazirlik altyapisi hazir degil.",
+            "HR_PAYROLL_PREP_MISSING",
+        ),
+    ]
+    for required, table_name, message, code in checks:
+        if required and not await table_exists(session, table_name):
+            raise DomainError(
+                message,
+                code,
+                status.HTTP_409_CONFLICT,
+                {"module_key": HR_MODULE_KEY},
+            )
 
 
 def assert_company_scope(context: dict[str, Any], company_id: str, *, write: bool = False) -> None:
@@ -319,3 +420,90 @@ def reject_controlled_employee_patch(payload: dict[str, Any]) -> None:
         status.HTTP_409_CONFLICT,
         {"fields": blocked},
     )
+
+
+async def record_hr_audit_best_effort(
+    session: AsyncSession,
+    context: dict[str, Any],
+    *,
+    action_type: str,
+    action_key: str,
+    summary: str,
+    entity_type: str | None = None,
+    entity_id: str | None = None,
+    old_values: dict[str, Any] | None = None,
+    new_values: dict[str, Any] | None = None,
+    metadata: dict[str, Any] | None = None,
+) -> None:
+    try:
+        from app.domains.audit.service import record_audit_best_effort
+
+        await record_audit_best_effort(
+            session,
+            {**context, "module_key": HR_MODULE_KEY},
+            action_type=action_type,
+            action_key=action_key,
+            summary=summary,
+            entity_type=entity_type,
+            entity_id=entity_id,
+            old_values=old_values,
+            new_values=new_values,
+            metadata=metadata,
+        )
+    except Exception:
+        return
+
+
+async def create_hr_notification_best_effort(
+    session: AsyncSession,
+    context: dict[str, Any],
+    *,
+    user_id: str | None,
+    company_id: str | None,
+    notification_type: str,
+    title: str,
+    message: str,
+    priority: str = "normal",
+    severity: str = "info",
+    action_key: str | None = None,
+    action_label: str | None = None,
+    target_page: str | None = None,
+    related_entity_type: str | None = None,
+    related_entity_id: str | None = None,
+    related_record_label: str | None = None,
+) -> dict[str, Any] | None:
+    if not user_id or not await table_exists(session, "public.notifications"):
+        return None
+    try:
+        from app.domains.notifications.notifications import create_notification
+        from app.domains.notifications.schemas import (
+            NotificationCreateRequest,
+            NotificationPriority,
+            NotificationSeverity,
+        )
+
+        return await create_notification(
+            session,
+            context,
+            NotificationCreateRequest(
+                user_id=user_id,
+                company_id=company_id,
+                module_key=HR_MODULE_KEY,
+                notification_type=notification_type,
+                title=title,
+                message=message,
+                severity=cast(NotificationSeverity, severity),
+                priority=cast(NotificationPriority, priority),
+                action_required=bool(action_key or target_page),
+                action_key=action_key,
+                action_label=action_label,
+                target_page=target_page,
+                related_entity_type=related_entity_type,
+                related_entity_id=related_entity_id,
+                related_record_label=related_record_label,
+                metadata_json={"source": HR_MODULE_KEY},
+            ),
+            queue_email=False,
+        )
+    except Exception:
+        return None
