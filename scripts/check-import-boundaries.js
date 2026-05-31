@@ -119,7 +119,7 @@ function checkRouteBoundaries(routeFiles) {
     ) {
       temporaryFallbacks.push(routePath(file))
       if (hasBackendImport || hasDirectDb) {
-        warnings.push(`${routePath(file)} keeps temporary TS fallback logic; removal is P1 after FastAPI staging verification`)
+        warnings.push(`${routePath(file)} keeps temporary TS fallback logic; removal is P1 after FastAPI Development verification`)
       }
     }
   }

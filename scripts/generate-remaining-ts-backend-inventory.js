@@ -72,7 +72,7 @@ function classify(relative, text) {
     return { role: 'thin BFF proxy', status, canDelete: 'no', proxy: 'yes', shared: 'no', priority: 'P1', action: 'Keep as compatibility proxy until frontend calls generated client directly.' }
   }
   if (['proxy_to_fastapi_with_legacy_fallback', 'proxy_to_fastapi_with_temporary_fallback'].includes(status)) {
-    return { role: 'FastAPI proxy with temporary TS fallback', status, canDelete: 'no', proxy: 'yes', shared: 'no', priority: 'P1', action: 'Remove fallback after FastAPI staging verification and E2E smoke tests.' }
+    return { role: 'FastAPI proxy with temporary TS fallback', status, canDelete: 'no', proxy: 'yes', shared: 'no', priority: 'P1', action: 'Remove fallback after FastAPI Development verification and E2E smoke tests.' }
   }
   if (['keep_ui_adapter', 'keep_session_bootstrap', 'keep_upload_adapter', 'keep_bff_proxy'].includes(status)) {
     return { role: 'frontend-adjacent BFF adapter', status, canDelete: 'no', proxy: status.includes('proxy') ? 'yes' : 'no', shared: 'no', priority: 'P2', action: 'Keep adapter thin; do not add ERP domain mutation logic.' }

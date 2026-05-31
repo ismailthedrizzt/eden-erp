@@ -1,7 +1,7 @@
 // BACKEND_MIGRATION_STATUS: proxy_to_fastapi_with_legacy_fallback
 // TARGET_BACKEND_MODULE: companies
 // TARGET_FASTAPI_ENDPOINT: /api/v1/companies/{company_id}
-// LEGACY_FALLBACK_REMOVE_AFTER: Python company detail projection and section adapters are verified with staging data.
+// LEGACY_FALLBACK_REMOVE_AFTER: Python company detail projection and section adapters are verified with Development data.
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'

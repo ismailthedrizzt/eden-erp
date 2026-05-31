@@ -8,9 +8,9 @@ Gate result: **READY_WITH_P1_DEBT**
 
 Eden ERP is suitable for a controlled pilot customer, MVP release rehearsal and investor/internal demo. No P0 blocker was found in the final gate checks. The application builds, typechecks, lint runs without errors, backend static checks pass, backend tests pass, OpenAPI drift is clean, security/env guards pass, and demo seed dry-run produces a coherent pilot data pack.
 
-The release is not a "full production complete" release. The remaining P1 debt is explicit and manageable: temporary TS fallbacks, missing committed E2E suites, production/staging auth and worker hardening, Docker verification unavailable in this local environment, and a small set of lint warnings.
+The release is not a "full production complete" release. The remaining P1 debt is explicit and manageable: temporary TS fallbacks, missing committed E2E suites, production/Development auth and worker hardening, Docker verification unavailable in this local environment, and a small set of lint warnings.
 
-Pilot can proceed if scope is controlled, staging environment variables are verified, workers are supervised, demo data is loaded into a non-production tenant, and P1 risks are accepted by the release owner.
+Pilot can proceed if scope is controlled, Development environment variables are verified, workers are supervised, demo data is loaded into a non-production tenant, and P1 risks are accepted by the release owner.
 
 ## 2. Release Decision
 
@@ -75,7 +75,7 @@ Rationale:
 | --- | --- | --- |
 | Next.js | pilot-ready with P1 debt | UI/BFF/proxy adapter role is documented. Temporary fallback routes remain tracked. |
 | FastAPI/Python | pilot-ready | Canonical backend contract, OpenAPI export and generated types pass drift. |
-| PostgreSQL/Supabase | pilot-ready with staging dependency | Local checks pass without DB-dependent demo validation. Staging DB validation remains required. |
+| PostgreSQL/Supabase | pilot-ready with Development dependency | Local checks pass without DB-dependent demo validation. Development DB validation remains required. |
 | OpenAPI | ready | `npm run openapi:drift` passed. |
 | Worker | partial/pilot-ready with supervision | Outbox/reminder/email worker strategy exists; deployment supervision is P1. |
 | Audit | pilot-ready | Audit masking and tests pass; full export/deep coverage remains P1/P2. |
@@ -88,7 +88,7 @@ Rationale:
 | Companies | pilot-ready | FastAPI + fallback | ready | unit/backend | ready | P1 fallback | MVP |
 | Partners/Ownership | pilot-ready | FastAPI + fallback | ready | unit/backend | ready | P1 workflow subroutes | MVP |
 | Representatives | pilot-ready | FastAPI + fallback | ready | unit/backend | ready | P1 scope E2E | MVP |
-| Branches | pilot-ready | FastAPI + fallback | ready | unit/backend | ready | P1 staging smoke | MVP |
+| Branches | pilot-ready | FastAPI + fallback | ready | unit/backend | ready | P1 Development smoke | MVP |
 | Organization/Facilities | partial/pilot-ready | FastAPI MVP | ready | backend partial | ready | P1 lifecycle depth | MVP |
 | Process/Action Center | pilot-ready | FastAPI + fallback | ready | backend | ready | P1 E2E/source coverage | MVP |
 | Audit | pilot-ready | FastAPI + fallback | ready | backend | ready | P1 export/deep tests | MVP |
@@ -99,21 +99,21 @@ Rationale:
 | Projects/Tasks | pilot-ready | FastAPI MVP | ready | backend | ready | P1 E2E | MVP |
 | Product/After-Sales | pilot-ready | FastAPI MVP | ready | backend | ready | P2 field mobile | MVP limited |
 | CRM/Stakeholders | pilot-ready | FastAPI MVP | ready | backend | ready | P1 duplicate/merge depth | MVP |
-| Documents | demo/pilot-ready | FastAPI scaffold | ready | docs/checklist | ready | P1 storage staging | MVP limited |
+| Documents | demo/pilot-ready | FastAPI scaffold | ready | docs/checklist | ready | P1 storage Development | MVP limited |
 | Import/Export/Bulk | demo/pilot-ready | FastAPI scaffold | ready | docs/checklist | ready | P1 integration tests | MVP limited |
 | Notifications/Email | demo/pilot-ready | FastAPI + worker scaffold | ready | docs/checklist | ready | P1 SMTP/worker deploy | MVP limited |
 | Onboarding | pilot-ready | FastAPI scaffold | ready | docs/checklist | ready | P1 E2E | MVP |
 | Search | pilot-ready | FastAPI scaffold | ready | docs/checklist | ready | P1 permission smoke | MVP |
 | Data Quality | demo/pilot-ready | FastAPI scaffold | ready | docs/checklist | ready | P1 merge hardening | MVP limited |
-| Reporting | pilot-ready | FastAPI MVP | ready | backend | ready | P1 pagination/index staging | MVP |
+| Reporting | pilot-ready | FastAPI MVP | ready | backend | ready | P1 pagination/index Development | MVP |
 | Pilot Demo Pack | ready | seed dry-run | badge ready | seed tests | ready | DB validation not configured locally | Demo/pilot |
 
 ## 6. Security Status
 
 | gate | status | notes |
 | --- | --- | --- |
-| Auth required strategy | pass with P1 staging dependency | FastAPI auth/JWT tests pass; production env verification required. |
-| Tenant isolation | pass with P1 integration depth | Tenant context tests pass; staging multi-tenant smoke required. |
+| Auth required strategy | pass with P1 Development dependency | FastAPI auth/JWT tests pass; production env verification required. |
+| Tenant isolation | pass with P1 integration depth | Tenant context tests pass; Development multi-tenant smoke required. |
 | RBAC | pass with P1 coverage depth | Permission registry/tests pass; non-critical endpoint review remains. |
 | Scope | pass with P1 branch/org/facility depth | Company/branch scope tests pass; organization/facility scope E2E remains. |
 | Secrets | pass | `npm run env:safety` and security guard passed. |
@@ -123,7 +123,7 @@ No service role secret exposure or client direct backend-risk files were found b
 
 ## 7. Data Integrity Status
 
-Critical operation-controlled field protections are covered by backend tests for field control, company lifecycle guards, partner patch guards and representative/ownership validations. Remaining P1 work is staging DB integration tests for multi-step operations and removal of temporary TS fallbacks.
+Critical operation-controlled field protections are covered by backend tests for field control, company lifecycle guards, partner patch guards and representative/ownership validations. Remaining P1 work is Development DB integration tests for multi-step operations and removal of temporary TS fallbacks.
 
 No evidence of a P0 operation-controlled field bypass was found in the final gate.
 
@@ -166,7 +166,7 @@ These are not P0 blockers for pilot, but they are P1/P2 cleanup candidates becau
 - Final cleanup removed exact-count fallback usage from hot company/representative lists and shared safe list helper.
 - Structured logging, request/correlation id, metrics and health/deep-health docs exist.
 - Outbox/worker metrics strategy exists; production worker supervision remains P1.
-- Staging DB EXPLAIN and index validation remain P1.
+- Development DB EXPLAIN and index validation remain P1.
 
 ## 11. Pilot / Demo Status
 
@@ -178,7 +178,7 @@ Pilot/demo readiness is strong:
 - Demo validation is read-only and safely reports missing DB config.
 - Demo data policy avoids real TCKN/VKN/secrets and uses demo metadata.
 
-Pilot prerequisite: run `npm run demo:seed` and `npm run demo:validate` against staging/demo DB before customer demo.
+Pilot prerequisite: run `npm run demo:seed` and `npm run demo:validate` against Development/demo DB before customer demo.
 
 ## 12. P0 / P1 / P2 Risks
 
@@ -190,11 +190,11 @@ None found in this final gate.
 
 | area | file/module | impact | likelihood | priority | suggested fix | release impact |
 | --- | --- | --- | --- | --- | --- | --- |
-| TS fallback removal | `app/api/**` | Legacy paths can diverge from FastAPI behavior. | High | P1 | Verify staging FastAPI endpoints and remove fallbacks route group by route group. | Pilot allowed, production restricted. |
+| TS fallback removal | `app/api/**` | Legacy paths can diverge from FastAPI behavior. | High | P1 | Verify Development FastAPI endpoints and remove fallbacks route group by route group. | Pilot allowed, production restricted. |
 | E2E coverage | `tests/e2e` | Critical UI regressions may be missed. | Medium | P1 | Add pilot smoke E2E for auth, companies, action center, documents, search, admin. | Pilot allowed with manual smoke. |
-| Worker deployment | `backend/app/workers/**` | Notifications/outbox/email may backlog. | Medium | P1 | Supervise workers, heartbeat, alerts and retry dashboard in staging. | Pilot allowed if monitored. |
-| Staging DB validation | Supabase/PostgreSQL | Demo validate and DB integration checks not proven locally. | Medium | P1 | Run demo validate, migration status and smoke against staging DB. | Required before live pilot. |
-| Auth/tenant staging | `backend/app/core/security.py`, policies | Production config drift can create access issues. | Medium | P1 | Run JWT/membership/scope smoke with real Supabase sessions. | Required before live pilot. |
+| Worker deployment | `backend/app/workers/**` | Notifications/outbox/email may backlog. | Medium | P1 | Supervise workers, heartbeat, alerts and retry dashboard in Development. | Pilot allowed if monitored. |
+| Development DB validation | Supabase/PostgreSQL | Demo validate and DB integration checks not proven locally. | Medium | P1 | Run demo validate, migration status and smoke against Development DB. | Required before live pilot. |
+| Auth/tenant Development | `backend/app/core/security.py`, policies | Production config drift can create access issues. | Medium | P1 | Run JWT/membership/scope smoke with real Supabase sessions. | Required before live pilot. |
 | Lint warnings | UI pages/components | Maintainability/edge UI behavior risk. | Medium | P1/P2 | Fix hook deps and image optimization warnings gradually. | Not pilot blocking. |
 | Docker verification | Dockerfiles/compose | Container build/runtime unverified locally. | Medium | P1 | Run Docker config/build in CI or developer machine with Docker. | Required before container deploy. |
 
@@ -221,7 +221,7 @@ Do not use the pilot for:
 
 - Real payroll, tax filing, bank transactions, e-invoice/e-archive filing or SGK/GIB production integrations.
 - Production document archive or legal immutable retention.
-- High-volume import/load testing without staging DB sizing.
+- High-volume import/load testing without Development DB sizing.
 
 ## 14. Next 30-Day Roadmap
 

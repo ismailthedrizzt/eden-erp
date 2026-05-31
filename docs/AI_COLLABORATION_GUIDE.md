@@ -1233,3 +1233,23 @@ Before using ANY component:
 **Last Updated**: 2024-05-01
 **Maintained by**: AI Assistants + Human Review
 **Enforcement**: STRICT - All AI must follow and warn on conflicts
+
+## Codex Working Copy and Release Preservation Rule
+
+Codex aktif gelistirmeyi `eden-erp-development` working copy uzerinde yapar. Mevcut `eden-erp` release calisma alani dogrudan gelistirme icin kullanilmaz.
+
+Migration, seed, demo data, reset ve schema degisiklikleri yalnizca Development Supabase project uzerinde yapilir. Release Supabase project protected environment'tir; acik release migration onayi olmadan degistirilmez:
+
+```text
+ALLOW_RELEASE_DB_MIGRATION=true
+RELEASE_MIGRATION_APPROVED_BY=<name>
+```
+
+Release ortaminda seed, demo seed ve reset calismaz. Yeni sayfa once `releaseStatus=development` olarak baslar. Test/onay olmadan `releaseStatus=release` yapilmaz. Demo/test/placeholder sayfa release ortaminda gorunmez. Release ortaminda debug, demo, environment ve sayfa status badge'leri normal kullaniciya gosterilmez. Yarım modul release ortaminda normal kullaniciya acilmaz.
+
+Development and Release are both Vercel + Supabase deployments:
+
+```text
+eden-erp-development -> develop -> Development Vercel -> Development Supabase
+eden-erp             -> main/release -> Release Vercel -> Release Supabase
+```

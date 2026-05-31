@@ -7,7 +7,7 @@ Goal: move Eden ERP from controlled MVP/pilot readiness to first customer pilot 
 ## Week 1 — Release Stabilization
 
 1. P1 bug/security cleanup
-   - Remove or lock down any route-level temporary fallback that is no longer needed after staging FastAPI verification.
+   - Remove or lock down any route-level temporary fallback that is no longer needed after Development FastAPI verification.
    - Run JWT, tenant membership and company/branch scope smoke with real Supabase sessions.
    - Verify admin/system endpoints are system.admin-only.
 
@@ -16,15 +16,15 @@ Goal: move Eden ERP from controlled MVP/pilot readiness to first customer pilot 
    - Cover login, dashboard, admin console, company draft, company detail, Action Center, audit timeline and global search.
    - Add permission-denied and scope-hidden-result tests.
 
-3. Staging demo validation
-   - Run `npm run demo:seed` on demo/staging tenant.
+3. Development demo validation
+   - Run `npm run demo:seed` on demo/Development tenant.
    - Run `npm run demo:validate` with `DATABASE_URL` or `SUPABASE_DB_URL`.
    - Capture screenshots for dashboard/action center/audit/reporting.
 
 ## Week 2 — Migration Debt Burn-Down
 
 1. TS fallback removal
-   - Convert highest-risk temporary fallback route groups to proxy-only after staging smoke:
+   - Convert highest-risk temporary fallback route groups to proxy-only after Development smoke:
      - companies official changes
      - ownership workflow subroutes
      - representatives authority/card routes
@@ -74,7 +74,7 @@ Goal: move Eden ERP from controlled MVP/pilot readiness to first customer pilot 
 - No P0 blockers.
 - Temporary fallback count trending down with explicit owner.
 - Pilot smoke E2E suite passing.
-- Demo tenant validates against staging DB.
+- Demo tenant validates against Development DB.
 - Workers supervised and visible from Admin Console.
 - Security scope smoke completed for admin, manager, accountant, HR, ops, auditor and standard user.
 

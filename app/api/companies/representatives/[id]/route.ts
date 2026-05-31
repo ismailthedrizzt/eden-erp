@@ -2,7 +2,7 @@
 // TARGET_BACKEND_MODULE: representatives
 // TARGET_FASTAPI_ENDPOINT: /api/v1/representatives/{representative_id}
 // TARGET_FASTAPI_AUTHORITY_ENDPOINT: /api/v1/representatives/{representative_id}/authority-transactions
-// LEGACY_FALLBACK_REMOVE_AFTER: Python representative card and authority endpoints are verified with staging data.
+// LEGACY_FALLBACK_REMOVE_AFTER: Python representative card and authority endpoints are verified with Development data.
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
