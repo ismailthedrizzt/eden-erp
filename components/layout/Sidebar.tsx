@@ -4,11 +4,14 @@ import { useEffect, useMemo, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { ReleaseStatusBadge } from '@/components/release/ReleaseStatusBadge'
 import { cn } from '@/lib/utils'
 import { useModuleLicense } from '@/hooks/useModuleLicense'
 import { useModules } from '@/lib/security/moduleStore'
 import { usePermissions } from '@/lib/security/permissionStore'
 import { findNavigationItemByPath } from '@/lib/navigation/navigationRegistry'
+import { getCurrentReleaseEnvironment } from '@/lib/release/environment'
+import { getRouteReleaseDecision } from '@/lib/release/releaseVisibility'
 import { resolveMenuItemVisibility } from '@/lib/visibility/runtimeVisibilityResolver'
 import type { RuntimeVisibilityContext, VisibilityDecision } from '@/lib/visibility/visibility.types'
 import {
@@ -326,6 +329,8 @@ function runtimeRedirectFor(status: string) {
 type SidebarVersionInfo = ModuleVersionInfo | PageVersionInfo
 
 function SidebarVersionBadge({ info, compact = false }: { info: SidebarVersionInfo; compact?: boolean }) {
+  if (getCurrentReleaseEnvironment() === 'release') return null
+
   return (
     <span
       title={getVersionTitle(info.label, info)}
@@ -405,6 +410,7 @@ export default function Sidebar({ collapsed = false, mobileOpen = false, onMobil
   const { isModuleActive, isSubmoduleActive } = useModuleLicense()
   const moduleRuntime = useModules()
   const permissionRuntime = usePermissions()
+  const releaseEnv = getCurrentReleaseEnvironment()
   const [openMods, setOpenMods] = useState<string[]>([])
   const visibilityContext = useMemo<RuntimeVisibilityContext>(() => ({
     currentPage: pathname,
@@ -434,9 +440,20 @@ export default function Sidebar({ collapsed = false, mobileOpen = false, onMobil
 
   // Auto-open active module on mount
   const renderItem = (item: NavItem) => {
+    const releaseUserContext = { permissions: visibilityContext.permissions }
+    const itemReleaseDecision = item.href
+      ? getRouteReleaseDecision(item.href, releaseEnv, 'navigation', releaseUserContext)
+      : null
+    const visibleChildren = item.children?.filter(child =>
+      getRouteReleaseDecision(child.href, releaseEnv, 'navigation', releaseUserContext).visible
+    ) || []
+
+    if (item.href && !itemReleaseDecision?.visible) return null
+    if (!item.href && item.children?.length && visibleChildren.length === 0) return null
+
     const isActive = isModActive(item)
     const isOpen = openMods.includes(item.id)
-    const hasChildren = !!item.children?.length
+    const hasChildren = visibleChildren.length > 0
     const moduleVersionInfo = getModuleVersionInfo(item.moduleKey)
     const itemTitle = getVersionTitle(item.label, moduleVersionInfo)
     const contractModuleKey = resolveSidebarContractModuleKey(item)
@@ -447,7 +464,10 @@ export default function Sidebar({ collapsed = false, mobileOpen = false, onMobil
     )
     const legacyModuleAvailable = !item.moduleKey || isModuleActive(item.moduleKey)
     const runtimeRedirect = visibilityDecision.setupAction?.targetPage || runtimeRedirectFor(runtimeStatus)
-    const isItemDisabled = item.disabled || !legacyModuleAvailable || !visibilityDecision.enabled
+    const releaseBlocksClick = itemReleaseDecision
+      ? !itemReleaseDecision.enabled && itemReleaseDecision.releaseReason !== 'coming_soon'
+      : false
+    const isItemDisabled = item.disabled || !legacyModuleAvailable || !visibilityDecision.enabled || releaseBlocksClick
 
     if (!visibilityDecision.visible) return null
 
@@ -464,6 +484,7 @@ export default function Sidebar({ collapsed = false, mobileOpen = false, onMobil
                 className={cn('ni', isActive && 'active', isItemDisabled && 'opacity-60')}>
             <span className={cn('flex-shrink-0 opacity-60', isActive && 'opacity-90')}>{item.icon}</span>
             {!collapsed && <span className="flex-1">{item.label}</span>}
+            {!collapsed && itemReleaseDecision && <ReleaseStatusBadge status={itemReleaseDecision.status} />}
             {!collapsed && <SidebarVisibilityBadge decision={visibilityDecision} />}
           </Link>
         ) : (
@@ -495,10 +516,11 @@ export default function Sidebar({ collapsed = false, mobileOpen = false, onMobil
             'overflow-hidden transition-all duration-200',
             isOpen ? 'max-h-96' : 'max-h-0'
           )}>
-            {item.children!.map(child => {
+            {visibleChildren.map(child => {
               // Check if submodule is active
               const isSubmoduleAvailable = !child.moduleKey || !child.submoduleKey ||
                 isSubmoduleActive(child.moduleKey, child.submoduleKey)
+              const childReleaseDecision = getRouteReleaseDecision(child.href, releaseEnv, 'navigation', releaseUserContext)
               const childContractModuleKey = resolveSidebarContractModuleKey(child, item)
               const childRuntimeStatus = childContractModuleKey ? moduleRuntime.getRuntimeStatus(childContractModuleKey) : runtimeStatus
               const childDecision = resolveMenuItemVisibility(
@@ -513,10 +535,13 @@ export default function Sidebar({ collapsed = false, mobileOpen = false, onMobil
 
               if (!childDecision.visible) return null
 
+              const childReleaseBlocksClick = !childReleaseDecision.enabled
+                && childReleaseDecision.releaseReason !== 'coming_soon'
               const isDisabled = child.disabled
                 || !isSubmoduleAvailable
                 || !childDecision.enabled
                 || isBlockedRuntimeStatus(childRuntimeStatus)
+                || childReleaseBlocksClick
 
               return (
                 <Link
@@ -532,6 +557,7 @@ export default function Sidebar({ collapsed = false, mobileOpen = false, onMobil
                 >
                   <span className="w-1.5 h-1.5 rounded-full bg-current opacity-50 flex-shrink-0" />
                   <span className="min-w-0 flex-1 truncate">{child.label}</span>
+                  <ReleaseStatusBadge status={childReleaseDecision.status} />
                   <SidebarVisibilityBadge decision={childDecision} />
                   {pageVersionInfo && <SidebarVersionBadge info={pageVersionInfo} compact />}
                 </Link>

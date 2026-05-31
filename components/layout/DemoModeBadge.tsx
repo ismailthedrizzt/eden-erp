@@ -3,8 +3,10 @@
 import Link from 'next/link'
 import { FlaskConical } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { isReleaseEnvironment } from '@/lib/release/environment'
 
 export function DemoModeBadge({ className }: { className?: string }) {
+  if (isReleaseEnvironment()) return null
   if (process.env.NEXT_PUBLIC_DEMO_MODE !== 'true') return null
 
   return (

@@ -1,4 +1,5 @@
 import { cn } from '@/lib/utils'
+import { isReleaseEnvironment } from '@/lib/release/environment'
 import {
   formatVersionBadge,
   getMaturityBadgeClass,
@@ -13,6 +14,8 @@ interface ProductVersionBadgeProps {
 }
 
 export function ProductVersionBadge({ compact = false, className }: ProductVersionBadgeProps) {
+  if (isReleaseEnvironment()) return null
+
   const product = productVersionManifest.product
   const badgeText = formatVersionBadge(product.version, product.maturity)
   const title = [
