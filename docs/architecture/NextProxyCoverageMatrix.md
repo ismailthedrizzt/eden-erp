@@ -4,13 +4,13 @@ Generated from `app/api/**/route.ts` by `npm run proxy:coverage`. Status values 
 
 ## Summary
 
-- Route files: 482
+- Route files: 500
 - deprecated_wrapper: 11
 - keep_session_bootstrap: 1
 - keep_ui_adapter: 24
 - keep_upload_adapter: 3
 - migrate_to_fastapi: 164
-- proxy_to_fastapi: 204
+- proxy_to_fastapi: 222
 - proxy_to_fastapi_with_temporary_fallback: 75
 
 ## Matrix
@@ -332,6 +332,24 @@ Generated from `app/api/**/route.ts` by `npm run proxy:coverage`. Status values 
 | `/api/import/templates/[template_key]/download` | `migrate_to_fastapi` | `/api/v1/import/templates/{template_key}/download` | no | no | Implement FastAPI equivalent, then convert route to proxy or remove. | P2 |
 | `/api/import/templates/[template_key]` | `migrate_to_fastapi` | `/api/v1/import/templates/{template_key}` | no | no | Implement FastAPI equivalent, then convert route to proxy or remove. | P2 |
 | `/api/import/templates` | `migrate_to_fastapi` | `/api/v1/import/templates` | no | no | Implement FastAPI equivalent, then convert route to proxy or remove. | P2 |
+| `/api/integrations/apps/[id]/credentials` | `proxy_to_fastapi` | `/api/v1/integrations/apps/{app_id}/credentials` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/integrations/apps/[id]/revoke` | `proxy_to_fastapi` | `/api/v1/integrations/apps/{app_id}/revoke` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/integrations/apps/[id]` | `proxy_to_fastapi` | `/api/v1/integrations/apps/{app_id}` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/integrations/apps/[id]/suspend` | `proxy_to_fastapi` | `/api/v1/integrations/apps/{app_id}/suspend` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/integrations/apps` | `proxy_to_fastapi` | `/api/v1/integrations/apps` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/integrations/credentials/[id]/revoke` | `proxy_to_fastapi` | `/api/v1/integrations/credentials/{credential_id}/revoke` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/integrations/credentials/[id]/rotate` | `proxy_to_fastapi` | `/api/v1/integrations/credentials/{credential_id}/rotate` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/integrations/event-types/[event_type]` | `proxy_to_fastapi` | `/api/v1/integrations/event-types/{event_type}` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/integrations/event-types` | `proxy_to_fastapi` | `/api/v1/integrations/event-types` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/integrations/inbound-events` | `proxy_to_fastapi` | `/api/v1/integrations/inbound-events` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/integrations/webhook-deliveries/[id]/retry` | `proxy_to_fastapi` | `/api/v1/integrations/webhook-deliveries/{delivery_id}/retry` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/integrations/webhook-deliveries/[id]` | `proxy_to_fastapi` | `/api/v1/integrations/webhook-deliveries/{delivery_id}` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/integrations/webhook-deliveries` | `proxy_to_fastapi` | `/api/v1/integrations/webhook-deliveries` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/integrations/webhook-subscriptions/[id]/pause` | `proxy_to_fastapi` | `/api/v1/integrations/webhook-subscriptions/{subscription_id}/pause` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/integrations/webhook-subscriptions/[id]/resume` | `proxy_to_fastapi` | `/api/v1/integrations/webhook-subscriptions/{subscription_id}/resume` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/integrations/webhook-subscriptions/[id]` | `proxy_to_fastapi` | `/api/v1/integrations/webhook-subscriptions/{subscription_id}` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/integrations/webhook-subscriptions/[id]/test` | `proxy_to_fastapi` | `/api/v1/integrations/webhook-subscriptions/{subscription_id}/test` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
+| `/api/integrations/webhook-subscriptions` | `proxy_to_fastapi` | `/api/v1/integrations/webhook-subscriptions` | no | no | Keep until frontend generated client/direct FastAPI strategy replaces BFF route. | P2 |
 | `/api/integrity/check` | `proxy_to_fastapi_with_temporary_fallback` | `/api/v1/integrity/check` | yes | no | Remove TS fallback after FastAPI endpoint is verified in staging and frontend E2E/smoke passes. | P2 |
 | `/api/integrity/operation/[operation_key]` | `proxy_to_fastapi_with_temporary_fallback` | `/api/v1/integrity/operation/{operation_key}` | yes | no | Remove TS fallback after FastAPI endpoint is verified in staging and frontend E2E/smoke passes. | P2 |
 | `/api/media/metadata` | `keep_ui_adapter` | `/api/v1/media/metadata` | yes | yes | Permanent adapter/shared contract; keep thin and do not add ERP domain mutation. | P2 |

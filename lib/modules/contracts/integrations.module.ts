@@ -1,0 +1,70 @@
+import { PERMISSIONS } from '@/packages/shared/src/permissions'
+import type { ModuleContract } from '../moduleContract.types'
+
+export const integrationsModule: ModuleContract = {
+  key: 'integrations',
+  name: 'Integration Hub',
+  description: 'Webhook abonelikleri, API credentiallari, inbound eventler, retry/dead-letter ve event publishing yonetimi.',
+  domain: 'platform',
+  category: 'platform',
+  version: '2026-05-29.2410',
+  status: 'active',
+  defaultEnabled: true,
+  licenseRequired: false,
+  setupRequired: true,
+  dependencies: [
+    { moduleKey: 'outbox', required: true, reason: 'Outbound webhook teslimatlari outbox eventlerinden uretilir.' },
+    { moduleKey: 'notifications', required: false, reason: 'Repeated failure uyarilari optional bildirim olarak yazilir.' },
+    { moduleKey: 'audit', required: false, reason: 'Credential, webhook ve inbound degisiklikleri auditlenir.' },
+    { moduleKey: 'after_sales', required: false, reason: 'Inbound servis talebi normalize edilebilir.' },
+  ],
+  entities: [
+    { key: 'integration_app', tableName: 'integration_apps', displayName: 'Integration App', lifecycle: false, draftSupported: true },
+    { key: 'integration_credential', tableName: 'integration_credentials', displayName: 'Integration Credential', lifecycle: false, draftSupported: false },
+    { key: 'webhook_subscription', tableName: 'integration_webhook_subscriptions', displayName: 'Webhook Aboneligi', lifecycle: false, draftSupported: false },
+    { key: 'webhook_delivery', tableName: 'integration_webhook_deliveries', displayName: 'Webhook Teslimati', lifecycle: false, draftSupported: false },
+    { key: 'inbound_event', tableName: 'integration_inbound_events', displayName: 'Inbound Olay', lifecycle: false, draftSupported: false },
+  ],
+  routes: [
+    { path: '/app/sistem/entegrasyonlar', type: 'page', permission: PERMISSIONS.integrations.view },
+    { path: '/api/integrations/apps', type: 'api', permission: PERMISSIONS.integrations.view },
+    { path: '/api/integrations/webhook-subscriptions', type: 'api', permission: PERMISSIONS.integrations.manageWebhooks },
+    { path: '/api/integrations/webhook-deliveries', type: 'api', permission: PERMISSIONS.integrations.viewDeliveries },
+    { path: '/api/integrations/event-types', type: 'api', permission: PERMISSIONS.integrations.view },
+  ],
+  menus: [
+    { label: 'Entegrasyonlar', path: '/app/sistem/entegrasyonlar', icon: 'Database', order: 906, parent: 'settings', permission: PERMISSIONS.integrations.view, featureFlag: 'integrations.enabled' },
+  ],
+  permissions: [
+    { key: PERMISSIONS.integrations.view, label: 'Entegrasyonlari goruntule' },
+    { key: PERMISSIONS.integrations.manageApps, label: 'Integration app yonet' },
+    { key: PERMISSIONS.integrations.manageCredentials, label: 'Credential ve secret yonet' },
+    { key: PERMISSIONS.integrations.manageWebhooks, label: 'Webhook abonelik yonet' },
+    { key: PERMISSIONS.integrations.viewDeliveries, label: 'Webhook teslimatlarini gor' },
+    { key: PERMISSIONS.integrations.retryDelivery, label: 'Webhook retry calistir' },
+    { key: PERMISSIONS.integrations.viewInbound, label: 'Inbound olaylari gor' },
+    { key: PERMISSIONS.integrations.processInbound, label: 'Inbound olay isle' },
+    { key: PERMISSIONS.integrations.admin, label: 'Integration Hub admin' },
+  ],
+  actions: [
+    { key: 'integrations_open_hub', label: 'Integration Hub ac', actionType: 'navigate', targetPage: '/app/sistem/entegrasyonlar', permission: PERMISSIONS.integrations.view, featureFlag: 'integrations.enabled' },
+    { key: 'integrations_create_webhook', label: 'Webhook aboneligi olustur', actionType: 'operation', targetPage: '/app/sistem/entegrasyonlar', permission: PERMISSIONS.integrations.manageWebhooks, featureFlag: 'integrations.outboundWebhooks' },
+    { key: 'integrations_retry_delivery', label: 'Webhook teslimatini tekrar dene', actionType: 'operation', targetPage: '/app/sistem/entegrasyonlar', permission: PERMISSIONS.integrations.retryDelivery, featureFlag: 'integrations.deliveryRetry' },
+  ],
+  projections: [],
+  events: [
+    { eventType: 'integration.app_created', version: '1', aggregateType: 'integration_app' },
+    { eventType: 'integration.webhook_delivery_failed', version: '1', aggregateType: 'webhook_delivery' },
+    { eventType: 'integration.inbound_event_received', version: '1', aggregateType: 'inbound_event' },
+  ],
+  featureFlags: [
+    { key: 'integrations.enabled', label: 'Integration Hub', defaultEnabled: true },
+    { key: 'integrations.outboundWebhooks', label: 'Outbound webhooks', defaultEnabled: true },
+    { key: 'integrations.inboundWebhooks', label: 'Inbound webhooks', defaultEnabled: true },
+    { key: 'integrations.credentials', label: 'Credential store', defaultEnabled: true },
+    { key: 'integrations.deliveryRetry', label: 'Webhook retry/dead-letter', defaultEnabled: true },
+    { key: 'integrations.eventSubscriptions', label: 'Event subscriptions', defaultEnabled: true },
+    { key: 'integrations.inboundServiceRequest', label: 'Inbound servis talebi', defaultEnabled: true },
+    { key: 'integrations.webhookSigning', label: 'Webhook imzalama', defaultEnabled: true },
+  ],
+}

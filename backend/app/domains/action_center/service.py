@@ -911,7 +911,7 @@ async def list_action_center_items(
                        created_at, updated_at
                 from public.outbox_events
                 where tenant_id = :tenant_id
-                  and status in ('failed', 'skipped', 'pending', 'processing')
+                  and status in ('failed', 'dead_letter', 'skipped', 'pending', 'processing')
                 order by created_at desc
                 limit :limit
                 """
@@ -920,13 +920,69 @@ async def list_action_center_items(
         )
         for row in rows_to_dicts(list(outbox_result.mappings().all())):
             if (
-                row.get("status") in {"failed", "skipped"}
+                row.get("status") in {"failed", "dead_letter", "skipped"}
                 or _minutes_since(
                     row.get("locked_at") or row.get("created_at") or row.get("occurred_at")
                 )
                 >= STALE_OUTBOX_MINUTES
             ):
                 items.append(_normalize_outbox(row, str(context["tenant_id"])))
+
+    if _can_see_integration_items(context) and await table_exists(
+        session,
+        "public.integration_webhook_deliveries",
+    ):
+        delivery_result = await session.execute(
+            text(
+                """
+                select d.id, d.tenant_id, d.integration_app_id, d.subscription_id,
+                       d.event_type, d.event_id, d.status, d.attempt_count,
+                       d.response_status_code, d.error_message, d.created_at,
+                       d.last_attempt_at, a.app_name, s.subscription_name
+                from public.integration_webhook_deliveries d
+                left join public.integration_apps a
+                  on a.tenant_id = d.tenant_id and a.id = d.integration_app_id
+                left join public.integration_webhook_subscriptions s
+                  on s.tenant_id = d.tenant_id and s.id = d.subscription_id
+                where d.tenant_id = :tenant_id
+                  and d.status in ('failed','dead_letter')
+                order by d.created_at desc
+                limit :limit
+                """
+            ),
+            {"tenant_id": context["tenant_id"], "limit": limit},
+        )
+        items.extend(
+            _normalize_integration_delivery(row, str(context["tenant_id"]))
+            for row in rows_to_dicts(list(delivery_result.mappings().all()))
+        )
+
+    if _can_see_integration_items(context) and await table_exists(
+        session,
+        "public.integration_inbound_events",
+    ):
+        inbound_result = await session.execute(
+            text(
+                """
+                select e.id, e.tenant_id, e.integration_app_id, e.inbound_event_type,
+                       e.source_event_id, e.status, e.signature_valid, e.error_message,
+                       e.related_entity_type, e.related_entity_id, e.created_at,
+                       e.updated_at, a.app_name
+                from public.integration_inbound_events e
+                left join public.integration_apps a
+                  on a.tenant_id = e.tenant_id and a.id = e.integration_app_id
+                where e.tenant_id = :tenant_id
+                  and e.status in ('rejected','failed')
+                order by e.created_at desc
+                limit :limit
+                """
+            ),
+            {"tenant_id": context["tenant_id"], "limit": limit},
+        )
+        items.extend(
+            _normalize_integration_inbound(row, str(context["tenant_id"]))
+            for row in rows_to_dicts(list(inbound_result.mappings().all()))
+        )
 
     filtered = _filter_items(items, query)
     sorted_items = _sort_items(filtered)
@@ -2040,13 +2096,13 @@ def _normalize_outbox(row: dict[str, Any], tenant_id: str) -> dict[str, Any]:
         "source_id": str(row.get("id")),
         "title": (
             "Sistem guncellemesi tamamlanamadi"
-            if status in {"failed", "skipped"}
+            if status in {"failed", "dead_letter", "skipped"}
             else "Sistem guncellemesi bekliyor"
         ),
         "description": "Kayitlar korunur; sistem guncellemesi arka planda tekrar denenebilir.",
-        "status": "failed" if status in {"failed", "skipped"} else "waiting",
-        "severity": "error" if status == "failed" else "warning",
-        "priority": "high" if status == "failed" else "normal",
+        "status": "failed" if status in {"failed", "dead_letter", "skipped"} else "waiting",
+        "severity": "error" if status in {"failed", "dead_letter"} else "warning",
+        "priority": "high" if status in {"failed", "dead_letter"} else "normal",
         "operation_id": row.get("operation_id"),
         "process_instance_id": row.get("process_instance_id"),
         "outbox_event_id": row.get("id"),
@@ -2061,6 +2117,88 @@ def _normalize_outbox(row: dict[str, Any], tenant_id: str) -> dict[str, Any]:
                 "label": "Sistem Durumunu Ac",
                 "action_type": "navigate",
                 "target_page": "/app/sistem/kurulum",
+            }
+        ],
+    }
+
+
+def _normalize_integration_delivery(row: dict[str, Any], tenant_id: str) -> dict[str, Any]:
+    dead_letter = row.get("status") == "dead_letter"
+    title = (
+        "Webhook teslimati dead-letter oldu"
+        if dead_letter
+        else "Webhook teslimati basarisiz"
+    )
+    description = (
+        row.get("error_message")
+        or "Webhook hedefi yanit vermedi veya hata dondurdu."
+    )
+    return {
+        "id": f"integration_delivery:{row.get('id')}",
+        "tenant_id": row.get("tenant_id") or tenant_id,
+        "module_key": "integrations",
+        "source_type": "webhook_delivery_dead_letter" if dead_letter else "webhook_delivery_failed",
+        "source_id": str(row.get("id")),
+        "title": title,
+        "description": description,
+        "status": "failed",
+        "severity": "error",
+        "priority": "high" if dead_letter else "normal",
+        "entity_type": "webhook_delivery",
+        "entity_id": str(row.get("id")),
+        "record_label": row.get("subscription_name") or row.get("event_type") or row.get("id"),
+        "created_at": row.get("created_at") or _now_iso(),
+        "updated_at": row.get("last_attempt_at"),
+        "target_page": "/app/sistem/entegrasyonlar",
+        "suggested_actions": [
+            {
+                "label": "Teslimati Gor",
+                "action_type": "navigate",
+                "target_page": "/app/sistem/entegrasyonlar",
+            }
+        ],
+    }
+
+
+def _normalize_integration_inbound(row: dict[str, Any], tenant_id: str) -> dict[str, Any]:
+    invalid_signature = row.get("signature_valid") is False and row.get("status") == "rejected"
+    source_type = (
+        "invalid_signature_repeated"
+        if invalid_signature
+        else "inbound_event_needs_review"
+    )
+    title = (
+        "Inbound webhook imzasi reddedildi"
+        if invalid_signature
+        else "Inbound olay inceleme bekliyor"
+    )
+    record_label = (
+        row.get("inbound_event_type")
+        or row.get("source_event_id")
+        or row.get("id")
+    )
+    return {
+        "id": f"integration_inbound:{row.get('id')}",
+        "tenant_id": row.get("tenant_id") or tenant_id,
+        "module_key": "integrations",
+        "source_type": source_type,
+        "source_id": str(row.get("id")),
+        "title": title,
+        "description": row.get("error_message") or "Inbound payload otomatik islenemedi.",
+        "status": "failed" if invalid_signature else "waiting",
+        "severity": "error" if invalid_signature else "warning",
+        "priority": "high" if invalid_signature else "normal",
+        "entity_type": "integration_inbound_event",
+        "entity_id": str(row.get("id")),
+        "record_label": record_label,
+        "created_at": row.get("created_at") or _now_iso(),
+        "updated_at": row.get("updated_at"),
+        "target_page": "/app/sistem/entegrasyonlar",
+        "suggested_actions": [
+            {
+                "label": "Inbound Olayi Incele",
+                "action_type": "navigate",
+                "target_page": "/app/sistem/entegrasyonlar",
             }
         ],
     }
@@ -2163,6 +2301,24 @@ def _can_see_system_items(context: dict[str, Any]) -> bool:
         return True
     permissions = set(context.get("permissions") or [])
     return bool(permissions.intersection(SYSTEM_PERMISSIONS))
+
+
+def _can_see_integration_items(context: dict[str, Any]) -> bool:
+    if context.get("is_internal"):
+        return True
+    permissions = set(context.get("permissions") or [])
+    return bool(
+        permissions.intersection(
+            {
+                "__eden_demo_allow_all__",
+                "system.admin",
+                "integrations.view",
+                "integrations.viewDeliveries",
+                "integrations.viewInbound",
+                "integrations.admin",
+            }
+        )
+    )
 
 
 def _can_see_data_quality_items(context: dict[str, Any]) -> bool:

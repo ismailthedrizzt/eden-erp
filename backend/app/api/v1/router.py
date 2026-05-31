@@ -21,6 +21,7 @@ from app.api.v1 import (
     health,
     hr,
     import_export,
+    integrations,
     integrity,
     modules,
     notifications,
@@ -64,6 +65,7 @@ api_router.include_router(
 )
 api_router.include_router(crm.router, prefix="/crm", tags=["crm"])
 api_router.include_router(reporting.router, prefix="/reporting", tags=["reporting"])
+api_router.include_router(integrations.router, prefix="/integrations", tags=["integrations"])
 api_router.include_router(import_export.router, tags=["import export"])
 api_router.include_router(documents.router, tags=["documents"])
 api_router.include_router(notifications.router, tags=["notifications"])

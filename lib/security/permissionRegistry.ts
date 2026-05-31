@@ -136,6 +136,17 @@ export const permissionRegistry = {
     viewActivity: PERMISSIONS.portal.viewActivity,
     shareDocuments: PERMISSIONS.portal.shareDocuments,
   },
+  integrations: {
+    view: PERMISSIONS.integrations.view,
+    manageApps: PERMISSIONS.integrations.manageApps,
+    manageCredentials: PERMISSIONS.integrations.manageCredentials,
+    manageWebhooks: PERMISSIONS.integrations.manageWebhooks,
+    viewDeliveries: PERMISSIONS.integrations.viewDeliveries,
+    retryDelivery: PERMISSIONS.integrations.retryDelivery,
+    viewInbound: PERMISSIONS.integrations.viewInbound,
+    processInbound: PERMISSIONS.integrations.processInbound,
+    admin: PERMISSIONS.integrations.admin,
+  },
 } as const
 
 const permissionAliases: Record<string, string> = {
@@ -211,6 +222,15 @@ const permissionAliases: Record<string, string> = {
   'portal.suspendUsers': permissionRegistry.portal.suspendUsers,
   'portal.viewActivity': permissionRegistry.portal.viewActivity,
   'portal.shareDocuments': permissionRegistry.portal.shareDocuments,
+  'integrations.view': permissionRegistry.integrations.view,
+  'integrations.manageApps': permissionRegistry.integrations.manageApps,
+  'integrations.manageCredentials': permissionRegistry.integrations.manageCredentials,
+  'integrations.manageWebhooks': permissionRegistry.integrations.manageWebhooks,
+  'integrations.viewDeliveries': permissionRegistry.integrations.viewDeliveries,
+  'integrations.retryDelivery': permissionRegistry.integrations.retryDelivery,
+  'integrations.viewInbound': permissionRegistry.integrations.viewInbound,
+  'integrations.processInbound': permissionRegistry.integrations.processInbound,
+  'integrations.admin': permissionRegistry.integrations.admin,
 }
 
 export const permissionContracts = [
@@ -314,6 +334,15 @@ export const permissionContracts = [
   contract(permissionRegistry.portal.suspendUsers, 'Musteri portali kullanicisini askiya alma', 'customerPortal', 'admin', [permissionRegistry.portal.manageUsers]),
   contract(permissionRegistry.portal.viewActivity, 'Musteri portali erisim izlerini goruntuleme', 'customerPortal', 'view', [permissionRegistry.portal.manageUsers]),
   contract(permissionRegistry.portal.shareDocuments, 'Belgeyi musteri portaliyla paylasma', 'customerPortal', 'operation', [permissionRegistry.documents.upload, permissionRegistry.portal.manageUsers]),
+  contract(permissionRegistry.integrations.view, 'Entegrasyonlari goruntuleme', 'integrations', 'view', [permissionRegistry.adminConsole.view]),
+  contract(permissionRegistry.integrations.manageApps, 'Integration app yonetimi', 'integrations', 'admin', [permissionRegistry.integrations.view, permissionRegistry.adminConsole.manage]),
+  contract(permissionRegistry.integrations.manageCredentials, 'Entegrasyon credential yonetimi', 'integrations', 'admin', [permissionRegistry.integrations.manageApps]),
+  contract(permissionRegistry.integrations.manageWebhooks, 'Webhook abonelik yonetimi', 'integrations', 'operation', [permissionRegistry.integrations.manageApps]),
+  contract(permissionRegistry.integrations.viewDeliveries, 'Webhook teslimatlarini goruntuleme', 'integrations', 'view', [permissionRegistry.integrations.view]),
+  contract(permissionRegistry.integrations.retryDelivery, 'Webhook teslimatini tekrar deneme', 'integrations', 'operation', [permissionRegistry.integrations.viewDeliveries]),
+  contract(permissionRegistry.integrations.viewInbound, 'Inbound webhook olaylarini goruntuleme', 'integrations', 'view', [permissionRegistry.integrations.view]),
+  contract(permissionRegistry.integrations.processInbound, 'Inbound webhook olaylarini isleme', 'integrations', 'operation', [permissionRegistry.integrations.viewInbound]),
+  contract(permissionRegistry.integrations.admin, 'Integration Hub yonetimi', 'integrations', 'admin', ['system.admin']),
 ] satisfies PermissionContract[]
 
 const permissionByKey = new Map(permissionContracts.map(item => [item.key, item]))

@@ -123,7 +123,9 @@ async def _outbox_check(session: AsyncSession, tenant_id: str) -> dict[str, Any]
     summary = await outbox_summary(session, tenant_id)
     if not summary.get("available"):
         return {"status": "missing", "label": "Outbox"}
-    failed = int(summary.get("counts", {}).get("failed", 0))
+    failed = int(summary.get("counts", {}).get("failed", 0)) + int(
+        summary.get("counts", {}).get("dead_letter", 0)
+    )
     return {"status": "degraded" if failed else "ok", "label": "Outbox", "failed": failed}
 
 

@@ -59,6 +59,15 @@ class Settings(BaseSettings):
     ai_max_context_chars: int = Field(default=12000, alias="AI_MAX_CONTEXT_CHARS")
     ai_log_prompts: bool = Field(default=False, alias="AI_LOG_PROMPTS")
     ai_store_history: bool = Field(default=True, alias="AI_STORE_HISTORY")
+    webhook_worker_batch_size: int = Field(default=20, alias="WEBHOOK_WORKER_BATCH_SIZE")
+    webhook_timeout_seconds: int = Field(default=10, alias="WEBHOOK_TIMEOUT_SECONDS")
+    webhook_max_retries: int = Field(default=5, alias="WEBHOOK_MAX_RETRIES")
+    webhook_allowed_private_ips_dev_only: bool = Field(
+        default=True,
+        alias="WEBHOOK_ALLOWED_PRIVATE_IPS_DEV_ONLY",
+    )
+    webhook_delivery_concurrency: int = Field(default=5, alias="WEBHOOK_DELIVERY_CONCURRENCY")
+    webhook_user_agent: str = Field(default="EdenERP-Webhooks/1.0", alias="WEBHOOK_USER_AGENT")
     smtp_host: str | None = Field(default=None, alias="SMTP_HOST")
     smtp_port: int = Field(default=587, alias="SMTP_PORT")
     smtp_user: str | None = Field(default=None, alias="SMTP_USER")
@@ -75,6 +84,7 @@ class Settings(BaseSettings):
     db_pool_recycle: int = Field(default=1800, alias="DB_POOL_RECYCLE")
     db_statement_timeout_ms: int | None = Field(default=None, alias="DB_STATEMENT_TIMEOUT_MS")
     db_slow_query_ms: int = Field(default=750, alias="DB_SLOW_QUERY_MS")
+    worker_db_pool_size: int | None = Field(default=None, alias="WORKER_DB_POOL_SIZE")
     use_supabase_pooler: bool = Field(default=False, alias="USE_SUPABASE_POOLER")
     api_slow_request_ms: int = Field(default=1000, alias="API_SLOW_REQUEST_MS")
     api_very_slow_request_ms: int = Field(default=3000, alias="API_VERY_SLOW_REQUEST_MS")
@@ -121,6 +131,10 @@ class Settings(BaseSettings):
         if self.supabase_url:
             return f"{self.supabase_url.rstrip('/')}/auth/v1/.well-known/jwks.json"
         return None
+
+    @property
+    def effective_db_pool_size(self) -> int:
+        return self.worker_db_pool_size or self.db_pool_size
 
 
 @lru_cache(maxsize=1)

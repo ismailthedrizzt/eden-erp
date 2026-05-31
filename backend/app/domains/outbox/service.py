@@ -146,6 +146,7 @@ async def fetch_pending_batch(session: AsyncSession, *, batch_size: int) -> list
               and (locked_at is null or locked_at < now() - interval '5 minutes')
             order by occurred_at nulls last, created_at
             limit :batch_size
+            for update skip locked
             """
         ),
         {"batch_size": batch_size},
@@ -199,7 +200,7 @@ async def mark_completed(
 async def mark_failed(session: AsyncSession, event: dict[str, Any], error: Exception) -> None:
     retry_count = int(event.get("retry_count") or 0) + 1
     max_retries = int(event.get("max_retries") or 5)
-    status = "failed" if retry_count >= max_retries else "pending"
+    status = "dead_letter" if retry_count >= max_retries else "pending"
     await session.execute(
         text(
             """

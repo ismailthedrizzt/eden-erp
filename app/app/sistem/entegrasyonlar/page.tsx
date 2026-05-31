@@ -1,6 +1,6 @@
-import { AdminConsolePage } from '@/components/admin/AdminConsolePage'
+import { IntegrationHubPage } from '@/components/modules/integrations/IntegrationHubPage'
 
 export default function SistemEntegrasyonlarPage() {
-  return <AdminConsolePage section="integrations" />
+  return <IntegrationHubPage />
 }
 

@@ -13,6 +13,7 @@ import { documentsModule } from './contracts/documents.module'
 import { facilitiesModule } from './contracts/facilities.module'
 import { hrModule } from './contracts/hr.module'
 import { importExportModule } from './contracts/importExport.module'
+import { integrationsModule } from './contracts/integrations.module'
 import { notificationsModule } from './contracts/notifications.module'
 import { organizationModule } from './contracts/organization.module'
 import { partnersModule } from './contracts/partners.module'
@@ -39,6 +40,7 @@ export const clientModuleContracts = [
   crmModule,
   documentsModule,
   importExportModule,
+  integrationsModule,
   dataQualityModule,
   notificationsModule,
   adminConsoleModule,

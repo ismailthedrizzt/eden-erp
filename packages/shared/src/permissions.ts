@@ -25,6 +25,7 @@ export const MODULE_CODES = [
   'automation',
   'ai_copilot',
   'customer_portal',
+  'integrations',
   'security',
   'import_export',
 ] as const
@@ -261,6 +262,17 @@ export const PERMISSIONS = {
     suspendUsers: 'portal.suspendUsers',
     viewActivity: 'portal.viewActivity',
     shareDocuments: 'portal.shareDocuments',
+  },
+  integrations: {
+    view: 'integrations.view',
+    manageApps: 'integrations.manageApps',
+    manageCredentials: 'integrations.manageCredentials',
+    manageWebhooks: 'integrations.manageWebhooks',
+    viewDeliveries: 'integrations.viewDeliveries',
+    retryDelivery: 'integrations.retryDelivery',
+    viewInbound: 'integrations.viewInbound',
+    processInbound: 'integrations.processInbound',
+    admin: 'integrations.admin',
   },
   security: {
     view: 'security.view',

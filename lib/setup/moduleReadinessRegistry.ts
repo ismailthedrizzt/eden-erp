@@ -256,6 +256,18 @@ export const moduleReadinessDefinitions: ModuleReadinessDefinition[] = [
     ],
   },
   {
+    moduleKey: 'integrations',
+    requiredTables: ['integration_apps', 'integration_credentials', 'integration_webhook_subscriptions', 'integration_webhook_deliveries', 'integration_inbound_events'],
+    optionalTables: ['integration_event_subscriptions', 'outbox_events', 'audit_logs', 'notifications', 'action_center_items'],
+    requiredDependencies: ['outbox'],
+    optionalDependencies: ['notifications', 'audit', 'actionCenter', 'after_sales', 'crm', 'documents'],
+    setupSteps: [
+      setupStep('integrations.tables', 'Integration Hub tablolarini kontrol et', 'App, credential, webhook subscription, delivery ve inbound event tablolarinin hazir oldugunu dogrular.', 'check'),
+      setupStep('integrations.security', 'Webhook guvenligini kontrol et', 'Secret plaintext saklanmamali, signature/replay kontrolu ve target URL korumasi aktif olmalidir.', 'check'),
+      setupStep('integrations.worker', 'Webhook worker ve retry akisini kontrol et', 'Teslimatlar retry/dead-letter, audit ve Action Center uyarilariyla izlenmelidir.', 'check'),
+    ],
+  },
+  {
     moduleKey: 'security',
     requiredTables: ['security_users_profile', 'security_roles', 'security_role_permissions', 'security_user_roles', 'security_user_company_scopes', 'security_user_branch_scopes'],
     optionalTables: ['security_policy_test_logs', 'audit_logs'],

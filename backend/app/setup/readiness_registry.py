@@ -483,6 +483,39 @@ READINESS_REGISTRY: dict[str, ModuleReadinessDefinition] = {
             "Verify customer asset, service request, service record, and document scope checks deny other-customer access.",
         ],
     ),
+    "integrations": ModuleReadinessDefinition(
+        module_key="integrations",
+        required_tables=[
+            "integration_apps",
+            "integration_credentials",
+            "integration_webhook_subscriptions",
+            "integration_webhook_deliveries",
+            "integration_inbound_events",
+        ],
+        optional_tables=[
+            "integration_event_subscriptions",
+            "outbox_events",
+            "audit_logs",
+            "notifications",
+            "action_center_items",
+        ],
+        required_dependencies=[
+            "outbox",
+        ],
+        optional_dependencies=[
+            "notifications",
+            "audit",
+            "actionCenter",
+            "after_sales",
+            "crm",
+            "documents",
+        ],
+        setup_steps=[
+            "Create Integration Hub app, credential, webhook subscription, delivery and inbound event tables.",
+            "Verify webhook signing, inbound signature verification, retry/dead-letter and secret one-time reveal behavior.",
+            "Wire outbox subscription handler, webhook worker, Action Center warnings and audit logging.",
+        ],
+    ),
     "security": ModuleReadinessDefinition(
         module_key="security",
         required_tables=[

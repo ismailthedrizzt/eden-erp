@@ -133,11 +133,11 @@ export const navigationItems = [
     fallbackPermission: 'outbox.dispatch',
     featureFlag: 'adminConsole.outboxAdmin',
   }),
-  item('adminIntegrations', 'Entegrasyonlar', '/app/sistem/entegrasyonlar', 'database', 'adminConsole', 906, {
+  item('adminIntegrations', 'Entegrasyonlar', '/app/sistem/entegrasyonlar', 'database', 'integrations', 906, {
     parentKey: 'settings',
-    permission: 'adminConsole.manage',
+    permission: 'integrations.view',
     fallbackPermission: 'settings.edit',
-    featureFlag: 'adminConsole.enabled',
+    featureFlag: 'integrations.enabled',
   }),
   item('adminTechnical', 'Teknik', '/app/sistem/teknik', 'key-round', 'adminConsole', 907, {
     parentKey: 'settings',

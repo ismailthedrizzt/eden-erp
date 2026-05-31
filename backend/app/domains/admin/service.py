@@ -62,7 +62,12 @@ async def admin_dashboard(session: AsyncSession, context: dict[str, Any]) -> dic
             "modules_ready": sum(1 for module in readiness.modules.values() if module.ok),
             "modules_setup_required": sum(1 for module in readiness.modules.values() if not module.ok),
             "feature_flags_total": len(features),
-            "outbox_failed": int(outbox.get("counts", {}).get("failed", 0)) if outbox.get("available") else 0,
+            "outbox_failed": (
+                int(outbox.get("counts", {}).get("failed", 0))
+                + int(outbox.get("counts", {}).get("dead_letter", 0))
+            )
+            if outbox.get("available")
+            else 0,
             "outbox_pending": int(outbox.get("counts", {}).get("pending", 0)) if outbox.get("available") else 0,
             "critical_warnings": len(readiness.warnings),
         },

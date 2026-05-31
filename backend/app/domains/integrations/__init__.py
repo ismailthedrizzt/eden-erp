@@ -1,0 +1,2 @@
+"""Integration Hub domain package."""
+
