@@ -8,7 +8,7 @@ export const DEFAULT_UI_PREFERENCES: UserUiPreferences = {
   language: 'tr',
   dateFormat: 'dd.MM.yyyy',
   timeFormat: '24h',
-  defaultLandingPage: '/dashboard',
+  defaultLandingPage: '/app',
   tablePreferences: {},
   dismissedHints: [],
   hasSeenGlobalTour: false,

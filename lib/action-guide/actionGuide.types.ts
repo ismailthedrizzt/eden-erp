@@ -75,6 +75,8 @@ export interface ActionGuideResponse {
   confidence: number
   title: string
   explanation: string
+  assistant_text?: string
+  conversation_only?: boolean
   steps: string[]
   target_page: string
   required_record_type?: string | null

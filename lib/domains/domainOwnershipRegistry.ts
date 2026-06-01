@@ -239,10 +239,10 @@ export const allDomainOwnershipDefinitions: DomainOwnershipDefinition[] = [
   },
   {
     domainKey: 'reporting',
-    label: 'Reporting / Dashboard Domain',
+    label: 'Reporting Domain',
     ownsEntities: ['report_definition', 'dashboard_kpi', 'report_result', 'report_export_request'],
     ownsTables: [],
-    ownsOperations: ['open_management_dashboard', 'query_report', 'export_report'],
+    ownsOperations: ['query_report', 'export_report'],
     publishesEvents: ['report.query_executed', 'report.export_requested'],
     consumesEvents: ['projection.refresh_requested', 'action_center.item_resolved', 'audit.recorded', 'task.updated'],
   },

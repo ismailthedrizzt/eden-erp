@@ -213,7 +213,7 @@ export const moduleReadinessDefinitions: ModuleReadinessDefinition[] = [
     requiredDependencies: ['companies'],
     optionalDependencies: ['partners', 'representatives', 'branches', 'accounting', 'hr', 'project_management', 'after_sales', 'crm', 'audit', 'actionCenter', 'notifications', 'documents'],
     setupSteps: [
-      setupStep('reporting.dashboard', 'Dashboard kaynaklarini kontrol et', 'Yonetim dashboard modullerin summary ve projection kaynaklarini okur.', 'check'),
+      setupStep('reporting.sources', 'Raporlama kaynaklarini kontrol et', 'Raporlama modullerin summary ve projection kaynaklarini okur.', 'check'),
       setupStep('reporting.advancedTables', 'Gelismis raporlama tablolarini kontrol et', 'Saved view, custom report, scheduled report, export job ve run log tablolarinin hazir oldugunu dogrular.', 'check'),
       setupStep('reporting.permissions', 'Rapor yetkilerini kontrol et', 'Finansal, IK, audit ve sistem KPI kartlari role/permission bazli gorunmelidir.', 'check'),
       setupStep('reporting.exports', 'Export politikasini kontrol et', 'Export joblari row limit, masking ve ek permission ister.', 'check'),

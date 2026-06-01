@@ -55,6 +55,19 @@ Backend health endpointleri:
 - `http://localhost:8000/health`
 - `http://localhost:8000/api/v1/health`
 
+Yerel / release Ollama:
+
+```bash
+npm run ollama:install:release
+npm run ollama:serve
+```
+
+Varsayilan kurulum `tools/ollama` altina standalone Ollama binary dosyalarini, `.ollama/models` altina model deposunu yerlestirir. Release makinesinde model de indirilecekse:
+
+```bash
+npm run ollama:pull
+```
+
 ## Ortam Degiskenleri
 
 `.env.local.example` dosyasini `.env.local` olarak kopyalayip doldurun:

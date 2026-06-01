@@ -15,20 +15,11 @@ export interface NavigationItem {
 
 export const navigationItems = [
   item('dashboard', 'Ana Sayfa', '/app', 'home', undefined, 10, { exact: true }),
-  item('onboarding', 'Baslangic Merkezi', '/app/onboarding', 'compass', 'settings', 15, {
-    featureFlag: 'onboarding.enabled',
-  }),
-  item('managementDashboard', 'Yonetim Dashboard', '/app/dashboard', 'bar-chart', 'reporting', 20, {
-    permission: 'reporting.dashboardView',
-    fallbackPermission: 'reporting.view',
-  }),
   item('reportingCustomReports', 'Ozel Raporlar', '/app/raporlama/ozel-raporlar', 'file-spreadsheet', 'reporting', 21, {
-    parentKey: 'managementDashboard',
     permission: 'reporting.customReportsManage',
     featureFlag: 'reporting.customReports',
   }),
   item('reportingScheduledReports', 'Zamanlanmis Raporlar', '/app/raporlama/zamanlanmis-raporlar', 'calendar-clock', 'reporting', 22, {
-    parentKey: 'managementDashboard',
     permission: 'reporting.scheduledReportsManage',
     featureFlag: 'reporting.scheduledReports',
   }),

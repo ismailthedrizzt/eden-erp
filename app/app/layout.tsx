@@ -6,19 +6,16 @@ import { usePathname, useSearchParams } from 'next/navigation'
 import Sidebar from '@/components/layout/Sidebar'
 import { DemoModeBadge } from '@/components/layout/DemoModeBadge'
 import { PendingActionsBell } from '@/components/layout/PendingActionsBell'
-import { ProductVersionBadge } from '@/components/layout/ProductVersionBadge'
 import { NotificationBell } from '@/components/notifications/NotificationBell'
-import { Bell, Building2, Check, ChevronDown, Home, LayoutDashboard, ListChecks, Loader2, Menu, Moon, MoreHorizontal, Star, Sun } from 'lucide-react'
+import { Bell, Building2, Check, ChevronDown, Home, ListChecks, Loader2, Menu, Moon, MoreHorizontal, Star, Sun } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ModuleLicenseProvider } from '@/hooks/useModuleLicense'
 import { PermissionProvider } from '@/lib/security/permissionStore'
 import { ModuleProvider, type ClientModuleRuntime } from '@/lib/security/moduleStore'
 import { GuidedSystemTour } from '@/components/onboarding/GuidedSystemTour'
-import { FirstRunExperience } from '@/components/onboarding/FirstRunExperience'
 import { ActionGuideProvider } from '@/components/ai/ActionGuideContext'
 import { ActionGuideSearch } from '@/components/ai/ActionGuideSearch'
 import { CopilotPanel } from '@/components/ai/CopilotPanel'
-import { GlobalSearchInput } from '@/components/search/GlobalSearchInput'
 import { cacheUiPreferences, readCachedUiPreferences, syncUiPreferencesPatch } from '@/lib/user-state/client'
 import { setStoredTenantId, tenantRequestHeaders } from '@/lib/tenancy/client'
 import type { SessionBootstrapResponse, UiThemePreference } from '@/lib/user-state/types'
@@ -79,7 +76,6 @@ const BREADCRUMBS: Record<string, string> = {
   '/app/sistem/entegrasyonlar': 'Sistem Yonetimi > Entegrasyonlar',
   '/app/sistem/teknik': 'Sistem Yonetimi > Teknik',
   '/app/sistem/ai-copilot': 'Sistem Yonetimi > AI Copilot',
-  '/app/onboarding': 'Baslangic Merkezi',
   '/app/sirket/companies': 'Şirket Yönetimi › Şirketlerimiz',
   '/app/sirket/companies/partners': 'Şirket Yönetimi › Ortaklarımız',
   '/app/sirket/companies/representatives': 'Şirket Yönetimi › Temsilcilerimiz',
@@ -368,14 +364,6 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
         <div className={cn('min-h-screen overflow-y-auto bg-gray-50 p-5 dark:bg-[#09141e]', dark && 'dark')}>
           {children}
         </div>
-        <GuidedSystemTour
-          open={!workspacesLoading && tourOpen}
-          initialStepId={tourInitialStep}
-          onOpenChange={(nextOpen) => {
-            setTourOpen(nextOpen)
-            if (!nextOpen) setTourClosedThisSession(true)
-          }}
-        />
       </ActionGuideProvider>
     )
   }
@@ -443,7 +431,6 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
               >
                 <Menu size={15} />
               </button>
-              <ProductVersionBadge className="hidden md:inline-flex" />
               <DemoModeBadge />
               <div ref={workspaceMenuRef} data-tour-id="workspace-switcher" className="relative hidden sm:block">
                 <button
@@ -551,18 +538,7 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
                 </div>
               )}
             </div>
-            <div className="mx-1 flex min-w-0 flex-1 items-center justify-center gap-2">
-              <GlobalSearchInput />
-              <ActionGuideSearch
-                compact
-                onStartSystemTour={() => {
-                  setTourInitialStep(null)
-                  setTourClosedThisSession(false)
-                  setTourShouldOpen(true)
-                  setTourOpen(true)
-                }}
-              />
-            </div>
+            <div className="min-w-0 flex-1" />
             <div className="flex items-center gap-2 sm:gap-3">
               <PendingActionsBell />
               <NotificationBell />
@@ -612,14 +588,7 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
                 if (!nextOpen) setTourClosedThisSession(true)
               }}
             />
-            <FirstRunExperience
-              onStartSystemTour={() => {
-                setTourInitialStep(null)
-                setTourClosedThisSession(false)
-                setTourShouldOpen(true)
-                setTourOpen(true)
-              }}
-            />
+            <ActionGuideSearch headless />
             <CopilotPanel />
           </div>
           </ActionGuideProvider>
@@ -632,7 +601,6 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
 function MobileBottomNavigation({ pathname, onOpenMenu }: { pathname: string; onOpenMenu: () => void }) {
   const items = [
     { label: 'Ana', href: '/app', icon: Home },
-    { label: 'Panel', href: '/app/dashboard', icon: LayoutDashboard },
     { label: 'Sirket', href: '/app/sirket/companies', icon: Building2 },
     { label: 'Gorev', href: '/app/gorev-ve-proje-yonetimi/gorevler', icon: ListChecks },
   ]
@@ -642,7 +610,7 @@ function MobileBottomNavigation({ pathname, onOpenMenu }: { pathname: string; on
       aria-label="Mobil ana gezinme"
       className="fixed inset-x-0 bottom-0 z-30 border-t border-gray-200 bg-white/95 px-2 pb-[calc(env(safe-area-inset-bottom)+0.35rem)] pt-1.5 shadow-[0_-10px_30px_rgba(15,34,51,0.12)] backdrop-blur dark:border-gray-800 dark:bg-eden-navy-2/95 lg:hidden"
     >
-      <div className="grid grid-cols-6 gap-1">
+      <div className="grid grid-cols-3 gap-1">
         {items.map(item => {
           const Icon = item.icon
           const active = pathname === item.href || (item.href !== '/app' && pathname.startsWith(item.href))

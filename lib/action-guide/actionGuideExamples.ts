@@ -12,7 +12,7 @@ export const actionGuideExampleQueries = [
 ]
 
 export const frequentActionKeys = [
-  'onboarding_start',
+  'home_start',
   'create_company_draft',
   'create_partner_draft',
   'create_representative_draft',
