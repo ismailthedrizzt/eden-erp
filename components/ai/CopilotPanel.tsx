@@ -81,7 +81,7 @@ export function CopilotPanel() {
 
   return (
     <>
-      <CopilotButton onClick={() => setOpen(true)} />
+      <CopilotButton />
       {open ? (
         <div className="fixed inset-0 z-50 flex items-end bg-black/30 lg:items-stretch lg:justify-end">
           <div className="flex max-h-[92dvh] w-full flex-col overflow-hidden rounded-t-2xl border border-slate-200 bg-slate-50 shadow-2xl dark:border-slate-800 dark:bg-slate-950 lg:my-4 lg:mr-4 lg:max-h-[calc(100dvh-2rem)] lg:w-[440px] lg:rounded-2xl">

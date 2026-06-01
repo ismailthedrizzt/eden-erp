@@ -93,7 +93,7 @@ function resolveOnboardingFirstRunQuestion(
       warnings: [],
       suggested_actions: [
         { label: 'Sirket Taslagi Olustur', action_type: 'navigate', target_page: '/app/sirket/companies?action=create' },
-        { label: 'Baslangic Merkezini Ac', action_type: 'navigate', target_page: '/app/onboarding' },
+        { label: 'Ana Sayfayi Ac', action_type: 'navigate', target_page: '/app' },
       ],
       matched_actions: [{ key: 'explain_company_draft', label: 'Sirket Taslagi Nedir?', confidence: 0.92 }],
     }
@@ -106,16 +106,16 @@ function resolveOnboardingFirstRunQuestion(
       title: 'Sirketiniz hazir, temel kayitlari derinlestirin',
       explanation: 'Aktif sirket kaydi oldugu icin sira ortak, temsilci, sube, cari kart ve kullanici yetki adimlarinda.',
       steps: ['Ortaklari ekleyin.', 'Temsilcileri ve subeleri tamamlayin.', 'Cari kartlari ve ekip yetkilerini hazirlayin.'],
-      target_page: '/app/onboarding',
+      target_page: '/app',
       can_start_now: true,
       blocking_reasons: [],
       warnings: [],
       suggested_actions: [
         { label: 'Ortaklari Ac', action_type: 'navigate', target_page: '/app/sirket/companies/partners' },
         { label: 'Temsilcileri Ac', action_type: 'navigate', target_page: '/app/sirket/companies/representatives' },
-        { label: 'Baslangic Merkezini Ac', action_type: 'navigate', target_page: '/app/onboarding' },
+        { label: 'Ana Sayfayi Ac', action_type: 'navigate', target_page: '/app' },
       ],
-      matched_actions: [{ key: 'onboarding_start', label: 'Nasil Baslayacagimi Goster', confidence: 0.9 }],
+      matched_actions: [{ key: 'home_start', label: 'Ana Sayfaya Git', confidence: 0.9 }],
     }
   }
 
@@ -132,7 +132,7 @@ function resolveOnboardingFirstRunQuestion(
       warnings: [],
       suggested_actions: [
         { label: 'Sirket Acilisina Git', action_type: 'navigate', target_page: '/app/sirket/companies?action=opening' },
-        { label: 'Baslangic Merkezini Ac', action_type: 'navigate', target_page: '/app/onboarding' },
+        { label: 'Ana Sayfayi Ac', action_type: 'navigate', target_page: '/app' },
       ],
       matched_actions: [{ key: 'company_opening', label: 'Sirket Acilisi', confidence: 0.9 }],
     }
@@ -143,16 +143,16 @@ function resolveOnboardingFirstRunQuestion(
     confidence: 0.92,
     title: 'Ilk sirket taslagiyla baslayin',
     explanation: 'Eden ERPde sirket, ortak, temsilci, sube ve muhasebe islemleri sirket karti uzerinden ilerler.',
-    steps: ['Baslangic Merkezini acin.', 'Ilk sirket taslagini olusturun.', 'Sirket Acilisi sihirbaziyla aktif hale getirin.'],
+    steps: ['Ana Sayfayi acin.', 'Ilk sirket taslagini olusturun.', 'Sirket Acilisi sihirbaziyla aktif hale getirin.'],
     target_page: '/app/sirket/companies?action=create',
     can_start_now: true,
     blocking_reasons: [],
     warnings: [],
     suggested_actions: [
       { label: 'Ilk Sirketi Olustur', action_type: 'navigate', target_page: '/app/sirket/companies?action=create' },
-      { label: 'Baslangic Merkezini Ac', action_type: 'navigate', target_page: '/app/onboarding' },
+      { label: 'Ana Sayfayi Ac', action_type: 'navigate', target_page: '/app' },
     ],
-    matched_actions: [{ key: 'onboarding_start', label: 'Nasil Baslayacagimi Goster', confidence: 0.92 }],
+    matched_actions: [{ key: 'home_start', label: 'Ana Sayfaya Git', confidence: 0.92 }],
   }
 }
 

@@ -636,22 +636,12 @@ export const productVersionManifest: ProductVersionManifest = {
     },
     reporting: {
       id: 'reporting',
-      label: 'Raporlama / Yonetim Dashboard',
+      label: 'Raporlama',
       version: '0.1.0',
       maturity: 'alpha',
       requiredForSmallBusiness: true,
-      notes: 'Yonetim dashboard, modul KPI kartlari, rapor tanimlari ve CSV export hazirligi MVP seviyesine tasindi.',
-      pages: {
-        dashboard: {
-          id: 'dashboard',
-          label: 'Yonetim Dashboard',
-          href: '/app/dashboard',
-          version: '0.1.0',
-          maturity: 'alpha',
-          requiredForSmallBusiness: true,
-          notes: 'KPI kartlari, risk uyarilari, modul bazli filtreler ve rapor listesi FastAPI reporting endpointlerinden okunur.',
-        },
-      },
+      notes: 'Rapor tanimlari, kayitli gorunumler, zamanlanmis raporlar ve CSV export hazirligi MVP seviyesine tasindi.',
+      pages: {},
     },
     sistem: {
       id: 'sistem',
@@ -836,16 +826,6 @@ export const productVersionManifest: ProductVersionManifest = {
           version: '0.2.0',
           maturity: 'dev',
           requiredForSmallBusiness: true,
-        },
-        onboarding: {
-          id: 'onboarding',
-          label: 'Baslangic Merkezi',
-          href: '/app/onboarding',
-          table: 'workspace_onboarding_state',
-          version: '0.1.0',
-          maturity: 'alpha',
-          requiredForSmallBusiness: true,
-          notes: 'Ilk giris karsilamasi, workspace checklist, modul paketleri, tur reset ve ilk sirket yonlendirmesi vardir.',
         },
         login_sayfasi: {
           id: 'login_sayfasi',

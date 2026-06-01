@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { ProductVersionBadge } from '@/components/layout/ProductVersionBadge'
 import { ReleaseStatusBadge } from '@/components/release/ReleaseStatusBadge'
 import { cn } from '@/lib/utils'
 import { useModuleLicense } from '@/hooks/useModuleLicense'
@@ -27,7 +28,7 @@ import {
 import {
   Home, Users, Building2, CreditCard, Package, ShoppingCart,
   Settings, Factory, Wrench, ChevronRight, LogOut, Download,
-  BarChart2, List, AlertCircle, FolderOpen, Wallet, X, Headphones, Tags, ListChecks, Handshake, FileArchive, BellRing, Compass
+  List, AlertCircle, FolderOpen, Wallet, X, Headphones, Tags, ListChecks, Handshake, FileArchive, BellRing
 } from 'lucide-react'
 
 interface NavItem {
@@ -55,19 +56,6 @@ const NAV: NavItem[] = [
     label: 'Ana Sayfa',
     icon: <Home size={16} />,
     href: '/app',
-  },
-  {
-    id: 'onboarding',
-    label: 'Baslangic',
-    icon: <Compass size={16} />,
-    href: '/app/onboarding',
-  },
-  {
-    id: 'reporting',
-    label: 'Yönetim Dashboard',
-    icon: <BarChart2 size={16} />,
-    href: '/app/dashboard',
-    moduleKey: 'reporting',
   },
   {
     id: 'sirket',
@@ -253,13 +241,11 @@ const NAV: NavItem[] = [
 
 const SIDEBAR_CONTRACT_MODULE_BY_HREF: Record<string, string> = {
   '/app/sirket/companies': 'companies',
-  '/app/dashboard': 'reporting',
   '/app/sirket/companies/branches': 'branches',
   '/app/sirket/companies/partners': 'partners',
   '/app/sirket/companies/representatives': 'representatives',
   '/app/sirket/teskilat': 'organization',
   '/app/sirket/tesisler': 'facilities',
-  '/app/onboarding': 'settings',
   '/app/ik': 'hr',
   '/app/ik/calisanlar': 'hr',
   '/app/ik/employees': 'hr',
@@ -578,7 +564,7 @@ export default function Sidebar({ collapsed = false, mobileOpen = false, onMobil
     >
       {/* Logo & Mobile Close */}
       <div className="px-4 py-4 border-b border-white/[0.07] flex items-center justify-between flex-shrink-0">
-        <div className="flex min-w-0 items-center">
+        <div className="flex min-w-0 items-center gap-2">
           {collapsed && !mobileOpen ? (
             <Image
               src="/eden-icon-original.png"
@@ -589,14 +575,20 @@ export default function Sidebar({ collapsed = false, mobileOpen = false, onMobil
               priority
             />
           ) : (
-            <Image
-              src="/brand/eden-logo-colored.png"
-              alt="Eden Teknoloji"
-              width={192}
-              height={86}
-              className="h-auto max-h-14 w-36 object-contain"
-              priority
-            />
+            <>
+              <Image
+                src="/brand/eden-logo-colored.png"
+                alt="Eden Teknoloji"
+                width={192}
+                height={86}
+                className="h-auto max-h-14 w-36 shrink-0 object-contain"
+                priority
+              />
+              <ProductVersionBadge
+                compact
+                className="hidden shrink-0 border-white/15 bg-white/[0.06] text-amber-100 sm:inline-flex"
+              />
+            </>
           )}
         </div>
         {/* Mobile Close Button */}

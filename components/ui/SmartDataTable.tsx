@@ -19,8 +19,7 @@ import {
   AlertTriangle,
   RefreshCw,
   FileDown,
-  Plus,
-  Sparkles
+  Plus
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { DashboardGrid } from '@/components/dashboard/DashboardGrid'
@@ -1426,15 +1425,6 @@ export function SmartDataTable<T extends { id: string }>({
               <RefreshCw size={18} />
             </button>
           )}
-
-          {/* AI Assistant */}
-          <button
-            onClick={() => window.dispatchEvent(new CustomEvent('eden:open-action-guide'))}
-            className="p-2 rounded-lg hover:bg-purple-100 dark:hover:bg-purple-900/30 text-purple-600 dark:text-purple-400 transition-colors"
-            title="AI İşlem Rehberi"
-          >
-            <Sparkles size={18} />
-          </button>
 
           {/* Quick Look Toggle */}
           <button

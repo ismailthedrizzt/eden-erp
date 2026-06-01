@@ -24,27 +24,6 @@ export const featureFlags = [
     defaultEnabled: true,
   },
   {
-    key: 'onboarding.enabled',
-    moduleKey: 'settings',
-    label: 'Ilk kurulum deneyimi',
-    description: 'Yeni calisma alaninda karsilama, checklist ve baslangic adimlarini etkinlestirir.',
-    defaultEnabled: true,
-  },
-  {
-    key: 'onboarding.workspaceChecklist',
-    moduleKey: 'settings',
-    label: 'Calisma alani checklist',
-    description: 'Ilk sirket, modul hazirligi, tur ve Action Center adimlarini takip eder.',
-    defaultEnabled: true,
-  },
-  {
-    key: 'onboarding.firstRunWelcome',
-    moduleKey: 'settings',
-    label: 'Ilk giris karsilamasi',
-    description: 'Kullaniciya ilk giriste sade baslangic mesajini gosterir.',
-    defaultEnabled: true,
-  },
-  {
     key: 'pilot.demoMode',
     moduleKey: 'settings',
     label: 'Pilot demo modu',
@@ -206,13 +185,6 @@ export const featureFlags = [
     moduleKey: 'reporting',
     label: 'Export joblari',
     description: 'Rapor export isteklerini auditli job olarak yonetir.',
-    defaultEnabled: true,
-  },
-  {
-    key: 'reporting.dashboardPersonalization',
-    moduleKey: 'reporting',
-    label: 'Dashboard kisisellestirme',
-    description: 'Kullanici dashboard kart sirasi, gizleme ve pinned rapor tercihlerini etkinlestirir.',
     defaultEnabled: true,
   },
   {

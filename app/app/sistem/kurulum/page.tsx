@@ -21,8 +21,6 @@ import Modal from '@/components/ui/Modal'
 import { Toast, type ToastType } from '@/components/ui/Toast'
 import { formControlClass, type FormControlState } from '@/components/ui/formControlStyles'
 import { TenantReadinessPanel } from '@/components/setup/TenantReadinessPanel'
-import { PageContextTour } from '@/components/onboarding/PageContextTour'
-import { pageTourSteps } from '@/components/onboarding/tourSteps'
 import { apiClient } from '@/lib/api/apiClient'
 import { setStoredTenantId } from '@/lib/tenancy/client'
 import { cn } from '@/lib/utils'
@@ -400,8 +398,6 @@ function SetupWizardContent() {
           setOpen(false)
         }}
       />
-
-      <PageContextTour tourKey="setup" steps={pageTourSteps.setup || []} />
 
       {toast && (
         <Toast

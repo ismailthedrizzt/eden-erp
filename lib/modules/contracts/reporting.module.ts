@@ -3,8 +3,8 @@ import type { ModuleContract } from '../moduleContract.types'
 
 export const reportingModule: ModuleContract = {
   key: 'reporting',
-  name: 'Raporlama / Yonetim Dashboard',
-  description: 'Yonetim ana paneli, kayitli gorunumler, ozel raporlar, zamanlanmis raporlar ve guvenli export joblari.',
+  name: 'Raporlama',
+  description: 'Kayitli gorunumler, ozel raporlar, zamanlanmis raporlar ve guvenli export joblari.',
   domain: 'reporting',
   category: 'business',
   version: '2026-05-29.2370',
@@ -13,7 +13,7 @@ export const reportingModule: ModuleContract = {
   licenseRequired: false,
   setupRequired: false,
   dependencies: [
-    { moduleKey: 'companies', required: true, reason: 'Dashboard sirket scope uzerinden filtrelenir.' },
+    { moduleKey: 'companies', required: true, reason: 'Raporlar sirket scope uzerinden filtrelenir.' },
     { moduleKey: 'accounting', required: false, reason: 'Finansal KPI kartlari icin Accounting summary kaynaklari kullanilir.' },
     { moduleKey: 'hr', required: false, reason: 'IK KPI kartlari icin HR summary kaynaklari kullanilir.' },
     { moduleKey: 'project_management', required: false, reason: 'Gorev ve proje KPI kartlari icin Project/Task read modelleri kullanilir.' },
@@ -30,7 +30,6 @@ export const reportingModule: ModuleContract = {
     { key: 'reporting_export_job', displayName: 'Export Job', lifecycle: false, draftSupported: false },
   ],
   routes: [
-    { path: '/app/dashboard', type: 'page', permission: PERMISSIONS.reporting.dashboardView },
     { path: '/app/raporlama/ozel-raporlar', type: 'page', permission: PERMISSIONS.reporting.customReportsManage },
     { path: '/app/raporlama/zamanlanmis-raporlar', type: 'page', permission: PERMISSIONS.reporting.scheduledReportsManage },
     { path: '/api/reporting/dashboard', type: 'api', permission: PERMISSIONS.reporting.dashboardView },
@@ -41,13 +40,12 @@ export const reportingModule: ModuleContract = {
     { path: '/api/reporting/exports', type: 'api', permission: PERMISSIONS.reporting.export },
   ],
   menus: [
-    { label: 'Yonetim Dashboard', path: '/app/dashboard', icon: 'BarChart2', order: 20, permission: PERMISSIONS.reporting.dashboardView },
     { label: 'Ozel Raporlar', path: '/app/raporlama/ozel-raporlar', icon: 'FileSpreadsheet', order: 21, permission: PERMISSIONS.reporting.customReportsManage },
     { label: 'Zamanlanmis Raporlar', path: '/app/raporlama/zamanlanmis-raporlar', icon: 'CalendarClock', order: 22, permission: PERMISSIONS.reporting.scheduledReportsManage },
   ],
   permissions: [
     { key: PERMISSIONS.reporting.view, label: 'Raporlari goruntule' },
-    { key: PERMISSIONS.reporting.dashboardView, label: 'Yonetim dashboard goruntule' },
+    { key: PERMISSIONS.reporting.dashboardView, label: 'Raporlama ozetlerini goruntule' },
     { key: PERMISSIONS.reporting.export, label: 'Rapor export al' },
     { key: PERMISSIONS.reporting.admin, label: 'Raporlama yoneticisi' },
     { key: PERMISSIONS.reporting.viewFinancial, label: 'Finansal KPI goruntule' },
@@ -58,13 +56,12 @@ export const reportingModule: ModuleContract = {
     { key: PERMISSIONS.reporting.customReportsManage, label: 'Ozel rapor tanimlarini yonet' },
     { key: PERMISSIONS.reporting.scheduledReportsManage, label: 'Zamanlanmis raporlari yonet' },
     { key: PERMISSIONS.reporting.exportManage, label: 'Export joblarini yonet' },
-    { key: PERMISSIONS.reporting.dashboardCustomize, label: 'Dashboard kisisellestir' },
+    { key: PERMISSIONS.reporting.dashboardCustomize, label: 'Raporlama gorunumlerini kisisellestir' },
   ],
   actions: [
-    { key: 'open_management_dashboard', label: 'Yonetim dashboard ac', actionType: 'navigate', targetPage: '/app/dashboard', permission: PERMISSIONS.reporting.dashboardView },
-    { key: 'query_report', label: 'Rapor sorgula', actionType: 'view', targetPage: '/app/dashboard', permission: PERMISSIONS.reporting.view },
-    { key: 'export_report', label: 'Rapor export hazirla', actionType: 'operation', targetPage: '/app/dashboard', permission: PERMISSIONS.reporting.export },
-    { key: 'create_saved_view', label: 'Gorunum kaydet', actionType: 'operation', targetPage: '/app/dashboard', permission: PERMISSIONS.reporting.view },
+    { key: 'query_report', label: 'Rapor sorgula', actionType: 'view', targetPage: '/app/raporlama/ozel-raporlar', permission: PERMISSIONS.reporting.view },
+    { key: 'export_report', label: 'Rapor export hazirla', actionType: 'operation', targetPage: '/app/raporlama/ozel-raporlar', permission: PERMISSIONS.reporting.export },
+    { key: 'create_saved_view', label: 'Gorunum kaydet', actionType: 'operation', targetPage: '/app/raporlama/ozel-raporlar', permission: PERMISSIONS.reporting.view },
     { key: 'create_scheduled_report', label: 'Rapor zamanla', actionType: 'operation', targetPage: '/app/raporlama/zamanlanmis-raporlar', permission: PERMISSIONS.reporting.scheduledReportsManage },
   ],
   projections: [
@@ -81,13 +78,11 @@ export const reportingModule: ModuleContract = {
   ],
   featureFlags: [
     { key: 'reporting.enabled', label: 'Raporlama modulunu etkinlestir', defaultEnabled: true },
-    { key: 'reporting.dashboard', label: 'Yonetim dashboard etkinlestir', defaultEnabled: true },
     { key: 'reporting.exports', label: 'Rapor export hazirligini etkinlestir', defaultEnabled: false },
     { key: 'reporting.savedViews', label: 'Kayitli gorunumleri etkinlestir', defaultEnabled: true },
     { key: 'reporting.customReports', label: 'Ozel raporlari etkinlestir', defaultEnabled: true },
     { key: 'reporting.scheduledReports', label: 'Zamanlanmis raporlari etkinlestir', defaultEnabled: true },
     { key: 'reporting.exportJobs', label: 'Export job yonetimini etkinlestir', defaultEnabled: true },
-    { key: 'reporting.dashboardPersonalization', label: 'Dashboard kisisellestirmeyi etkinlestir', defaultEnabled: true },
     { key: 'reporting.crossModuleReports', label: 'Moduller arasi yonetim raporlarini etkinlestir', defaultEnabled: true },
     { key: 'reporting.financialKpis', label: 'Finansal KPI kartlarini etkinlestir', defaultEnabled: true },
     { key: 'reporting.auditKpis', label: 'Audit KPI kartlarini etkinlestir', defaultEnabled: true },

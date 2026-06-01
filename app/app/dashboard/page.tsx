@@ -1,5 +1,5 @@
-import { ManagementDashboardPage } from '@/components/modules/reporting/ManagementDashboardPage'
+import { redirect } from 'next/navigation'
 
 export default function DashboardPage() {
-  return <ManagementDashboardPage />
+  redirect('/app')
 }
