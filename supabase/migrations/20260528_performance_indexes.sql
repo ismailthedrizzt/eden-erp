@@ -1,5 +1,5 @@
 -- Eden ERP Step 17 performance index preparation.
--- Indexes are non-unique and table-gated so this migration can run across
+-- Indexes are non-unique and table/column-gated so this migration can run across
 -- partially migrated staging databases. For very large production tables,
 -- run a reviewed CONCURRENTLY variant outside transaction-wrapped runners.
 
@@ -13,6 +13,9 @@ begin
   if to_regclass(target_table) is not null then
     execute ddl;
   end if;
+exception
+  when undefined_column then
+    raise notice 'Skipping index because a required column is missing: %', ddl;
 end;
 $$;
 
