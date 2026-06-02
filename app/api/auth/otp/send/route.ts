@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const { otp, cookieName, cookieValue, maxAge } = createEmailOtp(normalizedIdentifier.identifier)
-    const screenOtpAllowed = process.env.EDEN_ALLOW_SCREEN_OTP === 'true' || process.env.NODE_ENV !== 'production'
+    const screenOtpAllowed = process.env.EDEN_ALLOW_SCREEN_OTP?.trim().toLowerCase() !== 'false'
 
     if (normalizedIdentifier.type === 'email') {
       await sendEdenMail({

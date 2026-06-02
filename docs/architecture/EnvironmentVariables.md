@@ -15,6 +15,7 @@ Real values must never be committed. Examples live in `.env.local.example` and `
 - `INTERNAL_BACKEND_TOKEN`
 - `TRUSTED_PROXY_SECRET`
 - `CRON_SECRET`
+- `EDEN_ALLOW_SCREEN_OTP`
 
 Only `NEXT_PUBLIC_*` values are browser-visible. Service role keys, internal backend tokens and proxy secrets are server-only.
 
@@ -32,6 +33,11 @@ Supabase variables are optional and should only be set if the deployment still u
 - `SUPABASE_URL`
 - `SUPABASE_ANON_KEY`
 - `SUPABASE_JWT_SECRET`
+
+Temporary phone OTP behavior:
+
+- `EDEN_ALLOW_SCREEN_OTP=true` shows phone verification codes on the login screen.
+- Set `EDEN_ALLOW_SCREEN_OTP=false` after the SMS provider is wired.
 
 ## FastAPI
 

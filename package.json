@@ -31,6 +31,8 @@
     "migration:inventory": "node scripts/check-backend-migration-status.js write-inventory",
     "proxy:coverage": "node scripts/check-backend-migration-status.js write-proxy-matrix",
     "ts-backend:inventory": "node scripts/generate-remaining-ts-backend-inventory.js",
+    "backend:boundary:audit": "node scripts/audit-next-backend-boundary.js",
+    "backend:boundary:enforce": "node scripts/audit-next-backend-boundary.js --fail-on-direct-db",
     "boundaries:check": "node scripts/check-import-boundaries.js",
     "release:check": "node scripts/check-release-registry.js",
     "env:safety": "node scripts/check-release-env-safety.js",

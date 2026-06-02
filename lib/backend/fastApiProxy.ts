@@ -6,7 +6,6 @@ import 'server-only'
 // - Never expose these values through NEXT_PUBLIC_*.
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
 import { resolveTenantContext } from '@/lib/tenancy/server'
 
 type FastApiQuery = URLSearchParams | Record<string, string | number | boolean | null | undefined>
@@ -48,16 +47,6 @@ export function buildFastApiUrl(path: string, query?: FastApiQuery) {
   return targetUrl
 }
 
-async function getSupabaseAccessToken() {
-  try {
-    const supabase = await createClient()
-    const { data } = await supabase.auth.getSession()
-    return data.session?.access_token || null
-  } catch {
-    return null
-  }
-}
-
 export async function buildBackendHeaders(request: NextRequest, options: ProxyOptions = {}) {
   const tenantContext = resolveTenantContext(request)
   const headers = new Headers()
@@ -95,7 +84,7 @@ export async function buildBackendHeaders(request: NextRequest, options: ProxyOp
   const incomingAuthorization = request.headers.get('authorization')
   const accessToken = incomingAuthorization?.toLowerCase().startsWith('bearer ')
     ? incomingAuthorization.replace(/^Bearer\s+/i, '')
-    : await getSupabaseAccessToken()
+    : null
 
   if (options.internal && process.env.INTERNAL_BACKEND_TOKEN) {
     headers.set('authorization', `Bearer ${process.env.INTERNAL_BACKEND_TOKEN}`)
