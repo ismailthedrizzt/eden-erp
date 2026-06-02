@@ -13,8 +13,6 @@ import {
   ShieldCheck,
 } from 'lucide-react'
 import { AuditDetailDrawer } from '@/components/audit/AuditDetailDrawer'
-import { PageContextTour } from '@/components/onboarding/PageContextTour'
-import { pageTourSteps } from '@/components/onboarding/tourSteps'
 import { fetchAuditLogs, type AuditListFilters, type AuditListMeta } from '@/lib/audit/auditClient'
 import type { AuditLogRecord } from '@/lib/audit/audit.types'
 import { useRegisterActionGuideContext } from '@/components/ai/ActionGuideContext'
@@ -134,7 +132,6 @@ export default function AuditPage() {
               <Download className="h-4 w-4" aria-hidden="true" />
               Export hazirligi
             </button>
-            <PageContextTour tourKey="audit" steps={pageTourSteps.audit || []} />
           </div>
 
           <section className="grid gap-3 md:grid-cols-5" data-tour-id="audit-summary">

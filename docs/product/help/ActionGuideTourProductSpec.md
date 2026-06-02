@@ -2,7 +2,7 @@
 
 ## Amac
 
-Bu calisma Action Guide, Guided Tour, Page Tour, Operation Hint ve Locked Field Helper altyapilarini kullanicinin isi dogru sayfa, kayit veya sihirbaza cevirebildigi urun deneyimine tasir. Kullaniciya mimari anlatilmaz; yapmak istedigi is, tanimli action registry ve backend eligibility kararlari icinde yonlendirilir.
+Bu calisma Action Guide, tek global Guided Tour, Operation Hint ve Locked Field Helper altyapilarini kullanicinin isi dogru sayfa, kayit veya sihirbaza cevirebildigi urun deneyimine tasir. Kullaniciya mimari anlatilmaz; yapmak istedigi is, tanimli action registry ve backend eligibility kararlari icinde yonlendirilir.
 
 ## Kapsam
 
@@ -12,6 +12,7 @@ Bu calisma Action Guide, Guided Tour, Page Tour, Operation Hint ve Locked Field 
 - Registry disinda action uretilemez.
 - Dusuk confidence durumunda tek karar vermek yerine alternatifler gosterilir.
 - Field helper, operation button ve Action Guide ayni module/status/permission/readiness reason dilini kullanir.
+- Sayfa veya modul bazli guided tour uretilmez; detayli yardim yerel LLM destekli AI Islem Rehberi tarafindan verilir.
 
 ## Kullanici Rolleri
 
@@ -84,7 +85,7 @@ Kullaniciya teknik hata gosterilmez. Standart reason ornekleri:
 
 ## Guided Tour
 
-Genel tur adimlari: hos geldiniz, sol menu, liste sayfalari, + Ekle taslak, form detay, islem sihirbazlari, kilitli alanlar, Action Guide, Action Center, Kurulum Merkezi.
+Tek guided tour vardir: ilk giriste acilan global sistem turu. Eden ERP tek form/liste/islem mimarisiyle calistigi icin sayfa bazli tour acilmaz. Tur genel kavramlari ogretir: calisma alani, sol menu, liste sayfalari, + Ekle taslak, form detay, islem sihirbazlari, kilitli alanlar, Action Guide ve Action Center.
 
 Davranis:
 
@@ -92,10 +93,11 @@ Davranis:
 - backend user preferences ile kalicilik
 - mobile bottom sheet, keyboard ESC close, reduced motion
 - hedef yoksa fallback target veya sonraki adim
+- header tur ikonu ayni global turu yeniden baslatir
 
-## Page Tours
+## Page Tours Yoktur
 
-Sayfa turlari Sirketlerimiz, Ortaklarimiz, Temsilcilerimiz, Subelerimiz, Teskilat/Kadro, Tesisler/Lokasyonlar, Action Center, Audit ve Kurulum icin kisa urun aciklamalari sunar.
+Page tour, module tour veya route'a ozel guided tour eklenmez. Sayfaya ozel aciklama gerekiyorsa Operation Hint, Field Helper veya AI Islem Rehberi kullanilir. Yerel LLM kullanicinin detay sorularini is diliyle cevaplar ve teknik altyapi cevabi vermez.
 
 ## Operation Hints
 
@@ -120,7 +122,7 @@ Backend user preferences icinde su alanlar tutulur:
 
 - hasSeenGlobalTour
 - completedTourSteps
-- dismissedPageTours
+- dismissedPageTours legacy/migration alanidir; yeni page tour davranisi icin kullanilmaz
 - dismissedOperationHints
 - dismissedFieldHelpers
 - lockedFieldHintsDismissed
@@ -143,7 +145,7 @@ Backend user preferences icinde su alanlar tutulur:
 1. Action Guide dogru action'a baglar ve registry disi action uretmez.
 2. Context-aware oneriler aktif sirket/taslak sirket/temsilci yetki/ortak pay senaryolarinda calisir.
 3. Blocking reason'lar Action Guide, field helper ve operation visibility ile ayni dildir.
-4. Genel tur ve page tour state'i backend preference ile saklanir.
+4. Tek global tur state'i backend preference ile saklanir; page tour davranisi yoktur.
 5. Operation hints ve field helpers kullaniciyi dogru wizard veya setup yoluna yonlendirir.
 6. Product docs, real data scenarios, E2E checklist ve known gaps vardir.
 7. Typecheck/build/backend testleri bozulmaz.

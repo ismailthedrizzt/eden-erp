@@ -17,9 +17,7 @@ import {
 import { ActionCenterList } from '@/components/action-center/ActionCenterList'
 import { ActionCenterSummaryCards } from '@/components/action-center/ActionCenterSummaryCards'
 import { useRegisterActionGuideContext } from '@/components/ai/ActionGuideContext'
-import { PageContextTour } from '@/components/onboarding/PageContextTour'
 import { OperationHint } from '@/components/onboarding/OperationHint'
-import { pageTourSteps } from '@/components/onboarding/tourSteps'
 import { unwrapActionCenterListPayload } from '@/lib/action-center/actionCenterClient'
 import type { UnifiedActionItem } from '@/lib/action-center/actionCenter.types'
 import {
@@ -110,7 +108,6 @@ export default function ProcessesPage() {
 
   return (
     <main className="mx-auto flex max-w-7xl flex-col gap-5 p-4 sm:p-6">
-      <PageContextTour tourKey="process-center" steps={pageTourSteps.processCenter || []} />
 
       <header data-tour-id="process-center-header" className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm dark:border-gray-800 dark:bg-gray-950">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">

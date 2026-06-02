@@ -232,7 +232,7 @@ export function GuidedSystemTour({ open, initialStepId, onOpenChange }: GuidedSy
 
   return (
     <>
-      <TourSpotlight rect={targetRect} />
+      <TourSpotlight rect={targetRect} padding={activeStep.spotlightPadding} />
       <TourPopover
         step={activeStep}
         rect={targetRect}

@@ -1,10 +1,13 @@
 'use client'
 
 import type { UnifiedActionItem } from '@/lib/action-center/actionCenter.types'
+import type { NotificationRecord } from '@/lib/services/notifications'
 import { ActionCenterItem } from './ActionCenterItem'
 
+export type ActionCenterDisplayItem = NotificationRecord | UnifiedActionItem
+
 type ActionCenterListProps = {
-  items: UnifiedActionItem[]
+  items: ActionCenterDisplayItem[]
   loading?: boolean
   error?: string | null
   compact?: boolean

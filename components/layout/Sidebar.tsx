@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { ProductVersionBadge } from '@/components/layout/ProductVersionBadge'
 import { ReleaseStatusBadge } from '@/components/release/ReleaseStatusBadge'
 import { cn } from '@/lib/utils'
 import { useModuleLicense } from '@/hooks/useModuleLicense'
@@ -28,7 +27,7 @@ import {
 import {
   Home, Users, Building2, CreditCard, Package, ShoppingCart,
   Settings, Factory, Wrench, ChevronRight, LogOut, Download,
-  List, AlertCircle, FolderOpen, Wallet, X, Headphones, Tags, ListChecks, Handshake, FileArchive, BellRing
+  List, AlertCircle, FolderOpen, Wallet, X, Headphones, Tags, ListChecks, Handshake, FileArchive
 } from 'lucide-react'
 
 interface NavItem {
@@ -157,14 +156,6 @@ const NAV: NavItem[] = [
     href: '/app/belgeler',
     moduleKey: 'documents',
     contractModuleKey: 'documents',
-  },
-  {
-    id: 'notifications',
-    label: 'Bildirimler',
-    icon: <BellRing size={16} />,
-    href: '/app/ayarlar/bildirimler',
-    moduleKey: 'notifications',
-    contractModuleKey: 'notifications',
   },
   {
     id: 'product_services',
@@ -586,10 +577,6 @@ export default function Sidebar({ collapsed = false, mobileOpen = false, onMobil
                 height={86}
                 className="h-auto max-h-14 w-36 shrink-0 object-contain"
                 priority
-              />
-              <ProductVersionBadge
-                compact
-                className="hidden shrink-0 border-white/15 bg-white/[0.06] text-amber-100 sm:inline-flex"
               />
             </>
           )}

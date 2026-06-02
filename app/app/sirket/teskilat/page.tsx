@@ -25,9 +25,7 @@ import {
 import { PageBanner } from '@/components/ui/PageBanner'
 import { EntityForm, FormField, FormMode, FormTab } from '@/components/ui/EntityForm'
 import { SmartDataTable, ColumnDef, WidgetDef } from '@/components/ui/SmartDataTable'
-import { PageContextTour } from '@/components/onboarding/PageContextTour'
 import { OperationHint } from '@/components/onboarding/OperationHint'
-import { pageTourSteps } from '@/components/onboarding/tourSteps'
 import { useRegisterActionGuideContext } from '@/components/ai/ActionGuideContext'
 import { cn } from '@/lib/utils'
 import { companyService } from '@/lib/services/companyService'
@@ -403,7 +401,6 @@ export default function TeskilatPage() {
         addButtonTourId="quick-actions"
         onBackClick={() => setPageState('list')}
       />
-      <PageContextTour tourKey="organization" steps={pageTourSteps.organization || []} enabled={pageState === 'list' || pageState === 'view-unit'} />
 
       {toast && (
         <div className="mb-4 flex items-center justify-between rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200">

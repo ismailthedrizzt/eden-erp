@@ -1,236 +1,173 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { BellRing, CheckCheck, Loader2, Plus, RefreshCw } from 'lucide-react'
-import { NotificationItem } from '@/components/notifications/NotificationItem'
-import { NotificationPreferencesForm } from '@/components/notifications/NotificationPreferencesForm'
-import { ReminderList } from '@/components/notifications/ReminderList'
-import { Toast, type ToastType } from '@/components/ui/Toast'
-import { cn } from '@/lib/utils'
+import { BellRing } from 'lucide-react'
+import PageBanner from '@/components/ui/PageBanner'
+import { SmartDataTable, type ColumnDef, type TableStatusFilterOption } from '@/components/ui/SmartDataTable'
 import {
-  notificationService,
-  reminderService,
-  type NotificationCounts,
-  type NotificationRecord,
-} from '@/lib/services/notifications'
+  notificationCardParts,
+  notificationRecordStatusValue,
+  notificationStatusLabel,
+} from '@/lib/notifications/notificationPresentation'
+import { notificationService, type NotificationRecord, type NotificationStatus } from '@/lib/services/notifications'
 
-type ToastState = { type: ToastType; title?: string; message: string }
+type NotificationStatusFilter = 'unread' | 'read' | 'completed'
 
-type TabKey = 'unread' | 'all' | 'tasks' | 'documents' | 'system'
+type NotificationTableRow = NotificationRecord & {
+  record_status: NotificationStatusFilter
+  status_label: string
+  record_label: string
+  card_type: string
+  pending_action: string
+  priority_label: string
+}
 
-const tabs: Array<{ key: TabKey; label: string }> = [
-  { key: 'unread', label: 'Okunmamis' },
-  { key: 'all', label: 'Tum' },
-  { key: 'tasks', label: 'Gorev / Onay' },
-  { key: 'documents', label: 'Belgeler' },
-  { key: 'system', label: 'Sistem' },
+const STATUS_FILTER_OPTIONS: TableStatusFilterOption[] = [
+  { value: 'unread', label: 'Okunmamış', tone: 'draft' },
+  { value: 'read', label: 'Okundu', tone: 'active' },
+  { value: 'completed', label: 'Tamamlandı', tone: 'passive' },
 ]
 
-export default function NotificationSettingsPage() {
-  const [notifications, setNotifications] = useState<NotificationRecord[]>([])
-  const [counts, setCounts] = useState<NotificationCounts | null>(null)
+const DEFAULT_STATUS_FILTERS: NotificationStatusFilter[] = ['unread', 'read']
+
+const columns: ColumnDef[] = [
+  {
+    key: 'record_status',
+    label: 'Durum',
+    type: 'enum',
+    width: 120,
+    fixedWidth: true,
+    sortable: true,
+    category: 'Durum',
+    render: (_value, row: NotificationTableRow) => <StatusBadge status={row.record_status} label={row.status_label} />,
+  },
+  { key: 'record_label', label: 'Kayıt', type: 'text', width: 220, sortable: true, filterable: true, category: 'Bildirim' },
+  { key: 'card_type', label: 'Kart Tipi', type: 'text', width: 170, sortable: true, filterable: true, category: 'Bildirim' },
+  { key: 'pending_action', label: 'Bekleyen İşlem', type: 'text', width: 240, sortable: true, filterable: true, category: 'Bildirim' },
+  { key: 'module_key', label: 'Modul', type: 'text', width: 140, sortable: true, filterable: true, category: 'Kaynak' },
+  { key: 'priority_label', label: 'Oncelik', type: 'text', width: 110, sortable: true, filterable: true, category: 'Kaynak' },
+  { key: 'created_at', label: 'Oluşturma', type: 'date', width: 135, sortable: true, category: 'Tarih' },
+]
+
+export default function NotificationsPage() {
+  const [rows, setRows] = useState<NotificationTableRow[]>([])
   const [loading, setLoading] = useState(true)
-  const [working, setWorking] = useState(false)
-  const [tab, setTab] = useState<TabKey>('unread')
-  const [toast, setToast] = useState<ToastState | null>(null)
-  const [reminderDraft, setReminderDraft] = useState({
-    title: '',
-    message: '',
-    remind_at: '',
-  })
+  const [statusFilters, setStatusFilters] = useState<NotificationStatusFilter[]>(DEFAULT_STATUS_FILTERS)
+  const [listQuery, setListQuery] = useState({ page: 1, pageSize: 50, search: '' })
+  const [listMeta, setListMeta] = useState({ page: 1, pageSize: 50, total: 0 })
+  const [error, setError] = useState<string | null>(null)
+
+  const statusValues = useMemo(() => toApiStatuses(statusFilters), [statusFilters])
 
   const load = useCallback(async () => {
     setLoading(true)
+    setError(null)
     try {
-      const [listResult, countResult] = await Promise.all([
-        notificationService.list({ pageSize: 80 }),
-        notificationService.counts(),
-      ])
-      setNotifications(listResult.data)
-      setCounts(countResult)
-    } catch (error) {
-      setToast({ type: 'error', title: 'Bildirimler alinamadi', message: errorMessage(error) })
+      const result = await notificationService.list({
+        page: listQuery.page,
+        pageSize: listQuery.pageSize,
+        search: listQuery.search,
+        statusValues,
+      })
+      setRows(result.data.map(toTableRow))
+      setListMeta(result.meta)
+    } catch (fetchError: any) {
+      setRows([])
+      setListMeta({ page: listQuery.page, pageSize: listQuery.pageSize, total: 0 })
+      setError(fetchError.message || 'Bildirimler alinamadi.')
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [listQuery, statusValues])
 
   useEffect(() => {
     void load()
   }, [load])
 
-  const visibleNotifications = useMemo(
-    () => notifications.filter(notification => tabMatches(tab, notification)),
-    [notifications, tab]
-  )
-
-  async function mutate(action: () => Promise<unknown>, successMessage?: string) {
-    setWorking(true)
+  async function openNotification(row: NotificationTableRow) {
+    const targetPage = notificationCardParts(row).targetPage
     try {
-      await action()
-      if (successMessage) setToast({ type: 'success', message: successMessage })
-      await load()
-    } catch (error) {
-      setToast({ type: 'error', title: 'Islem tamamlanamadi', message: errorMessage(error) })
+      if (row.status === 'unread') await notificationService.markRead(row.id)
     } finally {
-      setWorking(false)
+      window.location.href = targetPage
     }
-  }
-
-  async function createReminder() {
-    if (!reminderDraft.title.trim() || !reminderDraft.remind_at) {
-      setToast({ type: 'warning', title: 'Eksik bilgi', message: 'Baslik ve hatirlatma zamani gereklidir.' })
-      return
-    }
-    await mutate(
-      () => reminderService.create({
-        module_key: 'notifications',
-        reminder_type: 'user_created',
-        title: reminderDraft.title.trim(),
-        message: reminderDraft.message.trim() || reminderDraft.title.trim(),
-        remind_at: new Date(reminderDraft.remind_at).toISOString(),
-        channels: ['in_app'],
-      }),
-      'Hatirlatma olusturuldu.'
-    )
-    setReminderDraft({ title: '', message: '', remind_at: '' })
   }
 
   return (
-    <main className="min-h-screen bg-background px-4 py-6 text-foreground sm:px-6 lg:px-8">
-      {toast && <Toast type={toast.type} title={toast.title} message={toast.message} onClose={() => setToast(null)} />}
-      <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
-        <header className="flex flex-col gap-4 border-b border-border pb-5 lg:flex-row lg:items-start lg:justify-between">
-          <div className="flex items-start gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-md border border-border bg-muted">
-              <BellRing className="h-5 w-5" aria-hidden="true" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-semibold">Bildirimler</h1>
-              <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
-                Gorev, onay, belge, servis, sistem uyarilari ve hatirlatmalar.
-              </p>
-            </div>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <button type="button" onClick={() => void mutate(() => notificationService.readAll(), 'Bildirimler okundu.')} disabled={working} className="inline-flex h-10 items-center gap-2 rounded-md border border-border px-3 text-sm font-medium hover:bg-muted disabled:opacity-50">
-              <CheckCheck className="h-4 w-4" aria-hidden="true" />
-              Tumunu Okundu Yap
-            </button>
-            <button type="button" onClick={load} disabled={loading} className="inline-flex h-10 items-center gap-2 rounded-md border border-border px-3 text-sm font-medium hover:bg-muted disabled:opacity-50">
-              {loading ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <RefreshCw className="h-4 w-4" aria-hidden="true" />}
-              Yenile
-            </button>
-          </div>
-        </header>
+    <main className="min-h-screen bg-gray-50 p-4 dark:bg-gray-900 sm:p-6">
+      <PageBanner
+        mode="list"
+        title="Bildirimler"
+        subtitle="Form bazli bekleyen is ve onay bildirimleri"
+        icon={<BellRing size={24} />}
+      />
 
-        <section className="grid gap-3 md:grid-cols-4">
-          <Metric label="Okunmamis" value={counts?.unread || 0} />
-          <Metric label="Aksiyon" value={counts?.action_required || 0} tone="amber" />
-          <Metric label="Yuksek" value={counts?.high_priority || 0} tone="sky" />
-          <Metric label="Kritik" value={counts?.critical || 0} tone="red" />
-        </section>
-
-        <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_390px]">
-          <div className="rounded-md border border-border bg-card p-4">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <h2 className="text-base font-semibold">Bildirim Akisi</h2>
-              <div className="flex gap-1 overflow-x-auto">
-                {tabs.map(item => (
-                  <button
-                    key={item.key}
-                    type="button"
-                    onClick={() => setTab(item.key)}
-                    className={cn(
-                      'h-8 rounded-md px-2 text-xs font-medium',
-                      tab === item.key ? 'bg-eden-blue text-white' : 'border border-border text-muted-foreground hover:bg-muted'
-                    )}
-                  >
-                    {item.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className="mt-4 space-y-3">
-              {loading && <LoadingBlock />}
-              {!loading && visibleNotifications.length === 0 && (
-                <div className="rounded-md border border-dashed border-border p-8 text-center text-sm text-muted-foreground">Bildirim yok.</div>
-              )}
-              {!loading && visibleNotifications.map(notification => (
-                <NotificationItem
-                  key={notification.id}
-                  notification={notification}
-                  onRead={id => void mutate(() => notificationService.markRead(id))}
-                  onDismiss={id => void mutate(() => notificationService.dismiss(id))}
-                  onArchive={id => void mutate(() => notificationService.archive(id))}
-                />
-              ))}
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            <section className="rounded-md border border-border bg-card p-4">
-              <h2 className="text-base font-semibold">Yeni Hatirlatma</h2>
-              <div className="mt-4 grid gap-3">
-                <TextInput label="Baslik" value={reminderDraft.title} onChange={value => setReminderDraft(current => ({ ...current, title: value }))} />
-                <TextInput label="Mesaj" value={reminderDraft.message} onChange={value => setReminderDraft(current => ({ ...current, message: value }))} />
-                <TextInput label="Zaman" type="datetime-local" value={reminderDraft.remind_at} onChange={value => setReminderDraft(current => ({ ...current, remind_at: value }))} />
-                <button type="button" onClick={createReminder} disabled={working} className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-primary px-3 text-sm font-medium text-primary-foreground disabled:opacity-50">
-                  {working ? <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Plus className="h-4 w-4" aria-hidden="true" />}
-                  Olustur
-                </button>
-              </div>
-            </section>
-            <NotificationPreferencesForm />
-          </div>
-        </section>
-
-        <ReminderList />
-      </div>
+      <SmartDataTable<NotificationTableRow>
+        columns={columns}
+        data={rows}
+        loading={loading}
+        title="Bildirim Listesi"
+        storageKey="notifications-table"
+        defaultView="list"
+        defaultPageSize={listQuery.pageSize}
+        emptyText={error || 'Bildirim bulunamadi.'}
+        onRefresh={load}
+        onRowClick={openNotification}
+        statusFilterOptions={STATUS_FILTER_OPTIONS}
+        activeStatusFilters={statusFilters}
+        onStatusFiltersChange={(next) => {
+          setStatusFilters(next.length ? next as NotificationStatusFilter[] : DEFAULT_STATUS_FILTERS)
+          setListQuery(current => ({ ...current, page: 1 }))
+        }}
+        pagination={{
+          mode: 'server',
+          page: listMeta.page,
+          pageSize: listMeta.pageSize,
+          total: listMeta.total,
+          onPageChange: page => setListQuery(current => ({ ...current, page })),
+          onPageSizeChange: pageSize => setListQuery(current => ({ ...current, page: 1, pageSize })),
+          onSearchChange: search => setListQuery(current => ({ ...current, page: 1, search })),
+        }}
+      />
     </main>
   )
 }
 
-function Metric({ label, value, tone = 'blue' }: { label: string; value: number; tone?: 'blue' | 'amber' | 'sky' | 'red' }) {
-  const tones = {
-    blue: 'bg-eden-blue/10 text-eden-blue',
-    amber: 'bg-amber-500/10 text-amber-700 dark:text-amber-300',
-    sky: 'bg-sky-500/10 text-sky-700 dark:text-sky-300',
-    red: 'bg-red-500/10 text-red-700 dark:text-red-300',
+function toTableRow(notification: NotificationRecord): NotificationTableRow {
+  const parts = notificationCardParts(notification)
+  const recordStatus = notificationRecordStatusValue(notification.status) as NotificationStatusFilter
+  return {
+    ...notification,
+    record_status: recordStatus,
+    status_label: notificationStatusLabel(notification.status),
+    record_label: parts.recordLabel,
+    card_type: parts.cardType,
+    pending_action: parts.pendingAction,
+    priority_label: priorityLabel(notification.priority),
+  }
+}
+
+function toApiStatuses(filters: NotificationStatusFilter[]): NotificationStatus[] {
+  const values = filters.flatMap(filter => filter === 'completed' ? ['dismissed', 'archived'] : [filter])
+  return Array.from(new Set(values)) as NotificationStatus[]
+}
+
+function priorityLabel(value: string) {
+  if (value === 'urgent') return 'Acil'
+  if (value === 'high') return 'Yuksek'
+  if (value === 'low') return 'Dusuk'
+  return 'Normal'
+}
+
+function StatusBadge({ status, label }: { status: NotificationStatusFilter; label: string }) {
+  const classes = {
+    unread: 'bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-100',
+    read: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-100',
+    completed: 'bg-slate-100 text-slate-700 dark:bg-slate-500/20 dark:text-slate-100',
   }
   return (
-    <div className="rounded-md border border-border bg-card p-4">
-      <div className="text-sm text-muted-foreground">{label}</div>
-      <div className={cn('mt-2 text-3xl font-semibold', tones[tone])}>{value}</div>
-    </div>
+    <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${classes[status]}`}>
+      {label}
+    </span>
   )
-}
-
-function TextInput({ label, value, onChange, type = 'text' }: { label: string; value: string; type?: string; onChange: (value: string) => void }) {
-  return (
-    <label className="block text-sm">
-      <span className="mb-1 block text-xs font-medium text-muted-foreground">{label}</span>
-      <input type={type} value={value} onChange={event => onChange(event.target.value)} className="h-10 w-full rounded-md border border-border bg-background px-3 text-sm outline-none focus:border-primary" />
-    </label>
-  )
-}
-
-function LoadingBlock() {
-  return (
-    <div className="flex h-32 items-center justify-center rounded-md border border-border bg-background text-muted-foreground">
-      <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" />
-    </div>
-  )
-}
-
-function tabMatches(tab: TabKey, item: NotificationRecord) {
-  if (tab === 'all') return item.status !== 'archived'
-  if (tab === 'unread') return item.status === 'unread'
-  if (tab === 'tasks') return item.notification_type.startsWith('task_') || item.notification_type.startsWith('approval_')
-  if (tab === 'documents') return item.notification_type.startsWith('document_')
-  return ['system', 'security', 'module'].some(prefix => item.notification_type.startsWith(prefix))
-}
-
-function errorMessage(error: unknown) {
-  return error instanceof Error ? error.message : 'Beklenmeyen hata olustu.'
 }

@@ -31,6 +31,11 @@ export type NotificationRecord = {
   related_entity_type?: string | null
   related_entity_id?: string | null
   related_record_label?: string | null
+  process_instance_id?: string | null
+  task_id?: string | null
+  approval_id?: string | null
+  operation_id?: string | null
+  outbox_event_id?: string | null
   due_at?: string | null
   expires_at?: string | null
   delivered_channels?: string[]
@@ -55,10 +60,13 @@ export type NotificationCounts = {
   high_priority: number
   critical: number
   action_required: number
+  pending_total?: number
+  pending_tasks?: number
 }
 
 export type NotificationListQuery = {
   status?: NotificationStatus
+  statusValues?: NotificationStatus[] | string
   notification_type?: string
   module_key?: string
   severity?: NotificationSeverity
@@ -77,8 +85,13 @@ function unwrap<T>(response: ApiEnvelope<T> | { data: T }): T {
 
 export const notificationService = {
   async list(query: NotificationListQuery = {}) {
+    const { statusValues, ...rest } = query
+    const normalizedQuery = {
+      ...rest,
+      ...(statusValues ? { statusValues: Array.isArray(statusValues) ? statusValues.join(',') : statusValues } : {}),
+    }
     const response = await apiClient.get<ApiEnvelope<NotificationListResult>>('/api/notifications', {
-      query,
+      query: normalizedQuery,
       useCache: false,
     })
     return unwrap(response)
@@ -124,4 +137,3 @@ export const notificationService = {
     return unwrap(response)
   },
 }
-

@@ -21,6 +21,7 @@ def default_reminder_channels() -> list[ReminderChannel]:
 
 class NotificationListQuery(BaseModel):
     status: NotificationStatus | None = None
+    status_values: list[NotificationStatus] = Field(default_factory=list)
     notification_type: str | None = None
     module_key: str | None = None
     severity: NotificationSeverity | None = None

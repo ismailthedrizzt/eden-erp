@@ -6,6 +6,7 @@ import {
   withTenantInsertScopeForTable,
   type TenantContext,
 } from '@/lib/tenancy/server'
+import { createProcessTaskNotification, dismissWorkNotifications } from '@/lib/services/notifications/processNotification.server'
 import type { ProcessInstance, ProcessStepDefinition, ProcessTask } from './process.types'
 
 export class ProcessTaskService {
@@ -47,6 +48,7 @@ export class ProcessTaskService {
 
     const { data, error } = await this.supabase.from('process_tasks').insert(row).select('*').single()
     if (error) throw error
+    await createProcessTaskNotification(this.supabase, this.tenantContext, data as Record<string, any>).catch(() => undefined)
     return data as ProcessTask
   }
 
@@ -97,19 +99,23 @@ export class ProcessTaskService {
   }
 
   async completeTask(taskId: string, completedBy?: string | null, result?: Record<string, any>) {
-    return this.update(taskId, {
+    const task = await this.update(taskId, {
       status: 'completed',
       completed_by: completedBy || null,
       completed_at: new Date().toISOString(),
       result_json: result || {},
     })
+    await dismissWorkNotifications(this.supabase, this.tenantContext, { taskId }).catch(() => undefined)
+    return task
   }
 
   async cancelTask(taskId: string, reason?: string | null) {
-    return this.update(taskId, {
+    const task = await this.update(taskId, {
       status: 'cancelled',
       result_json: reason ? { cancel_reason: reason } : {},
     })
+    await dismissWorkNotifications(this.supabase, this.tenantContext, { taskId }).catch(() => undefined)
+    return task
   }
 
   async markTaskOverdue(taskId: string) {

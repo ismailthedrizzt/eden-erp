@@ -9,6 +9,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.errors import DomainError
 from app.core.serialization import row_to_dict, rows_to_dicts
+from app.domains.notifications.notifications import (
+    create_process_approval_notifications,
+    dismiss_work_notifications,
+)
 from app.domains.operations.service import table_exists
 from app.domains.process.events import emit_process_event
 from app.domains.process.schemas import ApprovalDecisionRequest, CreateApprovalRequest
@@ -83,6 +87,7 @@ async def create_approval(
         company_id=payload.company_id or context.get("company_id"),
         payload={"approval_id": approval_id, "approval_type": payload.approval_type},
     )
+    await create_process_approval_notifications(session, context, row)
     return row
 
 
@@ -205,6 +210,12 @@ async def _decide(
         company_id=approval.get("company_id"),
         payload={"approval_id": approval_id, "decision_note": request.decision_note},
     )
+    await dismiss_work_notifications(
+        session,
+        context,
+        approval_id=approval_id,
+        task_id=approval.get("task_id"),
+    )
     return row
 
 
@@ -245,4 +256,11 @@ async def cancel_approval(
         ),
         {"approval_id": approval_id, "tenant_id": context["tenant_id"]},
     )
-    return row_to_dict(result.mappings().one()) or {}
+    row = row_to_dict(result.mappings().one()) or {}
+    await dismiss_work_notifications(
+        session,
+        context,
+        approval_id=approval_id,
+        task_id=approval.get("task_id"),
+    )
+    return row

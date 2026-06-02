@@ -22,16 +22,13 @@ Playwright bu repoda kurulu degilse bu dosya manuel/regression checklist olarak 
 - Next/back/skip/complete buttons work.
 - ESC postpones the tour.
 - Completed state persists in backend preferences.
-- "Yardimi Tekrar Goster" starts the tour again.
+- Header tour icon starts the same global tour again.
 
 ## Page Tours
 
-- Companies page tour opens and can be dismissed.
-- Partners page tour explains ownership/current ownership.
-- Representatives page tour explains card status vs authority status.
-- Branches page tour explains branch is not a company.
-- Organization/facilities page tours explain boundary with branch.
-- Setup page tour opens on setup readiness target.
+- No page-specific guided tour opens on route changes.
+- No `PageContextTour` usage exists in app routes.
+- Page-specific detail is handled by Action Guide, Operation Hint or Field Helper.
 
 ## Action Guide
 

@@ -1,147 +1,96 @@
 'use client'
 
-import { AlertCircle, CheckCircle2, Clock3, ExternalLink, ListChecks, ListTodo, ShieldCheck, Wrench } from 'lucide-react'
+import { ExternalLink } from 'lucide-react'
 import type { UnifiedActionItem } from '@/lib/action-center/actionCenter.types'
+import { notificationCardParts, notificationStatusLabel } from '@/lib/notifications/notificationPresentation'
+import { notificationService, type NotificationRecord } from '@/lib/services/notifications'
+
+type ActionCenterDisplayItem = NotificationRecord | UnifiedActionItem
 
 type ActionCenterItemProps = {
-  item: UnifiedActionItem
+  item: ActionCenterDisplayItem
   compact?: boolean
   onNavigate?: () => void
 }
 
-export function ActionCenterItem({ item, compact = false, onNavigate }: ActionCenterItemProps) {
-  const primaryAction = item.suggested_actions?.find(action => action.target_page && !action.disabled)
-  const disabledAction = item.suggested_actions?.find(action => action.disabled)
+export function ActionCenterItem({ item, onNavigate }: ActionCenterItemProps) {
+  const parts = isNotificationRecord(item) ? notificationCardParts(item) : actionItemParts(item)
+  const statusLabel = isNotificationRecord(item) ? notificationStatusLabel(item.status) : actionItemStatusLabel(item.status)
+
+  async function openItem() {
+    try {
+      if (isNotificationRecord(item) && item.status === 'unread') await notificationService.markRead(item.id)
+    } finally {
+      onNavigate?.()
+      window.location.href = parts.targetPage
+    }
+  }
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-3 shadow-sm dark:border-gray-800 dark:bg-gray-950">
-      <div className="flex items-start gap-3">
-        <span className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${iconClass(item.severity)}`}>
-          {sourceIcon(item)}
-        </span>
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-start gap-2">
-            <h4 className="min-w-0 flex-1 text-sm font-semibold text-gray-900 dark:text-gray-100">
-              {item.title}
-            </h4>
-            <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${badgeClass(item.severity)}`}>
-              {statusText(item)}
-            </span>
+    <button
+      type="button"
+      onClick={openItem}
+      className="w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-left shadow-sm transition-colors hover:border-eden-blue/40 hover:bg-blue-50/40 dark:border-gray-800 dark:bg-gray-950 dark:hover:border-eden-blue/50 dark:hover:bg-eden-navy/50"
+    >
+      <div className="flex min-w-0 items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="truncate text-sm font-semibold text-gray-900 dark:text-gray-100">
+            {parts.recordLabel}
           </div>
-          {item.description && (
-            <p className="mt-1 text-xs leading-5 text-gray-600 dark:text-gray-300">
-              {item.description}
-            </p>
-          )}
-          {!compact && (
-            <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-gray-500 dark:text-gray-400">
-              <span>{sourceText(item.source_type)}</span>
-              <span>{moduleText(item.module_key)}</span>
-              {item.record_label && <span>{item.record_label}</span>}
-              {item.due_at && <span>Son tarih: {formatDate(item.due_at)}</span>}
-            </div>
-          )}
-          {compact && (
-            <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-gray-500 dark:text-gray-400">
-              <span>{sourceText(item.source_type)}</span>
-              <span>{moduleText(item.module_key)}</span>
-              {item.due_at && <span>Son tarih: {formatDate(item.due_at)}</span>}
-            </div>
-          )}
-          <div className="mt-3 flex flex-wrap gap-2">
-            {primaryAction && (
-              <a
-                href={primaryAction.target_page}
-                onClick={onNavigate}
-                className="inline-flex min-h-11 items-center gap-1 rounded-md bg-eden-blue px-3 py-2 text-xs font-semibold text-white hover:bg-eden-blue-dk sm:min-h-0 sm:px-2.5 sm:py-1.5"
-              >
-                {primaryAction.label}
-                <ExternalLink size={12} />
-              </a>
-            )}
-            {disabledAction && (
-              <button
-                type="button"
-                disabled
-                title={disabledAction.disabled_reason}
-                className="inline-flex min-h-11 items-center gap-1 rounded-md border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-400 dark:border-gray-700 dark:text-gray-500 sm:min-h-0 sm:px-2.5 sm:py-1.5"
-              >
-                {disabledAction.label}
-              </button>
-            )}
+          <div className="mt-0.5 truncate text-xs font-medium text-gray-500 dark:text-gray-400">
+            {parts.cardType}
           </div>
-          {disabledAction?.disabled_reason && (
-            <p className="mt-2 text-[11px] text-gray-500 dark:text-gray-400">{disabledAction.disabled_reason}</p>
-          )}
         </div>
+        <span className="shrink-0 rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-semibold text-gray-600 dark:bg-gray-900 dark:text-gray-300">
+          {statusLabel}
+        </span>
       </div>
-    </div>
+      <div className="mt-1 flex min-w-0 items-center gap-1 text-xs text-gray-700 dark:text-gray-200">
+        <span className="truncate">{parts.pendingAction}</span>
+        <ExternalLink size={12} className="shrink-0 text-gray-400" />
+      </div>
+    </button>
   )
 }
 
-function sourceIcon(item: UnifiedActionItem) {
-  if (item.source_type === 'process_task') return <ListTodo size={16} />
-  if (item.source_type === 'project_task') return <ListChecks size={16} />
-  if (item.source_type === 'approval') return <ShieldCheck size={16} />
-  if (item.source_type === 'operation') return <Wrench size={16} />
-  if (item.source_type === 'outbox' || item.source_type === 'projection' || item.source_type === 'integrity_warning' || item.source_type === 'system') return <AlertCircle size={16} />
-  if (item.status === 'completed') return <CheckCircle2 size={16} />
-  return <Clock3 size={16} />
+function isNotificationRecord(item: ActionCenterDisplayItem): item is NotificationRecord {
+  return 'notification_type' in item && 'user_id' in item
 }
 
-function sourceText(sourceType: UnifiedActionItem['source_type']) {
-  const labels: Record<string, string> = {
-    process_task: 'Surec Gorevi',
-    project_task: 'Proje Gorevi',
+function actionItemParts(item: UnifiedActionItem) {
+  const firstSuggestedTarget = item.suggested_actions?.find(action => action.target_page)?.target_page
+  return {
+    recordLabel: item.record_label || item.title || 'Bekleyen iş',
+    cardType: actionItemTypeLabel(item.source_type),
+    pendingAction: item.description || item.title || 'İşlem bekliyor',
+    targetPage: item.target_page || firstSuggestedTarget || item.suggested_actions?.[0]?.target_page || '/app/surecler',
+  }
+}
+
+function actionItemTypeLabel(sourceType: UnifiedActionItem['source_type']) {
+  const labels: Partial<Record<UnifiedActionItem['source_type'], string>> = {
+    process_task: 'Görev',
+    project_task: 'Görev',
     approval: 'Onay',
-    operation: 'Tamamlanamayan islem',
-    outbox: 'Sistem guncellemesi',
-    projection: 'Liste uyarisi',
-    integrity_warning: 'Dikkat gerektiren durum',
-    module_readiness: 'Kurulum uyarisi',
+    operation: 'İşlem',
+    outbox: 'Sistem işi',
+    projection: 'Sistem işi',
+    integrity_warning: 'Uyarı',
+    module_readiness: 'Kurulum',
     notification: 'Bildirim',
-    system: 'Sistem uyarisi',
-  }
-  return labels[sourceType] || 'Is'
-}
-
-function iconClass(severity: UnifiedActionItem['severity']) {
-  if (severity === 'critical' || severity === 'error') return 'bg-red-50 text-red-700 dark:bg-red-950/30 dark:text-red-200'
-  if (severity === 'warning') return 'bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-200'
-  return 'bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-200'
-}
-
-function badgeClass(severity: UnifiedActionItem['severity']) {
-  if (severity === 'critical' || severity === 'error') return 'bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-200'
-  if (severity === 'warning') return 'bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-200'
-  return 'bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-200'
-}
-
-function statusText(item: UnifiedActionItem) {
-  if (item.status === 'failed') return 'Tamamlanamadi'
-  if (item.status === 'waiting') return 'Bekliyor'
-  if (item.status === 'in_progress') return 'Devam ediyor'
-  if (item.status === 'completed') return 'Tamamlandi'
-  return 'Acik'
-}
-
-function moduleText(moduleKey?: string | null) {
-  const labels: Record<string, string> = {
-    companies: 'Sirketlerimiz',
-    branches: 'Subelerimiz',
-    partners: 'Ortaklarimiz',
-    representatives: 'Temsilcilerimiz',
-    process: 'Surecler',
-    project_management: 'Proje ve Gorevler',
     system: 'Sistem',
-    settings: 'Sistem',
-    sirket: 'Sirketlerimiz',
   }
-  return labels[String(moduleKey || '')] || 'Eden ERP'
+  return labels[sourceType] || 'Bekleyen iş'
 }
 
-function formatDate(value: string) {
-  const date = new Date(value)
-  if (!Number.isFinite(date.getTime())) return value
-  return date.toLocaleDateString('tr-TR', { day: '2-digit', month: 'short' })
+function actionItemStatusLabel(status: UnifiedActionItem['status']) {
+  const labels: Record<UnifiedActionItem['status'], string> = {
+    open: 'Açık',
+    in_progress: 'İşlemde',
+    waiting: 'Bekliyor',
+    failed: 'Başarısız',
+    completed: 'Tamamlandı',
+    dismissed: 'Tamamlandı',
+  }
+  return labels[status] || status
 }

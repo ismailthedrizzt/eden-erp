@@ -16,8 +16,6 @@ import {
   ShieldCheck,
   XCircle,
 } from 'lucide-react'
-import { PageContextTour } from '@/components/onboarding/PageContextTour'
-import { pageTourSteps } from '@/components/onboarding/tourSteps'
 import {
   addTaskComment,
   approveApproval,
@@ -91,7 +89,6 @@ export default function ProcessDetailPage() {
 
   return (
     <main className="mx-auto flex max-w-7xl flex-col gap-5 p-4 sm:p-6">
-      <PageContextTour tourKey="process-detail" steps={pageTourSteps.processDetail || []} />
 
       <div className="flex items-center justify-between gap-3">
         <button

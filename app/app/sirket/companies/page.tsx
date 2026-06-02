@@ -27,8 +27,6 @@ import {
 import { Toast } from '@/components/ui/Toast'
 import { DraftCreateNotice } from '@/components/ui/DraftCreateNotice'
 import { SmartEmptyState } from '@/components/ui/SmartEmptyState'
-import { PageContextTour } from '@/components/onboarding/PageContextTour'
-import { pageTourSteps } from '@/components/onboarding/tourSteps'
 import { useRegisterActionGuideContext } from '@/components/ai/ActionGuideContext'
 import { RecordPendingActionsPanel } from '@/components/action-center/RecordPendingActionsPanel'
 import type { AnyDashboardWidgetConfig } from '@/components/dashboard/dashboard.types'
@@ -748,8 +746,7 @@ export default function SirketlerPage() {
     if (searchParams.get('systemTour') !== 'lifecycle') return
     if (tourLifecycleOpenedRef.current || pageState !== 'list' || loading) return
 
-    const draftCompany = tableData.find(row => getCompanyLifecycleStatus(row) === 'draft')
-      || createTourDraftCompany()
+    const draftCompany = tableData[0] || createTourDraftCompany()
     tourLifecycleOpenedRef.current = true
     setFormError(null)
     setFieldErrors({})
@@ -1812,7 +1809,6 @@ export default function SirketlerPage() {
           : { onBackClick: (bannerConfig as any).onBackClick }
         )}
       />
-      <PageContextTour tourKey="companies" steps={pageTourSteps.companies} enabled={pageState === 'list' || pageState === 'view'} />
 
       {toast && (
         <Toast

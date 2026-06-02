@@ -63,6 +63,7 @@ async def notifications_list(
     module_key: str | None = Query(default=None),
     severity: str | None = Query(default=None),
     priority: str | None = Query(default=None),
+    status_values: str | None = Query(default=None, alias="statusValues"),
     action_required: bool | None = Query(default=None),
     related_entity_type: str | None = Query(default=None),
     related_entity_id: str | None = Query(default=None),
@@ -75,6 +76,7 @@ async def notifications_list(
     try:
         query = NotificationListQuery(
             status=cast(NotificationStatus | None, status_value),
+            status_values=parse_status_values(status_values),
             notification_type=notification_type,
             module_key=module_key,
             severity=cast(NotificationSeverity | None, severity),
@@ -310,3 +312,15 @@ async def system_email_test(
 def ensure_permission(context: RequestContext, permission_key: str) -> None:
     if not has_permission(context, permission_key):
         raise DomainError("Bu islem icin yetkiniz bulunmuyor.", "PERMISSION_DENIED", status.HTTP_403_FORBIDDEN)
+
+
+def parse_status_values(value: str | None) -> list[NotificationStatus]:
+    if not value:
+        return []
+    allowed = {"unread", "read", "dismissed", "archived"}
+    statuses: list[str] = []
+    for item in value.split(","):
+        normalized = item.strip()
+        if normalized in allowed and normalized not in statuses:
+            statuses.append(normalized)
+    return cast(list[NotificationStatus], statuses)

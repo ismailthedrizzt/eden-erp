@@ -258,7 +258,7 @@ Guided Tour ve Contextual Help, kullaniciya teknik mimariyi anlatmak yerine bulu
 
 `+ Ekle` standart sayfalarda taslak kayit olusturur. Resmi sonuc doguran unvan degisikligi, sermaye artirimi, sube acilisi, ortaklik girisi ve temsil yetkisi gibi islemler ilgili sihirbazlarla tamamlanir.
 
-Genel tur ve sayfa mini turlari kullanici calisma alani tercihleri icinde saklanir. Cookie'ye guvenilmez; backend user state tamamlanan turu, kapatilan sayfa turlarini ve kapatilan operasyon ipuclarini tutar.
+Tek global onboarding turu kullanici calisma alani tercihleri icinde saklanir. Cookie'ye guvenilmez; backend user state tamamlanan turu ve kapatilan operasyon ipuclarini tutar. Sayfa veya modul bazli guided tour uretilmez; detayli yardim yerel LLM destekli AI Islem Rehberi, field helper ve operation hint ile verilir.
 
 EntityForm kilitli alanlari sessizce kapatmaz. Yardim ikonu alani neden degistiremedigini, hangi islemle degisecegini, varsa yetki/modul/kayit durumu engelini ve AI Islem Rehberi baglantisini gosterir.
 

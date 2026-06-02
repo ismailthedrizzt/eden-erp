@@ -10,6 +10,7 @@ export interface TourStep {
   path?: string
   navigateOnNext?: string
   clickOnNext?: string | string[]
+  spotlightPadding?: number
 }
 
 export interface TourTargetRect {

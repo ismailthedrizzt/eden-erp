@@ -25,6 +25,8 @@ Yeni musteri ilk giriste bos ve teknik bir ERP ile karsilasmaz. Eden ERP, calism
 ## Ilke
 Ilk giriste kullanici teknik kurulum ekranlariyla bas basa birakilmaz. Sistem, "simdi ne yapmaliyim?" sorusuna is dilinde yanit verir. Kritik onboarding state'i cookie ile degil backend tarafinda saklanir.
 
+Tek onboarding turu vardir: global sistem turu. Eden ERP'nin form, liste, durum ve resmi islem mimarisi ortak oldugu icin sayfa veya modul bazli guided tour uretilmez. Detayli yardim yerel LLM destekli AI Islem Rehberi, field helper ve operation hint katmanlarina aittir.
+
 ## Workspace Onboarding State
 `workspace_onboarding_state` tenant seviyesinde tutulur.
 
@@ -64,6 +66,7 @@ Alanlar:
 Kural:
 - Genel tur user-level kalir.
 - Workspace checklist tenant-level kalir.
+- Sayfa bazli tour yoktur; `completedPageTours` gibi legacy alanlar yeni davranis icin kullanilmaz.
 - Kullanici yardim durumunu sifirlayabilir.
 - Onboarding tamamlandiysa ilk giris welcome tekrar otomatik acilmaz.
 

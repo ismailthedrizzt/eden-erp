@@ -6,9 +6,8 @@ import { usePathname, useSearchParams } from 'next/navigation'
 import Sidebar from '@/components/layout/Sidebar'
 import { DemoModeBadge } from '@/components/layout/DemoModeBadge'
 import { EnvironmentBadge } from '@/components/release/EnvironmentBadge'
-import { ProductVersionBadge } from '@/components/layout/ProductVersionBadge'
 import { PendingActionsBell } from '@/components/layout/PendingActionsBell'
-import { Bell, Building2, Check, ChevronDown, Home, LayoutDashboard, ListChecks, Loader2, Menu, Moon, MoreHorizontal, Star, Sun, Users, WalletCards } from 'lucide-react'
+import { Bell, Building2, Check, ChevronDown, Home, LayoutDashboard, ListChecks, Loader2, Map, Menu, Moon, MoreHorizontal, Star, Sun, Users, WalletCards } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ModuleLicenseProvider } from '@/hooks/useModuleLicense'
 import { PermissionProvider } from '@/lib/security/permissionStore'
@@ -286,6 +285,14 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
     syncUiPreferencesPatch({ theme: nextTheme }).catch(() => undefined)
   }
 
+  function startSystemTour() {
+    setTourInitialStep(null)
+    setTourClosedThisSession(false)
+    setTourShouldOpen(true)
+    setTourOpen(false)
+    window.setTimeout(() => setTourOpen(true), 0)
+  }
+
   function toggleSidebar() {
     setCollapsed(previous => {
       const next = !previous
@@ -434,7 +441,6 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
               >
                 <Menu size={16} />
               </button>
-              <ProductVersionBadge className="hidden md:inline-flex" />
               <EnvironmentBadge className="hidden md:inline-flex" />
               <DemoModeBadge />
               <div ref={workspaceMenuRef} data-tour-id="workspace-switcher" className="relative hidden sm:block">
@@ -546,6 +552,16 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
             <div className="min-w-0 flex-1" />
             <div className="flex items-center gap-2 sm:gap-3">
               <PendingActionsBell />
+              <button
+                type="button"
+                onClick={startSystemTour}
+                data-tour-id="guided-tour-button"
+                className="flex h-9 w-9 items-center justify-center rounded-lg border border-gray-200 text-gray-500 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-eden-navy"
+                title="Sistem turunu başlat"
+                aria-label="Sistem turunu başlat"
+              >
+                <Map size={16} />
+              </button>
               <div data-tour-id="user-settings" className="flex items-center gap-2 sm:gap-3">
               <button
                 onClick={toggleTheme}

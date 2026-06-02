@@ -6,6 +6,7 @@ import {
   withTenantInsertScopeForTable,
   type TenantContext,
 } from '@/lib/tenancy/server'
+import { createProcessApprovalNotification, dismissWorkNotifications } from '@/lib/services/notifications/processNotification.server'
 import type { ProcessApproval, ProcessInstance, ProcessStepDefinition } from './process.types'
 
 export class ProcessApprovalService {
@@ -37,6 +38,7 @@ export class ProcessApprovalService {
 
     const { data, error } = await this.supabase.from('process_approvals').insert(row).select('*').single()
     if (error) throw error
+    await createProcessApprovalNotification(this.supabase, this.tenantContext, data as Record<string, any>).catch(() => undefined)
     return data as ProcessApproval
   }
 
@@ -62,29 +64,35 @@ export class ProcessApprovalService {
   }
 
   async approve(id: string, approverId?: string | null, decisionNote?: string | null) {
-    return this.update(id, {
+    const approval = await this.update(id, {
       status: 'approved',
       approver_id: approverId || null,
       decision_note: decisionNote || null,
       decided_at: new Date().toISOString(),
     })
+    await dismissWorkNotifications(this.supabase, this.tenantContext, { approvalId: id, taskId: approval.task_id }).catch(() => undefined)
+    return approval
   }
 
   async reject(id: string, approverId?: string | null, decisionNote?: string | null) {
-    return this.update(id, {
+    const approval = await this.update(id, {
       status: 'rejected',
       approver_id: approverId || null,
       decision_note: decisionNote || null,
       decided_at: new Date().toISOString(),
     })
+    await dismissWorkNotifications(this.supabase, this.tenantContext, { approvalId: id, taskId: approval.task_id }).catch(() => undefined)
+    return approval
   }
 
   async cancelApproval(id: string, reason?: string | null) {
-    return this.update(id, {
+    const approval = await this.update(id, {
       status: 'cancelled',
       decision_note: reason || null,
       decided_at: new Date().toISOString(),
     })
+    await dismissWorkNotifications(this.supabase, this.tenantContext, { approvalId: id, taskId: approval.task_id }).catch(() => undefined)
+    return approval
   }
 
   async getApprovalStatus(id: string) {

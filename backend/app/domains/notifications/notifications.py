@@ -33,7 +33,14 @@ async def list_notifications(
         "limit": query.page_size,
         "offset": (query.page - 1) * query.page_size,
     }
-    if query.status:
+    if query.status_values:
+        status_placeholders = []
+        for index, status_value in enumerate(query.status_values):
+            key = f"status_value_{index}"
+            status_placeholders.append(f":{key}")
+            params[key] = status_value
+        where.append(f"status in ({', '.join(status_placeholders)})")
+    elif query.status:
         where.append("status = :status")
         params["status"] = query.status
     if query.notification_type:
@@ -162,6 +169,88 @@ async def create_notification_for_users(
     return rows
 
 
+async def create_process_task_notifications(
+    session: AsyncSession,
+    context: dict[str, Any],
+    task: dict[str, Any],
+) -> list[dict[str, Any]]:
+    if not await table_exists(session, "public.notifications"):
+        return []
+    user_ids = await _resolve_notification_user_ids(
+        session,
+        context,
+        direct_user_id=task.get("assigned_to"),
+        role_key=task.get("assigned_role"),
+        permission_key=task.get("assigned_permission"),
+    )
+    if not user_ids:
+        return []
+
+    payload = _process_task_notification_payload(task)
+    return await create_notification_for_users(session, context, user_ids, payload)
+
+
+async def create_process_approval_notifications(
+    session: AsyncSession,
+    context: dict[str, Any],
+    approval: dict[str, Any],
+) -> list[dict[str, Any]]:
+    if not await table_exists(session, "public.notifications"):
+        return []
+    user_ids = await _resolve_notification_user_ids(
+        session,
+        context,
+        direct_user_id=approval.get("approver_id"),
+        role_key=approval.get("approver_role"),
+        permission_key=approval.get("approver_permission"),
+    )
+    if not user_ids:
+        return []
+
+    payload = _process_approval_notification_payload(approval)
+    return await create_notification_for_users(session, context, user_ids, payload)
+
+
+async def dismiss_work_notifications(
+    session: AsyncSession,
+    context: dict[str, Any],
+    *,
+    task_id: str | None = None,
+    approval_id: str | None = None,
+    process_instance_id: str | None = None,
+) -> dict[str, int]:
+    if not await table_exists(session, "public.notifications"):
+        return {"updated": 0}
+    targets: list[str] = []
+    params: dict[str, Any] = {"tenant_id": context["tenant_id"]}
+    if task_id:
+        targets.append("task_id = :task_id")
+        params["task_id"] = task_id
+    if approval_id:
+        targets.append("approval_id = :approval_id")
+        params["approval_id"] = approval_id
+    if process_instance_id:
+        targets.append("process_instance_id = :process_instance_id")
+        params["process_instance_id"] = process_instance_id
+    if not targets:
+        return {"updated": 0}
+
+    result = await session.execute(
+        text(
+            f"""
+            update public.notifications
+            set status = 'dismissed',
+                dismissed_at = now()
+            where tenant_id = :tenant_id
+              and status in ('unread','read')
+              and ({' or '.join(targets)})
+            """
+        ),
+        params,
+    )
+    return {"updated": int(getattr(result, "rowcount", 0) or 0)}
+
+
 async def mark_read(
     session: AsyncSession,
     context: dict[str, Any],
@@ -212,7 +301,16 @@ async def get_unread_counts(session: AsyncSession, context: dict[str, Any]) -> d
               count(*) filter (where status = 'unread') as unread,
               count(*) filter (where status = 'unread' and priority in ('high','urgent')) as high_priority,
               count(*) filter (where status = 'unread' and severity in ('error','critical')) as critical,
-              count(*) filter (where status = 'unread' and action_required) as action_required
+              count(*) filter (where status = 'unread' and action_required) as action_required,
+              count(*) filter (where status in ('unread','read')) as pending_total,
+              count(*) filter (
+                where status in ('unread','read')
+                  and (
+                    task_id is not null
+                    or notification_type like 'task_%'
+                    or notification_type like 'process_task%'
+                  )
+              ) as pending_tasks
             from public.notifications
             where tenant_id = :tenant_id and user_id = :user_id
             """
@@ -273,7 +371,7 @@ async def _find_duplicate_unread(
               and notification_type = :notification_type
               and related_entity_type = :related_entity_type
               and related_entity_id = :related_entity_id
-              and status = 'unread'
+              and status in ('unread','read')
             order by created_at desc
             limit 1
             """
@@ -304,6 +402,8 @@ async def _merge_duplicate(
                 message = :message,
                 severity = :severity,
                 priority = :priority,
+                status = 'unread',
+                read_at = null,
                 due_at = :due_at,
                 expires_at = :expires_at,
                 delivered_channels = cast(:delivered_channels as jsonb),
@@ -416,6 +516,295 @@ def _public_notification(row: dict[str, Any]) -> dict[str, Any]:
         for key, value in row.items()
         if key not in {"tenant_id"}
     }
+
+
+async def _resolve_notification_user_ids(
+    session: AsyncSession,
+    context: dict[str, Any],
+    *,
+    direct_user_id: Any = None,
+    role_key: Any = None,
+    permission_key: Any = None,
+) -> list[str]:
+    user_ids: set[str] = set()
+    if direct_user_id:
+        user_ids.add(str(direct_user_id))
+
+    role = _string_or_none(role_key)
+    permission = _string_or_none(permission_key)
+    if role and await table_exists(session, "public.security_user_roles") and await table_exists(session, "public.security_roles"):
+        await _add_security_role_users(session, context, user_ids, role)
+    if permission and await table_exists(session, "public.security_user_roles") and await table_exists(session, "public.security_roles") and await table_exists(session, "public.security_role_permissions"):
+        await _add_security_permission_users(session, context, user_ids, permission)
+    if role and await table_exists(session, "public.user_roles") and await table_exists(session, "public.roles"):
+        await _add_legacy_role_users(session, context, user_ids, role)
+    if permission and await table_exists(session, "public.user_roles") and await table_exists(session, "public.role_permissions") and await table_exists(session, "public.permissions"):
+        await _add_legacy_permission_users(session, context, user_ids, permission)
+    return sorted(user_ids)
+
+
+async def _add_security_role_users(
+    session: AsyncSession,
+    context: dict[str, Any],
+    user_ids: set[str],
+    role_key: str,
+) -> None:
+    profile_exists = await table_exists(session, "public.security_users_profile")
+    user_select = "coalesce(p.auth_user_id::text, ur.user_id::text)" if profile_exists else "ur.user_id::text"
+    profile_join = "left join public.security_users_profile p on p.id = ur.user_id" if profile_exists else ""
+    result = await session.execute(
+        text(
+            f"""
+            select distinct {user_select} as user_id
+            from public.security_user_roles ur
+            join public.security_roles r on r.id = ur.role_id
+            {profile_join}
+            where ur.tenant_id = :tenant_id
+              and r.status = 'active'
+              and r.role_key = :role_key
+            """
+        ),
+        {"tenant_id": context["tenant_id"], "role_key": role_key},
+    )
+    user_ids.update(str(row["user_id"]) for row in result.mappings().all() if row.get("user_id"))
+
+
+async def _add_security_permission_users(
+    session: AsyncSession,
+    context: dict[str, Any],
+    user_ids: set[str],
+    permission_key: str,
+) -> None:
+    profile_exists = await table_exists(session, "public.security_users_profile")
+    user_select = "coalesce(p.auth_user_id::text, ur.user_id::text)" if profile_exists else "ur.user_id::text"
+    profile_join = "left join public.security_users_profile p on p.id = ur.user_id" if profile_exists else ""
+    result = await session.execute(
+        text(
+            f"""
+            select distinct {user_select} as user_id
+            from public.security_user_roles ur
+            join public.security_roles r on r.id = ur.role_id
+            join public.security_role_permissions rp on rp.role_id = r.id and rp.granted = true
+            {profile_join}
+            where ur.tenant_id = :tenant_id
+              and r.status = 'active'
+              and rp.permission_key = :permission_key
+            """
+        ),
+        {"tenant_id": context["tenant_id"], "permission_key": permission_key},
+    )
+    user_ids.update(str(row["user_id"]) for row in result.mappings().all() if row.get("user_id"))
+
+
+async def _add_legacy_role_users(
+    session: AsyncSession,
+    context: dict[str, Any],
+    user_ids: set[str],
+    role_key: str,
+) -> None:
+    result = await session.execute(
+        text(
+            """
+            select distinct ur.user_id::text as user_id
+            from public.user_roles ur
+            join public.roles r on r.id = ur.role_id
+            where ur.status = 'active'
+              and r.status = 'active'
+              and r.role_key = :role_key
+              and (ur.instance_id = :tenant_id or ur.instance_id is null)
+            """
+        ),
+        {"tenant_id": context["tenant_id"], "role_key": role_key},
+    )
+    user_ids.update(str(row["user_id"]) for row in result.mappings().all() if row.get("user_id"))
+
+
+async def _add_legacy_permission_users(
+    session: AsyncSession,
+    context: dict[str, Any],
+    user_ids: set[str],
+    permission_key: str,
+) -> None:
+    result = await session.execute(
+        text(
+            """
+            select distinct ur.user_id::text as user_id
+            from public.user_roles ur
+            join public.role_permissions rp on rp.role_id = ur.role_id
+            join public.permissions p on p.id = rp.permission_id
+            where ur.status = 'active'
+              and p.permission_key = :permission_key
+              and (ur.instance_id = :tenant_id or ur.instance_id is null)
+            """
+        ),
+        {"tenant_id": context["tenant_id"], "permission_key": permission_key},
+    )
+    user_ids.update(str(row["user_id"]) for row in result.mappings().all() if row.get("user_id"))
+
+
+def _process_task_notification_payload(task: dict[str, Any]) -> dict[str, Any]:
+    metadata = _notification_card_metadata(task, default_action=_string_or_none(task.get("title")) or "İşlem bekliyor")
+    return {
+        "company_id": task.get("company_id"),
+        "module_key": task.get("module_key") or "process",
+        "notification_type": "process_task_created",
+        "title": metadata["record_label"],
+        "message": metadata["message"],
+        "severity": "info",
+        "priority": "normal",
+        "action_required": True,
+        "action_key": "open_process_task",
+        "action_label": "Aç",
+        "target_page": metadata["target_page"],
+        "related_entity_type": metadata["entity_type"],
+        "related_entity_id": metadata["entity_id"],
+        "related_record_label": metadata["record_label"],
+        "process_instance_id": task.get("process_instance_id"),
+        "task_id": task.get("id"),
+        "due_at": task.get("due_at"),
+        "metadata_json": metadata,
+    }
+
+
+def _process_approval_notification_payload(approval: dict[str, Any]) -> dict[str, Any]:
+    metadata = _notification_card_metadata(approval, default_action="Onay bekliyor")
+    return {
+        "company_id": approval.get("company_id"),
+        "module_key": approval.get("module_key") or "process",
+        "notification_type": "approval_requested",
+        "title": metadata["record_label"],
+        "message": metadata["message"],
+        "severity": "warning",
+        "priority": "high",
+        "action_required": True,
+        "action_key": "open_process_approval",
+        "action_label": "Aç",
+        "target_page": metadata["target_page"],
+        "related_entity_type": metadata["entity_type"],
+        "related_entity_id": metadata["entity_id"],
+        "related_record_label": metadata["record_label"],
+        "process_instance_id": approval.get("process_instance_id"),
+        "task_id": approval.get("task_id"),
+        "approval_id": approval.get("id"),
+        "metadata_json": metadata,
+    }
+
+
+def _notification_card_metadata(row: dict[str, Any], *, default_action: str) -> dict[str, Any]:
+    payload = _json_object(row.get("payload_json"))
+    entity_type = _first_text(row.get("entity_type"), payload.get("entity_type"), row.get("related_entity_type"))
+    entity_id = _first_text(row.get("entity_id"), payload.get("entity_id"), row.get("related_entity_id"))
+    entity_label = _entity_type_label(entity_type)
+    record_label = _first_text(
+        payload.get("related_record_label"),
+        payload.get("record_label"),
+        payload.get("display_name"),
+        payload.get("full_name"),
+        row.get("related_record_label"),
+        row.get("title"),
+        entity_id,
+        "Kayıt",
+    )
+    status_label = _record_status_label(_first_text(payload.get("record_status_label"), payload.get("status_label"), payload.get("record_status")))
+    pending_action = _first_text(payload.get("pending_action_label"), payload.get("operation_label"), row.get("title"), default_action)
+    card_type = " ".join(item for item in [status_label, entity_label] if item).strip() or entity_label or "Kayıt"
+    target_page = _first_text(payload.get("target_page"), row.get("target_page"), _record_target_page(entity_type, entity_id), _process_target_page(row))
+    message = f"{card_type}, {pending_action}"
+    return {
+        **payload,
+        "entity_type": entity_type,
+        "entity_id": entity_id,
+        "entity_type_label": entity_label,
+        "record_status_label": status_label,
+        "record_label": record_label,
+        "card_type": card_type,
+        "pending_action_label": pending_action,
+        "target_page": target_page,
+        "message": message,
+    }
+
+
+def _record_target_page(entity_type: str | None, entity_id: str | None) -> str | None:
+    if not entity_type or not entity_id:
+        return None
+    target_map = {
+        "company": "/app/sirket/companies",
+        "branch": "/app/sirket/companies/branches",
+        "company_branch": "/app/sirket/companies/branches",
+        "partner": "/app/sirket/companies/partners",
+        "company_partner": "/app/sirket/companies/partners",
+        "representative": "/app/sirket/companies/representatives",
+        "company_representative": "/app/sirket/companies/representatives",
+        "employee": "/app/ik/personel",
+        "hr_employee": "/app/ik/personel",
+    }
+    base = target_map.get(entity_type)
+    if not base:
+        return None
+    return f"{base}?id={entity_id}&action=notification"
+
+
+def _process_target_page(row: dict[str, Any]) -> str:
+    process_id = _string_or_none(row.get("process_instance_id"))
+    return f"/app/surecler/{process_id}" if process_id else "/app/surecler"
+
+
+def _entity_type_label(entity_type: str | None) -> str:
+    labels = {
+        "company": "Şirket",
+        "branch": "Şube",
+        "company_branch": "Şube",
+        "partner": "Ortak",
+        "company_partner": "Ortak",
+        "representative": "Temsilci",
+        "company_representative": "Temsilci",
+        "employee": "Çalışan",
+        "hr_employee": "Çalışan",
+        "person": "Gerçek Kişi",
+    }
+    return labels.get(str(entity_type or ""), "Kayıt")
+
+
+def _record_status_label(value: str | None) -> str:
+    labels = {
+        "draft": "Taslak",
+        "taslak": "Taslak",
+        "active": "Aktif",
+        "aktif": "Aktif",
+        "passive": "Pasif",
+        "pasif": "Pasif",
+        "pending": "Onayda",
+        "pending_approval": "Onayda",
+        "waiting_approval": "Onayda",
+    }
+    return labels.get(str(value or "").strip().lower(), str(value or "").strip())
+
+
+def _json_object(value: Any) -> dict[str, Any]:
+    if isinstance(value, dict):
+        return value
+    if isinstance(value, str):
+        try:
+            parsed = json.loads(value)
+        except json.JSONDecodeError:
+            return {}
+        return parsed if isinstance(parsed, dict) else {}
+    return {}
+
+
+def _first_text(*values: Any) -> str:
+    for value in values:
+        text_value = _string_or_none(value)
+        if text_value:
+            return text_value
+    return ""
+
+
+def _string_or_none(value: Any) -> str | None:
+    if value is None:
+        return None
+    text_value = str(value).strip()
+    return text_value or None
 
 
 async def _audit_if_critical(

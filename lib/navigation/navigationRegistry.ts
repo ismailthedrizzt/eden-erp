@@ -85,10 +85,6 @@ export const navigationItems = [
     fallbackPermission: 'companies.view',
     featureFlag: 'documents.enabled',
   }),
-  item('notifications', 'Bildirimler', '/app/ayarlar/bildirimler', 'bell', 'notifications', 510, {
-    permission: 'notifications.view',
-    featureFlag: 'notifications.enabled',
-  }),
   item('settings', 'Sistem Yonetimi', '/app/sistem', 'settings', 'adminConsole', 900, {
     permission: 'adminConsole.view',
     fallbackPermission: 'settings.view',

@@ -20,8 +20,6 @@ import {
 import { Toast } from '@/components/ui/Toast'
 import { DraftCreateNotice } from '@/components/ui/DraftCreateNotice'
 import { SmartEmptyState } from '@/components/ui/SmartEmptyState'
-import { PageContextTour } from '@/components/onboarding/PageContextTour'
-import { pageTourSteps } from '@/components/onboarding/tourSteps'
 import { useRegisterActionGuideContext } from '@/components/ai/ActionGuideContext'
 import { normalizeCountryId } from '@/lib/reference/country-nationalities'
 import { isSoftDeletedRecord } from '@/lib/forms/entityState'
@@ -965,7 +963,6 @@ export default function TemsilcilerPage() {
           : { onBackClick: (bannerConfig as any).onBackClick }
         )}
       />
-      <PageContextTour tourKey="representatives" steps={pageTourSteps.representatives} enabled={pageState === 'list' || pageState === 'view'} />
 
       {toast && <Toast type={toast.type} title={toast.title} message={toast.message} onClose={() => setToast(null)} />}
 

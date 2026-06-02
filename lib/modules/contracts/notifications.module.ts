@@ -34,7 +34,6 @@ export const notificationsModule: ModuleContract = {
     { path: '/api/system/email/messages', type: 'api', permission: PERMISSIONS.notifications.emailAdmin },
   ],
   menus: [
-    { label: 'Bildirim Ayarlari', path: '/app/ayarlar/bildirimler', icon: 'BellRing', order: 510, permission: PERMISSIONS.notifications.view, featureFlag: 'notifications.enabled' },
     { label: 'Sistem E-postalari', path: '/app/sistem/e-postalar', icon: 'Mail', order: 936, permission: PERMISSIONS.notifications.emailAdmin, featureFlag: 'notifications.email' },
   ],
   permissions: [
@@ -45,9 +44,6 @@ export const notificationsModule: ModuleContract = {
     { key: PERMISSIONS.notifications.remindersManage, label: 'Hatirlatmalari yonet' },
   ],
   actions: [
-    { key: 'view_notifications', label: 'Bildirimleri gor', actionType: 'navigate', targetPage: '/app/ayarlar/bildirimler', permission: PERMISSIONS.notifications.view, featureFlag: 'notifications.inApp' },
-    { key: 'manage_notification_preferences', label: 'Bildirim tercihlerini duzenle', actionType: 'navigate', targetPage: '/app/ayarlar/bildirimler', permission: PERMISSIONS.notifications.manage, featureFlag: 'notifications.enabled' },
-    { key: 'manage_reminders', label: 'Hatirlatmalari yonet', actionType: 'navigate', targetPage: '/app/ayarlar/bildirimler', permission: PERMISSIONS.notifications.remindersManage, featureFlag: 'notifications.reminders' },
     { key: 'view_system_emails', label: 'Sistem e-posta kuyrugunu gor', actionType: 'navigate', targetPage: '/app/sistem/e-postalar', permission: PERMISSIONS.notifications.emailAdmin, featureFlag: 'notifications.email' },
     { key: 'retry_failed_email', label: 'Basarisiz e-postayi tekrar dene', actionType: 'navigate', targetPage: '/app/sistem/e-postalar', permission: PERMISSIONS.notifications.emailAdmin, featureFlag: 'notifications.email' },
   ],

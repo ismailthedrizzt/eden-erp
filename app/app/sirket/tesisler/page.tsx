@@ -9,9 +9,7 @@ import { EntityForm, type FormField, type FormMode, type FormTab } from '@/compo
 import { SmartDataTable, type ColumnDef, type WidgetDef } from '@/components/ui/SmartDataTable'
 import { SmartEmptyState } from '@/components/ui/SmartEmptyState'
 import { Toast } from '@/components/ui/Toast'
-import { PageContextTour } from '@/components/onboarding/PageContextTour'
 import { OperationHint } from '@/components/onboarding/OperationHint'
-import { pageTourSteps } from '@/components/onboarding/tourSteps'
 import { useRegisterActionGuideContext } from '@/components/ai/ActionGuideContext'
 import { formControlClass } from '@/components/ui/formControlStyles'
 import { cn } from '@/lib/utils'
@@ -211,7 +209,6 @@ export default function FacilitiesPage() {
         icon={<Warehouse size={24} />}
         {...(pageState === 'list' ? { onAddClick: openCreate, addButtonText: 'Yeni Tesis/Lokasyon', addButtonTourId: 'quick-actions' } : { onBackClick: () => setPageState('list') })}
       />
-      <PageContextTour tourKey="facilities" steps={pageTourSteps.facilities || []} enabled={pageState === 'list' || pageState === 'view'} />
       {toast && <Toast type={toast.type} title={toast.title} message={toast.message} onClose={() => setToast(null)} />}
 
       {pageState === 'list' && (

@@ -9,6 +9,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.errors import DomainError
 from app.core.serialization import row_to_dict, rows_to_dicts
+from app.domains.notifications.notifications import (
+    create_process_task_notifications,
+    dismiss_work_notifications,
+)
 from app.domains.operations.service import table_exists
 from app.domains.process.events import emit_process_event
 from app.domains.process.schemas import (
@@ -88,6 +92,7 @@ async def create_task(
         step_key=payload.step_key,
         payload={"task_id": task_id, "title": payload.title},
     )
+    await create_process_task_notifications(session, context, row)
     return row
 
 
@@ -245,6 +250,11 @@ async def complete_task(
         company_id=task.get("company_id"),
         step_key=task.get("step_key"),
         payload={"task_id": task_id},
+    )
+    await dismiss_work_notifications(
+        session,
+        context,
+        task_id=task_id,
     )
     return row
 

@@ -11,9 +11,7 @@ import { SmartDataTable, type ColumnDef, type SortConfig, type TableStatusFilter
 import { Toast } from '@/components/ui/Toast'
 import { SmartEmptyState } from '@/components/ui/SmartEmptyState'
 import { DocumentSlotUploader, type DocumentSlot, type SlotDocument } from '@/components/ui/DocumentSlotUploader'
-import { PageContextTour } from '@/components/onboarding/PageContextTour'
 import { OperationHint } from '@/components/onboarding/OperationHint'
-import { pageTourSteps } from '@/components/onboarding/tourSteps'
 import { useRegisterActionGuideContext } from '@/components/ai/ActionGuideContext'
 import { RecordPendingActionsPanel } from '@/components/action-center/RecordPendingActionsPanel'
 import { CompanyBranchOpeningWizard, type BranchOpeningPrecheckContext, type BranchOpeningSubmitPayload } from '@/components/ui/CompanyBranchOpeningWizard'
@@ -417,7 +415,6 @@ export default function CompanyBranchesPage() {
         icon={<GitBranch size={24} />}
         {...(pageState === 'list' ? { onAddClick: () => setCompanyPickerOpen(true), addButtonText: 'Yeni Şube Aç', addButtonTourId: 'quick-actions' } : { onBackClick: () => setPageState('list') })}
       />
-      <PageContextTour tourKey="branches" steps={pageTourSteps.branches} enabled={pageState === 'list' || pageState === 'view'} />
       {toast && <Toast type={toast.type} title={toast.title} message={toast.message} onClose={() => setToast(null)} />}
       {pageState === 'list' && <div className="mt-6 space-y-4">
         <OperationHint

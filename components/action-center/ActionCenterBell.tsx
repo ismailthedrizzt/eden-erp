@@ -2,33 +2,25 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Bell } from 'lucide-react'
-import { tenantRequestHeaders } from '@/lib/tenancy/client'
-import { normalizeActionCenterSummaryPayload, unwrapActionCenterListPayload } from '@/lib/action-center/actionCenterClient'
-import type { ActionCenterSummary, UnifiedActionItem } from '@/lib/action-center/actionCenter.types'
+import { notificationService, type NotificationCounts, type NotificationRecord } from '@/lib/services/notifications'
 import { ActionCenterPanel } from './ActionCenterPanel'
 
 export function ActionCenterBell() {
   const [open, setOpen] = useState(false)
-  const [items, setItems] = useState<UnifiedActionItem[]>([])
-  const [summary, setSummary] = useState<ActionCenterSummary | null>(null)
+  const [items, setItems] = useState<NotificationRecord[]>([])
+  const [counts, setCounts] = useState<NotificationCounts | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const containerRef = useRef<HTMLDivElement | null>(null)
 
-  const count = summary?.total_open || 0
-  const hasUrgent = Boolean((summary?.urgent_count || 0) > 0 || (summary?.failed_operation_count || 0) > 0)
+  const count = counts?.pending_total ?? counts?.unread ?? 0
+  const hasUrgent = Boolean((counts?.critical || 0) > 0 || (counts?.high_priority || 0) > 0)
 
   const refreshSummary = useCallback(async () => {
     try {
-      const response = await fetch('/api/action-center/summary', {
-        cache: 'no-store',
-        headers: tenantRequestHeaders(),
-      })
-      const payload = await response.json().catch(() => ({}))
-      if (!response.ok) throw new Error(payload.error || 'Is merkezi ozet bilgisi alinamadi.')
-      setSummary(normalizeActionCenterSummaryPayload(payload))
+      setCounts(await notificationService.counts())
     } catch {
-      setSummary(null)
+      setCounts(null)
     }
   }, [])
 
@@ -36,15 +28,9 @@ export function ActionCenterBell() {
     setLoading(true)
     setError(null)
     try {
-      const response = await fetch('/api/action-center?pageSize=30', {
-        cache: 'no-store',
-        headers: tenantRequestHeaders(),
-      })
-      const payload = await response.json().catch(() => ({}))
-      if (!response.ok) throw new Error(payload.error || 'Bekleyen isler alinamadi.')
-      const result = unwrapActionCenterListPayload(payload)
+      const result = await notificationService.list({ statusValues: ['unread', 'read'], pageSize: 30 })
       setItems(result.data)
-      setSummary(previous => result.summary || previous)
+      setCounts(await notificationService.counts())
     } catch (fetchError: any) {
       setError(fetchError.message || 'Bekleyen isler alinamadi.')
     } finally {
@@ -84,7 +70,7 @@ export function ActionCenterBell() {
       >
         <Bell size={16} />
         {count > 0 && (
-          <span className={`absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-bold leading-none text-white ${hasUrgent ? 'bg-red-600' : 'bg-eden-blue'}`}>
+          <span className="absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold leading-none text-white">
             {count > 9 ? '9+' : count}
           </span>
         )}
@@ -93,7 +79,7 @@ export function ActionCenterBell() {
       {open && (
         <ActionCenterPanel
           items={items}
-          summary={summary}
+          counts={counts}
           loading={loading}
           error={error}
           onClose={() => setOpen(false)}
