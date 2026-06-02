@@ -8,7 +8,6 @@ import { DemoModeBadge } from '@/components/layout/DemoModeBadge'
 import { EnvironmentBadge } from '@/components/release/EnvironmentBadge'
 import { ProductVersionBadge } from '@/components/layout/ProductVersionBadge'
 import { PendingActionsBell } from '@/components/layout/PendingActionsBell'
-import { NotificationBell } from '@/components/notifications/NotificationBell'
 import { Bell, Building2, Check, ChevronDown, Home, LayoutDashboard, ListChecks, Loader2, Menu, Moon, MoreHorizontal, Star, Sun, Users, WalletCards } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ModuleLicenseProvider } from '@/hooks/useModuleLicense'
@@ -547,7 +546,6 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
             <div className="min-w-0 flex-1" />
             <div className="flex items-center gap-2 sm:gap-3">
               <PendingActionsBell />
-              <NotificationBell />
               <div data-tour-id="user-settings" className="flex items-center gap-2 sm:gap-3">
               <button
                 onClick={toggleTheme}
