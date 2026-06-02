@@ -9,7 +9,7 @@ Production readiness result: **PILOT_ONLY**.
 
 Gerekce: Eden ERP mimarisi Next.js BFF, FastAPI canonical backend, PostgreSQL/Supabase, policy/scope, audit, outbox and worker ekseninde production'a yaklasmistir. Bu final adimda tenant/company isolation checklistleri, permission matrix, DB index/pooling plani, worker/outbox/audit runbooklari, backup/DR, release/rollback, monitoring, incident response, data retention, portal/integration/AI safety ve load test planlari eklendi. Kucuk platform hardening olarak worker DB pool override, outbox dead-letter status, outbox/webhook `SKIP LOCKED` queue selection ve production index migration hazirlandi.
 
-Production'a acik genel kullanim icin restore rehearsal, load test execution, monitoring dashboard wiring, production secrets verification ve P0/P1 negative security smoke testlerinin staging/production-benzeri ortamda kanitlanmasi gerekir.
+Production'a acik genel kullanim icin restore rehearsal, load test execution, monitoring dashboard wiring, production secrets verification ve P0/P1 negative security smoke testlerinin Development/production-benzeri ortamda kanitlanmasi gerekir.
 
 ## 2. Architecture Status
 
@@ -54,7 +54,7 @@ Required before scale: duplicate-run tests for each worker type.
 - Safe gated index migration added: `supabase/migrations/20260531_production_hardening_indexes.sql`.
 - DB pool variables and worker pool override are documented and wired.
 
-Status: **P1 remaining**: staging EXPLAIN review and load test execution not yet recorded.
+Status: **P1 remaining**: Development EXPLAIN review and load test execution not yet recorded.
 
 ## 7. Worker/Outbox Status
 
@@ -95,7 +95,7 @@ Status: **P1 remaining**: dashboard wiring and alert channel verification requir
 - Worker pause/resume, migration review, smoke test and rollback stages defined.
 
 Status: **Pilot ready**.
-Required before production: one full release rehearsal in staging with rollback drill.
+Required before production: one full release rehearsal in Development with rollback drill.
 
 ## 12. Portal/Integration/AI Safety Status
 
@@ -139,7 +139,7 @@ P2 Scale Improvements:
 ## 14. Required Before Production
 
 - Run full typecheck/build/backend checks.
-- Apply and verify production hardening index migration in staging.
+- Apply and verify production hardening index migration in Development.
 - Run cross-tenant and cross-company negative smoke tests.
 - Run document signed URL/download scope tests.
 - Run portal customer isolation tests.

@@ -7,6 +7,8 @@ import type { ActionGuideResult } from '@/lib/ai/actionGuide'
 import { actionGuideExampleQueries } from '@/lib/action-guide/actionGuideExamples'
 import { tenantRequestHeaders } from '@/lib/tenancy/client'
 import { usePermissions } from '@/lib/security/permissionStore'
+import { getCurrentReleaseEnvironment, type ReleaseEnvironment } from '@/lib/release/environment'
+import { getRouteReleaseDecision } from '@/lib/release/releaseVisibility'
 import { useActionGuideContext } from './ActionGuideContext'
 import { ActionGuidePanel, type ActionGuideChatMessage } from './ActionGuidePanel'
 
@@ -21,6 +23,7 @@ export function ActionGuideSearch({ compact = false, headless = false }: ActionG
   const searchParams = useSearchParams()
   const permissions = usePermissions()
   const { pageContext } = useActionGuideContext()
+  const releaseEnv = getCurrentReleaseEnvironment()
   const [query, setQuery] = useState('')
   const [placeholderIndex, setPlaceholderIndex] = useState(0)
   const [open, setOpen] = useState(false)
@@ -74,7 +77,7 @@ export function ActionGuideSearch({ compact = false, headless = false }: ActionG
       })
       const payload = await response.json().catch(() => ({}))
       if (!response.ok) throw new Error(payload.error || 'Islem rehberi cevap veremedi.')
-      const guideResult = payload as ActionGuideResult
+      const guideResult = applyActionGuideReleaseVisibility(payload as ActionGuideResult, releaseEnv)
       const assistantText = guideResult.assistant_text || guideResult.explanation || guideResult.title || 'Rehber yaniti hazir.'
       const showAsChat = Boolean(guideResult.conversation_only)
       setResult(showAsChat ? null : guideResult)
@@ -98,7 +101,7 @@ export function ActionGuideSearch({ compact = false, headless = false }: ActionG
     } finally {
       setLoading(false)
     }
-  }, [currentRoute, pageContext, pathname, permissions.permissions])
+  }, [currentRoute, pageContext, pathname, permissions.permissions, releaseEnv])
 
   useEffect(() => {
     const onOpenGuide = (event: Event) => {
@@ -196,4 +199,39 @@ export function ActionGuideSearch({ compact = false, headless = false }: ActionG
       {panel}
     </div>
   )
+}
+function applyActionGuideReleaseVisibility(result: ActionGuideResult, env: ReleaseEnvironment): ActionGuideResult {
+  const routeDecision = getRouteReleaseDecision(result.target_page || '/app', env, 'action')
+  const releaseBlockMessage = env === 'release'
+    ? 'Bu islem henuz canli ortamda kullanima acilmadi.'
+    : routeDecision.reason || 'Bu sayfa bu ortamda yayina alinmamis.'
+
+  const suggestedActions = result.suggested_actions.map(action => {
+    if (!action.target_page) return action
+    const actionDecision = getRouteReleaseDecision(action.target_page, env, 'action')
+    if (!actionDecision.visible || !actionDecision.enabled) {
+      return {
+        ...action,
+        disabled: true,
+        disabled_reason: env === 'release'
+          ? 'Bu islem henuz canli ortamda kullanima acilmadi.'
+          : actionDecision.reason || 'Bu sayfa bu ortamda yayina alinmamis.',
+      }
+    }
+    return action
+  })
+
+  if (routeDecision.visible && routeDecision.enabled) {
+    return {
+      ...result,
+      suggested_actions: suggestedActions,
+    }
+  }
+
+  return {
+    ...result,
+    can_start_now: false,
+    blocking_reasons: Array.from(new Set([...result.blocking_reasons, releaseBlockMessage])),
+    suggested_actions: suggestedActions.map(action => ({ ...action, disabled: true, disabled_reason: action.disabled_reason || releaseBlockMessage })),
+  }
 }

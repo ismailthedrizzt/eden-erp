@@ -188,7 +188,7 @@ function cleanupAction(status) {
     case 'proxy_to_fastapi_with_legacy_fallback':
       return 'proxy to FastAPI; remove TS fallback after validation'
     case 'proxy_to_fastapi_with_temporary_fallback':
-      return 'proxy to FastAPI; remove temporary TS fallback after staging verification'
+      return 'proxy to FastAPI; remove temporary TS fallback after Development verification'
     case 'keep_temporary_fallback':
       return 'temporary compatibility bridge; removal must be scheduled'
     case 'keep_bff_proxy':
@@ -241,7 +241,7 @@ function displayStatus(status) {
 
 function removalCondition(row) {
   if (row.targetStatus === 'proxy_to_fastapi') return 'Keep until frontend generated client/direct FastAPI strategy replaces BFF route.'
-  if (row.targetStatus === 'proxy_to_fastapi_with_legacy_fallback') return 'Remove TS fallback after FastAPI endpoint is verified in staging and frontend E2E/smoke passes.'
+  if (row.targetStatus === 'proxy_to_fastapi_with_legacy_fallback') return 'Remove TS fallback after FastAPI endpoint is verified in Development and frontend E2E/smoke passes.'
   if (row.targetStatus === 'deprecated_wrapper') return 'Delete after canonical route or generated/shared contract has no imports.'
   if (row.targetStatus === 'delete_obsolete') return 'Delete immediately after import/reference check.'
   if (row.targetStatus.startsWith('keep_')) return 'Permanent adapter/shared contract; keep thin and do not add ERP domain mutation.'

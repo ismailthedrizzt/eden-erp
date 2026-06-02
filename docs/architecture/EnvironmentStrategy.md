@@ -1,44 +1,106 @@
 # Environment Strategy
 
-Eden ERP deploys as separate but coordinated runtimes: Next.js web/BFF, FastAPI core backend, Python worker and PostgreSQL/Supabase.
+Eden ERP uses one code branch and two environment configurations.
 
-## Local
+## Decision
 
-- Next URL: `http://localhost:3000`
-- FastAPI URL: `http://localhost:8000`
-- DB: local PostgreSQL or Supabase dev project
-- Auth: `AUTH_REQUIRED=false` is allowed
-- Trusted proxy headers: allowed with `ALLOW_TRUSTED_PROXY_HEADERS=true`
-- Logs: readable or JSON
-- Metrics: enabled, internal endpoints may be open for local work
-- Worker: optional loop or `--once`
-- Migrations: manual
-- Seed/demo data: allowed
+- `main` is the only product branch.
+- Local development runs from `main` and points to the Development Supabase project.
+- The Virtual Server runs from `main` and points to the Live/Release Supabase project.
+- Code promotion is no longer branch based. The difference between local and live is only environment variables and server secrets.
+- Ollama runs on the Virtual Server for live AI guide responses. Local Ollama remains optional.
 
-## Development
+## Physical Deployment Model
 
-- Next and FastAPI can run as preview deployments or shared dev containers.
-- Auth can use real Supabase or tightly scoped mock/dev fallback.
-- Debug logs are allowed but sensitive values remain masked.
-- Migrations are controlled manually or by a dev pipeline.
-- Worker can run with small batch sizes.
+| runtime | branch | machine | env file/source | Supabase | Ollama |
+|---|---|---|---|---|---|
+| Local development | `main` | developer machine | `.env.local` | Development Supabase | optional local `127.0.0.1:11434` |
+| Live release | `main` | Virtual Server | `/etc/eden-erp/eden-erp.env` or service env | Live/Release Supabase | VS-local `127.0.0.1:11434` |
 
-## Staging
+Release credentials do not belong in `.env.local`. Development credentials do not belong in the Virtual Server live env file.
 
-- Production-like URLs, real Supabase Auth and production-like CORS.
-- `AUTH_REQUIRED=true`.
-- Trusted proxy headers are hints only; JWT and tenant membership must validate.
-- Migrations run through pipeline or controlled operator command.
-- Load/performance tests can target staging.
-- Worker runs as a separate process/container.
+## Local Development
 
-## Production
+- Branch: `main`
+- Data/Auth/Storage: Development Supabase project
+- Purpose: active development, demo, field test, internal review and migration rehearsal
+- Visibility: `release`, `development`, `development_demo`, `development_internal` and optional `coming_soon` routes can be visible
+- Badges: environment and release status badges can be visible
+- Demo data: allowed
+- Migration/seed/reset: allowed only against Development Supabase
 
-- `AUTH_REQUIRED=true`.
-- Supabase JWT verification is required.
-- `ALLOW_TRUSTED_PROXY_HEADERS=false` unless a controlled internal network policy exists.
-- Secrets are managed by the deployment platform, not files.
-- Metrics/deep health/internal endpoints require `INTERNAL_BACKEND_TOKEN`.
-- Migrations require review and rollout approval.
-- Worker is independently deployable and observable.
-- Seed/demo data is disabled.
+## Live Release
+
+- Branch: `main`
+- Machine: Virtual Server
+- Data/Auth/Storage: Live/Release Supabase project
+- Purpose: clean, approved, user-facing system
+- Visibility: only `release` routes are enabled; `coming_soon` may show a passive state
+- Badges: environment, debug, demo and page status badges are hidden from normal users
+- Demo data: forbidden
+- Migration/seed/reset: forbidden unless a live migration is explicitly approved
+
+## Environment Resolver
+
+Canonical values:
+
+```text
+development
+release
+test
+```
+
+Inputs:
+
+```text
+NEXT_PUBLIC_APP_ENV
+NEXT_PUBLIC_RELEASE_CHANNEL
+VERCEL_ENV
+NODE_ENV
+```
+
+Mapping:
+
+```text
+NEXT_PUBLIC_APP_ENV=release              -> release
+NEXT_PUBLIC_RELEASE_CHANNEL=release      -> release
+NEXT_PUBLIC_APP_ENV=development          -> development
+NEXT_PUBLIC_RELEASE_CHANNEL=development  -> development
+VERCEL_ENV=production                    -> release
+NODE_ENV=development                     -> development
+NODE_ENV=test                            -> test
+```
+
+## Safety Rules
+
+- Live Supabase is protected.
+- Development Supabase is the only target for local migration, seed, reset and demo data work.
+- Live env cannot enable `EDEN_LOGIN_DISABLED`, `EDEN_ALLOW_LEGACY_API_ACCESS` or `NEXT_PUBLIC_DEMO_MODE`.
+- Live env cannot enable `ALLOW_RELEASE_DB_SEED` or `ALLOW_RELEASE_DB_RESET`.
+- Live migration requires `ALLOW_RELEASE_DB_MIGRATION=true` and `RELEASE_MIGRATION_APPROVED_BY=<name>`.
+- `NEXT_PUBLIC_*` variables must never contain service role keys, internal backend tokens, JWT secrets or private keys.
+- Service role keys must stay server-side.
+
+## Required Checks
+
+```bash
+npm run release:check
+npm run env:safety
+npm run supabase:target:check
+```
+
+## Route Visibility
+
+Route status values:
+
+```text
+release
+development
+development_demo
+development_internal
+coming_soon
+hidden
+broken_do_not_show
+```
+
+Live release shows only `release` routes as enabled. Local development can show development surfaces for testing. Hidden and broken routes are not normal-user navigation targets.

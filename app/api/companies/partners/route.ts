@@ -1,7 +1,7 @@
 // BACKEND_MIGRATION_STATUS: proxy_to_fastapi_with_legacy_fallback
 // TARGET_BACKEND_MODULE: partners
 // TARGET_FASTAPI_ENDPOINT: /api/v1/partners
-// LEGACY_FALLBACK_REMOVE_AFTER: Python partner projection and partner card endpoints are verified with staging data.
+// LEGACY_FALLBACK_REMOVE_AFTER: Python partner projection and partner card endpoints are verified with Development data.
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'

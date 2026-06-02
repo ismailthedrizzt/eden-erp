@@ -7,6 +7,8 @@ import { useActionGuideContext } from '@/components/ai/ActionGuideContext'
 import { cn } from '@/lib/utils'
 import { commandPaletteService } from '@/lib/services/search'
 import { searchService, type SearchGroup, type SearchResult, type SearchSuggestion } from '@/lib/services/search'
+import { getCurrentReleaseEnvironment, type ReleaseEnvironment } from '@/lib/release/environment'
+import { getRouteReleaseDecision } from '@/lib/release/releaseVisibility'
 import { QuickActions } from './QuickActions'
 import { RecentItems } from './RecentItems'
 import { SearchEmptyState } from './SearchEmptyState'
@@ -33,6 +35,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
   const [activeIndex, setActiveIndex] = useState(0)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const releaseEnv = getCurrentReleaseEnvironment()
   const showDiscoveryLists = query.trim().length < MIN_QUERY_LENGTH
   const visibleGroups = useMemo(
     () => showDiscoveryLists ? groups.filter(group => group.key !== 'actions') : groups,
@@ -60,9 +63,9 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
         selected_record_id: pageContext.selectedRecordId || null,
         limit: 30,
       })
-      setGroups(response.grouped_results || [])
-      setQuickActions(response.quick_actions || [])
-      setRecentItems(response.recent_items || [])
+      setGroups(filterSearchGroupsForRelease(response.grouped_results || [], releaseEnv))
+      setQuickActions(filterSearchResultsForRelease(response.quick_actions || [], releaseEnv))
+      setRecentItems(filterSearchResultsForRelease(response.recent_items || [], releaseEnv))
       setSuggestions(response.suggestions || [])
       setWarnings(response.warnings || [])
       setActiveIndex(0)
@@ -76,7 +79,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
     } finally {
       setLoading(false)
     }
-  }, [pageContext.currentPage, pageContext.selectedRecordId, pageContext.selectedRecordType, pathname])
+  }, [pageContext.currentPage, pageContext.selectedRecordId, pageContext.selectedRecordType, pathname, releaseEnv])
 
   const selectResult = useCallback((result: SearchResult) => {
     if (result.disabled) return
@@ -254,4 +257,37 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
       </div>
     </div>
   )
+}
+
+function filterSearchGroupsForRelease(groups: SearchGroup[], env: ReleaseEnvironment): SearchGroup[] {
+  return groups
+    .map(group => {
+      const results = filterSearchResultsForRelease(group.results, env)
+      return {
+        ...group,
+        results,
+        total_count: results.length,
+      }
+    })
+    .filter(group => group.results.length > 0)
+}
+
+function filterSearchResultsForRelease(results: SearchResult[], env: ReleaseEnvironment): SearchResult[] {
+  const visibleResults: SearchResult[] = []
+
+  for (const result of results) {
+    const decision = getRouteReleaseDecision(result.target_page || '/app', env, 'commandPalette')
+    if (!decision.visible) continue
+
+    visibleResults.push({
+      ...result,
+      badge: decision.badgeLabel || result.badge,
+      disabled: result.disabled || !decision.enabled,
+      disabled_reason: !decision.enabled
+        ? decision.reason
+        : result.disabled_reason,
+    })
+  }
+
+  return visibleResults
 }

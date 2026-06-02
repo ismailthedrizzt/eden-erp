@@ -37,7 +37,7 @@ Use this checklist before every pilot/demo release. Mark each item `pass`, `fail
 | Task status/action can be completed where allowed |  |  |  |
 | Approval approve/reject screen works |  |  |  |
 | Audit timeline opens for a record |  |  |  |
-| Document upload/download/preview flow works in staging storage |  |  |  |
+| Document upload/download/preview flow works in Development storage |  |  |  |
 | Global Search opens with Ctrl+K/Cmd+K |  |  |  |
 | Scope-hidden record does not appear in search |  |  |  |
 

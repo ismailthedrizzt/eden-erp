@@ -1233,3 +1233,23 @@ Before using ANY component:
 **Last Updated**: 2024-05-01
 **Maintained by**: AI Assistants + Human Review
 **Enforcement**: STRICT - All AI must follow and warn on conflicts
+
+## Codex Working Copy and Environment Preservation Rule
+
+Codex aktif gelistirmeyi tek kalici branch olan `main` uzerinde yapar. Local ve canli ortam ayrimi branch ile degil, ortam degiskenleri ve ayri Supabase project'leri ile saglanir.
+
+Migration, seed, demo data, reset ve schema degisiklikleri yalnizca Development Supabase project uzerinde yapilir. Release Supabase project protected environment'tir; acik release migration onayi olmadan degistirilmez:
+
+```text
+ALLOW_RELEASE_DB_MIGRATION=true
+RELEASE_MIGRATION_APPROVED_BY=<name>
+```
+
+Release ortaminda seed, demo seed ve reset calismaz. Yeni sayfa once `releaseStatus=development` olarak baslar. Test/onay olmadan `releaseStatus=release` yapilmaz. Demo/test/placeholder sayfa release ortaminda gorunmez. Release ortaminda debug, demo, environment ve sayfa status badge'leri normal kullaniciya gosterilmez. Yarım modul release ortaminda normal kullaniciya acilmaz.
+
+Development and Release use the same `main` code with different environment values:
+
+```text
+local machine  -> main -> .env.local                  -> Development Supabase
+Virtual Server -> main -> /etc/eden-erp/eden-erp.env  -> Release Supabase + VS Ollama
+```

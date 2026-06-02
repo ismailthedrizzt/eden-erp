@@ -1,0 +1,16 @@
+[Unit]
+Description=Eden ERP Next.js web service
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/eden-erp/app
+EnvironmentFile=/etc/eden-erp/eden-erp.env
+ExecStart=/usr/bin/npm run start -- --hostname 127.0.0.1 --port 3000
+Restart=always
+RestartSec=5
+User=eden
+Group=eden
+
+[Install]
+WantedBy=multi-user.target

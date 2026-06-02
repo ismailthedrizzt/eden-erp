@@ -5,9 +5,11 @@ import Link from 'next/link'
 import { usePathname, useSearchParams } from 'next/navigation'
 import Sidebar from '@/components/layout/Sidebar'
 import { DemoModeBadge } from '@/components/layout/DemoModeBadge'
+import { EnvironmentBadge } from '@/components/release/EnvironmentBadge'
+import { ProductVersionBadge } from '@/components/layout/ProductVersionBadge'
 import { PendingActionsBell } from '@/components/layout/PendingActionsBell'
 import { NotificationBell } from '@/components/notifications/NotificationBell'
-import { Bell, Building2, Check, ChevronDown, Home, ListChecks, Loader2, Menu, Moon, MoreHorizontal, Star, Sun } from 'lucide-react'
+import { Bell, Building2, Check, ChevronDown, Home, LayoutDashboard, ListChecks, Loader2, Menu, Moon, MoreHorizontal, Star, Sun, Users, WalletCards } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ModuleLicenseProvider } from '@/hooks/useModuleLicense'
 import { PermissionProvider } from '@/lib/security/permissionStore'
@@ -18,6 +20,8 @@ import { ActionGuideSearch } from '@/components/ai/ActionGuideSearch'
 import { CopilotPanel } from '@/components/ai/CopilotPanel'
 import { cacheUiPreferences, readCachedUiPreferences, syncUiPreferencesPatch } from '@/lib/user-state/client'
 import { setStoredTenantId, tenantRequestHeaders } from '@/lib/tenancy/client'
+import { getCurrentReleaseEnvironment } from '@/lib/release/environment'
+import { canShowRouteInNavigation } from '@/lib/release/releaseVisibility'
 import type { SessionBootstrapResponse, UiThemePreference } from '@/lib/user-state/types'
 
 const THEME_TRANSITION_SUPPRESS_MS = 120
@@ -431,6 +435,8 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
               >
                 <Menu size={15} />
               </button>
+              <ProductVersionBadge className="hidden md:inline-flex" />
+              <EnvironmentBadge className="hidden md:inline-flex" />
               <DemoModeBadge />
               <div ref={workspaceMenuRef} data-tour-id="workspace-switcher" className="relative hidden sm:block">
                 <button
@@ -599,11 +605,15 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
 }
 
 function MobileBottomNavigation({ pathname, onOpenMenu }: { pathname: string; onOpenMenu: () => void }) {
+  const releaseEnv = getCurrentReleaseEnvironment()
   const items = [
     { label: 'Ana', href: '/app', icon: Home },
     { label: 'Sirket', href: '/app/sirket/companies', icon: Building2 },
+    { label: 'Cari', href: '/app/muhasebe/cari-kartlar', icon: WalletCards },
+    { label: 'IK', href: '/app/ik/calisanlar', icon: Users },
+    { label: 'Panel', href: '/app/dashboard', icon: LayoutDashboard },
     { label: 'Gorev', href: '/app/gorev-ve-proje-yonetimi/gorevler', icon: ListChecks },
-  ]
+  ].filter(item => canShowRouteInNavigation(item.href, releaseEnv))
 
   return (
     <nav

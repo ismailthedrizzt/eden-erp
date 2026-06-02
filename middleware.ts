@@ -1,7 +1,9 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { APP_SESSION_COOKIE_NAME, verifyAppSessionToken } from '@/lib/auth/appSession'
+import { getReleaseEnvSafetyViolations } from '@/lib/env/releaseSafety'
 import { TENANT_ID_COOKIE, WORKSPACE_ID_COOKIE } from '@/lib/tenancy/constants'
+import { getRouteNotAvailableHref, getRouteReleaseDecision } from '@/lib/release/releaseVisibility'
 
 type CookieToSet = {
   name: string
@@ -28,6 +30,7 @@ export async function middleware(request: NextRequest) {
   const isApiRoute = pathname.startsWith('/api')
   const isPublicApiRoute = isApiRoute && PUBLIC_API_PREFIXES.some(prefix => isPathOrChild(pathname, prefix))
   const isSetupWizardPage = pathname.startsWith('/app/sistem/kurulum')
+  const isReleaseUnavailablePage = pathname.startsWith('/release-not-available')
   const isPwaAsset = [
     '/manifest.json',
     '/sw.js',
@@ -37,6 +40,28 @@ export async function middleware(request: NextRequest) {
     '/icons/',
     '/eden-icon-original.png',
   ].some(path => pathname.startsWith(path))
+
+  const releaseSafetyViolations = getReleaseEnvSafetyViolations()
+  if (releaseSafetyViolations.length && !isPwaAsset) {
+    return withSecurityHeaders(
+      NextResponse.json(
+        { error: 'Release environment safety check failed', code: 'RELEASE_ENV_UNSAFE' },
+        { status: 500 }
+      ),
+      request
+    )
+  }
+
+  if (shouldApplyReleaseRouteGuard(pathname, isApiRoute, isPwaAsset)) {
+    const decision = getRouteReleaseDecision(pathname, undefined, 'direct')
+    if (!decision.visible || !decision.enabled) {
+      const target = new URL(getRouteNotAvailableHref(pathname, decision.releaseReason), request.nextUrl.origin)
+      const rewriteUrl = request.nextUrl.clone()
+      rewriteUrl.pathname = target.pathname
+      rewriteUrl.search = target.search
+      return withSecurityHeaders(NextResponse.rewrite(rewriteUrl), request)
+    }
+  }
 
   if (isApiRoute && UNSAFE_METHODS.has(request.method.toUpperCase()) && !isAllowedRequestOrigin(request)) {
     return withSecurityHeaders(
@@ -55,7 +80,7 @@ export async function middleware(request: NextRequest) {
     return withSecurityHeaders(NextResponse.next({ request }), request)
   }
 
-  const isPublic = isAuthPage || isPublicApiRoute || isPwaAsset || isSetupWizardPage
+  const isPublic = isAuthPage || isPublicApiRoute || isPwaAsset || isSetupWizardPage || isReleaseUnavailablePage
   const appSession = await verifyAppSessionToken(request.cookies.get(APP_SESSION_COOKIE_NAME)?.value)
 
   if (isPublic || appSession) {
@@ -116,6 +141,20 @@ export async function middleware(request: NextRequest) {
   }
 
   return withSecurityHeaders(supabaseResponse, request)
+}
+
+function shouldApplyReleaseRouteGuard(pathname: string, isApiRoute: boolean, isPwaAsset: boolean) {
+  if (isApiRoute || isPwaAsset) return false
+  if (pathname === '/') return false
+  if (pathname.startsWith('/release-not-available')) return false
+  return pathname === '/app'
+    || pathname.startsWith('/app/')
+    || pathname === '/portal'
+    || pathname.startsWith('/portal/')
+    || pathname === '/test'
+    || pathname.startsWith('/muhasebe')
+    || pathname.startsWith('/ik/')
+    || pathname.startsWith('/ayarlar/')
 }
 
 function isAllowedRequestOrigin(request: NextRequest) {

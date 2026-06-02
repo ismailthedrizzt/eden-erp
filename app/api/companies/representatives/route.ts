@@ -1,7 +1,7 @@
 // BACKEND_MIGRATION_STATUS: proxy_to_fastapi_with_legacy_fallback
 // TARGET_BACKEND_MODULE: representatives
 // TARGET_FASTAPI_ENDPOINT: /api/v1/representatives
-// LEGACY_FALLBACK_REMOVE_AFTER: Python representative projection and card endpoints are verified with staging data.
+// LEGACY_FALLBACK_REMOVE_AFTER: Python representative projection and card endpoints are verified with Development data.
 // NOTES: Representative list/create logic is a temporary BFF fallback; new authority logic belongs in FastAPI.
 
 import { NextRequest, NextResponse } from 'next/server'

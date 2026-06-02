@@ -213,11 +213,15 @@ function printScenarioList() {
 }
 
 function assertSafeTarget(value) {
-  if (process.env.ALLOW_PRODUCTION_LOAD_TEST === 'true') return
+  if (process.env.ALLOW_RELEASE_LOAD_TEST === 'true' || process.env.ALLOW_PRODUCTION_LOAD_TEST === 'true') return
   const lower = value.toLowerCase()
-  const safe = lower.includes('localhost') || lower.includes('127.0.0.1') || lower.includes('staging')
+  const safe = lower.includes('localhost')
+    || lower.includes('127.0.0.1')
+    || lower.includes('development')
+    || lower.includes('dev')
+    || lower.includes('preview')
   if (!safe) {
-    throw new Error('Load tests are blocked outside localhost/staging unless ALLOW_PRODUCTION_LOAD_TEST=true.')
+    throw new Error('Load tests are blocked outside localhost/development unless ALLOW_RELEASE_LOAD_TEST=true.')
   }
 }
 

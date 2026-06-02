@@ -1,10 +1,21 @@
-# P0 P1 P2 Risk Register
+# P0/P1/P2 Risk Register
 
 Audit date: 2026-05-31
 
-Overall result: no confirmed active P0 build/typecheck/backend-test blocker. The platform is `PILOT_ONLY` until release visibility, fallback burn-down and staging smoke are complete.
+Overall result: no confirmed active P0 build/typecheck/backend-test blocker. The platform is `PILOT_ONLY` until release visibility, fallback burn-down, environment separation and staging smoke are complete.
 
-## P0 Risks
+## Environment And Release Guard Findings
+
+| id | title | module | severity | impact | file/path | recommended fix | suggested next prompt |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| P0-ENV-001 | Release Supabase mutation risk | env/db | P0 | Release data can be changed by development migration/seed | `scripts/check-supabase-target.js` | Keep guard required before migration/seed/import commands | Add CI gate for Supabase target check |
+| P0-ENV-002 | Release login bypass risk | auth | P0 | Release users can bypass auth if unsafe env is enabled | `scripts/check-release-env-safety.js` | Fail release when `EDEN_LOGIN_DISABLED=true` | Add Vercel release env validation |
+| P0-REL-001 | Development route visible in release | runtime visibility | P0 | Unapproved or sensitive pages can appear to users | `lib/release/routeReleaseRegistry.ts` | Keep `release:check` and middleware route guard | Add browser smoke for release nav |
+| P1-REL-001 | New page missing release status | runtime visibility | P1 | Page may be invisible or treated as development unexpectedly | `scripts/check-release-registry.js` | Add registry entry with every new page | Add PR checklist for route registry |
+| P1-DOC-001 | Promotion workflow manual | release ops | P1 | Release transfer depends on operator discipline | `docs/release/PromotionToReleaseWorkflow.md` | Add CI/checklist automation | Create release CI workflow |
+| P2-OPS-001 | Advanced deploy automation absent | ops | P2 | More manual checks before scale | `.github/workflows` | Add optional release safety workflow | Add release safety GitHub Action |
+
+## Platform Audit Risks
 
 | id | title | module | severity | impact | file/path | recommended fix | suggested next prompt |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -13,59 +24,27 @@ Overall result: no confirmed active P0 build/typecheck/backend-test blocker. The
 | P0-003 | Operation-controlled field bypass | company/ownership/representatives/branches | P0-if-found | official/legal data corruption | Next fallbacks and FastAPI operation routes | locked-field PATCH tests and fallback removal | `Critical Operation Guard Smoke Tests ekle` |
 | P0-004 | Unsafe portal external access | portal | P0-if-found | customer data exposure | `app/api/portal/**`, `backend/app/domains/portal/**` | portal scope/suspended-user/document sharing smoke | `Portal External Access Smoke Tests ekle` |
 | P0-005 | Service role exposure to client | security | P0-if-found | secret compromise | `lib/supabase/server.ts`, route handlers | env/static scan CI and no client imports | `Secret Exposure CI Guard ekle` |
-
-## P1 Risks
-
-| id | title | module | severity | impact | file/path | recommended fix | suggested next prompt |
-| --- | --- | --- | --- | --- | --- | --- | --- |
 | P1-001 | Temporary Next API fallbacks remain | platform/API | P1 | divergence from FastAPI canonical backend | 75 routes from `migration:status` | FastAPI-only proxy after staging smoke | `Next API Fallback Burn-down` |
 | P1-002 | 164 routes still `migrate_to_fastapi` | platform/API | P1 | Next continues to own backend behavior | `app/api/**/route.ts` | migrate domain logic to FastAPI | `Migrate Remaining Next Business Routes` |
-| P1-003 | Missing migration headers | platform/API | P1/P2 | route responsibility unclear | 205 Next routes | add explicit `BACKEND_MIGRATION_STATUS` headers | `Route Header Coverage 500/500` |
-| P1-004 | Frontend imports TS backend-core helpers | frontend/backend boundary | P1 | weak Next/FastAPI separation | company pages, audit, process, action-center components | split shared contracts from server logic | `Frontend Backend Boundary Cleanup` |
 | P1-005 | Release visibility not final | release/runtime | P1 | partial pages visible in production | navigation/module/visibility registries | route release registry | `Page Release Registry + Live/Preview/Hidden Visibility` |
-| P1-006 | Admin/export/document pages need security smoke | admin/documents/export | P1 | sensitive data leakage | `app/app/sistem/**`, `app/app/belgeler` | role/scope/signed-url/export tests | `Admin Document Export Security Smoke` |
-| P1-007 | Portal not production-smoked | portal | P1 | external customer scope leak | `app/portal/**`, `app/api/portal/**` | portal end-to-end smoke | `Portal External Access Smoke Tests` |
-| P1-008 | Worker visibility and retry operations partial | workers/outbox | P1 | failed background jobs invisible | `backend/app/workers/**`, Admin outbox | heartbeat/retry/DLQ admin smoke | `Worker Operations Smoke Tests` |
-| P1-009 | Frontend template inconsistency | frontend | P1 | uneven UX and possible locked-field confusion | MVP pages under `components/modules/**` | canonical template pass for live candidates | `Live Candidate Template Hardening` |
 | P1-010 | Real staging smoke not executed | release | P1 | build success mistaken for runtime readiness | smoke script only dry-run | run services and smoke routes with auth | `Runtime Smoke Fixes and Execution` |
-| P1-011 | Lint hook warnings in core pages | frontend | P1 | stale closure/runtime refresh issues | lint output files | fix hook dependencies | `Core Hook Warning Burn-down` |
-
-## P2 Risks
-
-| id | title | module | severity | impact | file/path | recommended fix | suggested next prompt |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| P2-001 | Legacy route aliases | routing | P2 | navigation/support confusion | `app/muhasebe/**`, `app/ik/**`, `app/ayarlar/**` | hide, redirect, later delete | `Legacy Route Alias Cleanup` |
-| P2-002 | Deprecated permission aliases | RBAC | P2 | role matrix complexity | `backend/app/policies/permissions.py` | phase out after role migration | `Permission Alias Deprecation Plan` |
-| P2-003 | Mock/MVP files remain | modules | P2 | demo assumptions leak into product | `lib/modules/**/*.mock.ts`, `*MvpPages.tsx` | rename/move under demo or replace | `MVP Mock Cleanup` |
-| P2-004 | Docker CLI unavailable locally | ops | P2 | local compose validation skipped | workstation/tooling | run in CI or install Docker | `CI Docker Compose Validation` |
-| P2-005 | Next lint deprecation | tooling | P2 | future Next 16 friction | `package.json` lint script | migrate to ESLint CLI | `Next Lint to ESLint CLI Migration` |
 | P2-006 | PWA build artifacts mutate locally | tooling | P2 | dirty worktree after build | `public/sw.js`, fallback files | deterministic CI handling or ignore strategy | `PWA Artifact Strategy` |
-
-## Findings
-
-- No active P0 blocker was confirmed by build/test/static audit.
-- P1 risk volume is high enough that direct broad production launch is not recommended.
-- Most P0 items are conditional: they become blockers if release visibility exposes unsafe/partial routes or if production env flags are misconfigured.
-
-## Risks
-
-- P1 risks can become P0 when a route is production-visible.
-- The current buildable surface is too broad for normal production navigation.
-- Temporary fallback routes are the most important architectural debt.
 
 ## Recommended Fixes
 
-- Treat release registry as the next platform hardening step.
-- Run real staging smoke before any production decision.
+- Development Supabase project ref and Release Supabase project ref should stay explicitly separated in Vercel envs.
+- Migration/seed/reset commands should run `npm run supabase:target:check` first.
+- New pages should default to `development` status in the route registry.
+- A page should move to `release` status only after field testing and staging smoke.
 - Burn down temporary fallbacks by domain priority: company/operation, process/action/audit, admin/export/document, portal/integration.
-- Add production env safety checks for bypass flags and secrets.
 
 ## P0/P1/P2 Priority
 
-- P0: conditional only; none confirmed active.
-- P1: release gating, fallback removal, smoke execution, boundary cleanup.
-- P2: aliases, mocks, tooling polish.
+- P0: release data safety, auth bypass prevention, tenant/scope denial and release route guard.
+- P1: missing registry entries, promotion automation, staging smoke, fallback removal and frontend/backend boundary cleanup.
+- P2: route aliases, mock cleanup, build artifact determinism and advanced CI polish.
 
-## Suggested Next Prompt
+## Suggested Next Prompts
 
-`Page Release Registry + Live/Preview/Hidden Visibility calismasini uygula ve ardindan Runtime Smoke Fixes and Execution fazina gec.`
+- `Local .env.local Development Supabase, VS env Release Supabase dogrulamasini yap ve release smoke checklist'i calistir.`
+- `Page Release Registry + Live/Preview/Hidden Visibility calismasini uygula ve ardindan Runtime Smoke Fixes and Execution fazina gec.`

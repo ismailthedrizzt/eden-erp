@@ -28,6 +28,8 @@ Next.js API route'lari kalici business logic katmani degildir. Domain logic, ope
 
 ## Yerel Calistirma
 
+Tek kalici branch `main`dir. Local ve canli ortam ayni kodu calistirir; fark sadece ortam degiskenleridir. Local `.env.local` Development Supabase'e, Virtual Server env dosyasi Live Supabase'e bakar.
+
 Frontend:
 
 ```bash
@@ -55,28 +57,34 @@ Backend health endpointleri:
 - `http://localhost:8000/health`
 - `http://localhost:8000/api/v1/health`
 
-Yerel / release Ollama:
+Yerel Ollama (Windows, opsiyonel):
 
 ```bash
-npm run ollama:install:release
+npm run ollama:install:windows
 npm run ollama:serve
 ```
 
-Varsayilan kurulum `tools/ollama` altina standalone Ollama binary dosyalarini, `.ollama/models` altina model deposunu yerlestirir. Release makinesinde model de indirilecekse:
+Varsayilan Windows kurulumu `tools/ollama` altina standalone Ollama binary dosyalarini, `.ollama/models` altina model deposunu yerlestirir.
+
+Virtual Server Ollama:
 
 ```bash
-npm run ollama:pull
+bash scripts/install-ollama-vps.sh
 ```
+
+VS tarafinda Ollama servis olarak calisir. Uygulama `OLLAMA_BASE_URL=http://127.0.0.1:11434` ile baglanir.
 
 ## Ortam Degiskenleri
 
-`.env.local.example` dosyasini `.env.local` olarak kopyalayip doldurun:
+Local icin `.env.local.example` dosyasini `.env.local` olarak kopyalayip Development Supabase bilgileriyle doldurun:
 
 - `NEXT_PUBLIC_SUPABASE_URL`
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `NEXT_PUBLIC_APP_URL`
 - `NEXT_PUBLIC_APP_NAME`
+
+Virtual Server icin `.env.release.example` dosyasini temel alip `/etc/eden-erp/eden-erp.env` olusturun ve Live Supabase bilgileriyle doldurun. Live secret'lari repoya veya `.env.local` dosyasina koymayin.
 
 FastAPI backend icin `backend/.env` veya sistem ortam degiskenleri kullanilabilir. Ilk scaffold `DATABASE_URL`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_JWT_SECRET` ve `CORS_ORIGINS` alanlarini destekleyecek sekilde hazirlanmistir.
 
@@ -118,6 +126,11 @@ docker compose config
 ```
 
 CI workflow `.github/workflows/ci.yml` frontend, backend, OpenAPI drift and Docker build checks for the Next + FastAPI + worker topology.
+
+Tek branch + Virtual Server deploy modeli:
+
+- [Single Main Virtual Server Deployment](./docs/deployment/SingleMainVirtualServerDeployment.md)
+- [Environment Strategy](./docs/architecture/EnvironmentStrategy.md)
 
 ## Deployment Model
 
