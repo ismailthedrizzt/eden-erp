@@ -440,7 +440,8 @@ export default function Sidebar({ collapsed = false, mobileOpen = false, onMobil
     const isActive = isModActive(item)
     const isOpen = openMods.includes(item.id)
     const hasChildren = visibleChildren.length > 0
-    const moduleVersionInfo = getModuleVersionInfo(item.moduleKey)
+    const showMenuVersionInfo = releaseEnv !== 'release'
+    const moduleVersionInfo = showMenuVersionInfo ? getModuleVersionInfo(item.moduleKey) : undefined
     const itemTitle = getVersionTitle(item.label, moduleVersionInfo)
     const contractModuleKey = resolveSidebarContractModuleKey(item)
     const runtimeStatus = contractModuleKey ? moduleRuntime.getRuntimeStatus(contractModuleKey) : 'available'
@@ -514,9 +515,11 @@ export default function Sidebar({ collapsed = false, mobileOpen = false, onMobil
                 { ...visibilityContext, moduleKey: childContractModuleKey || contractModuleKey || undefined }
               )
               const childRuntimeRedirect = childDecision.setupAction?.targetPage || runtimeRedirectFor(childRuntimeStatus)
-              const pageVersionInfo = child.pageId
-                ? getPageVersionInfo(child.moduleKey || item.moduleKey, child.pageId)
-                : getPageVersionInfoByHref(child.moduleKey || item.moduleKey, child.href)
+              const pageVersionInfo = showMenuVersionInfo
+                ? child.pageId
+                  ? getPageVersionInfo(child.moduleKey || item.moduleKey, child.pageId)
+                  : getPageVersionInfoByHref(child.moduleKey || item.moduleKey, child.href)
+                : undefined
               const childTitle = getVersionTitle(child.label, pageVersionInfo)
 
               if (!childDecision.visible) return null
