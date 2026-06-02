@@ -62,10 +62,10 @@ export function NotificationBell() {
       <button
         type="button"
         onClick={() => setOpen(previous => !previous)}
-        className={`relative flex h-11 w-11 items-center justify-center rounded-lg border transition-colors sm:h-8 sm:w-8 ${urgent ? 'border-amber-300 text-amber-700 hover:bg-amber-50 dark:border-amber-900 dark:text-amber-200 dark:hover:bg-amber-950/30' : 'border-gray-200 text-gray-500 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-eden-navy'}`}
+        className={`relative flex h-9 w-9 items-center justify-center rounded-lg border transition-colors ${urgent ? 'border-amber-300 text-amber-700 hover:bg-amber-50 dark:border-amber-900 dark:text-amber-200 dark:hover:bg-amber-950/30' : 'border-gray-200 text-gray-500 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-eden-navy'}`}
         aria-label="Bildirimler"
       >
-        <BellRing size={15} />
+        <BellRing size={16} />
         {count > 0 && (
           <span className={`absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-bold leading-none text-white ${urgent ? 'bg-amber-600' : 'bg-eden-blue'}`}>
             {count > 9 ? '9+' : count}
@@ -88,4 +88,3 @@ export function NotificationBell() {
     </div>
   )
 }
-

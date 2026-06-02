@@ -421,19 +421,19 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
               {/* Mobile Menu Button */}
               <button
                 onClick={() => setMobileMenuOpen(true)}
-                className="lg:hidden h-11 w-11 rounded-lg border border-gray-200 dark:border-gray-700 flex items-center justify-center
+                className="lg:hidden h-9 w-9 rounded-lg border border-gray-200 dark:border-gray-700 flex items-center justify-center
                            text-gray-500 hover:bg-gray-50 dark:hover:bg-eden-navy transition-colors"
                 aria-label="Mobil menuyu ac"
               >
-                <Menu size={18} />
+                <Menu size={16} />
               </button>
               {/* Desktop Toggle */}
               <button
                 onClick={toggleSidebar}
-                className="hidden lg:flex w-8 h-8 rounded-lg border border-gray-200 dark:border-gray-700 items-center justify-center
+                className="hidden h-9 w-9 rounded-lg border border-gray-200 dark:border-gray-700 items-center justify-center lg:flex
                            text-gray-500 hover:bg-gray-50 dark:hover:bg-eden-navy transition-colors"
               >
-                <Menu size={15} />
+                <Menu size={16} />
               </button>
               <ProductVersionBadge className="hidden md:inline-flex" />
               <EnvironmentBadge className="hidden md:inline-flex" />
@@ -552,12 +552,12 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
               <button
                 onClick={toggleTheme}
                 data-tour-id="theme-toggle"
-                className="h-11 w-11 rounded-lg border border-gray-200 dark:border-gray-700 flex items-center justify-center
+                className="h-9 w-9 rounded-lg border border-gray-200 dark:border-gray-700 flex items-center justify-center
                            text-gray-500 hover:bg-gray-50 dark:hover:bg-eden-navy transition-colors"
                 title="Tema"
                 aria-label="Tema degistir"
               >
-                {dark ? <Sun size={15} /> : <Moon size={15} />}
+                {dark ? <Sun size={16} /> : <Moon size={16} />}
               </button>
               {/* User Profile */}
               <div data-tour-id="header-user-info" className="flex items-center gap-2.5">
