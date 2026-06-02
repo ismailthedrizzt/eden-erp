@@ -13,6 +13,7 @@ function listMigrationFiles() {
     .filter((file) => file.endsWith('.sql'))
     .sort();
   moveAfter(files, '20260526_company_branch_p2_fixes.sql', '20260526_company_official_changes.sql');
+  moveAfter(files, '20260526_event_contract_outbox_dispatcher.sql', '20260526_operation_orchestrator_registry.sql');
   return files;
 }
 
