@@ -8,10 +8,20 @@ const envPath = path.join(root, '.env.local');
 const migrationsDir = path.join(root, 'supabase', 'migrations');
 
 function listMigrationFiles() {
-  return fs
+  const files = fs
     .readdirSync(migrationsDir)
     .filter((file) => file.endsWith('.sql'))
     .sort();
+  moveAfter(files, '20260526_company_branch_p2_fixes.sql', '20260526_company_official_changes.sql');
+  return files;
+}
+
+function moveAfter(files, target, dependency) {
+  const targetIndex = files.indexOf(target);
+  const dependencyIndex = files.indexOf(dependency);
+  if (targetIndex === -1 || dependencyIndex === -1 || targetIndex > dependencyIndex) return;
+  files.splice(targetIndex, 1);
+  files.splice(files.indexOf(dependency) + 1, 0, target);
 }
 
 function readEnv(filePath) {
