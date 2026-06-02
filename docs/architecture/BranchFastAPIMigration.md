@@ -63,7 +63,7 @@ Forward edilen basliklar:
 
 FastAPI:
 
-- `DATABASE_URL` veya `SUPABASE_DB_URL`
+- `DATABASE_URL`
 - `APP_ENV`
 - `LOG_LEVEL`
 - `CORS_ORIGINS`

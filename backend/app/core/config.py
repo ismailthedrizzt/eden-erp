@@ -15,10 +15,7 @@ class Settings(BaseSettings):
     )
     log_level: str = Field(default="INFO", validation_alias=AliasChoices("LOG_LEVEL"))
 
-    database_url: str | None = Field(
-        default=None,
-        validation_alias=AliasChoices("DATABASE_URL", "SUPABASE_DB_URL"),
-    )
+    database_url: str | None = Field(default=None, alias="DATABASE_URL")
     supabase_url: str | None = Field(default=None, alias="SUPABASE_URL")
     supabase_project_ref: str | None = Field(default=None, alias="SUPABASE_PROJECT_REF")
     supabase_service_role_key: str | None = Field(default=None, alias="SUPABASE_SERVICE_ROLE_KEY")
@@ -135,6 +132,14 @@ class Settings(BaseSettings):
     @property
     def effective_db_pool_size(self) -> int:
         return self.worker_db_pool_size or self.db_pool_size
+
+    @property
+    def async_database_url(self) -> str | None:
+        if not self.database_url:
+            return None
+        if self.database_url.startswith("postgresql://"):
+            return self.database_url.replace("postgresql://", "postgresql+asyncpg://", 1)
+        return self.database_url
 
 
 @lru_cache(maxsize=1)

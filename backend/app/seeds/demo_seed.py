@@ -1556,7 +1556,7 @@ async def validate_demo_data(tenant_id: str = DEMO_TENANT_ID) -> JsonDict:
     if not settings.database_url:
         return {
             "status": "not_configured",
-            "message": "DATABASE_URL or SUPABASE_DB_URL is not configured.",
+            "message": "DATABASE_URL is not configured.",
             "tenant_id": tenant_id,
             "checks": [],
         }

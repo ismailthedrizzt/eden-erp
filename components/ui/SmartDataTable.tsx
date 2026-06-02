@@ -19,7 +19,9 @@ import {
   AlertTriangle,
   RefreshCw,
   FileDown,
-  Plus
+  Plus,
+  ImageIcon,
+  User
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { DashboardGrid } from '@/components/dashboard/DashboardGrid'
@@ -197,6 +199,45 @@ function isActionColumn(col: ColumnDef) {
 
 function quickLookWidgetId(kind: 'summary' | 'dashboard', key: string) {
   return `${kind}:${key}`
+}
+
+function cleanDisplayText(value: unknown) {
+  return typeof value === 'string' ? value.trim() : ''
+}
+
+function getRowDisplayName(row: Record<string, any>, fallback = 'Kayıt') {
+  return cleanDisplayText(row.full_name)
+    || cleanDisplayText(row.fullname)
+    || cleanDisplayText(row.display_name)
+    || cleanDisplayText(row.name)
+    || cleanDisplayText(row.short_name)
+    || cleanDisplayText(row.trade_name)
+    || cleanDisplayText(row.company_name)
+    || cleanDisplayText(row.branch_name)
+    || cleanDisplayText(row.title)
+    || cleanDisplayText(row.code)
+    || fallback
+}
+
+function getRowInitials(row: Record<string, any>) {
+  const firstInitial = cleanDisplayText(row.first_name || row.firstName).charAt(0)
+  const lastInitial = cleanDisplayText(row.last_name || row.lastName || row.surname).charAt(0)
+  const directInitials = `${firstInitial}${lastInitial}`.toUpperCase()
+  if (directInitials) return directInitials
+
+  const displayName = getRowDisplayName(row, '')
+  if (!displayName) return ''
+
+  const words = displayName
+    .split(/\s+/)
+    .map(part => part.replace(/[^\p{L}\p{N}]/gu, ''))
+    .filter(Boolean)
+
+  return words
+    .slice(0, 2)
+    .map(part => part.charAt(0))
+    .join('')
+    .toUpperCase()
 }
 
 const LEGACY_PASSIVE_STATUS_FILTERS: TableStatusFilterOption[] = [
@@ -1141,11 +1182,11 @@ export function SmartDataTable<T extends { id: string }>({
     // @ts-ignore - dynamic property access on generic type
     const r = row as Record<string, any>
 
-    // For image type, handle specially (even if custom render exists, prefer type-based render)
-    if (col.type === 'image' || forceImageType) {
+    // For image/avatar type, handle specially (even if custom render exists, prefer type-based render)
+    if (col.type === 'image' || col.type === 'avatar' || forceImageType) {
       const imageUrl = value || r?.profileImage || r?.image || r?.photo || r?.avatar || r?.profile_image || r?.photo_url
-      const initials = (r?.first_name?.[0] || r?.firstName?.[0] || r?.name?.[0] || r?.last_name?.[0] || '?').toUpperCase()
-      const fullName = r?.full_name || r?.fullname || r?.first_name || r?.firstName || r?.name || 'İsimsiz'
+      const initials = getRowInitials(r)
+      const fullName = getRowDisplayName(r)
       const imageFit = col.imageFit || 'cover'
       const imageShape = col.imageShape || 'circle'
       
@@ -1171,8 +1212,12 @@ export function SmartDataTable<T extends { id: string }>({
               }}
             />
           ) : null}
-          <div className={cn("fallback-avatar w-full h-full flex items-center justify-center text-blue-600 text-sm font-bold", imageUrl ? "hidden" : "flex")}>
-            {initials}
+          <div className={cn(
+            "fallback-avatar w-full h-full items-center justify-center bg-gray-50 text-gray-500 dark:bg-gray-800 dark:text-gray-300",
+            initials && "text-blue-600 dark:text-blue-300 text-sm font-bold",
+            imageUrl ? "hidden" : "flex"
+          )}>
+            {initials || (imageShape === 'circle' ? <User size={16} /> : <ImageIcon size={16} />)}
           </div>
         </div>
       )
@@ -1873,16 +1918,14 @@ export function SmartDataTable<T extends { id: string }>({
           {paginatedData.map(row => {
             // @ts-ignore
             const r = row as Record<string, any>
-            const imageCol = displayColumnConfig.find(c => c.type === 'image')
+            const imageCol = displayColumnConfig.find(c => c.type === 'image' || c.type === 'avatar')
             const imageValue = imageCol ? getNestedValue(row, imageCol.key) : null
             const imageUrl = imageValue || r?.profileImage || r?.image || r?.photo || r?.avatar || r?.profile_image || r?.photo_url
             const imageFit = imageCol?.imageFit || 'contain'
-            const firstInitial = (r?.first_name?.[0] || r?.firstName?.[0] || r?.name?.[0] || '?').toUpperCase()
-            const lastInitial = (r?.last_name?.[0] || r?.lastName?.[0] || r?.surname?.[0] || '').toUpperCase()
-            const initials = firstInitial + lastInitial || '?'
-            const fullName = r?.full_name || r?.fullname || `${r?.first_name || r?.firstName || r?.name || ''} ${r?.last_name || r?.lastName || r?.surname || ''}`.trim() || 'İsimsiz'
+            const initials = getRowInitials(r)
+            const fullName = getRowDisplayName(r)
             
-            const cardFieldPool = displayColumnConfig.filter(c => c.type !== 'image')
+            const cardFieldPool = displayColumnConfig.filter(c => c.type !== 'image' && c.type !== 'avatar')
             const requiredCols = cardFieldPool.filter(c => c.required)
             const visibleCardCols = cardFieldPool.filter(c => c.visible)
             const displayCols = (requiredCols.length > 0 ? requiredCols : visibleCardCols.length > 0 ? visibleCardCols : cardFieldPool).slice(0, isMobileViewport ? 5 : 3)
@@ -1923,8 +1966,12 @@ export function SmartDataTable<T extends { id: string }>({
                         }}
                       />
                     ) : null}
-                    <div className={cn("card-fallback h-full w-full flex-col items-center justify-center bg-gradient-to-br from-blue-100 to-indigo-200", imageUrl ? "hidden" : "flex")}>
-                      <span className="text-3xl font-bold text-blue-600 dark:text-blue-500">{initials}</span>
+                    <div className={cn("card-fallback h-full w-full flex-col items-center justify-center bg-gradient-to-br from-blue-100 to-indigo-200 dark:from-blue-950/40 dark:to-indigo-950/40", imageUrl ? "hidden" : "flex")}>
+                      {initials ? (
+                        <span className="text-3xl font-bold text-blue-600 dark:text-blue-300">{initials}</span>
+                      ) : (
+                        <ImageIcon size={30} className="text-blue-500 dark:text-blue-300" />
+                      )}
                       <span className="text-xs text-gray-500 mt-1 px-2 text-center truncate max-w-full">{fullName}</span>
                     </div>
                   </div>

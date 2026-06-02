@@ -53,8 +53,13 @@ if (env === 'release') {
   if (isEnabled(process.env.ALLOW_RELEASE_DB_SEED)) failures.push('ALLOW_RELEASE_DB_SEED=true is forbidden in release.')
   if (isEnabled(process.env.ALLOW_RELEASE_DB_RESET)) failures.push('ALLOW_RELEASE_DB_RESET=true is forbidden in release.')
 
-  for (const key of ['NEXT_PUBLIC_SUPABASE_URL', 'NEXT_PUBLIC_SUPABASE_ANON_KEY', 'SUPABASE_SERVICE_ROLE_KEY']) {
-    if (!process.env[key]) failures.push(`${key} is required in release.`)
+  if (!process.env.DATABASE_URL) failures.push('DATABASE_URL is required in release.')
+
+  const supabaseConfigured = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL)
+  if (supabaseConfigured) {
+    for (const key of ['NEXT_PUBLIC_SUPABASE_URL', 'NEXT_PUBLIC_SUPABASE_ANON_KEY', 'SUPABASE_SERVICE_ROLE_KEY']) {
+      if (!process.env[key]) failures.push(`${key} is required when Supabase is configured.`)
+    }
   }
   if (process.env.REQUIRE_FASTAPI_BASE_URL === 'true' && !process.env.FASTAPI_BASE_URL) {
     failures.push('FASTAPI_BASE_URL is required because REQUIRE_FASTAPI_BASE_URL=true.')
@@ -100,6 +105,7 @@ function resolveEnvironment(source) {
   if (explicit) return explicit
   if (source.VERCEL_ENV === 'production') return 'release'
   if (source.NODE_ENV === 'test') return 'test'
+  if (source.NODE_ENV === 'production') return 'release'
   return 'development'
 }
 

@@ -18,7 +18,7 @@ python -m app.workers.outbox_worker
 
 Environment:
 
-- `DATABASE_URL` or `SUPABASE_DB_URL`
+- `DATABASE_URL`
 - `OUTBOX_BATCH_SIZE`
 - `OUTBOX_POLL_INTERVAL_SECONDS`
 - `WORKER_ID`

@@ -32,14 +32,21 @@ export function getReleaseEnvSafetyViolations(source: EnvSource = process.env) {
     if (isEnabled(source.ALLOW_RELEASE_DB_RESET)) {
       violations.push('ALLOW_RELEASE_DB_RESET cannot be true in release.')
     }
-    if (!source.NEXT_PUBLIC_SUPABASE_URL) {
-      violations.push('NEXT_PUBLIC_SUPABASE_URL is required in release.')
+    if (!source.DATABASE_URL) {
+      violations.push('DATABASE_URL is required in release.')
     }
-    if (!source.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-      violations.push('NEXT_PUBLIC_SUPABASE_ANON_KEY is required in release.')
-    }
-    if (!source.SUPABASE_SERVICE_ROLE_KEY) {
-      violations.push('SUPABASE_SERVICE_ROLE_KEY is required in release for server-side operations.')
+
+    const supabaseConfigured = Boolean(source.NEXT_PUBLIC_SUPABASE_URL || source.SUPABASE_URL)
+    if (supabaseConfigured) {
+      if (!source.NEXT_PUBLIC_SUPABASE_URL) {
+        violations.push('NEXT_PUBLIC_SUPABASE_URL is required when Supabase is configured.')
+      }
+      if (!source.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+        violations.push('NEXT_PUBLIC_SUPABASE_ANON_KEY is required when Supabase is configured.')
+      }
+      if (!source.SUPABASE_SERVICE_ROLE_KEY) {
+        violations.push('SUPABASE_SERVICE_ROLE_KEY is required when Supabase is configured.')
+      }
     }
   }
 

@@ -26,17 +26,18 @@ class DatabaseConfigurationError(RuntimeError):
 def get_engine() -> AsyncEngine:
     global _engine
     settings = get_settings()
-    if not settings.database_url:
-        raise DatabaseConfigurationError("DATABASE_URL or SUPABASE_DB_URL is required.")
+    database_url = settings.async_database_url
+    if not database_url:
+        raise DatabaseConfigurationError("DATABASE_URL is required.")
     if _engine is None:
         _engine = create_async_engine(
-            settings.database_url,
+            database_url,
             pool_pre_ping=True,
             pool_size=settings.effective_db_pool_size,
             max_overflow=settings.db_max_overflow,
             pool_timeout=settings.db_pool_timeout,
             pool_recycle=settings.db_pool_recycle,
-            connect_args=_connect_args(settings.database_url, settings.db_statement_timeout_ms),
+            connect_args=_connect_args(database_url, settings.db_statement_timeout_ms),
         )
         _attach_query_timing_listeners(_engine)
     return _engine
@@ -121,7 +122,7 @@ async def get_session() -> AsyncIterator[AsyncSession]:
 
 
 async def check_database_health() -> dict[str, str]:
-    if not get_settings().database_url:
+    if not get_settings().async_database_url:
         return {"status": "not_configured", "message": "Veri servisi baglantisi yapilandirilmamis."}
 
     async with get_session_factory()() as session:

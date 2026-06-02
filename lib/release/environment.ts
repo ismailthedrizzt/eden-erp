@@ -19,6 +19,7 @@ export function getCurrentReleaseEnvironment(source: EnvSource = process.env): R
   const nodeEnv = source.NODE_ENV?.trim().toLowerCase()
   if (nodeEnv === 'test') return 'test'
   if (nodeEnv === 'development') return 'development'
+  if (nodeEnv === 'production') return 'release'
 
   return 'development'
 }

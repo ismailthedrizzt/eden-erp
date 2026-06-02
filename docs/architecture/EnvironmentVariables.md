@@ -4,14 +4,13 @@ Real values must never be committed. Examples live in `.env.local.example` and `
 
 ## Next.js
 
-- `NEXT_PUBLIC_ENVIRONMENT`
+- `NEXT_PUBLIC_APP_ENV`
+- `NEXT_PUBLIC_RELEASE_CHANNEL`
 - `NEXT_PUBLIC_APP_URL`
 - `NEXT_PUBLIC_APP_NAME`
-- `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
 - `NEXT_PUBLIC_ACTION_GUIDE_ENABLED`
 - `NEXT_PUBLIC_GUIDED_TOUR_ENABLED`
-- `SUPABASE_SERVICE_ROLE_KEY`
+- `DATABASE_URL`
 - `FASTAPI_BASE_URL`
 - `INTERNAL_BACKEND_TOKEN`
 - `TRUSTED_PROXY_SECRET`
@@ -19,15 +18,27 @@ Real values must never be committed. Examples live in `.env.local.example` and `
 
 Only `NEXT_PUBLIC_*` values are browser-visible. Service role keys, internal backend tokens and proxy secrets are server-only.
 
+The single database target is:
+
+```text
+postgresql://postgres:<postgres-password>@localhost:5432/app1db
+```
+
+Supabase variables are optional and should only be set if the deployment still uses Supabase Auth/API:
+
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `SUPABASE_URL`
+- `SUPABASE_ANON_KEY`
+- `SUPABASE_JWT_SECRET`
+
 ## FastAPI
 
 - `APP_ENV`
 - `APP_NAME`
 - `APP_VERSION`
 - `DATABASE_URL`
-- `SUPABASE_URL`
-- `SUPABASE_JWT_SECRET`
-- `SUPABASE_JWKS_URL`
 - `INTERNAL_BACKEND_TOKEN`
 - `AUTH_REQUIRED`
 - `ALLOW_TRUSTED_PROXY_HEADERS`
@@ -47,6 +58,12 @@ Only `NEXT_PUBLIC_*` values are browser-visible. Service role keys, internal bac
 - `API_SLOW_REQUEST_MS`
 - `API_VERY_SLOW_REQUEST_MS`
 
+Optional Supabase Auth values:
+
+- `SUPABASE_URL`
+- `SUPABASE_JWT_SECRET`
+- `SUPABASE_JWKS_URL`
+
 ## Worker
 
 - `DATABASE_URL`
@@ -65,5 +82,5 @@ Only `NEXT_PUBLIC_*` values are browser-visible. Service role keys, internal bac
 - No `NEXT_PUBLIC_*SECRET`.
 - No `NEXT_PUBLIC_INTERNAL_BACKEND_TOKEN`.
 - No service role key in client components.
-- No `.env`, `.env.local`, production env files or real secrets in Git.
-- Run `npm run env:safety` before release.
+- No `.env`, `.env.local`, VS env files or real secrets in Git.
+- Run `npm run env:safety` before deployment.

@@ -1,6 +1,7 @@
 import 'server-only'
 
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { getPgSslConfig } from '@/lib/db/pgClientOptions'
 import { EdenMailError, sendEdenMail } from '@/lib/mail/edenMail'
 
 type PgClient = {
@@ -41,9 +42,10 @@ export async function ensureUserRegistrationRequestSchema() {
 
 async function applyUserRegistrationRequestSchema() {
   const { Client } = await import('pg')
+  const databaseUrl = process.env.DATABASE_URL
   const client = new Client({
-    connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: false },
+    connectionString: databaseUrl,
+    ssl: getPgSslConfig(databaseUrl),
   }) as PgClient
 
   await client.connect()

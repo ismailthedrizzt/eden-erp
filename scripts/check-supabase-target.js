@@ -1,17 +1,20 @@
 const env = resolveEnvironment(process.env)
 const context = String(process.env.COMMAND_CONTEXT || process.env.npm_lifecycle_event || process.argv[2] || '').toLowerCase()
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || ''
+const databaseUrl = process.env.DATABASE_URL || ''
 const projectRef = process.env.SUPABASE_PROJECT_REF || extractProjectRef(supabaseUrl) || 'unknown'
 const failures = []
 const warnings = []
 
-if (env === 'release') {
+if (databaseUrl && !supabaseUrl) {
+  warnings.push('Direct DATABASE_URL is configured; Supabase project target checks are skipped.')
+} else if (env === 'release') {
   if (/(demo|seed)/.test(context)) {
-    failures.push('Release Supabase protected environment. Seed/demo commands are blocked.')
+    failures.push('VS database is protected. Seed/demo commands are blocked.')
   }
 
   if (/reset/.test(context)) {
-    failures.push('Release Supabase protected environment. Reset commands are blocked.')
+    failures.push('VS database is protected. Reset commands are blocked.')
   }
 
   if (/(migrate|migration)/.test(context)) {
@@ -28,7 +31,7 @@ if (env === 'release') {
   }
 }
 
-if (env === 'development') {
+if (!databaseUrl && env === 'development') {
   if (process.env.DEVELOPMENT_SUPABASE_PROJECT_REF && projectRef !== process.env.DEVELOPMENT_SUPABASE_PROJECT_REF) {
     failures.push('Development environment must target DEVELOPMENT_SUPABASE_PROJECT_REF.')
   }
@@ -51,7 +54,7 @@ for (const warning of warnings) console.warn(`WARN: ${warning}`)
 if (failures.length) {
   console.error('FAIL')
   for (const failure of failures) console.error(`- ${failure}`)
-  console.error('Suggested fix: switch to Development Supabase or add explicit release migration approval env values.')
+  console.error('Suggested fix: run against the intended VS database and add explicit migration approval env values when required.')
   process.exit(1)
 }
 
@@ -62,6 +65,7 @@ function resolveEnvironment(source) {
   if (explicit) return explicit
   if (source.VERCEL_ENV === 'production') return 'release'
   if (source.NODE_ENV === 'test') return 'test'
+  if (source.NODE_ENV === 'production') return 'release'
   return 'development'
 }
 

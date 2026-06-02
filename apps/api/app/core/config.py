@@ -25,8 +25,8 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
-    supabase_url: AnyHttpUrl
-    supabase_anon_key: str
+    supabase_url: AnyHttpUrl | None = None
+    supabase_anon_key: str | None = None
     supabase_jwt_secret: str | None = None
     database_url: str
     cors_origins_raw: str = "http://localhost:3000"

@@ -2,7 +2,7 @@
 
 import { Suspense, useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
-import { usePathname, useSearchParams } from 'next/navigation'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import Sidebar from '@/components/layout/Sidebar'
 import { DemoModeBadge } from '@/components/layout/DemoModeBadge'
 import { EnvironmentBadge } from '@/components/release/EnvironmentBadge'
@@ -112,6 +112,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 }
 
 function AppLayoutShell({ children }: { children: React.ReactNode }) {
+  const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const forceTourToken = searchParams.get('tour') === '1' ? searchParams.toString() : ''
@@ -322,8 +323,46 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
       const payload = await response.json().catch(() => ({}))
       if (!response.ok) throw new Error(payload.error || 'Calisma alani degistirilemedi.')
 
+      const workspace = payload.data?.workspace || option
       setStoredTenantId(option.id)
-      window.location.reload()
+      setWorkspaceId(option.id)
+      setWorkspaceName(workspace.name || option.name || 'Calisma Alani')
+      setWorkspaceLogo(workspace)
+      setWorkspaceLogoFailed(false)
+      setWorkspaceOptions(previous => previous.map(row => row.id === option.id
+        ? {
+            ...row,
+            name: workspace.name || row.name,
+            logoUrl: workspace.logoUrl ?? row.logoUrl,
+            lightLogoUrl: workspace.lightLogoUrl ?? row.lightLogoUrl,
+            darkLogoUrl: workspace.darkLogoUrl ?? row.darkLogoUrl,
+            is_current: true,
+          }
+        : { ...row, is_current: false }
+      ))
+      setWorkspaceMenuOpen(false)
+
+      try {
+        const bootstrapResponse = await fetch('/api/session/bootstrap', {
+          cache: 'no-store',
+          headers: tenantRequestHeaders(option.id),
+        })
+        const bootstrapPayload = await bootstrapResponse.json().catch(() => ({}))
+        if (bootstrapResponse.ok) {
+          const nextBootstrap = bootstrapPayload as SessionBootstrapResponse
+          setBootstrapModules((nextBootstrap.modules || []) as ClientModuleRuntime[])
+          cacheUiPreferences(nextBootstrap.userState.uiPreferences)
+          setDark(applyThemePreference(nextBootstrap.userState.uiPreferences.theme))
+          setCollapsed(Boolean(nextBootstrap.userState.uiPreferences.sidebarCollapsed))
+          setTourInitialStep(nextBootstrap.userState.introCurrentStep)
+          setTourShouldOpen(Boolean(nextBootstrap.userState.shouldShowSystemTour))
+        }
+      } catch {
+        // Calisma alani zaten degisti; bootstrap tazelemesi aksarsa sayfa refresh yeni veriyi getirir.
+      }
+
+      router.refresh()
+      setSwitchingWorkspaceId(null)
     } catch (error) {
       setWorkspaceSwitchError(error instanceof Error ? error.message : 'Calisma alani degistirilemedi.')
       setSwitchingWorkspaceId(null)
@@ -383,8 +422,8 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <ModuleLicenseProvider>
-      <ModuleProvider initialModules={bootstrapModules}>
+    <ModuleLicenseProvider key={`licenses-${workspaceId || 'default'}`}>
+      <ModuleProvider key={`modules-${workspaceId || 'default'}`} initialModules={bootstrapModules}>
         <PermissionProvider>
           <ActionGuideProvider>
           <div className={cn('flex h-screen overflow-hidden', dark && 'dark')}>

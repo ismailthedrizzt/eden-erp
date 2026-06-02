@@ -15,7 +15,7 @@ target_metadata = None
 
 
 def get_url() -> str:
-    database_url = get_settings().database_url
+    database_url = get_settings().async_database_url
     if not database_url:
         raise RuntimeError("DATABASE_URL is required for Alembic migrations.")
     return database_url

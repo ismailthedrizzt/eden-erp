@@ -18,7 +18,7 @@ Goal: move Eden ERP from controlled MVP/pilot readiness to first customer pilot 
 
 3. Development demo validation
    - Run `npm run demo:seed` on demo/Development tenant.
-   - Run `npm run demo:validate` with `DATABASE_URL` or `SUPABASE_DB_URL`.
+   - Run `npm run demo:validate` with `DATABASE_URL`.
    - Capture screenshots for dashboard/action center/audit/reporting.
 
 ## Week 2 — Migration Debt Burn-Down

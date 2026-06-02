@@ -30,17 +30,15 @@ uvicorn app.main:app --reload
 ## Environment
 
 ```bash
-DATABASE_URL=postgresql+asyncpg://...
-# or
-SUPABASE_DB_URL=postgresql+asyncpg://...
-APP_ENV=local
+DATABASE_URL=postgresql://postgres:<postgres-password>@localhost:5432/app1db
+APP_ENV=production
 LOG_LEVEL=INFO
 CORS_ORIGINS=http://localhost:3000
-SUPABASE_URL=https://...
-SUPABASE_JWT_SECRET=...
-SUPABASE_JWKS_URL=https://.../auth/v1/.well-known/jwks.json
-AUTH_REQUIRED=false
-ALLOW_TRUSTED_PROXY_HEADERS=true
+SUPABASE_URL=
+SUPABASE_JWT_SECRET=
+SUPABASE_JWKS_URL=
+AUTH_REQUIRED=true
+ALLOW_TRUSTED_PROXY_HEADERS=false
 TRUSTED_PROXY_SECRET=local-proxy-secret
 INTERNAL_BACKEND_TOKEN=local-internal-secret
 LOG_FORMAT=json
@@ -62,15 +60,14 @@ SENTRY_DSN=
 ```
 
 The app imports without a database URL. Endpoints that need the database return a controlled
-`BACKEND_DATABASE_NOT_CONFIGURED` response until `DATABASE_URL` or `SUPABASE_DB_URL` is set.
+`BACKEND_DATABASE_NOT_CONFIGURED` response until `DATABASE_URL` is set.
 
 Auth hardening:
 
-- Production/staging require Supabase JWT validation.
-- Local development can relax auth with `AUTH_REQUIRED=false`.
-- Next BFF should forward the Supabase access token as `Authorization: Bearer ...`.
+- The single VS environment should keep `AUTH_REQUIRED=true`.
+- Next BFF should forward the user access token as `Authorization: Bearer ...` when auth is enabled.
 - Internal worker/cron endpoints use `INTERNAL_BACKEND_TOKEN` or `CRON_SECRET`, not a user JWT.
-- Trusted proxy headers are hints only; production requires validated JWT user and tenant membership.
+- Trusted proxy headers are hints only; the VS environment requires validated user and tenant membership.
 
 ## Observability
 

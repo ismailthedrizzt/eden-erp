@@ -2,6 +2,7 @@ import 'server-only'
 
 import { readdir, readFile } from 'node:fs/promises'
 import path from 'node:path'
+import { getPgSslConfig } from '@/lib/db/pgClientOptions'
 
 type PgClient = {
   connect: () => Promise<void>
@@ -34,7 +35,7 @@ async function applySetupDatabaseSchema() {
   const { Client } = await import('pg')
   const client = new Client({
     connectionString: databaseUrl,
-    ssl: { rejectUnauthorized: false },
+    ssl: getPgSslConfig(databaseUrl),
   }) as PgClient
 
   await client.connect()

@@ -153,7 +153,7 @@ These are not P0 blockers for pilot, but they are P1/P2 cleanup candidates becau
 | `cd backend && python -m mypy app` | PASS | No issues in 365 source files. |
 | `cd backend && python -m pytest` | PASS | 173 passed, 1 pytest cache permission warning. |
 | `npm run demo:seed:dry` | PASS | 205 deterministic demo records planned. |
-| `npm run demo:validate` | NOT_CONFIGURED | No `DATABASE_URL` or `SUPABASE_DB_URL` in local env; script handled it safely. |
+| `npm run demo:validate` | NOT_CONFIGURED | No `DATABASE_URL` in local env; script handled it safely. |
 | `npm run smoke:test:dry` | PASS | Smoke endpoints listed; live servers were not running. |
 | `git diff --check` | PASS | Whitespace check clean after generated PWA output cleanup. |
 | `docker compose config` | SKIPPED/FAILED ENV | Docker CLI not available in this environment. |

@@ -21,8 +21,8 @@ export interface RouteReleaseConfig {
 }
 
 const RELEASE_NOTES = 'Initial approved release surface; still requires normal auth, tenant and scope checks.'
-const DEVELOPMENT_NOTES = 'Development Supabase and Development Vercel only until explicitly promoted.'
-const INTERNAL_NOTES = 'Internal, admin, audit, integration, portal or operational surface; Development only.'
+const DEVELOPMENT_NOTES = 'Not visible in the single VS environment until explicitly promoted.'
+const INTERNAL_NOTES = 'Internal, admin, audit, integration, portal or operational surface; hidden from normal VS users.'
 
 export const routeReleaseRegistry = [
   route('/', 'shell', 'Root redirect', 'hidden', false, false, false, { notes: 'Redirect shell; not listed in navigation.' }),
