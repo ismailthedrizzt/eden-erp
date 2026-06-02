@@ -1,26 +1,12 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { createServiceClient } from '@/lib/supabase/server'
-import { COMPANY_NACE_SELECT, requireCompanyNaceAccess, scopeCompanyNaceQuery } from '../_shared'
+// BACKEND_MIGRATION_STATUS: proxy_to_fastapi
+// CANONICAL_BACKEND: FastAPI
+// TARGET_FASTAPI_ENDPOINT: /api/v1/companies/{company_id}/nace-codes/{id}
+// NOTES: Thin Next.js proxy only. DB and Supabase access belong to FastAPI.
 
-export async function PATCH(request: NextRequest, { params }: { params: Promise<{ company_id: string; id: string }> }) {
-  const { company_id, id } = await params
-  const supabase = createServiceClient()
-  const access = await requireCompanyNaceAccess(request, supabase, company_id, 'edit')
-  if (access instanceof NextResponse) return access
-  const body = await request.json()
+import { createFastApiProxyHandler } from '@/app/api/_fastapiProxy'
 
-  let query = supabase
-    .from('company_nace_codes')
-    .update({ notes: body.notes || null, updated_by: access.userId, updated_at: new Date().toISOString() })
-    .eq('id', id)
-    .eq('company_id', company_id)
+export const runtime = 'nodejs'
 
-  query = scopeCompanyNaceQuery(query, access.tenantContext)
+const handler = createFastApiProxyHandler('/api/v1/companies/{company_id}/nace-codes/{id}')
 
-  const { data, error } = await query
-    .select(COMPANY_NACE_SELECT)
-    .single()
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json({ data })
-}
+export { handler as PATCH }

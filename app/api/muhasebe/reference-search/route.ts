@@ -1,20 +1,12 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { createServiceClient } from '@/lib/supabase/server'
+// BACKEND_MIGRATION_STATUS: proxy_to_fastapi
+// CANONICAL_BACKEND: FastAPI
+// TARGET_FASTAPI_ENDPOINT: /api/v1/accounting/reference-search
+// NOTES: Thin Next.js proxy only. DB and Supabase access belong to FastAPI.
 
-export async function GET(request: NextRequest) {
-  const supabase = createServiceClient()
-  const { searchParams } = new URL(request.url)
-  const q = searchParams.get('q') || ''
+import { createFastApiProxyHandler } from '@/app/api/_fastapiProxy'
 
-  const [persons, organizations, companies] = await Promise.all([
-    supabase.from('persons').select('id,full_name,national_id,passport_no').eq('is_deleted', false).ilike('full_name', `%${q}%`).limit(50),
-    supabase.from('organizations').select('id,legal_name,tax_number,registration_number').eq('is_deleted', false).ilike('legal_name', `%${q}%`).limit(50),
-    supabase.from('companies').select('id,short_name,trade_name').eq('is_deleted', false).limit(50),
-  ])
+export const runtime = 'nodejs'
 
-  return NextResponse.json({
-    persons: persons.data || [],
-    organizations: organizations.data || [],
-    companies: companies.data || [],
-  })
-}
+const handler = createFastApiProxyHandler('/api/v1/accounting/reference-search')
+
+export { handler as GET }

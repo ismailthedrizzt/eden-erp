@@ -1,35 +1,12 @@
-// BACKEND_MIGRATION_STATUS: deprecated_wrapper
-// TARGET_BACKEND_MODULE: ownership
-// TARGET_FASTAPI_ENDPOINT: /api/v1/ownership-transactions/{transaction_id}/reject
-// NOTES: Contains ownership transaction rejection logic; Next.js route should become BFF/proxy after Python migration.
+// BACKEND_MIGRATION_STATUS: proxy_to_fastapi
+// CANONICAL_BACKEND: FastAPI
+// TARGET_FASTAPI_ENDPOINT: /api/v1/ownership/transactions/{id}/reject
+// NOTES: Thin Next.js proxy only. DB and Supabase access belong to FastAPI.
 
-import { NextResponse } from 'next/server'
-import { createServiceClient } from '@/lib/supabase/server'
-import { OWNERSHIP_TRANSACTION_SELECT } from '../../_shared'
+import { createFastApiProxyHandler } from '@/app/api/_fastapiProxy'
 
-export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params
-  const body = await request.json().catch(() => ({}))
-  const supabase = createServiceClient()
-  const now = new Date().toISOString()
-  const { data: current, error: currentError } = await supabase.from('ownership_transactions').select(OWNERSHIP_TRANSACTION_SELECT).eq('id', id).single()
-  if (currentError) return NextResponse.json({ error: currentError.message, code: currentError.code || 'FETCH_FAILED' }, { status: 500 })
+export const runtime = 'nodejs'
 
-  const history = [...(Array.isArray(current.history) ? current.history : []), { action: 'Reddedildi', changed_at: now, changed_by: 'Sistem Kullanıcısı' }]
-  const { data, error } = await supabase
-    .from('ownership_transactions')
-    .update({
-      approval_status: 'rejected',
-      workflow_status: 'rejected',
-      status: 'draft',
-      rejection_reason: body.rejection_reason || null,
-      history,
-      updated_at: now,
-    })
-    .eq('id', id)
-    .select(OWNERSHIP_TRANSACTION_SELECT)
-    .single()
+const handler = createFastApiProxyHandler('/api/v1/ownership/transactions/{id}/reject')
 
-  if (error) return NextResponse.json({ error: error.message, code: error.code || 'REJECT_FAILED' }, { status: 500 })
-  return NextResponse.json({ data })
-}
+export { handler as POST }

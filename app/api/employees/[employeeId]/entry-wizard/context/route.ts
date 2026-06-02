@@ -1,7 +1,12 @@
-import { NextRequest } from 'next/server'
-import { getEmployeeWizardContext } from '@/lib/modules/employees/workLifecycle.server'
+// BACKEND_MIGRATION_STATUS: proxy_to_fastapi
+// CANONICAL_BACKEND: FastAPI
+// TARGET_FASTAPI_ENDPOINT: /api/v1/hr/employees/{employeeId}/entry-wizard/context
+// NOTES: Thin Next.js proxy only. DB and backend business logic belong to FastAPI.
 
-export async function GET(request: NextRequest, { params }: { params: Promise<{ employeeId: string }> }) {
-  const { employeeId } = await params
-  return getEmployeeWizardContext(request, employeeId, 'entry')
-}
+import { createFastApiProxyHandler } from '@/app/api/_fastapiProxy'
+
+export const runtime = 'nodejs'
+
+const handler = createFastApiProxyHandler('/api/v1/hr/employees/{employeeId}/entry-wizard/context')
+
+export { handler as GET }

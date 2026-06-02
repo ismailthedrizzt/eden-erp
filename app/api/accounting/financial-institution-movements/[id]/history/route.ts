@@ -1,11 +1,12 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { createServiceClient } from '@/lib/supabase/server'
-import { ACCOUNTING_PERMISSIONS } from '@/lib/modules/accounting/shared/accounting.permissions'
-import { requirePermission } from '@/lib/security/serverPermissions'
+// BACKEND_MIGRATION_STATUS: proxy_to_fastapi
+// CANONICAL_BACKEND: FastAPI
+// TARGET_FASTAPI_ENDPOINT: /api/v1/accounting/financial-institution-movements/{id}/history
+// NOTES: Thin Next.js proxy only. DB and Supabase access belong to FastAPI.
 
-export async function GET(request: NextRequest) {
-  const supabase = createServiceClient()
-  const permission = await requirePermission(request, supabase, ACCOUNTING_PERMISSIONS.bankMovementsView)
-  if (permission instanceof NextResponse) return permission
-  return NextResponse.json({ data: [] })
-}
+import { createFastApiProxyHandler } from '@/app/api/_fastapiProxy'
+
+export const runtime = 'nodejs'
+
+const handler = createFastApiProxyHandler('/api/v1/accounting/financial-institution-movements/{id}/history')
+
+export { handler as GET }

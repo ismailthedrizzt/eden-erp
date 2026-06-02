@@ -1,25 +1,12 @@
-// BACKEND_MIGRATION_STATUS: deprecated_wrapper
-// TARGET_BACKEND_MODULE: capital
+// BACKEND_MIGRATION_STATUS: proxy_to_fastapi
+// CANONICAL_BACKEND: FastAPI
 // TARGET_FASTAPI_ENDPOINT: /api/v1/companies/{company_id}/capital-decreases/precheck
-// NOTES: Contains capital decrease precheck logic; move to Python company capital service.
+// NOTES: Thin Next.js proxy only. DB and Supabase access belong to FastAPI.
 
-import { NextRequest, NextResponse } from 'next/server'
-import { createServiceClient } from '@/lib/supabase/server'
-import { buildCapitalDecreasePrecheck, capitalDecreaseError, ensureCapitalDecreaseAccess } from '../_shared'
+import { createFastApiProxyHandler } from '@/app/api/_fastapiProxy'
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ company_id: string }> }
-) {
-  const { company_id: companyId } = await params
-  const supabase = createServiceClient()
-  const access = await ensureCapitalDecreaseAccess(request, supabase, companyId, 'companies.view')
-  if (access.response) return access.response
+export const runtime = 'nodejs'
 
-  try {
-    const precheck = await buildCapitalDecreasePrecheck(supabase, companyId, access.tenantContext)
-    return NextResponse.json({ data: precheck })
-  } catch (error: any) {
-    return capitalDecreaseError(error?.message || 'Sermaye azaltımı ön kontrolü yapılamadı.', error?.code || 'CAPITAL_DECREASE_PRECHECK_FAILED', 500)
-  }
-}
+const handler = createFastApiProxyHandler('/api/v1/companies/{company_id}/capital-decreases/precheck')
+
+export { handler as GET }

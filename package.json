@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "npm run encoding:guard && next build",
+    "build": "npm run encoding:guard && npm run backend:boundary:enforce && next build",
     "start": "next start",
     "lint": "next lint",
     "typecheck": "npm run typecheck:local",

@@ -1,28 +1,12 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { createServiceClient } from '@/lib/supabase/server'
-import { ACCOUNTING_PERMISSIONS } from '@/lib/modules/accounting/shared/accounting.permissions'
-import { requirePermission } from '@/lib/security/serverPermissions'
-import { FINANCIAL_MOVEMENT_SELECT } from '../../_selects'
+// BACKEND_MIGRATION_STATUS: proxy_to_fastapi
+// CANONICAL_BACKEND: FastAPI
+// TARGET_FASTAPI_ENDPOINT: /api/v1/accounting/financial-institution-movements/{id}/match
+// NOTES: Thin Next.js proxy only. DB and Supabase access belong to FastAPI.
 
-export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params
-  const supabase = createServiceClient()
-  const permission = await requirePermission(request, supabase, ACCOUNTING_PERMISSIONS.bankMovementsMatch)
-  if (permission instanceof NextResponse) return permission
-  const body = await request.json().catch(() => ({}))
+import { createFastApiProxyHandler } from '@/app/api/_fastapiProxy'
 
-  const { data, error } = await supabase
-    .from('financial_institution_movements')
-    .update({
-      match_status: body.preAccountingMovementId ? 'manual_match' : 'matched',
-      matched_pre_accounting_movement_id: body.preAccountingMovementId || null,
-      matched_at: new Date().toISOString(),
-      matched_by: permission.userId,
-    })
-    .eq('id', id)
-    .select(FINANCIAL_MOVEMENT_SELECT)
-    .single()
+export const runtime = 'nodejs'
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json({ data })
-}
+const handler = createFastApiProxyHandler('/api/v1/accounting/financial-institution-movements/{id}/match')
+
+export { handler as POST }

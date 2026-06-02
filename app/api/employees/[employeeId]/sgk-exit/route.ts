@@ -1,10 +1,12 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { isCompanySgk } from '@/lib/modules/employees/workLifecycle'
+// BACKEND_MIGRATION_STATUS: proxy_to_fastapi
+// CANONICAL_BACKEND: FastAPI
+// TARGET_FASTAPI_ENDPOINT: /api/v1/hr/employees/{employeeId}/sgk-exit
+// NOTES: Thin Next.js proxy only. DB and backend business logic belong to FastAPI.
 
-export async function POST(request: NextRequest) {
-  const body = await request.json().catch(() => ({}))
-  if (body.sgk_responsibility && !isCompanySgk(body.sgk_responsibility)) {
-    return NextResponse.json({ error: 'SGK çıkışı sadece SGK sorumlusu Şirket ise çalışır.' }, { status: 400 })
-  }
-  return NextResponse.json({ data: { status: 'pending_integration', message: 'SGK entegrasyonu devam ediyor. Bu özellik tamamlandığında aktif olacaktır.' } })
-}
+import { createFastApiProxyHandler } from '@/app/api/_fastapiProxy'
+
+export const runtime = 'nodejs'
+
+const handler = createFastApiProxyHandler('/api/v1/hr/employees/{employeeId}/sgk-exit')
+
+export { handler as POST }

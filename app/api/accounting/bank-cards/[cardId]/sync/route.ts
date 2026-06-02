@@ -1,16 +1,12 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { createServiceClient } from '@/lib/supabase/server'
-import { ACCOUNTING_PERMISSIONS } from '@/lib/modules/accounting/shared/accounting.permissions'
-import { requirePermission } from '@/lib/security/serverPermissions'
-import { BANK_CARD_SELECT } from '../../../bank-accounts-cards/_shared'
+// BACKEND_MIGRATION_STATUS: proxy_to_fastapi
+// CANONICAL_BACKEND: FastAPI
+// TARGET_FASTAPI_ENDPOINT: /api/v1/accounting/bank-cards/{cardId}/sync
+// NOTES: Thin Next.js proxy only. DB and Supabase access belong to FastAPI.
 
-export async function POST(request: NextRequest, { params }: { params: Promise<{ cardId: string }> }) {
-  const { cardId } = await params
-  const supabase = createServiceClient()
-  const permission = await requirePermission(request, supabase, ACCOUNTING_PERMISSIONS.bankConnectionsSync)
-  if (permission instanceof NextResponse) return permission
+import { createFastApiProxyHandler } from '@/app/api/_fastapiProxy'
 
-  const { data, error } = await supabase.from('bank_cards').update({ last_sync_at: new Date().toISOString() }).eq('id', cardId).select(BANK_CARD_SELECT).single()
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
-  return NextResponse.json({ data })
-}
+export const runtime = 'nodejs'
+
+const handler = createFastApiProxyHandler('/api/v1/accounting/bank-cards/{cardId}/sync')
+
+export { handler as POST }

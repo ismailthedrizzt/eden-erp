@@ -1,10 +1,12 @@
-import { NextRequest } from 'next/server'
-import { getCompanyLifecycle } from '@/lib/modules/companies/companyLifecycle.server'
+// BACKEND_MIGRATION_STATUS: proxy_to_fastapi
+// CANONICAL_BACKEND: FastAPI
+// TARGET_FASTAPI_ENDPOINT: /api/v1/companies/{company_id}/lifecycle
+// NOTES: Thin Next.js proxy only. DB and backend business logic belong to FastAPI.
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ company_id: string }> }
-) {
-  const { company_id } = await params
-  return getCompanyLifecycle(request, company_id)
-}
+import { createFastApiProxyHandler } from '@/app/api/_fastapiProxy'
+
+export const runtime = 'nodejs'
+
+const handler = createFastApiProxyHandler('/api/v1/companies/{company_id}/lifecycle')
+
+export { handler as GET }

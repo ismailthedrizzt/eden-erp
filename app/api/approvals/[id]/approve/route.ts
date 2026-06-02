@@ -1,53 +1,12 @@
-// BACKEND_MIGRATION_STATUS: proxy_to_fastapi_with_legacy_fallback
-// TARGET_BACKEND_MODULE: process
-// TARGET_FASTAPI_ENDPOINT: /api/v1/approvals/{approval_id}/approve
-// NOTES: Approval decision should be handled by Python; TS fallback remains a migration bridge.
+// BACKEND_MIGRATION_STATUS: proxy_to_fastapi
+// CANONICAL_BACKEND: FastAPI
+// TARGET_FASTAPI_ENDPOINT: /api/v1/approvals/{id}/approve
+// NOTES: Thin Next.js proxy only. DB and Supabase access belong to FastAPI.
 
-import { NextRequest, NextResponse } from 'next/server'
-import { proxyToFastApi } from '@/lib/backend/fastApiProxy'
-import { createServiceClient } from '@/lib/supabase/server'
-import { resolveTenantContext } from '@/lib/tenancy/server'
-import { requireAnyPermission } from '@/lib/security/serverPermissions'
-import { ProcessApprovalService } from '@/lib/process/processApprovalService'
-import { createProcessEngine } from '@/lib/process/processEngine'
-import { recordProcessEvent } from '@/lib/process/processEvents'
-import { ProcessInstanceService } from '@/lib/process/processInstanceService'
-import { isMissingInfrastructureError } from '@/lib/operations/operationRequestService'
+import { createFastApiProxyHandler } from '@/app/api/_fastapiProxy'
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const { id } = await params
-  const fastApiResponse = await proxyToFastApi(request, `/api/v1/approvals/${id}/approve`)
-  if (fastApiResponse) return fastApiResponse
+export const runtime = 'nodejs'
 
-  const supabase = createServiceClient()
-  const access = await requireAnyPermission(request, supabase, ['companies.edit', 'branches.opening.start', 'branches.closing.start'])
-  if (access instanceof Response) return access
-  const body = await request.json().catch(() => ({}))
-  const tenantContext = resolveTenantContext(request)
+const handler = createFastApiProxyHandler('/api/v1/approvals/{id}/approve')
 
-  try {
-    const approvalService = new ProcessApprovalService(supabase as any, tenantContext)
-    const approval = await approvalService.approve(id, access.userId || null, body.note || body.decision_note || null)
-    const process = await new ProcessInstanceService(supabase as any, tenantContext).get(approval.process_instance_id)
-    if (process) {
-      await recordProcessEvent({
-        supabase: supabase as any,
-        tenantContext,
-        process,
-        eventType: 'process.approved',
-        stepKey: process.current_step_key,
-        payload: { approval_id: approval.id, note: body.note || body.decision_note || null },
-        createdBy: access.userId || null,
-      })
-      const engine = createProcessEngine(supabase as any, { request, tenantContext, userId: access.userId || null })
-      await engine.completeStep(process.id, process.current_step_key || 'approval', { approval_id: approval.id, decision: 'approved' })
-    }
-    return NextResponse.json({ data: approval })
-  } catch (error: any) {
-    if (isMissingInfrastructureError(error)) return NextResponse.json({ error: 'Surec onaylari altyapisi henuz hazir degil.', code: 'PROCESS_INFRASTRUCTURE_MISSING' }, { status: 501 })
-    return NextResponse.json({ error: error.message, code: error.code || 'APPROVAL_APPROVE_FAILED' }, { status: 500 })
-  }
-}
+export { handler as POST }

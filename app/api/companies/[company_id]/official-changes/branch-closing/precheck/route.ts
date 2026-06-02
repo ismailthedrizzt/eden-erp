@@ -1,41 +1,12 @@
-// BACKEND_MIGRATION_STATUS: proxy_to_fastapi_with_legacy_fallback
-// TARGET_BACKEND_MODULE: branches
-// TARGET_FASTAPI_ENDPOINT: /api/v1/companies/{company_id}/branch-closings/precheck
-// NOTES: Proxies to FastAPI when FASTAPI_BASE_URL is configured; TS fallback is temporary migration bridge.
+// BACKEND_MIGRATION_STATUS: proxy_to_fastapi
+// CANONICAL_BACKEND: FastAPI
+// TARGET_FASTAPI_ENDPOINT: /api/v1/companies/{company_id}/official-changes/branch-closing/precheck
+// NOTES: Thin Next.js proxy only. DB and Supabase access belong to FastAPI.
 
-import { NextRequest, NextResponse } from 'next/server'
-import { isFastApiEnabled, proxyToFastApi } from '@/lib/backend/fastApiProxy'
-import { createServiceClient } from '@/lib/supabase/server'
-import { buildBranchClosingPrecheck, ensureOfficialChangeAccess } from '../../_shared'
+import { createFastApiProxyHandler } from '@/app/api/_fastapiProxy'
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ company_id: string }> }
-) {
-  const { company_id: companyId } = await params
-  if (isFastApiEnabled()) {
-    const proxied = await proxyToFastApi(request, `/api/v1/companies/${companyId}/branch-closings/precheck`)
-    if (proxied) return proxied
-  }
-  console.warn('FastAPI backend not configured; using legacy TS fallback for branch closing precheck.')
+export const runtime = 'nodejs'
 
-  const supabase = createServiceClient()
-  const access = await ensureOfficialChangeAccess(request, supabase, companyId, 'companies.view')
-  if (access.response) return access.response
+const handler = createFastApiProxyHandler('/api/v1/companies/{company_id}/official-changes/branch-closing/precheck')
 
-  try {
-    const precheck = await buildBranchClosingPrecheck(
-      supabase,
-      companyId,
-      access.tenantContext,
-      request.nextUrl.searchParams.get('branch_id')
-    )
-    return NextResponse.json({ data: precheck }, { headers: { 'Cache-Control': 'no-store, max-age=0' } })
-  } catch (error: any) {
-    return NextResponse.json({
-      error: error?.message || 'Şube kapanışı ön kontrolü yapılamadı.',
-      code: error?.code || 'BRANCH_CLOSING_PRECHECK_FAILED',
-      message: 'İşlem tamamlanamadı',
-    }, { status: 500 })
-  }
-}
+export { handler as GET }

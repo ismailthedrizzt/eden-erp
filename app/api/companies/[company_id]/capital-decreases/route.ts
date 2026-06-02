@@ -1,29 +1,12 @@
-// BACKEND_MIGRATION_STATUS: deprecated_wrapper
-// TARGET_BACKEND_MODULE: capital
+// BACKEND_MIGRATION_STATUS: proxy_to_fastapi
+// CANONICAL_BACKEND: FastAPI
 // TARGET_FASTAPI_ENDPOINT: /api/v1/companies/{company_id}/capital-decreases
-// NOTES: Contains capital decrease operation logic; move to Python company capital and ownership services.
+// NOTES: Thin Next.js proxy only. DB and Supabase access belong to FastAPI.
 
-import { NextRequest } from 'next/server'
-import { createServiceClient } from '@/lib/supabase/server'
-import { capitalDecreaseError, ensureCapitalDecreaseAccess } from './_shared'
+import { createFastApiProxyHandler } from '@/app/api/_fastapiProxy'
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ company_id: string }> }
-) {
-  const { company_id: companyId } = await params
-  const supabase = createServiceClient()
-  const access = await ensureCapitalDecreaseAccess(request, supabase, companyId, 'companies.edit')
-  if (access.response) return access.response
+export const runtime = 'nodejs'
 
-  return capitalDecreaseError(
-    'Sermaye azaltımı operasyonu hazırlık aşamasında. Bu işlem şu anda kayıt veya ortaklık dağılımı değiştirmez.',
-    'CAPITAL_DECREASE_NOT_ENABLED',
-    409,
-    {
-      operation_enabled: false,
-      company_id: companyId,
-      next_step: 'Belge ve onay akışı tamamlandığında ownership transaction üzerinden açılacaktır.',
-    }
-  )
-}
+const handler = createFastApiProxyHandler('/api/v1/companies/{company_id}/capital-decreases')
+
+export { handler as POST }

@@ -1,77 +1,12 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { createServiceClient } from '@/lib/supabase/server'
-import { ACCOUNTING_PERMISSIONS } from '@/lib/modules/accounting/shared/accounting.permissions'
-import { requirePermission } from '@/lib/security/serverPermissions'
-import { isMissingTableError } from '../_banking'
-import { BANK_ACCOUNT_SELECT, BANK_CARD_SELECT, ensureManualBankConnection, listBankAccountsCards, normalizeAccountBody, normalizeCardBody } from './_shared'
-import { listMetaFromRows, listRange, parseListQuery } from '@/lib/api/listEndpoint'
-import { getServerResponseCache, serverListCacheKey, setServerResponseCache } from '@/lib/api/serverResponseCache'
+// BACKEND_MIGRATION_STATUS: proxy_to_fastapi
+// CANONICAL_BACKEND: FastAPI
+// TARGET_FASTAPI_ENDPOINT: /api/v1/accounting/bank-accounts-cards
+// NOTES: Thin Next.js proxy only. DB and Supabase access belong to FastAPI.
 
-export async function GET(request: NextRequest) {
-  const supabase = createServiceClient()
-  const permission = await requirePermission(request, supabase, ACCOUNTING_PERMISSIONS.bankAccountsView)
-  if (permission instanceof NextResponse) return permission
+import { createFastApiProxyHandler } from '@/app/api/_fastapiProxy'
 
-  try {
-    const cacheKey = serverListCacheKey(request, 'bank-accounts-cards:list')
-    const cached = getServerResponseCache<Record<string, unknown>>(cacheKey)
-    if (cached) return NextResponse.json(cached)
+export const runtime = 'nodejs'
 
-    const { searchParams } = new URL(request.url)
-    const listQuery = parseListQuery(searchParams, { pageSize: 50, sort: 'bank_name', direction: 'asc' })
-    const { from, to } = listRange(listQuery)
-    const data = await listBankAccountsCards(supabase as any, {
-      includePassive: searchParams.get('include_passive') === 'true',
-      from,
-      to,
-      search: listQuery.search,
-      sort: listQuery.sort,
-      direction: listQuery.direction,
-    })
-    const payload = { data: data.rows, meta: listMetaFromRows(listQuery, data.rows.length), accountOptions: data.accountOptions }
-    setServerResponseCache(cacheKey, payload)
-    return NextResponse.json(payload)
-  } catch (error) {
-    if (isMissingTableError(error)) {
-      return NextResponse.json({
-        data: [],
-        accountOptions: [],
-        warning: 'Banka hesap/kart kayit alanlari hazir degil. Muhasebe modulu kurulumunu tamamlayin.',
-      })
-    }
+const handler = createFastApiProxyHandler('/api/v1/accounting/bank-accounts-cards')
 
-    const message = error instanceof Error ? error.message : 'Hesap ve kartlar yüklenemedi.'
-    return NextResponse.json({ error: message }, { status: 500 })
-  }
-}
-
-export async function POST(request: NextRequest) {
-  const supabase = createServiceClient()
-  const permission = await requirePermission(request, supabase, ACCOUNTING_PERMISSIONS.bankAccountsInsert)
-  if (permission instanceof NextResponse) return permission
-
-  try {
-    const body = await request.json()
-    const recordType = body.record_type === 'card' ? 'card' : 'account'
-    const connection = await ensureManualBankConnection(supabase as any, body, permission.userId)
-
-    if (recordType === 'account') {
-      const payload = normalizeAccountBody(body, connection, permission.userId)
-      if (!payload.account_name) return NextResponse.json({ error: 'Hesap adı zorunludur.' }, { status: 400 })
-      const { data, error } = await supabase.from('bank_accounts').insert({ ...payload, created_by: permission.userId }).select(BANK_ACCOUNT_SELECT).single()
-      if (error) throw new Error(error.message)
-      const account = data as Record<string, any>
-      return NextResponse.json({ data: { id: `account:${account.id}`, ...account } }, { status: 201 })
-    }
-
-    const payload = normalizeCardBody(body, connection, permission.userId)
-    if (!payload.card_name) return NextResponse.json({ error: 'Kart adı zorunludur.' }, { status: 400 })
-    const { data, error } = await supabase.from('bank_cards').insert({ ...payload, created_by: permission.userId }).select(BANK_CARD_SELECT).single()
-    if (error) throw new Error(error.message)
-    const card = data as Record<string, any>
-    return NextResponse.json({ data: { id: `card:${card.id}`, ...card } }, { status: 201 })
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Kayıt oluşturulamadı.'
-    return NextResponse.json({ error: message }, { status: 500 })
-  }
-}
+export { handler as GET, handler as POST }

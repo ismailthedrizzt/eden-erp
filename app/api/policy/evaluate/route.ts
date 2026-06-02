@@ -1,23 +1,12 @@
-// BACKEND_MIGRATION_STATUS: proxy_to_fastapi_with_legacy_fallback
-// TARGET_BACKEND_MODULE: policy
+// BACKEND_MIGRATION_STATUS: proxy_to_fastapi
+// CANONICAL_BACKEND: FastAPI
 // TARGET_FASTAPI_ENDPOINT: /api/v1/policy/evaluate
-// NOTES: Policy decisions are canonical in FastAPI; this route is BFF/proxy only.
+// NOTES: Thin Next.js proxy only. DB and backend business logic belong to FastAPI.
 
-import { NextRequest, NextResponse } from 'next/server'
-import { proxyToFastApi } from '@/lib/backend/fastApiProxy'
+import { createFastApiProxyHandler } from '@/app/api/_fastapiProxy'
 
 export const runtime = 'nodejs'
 
-export async function POST(request: NextRequest) {
-  const response = await proxyToFastApi(request, '/api/v1/policy/evaluate')
-  if (response) return response
+const handler = createFastApiProxyHandler('/api/v1/policy/evaluate')
 
-  return NextResponse.json(
-    {
-      error: 'Yetki kontrol servisi henuz yapilandirilmamis.',
-      code: 'FASTAPI_REQUIRED',
-      message: 'Yetki kontrol servisi henuz yapilandirilmamis.',
-    },
-    { status: 501 }
-  )
-}
+export { handler as POST }

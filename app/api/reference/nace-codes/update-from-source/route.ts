@@ -1,14 +1,12 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { createServiceClient } from '@/lib/supabase/server'
-import { requirePermission } from '@/lib/security/serverPermissions'
-import { NaceReferenceUpdateService } from '@/lib/modules/companies/nace/naceReference.service'
+// BACKEND_MIGRATION_STATUS: proxy_to_fastapi
+// CANONICAL_BACKEND: FastAPI
+// TARGET_FASTAPI_ENDPOINT: /api/v1/companies/nace-codes/update-from-source
+// NOTES: Thin Next.js proxy only. DB and Supabase access belong to FastAPI.
 
-export async function POST(request: NextRequest) {
-  const supabase = createServiceClient()
-  const permission = await requirePermission(request, supabase, 'nace_reference.update')
-  if (permission instanceof NextResponse) return permission
+import { createFastApiProxyHandler } from '@/app/api/_fastapiProxy'
 
-  const service = new NaceReferenceUpdateService(supabase as any)
-  const result = await service.updateFromTrustedSources()
-  return NextResponse.json({ data: result })
-}
+export const runtime = 'nodejs'
+
+const handler = createFastApiProxyHandler('/api/v1/companies/nace-codes/update-from-source')
+
+export { handler as POST }

@@ -1,15 +1,12 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { createServiceClient } from '@/lib/supabase/server'
-import { requirePermission } from '@/lib/security/serverPermissions'
-import { EMPLOYEE_WORK_PERMISSIONS, fetchLifecycleEvents } from '@/lib/modules/employees/workLifecycle.server'
+// BACKEND_MIGRATION_STATUS: proxy_to_fastapi
+// CANONICAL_BACKEND: FastAPI
+// TARGET_FASTAPI_ENDPOINT: /api/v1/hr/employees/{employeeId}/work-lifecycle-events
+// NOTES: Thin Next.js proxy only. DB and Supabase access belong to FastAPI.
 
-export async function GET(request: NextRequest, { params }: { params: Promise<{ employeeId: string }> }) {
-  const { employeeId } = await params
-  const supabase = createServiceClient()
-  const permission = await requirePermission(request, supabase, EMPLOYEE_WORK_PERMISSIONS.lifecycleView)
-  if (permission instanceof NextResponse) return permission
+import { createFastApiProxyHandler } from '@/app/api/_fastapiProxy'
 
-  const { data, error } = await fetchLifecycleEvents(supabase, employeeId)
-  if (error) return NextResponse.json({ error: error.message, code: error.code || 'FETCH_FAILED' }, { status: 500 })
-  return NextResponse.json({ data: data || [] })
-}
+export const runtime = 'nodejs'
+
+const handler = createFastApiProxyHandler('/api/v1/hr/employees/{employeeId}/work-lifecycle-events')
+
+export { handler as GET }

@@ -1,22 +1,12 @@
-// BACKEND_MIGRATION_STATUS: proxy_to_fastapi_with_legacy_fallback
-// TARGET_BACKEND_MODULE: action-center
+// BACKEND_MIGRATION_STATUS: proxy_to_fastapi
+// CANONICAL_BACKEND: FastAPI
 // TARGET_FASTAPI_ENDPOINT: /api/v1/action-center/summary
-// NOTES: Action Center summary belongs in Python; TS remains fallback only.
+// NOTES: Thin Next.js proxy only. DB and backend business logic belong to FastAPI.
 
-import { NextRequest, NextResponse } from 'next/server'
-import { proxyToFastApi } from '@/lib/backend/fastApiProxy'
-import { buildActionCenterContext } from '@/lib/action-center/actionCenterResolver'
-import { getActionCenterSummary } from '@/lib/action-center/actionCenterService'
+import { createFastApiProxyHandler } from '@/app/api/_fastapiProxy'
 
 export const runtime = 'nodejs'
 
-export async function GET(request: NextRequest) {
-  const fastApiResponse = await proxyToFastApi(request, '/api/v1/action-center/summary')
-  if (fastApiResponse) return fastApiResponse
+const handler = createFastApiProxyHandler('/api/v1/action-center/summary')
 
-  const context = await buildActionCenterContext(request)
-  if (context instanceof NextResponse) return context
-
-  const summary = await getActionCenterSummary(context)
-  return NextResponse.json({ data: summary }, { headers: { 'Cache-Control': 'no-store' } })
-}
+export { handler as GET }

@@ -3,6 +3,7 @@ const path = require('path')
 
 const root = process.cwd()
 const failOnDirectDb = process.argv.includes('--fail-on-direct-db')
+const failOnServerDirectDb = process.argv.includes('--fail-on-server-direct-db')
 
 const API_DIR = path.join(root, 'app', 'api')
 const SERVER_LIB_DIRS = [
@@ -15,10 +16,12 @@ const allServerFiles = SERVER_LIB_DIRS.flatMap(dir => collectFiles(dir, file => 
 
 const directSupabaseImport = /@\/lib\/supabase\/(server|client)|from ['"]@supabase\/|createServerClient|createBrowserClient/
 const directDbOperation = /\.(from|rpc)\s*\(/
-const fastApiProxy = /proxyToFastApi|proxyJsonToFastApi|proxyToFastApi[A-Z]/
+const fastApiProxy = /proxyToFastApi|proxyJsonToFastApi|proxyToFastApi[A-Z]|createFastApiProxyHandler/
+const routeBackendImport = /@\/lib\/(action-center|action-guide|audit|crud|db|documents\/documentThumbnail|domains|field-controls|identity|integrity|modules|operations|outbox|read-models|scope|security\/serverPermissions|services|setup|tenancy\/companyScopes|user-state|workflow)\b/
 const allowedSupabaseFiles = new Set([
   normalize('lib/supabase/server.ts'),
   normalize('lib/supabase/client.ts'),
+  normalize('app/api/_fastapiProxy.ts'),
 ])
 
 const apiRows = routeFiles.map(file => classify(file))
@@ -31,6 +34,7 @@ const summary = {
   apiRouteFiles: routeFiles.length,
   apiFastApiProxyRoutes: apiRows.filter(row => row.fastApiProxy).length,
   apiDirectDbRoutes: apiRows.filter(row => row.directSupabaseImport || row.directDbOperation).length,
+  apiBackendImportRoutes: apiRows.filter(row => row.routeBackendImport).length,
   serverDirectDbFiles: serverRows.length,
 }
 
@@ -38,9 +42,11 @@ console.log('Next/FastAPI backend boundary audit')
 console.log(`- app/api route files: ${summary.apiRouteFiles}`)
 console.log(`- FastAPI proxy route files: ${summary.apiFastApiProxyRoutes}`)
 console.log(`- app/api files with direct DB/Supabase access: ${summary.apiDirectDbRoutes}`)
+console.log(`- app/api files importing TS backend modules: ${summary.apiBackendImportRoutes}`)
 console.log(`- server TS files with direct DB/Supabase access: ${summary.serverDirectDbFiles}`)
 
 const directApiRows = apiRows.filter(row => row.directSupabaseImport || row.directDbOperation)
+const backendImportApiRows = apiRows.filter(row => row.routeBackendImport)
 if (directApiRows.length) {
   console.log('\nDirect DB/Supabase app/api files:')
   for (const row of directApiRows.slice(0, 120)) {
@@ -51,8 +57,23 @@ if (directApiRows.length) {
   }
 }
 
-if (failOnDirectDb && directApiRows.length) {
-  console.error('\nFAIL: Next API still contains direct DB/Supabase access. Route data operations must move to FastAPI.')
+if (backendImportApiRows.length) {
+  console.log('\nTS backend imports in app/api files:')
+  for (const row of backendImportApiRows.slice(0, 120)) {
+    console.log(`- ${row.relative}`)
+  }
+  if (backendImportApiRows.length > 120) {
+    console.log(`- ... ${backendImportApiRows.length - 120} more`)
+  }
+}
+
+if (failOnDirectDb && (directApiRows.length || backendImportApiRows.length)) {
+  console.error('\nFAIL: Next API still contains direct DB/Supabase access or TS backend imports. Route data operations must move to FastAPI.')
+  process.exit(1)
+}
+
+if (failOnServerDirectDb && serverRows.length) {
+  console.error('\nFAIL: Next server-side TypeScript still contains direct DB/Supabase access. Move data operations to FastAPI or isolate obsolete code outside the Next runtime.')
   process.exit(1)
 }
 
@@ -64,6 +85,7 @@ function classify(file) {
     fastApiProxy: fastApiProxy.test(content),
     directSupabaseImport: directSupabaseImport.test(content),
     directDbOperation: directDbOperation.test(content),
+    routeBackendImport: routeBackendImport.test(content),
   }
 }
 

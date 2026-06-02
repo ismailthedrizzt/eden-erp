@@ -1,24 +1,12 @@
-// BACKEND_MIGRATION_STATUS: deprecated_wrapper
-// TARGET_BACKEND_MODULE: ownership
-// TARGET_FASTAPI_ENDPOINT: /api/v1/ownership-transactions/{transaction_id}/history
-// NOTES: Contains ownership transaction history query logic; move to Python/read-model endpoint.
+// BACKEND_MIGRATION_STATUS: proxy_to_fastapi
+// CANONICAL_BACKEND: FastAPI
+// TARGET_FASTAPI_ENDPOINT: /api/v1/ownership/transactions/{id}/history
+// NOTES: Thin Next.js proxy only. DB and Supabase access belong to FastAPI.
 
-import { NextResponse } from 'next/server'
-import { createServiceClient } from '@/lib/supabase/server'
+import { createFastApiProxyHandler } from '@/app/api/_fastapiProxy'
 
-export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params
-  const supabase = createServiceClient()
-  const [{ data: transaction, error }, { data: technicalHistory }] = await Promise.all([
-    supabase.from('ownership_transactions').select('history').eq('id', id).single(),
-    supabase.from('record_history').select('id,instance_id,table_name,record_id,version,data_json,changed_by,created_at').eq('table_name', 'ownership_transactions').eq('record_id', id).order('created_at', { ascending: false }),
-  ])
+export const runtime = 'nodejs'
 
-  if (error) return NextResponse.json({ error: error.message, code: error.code || 'FETCH_FAILED' }, { status: 500 })
-  return NextResponse.json({
-    data: {
-      business: transaction?.history || [],
-      technical: technicalHistory || [],
-    },
-  })
-}
+const handler = createFastApiProxyHandler('/api/v1/ownership/transactions/{id}/history')
+
+export { handler as GET }

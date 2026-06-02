@@ -1,16 +1,12 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { employeesDashboardLayout } from '@/lib/modules/employees/dashboard/employeesDashboard.config'
+// BACKEND_MIGRATION_STATUS: proxy_to_fastapi
+// CANONICAL_BACKEND: FastAPI
+// TARGET_FASTAPI_ENDPOINT: /api/v1/reporting/dashboard/module/{module}/widgets/{widgetId}
+// NOTES: Thin Next.js proxy only. DB and backend business logic belong to FastAPI.
 
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: Promise<{ module: string; widgetId: string }> }
-) {
-  const { module, widgetId } = await params
+import { createFastApiProxyHandler } from '@/app/api/_fastapiProxy'
 
-  if (module === 'employees') {
-    const widget = employeesDashboardLayout.find(item => item.id === widgetId)
-    return NextResponse.json({ module, widgetId, widget: widget || null, dataMode: 'mock-config' })
-  }
+export const runtime = 'nodejs'
 
-  return NextResponse.json({ module, widgetId, widget: null })
-}
+const handler = createFastApiProxyHandler('/api/v1/reporting/dashboard/module/{module}/widgets/{widgetId}')
+
+export { handler as GET }

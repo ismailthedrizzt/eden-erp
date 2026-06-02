@@ -1,19 +1,12 @@
-import { NextResponse } from 'next/server'
-import { lookupTenantLoginStatus } from '@/lib/auth/tenantUserLookup'
-import { createServiceClient } from '@/lib/supabase/server'
+// BACKEND_MIGRATION_STATUS: proxy_to_fastapi
+// CANONICAL_BACKEND: FastAPI
+// TARGET_FASTAPI_ENDPOINT: /api/v1/auth/tenant-status
+// NOTES: Thin Next.js proxy only. DB and Supabase access belong to FastAPI.
+
+import { createFastApiProxyHandler } from '@/app/api/_fastapiProxy'
 
 export const runtime = 'nodejs'
 
-export async function GET() {
-  try {
-    const supabase = createServiceClient()
-    const status = await lookupTenantLoginStatus(supabase)
+const handler = createFastApiProxyHandler('/api/v1/auth/tenant-status')
 
-    return NextResponse.json({ data: status })
-  } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Login status could not be checked.' },
-      { status: 500 }
-    )
-  }
-}
+export { handler as GET }

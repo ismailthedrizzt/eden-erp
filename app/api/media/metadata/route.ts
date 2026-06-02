@@ -1,22 +1,12 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { createServiceClient } from '@/lib/supabase/server'
-import { requirePermission } from '@/lib/security/serverPermissions'
-import { resolveTenantContext } from '@/lib/tenancy/server'
-import { loadEntityMediaMetadata } from '@/lib/media/mediaMetadata.server'
+// BACKEND_MIGRATION_STATUS: proxy_to_fastapi
+// CANONICAL_BACKEND: FastAPI
+// TARGET_FASTAPI_ENDPOINT: /api/v1/documents/media/metadata
+// NOTES: Thin Next.js proxy only. DB and Supabase access belong to FastAPI.
 
-export async function GET(request: NextRequest) {
-  const supabase = createServiceClient()
-  const permission = await requirePermission(request, supabase, 'documents.view')
-  if (permission instanceof NextResponse) return permission
+import { createFastApiProxyHandler } from '@/app/api/_fastapiProxy'
 
-  const entityType = request.nextUrl.searchParams.get('entity_type') || ''
-  const entityId = request.nextUrl.searchParams.get('entity_id') || ''
-  if (!entityType || !entityId) {
-    return NextResponse.json({ error: 'entity_type ve entity_id zorunludur.', code: 'MEDIA_METADATA_INPUT_REQUIRED' }, { status: 400 })
-  }
+export const runtime = 'nodejs'
 
-  const result = await loadEntityMediaMetadata(supabase, resolveTenantContext(request), entityType, entityId)
-  if (!result.ok) return NextResponse.json({ error: result.error, code: result.code }, { status: result.status })
-  return NextResponse.json({ data: result.data })
-}
+const handler = createFastApiProxyHandler('/api/v1/documents/media/metadata')
 
+export { handler as GET }
