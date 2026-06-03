@@ -86,7 +86,7 @@ async def list_representative_authorities(
         raise domain_error_to_http(error) from error
 
 
-@router.get("", response_model=ApiSuccess[list[dict[str, Any]]])
+@router.get("", response_model=ApiSuccess[dict[str, Any]])
 async def list_representative_records(
     session: SessionDep,
     context: RequestContextDep,
