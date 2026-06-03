@@ -10,6 +10,7 @@ import {
   createEntityRecord,
   deleteEntityRecord,
   listEntityRecords,
+  normalizeListResponse,
   readEntityRecord,
   updateEntityRecord,
 } from '@/lib/crud/entityCrudClient'
@@ -156,10 +157,10 @@ export const companyService = {
   completeOfficialChange(companyId: string, changeType: 'title_change' | 'address_change' | 'public_registration_update', payload: Record<string, any>) {
     return apiClient.post<{ data: any }>(`/api/companies/${companyId}/official-changes/${officialChangePath(changeType)}`, payload)
   },
-  branchesList(options: RelationListOptions = {}) {
-    return apiClient.get<ListResponse<Array<any>[number]>>('/api/companies/branches', {
-      ...relationListOptions(options),
-    })
+  async branchesList(options: RelationListOptions = {}) {
+    const requestOptions = relationListOptions(options)
+    const response = await apiClient.get<ListResponse<Array<any>[number]>>('/api/companies/branches', requestOptions)
+    return normalizeListResponse(response, requestOptions.query)
   },
   branchDetail(id: string) {
     return readEntityRecord<any>({
@@ -214,10 +215,10 @@ export const companyService = {
   partners(companyId: string, options: ApiClientOptions = {}) {
     return apiClient.get<{ data: SirketOrtak[] }>('/api/companies/partners', relationListOptions({ ...options, companyId }))
   },
-  partnersList(options: RelationListOptions = {}) {
-    return apiClient.get<ListResponse<Array<any>[number]>>('/api/companies/partners', {
-      ...relationListOptions(options),
-    })
+  async partnersList(options: RelationListOptions = {}) {
+    const requestOptions = relationListOptions(options)
+    const response = await apiClient.get<ListResponse<Array<any>[number]>>('/api/companies/partners', requestOptions)
+    return normalizeListResponse(response, requestOptions.query)
   },
   partnerDetail(id: string) {
     return readEntityRecord<any>({
@@ -252,10 +253,10 @@ export const companyService = {
   representatives(companyId: string, options: ApiClientOptions = {}) {
     return apiClient.get<{ data: SirketTemsilci[] }>('/api/companies/representatives', relationListOptions({ ...options, companyId }))
   },
-  representativesList(options: RelationListOptions = {}) {
-    return apiClient.get<ListResponse<SirketTemsilci>>('/api/companies/representatives', {
-      ...relationListOptions(options),
-    })
+  async representativesList(options: RelationListOptions = {}) {
+    const requestOptions = relationListOptions(options)
+    const response = await apiClient.get<ListResponse<SirketTemsilci>>('/api/companies/representatives', requestOptions)
+    return normalizeListResponse(response, requestOptions.query)
   },
   representativeDetail(id: string) {
     return apiClient.get<{ data: SirketTemsilci }>(`/api/companies/representatives/${id}`, { skipAuth: true, staleTime: 120_000 })
@@ -299,10 +300,10 @@ export const companyService = {
   reverseRepresentativeAuthority(id: string, payload: Record<string, any>) {
     return representativeAuthorityOperation(id, 'Ters Kayıt', payload)
   },
-  stakeholdersList(options: RelationListOptions = {}) {
-    return apiClient.get<ListResponse<Array<any>[number]>>('/api/companies/stakeholders', {
-      ...relationListOptions(options),
-    })
+  async stakeholdersList(options: RelationListOptions = {}) {
+    const requestOptions = relationListOptions(options)
+    const response = await apiClient.get<ListResponse<Array<any>[number]>>('/api/companies/stakeholders', requestOptions)
+    return normalizeListResponse(response, requestOptions.query)
   },
   stakeholderDetail(id: string) {
     return apiClient.get<{ data: any }>(`/api/companies/stakeholders/${id}`, { skipAuth: true, staleTime: 120_000 })

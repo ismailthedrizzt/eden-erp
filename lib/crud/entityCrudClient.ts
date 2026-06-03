@@ -1,7 +1,7 @@
 'use client'
 
 import { apiClient, type ApiClientOptions } from '@/lib/api/apiClient'
-import type { ListQuery, ListResponse } from '@/lib/api/listEndpoint'
+import type { ListMeta, ListQuery, ListResponse } from '@/lib/api/listEndpoint'
 import type { EntityContract } from '@/lib/crud/entityContracts'
 import { getUnknownEntityPayloadFields } from '@/lib/crud/entityContracts'
 
@@ -70,10 +70,55 @@ export async function listEntityRecords<T = unknown>({
   query,
   options = {},
 }: EntityCrudListOptions) {
-  return apiClient.get<ListResponse<T>>(endpoint.collectionPath, {
+  const response = await apiClient.get<ListResponse<T> | NestedListEnvelope<T>>(endpoint.collectionPath, {
     ...options,
     query: { ...query, ...options.query } as ApiClientOptions['query'],
   })
+
+  return normalizeListResponse(response, query)
+}
+
+type NestedListEnvelope<T> = Omit<Partial<ListResponse<T>>, 'data'> & {
+  data?: ListResponse<T> | T[] | null
+}
+
+export function normalizeListResponse<T>(
+  response: ListResponse<T> | NestedListEnvelope<T>,
+  query?: ApiClientOptions['query'] | EntityCrudListOptions['query']
+): ListResponse<T> {
+  if (Array.isArray(response.data)) {
+    return {
+      ...response,
+      data: response.data,
+      meta: response.meta ?? fallbackListMeta(query, response.data.length),
+    } as ListResponse<T>
+  }
+
+  const nested = response.data
+  if (nested && typeof nested === 'object' && Array.isArray((nested as ListResponse<T>).data)) {
+    const nestedList = nested as ListResponse<T>
+    return {
+      ...nestedList,
+      meta: nestedList.meta ?? response.meta ?? fallbackListMeta(query, nestedList.data.length),
+    }
+  }
+
+  return {
+    ...(response as Partial<ListResponse<T>>),
+    data: [],
+    meta: response.meta ?? fallbackListMeta(query, 0),
+  } as ListResponse<T>
+}
+
+function fallbackListMeta(query: ApiClientOptions['query'] | EntityCrudListOptions['query'] | undefined, total: number): ListMeta {
+  const page = Number(query?.page) || 1
+  const pageSize = Number(query?.pageSize) || Math.max(total, 1)
+  return {
+    page,
+    pageSize,
+    total,
+    totalPages: Math.max(1, Math.ceil(total / pageSize)),
+  }
 }
 
 export async function updateEntityRecord<T = unknown>(
