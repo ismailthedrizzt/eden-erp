@@ -44,6 +44,7 @@ from app.api.v1 import (
     setup,
     system,
     tasks,
+    uploads,
 )
 
 api_router = APIRouter()
@@ -70,6 +71,7 @@ api_router.include_router(reporting.router, prefix="/reporting", tags=["reportin
 api_router.include_router(integrations.router, prefix="/integrations", tags=["integrations"])
 api_router.include_router(import_export.router, tags=["import export"])
 api_router.include_router(documents.router, tags=["documents"])
+api_router.include_router(uploads.router, prefix="/uploads", tags=["uploads"])
 api_router.include_router(notifications.router, tags=["notifications"])
 api_router.include_router(onboarding.router, tags=["onboarding"])
 api_router.include_router(search.router, tags=["search"])

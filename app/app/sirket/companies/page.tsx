@@ -951,7 +951,7 @@ export default function SirketlerPage() {
         && OPERATION_CONTROLLED_FORM_FIELDS.has(key)
         && !(isDraftEdit && DRAFT_EDITABLE_OPERATION_FORM_FIELDS.has(key))
       ) return
-      if (['partners', 'representatives', 'stakeholders', 'documents', 'logos', 'lifecycle_status_badge', 'company_lifecycle_summary', 'record_status', 'company_status', 'opening_details', 'liquidation_details', 'deregistration_details', 'lifecycle_events', 'lifecycle_last_event', 'capital_completion_ratio', 'committed_capital_amount', 'paid_capital_amount', 'company_nace_codes', 'nace_activity_summary', 'public_tax', 'public_sgk', 'public_incentives', 'public_registry', 'public_licenses', 'public_channels', 'related_status', 'related_errors'].includes(key)) return
+      if (['partners', 'representatives', 'stakeholders', 'documents', 'logos', 'lifecycle_status_badge', 'company_lifecycle_summary', 'record_status', 'company_status', 'opening_details', 'liquidation_details', 'deregistration_details', 'lifecycle_events', 'lifecycle_last_event', 'capital_completion_ratio', 'committed_capital_amount', 'paid_capital_amount', 'company_nace_codes', 'nace_activity_summary', 'public_tax', 'public_sgk', 'public_incentives', 'public_registry', 'public_licenses', 'public_channels', 'related_status', 'related_errors', 'base_version', 'base_updated_at'].includes(key)) return
       if (value === undefined) return
       if (value === '' || value === null) {
         if (pageState !== 'create') payload[key] = null
@@ -1005,8 +1005,9 @@ export default function SirketlerPage() {
         ? payload
         : {
           ...payload,
-          base_version: selectedSirket.version,
-          base_updated_at: selectedSirket.updated_at,
+          ...(selectedSirket.version !== undefined && selectedSirket.version !== null
+            ? { base_version: selectedSirket.version }
+            : { base_updated_at: selectedSirket.updated_at }),
         }
       const result = mode === 'create'
         ? await companyService.create(payload)

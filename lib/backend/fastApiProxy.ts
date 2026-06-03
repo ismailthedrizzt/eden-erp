@@ -139,7 +139,7 @@ export async function proxyToFastApi(
   try {
     const body = method === 'GET' || method === 'HEAD'
       ? undefined
-      : options.bodyText ?? await request.text()
+      : options.bodyText ?? await request.arrayBuffer()
     const response = await fetch(targetUrl, {
       method,
       headers: await buildBackendHeaders(request, { ...options, requestId, correlationId }),

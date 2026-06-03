@@ -132,6 +132,102 @@ async def company_detail(
         raise domain_error_to_http(error) from error
 
 
+def _company_lifecycle_wizard_context(data: dict[str, Any]) -> dict[str, Any]:
+    company = data.get("company") or data
+    warnings = data.get("warnings") or []
+    return {
+        "company": company,
+        "public": {
+            "tax": data.get("public_tax") or {},
+            "sgk": data.get("public_sgk") or {},
+            "registry": data.get("public_registry") or {},
+            "channels": data.get("public_channels") or {},
+        },
+        "references": {
+            "naceCodes": data.get("company_nace_codes") or [],
+            "representatives": data.get("representatives") or company.get("representatives") or [],
+            "partners": data.get("partners") or company.get("partners") or data.get("current_ownership") or [],
+            "stakeholders": data.get("stakeholders") or company.get("stakeholders") or [],
+        },
+        "events": data.get("lifecycle_events") or [],
+        "opening": data.get("opening_details") or company.get("opening_details") or {},
+        "liquidation": data.get("liquidation_details") or company.get("liquidation_details") or {},
+        "deregistration": data.get("deregistration_details") or company.get("deregistration_details") or {},
+        "warnings": warnings,
+    }
+
+
+async def _build_company_lifecycle_wizard_context(
+    session: AsyncSession,
+    *,
+    tenant_id: str,
+    company_id: str,
+) -> dict[str, Any]:
+    data = await build_company_detail_read_model(
+        session,
+        tenant_id=tenant_id,
+        company_id=company_id,
+    )
+    return _company_lifecycle_wizard_context(data)
+
+
+@router.get("/{company_id}/opening-wizard/context", response_model=ApiSuccess[dict[str, Any]])
+async def opening_wizard_context(
+    company_id: str,
+    session: SessionDep,
+    context: RequestContextDep,
+    readonly: bool = Query(default=False),
+) -> ApiSuccess[dict[str, Any]]:
+    tenant_id = require_tenant(context)
+    try:
+        data = await _build_company_lifecycle_wizard_context(
+            session,
+            tenant_id=tenant_id,
+            company_id=company_id,
+        )
+        return ApiSuccess(data=data, warnings=data.get("warnings", []), message="Sirket acilisi bilgileri getirildi.")
+    except DomainError as error:
+        raise domain_error_to_http(error) from error
+
+
+@router.get("/{company_id}/liquidation-wizard/context", response_model=ApiSuccess[dict[str, Any]])
+async def liquidation_wizard_context(
+    company_id: str,
+    session: SessionDep,
+    context: RequestContextDep,
+    readonly: bool = Query(default=False),
+) -> ApiSuccess[dict[str, Any]]:
+    tenant_id = require_tenant(context)
+    try:
+        data = await _build_company_lifecycle_wizard_context(
+            session,
+            tenant_id=tenant_id,
+            company_id=company_id,
+        )
+        return ApiSuccess(data=data, warnings=data.get("warnings", []), message="Tasfiye bilgileri getirildi.")
+    except DomainError as error:
+        raise domain_error_to_http(error) from error
+
+
+@router.get("/{company_id}/deregistration-wizard/context", response_model=ApiSuccess[dict[str, Any]])
+async def deregistration_wizard_context(
+    company_id: str,
+    session: SessionDep,
+    context: RequestContextDep,
+    readonly: bool = Query(default=False),
+) -> ApiSuccess[dict[str, Any]]:
+    tenant_id = require_tenant(context)
+    try:
+        data = await _build_company_lifecycle_wizard_context(
+            session,
+            tenant_id=tenant_id,
+            company_id=company_id,
+        )
+        return ApiSuccess(data=data, warnings=data.get("warnings", []), message="Terkin bilgileri getirildi.")
+    except DomainError as error:
+        raise domain_error_to_http(error) from error
+
+
 @router.patch("/{company_id}", response_model=ApiSuccess[dict[str, Any]])
 async def patch_company_card(
     company_id: str,
