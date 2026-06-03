@@ -228,15 +228,6 @@ export const systemTourSteps: TourStep[] = [
     path: '/app/sirket/companies?systemTour=lifecycle',
   },
   {
-    id: 'iban-automation-badge',
-    target: "[data-tour-id='entity-bank-iban-automation']",
-    fallbackTarget: "[data-tour-id='record-forms']",
-    title: 'Veri Bekliyor rozetini görünce durun',
-    description: 'IBAN girildiğinde banka, şube, hesap ve para birimi gibi bazı bilgiler sistem tarafından otomatik çekilir. Bu rozeti gördüğünüzde önce IBAN alanını doldurmayı ihmal etmeyin.',
-    placement: 'bottom',
-    path: '/app/sirket/companies?systemTour=lifecycle',
-  },
-  {
     id: 'eden-ai-help',
     target: "[data-tour-id='ai-copilot-button']",
     fallbackTarget: "[data-tour-id='action-guide-search']",

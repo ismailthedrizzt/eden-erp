@@ -712,6 +712,7 @@ export default function SirketlerPage() {
   useEffect(() => {
     if (pageState === 'list' || pageState === 'create') return
     if (!selectedSirket?.id || detailLoading || detailSections.mediaLoading) return
+    if (detailSections.mediaReady || detailSections.mediaError) return
     if (selectedHeroDocumentCount > 0) return
     if (mediaProbeRef.current[selectedSirket.id]) return
 
@@ -740,7 +741,7 @@ export default function SirketlerPage() {
     return () => {
       cancelled = true
     }
-  }, [detailLoading, detailSections.mediaLoading, pageState, selectedHeroDocumentCount, selectedSirket?.id])
+  }, [detailLoading, detailSections.mediaError, detailSections.mediaLoading, detailSections.mediaReady, pageState, selectedHeroDocumentCount, selectedSirket?.id])
 
   useEffect(() => {
     if (searchParams.get('systemTour') !== 'lifecycle') return
@@ -870,6 +871,7 @@ export default function SirketlerPage() {
 
       applySection(heroResult.data)
       if (detailRequestRef.current !== requestId) return
+      mediaProbeRef.current[row.id] = true
       const heroSections = { ...emptyDetailSectionState, heroLoading: false, heroReady: true, mediaLoading: true }
       setDetailSections(heroSections)
       writeEntityDetailCache(COMPANY_DETAIL_CACHE_NAMESPACE, row.id, mergedData, { meta: { ...heroSections, mediaLoading: false } })

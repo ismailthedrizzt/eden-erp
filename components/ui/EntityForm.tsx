@@ -172,6 +172,8 @@ type SgkCodeOption = {
 
 type SgkCodeCategories = Record<string, SgkCodeOption[]>
 
+type MasterSummaryValidationState = { status: FormControlState; label: string; locked?: boolean }
+
 /** Tab configuration for grouping fields */
 export interface FormTab {
   id: string
@@ -670,9 +672,11 @@ function MasterSummaryHero({
                 {validationState.label && (
                   <span className={cn(
                     "shrink-0 rounded border bg-white px-1.5 py-0.5 text-[10px] font-medium leading-none dark:bg-gray-900",
-                    validationState.status === 'valid'
-                      ? "border-emerald-300 text-emerald-600 dark:border-emerald-700 dark:text-emerald-400"
-                      : "border-red-300 text-red-600 dark:border-red-700 dark:text-red-400"
+                    validationState.status === 'invalid'
+                      ? "border-red-300 text-red-600 dark:border-red-700 dark:text-red-400"
+                      : validationState.status === 'valid'
+                        ? "border-emerald-300 text-emerald-600 dark:border-emerald-700 dark:text-emerald-400"
+                        : "border-sky-300 text-sky-700 dark:border-sky-800 dark:text-sky-300"
                   )}>
                     {validationState.label}
                   </span>
@@ -737,11 +741,11 @@ function MasterSummaryItemValue({
   readOnly: boolean
   turkeyProvinces?: TurkeyProvince[]
   onFieldChange?: (field: string, value: any, fieldKeys?: string[]) => void
-  validationState: { status: FormControlState; label: string }
+  validationState: MasterSummaryValidationState
 }) {
   const fieldName = item.fieldKeys ? pickEditableFieldName(sourceData, item.fieldKeys) : null
-  const canEdit = !!fieldName && !!onFieldChange && !readOnly
-  const inputClass = formControlClass({ state: readOnly ? 'neutral' : validationState.status, rounded: 'md', size: 'field', className: 'mt-1' })
+  const canEdit = !!fieldName && !!onFieldChange && !readOnly && !validationState.locked
+  const inputClass = formControlClass({ state: readOnly || validationState.locked ? 'neutral' : validationState.status, rounded: 'md', size: 'field', className: 'mt-1' })
   const editableFieldName = fieldName || item.fieldKeys?.[0] || item.label
   const isCitySummaryField = item.fieldKeys?.includes('city')
   const isDistrictSummaryField = item.fieldKeys?.includes('district')
@@ -857,8 +861,18 @@ function getMasterSummaryValidationState(
   requiredFields: FormField[],
   fieldErrors: Record<string, string>,
   readOnly: boolean
-): { status: FormControlState; label: string } {
-  if (readOnly || !item.fieldKeys?.length) return { status: 'neutral', label: '' }
+): MasterSummaryValidationState {
+  if (!item.fieldKeys?.length) return { status: 'neutral', label: '' }
+
+  const backingField = requiredFields.find(field =>
+    item.fieldKeys?.includes(field.name) && matchesCondition(field.visibleWhen, sourceData)
+  )
+
+  if (backingField?.controlledByOperation) {
+    return { status: 'neutral', label: 'Resmi Veri', locked: true }
+  }
+
+  if (readOnly) return { status: 'neutral', label: '' }
 
   const error = item.fieldKeys.map(key => fieldErrors[key]).find(Boolean)
   if (error) {
@@ -868,9 +882,6 @@ function getMasterSummaryValidationState(
     }
   }
 
-  const backingField = requiredFields.find(field =>
-    item.fieldKeys?.includes(field.name) && matchesCondition(field.visibleWhen, sourceData)
-  )
   const required = !!backingField && (backingField.required || !!(backingField.requiredWhen && matchesCondition(backingField.requiredWhen, sourceData)))
 
   if (!required) return { status: 'neutral', label: '' }
@@ -3452,7 +3463,7 @@ export function EntityForm({
   )
   const slotLoaderMode = isReadOnly ? 'view' : isCreate ? 'insert' : 'update'
   const getLoadStage = (key: FormLoadStageKey) => loadStages?.find(stage => stage.key === key)
-  const mediaLoadStage = getLoadStage('media') || getLoadStage('detail')
+  const mediaLoadStage = getLoadStage('media')
   const heroLoadStage = getLoadStage('hero') || getLoadStage('detail')
   const detailsLoadStage = getLoadStage('details') || getLoadStage('detail')
   const isIdentityGateEnabled = !!identityGate?.enabled

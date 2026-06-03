@@ -1873,12 +1873,12 @@ export function SmartDataTable<T extends { id: string }>({
                     )}
                     onClick={() => onRowClick?.(row)}
                     title={onRowClick ? 'Detayi ac' : undefined}
+                    data-tour-id={rowIndex === 0 ? 'smart-list-first-row' : undefined}
                   >
                     {visibleColumns.map(col => {
                       return (
                         <td
                           key={col.key}
-                          data-tour-id={rowIndex === 0 && col.key === firstRowClickColumnKey ? 'smart-list-first-row' : undefined}
                           title={getCellTitle(getNestedValue(row, col.key))}
                           className={cn(
                             "px-2 py-2 text-gray-900 dark:text-gray-100 dark:[&_*]:!text-gray-100 border-r border-gray-100 dark:border-gray-800 last:border-r-0 whitespace-nowrap overflow-hidden transition-[background-color,box-shadow] duration-150",
