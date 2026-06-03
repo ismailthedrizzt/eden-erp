@@ -1136,14 +1136,6 @@ export default function OrtaklarPage() {
           {pageState === 'create' && (
             <DraftCreateNotice message="Bu işlem ortak kartı taslağı oluşturur. Ortaklık hakları, pay oranı, oy hakkı, kar payı ve sermaye bilgileri İlk Ortaklık Girişi veya ilgili ortaklık işlemleriyle oluşturulur." />
           )}
-          {pageState !== 'create' && selectedPartner && (
-            <PartnerOwnershipReadinessPanel
-              partner={selectedPartner}
-              companyPartners={tableData}
-              ownershipRows={currentOwnershipRows}
-              onAction={handleOwnershipActionClick}
-            />
-          )}
           <EntityForm
             mode={formMode}
             entityName="Ortaklarımız"
@@ -2563,112 +2555,6 @@ function CurrentOwnershipPanel({ value, section }: { value?: CurrentOwnershipRow
         </div>
       )}
     </div>
-  )
-}
-
-function PartnerOwnershipReadinessPanel({
-  partner,
-  companyPartners,
-  ownershipRows,
-  onAction,
-}: {
-  partner: Record<string, any>
-  companyPartners: Record<string, any>[]
-  ownershipRows: CurrentOwnershipRow[]
-  onAction: (transactionType?: OwnershipTransactionType) => void
-}) {
-  const recordStatus = getPartnerRecordStatus(partner)
-  const currentOwnership = resolvePartnerCurrentOwnership(partner, ownershipRows, companyPartners)
-  const companyOwnershipRows = getCompanyCurrentOwnershipRows(partner.company_id, companyPartners, ownershipRows)
-  const totals = calculateCompanyOwnershipTotals(companyOwnershipRows)
-  const transactions = Array.isArray(partner.ownership_transaction_history)
-    ? partner.ownership_transaction_history as OwnershipTransactionHistoryRow[]
-    : []
-  const lastTransaction = transactions[0]
-  const hasRights = hasCurrentOwnershipRights(currentOwnership)
-  const flags = getPartnerOwnershipFlags({ ...partner, current_ownership: currentOwnership })
-  const totalShareKnown = companyOwnershipRows.length > 0
-  const warnings = [
-    ...buildPartnerOwnershipWarnings({ ...partner, current_ownership: currentOwnership }, transactions),
-    ...buildCompanyOwnershipDistributionWarnings(totals, totalShareKnown),
-  ]
-  const totalShareComplete = totalShareKnown && Math.abs(totals.share - 100) < 0.01
-  const currency = partner.currency || partner.default_currency || 'TRY'
-
-  return (
-    <section
-      id="partners-ownership-readiness"
-      data-tour-id="partners-ownership-readiness"
-      className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm dark:border-gray-800 dark:bg-gray-950"
-    >
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <div className="flex items-center gap-2 text-sm font-semibold text-gray-900 dark:text-white">
-            <ListChecks size={17} />
-            Ortaklık ürün özeti
-          </div>
-          <p className="mt-1 max-w-3xl text-sm text-gray-600 dark:text-gray-400">
-            Bu bölüm kart bilgisi ile pay, oy, kar payı, sermaye ve kontrol haklarını ayırır. Hak değerleri current ownership read modelinden ve onaylı ownership transaction geçmişinden okunur.
-          </p>
-        </div>
-        <span className={cn(
-          'rounded-full px-2.5 py-1 text-xs font-semibold',
-          recordStatus === 'draft' && 'bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-200',
-          recordStatus === 'active' && 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-200',
-          recordStatus === 'passive' && 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
-        )}>
-          {getPartnerStatusLabel(recordStatus)}
-        </span>
-      </div>
-
-      <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <PartnerReadinessMetric label="Ortaklık hakkı" value={hasRights ? 'Var' : recordStatus === 'draft' ? 'Taslak, hak yok' : 'Okunamadı'} tone={hasRights ? 'success' : recordStatus === 'draft' ? 'warning' : 'danger'} />
-        <PartnerReadinessMetric label="Pay / Oy / Kar" value={`${formatPercent(Number(currentOwnership?.current_share_ratio || 0))} / ${formatPercent(Number(currentOwnership?.current_voting_ratio || 0))} / ${formatPercent(Number(currentOwnership?.current_profit_ratio || 0))}`} />
-        <PartnerReadinessMetric label="Sermaye / Pay adedi" value={`${formatCurrency(Number(currentOwnership?.current_capital_amount || 0), currency)} / ${formatNumber(Number(currentOwnership?.current_share_units || 0))}`} />
-        <PartnerReadinessMetric label="Şirket toplam payı" value={totalShareKnown ? formatPercent(totals.share) : 'Read model yok'} tone={totalShareComplete ? 'success' : 'warning'} />
-        <PartnerReadinessMetric label="Aktif ortak sayısı" value={String(companyOwnershipRows.filter(row => Number(row.current_share_ratio || 0) > 0).length)} />
-        <PartnerReadinessMetric label="İmtiyaz / kontrol" value={flags.length ? flags.join(', ') : 'Yok'} tone={flags.length ? 'warning' : 'neutral'} />
-        <PartnerReadinessMetric label="Son işlem" value={lastTransaction?.transaction_type || partner.last_ownership_transaction || '-'} />
-        <PartnerReadinessMetric label="Silme davranışı" value={recordStatus === 'draft' && !transactions.length ? 'Güvenli taslak delete mümkün' : 'Pay devri / çıkış gerekir'} tone={recordStatus === 'draft' && !transactions.length ? 'success' : 'warning'} />
-      </div>
-
-      <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto]">
-        <div className="space-y-2">
-          {warnings.length ? warnings.map(warning => (
-            <div key={warning} className="flex gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-200">
-              <AlertCircle size={16} className="mt-0.5 shrink-0" />
-              <span>{warning}</span>
-            </div>
-          )) : (
-            <div className="flex gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-200">
-              <CheckCircle2 size={16} className="mt-0.5 shrink-0" />
-              <span>Current ownership bilgisi okunabiliyor ve kritik uyarı görünmüyor.</span>
-            </div>
-          )}
-        </div>
-
-        <div className="flex flex-wrap items-start gap-2 lg:justify-end">
-          {recordStatus === 'draft' && (
-            <button type="button" onClick={() => onAction(INITIAL_PARTNERSHIP_ENTRY_TYPE)} className="rounded-md bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700">
-              İlk Ortaklık Girişi
-            </button>
-          )}
-          {recordStatus === 'active' && (
-            <>
-              <button type="button" onClick={() => onAction('Pay Devri' as OwnershipTransactionType)} className="rounded-md border border-gray-300 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-900">
-                Pay Devri
-              </button>
-              <button type="button" onClick={() => onAction('Ortaklıktan Çıkış' as OwnershipTransactionType)} className="rounded-md border border-gray-300 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-900">
-                Ortaklıktan Çıkış
-              </button>
-              <button type="button" onClick={() => onAction('Oy Hakkı Değişikliği' as OwnershipTransactionType)} className="rounded-md border border-gray-300 px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-900">
-                Hak Değişikliği
-              </button>
-            </>
-          )}
-        </div>
-      </div>
-    </section>
   )
 }
 
