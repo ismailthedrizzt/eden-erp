@@ -63,7 +63,39 @@ const withPWA = require('next-pwa')({
   runtimeCaching,
 })
 
+const pageNoStoreHeaders = [
+  { key: 'Cache-Control', value: 'no-store, max-age=0' },
+]
+
+const apiNoStoreHeaders = [
+  { key: 'Cache-Control', value: 'no-store' },
+]
+
+const shortLivedPwaHeaders = [
+  { key: 'Cache-Control', value: 'public, max-age=0, must-revalidate' },
+]
+
 const nextConfig = {
+  async headers() {
+    return [
+      {
+        source: '/api/:path*',
+        headers: apiNoStoreHeaders,
+      },
+      {
+        source: '/sw.js',
+        headers: shortLivedPwaHeaders,
+      },
+      {
+        source: '/workbox-:file(.*)',
+        headers: shortLivedPwaHeaders,
+      },
+      {
+        source: '/((?!api/|_next/|manifest.json|sw.js|workbox-|brand/|icons/|eden-icon-original.png).*)',
+        headers: pageNoStoreHeaders,
+      },
+    ]
+  },
   serverExternalPackages: ['@napi-rs/canvas'],
   allowedDevOrigins: [
     'http://localhost:3000',
