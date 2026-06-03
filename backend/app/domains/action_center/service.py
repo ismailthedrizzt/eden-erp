@@ -37,6 +37,13 @@ ACCOUNTING_PERMISSIONS = {
 }
 
 
+def _clean_optional_text(value: Any) -> str | None:
+    if value is None:
+        return None
+    text_value = str(value).strip()
+    return text_value or None
+
+
 def filter_record_items(
     items: list[dict[str, Any]],
     *,
@@ -66,6 +73,7 @@ async def list_action_center_items(
     limit = max(page_size, int(query.get("limit") or page_size))
     items: list[dict[str, Any]] = []
     warnings: list[str] = []
+    user_id = _clean_optional_text(context.get("user_id"))
 
     if await table_exists(session, "public.process_tasks"):
         task_result = await session.execute(
@@ -118,7 +126,7 @@ async def list_action_center_items(
             ),
             {
                 "tenant_id": context["tenant_id"],
-                "user_id": context.get("user_id"),
+                "user_id": user_id,
                 "limit": limit,
             },
         )
@@ -284,7 +292,7 @@ async def list_action_center_items(
     hr_scope_sql = ""
     hr_params: dict[str, Any] = {
         "tenant_id": context["tenant_id"],
-        "user_id": context.get("user_id"),
+        "user_id": user_id,
         "limit": limit,
     }
     if context.get("company_scope_ids"):
@@ -451,7 +459,7 @@ async def list_action_center_items(
                 limit :limit
                 """
             ),
-            {"tenant_id": context["tenant_id"], "user_id": context.get("user_id"), "limit": limit},
+            {"tenant_id": context["tenant_id"], "user_id": user_id, "limit": limit},
         )
         items.extend(
             _normalize_after_sales_assignment(row, str(context["tenant_id"]))
@@ -515,7 +523,7 @@ async def list_action_center_items(
     crm_scope_sql = ""
     crm_params: dict[str, Any] = {
         "tenant_id": context["tenant_id"],
-        "user_id": context.get("user_id"),
+        "user_id": user_id,
         "limit": limit,
     }
     if context.get("company_scope_ids"):
@@ -793,7 +801,7 @@ async def list_action_center_items(
             for row in rows_to_dicts(list(reporting_export_result.mappings().all()))
         )
 
-    if await table_exists(session, "public.notifications") and context.get("user_id"):
+    if await table_exists(session, "public.notifications") and user_id:
         notification_result = await session.execute(
             text(
                 """
@@ -814,7 +822,7 @@ async def list_action_center_items(
             ),
             {
                 "tenant_id": context["tenant_id"],
-                "user_id": context["user_id"],
+                "user_id": user_id,
                 "limit": limit,
             },
         )

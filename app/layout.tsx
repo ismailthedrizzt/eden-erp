@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import './globals.css'
 import { PWAStatus } from '@/components/pwa/PWAStatus'
+import { APP_CACHE_VERSION, APP_CACHE_VERSION_KEY } from '@/lib/pwa/cacheVersion'
 
 const themeInitScript = `
 (() => {
@@ -14,6 +15,36 @@ const themeInitScript = `
   } catch {
     document.documentElement.classList.remove('dark');
   }
+})();
+`
+
+const cacheMaintenanceScript = `
+(() => {
+  try {
+    const version = ${JSON.stringify(APP_CACHE_VERSION)};
+    const key = ${JSON.stringify(APP_CACHE_VERSION_KEY)};
+    const reloadKey = 'eden-sw-cache-refresh';
+    const current = localStorage.getItem(key);
+    if (!version || current === version) return;
+    localStorage.setItem(key, version);
+    if (!current) return;
+
+    const jobs = [];
+    if ('caches' in window) {
+      jobs.push(caches.keys().then(keys => Promise.all(keys.map(cacheKey => caches.delete(cacheKey)))));
+    }
+    if ('serviceWorker' in navigator) {
+      jobs.push(navigator.serviceWorker.getRegistrations().then(registrations =>
+        Promise.all(registrations.map(registration => registration.update().catch(() => undefined)))
+      ));
+    }
+
+    Promise.all(jobs).finally(() => {
+      if (sessionStorage.getItem(reloadKey) === version) return;
+      sessionStorage.setItem(reloadKey, version);
+      window.location.reload();
+    });
+  } catch {}
 })();
 `
 
@@ -50,6 +81,7 @@ export default function RootLayout({
     <html lang="tr" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+        <script dangerouslySetInnerHTML={{ __html: cacheMaintenanceScript }} />
       </head>
       <body suppressHydrationWarning className="h-full bg-gray-50 dark:bg-[#09141e]">
         {children}

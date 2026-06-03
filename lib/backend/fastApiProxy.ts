@@ -55,7 +55,8 @@ export async function buildBackendHeaders(request: NextRequest, options: ProxyOp
   headers.set('accept', request.headers.get('accept') || 'application/json')
   headers.set('content-type', request.headers.get('content-type') || 'application/json')
   headers.set('x-tenant-id', options.tenantId || tenantContext.tenantId)
-  headers.set('x-user-id', options.userId || request.headers.get('x-user-id') || '')
+  const userId = (options.userId || request.headers.get('x-user-id') || '').trim()
+  if (userId) headers.set('x-user-id', userId)
   if (request.headers.get('x-user-permissions')) {
     headers.set('x-user-permissions', request.headers.get('x-user-permissions') || '')
   }

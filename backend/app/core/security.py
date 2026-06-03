@@ -294,6 +294,12 @@ def _split_header(value: str | None) -> list[str]:
     return [item.strip() for item in value.split(",") if item.strip()]
 
 
+def _clean_header_value(value: str | None) -> str | None:
+    if value is None:
+        return None
+    return value.strip() or None
+
+
 async def _build_request_context(
     request: Request,
     session: AsyncSession,
@@ -308,11 +314,11 @@ async def _build_request_context(
     settings = get_settings()
     trusted_proxy = _is_trusted_proxy(request)
     user = await get_current_user(request, session)
-    x_tenant_id = request.headers.get("x-tenant-id")
-    x_user_id = request.headers.get("x-user-id")
-    x_company_scope = request.headers.get("x-company-scope")
-    x_branch_scope = request.headers.get("x-branch-scope")
-    x_user_permissions = request.headers.get("x-user-permissions")
+    x_tenant_id = _clean_header_value(request.headers.get("x-tenant-id"))
+    x_user_id = _clean_header_value(request.headers.get("x-user-id"))
+    x_company_scope = _clean_header_value(request.headers.get("x-company-scope"))
+    x_branch_scope = _clean_header_value(request.headers.get("x-branch-scope"))
+    x_user_permissions = _clean_header_value(request.headers.get("x-user-permissions"))
 
     if not user and settings.effective_auth_required and not is_internal_request(request):
         raise _auth_http_exception("AUTH_REQUIRED")
@@ -373,17 +379,21 @@ async def get_request_context(request: Request) -> RequestContext:
     if not token and settings.effective_auth_required and not is_internal_request(request):
         raise _auth_http_exception("AUTH_REQUIRED")
     if not token and not settings.effective_auth_required and settings.is_development:
-        tenant_id = request.headers.get("x-tenant-id") or "00000000-0000-0000-0000-000000000000"
-        company_scope_ids = _split_header(request.headers.get("x-company-scope"))
+        x_tenant_id = _clean_header_value(request.headers.get("x-tenant-id"))
+        x_user_id = _clean_header_value(request.headers.get("x-user-id"))
+        x_company_scope = _clean_header_value(request.headers.get("x-company-scope"))
+        x_branch_scope = _clean_header_value(request.headers.get("x-branch-scope"))
+        x_user_permissions = _clean_header_value(request.headers.get("x-user-permissions"))
+        tenant_id = x_tenant_id or "00000000-0000-0000-0000-000000000000"
+        company_scope_ids = _split_header(x_company_scope)
         return RequestContext(
             tenant_id=tenant_id,
-            user_id=request.headers.get("x-user-id"),
-            company_scope=request.headers.get("x-company-scope"),
-            permissions=_split_header(request.headers.get("x-user-permissions"))
-            or ["system.admin"],
+            user_id=x_user_id,
+            company_scope=x_company_scope,
+            permissions=_split_header(x_user_permissions) or ["system.admin"],
             company_scope_ids=company_scope_ids or None,
             writable_company_scope_ids=company_scope_ids or None,
-            branch_scope_ids=_split_header(request.headers.get("x-branch-scope")) or None,
+            branch_scope_ids=_split_header(x_branch_scope) or None,
             is_internal=is_internal_request(request),
             is_trusted_proxy=_is_trusted_proxy(request),
             auth_claims={},

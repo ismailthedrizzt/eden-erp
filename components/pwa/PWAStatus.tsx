@@ -2,10 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { Download, RefreshCw, WifiOff, X } from 'lucide-react'
-
-const APP_CACHE_VERSION = '2026-05-12-document-uploader-v3'
-const APP_CACHE_VERSION_KEY = 'eden-app-cache-version'
-const APP_RELOAD_ONCE_KEY = 'eden-sw-controller-reload'
+import { APP_CACHE_VERSION, APP_CACHE_VERSION_KEY, APP_RELOAD_ONCE_KEY } from '@/lib/pwa/cacheVersion'
 
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>

@@ -82,7 +82,9 @@ else
 fi
 
 DEPLOY_COMMIT="$(git rev-parse --short HEAD)"
+export NEXT_PUBLIC_APP_VERSION="${NEXT_PUBLIC_APP_VERSION:-$DEPLOY_COMMIT}"
 echo "Deploy commit: $DEPLOY_COMMIT"
+echo "Frontend app version: $NEXT_PUBLIC_APP_VERSION"
 
 PACKAGE_LOCK_HASH="$(hash_file package-lock.json)"
 PREVIOUS_PACKAGE_LOCK_HASH="$(cat "$STATE_DIR/package-lock.sha256" 2>/dev/null || true)"
