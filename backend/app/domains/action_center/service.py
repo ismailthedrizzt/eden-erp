@@ -107,7 +107,10 @@ async def list_action_center_items(
                   on p.tenant_id = t.tenant_id and p.id = t.project_id
                 where t.tenant_id = :tenant_id
                   and t.status in ('backlog','todo','in_progress','blocked','review')
-                  and (:user_id is null or t.assignee_user_id = :user_id)
+                  and (
+                    cast(:user_id as uuid) is null
+                    or t.assignee_user_id = cast(:user_id as uuid)
+                  )
                   and coalesce(t.is_deleted, false) = false
                 order by coalesce(t.due_date, t.created_at::date) asc
                 limit :limit
