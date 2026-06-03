@@ -205,9 +205,23 @@ function withSecurityHeaders(response: NextResponse, request: NextRequest) {
 
   if (request.nextUrl.pathname.startsWith('/api/auth') || UNSAFE_METHODS.has(request.method.toUpperCase())) {
     response.headers.set('Cache-Control', 'no-store')
+  } else if (shouldDisablePageCache(request.nextUrl.pathname)) {
+    response.headers.set('Cache-Control', 'no-store, max-age=0')
   }
 
   return response
+}
+
+function shouldDisablePageCache(pathname: string) {
+  if (pathname.startsWith('/api')) return false
+  if (pathname.startsWith('/_next/')) return false
+  if (pathname === '/manifest.json') return false
+  if (pathname === '/sw.js') return false
+  if (pathname.startsWith('/workbox-')) return false
+  if (pathname.startsWith('/brand/')) return false
+  if (pathname.startsWith('/icons/')) return false
+  if (pathname === '/eden-icon-original.png') return false
+  return true
 }
 
 function tenantCookieOptions() {
