@@ -1,0 +1,26 @@
+name: Deploy Production
+
+on:
+  workflow_run:
+    workflows:
+      - CI
+    branches:
+      - main
+    types:
+      - completed
+  workflow_dispatch:
+
+concurrency:
+  group: app1-production-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy app1.edengrup.com
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: [self-hosted, Linux, X64]
+    timeout-minutes: 45
+    steps:
+      - name: Deploy live checkout
+        shell: bash
+        run: /home/edengrup-app1/htdocs/app1.edengrup.com/scripts/deploy-production.sh
