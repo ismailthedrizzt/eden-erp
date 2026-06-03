@@ -43,9 +43,17 @@ export function usePersonel(filters: Filters = {}) {
     try {
       if (force) employeeService.invalidateList()
       const result = await employeeService.list(debouncedFilters, { useCache: !force })
-      setData(result.data ?? [])
+      const nestedResult = result.data && !Array.isArray(result.data) && typeof result.data === 'object'
+        ? result.data as unknown as { data?: Personel[]; meta?: ListMeta }
+        : null
+      const rows = Array.isArray(result.data)
+        ? result.data
+        : Array.isArray(nestedResult?.data)
+          ? nestedResult.data
+          : []
+      setData(rows)
       hasDataRef.current = true
-      setMeta(result.meta ?? { page: debouncedFilters.page ?? 1, pageSize: debouncedFilters.pageSize ?? 50, total: result.data?.length ?? 0, totalPages: 1 })
+      setMeta(result.meta ?? nestedResult?.meta ?? { page: debouncedFilters.page ?? 1, pageSize: debouncedFilters.pageSize ?? 50, total: rows.length, totalPages: 1 })
     } catch (e: any) {
       console.error('usePersonel: Caught error:', e)
       setError(e.message)
