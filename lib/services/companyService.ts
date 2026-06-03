@@ -308,16 +308,25 @@ export const companyService = {
   stakeholderDetail(id: string) {
     return apiClient.get<{ data: any }>(`/api/companies/stakeholders/${id}`, { skipAuth: true, staleTime: 120_000 })
   },
-  currentOwnership(companyIds: string[], options: ApiClientOptions = {}) {
-    return apiClient.get<{ data: Array<any> }>('/api/companies/current-ownership', {
-      ...options,
-      skipAuth: options.skipAuth ?? true,
-      staleTime: options.staleTime ?? 120_000,
-      query: {
-        ...(companyIds.length ? { company_ids: companyIds.join(',') } : {}),
-        ...options.query,
-      },
-    })
+  async currentOwnership(companyIds: string[], options: ApiClientOptions = {}) {
+    const uniqueCompanyIds = Array.from(new Set(companyIds.filter(Boolean)))
+    if (uniqueCompanyIds.length === 0) return { data: [] as Array<any> }
+
+    const rows = await Promise.all(uniqueCompanyIds.map(async companyId => {
+      try {
+        const payload = await apiClient.get<{ data: Array<any> }>(`/api/companies/${companyId}/current-ownership`, {
+          ...options,
+          skipAuth: options.skipAuth ?? true,
+          staleTime: options.staleTime ?? 120_000,
+          query: options.query,
+        })
+        return Array.isArray(payload.data) ? payload.data : []
+      } catch {
+        return []
+      }
+    }))
+
+    return { data: rows.flat() }
   },
   async documents(companyId: string): Promise<{ data: SirketDokuman[] }> {
     const result = await this.detail(companyId)

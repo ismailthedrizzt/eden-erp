@@ -38,12 +38,16 @@ export const ownershipTransactionsService = {
   },
 
   async approvedForCompany(companyId: string): Promise<OwnershipTransaction[]> {
-    const payload = await apiClient.get<{ data: OwnershipTransaction[] }>('/api/ownership-transactions', {
-      skipAuth: true,
-      staleTime: 120_000,
-      query: { company_id: companyId, approval_status: 'approved', pageSize: 100 },
-    })
-    return payload.data || []
+    try {
+      const payload = await apiClient.get<{ data: OwnershipTransaction[] }>('/api/ownership-transactions', {
+        skipAuth: true,
+        staleTime: 120_000,
+        query: { company_id: companyId, approval_status: 'approved', pageSize: 100 },
+      })
+      return payload.data || []
+    } catch {
+      return []
+    }
   },
 
   invalidateList() {

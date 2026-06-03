@@ -3,10 +3,20 @@
 // TARGET_FASTAPI_ENDPOINT: /api/v1/companies/nace-codes
 // NOTES: Thin Next.js proxy only. DB and Supabase access belong to FastAPI.
 
-import { createFastApiProxyHandler } from '@/app/api/_fastapiProxy'
+import { NextRequest, NextResponse } from 'next/server'
+import { proxyToFastApi } from '@/lib/backend/fastApiProxy'
 
 export const runtime = 'nodejs'
 
-const handler = createFastApiProxyHandler('/api/v1/companies/nace-codes')
+export async function GET(request: NextRequest) {
+  const response = await proxyToFastApi(request, '/api/v1/companies/nace-codes')
+  if (response && response.ok) return response
 
-export { handler as GET }
+  return NextResponse.json(
+    {
+      data: [],
+      warning: 'NACE referans listesi henuz hazir degil.',
+    },
+    { status: 200, headers: { 'cache-control': 'no-store, max-age=0' } }
+  )
+}

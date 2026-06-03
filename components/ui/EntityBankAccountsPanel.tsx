@@ -529,7 +529,11 @@ function normalizeDraft(draft: Partial<EntityBankAccount>, masterName: string) {
 async function fetchJson(url: string, init: RequestInit = {}) {
   const response = await fetch(url, { ...init, headers: { 'Content-Type': 'application/json', ...(init.headers || {}) } })
   const payload = await response.json().catch(() => ({}))
-  if (!response.ok) throw new Error(payload.error || 'İşlem başarısız')
+  const method = String(init.method || 'GET').toUpperCase()
+  if (!response.ok) {
+    if (method === 'GET' && response.status === 404) return { data: [] }
+    throw new Error(payload.error || 'İşlem başarısız')
+  }
   return payload
 }
 
