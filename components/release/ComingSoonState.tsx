@@ -2,7 +2,6 @@
 
 import Link from 'next/link'
 import { ArrowLeft, Clock3 } from 'lucide-react'
-import { getCurrentReleaseEnvironment } from '@/lib/release/environment'
 
 interface ComingSoonStateProps {
   moduleName?: string
@@ -10,10 +9,7 @@ interface ComingSoonStateProps {
 }
 
 export function ComingSoonState({ moduleName = 'Eden ERP', message }: ComingSoonStateProps) {
-  const env = getCurrentReleaseEnvironment()
-  const description = env === 'release'
-    ? 'Bu ozellik yakinda kullanima acilacaktir.'
-    : message || 'Bu sayfa henuz release ortaminda kullanima acilmadi.'
+  const description = message || 'Bu sayfa henuz release ortaminda kullanima acilmadi.'
 
   return (
     <div className="flex min-h-[60vh] items-center justify-center bg-gray-50 px-4 py-12 dark:bg-[#09141e]">

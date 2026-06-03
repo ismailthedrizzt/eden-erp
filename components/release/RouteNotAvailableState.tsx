@@ -2,7 +2,6 @@
 
 import { Lock } from 'lucide-react'
 import { ComingSoonState } from './ComingSoonState'
-import { getCurrentReleaseEnvironment } from '@/lib/release/environment'
 
 export function RouteNotAvailableState({
   route,
@@ -11,8 +10,7 @@ export function RouteNotAvailableState({
   route?: string | null
   reason?: string | null
 }) {
-  const env = getCurrentReleaseEnvironment()
-  if (reason === 'coming_soon' || env === 'release') {
+  if (reason === 'coming_soon') {
     return <ComingSoonState moduleName="Eden ERP" />
   }
 
