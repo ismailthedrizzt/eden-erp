@@ -29,7 +29,7 @@ export type CompanyActivitySubjectChangeSubmitPayload = Record<string, any> & {
   document_meta: Record<string, { document_date?: string | null; description?: string | null }>
 }
 
-const steps = ['Ön Kontrol', 'Mevcut Faaliyet Konusu', 'Yeni Faaliyet Konusu', 'NACE Etkileri', 'Karar ve Tescil Bilgileri', 'Belgeler', 'Özet ve Onay']
+const steps = ['Bilgiler', 'Belgeler', 'Ön İzleme/Onay']
 
 const documentSlots: DocumentSlot[] = [
   { id: 'general_assembly_resolution', title: 'Genel Kurul / Ortaklar Kurulu Kararı', required: false },
@@ -93,15 +93,15 @@ export function CompanyActivitySubjectChangeWizard({
 
   const validateStep = (targetStep = step) => {
     if (targetStep >= 0 && (!context.ok || blockingReasons.length)) return blockingReasons[0] || 'Bu işlem şirketin mevcut durumunda başlatılamaz.'
-    if (targetStep >= 2) {
+    if (targetStep >= 0) {
       if (!draft.new_activity_subject.trim()) return 'Yeni faaliyet konusu boş olamaz.'
       if (currentActivitySubject.trim().toLocaleLowerCase('tr-TR') === draft.new_activity_subject.trim().toLocaleLowerCase('tr-TR')) return 'Yeni faaliyet konusu mevcut faaliyet konusu ile aynı olamaz.'
     }
-    if (targetStep >= 3) {
+    if (targetStep >= 0) {
       const selectionError = validateNaceRows(draft.nace_codes)
       if (selectionError) return selectionError
     }
-    if (targetStep >= 4) {
+    if (targetStep >= 0) {
       if (!draft.decision_date) return 'Karar tarihi boş olamaz.'
       if (!draft.registration_date) return 'Tescil tarihi boş olamaz.'
       if (draft.registration_date && draft.decision_date && new Date(draft.registration_date) < new Date(draft.decision_date)) return 'Tescil tarihi karar tarihinden önce olamaz.'
@@ -155,26 +155,26 @@ export function CompanyActivitySubjectChangeWizard({
     <WizardShell title="Faaliyet Konusu Değişikliği" companyName={companyName} steps={steps} step={step} setStep={setStep} saving={saving} onClose={onClose}>
       <div className="min-h-0 flex-1 overflow-auto px-5 py-5">
         {step === 0 && <PrecheckStep context={context} warnings={warnings} blockingReasons={blockingReasons} />}
-        {step === 1 && (
+        {step === 0 && (
           <ReadonlyGrid title="Mevcut faaliyet konusu" fields={[
             ['Faaliyet Konusu Özeti', currentActivitySubject],
             ['Birincil NACE', formatNaceRow((context.nace_codes || []).find(row => row.is_primary))],
             ['SGK Tehlike Sınıfı', context.public_sgk?.risk_class || context.current?.risk_class],
           ]} />
         )}
-        {step === 2 && (
+        {step === 0 && (
           <div className="grid gap-4 md:grid-cols-2">
             <TextareaField label="Yeni Faaliyet Konusu Metni" value={draft.new_activity_subject} onChange={value => setField('new_activity_subject', value)} error={fieldErrors.new_activity_subject} />
             <TextareaField label="Değişiklik Gerekçesi" value={draft.change_reason} onChange={value => setField('change_reason', value)} />
           </div>
         )}
-        {step === 3 && (
+        {step === 0 && (
           <div className="space-y-4">
             <SectionTitle title="NACE etkileri" description="Faaliyet konusu değişikliği tamamlandığında yeni NACE seti de resmi işlem kapsamında güncellenir." />
             <NaceSelectionEditor rows={draft.nace_codes} onChange={rows => setField('nace_codes', rows)} error={fieldErrors.nace_codes} />
           </div>
         )}
-        {step === 4 && (
+        {step === 0 && (
           <div className="grid gap-4 md:grid-cols-2">
             <TextField label="Karar Tarihi" type="date" value={draft.decision_date} onChange={value => setField('decision_date', value)} error={fieldErrors.decision_date} required />
             <TextField label="Tescil Tarihi" type="date" value={draft.registration_date} onChange={value => setField('registration_date', value)} error={fieldErrors.registration_date} required />
@@ -186,7 +186,7 @@ export function CompanyActivitySubjectChangeWizard({
             <TextareaField label="Açıklama / Not" value={draft.notes} onChange={value => setField('notes', value)} />
           </div>
         )}
-        {step === 5 && (
+        {step === 1 && (
           <DocumentsStep
             slots={documentSlots}
             documents={documents}
@@ -195,7 +195,7 @@ export function CompanyActivitySubjectChangeWizard({
             setDocumentMeta={setDocumentMeta}
           />
         )}
-        {step === 6 && (
+        {step === 2 && (
           <div className="space-y-5">
             <ReadonlyGrid title="Değişiklik özeti" fields={[
               ['Faaliyet Konusu', `${currentActivitySubject || '-'} -> ${draft.new_activity_subject || '-'}`],

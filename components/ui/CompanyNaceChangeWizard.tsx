@@ -40,7 +40,7 @@ export type CompanyNaceChangeSubmitPayload = Record<string, any> & {
   document_meta: Record<string, { document_date?: string | null; description?: string | null }>
 }
 
-const steps = ['Ön Kontrol', 'Faaliyet Konusu Etkisi', 'Mevcut NACE Bilgileri', 'Yeni NACE Bilgileri', 'Vergi / SGK Etkileri', 'Belgeler', 'Özet ve Onay']
+const steps = ['Bilgiler', 'Belgeler', 'Ön İzleme/Onay']
 
 const documentSlots: DocumentSlot[] = [
   { id: 'tax_certificate', title: 'Vergi Levhası', required: false },
@@ -98,18 +98,18 @@ export function CompanyNaceChangeWizard({
 
   const validateStep = (targetStep = step) => {
     if (targetStep >= 0 && (!context.ok || blockingReasons.length)) return blockingReasons[0] || 'Bu işlem şirketin mevcut durumunda başlatılamaz.'
-    if (targetStep >= 1 && draft.activity_subject_changes) return 'Bu değişiklik faaliyet konusu / esas sözleşme alanını etkiliyorsa Faaliyet Konusu Değişikliği wizardı kullanılmalıdır.'
-    if (targetStep >= 3) {
+    if (targetStep >= 0 && draft.activity_subject_changes) return 'Bu değişiklik faaliyet konusu / esas sözleşme alanını etkiliyorsa Faaliyet Konusu Değişikliği wizardı kullanılmalıdır.'
+    if (targetStep >= 0) {
       const selectionError = validateNaceRows(draft.nace_codes)
       if (selectionError) return selectionError
       if (changeRows.length === 0) return 'NACE / faaliyet kodu güncellemesi için en az bir kod değişmelidir.'
     }
-    if (targetStep >= 4 && !draft.effective_date) return 'Yürürlük tarihi boş olamaz.'
+    if (targetStep >= 0 && !draft.effective_date) return 'Yürürlük tarihi boş olamaz.'
     return null
   }
 
   const nextStep = () => {
-    if (step === 1 && draft.activity_subject_changes) {
+    if (step === 0 && draft.activity_subject_changes) {
       onRedirectToActivitySubject?.(draft.nace_codes)
       return
     }
@@ -156,7 +156,7 @@ export function CompanyNaceChangeWizard({
     <WizardShell title="NACE / Faaliyet Kodu Güncelleme" companyName={companyName} steps={steps} step={step} setStep={setStep} saving={saving} onClose={onClose}>
       <div className="min-h-0 flex-1 overflow-auto px-5 py-5">
         {step === 0 && <PrecheckStep context={context} warnings={warnings} blockingReasons={blockingReasons} />}
-        {step === 1 && (
+        {step === 0 && (
           <div className="space-y-4">
             <SectionTitle title="Faaliyet konusu etkisi" description="NACE değişikliği yalnızca idari/kamu faaliyet kodu düzeltmesi ise bu wizard devam eder." />
             <div className="grid gap-3 md:grid-cols-2">
@@ -170,7 +170,7 @@ export function CompanyNaceChangeWizard({
             )}
           </div>
         )}
-        {step === 2 && (
+        {step === 0 && (
           <ReadonlyGrid title="Mevcut NACE bilgileri" fields={[
             ['Birincil NACE', formatNaceRow((context.nace_codes || []).find(row => row.is_primary))],
             ['İkincil NACE sayısı', String((context.nace_codes || []).filter(row => !row.is_primary).length)],
@@ -179,14 +179,14 @@ export function CompanyNaceChangeWizard({
             ['Faaliyet konusu özeti', context.activity_subject || context.current?.activity_subject],
           ]} />
         )}
-        {step === 3 && (
+        {step === 0 && (
           <NaceSelectionEditor
             rows={draft.nace_codes}
             onChange={rows => setField('nace_codes', rows)}
             error={fieldErrors.nace_codes}
           />
         )}
-        {step === 4 && (
+        {step === 0 && (
           <div className="grid gap-4 md:grid-cols-2">
             <TextField label="Değişiklik Nedeni" value={draft.change_reason} onChange={value => setField('change_reason', value)} />
             <TextField label="Yürürlük Tarihi" type="date" value={draft.effective_date} onChange={value => setField('effective_date', value)} error={fieldErrors.effective_date} required />
@@ -196,7 +196,7 @@ export function CompanyNaceChangeWizard({
             <TextareaField label="Açıklama / Not" value={draft.notes} onChange={value => setField('notes', value)} />
           </div>
         )}
-        {step === 5 && (
+        {step === 1 && (
           <DocumentsStep
             slots={documentSlots}
             documents={documents}
@@ -205,7 +205,7 @@ export function CompanyNaceChangeWizard({
             setDocumentMeta={setDocumentMeta}
           />
         )}
-        {step === 6 && (
+        {step === 2 && (
           <div className="space-y-5">
             <ReadonlyGrid title="Değişiklik özeti" fields={changeRows.length ? changeRows.map(row => [row.label, `${row.oldValue || '-'} -> ${row.newValue || '-'}`]) : [['Değişiklik', 'Henüz değişiklik yok']]} />
             <ReadonlyGrid title="İşlem bilgileri" fields={[
@@ -217,7 +217,7 @@ export function CompanyNaceChangeWizard({
         )}
       </div>
       {error && <WizardError message={error} />}
-      <WizardFooter step={step} steps={steps} saving={saving} onClose={onClose} onBack={() => setStep(prev => Math.max(0, prev - 1))} onNext={nextStep} onComplete={complete} nextLabel={step === 1 && draft.activity_subject_changes ? 'Faaliyet Konusu Wizardına Geç' : 'Devam'} />
+      <WizardFooter step={step} steps={steps} saving={saving} onClose={onClose} onBack={() => setStep(prev => Math.max(0, prev - 1))} onNext={nextStep} onComplete={complete} nextLabel={step === 0 && draft.activity_subject_changes ? 'Faaliyet Konusu Wizardına Geç' : 'Devam'} />
     </WizardShell>
   )
 }

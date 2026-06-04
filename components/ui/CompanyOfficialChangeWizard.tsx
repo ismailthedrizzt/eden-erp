@@ -39,9 +39,7 @@ type ChangeRow = {
   newValue: unknown
 }
 
-const titleSteps = ['Ön Kontrol', 'Mevcut Unvan Bilgileri', 'Yeni Unvan Bilgileri', 'Karar ve Tescil Bilgileri', 'Belgeler', 'Özet ve Onay']
-const addressSteps = ['Ön Kontrol', 'Mevcut Adres', 'Yeni Adres', 'Karar ve Tescil Bilgileri', 'Belgeler', 'Özet ve Onay']
-const publicSteps = ['Ön Kontrol', 'Mevcut Kamu/Tescil Bilgileri', 'Güncellenecek Alanlar', 'Belgeler', 'Özet ve Onay']
+const standardSteps = ['Bilgiler', 'Belgeler', 'Ön İzleme/Onay']
 
 const documentSlotsByType: Record<CompanyOfficialChangeType, DocumentSlot[]> = {
   title_change: [
@@ -120,7 +118,7 @@ export function CompanyOfficialChangeWizard({
   onClose: () => void
   onComplete: (type: CompanyOfficialChangeType, payload: CompanyOfficialChangeSubmitPayload) => Promise<void>
 }) {
-  const steps = type === 'title_change' ? titleSteps : type === 'address_change' ? addressSteps : publicSteps
+  const steps = standardSteps
   const current = context.current
   const documentSlots = documentSlotsByType[type]
   const [step, setStep] = useState(0)
@@ -162,29 +160,29 @@ export function CompanyOfficialChangeWizard({
     }
 
     if (type === 'title_change') {
-      if (targetStep >= 2) {
+      if (targetStep >= 0) {
         if (!trimmed(draft.new_trade_name)) return 'Yeni ticari unvan boş olamaz.'
         if (sameText(draft.new_trade_name, current.trade_name)) return 'Yeni ticari unvan mevcut ticari unvanla aynı olamaz.'
       }
-      if (targetStep >= 3) {
+      if (targetStep >= 0) {
         if (draft.registration_date && draft.decision_date && new Date(draft.registration_date) < new Date(draft.decision_date)) return 'Tescil tarihi karar tarihinden önce olamaz.'
         if (draft.mersis_changed && !trimmed(draft.new_mersis_number)) return 'MERSİS değiştiyse yeni MERSİS numarası girilmelidir.'
       }
     }
 
     if (type === 'address_change') {
-      if (targetStep >= 2) {
+      if (targetStep >= 0) {
         if (!trimmed(draft.new_address)) return 'Yeni açık adres boş olamaz.'
         if (!trimmed(draft.new_city)) return 'Yeni il boş olamaz.'
         if (!trimmed(draft.new_district)) return 'Yeni ilçe boş olamaz.'
         if (!changeRows.length) return 'Yeni adres mevcut adresle aynı olamaz.'
       }
-      if (targetStep >= 3 && draft.registration_date && draft.decision_date && new Date(draft.registration_date) < new Date(draft.decision_date)) {
+      if (targetStep >= 0 && draft.registration_date && draft.decision_date && new Date(draft.registration_date) < new Date(draft.decision_date)) {
         return 'Tescil tarihi karar tarihinden önce olamaz.'
       }
     }
 
-    if (type === 'public_registration_update' && targetStep >= 2 && !changeRows.length) {
+    if (type === 'public_registration_update' && targetStep >= 0 && !changeRows.length) {
       return 'Kamu / tescil güncellemesi için en az bir alan değişmelidir.'
     }
 
@@ -242,7 +240,7 @@ export function CompanyOfficialChangeWizard({
         <div className="min-h-0 flex-1 overflow-auto px-5 py-5">
           {step === 0 && <PrecheckStep context={context} warnings={warnings} blockingReasons={blockingReasons} />}
 
-          {type === 'title_change' && step === 1 && (
+          {type === 'title_change' && step === 0 && (
             <ReadonlyGrid title="Mevcut unvan bilgileri" fields={[
               ['Ticari Unvan', current.trade_name],
               ['Kısa Unvan', current.short_name],
@@ -251,7 +249,7 @@ export function CompanyOfficialChangeWizard({
             ]} />
           )}
 
-          {type === 'title_change' && step === 2 && (
+          {type === 'title_change' && step === 0 && (
             <div className="grid gap-4 md:grid-cols-2">
               <TextField label="Yeni Ticari Unvan" value={draft.new_trade_name} onChange={value => setField('new_trade_name', value)} error={fieldErrors.new_trade_name} required />
               <TextField label="Yeni Kısa Unvan" value={draft.new_short_name} onChange={value => setField('new_short_name', value)} error={fieldErrors.new_short_name} />
@@ -264,7 +262,7 @@ export function CompanyOfficialChangeWizard({
             </div>
           )}
 
-          {type === 'address_change' && step === 1 && (
+          {type === 'address_change' && step === 0 && (
             <ReadonlyGrid title="Mevcut adres" fields={[
               ['Ülke', current.country],
               ['İl', current.city],
@@ -274,7 +272,7 @@ export function CompanyOfficialChangeWizard({
             ]} />
           )}
 
-          {type === 'address_change' && step === 2 && (
+          {type === 'address_change' && step === 0 && (
             <div className="space-y-4">
               <div className="grid gap-4 md:grid-cols-3">
                 <TextField label="Yeni Ülke" value={draft.new_country} onChange={value => setField('new_country', value)} required />
@@ -304,7 +302,7 @@ export function CompanyOfficialChangeWizard({
             <DecisionStep draft={draft} setField={setField} fieldErrors={fieldErrors} />
           )}
 
-          {type === 'public_registration_update' && step === 1 && (
+          {type === 'public_registration_update' && step === 0 && (
             <ReadonlyGrid title="Mevcut kamu / tescil bilgileri" fields={[
               ['Vergi Dairesi', current.tax_office],
               ['Ticaret Sicili Müdürlüğü', current.trade_registry_office],
@@ -321,7 +319,7 @@ export function CompanyOfficialChangeWizard({
             ]} />
           )}
 
-          {type === 'public_registration_update' && step === 2 && (
+          {type === 'public_registration_update' && step === 0 && (
             <div className="space-y-5">
               <div className="grid gap-4 md:grid-cols-2">
                 <ReferenceField label="Vergi Dairesi" value={draft.tax_office} onChange={value => setField('tax_office', value)} endpoint="/api/reference/tax-offices" error={fieldErrors.tax_office} />
@@ -947,15 +945,15 @@ function submitPayload(type: CompanyOfficialChangeType, draft: Record<string, an
 }
 
 function isDecisionStep(type: CompanyOfficialChangeType, step: number) {
-  return (type === 'title_change' || type === 'address_change') && step === 3
+  return (type === 'title_change' || type === 'address_change') && step === 0
 }
 
-function isDocumentsStep(type: CompanyOfficialChangeType, step: number) {
-  return type === 'public_registration_update' ? step === 3 : step === 4
+function isDocumentsStep(_type: CompanyOfficialChangeType, step: number) {
+  return step === 1
 }
 
-function isSummaryStep(_type: CompanyOfficialChangeType, step: number, stepCount: number) {
-  return step === stepCount - 1
+function isSummaryStep(_type: CompanyOfficialChangeType, step: number, _stepCount: number) {
+  return step === 2
 }
 
 function normalizeReferenceOptions(result: any): Array<{ value: string; label: string }> {

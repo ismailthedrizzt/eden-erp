@@ -2934,6 +2934,7 @@ function FieldOperationLockIndicator({ control, recordStatus }: { control: FormF
   const modules = useModules()
   const permissions = usePermissions()
   const message = getFieldOperationLockMessage(control)
+  const compactMessage = firstSentences(message, 2)
   const actions = getFieldOperationActions(control)
   const eligibility = getFieldOperationEligibility(control, modules, permissions, recordStatus)
 
@@ -2976,21 +2977,12 @@ function FieldOperationLockIndicator({ control, recordStatus }: { control: FormF
               {eligibility.canStart ? 'Islem hazir' : 'Kosul gerekiyor'}
             </span>
           </div>
-          <p>{message}</p>
-          <p className="mt-1 text-gray-500 dark:text-gray-400">Bu alan doğrudan karttan değil, ilgili resmi işlem üzerinden değişir.</p>
-          {control.helperText && control.helperText !== message && (
-            <p className="mt-2 text-gray-500 dark:text-gray-400">{control.helperText}</p>
-          )}
+          <p>{compactMessage}</p>
           {eligibility.disabledReason && (
             <p className="mt-2 rounded-md border border-amber-200 bg-amber-50 px-2 py-1 text-amber-800 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-200">
               {eligibility.disabledReason}
             </p>
           )}
-          {eligibility.warnings.length ? (
-            <div className="mt-2 space-y-1 text-amber-700 dark:text-amber-200">
-              {eligibility.warnings.map((warning, index) => <p key={`${warning}-${index}`}>{warning}</p>)}
-            </div>
-          ) : null}
           {actions.length ? (
             <div className="mt-3 flex flex-wrap gap-2">
               {actions.map(action => (
@@ -3011,30 +3003,15 @@ function FieldOperationLockIndicator({ control, recordStatus }: { control: FormF
               ))}
             </div>
           ) : null}
-          {actions.length ? (
-            <button
-              type="button"
-              onMouseDown={event => event.preventDefault()}
-              onClick={() => {
-                const action = actions[0]
-                window.dispatchEvent(new CustomEvent('eden:open-action-guide', {
-                  detail: {
-                    query: `${action.operationLabel} nasıl yapılır?`,
-                    actionKey: action.operationKey,
-                    wizardKey: action.wizardKey,
-                  },
-                }))
-                setShowTooltip(false)
-              }}
-              className="mt-3 text-[11px] font-semibold text-amber-800 underline-offset-2 hover:underline dark:text-amber-100"
-            >
-              Bu işlem nasıl yapılır?
-            </button>
-          ) : null}
         </div>
       )}
     </div>
   )
+}
+
+function firstSentences(value: string, count: number) {
+  const sentences = String(value || '').match(/[^.!?]+[.!?]+|[^.!?]+$/g) || []
+  return sentences.slice(0, count).join(' ').replace(/\s+/g, ' ').trim()
 }
 
 function getFieldOperationLockMessage(control: FormFieldOperationControl) {

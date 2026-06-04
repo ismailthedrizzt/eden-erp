@@ -129,8 +129,8 @@ export function EntityBankAccountsPanel({ entityKind, entityId, masterName = '',
   }, [entityKind, entityId])
 
   useEffect(() => {
-    if (!embedded || !Array.isArray(value)) return
-    setRows(value as EntityBankAccount[])
+    if (!embedded) return
+    setRows(Array.isArray(value) ? value as EntityBankAccount[] : [])
   }, [embedded, value])
 
   useEffect(() => {
@@ -148,7 +148,8 @@ export function EntityBankAccountsPanel({ entityKind, entityId, masterName = '',
 
   useEffect(() => {
     if (multiple) return
-    const selected = rows.find(row => row.status === 'active' && row.is_default) || rows.find(row => row.status === 'active') || rows[0]
+    const activeRows = rows.filter(row => row.status !== 'passive' && row.status !== 'invalid')
+    const selected = activeRows.find(row => row.is_default) || activeRows[0] || rows[0]
     const nextDraft = selected || buildInitialDraft(rows.length === 0)
     const selectionKey = selected?.id || 'new'
     setDraft(nextDraft)
