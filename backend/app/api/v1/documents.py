@@ -17,6 +17,7 @@ from app.domains.documents.schemas import (
     DocumentUpdateRequest,
     DocumentUploadRequest,
 )
+from app.domains.documents.storage import DEFAULT_BUCKET, SIGNED_URL_EXPIRES_IN, create_signed_url
 from app.domains.documents.service import (
     create_document,
     create_new_version,
@@ -154,6 +155,30 @@ async def documents_by_entity_upload(entity_type: str, entity_id: str, request: 
         return ApiSuccess(data=row, message="Kayda belge yuklendi.")
     except DomainError as error:
         raise domain_error_to_http(error) from error
+
+
+
+@router.post("/documents/uploads/signed-url")
+async def documents_upload_signed_url(
+    payload: dict[str, Any],
+    context: RequestContextDep,
+) -> dict[str, Any]:
+    tenant_id = require_tenant(context)
+    storage_path = str(payload.get("storagePath") or payload.get("storage_path") or "").strip()
+    if not storage_path or storage_path.startswith("/") or ".." in storage_path or storage_path.lower().startswith(("http://", "https://")):
+        raise DomainError("Gecersiz storage path.", "DOCUMENT_STORAGE_PATH_INVALID", status.HTTP_400_BAD_REQUEST)
+    if str(tenant_id) not in storage_path:
+        raise DomainError("Storage path calisma alani kapsami disinda.", "DOCUMENT_STORAGE_SCOPE_DENIED", status.HTTP_403_FORBIDDEN)
+    storage_bucket = str(payload.get("storageBucket") or payload.get("storage_bucket") or DEFAULT_BUCKET)
+    storage_provider = str(payload.get("storageProvider") or payload.get("storage_provider") or "supabase")
+    expires_in = int(payload.get("expiresIn") or payload.get("expires_in") or SIGNED_URL_EXPIRES_IN)
+    signed_url = await create_signed_url(storage_bucket, storage_path, storage_provider, expires_in=expires_in)
+    return {
+        "signedUrl": signed_url,
+        "expiresIn": expires_in,
+        "storagePath": storage_path,
+        "storageBucket": storage_bucket,
+    }
 
 
 @router.get("/documents/{document_id}", response_model=ApiSuccess[dict[str, Any]])

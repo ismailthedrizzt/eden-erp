@@ -1,12 +1,14 @@
 from __future__ import annotations
 
-from datetime import date
+from datetime import UTC, date, datetime
 import json
 from decimal import Decimal
 from pathlib import Path
 from typing import Annotated, Any
+from uuid import uuid4
 
 from fastapi import APIRouter, Depends, Query, status
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_session
@@ -128,6 +130,53 @@ def _load_turkish_iban_banks() -> dict[str, Any]:
     return banks if isinstance(banks, dict) else {}
 
 
+
+def _load_branch_map(file_name: str) -> dict[str, str]:
+    data_path = Path(__file__).resolve().parents[4] / "lib" / "data" / file_name
+    if not data_path.exists():
+        return {}
+    with data_path.open("r", encoding="utf-8") as handle:
+        data = json.load(handle)
+    branches = data.get("branches")
+    return branches if isinstance(branches, dict) else {}
+
+
+def _normalize_branch_code(value: str) -> str:
+    digits = "".join(char for char in str(value or "") if char.isdigit())
+    return str(int(digits)) if digits else ""
+
+
+def _resolve_known_turkish_iban_branch(bank_code: str, account_number: str) -> dict[str, str | None]:
+    if not account_number.isdigit() or len(account_number) != 16:
+        return {"branch_code": None, "branch_name": None}
+    if bank_code == "00062":
+        branches = _load_branch_map("garanti-bbva-branches.json")
+        if not account_number.startswith("0"):
+            return {"branch_code": None, "branch_name": None}
+        branch_code = _normalize_branch_code(account_number[1:5])
+        return {"branch_code": branch_code or None, "branch_name": branches.get(branch_code)}
+    if bank_code == "00046":
+        branches = _load_branch_map("akbank-branches.json")
+        special_code = _normalize_branch_code(account_number[:5])
+        branch_code = special_code if special_code in branches else _normalize_branch_code(account_number[:4])
+        return {"branch_code": branch_code or None, "branch_name": branches.get(branch_code)}
+    if bank_code == "00064":
+        branches = _load_branch_map("isbank-branches.json")
+        candidates = [
+            _normalize_branch_code(account_number[5:9]),
+            _normalize_branch_code(account_number[4:8]),
+            _normalize_branch_code(account_number[:4]),
+        ]
+        branch_code = next((code for code in candidates if code and code in branches), next((code for code in candidates if code), ""))
+        return {"branch_code": branch_code or None, "branch_name": branches.get(branch_code)}
+    if bank_code == "00010":
+        branches = _load_branch_map("ziraat-branches.json")
+        special_code = _normalize_branch_code(account_number[:5])
+        branch_code = special_code if special_code in branches else _normalize_branch_code(account_number[:4])
+        return {"branch_code": branch_code or None, "branch_name": branches.get(branch_code)}
+    return {"branch_code": None, "branch_name": None}
+
+
 def _resolve_turkish_iban(value: Any) -> dict[str, Any] | None:
     clean = _clean_iban(value)
     if len(clean) != 26 or not clean.startswith("TR"):
@@ -139,6 +188,8 @@ def _resolve_turkish_iban(value: Any) -> dict[str, Any] | None:
     bank_code = clean[4:9]
     banks = _load_turkish_iban_banks()
     bank = banks.get(bank_code) or {}
+    account_number = clean[10:26]
+    branch = _resolve_known_turkish_iban_branch(bank_code, account_number)
     return {
         "iban": clean,
         "country_code": "TR",
@@ -146,8 +197,11 @@ def _resolve_turkish_iban(value: Any) -> dict[str, Any] | None:
         "bank_code": bank_code,
         "bank_name": bank.get("name") or "Bilinmeyen Banka",
         "swift_bic": bank.get("swift"),
-        "account_number": clean[10:26],
+        "account_number": account_number,
         "reserved_field": clean[9:10],
+        "branch_code": branch.get("branch_code"),
+        "branch_name": branch.get("branch_name"),
+        "branch_confidence": "known" if branch.get("branch_name") else "unknown",
         "bank_country": "Türkiye",
         "account_country": "Türkiye",
         "account_currency": "TRY",
@@ -293,6 +347,256 @@ async def get_account_summary(
 
 
 
+def _entity_bank_account_priority_mode(country: str | None) -> str:
+    normalized = str(country or "").strip().lower()
+    if normalized in {"tr", "turkiye", "türkiye", "turkey"}:
+        return "tr_priority"
+    return "international_priority" if normalized else "unknown_country"
+
+
+def _company_card_metadata(company: dict[str, Any]) -> dict[str, Any]:
+    field_history = company.get("field_history")
+    if not isinstance(field_history, dict):
+        return {}
+    card_metadata = field_history.get("card_metadata")
+    return card_metadata if isinstance(card_metadata, dict) else {}
+
+
+def _company_entity_bank_accounts(company: dict[str, Any]) -> list[dict[str, Any]]:
+    rows = _company_card_metadata(company).get("entity_bank_accounts")
+    return [dict(row) for row in rows] if isinstance(rows, list) else []
+
+
+async def _get_company_for_entity_bank_accounts(
+    session: AsyncSession,
+    tenant_id: str,
+    entity_kind: str,
+    entity_id: str,
+) -> dict[str, Any] | None:
+    kind = entity_kind.strip().lower()
+    if kind in {"organization", "legal_entity"}:
+        where_sql = "(organization_id::text = :entity_id or id::text = :entity_id)"
+    elif kind == "company":
+        where_sql = "id::text = :entity_id"
+    else:
+        return None
+    result = await session.execute(
+        text(
+            f"""
+            select *
+            from public.companies
+            where tenant_id = :tenant_id
+              and {where_sql}
+              and coalesce(is_deleted, false) = false
+            limit 1
+            """
+        ),
+        {"tenant_id": tenant_id, "entity_id": entity_id},
+    )
+    row = result.mappings().one_or_none()
+    return dict(row) if row else None
+
+
+async def _get_company_for_entity_bank_account_id(
+    session: AsyncSession,
+    tenant_id: str,
+    account_id: str,
+) -> dict[str, Any] | None:
+    result = await session.execute(
+        text(
+            """
+            select *
+            from public.companies
+            where tenant_id = :tenant_id
+              and coalesce(is_deleted, false) = false
+              and coalesce(field_history, '{}'::jsonb) -> 'card_metadata' -> 'entity_bank_accounts' @> cast(:needle as jsonb)
+            limit 1
+            """
+        ),
+        {"tenant_id": tenant_id, "needle": json.dumps([{"id": account_id}])},
+    )
+    row = result.mappings().one_or_none()
+    return dict(row) if row else None
+
+
+async def _save_company_entity_bank_accounts(
+    session: AsyncSession,
+    tenant_id: str,
+    company: dict[str, Any],
+    rows: list[dict[str, Any]],
+    user_id: str | None,
+) -> list[dict[str, Any]]:
+    field_history = dict(company.get("field_history") or {})
+    card_metadata = field_history.get("card_metadata")
+    if not isinstance(card_metadata, dict):
+        card_metadata = {}
+    card_metadata["entity_bank_accounts"] = rows
+    card_metadata["updated_at"] = datetime.now(UTC).isoformat()
+    card_metadata["updated_by"] = user_id
+    card_metadata["source"] = "entity_bank_accounts_api"
+    field_history["card_metadata"] = card_metadata
+    await session.execute(
+        text(
+            """
+            update public.companies
+            set field_history = cast(:field_history as jsonb),
+                updated_at = now(),
+                updated_by = :updated_by,
+                version = coalesce(version, 0) + 1
+            where tenant_id = :tenant_id
+              and id = :company_id
+              and coalesce(is_deleted, false) = false
+            """
+        ),
+        {
+            "tenant_id": tenant_id,
+            "company_id": company["id"],
+            "field_history": json.dumps(field_history, ensure_ascii=False, default=str),
+            "updated_by": user_id,
+        },
+    )
+    await session.commit()
+    return rows
+
+
+def _normalize_entity_bank_account_payload(
+    payload: dict[str, Any],
+    *,
+    entity_kind: str,
+    entity_id: str,
+    existing: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    row = {**(existing or {}), **payload}
+    row["id"] = str(row.get("id") or uuid4())
+    row["entity_kind"] = entity_kind
+    row["entity_id"] = entity_id
+    row["status"] = row.get("status") or "active"
+    row["verification_status"] = row.get("verification_status") or "unverified"
+    row["history"] = row.get("history") if isinstance(row.get("history"), list) else []
+    return row
+
+
+@router.get("/entity-bank-accounts/form-priority-mode", response_model=ApiSuccess[dict[str, Any]])
+async def entity_bank_account_form_priority_mode(
+    session: SessionDep,
+    context: RequestContextDep,
+    entity_kind: str = Query(alias="entityKind"),
+    entity_id: str = Query(alias="entityId"),
+) -> ApiSuccess[dict[str, Any]]:
+    tenant_id = require_tenant(context)
+    company = await _get_company_for_entity_bank_accounts(session, tenant_id, entity_kind, entity_id)
+    return ApiSuccess(data={"mode": _entity_bank_account_priority_mode(company.get("country") if company else None)})
+
+
+@router.get("/entities/{entity_kind}/{entity_id}/bank-accounts", response_model=ApiSuccess[list[dict[str, Any]]])
+async def list_entity_bank_accounts(
+    entity_kind: str,
+    entity_id: str,
+    session: SessionDep,
+    context: RequestContextDep,
+) -> ApiSuccess[list[dict[str, Any]]]:
+    tenant_id = require_tenant(context)
+    company = await _get_company_for_entity_bank_accounts(session, tenant_id, entity_kind, entity_id)
+    if not company:
+        return ApiSuccess(data=[])
+    return ApiSuccess(data=_company_entity_bank_accounts(company))
+
+
+@router.post("/entities/{entity_kind}/{entity_id}/bank-accounts", response_model=ApiSuccess[dict[str, Any]])
+async def create_entity_bank_account(
+    entity_kind: str,
+    entity_id: str,
+    payload: dict[str, Any],
+    session: SessionDep,
+    context: RequestContextDep,
+) -> ApiSuccess[dict[str, Any]]:
+    tenant_id = require_tenant(context)
+    company = await _get_company_for_entity_bank_accounts(session, tenant_id, entity_kind, entity_id)
+    if not company:
+        raise DomainError("Master kayit bulunamadi.", "ENTITY_BANK_ACCOUNT_OWNER_NOT_FOUND", status.HTTP_404_NOT_FOUND)
+    rows = _company_entity_bank_accounts(company)
+    row = _normalize_entity_bank_account_payload(payload, entity_kind=entity_kind, entity_id=entity_id)
+    if not any(item.get("is_default") and item.get("status") == "active" for item in rows):
+        row["is_default"] = True
+    rows.append(row)
+    await _save_company_entity_bank_accounts(session, tenant_id, company, rows, context.user_id)
+    return ApiSuccess(data=row, message="Banka hesabi kaydedildi.")
+
+
+@router.patch("/entity-bank-accounts/{account_id}", response_model=ApiSuccess[dict[str, Any]])
+async def update_entity_bank_account(
+    account_id: str,
+    payload: dict[str, Any],
+    session: SessionDep,
+    context: RequestContextDep,
+) -> ApiSuccess[dict[str, Any]]:
+    tenant_id = require_tenant(context)
+    company = await _get_company_for_entity_bank_account_id(session, tenant_id, account_id)
+    if not company:
+        raise DomainError("Banka hesabi bulunamadi.", "ENTITY_BANK_ACCOUNT_NOT_FOUND", status.HTTP_404_NOT_FOUND)
+    rows = _company_entity_bank_accounts(company)
+    next_rows: list[dict[str, Any]] = []
+    updated: dict[str, Any] | None = None
+    for row in rows:
+        if row.get("id") == account_id:
+            updated = _normalize_entity_bank_account_payload(
+                payload,
+                entity_kind=str(row.get("entity_kind") or "organization"),
+                entity_id=str(row.get("entity_id") or company.get("organization_id") or company.get("id")),
+                existing=row,
+            )
+            next_rows.append(updated)
+        else:
+            next_rows.append(row)
+    await _save_company_entity_bank_accounts(session, tenant_id, company, next_rows, context.user_id)
+    return ApiSuccess(data=updated or {}, message="Banka hesabi guncellendi.")
+
+
+@router.post("/entity-bank-accounts/{account_id}/set-default", response_model=ApiSuccess[dict[str, Any]])
+async def set_default_entity_bank_account(
+    account_id: str,
+    session: SessionDep,
+    context: RequestContextDep,
+) -> ApiSuccess[dict[str, Any]]:
+    tenant_id = require_tenant(context)
+    company = await _get_company_for_entity_bank_account_id(session, tenant_id, account_id)
+    if not company:
+        raise DomainError("Banka hesabi bulunamadi.", "ENTITY_BANK_ACCOUNT_NOT_FOUND", status.HTTP_404_NOT_FOUND)
+    rows = [{**row, "is_default": row.get("id") == account_id} for row in _company_entity_bank_accounts(company)]
+    await _save_company_entity_bank_accounts(session, tenant_id, company, rows, context.user_id)
+    return ApiSuccess(data={"id": account_id, "is_default": True})
+
+
+@router.post("/entity-bank-accounts/{account_id}/passivate", response_model=ApiSuccess[dict[str, Any]])
+async def passivate_entity_bank_account(
+    account_id: str,
+    session: SessionDep,
+    context: RequestContextDep,
+) -> ApiSuccess[dict[str, Any]]:
+    tenant_id = require_tenant(context)
+    company = await _get_company_for_entity_bank_account_id(session, tenant_id, account_id)
+    if not company:
+        raise DomainError("Banka hesabi bulunamadi.", "ENTITY_BANK_ACCOUNT_NOT_FOUND", status.HTTP_404_NOT_FOUND)
+    rows = [{**row, "status": "passive"} if row.get("id") == account_id else row for row in _company_entity_bank_accounts(company)]
+    await _save_company_entity_bank_accounts(session, tenant_id, company, rows, context.user_id)
+    return ApiSuccess(data={"id": account_id, "status": "passive"})
+
+
+@router.get("/entity-bank-accounts/{account_id}/history", response_model=ApiSuccess[list[dict[str, Any]]])
+async def entity_bank_account_history(
+    account_id: str,
+    session: SessionDep,
+    context: RequestContextDep,
+) -> ApiSuccess[list[dict[str, Any]]]:
+    tenant_id = require_tenant(context)
+    company = await _get_company_for_entity_bank_account_id(session, tenant_id, account_id)
+    rows = _company_entity_bank_accounts(company) if company else []
+    row = next((item for item in rows if item.get("id") == account_id), None)
+    history = row.get("history") if isinstance(row, dict) and isinstance(row.get("history"), list) else []
+    return ApiSuccess(data=history)
+
+
+
 @router.post("/entity-bank-accounts/parse-iban", response_model=ApiSuccess[dict[str, Any]])
 async def parse_entity_bank_account_iban(
     payload: dict[str, Any],
@@ -308,6 +612,8 @@ async def parse_entity_bank_account_iban(
         "bank_name": details["bank_name"],
         "bank_code": details["bank_code"],
         "account_number": details["account_number"],
+        "branch_code": details.get("branch_code") or "",
+        "branch_name": details.get("branch_name") or "",
         "swift_bic": details.get("swift_bic") or "",
         "bank_country": details["bank_country"],
         "account_country": details["account_country"],

@@ -5,7 +5,11 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+    model_config = SettingsConfigDict(
+        env_file=(".env", ".env.local", "../.env", "../.env.local"),
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
 
     app_name: str = Field(default="Eden ERP Backend", alias="APP_NAME")
     service_name: str = "eden-erp-backend"
@@ -16,7 +20,10 @@ class Settings(BaseSettings):
     log_level: str = Field(default="INFO", validation_alias=AliasChoices("LOG_LEVEL"))
 
     database_url: str | None = Field(default=None, alias="DATABASE_URL")
-    supabase_url: str | None = Field(default=None, alias="SUPABASE_URL")
+    supabase_url: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices("SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_URL"),
+    )
     supabase_project_ref: str | None = Field(default=None, alias="SUPABASE_PROJECT_REF")
     supabase_service_role_key: str | None = Field(default=None, alias="SUPABASE_SERVICE_ROLE_KEY")
     supabase_jwt_secret: str | None = Field(default=None, alias="SUPABASE_JWT_SECRET")

@@ -77,7 +77,22 @@ COMPANY_DRAFT_CARD_FIELDS = {
     "foundation_date",
 }
 JSON_COMPANY_CARD_FIELDS = {"hero_images", "hero_documents"}
-COMPANY_CARD_METADATA_FIELDS = {"contact_points", "notes", "metadata_json"}
+COMPANY_CARD_METADATA_FIELDS = {"contact_points", "entity_bank_accounts", "notes", "metadata_json"}
+
+
+def hydrate_company_card_metadata(company: dict[str, Any]) -> dict[str, Any]:
+    field_history = company.get("field_history")
+    if not isinstance(field_history, dict):
+        return company
+    card_metadata = field_history.get("card_metadata")
+    if not isinstance(card_metadata, dict):
+        return company
+    hydrated = dict(company)
+    for field in COMPANY_CARD_METADATA_FIELDS:
+        if field in card_metadata:
+            hydrated[field] = card_metadata[field]
+    return hydrated
+
 
 
 async def get_company_by_id(
@@ -99,7 +114,7 @@ async def get_company_by_id(
         {"tenant_id": tenant_id, "company_id": company_id},
     )
     row = result.mappings().one_or_none()
-    return dict(row) if row else None
+    return hydrate_company_card_metadata(dict(row)) if row else None
 
 
 def is_company_draft(company: dict[str, Any] | None) -> bool:
