@@ -134,13 +134,18 @@ export function EntityBankAccountsPanel({ entityKind, entityId, masterName = '',
   }, [embedded, value])
 
   useEffect(() => {
+    if (embedded) {
+      setPriorityMode(getLocalPriorityMode(masterCountry))
+      return
+    }
     if (!entityKind || !entityId || !canView) return
+
     load()
     fetch(`/api/entity-bank-accounts/form-priority-mode?entityKind=${entityKind}&entityId=${entityId}`)
       .then(response => response.ok ? response.json() : null)
       .then(payload => payload?.data?.mode && setPriorityMode(payload.data.mode))
       .catch(() => setPriorityMode(getLocalPriorityMode(masterCountry)))
-  }, [entityKind, entityId, canView, load, masterCountry])
+  }, [embedded, entityKind, entityId, canView, load, masterCountry])
 
   const orderedFields = useMemo(() => getOrderedFields(priorityMode), [priorityMode])
   const primaryFields = useMemo(() => orderedFields.filter(field => !internationalTransferFields.has(field)), [orderedFields])
@@ -200,7 +205,7 @@ export function EntityBankAccountsPanel({ entityKind, entityId, masterName = '',
 
   async function save() {
     const payload = normalizeDraft(draft, masterName)
-    if (!hasPersistedEntity) {
+    if (embedded || !hasPersistedEntity) {
       updateRows(rows.map(row => row.id === draft.id ? { ...row, ...payload } as EntityBankAccount : row))
       setMode('list')
       return
@@ -215,7 +220,7 @@ export function EntityBankAccountsPanel({ entityKind, entityId, masterName = '',
   }
 
   async function mutateRow(row: EntityBankAccount, action: 'set-default' | 'passivate') {
-    if (!hasPersistedEntity) {
+    if (embedded || !hasPersistedEntity) {
       if (action === 'passivate') {
         updateRows(rows.map(item => item.id === row.id ? { ...item, status: 'passive' } : item))
       } else {
