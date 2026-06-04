@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { CheckCircle2, ChevronDown, Eye, History, Pencil, Plus, Star, Trash2, X } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { cn, getTurkishIbanBanks, resolveTurkishIban } from '@/lib/utils'
 import { AutomationBadge, type AutomationBadgeStatus } from './AutomationBadge'
 import { IBANInput } from './IBANInput'
 import { formControlClass } from './formControlStyles'
@@ -85,6 +85,7 @@ const intermediaryBankFields = new Set([
   'intermediary_bank_address',
   'intermediary_account_number',
 ])
+const turkishBanksByCode = Object.fromEntries(getTurkishIbanBanks().map(bank => [bank.bankCode, bank]))
 
 export function EntityBankAccountsPanel({ entityKind, entityId, masterName = '', masterCountry = '', readOnly = false, multiple = false, value, onChange }: Props) {
   const { can } = usePermissions()
@@ -98,6 +99,7 @@ export function EntityBankAccountsPanel({ entityKind, entityId, masterName = '',
   const [ibanAutomationStatus, setIbanAutomationStatus] = useState<IbanAutomationStatus>('idle')
   const [internationalOpen, setInternationalOpen] = useState(false)
   const singleSelectionKeyRef = useRef('')
+  const ibanParseRequestRef = useRef(0)
 
   const embedded = !!onChange
   const hasPersistedEntity = !!entityKind && !!entityId
@@ -225,17 +227,40 @@ export function EntityBankAccountsPanel({ entityKind, entityId, masterName = '',
   }
 
   async function parseIban(value: string) {
-    updateDraft('iban', value)
-    const clean = value.replace(/\s/g, '').toUpperCase()
+    const requestId = ibanParseRequestRef.current + 1
+    ibanParseRequestRef.current = requestId
+    const clean = value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase()
+    const optimisticValues = getProgressiveIbanValues(value)
+
+    setDraft(prev => {
+      const next = { ...prev, iban: value, ...optimisticValues }
+      if (embedded && next.id) {
+        updateRows(rows.map(row => row.id === next.id ? { ...row, ...next } : row))
+      }
+      return next
+    })
+
     if (!clean) {
       setIbanAutomationStatus('idle')
       return
     }
-    setIbanAutomationStatus('working')
+
+    if (Object.keys(optimisticValues).length > 0) {
+      setIbanAutomationStatus(clean.length >= 26 ? 'working' : 'done')
+    } else {
+      setIbanAutomationStatus(clean.length >= 26 ? 'working' : 'no_data')
+    }
+
+    if (!/^TR\d{2}[A-Z0-9]{22}$/.test(clean)) return
+
+    const currentDraft = { ...draft, iban: value, ...optimisticValues }
     const payload = await fetchJson('/api/entity-bank-accounts/parse-iban', {
       method: 'POST',
-      body: JSON.stringify({ iban: value, current: draft }),
+      body: JSON.stringify({ iban: value, current: currentDraft }),
     }).catch(() => null)
+
+    if (requestId !== ibanParseRequestRef.current) return
+
     if (payload?.data?.values) {
       setDraft(prev => {
         const next = { ...prev, ...payload.data.values }
@@ -246,7 +271,7 @@ export function EntityBankAccountsPanel({ entityKind, entityId, masterName = '',
       })
       setIbanAutomationStatus(Object.keys(payload.data.values).length > 0 ? 'done' : 'no_data')
     } else {
-      setIbanAutomationStatus('no_data')
+      setIbanAutomationStatus(Object.keys(optimisticValues).length > 0 ? 'done' : 'no_data')
     }
   }
 
@@ -554,6 +579,52 @@ function getInitialIbanAutomationStatus(row: Partial<EntityBankAccount>): IbanAu
   if (!row.iban) return 'idle'
   return row.bank_name || row.bank_code || row.account_number ? 'done' : 'no_data'
 }
+
+function getProgressiveIbanValues(value: string): Partial<EntityBankAccount> {
+  const clean = value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase()
+  if (!clean) return { bank_name: '', bank_code: '', branch_name: '', branch_code: '', account_number: '', swift_bic: '' }
+  if (!clean.startsWith('TR')) return {}
+
+  const values: Partial<EntityBankAccount> = {
+    bank_name: '',
+    bank_code: '',
+    branch_name: '',
+    branch_code: '',
+    account_number: '',
+    swift_bic: '',
+  }
+  if (/^TR\d{2}\d{5}/.test(clean)) {
+    values.bank_code = clean.substring(4, 9)
+    const bank = turkishBanksByCode[values.bank_code]
+    if (bank) {
+      values.bank_name = bank.bankName
+      values.swift_bic = bank.swiftCode || values.swift_bic
+      values.bank_country = 'TR'
+      values.account_country = 'TR'
+      values.preferred_currency = 'TRY'
+      values.account_currency = 'TRY'
+    }
+  }
+  if (clean.length >= 10) values.account_number = clean.substring(10, 26)
+
+  const details = resolveTurkishIban(clean)
+  if (details) {
+    values.iban = details.iban
+    values.bank_code = details.bankCode
+    values.bank_name = details.bankName !== 'Bilinmeyen Banka' ? details.bankName : values.bank_name
+    values.account_number = details.accountNo
+    values.branch_code = details.branchCode || values.branch_code
+    values.branch_name = details.branchName || values.branch_name
+    values.swift_bic = details.swiftCode || values.swift_bic
+    values.bank_country = 'TR'
+    values.account_country = 'TR'
+    values.preferred_currency = 'TRY'
+    values.account_currency = 'TRY'
+  }
+
+  return Object.fromEntries(Object.entries(values).filter(([, item]) => item !== undefined && item !== null)) as Partial<EntityBankAccount>
+}
+
 
 function priorityModeLabel(mode: BankAccountFormPriorityMode) {
   if (mode === 'tr_priority') return 'Türkiye öncelikli'

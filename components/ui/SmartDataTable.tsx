@@ -183,14 +183,22 @@ function mergeColumnConfig(allColumns: ColumnDef[], savedColumns?: ColumnDef[]) 
     .map((col, index) => {
       const saved = savedByKey.get(col.key)
       const canHide = col.hideable !== false && !col.fixed
+      const pinnedOrder = getPinnedSmartListColumnOrder(col, index)
 
       return {
         ...col,
         visible: canHide ? saved?.visible ?? getDefaultColumnVisibility(col) : true,
-        order: col.order ?? saved?.order ?? index,
+        order: pinnedOrder ?? col.order ?? saved?.order ?? index,
       }
     })
     .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+}
+
+function getPinnedSmartListColumnOrder(col: ColumnDef, index: number) {
+  const key = col.key.toLocaleLowerCase('tr-TR')
+  if (key === 'record_status' || key === 'status') return -100 + index / 1000
+  if (col.type === 'avatar') return -90 + index / 1000
+  return null
 }
 
 function isActionColumn(col: ColumnDef) {

@@ -239,7 +239,8 @@ const PARTNER_OWNERSHIP_REGISTRATION_CONTROL = {
 }
 
 const columns: ColumnDef[] = [
-  { key: 'record_status', label: 'Durum', type: 'enum', width: 44, minWidth: 44, maxWidth: 44, fixedWidth: true, sortable: false, hideHeaderLabel: true, category: 'Durum', order: -10, render: (_value, row) => <PartnerStatusDot status={getPartnerRecordStatus(row)} /> },
+  { key: 'record_status', label: 'Durum', type: 'enum', width: 44, minWidth: 44, maxWidth: 44, fixedWidth: true, sortable: false, hideHeaderLabel: true, category: 'Durum', order: -100, fixed: true, hideable: false, render: (_value, row) => <PartnerStatusDot status={getPartnerRecordStatus(row)} /> },
+  { key: 'avatar', label: 'Avatar', type: 'avatar', width: 48, minWidth: 48, maxWidth: 48, fixedWidth: true, sortable: false, hideHeaderLabel: true, category: 'Kimlik', order: -90, fixed: true, hideable: false, imageFit: 'cover', imageShape: 'circle' },
   { key: 'display_name', label: 'Ortak Adı / Ünvanı', type: 'text', width: 280, sortable: true, category: 'Kimlik', render: (value, row) => <PartnerNameCell value={value} row={row} /> },
   { key: 'partner_type_label', label: 'Ortak Türü', type: 'enum', width: 130, category: 'Kimlik' },
   { key: 'company_name', label: 'Şirket', type: 'text', width: 220, category: 'Şirket' },
@@ -250,7 +251,6 @@ const columns: ColumnDef[] = [
   { key: 'current_share_units', label: 'Pay Adedi', type: 'number', width: 120, category: 'Hesaplanan' },
   { key: 'ownership_flags', label: 'İmtiyaz / Kontrol', type: 'enum', width: 150, category: 'Haklar', render: value => <OwnershipFlagsCell value={value} /> },
   { key: 'last_ownership_transaction', label: 'Son İşlem', type: 'text', width: 160, category: 'Geçmiş' },
-  { key: 'ownership_warnings', label: 'Uyarılar', type: 'enum', width: 130, category: 'Uyarılar', render: value => <OwnershipWarningsCell value={value} /> },
   { key: 'start_date', label: 'Başlangıç', type: 'date', width: 120, category: 'Dönem' },
   { key: 'end_date', label: 'Bitiş', type: 'date', width: 120, category: 'Dönem' },
 ]
@@ -605,6 +605,7 @@ export default function OrtaklarPage() {
     return ({
     ...partner,
     display_name: partner.display_name || partner.partner_name || '',
+    avatar: getPartnerAvatarUrl(partner),
     identity_number: partner.identity_number || partner.identity_tax_number || '',
     partner_type_label: partnerType === 'organization' ? 'Tüzel Kişi' : 'Gerçek Kişi',
     company_name: partner.company_name || companyNameById[partner.company_id || ''] || '-',
@@ -2440,6 +2441,24 @@ function PartnerNameCell({ value }: { value: any; row: any }) {
     </div>
   )
 }
+
+function getPartnerAvatarUrl(partner: Record<string, any>) {
+  const direct = optionalString(partner.avatar || partner.photo_url || partner.profile_image || partner.profileImage || partner.image)
+  if (direct) return direct
+  const image = Array.isArray(partner.photo_logo) ? partner.photo_logo.find(item => !!item) : null
+  if (!image) return ''
+  return optionalString(
+    image.thumbnailUrl ||
+    image.thumbnail_url ||
+    image.previewUrl ||
+    image.preview_url ||
+    image.signedUrl ||
+    image.signed_url ||
+    image.url ||
+    image.download_url
+  )
+}
+
 
 function PartnerStatusSummary({ partner }: { partner?: Record<string, any> }) {
   const recordStatus = getPartnerRecordStatus(partner)
