@@ -241,8 +241,8 @@ const PARTNER_OWNERSHIP_REGISTRATION_CONTROL = {
 const columns: ColumnDef[] = [
   { key: 'record_status', label: 'Durum', type: 'enum', width: 44, minWidth: 44, maxWidth: 44, fixedWidth: true, sortable: false, hideHeaderLabel: true, category: 'Durum', order: -100, fixed: true, hideable: false, render: (_value, row) => <PartnerStatusDot status={getPartnerRecordStatus(row)} /> },
   { key: 'avatar', label: 'Avatar', type: 'avatar', width: 72, minWidth: 72, maxWidth: 72, fixedWidth: true, sortable: false, hideHeaderLabel: true, category: 'Kimlik', order: -90, fixed: true, hideable: false, imageFit: 'cover', imageShape: 'circle' },
-  { key: 'display_name', label: 'Ortak Adı / Ünvanı', type: 'text', width: 280, sortable: true, category: 'Kimlik', render: (value, row) => <PartnerNameCell value={value} row={row} /> },
-  { key: 'partner_type_label', label: 'Ortak Türü', type: 'enum', width: 130, category: 'Kimlik' },
+  { key: 'display_name', label: 'Adı / Ünvanı', type: 'text', width: 280, sortable: true, category: 'Kimlik', render: (value, row) => <PartnerNameCell value={value} row={row} /> },
+  { key: 'partner_type_label', label: 'Türü', type: 'enum', width: 130, category: 'Kimlik' },
   { key: 'company_name', label: 'Şirket', type: 'text', width: 220, category: 'Şirket' },
   { key: 'current_share_ratio', label: 'Hisse %', type: 'number', width: 110, category: 'Hesaplanan' },
   { key: 'current_voting_ratio', label: 'Oy %', type: 'number', width: 100, category: 'Hesaplanan' },
@@ -631,9 +631,9 @@ export default function OrtaklarPage() {
     return flags.length > 0
   }).length, [tableData])
   const widgets: WidgetDef<any>[] = useMemo(() => [
-    { key: 'total', label: 'Toplam Ortak', render: () => tableData.length },
-    { key: 'active', label: 'Aktif Ortak', render: () => activePartners.length },
-    { key: 'draft', label: 'Taslak Kart', render: () => draftPartners.length },
+    { key: 'total', label: 'Toplam', render: () => tableData.length },
+    { key: 'active', label: 'Aktif', render: () => activePartners.length },
+    { key: 'draft', label: 'Taslak', render: () => draftPartners.length },
     { key: 'visible_share', label: 'Görünen Pay', render: () => formatPercent(visibleShareTotal) },
     { key: 'control', label: 'İmtiyaz / Kontrol', render: () => privilegedOrControlCount },
     { key: 'warnings', label: 'Uyarı', render: () => ownershipWarningCount },
@@ -2805,45 +2805,82 @@ function PartnerHistorySections({ value }: { value?: PartnerHistorySectionsValue
 }
 
 function normalizePartnerForForm(partner: PartnerRow) {
-  const profile = partner.partner_profile || {}
-  const masterFields = partner as PartnerRow & {
-    first_name?: string
-    last_name?: string
-    trade_name?: string
-    legal_name?: string
-    short_name?: string
-    nationality?: string
-    nationality_country?: string
-    national_id?: string
-    passport_no?: string
-    phones?: Array<Record<string, any>>
-    emails?: Array<Record<string, any>>
-  }
-  const partnerType = normalizePartnerType(profile.partner_type || partner.owner_kind || partner.partner_type)
-  const identityNumber = partner.identity_number || partner.identity_tax_number || ''
-  const phones = Array.isArray(masterFields.phones) ? masterFields.phones : []
-  const emails = Array.isArray(masterFields.emails) ? masterFields.emails : []
+  const profile = isPlainRecord(partner.partner_profile) ? partner.partner_profile : {}
+  const masterRecord = getPartnerMasterRecord(partner)
+  const partnerType = normalizePartnerType(
+    firstPresent(profile.partner_type, partner.owner_kind, partner.partner_type, (partner as any).master_entity_kind)
+  )
+  const identityNumber = firstPresent(partner.identity_number, partner.identity_tax_number, profile.identity_number, masterRecord.identity_number, masterRecord.national_id, profile.tax_number, masterRecord.tax_number, '')
   const recordStatus = getPartnerRecordStatus(partner)
-  const status = recordStatus === 'passive' ? 'Pasif' : recordStatus === 'draft' ? 'Taslak' : partner.status || profile.status || 'Aktif'
+  const status = recordStatus === 'passive' ? 'Pasif' : recordStatus === 'draft' ? 'Taslak' : firstPresent(partner.status, profile.status, 'Aktif')
+  const read = (...keys: string[]) => firstPresent(...keys.map(key => (partner as any)[key]), ...keys.map(key => profile[key]), ...keys.map(key => masterRecord[key]))
+  const readList = (...keys: string[]) => {
+    for (const key of keys) {
+      const value = (partner as any)[key]
+      if (Array.isArray(value)) return value
+    }
+    for (const key of keys) {
+      const value = profile[key]
+      if (Array.isArray(value)) return value
+    }
+    for (const key of keys) {
+      const value = masterRecord[key]
+      if (Array.isArray(value)) return value
+    }
+    return []
+  }
+
   return {
+    ...masterRecord,
     ...profile,
     ...partner,
-    company_id: partner.company_id || partner.company_id || '',
+    master: isPlainRecord((partner as any).master) ? (partner as any).master : masterRecord,
+    masterRecord,
+    master_entity_kind: firstPresent((partner as any).master_entity_kind, partnerType),
+    master_record_id: read('master_record_id', partnerType === 'organization' ? 'organization_id' : 'person_id', 'id'),
+    company_id: partner.company_id || '',
     partner_type: partnerType,
-    first_name: masterFields.first_name || masterFields.trade_name || masterFields.legal_name || '',
-    last_name: masterFields.last_name || masterFields.short_name || '',
+    first_name: read('first_name', 'trade_name', 'legal_name') || '',
+    last_name: read('last_name', 'short_name') || '',
+    trade_name: read('trade_name', 'legal_name', 'partner_name', 'display_name') || '',
+    short_name: read('short_name') || '',
+    full_name: read('full_name', 'display_name') || [read('first_name'), read('last_name')].filter(Boolean).join(' '),
     identity_number: identityNumber,
-    nationality: masterFields.nationality || masterFields.nationality || masterFields.nationality_country || 'TR',
-    national_id: masterFields.national_id || masterFields.national_id || (partnerType === 'person' && String(identityNumber).length === 11 ? identityNumber : ''),
-    passport_no: masterFields.passport_no || masterFields.passport_no || (partnerType === 'person' && String(identityNumber).length !== 11 ? identityNumber : ''),
-    phones,
-    emails,
+    nationality: read('nationality', 'nationality_country', 'country') || 'TR',
+    nationality_country: read('nationality_country', 'country', 'nationality') || 'TR',
+    national_id: read('national_id', 'identity_number') || (partnerType === 'person' && String(identityNumber).length === 11 ? identityNumber : ''),
+    passport_no: read('passport_no') || (partnerType === 'person' && String(identityNumber).length !== 11 ? identityNumber : ''),
+    tax_number: read('tax_number') || (partnerType === 'organization' ? identityNumber : ''),
+    gender: read('gender') || '',
+    birth_date: read('birth_date') || '',
+    birth_place: read('birth_place') || '',
+    occupation: read('occupation') || '',
+    phone: read('phone', 'mobile_phone') || '',
+    email: read('email') || '',
+    phones: readList('phones'),
+    emails: readList('emails'),
+    address: read('address') || '',
+    city: read('city') || '',
+    district: read('district') || '',
+    country: read('country', 'nationality_country', 'nationality') || '',
+    is_illiterate: !!read('is_illiterate'),
+    education_schools: readList('education_schools'),
+    foreign_languages: readList('foreign_languages'),
+    certificates: readList('certificates'),
+    marital_status: read('marital_status') || '',
+    relatives: readList('relatives'),
+    emergency_contact_first_name: read('emergency_contact_first_name') || '',
+    emergency_contact_last_name: read('emergency_contact_last_name') || '',
+    emergency_contact_relationship: read('emergency_contact_relationship') || '',
+    emergency_contact_phone: read('emergency_contact_phone') || '',
+    contact_points: readList('contact_points'),
+    entity_bank_accounts: readList('entity_bank_accounts'),
     end_date: profile.end_date ?? partner.end_date ?? '',
     status,
     record_status: recordStatus,
-    photo_logo: partner.photo_logo || [],
+    photo_logo: partner.photo_logo || profile.photo_logo || masterRecord.photo_logo || [],
     partner_documents: partner.partner_documents || [],
-    current_ownership: partner.current_ownership || { company_id: partner.company_id || partner.company_id, partner_id: partner.id },
+    current_ownership: partner.current_ownership || { company_id: partner.company_id || '', partner_id: partner.id },
     representative_authorities: (partner as any).representative_authorities || [],
     history_sections: {
       ownershipTransactions: partner.ownership_transaction_history || [],
@@ -2851,6 +2888,31 @@ function normalizePartnerForForm(partner: PartnerRow) {
     },
     field_history: buildEntityFieldHistory(partner.history || []),
   }
+}
+
+function isPlainRecord(value: unknown): value is Record<string, any> {
+  return !!value && typeof value === 'object' && !Array.isArray(value)
+}
+
+function getPartnerMasterRecord(partner: Record<string, any>) {
+  const master = isPlainRecord(partner.masterRecord)
+    ? partner.masterRecord
+    : isPlainRecord(partner.master)
+      ? partner.master
+      : isPlainRecord(partner.person)
+        ? partner.person
+        : isPlainRecord(partner.organization)
+          ? partner.organization
+          : {}
+  const metadata = isPlainRecord(master.metadata_json) ? master.metadata_json : {}
+  return { ...metadata, ...master }
+}
+
+function firstPresent(...values: any[]) {
+  for (const value of values) {
+    if (value !== null && value !== undefined && value !== '') return value
+  }
+  return undefined
 }
 
 function normalizePartnerType(value: unknown): 'person' | 'organization' {

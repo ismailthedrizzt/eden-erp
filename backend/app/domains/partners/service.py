@@ -38,17 +38,54 @@ PARTNER_CARD_FIELDS = {
 PARTNER_PROFILE_FIELDS = {
     "trade_name",
     "short_name",
+    "foundation_date",
+    "company_type",
+    "mersis_number",
+    "trade_registry_no",
+    "registry_number",
+    "tax_number",
+    "tax_office",
+    "e_invoice_status",
     "national_id",
+    "identity_number",
     "passport_no",
     "nationality",
-    "tax_number",
+    "nationality_country",
+    "birth_date",
+    "birth_place",
+    "gender",
+    "occupation",
+    "is_illiterate",
+    "education_schools",
+    "foreign_languages",
+    "certificates",
+    "marital_status",
+    "relatives",
+    "emergency_contact_first_name",
+    "emergency_contact_last_name",
+    "emergency_contact_relationship",
+    "emergency_contact_phone",
     "phone",
+    "mobile_phone",
+    "work_phone",
     "email",
+    "phones",
+    "emails",
     "address",
     "city",
     "district",
     "country",
     "contact_points",
+    "beneficiary_full_name",
+    "beneficiary_address",
+    "beneficiary_iban",
+    "beneficiary_account_no",
+    "beneficiary_iban_or_account_no",
+    "beneficiary_bank_code",
+    "beneficiary_swift_bic",
+    "beneficiary_bank_name",
+    "beneficiary_bank_address",
+    "beneficiary_currency",
     "entity_bank_accounts",
 }
 PARTNER_JSON_FIELDS = {"photo_logo", "partner_documents", "partner_profile"}
@@ -99,6 +136,110 @@ def _merge_partner_profile(
         if field in payload and payload[field] is not None:
             profile[field] = payload[field]
     return profile
+
+
+def _json_object(value: Any) -> dict[str, Any]:
+    if isinstance(value, dict):
+        return value
+    if isinstance(value, str):
+        try:
+            parsed = json.loads(value)
+            return parsed if isinstance(parsed, dict) else {}
+        except Exception:
+            return {}
+    return {}
+
+
+def _flatten_master_record(row: dict[str, Any] | None, entity_kind: str) -> dict[str, Any] | None:
+    if not row:
+        return None
+    metadata = _json_object(row.get("metadata_json"))
+    data = {**metadata, **row}
+    data["metadata_json"] = metadata
+    if entity_kind == "person":
+        if data.get("identity_number") and not data.get("national_id"):
+            data["national_id"] = data.get("identity_number")
+        if data.get("country") and not data.get("nationality_country"):
+            data["nationality_country"] = data.get("country")
+    else:
+        if data.get("registry_number") and not data.get("trade_registry_no"):
+            data["trade_registry_no"] = data.get("registry_number")
+        if data.get("trade_name") and not data.get("legal_name"):
+            data["legal_name"] = data.get("trade_name")
+    return data
+
+
+async def _get_partner_master_record(
+    session: AsyncSession,
+    tenant_id: str,
+    partner: dict[str, Any],
+) -> tuple[str | None, dict[str, Any] | None]:
+    person_id = partner.get("person_id")
+    organization_id = partner.get("organization_id")
+    if person_id and await table_exists(session, "public.master_persons"):
+        result = await session.execute(
+            text(
+                """
+                select *
+                from public.master_persons
+                where tenant_id = :tenant_id
+                  and id = :entity_id
+                  and coalesce(is_deleted, false) = false
+                limit 1
+                """
+            ),
+            {"tenant_id": tenant_id, "entity_id": person_id},
+        )
+        row = result.mappings().one_or_none()
+        return "person", _flatten_master_record(dict(row) if row else None, "person")
+    if organization_id and await table_exists(session, "public.master_organizations"):
+        result = await session.execute(
+            text(
+                """
+                select *
+                from public.master_organizations
+                where tenant_id = :tenant_id
+                  and id = :entity_id
+                  and coalesce(is_deleted, false) = false
+                limit 1
+                """
+            ),
+            {"tenant_id": tenant_id, "entity_id": organization_id},
+        )
+        row = result.mappings().one_or_none()
+        return "organization", _flatten_master_record(dict(row) if row else None, "organization")
+    return None, None
+
+
+def _first_present(*values: Any) -> Any:
+    for value in values:
+        if value is not None and value != "":
+            return value
+    return None
+
+
+def _enrich_partner_with_master(partner: dict[str, Any], entity_kind: str | None, master: dict[str, Any] | None) -> dict[str, Any]:
+    if not master:
+        return partner
+    enriched = {**partner}
+    enriched["master"] = master
+    enriched["masterRecord"] = master
+    enriched["master_entity_kind"] = entity_kind
+    enriched["master_record_id"] = master.get("id")
+    if entity_kind == "person":
+        enriched["first_name"] = _first_present(partner.get("first_name"), master.get("first_name"))
+        enriched["last_name"] = _first_present(partner.get("last_name"), master.get("last_name"))
+        enriched["full_name"] = _first_present(master.get("full_name"), partner.get("display_name"), partner.get("partner_name"))
+        enriched["national_id"] = _first_present(master.get("national_id"), master.get("identity_number"), partner.get("identity_number"))
+    else:
+        enriched["trade_name"] = _first_present(partner.get("trade_name"), master.get("trade_name"), master.get("legal_name"), partner.get("partner_name"))
+        enriched["short_name"] = _first_present(partner.get("short_name"), master.get("short_name"))
+        enriched["tax_number"] = _first_present(master.get("tax_number"), partner.get("identity_tax_number"), partner.get("identity_number"))
+    for field in PARTNER_PROFILE_FIELDS:
+        value = _first_present(partner.get(field), master.get(field))
+        if value is not None:
+            enriched[field] = value
+    return enriched
 
 
 async def assert_unique_partner_card(
@@ -170,7 +311,11 @@ async def get_partner_by_id(
         {"tenant_id": tenant_id, "partner_id": partner_id},
     )
     row = result.mappings().one_or_none()
-    return dict(row) if row else None
+    if not row:
+        return None
+    partner = dict(row)
+    entity_kind, master = await _get_partner_master_record(session, tenant_id, partner)
+    return _enrich_partner_with_master(partner, entity_kind, master)
 
 
 async def list_partners_for_company(
