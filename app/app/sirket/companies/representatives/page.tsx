@@ -693,7 +693,7 @@ export default function TemsilcilerPage() {
   const configuredTabs = [
     ...createRealPersonMasterTabs({
       visibleWhen: { field: 'person_or_entity_type', operator: 'equals', value: 'person' },
-      includeEmergencyContact: false,
+      includeEmergencyContact: true,
     }),
     ...createLegalEntityMasterTabs({
       visibleWhen: { field: 'person_or_entity_type', operator: 'equals', value: 'organization' },
@@ -1771,7 +1771,13 @@ function Timeline({ value }: { value: any[] }) {
 }
 
 function normalizeRepresentativeForForm(representative: RepresentativeRow) {
-  const profile = representative.representative_profile || {}
+  const rawProfile = isPlainRecord(representative.representative_profile) ? representative.representative_profile : {}
+  const roleProfile = isPlainRecord(rawProfile.role) ? rawProfile.role : {}
+  const nestedRoleProfile = isPlainRecord(roleProfile.representative_profile) ? roleProfile.representative_profile : {}
+  const embeddedMasterProfile = isPlainRecord(rawProfile.master) ? rawProfile.master : {}
+  const profile = { ...nestedRoleProfile, ...embeddedMasterProfile, ...roleProfile, ...rawProfile }
+  const masterRecord = getRepresentativeMasterRecord(representative)
+  const profileWithMaster = { ...profile, ...masterRecord }
   const currentAuthority = representative.current_authority || {}
   const authorityTypes = (
     currentAuthority.authority_types ||
@@ -1780,28 +1786,39 @@ function normalizeRepresentativeForForm(representative: RepresentativeRow) {
     []
   ).map(toAuthorityValue)
   const primaryAuthority = getRepresentativePrimaryAuthority(representative)
-  const masterFields = representative as RepresentativeRow & {
-    first_name?: string
-    last_name?: string
-    trade_name?: string
-    legal_name?: string
-    short_name?: string
-    phones?: Array<Record<string, any>>
-    emails?: Array<Record<string, any>>
+  const read = (...keys: string[]) => firstPresent(...keys.map(key => (representative as any)[key]), ...keys.map(key => profile[key]), ...keys.map(key => masterRecord[key]))
+  const readList = (...keys: string[]) => {
+    for (const key of keys) {
+      const value = (representative as any)[key]
+      if (Array.isArray(value) && value.length > 0) return value
+    }
+    for (const key of keys) {
+      const value = profile[key]
+      if (Array.isArray(value) && value.length > 0) return value
+    }
+    for (const key of keys) {
+      const value = masterRecord[key]
+      if (Array.isArray(value) && value.length > 0) return value
+    }
+    return []
   }
-  const displayName = representative.display_name || representative.full_name || ''
+  const displayName = read('display_name', 'full_name') || ''
   const recordStatus = getRepresentativeRecordStatus(representative)
   const status = getRepresentativeRecordStatusLabel(recordStatus)
   const authorityStatus = getRepresentativeAuthorityStatus(representative)
   return {
+    ...masterRecord,
     ...profile,
     ...representative,
+    master: isPlainRecord((representative as any).master) ? (representative as any).master : masterRecord,
+    masterRecord,
     company_id: (representative as any).company_id || representative.company_id,
     person_or_entity_type: normalizeRepresentativeEntityType(profile.person_or_entity_type || (representative as any).person_or_entity_type || representative.person_kind),
-    first_name: masterFields.first_name || '',
-    last_name: masterFields.last_name || '',
-    trade_name: masterFields.trade_name || masterFields.legal_name || '',
-    short_name: masterFields.short_name || '',
+    first_name: read('first_name') || '',
+    last_name: read('last_name') || '',
+    trade_name: read('trade_name', 'legal_name') || '',
+    short_name: read('short_name') || '',
+    full_name: read('full_name', 'display_name') || [read('first_name'), read('last_name')].filter(Boolean).join(' '),
     display_name: displayName,
     primary_authority_type: toAuthorityValue(primaryAuthority || authorityTypes[0] || ''),
     authority_types: authorityTypes,
@@ -1838,12 +1855,83 @@ function normalizeRepresentativeForForm(representative: RepresentativeRow) {
     currency: currentAuthority.currency || profile.currency || representative.currency || 'TRY',
     photo_logo: representative.photo_logo || [],
     authority_documents: representative.authority_documents || [],
-    phones: Array.isArray(masterFields.phones) ? masterFields.phones : [],
-    emails: Array.isArray(masterFields.emails) ? masterFields.emails : [],
+    phone: read('phone', 'mobile_phone') || '',
+    email: read('email', 'email_1') || '',
+    phones: readList('phones').length ? readList('phones') : buildLegacyContactRows(profileWithMaster, 'phone', 'phone', 'mobile_phone', 'work_phone', 'phone_1', 'phone_2'),
+    emails: readList('emails').length ? readList('emails') : buildLegacyContactRows(profileWithMaster, 'address', 'email', 'email_1', 'email_2'),
+    address: read('address') || '',
+    city: read('city') || '',
+    district: read('district') || '',
+    country: read('country', 'nationality_country', 'nationality') || '',
+    is_illiterate: !!read('is_illiterate'),
+    education_schools: readList('education_schools'),
+    foreign_languages: readList('foreign_languages'),
+    certificates: readList('certificates'),
+    marital_status: read('marital_status') || '',
+    relatives: readList('relatives'),
+    emergency_contact_first_name: read('emergency_contact_first_name') || '',
+    emergency_contact_last_name: read('emergency_contact_last_name') || '',
+    emergency_contact_relationship: read('emergency_contact_relationship') || '',
+    emergency_contact_phone: read('emergency_contact_phone') || '',
+    contact_points: readList('contact_points'),
+    entity_bank_accounts: readList('entity_bank_accounts').length ? readList('entity_bank_accounts') : buildLegacyBankAccounts(profileWithMaster),
     document_summary: representative.authority_documents || [],
     timeline: Array.isArray(representative.authority_transaction_history) ? representative.authority_transaction_history : Array.isArray(representative.history) ? representative.history : [],
     field_history: buildEntityFieldHistory(representative.history || []),
   }
+}
+
+function getRepresentativeMasterRecord(representative: Record<string, any>) {
+  const master = isPlainRecord(representative.master) ? representative.master : isPlainRecord(representative.masterRecord) ? representative.masterRecord : {}
+  return master
+}
+
+function isPlainRecord(value: unknown): value is Record<string, any> {
+  return !!value && typeof value === 'object' && !Array.isArray(value)
+}
+
+function firstPresent(...values: any[]) {
+  for (const value of values) {
+    if (value === null || value === undefined || value === '') continue
+    if (Array.isArray(value) && value.length === 0) continue
+    if (isPlainRecord(value) && Object.keys(value).length === 0) continue
+    return value
+  }
+  return undefined
+}
+
+function buildLegacyContactRows(source: Record<string, any>, valueKey: 'phone' | 'address', ...keys: string[]) {
+  const rows: Array<Record<string, string>> = []
+  const seen = new Set<string>()
+  keys.forEach((key, index) => {
+    const value = String(source[key] || '').trim()
+    if (!value || seen.has(value)) return
+    seen.add(value)
+    rows.push({ label: index === 0 ? 'Birincil' : 'Alternatif', [valueKey]: value })
+  })
+  return rows
+}
+
+function buildLegacyBankAccounts(source: Record<string, any>) {
+  const iban = source.beneficiary_iban || source.beneficiary_iban_or_account_no
+  const accountNumber = source.beneficiary_account_no
+  if (!iban && !accountNumber) return []
+  return [{
+    id: 'legacy-beneficiary-account',
+    beneficiary_name: source.beneficiary_full_name || '',
+    is_same_as_master_name: !source.beneficiary_full_name,
+    iban: iban || '',
+    account_number: accountNumber || '',
+    bank_code: source.beneficiary_bank_code || '',
+    swift_bic: source.beneficiary_swift_bic || '',
+    bank_name: source.beneficiary_bank_name || '',
+    bank_address: source.beneficiary_bank_address || source.beneficiary_address || '',
+    account_currency: source.beneficiary_currency || 'TRY',
+    preferred_currency: source.beneficiary_currency || 'TRY',
+    verification_status: 'unverified',
+    is_default: true,
+    status: 'active',
+  }]
 }
 
 function normalizeRepresentativeEntityType(value: unknown): 'person' | 'organization' {

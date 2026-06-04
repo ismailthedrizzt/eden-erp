@@ -88,6 +88,143 @@ PARTNER_PROFILE_FIELDS = {
     "beneficiary_currency",
     "entity_bank_accounts",
 }
+
+MASTER_SYNC_FIELDS = {
+    "first_name",
+    "last_name",
+    "full_name",
+    "trade_name",
+    "legal_name",
+    "short_name",
+    "identity_number",
+    "national_id",
+    "passport_no",
+    "nationality",
+    "nationality_country",
+    "tax_number",
+    "tax_office",
+    "mersis_number",
+    "registry_number",
+    "trade_registry_no",
+    "birth_date",
+    "birth_place",
+    "gender",
+    "occupation",
+    "phone",
+    "mobile_phone",
+    "work_phone",
+    "email",
+    "phones",
+    "emails",
+    "address",
+    "city",
+    "district",
+    "country",
+    "contact_points",
+    "is_illiterate",
+    "education_schools",
+    "foreign_languages",
+    "certificates",
+    "marital_status",
+    "relatives",
+    "emergency_contact_first_name",
+    "emergency_contact_last_name",
+    "emergency_contact_relationship",
+    "emergency_contact_phone",
+    "beneficiary_full_name",
+    "beneficiary_address",
+    "beneficiary_iban",
+    "beneficiary_account_no",
+    "beneficiary_iban_or_account_no",
+    "beneficiary_bank_code",
+    "beneficiary_swift_bic",
+    "beneficiary_bank_name",
+    "beneficiary_bank_address",
+    "beneficiary_currency",
+    "entity_bank_accounts",
+}
+
+
+async def _public_table_columns(session: AsyncSession, table_name: str) -> set[str]:
+    result = await session.execute(
+        text(
+            """
+            select column_name
+            from information_schema.columns
+            where table_schema = 'public'
+              and table_name = :table_name
+            """
+        ),
+        {"table_name": table_name},
+    )
+    return {str(row[0]) for row in result.all()}
+
+
+async def _sync_master_profile_fields(
+    session: AsyncSession,
+    tenant_id: str,
+    entity_kind: str | None,
+    master_id: Any,
+    payload: dict[str, Any],
+    user_id: Any = None,
+) -> None:
+    if not master_id:
+        return
+    table_name = "organizations" if entity_kind in {"organization", "company", "legal_entity"} else "persons"
+    columns = await _public_table_columns(session, table_name)
+    if "metadata_json" not in columns:
+        return
+    sync_payload = {
+        key: value
+        for key, value in payload.items()
+        if key in MASTER_SYNC_FIELDS and value is not None
+    }
+    if not sync_payload:
+        return
+    result = await session.execute(
+        text(
+            f"""
+            select metadata_json
+            from public.{table_name}
+            where tenant_id = :tenant_id
+              and id = :master_id
+            limit 1
+            """
+        ),
+        {"tenant_id": tenant_id, "master_id": str(master_id)},
+    )
+    row = result.mappings().one_or_none()
+    if not row:
+        return
+    metadata = _json_object(row.get("metadata_json"))
+    metadata.update(sync_payload)
+    assignments = ["metadata_json = cast(:metadata_json as jsonb)"]
+    params: dict[str, Any] = {
+        "tenant_id": tenant_id,
+        "master_id": str(master_id),
+        "metadata_json": json.dumps(metadata, ensure_ascii=False, default=str),
+    }
+    for key, value in sync_payload.items():
+        if key in columns and not isinstance(value, (list, dict)):
+            assignments.append(f"{key} = :{key}")
+            params[key] = value
+    if "updated_at" in columns:
+        assignments.append("updated_at = now()")
+    if "updated_by" in columns and user_id:
+        assignments.append("updated_by = :updated_by")
+        params["updated_by"] = user_id
+    await session.execute(
+        text(
+            f"""
+            update public.{table_name}
+            set {", ".join(assignments)}
+            where tenant_id = :tenant_id
+              and id = :master_id
+            """
+        ),
+        params,
+    )
+
 PARTNER_JSON_FIELDS = {"photo_logo", "partner_documents", "partner_profile"}
 
 
@@ -229,45 +366,56 @@ async def _get_partner_master_record(
 ) -> tuple[str | None, dict[str, Any] | None]:
     person_id = partner.get("person_id")
     organization_id = partner.get("organization_id")
-    if person_id and await table_exists(session, "public.master_persons"):
-        result = await session.execute(
-            text(
-                """
-                select *
-                from public.master_persons
-                where tenant_id = :tenant_id
-                  and id = :entity_id
-                  and coalesce(is_deleted, false) = false
-                limit 1
-                """
-            ),
-            {"tenant_id": tenant_id, "entity_id": person_id},
-        )
-        row = result.mappings().one_or_none()
-        return "person", _flatten_master_record(dict(row) if row else None, "person")
-    if organization_id and await table_exists(session, "public.master_organizations"):
-        result = await session.execute(
-            text(
-                """
-                select *
-                from public.master_organizations
-                where tenant_id = :tenant_id
-                  and id = :entity_id
-                  and coalesce(is_deleted, false) = false
-                limit 1
-                """
-            ),
-            {"tenant_id": tenant_id, "entity_id": organization_id},
-        )
-        row = result.mappings().one_or_none()
-        return "organization", _flatten_master_record(dict(row) if row else None, "organization")
+    if person_id:
+        for table_name in ("master_persons", "persons"):
+            if not await table_exists(session, f"public.{table_name}"):
+                continue
+            result = await session.execute(
+                text(
+                    f"""
+                    select *
+                    from public.{table_name}
+                    where tenant_id = :tenant_id
+                      and id = :entity_id
+                      and coalesce(is_deleted, false) = false
+                    limit 1
+                    """
+                ),
+                {"tenant_id": tenant_id, "entity_id": person_id},
+            )
+            row = result.mappings().one_or_none()
+            if row:
+                return "person", _flatten_master_record(dict(row), "person")
+    if organization_id:
+        for table_name in ("master_organizations", "organizations"):
+            if not await table_exists(session, f"public.{table_name}"):
+                continue
+            result = await session.execute(
+                text(
+                    f"""
+                    select *
+                    from public.{table_name}
+                    where tenant_id = :tenant_id
+                      and id = :entity_id
+                      and coalesce(is_deleted, false) = false
+                    limit 1
+                    """
+                ),
+                {"tenant_id": tenant_id, "entity_id": organization_id},
+            )
+            row = result.mappings().one_or_none()
+            if row:
+                return "organization", _flatten_master_record(dict(row), "organization")
     return None, None
 
 
 def _first_present(*values: Any) -> Any:
     for value in values:
-        if value is not None and value != "":
-            return value
+        if value is None or value == "":
+            continue
+        if isinstance(value, (list, dict)) and not value:
+            continue
+        return value
     return None
 
 
@@ -452,6 +600,14 @@ async def create_partner_draft(
     display_name = _partner_display_name(payload)
     partner_profile = _merge_partner_profile({}, payload)
     partner_id = str(uuid4())
+    await _sync_master_profile_fields(
+        session,
+        context["tenant_id"],
+        owner_kind,
+        payload.get("organization_id") if owner_kind in {"organization", "company"} else payload.get("person_id"),
+        payload,
+        context.get("user_id"),
+    )
     result = await session.execute(
         text(
             """
