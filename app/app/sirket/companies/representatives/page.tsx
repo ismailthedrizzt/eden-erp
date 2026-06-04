@@ -6,7 +6,7 @@ import { useSearchParams } from 'next/navigation'
 import { AlertCircle, BadgeCheck, CheckCircle2, ListChecks, ShieldCheck } from 'lucide-react'
 import { EntityForm, FormField, FormMode, FormOperationActionGroup, FormTab } from '@/components/ui/EntityForm'
 import { PageBanner } from '@/components/ui/PageBanner'
-import { RecordLifecycleWizard, type RecordLifecycleWizardStep } from '@/components/ui/RecordLifecycleWizard'
+import { RecordLifecycleWizard, type RecordLifecycleWizardSection, type RecordLifecycleWizardStep } from '@/components/ui/RecordLifecycleWizard'
 import {
   DEFAULT_RECORD_STATUS_FILTERS,
   SmartDataTable,
@@ -1234,13 +1234,18 @@ function RepresentativeAuthorityWizard({
     if (!isTermination && limitValues.some(item => !Number.isFinite(item.value))) return setLocalError('Yetki limitleri sayisal olmalidir.')
     if (!isTermination && limitValues.some(item => item.value < 0)) return setLocalError('Yetki limitleri negatif olamaz.')
     if (!isTermination && limitValues.length > 0 && !form.currency) return setLocalError('Limit girildiginde para birimi zorunludur.')
-    if (!isTermination && form.requires_joint_signature && form.can_approve_alone) return setLocalError('Musterek imza ve tek basina onay ayni anda secilemez.')
+    if (!isTermination && form.signature_type === 'Müşterek' && form.can_approve_alone) {
+      setForm(previous => ({ ...previous, can_approve_alone: false }))
+      return setLocalError('Müşterek imza ve tek başına onay aynı anda seçilemez.')
+    }
     if (form.end_date && form.effective_date && new Date(form.end_date) < new Date(form.effective_date)) {
       return setLocalError('Bitiş tarihi yürürlük tarihinden önce olamaz.')
     }
     await onSubmit({
       ...form,
       ...normalizeRepresentativeAuthorityScopePayload(form),
+      requires_joint_signature: form.signature_type === 'Müşterek',
+      can_approve_alone: form.signature_type === 'Müşterek' ? false : form.can_approve_alone,
       notes: isEndOperation ? [form.termination_reason, form.notes].filter(Boolean).join(' - ') : form.notes,
       transaction_limit: form.transaction_limit === '' ? null : Number(form.transaction_limit),
       payment_approval_limit: form.payment_approval_limit === '' ? null : Number(form.payment_approval_limit),
@@ -1271,7 +1276,6 @@ function RepresentativeAuthorityWizard({
       saving={saving}
       error={localError || undefined}
       validateStep={validateStep}
-      sideInfo="Veriler son adıma kadar yalnızca wizard içinde tutulur. Tamamla aksiyonu tek bir resmi temsilcilik işlemi oluşturur."
     />
   )
 
@@ -1334,16 +1338,16 @@ function buildRepresentativeAuthorityWizardSteps({
             />
           ),
         },
-        {
+        ...(isTermination ? [{
           id: 'representative-authority-context-fields',
           title: 'Tarih ve not',
           fields: [
             { name: 'effective_date', label: 'Yürürlük Tarihi', type: 'date', required: true },
-            { name: 'end_date', label: isEndOperation ? 'Bitiş Tarihi' : 'Süre Sonu', type: 'date' },
+            { name: 'end_date', label: 'Bitiş Tarihi', type: 'date', placeholder: 'Boş bırakılırsa süresiz' },
             { name: 'termination_reason', label: 'Sonlandırma Nedeni', type: 'textarea', colSpan: 3, required: true, visibleWhen: { field: 'transaction_type', operator: 'equals', value: 'Sonlandırma' } },
             { name: 'notes', label: 'İşlem Notu', type: 'textarea', colSpan: 3 },
           ],
-        },
+        } as RecordLifecycleWizardSection] : []),
       ],
     },
   ]
@@ -1371,25 +1375,16 @@ function buildRepresentativeAuthorityWizardSteps({
               { value: 'Süresiz', label: 'Süresiz' },
               { value: 'Yok', label: 'Yok' },
             ] },
+            { name: 'effective_date', label: 'Yürürlük Tarihi', type: 'date', required: true },
+            { name: 'end_date', label: 'Bitiş Tarihi', type: 'date', placeholder: 'Boş bırakılırsa süresiz' },
+            { name: 'notes', label: 'İşlem Notu', type: 'textarea', colSpan: 3 },
             { name: 'currency', label: 'Para Birimi', type: 'select', options: [
               { value: 'TRY', label: 'TRY' },
               { value: 'USD', label: 'USD' },
               { value: 'EUR', label: 'EUR' },
               { value: 'GBP', label: 'GBP' },
             ] },
-            { name: 'requires_joint_signature', label: 'Müşterek imza gerekir', type: 'checkbox' },
-            { name: 'can_approve_alone', label: 'Tek başına onaylayabilir', type: 'checkbox' },
-          ],
-        },
-        {
-          id: 'representative-authority-limits',
-          title: 'Limitler',
-          fields: [
-            { name: 'transaction_limit', label: 'Genel Limit', type: 'number' },
-            { name: 'payment_approval_limit', label: 'Ödeme Onay Limiti', type: 'number' },
-            { name: 'purchase_approval_limit', label: 'Satınalma Onay Limiti', type: 'number' },
-            { name: 'bank_transaction_limit', label: 'Banka İşlem Limiti', type: 'number' },
-            { name: 'contract_signature_limit', label: 'Sözleşme İmza Limiti', type: 'number' },
+            ...(form.signature_type === 'Müşterek' ? [] : [{ name: 'can_approve_alone', label: 'Tek başına onaylayabilir', type: 'checkbox' as const }]),
           ],
         },
         {
@@ -1407,6 +1402,17 @@ function buildRepresentativeAuthorityWizardSteps({
             { name: 'facility_id', label: 'Tesis/Lokasyon', type: 'select', options: facilityOptions, visibleWhen: { field: 'scope_type', operator: 'equals', value: 'facility' }, required: form.scope_type === 'facility' },
             { name: 'scope_label', label: 'Kapsam Etiketi', type: 'text' },
             { name: 'scope_notes', label: 'Kapsam Açıklaması', type: 'textarea', colSpan: 3 },
+          ],
+        },
+        {
+          id: 'representative-authority-limits',
+          title: 'Limitler',
+          fields: [
+            { name: 'transaction_limit', label: 'Genel Limit', type: 'number' },
+            { name: 'payment_approval_limit', label: 'Ödeme Onay Limiti', type: 'number' },
+            { name: 'purchase_approval_limit', label: 'Satınalma Onay Limiti', type: 'number' },
+            { name: 'bank_transaction_limit', label: 'Banka İşlem Limiti', type: 'number' },
+            { name: 'contract_signature_limit', label: 'Sözleşme İmza Limiti', type: 'number' },
           ],
         },
         {
