@@ -134,6 +134,9 @@ class OwnershipTransactionRequest(BaseModel):
     profit_ratio_after: float | None = None
     capital_amount_before: float | None = None
     capital_amount_after: float | None = None
+    committed_capital_amount: float | None = None
+    paid_capital_amount: float | None = None
+    currency: str | None = None
     share_units_before: float | None = None
     share_units_after: float | None = None
     transferred_share_ratio: float | None = Field(

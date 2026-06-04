@@ -129,6 +129,8 @@ async def _hydrate_current_ownership(
             "current_voting_ratio",
             "current_profit_ratio",
             "current_capital_amount",
+            "committed_capital_amount",
+            "paid_capital_amount",
             "current_share_units",
             "has_control_right",
             "control_type",

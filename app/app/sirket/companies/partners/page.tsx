@@ -144,6 +144,7 @@ interface OwnershipTransactionHistoryRow {
   profit_ratio?: number | null
   capital_amount?: number | null
   committed_capital_amount?: number | null
+  paid_capital_amount?: number | null
   share_units?: number | null
   nominal_value?: number | null
   currency?: string | null
@@ -247,7 +248,7 @@ const columns: ColumnDef[] = [
   { key: 'current_share_ratio', label: 'Hisse %', type: 'number', width: 110, category: 'Hesaplanan' },
   { key: 'current_voting_ratio', label: 'Oy %', type: 'number', width: 100, category: 'Hesaplanan' },
   { key: 'current_profit_ratio', label: 'Kar Payı %', type: 'number', width: 120, category: 'Hesaplanan' },
-  { key: 'current_capital_amount', label: 'Sermaye', type: 'number', width: 130, category: 'Hesaplanan' },
+  { key: 'current_capital_amount', label: 'Taahhüt Edilen Sermaye', type: 'number', width: 170, category: 'Hesaplanan', render: value => formatCurrency(parseLocalizedNumber(value), 'TRY') },
   { key: 'current_share_units', label: 'Pay Adedi', type: 'number', width: 120, category: 'Hesaplanan' },
   { key: 'ownership_flags', label: 'İmtiyaz / Kontrol', type: 'enum', width: 150, category: 'Haklar', render: value => <OwnershipFlagsCell value={value} /> },
   { key: 'last_ownership_transaction', label: 'Son İşlem', type: 'text', width: 160, category: 'Geçmiş' },
@@ -885,12 +886,7 @@ export default function OrtaklarPage() {
       }
 
       if (!transaction) {
-        setToast({
-          type: 'warning',
-          title: 'İşlem Detayı Bulunamadı',
-          message: 'Bu işlem tamamlanmış görünüyor ancak detay form kaydı bulunamadı.',
-        })
-        return
+        transaction = buildInitialPartnershipFallbackTransaction(sourcePartner)
       }
 
       setOwnershipWizardReadOnly(true)
@@ -1596,6 +1592,7 @@ function InitialPartnershipEntryWizard({
 
   const calculations = useMemo(() => {
     const amount = parseLocalizedNumber(form.partner_committed_capital_amount)
+    const paidAmount = parseLocalizedNumber(form.partner_paid_capital_amount)
     const shareUnits = capital.share_nominal_value > 0 ? amount / capital.share_nominal_value : 0
     const shareRatio = capital.company_committed_capital_amount > 0
       ? (amount / capital.company_committed_capital_amount) * 100
@@ -1618,6 +1615,8 @@ function InitialPartnershipEntryWizard({
 
     return {
       partner_committed_capital_amount: roundMoney(amount),
+      partner_paid_capital_amount: roundMoney(paidAmount),
+      partner_unpaid_capital_amount: roundMoney(Math.max(0, amount - paidAmount)),
       partner_share_units: shareUnits,
       partner_share_ratio: roundRatio(shareRatio),
       partner_voting_ratio: roundRatio(votingRatio),
@@ -1627,7 +1626,7 @@ function InitialPartnershipEntryWizard({
       remaining_capital_after_entry: roundMoney(capital.available_capital_amount - amount),
       remaining_share_units_after_entry: capital.share_nominal_value > 0 ? (capital.available_capital_amount - amount) / capital.share_nominal_value : 0,
     }
-  }, [capital, form.has_non_proportional_rights, form.partner_committed_capital_amount, form.partner_profit_ratio, form.partner_voting_ratio])
+  }, [capital, form.has_non_proportional_rights, form.partner_committed_capital_amount, form.partner_paid_capital_amount, form.partner_profit_ratio, form.partner_voting_ratio])
 
   const infoErrors = useMemo(() => getInitialPartnershipInfoErrors({
     form,
@@ -1669,6 +1668,7 @@ function InitialPartnershipEntryWizard({
       nominal_value: roundMoney(capital.share_nominal_value),
       capital_amount: calculations.partner_committed_capital_amount,
       committed_capital_amount: calculations.partner_committed_capital_amount,
+      paid_capital_amount: calculations.partner_paid_capital_amount,
       currency: capital.currency,
       commitment_date: form.transaction_date,
       status: 'active',
@@ -1681,6 +1681,9 @@ function InitialPartnershipEntryWizard({
         has_non_proportional_rights: form.has_non_proportional_rights,
         expected_privilege_document_type: form.expected_privilege_document_type || null,
         partner_committed_capital_amount: calculations.partner_committed_capital_amount,
+        partner_paid_capital_amount: calculations.partner_paid_capital_amount,
+        partner_unpaid_capital_amount: calculations.partner_unpaid_capital_amount,
+        capital_payment_source: form.capital_payment_source || null,
         partner_share_units: Math.round(calculations.partner_share_units),
         partner_share_ratio: calculations.partner_share_ratio,
         partner_voting_ratio: calculations.partner_voting_ratio,
@@ -1695,6 +1698,9 @@ function InitialPartnershipEntryWizard({
         partner_id: partner.id,
         company_id: form.company_id,
         committed_capital_amount: calculations.partner_committed_capital_amount,
+        paid_capital_amount: calculations.partner_paid_capital_amount,
+        unpaid_capital_amount: calculations.partner_unpaid_capital_amount,
+        capital_payment_source: form.capital_payment_source || null,
         share_units: Math.round(calculations.partner_share_units),
         share_ratio: calculations.partner_share_ratio,
         voting_ratio: calculations.partner_voting_ratio,
@@ -1873,10 +1879,10 @@ function InitialPartnershipInfoStep({
       <section className="rounded-lg border border-gray-200 p-4 dark:border-gray-800">
         <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Şirket Sermaye ve Pay Bilgileri</h3>
         <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          <InitialPartnershipMetric label="Şirket Taahhüt Edilmiş Sermayesi" value={formatCurrency(capital.company_committed_capital_amount, capital.currency)} />
+          <InitialPartnershipMetric label="Şirket Taahhüt Edilen Sermayesi" value={formatCurrency(capital.company_committed_capital_amount, capital.currency)} />
           <InitialPartnershipMetric label="Toplam Pay Adedi" value={formatNumber(capital.company_total_share_units)} />
           <InitialPartnershipMetric label="Pay İtibari Değeri" value={formatCurrency(capital.share_nominal_value, capital.currency)} />
-          <InitialPartnershipMetric label="Ortaklara Tahsis Edilmiş Sermaye" value={formatCurrency(capital.allocated_capital_amount, capital.currency)} />
+          <InitialPartnershipMetric label="Ortaklara Taahhüt Ettirilmiş Sermaye" value={formatCurrency(capital.allocated_capital_amount, capital.currency)} />
           <InitialPartnershipMetric label="Taahhüt Edilebilir Sermaye" value={formatCurrency(capital.available_capital_amount, capital.currency)} />
           <InitialPartnershipMetric label="Taahhüt Edilebilir Pay Adedi" value={formatNumber(capital.available_share_units)} />
           <InitialPartnershipMetric label="Para Birimi" value={capital.currency} />
@@ -1888,7 +1894,7 @@ function InitialPartnershipInfoStep({
         <div className="grid gap-4 lg:grid-cols-2">
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
-              Taahhüt Edilecek Sermaye
+              Taahhüt Edilen Sermaye
               <InitialPartnershipCurrencyInput
                 value={form.partner_committed_capital_amount}
                 onChange={value => onUpdate('partner_committed_capital_amount', value)}
@@ -1902,12 +1908,28 @@ function InitialPartnershipInfoStep({
               </div>
             )}
           </div>
-          <div className="rounded-lg border border-blue-100 bg-blue-50 p-3 text-sm text-blue-800 dark:border-blue-900/60 dark:bg-blue-950/30 dark:text-blue-200">
-            Hisse oranı ve pay adedi kullanıcı tarafından girilmez; taahhüt edilecek sermaye ve pay itibari değerinden otomatik hesaplanır.
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
+              Yatırılan Sermaye
+              <InitialPartnershipCurrencyInput
+                value={form.partner_paid_capital_amount}
+                onChange={value => onUpdate('partner_paid_capital_amount', value)}
+                readOnly={readOnly || !selectedCompany || companyLoading}
+                currency={capital.currency}
+              />
+            </label>
+            <p className="mt-2 text-xs leading-5 text-gray-500 dark:text-gray-400">
+              Muhasebe bağlantısı hazır olduğunda bu tutar sermaye ödeme hareketlerinden seçilecek.
+            </p>
+          </div>
+          <div className="rounded-lg border border-blue-100 bg-blue-50 p-3 text-sm text-blue-800 dark:border-blue-900/60 dark:bg-blue-950/30 dark:text-blue-200 lg:col-span-2">
+            Hisse oranı ve pay adedi kullanıcı tarafından girilmez; taahhüt edilen sermaye ve pay itibari değerinden otomatik hesaplanır.
           </div>
         </div>
 
         <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <InitialPartnershipMetric label="Yatırılan Sermaye" value={formatCurrency(calculations.partner_paid_capital_amount, capital.currency)} />
+          <InitialPartnershipMetric label="Kalan Sermaye Borcu" value={formatCurrency(calculations.partner_unpaid_capital_amount, capital.currency)} />
           <InitialPartnershipMetric label="Ortağın Pay Adedi" value={formatNumber(calculations.partner_share_units)} />
           <InitialPartnershipMetric label="Ortağın Hisse Oranı" value={formatPercent(calculations.partner_share_ratio)} />
           <InitialPartnershipMetric label="Oy Hakkı Oranı" value={formatPercent(calculations.partner_voting_ratio)} caption="Varsayılan olarak hisse oranıyla aynı hesaplanır." />
@@ -1976,12 +1998,14 @@ function InitialPartnershipPreviewStep({
   const rows = [
     ['Ortak olacak kişi/kurum', partner.display_name || partner.partner_name || '-'],
     ['Ortağı olduğu şirket', company?.label || '-'],
-    ['Şirket taahhüt edilmiş sermayesi', formatCurrency(capital.company_committed_capital_amount, capital.currency)],
+    ['Şirket taahhüt edilen sermayesi', formatCurrency(capital.company_committed_capital_amount, capital.currency)],
     ['Toplam pay adedi', formatNumber(capital.company_total_share_units)],
     ['Pay itibari değeri', formatCurrency(capital.share_nominal_value, capital.currency)],
     ['Taahhüt edilebilir sermaye', formatCurrency(capital.available_capital_amount, capital.currency)],
     ['Taahhüt edilebilir pay adedi', formatNumber(capital.available_share_units)],
-    ['Ortağın taahhüt edeceği sermaye', formatCurrency(calculations.partner_committed_capital_amount, capital.currency)],
+    ['Ortağın taahhüt edilen sermayesi', formatCurrency(calculations.partner_committed_capital_amount, capital.currency)],
+    ['Ortağın yatırılan sermayesi', formatCurrency(calculations.partner_paid_capital_amount, capital.currency)],
+    ['Kalan sermaye borcu', formatCurrency(calculations.partner_unpaid_capital_amount, capital.currency)],
     ['Ortağın pay adedi', formatNumber(calculations.partner_share_units)],
     ['Ortağın hisse oranı', formatPercent(calculations.partner_share_ratio)],
     ['Oy hakkı oranı', formatPercent(calculations.partner_voting_ratio)],
@@ -2095,6 +2119,8 @@ type InitialPartnershipFormState = {
   company_id: string
   transaction_date: string
   partner_committed_capital_amount: string
+  partner_paid_capital_amount: string
+  capital_payment_source: string
   has_non_proportional_rights: boolean
   partner_voting_ratio: string
   partner_profit_ratio: string
@@ -2115,6 +2141,8 @@ type InitialPartnershipCapitalInfo = {
 
 type InitialPartnershipCalculations = {
   partner_committed_capital_amount: number
+  partner_paid_capital_amount: number
+  partner_unpaid_capital_amount: number
   partner_share_units: number
   partner_share_ratio: number
   partner_voting_ratio: number
@@ -2135,6 +2163,11 @@ function buildInitialPartnershipInitialForm(
     transaction?.capital_amount,
     newValues.partner_committed_capital_amount
   )
+  const partnerPaidCapital = firstPositiveNumber(
+    transaction?.paid_capital_amount,
+    newValues.partner_paid_capital_amount,
+    newValues.paid_capital_amount
+  )
   const hasNonProportionalRights = Boolean(
     newValues.has_non_proportional_rights ??
     transaction?.has_privileged_share ??
@@ -2145,6 +2178,8 @@ function buildInitialPartnershipInitialForm(
     company_id: String(transaction?.company_id || partner.company_id || ''),
     transaction_date: String(transaction?.effective_date || transaction?.transaction_date || new Date().toISOString().slice(0, 10)),
     partner_committed_capital_amount: partnerCommittedCapital > 0 ? String(partnerCommittedCapital) : '',
+    partner_paid_capital_amount: partnerPaidCapital > 0 ? String(partnerPaidCapital) : '',
+    capital_payment_source: String(newValues.capital_payment_source || ''),
     has_non_proportional_rights: hasNonProportionalRights,
     partner_voting_ratio: valueToInputString(newValues.partner_voting_ratio ?? transaction?.voting_ratio),
     partner_profit_ratio: valueToInputString(newValues.partner_profit_ratio ?? transaction?.profit_ratio),
@@ -2334,8 +2369,10 @@ function getInitialPartnershipInfoErrors({
   if (capital.company_total_share_units <= 0) errors.push('Şirketin toplam pay adedi tanımlı olmadığı için pay itibari değeri hesaplanamıyor. Bu bilgi şirket sermaye bilgilerinden tamamlanmalıdır.')
   if (capital.share_nominal_value <= 0) errors.push('Pay itibari değeri hesaplanamadığı için işlem tamamlanamaz.')
   if (capital.available_capital_amount <= 0) errors.push('Bu şirkette ortaklara tahsis edilmemiş taahhüt edilebilir sermaye bulunmuyor. Yeni ortak girişi için önce sermaye artırımı yapılmalıdır.')
-  if (calculations.partner_committed_capital_amount <= 0) errors.push('Taahhüt edilecek sermaye 0’dan büyük olmalıdır.')
-  if (calculations.partner_committed_capital_amount > capital.available_capital_amount) errors.push('Taahhüt edilecek sermaye, taahhüt edilebilir sermayeden büyük olamaz.')
+  if (calculations.partner_committed_capital_amount <= 0) errors.push('Taahhüt edilen sermaye 0’dan büyük olmalıdır.')
+  if (calculations.partner_committed_capital_amount > capital.available_capital_amount) errors.push('Taahhüt edilen sermaye, taahhüt edilebilir sermayeden büyük olamaz.')
+  if (calculations.partner_paid_capital_amount < 0) errors.push('Yatırılan sermaye 0’dan küçük olamaz.')
+  if (calculations.partner_paid_capital_amount > calculations.partner_committed_capital_amount) errors.push('Yatırılan sermaye, taahhüt edilen sermayeden büyük olamaz.')
   if (calculations.partner_committed_capital_amount > 0 && !calculations.isShareUnitWhole) {
     errors.push(`Taahhüt edilecek sermaye, pay itibari değeri olan ${formatCurrency(capital.share_nominal_value, capital.currency)} tutarının katı olmalıdır.`)
   }
@@ -2602,7 +2639,8 @@ function CurrentOwnershipPanel({ value, section }: { value?: CurrentOwnershipRow
         ['Hisse Oranı', `%${Number(value.current_share_ratio || 0).toFixed(2)}`],
         ['Oy Hakkı', `%${Number(value.current_voting_ratio || 0).toFixed(2)}`],
         ['Kar Payı', `%${Number(value.current_profit_ratio || 0).toFixed(2)}`],
-        ['Sermaye', Number(value.current_capital_amount || 0).toLocaleString('tr-TR')],
+        ['Taahhüt Edilen Sermaye', formatCurrency(parseLocalizedNumber(value.current_capital_amount), 'TRY')],
+        ['Yatırılan Sermaye', formatCurrency(parseLocalizedNumber((value as any).paid_capital_amount), 'TRY')],
         ['Pay Adedi', Number(value.current_share_units || 0).toLocaleString('tr-TR')],
       ]
     : [
@@ -2768,7 +2806,7 @@ function PartnerHistorySections({ value }: { value?: PartnerHistorySectionsValue
                   {transaction.share_ratio != null && <span>Pay %{Number(transaction.share_ratio).toFixed(2)}</span>}
                   {transaction.voting_ratio != null && <span>Oy %{Number(transaction.voting_ratio).toFixed(2)}</span>}
                   {transaction.profit_ratio != null && <span>Kar %{Number(transaction.profit_ratio).toFixed(2)}</span>}
-                  {transaction.capital_amount != null && <span>Sermaye {Number(transaction.capital_amount).toLocaleString('tr-TR')}</span>}
+                  {transaction.capital_amount != null && <span>Taahhüt {formatCurrency(parseLocalizedNumber(transaction.capital_amount), transaction.currency || 'TRY')}</span>}
                   {transaction.has_control_right && <span>Kontrol hakkı</span>}
                   {transaction.has_veto_right && <span>Veto hakkı</span>}
                   {transaction.has_board_nomination_right && <span>YK aday hakkı</span>}
@@ -3183,6 +3221,59 @@ function findInitialPartnershipTransaction(partner?: Record<string, any> | null)
   ) || transactions.find(transaction =>
     isInitialPartnershipEntryType(String(transaction.transaction_type || ''))
   ) || null
+}
+
+function buildInitialPartnershipFallbackTransaction(partner: Record<string, any>): OwnershipTransactionHistoryRow {
+  const current = partner.current_ownership || {}
+  const committedCapital = firstPositiveNumber(
+    current.current_capital_amount,
+    current.committed_capital_amount,
+    partner.current_capital_amount,
+    partner.committed_capital_amount,
+    partner.capital_amount
+  )
+  const paidCapital = firstPositiveNumber(
+    current.paid_capital_amount,
+    partner.paid_capital_amount
+  )
+  const shareRatio = firstPositiveNumber(current.current_share_ratio, partner.current_share_ratio, partner.share_ratio)
+  const votingRatio = firstPositiveNumber(current.current_voting_ratio, partner.current_voting_ratio, partner.voting_ratio, shareRatio)
+  const profitRatio = firstPositiveNumber(current.current_profit_ratio, partner.current_profit_ratio, partner.profit_ratio, shareRatio)
+  const shareUnits = firstPositiveNumber(current.current_share_units, partner.current_share_units, partner.share_units)
+  return {
+    id: `fallback-initial-${partner.id || 'partner'}`,
+    company_id: partner.company_id,
+    transaction_no: 'Geçiş Kaydı',
+    transaction_type: INITIAL_PARTNERSHIP_ENTRY_TYPE,
+    transaction_date: partner.start_date || partner.created_at,
+    effective_date: partner.start_date || partner.created_at,
+    status: 'active',
+    approval_status: 'approved',
+    to_partner_id: partner.id,
+    affected_partner_id: partner.id,
+    share_ratio: shareRatio,
+    voting_ratio: votingRatio,
+    profit_ratio: profitRatio,
+    capital_amount: committedCapital,
+    committed_capital_amount: committedCapital,
+    paid_capital_amount: paidCapital,
+    share_units: shareUnits,
+    nominal_value: shareUnits > 0 ? committedCapital / shareUnits : undefined,
+    currency: partner.currency || partner.default_currency || 'TRY',
+    document_status: 'Belge Yok',
+    document_files: [],
+    new_values: {
+      partner_committed_capital_amount: committedCapital,
+      partner_paid_capital_amount: paidCapital,
+      partner_unpaid_capital_amount: Math.max(0, committedCapital - paidCapital),
+      partner_share_units: shareUnits,
+      partner_share_ratio: shareRatio,
+      partner_voting_ratio: votingRatio,
+      partner_profit_ratio: profitRatio,
+      generated_from_partner_card: true,
+    },
+    notes: 'Veri geçişi nedeniyle işlem detay kaydı bulunamadı; bu özet ortak kartındaki güncel değerlerden oluşturuldu.',
+  }
 }
 
 function normalizePayload(raw: Record<string, any>, companies: Option[], mode: FormMode = 'create') {

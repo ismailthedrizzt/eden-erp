@@ -274,7 +274,12 @@ async def initial_partnership_entry(
             "SHARE_RATIO_REQUIRED",
             "Ilk ortaklik girisi icin pay orani zorunludur.",
         )
-        capital_amount = max(number_value(request.capital_amount_after), 0)
+        capital_amount = max(number_value(
+            request.capital_amount_after
+            or request.transferred_capital_amount
+            or request.committed_capital_amount
+        ), 0)
+        paid_capital_amount = max(number_value(request.paid_capital_amount), 0)
         total_after = total_share_ratio(current_rows) + share_ratio
         if total_after > 100.05:
             raise DomainError(
@@ -316,7 +321,11 @@ async def initial_partnership_entry(
                     "current_voting_ratio": request.voting_ratio_after or share_ratio,
                     "current_profit_ratio": request.profit_ratio_after or share_ratio,
                     "current_capital_amount": capital_amount,
-                    "current_share_units": request.share_units_after or 0,
+                    "committed_capital_amount": capital_amount,
+                    "paid_capital_amount": paid_capital_amount,
+                    "partner_paid_capital_amount": paid_capital_amount,
+                    "partner_unpaid_capital_amount": max(0, capital_amount - paid_capital_amount),
+                    "current_share_units": request.share_units_after or request.transferred_share_units or 0,
                 },
             ),
         )
@@ -329,7 +338,9 @@ async def initial_partnership_entry(
                 "voting_ratio": request.voting_ratio_after or share_ratio,
                 "profit_ratio": request.profit_ratio_after or share_ratio,
                 "capital_amount": capital_amount,
-                "share_units": request.share_units_after,
+                "committed_capital_amount": capital_amount,
+                "paid_capital_amount": paid_capital_amount,
+                "share_units": request.share_units_after or request.transferred_share_units,
                 "share_class": request.share_class,
                 "has_control_right": request.has_control_right,
                 "control_type": request.control_type,
@@ -899,7 +910,7 @@ def _transaction_payload(
         "capital_amount": capital_amount,
         "committed_capital_amount": capital_amount,
         "transfer_price": transfer_price,
-        "currency": "TRY",
+        "currency": request.currency or "TRY",
         "has_control_right": request.has_control_right,
         "control_type": request.control_type,
         "has_veto_right": request.has_veto_right,
