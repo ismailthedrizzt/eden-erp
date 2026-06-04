@@ -86,6 +86,7 @@ export function createLegalEntityMasterTabs({
               masterName={data.legal_name || data.trade_name || data.trade_name || data.display_name || data.short_name}
               masterCountry={data.country || data.country}
               readOnly={mode === 'view' || mode === 'passive'}
+              persistenceMode="form"
               value={Array.isArray(value) ? value : data.entity_bank_accounts}
               onChange={onChange}
             />

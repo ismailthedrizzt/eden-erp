@@ -25,6 +25,7 @@ type Props = {
   multiple?: boolean
   value?: Array<Partial<EntityBankAccount>>
   onChange?: (rows: Array<Partial<EntityBankAccount>>) => void
+  persistenceMode?: 'form' | 'standalone'
 }
 
 const emptyDraft: Partial<EntityBankAccount> = {
@@ -87,7 +88,7 @@ const intermediaryBankFields = new Set([
 ])
 const turkishBanksByCode = Object.fromEntries(getTurkishIbanBanks().map(bank => [bank.bankCode, bank]))
 
-export function EntityBankAccountsPanel({ entityKind, entityId, masterName = '', masterCountry = '', readOnly = false, multiple = false, value, onChange }: Props) {
+export function EntityBankAccountsPanel({ entityKind, entityId, masterName = '', masterCountry = '', readOnly = false, multiple = false, value, onChange, persistenceMode }: Props) {
   const { can } = usePermissions()
   const [rows, setRows] = useState<EntityBankAccount[]>([])
   const [loading, setLoading] = useState(false)
@@ -101,7 +102,8 @@ export function EntityBankAccountsPanel({ entityKind, entityId, masterName = '',
   const singleSelectionKeyRef = useRef('')
   const ibanParseRequestRef = useRef(0)
 
-  const embedded = !!onChange
+  const persistence = persistenceMode || (onChange ? 'form' : 'standalone')
+  const embedded = persistence === 'form'
   const hasPersistedEntity = !!entityKind && !!entityId
   const canView = embedded || can(ENTITY_BANK_ACCOUNT_PERMISSIONS.view)
   const canInsert = embedded || can(ENTITY_BANK_ACCOUNT_PERMISSIONS.insert)

@@ -362,6 +362,7 @@ export const personelModuleConfig: ModuleConfig<PersonelTableRow> = {
                   entityId={data.master_record_id || data.person_id}
                   masterName={data.full_name || [data.first_name, data.last_name].filter(Boolean).join(' ')}
                   masterCountry={data.nationality_country || data.nationality}
+                  persistenceMode="standalone"
                   readOnly={readOnly}
                 />
               ),
