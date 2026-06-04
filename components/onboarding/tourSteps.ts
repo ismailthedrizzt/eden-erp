@@ -146,15 +146,6 @@ export const systemTourSteps: TourStep[] = [
     path: '/app/sirket/companies?systemTour=lifecycle',
   },
   {
-    id: 'record-form-address-field',
-    target: "[data-tour-field='address']",
-    fallbackTarget: "[data-tour-id='record-form-fields']",
-    title: 'Detay alanları aynı formda izlenir',
-    description: 'Adres, iletişim ve benzeri bilgiler aynı kaydın parçası olarak tutulur. Aradığınız bilgi bir yerlere saklanmaz; en fazla bir sekme ötede durur.',
-    placement: 'top',
-    path: '/app/sirket/companies?systemTour=lifecycle',
-  },
-  {
     id: 'record-form-tabs',
     target: "[data-tour-id='record-form-tabs']",
     fallbackTarget: "[data-tour-id='record-forms']",
