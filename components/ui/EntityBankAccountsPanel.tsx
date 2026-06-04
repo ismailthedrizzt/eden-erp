@@ -236,7 +236,7 @@ export function EntityBankAccountsPanel({ entityKind, entityId, masterName = '',
     setDraft(prev => {
       const next = { ...prev, iban: value, ...optimisticValues }
       if (embedded && next.id) {
-        updateRows(rows.map(row => row.id === next.id ? { ...row, ...next } : row))
+        updateRows(upsertEmbeddedBankRow(rows, next as EntityBankAccount))
       }
       return next
     })
@@ -266,7 +266,7 @@ export function EntityBankAccountsPanel({ entityKind, entityId, masterName = '',
       setDraft(prev => {
         const next = { ...prev, ...payload.data.values }
         if (embedded && next.id) {
-          updateRows(rows.map(row => row.id === next.id ? { ...row, ...next } : row))
+            updateRows(upsertEmbeddedBankRow(rows, next as EntityBankAccount))
         }
         return next
       })
@@ -445,6 +445,12 @@ export function EntityBankAccountsPanel({ entityKind, entityId, masterName = '',
     setRows(nextRows)
     onChange?.(nextRows)
   }
+}
+
+function upsertEmbeddedBankRow(rows: EntityBankAccount[], next: EntityBankAccount) {
+  if (!next.id) return rows
+  const hasRow = rows.some(row => row.id === next.id)
+  return hasRow ? rows.map(row => row.id === next.id ? { ...row, ...next } : row) : [next]
 }
 
 function renderField(field: string, draft: Partial<EntityBankAccount>, disabled: boolean, onChange: (field: string, value: any) => void, onIban: (value: string) => void, ibanAutomationStatus: IbanAutomationStatus) {

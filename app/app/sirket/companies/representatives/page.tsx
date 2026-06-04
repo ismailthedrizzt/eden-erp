@@ -671,11 +671,7 @@ export default function TemsilcilerPage() {
     }
   }
 
-  const configuredHeroFields = heroFields.filter(field => {
-    if (pageState === 'create' && field.name === 'representative_status_summary') return false
-    if (pageState !== 'create') return true
-    return !REPRESENTATIVE_CREATE_HIDDEN_HERO_FIELDS.has(field.name)
-  }).map(field => {
+  const configuredHeroFields = heroFields.filter(field => field.name === 'company_id').map(field => {
     if (field.name === 'company_id') {
       return {
         ...field,
@@ -973,48 +969,10 @@ export default function TemsilcilerPage() {
               <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
             </div>
           )}
-          <div data-tour-id="representative-scope-filters" className="flex flex-wrap items-end gap-3 rounded-lg border border-gray-200 bg-white px-4 py-3 shadow-sm dark:border-gray-800 dark:bg-gray-950">
-            <label className="min-w-[240px] text-sm font-medium text-gray-700 dark:text-gray-200">
-              Bağlı Şirket
-              <select value={companyFilterId} onChange={event => { setCompanyFilterId(event.target.value); setBranchFilterId(''); setListQuery(prev => ({ ...prev, page: 1 })) }} className="mt-1 block w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900">
-                <option value="">Tüm şirketler</option>
-                {companies.map(company => <option key={company.value} value={company.value}>{company.label}</option>)}
-              </select>
-            </label>
-            <label className="min-w-[240px] text-sm font-medium text-gray-700 dark:text-gray-200">
-              Şube
-              <select value={branchFilterId} onChange={event => { setBranchFilterId(event.target.value); setListQuery(prev => ({ ...prev, page: 1 })) }} className="mt-1 block w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900">
-                <option value="">Tüm şubeler</option>
-                {visibleBranchOptions.map(branch => <option key={branch.id} value={branch.id}>{branch.branch_name || branch.branch_short_name || branch.id}</option>)}
-              </select>
-            </label>
-            <label className="min-w-[220px] text-sm font-medium text-gray-700 dark:text-gray-200">
-              Kapsam Turu
-              <select value={scopeTypeFilter} onChange={event => { setScopeTypeFilter(event.target.value as RepresentativeAuthorityScopeFilterValue); setListQuery(prev => ({ ...prev, page: 1 })) }} className="mt-1 block w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm dark:border-gray-700 dark:bg-gray-900">
-                <option value="">Tum kapsamlar</option>
-                <option value="company_wide">Sirket geneli</option>
-                <option value="branch">Sube</option>
-                <option value="organization_unit">Organizasyon birimi</option>
-                <option value="facility">Tesis/Lokasyon</option>
-              </select>
-            </label>
-            <label className="mb-2 flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-200">
-              <input type="checkbox" checked={includeCompanyWide} onChange={event => { setIncludeCompanyWide(event.target.checked); setListQuery(prev => ({ ...prev, page: 1 })) }} className="h-4 w-4 rounded border-gray-300" />
-              Şirket geneli yetkileri de göster
-            </label>
-          </div>
-          <RepresentativeAuthorityStatusFilterBar
-            activeValues={authorityStatusFilters}
-            onChange={(next) => {
-              setAuthorityStatusFilters(normalizeRepresentativeAuthorityStatusFilters(next))
-              setListQuery(prev => ({ ...prev, page: 1 }))
-            }}
-          />
           <SmartDataTable
             columns={columns}
             data={tableData}
             loading={loading}
-            widgets={widgets}
             defaultView="list"
             storageKey="companies-representatives-table"
             emptyText={
@@ -1348,8 +1306,8 @@ function buildRepresentativeAuthorityWizardSteps({
   const steps: RecordLifecycleWizardStep[] = [
     {
       id: 'representative-authority-context',
-      title: 'İşlem Bilgileri',
-      description: 'Temsilcilik işleminin tarih ve bağlam bilgileri.',
+      title: 'Bilgiler',
+      description: undefined,
       sections: [
         {
           id: 'representative-authority-context-summary',
@@ -1378,11 +1336,7 @@ function buildRepresentativeAuthorityWizardSteps({
   ]
 
   if (!isTermination) {
-    steps.push({
-      id: 'representative-authority-scope',
-      title: 'Yetki Kapsamı',
-      description: 'Temsilcinin sahip olacağı yetki tipleri, imza ve limit bilgileri.',
-      sections: [
+    steps[0].sections.push(
         {
           id: 'representative-authority-types',
           title: 'Yetki tipleri ve imza',
@@ -1457,18 +1411,17 @@ function buildRepresentativeAuthorityWizardSteps({
             { name: 'official_correspondence_authority', label: 'Resmi yazışma yetkisi', type: 'checkbox' },
           ],
         },
-      ],
-    })
+    )
   }
 
   steps.push(
     {
       id: 'representative-authority-documents',
       title: 'Belgeler',
-      description: 'Hazır belgeleri işleme ekleyin. Bu adım zorunlu değildir.',
+      description: undefined,
       sections: [{
         id: 'representative-authority-document-fields',
-        title: 'Temsilcilik belgeleri',
+        title: 'Belgeler',
         fields: [
           {
             name: 'authority_document',
@@ -1489,8 +1442,8 @@ function buildRepresentativeAuthorityWizardSteps({
     },
     {
       id: 'representative-authority-preview',
-      title: 'Önizleme',
-      description: 'Tamamlamadan önce işlem özetini kontrol edin.',
+      title: 'Ön İzleme/Onay',
+      description: undefined,
       sections: [{
         id: 'representative-authority-preview-section',
         title: 'İşlem özeti',
