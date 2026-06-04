@@ -240,7 +240,7 @@ const PARTNER_OWNERSHIP_REGISTRATION_CONTROL = {
 
 const columns: ColumnDef[] = [
   { key: 'record_status', label: 'Durum', type: 'enum', width: 44, minWidth: 44, maxWidth: 44, fixedWidth: true, sortable: false, hideHeaderLabel: true, category: 'Durum', order: -100, fixed: true, hideable: false, render: (_value, row) => <PartnerStatusDot status={getPartnerRecordStatus(row)} /> },
-  { key: 'avatar', label: 'Avatar', type: 'avatar', width: 48, minWidth: 48, maxWidth: 48, fixedWidth: true, sortable: false, hideHeaderLabel: true, category: 'Kimlik', order: -90, fixed: true, hideable: false, imageFit: 'cover', imageShape: 'circle' },
+  { key: 'avatar', label: 'Avatar', type: 'avatar', width: 72, minWidth: 72, maxWidth: 72, fixedWidth: true, sortable: false, hideHeaderLabel: true, category: 'Kimlik', order: -90, fixed: true, hideable: false, imageFit: 'cover', imageShape: 'circle' },
   { key: 'display_name', label: 'Ortak Adı / Ünvanı', type: 'text', width: 280, sortable: true, category: 'Kimlik', render: (value, row) => <PartnerNameCell value={value} row={row} /> },
   { key: 'partner_type_label', label: 'Ortak Türü', type: 'enum', width: 130, category: 'Kimlik' },
   { key: 'company_name', label: 'Şirket', type: 'text', width: 220, category: 'Şirket' },
@@ -291,14 +291,6 @@ const heroFields: FormField[] = [
   { name: 'last_name', label: 'Kısa Unvan', type: 'text', visibleWhen: { field: 'partner_type', operator: 'equals', value: 'organization' } },
   { name: 'identity_number', label: 'VKN', type: 'text', visibleWhen: { field: 'partner_type', operator: 'equals', value: 'organization' } },
   { name: 'start_date', label: 'Başlangıç Tarihi', type: 'date', required: true, controlledByOperation: PARTNER_LIFECYCLE_CONTROL },
-  {
-    name: 'partner_status_summary',
-    label: 'Durum Ozeti',
-    type: 'custom',
-    colSpan: 3,
-    hideLabel: true,
-    render: ({ data }: { data?: Record<string, any> }) => <PartnerStatusSummary partner={data} />,
-  },
 ]
 
 const tabs: FormTab[] = [
@@ -530,6 +522,11 @@ export default function OrtaklarPage() {
     }
   }, [])
 
+
+  useEffect(() => {
+    loadRelationContext(false).catch(() => undefined)
+  }, [loadRelationContext])
+
   const loadOwnershipContext = useCallback(async (force = false, companyIds?: string[]) => {
     const scopedCompanyIds = (companyIds?.length ? companyIds : companies.map(company => company.value)).filter(Boolean)
     if (!scopedCompanyIds.length) {
@@ -561,7 +558,10 @@ export default function OrtaklarPage() {
   }, [loadData])
 
   const activeCompanyOptions = useMemo(() => companies.filter(isActiveCompanyForNewPartner), [companies])
-  const companyNameById = useMemo(() => Object.fromEntries(companies.map(company => [company.value, company.label])), [companies])
+  const selectedCompanyOption = useMemo(() => buildPartnerSelectedCompanyOption(selectedPartner, companies), [companies, selectedPartner])
+  const formCompanyOptions = useMemo(() => mergeCompanyOptions(companies, selectedCompanyOption), [companies, selectedCompanyOption])
+  const formActiveCompanyOptions = useMemo(() => mergeCompanyOptions(activeCompanyOptions, selectedCompanyOption), [activeCompanyOptions, selectedCompanyOption])
+  const companyNameById = useMemo(() => Object.fromEntries(formCompanyOptions.map(company => [company.value, company.label])), [formCompanyOptions])
   const currentOwnershipByCompanyPartnerKey = useMemo(() => Object.fromEntries(currentOwnershipRows.map(row => [ownershipKey(row.company_id, row.partner_id), row])), [currentOwnershipRows])
   const representativeAuthoritiesForPartner = useCallback((partner: Record<string, any> | null | undefined) => {
     if (!partner) return []
@@ -650,11 +650,11 @@ export default function OrtaklarPage() {
     if (field.name === 'company_id') {
       return {
         ...field,
-        options: pageState === 'create' ? activeCompanyOptions : companies,
+        options: pageState === 'create' ? formActiveCompanyOptions : formCompanyOptions,
         remoteOptions: {
           endpoint: pageState === 'create'
             ? '/api/companies?statuses=active&pageSize=40'
-            : '/api/companies?statuses=draft,active&pageSize=40',
+            : '/api/companies?statuses=draft,active,opened&pageSize=40',
           queryParam: 'ara',
           minQueryLength: 2,
           limit: 40,
@@ -1322,12 +1322,25 @@ function ActiveOwnershipTransactionWizard({
   const [localError, setLocalError] = useState<string | null>(null)
   const companyPartners = partners.filter(item => (item.company_id || '') === form.company_id)
   const update = (name: string, value: string) => setForm(prev => ({ ...prev, [name]: value }))
+  const transactionType = form.transaction_type as OwnershipTransactionType
+  const needsTransferTarget = ['Pay Devri', 'Kısmi Pay Devri'].includes(transactionType)
+  const showShareRatio = ['Pay Devri', 'Kısmi Pay Devri', 'Ortaklıktan Çıkış'].includes(transactionType)
+  const showVotingRatio = ['Pay Devri', 'Kısmi Pay Devri', 'Oy Hakkı Değişikliği'].includes(transactionType)
+  const showProfitRatio = ['Pay Devri', 'Kısmi Pay Devri', 'Kar Payı Oranı Değişikliği'].includes(transactionType)
+
+  const validateActiveTransactionStep = (targetStep: number) => {
+    if (targetStep >= 0 && !form.company_id) return 'Şirket seçimi zorunludur.'
+    if (targetStep >= 0 && needsTransferTarget && !form.to_partner_id) return 'Devralan ortak seçimi zorunludur.'
+    return null
+  }
 
   const completeActiveTransaction = async () => {
     setLocalError(null)
-    if (!form.company_id) return setLocalError('Şirket seçimi zorunludur.')
-    const transactionType = form.transaction_type as OwnershipTransactionType
-    if (['Pay Devri', 'Kısmi Pay Devri'].includes(transactionType) && !form.to_partner_id) return setLocalError('Devralan ortak seçimi zorunludur.')
+    const validationError = validateActiveTransactionStep(2)
+    if (validationError) {
+      setLocalError(validationError)
+      return
+    }
 
     await onSubmit(partner, {
       company_id: form.company_id,
@@ -1349,20 +1362,16 @@ function ActiveOwnershipTransactionWizard({
     })
   }
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-      <div className="w-full max-w-2xl rounded-lg border border-gray-200 bg-white p-5 shadow-xl dark:border-gray-800 dark:bg-gray-950">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Ortaklık İşlemi</h3>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{partner.display_name || partner.partner_name || 'Ortak'}</p>
-          </div>
-          <button type="button" onClick={onClose} className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-900">
-            Kapat
-          </button>
-        </div>
-
-        <div className="mt-5 space-y-4">
+  const wizardSteps = useMemo<RecordLifecycleWizardStep[]>(() => [
+    {
+      id: 'active-ownership-info',
+      title: 'Bilgiler',
+      sections: [{
+        id: 'active-ownership-info-section',
+        title: 'Ortaklık işlem bilgileri',
+        frameless: true,
+        children: (
+          <div className="space-y-4">
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
               İşlem Türü
               <select value={form.transaction_type} onChange={event => update('transaction_type', event.target.value)} className={formControlClass({ className: 'mt-1' })}>
@@ -1371,7 +1380,7 @@ function ActiveOwnershipTransactionWizard({
                 ))}
               </select>
             </label>
-            {['Pay Devri', 'Kısmi Pay Devri'].includes(form.transaction_type) && (
+            {needsTransferTarget && (
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
                 Devralan Ortak
                 <select value={form.to_partner_id} onChange={event => update('to_partner_id', event.target.value)} className={formControlClass({ className: 'mt-1' })}>
@@ -1382,57 +1391,108 @@ function ActiveOwnershipTransactionWizard({
                 </select>
               </label>
             )}
-            {['Pay Devri', 'Kısmi Pay Devri', 'Ortaklıktan Çıkış'].includes(form.transaction_type) && (
+            {showShareRatio && (
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
                 Hisse Oranı
                 <input type="number" min="0" max="100" step="0.01" value={form.share_ratio} onChange={event => update('share_ratio', event.target.value)} className={formControlClass({ className: 'mt-1' })} />
               </label>
             )}
-            {['Pay Devri', 'Kısmi Pay Devri', 'Oy Hakkı Değişikliği'].includes(form.transaction_type) && (
+            {showVotingRatio && (
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
                 Oy Hakkı Oranı
                 <input type="number" min="0" max="100" step="0.01" value={form.voting_ratio} onChange={event => update('voting_ratio', event.target.value)} className={formControlClass({ className: 'mt-1' })} />
               </label>
             )}
-            {['Pay Devri', 'Kısmi Pay Devri', 'Kar Payı Oranı Değişikliği'].includes(form.transaction_type) && (
+            {showProfitRatio && (
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
                 Kar Payı Oranı
                 <input type="number" min="0" max="100" step="0.01" value={form.profit_ratio} onChange={event => update('profit_ratio', event.target.value)} className={formControlClass({ className: 'mt-1' })} />
               </label>
             )}
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
-              Belge Referansı
-              <input value={form.document_reference_id} onChange={event => update('document_reference_id', event.target.value)} className={formControlClass({ className: 'mt-1' })} />
+              İşlem Tarihi
+              <input type="date" value={form.start_date} onChange={event => update('start_date', event.target.value)} className={formControlClass({ className: 'mt-1' })} />
             </label>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
               Açıklama
               <textarea value={form.notes} onChange={event => update('notes', event.target.value)} rows={3} className={formControlClass({ className: 'mt-1' })} />
             </label>
+          </div>
+        ),
+      }],
+    },
+    {
+      id: 'active-ownership-documents',
+      title: 'Belgeler',
+      sections: [{
+        id: 'active-ownership-documents-section',
+        title: 'İşlem belgesi',
+        frameless: true,
+        children: (
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
+            Belge Referansı
+            <input value={form.document_reference_id} onChange={event => update('document_reference_id', event.target.value)} className={formControlClass({ className: 'mt-1' })} />
+          </label>
+        ),
+      }],
+    },
+    {
+      id: 'active-ownership-preview',
+      title: 'Ön İzleme/Onay',
+      description: 'Resmi işlem tamamlanmadan önce son kontrol.',
+      sections: [{
+        id: 'active-ownership-preview-section',
+        title: 'İşlem özeti',
+        frameless: true,
+        children: (
+          <div className="space-y-4">
+            <div className="overflow-hidden rounded-lg border border-gray-200 dark:border-gray-800">
+              <table className="min-w-full divide-y divide-gray-200 text-sm dark:divide-gray-800">
+                <tbody className="divide-y divide-gray-100 dark:divide-gray-800">
+                  {[
+                    ['Ortak', partner.display_name || partner.partner_name || '-'],
+                    ['İşlem Türü', getOwnershipTransactionTypeLabel(transactionType)],
+                    ['İşlem Tarihi', form.start_date || '-'],
+                    ['Hisse Oranı', form.share_ratio || '-'],
+                    ['Oy Hakkı Oranı', form.voting_ratio || '-'],
+                    ['Kar Payı Oranı', form.profit_ratio || '-'],
+                    ['Belge', form.document_reference_id || '-'],
+                  ].map(([label, value]) => (
+                    <tr key={label}>
+                      <td className="px-3 py-2 font-medium text-gray-600 dark:text-gray-300">{label}</td>
+                      <td className="px-3 py-2 font-semibold text-gray-900 dark:text-white">{value}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
             <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm text-gray-600 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-300">
               Hissesi tamamen devredilen ortak, onaylı işlemlerden sonra pasif statüye düşecektir. Ayrı bir Ortaklıktan Ayrılma işlemi oluşturulmaz.
             </div>
-        </div>
+          </div>
+        ),
+      }],
+    },
+  ], [companyPartners, form, needsTransferTarget, partner.display_name, partner.id, partner.partner_name, showProfitRatio, showShareRatio, showVotingRatio, transactionType])
 
-        {localError && <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-200">{localError}</div>}
-        <div className="mt-5 flex justify-end gap-2">
-          <button type="button" onClick={onClose} className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-900">
-            Vazgeç
-          </button>
-          <button
-            type="button"
-            disabled={saving}
-            onClick={completeActiveTransaction}
-            className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60"
-          >
-            İşlem Taslağı Oluştur
-          </button>
-        </div>
-      </div>
-    </div>
+  return (
+    <RecordLifecycleWizard
+      title="Ortaklık İşlemi"
+      subtitle={partner.display_name || partner.partner_name || 'Ortak'}
+      steps={wizardSteps}
+      form={form}
+      setForm={setForm as Dispatch<SetStateAction<Record<string, any>>>}
+      onClose={onClose}
+      onSubmit={completeActiveTransaction}
+      submitLabel="İşlem Taslağı Oluştur"
+      saving={saving}
+      error={localError || undefined}
+      validateStep={validateActiveTransactionStep}
+    />
   )
 }
 
-const initialPartnershipStepLabels = ['Bilgiler', 'Belgeler', 'Önizleme ve Tamamla'] as const
+const initialPartnershipStepLabels = ['Bilgiler', 'Belgeler', 'Ön İzleme/Onay'] as const
 
 type InitialPartnershipDocumentSlot = {
   id: string
@@ -1687,10 +1747,10 @@ function InitialPartnershipEntryWizard({
     {
       id: 'initial-partnership-preview',
       title: initialPartnershipStepLabels[2],
-      description: 'İşlem tamamlanmadan önce son kontrol.',
+      description: 'Resmi işlem tamamlanmadan önce son kontrol.',
       sections: [{
         id: 'initial-partnership-preview-section',
-        title: 'Önizleme ve Tamamla',
+        title: 'Ön İzleme/Onay',
         frameless: true,
         children: (
           <InitialPartnershipPreviewStep
@@ -2939,6 +2999,23 @@ function getPartnerRecordStatus(partner?: Record<string, any> | null): RecordSta
   if (partner.record_status === 'passive' || isSoftDeletedRecord(partner) || partner.status === 'Pasif') return 'passive'
   if (partner.record_status === 'active' || partner.status === 'Aktif') return 'active'
   return 'draft'
+}
+
+function buildPartnerSelectedCompanyOption(partner: Record<string, any> | null, companies: CompanyOption[]): CompanyOption | null {
+  const companyId = String(partner?.company_id || '')
+  if (!companyId || companies.some(company => company.value === companyId)) return null
+  const rawLabel = optionalString(partner?.company_name || partner?.company?.short_name || partner?.company?.trade_name)
+  return {
+    value: companyId,
+    label: rawLabel || companyId,
+    record_status: 'active',
+    company_status: 'active',
+  }
+}
+
+function mergeCompanyOptions(options: CompanyOption[], selected: CompanyOption | null) {
+  if (!selected || options.some(option => option.value === selected.value)) return options
+  return [selected, ...options]
 }
 
 function formatCompanyOptionLabel(company: Record<string, any>) {

@@ -1200,7 +1200,7 @@ export function SmartDataTable<T extends { id: string }>({
       
       return (
         <div className={cn(
-          'w-10 h-10 overflow-hidden flex items-center justify-center flex-shrink-0 shadow-sm',
+          'h-11 w-11 overflow-hidden flex items-center justify-center flex-shrink-0 shadow-sm',
           imageShape === 'rounded' ? 'rounded-lg' : 'rounded-full',
           imageFit === 'contain'
             ? 'border border-gray-200 bg-transparent dark:border-gray-700'

@@ -18,7 +18,7 @@
  * />
  */
 
-import { useState, useRef, useCallback, useMemo, useEffect } from 'react'
+import { useState, useRef, useCallback, useMemo, useEffect, type ReactNode } from 'react'
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -274,8 +274,22 @@ function isLikelyImageThumbnailUrl(value?: string) {
 function canRenderDocumentThumbnail(doc?: SlotDocument | null, thumbnailUrl?: string) {
   if (!doc || !thumbnailUrl || isFallbackDocumentThumbnailUrl(thumbnailUrl)) return false
   if (isImageDocument(doc)) return true
-  if (doc.thumbnailPath) return true
+  if (doc.thumbnailPath && isLikelyImageThumbnailUrl(doc.thumbnailPath)) return true
   return !!doc.thumbnailUrl && isLikelyImageThumbnailUrl(thumbnailUrl)
+}
+
+type DocumentThumbnailImageProps = {
+  doc?: SlotDocument | null
+  thumbnailUrl?: string
+  alt: string
+  className: string
+  fallback: ReactNode
+}
+
+function DocumentThumbnailImage({ doc, thumbnailUrl, alt, className, fallback }: DocumentThumbnailImageProps) {
+  const [failed, setFailed] = useState(false)
+  if (failed || !canRenderDocumentThumbnail(doc, thumbnailUrl)) return <>{fallback}</>
+  return <img src={thumbnailUrl} alt={alt} className={className} onError={() => setFailed(true)} />
 }
 
 function getDocumentTimestamp(doc?: SlotDocument | null) {
@@ -834,21 +848,20 @@ export function DocumentSlotUploader({
             const Icon = config.icon
             const slotTitle = allSlots.find(slot => slot.id === doc.slotId)?.title || doc.slotTitle || doc.slotId
             const active = isActiveDocument(doc)
-            const hasThumb = canRenderDocumentThumbnail(doc, thumbUrl)
-
             return (
               <div key={`${getDocumentIdentity(doc)}:${index}`} className="flex items-center gap-3 px-4 py-3">
-                {hasThumb ? (
-                  <img
-                    src={thumbUrl}
-                    alt={doc.name}
-                    className="h-11 w-8 shrink-0 rounded border border-gray-200 object-cover object-top bg-white shadow-sm dark:border-gray-700"
-                  />
-                ) : (
-                  <div className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-lg", config.bgColor)}>
-                    <Icon size={18} className={config.color} />
-                  </div>
-                )}
+                <DocumentThumbnailImage
+                  key={thumbUrl || getDocumentIdentity(doc)}
+                  doc={doc}
+                  thumbnailUrl={thumbUrl}
+                  alt={doc.name}
+                  className="h-11 w-8 shrink-0 rounded border border-gray-200 object-cover object-top bg-white shadow-sm dark:border-gray-700"
+                  fallback={(
+                    <div className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-lg", config.bgColor)}>
+                      <Icon size={18} className={config.color} />
+                    </div>
+                  )}
+                />
                 <div className="min-w-0 flex-1">
                   <button
                     type="button"
@@ -969,22 +982,21 @@ export function DocumentSlotUploader({
             ) : ''
             const config = getFileTypeConfig(getEffectiveDocumentType(doc))
             const Icon = config.icon
-            const hasThumb = canRenderDocumentThumbnail(doc, thumbUrl)
-
             return (
               <div key={slot.id}>
                 <div className="flex items-center gap-3 px-4 py-3">
-                  {hasThumb ? (
-                    <img
-                      src={thumbUrl}
-                      alt={doc?.name || slot.title}
-                      className="h-11 w-8 shrink-0 rounded border border-gray-200 object-cover object-top bg-white shadow-sm dark:border-gray-700"
-                    />
-                  ) : (
-                    <div className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-lg", config.bgColor)}>
-                      <Icon size={18} className={config.color} />
-                    </div>
-                  )}
+                  <DocumentThumbnailImage
+                    key={thumbUrl || doc?.documentId || slot.id}
+                    doc={doc}
+                    thumbnailUrl={thumbUrl}
+                    alt={doc?.name || slot.title}
+                    className="h-11 w-8 shrink-0 rounded border border-gray-200 object-cover object-top bg-white shadow-sm dark:border-gray-700"
+                    fallback={(
+                      <div className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-lg", config.bgColor)}>
+                        <Icon size={18} className={config.color} />
+                      </div>
+                    )}
+                  />
                   <div className="min-w-0 flex-1">
                     <div className="flex min-w-0 items-center gap-2">
                       <span className="shrink-0 text-sm font-semibold text-gray-900 dark:text-white">{slot.title}</span>
@@ -1266,15 +1278,14 @@ export function DocumentSlotUploader({
             <div className="relative flex-1 flex flex-col p-3 group">
               {/* File Preview / Thumbnail */}
               <div className="flex-1 flex items-center justify-center">
-                {hasVisualThumbnail ? (
-                  <img
-                    src={currentDocThumbnailUrl}
-                    alt={currentDoc.name}
-                    className="h-full min-h-36 w-full rounded border border-gray-200 object-cover object-top shadow-sm dark:border-gray-700"
-                  />
-                ) : (
-                  documentFallback
-                )}
+                <DocumentThumbnailImage
+                  key={currentDocThumbnailUrl || getDocumentIdentity(currentDoc)}
+                  doc={currentDoc}
+                  thumbnailUrl={currentDocThumbnailUrl}
+                  alt={currentDoc.name}
+                  className="h-full min-h-36 w-full rounded border border-gray-200 object-cover object-top shadow-sm dark:border-gray-700"
+                  fallback={documentFallback}
+                />
               </div>
 
               {/* File Info */}
