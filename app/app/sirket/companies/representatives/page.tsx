@@ -1831,7 +1831,7 @@ function normalizeRepresentativeForForm(representative: RepresentativeRow) {
     ...profile,
     ...representative,
     company_id: (representative as any).company_id || representative.company_id,
-    person_or_entity_type: normalizeRepresentativeEntityType(profile.person_or_entity_type || representative.person_kind),
+    person_or_entity_type: normalizeRepresentativeEntityType(profile.person_or_entity_type || (representative as any).person_or_entity_type || representative.person_kind),
     first_name: masterFields.first_name || '',
     last_name: masterFields.last_name || '',
     trade_name: masterFields.trade_name || masterFields.legal_name || '',

@@ -191,13 +191,13 @@ export function createRealPersonMasterTabs({
           hideLabel: true,
           type: 'custom',
           colSpan: 3,
-          render: ({ value, onChange, data, readOnly }) => (
+          render: ({ value, onChange, data, mode }) => (
             <EntityBankAccountsPanel
               entityKind="person"
               entityId={data.master_record_id || data.person_id}
               masterName={data.full_name || data.display_name || [data.first_name, data.last_name].filter(Boolean).join(' ')}
               masterCountry={data.nationality_country || data.country || data.nationality}
-              readOnly={readOnly}
+              readOnly={mode === 'view' || mode === 'passive'}
               value={Array.isArray(value) ? value : data.entity_bank_accounts}
               onChange={onChange}
             />

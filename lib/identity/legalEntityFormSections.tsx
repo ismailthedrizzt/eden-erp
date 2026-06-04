@@ -79,13 +79,13 @@ export function createLegalEntityMasterTabs({
           hideLabel: true,
           type: 'custom',
           colSpan: 3,
-          render: ({ value, onChange, data, readOnly }) => (
+          render: ({ value, onChange, data, mode }) => (
             <EntityBankAccountsPanel
               entityKind="organization"
               entityId={data.master_record_id || data.organization_id}
               masterName={data.legal_name || data.trade_name || data.trade_name || data.display_name || data.short_name}
               masterCountry={data.country || data.country}
-              readOnly={readOnly}
+              readOnly={mode === 'view' || mode === 'passive'}
               value={Array.isArray(value) ? value : data.entity_bank_accounts}
               onChange={onChange}
             />
