@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.exceptions import RequestValidationError
+from fastapi.encoders import jsonable_encoder
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from sqlalchemy.exc import SQLAlchemyError
@@ -107,7 +108,7 @@ def create_app() -> FastAPI:
                 "error": "Gonderilen bilgiler kontrol edilmeli.",
                 "code": "VALIDATION_ERROR",
                 "message": "Gonderilen bilgiler kontrol edilmeli.",
-                "details": {"fields": error.errors()},
+                "details": {"fields": jsonable_encoder(error.errors())},
                 **ids,
             },
         )
