@@ -5,6 +5,8 @@ from __future__ import annotations
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, status
+from pydantic import BaseModel
+from sqlalchemy import bindparam, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_session
@@ -48,6 +50,222 @@ from app.schemas.common import ApiSuccess
 router = APIRouter(dependencies=[Depends(require_access_context)])
 RequestContextDep = Annotated[RequestContext, Depends(require_access_context)]
 SessionDep = Annotated[AsyncSession, Depends(get_session)]
+
+
+
+
+class TenantWorkspaceMutation(BaseModel):
+    tenant_id: str
+
+
+def tenant_role_label(role_key: str | None) -> str | None:
+    labels = {
+        "yonetici": "Yonetici",
+        "admin": "Yonetici",
+        "owner": "Sahip",
+        "member": "Kullanici",
+        "viewer": "Izleyici",
+    }
+    return labels.get(str(role_key or "").lower(), role_key)
+
+
+def _digits(value: str | None) -> str:
+    return "".join(ch for ch in str(value or "") if ch.isdigit())
+
+
+def _phone_candidates(value: str | None) -> list[str]:
+    digits = _digits(value)
+    if not digits:
+        return []
+    candidates = {digits}
+    if digits.startswith("90") and len(digits) == 12:
+        candidates.add(digits[2:])
+    if digits.startswith("0") and len(digits) == 11:
+        candidates.add(digits[1:])
+    if len(digits) == 10:
+        candidates.add(f"90{digits}")
+        candidates.add(f"0{digits}")
+    return sorted(candidates)
+
+
+async def _related_person_ids(session: AsyncSession, user_id: str | None) -> list[str]:
+    if not user_id:
+        return []
+    result = await session.execute(
+        text(
+            """
+            select id, email, phone
+            from public.persons
+            where id::text = :user_id and is_deleted = false
+            limit 1
+            """
+        ),
+        {"user_id": user_id},
+    )
+    person = result.mappings().one_or_none()
+    if not person:
+        return [user_id]
+
+    ids = {str(person["id"])}
+    phone_candidates = _phone_candidates(person.get("phone"))
+    email = str(person.get("email") or "").strip().lower()
+
+    if phone_candidates:
+        related = await session.execute(
+            text(
+                """
+                select id
+                from public.persons
+                where is_deleted = false
+                  and regexp_replace(coalesce(phone, ''), '[^0-9]', '', 'g') in :phones
+                """
+            ).bindparams(bindparam("phones", expanding=True)),
+            {"phones": phone_candidates},
+        )
+        ids.update(str(row["id"]) for row in related.mappings().all() if row.get("id"))
+
+    if email:
+        related = await session.execute(
+            text(
+                """
+                select id
+                from public.persons
+                where is_deleted = false and lower(coalesce(email, '')) = :email
+                """
+            ),
+            {"email": email},
+        )
+        ids.update(str(row["id"]) for row in related.mappings().all() if row.get("id"))
+
+    return sorted(ids)
+
+
+def _metadata_value(*sources: Any, key: str) -> str | None:
+    for source in sources:
+        if isinstance(source, dict):
+            value = source.get(key)
+            if isinstance(value, str) and value.strip():
+                return value.strip()
+    return None
+
+
+def _workspace_payload(row: dict[str, Any], current_tenant_id: str | None) -> dict[str, Any]:
+    workspace_meta = row.get("workspace_metadata") if isinstance(row.get("workspace_metadata"), dict) else {}
+    instance_meta = row.get("instance_metadata") if isinstance(row.get("instance_metadata"), dict) else {}
+    tenant_id = str(row.get("id") or row.get("tenant_id") or "")
+    return {
+        "id": tenant_id,
+        "name": row.get("name") or "Calisma Alani",
+        "user_id": str(row.get("user_id")) if row.get("user_id") else None,
+        "role_key": row.get("role_key"),
+        "role_label": tenant_role_label(row.get("role_key")),
+        "is_default": bool(row.get("is_default")),
+        "is_current": bool(current_tenant_id and tenant_id == current_tenant_id),
+        "logoUrl": _metadata_value(workspace_meta, instance_meta, key="logoUrl"),
+        "lightLogoUrl": _metadata_value(workspace_meta, instance_meta, key="lightLogoUrl"),
+        "darkLogoUrl": _metadata_value(workspace_meta, instance_meta, key="darkLogoUrl"),
+    }
+
+
+async def _list_workspace_options(
+    session: AsyncSession,
+    context: RequestContext,
+    current_tenant_id: str | None,
+) -> list[dict[str, Any]]:
+    person_ids = await _related_person_ids(session, context.user_id)
+    if not person_ids:
+        return []
+    result = await session.execute(
+        text(
+            """
+            select
+              ei.id,
+              coalesce(ws.workspace_name, ei.name) as name,
+              tm.role_key,
+              tm.is_default,
+              ws.metadata_json as workspace_metadata,
+              ei.metadata_json as instance_metadata,
+              tm.user_id,
+              tm.created_at
+            from public.tenant_memberships tm
+            join public.erp_instances ei on ei.id = tm.tenant_id and ei.status = 'active'
+            left join public.workspace_settings ws on ws.tenant_id = ei.id
+            where tm.status = 'active'
+              and tm.user_id in :person_ids
+            order by tm.is_default desc, tm.created_at asc
+            """
+        ).bindparams(bindparam("person_ids", expanding=True)),
+        {"person_ids": person_ids},
+    )
+    by_tenant: dict[str, dict[str, Any]] = {}
+    for row in result.mappings().all():
+        item = _workspace_payload(dict(row), current_tenant_id)
+        tenant_id = item["id"]
+        if not tenant_id or tenant_id in by_tenant:
+            continue
+        by_tenant[tenant_id] = item
+    return list(by_tenant.values())
+
+
+async def _require_workspace_option(
+    session: AsyncSession,
+    context: RequestContext,
+    target_tenant_id: str,
+) -> dict[str, Any]:
+    options = await _list_workspace_options(session, context, context.tenant_id)
+    for option in options:
+        if option["id"] == target_tenant_id:
+            return option
+    raise DomainError("Bu calisma alanina erisiminiz bulunmuyor.", "TENANT_ACCESS_DENIED", status.HTTP_403_FORBIDDEN)
+
+
+@router.get("/tenants/options", response_model=ApiSuccess[list[dict[str, Any]]])
+async def tenant_options_endpoint(session: SessionDep, context: RequestContextDep) -> ApiSuccess[list[dict[str, Any]]]:
+    tenant_id = require_tenant(context)
+    try:
+        return ApiSuccess(data=await _list_workspace_options(session, context, tenant_id))
+    except DomainError as error:
+        raise domain_error_to_http(error) from error
+
+
+@router.get("/tenants/current", response_model=ApiSuccess[dict[str, Any]])
+async def tenant_current_endpoint(session: SessionDep, context: RequestContextDep) -> ApiSuccess[dict[str, Any]]:
+    tenant_id = require_tenant(context)
+    options = await _list_workspace_options(session, context, tenant_id)
+    current = next((item for item in options if item["id"] == tenant_id), None)
+    if current:
+        return ApiSuccess(data={"workspace": current})
+    raise DomainError("Calisma alani bilgisi dogrulanamadi.", "TENANT_CONTEXT_MISSING", status.HTTP_400_BAD_REQUEST)
+
+
+@router.post("/tenants/switch", response_model=ApiSuccess[dict[str, Any]])
+async def tenant_switch_endpoint(request: TenantWorkspaceMutation, session: SessionDep, context: RequestContextDep) -> ApiSuccess[dict[str, Any]]:
+    try:
+        workspace = await _require_workspace_option(session, context, request.tenant_id)
+        workspace["is_current"] = True
+        return ApiSuccess(data={"workspace": workspace}, message="Calisma alani degistirildi.")
+    except DomainError as error:
+        raise domain_error_to_http(error) from error
+
+
+@router.post("/tenants/default", response_model=ApiSuccess[dict[str, Any]])
+async def tenant_default_endpoint(request: TenantWorkspaceMutation, session: SessionDep, context: RequestContextDep) -> ApiSuccess[dict[str, Any]]:
+    try:
+        workspace = await _require_workspace_option(session, context, request.tenant_id)
+        person_ids = await _related_person_ids(session, context.user_id)
+        await session.execute(
+            text("update public.tenant_memberships set is_default = false where user_id in :person_ids").bindparams(bindparam("person_ids", expanding=True)),
+            {"person_ids": person_ids},
+        )
+        await session.execute(
+            text("update public.tenant_memberships set is_default = true where user_id in :person_ids and tenant_id = :tenant_id").bindparams(bindparam("person_ids", expanding=True)),
+            {"person_ids": person_ids, "tenant_id": request.tenant_id},
+        )
+        await session.commit()
+        workspace["is_default"] = True
+        return ApiSuccess(data={"workspace": workspace}, message="Varsayilan calisma alani guncellendi.")
+    except DomainError as error:
+        raise domain_error_to_http(error) from error
 
 
 @router.get("/users", response_model=ApiSuccess[list[dict[str, Any]]])

@@ -4,7 +4,6 @@ import { useEffect, useMemo, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { ReleaseStatusBadge } from '@/components/release/ReleaseStatusBadge'
 import { cn } from '@/lib/utils'
 import { useModuleLicense } from '@/hooks/useModuleLicense'
 import { useModules } from '@/lib/security/moduleStore'
@@ -462,7 +461,6 @@ export default function Sidebar({ collapsed = false, mobileOpen = false, onMobil
                 className={cn('ni', isActive && 'active', isItemDisabled && 'opacity-60')}>
             <span className={cn('flex-shrink-0 opacity-60', isActive && 'opacity-90')}>{item.icon}</span>
             {!collapsed && <span className="flex-1">{item.label}</span>}
-            {!collapsed && itemReleaseDecision && <ReleaseStatusBadge status={itemReleaseDecision.status} />}
             {!collapsed && <SidebarVisibilityBadge decision={visibilityDecision} />}
           </Link>
         ) : (
@@ -537,7 +535,6 @@ export default function Sidebar({ collapsed = false, mobileOpen = false, onMobil
                 >
                   <span className="w-1.5 h-1.5 rounded-full bg-current opacity-50 flex-shrink-0" />
                   <span className="min-w-0 flex-1 truncate">{child.label}</span>
-                  <ReleaseStatusBadge status={childReleaseDecision.status} />
                   <SidebarVisibilityBadge decision={childDecision} />
                   {pageVersionInfo && <SidebarVersionBadge info={pageVersionInfo} compact />}
                 </Link>

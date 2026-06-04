@@ -7,6 +7,7 @@ import 'server-only'
 
 import { NextRequest, NextResponse } from 'next/server'
 import { resolveTenantContext } from '@/lib/tenancy/server'
+import { APP_SESSION_COOKIE_NAME, verifyAppSessionToken } from '@/lib/auth/appSession'
 
 type FastApiQuery = URLSearchParams | Record<string, string | number | boolean | null | undefined>
 
@@ -49,13 +50,14 @@ export function buildFastApiUrl(path: string, query?: FastApiQuery) {
 
 export async function buildBackendHeaders(request: NextRequest, options: ProxyOptions = {}) {
   const tenantContext = resolveTenantContext(request)
+  const appSession = await verifyAppSessionToken(request.cookies.get(APP_SESSION_COOKIE_NAME)?.value)
   const headers = new Headers()
   const requestId = options.requestId || request.headers.get('x-request-id') || crypto.randomUUID()
   const correlationId = options.correlationId || request.headers.get('x-correlation-id') || requestId
   headers.set('accept', request.headers.get('accept') || 'application/json')
   headers.set('content-type', request.headers.get('content-type') || 'application/json')
   headers.set('x-tenant-id', options.tenantId || tenantContext.tenantId)
-  const userId = (options.userId || request.headers.get('x-user-id') || '').trim()
+  const userId = (options.userId || request.headers.get('x-user-id') || appSession?.userId || '').trim()
   if (userId) headers.set('x-user-id', userId)
   if (request.headers.get('x-user-permissions')) {
     headers.set('x-user-permissions', request.headers.get('x-user-permissions') || '')
