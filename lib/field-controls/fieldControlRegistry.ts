@@ -17,7 +17,7 @@ const operations = {
   addressChange: op('address_change', 'Adres Degisikligi', 'address_change', TARGETS.companies),
   publicRegistrationUpdate: op('public_registration_update', 'Kamu / Tescil Bilgisi Guncelleme', 'public_registration_update', TARGETS.companies),
   capitalIncrease: op('capital_increase', 'Sermaye Artirimi', 'capital_increase', TARGETS.companies),
-  capitalDecrease: op('capital_decrease', 'Sermaye Azaltimi On Kontrol', 'capital_decrease', TARGETS.companies),
+  capitalDecrease: op('capital_decrease', 'Sermaye Azaltımı', 'capital_decrease', TARGETS.companies),
   capitalIncreaseDecrease: op('capital_increase', 'Sermaye Artirimi / Sermaye Azaltimi', 'capital_increase', TARGETS.companies),
   capitalPayment: op('capital_payment', 'Sermaye Odeme / Muhasebe Islemi', 'capital_payment', TARGETS.companies),
   naceChange: op('nace_change', 'NACE / Faaliyet Kodu Guncelleme', 'nace_change', TARGETS.companies),

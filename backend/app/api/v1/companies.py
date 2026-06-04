@@ -1,12 +1,14 @@
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, Query
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_session
 from app.core.errors import DomainError, domain_error_to_http
 from app.core.security import RequestContext, require_access_context, require_tenant
 from app.domains.company.capital import (
+    build_capital_decrease_precheck_for_request,
     build_capital_increase_precheck_for_request,
     complete_capital_increase_for_request,
 )
@@ -36,6 +38,7 @@ from app.domains.company.service import (
     get_company_by_id,
     update_company_card,
 )
+from app.domains.operations.service import table_exists
 from app.projections.company import build_company_detail_read_model, list_company_projection
 from app.projections.current_ownership import current_ownership_projection
 from app.projections.query import projection_query_from_params
@@ -157,6 +160,61 @@ def _company_lifecycle_wizard_context(data: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _lifecycle_row_to_dict(row: Any | None) -> dict[str, Any]:
+    if not row:
+        return {}
+    return dict(row)
+
+
+async def _latest_company_related_row(
+    session: AsyncSession,
+    *,
+    tenant_id: str,
+    company_id: str,
+    table_name: str,
+) -> dict[str, Any]:
+    if not await table_exists(session, f"public.{table_name}"):
+        return {}
+    result = await session.execute(
+        text(
+            f"""
+            select *
+            from public.{table_name}
+            where tenant_id = :tenant_id
+              and company_id = :company_id
+            order by updated_at desc nulls last, created_at desc nulls last
+            limit 1
+            """
+        ),
+        {"tenant_id": tenant_id, "company_id": company_id},
+    )
+    return _lifecycle_row_to_dict(result.mappings().one_or_none())
+
+
+async def _company_lifecycle_events(
+    session: AsyncSession,
+    *,
+    tenant_id: str,
+    company_id: str,
+) -> list[dict[str, Any]]:
+    if not await table_exists(session, "public.company_lifecycle_events"):
+        return []
+    result = await session.execute(
+        text(
+            """
+            select *
+            from public.company_lifecycle_events
+            where tenant_id = :tenant_id
+              and company_id = :company_id
+            order by event_date desc nulls last, created_at desc nulls last
+            limit 50
+            """
+        ),
+        {"tenant_id": tenant_id, "company_id": company_id},
+    )
+    return [dict(row) for row in result.mappings()]
+
+
 async def _build_company_lifecycle_wizard_context(
     session: AsyncSession,
     *,
@@ -164,6 +222,29 @@ async def _build_company_lifecycle_wizard_context(
     company_id: str,
 ) -> dict[str, Any]:
     data = await build_company_detail_read_model(
+        session,
+        tenant_id=tenant_id,
+        company_id=company_id,
+    )
+    data["opening_details"] = await _latest_company_related_row(
+        session,
+        tenant_id=tenant_id,
+        company_id=company_id,
+        table_name="company_opening_details",
+    )
+    data["liquidation_details"] = await _latest_company_related_row(
+        session,
+        tenant_id=tenant_id,
+        company_id=company_id,
+        table_name="company_liquidation_details",
+    )
+    data["deregistration_details"] = await _latest_company_related_row(
+        session,
+        tenant_id=tenant_id,
+        company_id=company_id,
+        table_name="company_deregistration_details",
+    )
+    data["lifecycle_events"] = await _company_lifecycle_events(
         session,
         tenant_id=tenant_id,
         company_id=company_id,
@@ -292,6 +373,28 @@ async def capital_increase_precheck(
     tenant_id = require_tenant(context)
     try:
         data = await build_capital_increase_precheck_for_request(
+            session=session,
+            tenant_id=tenant_id,
+            user_id=context.user_id,
+            company_id=company_id,
+        )
+        return ApiSuccess(data=data, warnings=data.get("warnings", []), message=data.get("message"))
+    except DomainError as error:
+        raise domain_error_to_http(error) from error
+
+
+@router.get(
+    "/{company_id}/capital-decreases/precheck",
+    response_model=ApiSuccess[dict[str, Any]],
+)
+async def capital_decrease_precheck(
+    company_id: str,
+    session: SessionDep,
+    context: RequestContextDep,
+) -> ApiSuccess[dict[str, Any]]:
+    tenant_id = require_tenant(context)
+    try:
+        data = await build_capital_decrease_precheck_for_request(
             session=session,
             tenant_id=tenant_id,
             user_id=context.user_id,

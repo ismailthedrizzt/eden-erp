@@ -1557,7 +1557,7 @@ export default function SirketlerPage() {
       },
       {
         key: 'capital_decrease',
-        label: status === 'active' ? 'Sermaye Azaltımı Ön Kontrol' : 'Sermaye Azaltımı Hazırlanıyor',
+        label: 'Sermaye Azaltımı',
         icon: <TrendingDown size={16} />,
         onClick: openCapitalDecreaseWizard,
         disabled: status !== 'active',

@@ -693,6 +693,62 @@ async def complete_capital_increase(
         ) from error
 
 
+async def build_capital_decrease_precheck_for_request(
+    session: AsyncSession,
+    *,
+    tenant_id: str,
+    user_id: str | None,
+    company_id: str,
+) -> dict[str, Any]:
+    context = _context(tenant_id, user_id, company_id)
+    company = await get_company_by_id(session, tenant_id, company_id)
+    warnings: list[str] = []
+    blocking_reasons: list[str] = []
+    lifecycle = get_company_lifecycle(company)
+    is_company_active = lifecycle in {"active", "aktif", "opened", "open"}
+    if not company:
+        blocking_reasons.append("Şirket kaydı bulunamadı.")
+    elif not is_company_active:
+        blocking_reasons.append("Sermaye azaltımı yalnızca aktif şirketlerde başlatılabilir.")
+
+    ownership_rows: list[CurrentOwnershipRow] = []
+    if company:
+        try:
+            ownership_rows = await assert_current_ownership_readable(session, tenant_id, company_id)
+        except DomainError as error:
+            blocking_reasons.append(error.message)
+
+    current_capital = await _company_capital_amount(session, tenant_id, company) if company else 0
+    paid_capital = number_value(company.get("paid_capital_amount")) if company else 0
+    ok = not blocking_reasons
+    return {
+        "ok": ok,
+        "operation_enabled": ok,
+        "message": "Sermaye azaltımı başlatılabilir." if ok else blocking_reasons[0],
+        "warnings": warnings,
+        "reasons": blocking_reasons,
+        "blocking_reasons": blocking_reasons,
+        "is_company_active": is_company_active,
+        "company_status": lifecycle,
+        "record_status": company.get("record_status") if company else None,
+        "current_capital_amount": round_money(current_capital),
+        "paid_capital_amount": round_money(paid_capital),
+        "partner_count": len(ownership_rows),
+        "required_fields": [
+            "Genel kurul / ortaklar kurulu kararı",
+            "Sermaye azaltımı gerekçesi",
+            "Alacaklılara çağrı ve ilan belgeleri",
+            "Ticaret sicili başvuru evrakı",
+        ],
+        "current_ownership_distribution": [
+            _ownership_as_partner_snapshot(row) for row in ownership_rows
+        ],
+        "current_ownership": ownership_rows,
+        "company": company,
+        "context": context,
+    }
+
+
 async def build_capital_increase_precheck_for_request(
     session: AsyncSession,
     *,

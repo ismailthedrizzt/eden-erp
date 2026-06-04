@@ -39,7 +39,7 @@ export function CompanyCapitalDecreaseWizard({
       <div className="flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-lg border border-gray-200 bg-white shadow-2xl dark:border-gray-800 dark:bg-gray-950">
         <div className="flex items-start justify-between gap-4 border-b border-gray-100 px-5 py-4 dark:border-gray-800">
           <div>
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Sermaye Azaltımı Ön Kontrol</h2>
+            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Sermaye Azaltımı</h2>
             <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">{companyName}</p>
           </div>
           <button type="button" aria-label="Sermaye azaltımı penceresini kapat" onClick={onClose} className="inline-grid h-9 w-9 place-items-center rounded-lg border border-gray-200 text-gray-500 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-900">
