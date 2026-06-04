@@ -5,14 +5,12 @@ from __future__ import annotations
 import asyncio
 import base64
 import hashlib
-import json
 import mimetypes
+import os
 import re
-import urllib.error
 import urllib.parse
-import urllib.request
 from dataclasses import dataclass
-from pathlib import PurePosixPath
+from pathlib import Path, PurePosixPath
 from typing import Any
 
 from fastapi import status
@@ -21,6 +19,7 @@ from app.core.config import get_settings
 from app.core.errors import DomainError
 
 DEFAULT_BUCKET = "eden-documents"
+LOCAL_STORAGE_PROVIDER = "local"
 MAX_FILE_SIZE = 20 * 1024 * 1024
 SIGNED_URL_EXPIRES_IN = 300
 ALLOWED_EXTENSIONS = {
@@ -147,8 +146,9 @@ async def prepare_storage_file(
     )
     validate_storage_path(path, str(context["tenant_id"]))
     checksum = hashlib.sha256(content).hexdigest() if content is not None else None
+    normalized_provider = LOCAL_STORAGE_PROVIDER
     if content is not None:
-        await upload_to_storage(bucket, path, content, inferred_mime, storage_provider)
+        await upload_to_storage(bucket, path, content, inferred_mime, normalized_provider)
     return StoragePreparedFile(
         file_name=safe_name,
         file_extension=file_extension(safe_name).lstrip(".") or None or "",
@@ -157,7 +157,7 @@ async def prepare_storage_file(
         checksum=checksum,
         storage_bucket=bucket,
         storage_path=path,
-        storage_provider=storage_provider,
+        storage_provider=normalized_provider,
         metadata={"storage_path_masked": mask_storage_path(path)},
     )
 
@@ -165,7 +165,7 @@ async def prepare_storage_file(
 def validate_storage_path(path: str, tenant_id: str) -> None:
     if not path or path.startswith("/") or ".." in path or re.match(r"^https?://", path, re.I):
         raise DomainError("Gecersiz storage path.", "DOCUMENT_STORAGE_PATH_INVALID", status.HTTP_400_BAD_REQUEST)
-    if f"tenant/{tenant_id}/" not in path:
+    if tenant_id not in path:
         raise DomainError("Storage path calisma alani kapsami disinda.", "DOCUMENT_STORAGE_SCOPE_DENIED", status.HTTP_403_FORBIDDEN)
 
 
@@ -177,56 +177,53 @@ def mask_storage_path(path: str) -> str:
 
 
 async def upload_to_storage(bucket: str, path: str, content: bytes, mime_type: str, provider: str) -> None:
-    if provider != "supabase":
-        raise DomainError("Storage provider desteklenmiyor.", "DOCUMENT_STORAGE_PROVIDER_UNSUPPORTED", status.HTTP_409_CONFLICT, {"provider": provider})
-    settings = get_settings()
-    if not settings.supabase_url or not settings.supabase_service_role_key:
-        raise DomainError("Supabase Storage yapilandirilmamis.", "DOCUMENT_STORAGE_NOT_CONFIGURED", status.HTTP_503_SERVICE_UNAVAILABLE)
-    await asyncio.to_thread(_supabase_upload_sync, settings.supabase_url, settings.supabase_service_role_key, bucket, path, content, mime_type)
+    normalized_provider = (provider or LOCAL_STORAGE_PROVIDER).lower()
+    if normalized_provider != LOCAL_STORAGE_PROVIDER:
+        normalized_provider = LOCAL_STORAGE_PROVIDER
+    await asyncio.to_thread(_local_upload_sync, bucket, path, content)
 
 
 async def create_signed_url(bucket: str, path: str, provider: str, *, expires_in: int = SIGNED_URL_EXPIRES_IN) -> str:
-    if provider != "supabase":
-        raise DomainError("Storage provider desteklenmiyor.", "DOCUMENT_STORAGE_PROVIDER_UNSUPPORTED", status.HTTP_409_CONFLICT, {"provider": provider})
+    return local_media_url(bucket, path)
+
+
+def local_media_url(bucket: str, path: str, *, download: bool = False) -> str:
+    query = urllib.parse.urlencode({
+        "storageBucket": bucket or DEFAULT_BUCKET,
+        "storagePath": path,
+        "download": "1" if download else "0",
+    })
+    return f"/api/media/open?{query}"
+
+
+def local_storage_root() -> Path:
     settings = get_settings()
-    if not settings.supabase_url or not settings.supabase_service_role_key:
-        raise DomainError("Signed URL servisi yapilandirilmamis.", "DOCUMENT_STORAGE_NOT_CONFIGURED", status.HTTP_503_SERVICE_UNAVAILABLE)
-    return await asyncio.to_thread(_supabase_signed_url_sync, settings.supabase_url, settings.supabase_service_role_key, bucket, path, expires_in)
+    root = Path(settings.document_storage_root).expanduser()
+    if not root.is_absolute():
+        repo_root = Path(__file__).resolve().parents[4]
+        root = repo_root / root
+    return root.resolve()
 
 
-def _supabase_headers(service_role_key: str, content_type: str = "application/json") -> dict[str, str]:
-    return {
-        "Authorization": f"Bearer {service_role_key}",
-        "apikey": service_role_key,
-        "Content-Type": content_type,
-    }
+def local_storage_file_path(bucket: str, path: str) -> Path:
+    safe_bucket = safe_path_part(bucket or DEFAULT_BUCKET)
+    root = local_storage_root()
+    target = (root / safe_bucket / path).resolve()
+    allowed_root = (root / safe_bucket).resolve()
+    if os.path.commonpath([str(allowed_root), str(target)]) != str(allowed_root):
+        raise DomainError("Gecersiz storage path.", "DOCUMENT_STORAGE_PATH_INVALID", status.HTTP_400_BAD_REQUEST)
+    return target
 
 
-def _supabase_upload_sync(supabase_url: str, service_role_key: str, bucket: str, path: str, content: bytes, mime_type: str) -> None:
-    url = f"{supabase_url.rstrip('/')}/storage/v1/object/{urllib.parse.quote(bucket)}/{urllib.parse.quote(path)}"
-    request = urllib.request.Request(url, data=content, method="POST", headers={**_supabase_headers(service_role_key, mime_type), "x-upsert": "false"})
-    try:
-        with urllib.request.urlopen(request, timeout=20):
-            return
-    except urllib.error.HTTPError as exc:
-        body = exc.read().decode("utf-8", errors="ignore")
-        raise DomainError("Dosya storage'a yuklenemedi.", "DOCUMENT_STORAGE_UPLOAD_FAILED", status.HTTP_502_BAD_GATEWAY, {"status": exc.code, "reason": body[:300]}) from exc
+def _local_upload_sync(bucket: str, path: str, content: bytes) -> None:
+    target = local_storage_file_path(bucket, path)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_bytes(content)
 
 
-def _supabase_signed_url_sync(supabase_url: str, service_role_key: str, bucket: str, path: str, expires_in: int) -> str:
-    encoded_path = urllib.parse.quote(path)
-    url = f"{supabase_url.rstrip('/')}/storage/v1/object/sign/{urllib.parse.quote(bucket)}/{encoded_path}"
-    payload = json.dumps({"expiresIn": expires_in}).encode("utf-8")
-    request = urllib.request.Request(url, data=payload, method="POST", headers=_supabase_headers(service_role_key))
-    try:
-        with urllib.request.urlopen(request, timeout=10) as response:
-            data = json.loads(response.read().decode("utf-8"))
-    except urllib.error.HTTPError as exc:
-        body = exc.read().decode("utf-8", errors="ignore")
-        raise DomainError("Signed URL uretilemedi.", "DOCUMENT_SIGNED_URL_FAILED", status.HTTP_502_BAD_GATEWAY, {"status": exc.code, "reason": body[:300]}) from exc
-    signed = str(data.get("signedURL") or data.get("signedUrl") or "")
-    if not signed:
-        raise DomainError("Signed URL cevabi gecersiz.", "DOCUMENT_SIGNED_URL_INVALID", status.HTTP_502_BAD_GATEWAY)
-    if signed.startswith("http"):
-        return signed
-    return f"{supabase_url.rstrip('/')}{signed}"
+def local_file_metadata(bucket: str, path: str) -> dict[str, Any]:
+    target = local_storage_file_path(bucket, path)
+    if not target.exists() or not target.is_file():
+        raise DomainError("Belge yerel storage alaninda bulunamadi.", "DOCUMENT_LOCAL_FILE_NOT_FOUND", status.HTTP_404_NOT_FOUND, {"storage_path": mask_storage_path(path)})
+    mime_type = mimetypes.guess_type(target.name)[0] or "application/octet-stream"
+    return {"path": target, "file_name": target.name, "mime_type": mime_type, "file_size": target.stat().st_size}

@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, Query, status
+from fastapi.responses import FileResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_session
@@ -17,7 +18,7 @@ from app.domains.documents.schemas import (
     DocumentUpdateRequest,
     DocumentUploadRequest,
 )
-from app.domains.documents.storage import DEFAULT_BUCKET, SIGNED_URL_EXPIRES_IN, create_signed_url
+from app.domains.documents.storage import DEFAULT_BUCKET, SIGNED_URL_EXPIRES_IN, create_signed_url, local_file_metadata, validate_storage_path
 from app.domains.documents.service import (
     create_document,
     create_new_version,
@@ -170,7 +171,7 @@ async def documents_upload_signed_url(
     if str(tenant_id) not in storage_path:
         raise DomainError("Storage path calisma alani kapsami disinda.", "DOCUMENT_STORAGE_SCOPE_DENIED", status.HTTP_403_FORBIDDEN)
     storage_bucket = str(payload.get("storageBucket") or payload.get("storage_bucket") or DEFAULT_BUCKET)
-    storage_provider = str(payload.get("storageProvider") or payload.get("storage_provider") or "supabase")
+    storage_provider = str(payload.get("storageProvider") or payload.get("storage_provider") or "local")
     expires_in = int(payload.get("expiresIn") or payload.get("expires_in") or SIGNED_URL_EXPIRES_IN)
     signed_url = await create_signed_url(storage_bucket, storage_path, storage_provider, expires_in=expires_in)
     return {
@@ -178,6 +179,44 @@ async def documents_upload_signed_url(
         "expiresIn": expires_in,
         "storagePath": storage_path,
         "storageBucket": storage_bucket,
+    }
+
+
+@router.get("/documents/media/open")
+async def documents_media_open(
+    context: RequestContextDep,
+    storage_path: str = Query(alias="storagePath"),
+    storage_bucket: str = Query(default=DEFAULT_BUCKET, alias="storageBucket"),
+    download: bool = Query(default=False),
+) -> FileResponse:
+    tenant_id = require_tenant(context)
+    validate_storage_path(storage_path, str(tenant_id))
+    metadata = local_file_metadata(storage_bucket, storage_path)
+    disposition = "attachment" if download else "inline"
+    file_name = str(metadata["file_name"]).replace('"', "")
+    return FileResponse(
+        metadata["path"],
+        media_type=metadata["mime_type"],
+        filename=file_name,
+        headers={"content-disposition": f'{disposition}; filename="{file_name}"'},
+    )
+
+
+@router.get("/documents/media/metadata")
+async def documents_media_metadata(
+    context: RequestContextDep,
+    storage_path: str = Query(alias="storagePath"),
+    storage_bucket: str = Query(default=DEFAULT_BUCKET, alias="storageBucket"),
+) -> dict[str, Any]:
+    tenant_id = require_tenant(context)
+    validate_storage_path(storage_path, str(tenant_id))
+    metadata = local_file_metadata(storage_bucket, storage_path)
+    return {
+        "storagePath": storage_path,
+        "storageBucket": storage_bucket,
+        "name": metadata["file_name"],
+        "type": metadata["mime_type"],
+        "size": metadata["file_size"],
     }
 
 

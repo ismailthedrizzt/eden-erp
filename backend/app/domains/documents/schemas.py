@@ -37,7 +37,7 @@ class DocumentCreateRequest(BaseModel):
     file_size: int = Field(default=0, ge=0)
     storage_bucket: str | None = None
     storage_path: str | None = None
-    storage_provider: str = "supabase"
+    storage_provider: str = "local"
     checksum: str | None = None
     status: DocumentStatus = "uploaded"
     verification_status: VerificationStatus = "not_required"
@@ -64,7 +64,7 @@ class DocumentUploadRequest(BaseModel):
     content_base64: str | None = None
     storage_bucket: str | None = None
     storage_path: str | None = None
-    storage_provider: str = "supabase"
+    storage_provider: str = "local"
     required: bool = False
     verification_required: bool = False
     issue_date: date | None = None

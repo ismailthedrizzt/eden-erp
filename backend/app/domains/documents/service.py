@@ -35,6 +35,7 @@ from app.domains.documents.schemas import (
 from app.domains.documents.storage import (
     SIGNED_URL_EXPIRES_IN,
     create_signed_url,
+    local_media_url,
     mask_storage_path,
     prepare_storage_file,
     sanitize_file_name,
@@ -143,7 +144,7 @@ async def create_document(session: AsyncSession, context: dict[str, Any], reques
     file_name = sanitize_file_name(request.file_name)
     extension = file_name.rsplit(".", 1)[1].lower() if "." in file_name else None
     payload = request.model_dump(mode="json")
-    payload.update({"id": document_id, "file_name": file_name, "file_extension": extension, "uploaded_by": context.get("user_id"), "storage_path": request.storage_path or "", "storage_bucket": request.storage_bucket or "eden-documents"})
+    payload.update({"id": document_id, "file_name": file_name, "file_extension": extension, "uploaded_by": context.get("user_id"), "storage_path": request.storage_path or "", "storage_bucket": request.storage_bucket or "eden-documents", "storage_provider": request.storage_provider or "local"})
     row = await _insert_document(session, context, payload)
     await _insert_relation(session, context, document_id, request.owner_entity_type, request.owner_entity_id, request.relation_type)
     await _log_access(session, context, document_id, "upload")
@@ -299,8 +300,11 @@ async def reject_document(session: AsyncSession, context: dict[str, Any], docume
 async def get_document_url(session: AsyncSession, context: dict[str, Any], document_id: str, *, action: str) -> dict[str, Any]:
     document = await _load_document(session, context, document_id)
     assert_document_access(context, document)
-    url = await create_signed_url(str(document["storage_bucket"]), str(document["storage_path"]), str(document["storage_provider"]), expires_in=SIGNED_URL_EXPIRES_IN)
     access_action = "preview" if action == "preview" else "download"
+    if access_action == "download":
+        url = local_media_url(str(document["storage_bucket"]), str(document["storage_path"]), download=True)
+    else:
+        url = await create_signed_url(str(document["storage_bucket"]), str(document["storage_path"]), str(document["storage_provider"]), expires_in=SIGNED_URL_EXPIRES_IN)
     await _log_access(session, context, document_id, access_action)
     await _audit(
         session,

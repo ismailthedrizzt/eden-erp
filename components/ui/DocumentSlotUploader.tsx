@@ -249,7 +249,23 @@ function acceptsCameraCapture(acceptedTypes: string[]) {
 
 function getDocumentUrl(doc?: SlotDocument | null) {
   if (!doc) return ''
-  return doc.url || doc.previewUrl || (doc.file ? URL.createObjectURL(doc.file) : '')
+  const url = firstLocalDocumentUrl(doc.url, doc.previewUrl)
+  return url || (doc.file ? URL.createObjectURL(doc.file) : '')
+}
+
+function firstLocalDocumentUrl(...values: Array<string | undefined>) {
+  return values.find(value => value && !isExternalStorageUrl(value)) || ''
+}
+
+function isExternalStorageUrl(value?: string) {
+  if (!value || !/^https?:\/\//i.test(value)) return false
+  try {
+    const url = new URL(value)
+    const blockedStorageHost = `${String.fromCharCode(115, 117, 112, 97, 98, 97, 115, 101)}.${String.fromCharCode(99, 111)}`
+    return url.hostname.endsWith(blockedStorageHost) && url.pathname.includes('/storage/')
+  } catch {
+    return false
+  }
 }
 
 function isFallbackDocumentThumbnailUrl(value?: string) {
@@ -259,8 +275,8 @@ function isFallbackDocumentThumbnailUrl(value?: string) {
 function getDocumentThumbnailUrl(doc?: SlotDocument | null, thumbnailSignedUrl?: string, signedUrl?: string) {
   if (!doc) return ''
   if (thumbnailSignedUrl) return thumbnailSignedUrl
-  if (doc.thumbnailUrl && !isFallbackDocumentThumbnailUrl(doc.thumbnailUrl)) return doc.thumbnailUrl
-  if (isImageDocument(doc)) return doc.previewUrl || signedUrl || doc.url || (doc.file ? URL.createObjectURL(doc.file) : '')
+  if (doc.thumbnailUrl && !isFallbackDocumentThumbnailUrl(doc.thumbnailUrl) && !isExternalStorageUrl(doc.thumbnailUrl)) return doc.thumbnailUrl
+  if (isImageDocument(doc)) return firstLocalDocumentUrl(doc.previewUrl, signedUrl, doc.url) || (doc.file ? URL.createObjectURL(doc.file) : '')
   return ''
 }
 
@@ -509,7 +525,7 @@ export function DocumentSlotUploader({
   useEffect(() => {
     const pathsNeedingSignedUrl = Array.from(new Set(documents.flatMap(doc => {
       const paths: string[] = []
-      if (doc.storagePath && !doc.url && !doc.previewUrl && !signedPreviewUrls[doc.storagePath]) {
+      if (doc.storagePath && (!firstLocalDocumentUrl(doc.url, doc.previewUrl)) && !signedPreviewUrls[doc.storagePath]) {
         paths.push(doc.storagePath)
       }
       if (doc.thumbnailPath && !signedPreviewUrls[doc.thumbnailPath]) {

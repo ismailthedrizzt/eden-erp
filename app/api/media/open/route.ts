@@ -1,7 +1,7 @@
 // BACKEND_MIGRATION_STATUS: proxy_to_fastapi
 // CANONICAL_BACKEND: FastAPI
 // TARGET_FASTAPI_ENDPOINT: /api/v1/documents/media/open
-// NOTES: Thin Next.js proxy only. DB and Supabase access belong to FastAPI.
+// NOTES: Thin Next.js proxy only. DB and local document storage access belong to FastAPI.
 
 import { createFastApiProxyHandler } from '@/app/api/_fastapiProxy'
 

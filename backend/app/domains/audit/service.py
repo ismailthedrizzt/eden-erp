@@ -54,14 +54,14 @@ async def record_audit(
             """
             insert into public.audit_logs (
               id, tenant_id, company_id, branch_id, module_key, entity_type, entity_id,
-              action_type, action_key, operation_id, process_instance_id, task_id,
-              approval_id, outbox_event_id, user_id, old_values, new_values,
+              resource, record_id, action, action_type, action_key, operation_id, process_instance_id, task_id,
+              approval_id, outbox_event_id, user_id, before_json, after_json, old_values, new_values,
               changed_fields, summary, result_status, severity, metadata_json
             )
             values (
               :id, :tenant_id, :company_id, :branch_id, :module_key, :entity_type, :entity_id,
-              :action_type, :action_key, :operation_id, :process_instance_id, :task_id,
-              :approval_id, :outbox_event_id, :user_id, cast(:old_values as jsonb),
+              :resource, :record_id, :action, :action_type, :action_key, :operation_id, :process_instance_id, :task_id,
+              :approval_id, :outbox_event_id, :user_id, cast(:old_values as jsonb), cast(:new_values as jsonb), cast(:old_values as jsonb),
               cast(:new_values as jsonb), :changed_fields, :summary, :result_status, :severity,
               cast(:metadata_json as jsonb)
             )
@@ -76,6 +76,9 @@ async def record_audit(
             "module_key": module_key or context.get("module_key"),
             "entity_type": entity_type,
             "entity_id": entity_id,
+            "resource": entity_type or context.get("module_key") or "system",
+            "record_id": entity_id,
+            "action": action_key or action_type,
             "action_type": action_type,
             "action_key": action_key,
             "operation_id": operation_id or context.get("operation_id"),
@@ -129,21 +132,22 @@ async def record_audit_best_effort(
     metadata: dict[str, Any] | None = None,
 ) -> str | None:
     try:
-        row = await record_audit(
-            session,
-            context,
-            action_type=action_type,
-            action_key=action_key,
-            summary=summary,
-            result_status=result_status,
-            severity=severity,
-            entity_type=entity_type,
-            entity_id=entity_id,
-            branch_id=branch_id,
-            old_values=old_values,
-            new_values=new_values,
-            metadata=metadata,
-        )
+        async with session.begin_nested():
+            row = await record_audit(
+                session,
+                context,
+                action_type=action_type,
+                action_key=action_key,
+                summary=summary,
+                result_status=result_status,
+                severity=severity,
+                entity_type=entity_type,
+                entity_id=entity_id,
+                branch_id=branch_id,
+                old_values=old_values,
+                new_values=new_values,
+                metadata=metadata,
+            )
         return str(row["id"])
     except Exception as error:  # pragma: no cover - best-effort safety net
         increment_counter("audit_write_failed_count")

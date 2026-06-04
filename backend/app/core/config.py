@@ -28,6 +28,7 @@ class Settings(BaseSettings):
     supabase_service_role_key: str | None = Field(default=None, alias="SUPABASE_SERVICE_ROLE_KEY")
     supabase_jwt_secret: str | None = Field(default=None, alias="SUPABASE_JWT_SECRET")
     supabase_jwks_url: str | None = Field(default=None, alias="SUPABASE_JWKS_URL")
+    document_storage_root: str = Field(default="var/document-storage", alias="DOCUMENT_STORAGE_ROOT")
     cors_origins_raw: str = Field(
         default="http://localhost:3000",
         validation_alias=AliasChoices("CORS_ALLOWED_ORIGINS", "CORS_ORIGINS"),

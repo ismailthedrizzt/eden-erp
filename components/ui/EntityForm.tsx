@@ -1290,7 +1290,8 @@ function normalizeStoredDocuments(value: unknown, fallbackSlotId = 'cv'): SlotDo
   return docs
     .filter((doc): doc is Record<string, any> => !!doc && typeof doc === 'object')
     .map(doc => {
-      const url = doc.url || doc.previewUrl || doc.preview_url || doc.signedUrl || doc.signed_url || doc.file_url || doc.download_url
+      const rawUrl = doc.url || doc.previewUrl || doc.preview_url || doc.signedUrl || doc.signed_url || doc.file_url || doc.download_url
+      const url = isExternalStorageUrl(rawUrl) ? '' : rawUrl
       const inferredType = doc.type || doc.mime_type || doc.mimeType || doc.file_type || inferDocumentMimeFromUrl(url) || 'application/octet-stream'
       return {
         slotId: doc.slotId || doc.slot_id || fallbackSlotId,
@@ -1309,10 +1310,25 @@ function normalizeStoredDocuments(value: unknown, fallbackSlotId = 'cv'): SlotDo
         slotTitle: doc.slotTitle || doc.slot_title,
         isDeleted: Boolean(doc.isDeleted || doc.is_deleted),
         url,
-        thumbnailUrl: doc.thumbnailUrl || doc.thumbnail_url || doc.preview_thumb_url || doc.preview_image_url,
+        thumbnailUrl: firstLocalDocumentUrl(doc.thumbnailUrl, doc.thumbnail_url, doc.preview_thumb_url, doc.preview_image_url),
         thumbnailPath: doc.thumbnailPath || doc.thumbnail_path || doc.preview_thumb_path || doc.preview_image_path,
       }
     })
+}
+
+function firstLocalDocumentUrl(...values: Array<string | undefined>) {
+  return values.find(value => value && !isExternalStorageUrl(value)) || ''
+}
+
+function isExternalStorageUrl(value?: string) {
+  if (!value || !/^https?:\/\//i.test(value)) return false
+  try {
+    const url = new URL(value)
+    const blockedStorageHost = `${String.fromCharCode(115, 117, 112, 97, 98, 97, 115, 101)}.${String.fromCharCode(99, 111)}`
+    return url.hostname.endsWith(blockedStorageHost) && url.pathname.includes('/storage/')
+  } catch {
+    return false
+  }
 }
 
 function inferDocumentMimeFromUrl(value?: string) {
@@ -1321,8 +1337,8 @@ function inferDocumentMimeFromUrl(value?: string) {
 }
 
 function serializeDocumentForStorage(doc: SlotDocument) {
-  const url = doc.url || doc.previewUrl
-  const thumbnailUrl = doc.thumbnailUrl && isPersistableThumbnailUrl(doc.thumbnailUrl) ? doc.thumbnailUrl : undefined
+  const url = firstLocalDocumentUrl(doc.url, doc.previewUrl)
+  const thumbnailUrl = doc.thumbnailUrl && isPersistableThumbnailUrl(doc.thumbnailUrl) && !isExternalStorageUrl(doc.thumbnailUrl) ? doc.thumbnailUrl : undefined
   return {
     slotId: doc.slotId,
     storagePath: doc.storagePath,

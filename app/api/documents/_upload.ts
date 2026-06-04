@@ -33,7 +33,7 @@ export async function proxyDocumentUpload(request: NextRequest, targetPath: stri
     content_base64: buffer.toString('base64'),
     storage_bucket: nullableString(formData.get('storage_bucket')),
     storage_path: nullableString(formData.get('storage_path')),
-    storage_provider: stringValue(formData.get('storage_provider'), 'supabase'),
+    storage_provider: stringValue(formData.get('storage_provider'), 'local'),
     required: booleanValue(formData.get('required')),
     verification_required: booleanValue(formData.get('verification_required')),
     issue_date: nullableString(formData.get('issue_date')),
