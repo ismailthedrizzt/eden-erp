@@ -727,7 +727,7 @@ export default function SirketlerPage() {
         if (result.data) {
           setSelectedSirket(previous => {
             if (!previous || previous.id !== companyId) return previous
-            return normalizeCompanyForForm({ ...previous, ...result.data } as Sirket)
+            return normalizeCompanyForForm({ ...previous, ...extractCompanyDetailSection(result.data) } as Sirket)
           })
         }
         setDetailSections(previous => ({ ...previous, mediaLoading: false, mediaReady: true }))
@@ -852,9 +852,9 @@ export default function SirketlerPage() {
     }
 
     let mergedData = snapshot
-    const applySection = (sectionData: Partial<Sirket>) => {
+    const applySection = (sectionData: Partial<Sirket> | Record<string, any>) => {
       if (detailRequestRef.current !== requestId) return
-      mergedData = normalizeCompanyForForm({ ...mergedData, ...sectionData } as Sirket)
+      mergedData = normalizeCompanyForForm({ ...mergedData, ...extractCompanyDetailSection(sectionData) } as Sirket)
       setSelectedSirket(mergedData)
     }
 
@@ -3025,6 +3025,18 @@ function formatSourceType(value?: string) {
   }
 
   return value ? labels[value] || value : '-'
+}
+
+function extractCompanyDetailSection(sectionData: Partial<Sirket> | Record<string, any> | null | undefined): Partial<Sirket> {
+  if (!sectionData || typeof sectionData !== 'object') return {}
+  const company = (sectionData as any).company
+  if (!company || typeof company !== 'object') return sectionData as Partial<Sirket>
+
+  const { company: _company, ...related } = sectionData as Record<string, any>
+  return {
+    ...company,
+    ...related,
+  } as Partial<Sirket>
 }
 
 function normalizeCompanyForForm(company: Sirket) {
