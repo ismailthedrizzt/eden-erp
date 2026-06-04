@@ -5,7 +5,6 @@ import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import Sidebar from '@/components/layout/Sidebar'
 import { DemoModeBadge } from '@/components/layout/DemoModeBadge'
-import { EnvironmentBadge } from '@/components/release/EnvironmentBadge'
 import { PendingActionsBell } from '@/components/layout/PendingActionsBell'
 import { Bell, Building2, Check, ChevronDown, Home, LayoutDashboard, ListChecks, Loader2, Map, Menu, Moon, MoreHorizontal, Star, Sun, Users, WalletCards } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -480,7 +479,6 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
               >
                 <Menu size={16} />
               </button>
-              <EnvironmentBadge className="hidden md:inline-flex" />
               <DemoModeBadge />
               <div ref={workspaceMenuRef} data-tour-id="workspace-switcher" className="relative hidden sm:block">
                 <button

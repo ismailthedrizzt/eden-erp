@@ -1866,7 +1866,6 @@ export default function SirketlerPage() {
             }}
             defaultView="list"
             quickLookDefaultOpen={false}
-            forceQuickLookClosed={searchParams.has('systemTour')}
             storageKey="companies-table"
             emptyText={
               <SmartEmptyState
