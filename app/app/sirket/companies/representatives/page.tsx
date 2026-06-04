@@ -22,6 +22,8 @@ import { DraftCreateNotice } from '@/components/ui/DraftCreateNotice'
 import { SmartEmptyState } from '@/components/ui/SmartEmptyState'
 import { useRegisterActionGuideContext } from '@/components/ai/ActionGuideContext'
 import { normalizeCountryId } from '@/lib/reference/country-nationalities'
+import { createRealPersonMasterTabs } from '@/lib/identity/realPersonFormSections'
+import { createLegalEntityMasterTabs } from '@/lib/identity/legalEntityFormSections'
 import { isSoftDeletedRecord } from '@/lib/forms/entityState'
 import { createProgressiveFormLoadStages } from '@/lib/forms/progressiveFormLoading'
 import { invalidateEntityDetailCache, readEntityDetailCache, writeEntityDetailCache } from '@/lib/forms/entityDetailCache'
@@ -688,12 +690,23 @@ export default function TemsilcilerPage() {
     return withRepresentativeOperationControl(field)
   })
 
-  const configuredTabs = tabs
-    .filter(tab => pageState !== 'create' || ['genel', 'belgeler', 'notes'].includes(tab.id))
-    .map(tab => ({
-    ...tab,
-    fields: tab.fields.map(withRepresentativeOperationControl),
-  }))
+  const configuredTabs = [
+    ...createRealPersonMasterTabs({
+      visibleWhen: { field: 'person_or_entity_type', operator: 'equals', value: 'person' },
+      includeEmergencyContact: false,
+    }),
+    ...createLegalEntityMasterTabs({
+      visibleWhen: { field: 'person_or_entity_type', operator: 'equals', value: 'organization' },
+      websiteField: 'website',
+    }),
+    ...tabs
+      .filter(tab => ['belgeler', 'notes', 'gecmis'].includes(tab.id))
+      .filter(tab => pageState !== 'create' || ['belgeler', 'notes'].includes(tab.id))
+      .map(tab => ({
+        ...tab,
+        fields: tab.fields.map(withRepresentativeOperationControl),
+      })),
+  ]
 
   const withFieldHistory = (field: FormField) => {
     const history = selectedRepresentative?.field_history?.[field.name]
@@ -897,7 +910,7 @@ export default function TemsilcilerPage() {
     const cardActions = pageState === 'view'
       ? [{
           key: 'representative-card-edit',
-          label: 'Kart Bilgilerini Güncelle',
+          label: 'Güncelle',
           onClick: () => setPageState('edit'),
         }]
       : []
@@ -917,8 +930,8 @@ export default function TemsilcilerPage() {
         actions: authorityActions,
       }] : []),
       ...(cardActions.length ? [{
-        key: 'card',
-        title: 'Kart Bilgileri',
+        key: 'basic_update',
+        title: 'Güncelle',
         operationKind: 'basic_update' as const,
         actions: cardActions,
       }] : []),
