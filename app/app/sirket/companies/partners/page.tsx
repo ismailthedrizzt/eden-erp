@@ -2805,8 +2805,13 @@ function PartnerHistorySections({ value }: { value?: PartnerHistorySectionsValue
 }
 
 function normalizePartnerForForm(partner: PartnerRow) {
-  const profile = isPlainRecord(partner.partner_profile) ? partner.partner_profile : {}
+  const rawProfile = isPlainRecord(partner.partner_profile) ? partner.partner_profile : {}
+  const roleProfile = isPlainRecord(rawProfile.role) ? rawProfile.role : {}
+  const nestedRoleProfile = isPlainRecord(roleProfile.partner_profile) ? roleProfile.partner_profile : {}
+  const embeddedMasterProfile = isPlainRecord(rawProfile.master) ? rawProfile.master : {}
+  const profile = { ...nestedRoleProfile, ...embeddedMasterProfile, ...roleProfile, ...rawProfile }
   const masterRecord = getPartnerMasterRecord(partner)
+  const profileWithMaster = { ...profile, ...masterRecord }
   const partnerType = normalizePartnerType(
     firstPresent(profile.partner_type, partner.owner_kind, partner.partner_type, (partner as any).master_entity_kind)
   )
@@ -2829,6 +2834,10 @@ function normalizePartnerForForm(partner: PartnerRow) {
     }
     return []
   }
+
+  const phones = readList('phones')
+  const emails = readList('emails')
+  const entityBankAccounts = readList('entity_bank_accounts')
 
   return {
     ...masterRecord,
@@ -2856,9 +2865,9 @@ function normalizePartnerForForm(partner: PartnerRow) {
     birth_place: read('birth_place') || '',
     occupation: read('occupation') || '',
     phone: read('phone', 'mobile_phone') || '',
-    email: read('email') || '',
-    phones: readList('phones'),
-    emails: readList('emails'),
+    email: read('email', 'email_1') || '',
+    phones: phones.length ? phones : buildLegacyContactRows(profileWithMaster, 'phone', 'phone', 'mobile_phone', 'work_phone', 'phone_1', 'phone_2'),
+    emails: emails.length ? emails : buildLegacyContactRows(profileWithMaster, 'address', 'email', 'email_1', 'email_2'),
     address: read('address') || '',
     city: read('city') || '',
     district: read('district') || '',
@@ -2874,7 +2883,7 @@ function normalizePartnerForForm(partner: PartnerRow) {
     emergency_contact_relationship: read('emergency_contact_relationship') || '',
     emergency_contact_phone: read('emergency_contact_phone') || '',
     contact_points: readList('contact_points'),
-    entity_bank_accounts: readList('entity_bank_accounts'),
+    entity_bank_accounts: entityBankAccounts.length ? entityBankAccounts : buildLegacyBankAccounts(profileWithMaster),
     end_date: profile.end_date ?? partner.end_date ?? '',
     status,
     record_status: recordStatus,
@@ -2894,6 +2903,42 @@ function isPlainRecord(value: unknown): value is Record<string, any> {
   return !!value && typeof value === 'object' && !Array.isArray(value)
 }
 
+function buildLegacyContactRows(source: Record<string, any>, valueKey: 'phone' | 'address', ...keys: string[]) {
+  const rows: Array<Record<string, string>> = []
+  const seen = new Set<string>()
+  keys.forEach((key, index) => {
+    const value = source[key]
+    if (value === null || value === undefined || value === '') return
+    const text = String(value).trim()
+    if (!text || seen.has(text)) return
+    seen.add(text)
+    rows.push({ label: index === 0 ? 'Birincil' : 'Alternatif', [valueKey]: text })
+  })
+  return rows
+}
+
+function buildLegacyBankAccounts(source: Record<string, any>) {
+  const iban = firstPresent(source.beneficiary_iban, source.beneficiary_iban_or_account_no)
+  const accountNumber = firstPresent(source.beneficiary_account_no, source.account_number)
+  if (!iban && !accountNumber) return []
+  return [{
+    id: 'legacy-beneficiary-account',
+    beneficiary_name: source.beneficiary_full_name || '',
+    is_same_as_master_name: !source.beneficiary_full_name,
+    iban: iban || '',
+    account_number: accountNumber || '',
+    bank_code: source.beneficiary_bank_code || '',
+    swift_bic: source.beneficiary_swift_bic || '',
+    bank_name: source.beneficiary_bank_name || '',
+    bank_address: source.beneficiary_bank_address || source.beneficiary_address || '',
+    account_currency: source.beneficiary_currency || 'TRY',
+    preferred_currency: source.beneficiary_currency || 'TRY',
+    verification_status: 'unverified',
+    is_default: true,
+    status: 'active',
+  }]
+}
+
 function getPartnerMasterRecord(partner: Record<string, any>) {
   const master = isPlainRecord(partner.masterRecord)
     ? partner.masterRecord
@@ -2903,7 +2948,11 @@ function getPartnerMasterRecord(partner: Record<string, any>) {
         ? partner.person
         : isPlainRecord(partner.organization)
           ? partner.organization
-          : {}
+          : isPlainRecord(partner.partner_profile)
+            ? isPlainRecord(partner.partner_profile.master)
+              ? partner.partner_profile.master
+              : {}
+            : {}
   const metadata = isPlainRecord(master.metadata_json) ? master.metadata_json : {}
   return { ...metadata, ...master }
 }

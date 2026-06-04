@@ -2965,13 +2965,14 @@ function FieldOperationLockIndicator({ control, recordStatus }: { control: FormF
       <button
         type="button"
         aria-label="Alan işlem bilgisi"
-        title={message}
+        title={`Resmi Veri: ${message}`}
         onFocus={() => setShowTooltip(true)}
         onBlur={() => setShowTooltip(false)}
         onClick={() => setShowTooltip(previous => !previous)}
-        className="inline-grid h-5 w-5 place-items-center rounded-full text-amber-600 transition-colors hover:bg-amber-50 hover:text-amber-700 dark:text-amber-300 dark:hover:bg-amber-950/30"
+        className="inline-flex min-h-5 items-center gap-1 rounded border border-amber-300 bg-amber-50 px-1.5 py-0.5 text-[10px] font-semibold leading-none text-amber-800 transition-colors hover:bg-amber-100 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-100 dark:hover:bg-amber-950/70"
       >
-        <Info size={14} />
+        <Info size={11} />
+        <span>Resmi Veri</span>
       </button>
       {showTooltip && (
         <div
@@ -2980,12 +2981,13 @@ function FieldOperationLockIndicator({ control, recordStatus }: { control: FormF
           className="fixed inset-x-3 bottom-3 z-50 max-h-[70dvh] overflow-y-auto rounded-2xl border border-amber-200 bg-white p-4 text-xs leading-5 text-gray-700 shadow-2xl dark:border-amber-900/60 dark:bg-gray-950 dark:text-gray-200 sm:absolute sm:inset-x-auto sm:bottom-auto sm:left-1/2 sm:top-full sm:mt-1 sm:w-80 sm:-translate-x-1/2 sm:rounded-lg sm:p-3"
         >
           <div className="mb-1 flex items-center justify-between gap-2">
-            <div className="font-semibold text-gray-900 dark:text-gray-100">Bu alan neden kilitli?</div>
+            <div className="font-semibold text-gray-900 dark:text-gray-100">Resmi Veri</div>
             <span className={eligibility.canStart ? 'rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-200' : 'rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-semibold text-amber-700 dark:bg-amber-950/40 dark:text-amber-200'}>
               {eligibility.canStart ? 'Islem hazir' : 'Kosul gerekiyor'}
             </span>
           </div>
           <p>{message}</p>
+          <p className="mt-1 text-gray-500 dark:text-gray-400">Bu alan doğrudan karttan değil, ilgili resmi işlem üzerinden değişir.</p>
           {control.helperText && control.helperText !== message && (
             <p className="mt-2 text-gray-500 dark:text-gray-400">{control.helperText}</p>
           )}

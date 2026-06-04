@@ -150,6 +150,59 @@ def _json_object(value: Any) -> dict[str, Any]:
     return {}
 
 
+def _legacy_contact_rows(profile: dict[str, Any], value_key: str, *keys: str) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for index, key in enumerate(keys, start=1):
+        value = profile.get(key)
+        if value is None or value == "":
+            continue
+        text_value = str(value).strip()
+        if not text_value or text_value in seen:
+            continue
+        seen.add(text_value)
+        rows.append({"label": "Birincil" if index == 1 else "Alternatif", value_key: text_value})
+    return rows
+
+
+def _legacy_bank_rows(profile: dict[str, Any]) -> list[dict[str, Any]]:
+    iban = profile.get("beneficiary_iban") or profile.get("beneficiary_iban_or_account_no")
+    account_number = profile.get("beneficiary_account_no")
+    if not iban and not account_number:
+        return []
+    return [{
+        "id": "legacy-beneficiary-account",
+        "beneficiary_name": profile.get("beneficiary_full_name") or "",
+        "is_same_as_master_name": not bool(profile.get("beneficiary_full_name")),
+        "iban": iban or "",
+        "account_number": account_number or "",
+        "bank_code": profile.get("beneficiary_bank_code") or "",
+        "swift_bic": profile.get("beneficiary_swift_bic") or "",
+        "bank_name": profile.get("beneficiary_bank_name") or "",
+        "bank_address": profile.get("beneficiary_bank_address") or profile.get("beneficiary_address") or "",
+        "account_currency": profile.get("beneficiary_currency") or "TRY",
+        "preferred_currency": profile.get("beneficiary_currency") or "TRY",
+        "verification_status": "unverified",
+        "is_default": True,
+        "status": "active",
+    }]
+
+
+def _normalize_partner_profile(value: Any) -> dict[str, Any]:
+    profile = _json_object(value)
+    role = _json_object(profile.get("role"))
+    role_profile = _json_object(role.get("partner_profile"))
+    profile_master = _json_object(profile.get("master"))
+    normalized = {**role_profile, **profile_master, **role, **profile}
+    if not normalized.get("phones"):
+        normalized["phones"] = _legacy_contact_rows(normalized, "phone", "phone", "mobile_phone", "work_phone", "phone_1", "phone_2")
+    if not normalized.get("emails"):
+        normalized["emails"] = _legacy_contact_rows(normalized, "address", "email", "email_1", "email_2")
+    if not normalized.get("entity_bank_accounts"):
+        normalized["entity_bank_accounts"] = _legacy_bank_rows(normalized)
+    return normalized
+
+
 def _flatten_master_record(row: dict[str, Any] | None, entity_kind: str) -> dict[str, Any] | None:
     if not row:
         return None
@@ -314,7 +367,20 @@ async def get_partner_by_id(
     if not row:
         return None
     partner = dict(row)
+    profile = _normalize_partner_profile(partner.get("partner_profile"))
+    if profile:
+        partner["partner_profile"] = profile
     entity_kind, master = await _get_partner_master_record(session, tenant_id, partner)
+    if not master:
+        profile_master = _json_object(profile.get("master"))
+        if profile_master:
+            fallback_kind = str(profile.get("master_entity_kind") or partner.get("owner_kind") or partner.get("partner_type") or "person")
+            fallback_kind = "organization" if fallback_kind in {"organization", "company"} else "person"
+            entity_kind = fallback_kind
+            master = _flatten_master_record(profile_master, fallback_kind)
+    for field in PARTNER_PROFILE_FIELDS:
+        if field in profile and (partner.get(field) is None or partner.get(field) == ""):
+            partner[field] = profile[field]
     return _enrich_partner_with_master(partner, entity_kind, master)
 
 
