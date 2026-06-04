@@ -946,39 +946,8 @@ function isMasterIdentityHeroField(field: FormField) {
   return MASTER_IDENTITY_FIELD_NAMES.has(field.name)
 }
 
-function FormLoadStages({ stages }: { stages?: FormLoadStage[] }) {
-  const visibleStages = (stages || []).filter(stage => stage.status !== 'idle' && stage.status !== 'skipped')
-  if (!visibleStages.length) return null
-
-  return (
-    <div className="m-4 rounded-lg border border-sky-100 bg-sky-50/70 p-3 dark:border-sky-900/50 dark:bg-sky-950/20">
-      <div className="flex flex-wrap items-center gap-2">
-        {visibleStages.map(stage => (
-          <div
-            key={stage.key}
-            className={cn(
-              "inline-flex min-h-8 items-center gap-2 rounded-md border px-2.5 py-1.5 text-xs font-medium transition-colors",
-              stage.status === 'ready' && "border-emerald-200 bg-white text-emerald-700 dark:border-emerald-900/70 dark:bg-gray-900 dark:text-emerald-300",
-              stage.status === 'loading' && "border-sky-200 bg-white text-sky-700 dark:border-sky-900/70 dark:bg-gray-900 dark:text-sky-300",
-              stage.status === 'error' && "border-red-200 bg-white text-red-700 dark:border-red-900/70 dark:bg-gray-900 dark:text-red-300",
-            )}
-            title={stage.description}
-          >
-            {stage.status === 'ready' ? (
-              <CheckCircle2 size={14} />
-            ) : stage.status === 'loading' ? (
-              <Loader2 size={14} className="animate-spin" />
-            ) : stage.status === 'error' ? (
-              <AlertCircle size={14} />
-            ) : (
-              <Circle size={14} />
-            )}
-            <span>{stage.label}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
+function FormLoadStages({ stages: _stages }: { stages?: FormLoadStage[] }) {
+  return null
 }
 
 function SectionLoadIcon({ stage }: { stage?: FormLoadStage }) {

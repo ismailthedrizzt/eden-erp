@@ -28,7 +28,6 @@ import { Toast } from '@/components/ui/Toast'
 import { DraftCreateNotice } from '@/components/ui/DraftCreateNotice'
 import { SmartEmptyState } from '@/components/ui/SmartEmptyState'
 import { useRegisterActionGuideContext } from '@/components/ai/ActionGuideContext'
-import { RecordPendingActionsPanel } from '@/components/action-center/RecordPendingActionsPanel'
 import type { AnyDashboardWidgetConfig } from '@/components/dashboard/dashboard.types'
 import { CompanyNaceCodesSection } from '@/components/modules/sirket/CompanyPublicTab'
 import { cn, formatPhoneInput, normalizeEmailInput } from '@/lib/utils'
@@ -1872,9 +1871,6 @@ export default function SirketlerPage() {
         <div className="mt-6 space-y-4">
           {pageState === 'create' && (
             <DraftCreateNotice message="Bu işlem şirket kartı taslağı oluşturur. Şirketin resmi açılışı Şirket Açılışı sihirbazı ile tamamlanır." />
-          )}
-          {pageState !== 'create' && selectedSirket?.id && (
-            <RecordPendingActionsPanel entityType="company" entityId={selectedSirket.id} title="Bu şirket için bekleyen işler" />
           )}
           <EntityForm
             mode={formMode}

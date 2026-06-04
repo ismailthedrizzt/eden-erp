@@ -247,6 +247,18 @@ function acceptsCameraCapture(acceptedTypes: string[]) {
   return acceptedTypes.some(type => type === 'image/*' || type.startsWith('image/'))
 }
 
+function getDocumentSignedKey(doc?: SlotDocument | null) {
+  if (!doc) return ''
+  if (doc.storagePath) return doc.storagePath
+  const documentId = doc.documentId || ''
+  if (!documentId || documentId.startsWith('pending:') || /^https?:\/\//i.test(documentId) || documentId.startsWith('blob:') || documentId.startsWith('data:')) return ''
+  return documentId.includes('/') ? documentId : ''
+}
+
+function getDocumentThumbnailSignedKey(doc?: SlotDocument | null) {
+  return doc?.thumbnailPath || ''
+}
+
 function getDocumentUrl(doc?: SlotDocument | null) {
   if (!doc) return ''
   const url = firstLocalDocumentUrl(doc.url, doc.previewUrl)
@@ -275,9 +287,10 @@ function isFallbackDocumentThumbnailUrl(value?: string) {
 function getDocumentThumbnailUrl(doc?: SlotDocument | null, thumbnailSignedUrl?: string, signedUrl?: string) {
   if (!doc) return ''
   if (thumbnailSignedUrl) return thumbnailSignedUrl
-  if (doc.thumbnailUrl && !isFallbackDocumentThumbnailUrl(doc.thumbnailUrl) && !isExternalStorageUrl(doc.thumbnailUrl)) return doc.thumbnailUrl
+  if (doc.thumbnailUrl && !isExternalStorageUrl(doc.thumbnailUrl)) return doc.thumbnailUrl
   if (isImageDocument(doc)) return firstLocalDocumentUrl(doc.previewUrl, signedUrl, doc.url) || (doc.file ? URL.createObjectURL(doc.file) : '')
-  return ''
+  const config = getFileTypeConfig(getEffectiveDocumentType(doc))
+  return generateFallbackDocumentThumbnail(config.label || 'FILE', doc.name || 'Belge')
 }
 
 function isLikelyImageThumbnailUrl(value?: string) {
@@ -288,7 +301,8 @@ function isLikelyImageThumbnailUrl(value?: string) {
 }
 
 function canRenderDocumentThumbnail(doc?: SlotDocument | null, thumbnailUrl?: string) {
-  if (!doc || !thumbnailUrl || isFallbackDocumentThumbnailUrl(thumbnailUrl)) return false
+  if (!doc || !thumbnailUrl) return false
+  if (isFallbackDocumentThumbnailUrl(thumbnailUrl)) return true
   if (isImageDocument(doc)) return true
   if (doc.thumbnailPath && isLikelyImageThumbnailUrl(doc.thumbnailPath)) return true
   return !!doc.thumbnailUrl && isLikelyImageThumbnailUrl(thumbnailUrl)
@@ -480,8 +494,8 @@ export function DocumentSlotUploader({
     [documents]
   )
   const currentDoc = currentSlot ? getLatestActiveDocument(documents, currentSlot.id) : undefined
-  const currentDocSignedKey = currentDoc?.storagePath || currentDoc?.documentId || ''
-  const currentDocThumbnailSignedKey = currentDoc?.thumbnailPath || ''
+  const currentDocSignedKey = getDocumentSignedKey(currentDoc)
+  const currentDocThumbnailSignedKey = getDocumentThumbnailSignedKey(currentDoc)
   const currentDocUrl = getDocumentUrl(currentDoc) || (currentDocSignedKey ? signedPreviewUrls[currentDocSignedKey] : '')
   const currentDocThumbnailUrl = getDocumentThumbnailUrl(
     currentDoc,
@@ -525,11 +539,13 @@ export function DocumentSlotUploader({
   useEffect(() => {
     const pathsNeedingSignedUrl = Array.from(new Set(documents.flatMap(doc => {
       const paths: string[] = []
-      if (doc.storagePath && (!firstLocalDocumentUrl(doc.url, doc.previewUrl)) && !signedPreviewUrls[doc.storagePath]) {
-        paths.push(doc.storagePath)
+      const signedKey = getDocumentSignedKey(doc)
+      const thumbnailSignedKey = getDocumentThumbnailSignedKey(doc)
+      if (signedKey && (!firstLocalDocumentUrl(doc.url, doc.previewUrl)) && !signedPreviewUrls[signedKey]) {
+        paths.push(signedKey)
       }
-      if (doc.thumbnailPath && !signedPreviewUrls[doc.thumbnailPath]) {
-        paths.push(doc.thumbnailPath)
+      if (thumbnailSignedKey && !signedPreviewUrls[thumbnailSignedKey]) {
+        paths.push(thumbnailSignedKey)
       }
       return paths
     })))
@@ -572,7 +588,7 @@ export function DocumentSlotUploader({
       return
     }
 
-    const previewDocSignedKey = previewDoc.storagePath || previewDoc.documentId || ''
+    const previewDocSignedKey = getDocumentSignedKey(previewDoc)
     const previewDocUrl = getDocumentUrl(previewDoc) || (previewDocSignedKey ? signedPreviewUrls[previewDocSignedKey] : '')
     if (!isTextDocument(previewDoc) && !isDocxDocument(previewDoc)) {
       setPreviewText({ loading: false, content: '', error: '' })
@@ -772,7 +788,7 @@ export function DocumentSlotUploader({
     if (!doc?.file && !doc?.url && !doc?.storagePath && !doc?.documentId) return
     
     // Create download link
-    const signedKey = doc.storagePath || doc.documentId || ''
+    const signedKey = getDocumentSignedKey(doc)
     const url = getDocumentUrl(doc) || (signedKey ? signedPreviewUrls[signedKey] : '')
     if (url) {
       const link = document.createElement('a')
@@ -852,8 +868,8 @@ export function DocumentSlotUploader({
       ) : (
         <div className="max-h-[360px] divide-y divide-gray-100 overflow-auto dark:divide-gray-700">
           {sortedDocuments.map((doc, index) => {
-            const signedKey = doc.storagePath || doc.documentId || ''
-            const thumbnailSignedKey = doc.thumbnailPath || ''
+            const signedKey = getDocumentSignedKey(doc)
+            const thumbnailSignedKey = getDocumentThumbnailSignedKey(doc)
             const docUrl = getDocumentUrl(doc) || (signedKey ? signedPreviewUrls[signedKey] : '')
             const thumbUrl = getDocumentThumbnailUrl(
               doc,
@@ -988,8 +1004,8 @@ export function DocumentSlotUploader({
             const doc = getLatestActiveDocument(documents, slot.id)
             const historyDocs = sortedDocuments.filter(item => item.slotId === slot.id && !isActiveDocument(item))
             const expanded = expandedHistorySlotIds.includes(slot.id)
-            const signedKey = doc?.storagePath || doc?.documentId || ''
-            const thumbnailSignedKey = doc?.thumbnailPath || ''
+            const signedKey = getDocumentSignedKey(doc)
+            const thumbnailSignedKey = getDocumentThumbnailSignedKey(doc)
             const docUrl = getDocumentUrl(doc) || (signedKey ? signedPreviewUrls[signedKey] : '')
             const thumbUrl = doc ? getDocumentThumbnailUrl(
               doc,
@@ -1489,7 +1505,7 @@ export function DocumentSlotUploader({
       {/* Preview Modal */}
       {previewDoc && (
         (() => {
-          const previewDocSignedKey = previewDoc.storagePath || previewDoc.documentId || ''
+          const previewDocSignedKey = getDocumentSignedKey(previewDoc)
           const previewDocUrl = getDocumentUrl(previewDoc) || (previewDocSignedKey ? signedPreviewUrls[previewDocSignedKey] : '')
           const previewConfig = getFileTypeConfig(getEffectiveDocumentType(previewDoc))
           const PreviewIcon = previewConfig.icon
@@ -1559,12 +1575,16 @@ export function DocumentSlotUploader({
                         </pre>
                       )}
                     </div>
+                  ) : !previewDocUrl && previewDocSignedKey ? (
+                    <div className="flex h-[60vh] items-center justify-center rounded-lg border border-gray-200 bg-white text-sm text-gray-500 dark:border-gray-700 dark:bg-gray-950 dark:text-gray-400">
+                      Önizleme hazırlanıyor...
+                    </div>
                   ) : canPreviewInline ? (
-                  <iframe
-                    src={`${previewDocUrl}#toolbar=1&navpanes=0`}
-                    title={`${previewDoc.name} preview`}
-                    className="h-[60vh] w-full rounded-lg border border-gray-200 bg-white dark:border-gray-700"
-                  />
+                    <iframe
+                      src={`${previewDocUrl}#toolbar=1&navpanes=0`}
+                      title={`${previewDoc.name} preview`}
+                      className="h-[60vh] w-full rounded-lg border border-gray-200 bg-white dark:border-gray-700"
+                    />
                   ) : (
                     <div className="bg-gray-100 dark:bg-gray-900 rounded-lg p-8 text-center">
                       <PreviewIcon size={64} className={cn(
