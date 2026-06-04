@@ -20,8 +20,26 @@ from app.schemas.pagination import build_list_meta
 COMPANY_COLUMNS = """
 id, organization_id, short_name, trade_name, tax_number, tax_office, company_type,
 city, district, address, phone, email, record_status, company_status,
-committed_capital_amount, paid_capital_amount, logo_url, country, website,
-created_at, updated_at, version, is_deleted
+committed_capital_amount, paid_capital_amount,
+coalesce(logo_url, (
+  select coalesce(img->>'thumbnailUrl', img->>'thumbnail_url', img->>'previewUrl', img->>'preview_url', img->>'url')
+  from jsonb_array_elements(coalesce(hero_images, '[]'::jsonb)) img
+  where coalesce(img->>'slotId', img->>'slot_id') in ('light_mode_avatar', 'logo_primary', 'document_logo')
+  limit 1
+)) as logo_url,
+(
+  select coalesce(img->>'thumbnailUrl', img->>'thumbnail_url', img->>'previewUrl', img->>'preview_url', img->>'url')
+  from jsonb_array_elements(coalesce(hero_images, '[]'::jsonb)) img
+  where coalesce(img->>'slotId', img->>'slot_id') = 'light_mode_avatar'
+  limit 1
+) as logo_url_light,
+(
+  select coalesce(img->>'thumbnailUrl', img->>'thumbnail_url', img->>'previewUrl', img->>'preview_url', img->>'url')
+  from jsonb_array_elements(coalesce(hero_images, '[]'::jsonb)) img
+  where coalesce(img->>'slotId', img->>'slot_id') = 'dark_mode_avatar'
+  limit 1
+) as logo_url_dark,
+country, website, created_at, updated_at, version, is_deleted
 """
 
 

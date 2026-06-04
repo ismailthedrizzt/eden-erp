@@ -1279,11 +1279,6 @@ export function DocumentSlotUploader({
               {/* Hover Actions Overlay */}
               {(
                 <div className="pointer-events-none absolute inset-0 z-20 flex flex-col items-center justify-center gap-2 bg-white/90 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 dark:bg-gray-800/90">
-                  {!currentDocUrl && currentDoc?.storagePath && (
-                    <div className="rounded-md bg-gray-100 px-2 py-1 text-[10px] font-medium text-gray-600 dark:bg-gray-700 dark:text-gray-300">
-                      Bağlantı hazırlanıyor
-                    </div>
-                  )}
                   <div className="pointer-events-auto">
                     {renderDocumentActions('overlay')}
                   </div>

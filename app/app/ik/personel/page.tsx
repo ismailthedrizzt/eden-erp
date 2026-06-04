@@ -235,9 +235,9 @@ export default function PersonelYonetimPage() {
       return
     }
     let mergedData = row as Personel
-    const applySection = (sectionData: Partial<Personel>) => {
+    const applySection = (sectionData: Partial<Personel> | Record<string, any>) => {
       if (detailRequestRef.current !== requestId) return
-      mergedData = { ...mergedData, ...sectionData } as Personel
+      mergedData = { ...mergedData, ...extractEmployeeDetailSection(sectionData) } as Personel
       setSelectedPersonel(mergedData)
     }
 
@@ -957,6 +957,18 @@ export default function PersonelYonetimPage() {
       )}
     </div>
   )
+}
+
+function extractEmployeeDetailSection(sectionData: Partial<Personel> | Record<string, any> | null | undefined): Partial<Personel> {
+  if (!sectionData || typeof sectionData !== 'object') return {}
+  const employee = (sectionData as any).employee || (sectionData as any).personel
+  if (!employee || typeof employee !== 'object') return sectionData as Partial<Personel>
+
+  const { employee: _employee, personel: _personel, ...related } = sectionData as Record<string, any>
+  return {
+    ...employee,
+    ...related,
+  } as Partial<Personel>
 }
 
 function applyDashboardFilter(rows: PersonelTableRow[], event: DashboardFilterEvent | null) {
