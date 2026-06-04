@@ -33,7 +33,6 @@ import type { AnyDashboardWidgetConfig } from '@/components/dashboard/dashboard.
 import { CompanyNaceCodesSection } from '@/components/modules/sirket/CompanyPublicTab'
 import { cn, formatPhoneInput, normalizeEmailInput } from '@/lib/utils'
 import { createFormModeState, mapPageStateToFormMode } from '@/lib/forms/formModeEngine'
-import { createProgressiveFormLoadStages } from '@/lib/forms/progressiveFormLoading'
 import { invalidateEntityDetailCache, readEntityDetailCache, writeEntityDetailCache } from '@/lib/forms/entityDetailCache'
 import { createLegalEntityMasterTabs } from '@/lib/identity/legalEntityFormSections'
 import { extractCompanyLogoUrl } from '@/lib/media/companyLogo'
@@ -670,14 +669,6 @@ export default function SirketlerPage() {
     : pageState === 'edit' && formAccess.canSave && canEditSelectedProfile
         ? 'edit'
         : 'view'
-  const formLoadStages = createProgressiveFormLoadStages({
-    mode: formMode,
-    hasSnapshot: pageState !== 'create' && !!selectedSirket,
-    ...detailSections,
-    hasMaster: !!((selectedSirket as any)?.organization_id || (selectedSirket as any)?.master_record_id || (selectedSirket as any)?.master),
-    referencesLoading: false,
-    referencesReady: pageState !== 'list',
-  })
   const fieldControlMode = pageState === 'create'
     ? 'create'
     : selectedLifecycleStatus === 'draft'
@@ -2027,7 +2018,6 @@ export default function SirketlerPage() {
             saving={saving}
             deleting={deleting}
             error={formError}
-            loadStages={formLoadStages}
             externalFieldErrors={fieldErrors}
             onSave={handleSave}
             onCancel={handleBackToList}

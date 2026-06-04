@@ -108,7 +108,7 @@ const documentSlots: DocumentSlot[] = [
   { id: 'trade_registry_gazette', title: 'Ticaret Sicili Gazetesi İlanı', required: false },
 ]
 
-const stepLabels = ['Ön Kontrol', 'Sermaye Bilgileri', 'Ortaklara Dağıtım', 'Belgeler', 'Özet ve Onay']
+const stepLabels = ['Bilgiler', 'Belgeler', 'Ön İzleme/Onay']
 
 export function CompanyCapitalIncreaseWizard({
   companyName,
@@ -227,7 +227,8 @@ export function CompanyCapitalIncreaseWizard({
   }
 
   const nextStep = () => {
-    const validationError = validateCurrentStep(step)
+    const validationTarget = step === 0 ? 2 : step === 1 ? 3 : step
+    const validationError = validateCurrentStep(validationTarget)
     if (validationError) {
       setError(validationError)
       return
@@ -289,7 +290,7 @@ export function CompanyCapitalIncreaseWizard({
         </div>
 
         <div className="border-b border-gray-100 px-5 py-3 dark:border-gray-800">
-          <div className="grid gap-2 md:grid-cols-5">
+          <div className="grid gap-2 md:grid-cols-3">
             {stepLabels.map((label, index) => (
               <button
                 key={label}
@@ -316,7 +317,7 @@ export function CompanyCapitalIncreaseWizard({
             <PrecheckStep context={context} warnings={precheckWarnings} blockingReasons={blockingReasons} />
           )}
 
-          {step === 1 && (
+          {step === 0 && (
             <div className="space-y-5">
               <div className="grid gap-3 md:grid-cols-3">
                 <label className="text-sm font-medium text-gray-700 dark:text-gray-200">
@@ -379,7 +380,7 @@ export function CompanyCapitalIncreaseWizard({
             </div>
           )}
 
-          {step === 2 && (
+          {step === 0 && (
             <DistributionStep
               partners={partners}
               rows={rows}
@@ -391,7 +392,7 @@ export function CompanyCapitalIncreaseWizard({
             />
           )}
 
-          {step === 3 && (
+          {step === 1 && (
             <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
               <DocumentSlotUploader
                 slots={documentSlots}
@@ -431,7 +432,7 @@ export function CompanyCapitalIncreaseWizard({
             </div>
           )}
 
-          {step === 4 && (
+          {step === 2 && (
             <PreviewStep
               increaseType={increaseType}
               oldCapital={oldCapital}

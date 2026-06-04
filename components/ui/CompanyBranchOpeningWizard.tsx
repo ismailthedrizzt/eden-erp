@@ -28,7 +28,10 @@ export type BranchOpeningSubmitPayload = Record<string, any> & {
   document_meta: Record<string, { document_date?: string | null; description?: string | null }>
 }
 
-const steps = ['Ön Kontrol', 'Şube Kimliği', 'Şube Adresi / Lokasyon', 'Kamu / Tescil Bilgileri', 'Organizasyon Birimi', 'Belgeler', 'Özet ve Onay']
+const steps = ['Bilgiler', 'Belgeler', 'Ön İzleme/Onay']
+const BRANCH_OPENING_INFO_VALIDATION_STEP = 4
+const BRANCH_OPENING_FINAL_VALIDATION_STEP = 6
+
 const documentSlots: DocumentSlot[] = [
   { id: 'branch_opening_resolution', title: 'Şube Açılış Kararı' },
   { id: 'trade_registry_gazette', title: 'Ticaret Sicil Gazetesi' },
@@ -86,19 +89,20 @@ export function CompanyBranchOpeningWizard({
     if (targetStep >= 3 && draft.is_official_branch && !draft.opening_decision_date) return 'Resmi şube için karar tarihi zorunludur.'
     if (targetStep >= 3 && draft.is_official_branch && !draft.opening_registration_date) return 'Resmi şube için tescil tarihi zorunludur.'
     if (targetStep >= 3 && draft.opening_registration_date && draft.opening_decision_date && new Date(draft.opening_registration_date) < new Date(draft.opening_decision_date)) return 'Tescil tarihi karar tarihinden önce olamaz.'
-    if (targetStep >= steps.length - 1 && draft.is_official_branch && activeDocumentCount === 0) return 'Resmi şube açılışı için en az bir karar/tescil belgesi eklenmelidir.'
+    if (targetStep >= BRANCH_OPENING_FINAL_VALIDATION_STEP && draft.is_official_branch && activeDocumentCount === 0) return 'Resmi şube açılışı için en az bir karar/tescil belgesi eklenmelidir.'
     return null
   }
 
   const nextStep = () => {
-    const validationError = validate(step)
+    const validationTarget = step === 0 ? BRANCH_OPENING_INFO_VALIDATION_STEP : step === 1 ? BRANCH_OPENING_FINAL_VALIDATION_STEP : step
+    const validationError = validate(validationTarget)
     if (validationError) return setError(validationError)
     setError(null)
     setStep(prev => Math.min(prev + 1, steps.length - 1))
   }
 
   const complete = async () => {
-    const validationError = validate(steps.length - 1)
+    const validationError = validate(BRANCH_OPENING_FINAL_VALIDATION_STEP)
     if (validationError) return setError(validationError)
     setError(null)
     try {
@@ -116,13 +120,13 @@ export function CompanyBranchOpeningWizard({
         <StepNav steps={steps} step={step} setStep={setStep} />
         <div className="min-h-0 flex-1 overflow-auto px-5 py-5">
           {step === 0 && <Precheck context={context} blockingReasons={blockingReasons} />}
-          {step === 1 && <div className="grid gap-4 md:grid-cols-2">
+          {step === 0 && <div className="grid gap-4 md:grid-cols-2">
             <TextField label="Şube Adı" value={draft.branch_name} onChange={value => setField('branch_name', value)} error={fieldErrors.branch_name || (duplicateName ? 'Bu isimle aktif şube var.' : undefined)} required />
             <TextField label="Şube Kısa Adı" value={draft.branch_short_name} onChange={value => setField('branch_short_name', value)} />
             <SelectField label="Şube Türü" value={draft.branch_type} onChange={value => setField('branch_type', value)} options={branchTypeOptions} />
             <CheckboxField label="Resmi şube" checked={!!draft.is_official_branch} onChange={value => setField('is_official_branch', value)} />
           </div>}
-          {step === 2 && <div className="space-y-4">
+          {step === 0 && <div className="space-y-4">
             <div className="grid gap-4 md:grid-cols-3">
               <TextField label="Ülke" value={draft.country} onChange={value => setField('country', value)} required />
               <TextField label="İl" value={draft.city} onChange={value => setField('city', value)} error={fieldErrors.city} required={isTurkey(draft.country)} />
@@ -134,7 +138,7 @@ export function CompanyBranchOpeningWizard({
             </div>
             <TextareaField label="Açık Adres" value={draft.address} onChange={value => setField('address', value)} error={fieldErrors.address} required />
           </div>}
-          {step === 3 && <div className="grid gap-4 md:grid-cols-2">
+          {step === 0 && <div className="grid gap-4 md:grid-cols-2">
             <DateField label="Şube Açılış Karar Tarihi" value={draft.opening_decision_date} onChange={value => setField('opening_decision_date', value)} error={fieldErrors.opening_decision_date} />
             <DateField label="Tescil Tarihi" value={draft.opening_registration_date} onChange={value => setField('opening_registration_date', value)} error={fieldErrors.opening_registration_date} />
             <DateField label="Ticaret Sicil Gazetesi Tarihi" value={draft.trade_registry_gazette_date} onChange={value => setField('trade_registry_gazette_date', value)} />
@@ -145,7 +149,7 @@ export function CompanyBranchOpeningWizard({
             <TextField label="Ticaret Sicil Müdürlüğü" value={draft.trade_registry_office} onChange={value => setField('trade_registry_office', value)} />
             <TextareaField label="Açıklama / Not" value={draft.notes} onChange={value => setField('notes', value)} />
           </div>}
-          {step === 4 && <div className="grid gap-4 md:grid-cols-2">
+          {step === 0 && <div className="grid gap-4 md:grid-cols-2">
             <CheckboxField label="Otomatik organizasyon birimi oluşturulsun" checked={!!draft.create_organization_unit} onChange={value => setField('create_organization_unit', value)} />
             <TextField label="Organizasyon Birimi Adı" value={draft.organization_unit_name} onChange={value => setField('organization_unit_name', value)} disabled={!draft.create_organization_unit} />
             <SelectField label="Üst Organizasyon Birimi" value={draft.parent_organization_unit_id} onChange={value => setField('parent_organization_unit_id', value)} options={[['', 'Şirket kök birimi'], ...organizationUnitOptions.map(option => [option.value, option.label] as [string, string])]} />
@@ -153,8 +157,8 @@ export function CompanyBranchOpeningWizard({
             <CheckboxField label="Otomatik lokasyon/tesis kaydı oluşturulsun" checked={!!draft.create_facility} onChange={value => setField('create_facility', value)} />
             <TextField label="Lokasyon / Tesis Adı" value={draft.facility_name} onChange={value => setField('facility_name', value)} disabled={!draft.create_facility} />
           </div>}
-          {step === 5 && <Documents documents={documents} setDocuments={setDocuments} documentMeta={documentMeta} setDocumentMeta={setDocumentMeta} />}
-          {step === 6 && <Summary rows={summaryRows} documents={documents} />}
+          {step === 1 && <Documents documents={documents} setDocuments={setDocuments} documentMeta={documentMeta} setDocumentMeta={setDocumentMeta} />}
+          {step === 2 && <Summary rows={summaryRows} documents={documents} />}
         </div>
         {error && <ErrorBar message={error} />}
         <Footer step={step} stepsLength={steps.length} saving={saving} count={activeDocumentCount} onClose={onClose} onBack={() => setStep(prev => Math.max(0, prev - 1))} onNext={nextStep} onComplete={complete} />

@@ -299,8 +299,8 @@ function createOpeningPreviewStep(form: Record<string, any>): RecordLifecycleWiz
 
   return {
     id: 'preview-complete',
-    title: 'Önizleme ve Tamamla',
-    description: 'Açılış kaydı tamamlanmadan önce son kontrol.',
+    title: 'Ön İzleme/Onay',
+    description: 'Resmi işlem tamamlanmadan önce son kontrol.',
     sections: [
       {
         id: 'opening-preview-summary',

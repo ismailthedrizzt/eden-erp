@@ -31,7 +31,10 @@ export type BranchClosingSubmitPayload = Record<string, any> & {
   document_meta: Record<string, { document_date?: string | null; description?: string | null }>
 }
 
-const steps = ['Ön Kontrol', 'Kapatılacak Şube', 'Etki Analizi', 'Kapanış Bilgileri', 'Belgeler', 'Özet ve Onay']
+const steps = ['Bilgiler', 'Belgeler', 'Ön İzleme/Onay']
+const BRANCH_CLOSING_INFO_VALIDATION_STEP = 3
+const BRANCH_CLOSING_FINAL_VALIDATION_STEP = 5
+
 const documentSlots: DocumentSlot[] = [
   { id: 'branch_closing_resolution', title: 'Şube Kapanış Kararı' },
   { id: 'trade_registry_gazette', title: 'Ticaret Sicil Gazetesi' },
@@ -132,14 +135,15 @@ export function CompanyBranchClosingWizard({
   }
 
   const nextStep = () => {
-    const validationError = validate(step)
+    const validationTarget = step === 0 ? BRANCH_CLOSING_INFO_VALIDATION_STEP : step === 1 ? BRANCH_CLOSING_FINAL_VALIDATION_STEP : step
+    const validationError = validate(validationTarget)
     if (validationError) return setError(validationError)
     setError(null)
     setStep(prev => Math.min(prev + 1, steps.length - 1))
   }
 
   const complete = async () => {
-    const validationError = validate(steps.length - 1)
+    const validationError = validate(BRANCH_CLOSING_FINAL_VALIDATION_STEP)
     if (validationError) return setError(validationError)
     setError(null)
     try {
@@ -164,11 +168,11 @@ export function CompanyBranchClosingWizard({
         <StepNav steps={steps} step={step} setStep={setStep} />
         <div className="min-h-0 flex-1 overflow-auto px-5 py-5">
           {step === 0 && <Precheck context={precheck} blockingReasons={blockingReasons} activeBranchCount={activeBranches.length} />}
-          {step === 1 && <div className="space-y-4">
+          {step === 0 && <div className="space-y-4">
             <SelectField label="Kapatılacak Şube" value={draft.branch_id} onChange={value => setField('branch_id', value)} options={[['', 'Şube seçin'], ...activeBranches.map(branch => [branch.id, branch.branch_name || branch.branch_short_name || branch.id] as [string, string])]} error={fieldErrors.branch_id} />
             {selectedBranch ? <ReadonlyGrid title="Seçilen şube" fields={[['Şube Adı', selectedBranch.branch_name], ['Durum', selectedBranch.record_status || selectedBranch.status], ['Adres', [selectedBranch.address, selectedBranch.district, selectedBranch.city].filter(Boolean).join(' / ')], ['Açılış Tarihi', selectedBranch.opening_registration_date || selectedBranch.start_date]]} /> : null}
           </div>}
-          {step === 2 && <div className="space-y-5">
+          {step === 0 && <div className="space-y-5">
             {impactLoading ? <div className="rounded-lg border border-gray-200 p-4 text-sm text-gray-600 dark:border-gray-800 dark:text-gray-300">Etki analizi yenileniyor...</div> : null}
             <div className="grid gap-3 md:grid-cols-4">
               <Metric label="Organizasyon Birimi" value={selectedBranch?.organization_unit_id ? 'Bağlı' : 'Yok'} />
@@ -188,7 +192,7 @@ export function CompanyBranchClosingWizard({
               <SelectField label="Bağlı lokasyon/tesis ne olacak?" value={draft.facility_action} onChange={value => setField('facility_action', value)} options={[['deactivate', 'Pasife al'], ['keep_open', 'Açık bırak'], ['reuse', 'Başka amaçla kullan']]} />
             </div>
           </div>}
-          {step === 3 && <div className="space-y-4">
+          {step === 0 && <div className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2">
               <TextField label="Kapanış Nedeni" value={draft.closing_reason} onChange={value => setField('closing_reason', value)} error={fieldErrors.closing_reason} required />
               <DateField label="Karar Tarihi" value={draft.closing_decision_date} onChange={value => setField('closing_decision_date', value)} error={fieldErrors.closing_decision_date} />
@@ -200,8 +204,8 @@ export function CompanyBranchClosingWizard({
             </div>
             <TextareaField label="Açıklama / Not" value={draft.notes} onChange={value => setField('notes', value)} />
           </div>}
-          {step === 4 && <Documents documents={documents} setDocuments={setDocuments} documentMeta={documentMeta} setDocumentMeta={setDocumentMeta} />}
-          {step === 5 && <Summary rows={summaryRows} documents={documents} />}
+          {step === 1 && <Documents documents={documents} setDocuments={setDocuments} documentMeta={documentMeta} setDocumentMeta={setDocumentMeta} />}
+          {step === 2 && <Summary rows={summaryRows} documents={documents} />}
         </div>
         {error && <ErrorBar message={error} />}
         <Footer step={step} stepsLength={steps.length} saving={saving} count={activeDocumentCount} onClose={onClose} onBack={() => setStep(prev => Math.max(0, prev - 1))} onNext={nextStep} onComplete={complete} />

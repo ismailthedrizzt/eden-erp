@@ -21,7 +21,7 @@ export type CapitalDecreasePrecheckContext = {
   current_ownership_distribution: Array<Record<string, any>>
 }
 
-const stepLabels = ['Ön Kontrol', 'Sermaye Bilgileri', 'Ortaklara Etki', 'Belgeler', 'Özet']
+const stepLabels = ['Bilgiler', 'Belgeler', 'Ön İzleme/Onay']
 
 export function CompanyCapitalDecreaseWizard({
   companyName,
@@ -48,7 +48,7 @@ export function CompanyCapitalDecreaseWizard({
         </div>
 
         <div className="border-b border-gray-100 px-5 py-3 dark:border-gray-800">
-          <div className="grid gap-2 md:grid-cols-5">
+          <div className="grid gap-2 md:grid-cols-3">
             {stepLabels.map((label, index) => (
               <button
                 key={label}
@@ -70,10 +70,10 @@ export function CompanyCapitalDecreaseWizard({
 
         <div className="min-h-0 flex-1 overflow-auto px-5 py-5">
           {step === 0 && <PrecheckStep context={context} />}
-          {step === 1 && <CapitalFieldsStep context={context} />}
-          {step === 2 && <OwnershipImpactStep rows={context.current_ownership_distribution || []} />}
-          {step === 3 && <DocumentPlanStep requiredFields={context.required_fields || []} />}
-          {step === 4 && <SummaryStep context={context} />}
+          {step === 0 && <CapitalFieldsStep context={context} />}
+          {step === 0 && <OwnershipImpactStep rows={context.current_ownership_distribution || []} />}
+          {step === 1 && <DocumentPlanStep requiredFields={context.required_fields || []} />}
+          {step === 2 && <SummaryStep context={context} />}
         </div>
 
         <div className="flex items-center justify-between gap-3 border-t border-gray-100 px-5 py-4 dark:border-gray-800">

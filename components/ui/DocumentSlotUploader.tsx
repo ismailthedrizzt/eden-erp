@@ -261,8 +261,21 @@ function getDocumentThumbnailUrl(doc?: SlotDocument | null, thumbnailSignedUrl?:
   if (thumbnailSignedUrl) return thumbnailSignedUrl
   if (doc.thumbnailUrl && !isFallbackDocumentThumbnailUrl(doc.thumbnailUrl)) return doc.thumbnailUrl
   if (isImageDocument(doc)) return doc.previewUrl || signedUrl || doc.url || (doc.file ? URL.createObjectURL(doc.file) : '')
-  const label = isPdfDocument(doc) ? 'PDF' : isTextDocument(doc) ? 'TXT' : getFileTypeConfig(getEffectiveDocumentType(doc)).label
-  return generateFallbackDocumentThumbnail(label, doc.name)
+  return ''
+}
+
+function isLikelyImageThumbnailUrl(value?: string) {
+  if (!value) return false
+  if (value.startsWith('data:image/')) return true
+  const clean = value.split('?')[0].split('#')[0].toLowerCase()
+  return /\.(png|jpe?g|webp|gif|svg)$/.test(clean)
+}
+
+function canRenderDocumentThumbnail(doc?: SlotDocument | null, thumbnailUrl?: string) {
+  if (!doc || !thumbnailUrl || isFallbackDocumentThumbnailUrl(thumbnailUrl)) return false
+  if (isImageDocument(doc)) return true
+  if (doc.thumbnailPath) return true
+  return !!doc.thumbnailUrl && isLikelyImageThumbnailUrl(thumbnailUrl)
 }
 
 function getDocumentTimestamp(doc?: SlotDocument | null) {
@@ -449,7 +462,7 @@ export function DocumentSlotUploader({
   const currentAcceptedTypes = currentSlot?.acceptedTypes || DEFAULT_DOCUMENT_ACCEPTED_TYPES
   const currentDocType = getEffectiveDocumentType(currentDoc)
   const canPreviewCurrentDoc = canInlinePreview(currentDoc, currentDocUrl)
-  const hasVisualThumbnail = Boolean(currentDocThumbnailUrl)
+  const hasVisualThumbnail = canRenderDocumentThumbnail(currentDoc, currentDocThumbnailUrl)
   const activeDocumentSlotKey = useMemo(
     () => documents
       .filter(isActiveDocument)
@@ -821,10 +834,11 @@ export function DocumentSlotUploader({
             const Icon = config.icon
             const slotTitle = allSlots.find(slot => slot.id === doc.slotId)?.title || doc.slotTitle || doc.slotId
             const active = isActiveDocument(doc)
+            const hasThumb = canRenderDocumentThumbnail(doc, thumbUrl)
 
             return (
               <div key={`${getDocumentIdentity(doc)}:${index}`} className="flex items-center gap-3 px-4 py-3">
-                {thumbUrl ? (
+                {hasThumb ? (
                   <img
                     src={thumbUrl}
                     alt={doc.name}
@@ -955,11 +969,12 @@ export function DocumentSlotUploader({
             ) : ''
             const config = getFileTypeConfig(getEffectiveDocumentType(doc))
             const Icon = config.icon
+            const hasThumb = canRenderDocumentThumbnail(doc, thumbUrl)
 
             return (
               <div key={slot.id}>
                 <div className="flex items-center gap-3 px-4 py-3">
-                  {thumbUrl ? (
+                  {hasThumb ? (
                     <img
                       src={thumbUrl}
                       alt={doc?.name || slot.title}
