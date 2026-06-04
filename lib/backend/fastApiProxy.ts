@@ -150,15 +150,19 @@ export async function proxyToFastApi(
       signal: controller.signal,
     })
     const contentType = response.headers.get('content-type') || 'application/json'
-    const responseBody = await response.text()
+    const responseBody = await response.arrayBuffer()
+    const responseHeaders = new Headers()
+    responseHeaders.set('content-type', contentType)
+    responseHeaders.set('cache-control', 'no-store, max-age=0')
+    responseHeaders.set('x-request-id', response.headers.get('x-request-id') || requestId)
+    responseHeaders.set('x-correlation-id', response.headers.get('x-correlation-id') || correlationId)
+    ;['content-disposition', 'accept-ranges', 'last-modified', 'etag'].forEach(header => {
+      const value = response.headers.get(header)
+      if (value) responseHeaders.set(header, value)
+    })
     return new NextResponse(responseBody, {
       status: response.status,
-      headers: {
-        'content-type': contentType,
-        'cache-control': 'no-store, max-age=0',
-        'x-request-id': response.headers.get('x-request-id') || requestId,
-        'x-correlation-id': response.headers.get('x-correlation-id') || correlationId,
-      },
+      headers: responseHeaders,
     })
   } catch (error) {
     return NextResponse.json(

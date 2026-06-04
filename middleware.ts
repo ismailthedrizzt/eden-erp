@@ -193,11 +193,14 @@ function isLocalDevOriginPair(origin: string, requestOrigin: string) {
 
 function withSecurityHeaders(response: NextResponse, request: NextRequest) {
   response.headers.set('X-Content-Type-Options', 'nosniff')
-  response.headers.set('X-Frame-Options', 'DENY')
+  const isEmbeddableMedia = request.nextUrl.pathname === '/api/media/open'
+  response.headers.set('X-Frame-Options', isEmbeddableMedia ? 'SAMEORIGIN' : 'DENY')
   response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
   response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=(), usb=()')
   response.headers.set('Cross-Origin-Opener-Policy', 'same-origin')
-  response.headers.set('Content-Security-Policy', "frame-ancestors 'none'; base-uri 'self'; object-src 'none'")
+  response.headers.set('Content-Security-Policy', isEmbeddableMedia
+    ? "frame-ancestors 'self'; base-uri 'self'; object-src 'none'"
+    : "frame-ancestors 'none'; base-uri 'self'; object-src 'none'")
 
   if (process.env.NODE_ENV === 'production' && request.nextUrl.protocol === 'https:') {
     response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains')

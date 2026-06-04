@@ -1330,10 +1330,6 @@ export function DocumentSlotUploader({
                 </p>
               </div>
 
-              <div className="relative z-30 mt-2">
-                {renderDocumentActions('inline')}
-              </div>
-              
               {/* Hover Actions Overlay */}
               {(
                 <div className="pointer-events-none absolute inset-0 z-20 flex flex-col items-center justify-center gap-2 bg-white/90 opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100 dark:bg-gray-800/90">

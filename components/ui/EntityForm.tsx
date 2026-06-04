@@ -172,7 +172,7 @@ type SgkCodeOption = {
 
 type SgkCodeCategories = Record<string, SgkCodeOption[]>
 
-type MasterSummaryValidationState = { status: FormControlState; label: string; locked?: boolean }
+type MasterSummaryValidationState = { status: FormControlState; label: string; locked?: boolean; control?: FormFieldOperationControl }
 
 /** Tab configuration for grouping fields */
 export interface FormTab {
@@ -669,7 +669,12 @@ function MasterSummaryHero({
                 )}>
                   {item.label}
                 </div>
-                {validationState.label && (
+                {validationState.control ? (
+                  <FieldOperationLockIndicator
+                    control={validationState.control}
+                    recordStatus={String(sourceData.record_status || sourceData.status || '')}
+                  />
+                ) : validationState.label ? (
                   <span className={cn(
                     "shrink-0 rounded border bg-white px-1.5 py-0.5 text-[10px] font-medium leading-none dark:bg-gray-900",
                     validationState.status === 'invalid'
@@ -680,7 +685,7 @@ function MasterSummaryHero({
                   )}>
                     {validationState.label}
                   </span>
-                )}
+                ) : null}
               </div>
               <MasterSummaryItemValue
                 item={item}
@@ -869,7 +874,7 @@ function getMasterSummaryValidationState(
   )
 
   if (backingField?.controlledByOperation) {
-    return { status: 'neutral', label: 'Resmi Veri', locked: true }
+    return { status: 'neutral', label: 'Resmi Veri', locked: true, control: backingField.controlledByOperation }
   }
 
   if (readOnly) return { status: 'neutral', label: '' }
