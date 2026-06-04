@@ -230,27 +230,28 @@ function getRepresentativeScopeLabel(representative: Record<string, any>) {
 }
 
 const columns: ColumnDef[] = [
-  { key: 'record_status', label: 'Durum', type: 'enum', width: 44, minWidth: 44, maxWidth: 44, fixedWidth: true, sortable: false, hideHeaderLabel: true, category: 'Durum', order: -10, render: (_value, row) => <RepresentativeStatusDot status={getRepresentativeRecordLifecycleStatus(row)} /> },
+  { key: 'record_status', label: 'Durum', type: 'enum', width: 44, minWidth: 44, maxWidth: 44, fixedWidth: true, sortable: false, hideHeaderLabel: true, category: 'Durum', order: -100, fixed: true, hideable: false, render: (_value, row) => <RepresentativeStatusDot status={getRepresentativeRecordLifecycleStatus(row)} /> },
+  { key: 'avatar', label: 'Avatar', type: 'avatar', width: 72, minWidth: 72, maxWidth: 72, fixedWidth: true, sortable: false, hideHeaderLabel: true, category: 'Kimlik', order: -90, fixed: true, hideable: false, imageFit: 'cover', imageShape: 'circle' },
   { key: 'display_name', label: 'Ad Soyad / Ünvan', type: 'text', width: 260, minWidth: 180, sortable: true, category: 'Kimlik', required: true, render: (value, row) => <RepresentativeNameCell value={value} row={row} /> },
   { key: 'company_name', label: 'Temsil Ettiği Şirket', type: 'text', width: 220, category: 'Şirket', required: true },
-  { key: 'representative_type_label', label: 'Temsilci Tipi', type: 'enum', width: 160, category: 'Kimlik', required: true },
-  { key: 'person_kind_label', label: 'Kişi / Kurum Tipi', type: 'enum', width: 150, category: 'Kimlik', required: true },
-  { key: 'source_type_label', label: 'Kaynak Türü', type: 'enum', width: 150, category: 'Kimlik' },
-  { key: 'primary_authority_type', label: 'Ana Yetki Tipi', type: 'enum', width: 180, category: 'Yetki', required: true },
+  { key: 'representative_type_label', label: 'Temsilci Tipi', type: 'enum', width: 160, category: 'Kimlik', visible: false },
+  { key: 'person_kind_label', label: 'Kişi / Kurum Tipi', type: 'enum', width: 150, category: 'Kimlik', visible: false },
+  { key: 'source_type_label', label: 'Kaynak Türü', type: 'enum', width: 150, category: 'Kimlik', visible: false },
+  { key: 'primary_authority_type', label: 'Ana Yetki Tipi', type: 'enum', width: 180, category: 'Yetki', visible: false },
   { key: 'authority_types_summary', label: 'Yetki Türleri', type: 'text', width: 220, category: 'Yetki' },
   { key: 'signature_type_label', label: 'İmza Türü', type: 'enum', width: 130, category: 'Yetki' },
-  { key: 'signature_rule_summary', label: 'İmza Kuralı', type: 'enum', width: 150, category: 'Yetki' },
+  { key: 'signature_rule_summary', label: 'İmza Kuralı', type: 'enum', width: 150, category: 'Yetki', visible: false },
   { key: 'authority_status_label', label: 'Yetki Durumu', type: 'enum', width: 130, sortable: true, category: 'Yetki', required: true },
   { key: 'scope_label', label: 'Yetki Kapsamı', type: 'enum', width: 170, category: 'Yetki' },
-  { key: 'branch_name', label: 'Şube', type: 'text', width: 180, category: 'Kapsam' },
-  { key: 'organization_unit_name', label: 'Organizasyon Birimi', type: 'text', width: 190, category: 'Kapsam' },
-  { key: 'facility_name', label: 'Tesis/Lokasyon', type: 'text', width: 180, category: 'Kapsam' },
+  { key: 'branch_name', label: 'Şube', type: 'text', width: 180, category: 'Kapsam', visible: false },
+  { key: 'organization_unit_name', label: 'Organizasyon Birimi', type: 'text', width: 190, category: 'Kapsam', visible: false },
+  { key: 'facility_name', label: 'Tesis/Lokasyon', type: 'text', width: 180, category: 'Kapsam', visible: false },
   { key: 'authority_start_date', label: 'Yürürlük Başlangıcı', type: 'date', width: 140, category: 'Tarih' },
   { key: 'authority_end_date', label: 'Yürürlük Bitişi', type: 'date', width: 130, category: 'Tarih' },
   { key: 'limit_summary', label: 'Limit Özeti', type: 'text', width: 170, category: 'Yetki' },
-  { key: 'currency', label: 'Para Birimi', type: 'enum', width: 110, category: 'Yetki' },
-  { key: 'last_operation_label', label: 'Son İşlem', type: 'enum', width: 180, category: 'Durum' },
-  { key: 'warnings_summary', label: 'Uyarılar', type: 'text', width: 220, category: 'Durum' },
+  { key: 'currency', label: 'Para Birimi', type: 'enum', width: 110, category: 'Yetki', visible: false },
+  { key: 'last_operation_label', label: 'Son İşlem', type: 'enum', width: 180, category: 'Durum', visible: false },
+  { key: 'warnings_summary', label: 'Uyarılar', type: 'text', width: 220, category: 'Durum', visible: false },
 ]
 
 const heroFields: FormField[] = [
@@ -609,6 +610,7 @@ export default function TemsilcilerPage() {
   const tableData = useMemo(() => representatives.map(representative => ({
     ...representative,
     display_name: representative.display_name || representative.full_name || '',
+    avatar: getRepresentativeAvatarUrl(representative),
     person_kind_label: representative.person_kind === 'organization' ? 'Tüzel Kişi' : 'Gerçek Kişi',
     representative_type_label: getRepresentativeTypeLabel(representative),
     source_type_label: getRepresentativeSourceTypeLabel(representative.source_type),
@@ -987,7 +989,7 @@ export default function TemsilcilerPage() {
             data={tableData}
             loading={loading}
             defaultView="list"
-            storageKey="companies-representatives-table"
+            storageKey="companies-representatives-table-v2"
             emptyText={
               <SmartEmptyState
                 title="Henüz temsilci kaydı yok"
@@ -2020,6 +2022,27 @@ function RepresentativeNameCell({ value }: { value: any; row: any }) {
       <span className="font-medium">{value || '-'}</span>
     </div>
   )
+}
+
+function getRepresentativeAvatarUrl(representative: Record<string, any>) {
+  const direct = optionalString(representative.avatar || representative.photo_url || representative.profile_image || representative.profileImage || representative.image)
+  if (direct) return direct
+  const image = Array.isArray(representative.photo_logo) ? representative.photo_logo.find(item => !!item) : null
+  if (!image) return ''
+  return optionalString(
+    image.thumbnailUrl ||
+    image.thumbnail_url ||
+    image.previewUrl ||
+    image.preview_url ||
+    image.signedUrl ||
+    image.signed_url ||
+    image.url ||
+    image.download_url
+  )
+}
+
+function optionalString(value: unknown) {
+  return typeof value === 'string' && value.trim() ? value.trim() : ''
 }
 
 function getRepresentativeAuthorityStatusLabel(recordStatus: string, fallback?: string) {
