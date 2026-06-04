@@ -17,6 +17,7 @@ import { ActionGuideSearch } from '@/components/ai/ActionGuideSearch'
 import { CopilotPanel } from '@/components/ai/CopilotPanel'
 import { cacheUiPreferences, readCachedUiPreferences, syncUiPreferencesPatch } from '@/lib/user-state/client'
 import { setStoredTenantId, tenantRequestHeaders } from '@/lib/tenancy/client'
+import { apiClient } from '@/lib/api/apiClient'
 import { getCurrentReleaseEnvironment } from '@/lib/release/environment'
 import { canShowRouteInNavigation } from '@/lib/release/releaseVisibility'
 import type { SessionBootstrapResponse, UiThemePreference } from '@/lib/user-state/types'
@@ -340,6 +341,7 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
         : { ...row, is_current: false }
       ))
       setWorkspaceMenuOpen(false)
+      apiClient.invalidate()
 
       try {
         const bootstrapResponse = await fetch('/api/session/bootstrap', {
@@ -361,7 +363,8 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
       }
 
       router.refresh()
-      setSwitchingWorkspaceId(null)
+      window.location.reload()
+      return
     } catch (error) {
       setWorkspaceSwitchError(error instanceof Error ? error.message : 'Calisma alani degistirilemedi.')
       setSwitchingWorkspaceId(null)

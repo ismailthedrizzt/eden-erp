@@ -66,8 +66,10 @@ async function request<T>(path: string, options: ApiClientOptions = {}): Promise
   const { query, useCache, staleTime, tenantId, ...requestOptions } = options
   const method = (requestOptions.method || 'GET').toUpperCase()
   const url = buildUrl(path, query)
+  const tenantHeaders = tenantRequestHeaders(tenantId)
+  const tenantScope = tenantHeaders['x-eden-tenant-id'] || tenantHeaders['x-eden-workspace-id'] || tenantId || 'default'
   const shouldCache = method === 'GET' && useCache !== false
-  const cacheKey = shouldCache ? url : ''
+  const cacheKey = shouldCache ? `tenant=${tenantScope}:${url}` : ''
 
   if (shouldCache) {
     const cached = getCache.get(cacheKey)
@@ -80,7 +82,7 @@ async function request<T>(path: string, options: ApiClientOptions = {}): Promise
   const headers = new Headers(options.headers)
   if (!headers.has('Content-Type') && options.body) headers.set('Content-Type', 'application/json')
 
-  Object.entries(tenantRequestHeaders(tenantId)).forEach(([key, value]) => {
+  Object.entries(tenantHeaders).forEach(([key, value]) => {
     if (!headers.has(key)) headers.set(key, value)
   })
 
@@ -150,6 +152,14 @@ function addClientRequestId(method: string, body?: JsonBody): JsonBody | undefin
   return { ...record, client_request_id: `ui:${randomId}` }
 }
 
+
+function matchesCachePrefix(key: string, prefix: string, resolvedPrefix: string) {
+  return key.startsWith(prefix)
+    || key.startsWith(resolvedPrefix)
+    || key.includes(`:${prefix}`)
+    || key.includes(`:${resolvedPrefix}`)
+}
+
 export const apiClient = Object.assign(request, {
   get: <T>(path: string, options: ApiClientOptions = {}) => request<T>(path, { ...options, method: 'GET' }),
   post: <T>(path: string, body?: JsonBody, options: ApiClientOptions = {}) => request<T>(path, withJsonBody('POST', body, options)),
@@ -164,10 +174,10 @@ export const apiClient = Object.assign(request, {
 
     const resolvedPrefix = buildUrl(prefix)
     for (const key of getCache.keys()) {
-      if (key.startsWith(prefix) || key.startsWith(resolvedPrefix)) getCache.delete(key)
+      if (matchesCachePrefix(key, prefix, resolvedPrefix)) getCache.delete(key)
     }
     for (const key of inFlightGets.keys()) {
-      if (key.startsWith(prefix) || key.startsWith(resolvedPrefix)) inFlightGets.delete(key)
+      if (matchesCachePrefix(key, prefix, resolvedPrefix)) inFlightGets.delete(key)
     }
   },
 })
