@@ -32,6 +32,7 @@ from app.domains.company.schemas import (
     PublicRegistrationUpdateRequest,
     TitleChangeRequest,
 )
+from app.domains.company.nace import load_company_nace_codes
 from app.domains.company.service import (
     create_company_draft,
     delete_company_draft,
@@ -86,6 +87,45 @@ async def list_companies(
         )
     except DomainError as error:
         raise domain_error_to_http(error) from error
+
+
+@router.get("/nace-codes", response_model=ApiSuccess[list[dict[str, Any]]])
+async def list_nace_reference_codes(
+    session: SessionDep,
+    context: RequestContextDep,
+    search: str | None = Query(default=None),
+    limit: int = Query(default=50, ge=1, le=200),
+) -> ApiSuccess[list[dict[str, Any]]]:
+    require_tenant(context)
+    if not await table_exists(session, "public.nace_codes"):
+        raise DomainError("NACE referans kayıtları hazır değil.", "NACE_REFERENCE_MISSING", 409)
+    where = ["coalesce(is_active, true) = true"]
+    params: dict[str, Any] = {"limit": limit}
+    if search:
+        where.append("(nace_code ilike :search or description ilike :search)")
+        params["search"] = f"%{search}%"
+    where_sql = " and ".join(where)
+    result = await session.execute(
+        text(
+            f"""
+            select
+              id::text as id,
+              nace_code,
+              description,
+              hazard_class,
+              source_name,
+              source_url,
+              source_reference,
+              updated_at
+            from public.nace_codes
+            where {where_sql}
+            order by nace_code asc
+            limit :limit
+            """
+        ),
+        params,
+    )
+    return ApiSuccess(data=[dict(row) for row in result.mappings().all()], message="NACE referans listesi getirildi.")
 
 
 @router.post("", response_model=ApiSuccess[dict[str, Any]])
@@ -443,6 +483,169 @@ async def current_ownership_for_company(
         return ApiSuccess(data=projection.data, warnings=projection.warnings)
     except DomainError as error:
         raise domain_error_to_http(error) from error
+
+
+@router.get("/{company_id}/nace-codes", response_model=ApiSuccess[list[dict[str, Any]]])
+async def list_company_nace_codes(
+    company_id: str,
+    session: SessionDep,
+    context: RequestContextDep,
+) -> ApiSuccess[list[dict[str, Any]]]:
+    tenant_id = require_tenant(context)
+    company = await get_company_by_id(session, tenant_id, company_id)
+    if not company:
+        raise DomainError("Sirket kaydi bulunamadi.", "COMPANY_NOT_FOUND", 404)
+    rows = await load_company_nace_codes(session, tenant_id, company_id)
+    return ApiSuccess(data=rows, message="Sirket NACE kodlari getirildi.")
+
+
+@router.post("/{company_id}/nace-codes", response_model=ApiSuccess[list[dict[str, Any]]])
+async def add_company_nace_code(
+    company_id: str,
+    payload: dict[str, Any],
+    session: SessionDep,
+    context: RequestContextDep,
+) -> ApiSuccess[list[dict[str, Any]]]:
+    tenant_id = require_tenant(context)
+    nace_code_id = str(payload.get("nace_code_id") or payload.get("id") or "").strip()
+    if not nace_code_id:
+        raise DomainError("NACE kodu seçimi eksik.", "NACE_CODE_REQUIRED", 400)
+    async with session.begin():
+        company = await get_company_by_id(session, tenant_id, company_id)
+        if not company:
+            raise DomainError("Sirket kaydi bulunamadi.", "COMPANY_NOT_FOUND", 404)
+        reference = await session.execute(
+            text("""
+            select id
+            from public.nace_codes
+            where id::text = :nace_code_id
+              and coalesce(is_active, true) = true
+            limit 1
+            """),
+            {"nace_code_id": nace_code_id},
+        )
+        if not reference.mappings().one_or_none():
+            raise DomainError("Seçilen NACE kodu aktif referans kayıtlarında bulunamadı.", "NACE_REFERENCE_INVALID", 400)
+        current_rows = await load_company_nace_codes(session, tenant_id, company_id)
+        active_rows = [row for row in current_rows if str(row.get("status") or "active").lower() == "active" and not row.get("is_deleted")]
+        if any(str(row.get("nace_code_id")) == nace_code_id for row in active_rows):
+            raise DomainError("Bu NACE kodu zaten seçildi.", "NACE_DUPLICATE", 400)
+        if len(active_rows) >= 5:
+            raise DomainError("Bir şirket için en fazla 5 aktif NACE kodu tanımlanabilir.", "NACE_LIMIT_EXCEEDED", 400)
+        make_primary = bool(payload.get("is_primary")) or not any(row.get("is_primary") for row in active_rows)
+        if make_primary:
+            await session.execute(
+                text("""
+                update public.company_nace_codes
+                set is_primary = false, updated_at = now(), updated_by = :user_id
+                where tenant_id = :tenant_id
+                  and company_id = :company_id
+                  and coalesce(is_deleted, false) = false
+                  and status = 'active'
+                """),
+                {"tenant_id": tenant_id, "company_id": company_id, "user_id": context.user_id},
+            )
+        await session.execute(
+            text("""
+            insert into public.company_nace_codes (
+              tenant_id, company_id, nace_code_id, is_primary, status, start_date, created_by, updated_by
+            )
+            values (
+              :tenant_id, :company_id, cast(:nace_code_id as uuid), :is_primary, 'active', current_date, :user_id, :user_id
+            )
+            """),
+            {"tenant_id": tenant_id, "company_id": company_id, "nace_code_id": nace_code_id, "is_primary": make_primary, "user_id": context.user_id},
+        )
+    rows = await load_company_nace_codes(session, tenant_id, company_id)
+    return ApiSuccess(data=rows, message="NACE kodu eklendi.")
+
+
+@router.post("/{company_id}/nace-codes/{id}/set-primary", response_model=ApiSuccess[list[dict[str, Any]]])
+async def set_company_primary_nace_code(
+    company_id: str,
+    id: str,
+    session: SessionDep,
+    context: RequestContextDep,
+) -> ApiSuccess[list[dict[str, Any]]]:
+    tenant_id = require_tenant(context)
+    async with session.begin():
+        company = await get_company_by_id(session, tenant_id, company_id)
+        if not company:
+            raise DomainError("Sirket kaydi bulunamadi.", "COMPANY_NOT_FOUND", 404)
+        target = await session.execute(
+            text("""
+            select id
+            from public.company_nace_codes
+            where id::text = :id
+              and tenant_id = :tenant_id
+              and company_id = :company_id
+              and coalesce(is_deleted, false) = false
+              and status = 'active'
+            limit 1
+            """),
+            {"id": id, "tenant_id": tenant_id, "company_id": company_id},
+        )
+        if not target.mappings().one_or_none():
+            raise DomainError("NACE kaydı bulunamadı.", "NACE_ROW_NOT_FOUND", 404)
+        await session.execute(
+            text("""
+            update public.company_nace_codes
+            set is_primary = (id::text = :id), updated_at = now(), updated_by = :user_id
+            where tenant_id = :tenant_id
+              and company_id = :company_id
+              and coalesce(is_deleted, false) = false
+              and status = 'active'
+            """),
+            {"id": id, "tenant_id": tenant_id, "company_id": company_id, "user_id": context.user_id},
+        )
+    rows = await load_company_nace_codes(session, tenant_id, company_id)
+    return ApiSuccess(data=rows, message="Birincil NACE kodu güncellendi.")
+
+
+@router.post("/{company_id}/nace-codes/{id}/passivate", response_model=ApiSuccess[list[dict[str, Any]]])
+async def passivate_company_nace_code(
+    company_id: str,
+    id: str,
+    session: SessionDep,
+    context: RequestContextDep,
+) -> ApiSuccess[list[dict[str, Any]]]:
+    tenant_id = require_tenant(context)
+    async with session.begin():
+        company = await get_company_by_id(session, tenant_id, company_id)
+        if not company:
+            raise DomainError("Sirket kaydi bulunamadi.", "COMPANY_NOT_FOUND", 404)
+        result = await session.execute(
+            text("""
+            update public.company_nace_codes
+            set status = 'passive',
+                end_date = current_date,
+                is_primary = false,
+                updated_at = now(),
+                updated_by = :user_id
+            where id::text = :id
+              and tenant_id = :tenant_id
+              and company_id = :company_id
+              and coalesce(is_deleted, false) = false
+            returning id
+            """),
+            {"id": id, "tenant_id": tenant_id, "company_id": company_id, "user_id": context.user_id},
+        )
+        if not result.mappings().one_or_none():
+            raise DomainError("NACE kaydı bulunamadı.", "NACE_ROW_NOT_FOUND", 404)
+        active_rows = await load_company_nace_codes(session, tenant_id, company_id)
+        if active_rows and not any(row.get("is_primary") and str(row.get("status") or "active").lower() == "active" for row in active_rows):
+            first_active = next((row for row in active_rows if str(row.get("status") or "active").lower() == "active"), None)
+            if first_active:
+                await session.execute(
+                    text("""
+                    update public.company_nace_codes
+                    set is_primary = true, updated_at = now(), updated_by = :user_id
+                    where id = :id
+                    """),
+                    {"id": first_active["id"], "user_id": context.user_id},
+                )
+    rows = await load_company_nace_codes(session, tenant_id, company_id)
+    return ApiSuccess(data=rows, message="NACE kodu pasifleştirildi.")
 
 
 @router.get(

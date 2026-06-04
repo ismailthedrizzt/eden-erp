@@ -70,6 +70,11 @@ interface CompanyNaceRow {
   status: string
   updated_at?: string
   nace_code?: NaceReferenceRow
+  description?: string
+  hazard_class?: string
+  source_name?: string
+  source_url?: string
+  source_reference?: string
 }
 
 interface CompanyPublicTabProps {
@@ -759,10 +764,28 @@ function normalizeArray<T>(value: any): T[] {
 }
 
 function normalizeCompanyNaceRows(value: any): CompanyNaceRow[] {
-  return normalizeArray<CompanyNaceRow>(value).map((row) => ({
-    ...row,
-    status: row.status || 'active',
-  }))
+  return normalizeArray<Record<string, any>>(value).map((row) => {
+    const naceValue = row.nace_code
+    const nestedNace = naceValue && typeof naceValue === 'object' ? naceValue : null
+    const naceCodeId = String(row.nace_code_id || row.naceCodeId || nestedNace?.id || row.id || '')
+    const reference = {
+      id: String(nestedNace?.id || naceCodeId),
+      nace_code: String(nestedNace?.nace_code || nestedNace?.code || (typeof naceValue === 'string' ? naceValue : row.code || '')),
+      description: String(nestedNace?.description || row.description || ''),
+      hazard_class: String(nestedNace?.hazard_class || nestedNace?.hazardClass || row.hazard_class || row.hazardClass || ''),
+      source_name: nestedNace?.source_name || row.source_name,
+      source_url: nestedNace?.source_url || row.source_url,
+      source_reference: nestedNace?.source_reference || row.source_reference,
+      updated_at: nestedNace?.updated_at || row.updated_at,
+    }
+
+    return {
+      ...(row as CompanyNaceRow),
+      nace_code_id: naceCodeId,
+      status: row.status || 'active',
+      nace_code: reference,
+    }
+  })
 }
 
 function getPrimaryNace(value: any) {

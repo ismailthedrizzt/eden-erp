@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 from datetime import date
+import json
 from decimal import Decimal
+from pathlib import Path
 from typing import Annotated, Any
 
 from fastapi import APIRouter, Depends, Query, status
@@ -98,6 +100,59 @@ RequestContextDep = Annotated[RequestContext, Depends(require_access_context)]
 SessionDep = Annotated[AsyncSession, Depends(get_session)]
 DateFromQuery = Annotated[date | None, Query(alias="dateFrom")]
 DateToQuery = Annotated[date | None, Query(alias="dateTo")]
+
+
+def _clean_iban(value: Any) -> str:
+    return "".join(char for char in str(value or "").upper() if char.isalnum())
+
+
+def _is_valid_iban_mod97(iban: str) -> bool:
+    rearranged = f"{iban[4:]}{iban[:4]}"
+    remainder = 0
+    for char in rearranged:
+        value = str(ord(char) - 55) if char.isalpha() else char
+        for digit in value:
+            if not digit.isdigit():
+                return False
+            remainder = (remainder * 10 + int(digit)) % 97
+    return remainder == 1
+
+
+def _load_turkish_iban_banks() -> dict[str, Any]:
+    data_path = Path(__file__).resolve().parents[4] / "lib" / "data" / "turkish-bank-codes.json"
+    if not data_path.exists():
+        return {}
+    with data_path.open("r", encoding="utf-8") as handle:
+        data = json.load(handle)
+    banks = data.get("banks")
+    return banks if isinstance(banks, dict) else {}
+
+
+def _resolve_turkish_iban(value: Any) -> dict[str, Any] | None:
+    clean = _clean_iban(value)
+    if len(clean) != 26 or not clean.startswith("TR"):
+        return None
+    if not clean[2:9].isdigit():
+        return None
+    if not _is_valid_iban_mod97(clean):
+        return None
+    bank_code = clean[4:9]
+    banks = _load_turkish_iban_banks()
+    bank = banks.get(bank_code) or {}
+    return {
+        "iban": clean,
+        "country_code": "TR",
+        "check_digits": clean[2:4],
+        "bank_code": bank_code,
+        "bank_name": bank.get("name") or "Bilinmeyen Banka",
+        "swift_bic": bank.get("swift"),
+        "account_number": clean[10:26],
+        "reserved_field": clean[9:10],
+        "bank_country": "Türkiye",
+        "account_country": "Türkiye",
+        "account_currency": "TRY",
+        "preferred_currency": "TRY",
+    }
 
 
 @router.get("/cari-accounts", response_model=ApiSuccess[dict[str, Any]])
@@ -235,6 +290,31 @@ async def get_account_summary(
         return ApiSuccess(data=summary.model_dump())
     except DomainError as error:
         raise domain_error_to_http(error) from error
+
+
+
+@router.post("/entity-bank-accounts/parse-iban", response_model=ApiSuccess[dict[str, Any]])
+async def parse_entity_bank_account_iban(
+    payload: dict[str, Any],
+    context: RequestContextDep,
+) -> ApiSuccess[dict[str, Any]]:
+    require_tenant(context)
+    details = _resolve_turkish_iban(payload.get("iban"))
+    if not details:
+        return ApiSuccess(data={"values": {}, "valid": False}, message="IBAN çözümlenemedi.")
+
+    values = {
+        "iban": details["iban"],
+        "bank_name": details["bank_name"],
+        "bank_code": details["bank_code"],
+        "account_number": details["account_number"],
+        "swift_bic": details.get("swift_bic") or "",
+        "bank_country": details["bank_country"],
+        "account_country": details["account_country"],
+        "account_currency": details["account_currency"],
+        "preferred_currency": details["preferred_currency"],
+    }
+    return ApiSuccess(data={"values": values, "details": details, "valid": True}, message="IBAN çözümlendi.")
 
 
 @router.get("/company/{company_id}/summary", response_model=ApiSuccess[dict[str, Any]])

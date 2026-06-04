@@ -8,6 +8,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.errors import DomainError
+from app.domains.company.nace import load_company_nace_codes
 from app.domains.company.service import get_company_by_id, get_company_context
 from app.domains.operations.service import table_exists
 from app.projections.branch import get_branch_summary_for_company
@@ -134,7 +135,7 @@ async def build_company_detail_read_model(
         "public_registry": context.get("public_registry"),
         "public_channels": context.get("public_channels"),
         "current_ownership": ownership,
-        "company_nace_codes": [],
+        "company_nace_codes": await load_company_nace_codes(session, tenant_id, company_id),
         "lifecycle_events": [],
         "branches": branch_summary.data.get("branches", []),
         "branch_summary": {
