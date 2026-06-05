@@ -741,62 +741,52 @@ export default function TemsilcilerPage() {
     }
   }
 
-  const handleSave = async (data: Record<string, any>, mode: FormMode) => {
-    setSaving(true)
+  const buildRepresentativeSavePayload = (data: Record<string, any>, mode: FormMode) => {
     setFormError(null)
     setFieldErrors({})
-    try {
-      const payload = normalizePayload(data, selectedRepresentative || undefined, mode)
-      const companySelectionError = getRepresentativeCompanySelectionError(payload)
-      if (companySelectionError) throw companySelectionError
-      const requestPayload = mode === 'create'
-        ? payload
-        : withRepresentativeConcurrency(payload, selectedRepresentative)
-      const result = mode === 'create'
-        ? await companyService.createRepresentative(requestPayload)
-        : await companyService.updateRepresentative(selectedRepresentative?.id || '', requestPayload)
-      if (result.data) setSelectedRepresentative(normalizeRepresentativeForForm(result.data))
-      setToast({ type: 'success', title: 'Kayıt Başarılı', message: mode === 'create' ? 'Temsilci kaydı oluşturuldu' : 'Temsilci bilgileri güncellendi' })
-      await loadData(true)
-      if (mode === 'create') invalidateEntityDetailCache('company-representatives')
-      else invalidateEntityDetailCache('company-representatives', selectedRepresentative?.id)
-      setPageState('list')
-    } catch (err: any) {
-      const saveError = createSaveErrorFromService(err, mode === 'create' ? 'Temsilci oluşturulamadı' : 'Güncelleme başarısız')
-      setFormError(saveError.message)
-      setFieldErrors(saveError.fieldErrors || {})
-      setToast(saveError.toast || { type: 'error', title: 'Kayıt Başarısız', message: saveError.message })
-      throw saveError
-    } finally {
-      setSaving(false)
-    }
+    const payload = normalizePayload(data, selectedRepresentative || undefined, mode)
+    const companySelectionError = getRepresentativeCompanySelectionError(payload)
+    if (companySelectionError) throw companySelectionError
+    return mode === 'create'
+      ? payload
+      : withRepresentativeConcurrency(payload, selectedRepresentative)
   }
 
-  const handleDelete = async (representativeId = selectedRepresentative?.id) => {
-    if (!representativeId) return
-    setDeleting(true)
-    try {
-      const result = await companyService.deleteRepresentativeDraft(representativeId)
-      setToast({
-        type: 'success',
-        title: result.hardDeleted ? 'Taslak Silindi' : 'Silme İşlemi Tamamlandı',
-        message: result.hardDeleted
-          ? 'Temsilci kartı taslağı kalıcı olarak silindi.'
-          : 'Temsilci kaydı backend sonucuna göre güncellendi.',
-      })
-      await loadData(true)
-      setPageState('list')
-    } catch (err: any) {
-      const saveError = createSaveErrorFromService(err, 'Silme işlemi başarısız')
-      if (['REPRESENTATIVE_DELETE_REQUIRES_TERMINATION', 'REPRESENTATIVE_DELETE_HAS_AUTHORITY_HISTORY'].includes(saveError.code || '')) {
-        setToast({ type: 'warning', title: 'Yetki Sonlandırma Gerekli', message: 'Yetki veya işlem geçmişi olan temsilci kaydı doğrudan silinemez. Yetki Sonlandırma işlemini kullanın.' })
-        if (selectedRepresentative?.id === representativeId) openAuthorityWizard('Sonlandırma')
-      } else {
-        setToast(saveError.toast || { type: 'error', title: 'Kayıt Başarısız', message: saveError.message })
-      }
-      throw saveError
-    } finally {
-      setDeleting(false)
+  const handleRepresentativeSaveSuccess = async (result: any, _payload: Record<string, any>, mode: FormMode) => {
+    if (result.data) setSelectedRepresentative(normalizeRepresentativeForForm(result.data))
+    setToast({ type: 'success', title: 'Kayıt Başarılı', message: mode === 'create' ? 'Temsilci kaydı oluşturuldu' : 'Temsilci bilgileri güncellendi' })
+    await loadData(true)
+    if (mode === 'create') invalidateEntityDetailCache('company-representatives')
+    else invalidateEntityDetailCache('company-representatives', selectedRepresentative?.id)
+    setPageState('list')
+  }
+
+  const handleRepresentativeSaveError = async (err: unknown, _payload: Record<string, any>, mode: FormMode) => {
+    const saveError = createSaveErrorFromService(err, mode === 'create' ? 'Temsilci oluşturulamadı' : 'Güncelleme başarısız')
+    setFormError(saveError.message)
+    setFieldErrors(saveError.fieldErrors || {})
+    setToast(saveError.toast || { type: 'error', title: 'Kayıt Başarısız', message: saveError.message })
+  }
+
+  const handleRepresentativeDeleteSuccess = async (result: any) => {
+    setToast({
+      type: 'success',
+      title: result.hardDeleted ? 'Taslak Silindi' : 'Silme İşlemi Tamamlandı',
+      message: result.hardDeleted
+        ? 'Temsilci kartı taslağı kalıcı olarak silindi.'
+        : 'Temsilci kaydı backend sonucuna göre güncellendi.',
+    })
+    await loadData(true)
+    setPageState('list')
+  }
+
+  const handleRepresentativeDeleteError = async (err: unknown, record: Record<string, any>) => {
+    const saveError = createSaveErrorFromService(err, 'Silme işlemi başarısız')
+    if (['REPRESENTATIVE_DELETE_REQUIRES_TERMINATION', 'REPRESENTATIVE_DELETE_HAS_AUTHORITY_HISTORY'].includes(saveError.code || '')) {
+      setToast({ type: 'warning', title: 'Yetki Sonlandırma Gerekli', message: 'Yetki veya işlem geçmişi olan temsilci kaydı doğrudan silinemez. Yetki Sonlandırma işlemini kullanın.' })
+      if (selectedRepresentative?.id === record.id) openAuthorityWizard('Sonlandırma')
+    } else {
+      setToast(saveError.toast || { type: 'error', title: 'Kayıt Başarısız', message: saveError.message })
     }
   }
 
@@ -1041,9 +1031,20 @@ export default function TemsilcilerPage() {
             error={formError}
             loadStages={formLoadStages}
             externalFieldErrors={fieldErrors}
-            onSave={handleSave}
+            saveBinding={{
+              endpoint: (_payload, mode) => mode === 'create' ? '/api/companies/representatives' : `/api/companies/representatives/${selectedRepresentative?.id || ''}`,
+              method: (_payload, mode) => mode === 'create' ? 'POST' : 'PATCH',
+              buildPayload: buildRepresentativeSavePayload,
+              onSuccess: handleRepresentativeSaveSuccess,
+              onError: handleRepresentativeSaveError,
+            }}
             onCancel={() => setPageState('list')}
-            onDelete={canHardDeleteRepresentative(selectedRepresentative) ? () => handleDelete() : undefined}
+            deleteBinding={canHardDeleteRepresentative(selectedRepresentative) ? {
+              endpoint: record => `/api/companies/representatives/${record.id}`,
+              method: 'DELETE',
+              onSuccess: handleRepresentativeDeleteSuccess,
+              onError: handleRepresentativeDeleteError,
+            } : undefined}
             onModeChange={(mode) => setPageState(mode)}
             operationActions={getRepresentativeOperationActions()}
             onIdentityGateOpenExistingRole={async (roleRecord) => {

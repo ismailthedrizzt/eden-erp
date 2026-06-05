@@ -251,9 +251,18 @@ export interface FormOperationActionGroup {
 /** EntityForm props */
 export type EntityFormSaveBinding = {
   endpoint: string | ((payload: Record<string, any>, mode: FormMode, currentData?: Record<string, any>) => string)
-  method?: 'POST' | 'PATCH' | 'PUT'
+  method?: 'POST' | 'PATCH' | 'PUT' | ((payload: Record<string, any>, mode: FormMode, currentData?: Record<string, any>) => 'POST' | 'PATCH' | 'PUT')
   buildPayload?: (payload: Record<string, any>, mode: FormMode, currentData?: Record<string, any>) => Record<string, any>
   onSuccess?: (result: any, payload: Record<string, any>, mode: FormMode) => void | Promise<void>
+  onError?: (error: unknown, payload: Record<string, any>, mode: FormMode) => void | Promise<void>
+}
+
+export type EntityFormRecordActionBinding = {
+  endpoint: string | ((currentData: Record<string, any>) => string)
+  method?: 'DELETE' | 'POST' | 'PATCH' | 'PUT'
+  buildPayload?: (currentData: Record<string, any>) => Record<string, any> | undefined
+  onSuccess?: (result: any, currentData: Record<string, any>) => void | Promise<void>
+  onError?: (error: unknown, currentData: Record<string, any>) => void | Promise<void>
 }
 
 export interface EntityFormProps {
@@ -345,11 +354,13 @@ export interface EntityFormProps {
   /** Cancel/close handler */
   onCancel: () => void
 
-  /** Delete handler - only for view/edit modes */
+  /** Delete/passivate handler - only for view/edit modes */
   onDelete?: () => Promise<void> | void
+  deleteBinding?: EntityFormRecordActionBinding
 
   /** Activation handler for passive records */
   onActivate?: () => Promise<void> | void
+  activateBinding?: EntityFormRecordActionBinding
 
   /** Mode change handler (view -> edit) */
   onModeChange?: (mode: 'create' | 'view' | 'edit') => void
@@ -3159,13 +3170,27 @@ function startSuggestedFieldOperation(action: { operationKey: string; operationL
 async function submitEntityFormBinding(binding: EntityFormSaveBinding, payload: Record<string, any>, mode: FormMode, currentData?: Record<string, any>) {
   const endpoint = typeof binding.endpoint === 'function' ? binding.endpoint(payload, mode, currentData) : binding.endpoint
   const body = binding.buildPayload ? binding.buildPayload(payload, mode, currentData) : payload
-  const method = binding.method || (mode === 'create' ? 'POST' : 'PATCH')
+  const method = typeof binding.method === 'function' ? binding.method(payload, mode, currentData) : binding.method || (mode === 'create' ? 'POST' : 'PATCH')
   const result = method === 'POST'
     ? await apiClient.post(endpoint, body, { useCache: false })
     : method === 'PUT'
       ? await apiClient(endpoint, { method: 'PUT', body: JSON.stringify(body), useCache: false })
       : await apiClient.patch(endpoint, body, { useCache: false })
   await binding.onSuccess?.(result, body, mode)
+}
+
+async function submitEntityRecordActionBinding(binding: EntityFormRecordActionBinding, currentData: Record<string, any>) {
+  const endpoint = typeof binding.endpoint === 'function' ? binding.endpoint(currentData) : binding.endpoint
+  const body = binding.buildPayload?.(currentData)
+  const method = binding.method || 'DELETE'
+  const result = method === 'DELETE'
+    ? await apiClient.delete(endpoint, { useCache: false })
+    : method === 'POST'
+      ? await apiClient.post(endpoint, body, { useCache: false })
+      : method === 'PUT'
+        ? await apiClient(endpoint, { method: 'PUT', body: body === undefined ? undefined : JSON.stringify(body), useCache: false })
+        : await apiClient.patch(endpoint, body || {}, { useCache: false })
+  await binding.onSuccess?.(result, currentData)
 }
 
 export function EntityForm({
@@ -3201,7 +3226,9 @@ export function EntityForm({
   saveBinding,
   onCancel,
   onDelete,
+  deleteBinding,
   onActivate,
+  activateBinding,
   onModeChange,
   onActiveTabChange,
   onFieldChange,
@@ -3233,6 +3260,8 @@ export function EntityForm({
     districts: turkeyDistrictsByProvince[normalizeTurkeyLocationName(province.name)] || province.districts || [],
   })), [turkeyDistrictsByProvince, turkeyProvinces])
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [bindingSaving, setBindingSaving] = useState(false)
+  const [bindingDeleting, setBindingDeleting] = useState(false)
   
   // STANDARD FORM LAYOUT: Image and Document slots
   const resolvedImageSlots = typeof imageSlot.slots === 'function' ? imageSlot.slots(formData) : imageSlot.slots
@@ -3442,11 +3471,15 @@ export function EntityForm({
   const effectiveCanEdit = access?.canEdit ?? canEdit
   const effectiveCanPassivate = access?.canPassivate ?? canEdit
   const effectiveCanApprove = access?.canApprove ?? false
-  const canActivateRecord = isPassive && effectiveCanPassivate && !!onActivate
-  const canHardDeleteRecord = !isCreate && !isPassive && isDraftRecord(effectiveStatusData) && effectiveCanPassivate && !!onDelete
-  const canPassivateRecord = !isPassive && !canHardDeleteRecord && effectiveCanPassivate && !!onDelete
+  const hasActivateSubmit = !!onActivate || !!activateBinding
+  const hasDeleteSubmit = !!onDelete || !!deleteBinding
+  const canActivateRecord = isPassive && effectiveCanPassivate && hasActivateSubmit
+  const canHardDeleteRecord = !isCreate && !isPassive && isDraftRecord(effectiveStatusData) && effectiveCanPassivate && hasDeleteSubmit
+  const canPassivateRecord = !isPassive && !canHardDeleteRecord && effectiveCanPassivate && hasDeleteSubmit
   const canDeleteRecord = canHardDeleteRecord || canPassivateRecord
   const deleteActionLabel = canActivateRecord ? 'Aktive Et' : canHardDeleteRecord ? 'Sil' : 'Pasife Al'
+  const effectiveSaving = saving || bindingSaving
+  const effectiveDeleting = deleting || bindingDeleting
   const normalizedOperationActions = useMemo(() => normalizeFormOperationGroups(operationActions), [operationActions])
   const hasBasicUpdateOperationAction = isReadOnly && normalizedOperationActions.some(group =>
     group.operationKind === 'basic_update'
@@ -3949,6 +3982,7 @@ export function EntityForm({
     }
     
     try {
+      setBindingSaving(true)
       if (saveBinding) {
         await submitEntityFormBinding(saveBinding, payload, mode, data)
       } else if (onSave) {
@@ -3960,23 +3994,38 @@ export function EntityForm({
         setFormData({})
       }
     } catch (err: any) {
+      if (saveBinding) await saveBinding.onError?.(err, payload, mode)
       // Error handled by parent
+    } finally {
+      setBindingSaving(false)
     }
   }
 
   const handleDelete = async () => {
-    if ((!onDelete && !onActivate) || isCreate) return
+    if ((!hasDeleteSubmit && !hasActivateSubmit) || isCreate) return
     setShowDeleteConfirm(true)
   }
 
   const confirmDelete = async () => {
     if (isCreate) return
-    if (canActivateRecord) {
-      await onActivate()
-    } else if (onDelete) {
-      await onDelete()
+    setBindingDeleting(true)
+    const currentRecord = data || formData
+    try {
+      if (canActivateRecord) {
+        if (activateBinding) await submitEntityRecordActionBinding(activateBinding, currentRecord)
+        else if (onActivate) await onActivate()
+      } else if (deleteBinding) {
+        await submitEntityRecordActionBinding(deleteBinding, currentRecord)
+      } else if (onDelete) {
+        await onDelete()
+      }
+      setShowDeleteConfirm(false)
+    } catch (err: any) {
+      if (canActivateRecord && activateBinding) await activateBinding.onError?.(err, currentRecord)
+      if (!canActivateRecord && deleteBinding) await deleteBinding.onError?.(err, currentRecord)
+    } finally {
+      setBindingDeleting(false)
     }
-    setShowDeleteConfirm(false)
   }
 
   const renderField = (field: FormField, showHistoryIcon = false) => {
@@ -4335,7 +4384,7 @@ export function EntityForm({
     >
       <Modal
         open={showDeleteConfirm}
-        onClose={() => !deleting && setShowDeleteConfirm(false)}
+        onClose={() => !effectiveDeleting && setShowDeleteConfirm(false)}
         title={`${entityNameSingular} ${deleteActionLabel}`}
         size="sm"
         footer={
@@ -4343,7 +4392,7 @@ export function EntityForm({
             <button
               type="button"
               onClick={() => setShowDeleteConfirm(false)}
-              disabled={deleting}
+              disabled={effectiveDeleting}
               className="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50 dark:text-gray-300 dark:hover:bg-gray-800"
             >
               Vazgec
@@ -4351,13 +4400,13 @@ export function EntityForm({
             <button
               type="button"
               onClick={confirmDelete}
-              disabled={deleting}
+              disabled={effectiveDeleting}
               className={cn(
                 "flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50",
                 canActivateRecord ? "bg-emerald-600 hover:bg-emerald-700" : "bg-red-600 hover:bg-red-700"
               )}
             >
-              {deleting ? <Loader2 className="animate-spin" size={16} /> : canActivateRecord ? <RotateCcw size={16} /> : <Trash2 size={16} />}
+              {effectiveDeleting ? <Loader2 className="animate-spin" size={16} /> : canActivateRecord ? <RotateCcw size={16} /> : <Trash2 size={16} />}
               {deleteActionLabel}
             </button>
           </>
@@ -4535,7 +4584,7 @@ export function EntityForm({
                 {!isCreate && (canActivateRecord || canDeleteRecord) && (
                   <button
                     onClick={handleDelete}
-                    disabled={deleting}
+                    disabled={effectiveDeleting}
                     className={cn(
                       "flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 sm:flex-none",
                       canActivateRecord
@@ -4543,7 +4592,7 @@ export function EntityForm({
                         : "border-red-200 text-red-700 hover:bg-red-50 dark:border-red-900/60 dark:text-red-300 dark:hover:bg-red-950/30"
                     )}
                   >
-                    {deleting ? <Loader2 className="animate-spin" size={16} /> : canActivateRecord ? <RotateCcw size={16} /> : <Trash2 size={16} />}
+                    {effectiveDeleting ? <Loader2 className="animate-spin" size={16} /> : canActivateRecord ? <RotateCcw size={16} /> : <Trash2 size={16} />}
                     {deleteActionLabel}
                   </button>
                 )}
@@ -4569,10 +4618,10 @@ export function EntityForm({
                     </button>
                     <button
                       onClick={handleSave}
-                      disabled={saving || isIdentityGateLocked || (isCreate && !effectiveCanCreate) || (isEdit && !effectiveCanEdit)}
+                      disabled={effectiveSaving || isIdentityGateLocked || (isCreate && !effectiveCanCreate) || (isEdit && !effectiveCanEdit)}
                       className="flex min-h-11 flex-1 items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700 disabled:opacity-50 sm:flex-none"
                     >
-                      {saving ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} />}
+                      {effectiveSaving ? <Loader2 className="animate-spin" size={16} /> : <Save size={16} />}
                       {isCreate ? 'Oluştur' : 'Güncelle'}
                     </button>
                   </>
