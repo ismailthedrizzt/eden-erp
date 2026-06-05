@@ -1,4 +1,8 @@
 services:
+  # Database note:
+  # This compose file does not manage PostgreSQL. DATABASE_URL must point to a
+  # host-managed local PostgreSQL instance, for example eden_development_db.
+  # Add a postgres service only in a separate development-only compose profile.
   web:
     build:
       context: .
@@ -7,8 +11,6 @@ services:
       NEXT_PUBLIC_ENVIRONMENT: local
       NEXT_PUBLIC_APP_URL: http://localhost:3000
       NEXT_PUBLIC_APP_NAME: Eden ERP
-      NEXT_PUBLIC_SUPABASE_URL: ${NEXT_PUBLIC_SUPABASE_URL:-}
-      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${NEXT_PUBLIC_SUPABASE_ANON_KEY:-}
       FASTAPI_BASE_URL: http://api:8000
       INTERNAL_BACKEND_TOKEN: ${INTERNAL_BACKEND_TOKEN:-local-internal-token}
       TRUSTED_PROXY_SECRET: ${TRUSTED_PROXY_SECRET:-local-proxy-secret}
@@ -24,9 +26,6 @@ services:
     environment:
       APP_ENV: local
       DATABASE_URL: ${DATABASE_URL:-}
-      SUPABASE_URL: ${SUPABASE_URL:-}
-      SUPABASE_JWT_SECRET: ${SUPABASE_JWT_SECRET:-}
-      SUPABASE_JWKS_URL: ${SUPABASE_JWKS_URL:-}
       AUTH_REQUIRED: "false"
       ALLOW_TRUSTED_PROXY_HEADERS: "true"
       TRUSTED_PROXY_SECRET: ${TRUSTED_PROXY_SECRET:-local-proxy-secret}

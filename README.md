@@ -1,6 +1,6 @@
 # Eden Teknoloji ERP
 
-Eden ERP, moduler ERP platformu olarak tasarlanan yeni nesil bir is uygulamasidir. Mevcut repo bugun Next.js agirlikli calisir; hedef mimari ise Next.js frontend/BFF ve FastAPI/Python core backend ayrimidir.
+Eden ERP, moduler ERP platformu olarak tasarlanan yeni nesil bir is uygulamasidir. Guncel deployment modeli uzak sunucu, Next.js UI/BFF, FastAPI canonical backend ve sunucu uzerindeki yerel PostgreSQL/local DB yapisidir.
 
 ## Mimari Durum
 
@@ -8,15 +8,15 @@ Eden ERP, moduler ERP platformu olarak tasarlanan yeni nesil bir is uygulamasidi
 
 - Next.js 15 App Router tabanli frontend ve gecis donemi API route'lari.
 - React 19, TypeScript ve Tailwind CSS ile uygulama arayuzu.
-- Supabase/PostgreSQL veri katmani, Supabase Auth ve Supabase Storage entegrasyonu.
+- Yerel PostgreSQL/local DB veri katmani; Supabase sadece legacy compatibility envanterinde kalir.
 - TypeScript tarafinda domain, operation, process, audit, outbox ve policy katmanlarinin MVP/contract hazirligi.
 
 ### Hedef Durum
 
 - **Frontend**: Next.js 15, React 19, TypeScript, Tailwind CSS.
 - **BFF / Adapter**: Next.js API routes, yalnizca gecis donemi proxy/adaptor ve UI-specific endpoint olarak.
-- **Core Backend**: FastAPI / Python, SQLAlchemy veya SQLModel, Pydantic v2, Alembic, PostgreSQL/Supabase ve background worker altyapisi.
-- **Database/Auth/Storage**: Supabase/PostgreSQL, Supabase Auth ve Supabase Storage.
+- **Core Backend**: FastAPI / Python, SQLAlchemy veya SQLModel, Pydantic v2, Alembic, PostgreSQL ve background worker altyapisi.
+- **Database/Auth/Storage**: Local PostgreSQL/local DB, app-session auth, trusted proxy context ve local filesystem controlled media route.
 
 Next.js API route'lari kalici business logic katmani degildir. Domain logic, operation orchestration, process engine, policy engine, integrity checks, audit, outbox ve transaction boundary kademeli olarak FastAPI backend tarafina tasinacaktir.
 
@@ -28,7 +28,7 @@ Next.js API route'lari kalici business logic katmani degildir. Domain logic, ope
 
 ## Yerel Calistirma
 
-Tek kalici branch `main`dir. Local ve canli ortam ayni kodu calistirir; fark sadece ortam degiskenleridir. Local `.env.local` Development Supabase'e, Virtual Server env dosyasi Live Supabase'e bakar.
+Tek kalici branch `main`dir. Calisma ortami uzak sunucudur; ortam farki branch ile degil APP_ENV/NEXT_PUBLIC_APP_ENV, DATABASE_URL ve servis env degerleriyle yonetilir. Supabase/Vercel dokumanlari legacy kabul edilir.
 
 Frontend:
 

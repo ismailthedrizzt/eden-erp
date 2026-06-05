@@ -1,57 +1,62 @@
 # Backup Restore Runbook
 
-## Amac
+## Scope
 
-PostgreSQL/Supabase data, document storage, configuration and secrets icin backup ve restore surecini tanimlamak.
+This runbook covers the remote server + local PostgreSQL/local DB deployment. Supabase backup terminology is deprecated.
 
-## Kim Kullanir
+## Changed Files
 
-Operations owner, database owner, incident commander.
+- `docs/operations/BackupRestoreRunbook.md`
+- `docs/operations/LocalDatabaseOperationsRunbook.md`
+- `docs/operations/RemoteServerDeploymentRunbook.md`
 
-## On Kosullar
+## Why Changed
 
-- Supabase/PostgreSQL automated backups enabled.
-- Point-in-time recovery capability and retention known.
-- Document storage bucket backup or replication configured.
-- Environment/secrets inventory backed up in secret manager.
-- Restore target environment exists.
+Field test backup/restore must protect the server-local PostgreSQL database, document storage root and service env files rather than Supabase/Vercel resources.
 
-## Backup Strategy
+## Backup Checklist
 
-- Database: daily backup plus PITR where available.
-- Storage: daily object backup or provider replication.
-- Config: environment variable export from secret manager, not plaintext repo.
-- Migrations: git commit sha and migration table snapshot.
-- Audit/export artifacts: compliance retention policy aligned with tenant contract.
+- Confirm `DATABASE_URL` points at the intended DB.
+- Run `npm run db:target:check`.
+- Capture service env files without committing them.
+- Dump PostgreSQL before migration or field test.
+- Archive local document storage root.
 
-## Restore Test Checklist
+## PostgreSQL Backup
 
-1. Select restore point and target environment.
-2. Restore database to isolated test/staging.
-3. Restore storage bucket or subset required by fixture tenant.
-4. Apply missing config/secrets from secret manager.
-5. Start backend with restored DB.
-6. Run health/deep health.
-7. Run tenant login, company list, document download, audit list, outbox admin smoke.
-8. Validate no production webhooks/email are enabled in restored environment.
-9. Record RPO/RTO observed times.
+```bash
+mkdir -p backups
+pg_dump "$DATABASE_URL" > backups/eden_$(date +%Y%m%d_%H%M%S).sql
+```
 
-## RPO/RTO Targets
+## PostgreSQL Restore
 
-- Pilot target RPO: 24h backup, PITR preferred.
-- Pilot target RTO: 4h.
-- Scale target RPO: <= 1h with PITR.
-- Scale target RTO: <= 1h for core API, <= 4h for documents/reporting.
+```bash
+psql "$DATABASE_URL" < backups/eden_YYYYMMDD_HHMMSS.sql
+```
 
-## Rollback/Fallback
+For release DB restore, stop writers first, verify the backup timestamp, and restart `eden-fastapi`, `eden-app` and worker processes after restore.
 
-- If restore fails, escalate to provider restore support.
-- Disable outbound workers until restored tenant scope and secrets are verified.
-- Communicate data freshness and expected recovery time.
+## Local Document Storage
 
-## Audit/Log Referanslari
+Document files live under `DOCUMENT_STORAGE_ROOT` or `var/document-storage` by default.
 
-- Restore ticket, operator, restore point.
-- Supabase backup job id.
-- Storage backup job id.
-- Smoke test result and observed RPO/RTO.
+```bash
+tar -czf backups/eden_documents_$(date +%Y%m%d_%H%M%S).tgz var/document-storage
+```
+
+## P0/P1/P2 Risks
+
+- P0: release migration without a fresh DB backup.
+- P0: restore into the wrong DB target.
+- P1: document storage archive missing.
+- P2: old Supabase backup references confusing operators.
+
+## Field Test Impact
+
+Field test may proceed only after a successful DB dump and document storage archive.
+
+## Remaining Risks
+
+- Automated backup scheduling is still a separate operations task.
+- Restore drills should be run before a live release cutover.

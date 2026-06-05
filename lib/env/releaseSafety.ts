@@ -23,6 +23,9 @@ export function getReleaseEnvSafetyViolations(source: EnvSource = process.env) {
     if (isEnabled(source.EDEN_ALLOW_LEGACY_API_ACCESS)) {
       violations.push('EDEN_ALLOW_LEGACY_API_ACCESS cannot be true in release.')
     }
+    if (isEnabled(source.EDEN_ENABLE_LEGACY_SUPABASE_AUTH)) {
+      violations.push('EDEN_ENABLE_LEGACY_SUPABASE_AUTH cannot be true in release.')
+    }
     if (isEnabled(source.NEXT_PUBLIC_DEMO_MODE)) {
       violations.push('NEXT_PUBLIC_DEMO_MODE cannot be true in release.')
     }
@@ -35,18 +38,17 @@ export function getReleaseEnvSafetyViolations(source: EnvSource = process.env) {
     if (!source.DATABASE_URL) {
       violations.push('DATABASE_URL is required in release.')
     }
-
-    const supabaseConfigured = Boolean(source.NEXT_PUBLIC_SUPABASE_URL || source.SUPABASE_URL)
-    if (supabaseConfigured) {
-      if (!source.NEXT_PUBLIC_SUPABASE_URL) {
-        violations.push('NEXT_PUBLIC_SUPABASE_URL is required when Supabase is configured.')
-      }
-      if (!source.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
-        violations.push('NEXT_PUBLIC_SUPABASE_ANON_KEY is required when Supabase is configured.')
-      }
-      if (!source.SUPABASE_SERVICE_ROLE_KEY) {
-        violations.push('SUPABASE_SERVICE_ROLE_KEY is required when Supabase is configured.')
-      }
+    if (!source.APP_SESSION_SECRET && !source.SETUP_INTENT_SECRET && !source.OTP_SECRET) {
+      violations.push('APP_SESSION_SECRET or an equivalent app-session secret is required in release.')
+    }
+    if (!source.INTERNAL_BACKEND_TOKEN) {
+      violations.push('INTERNAL_BACKEND_TOKEN is required in release.')
+    }
+    if (!source.FASTAPI_BASE_URL) {
+      violations.push('FASTAPI_BASE_URL is required in release.')
+    }
+    if (isEnabled(source.ALLOW_TRUSTED_PROXY_HEADERS) && !source.TRUSTED_PROXY_SECRET) {
+      violations.push('TRUSTED_PROXY_SECRET is required when ALLOW_TRUSTED_PROXY_HEADERS=true in release.')
     }
   }
 

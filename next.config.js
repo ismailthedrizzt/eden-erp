@@ -25,15 +25,6 @@ const runtimeCaching = [
     },
   },
   {
-    urlPattern: /^https:\/\/.*\.supabase\.co\/storage\/v1\/object\/.*/i,
-    handler: 'StaleWhileRevalidate',
-    options: {
-      cacheName: 'supabase-storage-assets',
-      expiration: { maxEntries: 96, maxAgeSeconds: 24 * 60 * 60 },
-      cacheableResponse: { statuses: [0, 200] },
-    },
-  },
-  {
     urlPattern: ({ url, request }) =>
       url.origin === self.location.origin &&
       url.pathname.startsWith('/api/'),
@@ -107,9 +98,7 @@ const nextConfig = {
     // App Router is stable in Next.js 14
   },
   images: {
-    remotePatterns: [
-      { protocol: 'https', hostname: '*.supabase.co' },
-    ],
+    remotePatterns: [],
   },
 }
 

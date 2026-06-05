@@ -183,8 +183,14 @@ async def upload_to_storage(bucket: str, path: str, content: bytes, mime_type: s
     await asyncio.to_thread(_local_upload_sync, bucket, path, content)
 
 
-async def create_signed_url(bucket: str, path: str, provider: str, *, expires_in: int = SIGNED_URL_EXPIRES_IN) -> str:
+async def create_media_access_url(bucket: str, path: str, provider: str, *, expires_in: int = SIGNED_URL_EXPIRES_IN) -> str:
     return local_media_url(bucket, path)
+
+
+async def create_signed_url(bucket: str, path: str, provider: str, *, expires_in: int = SIGNED_URL_EXPIRES_IN) -> str:
+    # Legacy name retained for API compatibility. This returns a controlled
+    # local media access URL, not a public object-storage signed URL.
+    return await create_media_access_url(bucket, path, provider, expires_in=expires_in)
 
 
 def local_media_url(bucket: str, path: str, *, download: bool = False) -> str:

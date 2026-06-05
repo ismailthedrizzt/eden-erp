@@ -132,7 +132,13 @@ def extract_bearer_token(request: Request) -> str | None:
     return None
 
 
-def verify_supabase_jwt(token: str) -> dict[str, Any]:
+def verify_legacy_supabase_jwt(token: str) -> dict[str, Any]:
+    """Legacy Supabase JWT verifier.
+
+    The canonical remote-server auth path is Next app-session plus trusted proxy
+    headers. This verifier is retained only for deployments that explicitly
+    configure external JWT compatibility.
+    """
     settings = get_settings()
     if settings.supabase_jwt_secret:
         return _verify_hs256(token, settings.supabase_jwt_secret)
@@ -176,13 +182,23 @@ def verify_supabase_jwt(token: str) -> dict[str, Any]:
     raise DomainError(AUTH_MESSAGE, "AUTH_TOKEN_INVALID", status.HTTP_401_UNAUTHORIZED)
 
 
+def verify_external_jwt(token: str) -> dict[str, Any]:
+    return verify_legacy_supabase_jwt(token)
+
+
+def verify_supabase_jwt(token: str) -> dict[str, Any]:
+    return verify_legacy_supabase_jwt(token)
+
+
 def get_jwt_claims(request: Request) -> dict[str, Any] | None:
     token = extract_bearer_token(request)
     if not token:
+        if _is_trusted_proxy(request):
+            return None
         if get_settings().effective_auth_required:
             raise DomainError(AUTH_MESSAGE, "AUTH_TOKEN_MISSING", status.HTTP_401_UNAUTHORIZED)
         return None
-    return verify_supabase_jwt(token)
+    return verify_external_jwt(token)
 
 
 async def get_current_user(
@@ -376,7 +392,8 @@ async def _build_request_context(
 async def get_request_context(request: Request) -> RequestContext:
     settings = get_settings()
     token = extract_bearer_token(request)
-    if not token and settings.effective_auth_required and not is_internal_request(request):
+    trusted_proxy = _is_trusted_proxy(request)
+    if not token and settings.effective_auth_required and not is_internal_request(request) and not trusted_proxy:
         raise _auth_http_exception("AUTH_REQUIRED")
     if not token and not settings.effective_auth_required and settings.is_development:
         x_tenant_id = _clean_header_value(request.headers.get("x-tenant-id"))
@@ -400,7 +417,7 @@ async def get_request_context(request: Request) -> RequestContext:
         )
 
     if token:
-        verify_supabase_jwt(token)
+        verify_external_jwt(token)
 
     async with get_session_factory()() as session:
         return await _build_request_context(request, session)

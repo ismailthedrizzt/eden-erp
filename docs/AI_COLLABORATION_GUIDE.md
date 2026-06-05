@@ -1253,3 +1253,6 @@ Development and Release use the same `main` code with different environment valu
 local machine  -> main -> .env.local                  -> Development Supabase
 Virtual Server -> main -> /etc/eden-erp/eden-erp.env  -> Release Supabase + VS Ollama
 ```
+# Remote Server + Local DB Canonical Context
+
+Current Eden ERP work happens on the remote server. The canonical runtime is Next.js UI/BFF, FastAPI backend, app-session auth, trusted proxy context and local PostgreSQL/local DB. Do not add new Supabase/Vercel-dependent code paths. Existing Supabase modules are legacy migration inventory unless a task explicitly asks to touch them.

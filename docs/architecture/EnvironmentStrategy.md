@@ -1,16 +1,15 @@
 # Environment Strategy
 
-Eden ERP now uses one product branch and one Virtual Server environment.
+Eden ERP canonical deployment model is remote server + local PostgreSQL/local DB.
+Vercel and Supabase are no longer canonical runtime assumptions.
 
 ## Decision
 
 - `main` is the product branch.
-- There is no separate development/release database target.
-- The VS environment and local maintenance commands use the same PostgreSQL target:
-
-```text
-postgresql://postgres:<postgres-password>@localhost:5432/app1db
-```
+- Development and release are separated by server env and database target, not by branch.
+- Development DB names should contain `dev`, `development`, `local`, or `test`.
+- Release DB names should contain `release`, `prod`, or `production` and are protected by guard scripts.
+- If an existing local DB has a neutral name, set `DATABASE_TARGET_CLASS=release` or `DATABASE_TARGET_CLASS=development` explicitly.
 
 - Real credentials belong in `.env.local`, `/etc/eden-erp/eden-erp.env`, or service env only.
 - Example files must keep the password as a placeholder.
@@ -19,8 +18,19 @@ postgresql://postgres:<postgres-password>@localhost:5432/app1db
 
 | runtime | branch | machine | env file/source | database | Ollama |
 |---|---|---|---|---|---|
-| Single VS environment | `main` | Virtual Server | `/etc/eden-erp/eden-erp.env` or service env | local PostgreSQL `app1db` | VS-local `127.0.0.1:11434` |
-| Local commands | `main` | developer/VS shell | `.env.local` | same PostgreSQL target when connected to VS/local DB | optional |
+| Remote development | `main` | Virtual Server | repo/service env | local PostgreSQL development DB | optional |
+| Release field test | `main` | Virtual Server | protected service env | local PostgreSQL release DB | VS-local `127.0.0.1:11434` |
+
+## Canonical Auth And Data Flow
+
+```text
+Browser -> Next app session cookie
+Next BFF -> FastAPI trusted proxy headers
+FastAPI -> local PostgreSQL tenant/user/permission/scope resolution
+Documents -> local filesystem -> controlled media route
+```
+
+Supabase Auth, Supabase Storage and Vercel environment values are legacy compatibility only. They must not be required for release startup.
 
 ## Environment Resolver
 
@@ -67,10 +77,11 @@ NODE_ENV=test                       -> test visibility mode
 
 ```bash
 npm run env:safety
+npm run db:target:check
 npm run release:check
 ```
 
-`npm run supabase:target:check` is retained for legacy commands. When direct `DATABASE_URL` is configured and no Supabase URL is set, Supabase project-ref checks are skipped.
+`npm run legacy:supabase:target:check` is retained only for legacy Supabase commands. Direct `DATABASE_URL` checks use `scripts/check-database-target.js`.
 
 ## Route Visibility
 

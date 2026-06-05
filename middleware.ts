@@ -1,15 +1,8 @@
-import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { APP_SESSION_COOKIE_NAME, verifyAppSessionToken } from '@/lib/auth/appSession'
 import { getReleaseEnvSafetyViolations } from '@/lib/env/releaseSafety'
 import { TENANT_ID_COOKIE, WORKSPACE_ID_COOKIE } from '@/lib/tenancy/constants'
 import { getRouteNotAvailableHref, getRouteReleaseDecision } from '@/lib/release/releaseVisibility'
-
-type CookieToSet = {
-  name: string
-  value: string
-  options?: Parameters<NextResponse['cookies']['set']>[2]
-}
 
 const LOGIN_BYPASS_ENABLED = process.env.EDEN_LOGIN_DISABLED === 'true'
 const UNSAFE_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE'])
@@ -91,56 +84,32 @@ export async function middleware(request: NextRequest) {
     return response
   }
 
-  let supabaseResponse = withSecurityHeaders(NextResponse.next({ request }), request)
-
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() { return request.cookies.getAll() },
-        setAll(cookiesToSet: CookieToSet[]) {
-          cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
-          supabaseResponse = withSecurityHeaders(NextResponse.next({ request }), request)
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
-          )
+  if (process.env.EDEN_ENABLE_LEGACY_SUPABASE_AUTH === 'true') {
+    return withSecurityHeaders(
+      NextResponse.json(
+        {
+          error: 'Legacy Supabase auth fallback is disabled in the remote server/local DB deployment.',
+          code: 'LEGACY_SUPABASE_AUTH_DISABLED',
         },
-      },
-    }
-  )
-
-  const auth = supabase.auth as typeof supabase.auth & {
-    getUser: (jwt?: string) => Promise<{ data: { user: any } }>
+        { status: 500 }
+      ),
+      request
+    )
   }
 
-  let user = null
-  try {
-    const authorizationToken = request.headers.get('authorization')?.replace(/^Bearer\s+/i, '')
-    const { data } = await auth.getUser(authorizationToken || undefined)
-    user = data.user
-  } catch {
-    user = null
-  }
-
-  // Redirect unauthenticated protected requests.
-  if (!user) {
-    if (isApiRoute) {
-      const response = NextResponse.json({ error: 'Authentication required', code: 'AUTH_REQUIRED' }, { status: 401 })
-      response.cookies.set(APP_SESSION_COOKIE_NAME, '', { path: '/', maxAge: 0 })
-      response.cookies.set('demo_auth', '', { path: '/', maxAge: 0 })
-      return withSecurityHeaders(response, request)
-    }
-
-    const url = request.nextUrl.clone()
-    url.pathname = '/login'
-    const response = NextResponse.redirect(url)
+  if (isApiRoute) {
+    const response = NextResponse.json({ error: 'Authentication required', code: 'AUTH_REQUIRED' }, { status: 401 })
     response.cookies.set(APP_SESSION_COOKIE_NAME, '', { path: '/', maxAge: 0 })
     response.cookies.set('demo_auth', '', { path: '/', maxAge: 0 })
     return withSecurityHeaders(response, request)
   }
 
-  return withSecurityHeaders(supabaseResponse, request)
+  const url = request.nextUrl.clone()
+  url.pathname = '/login'
+  const response = NextResponse.redirect(url)
+  response.cookies.set(APP_SESSION_COOKIE_NAME, '', { path: '/', maxAge: 0 })
+  response.cookies.set('demo_auth', '', { path: '/', maxAge: 0 })
+  return withSecurityHeaders(response, request)
 }
 
 function shouldApplyReleaseRouteGuard(pathname: string, isApiRoute: boolean, isPwaAsset: boolean) {

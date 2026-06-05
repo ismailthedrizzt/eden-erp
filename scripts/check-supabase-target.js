@@ -1,4 +1,5 @@
 const env = resolveEnvironment(process.env)
+console.warn('DEPRECATED: check-supabase-target.js is legacy. Use scripts/check-database-target.js for remote server/local DB deployments.')
 const context = String(process.env.COMMAND_CONTEXT || process.env.npm_lifecycle_event || process.argv[2] || '').toLowerCase()
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL || ''
 const databaseUrl = process.env.DATABASE_URL || ''

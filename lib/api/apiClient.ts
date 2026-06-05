@@ -1,6 +1,5 @@
 'use client'
 
-import { createClient } from '@/lib/supabase/client'
 import { getPublicApiBaseUrl } from '@/lib/api/publicApiBaseUrl'
 import { normalizeBackendError } from '@/lib/backend/backendErrors'
 import { tenantRequestHeaders } from '@/lib/tenancy/client'
@@ -85,13 +84,6 @@ async function request<T>(path: string, options: ApiClientOptions = {}): Promise
   Object.entries(tenantHeaders).forEach(([key, value]) => {
     if (!headers.has(key)) headers.set(key, value)
   })
-
-  if (!options.skipAuth) {
-    const supabase = createClient()
-    const { data } = await supabase.auth.getSession()
-    const token = data.session?.access_token
-    if (token) headers.set('Authorization', `Bearer ${token}`)
-  }
 
   const promise = fetch(url, {
     ...requestOptions,

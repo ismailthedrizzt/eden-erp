@@ -20,6 +20,8 @@ class Settings(BaseSettings):
     log_level: str = Field(default="INFO", validation_alias=AliasChoices("LOG_LEVEL"))
 
     database_url: str | None = Field(default=None, alias="DATABASE_URL")
+    # Legacy compatibility only. Canonical auth/storage for remote server deployments
+    # is app-session/trusted proxy plus local document storage.
     supabase_url: str | None = Field(
         default=None,
         validation_alias=AliasChoices("SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_URL"),
@@ -127,6 +129,8 @@ class Settings(BaseSettings):
 
     @property
     def effective_supabase_jwks_url(self) -> str | None:
+        # Legacy external JWT verifier source. Do not require this for the
+        # canonical Next app-session + trusted proxy deployment model.
         if self.supabase_jwks_url:
             return self.supabase_jwks_url
         if self.supabase_project_ref:

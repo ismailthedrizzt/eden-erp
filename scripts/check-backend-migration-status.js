@@ -22,6 +22,7 @@ const statusValues = new Set([
   'keep_shared_contract',
   'keep_generated',
   'generated_do_not_edit',
+  'local_reference_fallback',
 ])
 
 const skippedDirs = new Set([
@@ -148,7 +149,7 @@ function readHeader(source) {
 function routeBoundaryFlags(source) {
   const backendImport = /@\/lib\/(operations|process|outbox|audit|integrity|setup|domains|read-models|action-center|action-guide|field-controls|modules|user-state|documents\/documentThumbnail|supabase\/server)/.test(source)
   const directDb = /createServiceClient|createServerClient|supabase\s*\.\s*from\s*\(|\.(insert|update|upsert|delete|rpc)\s*\(/.test(source)
-  const proxyHelper = /proxyToFastApi|proxyJsonToFastApi|createFastApiProxyHandler/.test(source)
+  const proxyHelper = /proxyToFastApi|proxyJsonToFastApi|createFastApiProxyHandler|proxyDocumentUpload/.test(source)
   return { backendImport, directDb, proxyHelper }
 }
 

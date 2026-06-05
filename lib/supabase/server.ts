@@ -2,6 +2,11 @@ import 'server-only'
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 
+// Deprecated legacy compatibility module.
+// Canonical data access is FastAPI/local PostgreSQL through the Next BFF proxy.
+// Do not add new imports from this file; existing imports are tracked as
+// migration inventory until they are moved to FastAPI/local DB endpoints.
+
 type CookieToSet = {
   name: string
   value: string

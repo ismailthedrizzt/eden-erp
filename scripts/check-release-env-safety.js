@@ -3,6 +3,8 @@ const path = require('path')
 const { execSync } = require('child_process')
 
 const root = process.cwd()
+loadLocalEnvFile(path.join(root, '.env.local'))
+
 const failures = []
 const warnings = []
 const env = resolveEnvironment(process.env)
@@ -49,29 +51,28 @@ for (const file of [
 if (env === 'release') {
   if (isEnabled(process.env.EDEN_LOGIN_DISABLED)) failures.push('EDEN_LOGIN_DISABLED=true is forbidden in release.')
   if (isEnabled(process.env.EDEN_ALLOW_LEGACY_API_ACCESS)) failures.push('EDEN_ALLOW_LEGACY_API_ACCESS=true is forbidden in release.')
+  if (isEnabled(process.env.EDEN_ENABLE_LEGACY_SUPABASE_AUTH)) failures.push('EDEN_ENABLE_LEGACY_SUPABASE_AUTH=true is forbidden in release.')
   if (isEnabled(process.env.NEXT_PUBLIC_DEMO_MODE)) failures.push('NEXT_PUBLIC_DEMO_MODE=true is forbidden in release.')
   if (isEnabled(process.env.ALLOW_RELEASE_DB_SEED)) failures.push('ALLOW_RELEASE_DB_SEED=true is forbidden in release.')
   if (isEnabled(process.env.ALLOW_RELEASE_DB_RESET)) failures.push('ALLOW_RELEASE_DB_RESET=true is forbidden in release.')
 
   if (!process.env.DATABASE_URL) failures.push('DATABASE_URL is required in release.')
-
-  const supabaseConfigured = Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL)
-  if (supabaseConfigured) {
-    for (const key of ['NEXT_PUBLIC_SUPABASE_URL', 'NEXT_PUBLIC_SUPABASE_ANON_KEY', 'SUPABASE_SERVICE_ROLE_KEY']) {
-      if (!process.env[key]) failures.push(`${key} is required when Supabase is configured.`)
-    }
+  if (!process.env.APP_SESSION_SECRET && !process.env.SETUP_INTENT_SECRET && !process.env.OTP_SECRET) {
+    failures.push('APP_SESSION_SECRET or an equivalent app-session secret is required in release.')
   }
-  if (process.env.REQUIRE_FASTAPI_BASE_URL === 'true' && !process.env.FASTAPI_BASE_URL) {
-    failures.push('FASTAPI_BASE_URL is required because REQUIRE_FASTAPI_BASE_URL=true.')
-  }
-
-  if (looksLikeDevelopmentSupabase(process.env.NEXT_PUBLIC_SUPABASE_URL)) {
-    failures.push('Release env appears to point at a development Supabase URL.')
+  if (!process.env.INTERNAL_BACKEND_TOKEN) failures.push('INTERNAL_BACKEND_TOKEN is required in release.')
+  if (!process.env.FASTAPI_BASE_URL) failures.push('FASTAPI_BASE_URL is required in release.')
+  if (isEnabled(process.env.ALLOW_TRUSTED_PROXY_HEADERS) && !process.env.TRUSTED_PROXY_SECRET) {
+    failures.push('TRUSTED_PROXY_SECRET is required when ALLOW_TRUSTED_PROXY_HEADERS=true in release.')
   }
 }
 
-if (env === 'development' && looksLikeReleaseSupabase(process.env.NEXT_PUBLIC_SUPABASE_URL)) {
-  warnings.push('Development env appears to point at a release Supabase URL.')
+if (process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL) {
+  warnings.push('Supabase env configured in local DB deployment. Confirm this is legacy compatibility only.')
+}
+
+if (process.env.VERCEL_ENV) {
+  warnings.push('VERCEL_ENV is compatibility-only. APP_ENV or NEXT_PUBLIC_APP_ENV is the canonical environment source.')
 }
 
 for (const file of collectFiles(root, ['app', 'components', 'lib'], ['.ts', '.tsx', '.js', '.jsx'])) {
@@ -94,14 +95,14 @@ for (const warning of warnings) console.warn(`WARN: ${warning}`)
 if (failures.length) {
   console.error('FAIL')
   for (const failure of failures) console.error(`- ${failure}`)
-  console.error('Suggested fix: correct the Vercel/Supabase env values before build or deployment.')
+  console.error('Suggested fix: correct remote server/local database env values before build or deployment.')
   process.exit(1)
 }
 
 console.log('PASS')
 
 function resolveEnvironment(source) {
-  const explicit = normalize(source.NEXT_PUBLIC_APP_ENV) || normalize(source.NEXT_PUBLIC_RELEASE_CHANNEL)
+  const explicit = normalize(source.APP_ENV) || normalize(source.NEXT_PUBLIC_APP_ENV) || normalize(source.NEXT_PUBLIC_RELEASE_CHANNEL)
   if (explicit) return explicit
   if (source.VERCEL_ENV === 'production') return 'release'
   if (source.NODE_ENV === 'test') return 'test'
@@ -119,22 +120,6 @@ function normalize(value) {
 
 function isEnabled(value) {
   return ['1', 'true', 'yes', 'on'].includes(String(value || '').trim().toLowerCase())
-}
-
-function looksLikeDevelopmentSupabase(value) {
-  const url = String(value || '').toLowerCase()
-  if (!url) return false
-  if (process.env.DEVELOPMENT_SUPABASE_URL && url === process.env.DEVELOPMENT_SUPABASE_URL.toLowerCase()) return true
-  if (process.env.DEVELOPMENT_SUPABASE_PROJECT_REF && url.includes(process.env.DEVELOPMENT_SUPABASE_PROJECT_REF.toLowerCase())) return true
-  return /\b(dev|development|preview|test)\b/.test(url)
-}
-
-function looksLikeReleaseSupabase(value) {
-  const url = String(value || '').toLowerCase()
-  if (!url) return false
-  if (process.env.RELEASE_SUPABASE_URL && url === process.env.RELEASE_SUPABASE_URL.toLowerCase()) return true
-  if (process.env.RELEASE_SUPABASE_PROJECT_REF && url.includes(process.env.RELEASE_SUPABASE_PROJECT_REF.toLowerCase())) return true
-  return /\b(prod|production|release)\b/.test(url)
 }
 
 function collectFiles(base, folders, extensions) {
@@ -160,4 +145,26 @@ function isTracked(file) {
   } catch {
     return false
   }
+}
+
+function loadLocalEnvFile(filePath) {
+  if (!fs.existsSync(filePath)) return
+  const contents = fs.readFileSync(filePath, 'utf8')
+  for (const rawLine of contents.split(/\r?\n/)) {
+    const line = rawLine.trim()
+    if (!line || line.startsWith('#')) continue
+    const equalsIndex = line.indexOf('=')
+    if (equalsIndex <= 0) continue
+    const key = line.slice(0, equalsIndex).trim()
+    if (!/^[A-Z0-9_]+$/i.test(key)) continue
+    if (process.env[key] !== undefined) continue
+    process.env[key] = stripEnvValue(line.slice(equalsIndex + 1).trim())
+  }
+}
+
+function stripEnvValue(value) {
+  if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+    return value.slice(1, -1)
+  }
+  return value
 }

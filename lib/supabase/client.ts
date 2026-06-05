@@ -1,5 +1,9 @@
 import { createBrowserClient } from '@supabase/ssr'
 
+// Deprecated legacy compatibility module.
+// Canonical browser auth uses eden_app_session cookies issued by Next auth
+// routes. Do not add new imports from this file.
+
 let browserClient: ReturnType<typeof createBrowserClient> | null = null
 
 export function createClient() {
