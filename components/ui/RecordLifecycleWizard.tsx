@@ -440,7 +440,12 @@ function RecordLifecycleWizardFieldView({
       <div className={cn('space-y-2', colSpanClass)}>
         {label}
         {validationState.label && <ValidationPill validationState={validationState} topClassName="top-0" />}
-        <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+        <div
+          className={cn(
+            'grid gap-2 rounded-xl border p-2 md:grid-cols-2 xl:grid-cols-3',
+            wizardFieldFrameClass(fieldControlState)
+          )}
+        >
           {(field.options || []).map(option => {
             const active = value === option.value
             return (
@@ -472,8 +477,15 @@ function RecordLifecycleWizardFieldView({
 
   if (field.type === 'document') {
     return (
-      <div className={cn(colSpanClass)}>
-        <DocumentRegistryField field={field} value={value} onChange={updateValue} readOnly={disabled} />
+      <div className={cn('relative space-y-1', colSpanClass)}>
+        {validationState.label && <ValidationPill validationState={validationState} topClassName="top-0" />}
+        <DocumentRegistryField
+          field={field}
+          value={value}
+          onChange={updateValue}
+          readOnly={disabled}
+          validationState={validationState}
+        />
       </div>
     )
   }
@@ -530,7 +542,12 @@ function RecordLifecycleWizardFieldView({
           ))}
         </select>
       ) : field.type === 'checkbox' ? (
-        <div className="flex min-h-[42px] items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-200">
+        <div
+          className={cn(
+            'flex min-h-[42px] items-center gap-2 rounded-lg border bg-gray-50 px-3 py-2 text-sm text-gray-700 dark:bg-gray-900 dark:text-gray-200',
+            wizardFieldFrameClass(fieldControlState)
+          )}
+        >
           <input
             type="checkbox"
             checked={!!value}
@@ -883,16 +900,28 @@ function ValidationPill({
   )
 }
 
+function wizardFieldFrameClass(state: FormControlState) {
+  if (state === 'invalid') {
+    return 'border-red-400 dark:border-red-700'
+  }
+  if (state === 'valid') {
+    return 'border-emerald-500 dark:border-emerald-600'
+  }
+  return 'border-gray-200 dark:border-gray-800'
+}
+
 function DocumentRegistryField({
   field,
   value,
   onChange,
   readOnly,
+  validationState,
 }: {
   field: RecordLifecycleWizardField
   value: any
   onChange: (value: any) => void
   readOnly?: boolean
+  validationState?: { status: FormControlState; label: string }
 }) {
   const current = typeof value === 'object' && value ? value : value ? { documentId: value, name: String(value) } : null
   const [mode, setMode] = useState<'new' | 'existing' | ''>(current?.source || '')
@@ -957,7 +986,12 @@ function DocumentRegistryField({
 
   if (field.documentMode === 'newOnly') {
     return (
-      <div className="flex flex-col gap-3 rounded-lg border border-gray-200 bg-white px-3 py-3 dark:border-gray-800 dark:bg-gray-950 sm:flex-row sm:items-center">
+      <div
+        className={cn(
+          'flex flex-col gap-3 rounded-lg border bg-white px-3 py-3 dark:bg-gray-950 sm:flex-row sm:items-center',
+          wizardFieldFrameClass(validationState?.status || 'neutral')
+        )}
+      >
         <input
           ref={fileInputRef}
           type="file"
@@ -1017,7 +1051,12 @@ function DocumentRegistryField({
   }
 
   return (
-    <div className="space-y-2 rounded-xl border border-dashed border-gray-300 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-900">
+    <div
+      className={cn(
+        'space-y-2 rounded-xl border border-dashed bg-gray-50 p-3 dark:bg-gray-900',
+        wizardFieldFrameClass(validationState?.status || 'neutral')
+      )}
+    >
       <div className="flex items-center gap-2">
         <span className="text-xs font-medium text-gray-600 dark:text-gray-400">{field.label}</span>
         {field.description && (
