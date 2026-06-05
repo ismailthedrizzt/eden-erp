@@ -38,6 +38,7 @@ import { COUNTRY_OPTIONS, normalizeCountryId } from '@/lib/reference/country-nat
 import { isDraftRecord, isSoftDeletedRecord } from '@/lib/forms/entityState'
 import { ModuleDependencyNotice, type EntityAccessState, type ModuleDependency } from '@/lib/access/entityAccess'
 import { useModules } from '@/lib/security/moduleStore'
+import { apiClient } from '@/lib/api/apiClient'
 import { usePermissions } from '@/lib/security/permissionStore'
 import { resolveActionRuntimeAvailability } from '@/lib/visibility/actionVisibility'
 
@@ -248,6 +249,13 @@ export interface FormOperationActionGroup {
 }
 
 /** EntityForm props */
+export type EntityFormSaveBinding = {
+  endpoint: string | ((payload: Record<string, any>, mode: FormMode, currentData?: Record<string, any>) => string)
+  method?: 'POST' | 'PATCH' | 'PUT'
+  buildPayload?: (payload: Record<string, any>, mode: FormMode, currentData?: Record<string, any>) => Record<string, any>
+  onSuccess?: (result: any, payload: Record<string, any>, mode: FormMode) => void | Promise<void>
+}
+
 export interface EntityFormProps {
   /** Current form mode */
   mode: FormMode
@@ -331,7 +339,8 @@ export interface EntityFormProps {
   }
   
   /** Save handler - receives form data */
-  onSave: (data: Record<string, any>, mode: FormMode) => Promise<void> | void
+  onSave?: (data: Record<string, any>, mode: FormMode) => Promise<void> | void
+  saveBinding?: EntityFormSaveBinding
   
   /** Cancel/close handler */
   onCancel: () => void
@@ -3146,6 +3155,19 @@ function startSuggestedFieldOperation(action: { operationKey: string; operationL
   }))
 }
 
+
+async function submitEntityFormBinding(binding: EntityFormSaveBinding, payload: Record<string, any>, mode: FormMode, currentData?: Record<string, any>) {
+  const endpoint = typeof binding.endpoint === 'function' ? binding.endpoint(payload, mode, currentData) : binding.endpoint
+  const body = binding.buildPayload ? binding.buildPayload(payload, mode, currentData) : payload
+  const method = binding.method || (mode === 'create' ? 'POST' : 'PATCH')
+  const result = method === 'POST'
+    ? await apiClient.post(endpoint, body, { useCache: false })
+    : method === 'PUT'
+      ? await apiClient(endpoint, { method: 'PUT', body: JSON.stringify(body), useCache: false })
+      : await apiClient.patch(endpoint, body, { useCache: false })
+  await binding.onSuccess?.(result, body, mode)
+}
+
 export function EntityForm({
   mode: initialMode,
   entityName,
@@ -3176,6 +3198,7 @@ export function EntityForm({
   imageSlot = { title: 'Fotoğraf', required: false },
   documentSlot,
   onSave,
+  saveBinding,
   onCancel,
   onDelete,
   onActivate,
@@ -3926,7 +3949,13 @@ export function EntityForm({
     }
     
     try {
-      await onSave(payload, mode)
+      if (saveBinding) {
+        await submitEntityFormBinding(saveBinding, payload, mode, data)
+      } else if (onSave) {
+        await onSave(payload, mode)
+      } else {
+        throw new Error('Bu form için kayıt endpointi tanımlı değil.')
+      }
       if (isCreate) {
         setFormData({})
       }

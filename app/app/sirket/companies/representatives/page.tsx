@@ -829,26 +829,15 @@ export default function TemsilcilerPage() {
     return () => window.removeEventListener('eden:action-guide-command', onGuideCommand)
   })
 
-  const handleAuthorityWizardSubmit = async (payload: Record<string, any>) => {
+  const handleAuthorityWizardSubmit = async (result: Record<string, any>, payload: Record<string, any>) => {
     if (!selectedRepresentative?.id) return
-    setSaving(true)
-    try {
-      const requestPayload = withRepresentativeConcurrency(payload, selectedRepresentative)
-      const result = await runRepresentativeAuthorityService(selectedRepresentative.id, payload.transaction_type, requestPayload)
-      const representativeResult = result.data?.representative || result.data
-      if (representativeResult) setSelectedRepresentative(normalizeRepresentativeForForm(representativeResult))
-      setAuthorityWizardOpen(false)
-      invalidateEntityDetailCache('company-representatives', selectedRepresentative.id)
-      await loadData(true)
-      setToast({ type: 'success', title: 'Temsilcilik İşlemi Oluşturuldu', message: `${payload.transaction_type} operation kaydı oluşturuldu.` })
-      setPageState('view')
-    } catch (err: any) {
-      const saveError = createSaveErrorFromService(err, 'Temsilcilik işlemi tamamlanamadı')
-      setToast(saveError.toast || { type: 'error', title: 'Temsilcilik İşlemi Başarısız', message: saveError.message })
-      throw saveError
-    } finally {
-      setSaving(false)
-    }
+    const representativeResult = result.data?.representative || result.data
+    if (representativeResult) setSelectedRepresentative(normalizeRepresentativeForForm(representativeResult))
+    setAuthorityWizardOpen(false)
+    invalidateEntityDetailCache('company-representatives', selectedRepresentative.id)
+    await loadData(true)
+    setToast({ type: 'success', title: 'Temsilcilik İşlemi Oluşturuldu', message: `${payload.transaction_type} operation kaydı oluşturuldu.` })
+    setPageState('view')
   }
 
   const getRepresentativeOperationActions = (): FormOperationActionGroup[] => {
@@ -1149,7 +1138,7 @@ function RepresentativeAuthorityWizard({
   transactionType: RepresentativeAuthorityTransactionType
   saving: boolean
   onClose: () => void
-  onSubmit: (payload: Record<string, any>) => Promise<void>
+  onSubmit: (result: Record<string, any>, payload: Record<string, any>) => Promise<void>
 }) {
   const current = representative.current_authority || {}
   const currentScope = getRepresentativeScope(representative)
@@ -1204,59 +1193,64 @@ function RepresentativeAuthorityWizard({
     isEndOperation,
   }), [branches, form, isEndOperation, isTermination, representative, selectedCompany?.label, transactionType])
 
-  const complete = async () => {
+  const buildSubmitPayload = (draft: Record<string, any>) => {
     setLocalError(null)
-    if (isActivation && recordStatus !== 'draft') return setLocalError('Temsilcilik Başlatma yalnızca Taslak temsilci kartları için çalışır.')
-    if (!isActivation && recordStatus !== 'active') return setLocalError('Temsilcilik işlemleri yalnızca Aktif temsilci kartları için yapılabilir.')
-    if (isSuspension && authorityStatus !== 'active') return setLocalError('Askıya alma yalnızca Aktif yetki için yapılabilir.')
-    if (isEndOperation && !['active', 'suspended'].includes(authorityStatus)) return setLocalError('Sonlandırma yalnızca Aktif veya Askıda yetki için yapılabilir.')
-    if (!isActivation && !isTermination && authorityStatus === 'suspended' && transactionType !== 'Yetki Yenileme') return setLocalError('Askıdaki yetki için yalnızca Askıdan Kaldır / Yetki Yenile işlemi yapılabilir.')
-    if (!form.company_id) return setLocalError('Şirket seçimi zorunludur.')
-    if (!form.effective_date) return setLocalError('Yürürlük tarihi zorunludur.')
-    if (!isTermination && form.authority_types.length === 0) return setLocalError('En az bir yetki tipi seçilmelidir.')
-    if (!isTermination && form.authority_types.includes('signature_authority') && !form.signature_type) return setLocalError('İmza yetkisi için imza türü zorunludur.')
-    if (!isTermination && form.scope_type === 'branch' && !form.branch_id) return setLocalError('Şube kapsamı için şube seçilmelidir.')
-    if (!isTermination && form.scope_type === 'organization_unit' && !form.organization_unit_id) return setLocalError('Organizasyon birimi kapsamı için birim seçilmelidir.')
-    if (!isTermination && form.scope_type === 'facility' && !form.facility_id) return setLocalError('Tesis/lokasyon kapsamı için tesis seçilmelidir.')
-    if (isActivation && collectRepresentativeAuthorityWizardDocuments(form, representative).length === 0) return setLocalError('Aktivasyon için en az bir yetki belgesi eklenmelidir.')
-    if (isEndOperation && !form.termination_reason) return setLocalError('Sonlandırma nedeni zorunludur.')
-    if (isEndOperation && (!form.authority_document || typeof form.authority_document !== 'object')) return setLocalError('Sonlandırma için işlem belgesi eklenmelidir.')
-    if (!isTermination && form.scope_type === 'company_wide' && (form.branch_id || form.organization_unit_id || form.facility_id)) {
-      return setLocalError('Sirket geneli yetkide sube, organizasyon birimi veya tesis/lokasyon secilemez.')
+    const fail = (message: string) => {
+      setLocalError(message)
+      throw new Error(message)
     }
-    if (!isTermination && form.scope_type === 'branch') {
-      const selectedBranch = branches.find(branch => branch.id === form.branch_id)
+    if (isActivation && recordStatus !== 'draft') fail('Temsilcilik Başlatma yalnızca Taslak temsilci kartları için çalışır.')
+    if (!isActivation && recordStatus !== 'active') fail('Temsilcilik işlemleri yalnızca Aktif temsilci kartları için yapılabilir.')
+    if (isSuspension && authorityStatus !== 'active') fail('Askıya alma yalnızca Aktif yetki için yapılabilir.')
+    if (isEndOperation && !['active', 'suspended'].includes(authorityStatus)) fail('Sonlandırma yalnızca Aktif veya Askıda yetki için yapılabilir.')
+    if (!isActivation && !isTermination && authorityStatus === 'suspended' && transactionType !== 'Yetki Yenileme') fail('Askıdaki yetki için yalnızca Askıdan Kaldır / Yetki Yenile işlemi yapılabilir.')
+    if (!draft.company_id) fail('Şirket seçimi zorunludur.')
+    if (!draft.effective_date) fail('Yürürlük tarihi zorunludur.')
+    if (!isTermination && draft.authority_types.length === 0) fail('En az bir yetki tipi seçilmelidir.')
+    if (!isTermination && draft.authority_types.includes('signature_authority') && !draft.signature_type) fail('İmza yetkisi için imza türü zorunludur.')
+    if (!isTermination && draft.scope_type === 'branch' && !draft.branch_id) fail('Şube kapsamı için şube seçilmelidir.')
+    if (!isTermination && draft.scope_type === 'organization_unit' && !draft.organization_unit_id) fail('Organizasyon birimi kapsamı için birim seçilmelidir.')
+    if (!isTermination && draft.scope_type === 'facility' && !draft.facility_id) fail('Tesis/lokasyon kapsamı için tesis seçilmelidir.')
+    if (isActivation && collectRepresentativeAuthorityWizardDocuments(draft, representative).length === 0) fail('Aktivasyon için en az bir yetki belgesi eklenmelidir.')
+    if (isEndOperation && !draft.termination_reason) fail('Sonlandırma nedeni zorunludur.')
+    if (isEndOperation && (!draft.authority_document || typeof draft.authority_document !== 'object')) fail('Sonlandırma için işlem belgesi eklenmelidir.')
+    if (!isTermination && draft.scope_type === 'company_wide' && (draft.branch_id || draft.organization_unit_id || draft.facility_id)) {
+      fail('Sirket geneli yetkide sube, organizasyon birimi veya tesis/lokasyon secilemez.')
+    }
+    if (!isTermination && draft.scope_type === 'branch') {
+      const selectedBranch = branches.find(branch => branch.id === draft.branch_id)
       const branchStatus = String(selectedBranch?.record_status || selectedBranch?.status || '').toLocaleLowerCase('tr-TR')
-      if (!selectedBranch || (!branchStatus.includes('active') && !branchStatus.includes('aktif'))) return setLocalError('Kapali veya pasif sube icin yeni aktif yetki verilemez.')
+      if (!selectedBranch || (!branchStatus.includes('active') && !branchStatus.includes('aktif'))) fail('Kapali veya pasif sube icin yeni aktif yetki verilemez.')
     }
     const limitFieldNames = ['transaction_limit', 'payment_approval_limit', 'purchase_approval_limit', 'bank_transaction_limit', 'contract_signature_limit']
     const limitValues = limitFieldNames
-      .map(field => ({ field, raw: form[field] }))
+      .map(field => ({ field, raw: draft[field] }))
       .filter(item => item.raw !== undefined && item.raw !== null && item.raw !== '')
       .map(item => ({ ...item, value: Number(item.raw) }))
-    if (!isTermination && limitValues.some(item => !Number.isFinite(item.value))) return setLocalError('Yetki limitleri sayisal olmalidir.')
-    if (!isTermination && limitValues.some(item => item.value < 0)) return setLocalError('Yetki limitleri negatif olamaz.')
-    if (!isTermination && limitValues.length > 0 && !form.currency) return setLocalError('Limit girildiginde para birimi zorunludur.')
-    if (!isTermination && form.signature_type === 'Müşterek' && form.can_approve_alone) {
+    if (!isTermination && limitValues.some(item => !Number.isFinite(item.value))) fail('Yetki limitleri sayisal olmalidir.')
+    if (!isTermination && limitValues.some(item => item.value < 0)) fail('Yetki limitleri negatif olamaz.')
+    if (!isTermination && limitValues.length > 0 && !draft.currency) fail('Limit girildiginde para birimi zorunludur.')
+    if (!isTermination && draft.signature_type === 'Müşterek' && draft.can_approve_alone) {
       setForm(previous => ({ ...previous, can_approve_alone: false }))
-      return setLocalError('Müşterek imza ve tek başına onay aynı anda seçilemez.')
+      fail('Müşterek imza ve tek başına onay aynı anda seçilemez.')
     }
-    if (form.end_date && form.effective_date && new Date(form.end_date) < new Date(form.effective_date)) {
-      return setLocalError('Bitiş tarihi yürürlük tarihinden önce olamaz.')
+    if (draft.end_date && draft.effective_date && new Date(draft.end_date) < new Date(draft.effective_date)) {
+      fail('Bitiş tarihi yürürlük tarihinden önce olamaz.')
     }
-    await onSubmit({
-      ...form,
-      ...normalizeRepresentativeAuthorityScopePayload(form),
-      requires_joint_signature: form.signature_type === 'Müşterek',
-      can_approve_alone: form.signature_type === 'Müşterek' ? false : form.can_approve_alone,
-      notes: isEndOperation ? [form.termination_reason, form.notes].filter(Boolean).join(' - ') : form.notes,
-      transaction_limit: form.transaction_limit === '' ? null : Number(form.transaction_limit),
-      payment_approval_limit: form.payment_approval_limit === '' ? null : Number(form.payment_approval_limit),
-      purchase_approval_limit: form.purchase_approval_limit === '' ? null : Number(form.purchase_approval_limit),
-      bank_transaction_limit: form.bank_transaction_limit === '' ? null : Number(form.bank_transaction_limit),
-      contract_signature_limit: form.contract_signature_limit === '' ? null : Number(form.contract_signature_limit),
-      document_files: collectRepresentativeAuthorityWizardDocuments(form, representative),
-    })
+    const payload = {
+      ...draft,
+      ...normalizeRepresentativeAuthorityScopePayload(draft),
+      requires_joint_signature: draft.signature_type === 'Müşterek',
+      can_approve_alone: draft.signature_type === 'Müşterek' ? false : draft.can_approve_alone,
+      notes: isEndOperation ? [draft.termination_reason, draft.notes].filter(Boolean).join(' - ') : draft.notes,
+      transaction_limit: draft.transaction_limit === '' ? null : Number(draft.transaction_limit),
+      payment_approval_limit: draft.payment_approval_limit === '' ? null : Number(draft.payment_approval_limit),
+      purchase_approval_limit: draft.purchase_approval_limit === '' ? null : Number(draft.purchase_approval_limit),
+      bank_transaction_limit: draft.bank_transaction_limit === '' ? null : Number(draft.bank_transaction_limit),
+      contract_signature_limit: draft.contract_signature_limit === '' ? null : Number(draft.contract_signature_limit),
+      document_files: collectRepresentativeAuthorityWizardDocuments(draft, representative),
+    }
+    return withRepresentativeConcurrency(payload, representative)
   }
 
   const validateStep = () => {
@@ -1274,7 +1268,12 @@ function RepresentativeAuthorityWizard({
       form={form}
       setForm={setForm as Dispatch<SetStateAction<Record<string, any>>>}
       onClose={onClose}
-      onSubmit={complete}
+      submitBinding={{
+        endpoint: `/api/companies/representatives/${representative.id}/authority-transactions`,
+        method: 'POST',
+        buildPayload: buildSubmitPayload,
+        onSuccess: onSubmit,
+      }}
       submitLabel="Onayla"
       saving={saving}
       error={localError || undefined}

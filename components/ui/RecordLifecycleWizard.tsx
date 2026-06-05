@@ -19,6 +19,7 @@ import {
   X,
 } from 'lucide-react'
 import { cn, resolveTurkishIban } from '@/lib/utils'
+import { apiClient } from '@/lib/api/apiClient'
 import type { FormField, FieldAutomationConfig } from './EntityForm'
 import { AutomationBadge, type AutomationBadgeStatus } from './AutomationBadge'
 import { formControlClass, type FormControlState } from './formControlStyles'
@@ -70,6 +71,13 @@ export type RecordLifecycleWizardStep = {
   sections: RecordLifecycleWizardSection[]
 }
 
+export type RecordLifecycleWizardSubmitBinding = {
+  endpoint: string | ((form: Record<string, any>) => string)
+  method?: 'POST' | 'PATCH' | 'PUT'
+  buildPayload?: (form: Record<string, any>) => Record<string, any>
+  onSuccess?: (result: any, payload: Record<string, any>) => void | Promise<void>
+}
+
 type RecordLifecycleWizardProps = {
   title: string
   subtitle?: ReactNode
@@ -77,7 +85,8 @@ type RecordLifecycleWizardProps = {
   form: Record<string, any>
   setForm: React.Dispatch<React.SetStateAction<Record<string, any>>>
   onClose: () => void
-  onSubmit: () => void | Promise<void>
+  onSubmit?: () => void | Promise<void>
+  submitBinding?: RecordLifecycleWizardSubmitBinding
   submitLabel: string
   saving?: boolean
   loadingMessage?: string
@@ -99,6 +108,7 @@ export function RecordLifecycleWizard({
   setForm,
   onClose,
   onSubmit,
+  submitBinding,
   submitLabel,
   saving,
   loadingMessage,
@@ -134,7 +144,13 @@ export function RecordLifecycleWizard({
     }
     setSubmitting(true)
     try {
-      await onSubmit()
+      if (submitBinding) {
+        await submitRecordLifecycleBinding(submitBinding, form)
+      } else if (onSubmit) {
+        await onSubmit()
+      } else {
+        throw new Error('Bu işlem için onay endpointi tanımlı değil.')
+      }
     } catch (error) {
       setSubmitError(formatWizardSubmitError(error))
     } finally {
@@ -1070,6 +1086,19 @@ async function uploadWizardDocumentFile(file: File, slotId: string) {
     size: Number(result.size || file.size),
     type: String(result.type || file.type || 'application/octet-stream'),
   }
+}
+
+
+async function submitRecordLifecycleBinding(binding: RecordLifecycleWizardSubmitBinding, form: Record<string, any>) {
+  const endpoint = typeof binding.endpoint === 'function' ? binding.endpoint(form) : binding.endpoint
+  const payload = binding.buildPayload ? binding.buildPayload(form) : form
+  const method = binding.method || 'POST'
+  const result = method === 'PATCH'
+    ? await apiClient.patch(endpoint, payload, { useCache: false })
+    : method === 'PUT'
+      ? await apiClient(endpoint, { method: 'PUT', body: JSON.stringify(payload), useCache: false })
+      : await apiClient.post(endpoint, payload, { useCache: false })
+  await binding.onSuccess?.(result, payload)
 }
 
 function formatWizardSubmitError(error: unknown) {
