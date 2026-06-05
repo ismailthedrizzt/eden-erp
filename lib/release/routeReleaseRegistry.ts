@@ -157,7 +157,7 @@ export const routeReleaseRegistry = [
   route('/app/sistem/module-licenses', 'settings', 'Modul Lisanslari', 'development_internal', true, true, true, { notes: INTERNAL_NOTES }),
   route('/app/sistem/system-parameters', 'settings', 'Sistem Parametreleri', 'development_internal', true, true, true, { notes: INTERNAL_NOTES }),
   route('/app/sistem/kullanici-talepleri', 'settings', 'Kullanici Talepleri', 'development_internal', true, true, true, { notes: INTERNAL_NOTES }),
-  route('/app/sistem/kurulum', 'settings', 'Kurulum Merkezi', 'development_internal', true, true, true, { notes: INTERNAL_NOTES }),
+  route('/app/sistem/kurulum', 'settings', 'Kurulum Merkezi', 'release', true, true, true, { notes: RELEASE_NOTES }),
   route('/app/sistem/login-sayfasi', 'settings', 'Login sayfasi ayarlari', 'coming_soon', true, true, true),
 
   route('/portal', 'portal', 'Portal Shell', 'development_internal', false, true, false, { notes: INTERNAL_NOTES }),
