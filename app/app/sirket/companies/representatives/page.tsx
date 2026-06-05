@@ -1243,6 +1243,7 @@ function RepresentativeAuthorityWizard({
       ...normalizeRepresentativeAuthorityScopePayload(draft),
       requires_joint_signature: draft.signature_type === 'Müşterek',
       can_approve_alone: draft.signature_type === 'Müşterek' ? false : draft.can_approve_alone,
+      end_date: draft.end_date || null,
       notes: isEndOperation ? [draft.termination_reason, draft.notes].filter(Boolean).join(' - ') : draft.notes,
       transaction_limit: draft.transaction_limit === '' ? null : Number(draft.transaction_limit),
       payment_approval_limit: draft.payment_approval_limit === '' ? null : Number(draft.payment_approval_limit),
