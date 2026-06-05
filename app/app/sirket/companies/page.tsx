@@ -984,73 +984,63 @@ export default function SirketlerPage() {
     })
   }
 
-  const handleSave = async (data: Record<string, any>, mode: FormMode) => {
-    setSaving(true)
+  const buildCompanySavePayload = (data: Record<string, any>, mode: FormMode) => {
     setFormError(null)
     setFieldErrors({})
 
-    try {
-      const payload = normalizePayload(data)
-      const updatePayload = mode === 'create' || !selectedSirket
-        ? payload
-        : {
-          ...payload,
-          ...(selectedSirket.version !== undefined && selectedSirket.version !== null
-            ? { base_version: selectedSirket.version }
-            : { base_updated_at: selectedSirket.updated_at }),
-        }
-      const result = mode === 'create'
-        ? await companyService.create(payload)
-        : await companyService.update(selectedSirket?.id || '', updatePayload)
-      if (mode === 'create') {
-        invalidateEntityDetailCache(COMPANY_DETAIL_CACHE_NAMESPACE)
-      } else {
-        invalidateEntityDetailCache(COMPANY_DETAIL_CACHE_NAMESPACE, selectedSirket?.id)
-      }
-      if (result.data) {
-        setSelectedSirket(normalizeCompanyForForm({
-          ...(selectedSirket || {}),
-          ...result.data,
-        } as Sirket))
-      }
-      setToast(buildCompanySaveToast(result as Record<string, any>, mode))
-      await yenile()
-      setPageState('list')
-    } catch (error: any) {
-      const saveError = normalizeSaveError(error)
-      setFormError(saveError.message)
-      setFieldErrors(saveError.fieldErrors || {})
-      setToast(saveError.toast || { type: 'error', title: 'Kayıt Başarısız', message: saveError.message })
-      throw saveError
-    } finally {
-      setSaving(false)
+    const payload = normalizePayload(data)
+    if (mode === 'create' || !selectedSirket) return payload
+
+    return {
+      ...payload,
+      ...(selectedSirket.version !== undefined && selectedSirket.version !== null
+        ? { base_version: selectedSirket.version }
+        : { base_updated_at: selectedSirket.updated_at }),
     }
   }
 
-  const handleDelete = async () => {
-    if (!selectedSirket) return
-
-    setDeleting(true)
-    try {
-      await companyService.delete(selectedSirket.id)
-      invalidateEntityDetailCache(COMPANY_DETAIL_CACHE_NAMESPACE, selectedSirket.id)
-
-      setToast({ type: 'success', title: 'Kayıt Başarılı', message: 'Şirket taslak kaydı kalıcı olarak silindi.' })
-      await yenile()
-      setPageState('list')
-    } catch (error: any) {
-      if (error?.code === 'USE_DEREGISTRATION_WIZARD' || error?.code === 'COMPANY_DELETE_REQUIRES_OFFICIAL_OPERATION') {
-        const message = 'Aktif veya resmi işlem geçmişi olan şirket doğrudan silinemez. Tasfiye veya Terkin işlemi kullanılmalıdır.'
-        setFormError(message)
-        setToast({ type: 'warning', title: 'Resmi İşlem Gerekli', message })
-        return
-      }
-      setFormError(error.message)
-      setToast(error.toast || { type: 'error', title: 'Kayıt Başarısız', message: error.message })
-      throw error
-    } finally {
-      setDeleting(false)
+  const handleCompanySaveSuccess = async (result: Record<string, any>, _payload: Record<string, any>, mode: FormMode) => {
+    if (mode === 'create') {
+      invalidateEntityDetailCache(COMPANY_DETAIL_CACHE_NAMESPACE)
+    } else {
+      invalidateEntityDetailCache(COMPANY_DETAIL_CACHE_NAMESPACE, selectedSirket?.id)
     }
+    if (result.data) {
+      setSelectedSirket(normalizeCompanyForForm({
+        ...(selectedSirket || {}),
+        ...result.data,
+      } as Sirket))
+    }
+    setToast(buildCompanySaveToast(result, mode))
+    await yenile()
+    setPageState('list')
+  }
+
+  const handleCompanySaveError = async (error: any) => {
+    const saveError = normalizeSaveError(error)
+    setFormError(saveError.message)
+    setFieldErrors(saveError.fieldErrors || {})
+    setToast(saveError.toast || { type: 'error', title: 'Kayıt Başarısız', message: saveError.message })
+    throw saveError
+  }
+
+  const handleCompanyDeleteSuccess = async (_result: Record<string, any>, record: Record<string, any>) => {
+    invalidateEntityDetailCache(COMPANY_DETAIL_CACHE_NAMESPACE, record.id)
+    setToast({ type: 'success', title: 'Kayıt Başarılı', message: 'Şirket taslak kaydı kalıcı olarak silindi.' })
+    await yenile()
+    setPageState('list')
+  }
+
+  const handleCompanyDeleteError = async (error: any) => {
+    if (error?.code === 'USE_DEREGISTRATION_WIZARD' || error?.code === 'COMPANY_DELETE_REQUIRES_OFFICIAL_OPERATION') {
+      const message = 'Aktif veya resmi işlem geçmişi olan şirket doğrudan silinemez. Tasfiye veya Terkin işlemi kullanılmalıdır.'
+      setFormError(message)
+      setToast({ type: 'warning', title: 'Resmi İşlem Gerekli', message })
+      return
+    }
+    setFormError(error.message)
+    setToast(error.toast || { type: 'error', title: 'Kayıt Başarısız', message: error.message })
+    throw error
   }
 
   const handleActivate = async () => {
@@ -2015,9 +2005,22 @@ export default function SirketlerPage() {
             deleting={deleting}
             error={formError}
             externalFieldErrors={fieldErrors}
-            onSave={handleSave}
+            saveBinding={{
+              endpoint: (_payload, mode) => mode === 'create'
+                ? '/api/companies'
+                : `/api/companies/${selectedSirket?.id || ''}`,
+              method: (_payload, mode) => mode === 'create' ? 'POST' : 'PATCH',
+              buildPayload: buildCompanySavePayload,
+              onSuccess: handleCompanySaveSuccess,
+              onError: handleCompanySaveError,
+            }}
             onCancel={handleBackToList}
-            onDelete={selectedSirket && getCompanyLifecycleStatus(selectedSirket) === 'draft' ? handleDelete : undefined}
+            deleteBinding={selectedSirket && getCompanyLifecycleStatus(selectedSirket) === 'draft' ? {
+              endpoint: record => `/api/companies/${record.id}`,
+              method: 'DELETE',
+              onSuccess: handleCompanyDeleteSuccess,
+              onError: handleCompanyDeleteError,
+            } : undefined}
             onModeChange={(mode) => setPageState(mode === 'edit' && !formAccess.showEdit ? 'view' : mode)}
             onFieldChange={handleFormFieldChange}
             onIdentityGateOpenExistingRole={async (roleRecord) => {

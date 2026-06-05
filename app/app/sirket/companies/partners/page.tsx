@@ -779,73 +779,67 @@ export default function OrtaklarPage() {
     void openPartnerFromNotification({ partnerId: pendingPartnerId, transactionId: pendingTransactionId })
   }, [loading, pageState, searchParams, tableData])
 
-  const handleSave = async (data: Record<string, any>, mode: FormMode) => {
-    setSaving(true)
+  const buildPartnerSavePayload = (data: Record<string, any>, mode: FormMode) => {
     setFormError(null)
     setFieldErrors({})
-    try {
-      const payload = normalizePayload(data, activeCompanyOptions, mode)
-      const validationPayload = mode === 'edit' && selectedPartner
-        ? normalizePayload({ ...selectedPartner, ...payload }, activeCompanyOptions, mode)
-        : payload
-      const companySelectionError = mode === 'create' ? getPartnerCompanySelectionError(validationPayload, activeCompanyOptions) : null
-      if (companySelectionError) throw companySelectionError
-      const missingPartnerFields = getMissingPartnerFields(validationPayload)
-      if (missingPartnerFields.length > 0) {
-        const message = missingPartnerFields.map(field => FIELD_LABELS[field] || field).join(', ')
-        const error = new Error(`Eksik Zorunlu Alan [${message}]`) as SaveError
-        error.fieldErrors = Object.fromEntries(missingPartnerFields.map(field => [field, `${FIELD_LABELS[field] || field} zorunludur`]))
-        error.toast = { type: 'warning', title: 'Eksik Zorunlu Alan', message }
-        throw error
-      }
-      const updatePayload = mode === 'edit' && selectedPartner
-        ? withPartnerConcurrency(payload, selectedPartner)
-        : payload
-      const result = mode === 'create'
-        ? await companyService.createPartner(payload)
-        : await companyService.updatePartner(selectedPartner?.id || '', updatePayload)
-      const normalized = result.data ? normalizePartnerForForm(result.data) : null
-      if (normalized) setSelectedPartner(normalized)
-      setToast(buildOperationToast(result as any, {
-        type: 'success',
-        title: 'Kayıt Başarılı',
-        message: mode === 'create' ? 'Ortak kaydı oluşturuldu' : 'Ortak bilgileri güncellendi',
-      }))
-      await loadData(true)
-      if (mode === 'create') invalidateEntityDetailCache('company-partners')
-      else invalidateEntityDetailCache('company-partners', selectedPartner?.id)
-      setPageState(mode === 'create' && normalized ? 'view' : 'list')
-    } catch (err: any) {
-      const normalizedError = normalizePartnerSaveError(err)
-      setFormError(normalizedError.message)
-      setFieldErrors(normalizedError.fieldErrors || {})
-      setToast(normalizedError.toast || { type: 'error', title: 'Kayıt Başarısız', message: normalizedError.message })
-      throw normalizedError
-    } finally {
-      setSaving(false)
+
+    const payload = normalizePayload(data, activeCompanyOptions, mode)
+    const validationPayload = mode === 'edit' && selectedPartner
+      ? normalizePayload({ ...selectedPartner, ...payload }, activeCompanyOptions, mode)
+      : payload
+    const companySelectionError = mode === 'create' ? getPartnerCompanySelectionError(validationPayload, activeCompanyOptions) : null
+    if (companySelectionError) throw companySelectionError
+    const missingPartnerFields = getMissingPartnerFields(validationPayload)
+    if (missingPartnerFields.length > 0) {
+      const message = missingPartnerFields.map(field => FIELD_LABELS[field] || field).join(', ')
+      const error = new Error(`Eksik Zorunlu Alan [${message}]`) as SaveError
+      error.fieldErrors = Object.fromEntries(missingPartnerFields.map(field => [field, `${FIELD_LABELS[field] || field} zorunludur`]))
+      error.toast = { type: 'warning', title: 'Eksik Zorunlu Alan', message }
+      throw error
     }
+
+    return mode === 'edit' && selectedPartner
+      ? withPartnerConcurrency(payload, selectedPartner)
+      : payload
   }
 
-  const handleDelete = async () => {
-    if (!selectedPartner?.id) return
-    setDeleting(true)
-    try {
-      await companyService.deletePartner(selectedPartner.id)
-      invalidateEntityDetailCache('company-partners', selectedPartner.id)
-      setToast({ type: 'success', title: 'Kayıt Başarılı', message: 'Ortak kartı taslağı kalıcı olarak silindi.' })
-      await loadData(true)
-      setPageState('list')
-    } catch (err: any) {
-      if (err?.code === 'PARTNER_DELETE_REQUIRES_OWNERSHIP_EXIT') {
-        const message = 'Ortaklık hakkı veya işlem geçmişi olan kayıt doğrudan silinemez. Pay Devri veya Ortaklıktan Çıkış işlemini kullanın.'
-        setToast({ type: 'warning', title: 'Ortaklık İşlemi Gerekli', message })
-        return
-      }
-      setToast(err.toast || { type: 'error', title: 'Kayıt Başarısız', message: err.message })
-      throw err
-    } finally {
-      setDeleting(false)
+  const handlePartnerSaveSuccess = async (result: Record<string, any>, _payload: Record<string, any>, mode: FormMode) => {
+    const normalized = result.data ? normalizePartnerForForm(result.data) : null
+    if (normalized) setSelectedPartner(normalized)
+    setToast(buildOperationToast(result as any, {
+      type: 'success',
+      title: 'Kayıt Başarılı',
+      message: mode === 'create' ? 'Ortak kaydı oluşturuldu' : 'Ortak bilgileri güncellendi',
+    }))
+    await loadData(true)
+    if (mode === 'create') invalidateEntityDetailCache('company-partners')
+    else invalidateEntityDetailCache('company-partners', selectedPartner?.id)
+    setPageState(mode === 'create' && normalized ? 'view' : 'list')
+  }
+
+  const handlePartnerSaveError = async (err: any) => {
+    const normalizedError = normalizePartnerSaveError(err)
+    setFormError(normalizedError.message)
+    setFieldErrors(normalizedError.fieldErrors || {})
+    setToast(normalizedError.toast || { type: 'error', title: 'Kayıt Başarısız', message: normalizedError.message })
+    throw normalizedError
+  }
+
+  const handlePartnerDeleteSuccess = async (_result: Record<string, any>, record: Record<string, any>) => {
+    invalidateEntityDetailCache('company-partners', record.id)
+    setToast({ type: 'success', title: 'Kayıt Başarılı', message: 'Ortak kartı taslağı kalıcı olarak silindi.' })
+    await loadData(true)
+    setPageState('list')
+  }
+
+  const handlePartnerDeleteError = async (err: any) => {
+    if (err?.code === 'PARTNER_DELETE_REQUIRES_OWNERSHIP_EXIT') {
+      const message = 'Ortaklık hakkı veya işlem geçmişi olan kayıt doğrudan silinemez. Pay Devri veya Ortaklıktan Çıkış işlemini kullanın.'
+      setToast({ type: 'warning', title: 'Ortaklık İşlemi Gerekli', message })
+      return
     }
+    setToast(err.toast || { type: 'error', title: 'Kayıt Başarısız', message: err.message })
+    throw err
   }
 
   function openOwnershipWizard(partner: Record<string, any>, transactionType?: OwnershipTransactionType) {
@@ -1162,9 +1156,22 @@ export default function OrtaklarPage() {
             error={formError}
             loadStages={formLoadStages}
             externalFieldErrors={fieldErrors}
-            onSave={handleSave}
+            saveBinding={{
+              endpoint: (_payload, mode) => mode === 'create'
+                ? '/api/companies/partners'
+                : `/api/companies/partners/${selectedPartner?.id || ''}`,
+              method: (_payload, mode) => mode === 'create' ? 'POST' : 'PATCH',
+              buildPayload: buildPartnerSavePayload,
+              onSuccess: handlePartnerSaveSuccess,
+              onError: handlePartnerSaveError,
+            }}
             onCancel={() => setPageState('list')}
-            onDelete={selectedRecordStatus === 'draft' ? handleDelete : undefined}
+            deleteBinding={selectedRecordStatus === 'draft' ? {
+              endpoint: record => `/api/companies/partners/${record.id}`,
+              method: 'DELETE',
+              onSuccess: handlePartnerDeleteSuccess,
+              onError: handlePartnerDeleteError,
+            } : undefined}
             onActivate={undefined}
             onModeChange={(mode) => setPageState(mode)}
             onActiveTabChange={handleFormTabChange}
