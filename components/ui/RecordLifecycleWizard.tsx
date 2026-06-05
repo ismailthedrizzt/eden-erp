@@ -113,23 +113,33 @@ export function RecordLifecycleWizard({
 }: RecordLifecycleWizardProps) {
   const [step, setStep] = useState(0)
   const [navigationError, setNavigationError] = useState<ReactNode | null>(null)
+  const [submitError, setSubmitError] = useState<ReactNode | null>(null)
+  const [submitting, setSubmitting] = useState(false)
   const currentStep = steps[Math.min(step, Math.max(steps.length - 1, 0))]
   const isLastStep = step === steps.length - 1
   const stepComplete = useMemo(() => readOnly || isWizardStepComplete(currentStep, form), [currentStep, form, readOnly])
 
-  const goNext = () => {
-    if (!stepComplete) return
+  const goNext = async () => {
+    if (!stepComplete || submitting || saving) return
     const validationMessage = validateStep?.(step)
     if (validationMessage) {
       setNavigationError(validationMessage)
       return
     }
     setNavigationError(null)
+    setSubmitError(null)
     if (!isLastStep) {
       setStep(current => Math.min(current + 1, steps.length - 1))
       return
     }
-    onSubmit()
+    setSubmitting(true)
+    try {
+      await onSubmit()
+    } catch (error) {
+      setSubmitError(formatWizardSubmitError(error))
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   const selectStep = (index: number) => {
@@ -225,10 +235,10 @@ export function RecordLifecycleWizard({
 
               {isLastStep && finalContent}
 
-              {(navigationError || error) && (
+              {(navigationError || submitError || error) && (
                 <div className="flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-950 dark:bg-red-950/30 dark:text-red-200">
                   <AlertCircle size={16} className="mt-0.5" />
-                  <span>{navigationError || error}</span>
+                  <span>{navigationError || submitError || error}</span>
                 </div>
               )}
             </div>
@@ -248,8 +258,8 @@ export function RecordLifecycleWizard({
           {!isLastStep ? (
             <button
               type="button"
-              onClick={goNext}
-              disabled={!stepComplete}
+              onClick={() => void goNext()}
+              disabled={!stepComplete || submitting || saving}
               className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-gray-200 disabled:text-gray-500 dark:disabled:bg-gray-800 dark:disabled:text-gray-400"
             >
               Devam
@@ -269,12 +279,13 @@ export function RecordLifecycleWizard({
           ) : (
             <button
               type="button"
-              onClick={goNext}
-              disabled={saving || !stepComplete}
+              onClick={() => void goNext()}
+              disabled={saving || submitting || !stepComplete}
+              aria-label={submitLabel || 'Onayla'}
               className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              {saving && <Loader2 size={16} className="animate-spin" />}
-              {submitLabel}
+              {(saving || submitting) && <Loader2 size={16} className="animate-spin" />}
+              Onayla
             </button>
           )}
           </div>
@@ -1059,6 +1070,16 @@ async function uploadWizardDocumentFile(file: File, slotId: string) {
     size: Number(result.size || file.size),
     type: String(result.type || file.type || 'application/octet-stream'),
   }
+}
+
+function formatWizardSubmitError(error: unknown) {
+  if (error instanceof Error && error.message) return error.message
+  if (error && typeof error === 'object') {
+    const candidate = error as Record<string, unknown>
+    const message = candidate.message || candidate.error || candidate.code
+    if (message) return String(message)
+  }
+  return 'İşlem tamamlanamadı. Lütfen bilgileri kontrol edip tekrar deneyin.'
 }
 
 function InfoPanel({ children, className }: { children: ReactNode; className?: string }) {

@@ -835,7 +835,8 @@ export default function TemsilcilerPage() {
     try {
       const requestPayload = withRepresentativeConcurrency(payload, selectedRepresentative)
       const result = await runRepresentativeAuthorityService(selectedRepresentative.id, payload.transaction_type, requestPayload)
-      if (result.data) setSelectedRepresentative(normalizeRepresentativeForForm(result.data))
+      const representativeResult = result.data?.representative || result.data
+      if (representativeResult) setSelectedRepresentative(normalizeRepresentativeForForm(representativeResult))
       setAuthorityWizardOpen(false)
       invalidateEntityDetailCache('company-representatives', selectedRepresentative.id)
       await loadData(true)
@@ -1274,7 +1275,7 @@ function RepresentativeAuthorityWizard({
       setForm={setForm as Dispatch<SetStateAction<Record<string, any>>>}
       onClose={onClose}
       onSubmit={complete}
-      submitLabel={getRepresentativeAuthoritySubmitLabel(transactionType)}
+      submitLabel="Onayla"
       saving={saving}
       error={localError || undefined}
       validateStep={validateStep}
@@ -1686,13 +1687,6 @@ function RepresentativeStatusSummary({ data }: { data: Record<string, any> }) {
 
 function isRepresentativeTerminationTransaction(transactionType: RepresentativeAuthorityTransactionType) {
   return ['Askıya Alma', 'Sonlandırma', 'Ters Kayıt'].includes(transactionType)
-}
-
-function getRepresentativeAuthoritySubmitLabel(transactionType: RepresentativeAuthorityTransactionType) {
-  if (transactionType === 'Temsilcilik Başlatma') return 'Yetkilendir / Aktive Et'
-  if (transactionType === 'Askıya Alma') return 'Askıya Al'
-  if (transactionType === 'Sonlandırma') return 'Sonlandır'
-  return 'İşlemi Tamamla'
 }
 
 function getRepresentativeAuthorityWizardTitle(transactionType: RepresentativeAuthorityTransactionType) {

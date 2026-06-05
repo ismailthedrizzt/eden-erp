@@ -348,11 +348,10 @@ export const companyService = {
 }
 
 function representativeAuthorityOperation(id: string, transactionType: string, payload: Record<string, any>) {
-  return apiClient.patch<{ data: any }>(`/api/companies/representatives/${id}`, {
+  return apiClient.post<{ data: any }>(`/api/companies/representatives/${id}/authority-transactions`, {
     ...payload,
     transaction_type: transactionType,
-    authority_action: true,
-  })
+  }, { useCache: false })
 }
 
 function officialChangePath(changeType: 'title_change' | 'address_change' | 'public_registration_update') {
