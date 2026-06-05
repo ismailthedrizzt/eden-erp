@@ -297,40 +297,34 @@ export default function TeskilatPage() {
     { id: 'gecmis', label: 'Geçmiş', fields: [{ name: 'history', label: 'Geçmiş', type: 'custom', colSpan: 3, render: () => <Timeline history={[]} /> }] },
   ]
 
-  async function saveUnit(data: Record<string, any>, mode: FormMode) {
-    setSaving(true)
-    try {
-      const response = await fetch('/api/organization', {
-        method: mode === 'create' ? 'POST' : 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...data, id: selectedUnit?.id, entity: 'unit' }),
-      })
-      const payload = await response.json()
-      if (!response.ok) throw new Error(payload.error || 'Birim kaydedilemedi')
-      await loadData(true)
-      setPageState('list')
-      setSelectedUnit(null)
-    } finally {
-      setSaving(false)
-    }
+  function buildUnitSavePayload(data: Record<string, any>) {
+    return { ...data, id: selectedUnit?.id, entity: 'unit' }
   }
 
-  async function savePosition(data: Record<string, any>) {
-    setSaving(true)
-    try {
-      const response = await fetch('/api/organization', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...data, entity: 'position' }),
-      })
-      const payload = await response.json()
-      if (!response.ok) throw new Error(payload.error || 'Kadro kaydedilemedi')
-      if (payload.warning) setToast(payload.warning)
-      await loadData(true)
-      setPageState('list')
-    } finally {
-      setSaving(false)
-    }
+  async function handleUnitSaveSuccess() {
+    await loadData(true)
+    setPageState('list')
+    setSelectedUnit(null)
+  }
+
+  async function handleUnitSaveError(error: any) {
+    setToast(error?.message || 'Birim kaydedilemedi')
+    throw error
+  }
+
+  function buildPositionSavePayload(data: Record<string, any>) {
+    return { ...data, entity: 'position' }
+  }
+
+  async function handlePositionSaveSuccess(payload: Record<string, any>) {
+    if (payload.warning) setToast(payload.warning)
+    await loadData(true)
+    setPageState('list')
+  }
+
+  async function handlePositionSaveError(error: any) {
+    setToast(error?.message || 'Kadro kaydedilemedi')
+    throw error
   }
 
   async function saveUnitType(data: Record<string, any>) {
@@ -453,7 +447,13 @@ export default function TeskilatPage() {
           data={formData}
           saving={saving}
           loadStages={formLoadStages}
-          onSave={saveUnit}
+          saveBinding={{
+            endpoint: '/api/organization',
+            method: (_payload, mode) => mode === 'create' ? 'POST' : 'PATCH',
+            buildPayload: buildUnitSavePayload,
+            onSuccess: handleUnitSaveSuccess,
+            onError: handleUnitSaveError,
+          }}
           onCancel={() => setPageState('list')}
           onModeChange={(mode) => setPageState(mode === 'edit' ? 'edit-unit' : 'view-unit')}
           enableHistory
@@ -471,7 +471,13 @@ export default function TeskilatPage() {
           data={{ unit_id: selectedUnit?.id || '', norm_count: 1, active_count: 0, status: 'Aktif', work_type: 'Tam Zamanlı' }}
           saving={saving}
           loadStages={formLoadStages}
-          onSave={savePosition}
+          saveBinding={{
+            endpoint: '/api/organization',
+            method: 'POST',
+            buildPayload: buildPositionSavePayload,
+            onSuccess: handlePositionSaveSuccess,
+            onError: handlePositionSaveError,
+          }}
           onCancel={() => setPageState('list')}
         />
       )}

@@ -169,24 +169,20 @@ export default function FacilitiesPage() {
     { id: 'notes', label: 'Notlar', fields: [{ name: 'notes', label: 'Notlar', type: 'textarea', colSpan: 3, readOnly: pageState === 'view' }] },
   ]
 
-  async function handleSave(data: Record<string, any>) {
-    setSaving(true)
-    try {
-      const payload = { ...data, name: data.facility_name, related_branch_id: data.branch_id || null }
-      const result = pageState === 'create'
-        ? await facilityService.create(payload)
-        : selectedFacility?.id
-          ? await facilityService.update(selectedFacility.id, payload)
-          : null
-      if (result?.data) setSelectedFacility(result.data)
-      setToast({ type: 'success', message: pageState === 'create' ? 'Tesis/lokasyon olusturuldu.' : 'Tesis/lokasyon guncellendi.' })
-      await loadFacilities(true)
-      setPageState(result?.data ? 'view' : 'list')
-    } catch (error: any) {
-      setToast({ type: 'error', title: 'Islem tamamlanamadi', message: error?.message || 'Tesis/lokasyon kaydedilemedi.' })
-    } finally {
-      setSaving(false)
-    }
+  function buildFacilitySavePayload(data: Record<string, any>) {
+    return { ...data, name: data.facility_name, related_branch_id: data.branch_id || null }
+  }
+
+  async function handleFacilitySaveSuccess(result: Record<string, any>, _payload: Record<string, any>, mode: FormMode) {
+    if (result?.data) setSelectedFacility(result.data)
+    setToast({ type: 'success', message: mode === 'create' ? 'Tesis/lokasyon olusturuldu.' : 'Tesis/lokasyon guncellendi.' })
+    await loadFacilities(true)
+    setPageState(result?.data ? 'view' : 'list')
+  }
+
+  async function handleFacilitySaveError(error: any) {
+    setToast({ type: 'error', title: 'Islem tamamlanamadi', message: error?.message || 'Tesis/lokasyon kaydedilemedi.' })
+    throw error
   }
 
   function openCreate() {
@@ -237,7 +233,7 @@ export default function FacilitiesPage() {
       {pageState !== 'list' && selectedFacility && (
         <div className="mt-6 space-y-4">
           <FacilityReadinessPanel facility={selectedFacility} />
-          <EntityForm mode={formMode} entityName="Tesisler/Lokasyonlar" entityNameSingular="Tesis/Lokasyon" heroFields={heroFields} tabs={tabs} data={selectedFacility} saving={saving} loading={loading} loadStages={loadStages} showHeroHeader={false} onSave={handleSave} onCancel={() => setPageState('list')} onModeChange={(mode) => setPageState(mode === 'edit' ? 'edit' : 'view')} />
+          <EntityForm mode={formMode} entityName="Tesisler/Lokasyonlar" entityNameSingular="Tesis/Lokasyon" heroFields={heroFields} tabs={tabs} data={selectedFacility} saving={saving} loading={loading} loadStages={loadStages} showHeroHeader={false} saveBinding={{ endpoint: (_payload, mode, currentData) => mode === 'create' ? '/api/facilities' : `/api/facilities/${currentData?.id || selectedFacility?.id || ''}`, method: (_payload, mode) => mode === 'create' ? 'POST' : 'PATCH', buildPayload: buildFacilitySavePayload, onSuccess: handleFacilitySaveSuccess, onError: handleFacilitySaveError }} onCancel={() => setPageState('list')} onModeChange={(mode) => setPageState(mode === 'edit' ? 'edit' : 'view')} />
         </div>
       )}
     </div>
