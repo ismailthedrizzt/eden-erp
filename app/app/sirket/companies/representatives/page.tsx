@@ -1249,6 +1249,8 @@ function RepresentativeAuthorityWizard({
       purchase_approval_limit: draft.purchase_approval_limit === '' ? null : Number(draft.purchase_approval_limit),
       bank_transaction_limit: draft.bank_transaction_limit === '' ? null : Number(draft.bank_transaction_limit),
       contract_signature_limit: draft.contract_signature_limit === '' ? null : Number(draft.contract_signature_limit),
+      gib_permissions: normalizeRepresentativePermissionList(draft.gib_permissions),
+      sgk_permissions: normalizeRepresentativePermissionList(draft.sgk_permissions),
       document_files: collectRepresentativeAuthorityWizardDocuments(draft, representative),
     }
     return withRepresentativeConcurrency(payload, representative)
@@ -1294,6 +1296,19 @@ function normalizeRepresentativeAuthorityScopePayload(form: Record<string, any>)
     scope_label: form.scope_label || '',
     scope_notes: form.scope_notes || '',
   }
+}
+
+function normalizeRepresentativePermissionList(value: any) {
+  if (Array.isArray(value)) {
+    return value.map(item => String(item || '').trim()).filter(Boolean)
+  }
+  if (value && typeof value === 'object') return value
+  const text = String(value || '').trim()
+  if (!text) return []
+  return text
+    .split(/\r?\n|,/)
+    .map(item => item.trim())
+    .filter(Boolean)
 }
 
 function buildRepresentativeAuthorityWizardSteps({

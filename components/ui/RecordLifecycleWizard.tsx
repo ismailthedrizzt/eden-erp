@@ -254,7 +254,7 @@ export function RecordLifecycleWizard({
               {(navigationError || submitError || error) && (
                 <div className="flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-950 dark:bg-red-950/30 dark:text-red-200">
                   <AlertCircle size={16} className="mt-0.5" />
-                  <span>{navigationError || submitError || error}</span>
+                  <div className="min-w-0 flex-1">{navigationError || submitError || error}</div>
                 </div>
               )}
             </div>
@@ -1101,14 +1101,119 @@ async function submitRecordLifecycleBinding(binding: RecordLifecycleWizardSubmit
   await binding.onSuccess?.(result, payload)
 }
 
-function formatWizardSubmitError(error: unknown) {
+function formatWizardSubmitError(error: unknown): ReactNode {
+  const message = getWizardSubmitErrorMessage(error)
+  const fieldErrors = getWizardValidationFieldErrors(error)
+  if (fieldErrors.length) {
+    return (
+      <div className="space-y-2">
+        <div>{message || 'Gonderilen bilgiler kontrol edilmeli.'}</div>
+        <ul className="list-disc space-y-1 pl-5">
+          {fieldErrors.slice(0, 6).map((fieldError, index) => (
+            <li key={`${fieldError.field}-${index}`}>
+              <span className="font-medium">{fieldError.field}</span>
+              {fieldError.message ? `: ${fieldError.message}` : null}
+            </li>
+          ))}
+          {fieldErrors.length > 6 ? <li>{fieldErrors.length - 6} alan daha kontrol edilmeli.</li> : null}
+        </ul>
+      </div>
+    )
+  }
+  if (message) return message
+  return 'İşlem tamamlanamadı. Lütfen bilgileri kontrol edip tekrar deneyin.'
+}
+
+function getWizardSubmitErrorMessage(error: unknown) {
   if (error instanceof Error && error.message) return error.message
   if (error && typeof error === 'object') {
     const candidate = error as Record<string, unknown>
     const message = candidate.message || candidate.error || candidate.code
     if (message) return String(message)
   }
-  return 'İşlem tamamlanamadı. Lütfen bilgileri kontrol edip tekrar deneyin.'
+  return null
+}
+
+type WizardValidationFieldError = {
+  field: string
+  message: string
+}
+
+function getWizardValidationFieldErrors(error: unknown): WizardValidationFieldError[] {
+  const fields = findWizardValidationFields(error)
+  return fields
+    .map(formatWizardValidationFieldError)
+    .filter((item): item is WizardValidationFieldError => Boolean(item))
+}
+
+function findWizardValidationFields(source: unknown): unknown[] {
+  if (!source || typeof source !== 'object') return []
+  const record = source as Record<string, unknown>
+  const candidates = [
+    record.fields,
+    record.detail,
+    record.details,
+    isPlainObject(record.details) ? record.details.fields : undefined,
+    isPlainObject(record.details) ? record.details.detail : undefined,
+    isPlainObject(record.details) && isPlainObject(record.details.details) ? record.details.details.fields : undefined,
+  ]
+  for (const candidate of candidates) {
+    if (Array.isArray(candidate)) return candidate
+  }
+  return []
+}
+
+function formatWizardValidationFieldError(value: unknown): WizardValidationFieldError | null {
+  if (!value || typeof value !== 'object') return null
+  const record = value as Record<string, unknown>
+  const field = formatWizardValidationField(record.loc || record.field || record.path)
+  const message = formatWizardValidationMessage(record.msg || record.message || record.type)
+  if (!field && !message) return null
+  return {
+    field: field || 'Alan',
+    message: message || 'Kontrol edilmeli',
+  }
+}
+
+function formatWizardValidationField(value: unknown) {
+  const rawParts = Array.isArray(value) ? value : String(value || '').split('.')
+  const parts = rawParts
+    .map(part => String(part || '').trim())
+    .filter(part => part && !['body', 'query', 'path'].includes(part))
+  const field = parts[0] || ''
+  const labels: Record<string, string> = {
+    authority_types: 'Yetki tipleri',
+    signature_type: 'Imza turu',
+    effective_date: 'Yururluk tarihi',
+    end_date: 'Bitis tarihi',
+    document_files: 'Belgeler',
+    authority_documents: 'Yetki belgeleri',
+    gib_permissions: 'GIB yetkileri',
+    sgk_permissions: 'SGK yetkileri',
+    scope_type: 'Kapsam turu',
+    branch_id: 'Sube',
+    organization_unit_id: 'Organizasyon birimi',
+    facility_id: 'Tesis/lokasyon',
+  }
+  return labels[field] || parts.join('.')
+}
+
+function formatWizardValidationMessage(value: unknown) {
+  const message = String(value || '').trim()
+  const normalized = message.toLocaleLowerCase('tr-TR')
+  if (!message) return ''
+  if (normalized.includes('field required')) return 'zorunlu alan eksik'
+  if (normalized.includes('valid list')) return 'liste formatinda olmali'
+  if (normalized.includes('valid dictionary')) return 'nesne formatinda olmali'
+  if (normalized.includes('valid number')) return 'sayisal deger olmali'
+  if (normalized.includes('valid date')) return 'gecerli tarih olmali'
+  if (normalized.includes('valid string')) return 'metin formatinda olmali'
+  if (normalized.includes('value_error')) return 'alan kurali saglanmadi'
+  return message
+}
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+  return Boolean(value && typeof value === 'object' && !Array.isArray(value))
 }
 
 function InfoPanel({ children, className }: { children: ReactNode; className?: string }) {
