@@ -151,35 +151,35 @@ export default function CompanyBranchesPage() {
     }
   }, [])
 
-  async function handleSave(payload: Record<string, any>) {
-    if (!selectedBranch?.id) return
-    setSaving(true)
+  function buildBranchSavePayload(payload: Record<string, any>) {
     setFormError(null)
     setFieldErrors({})
-    try {
-      const result = await companyService.updateBranch(selectedBranch.id, {
-        branch_short_name: payload.branch_short_name || null,
-        phone: payload.phone || null,
-        email: payload.email || null,
-        responsible_person_id: payload.responsible_person_id || null,
-        organization_unit_id: payload.organization_unit_id || null,
-        facility_id: payload.facility_id || null,
-        notes: payload.notes || null,
-        base_version: selectedBranch.version || null,
-        base_updated_at: selectedBranch.updated_at || null,
-      })
-      setSelectedBranch(result.data)
-      setPageState('view')
-      setToast({ type: 'success', title: 'Şube Güncellendi', message: 'Şube kart bilgileri güncellendi.' })
-      await loadData(true)
-    } catch (error: any) {
-      setFieldErrors(error?.details?.details?.fieldErrors || error?.details?.fieldErrors || {})
-      setFormError(error?.message || 'Şube kart bilgileri güncellenemedi.')
-      setToast({ type: 'error', title: 'Güncelleme Tamamlanamadı', message: error?.message || 'Şube kart bilgileri güncellenemedi.' })
-      throw error
-    } finally {
-      setSaving(false)
+
+    return {
+      branch_short_name: payload.branch_short_name || null,
+      phone: payload.phone || null,
+      email: payload.email || null,
+      responsible_person_id: payload.responsible_person_id || null,
+      organization_unit_id: payload.organization_unit_id || null,
+      facility_id: payload.facility_id || null,
+      notes: payload.notes || null,
+      base_version: selectedBranch?.version || null,
+      base_updated_at: selectedBranch?.updated_at || null,
     }
+  }
+
+  async function handleBranchSaveSuccess(result: Record<string, any>) {
+    setSelectedBranch(result.data)
+    setPageState('view')
+    setToast({ type: 'success', title: 'Şube Güncellendi', message: 'Şube kart bilgileri güncellendi.' })
+    await loadData(true)
+  }
+
+  async function handleBranchSaveError(error: any) {
+    setFieldErrors(error?.details?.details?.fieldErrors || error?.details?.fieldErrors || {})
+    setFormError(error?.message || 'Şube kart bilgileri güncellenemedi.')
+    setToast({ type: 'error', title: 'Güncelleme Tamamlanamadı', message: error?.message || 'Şube kart bilgileri güncellenemedi.' })
+    throw error
   }
 
   async function openBranchOpening(companyId?: string) {
@@ -438,7 +438,7 @@ export default function CompanyBranchesPage() {
         </div>
         <SmartDataTable columns={columns} data={tableRows} loading={loading} widgets={widgets} defaultView="list" storageKey="companies-branches-table" emptyText={<SmartEmptyState title="Henüz şube kaydı yok" message="Şube açmak için aktif bir şirket kartından Resmi Değişiklikler > Şube Açılışı işlemini başlatın." actionLabel="Şirketlerimiz'e Git" onAction={() => { window.location.href = '/app/sirket/companies?action=branch_opening' }} />} onRowClick={openBranch} onRefresh={() => loadData(true)} defaultPageSize={listQuery.pageSize} pagination={{ mode: 'server', page: listMeta.page, pageSize: listMeta.pageSize, total: listMeta.total, onPageChange: page => setListQuery(prev => ({ ...prev, page })), onPageSizeChange: pageSize => setListQuery(prev => ({ ...prev, page: 1, pageSize })), onSearchChange: search => setListQuery(prev => ({ ...prev, page: 1, search })), onSortChange: handleListSortChange }} activeStatusFilters={statusFilters} statusFilterOptions={BRANCH_STATUS_FILTER_OPTIONS} onStatusFiltersChange={(next) => { setStatusFilters(next.length ? next : ['active']); setListQuery(prev => ({ ...prev, page: 1 })) }} />
       </div>}
-      {pageState !== 'list' && selectedBranch && <div className="mt-6 space-y-4"><RecordPendingActionsPanel entityType="branch" entityId={selectedBranch.id} title="Bu şube için bekleyen işler" /><BranchProductReadinessPanel branch={selectedBranch} onOpenClosing={() => openBranchClosing(selectedBranch)} onOpenDocuments={() => setBranchDocumentWizard(selectedBranch)} /><EntityForm mode={formMode} entityName="Şubelerimiz" entityNameSingular="Şube" heroFields={controlledBranchHeroFields} tabs={controlledTabs} data={selectedBranch} saving={saving} loading={detailLoading} error={formError} externalFieldErrors={fieldErrors} loadStages={formLoadStages} showHeroHeader={false} onSave={handleSave} onCancel={() => setPageState('list')} onModeChange={(mode) => setPageState(mode === 'edit' ? 'edit' : 'view')} operationActions={operationActions()} onValidationError={(fields) => setToast({ type: 'warning', title: 'Alanları Kontrol Et', message: fields.join(', ') })} /></div>}
+      {pageState !== 'list' && selectedBranch && <div className="mt-6 space-y-4"><RecordPendingActionsPanel entityType="branch" entityId={selectedBranch.id} title="Bu şube için bekleyen işler" /><BranchProductReadinessPanel branch={selectedBranch} onOpenClosing={() => openBranchClosing(selectedBranch)} onOpenDocuments={() => setBranchDocumentWizard(selectedBranch)} /><EntityForm mode={formMode} entityName="Şubelerimiz" entityNameSingular="Şube" heroFields={controlledBranchHeroFields} tabs={controlledTabs} data={selectedBranch} saving={saving} loading={detailLoading} error={formError} externalFieldErrors={fieldErrors} loadStages={formLoadStages} showHeroHeader={false} saveBinding={{ endpoint: (_payload, _mode, currentData) => `/api/companies/branches/${currentData?.id || selectedBranch.id}`, method: 'PATCH', buildPayload: buildBranchSavePayload, onSuccess: handleBranchSaveSuccess, onError: handleBranchSaveError }} onCancel={() => setPageState('list')} onModeChange={(mode) => setPageState(mode === 'edit' ? 'edit' : 'view')} operationActions={operationActions()} onValidationError={(fields) => setToast({ type: 'warning', title: 'Alanları Kontrol Et', message: fields.join(', ') })} /></div>}
       {companyPickerOpen && <div className="fixed inset-0 z-[75] flex items-center justify-center bg-black/45 px-4"><div className="w-full max-w-lg rounded-lg border border-gray-200 bg-white p-5 shadow-2xl dark:border-gray-800 dark:bg-gray-950"><h2 className="text-lg font-semibold text-gray-900 dark:text-white">Yeni Şube Aç</h2><p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Şube açılışı için bağlı aktif şirketi seçin.</p><label className="mt-5 block text-sm font-medium text-gray-700 dark:text-gray-200">Bağlı Şirket<select value={pickerCompanyId} onChange={event => setPickerCompanyId(event.target.value)} className={formControlClass({ className: 'mt-1' })}><option value="">Şirket seçin</option>{companies.map(company => <option key={company.value} value={company.value}>{company.label}</option>)}</select></label>{selectedCompanyLabel ? <div className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/30 dark:text-emerald-200">{selectedCompanyLabel} için resmi şube açılışı başlatılacak.</div> : null}<div className="mt-5 flex justify-end gap-2"><button type="button" onClick={() => setCompanyPickerOpen(false)} className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-900">Vazgeç</button><button type="button" onClick={() => openBranchOpening(pickerCompanyId)} disabled={!pickerCompanyId || wizardSaving} className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:cursor-wait disabled:opacity-60">Wizardı Aç</button></div></div></div>}
       {branchOpeningWizard && <CompanyBranchOpeningWizard companyName={branchOpeningWizard.companyName} context={branchOpeningWizard.context} saving={wizardSaving} onClose={() => !wizardSaving && setBranchOpeningWizard(null)} onComplete={completeBranchOpening} />}
       {branchClosingWizard && <CompanyBranchClosingWizard companyId={branchClosingWizard.companyId} companyName={branchClosingWizard.companyName} context={branchClosingWizard.context} saving={wizardSaving} onClose={() => !wizardSaving && setBranchClosingWizard(null)} onComplete={completeBranchClosing} />}

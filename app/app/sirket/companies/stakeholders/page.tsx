@@ -406,75 +406,52 @@ export default function PaydaslarPage() {
     }
   }
 
-  const handleSave = async (data: Record<string, any>, mode: FormMode) => {
-    setSaving(true)
+  const buildStakeholderSavePayload = (data: Record<string, any>) => {
     setFormError(null)
     setFieldErrors({})
-    try {
-      const payload = normalizePayload(data, companies, selectedStakeholder || undefined)
-      const response = await fetch(mode === 'create' ? '/api/companies/stakeholders' : `/api/companies/stakeholders/${selectedStakeholder?.id}`, {
-        method: mode === 'create' ? 'POST' : 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      })
-      if (!response.ok) throw await createSaveError(response, mode === 'create' ? 'Paydaş oluşturulamadı' : 'Güncelleme başarısız')
-      setToast({ type: 'success', title: 'Kayıt Başarılı', message: mode === 'create' ? 'Paydaş kaydı oluşturuldu' : 'Paydaş bilgileri güncellendi' })
-      await loadData(true)
-      if (mode === 'create') invalidateEntityDetailCache('company-stakeholders')
-      else invalidateEntityDetailCache('company-stakeholders', selectedStakeholder?.id)
-      setPageState('list')
-    } catch (err: any) {
-      setFormError(err.message)
-      setFieldErrors(err.fieldErrors || {})
-      setToast(err.toast || { type: 'error', title: 'Kayıt Başarısız', message: err.message })
-      throw err
-    } finally {
-      setSaving(false)
-    }
+    return normalizePayload(data, companies, selectedStakeholder || undefined)
   }
 
-  const handleDelete = async () => {
-    if (!selectedStakeholder?.id) return
-    setDeleting(true)
-    try {
-      const response = await fetch(`/api/companies/stakeholders/${selectedStakeholder.id}`, { method: 'DELETE' })
-      if (!response.ok) throw await createSaveError(response, 'Pasifleştirme başarısız')
-      setToast({ type: 'success', title: 'Kayıt Başarılı', message: 'Paydaş kaydı pasife çekildi' })
-      await loadData(true)
-      setPageState('list')
-    } finally {
-      setDeleting(false)
-    }
+  const handleStakeholderSaveSuccess = async (_result: Record<string, any>, _payload: Record<string, any>, mode: FormMode) => {
+    setToast({ type: 'success', title: 'Kayıt Başarılı', message: mode === 'create' ? 'Paydaş kaydı oluşturuldu' : 'Paydaş bilgileri güncellendi' })
+    await loadData(true)
+    if (mode === 'create') invalidateEntityDetailCache('company-stakeholders')
+    else invalidateEntityDetailCache('company-stakeholders', selectedStakeholder?.id)
+    setPageState('list')
   }
 
-  const handleActivate = async () => {
-    if (!selectedStakeholder?.id) return
-    setDeleting(true)
-    try {
-      const response = await fetch(`/api/companies/stakeholders/${selectedStakeholder.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...selectedStakeholder,
-          status: 'Aktif',
-          is_deleted: false,
-          deleted_at: null,
-          deleted_by: null,
-        }),
-      })
-      if (!response.ok) throw await createSaveError(response, 'Aktifleştirme başarısız')
-      const result = await response.json()
-      if (result.data) setSelectedStakeholder(normalizeStakeholderForForm(result.data))
-      setToast({ type: 'success', title: 'Kayıt Başarılı', message: 'Paydaş kaydı aktive edildi' })
-      invalidateEntityDetailCache('company-stakeholders', selectedStakeholder.id)
-      await loadData(true)
-      setPageState('view')
-    } catch (err: any) {
-      setToast(err.toast || { type: 'error', title: 'Kayıt Başarısız', message: err.message })
-      throw err
-    } finally {
-      setDeleting(false)
-    }
+  const handleStakeholderSaveError = async (err: any) => {
+    setFormError(err.message)
+    setFieldErrors(err.fieldErrors || err?.details?.details?.fieldErrors || err?.details?.fieldErrors || {})
+    setToast(err.toast || { type: 'error', title: 'Kayıt Başarısız', message: err.message })
+    throw err
+  }
+
+  const handleStakeholderDeleteSuccess = async () => {
+    setToast({ type: 'success', title: 'Kayıt Başarılı', message: 'Paydaş kaydı pasife çekildi' })
+    await loadData(true)
+    setPageState('list')
+  }
+
+  const buildStakeholderActivatePayload = (record: Record<string, any>) => ({
+    ...record,
+    status: 'Aktif',
+    is_deleted: false,
+    deleted_at: null,
+    deleted_by: null,
+  })
+
+  const handleStakeholderActivateSuccess = async (result: Record<string, any>, record: Record<string, any>) => {
+    if (result.data) setSelectedStakeholder(normalizeStakeholderForForm(result.data))
+    setToast({ type: 'success', title: 'Kayıt Başarılı', message: 'Paydaş kaydı aktive edildi' })
+    invalidateEntityDetailCache('company-stakeholders', record.id)
+    await loadData(true)
+    setPageState('view')
+  }
+
+  const handleStakeholderActionError = async (err: any) => {
+    setToast(err.toast || { type: 'error', title: 'Kayıt Başarısız', message: err.message })
+    throw err
   }
 
   const bannerConfig = pageState === 'list'
@@ -528,10 +505,29 @@ export default function PaydaslarPage() {
             error={formError}
             loadStages={formLoadStages}
             externalFieldErrors={fieldErrors}
-            onSave={handleSave}
+            saveBinding={{
+              endpoint: (_payload, mode) => mode === 'create'
+                ? '/api/companies/stakeholders'
+                : `/api/companies/stakeholders/${selectedStakeholder?.id || ''}`,
+              method: (_payload, mode) => mode === 'create' ? 'POST' : 'PATCH',
+              buildPayload: buildStakeholderSavePayload,
+              onSuccess: handleStakeholderSaveSuccess,
+              onError: handleStakeholderSaveError,
+            }}
             onCancel={() => setPageState('list')}
-            onDelete={handleDelete}
-            onActivate={handleActivate}
+            deleteBinding={{
+              endpoint: record => `/api/companies/stakeholders/${record.id}`,
+              method: 'DELETE',
+              onSuccess: handleStakeholderDeleteSuccess,
+              onError: handleStakeholderActionError,
+            }}
+            activateBinding={{
+              endpoint: record => `/api/companies/stakeholders/${record.id}`,
+              method: 'PATCH',
+              buildPayload: buildStakeholderActivatePayload,
+              onSuccess: handleStakeholderActivateSuccess,
+              onError: handleStakeholderActionError,
+            }}
             onModeChange={(mode) => setPageState(mode)}
             onIdentityGateOpenExistingRole={async (roleRecord) => {
               await handleRowClick(roleRecord as any)
