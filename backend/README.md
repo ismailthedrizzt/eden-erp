@@ -31,14 +31,12 @@ uvicorn app.main:app --reload
 
 ```bash
 DATABASE_URL=postgresql://postgres:<postgres-password>@localhost:5432/app1db
+DATABASE_TARGET_CLASS=release
 APP_ENV=production
 LOG_LEVEL=INFO
 CORS_ORIGINS=http://localhost:3000
-SUPABASE_URL=
-SUPABASE_JWT_SECRET=
-SUPABASE_JWKS_URL=
 AUTH_REQUIRED=true
-ALLOW_TRUSTED_PROXY_HEADERS=false
+ALLOW_TRUSTED_PROXY_HEADERS=true
 TRUSTED_PROXY_SECRET=local-proxy-secret
 INTERNAL_BACKEND_TOKEN=local-internal-secret
 LOG_FORMAT=json
@@ -48,7 +46,6 @@ DB_MAX_OVERFLOW=10
 DB_POOL_TIMEOUT=30
 DB_POOL_RECYCLE=1800
 DB_STATEMENT_TIMEOUT_MS=1500
-USE_SUPABASE_POOLER=false
 API_SLOW_REQUEST_MS=1000
 API_VERY_SLOW_REQUEST_MS=3000
 EXPOSE_RESPONSE_TIME_HEADER=true
@@ -65,9 +62,20 @@ The app imports without a database URL. Endpoints that need the database return 
 Auth hardening:
 
 - The single VS environment should keep `AUTH_REQUIRED=true`.
-- Next BFF should forward the user access token as `Authorization: Bearer ...` when auth is enabled.
+- Canonical auth is `eden_app_session` in Next.js plus trusted proxy headers from the Next BFF to FastAPI.
+- Next BFF should set `x-tenant-id`, `x-user-id`, scope headers and `x-proxy-secret`; browsers must not call FastAPI directly.
 - Internal worker/cron endpoints use `INTERNAL_BACKEND_TOKEN` or `CRON_SECRET`, not a user JWT.
-- Trusted proxy headers are hints only; the VS environment requires validated user and tenant membership.
+- Supabase JWT settings are legacy compatibility only and must not be required for release startup.
+
+Legacy Supabase compatibility:
+
+```bash
+SUPABASE_URL=
+SUPABASE_JWT_SECRET=
+SUPABASE_JWKS_URL=
+USE_SUPABASE_POOLER=false
+EDEN_ENABLE_LEGACY_SUPABASE_SCRIPTS=false
+```
 
 ## Observability
 

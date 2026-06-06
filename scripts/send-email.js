@@ -1,8 +1,13 @@
 // scripts/send-email.js
-// Supabase üzerinden veri çekip e-posta olarak gönderen betik
+// Legacy Supabase demo script. Canonical runtime uses FastAPI + local PostgreSQL.
 
 const nodemailer = require('nodemailer');
 const { createClient } = require('@supabase/supabase-js');
+
+if (process.env.EDEN_ENABLE_LEGACY_SUPABASE_SCRIPTS !== 'true') {
+  console.error('Legacy Supabase scripts are disabled. Set EDEN_ENABLE_LEGACY_SUPABASE_SCRIPTS=true to run this script intentionally.')
+  process.exit(1)
+}
 
 // Supabase bağlantısı
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;

@@ -10,6 +10,11 @@ const largeDataUrlThreshold = 20_000
 
 loadEnvFile(path.join(root, '.env.local'))
 
+if (process.env.EDEN_ENABLE_LEGACY_SUPABASE_SCRIPTS !== 'true') {
+  console.error('Legacy Supabase scripts are disabled. Set EDEN_ENABLE_LEGACY_SUPABASE_SCRIPTS=true to run this migration intentionally.')
+  process.exit(1)
+}
+
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
