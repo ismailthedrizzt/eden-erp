@@ -1,5 +1,5 @@
 import type { NextRequest } from 'next/server'
-import type { SupabaseClient } from '@supabase/supabase-js'
+export type LegacySupabaseClient = any
 import type { TenantContext } from '@/lib/tenancy/server'
 
 export type ProcessStepType = 'form' | 'review' | 'approval' | 'operation' | 'notification' | 'system'
@@ -156,7 +156,7 @@ export type ProcessStartInput = {
 }
 
 export type ProcessEngineContext = {
-  supabase: SupabaseClient
+  supabase: LegacySupabaseClient
   request?: NextRequest
   tenantContext: TenantContext
   userId?: string | null

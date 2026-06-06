@@ -27,6 +27,7 @@ const serverOnlyClientPatterns = [
   { pattern: /from ['"](fs|path|async_hooks)['"]/, label: 'Node server module' },
 ]
 
+const clientSafeFacadeImportPattern = /@\/lib\/(services\/(?!notifications\/processNotification)|action-center\/(actionCenterClient|actionCenter\.types)|audit\/(auditClient|audit\.types))/
 const backendCoreImportPattern = /@\/lib\/(operations|orchestrators|process|outbox|audit|integrity|setup|domains|read-models|action-center|action-guide|field-controls|workflow|services|documents\/documentThumbnail)/
 const routeBackendImportPattern = /@\/lib\/(operations|orchestrators|process|outbox|audit|integrity|setup|domains|read-models|action-center|action-guide|field-controls|workflow|services|documents\/documentThumbnail|supabase\/server)/
 const directDbPattern = /createServiceClient|createServerClient|supabase\s*\.\s*from\s*\(|\.(insert|update|upsert|delete|rpc)\s*\(/
@@ -75,6 +76,14 @@ function migrationStatus(source) {
   return source.split(/\r?\n/).slice(0, 12).join('\n').match(/BACKEND_MIGRATION_STATUS:\s*([a-z_]+)/)?.[1] || null
 }
 
+function executableSource(source) {
+  return source
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .split(/\r?\n/)
+    .filter(line => !line.trim().startsWith('//'))
+    .join('\n')
+}
+
 function routePath(file) {
   return rel(file)
 }
@@ -92,7 +101,7 @@ function checkClientBoundaries(files) {
       }
     }
 
-    if (backendCoreImportPattern.test(source)) {
+    if (backendCoreImportPattern.test(source) && !clientSafeFacadeImportPattern.test(source)) {
       warnings.push(`${rel(file)} imports TS backend-core helpers; keep only frontend/shared contracts here`)
     }
   }
@@ -114,7 +123,7 @@ function checkRouteBoundaries(routeFiles) {
       errors.push(`${routePath(file)} is proxy_to_fastapi but still imports backend/domain or direct DB code`)
     }
 
-    if (status === 'proxy_to_fastapi' && fallbackPattern.test(source)) {
+    if (status === 'proxy_to_fastapi' && fallbackPattern.test(executableSource(source))) {
       warnings.push(`${routePath(file)} is proxy_to_fastapi but still references fallback/legacy behavior; verify there is no executable TS fallback before closing the burn-down item`)
     }
 

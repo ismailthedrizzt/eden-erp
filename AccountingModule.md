@@ -1,3 +1,5 @@
+Deprecated: This document belongs to the legacy migration/reference period. Canonical runtime is remote server + local PostgreSQL/local DB, with FastAPI as backend and Next.js as UI/BFF/proxy.
+
 # Muhasebe Module
 
 Muhasebe is the financial operation center of Eden ERP. The initial module contains two submodules:

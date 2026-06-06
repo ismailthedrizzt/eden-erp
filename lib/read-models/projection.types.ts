@@ -1,5 +1,5 @@
 import type { NextRequest } from 'next/server'
-import type { SupabaseClient } from '@supabase/supabase-js'
+export type LegacySupabaseClient = any
 import type { ListMeta, ListQuery, ListSortDirection } from '@/lib/api/listEndpoint'
 import type { TenantContext } from '@/lib/tenancy/server'
 
@@ -33,7 +33,7 @@ export interface ProjectionDefinition {
 }
 
 export interface ProjectionListArgs {
-  supabase: SupabaseClient
+  supabase: LegacySupabaseClient
   request: NextRequest
   projectionKey: string
   permissionKey?: string | string[]
@@ -57,7 +57,7 @@ export interface ProjectionListResult {
 }
 
 export interface ProjectionReadArgs {
-  supabase: SupabaseClient
+  supabase: LegacySupabaseClient
   request: NextRequest
   projectionKey: string
   permissionKey?: string | string[]

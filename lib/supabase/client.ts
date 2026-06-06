@@ -1,3 +1,4 @@
+// Deprecated: Legacy Supabase browser adapter. Canonical auth/data path is Eden app session + Next BFF + FastAPI + local DB.
 import { createBrowserClient } from '@supabase/ssr'
 
 // Deprecated legacy compatibility module.

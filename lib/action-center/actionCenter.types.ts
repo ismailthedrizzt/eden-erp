@@ -1,4 +1,4 @@
-import type { SupabaseClient } from '@supabase/supabase-js'
+export type LegacySupabaseClient = any
 
 export type ActionCenterSourceType =
   | 'process_task'
@@ -90,7 +90,7 @@ export type ActionCenterQuery = {
 }
 
 export type ActionCenterContext = {
-  supabase: SupabaseClient
+  supabase: LegacySupabaseClient
   tenantId: string
   userId: string | null
   permissions: string[]

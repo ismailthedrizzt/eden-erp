@@ -1,3 +1,5 @@
+Deprecated: This document belongs to the legacy migration/reference period. Canonical runtime is remote server + local PostgreSQL/local DB, with FastAPI as backend and Next.js as UI/BFF/proxy.
+
 # Backend API Migration
 
 Eden ERP veri erisim akisi su standarttadir:

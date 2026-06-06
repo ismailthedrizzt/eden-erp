@@ -1,4 +1,4 @@
-import type { SupabaseClient } from '@supabase/supabase-js'
+export type LegacySupabaseClient = any
 
 export type AuditActionType =
   | 'view'
@@ -124,4 +124,4 @@ export interface AuditWriteResult {
   error?: string
 }
 
-export type AuditSupabase = SupabaseClient<any, any, any>
+export type AuditSupabase = LegacySupabaseClient
