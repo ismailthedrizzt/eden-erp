@@ -1,5 +1,7 @@
 # Production Readiness Report
 
+Deprecated historical report, updated 2026-06-06: Some findings refer to the old Supabase/Vercel deployment model. Current production operations use remote server + local PostgreSQL/local DB runbooks under `docs/operations/`.
+
 Date: 2026-05-31
 Scope: ERP Hardening Final - Multi-Company / Multi-Tenant Scale / Production Operations
 

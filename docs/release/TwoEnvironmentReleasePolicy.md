@@ -2,18 +2,17 @@
 
 ## Purpose
 
-This policy protects live data while keeping development simple. Eden ERP uses one product branch and two isolated Supabase projects.
+This policy protects live data while keeping development simple. Eden ERP uses one product branch and isolated local PostgreSQL DB targets.
 
 ## Decision
 
 - `main` is the only long-lived product branch.
-- Local development runs from `main`.
-- The Virtual Server pulls and runs `origin/main`.
-- Local `.env.local` points to Development Supabase.
-- The VS live env file points to Release Supabase.
-- A same-project schema split is not recommended because auth and storage are project-level concerns.
-- Release Supabase remains protected.
-- Development Supabase remains the safe work/test area.
+- The remote server pulls and runs `origin/main`.
+- Development/field-test env points at `eden_development_db`.
+- Release env points at `eden_release_db` or another approved release DB target.
+- A same-DB schema split is not recommended for release/development separation.
+- Release DB remains protected.
+- Development DB remains the safe work/test area.
 
 ## Visibility Rule
 
@@ -21,10 +20,10 @@ Development env can expose development/demo/internal routes for testing. Release
 
 ## P0/P1/P2 Priority
 
-- P0: local seed/reset/migration points at Release Supabase; live env enables login bypass; release route guard bypass.
+- P0: seed/reset/migration points at Release DB without approval; live env enables login bypass; release route guard bypass.
 - P1: missing route registry entry; development page appears in live navigation/search.
 - P2: missing deployment notes, advanced CI automation, extra smoke scenarios.
 
 ## Suggested Next Prompt
 
-VS env dosyasini Live Supabase degerleriyle doldur ve `scripts/deploy-main-vps.sh` ile ilk canli deploy provasini calistir.
+Remote server env dosyasini local PostgreSQL release degerleriyle dogrula ve `db:target:check` + backup + smoke akisini otomatiklestir.

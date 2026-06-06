@@ -1,5 +1,7 @@
 # Runtime Smoke Checklist
 
+Updated 2026-06-06: Current runtime smoke is remote server + local PostgreSQL/local DB. Historical Vercel references are deprecated; use `db:target:check`, `env:safety`, PM2/process health and document storage smoke.
+
 ## Purpose
 
 Development and Release runtime behavior is checked after deploy and before promotion.
@@ -63,7 +65,7 @@ Runtime smoke must verify both navigation filtering and direct URL blocking.
 ## Recommended Fixes
 
 - Run manual route attempts for sensitive pages in Release.
-- Add automated browser smoke after Vercel URLs are available.
+- Add automated browser smoke after remote server app/API URLs and process health checks are finalized.
 
 ## P0/P1/P2 Priority
 

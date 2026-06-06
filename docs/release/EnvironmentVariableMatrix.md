@@ -1,5 +1,7 @@
 # Environment Variable Matrix
 
+Updated 2026-06-06: Supabase variables in this matrix are legacy compatibility only. Canonical release/development separation is remote server env + local PostgreSQL/local DB target.
+
 ## Purpose
 
 Remote server/local PostgreSQL target values must be explicit and never mixed. Both runtimes use the same `main` branch.
@@ -101,4 +103,4 @@ The repo now includes `.env.development.example`, `.env.release.example`, `.env.
 
 ## Suggested Next Prompt
 
-Actual Development Supabase project ref ve Release Supabase project ref degerlerini matrix'e isleyelim.
+Actual development and release local PostgreSQL DB target names/classes should be recorded in the matrix.

@@ -1,5 +1,7 @@
 # Disaster Recovery Plan
 
+Deprecated note, updated 2026-06-06: Older provider wording has been replaced with the current remote server + local PostgreSQL/local DB + local document storage model. Use `BackupRestoreRunbook.md`, `MigrationRollbackRunbook.md` and `IncidentResponseRunbook.md` for active operations.
+
 ## Amac
 
 Major outage, data loss or provider failure durumunda Eden ERP'nin geri kazanilmasi.
@@ -11,7 +13,8 @@ Incident commander, operations owner, engineering lead, support lead.
 ## Incident Classes
 
 - DB outage or data loss.
-- Supabase auth/storage outage.
+- Local PostgreSQL outage or corruption.
+- Local document storage outage/corruption.
 - Region/provider outage.
 - Failed migration causing data unavailability.
 - Worker/outbox backlog causing operational outage.
@@ -30,7 +33,7 @@ Incident commander, operations owner, engineering lead, support lead.
 
 - DB outage: failover/provider recovery, then health/smoke.
 - Data corruption: stop writes, backup current state, restore/reconcile.
-- Storage outage: disable upload/download features, preserve metadata, retry after provider recovery.
+- Storage outage: disable upload/download features, preserve metadata, restore local document storage backup if needed.
 - Auth outage: disable new sessions if needed, communicate impact.
 - Migration failure: app rollback first; DB rollback only with reviewed plan.
 

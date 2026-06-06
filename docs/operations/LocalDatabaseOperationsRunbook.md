@@ -1,19 +1,22 @@
 # Local Database Operations Runbook
 
-## Changed Files
+Date: 2026-06-06
 
-- `docs/operations/LocalDatabaseOperationsRunbook.md`
-- `scripts/check-database-target.js`
-- `package.json`
+## Purpose
 
-## Why Changed
+Protect local/server PostgreSQL targets during migration, seed, reset, backup and field-test operations.
 
-Database operations must protect local PostgreSQL development and release targets.
+## Current State
 
-## Naming
+`DATABASE_URL` points at a host-managed PostgreSQL target. `scripts/check-database-target.js` is the canonical guard. Compose does not manage DB lifecycle.
 
-- Development: include `dev`, `development`, `local`, or `test`.
-- Release: include `release`, `prod`, or `production`.
+## Target State
+
+Use clear DB naming and explicit target class:
+
+- `eden_development_db`
+- `eden_release_db`
+- `DATABASE_TARGET_CLASS=development` or `release` when the DB name is intentionally neutral
 
 ## Commands
 
@@ -22,41 +25,53 @@ npm run db:target:check
 npm run db:migrate:check
 npm run db:seed:check
 npm run db:reset:check
+npm run db:migrate
 ```
 
-Release migrations require:
+Development migration:
 
 ```bash
-ALLOW_RELEASE_DB_MIGRATION=true
-RELEASE_MIGRATION_APPROVED_BY=<name>
+npm run db:migrate:check
+cd backend
+.venv/bin/alembic upgrade head
 ```
 
-## Backup
+Release migration:
 
 ```bash
-pg_dump "$DATABASE_URL" > backups/eden_$(date +%Y%m%d_%H%M%S).sql
+npm run env:safety
+npm run db:target:check
+pg_dump "$DATABASE_URL" > /opt/eden-erp/backups/eden_$(date +%Y%m%d_%H%M%S).sql
+ALLOW_RELEASE_DB_MIGRATION=true RELEASE_MIGRATION_APPROVED_BY=<name> npm run db:migrate
 ```
 
-Document storage must be backed up with the database backup. The default local storage root is `var/document-storage` unless `DOCUMENT_STORAGE_ROOT` overrides it.
+Seed/reset:
 
-## Restore
+- Development seed can run after `db:seed:check`.
+- Release seed is forbidden.
+- Development reset can run only after `db:reset:check`.
+- Release reset is forbidden.
 
-```bash
-psql "$DATABASE_URL" < backups/eden_YYYYMMDD_HHMMSS.sql
-```
+## DATABASE_URL Safety
 
-## P0/P1/P2
+- Server-only.
+- Must not use `NEXT_PUBLIC_`.
+- Must not be logged.
+- `.env` files must not be committed.
+- DB commands fail if `DATABASE_URL` is missing.
+
+## P0/P1/P2 Risks
 
 - P0: release seed/reset.
-- P0: migration without release approval.
-- P0: document storage omitted from release backup.
-- P1: ambiguous DB target.
-- P2: manual DB naming drift.
+- P0: release migration without backup and approval env.
+- P0: `DATABASE_URL` leaks into client bundle/logs.
+- P1: ambiguous DB name without `DATABASE_TARGET_CLASS`.
+- P2: backup scheduling not automated.
 
 ## Field Test Impact
 
-Run DB guard and backup before any field-test migration.
+Field test can run on development/local DB after a successful backup and guard check.
 
-## Remaining Risks
+## Production/Release Impact
 
-Automated backup scheduling remains separate.
+Release DB is a protected asset. Backup, approval env and rollback plan are mandatory before schema changes.

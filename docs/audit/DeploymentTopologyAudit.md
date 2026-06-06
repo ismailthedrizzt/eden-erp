@@ -1,44 +1,74 @@
 # Deployment Topology Audit
 
 Date: 2026-06-06
-Branch: `main`
-Commit: `09e90b5588a43af147d75b2926d5368a6f4635b9`
 
-## Inspected
+## Purpose
 
-- `docker-compose.yml`
-- `Dockerfile.next`
-- `backend/Dockerfile`
-- `package.json`
-- `scripts/deploy-main-vps.sh`
-- `scripts/eden-erp-next.service.example`
-- PM2 status
-- repo search for nginx/caddy/pm2/supervisor/systemd config
+Audit current remote server topology for Next, FastAPI, workers, PostgreSQL, storage, logs and health.
 
-## Answers
+## Current State
 
-| Question | Answer |
+| Area | Finding |
 | --- | --- |
-| Next nasil calisiyor? | Live process `eden-app` under PM2; container/systemd examples exist but current process is PM2. |
-| FastAPI nasil calisiyor? | Live process `eden-fastapi` under PM2. Backend Dockerfile can run uvicorn. |
-| Worker nasil calisiyor? | Worker modules and compose service exist; live process not confirmed. |
-| PostgreSQL nerede? | Host-managed local PostgreSQL; DB target check reports `localhost:5432/app1db`. |
-| DB compose icinde mi? | No. `docker-compose.yml` explicitly says PostgreSQL is not managed by compose. |
-| Reverse proxy var mi? | Public site works, but reverse proxy config was not found in repo. |
-| SSL nerede sonlaniyor? | Not confirmed from repo. Likely external reverse proxy/control panel. |
-| Logs nerede tutuluyor? | PM2 logs likely under user PM2 home; repo runbook snapshot absent. |
-| Restart policy var mi? | PM2 manages app/api. Systemd example has restart policy for Next only. |
-| Health check var mi? | FastAPI deep health exists; deployment-level health checks not fully documented. |
+| Next | Current process `eden-app` under PM2. |
+| FastAPI | Current process `eden-fastapi` under PM2. |
+| Workers | Worker modules exist; live worker process not confirmed. |
+| PostgreSQL | Host-managed local/server DB; not in compose. |
+| Docker Compose | `web`, `api`, `worker`; no DB service; `DATABASE_URL` required externally. |
+| Reverse proxy | Public route works; sanitized proxy config not in repo. |
+| SSL | Likely hosting panel/reverse proxy; not confirmed in repo. |
+| Logs | PM2 for app/backend; PostgreSQL/proxy logs outside repo. |
+| Health | FastAPI health/deep health exists; deploy-level health script not centralized. |
 
-## Risks
+## Target State
 
-| Priority | Risk | Fix |
+Remote server topology follows:
+
+```text
+Reverse proxy -> Next :3000 -> FastAPI :8000 -> local PostgreSQL
+Next media route -> FastAPI media -> DOCUMENT_STORAGE_ROOT
+Workers -> local PostgreSQL queues/outbox
+```
+
+## Commands Tested/Recommended
+
+```bash
+pm2 status
+npm run env:safety
+npm run db:target:check
+docker compose config
+curl -sS http://127.0.0.1:3000/login
+```
+
+## Command Baseline
+
+| Command | Result | Notes |
 | --- | --- | --- |
-| P1 | Reverse proxy/SSL config not versioned. | Add sanitized proxy topology/runbook. |
-| P1 | Worker deployment not confirmed. | Add PM2/systemd worker config. |
-| P2 | Live PM2 config not checked into repo. | Add sanitized process ecosystem example. |
-| P2 | Health checks are not integrated into deploy script. | Add post-deploy smoke checks. |
+| `npm run typecheck` | Pass | No changed TypeScript files to check. |
+| `npm run build` | Pass | Existing ESLint warnings only. |
+| `npm run release:check` | Pass | Release registry/page route guard passed. |
+| `npm run env:safety` | Pass | Local DB/release safety guard passed. |
+| `npm run db:target:check` | Pass | `app1db` classified as release target. |
+| `npm run migration:status` | Pass with warnings | Existing missing migration header warnings remain. |
+| `npm run boundaries:check` | Pass with warnings | Existing boundary warnings remain. |
+| `npm run openapi:drift` | Pass | Generated OpenAPI files had no diff. |
+| `docker compose config` | Pass | Requires explicit `DATABASE_URL`; compose does not manage DB. |
+| `cd backend && python -m ruff check .` | Fail baseline | Existing 93 formatting/import/line-length findings. |
+| `cd backend && python -m mypy app` | Fail baseline | Existing `app/api/v1/accounting.py:596` type error. |
+| `cd backend && python -m pytest` | Fail baseline | 225 passed, 2 observability tests return 401 under release auth. |
 
-## Decision
+## P0/P1/P2 Risks
 
-`READY_WITH_LIMITATIONS`
+- P0: FastAPI public exposure accepts trusted headers.
+- P0: release auth/DB env missing.
+- P1: worker process not supervised/confirmed.
+- P1: reverse proxy/SSL config not versioned.
+- P2: deploy smoke not centralized.
+
+## Field Test Impact
+
+`READY_WITH_LIMITATIONS`: app/backend and DB guard are operational, but worker/proxy/backup visibility must be confirmed before broader field test.
+
+## Production/Release Impact
+
+Production readiness requires supervised workers, backup/restore drill, reverse proxy policy and process manager standardization.

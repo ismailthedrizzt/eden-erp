@@ -1272,9 +1272,9 @@ Before using ANY component:
 
 ## Codex Working Copy and Environment Preservation Rule
 
-Codex aktif gelistirmeyi tek kalici branch olan `main` uzerinde yapar. Local ve canli ortam ayrimi branch ile degil, ortam degiskenleri ve ayri Supabase project'leri ile saglanir.
+Codex aktif gelistirmeyi tek kalici branch olan `main` uzerinde yapar. Development/release ayrimi branch ile degil, uzak sunucu/env/DB target degerleriyle saglanir.
 
-Migration, seed, demo data, reset ve schema degisiklikleri yalnizca Development Supabase project uzerinde yapilir. Release Supabase project protected environment'tir; acik release migration onayi olmadan degistirilmez:
+Migration, seed, demo data, reset ve schema degisiklikleri yalnizca development/local DB hedefinde yapilir. Release DB protected asset'tir; acik release migration onayi olmadan degistirilmez:
 
 ```text
 ALLOW_RELEASE_DB_MIGRATION=true
@@ -1286,9 +1286,11 @@ Release ortaminda seed, demo seed ve reset calismaz. Yeni sayfa once `releaseSta
 Development and Release use the same `main` code with different environment values:
 
 ```text
-local machine  -> main -> .env.local                  -> Development Supabase
-Virtual Server -> main -> /etc/eden-erp/eden-erp.env  -> Release Supabase + VS Ollama
+Remote dev/test env -> main -> env file -> eden_development_db
+Remote release env  -> main -> env file -> eden_release_db or approved release DATABASE_URL
 ```
 # Remote Server + Local DB Canonical Context
 
 Current Eden ERP work happens on the remote server. The canonical runtime is Next.js UI/BFF, FastAPI backend, app-session auth, trusted proxy context and local PostgreSQL/local DB. Do not add new Supabase/Vercel-dependent code paths. Existing Supabase modules are legacy migration inventory unless a task explicitly asks to touch them.
+
+Operational work must keep deployment, worker, backup/restore, migration/rollback and incident runbooks aligned with the remote server + local DB model. Field test cannot proceed without DB backup, document storage backup, DB target guard, app/FastAPI health checks and at least an explicit outbox worker decision.

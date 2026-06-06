@@ -1,5 +1,7 @@
 # Two Environment Issues Register
 
+Deprecated historical register, updated 2026-06-06: This document contains old Vercel/Supabase-era issues. Current risks are tracked in `docs/audit/DeploymentP0P1P2RiskRegister.md`.
+
 ## Metadata
 
 | Field | Value |

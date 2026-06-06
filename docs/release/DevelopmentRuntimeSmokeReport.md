@@ -1,5 +1,7 @@
 # Development Runtime Smoke Report
 
+Deprecated historical report, updated 2026-06-06: This report contains old Vercel/Supabase-era simulation evidence. Current development/field-test readiness is covered by `docs/operations/FieldTestServerReadinessChecklist.md`.
+
 ## Metadata
 
 | Field | Value |

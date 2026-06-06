@@ -1,5 +1,7 @@
 # Next 30-Day Roadmap
 
+Deprecated historical roadmap, updated 2026-06-06: Items that mention Supabase/Vercel should be interpreted as local PostgreSQL/local DB and remote server operations unless explicitly marked legacy.
+
 Date: 2026-05-29
 
 Goal: move Eden ERP from controlled MVP/pilot readiness to first customer pilot confidence by reducing P1 risk, improving E2E proof and deepening the modules that pilot users will touch most.
@@ -77,4 +79,3 @@ Goal: move Eden ERP from controlled MVP/pilot readiness to first customer pilot 
 - Demo tenant validates against Development DB.
 - Workers supervised and visible from Admin Console.
 - Security scope smoke completed for admin, manager, accountant, HR, ops, auditor and standard user.
-

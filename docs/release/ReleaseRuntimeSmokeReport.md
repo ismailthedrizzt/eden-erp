@@ -1,5 +1,7 @@
 # Release Runtime Smoke Report
 
+Deprecated historical report, updated 2026-06-06: This document records an old local Vercel/Supabase-era simulation. The active deployment model is remote server + local PostgreSQL/local DB. Use `docs/operations/RemoteServerDeploymentRunbook.md` and `docs/operations/FieldTestServerReadinessChecklist.md` for current operations.
+
 ## Metadata
 
 | Field | Value |

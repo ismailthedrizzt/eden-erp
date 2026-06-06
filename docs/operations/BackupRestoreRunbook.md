@@ -1,62 +1,80 @@
 # Backup Restore Runbook
 
-## Scope
+Date: 2026-06-06
 
-This runbook covers the remote server + local PostgreSQL/local DB deployment. Supabase backup terminology is deprecated.
+## Purpose
 
-## Changed Files
+Define minimum DB, document storage and env backup/restore procedures for remote server + local PostgreSQL/local DB.
 
-- `docs/operations/BackupRestoreRunbook.md`
-- `docs/operations/LocalDatabaseOperationsRunbook.md`
-- `docs/operations/RemoteServerDeploymentRunbook.md`
+## Current State
 
-## Why Changed
+PostgreSQL is local/server managed. Document storage is local filesystem under `DOCUMENT_STORAGE_ROOT` or `var/document-storage`. Automated backup scheduling is not confirmed.
 
-Field test backup/restore must protect the server-local PostgreSQL database, document storage root and service env files rather than Supabase/Vercel resources.
+## Target State
 
-## Backup Checklist
+Before field test or release migration, capture:
 
-- Confirm `DATABASE_URL` points at the intended DB.
-- Run `npm run db:target:check`.
-- Capture service env files without committing them.
-- Dump PostgreSQL before migration or field test.
-- Archive local document storage root.
+- PostgreSQL dump.
+- Document storage archive.
+- Secure env file backup.
+- Restore procedure and target DB confirmation.
 
-## PostgreSQL Backup
+## Commands
 
-```bash
-mkdir -p backups
-pg_dump "$DATABASE_URL" > backups/eden_$(date +%Y%m%d_%H%M%S).sql
-```
-
-## PostgreSQL Restore
+Create backup directory:
 
 ```bash
-psql "$DATABASE_URL" < backups/eden_YYYYMMDD_HHMMSS.sql
+mkdir -p /opt/eden-erp/backups
 ```
 
-For release DB restore, stop writers first, verify the backup timestamp, and restart `eden-fastapi`, `eden-app` and worker processes after restore.
-
-## Local Document Storage
-
-Document files live under `DOCUMENT_STORAGE_ROOT` or `var/document-storage` by default.
+PostgreSQL backup:
 
 ```bash
-tar -czf backups/eden_documents_$(date +%Y%m%d_%H%M%S).tgz var/document-storage
+pg_dump "$DATABASE_URL" > /opt/eden-erp/backups/eden_$(date +%Y%m%d_%H%M%S).sql
 ```
+
+PostgreSQL restore:
+
+```bash
+psql "$DATABASE_URL" < /opt/eden-erp/backups/<backup-file>.sql
+```
+
+Document storage backup:
+
+```bash
+tar -czf /opt/eden-erp/backups/documents_$(date +%Y%m%d_%H%M%S).tar.gz <DOCUMENT_STORAGE_ROOT>
+```
+
+Document storage restore:
+
+```bash
+tar -xzf /opt/eden-erp/backups/documents_<timestamp>.tar.gz -C /
+```
+
+## Release Migration Checklist
+
+- DB backup alınmış.
+- Document storage backup alınmış.
+- Env file güvenli yedeklenmiş.
+- Migration dosyaları review edilmiş.
+- `npm run db:target:check` geçmiş.
+- `npm run env:safety` geçmiş.
+- `ALLOW_RELEASE_DB_MIGRATION=true` set edilmiş.
+- `RELEASE_MIGRATION_APPROVED_BY=<name>` set edilmiş.
+- Rollback/restore planı hazır.
 
 ## P0/P1/P2 Risks
 
-- P0: release migration without a fresh DB backup.
-- P0: restore into the wrong DB target.
-- P1: document storage archive missing.
-- P2: old Supabase backup references confusing operators.
+- P0: field test before any backup.
+- P0: document storage is outside backup scope.
+- P0: restore method is unknown.
+- P1: backup not tested with restore drill.
+- P2: backup schedule not automated.
 
 ## Field Test Impact
 
-Field test may proceed only after a successful DB dump and document storage archive.
+Minimum field test readiness requires a manual DB dump and document storage archive.
 
-## Remaining Risks
+## Production/Release Impact
 
-- Automated backup scheduling is still a separate operations task.
-- Restore drills should be run before a live release cutover.
+Release migrations cannot proceed without fresh backup and documented restore target.
