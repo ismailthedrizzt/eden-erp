@@ -7,12 +7,12 @@ Release is no longer promoted from `develop` to `main`. The product branch is al
 ## Workflow
 
 1. Work locally on `main`.
-2. Keep `.env.local` connected to Development Supabase.
+2. Keep `.env.local` connected to Development/local DB.
 3. Run local checks.
 4. Commit and push `origin/main`.
 5. Virtual Server runs `scripts/deploy-main-vps.sh`.
 6. Deploy script loads `/etc/eden-erp/eden-erp.env`.
-7. Build runs with Release Supabase public values.
+7. Build runs with release local DB and app-session env values.
 8. Service restarts after checks/build pass.
 
 ## Required Local Checks
@@ -34,12 +34,12 @@ npm run release:check
 npm run build
 ```
 
-Run `npm run supabase:target:check` before any live migration/import command.
+Run `npm run db:target:check` before any live migration/import command.
 
 ## Data Safety
 
-- Local seed/reset/migration: Development Supabase only.
-- VS live app: Release Supabase only.
+- Local seed/reset/migration: Development/local DB only.
+- VS live app: Release/local DB only.
 - Live seed/reset: forbidden.
 - Live migration: requires `ALLOW_RELEASE_DB_MIGRATION=true` and `RELEASE_MIGRATION_APPROVED_BY=<name>`.
 

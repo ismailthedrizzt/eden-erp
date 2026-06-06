@@ -9,7 +9,7 @@ Development and Release runtime behavior is checked after deploy and before prom
 | check | expected |
 |---|---|
 | Open Development URL | app loads |
-| Login | Development Supabase Auth works |
+| Login | App-session login works |
 | Sidebar | release + development surfaces visible |
 | Environment badge | visible |
 | Release status badge | visible on non-release surfaces |
@@ -18,14 +18,14 @@ Development and Release runtime behavior is checked after deploy and before prom
 | Direct hidden/broken route | blocked |
 | Demo route | opens if enabled |
 | Demo seed dry run | does not target Release |
-| Supabase URL | Development project |
+| DB target | Development/local DB target |
 
 ## Release Smoke
 
 | check | expected |
 |---|---|
 | Open Release URL | app loads |
-| Login | Release Supabase Auth works |
+| Login | App-session login works |
 | Sidebar | only release pages visible |
 | Environment badge | hidden |
 | Release status badge | hidden |
@@ -45,7 +45,7 @@ npm run typecheck
 npm run build
 npm run release:check
 npm run env:safety
-npm run supabase:target:check
+npm run db:target:check
 npm run migration:status
 npm run boundaries:check
 npm run openapi:drift

@@ -57,16 +57,26 @@ This is a newly designed platform, not a legacy system that must preserve obsole
 - **Validation**: Pydantic v2
 - **Data Access**: SQLAlchemy 2 or SQLModel
 - **Migrations**: Alembic
-- **Database**: PostgreSQL / Supabase
+- **Database**: PostgreSQL / local server DB
 - **Workers**: Python background workers for outbox, process, projection, audit and notification jobs
 
 ### Database / Auth / Storage
-- **Database platform**: Supabase/PostgreSQL
-- **Auth**: Supabase Auth may be used
-- **Storage**: Supabase Storage may be used
-- **Realtime**: Supabase Realtime may be used for notifications
+- **Database platform**: local/server PostgreSQL
+- **Auth**: App session + FastAPI trusted proxy is canonical; Supabase Auth is legacy compatibility only
+- **Storage**: local filesystem document storage is canonical; Supabase Storage is legacy compatibility only
+- **Realtime**: worker/outbox-driven notifications are canonical; Supabase Realtime is legacy compatibility only
 
-Supabase is not the core backend. It is the database/auth/storage platform. Core ERP business behavior belongs in FastAPI/Python.
+Supabase and Vercel are not canonical runtime platforms for Eden ERP. Core ERP business behavior, DB access and lifecycle mutation belong in FastAPI/Python backed by local PostgreSQL.
+
+## Platform Cleanup Phase 1 Rules
+
+- Supabase/Vercel are not canonical deployment targets.
+- FastAPI + local DB is the canonical backend/data path.
+- Middleware must not require Supabase env values to start.
+- New DB, migration, seed and reset commands must run through `npm run db:target:check` or the matching `db:*:check` guard.
+- Release DB seed/reset is forbidden.
+- Release migration requires `ALLOW_RELEASE_DB_MIGRATION=true` and `RELEASE_MIGRATION_APPROVED_BY=<name>`.
+- Business mutation submit buttons must route to FastAPI-backed canonical endpoints through the form/wizard template path.
 
 ### Key Dependencies (Locked Versions)
 ```json

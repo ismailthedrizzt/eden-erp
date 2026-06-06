@@ -2,15 +2,15 @@
 
 ## Purpose
 
-Virtual Server + Release Supabase ortamının temiz, onayli ve korumali oldugunu dogrular.
+Virtual Server + release local PostgreSQL ortamının temiz, onayli ve korumali oldugunu dogrular.
 
 ## Checklist
 
 | check | expected |
 |---|---|
 | Virtual Server app opens | App loads with release env |
-| Release Supabase connected | URL/ref belongs to Release project |
-| Login works | Auth uses Release users |
+| Release DB connected | `DATABASE_URL` belongs to Release/local DB |
+| Login works | App-session login uses release user context |
 | Environment badge hidden | no `development` badge |
 | Release status badge hidden | normal users see no route-status badge |
 | Debug/version hidden | no normal-user internal version/debug badge |
@@ -30,10 +30,12 @@ Virtual Server + Release Supabase ortamının temiz, onayli ve korumali oldugunu
 NEXT_PUBLIC_APP_ENV=release
 NEXT_PUBLIC_RELEASE_CHANNEL=release
 NEXT_PUBLIC_DEMO_MODE=false
-NEXT_PUBLIC_SUPABASE_URL=<release-supabase-url>
-NEXT_PUBLIC_SUPABASE_ANON_KEY=<release-anon-key>
-SUPABASE_SERVICE_ROLE_KEY=<release-service-role-key>
-SUPABASE_PROJECT_REF=<release-project-ref>
+DATABASE_URL=<release-local-postgresql-url>
+DATABASE_TARGET_CLASS=release
+APP_SESSION_SECRET=<release-session-secret>
+FASTAPI_BASE_URL=http://127.0.0.1:8000
+INTERNAL_BACKEND_TOKEN=<release-internal-token>
+TRUSTED_PROXY_SECRET=<release-trusted-proxy-secret>
 OLLAMA_BASE_URL=http://127.0.0.1:11434
 ALLOW_RELEASE_DB_SEED=false
 ALLOW_RELEASE_DB_RESET=false
@@ -44,7 +46,7 @@ ALLOW_RELEASE_DB_RESET=false
 ```bash
 npm run release:check
 npm run env:safety
-npm run supabase:target:check
+npm run db:target:check
 ```
 
 ## Suggested Next Prompt

@@ -29,7 +29,7 @@ No secrets were printed or persisted.
 | Check | Result | Notes | Priority |
 | --- | --- | --- | --- |
 | Two-environment files present | Pass | `lib/release/*`, `lib/env/releaseSafety.ts`, release components, guard scripts, and policy docs exist. | - |
-| `package.json` scripts | Pass | `release:check`, `env:safety`, and `supabase:target:check` exist. | - |
+| `package.json` scripts | Historical pass, superseded | `release:check` and `env:safety` existed; `supabase:target:check` has since been replaced by `db:target:check`. | - |
 | Release/development model | Pass after fix | Development permits release/development/internal/demo/direct surfaces; Release discovery surfaces now show only `release`. | - |
 | `staging` term | Pass with note | Only intentional policy text says staging is not used; no runtime code hit found. | P2 |
 | Navigation/sidebar visibility | Pass | Sidebar uses `getRouteReleaseDecision(..., 'navigation')`. | - |
@@ -46,7 +46,7 @@ No secrets were printed or persisted.
 | `npm run typecheck:app` | Fail / timeout | `tsc --noEmit -p tsconfig.app.json` timed out after 4 minutes and kept running until stopped. | Same full app TypeScript graph issue as build. | No | P0 |
 | `npm run release:check` | Pass | 139 registry routes, 139 page routes. | Script strengthened in this phase. | Yes | - |
 | `npm run env:safety` | Pass | Env resolved as development. | No unsafe release env values. | - | - |
-| `npm run supabase:target:check` | Pass | Env resolved as development; project ref unknown in default shell. | No configured real Supabase refs in shell. | - | - |
+| `npm run db:target:check` | Supersedes old baseline | Local DB target guard replaces the old Supabase target guard in Platform Cleanup Phase 1. | Old row was Supabase-era evidence. | Yes | - |
 | `npm run migration:status` | Pass with warnings | 205 missing migration headers, 75 temporary fallback routes, P0 missing headers 0. | Existing migration inventory debt. | No | P1/P2 |
 | `npm run boundaries:check` | Pass with warnings | 69 warnings, 0 critical errors. | Existing frontend/backend boundary debt and temp fallbacks. | No | P1 |
 | `npm run openapi:drift` | Pass | OpenAPI export/generate completed; `git diff --exit-code` passed for generated outputs. | No drift found. | - | - |

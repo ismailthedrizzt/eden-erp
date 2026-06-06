@@ -8,31 +8,31 @@ Release preservation is now data/env based, not branch based. The same `main` co
 
 - Branch: `main`
 - Env source: `.env.local`
-- Supabase: Development project
+- DB: Development/local PostgreSQL target
 - Codex may actively develop here.
-- Demo, seed, reset and migration experiments are allowed only against Development Supabase.
+- Demo, seed, reset and migration experiments are allowed only against Development/local DB.
 
 ## Live Runtime
 
 - Branch: `main`
 - Machine: Virtual Server
 - Env source: `/etc/eden-erp/eden-erp.env`
-- Supabase: Release project
+- DB: Release/local PostgreSQL target
 - Ollama: VS-local service
 - Live secrets stay on the VS or secret manager.
 
 ## Hard Rules
 
 - No long-lived `develop` branch.
-- Release Supabase is never used from local `.env.local`.
-- Schema/migration/seed experiments are not run on Release Supabase.
+- Release DB is never used from local `.env.local`.
+- Schema/migration/seed experiments are not run on Release DB.
 - Release migration requires explicit approval env values.
 - Release env keeps demo mode, login bypass and legacy API access disabled.
 
 ## P0/P1/P2 Priority
 
-- P0: local command mutates Release Supabase; VS live env targets Development Supabase; unsafe release flags are enabled.
-- P1: `release:check`, `env:safety`, `supabase:target:check` are skipped before risky operations.
+- P0: local command mutates Release DB; VS live env targets Development DB; unsafe release flags are enabled.
+- P1: `release:check`, `env:safety`, `db:target:check` are skipped before risky operations.
 - P2: manual smoke checklist is incomplete.
 
 ## Suggested Next Prompt
