@@ -101,6 +101,8 @@ export function DocumentLoader({
               document={byType.get(activeSlot.documentType)}
               readOnly={readOnly}
               allowCamera
+              moduleKey={moduleKey}
+              operationKey={operationKey}
               onUploaded={handleUploaded}
             />
           ) : null}
@@ -126,20 +128,20 @@ function upsertDocument(documents: DocumentRecord[], document: DocumentRecord) {
 function defaultSlots(entityType: string): DocumentSlotDefinition[] {
   if (entityType === 'employee') {
     return [
-      { documentType: 'identity_document', title: 'Kimlik', category: 'hr', required: true },
-      { documentType: 'sgk_entry_declaration', title: 'SGK Giris Bildirgesi', category: 'hr' },
-      { documentType: 'contract', title: 'Sozlesme', category: 'hr' },
+      { documentType: 'employee.identity_document', title: 'Kimlik', category: 'hr', required: true },
+      { documentType: 'employee.sgk_entry', title: 'SGK Giris Bildirgesi', category: 'hr' },
+      { documentType: 'contract.signed_contract', title: 'Sozlesme', category: 'hr' },
     ]
   }
   if (entityType === 'service_record') {
     return [
-      { documentType: 'service_photo', title: 'Servis Fotografi', category: 'after_sales', relationType: 'service_photo' },
+      { documentType: 'service.service_photo', title: 'Servis Fotografi', category: 'after_sales', relationType: 'service_photo' },
       { documentType: 'customer_signature', title: 'Musteri Imzasi', category: 'after_sales' },
     ]
   }
   return [
-    { documentType: 'trade_registry_gazette', title: 'Ticaret Sicil Gazetesi', category: 'company', required: true },
-    { documentType: 'signature_circular', title: 'Imza Sirkuleri', category: 'company' },
-    { documentType: 'tax_plate', title: 'Vergi Levhasi', category: 'company' },
+    { documentType: 'company.trade_registry_gazette', title: 'Ticaret Sicil Gazetesi', category: 'company', required: true },
+    { documentType: 'company.signature_circular', title: 'Imza Sirkuleri', category: 'company' },
+    { documentType: 'company.tax_certificate', title: 'Vergi Levhasi', category: 'company' },
   ]
 }

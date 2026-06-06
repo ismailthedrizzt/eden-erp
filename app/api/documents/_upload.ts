@@ -39,6 +39,10 @@ export async function proxyDocumentUpload(request: NextRequest, targetPath: stri
     issue_date: nullableString(formData.get('issue_date')),
     expiry_date: nullableString(formData.get('expiry_date')),
     relation_type: stringValue(formData.get('relation_type'), 'attachment'),
+    module_key: nullableString(formData.get('module_key')),
+    operation_key: nullableString(formData.get('operation_key')),
+    operation_id: nullableString(formData.get('operation_id')),
+    document_slot_key: nullableString(formData.get('document_slot_key')),
     tags: listValue(formData.get('tags')),
     metadata_json: jsonValue(formData.get('metadata_json')),
   }
@@ -63,6 +67,9 @@ async function normalizeUploadResponse(response: Response) {
   const size = numberRecordValue(data, 'size') || numberRecordValue(data, 'file_size')
   const type = stringRecordValue(data, 'type') || stringRecordValue(data, 'mime_type') || 'application/octet-stream'
   const url = stringRecordValue(data, 'url') || stringRecordValue(data, 'previewUrl') || stringRecordValue(data, 'preview_url') || (storagePath ? `/api/media/open?storageBucket=${encodeURIComponent(storageBucket)}&storagePath=${encodeURIComponent(storagePath)}&download=0` : '')
+  const mediaAccessUrl = stringRecordValue(data, 'mediaAccessUrl') || stringRecordValue(data, 'media_access_url') || url
+  const reusedExistingFile = Boolean(data.reused_existing_file || data.reusedExistingFile)
+  const duplicateWarning = stringRecordValue(data, 'duplicate_warning') || stringRecordValue(data, 'duplicateWarning')
 
   const headers = new Headers()
   headers.set('cache-control', 'no-store, max-age=0')
@@ -82,8 +89,14 @@ async function normalizeUploadResponse(response: Response) {
       storagePath,
       storage_path: storagePath,
       url,
+      mediaAccessUrl,
+      media_access_url: mediaAccessUrl,
       previewUrl: url,
       preview_url: url,
+      reusedExistingFile,
+      reused_existing_file: reusedExistingFile,
+      duplicateWarning,
+      duplicate_warning: duplicateWarning || null,
       name,
       fileName: name,
       file_name: name,
@@ -134,4 +147,3 @@ function jsonValue(value: FormDataEntryValue | null) {
     return {}
   }
 }
-

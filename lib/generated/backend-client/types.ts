@@ -692,6 +692,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/companies/nace-codes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Nace Reference Codes */
+        get: operations["list_nace_reference_codes_api_v1_companies_nace_codes_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/companies/{company_id}": {
         parameters: {
             query?: never;
@@ -711,6 +728,57 @@ export interface paths {
         patch: operations["patch_company_card_api_v1_companies__company_id__patch"];
         trace?: never;
     };
+    "/api/v1/companies/{company_id}/opening-wizard/context": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Opening Wizard Context */
+        get: operations["opening_wizard_context_api_v1_companies__company_id__opening_wizard_context_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{company_id}/liquidation-wizard/context": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Liquidation Wizard Context */
+        get: operations["liquidation_wizard_context_api_v1_companies__company_id__liquidation_wizard_context_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{company_id}/deregistration-wizard/context": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Deregistration Wizard Context */
+        get: operations["deregistration_wizard_context_api_v1_companies__company_id__deregistration_wizard_context_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/companies/{company_id}/capital-increases/precheck": {
         parameters: {
             query?: never;
@@ -720,6 +788,23 @@ export interface paths {
         };
         /** Capital Increase Precheck */
         get: operations["capital_increase_precheck_api_v1_companies__company_id__capital_increases_precheck_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{company_id}/capital-decreases/precheck": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Capital Decrease Precheck */
+        get: operations["capital_decrease_precheck_api_v1_companies__company_id__capital_decreases_precheck_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -756,6 +841,58 @@ export interface paths {
         get: operations["current_ownership_for_company_api_v1_companies__company_id__current_ownership_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{company_id}/nace-codes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Company Nace Codes */
+        get: operations["list_company_nace_codes_api_v1_companies__company_id__nace_codes_get"];
+        put?: never;
+        /** Add Company Nace Code */
+        post: operations["add_company_nace_code_api_v1_companies__company_id__nace_codes_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{company_id}/nace-codes/{id}/set-primary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Set Company Primary Nace Code */
+        post: operations["set_company_primary_nace_code_api_v1_companies__company_id__nace_codes__id__set_primary_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/companies/{company_id}/nace-codes/{id}/passivate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Passivate Company Nace Code */
+        post: operations["passivate_company_nace_code_api_v1_companies__company_id__nace_codes__id__passivate_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1155,6 +1292,126 @@ export interface paths {
         get: operations["get_account_summary_api_v1_accounting_cari_accounts__account_id__summary_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounting/entity-bank-accounts/form-priority-mode": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Entity Bank Account Form Priority Mode */
+        get: operations["entity_bank_account_form_priority_mode_api_v1_accounting_entity_bank_accounts_form_priority_mode_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounting/entities/{entity_kind}/{entity_id}/bank-accounts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Entity Bank Accounts */
+        get: operations["list_entity_bank_accounts_api_v1_accounting_entities__entity_kind___entity_id__bank_accounts_get"];
+        put?: never;
+        /** Create Entity Bank Account */
+        post: operations["create_entity_bank_account_api_v1_accounting_entities__entity_kind___entity_id__bank_accounts_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounting/entity-bank-accounts/{account_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update Entity Bank Account */
+        patch: operations["update_entity_bank_account_api_v1_accounting_entity_bank_accounts__account_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/accounting/entity-bank-accounts/{account_id}/set-default": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Set Default Entity Bank Account */
+        post: operations["set_default_entity_bank_account_api_v1_accounting_entity_bank_accounts__account_id__set_default_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounting/entity-bank-accounts/{account_id}/passivate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Passivate Entity Bank Account */
+        post: operations["passivate_entity_bank_account_api_v1_accounting_entity_bank_accounts__account_id__passivate_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounting/entity-bank-accounts/{account_id}/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Entity Bank Account History */
+        get: operations["entity_bank_account_history_api_v1_accounting_entity_bank_accounts__account_id__history_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/accounting/entity-bank-accounts/parse-iban": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Parse Entity Bank Account Iban */
+        post: operations["parse_entity_bank_account_iban_api_v1_accounting_entity_bank_accounts_parse_iban_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1578,6 +1835,40 @@ export interface paths {
         head?: never;
         /** Update Transaction */
         patch: operations["update_transaction_api_v1_accounting_cari_transactions__transaction_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/auth/tenant-access": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Tenant Access */
+        post: operations["tenant_access_api_v1_auth_tenant_access_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/tenant-status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Tenant Status */
+        get: operations["tenant_status_api_v1_auth_tenant_status_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/hr/employees/summary": {
@@ -4866,6 +5157,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/documents/uploads/signed-url": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Documents Upload Signed Url */
+        post: operations["documents_upload_signed_url_api_v1_documents_uploads_signed_url_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/documents/media/open": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Documents Media Open */
+        get: operations["documents_media_open_api_v1_documents_media_open_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/documents/media/metadata": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Documents Media Metadata */
+        get: operations["documents_media_metadata_api_v1_documents_media_metadata_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/documents/{document_id}": {
         parameters: {
             query?: never;
@@ -4953,6 +5295,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/documents/{document_id}/media-access-url": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Documents Media Access Url */
+        get: operations["documents_media_access_url_api_v1_documents__document_id__media_access_url_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/documents/{document_id}/preview-url": {
         parameters: {
             query?: never;
@@ -4981,6 +5340,23 @@ export interface paths {
         get: operations["documents_access_logs_api_v1_documents__document_id__access_logs_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/uploads/image-variants": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Image Variants */
+        post: operations["image_variants_api_v1_uploads_image_variants_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -5721,6 +6097,74 @@ export interface paths {
         head?: never;
         /** Patch Rule */
         patch: operations["patch_rule_api_v1_data_quality_rules__rule_key__patch"];
+        trace?: never;
+    };
+    "/api/v1/security/tenants/options": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Tenant Options Endpoint */
+        get: operations["tenant_options_endpoint_api_v1_security_tenants_options_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/security/tenants/current": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Tenant Current Endpoint */
+        get: operations["tenant_current_endpoint_api_v1_security_tenants_current_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/security/tenants/switch": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Tenant Switch Endpoint */
+        post: operations["tenant_switch_endpoint_api_v1_security_tenants_switch_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/security/tenants/default": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Tenant Default Endpoint */
+        post: operations["tenant_default_endpoint_api_v1_security_tenants_default_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/security/users": {
@@ -7889,6 +8333,33 @@ export interface components {
         } & {
             [key: string]: unknown;
         };
+        /** Body_image_variants_api_v1_uploads_image_variants_post */
+        Body_image_variants_api_v1_uploads_image_variants_post: {
+            /** File */
+            file: string;
+            /**
+             * Maxdimension
+             * @default 512
+             */
+            maxDimension: number;
+            /**
+             * Thumbnaildimension
+             * @default 96
+             */
+            thumbnailDimension: number;
+            /**
+             * Quality
+             * @default 0.78
+             */
+            quality: number;
+            /**
+             * Thumbnailquality
+             * @default 0.72
+             */
+            thumbnailQuality: number;
+            /** Transparentbackground */
+            transparentBackground?: string | null;
+        };
         /** BranchCardUpdateRequest */
         BranchCardUpdateRequest: {
             /** Branch Short Name */
@@ -9173,7 +9644,7 @@ export interface components {
             storage_path?: string | null;
             /**
              * Storage Provider
-             * @default supabase
+             * @default local
              */
             storage_provider: string;
             /** Checksum */
@@ -9210,7 +9681,7 @@ export interface components {
              * @default attachment
              * @enum {string}
              */
-            relation_type: "primary" | "supporting" | "evidence" | "attachment" | "generated_report" | "import_file" | "export_file" | "service_photo" | "identity_document";
+            relation_type: "primary" | "supporting" | "evidence" | "attachment" | "card_document" | "operation_evidence" | "required_evidence" | "supporting_document" | "generated_report" | "import_file" | "export_file" | "service_photo" | "service_report" | "contract_document" | "identity_document";
         };
         /** DocumentIntelligenceRequest */
         DocumentIntelligenceRequest: {
@@ -9329,7 +9800,7 @@ export interface components {
             storage_path?: string | null;
             /**
              * Storage Provider
-             * @default supabase
+             * @default local
              */
             storage_provider: string;
             /**
@@ -9357,7 +9828,15 @@ export interface components {
              * @default attachment
              * @enum {string}
              */
-            relation_type: "primary" | "supporting" | "evidence" | "attachment" | "generated_report" | "import_file" | "export_file" | "service_photo" | "identity_document";
+            relation_type: "primary" | "supporting" | "evidence" | "attachment" | "card_document" | "operation_evidence" | "required_evidence" | "supporting_document" | "generated_report" | "import_file" | "export_file" | "service_photo" | "service_report" | "contract_document" | "identity_document";
+            /** Module Key */
+            module_key?: string | null;
+            /** Operation Key */
+            operation_key?: string | null;
+            /** Operation Id */
+            operation_id?: string | null;
+            /** Document Slot Key */
+            document_slot_key?: string | null;
         };
         /** DuplicateDetectRequest */
         DuplicateDetectRequest: {
@@ -11392,6 +11871,12 @@ export interface components {
             capital_amount_before?: number | null;
             /** Capital Amount After */
             capital_amount_after?: number | null;
+            /** Committed Capital Amount */
+            committed_capital_amount?: number | null;
+            /** Paid Capital Amount */
+            paid_capital_amount?: number | null;
+            /** Currency */
+            currency?: string | null;
             /** Share Units Before */
             share_units_before?: number | null;
             /** Share Units After */
@@ -13487,6 +13972,16 @@ export interface components {
             /** Reason */
             reason?: string | null;
         };
+        /** TenantAccessRequest */
+        TenantAccessRequest: {
+            /** Identifier */
+            identifier: string;
+        };
+        /** TenantWorkspaceMutation */
+        TenantWorkspaceMutation: {
+            /** Tenant Id */
+            tenant_id: string;
+        };
         /** TimesheetCreateRequest */
         TimesheetCreateRequest: {
             /** Company Id */
@@ -15065,6 +15560,38 @@ export interface operations {
             };
         };
     };
+    list_nace_reference_codes_api_v1_companies_nace_codes_get: {
+        parameters: {
+            query?: {
+                search?: string | null;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_list_dict_str__Any___"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     company_detail_api_v1_companies__company_id__get: {
         parameters: {
             query?: never;
@@ -15162,7 +15689,137 @@ export interface operations {
             };
         };
     };
+    opening_wizard_context_api_v1_companies__company_id__opening_wizard_context_get: {
+        parameters: {
+            query?: {
+                readonly?: boolean;
+            };
+            header?: never;
+            path: {
+                company_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    liquidation_wizard_context_api_v1_companies__company_id__liquidation_wizard_context_get: {
+        parameters: {
+            query?: {
+                readonly?: boolean;
+            };
+            header?: never;
+            path: {
+                company_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    deregistration_wizard_context_api_v1_companies__company_id__deregistration_wizard_context_get: {
+        parameters: {
+            query?: {
+                readonly?: boolean;
+            };
+            header?: never;
+            path: {
+                company_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     capital_increase_precheck_api_v1_companies__company_id__capital_increases_precheck_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                company_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    capital_decrease_precheck_api_v1_companies__company_id__capital_decreases_precheck_get: {
         parameters: {
             query?: never;
             header?: never;
@@ -15234,6 +15891,138 @@ export interface operations {
             header?: never;
             path: {
                 company_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_list_dict_str__Any___"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_company_nace_codes_api_v1_companies__company_id__nace_codes_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                company_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_list_dict_str__Any___"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    add_company_nace_code_api_v1_companies__company_id__nace_codes_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                company_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    [key: string]: unknown;
+                };
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_list_dict_str__Any___"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_company_primary_nace_code_api_v1_companies__company_id__nace_codes__id__set_primary_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                company_id: string;
+                id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_list_dict_str__Any___"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    passivate_company_nace_code_api_v1_companies__company_id__nace_codes__id__passivate_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                company_id: string;
+                id: string;
             };
             cookie?: never;
         };
@@ -16258,6 +17047,273 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    entity_bank_account_form_priority_mode_api_v1_accounting_entity_bank_accounts_form_priority_mode_get: {
+        parameters: {
+            query: {
+                entityKind: string;
+                entityId: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_entity_bank_accounts_api_v1_accounting_entities__entity_kind___entity_id__bank_accounts_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                entity_kind: string;
+                entity_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_list_dict_str__Any___"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_entity_bank_account_api_v1_accounting_entities__entity_kind___entity_id__bank_accounts_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                entity_kind: string;
+                entity_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    [key: string]: unknown;
+                };
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_entity_bank_account_api_v1_accounting_entity_bank_accounts__account_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                account_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    [key: string]: unknown;
+                };
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_default_entity_bank_account_api_v1_accounting_entity_bank_accounts__account_id__set_default_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                account_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    passivate_entity_bank_account_api_v1_accounting_entity_bank_accounts__account_id__passivate_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                account_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    entity_bank_account_history_api_v1_accounting_entity_bank_accounts__account_id__history_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                account_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_list_dict_str__Any___"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    parse_entity_bank_account_iban_api_v1_accounting_entity_bank_accounts_parse_iban_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    [key: string]: unknown;
+                };
+            };
+        };
         responses: {
             /** @description Successful Response */
             200: {
@@ -17471,6 +18527,59 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    tenant_access_api_v1_auth_tenant_access_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TenantAccessRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    tenant_status_api_v1_auth_tenant_status_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
                 };
             };
         };
@@ -25610,6 +26719,110 @@ export interface operations {
             };
         };
     };
+    documents_upload_signed_url_api_v1_documents_uploads_signed_url_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    [key: string]: unknown;
+                };
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    documents_media_open_api_v1_documents_media_open_get: {
+        parameters: {
+            query: {
+                storagePath: string;
+                storageBucket?: string;
+                download?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    documents_media_metadata_api_v1_documents_media_metadata_get: {
+        parameters: {
+            query: {
+                storagePath: string;
+                storageBucket?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     documents_get_api_v1_documents__document_id__get: {
         parameters: {
             query?: never;
@@ -25839,6 +27052,37 @@ export interface operations {
             };
         };
     };
+    documents_media_access_url_api_v1_documents__document_id__media_access_url_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                document_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     documents_preview_url_api_v1_documents__document_id__preview_url_get: {
         parameters: {
             query?: never;
@@ -25901,6 +27145,41 @@ export interface operations {
             };
         };
     };
+    image_variants_api_v1_uploads_image_variants_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_image_variants_api_v1_uploads_image_variants_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     notifications_list_api_v1_notifications_get: {
         parameters: {
             query?: {
@@ -25909,6 +27188,7 @@ export interface operations {
                 module_key?: string | null;
                 severity?: string | null;
                 priority?: string | null;
+                statusValues?: string | null;
                 action_required?: boolean | null;
                 related_entity_type?: string | null;
                 related_entity_id?: string | null;
@@ -27368,6 +28648,112 @@ export interface operations {
             };
         };
     };
+    tenant_options_endpoint_api_v1_security_tenants_options_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_list_dict_str__Any___"];
+                };
+            };
+        };
+    };
+    tenant_current_endpoint_api_v1_security_tenants_current_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+        };
+    };
+    tenant_switch_endpoint_api_v1_security_tenants_switch_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TenantWorkspaceMutation"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    tenant_default_endpoint_api_v1_security_tenants_default_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TenantWorkspaceMutation"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     users_endpoint_api_v1_security_users_get: {
         parameters: {
             query?: never;
@@ -28738,7 +30124,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ApiSuccess_list_dict_str__Any___"];
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
                 };
             };
             /** @description Validation Error */

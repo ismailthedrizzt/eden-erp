@@ -61,6 +61,7 @@ class StoragePreparedFile:
     storage_path: str
     storage_provider: str
     metadata: dict[str, Any]
+    content: bytes | None = None
 
 
 def sanitize_file_name(value: str) -> str:
@@ -129,6 +130,7 @@ async def prepare_storage_file(
     storage_bucket: str | None,
     storage_path: str | None,
     storage_provider: str,
+    write_to_storage: bool = True,
 ) -> StoragePreparedFile:
     safe_name = sanitize_file_name(file_name)
     inferred_mime = mime_type or mimetypes.guess_type(safe_name)[0] or "application/octet-stream"
@@ -147,7 +149,7 @@ async def prepare_storage_file(
     validate_storage_path(path, str(context["tenant_id"]))
     checksum = hashlib.sha256(content).hexdigest() if content is not None else None
     normalized_provider = LOCAL_STORAGE_PROVIDER
-    if content is not None:
+    if content is not None and write_to_storage:
         await upload_to_storage(bucket, path, content, inferred_mime, normalized_provider)
     return StoragePreparedFile(
         file_name=safe_name,
@@ -159,6 +161,19 @@ async def prepare_storage_file(
         storage_path=path,
         storage_provider=normalized_provider,
         metadata={"storage_path_masked": mask_storage_path(path)},
+        content=content,
+    )
+
+
+async def write_prepared_file(prepared: StoragePreparedFile) -> None:
+    if prepared.content is None:
+        return
+    await upload_to_storage(
+        prepared.storage_bucket,
+        prepared.storage_path,
+        prepared.content,
+        prepared.mime_type,
+        prepared.storage_provider,
     )
 
 

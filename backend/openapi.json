@@ -1819,6 +1819,67 @@
         }
       }
     },
+    "/api/v1/companies/nace-codes": {
+      "get": {
+        "tags": [
+          "companies"
+        ],
+        "summary": "List Nace Reference Codes",
+        "operationId": "list_nace_reference_codes_api_v1_companies_nace_codes_get",
+        "parameters": [
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Search"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_list_dict_str__Any___"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/companies/{company_id}": {
       "get": {
         "tags": [
@@ -1951,6 +2012,162 @@
         }
       }
     },
+    "/api/v1/companies/{company_id}/opening-wizard/context": {
+      "get": {
+        "tags": [
+          "companies"
+        ],
+        "summary": "Opening Wizard Context",
+        "operationId": "opening_wizard_context_api_v1_companies__company_id__opening_wizard_context_get",
+        "parameters": [
+          {
+            "name": "company_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Company Id"
+            }
+          },
+          {
+            "name": "readonly",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Readonly"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_dict_str__Any__"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/companies/{company_id}/liquidation-wizard/context": {
+      "get": {
+        "tags": [
+          "companies"
+        ],
+        "summary": "Liquidation Wizard Context",
+        "operationId": "liquidation_wizard_context_api_v1_companies__company_id__liquidation_wizard_context_get",
+        "parameters": [
+          {
+            "name": "company_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Company Id"
+            }
+          },
+          {
+            "name": "readonly",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Readonly"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_dict_str__Any__"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/companies/{company_id}/deregistration-wizard/context": {
+      "get": {
+        "tags": [
+          "companies"
+        ],
+        "summary": "Deregistration Wizard Context",
+        "operationId": "deregistration_wizard_context_api_v1_companies__company_id__deregistration_wizard_context_get",
+        "parameters": [
+          {
+            "name": "company_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Company Id"
+            }
+          },
+          {
+            "name": "readonly",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Readonly"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_dict_str__Any__"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/companies/{company_id}/capital-increases/precheck": {
       "get": {
         "tags": [
@@ -1958,6 +2175,48 @@
         ],
         "summary": "Capital Increase Precheck",
         "operationId": "capital_increase_precheck_api_v1_companies__company_id__capital_increases_precheck_get",
+        "parameters": [
+          {
+            "name": "company_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Company Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_dict_str__Any__"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/companies/{company_id}/capital-decreases/precheck": {
+      "get": {
+        "tags": [
+          "companies"
+        ],
+        "summary": "Capital Decrease Precheck",
+        "operationId": "capital_decrease_precheck_api_v1_companies__company_id__capital_decreases_precheck_get",
         "parameters": [
           {
             "name": "company_id",
@@ -2060,6 +2319,202 @@
             "schema": {
               "type": "string",
               "title": "Company Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_list_dict_str__Any___"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/companies/{company_id}/nace-codes": {
+      "get": {
+        "tags": [
+          "companies"
+        ],
+        "summary": "List Company Nace Codes",
+        "operationId": "list_company_nace_codes_api_v1_companies__company_id__nace_codes_get",
+        "parameters": [
+          {
+            "name": "company_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Company Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_list_dict_str__Any___"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "companies"
+        ],
+        "summary": "Add Company Nace Code",
+        "operationId": "add_company_nace_code_api_v1_companies__company_id__nace_codes_post",
+        "parameters": [
+          {
+            "name": "company_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Company Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true,
+                "title": "Payload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_list_dict_str__Any___"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/companies/{company_id}/nace-codes/{id}/set-primary": {
+      "post": {
+        "tags": [
+          "companies"
+        ],
+        "summary": "Set Company Primary Nace Code",
+        "operationId": "set_company_primary_nace_code_api_v1_companies__company_id__nace_codes__id__set_primary_post",
+        "parameters": [
+          {
+            "name": "company_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Company Id"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_list_dict_str__Any___"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/companies/{company_id}/nace-codes/{id}/passivate": {
+      "post": {
+        "tags": [
+          "companies"
+        ],
+        "summary": "Passivate Company Nace Code",
+        "operationId": "passivate_company_nace_code_api_v1_companies__company_id__nace_codes__id__passivate_post",
+        "parameters": [
+          {
+            "name": "company_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Company Id"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Id"
             }
           }
         ],
@@ -3791,6 +4246,392 @@
             }
           }
         ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_dict_str__Any__"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/accounting/entity-bank-accounts/form-priority-mode": {
+      "get": {
+        "tags": [
+          "accounting"
+        ],
+        "summary": "Entity Bank Account Form Priority Mode",
+        "operationId": "entity_bank_account_form_priority_mode_api_v1_accounting_entity_bank_accounts_form_priority_mode_get",
+        "parameters": [
+          {
+            "name": "entityKind",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Entitykind"
+            }
+          },
+          {
+            "name": "entityId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Entityid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_dict_str__Any__"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/accounting/entities/{entity_kind}/{entity_id}/bank-accounts": {
+      "get": {
+        "tags": [
+          "accounting"
+        ],
+        "summary": "List Entity Bank Accounts",
+        "operationId": "list_entity_bank_accounts_api_v1_accounting_entities__entity_kind___entity_id__bank_accounts_get",
+        "parameters": [
+          {
+            "name": "entity_kind",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Entity Kind"
+            }
+          },
+          {
+            "name": "entity_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Entity Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_list_dict_str__Any___"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "accounting"
+        ],
+        "summary": "Create Entity Bank Account",
+        "operationId": "create_entity_bank_account_api_v1_accounting_entities__entity_kind___entity_id__bank_accounts_post",
+        "parameters": [
+          {
+            "name": "entity_kind",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Entity Kind"
+            }
+          },
+          {
+            "name": "entity_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Entity Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true,
+                "title": "Payload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_dict_str__Any__"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/accounting/entity-bank-accounts/{account_id}": {
+      "patch": {
+        "tags": [
+          "accounting"
+        ],
+        "summary": "Update Entity Bank Account",
+        "operationId": "update_entity_bank_account_api_v1_accounting_entity_bank_accounts__account_id__patch",
+        "parameters": [
+          {
+            "name": "account_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Account Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": true,
+                "title": "Payload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_dict_str__Any__"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/accounting/entity-bank-accounts/{account_id}/set-default": {
+      "post": {
+        "tags": [
+          "accounting"
+        ],
+        "summary": "Set Default Entity Bank Account",
+        "operationId": "set_default_entity_bank_account_api_v1_accounting_entity_bank_accounts__account_id__set_default_post",
+        "parameters": [
+          {
+            "name": "account_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Account Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_dict_str__Any__"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/accounting/entity-bank-accounts/{account_id}/passivate": {
+      "post": {
+        "tags": [
+          "accounting"
+        ],
+        "summary": "Passivate Entity Bank Account",
+        "operationId": "passivate_entity_bank_account_api_v1_accounting_entity_bank_accounts__account_id__passivate_post",
+        "parameters": [
+          {
+            "name": "account_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Account Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_dict_str__Any__"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/accounting/entity-bank-accounts/{account_id}/history": {
+      "get": {
+        "tags": [
+          "accounting"
+        ],
+        "summary": "Entity Bank Account History",
+        "operationId": "entity_bank_account_history_api_v1_accounting_entity_bank_accounts__account_id__history_get",
+        "parameters": [
+          {
+            "name": "account_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Account Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_list_dict_str__Any___"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/accounting/entity-bank-accounts/parse-iban": {
+      "post": {
+        "tags": [
+          "accounting"
+        ],
+        "summary": "Parse Entity Bank Account Iban",
+        "operationId": "parse_entity_bank_account_iban_api_v1_accounting_entity_bank_accounts_parse_iban_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "type": "object",
+                "title": "Payload"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "description": "Successful Response",
@@ -6229,6 +7070,68 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/tenant-access": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Tenant Access",
+        "operationId": "tenant_access_api_v1_auth_tenant_access_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TenantAccessRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_dict_str__Any__"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/tenant-status": {
+      "get": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Tenant Status",
+        "operationId": "tenant_status_api_v1_auth_tenant_status_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_dict_str__Any__"
                 }
               }
             }
@@ -21436,6 +22339,165 @@
         }
       }
     },
+    "/api/v1/documents/uploads/signed-url": {
+      "post": {
+        "tags": [
+          "documents"
+        ],
+        "summary": "Documents Upload Signed Url",
+        "operationId": "documents_upload_signed_url_api_v1_documents_uploads_signed_url_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "additionalProperties": true,
+                "type": "object",
+                "title": "Payload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Documents Upload Signed Url Api V1 Documents Uploads Signed Url Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/documents/media/open": {
+      "get": {
+        "tags": [
+          "documents"
+        ],
+        "summary": "Documents Media Open",
+        "operationId": "documents_media_open_api_v1_documents_media_open_get",
+        "parameters": [
+          {
+            "name": "storagePath",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Storagepath"
+            }
+          },
+          {
+            "name": "storageBucket",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "eden-documents",
+              "title": "Storagebucket"
+            }
+          },
+          {
+            "name": "download",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Download"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/documents/media/metadata": {
+      "get": {
+        "tags": [
+          "documents"
+        ],
+        "summary": "Documents Media Metadata",
+        "operationId": "documents_media_metadata_api_v1_documents_media_metadata_get",
+        "parameters": [
+          {
+            "name": "storagePath",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Storagepath"
+            }
+          },
+          {
+            "name": "storageBucket",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "eden-documents",
+              "title": "Storagebucket"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true,
+                  "title": "Response Documents Media Metadata Api V1 Documents Media Metadata Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/documents/{document_id}": {
       "get": {
         "tags": [
@@ -21756,6 +22818,48 @@
         }
       }
     },
+    "/api/v1/documents/{document_id}/media-access-url": {
+      "get": {
+        "tags": [
+          "documents"
+        ],
+        "summary": "Documents Media Access Url",
+        "operationId": "documents_media_access_url_api_v1_documents__document_id__media_access_url_get",
+        "parameters": [
+          {
+            "name": "document_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Document Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_dict_str__Any__"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/documents/{document_id}/preview-url": {
       "get": {
         "tags": [
@@ -21823,6 +22927,49 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ApiSuccess_list_dict_str__Any___"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/uploads/image-variants": {
+      "post": {
+        "tags": [
+          "uploads"
+        ],
+        "summary": "Image Variants",
+        "operationId": "image_variants_api_v1_uploads_image_variants_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_image_variants_api_v1_uploads_image_variants_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Image Variants Api V1 Uploads Image Variants Post"
                 }
               }
             }
@@ -21926,6 +23073,22 @@
                 }
               ],
               "title": "Priority"
+            }
+          },
+          {
+            "name": "statusValues",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Statusvalues"
             }
           },
           {
@@ -24211,6 +25374,130 @@
         }
       }
     },
+    "/api/v1/security/tenants/options": {
+      "get": {
+        "tags": [
+          "security"
+        ],
+        "summary": "Tenant Options Endpoint",
+        "operationId": "tenant_options_endpoint_api_v1_security_tenants_options_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_list_dict_str__Any___"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/security/tenants/current": {
+      "get": {
+        "tags": [
+          "security"
+        ],
+        "summary": "Tenant Current Endpoint",
+        "operationId": "tenant_current_endpoint_api_v1_security_tenants_current_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_dict_str__Any__"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/security/tenants/switch": {
+      "post": {
+        "tags": [
+          "security"
+        ],
+        "summary": "Tenant Switch Endpoint",
+        "operationId": "tenant_switch_endpoint_api_v1_security_tenants_switch_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TenantWorkspaceMutation"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_dict_str__Any__"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/security/tenants/default": {
+      "post": {
+        "tags": [
+          "security"
+        ],
+        "summary": "Tenant Default Endpoint",
+        "operationId": "tenant_default_endpoint_api_v1_security_tenants_default_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TenantWorkspaceMutation"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSuccess_dict_str__Any__"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/security/users": {
       "get": {
         "tags": [
@@ -26454,7 +27741,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ApiSuccess_list_dict_str__Any___"
+                  "$ref": "#/components/schemas/ApiSuccess_dict_str__Any__"
                 }
               }
             }
@@ -32807,6 +34094,51 @@
         "type": "object",
         "title": "BankTransactionUpdateRequest"
       },
+      "Body_image_variants_api_v1_uploads_image_variants_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File"
+          },
+          "maxDimension": {
+            "type": "integer",
+            "title": "Maxdimension",
+            "default": 512
+          },
+          "thumbnailDimension": {
+            "type": "integer",
+            "title": "Thumbnaildimension",
+            "default": 96
+          },
+          "quality": {
+            "type": "number",
+            "title": "Quality",
+            "default": 0.78
+          },
+          "thumbnailQuality": {
+            "type": "number",
+            "title": "Thumbnailquality",
+            "default": 0.72
+          },
+          "transparentBackground": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Transparentbackground"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_image_variants_api_v1_uploads_image_variants_post"
+      },
       "BranchCardUpdateRequest": {
         "properties": {
           "branch_short_name": {
@@ -37465,7 +38797,7 @@
           "storage_provider": {
             "type": "string",
             "title": "Storage Provider",
-            "default": "supabase"
+            "default": "local"
           },
           "checksum": {
             "anyOf": [
@@ -37551,10 +38883,16 @@
               "supporting",
               "evidence",
               "attachment",
+              "card_document",
+              "operation_evidence",
+              "required_evidence",
+              "supporting_document",
               "generated_report",
               "import_file",
               "export_file",
               "service_photo",
+              "service_report",
+              "contract_document",
               "identity_document"
             ],
             "title": "Relation Type",
@@ -38002,7 +39340,7 @@
           "storage_provider": {
             "type": "string",
             "title": "Storage Provider",
-            "default": "supabase"
+            "default": "local"
           },
           "required": {
             "type": "boolean",
@@ -38057,14 +39395,68 @@
               "supporting",
               "evidence",
               "attachment",
+              "card_document",
+              "operation_evidence",
+              "required_evidence",
+              "supporting_document",
               "generated_report",
               "import_file",
               "export_file",
               "service_photo",
+              "service_report",
+              "contract_document",
               "identity_document"
             ],
             "title": "Relation Type",
             "default": "attachment"
+          },
+          "module_key": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 120
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Module Key"
+          },
+          "operation_key": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 120
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Operation Key"
+          },
+          "operation_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 120
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Operation Id"
+          },
+          "document_slot_key": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 160
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Slot Key"
           }
         },
         "type": "object",
@@ -46118,6 +47510,39 @@
               }
             ],
             "title": "Capital Amount After"
+          },
+          "committed_capital_amount": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Committed Capital Amount"
+          },
+          "paid_capital_amount": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Paid Capital Amount"
+          },
+          "currency": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Currency"
           },
           "share_units_before": {
             "anyOf": [
@@ -54286,6 +55711,33 @@
           "status"
         ],
         "title": "TaskTransitionRequest"
+      },
+      "TenantAccessRequest": {
+        "properties": {
+          "identifier": {
+            "type": "string",
+            "minLength": 3,
+            "title": "Identifier"
+          }
+        },
+        "type": "object",
+        "required": [
+          "identifier"
+        ],
+        "title": "TenantAccessRequest"
+      },
+      "TenantWorkspaceMutation": {
+        "properties": {
+          "tenant_id": {
+            "type": "string",
+            "title": "Tenant Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "tenant_id"
+        ],
+        "title": "TenantWorkspaceMutation"
       },
       "TimesheetCreateRequest": {
         "properties": {

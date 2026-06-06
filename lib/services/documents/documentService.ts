@@ -27,7 +27,14 @@ export type DocumentRecord = {
   storage_bucket?: string
   storage_provider?: string
   storage_path_masked?: string
+  media_access_url?: string
+  mediaAccessUrl?: string
   checksum?: string | null
+  document_file_id?: string | null
+  relation_id?: string | null
+  reused_existing_file?: boolean
+  duplicate_warning?: string | null
+  message?: string | null
   version_no?: number
   parent_document_id?: string | null
   status: DocumentStatus
@@ -52,10 +59,16 @@ export type DocumentRelationType =
   | 'supporting'
   | 'evidence'
   | 'attachment'
+  | 'card_document'
+  | 'operation_evidence'
+  | 'required_evidence'
+  | 'supporting_document'
   | 'generated_report'
   | 'import_file'
   | 'export_file'
   | 'service_photo'
+  | 'service_report'
+  | 'contract_document'
   | 'identity_document'
 
 export type DocumentListResult = {
@@ -105,6 +118,10 @@ export type CreateDocumentInput = {
   tags?: string[]
   metadata_json?: Record<string, unknown>
   relation_type?: DocumentRelationType
+  module_key?: string | null
+  operation_key?: string | null
+  operation_id?: string | null
+  document_slot_key?: string | null
 }
 
 export type UploadDocumentInput = Omit<CreateDocumentInput, 'title' | 'file_name' | 'mime_type' | 'file_size'> & {
@@ -117,6 +134,9 @@ export type DocumentUrl = {
   document_id: string
   action: string
   url: string
+  media_access_url?: string
+  mediaAccessUrl?: string
+  signedUrl?: string
   expires_in: number
   storage_provider: string
 }
@@ -244,12 +264,16 @@ function uploadFormData(payload: UploadDocumentInput) {
   setFormValue(formData, 'description', payload.description)
   setFormValue(formData, 'storage_bucket', payload.storage_bucket)
   setFormValue(formData, 'storage_path', payload.storage_path)
-  formData.set('storage_provider', payload.storage_provider || 'supabase')
+  formData.set('storage_provider', payload.storage_provider || 'local')
   formData.set('required', String(Boolean(payload.required)))
   formData.set('verification_required', String(Boolean(payload.verification_required)))
   setFormValue(formData, 'issue_date', payload.issue_date)
   setFormValue(formData, 'expiry_date', payload.expiry_date)
   formData.set('relation_type', payload.relation_type || 'attachment')
+  setFormValue(formData, 'module_key', payload.module_key)
+  setFormValue(formData, 'operation_key', payload.operation_key)
+  setFormValue(formData, 'operation_id', payload.operation_id)
+  setFormValue(formData, 'document_slot_key', payload.document_slot_key)
   if (payload.tags?.length) formData.set('tags', payload.tags.join(','))
   if (payload.metadata_json) formData.set('metadata_json', JSON.stringify(payload.metadata_json))
   return formData
@@ -268,4 +292,3 @@ async function parseEnvelope<T>(response: Response): Promise<ApiEnvelope<T>> {
   }
   return body
 }
-

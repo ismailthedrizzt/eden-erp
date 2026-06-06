@@ -39,6 +39,7 @@ from app.domains.documents.storage import (
     mask_storage_path,
     prepare_storage_file,
     sanitize_file_name,
+    write_prepared_file,
 )
 from app.domains.documents.versions import next_version_no
 from app.domains.operations.service import table_exists
@@ -170,11 +171,52 @@ async def upload_document(session: AsyncSession, context: dict[str, Any], reques
         storage_bucket=request.storage_bucket,
         storage_path=request.storage_path,
         storage_provider=request.storage_provider,
+        write_to_storage=False,
     )
+    file_record = await _resolve_document_file(session, context, prepared, request)
+    reused_existing_file = bool(file_record.get("reused_existing_file"))
+    if reused_existing_file:
+        prepared = prepared.__class__(
+            file_name=prepared.file_name,
+            file_extension=prepared.file_extension,
+            mime_type=str(file_record.get("mime_type") or prepared.mime_type),
+            file_size=int(file_record.get("file_size") or prepared.file_size),
+            checksum=str(file_record.get("checksum") or prepared.checksum or ""),
+            storage_bucket=str(file_record.get("storage_bucket") or prepared.storage_bucket),
+            storage_path=str(file_record.get("storage_path") or prepared.storage_path),
+            storage_provider=str(file_record.get("storage_provider") or prepared.storage_provider),
+            metadata={**prepared.metadata, "storage_path_masked": mask_storage_path(str(file_record.get("storage_path") or prepared.storage_path))},
+            content=None,
+        )
+    else:
+        await write_prepared_file(prepared)
+    duplicate_warning = await _duplicate_warning(session, context, str(file_record.get("id") or ""), request.document_type)
+    if reused_existing_file:
+        existing_context_document = await _find_existing_context_document(
+            session,
+            context,
+            str(file_record.get("id") or ""),
+            request.owner_entity_type,
+            request.owner_entity_id,
+            request.document_type,
+        )
+        if existing_context_document:
+            existing_payload = _document_payload(existing_context_document)
+            await _log_access(session, context, str(existing_payload["id"]), "upload")
+            return {
+                **existing_payload,
+                "document_id": existing_payload.get("id"),
+                "document_file_id": file_record.get("id"),
+                "relation_id": await _find_relation_id(session, context, str(existing_payload["id"]), request.owner_entity_type, request.owner_entity_id),
+                "reused_existing_file": True,
+                "duplicate_warning": duplicate_warning,
+                "message": duplicate_warning or "Belge eklendi. Mevcut dosya yeniden kullanildi.",
+            }
     payload = request.model_dump(mode="json", exclude={"content_base64"})
     payload.update(
         {
             "id": document_id,
+            "document_file_id": file_record.get("id"),
             "title": request.title or prepared.file_name,
             "file_name": prepared.file_name,
             "file_extension": prepared.file_extension,
@@ -186,15 +228,43 @@ async def upload_document(session: AsyncSession, context: dict[str, Any], reques
             "checksum": prepared.checksum,
             "verification_status": "pending" if request.verification_required else "not_required",
             "uploaded_by": context.get("user_id"),
-            "metadata_json": {**request.metadata_json, **prepared.metadata, "preview_kind": preview_kind(prepared.mime_type, prepared.file_name)},
+            "metadata_json": {
+                **request.metadata_json,
+                **prepared.metadata,
+                "preview_kind": preview_kind(prepared.mime_type, prepared.file_name),
+                "reused_existing_file": reused_existing_file,
+                "duplicate_warning": duplicate_warning,
+            },
         }
     )
     row = await _insert_document(session, context, payload)
-    await _insert_relation(session, context, document_id, request.owner_entity_type, request.owner_entity_id, request.relation_type)
+    relation_id = await _insert_relation(
+        session,
+        context,
+        document_id,
+        request.owner_entity_type,
+        request.owner_entity_id,
+        request.relation_type,
+        document_file_id=str(file_record.get("id") or "") or None,
+        module_key=request.module_key,
+        operation_type=request.operation_key,
+        operation_id=request.operation_id,
+        document_slot_key=request.document_slot_key,
+        metadata_json={"reused_existing_file": reused_existing_file, "duplicate_warning": duplicate_warning},
+    )
     await _log_access(session, context, document_id, "upload")
-    await _audit(session, context, "document_upload", "document.upload", "Belge yuklendi.", row)
+    summary = "Belge eklendi. Mevcut dosya yeniden kullanildi." if reused_existing_file else "Belge yuklendi."
+    await _audit(session, context, "document_upload", "document.upload", summary, row)
     await _outbox(session, context, DOCUMENT_UPLOADED, row)
-    return row
+    return {
+        **row,
+        "document_id": row.get("id"),
+        "document_file_id": file_record.get("id"),
+        "relation_id": relation_id,
+        "reused_existing_file": reused_existing_file,
+        "duplicate_warning": duplicate_warning,
+        "message": duplicate_warning or summary,
+    }
 
 
 async def upload_document_for_entity(session: AsyncSession, context: dict[str, Any], entity_type: str, entity_id: str, request: DocumentUploadRequest) -> dict[str, Any]:
@@ -315,7 +385,16 @@ async def get_document_url(session: AsyncSession, context: dict[str, Any], docum
         _public_document_metadata(document),
     )
     await _outbox(session, context, DOCUMENT_PREVIEWED if access_action == "preview" else DOCUMENT_DOWNLOADED, document)
-    return {"document_id": document_id, "action": access_action, "url": url, "expires_in": SIGNED_URL_EXPIRES_IN, "storage_provider": document["storage_provider"]}
+    return {
+        "document_id": document_id,
+        "action": access_action,
+        "url": url,
+        "media_access_url": url,
+        "mediaAccessUrl": url,
+        "signedUrl": url,
+        "expires_in": SIGNED_URL_EXPIRES_IN,
+        "storage_provider": document["storage_provider"],
+    }
 
 
 async def list_documents_by_entity(session: AsyncSession, context: dict[str, Any], entity_type: str, entity_id: str) -> list[dict[str, Any]]:
@@ -406,12 +485,185 @@ async def list_access_logs(session: AsyncSession, context: dict[str, Any], docum
     return rows_to_dicts(list(rows.mappings().all()))
 
 
+async def _resolve_document_file(
+    session: AsyncSession,
+    context: dict[str, Any],
+    prepared: Any,
+    request: DocumentUploadRequest,
+) -> dict[str, Any]:
+    if not await table_exists(session, "public.document_files"):
+        return {
+            "id": None,
+            "checksum": prepared.checksum,
+            "mime_type": prepared.mime_type,
+            "file_size": prepared.file_size,
+            "storage_bucket": prepared.storage_bucket,
+            "storage_path": prepared.storage_path,
+            "storage_provider": prepared.storage_provider,
+            "reused_existing_file": False,
+        }
+    if prepared.checksum:
+        existing = await session.execute(
+            text(
+                """
+                select *
+                from public.document_files
+                where tenant_id = :tenant_id
+                  and checksum = :checksum
+                  and coalesce(is_deleted, false) = false
+                limit 1
+                """
+            ),
+            {"tenant_id": context["tenant_id"], "checksum": prepared.checksum},
+        )
+        row = row_to_dict(existing.mappings().one_or_none())
+        if row:
+            return {**row, "reused_existing_file": True}
+    file_id = str(uuid4())
+    result = await session.execute(
+        text(
+            """
+            insert into public.document_files (
+              id, tenant_id, checksum, original_file_name, file_extension, mime_type,
+              file_size, storage_bucket, storage_path, storage_provider, created_by,
+              created_at, metadata_json, is_deleted
+            )
+            values (
+              :id, :tenant_id, :checksum, :original_file_name, :file_extension, :mime_type,
+              :file_size, :storage_bucket, :storage_path, :storage_provider, :created_by,
+              now(), cast(:metadata_json as jsonb), false
+            )
+            returning *
+            """
+        ),
+        {
+            "id": file_id,
+            "tenant_id": context["tenant_id"],
+            "checksum": prepared.checksum,
+            "original_file_name": prepared.file_name,
+            "file_extension": prepared.file_extension,
+            "mime_type": prepared.mime_type,
+            "file_size": prepared.file_size,
+            "storage_bucket": prepared.storage_bucket,
+            "storage_path": prepared.storage_path,
+            "storage_provider": prepared.storage_provider,
+            "created_by": context.get("user_id"),
+            "metadata_json": _json(
+                {
+                    "first_document_type": request.document_type,
+                    "first_document_category": request.document_category,
+                    "preview_kind": preview_kind(prepared.mime_type, prepared.file_name),
+                }
+            ),
+        },
+    )
+    return {**(row_to_dict(result.mappings().one()) or {}), "reused_existing_file": False}
+
+
+async def _duplicate_warning(
+    session: AsyncSession,
+    context: dict[str, Any],
+    document_file_id: str,
+    document_type: str,
+) -> str | None:
+    if not document_file_id:
+        return None
+    result = await session.execute(
+        text(
+            """
+            select distinct document_type
+            from public.documents
+            where tenant_id = :tenant_id
+              and document_file_id = :document_file_id
+              and document_type <> :document_type
+              and coalesce(is_deleted, false) = false
+            limit 1
+            """
+        ),
+        {
+            "tenant_id": context["tenant_id"],
+            "document_file_id": document_file_id,
+            "document_type": document_type,
+        },
+    )
+    if result.scalar_one_or_none():
+        return "Belge eklendi. Ancak bu dosya daha once farkli bir belge turuyle kullanilmis. Kontrol etmeniz onerilir."
+    return None
+
+
+async def _find_existing_context_document(
+    session: AsyncSession,
+    context: dict[str, Any],
+    document_file_id: str,
+    owner_entity_type: str,
+    owner_entity_id: str,
+    document_type: str,
+) -> dict[str, Any] | None:
+    if not document_file_id:
+        return None
+    result = await session.execute(
+        text(
+            """
+            select *
+            from public.documents
+            where tenant_id = :tenant_id
+              and document_file_id = :document_file_id
+              and owner_entity_type = :owner_entity_type
+              and owner_entity_id = :owner_entity_id
+              and document_type = :document_type
+              and coalesce(is_deleted, false) = false
+            order by created_at desc
+            limit 1
+            """
+        ),
+        {
+            "tenant_id": context["tenant_id"],
+            "document_file_id": document_file_id,
+            "owner_entity_type": owner_entity_type,
+            "owner_entity_id": owner_entity_id,
+            "document_type": document_type,
+        },
+    )
+    return row_to_dict(result.mappings().one_or_none())
+
+
+async def _find_relation_id(
+    session: AsyncSession,
+    context: dict[str, Any],
+    document_id: str,
+    entity_type: str,
+    entity_id: str,
+) -> str | None:
+    result = await session.execute(
+        text(
+            """
+            select id
+            from public.document_relations
+            where tenant_id = :tenant_id
+              and document_id = :document_id
+              and entity_type = :entity_type
+              and entity_id = :entity_id
+            order by created_at desc
+            limit 1
+            """
+        ),
+        {
+            "tenant_id": context["tenant_id"],
+            "document_id": document_id,
+            "entity_type": entity_type,
+            "entity_id": entity_id,
+        },
+    )
+    value = result.scalar_one_or_none()
+    return str(value) if value else None
+
+
 async def _insert_document(session: AsyncSession, context: dict[str, Any], payload: dict[str, Any]) -> dict[str, Any]:
     result = await session.execute(
         text(
             """
             insert into public.documents (
-              id, tenant_id, company_id, branch_id, owner_entity_type, owner_entity_id,
+              id, tenant_id, document_file_id, company_id, branch_id, owner_entity_type, owner_entity_id,
               document_type, document_category, title, description, file_name,
               file_extension, mime_type, file_size, storage_bucket, storage_path,
               storage_provider, checksum, version_no, parent_document_id, status,
@@ -419,7 +671,7 @@ async def _insert_document(session: AsyncSession, context: dict[str, Any], paylo
               tags, metadata_json
             )
             values (
-              :id, :tenant_id, :company_id, :branch_id, :owner_entity_type, :owner_entity_id,
+              :id, :tenant_id, :document_file_id, :company_id, :branch_id, :owner_entity_type, :owner_entity_id,
               :document_type, :document_category, :title, :description, :file_name,
               :file_extension, :mime_type, :file_size, :storage_bucket, :storage_path,
               :storage_provider, :checksum, coalesce(:version_no, 1), :parent_document_id, :status,
@@ -431,6 +683,7 @@ async def _insert_document(session: AsyncSession, context: dict[str, Any], paylo
         ),
         {
             "tenant_id": context["tenant_id"],
+            "document_file_id": None,
             "version_no": 1,
             "parent_document_id": None,
             "status": "uploaded",
@@ -448,18 +701,54 @@ async def _insert_document(session: AsyncSession, context: dict[str, Any], paylo
     return _document_payload(row_to_dict(result.mappings().one()) or {})
 
 
-async def _insert_relation(session: AsyncSession, context: dict[str, Any], document_id: str, entity_type: str, entity_id: str, relation_type: str) -> None:
+async def _insert_relation(
+    session: AsyncSession,
+    context: dict[str, Any],
+    document_id: str,
+    entity_type: str,
+    entity_id: str,
+    relation_type: str,
+    *,
+    document_file_id: str | None = None,
+    module_key: str | None = None,
+    operation_type: str | None = None,
+    operation_id: str | None = None,
+    document_slot_key: str | None = None,
+    metadata_json: dict[str, Any] | None = None,
+) -> str:
+    relation_id = str(uuid4())
     await session.execute(
         text(
             """
             insert into public.document_relations (
-              id, tenant_id, document_id, entity_type, entity_id, relation_type, created_at
+              id, tenant_id, document_id, document_file_id, entity_type, entity_id,
+              operation_type, operation_id, module_key, relation_type, document_slot_key,
+              created_by, created_at, metadata_json
             )
-            values (:id, :tenant_id, :document_id, :entity_type, :entity_id, :relation_type, now())
+            values (
+              :id, :tenant_id, :document_id, :document_file_id, :entity_type, :entity_id,
+              :operation_type, :operation_id, :module_key, :relation_type, :document_slot_key,
+              :created_by, now(), cast(:metadata_json as jsonb)
+            )
             """
         ),
-        {"id": str(uuid4()), "tenant_id": context["tenant_id"], "document_id": document_id, "entity_type": entity_type, "entity_id": entity_id, "relation_type": relation_type},
+        {
+            "id": relation_id,
+            "tenant_id": context["tenant_id"],
+            "document_id": document_id,
+            "document_file_id": document_file_id,
+            "entity_type": entity_type,
+            "entity_id": entity_id,
+            "operation_type": operation_type,
+            "operation_id": operation_id,
+            "module_key": module_key or context.get("module_key"),
+            "relation_type": relation_type,
+            "document_slot_key": document_slot_key,
+            "created_by": context.get("user_id"),
+            "metadata_json": _json(metadata_json or {}),
+        },
     )
+    return relation_id
 
 
 async def _load_document(session: AsyncSession, context: dict[str, Any], document_id: str) -> dict[str, Any]:
@@ -547,6 +836,11 @@ async def _outbox(session: AsyncSession, context: dict[str, Any], event_type: st
 def _document_payload(row: dict[str, Any]) -> dict[str, Any]:
     payload = dict(row)
     if payload.get("storage_path"):
+        payload["media_access_url"] = local_media_url(
+            str(payload.get("storage_bucket") or "eden-documents"),
+            str(payload["storage_path"]),
+        )
+        payload["mediaAccessUrl"] = payload["media_access_url"]
         payload["storage_path_masked"] = mask_storage_path(str(payload["storage_path"]))
     payload.pop("storage_path", None)
     return payload

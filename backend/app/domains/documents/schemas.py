@@ -14,10 +14,16 @@ RelationType = Literal[
     "supporting",
     "evidence",
     "attachment",
+    "card_document",
+    "operation_evidence",
+    "required_evidence",
+    "supporting_document",
     "generated_report",
     "import_file",
     "export_file",
     "service_photo",
+    "service_report",
+    "contract_document",
     "identity_document",
 ]
 AccessAction = Literal["view", "download", "preview", "upload", "delete", "verify", "reject"]
@@ -72,6 +78,10 @@ class DocumentUploadRequest(BaseModel):
     tags: list[str] = Field(default_factory=list)
     metadata_json: dict[str, Any] = Field(default_factory=dict)
     relation_type: RelationType = "attachment"
+    module_key: str | None = Field(default=None, max_length=120)
+    operation_key: str | None = Field(default=None, max_length=120)
+    operation_id: str | None = Field(default=None, max_length=120)
+    document_slot_key: str | None = Field(default=None, max_length=160)
 
 
 class EntityDocumentUploadRequest(DocumentUploadRequest):

@@ -2,6 +2,7 @@
 
 import { Camera, FilePlus2, Upload } from 'lucide-react'
 import { useRef, useState } from 'react'
+import { DocumentDuplicateNotice } from './DocumentDuplicateNotice'
 import { DocumentPreview } from './DocumentPreview'
 import { DocumentStatusBadge } from './DocumentStatusBadge'
 import { documentService, type DocumentRecord, type DocumentRelationType } from '@/lib/services/documents'
@@ -15,6 +16,7 @@ export type DocumentSlotDefinition = {
   acceptedFileTypes?: string[]
   maxSizeMB?: number
   relationType?: DocumentRelationType
+  documentSlotKey?: string
 }
 
 type Props = {
@@ -24,10 +26,13 @@ type Props = {
   document?: DocumentRecord | null
   readOnly?: boolean
   allowCamera?: boolean
+  moduleKey?: string
+  operationKey?: string
+  operationId?: string
   onUploaded?: (document: DocumentRecord) => void
 }
 
-export function DocumentSlot({ entityType, entityId, slot, document, readOnly, allowCamera, onUploaded }: Props) {
+export function DocumentSlot({ entityType, entityId, slot, document, readOnly, allowCamera, moduleKey, operationKey, operationId, onUploaded }: Props) {
   const inputRef = useRef<HTMLInputElement | null>(null)
   const cameraRef = useRef<HTMLInputElement | null>(null)
   const [working, setWorking] = useState(false)
@@ -49,6 +54,10 @@ export function DocumentSlot({ entityType, entityId, slot, document, readOnly, a
         required: Boolean(slot.required),
         relation_type: slot.relationType || 'attachment',
         verification_required: Boolean(slot.required),
+        module_key: moduleKey || categoryFor(entityType),
+        operation_key: operationKey || null,
+        operation_id: operationId || null,
+        document_slot_key: slot.documentSlotKey || slot.documentType,
       }
       const uploaded = replaceDocument
         ? await documentService.newVersion(replaceDocument.id, payload)
@@ -75,6 +84,7 @@ export function DocumentSlot({ entityType, entityId, slot, document, readOnly, a
       <div className="mt-4">
         <DocumentPreview document={document || null} />
       </div>
+      <DocumentDuplicateNotice document={document || null} />
 
       {!readOnly ? (
         <div className="mt-4 flex flex-wrap gap-2">

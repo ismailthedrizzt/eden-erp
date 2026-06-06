@@ -6,6 +6,24 @@ Eden ERP belge altyapisi; dosya URL'lerini daginik JSON alanlarinda tutmak yerin
 
 Bu kapsam tam DMS/ECM degildir. Ilk hedef guvenli yukleme, indirme, preview, belge gereksinimleri, kayit iliskileri ve moduller arasi ortak Document Loader standardidir.
 
+## 2026-06 Rework Hedefi
+
+Belge yonetimi artik uc ayrik katmanla ele alinir:
+
+- Fiziksel dosya: `document_files`, checksum, local storage path, MIME type ve file size.
+- Belge metadata: `documents`, belge turu, durum, verification, tarih ve uploader bilgileri.
+- Baglam/iliski: `document_relations`, entity, operation, module, slot ve relation type.
+
+Kullanici belgeyi merkezi havuzdan secmek zorunda kalmaz. Belge hangi form, kart veya wizard icin gerekiyorsa orada yuklenir. Sistem arka planda tenant icinde SHA-256 checksum ile duplicate dosyayi tanir, fiziksel dosyayi tekrar yazmaz ve mevcut dosyayi yeni baglama relation ile baglar.
+
+Yeni upload response alanlari:
+
+- `document_file_id`
+- `relation_id`
+- `reused_existing_file`
+- `duplicate_warning`
+- `mediaAccessUrl`
+
 ## Kapsam
 
 Document domain sahip olur:

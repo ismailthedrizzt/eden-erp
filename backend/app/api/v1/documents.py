@@ -18,7 +18,6 @@ from app.domains.documents.schemas import (
     DocumentUpdateRequest,
     DocumentUploadRequest,
 )
-from app.domains.documents.storage import DEFAULT_BUCKET, SIGNED_URL_EXPIRES_IN, create_signed_url, local_file_metadata, validate_storage_path
 from app.domains.documents.service import (
     create_document,
     create_new_version,
@@ -36,6 +35,14 @@ from app.domains.documents.service import (
     upload_document,
     upload_document_for_entity,
     verify_document,
+)
+from app.domains.documents.storage import (
+    DEFAULT_BUCKET,
+    SIGNED_URL_EXPIRES_IN,
+    create_media_access_url,
+    create_signed_url,
+    local_file_metadata,
+    validate_storage_path,
 )
 from app.schemas.common import ApiSuccess
 
@@ -174,8 +181,11 @@ async def documents_upload_signed_url(
     storage_provider = str(payload.get("storageProvider") or payload.get("storage_provider") or "local")
     expires_in = int(payload.get("expiresIn") or payload.get("expires_in") or SIGNED_URL_EXPIRES_IN)
     signed_url = await create_signed_url(storage_bucket, storage_path, storage_provider, expires_in=expires_in)
+    media_access_url = await create_media_access_url(storage_bucket, storage_path, storage_provider, expires_in=expires_in)
     return {
         "signedUrl": signed_url,
+        "mediaAccessUrl": media_access_url,
+        "media_access_url": media_access_url,
         "expiresIn": expires_in,
         "storagePath": storage_path,
         "storageBucket": storage_bucket,
@@ -301,6 +311,16 @@ async def documents_download_url(document_id: str, session: SessionDep, context:
         raise domain_error_to_http(error) from error
 
 
+@router.get("/documents/{document_id}/media-access-url", response_model=ApiSuccess[dict[str, Any]])
+async def documents_media_access_url(document_id: str, session: SessionDep, context: RequestContextDep) -> ApiSuccess[dict[str, Any]]:
+    ensure_permission(context, "documents.view")
+    tenant_id = require_tenant(context)
+    try:
+        return ApiSuccess(data=await get_document_url(session, service_context(context, tenant_id), document_id, action="preview"))
+    except DomainError as error:
+        raise domain_error_to_http(error) from error
+
+
 @router.get("/documents/{document_id}/preview-url", response_model=ApiSuccess[dict[str, Any]])
 async def documents_preview_url(document_id: str, session: SessionDep, context: RequestContextDep) -> ApiSuccess[dict[str, Any]]:
     ensure_permission(context, "documents.view")
@@ -325,4 +345,3 @@ async def documents_access_logs(document_id: str, session: SessionDep, context: 
 def ensure_permission(context: RequestContext, permission_key: str) -> None:
     if not has_permission(context, permission_key):
         raise DomainError("Bu islem icin yetkiniz bulunmuyor.", "PERMISSION_DENIED", status.HTTP_403_FORBIDDEN)
-
