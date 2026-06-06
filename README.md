@@ -8,7 +8,7 @@ Eden ERP, moduler ERP platformu olarak tasarlanan yeni nesil bir is uygulamasidi
 
 - Next.js 15 App Router tabanli frontend ve gecis donemi API route'lari.
 - React 19, TypeScript ve Tailwind CSS ile uygulama arayuzu.
-- Yerel PostgreSQL/local DB veri katmani; Supabase sadece legacy compatibility envanterinde kalir.
+- Yerel PostgreSQL/local DB veri katmani, app-session auth ve local filesystem media storage.
 - TypeScript tarafinda domain, operation, process, audit, outbox ve policy katmanlarinin MVP/contract hazirligi.
 
 ### Hedef Durum
@@ -28,7 +28,7 @@ Next.js API route'lari kalici business logic katmani degildir. Domain logic, ope
 
 ## Yerel Calistirma
 
-Tek kalici branch `main`dir. Calisma ortami uzak sunucudur; ortam farki branch ile degil APP_ENV/NEXT_PUBLIC_APP_ENV, DATABASE_URL ve servis env degerleriyle yonetilir. Supabase/Vercel dokumanlari legacy kabul edilir.
+Tek kalici branch `main`dir. Calisma ortami uzak sunucudur; ortam farki branch ile degil APP_ENV/NEXT_PUBLIC_APP_ENV, DATABASE_URL ve servis env degerleriyle yonetilir.
 
 Frontend:
 
@@ -76,17 +76,22 @@ VS tarafinda Ollama servis olarak calisir. Uygulama `OLLAMA_BASE_URL=http://127.
 
 ## Ortam Degiskenleri
 
-Local icin `.env.local.example` dosyasini `.env.local` olarak kopyalayip Development Supabase bilgileriyle doldurun:
+Uzak sunucu icin servis env veya `.env.local` su canonical alanlari tasir:
 
-- `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-- `SUPABASE_SERVICE_ROLE_KEY`
+- `APP_ENV`
+- `NEXT_PUBLIC_APP_ENV`
+- `NEXT_PUBLIC_RELEASE_CHANNEL`
+- `DATABASE_URL`
+- `DATABASE_TARGET_CLASS`
+- `APP_SESSION_SECRET`
+- `FASTAPI_BASE_URL`
+- `INTERNAL_BACKEND_TOKEN`
+- `ALLOW_TRUSTED_PROXY_HEADERS`
+- `TRUSTED_PROXY_SECRET`
 - `NEXT_PUBLIC_APP_URL`
 - `NEXT_PUBLIC_APP_NAME`
 
-Virtual Server icin `.env.release.example` dosyasini temel alip `/etc/eden-erp/eden-erp.env` olusturun ve Live Supabase bilgileriyle doldurun. Live secret'lari repoya veya `.env.local` dosyasina koymayin.
-
-FastAPI backend icin `backend/.env` veya sistem ortam degiskenleri kullanilabilir. Ilk scaffold `DATABASE_URL`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_JWT_SECRET` ve `CORS_ORIGINS` alanlarini destekleyecek sekilde hazirlanmistir.
+Live secret'lari repoya koymayin. FastAPI backend icin `backend/.env` veya sistem ortam degiskenleri kullanilabilir.
 
 ## Dogrulama
 
@@ -127,19 +132,21 @@ docker compose config
 
 CI workflow `.github/workflows/ci.yml` frontend, backend, OpenAPI drift and Docker build checks for the Next + FastAPI + worker topology.
 
-Tek branch + Virtual Server deploy modeli:
+Tek branch + uzak sunucu deploy modeli:
 
-- [Single Main Virtual Server Deployment](./docs/deployment/SingleMainVirtualServerDeployment.md)
+- [Remote Server Deployment Runbook](./docs/operations/RemoteServerDeploymentRunbook.md)
 - [Environment Strategy](./docs/architecture/EnvironmentStrategy.md)
 
 ## Deployment Model
 
-Target deployment is no longer a single Next.js app:
+Target deployment is not a single Next.js app:
 
-- Next.js web/BFF container or Vercel deployment.
+- Next.js web/BFF process on the remote server.
 - FastAPI core backend container.
 - Python worker container/process for outbox and background work.
-- Supabase/PostgreSQL for DB/Auth/Storage.
+- Local PostgreSQL/local DB for data.
+- App-session auth through Next.js and trusted proxy context into FastAPI.
+- Local filesystem media storage through controlled media routes.
 
 Local container files:
 

@@ -3,7 +3,6 @@
 ## Changed Files
 
 - `scripts/check-database-target.js`
-- `scripts/check-supabase-target.js`
 - `package.json`
 - `scripts/check-release-env-safety.js`
 
@@ -17,7 +16,7 @@ DB safety must reason about `DATABASE_URL`, `DB_NAME`, `APP_ENV`, command contex
 - P0: release DB seed/reset passes.
 - P0: development context points at release-like DB.
 - P1: ambiguous DB name in release context.
-- P2: legacy Supabase target script remains for historical commands.
+- P2: operators still need a manual DB identity check before approved release migrations.
 
 ## Field Test Impact
 

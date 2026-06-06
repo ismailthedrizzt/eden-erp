@@ -65,17 +65,7 @@ Auth hardening:
 - Canonical auth is `eden_app_session` in Next.js plus trusted proxy headers from the Next BFF to FastAPI.
 - Next BFF should set `x-tenant-id`, `x-user-id`, scope headers and `x-proxy-secret`; browsers must not call FastAPI directly.
 - Internal worker/cron endpoints use `INTERNAL_BACKEND_TOKEN` or `CRON_SECRET`, not a user JWT.
-- Supabase JWT settings are legacy compatibility only and must not be required for release startup.
-
-Legacy Supabase compatibility:
-
-```bash
-SUPABASE_URL=
-SUPABASE_JWT_SECRET=
-SUPABASE_JWKS_URL=
-USE_SUPABASE_POOLER=false
-EDEN_ENABLE_LEGACY_SUPABASE_SCRIPTS=false
-```
+- External managed-auth settings are not part of the canonical deployment model and must not be required for release startup.
 
 ## Observability
 

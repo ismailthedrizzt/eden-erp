@@ -211,16 +211,19 @@ function renderAyarInput(ayar: SistemAyari) {
 async function testEmailConfig() {
   const testEmail = await getAyar('mail', 'test_email')
   
-  const { error } = await supabase.functions.invoke('send-email', {
-    body: {
+  const response = await fetch('/api/system/email/test', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({
       to: testEmail,
       subject: 'Eden ERP - Email Test',
       body: 'Email configuration is working!'
-    }
+    })
   })
   
-  if (error) {
-    toast.error('Email gönderilemedi: ' + error.message)
+  if (!response.ok) {
+    const payload = await response.json().catch(() => null)
+    toast.error('Email gönderilemedi: ' + (payload?.message || response.statusText))
   } else {
     toast.success('Test email gönderildi!')
   }

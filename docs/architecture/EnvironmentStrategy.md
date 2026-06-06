@@ -81,7 +81,7 @@ npm run db:target:check
 npm run release:check
 ```
 
-`npm run legacy:supabase:target:check` is retained only for legacy Supabase commands. Direct `DATABASE_URL` checks use `scripts/check-database-target.js`.
+Supabase target checks and legacy Supabase command wrappers have been removed from the canonical script surface. Direct `DATABASE_URL` checks use `scripts/check-database-target.js`.
 
 ## Route Visibility
 
