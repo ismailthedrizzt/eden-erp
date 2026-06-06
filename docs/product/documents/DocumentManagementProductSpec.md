@@ -246,3 +246,46 @@ Sensitive rule:
 ## Known Gaps
 
 Known gaps are tracked in [DocumentKnownGaps.md](./DocumentKnownGaps.md) and summarized in the final release gate risk list.
+# Document Management Product Spec
+
+Date: 2026-06-06
+
+## Product Rule
+
+Belge kullaniciya baglaminda yukletilir. Kullanici "once merkezi Belgeler sayfasina git, mevcut belge sec" akisi yasamaz. Merkezi Belgeler sayfasi denetim, arama, eksik belge takibi, dogrulama, expiry ve reuse izleme merkezidir.
+
+## Central Documents Page
+
+Tabs:
+
+- Tum Belgeler
+- Eksik Zorunlu Belgeler
+- Dogrulama Bekleyenler
+- Reddedilenler
+- Suresi Yaklasanlar
+- Suresi Dolanlar
+- Ayni Dosya Kullanimlari
+- Belge Aranacak Muhasebe Hareketleri
+
+Filters:
+
+- belge turu
+- modul
+- entity type
+- relation type
+- durum
+- verification status
+- required/missing
+- expiry status
+- uploaded by
+- date range
+- reused existing file
+
+## Card vs Operation Documents
+
+Kayit detaylarinda Belgeler iki grupta gosterilir:
+
+1. Kart / Genel Belgeler
+2. Islem / Lifecycle Belgeleri
+
+This split applies to company, employee, partner, representative, branch, service record and contract detail screens.

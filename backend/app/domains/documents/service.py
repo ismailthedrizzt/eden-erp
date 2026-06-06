@@ -190,27 +190,39 @@ async def upload_document(session: AsyncSession, context: dict[str, Any], reques
         )
     else:
         await write_prepared_file(prepared)
-    duplicate_warning = await _duplicate_warning(session, context, str(file_record.get("id") or ""), request.document_type)
+    duplicate_warning = await _duplicate_warning(
+        session,
+        context,
+        str(file_record.get("id") or ""),
+        str(file_record.get("checksum") or prepared.checksum or ""),
+        request.document_type,
+    )
     if reused_existing_file:
-        existing_context_document = await _find_existing_context_document(
+        existing_context_document, existing_relation = await _find_existing_context_document(
             session,
             context,
             str(file_record.get("id") or ""),
+            str(file_record.get("checksum") or prepared.checksum or ""),
             request.owner_entity_type,
             request.owner_entity_id,
             request.document_type,
+            request.relation_type,
+            operation_id=request.operation_id,
+            document_slot_key=request.document_slot_key,
         )
         if existing_context_document:
             existing_payload = _document_payload(existing_context_document)
             await _log_access(session, context, str(existing_payload["id"]), "upload")
+            relation_id = str(existing_relation.get("id") or "") if existing_relation else await _find_relation_id(session, context, str(existing_payload["id"]), request.owner_entity_type, request.owner_entity_id)
             return {
                 **existing_payload,
                 "document_id": existing_payload.get("id"),
                 "document_file_id": file_record.get("id"),
-                "relation_id": await _find_relation_id(session, context, str(existing_payload["id"]), request.owner_entity_type, request.owner_entity_id),
+                "relation_id": relation_id,
                 "reused_existing_file": True,
+                "relation_reused": True,
                 "duplicate_warning": duplicate_warning,
-                "message": duplicate_warning or "Belge eklendi. Mevcut dosya yeniden kullanildi.",
+                "message": "Belge zaten bu alana eklenmis.",
             }
     payload = request.model_dump(mode="json", exclude={"content_base64"})
     payload.update(
@@ -238,7 +250,7 @@ async def upload_document(session: AsyncSession, context: dict[str, Any], reques
         }
     )
     row = await _insert_document(session, context, payload)
-    relation_id = await _insert_relation(
+    relation = await _insert_relation(
         session,
         context,
         document_id,
@@ -260,8 +272,9 @@ async def upload_document(session: AsyncSession, context: dict[str, Any], reques
         **row,
         "document_id": row.get("id"),
         "document_file_id": file_record.get("id"),
-        "relation_id": relation_id,
+        "relation_id": relation["id"],
         "reused_existing_file": reused_existing_file,
+        "relation_reused": relation["relation_reused"],
         "duplicate_warning": duplicate_warning,
         "message": duplicate_warning or summary,
     }
@@ -492,6 +505,24 @@ async def _resolve_document_file(
     request: DocumentUploadRequest,
 ) -> dict[str, Any]:
     if not await table_exists(session, "public.document_files"):
+        if prepared.checksum:
+            existing_document = await session.execute(
+                text(
+                    """
+                    select checksum, mime_type, file_size, storage_bucket, storage_path, storage_provider
+                    from public.documents
+                    where tenant_id = :tenant_id
+                      and checksum = :checksum
+                      and coalesce(is_deleted, false) = false
+                    order by created_at asc
+                    limit 1
+                    """
+                ),
+                {"tenant_id": context["tenant_id"], "checksum": prepared.checksum},
+            )
+            row = row_to_dict(existing_document.mappings().one_or_none())
+            if row:
+                return {**row, "id": None, "reused_existing_file": True}
         return {
             "id": None,
             "checksum": prepared.checksum,
@@ -564,17 +595,24 @@ async def _duplicate_warning(
     session: AsyncSession,
     context: dict[str, Any],
     document_file_id: str,
+    checksum: str,
     document_type: str,
 ) -> str | None:
-    if not document_file_id:
+    if not document_file_id and not checksum:
         return None
+    if document_file_id:
+        where = "document_file_id = :document_file_id"
+        params = {"document_file_id": document_file_id}
+    else:
+        where = "checksum = :checksum"
+        params = {"checksum": checksum}
     result = await session.execute(
         text(
-            """
+            f"""
             select distinct document_type
             from public.documents
             where tenant_id = :tenant_id
-              and document_file_id = :document_file_id
+              and {where}
               and document_type <> :document_type
               and coalesce(is_deleted, false) = false
             limit 1
@@ -582,8 +620,8 @@ async def _duplicate_warning(
         ),
         {
             "tenant_id": context["tenant_id"],
-            "document_file_id": document_file_id,
             "document_type": document_type,
+            **params,
         },
     )
     if result.scalar_one_or_none():
@@ -595,36 +633,65 @@ async def _find_existing_context_document(
     session: AsyncSession,
     context: dict[str, Any],
     document_file_id: str,
+    checksum: str,
     owner_entity_type: str,
     owner_entity_id: str,
     document_type: str,
-) -> dict[str, Any] | None:
-    if not document_file_id:
-        return None
+    relation_type: str,
+    *,
+    operation_id: str | None,
+    document_slot_key: str | None,
+) -> tuple[dict[str, Any] | None, dict[str, Any] | None]:
+    if document_file_id:
+        file_where = "d.document_file_id = :document_file_id"
+        file_params = {"document_file_id": document_file_id}
+    elif checksum:
+        file_where = "d.checksum = :checksum"
+        file_params = {"checksum": checksum}
+    else:
+        return None, None
     result = await session.execute(
         text(
-            """
-            select *
+            f"""
+            select d.*, r.id as relation_id, r.document_slot_key as relation_document_slot_key,
+                   r.relation_type as relation_relation_type
             from public.documents
-            where tenant_id = :tenant_id
-              and document_file_id = :document_file_id
-              and owner_entity_type = :owner_entity_type
-              and owner_entity_id = :owner_entity_id
-              and document_type = :document_type
-              and coalesce(is_deleted, false) = false
-            order by created_at desc
+            join public.document_relations r
+              on r.tenant_id = d.tenant_id
+             and r.document_id = d.id
+            where d.tenant_id = :tenant_id
+              and {file_where}
+              and d.owner_entity_type = :owner_entity_type
+              and d.owner_entity_id = :owner_entity_id
+              and d.document_type = :document_type
+              and r.entity_type = :owner_entity_type
+              and r.entity_id = :owner_entity_id
+              and r.relation_type = :relation_type
+              and coalesce(r.operation_id, '') = coalesce(:operation_id, '')
+              and coalesce(r.document_slot_key, '') = coalesce(:document_slot_key, '')
+              and coalesce(d.is_deleted, false) = false
+            order by d.created_at desc
             limit 1
             """
         ),
         {
             "tenant_id": context["tenant_id"],
-            "document_file_id": document_file_id,
             "owner_entity_type": owner_entity_type,
             "owner_entity_id": owner_entity_id,
             "document_type": document_type,
+            "relation_type": relation_type,
+            "operation_id": operation_id,
+            "document_slot_key": document_slot_key,
+            **file_params,
         },
     )
-    return row_to_dict(result.mappings().one_or_none())
+    row = row_to_dict(result.mappings().one_or_none())
+    if not row:
+        return None, None
+    relation = {"id": row.pop("relation_id", None)}
+    row.pop("relation_document_slot_key", None)
+    row.pop("relation_relation_type", None)
+    return row, relation
 
 
 async def _find_relation_id(
@@ -715,7 +782,36 @@ async def _insert_relation(
     operation_id: str | None = None,
     document_slot_key: str | None = None,
     metadata_json: dict[str, Any] | None = None,
-) -> str:
+) -> dict[str, Any]:
+    existing = await session.execute(
+        text(
+            """
+            select id
+            from public.document_relations
+            where tenant_id = :tenant_id
+              and document_id = :document_id
+              and entity_type = :entity_type
+              and entity_id = :entity_id
+              and relation_type = :relation_type
+              and coalesce(operation_id, '') = coalesce(:operation_id, '')
+              and coalesce(document_slot_key, '') = coalesce(:document_slot_key, '')
+            order by created_at asc
+            limit 1
+            """
+        ),
+        {
+            "tenant_id": context["tenant_id"],
+            "document_id": document_id,
+            "entity_type": entity_type,
+            "entity_id": entity_id,
+            "relation_type": relation_type,
+            "operation_id": operation_id,
+            "document_slot_key": document_slot_key,
+        },
+    )
+    existing_id = existing.scalar_one_or_none()
+    if existing_id:
+        return {"id": str(existing_id), "relation_reused": True}
     relation_id = str(uuid4())
     await session.execute(
         text(
@@ -748,7 +844,7 @@ async def _insert_relation(
             "metadata_json": _json(metadata_json or {}),
         },
     )
-    return relation_id
+    return {"id": relation_id, "relation_reused": False}
 
 
 async def _load_document(session: AsyncSession, context: dict[str, Any], document_id: str) -> dict[str, Any]:

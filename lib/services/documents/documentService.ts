@@ -33,6 +33,7 @@ export type DocumentRecord = {
   document_file_id?: string | null
   relation_id?: string | null
   reused_existing_file?: boolean
+  relation_reused?: boolean
   duplicate_warning?: string | null
   message?: string | null
   version_no?: number

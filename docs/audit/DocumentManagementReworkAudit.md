@@ -1,43 +1,43 @@
 # Document Management Rework Audit
 
-Audit date: 2026-06-06
+Date: 2026-06-06
+Branch: main
+Working environment: remote server, local PostgreSQL/local DB
+
+## Purpose
+
+Audit the current document management model before strengthening central documents, contextual upload and duplicate file reuse.
 
 ## Current State
 
-- `documents` stores document metadata plus current storage fields: `storage_bucket`, `storage_path`, `storage_provider`, `checksum`, `mime_type`, `file_size`, status, verification status, owner entity and version fields.
-- `document_relations` exists and links a document to an entity. Before this rework it did not carry `document_file_id`, module, operation, slot or relation metadata.
-- `document_requirements` exists and is backed by default in-code requirements when the table is unavailable.
-- Local storage is already used through `backend/app/domains/documents/storage.py`; path traversal is blocked with tenant path validation and `commonpath`.
-- Media access is controlled through FastAPI and the Next BFF `/api/media/open` proxy.
-- The previous upload service calculated checksum but wrote the physical file before duplicate lookup, so duplicate physical file reuse was not enforced.
-- UI upload is contextual through `DocumentLoader` and `DocumentSlot`; users are not required to pick from a central document pool.
-- `signedUrl` terminology still existed as a compatibility name. This rework introduces `mediaAccessUrl` while keeping alias fields for older consumers.
-- Supabase Storage is not used by the canonical upload/media route. One client default still sent `storage_provider=supabase`; this was changed to `local`.
-
-## Changes In This Rework
-
-- Added `document_files` physical file registry.
-- Added tenant-scoped checksum lookup before file write.
-- Added `documents.document_file_id`.
-- Extended `document_relations` with file, module, operation, slot, creator and metadata fields.
-- Upload response now includes `document_file_id`, `relation_id`, `reused_existing_file`, `duplicate_warning` and a user-safe message.
-- Duplicate files are reused only inside the same tenant.
-- Added `mediaAccessUrl` / `media_access_url` response fields.
-- Added a document type registry and expanded default requirement registry.
-- Added UI duplicate notice in contextual document slots.
+| Area | Finding |
+| --- | --- |
+| `documents` | Carries tenant, company/branch, owner entity, document type/category, title, file metadata, checksum, storage metadata, status, verification, expiry, tags, audit metadata and soft delete. |
+| `document_files` | Exists via `20260606_0100_document_file_dedup.py`; canonical file identity is `tenant_id + checksum`. |
+| `document_relations` | Exists and carries document/file/entity/operation/module/slot/relation metadata after dedup migration. |
+| `document_requirements` | Exists; default registry also exists in Python for environments where table data is not seeded. |
+| Storage | `storage_provider` is normalized to `local`; files are under `DOCUMENT_STORAGE_ROOT`. |
+| Checksum | SHA-256 is calculated when upload includes bytes/base64. |
+| Duplicate reuse | Implemented through `document_files`; this phase added fallback reuse through existing `documents.checksum` if `document_files` is unavailable. |
+| Physical duplicate write | Avoided for same-tenant checksum reuse. |
+| Relation idempotency | This phase added service-level reuse and migration-backed unique context index. |
+| User selects existing document? | Not required. User uploads in context; system reuses existing file silently. |
+| UI | `DocumentSlot`, `DocumentLoader`, `DocumentRequirementList`, `DocumentPreview`, `DocumentDuplicateNotice`, `DocumentStatusBadge` exist. |
+| Wizard alignment | Partially aligned; wizard-by-wizard replacement with `DocumentRequirementList` remains burn-down work. |
+| Media route | Next `/api/media/open` is a thin FastAPI proxy. FastAPI validates tenant in storage path and serves through `FileResponse`. |
+| Signed URL terminology | `signedUrl` remains as backward-compatible alias; `mediaAccessUrl` is preferred. |
 
 ## P0/P1/P2 Risks
 
-- P0: cross-tenant checksum reuse must never happen. The lookup is scoped by `tenant_id`.
-- P0: media route must stay authenticated and scoped. The BFF route remains a thin proxy to FastAPI.
-- P0: storage path must not be public or user-controlled. Existing validation remains in place.
-- P1: old documents without checksum cannot be deduplicated until reuploaded or backfilled with checksum.
-- P1: relation finalization for operation drafts still depends on each wizard passing operation context consistently.
-- P2: old consumers may still read `signedUrl`; alias remains, but new code should use `mediaAccessUrl`.
+| Priority | Risk | Status | Next Action |
+| --- | --- | --- | --- |
+| P0 | Cross-tenant duplicate reuse. | Guarded by `tenant_id + checksum` lookup. | Keep tests for Tenant A/B reuse. |
+| P0 | Path traversal / public storage path. | Guarded by `validate_storage_path` and local root containment. | Add media access regression tests. |
+| P0 | Authless media access. | Next route proxies to FastAPI route with access context dependency. | Smoke with and without session. |
+| P1 | Wizard document steps not uniformly on `DocumentRequirementList`. | Partial. | Burn down lifecycle wizard families. |
+| P1 | Data-quality/action-center document findings not complete. | Planned. | Add findings for duplicate type conflict, rejected/expired reuse. |
+| P2 | `signedUrl` naming remains. | Legacy compatibility. | Prefer `mediaAccessUrl` in new UI. |
 
-## Field Test Checklist
+## Impact
 
-- Upload the same PDF twice to the same entity slot and verify the second response has `reused_existing_file=true`.
-- Upload the same PDF to a different document type in the same tenant and verify a warning appears.
-- Upload the same PDF in a different tenant and verify a new `document_files` row is created.
-- Open preview/download and verify no raw filesystem path is exposed.
+The document backend now better matches the target principle: users upload in context, files are centrally deduplicated per tenant, and relations attach files/documents to each business context.
