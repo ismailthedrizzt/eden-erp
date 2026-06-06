@@ -68,6 +68,23 @@ This is a newly designed platform, not a legacy system that must preserve obsole
 
 Supabase and Vercel are not canonical runtime platforms for Eden ERP. Core ERP business behavior, DB access and lifecycle mutation belong in FastAPI/Python backed by local PostgreSQL.
 
+
+## Field Test Cleanup Rules
+
+Date: 2026-06-06
+
+- Field test is business workflow validation, not only technical smoke testing.
+- P0 findings must be fixed before any new feature work.
+- P1 findings are fixed before module deepening unless the release scope explicitly excludes the affected flow.
+- P2 polish is batched separately after blocker and release-readiness work.
+- New pages start with `releaseStatus=development`.
+- A page can move to release only after field test evidence exists.
+- If lifecycle operation behavior changes, the related wizard scenario must be retested.
+- If document upload or duplicate reuse changes, all document field-test scenarios must be retested.
+- If auth, DB target guard, storage security or release guard changes, login, DB, media and release smoke tests must be rerun.
+- Field-test findings are recorded in `docs/field-test/ManualFieldTestFindingsRegister.md` and classified through `docs/field-test/P0P1P2FieldTestRiskRegister.md`.
+- Release-candidate decisions use `docs/field-test/FieldTestReleaseCandidateDecision.md`.
+
 ## Platform Cleanup Phase 1 Rules
 
 - Supabase/Vercel are not canonical deployment targets.
