@@ -95,6 +95,8 @@ export const routeReleaseRegistry = [
   route('/app/crm/pipeline-ayarlari', 'crm', 'CRM Pipeline Ayarlari', 'development', true, true, true),
   route('/app/crm/takipler', 'crm', 'CRM Takipler', 'development', true, true, true),
 
+  route('/app/satis/sozlesmeler', 'sales', 'Sozlesme Yonetimi', 'release', true, true, true, { notes: RELEASE_NOTES }),
+
   route('/app/gorev-ve-proje-yonetimi', 'project_management', 'Gorev ve Proje Yonetimi', 'development', true, true, true),
   route('/app/gorev-ve-proje-yonetimi/gorevler', 'project_management', 'Gorevler', 'development', true, true, true),
   route('/app/gorev-ve-proje-yonetimi/projeler', 'project_management', 'Projeler', 'development', true, true, true),

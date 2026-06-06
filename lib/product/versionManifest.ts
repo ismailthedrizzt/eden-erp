@@ -996,6 +996,14 @@ export const productVersionManifest: ProductVersionManifest = {
           maturity: 'planned',
           requiredForSmallBusiness: false,
         },
+        sozlesmeler: {
+          id: 'sozlesmeler',
+          label: 'Sözleşme Yönetimi',
+          href: '/app/satis/sozlesmeler',
+          version: '0.1.0',
+          maturity: 'dev',
+          requiredForSmallBusiness: true,
+        },
       },
     },
     servis: {

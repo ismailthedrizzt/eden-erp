@@ -54,6 +54,7 @@ const BREADCRUMBS: Record<string, string> = {
   '/app/satis-sonrasi/servis-destek-kayitlari': 'Satış Sonrası Hizmetler › Servis ve Destek Kayıtları',
   '/app/satis-sonrasi/bakim-sozlesme-takip': 'Satış Sonrası Hizmetler › Bakım ve Sözleşme Takip',
   '/app/satis-sonrasi/musterideki-urunler': 'Satış Sonrası Hizmetler › Müşterideki Ürünler',
+  '/app/satis/sozlesmeler': 'Satış › Sözleşme Yönetimi',
   '/app/gorev-ve-proje-yonetimi': 'Görev ve Proje Yönetimi › Genel Bakış',
   '/app/gorev-ve-proje-yonetimi/gorevler': 'Görev ve Proje Yönetimi › Görevler',
   '/app/gorev-ve-proje-yonetimi/projeler': 'Görev ve Proje Yönetimi › Projeler',
@@ -758,4 +759,3 @@ function resolveThemedLogoUrl(source: ThemedLogoSource | null | undefined, dark:
     ? source.darkLogoUrl || source.lightLogoUrl || source.logoUrl || null
     : source.lightLogoUrl || source.logoUrl || source.darkLogoUrl || null
 }
-

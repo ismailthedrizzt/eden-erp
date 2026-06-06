@@ -175,6 +175,7 @@ const NAV: NavItem[] = [
       { label: 'Teklifler', href: '/app/satis/teklifler', disabled: true },
       { label: 'Siparişler', href: '/app/satis/siparisler', disabled: true },
       { label: 'Müşteriler', href: '/app/satis/musteriler', disabled: true },
+      { label: 'Sözleşme Yönetimi', href: '/app/satis/sozlesmeler', pageId: 'sozlesmeler' },
     ],
   },
   {
@@ -613,4 +614,3 @@ export default function Sidebar({ collapsed = false, mobileOpen = false, onMobil
     </aside>
   )
 }
-
