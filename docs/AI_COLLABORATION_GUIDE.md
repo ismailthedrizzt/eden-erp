@@ -139,6 +139,25 @@ Next.js API routes may act as:
 
 They must not remain the permanent home for domain mutation, operation orchestration, process engine, policy engine core, transaction boundary, outbox dispatch, audit core write logic or cross-domain business rules.
 
+## Next API Fallback Burn-down Rule
+
+- New backend behavior is written in FastAPI first.
+- Next API routes are not the place for new ERP business logic.
+- A new `app/api/**/route.ts` should default to `proxy_to_fastapi`.
+- Temporary fallback is allowed only with an explicit migration plan, priority and expiry/smoke-test note.
+- Operation-controlled fields cannot be changed through a Next fallback.
+- Lifecycle, ownership, representative authority, branch, document/media, admin/security/export and portal routes are P0/P1 burn-down surfaces.
+- Route migration headers are mandatory for new files:
+
+```ts
+// BACKEND_MIGRATION_STATUS: proxy_to_fastapi
+// CANONICAL_BACKEND: FastAPI
+// TARGET_FASTAPI_ENDPOINT: /api/v1/...
+// NOTES: Thin BFF proxy only; no domain mutation in Next.
+```
+
+Run `npm run nextapi:burndown`, `npm run migration:status`, `npm run backend:boundary:audit` and `npm run boundaries:check` when changing API routes.
+
 ## Company-Related Lifecycle, Operation and Payload Architecture
 
 ### Core Rule

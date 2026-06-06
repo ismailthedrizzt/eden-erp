@@ -17,7 +17,7 @@ const allServerFiles = SERVER_LIB_DIRS.flatMap(dir => collectFiles(dir, file => 
 const directSupabaseImport = /@\/lib\/supabase\/(server|client)|from ['"]@supabase\/|createServerClient|createBrowserClient/
 const directDbOperation = /\.(from|rpc)\s*\(/
 const fastApiProxy = /proxyToFastApi|proxyJsonToFastApi|proxyToFastApi[A-Z]|createFastApiProxyHandler/
-const routeBackendImport = /@\/lib\/(action-center|action-guide|audit|crud|db|documents\/documentThumbnail|domains|field-controls|identity|integrity|modules|operations|outbox|read-models|scope|security\/serverPermissions|services|setup|tenancy\/companyScopes|user-state|workflow)\b/
+const routeBackendImport = /@\/lib\/(action-center|action-guide|audit|crud|db|documents\/documentThumbnail|domains|field-controls|identity|integrity|modules|operations|orchestrators|outbox|process|read-models|scope|security\/serverPermissions|services|setup|tenancy\/companyScopes|user-state|workflow)\b/
 const allowedSupabaseFiles = new Set([
   normalize('lib/supabase/server.ts'),
   normalize('lib/supabase/client.ts'),

@@ -27,9 +27,11 @@ const serverOnlyClientPatterns = [
   { pattern: /from ['"](fs|path|async_hooks)['"]/, label: 'Node server module' },
 ]
 
-const backendCoreImportPattern = /@\/lib\/(operations|process|outbox|audit|integrity|setup|domains|read-models|action-center|action-guide|field-controls)/
-const routeBackendImportPattern = /@\/lib\/(operations|process|outbox|audit|integrity|setup|domains|read-models|action-center|action-guide|field-controls|supabase\/server)/
+const backendCoreImportPattern = /@\/lib\/(operations|orchestrators|process|outbox|audit|integrity|setup|domains|read-models|action-center|action-guide|field-controls|workflow|services|documents\/documentThumbnail)/
+const routeBackendImportPattern = /@\/lib\/(operations|orchestrators|process|outbox|audit|integrity|setup|domains|read-models|action-center|action-guide|field-controls|workflow|services|documents\/documentThumbnail|supabase\/server)/
 const directDbPattern = /createServiceClient|createServerClient|supabase\s*\.\s*from\s*\(|\.(insert|update|upsert|delete|rpc)\s*\(/
+const fallbackPattern = /fallback|legacy|temporary|LOCAL_REFERENCE_FALLBACK|localReferenceFallback/i
+const lifecycleRoutePattern = /\/(companies|ownership-transactions|employees)\/|official-changes|opening-wizard|liquidation-wizard|deregistration-wizard|capital-increases|capital-decreases|authority-transactions/
 
 function walk(dir, predicate, acc = []) {
   if (!fs.existsSync(dir)) return acc
@@ -112,6 +114,10 @@ function checkRouteBoundaries(routeFiles) {
       errors.push(`${routePath(file)} is proxy_to_fastapi but still imports backend/domain or direct DB code`)
     }
 
+    if (status === 'proxy_to_fastapi' && fallbackPattern.test(source)) {
+      warnings.push(`${routePath(file)} is proxy_to_fastapi but still references fallback/legacy behavior; verify there is no executable TS fallback before closing the burn-down item`)
+    }
+
     if (
       status === 'proxy_to_fastapi_with_legacy_fallback'
       || status === 'proxy_to_fastapi_with_temporary_fallback'
@@ -121,6 +127,10 @@ function checkRouteBoundaries(routeFiles) {
       if (hasBackendImport || hasDirectDb) {
         warnings.push(`${routePath(file)} keeps temporary TS fallback logic; removal is P1 after FastAPI Development verification`)
       }
+    }
+
+    if ((status === 'migrate_to_fastapi' || temporaryFallbacks.includes(routePath(file))) && lifecycleRoutePattern.test(routePath(file))) {
+      warnings.push(`${routePath(file)} is a lifecycle/operation route with non-final backend ownership; treat as P0/P1 burn-down item`)
     }
   }
 

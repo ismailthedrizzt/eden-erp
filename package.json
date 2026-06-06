@@ -30,6 +30,7 @@
     "migration:status": "node scripts/check-backend-migration-status.js",
     "migration:inventory": "node scripts/check-backend-migration-status.js write-inventory",
     "proxy:coverage": "node scripts/check-backend-migration-status.js write-proxy-matrix",
+    "nextapi:burndown": "node scripts/generate-next-api-burndown-docs.js",
     "ts-backend:inventory": "node scripts/generate-remaining-ts-backend-inventory.js",
     "backend:boundary:audit": "node scripts/audit-next-backend-boundary.js",
     "backend:boundary:enforce": "node scripts/audit-next-backend-boundary.js --fail-on-direct-db",
