@@ -30,6 +30,13 @@ class Settings(BaseSettings):
     supabase_service_role_key: str | None = Field(default=None, alias="SUPABASE_SERVICE_ROLE_KEY")
     supabase_jwt_secret: str | None = Field(default=None, alias="SUPABASE_JWT_SECRET")
     supabase_jwks_url: str | None = Field(default=None, alias="SUPABASE_JWKS_URL")
+    legacy_supabase_jwt_enabled: bool = Field(
+        default=False,
+        validation_alias=AliasChoices(
+            "LEGACY_SUPABASE_JWT_ENABLED",
+            "EDEN_ENABLE_LEGACY_SUPABASE_AUTH",
+        ),
+    )
     document_storage_root: str = Field(default="var/document-storage", alias="DOCUMENT_STORAGE_ROOT")
     cors_origins_raw: str = Field(
         default="http://localhost:3000",
@@ -109,11 +116,11 @@ class Settings(BaseSettings):
 
     @property
     def is_production(self) -> bool:
-        return self.app_env == "production"
+        return self.app_env in {"production", "prod", "release"}
 
     @property
     def is_development(self) -> bool:
-        return self.app_env in {"local", "development", "dev", "test"}
+        return self.app_env in {"local", "development", "dev", "test", "preview"}
 
     @property
     def effective_auth_required(self) -> bool:

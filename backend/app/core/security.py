@@ -140,6 +140,12 @@ def verify_legacy_supabase_jwt(token: str) -> dict[str, Any]:
     configure external JWT compatibility.
     """
     settings = get_settings()
+    if not settings.legacy_supabase_jwt_enabled:
+        raise DomainError(
+            AUTH_MESSAGE,
+            "LEGACY_SUPABASE_JWT_DISABLED",
+            status.HTTP_401_UNAUTHORIZED,
+        )
     if settings.supabase_jwt_secret:
         return _verify_hs256(token, settings.supabase_jwt_secret)
 
@@ -183,6 +189,12 @@ def verify_legacy_supabase_jwt(token: str) -> dict[str, Any]:
 
 
 def verify_external_jwt(token: str) -> dict[str, Any]:
+    """Verify explicit direct FastAPI bearer tokens.
+
+    Direct browser auth is not canonical for Eden ERP MVP. Until a dedicated
+    direct FastAPI JWT/API-token policy is introduced, this wrapper only routes
+    to the legacy Supabase verifier when the legacy compatibility flag is set.
+    """
     return verify_legacy_supabase_jwt(token)
 
 
@@ -289,6 +301,12 @@ def validate_security_configuration() -> None:
         raise DomainError(
             "Production ortaminda proxy header guveni icin proxy secret gereklidir.",
             "TRUSTED_PROXY_MISCONFIGURED",
+            status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+    if settings.is_production and settings.legacy_supabase_jwt_enabled:
+        raise DomainError(
+            "Release ortaminda legacy Supabase JWT dogrulamasi acik olamaz.",
+            "LEGACY_SUPABASE_JWT_MISCONFIGURED",
             status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
 

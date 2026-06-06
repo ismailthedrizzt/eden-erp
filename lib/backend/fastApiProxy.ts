@@ -57,24 +57,9 @@ export async function buildBackendHeaders(request: NextRequest, options: ProxyOp
   headers.set('accept', request.headers.get('accept') || 'application/json')
   headers.set('content-type', request.headers.get('content-type') || 'application/json')
   headers.set('x-tenant-id', options.tenantId || tenantContext.tenantId)
-  const userId = (options.userId || request.headers.get('x-user-id') || appSession?.userId || '').trim()
+  const userId = (options.userId || appSession?.userId || '').trim()
   if (userId) headers.set('x-user-id', userId)
-  if (request.headers.get('x-user-permissions')) {
-    headers.set('x-user-permissions', request.headers.get('x-user-permissions') || '')
-  }
-  if (request.headers.get('x-company-id')) {
-    headers.set('x-company-id', request.headers.get('x-company-id') || '')
-  }
-  if (request.headers.get('x-branch-id')) {
-    headers.set('x-branch-id', request.headers.get('x-branch-id') || '')
-  }
   if (options.companyScope) headers.set('x-company-scope', options.companyScope)
-  if (!options.companyScope && request.headers.get('x-company-scope')) {
-    headers.set('x-company-scope', request.headers.get('x-company-scope') || '')
-  }
-  if (request.headers.get('x-branch-scope')) {
-    headers.set('x-branch-scope', request.headers.get('x-branch-scope') || '')
-  }
   headers.set('x-request-id', requestId)
   headers.set('x-correlation-id', correlationId)
   headers.set('x-forwarded-user-agent', request.headers.get('user-agent') || '')

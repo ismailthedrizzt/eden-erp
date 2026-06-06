@@ -26,6 +26,12 @@ export function getReleaseEnvSafetyViolations(source: EnvSource = process.env) {
     if (isEnabled(source.EDEN_ENABLE_LEGACY_SUPABASE_AUTH)) {
       violations.push('EDEN_ENABLE_LEGACY_SUPABASE_AUTH cannot be true in release.')
     }
+    if (isEnabled(source.LEGACY_SUPABASE_JWT_ENABLED)) {
+      violations.push('LEGACY_SUPABASE_JWT_ENABLED cannot be true in release.')
+    }
+    if (isDisabled(source.AUTH_REQUIRED)) {
+      violations.push('AUTH_REQUIRED cannot be false in release.')
+    }
     if (isEnabled(source.NEXT_PUBLIC_DEMO_MODE)) {
       violations.push('NEXT_PUBLIC_DEMO_MODE cannot be true in release.')
     }
@@ -38,8 +44,8 @@ export function getReleaseEnvSafetyViolations(source: EnvSource = process.env) {
     if (!source.DATABASE_URL) {
       violations.push('DATABASE_URL is required in release.')
     }
-    if (!source.APP_SESSION_SECRET && !source.SETUP_INTENT_SECRET && !source.OTP_SECRET) {
-      violations.push('APP_SESSION_SECRET or an equivalent app-session secret is required in release.')
+    if (!source.APP_SESSION_SECRET) {
+      violations.push('APP_SESSION_SECRET is required in release.')
     }
     if (!source.INTERNAL_BACKEND_TOKEN) {
       violations.push('INTERNAL_BACKEND_TOKEN is required in release.')
@@ -70,4 +76,8 @@ export function assertReleaseEnvSafety(source: EnvSource = process.env) {
 
 function isEnabled(value: string | undefined) {
   return ['1', 'true', 'yes', 'on'].includes(value?.trim().toLowerCase() || '')
+}
+
+function isDisabled(value: string | undefined) {
+  return ['0', 'false', 'no', 'off'].includes(value?.trim().toLowerCase() || '')
 }

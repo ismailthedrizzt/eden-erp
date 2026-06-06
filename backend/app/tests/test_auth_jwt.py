@@ -35,6 +35,7 @@ def clear_settings_cache() -> Generator[None]:
 
 
 def test_valid_hs256_supabase_jwt_returns_claims(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("LEGACY_SUPABASE_JWT_ENABLED", "true")
     monkeypatch.setenv("SUPABASE_JWT_SECRET", "secret")
     token = make_hs256_token(
         "secret",
@@ -48,6 +49,7 @@ def test_valid_hs256_supabase_jwt_returns_claims(monkeypatch: pytest.MonkeyPatch
 
 
 def test_invalid_hs256_supabase_jwt_rejects(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("LEGACY_SUPABASE_JWT_ENABLED", "true")
     monkeypatch.setenv("SUPABASE_JWT_SECRET", "secret")
     token = make_hs256_token(
         "other-secret",
@@ -62,6 +64,7 @@ def test_invalid_hs256_supabase_jwt_rejects(monkeypatch: pytest.MonkeyPatch) -> 
 
 
 def test_expired_supabase_jwt_rejects(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("LEGACY_SUPABASE_JWT_ENABLED", "true")
     monkeypatch.setenv("SUPABASE_JWT_SECRET", "secret")
     token = make_hs256_token("secret", {"sub": "user-1", "exp": int(time.time()) - 1})
 
@@ -69,6 +72,16 @@ def test_expired_supabase_jwt_rejects(monkeypatch: pytest.MonkeyPatch) -> None:
         verify_supabase_jwt(token)
 
     assert exc.value.code == "AUTH_TOKEN_EXPIRED"
+
+
+def test_supabase_jwt_disabled_without_legacy_flag(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("SUPABASE_JWT_SECRET", "secret")
+    token = make_hs256_token("secret", {"sub": "user-1", "exp": int(time.time()) + 300})
+
+    with pytest.raises(DomainError) as exc:
+        verify_supabase_jwt(token)
+
+    assert exc.value.code == "LEGACY_SUPABASE_JWT_DISABLED"
 
 
 def test_production_cannot_disable_auth(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -79,3 +92,23 @@ def test_production_cannot_disable_auth(monkeypatch: pytest.MonkeyPatch) -> None
         validate_security_configuration()
 
     assert exc.value.code == "AUTH_REQUIRED_MISCONFIGURED"
+
+
+def test_release_cannot_disable_auth(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("APP_ENV", "release")
+    monkeypatch.setenv("AUTH_REQUIRED", "false")
+
+    with pytest.raises(DomainError) as exc:
+        validate_security_configuration()
+
+    assert exc.value.code == "AUTH_REQUIRED_MISCONFIGURED"
+
+
+def test_release_cannot_enable_legacy_supabase_jwt(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("APP_ENV", "release")
+    monkeypatch.setenv("LEGACY_SUPABASE_JWT_ENABLED", "true")
+
+    with pytest.raises(DomainError) as exc:
+        validate_security_configuration()
+
+    assert exc.value.code == "LEGACY_SUPABASE_JWT_MISCONFIGURED"

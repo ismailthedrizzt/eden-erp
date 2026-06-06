@@ -52,14 +52,14 @@ if (env === 'release') {
   if (isEnabled(process.env.EDEN_LOGIN_DISABLED)) failures.push('EDEN_LOGIN_DISABLED=true is forbidden in release.')
   if (isEnabled(process.env.EDEN_ALLOW_LEGACY_API_ACCESS)) failures.push('EDEN_ALLOW_LEGACY_API_ACCESS=true is forbidden in release.')
   if (isEnabled(process.env.EDEN_ENABLE_LEGACY_SUPABASE_AUTH)) failures.push('EDEN_ENABLE_LEGACY_SUPABASE_AUTH=true is forbidden in release.')
+  if (isEnabled(process.env.LEGACY_SUPABASE_JWT_ENABLED)) failures.push('LEGACY_SUPABASE_JWT_ENABLED=true is forbidden in release.')
+  if (isDisabled(process.env.AUTH_REQUIRED)) failures.push('AUTH_REQUIRED=false is forbidden in release.')
   if (isEnabled(process.env.NEXT_PUBLIC_DEMO_MODE)) failures.push('NEXT_PUBLIC_DEMO_MODE=true is forbidden in release.')
   if (isEnabled(process.env.ALLOW_RELEASE_DB_SEED)) failures.push('ALLOW_RELEASE_DB_SEED=true is forbidden in release.')
   if (isEnabled(process.env.ALLOW_RELEASE_DB_RESET)) failures.push('ALLOW_RELEASE_DB_RESET=true is forbidden in release.')
 
   if (!process.env.DATABASE_URL) failures.push('DATABASE_URL is required in release.')
-  if (!process.env.APP_SESSION_SECRET && !process.env.SETUP_INTENT_SECRET && !process.env.OTP_SECRET) {
-    failures.push('APP_SESSION_SECRET or an equivalent app-session secret is required in release.')
-  }
+  if (!process.env.APP_SESSION_SECRET) failures.push('APP_SESSION_SECRET is required in release.')
   if (!process.env.INTERNAL_BACKEND_TOKEN) failures.push('INTERNAL_BACKEND_TOKEN is required in release.')
   if (!process.env.FASTAPI_BASE_URL) failures.push('FASTAPI_BASE_URL is required in release.')
   if (isEnabled(process.env.ALLOW_TRUSTED_PROXY_HEADERS) && !process.env.TRUSTED_PROXY_SECRET) {
@@ -120,6 +120,10 @@ function normalize(value) {
 
 function isEnabled(value) {
   return ['1', 'true', 'yes', 'on'].includes(String(value || '').trim().toLowerCase())
+}
+
+function isDisabled(value) {
+  return ['0', 'false', 'no', 'off'].includes(String(value || '').trim().toLowerCase())
 }
 
 function collectFiles(base, folders, extensions) {

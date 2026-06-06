@@ -78,6 +78,15 @@ Supabase and Vercel are not canonical runtime platforms for Eden ERP. Core ERP b
 - Release migration requires `ALLOW_RELEASE_DB_MIGRATION=true` and `RELEASE_MIGRATION_APPROVED_BY=<name>`.
 - Business mutation submit buttons must route to FastAPI-backed canonical endpoints through the form/wizard template path.
 
+## Auth Collaboration Rules
+
+- New auth work must not use Supabase Auth as the canonical path.
+- Canonical browser auth is `eden_app_session` plus Next middleware/BFF.
+- Canonical backend auth is FastAPI trusted proxy context validated with `TRUSTED_PROXY_SECRET`.
+- New business endpoints must use FastAPI permission, tenant and scope context.
+- Next API routes must not own DB/auth business logic; they may proxy or adapt session/upload concerns.
+- Direct public FastAPI access is not part of MVP unless a task explicitly defines JWT/API-token auth, CORS and rate limiting.
+
 ### Key Dependencies (Locked Versions)
 ```json
 {
