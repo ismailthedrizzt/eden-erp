@@ -24,6 +24,9 @@ Full command baseline is in `TransitionBaselineReport.md`.
 | TF-P1-007 | P1 | Auth | Direct FastAPI bearer auth still named/implemented as legacy Supabase JWT | `backend/app/core/security.py`. | Open | Define canonical direct API auth. |
 | TF-P1-008 | P1 | Documentation | Current docs still instruct Supabase/Vercel workflows | `docs/AI_COLLABORATION_GUIDE.md`, `docs/release/**`. | Open | Rewrite current runbooks after this baseline. |
 | TF-P1-009 | P1 | Workers | Live worker topology not confirmed | PM2 shows app/api only; worker modules exist. | Open | Decide and document live worker execution model. |
+| RS-LDB-P1-001 | P1 | Deployment | Reverse proxy and SSL termination config not versioned in repo | Repo search found no nginx/caddy/pm2 ecosystem config; public runtime exists outside repo. | Open | Add sanitized reverse proxy and SSL topology/runbook. |
+| RS-LDB-P1-002 | P1 | Storage | Local document storage backup inclusion not fully confirmed | Storage root is local filesystem; DB runbook existed, storage backup was added as required rule. | Open | Verify scheduled backup includes `DOCUMENT_STORAGE_ROOT`. |
+| RS-LDB-P1-003 | P1 | Workers | Outbox/email/reminder/reporting/automation/webhook worker runtime not confirmed | Worker modules exist; PM2 shows only `eden-app` and `eden-fastapi`. | Open | Add live worker process config and health check. |
 | TF-P2-001 | P2 | Tooling | Global `python` missing on remote host | exact `python -m ...` commands fail. | Open | Standardize on `backend/.venv/bin/python`. |
 | TF-P2-002 | P2 | Migration headers | 99 route files missing migration headers, 0 P0 | `migration:status`. | Open | Reduce over time; no immediate blocker. |
 | TF-P2-003 | P2 | Build warnings | Existing React hook/img warnings | `npm run build`. | Open | Address during frontend quality pass. |

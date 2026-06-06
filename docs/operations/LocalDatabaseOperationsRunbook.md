@@ -37,6 +37,8 @@ RELEASE_MIGRATION_APPROVED_BY=<name>
 pg_dump "$DATABASE_URL" > backups/eden_$(date +%Y%m%d_%H%M%S).sql
 ```
 
+Document storage must be backed up with the database backup. The default local storage root is `var/document-storage` unless `DOCUMENT_STORAGE_ROOT` overrides it.
+
 ## Restore
 
 ```bash
@@ -47,6 +49,7 @@ psql "$DATABASE_URL" < backups/eden_YYYYMMDD_HHMMSS.sql
 
 - P0: release seed/reset.
 - P0: migration without release approval.
+- P0: document storage omitted from release backup.
 - P1: ambiguous DB target.
 - P2: manual DB naming drift.
 

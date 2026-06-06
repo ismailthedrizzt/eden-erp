@@ -67,11 +67,23 @@ NODE_ENV=test                       -> test visibility mode
 ## Safety Rules
 
 - `DATABASE_URL` is required for the VS environment.
+- `DATABASE_URL` is a protected server-side secret and must never be exposed through `NEXT_PUBLIC_*`.
 - Do not configure old separate Supabase project refs as database targets.
 - Supabase variables are optional and should only be set if Supabase Auth/API is still used.
 - The VS env cannot enable `EDEN_LOGIN_DISABLED`, `EDEN_ALLOW_LEGACY_API_ACCESS` or `NEXT_PUBLIC_DEMO_MODE`.
 - The VS env cannot enable `ALLOW_RELEASE_DB_SEED` or `ALLOW_RELEASE_DB_RESET`.
 - `NEXT_PUBLIC_*` variables must never contain service role keys, internal backend tokens, JWT secrets or private keys.
+- `TRUSTED_PROXY_SECRET` is required when FastAPI accepts trusted proxy headers in release/production.
+- Release visibility is a product surface decision; it is not the same as the set of routes built by Next.js.
+
+## Remote Server Principles
+
+- Next.js is the UI/BFF/proxy layer.
+- FastAPI owns business mutation, lifecycle operations, audit and DB access.
+- Local PostgreSQL is the canonical data store and a protected asset.
+- Local filesystem document storage is the canonical file layer.
+- App session plus FastAPI trusted proxy context is the canonical browser auth path.
+- Vercel/Supabase values are legacy/compatibility only and must not be required for release startup.
 
 ## Required Checks
 

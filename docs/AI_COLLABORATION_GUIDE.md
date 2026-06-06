@@ -1,5 +1,22 @@
 # Eden ERP - AI Collaboration Guide
 
+## Current Canonical Runtime Rules
+
+Date: 2026-06-06
+
+- Eden ERP currently runs on a remote server with local PostgreSQL/local DB.
+- Next.js is the UI/BFF/proxy layer.
+- FastAPI is the canonical backend for business mutation, lifecycle operations, audit, policy and DB access.
+- Local filesystem document storage is the canonical document file layer.
+- App session plus FastAPI trusted proxy context is the canonical browser auth path.
+- Supabase/Vercel references are legacy or compatibility only unless a task explicitly says otherwise.
+- `Ekle` creates draft state; official/legal/financial completion uses lifecycle wizard/operation flows.
+- Documents are uploaded in context and managed centrally.
+- Release surface is not build surface; use the release registry.
+- Action Center is a business work center, not a technical event dump.
+- Local DB is a protected asset; run DB target guards before migration, seed or reset.
+- Critical operations must be audited.
+
 ## Purpose
 
 This document ensures consistent, coherent development across all AI-assisted sessions. It serves as the single source of truth for architectural decisions, coding conventions, and design patterns. **AI assistants must follow these guidelines and warn users when requests conflict with established architecture.**
