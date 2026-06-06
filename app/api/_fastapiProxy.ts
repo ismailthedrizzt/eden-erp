@@ -21,7 +21,7 @@ function interpolateTargetPath(targetPath: TargetPath, params: RouteParams) {
 export function createFastApiProxyHandler(targetPath: TargetPath) {
   return async function fastApiProxyHandler(request: NextRequest, context: RouteContext) {
     const params = await (context?.params || Promise.resolve({}))
-    const response = await proxyToFastApi(request, interpolateTargetPath(targetPath, params))
+    const response = await proxyToFastApi(request, interpolateTargetPath(targetPath, params), { internal: true })
     return response || fastApiUnavailableResponse()
   }
 }

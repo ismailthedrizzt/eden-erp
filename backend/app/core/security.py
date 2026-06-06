@@ -210,6 +210,8 @@ def get_jwt_claims(request: Request) -> dict[str, Any] | None:
         if get_settings().effective_auth_required:
             raise DomainError(AUTH_MESSAGE, "AUTH_TOKEN_MISSING", status.HTTP_401_UNAUTHORIZED)
         return None
+    if is_internal_request(request) and _is_trusted_proxy(request):
+        return None
     return verify_external_jwt(token)
 
 
@@ -434,7 +436,7 @@ async def get_request_context(request: Request) -> RequestContext:
             auth_claims={},
         )
 
-    if token:
+    if token and not is_internal_request(request):
         verify_external_jwt(token)
 
     async with get_session_factory()() as session:
