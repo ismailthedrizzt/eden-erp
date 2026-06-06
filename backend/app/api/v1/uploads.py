@@ -6,6 +6,7 @@ from typing import Annotated
 from fastapi import APIRouter, File, Form, UploadFile, status
 
 from app.core.errors import DomainError, domain_error_to_http
+
 router = APIRouter()
 
 MAX_IMAGE_BYTES = 8 * 1024 * 1024

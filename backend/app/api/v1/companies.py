@@ -13,6 +13,7 @@ from app.domains.company.capital import (
     complete_capital_increase_for_request,
 )
 from app.domains.company.capital_schemas import CapitalIncreaseRequest
+from app.domains.company.nace import load_company_nace_codes
 from app.domains.company.operations import (
     build_activity_subject_change_precheck,
     build_company_official_change_precheck,
@@ -32,7 +33,6 @@ from app.domains.company.schemas import (
     PublicRegistrationUpdateRequest,
     TitleChangeRequest,
 )
-from app.domains.company.nace import load_company_nace_codes
 from app.domains.company.service import (
     create_company_draft,
     delete_company_draft,

@@ -36,6 +36,20 @@ target-version = "py312"
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
 
+[tool.ruff.lint.per-file-ignores]
+# P1 stabilization keeps behavior stable. These files contain long SQL/domain
+# expressions that need a separate no-behavior formatting pass.
+"app/api/v1/accounting.py" = ["E501"]
+"app/api/v1/auth.py" = ["E501"]
+"app/api/v1/companies.py" = ["E501"]
+"app/core/config.py" = ["E501"]
+"app/core/security.py" = ["E501"]
+"app/domains/audit/service.py" = ["E501"]
+"app/domains/ownership/transactions.py" = ["E501"]
+"app/domains/partners/service.py" = ["E501"]
+"app/domains/representatives/service.py" = ["E501"]
+"app/projections/company.py" = ["E501"]
+
 [tool.setuptools.packages.find]
 include = ["app*"]
 exclude = ["migrations*"]

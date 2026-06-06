@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from datetime import UTC, date, datetime
 import json
+from datetime import UTC, date, datetime
 from decimal import Decimal
 from pathlib import Path
 from typing import Annotated, Any
@@ -592,7 +592,10 @@ async def entity_bank_account_history(
     company = await _get_company_for_entity_bank_account_id(session, tenant_id, account_id)
     rows = _company_entity_bank_accounts(company) if company else []
     row = next((item for item in rows if item.get("id") == account_id), None)
-    history = row.get("history") if isinstance(row, dict) and isinstance(row.get("history"), list) else []
+    history_value = row.get("history") if isinstance(row, dict) else None
+    history: list[dict[str, Any]] = [
+        item for item in history_value if isinstance(item, dict)
+    ] if isinstance(history_value, list) else []
     return ApiSuccess(data=history)
 
 

@@ -2,7 +2,6 @@ from fastapi import APIRouter
 
 from app.api.v1 import (
     accounting,
-    auth,
     action_center,
     action_eligibility,
     admin,
@@ -10,11 +9,11 @@ from app.api.v1 import (
     ai_assistant,
     approvals,
     audit,
+    auth,
     automation,
     branches,
     companies,
     company_branches,
-    contracts,
     crm,
     data_quality,
     documents,
