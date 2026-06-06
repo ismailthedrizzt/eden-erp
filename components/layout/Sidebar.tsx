@@ -26,7 +26,7 @@ import {
 import {
   Home, Users, Building2, CreditCard, Package, ShoppingCart,
   Settings, Factory, Wrench, ChevronRight, LogOut, Download,
-  List, AlertCircle, FolderOpen, Wallet, X, Headphones, Tags, ListChecks, Handshake, FileArchive
+  List, AlertCircle, FolderOpen, Wallet, X, Headphones, Tags, ListChecks, Handshake, FileArchive, FileText
 } from 'lucide-react'
 
 interface NavItem {
@@ -149,6 +149,14 @@ const NAV: NavItem[] = [
     ],
   },
   {
+    id: 'contracts',
+    label: 'S?zle?meler',
+    icon: <FileText size={16} />,
+    href: '/app/sozlesmeler',
+    moduleKey: 'contracts',
+    contractModuleKey: 'contracts',
+  },
+  {
     id: 'documents',
     label: 'Belgeler',
     icon: <FileArchive size={16} />,
@@ -175,7 +183,6 @@ const NAV: NavItem[] = [
       { label: 'Teklifler', href: '/app/satis/teklifler', disabled: true },
       { label: 'Siparişler', href: '/app/satis/siparisler', disabled: true },
       { label: 'Müşteriler', href: '/app/satis/musteriler', disabled: true },
-      { label: 'Sözleşme Yönetimi', href: '/app/satis/sozlesmeler', pageId: 'sozlesmeler' },
     ],
   },
   {
@@ -248,6 +255,7 @@ const SIDEBAR_CONTRACT_MODULE_BY_HREF: Record<string, string> = {
   '/app/satis-sonrasi': 'after_sales',
   '/app/gorev-ve-proje-yonetimi': 'project_management',
   '/app/belgeler': 'documents',
+  '/app/sozlesmeler': 'contracts',
   '/app/ayarlar/bildirimler': 'notifications',
   '/app/sistem': 'adminConsole',
   '/app/sistem/genel': 'adminConsole',
@@ -274,6 +282,7 @@ const SIDEBAR_CONTRACT_MODULE_BY_LEGACY_KEY: Record<string, string> = {
   after_sales: 'after_sales',
   project_management: 'project_management',
   documents: 'documents',
+  contracts: 'contracts',
   notifications: 'notifications',
   aiCopilot: 'aiCopilot',
   dataQuality: 'dataQuality',

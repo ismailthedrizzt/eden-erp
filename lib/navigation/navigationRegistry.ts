@@ -80,6 +80,11 @@ export const navigationItems = [
     featureFlag: 'crm.followups',
   }),
   item('projectManagement', 'Gorev ve Proje Yonetimi', '/app/gorev-ve-proje-yonetimi', 'list-checks', 'project_management', 400),
+  item('contracts', 'Sozlesmeler', '/app/sozlesmeler', 'file-text', 'contracts', 480, {
+    permission: 'contracts.view',
+    fallbackPermission: 'companies.view',
+    featureFlag: 'contracts.enabled',
+  }),
   item('documents', 'Belgeler', '/app/belgeler', 'file-archive', 'documents', 500, {
     permission: 'documents.view',
     fallbackPermission: 'companies.view',

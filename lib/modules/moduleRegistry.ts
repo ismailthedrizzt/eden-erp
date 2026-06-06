@@ -14,6 +14,7 @@ import { afterSalesModule } from './contracts/afterSales.module'
 import { branchesModule } from './contracts/branches.module'
 import { companiesModule } from './contracts/companies.module'
 import { crmModule } from './contracts/crm.module'
+import { contractManagementModule } from './contracts/contractManagement.module'
 import { customerPortalModule } from './contracts/customerPortal.module'
 import { dataQualityModule } from './contracts/dataQuality.module'
 import { documentsModule } from './contracts/documents.module'
@@ -46,6 +47,7 @@ export const allModuleContracts = [
   productServicesModule,
   afterSalesModule,
   crmModule,
+  contractManagementModule,
   documentsModule,
   importExportModule,
   integrationsModule,

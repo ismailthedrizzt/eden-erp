@@ -14,6 +14,7 @@ from app.api.v1 import (
     branches,
     companies,
     company_branches,
+    contracts,
     crm,
     data_quality,
     documents,

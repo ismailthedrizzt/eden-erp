@@ -1,0 +1,73 @@
+import { PERMISSIONS } from '@/packages/shared/src'
+import type { ModuleContract } from '../moduleContract.types'
+
+export const contractManagementModule: ModuleContract = {
+  key: 'contracts',
+  name: 'Sözleþme Yönetimi',
+  description: 'Sözleþme kartlarý, taraflar, lifecycle iþlemleri, belgeler, yükümlülükler ve renewal/fesih takibi.',
+  domain: 'contracts',
+  category: 'business',
+  version: '2026-06-06.1',
+  status: 'experimental',
+  defaultEnabled: true,
+  licenseRequired: false,
+  setupRequired: false,
+  dependencies: [
+    { moduleKey: 'documents', required: true, reason: 'Sözleþme dosyalarý merkezi belge yönetimi üzerinden saklanýr.' },
+    { moduleKey: 'actionCenter', required: false, reason: 'Yenileme, fesih ve belge eksikliði uyarýlarý Ýþ Merkezi kalemidir.' },
+    { moduleKey: 'audit', required: false, reason: 'Lifecycle iþlemleri audit/event timeline üretir.' },
+  ],
+  entities: [
+    { key: 'contract', tableName: 'contracts', displayName: 'Sözleþme' },
+    { key: 'contract_party', tableName: 'contract_parties', displayName: 'Sözleþme tarafý' },
+    { key: 'contract_relation', tableName: 'contract_relations', displayName: 'Sözleþme iliþkisi' },
+    { key: 'contract_obligation', tableName: 'contract_obligations', displayName: 'Sözleþme yükümlülüðü' },
+    { key: 'contract_event', tableName: 'contract_events', displayName: 'Sözleþme olayý' },
+  ],
+  routes: [
+    { path: '/app/sozlesmeler', type: 'page', permission: PERMISSIONS.contracts.view },
+    { path: '/app/sozlesmeler/[id]', type: 'page', permission: PERMISSIONS.contracts.view },
+    { path: '/app/sozlesmeler/yeni', type: 'page', permission: PERMISSIONS.contracts.create },
+    { path: '/api/contracts', type: 'api', permission: PERMISSIONS.contracts.view },
+  ],
+  menus: [
+    { label: 'Sözleþmeler', path: '/app/sozlesmeler', icon: 'FileText', order: 480, permission: PERMISSIONS.contracts.view, featureFlag: 'contracts.enabled' },
+  ],
+  permissions: [
+    { key: PERMISSIONS.contracts.view, label: 'Sözleþmeleri görüntüle' },
+    { key: PERMISSIONS.contracts.create, label: 'Sözleþme taslaðý oluþtur' },
+    { key: PERMISSIONS.contracts.edit, label: 'Sözleþme kartýný düzenle' },
+    { key: PERMISSIONS.contracts.activate, label: 'Sözleþme aktifleþtir' },
+    { key: PERMISSIONS.contracts.renew, label: 'Sözleþme yenile' },
+    { key: PERMISSIONS.contracts.amend, label: 'Ek protokol iþlemi' },
+    { key: PERMISSIONS.contracts.suspend, label: 'Sözleþme askýya al' },
+    { key: PERMISSIONS.contracts.terminate, label: 'Sözleþme feshet' },
+    { key: PERMISSIONS.contracts.archive, label: 'Sözleþme arþivle' },
+    { key: PERMISSIONS.contracts.documentsUpload, label: 'Sözleþme belgesi yükle' },
+    { key: PERMISSIONS.contracts.obligationsManage, label: 'Sözleþme yükümlülüðü yönet' },
+    { key: PERMISSIONS.contracts.export, label: 'Sözleþme dýþa aktar' },
+    { key: PERMISSIONS.contracts.admin, label: 'Sözleþme admin' },
+  ],
+  actions: [
+    { key: 'create_contract', label: 'Sözleþme taslaðý oluþtur', actionType: 'navigate', targetPage: '/app/sozlesmeler/yeni', permission: PERMISSIONS.contracts.create, featureFlag: 'contracts.enabled' },
+    { key: 'activate_contract', label: 'Sözleþme aktifleþtir', actionType: 'open_wizard', wizardKey: 'activate_contract', permission: PERMISSIONS.contracts.activate, featureFlag: 'contracts.lifecycle' },
+    { key: 'renew_contract', label: 'Sözleþme yenile', actionType: 'open_wizard', wizardKey: 'renew_contract', permission: PERMISSIONS.contracts.renew, featureFlag: 'contracts.renewals' },
+    { key: 'terminate_contract', label: 'Sözleþme feshet', actionType: 'open_wizard', wizardKey: 'terminate_contract', permission: PERMISSIONS.contracts.terminate, featureFlag: 'contracts.lifecycle' },
+  ],
+  projections: [],
+  events: [
+    { eventType: 'contract.created', version: '1', aggregateType: 'contract' },
+    { eventType: 'contract.activated', version: '1', aggregateType: 'contract' },
+    { eventType: 'contract.renewed', version: '1', aggregateType: 'contract' },
+    { eventType: 'contract.amended', version: '1', aggregateType: 'contract' },
+    { eventType: 'contract.terminated', version: '1', aggregateType: 'contract' },
+  ],
+  featureFlags: [
+    { key: 'contracts.enabled', label: 'Sözleþme yönetimi', defaultEnabled: true },
+    { key: 'contracts.lifecycle', label: 'Sözleþme lifecycle', defaultEnabled: true },
+    { key: 'contracts.documents', label: 'Sözleþme belgeleri', defaultEnabled: true },
+    { key: 'contracts.renewals', label: 'Sözleþme yenilemeleri', defaultEnabled: true },
+    { key: 'contracts.obligations', label: 'Sözleþme yükümlülükleri', defaultEnabled: true },
+    { key: 'contracts.actionCenter', label: 'Sözleþme Ýþ Merkezi uyarýlarý', defaultEnabled: false },
+  ],
+}

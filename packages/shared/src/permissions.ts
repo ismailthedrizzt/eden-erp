@@ -28,6 +28,7 @@ export const MODULE_CODES = [
   'integrations',
   'security',
   'import_export',
+  'contracts',
 ] as const
 
 export type ModuleCode = typeof MODULE_CODES[number]
@@ -223,6 +224,21 @@ export const PERMISSIONS = {
     legacyStakeholderCreate: 'stakeholders.insert',
     legacyStakeholderEdit: 'stakeholders.edit',
     legacyStakeholderDelete: 'stakeholders.delete',
+  },
+  contracts: {
+    view: 'contracts.view',
+    create: 'contracts.create',
+    edit: 'contracts.edit',
+    activate: 'contracts.activate',
+    renew: 'contracts.renew',
+    amend: 'contracts.amend',
+    suspend: 'contracts.suspend',
+    terminate: 'contracts.terminate',
+    archive: 'contracts.archive',
+    documentsUpload: 'contracts.documentsUpload',
+    obligationsManage: 'contracts.obligationsManage',
+    export: 'contracts.export',
+    admin: 'contracts.admin',
   },
   reporting: {
     view: 'reporting.view',

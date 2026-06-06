@@ -95,7 +95,22 @@ export const routeReleaseRegistry = [
   route('/app/crm/pipeline-ayarlari', 'crm', 'CRM Pipeline Ayarlari', 'development', true, true, true),
   route('/app/crm/takipler', 'crm', 'CRM Takipler', 'development', true, true, true),
 
-  route('/app/satis/sozlesmeler', 'sales', 'Sozlesme Yonetimi', 'release', true, true, true, { notes: RELEASE_NOTES }),
+  route('/app/sozlesmeler', 'contracts', 'Sozlesmeler', 'development', true, true, true, {
+    requiresPermission: ['contracts.view'],
+    notes: DEVELOPMENT_NOTES,
+  }),
+  route('/app/sozlesmeler/[id]', 'contracts', 'Sozlesme detayi', 'development', false, true, false, {
+    requiresPermission: ['contracts.view'],
+    notes: DEVELOPMENT_NOTES,
+  }),
+  route('/app/sozlesmeler/yeni', 'contracts', 'Yeni sozlesme', 'development', true, true, true, {
+    requiresPermission: ['contracts.create'],
+    notes: DEVELOPMENT_NOTES,
+  }),
+  route('/app/sozlesmeler/yenilemeler', 'contracts', 'Sozlesme yenilemeleri', 'development', true, true, true, { notes: DEVELOPMENT_NOTES }),
+  route('/app/sozlesmeler/fesihler', 'contracts', 'Sozlesme fesihleri', 'development', true, true, true, { notes: DEVELOPMENT_NOTES }),
+  route('/app/sozlesmeler/turler', 'contracts', 'Sozlesme turleri', 'development', true, true, true, { notes: DEVELOPMENT_NOTES }),
+  route('/app/satis/sozlesmeler', 'contracts', 'Legacy sozlesme yonetimi redirect', 'hidden', false, false, false),
 
   route('/app/gorev-ve-proje-yonetimi', 'project_management', 'Gorev ve Proje Yonetimi', 'development', true, true, true),
   route('/app/gorev-ve-proje-yonetimi/gorevler', 'project_management', 'Gorevler', 'development', true, true, true),
