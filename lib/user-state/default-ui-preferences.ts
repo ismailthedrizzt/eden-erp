@@ -1,7 +1,9 @@
 import type { UserUiPreferences } from './types'
 
 export const DEFAULT_UI_PREFERENCES: UserUiPreferences = {
+  appearanceMode: 'system',
   theme: 'system',
+  visualTheme: 'classic',
   accentColor: 'emerald',
   sidebarCollapsed: false,
   density: 'comfortable',

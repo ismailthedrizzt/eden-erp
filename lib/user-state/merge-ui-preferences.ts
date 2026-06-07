@@ -1,8 +1,26 @@
 import { DEFAULT_UI_PREFERENCES } from './default-ui-preferences'
-import type { UserUiPreferences, UserUiPreferencesPatch } from './types'
+import type { UiAppearancePreference, UserUiPreferences, VisualThemePreference } from './types'
+
+const APPEARANCE_VALUES = new Set<UiAppearancePreference>(['system', 'light', 'dark'])
+const VISUAL_THEME_VALUES = new Set<VisualThemePreference>([
+  'classic',
+  'executive_premium',
+  'anatolian_modern',
+  'technical_command',
+])
+const LEGACY_VISUAL_THEME_ALIASES: Record<string, VisualThemePreference> = {
+  classicCurrent: 'classic',
+  executivePremium: 'executive_premium',
+  anatolianModern: 'anatolian_modern',
+  technicalCommand: 'technical_command',
+}
 
 const ALLOWED_TOP_LEVEL_KEYS = new Set([
+  'appearanceMode',
+  'appearance_mode',
   'theme',
+  'visualTheme',
+  'visual_theme',
   'accentColor',
   'sidebarCollapsed',
   'density',
@@ -73,6 +91,18 @@ function shortText(value: unknown, fallback: string, maxLength = 80) {
   return trimmed.slice(0, maxLength)
 }
 
+export function normalizeAppearancePreference(value: unknown): UiAppearancePreference | null {
+  return typeof value === 'string' && APPEARANCE_VALUES.has(value as UiAppearancePreference)
+    ? value as UiAppearancePreference
+    : null
+}
+
+export function normalizeVisualThemePreference(value: unknown): VisualThemePreference | null {
+  if (typeof value !== 'string') return null
+  if (VISUAL_THEME_VALUES.has(value as VisualThemePreference)) return value as VisualThemePreference
+  return LEGACY_VISUAL_THEME_ALIASES[value] || null
+}
+
 function sanitizeJsonPreference(value: unknown): unknown {
   if (Array.isArray(value)) {
     return value.map(sanitizeJsonPreference)
@@ -123,8 +153,21 @@ export function normalizeUiPreferencesPatch(value: unknown): Partial<UserUiPrefe
 
     switch (key) {
       case 'theme':
-        if (rawValue === 'system' || rawValue === 'light' || rawValue === 'dark') patch.theme = rawValue
+      case 'appearanceMode':
+      case 'appearance_mode': {
+        const appearanceMode = normalizeAppearancePreference(rawValue)
+        if (appearanceMode) {
+          patch.appearanceMode = appearanceMode
+          patch.theme = appearanceMode
+        }
         break
+      }
+      case 'visualTheme':
+      case 'visual_theme': {
+        const visualTheme = normalizeVisualThemePreference(rawValue)
+        if (visualTheme) patch.visualTheme = visualTheme
+        break
+      }
       case 'accentColor':
         patch.accentColor = shortText(rawValue, DEFAULT_UI_PREFERENCES.accentColor, 32)
         break
@@ -207,9 +250,16 @@ export function mergeUiPreferences(
   base: Partial<UserUiPreferences> | null | undefined,
   patch: unknown
 ): UserUiPreferences {
+  const normalizedBasePatch = normalizeUiPreferencesPatch(base)
+  const baseAppearance = normalizedBasePatch.appearanceMode || normalizedBasePatch.theme || DEFAULT_UI_PREFERENCES.appearanceMode
+  const baseVisualTheme = normalizedBasePatch.visualTheme || DEFAULT_UI_PREFERENCES.visualTheme
   const normalizedBase = {
     ...DEFAULT_UI_PREFERENCES,
     ...(base || {}),
+    ...normalizedBasePatch,
+    appearanceMode: baseAppearance,
+    theme: baseAppearance,
+    visualTheme: baseVisualTheme,
     tablePreferences: {
       ...DEFAULT_UI_PREFERENCES.tablePreferences,
       ...(isPlainRecord(base?.tablePreferences) ? base?.tablePreferences : {}),
@@ -237,10 +287,15 @@ export function mergeUiPreferences(
       : DEFAULT_UI_PREFERENCES.lockedFieldHintsDismissed,
   }
   const normalizedPatch = normalizeUiPreferencesPatch(patch)
+  const nextAppearanceMode = normalizedPatch.appearanceMode || normalizedPatch.theme || normalizedBase.appearanceMode
+  const nextVisualTheme = normalizedPatch.visualTheme || normalizedBase.visualTheme
 
   return {
     ...normalizedBase,
     ...normalizedPatch,
+    appearanceMode: nextAppearanceMode,
+    theme: nextAppearanceMode,
+    visualTheme: nextVisualTheme,
     tablePreferences: deepMergeRecords(
       normalizedBase.tablePreferences,
       normalizedPatch.tablePreferences || {}

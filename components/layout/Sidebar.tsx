@@ -213,10 +213,13 @@ const NAV: NavItem[] = [
     icon: <Settings size={16} />,
     moduleKey: 'sistem',
     children: [
+      { label: 'Aboneliğim', href: '/app/aboneligim', moduleKey: 'sistem', contractModuleKey: 'settings' },
       { label: 'Modül Lisansları', href: '/app/sistem/module-licenses' },
+      { label: 'Lisanslar', href: '/app/sistem/lisanslar', moduleKey: 'sistem', contractModuleKey: 'adminConsole' },
       { label: 'Sistem Parametreleri', href: '/app/sistem/system-parameters' },
       { label: 'Entegrasyon Ayarları', href: '/app/sistem/entegrasyon-ayarlari', moduleKey: 'sistem', submoduleKey: 'entegrasyon-ayarlari' },
       { label: 'Kullanıcı Talepleri', href: '/app/sistem/kullanici-talepleri' },
+      { label: 'Tasarım Laboratuvarı', href: '/app/design-lab', moduleKey: 'sistem', contractModuleKey: 'adminConsole' },
       { label: 'Admin Console', href: '/app/sistem', moduleKey: 'sistem', contractModuleKey: 'adminConsole' },
       { label: 'Genel Ayarlar', href: '/app/sistem/genel', moduleKey: 'sistem', contractModuleKey: 'adminConsole' },
       { label: 'Moduller', href: '/app/sistem/moduller', moduleKey: 'sistem', contractModuleKey: 'adminConsole' },
@@ -257,6 +260,7 @@ const SIDEBAR_CONTRACT_MODULE_BY_HREF: Record<string, string> = {
   '/app/belgeler': 'documents',
   '/app/sozlesmeler': 'contracts',
   '/app/ayarlar/bildirimler': 'notifications',
+  '/app/design-lab': 'adminConsole',
   '/app/sistem': 'adminConsole',
   '/app/sistem/genel': 'adminConsole',
   '/app/sistem/moduller': 'adminConsole',
@@ -266,6 +270,8 @@ const SIDEBAR_CONTRACT_MODULE_BY_HREF: Record<string, string> = {
   '/app/sistem/entegrasyonlar': 'adminConsole',
   '/app/sistem/teknik': 'adminConsole',
   '/app/sistem/ai-copilot': 'aiCopilot',
+  '/app/aboneligim': 'settings',
+  '/app/sistem/lisanslar': 'adminConsole',
   '/app/sistem/module-licenses': 'settings',
   '/app/sistem/import': 'importExport',
   '/app/sistem/export': 'importExport',
@@ -308,7 +314,7 @@ function isBlockedRuntimeStatus(status: string) {
 
 function runtimeRedirectFor(status: string) {
   if (status === 'setup_required') return '/app/sistem/kurulum'
-  if (status === 'unlicensed') return '/app/sistem/module-licenses'
+  if (status === 'unlicensed') return '/app/aboneligim'
   return null
 }
 

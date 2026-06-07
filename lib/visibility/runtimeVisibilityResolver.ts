@@ -1,4 +1,5 @@
 import { isFeatureFlagEnabled } from '@/lib/features/featureFlags'
+import { isModuleEntitled } from '@/lib/licensing/tenantEntitlements'
 import {
   findClientActionContract,
   findClientModuleByRoute,
@@ -40,6 +41,20 @@ export function resolveModuleVisibility(moduleKey: string, context: RuntimeVisib
   const contract = getClientModuleContract(moduleKey)
   if (!contract) {
     return blockedDecision(moduleKey, 'hidden', 'Bu modul su anda kullanilabilir degil.')
+  }
+
+  const entitlementDecision = isModuleEntitled(context.tenantEntitlements, moduleKey)
+  if (!entitlementDecision.entitled) {
+    return {
+      key: moduleKey,
+      visible: true,
+      enabled: false,
+      status: 'unlicensed',
+      reason: entitlementDecision.reason || 'Bu modul mevcut lisans planinizda aktif degildir.',
+      warnings: [],
+      targetPage: contract.routes.find(route => route.type === 'page')?.path,
+      setupAction: setupActionForStatus(moduleKey, 'unlicensed'),
+    }
   }
 
   const runtime = getRuntimeModule(context, moduleKey)

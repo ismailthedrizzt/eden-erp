@@ -6,8 +6,21 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import Sidebar from '@/components/layout/Sidebar'
 import { DemoModeBadge } from '@/components/layout/DemoModeBadge'
 import { PendingActionsBell } from '@/components/layout/PendingActionsBell'
-import { Bell, Building2, Check, ChevronDown, Home, LayoutDashboard, ListChecks, Loader2, Map, Menu, Moon, MoreHorizontal, Star, Sun, Users, WalletCards } from 'lucide-react'
+import { UserAvatar } from '@/components/ui/UserAvatar'
+import { Bell, Building2, Check, ChevronDown, ChevronLeft, Home, LayoutDashboard, ListChecks, Loader2, Map, Menu, Monitor, Moon, MoreHorizontal, Palette, Star, Sun, User, Users, WalletCards } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import {
+  DEFAULT_VISUAL_THEME_ID,
+  LEGACY_DESIGN_LAB_THEME_STORAGE_KEY,
+  VISUAL_THEME_CHANGE_EVENT,
+  VISUAL_THEME_LABELS,
+  VISUAL_THEME_STORAGE_KEY,
+  findThemeConcept,
+  getEdenThemeCssVars,
+  normalizeThemeConceptId,
+  themeConcepts,
+  type ThemeConceptId,
+} from '@/components/design-lab/themeConcepts'
 import { ModuleLicenseProvider } from '@/hooks/useModuleLicense'
 import { PermissionProvider } from '@/lib/security/permissionStore'
 import { ModuleProvider, type ClientModuleRuntime } from '@/lib/security/moduleStore'
@@ -20,9 +33,36 @@ import { setStoredTenantId, tenantRequestHeaders } from '@/lib/tenancy/client'
 import { apiClient } from '@/lib/api/apiClient'
 import { getCurrentReleaseEnvironment } from '@/lib/release/environment'
 import { canShowRouteInNavigation } from '@/lib/release/releaseVisibility'
-import type { SessionBootstrapResponse, UiThemePreference } from '@/lib/user-state/types'
+import type { SessionBootstrapResponse, UiAppearancePreference } from '@/lib/user-state/types'
 
 const THEME_TRANSITION_SUPPRESS_MS = 120
+
+const APPEARANCE_LABELS: Record<UiAppearancePreference, string> = {
+  system: 'Sistem',
+  light: 'Aydinlik',
+  dark: 'Karanlik',
+}
+
+const APPEARANCE_OPTIONS = [
+  {
+    id: 'system' as const,
+    label: APPEARANCE_LABELS.system,
+    description: 'Cihaz ayarini izler',
+    icon: Monitor,
+  },
+  {
+    id: 'light' as const,
+    label: APPEARANCE_LABELS.light,
+    description: 'Aydinlik arayuz',
+    icon: Sun,
+  },
+  {
+    id: 'dark' as const,
+    label: APPEARANCE_LABELS.dark,
+    description: 'Karanlik arayuz',
+    icon: Moon,
+  },
+]
 
 const BREADCRUMBS: Record<string, string> = {
   '/app': 'Ana Sayfa',
@@ -78,6 +118,7 @@ const BREADCRUMBS: Record<string, string> = {
   '/app/sistem/outbox': 'Sistem Yonetimi > Outbox',
   '/app/sistem/entegrasyonlar': 'Sistem Yonetimi > Entegrasyonlar',
   '/app/sistem/teknik': 'Sistem Yonetimi > Teknik',
+  '/app/design-lab': 'Sistem Yonetimi > Tasarim Laboratuvari',
   '/app/sistem/ai-copilot': 'Sistem Yonetimi > AI Copilot',
   '/app/sirket/companies': 'Şirket Yönetimi › Şirketlerimiz',
   '/app/sirket/companies/partners': 'Şirket Yönetimi › Ortaklarımız',
@@ -104,6 +145,16 @@ type ThemedLogoSource = {
   darkLogoUrl?: string | null
 }
 
+type CurrentUserProfile = {
+  id?: string | null
+  displayName?: string | null
+  roleKey?: string | null
+  roleLabel?: string | null
+  avatarUrl?: string | null
+  email?: string | null
+  phone?: string | null
+}
+
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <Suspense fallback={<div className="min-h-screen bg-gray-50 dark:bg-[#09141e]" />}>
@@ -120,9 +171,11 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [dark, setDark] = useState(false)
+  const [appearanceMode, setAppearanceMode] = useState<UiAppearancePreference>('system')
   const [workspaceId, setWorkspaceId] = useState<string | null>(null)
   const [workspaceName, setWorkspaceName] = useState('Çalışma Alanı')
   const [workspaceLogo, setWorkspaceLogo] = useState<ThemedLogoSource>({})
+  const [currentUserProfile, setCurrentUserProfile] = useState<CurrentUserProfile | null>(null)
   const [workspaceLogoFailed, setWorkspaceLogoFailed] = useState(false)
   const [workspaceOptions, setWorkspaceOptions] = useState<TenantWorkspaceOption[]>([])
   const [bootstrapModules, setBootstrapModules] = useState<ClientModuleRuntime[]>([])
@@ -138,6 +191,7 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
   const [tourClosedThisSession, setTourClosedThisSession] = useState(false)
   const [isOffline, setIsOffline] = useState(false)
   const workspaceMenuRef = useRef<HTMLDivElement | null>(null)
+  const [visualThemeId, setVisualThemeId] = useState<ThemeConceptId>(DEFAULT_VISUAL_THEME_ID)
 
   useEffect(() => {
     setIsOffline(typeof navigator !== 'undefined' ? !navigator.onLine : false)
@@ -150,7 +204,10 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
     window.addEventListener('offline', updateNetworkState)
 
     const cachedPreferences = readCachedUiPreferences()
-    setDark(applyThemePreference(cachedPreferences.theme))
+    const cachedAppearance = cachedPreferences.appearanceMode || cachedPreferences.theme || 'system'
+    setAppearanceMode(cachedAppearance)
+    setDark(applyAppearancePreference(cachedAppearance))
+    setVisualThemeId(normalizeThemeConceptId(cachedPreferences.visualTheme) || DEFAULT_VISUAL_THEME_ID)
     setCollapsed(Boolean(cachedPreferences.sidebarCollapsed))
 
     const forceTour = new URLSearchParams(window.location.search).get('tour') === '1'
@@ -163,6 +220,49 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
     }
 
     let cancelled = false
+
+    fetch('/api/auth/me', {
+      cache: 'no-store',
+      headers: tenantRequestHeaders(),
+    })
+      .then(async response => {
+        const payload = await response.json().catch(() => ({}))
+        if (!response.ok) throw new Error(payload.error || 'Kullanici profili yuklenemedi.')
+        return (payload.data || payload) as CurrentUserProfile
+      })
+      .then(profile => {
+        if (cancelled || !profile) return
+        setCurrentUserProfile({
+          id: profile.id || null,
+          displayName: profile.displayName || null,
+          roleKey: profile.roleKey || null,
+          roleLabel: profile.roleLabel || null,
+          avatarUrl: profile.avatarUrl || null,
+          email: profile.email || null,
+          phone: profile.phone || null,
+        })
+      })
+      .catch(() => undefined)
+
+    fetch('/api/user/preferences', {
+      cache: 'no-store',
+      headers: tenantRequestHeaders(),
+    })
+      .then(async response => {
+        const payload = await response.json().catch(() => ({}))
+        if (!response.ok) throw new Error(payload.error || 'Kullanici tercihleri yuklenemedi.')
+        return payload.data?.uiPreferences || payload.uiPreferences
+      })
+      .then(preferences => {
+        if (cancelled || !preferences) return
+        const nextPreferences = cacheUiPreferences(preferences)
+        const nextAppearance = nextPreferences.appearanceMode || nextPreferences.theme || 'system'
+        setAppearanceMode(nextAppearance)
+        setDark(applyAppearancePreference(nextAppearance))
+        setVisualThemeId(normalizeThemeConceptId(nextPreferences.visualTheme) || DEFAULT_VISUAL_THEME_ID)
+        setCollapsed(Boolean(nextPreferences.sidebarCollapsed))
+      })
+      .catch(() => undefined)
 
     fetch('/api/session/bootstrap', {
       cache: 'no-store',
@@ -182,7 +282,10 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
         setBootstrapModules((payload.modules || []) as ClientModuleRuntime[])
         if (payload.workspace?.id) setStoredTenantId(payload.workspace.id)
         cacheUiPreferences(payload.userState.uiPreferences)
-        setDark(applyThemePreference(payload.userState.uiPreferences.theme))
+        const nextAppearance = payload.userState.uiPreferences.appearanceMode || payload.userState.uiPreferences.theme || 'system'
+        setAppearanceMode(nextAppearance)
+        setDark(applyAppearancePreference(nextAppearance))
+        setVisualThemeId(normalizeThemeConceptId(payload.userState.uiPreferences.visualTheme) || DEFAULT_VISUAL_THEME_ID)
         setCollapsed(Boolean(payload.userState.uiPreferences.sidebarCollapsed))
         setTourInitialStep(payload.userState.introCurrentStep)
         setTourShouldOpen(forceTour || Boolean(payload.userState.shouldShowSystemTour))
@@ -273,6 +376,46 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
   }, [collapsed, tourOpen])
 
   useEffect(() => {
+    const storedThemeId = normalizeThemeConceptId(
+      window.localStorage.getItem(VISUAL_THEME_STORAGE_KEY)
+        || window.localStorage.getItem(LEGACY_DESIGN_LAB_THEME_STORAGE_KEY)
+    )
+    if (storedThemeId) setVisualThemeId(storedThemeId)
+
+    function handleVisualThemeChange(event: Event) {
+      const themeId = (event as CustomEvent<{ themeId?: unknown }>).detail?.themeId
+      const normalized = normalizeThemeConceptId(themeId)
+      if (normalized) setVisualThemeId(normalized)
+    }
+
+    window.addEventListener(VISUAL_THEME_CHANGE_EVENT, handleVisualThemeChange)
+    return () => window.removeEventListener(VISUAL_THEME_CHANGE_EVENT, handleVisualThemeChange)
+  }, [])
+
+  useEffect(() => {
+    applyVisualThemePreference(visualThemeId, dark ? 'dark' : 'light')
+  }, [visualThemeId, dark])
+
+  useEffect(() => {
+    if (appearanceMode !== 'system') return
+
+    const mediaQuery = window.matchMedia?.('(prefers-color-scheme: dark)')
+    if (!mediaQuery) return
+
+    const handleSystemAppearanceChange = () => {
+      setDark(applyAppearancePreference('system'))
+    }
+
+    if (mediaQuery.addEventListener) {
+      mediaQuery.addEventListener('change', handleSystemAppearanceChange)
+      return () => mediaQuery.removeEventListener('change', handleSystemAppearanceChange)
+    }
+
+    mediaQuery.addListener(handleSystemAppearanceChange)
+    return () => mediaQuery.removeListener(handleSystemAppearanceChange)
+  }, [appearanceMode])
+
+  useEffect(() => {
     if (searchParams.get('open') !== 'action-center') return
     const timer = window.setTimeout(() => {
       window.dispatchEvent(new CustomEvent('eden:open-action-center'))
@@ -280,11 +423,19 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
     return () => window.clearTimeout(timer)
   }, [searchParams])
 
-  function toggleTheme() {
-    const nextTheme: UiThemePreference = dark ? 'light' : 'dark'
-    setDark(applyThemePreference(nextTheme))
-    localStorage.setItem('theme', nextTheme)
-    syncUiPreferencesPatch({ theme: nextTheme }).catch(() => undefined)
+  function changeAppearanceMode(nextAppearance: UiAppearancePreference) {
+    setAppearanceMode(nextAppearance)
+    setDark(applyAppearancePreference(nextAppearance))
+    syncUiPreferencesPatch({ appearanceMode: nextAppearance }).catch(() => undefined)
+  }
+
+  function changeVisualTheme(themeId: ThemeConceptId) {
+    setVisualThemeId(themeId)
+    applyVisualThemePreference(themeId, dark ? 'dark' : 'light')
+    syncUiPreferencesPatch({ visualTheme: themeId }).catch(() => undefined)
+    window.dispatchEvent(new CustomEvent(VISUAL_THEME_CHANGE_EVENT, {
+      detail: { themeId },
+    }))
   }
 
   function startSystemTour() {
@@ -354,7 +505,10 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
           const nextBootstrap = bootstrapPayload as SessionBootstrapResponse
           setBootstrapModules((nextBootstrap.modules || []) as ClientModuleRuntime[])
           cacheUiPreferences(nextBootstrap.userState.uiPreferences)
-          setDark(applyThemePreference(nextBootstrap.userState.uiPreferences.theme))
+          const nextAppearance = nextBootstrap.userState.uiPreferences.appearanceMode || nextBootstrap.userState.uiPreferences.theme || 'system'
+          setAppearanceMode(nextAppearance)
+          setDark(applyAppearancePreference(nextAppearance))
+          setVisualThemeId(normalizeThemeConceptId(nextBootstrap.userState.uiPreferences.visualTheme) || DEFAULT_VISUAL_THEME_ID)
           setCollapsed(Boolean(nextBootstrap.userState.uiPreferences.sidebarCollapsed))
           setTourInitialStep(nextBootstrap.userState.introCurrentStep)
           setTourShouldOpen(Boolean(nextBootstrap.userState.shouldShowSystemTour))
@@ -405,6 +559,8 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
   const breadcrumbParts = breadcrumb.split('›').map(part => part.trim()).filter(Boolean)
   const isPublicSetupRoute = pathname.startsWith('/app/sistem/kurulum')
   const workspaceLogoUrl = resolveThemedLogoUrl(workspaceLogo, dark)
+  const currentUserDisplayName = currentUserProfile?.displayName || currentUserProfile?.email || currentUserProfile?.phone || ''
+  const currentUserRoleLabel = currentUserProfile?.roleLabel || currentUserProfile?.roleKey || ''
 
   useEffect(() => {
     setWorkspaceLogoFailed(false)
@@ -603,29 +759,16 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
               >
                 <Map size={16} />
               </button>
-              <div data-tour-id="user-settings" className="flex items-center gap-2 sm:gap-3">
-              <button
-                onClick={toggleTheme}
-                data-tour-id="theme-toggle"
-                className="h-9 w-9 rounded-lg border border-gray-200 dark:border-gray-700 flex items-center justify-center
-                           text-gray-500 hover:bg-gray-50 dark:hover:bg-eden-navy transition-colors"
-                title="Tema"
-                aria-label="Tema degistir"
-              >
-                {dark ? <Sun size={16} /> : <Moon size={16} />}
-              </button>
-              {/* User Profile */}
-              <div data-tour-id="header-user-info" className="flex items-center gap-2.5">
-                <div className="w-7 h-7 rounded-full bg-eden-blue flex items-center justify-center
-                                text-[10px] font-bold text-white">
-                  İİ
-                </div>
-                <div className="hidden min-w-0 sm:block">
-                  <div className="text-xs font-medium text-gray-700 dark:text-gray-200 truncate">İsmail ILGAR</div>
-                  <div className="text-[10px] text-gray-500 dark:text-gray-400">Yönetici</div>
-                </div>
-              </div>
-              </div>
+              <UserProfileMenu
+                profile={currentUserProfile}
+                displayName={currentUserDisplayName}
+                roleLabel={currentUserRoleLabel}
+                activeThemeId={visualThemeId}
+                appearanceMode={appearanceMode}
+                activeDark={dark}
+                onVisualThemeChange={changeVisualTheme}
+                onAppearanceModeChange={changeAppearanceMode}
+              />
             </div>
           </header>
 
@@ -656,6 +799,308 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
         </PermissionProvider>
       </ModuleProvider>
     </ModuleLicenseProvider>
+  )
+}
+
+
+function UserProfileMenu({
+  profile,
+  displayName,
+  roleLabel,
+  activeThemeId,
+  appearanceMode,
+  activeDark,
+  onVisualThemeChange,
+  onAppearanceModeChange,
+}: {
+  profile: CurrentUserProfile | null
+  displayName: string
+  roleLabel: string
+  activeThemeId: ThemeConceptId
+  appearanceMode: UiAppearancePreference
+  activeDark: boolean
+  onVisualThemeChange: (themeId: ThemeConceptId) => void
+  onAppearanceModeChange: (appearanceMode: UiAppearancePreference) => void
+}) {
+  const [open, setOpen] = useState(false)
+  const [activePanel, setActivePanel] = useState<'theme' | 'appearance' | null>(null)
+  const containerRef = useRef<HTMLDivElement | null>(null)
+  const activeTheme = themeConcepts.find(theme => theme.id === activeThemeId)
+  const activeAppearanceLabel = APPEARANCE_LABELS[appearanceMode] || APPEARANCE_LABELS.system
+  const ActiveAppearanceIcon = appearanceMode === 'system' ? Monitor : activeDark ? Moon : Sun
+
+  useEffect(() => {
+    if (!open) return
+
+    function closeOnOutsideClick(event: MouseEvent) {
+      if (!containerRef.current?.contains(event.target as Node)) {
+        setOpen(false)
+        setActivePanel(null)
+      }
+    }
+
+    function closeOnEscape(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        setOpen(false)
+        setActivePanel(null)
+      }
+    }
+
+    document.addEventListener('mousedown', closeOnOutsideClick)
+    document.addEventListener('keydown', closeOnEscape)
+    return () => {
+      document.removeEventListener('mousedown', closeOnOutsideClick)
+      document.removeEventListener('keydown', closeOnEscape)
+    }
+  }, [open])
+
+  return (
+    <div
+      ref={containerRef}
+      data-tour-id="user-settings"
+      className="relative"
+    >
+      <button
+        type="button"
+        data-tour-id="header-user-info"
+        data-avatar-loaded={profile?.avatarUrl ? 'true' : 'false'}
+        onClick={() => {
+          setOpen(previous => {
+            const nextOpen = !previous
+            if (!nextOpen) setActivePanel(null)
+            return nextOpen
+          })
+        }}
+        className="flex h-9 min-w-9 items-center gap-2 rounded-lg border border-gray-200 bg-white px-1.5 text-gray-600 transition-colors hover:bg-gray-50 dark:border-gray-700 dark:bg-eden-navy-2 dark:text-gray-200 dark:hover:bg-eden-navy sm:px-2"
+        title="Profil ve tercihler"
+        aria-label="Profil ve tercihleri ac"
+        aria-haspopup="menu"
+        aria-expanded={open}
+      >
+        {(profile?.avatarUrl || displayName) ? (
+          <UserAvatar
+            name={displayName}
+            photoUrl={profile?.avatarUrl}
+            size="xs"
+            showTooltip={false}
+            className="h-7 w-7 border border-white/70 shadow-sm dark:border-gray-700"
+          />
+        ) : (
+          <span
+            className="flex h-7 w-7 items-center justify-center rounded-full border border-white/70 bg-gray-100 text-gray-400 shadow-sm dark:border-gray-700 dark:bg-eden-navy dark:text-gray-500"
+            aria-hidden="true"
+          >
+            <User size={14} />
+          </span>
+        )}
+        {(displayName || roleLabel) && (
+          <span className="hidden min-w-0 text-left sm:block">
+            {displayName && (
+              <span className="block max-w-32 truncate text-xs font-medium text-gray-700 dark:text-gray-200">{displayName}</span>
+            )}
+            {roleLabel && (
+              <span className="block max-w-32 truncate text-[10px] text-gray-500 dark:text-gray-400">{roleLabel}</span>
+            )}
+          </span>
+        )}
+        <ChevronDown size={13} className={cn('hidden shrink-0 text-gray-400 transition-transform sm:block', open && 'rotate-180')} />
+      </button>
+
+      {open && (
+        <div
+          data-tour-id="profile-menu"
+          className="absolute right-0 top-full z-50 mt-2 w-72 max-w-[calc(100vw-1rem)] overflow-visible rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-eden-navy-2"
+          role="menu"
+          aria-label="Profil ve tercihler"
+        >
+          <div className="flex items-center gap-2.5 border-b border-gray-200 px-3 py-3 dark:border-gray-700">
+            {(profile?.avatarUrl || displayName) ? (
+              <UserAvatar
+                name={displayName}
+                photoUrl={profile?.avatarUrl}
+                size="sm"
+                showTooltip={false}
+                className="h-9 w-9 border border-gray-100 shadow-sm dark:border-gray-700"
+              />
+            ) : (
+              <span className="flex h-9 w-9 items-center justify-center rounded-full border border-gray-100 bg-gray-100 text-gray-400 dark:border-gray-700 dark:bg-eden-navy dark:text-gray-500">
+                <User size={16} />
+              </span>
+            )}
+            <span className="min-w-0">
+              <span className="block truncate text-sm font-semibold text-gray-900 dark:text-gray-100">
+                {displayName || 'Kullanici'}
+              </span>
+              {roleLabel && (
+                <span className="mt-0.5 block truncate text-xs text-gray-500 dark:text-gray-400">{roleLabel}</span>
+              )}
+            </span>
+          </div>
+
+          <div className="py-1">
+            <div className="relative">
+              <button
+                type="button"
+                data-tour-id="visual-theme-selector"
+                data-active-theme-id={activeThemeId}
+                onClick={() => setActivePanel(panel => panel === 'theme' ? null : 'theme')}
+                onMouseEnter={() => setActivePanel('theme')}
+                onFocus={() => setActivePanel('theme')}
+                className={cn(
+                  'flex w-full items-center gap-2 px-3 py-2 text-left transition hover:bg-gray-50 dark:hover:bg-eden-navy',
+                  activePanel === 'theme' && 'bg-gray-50 dark:bg-eden-navy'
+                )}
+                role="menuitem"
+                aria-haspopup="menu"
+                aria-expanded={activePanel === 'theme'}
+              >
+                <span className="relative flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-white text-eden-blue dark:border-gray-700 dark:bg-eden-navy-3 dark:text-sky-200">
+                  <Palette size={15} />
+                  <span
+                    className="absolute bottom-1 right-1 h-2 w-2 rounded-full border border-white dark:border-eden-navy-3"
+                    style={{ backgroundColor: activeTheme?.colors.accentWarm || '#b88932' }}
+                    aria-hidden="true"
+                  />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-xs font-semibold text-gray-800 dark:text-gray-100">Tema</span>
+                  <span className="mt-0.5 block truncate text-[10px] text-gray-500 dark:text-gray-400">
+                    {activeTheme?.name || VISUAL_THEME_LABELS[activeThemeId]}
+                  </span>
+                </span>
+                <ChevronLeft size={15} className="shrink-0 text-gray-400" />
+              </button>
+
+              {activePanel === 'theme' && (
+                <div
+                  data-tour-id="visual-theme-options"
+                  className="absolute right-0 top-full z-[60] mt-2 w-72 max-w-[calc(100vw-1rem)] overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-eden-navy-2 sm:right-full sm:top-0 sm:mr-2 sm:mt-0"
+                  role="menu"
+                  aria-label="Tema secenekleri"
+                >
+                  <div className="border-b border-gray-200 px-3 py-2 dark:border-gray-700">
+                    <div className="text-[10px] font-semibold uppercase tracking-normal text-gray-400 dark:text-gray-500">Tema</div>
+                    <div className="mt-0.5 text-xs font-semibold text-gray-800 dark:text-gray-100">
+                      {activeTheme?.name || VISUAL_THEME_LABELS[activeThemeId]}
+                    </div>
+                  </div>
+                  <div className="py-1">
+                    {themeConcepts.map(theme => {
+                      const selected = theme.id === activeThemeId
+                      return (
+                        <button
+                          key={theme.id}
+                          type="button"
+                          data-theme-id={theme.id}
+                          onClick={() => {
+                            onVisualThemeChange(theme.id)
+                            setActivePanel(null)
+                          }}
+                          className={cn(
+                            'flex w-full items-center gap-2 px-3 py-2 text-left transition hover:bg-gray-50 dark:hover:bg-eden-navy',
+                            selected && 'bg-gray-50 dark:bg-eden-navy'
+                          )}
+                          role="menuitemradio"
+                          aria-checked={selected}
+                        >
+                          <span
+                            className="h-5 w-5 shrink-0 rounded-md border border-white shadow-sm dark:border-eden-navy-3"
+                            style={{ backgroundColor: theme.colors.accentPrimary }}
+                            aria-hidden="true"
+                          />
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate text-xs font-semibold text-gray-800 dark:text-gray-100">{VISUAL_THEME_LABELS[theme.id] || theme.name}</span>
+                            <span className="mt-0.5 block truncate text-[10px] text-gray-500 dark:text-gray-400">{theme.personality.join(' / ')}</span>
+                          </span>
+                          {selected && (
+                            <Check size={15} className="shrink-0 text-eden-green" />
+                          )}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="relative">
+              <button
+                type="button"
+                data-tour-id="theme-toggle"
+                onClick={() => setActivePanel(panel => panel === 'appearance' ? null : 'appearance')}
+                onMouseEnter={() => setActivePanel('appearance')}
+                onFocus={() => setActivePanel('appearance')}
+                className={cn(
+                  'flex w-full items-center gap-2 px-3 py-2 text-left transition hover:bg-gray-50 dark:hover:bg-eden-navy',
+                  activePanel === 'appearance' && 'bg-gray-50 dark:bg-eden-navy'
+                )}
+                role="menuitem"
+                aria-haspopup="menu"
+                aria-expanded={activePanel === 'appearance'}
+              >
+                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 dark:border-gray-700 dark:bg-eden-navy-3 dark:text-gray-200">
+                  <ActiveAppearanceIcon size={15} />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-xs font-semibold text-gray-800 dark:text-gray-100">Gorunum</span>
+                  <span className="mt-0.5 block truncate text-[10px] text-gray-500 dark:text-gray-400">
+                    {activeAppearanceLabel}
+                  </span>
+                </span>
+                <ChevronLeft size={15} className="shrink-0 text-gray-400" />
+              </button>
+
+              {activePanel === 'appearance' && (
+                <div
+                  data-tour-id="appearance-mode-options"
+                  className="absolute right-0 top-full z-[60] mt-2 w-64 max-w-[calc(100vw-1rem)] overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg dark:border-gray-700 dark:bg-eden-navy-2 sm:right-full sm:top-0 sm:mr-2 sm:mt-0"
+                  role="menu"
+                  aria-label="Gorunum secenekleri"
+                >
+                  <div className="border-b border-gray-200 px-3 py-2 dark:border-gray-700">
+                    <div className="text-[10px] font-semibold uppercase tracking-normal text-gray-400 dark:text-gray-500">Gorunum</div>
+                    <div className="mt-0.5 text-xs font-semibold text-gray-800 dark:text-gray-100">{activeAppearanceLabel}</div>
+                  </div>
+                  <div className="py-1">
+                    {APPEARANCE_OPTIONS.map(option => {
+                      const selected = option.id === appearanceMode
+                      const Icon = option.icon
+                      return (
+                        <button
+                          key={option.id}
+                          type="button"
+                          onClick={() => {
+                            onAppearanceModeChange(option.id)
+                            setActivePanel(null)
+                          }}
+                          className={cn(
+                            'flex w-full items-center gap-2 px-3 py-2 text-left transition hover:bg-gray-50 dark:hover:bg-eden-navy',
+                            selected && 'bg-gray-50 dark:bg-eden-navy'
+                          )}
+                          role="menuitemradio"
+                          aria-checked={selected}
+                        >
+                          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 dark:border-gray-700 dark:bg-eden-navy-3 dark:text-gray-200">
+                            <Icon size={14} />
+                          </span>
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate text-xs font-semibold text-gray-800 dark:text-gray-100">{option.label}</span>
+                            <span className="mt-0.5 block truncate text-[10px] text-gray-500 dark:text-gray-400">{option.description}</span>
+                          </span>
+                          {selected && (
+                            <Check size={15} className="shrink-0 text-eden-green" />
+                          )}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
   )
 }
 
@@ -738,7 +1183,7 @@ function WorkspaceLoadingScreen({ dark }: { dark: boolean }) {
   )
 }
 
-function applyThemePreference(theme: UiThemePreference) {
+function applyAppearancePreference(theme: UiAppearancePreference) {
   const prefersDark = typeof window !== 'undefined'
     && window.matchMedia?.('(prefers-color-scheme: dark)').matches
   const shouldUseDark = theme === 'dark' || (theme === 'system' && prefersDark)
@@ -751,6 +1196,19 @@ function applyThemePreference(theme: UiThemePreference) {
   }
 
   return shouldUseDark
+}
+
+function applyVisualThemePreference(themeId: ThemeConceptId, appearance: 'light' | 'dark') {
+  if (typeof document === 'undefined') return
+  const root = document.documentElement
+  const theme = findThemeConcept(themeId)
+  const vars = getEdenThemeCssVars(theme, appearance)
+
+  root.dataset.visualTheme = theme.id
+  root.dataset.appearanceMode = appearance
+  for (const [key, value] of Object.entries(vars)) {
+    root.style.setProperty(key, value)
+  }
 }
 
 function resolveThemedLogoUrl(source: ThemedLogoSource | null | undefined, dark: boolean) {

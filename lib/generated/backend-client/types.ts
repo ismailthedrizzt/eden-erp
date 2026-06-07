@@ -5690,6 +5690,24 @@ export interface paths {
         patch: operations["onboarding_user_patch_api_v1_onboarding_user_patch"];
         trace?: never;
     };
+    "/api/v1/onboarding/preferences": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Onboarding Preferences Get */
+        get: operations["onboarding_preferences_get_api_v1_onboarding_preferences_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Onboarding Preferences Patch */
+        patch: operations["onboarding_preferences_patch_api_v1_onboarding_preferences_patch"];
+        trace?: never;
+    };
     "/api/v1/onboarding/user/complete-tour": {
         parameters: {
             query?: never;
@@ -6125,6 +6143,23 @@ export interface paths {
         };
         /** Tenant Current Endpoint */
         get: operations["tenant_current_endpoint_api_v1_security_tenants_current_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/security/me": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Current User Endpoint */
+        get: operations["current_user_endpoint_api_v1_security_me_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -7304,6 +7339,338 @@ export interface paths {
         };
         /** Get Module Setup Readiness */
         get: operations["get_module_setup_readiness_api_v1_setup_readiness__module_key__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/licensing/products": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Products List */
+        get: operations["products_list_api_v1_licensing_products_get"];
+        put?: never;
+        /** Products Create */
+        post: operations["products_create_api_v1_licensing_products_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/licensing/products/{product_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Products Get */
+        get: operations["products_get_api_v1_licensing_products__product_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Products Update */
+        patch: operations["products_update_api_v1_licensing_products__product_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/licensing/products/{product_id}/plans": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Product Plans List */
+        get: operations["product_plans_list_api_v1_licensing_products__product_id__plans_get"];
+        put?: never;
+        /** Product Plans Create */
+        post: operations["product_plans_create_api_v1_licensing_products__product_id__plans_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/licensing/plans/{plan_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Plans Get */
+        get: operations["plans_get_api_v1_licensing_plans__plan_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Plans Update */
+        patch: operations["plans_update_api_v1_licensing_plans__plan_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/licensing/plans/{plan_id}/modules": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Plans Modules Get */
+        get: operations["plans_modules_get_api_v1_licensing_plans__plan_id__modules_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Plans Modules Patch */
+        patch: operations["plans_modules_patch_api_v1_licensing_plans__plan_id__modules_patch"];
+        trace?: never;
+    };
+    "/api/v1/licensing/plans/{plan_id}/features": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Plans Features Get */
+        get: operations["plans_features_get_api_v1_licensing_plans__plan_id__features_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Plans Features Patch */
+        patch: operations["plans_features_patch_api_v1_licensing_plans__plan_id__features_patch"];
+        trace?: never;
+    };
+    "/api/v1/licensing/tenant-licenses": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Tenant Licenses List */
+        get: operations["tenant_licenses_list_api_v1_licensing_tenant_licenses_get"];
+        put?: never;
+        /** Tenant Licenses Create */
+        post: operations["tenant_licenses_create_api_v1_licensing_tenant_licenses_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/licensing/tenant-licenses/{license_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Tenant Licenses Get */
+        get: operations["tenant_licenses_get_api_v1_licensing_tenant_licenses__license_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Tenant Licenses Patch */
+        patch: operations["tenant_licenses_patch_api_v1_licensing_tenant_licenses__license_id__patch"];
+        trace?: never;
+    };
+    "/api/v1/licensing/tenant-licenses/{license_id}/change-plan": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Tenant Licenses Change Plan */
+        post: operations["tenant_licenses_change_plan_api_v1_licensing_tenant_licenses__license_id__change_plan_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/licensing/tenant-licenses/{license_id}/suspend": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Tenant Licenses Suspend */
+        post: operations["tenant_licenses_suspend_api_v1_licensing_tenant_licenses__license_id__suspend_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/licensing/tenant-licenses/{license_id}/reactivate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Tenant Licenses Reactivate */
+        post: operations["tenant_licenses_reactivate_api_v1_licensing_tenant_licenses__license_id__reactivate_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/licensing/tenant-licenses/{license_id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Tenant Licenses Cancel */
+        post: operations["tenant_licenses_cancel_api_v1_licensing_tenant_licenses__license_id__cancel_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/licensing/tenant-licenses/{license_id}/archive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Tenant Licenses Archive */
+        post: operations["tenant_licenses_archive_api_v1_licensing_tenant_licenses__license_id__archive_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/licensing/tenant-licenses/{license_id}/payments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Tenant License Payments Get */
+        get: operations["tenant_license_payments_get_api_v1_licensing_tenant_licenses__license_id__payments_get"];
+        put?: never;
+        /** Tenant License Payments Post */
+        post: operations["tenant_license_payments_post_api_v1_licensing_tenant_licenses__license_id__payments_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/licensing/tenant-licenses/{license_id}/usage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Tenant License Usage Get */
+        get: operations["tenant_license_usage_get_api_v1_licensing_tenant_licenses__license_id__usage_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/licensing/tenant-licenses/{license_id}/usage-snapshot": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Tenant License Usage Post */
+        post: operations["tenant_license_usage_post_api_v1_licensing_tenant_licenses__license_id__usage_snapshot_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/licensing/current": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Current License */
+        get: operations["current_license_api_v1_licensing_current_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/licensing/current/modules": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Current License Modules */
+        get: operations["current_license_modules_api_v1_licensing_current_modules_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/licensing/current/features": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Current License Features */
+        get: operations["current_license_features_api_v1_licensing_current_features_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -11184,6 +11551,37 @@ export interface components {
             /** Base Version */
             base_version?: number | null;
         };
+        /** LicensedProductCreateRequest */
+        LicensedProductCreateRequest: {
+            /** Product Key */
+            product_key: string;
+            /** Product Name */
+            product_name: string;
+            /** Description */
+            description?: string | null;
+            /**
+             * Status
+             * @default active
+             */
+            status: string;
+            /** Metadata Json */
+            metadata_json?: {
+                [key: string]: unknown;
+            };
+        };
+        /** LicensedProductUpdateRequest */
+        LicensedProductUpdateRequest: {
+            /** Product Name */
+            product_name?: string | null;
+            /** Description */
+            description?: string | null;
+            /** Status */
+            status?: string | null;
+            /** Metadata Json */
+            metadata_json?: {
+                [key: string]: unknown;
+            } | null;
+        };
         /** MaintenanceDueCreateServiceRequest */
         MaintenanceDueCreateServiceRequest: {
             /** Assigned User Id */
@@ -12078,6 +12476,20 @@ export interface components {
             /** Active */
             active?: boolean | null;
         };
+        /** PlanFeaturePatchRequest */
+        PlanFeaturePatchRequest: {
+            /** Features */
+            features?: {
+                [key: string]: unknown;
+            }[];
+        };
+        /** PlanModulePatchRequest */
+        PlanModulePatchRequest: {
+            /** Modules */
+            modules?: {
+                [key: string]: unknown;
+            }[];
+        };
         /** PolicyEvaluateRequest */
         PolicyEvaluateRequest: {
             /** Action Key */
@@ -12383,6 +12795,94 @@ export interface components {
             };
         } & {
             [key: string]: unknown;
+        };
+        /** ProductPlanCreateRequest */
+        ProductPlanCreateRequest: {
+            /** Plan Key */
+            plan_key: string;
+            /** Plan Name */
+            plan_name: string;
+            /** Description */
+            description?: string | null;
+            /**
+             * Status
+             * @default active
+             */
+            status: string;
+            /** Business Size Label */
+            business_size_label?: string | null;
+            /**
+             * Default Billing Period
+             * @default monthly
+             */
+            default_billing_period: string;
+            /** Base Price */
+            base_price?: number | null;
+            /**
+             * Currency
+             * @default TRY
+             */
+            currency: string;
+            /**
+             * Trial Days
+             * @default 14
+             */
+            trial_days: number;
+            /**
+             * Support Level
+             * @default standard
+             */
+            support_level: string;
+            /**
+             * Visible In Setup
+             * @default true
+             */
+            visible_in_setup: boolean;
+            /**
+             * Is Development Plan
+             * @default false
+             */
+            is_development_plan: boolean;
+            /**
+             * Sort Order
+             * @default 100
+             */
+            sort_order: number;
+            /** Metadata Json */
+            metadata_json?: {
+                [key: string]: unknown;
+            };
+        };
+        /** ProductPlanUpdateRequest */
+        ProductPlanUpdateRequest: {
+            /** Plan Name */
+            plan_name?: string | null;
+            /** Description */
+            description?: string | null;
+            /** Status */
+            status?: string | null;
+            /** Business Size Label */
+            business_size_label?: string | null;
+            /** Default Billing Period */
+            default_billing_period?: string | null;
+            /** Base Price */
+            base_price?: number | null;
+            /** Currency */
+            currency?: string | null;
+            /** Trial Days */
+            trial_days?: number | null;
+            /** Support Level */
+            support_level?: string | null;
+            /** Visible In Setup */
+            visible_in_setup?: boolean | null;
+            /** Is Development Plan */
+            is_development_plan?: boolean | null;
+            /** Sort Order */
+            sort_order?: number | null;
+            /** Metadata Json */
+            metadata_json?: {
+                [key: string]: unknown;
+            } | null;
         };
         /** ProductUpdateRequest */
         ProductUpdateRequest: {
@@ -13977,6 +14477,152 @@ export interface components {
             /** Identifier */
             identifier: string;
         };
+        /** TenantLicenseCreateRequest */
+        TenantLicenseCreateRequest: {
+            /** Tenant Id */
+            tenant_id: string;
+            /** Product Id */
+            product_id?: string | null;
+            /**
+             * Product Key
+             * @default eden_erp
+             */
+            product_key: string;
+            /** Product Plan Id */
+            product_plan_id?: string | null;
+            /**
+             * Plan Key
+             * @default medium
+             */
+            plan_key: string;
+            /** License Key */
+            license_key?: string | null;
+            /**
+             * Status
+             * @default trial
+             * @enum {string}
+             */
+            status: "trial" | "active" | "past_due" | "suspended" | "cancelled" | "expired" | "development" | "internal" | "archived";
+            /** Starts At */
+            starts_at?: string | null;
+            /** Ends At */
+            ends_at?: string | null;
+            /** Renews At */
+            renews_at?: string | null;
+            /**
+             * Billing Period
+             * @default monthly
+             */
+            billing_period: string;
+            /** Price */
+            price?: number | null;
+            /**
+             * Currency
+             * @default TRY
+             */
+            currency: string;
+            /**
+             * Payment Status
+             * @default pending
+             */
+            payment_status: string;
+            /** Max Users */
+            max_users?: number | null;
+            /** Max Companies */
+            max_companies?: number | null;
+            /** Max Branches */
+            max_branches?: number | null;
+            /** Max Storage Mb */
+            max_storage_mb?: number | null;
+            /** Metadata Json */
+            metadata_json?: {
+                [key: string]: unknown;
+            };
+        };
+        /** TenantLicensePaymentCreateRequest */
+        TenantLicensePaymentCreateRequest: {
+            /** Period Start */
+            period_start?: string | null;
+            /** Period End */
+            period_end?: string | null;
+            /** Amount */
+            amount: number;
+            /**
+             * Currency
+             * @default TRY
+             */
+            currency: string;
+            /**
+             * Payment Status
+             * @default paid
+             */
+            payment_status: string;
+            /** Paid At */
+            paid_at?: string | null;
+            /** Payment Reference */
+            payment_reference?: string | null;
+            /** Notes */
+            notes?: string | null;
+            /** Metadata Json */
+            metadata_json?: {
+                [key: string]: unknown;
+            };
+        };
+        /** TenantLicensePlanChangeRequest */
+        TenantLicensePlanChangeRequest: {
+            /** Plan Key */
+            plan_key?: string | null;
+            /** Product Plan Id */
+            product_plan_id?: string | null;
+            /** Reason */
+            reason?: string | null;
+        };
+        /** TenantLicenseUpdateRequest */
+        TenantLicenseUpdateRequest: {
+            /** Status */
+            status?: ("trial" | "active" | "past_due" | "suspended" | "cancelled" | "expired" | "development" | "internal" | "archived") | null;
+            /** Starts At */
+            starts_at?: string | null;
+            /** Ends At */
+            ends_at?: string | null;
+            /** Renews At */
+            renews_at?: string | null;
+            /** Billing Period */
+            billing_period?: string | null;
+            /** Price */
+            price?: number | null;
+            /** Currency */
+            currency?: string | null;
+            /** Payment Status */
+            payment_status?: string | null;
+            /** Max Users */
+            max_users?: number | null;
+            /** Max Companies */
+            max_companies?: number | null;
+            /** Max Branches */
+            max_branches?: number | null;
+            /** Max Storage Mb */
+            max_storage_mb?: number | null;
+            /** Metadata Json */
+            metadata_json?: {
+                [key: string]: unknown;
+            } | null;
+        };
+        /** TenantUsageSnapshotCreateRequest */
+        TenantUsageSnapshotCreateRequest: {
+            /** Active Users */
+            active_users?: number | null;
+            /** Companies Count */
+            companies_count?: number | null;
+            /** Branches Count */
+            branches_count?: number | null;
+            /** Storage Used Mb */
+            storage_used_mb?: number | null;
+            /** Metadata Json */
+            metadata_json?: {
+                [key: string]: unknown;
+            };
+        };
         /** TenantWorkspaceMutation */
         TenantWorkspaceMutation: {
             /** Tenant Id */
@@ -14082,6 +14728,13 @@ export interface components {
             metadata_json?: {
                 [key: string]: unknown;
             } | null;
+        };
+        /** UserPreferencesPatch */
+        UserPreferencesPatch: {
+            /** Uipreferences */
+            uiPreferences?: {
+                [key: string]: unknown;
+            };
         };
         /** UserRoleMutation */
         UserRoleMutation: {
@@ -27849,6 +28502,59 @@ export interface operations {
             };
         };
     };
+    onboarding_preferences_get_api_v1_onboarding_preferences_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+        };
+    };
+    onboarding_preferences_patch_api_v1_onboarding_preferences_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UserPreferencesPatch"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     onboarding_user_complete_tour_api_v1_onboarding_user_complete_tour_post: {
         parameters: {
             query?: never;
@@ -28669,6 +29375,26 @@ export interface operations {
         };
     };
     tenant_current_endpoint_api_v1_security_tenants_current_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
+                };
+            };
+        };
+    };
+    current_user_endpoint_api_v1_security_me_get: {
         parameters: {
             query?: never;
             header?: never;
@@ -31628,6 +32354,926 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    products_list_api_v1_licensing_products_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    products_create_api_v1_licensing_products_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LicensedProductCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    products_get_api_v1_licensing_products__product_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                product_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    products_update_api_v1_licensing_products__product_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                product_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LicensedProductUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    product_plans_list_api_v1_licensing_products__product_id__plans_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                product_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    product_plans_create_api_v1_licensing_products__product_id__plans_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                product_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProductPlanCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    plans_get_api_v1_licensing_plans__plan_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                plan_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    plans_update_api_v1_licensing_plans__plan_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                plan_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProductPlanUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    plans_modules_get_api_v1_licensing_plans__plan_id__modules_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                plan_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    plans_modules_patch_api_v1_licensing_plans__plan_id__modules_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                plan_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PlanModulePatchRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    plans_features_get_api_v1_licensing_plans__plan_id__features_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                plan_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    plans_features_patch_api_v1_licensing_plans__plan_id__features_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                plan_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PlanFeaturePatchRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    tenant_licenses_list_api_v1_licensing_tenant_licenses_get: {
+        parameters: {
+            query?: {
+                tenant_id?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    tenant_licenses_create_api_v1_licensing_tenant_licenses_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TenantLicenseCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    tenant_licenses_get_api_v1_licensing_tenant_licenses__license_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                license_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    tenant_licenses_patch_api_v1_licensing_tenant_licenses__license_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                license_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TenantLicenseUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    tenant_licenses_change_plan_api_v1_licensing_tenant_licenses__license_id__change_plan_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                license_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TenantLicensePlanChangeRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    tenant_licenses_suspend_api_v1_licensing_tenant_licenses__license_id__suspend_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                license_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    tenant_licenses_reactivate_api_v1_licensing_tenant_licenses__license_id__reactivate_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                license_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    tenant_licenses_cancel_api_v1_licensing_tenant_licenses__license_id__cancel_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                license_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    tenant_licenses_archive_api_v1_licensing_tenant_licenses__license_id__archive_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                license_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    tenant_license_payments_get_api_v1_licensing_tenant_licenses__license_id__payments_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                license_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    tenant_license_payments_post_api_v1_licensing_tenant_licenses__license_id__payments_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                license_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TenantLicensePaymentCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    tenant_license_usage_get_api_v1_licensing_tenant_licenses__license_id__usage_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                license_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    tenant_license_usage_post_api_v1_licensing_tenant_licenses__license_id__usage_snapshot_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                license_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TenantUsageSnapshotCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    current_license_api_v1_licensing_current_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    current_license_modules_api_v1_licensing_current_modules_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    current_license_features_api_v1_licensing_current_features_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
         };

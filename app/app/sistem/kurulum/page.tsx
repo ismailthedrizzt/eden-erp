@@ -28,7 +28,7 @@ import { cn } from '@/lib/utils'
 type WizardStep = 'welcome' | 'scale' | 'company' | 'role' | 'person' | 'review' | 'payment'
 type VisualWizardStep = 'welcome' | 'company' | 'person' | 'review' | 'payment'
 type UserRole = 'partner' | 'employee'
-type CompanyScale = 'small' | 'medium' | 'corporate' | 'enterprise'
+type CompanyScale = 'micro' | 'small' | 'medium' | 'large' | 'enterprise'
 type PaymentChoice = 'pay_now' | 'demo'
 type SetupProgressKey =
   | 'core'
@@ -232,27 +232,43 @@ const SCALE_OPTIONS: Array<{
   bullets: string[]
 }> = [
   {
-    value: 'small',
-    title: 'Küçük',
-    userRange: '1–5 Kullanıcı',
+    value: 'micro',
+    title: 'Mikro İşletme',
+    userRange: '1-3 Kullanıcı',
     companyRange: 'Tek şirket',
-    description: 'Sade ve hızlı başlangıç için uygundur.',
+    description: 'Basit şirket, cari ve belge takibi için sade başlangıç paketidir.',
     authorizationManagement: false,
     workflowManagement: false,
     multiCompany: false,
     bullets: [
       'Tek şirket yönetimi',
-      'Yetki yönetimi yok',
-      'Süreç yönetimi yok',
-      'Temel ERP kullanımı',
+      'Cari hesap ve hareket takibi',
+      'Temel belge takibi',
+      'Basit raporlama',
+    ],
+  },
+  {
+    value: 'small',
+    title: 'Küçük İşletme',
+    userRange: '4-10 Kullanıcı',
+    companyRange: '1-2 şirket',
+    description: 'Şirket, ortak, temsilci, şube, çalışan ve temel operasyonlar için uygundur.',
+    authorizationManagement: false,
+    workflowManagement: false,
+    multiCompany: false,
+    bullets: [
+      'Şirket ve şube yönetimi',
+      'Ortak ve temsilci kayıtları',
+      'Temel IK ve belge akışı',
+      'Action Center başlangıcı',
     ],
   },
   {
     value: 'medium',
-    title: 'Orta',
-    userRange: '6–25 Kullanıcı',
-    companyRange: '1–3 şirket',
-    description: 'Büyüyen ekipler ve birkaç şirketli yapılar için uygundur.',
+    title: 'Orta İşletme',
+    userRange: '11-50 Kullanıcı',
+    companyRange: '1-5 şirket',
+    description: 'Çok şirketli yapı, IK, muhasebe, belge, görev ve audit kapsamı için uygundur.',
     authorizationManagement: true,
     workflowManagement: false,
     multiCompany: false,
@@ -265,11 +281,11 @@ const SCALE_OPTIONS: Array<{
     ],
   },
   {
-    value: 'corporate',
-    title: 'Kurumsal',
-    userRange: '26–300 Kullanıcı',
-    companyRange: '1–10 şirket',
-    description: 'Departmanlı yapılar ve çok şirketli yönetim için uygundur.',
+    value: 'large',
+    title: 'Büyük İşletme',
+    userRange: '51-300 Kullanıcı',
+    companyRange: '1-20 şirket',
+    description: 'CRM, satış sonrası, ürün/hizmet, raporlama ve gelişmiş süreçler için uygundur.',
     authorizationManagement: true,
     workflowManagement: true,
     multiCompany: false,
@@ -283,10 +299,10 @@ const SCALE_OPTIONS: Array<{
   },
   {
     value: 'enterprise',
-    title: 'Holding / Grup',
+    title: 'Enterprise',
     userRange: '301+ Kullanıcı',
-    companyRange: '10+ şirket',
-    description: 'Çok şirketli grup yapıları ve geniş paydaş ağı için tasarlanmıştır.',
+    companyRange: 'Özel kapsam',
+    description: 'Portal, entegrasyon, otomasyon, AI, gelişmiş raporlama ve özel yapılandırma için tasarlanmıştır.',
     authorizationManagement: true,
     workflowManagement: true,
     multiCompany: true,
@@ -429,7 +445,7 @@ function SetupWizardModal({
   const router = useRouter()
   const [step, setStep] = useState<WizardStep>('welcome')
   const [company, setCompany] = useState(initialCompanyForm)
-  const [scale, setScale] = useState<CompanyScale>('small')
+  const [scale, setScale] = useState<CompanyScale>('micro')
   const [role, setRole] = useState<UserRole>('partner')
   const [person, setPerson] = useState(() => personFormWithSignupIdentity(signupIdentity))
   const [paymentChoice, setPaymentChoice] = useState<PaymentChoice>('demo')
@@ -598,7 +614,7 @@ function SetupWizardModal({
     try {
       const response = await apiClient.post<SetupPackageResponse>(
         '/api/settings/setup-wizard',
-        { action: 'complete_setup', company, scale, payment_choice: paymentChoice, person: { ...person, role } },
+        { action: 'complete_setup', company, scale: legacyScaleForPlan(scale), plan_key: scale, payment_choice: paymentChoice, person: { ...person, role } },
         { skipAuth: true }
       )
       completeProgress()
@@ -999,8 +1015,8 @@ function ScaleStep({ value, onChange }: { value: CompanyScale; onChange: (value:
     <div className="space-y-5">
       <SectionHeader
         icon={<Users size={20} />}
-        title="Şirketinizin ölçeğini ve birlikte çalışma ihtiyacını belirleyiniz"
-        text="Eden ERP; şirketinizi, bağlı işletmelerinizi ve iş ortaklarınızı aynı yapı içinde yönetebilmeniz için tasarlanmıştır. Kullanıcı sayınızı, şirket sayınızı ve paydaş erişim ihtiyacınızı seçiniz."
+        title="İşletmeniz için lisans paketini seçiniz"
+        text="Development planı normal kurulumda gösterilmez. Paket seçimi tenant lisansının başlangıç planını belirler; release olmayan modülleri açmaz."
       />
       <div className="grid gap-4 lg:grid-cols-2">
         {SCALE_OPTIONS.map(option => (
@@ -1188,11 +1204,11 @@ function ReviewStep({
       <SectionHeader
         icon={<CheckCircle2 size={20} />}
         title="Kurulum özeti hazır"
-        text="Şirket, ölçek, kişi ve rol bilgileri ilk kurulum sırasında birlikte işlenecek."
+        text="Şirket, lisans paketi, kişi ve rol bilgileri ilk kurulum sırasında birlikte işlenecek."
       />
       <div className="grid gap-3 md:grid-cols-4">
         <SummaryItem title="Şirket" value={company.trade_name || 'Tanımlanmadı'} detail={company.tax_number || 'VKN yok'} />
-        <SummaryItem title="Ölçek" value={scaleOption.title} detail={`${scaleOption.userRange} · ${scaleOption.companyRange}`} />
+        <SummaryItem title="Paket" value={scaleOption.title} detail={`${scaleOption.userRange} · ${scaleOption.companyRange}`} />
         <SummaryItem title="Rol" value={roleLabel(role)} detail="Şirkete bağlanacak başlangıç rolü" />
         <SummaryItem title="Kişi" value={fullName || 'Tanımlanmadı'} detail={person.national_id || 'TC Kimlik No yok'} />
       </div>
@@ -1462,6 +1478,12 @@ function roleLabel(role: UserRole) {
 
 function getScaleOption(scale: CompanyScale) {
   return SCALE_OPTIONS.find(option => option.value === scale) || SCALE_OPTIONS[0]
+}
+
+function legacyScaleForPlan(scale: CompanyScale) {
+  if (scale === 'micro' || scale === 'small') return 'small'
+  if (scale === 'large') return 'corporate'
+  return scale
 }
 
 function SectionHeader({ icon, title, text }: { icon: React.ReactNode; title: string; text: string }) {

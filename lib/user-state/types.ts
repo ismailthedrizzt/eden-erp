@@ -1,8 +1,12 @@
-export type UiThemePreference = 'system' | 'light' | 'dark'
+export type UiAppearancePreference = 'system' | 'light' | 'dark'
+export type UiThemePreference = UiAppearancePreference
+export type VisualThemePreference = 'classic' | 'executive_premium' | 'anatolian_modern' | 'technical_command'
 export type UiDensityPreference = 'comfortable' | 'compact'
 
 export interface UserUiPreferences {
+  appearanceMode: UiAppearancePreference
   theme: UiThemePreference
+  visualTheme: VisualThemePreference
   accentColor: string
   sidebarCollapsed: boolean
   density: UiDensityPreference
@@ -30,7 +34,11 @@ export interface UserUiPreferences {
 }
 
 export type UserUiPreferencesPatch = Partial<{
+  appearanceMode: unknown
+  appearance_mode: unknown
   theme: unknown
+  visualTheme: unknown
+  visual_theme: unknown
   accentColor: unknown
   sidebarCollapsed: unknown
   density: unknown

@@ -2,6 +2,25 @@
 
 Runtime Feature Visibility, Eden ERP'de bir modulun, sayfanin veya islemin kullaniciya nasil gosterilecegini tek yerden kararlastirir.
 
+## Kanonik Model
+
+Environment-based development/release visibility modeli deprecated durumdadir.
+Ortam degiskenleri, Node runtime modu veya database target kullaniciya modul ya
+da ozellik acmak icin ana karar kaynagi olamaz.
+
+Kullaniciya gorunen runtime karar sirasi:
+
+1. Release registry readiness.
+2. Tenant license / plan entitlement.
+3. Feature flag.
+4. Permission / role.
+5. Company / branch scope.
+
+Development/internal yuzeyler sadece deployment environment ile acilmaz. Tenant
+`development` plani veya ilgili lisans entitlement'i tasimali, kullanici da
+gerekli role/permission kosullarini saglamalidir. Normal musteri tenant'lari
+sadece release-ready ve lisans kapsamindaki modul/ozellikleri gorur.
+
 ## Sorumluluklar
 
 - Modul aktif mi?

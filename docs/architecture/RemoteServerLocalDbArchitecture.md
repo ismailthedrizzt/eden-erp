@@ -3,7 +3,13 @@
 Date: 2026-06-06
 Branch: `main`
 Commit baseline: `09e90b5588a43af147d75b2926d5368a6f4635b9`
-Environment: remote server, release visibility mode
+Environment: remote server, release registry mode
+
+> Visibility update, 2026-06-07: environment-based development/release
+> visibility is deprecated for product/module access. This architecture document
+> describes operational runtime and data topology only. User-facing visibility is
+> resolved by release registry -> tenant license / plan entitlement -> feature
+> flag -> permission / role -> company / branch scope.
 
 ## Canonical Architecture
 
@@ -17,7 +23,8 @@ Eden ERP now runs on a remote server with a local/server PostgreSQL database. Ve
 | Local filesystem document storage | Canonical document file layer. |
 | Workers | Outbox, email, reminder, reporting, automation and webhook background processes. |
 | Reverse proxy | Public traffic routing and SSL termination, currently outside repo-level config. |
-| Release registry | Controls live user-facing surface; build surface is broader. |
+| Release registry | Controls release readiness; build surface is broader. |
+| Tenant license / plan entitlement | Controls tenant/user-facing module and feature access after release readiness. |
 | Auth | App session in Next plus FastAPI trusted proxy context. |
 
 ## Runtime Flow

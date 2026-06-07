@@ -10,11 +10,13 @@ import {
   getRouteReleaseStatus,
   type ReleaseStatus,
 } from './routeReleaseRegistry'
+import { canSeeDevelopmentSurface, isModuleEntitled, type TenantEntitlements } from '@/lib/licensing/tenantEntitlements'
 
 export type ReleaseVisibilitySurface = 'direct' | 'navigation' | 'search' | 'commandPalette' | 'action'
 
 export interface ReleaseUserContext {
   permissions?: string[]
+  tenantEntitlements?: TenantEntitlements | null
 }
 
 export interface ReleaseVisibilityDecision {
@@ -137,6 +139,33 @@ export function getRouteReleaseDecision(
       badgeLabel,
       reason: visible ? null : RELEASE_BLOCK_MESSAGE,
       releaseReason: visible ? null : 'not_promoted',
+    }
+  }
+
+  if ((status === 'development' || status === 'development_demo' || status === 'development_internal')
+    && userContext.tenantEntitlements
+    && !canSeeDevelopmentSurface(userContext.tenantEntitlements)) {
+    return {
+      visible: false,
+      enabled: false,
+      status,
+      badgeLabel,
+      reason: 'Bu sayfa development lisansli tenantlar icin ayrilmistir.',
+      releaseReason: 'not_promoted',
+    }
+  }
+
+  if (config.moduleKey) {
+    const entitlement = isModuleEntitled(userContext.tenantEntitlements, config.moduleKey)
+    if (!entitlement.entitled) {
+      return {
+        visible: false,
+        enabled: false,
+        status,
+        badgeLabel,
+        reason: entitlement.reason,
+        releaseReason: 'permission',
+      }
     }
   }
 

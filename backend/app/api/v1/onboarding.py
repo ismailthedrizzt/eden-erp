@@ -15,6 +15,7 @@ from app.domains.onboarding.schemas import (
     CompleteWorkspaceStepRequest,
     DismissHintRequest,
     UserOnboardingPatch,
+    UserPreferencesPatch,
     WorkspaceOnboardingPatch,
 )
 from app.domains.onboarding.service import (
@@ -22,7 +23,9 @@ from app.domains.onboarding.service import (
     complete_workspace_step,
     dismiss_user_hint,
     get_onboarding_overview,
+    get_user_preferences,
     get_user_state,
+    patch_user_preferences,
     patch_user_state,
     patch_workspace_state,
     reset_user_help,
@@ -115,6 +118,33 @@ async def onboarding_user_get(
     tenant_id = require_tenant(context)
     try:
         return ApiSuccess(data=await get_user_state(session, service_context(context, tenant_id)))
+    except DomainError as error:
+        raise domain_error_to_http(error) from error
+
+
+@router.get("/onboarding/preferences", response_model=ApiSuccess[dict[str, Any]])
+async def onboarding_preferences_get(
+    session: SessionDep,
+    context: RequestContextDep,
+) -> ApiSuccess[dict[str, Any]]:
+    tenant_id = require_tenant(context)
+    try:
+        return ApiSuccess(data=await get_user_preferences(session, service_context(context, tenant_id)))
+    except DomainError as error:
+        raise domain_error_to_http(error) from error
+
+
+@router.patch("/onboarding/preferences", response_model=ApiSuccess[dict[str, Any]])
+async def onboarding_preferences_patch(
+    request: UserPreferencesPatch,
+    session: SessionDep,
+    context: RequestContextDep,
+) -> ApiSuccess[dict[str, Any]]:
+    tenant_id = require_tenant(context)
+    try:
+        async with session.begin():
+            row = await patch_user_preferences(session, service_context(context, tenant_id), request.uiPreferences)
+        return ApiSuccess(data=row, message="Kullanici tercihleri kaydedildi.")
     except DomainError as error:
         raise domain_error_to_http(error) from error
 

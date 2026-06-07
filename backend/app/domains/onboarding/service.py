@@ -40,16 +40,42 @@ WORKSPACE_STEPS = [
 ]
 
 DEFAULT_USER_STATE: dict[str, Any] = {
+    "appearanceMode": "system",
+    "theme": "system",
+    "visualTheme": "classic",
+    "accentColor": "emerald",
+    "sidebarCollapsed": False,
+    "density": "comfortable",
+    "language": "tr",
+    "dateFormat": "dd.MM.yyyy",
+    "timeFormat": "24h",
+    "defaultLandingPage": "/app",
+    "tablePreferences": {},
     "hasSeenGlobalTour": False,
     "hasSeenFirstRunWelcome": False,
     "completedTourSteps": [],
     "completedPageTours": [],
     "dismissedHints": [],
+    "dismissedPageTours": [],
+    "dismissedOperationHints": [],
     "preferredHelpMode": "both",
     "actionGuideIntroSeen": False,
     "actionCenterIntroSeen": False,
+    "actionGuideDismissed": False,
+    "dismissedFieldHelpers": [],
+    "lockedFieldHintsDismissed": [],
+    "lastTourVersion": None,
     "lastOnboardingVersion": None,
     "helpLevel": "guided",
+}
+
+APPEARANCE_VALUES = {"system", "light", "dark"}
+VISUAL_THEME_VALUES = {"classic", "executive_premium", "anatolian_modern", "technical_command"}
+LEGACY_VISUAL_THEME_ALIASES = {
+    "classicCurrent": "classic",
+    "executivePremium": "executive_premium",
+    "anatolianModern": "anatolian_modern",
+    "technicalCommand": "technical_command",
 }
 
 MODULE_PACKAGES: list[dict[str, Any]] = [
@@ -242,6 +268,26 @@ async def get_user_state(session: AsyncSession, context: dict[str, Any]) -> dict
     return _public_user_state(preferences)
 
 
+async def get_user_preferences(session: AsyncSession, context: dict[str, Any]) -> dict[str, Any]:
+    if not await table_exists(session, "public.user_workspace_state"):
+        return {"uiPreferences": _public_ui_preferences(DEFAULT_USER_STATE)}
+    preferences = await _read_user_preferences(session, context)
+    return {"uiPreferences": _public_ui_preferences(preferences)}
+
+
+async def patch_user_preferences(
+    session: AsyncSession,
+    context: dict[str, Any],
+    patch: dict[str, Any],
+) -> dict[str, Any]:
+    if not await table_exists(session, "public.user_workspace_state"):
+        raise DomainError("Kullanici tercih altyapisi hazir degil.", "USER_PREFERENCES_TABLE_MISSING", status.HTTP_503_SERVICE_UNAVAILABLE)
+    payload = _normalize_ui_preferences_patch(patch)
+    if payload:
+        await _merge_user_preferences(session, context, payload)
+    return await get_user_preferences(session, context)
+
+
 async def patch_user_state(
     session: AsyncSession,
     context: dict[str, Any],
@@ -268,6 +314,27 @@ async def complete_user_tour(
     }
     await _merge_user_preferences(session, context, patch)
     return await get_user_state(session, context)
+
+
+async def _read_user_preferences(session: AsyncSession, context: dict[str, Any]) -> dict[str, Any]:
+    result = await session.execute(
+        text(
+            """
+            select ui_preferences, intro_completed_at, intro_version
+            from public.user_workspace_state
+            where user_id = :user_id and workspace_id = :tenant_id
+            limit 1
+            """
+        ),
+        {"tenant_id": context["tenant_id"], "user_id": context.get("user_id") or DEV_USER_ID},
+    )
+    row = row_to_dict(result.mappings().first()) or {}
+    preferences = {**DEFAULT_USER_STATE, **_as_dict(row.get("ui_preferences"))}
+    if row.get("intro_completed_at"):
+        preferences["hasSeenGlobalTour"] = True
+    if row.get("intro_version") and not preferences.get("lastOnboardingVersion"):
+        preferences["lastOnboardingVersion"] = row.get("intro_version")
+    return preferences
 
 
 async def dismiss_user_hint(
@@ -554,6 +621,105 @@ def _public_user_state(preferences: dict[str, Any]) -> dict[str, Any]:
         "lastOnboardingVersion": merged.get("lastOnboardingVersion"),
         "helpLevel": merged.get("helpLevel") if merged.get("helpLevel") in {"minimal", "guided", "detailed"} else "guided",
     }
+
+
+def _public_ui_preferences(preferences: dict[str, Any]) -> dict[str, Any]:
+    merged = {**DEFAULT_USER_STATE, **preferences}
+    appearance_mode = _normalize_appearance(merged.get("appearanceMode") or merged.get("appearance_mode") or merged.get("theme")) or "system"
+    visual_theme = _normalize_visual_theme(merged.get("visualTheme") or merged.get("visual_theme")) or "classic"
+    return {
+        "appearanceMode": appearance_mode,
+        "theme": appearance_mode,
+        "visualTheme": visual_theme,
+        "accentColor": _short_text(merged.get("accentColor"), "emerald", 32),
+        "sidebarCollapsed": bool(merged.get("sidebarCollapsed")),
+        "density": merged.get("density") if merged.get("density") in {"comfortable", "compact"} else "comfortable",
+        "language": _short_text(merged.get("language"), "tr", 12),
+        "dateFormat": _short_text(merged.get("dateFormat"), "dd.MM.yyyy", 32),
+        "timeFormat": _short_text(merged.get("timeFormat"), "24h", 16),
+        "defaultLandingPage": _short_text(merged.get("defaultLandingPage"), "/app", 120),
+        "tablePreferences": _as_dict(merged.get("tablePreferences")),
+        "dismissedHints": _string_list(merged.get("dismissedHints")),
+        "hasSeenGlobalTour": bool(merged.get("hasSeenGlobalTour")),
+        "hasSeenFirstRunWelcome": bool(merged.get("hasSeenFirstRunWelcome")),
+        "completedTourSteps": _string_list(merged.get("completedTourSteps")),
+        "completedPageTours": _string_list(merged.get("completedPageTours")),
+        "dismissedPageTours": _string_list(merged.get("dismissedPageTours")),
+        "dismissedOperationHints": _string_list(merged.get("dismissedOperationHints")),
+        "preferredHelpMode": merged.get("preferredHelpMode") if merged.get("preferredHelpMode") in {"tour", "guide", "both"} else "both",
+        "lastTourVersion": merged.get("lastTourVersion"),
+        "lastOnboardingVersion": merged.get("lastOnboardingVersion"),
+        "helpLevel": merged.get("helpLevel") if merged.get("helpLevel") in {"minimal", "guided", "detailed"} else "guided",
+        "actionGuideIntroSeen": bool(merged.get("actionGuideIntroSeen")),
+        "actionCenterIntroSeen": bool(merged.get("actionCenterIntroSeen")),
+        "actionGuideDismissed": bool(merged.get("actionGuideDismissed")),
+        "dismissedFieldHelpers": _string_list(merged.get("dismissedFieldHelpers")),
+        "lockedFieldHintsDismissed": _string_list(merged.get("lockedFieldHintsDismissed")),
+    }
+
+
+def _normalize_ui_preferences_patch(raw: dict[str, Any]) -> dict[str, Any]:
+    patch: dict[str, Any] = {}
+    if not isinstance(raw, dict):
+        return patch
+
+    for key, value in raw.items():
+        if key in {"appearanceMode", "appearance_mode", "theme"}:
+            appearance = _normalize_appearance(value)
+            if appearance:
+                patch["appearanceMode"] = appearance
+                patch["theme"] = appearance
+        elif key in {"visualTheme", "visual_theme"}:
+            visual_theme = _normalize_visual_theme(value)
+            if visual_theme:
+                patch["visualTheme"] = visual_theme
+        elif key == "accentColor":
+            patch[key] = _short_text(value, DEFAULT_USER_STATE["accentColor"], 32)
+        elif key == "sidebarCollapsed" and isinstance(value, bool):
+            patch[key] = value
+        elif key == "density" and value in {"comfortable", "compact"}:
+            patch[key] = value
+        elif key == "language":
+            patch[key] = _short_text(value, DEFAULT_USER_STATE["language"], 12)
+        elif key == "dateFormat":
+            patch[key] = _short_text(value, DEFAULT_USER_STATE["dateFormat"], 32)
+        elif key == "timeFormat":
+            patch[key] = _short_text(value, DEFAULT_USER_STATE["timeFormat"], 16)
+        elif key == "defaultLandingPage":
+            patch[key] = _short_text(value, DEFAULT_USER_STATE["defaultLandingPage"], 120)
+        elif key == "tablePreferences" and isinstance(value, dict):
+            patch[key] = value
+        elif key in {"dismissedHints", "completedTourSteps", "completedPageTours", "dismissedPageTours", "dismissedOperationHints", "dismissedFieldHelpers", "lockedFieldHintsDismissed"}:
+            patch[key] = _string_list(value)
+        elif key in {"hasSeenGlobalTour", "hasSeenFirstRunWelcome", "actionGuideIntroSeen", "actionCenterIntroSeen", "actionGuideDismissed"} and isinstance(value, bool):
+            patch[key] = value
+        elif key == "preferredHelpMode" and value in {"tour", "guide", "both"}:
+            patch[key] = value
+        elif key in {"lastTourVersion", "lastOnboardingVersion"}:
+            patch[key] = None if value is None else _short_text(value, "", 32)
+        elif key == "helpLevel" and value in {"minimal", "guided", "detailed"}:
+            patch[key] = value
+
+    return patch
+
+
+def _normalize_appearance(value: Any) -> str | None:
+    return value if isinstance(value, str) and value in APPEARANCE_VALUES else None
+
+
+def _normalize_visual_theme(value: Any) -> str | None:
+    if not isinstance(value, str):
+        return None
+    if value in VISUAL_THEME_VALUES:
+        return value
+    return LEGACY_VISUAL_THEME_ALIASES.get(value)
+
+
+def _short_text(value: Any, fallback: str, max_length: int) -> str:
+    if not isinstance(value, str):
+        return fallback
+    normalized = value.strip()
+    return (normalized or fallback)[:max_length]
 
 
 def _require_workspace_manager(context: dict[str, Any]) -> None:

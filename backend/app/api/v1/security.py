@@ -88,6 +88,171 @@ def _phone_candidates(value: str | None) -> list[str]:
     return sorted(candidates)
 
 
+
+PROFILE_IMAGE_METADATA_KEYS = (
+    "avatarUrl",
+    "avatar_url",
+    "photoUrl",
+    "photo_url",
+    "profileImage",
+    "profile_image",
+    "imageUrl",
+    "image_url",
+    "picture",
+)
+
+
+def _clean_text(value: Any) -> str | None:
+    if isinstance(value, str) and value.strip():
+        return value.strip()
+    return None
+
+
+def _person_display_name(person: dict[str, Any] | None) -> str | None:
+    if not person:
+        return None
+    full_name = _clean_text(person.get("full_name"))
+    if full_name:
+        return full_name
+    parts = [_clean_text(person.get("first_name")), _clean_text(person.get("last_name"))]
+    return " ".join(part for part in parts if part) or None
+
+
+def _first_metadata_value(*sources: Any, keys: tuple[str, ...] = PROFILE_IMAGE_METADATA_KEYS) -> str | None:
+    for source in sources:
+        if not isinstance(source, dict):
+            continue
+        for key in keys:
+            value = _clean_text(source.get(key))
+            if value:
+                return value
+    return None
+
+
+async def _table_exists(session: AsyncSession, qualified_name: str) -> bool:
+    result = await session.execute(
+        text("select to_regclass(:qualified_name) is not null as exists"),
+        {"qualified_name": qualified_name},
+    )
+    return bool(result.scalar())
+
+
+async def _current_user_person(session: AsyncSession, user_id: str | None) -> dict[str, Any] | None:
+    if not user_id or not await _table_exists(session, "public.persons"):
+        return None
+    result = await session.execute(
+        text(
+            """
+            select id, first_name, last_name, full_name, email, phone, metadata_json
+            from public.persons
+            where id::text = :user_id and coalesce(is_deleted, false) = false
+            limit 1
+            """
+        ),
+        {"user_id": user_id},
+    )
+    row = result.mappings().one_or_none()
+    return dict(row) if row else None
+
+
+async def _current_user_security_profile(
+    session: AsyncSession,
+    tenant_id: str,
+    user_id: str | None,
+) -> dict[str, Any] | None:
+    if not user_id or not await _table_exists(session, "public.security_users_profile"):
+        return None
+    result = await session.execute(
+        text(
+            """
+            select id, auth_user_id, display_name, email, metadata_json
+            from public.security_users_profile
+            where tenant_id::text = :tenant_id
+              and coalesce(is_deleted, false) = false
+              and (auth_user_id::text = :user_id or id::text = :user_id)
+            order by updated_at desc nulls last
+            limit 1
+            """
+        ),
+        {"tenant_id": tenant_id, "user_id": user_id},
+    )
+    row = result.mappings().one_or_none()
+    return dict(row) if row else None
+
+
+async def _current_user_membership(
+    session: AsyncSession,
+    tenant_id: str,
+    user_id: str | None,
+) -> dict[str, Any] | None:
+    person_ids = await _related_person_ids(session, user_id)
+    if not person_ids or not await _table_exists(session, "public.tenant_memberships"):
+        return None
+    result = await session.execute(
+        text(
+            """
+            select user_id, role_key, is_default, status
+            from public.tenant_memberships
+            where tenant_id::text = :tenant_id
+              and status = 'active'
+              and user_id::text in :person_ids
+            order by is_default desc, created_at asc nulls last
+            limit 1
+            """
+        ).bindparams(bindparam("person_ids", expanding=True)),
+        {"tenant_id": tenant_id, "person_ids": person_ids},
+    )
+    row = result.mappings().one_or_none()
+    return dict(row) if row else None
+
+
+async def _avatar_from_hr_employee(
+    session: AsyncSession,
+    tenant_id: str,
+    person_ids: list[str],
+) -> str | None:
+    if not person_ids or not await _table_exists(session, "public.hr_employees"):
+        return None
+    result = await session.execute(
+        text(
+            """
+            select photo_url
+            from public.hr_employees
+            where tenant_id::text = :tenant_id
+              and coalesce(is_deleted, false) = false
+              and nullif(trim(coalesce(photo_url, '')), '') is not null
+              and (person_id::text in :person_ids or id::text in :person_ids)
+            order by updated_at desc nulls last
+            limit 1
+            """
+        ).bindparams(bindparam("person_ids", expanding=True)),
+        {"tenant_id": tenant_id, "person_ids": person_ids},
+    )
+    row = result.mappings().one_or_none()
+    return _clean_text(row.get("photo_url")) if row else None
+
+
+async def _avatar_from_legacy_employee(session: AsyncSession, person_ids: list[str]) -> str | None:
+    if not person_ids or not await _table_exists(session, "public.employees"):
+        return None
+    result = await session.execute(
+        text(
+            """
+            select photo_url
+            from public.employees
+            where coalesce(is_deleted, false) = false
+              and nullif(trim(coalesce(photo_url, '')), '') is not null
+              and (person_id::text in :person_ids or id::text in :person_ids)
+            order by updated_at desc nulls last
+            limit 1
+            """
+        ).bindparams(bindparam("person_ids", expanding=True)),
+        {"person_ids": person_ids},
+    )
+    row = result.mappings().one_or_none()
+    return _clean_text(row.get("photo_url")) if row else None
+
+
 async def _related_person_ids(session: AsyncSession, user_id: str | None) -> list[str]:
     if not user_id:
         return []
@@ -236,6 +401,57 @@ async def tenant_current_endpoint(session: SessionDep, context: RequestContextDe
     if current:
         return ApiSuccess(data={"workspace": current})
     raise DomainError("Calisma alani bilgisi dogrulanamadi.", "TENANT_CONTEXT_MISSING", status.HTTP_400_BAD_REQUEST)
+
+
+
+@router.get("/me", response_model=ApiSuccess[dict[str, Any]])
+async def current_user_endpoint(session: SessionDep, context: RequestContextDep) -> ApiSuccess[dict[str, Any]]:
+    tenant_id = require_tenant(context)
+    user_id = context.user_id
+
+    if not user_id:
+        return ApiSuccess(data={
+            "id": None,
+            "displayName": None,
+            "roleKey": None,
+            "roleLabel": None,
+            "avatarUrl": None,
+            "email": None,
+            "phone": None,
+        })
+
+    person = await _current_user_person(session, user_id)
+    security_profile = await _current_user_security_profile(session, tenant_id, user_id)
+    membership = await _current_user_membership(session, tenant_id, user_id)
+    person_ids = await _related_person_ids(session, user_id)
+    profile_meta = security_profile.get("metadata_json") if security_profile else None
+    person_meta = person.get("metadata_json") if person else None
+
+    avatar_url = (
+        _first_metadata_value(profile_meta, person_meta)
+        or await _avatar_from_hr_employee(session, tenant_id, person_ids)
+        or await _avatar_from_legacy_employee(session, person_ids)
+    )
+    display_name = (
+        _clean_text(security_profile.get("display_name")) if security_profile else None
+    ) or _person_display_name(person) or _clean_text(context.auth_claims.get("name"))
+    email = (
+        _clean_text(security_profile.get("email")) if security_profile else None
+    ) or (_clean_text(person.get("email")) if person else None) or _clean_text(context.auth_claims.get("email"))
+    phone = (
+        _clean_text(person.get("phone")) if person else None
+    ) or _clean_text(context.auth_claims.get("phone")) or _clean_text(context.auth_claims.get("phone_number"))
+    role_key = membership.get("role_key") if membership else None
+
+    return ApiSuccess(data={
+        "id": user_id,
+        "displayName": display_name,
+        "roleKey": role_key,
+        "roleLabel": tenant_role_label(role_key),
+        "avatarUrl": avatar_url,
+        "email": email,
+        "phone": phone,
+    })
 
 
 @router.post("/tenants/switch", response_model=ApiSuccess[dict[str, Any]])

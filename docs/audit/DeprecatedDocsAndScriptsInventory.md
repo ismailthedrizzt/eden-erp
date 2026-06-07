@@ -6,6 +6,29 @@
 - Kapsam: app, components, lib, backend, scripts, docs, docker-compose, package.json, next.config.js, middleware.ts, README.md
 - Çalışma tipi: audit only; kod silme/refactor yok
 
+## Product Visibility Deprecation Update
+
+- Tarih: 2026-06-07
+- Karar: eski environment-based development/release visibility modeli product,
+  module ve feature access icin deprecated.
+- Yeni ana model: release registry -> tenant license / plan entitlement ->
+  feature flag -> permission / role -> company / branch scope.
+- Environment, release channel, `NODE_ENV` ve database target sadece runtime
+  safety, DB guardrail ve registry mode siniflandirmasi icin kullanilabilir.
+- Deprecated edilen dokuman/anlatimlar:
+  - `docs/architecture/EnvironmentStrategy.md`: product visibility bolumu
+    deprecated; operasyonel env/DB safety dokumani olarak tutulur.
+  - `docs/architecture/RuntimeVisibility.md`: environment-only visibility
+    modeli deprecated; tenant license based visibility canonical.
+  - `docs/architecture/DeploymentTopology.md`: deployment topology access
+    control kaynagi degil.
+  - Eski "development server/release server kullaniciya hangi modulu acar"
+    anlatimlari yeni dokumanlarda gecersiz kabul edilir.
+- Replacement docs:
+  - `docs/product/licensing/TenantBasedDevelopmentReleaseModel.md`
+  - `docs/architecture/ReleaseRegistryVsLicenseEntitlement.md`
+  - `docs/architecture/RuntimeFeatureVisibility.md`
+
 ## Supabase / Vercel / signed URL Residue
 
 | file/path | line/context | runtime’da kullanılıyor mu? | legacy flag arkasında mı? | replacement | priority |

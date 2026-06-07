@@ -1,3 +1,5 @@
+import type { TenantEntitlements } from '@/lib/licensing/tenantEntitlements'
+
 export type VisibilityStatus =
   | 'available'
   | 'disabled'
@@ -45,4 +47,5 @@ export interface RuntimeVisibilityContext {
   modules?: Record<string, any> | any[]
   readiness?: Record<string, any> | any[] | null
   featureFlags?: Record<string, boolean>
+  tenantEntitlements?: TenantEntitlements | null
 }

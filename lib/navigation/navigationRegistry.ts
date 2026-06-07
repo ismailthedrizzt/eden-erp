@@ -149,10 +149,29 @@ export const navigationItems = [
     fallbackPermission: 'system.admin',
     featureFlag: 'aiCopilot.enabled',
   }),
+  item('subscription', 'Aboneligim', '/app/aboneligim', 'credit-card', 'settings', 909.5, {
+    permission: 'settings.view',
+  }),
+  item('designLab', 'Tasarim Laboratuvari', '/app/design-lab', 'palette', 'adminConsole', 911, {
+    parentKey: 'settings',
+    featureFlag: 'adminConsole.enabled',
+  }),
+  item('visualThemes', 'Gorsel Temalar', '/app/sistem/temalar', 'palette', 'adminConsole', 912, {
+    parentKey: 'settings',
+    permission: 'adminConsole.manage',
+    fallbackPermission: 'system.admin',
+    featureFlag: 'adminConsole.enabled',
+  }),
   item('moduleLicenses', 'Modul Lisanslari', '/app/sistem/module-licenses', 'settings', 'settings', 910, {
     parentKey: 'settings',
     permission: 'settings.modulesManage',
     fallbackPermission: 'settings.view',
+  }),
+  item('tenantLicenses', 'Lisanslar', '/app/sistem/lisanslar', 'credit-card', 'adminConsole', 913, {
+    parentKey: 'settings',
+    permission: 'settings.modulesManage',
+    fallbackPermission: 'system.admin',
+    featureFlag: 'adminConsole.enabled',
   }),
   item('setup', 'Kurulum', '/app/sistem/kurulum', 'wrench', 'settings', 920, {
     parentKey: 'settings',

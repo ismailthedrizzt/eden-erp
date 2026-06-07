@@ -10,6 +10,9 @@ export interface TourStep {
   path?: string
   navigateOnNext?: string
   clickOnNext?: string | string[]
+  openBeforeTarget?: string | string[]
+  allowCurrentRouteTarget?: boolean
+  skipIfUnavailable?: boolean
   spotlightPadding?: number
 }
 

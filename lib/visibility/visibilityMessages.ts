@@ -34,8 +34,8 @@ export function setupActionForStatus(moduleKey: string, status: VisibilityStatus
   }
   if (status === 'unlicensed' || status === 'disabled') {
     return {
-      label: 'Modul Ayarlarina Git',
-      targetPage: '/app/sistem/module-licenses',
+      label: 'Abonelige Git',
+      targetPage: status === 'unlicensed' ? '/app/aboneligim' : '/app/sistem/module-licenses',
     }
   }
   if (status === 'feature_disabled') {

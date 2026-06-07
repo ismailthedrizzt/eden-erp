@@ -48,6 +48,10 @@ class UserOnboardingPatch(BaseModel):
     helpLevel: HelpLevel | None = None
 
 
+class UserPreferencesPatch(BaseModel):
+    uiPreferences: dict[str, Any] = Field(default_factory=dict)
+
+
 class CompleteTourRequest(BaseModel):
     tour_key: str = Field(default="global")
     version: str | None = None

@@ -133,9 +133,15 @@ export function GuidedSystemTour({ open, initialStepId, onOpenChange }: GuidedSy
     if (navigatingStepId === activeStep.id) return
 
     if (activeStep.path && !doesStepPathMatch(activeStep.path, pathname, currentRoute)) {
-      setTargetRect(null)
-      router.push(activeStep.path)
-      return
+      const currentRouteTarget = activeStep.allowCurrentRouteTarget
+        ? findTourTarget(getStepTargetSelectors(activeStep))
+        : null
+
+      if (!currentRouteTarget) {
+        setTargetRect(null)
+        router.push(activeStep.path)
+        return
+      }
     }
 
     let cancelled = false
@@ -144,6 +150,7 @@ export function GuidedSystemTour({ open, initialStepId, onOpenChange }: GuidedSy
     let firstFrame: number | null = null
     let secondFrame: number | null = null
     let retryTimer: number | null = null
+    let preparedOpeners = false
 
     const updateRect = (target: HTMLElement) => {
       if (cancelled || !document.body.contains(target)) return
@@ -175,13 +182,23 @@ export function GuidedSystemTour({ open, initialStepId, onOpenChange }: GuidedSy
 
     let detachTargetListeners: (() => void) | null = null
 
+    const maxTargetAttempts = activeStep.skipIfUnavailable ? 3 : 150
+
     const resolveTarget = () => {
       if (cancelled) return
+
+      if (!preparedOpeners && activeStep.openBeforeTarget) {
+        preparedOpeners = true
+        void openTourTargets(activeStep.openBeforeTarget).finally(() => {
+          if (!cancelled) retryTimer = window.setTimeout(resolveTarget, 80)
+        })
+        return
+      }
 
       const target = findTourTarget(getStepTargetSelectors(activeStep))
       if (!target) {
         attempts += 1
-        if (attempts < 150) {
+        if (attempts < maxTargetAttempts) {
           retryTimer = window.setTimeout(resolveTarget, 160)
           return
         }
@@ -262,6 +279,20 @@ async function clickTourTargets(selectors: string | string[]) {
     const target = await waitForTourTarget(selector)
     target?.click()
     await delay(240)
+  }
+}
+
+async function openTourTargets(selectors: string | string[]) {
+  const selectorList = Array.isArray(selectors) ? selectors : [selectors]
+
+  for (const selector of selectorList) {
+    const target = await waitForTourTarget(selector)
+    if (!target) continue
+
+    if (target.getAttribute('aria-expanded') !== 'true') {
+      target.click()
+    }
+    await delay(220)
   }
 }
 

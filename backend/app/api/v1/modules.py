@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_session
 from app.core.security import RequestContext, require_permission
 from app.domains.admin.module_admin import is_module_enabled, set_module_activation
+from app.domains.licensing.service import get_current_tenant_entitlements
 from app.features.registry import feature_flag_payload, list_feature_flags
 from app.setup.readiness_checker import check_module_readiness, check_tenant_readiness
 from app.setup.readiness_registry import list_readiness_definitions
@@ -114,11 +115,13 @@ async def list_modules(
 ) -> dict[str, object]:
     tenant_id = context.tenant_id or request.headers.get("x-tenant-id") or ""
     tenant_readiness = await check_tenant_readiness(session, tenant_id)
+    entitlements = await get_current_tenant_entitlements(session, tenant_id)
     modules = [
         _module_payload(
             module_key,
             readiness,
             tenant_id=tenant_id,
+            enabled_module_keys=set(entitlements.enabled_modules),
         )
         for module_key, readiness in tenant_readiness.modules.items()
     ]
@@ -149,7 +152,16 @@ async def get_module(
             },
         )
     readiness = await check_module_readiness(session, tenant_id, module_key)
-    return {"data": _module_payload(module_key, readiness, tenant_id=tenant_id), "warnings": []}
+    entitlements = await get_current_tenant_entitlements(session, tenant_id)
+    return {
+        "data": _module_payload(
+            module_key,
+            readiness,
+            tenant_id=tenant_id,
+            enabled_module_keys=set(entitlements.enabled_modules),
+        ),
+        "warnings": entitlements.warnings,
+    }
 
 
 @router.patch("/{module_key}/activation")
@@ -189,10 +201,12 @@ def _module_payload(
     readiness: ModuleReadinessResult,
     *,
     tenant_id: str,
+    enabled_module_keys: set[str] | None = None,
 ) -> dict[str, object]:
     meta = MODULE_META.get(module_key, {})
-    enabled = is_module_enabled(tenant_id, module_key, True)
-    license_status = "included"
+    licensed = enabled_module_keys is None or module_key in enabled_module_keys
+    enabled = is_module_enabled(tenant_id, module_key, True) and licensed
+    license_status = "included" if licensed else "unlicensed"
     status_value = _module_status(enabled, license_status, readiness)
     return {
         "module_key": module_key,
