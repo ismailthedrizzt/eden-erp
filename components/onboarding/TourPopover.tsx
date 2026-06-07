@@ -47,6 +47,16 @@ export function TourPopover({
   }, [step.id])
 
   const style = useMemo(() => {
+    if (step.centered) {
+      return {
+        left: '50%',
+        top: '50%',
+        width: isMobile ? 'calc(100vw - 24px)' : POPOVER_WIDTH,
+        maxWidth: 'calc(100vw - 24px)',
+        transform: 'translate(-50%, -50%)',
+      } as const
+    }
+
     if (isMobile) {
       return {
         left: 12,
@@ -96,14 +106,14 @@ export function TourPopover({
       top: clamp(rect.top + rect.height + GAP, 12, viewport.height - 292),
       width: POPOVER_WIDTH,
     }
-  }, [isMobile, placement, rect, viewport.height, viewport.width])
+  }, [isMobile, placement, rect, step.centered, viewport.height, viewport.width])
 
   return (
     <div
       ref={dialogRef}
       className={cn(
         'fixed z-[100] overflow-hidden rounded-xl border border-gray-200 bg-white shadow-2xl dark:border-gray-700 dark:bg-gray-950',
-        isMobile && 'rounded-b-none'
+        isMobile && !step.centered && 'rounded-b-none'
       )}
       style={style}
       tabIndex={-1}

@@ -59,6 +59,9 @@ export async function POST(request: NextRequest) {
       sub: tenantAccess.user_id || normalizedIdentifier.identifier,
       userId: tenantAccess.user_id || undefined,
       tenantId: tenant?.tenant_id,
+      displayName: tenantAccess.display_name || undefined,
+      roleKey: tenant?.role_key || undefined,
+      roleLabel: tenant?.role_label || undefined,
       email: normalizedIdentifier.type === 'email' ? normalizedIdentifier.identifier : undefined,
       phone: normalizedIdentifier.type === 'phone' ? normalizedIdentifier.identifier : undefined,
     })

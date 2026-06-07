@@ -6,6 +6,10 @@ export type AppSessionPayload = {
   sub: string
   userId?: string
   tenantId?: string
+  displayName?: string
+  roleKey?: string
+  roleLabel?: string
+  avatarUrl?: string
   email?: string
   phone?: string
   expiresAt: number

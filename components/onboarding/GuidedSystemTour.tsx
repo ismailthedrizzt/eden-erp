@@ -31,6 +31,7 @@ export function GuidedSystemTour({ open, initialStepId, onOpenChange }: GuidedSy
   const finishingRef = useRef(false)
 
   const activeStep = systemTourSteps[activeIndex] || systemTourSteps[0]
+  const activeStepNeedsTarget = !activeStep.centered && !activeStep.disableSpotlight
   const currentRoute = useMemo(() => {
     const query = searchParams.toString()
     return `${pathname}${query ? `?${query}` : ''}`
@@ -132,6 +133,11 @@ export function GuidedSystemTour({ open, initialStepId, onOpenChange }: GuidedSy
     if (!open || !activeStep) return
     if (navigatingStepId === activeStep.id) return
 
+    if (!activeStepNeedsTarget) {
+      setTargetRect(null)
+      return
+    }
+
     if (activeStep.path && !doesStepPathMatch(activeStep.path, pathname, currentRoute)) {
       const currentRouteTarget = activeStep.allowCurrentRouteTarget
         ? findTourTarget(getStepTargetSelectors(activeStep))
@@ -230,7 +236,7 @@ export function GuidedSystemTour({ open, initialStepId, onOpenChange }: GuidedSy
       resizeObserver?.disconnect()
       detachTargetListeners?.()
     }
-  }, [activeIndex, activeStep, completeTour, currentRoute, navigatingStepId, onOpenChange, open, pathname, router])
+  }, [activeIndex, activeStep, activeStepNeedsTarget, completeTour, currentRoute, navigatingStepId, onOpenChange, open, pathname, router])
 
   useEffect(() => {
     if (!open) return
@@ -249,7 +255,12 @@ export function GuidedSystemTour({ open, initialStepId, onOpenChange }: GuidedSy
 
   return (
     <>
-      <TourSpotlight rect={targetRect} padding={activeStep.spotlightPadding} />
+      <TourSpotlight
+        rect={targetRect}
+        padding={activeStep.spotlightPadding}
+        variant={activeStep.spotlightVariant}
+        disabled={activeStep.disableSpotlight}
+      />
       <TourPopover
         step={activeStep}
         rect={targetRect}
@@ -257,7 +268,7 @@ export function GuidedSystemTour({ open, initialStepId, onOpenChange }: GuidedSy
         totalSteps={systemTourSteps.length}
         canGoBack={activeIndex > 0 && !navigatingStepId}
         isLastStep={activeIndex >= systemTourSteps.length - 1}
-        isTargetReady={Boolean(targetRect) && navigatingStepId !== activeStep.id}
+        isTargetReady={(!activeStepNeedsTarget || Boolean(targetRect)) && navigatingStepId !== activeStep.id}
         onBack={goBack}
         onNext={goNext}
         onSkip={skipTour}

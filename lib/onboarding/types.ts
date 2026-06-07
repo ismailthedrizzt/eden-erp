@@ -14,6 +14,9 @@ export interface TourStep {
   allowCurrentRouteTarget?: boolean
   skipIfUnavailable?: boolean
   spotlightPadding?: number
+  spotlightVariant?: 'default' | 'sidebar'
+  disableSpotlight?: boolean
+  centered?: boolean
 }
 
 export interface TourTargetRect {

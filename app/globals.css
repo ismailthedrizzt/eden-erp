@@ -58,6 +58,8 @@
 
   html, body {
     height: 100%;
+    background: var(--eden-bg);
+    color: var(--eden-text);
     font-family: 'Plus Jakarta Sans', system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -140,22 +142,31 @@
 
   /* Cards */
   .card {
-    @apply bg-white dark:bg-eden-navy-2 border border-gray-200 dark:border-eden-navy
-           rounded-xl overflow-hidden;
+    @apply border rounded-xl overflow-hidden;
+    background: var(--eden-surface);
+    border-color: var(--eden-border);
+    color: var(--eden-text);
+    box-shadow: var(--eden-shadow-card);
   }
 
   /* Buttons */
   .btn {
     @apply inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-sm font-medium
-           cursor-pointer border border-gray-200 dark:border-gray-700
-           bg-white dark:bg-eden-navy text-gray-700 dark:text-gray-200
-           transition-all duration-150;
+           cursor-pointer border transition-all duration-150;
+    background: var(--eden-surface);
+    border-color: var(--eden-border);
+    color: var(--eden-text);
   }
-  .btn:hover { @apply bg-gray-50 dark:bg-eden-navy-2; }
+  .btn:hover { background: var(--eden-surface-muted); }
   .btn-primary {
-    @apply bg-eden-blue text-white border-eden-blue;
+    background: var(--eden-accent);
+    border-color: var(--eden-accent);
+    color: #fff;
   }
-  .btn-primary:hover { @apply bg-eden-blue-dk; }
+  .btn-primary:hover {
+    background: color-mix(in srgb, var(--eden-accent) 86%, #000 14%);
+    border-color: color-mix(in srgb, var(--eden-accent) 86%, #000 14%);
+  }
 
   /* Badges */
   .badge {
@@ -174,21 +185,27 @@
   /* Table */
   .data-table { @apply w-full text-sm border-collapse; }
   .data-table th {
-    @apply text-left text-[10.5px] font-semibold text-gray-500 dark:text-gray-400
-           px-3.5 py-2.5 border-b border-gray-200 dark:border-gray-700
-           uppercase tracking-wider whitespace-nowrap bg-white dark:bg-eden-navy-2;
+    @apply text-left text-[10.5px] font-semibold px-3.5 py-2.5 border-b
+           uppercase tracking-wider whitespace-nowrap;
+    background: var(--eden-surface);
+    border-color: var(--eden-border);
+    color: var(--eden-text-muted);
   }
   .data-table td {
-    @apply px-3.5 py-2.5 border-b border-gray-100 dark:border-gray-800
-           text-gray-700 dark:text-gray-200 align-middle;
+    @apply px-3.5 py-2.5 border-b align-middle;
+    border-color: var(--eden-border);
+    color: var(--eden-text);
   }
   .data-table tbody tr:last-child td { @apply border-b-0; }
-  .data-table tbody tr:hover td { @apply bg-gray-50 dark:bg-eden-navy/50; }
+  .data-table tbody tr:hover td { background: var(--eden-surface-muted); }
 
   /* KPI card */
   .kpi-card {
-    @apply bg-white dark:bg-eden-navy-2 border border-gray-200 dark:border-eden-navy
-           rounded-xl p-4 border-t-[3px];
+    @apply border rounded-xl p-4 border-t-[3px];
+    background: var(--eden-surface);
+    border-color: var(--eden-border);
+    color: var(--eden-text);
+    box-shadow: var(--eden-shadow-card);
   }
   .kpi-label { @apply text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2; }
   .kpi-value { @apply text-2xl font-bold font-display text-gray-900 dark:text-white; }

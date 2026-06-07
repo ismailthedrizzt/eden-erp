@@ -352,6 +352,9 @@ async def _build_request_context(
     user = await get_current_user(request, session)
     x_tenant_id = _clean_header_value(request.headers.get("x-tenant-id"))
     x_user_id = _clean_header_value(request.headers.get("x-user-id"))
+    x_user_email = _clean_header_value(request.headers.get("x-user-email"))
+    x_user_phone = _clean_header_value(request.headers.get("x-user-phone"))
+    x_user_name = _clean_header_value(request.headers.get("x-user-name"))
     x_company_scope = _clean_header_value(request.headers.get("x-company-scope"))
     x_branch_scope = _clean_header_value(request.headers.get("x-branch-scope"))
     x_user_permissions = _clean_header_value(request.headers.get("x-user-permissions"))
@@ -392,6 +395,16 @@ async def _build_request_context(
         company_scope_ids = _split_header(x_company_scope)
         writable_company_scope_ids = list(company_scope_ids)
 
+    trusted_proxy_claims: dict[str, Any] = {}
+    if trusted_proxy:
+        if x_user_email:
+            trusted_proxy_claims["email"] = x_user_email
+        if x_user_phone:
+            trusted_proxy_claims["phone"] = x_user_phone
+            trusted_proxy_claims["phone_number"] = x_user_phone
+        if x_user_name:
+            trusted_proxy_claims["name"] = x_user_name
+
     if not permissions and not settings.effective_auth_required and settings.is_development:
         permissions = ["system.admin"]
 
@@ -405,7 +418,7 @@ async def _build_request_context(
         branch_scope_ids=branch_scope_ids or _split_header(x_branch_scope) or None,
         is_internal=is_internal_request(request),
         is_trusted_proxy=trusted_proxy,
-        auth_claims=user.claims if user else {},
+        auth_claims=user.claims if user else trusted_proxy_claims,
     )
 
 

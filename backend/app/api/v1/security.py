@@ -155,6 +155,57 @@ async def _current_user_person(session: AsyncSession, user_id: str | None) -> di
     return dict(row) if row else None
 
 
+async def _current_user_person_by_identity(
+    session: AsyncSession,
+    user_id: str | None,
+    email: str | None = None,
+    phone: str | None = None,
+) -> dict[str, Any] | None:
+    person = await _current_user_person(session, user_id)
+    if person or not await _table_exists(session, "public.persons"):
+        return person
+
+    clean_email = _clean_text(email)
+    if clean_email:
+        result = await session.execute(
+            text(
+                """
+                select id, first_name, last_name, full_name, email, phone, metadata_json
+                from public.persons
+                where coalesce(is_deleted, false) = false
+                  and lower(coalesce(email, '')) = :email
+                order by updated_at desc nulls last
+                limit 1
+                """
+            ),
+            {"email": clean_email.lower()},
+        )
+        row = result.mappings().one_or_none()
+        if row:
+            return dict(row)
+
+    phones = _phone_candidates(phone)
+    if phones:
+        result = await session.execute(
+            text(
+                """
+                select id, first_name, last_name, full_name, email, phone, metadata_json
+                from public.persons
+                where coalesce(is_deleted, false) = false
+                  and regexp_replace(coalesce(phone, ''), '[^0-9]', '', 'g') in :phones
+                order by updated_at desc nulls last
+                limit 1
+                """
+            ).bindparams(bindparam("phones", expanding=True)),
+            {"phones": phones},
+        )
+        row = result.mappings().one_or_none()
+        if row:
+            return dict(row)
+
+    return None
+
+
 async def _current_user_security_profile(
     session: AsyncSession,
     tenant_id: str,
@@ -184,8 +235,10 @@ async def _current_user_membership(
     session: AsyncSession,
     tenant_id: str,
     user_id: str | None,
+    email: str | None = None,
+    phone: str | None = None,
 ) -> dict[str, Any] | None:
-    person_ids = await _related_person_ids(session, user_id)
+    person_ids = await _related_person_ids(session, user_id, email, phone)
     if not person_ids or not await _table_exists(session, "public.tenant_memberships"):
         return None
     result = await session.execute(
@@ -253,27 +306,21 @@ async def _avatar_from_legacy_employee(session: AsyncSession, person_ids: list[s
     return _clean_text(row.get("photo_url")) if row else None
 
 
-async def _related_person_ids(session: AsyncSession, user_id: str | None) -> list[str]:
-    if not user_id:
+async def _related_person_ids(
+    session: AsyncSession,
+    user_id: str | None,
+    email: str | None = None,
+    phone: str | None = None,
+) -> list[str]:
+    if not user_id and not email and not phone:
         return []
-    result = await session.execute(
-        text(
-            """
-            select id, email, phone
-            from public.persons
-            where id::text = :user_id and is_deleted = false
-            limit 1
-            """
-        ),
-        {"user_id": user_id},
-    )
-    person = result.mappings().one_or_none()
+    person = await _current_user_person_by_identity(session, user_id, email, phone)
     if not person:
-        return [user_id]
+        return [user_id] if user_id else []
 
     ids = {str(person["id"])}
-    phone_candidates = _phone_candidates(person.get("phone"))
-    email = str(person.get("email") or "").strip().lower()
+    phone_candidates = sorted(set(_phone_candidates(person.get("phone")) + _phone_candidates(phone)))
+    email_value = str(person.get("email") or email or "").strip().lower()
 
     if phone_candidates:
         related = await session.execute(
@@ -289,7 +336,7 @@ async def _related_person_ids(session: AsyncSession, user_id: str | None) -> lis
         )
         ids.update(str(row["id"]) for row in related.mappings().all() if row.get("id"))
 
-    if email:
+    if email_value:
         related = await session.execute(
             text(
                 """
@@ -298,7 +345,7 @@ async def _related_person_ids(session: AsyncSession, user_id: str | None) -> lis
                 where is_deleted = false and lower(coalesce(email, '')) = :email
                 """
             ),
-            {"email": email},
+            {"email": email_value},
         )
         ids.update(str(row["id"]) for row in related.mappings().all() if row.get("id"))
 
@@ -408,6 +455,11 @@ async def tenant_current_endpoint(session: SessionDep, context: RequestContextDe
 async def current_user_endpoint(session: SessionDep, context: RequestContextDep) -> ApiSuccess[dict[str, Any]]:
     tenant_id = require_tenant(context)
     user_id = context.user_id
+    claim_email = _clean_text(context.auth_claims.get("email"))
+    claim_phone = (
+        _clean_text(context.auth_claims.get("phone"))
+        or _clean_text(context.auth_claims.get("phone_number"))
+    )
 
     if not user_id:
         return ApiSuccess(data={
@@ -420,10 +472,12 @@ async def current_user_endpoint(session: SessionDep, context: RequestContextDep)
             "phone": None,
         })
 
-    person = await _current_user_person(session, user_id)
+    person = await _current_user_person_by_identity(session, user_id, claim_email, claim_phone)
     security_profile = await _current_user_security_profile(session, tenant_id, user_id)
-    membership = await _current_user_membership(session, tenant_id, user_id)
-    person_ids = await _related_person_ids(session, user_id)
+    if not security_profile and person and str(person.get("id")) != str(user_id):
+        security_profile = await _current_user_security_profile(session, tenant_id, str(person.get("id")))
+    membership = await _current_user_membership(session, tenant_id, user_id, claim_email, claim_phone)
+    person_ids = await _related_person_ids(session, user_id, claim_email, claim_phone)
     profile_meta = security_profile.get("metadata_json") if security_profile else None
     person_meta = person.get("metadata_json") if person else None
 
@@ -437,10 +491,10 @@ async def current_user_endpoint(session: SessionDep, context: RequestContextDep)
     ) or _person_display_name(person) or _clean_text(context.auth_claims.get("name"))
     email = (
         _clean_text(security_profile.get("email")) if security_profile else None
-    ) or (_clean_text(person.get("email")) if person else None) or _clean_text(context.auth_claims.get("email"))
+    ) or (_clean_text(person.get("email")) if person else None) or claim_email
     phone = (
         _clean_text(person.get("phone")) if person else None
-    ) or _clean_text(context.auth_claims.get("phone")) or _clean_text(context.auth_claims.get("phone_number"))
+    ) or claim_phone
     role_key = membership.get("role_key") if membership else None
 
     return ApiSuccess(data={

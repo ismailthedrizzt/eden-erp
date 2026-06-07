@@ -585,7 +585,10 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
       <ModuleProvider key={`modules-${workspaceId || 'default'}`} initialModules={bootstrapModules}>
         <PermissionProvider>
           <ActionGuideProvider>
-          <div className={cn('flex h-screen overflow-hidden', dark && 'dark')}>
+          <div
+            className={cn('flex h-screen overflow-hidden', dark && 'dark')}
+            style={{ backgroundColor: 'var(--eden-bg)', color: 'var(--eden-text)' }}
+          >
             {/* Desktop Sidebar */}
             <div className="hidden lg:block">
               <Sidebar
@@ -618,8 +621,14 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
           {/* Topbar */}
           <header
             data-tour-id="app-header"
-            className="h-14 bg-white dark:bg-eden-navy-2 border-b border-gray-200 dark:border-eden-navy
-                             px-3 sm:px-5 flex items-center justify-between gap-3 flex-shrink-0 z-10">
+            className="h-14 border-b px-3 sm:px-5 flex items-center justify-between gap-3 flex-shrink-0 z-10"
+            style={{
+              backgroundColor: 'var(--eden-surface)',
+              borderColor: 'var(--eden-border)',
+              color: 'var(--eden-text)',
+              boxShadow: 'var(--eden-shadow-card)',
+            }}
+          >
           
             <div className="flex min-w-0 items-center gap-3">
               {/* Mobile Menu Button */}
@@ -779,7 +788,11 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
           )}
 
           {/* Content */}
-          <main data-tour-id="page-template" className="flex-1 overflow-y-auto bg-gray-50 p-3 pb-24 dark:bg-[#09141e] sm:p-5 sm:pb-5">
+          <main
+            data-tour-id="page-template"
+            className="flex-1 overflow-y-auto p-3 pb-24 sm:p-5 sm:pb-5"
+            style={{ backgroundColor: 'var(--eden-bg)', color: 'var(--eden-text)' }}
+          >
             {children}
           </main>
           <MobileBottomNavigation pathname={pathname} onOpenMenu={() => setMobileMenuOpen(true)} />

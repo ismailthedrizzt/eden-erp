@@ -564,10 +564,14 @@ export default function Sidebar({ collapsed = false, mobileOpen = false, onMobil
 
   return (
     <aside className={cn(
-      'flex flex-col bg-eden-navy transition-all duration-200 overflow-hidden flex-shrink-0 h-full',
+      'flex flex-col transition-all duration-200 overflow-hidden flex-shrink-0 h-full',
       mobileOpen ? 'w-80' : (collapsed ? 'w-16' : 'w-80')
     )}
       data-tour-id="sidebar-menu"
+      style={{
+        background: 'linear-gradient(180deg, color-mix(in srgb, var(--eden-accent) 86%, #07121d 14%), color-mix(in srgb, var(--eden-accent) 58%, #07121d 42%))',
+        borderColor: 'var(--eden-border)',
+      }}
     >
       {/* Logo & Mobile Close */}
       <div className="px-4 py-4 border-b border-white/[0.07] flex items-center justify-between flex-shrink-0">
