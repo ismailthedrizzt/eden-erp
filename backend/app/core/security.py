@@ -8,6 +8,7 @@ import json
 import time
 from dataclasses import dataclass, field
 from typing import Any
+from urllib.parse import unquote
 
 from fastapi import Depends, HTTPException, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -336,6 +337,16 @@ def _clean_header_value(value: str | None) -> str | None:
     return value.strip() or None
 
 
+def _decode_header_value(value: str | None) -> str | None:
+    cleaned = _clean_header_value(value)
+    if not cleaned:
+        return None
+    try:
+        return unquote(cleaned).strip() or None
+    except Exception:
+        return None
+
+
 async def _build_request_context(
     request: Request,
     session: AsyncSession,
@@ -354,7 +365,10 @@ async def _build_request_context(
     x_user_id = _clean_header_value(request.headers.get("x-user-id"))
     x_user_email = _clean_header_value(request.headers.get("x-user-email"))
     x_user_phone = _clean_header_value(request.headers.get("x-user-phone"))
-    x_user_name = _clean_header_value(request.headers.get("x-user-name"))
+    x_user_name = (
+        _clean_header_value(request.headers.get("x-user-name"))
+        or _decode_header_value(request.headers.get("x-user-name-encoded"))
+    )
     x_company_scope = _clean_header_value(request.headers.get("x-company-scope"))
     x_branch_scope = _clean_header_value(request.headers.get("x-branch-scope"))
     x_user_permissions = _clean_header_value(request.headers.get("x-user-permissions"))

@@ -569,8 +569,9 @@ export default function Sidebar({ collapsed = false, mobileOpen = false, onMobil
     )}
       data-tour-id="sidebar-menu"
       style={{
-        background: 'linear-gradient(180deg, color-mix(in srgb, var(--eden-accent) 86%, #07121d 14%), color-mix(in srgb, var(--eden-accent) 58%, #07121d 42%))',
+        background: 'linear-gradient(180deg, var(--eden-nav-bg), color-mix(in srgb, var(--eden-nav-bg) 82%, var(--eden-accent) 18%))',
         borderColor: 'var(--eden-border)',
+        color: 'var(--eden-nav-text)',
       }}
     >
       {/* Logo & Mobile Close */}

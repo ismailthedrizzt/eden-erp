@@ -16,15 +16,19 @@ type CurrentUserProfile = {
 }
 
 export async function GET(request: NextRequest) {
-  const proxied = await proxyToFastApi(request, '/api/v1/security/me', { internal: true, timeoutMs: 8000 })
+  const proxied = await proxyToFastApi(request, '/api/v1/users/me/profile', { internal: true, timeoutMs: 8000 })
   if (proxied?.ok) return proxied
+
+  const legacyProxied = await proxyToFastApi(request, '/api/v1/security/me', { internal: true, timeoutMs: 8000 })
+  if (legacyProxied?.ok) return legacyProxied
 
   const fallback = await readCurrentUserFromAppSession(request)
   if (fallback) {
     return NextResponse.json({ data: fallback }, { headers: { 'Cache-Control': 'no-store' } })
   }
 
-  if (proxied && proxied.status < 500 && proxied.status !== 404 && proxied.status !== 405) return proxied
+  const failedResponse = proxied || legacyProxied
+  if (failedResponse && failedResponse.status < 500 && failedResponse.status !== 404 && failedResponse.status !== 405) return failedResponse
 
   return NextResponse.json(
     { error: 'Oturum bulunamadi.', code: 'AUTH_REQUIRED' },

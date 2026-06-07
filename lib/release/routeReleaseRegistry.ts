@@ -34,6 +34,7 @@ export const routeReleaseRegistry = [
   route('/app/dashboard', 'reporting', 'Yonetim Dashboard', 'development', true, true, true),
   route('/app/onboarding', 'settings', 'Baslangic Merkezi', 'development', true, true, true),
   route('/app/aboneligim', 'settings', 'Aboneligim', 'release', true, true, true, { notes: 'Customer tenant license and plan summary.' }),
+  route('/app/profil', 'security', 'Profilim', 'release', false, true, true, { notes: 'Tenant-scoped current user profile surface.' }),
   route('/app/yardim', 'help', 'Yardim', 'development', true, true, true),
   route('/app/ayarlar/bildirimler', 'notifications', 'Bildirimler', 'development_internal', false, false, false),
   route('/app/belgeler', 'documents', 'Belgeler', 'development_internal', true, true, true, {

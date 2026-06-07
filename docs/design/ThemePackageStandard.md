@@ -32,6 +32,24 @@ The first implementation exposes individual download artifacts through `/api/the
 - `css-variables.css`: CSS custom properties for inspection and handoff.
 - `README.md`: designer brief and screenshot checklist.
 
+## Decorative Motif Metadata
+
+Theme packages may include decorative motif guidance under `metadata.decorativeMotif`. This is configuration metadata, not executable CSS, HTML or uploaded illustration content.
+
+Allowed motif fields mirror the system theme config:
+
+- `style`
+- `cornerType`
+- `illustrationType`
+- `opacity`
+- `lineWeight`
+- `useOnHero`
+- `useOnFeaturedCards`
+- `useOnEmptyStates`
+- `useOnSectionHeaders`
+
+Motif metadata must remain token/config-driven. It cannot contain CSS blocks, HTML, scripts, external URLs, font files, arbitrary SVG payloads or executable content.
+
 ## Rules
 
 - Theme packages contain no user data, secrets, tenant data or business records.

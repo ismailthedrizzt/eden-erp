@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils'
 
 type ToastState = { type: ToastType; title?: string; message: string }
 
-const samplePackageUrl = '/api/theme/export?themeKey=executive_premium&format=eden'
+const samplePackageUrl = '/api/theme/export?themeKey=art_deco&format=eden'
 
 export default function VisualThemesAdminPage() {
   const [jsonText, setJsonText] = useState('')

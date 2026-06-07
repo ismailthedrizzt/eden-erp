@@ -147,10 +147,15 @@ type ThemedLogoSource = {
 
 type CurrentUserProfile = {
   id?: string | null
+  user_id?: string | null
   displayName?: string | null
+  display_name?: string | null
   roleKey?: string | null
+  role_key?: string | null
   roleLabel?: string | null
+  role_label?: string | null
   avatarUrl?: string | null
+  initials?: string | null
   email?: string | null
   phone?: string | null
 }
@@ -221,7 +226,7 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
 
     let cancelled = false
 
-    fetch('/api/auth/me', {
+    fetch('/api/users/me/profile', {
       cache: 'no-store',
       headers: tenantRequestHeaders(),
     })
@@ -238,6 +243,7 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
           roleKey: profile.roleKey || null,
           roleLabel: profile.roleLabel || null,
           avatarUrl: profile.avatarUrl || null,
+          initials: profile.initials || null,
           email: profile.email || null,
           phone: profile.phone || null,
         })
@@ -335,6 +341,26 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     setMobileMenuOpen(false)
   }, [pathname])
+
+  useEffect(() => {
+    function handleUserProfileUpdate(event: Event) {
+      const profile = (event as CustomEvent<CurrentUserProfile>).detail
+      if (!profile) return
+      setCurrentUserProfile({
+        id: profile.id || profile.user_id || null,
+        displayName: profile.displayName || profile.display_name || null,
+        roleKey: profile.roleKey || profile.role_key || null,
+        roleLabel: profile.roleLabel || profile.role_label || null,
+        avatarUrl: profile.avatarUrl || null,
+        initials: profile.initials || null,
+        email: profile.email || null,
+        phone: profile.phone || null,
+      } as CurrentUserProfile)
+    }
+
+    window.addEventListener('eden:user-profile-updated', handleUserProfileUpdate)
+    return () => window.removeEventListener('eden:user-profile-updated', handleUserProfileUpdate)
+  }, [])
 
   useEffect(() => {
     if (!workspaceMenuOpen) return
@@ -623,10 +649,10 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
             data-tour-id="app-header"
             className="h-14 border-b px-3 sm:px-5 flex items-center justify-between gap-3 flex-shrink-0 z-10"
             style={{
-              backgroundColor: 'var(--eden-surface)',
-              borderColor: 'var(--eden-border)',
+              backgroundColor: 'var(--eden-header-bg)',
+              borderColor: 'var(--eden-header-border)',
               color: 'var(--eden-text)',
-              boxShadow: 'var(--eden-shadow-card)',
+              boxShadow: 'var(--eden-shadow-subtle)',
             }}
           >
           
@@ -894,6 +920,7 @@ function UserProfileMenu({
           <UserAvatar
             name={displayName}
             photoUrl={profile?.avatarUrl}
+            initials={profile?.initials || undefined}
             size="xs"
             showTooltip={false}
             className="h-7 w-7 border border-white/70 shadow-sm dark:border-gray-700"
@@ -931,6 +958,7 @@ function UserProfileMenu({
               <UserAvatar
                 name={displayName}
                 photoUrl={profile?.avatarUrl}
+                initials={profile?.initials || undefined}
                 size="sm"
                 showTooltip={false}
                 className="h-9 w-9 border border-gray-100 shadow-sm dark:border-gray-700"
@@ -951,6 +979,23 @@ function UserProfileMenu({
           </div>
 
           <div className="py-1">
+            <Link
+              href="/app/profil"
+              onClick={() => {
+                setOpen(false)
+                setActivePanel(null)
+              }}
+              className="flex w-full items-center gap-2 px-3 py-2 text-left transition hover:bg-gray-50 dark:hover:bg-eden-navy"
+              role="menuitem"
+            >
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-500 dark:border-gray-700 dark:bg-eden-navy-3 dark:text-gray-200">
+                <User size={15} />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-xs font-semibold text-gray-800 dark:text-gray-100">Profilim</span>
+                <span className="mt-0.5 block truncate text-[10px] text-gray-500 dark:text-gray-400">Kisi profili</span>
+              </span>
+            </Link>
             <div className="relative">
               <button
                 type="button"
@@ -1219,6 +1264,8 @@ function applyVisualThemePreference(themeId: ThemeConceptId, appearance: 'light'
 
   root.dataset.visualTheme = theme.id
   root.dataset.appearanceMode = appearance
+  root.dataset.edenTheme = theme.id
+  root.dataset.appearance = appearance
   for (const [key, value] of Object.entries(vars)) {
     root.style.setProperty(key, value)
   }

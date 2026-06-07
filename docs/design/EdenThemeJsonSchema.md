@@ -31,11 +31,24 @@ Supported schema version: `1.0.0`
   "metadata": {
     "personality": ["ciddi", "guven veren"],
     "bestFor": ["yonetim", "finans"],
+    "decorativeMotif": {
+      "style": "art_deco_geometry",
+      "cornerType": "stepped geometric corner frame",
+      "illustrationType": "thin architectural linework",
+      "opacity": { "light": 0.24, "dark": 0.18 },
+      "lineWeight": 1.25,
+      "useOnHero": true,
+      "useOnFeaturedCards": true,
+      "useOnEmptyStates": true,
+      "useOnSectionHeaders": true
+    },
     "createdAt": "2026-06-07",
     "source": "eden_export"
   }
 }
 ```
+
+`metadata.decorativeMotif` is descriptive configuration only. It cannot contain CSS, HTML, JavaScript, external URLs, font files or SVG payloads.
 
 ## Allowed Token Groups
 

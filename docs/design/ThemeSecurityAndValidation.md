@@ -19,6 +19,10 @@ Theme import is JSON-only and token-schema-only. It does not accept executable o
 - executable uploads
 - zip path traversal, when zip support is added
 
+## Decorative Motif Boundary
+
+Decorative motif support is metadata/config only. Accepted motif fields describe style, corner type, illustration type, opacity, line weight and usage flags. They do not permit uploaded CSS, HTML, JavaScript, external URLs, font files or SVG payloads.
+
 ## Validation Steps
 
 1. Size limit: 256 KB.

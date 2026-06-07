@@ -13,9 +13,9 @@ Theme count: 4.
 | Label | Canonical key | Legacy key |
 | --- | --- | --- |
 | Klasik | `classic` | `classicCurrent` |
-| Kurumsal Premium | `executive_premium` | `executivePremium` |
-| Anadolu Modern | `anatolian_modern` | `anatolianModern` |
-| Teknik Komuta | `technical_command` | `technicalCommand` |
+| Art Deco Premium | `art_deco` | `executivePremium`, `executive_premium` |
+| Anadolu Modern | `anatolian_60s` | `anatolianModern`, `anatolian_modern` |
+| Yeşil Atölye | `command_bauhaus` | `technicalCommand`, `technical_command` |
 
 Selector location: top-right profile dropdown. Theme and appearance are separate menu items; their option panels open to the left of the dropdown on desktop.
 

@@ -1,6 +1,7 @@
 import { ActionCenterPreview } from './ActionCenterPreview'
 import { AuditTimelinePreview } from './AuditTimelinePreview'
 import { DashboardPreview } from './DashboardPreview'
+import { DecorativeFramePreview } from './DecorativeFramePreview'
 import { DocumentSlotPreview } from './DocumentSlotPreview'
 import { EmptyErrorStatePreview } from './EmptyErrorStatePreview'
 import { FormPreview } from './FormPreview'
@@ -34,6 +35,7 @@ export function ComponentGallery({ theme }: ComponentGalleryProps) {
         </div>
       </section>
 
+      <DecorativeFramePreview theme={theme} />
       <DashboardPreview />
       <ListTablePreview />
       <FormPreview />

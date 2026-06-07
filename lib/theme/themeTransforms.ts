@@ -40,6 +40,7 @@ export function themeConceptToEdenTheme(theme: ThemeConcept): EdenThemePackage {
     metadata: {
       personality: theme.personality,
       bestFor: theme.bestFor,
+      decorativeMotif: theme.motif,
       createdAt: '2026-06-07',
       source: 'eden_export',
     },
@@ -62,11 +63,11 @@ export function themeConceptToModeTokens(theme: ThemeConcept, appearance: 'light
       text: {
         primary: vars['--eden-text'],
         secondary: vars['--eden-text-muted'],
-        muted: vars['--eden-text-muted'],
+        muted: vars['--eden-text-soft'] || vars['--eden-text-muted'],
       },
       accent: {
         primary: vars['--eden-accent'],
-        secondary: theme.colors.accentSecondary,
+        secondary: vars['--eden-info'] || theme.colors.accentSecondary,
         soft: vars['--eden-accent-soft'],
       },
       success: vars['--eden-success'],
@@ -126,8 +127,13 @@ export function edenThemeToFigmaTokens(theme: EdenThemePackage) {
 }
 
 export function edenThemeToCssVariables(theme: EdenThemePackage) {
-  const lightVars = themeTokensToCssVars(theme.tokens.light)
-  const darkVars = themeTokensToCssVars(theme.tokens.dark)
+  const systemTheme = themeConcepts.find(item => item.id === theme.themeKey)
+  const lightVars = systemTheme
+    ? getEdenThemeCssVars(systemTheme, 'light')
+    : themeTokensToCssVars(theme.tokens.light)
+  const darkVars = systemTheme
+    ? getEdenThemeCssVars(systemTheme, 'dark')
+    : themeTokensToCssVars(theme.tokens.dark)
 
   return [
     `/* ${theme.displayName} (${theme.themeKey}) - Eden ERP theme tokens */`,
@@ -140,21 +146,72 @@ export function edenThemeToCssVariables(theme: EdenThemePackage) {
 export function themeTokensToCssVars(tokens: ThemeModeTokens): Record<`--${string}`, string> {
   return {
     '--eden-bg': tokens.color.background,
+    '--eden-bg-subtle': tokens.color.surfaceMuted,
     '--eden-surface': tokens.color.surface,
     '--eden-surface-muted': tokens.color.surfaceMuted,
     '--eden-surface-raised': tokens.color.surfaceRaised,
+    '--eden-surface-inset': tokens.color.surfaceMuted,
     '--eden-border': tokens.color.border,
     '--eden-border-strong': tokens.color.borderStrong,
     '--eden-text': tokens.color.text.primary,
     '--eden-text-muted': tokens.color.text.secondary,
+    '--eden-text-soft': tokens.color.text.muted,
     '--eden-accent': tokens.color.accent.primary,
+    '--eden-accent-hover': tokens.color.accent.primary,
     '--eden-accent-soft': tokens.color.accent.soft,
+    '--eden-accent-text': '#ffffff',
+    '--eden-accent-warm': tokens.color.warning,
     '--eden-success': tokens.color.success,
+    '--eden-success-soft': tokens.color.surfaceMuted,
     '--eden-warning': tokens.color.warning,
+    '--eden-warning-soft': tokens.color.surfaceMuted,
     '--eden-danger': tokens.color.danger,
+    '--eden-danger-soft': tokens.color.surfaceMuted,
     '--eden-info': tokens.color.info,
+    '--eden-info-soft': tokens.color.surfaceMuted,
+    '--eden-nav-bg': tokens.color.accent.primary,
+    '--eden-nav-text': '#ffffff',
+    '--eden-nav-muted': tokens.color.text.muted,
+    '--eden-nav-active-bg': tokens.color.accent.soft,
+    '--eden-nav-active-text': '#ffffff',
+    '--eden-nav-hover-bg': tokens.color.surfaceMuted,
+    '--eden-header-bg': tokens.color.surface,
+    '--eden-header-border': tokens.color.border,
+    '--eden-card-bg': tokens.color.surface,
+    '--eden-card-border': tokens.color.border,
+    '--eden-card-shadow': tokens.shadow.card,
+    '--eden-input-bg': tokens.color.surface,
+    '--eden-input-border': tokens.color.border,
+    '--eden-input-focus': tokens.color.accent.primary,
+    '--eden-table-header-bg': tokens.color.surfaceMuted,
+    '--eden-table-row-hover': tokens.color.surfaceMuted,
+    '--eden-table-row-selected': tokens.color.accent.soft,
+    '--eden-badge-bg': tokens.color.surfaceMuted,
+    '--eden-focus-ring': tokens.shadow.focus,
+    '--eden-alert-bg': tokens.color.surfaceMuted,
+    '--eden-alert-border': tokens.color.warning,
+    '--eden-radius-sm': tokens.radius.small,
+    '--eden-radius-md': tokens.radius.medium,
+    '--eden-radius-lg': tokens.radius.large,
     '--eden-radius-card': tokens.radius.card,
+    '--eden-radius-button': tokens.radius.button,
+    '--eden-radius-input': tokens.radius.input,
+    '--eden-shadow-subtle': tokens.shadow.subtle,
     '--eden-shadow-card': tokens.shadow.card,
+    '--eden-shadow-floating': tokens.shadow.floating,
+    '--eden-shadow-focus': tokens.shadow.focus,
+    '--eden-table-row-height': tokens.density.table === 'compact' ? '42px' : tokens.density.table === 'comfortable' ? '58px' : '50px',
+    '--eden-form-field-height': tokens.density.form === 'compact' ? '36px' : tokens.density.form === 'comfortable' ? '44px' : '40px',
+    '--eden-card-padding': tokens.density.dashboard === 'compact' ? '14px' : tokens.density.dashboard === 'comfortable' ? '22px' : '18px',
+    '--eden-section-gap': tokens.density.dashboard === 'compact' ? '12px' : tokens.density.dashboard === 'comfortable' ? '22px' : '16px',
+    '--eden-icon-stroke': String(tokens.icon.strokeWidth),
+    '--eden-icon-container-bg': tokens.color.accent.soft,
+    '--eden-icon-container-border': tokens.color.border,
+    '--eden-module-icon-bg': tokens.color.accent.soft,
+    '--eden-status-icon-bg': tokens.color.surfaceMuted,
+    '--eden-motif-opacity': '0.18',
+    '--eden-motif-line-width': '1px',
+    '--eden-motif-corner-size': '112px',
   }
 }
 
@@ -188,6 +245,9 @@ export function themeTokensToDesignLabCssVars(tokens: ThemeModeTokens): Record<`
     '--dl-shadow-focus': tokens.shadow.focus,
     '--dl-density-row': tokens.density.table === 'compact' ? '42px' : tokens.density.table === 'comfortable' ? '58px' : '50px',
     '--dl-density-gap': tokens.density.dashboard === 'compact' ? '12px' : tokens.density.dashboard === 'comfortable' ? '20px' : '16px',
+    '--dl-motif-opacity': '0.18',
+    '--dl-motif-line-width': '1px',
+    '--dl-motif-corner-size': '112px',
   }
 }
 

@@ -18,21 +18,69 @@
     --eden-navy: #0f2233;
     --eden-navy-2: #162b46;
     --eden-bg: #f7fafc;
+    --eden-bg-subtle: #f1f5f9;
     --eden-surface: #ffffff;
     --eden-surface-muted: #edf6fa;
     --eden-surface-raised: #ffffff;
+    --eden-surface-inset: #eaf0f6;
     --eden-border: #dbe5ec;
     --eden-border-strong: #b8c7d2;
     --eden-text: #0f172a;
     --eden-text-muted: #475569;
+    --eden-text-soft: #64748b;
     --eden-accent: #216688;
+    --eden-accent-hover: #174a61;
     --eden-accent-soft: #edf6fa;
+    --eden-accent-text: #ffffff;
+    --eden-accent-warm: #c98a04;
     --eden-success: #0e8c61;
+    --eden-success-soft: #e5f5ef;
     --eden-warning: #c98a04;
+    --eden-warning-soft: #fef8e3;
     --eden-danger: #d93025;
+    --eden-danger-soft: #fde8e7;
     --eden-info: #216688;
-    --eden-radius-card: 8px;
+    --eden-info-soft: #edf6fa;
+    --eden-nav-bg: #0f2233;
+    --eden-nav-text: #f8fafc;
+    --eden-nav-muted: #b9c6d3;
+    --eden-nav-active-bg: rgba(33, 102, 136, 0.3);
+    --eden-nav-active-text: #ffffff;
+    --eden-nav-hover-bg: rgba(255, 255, 255, 0.08);
+    --eden-header-bg: #ffffff;
+    --eden-header-border: #dbe5ec;
+    --eden-card-bg: #ffffff;
+    --eden-card-border: #dbe5ec;
+    --eden-card-shadow: 0 8px 24px rgba(15, 34, 51, 0.07);
+    --eden-input-bg: #ffffff;
+    --eden-input-border: #b8c7d2;
+    --eden-input-focus: #216688;
+    --eden-table-header-bg: #edf6fa;
+    --eden-table-row-hover: #edf6fa;
+    --eden-table-row-selected: #e8f3f8;
+    --eden-badge-bg: #edf6fa;
+    --eden-focus-ring: rgba(33, 102, 136, 0.18);
+    --eden-alert-bg: #fef8e3;
+    --eden-alert-border: #c98a04;
+    --eden-radius-sm: 6px;
+    --eden-radius-md: 8px;
+    --eden-radius-lg: 10px;
+    --eden-radius-card: 10px;
+    --eden-radius-button: 8px;
+    --eden-radius-input: 8px;
+    --eden-shadow-subtle: 0 1px 2px rgba(15, 34, 51, 0.05);
     --eden-shadow-card: 0 8px 24px rgba(15, 34, 51, 0.07);
+    --eden-shadow-floating: 0 18px 40px rgba(15, 34, 51, 0.12);
+    --eden-shadow-focus: 0 0 0 3px rgba(33, 102, 136, 0.18);
+    --eden-table-row-height: 50px;
+    --eden-form-field-height: 40px;
+    --eden-card-padding: 18px;
+    --eden-section-gap: 16px;
+    --eden-icon-stroke: 1.8;
+    --eden-icon-container-bg: #e8f3f8;
+    --eden-icon-container-border: #c8d4de;
+    --eden-module-icon-bg: #e8f3f8;
+    --eden-status-icon-bg: #edf6fa;
     --sb-w: 256px;
   }
 
@@ -41,11 +89,35 @@
     --eden-surface: #0f2233;
     --eden-surface-muted: #13263a;
     --eden-surface-raised: #162b46;
+    --eden-surface-inset: #09141e;
     --eden-border: #24445b;
     --eden-border-strong: #3b6f83;
     --eden-text: #f3f7fb;
     --eden-text-muted: #a8bdc9;
+    --eden-text-soft: #7894a0;
+    --eden-accent-hover: #5fb7d0;
     --eden-accent-soft: #17344a;
+    --eden-success-soft: #143829;
+    --eden-warning-soft: #3b2d15;
+    --eden-danger-soft: #3b1f28;
+    --eden-info-soft: #17344a;
+    --eden-header-bg: #0f2233;
+    --eden-header-border: #24445b;
+    --eden-card-bg: #0f2233;
+    --eden-card-border: #24445b;
+    --eden-input-bg: #09141e;
+    --eden-input-border: #24445b;
+    --eden-input-focus: var(--eden-accent);
+    --eden-table-header-bg: #13263a;
+    --eden-table-row-hover: #13263a;
+    --eden-table-row-selected: #17344a;
+    --eden-badge-bg: #13263a;
+    --eden-alert-bg: #3b2d15;
+    --eden-alert-border: var(--eden-warning);
+    --eden-icon-container-bg: #17344a;
+    --eden-icon-container-border: #24445b;
+    --eden-module-icon-bg: #17344a;
+    --eden-status-icon-bg: #13263a;
   }
 
   * { box-sizing: border-box; }
@@ -67,14 +139,14 @@
 
   select,
   select option {
-    color: #111827;
-    background-color: #ffffff;
+    color: var(--eden-text);
+    background-color: var(--eden-input-bg);
   }
 
   .dark select,
   .dark select option {
-    color: #f9fafb;
-    background-color: #111827;
+    color: var(--eden-text);
+    background-color: var(--eden-input-bg);
   }
 
   input:disabled,
@@ -140,13 +212,30 @@
   .sni:hover { @apply bg-white/[0.06] text-white/80; }
   .sni.active { @apply bg-eden-blue/25 text-white font-medium; }
 
+  .ni,
+  .sni {
+    color: var(--eden-nav-muted);
+  }
+  .ni:hover,
+  .sni:hover,
+  .ni.open {
+    background: var(--eden-nav-hover-bg);
+    color: var(--eden-nav-text);
+  }
+  .ni.active,
+  .sni.active {
+    background: var(--eden-nav-active-bg);
+    color: var(--eden-nav-active-text);
+  }
+
   /* Cards */
   .card {
     @apply border rounded-xl overflow-hidden;
-    background: var(--eden-surface);
-    border-color: var(--eden-border);
+    background: var(--eden-card-bg);
+    border-color: var(--eden-card-border);
     color: var(--eden-text);
-    box-shadow: var(--eden-shadow-card);
+    border-radius: var(--eden-radius-card);
+    box-shadow: var(--eden-card-shadow);
   }
 
   /* Buttons */
@@ -156,27 +245,43 @@
     background: var(--eden-surface);
     border-color: var(--eden-border);
     color: var(--eden-text);
+    border-radius: var(--eden-radius-button);
   }
   .btn:hover { background: var(--eden-surface-muted); }
   .btn-primary {
     background: var(--eden-accent);
     border-color: var(--eden-accent);
-    color: #fff;
+    color: var(--eden-accent-text);
   }
   .btn-primary:hover {
-    background: color-mix(in srgb, var(--eden-accent) 86%, #000 14%);
-    border-color: color-mix(in srgb, var(--eden-accent) 86%, #000 14%);
+    background: var(--eden-accent-hover);
+    border-color: var(--eden-accent-hover);
   }
 
   /* Badges */
   .badge {
     @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold;
   }
-  .badge-green { @apply bg-eden-green-lt text-green-800; }
-  .badge-red   { @apply bg-eden-red-lt text-red-800; }
-  .badge-blue  { @apply bg-eden-blue-lt text-eden-blue-dk; }
-  .badge-gold  { @apply bg-eden-gold-lt text-amber-800; }
-  .badge-gray  { @apply bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300; }
+  .badge-green {
+    background: var(--eden-success-soft);
+    color: var(--eden-success);
+  }
+  .badge-red {
+    background: var(--eden-danger-soft);
+    color: var(--eden-danger);
+  }
+  .badge-blue {
+    background: var(--eden-info-soft);
+    color: var(--eden-info);
+  }
+  .badge-gold {
+    background: var(--eden-warning-soft);
+    color: var(--eden-warning);
+  }
+  .badge-gray {
+    background: var(--eden-badge-bg);
+    color: var(--eden-text-muted);
+  }
 
   /* Amounts */
   .amt-pos { @apply text-eden-green font-semibold; }
@@ -187,7 +292,7 @@
   .data-table th {
     @apply text-left text-[10.5px] font-semibold px-3.5 py-2.5 border-b
            uppercase tracking-wider whitespace-nowrap;
-    background: var(--eden-surface);
+    background: var(--eden-table-header-bg);
     border-color: var(--eden-border);
     color: var(--eden-text-muted);
   }
@@ -195,19 +300,481 @@
     @apply px-3.5 py-2.5 border-b align-middle;
     border-color: var(--eden-border);
     color: var(--eden-text);
+    height: var(--eden-table-row-height);
   }
   .data-table tbody tr:last-child td { @apply border-b-0; }
-  .data-table tbody tr:hover td { background: var(--eden-surface-muted); }
+  .data-table tbody tr:hover td { background: var(--eden-table-row-hover); }
 
   /* KPI card */
   .kpi-card {
     @apply border rounded-xl p-4 border-t-[3px];
-    background: var(--eden-surface);
-    border-color: var(--eden-border);
+    background: var(--eden-card-bg);
+    border-color: var(--eden-card-border);
     color: var(--eden-text);
-    box-shadow: var(--eden-shadow-card);
+    border-radius: var(--eden-radius-card);
+    box-shadow: var(--eden-card-shadow);
   }
-  .kpi-label { @apply text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2; }
-  .kpi-value { @apply text-2xl font-bold font-display text-gray-900 dark:text-white; }
-  .kpi-sub { @apply text-xs text-gray-400 mt-1; }
+  .kpi-label {
+    @apply text-xs font-semibold uppercase tracking-wider mb-2;
+    color: var(--eden-text-soft);
+  }
+  .kpi-value {
+    @apply text-2xl font-bold font-display;
+    color: var(--eden-text);
+  }
+  .kpi-sub {
+    @apply text-xs mt-1;
+    color: var(--eden-text-soft);
+  }
+}
+
+/* Token bridge for existing shared/core Tailwind color utilities. */
+html[data-eden-theme] [class~="bg-white"],
+html[data-eden-theme] [class~="bg-gray-50"],
+html[data-eden-theme] [class~="bg-slate-50"],
+html[data-eden-theme] [class~="bg-zinc-50"] {
+  background-color: var(--eden-card-bg) !important;
+}
+
+html[data-eden-theme] [class~="bg-white/60"],
+html[data-eden-theme] [class~="bg-white/70"],
+html[data-eden-theme] [class~="bg-white/80"],
+html[data-eden-theme] [class~="bg-white/90"],
+html[data-eden-theme] [class~="bg-white/95"] {
+  background-color: color-mix(in srgb, var(--eden-card-bg) 88%, transparent) !important;
+}
+
+html[data-eden-theme] [class~="bg-gray-100"],
+html[data-eden-theme] [class~="bg-slate-100"],
+html[data-eden-theme] [class~="bg-zinc-100"],
+html[data-eden-theme] [class~="bg-muted"] {
+  background-color: var(--eden-surface-muted) !important;
+}
+
+html[data-eden-theme] [class~="bg-blue-50"],
+html[data-eden-theme] [class~="bg-sky-50"] {
+  background-color: var(--eden-info-soft) !important;
+}
+
+html[data-eden-theme] [class~="bg-emerald-50"],
+html[data-eden-theme] [class~="bg-green-50"] {
+  background-color: var(--eden-success-soft) !important;
+}
+
+html[data-eden-theme] [class~="bg-amber-50"],
+html[data-eden-theme] [class~="bg-yellow-50"] {
+  background-color: var(--eden-warning-soft) !important;
+}
+
+html[data-eden-theme] [class~="bg-red-50"],
+html[data-eden-theme] [class~="bg-rose-50"] {
+  background-color: var(--eden-danger-soft) !important;
+}
+
+html[data-eden-theme] [class~="bg-blue-50/60"],
+html[data-eden-theme] [class~="bg-blue-50/70"],
+html[data-eden-theme] [class~="bg-sky-50/60"],
+html[data-eden-theme] [class~="bg-sky-50/70"] {
+  background-color: color-mix(in srgb, var(--eden-info-soft) 78%, var(--eden-card-bg)) !important;
+}
+
+html[data-eden-theme] [class~="bg-emerald-50/60"],
+html[data-eden-theme] [class~="bg-emerald-50/70"],
+html[data-eden-theme] [class~="bg-green-50/60"],
+html[data-eden-theme] [class~="bg-green-50/70"] {
+  background-color: color-mix(in srgb, var(--eden-success-soft) 78%, var(--eden-card-bg)) !important;
+}
+
+html[data-eden-theme] [class~="bg-amber-50/60"],
+html[data-eden-theme] [class~="bg-amber-50/70"],
+html[data-eden-theme] [class~="bg-yellow-50/60"],
+html[data-eden-theme] [class~="bg-yellow-50/70"] {
+  background-color: color-mix(in srgb, var(--eden-warning-soft) 78%, var(--eden-card-bg)) !important;
+}
+
+html[data-eden-theme] [class~="bg-red-50/60"],
+html[data-eden-theme] [class~="bg-red-50/70"],
+html[data-eden-theme] [class~="bg-rose-50/60"],
+html[data-eden-theme] [class~="bg-rose-50/70"] {
+  background-color: color-mix(in srgb, var(--eden-danger-soft) 78%, var(--eden-card-bg)) !important;
+}
+
+html[data-eden-theme] [class~="text-gray-950"],
+html[data-eden-theme] [class~="text-gray-900"],
+html[data-eden-theme] [class~="text-slate-950"],
+html[data-eden-theme] [class~="text-slate-900"],
+html[data-eden-theme] [class~="text-zinc-900"] {
+  color: var(--eden-text) !important;
+}
+
+html[data-eden-theme] [class~="text-gray-800"],
+html[data-eden-theme] [class~="text-gray-700"],
+html[data-eden-theme] [class~="text-gray-600"],
+html[data-eden-theme] [class~="text-slate-700"],
+html[data-eden-theme] [class~="text-slate-600"],
+html[data-eden-theme] [class~="text-zinc-700"] {
+  color: var(--eden-text-muted) !important;
+}
+
+html[data-eden-theme] [class~="text-gray-500"],
+html[data-eden-theme] [class~="text-gray-400"],
+html[data-eden-theme] [class~="text-slate-500"],
+html[data-eden-theme] [class~="text-slate-400"] {
+  color: var(--eden-text-soft) !important;
+}
+
+html[data-eden-theme] [class~="text-blue-600"],
+html[data-eden-theme] [class~="text-blue-700"],
+html[data-eden-theme] [class~="text-sky-600"],
+html[data-eden-theme] [class~="text-sky-700"],
+html[data-eden-theme] [class~="text-eden-blue"] {
+  color: var(--eden-accent) !important;
+}
+
+html[data-eden-theme] [class~="text-emerald-600"],
+html[data-eden-theme] [class~="text-emerald-700"],
+html[data-eden-theme] [class~="text-green-700"],
+html[data-eden-theme] [class~="text-eden-green"] {
+  color: var(--eden-success) !important;
+}
+
+html[data-eden-theme] [class~="text-amber-700"],
+html[data-eden-theme] [class~="text-amber-800"],
+html[data-eden-theme] [class~="text-yellow-700"] {
+  color: var(--eden-warning) !important;
+}
+
+html[data-eden-theme] [class~="text-red-600"],
+html[data-eden-theme] [class~="text-red-700"],
+html[data-eden-theme] [class~="text-red-800"],
+html[data-eden-theme] [class~="text-rose-700"] {
+  color: var(--eden-danger) !important;
+}
+
+html[data-eden-theme] [class~="border-gray-100"],
+html[data-eden-theme] [class~="border-gray-200"],
+html[data-eden-theme] [class~="border-gray-300"],
+html[data-eden-theme] [class~="border-slate-100"],
+html[data-eden-theme] [class~="border-slate-200"],
+html[data-eden-theme] [class~="border-zinc-200"],
+html[data-eden-theme] [class~="border-border"] {
+  border-color: var(--eden-border) !important;
+}
+
+html[data-eden-theme] [class~="border-blue-100"],
+html[data-eden-theme] [class~="border-blue-200"],
+html[data-eden-theme] [class~="border-sky-200"] {
+  border-color: color-mix(in srgb, var(--eden-info) 38%, var(--eden-border)) !important;
+}
+
+html[data-eden-theme] [class~="border-emerald-200"],
+html[data-eden-theme] [class~="border-green-200"] {
+  border-color: color-mix(in srgb, var(--eden-success) 38%, var(--eden-border)) !important;
+}
+
+html[data-eden-theme] [class~="border-amber-200"],
+html[data-eden-theme] [class~="border-yellow-200"] {
+  border-color: color-mix(in srgb, var(--eden-warning) 38%, var(--eden-border)) !important;
+}
+
+html[data-eden-theme] [class~="border-red-200"],
+html[data-eden-theme] [class~="border-rose-200"] {
+  border-color: color-mix(in srgb, var(--eden-danger) 38%, var(--eden-border)) !important;
+}
+
+html[data-eden-theme] [class~="shadow-sm"] {
+  box-shadow: var(--eden-shadow-subtle) !important;
+}
+
+html[data-eden-theme] [class~="shadow"],
+html[data-eden-theme] [class~="shadow-md"],
+html[data-eden-theme] [class~="shadow-lg"] {
+  box-shadow: var(--eden-card-shadow) !important;
+}
+
+html[data-eden-theme] [class~="shadow-xl"],
+html[data-eden-theme] [class~="shadow-2xl"] {
+  box-shadow: var(--eden-shadow-floating) !important;
+}
+
+html[data-eden-theme] input,
+html[data-eden-theme] select,
+html[data-eden-theme] textarea {
+  background-color: var(--eden-input-bg);
+  border-color: var(--eden-input-border);
+  color: var(--eden-text);
+  min-height: var(--eden-form-field-height);
+  border-radius: var(--eden-radius-input);
+}
+
+html[data-eden-theme] input:focus,
+html[data-eden-theme] select:focus,
+html[data-eden-theme] textarea:focus {
+  border-color: var(--eden-input-focus) !important;
+  box-shadow: var(--eden-shadow-focus) !important;
+}
+
+html[data-eden-theme] table thead,
+html[data-eden-theme] [role="table"] [role="rowgroup"]:first-child {
+  background-color: var(--eden-table-header-bg);
+}
+
+html[data-eden-theme] body,
+html[data-eden-theme] main {
+  background-color: var(--eden-bg) !important;
+}
+
+html[data-eden-theme] main {
+  background-image:
+    linear-gradient(135deg, var(--eden-bg), color-mix(in srgb, var(--eden-bg) 84%, var(--eden-accent-soft) 16%));
+}
+
+html[data-eden-theme="art_deco"] main {
+  background-image:
+    linear-gradient(135deg, var(--eden-bg) 0%, color-mix(in srgb, var(--eden-bg) 78%, var(--eden-accent-warm) 22%) 100%);
+}
+
+html[data-eden-theme="anatolian_60s"] main {
+  background-image:
+    linear-gradient(135deg, var(--eden-bg) 0%, color-mix(in srgb, var(--eden-bg) 72%, var(--eden-accent-soft) 18%) 58%, color-mix(in srgb, var(--eden-bg) 82%, var(--eden-accent-warm) 18%) 100%);
+}
+
+html[data-eden-theme="command_bauhaus"] main {
+  background-image:
+    radial-gradient(circle at 92% 10%, color-mix(in srgb, var(--eden-success-soft) 70%, transparent) 0 120px, transparent 121px),
+    radial-gradient(circle at 8% 92%, color-mix(in srgb, var(--eden-accent-soft) 58%, transparent) 0 160px, transparent 161px),
+    linear-gradient(135deg, var(--eden-bg), color-mix(in srgb, var(--eden-bg) 78%, var(--eden-success-soft) 22%));
+}
+
+html[data-eden-theme="pop_studio"] main {
+  background-image:
+    linear-gradient(135deg, var(--eden-bg) 0%, var(--eden-bg-subtle) 58%, color-mix(in srgb, var(--eden-bg) 70%, var(--eden-accent-warm) 30%) 100%);
+}
+
+html[data-eden-theme] :where(div, section, article, aside, form, fieldset, li)[class~="rounded-md"][class~="border"],
+html[data-eden-theme] :where(div, section, article, aside, form, fieldset, li)[class~="rounded-lg"][class~="border"],
+html[data-eden-theme] :where(div, section, article, aside, form, fieldset, li)[class~="rounded-xl"][class~="border"],
+html[data-eden-theme] :where(div, section, article, aside, form, fieldset, li)[class~="rounded-2xl"][class~="border"] {
+  background-color: var(--eden-card-bg);
+  border-color: var(--eden-card-border);
+  box-shadow: var(--eden-shadow-subtle);
+}
+
+html[data-eden-theme] :where(div, section, article, aside, form, fieldset, li)[class~="rounded-lg"][class~="border"],
+html[data-eden-theme] :where(div, section, article, aside, form, fieldset, li)[class~="rounded-xl"][class~="border"],
+html[data-eden-theme] :where(div, section, article, aside, form, fieldset, li)[class~="rounded-2xl"][class~="border"] {
+  border-top-color: color-mix(in srgb, var(--eden-accent) 42%, var(--eden-card-border)) !important;
+}
+
+html[data-eden-theme="art_deco"] :where(div, section, article, aside, form, fieldset, li)[class~="rounded-lg"][class~="border"],
+html[data-eden-theme="art_deco"] :where(div, section, article, aside, form, fieldset, li)[class~="rounded-xl"][class~="border"],
+html[data-eden-theme="art_deco"] :where(div, section, article, aside, form, fieldset, li)[class~="rounded-2xl"][class~="border"] {
+  border-top-color: var(--eden-accent-warm) !important;
+  box-shadow: var(--eden-card-shadow), inset 0 1px 0 color-mix(in srgb, var(--eden-accent-warm) 18%, transparent);
+}
+
+html[data-eden-theme="anatolian_60s"] :where(div, section, article, aside, form, fieldset, li)[class~="rounded-lg"][class~="border"],
+html[data-eden-theme="anatolian_60s"] :where(div, section, article, aside, form, fieldset, li)[class~="rounded-xl"][class~="border"],
+html[data-eden-theme="anatolian_60s"] :where(div, section, article, aside, form, fieldset, li)[class~="rounded-2xl"][class~="border"] {
+  border-top-color: var(--eden-accent-warm) !important;
+  box-shadow: var(--eden-shadow-subtle), inset 3px 0 0 color-mix(in srgb, var(--eden-accent) 38%, transparent);
+}
+
+html[data-eden-theme="command_bauhaus"] :where(div, section, article, aside, form, fieldset, li)[class~="rounded-lg"][class~="border"],
+html[data-eden-theme="command_bauhaus"] :where(div, section, article, aside, form, fieldset, li)[class~="rounded-xl"][class~="border"],
+html[data-eden-theme="command_bauhaus"] :where(div, section, article, aside, form, fieldset, li)[class~="rounded-2xl"][class~="border"] {
+  border-color: color-mix(in srgb, var(--eden-success) 24%, var(--eden-card-border)) !important;
+  box-shadow: var(--eden-shadow-subtle), inset 0 1px 0 color-mix(in srgb, var(--eden-success) 16%, transparent);
+}
+
+html[data-eden-theme="pop_studio"] :where(div, section, article, aside, form, fieldset, li)[class~="rounded-lg"][class~="border"],
+html[data-eden-theme="pop_studio"] :where(div, section, article, aside, form, fieldset, li)[class~="rounded-xl"][class~="border"],
+html[data-eden-theme="pop_studio"] :where(div, section, article, aside, form, fieldset, li)[class~="rounded-2xl"][class~="border"] {
+  border-top-color: var(--eden-accent-warm) !important;
+  box-shadow: var(--eden-shadow-subtle), inset 0 3px 0 color-mix(in srgb, var(--eden-accent-warm) 78%, var(--eden-accent) 22%);
+}
+
+html[data-eden-theme] .eden-decorative-surface {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+html[data-eden-theme] .eden-decorative-surface::before {
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  inset: auto -18px -18px auto;
+  z-index: 0;
+  width: var(--eden-motif-corner-size);
+  height: var(--eden-motif-corner-size);
+  opacity: var(--eden-motif-opacity);
+  border-top: var(--eden-motif-line-width) solid var(--eden-accent-warm);
+  border-left: var(--eden-motif-line-width) solid var(--eden-accent-warm);
+  border-top-left-radius: var(--eden-radius-card);
+}
+
+html[data-eden-theme] .eden-decorative-surface > * {
+  position: relative;
+  z-index: 1;
+}
+
+html[data-eden-theme="art_deco"] .eden-decorative-surface::before {
+  background:
+    linear-gradient(135deg, transparent 0 36%, color-mix(in srgb, var(--eden-accent-warm) 70%, transparent) 37% 39%, transparent 40%),
+    linear-gradient(90deg, transparent 0 62%, color-mix(in srgb, var(--eden-accent) 42%, transparent) 63% 64%, transparent 65%);
+}
+
+html[data-eden-theme="anatolian_60s"] .eden-decorative-surface::before {
+  border-radius: 999px 0 0 0;
+  background:
+    radial-gradient(circle at 100% 100%, color-mix(in srgb, var(--eden-accent-warm) 28%, transparent) 0 38%, transparent 39%),
+    repeating-conic-gradient(from 190deg at 100% 100%, color-mix(in srgb, var(--eden-accent-warm) 42%, transparent) 0 8deg, transparent 9deg 18deg);
+}
+
+html[data-eden-theme="command_bauhaus"] .eden-decorative-surface::before {
+  border-color: var(--eden-success);
+  border-radius: 60% 0 0 0;
+  background:
+    radial-gradient(ellipse at 72% 68%, color-mix(in srgb, var(--eden-success) 22%, transparent) 0 16%, transparent 17%),
+    radial-gradient(ellipse at 48% 44%, color-mix(in srgb, var(--eden-accent) 18%, transparent) 0 14%, transparent 15%);
+}
+
+html[data-eden-theme="pop_studio"] .eden-decorative-surface::before {
+  border-color: var(--eden-accent);
+  background:
+    radial-gradient(circle at 20% 20%, color-mix(in srgb, var(--eden-accent) 44%, transparent) 0 4px, transparent 5px),
+    radial-gradient(circle at 38% 32%, color-mix(in srgb, var(--eden-accent-warm) 46%, transparent) 0 5px, transparent 6px),
+    linear-gradient(135deg, color-mix(in srgb, var(--eden-accent-warm) 28%, transparent) 0 34%, transparent 35%);
+}
+
+html[data-eden-theme] :where(span, div)[class~="rounded-md"][class~="bg-white"],
+html[data-eden-theme] :where(span, div)[class~="rounded-lg"][class~="bg-white"],
+html[data-eden-theme] :where(span, div)[class~="rounded-xl"][class~="bg-white"] {
+  background-color: var(--eden-icon-container-bg) !important;
+  border-color: var(--eden-icon-container-border) !important;
+}
+
+html[data-eden-theme].dark [class~="dark:bg-gray-950"],
+html[data-eden-theme].dark [class~="dark:bg-gray-900"],
+html[data-eden-theme].dark [class~="dark:bg-gray-800"],
+html[data-eden-theme].dark [class~="dark:bg-eden-navy"],
+html[data-eden-theme].dark [class~="dark:bg-eden-navy-2"],
+html[data-eden-theme].dark [class~="dark:bg-eden-navy-3"] {
+  background-color: var(--eden-card-bg) !important;
+}
+
+html[data-eden-theme].dark [class*="dark:bg-gray-"],
+html[data-eden-theme].dark [class*="dark:bg-slate-"],
+html[data-eden-theme].dark [class*="dark:bg-zinc-"],
+html[data-eden-theme].dark [class*="dark:bg-neutral-"],
+html[data-eden-theme].dark [class*="dark:bg-eden-navy"] {
+  background-color: var(--eden-card-bg) !important;
+}
+
+html[data-eden-theme].dark [class*="dark:bg-white/"],
+html[data-eden-theme].dark [class*="dark:hover:bg-white/"] {
+  background-color: color-mix(in srgb, var(--eden-surface-muted) 72%, transparent) !important;
+}
+
+html[data-eden-theme].dark [class*="dark:bg-blue-"],
+html[data-eden-theme].dark [class*="dark:bg-sky-"] {
+  background-color: var(--eden-info-soft) !important;
+}
+
+html[data-eden-theme].dark [class*="dark:bg-emerald-"],
+html[data-eden-theme].dark [class*="dark:bg-green-"] {
+  background-color: var(--eden-success-soft) !important;
+}
+
+html[data-eden-theme].dark [class*="dark:bg-amber-"],
+html[data-eden-theme].dark [class*="dark:bg-yellow-"],
+html[data-eden-theme].dark [class*="dark:bg-orange-"] {
+  background-color: var(--eden-warning-soft) !important;
+}
+
+html[data-eden-theme].dark [class*="dark:bg-red-"],
+html[data-eden-theme].dark [class*="dark:bg-rose-"] {
+  background-color: var(--eden-danger-soft) !important;
+}
+
+html[data-eden-theme].dark [class*="dark:hover:bg-gray-"]:hover,
+html[data-eden-theme].dark [class*="dark:hover:bg-slate-"]:hover,
+html[data-eden-theme].dark [class*="dark:hover:bg-zinc-"]:hover,
+html[data-eden-theme].dark [class*="dark:hover:bg-eden-navy"]:hover {
+  background-color: var(--eden-table-row-hover) !important;
+}
+
+html[data-eden-theme].dark [class~="dark:border-gray-800"],
+html[data-eden-theme].dark [class~="dark:border-gray-700"],
+html[data-eden-theme].dark [class~="dark:border-eden-navy"],
+html[data-eden-theme].dark [class~="dark:border-eden-navy-3"] {
+  border-color: var(--eden-border) !important;
+}
+
+html[data-eden-theme].dark [class*="dark:border-gray-"],
+html[data-eden-theme].dark [class*="dark:border-slate-"],
+html[data-eden-theme].dark [class*="dark:border-zinc-"],
+html[data-eden-theme].dark [class*="dark:border-eden-navy"] {
+  border-color: var(--eden-border) !important;
+}
+
+html[data-eden-theme].dark [class*="dark:border-blue-"],
+html[data-eden-theme].dark [class*="dark:border-sky-"] {
+  border-color: color-mix(in srgb, var(--eden-info) 42%, var(--eden-border)) !important;
+}
+
+html[data-eden-theme].dark [class*="dark:border-emerald-"],
+html[data-eden-theme].dark [class*="dark:border-green-"] {
+  border-color: color-mix(in srgb, var(--eden-success) 42%, var(--eden-border)) !important;
+}
+
+html[data-eden-theme].dark [class*="dark:border-amber-"],
+html[data-eden-theme].dark [class*="dark:border-yellow-"],
+html[data-eden-theme].dark [class*="dark:border-orange-"] {
+  border-color: color-mix(in srgb, var(--eden-warning) 42%, var(--eden-border)) !important;
+}
+
+html[data-eden-theme].dark [class*="dark:border-red-"],
+html[data-eden-theme].dark [class*="dark:border-rose-"] {
+  border-color: color-mix(in srgb, var(--eden-danger) 42%, var(--eden-border)) !important;
+}
+
+html[data-eden-theme].dark [class~="dark:text-white"],
+html[data-eden-theme].dark [class~="dark:text-gray-100"],
+html[data-eden-theme].dark [class~="dark:text-gray-200"] {
+  color: var(--eden-text) !important;
+}
+
+html[data-eden-theme].dark [class~="dark:text-gray-300"],
+html[data-eden-theme].dark [class~="dark:text-gray-400"],
+html[data-eden-theme].dark [class~="dark:text-gray-500"] {
+  color: var(--eden-text-muted) !important;
+}
+
+html[data-eden-theme].dark [class*="dark:text-gray-"],
+html[data-eden-theme].dark [class*="dark:text-slate-"],
+html[data-eden-theme].dark [class*="dark:text-zinc-"] {
+  color: var(--eden-text-muted) !important;
+}
+
+html[data-eden-theme].dark [class*="dark:text-blue-"],
+html[data-eden-theme].dark [class*="dark:text-sky-"] {
+  color: var(--eden-info) !important;
+}
+
+html[data-eden-theme].dark [class*="dark:text-emerald-"],
+html[data-eden-theme].dark [class*="dark:text-green-"] {
+  color: var(--eden-success) !important;
+}
+
+html[data-eden-theme].dark [class*="dark:text-amber-"],
+html[data-eden-theme].dark [class*="dark:text-yellow-"],
+html[data-eden-theme].dark [class*="dark:text-orange-"] {
+  color: var(--eden-warning) !important;
+}
+
+html[data-eden-theme].dark [class*="dark:text-red-"],
+html[data-eden-theme].dark [class*="dark:text-rose-"] {
+  color: var(--eden-danger) !important;
 }

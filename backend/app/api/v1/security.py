@@ -45,6 +45,7 @@ from app.domains.security.users import (
     patch_user,
     remove_user_role,
 )
+from app.domains.users.profile import get_current_user_profile
 from app.schemas.common import ApiSuccess
 
 router = APIRouter(dependencies=[Depends(require_access_context)])
@@ -90,15 +91,33 @@ def _phone_candidates(value: str | None) -> list[str]:
 
 
 PROFILE_IMAGE_METADATA_KEYS = (
+    "avatar",
     "avatarUrl",
     "avatar_url",
+    "photo",
     "photoUrl",
     "photo_url",
+    "image",
     "profileImage",
     "profile_image",
     "imageUrl",
     "image_url",
     "picture",
+    "photoLogo",
+    "photo_logo",
+)
+
+PROFILE_IMAGE_VALUE_KEYS = (
+    "url",
+    "src",
+    "href",
+    "path",
+    "publicUrl",
+    "public_url",
+    "signedUrl",
+    "signed_url",
+    "downloadUrl",
+    "download_url",
 )
 
 
@@ -123,10 +142,36 @@ def _first_metadata_value(*sources: Any, keys: tuple[str, ...] = PROFILE_IMAGE_M
         if not isinstance(source, dict):
             continue
         for key in keys:
-            value = _clean_text(source.get(key))
+            value = _first_media_value(source.get(key))
             if value:
                 return value
     return None
+
+
+def _first_media_value(value: Any) -> str | None:
+    direct = _clean_text(value)
+    if direct:
+        return direct
+    if isinstance(value, dict):
+        for nested_key in PROFILE_IMAGE_METADATA_KEYS + PROFILE_IMAGE_VALUE_KEYS:
+            direct = _first_media_value(value.get(nested_key))
+            if direct:
+                return direct
+    if isinstance(value, list):
+        for item in value:
+            direct = _first_media_value(item)
+            if direct:
+                return direct
+    return None
+
+
+def _identity_claims(context: RequestContext) -> tuple[str | None, str | None]:
+    claim_email = _clean_text(context.auth_claims.get("email"))
+    claim_phone = (
+        _clean_text(context.auth_claims.get("phone"))
+        or _clean_text(context.auth_claims.get("phone_number"))
+    )
+    return claim_email, claim_phone
 
 
 async def _table_exists(session: AsyncSession, qualified_name: str) -> bool:
@@ -384,7 +429,8 @@ async def _list_workspace_options(
     context: RequestContext,
     current_tenant_id: str | None,
 ) -> list[dict[str, Any]]:
-    person_ids = await _related_person_ids(session, context.user_id)
+    claim_email, claim_phone = _identity_claims(context)
+    person_ids = await _related_person_ids(session, context.user_id, claim_email, claim_phone)
     if not person_ids:
         return []
     result = await session.execute(
@@ -453,15 +499,11 @@ async def tenant_current_endpoint(session: SessionDep, context: RequestContextDe
 
 @router.get("/me", response_model=ApiSuccess[dict[str, Any]])
 async def current_user_endpoint(session: SessionDep, context: RequestContextDep) -> ApiSuccess[dict[str, Any]]:
-    tenant_id = require_tenant(context)
-    user_id = context.user_id
-    claim_email = _clean_text(context.auth_claims.get("email"))
-    claim_phone = (
-        _clean_text(context.auth_claims.get("phone"))
-        or _clean_text(context.auth_claims.get("phone_number"))
-    )
-
-    if not user_id:
+    try:
+        profile = await get_current_user_profile(session, context)
+    except DomainError as error:
+        if error.code != "AUTH_REQUIRED":
+            raise domain_error_to_http(error) from error
         return ApiSuccess(data={
             "id": None,
             "displayName": None,
@@ -470,41 +512,21 @@ async def current_user_endpoint(session: SessionDep, context: RequestContextDep)
             "avatarUrl": None,
             "email": None,
             "phone": None,
+            "initials": None,
+            "avatar": {"type": "initials", "initials": "?"},
         })
 
-    person = await _current_user_person_by_identity(session, user_id, claim_email, claim_phone)
-    security_profile = await _current_user_security_profile(session, tenant_id, user_id)
-    if not security_profile and person and str(person.get("id")) != str(user_id):
-        security_profile = await _current_user_security_profile(session, tenant_id, str(person.get("id")))
-    membership = await _current_user_membership(session, tenant_id, user_id, claim_email, claim_phone)
-    person_ids = await _related_person_ids(session, user_id, claim_email, claim_phone)
-    profile_meta = security_profile.get("metadata_json") if security_profile else None
-    person_meta = person.get("metadata_json") if person else None
-
-    avatar_url = (
-        _first_metadata_value(profile_meta, person_meta)
-        or await _avatar_from_hr_employee(session, tenant_id, person_ids)
-        or await _avatar_from_legacy_employee(session, person_ids)
-    )
-    display_name = (
-        _clean_text(security_profile.get("display_name")) if security_profile else None
-    ) or _person_display_name(person) or _clean_text(context.auth_claims.get("name"))
-    email = (
-        _clean_text(security_profile.get("email")) if security_profile else None
-    ) or (_clean_text(person.get("email")) if person else None) or claim_email
-    phone = (
-        _clean_text(person.get("phone")) if person else None
-    ) or claim_phone
-    role_key = membership.get("role_key") if membership else None
-
     return ApiSuccess(data={
-        "id": user_id,
-        "displayName": display_name,
-        "roleKey": role_key,
-        "roleLabel": tenant_role_label(role_key),
-        "avatarUrl": avatar_url,
-        "email": email,
-        "phone": phone,
+        "id": profile["user_id"],
+        "displayName": profile["displayName"],
+        "roleKey": profile["roleKey"],
+        "roleLabel": profile["roleLabel"],
+        "avatarUrl": profile["avatarUrl"],
+        "avatar": profile["avatar"],
+        "initials": profile["initials"],
+        "email": profile["email"],
+        "phone": profile["phone"],
+        "masterPersonId": profile["masterPersonId"],
     })
 
 
@@ -522,7 +544,8 @@ async def tenant_switch_endpoint(request: TenantWorkspaceMutation, session: Sess
 async def tenant_default_endpoint(request: TenantWorkspaceMutation, session: SessionDep, context: RequestContextDep) -> ApiSuccess[dict[str, Any]]:
     try:
         workspace = await _require_workspace_option(session, context, request.tenant_id)
-        person_ids = await _related_person_ids(session, context.user_id)
+        claim_email, claim_phone = _identity_claims(context)
+        person_ids = await _related_person_ids(session, context.user_id, claim_email, claim_phone)
         await session.execute(
             text("update public.tenant_memberships set is_default = false where user_id in :person_ids").bindparams(bindparam("person_ids", expanding=True)),
             {"person_ids": person_ids},

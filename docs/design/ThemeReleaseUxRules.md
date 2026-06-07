@@ -4,7 +4,7 @@
 
 - Theme selector is visible as a normal preference inside the profile dropdown.
 - Profile button is compact and uses accessible label `Profil ve tercihleri ac`.
-- Theme dropdown labels are professional: Klasik, Kurumsal Premium, Anadolu Modern, Teknik Komuta.
+- Theme dropdown labels are professional: Klasik, Art Deco Premium, Anadolu Modern, Yeşil Atölye, Pop Studio.
 - Appearance mode is a separate profile-menu preference: Sistem, Aydinlik, Karanlik.
 - No visible `Design Lab`, `concept`, `development`, `experimental`, `internal` or `theme concept` text.
 - Design Lab route remains hidden by release visibility guards.

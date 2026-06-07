@@ -15,6 +15,24 @@ export type ThemePackageStatus =
 export type ThemeDensity = 'compact' | 'balanced' | 'comfortable'
 export type IconContainerStyle = 'soft' | 'outlined' | 'solid' | 'minimal'
 export type ThemeAppearance = 'light' | 'dark'
+export type ThemeDecorativeMotifStyle =
+  | 'minimal_grid'
+  | 'art_deco_geometry'
+  | 'retro_sun'
+  | 'botanical_line'
+  | 'pop_blocks'
+
+export interface ThemeDecorativeMotifMetadata {
+  style: ThemeDecorativeMotifStyle
+  cornerType: string
+  illustrationType: string
+  opacity: Record<ThemeAppearance, number>
+  lineWeight: number
+  useOnHero: boolean
+  useOnFeaturedCards: boolean
+  useOnEmptyStates: boolean
+  useOnSectionHeaders: boolean
+}
 
 export interface ThemeModeTokens {
   color: {
@@ -89,6 +107,7 @@ export interface EdenThemePackage {
   metadata?: {
     personality?: string | string[]
     bestFor?: string | string[]
+    decorativeMotif?: ThemeDecorativeMotifMetadata
     createdAt?: string
     source?: 'eden_export' | 'imported' | 'generated' | string
     [key: string]: unknown

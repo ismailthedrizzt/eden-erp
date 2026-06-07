@@ -2,45 +2,51 @@
 
 Date: 2026-06-07
 
-## Coverage Method
+## Covered By Runtime Tokens
 
-This pass used code inspection, endpoint smoke and targeted build checks. Browser automation was unstable in this environment, so full visual screenshots should be repeated manually.
+| Area | Coverage |
+| --- | --- |
+| App shell | `--eden-bg`, `--eden-text` |
+| Header | `--eden-header-bg`, `--eden-header-border` |
+| Sidebar | `--eden-nav-*` |
+| Cards | `--eden-card-bg`, `--eden-card-border`, `--eden-card-shadow`, radius |
+| Buttons | `--eden-accent`, hover, text, border |
+| Forms | input background, border, focus, field height |
+| Tables | header, hover, selected, row height |
+| Badges | neutral/success/warning/danger/info soft colors |
+| Alerts | alert background and border |
+| Icons | icon container/module/status token variables |
+| Shadows | subtle/card/floating/focus token variables |
 
-## Core Pages
+## Design Lab Coverage
 
-| Area | Status | Notes |
-| --- | --- | --- |
-| Login | Not visually smoke tested | Root first-render script updated for appearance/theme cache. |
-| `/app` | Code path updated | Header selector is global. |
-| Sirketler | Needs visual smoke | Table preference data already persisted in same store. |
-| Ortaklar | Needs visual smoke | Hardcoded color debt remains. |
-| Temsilciler | Needs visual smoke | Hardcoded color debt remains. |
-| Subeler | Needs visual smoke | Hardcoded color debt remains. |
-| Calisanlar | Needs visual smoke | Wizard/locked field checks required. |
-| Cari Kartlar | Needs visual smoke | Table/button token debt. |
-| Cari Hareketler | Needs visual smoke | Table/status token debt. |
-| Belgeler | Needs visual smoke | Document slot audit required. |
-| Action Center | Needs visual smoke | Status/hover token debt. |
-| Audit | Needs visual smoke | Timeline/table token debt. |
+Design Lab includes representative previews:
 
-## Development Pages
+- Dashboard Preview
+- List/Table Preview
+- Form Preview
+- Wizard Preview
+- Document Slot Preview
+- Action Center Preview
+- Audit Timeline Preview
+- Icon Language Preview
+- Empty/Error State Preview
 
-| Area | Status | Notes |
-| --- | --- | --- |
-| Design Lab | Updated | Writes `visualTheme` preference, still development/internal copy. |
-| Sozlesmeler | Needs visual smoke | Development route. |
-| CRM | Needs visual smoke | Development route. |
-| Satis Sonrasi | Needs visual smoke | Development route. |
+It now supports light/dark preview for each of the five system themes.
 
 ## Smoke Matrix
 
-Minimum matrix for manual verification:
+Required smoke matrix:
 
-| Theme | Light | Dark |
-| --- | --- | --- |
-| `classic` | Required | Required |
-| `executive_premium` | Required | Required |
-| `anatolian_modern` | Required | Required |
-| `technical_command` | Required | Required |
+- `classic` light/dark
+- `art_deco` light/dark
+- `anatolian_60s` light/dark
+- `command_bauhaus` light/dark
+- `pop_studio` light/dark
 
-Check header, sidebar, card, table, form, wizard, badge and error state in each combination.
+## Remaining Gaps
+
+- Some page-level tables and wizard states still declare direct Tailwind status colors.
+- Full page screenshot automation is still future work.
+- Imported themes can be previewed, but activation workflow remains admin-controlled as documented in the theme package docs.
+

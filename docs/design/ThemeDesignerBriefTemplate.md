@@ -14,6 +14,8 @@ Eden ERP is an operational business application. Users scan dense tables, forms,
 - typography weights and scale
 - icon container style
 - density tokens
+- decorative motif metadata
+- restrained corner border/frame language on large surfaces
 
 ## What Must Not Change
 
@@ -60,3 +62,5 @@ Do not add:
 ## Acceptance Notes
 
 Light and dark tokens must both be complete. Contrast must remain readable in tables, forms, buttons, inputs, badges, warnings and error states.
+
+Decorative motifs may support hero, featured card, section header, empty state and wizard summary surfaces. They must not be placed inside dense table rows, narrow input interiors, accounting detail rows or audit row bodies.

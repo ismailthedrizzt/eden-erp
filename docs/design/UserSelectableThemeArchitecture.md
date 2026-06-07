@@ -11,9 +11,10 @@ Theme:
 | Label | Canonical key | Legacy key |
 | --- | --- | --- |
 | Klasik | `classic` | `classicCurrent` |
-| Kurumsal Premium | `executive_premium` | `executivePremium` |
-| Anadolu Modern | `anatolian_modern` | `anatolianModern` |
-| Teknik Komuta | `technical_command` | `technicalCommand` |
+| Art Deco Premium | `art_deco` | `executivePremium`, `executive_premium` |
+| Anadolu Modern | `anatolian_60s` | `anatolianModern`, `anatolian_modern` |
+| Yeşil Atölye | `command_bauhaus` | `technicalCommand`, `technical_command` |
+| Pop Studio | `pop_studio` | - |
 
 Appearance:
 
@@ -57,3 +58,19 @@ Theme config is centralized in `components/design-lab/themeConcepts.ts`. It expo
 - minimum `--eden-*` tokens
 
 Existing Tailwind hardcoded colors remain a migration debt and are tracked in the audit reports.
+
+## Decorative Motif Model
+
+Visual themes carry a decorative motif profile in addition to color, shape, shadow, density and icon tokens. Motif config is centralized with the theme:
+
+- `motif.style`
+- `motif.cornerType`
+- `motif.illustrationType`
+- `motif.opacity`
+- `motif.lineWeight`
+- `motif.useOnHero`
+- `motif.useOnFeaturedCards`
+- `motif.useOnEmptyStates`
+- `motif.useOnSectionHeaders`
+
+Motifs are decorative only. They may support hero, section header, featured card, empty state and wizard summary surfaces, but they must not appear inside dense table rows, narrow input interiors or critical accounting detail lines.

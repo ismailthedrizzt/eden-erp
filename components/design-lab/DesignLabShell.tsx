@@ -14,6 +14,7 @@ import {
   getThemeCssVars,
   normalizeThemeConceptId,
   themeConcepts,
+  type ThemeAppearanceMode,
   type ThemeConceptId,
 } from './themeConcepts'
 import { readCachedUiPreferences, syncUiPreferencesPatch } from '@/lib/user-state/client'
@@ -34,21 +35,28 @@ const evaluationCriteria = [
   'Action Center is listesi hissi veriyor mu?',
   'Belgeler anlasilir mi?',
   'Karanlik/aydinlik dengesi nasil?',
+  'Kose borderlari temaya karakter katiyor mu?',
+  'Motifler temayi ayirt etmeye yardimci oluyor mu?',
+  'Motifler veri alanini boguyor mu?',
+  'Light/dark modda dekoratif dil korunuyor mu?',
+  'Tema yalniz renk degil, dekoratif kimlik de tasiyor mu?',
+  'Dashboard ve ana ekranlarda tasarimci eli degmis hissi var mi?',
   'Turkiye KOBI/kurumsal pazarina uygun mu?',
   'Savunma/teknoloji projeleriyle uyumlu mu?',
 ]
 
 export function DesignLabShell() {
   const [activeThemeId, setActiveThemeId] = useState<ThemeConceptId>(DEFAULT_DESIGN_LAB_THEME_ID)
+  const [previewAppearance, setPreviewAppearance] = useState<ThemeAppearanceMode>('light')
   const [importedPreviewTheme, setImportedPreviewTheme] = useState<EdenThemePackage | null>(null)
   const [showImportedPreview, setShowImportedPreview] = useState(false)
   const activeTheme = findThemeConcept(activeThemeId)
   const themeVars = useMemo(() => {
     if (showImportedPreview && importedPreviewTheme) {
-      return themeTokensToDesignLabCssVars(importedPreviewTheme.tokens.light)
+      return themeTokensToDesignLabCssVars(importedPreviewTheme.tokens[previewAppearance])
     }
-    return getThemeCssVars(activeTheme)
-  }, [activeTheme, importedPreviewTheme, showImportedPreview])
+    return getThemeCssVars(activeTheme, previewAppearance)
+  }, [activeTheme, importedPreviewTheme, previewAppearance, showImportedPreview])
   const previewDisplayName = showImportedPreview && importedPreviewTheme
     ? importedPreviewTheme.displayName
     : activeTheme.name
@@ -131,11 +139,33 @@ export function DesignLabShell() {
             </div>
 
             <div className="rounded-[var(--dl-radius-large)] border border-[var(--dl-border-subtle)] bg-[var(--dl-surface-muted)] p-4">
-              <div className="flex items-center gap-2 text-sm font-semibold text-[var(--dl-text-primary)]">
-                <Sparkles size={16} className="text-[var(--dl-accent-warm)]" />
-                Designer note
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div className="flex items-center gap-2 text-sm font-semibold text-[var(--dl-text-primary)]">
+                  <Sparkles size={16} className="text-[var(--dl-accent-warm)]" />
+                  Designer note
+                </div>
+                <div className="inline-flex rounded-[var(--dl-radius-medium)] border border-[var(--dl-border-subtle)] bg-[var(--dl-surface-raised)] p-1">
+                  {(['light', 'dark'] as ThemeAppearanceMode[]).map(mode => (
+                    <button
+                      key={mode}
+                      type="button"
+                      onClick={() => setPreviewAppearance(mode)}
+                      className={[
+                        'rounded-[var(--dl-radius-small)] px-2.5 py-1 text-xs font-semibold transition',
+                        previewAppearance === mode
+                          ? 'bg-[var(--dl-accent-primary)] text-[var(--dl-surface-raised)]'
+                          : 'text-[var(--dl-text-secondary)] hover:bg-[var(--dl-surface-muted)]',
+                      ].join(' ')}
+                    >
+                      {mode === 'light' ? 'Light' : 'Dark'}
+                    </button>
+                  ))}
+                </div>
               </div>
               <p className="mt-2 text-sm leading-6 text-[var(--dl-text-secondary)]">{activeTheme.designerNote}</p>
+              <p className="mt-2 text-xs font-semibold text-[var(--dl-text-muted)]">
+                {activeTheme.artDirection} / {previewAppearance}
+              </p>
               <div className="mt-4 flex flex-wrap gap-2">
                 {activeTheme.sampleBadges.map(badge => (
                   <span
@@ -154,6 +184,7 @@ export function DesignLabShell() {
         <ThemeConceptSwitcher
           concepts={themeConcepts}
           activeId={activeTheme.id}
+          appearance={previewAppearance}
           onChange={changeThemeConcept}
         />
 

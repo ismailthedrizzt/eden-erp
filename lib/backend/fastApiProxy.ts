@@ -48,6 +48,13 @@ export function buildFastApiUrl(path: string, query?: FastApiQuery) {
   return targetUrl
 }
 
+function isByteStringHeaderValue(value: string) {
+  for (let index = 0; index < value.length; index += 1) {
+    if (value.charCodeAt(index) > 255) return false
+  }
+  return true
+}
+
 export async function buildBackendHeaders(request: NextRequest, options: ProxyOptions = {}) {
   const tenantContext = resolveTenantContext(request)
   const appSession = await verifyAppSessionToken(request.cookies.get(APP_SESSION_COOKIE_NAME)?.value)
@@ -61,7 +68,13 @@ export async function buildBackendHeaders(request: NextRequest, options: ProxyOp
   if (userId) headers.set('x-user-id', userId)
   if (appSession?.email) headers.set('x-user-email', appSession.email)
   if (appSession?.phone) headers.set('x-user-phone', appSession.phone)
-  if (appSession?.displayName) headers.set('x-user-name', appSession.displayName)
+  if (appSession?.displayName) {
+    if (isByteStringHeaderValue(appSession.displayName)) {
+      headers.set('x-user-name', appSession.displayName)
+    } else {
+      headers.set('x-user-name-encoded', encodeURIComponent(appSession.displayName))
+    }
+  }
   if (options.companyScope) headers.set('x-company-scope', options.companyScope)
   headers.set('x-request-id', requestId)
   headers.set('x-correlation-id', correlationId)
