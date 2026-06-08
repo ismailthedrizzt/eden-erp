@@ -9,7 +9,7 @@ import { proxyToFastApi } from '@/lib/backend/fastApiProxy'
 export const runtime = 'nodejs'
 
 export async function POST(request: NextRequest) {
-  const response = await proxyToFastApi(request, '/api/v1/documents/uploads/signed-url')
+  const response = await proxyToFastApi(request, '/api/v1/documents/uploads/signed-url', { internal: true })
   if (response && response.ok) return response
 
   return NextResponse.json(

@@ -8,9 +8,9 @@ import { proxyToFastApi } from '@/lib/backend/fastApiProxy'
 export async function proxyToFastApiDocuments(
   request: NextRequest,
   targetPath: string,
-  init?: { method?: string; timeoutMs?: number; bodyText?: string }
+  init?: { method?: string; timeoutMs?: number; bodyText?: string; internal?: boolean }
 ) {
-  const response = await proxyToFastApi(request, targetPath, init)
+  const response = await proxyToFastApi(request, targetPath, { internal: true, ...init })
   return response || documentsBackendUnavailable()
 }
 
@@ -24,4 +24,3 @@ export function documentsBackendUnavailable(status = 503) {
     { status }
   )
 }
-

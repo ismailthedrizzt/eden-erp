@@ -361,9 +361,13 @@ async function uploadDocumentFile(file: File, slotId: string) {
   const body = new FormData()
   body.append('file', file)
   body.append('slotId', slotId)
+  body.append('document_slot_key', slotId)
+  body.append('document_type', slotId)
+  body.append('document_category', 'slot_document')
 
   const response = await fetch('/api/uploads/documents', {
     method: 'POST',
+    credentials: 'same-origin',
     body,
   })
 
@@ -556,6 +560,7 @@ export function DocumentSlotUploader({
       pathsNeedingSignedUrl.map(path =>
         fetch('/api/uploads/documents/signed-url', {
           method: 'POST',
+          credentials: 'same-origin',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ storagePath: path }),
         })
@@ -603,7 +608,7 @@ export function DocumentSlotUploader({
           const mammoth = await import('mammoth/mammoth.browser')
           const arrayBuffer = previewDoc.file
             ? await readFileAsArrayBuffer(previewDoc.file)
-            : await fetch(previewDocUrl).then(response => response.arrayBuffer())
+            : await fetch(previewDocUrl, { credentials: 'same-origin' }).then(response => response.arrayBuffer())
           const result = await mammoth.extractRawText({ arrayBuffer })
           if (!cancelled) setPreviewText({ loading: false, content: result.value || 'Önizlenecek metin bulunamadı.', error: '' })
           return
@@ -611,7 +616,7 @@ export function DocumentSlotUploader({
 
         const text = previewDoc.file
           ? await readFileAsText(previewDoc.file)
-          : await fetch(previewDocUrl).then(response => response.text())
+          : await fetch(previewDocUrl, { credentials: 'same-origin' }).then(response => response.text())
         if (!cancelled) setPreviewText({ loading: false, content: text || 'Önizlenecek metin bulunamadı.', error: '' })
       } catch (error) {
         if (!cancelled) {

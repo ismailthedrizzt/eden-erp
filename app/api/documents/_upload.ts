@@ -23,7 +23,7 @@ export async function proxyDocumentUpload(request: NextRequest, targetPath: stri
     branch_id: nullableString(formData.get('branch_id')),
     owner_entity_type: stringValue(formData.get('owner_entity_type'), 'document'),
     owner_entity_id: stringValue(formData.get('owner_entity_id'), 'document'),
-    document_type: stringValue(formData.get('document_type'), 'other'),
+    document_type: stringValue(formData.get('document_type'), nullableString(formData.get('slotId')) || 'other'),
     document_category: stringValue(formData.get('document_category'), 'general'),
     title: nullableString(formData.get('title')) || file.name,
     description: nullableString(formData.get('description')),
@@ -42,12 +42,12 @@ export async function proxyDocumentUpload(request: NextRequest, targetPath: stri
     module_key: nullableString(formData.get('module_key')),
     operation_key: nullableString(formData.get('operation_key')),
     operation_id: nullableString(formData.get('operation_id')),
-    document_slot_key: nullableString(formData.get('document_slot_key')),
+    document_slot_key: nullableString(formData.get('document_slot_key')) || nullableString(formData.get('slotId')),
     tags: listValue(formData.get('tags')),
     metadata_json: jsonValue(formData.get('metadata_json')),
   }
 
-  const response = await proxyJsonToFastApi(request, targetPath, payload, { timeoutMs: 45000 })
+  const response = await proxyJsonToFastApi(request, targetPath, payload, { timeoutMs: 45000, internal: true })
   if (!response) return documentsBackendUnavailable()
   return normalizeUploadResponse(response)
 }

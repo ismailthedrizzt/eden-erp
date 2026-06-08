@@ -373,7 +373,12 @@ async def _build_request_context(
     x_branch_scope = _clean_header_value(request.headers.get("x-branch-scope"))
     x_user_permissions = _clean_header_value(request.headers.get("x-user-permissions"))
 
-    if not user and settings.effective_auth_required and not is_internal_request(request):
+    if (
+        not user
+        and settings.effective_auth_required
+        and not is_internal_request(request)
+        and not (trusted_proxy and x_user_id)
+    ):
         raise _auth_http_exception("AUTH_REQUIRED")
 
     user_id = user.user_id if user else (x_user_id if trusted_proxy else None)
