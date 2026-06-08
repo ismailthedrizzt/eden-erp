@@ -1801,3 +1801,233 @@ html[data-eden-theme] .eden-smart-list .card-fallback,
 html[data-visual-theme] .eden-smart-list .card-fallback {
   background: linear-gradient(135deg, var(--eden-accent-soft), color-mix(in srgb, var(--eden-accent-soft) 62%, var(--eden-card-bg))) !important;
 }
+
+/* Parametric theme enforcement layer.
+   This intentionally lives at the end of globals.css so selected themes affect
+   all core surfaces, including legacy Tailwind utility-heavy pages. Logo assets
+   and wizard-specific components remain untouched. */
+html[data-eden-theme],
+html[data-visual-theme] {
+  color-scheme: light;
+}
+
+html.dark[data-eden-theme],
+html.dark[data-visual-theme],
+html[data-appearance="dark"][data-eden-theme],
+html[data-appearance="dark"][data-visual-theme] {
+  color-scheme: dark;
+}
+
+html[data-eden-theme] body,
+html[data-visual-theme] body {
+  background:
+    radial-gradient(circle at 92% 8%, color-mix(in srgb, var(--eden-motif-primary) 10%, transparent) 0 132px, transparent 133px),
+    radial-gradient(circle at 8% 94%, color-mix(in srgb, var(--eden-motif-secondary) 9%, transparent) 0 180px, transparent 181px),
+    linear-gradient(135deg, var(--eden-bg), color-mix(in srgb, var(--eden-bg) 84%, var(--eden-accent-soft) 16%)) !important;
+}
+
+html[data-eden-theme] .eden-page-banner,
+html[data-visual-theme] .eden-page-banner {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+html[data-eden-theme] .eden-page-banner > *,
+html[data-visual-theme] .eden-page-banner > * {
+  position: relative;
+  z-index: 1;
+}
+
+html[data-eden-theme] .eden-page-banner::before,
+html[data-visual-theme] .eden-page-banner::before {
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  inset: auto -26px -28px auto;
+  z-index: 0;
+  width: 150px;
+  height: 150px;
+  opacity: var(--eden-motif-opacity);
+  border: var(--eden-motif-line) solid color-mix(in srgb, var(--eden-page-banner-text) 48%, transparent);
+  border-left-width: 0;
+  border-bottom-width: 0;
+  border-radius: 999px 0 0 0;
+}
+
+html[data-eden-theme="classic"] .eden-page-banner,
+html[data-visual-theme="classic"] .eden-page-banner {
+  background: linear-gradient(135deg, #24465c 0%, #17364a 100%) !important;
+}
+
+html[data-eden-theme="art_deco_premium"] .eden-page-banner,
+html[data-eden-theme="art_deco"] .eden-page-banner,
+html[data-visual-theme="art_deco_premium"] .eden-page-banner,
+html[data-visual-theme="art_deco"] .eden-page-banner {
+  background:
+    linear-gradient(135deg, #08111f 0%, #12213a 58%, #2f2415 100%) !important;
+}
+
+html[data-eden-theme="anatolian_60s"] .eden-page-banner,
+html[data-visual-theme="anatolian_60s"] .eden-page-banner {
+  background:
+    radial-gradient(circle at 93% 18%, color-mix(in srgb, var(--eden-accent-warm) 62%, transparent) 0 58px, transparent 59px),
+    linear-gradient(135deg, #b66a3c 0%, #c7863d 42%, #1f5e64 100%) !important;
+}
+
+html[data-eden-theme="green_atelier"] .eden-page-banner,
+html[data-eden-theme="command_bauhaus"] .eden-page-banner,
+html[data-visual-theme="green_atelier"] .eden-page-banner,
+html[data-visual-theme="command_bauhaus"] .eden-page-banner {
+  background:
+    radial-gradient(ellipse at 92% 16%, color-mix(in srgb, var(--eden-success) 30%, transparent) 0 86px, transparent 87px),
+    linear-gradient(135deg, #163b25 0%, #1f6b3a 58%, #174f2c 100%) !important;
+}
+
+html[data-eden-theme="pop_studio"] .eden-page-banner,
+html[data-visual-theme="pop_studio"] .eden-page-banner {
+  background:
+    linear-gradient(135deg, #e91e63 0%, #277da1 52%, #ff6b35 100%) !important;
+}
+
+html.dark[data-eden-theme="green_atelier"] .eden-page-banner,
+html.dark[data-eden-theme="command_bauhaus"] .eden-page-banner,
+html.dark[data-visual-theme="green_atelier"] .eden-page-banner,
+html.dark[data-visual-theme="command_bauhaus"] .eden-page-banner,
+html[data-appearance="dark"][data-eden-theme="green_atelier"] .eden-page-banner,
+html[data-appearance="dark"][data-eden-theme="command_bauhaus"] .eden-page-banner,
+html[data-appearance="dark"][data-visual-theme="green_atelier"] .eden-page-banner,
+html[data-appearance="dark"][data-visual-theme="command_bauhaus"] .eden-page-banner {
+  background:
+    radial-gradient(ellipse at 92% 16%, color-mix(in srgb, var(--eden-success) 22%, transparent) 0 86px, transparent 87px),
+    linear-gradient(135deg, #09150e 0%, #182d20 58%, #193a24 100%) !important;
+}
+
+html.dark[data-eden-theme="pop_studio"] .eden-page-banner,
+html.dark[data-visual-theme="pop_studio"] .eden-page-banner,
+html[data-appearance="dark"][data-eden-theme="pop_studio"] .eden-page-banner,
+html[data-appearance="dark"][data-visual-theme="pop_studio"] .eden-page-banner {
+  background: linear-gradient(135deg, #191124 0%, #461333 52%, #552817 100%) !important;
+}
+
+html[data-eden-theme] .eden-smart-list-toolbar,
+html[data-visual-theme] .eden-smart-list-toolbar,
+html[data-eden-theme] .eden-smart-list-filter-panel,
+html[data-visual-theme] .eden-smart-list-filter-panel,
+html[data-eden-theme] .eden-smart-list-pagination,
+html[data-visual-theme] .eden-smart-list-pagination {
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--eden-card-bg) 70%, var(--eden-accent-soft) 30%), var(--eden-card-bg)) !important;
+  border-color: var(--eden-smart-list-border) !important;
+}
+
+html[data-eden-theme="green_atelier"] .eden-smart-list-toolbar,
+html[data-eden-theme="green_atelier"] .eden-smart-list-filter-panel,
+html[data-eden-theme="green_atelier"] .eden-smart-list-pagination,
+html[data-eden-theme="command_bauhaus"] .eden-smart-list-toolbar,
+html[data-eden-theme="command_bauhaus"] .eden-smart-list-filter-panel,
+html[data-eden-theme="command_bauhaus"] .eden-smart-list-pagination,
+html[data-visual-theme="green_atelier"] .eden-smart-list-toolbar,
+html[data-visual-theme="green_atelier"] .eden-smart-list-filter-panel,
+html[data-visual-theme="green_atelier"] .eden-smart-list-pagination,
+html[data-visual-theme="command_bauhaus"] .eden-smart-list-toolbar,
+html[data-visual-theme="command_bauhaus"] .eden-smart-list-filter-panel,
+html[data-visual-theme="command_bauhaus"] .eden-smart-list-pagination {
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--eden-card-bg) 58%, var(--eden-success-soft) 42%), var(--eden-card-bg)) !important;
+  border-color: color-mix(in srgb, var(--eden-success) 38%, var(--eden-card-border)) !important;
+}
+
+html[data-eden-theme="pop_studio"] .eden-smart-list-toolbar,
+html[data-eden-theme="pop_studio"] .eden-smart-list-filter-panel,
+html[data-eden-theme="pop_studio"] .eden-smart-list-pagination,
+html[data-visual-theme="pop_studio"] .eden-smart-list-toolbar,
+html[data-visual-theme="pop_studio"] .eden-smart-list-filter-panel,
+html[data-visual-theme="pop_studio"] .eden-smart-list-pagination {
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--eden-card-bg) 60%, var(--eden-accent-soft) 40%), color-mix(in srgb, var(--eden-card-bg) 82%, var(--eden-accent-warm) 18%)) !important;
+  border-color: color-mix(in srgb, var(--eden-accent) 44%, var(--eden-accent-warm)) !important;
+}
+
+html[data-eden-theme] .eden-smart-list-table,
+html[data-visual-theme] .eden-smart-list-table {
+  background: color-mix(in srgb, var(--eden-card-bg) 90%, var(--eden-accent-soft) 10%) !important;
+  border-color: var(--eden-smart-list-border) !important;
+}
+
+html[data-eden-theme] .eden-smart-list-table-head,
+html[data-visual-theme] .eden-smart-list-table-head,
+html[data-eden-theme] table thead,
+html[data-visual-theme] table thead {
+  background: color-mix(in srgb, var(--eden-table-header-bg) 70%, var(--eden-accent-soft) 30%) !important;
+}
+
+html[data-eden-theme] .eden-smart-list-body .eden-smart-list-row:nth-child(odd) .eden-smart-list-cell,
+html[data-visual-theme] .eden-smart-list-body .eden-smart-list-row:nth-child(odd) .eden-smart-list-cell,
+html[data-eden-theme] tbody tr:nth-child(odd) td,
+html[data-visual-theme] tbody tr:nth-child(odd) td {
+  background-color: color-mix(in srgb, var(--eden-card-bg) 86%, var(--eden-accent-soft) 14%) !important;
+}
+
+html[data-eden-theme] .eden-smart-list-body .eden-smart-list-row:nth-child(even) .eden-smart-list-cell,
+html[data-visual-theme] .eden-smart-list-body .eden-smart-list-row:nth-child(even) .eden-smart-list-cell,
+html[data-eden-theme] tbody tr:nth-child(even) td,
+html[data-visual-theme] tbody tr:nth-child(even) td {
+  background-color: color-mix(in srgb, var(--eden-card-bg) 94%, var(--eden-accent-soft) 6%) !important;
+}
+
+html[data-eden-theme] button[class*="bg-blue-"],
+html[data-visual-theme] button[class*="bg-blue-"],
+html[data-eden-theme] a[class*="bg-blue-"],
+html[data-visual-theme] a[class*="bg-blue-"],
+html[data-eden-theme] [class~="bg-eden-blue"],
+html[data-visual-theme] [class~="bg-eden-blue"],
+html[data-eden-theme] [class~="bg-blue-500"],
+html[data-visual-theme] [class~="bg-blue-500"],
+html[data-eden-theme] [class~="bg-blue-600"],
+html[data-visual-theme] [class~="bg-blue-600"],
+html[data-eden-theme] [class~="bg-blue-700"],
+html[data-visual-theme] [class~="bg-blue-700"] {
+  background-color: var(--eden-accent) !important;
+  border-color: var(--eden-accent) !important;
+  color: var(--eden-accent-text) !important;
+}
+
+html[data-eden-theme] button[class*="hover:bg-blue-"]:hover,
+html[data-visual-theme] button[class*="hover:bg-blue-"]:hover,
+html[data-eden-theme] a[class*="hover:bg-blue-"]:hover,
+html[data-visual-theme] a[class*="hover:bg-blue-"]:hover {
+  background-color: var(--eden-accent-hover) !important;
+  border-color: var(--eden-accent-hover) !important;
+}
+
+html[data-eden-theme] [class*="ring-blue-"],
+html[data-visual-theme] [class*="ring-blue-"] {
+  --tw-ring-color: var(--eden-focus-ring) !important;
+}
+
+html[data-eden-theme] [class*="focus:ring-blue-"]:focus,
+html[data-visual-theme] [class*="focus:ring-blue-"]:focus,
+html[data-eden-theme] [class*="focus:border-blue-"]:focus,
+html[data-visual-theme] [class*="focus:border-blue-"]:focus {
+  border-color: var(--eden-input-focus) !important;
+  --tw-ring-color: var(--eden-focus-ring) !important;
+}
+
+html[data-eden-theme] .card,
+html[data-visual-theme] .card,
+html[data-eden-theme] .kpi-card,
+html[data-visual-theme] .kpi-card,
+html[data-eden-theme] .eden-decorative-surface,
+html[data-visual-theme] .eden-decorative-surface {
+  background-color: var(--eden-card-bg) !important;
+  border-color: var(--eden-card-border) !important;
+  color: var(--eden-text) !important;
+}
+
+html[data-eden-theme] .eden-decorative-surface::before,
+html[data-visual-theme] .eden-decorative-surface::before,
+html[data-eden-theme] .eden-page-banner::before,
+html[data-visual-theme] .eden-page-banner::before {
+  opacity: var(--eden-motif-opacity) !important;
+}
