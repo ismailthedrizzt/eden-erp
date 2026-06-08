@@ -161,6 +161,59 @@ type CurrentUserProfile = {
   phone?: string | null
 }
 
+function normalizeWorkspaceOption(value: any, currentWorkspaceId?: string | null): TenantWorkspaceOption | null {
+  const id = typeof value?.id === 'string'
+    ? value.id
+    : typeof value?.tenant_id === 'string'
+      ? value.tenant_id
+      : null
+  if (!id) return null
+
+  return {
+    id,
+    name: String(value?.name || value?.workspace_name || value?.tenant_name || 'Calisma Alani'),
+    logoUrl: value?.logoUrl ?? value?.logo_url ?? null,
+    lightLogoUrl: value?.lightLogoUrl ?? value?.light_logo_url ?? null,
+    darkLogoUrl: value?.darkLogoUrl ?? value?.dark_logo_url ?? null,
+    role_key: value?.role_key ?? null,
+    role_label: value?.role_label ?? null,
+    is_default: Boolean(value?.is_default),
+    is_current: Boolean(value?.is_current || (currentWorkspaceId && id === currentWorkspaceId)),
+  }
+}
+
+function normalizeWorkspaceOptions(values: unknown, currentWorkspaceId?: string | null) {
+  if (!Array.isArray(values)) return []
+  return values
+    .map(value => normalizeWorkspaceOption(value, currentWorkspaceId))
+    .filter((value): value is TenantWorkspaceOption => Boolean(value))
+}
+
+function mergeWorkspaceOptions(
+  options: TenantWorkspaceOption[],
+  current: TenantWorkspaceOption | null,
+) {
+  const deduped = new globalThis.Map<string, TenantWorkspaceOption>()
+  for (const option of options) {
+    deduped.set(option.id, option)
+  }
+
+  if (current) {
+    const previous = deduped.get(current.id)
+    deduped.set(current.id, {
+      ...previous,
+      ...current,
+      name: current.name || previous?.name || 'Calisma Alani',
+      is_current: true,
+    })
+  }
+
+  return Array.from(deduped.values()).map(option => ({
+    ...option,
+    is_current: current ? option.id === current.id : Boolean(option.is_current),
+  }))
+}
+
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <Suspense fallback={<div className="min-h-screen bg-gray-50 dark:bg-[#09141e]" />}>
@@ -187,6 +240,7 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
   const [bootstrapModules, setBootstrapModules] = useState<ClientModuleRuntime[]>([])
   const [sessionBootstrapLoading, setSessionBootstrapLoading] = useState(true)
   const [workspaceOptionsLoading, setWorkspaceOptionsLoading] = useState(true)
+  const [workspaceOptionsError, setWorkspaceOptionsError] = useState<string | null>(null)
   const [workspaceMenuOpen, setWorkspaceMenuOpen] = useState(false)
   const [workspaceSwitchError, setWorkspaceSwitchError] = useState<string | null>(null)
   const [switchingWorkspaceId, setSwitchingWorkspaceId] = useState<string | null>(null)
@@ -278,16 +332,20 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
       .then(async response => {
         const payload = await response.json().catch(() => ({}))
         if (!response.ok) throw new Error(payload.error || 'Oturum hazirligi tamamlanamadi.')
-        return payload as SessionBootstrapResponse
+        return (payload.data || payload) as SessionBootstrapResponse
       })
       .then(payload => {
         if (cancelled) return
-        setWorkspaceId(payload.workspace?.id || null)
-        setWorkspaceName(payload.workspace?.name || 'Çalışma Alanı')
-        setWorkspaceLogo(payload.workspace || {})
-        setWorkspaceLogoFailed(false)
+        const currentWorkspace = normalizeWorkspaceOption(payload.workspace, payload.workspace?.id)
+        if (currentWorkspace) {
+          setWorkspaceId(currentWorkspace.id)
+          setWorkspaceName(currentWorkspace.name || 'Calisma Alani')
+          setWorkspaceLogo(currentWorkspace)
+          setWorkspaceLogoFailed(false)
+          setStoredTenantId(currentWorkspace.id)
+          setWorkspaceOptions(previous => mergeWorkspaceOptions(previous, currentWorkspace))
+        }
         setBootstrapModules((payload.modules || []) as ClientModuleRuntime[])
-        if (payload.workspace?.id) setStoredTenantId(payload.workspace.id)
         cacheUiPreferences(payload.userState.uiPreferences)
         const nextAppearance = payload.userState.uiPreferences.appearanceMode || payload.userState.uiPreferences.theme || 'system'
         setAppearanceMode(nextAppearance)
@@ -310,13 +368,22 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
     })
       .then(async response => {
         const payload = await response.json().catch(() => ({}))
-        if (!response.ok) throw new Error(payload.error || 'Calisma alanlari yuklenemedi.')
+        if (!response.ok) {
+          if ([400, 403, 409].includes(response.status)) {
+            setStoredTenantId(null)
+            const retryResponse = await fetch('/api/tenants/options', { cache: 'no-store' })
+            const retryPayload = await retryResponse.json().catch(() => ({}))
+            if (retryResponse.ok) return retryPayload.data as TenantWorkspaceOption[]
+            throw new Error(retryPayload.error || retryPayload.message || payload.error || 'Calisma alanlari yuklenemedi.')
+          }
+          throw new Error(payload.error || payload.message || 'Calisma alanlari yuklenemedi.')
+        }
         return payload.data as TenantWorkspaceOption[]
       })
       .then(options => {
         if (cancelled) return
-        const rows = Array.isArray(options) ? options : []
-        setWorkspaceOptions(rows)
+        setWorkspaceOptionsError(null)
+        const rows = normalizeWorkspaceOptions(options)
 
         const current = rows.find(option => option.is_current)
         if (current) {
@@ -326,8 +393,30 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
           setWorkspaceLogoFailed(false)
           setStoredTenantId(current.id)
         }
+        setWorkspaceOptions(previous => mergeWorkspaceOptions(rows.length ? rows : previous, current || null))
       })
-      .catch(() => undefined)
+      .catch(async error => {
+        if (cancelled) return
+        setWorkspaceOptionsError(error instanceof Error ? error.message : 'Calisma alanlari yuklenemedi.')
+        try {
+          const response = await fetch('/api/tenants/current', {
+            cache: 'no-store',
+            headers: tenantRequestHeaders(),
+          })
+          const payload = await response.json().catch(() => ({}))
+          if (!response.ok) throw new Error()
+          const current = normalizeWorkspaceOption(payload.data?.workspace || payload.workspace)
+          if (!current || cancelled) return
+          setWorkspaceId(current.id)
+          setWorkspaceName(current.name || 'Calisma Alani')
+          setWorkspaceLogo(current)
+          setWorkspaceLogoFailed(false)
+          setStoredTenantId(current.id)
+          setWorkspaceOptions(previous => mergeWorkspaceOptions(previous, current))
+        } catch {
+          // Mevcut bootstrap workspace'i ekranda kalir; options tekrar sonraki reload'da denenir.
+        }
+      })
       .finally(() => {
         if (!cancelled) setWorkspaceOptionsLoading(false)
       })
@@ -529,7 +618,7 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
         })
         const bootstrapPayload = await bootstrapResponse.json().catch(() => ({}))
         if (bootstrapResponse.ok) {
-          const nextBootstrap = bootstrapPayload as SessionBootstrapResponse
+          const nextBootstrap = (bootstrapPayload.data || bootstrapPayload) as SessionBootstrapResponse
           setBootstrapModules((nextBootstrap.modules || []) as ClientModuleRuntime[])
           cacheUiPreferences(nextBootstrap.userState.uiPreferences)
           const nextAppearance = nextBootstrap.userState.uiPreferences.appearanceMode || nextBootstrap.userState.uiPreferences.theme || 'system'
@@ -760,9 +849,16 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
                           </div>
                         )
                       }) : (
-                        <div className="px-3 py-3 text-xs text-gray-500 dark:text-gray-400">Erisilebilir baska calisma alani yok.</div>
+                        <div className="px-3 py-3 text-xs text-gray-500 dark:text-gray-400">
+                          {workspaceOptionsError ? 'Calisma alanlari su an tazelenemedi; mevcut alan korunuyor.' : 'Erisilebilir baska calisma alani yok.'}
+                        </div>
                       )}
                     </div>
+                    {workspaceOptionsError && workspaceOptions.length > 0 && (
+                      <div className="border-t border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700 dark:border-amber-900/60 dark:bg-amber-950/30 dark:text-amber-200">
+                        Calisma alanlari tazelenemedi; mevcut liste korunuyor.
+                      </div>
+                    )}
                     {workspaceSwitchError && (
                       <div className="border-t border-gray-200 px-3 py-2 text-xs text-red-600 dark:border-gray-700 dark:text-red-300">
                         {workspaceSwitchError}
