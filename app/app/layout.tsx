@@ -20,7 +20,6 @@ import {
   getEdenThemeCssVars,
   normalizeThemeConceptId,
   themeConcepts,
-  type ThemeConceptId,
 } from '@/components/design-lab/themeConcepts'
 import { ModuleLicenseProvider } from '@/hooks/useModuleLicense'
 import { PermissionProvider } from '@/lib/security/permissionStore'
@@ -30,6 +29,14 @@ import { ActionGuideProvider } from '@/components/ai/ActionGuideContext'
 import { ActionGuideSearch } from '@/components/ai/ActionGuideSearch'
 import { CopilotPanel } from '@/components/ai/CopilotPanel'
 import { cacheUiPreferences, readCachedUiPreferences, syncUiPreferencesPatch } from '@/lib/user-state/client'
+import { normalizeVisualThemePreference } from '@/lib/user-state/merge-ui-preferences'
+import {
+  THEME_MANAGEMENT_CHANGE_EVENT,
+  findManagedThemeRecord,
+  getManagedThemeCssVars,
+  listActiveManagedThemeRecords,
+  type ManagedThemeRecord,
+} from '@/lib/theme/themeManagement'
 import { setStoredTenantId, tenantRequestHeaders } from '@/lib/tenancy/client'
 import { apiClient } from '@/lib/api/apiClient'
 import type { TenantEntitlements } from '@/lib/licensing/tenantEntitlements'
@@ -253,7 +260,7 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
   const [tourClosedThisSession, setTourClosedThisSession] = useState(false)
   const [isOffline, setIsOffline] = useState(false)
   const workspaceMenuRef = useRef<HTMLDivElement | null>(null)
-  const [visualThemeId, setVisualThemeId] = useState<ThemeConceptId>(DEFAULT_VISUAL_THEME_ID)
+  const [visualThemeId, setVisualThemeId] = useState<string>(DEFAULT_VISUAL_THEME_ID)
 
   useEffect(() => {
     setIsOffline(typeof navigator !== 'undefined' ? !navigator.onLine : false)
@@ -269,7 +276,7 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
     const cachedAppearance = cachedPreferences.appearanceMode || cachedPreferences.theme || 'system'
     setAppearanceMode(cachedAppearance)
     setDark(applyAppearancePreference(cachedAppearance))
-    setVisualThemeId(normalizeThemeConceptId(cachedPreferences.visualTheme) || DEFAULT_VISUAL_THEME_ID)
+    setVisualThemeId(normalizeVisualThemePreference(cachedPreferences.visualTheme) || DEFAULT_VISUAL_THEME_ID)
     setCollapsed(Boolean(cachedPreferences.sidebarCollapsed))
 
     const forceTour = new URLSearchParams(window.location.search).get('tour') === '1'
@@ -322,7 +329,7 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
         const nextAppearance = nextPreferences.appearanceMode || nextPreferences.theme || 'system'
         setAppearanceMode(nextAppearance)
         setDark(applyAppearancePreference(nextAppearance))
-        setVisualThemeId(normalizeThemeConceptId(nextPreferences.visualTheme) || DEFAULT_VISUAL_THEME_ID)
+        setVisualThemeId(normalizeVisualThemePreference(nextPreferences.visualTheme) || DEFAULT_VISUAL_THEME_ID)
         setCollapsed(Boolean(nextPreferences.sidebarCollapsed))
       })
       .catch(() => undefined)
@@ -352,7 +359,7 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
         const nextAppearance = payload.userState.uiPreferences.appearanceMode || payload.userState.uiPreferences.theme || 'system'
         setAppearanceMode(nextAppearance)
         setDark(applyAppearancePreference(nextAppearance))
-        setVisualThemeId(normalizeThemeConceptId(payload.userState.uiPreferences.visualTheme) || DEFAULT_VISUAL_THEME_ID)
+        setVisualThemeId(normalizeVisualThemePreference(payload.userState.uiPreferences.visualTheme) || DEFAULT_VISUAL_THEME_ID)
         setCollapsed(Boolean(payload.userState.uiPreferences.sidebarCollapsed))
         setTourInitialStep(payload.userState.introCurrentStep)
         setTourShouldOpen(forceTour || Boolean(payload.userState.shouldShowSystemTour))
@@ -510,7 +517,7 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
   }, [collapsed, tourOpen])
 
   useEffect(() => {
-    const storedThemeId = normalizeThemeConceptId(
+    const storedThemeId = normalizeVisualThemePreference(
       window.localStorage.getItem(VISUAL_THEME_STORAGE_KEY)
         || window.localStorage.getItem(LEGACY_DESIGN_LAB_THEME_STORAGE_KEY)
     )
@@ -518,12 +525,16 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
 
     function handleVisualThemeChange(event: Event) {
       const themeId = (event as CustomEvent<{ themeId?: unknown }>).detail?.themeId
-      const normalized = normalizeThemeConceptId(themeId)
+      const normalized = normalizeVisualThemePreference(themeId)
       if (normalized) setVisualThemeId(normalized)
     }
 
     window.addEventListener(VISUAL_THEME_CHANGE_EVENT, handleVisualThemeChange)
-    return () => window.removeEventListener(VISUAL_THEME_CHANGE_EVENT, handleVisualThemeChange)
+    window.addEventListener(THEME_MANAGEMENT_CHANGE_EVENT, handleVisualThemeChange)
+    return () => {
+      window.removeEventListener(VISUAL_THEME_CHANGE_EVENT, handleVisualThemeChange)
+      window.removeEventListener(THEME_MANAGEMENT_CHANGE_EVENT, handleVisualThemeChange)
+    }
   }, [])
 
   useEffect(() => {
@@ -563,12 +574,13 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
     syncUiPreferencesPatch({ appearanceMode: nextAppearance }).catch(() => undefined)
   }
 
-  function changeVisualTheme(themeId: ThemeConceptId) {
-    setVisualThemeId(themeId)
-    applyVisualThemePreference(themeId, dark ? 'dark' : 'light')
-    syncUiPreferencesPatch({ visualTheme: themeId }).catch(() => undefined)
+  function changeVisualTheme(themeId: string) {
+    const normalized = normalizeVisualThemePreference(themeId) || DEFAULT_VISUAL_THEME_ID
+    setVisualThemeId(normalized)
+    applyVisualThemePreference(normalized, dark ? 'dark' : 'light')
+    syncUiPreferencesPatch({ visualTheme: normalized }).catch(() => undefined)
     window.dispatchEvent(new CustomEvent(VISUAL_THEME_CHANGE_EVENT, {
-      detail: { themeId },
+      detail: { themeId: normalized },
     }))
   }
 
@@ -656,7 +668,7 @@ function AppLayoutShell({ children }: { children: React.ReactNode }) {
           const nextAppearance = nextBootstrap.userState.uiPreferences.appearanceMode || nextBootstrap.userState.uiPreferences.theme || 'system'
           setAppearanceMode(nextAppearance)
           setDark(applyAppearancePreference(nextAppearance))
-          setVisualThemeId(normalizeThemeConceptId(nextBootstrap.userState.uiPreferences.visualTheme) || DEFAULT_VISUAL_THEME_ID)
+          setVisualThemeId(normalizeVisualThemePreference(nextBootstrap.userState.uiPreferences.visualTheme) || DEFAULT_VISUAL_THEME_ID)
           setCollapsed(Boolean(nextBootstrap.userState.uiPreferences.sidebarCollapsed))
           setTourInitialStep(nextBootstrap.userState.introCurrentStep)
           setTourShouldOpen(Boolean(nextBootstrap.userState.shouldShowSystemTour))
@@ -985,18 +997,48 @@ function UserProfileMenu({
   profile: CurrentUserProfile | null
   displayName: string
   roleLabel: string
-  activeThemeId: ThemeConceptId
+  activeThemeId: string
   appearanceMode: UiAppearancePreference
   activeDark: boolean
-  onVisualThemeChange: (themeId: ThemeConceptId) => void
+  onVisualThemeChange: (themeId: string) => void
   onAppearanceModeChange: (appearanceMode: UiAppearancePreference) => void
 }) {
   const [open, setOpen] = useState(false)
   const [activePanel, setActivePanel] = useState<'theme' | 'appearance' | null>(null)
+  const [managedThemes, setManagedThemes] = useState<ManagedThemeRecord[]>([])
   const containerRef = useRef<HTMLDivElement | null>(null)
   const activeTheme = themeConcepts.find(theme => theme.id === activeThemeId)
+  const activeManagedTheme = activeTheme ? null : managedThemes.find(theme => theme.themeKey === activeThemeId) || findManagedThemeRecord(activeThemeId)
+  const activeThemeLabel = activeTheme?.name || activeManagedTheme?.displayName || VISUAL_THEME_LABELS[normalizeThemeConceptId(activeThemeId) || DEFAULT_VISUAL_THEME_ID]
+  const activeThemeAccent = activeTheme?.colors.accentWarm || activeManagedTheme?.package.tokens.light.color.accent.primary || '#b88932'
+  const themeOptions = [
+    ...themeConcepts.map(theme => ({
+      id: theme.id,
+      name: VISUAL_THEME_LABELS[theme.id] || theme.name,
+      description: theme.personality.join(' / '),
+      accent: theme.colors.accentPrimary,
+      source: 'system',
+    })),
+    ...managedThemes.map(theme => ({
+      id: theme.themeKey,
+      name: theme.displayName,
+      description: `${theme.artDirection || theme.source} / active`,
+      accent: theme.package.tokens.light.color.accent.primary,
+      source: theme.source,
+    })),
+  ]
   const activeAppearanceLabel = APPEARANCE_LABELS[appearanceMode] || APPEARANCE_LABELS.system
   const ActiveAppearanceIcon = appearanceMode === 'system' ? Monitor : activeDark ? Moon : Sun
+
+  useEffect(() => {
+    function refreshManagedThemes() {
+      setManagedThemes(listActiveManagedThemeRecords())
+    }
+
+    refreshManagedThemes()
+    window.addEventListener(THEME_MANAGEMENT_CHANGE_EVENT, refreshManagedThemes)
+    return () => window.removeEventListener(THEME_MANAGEMENT_CHANGE_EVENT, refreshManagedThemes)
+  }, [])
 
   useEffect(() => {
     if (!open) return
@@ -1146,14 +1188,14 @@ function UserProfileMenu({
                   <Palette size={15} />
                   <span
                     className="absolute bottom-1 right-1 h-2 w-2 rounded-full border border-white dark:border-eden-navy-3"
-                    style={{ backgroundColor: activeTheme?.colors.accentWarm || '#b88932' }}
+                    style={{ backgroundColor: activeThemeAccent }}
                     aria-hidden="true"
                   />
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-xs font-semibold text-gray-800 dark:text-gray-100">Tema</span>
                   <span className="mt-0.5 block truncate text-[10px] text-gray-500 dark:text-gray-400">
-                    {activeTheme?.name || VISUAL_THEME_LABELS[activeThemeId]}
+                    {activeThemeLabel}
                   </span>
                 </span>
                 <ChevronLeft size={15} className="shrink-0 text-gray-400" />
@@ -1169,11 +1211,11 @@ function UserProfileMenu({
                   <div className="border-b border-gray-200 px-3 py-2 dark:border-gray-700">
                     <div className="text-[10px] font-semibold uppercase tracking-normal text-gray-400 dark:text-gray-500">Tema</div>
                     <div className="mt-0.5 text-xs font-semibold text-gray-800 dark:text-gray-100">
-                      {activeTheme?.name || VISUAL_THEME_LABELS[activeThemeId]}
+                      {activeThemeLabel}
                     </div>
                   </div>
                   <div className="py-1">
-                    {themeConcepts.map(theme => {
+                    {themeOptions.map(theme => {
                       const selected = theme.id === activeThemeId
                       return (
                         <button
@@ -1193,12 +1235,12 @@ function UserProfileMenu({
                         >
                           <span
                             className="h-5 w-5 shrink-0 rounded-md border border-white shadow-sm dark:border-eden-navy-3"
-                            style={{ backgroundColor: theme.colors.accentPrimary }}
+                            style={{ backgroundColor: theme.accent }}
                             aria-hidden="true"
                           />
                           <span className="min-w-0 flex-1">
-                            <span className="block truncate text-xs font-semibold text-gray-800 dark:text-gray-100">{VISUAL_THEME_LABELS[theme.id] || theme.name}</span>
-                            <span className="mt-0.5 block truncate text-[10px] text-gray-500 dark:text-gray-400">{theme.personality.join(' / ')}</span>
+                            <span className="block truncate text-xs font-semibold text-gray-800 dark:text-gray-100">{theme.name}</span>
+                            <span className="mt-0.5 block truncate text-[10px] text-gray-500 dark:text-gray-400">{theme.description}</span>
                           </span>
                           {selected && (
                             <Check size={15} className="shrink-0 text-eden-green" />
@@ -1395,18 +1437,21 @@ function applyAppearancePreference(theme: UiAppearancePreference) {
   return shouldUseDark
 }
 
-function applyVisualThemePreference(themeId: ThemeConceptId, appearance: 'light' | 'dark') {
+function applyVisualThemePreference(themeId: string, appearance: 'light' | 'dark') {
   if (typeof document === 'undefined') return
   const root = document.documentElement
-  const theme = findThemeConcept(themeId)
-  const vars = getEdenThemeCssVars(theme, appearance)
+  const systemThemeId = normalizeThemeConceptId(themeId)
+  const theme = systemThemeId ? findThemeConcept(systemThemeId) : null
+  const vars = theme ? getEdenThemeCssVars(theme, appearance) : getManagedThemeCssVars(themeId, appearance)
+  const resolvedThemeId = theme?.id || (vars ? themeId : DEFAULT_VISUAL_THEME_ID)
+  const resolvedVars = vars || getEdenThemeCssVars(findThemeConcept(DEFAULT_VISUAL_THEME_ID), appearance)
 
-  root.dataset.visualTheme = theme.id
+  root.dataset.visualTheme = resolvedThemeId
   root.dataset.appearanceMode = appearance
-  root.dataset.edenTheme = CANONICAL_THEME_KEYS[theme.id] || theme.id
-  root.dataset.edenThemeInternal = theme.id
+  root.dataset.edenTheme = theme ? (CANONICAL_THEME_KEYS[theme.id] || theme.id) : resolvedThemeId
+  root.dataset.edenThemeInternal = resolvedThemeId
   root.dataset.appearance = appearance
-  for (const [key, value] of Object.entries(vars)) {
+  for (const [key, value] of Object.entries(resolvedVars)) {
     root.style.setProperty(key, value)
   }
 }

@@ -27,7 +27,7 @@ import {
 import {
   Home, Users, Building2, CreditCard, Package, ShoppingCart,
   Settings, Factory, Wrench, ChevronRight, LogOut, Download,
-  List, AlertCircle, FolderOpen, Wallet, X, Headphones, Tags, ListChecks, Handshake, FileArchive, FileText
+  List, AlertCircle, FolderOpen, Wallet, X, Headphones, Tags, ListChecks, Handshake, FileArchive, FileText, Palette
 } from 'lucide-react'
 
 interface NavItem {
@@ -239,6 +239,14 @@ const NAV: NavItem[] = [
       { label: 'Sistem Logları', href: '/app/sistem/loglar', disabled: true },
     ],
   },
+  {
+    id: 'development',
+    label: 'Development',
+    icon: <Palette size={16} />,
+    children: [
+      { label: 'Temalarımız', href: '/app/development/temalarimiz', contractModuleKey: 'adminConsole' },
+    ],
+  },
 ]
 
 const SIDEBAR_CONTRACT_MODULE_BY_HREF: Record<string, string> = {
@@ -262,6 +270,7 @@ const SIDEBAR_CONTRACT_MODULE_BY_HREF: Record<string, string> = {
   '/app/sozlesmeler': 'contracts',
   '/app/ayarlar/bildirimler': 'notifications',
   '/app/design-lab': 'adminConsole',
+  '/app/development/temalarimiz': 'adminConsole',
   '/app/sistem': 'adminConsole',
   '/app/sistem/genel': 'adminConsole',
   '/app/sistem/moduller': 'adminConsole',

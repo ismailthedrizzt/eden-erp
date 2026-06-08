@@ -10,6 +10,7 @@ const VISUAL_THEME_VALUES = new Set<VisualThemePreference>([
   'atlas',
   'avangard',
 ])
+const CUSTOM_VISUAL_THEME_PATTERN = /^[a-z0-9][a-z0-9_]{1,63}$/
 const LEGACY_VISUAL_THEME_ALIASES: Record<string, VisualThemePreference> = {
   classic: 'hikmet',
   classicCurrent: 'hikmet',
@@ -113,8 +114,10 @@ export function normalizeAppearancePreference(value: unknown): UiAppearancePrefe
 
 export function normalizeVisualThemePreference(value: unknown): VisualThemePreference | null {
   if (typeof value !== 'string') return null
-  if (VISUAL_THEME_VALUES.has(value as VisualThemePreference)) return value as VisualThemePreference
-  return LEGACY_VISUAL_THEME_ALIASES[value] || null
+  const trimmed = value.trim()
+  if (VISUAL_THEME_VALUES.has(trimmed as VisualThemePreference)) return trimmed as VisualThemePreference
+  if (LEGACY_VISUAL_THEME_ALIASES[trimmed]) return LEGACY_VISUAL_THEME_ALIASES[trimmed]
+  return CUSTOM_VISUAL_THEME_PATTERN.test(trimmed) ? trimmed : null
 }
 
 function sanitizeJsonPreference(value: unknown): unknown {

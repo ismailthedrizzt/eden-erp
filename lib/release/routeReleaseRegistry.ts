@@ -44,6 +44,10 @@ export const routeReleaseRegistry = [
   route('/app/design-lab', 'design_lab', 'Design Lab', 'development_internal', true, true, true, {
     notes: 'Development-only visual identity exploration surface. Not available in release.',
   }),
+  route('/app/development/temalarimiz', 'adminConsole', 'Temalarımız', 'development_internal', true, true, true, {
+    requiresPermission: ['adminConsole.manage', 'system.admin'],
+    notes: 'Development tenant only theme management surface with draft/import/export/activation lifecycle.',
+  }),
 
   route('/app/sirket', 'companies', 'Sirket module hub', 'development', true, true, true),
   route('/app/sirket/companies', 'companies', 'Sirketlerimiz', 'release', true, true, true, { notes: RELEASE_NOTES }),
@@ -167,7 +171,7 @@ export const routeReleaseRegistry = [
   route('/app/sistem/entegrasyon-ayarlari', 'integrations', 'Entegrasyon Ayarlari', 'development_internal', true, true, true, { notes: INTERNAL_NOTES }),
   route('/app/sistem/teknik', 'adminConsole', 'Teknik', 'development_internal', true, true, true, { notes: INTERNAL_NOTES }),
   route('/app/sistem/ai-copilot', 'aiCopilot', 'AI Copilot', 'development_internal', true, true, true, { notes: INTERNAL_NOTES }),
-  route('/app/sistem/temalar', 'adminConsole', 'Gorsel Temalar', 'development_internal', true, true, true, { notes: 'Internal theme package export/import and preview surface; hidden from release users.' }),
+  route('/app/sistem/temalar', 'adminConsole', 'Legacy visual themes route', 'hidden', false, false, false, { notes: 'Deprecated in favor of /app/development/temalarimiz.' }),
   route('/app/sistem/lisanslar', 'adminConsole', 'Lisanslar', 'development_internal', true, true, true, {
     requiresPermission: ['settings.modulesManage', 'adminConsole.manage', 'system.admin'],
     notes: 'Vendor/platform tenant product, plan and tenant license management surface.',

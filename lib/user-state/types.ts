@@ -1,6 +1,6 @@
 export type UiAppearancePreference = 'system' | 'light' | 'dark'
 export type UiThemePreference = UiAppearancePreference
-export type VisualThemePreference = 'hikmet' | 'bozkir' | 'esitlik' | 'tabiat' | 'atlas' | 'avangard'
+export type VisualThemePreference = string
 export type UiDensityPreference = 'comfortable' | 'compact'
 
 export interface UserUiPreferences {

@@ -41,6 +41,7 @@ const releasePromotedRoutes = [
 
 const developmentTenantOnlyRoutes = [
   '/app/design-lab',
+  '/app/development/temalarimiz',
   '/app/sirket/companies/branches',
   '/app/sirket/tesisler',
   '/app/sirket/teskilat',

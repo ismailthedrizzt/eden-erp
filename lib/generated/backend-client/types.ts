@@ -5708,6 +5708,23 @@ export interface paths {
         patch: operations["onboarding_preferences_patch_api_v1_onboarding_preferences_patch"];
         trace?: never;
     };
+    "/api/v1/onboarding/session/bootstrap": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Onboarding Session Bootstrap */
+        get: operations["onboarding_session_bootstrap_api_v1_onboarding_session_bootstrap_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/onboarding/user/complete-tour": {
         parameters: {
             query?: never;
@@ -28676,6 +28693,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    onboarding_session_bootstrap_api_v1_onboarding_session_bootstrap_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiSuccess_dict_str__Any__"];
                 };
             };
         };

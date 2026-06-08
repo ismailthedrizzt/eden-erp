@@ -152,11 +152,22 @@ export const navigationItems = [
   item('subscription', 'Aboneligim', '/app/aboneligim', 'credit-card', 'settings', 909.5, {
     permission: 'settings.view',
   }),
+  item('development', 'Development', '/app/development', 'palette', 'adminConsole', 910.5, {
+    permission: 'adminConsole.manage',
+    fallbackPermission: 'system.admin',
+    featureFlag: 'adminConsole.enabled',
+  }),
+  item('developmentThemes', 'Temalarımız', '/app/development/temalarimiz', 'palette', 'adminConsole', 910.6, {
+    parentKey: 'development',
+    permission: 'adminConsole.manage',
+    fallbackPermission: 'system.admin',
+    featureFlag: 'adminConsole.enabled',
+  }),
   item('designLab', 'Tasarim Laboratuvari', '/app/design-lab', 'palette', 'adminConsole', 911, {
     parentKey: 'settings',
     featureFlag: 'adminConsole.enabled',
   }),
-  item('visualThemes', 'Gorsel Temalar', '/app/sistem/temalar', 'palette', 'adminConsole', 912, {
+  item('visualThemes', 'Temalarımız eski route', '/app/sistem/temalar', 'palette', 'adminConsole', 912, {
     parentKey: 'settings',
     permission: 'adminConsole.manage',
     fallbackPermission: 'system.admin',
