@@ -184,4 +184,4 @@ Detayli haritalar:
 
 ## Visual Studio
 
-Visual Studio 2022 ile [eden-erp.esproj](C:/Users/ismai/Desktop/eden-erp/eden-erp.esproj) dosyasini acip `Start` ile Next.js uygulamasini calistirabilirsiniz.
+Visual Studio 2022 ile [eden-erp.esproj](C:/Users/ismai/Desktop/eden-erp/eden-erp.esproj) dosyasini acip `Start` ile Next.js uygulamasini calistirabilirsiniz
