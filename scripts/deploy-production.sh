@@ -7,7 +7,7 @@ PM2_BIN="${PM2_BIN:-/home/edengrup-app1/.npm-global/bin/pm2}"
 LOG_DIR="${DEPLOY_LOG_DIR:-/home/edengrup-app1/logs}"
 STATE_DIR="${DEPLOY_STATE_DIR:-/home/edengrup-app1/.deploy-state}"
 LOCK_FILE="${DEPLOY_LOCK_FILE:-/home/edengrup-app1/tmp/eden-production-deploy.lock}"
-FRONTEND_HEALTH_URL="${FRONTEND_HEALTH_URL:-http://127.0.0.1:3000/}"
+FRONTEND_HEALTH_URL="${FRONTEND_HEALTH_URL:-http://127.0.0.1:3001/login}"
 BACKEND_HEALTH_URL="${BACKEND_HEALTH_URL:-http://127.0.0.1:8000/openapi.json}"
 
 mkdir -p "$LOG_DIR" "$STATE_DIR" "$(dirname "$LOCK_FILE")"
@@ -124,7 +124,7 @@ fi
 if [[ "${DEPLOY_SKIP_RESTART:-0}" != "1" ]]; then
   log "Restarting PM2 processes"
   run "$PM2_BIN" restart eden-fastapi --update-env
-  run "$PM2_BIN" restart eden-app --update-env
+  run "$PM2_BIN" restart eden-next-public --update-env
   sleep 6
   run "$PM2_BIN" list
 else
