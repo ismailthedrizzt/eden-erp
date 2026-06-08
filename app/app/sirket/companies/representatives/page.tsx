@@ -229,6 +229,29 @@ function getRepresentativeScopeLabel(representative: Record<string, any>) {
   return 'Şirket geneli'
 }
 
+function isUuidLike(value?: unknown) {
+  return typeof value === 'string' && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value.trim())
+}
+
+function getRepresentativeCompanyLabel(representative: Record<string, any>) {
+  const currentAuthority = representative.current_authority || {}
+  const company = representative.company || currentAuthority.company || {}
+  const candidates = [
+    representative.company_name,
+    representative.company_label,
+    representative.company_trade_name,
+    representative.company_short_name,
+    currentAuthority.company_name,
+    currentAuthority.company_label,
+    company.trade_name,
+    company.short_name,
+    company.name,
+  ]
+  return candidates
+    .map(value => String(value || '').trim())
+    .find(value => value && !isUuidLike(value)) || ''
+}
+
 const columns: ColumnDef[] = [
   { key: 'record_status', label: 'Durum', type: 'enum', width: 44, minWidth: 44, maxWidth: 44, fixedWidth: true, sortable: false, hideHeaderLabel: true, category: 'Durum', order: -100, fixed: true, hideable: false, render: (_value, row) => <RepresentativeStatusDot status={getRepresentativeRecordLifecycleStatus(row)} /> },
   { key: 'avatar', label: 'Avatar', type: 'avatar', width: 72, minWidth: 72, maxWidth: 72, fixedWidth: true, sortable: false, hideHeaderLabel: true, category: 'Kimlik', order: -90, fixed: true, hideable: false, imageFit: 'cover', imageShape: 'circle' },
@@ -579,16 +602,22 @@ export default function TemsilcilerPage() {
     setCompanyOptionsLoading(true)
     setCompanyOptionsError(false)
     try {
-    const companyPayload = await companyService.list({ useCache: !force })
-    setCompanies(Array.isArray(companyPayload.data) ? companyPayload.data.map((company: any) => ({
-      value: company.id,
-      label: company.trade_name || company.short_name,
-    })) : [])
-    const branchPayload = await companyService.branchesList({ useCache: !force, statuses: ['active', 'passive', 'closed'], pageSize: 200 })
-    setBranches(Array.isArray(branchPayload.data) ? branchPayload.data : [])
-    setCompaniesLoaded(true)
+      const companyPayload = await companyService.list({ useCache: !force })
+      setCompanies(Array.isArray(companyPayload.data) ? companyPayload.data.map((company: any) => ({
+        value: company.id,
+        label: company.trade_name || company.short_name || company.name || company.id,
+      })) : [])
+      setCompaniesLoaded(true)
+
+      try {
+        const branchPayload = await companyService.branchesList({ useCache: !force, statuses: ['active', 'passive', 'closed'], pageSize: 200 })
+        setBranches(Array.isArray(branchPayload.data) ? branchPayload.data : [])
+      } catch {
+        setBranches([])
+      }
     } catch (error) {
       setCompanyOptionsError(true)
+      setCompaniesLoaded(false)
       throw error
     } finally {
       setCompanyOptionsLoading(false)
@@ -614,7 +643,7 @@ export default function TemsilcilerPage() {
     person_kind_label: representative.person_kind === 'organization' ? 'Tüzel Kişi' : 'Gerçek Kişi',
     representative_type_label: getRepresentativeTypeLabel(representative),
     source_type_label: getRepresentativeSourceTypeLabel(representative.source_type),
-    company_name: companyNameById[representative.company_id] || '-',
+    company_name: companyNameById[representative.company_id] || getRepresentativeCompanyLabel(representative) || '-',
     primary_authority_type: toAuthorityLabel(getRepresentativePrimaryAuthority(representative) || '-'),
     authority_types_summary: getRepresentativeAuthorityTypes(representative).map(toAuthorityLabel).join(', ') || '-',
     signature_type_label: representative.current_authority?.signature_type || representative.signature_type || '-',
@@ -1184,15 +1213,16 @@ function RepresentativeAuthorityWizard({
   })
   const [localError, setLocalError] = useState<string | null>(null)
   const selectedCompany = companies.find(company => company.value === form.company_id)
+  const companyLabel = selectedCompany?.label || getRepresentativeCompanyLabel(representative)
   const steps = useMemo<RecordLifecycleWizardStep[]>(() => buildRepresentativeAuthorityWizardSteps({
     representative,
-    companyLabel: selectedCompany?.label || '',
+    companyLabel,
     branches,
     form,
     transactionType,
     isTermination,
     isEndOperation,
-  }), [branches, form, isEndOperation, isTermination, representative, selectedCompany?.label, transactionType])
+  }), [branches, companyLabel, form, isEndOperation, isTermination, representative, transactionType])
 
   const buildSubmitPayload = (draft: Record<string, any>) => {
     setLocalError(null)
@@ -1514,7 +1544,7 @@ function RepresentativeWizardContextSummary({
     <div className="grid gap-3 md:grid-cols-3">
       <SummaryMetric label="İşlem" value={transactionType} />
       <SummaryMetric label="Temsilci" value={representative.display_name || representative.full_name || '-'} />
-      <SummaryMetric label="Şirket" value={companyLabel || representative.company_name || representative.company_id || '-'} />
+      <SummaryMetric label="Şirket" value={companyLabel || getRepresentativeCompanyLabel(representative) || 'Şirket bilgisi yükleniyor'} />
     </div>
   )
 }
@@ -1538,7 +1568,7 @@ function RepresentativeAuthorityPreviewStep({
       <div className="grid gap-3 md:grid-cols-2">
         <SummaryMetric label="İşlem" value={form.transaction_type || '-'} />
         <SummaryMetric label="Temsilci" value={representative.display_name || representative.full_name || '-'} />
-        <SummaryMetric label="Şirket" value={companyLabel || representative.company_name || representative.company_id || '-'} />
+        <SummaryMetric label="Şirket" value={companyLabel || getRepresentativeCompanyLabel(representative) || 'Şirket bilgisi yükleniyor'} />
         <SummaryMetric label="Yürürlük" value={form.effective_date || '-'} />
         <SummaryMetric label="Bitiş" value={form.end_date || 'Süresiz'} />
         <SummaryMetric label="Not" value={form.notes || '-'} />
